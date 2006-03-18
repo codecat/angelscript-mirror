@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -44,6 +44,8 @@
 #include "as_array.h"
 #include "as_string.h"
 #include "as_types.h"
+#include "as_objecttype.h"
+#include "as_callfunc.h"
 
 class asCScriptFunction;
 class asCScriptEngine;
@@ -69,25 +71,41 @@ public:
 	int  Abort();
 	int  Suspend();
 
-	int  SetArguments(int stackPos, asDWORD *data, int count);
-	int  GetReturnValue(asDWORD *data, int count);
+	int SetArgDWord(asUINT arg, asDWORD value);
+	int SetArgQWord(asUINT arg, asQWORD value);
+	int SetArgFloat(asUINT arg, float value);
+	int SetArgDouble(asUINT arg, double value);
+	int SetArgObject(asUINT arg, void *obj);
+
+	asDWORD GetReturnDWord();
+	asQWORD GetReturnQWord();
+	float   GetReturnFloat();
+	double  GetReturnDouble();
+	void   *GetReturnObject();
 
 	int  GetState();
 
-	int  GetCurrentLineNumber();
+	int  GetCurrentLineNumber(int *column);
 	int  GetCurrentFunction();
 
-	int  GetExceptionLineNumber();
+	int  GetExceptionLineNumber(int *column);
 	int  GetExceptionFunction();
 	const char *GetExceptionString(int *length);
 
-#ifdef AS_DEPRECATED
-	int  GetExceptionString(char *buffer, int bufferSize);
-#endif
+	int  SetLineCallback(asUPtr callback, void *obj, int callConv);
+	void ClearLineCallback();
+	int  SetExceptionCallback(asUPtr callback, void *obj, int callConv);
+	void ClearExceptionCallback();
+
+	int GetCallstackSize();
+	int GetCallstackFunction(int index);
+	int GetCallstackLineNumber(int index, int *column);
+
 
 	int  SetException(const char *descr);
 
 	int  SetExecuteStringFunction(asCScriptFunction *func);
+
 
 //protected:
 	friend class asCScriptEngine;
@@ -98,11 +116,17 @@ public:
 	static void CreateRelocTable(void);
 #endif
 
+	void CallLineCallback();
+	void CallExceptionCallback();
+
+	int  CallGeneric(int funcID, void *objectPointer);
+
 	void DetachEngine();
 
 	void ExecuteNext(bool createRelocTable = false);
 	void CleanStack();
 	void CleanStackFrame();
+	void CleanReturnObject();
 
 	void PushCallState();
 	void PopCallState();
@@ -127,7 +151,7 @@ public:
 
 	asCScriptFunction *currentFunction;
 	asDWORD *stackFramePointer;
-	int exceptionID;
+	bool isStackMemoryNotAllocated;
 
 	asDWORD tempReg;
 	asQWORD returnVal;
@@ -142,14 +166,27 @@ public:
 	asCString exceptionString;
 	int exceptionFunction;
 	int exceptionLine;
+	int exceptionColumn;
 
 	int returnValueSize;
 	int argumentsSize;
 
+	void          *objectRegister;
+	asCObjectType *objectType;
+	
 	// String function
 	asCScriptFunction *stringFunction;
 	
 	asCScriptFunction *initialFunction;
+
+	// callbacks
+	bool lineCallback;
+	asSSystemFunctionInterface lineCallbackFunc;
+	void *lineCallbackObj;
+
+	bool exceptionCallback;
+	asSSystemFunctionInterface exceptionCallbackFunc;
+	void *exceptionCallbackObj;
 
 	DECLARECRITICALSECTION(criticalSection);
 };

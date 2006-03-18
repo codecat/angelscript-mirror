@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -51,9 +51,12 @@
 // USE_ASM_VM
 // This flag tells the compiler to use the VM optimized with inline assembler.
 
-// BUILD_WITH_LINE_CUES
-// This flag makes the script compiler add some extra bytecode that will
-// allow ExecuteStep() to return after each statement. 
+// BUILD_WITHOUT_LINE_CUES
+// This flag makes the script compiler remove some extra bytecodes that is used
+// to allow the VM to call the line callback after each statement. The performance 
+// is improved slightly but the scripts are only guaranteed to allow one suspension
+// per loop iteration, not one per statement.
+
 // AS_DEBUG
 // This flag can be defined to make the library write some extra output when
 // compiling and executing scripts.
@@ -62,6 +65,13 @@
 // If this flag is defined then some backwards compatibility is maintained. 
 // There is no guarantee for how well deprecated functionality will work though
 // so it is best to exchange it for the new functionality as soon as possible.
+
+// AS_C_INTERFACE
+// Make the C interface available.
+
+// AS_NO_CLASS_METHODS
+// Disables the possibility to add class methods. Can increase the  
+// portability of the library.
 
 
 
@@ -102,6 +112,11 @@
 // VALUE_OF_BOOLEAN_TRUE
 // This flag allows to customize the exact value of boolean true
 
+// STDCALL
+// This is used to declare a function to use the stdcall calling convention
+
+
+
 
 //
 // How to identify different compilers
@@ -136,6 +151,12 @@
 // AS_USE_DOUBLE_AS_FLOAT
 // If there is no 64 bit floating point type, then this constant can be defined
 // to treat double like normal floats.
+
+// AS_X86
+// Use assembler code for the x86 CPU family
+
+// AS_SH4
+// Use assembler code for the SH4 CPU family
 
 
 
@@ -183,6 +204,10 @@
 // THISCALL_CALLEE_POPS_ARGUMENTS
 // If the callee pops arguments for class methods then define this constant
 
+// COMPLEX_OBJS_PASSED_BY_REF
+// Some compilers always pass certain objects by reference. GNUC for example does 
+// this if the the class has a defined destructor.
+
 
 
 // 
@@ -202,6 +227,10 @@
 	#define vsnprintf(a, b, c, d) _vsnprintf(a, b, c, d)
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define COMPLEX_MASK (asOBJ_CLASS_CONSTRUCTOR | asOBJ_CLASS_DESTRUCTOR | asOBJ_CLASS_ASSIGNMENT)
+	#define STDCALL __stdcall
+	#ifdef _M_IX86
+		#define AS_X86
+	#endif
 #endif
 
 // GNU C
@@ -209,18 +238,27 @@
 	#define GNU_STYLE_VIRTUAL_METHOD
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
+	#define COMPLEX_OBJS_PASSED_BY_REF
 	#define __int64 long long
 	#define ASM_AT_N_T
 	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
+	#define STDCALL __attribute__((stdcall))
 	#ifdef __linux__
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 	#endif
-
+	#ifdef i386
+		#define AS_X86
+	#endif
 #endif
 
-
+// Dreamcast console
+#ifdef __SH4_SINGLE_ONLY__
+	#define AS_ALIGN				// align datastructures
+	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
+	#define AS_SH4
+#endif
 
 
 // 

@@ -1,28 +1,28 @@
 /*
-   ac_string.cpp - version 1.2, Aug 22nd, 2004
+   AngelCode Scripting Library
+   Copyright (c) 2003-2005 Andreas Jönsson
 
-   acCString is a character string class, for easier
-   manipulation of strings.
+   This software is provided 'as-is', without any express or implied 
+   warranty. In no event will the authors be held liable for any 
+   damages arising from the use of this software.
 
-   Copyright (c) 2003 Andreas Jönsson
+   Permission is granted to anyone to use this software for any 
+   purpose, including commercial applications, and to alter it and 
+   redistribute it freely, subject to the following restrictions:
 
-   This software is provided 'as-is', without any form of
-   warranty. In no case will the author be held responsible
-   for any damage caused by its use.
+   1. The origin of this software must not be misrepresented; you 
+      must not claim that you wrote the original software. If you use
+	  this software in a product, an acknowledgment in the product 
+	  documentation would be appreciated but is not required.
 
-   Permission is granted to anyone to use the software for
-   for any purpose, including commercial. It is also allowed
-   to modify the software and redistribute it free of charge.
-   The permission is granted with the following restrictions:
+   2. Altered source versions must be plainly marked as such, and 
+      must not be misrepresented as being the original software.
 
-   1. The origin of the software may not be misrepresented.
-      It must be plainly understandable who is the author of
-      the original software.
-   2. Altered versions must not be misrepresented as the
-      original software, i.e. must be plainly marked as
-      altered.
-   3. This notice may not be removed or altered from any
-      distribution of the software, altered or not.
+   3. This notice may not be removed or altered from any source 
+      distribution.
+
+   The original version of this library can be located at:
+   http://www.angelcode.com/angelscript/
 
    Andreas Jönsson
    andreas@angelcode.com
@@ -141,7 +141,7 @@ void asCString::Copy(const char *str, int len)
 
 asCString &asCString::operator =(const char *str)
 {
-	int len = strlen(str);
+	int len = str ? strlen(str) : 0;
 	Copy(str, len);
 
 	return *this;

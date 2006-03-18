@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -43,17 +43,38 @@
 asCScriptCode::asCScriptCode()
 {
 	lineOffset = 0;
+	code = 0;
+	codeLength = 0;
+	sharedCode = false;
 }
 
-int asCScriptCode::SetCode(const char *name, const char *code)
+asCScriptCode::~asCScriptCode()
 {
-	return SetCode(name, code, strlen(code));
+	if( !sharedCode && code ) delete[] (char*)code;
 }
 
-int asCScriptCode::SetCode(const char *name, const char *code, int length)
+int asCScriptCode::SetCode(const char *name, const char *code, bool makeCopy)
+{
+	return SetCode(name, code, strlen(code), makeCopy);
+}
+
+int asCScriptCode::SetCode(const char *name, const char *code, int length, bool makeCopy)
 {
 	this->name = name;
-	this->code.Copy(code, length);
+	if( !sharedCode && this->code ) delete[] (char*)this->code;
+	if( makeCopy )
+	{
+		this->code = new char[length];
+		memcpy((char*)this->code, code, length);
+		codeLength = length;
+		sharedCode = false;
+	}
+	else
+	{
+		codeLength = length;
+		this->code = code;
+		sharedCode = true;
+	}
 
 	// Find the positions of each line
 	linePositions.PushLast(0);

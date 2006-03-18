@@ -107,31 +107,35 @@ individual bits. The data type holds 32 bits in a word. It can be assigned by a
 <a name="mod">
 <h2>Type modifiers</h2>
 
-<p>When specifying a function's parameter data type the <code>&</code> modifier
-can be used to specify that the argument should be sent by reference instead of
-by value. This can be used to allow a function to return more than one value,
-but is especially important when sending strings as they would be copied if
-sent by value.</p>
+<p>It is also possible to declare array variables by appending the [] brackets to the type.</p>
 
-<p>Another modifier is the <code>*</code>. This one is used to tell that the type
-is a pointer to a memory location, instead of the actual value. More than one
-<code>*</code> can be combined to form a pointer to a pointer.</p>
+<p>When declaring a variable with a type modifier, the type modifier affects the type of all variables in the list. 
+Example:</p>
 
-<p>When declaring a variable with a type modifier, the type modifier only affects
-the variable directly after the modifier. Example:</p>
+<pre><font color=blue>int</font>[] a, b, c;</pre>
 
-<pre><font color=blue>int</font> a, *b, c;</pre>
+<p><code>a</code>, <code>b</code>, and <code>c</code> are now arrays of integers.</p>
 
-<p><code>a</code> and <code>c</code> are normal integers, while <code>b</code> is a pointer to an integer.</p>
-
-<p>It is also possible to make arrays of types like this:</p>
+<p>When declaring arrays it is possible to define the initial size of the array by passing the length as a parameter to the constructor. Example:</p>
 
 <pre>TYPE[] a;
 TYPE[] b(LENGTH);</pre>
 
-<p>a is an empty array of TYPE. b is an array with the length of LENGTH. Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the range of valid indices are 0 to length - 1.</p>
+<p>a is an empty array of TYPE. b is an array with the length of LENGTH. Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the range of valid indices are from 0 to length - 1.</p>
 
-<pre>a[0] = EXPRESSION;</pre>
+<pre>a[INDEX] = EXPRESSION;</pre>
+
+<p>Object handles are a special type that can be used to hold references to other objects. When calling methods or accessing properties on a variable that is an object handle you will be accessing the actual object that the handle references, just as if it was an alias.</p>
+
+<pre>
+obj@ a;
+</pre>
+
+<p><code>a</code> is here a handle to an object of type <code>obj</code>. Note that unless initialized with the handle of an object, the handle is <code>null</code>.</p>
+
+<p>Not all types allow a handle to be taken. Neither of the primitive types can have handles, and there may exist some object types that do not allow handles. Which objects allow handles or not, are up to the application that registers them.</p>
+
+<p>Object handle and array type modifiers can be combined to form handles to arrays, or arrays of handles, etc.</p>
 
 <a name="bstr">
 <h2>Strings</h2>

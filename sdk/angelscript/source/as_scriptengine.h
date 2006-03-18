@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -53,16 +53,6 @@
 
 #define EXECUTESTRINGID 0x7FFFFFFFul
 
-struct asSTypeBehaviour
-{
-	asCDataType type;
-	int construct;
-	int destruct;
-	int copy;
-	asCArray<int> constructors;
-	asCArray<int> operators;
-};
-
 class asCBuilder;
 class asCContext;
 
@@ -88,9 +78,10 @@ public:
 
 	int RegisterStringFactory(const char *datatype, asUPtr factoryFunc, asDWORD callConv);
 
-	int AddScriptSection(const char *module, const char *name, const char *code, int codeLength, int lineOffset);
+	int AddScriptSection(const char *module, const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy);
 	int Build(const char *module, asIOutputStream *out);
 	int Discard(const char *module);
+	int ResetModule(const char *module);
 	int GetModuleIndex(const char *module);
 	const char *GetModuleNameFromIndex(int index, int *length);
 
@@ -100,6 +91,7 @@ public:
 	int GetFunctionIDByDecl(const char *module, const char *decl);
 	const char *GetFunctionDeclaration(int funcID, int *length);
 	const char *GetFunctionName(int funcID, int *length);
+	const char *GetFunctionSection(int funcID, int *length);
 
 	int GetGlobalVarCount(const char *module);
 	int GetGlobalVarIDByIndex(const char *module, int index);
@@ -128,20 +120,11 @@ public:
 	int ExecuteString(const char *module, const char *script, asIOutputStream *out, asIScriptContext **ctx, asDWORD flags);
 
 	// Bytecode Saving/Restoring
-	int SaveByteCode(const char* module, asIBinaryStream* out);
-	int LoadByteCode(const char* module, asIBinaryStream* in);
+	int SaveByteCode(const char *module, asIBinaryStream *out);
+	int LoadByteCode(const char *module, asIBinaryStream *in);
+
 
 	asCObjectType *GetArrayType(asCDataType &type);
-
-#ifdef AS_DEPRECATED
-	int ExecuteString(const char *module, const char *script, asIOutputStream *out, asDWORD flags);
-	asIScriptContext *GetContextForExecuteString();
-	int GetFunctionDeclaration(int funcID, char *buffer, int bufferSize);
-	int GetFunctionName(int funcID, char *buffer, int bufferSize);
-	int GetGlobalVarDeclaration(int gvarID, char *buffer, int bufferSize);
-	int GetGlobalVarName(int gvarID, char *buffer, int bufferSize);
-	int GetImportedFunctionDeclaration(const char *module, int index, char *buffer, int bufferSize);
-#endif
 
 //protected:
 	friend class asCBuilder;
@@ -160,6 +143,13 @@ public:
 	int RegisterSpecialObjectMethod(const char *objname, const char *declaration, asUPtr funcPointer, int callConv);
 	int RegisterSpecialObjectBehaviour(const char *objname, asDWORD behaviour, const char *decl, asUPtr funcPointer, int callConv);
 
+	void *CallAlloc(int objTypeIdx);
+	void CallFree(int objTypeIdx, void *obj);
+	void CallObjectMethod(void *obj, int func);
+	void CallObjectMethod(void *obj, void *param, int func);
+	void CallObjectMethod(void *obj, asSSystemFunctionInterface *func, asCScriptFunction *desc);
+	void CallObjectMethod(void *obj, void *param, asSSystemFunctionInterface *func, asCScriptFunction *desc);
+	void CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 
 	void Reset();
 	void PrepareEngine();
@@ -168,14 +158,14 @@ public:
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
 	int AddObjectType(const char *type, int byteSize);
-	asCObjectType *GetObjectType(const char *type, int pointerLevel = 0, int arrayDimensions = 0);
+	asCObjectType *GetObjectType(const char *type, int pointerLevel = 0, int arrayType = 0);
 
 	int AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal);
 
 	asCString GetFunctionDeclaration(int funcID);
 
 	asSTypeBehaviour *GetBehaviour(const asCDataType *type, bool notDefault = false);
-	int GetBehaviourIndex(const asCDataType *type);
+	int GetObjectTypeIndex(const asCObjectType *type);
 
 	asCScriptFunction *GetScriptFunction(int funcID);
 
@@ -185,12 +175,15 @@ public:
 	// Information registered by host
 	asSTypeBehaviour globalBehaviours;
 	asCObjectType *defaultArrayObjectType;
+
+	// Store information about registered object types
 	asCArray<asCObjectType *> objectTypes;
+	// Store information about registered array types
 	asCArray<asCObjectType *> arrayTypes;
 	asCArray<asCProperty *> globalProps;
 	asCArray<void *> globalPropAddresses;
-	asCArray<asSTypeBehaviour *> typeBehaviours;
-	asSTypeBehaviour *defaultArrayObjectBehaviour;
+	// Used to give all object types a unique id
+	asCArray<asCObjectType *> allObjectTypes;
 	asCArray<asCScriptFunction *> systemFunctions;
 	asCArray<asSSystemFunctionInterface *> systemFunctionInterfaces;
 	asCScriptFunction *stringFactory;
@@ -206,9 +199,6 @@ public:
 	int refCount;
 	asCArray<asCModule *> scriptModules;
 	asCModule *lastModule;
-#ifdef AS_DEPRECATED
-	asCContext *stringContext;
-#endif
 
 	// Critical sections for threads
 	DECLARECRITICALSECTION(engineCritical);

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -49,8 +49,8 @@ class asCObjectType;
 class asCDataType
 {
 public:
-	asCDataType() : tokenType(ttUnrecognizedToken), extendedType(0), pointerLevel(0), arrayDimensions(0), objectType(0), isReference(false), isReadOnly(false) {};
-	asCDataType(eTokenType tt, bool cnst, bool ref) : tokenType(tt), extendedType(0), pointerLevel(0), arrayDimensions(0), objectType(0), isReference(ref), isReadOnly(cnst) {};
+	asCDataType() : tokenType(ttUnrecognizedToken), extendedType(0), arrayType(0), objectType(0), isReference(false), isReadOnly(false), isObjectHandle(false), isExplicitHandle(false), isConstHandle(false) {};
+	asCDataType(eTokenType tt, bool cnst, bool ref) : tokenType(tt), extendedType(0), arrayType(0), objectType(0), isReference(ref), isReadOnly(cnst), isObjectHandle(false), isExplicitHandle(false), isConstHandle(false) {};
 
 	asCString Format() const;
 
@@ -60,14 +60,16 @@ public:
 
 	eTokenType tokenType;
 	asCObjectType *extendedType;
-	int  pointerLevel;
-	int  arrayDimensions;
+	int  arrayType;
 	asCObjectType *objectType;
 	bool isReference;
 	bool isReadOnly;
+	bool isObjectHandle;
+	bool isExplicitHandle;
+	bool isConstHandle;
 
 	bool IsPrimitive() const;
-	bool IsComplex(asCScriptEngine *engine) const;
+	bool IsObject() const;
 
 	bool IsIntegerType() const;
 	bool IsUnsignedType() const;
@@ -75,6 +77,7 @@ public:
 	bool IsDoubleType() const;
 	bool IsBitVectorType() const;
 	bool IsBooleanType() const;
+
 	int  GetSizeOnStackDWords() const;
 	int  GetSizeInMemoryBytes() const;
 	int  GetSizeInMemoryDWords() const;

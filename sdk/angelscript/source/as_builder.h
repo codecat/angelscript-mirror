@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -84,7 +84,7 @@ public:
 	int ParseFunctionDeclaration(const char *decl, asCScriptFunction *func);
 	int ParseVariableDeclaration(const char *decl, asCProperty *var);
 
-	int AddCode(const char *name, const char *code, int codeLength, int lineOffset);
+	int AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy);
 	int Build();
 
 	int BuildString(const char *string, asCContext *ctx);
@@ -98,6 +98,7 @@ public:
 
 protected:
 	friend class asCCompiler;
+	friend class asCModule;
 
 	int RegisterConstantBStr(const char *str, int len);
 	asBSTR *GetConstantBStr(int bstrID);
@@ -107,9 +108,7 @@ protected:
 
 	asCScriptFunction *GetFunctionDescription(int funcID);
 	void GetFunctionDescriptions(const char *name, asCArray<int> &funcs);
-	void GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods);
-
-	asSTypeBehaviour *GetBehaviour(asCDataType *t) {return engine->GetBehaviour(t);}
+	void GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst);
 
 	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
 	int RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
@@ -133,7 +132,7 @@ protected:
 	asCModule *module;
 
 	asCDataType CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file);
-	asCDataType ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node);
+	asCDataType ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, int *inOutFlag);
 };
 
 

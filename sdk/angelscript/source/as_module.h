@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -72,9 +72,11 @@ public:
 	asCModule(const char *name, int id, asCScriptEngine *engine);
 	~asCModule();
 
-	int  AddScriptSection(const char *name, const char *code, int codeLength, int lineOffset);
+	int  AddScriptSection(const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy);
 	int  Build(asIOutputStream *out);
 	void Discard();
+
+	int  ResetGlobalVars();
 
 	int  GetFunctionCount();
 	int  GetFunctionIDByName(const char *name);
@@ -110,8 +112,8 @@ public:
 	int AllocGlobalMemory(int size);
 
 	int GetNextFunctionId();
-	int AddScriptFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int paramCount);
-	int AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int paramCount, int moduleNameStringID);
+	int AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount);
+	int AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, int moduleNameStringID);
 
 	bool CanDeleteAllReferences(asCArray<asCModule*> &modules);
 
@@ -140,11 +142,14 @@ public:
 	int ReleaseModuleRef();
 	int moduleCount;
 
+	int GetScriptSectionIndex(const char *name);
+
 	bool CanDelete();
 
 	asCScriptFunction initFunction;
 	asCScriptFunction exitFunction;
 
+	asCArray<asCString *> scriptSections;
 	asCArray<asCScriptFunction *> scriptFunctions;
 	asCArray<asCScriptFunction *> importedFunctions;
 	asCArray<sBindInfo> bindInformations;

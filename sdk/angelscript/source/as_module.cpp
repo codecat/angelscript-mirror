@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -77,12 +77,12 @@ asCModule::~asCModule()
 	}
 }
 
-int asCModule::AddScriptSection(const char *name, const char *code, int codeLength, int lineOffset)
+int asCModule::AddScriptSection(const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy)
 {
 	if( !builder )
 		builder = new asCBuilder(engine, this);
 
-	builder->AddCode(name, code, codeLength, lineOffset);
+	builder->AddCode(name, code, codeLength, lineOffset, builder->scripts.GetLength(), makeCopy);
 
 	return asSUCCESS;
 }
@@ -97,6 +97,13 @@ int asCModule::Build(asIOutputStream *out)
 		return asSUCCESS;
 
 	builder->SetOutputStream(out);
+
+	// Store the section names
+	for( int n = 0; n < builder->scripts.GetLength(); n++ )
+	{
+		asCString *sectionName = new asCString(builder->scripts[n]->name);
+		scriptSections.PushLast(sectionName);
+	}
 
 	// Compile the script
 	int r = builder->Build();
@@ -121,9 +128,22 @@ int asCModule::Build(asIOutputStream *out)
 	return r;
 }
 
+int asCModule::ResetGlobalVars()
+{
+	if( !isGlobalVarInitialized ) return asERROR;
+
+	CallExit();
+
+	CallInit();
+
+	return 0;
+}
+
 void asCModule::CallInit()
 {
 	if( isGlobalVarInitialized ) return;
+
+	memset(globalMem.AddressOf(), 0, globalMem.GetLength()*sizeof(asDWORD));
 
 	if( initFunction.byteCode.GetLength() == 0 ) return;
 
@@ -215,6 +235,10 @@ void asCModule::Reset()
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
 		delete scriptGlobals[n];
 	scriptGlobals.SetLength(0);
+
+	for( n = 0; n < scriptSections.GetLength(); n++ )
+		delete scriptSections[n];
+	scriptSections.SetLength(0);
 }
 
 int asCModule::GetFunctionIDByName(const char *name)
@@ -309,7 +333,9 @@ int asCModule::GetFunctionIDByDecl(const char *decl)
 	asCBuilder bld(engine, this);
 
 	asCScriptFunction func;
-	bld.ParseFunctionDeclaration(decl, &func);
+	int r = bld.ParseFunctionDeclaration(decl, &func);
+	if( r < 0 )
+		return asINVALID_DECLARATION;
 
 	// TODO: Improve linear search
 	// Search script functions for matching interface
@@ -436,7 +462,7 @@ int asCModule::GetNextImportedFunctionId()
 	return FUNC_IMPORTED | importedFunctions.GetLength();
 }
 
-int asCModule::AddScriptFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int paramCount)
+int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount)
 {
 	assert(id >= 0);
 
@@ -445,8 +471,12 @@ int asCModule::AddScriptFunction(int id, const char *name, const asCDataType &re
 	func->name       = name;
 	func->id         = id;
 	func->returnType = returnType;
+	func->scriptSectionIdx = sectionIdx;
 	for( int n = 0; n < paramCount; n++ )
+	{
 		func->parameterTypes.PushLast(params[n]);
+		func->inOutFlags.PushLast(inOutFlags[n]);
+	}
 	func->objectType = 0;
 
 	scriptFunctions.PushLast(func);
@@ -454,7 +484,7 @@ int asCModule::AddScriptFunction(int id, const char *name, const asCDataType &re
 	return 0;
 }
 
-int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int paramCount, int moduleNameStringID)
+int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, int moduleNameStringID)
 {
 	assert(id >= 0);
 
@@ -464,7 +494,10 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	func->id         = id;
 	func->returnType = returnType;
 	for( int n = 0; n < paramCount; n++ )
+	{
 		func->parameterTypes.PushLast(params[n]);
+		func->inOutFlags.PushLast(inOutFlags[n]);
+	}
 	func->objectType = 0;
 
 	importedFunctions.PushLast(func);

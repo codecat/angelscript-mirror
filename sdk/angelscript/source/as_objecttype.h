@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -46,25 +46,39 @@
 #include "as_array.h"
 #include "as_scriptfunction.h"
 
-struct asSTypeBehaviour;
+struct asSTypeBehaviour
+{
+	asSTypeBehaviour() {construct = 0; destruct = 0; copy = 0; addref = 0; release = 0; alloc = 0; free = 0;}
+
+	int construct;
+	int destruct;
+	int copy;
+	int addref;
+	int release;
+	int alloc;
+	int free;
+	asCArray<int> constructors;
+	asCArray<int> operators;
+};
 
 class asCObjectType
 {
 public:
-	asCObjectType() {beh = 0;}
+	asCObjectType() {}
 	~asCObjectType();
 
 	asCString   name;
 	eTokenType  tokenType;
 	int         pointerLevel;
-	int         arrayDimensions;
+	int         arrayType;
 	int         size;
 	asCArray<asCProperty*> properties;
 	asCArray<int> methods;
+	int         idx;
 
 	asDWORD flags;
 
-	asSTypeBehaviour *beh;
+	asSTypeBehaviour beh;
 };
 
 #endif

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -48,6 +48,8 @@
 #define MAX_DATA_SIZE  8
 #define MAX_INSTR_SIZE (BYTECODE_SIZE+MAX_DATA_SIZE)
 
+class asCModule;
+class asCScriptEngine;
 class cByteInstruction;
 
 class asCByteCode
@@ -61,6 +63,8 @@ public:
 	int GetSize();
 
 	void Finalize();
+
+	bool IsComplex();
 		
 	int Optimize();
 	void ExtractLineNumbers();
@@ -79,20 +83,23 @@ public:
 
 	void AddPath(asCArray<cByteInstruction *> &paths, cByteInstruction *instr, int stackSize);
 
-	void GenerateExceptionHandler(asCByteCode &handlerCode);
-
 	void Output(asBYTE *array);
 	void AddCode(asCByteCode *bc);
 
 	void PostProcess();
-	void DebugOutput(const char *name);
+	void DebugOutput(const char *name, asCModule *module, asCScriptEngine *engine);
 
 	int  GetLastCode();
 	int  RemoveLastCode();
 
+	void GetVarsUsed(asCArray<int> &vars);
+	bool IsVarUsed(int offset);
+	void ExchangeVar(int oldOffset, int newOffset);
+
 	void Label(short label);
-	void Line(int line);
+	void Line(int line, int column);
 	void Call(int bc, int funcID, int pop);
+	void Alloc(int bc, int objID, int funcID, int pop);
 	void Ret(int pop);
 	void JmpP(asDWORD max);
 	void Destructor(int bc, asDWORD destr, int sfOffset);
@@ -113,7 +120,6 @@ public:
 	int Push(int numDwords);
 
 	asCArray<int> lineNumbers;
-	asCArray<int> exceptionIDs;
 	int largestStackUsed;
 
 protected:

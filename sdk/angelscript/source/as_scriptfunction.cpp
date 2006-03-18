@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -63,15 +63,41 @@ asCString asCScriptFunction::GetDeclaration(asCScriptEngine *engine)
 	asCString str;
 
 	str = returnType.Format();
-	str += " " + name + "(";
+	str += " ";
+	if( objectType )
+	{
+		if( objectType->name != "" )
+			str += objectType->name + "::";
+		else
+			str += "?::";
+	}
+	if( name == "" )
+		str += "?(";
+	else
+		str += name + "(";
 
 	if( parameterTypes.GetLength() > 0 )
 	{
 		int n;
 		for( n = 0; n < parameterTypes.GetLength() - 1; n++ )
-			str += parameterTypes[n].Format() + ", ";
+		{
+			str += parameterTypes[n].Format();
+			if( parameterTypes[n].isReference && inOutFlags.GetLength() > n )
+			{
+				if( inOutFlags[n] == 1 ) str += "in";
+				else if( inOutFlags[n] == 2 ) str += "out";
+				else if( inOutFlags[n] == 3 ) str += "inout";
+			}
+			str += ", ";
+		}
 
 		str += parameterTypes[n].Format();
+		if( parameterTypes[n].isReference && inOutFlags.GetLength() > n )
+		{
+			if( inOutFlags[n] == 1 ) str += "in";
+			else if( inOutFlags[n] == 2 ) str += "out";
+			else if( inOutFlags[n] == 3 ) str += "inout";
+		}
 	}
 
 	str += ")";
@@ -93,61 +119,24 @@ int asCScriptFunction::GetLineNumber(int programPosition)
 		if( lineNumbers[i*2] < programPosition )
 		{
 			// Have we found the largest number < programPosition?
-			if( min == i ) return lineNumbers[i*2+1];
+			if( max == i ) return lineNumbers[i*2+1];
+			if( lineNumbers[i*2+2] > programPosition ) return lineNumbers[i*2+1];
 
-			min = i;
-			i = (max + min)/2;
+			min = i + 1;
+			i = (max + min)/2; 
 		}
 		else if( lineNumbers[i*2] > programPosition )
 		{
-			// Have we found the smallest number > programPoisition?
-			if( max == i ) return lineNumbers[i*2+1];
+			// Have we found the smallest number > programPosition?
+			if( min == i ) return lineNumbers[i*2+1];
 
-			max = i;
+			max = i - 1;
 			i = (max + min)/2;
 		}
 		else
 		{
 			// We found the exact position
 			return lineNumbers[i*2+1];
-		}
-	}
-}
-
-int asCScriptFunction::GetExceptionID(int programPosition)
-{
-	if( exceptionIDs.GetLength() == 0 ) return 0;
-
-	// eid 0 isn't stored in the array
-	if( programPosition < exceptionIDs[0] ) return 0;
-
-	// Do a binary search in the buffer
-	int max = exceptionIDs.GetLength()/2 - 1;
-	int min = 0;
-	int i = max/2;
-
-	for(;;)
-	{
-		if( exceptionIDs[i*2] < programPosition )
-		{
-			// Have we found the largest number < programPosition?
-			if( min == i ) return exceptionIDs[i*2+1];
-
-			min = i;
-			i = (max + min)/2;
-		}
-		else if( exceptionIDs[i*2] > programPosition )
-		{
-			// Have we found the smallest number > programPoisition?
-			if( max == i ) return exceptionIDs[i*2+1];
-
-			max = i;
-			i = (max + min)/2;
-		}
-		else
-		{
-			// We found the exact position
-			return exceptionIDs[i*2+1];
 		}
 	}
 }

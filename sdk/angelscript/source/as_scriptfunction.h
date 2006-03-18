@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -50,25 +50,27 @@ class asCScriptEngine;
 class asCScriptFunction
 {
 public:
-	asCScriptFunction() {objectType = 0; name = "";}
+	asCScriptFunction() {objectType = 0; name = ""; isReadOnly = false;}
 
 	int GetSpaceNeededForArguments();
 	int GetSpaceNeededForReturnValue();
 	asCString GetDeclaration(asCScriptEngine *engine);
 	int GetLineNumber(int programPosition);
-	int GetExceptionID(int programPosition);
 
-	asCString             name;
-	asCDataType           returnType;
-	asCArray<asCDataType> parameterTypes;
-	int                   id;
-	asCArray<asBYTE>      byteCode;
-	asCArray<asBYTE>      cleanCode;
-	asCArray<int>         lineNumbers;
-	asCArray<int>         exceptionIDs;
-	int                   stackNeeded;
+	asCString                name;
+	asCDataType              returnType;
+	asCArray<asCDataType>    parameterTypes;
+	asCArray<int>            inOutFlags;
+	int                      id;
+	int                      scriptSectionIdx;
+	asCArray<asBYTE>         byteCode;
+	asCArray<asCObjectType*> objVariableTypes;
+	asCArray<int>	         objVariablePos;
+	asCArray<int>            lineNumbers;
+	int                      stackNeeded;
+	bool                     isReadOnly;
 
-	asCObjectType *       objectType;
+	asCObjectType *          objectType;
 };
 
 #endif

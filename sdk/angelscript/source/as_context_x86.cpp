@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -53,11 +53,13 @@
 #include "as_module.h"
 
 
+
 #ifdef USE_ASM_VM
 
 // Take the address of these functions, as MSVC6++ can't resolve
 // them in inline assembler with full optimizations turned on
-static void *work_around_fmod = (double (*)(double, double))fmod;
+static void *global_fmod = (double (*)(double, double))fmod;
+static void *global_CallSystemFunction = (int (*)(int, asCContext*, void*))CallSystemFunction;
 
 asUPtr uptr_module_GetScriptFunction = asMETHOD(asCModule,GetScriptFunction);
 static void *module_GetScriptFunction = uptr_module_GetScriptFunction.func;
@@ -71,8 +73,21 @@ static void *context_PopCallState = uptr_context_PopCallState.func;
 asUPtr uptr_module_GetConstantBStr = asMETHOD(asCModule,GetConstantBStr);
 static void *module_GetConstantBStr = uptr_module_GetConstantBStr.func;
 
-asUPtr uptr_engine_GetModule = asMETHODPR(asCScriptEngine,GetModule,(int),asCModule *);
+asUPtr uptr_engine_GetModule = asMETHODPR(asCScriptEngine,GetModule,(int),asCModule*);
 static void *engine_GetModule = uptr_engine_GetModule.func;
+
+asUPtr uptr_engine_CallAlloc = asMETHODPR(asCScriptEngine,CallAlloc,(int),void*);
+static void *engine_CallAlloc = uptr_engine_CallAlloc.func;
+
+asUPtr uptr_engine_CallFree = asMETHODPR(asCScriptEngine,CallFree,(int,void*),void);
+static void *engine_CallFree = uptr_engine_CallFree.func;
+
+asUPtr uptr_engine_CallObjectMethod = asMETHODPR(asCScriptEngine,CallObjectMethod,(void*,int),void);
+static void *engine_CallObjectMethod = uptr_engine_CallObjectMethod.func;
+
+asUPtr uptr_context_CallLineCallback = asMETHOD(asCContext,CallLineCallback);
+static void *context_CallLineCallback = uptr_context_CallLineCallback.func;
+
 
 // Declare _ftol
 extern "C" void _ftol();
@@ -117,18 +132,25 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			// Verify the member offsets used in the assembler code
 #ifdef _DEBUG
 			int offset;
-			assert((offset = offsetof(asCContext     , engine             )) == 0x0C);
-			assert((offset = offsetof(asCContext     , module             )) == 0x10);
-			assert((offset = offsetof(asCContext     , status             )) == 0x14);
-			assert((offset = offsetof(asCContext     , doSuspend          )) == 0x18);
-			assert((offset = offsetof(asCContext     , byteCode           )) == 0x1C);
-			assert((offset = offsetof(asCContext     , stackFramePointer  )) == 0x24);
-			assert((offset = offsetof(asCContext     , exceptionID        )) == 0x28);
-			assert((offset = offsetof(asCContext     , returnVal          )) == 0x30);
-			assert((offset = offsetof(asCContext     , callStack          )) == 0x38);
-			assert((offset = offsetof(asCContext     , stackPointer       )) == 0x50);
-			assert((offset = offsetof(asCScriptEngine, globalPropAddresses)) == 0x74);
-			assert((offset = offsetof(asCModule      , globalMem          )) == 0x134);
+			assert((offset = offsetof(asCContext      , engine             )) == 0x0C);
+			assert((offset = offsetof(asCContext      , module             )) == 0x10);
+			assert((offset = offsetof(asCContext      , status             )) == 0x14);
+			assert((offset = offsetof(asCContext      , doSuspend          )) == 0x18);
+			assert((offset = offsetof(asCContext      , byteCode           )) == 0x1C);
+			assert((offset = offsetof(asCContext      , stackFramePointer  )) == 0x24);
+			assert((offset = offsetof(asCContext      , returnVal          )) == 0x30);
+			assert((offset = offsetof(asCContext      , callStack          )) == 0x38);
+			assert((offset = offsetof(asCContext      , stackPointer       )) == 0x50);
+			assert((offset = offsetof(asCContext      , objectRegister     )) == 0x80);
+			assert((offset = offsetof(asCContext      , objectType         )) == 0x84);
+			assert((offset = offsetof(asCContext      , lineCallback       )) == 0x90);
+			assert((offset = offsetof(asCScriptEngine , globalPropAddresses)) == 0x6C);
+			assert((offset = offsetof(asCScriptEngine , allObjectTypes     )) == 0x78);
+			assert((offset = offsetof(asCModule       , globalMem          )) == 0x168);
+			assert((offset = offsetof(asCModule       , bindInformations   )) == 0x150);
+			assert((offset = offsetof(asCObjectType   , beh                )) == 0x3C);
+			assert((offset = offsetof(asSTypeBehaviour, release            )) == 0x10);
+
 			//assert((offset = offsetof(asCArray<int>  , length             )) == 0x4);
 #endif
 
@@ -149,7 +171,6 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 				OFFSET(bc_SWAP4)
 				OFFSET(bc_STORE4)
 				OFFSET(bc_RECALL4)
-				OFFSET(bc_ADDOFF)
 				OFFSET(bc_CALL)
 				OFFSET(bc_RET)
 				OFFSET(bc_JMP)
@@ -224,7 +245,6 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 				OFFSET(bc_uiTOd)
 				OFFSET(bc_fTOd)
 				OFFSET(bc_JMPP)
-				OFFSET(bc_PEID)
 				OFFSET(bc_SRET4)
 				OFFSET(bc_SRET8)
 				OFFSET(bc_RRET4)
@@ -248,7 +268,20 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 				OFFSET(bc_MULIi)
 				OFFSET(bc_MULIf)
 				OFFSET(bc_SUSPEND)
-				OFFSET(bc_END)
+				OFFSET(bc_ALLOC)
+				OFFSET(bc_FREE)
+				OFFSET(bc_LOADOBJ)
+				OFFSET(bc_STOREOBJ)
+				OFFSET(bc_GETOBJ)
+				OFFSET(bc_REFCPY)
+				OFFSET(bc_CHKREF)
+				OFFSET(bc_RD1)
+				OFFSET(bc_RD2)
+				OFFSET(bc_GETOBJREF)
+				OFFSET(bc_GETREF)
+				OFFSET(bc_SWAP48)
+				OFFSET(bc_SWAP84)
+
 			}
 
 #elif ASM_AT_N_T
@@ -260,29 +293,33 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		return;
 	}	
 	
-	asBYTE  *asm_byteCode;
-	asDWORD *asm_stackPointer;
-	asDWORD *asm_stackFramePointer;
+	asBYTE  *l_bc;  // byte code
+	asDWORD *l_sp;  // stack pointer
+	asDWORD *l_fp;  // frame pointer
+
+	// Temporary storage for STORE4/RECALL4
 	asDWORD  asm_tempReg;
 
-	asQWORD temp;
+	// Temporary variables used within the instructions
+	asQWORD temp1;
+	asQWORD temp2;
+	asQWORD temp3;
 	
 #ifdef ASM_INTEL
 	__asm 
 	{		
 		mov ecx, this
-		// Set asm_byteCode = this->byteCode
+		// Set l_bc = this->byteCode
 		mov esi, [ecx+1Ch]
-		mov [asm_byteCode], esi
-		// Set asm_stackPointer = this->stackPointer
+		mov [l_bc], esi
+		// Set l_sp = this->stackPointer
 		mov ebx, [ecx+50h]
-		mov [asm_stackPointer], ebx
-		// Set asm_stackFramePointer = this->stackFramePointer
+		mov [l_sp], ebx
+		// Set l_fp = this->stackFramePointer
 		mov eax, [ecx+24h]
-		mov [asm_stackFramePointer], eax				
+		mov [l_fp], eax				
 		NEXT_EIP	
 
-// TESTED
 bc_POP:			
 		xor         ecx,ecx
         mov         cx,word ptr [esi+4]
@@ -290,7 +327,6 @@ bc_POP:
         lea         ebx,[ebx+ecx*4]    
 		NEXT_EIP		
 	
-// TESTED
 bc_PUSH:		
 		xor         edx,edx
         mov         dx,word ptr [esi+4]
@@ -299,7 +335,6 @@ bc_PUSH:
         lea         ebx,[ebx+edx*4]    
 		NEXT_EIP
 		
-// TESTED
 bc_SET4:
 		mov         eax,dword ptr [esi+4]
 		sub         ebx,4
@@ -307,7 +342,6 @@ bc_SET4:
 		mov         dword ptr [ebx],eax  
 		NEXT_EIP
 		
-// TESTED
 bc_RD4:
 		mov         ecx,dword ptr [ebx]
         add         esi,4
@@ -315,10 +349,9 @@ bc_RD4:
         mov         dword ptr [ebx],edx  
 		NEXT_EIP
 
-// TESTED
 bc_RDSF4:
 		movsx       eax,word ptr [esi+4]
-		mov         ecx,[asm_stackFramePointer]
+		mov         ecx,[l_fp]
 		sub         ebx,4
 		shl         eax,2                
 		sub         ecx,eax
@@ -327,7 +360,6 @@ bc_RDSF4:
 		mov         dword ptr [ebx],edx  
 		NEXT_EIP
 
-// TESTED
 bc_WRT4:
 		mov         eax,dword ptr [ebx]
 		mov         ecx,dword ptr [ebx+4]
@@ -336,7 +368,6 @@ bc_WRT4:
 		mov         dword ptr [eax],ecx  
 		NEXT_EIP
 	
-// TESTED
 bc_MOV4:
 		mov         edx,dword ptr [ebx]
 		mov         eax,dword ptr [ebx+4]
@@ -345,10 +376,9 @@ bc_MOV4:
 		mov         dword ptr [edx],eax  
 		NEXT_EIP
 	
-// TESTED
 bc_PSF:
 		movsx       ecx,word ptr [esi+4]
-        mov         edx,[asm_stackFramePointer]
+        mov         edx,[l_fp]
         sub         ebx,4
         shl         ecx,2                
         sub         edx,ecx
@@ -356,10 +386,9 @@ bc_PSF:
         mov         dword ptr [ebx],edx  
 		NEXT_EIP
 
-// TESTED
 bc_MOVSF4:
 		movsx       eax,word ptr [esi+4]
-		mov         ecx,[asm_stackFramePointer]
+		mov         ecx,[l_fp]
 		mov         edx,dword ptr [ebx]
 		shl         eax,2                
 		sub         ecx,eax
@@ -368,7 +397,6 @@ bc_MOVSF4:
 		mov         dword ptr [ecx],edx  
 		NEXT_EIP
 
-// TESTED
 bc_SWAP4:
 		mov         eax,dword ptr [ebx]
         mov         ecx,dword ptr [ebx+4]
@@ -377,14 +405,12 @@ bc_SWAP4:
         mov         dword ptr [ebx+4],eax
 		NEXT_EIP
 
-// NOT TESTED
 bc_STORE4:
 		mov         edx,dword ptr [ebx]
         add         esi,4
         mov         [asm_tempReg],edx
 		NEXT_EIP
 
-// NOT TESTED
 bc_RECALL4:
 		mov         eax,[asm_tempReg]
 		sub         ebx,4
@@ -392,37 +418,9 @@ bc_RECALL4:
 		mov         dword ptr [ebx],eax  
 		NEXT_EIP
 
-// NOT TESTED
-bc_ADDOFF:
-		mov         ecx,dword ptr [ebx]
-		mov         eax,dword ptr [ebx+4]
-		add         ebx,4
-		mov         eax,dword ptr [eax]
-		test        eax,eax
-		je          ExceptionNullPointer
-		add         eax,ecx
-		add         esi,4
-		mov         dword ptr [ebx],eax
-		NEXT_EIP
-
-ExceptionNullPointer:
-		mov [asm_byteCode], esi
-		mov [asm_stackPointer], ebx
-	} {
-		// Need to move the values back to the context
-		byteCode = asm_byteCode;
-		stackPointer = asm_stackPointer;
-		stackFramePointer = asm_stackFramePointer;
-
-		// Raise exception
-		SetInternalException(TXT_NULL_POINTER_ACCESS);
-		return;
-	} __asm { 
-
-// TESTED
 bc_CALL:
 		mov         edi,this
-		mov         ecx,[asm_stackFramePointer]
+		mov         ecx,[l_fp]
 		mov         eax,dword ptr [esi+4]
 		add         esi,8
 		mov         dword ptr [edi+24h],ecx     // this->stackFramePointer = asm_stackPointer
@@ -439,33 +437,20 @@ bc_CALL:
 		mov         eax,dword ptr [edi+24h]     // eax = this->stackFramePointer
 		mov         esi,dword ptr [edi+1Ch]     // esi = this->byteCode
 		mov         ebx,dword ptr [edi+50h]     // ebx = this->stackPointer
-		mov         [asm_stackFramePointer],eax
+		mov         [l_fp],eax
 		mov         eax,dword ptr [edi+14h]     // eax = this->status
 		cmp         eax,3						// status != tsActive
 		jne         Return
 		NEXT_EIP
 
-Return:
-		mov [asm_byteCode], esi
-		mov [asm_stackPointer], ebx
-	} {
-		// Need to move the values back to the context
-		byteCode = asm_byteCode;
-		stackPointer = asm_stackPointer;
-		stackFramePointer = asm_stackFramePointer;
-
-		return;
-	} __asm { 
-		
-// TESTED
 bc_RET:
 		mov         edi,this
 		mov         eax,dword ptr [edi+3Ch]     // eax = this->callStack.length
 		test        eax,eax
 		je          ReturnFinished
 		mov         cx,word ptr [esi+4]
-		mov         edx,[asm_stackFramePointer]
-		mov         word ptr [temp],cx			// temp = ecx (return pop)
+		mov         edx,[l_fp]
+		mov         word ptr [temp1],cx			// temp = ecx (return pop)
 		mov         ecx,edi
 		mov         dword ptr [edi+1Ch],esi     // this->byteCode = esi
 		mov         dword ptr [edi+50h],ebx     // this->stackPointer = ebx
@@ -474,32 +459,18 @@ bc_RET:
 		mov         eax,dword ptr [edi+24h]     // eax = this->stackFramePointer
 		mov         ecx,dword ptr [edi+50h]     // ecx = this->stackPointer
 		mov         esi,dword ptr [edi+1Ch]     // esi = this->byteCode
-		mov         [asm_stackFramePointer],eax
-		mov         eax,dword ptr [temp]        // eax = temp (return pop)
+		mov         [l_fp],eax
+		mov         eax,dword ptr [temp1]       // eax = temp (return pop)
 		and         eax,0FFFFh                 
 		lea         ebx,[ecx+eax*4]             // pop the arguments
 		NEXT_EIP
 
-ReturnFinished:
-		mov [asm_byteCode], esi
-		mov [asm_stackPointer], ebx
-	} {
-		// Need to move the values back to the context
-		byteCode = asm_byteCode;
-		stackPointer = asm_stackPointer;
-		stackFramePointer = asm_stackFramePointer;
 
-		status = tsProgramFinished;
-		return;
-	} __asm { 
-
-// TESTED
 bc_JMP:
 		mov         edx,dword ptr [esi+4]
 		lea         esi,[esi+edx+8]      
 		NEXT_EIP
 
-// TESTED
 bc_JZ:
 		cmp         dword ptr [ebx],0
 		jne         jz_lbl
@@ -509,7 +480,6 @@ jz_lbl:
 		add         esi,8
 		NEXT_EIP
 
-// TESTED
 bc_JNZ:
 		cmp         dword ptr [ebx],0
 		je          jnz_lbl
@@ -519,7 +489,6 @@ jnz_lbl:
 		add         esi,8
 		NEXT_EIP
 
-// NOT TESTED
 bc_TZ:
 		mov         ecx,dword ptr [ebx]
         xor         eax,eax
@@ -529,7 +498,6 @@ bc_TZ:
         mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-// NOT TESTED
 bc_TNZ:
 		mov         edx,dword ptr [ebx]
         xor         ecx,ecx
@@ -539,7 +507,6 @@ bc_TNZ:
         mov         dword ptr [ebx],ecx
 		NEXT_EIP
 
-// TESTED
 bc_TS:
 		mov         ecx,dword ptr [ebx]
         xor         edx,edx
@@ -549,7 +516,6 @@ bc_TS:
         mov         dword ptr [ebx],edx
 		NEXT_EIP
 
-// NOT TESTED
 bc_TNS:
 		mov         ecx,dword ptr [ebx]
 	    xor         eax,eax
@@ -559,7 +525,6 @@ bc_TNS:
 	    mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-// TESTED
 bc_TP:
 		mov         edx,dword ptr [ebx]
         xor         ecx,ecx
@@ -569,7 +534,6 @@ bc_TP:
         mov         dword ptr [ebx],ecx
 		NEXT_EIP
 
-// TESTED
 bc_TNP:
 		mov         ecx,dword ptr [ebx]
         xor         edx,edx
@@ -579,7 +543,6 @@ bc_TNP:
         mov         dword ptr [ebx],edx
 		NEXT_EIP
 
-// TESTED
 bc_ADDi:
 		mov         eax,dword ptr [ebx]
 		mov         ecx,dword ptr [ebx+4]
@@ -589,7 +552,6 @@ bc_ADDi:
 		mov         dword ptr [ebx],ecx  
 		NEXT_EIP
 
-// TESTED
 bc_SUBi:
 		mov         ecx,dword ptr [ebx]
 		mov         edx,dword ptr [ebx+4]
@@ -599,7 +561,6 @@ bc_SUBi:
 		mov         dword ptr [ebx],edx  
 		NEXT_EIP
 
-// TESTED
 bc_MULi:
 		mov         edx,dword ptr [ebx]
 		add         ebx,4
@@ -608,7 +569,6 @@ bc_MULi:
 		mov         dword ptr [ebx],edx
 		NEXT_EIP
 
-// TESTED
 bc_DIVi:
 		cmp         dword ptr [ebx],0
 		je          ExceptionDivByZero 
@@ -620,21 +580,6 @@ bc_DIVi:
 		mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-ExceptionDivByZero:
-		mov [asm_byteCode], esi
-		mov [asm_stackPointer], ebx
-	} {
-		// Need to move the values back to the context
-		byteCode = asm_byteCode;
-		stackPointer = asm_stackPointer;
-		stackFramePointer = asm_stackFramePointer;
-
-		// Raise exception
-		SetInternalException(TXT_DIVIDE_BY_ZERO);
-		return;
-	} __asm { 
-
-// TESTED
 bc_MODi:
 		cmp         dword ptr [ebx],0
 		je          ExceptionDivByZero
@@ -646,7 +591,6 @@ bc_MODi:
 		mov         dword ptr [ebx],edx
 		NEXT_EIP
 
-// NOT TESTED
 bc_NEGi:
 		mov         eax,dword ptr [ebx]
 		neg         eax
@@ -654,7 +598,6 @@ bc_NEGi:
 		mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-// TESTED
 bc_CMPi:
 		mov         eax,dword ptr [ebx+4]
         mov         ecx,dword ptr [ebx]
@@ -677,28 +620,24 @@ cmpi_lbl:
         mov         dword ptr [ebx],eax  
         NEXT_EIP
 
-// TESTED
 bc_INCi:
 		mov         eax,dword ptr [ebx]
         add         esi,4
         inc         int ptr [eax]
 		NEXT_EIP
 
-// NOT TESTED
 bc_DECi:
 		mov         eax,dword ptr [ebx]
         add         esi,4
         dec         int ptr [eax]
 		NEXT_EIP
 
-// NOT TESTED
 bc_I2F:
 		fild        dword ptr [ebx]
         add         esi,4
         fstp        dword ptr [ebx]      
 		NEXT_EIP
 
-// TESTED
 bc_ADDf:
 		fld         dword ptr [ebx]
         fadd        dword ptr [ebx+4]
@@ -707,7 +646,6 @@ bc_ADDf:
         fstp        dword ptr [ebx]      
 		NEXT_EIP
 
-// TESTED
 bc_SUBf:
 		fld         dword ptr [ebx+4]
         fsub        dword ptr [ebx]
@@ -716,7 +654,6 @@ bc_SUBf:
         fstp        dword ptr [ebx]      
 		NEXT_EIP
 
-// TESTED
 bc_MULf:
 		fld         dword ptr [ebx]
 		fmul        dword ptr [ebx+4]
@@ -725,7 +662,6 @@ bc_MULf:
 		fstp        dword ptr [ebx]      
 		NEXT_EIP
 
-// TESTED
 bc_DIVf:
 		cmp         dword ptr [ebx],0
 		je          ExceptionDivByZero
@@ -736,7 +672,6 @@ bc_DIVf:
 		fstp        dword ptr [ebx]
 		NEXT_EIP
 
-// TESTED
 bc_MODf:
 		cmp         dword ptr [ebx],0
 		je          ExceptionDivByZero
@@ -749,7 +684,6 @@ bc_MODf:
 		fstp        dword ptr [ebx]
 		NEXT_EIP
 
-// NOT TESTED
 bc_NEGf:
 		fld         dword ptr [ebx]
 		fchs
@@ -757,7 +691,6 @@ bc_NEGf:
 		add         esi,4          
 		NEXT_EIP
 
-// NOT TESTED
 bc_CMPf:
 		fld         dword ptr [ebx+4]
 		fsub        dword ptr [ebx]
@@ -780,7 +713,6 @@ cmpf_lbl2:
 		add         esi,4
 		NEXT_EIP
 
-// NOT TESTED
 bc_INCf:
 		mov         eax,dword ptr [ebx]
 		add         esi,4
@@ -789,7 +721,6 @@ bc_INCf:
 		fstp        dword ptr [eax]
 		NEXT_EIP
 
-// NOT TESTED
 bc_DECf:
 		mov         eax,dword ptr [ebx]
 		add         esi,4
@@ -798,7 +729,6 @@ bc_DECf:
 		fstp        dword ptr [eax]
 		NEXT_EIP
 
-// NOT TESTED
 bc_F2I:
 		fld         dword ptr [ebx]
 		call        _ftol
@@ -806,7 +736,6 @@ bc_F2I:
 		mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-// NOT TESTED
 bc_BNOT:
 		mov         ecx,dword ptr [ebx]
 		add         esi,4
@@ -814,7 +743,6 @@ bc_BNOT:
 		mov         dword ptr [ebx],ecx
 		NEXT_EIP
 
-// NOT TESTED
 bc_BAND:
 		mov         edx,dword ptr [ebx]
 		mov         ecx,dword ptr [ebx+4]
@@ -824,7 +752,6 @@ bc_BAND:
 		mov         dword ptr [ebx],ecx  
 		NEXT_EIP
 
-// NOT TESTED
 bc_BOR:
 		mov         eax,dword ptr [ebx]
         mov         ecx,dword ptr [ebx+4]
@@ -834,7 +761,6 @@ bc_BOR:
         mov         dword ptr [ebx],ecx  
         NEXT_EIP
 
-// NOT TESTED
 bc_BXOR:
 		mov         ecx,dword ptr [ebx]
         mov         edx,dword ptr [ebx+4]
@@ -844,7 +770,6 @@ bc_BXOR:
         mov         dword ptr [ebx],edx  
         NEXT_EIP
 
-// NOT TESTED
 bc_BSLL:
 		mov         ecx,dword ptr [ebx]
         mov         edx,dword ptr [ebx+4]
@@ -854,7 +779,6 @@ bc_BSLL:
         mov         dword ptr [ebx],edx  
 		NEXT_EIP
 
-// NOT TESTED
 bc_BSRL:
 		mov         ecx,dword ptr [ebx]
 		mov         edx,dword ptr [ebx+4]
@@ -864,7 +788,6 @@ bc_BSRL:
         mov         dword ptr [ebx],edx  
 		NEXT_EIP
 
-// NOT TESTED
 bc_BSRA:
 		mov         edx,dword ptr [ebx+4]
 		mov         ecx,dword ptr [ebx]
@@ -874,17 +797,15 @@ bc_BSRA:
 		mov         dword ptr [ebx],edx  
 		NEXT_EIP
 
-// NOT TESTED
 bc_UI2F:
 		mov         eax,dword ptr [ebx]
-		mov         dword ptr [temp+4],0
-		mov         dword ptr [temp],eax
+		mov         dword ptr [temp1+4],0
+		mov         dword ptr [temp1],eax
 		add         esi,4
-		fild        qword ptr [temp]
+		fild        qword ptr [temp1]
 		fstp        dword ptr [ebx]
 		NEXT_EIP
 
-// NOT TESTED
 bc_F2UI:
 		fld         dword ptr [ebx]
 		call        _ftol
@@ -892,7 +813,6 @@ bc_F2UI:
 		mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-// NOT TESTED
 bc_CMPui:
 		mov         eax,dword ptr [ebx+4]
         mov         ecx,dword ptr [ebx]
@@ -902,7 +822,6 @@ bc_CMPui:
         xor         eax,eax
         add         esi,4
         mov         dword ptr [ebx],eax
-        mov         dword ptr [ebp+8],esi 
         NEXT_EIP     
 cmpui_lbl:
         sbb         eax,eax
@@ -910,24 +829,20 @@ cmpui_lbl:
         inc         eax
         add         esi,4
         mov         dword ptr [ebx],eax
-        mov         dword ptr [ebp+8],esi 
         NEXT_EIP   
 
-// TESTED
 bc_SB:
 		movsx       ecx,byte ptr [ebx]
         add         esi,4
         mov         dword ptr [ebx],ecx
 		NEXT_EIP
 
-// NOT TESTED
 bc_SW:
 		movsx       edx,word ptr [ebx]
         add         esi,4
         mov         dword ptr [ebx],edx
 		NEXT_EIP
 
-// TESTED
 bc_UB:
 		xor         eax,eax
         add         esi,4
@@ -935,7 +850,6 @@ bc_UB:
         mov         dword ptr [ebx],eax  
 		NEXT_EIP
 
-// NOT TESTED
 bc_UW:
 		xor         ecx,ecx
         add         esi,4
@@ -943,7 +857,6 @@ bc_UW:
         mov         dword ptr [ebx],ecx  
 		NEXT_EIP
 
-// TESTED
 bc_WRT1:
 		mov         edx,dword ptr [ebx]
         mov         al,byte ptr [ebx+4]
@@ -952,7 +865,6 @@ bc_WRT1:
         mov         byte ptr [edx],al  
 		NEXT_EIP
 
-// NOT TESTED
 bc_WRT2:
 		mov         ecx,dword ptr [ebx]
         mov         dx,word ptr [ebx+4]
@@ -961,14 +873,12 @@ bc_WRT2:
         mov         word ptr [ecx],dx  
 		NEXT_EIP
 
-// NOT TESTED
 bc_INCi16:
 		mov         eax,dword ptr [ebx]
         inc         word ptr [eax]
         add         esi,4              
 		NEXT_EIP
 
-// NOT TESTED
 bc_INCi8:
 		mov         eax,dword ptr [ebx]
         mov         cl,byte ptr [eax]
@@ -977,14 +887,12 @@ bc_INCi8:
         mov         byte ptr [eax],cl  
 		NEXT_EIP
 
-// NOT TESTED
 bc_DECi16:
 		mov         eax,dword ptr [ebx]
         dec         word ptr [eax]
         add         esi,4              
 		NEXT_EIP
 
-// NOT TESTED
 bc_DECi8:
 		mov         eax,dword ptr [ebx]
         mov         cl,byte ptr [eax]
@@ -993,27 +901,38 @@ bc_DECi8:
         mov         byte ptr [eax],cl  
 		NEXT_EIP
 
-// TESTED
 bc_PUSHZERO:
 		sub         ebx,4
         add         esi,4
         mov         dword ptr [ebx],0    
 		NEXT_EIP
 
-// TESTED
 bc_COPY:
-		mov         eax,esi			                  // eax = byteCode
-		xor         ecx,ecx                           // ecx = 0
-		mov         esi,dword ptr [ebx+4]             // esi = source address
-		mov         edi,dword ptr [ebx]               // edi = dest address
-		mov         cx,word ptr [eax+4]               // ecx = num dwords from bytecode argument
-		add         ebx,4                             // pop dest address
-		rep movs    dword ptr [edi],dword ptr [esi]   // copy ecx dwords
-		add         eax,6                             // move to next bytecode
-		mov         esi,eax                           // esi = byteCode
+		mov         dword ptr [temp1],esi
+		mov         eax,dword ptr [ebx]
+		mov         edx,dword ptr [ebx+4]
+		add         ebx,4
+		mov         dword ptr [temp2],eax
+		test        edx,edx
+		je          ExceptionNullPointerAccess
+		test        eax,eax
+		je          ExceptionNullPointerAccess
+		mov         eax,dword ptr [temp1]
+		xor         ecx,ecx
+		mov         edi,dword ptr [temp2]
+		mov         esi,edx
+		mov         cx,word ptr [eax+4]
+		shl         ecx,2
+		mov         edx,ecx
+		shr         ecx,2
+		rep movs    dword ptr [edi],dword ptr [esi]
+		mov         ecx,edx
+		and         ecx,3
+		add         eax,6
+		rep movs    byte ptr [edi],byte ptr [esi]
+		mov         esi,eax
 		NEXT_EIP
 
-// TESTED
 bc_PGA:
 		mov         edi,this
 		mov         eax,dword ptr [esi+4]
@@ -1022,7 +941,7 @@ bc_PGA:
 		jge         pga_lbl
 		mov         ecx,dword ptr [edi+0Ch]
 		lea         eax,[eax*4+4]
-		mov         edx,dword ptr [ecx+74h]
+		mov         edx,dword ptr [ecx+6Ch]   // globalPropAddress
 		sub         edx,eax
 		add         esi,8
 		mov         eax,dword ptr [edx]
@@ -1032,12 +951,11 @@ pga_lbl:
 		mov         ecx,dword ptr [edi+10h]
 		and         eax,0FFFFh
 		add         esi,8
-		mov         edx,dword ptr [ecx+134h]
+		mov         edx,dword ptr [ecx+168h]   // module::globalMem
 		lea         eax,[edx+eax*4]
 		mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-// TESTED
 bc_SET8:
 		mov         ecx,dword ptr [esi+4]
 		sub         ebx,8
@@ -1047,7 +965,6 @@ bc_SET8:
 		mov         dword ptr [ebx+4],edx
 		NEXT_EIP
 
-// TESTED
 bc_WRT8:
 		mov         eax,dword ptr [ebx]
 		mov         ecx,dword ptr [ebx+4]
@@ -1058,7 +975,6 @@ bc_WRT8:
 		mov         dword ptr [eax+4],edx
 		NEXT_EIP
 
-// TESTED
 bc_RD8:
 		mov         eax,dword ptr [ebx]
         sub         ebx,4
@@ -1069,7 +985,6 @@ bc_RD8:
         mov         dword ptr [ebx+4],edx
 		NEXT_EIP
 
-// NOT TESTED
 bc_NEGd:
 		fld         qword ptr [ebx]
         fchs
@@ -1077,7 +992,6 @@ bc_NEGd:
         add         esi,4          
 		NEXT_EIP
 
-// NOT TESTED
 bc_INCd:
 		mov         eax,dword ptr [ebx]
 		add         esi,4
@@ -1086,7 +1000,6 @@ bc_INCd:
 		fstp        qword ptr [eax]
 		NEXT_EIP
 
-// NOT TESTED
 bc_DECd:
 		mov         eax,dword ptr [ebx]
 		add         esi,4
@@ -1095,7 +1008,6 @@ bc_DECd:
 		fstp        qword ptr [eax]
 		NEXT_EIP
 
-// TESTED
 bc_ADDd:
 		fld         qword ptr [ebx]
 		fadd        qword ptr [ebx+8]
@@ -1104,7 +1016,6 @@ bc_ADDd:
 		fstp        qword ptr [ebx]      
 		NEXT_EIP
 
-// TESTED
 bc_SUBd:
 		fld         qword ptr [ebx+8]
         fsub        qword ptr [ebx]
@@ -1113,7 +1024,6 @@ bc_SUBd:
         fstp        qword ptr [ebx]      
 		NEXT_EIP
 
-// TESTED
 bc_MULd:
 		fld         qword ptr [ebx]
 		fmul        qword ptr [ebx+8]
@@ -1122,7 +1032,6 @@ bc_MULd:
 		fstp        qword ptr [ebx]      
 		NEXT_EIP
 
-// TESTED
 bc_DIVd:
 		mov         eax,dword ptr [ebx]
 		mov         ecx,dword ptr [ebx+4]
@@ -1135,7 +1044,6 @@ bc_DIVd:
 		fstp        qword ptr [ebx]
 		NEXT_EIP
 
-// TESTED
 bc_MODd:
 		mov         ecx,dword ptr [ebx]
 		mov         eax,dword ptr [ebx+4]
@@ -1150,13 +1058,12 @@ bc_MODd:
 		mov         edx,dword ptr [ebx]
 		push        ecx
 		push        edx
-		call        work_around_fmod
+		call        global_fmod
 		fstp        qword ptr [ebx]
 		add         esp,10h
 		add         esi,4
 		NEXT_EIP
 
-// TESTED
 bc_SWAP8:
 		mov         edx,dword ptr [ebx+8]
 		mov         eax,dword ptr [ebx]
@@ -1169,7 +1076,6 @@ bc_SWAP8:
 		mov         dword ptr [ebx+0Ch],ecx
 		NEXT_EIP
 
-// NOT TESTED
 bc_CMPd:
 		fld         qword ptr [ebx+8]
 		fsub        qword ptr [ebx]
@@ -1192,7 +1098,6 @@ cmpd_lbl2:
 		add         esi,4
 		NEXT_EIP
 
-// NOT TESTED
 bc_dTOi:
 		fld         qword ptr [ebx]
 		call        _ftol
@@ -1201,7 +1106,6 @@ bc_dTOi:
 		add         esi,4
 		NEXT_EIP
 
-// NOT TESTED
 bc_dTOui:
 		fld         qword ptr [ebx]
 		call        _ftol
@@ -1210,7 +1114,6 @@ bc_dTOui:
 		add         esi,4
 		NEXT_EIP
 
-// NOT TESTED
 bc_dTOf:
 		fld         qword ptr [ebx]
         add         ebx,4
@@ -1218,7 +1121,6 @@ bc_dTOf:
         add         esi,4          
 		NEXT_EIP
 
-// NOT TESTED
 bc_iTOd:
 		fild        dword ptr [ebx]
         sub         ebx,4
@@ -1226,18 +1128,16 @@ bc_iTOd:
         fstp        qword ptr [ebx]    
 		NEXT_EIP
 
-// NOT TESTED
 bc_uiTOd:
 		mov         eax,dword ptr [ebx]
-		mov         dword ptr [temp+4],0
-		mov         dword ptr [temp],eax
+		mov         dword ptr [temp1+4],0
+		mov         dword ptr [temp1],eax
 		sub         ebx,4
-		fild        qword ptr [temp]
+		fild        qword ptr [temp1]
 		add         esi,4
 		fstp        qword ptr [ebx]
 		NEXT_EIP
 
-// NOT TESTED
 bc_fTOd:
 		fld         dword ptr [ebx]
         sub         ebx,4
@@ -1245,23 +1145,12 @@ bc_fTOd:
         add         esi,4          
 		NEXT_EIP
 
-// TESTED
 bc_JMPP:
 		mov         ecx,dword ptr [ebx]
         add         ebx,4
         lea         esi,[esi+ecx*8+4]  
 		NEXT_EIP
 
-// TESTED
-bc_PEID:
-		mov         edi,this
-		mov         edx,dword ptr [edi+28h]
-		sub         ebx,4
-		add         esi,4
-		mov         dword ptr [ebx],edx
-		NEXT_EIP
-
-// TESTED
 bc_SRET4:
 		mov         edi,this
 		mov         eax,dword ptr [ebx]
@@ -1270,7 +1159,6 @@ bc_SRET4:
 		mov         dword ptr [edi+30h],eax
 		NEXT_EIP
 
-// NOT TESTED
 bc_SRET8:
 		mov         edi,this
 		mov         ecx,dword ptr [ebx]
@@ -1281,7 +1169,6 @@ bc_SRET8:
 		mov         dword ptr [edi+34h],edx
 		NEXT_EIP
 
-// TESTED
 bc_RRET4:
 		mov         edi,this
 		mov         eax,dword ptr [edi+30h]
@@ -1290,7 +1177,6 @@ bc_RRET4:
 		mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-// TESTED
 bc_RRET8:
 		mov         edi,this
 		mov         ecx,dword ptr [edi+30h]
@@ -1301,7 +1187,6 @@ bc_RRET8:
 		mov         dword ptr [ebx+4],edx
 		NEXT_EIP
 
-// TESTED
 bc_STR:
 		mov         edi,this
 		mov         ax,word ptr [esi+4]
@@ -1320,7 +1205,6 @@ bc_STR:
 		mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-// NOT TESTED
 bc_JS:
 		cmp         dword ptr [ebx],0
 		jge         js_lbl
@@ -1330,7 +1214,6 @@ js_lbl:
 		add         esi,8
 		NEXT_EIP
 		
-// NOT TESTED
 bc_JNS:
 		cmp         dword ptr [ebx],0
 		jl          jns_lbl
@@ -1340,7 +1223,6 @@ jns_lbl:
 		add         esi,8
 		NEXT_EIP
 
-// NOT TESTED
 bc_JP:
 		cmp         dword ptr [ebx],0
 		jle         jp_lbl
@@ -1350,7 +1232,6 @@ jp_lbl:
 		add         esi,8                
 		NEXT_EIP
 
-// NOT TESTED
 bc_JNP:
 		cmp         dword ptr [ebx],0
 		jg          jnp_lbl
@@ -1360,7 +1241,6 @@ jnp_lbl:
 		add         esi,8                
 		NEXT_EIP
 
-// TESTED
 bc_CMPIi:
 		mov         eax,dword ptr [ebx]
 		mov         ecx,dword ptr [esi+4]
@@ -1382,7 +1262,6 @@ cmpii_lbl:
 		mov         dword ptr [ebx],eax
 		NEXT_EIP
 
-// NOT TESTED
 bc_CMPIui:
 		mov         eax,dword ptr [esi+4]
 		mov         ecx,dword ptr [ebx]
@@ -1400,20 +1279,21 @@ cmpiui_lbl:
 		mov         dword ptr [ebx],eax
 		NEXT_EIP    
 
-// TESTED
 bc_CALLSYS:
 		mov         edi,this
 		mov         eax,dword ptr [esi+4]
-		mov         edx,dword ptr [asm_stackFramePointer]
+		xor         ecx,ecx
+		mov         edx,dword ptr [l_fp]
+		push        ecx
 		push        edi
 		push        eax
 		mov         dword ptr [edi+1Ch],esi
 		mov         dword ptr [edi+50h],ebx
 		mov         dword ptr [edi+24h],edx
-		call        CallSystemFunction
+		call        global_CallSystemFunction
 		lea         ebx,[ebx+eax*4]
 		mov         al,byte ptr [edi+18h]			// al = this->doSuspend
-		add         esp,8
+		add         esp,0Ch
 		add         esi,8
 		test        al,al
 		jne         ReturnSuspend
@@ -1421,20 +1301,19 @@ bc_CALLSYS:
 		jne         Return
 		NEXT_EIP
 
-// TESTED
 bc_CALLBND:
 		mov         edi,this
-		mov         eax,dword ptr [esi+4]
-		mov         ecx,dword ptr [asm_stackFramePointer]
-		mov         edx,dword ptr [edi+10h]
+		mov         eax,dword ptr [esi+4]          // i
+		mov         ecx,dword ptr [l_fp]
+		mov         edx,dword ptr [edi+10h]        // module
 		add         esi,8
 		mov         dword ptr [edi+1Ch],esi
 		mov         dword ptr [edi+50h],ebx
 		mov         dword ptr [edi+24h],ecx
-		mov         ecx,dword ptr [edx+11Ch]
+		mov         ecx,dword ptr [edx+150h]       // module->bindInformations
 		and         eax,0FFFFh
-		mov         esi,dword ptr [ecx+eax*8+4]
-		cmp         esi,0FFh
+		mov         esi,dword ptr [ecx+eax*8+4]    // module->bindInformations[i&0xFFFF].importedFunction
+		cmp         esi,0FFFFFFFFh
 		je          ExceptionUnboundFunction
 		mov         ecx,dword ptr [edi+0Ch]
 		push        esi
@@ -1452,26 +1331,10 @@ bc_CALLBND:
 		mov         edx,dword ptr [edi+24h]
 		mov         ebx,dword ptr [edi+50h]
 		cmp         eax,3
-		mov         dword ptr [asm_stackFramePointer],edx
+		mov         dword ptr [l_fp],edx
 		jne         Return
 		NEXT_EIP
 
-ExceptionUnboundFunction:
-		mov [asm_byteCode], esi
-		mov [asm_stackPointer], ebx
-	} {
-		// Need to move the values back to the context
-		byteCode = asm_byteCode;
-		stackPointer = asm_stackPointer;
-		stackFramePointer = asm_stackFramePointer;
-
-		// Raise exception
-		SetInternalException(TXT_UNBOUND_FUNCTION);
-		return;
-	} __asm { 
-
-
-// NOT TESTED
 bc_RDGA4:
 		mov         edi,this
 		mov         eax,dword ptr [esi+4]
@@ -1480,7 +1343,7 @@ bc_RDGA4:
 		mov         ecx,dword ptr [edi+0Ch]          // ecx = this->engine
 		lea         eax,[eax*4+4]                    
 		sub         ebx,4
-		mov         edx,dword ptr [ecx+74h]          // edx = engine->globalPropAddresses.array
+		mov         edx,dword ptr [ecx+6Ch]          // edx = engine->globalPropAddresses.array
 		sub         edx,eax                          
 		add         esi,8
 		mov         eax,dword ptr [edx]              
@@ -1492,13 +1355,12 @@ rdga4_lbl:
 		and         eax,0FFFFh
 		sub         ebx,4
 		add         esi,8
-		mov         edx,dword ptr [ecx+134h]         // edx = module->globalMem.array
+		mov         edx,dword ptr [ecx+168h]         // edx = module->globalMem.array
 		lea         eax,[edx+eax*4]                  
 		mov         eax,dword ptr [eax]              
 		mov         dword ptr [ebx],eax              
 		NEXT_EIP
 
-// NOT TESTED
 bc_MOVGA4:
 		mov         edi,this
 		mov         eax,dword ptr [esi+4]
@@ -1507,7 +1369,7 @@ bc_MOVGA4:
 		mov         edx,dword ptr [edi+0Ch]			// edx = this->engine
 		lea         ecx,[eax*4+4]
 		add         ebx,4
-		mov         eax,dword ptr [edx+74h]			// eax = engine->globalPropAddresses.array
+		mov         eax,dword ptr [edx+6Ch]			// eax = engine->globalPropAddresses.array
 		sub         eax,ecx
 		mov         ecx,dword ptr [ebx-4]
 		add         esi,8
@@ -1519,13 +1381,12 @@ movga4_lbl:
 		and         eax,0FFFFh
 		add         ebx,4
 		add         esi,8
-		mov         edx,dword ptr [ecx+134h]		// edx = module->globalMem.array
+		mov         edx,dword ptr [ecx+168h]		// edx = module->globalMem.array
 		mov         ecx,dword ptr [ebx-4]
 		mov         dword ptr [edx+eax*4],ecx
 		lea         eax,[edx+eax*4]
 		NEXT_EIP
 
-// NOT TESTED
 bc_ADDIi:
 		mov         edx,dword ptr [esi+4]
 		mov         ecx,dword ptr [ebx]
@@ -1534,7 +1395,6 @@ bc_ADDIi:
 		mov         dword ptr [ebx],ecx  
 		NEXT_EIP
 
-// NOT TESTED
 bc_SUBIi:
 		mov         eax,dword ptr [esi+4]
 		mov         ecx,dword ptr [ebx]
@@ -1543,7 +1403,6 @@ bc_SUBIi:
 		mov         dword ptr [ebx],ecx
 		NEXT_EIP
 
-// NOT TESTED
 bc_CMPIf:
 		fld         dword ptr [ebx]
 		fsub        dword ptr [esi+4]
@@ -1565,8 +1424,6 @@ cmpif_lbl2:
 		mov         dword ptr [ebx],1
 		NEXT_EIP
 
-
-// NOT TESTED
 bc_ADDIf:
 		fld         dword ptr [esi+4]
 		fadd        dword ptr [ebx]
@@ -1574,7 +1431,6 @@ bc_ADDIf:
 		fstp        dword ptr [ebx]      
 		NEXT_EIP
 
-// NOT TESTED
 bc_SUBIf:
 		fld         dword ptr [ebx]
 		fsub        dword ptr [esi+4]
@@ -1582,7 +1438,6 @@ bc_SUBIf:
 		fstp        dword ptr [ebx]      
 		NEXT_EIP
 
-// NOT TESTED
 bc_MULIi:
 		mov         ecx,dword ptr [esi+4]
         imul        ecx,dword ptr [ebx]
@@ -1590,7 +1445,6 @@ bc_MULIi:
         mov         dword ptr [ebx],ecx
 		NEXT_EIP
 
-// NOT TESTED
 bc_MULIf:
 		fld         dword ptr [esi+4]
         fmul        dword ptr [ebx]
@@ -1598,31 +1452,359 @@ bc_MULIf:
         fstp        dword ptr [ebx]      
 		NEXT_EIP
 
-// TESTED
 bc_SUSPEND:
+		mov         ecx,this
+		mov         al,byte ptr [ecx+90h]           // al = this->lineCallback
+		test        al,al
+		je          suspend_lbl
+		mov         eax,[l_fp] 
+		mov         dword ptr [ecx+1Ch],esi
+		mov         dword ptr [ecx+50h],ebx
+		mov         dword ptr [ecx+24h],eax
+		call        context_CallLineCallback
+		mov         ecx,this
+suspend_lbl:
 		add         esi,4
-		mov         edi,this
-		mov         al,byte ptr [edi+18h]			// al = this->doSuspend
+		mov         al,byte ptr [ecx+18h]			// al = this->doSuspend
 		test        al,al
 		jne         ReturnSuspend
 		NEXT_EIP
 
-ReturnSuspend:
-		mov [asm_byteCode], esi
-		mov [asm_stackPointer], ebx
+bc_ALLOC:
+		mov         edi,this
+		mov         eax,dword ptr [esi+4]           // objTypeIdx
+		mov         edx,dword ptr [esi+8]           // func
+		push        eax
+		mov         dword ptr [temp1],edx           // store func
+		mov         ecx,dword ptr [edi+0Ch]         // engine
+		call        engine_CallAlloc
+		mov         dword ptr [temp2],eax           // store mem
+		mov         eax,dword ptr [temp1]           // get func
+		test        eax,eax
+		je          alloc_lbl
+		mov         ecx,dword ptr [temp2]           // get mem
+		mov         edx,dword ptr [temp1]           // get func
+		mov         eax,[l_fp] 
+		push        ecx
+		push        edi
+		push        edx
+		mov         dword ptr [edi+1Ch],esi
+		mov         dword ptr [edi+50h],ebx
+		mov         dword ptr [edi+24h],eax
+		call        global_CallSystemFunction       // f(func, this, mem)
+		add         esp,0Ch
+		lea         ebx,[ebx+eax*4]                 // l_sp += pop size
+alloc_lbl:
+		mov         eax,dword ptr [ebx]             // a = *l_sp
+		add         ebx,4
+		test        eax,eax
+		je          alloc_lbl2
+		mov         ecx,dword ptr [temp2]           // get mem
+		mov         dword ptr [eax],ecx             // *a = mem
+alloc_lbl2:
+		mov         cl,byte ptr [edi+18h]           // doSuspend
+		add         esi,0Ch
+		test        cl,cl
+		jne         ReturnSuspend
+		cmp         dword ptr [edi+14h],3           // status != tsActive
+		jne         alloc_lbl3
+		NEXT_EIP
+alloc_lbl3:
+		mov         ecx,dword ptr [temp2]           // get mem
+		push        eax                             // store eax
+		push        ecx
+		mov         eax,dword ptr [esi-8]           // objTypeIdx
+        push        eax
+		mov         ecx,dword ptr [edi+0Ch]         // engine
+		call        engine_CallFree                 
+		pop         eax                             // *a = 0
+		mov         dword ptr [eax], 0  
+		jmp         Return
+
+bc_FREE:
+		mov         edi,this
+		mov         eax,dword ptr [ebx]
+		add         ebx,4
+		test        eax,eax
+		mov         dword ptr [temp1],eax
+		je          free_lbl
+		mov         edx,eax
+		cmp         dword ptr [edx],0
+		je          free_lbl
+		mov         ecx,dword ptr [edi+0Ch]      // engine
+		mov         eax,dword ptr [esi+4]        // objTypeIndex
+		mov         edx,dword ptr [ecx+78h]      // engine->allObjectTypes
+		mov         eax,dword ptr [edx+eax*4]    // [objTypeIndex]
+		mov         edx,[l_fp]
+		add         eax,3Ch                      // ->beh
+		mov         dword ptr [edi+1Ch],esi
+		mov         dword ptr [edi+50h],ebx
+		mov         dword ptr [edi+24h],edx
+		mov         edx,dword ptr [eax+10h]      // beh->release
+		test        edx,edx
+		je          free_lbl2
+		mov         eax,dword ptr [temp1]
+		push        edx
+		mov         edx,dword ptr [eax]
+		push        edx
+		call        engine_CallObjectMethod
+		mov         edx,dword ptr [temp1]
+		add         esi,8
+		mov         dword ptr [edx],0
+		NEXT_EIP
+free_lbl2:
+		mov         eax,dword ptr [eax+4]
+		test        eax,eax
+		je          free_lbl3
+		push        eax
+		mov         eax,dword ptr [temp1]
+		mov         edx,dword ptr [eax]
+		push        edx
+		call        engine_CallObjectMethod
+free_lbl3:
+		mov         eax,dword ptr [temp1]
+		mov         ecx,dword ptr [eax]
+		push        ecx
+		mov         eax,dword ptr [esi+4]        // objTypeIndex
+		push        eax
+		mov         ecx,dword ptr [edi+0Ch]      // engine
+		call        engine_CallFree
+		mov         edx,dword ptr [temp1]
+		mov         dword ptr [edx],0
+free_lbl:
+		add         esi,8
+		NEXT_EIP
+		   
+bc_LOADOBJ:
+		mov         edi,this
+		movsx       eax,word ptr [esi+4]
+		shl         eax,2
+		mov         ecx,eax
+		mov         eax,[l_fp]
+		sub         eax,ecx
+		mov         dword ptr [edi+84h],0    // objectType = 0
+		add         esi,6
+		mov         edx,dword ptr [eax]
+		mov         dword ptr [edi+80h],edx  // objectRegister = *a
+		mov         dword ptr [eax],0
+		NEXT_EIP
+
+bc_STOREOBJ:
+		mov         edi,this
+		movsx       eax,word ptr [esi+4]
+		mov         ecx,[l_fp]
+		mov         edx,dword ptr [edi+80h]  // *a = objectRegister
+		shl         eax,2
+		sub         ecx,eax
+		add         esi,6
+		mov         dword ptr [ecx],edx
+		mov         dword ptr [edi+80h],0    // objectRegister = 0
+		NEXT_EIP
+
+bc_GETOBJ:
+		xor         eax,eax
+		mov         ax,word ptr [esi+4]
+		mov         edx,dword ptr [ebx+eax*4]
+		lea         ecx,[ebx+eax*4]
+		mov         eax,dword ptr [l_fp]
+		shl         edx,2
+		sub         eax,edx
+		add         esi,6
+		mov         edx,dword ptr [eax]
+		mov         dword ptr [ecx],edx
+		mov         dword ptr [eax],0
+		NEXT_EIP
+
+bc_REFCPY:
+		mov         edi,this
+		mov         ecx,dword ptr [edi+0Ch]      // engine
+		mov         edx,dword ptr [esi+4]
+		add         ebx,4
+		mov         eax,dword ptr [ecx+78h]      // engine->allObjectTypes.array
+		mov         eax,dword ptr [eax+edx*4]    // + objTypeIdx
+		mov         edx,dword ptr [ebx]
+		add         eax,3Ch                      // ->beh
+		mov         dword ptr [temp1],edx
+		mov         dword ptr [temp2],eax
+		mov         eax,dword ptr [ebx-4]
+		mov         edx,dword ptr [l_fp]
+		mov         dword ptr [temp3],eax
+		mov         dword ptr [edi+1Ch],esi      // byteCode
+		mov         dword ptr [edi+50h],ebx      // stackPointer
+		mov         dword ptr [edi+24h],edx      // stackFramePointer
+		mov         eax,dword ptr [eax]          // *d
+		test        eax,eax                      // != 0
+		je          refcpy_lbl
+		mov         edx,dword ptr [temp2]        // beh
+		mov         edx,dword ptr [edx+10h]      // beh->release
+		push        edx
+		push        eax
+		call        engine_CallObjectMethod
+refcpy_lbl:
+		mov         eax,dword ptr [temp1]        // s
+		test        eax,eax                      // != 0
+		je          refcpy_lbl2
+		mov         eax,dword ptr [temp2]        // beh
+		mov         edx,dword ptr [temp1]        // s
+		mov         ecx,dword ptr [eax+0Ch]      // beh->addref
+		push        ecx                          
+		mov         ecx,dword ptr [edi+0Ch]      // engine
+		push        edx                          
+		call        engine_CallObjectMethod
+refcpy_lbl2:
+		mov         eax,dword ptr [temp3]      
+		mov         ecx,dword ptr [temp1]
+		add         esi,8
+		mov         dword ptr [eax],ecx          // *d = s
+		NEXT_EIP
+
+bc_CHKREF:
+		cmp         dword ptr [ebx],0
+		je          ExceptionNullPointerAccess
+		add         esi,4
+		NEXT_EIP
+
+bc_RD1:
+		mov         edx,dword ptr [ebx]
+		xor         eax,eax
+		add         esi,4
+		mov         al,byte ptr [edx]
+		mov         dword ptr [ebx],eax
+		NEXT_EIP
+
+bc_RD2:
+		mov         ecx,dword ptr [ebx]
+		xor         edx,edx
+		add         esi,4
+		mov         dx,word ptr [ecx]
+		mov         dword ptr [ebx],edx
+		NEXT_EIP
+
+bc_GETOBJREF:
+		xor         eax,eax
+		mov         edx,dword ptr [l_fp]
+		mov         ax,word ptr [esi+4]
+		mov         ecx,dword ptr [ebx+eax*4]
+		lea         eax,[ebx+eax*4]
+		shl         ecx,2
+		sub         edx,ecx
+		add         esi,6
+		mov         ecx,dword ptr [edx]
+		mov         dword ptr [eax],ecx
+		NEXT_EIP
+bc_GETREF:
+		xor         edx,edx
+		mov         dx,word ptr [esi+4]
+		mov         ecx,dword ptr [ebx+edx*4]
+		lea         eax,[ebx+edx*4]
+		mov         edx,dword ptr [l_fp]
+		shl         ecx,2
+		sub         edx,ecx
+		add         esi,6
+		mov         dword ptr [eax],edx
+		NEXT_EIP
+bc_SWAP48:
+		mov         eax,dword ptr [ebx]
+		mov         ecx,dword ptr [ebx+4]
+		mov         edx,dword ptr [ebx+8]
+		mov         dword ptr [ebx], ecx
+		mov         dword ptr [ebx+4], edx
+		mov         dword ptr [ebx+8], eax
+		add         esi,4
+		NEXT_EIP
+bc_SWAP84:
+		mov         eax,dword ptr [ebx]
+		mov         ecx,dword ptr [ebx+4]
+		mov         edx,dword ptr [ebx+8]
+		mov         dword ptr [ebx], edx
+		mov         dword ptr [ebx+4], eax
+		mov         dword ptr [ebx+8], ecx
+		add         esi,4
+		NEXT_EIP
+
+ExceptionDivByZero:
+		mov [l_bc], esi
+		mov [l_sp], ebx
 	} {
 		// Need to move the values back to the context
-		byteCode = asm_byteCode;
-		stackPointer = asm_stackPointer;
-		stackFramePointer = asm_stackFramePointer;
+		byteCode = l_bc;
+		stackPointer = l_sp;
+		stackFramePointer = l_fp;
+
+		// Raise exception
+		SetInternalException(TXT_DIVIDE_BY_ZERO);
+		return;
+	} __asm { 
+
+ExceptionUnboundFunction:
+		mov [l_bc], esi
+		mov [l_sp], ebx
+	} {
+		// Need to move the values back to the context
+		byteCode = l_bc;
+		stackPointer = l_sp;
+		stackFramePointer = l_fp;
+
+		// Raise exception
+		SetInternalException(TXT_UNBOUND_FUNCTION);
+		return;
+	} __asm { 
+		
+ExceptionNullPointerAccess:
+		mov [l_bc], esi
+		mov [l_sp], ebx
+	} {
+		// Need to move the values back to the context
+		byteCode = l_bc;
+		stackPointer = l_sp;
+		stackFramePointer = l_fp;
+
+		// Raise exception
+		SetInternalException(TXT_NULL_POINTER_ACCESS);
+		return;
+	} __asm { 
+		
+		
+ReturnSuspend:
+		mov [l_bc], esi
+		mov [l_sp], ebx
+	} {
+		// Need to move the values back to the context
+		byteCode = l_bc;
+		stackPointer = l_sp;
+		stackFramePointer = l_fp;
 
 		status = tsSuspended;
 		return;
 	} __asm {
+		
+		
+ReturnFinished:
+		mov [l_bc], esi
+		mov [l_sp], ebx
+	} {
+		// Need to move the values back to the context
+		byteCode = l_bc;
+		stackPointer = l_sp;
+		stackFramePointer = l_fp;
 
-// TESTED
-bc_END:
-		jmp ReturnSuspend
+		status = tsProgramFinished;
+		return;
+	} __asm { 
+		
+Return:
+		mov [l_bc], esi
+		mov [l_sp], ebx
+	} {
+		// Need to move the values back to the context
+		byteCode = l_bc;
+		stackPointer = l_sp;
+		stackFramePointer = l_fp;
+
+		return;
+	} __asm { 
+	
+		
 	}
 
 #else if ASM_AT_N_T
@@ -1633,3 +1815,5 @@ bc_END:
 }
 
 #endif
+
+

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -45,6 +45,8 @@
 #include "as_debug.h" // mkdir()
 #include "as_array.h"
 #include "as_string.h"
+#include "as_module.h"
+#include "as_scriptengine.h"
 
 asCByteCode::asCByteCode()
 {
@@ -88,9 +90,65 @@ void asCByteCode::ClearAll()
 	last = 0;
 
 	lineNumbers.SetLength(0);
-	exceptionIDs.SetLength(0);
 
 	largestStackUsed = -1;
+}
+
+void asCByteCode::GetVarsUsed(asCArray<int> &vars)
+{
+	cByteInstruction *curr = first;
+	while( curr )
+	{
+		if( curr->op == BC_VAR )
+		{
+			bool insert = true;
+			for( int n = 0; n < vars.GetLength(); n++ )
+			{
+				if( (int)*ARG_DW(curr->arg) == vars[n] )
+				{
+					insert = false;
+					break;
+				}
+			}
+
+			if( insert )
+				vars.PushLast(*ARG_DW(curr->arg));
+		}
+
+		curr = curr->next;
+	}
+}
+
+bool asCByteCode::IsVarUsed(int offset)
+{
+	cByteInstruction *curr = first;
+	while( curr )
+	{
+		if( curr->op == BC_VAR )
+		{
+			if( (int)*ARG_DW(curr->arg) == offset )
+				return true;
+		}
+
+		curr = curr->next;
+	}
+
+	return false;
+}
+
+void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
+{
+	cByteInstruction *curr = first;
+	while( curr )
+	{
+		if( curr->op == BC_VAR )
+		{
+			if( (int)*ARG_DW(curr->arg) == oldOffset )
+				*ARG_DW(curr->arg) = newOffset;
+		}
+
+		curr = curr->next;
+	}
 }
 
 void asCByteCode::AddPath(asCArray<cByteInstruction *> &paths, cByteInstruction *instr, int stackSize)
@@ -257,6 +315,34 @@ cByteInstruction *asCByteCode::OptimizePattern(cByteInstruction *curr)
 	return instr;
 }
 
+bool asCByteCode::IsComplex()
+{
+	cByteInstruction *instr = first;
+	while( instr )
+	{
+		if( instr->op == BC_CALL || instr->op == BC_CALLSYS || instr->op == BC_CALLBND )
+			return true;
+		if( instr->op == BC_WRT1 || instr->op == BC_WRT2 || instr->op == BC_WRT4 || instr->op == BC_WRT8 )
+			return true;
+		if( instr->op == BC_MOV4 || instr->op == BC_MOVSF4 || instr->op == BC_MOVGA4 )
+			return true;
+		if( instr->op == BC_INCi || instr->op == BC_DECi || 
+			instr->op == BC_INCf || instr->op == BC_DECf || 
+			instr->op == BC_INCd || instr->op == BC_DECd || 
+			instr->op == BC_INCi16 || instr->op == BC_DECi16 || 
+			instr->op == BC_INCi8 || instr->op == BC_DECi8 )
+			return true;
+		if( instr->op == BC_COPY )
+			return true;
+		if( instr->op == BC_STR || instr->op == BC_ALLOC || instr->op == BC_FREE )
+			return true;
+
+		instr = instr->next;
+	}
+
+	return false;
+}
+
 int asCByteCode::Optimize()
 {
 	cByteInstruction *instr = first;
@@ -360,11 +446,22 @@ int asCByteCode::Optimize()
 			// Continue with the instruction before the one removed
 			if( instr->prev ) instr = instr->prev;
 		}
+		// SET4 a, GETREF 0 -> PSF a
+		else if( IsCombination(curr, BC_SET4, BC_GETREF) && *ARG_W(instr->arg) == 0 )
+		{
+			// Convert SET4 a, to PSF a
+			*ARG_W(curr->arg) = (short)*ARG_DW(curr->arg);
+			curr->size = BCS_PSF;
+			curr->op = BC_PSF;
+			DeleteInstruction(instr);
+			instr = curr;
+		}
 		// YYY y, POP x -> POP x-1
-		else if( (IsCombination(curr, BC_RRET4, BC_POP) ||
-		         IsCombination(curr, BC_SET4 , BC_POP) ||
-		         IsCombination(curr, BC_PSF  , BC_POP) ||
-		         IsCombination(curr, BC_PGA  , BC_POP)) && *ARG_W(instr->arg) > 0 )
+		else if( (IsCombination(curr, BC_RDSF4, BC_POP) || 
+			      IsCombination(curr, BC_RRET4, BC_POP) ||
+		          IsCombination(curr, BC_SET4 , BC_POP) ||
+		          IsCombination(curr, BC_PSF  , BC_POP) ||
+		          IsCombination(curr, BC_PGA  , BC_POP)) && *ARG_W(instr->arg) > 0 )
 		{
 			// Delete current
 			DeleteInstruction(curr);
@@ -445,8 +542,7 @@ void asCByteCode::ExtractLineNumbers()
 	{
 		cByteInstruction *curr = instr;
 		instr = instr->next;
-		pos += curr->size;
-
+		
 		if( curr->op == BC_LINE )
 		{
 			if( lastLinePos == pos )
@@ -459,188 +555,19 @@ void asCByteCode::ExtractLineNumbers()
 			lineNumbers.PushLast(pos);
 			lineNumbers.PushLast(*(int*)ARG_DW(curr->arg));
 
-#ifdef BUILD_WITH_LINE_CUES
+#ifndef BUILD_WITHOUT_LINE_CUES
 			// Transform BC_LINE into BC_SUSPEND
 			curr->op = BC_SUSPEND;
 			curr->size = BCS_SUSPEND;
+			pos += curr->size;
 #else
 			// Delete the instruction
 			DeleteInstruction(curr);
 #endif
 		}
-		else if( curr->op == BC_EID )
-		{
-			if( lastEIDPos == pos )
-			{
-				exceptionIDs.PopLast();
-				exceptionIDs.PopLast();
-			}
-
-			lastEIDPos = pos;
-			exceptionIDs.PushLast(pos);
-			exceptionIDs.PushLast(*(int*)ARG_DW(curr->arg));
-
-			DeleteInstruction(curr);
-		}		
-	}
-}
-
-struct sDestr
-{
-	asDWORD destr;
-	int sfOffset;
-};
-
-void asCByteCode::GenerateExceptionHandler(asCByteCode &cleanCode)
-{
-	// The exception handler will generate cleanup code for each place where a 
-	// destructor is added or removed from the handler. It will then insert 
-	// identifiers into the code that tells where the exception handler should 
-	// start
-
-	// The exception handler will start with a switch case that takes the handler 
-	// to the correct spot
-
-	asCByteCode jumps;
-
-	// Pass through the byte code
-	// When (add/rem)destr is found a new id is generated
-	// If several (add/rem)destr are together they generate only one id
-	// For each id, generate the cleanup code
-	asCArray<sDestr> destructors;
-	int eid = 0;
-	int sp = 0;
-	asCByteCode middle;
-	bool doNothing = true;
-
-	// If there are arguments with destructors they must be placed in eid 0
-	if( first && first->op == BC_ADDDESTRSF ) 
-		eid--;
-	else
-	{
-		// Add empty handler for eid 0
-		jumps.InstrINT(BC_JMP, eid);
-
-		middle.Label((short)eid);
-		middle.Instr(BC_END);
-	}
-
-	cByteInstruction *instr = first;
-	while( instr )
-	{
-		sDestr d;
-
-		asDWORD bc = instr->op;
-		if( bc == BC_ADDDESTRSF || bc == BC_REMDESTRSF ||
-			bc == BC_ADDDESTRSP || bc == BC_REMDESTRSP ||
-			bc == BC_ADDDESTRASF || bc == BC_REMDESTRASF )
-		{
-			d.destr = *(asDWORD*)(ARG_DW(instr->arg));
-			d.sfOffset = *(int*)(ARG_DW(instr->arg) + 1);
-
-			// Convert offsets relative to stack pointer to offsets relative to stack frame
-			if( bc == BC_ADDDESTRSP || bc == BC_REMDESTRSP )
-				d.sfOffset = d.sfOffset - sp;
-
-			// Special code used for return values
-			if( bc == BC_ADDDESTRASF || bc == BC_REMDESTRASF )
-				d.sfOffset = 0x7FFFFFFE;
-
-			if( bc == BC_ADDDESTRSF || bc == BC_ADDDESTRSP || bc == BC_ADDDESTRASF )
-				destructors.PushLast(d);
-			else
-			{
-				int n;
-				for( n = 0; n < destructors.GetLength(); n++ )
-				{
-					if( destructors[n].sfOffset == d.sfOffset )
-					{
-						assert( destructors[n].destr == d.destr );
-
-						destructors[n].destr = 0;
-						destructors[n].sfOffset = 0x7FFFFFFF;
-
-						// TODO: Compact list
-
-						break;
-					}
-				}
-
-				// Make sure we found a destructor
-				assert( n < destructors.GetLength() );
-			}
-
-			// Remove the instruction from the code
-			cByteInstruction *temp = instr;
-			instr = instr->next;
-
-			// If the next instruction also adds or remove destructors we just remove this one here
-			// otherwise we insert an eid instruction and add code to the handler
-			bc = instr ? instr->op : 0;
-			if( bc == BC_ADDDESTRSF || bc == BC_REMDESTRSF ||
-				bc == BC_ADDDESTRSP || bc == BC_REMDESTRSP || 
-				bc == BC_ADDDESTRASF || bc == BC_REMDESTRASF )
-			{
-				DeleteInstruction(temp);
-			}
-			else
-			{
-				doNothing = false;
-				temp->op = BC_EID;
-				*(asDWORD*)ARG_DW(temp->arg) = (asDWORD)++eid;
-				temp->size = 0;
-
-				// Add code to exception handler
-				jumps.InstrINT(BC_JMP, eid);
-
-				middle.Label((short)eid);
-				for( int n = destructors.GetLength() - 1; n >= 0; n-- )
-				{
-					if( destructors[n].destr )
-					{
-						if( destructors[n].sfOffset == 0x7FFFFFFE )
-						{
-							// The address to the object is stored on the stack
-							middle.InstrSHORT(BC_PSF, 0);
-							middle.Instr(BC_RD4);
-						}
-						else
-						{
-							// The object is stored on the stack
-							middle.InstrSHORT(BC_PSF, (short)destructors[n].sfOffset);
-						}
-						middle.Call(BC_CALLSYS, destructors[n].destr, 1);
-					}
-				}
-				middle.Instr(BC_END);
-			}
-		}
 		else
-		{
-			// Keep track of stack pointer (for converting stack offsets to frame offsets)
-			sp -= instr->GetStackIncrease();
-
-			instr = instr->next;
-		}
+			pos += curr->size;
 	}
-
-	// TODO: many times a previous id can be reused, either entirely or partially
-
-	// Mount the final code
-	cleanCode.Instr(BC_PEID);
-	cleanCode.JmpP(eid);
-	cleanCode.AddCode(&jumps);
-	cleanCode.AddCode(&middle);
-
-	if( doNothing )
-	{
-		cleanCode.ClearAll();
-		cleanCode.Instr(BC_END);
-	}
-
-	cleanCode.PostProcess();
-	cleanCode.Optimize();
-	cleanCode.ResolveJumpAddresses();
 }
 
 int asCByteCode::GetSize()
@@ -722,6 +649,18 @@ void asCByteCode::Call(int instr, int funcID, int pop)
 	*((int*)ARG_DW(last->arg)) = funcID;
 }
 
+void asCByteCode::Alloc(int instr, int objID, int funcID, int pop)
+{
+	if( AddInstruction() < 0 )
+		return;
+
+	last->op = instr;
+	last->size = bcSize[instr];
+	last->stackInc = -pop; // BC_ALLOC
+	*((int*)ARG_DW(last->arg)) = objID;
+	*((int*)(ARG_DW(last->arg)+1)) = funcID;
+}
+
 void asCByteCode::Ret(int pop)
 {
 	if( AddInstruction() < 0 )
@@ -757,7 +696,7 @@ void asCByteCode::Label(short label)
 	*((short*) ARG_W(last->arg)) = label;
 }
 
-void asCByteCode::Line(int line)
+void asCByteCode::Line(int line, int column)
 {
 	if( AddInstruction() < 0 )
 		return;
@@ -765,7 +704,7 @@ void asCByteCode::Line(int line)
 	last->op = BC_LINE;
 	last->size = BCS_LINE;
 	last->stackInc = 0;
-	*((int*) ARG_DW(last->arg)) = line;
+	*((int*) ARG_DW(last->arg)) = (line & 0xFFFFF)|((column & 0xFFF)<<20);
 }
 
 void asCByteCode::Destructor(int bc, asDWORD destr, int sfOffset)
@@ -935,6 +874,12 @@ void asCByteCode::PostProcess()
 			if( stackSize > largestStackUsed ) 
 				largestStackUsed = stackSize;
 
+			// VAR -> SET4
+			if( instr->op == BC_VAR )
+			{
+				instr->op = BC_SET4;
+			}
+
 			// PSP -> PSF
 			if( instr->op == BC_PSP )
 			{
@@ -1015,7 +960,7 @@ void asCByteCode::PostProcess()
 	}	
 }
 
-void asCByteCode::DebugOutput(const char *name)
+void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngine *engine)
 {
 #ifdef AS_DEBUG
 	mkdir("AS_DEBUG");
@@ -1027,22 +972,14 @@ void asCByteCode::DebugOutput(const char *name)
 
 	int pos = 0;
 	int lineIndex = 0;
-	int excIndex = 0;
 	cByteInstruction *instr = first;
 	while( instr )
 	{
 		if( lineIndex < lineNumbers.GetLength() && lineNumbers[lineIndex] == pos )
 		{
-			int line = lineNumbers[lineIndex+1];
-			fprintf(file, "- ln %d -\n", line);
+			asDWORD line = lineNumbers[lineIndex+1];
+			fprintf(file, "- %d,%d -\n", line&0xFFFFF, line>>20);
 			lineIndex += 2;
-		}
-
-		if( excIndex < exceptionIDs.GetLength() && exceptionIDs[excIndex] == pos )
-		{
-			int eid = exceptionIDs[excIndex+1];
-			fprintf(file, "- eid %d -\n", eid);
-			excIndex += 2;
 		}
 
 		fprintf(file, "%5d ", pos);
@@ -1058,10 +995,23 @@ void asCByteCode::DebugOutput(const char *name)
 		case BC_RDSF4:
 		case BC_MOVSF4:
 		case BC_PSF:
-		case BC_STR:
 		case BC_COPY:
+		case BC_GETOBJ:
+		case BC_GETOBJREF:
+		case BC_GETREF:
+		case BC_LOADOBJ:
+		case BC_STOREOBJ:
 			assert(instr->size == BCSIZE2);
 			fprintf(file, "   %-8s %d\n", bcName[instr->op].name, (int)*((short*) ARG_W(instr->arg)));
+			break;
+
+		case BC_STR:
+			{
+				int id = *(short*) ARG_W(instr->arg);
+				asBSTR *bstr = module->GetConstantBStr(id);
+				assert(instr->size == BCSIZE2);
+				fprintf(file, "   %-8s %d         (l:%d s:\"%.10s\")\n", bcName[instr->op].name, (int)*((short*) ARG_W(instr->arg)), asBStrLength(*bstr), *bstr);
+			}
 			break;
 
 		case BC_PGA:
@@ -1073,7 +1023,7 @@ void asCByteCode::DebugOutput(const char *name)
 
 		case BC_SET4:
 			assert(instr->size == BCSIZE4);
-			fprintf(file, "   %-8s 0x%lx (i:%d, f:%g)\n", bcName[instr->op].name, *ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
+			fprintf(file, "   %-8s 0x%lx          (i:%d, f:%g)\n", bcName[instr->op].name, *ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 			break;
 
 		case BC_CMPIi:
@@ -1100,15 +1050,31 @@ void asCByteCode::DebugOutput(const char *name)
 		case BC_SET8:
 			assert(instr->size == BCSIZE8);
 #ifdef __GNUC__
-			fprintf(file, "   %-8s 0x%llx (i:%lld, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s 0x%llx           (i:%lld, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #else
-			fprintf(file, "   %-8s 0x%I64x (i:%I64d, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s 0x%I64x          (i:%I64d, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #endif
+			break;
+
+		case BC_ALLOC:
+			assert(instr->size == BCSIZE8);
+			fprintf(file, "   %-8s %u, %d\n", bcName[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1));
 			break;
 
 		case BC_CALL:
 		case BC_CALLSYS:
 		case BC_CALLBND:
+			{
+				int funcID = *(int*)ARG_DW(instr->arg) | module->moduleID;
+				asCString decl = engine->GetFunctionDeclaration(funcID);
+
+				assert(instr->size == BCSIZE4);
+				fprintf(file, "   %-8s %d           (%s)\n", bcName[instr->op].name, (int)*((int*) ARG_DW(instr->arg)), decl.AddressOf());
+			}
+			break;	
+
+		case BC_FREE:
+		case BC_REFCPY:
 			assert(instr->size == BCSIZE4);
 			fprintf(file, "   %-8s %d\n", bcName[instr->op].name, (int)*((int*) ARG_DW(instr->arg)));
 			break;
@@ -1121,17 +1087,7 @@ void asCByteCode::DebugOutput(const char *name)
 		case BC_JP:
 		case BC_JNP:
 			assert(instr->size == BCSIZE4);
-			fprintf(file, "   %-8s %+d (%d)\n", bcName[instr->op].name, *((int*) ARG_DW(instr->arg)), pos+*((int*) ARG_DW(instr->arg)));
-			break;
-
-
-		case BC_ADDDESTRASF:
-		case BC_REMDESTRASF:
-		case BC_ADDDESTRSF:
-		case BC_REMDESTRSF:
-		case BC_ADDDESTRSP:
-		case BC_REMDESTRSP:
-			fprintf(file, "   %-8s %lx, %d\n", bcName[instr->op].name, *ARG_DW(instr->arg), *((short*) ARG_W(instr->arg) + 2));
+			fprintf(file, "   %-8s %+d              (d:%d)\n", bcName[instr->op].name, *((int*) ARG_DW(instr->arg)), pos+*((int*) ARG_DW(instr->arg)));
 			break;
 
 		case BC_LABEL:

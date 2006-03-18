@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -486,11 +486,11 @@ void asCMap::BalanceErase(asSMapNode *child, asSMapNode *parent)
 
 int asCMap::RotateRight(asSMapNode *node)
 {
-	//     P             L 
-	//    / \           / \ 
-	//   L   R    =>   Ll  P 
-	//  / \               / \ 
-	// Ll  Lr            Lr  R 
+	//     P             L       //
+	//    / \           / \      //
+	//   L   R    =>   Ll  P     //
+	//  / \               / \    //
+	// Ll  Lr            Lr  R   //
 
 	if( node->left == 0 ) return -1;
 
@@ -526,11 +526,11 @@ int asCMap::RotateRight(asSMapNode *node)
 
 int asCMap::RotateLeft(asSMapNode *node)
 {
-	//     P             R 
-	//    / \           / \ 
-	//   L   R    =>   P   Rr 
-	//      / \       / \ 
-	//     Rl  Rr    L   Rl 
+	//     P             R      //
+	//    / \           / \     //
+	//   L   R    =>   P   Rr   //
+	//      / \       / \       //
+	//     Rl  Rr    L   Rl     //
 
 	if( node->right == 0 ) return -1;
 

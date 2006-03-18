@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -41,40 +41,66 @@
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        11001
-#define ANGELSCRIPT_VERSION_MAJOR  1
-#define ANGELSCRIPT_VERSION_MINOR  10
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "1.10.1d"
+#define ANGELSCRIPT_VERSION        20100
+#define ANGELSCRIPT_VERSION_MAJOR  2
+#define ANGELSCRIPT_VERSION_MINOR  1
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.1.0c"
 
 // Data types
 
 class asIScriptEngine;
 class asIScriptContext;
+class asIScriptGeneric;
 class asIOutputStream;
 class asIBinaryStream;
 typedef unsigned long  asDWORD;
+#ifdef __GNUC__
+typedef long long asQWORD;
+#else
+typedef __int64 asQWORD;
+#endif
 typedef unsigned short asWORD;
 typedef unsigned char  asBYTE;
 typedef unsigned int   asUINT;
 
 typedef void (*asFUNCTION_t)();
 
+#define asFUNCTION(f) asFunctionPtr((void (*)())(f))
+#define asFUNCTIONPR(f,p,r) asFunctionPtr((void (*)())((r (*)p)(f)))
+
+#define asMODULEIDX(id) ((id >> 16) & 0x3FF)
+
+#ifndef AS_NO_CLASS_METHODS
+
 class asCUnknownClass;
 typedef void (asCUnknownClass::*asMETHOD_t)();
 
 union asUPtr
 {
-	asFUNCTION_t func;
+	char         dummy[20]; // largest known class method pointer
 	asMETHOD_t   mthd;
+	asFUNCTION_t func;
 };
 
-#define asFUNCTION(f) asFunctionPtr((void (*)())(f))
-#define asFUNCTIONP(f,p) asFunctionPtr((void (*)())((void (*)p)(f)))
-#define asFUNCTIONPR(f,p,r) asFunctionPtr((void (*)())((r (*)p)(f)))
 #define asMETHOD(c,m) asSMethodPtr<sizeof(void (c::*)())>::Convert((void (c::*)())(&c::m))
-#define asMETHODP(c,m,p) asSMethodPtr<sizeof(void (c::*)())>::Convert((void (c::*)p)(&c::m))
 #define asMETHODPR(c,m,p,r) asSMethodPtr<sizeof(void (c::*)())>::Convert((r (c::*)p)(&c::m))
+
+#else // Class methods are disabled
+
+union asUPtr
+{
+	char         dummy[20]; // largest known class method pointer
+	asFUNCTION_t func;
+};
+
+#endif
+
+
+#ifdef AS_C_INTERFACE
+typedef void (*asOUTPUTFUNC_t)(const char *text, void *param);
+typedef void (*asBINARYFUNC_t)(void *ptr, int size, void *param);
+#endif
 
 // API functions
 
@@ -108,6 +134,99 @@ extern "C"
 
 	// Thread support
 	AS_API int asThreadCleanup();
+
+#ifdef AS_C_INTERFACE
+	AS_API int         asEngine_AddRef(asIScriptEngine *e);                                                                                                                               
+	AS_API int         asEngine_Release(asIScriptEngine *e);                                                                                                                              
+	AS_API int         asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags);                                                                    
+	AS_API int         asEngine_RegisterObjectProperty(asIScriptEngine *e, const char *obj, const char *declaration, int byteOffset);                                                     
+	AS_API int         asEngine_RegisterObjectMethod(asIScriptEngine *e, const char *obj, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);                               
+	AS_API int         asEngine_RegisterObjectBehaviour(asIScriptEngine *e, const char *datatype, asDWORD behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);    
+	AS_API int         asEngine_RegisterGlobalProperty(asIScriptEngine *e, const char *declaration, void *pointer);                                                                       
+	AS_API int         asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);                                             
+	AS_API int         asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asDWORD behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);                          
+	AS_API int         asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv);                                                  
+	AS_API int         asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0, bool makeCopy = true);                             
+	AS_API int         asEngine_Build(asIScriptEngine *e, const char *module, asOUTPUTFUNC_t outFunc, void *outParam = 0);                                                                    
+	AS_API int         asEngine_Discard(asIScriptEngine *e, const char *module);                                                                                                          
+	AS_API int         asEngine_GetModuleIndex(asIScriptEngine *e, const char *module);                                                                                                   
+	AS_API const char *asEngine_GetModuleNameFromIndex(asIScriptEngine *e, int index, int *length = 0);                                                                                       
+	AS_API int         asEngine_GetFunctionCount(asIScriptEngine *e, const char *module);                                                                                                 
+	AS_API int         asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index);                                                                                  
+	AS_API int         asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name);                                                                            
+	AS_API int         asEngine_GetFunctionIDByDecl(asIScriptEngine *e, const char *module, const char *decl);                                                                            
+	AS_API const char *asEngine_GetFunctionDeclaration(asIScriptEngine *e, int funcID, int *length = 0);                                                                                      
+	AS_API const char *asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length = 0);                                                                                             
+	AS_API const char *asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length = 0);
+	AS_API int         asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module);                                                                                                
+	AS_API int         asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index);                                                                                 
+	AS_API int         asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name);                                                                           
+	AS_API int         asEngine_GetGlobalVarIDByDecl(asIScriptEngine *e, const char *module, const char *decl);                                                                           
+	AS_API const char *asEngine_GetGlobalVarDeclaration(asIScriptEngine *e, int gvarID, int *length = 0);                                                                                     
+	AS_API const char *asEngine_GetGlobalVarName(asIScriptEngine *e, int gvarID, int *length = 0);                                                                                            
+	AS_API int         asEngine_GetGlobalVarPointer(asIScriptEngine *e, int gvarID, void **pointer);                                                                                      
+	AS_API int         asEngine_GetImportedFunctionCount(asIScriptEngine *e, const char *module);                                                                                         
+	AS_API int         asEngine_GetImportedFunctionIndexByDecl(asIScriptEngine *e, const char *module, const char *decl);                                                                 
+	AS_API const char *asEngine_GetImportedFunctionDeclaration(asIScriptEngine *e, const char *module, int importIndex, int *length = 0);                                                     
+	AS_API const char *asEngine_GetImportedFunctionSourceModule(asIScriptEngine *e, const char *module, int importIndex, int *length = 0);                                                    
+	AS_API int         asEngine_BindImportedFunction(asIScriptEngine *e, const char *module, int importIndex, int funcID);                                                                
+	AS_API int         asEngine_UnbindImportedFunction(asIScriptEngine *e, const char *module, int importIndex);                                                                          
+	AS_API int         asEngine_BindAllImportedFunctions(asIScriptEngine *e, const char *module);                                                                                         
+	AS_API int         asEngine_UnbindAllImportedFunctions(asIScriptEngine *e, const char *module);                                                                                       
+	AS_API int         asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum);                                                                           
+	AS_API int         asEngine_CreateContext(asIScriptEngine *e, asIScriptContext **context);                                                                                            
+	AS_API int         asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asOUTPUTFUNC_t outFunc, void *outParam, asIScriptContext **ctx, asDWORD flags); 
+	AS_API int         asEngine_SaveByteCode(asIScriptEngine *e, const char *module, asBINARYFUNC_t outFunc, void *outParam);                                                             
+	AS_API int         asEngine_LoadByteCode(asIScriptEngine *e, const char *module, asBINARYFUNC_t inFunc, void *inParam);                                                               
+
+	AS_API int              asContext_AddRef(asIScriptContext *c);                                 
+	AS_API int              asContext_Release(asIScriptContext *c);                                
+	AS_API asIScriptEngine *asContext_GetEngine(asIScriptContext *c);                              
+	AS_API int              asContext_GetState(asIScriptContext *c);                               
+	AS_API int              asContext_Prepare(asIScriptContext *c, int funcID);                    
+	AS_API int              asContext_SetArgDWord(asIScriptContext *c, asUINT arg, asDWORD value);  
+	AS_API int              asContext_SetArgQWord(asIScriptContext *c, asUINT arg, asQWORD value); 
+	AS_API int              asContext_SetArgFloat(asIScriptContext *c, asUINT arg, float value);   
+	AS_API int              asContext_SetArgDouble(asIScriptContext *c, asUINT arg, double value); 
+	AS_API int              asContext_SetArgObject(asIScriptContext *c, asUINT arg, void *obj);    
+	AS_API asDWORD          asContext_GetReturnDWord(asIScriptContext *c);                         
+	AS_API asQWORD          asContext_GetReturnQWord(asIScriptContext *c);                         
+	AS_API float            asContext_GetReturnFloat(asIScriptContext *c);                         
+	AS_API double           asContext_GetReturnDouble(asIScriptContext *c);                        
+	AS_API void *           asContext_GetReturnObject(asIScriptContext *c);                        
+	AS_API int              asContext_Execute(asIScriptContext *c);                                
+#ifdef AS_DEPRECATED
+	AS_API int              asContext_ExecuteStep(asIScriptContext *c, asDWORD flag);              
+#endif
+	AS_API int              asContext_Abort(asIScriptContext *c);                                  
+	AS_API int              asContext_Suspend(asIScriptContext *c);                                
+	AS_API int              asContext_GetCurrentLineNumber(asIScriptContext *c, int *column = 0);                   
+	AS_API int              asContext_GetCurrentFunction(asIScriptContext *c);                     
+	AS_API int              asContext_SetException(asIScriptContext *c, const char *string);       
+	AS_API int              asContext_GetExceptionLineNumber(asIScriptContext *c, int *column = 0);                 
+	AS_API int              asContext_GetExceptionFunction(asIScriptContext *c);                   
+	AS_API const char *     asContext_GetExceptionString(asIScriptContext *c, int *length = 0);        
+	AS_API int              asContext_SetLineCallback(asIScriptContext *c, asUPtr callback, void *obj, int callConv);
+	AS_API void             asContext_ClearLineCallback(asIScriptContext *c);
+	AS_API int              asContext_SetExceptionCallback(asIScriptContext *c, asUPtr callback, void *obj, int callConv);
+	AS_API void             asContext_ClearExceptionCallback(asIScriptContext *c);
+	AS_API int              asContext_GetCallstackSize(asIScriptContext *c);
+	AS_API int              asContext_GetCallstackFunction(asIScriptContext *c, int index);
+	AS_API int              asContext_GetCallstackLineNumber(asIScriptContext *c, int index, int *column = 0);
+	
+	AS_API asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g);
+	AS_API void *           asGeneric_GetObject(asIScriptGeneric *g);
+	AS_API asDWORD          asGeneric_GetArgDWord(asIScriptGeneric *g, asUINT arg);
+	AS_API asQWORD          asGeneric_GetArgQWord(asIScriptGeneric *g, asUINT arg);
+	AS_API float            asGeneric_GetArgFloat(asIScriptGeneric *g, asUINT arg);
+	AS_API double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg);
+	AS_API void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg);
+	AS_API int              asGeneric_SetReturnDWord(asDWORD val);
+	AS_API int              asGeneric_SetReturnQWord(asQWORD val);
+	AS_API int              asGeneric_SetReturnFloat(float val);
+	AS_API int              asGeneric_SetReturnDouble(double val);
+	AS_API int              asGeneric_SetReturnObject(void *obj);
+#endif
 }
 #endif
 
@@ -133,9 +252,10 @@ public:
 	virtual int RegisterStringFactory(const char *datatype, asUPtr factoryFunc, asDWORD callConv) = 0;
 
 	// Script modules
-	virtual int AddScriptSection(const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0) = 0;
+	virtual int AddScriptSection(const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0, bool makeCopy = true) = 0;
 	virtual int Build(const char *module, asIOutputStream *out = 0) = 0;
     virtual int Discard(const char *module) = 0;
+	virtual int ResetModule(const char *module) = 0;
 	virtual int GetModuleIndex(const char *module) = 0;
 	virtual const char *GetModuleNameFromIndex(int index, int *length = 0) = 0;
 
@@ -146,6 +266,7 @@ public:
 	virtual int GetFunctionIDByDecl(const char *module, const char *decl) = 0;
 	virtual const char *GetFunctionDeclaration(int funcID, int *length = 0) = 0;
 	virtual const char *GetFunctionName(int funcID, int *length = 0) = 0;
+	virtual const char *GetFunctionSection(int funcID, int *length = 0) = 0;
 
 	// Script global variables
 	virtual int GetGlobalVarCount(const char *module) = 0;
@@ -178,15 +299,8 @@ public:
 	virtual int SaveByteCode(const char *module, asIBinaryStream *out) = 0;
 	virtual int LoadByteCode(const char *module, asIBinaryStream *in) = 0;
 
-#ifdef AS_DEPRECATED
-	virtual int ExecuteString(const char *module, const char *script, asIOutputStream *out = 0, asDWORD flags = 0) = 0;
-	virtual asIScriptContext *GetContextForExecuteString() = 0;
-	virtual int GetFunctionDeclaration(int funcID, char *buffer, int bufferSize) = 0;
-	virtual int GetFunctionName(int funcID, char *buffer, int bufferSize) = 0;
-	virtual int GetGlobalVarDeclaration(int gvarID, char *buffer, int bufferSize) = 0;
-	virtual int GetGlobalVarName(int gvarID, char *buffer, int bufferSize) = 0;
-	virtual int GetImportedFunctionDeclaration(const char *module, int importIndex, char *buffer, int bufferSize) = 0;
-#endif
+protected:
+	virtual ~asIScriptEngine() {};
 };
 
 class asIScriptContext
@@ -204,26 +318,68 @@ public:
 
 	virtual int Prepare(int funcID) = 0;
 
-	virtual int SetArguments(int stackPos, asDWORD *data, int count) = 0;
-	virtual int GetReturnValue(asDWORD *data, int count) = 0;
+	virtual int SetArgDWord(asUINT arg, asDWORD value) = 0;
+	virtual int SetArgQWord(asUINT arg, asQWORD value) = 0;
+	virtual int SetArgFloat(asUINT arg, float value) = 0;
+	virtual int SetArgDouble(asUINT arg, double value) = 0;
+	virtual int SetArgObject(asUINT arg, void *obj) = 0;
+
+	virtual asDWORD GetReturnDWord() = 0;
+	virtual asQWORD GetReturnQWord() = 0;
+	virtual float   GetReturnFloat() = 0;
+	virtual double  GetReturnDouble() = 0;
+	virtual void   *GetReturnObject() = 0;
 
 	virtual int Execute() = 0;
+#ifdef AS_DEPRECATED
 	virtual int ExecuteStep(asDWORD flag) = 0;
+#endif
 	virtual int Abort() = 0;
 	virtual int Suspend() = 0;
 
-	virtual int GetCurrentLineNumber() = 0;
+	virtual int GetCurrentLineNumber(int *column = 0) = 0;
 	virtual int GetCurrentFunction() = 0;
 
 	// Exception handling
 	virtual int SetException(const char *string) = 0;
-	virtual int GetExceptionLineNumber() = 0;
+	virtual int GetExceptionLineNumber(int *column = 0) = 0;
 	virtual int GetExceptionFunction() = 0;
 	virtual const char *GetExceptionString(int *length = 0) = 0;
 
-#ifdef AS_DEPRECATED
-	virtual int GetExceptionString(char *buffer, int bufferSize) = 0;
-#endif
+	virtual int  SetLineCallback(asUPtr callback, void *obj, int callConv) = 0;
+	virtual void ClearLineCallback() = 0;
+	virtual int  SetExceptionCallback(asUPtr callback, void *obj, int callConv) = 0;
+	virtual void ClearExceptionCallback() = 0;
+	
+	virtual int GetCallstackSize() = 0;
+	virtual int GetCallstackFunction(int index) = 0;
+	virtual int GetCallstackLineNumber(int index, int *column = 0) = 0;
+
+protected:
+	virtual ~asIScriptContext() {};
+};
+
+class asIScriptGeneric
+{
+public:
+	virtual asIScriptEngine *GetEngine() = 0;
+
+	virtual void   *GetObject() = 0;
+	
+	virtual asDWORD GetArgDWord(asUINT arg) = 0;
+	virtual asQWORD GetArgQWord(asUINT arg) = 0;
+	virtual float   GetArgFloat(asUINT arg) = 0;
+	virtual double  GetArgDouble(asUINT arg) = 0;
+	virtual void   *GetArgObject(asUINT arg) = 0;
+
+	virtual int     SetReturnDWord(asDWORD val) = 0;
+	virtual int     SetReturnQWord(asQWORD val) = 0;
+	virtual int     SetReturnFloat(float val) = 0;
+	virtual int     SetReturnDouble(double val) = 0;
+	virtual int     SetReturnObject(void *obj) = 0;
+
+protected:
+	virtual ~asIScriptGeneric() {};
 };
 
 class asIOutputStream
@@ -248,10 +404,10 @@ const asDWORD asCALL_STDCALL          = 1;
 const asDWORD asCALL_THISCALL         = 2;
 const asDWORD asCALL_CDECL_OBJLAST    = 3;
 const asDWORD asCALL_CDECL_OBJFIRST   = 4;
+const asDWORD asCALL_GENERIC          = 5;
 
 // Object type flags
 
-const asDWORD asOBJ_GUESS             = 0;
 const asDWORD asOBJ_CLASS             = 1;
 const asDWORD asOBJ_CLASS_CONSTRUCTOR = 2;
 const asDWORD asOBJ_CLASS_DESTRUCTOR  = 4;
@@ -307,6 +463,10 @@ const asDWORD asBEHAVE_FIRST_DUAL    = 14;
 const asDWORD asBEHAVE_LAST_DUAL     = 32;
 const asDWORD asBEHAVE_INDEX         = 33;
 const asDWORD asBEHAVE_NEGATE        = 34;
+const asDWORD asBEHAVE_ADDREF        = 35;
+const asDWORD asBEHAVE_RELEASE       = 36;
+const asDWORD asBEHAVE_ALLOC         = 37;
+const asDWORD asBEHAVE_FREE          = 38;
 
 // Return codes
 
@@ -342,11 +502,14 @@ const int asEXECUTION_EXCEPTION     = 3;
 const int asEXECUTION_PREPARED      = 4;
 const int asEXECUTION_UNINITIALIZED = 5;
 const int asEXECUTION_ACTIVE        = 6;
+const int asEXECUTION_ERROR         = 7;
 
+#ifdef AS_DEPRECATED
 // ExecuteStep flags
 
 const asDWORD asEXEC_STEP_INTO = 0;
 const asDWORD asEXEC_STEP_OVER = 1;
+#endif
 
 // ExecuteString flags
 
@@ -360,22 +523,41 @@ const int asPREPARE_PREVIOUS = -1;
 //-----------------------------------------------------------------
 // Function pointers
 
-#include <memory.h>
+// Use our own memset() and memcpy() implementations for better portability
+inline void asMemClear(void *_p, int size)
+{
+	char *p = (char *)_p;
+	const char *e = p + size;
+	for( ; p < e; p++ )
+		*p = 0;
+}
+
+inline void asMemCopy(void *_d, const void *_s, int size)
+{
+	char *d = (char *)_d;
+	const char *s = (const char *)_s;
+	const char *e = s + size;
+	for( ; s < e; d++, s++ )
+		*d = *s;
+}
 
 inline asUPtr asFunctionPtr(asFUNCTION_t func)
 {
 	asUPtr p;
-	memset(&p, 0, sizeof(p));
+	asMemClear(&p, sizeof(p));
 	p.func = func;
 
 	return p;
 }
 
+#ifndef AS_NO_CLASS_METHODS
+
 // Method pointers
 
 // Declare a dummy class so that we can determine the size of a simple method pointer
 class asCSimpleDummy {};
-const int SINGLE_PTR_SIZE = sizeof(void (asCSimpleDummy::*)());
+typedef void (asCSimpleDummy::*asSIMPLEMETHOD_t)();
+const int SINGLE_PTR_SIZE = sizeof(asSIMPLEMETHOD_t);
 
 // Define template
 template <int N>
@@ -384,6 +566,8 @@ struct asSMethodPtr
 	template<class M>
 	static asUPtr Convert(M Mthd)
 	{
+		// This version of the function should never be executed, nor compiled,
+		// as it would mean that the size of the method pointer cannot be determined.
 		//int ERROR_UnsupportedMethodPtr[-1];
 		return 0;
 	}
@@ -397,9 +581,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE>
 	static asUPtr Convert(M Mthd)
 	{
 		asUPtr p;
-		memset(&p, 0, sizeof(p));
+		asMemClear(&p, sizeof(p));
 
-		memcpy(&p, &Mthd, SINGLE_PTR_SIZE);
+		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE);
 
 		return p;
 	}
@@ -415,9 +599,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+1*sizeof(int)>
 	static asUPtr Convert(M Mthd)
 	{
 		asUPtr p;
-		memset(&p, 0, sizeof(p));
+		asMemClear(&p, sizeof(p));
 
-		memcpy(&p, &Mthd, SINGLE_PTR_SIZE+sizeof(int));
+		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+sizeof(int));
 
 		return p;
 	}
@@ -459,9 +643,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+3*sizeof(int)>
 	static asUPtr Convert(M Mthd)
 	{
 		asUPtr p;
-		memset(&p, 0, sizeof(p));
+		asMemClear(&p, sizeof(p));
 
-		memcpy(&p, &Mthd, SINGLE_PTR_SIZE+3*sizeof(int));
+		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+3*sizeof(int));
 
 		return p;
 	}
@@ -469,7 +653,6 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+3*sizeof(int)>
 
 #endif
 
-
-
+#endif // AS_NO_CLASS_METHODS
 
 #endif

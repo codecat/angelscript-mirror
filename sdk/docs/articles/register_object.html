@@ -106,11 +106,39 @@ A:hover
 
 <h1>Registering a C++ class</h1>
 
-<p>2004/11/18, Andreas Jönsson</p>
+<p>2005/02/11, Andreas Jönsson</p>
 
-<p>The first thing to do when registering a class with AngelScript is to make 
-sure AngelScript knows how to handle instances of the class. Once that is done 
-the class properties and methods can be added.</p>
+<p>Before registering a class with AngelScript you need to decide how the script 
+engine should interact with it. Basically there are two questions that needs 
+to be answered:</p>
+
+<ul>
+<li>Should local objects be allowed to be constructed in the script?
+<li>Should the script be able to take handles to the objects?
+</ul>
+
+<p>If you answered no on the first question, then you'll want to register the
+object with a size of 0. This is useful if you wish to register an object type
+for interacting with singletons, or you wish to have special control over how
+the objects are created.</p>
+
+<p>If you answered yes to the second question, then you'll need to register the
+addref and release behaviours for the object type. These will be used to control
+how many references are held by the script.</p>
+
+<p>If you answered no to both questions then the script can only interact with the
+object if it is registered as a global property, or if a registered function or method
+returns a reference to the object.</p>
+
+<p>If you answered yes to the first question, then you need to define the size of 
+the object type, and perhaps even register the constructor and destructor behaviours
+for initializing and cleaning up the objects.
+</p>
+
+<p>It is also possible to override how the memory is allocated for an object type,
+but this will not be described in this article. This can be useful if the object type
+is allocated from for example a memory pool, or if it is allocated from a DLL which
+uses another memory heap than the main application.</p>
 
 <h2>The object type</h2>
 
@@ -132,7 +160,7 @@ override the default array implementation for that specific type.</p>
 bytes, so normally you would use the sizeof() operator to determine this 
 value. It is however valid to register an object type with the size of 0, 
 which then means that the scripts may not declare local objects of that type. 
-The scripts can still hold pointers to the object type, or use application 
+The scripts can still hold handles to the object type, or use application 
 registered global objects of that type.</p>
 
 <p>The third flag is perhaps the most important one, if this flag isn't 
@@ -174,7 +202,7 @@ way an object is constructed, destroyed, and copied from one location to
 another.</p>
 
 <p>If no constructor is registered then AngelScript will not do anything to
-initialize new objects of the registered type. This is fine for structures,
+initialize new objects of the registered type. This is fine for structures
 and unions that don't make any presumtion on the value of the members. But 
 for a class that needs to allocate resources at construction it could be big
 problem. If the class declares virtual functions it is also important to 
@@ -184,10 +212,12 @@ the class at allocation.</p>
 <p>If no destructor is registered then AngelScript again does nothing when
 the object is destroyed, e.g. when a variable of the type goes out of scope. 
 If the object allocates resources that must be freed upon destruction then it
-is necessary to register the destructor.</p>
+is necessary to register the destructor. The exception is if the addref/release
+behaviours are registered, since the library will then expect the application
+to destroy the object in the release method, thus it never calls the destructor.</p>
 
 <p>If no copy behaviour, or assignment behaviour as it is also called, is 
-registered, then AngelScript simply copy the memory byte for byte. If the 
+registered, then AngelScript simply copies the memory byte for byte. If the 
 class needs special behaviour when being copied, for example if a new resource
 must be allocated for the target object, then it is again necessary to 
 register the assignment behaviour.</p>
@@ -213,6 +243,8 @@ the following:</p>
 <tr><td width=200 valign=top>asBEHAVE_CONSTRUCT</td><td>The constructor behaviour.</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_DESTRUCT</td><td>The destructor behaviour.</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_ASSIGNMENT</td><td>The assignment or copy behaviour.</td></tr>
+<tr><td width=200 valign=top>asBEHAVE_ADDREF</td><td>The addref behaviour.</td></tr>
+<tr><td width=200 valign=top>asBEHAVE_RELEASE</td><td>The release behaviour.</td></tr>
 </table>
 
 <p>The declaration parameter, is used to show the parameter types and return 
@@ -230,14 +262,16 @@ reference to it's own type.</p>
 <table border=0 cellspacing=0 cellpadding=0>
 <tr><td width=200 valign=top>asBEHAVE_CONSTRUCT</td><td>"void f()"</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_DESTRUCT</td><td>"void f()"</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_ASSIGNMENT</td><td>"TYPE &amp;f(const TYPE &amp;)"</td></tr>
+<tr><td width=200 valign=top>asBEHAVE_ASSIGNMENT</td><td>"obj &amp;f(obj &amp;in)"</td></tr>
+<tr><td width=200 valign=top>asBEHAVE_ADDREF</td><td>"void f()"</td></tr>
+<tr><td width=200 valign=top>asBEHAVE_RELEASE</td><td>"void f()"</td></tr>
 </table>
 
 <p>The function name used in the declaration doesn't really matter as it will 
-not be stored by the engine.</p>
+not be stored by the engine. For the assignment the return value should be a reference to the actual object. The parameter type can be any type that AngelScript understand. If it is a reference to an object of the same type as the actual object, then the operator will also be used when copying the object in the VM, e.g. when passing the object by value to a function.</p>
 
 <p>The fourth parameter is the actual function pointer. It is possible to 
-register class methods directly or global C++ function that take an extra 
+register class methods directly or global C++ functions that take an extra 
 parameter for the object pointer. It is not possible to register a class' 
 constructor and destructor directly as C++ doesn't allow taking the pointer
 to these methods. For these two it is therefor necessary to write a couple of
@@ -283,6 +317,7 @@ behaviours the supported calling conventions are:</p>
 <tr><td width=200 valign=top>asCALL_THISCALL</td><td>Class method with fixed number of parameters.</td></tr>
 <tr><td width=200 valign=top>asCALL_CDECL_OBJLAST</td><td>Global cdecl function that takes the pointer to the object as the last parameter, after all declared parameters.</td></tr>
 <tr><td width=200 valign=top>asCALL_CDECL_OBJFIRST</td><td>Global cdecl function that takes the object pointer as the first parameter before any declared parameter.</td></tr>
+<tr><td width=200 valign=top>asCALL_GENERIC</td><td>Global function implementing the generic calling convention.</td></tr>
 </table>
 
 <p>The other object behaviours found in the reference manual are registered
@@ -357,6 +392,7 @@ though, as we are now registering a global function.</p>
 <table border=0 cellspacing=0 cellpadding=0>
 <tr><td width=200 valign=top>asCALL_CDECL</td><td>Global cdecl function, that can have variable number of parameters.</td></tr>
 <tr><td width=200 valign=top>asCALL_STDCALL</td><td>Global stdcall function with fixed number of parameters.</td></tr>
+<tr><td width=200 valign=top>asCALL_GENERIC</td><td>Global function using the generic calling convention.</td></tr>
 </table>
 
 <p>Although it is possible to register a global function that takes a variable 

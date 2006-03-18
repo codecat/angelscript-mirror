@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -41,15 +41,15 @@
 
 SCRIPT        = (FUNCTION | GLOBVAR | IMPORT)*
 TYPE          = 'const'? DATATYPE
-TYPEMOD       = '*'* '&'?
-FUNCTION      = TYPE TYPEMOD '&'? IDENTIFIER PARAMLIST BLOCK
-IMPORT        = 'import' TYPE TYPEMOD '&'? IDENTIFIER PARAMLIST 'from' STRING ';'
-GLOBVAR       = TYPE TYPEMOD IDENTIFIER ('=' ASSIGNMENT)? (',' TYPEMOD IDENTIFIER ('=' ASSIGNMENT)?)* ';'
+TYPEMOD       = ('&' ('in' | 'out' | 'inout')?)?
+FUNCTION      = TYPE TYPEMOD IDENTIFIER PARAMLIST BLOCK
+IMPORT        = 'import' TYPE TYPEMOD IDENTIFIER PARAMLIST 'from' STRING ';'
+GLOBVAR       = TYPE IDENTIFIER ('=' ASSIGNMENT)? (',' IDENTIFIER ('=' ASSIGNMENT)?)* ';'
 DATATYPE      = REALTYPE | IDENTIFIER
 REALTYPE      = 'void' | 'bool' | 'float' | 'int' | 'uint' | 'bits'
 PARAMLIST     = '(' (TYPE TYPEMOD IDENTIFIER? (',' TYPE TYPEMOD IDENTIFIER?)*)? ')'
 BLOCK         = '{' (DECLARATION | STATEMENT)* '}'
-DECLARATION   = TYPE TYPEMOD IDENTIFIER ('=' ASSIGNMENT)? (',' TYPEMOD IDENTIFIER ('=' ASSIGNMENT)?) ';'
+DECLARATION   = TYPE IDENTIFIER ('=' ASSIGNMENT)? (',' IDENTIFIER ('=' ASSIGNMENT)?) ';'
 STATEMENT     = BLOCK | IF | WHILE | DOWHILE | RETURN | EXPRSTATEMENT | BREAK | CONTINUE
 BREAK         = 'break' ';'
 CONTINUE      = 'continue' ';'
@@ -109,8 +109,8 @@ protected:
 	asCScriptNode *ParseFunctionDefinition();
 
 	asCScriptNode *ParseScript();
-	asCScriptNode *ParseType();
-	asCScriptNode *ParseTypeMod();
+	asCScriptNode *ParseType(bool allowConst);
+	asCScriptNode *ParseTypeMod(bool isParam);
 	asCScriptNode *ParseFunction();
 	asCScriptNode *ParseGlobalVar();
 	asCScriptNode *ParseParameterList();
@@ -143,8 +143,8 @@ protected:
 	asCScriptNode *ParseConstant();
 	asCScriptNode *ParseStringConstant();
 	asCScriptNode *ParseFunctionCall();
-	asCScriptNode *ParseConversion();
 	asCScriptNode *ParseToken(int token);
+	asCScriptNode *ParseOneOf(int *tokens, int num);
 
 	bool IsGlobalVar();
 	bool IsDeclaration();
@@ -155,9 +155,11 @@ protected:
 	bool IsPostOperator(int tokenType);
 	bool IsConstant(int tokenType);
 	bool IsAssignOperator(int tokenType);
+	bool IsFunctionCall();
 
 	asCString ExpectedToken(const char *token);
 	asCString ExpectedTokens(const char *token1, const char *token2);
+	asCString ExpectedOneOf(int *tokens, int count);
 
 	bool errorWhileParsing;
 	bool isSyntaxError;

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -40,21 +40,30 @@
 
 asCTypeInfo::asCTypeInfo()
 {
-	dataType.tokenType = ttUnrecognizedToken;
-	dataType.isReference = false;
+	dataType.tokenType    = ttUnrecognizedToken;
+	dataType.isReference  = false;
 	dataType.extendedType = 0;
-	isTemporary = false;
-	stackOffset = 0;
-	isConstant = false;
-	isVariable = false;
-	qwordValue = 0;
+	isTemporary           = false;
+	stackOffset           = 0;
+	isConstant            = false;
+	isVariable            = false;
+	qwordValue            = 0;
 }
 
 void asCTypeInfo::Set(const asCDataType &dt)
 {
-	dataType      = dt;
-	isTemporary   = false;
-	stackOffset   = 0;
-	isConstant    = false;
-	qwordValue    = 0;
+	dataType    = dt;
+	isTemporary = false;
+	stackOffset = 0;
+	isConstant  = false;
+	qwordValue  = 0;
 }
+
+bool asCTypeInfo::IsNullConstant()
+{
+	if( isConstant && dataType.isExplicitHandle )
+		return true;
+
+	return false;
+}
+

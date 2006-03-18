@@ -1,1 +1,0 @@
-Microsoft Visual C++ 6 seems to have trouble if you try to register vector of vectors, e.g. vector< vector<int> >. There seems to be some linker problem that make the code crash.

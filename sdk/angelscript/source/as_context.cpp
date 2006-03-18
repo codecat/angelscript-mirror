@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -36,6 +36,7 @@
 //
 
 #include <math.h> // fmodf()
+#include <malloc.h>
 
 #include "as_config.h"
 #include "as_context.h"
@@ -46,11 +47,15 @@
 #include "as_texts.h"
 #include "as_callfunc.h"
 #include "as_module.h"
+#include "as_generic.h"
 #include "as_debug.h" // mkdir()
 
 // We need at least 2 DWORDs reserved for exception handling
 // We need at least 1 DWORD reserved for calling system functions
 const int RESERVE_STACK = 2;
+
+// For each script function call we push 6 DWORDs on the call stack
+const int CALLSTACK_FRAME_SIZE = 6;
 
 
 #ifdef AS_DEBUG
@@ -103,7 +108,6 @@ AS_API asIScriptContext *asGetActiveContext()
 	asCThreadLocalData *tld = threadManager.GetLocalData();
 	if( tld->activeContexts.GetLength() == 0 )
 		return 0;
-
 	return tld->activeContexts[tld->activeContexts.GetLength()-1];
 }
 
@@ -143,9 +147,15 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	refCount = 1;
 	module = 0;
 	inExceptionHandler = false;
+	isStackMemoryNotAllocated = false;
 
 	stringFunction = 0;
 	currentFunction = 0;
+	objectRegister = 0;
+	initialFunction = 0;
+
+	lineCallback = false;
+	exceptionCallback = false;
 }
 
 asCContext::~asCContext()
@@ -218,6 +228,9 @@ int asCContext::Prepare(int funcID)
 	if( status == tsActive || status == tsSuspended )
 		return asCONTEXT_ACTIVE;
 
+	// Release the returned object (if any)
+	CleanReturnObject();
+		
 	if( funcID == -1 )
 	{
 		// Use the previously prepared function
@@ -268,8 +281,6 @@ int asCContext::Prepare(int funcID)
 		// Reserve space for the arguments and return value
 		returnValueSize = currentFunction->GetSpaceNeededForReturnValue();
 		argumentsSize = currentFunction->GetSpaceNeededForArguments();
-		if( currentFunction->returnType.IsComplex(engine) )
-			argumentsSize++;
 	}
 
 	byteCode = currentFunction->byteCode.AddressOf();
@@ -277,12 +288,14 @@ int asCContext::Prepare(int funcID)
 	// Reset state
 	exceptionLine = -1;
 	exceptionFunction = 0;
-	exceptionID = 0;
 	isCallingSystemFunction = false;
 	doAbort = false;
 	doSuspend = false;
 	externalSuspendRequest = false;
 	status = tsPrepared;
+
+	assert(objectRegister == 0);
+	objectRegister = 0;
 
 	// Reserve space for the arguments and return value
 	stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize;
@@ -291,6 +304,13 @@ int asCContext::Prepare(int funcID)
 	
 	// Set arguments to 0
 	memset(stackPointer, 0, 4*argumentsSize);
+
+	// Set all object variables to 0
+	for( int n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+	{
+		int pos = currentFunction->objVariablePos[n];
+		stackFramePointer[-pos] = 0;
+	}
 
 	return asSUCCESS;
 }
@@ -320,8 +340,6 @@ int asCContext::PrepareSpecial(int funcID)
 	exceptionLine = -1;
 	exceptionFunction = 0;
 
-	exceptionID = 0;
-
 	isCallingSystemFunction = false;
 
 	if( module ) module->ReleaseContextRef();
@@ -330,10 +348,11 @@ int asCContext::PrepareSpecial(int funcID)
 	module->AddContextRef();
 
 	if( (funcID & 0xFFFF) == asFUNC_STRING )
-		currentFunction = stringFunction;
+		initialFunction = stringFunction;
 	else
-		currentFunction = module->GetSpecialFunction(funcID & 0xFFFF);
+		initialFunction = module->GetSpecialFunction(funcID & 0xFFFF);
 
+	currentFunction = initialFunction;
 	if( currentFunction == 0 )
 		return asERROR;
 
@@ -357,7 +376,7 @@ int asCContext::PrepareSpecial(int funcID)
 		stackBlocks.SetLength(0);
 
 		stackBlockSize = stackSize;
-	
+
 		asDWORD *stack = new asDWORD[stackBlockSize];
 		stackBlocks.PushLast(stack);
 	}
@@ -373,41 +392,285 @@ int asCContext::PrepareSpecial(int funcID)
 	// Set arguments to 0
 	memset(stackPointer, 0, 4*argumentsSize);
 
+	// Set all object variables to 0
+	for( int n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+	{
+		int pos = currentFunction->objVariablePos[n];
+		stackFramePointer[-pos] = 0;
+	}
+
 	return asSUCCESS;
 }
 
 
-int asCContext::GetReturnValue(asDWORD *data, int count)
+asDWORD asCContext::GetReturnDWord()
 {
-	// Verify that the stackPos is readable
-	if( count > returnValueSize ) return asERROR;
+	if( status != tsProgramFinished ) return 0;
 
-	// Must be in terminated state
-	if( status != tsProgramFinished ) return asCONTEXT_NOT_FINISHED;
+	asCDataType *dt = &initialFunction->returnType;
 
-	if( count == 1 )
-		*data = *(asDWORD*)&returnVal;
-	else if( count == 2 )
-		*(asQWORD*)data = returnVal;
-	
-	return asSUCCESS;
+	if( dt->IsObject() ) return 0;
+	assert(!dt->isReference);
+
+	return *(asDWORD*)&returnVal;
 }
 
-int asCContext::SetArguments(int stackPos, asDWORD *data, int count)
+asQWORD asCContext::GetReturnQWord()
 {
-	// Verify that the stackPos is writeable
-	if( stackPos < 0 ) return asERROR;
-	if( stackPos >= argumentsSize ) return asERROR;
-	if( stackPos + count - 1 >= argumentsSize ) return asERROR;
+	if( status != tsProgramFinished ) return 0;
 
-	// Must be before execution
-	if( status != tsPrepared ) return asCONTEXT_NOT_PREPARED;
+	asCDataType *dt = &initialFunction->returnType;
 
-	for( int c = 0; c < count; c++ )
-		stackFramePointer[stackPos + c] = data[c];
+	if( dt->IsObject() ) return 0;
+	assert(!dt->isReference);
+
+	return returnVal;
+}
+
+float asCContext::GetReturnFloat()
+{
+	if( status != tsProgramFinished ) return 0;
+
+	asCDataType *dt = &initialFunction->returnType;
+
+	if( dt->IsObject() ) return 0;
+	assert(!dt->isReference);
+
+	return *(float*)&returnVal;
+}
+
+double asCContext::GetReturnDouble()
+{
+	if( status != tsProgramFinished ) return 0;
+
+	asCDataType *dt = &initialFunction->returnType;
+
+	if( dt->IsObject() ) return 0;
+	assert(!dt->isReference);
+
+	return *(double*)&returnVal;
+}
+
+void *asCContext::GetReturnObject()
+{
+	if( status != tsProgramFinished ) return 0;
+
+	asCDataType *dt = &initialFunction->returnType;
+
+	assert(!dt->isReference);
+
+	if( !dt->IsObject() ) return 0;
+
+	return objectRegister;
+}
+
+int asCContext::SetArgDWord(asUINT arg, asDWORD value)
+{
+	if( status != tsPrepared )
+		return asCONTEXT_NOT_PREPARED;
+
+	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_ARG;
+	}
+
+	// Verify the type of the argument
+	asCDataType *dt = &initialFunction->parameterTypes[arg];
+	if( dt->IsObject() ) 
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	if( dt->GetSizeOnStackDWords() != 1 )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Set the value
+	stackFramePointer[offset] = value;
 
 	return 0;
 }
+
+int asCContext::SetArgQWord(asUINT arg, asQWORD value)
+{
+	if( status != tsPrepared )
+		return asCONTEXT_NOT_PREPARED;
+
+	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_ARG;
+	}
+
+	// Verify the type of the argument
+	asCDataType *dt = &initialFunction->parameterTypes[arg];
+	if( dt->IsObject() ) 
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	if( dt->GetSizeOnStackDWords() != 2 ) 
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Set the value
+	*(asQWORD*)(&stackFramePointer[offset]) = value;
+
+	return 0;
+}
+
+int asCContext::SetArgFloat(asUINT arg, float value)
+{
+	if( status != tsPrepared )
+		return asCONTEXT_NOT_PREPARED;
+
+	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_ARG;
+	}
+
+	// Verify the type of the argument
+	asCDataType *dt = &initialFunction->parameterTypes[arg];
+	if( dt->IsObject() ) 
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	if( dt->GetSizeOnStackDWords() != 1 )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Set the value
+	*(float*)(&stackFramePointer[offset]) = value;
+
+	return 0;
+}
+
+int asCContext::SetArgDouble(asUINT arg, double value)
+{
+	if( status != tsPrepared )
+		return asCONTEXT_NOT_PREPARED;
+
+	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_ARG;
+	}
+
+	// Verify the type of the argument
+	asCDataType *dt = &initialFunction->parameterTypes[arg];
+	if( dt->IsObject() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	if( dt->GetSizeOnStackDWords() != 2 )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Set the value
+	*(double*)(&stackFramePointer[offset]) = value;
+
+	return 0;
+}
+
+int asCContext::SetArgObject(asUINT arg, void *obj)
+{
+	if( status != tsPrepared )
+		return asCONTEXT_NOT_PREPARED;
+
+	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_ARG;
+	}
+
+	// Verify the type of the argument
+	asCDataType *dt = &initialFunction->parameterTypes[arg];
+	if( !dt->IsObject() ) 
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	// If the object should be sent by value we must make a copy of it
+	if( !dt->isReference ) 
+	{
+		if( dt->isExplicitHandle )
+		{
+			// Increase the reference counter
+			asSTypeBehaviour *beh = &dt->objectType->beh;
+			if( beh->addref )
+				engine->CallObjectMethod(obj, beh->addref);
+		}
+		else
+		{
+			// Allocate memory
+			char *mem = (char*)engine->CallAlloc(dt->objectType->idx);
+
+			// Call the object's default constructor
+			asSTypeBehaviour *beh = &dt->objectType->beh;
+			if( beh->construct )
+				engine->CallObjectMethod(mem, beh->construct);
+
+			// Call the object's assignment operator
+			if( beh->copy )
+				engine->CallObjectMethod(mem, obj, beh->copy);
+			else
+			{
+				// Default operator is a simple copy
+				memcpy(mem, obj, dt->GetSizeInMemoryBytes());
+			}
+
+			obj = mem;
+		}
+	}
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Set the value
+	stackFramePointer[offset] = (asDWORD)obj;
+
+	return 0;
+}
+
 
 int asCContext::Abort()
 {
@@ -422,6 +685,8 @@ int asCContext::Abort()
 		CleanStack();
 	}
 	
+	CleanReturnObject();
+
 	doSuspend = true;
 	externalSuspendRequest = true;
 	doAbort = true;
@@ -441,6 +706,7 @@ int asCContext::Suspend()
 	return 0;
 }
 
+#ifdef AS_DEPRECATED
 int asCContext::ExecuteStep(asDWORD flag)
 {
 	if( flag != asEXEC_STEP_INTO &&
@@ -509,6 +775,7 @@ int asCContext::ExecuteStep(asDWORD flag)
 
 	return asERROR;
 }
+#endif
 
 int asCContext::Execute()
 {
@@ -576,7 +843,10 @@ int asCContext::Execute()
 		return asEXECUTION_SUSPENDED;
 
 	if( status == tsProgramFinished )
+	{
+		objectType = initialFunction->returnType.objectType;
 		return asEXECUTION_FINISHED;
+	}
 
 	if( status == tsUnhandledException )
 		return asEXECUTION_EXCEPTION;
@@ -586,9 +856,9 @@ int asCContext::Execute()
 
 void asCContext::PushCallState()
 {
-	callStack.SetLength(callStack.GetLength() + 6);
+	callStack.SetLength(callStack.GetLength() + CALLSTACK_FRAME_SIZE);
 
-	asDWORD *s = (asDWORD *)callStack.AddressOf() + callStack.GetLength() - 6;
+	asDWORD *s = (asDWORD *)callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
 
 	s[0] = (asDWORD)stackFramePointer;
 	s[1] = (asDWORD)currentFunction;
@@ -600,7 +870,7 @@ void asCContext::PushCallState()
 
 void asCContext::PopCallState()
 {
-	asDWORD *s = (asDWORD *)callStack.AddressOf() + callStack.GetLength() - 6;
+	asDWORD *s = (asDWORD *)callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
 
 	stackFramePointer = (asDWORD *)s[0];
 	currentFunction   = (asCScriptFunction *)s[1];
@@ -609,13 +879,45 @@ void asCContext::PopCallState()
 	stackIndex        = s[4];
 	module            = (asCModule *)s[5];
 
-	callStack.SetLength(callStack.GetLength() - 6);
+	callStack.SetLength(callStack.GetLength() - CALLSTACK_FRAME_SIZE);
+}
+
+int asCContext::GetCallstackSize()
+{
+	return callStack.GetLength() / CALLSTACK_FRAME_SIZE;
+}
+
+int asCContext::GetCallstackFunction(int index)
+{
+	if( index < 0 || index >= GetCallstackSize() ) return asINVALID_ARG;
+
+	asCScriptFunction *func = (asCScriptFunction*)callStack[index*CALLSTACK_FRAME_SIZE + 1];
+	asCModule *module = (asCModule*)callStack[index*CALLSTACK_FRAME_SIZE + 5];
+
+	return module->moduleID | func->id;
+}
+
+int asCContext::GetCallstackLineNumber(int index, int *column)
+{
+	if( index < 0 || index >= GetCallstackSize() ) return asINVALID_ARG;
+
+	asCScriptFunction *func = (asCScriptFunction*)callStack[index*CALLSTACK_FRAME_SIZE + 1];
+	asBYTE *bytePos = (asBYTE*)callStack[index*CALLSTACK_FRAME_SIZE + 2];
+
+	asDWORD line = func->GetLineNumber(bytePos - func->byteCode.AddressOf());
+	if( column ) *column = (line >> 20);
+
+	return (line & 0xFFFFF);
 }
 
 void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 {
 	// Push the framepointer, functionid and programCounter on the stack
 	PushCallState();
+
+	currentFunction = func;
+	module = mod;
+	byteCode = currentFunction->byteCode.AddressOf();
 
 	// Verify if there is enough room in the stack block. Allocate new block if not
 	asDWORD *oldStackPointer = stackPointer;
@@ -630,6 +932,12 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 			// This test will only stop growth once it has already crossed the limit
 			if( stackBlockSize * ((1 << (stackIndex+1)) - 1) > engine->maximumContextStackSize )
 			{
+				isStackMemoryNotAllocated = true;
+				
+				// Set the stackFramePointer, even though the stackPointer wasn't updated
+				stackFramePointer = stackPointer;
+
+				// TODO: Make sure the exception handler doesn't try to free objects that have not been initialized
 				SetInternalException(TXT_STACK_OVERFLOW);
 				return;
 			}
@@ -653,15 +961,18 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 
 	// Update framepointer and programCounter
 	stackFramePointer = stackPointer;
-	currentFunction = func;
-	exceptionID = 0;
-	module = mod;
 
-	// Set new byte code pointer
-	byteCode = currentFunction->byteCode.AddressOf();
+	// Set all object variables to 0
+	for( int n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+	{
+		int pos = currentFunction->objVariablePos[n];
+		stackFramePointer[-pos] = 0;
+	}
 }
 
 #ifndef USE_ASM_VM
+
+//extern "C" void BreakPoint();
 
 void asCContext::ExecuteNext(bool createRelocationTable)
 {
@@ -764,22 +1075,6 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		l_bc += BCS_RECALL4;
 		break;
 
-	case BC_ADDOFF:
-		{
-			int i = int(*l_sp); // The offset
-			++l_sp; // Pop the value
-			asDWORD *a = (asDWORD*)*l_sp; // The reference to the pointer
-
-			if( *a == 0 ) // Check the pointer
-			{
-				SetInternalException(TXT_NULL_POINTER_ACCESS);
-				return;
-			}
-			
-			*l_sp = asDWORD((asBYTE*)(*a) + i);
-			l_bc += BCS_ADDOFF;
-		}
-		break;
 
 //----------------
 // path control instructions
@@ -1187,8 +1482,22 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		break;
 
 	case BC_COPY:
-		memcpy((asDWORD*)*l_sp, (asDWORD*)*(l_sp+1), *(asWORD*)(BCARG_W(l_bc))*4);
-		l_sp++;
+		{
+			void *d = (void*)*l_sp++;
+			void *s = (void*)*l_sp;
+			if( s == 0 || d == 0 )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+				return;
+			}
+			memcpy(d, s, *(asWORD*)(BCARG_W(l_bc))*4);
+		}
 		l_bc += BCS_COPY;
 		break;
 
@@ -1370,14 +1679,6 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		l_bc += BCS_JMPP + (*l_sp++)*BCS_JMP;
 		break;
 
-	case BC_PEID:
-		// Push current eid value
-		l_sp--;
-		*l_sp = exceptionID;
-
-		l_bc += BCS_PEID;
-		break;
-
 	case BC_SRET4:
 		*(asDWORD*)&returnVal = *l_sp;
 		l_sp++;
@@ -1490,7 +1791,7 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			stackPointer = l_sp;
 			stackFramePointer = l_fp;
 
-			l_sp += CallSystemFunction(i, this);
+			l_sp += CallSystemFunction(i, this, 0);
 
 			// Update the program position after the call so that line number is correct
 			l_bc += BCS_CALLSYS;
@@ -1610,7 +1911,7 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		l_bc += BCS_SUBIf;
 		break;
 	case BC_MULIi:
-		*l_sp = asDWORD(int(asDWORD(*l_sp)) * *(int*)(BCARG_DW(l_bc)));;
+		*l_sp = asDWORD(int(asDWORD(*l_sp)) * *(int*)(BCARG_DW(l_bc)));
 		l_bc += BCS_MULIi;
 		break;
 	case BC_MULIf:
@@ -1618,6 +1919,14 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		l_bc += BCS_MULIf;
 		break;
 	case BC_SUSPEND:
+		if( lineCallback )
+		{
+			byteCode = l_bc;
+			stackPointer = l_sp;
+			stackFramePointer = l_fp;
+
+			CallLineCallback();
+		}
 		l_bc += BCS_SUSPEND;
 		if( doSuspend )
 		{
@@ -1630,18 +1939,189 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			return;
 		}
 		break;
-	case BC_END:
+	case BC_ALLOC:
 		{
-			// Need to move the values back to the context
+			asDWORD objTypeIdx = *(asDWORD*)(BCARG_DW(l_bc));
+			int func = *(int*)(BCARG_DW(l_bc)+1);
+			asDWORD *mem = (asDWORD*)engine->CallAlloc(objTypeIdx);
+			
+			if( func )
+			{
+				// Need to move the values back to the context 
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				l_sp += CallSystemFunction(func, this, mem);
+			}
+
+			// Pop the variable address from the stack
+			asDWORD **a = (asDWORD**)*l_sp++;
+			if( a ) *a = mem;
+
+			l_bc += BCS_ALLOC;
+
+			// Should the execution be suspended?
+			if( doSuspend )
+			{
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				status = tsSuspended;
+				return;
+			}
+			// An exception might have been raised
+			if( status != tsActive )
+			{
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				engine->CallFree(objTypeIdx, mem);
+				*a = 0;
+
+				return;
+			}
+		}
+		break;
+	case BC_FREE:
+		{
+			asDWORD **a = (asDWORD**)*l_sp++;
+			if( a && *a )
+			{
+				int objTypeIdx = *(asDWORD*)(BCARG_DW(l_bc));
+				asSTypeBehaviour *beh = &engine->allObjectTypes[objTypeIdx]->beh;
+
+				// Need to move the values back to the context 
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				if( beh->release )
+				{
+					engine->CallObjectMethod(*a, beh->release);
+
+					// The release method will free the memory
+				}
+				else
+				{
+					if( beh->destruct )
+					{
+						// Call the destructor
+						engine->CallObjectMethod(*a, beh->destruct);
+					}
+
+					engine->CallFree(objTypeIdx, *a);
+				}
+				*a = 0;
+			}
+		}
+		l_bc += BCS_FREE;
+		break;
+	case BC_LOADOBJ:
+		{
+			// Move the object pointer from the object variable into the object register
+			void **a = (void**)asDWORD(l_fp - *(short*)(BCARG_W(l_bc)));
+			objectType = 0;
+			objectRegister = *a;
+			*a = 0;
+		}
+		l_bc += BCS_LOADOBJ;
+		break;
+	case BC_STOREOBJ:
+		{
+			// Move the object pointer from the object register to the object variable
+			void **a = (void**)asDWORD(l_fp - *(short*)(BCARG_W(l_bc)));
+			*a = objectRegister;
+			objectRegister = 0;
+		}
+		l_bc += BCS_STOREOBJ;
+		break;
+	case BC_GETOBJ:
+		{
+			asDWORD *a = l_sp + *(asWORD*)(BCARG_W(l_bc));
+			asDWORD offset = *a;
+			asDWORD *v = l_fp - offset;
+			*a = *v;
+			*v = 0;
+		}
+		l_bc += BCS_GETOBJ;
+		break;
+	case BC_REFCPY:
+		{
+			int objTypeIdx = *(asDWORD*)(BCARG_DW(l_bc));
+			asSTypeBehaviour *beh = &engine->allObjectTypes[objTypeIdx]->beh;
+			void **d = (void**)*l_sp++;
+			void *s = (void*)*l_sp;
+
+			// Need to move the values back to the context 
 			byteCode = l_bc;
 			stackPointer = l_sp;
 			stackFramePointer = l_fp;
 
-			status = tsSuspended;
-			return;
+			if( *d != 0 )
+				engine->CallObjectMethod(*d, beh->release);
+			if( s != 0 )
+				engine->CallObjectMethod(s, beh->addref);
+			*d = s;
 		}
-		// Don't update the program position
-		// l_bc += BCS_END;
+		l_bc += BCS_REFCPY;
+		break;
+	case BC_CHKREF:
+		{
+			asDWORD a = *l_sp;
+			if( a == 0 )
+			{
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+				return;
+			}
+		}
+		l_bc += BCS_CHKREF;
+		break;
+	case BC_RD1:
+		*l_sp = *(asBYTE*)(*l_sp);
+		l_bc += BCS_RD1;
+		break;
+	case BC_RD2:
+		*l_sp = *(asWORD*)(*l_sp);
+		l_bc += BCS_RD2;
+		break;
+	case BC_GETOBJREF:
+		{
+			asDWORD *a = l_sp + *(asWORD*)(BCARG_W(l_bc));
+			*(asDWORD**)a = *(asDWORD**)(l_fp - *a);
+		}
+		l_bc += BCS_GETOBJ;
+		break;
+	case BC_GETREF:
+		{
+			asDWORD *a = l_sp + *(asWORD*)(BCARG_W(l_bc));
+			*(asDWORD**)a = l_fp - *a;
+		}
+		l_bc += BCS_GETOBJ;
+		break;
+	case BC_SWAP48:
+		{
+			asDWORD d = *(asDWORD*)l_sp;
+			asQWORD q = *(asQWORD*)(l_sp+1);
+			*(asQWORD*)l_sp = q;
+			*(asDWORD*)(l_sp+2) = d;
+			l_bc += BCS_SWAP48;
+		}
+		break;
+	case BC_SWAP84:
+		{
+			asQWORD q = *(asQWORD*)l_sp;
+			asDWORD d = *(asDWORD*)(l_sp+2);
+			*(asDWORD*)l_sp = d;
+			*(asQWORD*)(l_sp+1) = q;
+			l_bc += BCS_SWAP84;
+		}
 		break;
 
 
@@ -1678,21 +2158,53 @@ void asCContext::SetInternalException(const char *descr)
 		return; // but if it does, at least this will not crash the application
 	}
 
+	status = tsUnhandledException;
+
 	exceptionString = descr;
-	exceptionFunction = currentFunction->id;
+	exceptionFunction = module->moduleID | currentFunction->id;
 	exceptionLine = currentFunction->GetLineNumber(byteCode - currentFunction->byteCode.AddressOf());
+	exceptionColumn = exceptionLine >> 20;
+	exceptionLine &= 0xFFFFF;
+
+	if( exceptionCallback )
+		CallExceptionCallback();
 
 	// Clean up stack
 	CleanStack();
+}
 
-	status = tsUnhandledException;
+void asCContext::CleanReturnObject()
+{
+	if( objectRegister == 0 ) return;
+
+	assert( objectType != 0 );
+
+	if( objectType )
+	{
+		// Call the destructor on the object
+		asSTypeBehaviour *beh = &objectType->beh;
+		if( beh->release )
+		{
+			engine->CallObjectMethod(objectRegister, beh->release);
+			objectRegister = 0;
+
+			// The release method is responsible for freeing the memory
+		}
+		else
+		{
+			if( beh->destruct )
+				engine->CallObjectMethod(objectRegister, beh->destruct);
+
+			// Free the memory
+			engine->CallFree(objectType->idx, objectRegister);
+			objectRegister = 0;
+		}
+	}
 }
 
 void asCContext::CleanStack()
 {
 	inExceptionHandler = true;
-
-	// TODO: Increase the numActiveContexts when cleaning the stack
 
 	// Run the clean up code for each of the functions called
 	CleanStackFrame();
@@ -1708,28 +2220,72 @@ void asCContext::CleanStack()
 
 void asCContext::CleanStackFrame()
 {
-	// Find the ID for the exception location so that the cleanup function can do the right thing
-	exceptionID = currentFunction->GetExceptionID(byteCode - currentFunction->byteCode.AddressOf());
+	// Clean object variables
+	if( !isStackMemoryNotAllocated )
+	{
+		for( int n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+		{
+			int pos = currentFunction->objVariablePos[n];
+			if( stackFramePointer[-pos] )
+			{
+				// Call the object's destructor
+				asSTypeBehaviour *beh = &currentFunction->objVariableTypes[n]->beh;
+				if( beh->release )
+				{
+					engine->CallObjectMethod((void*)stackFramePointer[-pos], beh->release);
+					stackFramePointer[-pos] = 0;
+				}
+				else
+				{
+					if( beh->destruct )
+						engine->CallObjectMethod((void*)stackFramePointer[-pos], beh->destruct);
 
-	// Store state
-	asBYTE *oldByteCode = byteCode;
+					// Free the memory
+					engine->CallFree(currentFunction->objVariableTypes[n]->idx, (void*)stackFramePointer[-pos]);
+					stackFramePointer[-pos] = 0;
+				}
+			}
+		}
+	}
+	else
+		isStackMemoryNotAllocated = false;
 
-	// Execute clean up code
-	byteCode = currentFunction->cleanCode.AddressOf();
+	// Clean object parameters sent by reference
+	int offset = 0;
+	for( int n = 0; n < currentFunction->parameterTypes.GetLength(); n++ )
+	{
+		if( currentFunction->parameterTypes[n].IsObject() && !currentFunction->parameterTypes[n].isReference )
+		{
+			if( stackFramePointer[offset] )
+			{
+				// Call the object's destructor
+				asSTypeBehaviour *beh = engine->GetBehaviour(&currentFunction->parameterTypes[n]);
+				if( beh->release )
+				{
+					engine->CallObjectMethod((void*)stackFramePointer[offset], beh->release);
+					stackFramePointer[offset] = 0;
+				}
+				else
+				{
+					if( beh->destruct )
+						engine->CallObjectMethod((void*)stackFramePointer[offset], beh->destruct);
 
-#ifdef USE_ASM_VM
-	while( *(asDWORD*)byteCode != relocTable[BC_END] ) ExecuteNext();
-#else
-	while( *byteCode != BC_END ) ExecuteNext();
-#endif
+					// Free the memory
+					free((void*)stackFramePointer[offset]);
+					stackFramePointer[offset] = 0;
+				}
+			}
+		}
 
-	// Restore state
-	byteCode = oldByteCode;
+		offset += currentFunction->parameterTypes[n].GetSizeOnStackDWords();
+	}
 }
 
-int asCContext::GetExceptionLineNumber()
+int asCContext::GetExceptionLineNumber(int *column)
 {
 	if( GetState() != asEXECUTION_EXCEPTION ) return asERROR;
+
+	if( column ) *column = exceptionColumn;
 
 	return exceptionLine;
 }
@@ -1744,16 +2300,19 @@ int asCContext::GetExceptionFunction()
 int asCContext::GetCurrentFunction()
 {
 	if( status == tsSuspended || status == tsActive )
-		return currentFunction->id;
+		return module->moduleID | currentFunction->id;
 
 	return -1;
 }
 
-int asCContext::GetCurrentLineNumber()
+int asCContext::GetCurrentLineNumber(int *column)
 {
 	if( status == tsSuspended || status == tsActive )
 	{
-		return currentFunction->GetLineNumber(byteCode - currentFunction->byteCode.AddressOf());
+		asDWORD line = currentFunction->GetLineNumber(byteCode - currentFunction->byteCode.AddressOf());
+		if( column ) *column = line >> 20;
+
+		return line & 0xFFFFF;
 	}
 
 	return -1;
@@ -1767,18 +2326,6 @@ const char *asCContext::GetExceptionString(int *length)
 
 	return exceptionString.AddressOf();
 }
-
-#ifdef AS_DEPRECATED
-int asCContext::GetExceptionString(char *buffer, int bufferSize)
-{
-	if( GetState() != asEXECUTION_EXCEPTION ) return asERROR;
-
-	memcpy(buffer, exceptionString.AddressOf(), bufferSize < (exceptionString.GetLength() + 1) ? bufferSize : (exceptionString.GetLength() + 1));
-	buffer[bufferSize-1] = 0;
-
-	return exceptionString.GetLength();
-}
-#endif
 
 int asCContext::GetState()
 {
@@ -1802,4 +2349,162 @@ int asCContext::GetState()
 
 	return asERROR;
 }
+
+int asCContext::SetLineCallback(asUPtr callback, void *obj, int callConv)
+{
+	lineCallback = true;
+	lineCallbackObj = obj;
+	const char *isObj = 0;
+	if( (unsigned)callConv == asCALL_GENERIC )
+		return asNOT_SUPPORTED;
+	if( (unsigned)callConv >= asCALL_THISCALL )
+	{
+		isObj = "";
+		if( obj == 0 )
+		{
+			lineCallback = false;
+			return asINVALID_ARG;
+		}
+	}
+	int r = DetectCallingConvention(isObj, callback, callConv, &lineCallbackFunc);
+	if( r < 0 ) lineCallback = false;
+	return r;
+}
+
+void asCContext::CallLineCallback()
+{
+	if( lineCallbackFunc.callConv < ICC_THISCALL )
+		engine->CallGlobalFunction(this, lineCallbackObj, &lineCallbackFunc, 0);
+	else
+		engine->CallObjectMethod(lineCallbackObj, this, &lineCallbackFunc, 0);
+}
+
+int asCContext::SetExceptionCallback(asUPtr callback, void *obj, int callConv)
+{
+	exceptionCallback = true;
+	exceptionCallbackObj = obj;
+	const char *isObj = 0;
+	if( (unsigned)callConv == asCALL_GENERIC )
+		return asNOT_SUPPORTED;
+	if( (unsigned)callConv >= asCALL_THISCALL )
+	{
+		isObj = "";
+		if( obj == 0 )
+		{
+			exceptionCallback = false;
+			return asINVALID_ARG;
+		}
+	}
+	int r = DetectCallingConvention(isObj, callback, callConv, &exceptionCallbackFunc);
+	if( r < 0 ) exceptionCallback = false;
+	return r;
+}
+
+void asCContext::CallExceptionCallback()
+{
+	if( exceptionCallbackFunc.callConv < ICC_THISCALL )
+		engine->CallGlobalFunction(this, exceptionCallbackObj, &exceptionCallbackFunc, 0);
+	else
+		engine->CallObjectMethod(exceptionCallbackObj, this, &exceptionCallbackFunc, 0);
+}
+
+void asCContext::ClearLineCallback()
+{
+	lineCallback = false;
+}
+
+void asCContext::ClearExceptionCallback()
+{
+	exceptionCallback = false;
+}
+
+int asCContext::CallGeneric(int id, void *objectPointer)
+{
+	id = -id - 1;
+	asSSystemFunctionInterface *sysFunc = engine->systemFunctionInterfaces[id];
+	asCScriptFunction *sysFunction = engine->systemFunctions[id];
+	void (*func)(asIScriptGeneric*) = (void (*)(asIScriptGeneric*))sysFunc->func;
+	int popSize = sysFunc->paramSize;
+	asDWORD *args = stackPointer;
+
+	// Verify the object pointer if it is a class method
+	void *currentObject = 0;
+	if( sysFunc->callConv == ICC_GENERIC_METHOD )
+	{
+		if( objectPointer )
+		{
+			currentObject = objectPointer;
+
+			// Don't increase the reference of this pointer
+			// since it will not have been constructed yet
+		}
+		else
+		{
+			// The object pointer should be popped from the context stack
+			popSize++;
+
+			// Check for null pointer
+			currentObject = (void*)*(args);
+			if( currentObject == 0 )
+			{	
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+				return 0;
+			}
+
+			// Add the base offset for multiple inheritance
+			currentObject = (void*)(int(currentObject) + sysFunc->baseOffset);
+
+			// Keep a reference to the object to protect it 
+			// from being released before the method returns
+			if( sysFunction->objectType->beh.addref )
+				engine->CallObjectMethod(currentObject, sysFunction->objectType->beh.addref);
+
+			// Skip object pointer
+			args++;
+		}		
+	}
+
+	asCGeneric gen(engine, sysFunction, currentObject, args);
+
+	isCallingSystemFunction = true;
+	func(&gen);
+	isCallingSystemFunction = false;
+
+	returnVal = gen.returnVal;
+	objectRegister = gen.objectRegister;
+	objectType = sysFunction->returnType.objectType;
+
+	// Clean up function parameters
+	int offset = 0;
+	for( int n = 0; n < sysFunction->parameterTypes.GetLength(); n++ )
+	{
+		if( sysFunction->parameterTypes[n].IsObject() && !sysFunction->parameterTypes[n].isReference )
+		{
+			void *obj = *(void**)&args[offset];
+
+			// Release the object
+			asSTypeBehaviour *beh = &sysFunction->parameterTypes[n].objectType->beh;
+			if( beh->release )
+				engine->CallObjectMethod(obj, beh->release);
+			else
+			{
+				// Call the destructor then free the memory
+				if( beh->destruct )
+					engine->CallObjectMethod(obj, beh->destruct);
+
+				engine->CallFree(sysFunction->parameterTypes[n].objectType->idx, obj);
+			}
+		}
+		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
+	}
+
+	// Release the object pointer
+	if( currentObject && sysFunction->objectType->beh.release && !objectPointer )
+		engine->CallObjectMethod(currentObject, sysFunction->objectType->beh.release);
+
+	// Return how much should be popped from the stack
+	return popSize;
+}
+
+
 

@@ -5,14 +5,14 @@ CPP  = g++.exe -D__DEBUG__
 CC   = gcc.exe -D__DEBUG__
 WINDRES = windres.exe
 RES  = 
-OBJ  = obj/as_arrayobject.o obj/as_bstr_util.o obj/as_builder.o obj/as_bytecode.o obj/as_callfunc_x86.o obj/as_compiler.o obj/as_context.o obj/as_context_x86.o obj/as_datatype.o obj/as_map.o obj/as_module.o obj/as_objecttype.o obj/as_outputbuffer.o obj/as_parser.o obj/as_restore.o obj/as_scriptcode.o obj/as_scriptengine.o obj/as_scriptfunction.o obj/as_scriptnode.o obj/as_string.o obj/as_string_util.o obj/as_thread.o obj/as_tokenizer.o obj/as_typeinfo.o obj/as_variablescope.o $(RES)
-LINKOBJ  = obj/as_arrayobject.o obj/as_bstr_util.o obj/as_builder.o obj/as_bytecode.o obj/as_callfunc_x86.o obj/as_compiler.o obj/as_context.o obj/as_context_x86.o obj/as_datatype.o obj/as_map.o obj/as_module.o obj/as_objecttype.o obj/as_outputbuffer.o obj/as_parser.o obj/as_restore.o obj/as_scriptcode.o obj/as_scriptengine.o obj/as_scriptfunction.o obj/as_scriptnode.o obj/as_string.o obj/as_string_util.o obj/as_thread.o obj/as_tokenizer.o obj/as_typeinfo.o obj/as_variablescope.o $(RES)
+OBJ  = obj/as_arrayobject.o obj/as_bstr_util.o obj/as_builder.o obj/as_bytecode.o obj/as_callfunc_x86.o obj/as_compiler.o obj/as_context.o obj/as_context_x86.o obj/as_datatype.o obj/as_map.o obj/as_module.o obj/as_objecttype.o obj/as_outputbuffer.o obj/as_parser.o obj/as_restore.o obj/as_scriptcode.o obj/as_scriptengine.o obj/as_scriptfunction.o obj/as_scriptnode.o obj/as_string.o obj/as_string_util.o obj/as_thread.o obj/as_tokenizer.o obj/as_typeinfo.o obj/as_variablescope.o obj/as_callfunc_sh4.o obj/as_generic.o $(RES)
+LINKOBJ  = obj/as_arrayobject.o obj/as_bstr_util.o obj/as_builder.o obj/as_bytecode.o obj/as_callfunc_x86.o obj/as_compiler.o obj/as_context.o obj/as_context_x86.o obj/as_datatype.o obj/as_map.o obj/as_module.o obj/as_objecttype.o obj/as_outputbuffer.o obj/as_parser.o obj/as_restore.o obj/as_scriptcode.o obj/as_scriptengine.o obj/as_scriptfunction.o obj/as_scriptnode.o obj/as_string.o obj/as_string_util.o obj/as_thread.o obj/as_tokenizer.o obj/as_typeinfo.o obj/as_variablescope.o obj/as_callfunc_sh4.o obj/as_generic.o $(RES)
 LIBS =  -L"C:/Dev-Cpp/lib"  -g3 
 INCS =  -I"C:/Dev-Cpp/include" 
 CXXINCS =  -I"C:/Dev-Cpp/include/c++/3.3.1"  -I"C:/Dev-Cpp/include/c++/3.3.1/mingw32"  -I"C:/Dev-Cpp/include/c++/3.3.1/backward"  -I"C:/Dev-Cpp/lib/gcc-lib/mingw32/3.3.1/include"  -I"C:/Dev-Cpp/include" 
 BIN  = ../../lib/AngelScript.a
-CXXFLAGS = $(CXXINCS)   -fexpensive-optimizations -O3 -g3
-CFLAGS = $(INCS)   -fexpensive-optimizations -O3 -g3
+CXXFLAGS = $(CXXINCS)   -g3
+CFLAGS = $(INCS)   -g3
 
 .PHONY: all all-before all-after clean clean-custom
 
@@ -100,3 +100,9 @@ obj/as_typeinfo.o: ../../source/as_typeinfo.cpp
 
 obj/as_variablescope.o: ../../source/as_variablescope.cpp
 	$(CPP) -c ../../source/as_variablescope.cpp -o obj/as_variablescope.o $(CXXFLAGS)
+
+obj/as_callfunc_sh4.o: ../../source/as_callfunc_sh4.cpp
+	$(CPP) -c ../../source/as_callfunc_sh4.cpp -o obj/as_callfunc_sh4.o $(CXXFLAGS)
+
+obj/as_generic.o: ../../source/as_generic.cpp
+	$(CPP) -c ../../source/as_generic.cpp -o obj/as_generic.o $(CXXFLAGS)

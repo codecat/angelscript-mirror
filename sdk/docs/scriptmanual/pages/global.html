@@ -25,20 +25,25 @@ it.</p>
 <a name="function">
 <h2>Functions</h2>
 
-<pre><i>TYPE</i> FunctionName(<i>PARAMS</i>) {<i>IMPLEMENTATION</i>}</pre>
+<pre>
+FUNCTION       ::= TYPE IDENTIFIER '(' PARAMETERS ')' '{' IMPLEMENTATION '}'
+PARAMETERS     ::= (TYPE ('&' ('in' | 'out' | 'inout'))? IDENTIFIER?)*
+TYPE           ::= &lt;a data type&gt;
+IDENTIFIER     ::= &lt;the function name&gt;
+IMPLEMENTATION ::= &lt;zero or more statements&gt;
+</pre>
 
 <p>TYPE is one of the available return <a href="datatypes.html">data types</a>, e.g. <code><font color=blue>void</font></code>, <code><font color=blue>int</font></code>, or <code><font color=blue>bool</font></code>.</p>
 
-<p>Parameters are declared with data type, pointer level, and optionally <code>&</code> for
+<p>Parameters are declared with data type, optionally <code>&amp;</code> for
 data sent by reference and optionally an identifier to access the parameter from within
 the function. If more than one parameter is specified they are separated with commas.</p>
+
+<p>For parameters sent by reference, i.e. with the <code>&amp;</code> modifier it is necessary in which direction the value is passed, in, out, or inout, e.g. &amp;out. For parameters marked with in the value is passed in to the function, and for parameters marked with out the value is returned from the function. Note that if the parameter is marked as inout, the argument is copied twice, once when going in to the function and once when going out, this can lead to a performance impact, so should be avoided if possible.</p>
 
 <p>Parameters can also be declared as <code>const</code> which prohibits the alteration of their value. It is
 good practice to declare variables that will not be changed as <code>const</code>,
 because it makes for more readable code and the compiler is also able to take advantage of it some times.</p>
-
-<p>Note that functions are uniquely identified by their names, thus functions may
-not share the name with other functions or other global declarations for that matter.</p>
 
 <p>The IMPLEMENTATION is written through a series of <a href="statement.html">statements</a>.</p>
 
@@ -50,7 +55,12 @@ be used as the target in assignments.</p>
 <a name="variable">
 <h2>Variables</h2>
 
-<pre><i>TYPE</i> VariableName = <i>EXPR</i>, VariableName2;</pre>
+<pre>
+DECLARATION ::= TYPE IDENTIFIER ('=' EXPRESSION)? (',' IDENTIFIER ('=' EXPRESSION)?)* ';'
+TYPE        ::= &lt;a data type&gt;
+IDENTIFIER  ::= &lt;the variable name&gt;
+EXPRESSION  ::= &lt;an expression whose value will initialize the variable&gt;
+</pre>
 
 <p>TYPE is one of the available <a href="datatypes.html">data types</a>. The expression may not call any functions, assign any variables. The expression doesn't have to be constant, and it can even use the condition operator ?:.</p>
 
@@ -59,7 +69,14 @@ be used as the target in assignments.</p>
 <a name="import">
 <h2>Imports</h2>
 
-<pre>import <i>TYPE</i> FunctionName(<i>PARAMS</i>) from "ModuleName";</pre>
+<pre>
+IMPORT         ::= 'import' TYPE IDENTIFIER '(' PARAMETERS ')' 'from' STRING ';'
+PARAMETERS     ::= (TYPE ('&' ('in' | 'out' | 'inout'))? IDENTIFIER?)*
+TYPE           ::= &lt;a data type&gt;
+IDENTIFIER     ::= &lt;the function name&gt;
+STRING         ::= &lt;a text string between double quotes&gt;
+</pre>
+
 
 <p>TYPE is one of the available return <a href="datatypes.html">data types</a>, e.g. <code><font color=blue>void</font></code>, <code><font color=blue>int</font></code>, or <code><font color=blue>bool</font></code>.</p>
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -47,14 +47,18 @@ class asCScriptCode
 {
 public:
 	asCScriptCode();
+	~asCScriptCode();
 
-	int SetCode(const char *name, const char *code);
-	int SetCode(const char *name, const char *code, int length);
+	int SetCode(const char *name, const char *code, bool makeCopy);
+	int SetCode(const char *name, const char *code, int length, bool makeCopy);
 
 	void ConvertPosToRowCol(int pos, int *row, int *col);
 
 	asCString name;
-	asCString code;
+	const char *code;
+	int   codeLength;
+	bool  sharedCode;
+	int idx;
 	int lineOffset;
 	asCArray<int> linePositions;
 };

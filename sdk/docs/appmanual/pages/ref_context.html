@@ -1,6 +1,6 @@
 <HTML>
 <head>
-<title>AngelScript: Reference: asIScriptEngine</title>
+<title>AngelScript: Reference: asIScriptContext</title>
 <LINK rel="stylesheet" type="text/css" href="style.css">
 </head>
 
@@ -17,33 +17,50 @@ class asIScriptContext
 {
 public:
   <font color=green>// Memory management</font>
-  virtual int <a href="#addref">AddRef</a>() = 0;
-  virtual int <a href="#release">Release</a>() = 0;
+  int <a href="#addref">AddRef</a>();
+  int <a href="#release">Release</a>();
 
   <font color=green>// Engine</font>
-  virtual asIScriptEngine *<a href="#engine">GetEngine</a>() = 0;
+  asIScriptEngine *<a href="#engine">GetEngine</a>();
 
   <font color=green>// Script context</font>
-  virtual int <a href="#state">GetState</a>() = 0;
+  int <a href="#state">GetState</a>();
 
-  virtual int <a href="#prepare">Prepare</a>(int funcID) = 0;
+  int <a href="#prepare">Prepare</a>(int funcID);
 
-  virtual int <a href="#args">SetArguments</a>(int stackPos, asDWORD *data, int count) = 0;
-  virtual int <a href="#return">GetReturnValue</a>(asDWORD *data, int count) = 0;
+  int <a href="#args">SetArgDWord</a>(asUINT arg, asDWORD value);
+  int <a href="#args">SetArgQWord</a>(asUINT arg, asQWORD value);
+  int <a href="#args">SetArgFloat</a>(asUINT arg, float value);
+  int <a href="#args">SetArgDouble</a>(asUINT arg, double value);
+  int <a href="#args">SetArgObject</a>(asUINT arg, void *object);
 
-  virtual int <a href="#exec">Execute</a>() = 0;
-  virtual int <a href="#execstep">ExecuteStep</a>(asDWORD flag) = 0;
-  virtual int <a href="#abort">Abort</a>() = 0;
-  virtual int <a href="#suspend">Suspend</a>() = 0;
+  asDWORD <a href="#return">GetReturnDWord</a>();
+  asQWORD <a href="#return">GetReturnQWord</a>();
+  float   <a href="#return">GetReturnFloat</a>();
+  double  <a href="#return">GetReturnDouble</a>();
+  void   *<a href="#return">GetReturnObject</a>();
 
-  virtual int <a href="#currentline">GetCurrentLineNumber</a>() = 0;
-  virtual int <a href="#currentfunc">GetCurrentFunction</a>() = 0;
+  int <a href="#exec">Execute</a>();
+  int <a href="#abort">Abort</a>();
+  int <a href="#suspend">Suspend</a>();
+
+  int <a href="#currentline">GetCurrentLineNumber</a>(int *column = 0);
+  int <a href="#currentfunc">GetCurrentFunction</a>();
 
   <font color=green>// Exception handling</font>
-  virtual int <a href="#setexcept">SetException</a>(const char *string) = 0;
-  virtual int <a href="#exceptline">GetExceptionLineNumber</a>() = 0;
-  virtual int <a href="#exceptfunc">GetExceptionFunction</a>() = 0;
-  virtual const char *<a href="#exceptstring">GetExceptionString</a>(int *length = 0) = 0;
+  int <a href="#setexcept">SetException</a>(const char *string);
+  int <a href="#exceptline">GetExceptionLineNumber</a>(int *column = 0);
+  int <a href="#exceptfunc">GetExceptionFunction</a>();
+  const char *<a href="#exceptstring">GetExceptionString</a>(int *length = 0);
+  
+  int  <a href="#setlinecb">SetLineCallback</a>(asUPtr callback, void *obj, int callConv);
+  void <a href="#clearlinecb">ClearLineCallback</a>();
+  int  <a href="#setexceptcb">SetExceptionCallback</a>(asUPtr callback, void *obj, int callConv);
+  void <a href="#clearexceptcb">ClearExceptionCallback</a>();
+	
+  int <a href="#getcssize">GetCallstackSize</a>();
+  int <a href="#getcsfunc">GetCallstackFunction</a>(int index);
+  int <a href="#getcsline">GetCallstackLineNumber</a>(int index, int *column = 0);
 };
 </pre>
 
@@ -214,35 +231,6 @@ asEXECUTION_EXCEPTION.</p>
 
 
 
-<a name=execstep></a>
-<h2>ExecuteStep</h2>
-
-<pre class=border>
-int ExecuteStep(asDWORD flag);
-</pre>
-
-<h3>Description</h3>
-
-<p>Executes one step of the prepared function. One step is normally one complete statement in the scripting code, but may be less.</p>
-
-
-<h3>Parameters</h3>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr>
-<td valign=top width=100><code>flag</code>&nbsp;</td>
-<td valign=top><p>Can be either asEXEC_STEP_INTO or asEXEC_STEP_OVER.</p></td>
-</tr>
-</table>
-
-<h3>Returns</h3>
-
-<p>Returns a negative value on an unexpected error. On success it returns one of the following values to show the state of the context
-
-asEXECUTION_FINISHED,
-asEXECUTION_SUSPENDED,
-asEXECUTION_ABORTED, or
-asEXECUTION_EXCEPTION.</p>
 
 
 
@@ -290,32 +278,34 @@ int Suspend();
 
 
 <a name=args></a>
-<h2>SetArguments</h2>
+<h2>SetArg</h2>
 
 <pre class=border>
-int SetArguments(int stackPos,
-                 asDWORD *data,
-                 int count);
+int SetArgDWord(asUINT arg, asDWORD value);
+int SetArgQWord(asUINT arg, asQWORD value);
+int SetArgFloat(asUINT arg, float value);
+int SetArgDouble(asUINT arg, double value);
+int SetArgObject(asUINT arg, void *object);
 </pre>
 
 <h3>Description</h3>
 
-<p>This method sets data on the stack space reserved for function arguments.</p>
+<p>These method sets function arguments when calling script functions.</p>
 
 <h3>Parameters</h3>
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr>
-<td valign=top width=100><code>stackPos</code>&nbsp;</td>
-<td valign=top><p>The position in the stack to set, relative to the function's stack frame. The argument data should be placed on positions starting with 0 and increasing, i.e the first argument on 0, the second on 1, etc. Note that some types take up more than one position, e.g. double take 2 dwords.</p></td>
+<td valign=top width=100><code>arg</code>&nbsp;</td>
+<td valign=top><p>This is the argument number starting from 0, i.e. the first argument is on 0, the second on 1, and so on.</p></td>
 </tr>
 <tr>
-<td valign=top width=100><code>data</code>&nbsp;</td>
-<td valign=top><p>A pointer to the data to be set. You should verify the function interface before setting parameters, so that the function really takes the parameters that you are sending.</p></td>
+<td valign=top width=100><code>value</code>&nbsp;</td>
+<td valign=top><p>This is the value of the argument. This should be used for passing primitive data to the function. Use DWord when passing a reference to a primitive variable.</p></td>
 </tr>
 <tr>
-<td valign=top width=100><code>count</code>&nbsp;</td>
-<td valign=top><p>The number of dwords to copy from the data pointer.</p></td>
+<td valign=top width=100><code>object</code>&nbsp;</td>
+<td valign=top><p>When the function expects an object, either by value or by reference, you should use SetArgObject(). Pass a pointer to the object. If the function expects an object by value the library will automatically make a copy of the object.</p></td>
 </tr>
 </table>
 
@@ -334,33 +324,23 @@ int SetArguments(int stackPos,
 
 
 <a name=return></a>
-<h2>GetReturnValue</h2>
+<h2>GetReturn</h2>
 
 <pre class=border>
-int GetReturnValue(asDWORD *data,
-                   int count);
+asDWORD GetReturnDWord();
+asQWORD GetReturnQWord();
+float   GetReturnFloat();
+double  GetReturnDouble();
+void   *GetReturnObject();
 </pre>
 
 <h3>Description</h3>
 
-<p>This method gets data from the stack space reserved for the function return value.</p>
-
-<h3>Parameters</h3>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr>
-<td valign=top width=100><code>data</code>&nbsp;</td>
-<td valign=top><p>A pointer to a buffer that receives the data. You should verify the function interface before getting the return value, so that the function really returns what you are expecting.</p></td>
-</tr>
-<tr>
-<td valign=top width=100><code>count</code>&nbsp;</td>
-<td valign=top><p>The number of dwords to copy.</p></td>
-</tr>
-</table>
+<p>This method gets the return value from the script function. The value returned is only valid if the script function has finished successfully, i.e. if the state of the context is asEXECUTION_FINISHED.</p>
 
 <h3>Returns</h3>
 
-<p>Returns a negative value on failure. Returns 0 or greater if sucessful.</p>
+<p>The functions return the value that the script function returned. If the function returns an object, either by value or by reference you should use GetReturnObject(), which will return a pointer to the object. If the object is returned by value you need to make a copy of it, as the library will release the object when the context is released or reused.</p>
 
 
 
@@ -375,12 +355,21 @@ int GetReturnValue(asDWORD *data,
 <h2>GetCurrentLineNumber</h2>
 
 <pre class=border>
-int GetCurrentLineNumber();
+int GetCurrentLineNumber(int *column);
 </pre>
 
 <h3>Description</h3>
 
 <p>This method returns the line number where the context is currently located. The line number is relative to the script section where the function was found.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>column</code>&nbsp;</td>
+<td valign=top><p>An optional pointer to an integer that will receive the column number.</p></td>
+</tr>
+</table>
 
 <h3>Returns</h3>
 
@@ -457,12 +446,22 @@ int SetException(const char *string);
 <h2>GetExceptionLineNumber</h2>
 
 <pre class=border>
-int GetExceptionLineNumber();
+int GetExceptionLineNumber(int *column);
 </pre>
 
 <h3>Description</h3>
 
 <p>This method returns the line number where the exception ocurred. The line number is relative to the script section where the function was found.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>column</code>&nbsp;</td>
+<td valign=top><p>An optional pointer to an integer that will receive the column number.</p></td>
+</tr>
+</table>
+
 
 <h3>Returns</h3>
 
@@ -521,8 +520,211 @@ const char *GetExceptionString(int *length = 0);
 
 
 
+<a name=setlinecb></a>
+<h2>SetLineCallback</h2>
+
+<pre class=border>
+int SetLineCallback(asUPtr callback, void *obj, int callConv);
+</pre>
+
+<h3>Description</h3>
+
+<p>This function sets a callback function that will be called by the VM each
+time the SUSPEND instruction is encounted. Generally this instruction is 
+placed before each statement. Thus by setting this callback function it is 
+possible to monitor the execution, and suspend the execution at application
+defined locations.</p>
+
+<p>The callback function can be either a global function or a class method.
+For a global function the VM will pass two parameters, first the context 
+pointer and then the object pointer specified by the application. For a class
+method, the VM will call the method using the object pointer as the owner.</p>
+
+<pre class=border>
+void Callback(asIScriptContext *ctx, void *obj);
+void Object::Callback(asIScriptContext *ctx);
+</pre>
+
+<p>The global function can use either CDECL or STDCALL, and the class method
+can use either THISCALL, CDECL_OBJLAST, or CDECL_OBJFIRST.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>callback</code>&nbsp;</td>
+<td valign=top><p>Pointer to a the function or method.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>obj</code>&nbsp;</td>
+<td valign=top><p>Pointer to the object or parameter for the function.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>callConv</code>&nbsp;</td>
+<td valign=top><p>The calling convention for the function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value on failure.</p>
 
 
+
+
+
+
+
+
+
+
+<a name=clearlinecb></a>
+<h2>ClearLineCallback</h2>
+
+<pre class=border>
+void ClearLineCallback();
+</pre>
+
+<h3>Description</h3>
+
+<p>This method removes the line callback function.</p>
+
+
+
+
+<a name=setexceptcb></a>
+<h2>SetExceptionCallback</h2>
+
+<pre class=border>
+int SetExceptionCallback(asUPtr callback, void *obj, int callConv);
+</pre>
+
+<h3>Description</h3>
+
+<p>This callback function will be called by the VM when a script exception
+is raised, which allow the application to examine the callstack and generate
+a detailed report before the callstack is cleaned up.</p>
+
+<p>See <a href="#setlinecb">SetLineCallback</a>() for details on the calling
+convention.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>callback</code>&nbsp;</td>
+<td valign=top><p>Pointer to a the function or method.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>obj</code>&nbsp;</td>
+<td valign=top><p>Pointer to the object or parameter for the function.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>callConv</code>&nbsp;</td>
+<td valign=top><p>The calling convention for the function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value on failure.</p>
+
+
+
+
+
+<a name=clearexceptcb></a>
+<h2>ClearExceptionCallback</h2>
+
+<pre class=border>
+void ClearExceptionCallback();
+</pre>
+	
+<h3>Description</h3>
+
+<p>This method removes the exception callback function.</p>
+	
+	
+	
+	
+	
+<a name=getcssize></a>
+<h2>GetCallstackSize</h2> 
+
+<pre class=border>
+int GetCallstackSize();
+</pre>
+
+<h3>Description</h3>
+
+<p>This methods returns the size of the callstack, i.e. how many parent 
+functions there are above the current functions being called. It can be used
+to enumerate the callstack in order to generate a detailed report when an
+exception occurs.</p>
+
+<h3>Returns</h3>
+
+<p>The size of the callstack.</p>
+
+
+
+
+
+<a name=getcsfunc></a>
+<h2>GetCallstackFunction</h2>
+
+<pre class=border>
+int GetCallstackFunction(int index);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the function id of a function on the determined level in the 
+callstack.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>index</code>&nbsp;</td>
+<td valign=top><p>The index into the callstack.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>The function id.</p>
+
+
+
+
+<a name=getcsline></a>
+<h2>GetCallstackLineNumber</h2>
+
+<pre class=border>
+int GetCallstackLineNumber(int index, int *column);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the line number for the function at the callstack index.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>index</code>&nbsp;</td>
+<td valign=top><p>The index into the callstack.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>column</code>&nbsp;</td>
+<td valign=top><p>An optional pointer to an integer that will receive the column number.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>The line number.</p>
 
 
 

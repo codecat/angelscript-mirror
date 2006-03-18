@@ -1,0 +1,63 @@
+<HTML>
+<head>
+<title>AngelScript: References</title>
+<LINK rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<p><a href="../index.html">index</a><p>
+
+<h1>References</h1>
+
+<p>
+Passing variables by references to and from functions allow for increased
+flexibility in the way you solve a problem. A function can normally only 
+return one value, but by declaring the function to take a parameter by 
+reference the function can use that reference to set a second return value.
+</p>
+
+<p>A parameter is declared as reference by appending the symbol &amp; followed 
+by <code>in</code>, <code>out</code>, or <code>inout</code>. The word 
+following the &amp; symbol shows in which direction the value in the 
+reference is passed, in to the function, out from function, or both.</p>
+
+<pre>
+void function(int &amp;in a, int &amp;out b)
+{
+  <font color=green>// The value of b will be returned to the calling function</font>
+  b = a;
+  
+  <font color=green>// The value of a is not returned to the calling function</font>
+  a = 0;
+}
+</pre>
+
+<p>
+The term by reference, might be a bit misgiving, as it is not a reference to
+the actual value that is being passed to the function, but rather a reference
+to a value of the same type. If the reference is <code>in</code> or 
+<code>inout</code> the value will have the same value as the expression 
+calculated for the argument, otherwise it will be unitialized. If the 
+reference is <code>out</code> or <code>inout</code> the value in the parameter
+will be copied back to the original variable when the function returns.
+</p>
+
+<p>
+When the reference is <code>in</code> the argument expression is evaluated 
+before the function call, and for <code>out</code> the expression is evaluated
+after the function returns. For <code>inout</code> the expression is evaluated
+twice, so be aware of this when using complex expressions for the function
+arguments.
+</p>
+
+<p>As you might have guessed, it is not very useful to declare a parameter as
+&amp;in because the value will be copied anyway. The only reason that this 
+option is available is that some application functions might require it.</p>
+
+<p>If possible, it is normally better to pass the objects using a handle 
+instead of passing it by reference, because this will avoid a potentially
+expensive copy of the object.</p>
+
+<p><a href="#">top</a></p>
+
+</body></HTML>

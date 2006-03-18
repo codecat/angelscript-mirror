@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -98,11 +98,12 @@ void asCBuilder::SetOutputStream(asIOutputStream *out)
 	this->out = out;
 }
 
-int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int lineOffset)
+int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy)
 {
 	asCScriptCode *script = new asCScriptCode;
-	script->SetCode(name, code, codeLength);
+	script->SetCode(name, code, codeLength, makeCopy);
 	script->lineOffset = lineOffset;
+	script->idx = sectionIdx;
 	scripts.PushLast(script);
 
 	return 0;
@@ -130,7 +131,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 
 	// Add the string to the script code
 	asCScriptCode *script = new asCScriptCode;
-	script->SetCode(TXT_EXECUTESTRING, string);
+	script->SetCode(TXT_EXECUTESTRING, string, true);
 	script->lineOffset = -1; // Compensate for "void ExecuteString() {\n"
 	scripts.PushLast(script);
 
@@ -173,13 +174,16 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 			compiler.byteCode.Output(execfunc->byteCode.AddressOf());
 			execfunc->stackNeeded = compiler.byteCode.largestStackUsed;
 			execfunc->lineNumbers = compiler.byteCode.lineNumbers;
-			execfunc->exceptionIDs = compiler.byteCode.exceptionIDs;
 
-			// Copy byte code for function clean up
-			execfunc->cleanCode.SetLength(compiler.cleanCode.GetSize());
-			compiler.cleanCode.Output(execfunc->cleanCode.AddressOf());
+			execfunc->objVariablePos = compiler.objVariablePos;
+			execfunc->objVariableTypes = compiler.objVariableTypes;
 
 			ctx->SetExecuteStringFunction(execfunc);
+
+#ifdef AS_DEBUG
+			// DEBUG: output byte code
+			compiler.byteCode.DebugOutput("__ExecuteString.txt", module, engine);
+#endif
 		}
 	}
 
@@ -258,16 +262,13 @@ void asCBuilder::CompileFunctions()
 			compiler.byteCode.Output(module->scriptFunctions[n]->byteCode.AddressOf());
 			module->scriptFunctions[n]->stackNeeded = compiler.byteCode.largestStackUsed;
 			module->scriptFunctions[n]->lineNumbers = compiler.byteCode.lineNumbers;
-			module->scriptFunctions[n]->exceptionIDs = compiler.byteCode.exceptionIDs;
 
-			// Copy byte code for function clean up
-			module->scriptFunctions[n]->cleanCode.SetLength(compiler.cleanCode.GetSize());
-			compiler.cleanCode.Output(module->scriptFunctions[n]->cleanCode.AddressOf());
+			module->scriptFunctions[n]->objVariablePos = compiler.objVariablePos;
+			module->scriptFunctions[n]->objVariableTypes = compiler.objVariableTypes;
 
 #ifdef AS_DEBUG
 			// DEBUG: output byte code
-			compiler.byteCode.DebugOutput("__" + functions[n]->name + ".txt");
-			compiler.cleanCode.DebugOutput("__" + functions[n]->name + "@exc" + ".txt");
+			compiler.byteCode.DebugOutput("__" + functions[n]->name + ".txt", module, engine);
 #endif
 		}
 
@@ -281,7 +282,7 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 	numWarnings = 0;
 
 	asCScriptCode source;
-	source.SetCode("", datatype);
+	source.SetCode("", datatype, true);
 
 	asCParser parser(this);
 	int r = parser.ParseDataType(&source);
@@ -292,7 +293,6 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 	asCScriptNode *dataType = parser.GetScriptNode()->firstChild;
 
 	*result = CreateDataTypeFromNode(dataType, &source);
-	*result = ModifyDataTypeFromNode(*result, dataType->next);
 
 	if( numErrors > 0 )
 		return asINVALID_TYPE;
@@ -314,7 +314,7 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 
 	// Check property declaration and type
 	asCScriptCode source;
-	source.SetCode(TXT_PROPERTY, decl);
+	source.SetCode(TXT_PROPERTY, decl, true);
 
 	asCParser parser(this);
 	int r = parser.ParsePropertyDeclaration(&source);
@@ -324,10 +324,9 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	// Get data type and property name
 	asCScriptNode *dataType = parser.GetScriptNode()->firstChild;
 
-	asCScriptNode *nameNode = dataType->next->next;
+	asCScriptNode *nameNode = dataType->next;
 
 	type = CreateDataTypeFromNode(dataType, &source);
-	type = ModifyDataTypeFromNode(type, dataType->next);
 	name.Copy(&decl[nameNode->tokenPos], nameNode->tokenLength);
 
 	// Verify property name
@@ -402,7 +401,7 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 	numWarnings = 0;
 
 	asCScriptCode source;
-	source.SetCode(TXT_SYSTEM_FUNCTION, decl);
+	source.SetCode(TXT_SYSTEM_FUNCTION, decl, true);
 
 	asCParser parser(this);
 
@@ -418,22 +417,30 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 
 	// Initialize a script function object for registration
 	func->returnType = CreateDataTypeFromNode(node->firstChild, &source);
-	func->returnType = ModifyDataTypeFromNode(func->returnType, node->firstChild->next);
+	func->returnType = ModifyDataTypeFromNode(func->returnType, node->firstChild->next, 0);
 
 	n = n->next->firstChild;
 	while( n )
 	{
+		int inOutFlags;
 		asCDataType type = CreateDataTypeFromNode(n, &source);
-		type = ModifyDataTypeFromNode(type, n->next);
+		type = ModifyDataTypeFromNode(type, n->next, &inOutFlags);
 		
 		// Store the parameter type
 		func->parameterTypes.PushLast(type);
+		func->inOutFlags.PushLast(inOutFlags);
 
 		// Move to next parameter
 		n = n->next->next;
 		if( n && n->nodeType == snIdentifier )
 			n = n->next;
 	}
+
+	// Set the read-only flag if const is declared after parameter list
+	if( node->lastChild->nodeType == snUndefined && node->lastChild->tokenType == ttConst )
+		func->isReadOnly = true;
+	else 
+		func->isReadOnly = false;
 
 	if( numErrors > 0 || numWarnings > 0 )
 		return asINVALID_DECLARATION;
@@ -447,7 +454,7 @@ int asCBuilder::ParseVariableDeclaration(const char *decl, asCProperty *var)
 	numWarnings = 0;
 
 	asCScriptCode source;
-	source.SetCode(TXT_VARIABLE_DECL, decl);
+	source.SetCode(TXT_VARIABLE_DECL, decl, true);
 
 	asCParser parser(this);
 
@@ -458,12 +465,11 @@ int asCBuilder::ParseVariableDeclaration(const char *decl, asCProperty *var)
 	asCScriptNode *node = parser.GetScriptNode();
 
 	// Find name
-	asCScriptNode *n = node->firstChild->next->next;
+	asCScriptNode *n = node->firstChild->next;
 	var->name.Copy(&source.code[n->tokenPos], n->tokenLength);
 
 	// Initialize a script variable object for registration
 	var->type = CreateDataTypeFromNode(node->firstChild, &source);
-	var->type = ModifyDataTypeFromNode(var->type, node->firstChild->next);
 
 	if( numErrors > 0 || numWarnings > 0 )
 		return asINVALID_DECLARATION;
@@ -608,13 +614,26 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 	// What data type is it?
 	asCDataType type = CreateDataTypeFromNode(node->firstChild, file);
 
+	if( type.GetSizeOnStackDWords() == 0 || 
+		(type.IsObject() && !type.isExplicitHandle && type.GetSizeInMemoryBytes() == 0) )
+	{
+		asCString str;
+		// TODO: Change to "'type' cannot be declared as variable"
+		str.Format(TXT_DATA_TYPE_CANT_BE_s, (const char *)type.Format());
+		
+		int r, c;
+		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+		
+		WriteError(file->name, str, r, c);
+	}
+
 	asCScriptNode *n = node->firstChild->next;
 
 	while( n )
 	{
 		// Verify that the name isn't taken
-		GETSTRING(name, &file->code[n->next->tokenPos], n->next->tokenLength);
-		CheckNameConflict(name, n->next, file);
+		GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
+		CheckNameConflict(name, n, file);
 
 		// Register the global variable
 		sGlobalVariableDescription *gvar = new sGlobalVariableDescription;
@@ -622,24 +641,24 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 
 		gvar->script     = file;
 		gvar->name       = name;
-		gvar->datatype   = ModifyDataTypeFromNode(type, n);
 		gvar->isCompiled = false;
+		gvar->datatype   = type;
 
 		// TODO: Give error message if wrong
 		assert(!gvar->datatype.isReference);
 
 		// Allocate space on the global memory stack
-		gvar->index      = module->AllocGlobalMemory(gvar->datatype.GetSizeInMemoryDWords());
+		gvar->index      = module->AllocGlobalMemory(gvar->datatype.GetSizeOnStackDWords());
 		gvar->node       = 0;
-		if( n->next->next && n->next->next->nodeType == snAssignment )
+		if( n->next && n->next->nodeType == snAssignment )
 		{
-			gvar->node       = n->next->next;
-			n->next->next->DisconnectParent();
+			gvar->node       = n->next;
+			n->next->DisconnectParent();
 		}
-		else if( n->next->next && n->next->next->nodeType == snArgList) 
-		{			
-			gvar->node = n->next->next;			
-			n->next->next->DisconnectParent();				
+		else if( n->next && n->next->nodeType == snArgList) 
+		{
+			gvar->node = n->next;			
+			n->next->DisconnectParent();				
 		}
 
 		// Add script variable to engine
@@ -651,7 +670,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 
 		gvar->property = prop;
 
-		n = n->next->next;
+		n = n->next;
 	}
 
 	delete node;
@@ -718,11 +737,12 @@ void asCBuilder::CompileGlobalVariables()
 				}
 
 				// Call destructor for all data types
-				asSTypeBehaviour *beh = engine->GetBehaviour(&gvar->datatype);
-				if( beh && beh->destruct )
+				if( gvar->datatype.IsObject() && !gvar->datatype.isReference )
 				{
+					int objTypeIdx = engine->GetObjectTypeIndex(gvar->datatype.objectType);
+
 					exit.InstrINT(BC_PGA, gvar->index);
-					exit.Call(BC_CALLSYS, (asDWORD)beh->destruct, 1);
+					exit.InstrINT(BC_FREE, objTypeIdx);
 				}
 
 				if( gvar->isCompiled )
@@ -777,22 +797,16 @@ void asCBuilder::CompileGlobalVariables()
 
 	module->initFunction.byteCode.SetLength(finalInit.GetSize());
 	finalInit.Output(module->initFunction.byteCode.AddressOf());
-	module->initFunction.cleanCode.SetLength(cleanInit.GetSize());
-	cleanInit.Output(module->initFunction.cleanCode.AddressOf());
 	module->initFunction.stackNeeded = finalInit.largestStackUsed;
 
 	module->exitFunction.byteCode.SetLength(finalExit.GetSize());
 	finalExit.Output(module->exitFunction.byteCode.AddressOf());
-	module->exitFunction.cleanCode.SetLength(cleanExit.GetSize());
-	cleanExit.Output(module->exitFunction.cleanCode.AddressOf());
 	module->exitFunction.stackNeeded = finalExit.largestStackUsed;
 
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
-	finalInit.DebugOutput("__@init.txt");
-	cleanInit.DebugOutput("__@init@exc.txt");
-	finalExit.DebugOutput("__@exit.txt");
-	cleanExit.DebugOutput("__@exit@exc.txt");
+	finalInit.DebugOutput("__@init.txt", module, engine);
+	finalExit.DebugOutput("__@exit.txt", module, engine);
 #endif
 
 }
@@ -816,20 +830,23 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	// Initialize a script function object for registration
 	asCDataType returnType;
 	returnType = CreateDataTypeFromNode(node->firstChild, file);
-	returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next);
+	returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next, 0);
 		
 	asCArray<asCDataType> parameterTypes;
+	asCArray<int> inOutFlags;
 	n = n->next->firstChild;
 	while( n )
 	{
+		int inOutFlag;
 		asCDataType type = CreateDataTypeFromNode(n, file);
-		type = ModifyDataTypeFromNode(type, n->next);
+		type = ModifyDataTypeFromNode(type, n->next, &inOutFlag);
 
 		// Store the parameter type
-		n = n->next->next;
 		parameterTypes.PushLast(type);
+		inOutFlags.PushLast(inOutFlag);
 
 		// Move to next parameter
+		n = n->next->next;
 		if( n && n->nodeType == snIdentifier )
 			n = n->next;
 	}
@@ -868,7 +885,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	}
 
 	// Register the function
-	module->AddScriptFunction(funcID, func->name, returnType, parameterTypes.AddressOf(), parameterTypes.GetLength());
+	module->AddScriptFunction(file->idx, funcID, func->name, returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), parameterTypes.GetLength());
 
 	return 0;
 }
@@ -886,18 +903,21 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	// Initialize a script function object for registration
 	asCDataType returnType;
 	returnType = CreateDataTypeFromNode(f->firstChild, file);
-	returnType = ModifyDataTypeFromNode(returnType, f->firstChild->next);
+	returnType = ModifyDataTypeFromNode(returnType, f->firstChild->next, 0);
 		
 	asCArray<asCDataType> parameterTypes;
+	asCArray<int> inOutFlags;
 	n = n->next->firstChild;
 	while( n )
 	{
+		int inOutFlag;
 		asCDataType type = CreateDataTypeFromNode(n, file);
-		type = ModifyDataTypeFromNode(type, n->next);
+		type = ModifyDataTypeFromNode(type, n->next, &inOutFlag);
 
 		// Store the parameter type
 		n = n->next->next;
 		parameterTypes.PushLast(type);
+		inOutFlags.PushLast(inOutFlag);
 
 		// Move to next parameter
 		if( n && n->nodeType == snIdentifier )
@@ -947,7 +967,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	delete node;
 
 	// Register the function
-	module->AddImportedFunction(importID, name, returnType, parameterTypes.AddressOf(), parameterTypes.GetLength(), moduleNameString);
+	module->AddImportedFunction(importID, name, returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), parameterTypes.GetLength(), moduleNameString);
 
 	return 0;
 }
@@ -991,14 +1011,29 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 	}
 }
 
-void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods)
+void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst)
 {
 	// TODO: Improve linear search
-	for( int n = 0; n < engine->systemFunctions.GetLength(); n++ )
+	if( objIsConst )
 	{
-		if( engine->systemFunctions[n]->objectType == objectType &&
-			engine->systemFunctions[n]->name == name )
-			methods.PushLast(engine->systemFunctions[n]->id);
+		// Only add const methods to the list
+		for( int n = 0; n < engine->systemFunctions.GetLength(); n++ )
+		{
+			if( engine->systemFunctions[n]->objectType == objectType &&
+				engine->systemFunctions[n]->name == name &&
+				engine->systemFunctions[n]->isReadOnly )
+				methods.PushLast(engine->systemFunctions[n]->id);
+		}
+	}
+	else
+	{
+		// TODO: Prefer non-const over const
+		for( int n = 0; n < engine->systemFunctions.GetLength(); n++ )
+		{
+			if( engine->systemFunctions[n]->objectType == objectType &&
+				engine->systemFunctions[n]->name == name )
+				methods.PushLast(engine->systemFunctions[n]->id);
+		}
 	}
 }
 
@@ -1069,6 +1104,8 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		n = n->next;
 	}
 
+	asCScriptNode *typeNode = n;
+
 	dt.tokenType = n->tokenType;
 	if( dt.tokenType == ttIdentifier )
 	{
@@ -1095,42 +1132,89 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		dt.objectType = 0;
 	}
 
+	// Determine array dimensions and object handles
+	n = n->next;
+	int arrayType = 0;
+	int arrayDimensions = 0;
+	bool isHandle = false;
+	while( n && (n->tokenType == ttOpenBracket || n->tokenType == ttHandle) )
+	{
+		if( n->tokenType == ttOpenBracket )
+		{
+			if( arrayDimensions == 4 )
+			{
+				int r, c;
+				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+				WriteError(file->name, TXT_TOO_MANY_ARRAY_DIMENSIONS, r, c);
+				break;
+			}
+			// Push another level into the description
+			arrayType = (arrayType << 2) | 2 | (isHandle ? 1 : 0);
+			arrayDimensions++;
+			isHandle = false;
+		}
+		else
+		{
+			if( isHandle )
+			{
+				int r, c;
+				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+				WriteError(file->name, TXT_OBJECT_HANDLE_NOT_SUPPORTED, r, c);
+				break;
+			}
+
+			isHandle = true;
+		}
+		n = n->next;
+	}
+
+	dt.arrayType = arrayType;
+	if( dt.arrayType )
+		dt.objectType = engine->GetArrayType(dt);
+
+	if( isHandle )
+	{
+		dt.isExplicitHandle = true;
+		if( !dt.objectType || dt.objectType->beh.addref == 0 || dt.objectType->beh.release == 0 )
+		{
+			int r, c;
+			file->ConvertPosToRowCol(typeNode->tokenPos, &r, &c);
+
+			WriteError(file->name, TXT_OBJECT_HANDLE_NOT_SUPPORTED, r, c);
+
+			dt.isExplicitHandle = false;
+		}
+	}
+
+	// TODO: Must verify that each of the levels support object handles
+
 	return dt;
 }
 
-asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node)
+asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, int *inOutFlags)
 {
 	asCDataType dt = type;
 
-	// Count pointer level
-	int pointerLevel = 0;
-	asCScriptNode *n = node->firstChild;
-	while( n && n->tokenType == ttStar )
-	{
-		pointerLevel++;
-		n = n->next;
-	}
-	dt.pointerLevel = pointerLevel;
-	// Pointers don't have an object type
-	if( pointerLevel > 0 )
-		dt.objectType = 0;
-
-	// Count array dimensions
-	int arrayDimensions = 0;
-	while( n && n->tokenType == ttOpenBracket )
-	{
-		arrayDimensions++;
-		n = n->next;
-	}
-	dt.arrayDimensions = arrayDimensions;
-	if( dt.arrayDimensions )
-		dt.objectType = engine->GetArrayType(dt);
-
 	// Is the argument sent by reference?
+	asCScriptNode *n = node->firstChild;
 	if( n && n->tokenType == ttAmp )
 	{
 		dt.isReference = true;
 		n = n->next;
+	}
+
+	if( inOutFlags ) *inOutFlags = 0;
+
+	if( n && inOutFlags )
+	{
+		if( n->tokenType == ttIn ) 
+			*inOutFlags = 1;
+		else if( n->tokenType == ttOut )
+			*inOutFlags = 2;
+		else if( n->tokenType == ttInOut )
+			*inOutFlags = 3;
+		else
+			assert(false);
 	}
 
 	return dt;

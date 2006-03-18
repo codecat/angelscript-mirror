@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -53,6 +53,8 @@ class asCArrayObject
 public:
 	asCArrayObject(asUINT length, int elementSize, int behaviourIndex);
 	~asCArrayObject();
+	int AddRef();
+	int Release();
 
 	void   resize(asUINT numElements);
 	asUINT length();
@@ -61,7 +63,8 @@ public:
 
 protected:
 	sArrayBuffer *buffer;
-	int arrayDimension;
+	int refCount;
+	int arrayType;
 	int elementSize;
 	int behaviourIndex;
 	asCScriptEngine *engine;
@@ -69,6 +72,9 @@ protected:
 	void CreateBuffer(sArrayBuffer **buf, asUINT numElements);
 	void DeleteBuffer(sArrayBuffer *buf);
 	void CopyBuffer(sArrayBuffer *dst, sArrayBuffer *src);
+
+	void Construct(sArrayBuffer *buf, asUINT start, asUINT end);
+	void Destruct(sArrayBuffer *buf, asUINT start, asUINT end);
 };
 
 void RegisterArrayObject(asCScriptEngine *engine);

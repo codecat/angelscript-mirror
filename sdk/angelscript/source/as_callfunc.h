@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -39,8 +39,8 @@
 #ifndef AS_CALLFUNC_H
 #define AS_CALLFUNC_H
 
-#include "as_context.h"
-
+class asCContext;
+class asCScriptEngine;
 class asCScriptFunction;
 struct asSSystemFunctionInterface;
 
@@ -48,10 +48,12 @@ int DetectCallingConvention(const char *, asUPtr &ptr, int callConv, asSSystemFu
 
 int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 
-int CallSystemFunction(int id, asCContext *context);
+int CallSystemFunction(int id, asCContext *context, void *objectPointer);
 
 enum internalCallConv
 {
+	ICC_GENERIC_FUNC,
+	ICC_GENERIC_FUNC_RETURNINMEM, // never used
 	ICC_CDECL,
 	ICC_CDECL_RETURNINMEM,
 	ICC_STDCALL,
@@ -64,6 +66,8 @@ enum internalCallConv
 	ICC_CDECL_OBJLAST_RETURNINMEM,
 	ICC_CDECL_OBJFIRST,
 	ICC_CDECL_OBJFIRST_RETURNINMEM,
+	ICC_GENERIC_METHOD,
+	ICC_GENERIC_METHOD_RETURNINMEM, // never used
 };
 
 struct asSSystemFunctionInterface
@@ -71,12 +75,12 @@ struct asSSystemFunctionInterface
 	asDWORD              func;
 	int                  baseOffset;
 	internalCallConv     callConv;
-	bool                 scriptReturnInMemory;
 	int                  scriptReturnSize;
 	bool                 hostReturnInMemory;
 	bool                 hostReturnFloat;
 	int                  hostReturnSize;
 	int                  paramSize;
+	bool                 takesObjByVal;
 };
 
 

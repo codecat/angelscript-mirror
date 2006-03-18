@@ -22,6 +22,7 @@
 	<li><a href="#index">Indexing operator</a>
 	<li><a href="#condition">Conditional expression</a>
 	<li><a href="#member">Member access</a>
+	<li><a href="#handle">Handle-of</a>
 	</ul>
 
 
@@ -175,11 +176,22 @@ Both the left hand and right hand values must have the same type.</p>
 <a name=member>
 <h2>Member access</h2>
 
-<pre><i>OBJ</i> . <i>MEMBER</i>
-<i>POINTER</i> -> <i>MEMBER</i></pre>
+<pre><i>OBJ</i> . <i>MEMBER</i></pre>
 
 
-<p>OBJ must be an expression resulting in a data type that have members. POINTER must be an expression evaluating to a pointer to an object with members. MEMBER is the name of the member to be accessed. This member may or may not be read only.</p>
+<p>OBJ must be an expression resulting in a data type that have members. MEMBER is the name of the member to be accessed. This member may or may not be read only.</p>
+
+
+
+<a name=handle>
+<h2>Handle-of</h2>
+
+<pre>@ <i>VAR</i></pre>
+
+
+<p>VAR is an object that allows its handle to be taken. The handle can then be assigned to a handle variable of the same type, or compared against another handle, or <code>null</code>.</p>
+
+
 
 
 <p><a href="#">top</a></p>

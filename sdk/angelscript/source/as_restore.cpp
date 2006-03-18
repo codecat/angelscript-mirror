@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -197,9 +197,13 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	WRITE_NUM(count);
 	WriteByteCode(func->byteCode.AddressOf(), count);
 
-	count = func->cleanCode.GetLength();
+	count = func->objVariablePos.GetLength();
 	WRITE_NUM(count);
-	WriteByteCode(func->cleanCode.AddressOf(), count);
+	for( i = 0; i < count; ++i )
+	{
+		WriteObjectType(func->objVariableTypes[i]);
+		WRITE_NUM(func->objVariablePos[i]);
+	}
 
 	WRITE_NUM(func->stackNeeded);
 
@@ -209,11 +213,6 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	WRITE_NUM(length);
 	for( i = 0; i < length; ++i )
 		WRITE_NUM(func->lineNumbers[i]);
-
-	length = func->exceptionIDs.GetLength();
-	WRITE_NUM(length);
-	for( i = 0; i < length; ++i )
-		WRITE_NUM(func->exceptionIDs[i]);
 }
 
 void asCRestore::WriteProperty(asCProperty* prop) 
@@ -237,11 +236,11 @@ void asCRestore::WriteDataType(asCDataType* dt)
 {
 	WRITE_NUM(dt->tokenType);
 	WriteObjectType(dt->extendedType);
-	WRITE_NUM(dt->pointerLevel);
-	WRITE_NUM(dt->arrayDimensions);
+	WRITE_NUM(dt->arrayType);
 	WRITE_NUM(dt->isReference);
 	WRITE_NUM(dt->isReadOnly);
 	WriteObjectType(dt->objectType);
+	WRITE_NUM(dt->isExplicitHandle);
 }
 
 void asCRestore::WriteObjectType(asCObjectType* ot) 
@@ -270,6 +269,7 @@ void asCRestore::ReadFunction(asCScriptFunction* func)
 {
 	int i, count;
 	asCDataType dt;
+	int num;
 
 	ReadString(&func->name);
 
@@ -291,9 +291,14 @@ void asCRestore::ReadFunction(asCScriptFunction* func)
 	func->byteCode.SetLength(count);
 
 	READ_NUM(count);
-	func->cleanCode.Allocate(count, 0);
-	ReadByteCode(func->cleanCode.AddressOf(), count);
-	func->cleanCode.SetLength(count);
+	func->objVariablePos.Allocate(count, 0);
+	func->objVariableTypes.Allocate(count, 0);
+	for( i = 0; i < count; ++i )
+	{
+		func->objVariableTypes.PushLast(ReadObjectType());
+		READ_NUM(num);
+		func->objVariablePos.PushLast(num);
+	}
 
 	READ_NUM(func->stackNeeded);
 
@@ -304,12 +309,6 @@ void asCRestore::ReadFunction(asCScriptFunction* func)
 	func->lineNumbers.SetLength(length);
 	for( i = 0; i < length; ++i )
 		READ_NUM(func->lineNumbers[i]);
-
-	READ_NUM(length);
-	func->exceptionIDs.SetLength(length);
-	for( i = 0; i < length; ++i )
-		READ_NUM(func->exceptionIDs[i]);
-
 }
 
 void asCRestore::ReadProperty(asCProperty* prop) 
@@ -335,11 +334,11 @@ void asCRestore::ReadDataType(asCDataType* dt)
 {
 	READ_NUM(dt->tokenType);
 	dt->extendedType = ReadObjectType();
-	READ_NUM(dt->pointerLevel);
-	READ_NUM(dt->arrayDimensions);
+	READ_NUM(dt->arrayType);
 	READ_NUM(dt->isReference);
 	READ_NUM(dt->isReadOnly);
 	dt->objectType = ReadObjectType();
+	READ_NUM(dt->isExplicitHandle);
 }
 
 asCObjectType* asCRestore::ReadObjectType() 

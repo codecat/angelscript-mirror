@@ -106,15 +106,13 @@ A:hover
 
 <h1>How to compile and link with AngelScript</h1>
 
-<p>2004/10/01, Andreas Jönsson</p>
+<p>2005/01/19, Andreas Jönsson</p>
 
 <h2>Set compile time options</h2>
 
 <p>I try to contain compiler differences in as few places as possible. The header as_config.h was created for that purpose. Here you will find some #defines that allow different compilers to work. You'll probably not have to change this file, but if you're using a compiler not previously used and you're getting compiler errors it might be worth it to take a look at this file.</p>
 
 <p>There are also a couple of other #defines used in the code to alter the compilation. When compiling the library you might want to define ANGELSCRIPT_EXPORT so that library functions are exported. If you include the library source code directly in your application project you shouldn't have to define this flag.</p>
-
-<p>The flag AS_DEBUG is used in some places to add extra debugging code to the library, such as output of bytecode instructions to text files, and bytecode statistics for script executions.</p>
 
 <p>If AS_DEPRECATED is defined then some backwards compatibility is maintained, this can help you do the upgrade to the latest version a little more smoothly. There is no guarantee that the backwards compatibility will be maintained though so try to upgrade as soon as possible.</p>
 

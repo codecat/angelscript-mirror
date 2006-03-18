@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -42,6 +42,8 @@
 // Compiler messages
 
 #define TXT_s_ALREADY_DECLARED            "'%s' already declared"
+#define TXT_ARG_NOT_LVALUE                "Argument cannot be assigned. Output will be discarded."
+#define TXT_ARG_COMPUTED_TWICE            "Argument is evaluated twice."
 #define TXT_ARGUMENT_COUNT                "Argument count does not match definition."
 #define TXT_ASSIGN_IN_GLOBAL_EXPR         "Assignments are not allowed in global expressions"
 
@@ -52,9 +54,11 @@
 #define TXT_CHANGE_SIGN_u_d               "Implicit conversion changed sign of value, %u -> %d."
 #define TXT_CHANGE_SIGN_d_u               "Implicit conversion changed sign of value, %d -> %u."
 #define TXT_COMPILING_s                   "Compiling %s"
+#define TXT_CONST_NOT_PRIMITIVE           "Only primitives may be declared as const"
 
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
+
 #define TXT_EXPECTED_s                    "Expected '%s'"
 #define TXT_EXPECTED_CONSTANT             "Expected constant"
 // TODO: Should be TXT_NO_CONVERSION
@@ -62,6 +66,7 @@
 #define TXT_EXPECTED_DATA_TYPE            "Expected data type"
 #define TXT_EXPECTED_EXPRESSION_VALUE     "Expected expression value"
 #define TXT_EXPECTED_IDENTIFIER           "Expected identifier"
+#define TXT_EXPECTED_ONE_OF               "Expected one of: "
 #define TXT_EXPECTED_OPERATOR             "Expected operator"
 #define TXT_EXPECTED_s_OR_s               "Expected '%s' or '%s'"
 #define TXT_EXPECTED_POST_OPERATOR        "Expected post operator"
@@ -100,8 +105,10 @@
 #define TXT_NAME_CONFLICT_s_OBJ_PROPERTY    "Name conflict. '%s' is an object property."
 #define TXT_NAME_CONFLICT_s_OBJ_METHOD      "Name conflict. '%s' is an object method."
 #define TXT_NAME_CONFLICT_s_SYSTEM_FUNCTION "Name conflict. '%s' is a system function."
+#define TXT_NEED_TO_BE_A_HANDLE           "Need to be a handle"
 #define TXT_NO_CONVERSION_s_TO_s          "No conversion from '%s' to '%s' available."
 #define TXT_NO_CONVERSION_s_TO_MATH_TYPE   "No conversion from '%s' to math type available."
+#define TXT_NO_DEFAULT_COPY_OP            "There is no copy operator for this type available."
 #define TXT_NO_MATCHING_SIGNATURES_TO_s    "No matching signatures to '%s'"
 #define TXT_NO_MATCHING_OP_FOUND_FOR_TYPE_s "No matching operator that takes the type '%s' found"
 #define TXT_NOT_ALL_PATHS_RETURN          "Not all paths return a value"
@@ -118,6 +125,8 @@
 
 #define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP "Type '%s' doesn't support the indexing operator"
 #define TXT_OBJECT_DOESNT_SUPPORT_NEGATE_OP "Object doesn't have the negate operator"
+#define TXT_OBJECT_HANDLE_NOT_SUPPORTED   "Object handle is not supported for this type"
+#define TXT_ONLY_ONE_ARGUMENT_IN_CAST     "There is only one argument in a cast"
 
 #define TXT_PARAMETER_ALREADY_DECLARED    "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s           "Parameter type can't be '%s'"
@@ -125,11 +134,14 @@
 
 #define TXT_REF_IS_READ_ONLY              "Reference is read-only"
 #define TXT_REF_IS_TEMP                   "Reference is temporary"
+#define TXT_RETURN_CANT_BE_s              "Return type can't be '%s'"
 
 #define TXT_SIGNED_UNSIGNED_MISMATCH      "Signed/Unsigned mismatch"
 #define TXT_STRINGS_NOT_RECOGNIZED        "Strings are not recognized by the application"
 #define TXT_SWITCH_CASE_MUST_BE_CONSTANT  "Case expressions must be constants"
 #define TXT_SWITCH_MUST_BE_INTEGRAL       "Switch expressions must be integral numbers"
+
+#define TXT_TOO_MANY_ARRAY_DIMENSIONS     "Too many array dimensions"
 
 #define TXT_UNEXPECTED_END_OF_FILE        "Unexpected end of file"
 #define TXT_UNEXPECTED_TOKEN_s            "Unexpected token '%s'"

@@ -91,7 +91,7 @@ A:hover
 
 <h1>AngelCode Scripting Library byte code instruction set</h1>
 
-<p>2004/10/25, Andreas Jönsson</p>
+<p>2005/02/25, Andreas Jönsson</p>
 
 <ul>
 <li><a href="#path">Path control</a>
@@ -120,7 +120,7 @@ A:hover
 <td valign=top><code>CALL</code>&nbsp;</td>
 <td valign=top>int&nbsp;</td>
 <td valign=top>-&nbsp;</td>
-<td valign=top>Y&nbsp;</td>
+<td valign=top>-&nbsp;</td>
 <td valign=top>Y&nbsp;</td>
 <td valign=top>Takes an integer argument as the function id. Stores stack frame pointer, current function id, and program counter on the call stack. May throw an exception, e.g stack-overflow or system-error from a system function.</td>
 </tr>
@@ -128,7 +128,7 @@ A:hover
 <td valign=top><code>CALLSYS</code>&nbsp;</td>
 <td valign=top>int&nbsp;</td>
 <td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
+<td valign=top>Y&nbsp;</td>
 <td valign=top>Y&nbsp;</td>
 <td valign=top>Takes an integer argument as the function id. Stores stack frame pointer, current function id, and program counter on the call stack. May throw an exception, e.g stack-overflow or system-error from a system function.</td>
 </tr>
@@ -213,76 +213,12 @@ A:hover
 <td valign=top>Pops the offset from the stack and then jumps.</td>
 </tr>
 <tr>
-<td valign=top><code>TZ</code>&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>Pops the stack, and if the value is 0, pushes 1 on the stack, otherwise pushes 0.</td>
-</tr>
-<tr>
-<td valign=top><code>TNZ</code>&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>Pops the stack, and if the value is not 0, pushes 1 on the stack, otherwise pushes 0.</td>
-</tr>
-<tr>
-<td valign=top><code>TS</code>&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>Pops the stack, and if the value is signed (i.e. negative), pushes 1 on the stack, otherwise pushes 0.</td>
-</tr>
-<tr>
-<td valign=top><code>TNS</code>&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>Pops the stack, and if the value is not signed (i.e. not negative), pushes 1 on the stack, otherwise pushes 0.</td>
-</tr>
-<tr>
-<td valign=top><code>TP</code>&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>Pops the stack, and if the value is larger than 0, pushes 1 on the stack, otherwise pushes 0.</td>
-</tr>
-<tr>
-<td valign=top><code>TNP</code>&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>Pops the stack, and if the value is not larger than 0, pushes 1 on the stack, otherwise pushes 0.</td>
-</tr>
-<tr>
-<td valign=top><code>PEID</code>&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>+1&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>Pushes the exception location id on the stack.</td>
-</tr>
-<tr>
 <td valign=top><code>SUSPEND</code>&nbsp;</td>
 <td valign=top>-&nbsp;</td>
 <td valign=top>-&nbsp;</td>
 <td valign=top>Y&nbsp;</td>
 <td valign=top>-&nbsp;</td>
 <td valign=top>Checks an internal flag to see if the execution should be suspended.</td>
-</tr>
-<tr>
-<td valign=top><code>END</code>&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>Y&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>Ends the exception handler for a particular function.</td>
 </tr>
 </table>
 
@@ -324,6 +260,20 @@ A:hover
 <td valign=top>+2&nbsp;</td>
 <td valign=top>-&nbsp;</td>
 <td valign=top>Pushes a qword on the stack with the value in the argument.</td>
+</tr>
+<tr>
+<td valign=top><code>RD1</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Pops the address to read from, and then pushes the byte from the address on the stack.</td>
+</tr>
+<tr>
+<td valign=top><code>RD2</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Pops the address to read from, and then pushes the word from the address on the stack.</td>
 </tr>
 <tr>
 <td valign=top><code>RD4</code>&nbsp;</td>
@@ -403,6 +353,20 @@ A:hover
 <td valign=top>Swaps the top two qwords.</td>
 </tr>
 <tr>
+<td valign=top><code>SWAP48</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Swaps a dword with a qword.</td>
+</tr>
+<tr>
+<td valign=top><code>SWAP84</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Swaps a qword with a dword.</td>
+</tr>
+<tr>
 <td valign=top><code>STORE4</code>&nbsp;</td>
 <td valign=top>-&nbsp;</td>
 <td valign=top>-&nbsp;</td>
@@ -415,13 +379,6 @@ A:hover
 <td valign=top>1&nbsp;</td>
 <td valign=top>-&nbsp;</td>
 <td valign=top>Pushes the dword in the temporary register on the stack.</td>
-</tr>
-<tr>
-<td valign=top><code>ADDOFF</code>&nbsp;</td>
-<td valign=top>-&nbsp;</td>
-<td valign=top>-1&nbsp;</td>
-<td valign=top>Y&nbsp;</td>
-<td valign=top>Pops the byte offset, pops a variable reference. Adds the offset to the value that the variable points to and pushes the result on the stack. Throws null-pointer-access if the variable holds a null pointer.</td>
 </tr>
 <tr>
 <td valign=top><code>MOV4</code>&nbsp;</td>
@@ -499,6 +456,111 @@ A:hover
 <td valign=top>+2&nbsp;</td>
 <td valign=top>-&nbsp;</td>
 <td valign=top>Pushes the address of the string on the stack, then the size of the string.</td>
+</tr>
+<tr>
+<td valign=top><code>TZ</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Pops the stack, and if the value is 0, pushes 1 on the stack, otherwise pushes 0.</td>
+</tr>
+<tr>
+<td valign=top><code>TNZ</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Pops the stack, and if the value is not 0, pushes 1 on the stack, otherwise pushes 0.</td>
+</tr>
+<tr>
+<td valign=top><code>TS</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Pops the stack, and if the value is signed (i.e. negative), pushes 1 on the stack, otherwise pushes 0.</td>
+</tr>
+<tr>
+<td valign=top><code>TNS</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Pops the stack, and if the value is not signed (i.e. not negative), pushes 1 on the stack, otherwise pushes 0.</td>
+</tr>
+<tr>
+<td valign=top><code>TP</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Pops the stack, and if the value is larger than 0, pushes 1 on the stack, otherwise pushes 0.</td>
+</tr>
+<tr>
+<td valign=top><code>TNP</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Pops the stack, and if the value is not larger than 0, pushes 1 on the stack, otherwise pushes 0.</td>
+</tr>
+<tr>
+<td valign=top><code>ALLOC</code>&nbsp;</td>
+<td valign=top>uint, int&nbsp;</td>
+<td valign=top>?&nbsp;</td>
+<td valign=top>Y&nbsp;</td>
+<td valign=top>Allocates memory and calls the object constructor (with or without arguments). Pops all constructor argument. The new object is stored in the object variable popped from the stack.</td>
+</tr>
+<tr>
+<td valign=top><code>FREE</code>&nbsp;</td>
+<td valign=top>int&nbsp;</td>
+<td valign=top>-1&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Pops an address from the stack, calls the object's destructor, frees the memory the address points to and sets the address to 0.</td>
+</tr>
+<tr>
+<td valign=top><code>LOADOBJ</code>&nbsp;</td>
+<td valign=top>short&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Moves a temporary object variable into the object register.</td>
+</tr>
+<tr>
+<td valign=top><code>STOREOBJ</code>&nbsp;</td>
+<td valign=top>short&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Moves the object register to a temporary object variable.</td>
+</tr>
+<tr>
+<td valign=top><code>GETOBJ</code>&nbsp;</td>
+<td valign=top>word&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Replaces a stack frame offset with the pointer the variable at that location holds. The offset is from the stack pointer. The variable will be set to 0.</td>
+</tr>
+<tr>
+<td valign=top><code>GETREF</code>&nbsp;</td>
+<td valign=top>word&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Replaces a stack frame offset with a pointer to the variable.</td>
+</tr>
+<tr>
+<td valign=top><code>GETOBJREF</code>&nbsp;</td>
+<td valign=top>word&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Replaces a stack frame offset with the pointer the variable at that location holds.</td>
+</tr>
+<tr>
+<td valign=top><code>REFCPY</code>&nbsp;</td>
+<td valign=top>uint&nbsp;</td>
+<td valign=top>-1&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Copies a reference to a handle type, updating the reference counters of both the previous and new objects.</td>
+</tr>
+<tr>
+<td valign=top><code>CHKREF</code>&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>-&nbsp;</td>
+<td valign=top>Verifies that a reference is not null.</td>
 </tr>
 </table>
 

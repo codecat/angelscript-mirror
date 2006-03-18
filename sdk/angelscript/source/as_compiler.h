@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2004 Andreas Jönsson
+   Copyright (c) 2003-2005 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -49,6 +49,22 @@
 #include "as_types.h"
 #include "as_typeinfo.h"
 
+struct asSDeferredOutParam
+{
+	asCScriptNode *argNode;
+	asCTypeInfo    argType;
+	int            argInOutFlags;
+};
+
+struct asSExprContext
+{
+	asCByteCode bc;
+	asCTypeInfo type;
+	asCArray<asSDeferredOutParam> deferredOutParams;
+
+	~asSExprContext() { assert( deferredOutParams.GetLength() == 0 ); }
+};
+
 class asCCompiler
 {
 public:
@@ -59,7 +75,8 @@ public:
 	int CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *expr, sGlobalVariableDescription *gvar);
 
 	asCByteCode byteCode;
-	asCByteCode cleanCode;
+	asCArray<asCObjectType*> objVariableTypes;
+	asCArray<int> objVariablePos;
 
 protected:
 	friend class asCBuilder;
@@ -82,45 +99,53 @@ protected:
 	void CompileExpressionStatement(asCScriptNode *node, asCByteCode *bc);
 
 	// Expressions
-	void CompileAssignment(asCScriptNode *expr, asCByteCode *bc, asCTypeInfo *type);
-	void CompileCondition(asCScriptNode *expr, asCByteCode *bc, asCTypeInfo *type);
-	void CompileExpression(asCScriptNode *expr, asCByteCode *bc, asCTypeInfo *type);
-	void SwapPostFixOperands(asCArray<asCScriptNode *> &postfix, asCArray<asCScriptNode *> &target);
-	void CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, asCByteCode *bc, asCTypeInfo *type);
-	void CompileExpressionTerm(asCScriptNode *node, asCByteCode *bc, asCTypeInfo *type);
-	void CompileExpressionPreOp(asCScriptNode *node, asCByteCode *bc, asCTypeInfo *type);
-	void CompileExpressionPostOp(asCScriptNode *node, asCByteCode *bc, asCTypeInfo *type);
-	void CompileExpressionValue(asCScriptNode *node, asCByteCode *bc, asCTypeInfo *type);
-	void CompileFunctionCall(asCScriptNode *node, asCByteCode *bc, asCTypeInfo *type, asCObjectType *objectType);
-	void CompileConversion(asCScriptNode *node, asCByteCode *bc, asCTypeInfo *type);
-	void CompileOperator(asCScriptNode *node, asCByteCode *lbc, asCByteCode *rbc, asCByteCode *bc, asCTypeInfo *lterm, asCTypeInfo *rterm, asCTypeInfo *res);
-	void CompileOperatorOnPointers(asCScriptNode *node, asCByteCode *lbc, asCByteCode *rbc, asCByteCode *bc, asCTypeInfo *lterm, asCTypeInfo *rterm, asCTypeInfo *res);
-	void CompileMathOperator(asCScriptNode *node, asCByteCode *lbc, asCByteCode *rbc, asCByteCode *bc, asCTypeInfo *lterm, asCTypeInfo *rterm, asCTypeInfo *res);
-	void CompileBitwiseOperator(asCScriptNode *node, asCByteCode *lbc, asCByteCode *rbc, asCByteCode *bc, asCTypeInfo *lterm, asCTypeInfo *rterm, asCTypeInfo *res);
-	void CompileComparisonOperator(asCScriptNode *node, asCByteCode *lbc, asCByteCode *rbc, asCByteCode *bc, asCTypeInfo *lterm, asCTypeInfo *rterm, asCTypeInfo *res);
-	void CompileBooleanOperator(asCScriptNode *node, asCByteCode *lbc, asCByteCode *rbc, asCByteCode *bc, asCTypeInfo *lterm, asCTypeInfo *rterm, asCTypeInfo *res);
-	bool CompileOverloadedOperator(asCScriptNode *node, asCByteCode *lbc, asCByteCode *rbc, asCByteCode *bc, asCTypeInfo *ltype, asCTypeInfo *rtype, asCTypeInfo *type);
+	void CompileAssignment(asCScriptNode *expr, asSExprContext *out);
+	void CompileCondition(asCScriptNode *expr, asSExprContext *out);
+	void CompileExpression(asCScriptNode *expr, asSExprContext *out);
+	void CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, asSExprContext *out);
+	void CompileExpressionTerm(asCScriptNode *node, asSExprContext *out);
+	void CompileExpressionPreOp(asCScriptNode *node, asSExprContext *out);
+	void CompileExpressionPostOp(asCScriptNode *node, asSExprContext *out);
+	void CompileExpressionValue(asCScriptNode *node, asSExprContext *out);
+	void CompileFunctionCall(asCScriptNode *node, asSExprContext *out, asCObjectType *objectType, bool objIsConst);
+	void CompileConversion(asCScriptNode *node, asSExprContext *out);
+	void CompileOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
+	void CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
+	void CompileMathOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
+	void CompileBitwiseOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
+	void CompileComparisonOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
+	void CompileBooleanOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
+	bool CompileOverloadedOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 
 	void DefaultConstructor(asCByteCode *bc, asCDataType &dt);
 	void CompileConstructor(asCDataType &type, int offset, asCByteCode *bc);
 	void CompileDestructor(asCDataType &type, int offset, asCByteCode *bc);
-	void CompileArgumentList(asCScriptNode *node, asCArray<asCTypeInfo> &argTypes, asCArray<asCByteCode *> &argByteCodes, asCDataType *type = 0);
-	void MatchFunctions(asCArray<int> &funcs, asCArray<asCTypeInfo> &argTypes, asCScriptNode *node, const char *name);
+	void CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args, asCDataType *type = 0);
+	void MatchFunctions(asCArray<int> &funcs, asCArray<asCTypeInfo> &argTypes, asCScriptNode *node, const char *name, bool isConstMethod = false);
 
 	// Helper functions
-	void PrepareOperand(asCTypeInfo *type, asCByteCode *bc, asCScriptNode *node);
+	void SwapPostFixOperands(asCArray<asCScriptNode *> &postfix, asCArray<asCScriptNode *> &target);
+	void PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx);
+	void PrepareOperand(asSExprContext *ctx, asCScriptNode *node);
 	void PrepareForAssignment(asCDataType *lvalue, asCTypeInfo *rvalue, asCByteCode *bc, asCScriptNode *node);
 	void PerformAssignment(asCTypeInfo *lvalue, asCByteCode *bc, asCScriptNode *node);
 	bool IsVariableInitialized(asCTypeInfo *type, asCScriptNode *node);
-	void Dereference(asCByteCode *bc, asCTypeInfo *type);
+	void Dereference(asSExprContext *ctx, bool generateCode);
 	void ImplicitConversion(asCByteCode *bc, const asCDataType &to, asCTypeInfo *from, asCScriptNode *node, bool isExplicit);
 	void ImplicitConversionConstant(asCByteCode *bc, const asCDataType &to, asCTypeInfo *from, asCScriptNode *node, bool isExplicit);
 	int  MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, asCTypeInfo *argType, int paramNum);
-    void MoveArgumentToReservedSpace(asCDataType &paramType, asCTypeInfo *argType, asCScriptNode *node, asCByteCode *bc, bool haveReservedSpace, int offset);
-	int  ReserveSpaceForArgument(asCDataType &dt, asCByteCode *bc, bool alwaysReserve);
-    void PerformFunctionCall(int funcID, asCTypeInfo *type, asCByteCode *bc);
-	void PrepareFunctionCall(int funcID, asCScriptNode *argListNode, asCByteCode *bc, asCArray<asCTypeInfo> &argTypes, asCArray<asCByteCode *> &argByteCodes);
-	 
+	void PerformFunctionCall(int funcID, asSExprContext *out, bool isConstructor = false, asCArray<asCTypeInfo> *argTypes = 0, asCScriptNode *argListNode = 0);
+	void MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprContext *> &args, bool addOneToOffset);
+	void PrepareFunctionCall(int funcID, asCScriptNode *argListNode, asCByteCode *bc, asCArray<asSExprContext *> &args);
+	void AfterFunctionCall(int funcID, asCScriptNode *argListNode, asSExprContext *ctx, asCArray<asCTypeInfo> &argTypes);
+	void ProcessDeferredOutParams(asSExprContext *ctx);
+	void PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction = false, bool isInRef = false);
+	bool IsLValue(asCTypeInfo &type);
+	void DetermineDefaultArrayArgs(asCDataType &type, asDWORD *subType, asDWORD *size_arrayType);
+	void DoAssignment(asSExprContext *out, asSExprContext *lctx, asSExprContext *rctx, asCScriptNode *lexpr, asCScriptNode *rexpr, int op, asCScriptNode *opNode);
+	void MergeExprContexts(asSExprContext *before, asSExprContext *after);
+	void FilterConst(asCArray<int> &funcs);
+
 	void LineInstr(asCByteCode *bc, int pos);
 
 	int  RegisterConstantBStr(const char *str, int len);
@@ -145,6 +170,7 @@ protected:
 	asCArray<int> continueLabels;
 
 	int AllocateVariable(const asCDataType &type, bool isTemporary);
+	int AllocateVariableNotIn(const asCDataType &type, bool isTemporary, asCArray<int> &vars);
 	int GetVariableOffset(int varIndex);
 	int GetVariableSlot(int varOffset);
 	void DeallocateVariable(int pos);
@@ -155,6 +181,8 @@ protected:
 	asCArray<int> tempVariables;
 
 	bool globalExpression;
+	bool isProcessingDeferredOutParams;
+	int noCodeOutput;
 };
 
 #endif
