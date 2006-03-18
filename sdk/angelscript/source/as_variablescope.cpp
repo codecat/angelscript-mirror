@@ -44,18 +44,22 @@ BEGIN_AS_NAMESPACE
 asCVariableScope::asCVariableScope(asCVariableScope *parent)
 {
 	this->parent    = parent;
-	isBreakScope    = false;
-	isContinueScope = false;
+	Reset();
 }
 
 asCVariableScope::~asCVariableScope()
 {
-	for( asUINT n = 0; n < variables.GetLength(); n++ )
-	{
-		if( variables[n] ) delete variables[n];
+	Reset();
+}
 
-		variables[n] = 0;
-	}
+void asCVariableScope::Reset()
+{
+	isBreakScope = false;
+	isContinueScope = false;
+
+	for( asUINT n = 0; n < variables.GetLength(); n++ )
+		if( variables[n] ) delete variables[n];
+	variables.SetLength(0);
 }
 
 int asCVariableScope::DeclareVariable(const char *name, const asCDataType &type, int stackOffset)

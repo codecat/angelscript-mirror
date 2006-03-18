@@ -81,6 +81,9 @@ int asCRestore::Save()
 	count = module->globalMem.GetLength();
 	WRITE_NUM(count);
 	
+	// globalVarPointers[]
+	WriteGlobalVarPointers();
+
 	// initFunction
 	WriteFunction(&module->initFunction);
 
@@ -160,6 +163,8 @@ int asCRestore::Restore()
 	READ_NUM(count);
 	module->globalMem.SetLength(count);
 
+	// globalVarPointers[]
+	ReadGlobalVarPointers();
 
 	// initFunction
 	ReadFunction(&module->initFunction);
@@ -567,48 +572,48 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot)
 	// methods[]
 }
 
-void asCRestore::WriteByteCode(asBYTE *bc, int length)
+void asCRestore::WriteByteCode(asDWORD *bc, int length)
 {
 	while( length )
 	{
-		asBYTE c = *bc;
-		bc += 4;
-		WRITE_NUM(c);
+		asDWORD c = (*bc)&0xFF;
+		WRITE_NUM(*bc);
+		bc += 1;
 		if( c == BC_ALLOC || c == BC_FREE ||
 			c == BC_REFCPY || c == BC_OBJTYPE )
 		{
 			// Translate object type pointers into indices
-			char tmp[MAX_DATA_SIZE];
+			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
-			for( n = 0; n < bcSize[c]-4; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
 				tmp[n] = *bc++;
 
 			*(int*)tmp = FindObjectTypeIdx(*(asCObjectType**)tmp);
 
-			for( n = 0; n < bcSize[c]-4; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
 		else if( c == BC_TYPEID )
 		{
 			// Translate type ids into indices
-			char tmp[MAX_DATA_SIZE];
+			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
-			for( n = 0; n < bcSize[c]-4; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
 				tmp[n] = *bc++;
 
 			*(int*)tmp = FindTypeIdIdx(*(int*)tmp);
 
-			for( n = 0; n < bcSize[c]-4; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
 		else
 		{
 			// Store the bc as is
-			for( int n = 4; n < bcSize[c]; n++ )
+			for( int n = 1; n < asCByteCode::SizeOfType(bcTypes[c]); n++ )
 				WRITE_NUM(*bc++);
 		}
 
-		length -= bcSize[c];
+		length -= asCByteCode::SizeOfType(bcTypes[c]);
 	}
 }
 
@@ -659,19 +664,19 @@ void asCRestore::ReadUsedTypeIds()
 
 void asCRestore::TranslateFunction(asCScriptFunction *func)
 {
-	asBYTE *bc = func->byteCode.AddressOf();
+	asDWORD *bc = func->byteCode.AddressOf();
 	for( asUINT n = 0; n < func->byteCode.GetLength(); )
 	{
-		int c = bc[n];
+		int c = bc[n]&0xFF;
 		if( c == BC_TYPEID )
 		{
 			// Translate the index to the type id
-			int *tid = (int*)&bc[n+4];
+			int *tid = (int*)&bc[n+1];
 
 			*tid = FindTypeId(*tid);
 		}
 
-		n += bcSize[c];
+		n += asCByteCode::SizeOfType(bcTypes[c]);
 	}
 }
 
@@ -693,36 +698,86 @@ asCObjectType *asCRestore::FindObjectType(int idx)
 	return module->usedTypes[idx];
 }
 
-void asCRestore::ReadByteCode(asBYTE *bc, int length)
+void asCRestore::ReadByteCode(asDWORD *bc, int length)
 {
 	while( length )
 	{
-		asBYTE c;
+		asDWORD c;
 		READ_NUM(c);
-		*(asDWORD*)bc = asDWORD(c);
-		bc += 4;
+		*bc = asDWORD(c);
+		bc += 1;
+		c &= 0xFF;
 		if( c == BC_ALLOC || c == BC_FREE ||
 			c == BC_REFCPY || c == BC_OBJTYPE )
 		{
 			// Translate the index to the true object type
-			char tmp[MAX_DATA_SIZE];
+			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
-			for( n = 0; n < bcSize[c]-4; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
 				READ_NUM(tmp[n]);
 
 			*(asCObjectType**)tmp = FindObjectType(*(int*)tmp);
 
-			for( n = 0; n < bcSize[c]-4; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
 				*bc++ = tmp[n];
 		}
 		else
 		{
 			// Read the bc as is
-			for( int n = 4; n < bcSize[c]; n++ )
+			for( int n = 1; n < asCByteCode::SizeOfType(bcTypes[c]); n++ )
 				READ_NUM(*bc++);
 		}
 
-		length -= bcSize[c];
+		length -= asCByteCode::SizeOfType(bcTypes[c]);
+	}
+}
+
+void asCRestore::WriteGlobalVarPointers()
+{
+	int c = module->globalVarPointers.GetLength();
+	WRITE_NUM(c);
+
+	for( int n = 0; n < c; n++ )
+	{
+		asDWORD *p = (asDWORD*)module->globalVarPointers[n];
+		int idx = 0;
+		
+		// Is it a module global or engine global?
+		if( p >= module->globalMem.AddressOf() && p <= module->globalMem.AddressOf() + module->globalMem.GetLength() )
+			idx = (asDWORD(p) - asDWORD(module->globalMem.AddressOf()))/4;
+		else
+		{
+			for( int i = 0; i < (signed)engine->globalPropAddresses.GetLength(); i++ )
+			{
+				if( engine->globalPropAddresses[i] == p )
+				{
+					idx = -i - 1;
+					break;
+				}
+			}
+			assert( idx != 0 );
+		}
+
+		WRITE_NUM(idx);
+	}
+}
+
+void asCRestore::ReadGlobalVarPointers()
+{
+	int c;
+	READ_NUM(c);
+
+	module->globalVarPointers.SetLength(c);
+
+	for( int n = 0; n < c; n++ )
+	{
+		int idx;
+		READ_NUM(idx);
+
+		if( idx < 0 ) 
+			module->globalVarPointers[n] = (void*)(engine->globalPropAddresses[-idx - 1]);
+		else
+			module->globalVarPointers[n] = (void*)(module->globalMem.AddressOf() + idx);
 	}
 }
 

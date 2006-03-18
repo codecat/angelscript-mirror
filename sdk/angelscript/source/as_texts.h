@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -43,12 +43,12 @@
 
 #define TXT_s_ALREADY_DECLARED            "'%s' already declared"
 #define TXT_ARG_NOT_LVALUE                "Argument cannot be assigned. Output will be discarded."
-#define TXT_ARG_COMPUTED_TWICE            "Argument is evaluated twice."
 #define TXT_ARGUMENT_COUNT                "Argument count does not match definition."
 #define TXT_ASSIGN_IN_GLOBAL_EXPR         "Assignments are not allowed in global expressions"
 
 #define TXT_BOTH_MUST_BE_SAME             "Both expressions must have the same type"
 
+#define TXT_CANT_GUARANTEE_REF            "Cannot guarantee safety of reference. Copy the value to a local variable first"
 #define TXT_CANT_IMPLICITLY_CONVERT_s_TO_s "Can't implicitly convert from '%s' to '%s'."
 #define TXT_CANT_RETURN_VALUE             "Can't return value when return type is 'void'"
 #define TXT_CHANGE_SIGN_u_d               "Implicit conversion changed sign of value, %u -> %d."
@@ -59,6 +59,7 @@
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
 
+#define TXT_EMPTY_CHAR_LITERAL            "Empty character literal"
 #define TXT_EXPECTED_s                    "Expected '%s'"
 #define TXT_EXPECTED_CONSTANT             "Expected constant"
 // TODO: Should be TXT_NO_CONVERSION
@@ -127,6 +128,7 @@
 #define TXT_s_NOT_MEMBER_OF_s               "'%s' is not a member of '%s'"
 #define TXT_NOT_SUPPORTED_YET               "Not supported yet"
 #define TXT_NOT_VALID_REFERENCE             "Not a valid reference"
+#define TXT_NOT_VALID_LVALUE                "Not a valid lvalue"
 
 #define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP "Type '%s' doesn't support the indexing operator"
 #define TXT_OBJECT_DOESNT_SUPPORT_NEGATE_OP "Object doesn't have the negate operator"

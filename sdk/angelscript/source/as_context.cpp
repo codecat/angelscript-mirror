@@ -47,6 +47,7 @@
 #include "as_module.h"
 #include "as_generic.h"
 #include "as_debug.h" // mkdir()
+#include "as_bytecode.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -75,7 +76,7 @@ public:
 
 	~asCDebugStats() 
 	{
-		_mkdir("AS_DEBUG"); 
+		mkdir("AS_DEBUG"); 
 		FILE *f = fopen("AS_DEBUG/total.txt", "at");
 		if( f )
 		{
@@ -156,6 +157,8 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 
 	lineCallback = false;
 	exceptionCallback = false;
+
+	doProcessSuspend = false;
 }
 
 asCContext::~asCContext()
@@ -291,6 +294,7 @@ int asCContext::Prepare(int funcID)
 	isCallingSystemFunction = false;
 	doAbort = false;
 	doSuspend = false;
+	doProcessSuspend = lineCallback;
 	externalSuspendRequest = false;
 	status = tsPrepared;
 
@@ -360,6 +364,7 @@ int asCContext::PrepareSpecial(int funcID)
 
 	doAbort = false;
 	doSuspend = false;
+	doProcessSuspend = lineCallback;
 	externalSuspendRequest = false;
 	status = tsPrepared;
 
@@ -412,7 +417,7 @@ asDWORD asCContext::GetReturnDWord()
 	if( dt->IsObject() ) return 0;
 	assert(!dt->IsReference());
 
-	return *(asDWORD*)&returnVal;
+	return *(asDWORD*)&register1;
 }
 
 asQWORD asCContext::GetReturnQWord()
@@ -424,7 +429,7 @@ asQWORD asCContext::GetReturnQWord()
 	if( dt->IsObject() ) return 0;
 	assert(!dt->IsReference());
 
-	return returnVal;
+	return register1;
 }
 
 float asCContext::GetReturnFloat()
@@ -436,7 +441,7 @@ float asCContext::GetReturnFloat()
 	if( dt->IsObject() ) return 0;
 	assert(!dt->IsReference());
 
-	return *(float*)&returnVal;
+	return *(float*)&register1;
 }
 
 double asCContext::GetReturnDouble()
@@ -448,7 +453,7 @@ double asCContext::GetReturnDouble()
 	if( dt->IsObject() ) return 0;
 	assert(!dt->IsReference());
 
-	return *(double*)&returnVal;
+	return *(double*)&register1;
 }
 
 void *asCContext::GetReturnObject()
@@ -688,6 +693,7 @@ int asCContext::Abort()
 	CleanReturnObject();
 
 	doSuspend = true;
+	doProcessSuspend = true;
 	externalSuspendRequest = true;
 	doAbort = true;
 
@@ -701,6 +707,7 @@ int asCContext::Suspend()
 	if( engine == 0 ) return asERROR;
 
 	doSuspend = true;
+	doProcessSuspend = true;
 	externalSuspendRequest = true;
 
 	return 0;
@@ -726,21 +733,27 @@ int asCContext::Execute()
 	}
 
 	doSuspend = false;
+	doProcessSuspend = lineCallback;
 
 	asPopActiveContext((asIScriptContext *)this);
 
 
 #ifdef AS_DEBUG
 	// Output instruction statistics
-	_mkdir("AS_DEBUG");
+	mkdir("AS_DEBUG");
 	FILE *f = fopen("AS_DEBUG/stats.txt", "at");
 	fprintf(f, "\n");
+	asQWORD total = 0;
 	int n;
 	for( n = 0; n < 256; n++ )
 	{
 		if( bcName[n].name && instrCount[n] )
 			fprintf(f, "%-10.10s : %d\n", bcName[n].name, instrCount[n]);
+
+		total += instrCount[n];
 	}
+
+	fprintf(f, "\ntotal      : %I64d\n", total);
 
 	fprintf(f, "\n");
 	for( n = 0; n < 256; n++ )
@@ -785,6 +798,7 @@ int asCContext::Execute()
 
 void asCContext::PushCallState()
 {
+	// TODO: Pointer size
 	callStack.SetLength(callStack.GetLength() + CALLSTACK_FRAME_SIZE);
 
 	asDWORD *s = (asDWORD *)callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
@@ -799,11 +813,12 @@ void asCContext::PushCallState()
 
 void asCContext::PopCallState()
 {
+	// TODO: Pointer size
 	asDWORD *s = (asDWORD *)callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
 
 	stackFramePointer = (asDWORD *)s[0];
 	currentFunction   = (asCScriptFunction *)s[1];
-	byteCode          = (asBYTE *)s[2];
+	byteCode          = (asDWORD *)s[2];
 	stackPointer      = (asDWORD *)s[3];
 	stackIndex        = s[4];
 	module            = (asCModule *)s[5];
@@ -820,6 +835,7 @@ int asCContext::GetCallstackFunction(int index)
 {
 	if( index < 0 || index >= GetCallstackSize() ) return asINVALID_ARG;
 
+	// TODO: Pointer size
 	asCScriptFunction *func = (asCScriptFunction*)callStack[index*CALLSTACK_FRAME_SIZE + 1];
 	asCModule *module = (asCModule*)callStack[index*CALLSTACK_FRAME_SIZE + 5];
 
@@ -830,8 +846,9 @@ int asCContext::GetCallstackLineNumber(int index, int *column)
 {
 	if( index < 0 || index >= GetCallstackSize() ) return asINVALID_ARG;
 
+	// TODO: Pointer size
 	asCScriptFunction *func = (asCScriptFunction*)callStack[index*CALLSTACK_FRAME_SIZE + 1];
-	asBYTE *bytePos = (asBYTE*)callStack[index*CALLSTACK_FRAME_SIZE + 2];
+	asDWORD *bytePos = (asDWORD*)callStack[index*CALLSTACK_FRAME_SIZE + 2];
 
 	asDWORD line = func->GetLineNumber(bytePos - func->byteCode.AddressOf());
 	if( column ) *column = (line >> 20);
@@ -892,6 +909,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	stackFramePointer = stackPointer;
 
 	// Set all object variables to 0
+	// TODO: Pointer size
 	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 	{
 		int pos = currentFunction->objVariablePos[n];
@@ -899,85 +917,76 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	}
 }
 
-void asCContext::ExecuteNext(bool createRelocationTable)
-{
-	if( createRelocationTable ) return;
+#define DWORDARG(x)  (asDWORD(*(x+1)))
+#define INTARG(x)    (int(*(x+1)))
+#define QWORDARG(x)  (*(asQWORD*)(x+1))
+#define FLOATARG(x)  (*(float*)(x+1))
 
-	asBYTE  *l_bc = byteCode;
+#define WORDARG0(x)   (*(((asWORD*)x)+1))
+#define WORDARG1(x)   (*(((asWORD*)x)+2))
+
+#define SWORDARG0(x) (*(((short*)x)+1))
+#define SWORDARG1(x) (*(((short*)x)+2))
+#define SWORDARG2(x) (*(((short*)x)+3))
+
+
+void asCContext::ExecuteNext()
+{
+	asDWORD *l_bc = byteCode;
 	asDWORD *l_sp = stackPointer;
 	asDWORD *l_fp = stackFramePointer;
-	asDWORD  l_tempReg = 0;
 
 	for(;;)
 	{
 
 #ifdef AS_DEBUG
-	++stats.instrCount[*l_bc];
+	++stats.instrCount[(*l_bc)&0xFF];
 
-	++instrCount[*l_bc];
+	++instrCount[(*l_bc)&0xFF];
 
-	++instrCount2[lastBC][*l_bc];
-	lastBC = *l_bc;
+	++instrCount2[lastBC][(*l_bc)&0xFF];
+	lastBC = (*l_bc)&0xFF;
+
+	// Used to verify that the size of the instructions are correct
+	asDWORD *old = l_bc;
 #endif
+
 
 	// Remember to keep the cases in order and without 
 	// gaps, because that will make the switch faster. 
 	// It will be faster since only one lookup will be 
 	// made to find the correct jump destination. If not
 	// in order, the switch will make two lookups.
-	switch(*l_bc)
+	switch( *(asBYTE*)l_bc )
 	{
 //--------------
 // memory access functions
 	case BC_POP:
-		l_sp += *(asWORD*)(BCARG_W(l_bc));
-		l_bc += BCS_POP;
+		l_sp += WORDARG0(l_bc);
+		l_bc++;
 		break;
 
 	case BC_PUSH:
-		l_sp -= *(asWORD*)(BCARG_W(l_bc));
-		l_bc += BCS_PUSH;
+		l_sp -= WORDARG0(l_bc);
+		l_bc++;
 		break;
 
-	case BC_SET4:
+	case BC_PshC4:
 		--l_sp;
-		*l_sp = *(asDWORD*)(BCARG_DW(l_bc));
-		l_bc += BCS_SET4;
+		*l_sp = DWORDARG(l_bc);
+		l_bc += 2;
 		break;
 
-	case BC_RD4:
-		*l_sp = *(asDWORD*)(*l_sp);
-		l_bc += BCS_RD4;
-		break;
-
-	case BC_RDSF4:
+	case BC_PshV4:
 		--l_sp;
-		*l_sp = *(l_fp - *(short*)(BCARG_W(l_bc)));
-		l_bc += BCS_RDSF4;
-		break;
-
-	case BC_WRT4:
-		*(asDWORD*)*l_sp = *(l_sp + 1);
-		++l_sp;
-		l_bc += BCS_WRT4;
-		break;
-
-	case BC_MOV4:
-		*(asDWORD*)*l_sp = *(l_sp+1);
-		l_sp += 2;
-		l_bc += BCS_MOV4;
+		*l_sp = *(l_fp - SWORDARG0(l_bc));
+		l_bc++;
 		break;
 
 	case BC_PSF:
 		--l_sp;
-		*l_sp = asDWORD(l_fp - *(short*)(BCARG_W(l_bc)));
-		l_bc += BCS_PSF;
-		break;
-
-	case BC_MOVSF4:
-		*(l_fp - *(short*)(BCARG_W(l_bc))) = *l_sp;
-		++l_sp;
-		l_bc += BCS_MOVSF4;
+		*l_sp = asDWORD(l_fp - SWORDARG0(l_bc));
+		l_bc++;
 		break;
 
 	case BC_SWAP4:
@@ -985,19 +994,26 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			asDWORD d = *l_sp;
 			*l_sp = *(l_sp+1);
 			*(l_sp+1) = d;
-			l_bc += BCS_SWAP4;
+			l_bc++;
 		}
 		break;
 
-	case BC_STORE4:
-		l_tempReg = *l_sp;
-		l_bc += BCS_STORE4;
+	case BC_NOT:
+		*(l_fp - SWORDARG0(l_bc)) = (*(l_fp - SWORDARG0(l_bc)) == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+		l_bc++;
 		break;
 
-	case BC_RECALL4:
+	case BC_PshG4:
 		--l_sp;
-		*l_sp = l_tempReg;
-		l_bc += BCS_RECALL4;
+		*l_sp = *(asDWORD*)module->globalVarPointers[WORDARG0(l_bc)];
+		l_bc++;
+		break;
+
+	case BC_LdGRdR4:
+		*(asDWORD**)&register1 = (asDWORD*)module->globalVarPointers[WORDARG1(l_bc)];
+		// TODO: Pointer size
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)(asDWORD)register1;
+		l_bc += 2;
 		break;
 
 
@@ -1005,8 +1021,8 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 // path control instructions
 	case BC_CALL:
 		{
-			int i = *(int*)(BCARG_DW(l_bc));
-			l_bc += BCS_CALL;
+			int i = INTARG(l_bc);
+			l_bc += 2;
 
 			assert( i >= 0 );
 			assert( (i & FUNC_IMPORTED) == 0 );
@@ -1037,7 +1053,7 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 				return;
 			}
 
-			asWORD w = *(asWORD*)(BCARG_W(l_bc));
+			asWORD w = WORDARG0(l_bc);
 
 			// Need to move the values back to the context
 			byteCode = l_bc;
@@ -1058,352 +1074,196 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		break;
 
 	case BC_JMP:
-		l_bc += BCS_JMP + *(int*)(BCARG_DW(l_bc));
+		l_bc += 2 + INTARG(l_bc);
 		break;
 
+//----------------
+// Conditional jumps
 	case BC_JZ:
-		{
-			asDWORD d = *l_sp;
-			if( d == 0 )
-				l_bc += *(int*)(BCARG_DW(l_bc));
-			++l_sp;
-			l_bc += BCS_JZ;
-		}
+		if( *(int*)&register1 == 0 )
+			l_bc += INTARG(l_bc) + 2;
+		else
+			l_bc += 2;
 		break;
 
 	case BC_JNZ:
-		{
-			asDWORD d = *l_sp;
-			if( d != 0 )
-				l_bc += *(int*)(BCARG_DW(l_bc));
-			++l_sp;
-			l_bc += BCS_JNZ;
-		}
+		if( *(int*)&register1 != 0 )
+			l_bc += INTARG(l_bc) + 2;
+		else
+			l_bc += 2;
+		break;
+	case BC_JS:
+		if( *(int*)&register1 < 0 )
+			l_bc += INTARG(l_bc) + 2;
+		else
+			l_bc += 2;
+		break;
+	case BC_JNS:
+		if( *(int*)&register1 >= 0 )
+			l_bc += INTARG(l_bc) + 2;
+		else
+			l_bc += 2;
+		break;
+	case BC_JP:
+		if( *(int*)&register1 > 0 )
+			l_bc += INTARG(l_bc) + 2;
+		else
+			l_bc += 2;
+		break;
+	case BC_JNP:
+		if( *(int*)&register1 <= 0 )
+			l_bc += INTARG(l_bc) + 2;
+		else
+			l_bc += 2;
 		break;
 //--------------------
 // test instructions
 	case BC_TZ:
-		*l_sp = (*l_sp == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
-		l_bc += BCS_TZ;
+		*(int*)&register1 = (*(int*)&register1 == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+		l_bc++;
 		break;
 	case BC_TNZ:
-		*l_sp = (*l_sp == 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
-		l_bc += BCS_TNZ;
+		*(int*)&register1 = (*(int*)&register1 == 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
+		l_bc++;
 		break;
 	case BC_TS:
-		*l_sp = (int(*l_sp) < 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
-		l_bc += BCS_TS;
+		*(int*)&register1 = (*(int*)&register1 < 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+		l_bc++;
 		break;
 	case BC_TNS:
-		*l_sp = (int(*l_sp) < 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
-		l_bc += BCS_TNS;
+		*(int*)&register1 = (*(int*)&register1 < 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
+		l_bc++;
 		break;
 	case BC_TP:
-		*l_sp = (int(*l_sp) > 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
-		l_bc += BCS_TP;
+		*(int*)&register1 = (*(int*)&register1 > 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+		l_bc++;
 		break;
 	case BC_TNP:
-		*l_sp = (int(*l_sp) > 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
-		l_bc += BCS_TNP;
-		break;
-//--------------------------
-// int instructions
-	case BC_ADDi:
-		++l_sp;
-		*l_sp = asDWORD(int(*l_sp) + int(*(l_sp-1)));
-		l_bc += BCS_ADDi;
+		*(int*)&register1 = (*(int*)&register1 > 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
+		l_bc++;
 		break;
 
-	case BC_SUBi:
-		++l_sp;
-		*l_sp = asDWORD(int(*l_sp) - int(*(l_sp-1)));
-		l_bc += BCS_SUBi;
-		break;
-
-	case BC_MULi:
-		++l_sp;
-		*l_sp = asDWORD(int(*l_sp) * int(*(l_sp-1)));
-		l_bc += BCS_MULi;
-		break;
-
-	case BC_DIVi:
-		if( *l_sp == 0 )
-		{
-			// Need to move the values back to the context
-			byteCode = l_bc;
-			stackPointer = l_sp;
-			stackFramePointer = l_fp;
-
-			// Raise exception
-			SetInternalException(TXT_DIVIDE_BY_ZERO);
-			return;
-		}
-		++l_sp;
-		*l_sp = asDWORD(int(*l_sp) / int(*(l_sp-1)));
-		l_bc += BCS_DIVi;
-		break;
-
-	case BC_MODi:
-		if( *l_sp == 0 )
-		{
-			// Need to move the values back to the context
-			byteCode = l_bc;
-			stackPointer = l_sp;
-			stackFramePointer = l_fp;
-
-			// Raise exception
-			SetInternalException(TXT_DIVIDE_BY_ZERO);
-			return;
-		}
-		++l_sp;
-		*l_sp = asDWORD(int(*l_sp) % int(*(l_sp-1)));
-		l_bc += BCS_MODi;
-		break;
-
+//--------------------
+// negate value
 	case BC_NEGi:
-		*l_sp = asDWORD(-int(*l_sp));
-		l_bc += BCS_NEGi;
+		*(l_fp - SWORDARG0(l_bc)) = asDWORD(-int(*(l_fp - SWORDARG0(l_bc))));
+		l_bc++;
+		break;
+	case BC_NEGf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = -*(float*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+	case BC_NEGd:
+		*(double*)(l_fp - SWORDARG0(l_bc)) = -*(double*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
 		break;
 
-	case BC_CMPi:
-		{
-			++l_sp;
-			int i = asDWORD(int(*l_sp) - int(*(l_sp-1)));
-			if( i == 0 ) i = 0;
-			else if( i < 0 ) i = -1;
-			else i = 1;
-			*l_sp = i;
-			l_bc += BCS_CMPi;
-		}
+//-------------------------
+// Increment value pointed to by address in register
+	case BC_INCi16:
+		// TODO: Pointer size
+		(*(short*)(asDWORD)register1)++;
+		l_bc++;
 		break;
 
+	case BC_INCi8:
+		// TODO: Pointer size
+		(*(char*)(asDWORD)register1)++;
+		l_bc++;
+		break;
+
+	case BC_DECi16:
+		// TODO: Pointer size
+		(*(short*)(asDWORD)register1)--;
+		l_bc++;
+		break;
+
+	case BC_DECi8:
+		// TODO: Pointer size
+		(*(char*)(asDWORD)register1)--;
+		l_bc++;
+		break;
 	case BC_INCi:
-		++(*(int*)(*l_sp));
-		l_bc += BCS_INCi;
+		// TODO: Pointer size
+		++(*(int*)(asDWORD)register1);
+		l_bc++;
 		break;
 
 	case BC_DECi:
-		--(*(int*)(*l_sp));
-		l_bc += BCS_DECi;
+		// TODO: Pointer size
+		--(*(int*)(asDWORD)register1);
+		l_bc++;
 		break;
-
-	case BC_I2F:
-		*(float*)l_sp = float(*(int*)(l_sp));
-		l_bc += BCS_UI2F;
-		break;
-//------------------
-// float instructions
-	case BC_ADDf:
-		++l_sp;
-		*(float*)l_sp = *(float*)l_sp + *(float*)(l_sp-1);
-		l_bc += BCS_MULf;
-		break;
-
-	case BC_SUBf:
-		++l_sp;
-		*(float*)l_sp = *(float*)l_sp - *(float*)(l_sp-1);
-		l_bc += BCS_MULf;
-		break;
-
-	case BC_MULf:
-		++l_sp;
-		*(float*)l_sp = *(float*)l_sp * *(float*)(l_sp-1);
-		l_bc += BCS_MULf;
-		break;
-
-	case BC_DIVf:
-		if( *l_sp == 0 )
-		{
-			// Need to move the values back to the context
-			byteCode = l_bc;
-			stackPointer = l_sp;
-			stackFramePointer = l_fp;
-
-			// Raise exception
-			SetInternalException(TXT_DIVIDE_BY_ZERO);
-			return;
-		}
-		++l_sp;
-		*(float*)l_sp = *(float*)l_sp / *(float*)(l_sp-1);
-		l_bc += BCS_DIVf;
-		break;
-
-	case BC_MODf:
-		if( *l_sp == 0 )
-		{
-			// Need to move the values back to the context
-			byteCode = l_bc;
-			stackPointer = l_sp;
-			stackFramePointer = l_fp;
-
-			// Raise exception
-			SetInternalException(TXT_DIVIDE_BY_ZERO);
-			return;
-		}
-		++l_sp;
-		*(float*)l_sp = fmodf(*(float*)l_sp, *(float*)(l_sp-1));
-		l_bc += BCS_MODf;
-		break;
-
-	case BC_NEGf:
-		*(float*)l_sp = -*(float*)l_sp;
-		l_bc += BCS_NEGf;
-		break;
-
-	case BC_CMPf:
-		{
-			++l_sp;
-			float f = *(float*)l_sp - *(float*)(l_sp-1);
-			int i;
-			if( f == 0 ) i = 0;
-			else if( f < 0 ) i = -1;
-			else i = 1;
-			*l_sp = i;
-			l_bc += BCS_CMPf;
-		}
-		break;
-
-
 
 	case BC_INCf:
-		++(*(float*)(*l_sp));
-		l_bc += BCS_INCf;
+		// TODO: Pointer size
+		++(*(float*)(asDWORD)register1);
+		l_bc++;
 		break;
 
 	case BC_DECf:
-		--(*(float*)(*l_sp));
-		l_bc += BCS_DECf;
+		// TODO: Pointer size
+		--(*(float*)(asDWORD)register1);
+		l_bc++;
+		break;
+	case BC_INCd:
+		// TODO: Pointer size
+		++(*(double*)(asDWORD)register1);
+		l_bc++;
 		break;
 
-	case BC_F2I:
-		*l_sp = int(*(float*)(l_sp));
-		l_bc += BCS_F2I;
+	case BC_DECd:
+		// TODO: Pointer size
+		--(*(double*)(asDWORD)register1);
+		l_bc++;
+		break;
+
+//--------------------
+// Increment value pointed to by address in register
+	case BC_IncVi:
+		(*(l_fp - SWORDARG0(l_bc)))++;
+		l_bc++;
+		break;
+	case BC_DecVi:
+		(*(l_fp - SWORDARG0(l_bc)))--;
+		l_bc++;
 		break;
 
 //--------------------
 // bits instructions
 	case BC_BNOT:
-		*l_sp = ~*l_sp;
-		l_bc += BCS_BNOT;
+		*(l_fp - SWORDARG0(l_bc)) = ~*(l_fp - SWORDARG0(l_bc));
+		l_bc++;
 		break;
 
 	case BC_BAND:
-		++l_sp;
-		*l_sp = *l_sp & *(l_sp-1);
-		l_bc += BCS_BAND;
+		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) & *(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
 		break;
 
 	case BC_BOR:
-		++l_sp;
-		*l_sp = *l_sp | *(l_sp-1);
-		l_bc += BCS_BOR;
+		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) | *(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
 		break;
 
 	case BC_BXOR:
-		++l_sp;
-		*l_sp = *l_sp ^ *(l_sp-1);
-		l_bc += BCS_BXOR;
+		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) ^ *(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
 		break;
 
 	case BC_BSLL:
-		++l_sp;
-		*l_sp = *l_sp << *(l_sp-1);
-		l_bc += BCS_BSLL;
+		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) << *(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
 		break;
 
 	case BC_BSRL:
-		++l_sp;
-		*l_sp = *l_sp >> *(l_sp-1);
-		l_bc += BCS_BSRL;
+		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) >> *(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
 		break;
 
 	case BC_BSRA:
-		++l_sp;
-		*l_sp = int(*l_sp) >> *(l_sp-1);
-		l_bc += BCS_BSRA;
-		break;
-
-//----------------------------------
-	case BC_UI2F:
-		*(float*)l_sp = float(*(unsigned int*)(l_sp));
-		l_bc += BCS_UI2F;
-		break;
-	
-	case BC_F2UI:
-		*l_sp = (unsigned int)(*(float*)(l_sp));
-		l_bc += BCS_F2UI;
-		break;
-
-	case BC_CMPui:
-		{
-			asDWORD d = asDWORD(*(l_sp+1));
-			asDWORD d2 = asDWORD(*l_sp);
-			l_sp++;
-			int i;
-			if( d == d2 ) i = 0;
-			else if( d < d2 ) i = -1;
-			else i = 1;
-			*l_sp = asDWORD(i);
-			l_bc += BCS_CMPui;
-		}
-		break;
-		
-	case BC_SB:
-		*l_sp = *(char*)l_sp;
-		l_bc += BCS_SB;
-		break;
-
-	case BC_SW:
-		*l_sp = *(short*)l_sp;
-		l_bc += BCS_SW;
-		break;
-
-	case BC_UB:
-		*l_sp = *(asBYTE*)l_sp;
-		l_bc += BCS_UB;
-		break;
-
-	case BC_UW:
-		*l_sp = *(asWORD*)l_sp;
-		l_bc += BCS_UW;
-		break;
-
-	case BC_WRT1:
-		l_sp++;
-		*(asBYTE*)*(l_sp-1) = *(asBYTE*)l_sp;
-		l_bc += BCS_WRT1;
-		break;
-
-	case BC_WRT2:
-		l_sp++;
-		*(asWORD*)*(l_sp-1) = *(asWORD*)l_sp;
-		l_bc += BCS_WRT2;
-		break;
-
-	case BC_INCi16:
-		(*(short*)(*l_sp))++;
-		l_bc += BCS_INCi16;
-		break;
-
-	case BC_INCi8:
-		(*(char*)(*l_sp))++;
-		l_bc += BCS_INCi8;
-		break;
-
-	case BC_DECi16:
-		(*(short*)(*l_sp))--;
-		l_bc += BCS_DECi16;
-		break;
-
-	case BC_DECi8:
-		(*(char*)(*l_sp))--;
-		l_bc += BCS_DECi8;
-		break;
-
-	case BC_PUSHZERO:
-		--l_sp;
-		*l_sp = 0;
-		l_bc += BCS_PUSHZERO;
+		*(l_fp - SWORDARG0(l_bc)) = int(*(l_fp - SWORDARG1(l_bc))) >> *(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
 		break;
 
 	case BC_COPY:
@@ -1421,112 +1281,22 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
 				return;
 			}
-			memcpy(d, s, *(asWORD*)(BCARG_W(l_bc))*4);
+			memcpy(d, s, WORDARG0(l_bc)*4);
 		}
-		l_bc += BCS_COPY;
-		break;
-
-	case BC_PGA:
-		{
-			int i = *(int*)(BCARG_DW(l_bc));
-			--l_sp;
-			if( i < 0 )
-				*l_sp = asDWORD(engine->globalPropAddresses[-int(i) - 1]);
-			else
-				*l_sp = asDWORD(module->globalMem.AddressOf() + (i & 0xFFFF));
-			l_bc += BCS_PGA;
-		}
+		l_bc++;
 		break;
 
 	case BC_SET8:
 		l_sp -= 2;
-		*(asQWORD*)l_sp = *(asQWORD*)(BCARG_QW(l_bc));
-		l_bc += BCS_SET8;
+		*(asQWORD*)l_sp = QWORDARG(l_bc);
+		l_bc += 3;
 		break;
 
-	case BC_WRT8:
-		l_sp++;
-		*(asQWORD*)*(l_sp-1) = *(asQWORD*)l_sp;
-		l_bc += BCS_WRT8;
-		break;
-
-	case BC_RD8:
+	case BC_RDS8:
+		// TODO: Pointer size
 		*(asQWORD*)(l_sp-1) = *(asQWORD*)*l_sp;
 		--l_sp;
-		l_bc += BCS_RD8;
-		break;
-
-	case BC_NEGd:
-		*(double*)l_sp = -*(double*)l_sp;
-		l_bc += BCS_NEGd;
-		break;
-
-	case BC_INCd:
-		++(*(double*)(*l_sp));
-		l_bc += BCS_INCd;
-		break;
-
-	case BC_DECd:
-		--(*(double*)(*l_sp));
-		l_bc += BCS_DECd;
-		break;
-
-	case BC_ADDd:
-		l_sp += 2;
-		*(double*)l_sp = *(double*)(l_sp) + *(double*)(l_sp-2);
-		l_bc += BCS_ADDd;
-		break;
-	
-	case BC_SUBd:
-		l_sp += 2;
-		*(double*)l_sp = *(double*)(l_sp) - *(double*)(l_sp-2);
-		l_bc += BCS_SUBd;
-		break;
-
-	case BC_MULd:
-		l_sp += 2;
-		*(double*)l_sp = *(double*)(l_sp) * *(double*)(l_sp-2);
-		l_bc += BCS_MULd;
-		break;
-
-	case BC_DIVd:
-		{
-			if( *(asQWORD*)l_sp == 0 )
-			{
-				// Need to move the values back to the context
-				byteCode = l_bc;
-				stackPointer = l_sp;
-				stackFramePointer = l_fp;
-
-				// Raise exception
-				SetInternalException(TXT_DIVIDE_BY_ZERO);
-				return;
-			}
-			
-			l_sp += 2;
-			*(double*)l_sp = *(double*)(l_sp) / *(double*)(l_sp-2);
-			l_bc += BCS_DIVd;
-		}
-		break;
-
-	case BC_MODd:
-		{
-			if( *(asQWORD*)l_sp == 0 )
-			{
-				// Need to move the values back to the context
-				byteCode = l_bc;
-				stackPointer = l_sp;
-				stackFramePointer = l_fp;
-
-				// Raise exception
-				SetInternalException(TXT_DIVIDE_BY_ZERO);
-				return;
-			}
-			
-			l_sp += 2;
-			*(double*)l_sp = fmod(*(double*)(l_sp), *(double*)(l_sp-2));
-			l_bc += BCS_MODd;
-		}
+		l_bc++;
 		break;
 
 	case BC_SWAP8:
@@ -1534,181 +1304,124 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			asQWORD q = *(asQWORD*)l_sp;
 			*(asQWORD*)l_sp = *(asQWORD*)(l_sp+2);
 			*(asQWORD*)(l_sp+2) = q;
-			l_bc += BCS_SWAP8;
+			l_bc++;
 		}
 		break;
 
+	//----------------------------
+	// Comparisons
 	case BC_CMPd:
 		{
-			double dbl = *(double*)(l_sp+2) - *(double*)(l_sp);
-			l_sp += 3;
-			int i;
-			if( dbl == 0 ) i = 0;
-			else if( dbl < 0 ) i = -1;
-			else i = 1;
-			*l_sp = asDWORD(i);
-
-			l_bc += BCS_CMPd;
+			double dbl = *(double*)(l_fp - SWORDARG0(l_bc)) - *(double*)(l_fp - SWORDARG1(l_bc));
+			if( dbl == 0 )     *(int*)&register1 =  0;
+			else if( dbl < 0 ) *(int*)&register1 = -1;
+			else               *(int*)&register1 =  1;
+			l_bc += 2;
 		}
 		break;
 
-	case BC_dTOi:
+	case BC_CMPu:
 		{
-			int i = int(*(double*)(l_sp++));
-			*l_sp = i;
+			asDWORD d = *(l_fp - SWORDARG0(l_bc));
+			asDWORD d2 = *(l_fp - SWORDARG1(l_bc));
+			if( d == d2 )     *(int*)&register1 =  0;
+			else if( d < d2 ) *(int*)&register1 = -1;
+			else              *(int*)&register1 =  1;
+			l_bc += 2;
 		}
-		l_bc += BCS_dTOui;
 		break;
 
-	case BC_dTOui:
+	case BC_CMPf:
 		{
-			asUINT u = asDWORD(*(double*)(l_sp++));
-			*l_sp = u;
+			float f = *(float*)(l_fp - SWORDARG0(l_bc)) - *(float*)(l_fp - SWORDARG1(l_bc));
+			if( f == 0 )     *(int*)&register1 =  0;
+			else if( f < 0 ) *(int*)&register1 = -1;
+			else             *(int*)&register1 =  1;
+			l_bc += 2;
 		}
-		l_bc += BCS_dTOui;
 		break;
 
-	case BC_dTOf:
+	case BC_CMPi:
 		{
-			float f = float(*(double*)(l_sp++));
-			*(float*)l_sp = f;
+			int i = *(int*)(l_fp - SWORDARG0(l_bc)) - *(int*)(l_fp - SWORDARG1(l_bc));
+			if( i == 0 )     *(int*)&register1 =  0;
+			else if( i < 0 ) *(int*)&register1 = -1;
+			else             *(int*)&register1 =  1;
+			l_bc += 2;
 		}
-		l_bc += BCS_dTOf;
 		break;
 
-	case BC_iTOd:
+	//----------------------------
+	// Comparisons with constant value
+	case BC_CMPIi:
 		{
-			double d = double(int(*l_sp--));
-			*(double*)l_sp = d;
+			int i = *(int*)(l_fp - SWORDARG0(l_bc)) - INTARG(l_bc);
+			if( i == 0 )     *(int*)&register1 =  0;
+			else if( i < 0 ) *(int*)&register1 = -1;
+			else             *(int*)&register1 =  1;
+			l_bc += 2;
 		}
-		l_bc += BCS_iTOd;
 		break;
 
-	case BC_uiTOd:
+	case BC_CMPIf:
 		{
-			double d = double(*l_sp--);
-			*(double*)l_sp = d;
+			float f = *(float*)(l_fp - SWORDARG0(l_bc)) - FLOATARG(l_bc);
+			if( f == 0 )     *(int*)&register1 =  0;
+			else if( f < 0 ) *(int*)&register1 = -1;
+			else             *(int*)&register1 =  1;
+			l_bc += 2;
 		}
-		l_bc += BCS_uiTOd;
 		break;
 
-	case BC_fTOd:
+	case BC_CMPIu:
 		{
-			double d = double(*(float*)(l_sp--));
-			*(double*)l_sp = d;
+			asDWORD d1 = *(l_fp - SWORDARG0(l_bc));
+			asDWORD d2 = DWORDARG(l_bc);
+			if( d1 == d2 )     *(int*)&register1 =  0;
+			else if( d1 < d2 ) *(int*)&register1 = -1;
+			else               *(int*)&register1 =  1;
+			l_bc += 2;
 		}
-		l_bc += BCS_fTOd;
 		break;
 
 	case BC_JMPP:
-		l_bc += BCS_JMPP + (*l_sp++)*BCS_JMP;
+		l_bc += 1 + (*(int*)(l_fp - SWORDARG0(l_bc)))*2;
 		break;
 
-	case BC_SRET4:
-		*(asDWORD*)&returnVal = *l_sp;
+	case BC_PopRPtr:
+		// TODO: Pointer size
+		*(asDWORD*)&register1 = *l_sp;
 		l_sp++;
-		l_bc += BCS_SRET4;
+		l_bc++;
 		break;
 
-	case BC_SRET8:
-		returnVal = *(asQWORD*)l_sp;
-		l_sp += 2;
-		l_bc += BCS_SRET8;
-		break;
-
-	case BC_RRET4:
+	case BC_PshRPtr:
+		// TODO: Pointer size
 		l_sp--;
-		*l_sp = *(asDWORD*)&returnVal;
-		l_bc += BCS_RRET4;
+		*l_sp = *(asDWORD*)&register1;
+		l_bc++;
 		break;
 
-	case BC_RRET8:
-		l_sp -= 2;
-		*(asQWORD*)l_sp = returnVal;
-		l_bc += BCS_RRET8;
-		break;
-
-// -----------------------
 	case BC_STR:
 		{
 			// Get the string id from the argument
-			asWORD w = *(asWORD*)(BCARG_W(l_bc));
+			asWORD w = WORDARG0(l_bc);
 			// Push the string pointer on the stack
+			// TODO: Pointer size
 			--l_sp;
 			const asCString &b = module->GetConstantString(w);
 			*l_sp = (asDWORD)b.AddressOf();
 			// Push the string length on the stack
 			--l_sp;
 			*l_sp = b.GetLength();
-			l_bc += BCS_STR;
-		}
-		break;
-
-	case BC_JS:
-		{
-			int i = int(*l_sp);
-			if( i < 0 )
-				l_bc += *(int*)(BCARG_DW(l_bc));
-			l_sp++;
-			l_bc += BCS_JS;
-		}
-		break;
-	case BC_JNS:
-		{
-			int i = int(*l_sp);
-			if( i >= 0 )
-				l_bc += *(int*)(BCARG_DW(l_bc));
-			l_sp++;
-			l_bc += BCS_JNS;
-		}
-		break;
-	case BC_JP:
-		{
-			int i = int(*l_sp);
-			if( i > 0 )
-				l_bc += *(int*)(BCARG_DW(l_bc));
-			l_sp++;
-			l_bc += BCS_JP;
-		}
-		break;
-	case BC_JNP:
-		{
-			int i = int(*l_sp);
-			if( i <= 0 )
-				l_bc += *(int*)(BCARG_DW(l_bc));
-			l_sp++;
-			l_bc += BCS_JNP;
-		}
-		break;
-
-	case BC_CMPIi:
-		{
-			int i = int(*l_sp) - *(int*)(BCARG_DW(l_bc));
-			if( i == 0 ) i = 0;
-			else if( i < 0 ) i = -1;
-			else i = 1;
-			*l_sp = asDWORD(i);
-			l_bc += BCS_CMPIi;
-		}
-		break;
-
-	case BC_CMPIui:
-		{
-			asDWORD d2 = *(asDWORD*)(BCARG_DW(l_bc));
-			asDWORD d = asDWORD(*l_sp);
-			int i;
-			if( d == d2 ) i = 0;
-			else if( d < d2 ) i = -1;
-			else i = 1;
-			*l_sp = asDWORD(i);
-			l_bc += BCS_CMPIui;
+			l_bc++;
 		}
 		break;
 
 	case BC_CALLSYS:
 		{
 			// Get function ID from the argument
-			int i = *(int*)(BCARG_DW(l_bc));
+			int i = INTARG(l_bc);
 			assert( i < 0 );
 
 			// Need to move the values back to the context 
@@ -1719,7 +1432,7 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			l_sp += CallSystemFunction(i, this, 0);
 
 			// Update the program position after the call so that line number is correct
-			l_bc += BCS_CALLSYS;
+			l_bc += 2;
 
 			// Should the execution be suspended?
 			if( doSuspend )
@@ -1746,8 +1459,8 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 	case BC_CALLBND:
 		{
 			// Get the function ID from the stack
-			int i = *(int*)(BCARG_DW(l_bc));
-			l_bc += BCS_CALL;
+			int i = INTARG(l_bc);
+			l_bc += 2;
 
 			assert( i >= 0 );
 			assert( i & FUNC_IMPORTED );
@@ -1782,92 +1495,37 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		}
 		break;
 
-	case BC_RDGA4:
-		{
-			int i = *(int*)(BCARG_DW(l_bc));
-			asDWORD *a;
-			if( i < 0 )
-				a = (asDWORD*)(engine->globalPropAddresses[-int(i) - 1]);
-			else
-				a = (asDWORD*)(module->globalMem.AddressOf() + (i & 0xFFFF));
-			--l_sp;
-			*l_sp = *a;
-			l_bc += BCS_RDGA4;
-		}
-		break;
-
-	case BC_MOVGA4:
-		{
-			int i = *(int*)(BCARG_DW(l_bc));
-			asDWORD *a;
-			if( i < 0 )
-				a = (asDWORD*)(engine->globalPropAddresses[-int(i) - 1]);
-			else
-				a = (asDWORD*)(module->globalMem.AddressOf() + (i & 0xFFFF));
-			*(asDWORD*)a = *l_sp++;
-			l_bc += BCS_MOVGA4;
-		}
-		break;
-	case BC_ADDIi:
-		*l_sp = asDWORD(int(asDWORD(*l_sp)) + *(int*)(BCARG_DW(l_bc)));
-		l_bc += BCS_ADDIi;
-		break;
-	case BC_SUBIi:
-		*l_sp = asDWORD(int(asDWORD(*l_sp)) - *(int*)(BCARG_DW(l_bc)));
-		l_bc += BCS_SUBIi;
-		break;
-	case BC_CMPIf:
-		{
-			float f = *(float*)l_sp - *(float*)(BCARG_DW(l_bc));
-			int i;
-			if( f == 0 ) i = 0;
-			else if( f < 0 ) i = -1;
-			else i = 1;
-			*l_sp = asDWORD(i);
-			l_bc += BCS_CMPIf;
-		}
-		break;
-	case BC_ADDIf:
-		*(float*)l_sp = *(float*)l_sp + *(float*)(BCARG_DW(l_bc));
-		l_bc += BCS_ADDIf;
-		break;
-	case BC_SUBIf:
-		*(float*)l_sp = *(float*)l_sp - *(float*)(BCARG_DW(l_bc));
-		l_bc += BCS_SUBIf;
-		break;
-	case BC_MULIi:
-		*l_sp = asDWORD(int(asDWORD(*l_sp)) * *(int*)(BCARG_DW(l_bc)));
-		l_bc += BCS_MULIi;
-		break;
-	case BC_MULIf:
-		*(float*)l_sp = *(float*)l_sp * *(float*)(BCARG_DW(l_bc));
-		l_bc += BCS_MULIf;
-		break;
 	case BC_SUSPEND:
-		if( lineCallback )
+		if( doProcessSuspend )
 		{
-			byteCode = l_bc;
-			stackPointer = l_sp;
-			stackFramePointer = l_fp;
+			if( lineCallback )
+			{
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
 
-			CallLineCallback();
-		}
-		l_bc += BCS_SUSPEND;
-		if( doSuspend )
-		{
-			// Need to move the values back to the context
-			byteCode = l_bc;
-			stackPointer = l_sp;
-			stackFramePointer = l_fp;
+				CallLineCallback();
+			}
+			l_bc++;
+			if( doSuspend )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
 
-			status = tsSuspended;
-			return;
+				status = tsSuspended;
+				return;
+			}
 		}
+		else
+			l_bc++;
 		break;
 	case BC_ALLOC:
 		{
-			asCObjectType *objType = *(asCObjectType**)(BCARG_DW(l_bc));
-			int func = *(int*)(BCARG_DW(l_bc)+1);
+			// TODO: Pointer size. Don't read pointer from arg, use lookup table instead
+			asCObjectType *objType = (asCObjectType*)DWORDARG(l_bc);
+			int func = INTARG(l_bc+1);
 			asDWORD *mem = (asDWORD*)engine->CallAlloc(objType);
 			
 			if( func )
@@ -1881,10 +1539,11 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			}
 
 			// Pop the variable address from the stack
+			// TODO: Pointer size
 			asDWORD **a = (asDWORD**)*l_sp++;
 			if( a ) *a = mem;
 
-			l_bc += BCS_ALLOC;
+			l_bc += 3;
 
 			// Should the execution be suspended?
 			if( doSuspend )
@@ -1912,10 +1571,12 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		break;
 	case BC_FREE:
 		{
+			// TODO: Pointer size
 			asDWORD **a = (asDWORD**)*l_sp++;
 			if( a && *a )
 			{
-				asCObjectType *objType = *(asCObjectType**)(BCARG_DW(l_bc));
+				// TODO: Pointer size. Don't read pointer from arg, use lookup table instead
+				asCObjectType *objType = (asCObjectType*)DWORDARG(l_bc);
 				asSTypeBehaviour *beh = &objType->beh;
 
 				// Need to move the values back to the context 
@@ -1942,40 +1603,39 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 				*a = 0;
 			}
 		}
-		l_bc += BCS_FREE;
+		l_bc += 2;
 		break;
 	case BC_LOADOBJ:
 		{
 			// Move the object pointer from the object variable into the object register
-			void **a = (void**)asDWORD(l_fp - *(short*)(BCARG_W(l_bc)));
+			void **a = (void**)asDWORD(l_fp - SWORDARG0(l_bc));
 			objectType = 0;
 			objectRegister = *a;
 			*a = 0;
 		}
-		l_bc += BCS_LOADOBJ;
+		l_bc++;
 		break;
 	case BC_STOREOBJ:
-		{
-			// Move the object pointer from the object register to the object variable
-			void **a = (void**)asDWORD(l_fp - *(short*)(BCARG_W(l_bc)));
-			*a = objectRegister;
-			objectRegister = 0;
-		}
-		l_bc += BCS_STOREOBJ;
+		// Move the object pointer from the object register to the object variable
+		// TODO: Pointer size
+		*(l_fp - SWORDARG0(l_bc)) = asDWORD(objectRegister);
+		objectRegister = 0;
+		l_bc++;
 		break;
 	case BC_GETOBJ:
 		{
-			asDWORD *a = l_sp + *(asWORD*)(BCARG_W(l_bc));
+			asDWORD *a = l_sp + WORDARG0(l_bc);
 			asDWORD offset = *a;
 			asDWORD *v = l_fp - offset;
 			*a = *v;
 			*v = 0;
 		}
-		l_bc += BCS_GETOBJ;
+		l_bc++;
 		break;
 	case BC_REFCPY:
 		{
-			asCObjectType *objType = *(asCObjectType**)(BCARG_DW(l_bc));
+			// TODO: Pointer size. Don't read pointer from arg, use lookup table instead
+			asCObjectType *objType = (asCObjectType*)DWORDARG(l_bc);
 			asSTypeBehaviour *beh = &objType->beh;
 			void **d = (void**)*l_sp++;
 			void *s = (void*)*l_sp;
@@ -1991,10 +1651,11 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 				engine->CallObjectMethod(s, beh->addref);
 			*d = s;
 		}
-		l_bc += BCS_REFCPY;
+		l_bc += 2;
 		break;
 	case BC_CHKREF:
 		{
+			// TODO: Pointer size
 			asDWORD a = *l_sp;
 			if( a == 0 )
 			{
@@ -2006,29 +1667,24 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 				return;
 			}
 		}
-		l_bc += BCS_CHKREF;
+		l_bc++;
 		break;
-	case BC_RD1:
-		*l_sp = *(asBYTE*)(*l_sp);
-		l_bc += BCS_RD1;
-		break;
-	case BC_RD2:
-		*l_sp = *(asWORD*)(*l_sp);
-		l_bc += BCS_RD2;
-		break;
+
 	case BC_GETOBJREF:
 		{
-			asDWORD *a = l_sp + *(asWORD*)(BCARG_W(l_bc));
+			// TODO: Pointer size
+			asDWORD *a = l_sp + WORDARG0(l_bc);
 			*(asDWORD**)a = *(asDWORD**)(l_fp - *a);
 		}
-		l_bc += BCS_GETOBJ;
+		l_bc++;
 		break;
 	case BC_GETREF:
 		{
-			asDWORD *a = l_sp + *(asWORD*)(BCARG_W(l_bc));
+			// TODO: Pointer size
+			asDWORD *a = l_sp + WORDARG0(l_bc);
 			*(asDWORD**)a = l_fp - *a;
 		}
-		l_bc += BCS_GETOBJ;
+		l_bc++;
 		break;
 	case BC_SWAP48:
 		{
@@ -2036,7 +1692,7 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			asQWORD q = *(asQWORD*)(l_sp+1);
 			*(asQWORD*)l_sp = q;
 			*(asDWORD*)(l_sp+2) = d;
-			l_bc += BCS_SWAP48;
+			l_bc++;
 		}
 		break;
 	case BC_SWAP84:
@@ -2045,27 +1701,570 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			asDWORD d = *(asDWORD*)(l_sp+2);
 			*(asDWORD*)l_sp = d;
 			*(asQWORD*)(l_sp+1) = q;
-			l_bc += BCS_SWAP84;
+			l_bc++;
 		}
 		break;
 	case BC_OBJTYPE:
 		{
 			--l_sp;
-			asCObjectType *objType = *(asCObjectType**)(BCARG_DW(l_bc));
+			// TODO: Pointer size. Don't read pointer from arg, use lookup table instead
+			asCObjectType *objType = (asCObjectType*)DWORDARG(l_bc);
 			*l_sp = (asDWORD)objType;
-			l_bc += BCS_OBJTYPE;
+			l_bc += 2;
 		}
 		break;
 	case BC_TYPEID:
 		{
 			--l_sp;
-			asDWORD typeId = *BCARG_DW(l_bc);
+			asDWORD typeId = DWORDARG(l_bc);
 			*l_sp = typeId;
-			l_bc += BCS_TYPEID;
+			l_bc += 2;
+		}
+		break;
+	case BC_SetV4:
+		*(l_fp - SWORDARG0(l_bc)) = DWORDARG(l_bc);
+		l_bc += 2;
+		break;
+	case BC_SetV8:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = QWORDARG(l_bc);
+		l_bc += 3;
+		break;
+	case BC_ADDSi:
+		// TODO: Pointer size. This command is used to offset a pointer on the stack
+		*l_sp = asDWORD(int(*l_sp) + INTARG(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_CpyVtoV4:
+		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc));
+		l_bc += 2;
+		break;
+	case BC_CpyVtoV8:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc));
+		l_bc += 2;
+		break;
+	case BC_CpyVtoR4:
+		*(asDWORD*)&register1 = *(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+	case BC_CpyVtoR8:
+		*(asQWORD*)&register1 = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+	case BC_CpyVtoG4:
+		*(asDWORD*)module->globalVarPointers[WORDARG0(l_bc)] = *(asDWORD*)(l_fp - SWORDARG1(l_bc));
+		l_bc += 2;
+		break;
+	case BC_CpyRtoV4:
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)&register1;
+		l_bc++;
+		break;
+	case BC_CpyRtoV8:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = register1;
+		l_bc++;
+		break;
+	case BC_CpyGtoV4:
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)module->globalVarPointers[WORDARG1(l_bc)];
+		l_bc += 2;
+		break;
+
+	case BC_WRTV1:
+		// TODO: Pointer size
+		*(asBYTE*)(asDWORD)register1 = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+	case BC_WRTV2:
+		// TODO: Pointer size
+		*(asWORD*)(asDWORD)register1 = *(asWORD*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+	case BC_WRTV4:
+		// TODO: Pointer size
+		*(asDWORD*)(asDWORD)register1 = *(asDWORD*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+	case BC_WRTV8:
+		// TODO: Pointer size
+		*(asQWORD*)(asDWORD)register1 = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+
+	case BC_RDR1:
+		// TODO: Pointer size
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asBYTE*)(asDWORD)register1;
+		l_bc++;
+		break;
+	case BC_RDR2:
+		// TODO: Pointer size
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asWORD*)(asDWORD)register1;
+		l_bc++;
+		break;
+	case BC_RDR4:
+		// TODO: Pointer size
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)(asDWORD)register1;
+		l_bc++;
+		break;
+	case BC_RDR8:
+		// TODO: Pointer size
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(asDWORD)register1;
+		l_bc++;
+		break;
+
+	case BC_LDG:
+		*(asDWORD**)&register1 = (asDWORD*)module->globalVarPointers[WORDARG0(l_bc)];
+		l_bc++;
+		break;
+	case BC_LDV:
+		// TODO: Pointer size
+		register1 = asDWORD(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+	case BC_PGA:
+		// TODO: Pointer size
+		--l_sp;
+		*l_sp = (asDWORD)module->globalVarPointers[WORDARG0(l_bc)];
+		l_bc++;
+		break;
+	case BC_RDS4:
+		*l_sp = *(asDWORD*)(*l_sp);
+		l_bc++;
+		break;
+	case BC_VAR:
+		--l_sp;
+		*l_sp = SWORDARG0(l_bc);
+		l_bc++;
+		break;
+
+	//----------------------------
+	// Type conversions
+	case BC_iTOf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(int*)(l_fp - SWORDARG0(l_bc)));
+		l_bc++;
+		break;
+
+	case BC_fTOi:
+		*(l_fp - SWORDARG0(l_bc)) = int(*(float*)(l_fp - SWORDARG0(l_bc)));
+		l_bc++;
+		break;
+
+	case BC_uTOf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(l_fp - SWORDARG0(l_bc)));
+		l_bc++;
+		break;
+	
+	case BC_fTOu:
+		*(l_fp - SWORDARG0(l_bc)) = asUINT(*(float*)(l_fp - SWORDARG0(l_bc)));
+		l_bc++;
+		break;
+		
+	case BC_sbTOi:
+		*(l_fp - SWORDARG0(l_bc)) = *(char*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+
+	case BC_swTOi:
+		*(l_fp - SWORDARG0(l_bc)) = *(short*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+
+	case BC_ubTOi:
+		*(l_fp - SWORDARG0(l_bc)) = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+
+	case BC_uwTOi:
+		*(l_fp - SWORDARG0(l_bc)) = *(asWORD*)(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+	case BC_dTOi:
+		*(l_fp - SWORDARG0(l_bc)) = int(*(double*)(l_fp - SWORDARG1(l_bc)));
+		l_bc += 2;
+		break;
+
+	case BC_dTOu:
+		*(l_fp - SWORDARG0(l_bc)) = asUINT(*(double*)(l_fp - SWORDARG1(l_bc)));
+		l_bc += 2;
+		break;
+
+	case BC_dTOf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(double*)(l_fp - SWORDARG1(l_bc)));
+		l_bc += 2;
+		break;
+
+	case BC_iTOd:
+		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(int*)(l_fp - SWORDARG1(l_bc)));
+		l_bc += 2;
+		break;
+
+	case BC_uTOd:
+		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(asUINT*)(l_fp - SWORDARG1(l_bc)));
+		l_bc += 2;
+		break;
+
+	case BC_fTOd:
+		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(float*)(l_fp - SWORDARG1(l_bc)));
+		l_bc += 2;
+		break;
+
+	//------------------------------
+	// Math operations
+	case BC_ADDi:
+		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) + *(int*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_SUBi:
+		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) - *(int*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_MULi:
+		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) * *(int*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_DIVi:
+		{
+			int divider = *(int*)(l_fp - SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) / divider;
+		}
+		l_bc += 2;
+		break;
+
+	case BC_MODi:
+		{
+			int divider = *(int*)(l_fp - SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) % divider;
+		}
+		l_bc += 2;
+		break;
+
+	case BC_ADDf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) + *(float*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_SUBf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) - *(float*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_MULf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) * *(float*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_DIVf:
+		{
+			float divider = *(float*)(l_fp - SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) / divider;
+		}
+		l_bc += 2;
+		break;
+
+	case BC_MODf:
+		{
+			float divider = *(float*)(l_fp - SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(float*)(l_fp - SWORDARG0(l_bc)) = fmodf(*(float*)(l_fp - SWORDARG1(l_bc)), divider);
+		}
+		l_bc += 2;
+		break;
+
+	case BC_ADDd:
+		*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) + *(double*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+	
+	case BC_SUBd:
+		*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) - *(double*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_MULd:
+		*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) * *(double*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_DIVd:
+		{
+			double divider = *(double*)(l_fp - SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			
+			*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) / divider;
+			l_bc += 2;
 		}
 		break;
 
+	case BC_MODd:
+		{
+			double divider = *(double*)(l_fp - SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
 
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			
+			*(double*)(l_fp - SWORDARG0(l_bc)) = fmod(*(double*)(l_fp - SWORDARG1(l_bc)), divider);
+			l_bc += 2;
+		}
+		break;
+
+	//------------------------------
+	// Math operations with constant value
+	case BC_ADDIi:
+		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) + INTARG(l_bc+1);
+		l_bc += 3;
+		break;
+
+	case BC_SUBIi:
+		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) - INTARG(l_bc+1);
+		l_bc += 3;
+		break;
+
+	case BC_MULIi:
+		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) * INTARG(l_bc+1);
+		l_bc += 3;
+		break;
+
+	case BC_ADDIf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) + FLOATARG(l_bc+1);
+		l_bc += 3;
+		break;
+
+	case BC_SUBIf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) - FLOATARG(l_bc+1);
+		l_bc += 3;
+		break;
+
+	case BC_MULIf:
+		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) * FLOATARG(l_bc+1);
+		l_bc += 3;
+		break;
+
+	//-----------------------------------
+	case BC_SetG4:
+		*(asDWORD*)module->globalVarPointers[WORDARG0(l_bc)] = DWORDARG(l_bc);
+		l_bc += 2;
+		break;
+
+	case BC_ChkRefS:
+		{
+			// TODO: Pointer size
+			asDWORD *a = (asDWORD*)*l_sp;
+			if( *a == 0 )
+			{
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+				return;
+			}
+		}
+		l_bc++;
+		break;
+
+	case BC_ChkNullV:
+		{
+			// TODO: Pointer size
+			asDWORD *a = *(asDWORD**)(l_fp - SWORDARG0(l_bc));
+			if( a == 0 )
+			{
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+				return;
+			}
+		}
+		l_bc++;
+		break;
+
+	// Don't let the optimizer optimize for size, 
+	// since it requires extra conditions and jumps
+	case 139: l_bc = (asDWORD*)139; break;
+	case 140: l_bc = (asDWORD*)140; break;
+	case 141: l_bc = (asDWORD*)141; break;
+	case 142: l_bc = (asDWORD*)142; break;
+	case 143: l_bc = (asDWORD*)143; break;
+	case 144: l_bc = (asDWORD*)144; break;
+	case 145: l_bc = (asDWORD*)145; break;
+	case 146: l_bc = (asDWORD*)146; break;
+	case 147: l_bc = (asDWORD*)147; break;
+	case 148: l_bc = (asDWORD*)148; break;
+	case 149: l_bc = (asDWORD*)149; break;
+	case 150: l_bc = (asDWORD*)150; break;
+	case 151: l_bc = (asDWORD*)151; break;
+	case 152: l_bc = (asDWORD*)152; break;
+	case 153: l_bc = (asDWORD*)153; break;
+	case 154: l_bc = (asDWORD*)154; break;
+	case 155: l_bc = (asDWORD*)155; break;
+	case 156: l_bc = (asDWORD*)156; break;
+	case 157: l_bc = (asDWORD*)157; break;
+	case 158: l_bc = (asDWORD*)158; break;
+	case 159: l_bc = (asDWORD*)159; break;
+	case 160: l_bc = (asDWORD*)160; break;
+	case 161: l_bc = (asDWORD*)161; break;
+	case 162: l_bc = (asDWORD*)162; break;
+	case 163: l_bc = (asDWORD*)163; break;
+	case 164: l_bc = (asDWORD*)164; break;
+	case 165: l_bc = (asDWORD*)165; break;
+	case 166: l_bc = (asDWORD*)166; break;
+	case 167: l_bc = (asDWORD*)167; break;
+	case 168: l_bc = (asDWORD*)168; break;
+	case 169: l_bc = (asDWORD*)169; break;
+	case 170: l_bc = (asDWORD*)170; break;
+	case 171: l_bc = (asDWORD*)171; break;
+	case 172: l_bc = (asDWORD*)172; break;
+	case 173: l_bc = (asDWORD*)173; break;
+	case 174: l_bc = (asDWORD*)174; break;
+	case 175: l_bc = (asDWORD*)175; break;
+	case 176: l_bc = (asDWORD*)176; break;
+	case 177: l_bc = (asDWORD*)177; break;
+	case 178: l_bc = (asDWORD*)178; break;
+	case 179: l_bc = (asDWORD*)179; break;
+	case 180: l_bc = (asDWORD*)180; break;
+	case 181: l_bc = (asDWORD*)181; break;
+	case 182: l_bc = (asDWORD*)182; break;
+	case 183: l_bc = (asDWORD*)183; break;
+	case 184: l_bc = (asDWORD*)184; break;
+	case 185: l_bc = (asDWORD*)185; break;
+	case 186: l_bc = (asDWORD*)186; break;
+	case 187: l_bc = (asDWORD*)187; break;
+	case 188: l_bc = (asDWORD*)188; break;
+	case 189: l_bc = (asDWORD*)189; break;
+	case 190: l_bc = (asDWORD*)190; break;
+	case 191: l_bc = (asDWORD*)191; break;
+	case 192: l_bc = (asDWORD*)192; break;
+	case 193: l_bc = (asDWORD*)193; break;
+	case 194: l_bc = (asDWORD*)194; break;
+	case 195: l_bc = (asDWORD*)195; break;
+	case 196: l_bc = (asDWORD*)196; break;
+	case 197: l_bc = (asDWORD*)197; break;
+	case 198: l_bc = (asDWORD*)198; break;
+	case 199: l_bc = (asDWORD*)199; break;
+	case 200: l_bc = (asDWORD*)200; break;
+	case 201: l_bc = (asDWORD*)201; break;
+	case 202: l_bc = (asDWORD*)202; break;
+	case 203: l_bc = (asDWORD*)203; break;
+	case 204: l_bc = (asDWORD*)204; break;
+	case 205: l_bc = (asDWORD*)205; break;
+	case 206: l_bc = (asDWORD*)206; break;
+	case 207: l_bc = (asDWORD*)207; break;
+	case 208: l_bc = (asDWORD*)208; break;
+	case 209: l_bc = (asDWORD*)209; break;
+	case 210: l_bc = (asDWORD*)210; break;
+	case 211: l_bc = (asDWORD*)211; break;
+	case 212: l_bc = (asDWORD*)212; break;
+	case 213: l_bc = (asDWORD*)213; break;
+	case 214: l_bc = (asDWORD*)214; break;
+	case 215: l_bc = (asDWORD*)215; break;
+	case 216: l_bc = (asDWORD*)216; break;
+	case 217: l_bc = (asDWORD*)217; break;
+	case 218: l_bc = (asDWORD*)218; break;
+	case 219: l_bc = (asDWORD*)219; break;
+	case 220: l_bc = (asDWORD*)220; break;
+	case 221: l_bc = (asDWORD*)221; break;
+	case 222: l_bc = (asDWORD*)222; break;
+	case 223: l_bc = (asDWORD*)223; break;
+	case 224: l_bc = (asDWORD*)224; break;
+	case 225: l_bc = (asDWORD*)225; break;
+	case 226: l_bc = (asDWORD*)226; break;
+	case 227: l_bc = (asDWORD*)227; break;
+	case 228: l_bc = (asDWORD*)228; break;
+	case 229: l_bc = (asDWORD*)229; break;
+	case 230: l_bc = (asDWORD*)230; break;
+	case 231: l_bc = (asDWORD*)231; break;
+	case 232: l_bc = (asDWORD*)232; break;
+	case 233: l_bc = (asDWORD*)233; break;
+	case 234: l_bc = (asDWORD*)234; break;
+	case 235: l_bc = (asDWORD*)235; break;
+	case 236: l_bc = (asDWORD*)236; break;
+	case 237: l_bc = (asDWORD*)237; break;
+	case 238: l_bc = (asDWORD*)238; break;
+	case 239: l_bc = (asDWORD*)239; break;
+	case 240: l_bc = (asDWORD*)240; break;
+	case 241: l_bc = (asDWORD*)241; break;
+	case 242: l_bc = (asDWORD*)242; break;
+	case 243: l_bc = (asDWORD*)243; break;
+	case 244: l_bc = (asDWORD*)244; break;
+	case 245: l_bc = (asDWORD*)245; break;
+	case 246: l_bc = (asDWORD*)246; break;
+	case 247: l_bc = (asDWORD*)247; break;
+	case 248: l_bc = (asDWORD*)248; break;
+	case 249: l_bc = (asDWORD*)249; break;
+	case 250: l_bc = (asDWORD*)250; break;
+	case 251: l_bc = (asDWORD*)251; break;
+	case 252: l_bc = (asDWORD*)252; break;
+	case 253: l_bc = (asDWORD*)253; break;
+	case 254: l_bc = (asDWORD*)254; break;
+	case 255: l_bc = (asDWORD*)255; break;
+
+#ifdef AS_DEBUG
+	default:
+		assert(false);
+#endif
 /*
 	default:
 		// This Microsoft specific code allows the
@@ -2074,6 +2273,15 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		// reach this point
 		__assume(0);
 */	}
+
+#ifdef AS_DEBUG
+		asDWORD instr = (*old)&0xFF;
+		if( instr != BC_JMP && instr != BC_JMPP && (instr < BC_JZ || instr > BC_JNP) &&
+			instr != BC_CALL && instr != BC_CALLBND && instr != BC_RET )
+		{
+			assert( (l_bc - old) == asCByteCode::SizeOfType(bcTypes[instr]) );
+		}
+#endif
 	}
 
 	SetInternalException(TXT_UNRECOGNIZED_BYTE_CODE);
@@ -2292,21 +2500,28 @@ int asCContext::GetState()
 int asCContext::SetLineCallback(asUPtr callback, void *obj, int callConv)
 {
 	lineCallback = true;
+	doProcessSuspend = true;
 	lineCallbackObj = obj;
 	bool isObj = false;
 	if( (unsigned)callConv == asCALL_GENERIC )
+	{
+		lineCallback = false;
+		doProcessSuspend = doSuspend;
 		return asNOT_SUPPORTED;
+	}
 	if( (unsigned)callConv >= asCALL_THISCALL )
 	{
 		isObj = true;
 		if( obj == 0 )
 		{
 			lineCallback = false;
+			doProcessSuspend = doSuspend;
 			return asINVALID_ARG;
 		}
 	}
 	int r = DetectCallingConvention(isObj, callback, callConv, &lineCallbackFunc);
 	if( r < 0 ) lineCallback = false;
+	doProcessSuspend = doSuspend || lineCallback;
 	return r;
 }
 
@@ -2350,6 +2565,7 @@ void asCContext::CallExceptionCallback()
 void asCContext::ClearLineCallback()
 {
 	lineCallback = false;
+	doProcessSuspend = doSuspend;
 }
 
 void asCContext::ClearExceptionCallback()
@@ -2409,7 +2625,7 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 	func(&gen);
 	isCallingSystemFunction = false;
 
-	returnVal = gen.returnVal;
+	register1 = gen.returnVal;
 	objectRegister = gen.objectRegister;
 	objectType = sysFunction->returnType.GetObjectType();
 
@@ -2445,6 +2661,96 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 	return popSize;
 }
 
+int asCContext::GetVarCount(int stackLevel)
+{
+	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return asINVALID_ARG;
+
+	asCScriptFunction *func;
+	if( stackLevel == -1 ) 
+		func = currentFunction;
+	else
+		func = (asCScriptFunction*)callStack[stackLevel*CALLSTACK_FRAME_SIZE + 1];
+
+	if( func == 0 )
+		return asERROR;
+
+	return func->variables.GetLength();
+}
+
+const char *asCContext::GetVarName(int varIndex, int *length, int stackLevel)
+{
+	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
+
+	asCScriptFunction *func;
+	if( stackLevel == -1 ) 
+		func = currentFunction;
+	else
+		func = (asCScriptFunction*)callStack[stackLevel*CALLSTACK_FRAME_SIZE + 1];
+
+	if( func == 0 )
+		return 0;
+
+	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
+		return 0;
+
+	if( length )
+		*length = func->variables[varIndex]->name.GetLength();
+
+	return func->variables[varIndex]->name.AddressOf();
+}
+
+const char *asCContext::GetVarDeclaration(int varIndex, int *length, int stackLevel)
+{
+	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
+
+	asCScriptFunction *func;
+	if( stackLevel == -1 ) 
+		func = currentFunction;
+	else
+		func = (asCScriptFunction*)callStack[stackLevel*CALLSTACK_FRAME_SIZE + 1];
+
+	if( func == 0 )
+		return 0;
+
+	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
+		return 0;
+
+	asCString *tempString = &threadManager.GetLocalData()->string;
+	*tempString = func->variables[varIndex]->type.Format();
+	*tempString += " " + func->variables[varIndex]->name;
+
+	if( length ) *length = tempString->GetLength();
+
+	return tempString->AddressOf();
+}
+
+void *asCContext::GetVarPointer(int varIndex, int stackLevel)
+{
+	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
+
+	asCScriptFunction *func;
+	asDWORD *sf;
+	if( stackLevel == -1 ) 
+	{
+		func = currentFunction;
+		sf = stackFramePointer;
+	}
+	else
+	{
+		func = (asCScriptFunction*)callStack[stackLevel*CALLSTACK_FRAME_SIZE + 1];
+		sf = (asDWORD*)callStack[stackLevel*CALLSTACK_FRAME_SIZE + 0];
+	}
+
+	if( func == 0 )
+		return 0;
+
+	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
+		return 0;
+	
+	return sf - func->variables[varIndex]->stackOffset;
+}
+
 END_AS_NAMESPACE
+
 
 

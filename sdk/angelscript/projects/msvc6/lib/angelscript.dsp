@@ -399,10 +399,6 @@ SOURCE=..\..\..\source\as_typeinfo.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_types.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\source\as_variablescope.h
 # End Source File
 # End Group

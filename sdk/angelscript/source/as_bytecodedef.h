@@ -46,145 +46,182 @@ BEGIN_AS_NAMESPACE
 //---------------------------------------------
 // Byte code instructions
 
-#define BC_POP		0
-#define BC_PUSH		1
-#define BC_SET4		2
-#define BC_RD4		3
-#define BC_RDSF4	4
-#define BC_WRT4		5
-#define BC_MOV4		6
-#define BC_PSF		7	// Push stack frame
-#define BC_MOVSF4   8
-#define BC_SWAP4    9 // Swap top two dwords
-#define BC_STORE4   10 // Store top dword in temp reg
-#define BC_RECALL4  11 // Push temp reg on stack
+enum bcInstr
+{
+	// Unsorted
+	BC_POP			= 0,	// Decrease stack size
+	BC_PUSH			= 1,	// Increase stack size
+	BC_PshC4		= 2,	// Push constant on stack
+	BC_PshV4		= 3,	// Push value in variable on stack
+	BC_PSF			= 4,	// Push stack frame
+	BC_SWAP4		= 5,	// Swap top two dwords
+	BC_NOT			= 6,    // Boolean not operator for a variable
+	BC_PshG4		= 7,	// Push value in global variable on stack
+	BC_LdGRdR4	    = 8,    // Same as LDG, RDR4
+	BC_CALL			= 9,	// Call function
+	BC_RET			= 10,	// Return from function
+	BC_JMP			= 11,
 
-#define BC_CALL		12  // Call function
-#define BC_RET		13 // Return from function
-#define BC_JMP		14
-#define BC_JZ		15
-#define BC_JNZ		16
+	// Conditional jumps
+	BC_JZ			= 12,
+	BC_JNZ			= 13,
+	BC_JS			= 14,	// Same as TS+JNZ or TNS+JZ
+	BC_JNS			= 15,	// Same as TNS+JNZ or TS+JZ
+	BC_JP			= 16,	// Same as TP+JNZ or TNP+JZ
+	BC_JNP			= 17,	// Same as TNP+JNZ or TP+JZ
 
-#define BC_TZ		17  // Test if zero
-#define BC_TNZ		18  // Test if not zero
-#define BC_TS		19  // Test if signaled (less than zero)
-#define BC_TNS		20  // Test if not signaled (zero or greater)
-#define BC_TP		21  // Test if positive (greater than zero)
-#define BC_TNP		22  // Test if not positive (zero or less)
+	// Test value
+	BC_TZ			= 18,	// Test if zero
+	BC_TNZ			= 19,	// Test if not zero
+	BC_TS			= 20,	// Test if signaled (less than zero)
+	BC_TNS			= 21,	// Test if not signaled (zero or greater)
+	BC_TP			= 22,	// Test if positive (greater than zero)
+	BC_TNP			= 23,	// Test if not positive (zero or less)
 
-#define BC_ADDi		23
-#define BC_SUBi		24
-#define BC_MULi		25
-#define BC_DIVi		26
-#define BC_MODi		27
-#define BC_NEGi		28
-#define BC_CMPi		29
-#define BC_INCi		30
-#define BC_DECi		31
-#define BC_I2F		32	// integer to float conversion
+	// Negate value
+	BC_NEGi			= 24,
+	BC_NEGf			= 25,
+	BC_NEGd			= 26,
 
-#define BC_ADDf		33
-#define BC_SUBf		34
-#define BC_MULf		35
-#define BC_DIVf		36
-#define BC_MODf		37
-#define BC_NEGf		38
-#define BC_CMPf		39
-#define BC_INCf		40
-#define BC_DECf		41
-#define BC_F2I		42	// float to integer conversion
+	// Increment value pointed to by address in register
+	BC_INCi16		= 27,
+	BC_INCi8    	= 28,
+	BC_DECi16   	= 29,
+	BC_DECi8    	= 30, 
+	BC_INCi			= 31,
+	BC_DECi			= 32,
+	BC_INCf			= 33,
+	BC_DECf			= 34,
+	BC_INCd     	= 35,
+	BC_DECd     	= 36,
 
-#define BC_BNOT		43
-#define BC_BAND		44
-#define BC_BOR		45
-#define BC_BXOR		46
-#define BC_BSLL		47
-#define BC_BSRL		48
-#define BC_BSRA		49
+	// Increment variable
+	BC_IncVi		= 37,
+	BC_DecVi		= 38,
 
-#define BC_UI2F     50
-#define BC_F2UI     51
-#define BC_CMPui    52
-#define BC_SB       53 // Signed byte
-#define BC_SW       54 // Signed word
-#define BC_UB       55 // Unsigned byte
-#define BC_UW       56 // Unsigned word
-#define BC_WRT1     57
-#define BC_WRT2     58
-#define BC_INCi16   59
-#define BC_INCi8    60
-#define BC_DECi16   61
-#define BC_DECi8    62
-#define BC_PUSHZERO 63
-#define BC_COPY     64
-#define BC_PGA      65 // Push Global Address
+	// Bitwise operations
+	BC_BNOT			= 39,
+	BC_BAND			= 40,
+	BC_BOR			= 41,
+	BC_BXOR			= 42,
+	BC_BSLL			= 43,
+	BC_BSRL			= 44,
+	BC_BSRA			= 45,
 
-#define BC_SET8     66
-#define BC_WRT8     67
-#define BC_RD8      68
-#define BC_NEGd     69
-#define BC_INCd     70
-#define BC_DECd     71
-#define BC_ADDd     72
-#define BC_SUBd     73
-#define BC_MULd     74
-#define BC_DIVd     75
-#define BC_MODd     76
-#define BC_SWAP8    77
-#define BC_CMPd     78
-#define BC_dTOi     79
-#define BC_dTOui    80
-#define BC_dTOf     81
-#define BC_iTOd     82
-#define BC_uiTOd    83
-#define BC_fTOd     84
-#define BC_JMPP     85 // Jump relative to top stack dword
-#define BC_SRET4    86 // Store dword return value
-#define BC_SRET8    87 // Store qword return value
-#define BC_RRET4    88 // Recall dword return value
-#define BC_RRET8    89 // Recall qword return value
-#define BC_STR      90 // Push string address and length on stack
-#define BC_JS		91 // Same as TS+JMP1 or TNS+JMP0
-#define BC_JNS		92 // Same as TNS+JMP1 or TS+JMP0
-#define BC_JP		93 // Same as TP+JMP1 or TNP+JMP0
-#define BC_JNP		94 // Same as TNP+JMP1 or TP+JMP0
-#define BC_CMPIi    95 // Same as SET4+CMPi
-#define BC_CMPIui   96 // Same as SET4+CMPui
-#define BC_CALLSYS  97
-#define BC_CALLBND  98
-#define BC_RDGA4    99 // Same as PGA+RD4
-#define BC_MOVGA4   100 // Same as PGA+MOV4
-#define BC_ADDIi    101 // Same as SET4+ADDi
-#define BC_SUBIi    102 // Same as SET4+SUBi
-#define BC_CMPIf    103 // Same as SET4+CMPf
-#define BC_ADDIf    104 // Same as SET4+ADDf
-#define BC_SUBIf    105 // Same as SET4+SUBf
-#define BC_MULIi    106 // Same as SET4+MULi
-#define BC_MULIf    107 // Same as SET4+MULf
+	// Unsorted
+	BC_COPY			= 46,	// Do byte-for-byte copy of object
+	BC_SET8			= 47,	// Push QWORD on stack
+	BC_RDS8			= 48,	// Read value from address on stack onto the top of the stack
+	BC_SWAP8		= 49,
 
-#define BC_SUSPEND   108
-#define BC_ALLOC     109
-#define BC_FREE      110
-#define BC_LOADOBJ   111
-#define BC_STOREOBJ  112
-#define BC_GETOBJ    113
-#define BC_REFCPY    114
-#define BC_CHKREF    115
-#define BC_RD1       116
-#define BC_RD2       117
-#define BC_GETOBJREF 118
-#define BC_GETREF    119
-#define BC_SWAP48    120
-#define BC_SWAP84    121
-#define BC_OBJTYPE   122
-#define BC_TYPEID    123
-#define BC_MAXBYTECODE 124
+	// Comparisons
+	BC_CMPd     	= 50,
+	BC_CMPu			= 51,
+	BC_CMPf			= 52,
+	BC_CMPi			= 53,
 
-// Temporary tokens, can't be output to the final program
-#define BC_PSP		   246
-#define BC_VAR         247
-#define BC_LINE	       248
-#define BC_LABEL	   255
+	// Comparisons with constant value
+	BC_CMPIi		= 54,
+	BC_CMPIf		= 55,
+	BC_CMPIu        = 56,
+
+	BC_JMPP     	= 57,	// Jump with offset in variable
+	BC_PopRPtr    	= 58,	// Pop address from stack into register
+	BC_PshRPtr    	= 59,	// Push address from register on stack
+	BC_STR      	= 60,	// Push string address and length on stack
+	BC_CALLSYS  	= 61,
+	BC_CALLBND  	= 62,
+	BC_SUSPEND  	= 63,
+	BC_ALLOC    	= 64,
+	BC_FREE     	= 65,
+	BC_LOADOBJ		= 66,
+	BC_STOREOBJ  	= 67,
+	BC_GETOBJ    	= 68,
+	BC_REFCPY    	= 69,
+	BC_CHKREF    	= 70,
+	BC_GETOBJREF 	= 71,
+	BC_GETREF    	= 72,
+	BC_SWAP48    	= 73,
+	BC_SWAP84    	= 74,
+	BC_OBJTYPE   	= 75,
+	BC_TYPEID    	= 76,
+	BC_SetV4		= 77,	// Initialize the variable with a DWORD
+	BC_SetV8		= 78,	// Initialize the variable with a QWORD
+	BC_ADDSi		= 79,	// Add arg to value on stack
+	BC_CpyVtoV4		= 80,	// Copy value from one variable to another
+	BC_CpyVtoV8		= 81,	
+	BC_CpyVtoR4     = 82,	// Copy value from variable into register
+	BC_CpyVtoR8		= 83,	// Copy value from variable into register
+	BC_CpyVtoG4     = 84,   // Write the value of a variable to a global variable (LDG, WRTV4)
+	BC_CpyRtoV4     = 85,   // Copy the value from the register to the variable
+	BC_CpyRtoV8     = 86,
+	BC_CpyGtoV4     = 87,   // Copy the value of the global variable to a local variable (LDG, RDR4)
+	BC_WRTV1        = 88,	// Copy value from variable to address held in register
+	BC_WRTV2        = 89,
+	BC_WRTV4        = 90,
+	BC_WRTV8        = 91,
+	BC_RDR1         = 92,	// Read value from address in register and store in variable
+	BC_RDR2         = 93,
+	BC_RDR4         = 94,	
+	BC_RDR8         = 95,
+	BC_LDG          = 96,	// Load the register with the address of the global attribute
+	BC_LDV          = 97,	// Load the register with the address of the variable
+	BC_PGA          = 98,
+	BC_RDS4         = 99,	// Read value from address on stack onto the top of the stack
+	BC_VAR          = 100,	// Push the variable offset on the stack
+
+	// Type conversions
+	BC_iTOf			= 101,
+	BC_fTOi			= 102,
+	BC_uTOf			= 103,
+	BC_fTOu			= 104,
+	BC_sbTOi		= 105,	// Signed byte
+	BC_swTOi		= 106,	// Signed word
+	BC_ubTOi		= 107,	// Unsigned byte
+	BC_uwTOi		= 108,	// Unsigned word
+	BC_dTOi     	= 109,
+	BC_dTOu     	= 110,
+	BC_dTOf     	= 111,
+	BC_iTOd     	= 112,
+	BC_uTOd     	= 113,
+	BC_fTOd     	= 114,
+
+	// Math operations
+	BC_ADDi			= 115,
+	BC_SUBi			= 116,
+	BC_MULi			= 117,
+	BC_DIVi			= 118,
+	BC_MODi			= 119,
+	BC_ADDf			= 120,
+	BC_SUBf			= 121,
+	BC_MULf			= 122,
+	BC_DIVf			= 123,
+	BC_MODf			= 124,
+	BC_ADDd     	= 125,
+	BC_SUBd     	= 126,
+	BC_MULd     	= 127,
+	BC_DIVd     	= 128,
+	BC_MODd     	= 129,
+
+	// Math operations with constant value
+	BC_ADDIi        = 130,
+	BC_SUBIi        = 131,
+	BC_MULIi        = 132,
+	BC_ADDIf        = 133,
+	BC_SUBIf        = 134,
+	BC_MULIf        = 135,
+
+	BC_SetG4		= 136,	// Initialize the global variable with a DWORD
+	BC_ChkRefS      = 137,  // Verify that the reference to the handle on the stack is not null
+	BC_ChkNullV     = 138,  // Verify that the variable is not a null handle
+
+	BC_MAXBYTECODE  = 139,
+
+	// Temporary tokens, can't be output to the final program
+	BC_PSP			= 246,
+	BC_LINE			= 248,
+	BC_LABEL		= 255
+};
 
 //------------------------------------------------------------
 // Relocation Table
@@ -192,288 +229,354 @@ extern asDWORD relocTable[BC_MAXBYTECODE];
 
 //------------------------------------------------------------
 // Instruction sizes
+const int BCTYPE_INFO         = 0;
+const int BCTYPE_NO_ARG       = 1;
+const int BCTYPE_W_ARG        = 2;
+const int BCTYPE_wW_ARG       = 3;
+const int BCTYPE_DW_ARG       = 4;
+const int BCTYPE_rW_DW_ARG    = 5;
+const int BCTYPE_QW_ARG       = 6;
+const int BCTYPE_DW_DW_ARG    = 7;
+const int BCTYPE_wW_rW_rW_ARG = 8;
+const int BCTYPE_wW_QW_ARG    = 9;
+const int BCTYPE_wW_rW_ARG    = 10;
+const int BCTYPE_rW_ARG       = 11;
+const int BCTYPE_wW_DW_ARG    = 12;
+const int BCTYPE_wW_rW_DW_ARG = 13;
+const int BCTYPE_rW_rW_ARG    = 14;
+const int BCTYPE_W_rW_ARG     = 15;
+const int BCTYPE_wW_W_ARG     = 16;
+const int BCTYPE_W_DW_ARG     = 17;
 
-const int BCS_POP       = BCSIZE2;
-const int BCS_PUSH      = BCSIZE2;
-const int BCS_SET4      = BCSIZE4;
-const int BCS_RD4       = BCSIZE0;
-const int BCS_RDSF4     = BCSIZE2;
-const int BCS_WRT4      = BCSIZE0;
-const int BCS_MOV4      = BCSIZE0;
-const int BCS_PSF       = BCSIZE2;
-const int BCS_MOVSF4    = BCSIZE2;
-const int BCS_SWAP4     = BCSIZE0;
-const int BCS_STORE4    = BCSIZE0;
-const int BCS_RECALL4   = BCSIZE0;
+const int BCT_POP       = BCTYPE_W_ARG;       
+const int BCT_PUSH      = BCTYPE_W_ARG;
+const int BCT_PshC4     = BCTYPE_DW_ARG;
+const int BCT_PshV4     = BCTYPE_rW_ARG;
+const int BCT_PSF       = BCTYPE_rW_ARG;
+const int BCT_SWAP4     = BCTYPE_NO_ARG;
+const int BCT_NOT       = BCTYPE_rW_ARG;
+const int BCT_PshG4     = BCTYPE_W_ARG;
+const int BCT_LdGRdR4   = BCTYPE_wW_W_ARG;
+const int BCT_CALL      = BCTYPE_DW_ARG;
+const int BCT_RET       = BCTYPE_W_ARG;
+const int BCT_JMP       = BCTYPE_DW_ARG;
 
-const int BCS_CALL      = BCSIZE4;
-const int BCS_RET       = BCSIZE2;
-const int BCS_JMP       = BCSIZE4;
-const int BCS_JZ        = BCSIZE4;
-const int BCS_JNZ       = BCSIZE4;
+const int BCT_JZ        = BCTYPE_DW_ARG;
+const int BCT_JNZ       = BCTYPE_DW_ARG;
+const int BCT_JS        = BCTYPE_DW_ARG;
+const int BCT_JNS       = BCTYPE_DW_ARG;
+const int BCT_JP        = BCTYPE_DW_ARG;
+const int BCT_JNP       = BCTYPE_DW_ARG;
 
-const int BCS_TZ        = BCSIZE0;
-const int BCS_TNZ       = BCSIZE0;
-const int BCS_TS        = BCSIZE0;
-const int BCS_TNS       = BCSIZE0;
-const int BCS_TP        = BCSIZE0;
-const int BCS_TNP       = BCSIZE0;
+const int BCT_TZ        = BCTYPE_NO_ARG;
+const int BCT_TNZ       = BCTYPE_NO_ARG;
+const int BCT_TS        = BCTYPE_NO_ARG;
+const int BCT_TNS       = BCTYPE_NO_ARG;
+const int BCT_TP        = BCTYPE_NO_ARG;
+const int BCT_TNP       = BCTYPE_NO_ARG;
 
-const int BCS_ADDi      = BCSIZE0;
-const int BCS_SUBi      = BCSIZE0;
-const int BCS_MULi      = BCSIZE0;
-const int BCS_DIVi      = BCSIZE0;
-const int BCS_MODi      = BCSIZE0;
-const int BCS_NEGi      = BCSIZE0;
-const int BCS_CMPi      = BCSIZE0;
-const int BCS_INCi      = BCSIZE0;
-const int BCS_DECi      = BCSIZE0;
-const int BCS_I2F       = BCSIZE0;
+const int BCT_NEGi      = BCTYPE_rW_ARG;
+const int BCT_NEGf      = BCTYPE_rW_ARG;
+const int BCT_NEGd      = BCTYPE_rW_ARG;
 
-const int BCS_ADDf      = BCSIZE0;
-const int BCS_SUBf      = BCSIZE0;
-const int BCS_MULf      = BCSIZE0;
-const int BCS_DIVf      = BCSIZE0;
-const int BCS_MODf      = BCSIZE0;
-const int BCS_NEGf      = BCSIZE0;
-const int BCS_CMPf      = BCSIZE0;
-const int BCS_INCf      = BCSIZE0;
-const int BCS_DECf      = BCSIZE0;
-const int BCS_F2I       = BCSIZE0;
+const int BCT_INCi16    = BCTYPE_NO_ARG;
+const int BCT_INCi8     = BCTYPE_NO_ARG;
+const int BCT_DECi16    = BCTYPE_NO_ARG;
+const int BCT_DECi8     = BCTYPE_NO_ARG;
+const int BCT_INCi      = BCTYPE_NO_ARG;
+const int BCT_DECi      = BCTYPE_NO_ARG;
+const int BCT_INCf      = BCTYPE_NO_ARG;
+const int BCT_DECf      = BCTYPE_NO_ARG;
+const int BCT_INCd      = BCTYPE_NO_ARG;
+const int BCT_DECd      = BCTYPE_NO_ARG;
 
-const int BCS_BNOT      = BCSIZE0;
-const int BCS_BAND      = BCSIZE0;
-const int BCS_BOR       = BCSIZE0;
-const int BCS_BXOR      = BCSIZE0;
-const int BCS_BSLL      = BCSIZE0;
-const int BCS_BSRL      = BCSIZE0;
-const int BCS_BSRA      = BCSIZE0;
+const int BCT_IncVi     = BCTYPE_rW_ARG;
+const int BCT_DecVi     = BCTYPE_rW_ARG;
 
-const int BCS_UI2F      = BCSIZE0;
-const int BCS_F2UI      = BCSIZE0;
-const int BCS_CMPui     = BCSIZE0;
-const int BCS_SB        = BCSIZE0;
-const int BCS_SW        = BCSIZE0;
-const int BCS_UB        = BCSIZE0;
-const int BCS_UW        = BCSIZE0;
-const int BCS_WRT1      = BCSIZE0;
-const int BCS_WRT2      = BCSIZE0;
-const int BCS_INCi16    = BCSIZE0;
-const int BCS_INCi8     = BCSIZE0;
-const int BCS_DECi16    = BCSIZE0;
-const int BCS_DECi8     = BCSIZE0;
-const int BCS_PUSHZERO  = BCSIZE0;
-const int BCS_COPY      = BCSIZE2;
-const int BCS_PGA       = BCSIZE4;
+const int BCT_BNOT      = BCTYPE_rW_ARG;
+const int BCT_BAND      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BOR       = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BXOR      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BSLL      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BSRL      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BSRA      = BCTYPE_wW_rW_rW_ARG;
 
-const int BCS_SET8      = BCSIZE8;
-const int BCS_WRT8      = BCSIZE0;
-const int BCS_RD8       = BCSIZE0;
-const int BCS_NEGd      = BCSIZE0;
-const int BCS_INCd      = BCSIZE0;
-const int BCS_DECd      = BCSIZE0;
-const int BCS_ADDd      = BCSIZE0;
-const int BCS_SUBd      = BCSIZE0;
-const int BCS_MULd      = BCSIZE0;
-const int BCS_DIVd      = BCSIZE0;
-const int BCS_MODd      = BCSIZE0;
-const int BCS_SWAP8     = BCSIZE0;
-const int BCS_CMPd      = BCSIZE0;
-const int BCS_dTOi      = BCSIZE0;
-const int BCS_dTOui     = BCSIZE0;
-const int BCS_dTOf      = BCSIZE0;
-const int BCS_iTOd      = BCSIZE0;
-const int BCS_uiTOd     = BCSIZE0;
-const int BCS_fTOd      = BCSIZE0;
-const int BCS_JMPP      = BCSIZE0;
-const int BCS_SRET4     = BCSIZE0;
-const int BCS_SRET8     = BCSIZE0;
-const int BCS_RRET4     = BCSIZE0;
-const int BCS_RRET8     = BCSIZE0;
-const int BCS_STR       = BCSIZE2;
-const int BCS_JS        = BCSIZE4;
-const int BCS_JNS       = BCSIZE4;
-const int BCS_JP        = BCSIZE4;
-const int BCS_JNP       = BCSIZE4;
-const int BCS_CMPIi     = BCSIZE4;
-const int BCS_CMPIui    = BCSIZE4;
-const int BCS_CALLSYS   = BCSIZE4;
-const int BCS_CALLBND   = BCSIZE4;
-const int BCS_RDGA4     = BCSIZE4;
-const int BCS_MOVGA4    = BCSIZE4;
-const int BCS_ADDIi     = BCSIZE4;
-const int BCS_SUBIi     = BCSIZE4;
-const int BCS_CMPIf     = BCSIZE4;
-const int BCS_ADDIf     = BCSIZE4;
-const int BCS_SUBIf     = BCSIZE4;
-const int BCS_MULIi     = BCSIZE4;
-const int BCS_MULIf     = BCSIZE4;
-const int BCS_SUSPEND   = BCSIZE0;
-const int BCS_ALLOC     = BCSIZE8;
-const int BCS_FREE      = BCSIZE4;
-const int BCS_LOADOBJ   = BCSIZE2;
-const int BCS_STOREOBJ  = BCSIZE2;
-const int BCS_GETOBJ    = BCSIZE2;
-const int BCS_REFCPY    = BCSIZE4;
-const int BCS_CHKREF    = BCSIZE0;
-const int BCS_RD1       = BCSIZE0;
-const int BCS_RD2       = BCSIZE0;
-const int BCS_GETOBJREF = BCSIZE2;
-const int BCS_GETREF    = BCSIZE2;
-const int BCS_SWAP48    = BCSIZE0;
-const int BCS_SWAP84    = BCSIZE0;
-const int BCS_OBJTYPE   = BCSIZE4;
-const int BCS_TYPEID    = BCSIZE4;
+const int BCT_COPY      = BCTYPE_W_ARG;
+const int BCT_SET8      = BCTYPE_QW_ARG;
+const int BCT_RDS8      = BCTYPE_NO_ARG;
+const int BCT_SWAP8     = BCTYPE_NO_ARG;
 
-// Temporary
-const int BCS_PSP       = BCSIZE2;
-const int BCS_VAR       = BCSIZE4;
+const int BCT_CMPd      = BCTYPE_rW_rW_ARG;
+const int BCT_CMPu      = BCTYPE_rW_rW_ARG;
+const int BCT_CMPf      = BCTYPE_rW_rW_ARG;
+const int BCT_CMPi      = BCTYPE_rW_rW_ARG;
+const int BCT_CMPIi     = BCTYPE_rW_DW_ARG;
+const int BCT_CMPIf     = BCTYPE_rW_DW_ARG;
+const int BCT_CMPIu     = BCTYPE_rW_DW_ARG;
+
+const int BCT_JMPP      = BCTYPE_rW_ARG;
+const int BCT_PopRPtr   = BCTYPE_NO_ARG;
+const int BCT_PshRPtr   = BCTYPE_NO_ARG;
+const int BCT_STR       = BCTYPE_W_ARG;
+const int BCT_CALLSYS   = BCTYPE_DW_ARG;
+const int BCT_CALLBND   = BCTYPE_DW_ARG;
+const int BCT_SUSPEND   = BCTYPE_NO_ARG;
+const int BCT_ALLOC     = BCTYPE_DW_DW_ARG;
+const int BCT_FREE      = BCTYPE_DW_ARG;
+const int BCT_LOADOBJ   = BCTYPE_rW_ARG;
+const int BCT_STOREOBJ  = BCTYPE_wW_ARG;
+const int BCT_GETOBJ    = BCTYPE_W_ARG;
+const int BCT_REFCPY    = BCTYPE_DW_ARG;
+const int BCT_CHKREF    = BCTYPE_NO_ARG;
+const int BCT_GETOBJREF = BCTYPE_W_ARG;
+const int BCT_GETREF    = BCTYPE_W_ARG;
+const int BCT_SWAP48    = BCTYPE_NO_ARG;
+const int BCT_SWAP84    = BCTYPE_NO_ARG;
+const int BCT_OBJTYPE   = BCTYPE_DW_ARG;
+const int BCT_TYPEID    = BCTYPE_DW_ARG;
+const int BCT_SetV4     = BCTYPE_wW_DW_ARG;
+const int BCT_SetV8     = BCTYPE_wW_QW_ARG;
+const int BCT_ADDSi     = BCTYPE_DW_ARG;
+const int BCT_CpyVtoV4  = BCTYPE_wW_rW_ARG;
+const int BCT_CpyVtoV8  = BCTYPE_wW_rW_ARG;
+const int BCT_CpyVtoR4  = BCTYPE_rW_ARG;
+const int BCT_CpyVtoR8  = BCTYPE_rW_ARG;
+const int BCT_CpyVtoG4  = BCTYPE_W_rW_ARG;
+const int BCT_CpyRtoV4  = BCTYPE_wW_ARG;
+const int BCT_CpyRtoV8  = BCTYPE_wW_ARG;
+const int BCT_CpyGtoV4  = BCTYPE_wW_W_ARG;
+const int BCT_WRTV1     = BCTYPE_rW_ARG;
+const int BCT_WRTV2     = BCTYPE_rW_ARG;
+const int BCT_WRTV4     = BCTYPE_rW_ARG;
+const int BCT_WRTV8     = BCTYPE_rW_ARG;
+const int BCT_RDR1      = BCTYPE_wW_ARG;
+const int BCT_RDR2      = BCTYPE_wW_ARG;
+const int BCT_RDR4      = BCTYPE_wW_ARG;
+const int BCT_RDR8      = BCTYPE_wW_ARG;
+const int BCT_LDG       = BCTYPE_W_ARG;
+const int BCT_LDV       = BCTYPE_rW_ARG;
+const int BCT_PGA       = BCTYPE_W_ARG;
+const int BCT_RDS4      = BCTYPE_NO_ARG;
+const int BCT_VAR       = BCTYPE_rW_ARG;
+
+const int BCT_iTOf      = BCTYPE_rW_ARG;
+const int BCT_fTOi      = BCTYPE_rW_ARG;
+const int BCT_uTOf      = BCTYPE_rW_ARG;
+const int BCT_fTOu      = BCTYPE_rW_ARG;
+const int BCT_sbTOi     = BCTYPE_rW_ARG;
+const int BCT_swTOi     = BCTYPE_rW_ARG;
+const int BCT_ubTOi     = BCTYPE_rW_ARG;
+const int BCT_uwTOi     = BCTYPE_rW_ARG;
+const int BCT_dTOi      = BCTYPE_wW_rW_ARG;
+const int BCT_dTOu      = BCTYPE_wW_rW_ARG;
+const int BCT_dTOf      = BCTYPE_wW_rW_ARG;
+const int BCT_iTOd      = BCTYPE_wW_rW_ARG;
+const int BCT_uTOd      = BCTYPE_wW_rW_ARG;
+const int BCT_fTOd      = BCTYPE_wW_rW_ARG;
+
+const int BCT_ADDi      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_SUBi      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_MULi      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_DIVi      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_MODi      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_ADDf      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_SUBf      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_MULf      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_DIVf      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_MODf      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_ADDd      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_SUBd      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_MULd      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_DIVd      = BCTYPE_wW_rW_rW_ARG;
+const int BCT_MODd      = BCTYPE_wW_rW_rW_ARG;
+
+const int BCT_ADDIi     = BCTYPE_wW_rW_DW_ARG;
+const int BCT_SUBIi     = BCTYPE_wW_rW_DW_ARG;
+const int BCT_MULIi     = BCTYPE_wW_rW_DW_ARG;
+const int BCT_ADDIf     = BCTYPE_wW_rW_DW_ARG;
+const int BCT_SUBIf     = BCTYPE_wW_rW_DW_ARG;
+const int BCT_MULIf     = BCTYPE_wW_rW_DW_ARG;
+
+const int BCT_SetG4     = BCTYPE_W_DW_ARG;
+const int BCT_ChkRefS   = BCTYPE_NO_ARG;
+const int BCT_ChkNullV  = BCTYPE_rW_ARG;
+
+// Temporary// Temporary
+const int BCT_PSP       = BCTYPE_W_ARG;
 #ifndef BUILD_WITHOUT_LINE_CUES
-	const int BCS_LINE = BCS_SUSPEND;
+	const int BCT_LINE  = BCTYPE_NO_ARG;
 #else
-	const int BCS_LINE = 0;
+	const int BCT_LINE  = BCTYPE_INFO;
 #endif
 
-
-
-const int bcSize[256] =
+const int bcTypes[256] =
 {
-	BCS_POP,
-	BCS_PUSH,
-	BCS_SET4,
-	BCS_RD4,
-	BCS_RDSF4,
-	BCS_WRT4,
-	BCS_MOV4,
-	BCS_PSF,
-	BCS_MOVSF4,
-	BCS_SWAP4,
-	BCS_STORE4,
-	BCS_RECALL4,
-
-	BCS_CALL,
-	BCS_RET,
-	BCS_JMP,
-	BCS_JZ,
-	BCS_JNZ,
-
-	BCS_TZ,
-	BCS_TNZ,
-	BCS_TS,
-	BCS_TNS,
-	BCS_TP,
-	BCS_TNP,
-
-	BCS_ADDi,
-	BCS_SUBi,
-	BCS_MULi,
-	BCS_DIVi,
-	BCS_MODi,
-	BCS_NEGi,
-	BCS_CMPi,
-	BCS_INCi,
-	BCS_DECi,
-	BCS_I2F,
-
-	BCS_ADDf,
-	BCS_SUBf,
-	BCS_MULf,
-	BCS_DIVf,
-	BCS_MODf,
-	BCS_NEGf,
-	BCS_CMPf,
-	BCS_INCf,
-	BCS_DECf,
-	BCS_F2I,
-
-	BCS_BNOT,
-	BCS_BAND,
-	BCS_BOR,
-	BCS_BXOR,
-	BCS_BSLL,
-	BCS_BSRL,
-	BCS_BSRA,
-
-	BCS_UI2F,
-	BCS_F2UI,
-	BCS_CMPui,
-	BCS_SB,
-	BCS_SW,
-	BCS_UB,
-	BCS_UW,
-	BCS_WRT1,
-	BCS_WRT2,
-	BCS_INCi16,
-	BCS_INCi8,
-	BCS_DECi16,
-	BCS_DECi8,
-	BCS_PUSHZERO,
-	BCS_COPY,
-	BCS_PGA,
-
-	BCS_SET8,
-	BCS_WRT8,
-	BCS_RD8,
-	BCS_NEGd,
-	BCS_INCd,
-	BCS_DECd,
-	BCS_ADDd,
-	BCS_SUBd,
-	BCS_MULd,
-	BCS_DIVd,
-	BCS_MODd,
-	BCS_SWAP8,
-	BCS_CMPd,
-	BCS_dTOi,
-	BCS_dTOui,
-	BCS_dTOf,
-	BCS_iTOd,
-	BCS_uiTOd,
-	BCS_fTOd,
-	BCS_JMPP,
-	BCS_SRET4,
-	BCS_SRET8,
-	BCS_RRET4,
-	BCS_RRET8,
-	BCS_STR,
-	BCS_JS,
-	BCS_JNS,
-	BCS_JP,
-	BCS_JNP,
-	BCS_CMPIi,
-	BCS_CMPIui,
-	BCS_CALLSYS,
-	BCS_CALLBND,
-	BCS_RDGA4,
-	BCS_MOVGA4,
-	BCS_ADDIi,
-	BCS_SUBIi,
-	BCS_CMPIf,
-	BCS_ADDIf,
-	BCS_SUBIf,
-	BCS_MULIi,
-	BCS_MULIf,
-	BCS_SUSPEND,
-	BCS_ALLOC,
-	BCS_FREE,
-	BCS_LOADOBJ,
-	BCS_STOREOBJ,
-	BCS_GETOBJ,
-	BCS_REFCPY,
-	BCS_CHKREF,
-	BCS_RD1,
-	BCS_RD2,
-	BCS_GETOBJREF,
-	BCS_GETREF, 
-	BCS_SWAP48,
-	BCS_SWAP84,
-	BCS_OBJTYPE,
-	BCS_TYPEID,
-	0,0,0,0,0,0, // 124-129
-	0,0,0,0,0,0,0,0,0,0, // 130-139
-	0,0,0,0,0,0,0,0,0,0, // 140-149
-	0,0,0,0,0,0,0,0,0,0, // 150-159
-	0,0,0,0,0,0,0,0,0,0, // 160-169
+	BCT_POP,
+	BCT_PUSH,
+	BCT_PshC4,
+	BCT_PshV4,
+	BCT_PSF,
+	BCT_SWAP4,
+	BCT_NOT,
+	BCT_PshG4,
+	BCT_LdGRdR4,
+	BCT_CALL,
+	BCT_RET,
+	BCT_JMP,
+	BCT_JZ,
+	BCT_JNZ,
+	BCT_JS,
+	BCT_JNS,
+	BCT_JP,
+	BCT_JNP,
+	BCT_TZ,
+	BCT_TNZ,
+	BCT_TS,
+	BCT_TNS,
+	BCT_TP,
+	BCT_TNP,
+	BCT_NEGi,
+	BCT_NEGf,
+	BCT_NEGd,
+	BCT_INCi16,
+	BCT_INCi8,
+	BCT_DECi16,
+	BCT_DECi8,
+	BCT_INCi,
+	BCT_DECi,
+	BCT_INCf,
+	BCT_DECf,
+	BCT_INCd,
+	BCT_DECd,
+	BCT_IncVi,
+	BCT_DecVi,
+	BCT_BNOT,
+	BCT_BAND,
+	BCT_BOR,
+	BCT_BXOR,
+	BCT_BSLL,
+	BCT_BSRL,
+	BCT_BSRA,
+	BCT_COPY,
+	BCT_SET8,
+	BCT_RDS8,
+	BCT_SWAP8,
+	BCT_CMPd,
+	BCT_CMPu,
+	BCT_CMPf,
+	BCT_CMPi,
+	BCT_CMPIi,
+	BCT_CMPIf,
+	BCT_CMPIu,
+	BCT_JMPP,
+	BCT_PopRPtr,
+	BCT_PshRPtr,
+	BCT_STR,
+	BCT_CALLSYS,
+	BCT_CALLBND,
+	BCT_SUSPEND,
+	BCT_ALLOC,
+	BCT_FREE,
+	BCT_LOADOBJ,
+	BCT_STOREOBJ,
+	BCT_GETOBJ,
+	BCT_REFCPY,
+	BCT_CHKREF,
+	BCT_GETOBJREF,
+	BCT_GETREF, 
+	BCT_SWAP48,
+	BCT_SWAP84,
+	BCT_OBJTYPE,
+	BCT_TYPEID,
+	BCT_SetV4,
+	BCT_SetV8,
+	BCT_ADDSi,
+	BCT_CpyVtoV4,
+	BCT_CpyVtoV8,
+	BCT_CpyVtoR4,
+	BCT_CpyVtoR8,
+	BCT_CpyVtoG4,
+	BCT_CpyRtoV4,
+	BCT_CpyRtoV8,
+	BCT_CpyGtoV4, 
+	BCT_WRTV1,
+	BCT_WRTV2,
+	BCT_WRTV4,
+	BCT_WRTV8,
+	BCT_RDR1,
+	BCT_RDR2,
+	BCT_RDR4,
+	BCT_RDR8,
+	BCT_LDG,
+	BCT_LDV,
+	BCT_PGA,
+	BCT_RDS4,
+	BCT_VAR,
+	BCT_iTOf,
+	BCT_fTOi,
+	BCT_uTOf,
+	BCT_fTOu,
+	BCT_sbTOi,
+	BCT_swTOi,
+	BCT_ubTOi,
+	BCT_uwTOi,
+	BCT_dTOi,
+	BCT_dTOu,
+	BCT_dTOf,
+	BCT_iTOd,
+	BCT_uTOd,
+	BCT_fTOd,
+	BCT_ADDi,
+	BCT_SUBi,
+	BCT_MULi,
+	BCT_DIVi,
+	BCT_MODi,
+	BCT_ADDf,
+	BCT_SUBf,
+	BCT_MULf,
+	BCT_DIVf,
+	BCT_MODf,
+	BCT_ADDd,
+	BCT_SUBd,
+	BCT_MULd,
+	BCT_DIVd,
+	BCT_MODd,
+	BCT_ADDIi,
+	BCT_SUBIi,
+	BCT_MULIi,
+	BCT_ADDIf,
+	BCT_SUBIf,
+	BCT_MULIf,
+	BCT_SetG4,
+	BCT_ChkRefS,
+	BCT_ChkNullV,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,0,0,0,0, // 165-169
 	0,0,0,0,0,0,0,0,0,0, // 170-179
 	0,0,0,0,0,0,0,0,0,0, // 180-189
 	0,0,0,0,0,0,0,0,0,0, // 190-199
@@ -482,10 +585,10 @@ const int bcSize[256] =
 	0,0,0,0,0,0,0,0,0,0, // 220-229
 	0,0,0,0,0,0,0,0,0,0, // 230-239
 	0,0,0,0,0,0,       // 240-245
-	BCS_PSP, 
-	BCS_VAR,  
-	BCS_LINE,  
-	0,  // 249
+	BCT_PSP, 
+	0,  
+	BCT_LINE,  
+	0, 
 	0,  // 250
 	0,  // 251
 	0,  // 252
@@ -498,140 +601,170 @@ const int bcStackInc[256] =
 {
 	0xFFFF,	// BC_POP
 	0xFFFF,	// BC_PUSH
-	1,		// BC_SET4
-	0,		// BC_RD4
-	1,		// BC_RDSF4
-	-1,		// BC_WRT4
-	-2,		// BC_MOV4
+	1,		// BC_PshC4
+	1,		// BC_PshV4
 	1,		// BC_PSF
-	-1,		// BC_MOVSF4
 	0,      // BC_SWAP4
-	0,      // BC_STORE4
-	1,      // BC_RECALL4
-
+	0,		// BC_NOT
+	1,		// BC_PshG4
+	0,		// BC_LdGRdR4
 	0xFFFF,	// BC_CALL
 	0xFFFF,	// BC_RET
 	0,		// BC_JMP
-	-1,		// BC_JZ
-	-1,		// BC_JNZ
-
+	0,		// BC_JZ
+	0,		// BC_JNZ
+	0,		// BC_JS
+	0,		// BC_JNS
+	0,		// BC_JP
+	0,		// BC_JNP
 	0,		// BC_TZ
 	0,		// BC_TNZ
 	0,		// BC_TS
 	0,		// BC_TNS
 	0,		// BC_TP
 	0,		// BC_TNP
-
-	-1,		// BC_ADDi
-	-1,		// BC_SUBi
-	-1,		// BC_MULi
-	-1,		// BC_DIVi
-	-1,		// BC_MODi
 	0,		// BC_NEGi
-	-1,		// BC_CMPi
-	0,		// BC_INCi
-	0,		// BC_DECi
-	0,		// BC_I2F
-
-	-1,		// BC_ADDf
-	-1,		// BC_SUBf
-	-1,		// BC_MULf
-	-1,		// BC_DIVf
-	-1,		// BC_MODf
 	0,		// BC_NEGf
-	-1,		// BC_CMPf
-	0,		// BC_INCf
-	0,		// BC_DECf
-	0,		// BC_F2I
-
-	0,		// BC_BNOT
-	-1,		// BC_BAND
-	-1,		// BC_BOR
-	-1,		// BC_BXOR
-	-1,		// BC_BSLL
-	-1,		// BC_BSRL
-	-1,		// BC_BSRA
-    
-	0,      // BC_UI2F
-	0,		// BC_F2UI
-	-1,		// BC_CMPui
-	0,		// BC_SB
-	0,		// BC_SW
-	0,		// BC_UB
-	0,		// BC_UW
-	-1,		// BC_WRT1
-	-1,		// BC_WRT2
+	0,		// BC_NEGd
 	0,		// BC_INCi16
 	0,		// BC_INCi8
 	0,		// BC_DECi16
 	0,		// BC_DECi8
-	1,		// BC_PUSHZERO
-	-1,		// BC_COPY
-	1,		// BC_PGA
-
-	2,		// BC_SET8
-	-1,		// BC_WRT8
-	1,		// BC_RD8
-	0,		// BC_NEGd
+	0,		// BC_INCi
+	0,		// BC_DECi
+	0,		// BC_INCf
+	0,		// BC_DECf
 	0,		// BC_INCd
 	0,		// BC_DECd
-	-2,		// BC_ADDd
-	-2,		// BC_SUBd
-	-2,		// BC_MULd
-	-2,		// BC_DIVd
-	-2,		// BC_MODd
+	0,		// BC_IncVi
+	0,		// BC_DecVi
+	0,		// BC_BNOT
+	0,		// BC_BAND
+	0,		// BC_BOR
+	0,		// BC_BXOR
+	0,		// BC_BSLL
+	0,		// BC_BSRL
+	0,		// BC_BSRA
+	-1,		// BC_COPY
+	2,		// BC_SET8
+	1,		// BC_RD8
 	0,		// BC_SWAP8
-	-3,		// BC_CMPd
-	-1,		// BC_dTOi
-	-1,		// BC_dTOui
-	-1,		// BC_dTOf
-	1,		// BC_iTOd
-	1,		// BC_uiTOd
-	1,		// BC_fTOd
-	-1,		// BC_JMPP
-	-1,		// BC_SRET4
-	-2,		// BC_SRET8
-	1,		// BC_RRET4
-	2,		// BC_RRET8
+	0,		// BC_CMPd
+	0,		// BC_CMPu
+	0,		// BC_CMPf
+	0,		// BC_CMPi
+	0,      // BC_CMPIi
+	0,      // BC_CMPIf
+	0,      // BC_CMPIu
+	0,		// BC_JMPP
+	-1,		// BC_PopRPtr	TODO: Adapt pointer size
+	1,		// BC_PshRPtr	TODO: Adapt pointer size
 	2,		// BC_STR
-	-1,     // BC_JS
-	-1,     // BC_JNS
-	-1,     // BC_JP
-	-1,     // BC_JNP
-	0,		// BC_CMPIi
-	0,		// BC_CMPIui
 	0xFFFF,	// BC_CALLSYS
 	0xFFFF,	// BC_CALLBND
-	1,		// BC_RDGA4
-	-1,		// BC_MOVGA4
-	0,		// BC_ADDIi
-	0,		// BC_SUBIi
-	0,		// BC_CMPIf
-	0,		// BC_ADDIf
-	0,		// BC_SUBIf
-	0,		// BC_MULIi
-	0,		// BC_MULIf
 	0,		// BC_SUSPEND
 	0xFFFF,	// BC_ALLOC
 	-1,		// BC_FREE
-	0,      // BC_LOADOBJ
+	0,		// BC_LOADOBJ
 	0,		// BC_STOREOBJ
 	0,		// BC_GETOBJ
-	-1,     // BC_REFCPY
+	-1,		// BC_REFCPY
 	0,		// BC_CHKREF
-	0,		// BC_RD1
-	0,		// BC_RD2
 	0,		// BC_GETOBJREF
-	0,      // BC_GETREF
-	0,      // BC_SWAP48
-	0,      // BC_SWAP84
+	0,		// BC_GETREF
+	0,		// BC_SWAP48
+	0,		// BC_SWAP84
 	1,		// BC_OBJTYPE
-	1,      // BC_TYPEID
-	0,0,0,0,0,0, // 124-129
-	0,0,0,0,0,0,0,0,0,0, // 130-139
-	0,0,0,0,0,0,0,0,0,0, // 140-149
-	0,0,0,0,0,0,0,0,0,0, // 150-159
-	0,0,0,0,0,0,0,0,0,0, // 160-169
+	1,		// BC_TYPEID
+	0,		// BC_SetV4
+	0,      // BC_SetV8
+	0,		// BC_ADDSi
+	0,		// BC_CpyVtoV4
+	0,		// BC_CpyVtoV8
+	0,		// BC_CpyVtoR4
+	0,		// BC_CpyVtoR8
+	0,		// BC_CpyVtoG4
+	0,		// BC_CpyRtoV4
+	0,		// BC_CpyRtoV8
+	0,		// BC_CpyGtoV4
+	0,		// BC_WRTV1
+	0,		// BC_WRTV2
+	0,		// BC_WRTV4
+	0,		// BC_WRTV8
+	0,		// BC_RDR1
+	0,		// BC_RDR2
+	0,		// BC_RDR4
+	0,		// BC_RDR8
+	0,		// BC_LDG
+	0,		// BC_LDV
+	1,		// BC_PGA
+	0,		// BC_RDS4
+	1,		// BC_VAR
+	0,		// BC_iTOf	
+	0,		// BC_fTOi	
+	0,		// BC_uTOf	
+	0,		// BC_fTOu	
+	0,		// BC_sbTOi	
+	0,		// BC_swTOi	
+	0,		// BC_ubTOi	
+	0,		// BC_uwTOi	
+	0,		// BC_dTOi 
+	0,		// BC_dTOu 
+	0,		// BC_dTOf 
+	0,		// BC_iTOd 
+	0,		// BC_iTOd
+	0,		// BC_fTOd 
+	0,		// BC_ADDi
+	0,		// BC_SUBi
+	0,		// BC_MULi
+	0,		// BC_DIVi
+	0,		// BC_MODi
+	0,		// BC_ADDf
+	0,		// BC_SUBf
+	0,		// BC_MULf
+	0,		// BC_DIVf
+	0,		// BC_MODf
+	0,		// BC_ADDd
+	0,		// BC_SUBd
+	0,		// BC_MULd
+	0,		// BC_DIVd
+	0,		// BC_MODd
+	0,		// BC_ADDIi
+	0,		// BC_SUBIi
+	0,		// BC_MULIi
+	0,		// BC_ADDIf
+	0,		// BC_SUBIf
+	0,		// BC_MULIf
+	0,		// BC_SetG4
+	0,		// BC_ChkRefS
+	0,		// BC_ChkNullV
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,0,0,0,0, // 165-169
 	0,0,0,0,0,0,0,0,0,0, // 170-179
 	0,0,0,0,0,0,0,0,0,0, // 180-189
 	0,0,0,0,0,0,0,0,0,0, // 190-199
@@ -641,9 +774,9 @@ const int bcStackInc[256] =
 	0,0,0,0,0,0,0,0,0,0, // 230-239
 	0,0,0,0,0,0,       // 240-245
 	1,		// BC_PSP
-	1,      // BC_VAR
+	0,		
 	0xFFFF, // BC_LINE
-	0, // 249
+	0,		// 249
 	0, // 250
 	0, // 251
 	0, // 252
@@ -662,52 +795,43 @@ const sByteCodeName bcName[256] =
 {
 	{"POP"},
 	{"PUSH"},
-	{"SET4"},
-	{"RD4"},
-	{"RDSF4"},
-	{"WRT4"},
-	{"MOV4"},
+	{"PshC4"},
+	{"PshV4"},
 	{"PSF"},
-	{"MOVSF4"},
 	{"SWAP4"},
-	{"STORE4"},
-	{"RECALL4"},
-
+	{"NOT"},
+	{"PshG4"},
+	{"LdGRdR4"},
 	{"CALL"},
 	{"RET"},
 	{"JMP"},
 	{"JZ"},
 	{"JNZ"},
-
+	{"JS"},
+	{"JNS"},
+	{"JP"},
+	{"JNP"},
 	{"TZ"},
 	{"TNZ"},
 	{"TS"},
 	{"TNS"},
 	{"TP"},
 	{"TNP"},
-
-	{"ADDi"},
-	{"SUBi"},
-	{"MULi"},
-	{"DIVi"},
-	{"MODi"},
 	{"NEGi"},
-	{"CMPi"},
+	{"NEGf"},
+	{"NEGd"},
+	{"INCi16"},
+	{"INCi8"},
+	{"DECi16"},
+	{"DECi8"},
 	{"INCi"},
 	{"DECi"},
-	{"I2F"},
-
-	{"ADDf"},
-	{"SUBf"},
-	{"MULf"},
-	{"DIVf"},
-	{"MODf"},
-	{"NEGf"},
-	{"CMPf"},
 	{"INCf"},
 	{"DECf"},
-	{"F2I"},
-
+	{"INCd"},
+	{"DECd"},
+	{"IncVi"},
+	{"DecVi"},
 	{"BNOT"},
 	{"BAND"},
 	{"BOR"},
@@ -715,65 +839,23 @@ const sByteCodeName bcName[256] =
 	{"BSLL"},
 	{"BSRL"},
 	{"BSRA"},
-
-    {"UI2F"},
-	{"F2UI"},
-	{"CMPui"},
-	{"SB"},
-	{"SW"},
-	{"UB"},
-	{"UW"},
-	{"WRT1"},
-	{"WRT2"},
-	{"INCi16"},
-	{"INCi8"},
-	{"DECi16"},
-	{"DECi8"},
-	{"PUSHZERO"},
 	{"COPY"},
-	{"PGA"},
 	{"SET8"},
-	{"WRT8"},
-	{"RD8"},
-	{"NEGd"},
-	{"INCd"},
-	{"DECd"},
-	{"ADDd"},
-	{"SUBd"},
-	{"MULd"},
-	{"DIVd"},
-	{"MODd"},
+	{"RDS8"},
 	{"SWAP8"},
 	{"CMPd"},
-	{"dTOi"},
-	{"dTOui"},
-	{"dTOf"},
-	{"iTOd"},
-	{"uiTOd"},
-	{"fTOd"},
-	{"JMPP"},
-	{"SRET4"},
-	{"SRET8"},
-	{"RRET4"},
-	{"RRET8"},
-	{"STR"},
-	{"JS"},
-	{"JNS"},
-	{"JP"},
-	{"JNP"},
+	{"CMPu"},
+	{"CMPf"},
+	{"CMPi"},
 	{"CMPIi"},
-	{"CMPIui"},
+	{"CMPIf"},
+	{"CMPIu"},
+	{"JMPP"},
+	{"PopRPtr"},
+	{"PshRPtr"},
+	{"STR"},
 	{"CALLSYS"},
 	{"CALLBND"},
-	{"RDGA4"},
-	{"MOVGA4"},
-	{"ADDIi"},
-	{"SUBIi"},
-	{"CMPIf"},
-	{"ADDIf"},
-	{"SUBIf"},
-	{"MULIi"},
-	{"MULIf"},
 	{"SUSPEND"},
 	{"ALLOC"},
 	{"FREE"},
@@ -782,19 +864,101 @@ const sByteCodeName bcName[256] =
 	{"GETOBJ"},
 	{"REFCPY"},
 	{"CHKREF"},
-	{"RD1"},
-	{"RD2"},
 	{"GETOBJREF"},
 	{"GETREF"}, 
 	{"SWAP48"},
 	{"SWAP84"},
 	{"OBJTYPE"},
 	{"TYPEID"},
-	{0},{0},{0},{0},{0},{0}, // 124-129
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 130-139
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 140-149
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 150-159
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 160-169
+	{"SetV4"},
+	{"SetV8"},
+	{"ADDSi"},
+	{"CpyVtoV4"},
+	{"CpyVtoV8"},
+	{"CpyVtoR4"},
+	{"CpyVtoR8"},
+	{"CpyVtoG4"},
+	{"CpyRtoV4"},
+	{"CpyRtoV8"},
+	{"CpyGtoV4"},
+	{"WRTV1"},
+	{"WRTV2"},
+	{"WRTV4"},
+	{"WRTV8"},
+	{"RDR1"},
+	{"RDR2"},
+	{"RDR4"},
+	{"RDR8"},
+	{"LDG"},
+	{"LDV"},
+	{"PGA"},
+	{"RDS4"},
+	{"VAR"},
+	{"iTOf"},
+	{"fTOi"},
+	{"uTOf"},
+	{"fTOu"},
+	{"sbTOi"},
+	{"swTOi"},
+	{"ubTOi"},
+	{"uwTOi"},
+	{"dTOi"},
+	{"dTOu"}, 
+	{"dTOf"},
+	{"iTOd"},
+	{"uTOd"},
+	{"fTOd"},
+	{"ADDi"},
+	{"SUBi"},
+	{"MULi"},
+	{"DIVi"},
+	{"MODi"},
+	{"ADDf"},
+	{"SUBf"},
+	{"MULf"},
+	{"DIVf"},
+	{"MODf"},
+	{"ADDd"},
+	{"SUBd"},
+	{"MULd"},
+	{"DIVd"},
+	{"MODd"},
+	{"ADDIi"},
+	{"SUBIi"},
+	{"MULIi"},
+	{"ADDIf"},
+	{"SUBIf"},
+	{"MULIf"},
+	{"SetG4"},
+	{"ChkRefS"},
+	{"ChkNullV"},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},
+	{0},{0},{0},{0},{0}, // 165-169
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 170-179
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 180-189
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 190-199
@@ -804,7 +968,7 @@ const sByteCodeName bcName[256] =
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 230-239
 	{0},{0},{0},{0},{0},{0},	     // 240-245
 	{"PSP"},
-	{"VAR"},
+	{0},
 	{"LINE"},
 	{0}, 
 	{0},

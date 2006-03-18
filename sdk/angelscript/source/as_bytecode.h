@@ -40,8 +40,8 @@
 #ifndef AS_BYTECODE_H
 #define AS_BYTECODE_H
 
+#include "as_config.h"
 #include "as_bytecodedef.h"
-#include "as_types.h"
 #include "as_array.h"
 
 BEGIN_AS_NAMESPACE
@@ -66,57 +66,52 @@ public:
 
 	void Finalize();
 
-	bool IsComplex();
-		
-	int Optimize();
+	int  Optimize();
 	void ExtractLineNumbers();
-	bool IsCombination(cByteInstruction *curr, asBYTE bc1, asBYTE bc2);
-	bool IsCombination(cByteInstruction *curr, asBYTE bc1, asBYTE bc2, asBYTE bc3);
-	cByteInstruction *ChangeFirstDeleteNext(cByteInstruction *curr, asBYTE bc);
-	cByteInstruction *DeleteFirstChangeNext(cByteInstruction *curr, asBYTE bc);
-	cByteInstruction *DeleteInstruction(cByteInstruction *instr);
-	void RemoveInstruction(cByteInstruction *instr);
-	void InsertBefore(cByteInstruction *before, cByteInstruction *instr);
-	bool MatchPattern(cByteInstruction *curr);
-	cByteInstruction *OptimizePattern(cByteInstruction *curr);
-	bool CanBeSwapped(cByteInstruction *curr);
 	int  ResolveJumpAddresses();
 	int  FindLabel(int label, cByteInstruction *from, cByteInstruction **dest, int *positionDelta);
 
 	void AddPath(asCArray<cByteInstruction *> &paths, cByteInstruction *instr, int stackSize);
 
-	void Output(asBYTE *array);
+	void Output(asDWORD *array);
 	void AddCode(asCByteCode *bc);
 
 	void PostProcess();
 	void DebugOutput(const char *name, asCModule *module, asCScriptEngine *engine);
 
-	int  GetLastCode();
-	int  RemoveLastCode();
+	int  GetLastInstr();
+	int  RemoveLastInstr();
+	asDWORD GetLastInstrValueDW();
 
+	void InsertIfNotExists(asCArray<int> &vars, int var);
 	void GetVarsUsed(asCArray<int> &vars);
 	bool IsVarUsed(int offset);
 	void ExchangeVar(int oldOffset, int newOffset);
 
 	void Label(short label);
 	void Line(int line, int column);
-	void Call(int bc, int funcID, int pop);
-	void Alloc(int bc, int objID, int funcID, int pop);
+	void Call(bcInstr bc, int funcID, int pop);
+	void Alloc(bcInstr bc, int objID, int funcID, int pop);
 	void Ret(int pop);
-	void JmpP(asDWORD max);
-	void Destructor(int bc, asDWORD destr, int sfOffset);
+	void JmpP(int var, asDWORD max);
 
-	int InsertFirstInstrDWORD(int bc, asDWORD param);
-	int InsertFirstInstrQWORD(int bc, asQWORD param);
-	int Instr(int bc);
-	int InstrQWORD(int bc, asQWORD param);
-	int InstrDOUBLE(int bc, double param);
-	int InstrDWORD(int bc, asDWORD param);
-	int InstrWORD(int bc, asWORD param);
-	int InstrBYTE(int bc, asBYTE param);
-	int InstrSHORT(int bc, short param);
-	int InstrFLOAT(int bc, float param);
-	int InstrINT(int bc, int param);
+	int InsertFirstInstrDWORD(bcInstr bc, asDWORD param);
+	int InsertFirstInstrQWORD(bcInstr bc, asQWORD param);
+	int Instr(bcInstr bc);
+	int InstrQWORD(bcInstr bc, asQWORD param);
+	int InstrDOUBLE(bcInstr bc, double param);
+	int InstrDWORD(bcInstr bc, asDWORD param);
+	int InstrWORD(bcInstr bc, asWORD param);
+	int InstrSHORT(bcInstr bc, short param);
+	int InstrFLOAT(bcInstr bc, float param);
+	int InstrINT(bcInstr bc, int param);
+	int InstrW_W_W(bcInstr bc, int a, int b, int c);
+	int InstrW_DW(bcInstr bc, asWORD a, asDWORD b);
+	int InstrSHORT_DW(bcInstr bc, short a, asDWORD b);
+	int InstrW_QW(bcInstr bc, asWORD a, asQWORD b);
+	int InstrSHORT_QW(bcInstr bc, short a, asQWORD b);
+	int InstrW_FLOAT(bcInstr bc, asWORD a, float b);
+	int InstrW_W(bcInstr bc, int w, int b);
 
 	int Pop (int numDwords);
 	int Push(int numDwords);
@@ -124,12 +119,39 @@ public:
 	asCArray<int> lineNumbers;
 	int largestStackUsed;
 
+	static int SizeOfType(int type);
+
+	void DefineTemporaryVariable(int varOffset);
+
 protected:
+	// Helpers for Optimize
+	bool MatchPattern(cByteInstruction *curr);
+	cByteInstruction *OptimizePattern(cByteInstruction *curr);
+	bool CanBeSwapped(cByteInstruction *curr);
+	bool IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2);
+	bool IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2, bcInstr bc3);
+	cByteInstruction *ChangeFirstDeleteNext(cByteInstruction *curr, bcInstr bc);
+	cByteInstruction *DeleteFirstChangeNext(cByteInstruction *curr, bcInstr bc);
+	cByteInstruction *DeleteInstruction(cByteInstruction *instr);
+	void RemoveInstruction(cByteInstruction *instr);
+	cByteInstruction *GoBack(cByteInstruction *curr);
+	void InsertBefore(cByteInstruction *before, cByteInstruction *instr);
+	bool RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **next);
+	bool IsTemporary(short offset);
+	bool IsTempRegUsed(cByteInstruction *curr);
+	bool IsTempVarRead(cByteInstruction *curr, int offset);
+	bool PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **next);
+	bool IsTempVarReadByInstr(cByteInstruction *curr, int var);
+	bool IsTempVarOverwrittenByInstr(cByteInstruction *curr, int var);
+	bool IsInstrJmpOrLabel(cByteInstruction *curr);
+
 	int AddInstruction();
 	int AddInstructionFirst();
 
 	cByteInstruction *first;
 	cByteInstruction *last;
+
+	asCArray<int> temporaryVariables;
 };
 
 class cByteInstruction
@@ -147,8 +169,9 @@ public:
 	cByteInstruction *next;
 	cByteInstruction *prev;
 
-	asDWORD op;
-	asBYTE arg[MAX_DATA_SIZE];
+	bcInstr op;
+	asQWORD arg;
+	short wArg[3];
 	int size;
 	int stackInc;
 

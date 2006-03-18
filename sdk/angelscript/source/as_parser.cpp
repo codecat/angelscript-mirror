@@ -532,8 +532,16 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 
 		if( isParam )
 		{
-			int tokens[3] = {ttIn, ttOut, ttInOut};
-			node->AddChildLast(ParseOneOf(tokens, 3));
+#ifdef AS_ALLOW_UNSAFE_REFERENCES
+			GetToken(&t);
+			RewindTo(&t);
+
+			if( t.type == ttIn || t.type == ttOut || t.type == ttInOut )
+#endif
+			{
+				int tokens[3] = {ttIn, ttOut, ttInOut};
+				node->AddChildLast(ParseOneOf(tokens, 3));
+			}
 		}
 	}
 

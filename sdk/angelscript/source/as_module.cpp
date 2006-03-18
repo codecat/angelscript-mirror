@@ -207,6 +207,7 @@ void asCModule::Reset()
 
 	// Free global variables
 	globalMem.SetLength(0);
+	globalVarPointers.SetLength(0);
 
 	isBuildWithoutErrors = true;
 	isDiscarded = false;
@@ -570,7 +571,16 @@ int asCModule::AllocGlobalMemory(int size)
 {
 	int index = globalMem.GetLength();
 
+	asDWORD *start = globalMem.AddressOf();
+
 	globalMem.SetLength(index + size);
+
+	// Update the addresses in the globalVarPointers
+	for( asUINT n = 0; n < globalVarPointers.GetLength(); n++ )
+	{
+		if( globalVarPointers[n] >= start && globalVarPointers[n] < (start+index) )
+			globalVarPointers[n] = &globalMem[0] + (int(globalVarPointers[n]) - int(start))/sizeof(void*);
+	}
 
 	return index;
 }
@@ -837,6 +847,22 @@ void asCModule::RefConfigGroupForObjectType(asCObjectType *type)
 	// Add reference to the group
 	configGroups.PushLast(group);
 	group->AddRef();
+}
+
+int asCModule::GetGlobalVarIndex(int propIdx)
+{
+	void *ptr = 0;
+	if( propIdx < 0 )
+		ptr = engine->globalPropAddresses[-int(propIdx) - 1];
+	else
+		ptr = globalMem.AddressOf() + (propIdx & 0xFFFF);
+
+	for( int n = 0; n < (signed)globalVarPointers.GetLength(); n++ )
+		if( globalVarPointers[n] == ptr )
+			return n;
+
+	globalVarPointers.PushLast(ptr);
+	return globalVarPointers.GetLength()-1;
 }
 
 END_AS_NAMESPACE

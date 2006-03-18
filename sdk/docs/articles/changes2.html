@@ -118,6 +118,78 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
+<h2>Version 2.5.0c - 2006/02/16</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Using named constants, i.e. variables declared and initialized with constants, would in certain situations give the wrong value. (Thanks Villemon) Bug from 2.5.0b
+<li>Added null checks to fix memory access failure related to dynamic configurations. (Thanks mandrav)
+</ul>
+<li>Project
+<ul>
+<li>Removed as_structs.h
+</ul>
+</ul>
+
+<h2>Version 2.5.0b - 2006/01/31</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Comparison with object handle in a local variable produced incorrect byte code. (Thanks Villemon)
+<li>A bug in the VM for the BC_ChkNullV byte code caused script exceptions when using asCScriptString compiled with VC++ 2005. (Thanks topcatse)
+<li>When releasing the engine, the internal resources were released in the wrong order, causing assert failures in the memory manager with VC++ 2005.
+<li>The assignment operator for the internal type 'any' wasn't properly registered, causing memory management problems.
+<li>Global variables were not initialized properly when loading pre-compiled bytecode. (Thanks Villemon)
+</ul>
+</ul>
+
+<h2>Version 2.5.0a - 2006/01/20</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Using assignment behaviours that took a reference as &amp;inout with asALLOW_UNSAFE_REFERENCES would crash the application. (Thanks Deyja)
+<li>Using the default constructor for script structures to create temporary objects didn't work.
+</ul>
+</ul>
+
+<h2>Version 2.5.0 - 2006/01/12</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>asCALL_CDECL_OBJLAST that returned objects by value didn't work correctly (Thanks Deyja)
+</ul>
+<li>Script language
+<ul>
+<li>Primitive types can be implicitly converted to a reference of another primitive type for function calls. This is something C++ doesn't accept.
+<li>Parameter reference specified as &amp;inout no longer copies the value. The argument is only computed once. The function receives a reference to the true value. Expressions where the reference cannot be guaranteed during the execution of the function generates a compiler error. The value must then be copied to a local variable instead.
+<li>Added support for character literals.
+</ul>
+<li>Library interface
+<ul>
+<li>Overloaded operators may now use &amp;inout references. Since this type of references now guarantees a pointer to the true object this is useful if the operand has to be modified, e.g. a stream class.
+<li>Overloaded operators may now use &amp;out references. The order of evaluation will change, but precedence order is kept.
+<li>Added functions to the asIScriptContext interface that allow the application to enumerate variables on the stack and examine their values. (Thanks Ivan Marinov)
+</ul>
+<li>Library
+<ul>
+<li>A couple of minor code changes to make it easier to compile the library on Metrowerks CodeWarrior for NintendoDS (Thanks Fumihiro KanaYA)
+<li>The script compiler was changed to generate less copies of objects when doing function parameters by reference.
+<li>Added a new compile time flag: AS_ALLOW_UNSAFE_REFERENCES. When this is defined the library will allow parameter references without the in, out, or inout keywords. These parameters references will also work just like normal C++ parameter references, without any restrictions.
+</ul>
+<li>Virtual Machine
+<ul>
+<li>The VM has been changed to use three op instructions instead of stack based instructions. In some situations the new VM is faster, in others it is about the same.
+</ul>
+<li>Project
+<ul>
+<li>as_types.h was removed.
+</ul>
+</ul>
+
 <h2>Version 2.4.1e - 2006/02/04</h2>
 
 <ul>

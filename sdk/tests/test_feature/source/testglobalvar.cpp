@@ -27,20 +27,36 @@ static const char *script3 =
 "}                            \n";
 
 static const char *script4 =
-"const double a=12;   \n"
-"const double b=5;    \n"
-"const double c=35.2; \n"
-"const double d=4;    \n"
+"const double gca=12;   \n"
+"const double gcb=5;    \n"
+"const double gcc=35.2; \n"
+"const double gcd=4;    \n"
+"double a=12;   \n"
+"double b=5;    \n"
+"double c=35.2; \n"
+"double d=4;    \n"
 "void test()          \n"
 "{                    \n"
+"  print(gca+\"\\n\");  \n"
+"  print(gcb+\"\\n\");  \n"
+"  print(gcc+\"\\n\");  \n"
+"  print(gcd+\"\\n\");  \n"
 "  print(a+\"\\n\");  \n"
 "  print(b+\"\\n\");  \n"
 "  print(c+\"\\n\");  \n"
 "  print(d+\"\\n\");  \n"
-"const double la=12;   \n"
-"const double lb=5;    \n"
-"const double lc=35.2; \n"
-"const double ld=4;    \n"
+"const double lca=12;   \n"
+"const double lcb=5;    \n"
+"const double lcc=35.2; \n"
+"const double lcd=4;    \n"
+"double la=12;   \n"
+"double lb=5;    \n"
+"double lc=35.2; \n"
+"double ld=4;    \n"
+"  print(lca+\"\\n\");  \n"
+"  print(lcb+\"\\n\");  \n"
+"  print(lcc+\"\\n\");  \n"
+"  print(lcd+\"\\n\");  \n"
 "  print(la+\"\\n\");  \n"
 "  print(lb+\"\\n\");  \n"
 "  print(lc+\"\\n\");  \n"
@@ -122,7 +138,7 @@ bool TestGlobalVar()
 	}
 
 	int c = engine->GetGlobalVarCount("a");
-	if( c != 4 ) ret = true;
+	if( c != 8 ) ret = true;
 	double d;
 	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 0)); 
 	if( d != 12 ) ret = true;

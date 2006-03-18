@@ -16,32 +16,34 @@ public:
 	~CScriptStream();
 
 	CScriptStream &operator=(const CScriptStream&);
+	void AddRef();
+	void Release();
 
-	stringstream *s;
+	stringstream s;
+	int refCount;
 };
 
 CScriptStream &operator<<(CScriptStream &s, const string &other)
 {
 //	printf("(%X) << \"%s\"\n", &s, other.c_str());
 
-	*s.s << other;
+	stream << other;
+	s.s << other;
 	return s;
 }
 
-// TODO: Make this work
-/*
 CScriptStream &operator>>(CScriptStream &s, string &other)
 {
-	*s.s >> other;
+	s.s >> other;
 	return s;
 }
-*/
+
 
 CScriptStream::CScriptStream()
 {
 //	printf("new (%X)\n", this);
 
-	s = &stream;
+	refCount = 1;
 }
 
 CScriptStream::~CScriptStream()
@@ -53,19 +55,27 @@ CScriptStream &CScriptStream::operator=(const CScriptStream &other)
 {
 //	printf("(%X) = (%X)\n", this, &other);
 
-	s = other.s;
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx )
+		ctx->SetException("Illegal use of assignment on stream object");
 
 	return *this;
+}
+
+void CScriptStream::AddRef()
+{
+	refCount++;
+}
+
+void CScriptStream::Release()
+{
+	if( --refCount == 0 )
+		delete this;
 }
 
 void CScriptStream_Construct(CScriptStream *o)
 {
 	new(o) CScriptStream;
-}
-
-void CScriptStream_Destruct(CScriptStream *o)
-{
-	o->~CScriptStream();
 }
 
 static const char *script1 =
@@ -74,15 +84,18 @@ static const char *script1 =
 "  stream s;                       \n"
 "  s << \"a\" << \"b\" << \"c\";   \n"
 "}                                 \n";
-// TODO: Make this work
-/*
+
+static const char *script2 =
 "void Test2()                      \n"
 "{                                 \n"
 "  stream s;                       \n"
 "  s << \"a b c\";                 \n"
 "  string a,b,c;                   \n"
 "  s >> a >> b >> c;               \n"
-"}                                 \n";*/
+"  Assert(a == \"a\");             \n"
+"  Assert(b == \"b\");             \n"
+"  Assert(c == \"c\");             \n"
+"}                                 \n";
 
 bool Test()
 {
@@ -92,14 +105,15 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString(engine);
+	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
 
 	engine->RegisterObjectType("stream", sizeof(CScriptStream), asOBJ_CLASS_CDA);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CScriptStream_Construct), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectBehaviour("stream", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(CScriptStream_Destruct), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("stream", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptStream,AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("stream", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptStream,Release), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_ASSIGNMENT, "stream &f(const stream &in)", asMETHOD(CScriptStream, operator=), asCALL_THISCALL);
-	engine->RegisterGlobalBehaviour(asBEHAVE_BIT_SLL, "stream &f(stream &in, string &in)", asFUNCTIONPR(operator<<, (CScriptStream &s, const string &other), CScriptStream &), asCALL_CDECL);
-	// TODO: Make this work
-//	engine->RegisterGlobalBehaviour(asBEHAVE_BIT_SRL, "stream &f(stream &in, string &out)", asFUNCTIONPR(operator>>, (CScriptStream &s, string &other), CScriptStream &), asCALL_CDECL);
+	engine->RegisterGlobalBehaviour(asBEHAVE_BIT_SLL, "stream &f(stream &inout, const string &in)", asFUNCTIONPR(operator<<, (CScriptStream &s, const string &other), CScriptStream &), asCALL_CDECL);
+	engine->RegisterGlobalBehaviour(asBEHAVE_BIT_SRL, "stream &f(stream &inout, string &out)", asFUNCTIONPR(operator>>, (CScriptStream &s, string &other), CScriptStream &), asCALL_CDECL);
 
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
@@ -131,6 +145,19 @@ bool Test()
 
 	stream.clear();
 	
+	//-------------------------------
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+
+	r = engine->ExecuteString(0, "Test2()", &ctx);
+	if( r != asEXECUTION_FINISHED )
+	{
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+		fail = true;
+	}
+	if( ctx ) ctx->Release();
 
 	engine->Release();
 

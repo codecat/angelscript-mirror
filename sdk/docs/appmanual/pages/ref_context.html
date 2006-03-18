@@ -57,10 +57,15 @@ public:
   void <a href="#clearlinecb">ClearLineCallback</a>();
   int  <a href="#setexceptcb">SetExceptionCallback</a>(asUPtr callback, void *obj, int callConv);
   void <a href="#clearexceptcb">ClearExceptionCallback</a>();
-	
+
   int <a href="#getcssize">GetCallstackSize</a>();
   int <a href="#getcsfunc">GetCallstackFunction</a>(int index);
   int <a href="#getcsline">GetCallstackLineNumber</a>(int index, int *column = 0);
+  
+  int <a href="#getvarcount">GetVarCount</a>(int stackLevel = -1);
+  const char *<a href="#getvarname">GetVarName</a>(int varIndex, int *length = 0, int stackLevel = -1);
+  const char *<a href="#getvardecl">GetVarDeclaration</a>(int varIndex, int *length = 0, int stackLevel = -1);
+  void *<a href="#getvarptr">GetVarPointer</a>(int varIndex, int stackLevel = -1);
 };
 </pre>
 
@@ -725,6 +730,135 @@ int GetCallstackLineNumber(int index, int *column);
 <h3>Returns</h3>
 
 <p>The line number.</p>
+
+
+
+
+
+<a name=getvarcount></a>
+<h2>GetVarCount</h2>
+
+<pre class=border>
+int GetVarCount(int stackLevel);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the number of declared variables, including the parameters, in the function on the stack.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>stackLevel</code>&nbsp;</td>
+<td valign=top><p>The stack level. 0 is the first called function on the stack, the greater the number the younger the function. -1 (default) is the current function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>The number of variables in the function.</p>
+
+
+
+
+<a name=getvarname></a>
+<h2>GetVarName</h2>
+
+<pre class=border>
+const char *GetVarName(int varIndex, int *length, int stackLevel);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the name of the variable in the function.</p>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>varIndex</code>&nbsp;</td>
+<td valign=top><p>The index of the variable.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>length</code>&nbsp;</td>
+<td valign=top><p>This argument will receive the length of the returned string. Can be 0.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>stackLevel</code>&nbsp;</td>
+<td valign=top><p>The stack level in which the variables are enumerated. -1 is the default, and means the current function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns the pointer to a temporary string with the name of the variable.</p>
+
+
+
+
+
+<a name=getvardecl></a>
+<h2>GetVarDeclaration</h2>
+
+<pre class=border>
+const char *GetVarDeclaration(int varIndex, int *length, int stackLevel);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the declaration of the variable in the function.</p>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>varIndex</code>&nbsp;</td>
+<td valign=top><p>The index of the variable.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>length</code>&nbsp;</td>
+<td valign=top><p>This argument will receive the length of the returned string. Can be 0.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>stackLevel</code>&nbsp;</td>
+<td valign=top><p>The stack level in which the variables are enumerated. -1 is the default, and means the current function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns the pointer to a temporary string with the declaration of the variable.</p>
+
+
+
+
+
+<a name=getvarptr></a>
+<h2>GetVarPointer</h2>
+
+<pre class=border>
+const char *GetVarPointer(int varIndex, int stackLevel);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns a pointer to the variable, so that its value can be read and written. The address is valid until the script function returns.</p>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>varIndex</code>&nbsp;</td>
+<td valign=top><p>The index of the variable.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>length</code>&nbsp;</td>
+<td valign=top><p>This argument will receive the length of the returned string. Can be 0.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>stackLevel</code>&nbsp;</td>
+<td valign=top><p>The stack level in which the variables are enumerated. -1 is the default, and means the current function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns the pointer to the variable.</p>
 
 
 

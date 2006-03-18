@@ -53,11 +53,11 @@ static const char *script4 =
 "{                              \n"
 "   string s = \"\"\"           \n"
 "Heredoc\\x20test\n"
-"            \"\"\" \"\\x21\"; \n"
+"            \"\"\" \"\\x21\";  \n"
 "   print(s);                   \n"
 "}                              \n";
 
-static const char *script5 = 
+static const char *script5 =
 "void test( string @ s )         \n"
 "{                               \n"
 "   string t = s;                \n"
@@ -180,6 +180,23 @@ bool Test()
 	if( engine->Build(0) < 0 ) fail = true;
 	r = engine->ExecuteString(0, "Main()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+
+
+	// Test character literals
+	printOutput = "";
+	r = engine->ExecuteString(0, "print(\"\" + 'a')");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( printOutput != "97" ) fail = true;
+
+	printOutput = "";
+	r = engine->ExecuteString(0, "print(\"\" + '\\'')");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( printOutput != "39" ) fail = true;
+
+	CBufferedOutStream bout;
+	engine->SetCommonMessageStream(&bout);
+	r = engine->ExecuteString(0, "print(\"\" + '')");
+	if( r != -1 ) fail = true;
 
 	//-------------------------------------
 	engine->AddScriptSection(0, "test", script7, strlen(script7), 0, false);

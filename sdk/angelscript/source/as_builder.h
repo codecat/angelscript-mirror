@@ -42,13 +42,11 @@
 #include "as_config.h"
 #include "as_scriptengine.h"
 #include "as_module.h"
-
 #include "as_array.h"
 #include "as_scriptcode.h"
 #include "as_scriptnode.h"
 #include "as_datatype.h"
 #include "as_property.h"
-#include "as_types.h"
 
 BEGIN_AS_NAMESPACE
 

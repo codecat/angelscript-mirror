@@ -126,10 +126,16 @@ bool Test()
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build(0);
-	if( r < 0 ) fail = true;
+#ifndef AS_ALLOW_UNSAFE_REFERENCES
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "TestRefArgument (1, 1) : Info    : Compiling void Test()\n"
+		               "TestRefArgument (4, 9) : Error   : Cannot guarantee safety of reference. Copy the value to a local variable first\n" ) fail = true;
+#else
+	if( r != 0 ) fail = true;
+#endif
 
 	//----------------------
-	engine->SetCommonMessageStream(&bout);
+	engine->SetCommonMessageStream(&out);
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;

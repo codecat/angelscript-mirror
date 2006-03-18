@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -255,11 +255,34 @@ bool asCTokenizer::IsConstant()
 		return true;
 	}
 
+	// Character literal between single-quotes
+	if( source[0] == '\'' )
+	{
+		bool evenSlashes = true;
+		int n;
+		for( n = 1; n < sourceLength; n++ )
+		{
+			if( source[n] == '\n' ) break;
+			if( source[n] == '\'' && evenSlashes )
+			{
+				tokenType = ttIntConstant;
+				tokenLength = n+1;
+				return true;
+			}
+			if( source[n] == '\\' ) evenSlashes = !evenSlashes; else evenSlashes = true;
+		}
+
+		tokenType = ttNonTerminatedStringConstant;
+		tokenLength = n-1;
+
+		return true;
+	}
+
 	// String constant between double-quotes
 	if( source[0] == '"' )
 	{
 		// Is it a normal string constant or a heredoc string constant?
-		if( sourceLength >= 6 && source[1] == '"' && source [2] == '"' )
+		if( sourceLength >= 6 && source[1] == '"' && source[2] == '"' )
 		{
 			// Heredoc string constant (spans multiple lines, no escape sequences)
 
@@ -273,8 +296,6 @@ bool asCTokenizer::IsConstant()
 
 			tokenType = ttHeredocStringConstant;
 			tokenLength = n+3;
-
-			return true;
 		}
 		else
 		{

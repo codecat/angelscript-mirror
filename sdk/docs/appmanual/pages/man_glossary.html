@@ -17,6 +17,7 @@
 <li><a href="#context">Context</a>
 <li><a href="#engine">Engine</a>
 <li><a href="#module">Module</a>
+<li><a href="#handle">Object handle</a>
 <li><a href="#section">Section</a>
 </ul>
 
@@ -57,6 +58,15 @@ that module.</p>
 application. The script library makes no assumptions, i.e. there is no 
 predefined function like 'void main()' that must exist. It depends on what 
 you want the application to be able to do.</p>
+
+
+<a name="handle"></a>
+<h2>Object handle</h2>
+
+<p>An object handle is a reference counted pointer to an object. Whenever a handle for an object is stored, the object's reference counter is increased with a call to the object's ADDREF behaviour. When the handle is released the RELEASE behaviour is called. When the object detects that all references have been released it should destroy itself.</p>
+
+<p>Because the handle needs a reference counter to work it is only supported for those object types that have the ADDREF and RELEASE behaviours registered. Primitive types, like int, float, and double, for example do not support object handles.</p>
+
 
 
 <a name="section"></a>

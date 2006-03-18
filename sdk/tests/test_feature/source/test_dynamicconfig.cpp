@@ -156,7 +156,8 @@ bool Test()
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 3) : Error   : 'global' is not declared\n"
-								 "TestDynamicConfig (3, 10) : Error   : Not a valid reference\n" ) 
+								 "TestDynamicConfig (3, 10) : Error   : Reference is read-only\n"
+								 "TestDynamicConfig (3, 10) : Error   : Not a valid lvalue\n" ) 
 	{
 		fail = true;
 	}
@@ -232,8 +233,7 @@ bool Test()
 	engine->SetCommonMessageStream(&bout);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
-                                 "TestDynamicConfig (5, 9) : Error   : No matching operator that takes the type 'string&' found\n"
-								 "TestDynamicConfig (5, 7) : Error   : Can't implicitly convert from '<unrecognized token>&' to 'string&'.\n" ) 
+                                 "TestDynamicConfig (5, 9) : Error   : No matching operator that takes the type 'string&' found\n" ) 
 	{
 		fail = true;
 	}
@@ -493,6 +493,36 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
 	engine->Release();
+
+	//----------------------
+	// Test
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	r = engine->BeginConfigGroup("g1"); assert( r >= 0 );
+	RegisterScriptString(engine);
+	r = engine->EndConfigGroup(); assert( r >= 0 );
+
+	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
+
+	r = engine->Discard(0);  assert( r >= 0 );
+	r = engine->GarbageCollect(true); assert( r >= 0 );
+
+	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );
+
+	// again..
+	r = engine->BeginConfigGroup("g1"); assert( r >= 0 );
+	RegisterScriptString(engine);
+	r = engine->EndConfigGroup(); assert( r >= 0 );
+
+	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
+
+	r = engine->Discard(0);  assert( r >= 0 );
+	r = engine->GarbageCollect(true); assert( r >= 0 );
+
+	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );
+
+	engine->Release();
+
 
 	// Success
 	return fail;

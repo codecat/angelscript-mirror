@@ -44,6 +44,12 @@
 
 BEGIN_AS_NAMESPACE
 
+asCScriptFunction::~asCScriptFunction()
+{
+	for( asUINT n = 0; n < variables.GetLength(); n++ )
+		delete variables[n];
+}
+
 int asCScriptFunction::GetSpaceNeededForArguments()
 {
 	// We need to check the size for each type
@@ -140,6 +146,15 @@ int asCScriptFunction::GetLineNumber(int programPosition)
 			return lineNumbers[i*2+1];
 		}
 	}
+}
+
+void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stackOffset)
+{
+	asSScriptVariable *var = new asSScriptVariable;
+	var->name = name;
+	var->type = type;
+	var->stackOffset = stackOffset;
+	variables.PushLast(var);
 }
 
 END_AS_NAMESPACE

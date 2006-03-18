@@ -6,8 +6,10 @@
 #include "angelscript.h"
 
 namespace TestBasic { void Test(); }
+namespace TestBasic2 { void Test(); }
 namespace TestInt { void Test(); }
 namespace TestString { void Test(); }
+namespace TestString2 { void Test(); }
 
 void DetectMemoryLeaks()
 {
@@ -30,8 +32,10 @@ int main(int argc, char **argv)
 	printf("AngelScript %s\n", asGetLibraryVersion()); 
 
 	TestBasic::Test();
+	TestBasic2::Test();
 	TestInt::Test();
 	TestString::Test();
+	TestString2::Test();
 	
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");

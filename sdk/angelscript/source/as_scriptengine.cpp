@@ -215,7 +215,7 @@ asCScriptEngine::~asCScriptEngine()
 		{
 			objectTypes[n]->subType = 0;
 			delete objectTypes[n];
-	}
+		}
 	}
 	objectTypes.SetLength(0);
 
@@ -380,7 +380,7 @@ void asCScriptEngine::ClearUnusedTypes()
 
 	for( n = 0; n < scriptArrayTypes.GetLength(); n++ )
 	{
-		if( scriptArrayTypes[n]->refCount == 0 )
+		if( scriptArrayTypes[n] && scriptArrayTypes[n]->refCount == 0 )
 		{
 			RemoveArrayType(scriptArrayTypes[n]);
 
@@ -722,13 +722,13 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	asUINT n;
 	for( n = 0; n < objectTypes.GetLength(); n++ )
 	{
-		if( objectTypes[n]->name == name )
+		if( objectTypes[n] && objectTypes[n]->name == name )
 			return asALREADY_REGISTERED;
 	}
 
 	for( n = 0; n < arrayTypes.GetLength(); n++ )
 	{
-		if( arrayTypes[n]->name == name )
+		if( arrayTypes[n] && arrayTypes[n]->name == name )
 			return asALREADY_REGISTERED;
 	}		
 
@@ -1153,9 +1153,11 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		if( func.returnType != type )
 			return ConfigError(asINVALID_DECLARATION);
 
+#ifndef AS_ALLOW_UNSAFE_REFERENCES
 		// Verify that the rvalue is marked as in if a reference
 		if( func.parameterTypes[0].IsReference() && func.inOutFlags[0] != 1 )
 			return ConfigError(asINVALID_DECLARATION);
+#endif
 
 		if( behaviour == asBEHAVE_ASSIGNMENT && func.parameterTypes[0].IsEqualExceptConst(type) )
 		{
@@ -1259,12 +1261,6 @@ int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl
 		// Verify that at least one of the parameters is a registered type
 		if( !(func.parameterTypes[0].GetTokenType() == ttIdentifier) &&
 			!(func.parameterTypes[1].GetTokenType() == ttIdentifier) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that parameters by reference are marked as 'in'
-		// TODO: Allow 'out' references as well.
-		if( (func.parameterTypes[0].IsReference() && func.inOutFlags[0] != 1) ||
-			(func.parameterTypes[1].IsReference() && func.inOutFlags[1] != 1) )
 			return ConfigError(asINVALID_DECLARATION);
 
 		// TODO: Verify that the operator hasn't been registered with the same parameters already
@@ -1624,7 +1620,8 @@ void asCScriptEngine::PrepareEngine()
 	for( asUINT n = 0; n < systemFunctions.GetLength(); n++ )
 	{
 		// Determine the host application interface
-		PrepareSystemFunction(systemFunctions[n], systemFunctionInterfaces[n], this);
+		if( systemFunctions[n] )
+			PrepareSystemFunction(systemFunctions[n], systemFunctionInterfaces[n], this);
 	}
 
 	isPrepared = true;
@@ -2081,7 +2078,8 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 		// TODO: Improve linear search
 		for( asUINT n = 0; n < arrayTypes.GetLength(); n++ )
 		{
-			if( arrayTypes[n]->tokenType == ttIdentifier &&
+			if( arrayTypes[n] &&
+				arrayTypes[n]->tokenType == ttIdentifier &&
 				arrayTypes[n]->subType == type.GetObjectType() &&
 				arrayTypes[n]->arrayType == arrayType )
 				return arrayTypes[n];
@@ -2092,7 +2090,8 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 		// TODO: Improve linear search
 		for( asUINT n = 0; n < arrayTypes.GetLength(); n++ )
 		{
-			if( arrayTypes[n]->tokenType == type.GetTokenType() &&
+			if( arrayTypes[n] && 
+				arrayTypes[n]->tokenType == type.GetTokenType() &&
 				arrayTypes[n]->arrayType == arrayType )
 				return arrayTypes[n];
 		}

@@ -99,11 +99,19 @@ SOURCE=..\..\source\test_basic.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_basic2.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_int.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\source\test_string.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_string2.cpp
 # End Source File
 # Begin Source File
 

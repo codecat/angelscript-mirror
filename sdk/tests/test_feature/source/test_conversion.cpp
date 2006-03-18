@@ -321,7 +321,7 @@ bool Test()
 	ui16 = 123;   engine->ExecuteString(0, "d = double(ui16);"); if( d  !=  123.0  ) fail = true;
 	i    = -123;  engine->ExecuteString(0, "d = double(i);");    if( d  != -123.0  ) fail = true;
 	i8   = -123;  engine->ExecuteString(0, "d = double(i8);");   if( d  != -123.0  ) fail = true;
-	i16  = -123;  engine->ExecuteString(0, "d = double(i16);");   if( d  != -123.0  ) fail = true;
+	i16  = -123;  engine->ExecuteString(0, "d = double(i16);");  if( d  != -123.0  ) fail = true;
 
 	d    = 12.3;  engine->ExecuteString(0, "d = d;");    if( d  !=   12.3  ) fail = true; 
 	f    = 12.3f; engine->ExecuteString(0, "d = f;");    if( d  !=   12.3f ) fail = true; 
@@ -484,14 +484,16 @@ bool Test()
 	bout.buffer = "";
 
 	int r;
-	r = engine->ExecuteString(0, "TestDoubleByRef(d); TestFloatByRef(d); TestIntByRef(d); TestI16ByRef(d); TestI8ByRef(d); TestUIntByRef(d); TestUI16ByRef(d); TestUI8ByRef(d);"); if( r >= 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestDoubleByRef(f); TestFloatByRef(f); TestIntByRef(f); TestI16ByRef(f); TestI8ByRef(f); TestUIntByRef(f); TestUI16ByRef(f); TestUI8ByRef(f);"); if( r >= 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestDoubleByRef(ui); TestFloatByRef(ui); TestIntByRef(ui); TestI16ByRef(ui); TestI8ByRef(ui); TestUIntByRef(ui); TestUI16ByRef(ui); TestUI8ByRef(ui);"); if( r >= 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestDoubleByRef(ui8); TestFloatByRef(ui8); TestIntByRef(ui8); TestI16ByRef(ui8); TestI8ByRef(ui8); TestUIntByRef(ui8); TestUI16ByRef(ui8); TestUI8ByRef(ui8);"); if( r >= 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestDoubleByRef(ui16); TestFloatByRef(ui16); TestIntByRef(ui16); TestI16ByRef(ui16); TestI8ByRef(ui16); TestUIntByRef(ui16); TestUI16ByRef(ui16); TestUI8ByRef(ui16);"); if( r >= 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestDoubleByRef(i); TestFloatByRef(i); TestIntByRef(i); TestI16ByRef(i); TestI8ByRef(i); TestUIntByRef(i); TestUI16ByRef(i); TestUI8ByRef(i);"); if( r >= 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestDoubleByRef(i8); TestFloatByRef(i8); TestIntByRef(i8); TestI16ByRef(i8); TestI8ByRef(i8); TestUIntByRef(i8); TestUI16ByRef(i8); TestUI8ByRef(i8);"); if( r >= 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestDoubleByRef(i16); TestFloatByRef(i16); TestIntByRef(i16); TestI16ByRef(i16); TestI8ByRef(i16); TestUIntByRef(i16); TestUI16ByRef(i16); TestUI8ByRef(i16);"); if( r >= 0 ) fail = true;
+
+	// Allow the conversion of a type to another even for reference parameters (C++ doesn't allow this)
+	r = engine->ExecuteString(0, "TestDoubleByRef(d); TestFloatByRef(d); TestIntByRef(d); TestI16ByRef(d); TestI8ByRef(d); TestUIntByRef(d); TestUI16ByRef(d); TestUI8ByRef(d);"); if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "TestDoubleByRef(f); TestFloatByRef(f); TestIntByRef(f); TestI16ByRef(f); TestI8ByRef(f); TestUIntByRef(f); TestUI16ByRef(f); TestUI8ByRef(f);"); if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "TestDoubleByRef(ui); TestFloatByRef(ui); TestIntByRef(ui); TestI16ByRef(ui); TestI8ByRef(ui); TestUIntByRef(ui); TestUI16ByRef(ui); TestUI8ByRef(ui);"); if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "TestDoubleByRef(ui8); TestFloatByRef(ui8); TestIntByRef(ui8); TestI16ByRef(ui8); TestI8ByRef(ui8); TestUIntByRef(ui8); TestUI16ByRef(ui8); TestUI8ByRef(ui8);"); if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "TestDoubleByRef(ui16); TestFloatByRef(ui16); TestIntByRef(ui16); TestI16ByRef(ui16); TestI8ByRef(ui16); TestUIntByRef(ui16); TestUI16ByRef(ui16); TestUI8ByRef(ui16);"); if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "TestDoubleByRef(i); TestFloatByRef(i); TestIntByRef(i); TestI16ByRef(i); TestI8ByRef(i); TestUIntByRef(i); TestUI16ByRef(i); TestUI8ByRef(i);"); if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "TestDoubleByRef(i8); TestFloatByRef(i8); TestIntByRef(i8); TestI16ByRef(i8); TestI8ByRef(i8); TestUIntByRef(i8); TestUI16ByRef(i8); TestUI8ByRef(i8);"); if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "TestDoubleByRef(i16); TestFloatByRef(i16); TestIntByRef(i16); TestI16ByRef(i16); TestI8ByRef(i16); TestUIntByRef(i16); TestUI16ByRef(i16); TestUI8ByRef(i16);"); if( r < 0 ) fail = true;
 
 	engine->SetCommonMessageStream(&out);
 	engine->AddScriptSection(0, "script", script, strlen(script));

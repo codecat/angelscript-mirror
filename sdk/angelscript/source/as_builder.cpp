@@ -181,13 +181,14 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	{
 		// Compile the function
 		asCCompiler compiler;
-		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node) >= 0 )
+		asCScriptFunction *execfunc = new asCScriptFunction;
+		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, execfunc) >= 0 )
 		{
-			asCScriptFunction *execfunc = new asCScriptFunction;
 			execfunc->id = asFUNC_STRING | module->moduleID;
 
 			// Copy byte code to the registered function
 			execfunc->byteCode.SetLength(compiler.byteCode.GetSize());
+			// TODO: pass the function pointer directly
 			compiler.byteCode.Output(execfunc->byteCode.AddressOf());
 			execfunc->stackNeeded = compiler.byteCode.largestStackUsed;
 			execfunc->lineNumbers = compiler.byteCode.lineNumbers;
@@ -202,6 +203,8 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 			compiler.byteCode.DebugOutput("__ExecuteString.txt", module, engine);
 #endif
 		}
+		else
+			delete execfunc;
 	}
 
 	if( numErrors > 0 )
@@ -303,10 +306,11 @@ void asCBuilder::CompileFunctions()
 		str.Format(TXT_COMPILING_s, str.AddressOf());
 		WriteInfo(functions[n]->script->name.AddressOf(), str.AddressOf(), r, c, true);
 
-		if( compiler.CompileFunction(this, functions[n]->script, functions[n]->node) >= 0 )
+		if( compiler.CompileFunction(this, functions[n]->script, functions[n]->node, module->scriptFunctions[n]) >= 0 )
 		{
 			// Copy byte code to the registered function
 			module->scriptFunctions[n]->byteCode.SetLength(compiler.byteCode.GetSize());
+			// TODO: Pass the function pointer directly
 			compiler.byteCode.Output(module->scriptFunctions[n]->byteCode.AddressOf());
 			module->scriptFunctions[n]->stackNeeded = compiler.byteCode.largestStackUsed;
 			module->scriptFunctions[n]->lineNumbers = compiler.byteCode.lineNumbers;
@@ -851,6 +855,7 @@ void asCBuilder::CompileGlobalVariables()
 	asCByteCode cleanExit;
 
 	module->initFunction.byteCode.SetLength(finalInit.GetSize());
+	// TODO: Pass the function pointer directly
 	finalInit.Output(module->initFunction.byteCode.AddressOf());
 	module->initFunction.stackNeeded = finalInit.largestStackUsed;
 
@@ -1472,19 +1477,29 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 		dt.MakeReference(true);
 		n = n->next;
 
-		if( n && inOutFlags )
+		if( n )
 		{
-			if( n->tokenType == ttIn ) 
-				*inOutFlags = 1;
-			else if( n->tokenType == ttOut )
-				*inOutFlags = 2;
-			else if( n->tokenType == ttInOut )
-				*inOutFlags = 3;
-			else
-				assert(false);
+			if( inOutFlags )
+			{
+				if( n->tokenType == ttIn ) 
+					*inOutFlags = 1;
+				else if( n->tokenType == ttOut )
+					*inOutFlags = 2;
+				else if( n->tokenType == ttInOut )
+					*inOutFlags = 3;
+				else
+					assert(false);
+			}
 
 			n = n->next;
 		}
+#ifdef AS_ALLOW_UNSAFE_REFERENCES
+		else
+		{
+			if( inOutFlags )
+				*inOutFlags = 3; // ttInOut
+		}
+#endif
 	}
 
 	if( autoHandle ) *autoHandle = false;

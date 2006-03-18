@@ -61,6 +61,8 @@ public:
 	asCVariableScope(asCVariableScope *parent);
 	~asCVariableScope();
 
+	void Reset();
+
 	int DeclareVariable(const char *name, const asCDataType &type, int stackOffset);
 	sVariable *GetVariable(const char *name);
 	sVariable *GetVariableByOffset(int offset);

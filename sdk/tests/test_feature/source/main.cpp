@@ -107,6 +107,7 @@ namespace TestConfigAccess    { bool Test(); }
 namespace TestFloat           { bool Test(); }
 namespace TestVector3_2       { bool Test(); }
 namespace TestDict            { bool Test(); }
+namespace TestUnsafeRef       { bool Test(); }
 namespace TestReturnString    { bool Test(); }
 
 
@@ -124,7 +125,12 @@ extern "C" void BreakPoint()
 	printf("Breakpoint\n");
 }
 
-//#define AS_MAX_PORTABILITY
+//----------------------------------
+// Test with these flags as well
+//
+// + AS_MAX_PORTABILITY
+// + AS_ALLOW_UNSAFE_REFERENCES
+//----------------------------------
 
 int main(int argc, char **argv)
 {
@@ -135,10 +141,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifndef AS_MAX_PORTABILITY
-	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
-	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
-	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
-	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
+	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
 	if( TestConfig::Test()            ) goto failed; else printf("-- TestConfig passed\n");
@@ -146,11 +149,14 @@ int main(int argc, char **argv)
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
+	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestObject::Test()            ) goto failed; else printf("-- TestObject passed\n");
 	if( TestDict::Test()              ) goto failed; else printf("-- TestDict passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
 	if( TestArrayHandle::Test()       ) goto failed; else printf("-- TestArrayHandle passed\n");
 	if( TestObject3::Test()           ) goto failed; else printf("-- TestObject3 passed\n");
+	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
+	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
 	if( TestVector3_2::Test()         ) goto failed; else printf("-- TestVector3_2 passed\n");
@@ -162,10 +168,10 @@ int main(int argc, char **argv)
 	if( TestEnumGlobVar()             ) goto failed; else printf("-- TestEnumGlobVar passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
-	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestStack2::Test()            ) goto failed; else printf("-- TestStack2 passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
+	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
 	if( TestArrayIntf::Test()         ) goto failed; else printf("-- TestArrayIntf passed\n");
 	if( TestStructIntf::Test()        ) goto failed; else printf("-- TestStructIntf passed\n");
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
@@ -221,15 +227,19 @@ int main(int argc, char **argv)
 	if( TestVirtualInheritance()      ) goto failed; else printf("-- TestVirtualInheritance passed\n");
 	if( TestOutput::Test()            ) goto failed; else printf("-- TestOutput passed\n");
 	if( Test2Func::Test()             ) goto failed; else printf("-- Test2Func passed\n");
-	if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
 	if( TestDiscard::Test()           ) goto failed; else printf("-- TestDiscard passed\n");
 	if( TestCircularImport::Test()    ) goto failed; else printf("-- TestCircularImport passed\n");
 	if( TestNeverVisited()            ) goto failed; else printf("-- TestNeverVisited passed\n");
 	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
-	if( TestExecuteScript()           ) goto failed; else printf("-- TestExecuteScript passed\n");
+	if( TestExecuteScript()           ) goto failed; else printf("-- TestExecuteScript passed\n"); 
 #else
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestExecuteScript()           ) goto failed; else printf("-- TestExecuteScript passed\n");
+#endif
+
+#ifdef AS_ALLOW_UNSAFE_REFERENCES
+	if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
+	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");
 #endif
 
 	// No longer valid

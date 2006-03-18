@@ -70,13 +70,13 @@ bool Test()
 
 	r = engine->RegisterObjectBehaviour("Foo",
 		asBEHAVE_ASSIGNMENT,
-		"Foo& op_assign(const Foo&in)",
+		"Foo& op_assign(const Foo&)",
 		asFUNCTION(AssignFoo),
 		asCALL_CDECL_OBJLAST);	assert( r >=0 );
 
 	r = engine->RegisterObjectBehaviour("Foo",
 		asBEHAVE_CONSTRUCT,
-		"void constructor(const Foo&in)",
+		"void constructor(const Foo&)",
 		asFUNCTION(CopyConstructFoo),
 		asCALL_CDECL_OBJLAST);	assert( r >=0 );				
 
@@ -96,13 +96,13 @@ bool Test()
 
 	r = engine->RegisterObjectBehaviour("string",
 		asBEHAVE_ASSIGNMENT,
-		"string& op_assign(const string&in)",
+		"string& op_assign(const string&)",
 		asFUNCTION(AssignString),
 		asCALL_CDECL_OBJLAST);	assert( r >=0 );
 
 	r = engine->RegisterObjectBehaviour("string",
 		asBEHAVE_CONSTRUCT,
-		"void constructor(const string&in)",
+		"void constructor(const string&)",
 		asFUNCTION(CopyConstructString),
 		asCALL_CDECL_OBJLAST);		assert( r >=0 );			
 
@@ -111,17 +111,17 @@ bool Test()
 		asCALL_CDECL);assert( r >=0 );
 
 	r = engine->RegisterObjectMethod("Foo",
-		"string member_one(const string&in)",
+		"string member_one(const string&)",
 		asFUNCTION(foo_member_fun_one),
 		asCALL_CDECL_OBJLAST);assert( r >=0 );
 
 	r = engine->RegisterObjectMethod("Foo",
-		"void member_two(const string&in)",
+		"void member_two(const string&)",
 		asFUNCTION(foo_member_fun_two),
 		asCALL_CDECL_OBJLAST);assert( r >=0 );
 
 	r = engine->RegisterGlobalFunction(
-		"string free_fun(const string&in)",
+		"string free_fun(const string&)",
 		asFUNCTION(free_fun),
 		asCALL_CDECL);assert( r >=0 );
 

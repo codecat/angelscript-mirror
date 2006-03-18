@@ -39,6 +39,8 @@
 #ifndef ANGELSCRIPT_H
 #define ANGELSCRIPT_H
 
+#include <stddef.h>
+
 #ifdef AS_USE_NAMESPACE
  #define BEGIN_AS_NAMESPACE namespace AngelScript {
  #define END_AS_NAMESPACE }
@@ -51,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        20401
+#define ANGELSCRIPT_VERSION        20500
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  4
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "2.4.1e"
+#define ANGELSCRIPT_VERSION_MINOR  5
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.5.0c"
 
 // Data types
 
@@ -79,7 +81,7 @@ typedef unsigned int   asUINT;
 
 typedef void (*asFUNCTION_t)();
 
-typedef void *(*asALLOCFUNC_t)(asUINT);
+typedef void *(*asALLOCFUNC_t)(size_t);
 typedef void (*asFREEFUNC_t)(void *);
 
 #define asFUNCTION(f) asFunctionPtr((void (*)())(f))
@@ -238,6 +240,11 @@ extern "C"
 	AS_API int              asContext_GetCallstackSize(asIScriptContext *c);
 	AS_API int              asContext_GetCallstackFunction(asIScriptContext *c, int index);
 	AS_API int              asContext_GetCallstackLineNumber(asIScriptContext *c, int index, int *column = 0);
+	AS_API int              asContext_GetVarCount(asIScriptContext *c, int stackLevel = 0);
+	AS_API const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *length = 0, int stackLevel = 0);
+	AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length = 0, int stackLevel = 0);
+	AS_API void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel = 0);
+
 
 	AS_API asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g);
 	AS_API void *           asGeneric_GetObject(asIScriptGeneric *g);
@@ -432,6 +439,11 @@ public:
 	virtual int GetCallstackSize() = 0;
 	virtual int GetCallstackFunction(int index) = 0;
 	virtual int GetCallstackLineNumber(int index, int *column = 0) = 0;
+
+	virtual int GetVarCount(int stackLevel = -1) = 0;
+	virtual const char *GetVarName(int varIndex, int *length = 0, int stackLevel = -1) = 0;
+	virtual const char *GetVarDeclaration(int varIndex, int *length = 0, int stackLevel = -1) = 0;
+	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
 
 protected:
 	virtual ~asIScriptContext() {};

@@ -131,6 +131,8 @@ public:
 	void RefConfigGroupForGlobalVar(int gvarId);
 	void RefConfigGroupForObjectType(asCObjectType *type);
 
+	int GetGlobalVarIndex(int propIdx);
+
 	asCScriptEngine *engine;
 	asCBuilder *builder;
 	bool isBuildWithoutErrors;
@@ -159,6 +161,8 @@ public:
 
 	asCArray<asCProperty *> scriptGlobals;
 	asCArray<asDWORD> globalMem;
+
+	asCArray<void*> globalVarPointers;
 
 	asCArray<asCString*> stringConstants;
 

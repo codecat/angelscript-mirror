@@ -74,6 +74,12 @@
 // Disables all platform specific code. Only the asCALL_GENERIC calling 
 // convention will be available in with this flag set.
 
+// AS_ALLOW_UNSAFE_REFERENCES
+// When this flag is defined it is not required to define the in, out, or 
+// inout keywords for parameter references. The compiler will generate code 
+// that passes the true reference to functions. It is however possible to 
+// write scripts that could crash the application due to invalid references.
+
 
 
 
@@ -290,28 +296,16 @@
 
 #ifdef AS_ALIGN
 	#define	ALIGN(b) (((b)+3)&(~3))
-	#define BCSIZE0	4
-	#define BCSIZE1 8
-	#define BCSIZE2 8
-	#define BCSIZE4 8
-	#define BCSIZE8 12
 #else
 	#define	ALIGN(b) (b)
-	#define BCSIZE0	4
-	#define BCSIZE1 5
-	#define BCSIZE2 6
-	#define BCSIZE4 8
-	#define BCSIZE8 12
 #endif
 
-#define	ARG_B(b) ((asBYTE*)&(b)[0])
-#define	ARG_W(b) ((asWORD*)&(b)[0])
-#define	ARG_DW(b) ((asDWORD*)&(b)[0])
-#define	ARG_QW(b) ((asQWORD*)&(b)[0])	
-#define	BCARG_B(b) ((asBYTE*)&(b)[4])
-#define	BCARG_W(b) ((asWORD*)&(b)[4])
-#define	BCARG_DW(b) ((asDWORD*)&(b)[4])
-#define	BCARG_QW(b) ((asQWORD*)&(b)[4])
+#define	ARG_W(b) ((asWORD*)&b)
+#define	ARG_DW(b) ((asDWORD*)&b)
+#define	ARG_QW(b) ((asQWORD*)&b)	
+#define	BCARG_W(b) ((asWORD*)&(b)[1])
+#define	BCARG_DW(b) ((asDWORD*)&(b)[1])
+#define	BCARG_QW(b) ((asQWORD*)&(b)[1])
 
 
 

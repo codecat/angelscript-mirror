@@ -149,6 +149,11 @@ void             asContext_ClearExceptionCallback(asIScriptContext *c)          
 int              asContext_GetCallstackSize(asIScriptContext *c)                                               { return c->GetCallstackSize(); }
 int              asContext_GetCallstackFunction(asIScriptContext *c, int index)                                { return c->GetCallstackFunction(index); }
 int              asContext_GetCallstackLineNumber(asIScriptContext *c, int index, int *column)                 { return c->GetCallstackLineNumber(index, column); }
+int              asContext_GetVarCount(asIScriptContext *c, int stackLevel)                                    { return c->GetVarCount(stackLevel); }
+const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *length, int stackLevel)          { return c->GetVarName(varIndex, length, stackLevel); }
+const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length, int stackLevel)   { return c->GetVarDeclaration(varIndex, length, stackLevel); }
+void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel)                    { return c->GetVarPointer(varIndex, stackLevel); }
+
 
 asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g)                   { return g->GetEngine(); }
 void *           asGeneric_GetObject(asIScriptGeneric *g)                   { return g->GetObject(); }

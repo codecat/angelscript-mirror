@@ -42,7 +42,6 @@
 
 #include "as_config.h"
 #include "as_datatype.h"
-#include "as_types.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -50,6 +49,14 @@ struct asCTypeInfo
 {
 	asCTypeInfo();
 	void Set(const asCDataType &dataType);
+
+	void SetVariable(const asCDataType &dataType, int stackOffset, bool isTemporary);
+	void SetConstantQW(const asCDataType &dataType, asQWORD value);
+	void SetConstantDW(const asCDataType &dataType, asDWORD value);
+	void SetConstantF(const asCDataType &dataType, float value);
+	void SetConstantD(const asCDataType &dataType, double value);
+	void SetNullConstant();
+	void SetDummy();
 
 	bool IsNullConstant();
 

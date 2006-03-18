@@ -598,6 +598,9 @@ bool TestOptimize()
 	r = engine->ExecuteString(0, "bool a = false, b = true; boolValue = a != b;"); assert( r == asEXECUTION_FINISHED );
 	if( boolValue != true ) fail = true;
 
+	r = engine->ExecuteString(0, "bool a = false; bool b = a == false; boolValue = b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+
 	engine->Release();
 
 	// Success

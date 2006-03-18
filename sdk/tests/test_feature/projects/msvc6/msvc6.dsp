@@ -330,6 +330,10 @@ SOURCE=..\..\source\test_suspend.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_unsaferef.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_vector3.cpp
 # End Source File
 # Begin Source File

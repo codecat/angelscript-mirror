@@ -27,10 +27,12 @@ SRCNAMES = \
   test_conversion.cpp \
   test_custommem.cpp \
   test_debug.cpp \
+  test_dict.cpp \
   test_discard.cpp \
   test_dynamicconfig.cpp \
   test_exception.cpp \
   test_exceptionmemory.cpp \
+  test_float.cpp \
   test_funcoverload.cpp \
   test_generic.cpp \
   test_import.cpp \

@@ -20,7 +20,11 @@ bool Test()
 	if( r >= 0 ) fail = true;
 
 	r = engine->RegisterGlobalFunction("void func(int &)", asFUNCTION(0), asCALL_CDECL);
+#ifndef AS_ALLOW_UNSAFE_REFERENCES
 	if( r >= 0 ) fail = true;
+#else
+	if( r < 0 ) fail = true;
+#endif
 	
 	r = engine->RegisterObjectType("mytype", 0, 0);
 	if( r < 0 ) fail = true;
@@ -35,7 +39,11 @@ bool Test()
 	if( r >= 0 ) fail = true;
 
 	r = engine->RegisterObjectMethod("mytype", "void method(int &)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+#ifndef AS_ALLOW_UNSAFE_REFERENCES
 	if( r >= 0 ) fail = true;
+#else
+	if( r < 0 ) fail = true;
+#endif
 
 	r = engine->RegisterObjectProperty("mytype", "type a", 0);
 	if( r >= 0 ) fail = true;
@@ -46,6 +54,7 @@ bool Test()
 	engine->Release();
 
 	// Verify the output messages
+#ifndef AS_ALLOW_UNSAFE_REFERENCES
 	if( bout.buffer != "System function (1, 11) : Error   : Identifier 'mytype' is not a data type\n"
 					   "System function (1, 16) : Error   : Expected one of: in, out, inout\n"
 					   "System function (1, 8) : Error   : Identifier 'othertype' is not a data type\n"
@@ -54,6 +63,15 @@ bool Test()
 					   "System function (1, 18) : Error   : Expected one of: in, out, inout\n"
 					   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
 					   " (1, 1) : Error   : Identifier 'type' is not a data type\n" )
+#else
+	if( bout.buffer != "System function (1, 11) : Error   : Identifier 'mytype' is not a data type\n"
+		               "System function (1, 8) : Error   : Identifier 'othertype' is not a data type\n"
+					   "System function (1, 1) : Error   : Identifier 'type' is not a data type\n"
+					   "System function (1, 8) : Error   : Identifier 'type' is not a data type\n"
+					   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
+					   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
+					   " (1, 1) : Error   : Identifier 'type' is not a data type\n")
+#endif
 		fail = true;
 
 	// Success

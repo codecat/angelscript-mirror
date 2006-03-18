@@ -14,42 +14,52 @@ static const char *script1 =
 "import void Test2() from \"Module2\";  \n"
 "void main()                            \n"
 "{                                      \n"
-"  Test1();                             \n" // 4
-"  Test2();                             \n" // 5
+"  int a = 1;                           \n"
+"  Test1();                             \n" // 5
+"  Test2();                             \n" // 6
 "}                                      \n"
 "void Test1()                           \n"
-"{                                      \n" // 8
+"{                                      \n" // 9
+"  int d = 4;                           \n"
 "}                                      \n";
 
 static const char *script2 =
 "void Test2()           \n"
 "{                      \n"
-"  Test3();             \n" // 3
+"  int b = 2;           \n"
+"  Test3();             \n" // 4
 "}                      \n"
 "void Test3()           \n"
 "{                      \n"
-"  int[] a;             \n" // 7
-"  a[0] = 0;            \n" // 8
+"  int c = 3;           \n"
+"  int[] a;             \n" // 9
+"  a[0] = 0;            \n" // 10
 "}                      \n";
 
 
 std::string printBuffer;
 static const char *correct =
 "Module1:void main():4,3\n"
-" Module1:void Test1():9,2\n"
-"Module1:void main():5,3\n"    
+"Module1:void main():5,3\n"
+" Module1:void Test1():10,3\n"
+" Module1:void Test1():11,2\n"
+"Module1:void main():6,3\n"    
 " Module2:void Test2():3,3\n"
-"  Module2:void Test3():7,3\n"
-"  Module2:void Test3():8,3\n" 
+" Module2:void Test2():4,3\n"
+"  Module2:void Test3():8,3\n"
+"  Module2:void Test3():9,3\n" 
+"  Module2:void Test3():10,3\n" 
 "--- exception ---\n"
 "desc: Out of range\n"
 "func: void Test3()\n"
 "modl: Module2\n"
 "sect: TestDebug:2\n"
-"line: 8,3\n"
+"line: 10,3\n"
 "--- call stack ---\n"
-"Module1:void main():6,2\n"
-"Module2:void Test2():4,2\n";
+"Module1:void main():7,2\n"
+" int a = 1\n"
+"Module2:void Test2():5,2\n"
+" int b = 2\n";
 
 static const char *correctWithoutLineCues =
 "--- exception ---\n"
@@ -89,6 +99,16 @@ void LineCallback(asIScriptContext *ctx, void *param)
 	                    line, col);
 }
 
+void PrintVariables(asIScriptContext *ctx, int stackLevel)
+{
+	int numVars = ctx->GetVarCount(stackLevel);
+	for( int n = 0; n < numVars; n++ )
+	{
+		print(" %s = %d\n", ctx->GetVarDeclaration(n, 0, stackLevel),
+			                *(int*)ctx->GetVarPointer(n, stackLevel));
+	}
+}
+
 void ExceptionCallback(asIScriptContext *ctx, void *param)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
@@ -109,6 +129,7 @@ void ExceptionCallback(asIScriptContext *ctx, void *param)
 		print("%s:%s:%d,%d\n", engine->GetModuleNameFromIndex(asMODULEIDX(funcID)),
 		                       engine->GetFunctionDeclaration(funcID),
 							   line, col);
+		PrintVariables(ctx, n);
 	}
 }
 
