@@ -32,7 +32,8 @@ bool TestEnumGlobVar()
 	engine->AddScriptSection(0, "test", script, sizeof(script)-1, 0);
 
 	COutStream out;
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
 	int count = engine->GetGlobalVarCount(0);
 	if( count != 6 )
@@ -79,8 +80,8 @@ bool TestEnumGlobVar()
 	}
 
 	unsigned long *d;
-	r = engine->GetGlobalVarPointer(3, (void**)&d);
-	if( r < 0 )
+	d = (unsigned long *)engine->GetGlobalVarPointer(3);
+	if( d == 0 )
 	{
 		printf("%s: GetGlobalVarPointer() returned %d\n", TESTNAME, r);
 		ret = true;
@@ -92,8 +93,8 @@ bool TestEnumGlobVar()
 	}
 
 	std::string *e;
-	r = engine->GetGlobalVarPointer(4, (void**)&e);
-	if( r < 0 )
+	e = (std::string*)engine->GetGlobalVarPointer(4);
+	if( e == 0 )
 	{
 		printf("%s: Failed\n", TESTNAME);
 		ret = true;
@@ -106,8 +107,8 @@ bool TestEnumGlobVar()
 	}
 
 	int *f;
-	r = engine->GetGlobalVarPointer(5, (void**)&f);
-	if( r < 0 )
+	f = (int*)engine->GetGlobalVarPointer(5);
+	if( f == 0 )
 	{
 		printf("%s: failed\n", TESTNAME);
 		ret = true;

@@ -18,17 +18,19 @@ DELETER = rm -f
 COPIER = cp
 
 SRCNAMES = \
+  as_anyobject.cpp \
   as_arrayobject.cpp \
-  as_bstr_util.cpp \
   as_builder.cpp  \
   as_bytecode.cpp \
+  as_callfunc.cpp \
   as_callfunc_sh4.cpp \
   as_callfunc_x86.cpp \
   as_compiler.cpp \
   as_context.cpp \
+  as_configgroup.cpp \
   as_datatype.cpp \
+  as_gcobject.cpp \
   as_generic.cpp \
-  as_map.cpp \
   as_module.cpp \
   as_objecttype.cpp \
   as_outputbuffer.cpp \
@@ -38,6 +40,7 @@ SRCNAMES = \
   as_scriptengine.cpp \
   as_scriptfunction.cpp \
   as_scriptnode.cpp \
+  as_scriptstruct.cpp \
   as_string.cpp \
   as_string_util.cpp \
   as_thread.cpp \

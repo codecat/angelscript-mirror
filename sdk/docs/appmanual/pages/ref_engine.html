@@ -21,20 +21,30 @@ public:
   int <a href="#release">Release</a>();
 
   <font color=green>// Engine configuration</font>
+  void <a href="#msgstream">SetCommonMessageStream</a>(asIOutputStream *out);
+  void <a href="#msgstream">SetCommonMessageStream</a>(asOUTPUTFUNC_t outFunc, void *outParam);
+  
+  int <a href="#memfunc">SetCommonObjectMemoryFunctions</a>(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+  
   int <a href="#datatype">RegisterObjectType</A>(const char *name, int byteSize, asDWORD flags);
   int <a href="#property">RegisterObjectProperty</a>(const char *obj, const char *declaration, int byteOffset);
-  int <a href="#method">RegisterObjectMethod</a>(const char *obj, const char *declaration, asUPtr funcPointer, asDWORD callConv);
-  int <a href="#behave">RegisterObjectBehaviour</a>(const char *datatype, asDWORD behaviour, const char *declaration, asUPtr funcPointer, asDWORD callConv);
+  int <a href="#method">RegisterObjectMethod</a>(const char *obj, const char *declaration, const asUPtr &amp;funcPointer, asDWORD callConv);
+  int <a href="#behave">RegisterObjectBehaviour</a>(const char *datatype, asDWORD behaviour, const char *declaration, const asUPtr &amp;funcPointer, asDWORD callConv);
 
   int <a href="#globprop">RegisterGlobalProperty</a>(const char *declaration, void *pointer);
-  int <a href="#sysfunc">RegisterGlobalFunction</a>(const char *declaration, asUPtr funcPointer, asDWORD callConv);
-  int <a href="#gbehave">RegisterGlobalBehaviour</a>(asDWORD behaviour, const char *declaration, asUPtr funcPointer, asDWORD callConv);
+  int <a href="#sysfunc">RegisterGlobalFunction</a>(const char *declaration, const asUPtr &amp;funcPointer, asDWORD callConv);
+  int <a href="#gbehave">RegisterGlobalBehaviour</a>(asDWORD behaviour, const char *declaration, const asUPtr &amp;funcPointer, asDWORD callConv);
 
-  int <a href="#string">RegisterStringFactory</a>(const char *datatype, asUPtr factoryFunc, asDWORD callConv);
+  int <a href="#string">RegisterStringFactory</a>(const char *datatype, const asUPtr &amp;factoryFunc, asDWORD callConv);
+
+  int <a href="#begincfg">BeginConfigGroup</a>(const char *groupName);
+  int <a href="#endcfg">EndConfigGroup</a>();
+  int <a href="#remcfg">RemoveConfigGroup</a>(const char *groupName);
+  int <a href="#cfgaccess">SetConfigGroupModuleAccess</a>(const char *groupName, const char *module, bool hasAccess);
 
   <font color=green>// Script modules</font>
   int <a href="#addscript">AddScriptSection</a>(const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0, bool makeCopy = true);
-  int <a href="#build">Build</a>(const char *module, asIOutputStream *out = 0);
+  int <a href="#build">Build</a>(const char *module);
   int <a href="#discard">Discard</a>(const char *module);
   int <a href="#reset">ResetModule</a>(const char *module);
   int <a href="#getmodindex">GetModuleIndex</a>(const char *module);
@@ -56,7 +66,7 @@ public:
   int <a href="#variddecl">GetGlobalVarIDByDecl</a>(const char *module, const char *decl);
   const char *<a href="#vardecl">GetGlobalVarDeclaration</a>(int gvarID, int *length = 0);
   const char *<a href="#varname">GetGlobalVarName</a>(int gvarID, int *length = 0);
-  int <a href="#varpointer">GetGlobalVarPointer</a>(int gvarID, void **pointer);
+  void *<a href="#varpointer">GetGlobalVarPointer</a>(int gvarID);
 
   <font color=green>// Dynamic binding between modules</font>
   int <a href="#importcount">GetImportedFunctionCount</a>(const char *module);
@@ -69,12 +79,21 @@ public:
   int <a href="#bindall">BindAllImportedFunctions</a>(const char *module);
   int <a href="#unbindall">UnbindAllImportedFunctions</a>(const char *module);
 
+  <font color=green>// Type identification</font>
+  int <a href="#typebydecl">GetTypeIdByDecl</a>(const char *module, const char *decl);
+  const char *<a href="#typedecl">GetTypeDeclaration</a>(int typeId, int *length = 0);
+
   <font color=green>// Script execution</font>
   int <a href="#stacksize">SetDefaultContextStackSize</a>(asUINT initial, asUINT maximum);
-  int <a href="#createcontext">CreateContext</a>(asIScriptContext **context);
+  asIScriptContext *<a href="#createcontext">CreateContext</a>();
+  void *<a href="#createobj">CreateScriptObject</a>(int typeId);
 
   <font color=green>// String interpretation</font>
-  int <a href="#executestring">ExecuteString</a>(const char *module, const char *script, asIOutputStream *out = 0, asIScriptContext **ctx = 0, asDWORD flags = 0);
+  int <a href="#executestring">ExecuteString</a>(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0);
+
+  <font color=green>// Garbage collection</font>
+  int <a href="#gc">GarbageCollect</a>(bool doFullCycle = true);
+  int <a href="#gccount">GetObjectsInGarbageCollectorCount</a>();
 
   <font color=green>// Bytecode saving/loading</font>
   int <a href="#save">SaveByteCode</a>(const char *module, asIBinaryStream *out);
@@ -145,6 +164,82 @@ object references successfully.</p>
 
 
 
+
+
+<a name=msgstream></a>
+<h2>SetCommonMessageStream</h2>
+
+<pre class=border>
+void SetCommonMessageStream(asIOutputStream *out);
+void SetCommonMessageStream(asOUTPUTFUNC_t outFunc, void *outParam);
+</pre>
+
+<h3>Description</h3>
+
+<p>There are two possible ways of receiving the compiler messages, either 
+through a C++ interface, or a simpler C callback function.</p>
+
+<p>The outFunc must have the signature <code>void func(const char *msgText, 
+void *outParam)</code>, and use the cdecl calling convention. printf() is a 
+perfect candidate for this.</p>
+
+<p>Since the pointer to this message stream will be held by the engine until 
+the the next call to the method or the engine is released it is important 
+that the application makes sure that it isn't destroyed before its time.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>out</code>&nbsp;</td>
+<td valign=top><p>A pointer to an output stream.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>outFunc</code>&nbsp;</td>
+<td valign=top><p>The function pointer.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>outParam</code>&nbsp;</td>
+<td valign=top><p>An extra parameter that will be passed together with the message text.</p></td>
+</tr>
+</table>
+
+
+
+
+<a name=memfunc></a>
+<h2>SetCommonObjectMemoryFunctions</h2>
+
+<pre class=border>
+int SetCommonObjectMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+</pre>
+
+<h3>Description</h3>
+
+<p>This function allows the application to set the allocation and deallocation 
+functions used to manage memory for script objects. These functions will then
+be used for all objects, except those that have individually overidden the 
+functions by registering the behaviours asBEHAVE_ALLOC and asBEHAVE_FREE.</p>
+
+<p>The allocFunc must have the same signature as malloc(), and the freeFunc  
+must have the same signature as free().</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>allocFunc</code>&nbsp;</td>
+<td valign=top><p>The allocation function pointer.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>freeFunc</code>&nbsp;</td>
+<td valign=top><p>The deallocation function pointer.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Negative value on error.</p>
 
 
 
@@ -264,7 +359,7 @@ the location of these members must be verified at run time through lookup in a v
 <pre class=border>
 int RegisterObjectMethod(const char *obj,
                          const char *declaration,
-                         asUPtr funcPointer,
+                         const asUPtr &amp;funcPointer,
                          asDWORD callConv);
 </pre>
 
@@ -344,7 +439,7 @@ function that the engine will call. Use the macro asMETHOD() if you are register
 int RegisterObjectBehaviour(const char *datatype,
                             asDWORD behaviour,
                             const char *declaration,
-                            asUPtr funcPointer,
+                            const asUPtr &amp;funcPointer,
                             asDWORD callConv);
 </pre>
 
@@ -470,7 +565,7 @@ the type declaration.</p>
 
 <pre class=border>
 int RegisterGlobalFunction(const char *declaration,
-                           asUPtr funcPointer,
+                           const asUPtr &amp;funcPointer,
                            asDWORD callConv);
 </pre>
 
@@ -522,7 +617,7 @@ function that the engine will call.</p></td>
 <pre class=border>
 int RegisterGlobalBehaviour(asDWORD behaviour,
                             const char *declaration,
-                            asUPtr funcPointer,
+                            const asUPtr &amp;funcPointer,
                             asDWORD callConv);
 </pre>
 
@@ -579,7 +674,7 @@ allow the compiler to optimize the code to execute faster.</p>
 
 <pre class=border>
 int RegisterStringFactory(const char *datatype,
-                          asUPtr factoryFunc,
+                          const asUPtr &amp;factoryFunc,
                           asDWORD callConv);
 </pre>
 
@@ -611,6 +706,131 @@ of the string constant and a pointer to the character data.</p>
 
 <p>A negative value on error, 0 or greater if successful.</p>
 
+
+
+
+<a name="begincfg"></a>
+<h2>BeginConfigGroup</h2>
+
+<pre class=border>
+int BeginConfigGroup(const char *groupName);
+</pre>
+
+<h3>Description</h3>
+
+<p>Starts a new dynamic configuration group. This group can be setup so that 
+it is only visible to specific modules, and it can also be removed when it is
+no longer used.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>groupName</code>&nbsp;</td>
+<td valign=top><p>The name of the group.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, 0 or greater if successful.</p>
+
+
+
+
+
+
+<a name="endcfg"></a>
+<h2>EndConfigGroup</h2>
+
+<pre class=border>
+int EndConfigGroup();
+</pre>
+
+<h3>Description</h3>
+
+<p>Ends the current configuration group. Once finished a config group cannot 
+be changed, but it can be removed when it is no longer used.</p>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, 0 or greater if successful.</p>
+
+
+
+
+
+
+<a name="remcfg"></a>
+<h2>RemoveConfigGroups</h2>
+
+<pre class=border>
+int RemoveConfigGroup(const char *groupName);
+</pre>
+
+<h3>Description</h3>
+
+<p>Remove the configuration group. If something in the configuration group is 
+currently in use, the function will return with an error code. Examples of 
+uses are compiled modules that have function calls to functions in the group
+and global variables of types registered in the group.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>groupName</code>&nbsp;</td>
+<td valign=top><p>The name of the group.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, 0 or greater if successful.</p>
+
+
+
+
+
+
+<a name="cfgaccess"></a>
+<h2>SetConfigGroupModuleAccess</h2>
+
+<pre class=border>
+int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess);
+</pre>
+
+<h3>Description</h3>
+
+<p>
+With this method the application can give modules access to individual configuration groups. This is useful when exposing more than one script interface for various parts of the application, e.g. one interface for GUI handling, another for in-game events, etc.
+</p>
+
+<p>
+The default module access is granted. The default for a group can be changed by specifying the modulename asALL_MODULES.
+</p>
+
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>groupName</code>&nbsp;</td>
+<td valign=top><p>The name of the group.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>module</code>&nbsp;</td>
+<td valign=top><p>The name of the module, or asALL_MODULES.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>hasAccess</code>&nbsp;</td>
+<td valign=top><p>Access mode.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, 0 or greater if successful.</p>
 
 
 
@@ -687,7 +907,7 @@ int AddScriptSection(const char *module,
 <h2>Build</h2>
 
 <pre class=border>
-int Build(const char *module, asIOutputStream *out = 0);
+int Build(const char *module);
 </pre>
 
 <h3>Description</h3>
@@ -696,16 +916,14 @@ int Build(const char *module, asIOutputStream *out = 0);
 
 <p>If Build() is to be called again new code sections must first be added again. Registered data types and functions are remembered by the engine though.</p>
 
+<p>Any compiler messages are sent to the message stream set with SetCommonMessageStream(). If there are no errors or warnings, no messages will be sent to the stream.</p>
+
 <h3>Parameters</h3>
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr>
 <td valign=top width=100><code>module</code>&nbsp;</td>
 <td valign=top><p>The name of the module. Can be null.</p></td>
-</tr>
-<tr>
-<td valign=top width=100><code>out</code>&nbsp;</td>
-<td valign=top><p>A pointer to an output stream that will receive the build messages.</p></td>
 </tr>
 </table>
 
@@ -1286,7 +1504,7 @@ with other functions in the library so you shouldn't store the pointer.</p>
 <h2>GetGlobalVarPointer</h2>
 
 <pre class=border>
-int GetGlobalVarPointer(int gvarID, void **pointer);
+void *GetGlobalVarPointer(int gvarID);
 </pre>
 
 <h3>Description</h3>
@@ -1301,15 +1519,11 @@ you wish to access.</p>
 <td valign=top width=100><code>gvarID</code>&nbsp;</td>
 <td valign=top><p>The id of the variable.</p></td>
 </tr>
-<tr>
-<td valign=top width=100><code>pointer</code>&nbsp;</td>
-<td valign=top><p>A pointer to a pointer to the variable that will be set by the function.</p></td>
-</tr>
 </table>
 
 <h3>Returns</h3>
 
-<p>A negative value on error.</p>
+<p>Returns the pointer, or null if it cannot be located.</p>
 
 
 
@@ -1504,7 +1718,64 @@ int UnbindAllImportedFunctions(const char *module);
 <p>Negative on error.</p>
 
 
+<a name=typebydecl></a>
+<h2>GetTypeIdByDecl</h2>
+<pre class=border>
+int GetTypeIdByDecl(const char *module, const char *decl);
+</pre>
+<h3>Description</h3>
+<p>Translates a type declaration into a type id. The returned type id is valid 
+for as long as the type is valid, so you can safely store it for later use to
+avoid potential overhead by calling this function each time. Just remember to
+update the type id, any time the type is changed within the engine, e.g. when
+recompiling script declared structures, or changing the engine configuration.</p>
 
+<p>The type id is based on a sequence number and depends on the order in which 
+the type ids are queried, thus is not guaranteed to always be the same for 
+each execution of the application.</p>
+
+<h3>Parameters</h3>
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>module</code>&nbsp;</td>
+<td valign=top><p>The name of the module, or null.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>decl</code>&nbsp;</td>
+<td valign=top><p>The type declaration.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+<p>The type id if successful, or a negative value on error.</p>
+
+
+
+<a name=typedecl></a>
+<h2>GetTypeDeclaration</h2>
+<pre class=border>
+const char *GetTypeDeclaration(int typeId, int *length = 0);
+</pre>
+<h3>Description</h3>
+<p>Translates a type id into the type declaration string.</p>
+
+<h3>Parameters</h3>
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The typeId.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>length</code>&nbsp;</td>
+<td valign=top><p>A pointer to the variable that will receive the length of the returned string.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+<p>A pointer to the string that holds the type declaration. The memory for the 
+string is shared internally by the engine so do not store it for later use.</p>
+
+<p>If the typeId is not valid the returned pointer will be null.</p>
 
 
 
@@ -1547,7 +1818,7 @@ int SetDefaultContextStackSize(asUINT initial, asUINT maximum);
 <h2>CreateContext</h2>
 
 <pre class=border>
-int CreateContext(asIScriptContext **context);
+asIScriptContext *CreateContext();
 </pre>
 
 <h3>Description</h3>
@@ -1555,18 +1826,42 @@ int CreateContext(asIScriptContext **context);
 <p>This method creates a context that will be used to execute the script functions. The
 context interface created will have its reference counter already increased.</p>
 
+<h3>Returns</h3>
+
+<p>Returns the context pointer.</p>
+
+
+
+
+
+<a name=createobj></a>
+<h2>CreateScriptObject</h2>
+
+<pre class=border>
+void *CreateScriptObject(int typeId);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method is used to create a script object based on it's type id. The 
+method will allocate the memory and call the object's default constructor.</p>
+
+<p>This only works for objects, for primitive types and object handles the 
+method doesn't do anything and returns a null pointer.</p>
+
 <h3>Parameters</h3>
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr>
-<td valign=top width=100><code>context</code>&nbsp;</td>
-<td valign=top><p>Pointer to the variable that will get the pointer of the context.</p></td>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The type id for the object type.</p></td>
 </tr>
 </table>
 
 <h3>Returns</h3>
 
-<p>Returns the context id on success and a negative value on failure.</p>
+<p>Returns the pointer to the initialized object.</p>
+
 
 
 
@@ -1579,7 +1874,6 @@ context interface created will have its reference counter already increased.</p>
 <pre class=border>
 int ExecuteString(const char *module, 
                   const char *script, 
-                  asIOutputStream *out = 0, 
                   asIScriptContext **ctx = 0,
                   asDWORD flags = 0);
 </pre>
@@ -1600,10 +1894,6 @@ int ExecuteString(const char *module,
 <td valign=top><p>The script statements separated by ;. These statements will be executed within function scope, so any variable declarations will only be available to the current call.</p></td>
 </tr>
 <tr>
-<td valign=top width=100><code>out</code>&nbsp;</td>
-<td valign=top><p>An optional outstream that will receive build errors.</p></td>
-</tr>
-<tr>
 <td valign=top width=100><code>ctx</code>&nbsp;</td>
 <td valign=top><p>An optional parameter that will receive the context pointer. Or if asEXECSTRING_USE_MY_CONTEXT is specified is used to pass a context to the method.</p></td>
 </tr>
@@ -1621,6 +1911,59 @@ int ExecuteString(const char *module,
 
 
 
+
+<a name=gc></a>
+<h2>GarbageCollect</h2>
+
+<pre class=border>
+int GarbageCollect(bool doFullCycle);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method will free script objects that can no longer be reached. When the engine is released the garbage collector will automatically do a full cycle to release all objects still alive. If the engine is long living it is important to call this method every once in a while to free up memory allocated by the scripts. If a script does a lot of allocations before returning it may be necessary to implement a line callback function that calls the garbage collector during execution of the script.</p>
+
+<p>It is not necessary to do a full cycle with every call. This makes it possible to spread out the garbage collection time over a large period, thus not impacting the responsiveness of the application.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>doFullCycle</code>&nbsp;</td>
+<td valign=top><p>Set to true if the garbage collector should complete a full cycle before returning, or false if it should just make a small incremental step.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns 1 if the cycle wasn't completed yet, or 0 if it is was. If an error occurs the value is negative.</p>
+
+
+
+
+
+<a name=gccount></a>
+<h2>GetObjectsInGarbageCollectorCount</h2>
+
+<pre class=border>
+int GetObjectsInGarbageCollectorCount();
+</pre>
+
+<h3>Description</h3>
+
+<p>This method can be used to query the number of objects that the garbage 
+collector is keeping track of. If the number is very large then it is probably 
+time to call the GarbageCollect() method so that some of the objects can be 
+freed.</p>
+
+<p>Note, that the objects that the garbage collector keeps track of may in 
+turn hold references to other objects, but these are not reflected in the 
+return value. Thus there is no way of knowing the exact amount of memory 
+allocated directly and indirectly by the objects referred to by this function.</p>
+
+<h3>Returns</h3>
+
+<p>The number of objects.</p>
 
 
 

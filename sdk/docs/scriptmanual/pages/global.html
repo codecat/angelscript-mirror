@@ -18,6 +18,7 @@ it.</p>
 	<ul>
 	<li><a href="#function">functions</a>
 	<li><a href="#variable">variables</a>
+        <li><a href="#structs">structures</a>
         <li><a href="#import">imports</a>
 	</ul>
 
@@ -65,6 +66,17 @@ EXPRESSION  ::= &lt;an expression whose value will initialize the variable&gt;
 <p>TYPE is one of the available <a href="datatypes.html">data types</a>. The expression may not call any functions, assign any variables. The expression doesn't have to be constant, and it can even use the condition operator ?:.</p>
 
 <p>Variables declared globally like this are accessible from all functions. The value of the variables are initialized at compile time and any changes are maintained between calls. If a global variable holds a memory resource, e.g. an bstr, its memory is released when the script engine is reset.</p>
+
+<a name="structs">
+<h2>Structures</h2>
+
+<pre>
+DECLARATION ::= 'struct' IDENTIFIER '{' PROP* '}' ';'
+PROP        ::= TYPE IDENTIFIER ';'
+TYPE        ::= &lt;a data type&gt;
+</pre>
+
+<p>With structures the script writer can declare new data types that hold groups of values.</p>
 
 <a name="import">
 <h2>Imports</h2>

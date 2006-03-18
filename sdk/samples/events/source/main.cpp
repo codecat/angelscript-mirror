@@ -13,6 +13,12 @@ int  CompileScript(asIScriptEngine *engine);
 void PrintString(string &str);
 void LineCallback(asIScriptContext *ctx, DWORD *timeOut);
 
+class asCOutputStream : public asIOutputStream
+{
+public:
+	void Write(const char *text) { printf(text); }
+};
+
 int main(int argc, char **argv)
 {
 	int r;
@@ -24,6 +30,10 @@ int main(int argc, char **argv)
 		cout << "Failed to create script engine." << endl;
 		return -1;
 	}
+
+	// The script compiler will send any compiler messages to the outstream
+	asCOutputStream out;
+	engine->SetCommonMessageStream(&out);
 
 	// Configure the script engine with all the functions, 
 	// and variables that the script should be able to use.
@@ -39,17 +49,15 @@ int main(int argc, char **argv)
 	// Note that the global variables declared in the script
 	// are shared between the contexts, so they are able to
 	// communicate with each other this way.
-	asIScriptContext *mainCtx;
-	r = engine->CreateContext(&mainCtx);
-	if( r < 0 ) 
+	asIScriptContext *mainCtx = engine->CreateContext();
+	if( mainCtx == 0 ) 
 	{
 		cout << "Failed to create the context." << endl;
 		return -1;
 	}
 
-	asIScriptContext *eventCtx;
-	r = engine->CreateContext(&eventCtx);
-	if( r < 0 )
+	asIScriptContext *eventCtx = engine->CreateContext();
+	if( eventCtx == 0 )
 	{
 		cout << "Failed to create the context." << endl;
 		return -1;
@@ -163,14 +171,6 @@ void ConfigureEngine(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("uint GetSystemTime()", asFUNCTION(timeGetTime), asCALL_STDCALL); assert( r >= 0 );
 }
 
-class asCOutputStream : public asIOutputStream
-{
-public:
-	void Write(const char *text) { buffer += text; }
-
-	string buffer;
-};
-
 int CompileScript(asIScriptEngine *engine)
 {
 	int r;
@@ -222,11 +222,8 @@ int CompileScript(asIScriptEngine *engine)
 		return -1;
 	}
 
-	// The script compiler will send any compiler messages to the outstream
-	asCOutputStream out;
-
 	// Compile the script
-	r = engine->Build(0, &out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		cout << "Build() failed" << endl;

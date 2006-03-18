@@ -10,7 +10,7 @@ namespace TestStack2
 
 #define TESTNAME "TestStack2"
 
-const char *script1 =
+static const char *script1 =
 "void testargs()                   \n"
 "{                                 \n"
 "  t(\"a\",\"b\");                 \n"
@@ -22,7 +22,7 @@ const char *script1 =
 "void s(string &out a, int &out b) \n"
 "{ a = \"\"; b = 1; }              \n";
 
-const char *script2 = 
+static const char *script2 = 
 "void testop()          \n"
 "{                      \n"
 "  \"a\"+func(\"b\");   \n"
@@ -34,7 +34,7 @@ const char *script2 =
 "  return \"b\";        \n"
 "}                      \n";
 
-const char *script3 =
+static const char *script3 =
 "void testassign()        \n"
 "{                        \n"
 "  string a;              \n"
@@ -44,14 +44,14 @@ const char *script3 =
 "  b_intref() += a_int(); \n"
 "}                        \n";
 
-const char *script4 =
+static const char *script4 =
 "void testmethod()      \n"
 "{                      \n"
 "  int[] a(5);          \n"
 "  a[4];                \n"
 "}                      \n";
 
-const char *script5 = 
+static const char *script5 = 
 "void testoutparm()        \n"
 "{                         \n"
 "  string a, b;            \n"
@@ -175,43 +175,44 @@ bool Test()
 	engine->AddScriptSection(0, "3", script3, strlen(script3));	
 	engine->AddScriptSection(0, "4", script4, strlen(script4));	
 	engine->AddScriptSection(0, "5", script5, strlen(script5));
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
 	
 	// Verify order of calculations
  	output = "";
-	engine->ExecuteString(0, "a_str() + b_str()", &out);
+	engine->ExecuteString(0, "a_str() + b_str()");
 	if( output != "ab" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "b_strref() = a_str()", &out);
+	engine->ExecuteString(0, "b_strref() = a_str()");
 	if( output != "ab" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "b_strref() += a_str()", &out);
+	engine->ExecuteString(0, "b_strref() += a_str()");
 	if( output != "ab" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "a_int() + b_int()", &out);
+	engine->ExecuteString(0, "a_int() + b_int()");
 	if( output != "ab" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "b_intref() = a_int()", &out);
+	engine->ExecuteString(0, "b_intref() = a_int()");
 	if( output != "ab" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "b_intref() += a_int()", &out);
+	engine->ExecuteString(0, "b_intref() += a_int()");
 	if( output != "ab" ) fail = true;
 
 	// Nested output parameters with a returned reference
 	ci = 0; cs = ""; str = "";
-	engine->ExecuteString(0, "complex3(complex(str)) = 1", &out);
+	engine->ExecuteString(0, "complex3(complex(str)) = 1");
 	if( ci != 1 ) fail = true;
 	if( cs != "outparm3" ) fail = true;
 	if( str != "outparm" ) fail = true;
 
 	str = "";
-	engine->ExecuteString(0, "GetProp(\"test\").Get(str);", &out);
+	engine->ExecuteString(0, "GetProp(\"test\").Get(str);");
 	if( str != "PropOut" ) fail = true;
 
  	engine->Release();

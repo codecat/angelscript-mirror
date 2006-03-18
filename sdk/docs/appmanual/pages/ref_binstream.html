@@ -16,8 +16,8 @@
 class asIBinaryStream
 {
 public:
-  void <a href="#read">Read</a>(void *ptr, int size);
-  void <a href="#write">Write</a>(void *ptr, int size);
+  void <a href="#read">Read</a>(void *ptr, asUINT size);
+  void <a href="#write">Write</a>(const void *ptr, asUINT size);
 };
 </pre>
 
@@ -25,7 +25,7 @@ public:
 <h2>Read</h2>
 
 <pre class=border>
-void Read(void *ptr, int size);
+void Read(void *ptr, asUINT size);
 </pre>
 
 <h3>Description</h3>
@@ -51,7 +51,7 @@ void Read(void *ptr, int size);
 <h2>Write</h2>
 
 <pre class=border>
-void Write(const char *text);
+void Write(const void *ptr, asUINT size);
 </pre>
 
 <h3>Description</h3>

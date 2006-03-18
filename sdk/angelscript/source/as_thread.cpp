@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -40,6 +40,8 @@
 
 #include "as_config.h"
 #include "as_thread.h"
+
+BEGIN_AS_NAMESPACE
 
 #ifdef USE_THREADS
 // From windows.h
@@ -87,7 +89,7 @@ asCThreadManager::~asCThreadManager()
 		do
 		{
 			if( tldMap.GetValue() ) 
-				delete (asCThreadLocalData*)tldMap.GetValue();
+				delete tldMap.GetValue();
 		} while( tldMap.MoveNext() );
 	}
 
@@ -108,7 +110,7 @@ int asCThreadManager::CleanupLocalData()
 
 	if( tldMap.MoveTo(id) )
 	{
-		asCThreadLocalData *tld = (asCThreadLocalData*)tldMap.GetValue();
+		asCThreadLocalData *tld = tldMap.GetValue();
 		
 		// Can we really remove it at this time?
 		if( tld->activeContexts.GetLength() == 0 )
@@ -133,7 +135,7 @@ asCThreadLocalData *asCThreadManager::GetLocalData(asDWORD threadId)
 	ENTERCRITICALSECTION(criticalSection);
 
 	if( tldMap.MoveTo(threadId) )
-		tld = (asCThreadLocalData*)tldMap.GetValue();
+		tld = tldMap.GetValue();
 
 	LEAVECRITICALSECTION(criticalSection);
 
@@ -144,7 +146,7 @@ void asCThreadManager::SetLocalData(asDWORD threadId, asCThreadLocalData *tld)
 {
 	ENTERCRITICALSECTION(criticalSection);
 
-	tldMap.Insert(threadId, VALUE(tld));
+	tldMap.Insert(threadId, tld);
 
 	LEAVECRITICALSECTION(criticalSection);
 }
@@ -207,4 +209,6 @@ void asCThreadCriticalSection::Leave()
 #endif
 
 //========================================================================
+
+END_AS_NAMESPACE
 

@@ -20,7 +20,7 @@ bool TestLongToken()
 	str += " = 1";
 
 	COutStream out;
-	engine->ExecuteString(0, str.c_str(), 0/*&out*/);
+	engine->ExecuteString(0, str.c_str());
 
 	engine->Release();
 

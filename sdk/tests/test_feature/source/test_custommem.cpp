@@ -38,7 +38,7 @@ void ReturnObjGeneric(asIScriptGeneric *gen)
 	gen->SetReturnObject(&v);
 }
 
-const char *script =
+static const char *script =
 "void test(obj o) { }";
 
 bool Test()
@@ -58,18 +58,18 @@ bool Test()
 	r = engine->RegisterGlobalFunction("obj retObj2(obj)", asFUNCTION(ReturnObjGeneric), asCALL_GENERIC); assert( r >= 0 );
 
 	COutStream out;
-	engine->ExecuteString(0, "obj o", &out);
+	engine->SetCommonMessageStream(&out);
+	engine->ExecuteString(0, "obj o");
 
-	engine->ExecuteString(0, "retObj()", &out);
+	engine->ExecuteString(0, "retObj()");
 
-	engine->ExecuteString(0, "obj o; retObj2(o)", &out);
+	engine->ExecuteString(0, "obj o; retObj2(o)");
 
-	engine->ExecuteString(0, "obj[] o(2)", &out);
+	engine->ExecuteString(0, "obj[] o(2)");
 
 	engine->AddScriptSection(0, 0, script, strlen(script));
-	engine->Build(0, &out);
-	asIScriptContext *ctx;
-	engine->CreateContext(&ctx);
+	engine->Build(0);
+	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(engine->GetFunctionIDByName(0, "test"));
 	int v = 0;
 	ctx->SetArgObject(0, &v);

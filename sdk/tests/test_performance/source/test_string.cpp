@@ -3,7 +3,7 @@
 //
 
 #include "utils.h"
-#include "../../add_on/std_string/stdstring.h"
+#include "../../add_on/scriptstring/scriptstring.h"
 
 namespace TestString
 {
@@ -33,38 +33,21 @@ void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("Machine 1\n");
-	printf("AngelScript 1.9.0             : 11.00 secs\n");
-	printf("AngelScript 1.9.1             : 9.618 secs\n");
-	printf("AngelScript 1.9.2             : 8.748 secs\n");
-	printf("AngelScript 1.10.0 with C++ VM: 7.073 secs\n");
-	printf("AngelScript 1.10.0 with ASM VM: 7.613 secs\n");
-	printf("AngelScript 1.10.1 with ASM VM: 6.432 secs\n");
-	printf("\n");
-	printf("Machine 2\n");
-	printf("AngelScript 1.9.0             : 4.806 secs\n");
-	printf("AngelScript 1.9.1             : 4.300 secs\n");
-	printf("AngelScript 1.9.2             : 3.686 secs\n");
-	printf("AngelScript 1.10.0 with C++ VM: 2.973 secs\n");
-	printf("AngelScript 1.10.0 with ASM VM: 3.329 secs\n");
-	printf("AngelScript 1.10.1 with ASM VM: 2.936 secs\n");
-	printf("AngelScript 2.0.0  with C++ VM: 6.182 secs\n");
-	printf("AngelScript 2.0.0  with ASM VM: 5.958 secs\n");
-	printf("AngelScript 2.1.0WIP6 with ASM VM: 7.835 secs\n");
-	printf("AngelScript 2.1.0WIP6 with ASM VM: 7.715 secs\n");
+	printf("AngelScript 2.4.1             : 7.941 secs\n");
+	printf("AngelScript 2.5.0 WIP 1       : 5.788 secs\n");
 
 	printf("\nBuilding...\n");
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	RegisterStdString(engine);
-
 	COutStream out;
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
 
-	asIScriptContext *ctx;
-	engine->CreateContext(&ctx);
+	RegisterScriptString(engine);
+
+	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
+	engine->Build(0);
+
+	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestString()"));
 
 	printf("Executing AngelScript version...\n");

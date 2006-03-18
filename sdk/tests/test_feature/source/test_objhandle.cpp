@@ -37,11 +37,11 @@ static const char *script1 =
 "   b = g + b;                          \n"
 // parameter references
 "   @g = null;                          \n"
-"   TestObjHandleRef(@b, @g);           \n"
+"   TestObjHandleRef(b, @g);            \n"
 "   Assert(@g == @b);                   \n"
 // return handles
 "   @g = null;                          \n"
-"   @g = @TestObjReturnHandle(@b);      \n"
+"   @g = @TestObjReturnHandle(b);       \n"
 "   Assert(@g == @b);                   \n"
 "   Assert(@TestReturnNull() == null);  \n"
 "}                                      \n"
@@ -51,7 +51,7 @@ static const char *script1 =
 "}                                                     \n"
 "refclass@ TestObjReturnHandle(refclass@ i)            \n"
 "{                                                     \n"
-"   return @i;                                         \n"
+"   return i;                                          \n"
 "}                                                     \n"
 "refclass@ TestReturnNull()                            \n"
 "{                                                     \n"
@@ -149,7 +149,8 @@ bool Test()
 	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
@@ -157,7 +158,7 @@ bool Test()
 	}
 
 	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "TestObjHandle()", 0, &ctx);
+	r = engine->ExecuteString(0, "TestObjHandle()", &ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -169,7 +170,7 @@ bool Test()
 	if( ctx ) ctx->Release();
 
 	// Call TestObjReturnHandle() from the application to verify that references are updated as necessary
-	engine->CreateContext(&ctx);
+	ctx = engine->CreateContext();
 	ctx->Prepare(engine->GetFunctionIDByDecl(0, "refclass@ TestObjReturnHandle(refclass@)"));
 	CRefClass *refclass = new CRefClass();
 

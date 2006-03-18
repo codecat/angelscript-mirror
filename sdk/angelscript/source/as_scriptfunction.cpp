@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -42,12 +42,13 @@
 #include "as_tokendef.h"
 #include "as_scriptengine.h"
 
+BEGIN_AS_NAMESPACE
 
 int asCScriptFunction::GetSpaceNeededForArguments()
 {
 	// We need to check the size for each type
 	int s = 0;
-	for( int n = 0; n < parameterTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < parameterTypes.GetLength(); n++ )
 		s += parameterTypes[n].GetSizeOnStackDWords();
 
 	return s;
@@ -58,7 +59,7 @@ int asCScriptFunction::GetSpaceNeededForReturnValue()
 	return returnType.GetSizeOnStackDWords();
 }
 
-asCString asCScriptFunction::GetDeclaration(asCScriptEngine *engine)
+asCString asCScriptFunction::GetDeclaration(asCScriptEngine *)
 {
 	asCString str;
 
@@ -78,11 +79,11 @@ asCString asCScriptFunction::GetDeclaration(asCScriptEngine *engine)
 
 	if( parameterTypes.GetLength() > 0 )
 	{
-		int n;
+		asUINT n;
 		for( n = 0; n < parameterTypes.GetLength() - 1; n++ )
 		{
 			str += parameterTypes[n].Format();
-			if( parameterTypes[n].isReference && inOutFlags.GetLength() > n )
+			if( parameterTypes[n].IsReference() && inOutFlags.GetLength() > n )
 			{
 				if( inOutFlags[n] == 1 ) str += "in";
 				else if( inOutFlags[n] == 2 ) str += "out";
@@ -92,7 +93,7 @@ asCString asCScriptFunction::GetDeclaration(asCScriptEngine *engine)
 		}
 
 		str += parameterTypes[n].Format();
-		if( parameterTypes[n].isReference && inOutFlags.GetLength() > n )
+		if( parameterTypes[n].IsReference() && inOutFlags.GetLength() > n )
 		{
 			if( inOutFlags[n] == 1 ) str += "in";
 			else if( inOutFlags[n] == 2 ) str += "out";
@@ -140,4 +141,6 @@ int asCScriptFunction::GetLineNumber(int programPosition)
 		}
 	}
 }
+
+END_AS_NAMESPACE
 

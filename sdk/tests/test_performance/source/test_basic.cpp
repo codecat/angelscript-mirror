@@ -70,100 +70,24 @@ float Average(float a, float b)
 	return (a+b)/2;
 }
 
-float N;                                  
-                                          
-void func5()                              
-{                                         
-    N += Average( N, N );                 
-}                                         
-                                          
-void func4()                              
-{                                         
-    N += 2 * Average( N + 1, N + 2 );     
-}                                         
-                                          
-void func3()                              
-{                                         
-    N *= 2.1f * N;                        
-}                                         
-                                          
-void func2()                              
-{                                         
-    N /= 3.5f;                            
-}                                         
-                                          
-void Recursion( int nRec )                
-{                                         
-    if ( nRec >= 1 )                      
-        Recursion( nRec - 1 );            
-                                          
-    if ( nRec == 5 )                      
-        func5();                          
-    else if ( nRec == 4 )                 
-        func4();                          
-    else if ( nRec == 3 )                 
-        func3();                          
-    else if ( nRec == 2 )                 
-        func2();                          
-    else                                  
-        N *= 1.5;                         
-}                                         
-                                          
-int TestCPP()                                
-{                                         
-    N = 0;                                
-    float i = 0;                          
-                                          
-    for ( i = 0; i < 250000; i += 0.25f ) 
-    {                                     
-        Average( i, i );                  
-        Recursion( 5 );                   
-                                          
-        if ( N > 100 ) N = 0;             
-    }                                     
-                                          
-    return 0;                             
-}                                         
-
-
 void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("Machine 1\n");
-	printf("AngelScript 1.9.0             : 20.88 secs\n");
-	printf("AngelScript 1.9.1             : 13.56 secs\n");
-	printf("AngelScript 1.9.2             : 11.44 secs\n");
-	printf("AngelScript 1.10.0 with C++ VM: 6.278 secs\n");
-	printf("AngelScript 1.10.0 with ASM VM: 6.997 secs\n");
-	printf("AngelScript 1.10.1 with ASM VM: 4.370 secs\n");
-	printf("C++                           :  0.25 secs\n");
-	printf("\n");
-	printf("Machine 2\n");
-	printf("AngelScript 1.9.0             : 8.812 secs\n");
-	printf("AngelScript 1.9.1             : 5.605 secs\n");
-	printf("AngelScript 1.9.2             : 4.674 secs\n");
-	printf("AngelScript 1.10.0 with C++ VM: 2.450 secs\n");
-	printf("AngelScript 1.10.0 with ASM VM: 3.234 secs\n");
-	printf("AngelScript 1.10.1 with ASM VM: 2.245 secs\n");
-	printf("AngelScript 2.0.0 with C++ VM : 2.538 secs\n");
-	printf("AngelScript 2.0.0 with ASM VM : 2.335 secs\n");
-	printf("AngelScript 2.1.0WIP6 with C++ VM : 2.454 secs\n");
-	printf("AngelScript 2.1.0WIP6 with ASM VM : 2.150 secs\n");
-	printf("C++                           :  0.14 secs\n");
+	printf("AngelScript 2.4.1             : 2.794 secs\n");
+	printf("AngelScript 2.5.0 WIP 1       : 2.728 secs\n");
 
 	printf("\nBuilding...\n");
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
+	COutStream out;
+	engine->SetCommonMessageStream(&out);
 	engine->RegisterGlobalFunction("float Average(float, float)", asFUNCTION(Average), asCALL_CDECL);
 
-	COutStream out;
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
-	asIScriptContext *ctx;
-	engine->CreateContext(&ctx);
+	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(engine->GetFunctionIDByDecl(0, "int TestBasic()"));
 
 	printf("Executing AngelScript version...\n");
@@ -190,14 +114,6 @@ void Test()
 
 	ctx->Release();
 	engine->Release();
-
-/*
-	printf("Executing C++ version...\n");
-	time = GetSystemTimer();
-	TestCPP();
-	time = GetSystemTimer() - time;
-	printf("Time = %f secs\n", time);
-*/
 }
 
 } // namespace

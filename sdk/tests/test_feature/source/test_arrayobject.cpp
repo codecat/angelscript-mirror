@@ -1,5 +1,5 @@
-#include "utils.h"
 #include "stdvector.h"
+#include "utils.h"
 
 
 namespace TestArrayObject
@@ -186,6 +186,8 @@ static const char *script1 =
 "	Assert(A[1] == 20);              \n"
 "   char[] B(5);                     \n"
 "   Assert(B.size() == 5);           \n"
+"   int[] c = {2,3};                 \n"
+"   Assert(c.size() == 2);           \n"
 "}                                   \n"
 "                                    \n"
 "void Test2D()                       \n"
@@ -222,6 +224,11 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("char[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArray, (CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArray, (int, CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("char[]", "int size()", asMETHOD(CIntArray, size), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectType("char[][]", sizeof(CIntArrayArray), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("char[][]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArrayArray, (CIntArrayArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("char[][]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArrayArray, (int, CIntArrayArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("char[][]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructIntArrayArray), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("char[][]", "int size()", asMETHOD(CIntArrayArray, size), asCALL_THISCALL); assert( r >= 0 );
 
 	// Verify that it is possible to register arrays of built-in types
 	r = engine->RegisterObjectType("int[]", sizeof(CIntArray), asOBJ_CLASS_CDA); assert( r >= 0 );
@@ -246,19 +253,23 @@ bool Test()
 	r = engine->RegisterObjectMethod("int[][]", "void push_back(int[] &in)", asMETHOD(CIntArrayArray, push_back), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("int[][]", "int[] pop_back()", asMETHOD(CIntArrayArray, pop_back), asCALL_THISCALL); assert( r >= 0 );
 
+
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
 
 	COutStream out;
+	engine->SetCommonMessageStream(&out);
+
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0, &out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
+
 	asIScriptContext *ctx = 0;
-	r = engine->ExecuteString(0, "Test()", 0, &ctx);
+	r = engine->ExecuteString(0, "Test()", &ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failed to execute script\n", TESTNAME);
@@ -270,6 +281,7 @@ bool Test()
 	}
 	
 	if( ctx ) ctx->Release();
+
 	engine->Release();
 
 	// Success

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -47,6 +47,7 @@
 
 #include "as_config.h"
 
+#ifndef MAX_PORTABILITY
 #ifdef AS_SH4
 
 #include "as_callfunc.h"
@@ -55,6 +56,8 @@
 #include "as_tokendef.h"
 
 #include <stdlib.h>
+
+BEGIN_AS_NAMESPACE
 
 #define AS_SH4_MAX_ARGS 32
 // The array used to send values to the correct places.
@@ -246,13 +249,13 @@ asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD *args, int a
 
 	return sh4Func(intArgs << 2, floatArgs << 2, restArgs << 2, func);
 }
-int DetectCallingConvention(const char *obj, asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal) {
+int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal) {
 	memset(internal, 0, sizeof(asSSystemFunctionInterface));
 
-	internal->func = (asDWORD)ptr.func;
+	internal->func = (asDWORD)ptr.f.func;
 
-	unsigned int base = callConv;
-	if( obj == 0 )
+	int base = callConv;
+	if( !isMethod )
 	{
 		if( base == asCALL_CDECL )
 			internal->callConv = ICC_CDECL;
@@ -270,7 +273,7 @@ int DetectCallingConvention(const char *obj, asUPtr &ptr, int callConv, asSSyste
 		{
 			internal->callConv = ICC_THISCALL;
 #ifdef GNU_STYLE_VIRTUAL_METHOD
-			if( (asDWORD(ptr.func) & 1) )
+			if( (asDWORD(ptr.f.func) & 1) )
 				internal->callConv = ICC_VIRTUAL_THISCALL;
 #endif
 			internal->baseOffset = MULTI_BASE_OFFSET(ptr);
@@ -300,7 +303,7 @@ int DetectCallingConvention(const char *obj, asUPtr &ptr, int callConv, asSSyste
 int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine)
 {
 	// References are always returned as primitive data
-	if( func->returnType.isReference || func->returnType.isExplicitHandle )
+	if( func->returnType.IsReference() || func->returnType.IsObjectHandle() )
 	{
 		internal->hostReturnInMemory = false;
 		internal->hostReturnSize = 1;
@@ -309,7 +312,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	// Registered types have special flags that determine how they are returned
 	else if( func->returnType.IsObject() )
 	{
-		asDWORD objType = func->returnType.objectType->flags;
+		asDWORD objType = func->returnType.GetObjectType()->flags;
 		if( objType & asOBJ_CLASS )
 		{
 			if( objType & COMPLEX_MASK )
@@ -385,13 +388,13 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	{
 		internal->hostReturnInMemory = false;
 		internal->hostReturnSize = 2;
-		internal->hostReturnFloat = func->returnType.IsEqualExceptConst(asCDataType(ttDouble, true, false));
+		internal->hostReturnFloat = func->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttDouble, true));
 	}
 	else if( func->returnType.GetSizeInMemoryDWords() == 1 )
 	{
 		internal->hostReturnInMemory = false;
 		internal->hostReturnSize = 1;
-		internal->hostReturnFloat = func->returnType.IsEqualExceptConst(asCDataType(ttFloat, true, false));
+		internal->hostReturnFloat = func->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttFloat, true));
 	}
 	else
 	{
@@ -404,12 +407,24 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	internal->paramSize = func->GetSpaceNeededForArguments();
 
 	// Verify if the function takes any objects by value
+	int n;
 	internal->takesObjByVal = false;
-	for( int n = 0; n < func->parameterTypes.GetLength(); n++ )
+	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
-		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].isExplicitHandle && !func->parameterTypes[n].isReference )
+		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsObjectHandle() && !func->parameterTypes[n].IsReference() )
 		{
 			internal->takesObjByVal = true;
+			break;
+		}
+	}
+
+	// Verify if the function has any registered autohandles
+	internal->hasAutoHandles = false;
+	for( n = 0; n < internal->paramAutoHandles.GetLength(); n++ )
+	{
+		if( internal->paramAutoHandles[n] )
+		{
+			internal->hasAutoHandles = true;
 			break;
 		}
 	}
@@ -459,11 +474,11 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	asDWORD *vftable;
 	int      popSize           = paramSize;
 
-	context->objectType = descr->returnType.objectType;
-	if( descr->returnType.IsObject() && !descr->returnType.isReference && !descr->returnType.isExplicitHandle )
+	context->objectType = descr->returnType.GetObjectType();
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
 	{
 		// Allocate the memory for the object
-		retPointer = engine->CallAlloc(descr->returnType.objectType->idx);
+		retPointer = engine->CallAlloc(descr->returnType.GetObjectType());
 		sh4Args[AS_SH4_MAX_ARGS+1] = (asDWORD) retPointer;
 
 		if( sysFunc->hostReturnInMemory )
@@ -489,7 +504,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			if( obj == 0 )
 			{	
 				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
-				engine->CallFree(descr->returnType.objectType->idx, retPointer);
+				if( retPointer )
+					engine->CallFree(descr->returnType.GetObjectType(), retPointer);
 				return 0;
 			}
 
@@ -524,10 +540,10 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		int dpos = 1;
 		for( int n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
-			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].isExplicitHandle && !descr->parameterTypes[n].isReference )
+			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
 			{
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
-				if( descr->parameterTypes[n].objectType->flags & COMPLEX_MASK )
+				if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
 				{
 					paramBuffer[dpos++] = args[spos++];
 					paramSize++;
@@ -538,7 +554,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 					// Copy the object's memory to the buffer
 					memcpy(&paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
 					// Delete the original memory
-					engine->CallFree(descr->parameterTypes[n].objectType->idx, *(char**)(args+spos));
+					engine->CallFree(descr->parameterTypes[n].GetObjectType(), *(char**)(args+spos));
 					spos++;
 					dpos += descr->parameterTypes[n].GetSizeInMemoryDWords();
 					paramSize += descr->parameterTypes[n].GetSizeInMemoryDWords();
@@ -601,15 +617,15 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		for( int n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			if( descr->parameterTypes[n].IsObject() && 
-				!descr->parameterTypes[n].isReference &&
-				(descr->parameterTypes[n].objectType->flags & COMPLEX_MASK) )
+				!descr->parameterTypes[n].IsReference() &&
+				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )
 			{
 				void *obj = (void*)args[spos++];
-				asSTypeBehaviour *beh = &descr->parameterTypes[n].objectType->beh;
+				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
 				if( beh->destruct )
 					engine->CallObjectMethod(obj, beh->destruct);
 
-				engine->CallFree(descr->parameterTypes[n].objectType->idx, obj);
+				engine->CallFree(descr->parameterTypes[n].GetObjectType(), obj);
 			}
 			else
 				spos += descr->parameterTypes[n].GetSizeInMemoryDWords();
@@ -618,13 +634,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 #endif
 
 	// Store the returned value in our stack
-	if( descr->returnType.IsObject() && !descr->returnType.isReference )
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() )
 	{
-		if( descr->returnType.isExplicitHandle )
+		if( descr->returnType.IsObjectHandle() )
 		{
-			context->objectRegister = (void*)retQW;
-			// The function should already have increased the reference counter
-			//engine->CallObjectMethod(context->objectRegister, descr->returnType.objectType->beh.addref);
+			context->objectRegister = (void*)(asDWORD)retQW;
+
+			if( sysFunc->returnAutoHandle && context->objectRegister )
+				engine->CallObjectMethod(context->objectRegister, descr->returnType.GetObjectType()->beh.addref);
 		}
 		else
 		{
@@ -636,7 +653,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				else
 					*(asQWORD*)retPointer = retQW;
 			}
-			
+
 			// Store the object in the register
 			context->objectRegister = retPointer;
 		}
@@ -657,8 +674,35 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			context->returnVal = retQW;
 	}
 
+	if( sysFunc->hasAutoHandles )
+	{
+		args = context->stackPointer;
+		if( callConv >= ICC_THISCALL && !objectPointer )
+			args++;
+
+		int spos = 0;
+		for( int n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		{
+			if( sysFunc->paramAutoHandles[n] && args[spos] )
+			{
+				// Call the release method on the type
+				engine->CallObjectMethod((void*)args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
+				args[spos] = 0;
+			}
+
+			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
+				spos++;
+			else
+				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
+		}
+	}
+
 	return popSize;
 }
 
+END_AS_NAMESPACE
+
 #endif // AS_SH4
+#endif // AS_MAX_PORTABILITY
+
 

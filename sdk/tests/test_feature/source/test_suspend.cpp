@@ -73,14 +73,15 @@ bool Test()
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
 
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
-	engine->CreateContext(&ctx);
+	ctx = engine->CreateContext();
 	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_STDCALL);
 	if( ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestSuspend()")) >= 0 )
 	{
-	while( loopCount < 5 && !doSuspend )
-		ctx->Execute();
+		while( loopCount < 5 && !doSuspend )
+			ctx->Execute();
 	}
 	else
 		fail = true;
@@ -96,9 +97,9 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterGlobalProperty("int loopCount", &loopCount);
 	engine->AddScriptSection(0, TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
-	engine->CreateContext(&ctx);
+	ctx = engine->CreateContext();
 	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_STDCALL);
 	ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestSuspend2()"));
 	loopCount = 0;

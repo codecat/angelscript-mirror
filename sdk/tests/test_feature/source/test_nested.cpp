@@ -34,11 +34,11 @@ bool TestNested()
 	COutStream out;	
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
 	// Make the call with a separate context (should work)
-	asIScriptContext *ctx;
-	engine->CreateContext(&ctx);
+	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(engine->GetFunctionIDByIndex(0, 0));
 	ctx->Execute();
 

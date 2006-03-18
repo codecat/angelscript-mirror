@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -43,6 +43,8 @@
 #include "as_string.h"
 #include "as_array.h"
 #include "as_map.h"
+
+BEGIN_AS_NAMESPACE
 
 //========================================================================
 
@@ -100,7 +102,7 @@ protected:
 	asCThreadLocalData *GetLocalData(asDWORD threadId);
 	void SetLocalData(asDWORD threadId, asCThreadLocalData *tld);
 
-	asCMap tldMap;
+	asCMap<asDWORD,asCThreadLocalData*> tldMap;
 	DECLARECRITICALSECTION(criticalSection);
 #else
 	asCThreadLocalData *tld;
@@ -126,5 +128,6 @@ protected:
 	~asCThreadLocalData();
 };
 
+END_AS_NAMESPACE
 
 #endif

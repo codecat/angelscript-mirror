@@ -11,14 +11,15 @@ bool TestException()
 
 	COutStream out;	
 	asIScriptContext *ctx;
-	int r = engine->ExecuteString(0, "int a = 0;\na = 10/a;", &out, &ctx); // Throws an exception
+	engine->SetCommonMessageStream(&out);
+	int r = engine->ExecuteString(0, "int a = 0;\na = 10/a;", &ctx); // Throws an exception
 	if( r == asEXECUTION_EXCEPTION )
 	{
 		int func = ctx->GetExceptionFunction();
 		int line = ctx->GetExceptionLineNumber();
 		const char *desc = ctx->GetExceptionString();
 
-		if( func != 0xFFFD )
+		if( func != 0xFFFE )
 		{
 			printf("%s: Exception function ID is wrong\n", TESTNAME);
 			fail = true;

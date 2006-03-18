@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -39,17 +39,17 @@
 
 /*
 
-SCRIPT        = (FUNCTION | GLOBVAR | IMPORT)*
+SCRIPT        = (FUNCTION | GLOBVAR | IMPORT | STRUCT)*
 TYPE          = 'const'? DATATYPE
 TYPEMOD       = ('&' ('in' | 'out' | 'inout')?)?
 FUNCTION      = TYPE TYPEMOD IDENTIFIER PARAMLIST BLOCK
 IMPORT        = 'import' TYPE TYPEMOD IDENTIFIER PARAMLIST 'from' STRING ';'
-GLOBVAR       = TYPE IDENTIFIER ('=' ASSIGNMENT)? (',' IDENTIFIER ('=' ASSIGNMENT)?)* ';'
+GLOBVAR       = TYPE IDENTIFIER ('=' (INITLIST | ASSIGNMENT))? (',' IDENTIFIER ('=' (INITLIST | ASSIGNMENT))?)* ';'
 DATATYPE      = REALTYPE | IDENTIFIER
 REALTYPE      = 'void' | 'bool' | 'float' | 'int' | 'uint' | 'bits'
 PARAMLIST     = '(' (TYPE TYPEMOD IDENTIFIER? (',' TYPE TYPEMOD IDENTIFIER?)*)? ')'
 BLOCK         = '{' (DECLARATION | STATEMENT)* '}'
-DECLARATION   = TYPE IDENTIFIER ('=' ASSIGNMENT)? (',' IDENTIFIER ('=' ASSIGNMENT)?) ';'
+DECLARATION   = TYPE IDENTIFIER ('=' (INITLIST | ASSIGNMENT))? (',' IDENTIFIER ('=' (INITLIST | ASSIGNMENT))?)* ';'
 STATEMENT     = BLOCK | IF | WHILE | DOWHILE | RETURN | EXPRSTATEMENT | BREAK | CONTINUE
 BREAK         = 'break' ';'
 CONTINUE      = 'continue' ';'
@@ -74,6 +74,7 @@ OP            = 'and' | 'or' |
 			    '+' | '-' | '*' | '/' | '%' | '|' | '&' | '^' | '<<' | '>>' | '>>>'
 ASSIGNOP      = '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '|=' | '&=' | '^=' | '<<=' | '>>=' | '>>>='
 CONVERSION    = TYPE '(' ASSIGNMENT ')'
+INITLIST      = '{' ((INITLIST | ASSIGNMENT)? (',' (INITLIST | ASSIGNMENT)?)*)? '}'
 
 */
 
@@ -84,6 +85,8 @@ CONVERSION    = TYPE '(' ASSIGNMENT ')'
 #include "as_scriptcode.h"
 #include "as_builder.h"
 #include "as_tokenizer.h"
+
+BEGIN_AS_NAMESPACE
 
 class asCParser
 {
@@ -145,6 +148,8 @@ protected:
 	asCScriptNode *ParseFunctionCall();
 	asCScriptNode *ParseToken(int token);
 	asCScriptNode *ParseOneOf(int *tokens, int num);
+	asCScriptNode *ParseStruct();
+	asCScriptNode *ParseInitList();
 
 	bool IsGlobalVar();
 	bool IsDeclaration();
@@ -171,5 +176,7 @@ protected:
 	asCTokenizer tokenizer;
 	int          sourcePos;
 };
+
+END_AS_NAMESPACE
 
 #endif

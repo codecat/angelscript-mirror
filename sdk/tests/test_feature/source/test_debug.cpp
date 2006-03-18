@@ -34,7 +34,7 @@ static const char *script2 =
 
 
 std::string printBuffer;
-const char *correct =
+static const char *correct =
 "Module1:void main():4,3\n"
 " Module1:void Test1():9,2\n"
 "Module1:void main():5,3\n"    
@@ -51,7 +51,7 @@ const char *correct =
 "Module1:void main():6,2\n"
 "Module2:void Test2():4,2\n";
 
-const char *correctWithoutLineCues =
+static const char *correctWithoutLineCues =
 "--- exception ---\n"
 "desc: Out of range\n"
 "func: void Test3()\n"
@@ -122,17 +122,17 @@ bool Test()
 	engine->RegisterGlobalProperty("int number", &number);
 
 	COutStream out;
+	engine->SetCommonMessageStream(&out);
 	engine->AddScriptSection("Module1", TESTNAME ":1", script1, strlen(script1), 0);
-	engine->Build("Module1", &out);
+	engine->Build("Module1");
 
 	engine->AddScriptSection("Module2", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("Module2", &out);
+	engine->Build("Module2");
 
 	// Bind all functions that the module imports
 	engine->BindAllImportedFunctions("Module1");
 
-	asIScriptContext *ctx;
-	engine->CreateContext(&ctx);
+	asIScriptContext *ctx =	engine->CreateContext();
 	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_CDECL);
 	ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
 	ctx->Prepare(engine->GetFunctionIDByDecl("Module1", "void main()"));

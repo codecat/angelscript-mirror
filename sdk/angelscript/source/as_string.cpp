@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -42,7 +42,7 @@ asCString::asCString()
 	bufferSize = 0;
 	buffer = 0;
 
-//	Copy("", 0);
+//	Assign("", 0);
 }
 
 // Copy constructor
@@ -52,7 +52,16 @@ asCString::asCString(const asCString &str)
 	bufferSize = 0;
 	buffer = 0;
 
-	Copy(str.buffer, str.length);
+	Assign(str.buffer, str.length);
+}
+
+asCString::asCString(const char *str, asUINT len)
+{
+	length = 0;
+	bufferSize = 0;
+	buffer = 0;
+
+	Assign(str, len);
 }
 
 asCString::asCString(const char *str)
@@ -62,7 +71,7 @@ asCString::asCString(const char *str)
 	buffer = 0;
 
 	int len = strlen(str);
-	Copy(str, len);
+	Assign(str, len);
 }
 
 asCString::asCString(char ch)
@@ -71,7 +80,7 @@ asCString::asCString(char ch)
 	bufferSize = 0;
 	buffer = 0;
 
-	Copy(&ch, 1);
+	Assign(&ch, 1);
 }
 
 asCString::~asCString()
@@ -80,27 +89,28 @@ asCString::~asCString()
 		delete[] buffer;
 }
 
-asCString::operator const char *() const
+char *asCString::AddressOf()
+{
+	if( buffer == 0 ) Assign("", 0);
+	return buffer;
+}
+
+const char *asCString::AddressOf() const
 {
 	if( buffer == 0 ) return "";
 	return buffer;
 }
 
-char *asCString::AddressOf()
-{
-	if( buffer == 0 ) Copy("", 0);
-	return buffer;
-}
-
-void asCString::SetLength(int len)
+void asCString::SetLength(asUINT len)
 {
 	if( len >= bufferSize )
 		Allocate(len, true);
 
 	buffer[len] = 0;
+	length = len;
 }
 
-void asCString::Allocate(int len, bool keepData)
+void asCString::Allocate(asUINT len, bool keepData)
 {
 	char *buf = new char[len+1];
 	bufferSize = len+1;
@@ -127,7 +137,7 @@ void asCString::Allocate(int len, bool keepData)
 	buffer[length] = 0;
 }
 
-void asCString::Copy(const char *str, int len)
+void asCString::Assign(const char *str, asUINT len)
 {
 	// Allocate memory for the string
 	if( bufferSize < len + 1 )
@@ -142,26 +152,26 @@ void asCString::Copy(const char *str, int len)
 asCString &asCString::operator =(const char *str)
 {
 	int len = str ? strlen(str) : 0;
-	Copy(str, len);
+	Assign(str, len);
 
 	return *this;
 }
 
 asCString &asCString::operator =(const asCString &str)
 {
-	Copy(str.buffer, str.length);
+	Assign(str.buffer, str.length);
 
 	return *this;
 }
 
 asCString &asCString::operator =(char ch)
 {
-	Copy(&ch, 1);
+	Assign(&ch, 1);
 
 	return *this;
 }
 
-void asCString::Concatenate(const char *str, int len)
+void asCString::Concatenate(const char *str, asUINT len)
 {
 	// Allocate memory for the string
 	if( bufferSize < length + len + 1 )
@@ -194,7 +204,7 @@ asCString &asCString::operator +=(char ch)
 	return *this;
 }
 
-int asCString::GetLength() const
+asUINT asCString::GetLength() const
 {
 	return length;
 }
@@ -210,7 +220,7 @@ int asCString::Format(const char *format, ...)
 
 	if( r > 0 )
 	{
-		Copy(tmp, r);
+		Assign(tmp, r);
 	}
 	else
 	{
@@ -224,7 +234,7 @@ int asCString::Format(const char *format, ...)
 			str.Allocate(n, false);
 		}
 
-		Copy(str.buffer, r);
+		Assign(str.buffer, r);
 	}
 
 	va_end(args);
@@ -232,37 +242,77 @@ int asCString::Format(const char *format, ...)
 	return length;
 }
 
-char &asCString::operator [](int index) const
+char &asCString::operator [](asUINT index) 
 {
-	assert(index >= 0);
 	assert(index < length);
 
 	return buffer[index];
 }
 
-asCString asCString::SubString(int start, int length) const
+const char &asCString::operator [](asUINT index) const
+{
+	assert(index < length);
+
+	return buffer[index];
+}
+
+asCString asCString::SubString(asUINT start, int length) const
 {
 	if( start >= GetLength() || length == 0 )
 		return asCString("");
 
-	if( start < 0 ) start = 0;
 	if( length == -1 ) length = GetLength() - start;
 
 	asCString tmp;
-	tmp.Copy(buffer + start, length);
+	tmp.Assign(buffer + start, length);
 
 	return tmp;
 }
 
 int asCString::Compare(const char *str) const
 {
-	if( buffer == 0 ) return strcmp("",str);
-	return strcmp(buffer, str);
+	return Compare(str, strlen(str));
+}
+
+int asCString::Compare(const asCString &str) const
+{
+	return Compare(str.AddressOf(), str.GetLength());
+}
+
+int asCString::Compare(const char *str, asUINT len) const
+{
+	if( buffer == 0 ) 
+	{
+		if( str == 0 || len == 0 ) return 0; // Equal
+
+		return 1; // The other string is larger than this
+	}
+
+	if( str == 0 )
+	{
+		if( length == 0 ) 
+			return 0; // Equal
+
+		return -1; // The other string is smaller than this
+	}
+
+	if( len < length )
+	{
+		int result = memcmp(buffer, str, len);
+		if( result == 0 ) return -1; // The other string is smaller than this
+
+		return result;
+	}
+
+	int result = memcmp(buffer, str, length);
+	if( result == 0 && length < len ) return 1; // The other string is larger than this
+
+	return result;
 }
 
 int asCString::RecalculateLength()
 {
-	if( buffer == 0 ) Copy("", 0);
+	if( buffer == 0 ) Assign("", 0);
 	length = strlen(buffer);
 
 	assert(length < bufferSize);
@@ -281,6 +331,31 @@ bool operator ==(const asCString &a, const char *b)
 bool operator !=(const asCString &a, const char *b)
 {
 	return a.Compare(b) != 0;
+}
+
+bool operator ==(const asCString &a, const asCString &b)
+{
+	return a.Compare(b) == 0;
+}
+
+bool operator !=(const asCString &a, const asCString &b)
+{
+	return a.Compare(b) != 0;
+}
+
+bool operator ==(const char *a, const asCString &b)
+{
+	return b.Compare(a) == 0;
+}
+
+bool operator !=(const char *a, const asCString &b)
+{
+	return b.Compare(a) != 0;
+}
+
+bool operator <(const asCString &a, const asCString &b)
+{
+	return a.Compare(b) < 0;
 }
 
 asCString operator +(const asCString &a, const asCString &b)

@@ -62,7 +62,8 @@ bool TestMultipleInheritance()
 	r = engine->RegisterGlobalProperty("class d", &d);
 
 	COutStream out;
-	engine->ExecuteString(0, "d.CallMe1(); d.CallMe2();", &out);
+	engine->SetCommonMessageStream(&out);
+	engine->ExecuteString(0, "d.CallMe1(); d.CallMe2();");
 	
 	if( output2 != "CBase1: CBase1::CallMe1()\nCBase2: CBase2::CallMe2()\n" )
 	{

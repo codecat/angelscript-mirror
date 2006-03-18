@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -85,9 +85,11 @@
 #define TXT_ILLEGAL_OPERATION             "Illegal operation on this datatype"
 #define TXT_ILLEGAL_OPERATION_ON_s        "Illegal operation on '%s'"
 #define TXT_INC_OP_IN_GLOBAL_EXPR         "Incremental operators are not allowed in global expressions"
+#define TXT_INIT_LIST_CANNOT_BE_USED_WITH_s "Initialization lists cannot be used with '%s'"
 #define TXT_INVALID_BREAK                 "Invalid 'break'"
 #define TXT_INVALID_CONTINUE              "Invalid 'continue'"
 #define TXT_INVALID_TYPE                  "Invalid type"
+#define TXT_ILLEGAL_MEMBER_TYPE           "Illegal member type"
 #define TXT_ILLEGAL_VARIABLE_NAME_s       "Illegal variable name '%s'."
 
 #define TXT_METHOD_IN_GLOBAL_EXPR         "Object method calls are not allowed in global expressions"
@@ -102,26 +104,29 @@
 #define TXT_NAME_CONFLICT_s_FUNCTION        "Name conflict. '%s' is a function."
 #define TXT_NAME_CONFLICT_s_GLOBAL_VAR      "Name conflict. '%s' is a global variable."
 #define TXT_NAME_CONFLICT_s_GLOBAL_PROPERTY "Name conflict. '%s' is a global property."
+#define TXT_NAME_CONFLICT_s_STRUCT          "Name conflict. '%s' is a struct."
 #define TXT_NAME_CONFLICT_s_OBJ_PROPERTY    "Name conflict. '%s' is an object property."
 #define TXT_NAME_CONFLICT_s_OBJ_METHOD      "Name conflict. '%s' is an object method."
 #define TXT_NAME_CONFLICT_s_SYSTEM_FUNCTION "Name conflict. '%s' is a system function."
-#define TXT_NEED_TO_BE_A_HANDLE           "Need to be a handle"
-#define TXT_NO_CONVERSION_s_TO_s          "No conversion from '%s' to '%s' available."
-#define TXT_NO_CONVERSION_s_TO_MATH_TYPE   "No conversion from '%s' to math type available."
-#define TXT_NO_DEFAULT_COPY_OP            "There is no copy operator for this type available."
-#define TXT_NO_MATCHING_SIGNATURES_TO_s    "No matching signatures to '%s'"
+#define TXT_NEED_TO_BE_A_HANDLE             "Need to be a handle"
+#define TXT_NO_APPROPRIATE_INDEX_OPERATOR   "No appropriate indexing operator found"
+#define TXT_NO_CONVERSION_s_TO_s            "No conversion from '%s' to '%s' available."
+#define TXT_NO_CONVERSION_s_TO_MATH_TYPE    "No conversion from '%s' to math type available."
+#define TXT_NO_DEFAULT_COPY_OP              "There is no copy operator for this type available."
+#define TXT_NO_MATCHING_SIGNATURES_TO_s     "No matching signatures to '%s'"
 #define TXT_NO_MATCHING_OP_FOUND_FOR_TYPE_s "No matching operator that takes the type '%s' found"
-#define TXT_NOT_ALL_PATHS_RETURN          "Not all paths return a value"
-#define TXT_s_NOT_AVAILABLE_FOR_s         "'%s' is not available for '%s'"
-#define TXT_s_NOT_DECLARED                "'%s' is not declared"
-#define TXT_NOT_EXACT_g_d_g               "Implicit conversion of value is not exact, %g -> %d -> %g."
-#define TXT_NOT_EXACT_d_g_d               "Implicit conversion of value is not exact, %d -> %g -> %d."
-#define TXT_NOT_EXACT_g_u_g               "Implicit conversion of value is not exact, %g -> %u -> %g."
-#define TXT_NOT_EXACT_u_g_u               "Implicit conversion of value is not exact, %u -> %g -> %u."
+#define TXT_NOT_ALL_PATHS_RETURN            "Not all paths return a value"
+#define TXT_s_NOT_AVAILABLE_FOR_s           "'%s' is not available for '%s'"
+#define TXT_s_NOT_DECLARED                  "'%s' is not declared"
+#define TXT_NOT_EXACT_g_d_g                 "Implicit conversion of value is not exact, %g -> %d -> %g."
+#define TXT_NOT_EXACT_d_g_d                 "Implicit conversion of value is not exact, %d -> %g -> %d."
+#define TXT_NOT_EXACT_g_u_g                 "Implicit conversion of value is not exact, %g -> %u -> %g."
+#define TXT_NOT_EXACT_u_g_u                 "Implicit conversion of value is not exact, %u -> %g -> %u."
 #define TXT_s_NOT_FUNCTION                  "Function '%s' not found"
-#define TXT_s_NOT_INITIALIZED             "'%s' is not initialized."
-#define TXT_s_NOT_MEMBER_OF_s             "'%s' is not a member of '%s'"
-#define TXT_NOT_VALID_REFERENCE           "Not a valid reference"
+#define TXT_s_NOT_INITIALIZED               "'%s' is not initialized."
+#define TXT_s_NOT_MEMBER_OF_s               "'%s' is not a member of '%s'"
+#define TXT_NOT_SUPPORTED_YET               "Not supported yet"
+#define TXT_NOT_VALID_REFERENCE             "Not a valid reference"
 
 #define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP "Type '%s' doesn't support the indexing operator"
 #define TXT_OBJECT_DOESNT_SUPPORT_NEGATE_OP "Object doesn't have the negate operator"
@@ -131,6 +136,7 @@
 #define TXT_PARAMETER_ALREADY_DECLARED    "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s           "Parameter type can't be '%s'"
 #define TXT_POSSIBLE_LOSS_OF_PRECISION    "Conversion from double to float, possible loss of precision"
+#define TXT_PROPERTY_CANT_BE_CONST        "Struct properties cannot be declared as const"
 
 #define TXT_REF_IS_READ_ONLY              "Reference is read-only"
 #define TXT_REF_IS_TEMP                   "Reference is temporary"
@@ -141,7 +147,8 @@
 #define TXT_SWITCH_CASE_MUST_BE_CONSTANT  "Case expressions must be constants"
 #define TXT_SWITCH_MUST_BE_INTEGRAL       "Switch expressions must be integral numbers"
 
-#define TXT_TOO_MANY_ARRAY_DIMENSIONS     "Too many array dimensions"
+#define TXT_TOO_MANY_ARRAY_DIMENSIONS        "Too many array dimensions"
+#define TXT_TYPE_s_NOT_AVAILABLE_FOR_MODULE  "Type '%s' is not available for this module"
 
 #define TXT_UNEXPECTED_END_OF_FILE        "Unexpected end of file"
 #define TXT_UNEXPECTED_TOKEN_s            "Unexpected token '%s'"

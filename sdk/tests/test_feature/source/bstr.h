@@ -3,6 +3,11 @@
 
 #include <angelscript.h>
 
+#ifdef AS_USE_NAMESPACE
+namespace AngelScript
+{
+#endif
+
 void RegisterBStr(asIScriptEngine *engine);
 
 typedef unsigned char * asBSTR;
@@ -29,5 +34,9 @@ asBSTR  asBStrFormat(double number);
 asBSTR  asBStrFormatBits(asDWORD bits);
 
 asBSTR  asBStrSubstr(const asBSTR &str, asUINT start, asUINT count);
+
+#ifdef AS_USE_NAMESPACE
+}
+#endif
 
 #endif

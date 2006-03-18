@@ -12,39 +12,39 @@ namespace TestInt
 static const char *script =
 "int N;                                    \n"
 "                                          \n"
-"void func5()                              \n"
+"void ifunc5()                             \n"
 "{                                         \n"
 "    N += Average( N, N );                 \n"
 "}                                         \n"
 "                                          \n"
-"void func4()                              \n"
+"void ifunc4()                             \n"
 "{                                         \n"
 "    N += 2 * Average( N + 1, N + 2 );     \n"
 "}                                         \n"
 "                                          \n"
-"void func3()                              \n"
+"void ifunc3()                             \n"
 "{                                         \n"
 "    N *= 2 * N;                           \n"
 "}                                         \n"
 "                                          \n"
-"void func2()                              \n"
+"void ifunc2()                             \n"
 "{                                         \n"
 "    N /= 3;                               \n"
 "}                                         \n"
 "                                          \n"
-"void Recursion( int nRec )                \n"
+"void iRecursion( int nRec )               \n"
 "{                                         \n"
 "    if ( nRec >= 1 )                      \n"
-"        Recursion( nRec - 1 );            \n"
+"        iRecursion( nRec - 1 );           \n"
 "                                          \n"
 "    if ( nRec == 5 )                      \n"
-"        func5();                          \n"
+"        ifunc5();                         \n"
 "    else if ( nRec == 4 )                 \n"
-"        func4();                          \n"
+"        ifunc4();                         \n"
 "    else if ( nRec == 3 )                 \n"
-"        func3();                          \n"
+"        ifunc3();                         \n"
 "    else if ( nRec == 2 )                 \n"
-"        func2();                          \n"
+"        ifunc2();                         \n"
 "    else                                  \n"
 "        N *= 2;                           \n"
 "}                                         \n"
@@ -57,7 +57,7 @@ static const char *script =
 "    for ( i = 0; i < 250000; i++ )        \n"
 "    {                                     \n"
 "        Average( i, i );                  \n"
-"        Recursion( 5 );                   \n"
+"        iRecursion( 5 );                  \n"
 "                                          \n"
 "        if ( N > 100 ) N = 0;             \n"
 "    }                                     \n"
@@ -75,38 +75,21 @@ void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("Machine 1\n");
-	printf("AngelScript 1.9.0             : 5.229 secs\n");
-	printf("AngelScript 1.9.1             : 3.358 secs\n");
-	printf("AngelScript 1.9.2             : 2.787 secs\n");
-	printf("AngelScript 1.10.0 with C++ VM: 1.539 secs\n");
-	printf("AngelScript 1.10.0 with ASM VM: 1.716 secs\n");
-	printf("AngelScript 1.10.1 with ASM VM: 1.054 secs\n");
-	printf("\n");
-	printf("Machine 2\n");
-	printf("AngelScript 1.9.0             : 2.138 secs\n");
-	printf("AngelScript 1.9.1             : 1.371 secs\n");
-	printf("AngelScript 1.9.2             : 1.116 secs\n");
-	printf("AngelScript 1.10.0 with C++ VM: .5908 secs\n");
-	printf("AngelScript 1.10.0 with ASM VM: .7899 secs\n");
-	printf("AngelScript 1.10.1 with ASM VM: .5400 secs\n");
-	printf("AngelScript 2.0.0 with C++ VM : .6316 secs\n");
-	printf("AngelScript 2.0.0 with ASM VM : .5757 secs\n");
-	printf("AngelScript 2.1.0WIP6 with C++ VM : .5782 secs\n");
-	printf("AngelScript 2.1.0WIP6 with ASM VM : .5476 secs\n");
+	printf("AngelScript 2.4.1             : .6500 secs\n");
+	printf("AngelScript 2.5.0 WIP 1       : .6525 secs\n");
 
 	printf("\nBuilding...\n");
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	COutStream out;
+	engine->SetCommonMessageStream(&out);
 
 	engine->RegisterGlobalFunction("int Average(int, int)", asFUNCTION(Average), asCALL_CDECL);
 
-	COutStream out;
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
-	asIScriptContext *ctx;
-	engine->CreateContext(&ctx);
+	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(engine->GetFunctionIDByDecl(0, "int TestInt()"));
 
 	printf("Executing AngelScript version...\n");

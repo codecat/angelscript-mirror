@@ -44,15 +44,16 @@ bool TestNeverVisited()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	CBufferedOutStream out;	
+	engine->SetCommonMessageStream(&out);
 
 	engine->AddScriptSection(0, TESTNAME"1", script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	engine->AddScriptSection(0, TESTNAME"2", script2, strlen(script2), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	engine->AddScriptSection(0, TESTNAME"3", script3, strlen(script3), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	engine->Release();
 

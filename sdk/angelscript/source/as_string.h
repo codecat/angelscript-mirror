@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -38,6 +38,8 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef unsigned int asUINT;
+
 class asCString
 {
 public:
@@ -46,43 +48,55 @@ public:
 
 	asCString(const asCString &);
 	asCString(const char *);
+	asCString(const char *, asUINT length);
 	asCString(char);
 
-	void Allocate(int len, bool keepData);
-	void SetLength(int len);
-	int  GetLength() const;
+	void   Allocate(asUINT len, bool keepData);
+	void   SetLength(asUINT len);
+	asUINT GetLength() const;
 
-	void Concatenate(const char *str, int length);
+	void Concatenate(const char *str, asUINT length);
 	asCString &operator +=(const asCString &);
 	asCString &operator +=(const char *);
 	asCString &operator +=(char);
 
-	void Copy(const char *str, int length);
+	void Assign(const char *str, asUINT length);
 	asCString &operator =(const asCString &);
 	asCString &operator =(const char *);
 	asCString &operator =(char);
 
-	asCString SubString(int start, int length) const;
+	asCString SubString(asUINT start, int length) const;
 
 	int Format(const char *fmt, ...);
 
 	int Compare(const char *str) const;
+	int Compare(const asCString &str) const;
+	int Compare(const char *str, asUINT length) const;
 
 	char *AddressOf();
-	operator const char *() const;
-	char &operator [](int index) const;
+	const char *AddressOf() const;
+	char &operator [](asUINT index);
+	const char &operator[](asUINT index) const;
 	int RecalculateLength();
 
 protected:
-	int length;
-	int bufferSize;
+	asUINT length;
+	asUINT bufferSize;
 	char *buffer;
 };
 
 // Helper functions
 
+bool operator ==(const asCString &, const asCString &);
+bool operator !=(const asCString &, const asCString &);
+
 bool operator ==(const asCString &, const char *);
 bool operator !=(const asCString &, const char *);
+
+bool operator ==(const char *, const asCString &);
+bool operator !=(const char *, const asCString &);
+
+bool operator <(const asCString &, const asCString &);
 
 asCString operator +(const asCString &, const char *);
 asCString operator +(const char *, const asCString &);

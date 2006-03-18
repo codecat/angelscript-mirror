@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -42,32 +42,47 @@
 #define AS_ARRAYOBJECT_H
 
 #include "as_config.h"
+#include "as_gcobject.h"
 
-#define asDEFAULT_ARRAY "@array"
+BEGIN_AS_NAMESPACE
+
+#define asDEFAULT_ARRAY "#array"
 
 class asCScriptEngine;
 struct sArrayBuffer;
+class asCObjectType;
 
-class asCArrayObject
+class asCArrayObject : public asIScriptArray
 {
 public:
-	asCArrayObject(asUINT length, int elementSize, int behaviourIndex);
-	~asCArrayObject();
+	asCArrayObject(asUINT length, asCObjectType *ot);
+	virtual ~asCArrayObject();
+
 	int AddRef();
 	int Release();
 
-	void   resize(asUINT numElements);
-	asUINT length();
+	int    GetArrayTypeId();
+	int    GetElementTypeId();
+
+	void   Resize(asUINT numElements);
+	asUINT GetElementCount();
+	void  *GetElementPointer(asUINT index);
 	void  *at(asUINT index);
 	asCArrayObject &operator=(asCArrayObject&);
 
+	int    CopyFrom(asIScriptArray *other);
+
+	// GC methods
+	void Destruct();
+	void CountReferences();
+	void AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked);
+	void ReleaseAllHandles();
+
 protected:
+	asSGCObject gc;
 	sArrayBuffer *buffer;
-	int refCount;
 	int arrayType;
 	int elementSize;
-	int behaviourIndex;
-	asCScriptEngine *engine;
 
 	void CreateBuffer(sArrayBuffer **buf, asUINT numElements);
 	void DeleteBuffer(sArrayBuffer *buf);
@@ -78,5 +93,8 @@ protected:
 };
 
 void RegisterArrayObject(asCScriptEngine *engine);
+void ArrayObjectConstructor(asCObjectType *ot, asCArrayObject *self);
+
+END_AS_NAMESPACE
 
 #endif

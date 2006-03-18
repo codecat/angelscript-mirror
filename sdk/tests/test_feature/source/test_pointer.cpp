@@ -90,9 +90,10 @@ bool Test()
 	r = engine->RegisterGlobalProperty("ObjectInstance *ptr", &pnt); assert(r>=0);
 
 	COutStream out;
+	engine->SetCommonMessageStream(&out);
 
 	// Function call executed fine when using an object.
-	r = engine->ExecuteString(0, "obj.function(); obj.val = 23;", &out);
+	r = engine->ExecuteString(0, "obj.function(); obj.val = 23;");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -104,7 +105,7 @@ bool Test()
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "ptr->function(); ptr->val = 13;", &out);
+	r = engine->ExecuteString(0, "ptr->function(); ptr->val = 13;");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -117,7 +118,7 @@ bool Test()
 	}
 
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script));
-	r = engine->Build(0, &out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		printf("%s: failed\n", TESTNAME, r);

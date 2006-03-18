@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -38,6 +38,10 @@
 #include "as_config.h"
 #include "as_restore.h"
 #include "as_bytecodedef.h"
+#include "as_bytecode.h"
+#include "as_arrayobject.h"
+
+BEGIN_AS_NAMESPACE
 
 #define WRITE_NUM(N) stream->Write(&(N), sizeof(N))
 #define READ_NUM(N) stream->Read(&(N), sizeof(N))
@@ -45,27 +49,27 @@
 asCRestore::asCRestore(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
  : module(_module), stream(_stream), engine(_engine)
 {
-#ifdef USE_ASM_VM
-	for( int n = 0; n < BC_MAXBYTECODE; n++ )
-		relocToBC.Insert(relocTable[n], n);
-#endif
 }
 
 int asCRestore::Save() 
 {
 	unsigned long i, count;
-	
-	// initFunction
-	WriteFunction(&module->initFunction);
 
-	// exitFunction
-	WriteFunction(&module->exitFunction);
-
-	// scriptFunctions[]
-	count = module->scriptFunctions.GetLength();
+	// structTypes[]
+	count = module->structTypes.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
-		WriteFunction(module->scriptFunctions[i]);
+	{
+		WriteObjectTypeDeclaration(module->structTypes[i]);
+	}
+
+	// usedTypeIndices[]
+	count = module->usedTypes.GetLength();
+	WRITE_NUM(count);
+	for( i = 0; i < count; ++i )
+	{
+		WriteObjectType(module->usedTypes[i]);
+	}
 
 	// scriptGlobals[]
 	count = module->scriptGlobals.GetLength();
@@ -76,12 +80,21 @@ int asCRestore::Save()
 	// globalMem size (can restore data using @init())
 	count = module->globalMem.GetLength();
 	WRITE_NUM(count);
+	
+	// initFunction
+	WriteFunction(&module->initFunction);
+
+	// scriptFunctions[]
+	count = module->scriptFunctions.GetLength();
+	WRITE_NUM(count);
+	for( i = 0; i < count; ++i )
+		WriteFunction(module->scriptFunctions[i]);
 
 	// stringConstants[]
 	count = module->stringConstants.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i ) 
-		WriteBSTR(&module->stringConstants[i]);
+		WriteString(module->stringConstants[i]);
 
 	// importedFunctions[] and bindInformations[]
 	count = module->importedFunctions.GetLength();
@@ -92,9 +105,13 @@ int asCRestore::Save()
 		WRITE_NUM(module->bindInformations[i].importFrom);
 	}
 
+	// usedTypeIds[]
+	WriteUsedTypeIds();
+
 	return asSUCCESS;
 }
 
+// NEXT: Must go through the bytecode and set the correct objecttype pointer where used
 int asCRestore::Restore() 
 {
 	// Before starting the load, make sure that 
@@ -105,22 +122,28 @@ int asCRestore::Restore()
 
 	asCScriptFunction* func;
 	asCProperty* prop;
-	asBSTR bstr;
+	asCString *cstr;
 
-	// initFunction
-	ReadFunction(&module->initFunction);
-
-	// exitFunction
-	ReadFunction(&module->exitFunction);
-
-	// scriptFunctions[]
+	// structTypes[]
 	READ_NUM(count);
-	module->scriptFunctions.Allocate(count, 0);
-	for( i = 0; i < count; ++i ) 
+	module->structTypes.Allocate(count, 0);
+	for( i = 0; i < count; ++i )
 	{
-		func = new asCScriptFunction;
-		ReadFunction(func);
-		module->scriptFunctions.PushLast(func);
+		asCObjectType *ot = new asCObjectType(engine);
+		ReadObjectTypeDeclaration(ot);
+		engine->structTypes.PushLast(ot);
+		module->structTypes.PushLast(ot);
+		ot->refCount++;
+	}
+
+	// usedTypes[]
+	READ_NUM(count);
+	module->usedTypes.Allocate(count, 0);
+	for( i = 0; i < count; ++i )
+	{
+		asCObjectType *ot = ReadObjectType();
+		module->usedTypes.PushLast(ot);
+		ot->refCount++;		
 	}
 
 	// scriptGlobals[]
@@ -135,15 +158,30 @@ int asCRestore::Restore()
 
 	// globalMem size
 	READ_NUM(count);
-	module->globalMem.Allocate(count, 0);
+	module->globalMem.SetLength(count);
+
+
+	// initFunction
+	ReadFunction(&module->initFunction);
+
+	// scriptFunctions[]
+	READ_NUM(count);
+	module->scriptFunctions.Allocate(count, 0);
+	for( i = 0; i < count; ++i ) 
+	{
+		func = new asCScriptFunction;
+		ReadFunction(func);
+		module->scriptFunctions.PushLast(func);
+	}
 
 	// stringConstants[]
 	READ_NUM(count);
 	module->stringConstants.Allocate(count, 0);
 	for(i=0;i<count;++i) 
 	{
-		bstr = ReadBSTR();
-		module->stringConstants.PushLast(bstr);
+		cstr = new asCString();
+		ReadString(cstr);
+		module->stringConstants.PushLast(cstr);
 	}
 	
 	// importedFunctions[] and bindInformations[]
@@ -159,6 +197,9 @@ int asCRestore::Restore()
 		READ_NUM(module->bindInformations[i].importFrom);
 		module->bindInformations[i].importedFunction = -1;
 	}
+	
+	// usedTypeIds[]
+	ReadUsedTypeIds();
 
 	// Fake building
 	module->isBuildWithoutErrors = true;
@@ -222,38 +263,107 @@ void asCRestore::WriteProperty(asCProperty* prop)
 	WRITE_NUM(prop->index);
 }
 
-void asCRestore::WriteBSTR(asBSTR* str) 
+void asCRestore::WriteDataType(const asCDataType *dt) 
 {
-	unsigned long count;
+	if( dt->IsScriptArray() )
+	{
+		bool b = true;
+		WRITE_NUM(b);
 
-	count = strlen((char*)*str);
-	WRITE_NUM(count);
+		b = dt->IsObjectHandle();
+		WRITE_NUM(b);
+		b = dt->IsReadOnly();
+		WRITE_NUM(b);
+		b = dt->IsHandleToConst();
+		WRITE_NUM(b);
+		b = dt->IsReference();
+		WRITE_NUM(b);
 
-	stream->Write(*str, count);
-}
+		asCDataType sub = dt->GetSubType();
+		WriteDataType(&sub);
+	}
+	else
+	{
+		bool b = false;
+		WRITE_NUM(b);
 
-void asCRestore::WriteDataType(asCDataType* dt) 
-{
-	WRITE_NUM(dt->tokenType);
-	WriteObjectType(dt->extendedType);
-	WRITE_NUM(dt->arrayType);
-	WRITE_NUM(dt->isReference);
-	WRITE_NUM(dt->isReadOnly);
-	WriteObjectType(dt->objectType);
-	WRITE_NUM(dt->isExplicitHandle);
+		int t = dt->GetTokenType();
+		WRITE_NUM(t);
+		WriteObjectType(dt->GetObjectType());
+		b = dt->IsObjectHandle();
+		WRITE_NUM(b);
+		b = dt->IsReadOnly();
+		WRITE_NUM(b);
+		b = dt->IsHandleToConst();
+		WRITE_NUM(b);
+		b = dt->IsReference();
+		WRITE_NUM(b);
+	}
 }
 
 void asCRestore::WriteObjectType(asCObjectType* ot) 
 {
+	char ch;
+
 	// Only write the object type name
 	if( ot )
-		WriteString(&ot->name);
+	{
+		if( ot->flags & asOBJ_SCRIPT_ARRAY && ot->name != asDEFAULT_ARRAY )
+		{
+			ch = 'a';
+			WRITE_NUM(ch);
+
+			if( ot->subType )
+			{
+				ch = 's';
+				WRITE_NUM(ch);
+				WriteObjectType(ot->subType);
+
+				ch = ot->arrayType & 1 ? 'h' : 'o';
+				WRITE_NUM(ch);
+			}
+			else
+			{
+				ch = 't';
+				WRITE_NUM(ch);
+				WRITE_NUM(ot->tokenType);
+			}
+		}
+		else
+		{
+			ch = 'o';
+			WRITE_NUM(ch);
+			WriteString(&ot->name);
+		}
+	}
 	else
 	{
+		ch = '\0';
+		WRITE_NUM(ch);
 		// Write a null string
 		asDWORD null = 0;
 		WRITE_NUM(null);
 	}
+}
+
+void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot)
+{
+	// name
+	WriteString(&ot->name);
+	// size
+	int size = ot->size;
+	WRITE_NUM(size);
+	// properties[]
+	size = ot->properties.GetLength();
+	WRITE_NUM(size);
+	for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
+	{
+		WriteProperty(ot->properties[n]);
+	}
+
+	// TODO:
+	// methods[]
+	// behaviours
 }
 
 void asCRestore::ReadString(asCString* str) 
@@ -262,7 +372,6 @@ void asCRestore::ReadString(asCString* str)
 	READ_NUM(len);
 	str->SetLength(len);
 	stream->Read(str->AddressOf(), len);
-	str->RecalculateLength();
 }
 
 void asCRestore::ReadFunction(asCScriptFunction* func) 
@@ -318,56 +427,270 @@ void asCRestore::ReadProperty(asCProperty* prop)
 	READ_NUM(prop->index);
 }
 
-asBSTR asCRestore::ReadBSTR() 
+void asCRestore::ReadDataType(asCDataType *dt) 
 {
-	unsigned long count;
+	bool b;
+	READ_NUM(b);
+	if( b ) 
+	{
+		bool isObjectHandle;
+		READ_NUM(isObjectHandle);
+		bool isReadOnly;
+		READ_NUM(isReadOnly);
+		bool isHandleToConst;
+		READ_NUM(isHandleToConst);
+		bool isReference;
+		READ_NUM(isReference);
 
-	READ_NUM(count);
-	asBSTR str = asBStrAlloc(count);
+		asCDataType sub;
+		ReadDataType(&sub);
 
-	stream->Read(str, count);
-	
-	return str;
-}
+		*dt = sub;
+		dt->MakeArray(engine);
+		if( isObjectHandle )
+		{
+			dt->MakeReadOnly(isHandleToConst);
+			dt->MakeHandle(true);
+		}
+		dt->MakeReadOnly(isReadOnly);
+		dt->MakeReference(isReference);
+	}
+	else
+	{
+		eTokenType tokenType;
+		READ_NUM(tokenType);
+		asCObjectType *objType = ReadObjectType();
+		bool isObjectHandle;
+		READ_NUM(isObjectHandle);
+		bool isReadOnly;
+		READ_NUM(isReadOnly);
+		bool isHandleToConst;
+		READ_NUM(isHandleToConst);
+		bool isReference;
+		READ_NUM(isReference);
 
-void asCRestore::ReadDataType(asCDataType* dt) 
-{
-	READ_NUM(dt->tokenType);
-	dt->extendedType = ReadObjectType();
-	READ_NUM(dt->arrayType);
-	READ_NUM(dt->isReference);
-	READ_NUM(dt->isReadOnly);
-	dt->objectType = ReadObjectType();
-	READ_NUM(dt->isExplicitHandle);
+		if( tokenType == ttIdentifier )
+			*dt = asCDataType::CreateObject(objType, false);
+		else
+			*dt = asCDataType::CreatePrimitive(tokenType, false);
+		if( isObjectHandle )
+		{
+			dt->MakeReadOnly(isHandleToConst);
+			dt->MakeHandle(true);
+		}
+		dt->MakeReadOnly(isReadOnly);
+		dt->MakeReference(isReference);
+	}
 }
 
 asCObjectType* asCRestore::ReadObjectType() 
 {
-	// Read the object type name
-	asCString typeName;
-	ReadString(&typeName);
+	asCObjectType *ot;
+	char ch;
+	READ_NUM(ch);
+	if( ch == 'a' )
+	{
+		READ_NUM(ch);
+		if( ch == 's' )
+		{
+			ot = ReadObjectType();
+			asCDataType dt = asCDataType::CreateObject(ot, false);
 
-	// Find the registered object type in the engine
-	return engine->GetObjectType(typeName);
+			READ_NUM(ch);
+			if( ch == 'h' )
+				dt.MakeHandle(true);
+
+			dt.MakeArray(engine);
+			ot = dt.GetObjectType();
+		}
+		else
+		{
+			eTokenType tokenType;
+			READ_NUM(tokenType);
+			asCDataType dt = asCDataType::CreatePrimitive(tokenType, false);
+			dt.MakeArray(engine);
+			ot = dt.GetObjectType();
+		}
+	}
+	else
+	{
+		// Read the object type name
+		asCString typeName;
+		ReadString(&typeName);
+
+		// Find the object type
+		ot = module->GetObjectType(typeName.AddressOf());
+		if( !ot )
+			ot = engine->GetObjectType(typeName.AddressOf());
+	}
+
+	return ot;
+}
+
+void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot)
+{
+	// name
+	ReadString(&ot->name);
+	// size
+	int size;
+	READ_NUM(size);
+	ot->size = size;
+	// properties[]
+	READ_NUM(size);
+	ot->properties.Allocate(size,0);
+	for( int n = 0; n < size; n++ )
+	{
+		asCProperty *prop = new asCProperty;
+		ReadProperty(prop);
+		ot->properties.PushLast(prop);
+	}
+
+	// Use the default script struct behaviours
+	ot->beh.construct = engine->scriptTypeBehaviours.beh.construct;
+	ot->beh.constructors.PushLast(ot->beh.construct);
+	ot->beh.addref = engine->scriptTypeBehaviours.beh.addref;
+	ot->beh.release = engine->scriptTypeBehaviours.beh.release;
+	ot->beh.copy = engine->scriptTypeBehaviours.beh.copy;
+	ot->beh.operators.PushLast(ttAssignment);
+	ot->beh.operators.PushLast(ot->beh.copy);
+
+	// Some implicit values
+	ot->tokenType = ttIdentifier;
+	ot->arrayType = 0;
+	ot->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
+
+	// TODO: The flag asOBJ_POTENTIAL_CIRCLE must be saved
+
+	// TODO: What about the arrays? the flag must be saved as well
+
+	// TODO:
+	// methods[]
 }
 
 void asCRestore::WriteByteCode(asBYTE *bc, int length)
 {
 	while( length )
 	{
-#ifdef USE_ASM_VM
-		asDWORD reloc = *(asDWORD*)bc;
-		asBYTE c = FindByteCode(reloc);
-#else
 		asBYTE c = *bc;
-#endif
 		bc += 4;
 		WRITE_NUM(c);
-		for( int n = 4; n < bcSize[c]; n++ )
-			WRITE_NUM(*bc++);
+		if( c == BC_ALLOC || c == BC_FREE ||
+			c == BC_REFCPY || c == BC_OBJTYPE )
+		{
+			// Translate object type pointers into indices
+			char tmp[MAX_DATA_SIZE];
+			int n;
+			for( n = 0; n < bcSize[c]-4; n++ )
+				tmp[n] = *bc++;
+
+			*(int*)tmp = FindObjectTypeIdx(*(asCObjectType**)tmp);
+
+			for( n = 0; n < bcSize[c]-4; n++ )
+				WRITE_NUM(tmp[n]);
+		}
+		else if( c == BC_TYPEID )
+		{
+			// Translate type ids into indices
+			char tmp[MAX_DATA_SIZE];
+			int n;
+			for( n = 0; n < bcSize[c]-4; n++ )
+				tmp[n] = *bc++;
+
+			*(int*)tmp = FindTypeIdIdx(*(int*)tmp);
+
+			for( n = 0; n < bcSize[c]-4; n++ )
+				WRITE_NUM(tmp[n]);
+		}
+		else
+		{
+			// Store the bc as is
+			for( int n = 4; n < bcSize[c]; n++ )
+				WRITE_NUM(*bc++);
+		}
 
 		length -= bcSize[c];
 	}
+}
+
+int asCRestore::FindTypeIdIdx(int typeId)
+{
+	asUINT n;
+	for( n = 0; n < usedTypeIds.GetLength(); n++ )
+	{
+		if( usedTypeIds[n] == typeId )
+			return n;
+	}
+
+	usedTypeIds.PushLast(typeId);
+	return usedTypeIds.GetLength() - 1;
+}
+
+int asCRestore::FindTypeId(int idx)
+{
+	return usedTypeIds[idx];
+}
+
+void asCRestore::WriteUsedTypeIds()
+{
+	int count = usedTypeIds.GetLength();
+	WRITE_NUM(count);
+	for( int n = 0; n < count; n++ )
+		WriteDataType(engine->GetDataTypeFromTypeId(usedTypeIds[n]));
+}
+
+void asCRestore::ReadUsedTypeIds()
+{
+	asUINT n;
+	asUINT count;
+	READ_NUM(count);
+	usedTypeIds.SetLength(count);
+	for( n = 0; n < count; n++ )
+	{
+		asCDataType dt;
+		ReadDataType(&dt);
+		usedTypeIds[n] = engine->GetTypeIdFromDataType(dt);
+	}
+
+	// Translate all the TYPEID bytecodes
+	TranslateFunction(&module->initFunction);
+	for( n = 0; n < module->scriptFunctions.GetLength(); n++ )
+		TranslateFunction(module->scriptFunctions[n]);
+}
+
+void asCRestore::TranslateFunction(asCScriptFunction *func)
+{
+	asBYTE *bc = func->byteCode.AddressOf();
+	for( asUINT n = 0; n < func->byteCode.GetLength(); )
+	{
+		int c = bc[n];
+		if( c == BC_TYPEID )
+		{
+			// Translate the index to the type id
+			int *tid = (int*)&bc[n+4];
+
+			*tid = FindTypeId(*tid);
+		}
+
+		n += bcSize[c];
+	}
+}
+
+int asCRestore::FindObjectTypeIdx(asCObjectType *obj)
+{
+	asUINT n;
+	for( n = 0; n < module->usedTypes.GetLength(); n++ )
+	{
+		if( module->usedTypes[n] == obj )
+			return n;
+	}
+
+	assert( false );
+	return -1;
+}
+
+asCObjectType *asCRestore::FindObjectType(int idx)
+{
+	return module->usedTypes[idx];
 }
 
 void asCRestore::ReadByteCode(asBYTE *bc, int length)
@@ -376,27 +699,32 @@ void asCRestore::ReadByteCode(asBYTE *bc, int length)
 	{
 		asBYTE c;
 		READ_NUM(c);
-#ifdef USE_ASM_VM
-		*(asDWORD*)bc = relocTable[c];
-#else
 		*(asDWORD*)bc = asDWORD(c);
-#endif
 		bc += 4;
-		for( int n = 4; n < bcSize[c]; n++ )
-			READ_NUM(*bc++);
+		if( c == BC_ALLOC || c == BC_FREE ||
+			c == BC_REFCPY || c == BC_OBJTYPE )
+		{
+			// Translate the index to the true object type
+			char tmp[MAX_DATA_SIZE];
+			int n;
+			for( n = 0; n < bcSize[c]-4; n++ )
+				READ_NUM(tmp[n]);
+
+			*(asCObjectType**)tmp = FindObjectType(*(int*)tmp);
+
+			for( n = 0; n < bcSize[c]-4; n++ )
+				*bc++ = tmp[n];
+		}
+		else
+		{
+			// Read the bc as is
+			for( int n = 4; n < bcSize[c]; n++ )
+				READ_NUM(*bc++);
+		}
 
 		length -= bcSize[c];
 	}
 }
 
-#ifdef USE_ASM_VM
-asBYTE asCRestore::FindByteCode(asDWORD relocation)
-{
-	asDWORD bc;
-	relocToBC.MoveTo(relocation);
-	bc = relocToBC.GetValue();
-
-	return asBYTE(bc);
-}
-#endif
+END_AS_NAMESPACE
 

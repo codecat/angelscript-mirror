@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -66,6 +66,7 @@ const char *asGetTokenDefinition(int tokenType)
 	if( tokenType == ttStringConstant				) return "<string constant>";
 	if( tokenType == ttNonTerminatedStringConstant	) return "<unterminated string constant>";
 	if( tokenType == ttBitsConstant					) return "<bits constant>";
+	if( tokenType == ttHeredocStringConstant		) return "<heredoc string constant>";
 
 	for( int n = 0; n < numTokenWords; n++ )
 		if( tokenWords[n].tokenType == tokenType )
@@ -257,22 +258,44 @@ bool asCTokenizer::IsConstant()
 	// String constant between double-quotes
 	if( source[0] == '"' )
 	{
-		bool evenSlashes = true;
-		int n;
-		for( n = 1; n < sourceLength; n++ )
+		// Is it a normal string constant or a heredoc string constant?
+		if( sourceLength >= 6 && source[1] == '"' && source [2] == '"' )
 		{
-			if( source[n] == '\n' ) break;
-			if( source[n] == '"' && evenSlashes )
-			{
-				tokenType = ttStringConstant;
-				tokenLength = n+1;
-				return true;
-			}
-			if( source[n] == '\\' ) evenSlashes = !evenSlashes; else evenSlashes = true;
-		}
+			// Heredoc string constant (spans multiple lines, no escape sequences)
 
-		tokenType = ttNonTerminatedStringConstant;
-		tokenLength = n-1;
+			// Find the length
+			int n;
+			for( n = 3; n < sourceLength-2; n++ )
+			{
+				if( source[n] == '"' && source[n+1] == '"' && source[n+2] == '"' )
+					break;
+			}
+
+			tokenType = ttHeredocStringConstant;
+			tokenLength = n+3;
+
+			return true;
+		}
+		else
+		{
+			// Normal string constant
+			bool evenSlashes = true;
+			int n;
+			for( n = 1; n < sourceLength; n++ )
+			{
+				if( source[n] == '\n' ) break;
+				if( source[n] == '"' && evenSlashes )
+				{
+					tokenType = ttStringConstant;
+					tokenLength = n+1;
+					return true;
+				}
+				if( source[n] == '\\' ) evenSlashes = !evenSlashes; else evenSlashes = true;
+			}
+
+			tokenType = ttNonTerminatedStringConstant;
+			tokenLength = n-1;
+		}
 
 		return true;
 	}

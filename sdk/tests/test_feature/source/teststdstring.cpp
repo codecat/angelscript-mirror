@@ -124,9 +124,10 @@ bool TestStdString()
 	COutStream out;
 
 	engine->AddScriptSection(0, "string", script, strlen(script), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
-	int r = engine->ExecuteString(0, "blah1(); blah2();", &out);
+	int r = engine->ExecuteString(0, "blah1(); blah2();");
 	if( r < 0 )
 	{
 		fail = true;
@@ -134,9 +135,9 @@ bool TestStdString()
 	}
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
-	engine->ExecuteString(0, "testString()", &out);
+	engine->ExecuteString(0, "testString()");
 
 	if( printOutput != "hello Ida" )
 	{
@@ -144,15 +145,15 @@ bool TestStdString()
 		printf("%s: Failed to print the correct string\n", TESTNAME);
 	}
 
-	engine->ExecuteString(0, "string s = \"test\\\\test\\\\\"", &out);
+	engine->ExecuteString(0, "string s = \"test\\\\test\\\\\"");
 
 	// Verify that it is possible to use the string in constructor parameters
-	engine->ExecuteString(0, "obj a; a = obj(\"test\")", &out);
-	engine->ExecuteString(0, "obj a(\"test\")", &out);
+	engine->ExecuteString(0, "obj a; a = obj(\"test\")");
+	engine->ExecuteString(0, "obj a(\"test\")");
 
 	// Verify that it is possible to pass strings by value
 	printOutput = "";
-	engine->ExecuteString(0, "testString2()", &out);
+	engine->ExecuteString(0, "testString2()");
 	if( printOutput != "Hello World!" )
 	{
 		fail = true;
@@ -160,44 +161,44 @@ bool TestStdString()
 	}
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a; a = 1; print(a);", &out);
+	engine->ExecuteString(0, "string a; a = 1; print(a);");
 	if( printOutput != "1" ) fail = true;
 	
 	printOutput = "";
-	engine->ExecuteString(0, "string a; a += 1; print(a);", &out);
+	engine->ExecuteString(0, "string a; a += 1; print(a);");
 	if( printOutput != "1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a = \"a\" + 1; print(a);", &out);
+	engine->ExecuteString(0, "string a = \"a\" + 1; print(a);");
 	if( printOutput != "a1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a = 1 + \"a\"; print(a);", &out);
+	engine->ExecuteString(0, "string a = 1 + \"a\"; print(a);");
 	if( printOutput != "1a" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a = 1; print(a);", &out);
+	engine->ExecuteString(0, "string a = 1; print(a);");
 	if( printOutput != "1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "print(\"a\" + 1.2)", &out);
+	engine->ExecuteString(0, "print(\"a\" + 1.2)");
 	if( printOutput != "a1.2") fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "print(1.2 + \"a\")", &out);
+	engine->ExecuteString(0, "print(1.2 + \"a\")");
 	if( printOutput != "1.2a") fail = true;
 
-	engine->ExecuteString(0, "StringByVal(\"test\", \"test\")", &out);
+	engine->ExecuteString(0, "StringByVal(\"test\", \"test\")");
 
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	if( engine->Build(0, &out) < 0 )
+	if( engine->Build(0) < 0 )
 	{
 		fail = true;
 	}
 
 	//--> new: object method string argument test
 	printOutput = "";
-	engine->ExecuteString(0, "consumerObject.Consume(\"This is my string\")", &out);
+	engine->ExecuteString(0, "consumerObject.Consume(\"This is my string\")");
 	if( printOutput != "This is my string") fail = true;
 	//<-- new: object method string argument test
 

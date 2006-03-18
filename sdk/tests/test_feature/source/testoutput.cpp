@@ -29,11 +29,12 @@ bool Test()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	CBufferedOutStream out;
+	engine->SetCommonMessageStream(&out);
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	if( out.buffer != "TestOutput (1, 1) : Info    : Compiling void test()\n"
 		              "TestOutput (4, 7) : Error   : 'a' is not declared\n"

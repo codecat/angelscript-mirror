@@ -121,6 +121,9 @@ void ConfigureEngine(asIScriptEngine *engine)
 {
 	int r;
 
+	// Tell the engine to output any error messages to printf
+	engine->SetCommonMessageStream((asOUTPUTFUNC_t)printf, 0);
+
 	// Register the script string type
 	// Look at the implementation for this function for more information  
 	// on how to register a custom string type, and other object types.
@@ -147,6 +150,9 @@ void ConfigureEngine(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("void _grab(double)", asFUNCTIONPR(grab, (double), void), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void _grab()", asFUNCTIONPR(grab, (void), void), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void _grab(string &in)", asFUNCTIONPR(grab, (string&), void), asCALL_CDECL); assert( r >= 0 );
+
+	// Do not output anything else to printf
+	engine->SetCommonMessageStream(0);
 }
 
 class asCOutputStream : public asIOutputStream
@@ -165,11 +171,14 @@ void ExecString(asIScriptEngine *engine, string &arg)
 
 	script = "_grab(" + arg + ")";
 
-	int r = engine->ExecuteString(0, script.c_str(), &out);
+	engine->SetCommonMessageStream(&out);
+	int r = engine->ExecuteString(0, script.c_str());
 	if( r < 0 )
 		cout << "Invalid script statement. " << endl;
 	else if( r == asEXECUTION_EXCEPTION )
 		cout << "A script exception was raised." << endl;
+
+	engine->SetCommonMessageStream(0);
 }
 
 void grab(int v)

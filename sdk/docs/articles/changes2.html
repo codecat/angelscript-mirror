@@ -118,6 +118,206 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
+<h2>Version 2.4.1e - 2006/02/04</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>When releasing the engine, the internal resources were released in the wrong order, causing assert failures in the memory manager with VC++ 2005.
+<li>The assignment operator for the internal type 'any' wasn't properly registered, causing memory management problems.
+<li>asCALL_CDECL_OBJLAST that returned objects by value didn't work correctly (Thanks Deyja)
+<li>Global variables were not initialized properly when loading pre-compiled bytecode. (Thanks Villemon)
+<li>Using the default constructor for script structures to create temporary objects didn't work.
+<li>Comparison with boolean values resulted in the value -1 instead of 1.
+</ul>
+</ul>
+
+<h2>Version 2.4.1d - 2005/12/09</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>The compiler didn't raise an error when doing an handle assignment where the lvalue was a normal object (Thanks Lbas)
+</ul>
+</ul>
+
+<h2>Version 2.4.1c - 2005/11/22</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Overloaded indexing operators that take an object as parameter and returns a reference, crashed the application when compiling the script. (Thanks Desdemona)
+</ul>
+</ul>
+
+<h2>Version 2.4.1b - 2005/11/08</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Chained expressions with overloaded operators and registered types could cause null pointer violations (continued) (Thanks __Avatar__)
+</ul>
+</ul>
+
+<h2>Version 2.4.1a - 2005/10/18</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Registering global properties, after removing a config group with global properties, caused a null pointer violation. (Thanks DaesDemon)
+<li>An assert failed when initializing variables with a function that took reference parameters. (Thanks mandrav)
+<li>Chained expressions with overloaded operators and registered types could cause null pointer violations. (Thanks Anders Stenberg, a.k.a Dentoid)
+<li>Expressions with multiple levels of indirections (.) and object handles as arguments in each level, caused incorrect bytecode. (Thanks Vexorian)
+</ul>
+</ul>
+
+<h2>Version 2.4.1 - 2005/09/23</h2>
+
+<ul>
+<li>Script language
+<ul>
+<li>Added support for heredoc string constants. (Thanks Ashish Ranjan)
+<li>Added support for array initialization lists.
+</ul>
+</ul>
+
+<h2>Version 2.4.0 - 2005/09/15</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>The bitwise negate operator, ~, now works with integer types as well, e.g. int and uint. (Thanks Suudy)
+<li>Save and load of compiled bytecode with script arrays now work. (Thanks Evgeny Efremov, a.k.a wolfenstein)
+</ul>
+<li>Library interface
+<ul>
+<li>Added methods BeginConfigGroup(), EndConfigGroup(), and RemoveConfigGroup() for asIScriptEngine.
+<li>The engine no longer allow overriding the array types if they are already being used elsewhere.
+<li>All methods taking asUPtr as parameter was changed to take const asUPtr&amp; instead, which ought to help avoid ESP problems that some people have encountered.
+<li>Added an optional namespace. Define the flag AS_USE_NAMESPACE when compiling to put the script engine in the namespace AngelScript.
+<li>Added a method SetCommonObjectMemoryFunctions() that allow the application to register an alloc()/free() function pair that will be used for all script objects.
+<li>asIBinaryStream was changed to use asUINT instead of int for the block size, and const void * instead of void * for Write().
+<li>Added a method SetCommonMessageStream(). The engine uses this output stream to output error messages when registering configurations, and also if the Build() method is called with a null pointer for the output stream. A second version of this method is available that takes a simple function pointer and an optional parameter, like a normal callback function.
+<li>Build() and ExecuteString() no longer takes a pointer to an asIOutputStream. The old version is still available by defining the flag AS_DEPRECATED.
+<li>Added method SetConfigGroupModuleAccess() which is used to set both default module access mode and individual module accesses.
+</ul>
+<li>Script language
+<ul>
+<li>Constant variables that are initialized with a constant expression, can now be used as named constants in for example switch cases. (Thanks juhnu)
+</ul>
+<li>Library
+<ul>
+<li>Changed the way the modules free global variables. Instead of a script function, it is now just a simple loop freeing each of the variables.
+<li>asBSTR is no longer used internally to store constant strings, asCString is used instead.
+<li>Converted the asCMap to template code.
+<li>The assembler VM was removed as it will no longer be possible to keep it compatible with the C++ VM.
+</ul>
+<li>Project
+<ul>
+<li>Added as_configgroup.cpp and as_configgroup.h.
+<li>Removed as_map.cpp
+<li>Removed as_context_x86.cpp
+<li>Removed as_bstr_util.cpp and as_bstr_util.h.
+</ul>
+</ul>
+
+<h2>Version 2.3.0b - 2005/08/09</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Parameters where freed before the returned reference was used, which caused errors if the reference pointed to one of the parameters. (Thanks Suudy)
+</ul>
+</ul>
+
+<h2>Version 2.3.0a - 2005/07/29</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Structure definitions and function declarations where not order independent. (Thanks Carl Ådahl)
+<li>Added the old CreateContext() and GetGlobalVarPointer() as deprecated methods.
+<li>Fixed some more compiler warnings.
+</ul>
+</ul>
+
+<h2>Version 2.3.0 - 2005/07/14</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>RegisterGlobalProperty() for object handles wasn't working correctly, the wrong address was used by the VM.
+<li>The C interface for asIScriptGeneric wasn't declared correctly.
+<li>Fixed a few compiler warnings. (Thanks Rain Dog)
+<li>When calling methods on null handles, the application crashed with a memory access violation (Thanks Robert Manuszewski)
+<li>If accessing the elements of a script array handle, the compiler wrongly made the elements handles as well (Thanks Scott Dillman, a.k.a AlphaDog)
+</ul>
+<li>Library interface
+<ul>
+<li>Added an interface to manipulate the any type, asIScriptAny.
+<li>Added an interface to manipulate script structures, asIScriptStruct.
+<li>Added an interface to manipulate script arrays, asIScriptArray.
+<li>Added methods GetTypeIdByDecl() and GetTypeDeclaration().
+<li>Added the method asIScriptEngine::CreateScriptObject() that allow the application to create objects from a type id.
+<li>Added the method asIScriptEngine::GetObjectsInGarbageCollectorCount()
+    which can be used to finetune how often the GarbageCollect() is called.
+<li>Changed the asIScriptEngine::CreateContext() to return the context pointer instead of placing it in the parameter.
+<li>asIScriptEngine::GetGlobalVarPointer() now returns the pointer directly, instead of putting it in the argument.
+<li>Removed the deprecated asIScriptContext::ExecuteStep().
+</ul>
+<li>Script language
+<ul>
+<li>New built-in type: any. This type will be able to hold any other type, as a generic container, though currently it can only hold object handles. It is possible to pass this type to the application.
+</ul>
+<li>Library
+<ul>
+<li>Changed the implementation for asCGCObject, since it is not possible to use multiple inheritance with anonymous pointers.
+<li>Slimmed down the internal datatype representation, for the typeid feature.
+</ul>
+<li>Virtual machine
+<ul>
+<li>A new bytecode TYPEID has been implemented.
+<li>The object types are now passed as pointers directly in the bytecode, instead of by index. 
+</ul>
+<li>Project
+<ul>
+<li>Added as_anyobject.h and as_anyobject.cpp
+</ul>
+</ul>
+
+<h2>Version 2.2.0 - 2005/06/08</h2>
+
+<ul>
+<li>Script language
+<ul>
+<li>New reserved keyword: struct
+<li>The scripts can now declare and use structures.
+<li>The compiler now automatically converts objects to object handles, when it is obvious a handle is wanted, i.e. there will be less need to use the @ operator.
+</ul>
+<li>Library interface
+<ul>
+<li>It is now possible to tell the library to automatically handle reference for handles passed to and from application functions. Simply add a + after the @. This makes it possible to pass handles to functions that do not call the release method before returning.
+<li>A new method GarbageCollect() has been implemented that will free unused script objects. For long running programs it is necessary to call this every now and then. It can do either a full cycle or just a small incremental step, depending on the needs of the application.
+</ul>
+<li>Virtual machine
+<ul>
+<li>The bytecode now identifies object types locally to each module. 
+<li>There is a new bytecode OBJTYPE that translates a local object type id to the engine's object type id.
+</ul>
+<li>Library
+<ul>
+<li>Added a new preprocessor flag, AS_MAX_PORTABILITY, which removes all calls to assembler routines, which should make the library work on all platforms. In this mode, only asCALL_GENERIC can be used for application functions.
+<li>Changed the internal data type description class to be easier to work with. The intention is to allow the application to access this to get information about types for global variables, function declarations, etc.
+<li>Changed the implementation of the internal script array object to work more similar to the way script structures work. 
+</ul>
+<li>Project
+<ul>
+<li>New files: as_scriptstruct.cpp and as_scriptstruct.h
+<li>Added as_callfunc.cpp which implements the portable functions when AS_MAX_PORTABILITY is defined.
+<li>Added the files as_gcobject.h and as_gcobject.cpp
+</ul>
+</ul>
+
 <h2>Version 2.1.0c - 2005/05/26</h2>
 
 <ul>
@@ -147,7 +347,7 @@ A:hover
 <ul>
 <li>The null pointer access in the compiler when matching function arguments was removed (Thanks Lennart Denninger)
 <li>The ?: operator was reusing temporary variables incorrectly.
-<li>The compiler failed to compile the boolean not operator for variables. (Thanks Colin Vella, a.k.a SharkBait)
+<li>The compiler failed to compile the boolean not operator for variables. (Thanks SharkBait)
 </ul>
 </ul>
 
@@ -165,7 +365,7 @@ A:hover
 <li>Registered object types without registered constructor couldn't be used to create temporary objects in expressions.
 <li>Global variables couldn't use overloaded assignment operators to initialize the variables.
 <li>Object properties declared as object handles were not handled correctly by the compiler.
-<li>Fixed a bug that crashed the application when compiling a function declared with a void parameter. (Thanks Colin Vella, a.k.a SharkBait)
+<li>Fixed a bug that crashed the application when compiling a function declared with a void parameter. (Thanks SharkBait)
 <li>Sending complex objects by value to class methods caused a crash on GNUC based compilers. (Thanks Torsten, a.k.a torsten_pf)
 <li>Passing objects by reference to constructors in declarations caused an assert failure. (Thanks Rain Dog)
 </ul>

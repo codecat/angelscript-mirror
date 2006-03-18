@@ -84,7 +84,8 @@ bool TestCDecl_ClassC()
 
 	c1.a = 0;
 
-	int r = engine->ExecuteString(0, "c1 = _class1();", &out);
+	engine->SetCommonMessageStream(&out);
+	int r = engine->ExecuteString(0, "c1 = _class1();");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -101,7 +102,7 @@ bool TestCDecl_ClassC()
 	c2.a = 0;
 	c2.b = 0;
 
-	r = engine->ExecuteString(0, "c2 = _class2();", &out);
+	r = engine->ExecuteString(0, "c2 = _class2();");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -124,7 +125,7 @@ bool TestCDecl_ClassC()
 	c3.b = 0;
 	c3.c = 0;
 
-	r = engine->ExecuteString(0, "c3 = _class3();", &out);
+	r = engine->ExecuteString(0, "c3 = _class3();");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);

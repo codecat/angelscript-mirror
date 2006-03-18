@@ -19,7 +19,9 @@
 	<li><a href="#float">float</a>
 	<li><a href="#double">double</a>
 	<li><a href="#bits">bits, bits8, bits16</a>
-	<li><a href="#mod">Type modifiers</a>
+	<li><a href="#any">any</a>
+	<li><a href="#array">Arrays</a>
+	<li><a href="#objhandle">Object handles</a>
 	<li><a href="#bstr">Strings</a>
 	</ul>
 
@@ -104,34 +106,84 @@ individual bits. The data type holds 32 bits in a word. It can be assigned by a
 
 <p>As the scripting engine has been optimized for 32 bit datatypes, using the smaller variants is only recommended for accessing application specified variables. For local variables it is better to use the 32 bit variant.</p>
 
-<a name="mod">
-<h2>Type modifiers</h2>
+
+
+<a name="any">
+<h2>any</h2>
+
+<p><code><font color=blue>any</font></code> is a special data type that can hold the value of any other type. Think
+of it as a generic container.</p>
+
+<p>Two methods store() and retrieve() are used to manipulate the value held by the container.</p>
+
+<pre class=border>
+object obj;             <font color=green>// An object that supports object handles</font>
+<font color=blue>any</font> container;
+container.store(@obj);  <font color=green>// The @ operator is necessary to show that it is the handle that should be stored</font>
+
+object@ handle;
+container.retrieve(@handle);  
+</pre>
+
+<p>When calling the method store() the previous value held by the container is released, and replaced with a copy of the new value. In the case of object handles, only the handle is copied, i.e. the object itself remains the same.</p>
+
+<p>When calling retrieve() and passing a variable, the variable is only assigned a copy of the value held by the container if the type of the variable is compatible with the value.</p>
+
+<p>Note: Currently only object handles can be stored by the any type, but future versions will allow all types. The any type will also receive another method for querying information about the type held by the container.</p>
+
+
+
+
+
+
+<a name="array">
+<h2>Arrays</h2>
 
 <p>It is also possible to declare array variables by appending the [] brackets to the type.</p>
 
 <p>When declaring a variable with a type modifier, the type modifier affects the type of all variables in the list. 
 Example:</p>
 
-<pre><font color=blue>int</font>[] a, b, c;</pre>
+<pre class=border>
+<font color=blue>int</font>[] a, b, c;
+</pre>
 
 <p><code>a</code>, <code>b</code>, and <code>c</code> are now arrays of integers.</p>
 
-<p>When declaring arrays it is possible to define the initial size of the array by passing the length as a parameter to the constructor. Example:</p>
+<p>When declaring arrays it is possible to define the initial size of the array by passing the length as a parameter to the constructor. The elements can also be individually initialized by specifying an initialization list. Example:</p>
 
-<pre>TYPE[] a;
-TYPE[] b(LENGTH);</pre>
-
-<p>a is an empty array of TYPE. b is an array with the length of LENGTH. Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the range of valid indices are from 0 to length - 1.</p>
-
-<pre>a[INDEX] = EXPRESSION;</pre>
-
-<p>Object handles are a special type that can be used to hold references to other objects. When calling methods or accessing properties on a variable that is an object handle you will be accessing the actual object that the handle references, just as if it was an alias.</p>
-
-<pre>
-obj@ a;
+<pre class=border>
+<font color=blue>int</font>[] a;           <font color=green>// A zero-length array of integers</font>
+<font color=blue>int</font>[] b(3);        <font color=green>// An array of integers with 3 elements</font>
+<font color=blue>int</font>[] c = {,3,4,}; <font color=green>// An array of integers with 4 elements, where 
+                   // the second and third elements are initialized</font>
 </pre>
 
-<p><code>a</code> is here a handle to an object of type <code>obj</code>. Note that unless initialized with the handle of an object, the handle is <code>null</code>.</p>
+<p>Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the range of valid indices are from 0 to length - 1.</p>
+
+<pre class=border>
+a[0] = some_value;
+</pre>
+
+<p>An array also have two methods. length() allow you to determine how many elements are in the array, and resize() lets you resize the array.</p>
+
+<a name="objhandle">
+<h2>Object handles</h2>
+
+<p>Object handles are a special type that can be used to hold references to other objects. When calling methods or accessing properties on a variable that is an object handle you will be accessing the actual object that the handle references, just as if it was an alias. Note that unless initialized with the handle of an object, the handle is <code>null</code>.</p>
+
+<pre class=border>
+obj o;
+obj@ a;           <font color=green>// a is initialized to null</font>
+obj@ b = o;       <font color=green>// b holds a reference to o</font>
+
+b.ModifyMe();     <font color=green>// The method modifies the original object</font>
+
+<font color=blue>if</font>( @a == null )  <font color=green>// Verify if the object points to an object</font>
+{
+  @a = b;         <font color=green>// Make a hold a reference to the same object as b</font> 
+}
+</pre>
 
 <p>Not all types allow a handle to be taken. Neither of the primitive types can have handles, and there may exist some object types that do not allow handles. Which objects allow handles or not, are up to the application that registers them.</p>
 
@@ -141,15 +193,17 @@ obj@ a;
 <h2>Strings</h2>
 
 <p>Strings are a special type of data that can be used only if the application 
-registers support for them. They are a special data type that holds an array of 
+registers support for them. They hold an array of 
 bytes. The only limit to how large this array can be is the memory available on 
 the computer.</p>
 
-<p>Constant strings are written between double quotation marks (<code>"</code>).
+<p>There are two types of string constants supported in the AngelScript 
+language, the normal double quoted string, and the documentation strings, 
+called heredoc strings.</p>
+
+<p>The normal strings are written between double quotation marks (<code>"</code>).
 Inside the constant strings some escape sequences can be used to write exact
-byte values that might not be possible to write in your normal editor. If more 
-than one string constants are written in sequence with only whitespace or 
-comments between them the compiler will concatenate them into one constant.
+byte values that might not be possible to write in your normal editor. 
 </p>
 
 <table cellspacing=0 cellpadding=0 border=0>
@@ -176,6 +230,42 @@ comments between them the compiler will concatenate them into one constant.
 <td valign=top width=50>0xFF</td>
 <td valign=top>FF should be exchanged for the hexadecimal number representing the byte value wanted</td></tr>
 </table>
+<br>
+
+<pre class=border>
+string str = "This is a string with \"escape sequences\".";
+</pre>
+
+<p>
+The heredoc strings are designed for inclusion of large portions of text 
+without processing of escape sequences. A heredoc string is surrounded by 
+triple double-quotation marks (<code>"""</code>), and can span multiple lines 
+of code. If the characters following the start of the string until the first 
+linebreak only contains white space, it is automatically removed by the 
+compiler. Likewise if the characters following the last line break until the 
+end of the string only contains white space this is also remove, including the 
+linebreak.
+</p>
+
+<pre class=border>
+string str = """
+This is some text without "escape sequences". This is some text. 
+This is some text. This is some text. This is some text. This is 
+some text. This is some text. This is some text. This is some 
+text. This is some text. This is some text. This is some text. 
+This is some text.
+""";
+</pre>
+
+<p>If more 
+than one string constants are written in sequence with only whitespace or 
+comments between them the compiler will concatenate them into one constant.</p>
+
+<pre class=border>
+string str = "First line.\n"
+             "Second line.\n"
+             "Third line.\n";
+</pre>
 
 <p><a href="#">top</a></p>
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -40,6 +40,8 @@
 #define AS_BYTECODEDEF_H
 
 #include "as_config.h"
+
+BEGIN_AS_NAMESPACE
 
 //---------------------------------------------
 // Byte code instructions
@@ -174,7 +176,9 @@
 #define BC_GETREF    119
 #define BC_SWAP48    120
 #define BC_SWAP84    121
-#define BC_MAXBYTECODE (BC_SWAP84+1)
+#define BC_OBJTYPE   122
+#define BC_TYPEID    123
+#define BC_MAXBYTECODE 124
 
 // Temporary tokens, can't be output to the final program
 #define BC_PSP		   246
@@ -318,6 +322,8 @@ const int BCS_GETOBJREF = BCSIZE2;
 const int BCS_GETREF    = BCSIZE2;
 const int BCS_SWAP48    = BCSIZE0;
 const int BCS_SWAP84    = BCSIZE0;
+const int BCS_OBJTYPE   = BCSIZE4;
+const int BCS_TYPEID    = BCSIZE4;
 
 // Temporary
 const int BCS_PSP       = BCSIZE2;
@@ -461,7 +467,9 @@ const int bcSize[256] =
 	BCS_GETREF, 
 	BCS_SWAP48,
 	BCS_SWAP84,
-	0,0,0,0,0,0,0,0, // 122-129
+	BCS_OBJTYPE,
+	BCS_TYPEID,
+	0,0,0,0,0,0, // 124-129
 	0,0,0,0,0,0,0,0,0,0, // 130-139
 	0,0,0,0,0,0,0,0,0,0, // 140-149
 	0,0,0,0,0,0,0,0,0,0, // 150-159
@@ -617,7 +625,9 @@ const int bcStackInc[256] =
 	0,      // BC_GETREF
 	0,      // BC_SWAP48
 	0,      // BC_SWAP84
-	0,0,0,0,0,0,0,0, // 122-129
+	1,		// BC_OBJTYPE
+	1,      // BC_TYPEID
+	0,0,0,0,0,0, // 124-129
 	0,0,0,0,0,0,0,0,0,0, // 130-139
 	0,0,0,0,0,0,0,0,0,0, // 140-149
 	0,0,0,0,0,0,0,0,0,0, // 150-159
@@ -778,7 +788,9 @@ const sByteCodeName bcName[256] =
 	{"GETREF"}, 
 	{"SWAP48"},
 	{"SWAP84"},
-	{0},{0},{0},{0},{0},{0},{0},{0}, // 122-129
+	{"OBJTYPE"},
+	{"TYPEID"},
+	{0},{0},{0},{0},{0},{0}, // 124-129
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 130-139
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 140-149
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 150-159
@@ -803,5 +815,7 @@ const sByteCodeName bcName[256] =
 	{"LABEL"}
 };
 #endif
+
+END_AS_NAMESPACE
 
 #endif

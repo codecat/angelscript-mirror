@@ -5,8 +5,8 @@ CPP  = g++.exe -D__DEBUG__
 CC   = gcc.exe -D__DEBUG__
 WINDRES = windres.exe
 RES  = 
-OBJ  = obj/main.o obj/test_2func.o obj/test_array.o obj/test_arrayobject.o obj/test_circularimport.o obj/test_condition.o obj/test_constproperty.o obj/test_constructor.o obj/test_constructor2.o obj/test_conversion.o obj/test_discard.o obj/test_exception.o obj/test_exceptionmemory.o obj/test_funcoverload.o obj/test_import.o obj/test_multiassign.o obj/test_nested.o obj/test_nevervisited.o obj/test_notinitialized.o obj/test_object.o obj/test_optimize.o obj/test_pointer.o obj/test_return_with_cdecl_objfirst.o obj/test_saveload.o obj/test_stdvector.o obj/test_suspend.o obj/test_vector3.o obj/test2modules.o obj/testbstr.o obj/testbstr2.o obj/testcdecl_class.o obj/testcdecl_class_a.o obj/testcdecl_class_c.o obj/testcdecl_class_d.o obj/testcreateengine.o obj/testenumglobvar.o obj/testexecute.o obj/testexecute1arg.o obj/testexecute2args.o obj/testexecute32args.o obj/testexecute32mixedargs.o obj/testexecute4args.o obj/testexecute4argsf.o obj/testexecutemixedargs.o obj/testexecutescript.o obj/testexecutestring.o obj/testexecutethis32mixedargs.o obj/testglobalvar.o obj/testint64.o obj/testlongtoken.o obj/testmoduleref.o obj/testmultipleinheritance.o obj/testnegateoperator.o obj/testnotcomplexstdcall.o obj/testnotcomplexthiscall.o obj/testoutput.o obj/testreturn.o obj/testreturnd.o obj/testreturnf.o obj/teststack.o obj/teststdcall4args.o obj/teststdstring.o obj/testswitch.o obj/testtempvar.o obj/testvirtualinheritance.o obj/testvirtualmethod.o obj/utils.o obj/bstr.o obj/test_argref.o obj/test_objhandle.o obj/test_arrayhandle.o obj/test_objhandle2.o obj/test_refargument.o obj/test_objzerosize.o obj/test_import2.o obj/test_debug.o obj/test_generic.o obj/test_custommem.o obj/test_stack2.o obj/test_constobject.o obj/test_scriptstring.o obj/scriptstring.o obj/stdstring.o $(RES)
-LINKOBJ  = obj/main.o obj/test_2func.o obj/test_array.o obj/test_arrayobject.o obj/test_circularimport.o obj/test_condition.o obj/test_constproperty.o obj/test_constructor.o obj/test_constructor2.o obj/test_conversion.o obj/test_discard.o obj/test_exception.o obj/test_exceptionmemory.o obj/test_funcoverload.o obj/test_import.o obj/test_multiassign.o obj/test_nested.o obj/test_nevervisited.o obj/test_notinitialized.o obj/test_object.o obj/test_optimize.o obj/test_pointer.o obj/test_return_with_cdecl_objfirst.o obj/test_saveload.o obj/test_stdvector.o obj/test_suspend.o obj/test_vector3.o obj/test2modules.o obj/testbstr.o obj/testbstr2.o obj/testcdecl_class.o obj/testcdecl_class_a.o obj/testcdecl_class_c.o obj/testcdecl_class_d.o obj/testcreateengine.o obj/testenumglobvar.o obj/testexecute.o obj/testexecute1arg.o obj/testexecute2args.o obj/testexecute32args.o obj/testexecute32mixedargs.o obj/testexecute4args.o obj/testexecute4argsf.o obj/testexecutemixedargs.o obj/testexecutescript.o obj/testexecutestring.o obj/testexecutethis32mixedargs.o obj/testglobalvar.o obj/testint64.o obj/testlongtoken.o obj/testmoduleref.o obj/testmultipleinheritance.o obj/testnegateoperator.o obj/testnotcomplexstdcall.o obj/testnotcomplexthiscall.o obj/testoutput.o obj/testreturn.o obj/testreturnd.o obj/testreturnf.o obj/teststack.o obj/teststdcall4args.o obj/teststdstring.o obj/testswitch.o obj/testtempvar.o obj/testvirtualinheritance.o obj/testvirtualmethod.o obj/utils.o obj/bstr.o obj/test_argref.o obj/test_objhandle.o obj/test_arrayhandle.o obj/test_objhandle2.o obj/test_refargument.o obj/test_objzerosize.o obj/test_import2.o obj/test_debug.o obj/test_generic.o obj/test_custommem.o obj/test_stack2.o obj/test_constobject.o obj/test_scriptstring.o obj/scriptstring.o obj/stdstring.o $(RES)
+OBJ  = obj/main.o obj/test_2func.o obj/test_array.o obj/test_arrayobject.o obj/test_circularimport.o obj/test_condition.o obj/test_configaccess.o obj/test_constproperty.o obj/test_constructor.o obj/test_constructor2.o obj/test_conversion.o obj/test_discard.o obj/test_exception.o obj/test_exceptionmemory.o obj/test_funcoverload.o obj/test_import.o obj/test_multiassign.o obj/test_nested.o obj/test_nevervisited.o obj/test_notinitialized.o obj/test_object.o obj/test_optimize.o obj/test_pointer.o obj/test_return_with_cdecl_objfirst.o obj/test_saveload.o obj/test_stdvector.o obj/test_suspend.o obj/test_vector3.o obj/test2modules.o obj/testbstr.o obj/testbstr2.o obj/testcdecl_class.o obj/testcdecl_class_a.o obj/testcdecl_class_c.o obj/testcdecl_class_d.o obj/testcreateengine.o obj/testenumglobvar.o obj/testexecute.o obj/testexecute1arg.o obj/testexecute2args.o obj/testexecute32args.o obj/testexecute32mixedargs.o obj/testexecute4args.o obj/testexecute4argsf.o obj/testexecutemixedargs.o obj/testexecutescript.o obj/testexecutestring.o obj/testexecutethis32mixedargs.o obj/testglobalvar.o obj/testint64.o obj/testlongtoken.o obj/testmoduleref.o obj/testmultipleinheritance.o obj/testnegateoperator.o obj/testnotcomplexstdcall.o obj/testnotcomplexthiscall.o obj/testoutput.o obj/testreturn.o obj/testreturnd.o obj/testreturnf.o obj/teststack.o obj/teststdcall4args.o obj/teststdstring.o obj/testswitch.o obj/testtempvar.o obj/testvirtualinheritance.o obj/testvirtualmethod.o obj/utils.o obj/bstr.o obj/test_argref.o obj/test_objhandle.o obj/test_arrayhandle.o obj/test_objhandle2.o obj/test_refargument.o obj/test_objzerosize.o obj/test_import2.o obj/test_debug.o obj/test_generic.o obj/test_custommem.o obj/test_stack2.o obj/test_constobject.o obj/test_scriptstring.o obj/scriptstring.o obj/stdstring.o obj/test_scriptstruct.o obj/test_autohandle.o obj/test_any.o obj/test_structintf.o obj/test_arrayintf.o obj/test_stream.o obj/test_dynamicconfig.o obj/test_config.o $(RES)
+LINKOBJ  = obj/*.o $(RES)
 LIBS =  -L"C:/Dev-Cpp/lib" -L"../../../../angelscript/lib" ../../../../angelscript/lib/AngelScript.a  -g3 
 INCS =  -I"C:/Dev-Cpp/include"  -I"../../../../angelscript/include" 
 CXXINCS =  -I"C:/Dev-Cpp/include/c++/3.3.1"  -I"C:/Dev-Cpp/include/c++/3.3.1/mingw32"  -I"C:/Dev-Cpp/include/c++/3.3.1/backward"  -I"C:/Dev-Cpp/lib/gcc-lib/mingw32/3.3.1/include"  -I"C:/Dev-Cpp/include"  -I"../../../../angelscript/include" 
@@ -42,6 +42,9 @@ obj/test_circularimport.o: ../../source/test_circularimport.cpp
 
 obj/test_condition.o: ../../source/test_condition.cpp
 	$(CPP) -c ../../source/test_condition.cpp -o obj/test_condition.o $(CXXFLAGS)
+
+obj/test_configaccess.o: ../../source/test_configaccess.cpp
+	$(CPP) -c ../../source/test_configaccess.cpp -o obj/test_configaccess.o $(CXXFLAGS)
 
 obj/test_constproperty.o: ../../source/test_constproperty.cpp
 	$(CPP) -c ../../source/test_constproperty.cpp -o obj/test_constproperty.o $(CXXFLAGS)
@@ -271,5 +274,29 @@ obj/test_scriptstring.o: ../../source/test_scriptstring.cpp
 obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp
 	$(CPP) -c ../../../../add_on/scriptstring/scriptstring.cpp -o obj/scriptstring.o $(CXXFLAGS)
 
-obj/stdstring.o: ../../../../add_on/std_string/stdstring.cpp
-	$(CPP) -c ../../../../add_on/std_string/stdstring.cpp -o obj/stdstring.o $(CXXFLAGS)
+obj/stdstring.o: ../../source/stdstring.cpp
+	$(CPP) -c ../../source/stdstring.cpp -o obj/stdstring.o $(CXXFLAGS)
+
+obj/test_scriptstruct.o: ../../source/test_scriptstruct.cpp
+	$(CPP) -c ../../source/test_scriptstruct.cpp -o obj/test_scriptstruct.o $(CXXFLAGS)
+
+obj/test_autohandle.o: ../../source/test_autohandle.cpp
+	$(CPP) -c ../../source/test_autohandle.cpp -o obj/test_autohandle.o $(CXXFLAGS)
+
+obj/test_any.o: ../../source/test_any.cpp
+	$(CPP) -c ../../source/test_any.cpp -o obj/test_any.o $(CXXFLAGS)
+
+obj/test_structintf.o: ../../source/test_structintf.cpp
+	$(CPP) -c ../../source/test_structintf.cpp -o obj/test_structintf.o $(CXXFLAGS)
+
+obj/test_arrayintf.o: ../../source/test_arrayintf.cpp
+	$(CPP) -c ../../source/test_arrayintf.cpp -o obj/test_arrayintf.o $(CXXFLAGS)
+
+obj/test_stream.o: ../../source/test_stream.cpp
+	$(CPP) -c ../../source/test_stream.cpp -o obj/test_stream.o $(CXXFLAGS)
+
+obj/test_dynamicconfig.o: ../../source/test_dynamicconfig.cpp
+	$(CPP) -c ../../source/test_dynamicconfig.cpp -o obj/test_dynamicconfig.o $(CXXFLAGS)
+
+obj/test_config.o: ../../source/test_config.cpp
+	$(CPP) -c ../../source/test_config.cpp -o obj/test_config.o $(CXXFLAGS)

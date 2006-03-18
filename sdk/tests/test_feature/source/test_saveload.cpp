@@ -4,8 +4,8 @@
 // Test author: Andreas Jonsson
 //
 
-#include "utils.h"
 #include <vector>
+#include "utils.h"
 
 namespace TestSaveLoad
 {
@@ -18,8 +18,8 @@ class CBytecodeStream : public asIBinaryStream
 public:
 	CBytecodeStream() {wpointer = 0;rpointer = 0;}
 
-	void Write(void *ptr, int size) {buffer.resize(buffer.size() + size); memcpy(&buffer[wpointer], ptr, size); wpointer += size;}
-	void Read(void *ptr, int size) {memcpy(ptr, &buffer[rpointer], size); rpointer += size;}
+	void Write(const void *ptr, asUINT size) {if( size == 0 ) return; buffer.resize(buffer.size() + size); memcpy(&buffer[wpointer], ptr, size); wpointer += size;}
+	void Read(void *ptr, asUINT size) {memcpy(ptr, &buffer[rpointer], size); rpointer += size;}
 
 	int rpointer;
 	int wpointer;
@@ -30,13 +30,33 @@ public:
 static const char *script1 =
 "import void Test() from \"DynamicModule\";   \n"
 "OBJ g_obj;                                   \n"
+"A @gHandle;                                  \n"
 "void main()                                  \n"
 "{                                            \n"
 "  Test();                                    \n"
+"  TestStruct();                              \n"
+"  TestArray();                               \n"
 "}                                            \n"
 "void TestObj(OBJ &out obj)                   \n"
 "{                                            \n"
 "}                                            \n"
+"void TestStruct()                            \n"
+"{                                            \n"
+"  A a;                                       \n"
+"  a.a = 2;                                   \n"
+"  A@ b = @a;                                 \n"
+"}                                            \n"
+"void TestArray()                             \n"
+"{                                            \n"
+"  A[] c(3);                                  \n"
+"  int[] d(2);                                \n"
+"  A[]@[] e(1);                               \n"
+"  @e[0] = @c;                                \n"
+"}                                            \n"
+"struct A                                     \n"
+"{                                            \n"
+"  int a;                                     \n"
+"};                                           \n"
 "void TestHandle(string @str)                 \n"
 "{                                            \n"
 "}                                            \n";
@@ -57,6 +77,7 @@ bool Test()
 	bool fail = false;
 
 	int number = 0;
+	int r;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString(engine);
@@ -66,13 +87,14 @@ bool Test()
 
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
 	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("DynamicModule", &out);
+	engine->Build("DynamicModule");
 
 	// Bind all functions that the module imports
-	engine->BindAllImportedFunctions(0);
+	r = engine->BindAllImportedFunctions(0); assert( r >= 0 );
 
 	// Save the compiled byte code
 	CBytecodeStream stream;
@@ -90,9 +112,9 @@ bool Test()
 	}
 
 	// Bind the imported functions again
-	engine->BindAllImportedFunctions(0);
+	r = engine->BindAllImportedFunctions(0); assert( r >= 0 );
 
-	engine->ExecuteString(0, "main()", &out);
+	engine->ExecuteString(0, "main()");
 
 	engine->Release();
 

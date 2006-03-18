@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -42,28 +42,8 @@ acUINT asStringHash(const char *string);
 
 void   asStringCopy(const char *source, int srcLength, char *dest, int destLength);
 
-#ifdef __GNUC__
 #define GETSTRING(name,src,len) \
   asCString name; \
-  name.Copy((src), (len));
-#else
-// This macro copies a string to a temporary buffer, where the 
-// buffer is allocated on the stack if the string is smaller 
-// than 50 characters
-#define GETSTRING(name,src,len) \
-  asCString _##name##Str; \
-  char _##name##Buffer[51]; \
-  const char *##name##; \
-  if( (len) > 50 ) \
-  { \
-    _##name##Str.Copy((src), (len)); \
-    ##name## = _##name##Str.AddressOf(); \
-  } \
-  else \
-  { \
-    asStringCopy((src), (len), _##name##Buffer, 50); \
-    ##name## = _##name##Buffer; \
-  } 
-#endif
+  name.Assign((src), (len));
 
 #endif

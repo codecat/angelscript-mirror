@@ -9,11 +9,16 @@ SRCNAMES = \
   bstr.cpp \
   main.cpp \
   test_2func.cpp \
+  test_any.cpp \
   test_argref.cpp \
   test_array.cpp \
   test_arrayhandle.cpp \
+  test_arrayintf.cpp \
   test_arrayobject.cpp \
+  test_autohandle.cpp \
   test_circularimport.cpp \
+  test_config.cpp \
+  test_configaccess.cpp \
   test_condition.cpp \
   test_constobject.cpp \
   test_constproperty.cpp \
@@ -23,6 +28,7 @@ SRCNAMES = \
   test_custommem.cpp \
   test_debug.cpp \
   test_discard.cpp \
+  test_dynamicconfig.cpp \
   test_exception.cpp \
   test_exceptionmemory.cpp \
   test_funcoverload.cpp \
@@ -34,6 +40,8 @@ SRCNAMES = \
   test_nevervisited.cpp \
   test_notinitialized.cpp \
   test_object.cpp \
+  test_object2.cpp \
+  test_object3.cpp \
   test_objhandle.cpp \
   test_objhandle2.cpp \
   test_objzerosize.cpp \
@@ -43,10 +51,14 @@ SRCNAMES = \
   test_return_with_cdecl_objfirst.cpp \
   test_saveload.cpp \
   test_scriptstring.cpp \
+  test_scriptstruct.cpp \
   test_suspend.cpp \
   test_stack2.cpp \
   test_stdvector.cpp \
+  test_stream.cpp \
+  test_structintf.cpp \
   test_vector3.cpp \
+  test_vector3_2.cpp \
   test2modules.cpp \
   testbstr.cpp \
   testbstr2.cpp  \

@@ -126,6 +126,10 @@ SOURCE=..\..\source\test_2func.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_any.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_argref.cpp
 # End Source File
 # Begin Source File
@@ -138,7 +142,15 @@ SOURCE=..\..\source\test_arrayhandle.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_arrayintf.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_arrayobject.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_autohandle.cpp
 # End Source File
 # Begin Source File
 
@@ -147,6 +159,14 @@ SOURCE=..\..\source\test_circularimport.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_condition.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_config.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_configaccess.cpp
 # End Source File
 # Begin Source File
 
@@ -178,7 +198,15 @@ SOURCE=..\..\source\test_debug.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_dict.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_discard.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_dynamicconfig.cpp
 # End Source File
 # Begin Source File
 
@@ -187,6 +215,10 @@ SOURCE=..\..\source\test_exception.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_exceptionmemory.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_float.cpp
 # End Source File
 # Begin Source File
 
@@ -226,6 +258,14 @@ SOURCE=..\..\source\test_object.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_object2.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_object3.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_objhandle.cpp
 # End Source File
 # Begin Source File
@@ -254,11 +294,19 @@ SOURCE=..\..\source\test_return_with_cdecl_objfirst.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_returnstring.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_saveload.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\source\test_scriptstring.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_scriptstruct.cpp
 # End Source File
 # Begin Source File
 
@@ -270,11 +318,23 @@ SOURCE=..\..\source\test_stdvector.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_stream.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_structintf.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_suspend.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\source\test_vector3.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_vector3_2.cpp
 # End Source File
 # Begin Source File
 

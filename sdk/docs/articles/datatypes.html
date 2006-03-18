@@ -153,6 +153,13 @@ function is responsible for releasing the reference once it is finished with
 it. In the same manner AngelScript expects any handle returned from a function 
 to already have the reference accounted for.</p>
 
+<p>However, when registering functions/methods with AngelScript the 
+application can tell the library that it should automatically take care of 
+releasing the handle references once a function return, likewise for returned 
+handles. This is done by adding a + sign to the @ type modifier. When doing 
+this an object handle can be safely passed to a C++ function that expects a 
+normal pointer, but don't release it afterwards.</p>
+
 <h2>Parameter references</h2>
 
 <p>Because AngelScript needs to guarantee validity of pointers at all times,

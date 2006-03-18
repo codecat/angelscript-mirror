@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -39,6 +39,7 @@
 #ifndef AS_BUILDER_H
 #define AS_BUILDER_H
 
+#include "as_config.h"
 #include "as_scriptengine.h"
 #include "as_module.h"
 
@@ -48,6 +49,8 @@
 #include "as_datatype.h"
 #include "as_property.h"
 #include "as_types.h"
+
+BEGIN_AS_NAMESPACE
 
 struct sFunctionDescription
 {
@@ -65,6 +68,17 @@ struct sGlobalVariableDescription
 	asCDataType datatype;
 	int index;
 	bool isCompiled;
+	bool isPureConstant;
+	asQWORD constantValue;
+};
+
+struct sStructDeclaration
+{
+	asCScriptCode *script;
+	asCScriptNode *node;
+	asCString name;
+	int validState;
+	asCObjectType *objType;
 };
 
 class asCCompiler;
@@ -81,7 +95,7 @@ public:
 
 	int ParseDataType(const char *datatype, asCDataType *result);
 
-	int ParseFunctionDeclaration(const char *decl, asCScriptFunction *func);
+	int ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0);
 	int ParseVariableDeclaration(const char *decl, asCProperty *var);
 
 	int AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy);
@@ -100,11 +114,10 @@ protected:
 	friend class asCCompiler;
 	friend class asCModule;
 
-	int RegisterConstantBStr(const char *str, int len);
-	asBSTR *GetConstantBStr(int bstrID);
+	const asCString &GetConstantString(int strID);
 
 	asCProperty *GetObjectProperty(asCDataType &obj, const char *prop);
-	asCProperty *GetGlobalProperty(const char *prop, bool *isCompiled);
+	asCProperty *GetGlobalProperty(const char *prop, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue);
 
 	asCScriptFunction *GetFunctionDescription(int funcID);
 	void GetFunctionDescriptions(const char *name, asCArray<int> &funcs);
@@ -113,6 +126,10 @@ protected:
 	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
 	int RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
 	int RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file);
+	int RegisterStruct(asCScriptNode *node, asCScriptCode *file);
+	void CompileStructs();
+
+	asCObjectType *GetObjectType(const char *type);
 
 	void ParseScripts();
 	void CompileFunctions();
@@ -127,14 +144,15 @@ protected:
 	asCArray<asCScriptCode *> scripts;
 	asCArray<sFunctionDescription *> functions;
 	asCArray<sGlobalVariableDescription *> globVariables;
+	asCArray<sStructDeclaration *> structDeclarations;
 
 	asCScriptEngine *engine;
 	asCModule *module;
 
 	asCDataType CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file);
-	asCDataType ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, int *inOutFlag);
+	asCDataType ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, int *inOutFlag, bool *autoHandle);
 };
 
-
+END_AS_NAMESPACE
 
 #endif

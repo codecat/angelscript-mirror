@@ -72,7 +72,8 @@ bool TestConstructor()
 
 	CBufferedOutStream out;	
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
 	if( out.buffer != "" )
 	{
@@ -81,7 +82,7 @@ bool TestConstructor()
 	}
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2));
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	if( out.buffer != "" )
 	{
@@ -100,7 +101,7 @@ bool TestConstructor()
 
 /*
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3));
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	if( out.buffer != "TestConstructor (1, 12) : Info    : Compiling obj* g_obj4\n"
 	                  "TestConstructor (1, 12) : Error   : Only objects have constructors\n" )
@@ -111,7 +112,7 @@ bool TestConstructor()
 */
 	out.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4));
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	if( out.buffer != "" ) 
 	{

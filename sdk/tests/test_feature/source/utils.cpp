@@ -26,6 +26,7 @@ void Assert(bool expr)
 			printf("sect: %s\n", engine->GetFunctionSection(funcID));
 			printf("line: %d\n", ctx->GetCurrentLineNumber());
 			ctx->SetException("Assert failed");
+			printf("---------------------\n");
 		}
 	}
 }

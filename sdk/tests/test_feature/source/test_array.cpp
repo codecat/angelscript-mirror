@@ -112,28 +112,70 @@ static const char *script4 =
 "   Assert(a[1] == 19);                          \n"
 "}                                               \n";
 
+static const char *script5 = 
+"int[] g = {1,2,3};                              \n"
+"void TestArrayInitList()                        \n"
+"{                                               \n"
+"   Assert(g.length() == 3);                     \n"
+"   Assert(g[2] == 3);                           \n"
+"   int[] a = {,2,};                             \n"
+"   Assert(a.length() == 3);                     \n"
+"   Assert(a[1] == 2);                           \n"
+"   string[] b = {\"test\", \"3\"};              \n"
+"   Assert(b.length() == 2);                     \n"
+"   Assert(b[0] == \"test\");                    \n"
+"   Assert(b[1] == \"3\");                       \n"
+"   int[][] c = {,{23},{23,4},};                 \n"
+"   Assert(c.length() == 4);                     \n"
+"   Assert(c[2].length() == 2);                  \n"
+"   Assert(c[2][1] == 4);                        \n"
+"   const int[] d = {0,1,2};                     \n"
+"   Assert(d.length() == 3);                     \n"
+"   Assert(d[2] == 2);                           \n"
+"}                                               \n";
+
+static const char *script6 =
+"void Test()                                     \n"
+"{                                               \n"
+"   int[]@ e = {2,5};                            \n"
+"   int[] f = {,{23}};                           \n"
+"}                                               \n";
+
+void *ScriptAlloc(asUINT size)
+{
+	return malloc(size);
+}
+
+void ScriptFree(void *mem)
+{
+	free(mem);
+}
+
 bool Test()
 {
 	bool fail = false;
 	int r;
+	COutStream out;
+	asIScriptContext *ctx;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	
+	r = engine->SetCommonObjectMemoryFunctions(ScriptAlloc, ScriptFree);
+	engine->SetCommonMessageStream(&out);
 
 	RegisterScriptString(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
 
-	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
-	r = engine->Build(0, &out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "TestArray()", 0, &ctx);
+	r = engine->ExecuteString(0, "TestArray()", &ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -145,7 +187,7 @@ bool Test()
 	if( ctx ) ctx->Release();
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
-	r = engine->Build(0, &out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
@@ -160,14 +202,14 @@ bool Test()
 	}
 
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0, false);
-	r = engine->Build(0, &out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestArrayMulti()", 0, &ctx);
+	r = engine->ExecuteString(0, "TestArrayMulti()", &ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failure\n", TESTNAME);
@@ -181,13 +223,13 @@ bool Test()
 	ctx = 0;
 
 	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0, false);
-	r = engine->Build(0, &out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
-	r = engine->ExecuteString(0, "TestArrayChar()", 0, &ctx);
+	r = engine->ExecuteString(0, "TestArrayChar()", &ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failure\n", TESTNAME);
@@ -199,6 +241,26 @@ bool Test()
 	}
 
 	if( ctx ) ctx->Release();
+
+	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0, false);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "TestArrayInitList()", &ctx);
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r == asEXECUTION_EXCEPTION )
+		PrintException(ctx);
+
+	if( ctx ) ctx->Release();
+
+	CBufferedOutStream bout;
+	engine->SetCommonMessageStream(&bout);
+	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0, false);
+	r = engine->Build(0);
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "TestArray (1, 1) : Info    : Compiling void Test()\n"
+	                   "TestArray (3, 15) : Error   : Initialization lists cannot be used with 'int[]@'\n"
+	                   "TestArray (4, 16) : Error   : Initialization lists cannot be used with 'int'\n" )
+		fail = true;
 
 	engine->Release();
 

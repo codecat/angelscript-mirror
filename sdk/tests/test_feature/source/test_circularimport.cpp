@@ -29,11 +29,12 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	COutStream out;
+	engine->SetCommonMessageStream(&out);
 	engine->AddScriptSection("Module1", TESTNAME ":1", script1, strlen(script1), 0);
-	engine->Build("Module1", &out);
+	engine->Build("Module1");
 
 	engine->AddScriptSection("Module2", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("Module2", &out);
+	engine->Build("Module2");
 
 	BindImportedFunctions(engine, "Module1");
 	BindImportedFunctions(engine, "Module2");

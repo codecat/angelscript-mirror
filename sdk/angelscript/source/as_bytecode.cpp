@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -47,6 +47,8 @@
 #include "as_string.h"
 #include "as_module.h"
 #include "as_scriptengine.h"
+
+BEGIN_AS_NAMESPACE
 
 asCByteCode::asCByteCode()
 {
@@ -102,7 +104,7 @@ void asCByteCode::GetVarsUsed(asCArray<int> &vars)
 		if( curr->op == BC_VAR )
 		{
 			bool insert = true;
-			for( int n = 0; n < vars.GetLength(); n++ )
+			for( asUINT n = 0; n < vars.GetLength(); n++ )
 			{
 				if( (int)*ARG_DW(curr->arg) == vars[n] )
 				{
@@ -145,6 +147,11 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 		{
 			if( (int)*ARG_DW(curr->arg) == oldOffset )
 				*ARG_DW(curr->arg) = newOffset;
+		}
+		else if( curr->op == BC_STOREOBJ )
+		{
+			if( (int)*ARG_W(curr->arg) == oldOffset )
+				*ARG_W(curr->arg) = newOffset;
 		}
 
 		curr = curr->next;
@@ -440,7 +447,7 @@ int asCByteCode::Optimize()
 		else if( IsCombination(curr, BC_PUSH, BC_PUSH) )
 		{
 			// Combine the two PUSH
-			*ARG_W(instr->arg) = *ARG_W(curr->arg) + *ARG_W(instr->arg);
+			*ARG_W(instr->arg) = asWORD(*ARG_W(curr->arg) + *ARG_W(instr->arg));
 			// Delete current
 			DeleteInstruction(curr);
 			// Continue with the instruction before the one removed
@@ -535,7 +542,6 @@ int asCByteCode::Optimize()
 void asCByteCode::ExtractLineNumbers()
 {
 	int lastLinePos = -1;
-	int lastEIDPos = -1;
 	int pos = 0;
 	cByteInstruction *instr = first;
 	while( instr )
@@ -669,7 +675,7 @@ void asCByteCode::Ret(int pop)
 	last->op = BC_RET;
 	last->size = bcSize[BC_RET];
 	last->stackInc = 0; // The instruction pops the argument, but it doesn't affect current function
-	*((short*)ARG_W(last->arg)) = pop;
+	*((short*)ARG_W(last->arg)) = (short)pop;
 }
 
 void asCByteCode::JmpP(asDWORD max)
@@ -815,8 +821,6 @@ cByteInstruction *asCByteCode::DeleteInstruction(cByteInstruction *instr)
 
 void asCByteCode::Output(asBYTE *array)
 {
-	// TODO: Convert byte code to relocation address here
-
 	asBYTE *ap = array;
 
 	cByteInstruction *instr = first;
@@ -824,11 +828,7 @@ void asCByteCode::Output(asBYTE *array)
 	{
 		if( instr->GetSize() > 0 )
 		{
-#ifdef USE_ASM_VM
-			memcpy(ap, &relocTable[instr->op], 4);
-#else
 			memcpy(ap, &instr->op, 4);
-#endif
 			memcpy(ap+4, instr->arg, instr->GetSize()-4);
 		}
 
@@ -861,7 +861,7 @@ void asCByteCode::PostProcess()
 	AddPath(paths, first, 0);
 
 	// Go through each of the code paths
-	for( int p = 0; p < paths.GetLength(); ++p )
+	for( asUINT p = 0; p < paths.GetLength(); ++p )
 	{
 		instr = paths[p];
 		int stackSize = instr->stackSize;
@@ -884,7 +884,7 @@ void asCByteCode::PostProcess()
 			if( instr->op == BC_PSP )
 			{
 				instr->op = BC_PSF;
-				*ARG_W(instr->arg) += instr->stackSize;
+				*ARG_W(instr->arg) = asWORD(*ARG_W(instr->arg) + instr->stackSize);
 			}
 
 			if( instr->op == BC_JMP )
@@ -968,10 +968,10 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 	asCString str = "AS_DEBUG/";
 	str += name;
 
-	FILE *file = fopen(str, "w");
+	FILE *file = fopen(str.AddressOf(), "w");
 
 	int pos = 0;
-	int lineIndex = 0;
+	asUINT lineIndex = 0;
 	cByteInstruction *instr = first;
 	while( instr )
 	{
@@ -1008,9 +1008,9 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 		case BC_STR:
 			{
 				int id = *(short*) ARG_W(instr->arg);
-				asBSTR *bstr = module->GetConstantBStr(id);
+				const asCString &str = module->GetConstantString(id);
 				assert(instr->size == BCSIZE2);
-				fprintf(file, "   %-8s %d         (l:%d s:\"%.10s\")\n", bcName[instr->op].name, (int)*((short*) ARG_W(instr->arg)), asBStrLength(*bstr), *bstr);
+				fprintf(file, "   %-8s %d         (l:%d s:\"%.10s\")\n", bcName[instr->op].name, (int)*((short*) ARG_W(instr->arg)), str.GetLength(), str.AddressOf());
 			}
 			break;
 
@@ -1022,6 +1022,8 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			break;
 
 		case BC_SET4:
+		case BC_OBJTYPE:
+		case BC_TYPEID:
 			assert(instr->size == BCSIZE4);
 			fprintf(file, "   %-8s 0x%lx          (i:%d, f:%g)\n", bcName[instr->op].name, *ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 			break;
@@ -1398,3 +1400,4 @@ void cByteInstruction::Remove()
 	next = 0;
 }
 
+END_AS_NAMESPACE

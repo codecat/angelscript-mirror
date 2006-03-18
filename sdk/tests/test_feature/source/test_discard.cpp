@@ -23,9 +23,10 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	COutStream out;
+	engine->SetCommonMessageStream(&out);
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	engine->Discard(0);
 
@@ -36,4 +37,5 @@ bool Test()
 }
 
 } // namespace
+
 

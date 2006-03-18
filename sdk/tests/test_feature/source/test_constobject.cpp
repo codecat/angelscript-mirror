@@ -5,7 +5,13 @@ namespace TestConstObject
 
 #define TESTNAME "TestConstObject"
 
-const char *script = 
+static const char *script2 = 
+"const string URL_SITE = \"http://www.sharkbaitgames.com\";                    \n"
+"const string URL_GET_HISCORES = URL_SITE + \"/get_hiscores.php\";             \n"
+"const string URL_CAN_SUBMIT_HISCORE = URL_SITE + \"/can_submit_hiscore.php\"; \n"
+"const string URL_SUBMIT_HISCORE = URL_SITE + \"/submit_hiscore.php\";         \n";
+
+static const char *script = 
 "void Test(obj@ o) { }";
 
 class CObj
@@ -76,9 +82,15 @@ bool Test()
 	r = engine->RegisterGlobalProperty("const obj c_obj", &c_obj); assert( r>=0 );
 	r = engine->RegisterGlobalProperty("obj g_obj", &c_obj); assert( r>= 0 );
 
-
+	RegisterScriptString(engine);
 
 	COutStream out;
+	engine->SetCommonMessageStream(&out);
+	engine->AddScriptSection(0, "script1", script2, strlen(script2), 0, false);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+
+
 	CBufferedOutStream bout;
 
 	// TODO:
@@ -89,91 +101,101 @@ bool Test()
 
 	// A member object of a const object is also const
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "c_obj.p.val = 1;", &bout);
+	engine->SetCommonMessageStream(&bout);
+	r = engine->ExecuteString(0, "c_obj.p.val = 1;");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : Reference is read-only\n" ) fail = true;
 
 	c_obj.val = 0;
-	r = engine->ExecuteString(0, "g_obj.p.val = 1;", &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->ExecuteString(0, "g_obj.p.val = 1;");
 	if( r < 0 ) fail = true;
 	if( c_obj.val != 1 ) fail = true;
 
 	// Allow overloading on const.
-	r = engine->ExecuteString(0, "obj o; o[0] = 1;", &out);
+	r = engine->ExecuteString(0, "obj o; o[0] = 1;");
 	if( r < 0 ) fail = true;
 
 	// Allow return of const ref
-	r = engine->ExecuteString(0, "int a = c_obj[0];", &out);
+	r = engine->ExecuteString(0, "int a = c_obj[0];");
 	if( r < 0 ) fail = true;
 
 	// Do not allow the script to call object behaviour that is not const on a const object
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "c_obj[0] = 1;", &bout);
+	engine->SetCommonMessageStream(&bout);
+	r = engine->ExecuteString(0, "c_obj[0] = 1;");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 10) : Error   : Reference is read-only\n" ) fail = true;
 
 	// Do not allow the script to take a non-const handle to a const object
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "obj@ o = @c_obj;", &bout);
+	r = engine->ExecuteString(0, "obj@ o = @c_obj;");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 10) : Error   : Can't implicitly convert from 'const obj@' to 'obj@&'.\n" )
 		fail = true;
 
 	// Do not allow the script to pass a const obj@ to a parameter that is not a const obj@
 	engine->AddScriptSection(0, "script", script, strlen(script));
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 	
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "Test(@c_obj);", &bout);
+	engine->SetCommonMessageStream(&bout);
+	r = engine->ExecuteString(0, "Test(@c_obj);");
 	if( r >= 0 ) fail = true;
-	if( bout.buffer != "ExecuteString (1, 1) : Error   : No matching signatures to 'Test(const obj@&)'\n" )
+	if( bout.buffer != "ExecuteString (1, 1) : Error   : No matching signatures to 'Test(const obj@const&)'\n" )
 		fail = true;
 
 	// Do not allow the script to assign the object handle member of a const object
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "@c_obj.next = @obj();", &bout);
+	r = engine->ExecuteString(0, "@c_obj.next = @obj();");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : Reference is read-only\n" )
 		fail = true;
 
 	// Allow the script to change the object the handle points to
-	r = engine->ExecuteString(0, "c_obj.next.val = 1;", &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->ExecuteString(0, "c_obj.next.val = 1;");
 	if( r != 3 ) fail = true;
 
 	// Allow the script take a handle to a non const object handle in a const object
-	r = engine->ExecuteString(0, "obj @a = @c_obj.next;", &out);
+	r = engine->ExecuteString(0, "obj @a = @c_obj.next;");
 	if( r < 0 ) fail = true;
 
 	// Allow the script to take a const handle to a const object
-	r = engine->ExecuteString(0, "const obj@ o = @c_obj;", &out);
+	r = engine->ExecuteString(0, "const obj@ o = @c_obj;");
 	if( r < 0 ) fail = true;
 
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "obj @a; const obj @b; @a = @b;", &bout);
+	engine->SetCommonMessageStream(&bout);
+	r = engine->ExecuteString(0, "obj @a; const obj @b; @a = @b;");
 	if( r >= 0 ) fail = true;
-	if(bout.buffer != "ExecuteString (1, 28) : Error   : Can't implicitly convert from 'const obj@' to 'obj@'.\n" )
+	if(bout.buffer != "ExecuteString (1, 28) : Error   : Can't implicitly convert from 'const obj@&' to 'obj@&'.\n" )
 		fail = true;
 
 	// Allow a non-const handle to be assigned to a const handle
-	r = engine->ExecuteString(0, "obj @a; const obj @b; @b = @a;", &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->ExecuteString(0, "obj @a; const obj @b; @b = @a;");
 	if( r < 0 ) fail = true;
 
 	// Do not allow the script to alter properties of a const object
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "c_obj.val = 1;", &bout);
+	engine->SetCommonMessageStream(&bout);
+	r = engine->ExecuteString(0, "c_obj.val = 1;");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 11) : Error   : Reference is read-only\n" )
 		fail = true;
 
 	// Do not allow the script to call non-const methods on a const object
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "c_obj.SetVal(1);", &bout);
+	r = engine->ExecuteString(0, "c_obj.SetVal(1);");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 7) : Error   : No matching signatures to 'SetVal(const uint) const'\n" )
 		fail = true;
 
 	// Allow the script to call const methods on a const object
-	r = engine->ExecuteString(0, "c_obj.GetVal();", &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->ExecuteString(0, "c_obj.GetVal();");
 	if( r < 0 ) fail = true;
 
 	engine->Release();

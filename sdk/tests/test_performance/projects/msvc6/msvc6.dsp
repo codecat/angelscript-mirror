@@ -91,7 +91,7 @@ SOURCE=..\..\source\main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\std_string\stdstring.cpp
+SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.cpp
 # End Source File
 # Begin Source File
 
@@ -115,11 +115,11 @@ SOURCE=..\..\source\utils.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\..\source\angelscript.h
+SOURCE=..\..\..\..\angelscript\include\angelscript.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\std_string\stdstring.h
+SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.h
 # End Source File
 # Begin Source File
 

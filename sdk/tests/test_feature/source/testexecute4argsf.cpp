@@ -35,7 +35,8 @@ bool TestExecute4Argsf()
 	engine->RegisterGlobalFunction("void cfunction(float, float, double, float)", asFUNCTION(cfunction), asCALL_CDECL);
 
 	COutStream out;
-	engine->ExecuteString(0, "cfunction(9.2f, 13.3f, 18.8, 3.1415f)", &out);
+	engine->SetCommonMessageStream(&out);
+	engine->ExecuteString(0, "cfunction(9.2f, 13.3f, 18.8, 3.1415f)");
 
 	if( !called ) 
 	{

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -36,19 +36,19 @@
 //
 
 #include <math.h> // fmodf()
-#include <malloc.h>
 
 #include "as_config.h"
 #include "as_context.h"
 #include "as_scriptengine.h"
 #include "as_tokendef.h"
 #include "as_bytecodedef.h"
-#include "as_bstr_util.h"
 #include "as_texts.h"
 #include "as_callfunc.h"
 #include "as_module.h"
 #include "as_generic.h"
 #include "as_debug.h" // mkdir()
+
+BEGIN_AS_NAMESPACE
 
 // We need at least 2 DWORDs reserved for exception handling
 // We need at least 1 DWORD reserved for calling system functions
@@ -75,7 +75,7 @@ public:
 
 	~asCDebugStats() 
 	{
-		mkdir("AS_DEBUG"); 
+		_mkdir("AS_DEBUG"); 
 		FILE *f = fopen("AS_DEBUG/total.txt", "at");
 		if( f )
 		{
@@ -162,7 +162,7 @@ asCContext::~asCContext()
 {
 	DetachEngine();
 
-	for( int n = 0; n < stackBlocks.GetLength(); n++ )
+	for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
 	{
 		if( stackBlocks[n] )
 			delete[] stackBlocks[n];
@@ -267,7 +267,7 @@ int asCContext::Prepare(int funcID)
 
 		if( stackSize != stackBlockSize )
 		{
-			for( int n = 0; n < stackBlocks.GetLength(); n++ )
+			for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
 				if( stackBlocks[n] )
 					delete[] stackBlocks[n];
 			stackBlocks.SetLength(0);
@@ -306,7 +306,7 @@ int asCContext::Prepare(int funcID)
 	memset(stackPointer, 0, 4*argumentsSize);
 
 	// Set all object variables to 0
-	for( int n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 	{
 		int pos = currentFunction->objVariablePos[n];
 		stackFramePointer[-pos] = 0;
@@ -370,7 +370,7 @@ int asCContext::PrepareSpecial(int funcID)
 
 	if( stackSize != stackBlockSize )
 	{
-		for( int n = 0; n < stackBlocks.GetLength(); n++ )
+		for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
 			if( stackBlocks[n] )
 				delete[] stackBlocks[n];
 		stackBlocks.SetLength(0);
@@ -393,7 +393,7 @@ int asCContext::PrepareSpecial(int funcID)
 	memset(stackPointer, 0, 4*argumentsSize);
 
 	// Set all object variables to 0
-	for( int n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 	{
 		int pos = currentFunction->objVariablePos[n];
 		stackFramePointer[-pos] = 0;
@@ -410,7 +410,7 @@ asDWORD asCContext::GetReturnDWord()
 	asCDataType *dt = &initialFunction->returnType;
 
 	if( dt->IsObject() ) return 0;
-	assert(!dt->isReference);
+	assert(!dt->IsReference());
 
 	return *(asDWORD*)&returnVal;
 }
@@ -422,7 +422,7 @@ asQWORD asCContext::GetReturnQWord()
 	asCDataType *dt = &initialFunction->returnType;
 
 	if( dt->IsObject() ) return 0;
-	assert(!dt->isReference);
+	assert(!dt->IsReference());
 
 	return returnVal;
 }
@@ -434,7 +434,7 @@ float asCContext::GetReturnFloat()
 	asCDataType *dt = &initialFunction->returnType;
 
 	if( dt->IsObject() ) return 0;
-	assert(!dt->isReference);
+	assert(!dt->IsReference());
 
 	return *(float*)&returnVal;
 }
@@ -446,7 +446,7 @@ double asCContext::GetReturnDouble()
 	asCDataType *dt = &initialFunction->returnType;
 
 	if( dt->IsObject() ) return 0;
-	assert(!dt->isReference);
+	assert(!dt->IsReference());
 
 	return *(double*)&returnVal;
 }
@@ -457,7 +457,7 @@ void *asCContext::GetReturnObject()
 
 	asCDataType *dt = &initialFunction->returnType;
 
-	assert(!dt->isReference);
+	assert(!dt->IsReference());
 
 	if( !dt->IsObject() ) return 0;
 
@@ -628,22 +628,22 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	}
 
 	// If the object should be sent by value we must make a copy of it
-	if( !dt->isReference ) 
+	if( !dt->IsReference() ) 
 	{
-		if( dt->isExplicitHandle )
+		if( dt->IsObjectHandle() )
 		{
 			// Increase the reference counter
-			asSTypeBehaviour *beh = &dt->objectType->beh;
+			asSTypeBehaviour *beh = &dt->GetObjectType()->beh;
 			if( beh->addref )
 				engine->CallObjectMethod(obj, beh->addref);
 		}
 		else
 		{
 			// Allocate memory
-			char *mem = (char*)engine->CallAlloc(dt->objectType->idx);
+			char *mem = (char*)engine->CallAlloc(dt->GetObjectType());
 
 			// Call the object's default constructor
-			asSTypeBehaviour *beh = &dt->objectType->beh;
+			asSTypeBehaviour *beh = &dt->GetObjectType()->beh;
 			if( beh->construct )
 				engine->CallObjectMethod(mem, beh->construct);
 
@@ -706,77 +706,6 @@ int asCContext::Suspend()
 	return 0;
 }
 
-#ifdef AS_DEPRECATED
-int asCContext::ExecuteStep(asDWORD flag)
-{
-	if( flag != asEXEC_STEP_INTO &&
-		flag != asEXEC_STEP_OVER ) return asINVALID_ARG;
-
-	// Check engine pointer
-	if( engine == 0 ) return asERROR;
-	
-	if( status != tsSuspended && status != tsPrepared )
-		return asERROR;
-
-	status = tsSuspended;
-
-	asPushActiveContext((asIScriptContext *)this);
-
-	if( flag == asEXEC_STEP_INTO )
-	{
-		doSuspend = true;
-		status = tsActive;
-		while( status == tsActive )
-			ExecuteNext();
-	}
-	else if( flag == asEXEC_STEP_OVER )
-	{
-		// Remember at what call stack level we are
-		int level = callStack.GetLength();
-
-		while( !externalSuspendRequest && status == tsSuspended )
-		{
-			doSuspend = true;
-			status = tsActive;
-			while( status == tsActive )
-				ExecuteNext();
-
-			// If are at the same level (or lower) as we started 
-			// we should suspend the execution
-			if( callStack.GetLength() <= level )
-				break;
-		}
-	}
-
-	doSuspend = false;
-	externalSuspendRequest = false;
-		
-	asPopActiveContext((asIScriptContext *)this);
-
-	if( doAbort )
-	{
-		doAbort = false;
-			
-		// TODO: Cleaning the stack is also an execution thus the context is active
-		// We shouldn't decrease the numActiveContexts until after this is complete
-		CleanStack();
-		status = tsProgramAborted;
-		return asEXECUTION_ABORTED;
-	}
-
-	if( status == tsSuspended )
-		return asEXECUTION_SUSPENDED;
-
-	if( status == tsProgramFinished )
-		return asEXECUTION_FINISHED;
-
-	if( status == tsUnhandledException )
-		return asEXECUTION_EXCEPTION;
-
-	return asERROR;
-}
-#endif
-
 int asCContext::Execute()
 {
 	// Check engine pointer
@@ -803,7 +732,7 @@ int asCContext::Execute()
 
 #ifdef AS_DEBUG
 	// Output instruction statistics
-	mkdir("AS_DEBUG");
+	_mkdir("AS_DEBUG");
 	FILE *f = fopen("AS_DEBUG/stats.txt", "at");
 	fprintf(f, "\n");
 	int n;
@@ -844,7 +773,7 @@ int asCContext::Execute()
 
 	if( status == tsProgramFinished )
 	{
-		objectType = initialFunction->returnType.objectType;
+		objectType = initialFunction->returnType.GetObjectType();
 		return asEXECUTION_FINISHED;
 	}
 
@@ -944,7 +873,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 		}
 
 		stackIndex++;
-		if( stackBlocks.GetLength() == stackIndex )
+		if( (int)stackBlocks.GetLength() == stackIndex )
 		{
 			asDWORD *stack = new asDWORD[stackBlockSize << stackIndex];
 			stackBlocks.PushLast(stack);
@@ -963,16 +892,12 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	stackFramePointer = stackPointer;
 
 	// Set all object variables to 0
-	for( int n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 	{
 		int pos = currentFunction->objVariablePos[n];
 		stackFramePointer[-pos] = 0;
 	}
 }
-
-#ifndef USE_ASM_VM
-
-//extern "C" void BreakPoint();
 
 void asCContext::ExecuteNext(bool createRelocationTable)
 {
@@ -1710,11 +1635,11 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			asWORD w = *(asWORD*)(BCARG_W(l_bc));
 			// Push the string pointer on the stack
 			--l_sp;
-			asBSTR *b = module->GetConstantBStr(w);
-			*l_sp = *(asDWORD*)b;
+			const asCString &b = module->GetConstantString(w);
+			*l_sp = (asDWORD)b.AddressOf();
 			// Push the string length on the stack
 			--l_sp;
-			*l_sp = asBStrLength(*b);
+			*l_sp = b.GetLength();
 			l_bc += BCS_STR;
 		}
 		break;
@@ -1941,9 +1866,9 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		break;
 	case BC_ALLOC:
 		{
-			asDWORD objTypeIdx = *(asDWORD*)(BCARG_DW(l_bc));
+			asCObjectType *objType = *(asCObjectType**)(BCARG_DW(l_bc));
 			int func = *(int*)(BCARG_DW(l_bc)+1);
-			asDWORD *mem = (asDWORD*)engine->CallAlloc(objTypeIdx);
+			asDWORD *mem = (asDWORD*)engine->CallAlloc(objType);
 			
 			if( func )
 			{
@@ -1978,7 +1903,7 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 				stackPointer = l_sp;
 				stackFramePointer = l_fp;
 
-				engine->CallFree(objTypeIdx, mem);
+				engine->CallFree(objType, mem);
 				*a = 0;
 
 				return;
@@ -1990,8 +1915,8 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			asDWORD **a = (asDWORD**)*l_sp++;
 			if( a && *a )
 			{
-				int objTypeIdx = *(asDWORD*)(BCARG_DW(l_bc));
-				asSTypeBehaviour *beh = &engine->allObjectTypes[objTypeIdx]->beh;
+				asCObjectType *objType = *(asCObjectType**)(BCARG_DW(l_bc));
+				asSTypeBehaviour *beh = &objType->beh;
 
 				// Need to move the values back to the context 
 				byteCode = l_bc;
@@ -2012,7 +1937,7 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 						engine->CallObjectMethod(*a, beh->destruct);
 					}
 
-					engine->CallFree(objTypeIdx, *a);
+					engine->CallFree(objType, *a);
 				}
 				*a = 0;
 			}
@@ -2050,8 +1975,8 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 		break;
 	case BC_REFCPY:
 		{
-			int objTypeIdx = *(asDWORD*)(BCARG_DW(l_bc));
-			asSTypeBehaviour *beh = &engine->allObjectTypes[objTypeIdx]->beh;
+			asCObjectType *objType = *(asCObjectType**)(BCARG_DW(l_bc));
+			asSTypeBehaviour *beh = &objType->beh;
 			void **d = (void**)*l_sp++;
 			void *s = (void*)*l_sp;
 
@@ -2123,6 +2048,22 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 			l_bc += BCS_SWAP84;
 		}
 		break;
+	case BC_OBJTYPE:
+		{
+			--l_sp;
+			asCObjectType *objType = *(asCObjectType**)(BCARG_DW(l_bc));
+			*l_sp = (asDWORD)objType;
+			l_bc += BCS_OBJTYPE;
+		}
+		break;
+	case BC_TYPEID:
+		{
+			--l_sp;
+			asDWORD typeId = *BCARG_DW(l_bc);
+			*l_sp = typeId;
+			l_bc += BCS_TYPEID;
+		}
+		break;
 
 
 /*
@@ -2137,8 +2078,6 @@ void asCContext::ExecuteNext(bool createRelocationTable)
 
 	SetInternalException(TXT_UNRECOGNIZED_BYTE_CODE);
 }
-
-#endif // USE_ASM_VM
 
 int asCContext::SetException(const char *descr)
 {
@@ -2196,7 +2135,7 @@ void asCContext::CleanReturnObject()
 				engine->CallObjectMethod(objectRegister, beh->destruct);
 
 			// Free the memory
-			engine->CallFree(objectType->idx, objectRegister);
+			engine->CallFree(objectType, objectRegister);
 			objectRegister = 0;
 		}
 	}
@@ -2223,7 +2162,7 @@ void asCContext::CleanStackFrame()
 	// Clean object variables
 	if( !isStackMemoryNotAllocated )
 	{
-		for( int n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
 			int pos = currentFunction->objVariablePos[n];
 			if( stackFramePointer[-pos] )
@@ -2241,7 +2180,7 @@ void asCContext::CleanStackFrame()
 						engine->CallObjectMethod((void*)stackFramePointer[-pos], beh->destruct);
 
 					// Free the memory
-					engine->CallFree(currentFunction->objVariableTypes[n]->idx, (void*)stackFramePointer[-pos]);
+					engine->CallFree(currentFunction->objVariableTypes[n], (void*)stackFramePointer[-pos]);
 					stackFramePointer[-pos] = 0;
 				}
 			}
@@ -2252,14 +2191,14 @@ void asCContext::CleanStackFrame()
 
 	// Clean object parameters sent by reference
 	int offset = 0;
-	for( int n = 0; n < currentFunction->parameterTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < currentFunction->parameterTypes.GetLength(); n++ )
 	{
-		if( currentFunction->parameterTypes[n].IsObject() && !currentFunction->parameterTypes[n].isReference )
+		if( currentFunction->parameterTypes[n].IsObject() && !currentFunction->parameterTypes[n].IsReference() )
 		{
 			if( stackFramePointer[offset] )
 			{
 				// Call the object's destructor
-				asSTypeBehaviour *beh = engine->GetBehaviour(&currentFunction->parameterTypes[n]);
+				asSTypeBehaviour *beh = currentFunction->parameterTypes[n].GetBehaviour();
 				if( beh->release )
 				{
 					engine->CallObjectMethod((void*)stackFramePointer[offset], beh->release);
@@ -2271,7 +2210,7 @@ void asCContext::CleanStackFrame()
 						engine->CallObjectMethod((void*)stackFramePointer[offset], beh->destruct);
 
 					// Free the memory
-					free((void*)stackFramePointer[offset]);
+					engine->CallFree(currentFunction->parameterTypes[n].GetObjectType(), (void*)stackFramePointer[offset]);
 					stackFramePointer[offset] = 0;
 				}
 			}
@@ -2354,12 +2293,12 @@ int asCContext::SetLineCallback(asUPtr callback, void *obj, int callConv)
 {
 	lineCallback = true;
 	lineCallbackObj = obj;
-	const char *isObj = 0;
+	bool isObj = false;
 	if( (unsigned)callConv == asCALL_GENERIC )
 		return asNOT_SUPPORTED;
 	if( (unsigned)callConv >= asCALL_THISCALL )
 	{
-		isObj = "";
+		isObj = true;
 		if( obj == 0 )
 		{
 			lineCallback = false;
@@ -2383,12 +2322,12 @@ int asCContext::SetExceptionCallback(asUPtr callback, void *obj, int callConv)
 {
 	exceptionCallback = true;
 	exceptionCallbackObj = obj;
-	const char *isObj = 0;
+	bool isObj = false;
 	if( (unsigned)callConv == asCALL_GENERIC )
 		return asNOT_SUPPORTED;
 	if( (unsigned)callConv >= asCALL_THISCALL )
 	{
-		isObj = "";
+		isObj = true;
 		if( obj == 0 )
 		{
 			exceptionCallback = false;
@@ -2472,18 +2411,18 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 
 	returnVal = gen.returnVal;
 	objectRegister = gen.objectRegister;
-	objectType = sysFunction->returnType.objectType;
+	objectType = sysFunction->returnType.GetObjectType();
 
 	// Clean up function parameters
 	int offset = 0;
-	for( int n = 0; n < sysFunction->parameterTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < sysFunction->parameterTypes.GetLength(); n++ )
 	{
-		if( sysFunction->parameterTypes[n].IsObject() && !sysFunction->parameterTypes[n].isReference )
+		if( sysFunction->parameterTypes[n].IsObject() && !sysFunction->parameterTypes[n].IsReference() )
 		{
 			void *obj = *(void**)&args[offset];
 
 			// Release the object
-			asSTypeBehaviour *beh = &sysFunction->parameterTypes[n].objectType->beh;
+			asSTypeBehaviour *beh = &sysFunction->parameterTypes[n].GetObjectType()->beh;
 			if( beh->release )
 				engine->CallObjectMethod(obj, beh->release);
 			else
@@ -2492,7 +2431,7 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 				if( beh->destruct )
 					engine->CallObjectMethod(obj, beh->destruct);
 
-				engine->CallFree(sysFunction->parameterTypes[n].objectType->idx, obj);
+				engine->CallFree(sysFunction->parameterTypes[n].GetObjectType(), obj);
 			}
 		}
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -2506,5 +2445,6 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 	return popSize;
 }
 
+END_AS_NAMESPACE
 
 

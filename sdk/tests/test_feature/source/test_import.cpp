@@ -32,6 +32,7 @@ bool Test()
 	bool fail = false;
 
 	int number = 0;
+	int r;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString(engine);
@@ -39,15 +40,16 @@ bool Test()
 
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
 	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("DynamicModule", &out);
+	engine->Build("DynamicModule");
 
 	// Bind all functions that the module imports
-	engine->BindAllImportedFunctions(0);
+	r = engine->BindAllImportedFunctions(0); assert( r >= 0 );
 
-	engine->ExecuteString(0, "main()", &out);
+	engine->ExecuteString(0, "main()");
 
 	engine->Release();
 

@@ -107,7 +107,7 @@ SOURCE=..\..\source\utils.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\..\source\angelscript.h
+SOURCE=..\..\..\..\angelscript\include\angelscript.h
 # End Source File
 # Begin Source File
 

@@ -34,8 +34,10 @@ bool Test()
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	COutStream out;
+	engine->SetCommonMessageStream(&out);
+
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	// Get a function declaration, this should be the same after the other thread terminates
 	const char *str = engine->GetFunctionDeclaration(engine->GetFunctionIDByIndex(0, 0));

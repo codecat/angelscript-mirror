@@ -5,8 +5,8 @@ CPP  = g++.exe -D__DEBUG__
 CC   = gcc.exe -D__DEBUG__
 WINDRES = windres.exe
 RES  = 
-OBJ  = obj/as_arrayobject.o obj/as_bstr_util.o obj/as_builder.o obj/as_bytecode.o obj/as_callfunc_x86.o obj/as_compiler.o obj/as_context.o obj/as_context_x86.o obj/as_datatype.o obj/as_map.o obj/as_module.o obj/as_objecttype.o obj/as_outputbuffer.o obj/as_parser.o obj/as_restore.o obj/as_scriptcode.o obj/as_scriptengine.o obj/as_scriptfunction.o obj/as_scriptnode.o obj/as_string.o obj/as_string_util.o obj/as_thread.o obj/as_tokenizer.o obj/as_typeinfo.o obj/as_variablescope.o obj/as_callfunc_sh4.o obj/as_generic.o $(RES)
-LINKOBJ  = obj/as_arrayobject.o obj/as_bstr_util.o obj/as_builder.o obj/as_bytecode.o obj/as_callfunc_x86.o obj/as_compiler.o obj/as_context.o obj/as_context_x86.o obj/as_datatype.o obj/as_map.o obj/as_module.o obj/as_objecttype.o obj/as_outputbuffer.o obj/as_parser.o obj/as_restore.o obj/as_scriptcode.o obj/as_scriptengine.o obj/as_scriptfunction.o obj/as_scriptnode.o obj/as_string.o obj/as_string_util.o obj/as_thread.o obj/as_tokenizer.o obj/as_typeinfo.o obj/as_variablescope.o obj/as_callfunc_sh4.o obj/as_generic.o $(RES)
+OBJ  = obj/as_arrayobject.o obj/as_builder.o obj/as_bytecode.o obj/as_callfunc_x86.o obj/as_compiler.o obj/as_context.o obj/as_datatype.o obj/as_module.o obj/as_objecttype.o obj/as_outputbuffer.o obj/as_parser.o obj/as_restore.o obj/as_scriptcode.o obj/as_scriptengine.o obj/as_scriptfunction.o obj/as_scriptnode.o obj/as_string.o obj/as_string_util.o obj/as_thread.o obj/as_tokenizer.o obj/as_typeinfo.o obj/as_variablescope.o obj/as_callfunc_sh4.o obj/as_generic.o obj/as_callfunc.o obj/as_scriptstruct.o obj/as_gcobject.o obj/as_anyobject.o obj/as_configgroup.o $(RES)
+LINKOBJ  = obj/as_arrayobject.o obj/as_builder.o obj/as_bytecode.o obj/as_callfunc_x86.o obj/as_compiler.o obj/as_context.o obj/as_datatype.o obj/as_module.o obj/as_objecttype.o obj/as_outputbuffer.o obj/as_parser.o obj/as_restore.o obj/as_scriptcode.o obj/as_scriptengine.o obj/as_scriptfunction.o obj/as_scriptnode.o obj/as_string.o obj/as_string_util.o obj/as_thread.o obj/as_tokenizer.o obj/as_typeinfo.o obj/as_variablescope.o obj/as_callfunc_sh4.o obj/as_generic.o obj/as_callfunc.o obj/as_scriptstruct.o obj/as_gcobject.o obj/as_anyobject.o obj/as_configgroup.o $(RES)
 LIBS =  -L"C:/Dev-Cpp/lib"  -g3 
 INCS =  -I"C:/Dev-Cpp/include" 
 CXXINCS =  -I"C:/Dev-Cpp/include/c++/3.3.1"  -I"C:/Dev-Cpp/include/c++/3.3.1/mingw32"  -I"C:/Dev-Cpp/include/c++/3.3.1/backward"  -I"C:/Dev-Cpp/lib/gcc-lib/mingw32/3.3.1/include"  -I"C:/Dev-Cpp/include" 
@@ -29,9 +29,6 @@ $(BIN): $(LINKOBJ)
 obj/as_arrayobject.o: ../../source/as_arrayobject.cpp
 	$(CPP) -c ../../source/as_arrayobject.cpp -o obj/as_arrayobject.o $(CXXFLAGS)
 
-obj/as_bstr_util.o: ../../source/as_bstr_util.cpp
-	$(CPP) -c ../../source/as_bstr_util.cpp -o obj/as_bstr_util.o $(CXXFLAGS)
-
 obj/as_builder.o: ../../source/as_builder.cpp
 	$(CPP) -c ../../source/as_builder.cpp -o obj/as_builder.o $(CXXFLAGS)
 
@@ -47,14 +44,8 @@ obj/as_compiler.o: ../../source/as_compiler.cpp
 obj/as_context.o: ../../source/as_context.cpp
 	$(CPP) -c ../../source/as_context.cpp -o obj/as_context.o $(CXXFLAGS)
 
-obj/as_context_x86.o: ../../source/as_context_x86.cpp
-	$(CPP) -c ../../source/as_context_x86.cpp -o obj/as_context_x86.o $(CXXFLAGS)
-
 obj/as_datatype.o: ../../source/as_datatype.cpp
 	$(CPP) -c ../../source/as_datatype.cpp -o obj/as_datatype.o $(CXXFLAGS)
-
-obj/as_map.o: ../../source/as_map.cpp
-	$(CPP) -c ../../source/as_map.cpp -o obj/as_map.o $(CXXFLAGS)
 
 obj/as_module.o: ../../source/as_module.cpp
 	$(CPP) -c ../../source/as_module.cpp -o obj/as_module.o $(CXXFLAGS)
@@ -106,3 +97,18 @@ obj/as_callfunc_sh4.o: ../../source/as_callfunc_sh4.cpp
 
 obj/as_generic.o: ../../source/as_generic.cpp
 	$(CPP) -c ../../source/as_generic.cpp -o obj/as_generic.o $(CXXFLAGS)
+
+obj/as_callfunc.o: ../../source/as_callfunc.cpp
+	$(CPP) -c ../../source/as_callfunc.cpp -o obj/as_callfunc.o $(CXXFLAGS)
+
+obj/as_scriptstruct.o: ../../source/as_scriptstruct.cpp
+	$(CPP) -c ../../source/as_scriptstruct.cpp -o obj/as_scriptstruct.o $(CXXFLAGS)
+
+obj/as_gcobject.o: ../../source/as_gcobject.cpp
+	$(CPP) -c ../../source/as_gcobject.cpp -o obj/as_gcobject.o $(CXXFLAGS)
+
+obj/as_anyobject.o: ../../source/as_anyobject.cpp
+	$(CPP) -c ../../source/as_anyobject.cpp -o obj/as_anyobject.o $(CXXFLAGS)
+
+obj/as_configgroup.o: ../../source/as_configgroup.cpp
+	$(CPP) -c ../../source/as_configgroup.cpp -o obj/as_configgroup.o $(CXXFLAGS)

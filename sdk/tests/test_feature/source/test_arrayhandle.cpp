@@ -16,6 +16,18 @@ static const char *script1 =
 "   Assert(@a[0] == null);                       \n"
 "}                                               \n";
 
+static const char *script2 =
+"void TestArrayHandle2()                         \n"
+"{                                               \n"
+"   string[] s(10);                              \n"
+"   Append(s);                                   \n"
+"}                                               \n"
+"void Append(string[]@ s)                        \n"
+"{                                               \n"
+"   for( uint n = 0; n < s.length(); n++ )       \n"
+"      s[n] += \".\";                            \n"
+"}                                               \n";
+
 bool Test()
 {
 	bool fail = false;
@@ -29,7 +41,8 @@ bool Test()
 	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
@@ -37,7 +50,27 @@ bool Test()
 	}
 
 	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "TestArrayHandle()", 0, &ctx);
+	r = engine->ExecuteString(0, "TestArrayHandle()", &ctx);
+	if( r != asEXECUTION_FINISHED )
+	{
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+
+		printf("%s: Failed to execute script\n", TESTNAME);
+		fail = true;
+	}
+	if( ctx ) ctx->Release();
+
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+	engine->SetCommonMessageStream(&out);
+	r = engine->Build(0);
+	if( r < 0 )
+	{
+		fail = true;
+		printf("%s: Failed to compile the script\n", TESTNAME);
+	}
+
+	r = engine->ExecuteString(0, "TestArrayHandle2()", &ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )

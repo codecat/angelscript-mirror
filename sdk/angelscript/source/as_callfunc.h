@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -39,12 +39,16 @@
 #ifndef AS_CALLFUNC_H
 #define AS_CALLFUNC_H
 
+#include "as_array.h"
+
+BEGIN_AS_NAMESPACE
+
 class asCContext;
 class asCScriptEngine;
 class asCScriptFunction;
 struct asSSystemFunctionInterface;
 
-int DetectCallingConvention(const char *, asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal);
+int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal);
 
 int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 
@@ -67,7 +71,7 @@ enum internalCallConv
 	ICC_CDECL_OBJFIRST,
 	ICC_CDECL_OBJFIRST_RETURNINMEM,
 	ICC_GENERIC_METHOD,
-	ICC_GENERIC_METHOD_RETURNINMEM, // never used
+	ICC_GENERIC_METHOD_RETURNINMEM // never used
 };
 
 struct asSSystemFunctionInterface
@@ -81,8 +85,12 @@ struct asSSystemFunctionInterface
 	int                  hostReturnSize;
 	int                  paramSize;
 	bool                 takesObjByVal;
+	asCArray<bool>       paramAutoHandles;
+	bool                 returnAutoHandle;
+	bool                 hasAutoHandles;
 };
 
+END_AS_NAMESPACE
 
 #endif
 

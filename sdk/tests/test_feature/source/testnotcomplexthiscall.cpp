@@ -87,7 +87,8 @@ bool TestNotComplexThisCall()
 
 	c1.a = 0;
 
-	int r = engine->ExecuteString(0, "c1 = f.notComplex1();", &out);
+	engine->SetCommonMessageStream(&out);
+	int r = engine->ExecuteString(0, "c1 = f.notComplex1();");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -104,7 +105,7 @@ bool TestNotComplexThisCall()
 	c2.a = 0;
 	c2.b = 0;
 
-	r = engine->ExecuteString(0, "c2 = f.notComplex2();", &out);
+	r = engine->ExecuteString(0, "c2 = f.notComplex2();");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -127,7 +128,7 @@ bool TestNotComplexThisCall()
 	c3.b = 0;
 	c3.c = 0;
 
-	r = engine->ExecuteString(0, "c3 = f.notComplex3();", &out);
+	r = engine->ExecuteString(0, "c3 = f.notComplex3();");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);

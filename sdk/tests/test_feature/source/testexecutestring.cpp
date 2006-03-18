@@ -31,8 +31,9 @@ bool TestExecuteString()
 	g_Obj.b = true;
 
 	COutStream out;
+	engine->SetCommonMessageStream(&out);
 	engine->ExecuteString(0, "g_Obj.a = true;\n"
-		                     "g_Obj.b = false;\n", &out);
+		                     "g_Obj.b = false;\n");
 
 	engine->Release();
 

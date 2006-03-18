@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -48,9 +48,6 @@
 // Adds basic support for multithreading. 
 // This is currently only supported on Win32 platforms.
 
-// USE_ASM_VM
-// This flag tells the compiler to use the VM optimized with inline assembler.
-
 // BUILD_WITHOUT_LINE_CUES
 // This flag makes the script compiler remove some extra bytecodes that is used
 // to allow the VM to call the line callback after each statement. The performance 
@@ -72,6 +69,11 @@
 // AS_NO_CLASS_METHODS
 // Disables the possibility to add class methods. Can increase the  
 // portability of the library.
+
+// AS_MAX_PORTABILITY
+// Disables all platform specific code. Only the asCALL_GENERIC calling 
+// convention will be available in with this flag set.
+
 
 
 
@@ -103,18 +105,20 @@
 // the function into its real name.
 
 // ASM_AT_N_T or ASM_INTEL
-// You should choose what inline assembly syntax to use when compiling
+// You should choose what inline assembly syntax to use when compiling.
 
 // __int64
 // If your compiler doesn't support the __int64 type you'll need to define
 // a substitute for it that is 64 bits large.
 
 // VALUE_OF_BOOLEAN_TRUE
-// This flag allows to customize the exact value of boolean true
+// This flag allows to customize the exact value of boolean true.
 
 // STDCALL
-// This is used to declare a function to use the stdcall calling convention
+// This is used to declare a function to use the stdcall calling convention.
 
+// AS_USE_NAMESPACE
+// Adds the AngelScript namespace on the declarations.
 
 
 
@@ -233,6 +237,24 @@
 	#endif
 #endif
 
+// Metrowerks CodeWarrior (experimental, let me know if something isn't working)
+#if defined(__MWERKS__)
+	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
+	#define HAVE_VIRTUAL_BASE_OFFSET
+	#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+3))
+	#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+	#define THISCALL_PASS_OBJECT_POINTER_IN_ECX
+	#define ASM_INTEL
+	#define vsnprintf(a, b, c, d) _vsnprintf(a, b, c, d)
+	#define THISCALL_CALLEE_POPS_ARGUMENTS
+	#define COMPLEX_MASK (asOBJ_CLASS_CONSTRUCTOR | asOBJ_CLASS_DESTRUCTOR | asOBJ_CLASS_ASSIGNMENT)
+	#define STDCALL __stdcall
+	#ifdef _M_IX86
+		#define AS_X86
+	#endif
+	#define __int64 long long
+#endif
+
 // GNU C
 #ifdef __GNUC__
 	#define GNU_STYLE_VIRTUAL_METHOD
@@ -259,6 +281,7 @@
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 	#define AS_SH4
 #endif
+
 
 
 // 

@@ -38,7 +38,8 @@ bool TestNegateOperator()
 	testVal = 1000;
 
 	COutStream obj;
-	engine->ExecuteString(0, "testVal = -testVal", &obj);
+	engine->SetCommonMessageStream(&obj);
+	engine->ExecuteString(0, "testVal = -testVal");
 
 	if( !called ) 
 	{
@@ -54,7 +55,7 @@ bool TestNegateOperator()
 	}
 
 	called = false;
-	engine->ExecuteString(0, "testVal = testVal - testVal", &obj);
+	engine->ExecuteString(0, "testVal = testVal - testVal");
 
 	if( !called ) 
 	{

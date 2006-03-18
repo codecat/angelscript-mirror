@@ -24,15 +24,15 @@ bool TestStack()
 
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	int r = engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	int r = engine->Build(0);
 	if( r < 0 )
 	{
 		printf("%s: Failed to build script\n", TESTNAME);
 		fail = true;
 	}
 
-	asIScriptContext *ctx = 0;
-	engine->CreateContext(&ctx);
+	asIScriptContext *ctx = engine->CreateContext();
 	engine->SetDefaultContextStackSize(0, 32); // Minumum stack, 32 byte limit
 	ctx->Prepare(engine->GetFunctionIDByDecl(0, "void recursive(int)"));
 	ctx->SetArgDWord(0, 100);

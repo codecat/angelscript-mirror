@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -34,6 +34,8 @@
 #include <memory.h>
 #include <assert.h>
 
+BEGIN_AS_NAMESPACE
+
 template <class T> class asCArray
 {
 public:
@@ -41,25 +43,27 @@ public:
 	asCArray(const asCArray<T> &);
 	~asCArray();
 
-	void Allocate(int numElements, bool keepData);
-	int  GetCapacity() const;
+	void   Allocate(asUINT numElements, bool keepData);
+	asUINT GetCapacity() const;
 
 	void PushLast(const T &element);
 	T    PopLast();
 
-	void SetLength(int numElements);
-	int  GetLength() const;
+	void   SetLength(asUINT numElements);
+	asUINT GetLength() const;
 
-	void Copy(const T*, int count);
+	void Copy(const T*, asUINT count);
 	asCArray<T> &operator =(const asCArray<T> &);
 
-	T &operator [](int index) const;
+	T &operator [](asUINT index) const;
 	T *AddressOf();
+
+	void Concatenate(const asCArray<T> &);
 
 protected:
 	T   *array;
-	int  length;
-	int  maxLength;
+	asUINT  length;
+	asUINT  maxLength;
 };
 
 // Implementation
@@ -99,15 +103,14 @@ asCArray<T>::~asCArray(void)
 }
 
 template <class T>
-int asCArray<T>::GetLength() const
+asUINT asCArray<T>::GetLength() const
 {
 	return length;
 }
 
 template <class T>
-T &asCArray<T>::operator [](int index) const
+T &asCArray<T>::operator [](asUINT index) const
 {
-	assert(index >= 0);
 	assert(index < length);
 
 	return array[index];
@@ -131,10 +134,8 @@ T asCArray<T>::PopLast()
 }
 
 template <class T>
-void asCArray<T>::Allocate(int numElements, bool keepData)
+void asCArray<T>::Allocate(asUINT numElements, bool keepData)
 {
-	assert(numElements >= 0);
-
 	T *tmp = new T[numElements];
 
 	if( array )
@@ -144,7 +145,8 @@ void asCArray<T>::Allocate(int numElements, bool keepData)
 			if( length > numElements )
 				length = numElements;
 
-			memcpy(tmp, array, length*sizeof(T));
+			for( asUINT n = 0; n < length; n++ )
+				tmp[n] = array[n];
 		}
 		else
 			length = 0;
@@ -157,16 +159,14 @@ void asCArray<T>::Allocate(int numElements, bool keepData)
 }
 
 template <class T>
-int asCArray<T>::GetCapacity() const
+asUINT asCArray<T>::GetCapacity() const
 {
 	return maxLength;
 }
 
 template <class T>
-void asCArray<T>::SetLength(int numElements)
+void asCArray<T>::SetLength(asUINT numElements)
 {
-	assert(numElements >= 0);
-
 	if( numElements > maxLength )
 		Allocate(numElements, true);
 
@@ -174,12 +174,13 @@ void asCArray<T>::SetLength(int numElements)
 }
 
 template <class T>
-void asCArray<T>::Copy(const T *data, int count)
+void asCArray<T>::Copy(const T *data, asUINT count)
 {
 	if( maxLength < count )
 		Allocate(count, false);
 
-	memcpy(array, data, count*sizeof(T));
+	for( asUINT n = 0; n < count; n++ )
+		array[n] = data[n];
 
 	length = count;
 }
@@ -192,5 +193,18 @@ asCArray<T> &asCArray<T>::operator =(const asCArray<T> &copy)
 	return *this;
 }
 
+template <class T>
+void asCArray<T>::Concatenate(const asCArray<T> &other)
+{
+	if( maxLength < length + other.length )
+		Allocate(length + other.length, true);
+
+	for( asUINT n = 0; n < other.length; n++ )
+		array[length+n] = other.array[n];
+
+	length += other.length;
+}
+
+END_AS_NAMESPACE
 
 #endif

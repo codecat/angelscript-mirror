@@ -3,6 +3,8 @@
 #include "scriptstring.h"
 using namespace std;
 
+BEGIN_AS_NAMESPACE
+
 //--------------
 // constructors
 //--------------
@@ -114,6 +116,14 @@ static asCScriptString &AssignIntToString(int i, asCScriptString &dest)
 	return dest;
 }
 
+static asCScriptString &AssignFloatToString(float f, asCScriptString &dest)
+{
+	ostringstream stream;
+	stream << f;
+	dest.buffer = stream.str(); 
+	return dest;
+}
+
 static asCScriptString &AssignDoubleToString(double f, asCScriptString &dest)
 {
 	ostringstream stream;
@@ -146,6 +156,14 @@ static asCScriptString &AddAssignIntToString(int i, asCScriptString &dest)
 {
 	ostringstream stream;
 	stream << i;
+	dest.buffer += stream.str(); 
+	return dest;
+}
+
+static asCScriptString &AddAssignFloatToString(float f, asCScriptString &dest)
+{
+	ostringstream stream;
+	stream << f;
 	dest.buffer += stream.str(); 
 	return dest;
 }
@@ -183,6 +201,13 @@ static asCScriptString *AddStringInt(const asCScriptString &str, int i)
 	return new asCScriptString(str.buffer + stream.str());
 }
 
+static asCScriptString *AddStringFloat(const asCScriptString &str, float f)
+{
+	ostringstream stream;
+	stream << f;
+	return new asCScriptString(str.buffer + stream.str());
+}
+
 static asCScriptString *AddStringDouble(const asCScriptString &str, double f)
 {
 	ostringstream stream;
@@ -212,6 +237,13 @@ static asCScriptString *AddUIntString(unsigned int i, const asCScriptString &str
 {
 	ostringstream stream;
 	stream << i;
+	return new asCScriptString(stream.str() + str.buffer);
+}
+
+static asCScriptString *AddFloatString(float f, const asCScriptString &str)
+{
+	ostringstream stream;
+	stream << f;
 	return new asCScriptString(stream.str() + str.buffer);
 }
 
@@ -245,6 +277,19 @@ static char *StringCharAt(unsigned int i, asCScriptString &str)
 // AngelScript functions
 //-----------------------
 
+// This function allocates memory for the string object
+static void *StringAlloc(int)
+{
+	return new char[sizeof(asCScriptString)];
+}
+
+// This function deallocates the memory for the string object
+static void StringFree(void *p)
+{
+	assert( p );
+	delete p;
+}
+
 // This is the string factory that creates new strings for the script
 static asCScriptString *StringFactory(asUINT length, const char *s)
 {
@@ -276,6 +321,11 @@ void RegisterScriptString(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(const string &in)", asMETHODPR(asCScriptString, operator =, (const asCScriptString&), asCScriptString&), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(const string &in)", asMETHODPR(asCScriptString, operator+=, (const asCScriptString&), asCScriptString&), asCALL_THISCALL); assert( r >= 0 );
 
+	// Register the memory allocator routines. This will make all memory allocations for the string 
+	// object be made in one place, which is important if for example the script library is used from a dll
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ALLOC, "string &f(uint)", asFUNCTION(StringAlloc), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FREE, "void f(string &in)", asFUNCTION(StringFree), asCALL_CDECL); assert( r >= 0 );
+
 	// Register the factory to return a handle to a new string
 	// Note: We must register the string factory after the basic behaviours, 
 	// otherwise the library will not allow the use of object handles for this type
@@ -305,6 +355,11 @@ void RegisterScriptString(asIScriptEngine *engine)
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(const string &in, double)", asFUNCTION(AddStringDouble), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(double, const string &in)", asFUNCTION(AddDoubleString), asCALL_CDECL); assert( r >= 0 );
 
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(float)", asFUNCTION(AssignFloatToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(float)", asFUNCTION(AddAssignFloatToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(const string &in, float)", asFUNCTION(AddStringFloat), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(float, const string &in)", asFUNCTION(AddFloatString), asCALL_CDECL); assert( r >= 0 );
+
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(int)", asFUNCTION(AssignIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(int)", asFUNCTION(AddAssignIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(const string &in, int)", asFUNCTION(AddStringInt), asCALL_CDECL); assert( r >= 0 );
@@ -320,5 +375,7 @@ void RegisterScriptString(asIScriptEngine *engine)
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(const string &in, bits)", asFUNCTION(AddStringBits), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(bits, const string &in)", asFUNCTION(AddBitsString), asCALL_CDECL); assert( r >= 0 );
 }
+
+END_AS_NAMESPACE
 
 

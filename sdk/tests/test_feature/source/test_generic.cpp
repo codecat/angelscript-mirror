@@ -129,11 +129,12 @@ bool Test()
 	r = engine->RegisterGlobalProperty("obj o", &obj);
 
 	COutStream out;
-	engine->ExecuteString(0, "test(func1(23, 23, \"test\"))", &out);
+	engine->SetCommonMessageStream(&out);
+	engine->ExecuteString(0, "test(func1(23, 23, \"test\"))");
 
-	engine->ExecuteString(0, "test(o.mthd1(23, 23))", &out);
+	engine->ExecuteString(0, "test(o.mthd1(23, 23))");
 
-	engine->ExecuteString(0, "o = o", &out);
+	engine->ExecuteString(0, "o = o");
 
 	engine->Release();
 

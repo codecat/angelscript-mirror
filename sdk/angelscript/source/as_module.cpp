@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -41,6 +41,7 @@
 #include "as_builder.h"
 #include "as_context.h"
 
+BEGIN_AS_NAMESPACE
 
 asCModule::asCModule(const char *name, int id, asCScriptEngine *engine)
 {
@@ -99,7 +100,7 @@ int asCModule::Build(asIOutputStream *out)
 	builder->SetOutputStream(out);
 
 	// Store the section names
-	for( int n = 0; n < builder->scripts.GetLength(); n++ )
+	for( asUINT n = 0; n < builder->scripts.GetLength(); n++ )
 	{
 		asCString *sectionName = new asCString(builder->scripts[n]->name);
 		scriptSections.PushLast(sectionName);
@@ -166,18 +167,26 @@ void asCModule::CallExit()
 {
 	if( !isGlobalVarInitialized ) return;
 
-	if( exitFunction.byteCode.GetLength() == 0 ) return;
-
-	int id = moduleID | asFUNC_EXIT;
-	asIScriptContext *ctx = 0;
-	int r = engine->CreateContext(&ctx, true);
-	if( r >= 0 && ctx )
+	for( asUINT n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
-		// TODO: Add error handling
-		((asCContext*)ctx)->PrepareSpecial(id);
-		ctx->Execute();
-		ctx->Release();
-		ctx = 0;
+		if( scriptGlobals[n]->type.IsObject() )
+		{
+			void *obj = *(void**)(globalMem.AddressOf() + scriptGlobals[n]->index);
+			if( obj )
+			{
+				asCObjectType *ot = scriptGlobals[n]->type.GetObjectType();
+
+				if( ot->beh.release )
+					engine->CallObjectMethod(obj, ot->beh.release);
+				else
+				{
+					if( ot->beh.destruct )
+						engine->CallObjectMethod(obj, ot->beh.destruct);
+
+					engine->CallFree(ot, obj);
+				}
+			}
+		}
 	}
 
 	isGlobalVarInitialized = false;
@@ -195,7 +204,6 @@ void asCModule::Reset()
 	CallExit();
 
 	initFunction.byteCode.SetLength(0);
-	exitFunction.byteCode.SetLength(0);
 
 	// Free global variables
 	globalMem.SetLength(0);
@@ -203,7 +211,7 @@ void asCModule::Reset()
 	isBuildWithoutErrors = true;
 	isDiscarded = false;
 
-	int n;
+	asUINT n;
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
 		delete scriptFunctions[n];
 	scriptFunctions.SetLength(0);
@@ -229,7 +237,7 @@ void asCModule::Reset()
 	bindInformations.SetLength(0);
 
 	for( n = 0; n < stringConstants.GetLength(); n++ )
-		asBStrFree(stringConstants[n]);
+		delete stringConstants[n];
 	stringConstants.SetLength(0);
 
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
@@ -239,6 +247,24 @@ void asCModule::Reset()
 	for( n = 0; n < scriptSections.GetLength(); n++ )
 		delete scriptSections[n];
 	scriptSections.SetLength(0);
+
+	for( n = 0; n < structTypes.GetLength(); n++ )
+		structTypes[n]->refCount--;
+	structTypes.SetLength(0);
+
+	for( n = 0; n < scriptArrayTypes.GetLength(); n++ )
+		scriptArrayTypes[n]->refCount--;
+	scriptArrayTypes.SetLength(0);
+
+	// Release all used object types
+	for( n = 0; n < usedTypes.GetLength(); n++ )
+		usedTypes[n]->refCount--;
+	usedTypes.SetLength(0);
+
+	// Release all config groups
+	for( n = 0; n < configGroups.GetLength(); n++ )
+		configGroups[n]->Release();
+	configGroups.SetLength(0);
 }
 
 int asCModule::GetFunctionIDByName(const char *name)
@@ -249,7 +275,7 @@ int asCModule::GetFunctionIDByName(const char *name)
 	// TODO: Improve linear search
 	// Find the function id
 	int id = -1;
-	for( int n = 0; n < scriptFunctions.GetLength(); n++ )
+	for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
 	{
 		if( scriptFunctions[n]->name == name )
 		{
@@ -286,14 +312,14 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 	// TODO: Improve linear search
 	// Search script functions for matching interface
 	int id = -1;
-	for( int n = 0; n < importedFunctions.GetLength(); ++n )
+	for( asUINT n = 0; n < importedFunctions.GetLength(); ++n )
 	{
 		if( func.name == importedFunctions[n]->name && 
 			func.returnType == importedFunctions[n]->returnType &&
 			func.parameterTypes.GetLength() == importedFunctions[n]->parameterTypes.GetLength() )
 		{
 			bool match = true;
-			for( int p = 0; p < func.parameterTypes.GetLength(); ++p )
+			for( asUINT p = 0; p < func.parameterTypes.GetLength(); ++p )
 			{
 				if( func.parameterTypes[p] != importedFunctions[n]->parameterTypes[p] )
 				{
@@ -340,14 +366,14 @@ int asCModule::GetFunctionIDByDecl(const char *decl)
 	// TODO: Improve linear search
 	// Search script functions for matching interface
 	int id = -1;
-	for( int n = 0; n < scriptFunctions.GetLength(); ++n )
+	for( asUINT n = 0; n < scriptFunctions.GetLength(); ++n )
 	{
 		if( func.name == scriptFunctions[n]->name && 
 			func.returnType == scriptFunctions[n]->returnType &&
 			func.parameterTypes.GetLength() == scriptFunctions[n]->parameterTypes.GetLength() )
 		{
 			bool match = true;
-			for( int p = 0; p < func.parameterTypes.GetLength(); ++p )
+			for( asUINT p = 0; p < func.parameterTypes.GetLength(); ++p )
 			{
 				if( func.parameterTypes[p] != scriptFunctions[n]->parameterTypes[p] )
 				{
@@ -386,7 +412,7 @@ int asCModule::GetGlobalVarIDByName(const char *name)
 
 	// Find the global var id
 	int id = -1;
-	for( int n = 0; n < scriptGlobals.GetLength(); n++ )
+	for( asUINT n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
 		if( scriptGlobals[n]->name == name )
 		{
@@ -413,7 +439,7 @@ int asCModule::GetGlobalVarIDByDecl(const char *decl)
 	// TODO: Improve linear search
 	// Search script functions for matching interface
 	int id = -1;
-	for( int n = 0; n < scriptGlobals.GetLength(); ++n )
+	for( asUINT n = 0; n < scriptGlobals.GetLength(); ++n )
 	{
 		if( gvar.name == scriptGlobals[n]->name && 
 			gvar.type == scriptGlobals[n]->type )
@@ -428,28 +454,31 @@ int asCModule::GetGlobalVarIDByDecl(const char *decl)
 	return moduleID | id;
 }
 
-int asCModule::AddConstantBStr(const char *str, int len)
+int asCModule::AddConstantString(const char *str, asUINT len)
 {
+	//  The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
+	asCString *cstr = new asCString(str, len);
+
 	// TODO: Improve linear search
 	// Has the string been registered before?
-	for( int n = 0; n < stringConstants.GetLength(); n++ )
+	for( asUINT n = 0; n < stringConstants.GetLength(); n++ )
 	{
-		if( asBStrLength(stringConstants[n]) == (unsigned)len &&
-			memcmp(str, stringConstants[n], len) == 0 )
+		if( *stringConstants[n] == *cstr )
+		{
+			delete cstr;
 			return n;
+		}
 	}
 
 	// No match was found, add the string
-	asBSTR bstr = asBStrAlloc((unsigned)len);
-	memcpy(bstr, str, len);
-	stringConstants.PushLast(bstr);
+	stringConstants.PushLast(cstr);
 
 	return stringConstants.GetLength() - 1;
 }
 
-asBSTR *asCModule::GetConstantBStr(int id)
+const asCString &asCModule::GetConstantString(int id)
 {
-	return &stringConstants[id];
+	return *stringConstants[id];
 }
 
 int asCModule::GetNextFunctionId()
@@ -528,8 +557,6 @@ asCScriptFunction *asCModule::GetSpecialFunction(int funcID)
 	{
 		if( (funcID & 0xFFFF) == asFUNC_INIT )
 			return &initFunction;
-		else if( (funcID & 0xFFFF) == asFUNC_EXIT )
-			return &exitFunction;
 		else if( (funcID & 0xFFFF) == asFUNC_STRING )
 		{
 			assert(false);
@@ -598,7 +625,7 @@ bool asCModule::CanDelete()
 		if( CanDeleteAllReferences(modules) )
 		{
 			// Unbind all functions. This will break any circular references
-			for( int n = 0; n < bindInformations.GetLength(); n++ )
+			for( asUINT n = 0; n < bindInformations.GetLength(); n++ )
 			{
 				int oldFuncID = bindInformations[n].importedFunction;
 				if( oldFuncID != -1 )
@@ -630,14 +657,14 @@ bool asCModule::CanDeleteAllReferences(asCArray<asCModule*> &modules)
 	modules.PushLast(this);
 
 	// Check all bound functions for referenced modules
-	for( int n = 0; n < bindInformations.GetLength(); n++ )
+	for( asUINT n = 0; n < bindInformations.GetLength(); n++ )
 	{
 		int funcID = bindInformations[n].importedFunction;
 		asCModule *module = engine->GetModule(funcID);
 
 		// If the module is already in the list don't check it again
 		bool inList = false;
-		for( int m = 0; m < modules.GetLength(); m++ )
+		for( asUINT m = 0; m < modules.GetLength(); m++ )
 		{
 			if( modules[m] == module )
 			{
@@ -695,7 +722,7 @@ int asCModule::BindImportedFunction(int index, int sourceID)
 	if( dst->parameterTypes.GetLength() != src->parameterTypes.GetLength() )
 		return asINVALID_INTERFACE;
 
-	for( int n = 0; n < dst->parameterTypes.GetLength(); ++n )
+	for( asUINT n = 0; n < dst->parameterTypes.GetLength(); ++n )
 	{
 		if( dst->parameterTypes[n] != src->parameterTypes[n] )
 			return asINVALID_INTERFACE;
@@ -711,12 +738,12 @@ int asCModule::BindImportedFunction(int index, int sourceID)
 
 const char *asCModule::GetImportedFunctionSourceModule(int index)
 {
-	if( index >= bindInformations.GetLength() )
+	if( index >= (int)bindInformations.GetLength() )
 		return 0;
 
 	index = bindInformations[index].importFrom;
 
-	return (const char *)stringConstants[index];
+	return stringConstants[index]->AddressOf();
 }
 
 bool asCModule::IsUsed()
@@ -726,3 +753,91 @@ bool asCModule::IsUsed()
 
 	return false;
 }
+
+asCObjectType *asCModule::GetObjectType(const char *type)
+{
+	// TODO: Improve linear search
+	for( asUINT n = 0; n < structTypes.GetLength(); n++ )
+		if( structTypes[n]->name == type )
+			return structTypes[n];
+
+	return 0;
+}
+
+asCObjectType *asCModule::RefObjectType(asCObjectType *type)
+{
+	if( !type ) return 0;
+
+	// Determine the index local to the module
+	for( asUINT n = 0; n < usedTypes.GetLength(); n++ )
+		if( usedTypes[n] == type ) return type;
+
+	usedTypes.PushLast(type);
+	type->refCount++;
+
+	RefConfigGroupForObjectType(type);
+
+	return type;
+}
+
+void asCModule::RefConfigGroupForFunction(int funcId)
+{
+	// Find the config group where the function was registered
+	asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
+	if( group == 0 )
+		return;
+
+	// Verify if the module is already referencing the config group
+	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
+	{
+		if( configGroups[n] == group ) 
+			return;
+	}
+
+	// Add reference to the group
+	configGroups.PushLast(group);
+	group->AddRef();
+}
+
+void asCModule::RefConfigGroupForGlobalVar(int gvarId)
+{
+	// Find the config group where the function was registered
+	asCConfigGroup *group = engine->FindConfigGroupForGlobalVar(gvarId);
+	if( group == 0 )
+		return;
+
+	// Verify if the module is already referencing the config group
+	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
+	{
+		if( configGroups[n] == group ) 
+			return;
+	}
+
+	// Add reference to the group
+	configGroups.PushLast(group);
+	group->AddRef();
+}
+
+void asCModule::RefConfigGroupForObjectType(asCObjectType *type)
+{
+	if( type == 0 ) return;
+
+	// Find the config group where the function was registered
+	asCConfigGroup *group = engine->FindConfigGroupForObjectType(type);
+	if( group == 0 )
+		return;
+
+	// Verify if the module is already referencing the config group
+	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
+	{
+		if( configGroups[n] == group ) 
+			return;
+	}
+
+	// Add reference to the group
+	configGroups.PushLast(group);
+	group->AddRef();
+}
+
+END_AS_NAMESPACE
+

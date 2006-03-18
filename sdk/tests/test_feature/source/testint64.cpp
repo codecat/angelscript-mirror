@@ -62,11 +62,11 @@ bool TestInt64()
 
 	COutStream out;
 	engine->AddScriptSection(0, "test", script, strlen(script), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
 	int f = engine->GetFunctionIDByDecl(0, "int Main()");
-	asIScriptContext *ctx;
-	engine->CreateContext(&ctx);
+	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(f);
 	int r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )

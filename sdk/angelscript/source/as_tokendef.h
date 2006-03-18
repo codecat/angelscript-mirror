@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -53,13 +53,14 @@ enum eTokenType
 	ttMultilineComment,    // /* */
 
 	// Atoms
-	ttIdentifier,          // abc123
-	ttIntConstant,         // 1234
-	ttFloatConstant,       // 12.34e56f
-	ttDoubleConstant,	   // 12.34e56
-	ttStringConstant,      // "123"
+	ttIdentifier,            // abc123
+	ttIntConstant,           // 1234
+	ttFloatConstant,         // 12.34e56f
+	ttDoubleConstant,        // 12.34e56
+	ttStringConstant,        // "123"
+	ttHeredocStringConstant, // """text"""
 	ttNonTerminatedStringConstant, // "123
-	ttBitsConstant,        // 0xFFFF
+	ttBitsConstant,          // 0xFFFF
 
 	// Math operators
 	ttPlus,                // +
@@ -155,7 +156,8 @@ enum eTokenType
 	ttIn,                  // in
 	ttOut,                 // out
 	ttInOut,               // inout
-	ttNull                 // null
+	ttNull,                // null
+    ttStruct               // struct
 };
 
 struct sTokenWord
@@ -232,7 +234,7 @@ sTokenWord const tokenWords[] =
 	{"else"    , ttElse},
 	{"false"   , ttFalse},
 	{"float"   , ttFloat},
-	{"for"	   , ttFor},
+	{"for"     , ttFor},
 	{"if"      , ttIf},
 	{"in"      , ttIn},
 	{"inout"   , ttInOut},
@@ -254,6 +256,7 @@ sTokenWord const tokenWords[] =
 	{"uint16"  , ttUInt16},
 	{"uint32"  , ttUInt},
 	{"switch"  , ttSwitch},
+	{"struct"  , ttStruct},
 	{"case"    , ttCase}, 
 	{"default" , ttDefault},
 	{"xor"     , ttXor},

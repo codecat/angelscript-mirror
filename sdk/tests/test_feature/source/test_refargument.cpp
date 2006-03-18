@@ -12,6 +12,8 @@ static const char *script1 =
 "   test2(r);                           \n"
 "   Assert(ref.id == 0xdeadc0de);       \n"
 "   test(ref);                          \n"
+"   test3(r);                           \n"
+"   Assert(r == 1.0f);                  \n"
 "}                                      \n"
 "void test(refclass &in ref)            \n"
 "{                                      \n"
@@ -19,6 +21,32 @@ static const char *script1 =
 "}                                      \n"
 "void test2(float &out ref)             \n"
 "{                                      \n"
+"}                                      \n"
+"void test3(float &inout a)             \n"
+"{                                      \n"
+"   a = 1.0f;                           \n"
+"}                                      \n";
+
+static const char *script2 = 
+"void Test()                            \n"
+"{                                      \n"
+"  float[] a(2);                        \n"
+"  Testf(a[1]);                         \n"
+"}                                      \n"
+"void Testf(float &inout a)             \n"
+"{                                      \n"
+"}                                      \n";
+
+static const char *script3 = 
+"void Test()                            \n"
+"{                                      \n"
+"  string[] a(1);                       \n"
+"  Testref(a[0]);                       \n"
+"  Assert(a[0] == \"test\");            \n"
+"}                                      \n"
+"void Testref(string &inout s)          \n"
+"{                                      \n"
+"  s = \"test\";                        \n"
 "}                                      \n";
 
 class CRefClass
@@ -69,14 +97,14 @@ bool Test()
 	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
-	asIScriptContext *ctx;
-	engine->CreateContext(&ctx);
+	asIScriptContext *ctx = engine->CreateContext();
 	int func = engine->GetFunctionIDByName(0, "TestObjHandle"); assert(r >= 0);
 
 	CRefClass cref;	
@@ -92,6 +120,21 @@ bool Test()
 	}
 	if( ctx ) ctx->Release();
 
+	//-------------------
+	CBufferedOutStream bout;
+	engine->SetCommonMessageStream(&bout);
+
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+
+	//----------------------
+	engine->SetCommonMessageStream(&bout);
+	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "Test()");
+	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	engine->Release();
 

@@ -35,21 +35,24 @@ static const char *script =
 "}                               \n"; // 22
 
 static const char *script2 =
-"void _switch()                     \n"  //  1
-"{                                  \n"  //  2
-"  for( uint8 n = 0; n <= 5; ++n )  \n"  //  3
-"  {                                \n"  //  4
-"    switch( n )                    \n"  //  5
-"    {                              \n"  //  6
-"    case 5: Log(\"5\"); break;     \n"  //  7
-"    case 4: Log(\"4\"); break;     \n"  //  8
-"    case 3: Log(\"3\"); break;     \n"  //  9
-"    case 2: Log(\"2\"); break;     \n"  // 10
-"    case 1: Log(\"1\"); break;     \n"  // 11
-"    default: Log(\"d\"); break;    \n"  // 12
-"    }                              \n"  // 13
-"  }                                \n"  // 14
-"}                                  \n"; // 15
+"const int a = 1;                   \n"
+"const int8 b = 2;                  \n"
+"void _switch()                     \n"  
+"{                                  \n"  
+"  const uint c = 3;                \n" 
+"  for( uint8 n = 0; n <= 5; ++n )  \n"  
+"  {                                \n"  
+"    switch( n )                    \n"  
+"    {                              \n"  
+"    case 5: Log(\"5\"); break;     \n"  
+"    case 4: Log(\"4\"); break;     \n"  
+"    case c: Log(\"3\"); break;     \n"  
+"    case b: Log(\"2\"); break;     \n"  
+"    case a: Log(\"1\"); break;     \n"  
+"    default: Log(\"d\"); break;    \n"  
+"    }                              \n"  
+"  }                                \n"  
+"}                                  \n"; 
 
 static int sum = 0;
 
@@ -82,16 +85,16 @@ bool TestSwitch()
 	engine->RegisterGlobalFunction("void add(int)", asFUNCTION(add), asCALL_CDECL);
 
 	COutStream out;
+	engine->SetCommonMessageStream(&out);
 	engine->AddScriptSection(0, "switch", script, strlen(script), 0);
-	int r = engine->Build(0, &out);
+	int r = engine->Build(0);
 	if( r < 0 )
 	{
 		printf("%s: Failed to build script\n", TESTNAME);
 		fail = true;
 	}
 
-	asIScriptContext *ctx = 0;
-	engine->CreateContext(&ctx);
+	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(engine->GetFunctionIDByDecl(0, "void _switch()"));
 	ctx->Execute();
 
@@ -104,9 +107,9 @@ bool TestSwitch()
 	ctx->Release();
 
 	engine->AddScriptSection(0, "switch", script2, strlen(script2), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
-	engine->ExecuteString(0, "_switch()", &out);
+	engine->ExecuteString(0, "_switch()");
 
 	if( log != "d12345" )
 	{

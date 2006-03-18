@@ -17,7 +17,8 @@ bool TestNotInitialized()
 	engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction), asCALL_CDECL);
 	
 	CBufferedOutStream out;	
-	int r = engine->ExecuteString(0, "int a; cfunction(a);", &out); 
+	engine->SetCommonMessageStream(&out);
+	int r = engine->ExecuteString(0, "int a; cfunction(a);"); 
 
 	if( out.buffer != "ExecuteString (1, 18) : Warning : 'a' is not initialized.\n" )
 	{

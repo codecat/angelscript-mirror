@@ -20,6 +20,8 @@
 #include <angelscript.h>
 #include <string>
 
+BEGIN_AS_NAMESPACE
+
 class asCScriptString
 {
 public:
@@ -44,5 +46,7 @@ protected:
 // Call this function to register all the necessary 
 // functions for the scripts to use this type
 void RegisterScriptString(asIScriptEngine *engine);
+
+END_AS_NAMESPACE
 
 #endif

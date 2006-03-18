@@ -13,28 +13,29 @@
 <h1>Reference: Return codes</h1>
 
 <pre class=border>
-<a href="#success">asSUCCESS</a>
-<a href="#error">asERROR</a>
-<a href="#ctxactive">asCONTEXT_ACTIVE</a>
-<a href="#ctxnotfinished">asCONTEXT_NOT_FINISHED</a>
-<a href="#ctxnotprepared">asCONTEXT_NOT_PREPARED</a>
-<a href="#invalidarg">asINVALID_ARG</a>
-<a href="#nofunc">asNO_FUNCTION</a>
-<a href="#notsupported">asNOT_SUPPORTED</a>
-<a href="#invalidname">asINVALID_NAME</a>
-<a href="#nametaken">asNAME_TAKEN</a>
-<a href="#invaliddecl">asINVALID_DECLARATION</a>
-<a href="#invalidobj">asINVALID_OBJECT</a>
-<a href="#invalidtype">asINVALID_TYPE</a>
-<a href="#alreadyregistered">asALREADY_REGISTERED</a>
-<a href="#multiplefuncs">asMULTIPLE_FUNCTIONS</a>
-<a href="#nomodule">asNO_MODULE</a>
-<a href="#noglobalvar">asNO_GLOBAL_VAR</a>
-<a href="#invalidconf">asINVALID_CONFIGURATION</a>
-<a href="#invalidinterface">asINVALID_INTERFACE</a>
-<a href="#candbindall">asCANT_BIND_ALL_FUNCTIONS</a>
-<a href="#lowerarray">asLOWER_ARRAY_DIMENSION_NOT_REGISTERED</a>
-<a href="#nodefarray">asAPP_CANT_INTERFACE_DEFAULT_ARRAY</a>
+<a href="#success"          >asSUCCESS</a>                                 0
+<a href="#error"            >asERROR</a>                                  -1
+<a href="#ctxactive"        >asCONTEXT_ACTIVE</a>                         -2
+<a href="#ctxnotfinished"   >asCONTEXT_NOT_FINISHED</a>                   -3
+<a href="#ctxnotprepared"   >asCONTEXT_NOT_PREPARED</a>                   -4
+<a href="#invalidarg"       >asINVALID_ARG</a>                            -5
+<a href="#nofunc"           >asNO_FUNCTION</a>                            -6
+<a href="#notsupported"     >asNOT_SUPPORTED</a>                          -7
+<a href="#invalidname"      >asINVALID_NAME</a>                           -8
+<a href="#nametaken"        >asNAME_TAKEN</a>                             -9
+<a href="#invaliddecl"      >asINVALID_DECLARATION</a>                   -10
+<a href="#invalidobj"       >asINVALID_OBJECT</a>                        -11
+<a href="#invalidtype"      >asINVALID_TYPE</a>                          -12
+<a href="#alreadyregistered">asALREADY_REGISTERED</a>                    -13
+<a href="#multiplefuncs"    >asMULTIPLE_FUNCTIONS</a>                    -14
+<a href="#nomodule"         >asNO_MODULE</a>                             -15
+<a href="#noglobalvar"      >asNO_GLOBAL_VAR</a>                         -16
+<a href="#invalidconf"      >asINVALID_CONFIGURATION</a>                 -17
+<a href="#invalidinterface" >asINVALID_INTERFACE</a>                     -18
+<a href="#candbindall"      >asCANT_BIND_ALL_FUNCTIONS</a>               -19
+<a href="#lowerarray"       >asLOWER_ARRAY_DIMENSION_NOT_REGISTERED</a>  -20
+<a href="#wrongcfggrp"      >asWRONG_CONFIG_GROUP</a>                    -21
+<a href="#groupinuse"       >asCONFIG_GROUP_IS_IN_USE</a>                -22
 </pre>
 
 <a name=success></a>
@@ -189,10 +190,24 @@
 
 
 
-<a name="nodefarray"></a>
-<h2>asAPP_CANT_INTERFACE_DEFAULT_ARRAY</h2>
+<a name="wrongcfggrp"></a>
+<h2>asWRONG_CONFIG_GROUP</h2>
 
-<p>This code is returned if the application tries to register a function that interfaces with an array that have not previously been registered by the application.</p>
+<p>This error message is received, for example, when trying to register an 
+object property and the object type was registered in a different 
+configuration group than the current one.</p>
+
+
+
+<a name="groupinuse"></a>
+<h2>asCONFIG_GROUP_IS_IN_USE</h2>
+
+<p>This happens when trying to remove a configuration group that is currently 
+being used. A group is in use, if a script module uses the configuration in 
+the group, or if an object with a type from the group is still alive.</p>
+
+
+
 
 
 <p><a href="#">top</a></p>

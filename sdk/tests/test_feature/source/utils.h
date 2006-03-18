@@ -11,6 +11,10 @@
 
 #include "../../../add_on/scriptstring/scriptstring.h"
 
+#ifdef AS_USE_NAMESPACE
+using namespace AngelScript;
+#endif
+
 class COutStream : public asIOutputStream
 {
 public:

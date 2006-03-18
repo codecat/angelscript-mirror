@@ -47,8 +47,9 @@ bool Test()
 	engine->RegisterGlobalProperty("const float g_Float", &constantFloat);
 
 	CBufferedOutStream out;
+	engine->SetCommonMessageStream(&out);
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
 	if( out.buffer != "TestConstProperty (3, 1) : Info    : Compiling void Init()\n"
 		              "TestConstProperty (5, 11) : Error   : Reference is read-only\n" )

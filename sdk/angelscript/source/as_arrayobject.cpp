@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -34,10 +34,13 @@
 #include <malloc.h>
 
 #include "as_config.h"
-
 #include "as_arrayobject.h"
 #include "as_scriptengine.h"
 #include "as_texts.h"
+#include "as_scriptstruct.h"
+#include "as_anyobject.h"
+
+BEGIN_AS_NAMESPACE
 
 struct sArrayBuffer
 {
@@ -45,30 +48,17 @@ struct sArrayBuffer
 	asBYTE  data[1];
 };
 
-static void ArrayObjectConstructor(int elementSize, int behaviourIndex, asCArrayObject *self)
+void ArrayObjectConstructor(asCObjectType *ot, asCArrayObject *self)
 {
-	new(self) asCArrayObject(0, elementSize, behaviourIndex);
+	new(self) asCArrayObject(0, ot);
 }
 
-static void ArrayObjectConstructor2(asUINT length, int elementSize, int behaviourIndex, asCArrayObject *self)
+static void ArrayObjectConstructor2(asUINT length, asCObjectType *ot, asCArrayObject *self)
 {
-	new(self) asCArrayObject(length, elementSize, behaviourIndex);
+	new(self) asCArrayObject(length, ot);
 }
 
-static void ArrayObjectDestructor(asCArrayObject *self)
-{
-	self->~asCArrayObject();
-}
-
-static void ArrayObjectAddRef(asCArrayObject *self)
-{
-	self->AddRef();
-}
-
-static void ArrayObjectRelease(asCArrayObject *self)
-{
-	self->Release();
-}
+#ifndef AS_MAX_PORTABILITY
 
 static asCArrayObject &ArrayObjectAssignment(asCArrayObject *other, asCArrayObject *self)
 {
@@ -82,28 +72,92 @@ static void *ArrayObjectAt(asUINT index, asCArrayObject *self)
 
 static asUINT ArrayObjectLength(asCArrayObject *self)
 {
-	return self->length();
+	return self->GetElementCount();
 }
-
 static void ArrayObjectResize(asUINT size, asCArrayObject *self)
 {
-	self->resize(size);
+	self->Resize(size);
 }
+
+#else
+
+static void ArrayObjectConstructor_Generic(asIScriptGeneric *gen)
+{
+	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(0);
+	asCArrayObject *obj = (asCArrayObject*)gen->GetObject();
+
+	ArrayObjectConstructor(ot, obj);
+}
+
+static void ArrayObjectConstructor2_Generic(asIScriptGeneric *gen)
+{
+	asUINT length = gen->GetArgDWord(0);
+	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(1);
+	asCArrayObject *obj = (asCArrayObject*)gen->GetObject();
+
+	ArrayObjectConstructor2(length, ot, obj);
+}
+
+static void ArrayObjectAssignment_Generic(asIScriptGeneric *gen)
+{
+	asCArrayObject *other = (asCArrayObject*)gen->GetArgObject(0);
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+
+	*self = *other;
+
+	gen->SetReturnObject(self);
+}
+
+static void ArrayObjectAt_Generic(asIScriptGeneric *gen)
+{
+	asUINT index = gen->GetArgDWord(0);
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+
+	gen->SetReturnDWord((asDWORD)self->at(index));
+}
+
+static void ArrayObjectLength_Generic(asIScriptGeneric *gen)
+{
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+
+	gen->SetReturnDWord(self->GetElementCount());
+}
+
+static void ArrayObjectResize_Generic(asIScriptGeneric *gen)
+{
+	asUINT size = gen->GetArgDWord(0);
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+
+	self->Resize(size);
+}
+
+#endif
 
 void RegisterArrayObject(asCScriptEngine *engine)
 {
 	int r;
-	r = engine->RegisterSpecialObjectType(asDEFAULT_ARRAY, sizeof(asCArrayObject), asOBJ_CLASS_CDA); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(asDEFAULT_ARRAY, asBEHAVE_CONSTRUCT, "void f(int, int)", asFUNCTIONPR(ArrayObjectConstructor, (int, int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(asDEFAULT_ARRAY, asBEHAVE_CONSTRUCT, "void f(uint, int, int)", asFUNCTIONPR(ArrayObjectConstructor2, (asUINT, int, int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(asDEFAULT_ARRAY, asBEHAVE_ADDREF, "void f()", asFUNCTION(ArrayObjectAddRef), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(asDEFAULT_ARRAY, asBEHAVE_RELEASE, "void f()", asFUNCTION(ArrayObjectRelease), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(asDEFAULT_ARRAY, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(ArrayObjectDestructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(asDEFAULT_ARRAY, asBEHAVE_ASSIGNMENT, "void[] &f(void[]&in)", asFUNCTION(ArrayObjectAssignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(asDEFAULT_ARRAY, asBEHAVE_INDEX, "int f(uint)", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(asDEFAULT_ARRAY, asBEHAVE_INDEX, "int f(uint) const", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectType(asDEFAULT_ARRAY, sizeof(asCArrayObject), asOBJ_CLASS_CDA | asOBJ_SCRIPT_ARRAY); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ArrayObjectConstructor, (int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int)", asFUNCTIONPR(ArrayObjectConstructor2, (asUINT, int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ASSIGNMENT, "void[] &f(void[]&in)", asFUNCTION(ArrayObjectAssignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int f(uint)", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int f(uint) const", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "uint length() const", asFUNCTION(ArrayObjectLength), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "void resize(uint)", asFUNCTION(ArrayObjectResize), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+#else
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ArrayObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int)", asFUNCTION(ArrayObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ASSIGNMENT, "void[] &f(void[]&in)", asFUNCTION(ArrayObjectAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int f(uint)", asFUNCTION(ArrayObjectAt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int f(uint) const", asFUNCTION(ArrayObjectAt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "uint length() const", asFUNCTION(ArrayObjectLength_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "void resize(uint)", asFUNCTION(ArrayObjectResize_Generic), asCALL_GENERIC); assert( r >= 0 );
+#endif 
 }
 
 asCArrayObject &asCArrayObject::operator=(asCArrayObject &other)
@@ -121,29 +175,45 @@ asCArrayObject &asCArrayObject::operator=(asCArrayObject &other)
 	return *this;
 }
 
-asCArrayObject::asCArrayObject(asUINT length, int elementSize, int behaviourIndex)
+int asCArrayObject::CopyFrom(asIScriptArray *other)
 {
-	asIScriptContext *ctx = asGetActiveContext();
-	engine = (asCScriptEngine *)ctx->GetEngine();
-	this->elementSize = elementSize & 0xFFFFFF;
-	this->arrayType = elementSize >> 24;
-	this->behaviourIndex = behaviourIndex;
-	refCount = 1;
+	if( other == 0 ) return asINVALID_ARG;
+
+	// Verify that the types are equal
+	if( GetArrayTypeId() != other->GetArrayTypeId() )
+		return asINVALID_TYPE;
+
+	*this = *(asCArrayObject*)other;
+
+	return 0;
+}
+
+asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
+{
+	gc.Init(ot);
+
+	// Determine element size
+	if( gc.objType->subType )
+	{
+		elementSize = 4;
+	}
+	else
+	{
+		if( gc.objType->tokenType == ttDouble )
+			elementSize = 8;
+		else if( gc.objType->tokenType == ttInt || gc.objType->tokenType == ttUInt ||
+			     gc.objType->tokenType == ttBits || gc.objType->tokenType == ttFloat )
+			elementSize = 4;
+		else if( gc.objType->tokenType == ttInt16 || gc.objType->tokenType == ttUInt16 ||
+				 gc.objType->tokenType == ttBits16 )
+			elementSize = 2;
+		else
+			elementSize = 1;
+	}
+
+	arrayType = gc.objType->arrayType;
 
 	CreateBuffer(&buffer, length);
-}
-
-int asCArrayObject::AddRef()
-{
-	return ++refCount;
-}
-
-int asCArrayObject::Release()
-{
-	int r = --refCount;
-	if( r == 0 )
-		delete this;
-	return r;
 }
 
 asCArrayObject::~asCArrayObject()
@@ -153,17 +223,29 @@ asCArrayObject::~asCArrayObject()
 		DeleteBuffer(buffer);
 		buffer = 0;
 	}
+
+	// The GCObject's destructor will be called after this
 }
 
-asUINT asCArrayObject::length()
+int asCArrayObject::AddRef()
+{
+	return gc.AddRef();
+}
+
+int asCArrayObject::Release()
+{
+	return gc.Release();
+}
+
+asUINT asCArrayObject::GetElementCount()
 {
 	return buffer->numElements;
 }
 
-void asCArrayObject::resize(asUINT numElements)
+void asCArrayObject::Resize(asUINT numElements)
 {
 	sArrayBuffer *newBuffer;
-	if( (arrayType & ~3) || behaviourIndex >= 0 )
+	if( gc.objType->subType )
 	{
 		// Allocate memory for the buffer
 		newBuffer = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
@@ -201,6 +283,29 @@ void asCArrayObject::resize(asUINT numElements)
 	buffer = newBuffer;
 }
 
+int asCArrayObject::GetArrayTypeId()
+{
+	asCDataType dt = asCDataType::CreateObject(gc.objType, false);
+	return gc.objType->engine->GetTypeIdFromDataType(dt);
+}
+
+int asCArrayObject::GetElementTypeId()
+{
+	asCDataType dt = asCDataType::CreateObject(gc.objType, false);
+	dt = dt.GetSubType();
+	return gc.objType->engine->GetTypeIdFromDataType(dt);
+}
+
+void *asCArrayObject::GetElementPointer(asUINT index)
+{
+	if( index >= buffer->numElements ) return 0;
+
+	if( gc.objType->subType && !(arrayType & 1) )
+		return (void*)((asDWORD*)buffer->data)[index];
+	else
+		return buffer->data + elementSize*index;
+}
+
 void *asCArrayObject::at(asUINT index)
 {
 	if( index >= buffer->numElements )
@@ -212,8 +317,8 @@ void *asCArrayObject::at(asUINT index)
 	}
 	else
 	{
-		if( ((arrayType & ~3) || behaviourIndex >= 0) && !(arrayType & 1) )
-			return *(void**)(buffer->data + sizeof(void*)*index);
+		if( gc.objType->subType && !(arrayType & 1) )
+			return (void*)((asDWORD*)buffer->data)[index];
 		else
 			return buffer->data + elementSize*index;
 	}
@@ -221,23 +326,15 @@ void *asCArrayObject::at(asUINT index)
 
 void asCArrayObject::CreateBuffer(sArrayBuffer **buf, asUINT numElements)
 {
-	if( arrayType & ~3 )
+	if( gc.objType->subType )
 	{
-		*buf = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+sizeof(asCArrayObject*)*numElements);
+		*buf = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
 		(*buf)->numElements = numElements;
 	}
 	else
 	{
-		if( behaviourIndex >= 0 )
-		{
-			*buf = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
-			(*buf)->numElements = numElements;
-		}
-		else
-		{
-			*buf = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+elementSize*numElements);
-			(*buf)->numElements = numElements;
-		}
+		*buf = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+elementSize*numElements);
+		(*buf)->numElements = numElements;
 	}
 
 	Construct(*buf, 0, numElements);
@@ -259,29 +356,44 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 		asDWORD *d = (asDWORD*)(buf->data + start * sizeof(void*));
 		memset(d, 0, (end-start)*sizeof(void*));
 	}
-	else if( arrayType & ~3 )
+	else if( gc.objType->subType )
 	{
 		// Call the constructor on all objects
-		int funcIndex = engine->defaultArrayObjectType->beh.construct;
-
-		asSSystemFunctionInterface *i = engine->systemFunctionInterfaces[-funcIndex-1];
-		asDWORD **max = (asDWORD**)(buf->data + end * sizeof(asCArrayObject*));
-		asDWORD **d = (asDWORD**)(buf->data + start * sizeof(asCArrayObject*));
-
-		int esize = elementSize | ((arrayType>>2)<<24);
-		void (*f)(int, int, void *) = (void (*)(int, int, void *))(i->func);
-		for( ; d < max; d++ )
+		asCScriptEngine *engine = gc.objType->engine;
+		asCObjectType *subType = gc.objType->subType;
+		if( subType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY | asOBJ_SCRIPT_ANY) )
 		{
-			*d = (asDWORD*)engine->CallAlloc(engine->defaultArrayObjectType->idx);
-			f(esize, behaviourIndex, *d);
+			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
+			asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
+
+			if( subType->flags & asOBJ_SCRIPT_STRUCT ) 
+			{
+				for( ; d < max; d++ )
+				{
+					*d = (asDWORD*)engine->CallAlloc(subType);
+					ScriptStruct_Construct(subType, (asCScriptStruct*)*d);
+				}
+			}
+			else if( subType->flags & asOBJ_SCRIPT_ARRAY )
+			{
+				for( ; d < max; d++ )
+				{
+					*d = (asDWORD*)engine->CallAlloc(subType);
+					ArrayObjectConstructor(subType, (asCArrayObject*)*d);
+				}
+			}
+			else if( subType->flags & asOBJ_SCRIPT_ANY )
+			{
+				for( ; d < max; d++ )
+				{
+					*d = (asDWORD*)engine->CallAlloc(subType);
+					AnyObjectConstructor(subType, (asCAnyObject*)*d);
+				}
+			}
 		}
-	}
-	else
-	{
-		if( behaviourIndex >= 0 )
+		else
 		{
-			// Call the constructor on all objects
-			int funcIndex = engine->allObjectTypes[behaviourIndex]->beh.construct;
+			int funcIndex = subType->beh.construct;
 			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
 			asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
 
@@ -289,14 +401,14 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 			{
 				for( ; d < max; d++ )
 				{
-					*d = (asDWORD*)engine->CallAlloc(behaviourIndex);
+					*d = (asDWORD*)engine->CallAlloc(subType);
 					engine->CallObjectMethod(*d, funcIndex);
 				}
 			}
 			else
 			{
 				for( ; d < max; d++ )
-					*d = (asDWORD*)engine->CallAlloc(behaviourIndex);
+					*d = (asDWORD*)engine->CallAlloc(subType);
 			}
 		}
 	}
@@ -304,58 +416,33 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 
 void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 {
-	asUINT esize;
-	if( arrayType & ~3 )
+	bool doDelete = true;
+	if( gc.objType->subType )
 	{
-		// We need to destroy default array objects
-		int funcIndex = engine->defaultArrayObjectType->beh.release;
+		asCScriptEngine *engine = gc.objType->engine;
+		int funcIndex;
+		if( gc.objType->subType->beh.release )
+		{
+			funcIndex = gc.objType->subType->beh.release;
+			doDelete = false;
+		}
+		else
+			funcIndex = gc.objType->subType->beh.destruct;
 
 		// Call the destructor on all of the objects
-		asDWORD **max = (asDWORD**)(buf->data + end * sizeof(asCArrayObject*));
-		asDWORD **d   = (asDWORD**)(buf->data + start * sizeof(asCArrayObject*));
+		asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
+		asDWORD **d   = (asDWORD**)(buf->data + start * sizeof(void*));
 
-		for( ; d < max; d++ )
-			if( *d )
-				engine->CallObjectMethod(*d, funcIndex);
-	}
-	else
-	{
-		esize = elementSize;
-		bool doDelete = true;
-		if( behaviourIndex >= 0 )
+		if( doDelete )
 		{
-			int funcIndex;
-			if( engine->allObjectTypes[behaviourIndex]->beh.release )
+			if( funcIndex )
 			{
-				funcIndex = engine->allObjectTypes[behaviourIndex]->beh.release;
-				doDelete = false;
-			}
-			else
-				funcIndex = engine->allObjectTypes[behaviourIndex]->beh.destruct;
-
-			// Call the destructor on all of the objects
-			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
-			asDWORD **d   = (asDWORD**)(buf->data + start * sizeof(void*));
-
-			if( doDelete )
-			{
-				if( funcIndex )
+				for( ; d < max; d++ )
 				{
-					for( ; d < max; d++ )
+					if( *d )
 					{
-						if( *d )
-						{
-							engine->CallObjectMethod(*d, funcIndex);
-							engine->CallFree(behaviourIndex, *d);
-						}
-					}
-				}
-				else
-				{
-					for( ; d < max; d++ )
-					{
-						if( *d )
-							engine->CallFree(behaviourIndex, *d);
+						engine->CallObjectMethod(*d, funcIndex);
+						engine->CallFree(gc.objType->subType, *d);
 					}
 				}
 			}
@@ -364,8 +451,16 @@ void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 				for( ; d < max; d++ )
 				{
 					if( *d )
-						engine->CallObjectMethod(*d, funcIndex);
+						engine->CallFree(gc.objType->subType, *d);
 				}
+			}
+		}
+		else
+		{
+			for( ; d < max; d++ )
+			{
+				if( *d )
+					engine->CallObjectMethod(*d, funcIndex);
 			}
 		}
 	}
@@ -375,106 +470,120 @@ void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 void asCArrayObject::CopyBuffer(sArrayBuffer *dst, sArrayBuffer *src)
 {
 	asUINT esize;
-	if( arrayType & ~3 )
+	asCScriptEngine *engine = gc.objType->engine;
+	if( arrayType & 1 )
 	{
-		if( arrayType & 1 )
+		// Copy the references and increase the reference counters
+		int funcIndex = gc.objType->subType->beh.addref;
+
+		if( dst->numElements > 0 && src->numElements > 0 )
 		{
-			// Copy the references and increase the reference counters
-			int funcIndex = engine->defaultArrayObjectType->beh.addref;
+			int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
 
-			if( dst->numElements > 0 && src->numElements > 0 )
+			asDWORD **max = (asDWORD**)(dst->data + count * sizeof(void*));
+			asDWORD **d   = (asDWORD**)dst->data;
+			asDWORD **s   = (asDWORD**)src->data;
+			
+			for( ; d < max; d++, s++ )
 			{
-				int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
-
-				asDWORD **max = (asDWORD**)(dst->data + count * sizeof(asCArrayObject*));
-				asDWORD **d   = (asDWORD**)dst->data;
-				asDWORD **s   = (asDWORD**)src->data;
-				
-				for( ; d < max; d++, s++ )
-				{
-					*d = *s;
-					if( *d )
-						engine->CallObjectMethod(*d, funcIndex);
-				}
-			}
-		}
-		else
-		{
-			// We need to copy default array objects
-			int funcIndex = engine->defaultArrayObjectType->beh.copy;
-
-			if( dst->numElements > 0 && src->numElements > 0 )
-			{
-				int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
-
-				// Call the assignment operator on all of the objects
-				asDWORD **max = (asDWORD**)(dst->data + count * sizeof(asCArrayObject*));
-				asDWORD **d   = (asDWORD**)dst->data;
-				asDWORD **s   = (asDWORD**)src->data;
-
-				for( ; d < max; d++, s++ )
-					engine->CallObjectMethod(*d, *s, funcIndex);			
+				*d = *s;
+				if( *d )
+					engine->CallObjectMethod(*d, funcIndex);
 			}
 		}
 	}
 	else
 	{
-		if( arrayType & 1 )
+		esize = elementSize;
+		int funcIndex = 0;
+		if( gc.objType->subType )
 		{
-			// Copy the references and increase the reference counters
-			int funcIndex = engine->allObjectTypes[behaviourIndex]->beh.addref;
+			funcIndex = gc.objType->subType->beh.copy;
+			esize = gc.objType->subType->size;
+		}
 
-			if( dst->numElements > 0 && src->numElements > 0 )
+		if( dst->numElements > 0 && src->numElements > 0 )
+		{
+			int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
+			if( gc.objType->subType )
 			{
-				int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
-
+				// Call the assignment operator on all of the objects
 				asDWORD **max = (asDWORD**)(dst->data + count * sizeof(void*));
 				asDWORD **d   = (asDWORD**)dst->data;
 				asDWORD **s   = (asDWORD**)src->data;
-				
-				for( ; d < max; d++, s++ )
-				{
-					*d = *s;
-					if( *d )
-						engine->CallObjectMethod(*d, funcIndex);
-				}
-			}
-		}
-		else
-		{
-			esize = elementSize;
-			int funcIndex = 0;
-			if( behaviourIndex >= 0 )
-				funcIndex = engine->allObjectTypes[behaviourIndex]->beh.copy;
 
-			if( dst->numElements > 0 && src->numElements > 0 )
-			{
-				int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
-				if( behaviourIndex >= 0 )
+				if( funcIndex )
 				{
-					// Call the assignment operator on all of the objects
-					asDWORD **max = (asDWORD**)(dst->data + count * sizeof(void*));
-					asDWORD **d   = (asDWORD**)dst->data;
-					asDWORD **s   = (asDWORD**)src->data;
-
-					if( funcIndex )
-					{
-						for( ; d < max; d++, s++ )
-							engine->CallObjectMethod(*d, *s, funcIndex);
-					}
-					else
-					{
-						for( ; d < max; d++, s++ )
-							memcpy(*d, *s, esize);
-					}
+					for( ; d < max; d++, s++ )
+						engine->CallObjectMethod(*d, *s, funcIndex);
 				}
 				else
 				{
-					// Primitives are copied byte for byte
-					memcpy(dst->data, src->data, count*esize);
+					for( ; d < max; d++, s++ )
+						memcpy(*d, *s, esize);
 				}
+			}
+			else
+			{
+				// Primitives are copied byte for byte
+				memcpy(dst->data, src->data, count*esize);
 			}
 		}
 	}
 }
 
+void asCArrayObject::Destruct()
+{
+	// Call the destructor, which will also call the GCObject's destructor
+	this->~asCArrayObject();
+
+	// Free the memory
+	gc.objType->engine->global_free(this);
+}
+
+void asCArrayObject::CountReferences()
+{
+	asCObjectType *subType = gc.objType->subType;
+	if( subType && subType->flags & asOBJ_POTENTIAL_CIRCLE )
+	{
+		asCGCObject **d = (asCGCObject**)buffer->data;
+		for( asUINT n = 0; n < buffer->numElements; n++ )
+		{
+			if( d[n] )
+				d[n]->gc.gcCount--;
+		}
+	}
+}
+
+void asCArrayObject::AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked)
+{
+	asCObjectType *subType = gc.objType->subType;
+	if( subType && subType->flags & asOBJ_POTENTIAL_CIRCLE )
+	{
+		asCGCObject **d = (asCGCObject**)buffer->data;
+		for( asUINT n = 0; n < buffer->numElements; n++ )
+		{
+			if( d[n] && d[n]->gc.gcCount == 0 )
+				unmarked.PushLast(d[n]);
+		}
+	}
+}
+
+void asCArrayObject::ReleaseAllHandles()
+{
+	asCObjectType *subType = gc.objType->subType;
+	if( subType && subType->flags & asOBJ_POTENTIAL_CIRCLE )
+	{
+		asCGCObject **d = (asCGCObject**)buffer->data;
+		for( asUINT n = 0; n < buffer->numElements; n++ )
+		{
+			if( d[n] )
+			{
+				d[n]->Release();
+				d[n] = 0;
+			}
+		}
+	}
+}
+
+END_AS_NAMESPACE

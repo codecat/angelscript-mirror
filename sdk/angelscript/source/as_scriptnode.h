@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -73,7 +73,9 @@ enum eScriptNode
 	snGlobalVar,
 	snSwitch,
 	snCase,
-	snImport
+	snImport,
+	snStruct,
+	snInitList
 };
 
 struct sToken

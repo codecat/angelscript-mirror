@@ -106,7 +106,7 @@ A:hover
 
 <h1>An overview of AngelScript</h1>
 
-<p>2005/01/05, Andreas Jönsson</p>
+<p>2005/08/15, Andreas Jönsson</p>
 
 <p>This article gives a quick overview of what is possible to do with the AngelScript library. I've left out any error checking to make the code more readable.</p>
 
@@ -223,8 +223,7 @@ engine-&gt;BindAllImportedFunctions("Module");
 <font color=green>// C++ code</font>
 
 <font color=green>// Do some preparation before execution</font>
-asIScriptContext *context = 0;
-engine-&gt;CreateContext(&amp;context);
+asIScriptContext *context = engine-&gt;CreateContext();
 int functionID = engine-&gt;GetFunctionIDByDecl("module", "void DoSomething()");
 
 <font color=green>// Execute the script function</font>
@@ -542,7 +541,7 @@ CVector operator+(CVector &amp;a, CVector &amp;b)
   return c; 
 }
 
-engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "vector f(vector &amp;in, vector &amp;in)", asFUNCTIONP(operator+, (CVector &amp;, CVector &amp;)), asCALL_CDECL);
+engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "vector f(vector &amp;in, vector &amp;in)", asFUNCTIONPR(operator+, (CVector &amp;, CVector &amp;), CVector), asCALL_CDECL);
 </pre>
 
 <pre class=border>
@@ -578,11 +577,11 @@ void Test()
 
 <font color=green>// Register std::vector&lt;int&gt;</font>
 engine->RegisterObjectType("int[]", sizeof(vector&lt;int&gt;), asOBJ_CLASS_CDA);
-engine->RegisterObjectBehaviour("int[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONP(ConstructIntArray, (vector&lt;int&gt; *)), asCALL_CDECL_OBJLAST);
-engine->RegisterObjectBehaviour("int[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONP(ConstructIntArray, (int, vector&lt;int&gt; *)), asCALL_CDECL_OBJLAST);
+engine->RegisterObjectBehaviour("int[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArray, (vector&lt;int&gt; *), void), asCALL_CDECL_OBJLAST);
+engine->RegisterObjectBehaviour("int[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArray, (int, vector&lt;int&gt; *), void), asCALL_CDECL_OBJLAST);
 engine->RegisterObjectBehaviour("int[]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructIntArray), asCALL_CDECL_OBJLAST);
-engine->RegisterObjectBehaviour("int[]", asBEHAVE_ASSIGNMENT, "int[] &amp;f(int[]&amp;in)", asMETHODP(vector&lt;int&gt;, operator=, (const std::vector&lt;int&gt; &)), asCALL_THISCALL);
-engine->RegisterObjectBehaviour("int[]", asBEHAVE_INDEX, "int &amp;f(int)", asMETHODP(vector&lt;int&gt;, operator[], (int)), asCALL_THISCALL);
+engine->RegisterObjectBehaviour("int[]", asBEHAVE_ASSIGNMENT, "int[] &amp;f(int[]&amp;in)", asMETHODPR(vector&lt;int&gt;, operator=, (const std::vector&lt;int&gt; &amp;), vector&lt;int&gt;&amp;), asCALL_THISCALL);
+engine->RegisterObjectBehaviour("int[]", asBEHAVE_INDEX, "int &amp;f(int)", asMETHODPR(vector&lt;int&gt;, operator[], (int), int&amp;), asCALL_THISCALL);
 engine->RegisterObjectMethod("int[]", "int length()", asMETHOD(vector&lt;int&gt;, size), asCALL_THISCALL);
 
 <font color=green>// Constructor functions</font>

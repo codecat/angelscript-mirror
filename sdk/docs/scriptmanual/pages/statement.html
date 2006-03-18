@@ -73,9 +73,19 @@
 }
 </pre>
 
-<p>If you have an integer (signed or unsigned) expression that have many different outcomes that should lead to different code, a switch case is often the best choice for implementing the condition. It is much faster than a series of ifs, especially if all of the case values are close in numbers.</p>
+<p>If you have an integer (signed or unsigned) expression that have many 
+different outcomes that should lead to different code, a switch case is often 
+the best choice for implementing the condition. It is much faster than a 
+series of ifs, especially if all of the case values are close in numbers.</p>
 
-<p>Each case should be terminated with a break statement unless you want the code to continue with the next case.</p>
+<p>Each case should be terminated with a break statement unless you want the 
+code to continue with the next case.</p>
+
+<p>The case value can be a const variable that was initialized with a constant
+expression. If the constant variable was initialized with an expression that 
+cannot be determined at compile time, it cannot be used in the case values.</p>
+
+
 
 
 <a name="while">

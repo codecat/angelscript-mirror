@@ -18,7 +18,7 @@ bool TestBStr2()
 	RegisterScriptString(engine);
 
 	COutStream out;
-	int r = engine->ExecuteString(0, "MissingFunction(\"test\")", 0/*&out*/);
+	int r = engine->ExecuteString(0, "MissingFunction(\"test\")");
 	if( r >= 0 )
 	{
 		fail = true;

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -35,11 +35,12 @@
 // This class handles the call to a function registered with asCALL_GENERIC
 //
 
-#include <malloc.h>
 #include "as_generic.h"
 #include "as_scriptfunction.h"
 #include "as_objecttype.h"
 #include "as_scriptengine.h"
+
+BEGIN_AS_NAMESPACE
 
 asCGeneric::asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, asDWORD *stackPointer)
 {
@@ -239,26 +240,26 @@ int asCGeneric::SetReturnObject(void *obj)
 	if( !dt->IsObject() )
 		return asERROR;
 
-	if( dt->isReference )
+	if( dt->IsReference() )
 	{
 		*(void**)&returnVal = obj;
 		return 0;
 	}
 
-	if( dt->isExplicitHandle )
+	if( dt->IsObjectHandle() )
 	{
 		// Increase the reference counter
-		asSTypeBehaviour *beh = &dt->objectType->beh;
+		asSTypeBehaviour *beh = &dt->GetObjectType()->beh;
 		if( beh->addref )
 			engine->CallObjectMethod(obj, beh->addref);
 	}
 	else
 	{
 		// Make a copy of the object
-		char *mem = (char*)engine->CallAlloc(dt->objectType->idx);
+		char *mem = (char*)engine->CallAlloc(dt->GetObjectType());
 
 		// Call the object's default constructor
-		asSTypeBehaviour *beh = &dt->objectType->beh;
+		asSTypeBehaviour *beh = &dt->GetObjectType()->beh;
 		if( beh->construct )
 			engine->CallObjectMethod(mem, beh->construct);
 
@@ -279,4 +280,4 @@ int asCGeneric::SetReturnObject(void *obj)
 	return 0;
 }
 
-
+END_AS_NAMESPACE

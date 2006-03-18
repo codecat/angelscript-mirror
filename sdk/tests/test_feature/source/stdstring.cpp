@@ -3,6 +3,10 @@
 #include "stdstring.h"
 using namespace std;
 
+#ifdef AS_USE_NAMESPACE
+namespace AngelScript {
+#endif
+
 static string StringFactory(asUINT length, const char *s)
 {
 	return string(s);
@@ -191,5 +195,11 @@ void RegisterStdString(asIScriptEngine *engine)
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(const string &in, bits)", asFUNCTION(AddStringBits), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(bits, const string &in)", asFUNCTION(AddBitsString), asCALL_CDECL); assert( r >= 0 );
 }
+
+#ifdef AS_USE_NAMESPACE
+}
+#endif
+
+
 
 

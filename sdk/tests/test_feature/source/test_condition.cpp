@@ -75,8 +75,8 @@ bool TestCondition()
 	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_CDECL);
 
 	COutStream out;	
-
-	r = engine->ExecuteString(0, "print(a == \"a\" ? \"t\" : \"f\")", &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->ExecuteString(0, "print(a == \"a\" ? \"t\" : \"f\")");
 	if( r < 0 ) 
 	{
 		fail = true;
@@ -84,9 +84,9 @@ bool TestCondition()
 	}
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
-	r = engine->ExecuteString(0, "Test(\"t\", \"f\")", &out);
+	r = engine->ExecuteString(0, "Test(\"t\", \"f\")");
 	if( r < 0 )
 	{
 		fail = true;
@@ -94,9 +94,9 @@ bool TestCondition()
 	}
 
 /*	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
-	r = engine->ExecuteString(0, "Test()", &out);
+	r = engine->ExecuteString(0, "Test()");
 	if( r < 0 )
 	{
 		fail = true;
@@ -104,23 +104,23 @@ bool TestCondition()
 	}
 */
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
-	r = engine->ExecuteString(0, "Test()", &out);
+	r = engine->ExecuteString(0, "Test()");
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "bool b = true; print(\"Test: \" + format(float(b ? 15 : 0)));", &out);
+	r = engine->ExecuteString(0, "bool b = true; print(\"Test: \" + format(float(b ? 15 : 0)));");
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "bool b = true; print(\"Test: \" + format(b ? 15 : 0));", &out);
+	r = engine->ExecuteString(0, "bool b = true; print(\"Test: \" + format(b ? 15 : 0));");
 	if( r < 0 )
 	{
 		fail = true;

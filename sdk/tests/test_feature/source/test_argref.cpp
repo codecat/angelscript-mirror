@@ -48,7 +48,8 @@ bool Test()
 	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
-	r = engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;

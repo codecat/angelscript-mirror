@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2005 Andreas Jönsson
+   Copyright (c) 2003-2006 Andreas Jönsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -40,6 +40,7 @@
 #ifndef AS_COMPILER_H
 #define AS_COMPILER_H
 
+#include "as_config.h"
 #include "as_builder.h"
 #include "as_scriptfunction.h"
 #include "as_variablescope.h"
@@ -49,7 +50,9 @@
 #include "as_types.h"
 #include "as_typeinfo.h"
 
-struct asSDeferredOutParam
+BEGIN_AS_NAMESPACE
+
+struct asSDeferredParam
 {
 	asCScriptNode *argNode;
 	asCTypeInfo    argType;
@@ -60,9 +63,7 @@ struct asSExprContext
 {
 	asCByteCode bc;
 	asCTypeInfo type;
-	asCArray<asSDeferredOutParam> deferredOutParams;
-
-	~asSExprContext() { assert( deferredOutParams.GetLength() == 0 ); }
+	asCArray<asSDeferredParam> deferredParams;
 };
 
 class asCCompiler
@@ -108,6 +109,7 @@ protected:
 	void CompileExpressionPostOp(asCScriptNode *node, asSExprContext *out);
 	void CompileExpressionValue(asCScriptNode *node, asSExprContext *out);
 	void CompileFunctionCall(asCScriptNode *node, asSExprContext *out, asCObjectType *objectType, bool objIsConst);
+	void CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *out, asCObjectType *objectType, bool objIsConst);
 	void CompileConversion(asCScriptNode *node, asSExprContext *out);
 	void CompileOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 	void CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
@@ -117,10 +119,12 @@ protected:
 	void CompileBooleanOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 	bool CompileOverloadedOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 
+	void CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByteCode *bc);
+
 	void DefaultConstructor(asCByteCode *bc, asCDataType &dt);
 	void CompileConstructor(asCDataType &type, int offset, asCByteCode *bc);
 	void CompileDestructor(asCDataType &type, int offset, asCByteCode *bc);
-	void CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args, asCDataType *type = 0);
+	void CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args, asCArray<asCScriptNode*> &argNodes, asCDataType *type = 0);
 	void MatchFunctions(asCArray<int> &funcs, asCArray<asCTypeInfo> &argTypes, asCScriptNode *node, const char *name, bool isConstMethod = false);
 
 	// Helper functions
@@ -131,24 +135,24 @@ protected:
 	void PerformAssignment(asCTypeInfo *lvalue, asCByteCode *bc, asCScriptNode *node);
 	bool IsVariableInitialized(asCTypeInfo *type, asCScriptNode *node);
 	void Dereference(asSExprContext *ctx, bool generateCode);
-	void ImplicitConversion(asCByteCode *bc, const asCDataType &to, asCTypeInfo *from, asCScriptNode *node, bool isExplicit);
+	void ImplicitConversion(asCByteCode *bc, const asCDataType &to, asCTypeInfo *from, asCScriptNode *node, bool isExplicit, asCArray<int> *reservedVars = 0);
 	void ImplicitConversionConstant(asCByteCode *bc, const asCDataType &to, asCTypeInfo *from, asCScriptNode *node, bool isExplicit);
 	int  MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, asCTypeInfo *argType, int paramNum);
-	void PerformFunctionCall(int funcID, asSExprContext *out, bool isConstructor = false, asCArray<asCTypeInfo> *argTypes = 0, asCScriptNode *argListNode = 0);
+	void PerformFunctionCall(int funcID, asSExprContext *out, bool isConstructor = false, asCArray<asCTypeInfo> *argTypes = 0, asCArray<asCScriptNode*> *argListNode = 0, asCObjectType *objType = 0);
 	void MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprContext *> &args, bool addOneToOffset);
 	void PrepareFunctionCall(int funcID, asCScriptNode *argListNode, asCByteCode *bc, asCArray<asSExprContext *> &args);
-	void AfterFunctionCall(int funcID, asCScriptNode *argListNode, asSExprContext *ctx, asCArray<asCTypeInfo> &argTypes);
-	void ProcessDeferredOutParams(asSExprContext *ctx);
-	void PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction = false, bool isInRef = false);
+	void AfterFunctionCall(int funcID, asCArray<asCScriptNode*> &argListNode, asSExprContext *ctx, asCArray<asCTypeInfo> &argTypes, bool deferAll);
+	void ProcessDeferredParams(asSExprContext *ctx);
+	void PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction = false, bool isInRef = false, asCArray<int> *reservedVars = 0);
 	bool IsLValue(asCTypeInfo &type);
-	void DetermineDefaultArrayArgs(asCDataType &type, asDWORD *subType, asDWORD *size_arrayType);
 	void DoAssignment(asSExprContext *out, asSExprContext *lctx, asSExprContext *rctx, asCScriptNode *lexpr, asCScriptNode *rexpr, int op, asCScriptNode *opNode);
 	void MergeExprContexts(asSExprContext *before, asSExprContext *after);
 	void FilterConst(asCArray<int> &funcs);
 
 	void LineInstr(asCByteCode *bc, int pos);
 
-	int  RegisterConstantBStr(const char *str, int len);
+	void ProcessStringConstant(asCString &str);
+	void ProcessHeredocStringConstant(asCString &str);
 	int  GetPrecedence(asCScriptNode *op);
 
 	void Error(const char *msg, asCScriptNode *node);
@@ -181,8 +185,10 @@ protected:
 	asCArray<int> tempVariables;
 
 	bool globalExpression;
-	bool isProcessingDeferredOutParams;
+	bool isProcessingDeferredParams;
 	int noCodeOutput;
 };
+
+END_AS_NAMESPACE
 
 #endif

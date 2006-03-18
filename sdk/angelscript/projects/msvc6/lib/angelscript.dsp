@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
-CFG=angelscript lib - Win32 Debug with ASM VM
+CFG=angelscript lib - Win32 Debug NO ASM
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,15 +13,14 @@ CFG=angelscript lib - Win32 Debug with ASM VM
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "angelscript.mak" CFG="angelscript lib - Win32 Debug with ASM VM"
+!MESSAGE NMAKE /f "angelscript.mak" CFG="angelscript lib - Win32 Debug NO ASM"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
 !MESSAGE "angelscript lib - Win32 Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "angelscript lib - Win32 Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE "angelscript lib - Win32 Debug with stats" (based on "Win32 (x86) Static Library")
-!MESSAGE "angelscript lib - Win32 Release with ASM VM" (based on "Win32 (x86) Static Library")
-!MESSAGE "angelscript lib - Win32 Debug with ASM VM" (based on "Win32 (x86) Static Library")
+!MESSAGE "angelscript lib - Win32 Debug NO ASM" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -100,50 +99,27 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo /out:"..\..\..\lib\angelscript.lib"
 # ADD LIB32 /nologo /out:"..\..\..\lib\angelscriptd.lib"
 
-!ELSEIF  "$(CFG)" == "angelscript lib - Win32 Release with ASM VM"
-
-# PROP BASE Use_MFC 0
-# PROP BASE Use_Debug_Libraries 0
-# PROP BASE Output_Dir "angelscript_lib___Win32_Release_with_ASM_VM"
-# PROP BASE Intermediate_Dir "angelscript_lib___Win32_Release_with_ASM_VM"
-# PROP BASE Target_Dir ""
-# PROP Use_MFC 0
-# PROP Use_Debug_Libraries 0
-# PROP Output_Dir "Release_asm_vm"
-# PROP Intermediate_Dir "Release_asm_vm"
-# PROP Target_Dir ""
-# ADD BASE CPP /nologo /MD /W3 /O2 /Oy- /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /c
-# ADD CPP /nologo /MD /W3 /O2 /Oy- /D "USE_ASM_VM" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /c
-# ADD BASE RSC /l 0x416 /d "NDEBUG"
-# ADD RSC /l 0x416 /d "NDEBUG"
-BSC32=bscmake.exe
-# ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
-LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"..\..\..\lib\angelscript.lib"
-# ADD LIB32 /nologo /out:"..\..\..\lib\angelscript.lib"
-
-!ELSEIF  "$(CFG)" == "angelscript lib - Win32 Debug with ASM VM"
+!ELSEIF  "$(CFG)" == "angelscript lib - Win32 Debug NO ASM"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "angelscript_lib___Win32_Debug_with_ASM_VM"
-# PROP BASE Intermediate_Dir "angelscript_lib___Win32_Debug_with_ASM_VM"
+# PROP BASE Output_Dir "angelscript_lib___Win32_Debug_NO_ASM"
+# PROP BASE Intermediate_Dir "angelscript_lib___Win32_Debug_NO_ASM"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "Debug_asm_vm"
-# PROP Intermediate_Dir "Debug_asm_vm"
+# PROP Output_Dir "angelscript_lib___Win32_Debug_NO_ASM"
+# PROP Intermediate_Dir "angelscript_lib___Win32_Debug_NO_ASM"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MDd /W3 /Gm /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /ZI /Od /D "USE_ASM_VM" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /GZ /c
+# ADD BASE CPP /nologo /MDd /W3 /Gm /ZI /Od /D "AS_C_INTERFACE" /D "AS_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /ZI /Od /D "AS_MAX_PORTABILITY" /D "AS_C_INTERFACE" /D "AS_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /GZ /c
 # ADD BASE RSC /l 0x416 /d "_DEBUG"
 # ADD RSC /l 0x416 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"..\..\..\lib\angelscript.lib"
+# ADD BASE LIB32 /nologo /out:"..\..\..\lib\angelscriptd.lib"
 # ADD LIB32 /nologo /out:"..\..\..\lib\angelscriptd.lib"
 
 !ENDIF 
@@ -153,18 +129,17 @@ LIB32=link.exe -lib
 # Name "angelscript lib - Win32 Release"
 # Name "angelscript lib - Win32 Debug"
 # Name "angelscript lib - Win32 Debug with stats"
-# Name "angelscript lib - Win32 Release with ASM VM"
-# Name "angelscript lib - Win32 Debug with ASM VM"
+# Name "angelscript lib - Win32 Debug NO ASM"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\..\source\as_arrayobject.cpp
+SOURCE=..\..\..\source\as_anyobject.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_bstr_util.cpp
+SOURCE=..\..\..\source\as_arrayobject.cpp
 # End Source File
 # Begin Source File
 
@@ -180,6 +155,10 @@ SOURCE=..\..\..\source\as_c.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\source\as_callfunc.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_callfunc_sh4.cpp
 # End Source File
 # Begin Source File
@@ -192,11 +171,11 @@ SOURCE=..\..\..\source\as_compiler.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_context.cpp
+SOURCE=..\..\..\source\as_configgroup.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_context_x86.cpp
+SOURCE=..\..\..\source\as_context.cpp
 # End Source File
 # Begin Source File
 
@@ -204,11 +183,11 @@ SOURCE=..\..\..\source\as_datatype.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_generic.cpp
+SOURCE=..\..\..\source\as_gcobject.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_map.cpp
+SOURCE=..\..\..\source\as_generic.cpp
 # End Source File
 # Begin Source File
 
@@ -248,6 +227,10 @@ SOURCE=..\..\..\source\as_scriptnode.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\source\as_scriptstruct.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_string.cpp
 # End Source File
 # Begin Source File
@@ -276,15 +259,15 @@ SOURCE=..\..\..\source\as_variablescope.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=..\..\..\source\as_anyobject.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_array.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\source\as_arrayobject.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\source\as_bstr_util.h
 # End Source File
 # Begin Source File
 
@@ -312,6 +295,10 @@ SOURCE=..\..\..\source\as_config.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\source\as_configgroup.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_context.h
 # End Source File
 # Begin Source File
@@ -321,6 +308,10 @@ SOURCE=..\..\..\source\as_datatype.h
 # Begin Source File
 
 SOURCE=..\..\..\source\as_debug.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\source\as_gcobject.h
 # End Source File
 # Begin Source File
 
@@ -369,6 +360,10 @@ SOURCE=..\..\..\source\as_scriptfunction.h
 # Begin Source File
 
 SOURCE=..\..\..\source\as_scriptnode.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\source\as_scriptstruct.h
 # End Source File
 # Begin Source File
 

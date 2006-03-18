@@ -48,7 +48,7 @@ class CObject
 {
 public:
 	CObject() {val = ('C' | ('O'<<8) | ('b'<<16) | ('j'<<24)); mem = new int[1]; *mem = ('M' | ('e'<<8) | ('m'<<16) | (' '<<24)); /*printf("C: %x\n", this);*/ }
-	~CObject() {delete mem; /*printf("D: %x\n", this);*/}
+	~CObject() {delete[] mem; /*printf("D: %x\n", this);*/}
 	int val;
 	int *mem;
 };
@@ -139,7 +139,8 @@ bool Test()
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
@@ -185,7 +186,7 @@ bool Test()
 
 	asIScriptContext *ctx;
 	engine->SetDefaultContextStackSize(1024, 0);
-	r = engine->ExecuteString(0, "Test4()", 0, &ctx);
+	r = engine->ExecuteString(0, "Test4()", &ctx);
 	if( r != asEXECUTION_SUSPENDED )
 	{
 		printf("%s: Failed\n", TESTNAME);

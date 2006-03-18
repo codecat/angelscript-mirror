@@ -233,7 +233,7 @@ static const char *script1 =
 "  g_b5 = a;                   \n"
 "  g_b5 <<= 3;                 \n"
 "}                             \n"
-"void TestOptimizeSRL()        \n"
+"void TestOptimizeSRA()        \n"
 "{                             \n"
 "  bits a = 0xF3;              \n"
 "  uint b = 3;                 \n"
@@ -246,7 +246,7 @@ static const char *script1 =
 "  g_b5 = a;                   \n"
 "  g_b5 >>>= 3;                \n"
 "}                             \n"
-"void TestOptimizeSRA()        \n"
+"void TestOptimizeSRL()        \n"
 "{                             \n"
 "  bits a = 0xF3;              \n"
 "  uint b = 3;                 \n"
@@ -301,7 +301,8 @@ bool TestOptimize()
 	COutStream out;	
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
 	int n;
 	engine->ExecuteString(0, "TestOptimizeAdd()");
@@ -354,9 +355,9 @@ bool TestOptimize()
 		}
 	}
 
-	engine->ExecuteString(0, "g_i0 = 13; g_i1 = -g_i0; g_i2 = -13;", &out); if( g_i[1] != -13 || g_i[2] != -13 ) { printf("%s: negi failed\n", TESTNAME); }
-	engine->ExecuteString(0, "g_i0 = 0; g_i1 = g_i0++; g_i2 = ++g_i0;", &out); if( g_i[0] != 2 || g_i[1] != 0 || g_i[2] != 2 ) { printf("%s: inci failed\n", TESTNAME); }
-	engine->ExecuteString(0, "g_i0 = 0; g_i1 = g_i0--; g_i2 = --g_i0;", &out); if( g_i[0] != -2 || g_i[1] != 0 || g_i[2] != -2 ) { printf("%s: deci failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_i0 = 13; g_i1 = -g_i0; g_i2 = -13;"); if( g_i[1] != -13 || g_i[2] != -13 ) { printf("%s: negi failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_i0 = 0; g_i1 = g_i0++; g_i2 = ++g_i0;"); if( g_i[0] != 2 || g_i[1] != 0 || g_i[2] != 2 ) { printf("%s: inci failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_i0 = 0; g_i1 = g_i0--; g_i2 = --g_i0;"); if( g_i[0] != -2 || g_i[1] != 0 || g_i[2] != -2 ) { printf("%s: deci failed\n", TESTNAME); }
 
 	engine->ExecuteString(0, "TestOptimizeAddf()");
 	for( n = 0; n < 6; ++ n )
@@ -408,9 +409,9 @@ bool TestOptimize()
 		}
 	}
 
-	engine->ExecuteString(0, "g_f0 = 13; g_f1 = -g_f0; g_f2 = -13;", &out); if( g_f[1] != -13 || g_f[2] != -13 ) { printf("%s: negf failed\n", TESTNAME); }
-	engine->ExecuteString(0, "g_f0 = 0; g_f1 = g_f0++; g_f2 = ++g_f0;", &out); if( g_f[0] != 2 || g_f[1] != 0 || g_f[2] != 2 ) { printf("%s: incf failed\n", TESTNAME); }
-	engine->ExecuteString(0, "g_f0 = 0; g_f1 = g_f0--; g_f2 = --g_f0;", &out); if( g_f[0] != -2 || g_f[1] != 0 || g_f[2] != -2 ) { printf("%s: decf failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_f0 = 13; g_f1 = -g_f0; g_f2 = -13;"); if( g_f[1] != -13 || g_f[2] != -13 ) { printf("%s: negf failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_f0 = 0; g_f1 = g_f0++; g_f2 = ++g_f0;"); if( g_f[0] != 2 || g_f[1] != 0 || g_f[2] != 2 ) { printf("%s: incf failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_f0 = 0; g_f1 = g_f0--; g_f2 = --g_f0;"); if( g_f[0] != -2 || g_f[1] != 0 || g_f[2] != -2 ) { printf("%s: decf failed\n", TESTNAME); }
 
 	engine->ExecuteString(0, "TestOptimizeAddd()");
 	for( n = 0; n < 6; ++ n )
@@ -462,9 +463,9 @@ bool TestOptimize()
 		}
 	}
 
-	engine->ExecuteString(0, "g_d0 = 13; g_d1 = -g_d0; g_d2 = -13;", &out); if( g_d[1] != -13 || g_d[2] != -13 ) { printf("%s: negd failed\n", TESTNAME); }
-	engine->ExecuteString(0, "g_d0 = 0; g_d1 = g_d0++; g_d2 = ++g_d0;", &out); if( g_d[0] != 2 || g_d[1] != 0 || g_d[2] != 2 ) { printf("%s: incd failed\n", TESTNAME); }
-	engine->ExecuteString(0, "g_d0 = 0; g_d1 = g_d0--; g_d2 = --g_d0;", &out); if( g_d[0] != -2 || g_d[1] != 0 || g_d[2] != -2 ) { printf("%s: decd failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_d0 = 13; g_d1 = -g_d0; g_d2 = -13;"); if( g_d[1] != -13 || g_d[2] != -13 ) { printf("%s: negd failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_d0 = 0; g_d1 = g_d0++; g_d2 = ++g_d0;"); if( g_d[0] != 2 || g_d[1] != 0 || g_d[2] != 2 ) { printf("%s: incd failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_d0 = 0; g_d1 = g_d0--; g_d2 = --g_d0;"); if( g_d[0] != -2 || g_d[1] != 0 || g_d[2] != -2 ) { printf("%s: decd failed\n", TESTNAME); }
 
 	engine->ExecuteString(0, "TestOptimizeAnd()");
 	for( n = 0; n < 6; ++ n )
@@ -526,29 +527,76 @@ bool TestOptimize()
 		}
 	}
 	
-	engine->ExecuteString(0, "g_b0 = 0xF3; g_b1 = ~g_b0; g_b2 = ~0xF3;", &out); if( g_b[1] != ~0xF3 || g_b[2] != ~0xF3 ) { printf("%s: bnot failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_b0 = 0xF3; g_b1 = ~g_b0; g_b2 = ~0xF3;"); if( g_b[1] != ~0xF3 || g_b[2] != ~0xF3 ) { printf("%s: bnot failed\n", TESTNAME); }
 
 	int r;
-	r = engine->ExecuteString(0, "bool b = false; if( !b );", &out);
-	if( r < 0 )
+	r = engine->ExecuteString(0, "bool b = false; if( !b );");
+	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: !b failed\n", TESTNAME);
 		fail = true;
 	}
 		
-	r = engine->ExecuteString(0, "bool b = false; b = not b;", &out);
-	if( r < 0 )
+	r = engine->ExecuteString(0, "bool b = false; b = not b;");
+	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: !b failed\n", TESTNAME);
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "bits tmp = 50; bits x = tmp + 0x50;", &out);
-	if( r < 0 )
+	r = engine->ExecuteString(0, "bits tmp = 50; bits x = tmp + 0x50;");
+	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: bits failed\n", TESTNAME);
 		fail = true;
 	}
+
+	bool boolValue;
+	engine->RegisterGlobalProperty("bool boolValue", &boolValue);
+	r = engine->ExecuteString(0, "bool a = false, b = false; boolValue = a xor b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = false; boolValue = a xor b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = true; boolValue = a xor b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+	r = engine->ExecuteString(0, "bool a = false, b = true; boolValue = a xor b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+
+	r = engine->ExecuteString(0, "bool a = false, b = false; boolValue = a and b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = false; boolValue = a and b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = true; boolValue = a and b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+	r = engine->ExecuteString(0, "bool a = false, b = true; boolValue = a and b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+
+	r = engine->ExecuteString(0, "bool a = false, b = false; boolValue = a or b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = false; boolValue = a or b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = true; boolValue = a or b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+	r = engine->ExecuteString(0, "bool a = false, b = true; boolValue = a or b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+
+	r = engine->ExecuteString(0, "bool a = false, b = false; boolValue = a == b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = false; boolValue = a == b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = true; boolValue = a == b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+	r = engine->ExecuteString(0, "bool a = false, b = true; boolValue = a == b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+
+	r = engine->ExecuteString(0, "bool a = false, b = false; boolValue = a != b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = false; boolValue = a != b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
+	r = engine->ExecuteString(0, "bool a = true, b = true; boolValue = a != b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != false ) fail = true;
+	r = engine->ExecuteString(0, "bool a = false, b = true; boolValue = a != b;"); assert( r == asEXECUTION_FINISHED );
+	if( boolValue != true ) fail = true;
 
 	engine->Release();
 

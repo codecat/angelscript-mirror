@@ -48,7 +48,8 @@ bool TestVector3()
 
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script));
-	r = engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		printf("%s: Failed to build\n", TESTNAME);
@@ -57,7 +58,7 @@ bool TestVector3()
 	else
 	{
 		// Internal return
-		r = engine->ExecuteString(0, "v = TestVector3();", &out);
+		r = engine->ExecuteString(0, "v = TestVector3();");
 		if( r < 0 )
 		{
 			printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -72,8 +73,7 @@ bool TestVector3()
 		// Manual return
 		v.x = 0; v.y = 0; v.z = 0;
 
-		asIScriptContext *ctx;
-		engine->CreateContext(&ctx);
+		asIScriptContext *ctx = engine->CreateContext();
 		ctx->Prepare(engine->GetFunctionIDByDecl(0, "Vector3 TestVector3()"));
 
 		ctx->Execute();

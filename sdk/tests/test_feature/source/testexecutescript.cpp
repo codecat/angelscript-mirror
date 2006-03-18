@@ -59,7 +59,7 @@ static int LoadScript(const char *filename)
 	std::string code;
 	code.resize(len);
 
-	int c =	fread(&code[0], len, 1, f);
+	int c = fread(&code[0], len, 1, f);
 	fclose(f);
 
 	if( c == 0 ) 
@@ -96,7 +96,8 @@ static int CompileScript()
 	// Create an output stream that will receive information about the build
 	COutStream out;
 
-	int r = engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	int r = engine->Build(0);
 	if( r < 0 )
 	{
 		printf("%s: Failed to compile script\n", TESTNAME);
@@ -114,6 +115,8 @@ static int CompileScript()
 		return -1;
 	}
 
+	engine->SetCommonMessageStream(0);
+
 	return 0;
 }
 
@@ -127,9 +130,8 @@ static bool ExecuteScript()
 	// at a time. An execution can be suspended to allow another 
 	// context to execute.
 
-	asIScriptContext *ctx;
-	int r = engine->CreateContext(&ctx);
-	if( r < 0 )
+	asIScriptContext *ctx = engine->CreateContext();
+	if( ctx == 0 )
 	{
 		printf("%s: Failed to create a context\n", TESTNAME);
 		return true;
@@ -141,7 +143,7 @@ static bool ExecuteScript()
 	// PrepareContext on it again. If the same stack size is used as the last time
 	// there will not be any new allocation thus saving some time.
 
-	r = ctx->Prepare(engine->GetFunctionIDByName(0, "main"));
+	int r = ctx->Prepare(engine->GetFunctionIDByName(0, "main"));
 	if( r < 0 )
 	{
 		printf("%s: Failed to prepare context\n", TESTNAME);

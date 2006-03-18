@@ -168,7 +168,8 @@ bool Test()
 	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	r = engine->Build(0);
 	if( r < 0 )
 	{
 		fail = true;
@@ -176,7 +177,7 @@ bool Test()
 	}
 
 	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "TestObject()", 0, &ctx);
+	r = engine->ExecuteString(0, "TestObject()", &ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -187,7 +188,7 @@ bool Test()
 	}
 	if( ctx ) ctx->Release();
 
-	engine->ExecuteString(0, "ObjNoConstruct a; a = ObjNoConstruct();", &out);
+	engine->ExecuteString(0, "ObjNoConstruct a; a = ObjNoConstruct();");
 	if( r != 0 )
 	{
 		fail = true;
@@ -195,8 +196,9 @@ bool Test()
 	}
 
 	CBufferedOutStream bout;
-	r = engine->ExecuteString(0, "Object obj; float r = 0; obj = r;", &bout);
-	if( r >= 0 || bout.buffer != "ExecuteString (1, 32) : Error   : Can't implicitly convert from 'float' to 'Object'.\n" )
+	engine->SetCommonMessageStream(&bout);
+	r = engine->ExecuteString(0, "Object obj; float r = 0; obj = r;");
+	if( r >= 0 || bout.buffer != "ExecuteString (1, 32) : Error   : Can't implicitly convert from 'const float' to 'Object'.\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
 		fail = true;

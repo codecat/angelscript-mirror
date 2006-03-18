@@ -39,6 +39,9 @@ void Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
+	COutStream out;
+	engine->SetCommonMessageStream(&out);
+
 	string script = scriptBegin;
 	for( int n = 0; n < 4000; n++ )
 		script += scriptMiddle;
@@ -46,9 +49,8 @@ void Test()
 
 	double time = GetSystemTimer();
 
-	COutStream out;
 	engine->AddScriptSection(0, TESTNAME, script.c_str(), script.size(), 0);
-	int r = engine->Build(0, &out);
+	int r = engine->Build(0);
 
 	time = GetSystemTimer() - time;
 

@@ -4,6 +4,10 @@
 #include <stdio.h>  // sprintf()
 #include "bstr.h"
 
+#if AS_USE_NAMESPACE
+namespace AngelScript {
+#endif
+
 void    asBStrConstruct(asBSTR *s);
 void    asBStrDestruct(asBSTR *s);
 asBSTR *asBStrCopy(const asBSTR *src, asBSTR *dst);
@@ -306,3 +310,7 @@ asBSTR asBStrSubstr(const asBSTR &str, asUINT start, asUINT count)
 
 	return sub;
 }
+
+#ifdef AS_USE_NAMESPACE
+}
+#endif

@@ -59,16 +59,17 @@ bool Test()
 
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
 	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("DynamicModule", &out);
+	engine->Build("DynamicModule");
 
 	// Bind all functions that the module imports
 	engine->BindAllImportedFunctions(0);
 
 	asIScriptContext *ctx;
-	int r = engine->ExecuteString(0, "Run()", &out, &ctx);
+	int r = engine->ExecuteString(0, "Run()", &ctx);
 	if( r == asEXECUTION_EXCEPTION )
 	{
 		int funcID = ctx->GetExceptionFunction();

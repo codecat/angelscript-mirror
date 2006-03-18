@@ -2,7 +2,7 @@
 #define UTILS_H
 
 #include <angelscript.h>
-#include "../../add_on/std_string/stdstring.h"
+#include "../../add_on/scriptstring/scriptstring.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>

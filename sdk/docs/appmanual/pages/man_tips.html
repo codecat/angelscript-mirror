@@ -1,0 +1,63 @@
+<HTML>
+<head>
+<title>AngelScript: Documentation: Tips &amp; Tricks</title>
+<LINK rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+<p>
+<a href="../index.html">index</a>
+</p>
+
+<h1>Documentation: Tips &amp; Tricks</h1>
+
+<p>These are a few tips and tricks that may come in handy.</p>
+
+<h2>Use the line callback to timeout long running scripts</h2>
+
+<p>The line callback feature is used to be able to some special treatment 
+during execution of the scripts. The callback is called for every script 
+statement, which for example makes it possible to verify if the script has  
+executed for too long time and if so suspend the execution to be resumed at
+a later time.</p>
+
+<p>Before calling the context's Execute() method, set the callback function 
+like so:</p>
+
+<pre class=border>
+void ExecuteScript()
+{
+  DWORD timeOut;
+  ctx->SetLineCallback(asFUNCTION(LineCallback), &amp;timeOut, asCALL_CDECL);
+
+  int status = asEXECUTION_SUSPENDED;
+  while( status == asEXECUTION_SUSPENDED )
+  {
+    <font color=green>// Allow the long running script to execute for 10ms</font>
+    timeOut = timeGetTime() + 10;
+    status = ctx->Execute();
+  
+    <font color=green>// The execution was suspended, now we can do something else before
+    // continuing the execution with another call to Execute().</font>
+    ...
+  }
+}
+
+void LineCallback(asIScriptContext *ctx, DWORD *timeOut)
+{
+  <font color=green>// If the time out is reached we suspend the script</font>
+  if( *timeOut &lt; timeGetTime() )
+    ctx->Suspend();
+}
+</pre>
+
+<p>
+Take a look at the sample <a href="man_samples.html#events">events</a> to 
+see this working.
+</p>
+
+
+<p><a href="#">top</a></p>
+
+</body></HTML>

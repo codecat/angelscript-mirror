@@ -16,15 +16,14 @@ bool TestModuleRef()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
 	engine->AddScriptSection("a", "script", script, strlen(script), 0);
-	if( engine->Build("a", 0) < 0 )
+	if( engine->Build("a") < 0 )
 	{
 		printf("%s: failed to build module a\n", TESTNAME);
 		ret = true;
 	}
 
 	int funcID = engine->GetFunctionIDByDecl("a", "void Test()");
-	asIScriptContext *ctx = 0;
-	engine->CreateContext(&ctx);
+	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(funcID);
 
 	if( engine->GetFunctionCount("a") < 0 )

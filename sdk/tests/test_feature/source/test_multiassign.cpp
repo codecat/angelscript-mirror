@@ -48,9 +48,10 @@ bool Test()
 
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	engine->Build(0, &out);
+	engine->SetCommonMessageStream(&out);
+	engine->Build(0);
 
-	engine->ExecuteString(0, "Init();", &out);
+	engine->ExecuteString(0, "Init();");
 
 	if( a != 0x12345678 || b != 0x12345678 || c != 0x12345678 || d != 0x12345678 )
 	{

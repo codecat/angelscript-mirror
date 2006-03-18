@@ -30,9 +30,10 @@ void FuncInt(int v)
 bool TestFuncOverload()
 {
 	bool fail = false;
+	COutStream out;	
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
+	engine->SetCommonMessageStream(&out);
 	RegisterScriptString(engine);
 
 	engine->RegisterObjectType("Data", sizeof(void*), asOBJ_PRIMITIVE);
@@ -46,12 +47,10 @@ bool TestFuncOverload()
 	engine->RegisterGlobalFunction("void func()", asFUNCTION(FuncVoid), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void func(int)", asFUNCTION(FuncInt), asCALL_CDECL);
 
-	COutStream out;	
-
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->Build(0, &out);
+	engine->Build(0);
 
-	engine->ExecuteString(0, "func(func(3));", &out);
+	engine->ExecuteString(0, "func(func(3));");
 
 	engine->Release();
 
