@@ -75,7 +75,7 @@ const char *asGetTokenDefinition(int tokenType)
 	return 0;
 }
 
-eTokenType asCTokenizer::GetToken(const char *source, int sourceLength, int *tokenLength)
+eTokenType asCTokenizer::GetToken(const char *source, size_t sourceLength, size_t *tokenLength)
 {
 	assert(source != 0);
 	assert(tokenLength != 0);
@@ -110,7 +110,7 @@ int asCTokenizer::ParseToken()
 
 bool asCTokenizer::IsWhiteSpace()
 {
-	int n;
+	size_t n;
 	for( n = 0; n < sourceLength; n++ )
 	{
 		bool isWhiteSpace = false;
@@ -148,7 +148,7 @@ bool asCTokenizer::IsComment()
 		// One-line comment
 
 		// Find the length
-		int n;
+		size_t n;
 		for( n = 2; n < sourceLength; n++ )
 		{
 			if( source[n] == '\n' )
@@ -166,7 +166,7 @@ bool asCTokenizer::IsComment()
 		// Multi-line comment
 
 		// Find the length
-		int n;
+		size_t n;
 		for( n = 2; n < sourceLength-1; )
 		{
 			if( source[n++] == '*' && source[n] == '/' )
@@ -190,7 +190,7 @@ bool asCTokenizer::IsConstant()
 		// Is it a hexadecimal number?
 		if( sourceLength >= 1 && (source[1] == 'x' || source[1] == 'X') )
 		{
-			int n;
+			size_t n;
 			for( n = 2; n < sourceLength; n++ )
 			{
 				if( !(source[n] >= '0' && source[n] <= '9') &&
@@ -204,7 +204,7 @@ bool asCTokenizer::IsConstant()
 			return true;
 		}
 
-		int n;
+		size_t n;
 		for( n = 1; n < sourceLength; n++ )
 		{
 			if( source[n] < '0' || source[n] > '9' )
@@ -259,7 +259,7 @@ bool asCTokenizer::IsConstant()
 	if( source[0] == '\'' )
 	{
 		bool evenSlashes = true;
-		int n;
+		size_t n;
 		for( n = 1; n < sourceLength; n++ )
 		{
 			if( source[n] == '\n' ) break;
@@ -287,7 +287,7 @@ bool asCTokenizer::IsConstant()
 			// Heredoc string constant (spans multiple lines, no escape sequences)
 
 			// Find the length
-			int n;
+			size_t n;
 			for( n = 3; n < sourceLength-2; n++ )
 			{
 				if( source[n] == '"' && source[n+1] == '"' && source[n+2] == '"' )
@@ -301,7 +301,7 @@ bool asCTokenizer::IsConstant()
 		{
 			// Normal string constant
 			bool evenSlashes = true;
-			int n;
+			size_t n;
 			for( n = 1; n < sourceLength; n++ )
 			{
 				if( source[n] == '\n' ) break;
@@ -334,7 +334,7 @@ bool asCTokenizer::IsIdentifier()
 		tokenType = ttIdentifier;
 		tokenLength = 1;
 
-		for( int n = 1; n < sourceLength; n++ )
+		for( size_t n = 1; n < sourceLength; n++ )
 		{
 			if( source[n] >= 'a' && source[n] <= 'z' ||
 				source[n] >= 'A' && source[n] <= 'Z' ||
@@ -371,7 +371,7 @@ bool asCTokenizer::IsKeyWord()
 	// remove keywords that don't match. When only one remains and
 	// it matches the source completely we have found a match.
 	int words[numTokenWords];
-	int n;
+	asUINT n;
 	for( n = 0; n < numTokenWords; n++ )
 		words[n] = n;
 

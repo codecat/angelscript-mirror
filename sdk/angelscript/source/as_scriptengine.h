@@ -101,10 +101,7 @@ public:
 	int RemoveConfigGroup(const char *groupName);
 	int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool haveAccess);
 
-	int AddScriptSection(const char *module, const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy);
-#ifdef AS_DEPRECATED
-	int Build(const char *module, asIOutputStream *out);
-#endif
+	int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset, bool makeCopy);
 	int Build(const char *module);
 	int Discard(const char *module);
 	int ResetModule(const char *module);

@@ -55,6 +55,7 @@ struct sFunctionDescription
 	asCScriptCode *script;
 	asCScriptNode *node;
 	asCString name;
+	asCObjectType *objType;
 };
 
 struct sGlobalVariableDescription
@@ -121,11 +122,13 @@ protected:
 	void GetFunctionDescriptions(const char *name, asCArray<int> &funcs);
 	void GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst);
 
-	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
+	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0);
 	int RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
 	int RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file);
 	int RegisterStruct(asCScriptNode *node, asCScriptCode *file);
 	void CompileStructs();
+
+	void AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file);
 
 	asCObjectType *GetObjectType(const char *type);
 
@@ -148,7 +151,7 @@ protected:
 	asCModule *module;
 
 	asCDataType CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file);
-	asCDataType ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, int *inOutFlag, bool *autoHandle);
+	asCDataType ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, int *inOutFlag, bool *autoHandle);
 };
 
 END_AS_NAMESPACE

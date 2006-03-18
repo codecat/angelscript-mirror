@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -81,8 +81,8 @@ enum eScriptNode
 struct sToken
 {
 	eTokenType type;
-	int pos;
-	int length;
+	size_t pos;
+	size_t length;
 };
 
 class asCScriptNode
@@ -95,12 +95,12 @@ public:
 	void AddChildLast(asCScriptNode *node);
 	void DisconnectParent();
 
-	void UpdateSourcePos(int pos, int length);
+	void UpdateSourcePos(size_t pos, size_t length);
 
 	eScriptNode nodeType;
 	eTokenType tokenType;
-	int tokenPos;
-	int tokenLength;
+	size_t tokenPos;
+	size_t tokenLength;
 
 	asCScriptNode *parent;
 	asCScriptNode *next;

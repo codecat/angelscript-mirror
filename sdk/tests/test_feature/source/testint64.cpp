@@ -22,7 +22,7 @@ static char *script =
 "    // executed.\n"
 "    cfunction();\n"
 
-"    int64 var;\n"
+"    Int64 var;\n"
 "    bar( var );\n"
     
 "    // Some value we'll know when we return\n"
@@ -31,11 +31,11 @@ static char *script =
 
 "void foo( )\n"
 "{\n"
-"    int64 var;\n"
+"    Int64 var;\n"
 "    bar( var );\n"
 "}\n"
 
-"void bar( int64 )\n"
+"void bar( Int64 )\n"
 "{\n"
 "    // If any of the three cases are satisfied, the code works as expected.\n"
 "    // --------------------------------------------------------------------\n"
@@ -57,7 +57,7 @@ bool TestInt64()
 	bool ret = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterObjectType("int64", 8, 0);
+	engine->RegisterObjectType("Int64", 8, 0);
 	engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
 
 	COutStream out;

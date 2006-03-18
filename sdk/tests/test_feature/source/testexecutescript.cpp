@@ -59,7 +59,7 @@ static int LoadScript(const char *filename)
 	std::string code;
 	code.resize(len);
 
-	int c = fread(&code[0], len, 1, f);
+	size_t c = fread(&code[0], len, 1, f);
 	fclose(f);
 
 	if( c == 0 ) 

@@ -59,7 +59,7 @@ static const char *script1 =
 "  Object a;                      \n"
 "  a.val = 12;                    \n"
 "  TestSysArgRef(a);              \n"
-"  Assert(a.val == 0);            \n"
+"  Assert(a.val == 2);            \n"
 "  a.val = 12;                    \n"
 "  TestSysArgVal(a);              \n"
 "  Assert(a.val == 12);           \n"
@@ -130,8 +130,9 @@ void TestSysArgVal(CObject obj)
 
 void TestSysArgRef(CObject &obj)
 {
-	assert(obj.val == 12);
-	obj.val = 0;
+// We're not receiving the true object, only a reference to a place holder for the output value
+	assert(obj.val == 0);
+	obj.val = 2;
 }
 
 bool Test()
@@ -158,7 +159,7 @@ bool Test()
 	engine->RegisterGlobalFunction("Object TestReturnObject()", asFUNCTION(TestReturnObject), asCALL_CDECL);
 	engine->RegisterGlobalFunction("Object &TestReturnObjectRef()", asFUNCTION(TestReturnObjectRef), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void TestSysArgVal(Object)", asFUNCTION(TestSysArgVal), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestSysArgRef(Object &inout)", asFUNCTION(TestSysArgRef), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void TestSysArgRef(Object &out)", asFUNCTION(TestSysArgRef), asCALL_CDECL);
 
 	engine->RegisterGlobalProperty("Object obj", &obj);
 

@@ -53,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        20500
+#define ANGELSCRIPT_VERSION        20600
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  5
+#define ANGELSCRIPT_VERSION_MINOR  6
 #define ANGELSCRIPT_VERSION_BUILD  0
-#define ANGELSCRIPT_VERSION_STRING "2.5.0c"
+#define ANGELSCRIPT_VERSION_STRING "2.6.0 WIP 4"
 
 // Data types
 
@@ -69,18 +69,18 @@ class asIScriptStruct;
 class asIScriptArray;
 class asIOutputStream;
 class asIBinaryStream;
-typedef unsigned long  asDWORD;
+
+typedef unsigned int   asDWORD;
+typedef unsigned short asWORD;
+typedef unsigned char  asBYTE;
+typedef unsigned int   asUINT;
 #if defined(__GNUC__) || defined(__MWERKS__)
 typedef long long asQWORD;
 #else
 typedef __int64 asQWORD;
 #endif
-typedef unsigned short asWORD;
-typedef unsigned char  asBYTE;
-typedef unsigned int   asUINT;
 
 typedef void (*asFUNCTION_t)();
-
 typedef void *(*asALLOCFUNC_t)(size_t);
 typedef void (*asFREEFUNC_t)(void *);
 
@@ -218,11 +218,14 @@ extern "C"
 	AS_API int              asContext_SetArgQWord(asIScriptContext *c, asUINT arg, asQWORD value);
 	AS_API int              asContext_SetArgFloat(asIScriptContext *c, asUINT arg, float value);
 	AS_API int              asContext_SetArgDouble(asIScriptContext *c, asUINT arg, double value);
+	AS_API int              asContext_SetArgAddress(asIScriptContext *c, asUINT arg, void *addr);
 	AS_API int              asContext_SetArgObject(asIScriptContext *c, asUINT arg, void *obj);
+	AS_API int              asContext_SetObject(asIScriptContext *c, void *obj);
 	AS_API asDWORD          asContext_GetReturnDWord(asIScriptContext *c);
 	AS_API asQWORD          asContext_GetReturnQWord(asIScriptContext *c);
 	AS_API float            asContext_GetReturnFloat(asIScriptContext *c);
 	AS_API double           asContext_GetReturnDouble(asIScriptContext *c);
+	AS_API void *           asContext_GetReturnAddress(asIScriptContext *c);
 	AS_API void *           asContext_GetReturnObject(asIScriptContext *c);
 	AS_API int              asContext_Execute(asIScriptContext *c);
 	AS_API int              asContext_Abort(asIScriptContext *c);
@@ -252,11 +255,13 @@ extern "C"
 	AS_API asQWORD          asGeneric_GetArgQWord(asIScriptGeneric *g, asUINT arg);
 	AS_API float            asGeneric_GetArgFloat(asIScriptGeneric *g, asUINT arg);
 	AS_API double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg);
+	AS_API void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg);
 	AS_API int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val);
 	AS_API int              asGeneric_SetReturnQWord(asIScriptGeneric *g, asQWORD val);
 	AS_API int              asGeneric_SetReturnFloat(asIScriptGeneric *g, float val);
 	AS_API int              asGeneric_SetReturnDouble(asIScriptGeneric *g, double val);
+	AS_API int              asGeneric_SetReturnAddress(asIScriptGeneric *g, void *addr);
 	AS_API int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj);
 
 	AS_API int  asAny_AddRef(asIScriptAny *a);
@@ -319,10 +324,7 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
-	virtual int AddScriptSection(const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0, bool makeCopy = true) = 0;
-#ifdef AS_DEPRECATED
-	virtual int Build(const char *module, asIOutputStream *out) = 0;
-#endif
+	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0, bool makeCopy = true) = 0;
 	virtual int Build(const char *module) = 0;
     virtual int Discard(const char *module) = 0;
 	virtual int ResetModule(const char *module) = 0;
@@ -410,12 +412,16 @@ public:
 	virtual int SetArgQWord(asUINT arg, asQWORD value) = 0;
 	virtual int SetArgFloat(asUINT arg, float value) = 0;
 	virtual int SetArgDouble(asUINT arg, double value) = 0;
+	virtual int SetArgAddress(asUINT arg, void *addr) = 0;
 	virtual int SetArgObject(asUINT arg, void *obj) = 0;
+
+	virtual int SetObject(void *obj) = 0;
 
 	virtual asDWORD GetReturnDWord() = 0;
 	virtual asQWORD GetReturnQWord() = 0;
 	virtual float   GetReturnFloat() = 0;
 	virtual double  GetReturnDouble() = 0;
+	virtual void   *GetReturnAddress() = 0;
 	virtual void   *GetReturnObject() = 0;
 
 	virtual int Execute() = 0;
@@ -460,12 +466,14 @@ public:
 	virtual asQWORD GetArgQWord(asUINT arg) = 0;
 	virtual float   GetArgFloat(asUINT arg) = 0;
 	virtual double  GetArgDouble(asUINT arg) = 0;
+	virtual void   *GetArgAddress(asUINT arg) = 0;
 	virtual void   *GetArgObject(asUINT arg) = 0;
 
 	virtual int     SetReturnDWord(asDWORD val) = 0;
 	virtual int     SetReturnQWord(asQWORD val) = 0;
 	virtual int     SetReturnFloat(float val) = 0;
 	virtual int     SetReturnDouble(double val) = 0;
+	virtual int     SetReturnAddress(void *addr) = 0;
 	virtual int     SetReturnObject(void *obj) = 0;
 
 protected:

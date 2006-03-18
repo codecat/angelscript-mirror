@@ -247,7 +247,7 @@ asCScriptNode *asCParser::ParseScript()
 				node->AddChildLast(ParseGlobalVar());
 			else if( IsDataType(t1.type) )
 			{
-				if( IsGlobalVar() )
+				if( IsVarDecl() )
 					node->AddChildLast(ParseGlobalVar());
 				else
 					node->AddChildLast(ParseFunction());
@@ -293,14 +293,14 @@ asCScriptNode *asCParser::ParseScript()
 	return 0;
 }
 
-bool asCParser::IsGlobalVar()
+bool asCParser::IsVarDecl()
 {
 	// Set start point so that we can rewind
 	sToken t;
 	GetToken(&t);
 	RewindTo(&t);
 	
-	// A global variable can start with a const
+	// A variable decl can start with a const
 	sToken t1;
 	GetToken(&t1);
 	if( t1.type == ttConst )
@@ -312,20 +312,23 @@ bool asCParser::IsGlobalVar()
 		return false;
 	}
 
-	// TODO: Object handles can be interleaved with the array brackets
-
+	// Object handles can be interleaved with the array brackets
 	sToken t2;
 	GetToken(&t2);
-	while( t2.type == ttOpenBracket )
+	while( t2.type == ttHandle || t2.type == ttOpenBracket )
 	{
-		GetToken(&t2);
-		if( t2.type != ttCloseBracket )
-			return false;
+		if( t2.type == ttOpenBracket )
+		{
+			GetToken(&t2);
+			if( t2.type != ttCloseBracket )
+			{
+				RewindTo(&t1);
+				return false;
+			}
+		}
+
 		GetToken(&t2);
 	}
-
-	if( t2.type == ttHandle )
-		GetToken(&t2);
 
 	if( t2.type != ttIdentifier )
 	{
@@ -365,15 +368,23 @@ bool asCParser::IsGlobalVar()
 	return false;
 }
 
-asCScriptNode *asCParser::ParseFunction()
+asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
 	asCScriptNode *node = new asCScriptNode(snFunction);
 
-	node->AddChildLast(ParseType(false));
-	if( isSyntaxError ) return node;
+	// If this is a class constructor then no return type will be declared
+	sToken t1,t2;
+	GetToken(&t1);
+	GetToken(&t2);
+	RewindTo(&t1);
+	if( !isMethod || t2.type != ttOpenParanthesis )
+	{
+		node->AddChildLast(ParseType(false));
+		if( isSyntaxError ) return node;
 
-	node->AddChildLast(ParseTypeMod(false));
-	if( isSyntaxError ) return node;
+		node->AddChildLast(ParseTypeMod(false));
+		if( isSyntaxError ) return node;
+	}
 
 	node->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return node;
@@ -414,23 +425,32 @@ asCScriptNode *asCParser::ParseStruct()
 	RewindTo(&t);
 	while( t.type != ttEndStatementBlock )
 	{
-		// Parse a property declaration
-		asCScriptNode *prop = new asCScriptNode(snDeclaration);
-		node->AddChildLast(prop);
-
-		prop->AddChildLast(ParseType(true));
-		if( isSyntaxError ) return node;
-
-		prop->AddChildLast(ParseIdentifier());
-		if( isSyntaxError ) return node;
-
-		GetToken(&t);
-		if( t.type != ttEndStatement )
+		// Is it a property or a method?
+		if( !IsVarDecl() )
 		{
-			Error(ExpectedToken(";").AddressOf(), &t);
-			return node;
+			// Parse the method
+			node->AddChildLast(ParseFunction(true));
 		}
-		prop->UpdateSourcePos(t.pos, t.length);
+		else
+		{
+			// Parse a property declaration
+			asCScriptNode *prop = new asCScriptNode(snDeclaration);
+			node->AddChildLast(prop);
+
+			prop->AddChildLast(ParseType(true));
+			if( isSyntaxError ) return node;
+
+			prop->AddChildLast(ParseIdentifier());
+			if( isSyntaxError ) return node;
+
+			GetToken(&t);
+			if( t.type != ttEndStatement )
+			{
+				Error(ExpectedToken(";").AddressOf(), &t);
+				return node;
+			}
+			prop->UpdateSourcePos(t.pos, t.length);
+		}
 
 		GetToken(&t);
 		RewindTo(&t);
@@ -532,12 +552,10 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 
 		if( isParam )
 		{
-#ifdef AS_ALLOW_UNSAFE_REFERENCES
 			GetToken(&t);
 			RewindTo(&t);
 
 			if( t.type == ttIn || t.type == ttOut || t.type == ttInOut )
-#endif
 			{
 				int tokens[3] = {ttIn, ttOut, ttInOut};
 				node->AddChildLast(ParseOneOf(tokens, 3));
@@ -953,7 +971,7 @@ asCScriptNode *asCParser::ParseStatementBlock()
 			{
 				RewindTo(&t1);
 
-				if( IsDeclaration() )
+				if( IsVarDecl() )
 					node->AddChildLast(ParseDeclaration());
 				else
 					node->AddChildLast(ParseStatement());
@@ -1101,57 +1119,6 @@ asCScriptNode *asCParser::ParseInitList()
 		}
 	}
 	return 0;
-}
-
-bool asCParser::IsDeclaration()
-{
-	sToken t1, t2;
-
-	GetToken(&t1);
-
-	if( t1.type == ttConst )
-	{
-		RewindTo(&t1);
-		return true;
-	}
-
-	if( !IsDataType(t1.type) )
-	{
-		RewindTo(&t1);
-		return false;
-	}
-
-	GetToken(&t2);
-	if( t2.type == ttIdentifier )
-	{
-		RewindTo(&t1);
-		return true;
-	}
-
-	// The data type can be followed by handle and array brackets
-	while( t2.type == ttHandle || t2.type == ttOpenBracket )
-	{
-		if( t2.type == ttOpenBracket )
-		{
-			GetToken(&t2);
-			if( t2.type != ttCloseBracket )
-			{
-				RewindTo(&t1);
-				return false;
-			}
-		}
-
-		GetToken(&t2);
-	}
-
-	if( t2.type == ttIdentifier )
-	{
-		RewindTo(&t1);
-		return true;
-	}
-
-	RewindTo(&t1);
-	return false;
 }
 
 bool asCParser::IsFunctionCall()
@@ -1506,7 +1473,7 @@ asCScriptNode *asCParser::ParseFor()
 		return node;
 	}
 
-	if( IsDeclaration() )
+	if( IsVarDecl() )
 		node->AddChildLast(ParseDeclaration());
 	else
 		node->AddChildLast(ParseExpressionStatement());
@@ -1923,7 +1890,7 @@ asCScriptNode *asCParser::ParseAssignOperator()
 
 void asCParser::GetToken(sToken *token)
 {
-	int sourceLength = script->codeLength;
+	size_t sourceLength = script->codeLength;
 
 	do
 	{
@@ -1971,6 +1938,7 @@ bool asCParser::IsRealType(int tokenType)
 		tokenType == ttInt ||
 		tokenType == ttInt8 ||
 		tokenType == ttInt16 ||
+		tokenType == ttInt64 ||
 		tokenType == ttUInt ||
 		tokenType == ttUInt8 ||
 		tokenType == ttUInt16 ||

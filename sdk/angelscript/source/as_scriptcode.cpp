@@ -60,7 +60,7 @@ int asCScriptCode::SetCode(const char *name, const char *code, bool makeCopy)
 	return SetCode(name, code, strlen(code), makeCopy);
 }
 
-int asCScriptCode::SetCode(const char *name, const char *code, int length, bool makeCopy)
+int asCScriptCode::SetCode(const char *name, const char *code, size_t length, bool makeCopy)
 {
 	this->name = name;
 	if( !sharedCode && this->code ) delete[] (char*)this->code;
@@ -80,14 +80,14 @@ int asCScriptCode::SetCode(const char *name, const char *code, int length, bool 
 
 	// Find the positions of each line
 	linePositions.PushLast(0);
-	for( int n = 0; n < length; n++ )
+	for( size_t n = 0; n < length; n++ )
 		if( code[n] == '\n' ) linePositions.PushLast(n+1);
 	linePositions.PushLast(length);
 
 	return 0;
 }
 
-void asCScriptCode::ConvertPosToRowCol(int pos, int *row, int *col)
+void asCScriptCode::ConvertPosToRowCol(size_t pos, int *row, int *col)
 {
 	if( linePositions.GetLength() == 0 ) 
 	{
@@ -97,7 +97,7 @@ void asCScriptCode::ConvertPosToRowCol(int pos, int *row, int *col)
 	}
 
 	// Do a binary search in the buffer
-	int max = linePositions.GetLength() - 1;
+	int max = (int)linePositions.GetLength() - 1;
 	int min = 0;
 	int i = max/2;
 
@@ -127,7 +127,7 @@ void asCScriptCode::ConvertPosToRowCol(int pos, int *row, int *col)
 	}
 
 	if( row ) *row = i + 1 + lineOffset;
-	if( col ) *col = pos - linePositions[i] + 1;
+	if( col ) *col = (int)(pos - linePositions[i]) + 1;
 }
 
 END_AS_NAMESPACE

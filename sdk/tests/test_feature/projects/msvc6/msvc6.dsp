@@ -286,6 +286,10 @@ SOURCE=..\..\source\test_pointer.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_postprocess.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_refargument.cpp
 # End Source File
 # Begin Source File
@@ -299,6 +303,10 @@ SOURCE=..\..\source\test_returnstring.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_saveload.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_scriptclassmethod.cpp
 # End Source File
 # Begin Source File
 

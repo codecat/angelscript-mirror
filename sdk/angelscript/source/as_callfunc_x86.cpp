@@ -53,7 +53,7 @@ int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSS
 {
 	memset(internal, 0, sizeof(asSSystemFunctionInterface));
 
-	internal->func = (asDWORD)ptr.f.func;
+	internal->func = (size_t)ptr.f.func;
 
 	asDWORD base = callConv;
 	if( !isMethod )
@@ -233,24 +233,24 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	return 0;
 }
 
-typedef asQWORD (*t_CallCDeclQW)(const asDWORD *, int, asDWORD);
-typedef asQWORD (*t_CallCDeclQWObj)(void *obj, const asDWORD *, int, asDWORD);
-typedef asDWORD (*t_CallCDeclRetByRef)(const asDWORD *, int, asDWORD, void *);
-typedef asDWORD (*t_CallCDeclObjRetByRef)(void *obj, const asDWORD *, int, asDWORD, void *);
-typedef asQWORD (*t_CallSTDCallQW)(const asDWORD *, int, asDWORD);
-typedef asQWORD (*t_CallThisCallQW)(const void *, const asDWORD *, int, asDWORD);
-typedef asDWORD (*t_CallThisCallRetByRef)(const void *, const asDWORD *, int, asDWORD, void *);
+typedef asQWORD (*t_CallCDeclQW)(const size_t *, int, size_t);
+typedef asQWORD (*t_CallCDeclQWObj)(void *obj, const size_t *, int, size_t);
+typedef asDWORD (*t_CallCDeclRetByRef)(const size_t *, int, size_t, void *);
+typedef asDWORD (*t_CallCDeclObjRetByRef)(void *obj, const size_t *, int, size_t, void *);
+typedef asQWORD (*t_CallSTDCallQW)(const size_t *, int, size_t);
+typedef asQWORD (*t_CallThisCallQW)(const void *, const size_t *, int, size_t);
+typedef asDWORD (*t_CallThisCallRetByRef)(const void *, const size_t *, int, size_t, void *);
 
 // Prototypes
-void CallCDeclFunction(const asDWORD *args, int paramSize, asDWORD func);
-void CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int paramSize, asDWORD func);
-void CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, int paramSize, asDWORD func);
-void CallCDeclFunctionRetByRef_impl(const asDWORD *args, int paramSize, asDWORD func, void *retPtr);
-void CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const asDWORD *args, int paramSize, asDWORD func, void *retPtr);
-void CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const asDWORD *args, int paramSize, asDWORD func, void *retPtr);
-void CallSTDCallFunction(const asDWORD *args, int paramSize, asDWORD func);
-void CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, asDWORD func);
-void CallThisCallFunctionRetByRef_impl(const void *, const asDWORD *, int, asDWORD, void *retPtr);
+void CallCDeclFunction(const size_t *args, int paramSize, size_t func);
+void CallCDeclFunctionObjLast(const void *obj, const size_t *args, int paramSize, size_t func);
+void CallCDeclFunctionObjFirst(const void *obj, const size_t *args, int paramSize, size_t func);
+void CallCDeclFunctionRetByRef_impl(const size_t *args, int paramSize, size_t func, void *retPtr);
+void CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr);
+void CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr);
+void CallSTDCallFunction(const size_t *args, int paramSize, size_t func);
+void CallThisCallFunction(const void *obj, const size_t *args, int paramSize, size_t func);
+void CallThisCallFunctionRetByRef_impl(const void *, const size_t *, int, size_t, void *retPtr);
 
 // Initialize function pointers
 const t_CallCDeclQW CallCDeclFunctionQWord = (t_CallCDeclQW)CallCDeclFunction;
@@ -282,7 +282,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 	void    *func              = (void*)sysFunc->func;
 	int      paramSize         = sysFunc->paramSize;
-	asDWORD *args              = context->stackPointer;
+	size_t  *args              = context->stackPointer;
 	void    *retPointer = 0;
 	void    *obj = 0;
 	asDWORD *vftable;
@@ -323,7 +323,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			}
 
 			// Add the base offset for multiple inheritance
-			obj = (void*)(int(obj) + sysFunc->baseOffset);
+			obj = (void*)(size_t(obj) + sysFunc->baseOffset);
 
 			// Don't keep a reference to the object pointer, as it is the
 			// responsibility of the application to make sure the reference
@@ -336,7 +336,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 
-	asDWORD paramBuffer[64];
+	size_t paramBuffer[64];
 	if( sysFunc->takesObjByVal )
 	{
 		paramSize = 0;
@@ -381,65 +381,65 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	switch( callConv )
 	{
 	case ICC_CDECL:
-		retQW = CallCDeclFunctionQWord(args, paramSize<<2, (asDWORD)func);
+		retQW = CallCDeclFunctionQWord(args, paramSize<<2, (size_t)func);
 		break;
 
 	case ICC_CDECL_RETURNINMEM:
-		retQW = CallCDeclFunctionRetByRef(args, paramSize<<2, (asDWORD)func, retPointer);
+		retQW = CallCDeclFunctionRetByRef(args, paramSize<<2, (size_t)func, retPointer);
 		break;
 
 	case ICC_STDCALL:
-		retQW = CallSTDCallFunctionQWord(args, paramSize<<2, (asDWORD)func);
+		retQW = CallSTDCallFunctionQWord(args, paramSize<<2, (size_t)func);
 		break;
 
 	case ICC_STDCALL_RETURNINMEM:
 		// Push the return pointer on the stack
 		paramSize++;
 		args--;
-		*args = (asDWORD)retPointer;
+		*args = (size_t)retPointer;
 
-		retQW = CallSTDCallFunctionQWord(args, paramSize<<2, (asDWORD)func);
+		retQW = CallSTDCallFunctionQWord(args, paramSize<<2, (size_t)func);
 		break;
 
 	case ICC_THISCALL:
-		retQW = CallThisCallFunctionQWord(obj, args, paramSize<<2, (asDWORD)func);
+		retQW = CallThisCallFunctionQWord(obj, args, paramSize<<2, (size_t)func);
 		break;
 
 	case ICC_THISCALL_RETURNINMEM:
-		retQW = CallThisCallFunctionRetByRef(obj, args, paramSize<<2, (asDWORD)func, retPointer);
+		retQW = CallThisCallFunctionRetByRef(obj, args, paramSize<<2, (size_t)func, retPointer);
 		break;
 
 	case ICC_VIRTUAL_THISCALL:
 		// Get virtual function table from the object pointer
 		vftable = *(asDWORD**)obj;
 
-		retQW = CallThisCallFunctionQWord(obj, args, paramSize<<2, vftable[asDWORD(func)>>2]);
+		retQW = CallThisCallFunctionQWord(obj, args, paramSize<<2, vftable[size_t(func)>>2]);
 		break;
 
 	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		// Get virtual function table from the object pointer
 		vftable = *(asDWORD**)obj;
 
-		retQW = CallThisCallFunctionRetByRef(obj, args, paramSize<<2, vftable[asDWORD(func)>>2], retPointer);
+		retQW = CallThisCallFunctionRetByRef(obj, args, paramSize<<2, vftable[size_t(func)>>2], retPointer);
 		break;
 
 	case ICC_CDECL_OBJLAST:
-		retQW = CallCDeclFunctionQWordObjLast(obj, args, paramSize<<2, (asDWORD)func);
+		retQW = CallCDeclFunctionQWordObjLast(obj, args, paramSize<<2, (size_t)func);
 		break;
 
 	case ICC_CDECL_OBJLAST_RETURNINMEM:
 		// Call the system object method as a cdecl with the obj ref as the last parameter
-		retQW = CallCDeclFunctionRetByRefObjLast(obj, args, paramSize<<2, (asDWORD)func, retPointer);
+		retQW = CallCDeclFunctionRetByRefObjLast(obj, args, paramSize<<2, (size_t)func, retPointer);
 		break;
 
 	case ICC_CDECL_OBJFIRST:
 		// Call the system object method as a cdecl with the obj ref as the first parameter
-		retQW = CallCDeclFunctionQWordObjFirst(obj, args, paramSize<<2, (asDWORD)func);
+		retQW = CallCDeclFunctionQWordObjFirst(obj, args, paramSize<<2, (size_t)func);
 		break;
 
 	case ICC_CDECL_OBJFIRST_RETURNINMEM:
 		// Call the system object method as a cdecl with the obj ref as the first parameter
-		retQW = CallCDeclFunctionRetByRefObjFirst(obj, args, paramSize<<2, (asDWORD)func, retPointer);
+		retQW = CallCDeclFunctionRetByRefObjFirst(obj, args, paramSize<<2, (size_t)func, retPointer);
 		break;
 
 	default:
@@ -480,7 +480,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		if( descr->returnType.IsObjectHandle() )
 		{
-			context->objectRegister = (void*)(asDWORD)retQW;
+			context->objectRegister = (void*)(size_t)retQW;
 
 			if( sysFunc->returnAutoHandle && context->objectRegister )
 				engine->CallObjectMethod(context->objectRegister, descr->returnType.GetObjectType()->beh.addref);
@@ -543,7 +543,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 }
 
 
-void CallCDeclFunction(const asDWORD *args, int paramSize, asDWORD func)
+void CallCDeclFunction(const size_t *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -601,7 +601,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int paramSize, asDWORD func)
+void CallCDeclFunctionObjLast(const void *obj, const size_t *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -665,7 +665,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, int paramSize, asDWORD func)
+void CallCDeclFunctionObjFirst(const void *obj, const size_t *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -729,7 +729,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const asDWORD *args, int paramSize, asDWORD func, void *retPtr)
+void CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -806,7 +806,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionRetByRef_impl(const asDWORD *args, int paramSize, asDWORD func, void *retPtr)
+void CallCDeclFunctionRetByRef_impl(const size_t *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -875,7 +875,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const asDWORD *args, int paramSize, asDWORD func, void *retPtr)
+void CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -950,7 +950,7 @@ endcopy:
 #endif
 }
 
-void CallSTDCallFunction(const asDWORD *args, int paramSize, asDWORD func)
+void CallSTDCallFunction(const size_t *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -1007,7 +1007,7 @@ endcopy:
 }
 
 
-void CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, asDWORD func)
+void CallThisCallFunction(const void *obj, const size_t *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -1082,7 +1082,7 @@ endcopy:
 #endif
 }
 
-void CallThisCallFunctionRetByRef_impl(const void *obj, const asDWORD *args, int paramSize, asDWORD func, void *retPtr)
+void CallThisCallFunctionRetByRef_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 

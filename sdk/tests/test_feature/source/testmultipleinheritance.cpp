@@ -54,12 +54,12 @@ bool TestMultipleInheritance()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	// Register the CDerived class
-	r = engine->RegisterObjectType("class", 0, 0);
-	r = engine->RegisterObjectMethod("class", "void CallMe1()", asMETHOD(CDerivedMultiple, CallMe1), asCALL_THISCALL);
-	r = engine->RegisterObjectMethod("class", "void CallMe2()", asMETHOD(CDerivedMultiple, CallMe2), asCALL_THISCALL);
+	r = engine->RegisterObjectType("class1", 0, 0);
+	r = engine->RegisterObjectMethod("class1", "void CallMe1()", asMETHOD(CDerivedMultiple, CallMe1), asCALL_THISCALL);
+	r = engine->RegisterObjectMethod("class1", "void CallMe2()", asMETHOD(CDerivedMultiple, CallMe2), asCALL_THISCALL);
 	
 	// Register the global CDerived object
-	r = engine->RegisterGlobalProperty("class d", &d);
+	r = engine->RegisterGlobalProperty("class1 d", &d);
 
 	COutStream out;
 	engine->SetCommonMessageStream(&out);

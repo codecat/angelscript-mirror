@@ -52,7 +52,7 @@ int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSS
 {
 	memset(internal, 0, sizeof(asSSystemFunctionInterface));
 
-	internal->func = (asDWORD)ptr.f.func;
+	internal->func = (size_t)ptr.f.func;
 
 	int base = callConv;
 	if( !isMethod )

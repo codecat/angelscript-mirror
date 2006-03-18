@@ -114,7 +114,7 @@ protected:
 	asCScriptNode *ParseScript();
 	asCScriptNode *ParseType(bool allowConst);
 	asCScriptNode *ParseTypeMod(bool isParam);
-	asCScriptNode *ParseFunction();
+	asCScriptNode *ParseFunction(bool isMethod = false);
 	asCScriptNode *ParseGlobalVar();
 	asCScriptNode *ParseParameterList();
 	asCScriptNode *ParseStatementBlock();
@@ -151,8 +151,7 @@ protected:
 	asCScriptNode *ParseStruct();
 	asCScriptNode *ParseInitList();
 
-	bool IsGlobalVar();
-	bool IsDeclaration();
+	bool IsVarDecl();
 	bool IsRealType(int tokenType);
 	bool IsDataType(int tokenType);
 	bool IsOperator(int tokenType);
@@ -174,7 +173,7 @@ protected:
 	asCScriptNode *scriptNode;
 
 	asCTokenizer tokenizer;
-	int          sourcePos;
+	size_t       sourcePos;
 };
 
 END_AS_NAMESPACE

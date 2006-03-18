@@ -46,14 +46,14 @@ bool TestVirtualMethod()
 	
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	r = engine->RegisterObjectType("class", 0, 0);
-	r = engine->RegisterObjectMethod("class", "void CallMe()", asMETHOD(CBase, CallMe), asCALL_THISCALL);
+	r = engine->RegisterObjectType("class1", 0, 0);
+	r = engine->RegisterObjectMethod("class1", "void CallMe()", asMETHOD(CBase, CallMe), asCALL_THISCALL);
 	
 	// We must register the property as a pointer to the base class since
 	// all registered methods are taken from the base class. This is 
 	// especially important when there is multiple or virtual inheritance
-	r = engine->RegisterGlobalProperty("class b", &b);
-	r = engine->RegisterGlobalProperty("class d", (CBase*)&d);
+	r = engine->RegisterGlobalProperty("class1 b", &b);
+	r = engine->RegisterGlobalProperty("class1 d", (CBase*)&d);
 
 	COutStream out;
 	engine->SetCommonMessageStream(&out);

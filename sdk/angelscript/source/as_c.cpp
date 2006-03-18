@@ -127,11 +127,14 @@ int              asContext_SetArgDWord(asIScriptContext *c, asUINT arg, asDWORD 
 int              asContext_SetArgQWord(asIScriptContext *c, asUINT arg, asQWORD value)                         { return c->SetArgQWord(arg, value); }
 int              asContext_SetArgFloat(asIScriptContext *c, asUINT arg, float value)                           { return c->SetArgFloat(arg, value); }
 int              asContext_SetArgDouble(asIScriptContext *c, asUINT arg, double value)                         { return c->SetArgDouble(arg, value); }
+int              asContext_SetArgAddress(asIScriptContext *c, asUINT arg, void *addr)						   { return c->SetArgAddress(arg, addr); }
 int              asContext_SetArgObject(asIScriptContext *c, asUINT arg, void *obj)                            { return c->SetArgObject(arg, obj); }
+int              asContext_SetObject(asIScriptContext *c, void *obj)										   { return c->SetObject(obj); }
 asDWORD          asContext_GetReturnDWord(asIScriptContext *c)                                                 { return c->GetReturnDWord(); }
 asQWORD          asContext_GetReturnQWord(asIScriptContext *c)                                                 { return c->GetReturnQWord(); }
 float            asContext_GetReturnFloat(asIScriptContext *c)                                                 { return c->GetReturnFloat(); }
 double           asContext_GetReturnDouble(asIScriptContext *c)                                                { return c->GetReturnDouble(); }
+void *           asContext_GetReturnAddress(asIScriptContext *c)											   { return c->GetReturnAddress(); }
 void *           asContext_GetReturnObject(asIScriptContext *c)                                                { return c->GetReturnObject(); }
 int              asContext_Execute(asIScriptContext *c)                                                        { return c->Execute(); }
 int              asContext_Abort(asIScriptContext *c)                                                          { return c->Abort(); }
@@ -161,11 +164,13 @@ asDWORD          asGeneric_GetArgDWord(asIScriptGeneric *g, asUINT arg)     { re
 asQWORD          asGeneric_GetArgQWord(asIScriptGeneric *g, asUINT arg)     { return g->GetArgQWord(arg); }
 float            asGeneric_GetArgFloat(asIScriptGeneric *g, asUINT arg)     { return g->GetArgFloat(arg); }
 double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg)    { return g->GetArgDouble(arg); }
+void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg)   { return g->GetArgAddress(arg); }
 void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg)    { return g->GetArgObject(arg); }
 int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val) { return g->SetReturnDWord(val); }
 int              asGeneric_SetReturnQWord(asIScriptGeneric *g, asQWORD val) { return g->SetReturnQWord(val); }
 int              asGeneric_SetReturnFloat(asIScriptGeneric *g, float val)   { return g->SetReturnFloat(val); }
 int              asGeneric_SetReturnDouble(asIScriptGeneric *g, double val) { return g->SetReturnDouble(val); }
+int              asGeneric_SetReturnAddress(asIScriptGeneric *g, void *addr) { return g->SetReturnAddress(addr); }
 int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj)  { return g->SetReturnObject(obj); }
 
 int  asAny_AddRef(asIScriptAny *a)                          { return a->AddRef(); }

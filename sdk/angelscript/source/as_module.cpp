@@ -83,7 +83,7 @@ int asCModule::AddScriptSection(const char *name, const char *code, int codeLeng
 	if( !builder )
 		builder = new asCBuilder(engine, this);
 
-	builder->AddCode(name, code, codeLength, lineOffset, builder->scripts.GetLength(), makeCopy);
+	builder->AddCode(name, code, codeLength, lineOffset, (int)builder->scripts.GetLength(), makeCopy);
 
 	return asSUCCESS;
 }
@@ -297,7 +297,7 @@ int asCModule::GetImportedFunctionCount()
 	if( isBuildWithoutErrors == false )
 		return asERROR;
 
-	return importedFunctions.GetLength();
+	return (int)importedFunctions.GetLength();
 }
 
 int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
@@ -349,7 +349,7 @@ int asCModule::GetFunctionCount()
 	if( isBuildWithoutErrors == false )
 		return asERROR;
 
-	return scriptFunctions.GetLength();
+	return (int)scriptFunctions.GetLength();
 }
 
 int asCModule::GetFunctionIDByDecl(const char *decl)
@@ -403,7 +403,7 @@ int asCModule::GetGlobalVarCount()
 	if( isBuildWithoutErrors == false )
 		return asERROR;
 
-	return scriptGlobals.GetLength();
+	return (int)scriptGlobals.GetLength();
 }
 
 int asCModule::GetGlobalVarIDByName(const char *name)
@@ -474,7 +474,7 @@ int asCModule::AddConstantString(const char *str, asUINT len)
 	// No match was found, add the string
 	stringConstants.PushLast(cstr);
 
-	return stringConstants.GetLength() - 1;
+	return (int)stringConstants.GetLength() - 1;
 }
 
 const asCString &asCModule::GetConstantString(int id)
@@ -484,15 +484,15 @@ const asCString &asCModule::GetConstantString(int id)
 
 int asCModule::GetNextFunctionId()
 {
-	return scriptFunctions.GetLength();
+	return (int)scriptFunctions.GetLength();
 }
 
 int asCModule::GetNextImportedFunctionId()
 {
-	return FUNC_IMPORTED | importedFunctions.GetLength();
+	return FUNC_IMPORTED | (asUINT)importedFunctions.GetLength();
 }
 
-int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount)
+int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, asCObjectType *objType)
 {
 	assert(id >= 0);
 
@@ -507,7 +507,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 		func->parameterTypes.PushLast(params[n]);
 		func->inOutFlags.PushLast(inOutFlags[n]);
 	}
-	func->objectType = 0;
+	func->objectType = objType;
 
 	scriptFunctions.PushLast(func);
 
@@ -569,9 +569,9 @@ asCScriptFunction *asCModule::GetSpecialFunction(int funcID)
 
 int asCModule::AllocGlobalMemory(int size)
 {
-	int index = globalMem.GetLength();
+	int index = (int)globalMem.GetLength();
 
-	asDWORD *start = globalMem.AddressOf();
+	size_t *start = globalMem.AddressOf();
 
 	globalMem.SetLength(index + size);
 
@@ -579,7 +579,7 @@ int asCModule::AllocGlobalMemory(int size)
 	for( asUINT n = 0; n < globalVarPointers.GetLength(); n++ )
 	{
 		if( globalVarPointers[n] >= start && globalVarPointers[n] < (start+index) )
-			globalVarPointers[n] = &globalMem[0] + (int(globalVarPointers[n]) - int(start))/sizeof(void*);
+			globalVarPointers[n] = &globalMem[0] + (size_t(globalVarPointers[n]) - size_t(start))/sizeof(void*);
 	}
 
 	return index;
@@ -862,7 +862,7 @@ int asCModule::GetGlobalVarIndex(int propIdx)
 			return n;
 
 	globalVarPointers.PushLast(ptr);
-	return globalVarPointers.GetLength()-1;
+	return (int)globalVarPointers.GetLength()-1;
 }
 
 END_AS_NAMESPACE

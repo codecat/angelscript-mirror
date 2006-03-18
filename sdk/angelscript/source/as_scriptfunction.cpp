@@ -117,7 +117,7 @@ int asCScriptFunction::GetLineNumber(int programPosition)
 	if( lineNumbers.GetLength() == 0 ) return 0;
 
 	// Do a binary search in the buffer
-	int max = lineNumbers.GetLength()/2 - 1;
+	int max = (int)lineNumbers.GetLength()/2 - 1;
 	int min = 0;
 	int i = max/2;
 

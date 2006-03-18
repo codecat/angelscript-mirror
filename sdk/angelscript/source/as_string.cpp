@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -70,7 +70,7 @@ asCString::asCString(const char *str)
 	bufferSize = 0;
 	buffer = 0;
 
-	int len = strlen(str);
+	size_t len = strlen(str);
 	Assign(str, len);
 }
 
@@ -151,7 +151,7 @@ void asCString::Assign(const char *str, asUINT len)
 
 asCString &asCString::operator =(const char *str)
 {
-	int len = str ? strlen(str) : 0;
+	size_t len = str ? strlen(str) : 0;
 	Assign(str, len);
 
 	return *this;
@@ -171,7 +171,7 @@ asCString &asCString::operator =(char ch)
 	return *this;
 }
 
-void asCString::Concatenate(const char *str, asUINT len)
+void asCString::Concatenate(const char *str, size_t len)
 {
 	// Allocate memory for the string
 	if( bufferSize < length + len + 1 )
@@ -184,7 +184,7 @@ void asCString::Concatenate(const char *str, asUINT len)
 
 asCString &asCString::operator +=(const char *str)
 {
-	int len = strlen(str);
+	size_t len = strlen(str);
 	Concatenate(str, len);
 
 	return *this;
@@ -204,13 +204,13 @@ asCString &asCString::operator +=(char ch)
 	return *this;
 }
 
-asUINT asCString::GetLength() const
+size_t asCString::GetLength() const
 {
 	return length;
 }
 
 // Returns the length
-int asCString::Format(const char *format, ...)
+size_t asCString::Format(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -224,7 +224,7 @@ int asCString::Format(const char *format, ...)
 	}
 	else
 	{
-		int n = 512;
+		size_t n = 512;
 		asCString str; // Use temporary string in case the current buffer is a parameter
 		str.Allocate(n, false);
 
@@ -242,26 +242,26 @@ int asCString::Format(const char *format, ...)
 	return length;
 }
 
-char &asCString::operator [](asUINT index) 
+char &asCString::operator [](size_t index) 
 {
 	assert(index < length);
 
 	return buffer[index];
 }
 
-const char &asCString::operator [](asUINT index) const
+const char &asCString::operator [](size_t index) const
 {
 	assert(index < length);
 
 	return buffer[index];
 }
 
-asCString asCString::SubString(asUINT start, int length) const
+asCString asCString::SubString(size_t start, size_t length) const
 {
 	if( start >= GetLength() || length == 0 )
 		return asCString("");
 
-	if( length == -1 ) length = GetLength() - start;
+	if( length == (size_t)(-1) ) length = GetLength() - start;
 
 	asCString tmp;
 	tmp.Assign(buffer + start, length);
@@ -310,7 +310,7 @@ int asCString::Compare(const char *str, asUINT len) const
 	return result;
 }
 
-int asCString::RecalculateLength()
+size_t asCString::RecalculateLength()
 {
 	if( buffer == 0 ) Assign("", 0);
 	length = strlen(buffer);

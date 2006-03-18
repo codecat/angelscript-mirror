@@ -48,13 +48,13 @@
 
 #define TXT_BOTH_MUST_BE_SAME             "Both expressions must have the same type"
 
-#define TXT_CANT_GUARANTEE_REF            "Cannot guarantee safety of reference. Copy the value to a local variable first"
 #define TXT_CANT_IMPLICITLY_CONVERT_s_TO_s "Can't implicitly convert from '%s' to '%s'."
 #define TXT_CANT_RETURN_VALUE             "Can't return value when return type is 'void'"
 #define TXT_CHANGE_SIGN_u_d               "Implicit conversion changed sign of value, %u -> %d."
 #define TXT_CHANGE_SIGN_d_u               "Implicit conversion changed sign of value, %d -> %u."
 #define TXT_COMPILING_s                   "Compiling %s"
 #define TXT_CONST_NOT_PRIMITIVE           "Only primitives may be declared as const"
+#define TXT_CONSTRUCTOR_NAME_ERROR        "The constructor name must be the same as the class"
 
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
@@ -133,6 +133,7 @@
 #define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP "Type '%s' doesn't support the indexing operator"
 #define TXT_OBJECT_DOESNT_SUPPORT_NEGATE_OP "Object doesn't have the negate operator"
 #define TXT_OBJECT_HANDLE_NOT_SUPPORTED   "Object handle is not supported for this type"
+#define TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT "Only object types that support object handles can use &inout. Use &in or &out instead"
 #define TXT_ONLY_ONE_ARGUMENT_IN_CAST     "There is only one argument in a cast"
 
 #define TXT_PARAMETER_ALREADY_DECLARED    "Parameter already declared"

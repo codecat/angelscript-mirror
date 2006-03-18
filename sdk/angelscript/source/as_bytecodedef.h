@@ -223,6 +223,13 @@ enum bcInstr
 	BC_LABEL		= 255
 };
 
+#ifdef AS_64BIT_PTR
+	#define BC_RDSPTR BC_RDS8
+#else
+	#define BC_RDSPTR BC_RDS4
+#endif
+
+
 //------------------------------------------------------------
 // Relocation Table
 extern asDWORD relocTable[BC_MAXBYTECODE];
@@ -247,6 +254,15 @@ const int BCTYPE_rW_rW_ARG    = 14;
 const int BCTYPE_W_rW_ARG     = 15;
 const int BCTYPE_wW_W_ARG     = 16;
 const int BCTYPE_W_DW_ARG     = 17;
+const int BCTYPE_QW_DW_ARG    = 18;
+
+#ifndef AS_64BIT_PTR
+	#define BCTYPE_PTR_ARG    BCTYPE_DW_ARG
+	#define BCTYPE_PTR_DW_ARG BCTYPE_DW_DW_ARG
+#else
+	#define BCTYPE_PTR_ARG    BCTYPE_QW_ARG
+	#define BCTYPE_PTR_DW_ARG BCTYPE_QW_DW_ARG
+#endif
 
 const int BCT_POP       = BCTYPE_W_ARG;       
 const int BCT_PUSH      = BCTYPE_W_ARG;
@@ -321,18 +337,18 @@ const int BCT_STR       = BCTYPE_W_ARG;
 const int BCT_CALLSYS   = BCTYPE_DW_ARG;
 const int BCT_CALLBND   = BCTYPE_DW_ARG;
 const int BCT_SUSPEND   = BCTYPE_NO_ARG;
-const int BCT_ALLOC     = BCTYPE_DW_DW_ARG;
-const int BCT_FREE      = BCTYPE_DW_ARG;
+const int BCT_ALLOC     = BCTYPE_PTR_DW_ARG;
+const int BCT_FREE      = BCTYPE_PTR_ARG;
 const int BCT_LOADOBJ   = BCTYPE_rW_ARG;
 const int BCT_STOREOBJ  = BCTYPE_wW_ARG;
 const int BCT_GETOBJ    = BCTYPE_W_ARG;
-const int BCT_REFCPY    = BCTYPE_DW_ARG;
+const int BCT_REFCPY    = BCTYPE_PTR_ARG;
 const int BCT_CHKREF    = BCTYPE_NO_ARG;
 const int BCT_GETOBJREF = BCTYPE_W_ARG;
 const int BCT_GETREF    = BCTYPE_W_ARG;
 const int BCT_SWAP48    = BCTYPE_NO_ARG;
 const int BCT_SWAP84    = BCTYPE_NO_ARG;
-const int BCT_OBJTYPE   = BCTYPE_DW_ARG;
+const int BCT_OBJTYPE   = BCTYPE_PTR_ARG;
 const int BCT_TYPEID    = BCTYPE_DW_ARG;
 const int BCT_SetV4     = BCTYPE_wW_DW_ARG;
 const int BCT_SetV8     = BCTYPE_wW_QW_ARG;
@@ -599,145 +615,145 @@ const int bcTypes[256] =
 
 const int bcStackInc[256] =
 {
-	0xFFFF,	// BC_POP
-	0xFFFF,	// BC_PUSH
-	1,		// BC_PshC4
-	1,		// BC_PshV4
-	1,		// BC_PSF
-	0,      // BC_SWAP4
-	0,		// BC_NOT
-	1,		// BC_PshG4
-	0,		// BC_LdGRdR4
-	0xFFFF,	// BC_CALL
-	0xFFFF,	// BC_RET
-	0,		// BC_JMP
-	0,		// BC_JZ
-	0,		// BC_JNZ
-	0,		// BC_JS
-	0,		// BC_JNS
-	0,		// BC_JP
-	0,		// BC_JNP
-	0,		// BC_TZ
-	0,		// BC_TNZ
-	0,		// BC_TS
-	0,		// BC_TNS
-	0,		// BC_TP
-	0,		// BC_TNP
-	0,		// BC_NEGi
-	0,		// BC_NEGf
-	0,		// BC_NEGd
-	0,		// BC_INCi16
-	0,		// BC_INCi8
-	0,		// BC_DECi16
-	0,		// BC_DECi8
-	0,		// BC_INCi
-	0,		// BC_DECi
-	0,		// BC_INCf
-	0,		// BC_DECf
-	0,		// BC_INCd
-	0,		// BC_DECd
-	0,		// BC_IncVi
-	0,		// BC_DecVi
-	0,		// BC_BNOT
-	0,		// BC_BAND
-	0,		// BC_BOR
-	0,		// BC_BXOR
-	0,		// BC_BSLL
-	0,		// BC_BSRL
-	0,		// BC_BSRA
-	-1,		// BC_COPY
-	2,		// BC_SET8
-	1,		// BC_RD8
-	0,		// BC_SWAP8
-	0,		// BC_CMPd
-	0,		// BC_CMPu
-	0,		// BC_CMPf
-	0,		// BC_CMPi
-	0,      // BC_CMPIi
-	0,      // BC_CMPIf
-	0,      // BC_CMPIu
-	0,		// BC_JMPP
-	-1,		// BC_PopRPtr	TODO: Adapt pointer size
-	1,		// BC_PshRPtr	TODO: Adapt pointer size
-	2,		// BC_STR
-	0xFFFF,	// BC_CALLSYS
-	0xFFFF,	// BC_CALLBND
-	0,		// BC_SUSPEND
-	0xFFFF,	// BC_ALLOC
-	-1,		// BC_FREE
-	0,		// BC_LOADOBJ
-	0,		// BC_STOREOBJ
-	0,		// BC_GETOBJ
-	-1,		// BC_REFCPY
-	0,		// BC_CHKREF
-	0,		// BC_GETOBJREF
-	0,		// BC_GETREF
-	0,		// BC_SWAP48
-	0,		// BC_SWAP84
-	1,		// BC_OBJTYPE
-	1,		// BC_TYPEID
-	0,		// BC_SetV4
-	0,      // BC_SetV8
-	0,		// BC_ADDSi
-	0,		// BC_CpyVtoV4
-	0,		// BC_CpyVtoV8
-	0,		// BC_CpyVtoR4
-	0,		// BC_CpyVtoR8
-	0,		// BC_CpyVtoG4
-	0,		// BC_CpyRtoV4
-	0,		// BC_CpyRtoV8
-	0,		// BC_CpyGtoV4
-	0,		// BC_WRTV1
-	0,		// BC_WRTV2
-	0,		// BC_WRTV4
-	0,		// BC_WRTV8
-	0,		// BC_RDR1
-	0,		// BC_RDR2
-	0,		// BC_RDR4
-	0,		// BC_RDR8
-	0,		// BC_LDG
-	0,		// BC_LDV
-	1,		// BC_PGA
-	0,		// BC_RDS4
-	1,		// BC_VAR
-	0,		// BC_iTOf	
-	0,		// BC_fTOi	
-	0,		// BC_uTOf	
-	0,		// BC_fTOu	
-	0,		// BC_sbTOi	
-	0,		// BC_swTOi	
-	0,		// BC_ubTOi	
-	0,		// BC_uwTOi	
-	0,		// BC_dTOi 
-	0,		// BC_dTOu 
-	0,		// BC_dTOf 
-	0,		// BC_iTOd 
-	0,		// BC_iTOd
-	0,		// BC_fTOd 
-	0,		// BC_ADDi
-	0,		// BC_SUBi
-	0,		// BC_MULi
-	0,		// BC_DIVi
-	0,		// BC_MODi
-	0,		// BC_ADDf
-	0,		// BC_SUBf
-	0,		// BC_MULf
-	0,		// BC_DIVf
-	0,		// BC_MODf
-	0,		// BC_ADDd
-	0,		// BC_SUBd
-	0,		// BC_MULd
-	0,		// BC_DIVd
-	0,		// BC_MODd
-	0,		// BC_ADDIi
-	0,		// BC_SUBIi
-	0,		// BC_MULIi
-	0,		// BC_ADDIf
-	0,		// BC_SUBIf
-	0,		// BC_MULIf
-	0,		// BC_SetG4
-	0,		// BC_ChkRefS
-	0,		// BC_ChkNullV
+	0xFFFF,		// BC_POP
+	0xFFFF,		// BC_PUSH
+	1,			// BC_PshC4
+	1,			// BC_PshV4
+	PTR_SIZE,	// BC_PSF
+	0,			// BC_SWAP4
+	0,			// BC_NOT
+	1,			// BC_PshG4
+	0,			// BC_LdGRdR4
+	0xFFFF,		// BC_CALL
+	0xFFFF,		// BC_RET
+	0,			// BC_JMP
+	0,			// BC_JZ
+	0,			// BC_JNZ
+	0,			// BC_JS
+	0,			// BC_JNS
+	0,			// BC_JP
+	0,			// BC_JNP
+	0,			// BC_TZ
+	0,			// BC_TNZ
+	0,			// BC_TS
+	0,			// BC_TNS
+	0,			// BC_TP
+	0,			// BC_TNP
+	0,			// BC_NEGi
+	0,			// BC_NEGf
+	0,			// BC_NEGd
+	0,			// BC_INCi16
+	0,			// BC_INCi8
+	0,			// BC_DECi16
+	0,			// BC_DECi8
+	0,			// BC_INCi
+	0,			// BC_DECi
+	0,			// BC_INCf
+	0,			// BC_DECf
+	0,			// BC_INCd
+	0,			// BC_DECd
+	0,			// BC_IncVi
+	0,			// BC_DecVi
+	0,			// BC_BNOT
+	0,			// BC_BAND
+	0,			// BC_BOR
+	0,			// BC_BXOR
+	0,			// BC_BSLL
+	0,			// BC_BSRL
+	0,			// BC_BSRA
+	-1,			// BC_COPY
+	2,			// BC_SET8
+	2-PTR_SIZE,	// BC_RDS8
+	0,			// BC_SWAP8
+	0,			// BC_CMPd
+	0,			// BC_CMPu
+	0,			// BC_CMPf
+	0,			// BC_CMPi
+	0,			// BC_CMPIi
+	0,			// BC_CMPIf
+	0,			// BC_CMPIu
+	0,			// BC_JMPP
+	-PTR_SIZE,	// BC_PopRPtr
+	PTR_SIZE,	// BC_PshRPtr
+	1+PTR_SIZE,	// BC_STR
+	0xFFFF,		// BC_CALLSYS
+	0xFFFF,		// BC_CALLBND
+	0,			// BC_SUSPEND
+	0xFFFF,		// BC_ALLOC
+	-PTR_SIZE,	// BC_FREE
+	0,			// BC_LOADOBJ
+	0,			// BC_STOREOBJ
+	0,			// BC_GETOBJ
+	-PTR_SIZE,	// BC_REFCPY
+	0,			// BC_CHKREF
+	0,			// BC_GETOBJREF
+	0,			// BC_GETREF
+	0,			// BC_SWAP48
+	0,			// BC_SWAP84
+	PTR_SIZE,	// BC_OBJTYPE
+	1,			// BC_TYPEID
+	0,			// BC_SetV4
+	0,			// BC_SetV8
+	0,			// BC_ADDSi
+	0,			// BC_CpyVtoV4
+	0,			// BC_CpyVtoV8
+	0,			// BC_CpyVtoR4
+	0,			// BC_CpyVtoR8
+	0,			// BC_CpyVtoG4
+	0,			// BC_CpyRtoV4
+	0,			// BC_CpyRtoV8
+	0,			// BC_CpyGtoV4
+	0,			// BC_WRTV1
+	0,			// BC_WRTV2
+	0,			// BC_WRTV4
+	0,			// BC_WRTV8
+	0,			// BC_RDR1
+	0,			// BC_RDR2
+	0,			// BC_RDR4
+	0,			// BC_RDR8
+	0,			// BC_LDG
+	0,			// BC_LDV
+	PTR_SIZE,	// BC_PGA
+	1-PTR_SIZE,	// BC_RDS4
+	PTR_SIZE,	// BC_VAR
+	0,			// BC_iTOf	
+	0,			// BC_fTOi	
+	0,			// BC_uTOf	
+	0,			// BC_fTOu	
+	0,			// BC_sbTOi	
+	0,			// BC_swTOi	
+	0,			// BC_ubTOi	
+	0,			// BC_uwTOi	
+	0,			// BC_dTOi 
+	0,			// BC_dTOu 
+	0,			// BC_dTOf 
+	0,			// BC_iTOd 
+	0,			// BC_iTOd
+	0,			// BC_fTOd 
+	0,			// BC_ADDi
+	0,			// BC_SUBi
+	0,			// BC_MULi
+	0,			// BC_DIVi
+	0,			// BC_MODi
+	0,			// BC_ADDf
+	0,			// BC_SUBf
+	0,			// BC_MULf
+	0,			// BC_DIVf
+	0,			// BC_MODf
+	0,			// BC_ADDd
+	0,			// BC_SUBd
+	0,			// BC_MULd
+	0,			// BC_DIVd
+	0,			// BC_MODd
+	0,			// BC_ADDIi
+	0,			// BC_SUBIi
+	0,			// BC_MULIi
+	0,			// BC_ADDIf
+	0,			// BC_SUBIf
+	0,			// BC_MULIf
+	0,			// BC_SetG4
+	0,			// BC_ChkRefS
+	0,			// BC_ChkNullV
 	0,
 	0,
 	0,

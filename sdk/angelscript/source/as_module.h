@@ -104,13 +104,13 @@ public:
 
 	bool IsUsed();
 
-	int AddConstantString(const char *str, asUINT length);
+	int AddConstantString(const char *str, size_t length);
 	const asCString &GetConstantString(int id);
 
 	int AllocGlobalMemory(int size);
 
 	int GetNextFunctionId();
-	int AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount);
+	int AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, asCObjectType *objType = 0);
 	int AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, int moduleNameStringID);
 
 	bool CanDeleteAllReferences(asCArray<asCModule*> &modules);
@@ -160,7 +160,7 @@ public:
 	asCArray<sBindInfo> bindInformations;
 
 	asCArray<asCProperty *> scriptGlobals;
-	asCArray<asDWORD> globalMem;
+	asCArray<size_t> globalMem;
 
 	asCArray<void*> globalVarPointers;
 

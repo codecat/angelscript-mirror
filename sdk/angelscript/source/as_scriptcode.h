@@ -52,17 +52,17 @@ public:
 	~asCScriptCode();
 
 	int SetCode(const char *name, const char *code, bool makeCopy);
-	int SetCode(const char *name, const char *code, int length, bool makeCopy);
+	int SetCode(const char *name, const char *code, size_t length, bool makeCopy);
 
-	void ConvertPosToRowCol(int pos, int *row, int *col);
+	void ConvertPosToRowCol(size_t pos, int *row, int *col);
 
 	asCString name;
 	const char *code;
-	int   codeLength;
+	size_t   codeLength;
 	bool  sharedCode;
 	int idx;
 	int lineOffset;
-	asCArray<int> linePositions;
+	asCArray<size_t> linePositions;
 };
 
 END_AS_NAMESPACE

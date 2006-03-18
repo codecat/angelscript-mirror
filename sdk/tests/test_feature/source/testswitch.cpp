@@ -37,22 +37,22 @@ static const char *script =
 static const char *script2 =
 "const int a = 1;                   \n"
 "const int8 b = 2;                  \n"
-"void _switch()                     \n"  
-"{                                  \n"  
-"  const uint c = 3;                \n" 
-"  for( uint8 n = 0; n <= 5; ++n )  \n"  
-"  {                                \n"  
-"    switch( n )                    \n"  
-"    {                              \n"  
-"    case 5: Log(\"5\"); break;     \n"  
-"    case 4: Log(\"4\"); break;     \n"  
-"    case c: Log(\"3\"); break;     \n"  
-"    case b: Log(\"2\"); break;     \n"  
-"    case a: Log(\"1\"); break;     \n"  
-"    default: Log(\"d\"); break;    \n"  
-"    }                              \n"  
-"  }                                \n"  
-"}                                  \n"; 
+"void _switch()                     \n"
+"{                                  \n"
+"  const uint c = 3;                \n"
+"  for( uint8 n = 0; n <= 5; ++n )  \n"
+"  {                                \n"
+"    switch( n )                    \n"
+"    {                              \n"
+"    case 5: Log(\"5\"); break;     \n"
+"    case 4: Log(\"4\"); break;     \n"
+"    case c: Log(\"3\"); break;     \n"
+"    case b: Log(\"2\"); break;     \n"
+"    case a: Log(\"1\"); break;     \n"
+"    default: Log(\"d\"); break;    \n"
+"    }                              \n"
+"  }                                \n"
+"}                                  \n";
 
 static int sum = 0;
 

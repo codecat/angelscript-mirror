@@ -153,6 +153,22 @@ bool TestGlobalVar()
 
 	engine->Release();
 
+	//--------------------
+
+	asIScriptArray *gPacketData = 0;
+	unsigned int gPacketLength = 0;
+	int r;
+
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	r = engine->RegisterGlobalProperty("uint gPacketLength", &gPacketLength); assert( r >= 0 );
+	r = engine->RegisterGlobalProperty("uint8[] @gPacketData", &gPacketData); assert( r >= 0 );
+	engine->Release();
+
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	r = engine->RegisterGlobalProperty("uint8[] @gPacketData", &gPacketData); assert( r >= 0 );
+	r = engine->RegisterGlobalProperty("uint gPacketLength", &gPacketLength); assert( r >= 0 );
+	engine->Release();
+
 	return ret;
 }
 

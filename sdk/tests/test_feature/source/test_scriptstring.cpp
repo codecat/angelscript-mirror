@@ -11,21 +11,23 @@ static string printOutput;
 
 // This function receives the string by reference
 // (in fact it is a reference to copy of the string)
-static void PrintString(asCScriptString &str)
+static void PrintString(asIScriptGeneric *gen)
 {
-	printOutput = str.buffer;
+	asCScriptString *str = (asCScriptString*)gen->GetArgAddress(0);
+	printOutput = str->buffer;
 }
 
 // This function shows how to receive an 
 // object handle from the script engine
-static void SetString(asCScriptString *str)
+static void SetString(asIScriptGeneric *gen)
 {
+	asCScriptString *str = (asCScriptString*)gen->GetArgAddress(0);
 	if( str )
 	{
 		str->buffer = "Handle to a string";
 
-		// Release the string before returning
-		str->Release();
+		// The generic interface will release the handle in the parameter for us
+		// str->Release();
 	}
 }
 
@@ -92,9 +94,9 @@ bool Test()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
-	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_CDECL);
+	RegisterScriptString_Generic(engine);
+	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
 
 	COutStream out;
 	engine->SetCommonMessageStream(&out);

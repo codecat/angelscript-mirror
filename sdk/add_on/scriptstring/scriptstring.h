@@ -47,6 +47,10 @@ protected:
 // functions for the scripts to use this type
 void RegisterScriptString(asIScriptEngine *engine);
 
+// Use this one instead if native calling conventions 
+// are not supported on the target platform
+void RegisterScriptString_Generic(asIScriptEngine *engine);
+
 END_AS_NAMESPACE
 
 #endif

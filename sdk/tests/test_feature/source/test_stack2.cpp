@@ -212,7 +212,7 @@ bool Test()
 	if( str != "outparm" ) fail = true;
 
 	str = "";
-	engine->ExecuteString(0, "GetProp(\"test\").Get(str);");
+ 	engine->ExecuteString(0, "GetProp(\"test\").Get(str);");
 	if( str != "PropOut" ) fail = true;
 
  	engine->Release();

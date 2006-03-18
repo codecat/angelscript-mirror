@@ -69,7 +69,11 @@ static void AnyObject_Retrieve(void *ref, int refTypeId, asCAnyObject *self)
 
 static void AnyObjectConstructor_Generic(asIScriptGeneric *gen)
 {
+#ifndef AS_64BIT_PTR
 	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(0);
+#else
+	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(0);
+#endif
 	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
 
 	new(self) asCAnyObject(ot);
@@ -77,9 +81,13 @@ static void AnyObjectConstructor_Generic(asIScriptGeneric *gen)
 
 static void AnyObjectConstructor2_Generic(asIScriptGeneric *gen)
 {
-	void *ref = (void*)gen->GetArgDWord(0);
+	void *ref = (void*)gen->GetArgAddress(0);
 	int refType = gen->GetArgDWord(1);
+#ifndef AS_64BIT_PTR
 	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(2);
+#else
+	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(2);
+#endif
 	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
 
 	new(self) asCAnyObject(ref,refType,ot);
@@ -121,16 +129,26 @@ void RegisterAnyObject(asCScriptEngine *engine)
 	int r;
 	r = engine->RegisterSpecialObjectType("any", sizeof(asCAnyObject), asOBJ_CLASS_CDA | asOBJ_SCRIPT_ANY | asOBJ_POTENTIAL_CIRCLE | asOBJ_CONTAINS_ANY); assert( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
+#ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(AnyObjectConstructor, (asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int&in, int, int)", asFUNCTIONPR(AnyObjectConstructor2, (void*, asCObjectType*, asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+#else
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTIONPR(AnyObjectConstructor, (asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int&in, int, int64)", asFUNCTIONPR(AnyObjectConstructor2, (void*, asCObjectType*, asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+#endif
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ASSIGNMENT, "any &f(any&in)", asFUNCTION(AnyObjectAssignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod("any", "void store(int&in, int)", asFUNCTION(AnyObject_Store), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod("any", "void retrieve(int&out, int) const", asFUNCTION(AnyObject_Retrieve), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 #else
+#ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(AnyObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int&in, int, int)", asFUNCTION(AnyObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
+#else
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(AnyObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int&in, int, int64)", asFUNCTION(AnyObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
+#endif
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ASSIGNMENT, "any &f(any&in)", asFUNCTION(AnyObjectAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );

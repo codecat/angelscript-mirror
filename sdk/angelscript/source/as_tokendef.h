@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -130,6 +130,7 @@ enum eTokenType
 	ttInt,                 // int
 	ttInt8,                // int8
 	ttInt16,               // int16
+	ttInt64,               // int64
 	ttUInt,                // uint
 	ttUInt8,               // uint8
 	ttUInt16,              // uint16
@@ -243,6 +244,7 @@ sTokenWord const tokenWords[] =
 	{"int8"    , ttInt8},
 	{"int16"   , ttInt16},
 	{"int32"   , ttInt},  
+	{"int64"   , ttInt64},
 	{"not"     , ttNot},
 	{"null"    , ttNull},
 	{"or"      , ttOr},
@@ -256,6 +258,7 @@ sTokenWord const tokenWords[] =
 	{"uint16"  , ttUInt16},
 	{"uint32"  , ttUInt},
 	{"switch"  , ttSwitch},
+	{"class"   , ttStruct},
 	{"struct"  , ttStruct},
 	{"case"    , ttCase}, 
 	{"default" , ttDefault},

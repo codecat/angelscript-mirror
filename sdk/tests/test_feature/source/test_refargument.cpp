@@ -22,7 +22,7 @@ static const char *script1 =
 "void test2(float &out ref)             \n"
 "{                                      \n"
 "}                                      \n"
-"void test3(float &inout a)             \n"
+"void test3(float &out a)               \n"
 "{                                      \n"
 "   a = 1.0f;                           \n"
 "}                                      \n";
@@ -128,8 +128,7 @@ bool Test()
 	r = engine->Build(0);
 #ifndef AS_ALLOW_UNSAFE_REFERENCES
 	if( r >= 0 ) fail = true;
-	if( bout.buffer != "TestRefArgument (1, 1) : Info    : Compiling void Test()\n"
-		               "TestRefArgument (4, 9) : Error   : Cannot guarantee safety of reference. Copy the value to a local variable first\n" ) fail = true;
+	if( bout.buffer != "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" ) fail = true;
 #else
 	if( r != 0 ) fail = true;
 #endif

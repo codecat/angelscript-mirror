@@ -65,15 +65,15 @@ bool TestVirtualInheritance()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	// Register the CDerived class
-	r = engine->RegisterObjectType("class", 0, 0);
-	r = engine->RegisterObjectMethod("class", "void CallMe1()", asMETHOD(CDerivedVirtual, CallMe1), asCALL_THISCALL);
+	r = engine->RegisterObjectType("class1", 0, 0);
+	r = engine->RegisterObjectMethod("class1", "void CallMe1()", asMETHOD(CDerivedVirtual, CallMe1), asCALL_THISCALL);
 	if( r != asNOT_SUPPORTED )
 	{
 		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
 		fail = true;
 	}
 
-	r = engine->RegisterObjectMethod("class", "void CallMe2()", asMETHOD(CDerivedVirtual, CallMe2), asCALL_THISCALL);
+	r = engine->RegisterObjectMethod("class1", "void CallMe2()", asMETHOD(CDerivedVirtual, CallMe2), asCALL_THISCALL);
 	if( r != asNOT_SUPPORTED )
 	{
 		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
@@ -82,7 +82,7 @@ bool TestVirtualInheritance()
 
 /*
 	// Register the global CDerived object
-	r = engine->RegisterGlobalProperty("class d", &d);
+	r = engine->RegisterGlobalProperty("class1 d", &d);
 
 	COutStream out;
 	engine->ExecuteString(0, "d.CallMe1(); d.CallMe2();", &out);

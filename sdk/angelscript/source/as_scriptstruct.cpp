@@ -42,9 +42,39 @@
 
 BEGIN_AS_NAMESPACE
 
+void RegisterScriptStruct(asCScriptEngine *engine)
+{
+	// Register the default script structure behaviours
+	int r;
+	engine->scriptTypeBehaviours.flags = asOBJ_SCRIPT_STRUCT;
+#ifndef AS_MAX_PORTABILITY
+#ifndef AS_64BIT_PTR
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ScriptStruct_Construct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+#else
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(ScriptStruct_Construct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+#endif
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ASSIGNMENT, "int &f(void[] &in)", asFUNCTION(ScriptStruct_Assignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+#else
+#ifndef AS_64BIT_PTR
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ScriptStruct_Construct_Generic), asCALL_GENERIC); assert( r >= 0 );
+#else
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(ScriptStruct_Construct_Generic), asCALL_GENERIC); assert( r >= 0 );
+#endif
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ASSIGNMENT, "int &f(void[] &in)", asFUNCTION(ScriptStruct_Assignment_Generic), asCALL_GENERIC); assert( r >= 0 );
+#endif
+}
+
 void ScriptStruct_Construct_Generic(asIScriptGeneric *gen)
 {
-	asCObjectType *objType = (asCObjectType*)gen->GetArgDWord(0);
+#ifndef AS_64BIT_PTR
+	asCObjectType *objType = (asCObjectType*)(size_t)gen->GetArgDWord(0);
+#else
+	asCObjectType *objType = (asCObjectType*)(size_t)gen->GetArgQWord(0);
+#endif
 	asCScriptStruct *self = (asCScriptStruct*)gen->GetObject();
 
 	ScriptStruct_Construct(objType, self);
@@ -66,14 +96,14 @@ asCScriptStruct::asCScriptStruct(asCObjectType *ot)
 		asCProperty *prop = gc.objType->properties[n];
 		if( prop->type.IsObject() )
 		{
-			asDWORD *ptr = (asDWORD*)(((char*)this) + prop->byteOffset);
+			size_t *ptr = (size_t*)(((char*)this) + prop->byteOffset);
 
 			if( prop->type.IsObjectHandle() )
 				*ptr = 0;
 			else
 			{
 				// Allocate the object and call it's constructor
-				*ptr = (asDWORD)AllocateObject(prop->type.GetObjectType(), engine);
+				*ptr = (size_t)AllocateObject(prop->type.GetObjectType(), engine);
 			}
 		}
 	}
@@ -130,7 +160,8 @@ int asCScriptStruct::GetStructTypeId()
 
 int asCScriptStruct::GetPropertyCount()
 {
-	return gc.objType->properties.GetLength();
+	// TODO: Return size_t
+	return (int)gc.objType->properties.GetLength();
 }
 
 int asCScriptStruct::GetPropertyTypeId(asUINT prop)

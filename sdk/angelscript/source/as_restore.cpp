@@ -56,7 +56,7 @@ int asCRestore::Save()
 	unsigned long i, count;
 
 	// structTypes[]
-	count = module->structTypes.GetLength();
+	count = (asUINT)module->structTypes.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
 	{
@@ -64,7 +64,7 @@ int asCRestore::Save()
 	}
 
 	// usedTypeIndices[]
-	count = module->usedTypes.GetLength();
+	count = (asUINT)module->usedTypes.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
 	{
@@ -72,13 +72,13 @@ int asCRestore::Save()
 	}
 
 	// scriptGlobals[]
-	count = module->scriptGlobals.GetLength();
+	count = (asUINT)module->scriptGlobals.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i ) 
 		WriteProperty(module->scriptGlobals[i]);
 
 	// globalMem size (can restore data using @init())
-	count = module->globalMem.GetLength();
+	count = (asUINT)module->globalMem.GetLength();
 	WRITE_NUM(count);
 	
 	// globalVarPointers[]
@@ -88,19 +88,19 @@ int asCRestore::Save()
 	WriteFunction(&module->initFunction);
 
 	// scriptFunctions[]
-	count = module->scriptFunctions.GetLength();
+	count = (asUINT)module->scriptFunctions.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
 		WriteFunction(module->scriptFunctions[i]);
 
 	// stringConstants[]
-	count = module->stringConstants.GetLength();
+	count = (asUINT)module->stringConstants.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i ) 
 		WriteString(module->stringConstants[i]);
 
 	// importedFunctions[] and bindInformations[]
-	count = module->importedFunctions.GetLength();
+	count = (asUINT)module->importedFunctions.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
 	{
@@ -219,31 +219,31 @@ int asCRestore::Restore()
 
 void asCRestore::WriteString(asCString* str) 
 {
-	unsigned long len = str->GetLength();
+	asUINT len = (asUINT)str->GetLength();
 	WRITE_NUM(len);
-	stream->Write(str->AddressOf(), len);
+	stream->Write(str->AddressOf(), (asUINT)len);
 }
 
 void asCRestore::WriteFunction(asCScriptFunction* func) 
 {
-	int i, count;
+	asUINT i, count;
 
 	WriteString(&func->name);
 
 	WriteDataType(&func->returnType);
 
-	count = func->parameterTypes.GetLength();
+	count = (asUINT)func->parameterTypes.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i ) 
 		WriteDataType(&func->parameterTypes[i]);
 
 	WRITE_NUM(func->id);
 	
-	count = func->byteCode.GetLength();
+	count = (asUINT)func->byteCode.GetLength();
 	WRITE_NUM(count);
 	WriteByteCode(func->byteCode.AddressOf(), count);
 
-	count = func->objVariablePos.GetLength();
+	count = (asUINT)func->objVariablePos.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
 	{
@@ -255,7 +255,7 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 
 	WriteObjectType(func->objectType);
 
-	int length = func->lineNumbers.GetLength();
+	asUINT length = (asUINT)func->lineNumbers.GetLength();
 	WRITE_NUM(length);
 	for( i = 0; i < length; ++i )
 		WRITE_NUM(func->lineNumbers[i]);
@@ -359,7 +359,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot)
 	int size = ot->size;
 	WRITE_NUM(size);
 	// properties[]
-	size = ot->properties.GetLength();
+	size = (asUINT)ot->properties.GetLength();
 	WRITE_NUM(size);
 	for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
 	{
@@ -373,7 +373,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot)
 
 void asCRestore::ReadString(asCString* str) 
 {
-	unsigned long len;
+	asUINT len;
 	READ_NUM(len);
 	str->SetLength(len);
 	stream->Read(str->AddressOf(), len);
@@ -627,7 +627,7 @@ int asCRestore::FindTypeIdIdx(int typeId)
 	}
 
 	usedTypeIds.PushLast(typeId);
-	return usedTypeIds.GetLength() - 1;
+	return (int)usedTypeIds.GetLength() - 1;
 }
 
 int asCRestore::FindTypeId(int idx)
@@ -637,9 +637,9 @@ int asCRestore::FindTypeId(int idx)
 
 void asCRestore::WriteUsedTypeIds()
 {
-	int count = usedTypeIds.GetLength();
+	asUINT count = (asUINT)usedTypeIds.GetLength();
 	WRITE_NUM(count);
-	for( int n = 0; n < count; n++ )
+	for( asUINT n = 0; n < count; n++ )
 		WriteDataType(engine->GetDataTypeFromTypeId(usedTypeIds[n]));
 }
 
@@ -734,17 +734,17 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 
 void asCRestore::WriteGlobalVarPointers()
 {
-	int c = module->globalVarPointers.GetLength();
+	int c = (int)module->globalVarPointers.GetLength();
 	WRITE_NUM(c);
 
 	for( int n = 0; n < c; n++ )
 	{
-		asDWORD *p = (asDWORD*)module->globalVarPointers[n];
+		size_t *p = (size_t*)module->globalVarPointers[n];
 		int idx = 0;
 		
 		// Is it a module global or engine global?
 		if( p >= module->globalMem.AddressOf() && p <= module->globalMem.AddressOf() + module->globalMem.GetLength() )
-			idx = (asDWORD(p) - asDWORD(module->globalMem.AddressOf()))/4;
+			idx = int(size_t(p) - size_t(module->globalMem.AddressOf()))/sizeof(size_t);
 		else
 		{
 			for( int i = 0; i < (signed)engine->globalPropAddresses.GetLength(); i++ )

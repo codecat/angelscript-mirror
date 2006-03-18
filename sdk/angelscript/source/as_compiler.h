@@ -81,6 +81,7 @@ public:
 	~asCCompiler();
 
 	int CompileFunction(asCBuilder *builder, asCScriptCode *script, asCScriptNode *func, asCScriptFunction *outFunc);
+	int CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *script, asCScriptFunction *outFunc);
 	int CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *expr, sGlobalVariableDescription *gvar);
 
 	asCByteCode byteCode;
@@ -163,7 +164,7 @@ protected:
 	void ConvertToReference(asSExprContext *ctx);
 	void PushVariableOnStack(asSExprContext *ctx, bool asReference);
 
-	void LineInstr(asCByteCode *bc, int pos);
+	void LineInstr(asCByteCode *bc, size_t pos);
 
 	void ProcessStringConstant(asCString &str);
 	void ProcessHeredocStringConstant(asCString &str);

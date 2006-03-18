@@ -83,7 +83,7 @@ public:
 #endif
 
 #ifdef AS_VECTOR_CHECKBOUNDS
-		if (i < 0 || i >= lhs->size())
+		if (i < 0 || i >= (signed)lhs->size())
 		{
 			asIScriptContext* context = asGetActiveContext();
 			if( context )
@@ -97,7 +97,7 @@ public:
 
 	static int Size(std::vector<T>* lhs)
 	{
-		return lhs->size();
+		return (int)lhs->size();
 	}
 
 	static void Resize(int size, std::vector<T>* lhs)

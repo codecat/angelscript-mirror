@@ -250,6 +250,31 @@ void asCBuilder::ParseScripts()
 			}
 		}
 
+		// Register script methods found in the structures
+		for( n = 0; n < structDeclarations.GetLength(); n++ )
+		{
+			sStructDeclaration *decl = structDeclarations[n];
+
+			asCScriptNode *node = decl->node->firstChild->next;
+			while( node )
+			{
+				asCScriptNode *next = node->next;
+				if( node->nodeType == snFunction )
+				{
+					node->DisconnectParent();
+					RegisterScriptFunction(module->GetNextFunctionId(), node, decl->script, decl->objType);
+				}
+				
+				node = next;
+			}
+
+			// Make sure the default constructor exists
+			if( decl->objType->beh.construct == engine->scriptTypeBehaviours.beh.construct )
+			{
+				AddDefaultConstructor(decl->objType, decl->script);
+			}
+		}
+
 		// Find other global nodes
 		for( n = 0; n < scripts.GetLength(); n++ )
 		{
@@ -298,6 +323,8 @@ void asCBuilder::CompileFunctions()
 	// Compile each function
 	for( asUINT n = 0; n < functions.GetLength(); n++ )
 	{
+		if( functions[n] == 0 ) continue;
+
 		asCCompiler compiler;
 
 		int r, c;
@@ -480,7 +507,7 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 	// Initialize a script function object for registration
 	bool autoHandle;
 	func->returnType = CreateDataTypeFromNode(node->firstChild, &source);
-	func->returnType = ModifyDataTypeFromNode(func->returnType, node->firstChild->next, 0, &autoHandle);
+	func->returnType = ModifyDataTypeFromNode(func->returnType, node->firstChild->next, &source, 0, &autoHandle);
 	if( autoHandle && (!func->returnType.IsObjectHandle() || func->returnType.IsReference()) )
 			return asINVALID_DECLARATION;			
 	if( returnAutoHandle ) *returnAutoHandle = autoHandle;
@@ -490,7 +517,7 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 	{
 		int inOutFlags;
 		asCDataType type = CreateDataTypeFromNode(n, &source);
-		type = ModifyDataTypeFromNode(type, n->next, &inOutFlags, &autoHandle);
+		type = ModifyDataTypeFromNode(type, n->next, &source, &inOutFlags, &autoHandle);
 		
 		// Store the parameter type
 		func->parameterTypes.PushLast(type);
@@ -880,48 +907,58 @@ void asCBuilder::CompileStructs()
 		asCScriptNode *node = decl->node->firstChild->next;
 		while( node )
 		{
-			asCScriptCode *file = decl->script;
-			asCDataType dt = CreateDataTypeFromNode(node->firstChild, file);
-			GETSTRING(name, &file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
-
-			if( dt.IsReadOnly() )
+			if( node->nodeType == snDeclaration )
 			{
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+				asCScriptCode *file = decl->script;
+				asCDataType dt = CreateDataTypeFromNode(node->firstChild, file);
+				GETSTRING(name, &file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
 
-				WriteError(file->name.AddressOf(), TXT_PROPERTY_CANT_BE_CONST, r, c);
+				if( dt.IsReadOnly() )
+				{
+					int r, c;
+					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+					WriteError(file->name.AddressOf(), TXT_PROPERTY_CANT_BE_CONST, r, c);
+				}
+
+				asCDataType st;
+				st.SetObjectType(decl->objType);
+				CheckNameConflictMember(st, name.AddressOf(), node->lastChild, file);
+
+				// Store the properties in the object type descriptor
+				asCProperty *prop = new asCProperty;
+				prop->name = name;
+				prop->type = dt;
+
+				int propSize;
+				if( dt.IsObject() )
+				{
+					propSize = dt.GetSizeOnStackDWords()*4;
+					if( !dt.IsObjectHandle() )
+						prop->type.MakeReference(true);
+				}
+				else
+					propSize = dt.GetSizeInMemoryBytes();
+
+				// Add extra bytes so that the property will be properly aligned
+				if( propSize == 2 && (decl->objType->size & 1) ) decl->objType->size += 1;
+				if( propSize > 2 && (decl->objType->size & 3) ) decl->objType->size += 3 - (decl->objType->size & 3);
+
+				prop->byteOffset = decl->objType->size;
+				decl->objType->size += propSize;
+
+				decl->objType->properties.PushLast(prop);
+
+				// Make sure the module holds a reference to the config group where the object is registered
+				module->RefConfigGroupForObjectType(dt.GetObjectType());
 			}
-
-			asCDataType st;
-			st.SetObjectType(decl->objType);
-			CheckNameConflictMember(st, name.AddressOf(), node->lastChild, file);
-
-			// Store the properties in the object type descriptor
-			asCProperty *prop = new asCProperty;
-			prop->name = name;
-			prop->type = dt;
-
-			int propSize;
-			if( dt.IsObject() )
+			else if( node->nodeType == snFunction )
 			{
-				propSize = dt.GetSizeOnStackDWords()*4;
-				if( !dt.IsObjectHandle() )
-					prop->type.MakeReference(true);
+				// TODO: Register the method and add it to the list of functions to compile later 
+
 			}
 			else
-				propSize = dt.GetSizeInMemoryBytes();
-
-			// Add extra bytes so that the property will be properly aligned
-			if( propSize == 2 && (decl->objType->size & 1) ) decl->objType->size += 1;
-			if( propSize > 2 && (decl->objType->size & 3) ) decl->objType->size += 3 - (decl->objType->size & 3);
-
-			prop->byteOffset = decl->objType->size;
-			decl->objType->size += propSize;
-
-			decl->objType->properties.PushLast(prop);
-
-			// Make sure the module holds a reference to the config group where the object is registered
-			module->RefConfigGroupForObjectType(dt.GetObjectType());
+				assert(false);
 
 			node = node->next;
 		}
@@ -933,7 +970,7 @@ void asCBuilder::CompileStructs()
 	// doesn't contain a member of its own type directly or indirectly
 	while( toValidate.GetLength() > 0 ) 
 	{
-		asUINT numStructs = toValidate.GetLength();
+		asUINT numStructs = (asUINT)toValidate.GetLength();
 
 		asCArray<sStructDeclaration*> toValidateNext;
 		while( toValidate.GetLength() > 0 )
@@ -1084,28 +1121,74 @@ void asCBuilder::CompileStructs()
 	}
 }
 
-int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file)
+void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file)
+{
+	int funcId = module->GetNextFunctionId();
+
+	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
+	asCArray<asCDataType> parameterTypes;
+	asCArray<int> inOutFlags;
+
+	// Add the script function
+	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), objType);
+	
+	// Set it as default constructor
+	objType->beh.construct = funcId;
+	objType->beh.constructors[0] = funcId;
+
+	// Compile the bytecode
+	asCCompiler compiler;
+	compiler.CompileDefaultConstructor(this, file, module->scriptFunctions[funcId]);
+
+	// Add a dummy function to the module so that it doesn't mix up the func Ids
+	functions.PushLast(0);
+}
+
+int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType)
 {
 	// Find name 
-	asCScriptNode *n = node->firstChild->next->next;
+	bool isConstructor = false;
+	asCScriptNode *n = 0;
+	if( node->firstChild->nodeType == snDataType )
+		n = node->firstChild->next->next;
+	else
+	{
+		n = node->firstChild;
+		isConstructor = true;
+	}
 
 	// Check for name conflicts
 	GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
-	CheckNameConflict(name.AddressOf(), n, file);
+	if( !isConstructor )
+		CheckNameConflict(name.AddressOf(), n, file);
+	else
+	{
+		// Verify that the name of the function is the same as the class
+		if( name != objType->name )
+		{
+			int r, c;
+			file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+			WriteError(file->name.AddressOf(), TXT_CONSTRUCTOR_NAME_ERROR, r, c);
+		}
+	}
 
 	sFunctionDescription *func = new sFunctionDescription;
 	functions.PushLast(func);
 
-	func->script = file;
-	func->node   = node;
-	func->name   = name;
+	func->script  = file;
+	func->node    = node;
+	func->name    = name;
+	func->objType = objType;
 
 	// Initialize a script function object for registration
-	asCDataType returnType;
-	returnType = CreateDataTypeFromNode(node->firstChild, file);
-	returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next, 0, 0);
-		
-	module->RefConfigGroupForObjectType(returnType.GetObjectType());
+	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
+	if( !isConstructor )
+	{
+		returnType = CreateDataTypeFromNode(node->firstChild, file);
+		returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next, file, 0, 0);
+
+		module->RefConfigGroupForObjectType(returnType.GetObjectType());
+	}
 
 	asCArray<asCDataType> parameterTypes;
 	asCArray<int> inOutFlags;
@@ -1114,7 +1197,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	{
 		int inOutFlag;
 		asCDataType type = CreateDataTypeFromNode(n, file);
-		type = ModifyDataTypeFromNode(type, n->next, &inOutFlag, 0);
+		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
 
 		module->RefConfigGroupForObjectType(type.GetObjectType());
 
@@ -1162,7 +1245,24 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	}
 
 	// Register the function
-	module->AddScriptFunction(file->idx, funcID, func->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), parameterTypes.GetLength());
+	module->AddScriptFunction(file->idx, funcID, func->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), objType);
+
+	if( objType )
+	{
+		if( isConstructor )
+		{
+			if( parameterTypes.GetLength() == 0 )
+			{
+				// Overload the default constructor
+				objType->beh.construct = funcID;
+				objType->beh.constructors[0] = funcID;
+			}
+			else
+				objType->beh.constructors.PushLast(funcID);
+		}
+		else
+			objType->methods.PushLast(funcID);
+	}
 
 	return 0;
 }
@@ -1180,7 +1280,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	// Initialize a script function object for registration
 	asCDataType returnType;
 	returnType = CreateDataTypeFromNode(f->firstChild, file);
-	returnType = ModifyDataTypeFromNode(returnType, f->firstChild->next, 0, 0);
+	returnType = ModifyDataTypeFromNode(returnType, f->firstChild->next, file, 0, 0);
 		
 	asCArray<asCDataType> parameterTypes;
 	asCArray<int> inOutFlags;
@@ -1189,7 +1289,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	{
 		int inOutFlag;
 		asCDataType type = CreateDataTypeFromNode(n, file);
-		type = ModifyDataTypeFromNode(type, n->next, &inOutFlag, 0);
+		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
 
 		// Store the parameter type
 		n = n->next->next;
@@ -1244,7 +1344,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	delete node;
 
 	// Register the function
-	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), parameterTypes.GetLength(), moduleNameString);
+	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), moduleNameString);
 
 	return 0;
 }
@@ -1269,7 +1369,8 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 	// TODO: Improve linear search
 	for( n = 0; n < module->scriptFunctions.GetLength(); n++ )
 	{
-		if( module->scriptFunctions[n]->name == name )
+		if( module->scriptFunctions[n]->name == name &&
+			module->scriptFunctions[n]->objectType == 0 )
 			funcs.PushLast(module->scriptFunctions[n]->id);
 	}
 
@@ -1301,9 +1402,18 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		// Only add const methods to the list
 		for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
 		{
-			if( engine->systemFunctions[objectType->methods[n]]->name == name &&
-				engine->systemFunctions[objectType->methods[n]]->isReadOnly )
-				methods.PushLast(engine->systemFunctions[objectType->methods[n]]->id);
+			if( objectType->flags & asOBJ_SCRIPT_STRUCT )
+			{
+				if( module->scriptFunctions[objectType->methods[n]]->name == name &&
+					module->scriptFunctions[objectType->methods[n]]->isReadOnly )
+					methods.PushLast(module->scriptFunctions[objectType->methods[n]]->id);
+			}
+			else
+			{
+				if( engine->systemFunctions[objectType->methods[n]]->name == name &&
+					engine->systemFunctions[objectType->methods[n]]->isReadOnly )
+					methods.PushLast(engine->systemFunctions[objectType->methods[n]]->id);
+			}
 		}
 	}
 	else
@@ -1311,8 +1421,16 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		// TODO: Prefer non-const over const
 		for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
 		{
-			if( engine->systemFunctions[objectType->methods[n]]->name == name )
-				methods.PushLast(engine->systemFunctions[objectType->methods[n]]->id);
+			if( objectType->flags & asOBJ_SCRIPT_STRUCT )
+			{
+				if( module->scriptFunctions[objectType->methods[n]]->name == name )
+					methods.PushLast(module->scriptFunctions[objectType->methods[n]]->id);
+			}
+			else
+			{
+				if( engine->systemFunctions[objectType->methods[n]]->name == name )
+					methods.PushLast(engine->systemFunctions[objectType->methods[n]]->id);
+			}
 		}
 	}
 }
@@ -1464,7 +1582,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	return dt;
 }
 
-asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, int *inOutFlags, bool *autoHandle)
+asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, int *inOutFlags, bool *autoHandle)
 {
 	asCDataType dt = type;
 
@@ -1493,11 +1611,22 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 
 			n = n->next;
 		}
-#ifdef AS_ALLOW_UNSAFE_REFERENCES
 		else
 		{
 			if( inOutFlags )
 				*inOutFlags = 3; // ttInOut
+		}
+
+#ifndef AS_ALLOW_UNSAFE_REFERENCES
+		if( inOutFlags && *inOutFlags == 3 )
+		{				
+			// Verify that the base type support &inout parameter types
+			if( !dt.IsObject() || dt.IsObjectHandle() || !dt.GetObjectType()->beh.addref || !dt.GetObjectType()->beh.release )
+			{
+				int r, c;
+				file->ConvertPosToRowCol(node->firstChild->tokenPos, &r, &c);
+				WriteError(file->name.AddressOf(), TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT, r, c);
+			}
 		}
 #endif
 	}

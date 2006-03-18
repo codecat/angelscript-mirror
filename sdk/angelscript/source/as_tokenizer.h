@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -50,7 +50,7 @@ public:
 	asCTokenizer();
 	~asCTokenizer();
 
-	eTokenType GetToken(const char *source, int sourceLength, int *tokenLength);
+	eTokenType GetToken(const char *source, size_t sourceLength, size_t *tokenLength);
 
 protected:
 	int  ParseToken();
@@ -61,10 +61,10 @@ protected:
 	bool IsIdentifier();
 
 	const char *source;
-	int   sourceLength;
+	size_t sourceLength;
 
 	eTokenType tokenType;
-	int tokenLength;
+	size_t tokenLength;
 };
 
 #endif

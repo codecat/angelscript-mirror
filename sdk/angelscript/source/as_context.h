@@ -75,12 +75,16 @@ public:
 	int SetArgQWord(asUINT arg, asQWORD value);
 	int SetArgFloat(asUINT arg, float value);
 	int SetArgDouble(asUINT arg, double value);
+	int SetArgAddress(asUINT arg, void *addr);
 	int SetArgObject(asUINT arg, void *obj);
+
+	int SetObject(void *obj);
 
 	asDWORD GetReturnDWord();
 	asQWORD GetReturnQWord();
 	float   GetReturnFloat();
 	double  GetReturnDouble();
+	void   *GetReturnAddress();
 	void   *GetReturnObject();
 
 	int  GetState();
@@ -155,7 +159,7 @@ public:
 
 	asQWORD register1;
 
-	asCArray<int> callStack;
+	asCArray<size_t> callStack;
 	asCArray<asDWORD *> stackBlocks;
 	asDWORD *stackPointer;
 	int stackBlockSize;

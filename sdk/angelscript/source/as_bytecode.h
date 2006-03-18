@@ -91,7 +91,7 @@ public:
 	void Label(short label);
 	void Line(int line, int column);
 	void Call(bcInstr bc, int funcID, int pop);
-	void Alloc(bcInstr bc, int objID, int funcID, int pop);
+	void Alloc(bcInstr bc, void *objID, int funcID, int pop);
 	void Ret(int pop);
 	void JmpP(int var, asDWORD max);
 
@@ -100,6 +100,7 @@ public:
 	int Instr(bcInstr bc);
 	int InstrQWORD(bcInstr bc, asQWORD param);
 	int InstrDOUBLE(bcInstr bc, double param);
+	int InstrPTR(bcInstr bc, void *param);
 	int InstrDWORD(bcInstr bc, asDWORD param);
 	int InstrWORD(bcInstr bc, asWORD param);
 	int InstrSHORT(bcInstr bc, short param);

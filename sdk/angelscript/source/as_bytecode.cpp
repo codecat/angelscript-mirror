@@ -618,7 +618,7 @@ int asCByteCode::Optimize()
 		// Remove or combine instructions 
 		if( RemoveUnusedValue(curr, &instr) ) continue;
 
-		// Post pone initializations so that they may be combined in the second pass
+		// Postpone initializations so that they may be combined in the second pass
 		if( PostponeInitOfTemp(curr, &instr) ) continue;
 
 		// XXX x, YYY y, SWAP4 -> YYY y, XXX x
@@ -727,22 +727,23 @@ int asCByteCode::Optimize()
 		}
 		// YYY y, POP x -> POP x-1
 		else if( (IsCombination(curr, BC_PshV4, BC_POP) ||
-		          IsCombination(curr, BC_PshC4, BC_POP) ||
-				  IsCombination(curr, BC_VAR  , BC_POP)) && instr->wArg[0] > 0 )
+		          IsCombination(curr, BC_PshC4, BC_POP)) && instr->wArg[0] > 0 )
 		{
 			DeleteInstruction(curr);
 			instr->wArg[0]--;
 			instr = GoBack(instr);
 		}
-		// TODO: Adjust for pointer size
 		// PshRPtr, POP x -> POP x - 1
 		else if( (IsCombination(curr, BC_PshRPtr, BC_POP) ||
-			      IsCombination(curr, BC_PSF    , BC_POP)) && instr->wArg[0] > 0 )
+			      IsCombination(curr, BC_PSF    , BC_POP) ||
+				  IsCombination(curr, BC_VAR    , BC_POP)) 
+				  && instr->wArg[0] > (PTR_SIZE-1) )
 		{
 			DeleteInstruction(curr);
-			instr->wArg[0]--;
+			instr->wArg[0] -= PTR_SIZE;
 			instr = GoBack(instr);
 		}
+		// TODO: Pointer size
 		// RDS8, POP 2 -> POP x-1
 		else if( IsCombination(curr, BC_RDS8, BC_POP) && instr->wArg[0] > 1 )
 		{
@@ -853,6 +854,8 @@ int asCByteCode::SizeOfType(int type)
 	case BCTYPE_wW_QW_ARG:
 	case BCTYPE_wW_rW_DW_ARG:
 		return 3;
+	case BCTYPE_QW_DW_ARG:
+		return 4;
 	default:
 		assert(false);	
 		return 0;
@@ -1170,18 +1173,18 @@ void asCByteCode::Call(bcInstr instr, int funcID, int pop)
 	*((int*)ARG_DW(last->arg)) = funcID;
 }
 
-void asCByteCode::Alloc(bcInstr instr, int objID, int funcID, int pop)
+void asCByteCode::Alloc(bcInstr instr, void *objID, int funcID, int pop)
 {
 	if( AddInstruction() < 0 )
 		return;
 
-	assert(bcTypes[instr] == BCTYPE_DW_DW_ARG);
-
 	last->op = instr;
 	last->size = SizeOfType(bcTypes[instr]);
 	last->stackInc = -pop; // BC_ALLOC
-	*((int*)ARG_DW(last->arg)) = objID;
-	*((int*)(ARG_DW(last->arg)+1)) = funcID;
+
+	assert(bcTypes[instr] == BCTYPE_PTR_DW_ARG);
+	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)objID;
+	*((int*)(ARG_DW(last->arg)+PTR_SIZE)) = funcID;
 }
 
 void asCByteCode::Ret(int pop)
@@ -1516,7 +1519,7 @@ void asCByteCode::PostProcess()
 void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngine *engine)
 {
 #ifdef AS_DEBUG
-	mkdir("AS_DEBUG");
+	_mkdir("AS_DEBUG");
 
 	asCString str = "AS_DEBUG/";
 	str += name;
@@ -1656,6 +1659,13 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 				fprintf(file, "   %-8s 0x%lx, %d\n", bcName[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1));
 			else
 				fprintf(file, "   %-8s %u, %d\n", bcName[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1));
+			break;
+
+		case BCTYPE_QW_DW_ARG:
+			if( instr->op == BC_ALLOC )
+				fprintf(file, "   %-8s 0x%I64x, %d\n", bcName[instr->op].name, *(__int64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+			else
+				fprintf(file, "   %-8s %I64u, %d\n", bcName[instr->op].name, *(__int64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 			break;
 
 		case BCTYPE_INFO:
@@ -1948,6 +1958,22 @@ int asCByteCode::InstrDWORD(bcInstr bc, asDWORD param)
 
 	last->op = bc;
 	*ARG_DW(last->arg) = param;
+	last->size     = SizeOfType(bcTypes[bc]);
+	last->stackInc = bcStackInc[bc];
+
+	return last->stackInc;
+}
+
+int asCByteCode::InstrPTR(bcInstr bc, void *param)
+{
+	assert(bcStackInc[bc] != 0xFFFF);
+
+	if( AddInstruction() < 0 )
+		return 0;
+
+	last->op = bc;
+	assert(bcTypes[bc] == BCTYPE_PTR_ARG);
+	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)param;
 	last->size     = SizeOfType(bcTypes[bc]);
 	last->stackInc = bcStackInc[bc];
 

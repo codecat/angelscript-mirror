@@ -96,7 +96,7 @@ void GenericString_Assignment(asIScriptGeneric *gen)
 void GenericString_Factory(asIScriptGeneric *gen)
 {
 	asUINT length = gen->GetArgDWord(0);
-	const char *s = (const char *)gen->GetArgDWord(1);
+	const char *s = (const char *)gen->GetArgAddress(1);
 
 	string str(s);
 

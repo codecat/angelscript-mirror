@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -34,13 +34,13 @@
 
 typedef unsigned int acUINT;
 
-int    asStringFormat(char *string, int maxLength, const char *format, ...);
-double asStringScanDouble(const char *string, int *numScanned);
-int    asStringScanInt(const char *string, int base, int *numScanned);
-acUINT asStringScanUInt(const char *string, int base, int *numScanned);
+int    asStringFormat(char *string, size_t maxLength, const char *format, ...);
+double asStringScanDouble(const char *string, size_t *numScanned);
+int    asStringScanInt(const char *string, int base, size_t *numScanned);
+acUINT asStringScanUInt(const char *string, int base, size_t *numScanned);
 acUINT asStringHash(const char *string);
 
-void   asStringCopy(const char *source, int srcLength, char *dest, int destLength);
+void   asStringCopy(const char *source, size_t srcLength, char *dest, size_t destLength);
 
 #define GETSTRING(name,src,len) \
   asCString name; \

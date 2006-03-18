@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -48,40 +48,40 @@ public:
 
 	asCString(const asCString &);
 	asCString(const char *);
-	asCString(const char *, asUINT length);
+	asCString(const char *, size_t length);
 	asCString(char);
 
-	void   Allocate(asUINT len, bool keepData);
-	void   SetLength(asUINT len);
-	asUINT GetLength() const;
+	void   Allocate(size_t len, bool keepData);
+	void   SetLength(size_t len);
+	size_t GetLength() const;
 
-	void Concatenate(const char *str, asUINT length);
+	void Concatenate(const char *str, size_t length);
 	asCString &operator +=(const asCString &);
 	asCString &operator +=(const char *);
 	asCString &operator +=(char);
 
-	void Assign(const char *str, asUINT length);
+	void Assign(const char *str, size_t length);
 	asCString &operator =(const asCString &);
 	asCString &operator =(const char *);
 	asCString &operator =(char);
 
-	asCString SubString(asUINT start, int length) const;
+	asCString SubString(size_t start, size_t length = (size_t)(-1)) const;
 
-	int Format(const char *fmt, ...);
+	size_t Format(const char *fmt, ...);
 
 	int Compare(const char *str) const;
 	int Compare(const asCString &str) const;
-	int Compare(const char *str, asUINT length) const;
+	int Compare(const char *str, size_t length) const;
 
 	char *AddressOf();
 	const char *AddressOf() const;
-	char &operator [](asUINT index);
-	const char &operator[](asUINT index) const;
-	int RecalculateLength();
+	char &operator [](size_t index);
+	const char &operator[](size_t index) const;
+	size_t RecalculateLength();
 
 protected:
-	asUINT length;
-	asUINT bufferSize;
+	size_t length;
+	size_t bufferSize;
 	char *buffer;
 };
 

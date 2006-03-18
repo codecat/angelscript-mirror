@@ -12,8 +12,8 @@
 
    1. The origin of this software must not be misrepresented; you 
       must not claim that you wrote the original software. If you use
-	  this software in a product, an acknowledgment in the product 
-	  documentation would be appreciated but is not required.
+      this software in a product, an acknowledgment in the product 
+      documentation would be appreciated but is not required.
 
    2. Altered source versions must be plainly marked as such, and 
       must not be misrepresented as being the original software.
@@ -72,7 +72,7 @@ void asCScriptNode::SetToken(sToken *token)
 	tokenType   = token->type;
 }
 
-void asCScriptNode::UpdateSourcePos(int pos, int length)
+void asCScriptNode::UpdateSourcePos(size_t pos, size_t length)
 {
 	if( pos == 0 && length == 0 ) return;
 

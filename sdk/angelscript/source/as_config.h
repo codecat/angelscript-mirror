@@ -128,6 +128,7 @@
 
 
 
+
 //
 // How to identify different compilers
 //-----------------------------------------
@@ -167,6 +168,9 @@
 
 // AS_SH4
 // Use assembler code for the SH4 CPU family
+
+// AS_64BIT_PTR
+// Define this to make the engine store all pointers in 64bit words.
 
 
 
@@ -288,10 +292,20 @@
 	#define AS_SH4
 #endif
 
+// If there are no current support for native calling 
+// conventions, then compile with AS_MAX_PORTABILITY
+#if (!defined(AS_X86) && !defined(AS_SH4))
+    #ifndef AS_MAX_PORTABILITY
+        #define AS_MAX_PORTABILITY
+    #endif
+#endif
+
+
+
 
 
 // 
-// Alignment macros
+// Internal defines (do not changes these)
 //----------------------------------------------------------------
 
 #ifdef AS_ALIGN
@@ -300,13 +314,22 @@
 	#define	ALIGN(b) (b)
 #endif
 
-#define	ARG_W(b) ((asWORD*)&b)
-#define	ARG_DW(b) ((asDWORD*)&b)
-#define	ARG_QW(b) ((asQWORD*)&b)	
-#define	BCARG_W(b) ((asWORD*)&(b)[1])
+#define	ARG_W(b)    ((asWORD*)&b)
+#define	ARG_DW(b)   ((asDWORD*)&b)
+#define	ARG_QW(b)   ((asQWORD*)&b)	
+#define	BCARG_W(b)  ((asWORD*)&(b)[1])
 #define	BCARG_DW(b) ((asDWORD*)&(b)[1])
 #define	BCARG_QW(b) ((asQWORD*)&(b)[1])
 
+#ifdef AS_64BIT_PTR
+	#define PTR_SIZE     2
+	#define asPTRWORD    asQWORD
+#else
+	#define PTR_SIZE     1
+	#define asPTRWORD    asDWORD
+#endif
+#define ARG_PTR(b)   ((asPTRWORD*)&b)
+#define BCARG_PTR(b) ((asPTRWORD*)&(b)[1])
 
 
 #include "../include/angelscript.h"

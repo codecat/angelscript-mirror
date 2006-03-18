@@ -49,7 +49,7 @@ class asCScriptFunction;
 class asCGeneric : public asIScriptGeneric
 {
 public:
-	asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, asDWORD *stackPointer);
+	asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, size_t *stackPointer);
 	virtual ~asCGeneric();
 
 // interface - begin
@@ -60,19 +60,21 @@ public:
 	asQWORD GetArgQWord(asUINT arg);
 	float   GetArgFloat(asUINT arg);
 	double  GetArgDouble(asUINT arg);
+	void   *GetArgAddress(asUINT arg);
 	void   *GetArgObject(asUINT arg);
 
 	int     SetReturnDWord(asDWORD val);
 	int     SetReturnQWord(asQWORD val);
 	int     SetReturnFloat(float val);
 	int     SetReturnDouble(double val);
+	int     SetReturnAddress(void *addr);
 	int     SetReturnObject(void *obj);
 // interface - end
 
 	asCScriptEngine *engine;
 	asCScriptFunction *sysFunction;
 	void *currentObject;
-	asDWORD *stackPointer;
+	size_t *stackPointer;
 	void *objectRegister;
 
 	asQWORD returnVal;

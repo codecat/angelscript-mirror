@@ -42,7 +42,7 @@
 
 BEGIN_AS_NAMESPACE
 
-asCGeneric::asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, asDWORD *stackPointer)
+asCGeneric::asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, size_t *stackPointer)
 {
 	this->engine = engine;
 	this->sysFunction = sysFunction;
@@ -86,7 +86,7 @@ asDWORD asCGeneric::GetArgDWord(asUINT arg)
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
 
 	// Get the value
-	return stackPointer[offset];
+	return (asDWORD)stackPointer[offset];
 }
 
 asQWORD asCGeneric::GetArgQWord(asUINT arg)
@@ -97,6 +97,9 @@ asQWORD asCGeneric::GetArgQWord(asUINT arg)
 	// Verify that the type is correct
 	asCDataType *dt = &sysFunction->parameterTypes[arg];
 	if( dt->IsObject() )
+		return 0;
+
+	if( dt->IsReference() )
 		return 0;
 
 	if( dt->GetSizeOnStackDWords() != 2 )
@@ -155,6 +158,25 @@ double asCGeneric::GetArgDouble(asUINT arg)
 	return *(double*)(&stackPointer[offset]);
 }
 
+void *asCGeneric::GetArgAddress(asUINT arg)
+{
+	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
+		return 0;
+
+	// Verify that the type is correct
+	asCDataType *dt = &sysFunction->parameterTypes[arg];
+	if( !dt->IsReference() && !dt->IsObjectHandle() )
+		return 0;
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Get the value
+	return (void*)stackPointer[offset];
+}
+
 void *asCGeneric::GetArgObject(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -177,11 +199,11 @@ void *asCGeneric::GetArgObject(asUINT arg)
 int asCGeneric::SetReturnDWord(asDWORD val)
 {
 	// Verify the type of the return value
-	if( sysFunction->returnType.IsObject() )
-		return asERROR;
+	if( sysFunction->returnType.IsObject() || sysFunction->returnType.IsReference() )
+		return asINVALID_TYPE;
 
 	if( sysFunction->returnType.GetSizeOnStackDWords() != 1 )
-		return asERROR;
+		return asINVALID_TYPE;
 
 	// Store the value
 	*(asDWORD*)&returnVal = val;
@@ -192,11 +214,11 @@ int asCGeneric::SetReturnDWord(asDWORD val)
 int asCGeneric::SetReturnQWord(asQWORD val)
 {
 	// Verify the type of the return value
-	if( sysFunction->returnType.IsObject() )
-		return asERROR;
+	if( sysFunction->returnType.IsObject() || sysFunction->returnType.IsReference() )
+		return asINVALID_TYPE;
 
 	if( sysFunction->returnType.GetSizeOnStackDWords() != 2 )
-		return asERROR;
+		return asINVALID_TYPE;
 
 	// Store the value
 	returnVal = val;
@@ -207,11 +229,11 @@ int asCGeneric::SetReturnQWord(asQWORD val)
 int asCGeneric::SetReturnFloat(float val)
 {
 	// Verify the type of the return value
-	if( sysFunction->returnType.IsObject() )
-		return asERROR;
+	if( sysFunction->returnType.IsObject() || sysFunction->returnType.IsReference() )
+		return asINVALID_TYPE;
 
 	if( sysFunction->returnType.GetSizeOnStackDWords() != 1 )
-		return asERROR;
+		return asINVALID_TYPE;
 
 	// Store the value
 	*(float*)&returnVal = val;
@@ -222,11 +244,11 @@ int asCGeneric::SetReturnFloat(float val)
 int asCGeneric::SetReturnDouble(double val)
 {
 	// Verify the type of the return value
-	if( sysFunction->returnType.IsObject() )
-		return asERROR;
+	if( sysFunction->returnType.IsObject() || sysFunction->returnType.IsReference() )
+		return asINVALID_TYPE;
 
 	if( sysFunction->returnType.GetSizeOnStackDWords() != 2 )
-		return asERROR;
+		return asINVALID_TYPE;
 
 	// Store the value
 	*(double*)&returnVal = val;
@@ -234,11 +256,30 @@ int asCGeneric::SetReturnDouble(double val)
 	return 0;
 }
 
+int asCGeneric::SetReturnAddress(void *val)
+{
+	// Verify the type of the return value
+	if( sysFunction->returnType.IsReference() )
+	{
+		// Store the value
+		*(void**)&returnVal = val;
+		return 0;
+	}
+	else if( sysFunction->returnType.IsObjectHandle() )
+	{
+		// Store the handle without increasing reference
+		objectRegister = val;
+		return 0;
+	}
+
+	return asINVALID_TYPE;
+}
+
 int asCGeneric::SetReturnObject(void *obj)
 {
 	asCDataType *dt = &sysFunction->returnType;
 	if( !dt->IsObject() )
-		return asERROR;
+		return asINVALID_TYPE;
 
 	if( dt->IsReference() )
 	{

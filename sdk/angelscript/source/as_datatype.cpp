@@ -117,7 +117,11 @@ asCDataType asCDataType::CreateNullHandle()
 {
 	asCDataType dt;
 
+#ifndef AS_64BIT_PTR
 	dt.tokenType = ttInt;
+#else
+	dt.tokenType = ttInt64;
+#endif
 	dt.isReadOnly = true;
 	dt.isObjectHandle = true;
 	dt.isConstHandle = true;
@@ -462,7 +466,8 @@ int asCDataType::GetSizeInMemoryBytes() const
 		tokenType == ttBits16 )
 		return 2;
 
-	if( tokenType == ttDouble )
+	if( tokenType == ttDouble ||
+		tokenType == ttInt64 )
 		return 8;
 
 	return 4;
@@ -479,10 +484,8 @@ int asCDataType::GetSizeInMemoryDWords() const
 
 int asCDataType::GetSizeOnStackDWords() const
 {
-	if( isReference ) return 1;
-
-	// Objects are stored with a pointer to dynamic memory
-	if( objectType ) return 1;
+	if( isReference ) return PTR_SIZE;
+	if( objectType ) return PTR_SIZE;
 
 	return GetSizeInMemoryDWords();
 }

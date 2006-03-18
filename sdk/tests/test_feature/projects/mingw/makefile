@@ -52,6 +52,7 @@ SRCNAMES = \
   test_refargument.cpp \
   test_return_with_cdecl_objfirst.cpp \
   test_saveload.cpp \
+  test_scriptclassmethod.cpp \
   test_scriptstring.cpp \
   test_scriptstruct.cpp \
   test_suspend.cpp \

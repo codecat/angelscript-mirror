@@ -56,11 +56,13 @@ bool Test()
 	// Verify the output messages
 #ifndef AS_ALLOW_UNSAFE_REFERENCES
 	if( bout.buffer != "System function (1, 11) : Error   : Identifier 'mytype' is not a data type\n"
-					   "System function (1, 16) : Error   : Expected one of: in, out, inout\n"
+					   "System function (1, 15) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
 					   "System function (1, 8) : Error   : Identifier 'othertype' is not a data type\n"
-					   "System function (1, 14) : Error   : Expected one of: in, out, inout\n"
+					   "System function (1, 1) : Error   : Identifier 'type' is not a data type\n"
+					   "System function (1, 8) : Error   : Identifier 'type' is not a data type\n"
+					   "System function (1, 13) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
 					   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
-					   "System function (1, 18) : Error   : Expected one of: in, out, inout\n"
+					   "System function (1, 17) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
 					   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
 					   " (1, 1) : Error   : Identifier 'type' is not a data type\n" )
 #else

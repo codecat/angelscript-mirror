@@ -64,7 +64,7 @@ AS_API const char * asGetLibraryVersion()
 #endif
 }
 
-AS_API asIScriptEngine * asCreateScriptEngine(asDWORD version)
+AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 {
 	if( (version/10000) != ANGELSCRIPT_VERSION_MAJOR )
 		return 0;
@@ -133,21 +133,7 @@ asCScriptEngine::asCScriptEngine()
 
 	RegisterArrayObject(this);
 	RegisterAnyObject(this);
-
-	// Register the default script structure behaviours
-	int r;
-	scriptTypeBehaviours.flags = asOBJ_SCRIPT_STRUCT;
-#ifndef AS_MAX_PORTABILITY
-	r = RegisterSpecialObjectBehaviour(&scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ScriptStruct_Construct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = RegisterSpecialObjectBehaviour(&scriptTypeBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = RegisterSpecialObjectBehaviour(&scriptTypeBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = RegisterSpecialObjectBehaviour(&scriptTypeBehaviours, asBEHAVE_ASSIGNMENT, "int &f(void[] &in)", asFUNCTION(ScriptStruct_Assignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-#else
-	r = RegisterSpecialObjectBehaviour(&scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ScriptStruct_Construct_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = RegisterSpecialObjectBehaviour(&scriptTypeBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = RegisterSpecialObjectBehaviour(&scriptTypeBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = RegisterSpecialObjectBehaviour(&scriptTypeBehaviours, asBEHAVE_ASSIGNMENT, "int &f(void[] &in)", asFUNCTION(ScriptStruct_Assignment_Generic), asCALL_GENERIC); assert( r >= 0 );
-#endif
+	RegisterScriptStruct(this);
 }
 
 asCScriptEngine::~asCScriptEngine()
@@ -285,7 +271,7 @@ void asCScriptEngine::SetCommonMessageStream(asOUTPUTFUNC_t outFunc, void *outPa
 		SetCommonMessageStream((asIOutputStream*)0);
 }
 
-int asCScriptEngine::AddScriptSection(const char *module, const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy)
+int asCScriptEngine::AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset, bool makeCopy)
 {
 	asCModule *mod = GetModule(module, true);
 	if( mod == 0 ) return asNO_MODULE;
@@ -299,22 +285,8 @@ int asCScriptEngine::AddScriptSection(const char *module, const char *name, cons
 		mod = GetModule(module, true);
 	}
 
-	return mod->AddScriptSection(name, code, codeLength, lineOffset, makeCopy);
+	return mod->AddScriptSection(name, code, (int)codeLength, lineOffset, makeCopy);
 }
-
-#ifdef AS_DEPRECATED
-int asCScriptEngine::Build(const char *module, asIOutputStream *customOut)
-{
-	asIOutputStream *oldOut = outStream;
-	outStream = customOut;
-	
-	int r = Build(module);
-
-	outStream = oldOut;
-
-	return r;
-}
-#endif
 
 int asCScriptEngine::Build(const char *module)
 {
@@ -436,7 +408,8 @@ const char *asCScriptEngine::GetFunctionDeclaration(int funcID, int *length)
 		*tempString = func->GetDeclaration(this);
 	}
 
-	if( length ) *length = tempString->GetLength();
+	// TODO: Return size_t
+	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
 }
@@ -459,7 +432,8 @@ const char *asCScriptEngine::GetFunctionSection(int funcID, int *length)
 		*tempString = *module->scriptSections[func->scriptSectionIdx];
 	}
 
-	if( length ) *length = tempString->GetLength();
+	// TODO: Return size_t
+	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
 }
@@ -479,7 +453,8 @@ const char *asCScriptEngine::GetFunctionName(int funcID, int *length)
 		*tempString = func->name;
 	}
 
-	if( length ) *length = tempString->GetLength();
+	// TODO: Return size_t
+	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
 }
@@ -531,7 +506,8 @@ const char *asCScriptEngine::GetGlobalVarDeclaration(int gvarID, int *length)
 	*tempString = prop->type.Format();
 	*tempString += " " + prop->name;
 
-	if( length ) *length = tempString->GetLength();
+	// TODO: Return size_t
+	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
 }
@@ -548,7 +524,8 @@ const char *asCScriptEngine::GetGlobalVarName(int gvarID, int *length)
 	asCString *tempString = &threadManager.GetLocalData()->string;
 	*tempString = mod->scriptGlobals[id]->name;
 
-	if( length ) *length = tempString->GetLength();
+	// TODO: return size_t
+	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
 }
@@ -748,9 +725,9 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	{
 		// Make sure the name is not a reserved keyword
 		asCTokenizer t;
-		int tokenLen;
+		size_t tokenLen;
 		int token = t.GetToken(name, strlen(name), &tokenLen);
-		if( token != ttIdentifier || strlen(name) != (unsigned)tokenLen )
+		if( token != ttIdentifier || strlen(name) != tokenLen )
 			return ConfigError(asINVALID_NAME);
 
 		int r = bld.CheckNameConflict(name, 0, 0);
@@ -1001,9 +978,9 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	{
 		if( callConv != asCALL_CDECL ) return ConfigError(asNOT_SUPPORTED);
 
-		int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
-		if( r < 0 )
-			return ConfigError(r);
+		memset(&internal, 0, sizeof(asSSystemFunctionInterface));
+		internal.func = (size_t)funcPointer.f.func;
+		internal.callConv = ICC_CDECL;
 	}
 	else
 	{
@@ -1268,7 +1245,7 @@ int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl
 		// Map behaviour to token
 		beh->operators.PushLast(behave_dual_token[behaviour - asBEHAVE_FIRST_DUAL]); 
 		beh->operators.PushLast(AddBehaviourFunction(func, internal));
-		currentGroup->globalBehaviours.PushLast(beh->operators.GetLength()-2);
+		currentGroup->globalBehaviours.PushLast((int)beh->operators.GetLength()-2);
 	}
 	else
 	{
@@ -1352,7 +1329,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	asCProperty *prop = new asCProperty;
 	prop->name       = name;
 	prop->type       = type;
-	prop->index      = -1 - globalPropAddresses.GetLength();
+	prop->index      = -1 - (int)globalPropAddresses.GetLength();
 
 	// TODO: Reuse slots emptied when removing configuration groups
 	globalProps.PushLast(prop);
@@ -1369,7 +1346,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	if( type.IsObject() && !type.IsReference() && !type.IsObjectHandle() )
 	{
 		// Create a pointer to a pointer
-		prop->index = -1 - globalPropAddresses.GetLength();
+		prop->index = -1 - (int)globalPropAddresses.GetLength();
 
 		void **pp = &globalPropAddresses[globalPropAddresses.GetLength()-1];
 		globalPropAddresses.PushLast(pp);
@@ -1379,7 +1356,10 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	// because they change when the array is resized
 	for( asUINT n = 0; n < globalProps.GetLength(); n++ )
 	{
-		if( globalProps[n] && globalProps[n]->type.IsObject() && !globalProps[n]->type.IsReference() && !type.IsObjectHandle() )
+		if( globalProps[n] && 
+			globalProps[n]->type.IsObject() && 
+			!globalProps[n]->type.IsReference() && 
+			!globalProps[n]->type.IsObjectHandle() )
 		{
 			int idx = -globalProps[n]->index - 1;
 			void **pp = &globalPropAddresses[idx-1];
@@ -1418,7 +1398,7 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 	asCScriptFunction *func = new asCScriptFunction();
 	func->objectType = objType;
 
-	objType->methods.PushLast(systemFunctions.GetLength());
+	objType->methods.PushLast((int)systemFunctions.GetLength());
 
 	asCBuilder bld(this, 0);
 	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
@@ -1438,7 +1418,7 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 		return ConfigError(asNAME_TAKEN);
 	}
 
-	func->id = -1 - systemFunctions.GetLength();
+	func->id = -1 - (int)systemFunctions.GetLength();
 	systemFunctions.PushLast(func);
 
 	return 0;
@@ -1480,7 +1460,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	asCScriptFunction *func = new asCScriptFunction();
 	func->objectType = dt.GetObjectType();
 
-	func->objectType->methods.PushLast(systemFunctions.GetLength());
+	func->objectType->methods.PushLast((int)systemFunctions.GetLength());
 
 	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 ) 
@@ -1497,7 +1477,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		return ConfigError(asNAME_TAKEN);
 	}
 
-	func->id = -1 - systemFunctions.GetLength();
+	func->id = -1 - (int)systemFunctions.GetLength();
 	systemFunctions.PushLast(func);
 
 	// If parameter type from other groups are used, add references
@@ -1556,7 +1536,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 		return ConfigError(asNAME_TAKEN);
 	}
 
-	func->id = -1 - systemFunctions.GetLength();
+	func->id = -1 - (int)systemFunctions.GetLength();
 	systemFunctions.PushLast(func);
 
 	currentGroup->systemFunctions.PushLast(func);
@@ -1665,9 +1645,11 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 	}
 
 	func->returnType = dt;
-	func->parameterTypes.PushLast(asCDataType::CreatePrimitive(ttInt, false));
-	func->parameterTypes.PushLast(asCDataType::CreatePrimitive(ttUInt8, true));
-	func->id = -1 - systemFunctions.GetLength();
+	func->parameterTypes.PushLast(asCDataType::CreatePrimitive(ttInt, true));
+	asCDataType parm1 = asCDataType::CreatePrimitive(ttUInt8, true);
+	parm1.MakeReference(true);
+	func->parameterTypes.PushLast(parm1);
+	func->id = -1 - (int)systemFunctions.GetLength();
 	systemFunctions.PushLast(func);
 
 	stringFactory = func;
@@ -1826,7 +1808,8 @@ const char *asCScriptEngine::GetImportedFunctionDeclaration(const char *module, 
 	asCString *tempString = &threadManager.GetLocalData()->string;
 	*tempString = func->GetDeclaration(this);
 
-	if( length ) *length = tempString->GetLength();
+	// TODO: Return size_t
+	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
 }
@@ -1838,7 +1821,7 @@ const char *asCScriptEngine::GetImportedFunctionSourceModule(const char *module,
 
 	const char *str = mod->GetImportedFunctionSourceModule(index);
 	if( length && str )
-		*length = strlen(str);
+		*length = (int)strlen(str);
 
 	return str;
 }
@@ -1867,7 +1850,7 @@ const char *asCScriptEngine::GetModuleNameFromIndex(int index, int *length)
 	const char *str = module->name.AddressOf();
 
 	if( length && str )
-		*length = strlen(str);
+		*length = (int)strlen(str);
 
 	return str;
 }
@@ -2039,7 +2022,7 @@ void asCScriptEngine::RemoveArrayType(asCObjectType *t)
 	// the time it will be the last two types
 
 	int n;
-	for( n = arrayTypes.GetLength()-1; n >= 0; n-- )
+	for( n = (int)arrayTypes.GetLength()-1; n >= 0; n-- )
 	{
 		if( arrayTypes[n] == t ) 
 		{
@@ -2050,7 +2033,7 @@ void asCScriptEngine::RemoveArrayType(asCObjectType *t)
 		}
 	}
 
-	for( n = scriptArrayTypes.GetLength()-1; n >= 0; n-- )
+	for( n = (int)scriptArrayTypes.GetLength()-1; n >= 0; n-- )
 	{
 		if( scriptArrayTypes[n] == t )
 		{
@@ -2232,7 +2215,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 	}
 	else if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, (asDWORD*)&param);
+		asCGeneric gen(this, s, obj, (size_t*)&param);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
@@ -2258,7 +2241,7 @@ void asCScriptEngine::CallGlobalFunction(void *param1, void *param2, asSSystemFu
 	}
 	else
 	{
-		asCGeneric gen(this, s, 0, (asDWORD*)&param1);
+		asCGeneric gen(this, s, 0, (size_t*)&param1);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
@@ -2321,7 +2304,7 @@ int asCScriptEngine::GarbageCollect(bool doFullCycle)
 
 int asCScriptEngine::GetObjectsInGarbageCollectorCount()
 {
-	return gcObjects.GetLength();
+	return (int)gcObjects.GetLength();
 }
 
 int asCScriptEngine::GCInternal()
@@ -2670,7 +2653,8 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, int *length)
 	asCString *tempString = &threadManager.GetLocalData()->string;
 	*tempString = dt->Format();
 
-	if( length ) *length = tempString->GetLength();
+	// TODO: Return size_t
+	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
 }
@@ -2693,7 +2677,34 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 
 	// Construct the object
 	if( objType->flags & asOBJ_SCRIPT_STRUCT )
-		ScriptStruct_Construct(objType, (asCScriptStruct*)ptr);
+	{
+		int funcIndex = objType->beh.construct;
+		// Setup a context for calling the function
+		asIScriptContext *ctx;
+		int r = CreateContext(&ctx, true);
+		if( r < 0 )
+		{
+			CallFree(objType, ptr);
+			return 0;
+		}
+		r = ctx->Prepare(funcIndex);
+		if( r < 0 )
+		{
+			CallFree(objType, ptr);
+			ctx->Release();
+			return 0;
+		}
+		ctx->SetObject(ptr);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+		{
+			// The memory should have been released already
+			// TODO: Verify this
+			ctx->Release();
+			return 0;
+		}
+		ctx->Release();
+	}
 	else if( objType->flags & asOBJ_SCRIPT_ARRAY )
 		ArrayObjectConstructor(objType, (asCArrayObject*)ptr);
 	else if( objType->flags & asOBJ_SCRIPT_ANY )

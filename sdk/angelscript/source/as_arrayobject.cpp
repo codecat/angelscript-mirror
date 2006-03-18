@@ -83,7 +83,11 @@ static void ArrayObjectResize(asUINT size, asCArrayObject *self)
 
 static void ArrayObjectConstructor_Generic(asIScriptGeneric *gen)
 {
+#ifndef AS_64BIT_PTR
 	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(0);
+#else
+	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(0);
+#endif
 	asCArrayObject *obj = (asCArrayObject*)gen->GetObject();
 
 	ArrayObjectConstructor(ot, obj);
@@ -92,7 +96,11 @@ static void ArrayObjectConstructor_Generic(asIScriptGeneric *gen)
 static void ArrayObjectConstructor2_Generic(asIScriptGeneric *gen)
 {
 	asUINT length = gen->GetArgDWord(0);
+#ifndef AS_64BIT_PTR
 	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(1);
+#else
+	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(1);
+#endif
 	asCArrayObject *obj = (asCArrayObject*)gen->GetObject();
 
 	ArrayObjectConstructor2(length, ot, obj);
@@ -113,7 +121,7 @@ static void ArrayObjectAt_Generic(asIScriptGeneric *gen)
 	asUINT index = gen->GetArgDWord(0);
 	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
 
-	gen->SetReturnDWord((asDWORD)self->at(index));
+	gen->SetReturnAddress(self->at(index));
 }
 
 static void ArrayObjectLength_Generic(asIScriptGeneric *gen)
@@ -138,8 +146,13 @@ void RegisterArrayObject(asCScriptEngine *engine)
 	int r;
 	r = engine->RegisterSpecialObjectType(asDEFAULT_ARRAY, sizeof(asCArrayObject), asOBJ_CLASS_CDA | asOBJ_SCRIPT_ARRAY); assert( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
+#ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ArrayObjectConstructor, (int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int)", asFUNCTIONPR(ArrayObjectConstructor2, (asUINT, int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+#else
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTIONPR(ArrayObjectConstructor, (int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int64)", asFUNCTIONPR(ArrayObjectConstructor2, (asUINT, int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+#endif
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ASSIGNMENT, "void[] &f(void[]&in)", asFUNCTION(ArrayObjectAssignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -148,8 +161,13 @@ void RegisterArrayObject(asCScriptEngine *engine)
 	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "uint length() const", asFUNCTION(ArrayObjectLength), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "void resize(uint)", asFUNCTION(ArrayObjectResize), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 #else
+#ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ArrayObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int)", asFUNCTION(ArrayObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
+#else
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ArrayObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int)", asFUNCTION(ArrayObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
+#endif
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ASSIGNMENT, "void[] &f(void[]&in)", asFUNCTION(ArrayObjectAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -301,7 +319,7 @@ void *asCArrayObject::GetElementPointer(asUINT index)
 	if( index >= buffer->numElements ) return 0;
 
 	if( gc.objType->subType && !(arrayType & 1) )
-		return (void*)((asDWORD*)buffer->data)[index];
+		return (void*)((size_t*)buffer->data)[index];
 	else
 		return buffer->data + elementSize*index;
 }
@@ -318,7 +336,7 @@ void *asCArrayObject::at(asUINT index)
 	else
 	{
 		if( gc.objType->subType && !(arrayType & 1) )
-			return (void*)((asDWORD*)buffer->data)[index];
+			return (void*)((size_t*)buffer->data)[index];
 		else
 			return buffer->data + elementSize*index;
 	}

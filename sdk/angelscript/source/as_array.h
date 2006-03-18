@@ -43,19 +43,20 @@ public:
 	asCArray(const asCArray<T> &);
 	~asCArray();
 
-	void   Allocate(asUINT numElements, bool keepData);
-	asUINT GetCapacity() const;
+	void   Allocate(size_t numElements, bool keepData);
+	size_t GetCapacity() const;
 
 	void PushLast(const T &element);
 	T    PopLast();
 
-	void   SetLength(asUINT numElements);
-	asUINT GetLength() const;
+	void   SetLength(size_t numElements);
+	size_t GetLength() const;
 
-	void Copy(const T*, asUINT count);
+	void Copy(const T*, size_t count);
 	asCArray<T> &operator =(const asCArray<T> &);
 
-	T &operator [](asUINT index) const;
+	const T &operator [](size_t index) const;
+	T &operator [](size_t index);
 	T *AddressOf();
 
 	void Concatenate(const asCArray<T> &);
@@ -64,8 +65,8 @@ public:
 
 protected:
 	T   *array;
-	asUINT  length;
-	asUINT  maxLength;
+	size_t  length;
+	size_t  maxLength;
 };
 
 // Implementation
@@ -111,7 +112,15 @@ asUINT asCArray<T>::GetLength() const
 }
 
 template <class T>
-T &asCArray<T>::operator [](asUINT index) const
+const T &asCArray<T>::operator [](asUINT index) const
+{
+	assert(index < length);
+
+	return array[index];
+}
+
+template <class T>
+T &asCArray<T>::operator [](asUINT index)
 {
 	assert(index < length);
 
@@ -122,7 +131,7 @@ template <class T>
 void asCArray<T>::PushLast(const T &element)
 {
 	if( length == maxLength )
-		Allocate(int(maxLength*1.5f) + 1, true);
+		Allocate(maxLength + maxLength/2 + 1, true);
 
 	array[length++] = element;
 }
