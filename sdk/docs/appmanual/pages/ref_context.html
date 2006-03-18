@@ -1,0 +1,538 @@
+<HTML>
+<head>
+<title>AngelScript: Reference: asIScriptEngine</title>
+<LINK rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+<p>
+<a href="../index.html">index</a>
+</p>
+
+<h1>Reference: asIScriptContext</h1>
+
+<pre class=border>
+class asIScriptContext
+{
+public:
+  <font color=green>// Memory management</font>
+  virtual int <a href="#addref">AddRef</a>() = 0;
+  virtual int <a href="#release">Release</a>() = 0;
+
+  <font color=green>// Engine</font>
+  virtual asIScriptEngine *<a href="#engine">GetEngine</a>() = 0;
+
+  <font color=green>// Script context</font>
+  virtual int <a href="#state">GetState</a>() = 0;
+
+  virtual int <a href="#prepare">Prepare</a>(int funcID) = 0;
+
+  virtual int <a href="#args">SetArguments</a>(int stackPos, asDWORD *data, int count) = 0;
+  virtual int <a href="#return">GetReturnValue</a>(asDWORD *data, int count) = 0;
+
+  virtual int <a href="#exec">Execute</a>() = 0;
+  virtual int <a href="#execstep">ExecuteStep</a>(asDWORD flag) = 0;
+  virtual int <a href="#abort">Abort</a>() = 0;
+  virtual int <a href="#suspend">Suspend</a>() = 0;
+
+  virtual int <a href="#currentline">GetCurrentLineNumber</a>() = 0;
+  virtual int <a href="#currentfunc">GetCurrentFunction</a>() = 0;
+
+  <font color=green>// Exception handling</font>
+  virtual int <a href="#setexcept">SetException</a>(const char *string) = 0;
+  virtual int <a href="#exceptline">GetExceptionLineNumber</a>() = 0;
+  virtual int <a href="#exceptfunc">GetExceptionFunction</a>() = 0;
+  virtual const char *<a href="#exceptstring">GetExceptionString</a>(int *length = 0) = 0;
+};
+</pre>
+
+<a name=addref></a>
+<h2>AddRef</h2>
+
+<pre class=border>
+int AddRef();
+</pre>
+
+<h3>Description</h3>
+
+<p>This method increases the internal reference counter of the object and
+returns the count. The returned value shouldn't be used for anything else
+but debugging.</p>
+
+<p>Call AddRef() each time you assign a reference to a new variable.</p>
+
+<h3>Returns</h3>
+
+<p>The internal reference counter.</p>
+
+
+
+
+
+
+
+
+
+<a name=release></a>
+<h2>Release</h2>
+
+<pre class=border>
+int Release();
+</pre>
+
+<h3>Description</h3>
+
+<p>Decreases the internal reference counter and returns the count. If the
+counter reaches 0 the object is deleted and the memory is freed.</p>
+
+<p>After calling Release() don't forget to set your reference to 0 so that
+you don't mistakenly try to use the reference again.</p>
+
+<h3>Returns</h3>
+
+<p>The internal reference counter.</p>
+
+
+
+
+
+
+
+<a name=engine></a>
+<h2>GetEngine</h2>
+
+<pre class=border>
+asIScriptEngine *GetEngine();
+</pre>
+
+<h3>Description</h3>
+
+<p>This function is used to retrieve the engine which created this context.</p>
+
+<h3>Returns</h3>
+
+<p>Returns the pointer to the engine object.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+<a name=state></a>
+<h2>GetState</h2>
+
+<pre class=border>
+int GetState();
+</pre>
+
+<h3>Description</h3>
+
+<p>This method returns the state of a context.</p>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value on failure. And one of
+asEXECUTION_FINISHED,
+asEXECUTION_SUSPENDED,
+asEXECUTION_ABORTED,
+asEXECUTION_EXCEPTION,
+asEXECUTION_PREPARED,
+asEXECUTION_UNINITIALIZED, or
+asEXECUTION_ACTIVE on success.</p>
+
+
+
+
+
+
+
+
+<a name=prepare></a>
+<h2>Prepare</h2>
+
+<pre class=border>
+int Prepare(int funcID);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method prepares the context for execution of a script function. It
+allocates the stack space required and reserves space for return value and
+parameters. The default value for parameters and return value is 0.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>funcID</code>&nbsp;</td>
+<td valign=top><p>The id of the function which is to be executed, or asPREPARE_PREVIOUS to use the same function again.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value if the function cannot be found. Returns 0 or greater if sucessful.</p>
+
+
+
+
+
+
+
+
+<a name=exec></a>
+<h2>Execute</h2>
+
+<pre class=border>
+int Execute();
+</pre>
+
+<h3>Description</h3>
+
+<p>Executes the prepared function until the script returns. If the execution was previously suspended the function resumes where it left of.</p>
+
+<p>Note that if the engine freezes, e.g. if trapped in a never ending loop, you may call Abort() from another thread to stop execution.</p>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value on an unexpected error. On success it returns one of the following values to show the state of the context
+
+asEXECUTION_FINISHED,
+asEXECUTION_SUSPENDED,
+asEXECUTION_ABORTED, or
+asEXECUTION_EXCEPTION.</p>
+
+
+
+
+
+
+<a name=execstep></a>
+<h2>ExecuteStep</h2>
+
+<pre class=border>
+int ExecuteStep(asDWORD flag);
+</pre>
+
+<h3>Description</h3>
+
+<p>Executes one step of the prepared function. One step is normally one complete statement in the scripting code, but may be less.</p>
+
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>flag</code>&nbsp;</td>
+<td valign=top><p>Can be either asEXEC_STEP_INTO or asEXEC_STEP_OVER.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value on an unexpected error. On success it returns one of the following values to show the state of the context
+
+asEXECUTION_FINISHED,
+asEXECUTION_SUSPENDED,
+asEXECUTION_ABORTED, or
+asEXECUTION_EXCEPTION.</p>
+
+
+
+
+
+
+
+<a name=abort></a>
+<h2>Abort</h2>
+
+<pre class=border>
+int Abort();
+</pre>
+
+<h3>Description</h3>
+
+<p>Aborts the current execution of a script.</p>
+
+<h3>Returns</h3>
+
+<p>Negative value on failure.</p>
+
+
+
+
+
+
+<a name=suspend></a>
+<h2>Suspend</h2>
+
+<pre class=border>
+int Suspend();
+</pre>
+
+<h3>Description</h3>
+
+<p>Suspends the current execution of a script.</p>
+
+<h3>Returns</h3>
+
+<p>Negative value on failure.</p>
+
+
+
+
+
+<a name=args></a>
+<h2>SetArguments</h2>
+
+<pre class=border>
+int SetArguments(int stackPos,
+                 asDWORD *data,
+                 int count);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method sets data on the stack space reserved for function arguments.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>stackPos</code>&nbsp;</td>
+<td valign=top><p>The position in the stack to set, relative to the function's stack frame. The argument data should be placed on positions starting with 0 and increasing, i.e the first argument on 0, the second on 1, etc. Note that some types take up more than one position, e.g. double take 2 dwords.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>data</code>&nbsp;</td>
+<td valign=top><p>A pointer to the data to be set. You should verify the function interface before setting parameters, so that the function really takes the parameters that you are sending.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>count</code>&nbsp;</td>
+<td valign=top><p>The number of dwords to copy from the data pointer.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value if the function cannot be found. Returns 0 or greater if sucessful.</p>
+
+
+
+
+
+
+
+
+
+
+
+<a name=return></a>
+<h2>GetReturnValue</h2>
+
+<pre class=border>
+int GetReturnValue(asDWORD *data,
+                   int count);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method gets data from the stack space reserved for the function return value.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>data</code>&nbsp;</td>
+<td valign=top><p>A pointer to a buffer that receives the data. You should verify the function interface before getting the return value, so that the function really returns what you are expecting.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>count</code>&nbsp;</td>
+<td valign=top><p>The number of dwords to copy.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value on failure. Returns 0 or greater if sucessful.</p>
+
+
+
+
+
+
+
+
+
+
+<a name=currentline></a>
+<h2>GetCurrentLineNumber</h2>
+
+<pre class=border>
+int GetCurrentLineNumber();
+</pre>
+
+<h3>Description</h3>
+
+<p>This method returns the line number where the context is currently located. The line number is relative to the script section where the function was found.</p>
+
+<h3>Returns</h3>
+
+<p>The line number, where the first line is 1. May also return 0, if the line number counter has been disabled.</p>
+
+<p>Returns negative value on failure.</p>
+
+
+
+
+
+
+
+
+
+
+
+<a name=currentfunc></a>
+<h2>GetCurrentFunction</h2>
+
+<pre class=border>
+int GetCurrentFunction();
+</pre>
+
+<h3>Description</h3>
+
+<p>Use this method to get the id of the function that the context is currently positioned in.</p>
+
+<h3>Returns</h3>
+
+<p>Returns the id of the function, or a negative value on failure.</p>
+
+
+
+
+
+
+
+<a name=setexcept></a>
+<h2>SetException</h2>
+
+<pre class=border>
+int SetException(const char *string);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method sets a script exception in the context. This will only work if the context is currently calling a system function, thus this method can only be used for system functions.</p>
+
+<p>Note that if your system function sets an exception, it should not return any object references because the engine will not release the returned reference.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>string</code>&nbsp;</td>
+<td valign=top><p>The exception string.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns a negative number on failure.</p>
+
+
+
+
+
+
+
+
+
+<a name=exceptline></a>
+<h2>GetExceptionLineNumber</h2>
+
+<pre class=border>
+int GetExceptionLineNumber();
+</pre>
+
+<h3>Description</h3>
+
+<p>This method returns the line number where the exception ocurred. The line number is relative to the script section where the function was found.</p>
+
+<h3>Returns</h3>
+
+<p>The line number, where the first line is 1. May also return 0, if the line number counter has been disabled.
+
+<p>Returns -1 if no context was prepared or no exception ocurred.</p>
+
+
+
+
+
+<a name=exceptfunc></a>
+<h2>GetExceptionFunction</h2>
+
+<pre class=border>
+int GetExceptionFunction();
+</pre>
+
+<h3>Description</h3>
+
+<p>Use this method to get the id of the function in which the exception ocurred.</p>
+
+<h3>Returns</h3>
+
+<p>Returns the id of the function.</p>
+
+<p>Returns -1 if no context was prepared or no exception ocurred.</p>
+
+
+
+
+
+<a name=exceptstring></a>
+<h2>GetExceptionString</h2>
+
+<pre class=border>
+const char *GetExceptionString(int *length = 0);
+</pre>
+
+<h3>Description</h3>
+
+<p>This function gives the exception string, which describe what happened.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>length</code>&nbsp;</td>
+<td valign=top><p>Pointer to a variable that will receive the length of the returned string.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns a null-terminated string with the exception description.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<p><a href="#">top</a></p>
+
+</body></HTML>

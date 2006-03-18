@@ -1,0 +1,74 @@
+/*
+   AngelCode Scripting Library
+   Copyright (c) 2003-2004 Andreas Jönsson
+
+   This software is provided 'as-is', without any express or implied 
+   warranty. In no event will the authors be held liable for any 
+   damages arising from the use of this software.
+
+   Permission is granted to anyone to use this software for any 
+   purpose, including commercial applications, and to alter it and 
+   redistribute it freely, subject to the following restrictions:
+
+   1. The origin of this software must not be misrepresented; you 
+      must not claim that you wrote the original software. If you use
+	  this software in a product, an acknowledgment in the product 
+	  documentation would be appreciated but is not required.
+
+   2. Altered source versions must be plainly marked as such, and 
+      must not be misrepresented as being the original software.
+
+   3. This notice may not be removed or altered from any source 
+      distribution.
+
+   The original version of this library can be located at:
+   http://www.angelcode.com/angelscript/
+
+   Andreas Jönsson
+   andreas@angelcode.com
+*/
+
+
+//
+// as_scriptfunction.h
+//
+// A container for a compiled script function
+//
+
+
+
+#ifndef AS_SCRIPTFUNCTION_H
+#define AS_SCRIPTFUNCTION_H
+
+#include "as_string.h"
+#include "as_array.h"
+#include "as_datatype.h"
+#include "as_types.h"
+
+class asCScriptEngine;
+
+class asCScriptFunction
+{
+public:
+	asCScriptFunction() {objectType = 0; name = "";}
+
+	int GetSpaceNeededForArguments();
+	int GetSpaceNeededForReturnValue();
+	asCString GetDeclaration(asCScriptEngine *engine);
+	int GetLineNumber(int programPosition);
+	int GetExceptionID(int programPosition);
+
+	asCString             name;
+	asCDataType           returnType;
+	asCArray<asCDataType> parameterTypes;
+	int                   id;
+	asCArray<asBYTE>      byteCode;
+	asCArray<asBYTE>      cleanCode;
+	asCArray<int>         lineNumbers;
+	asCArray<int>         exceptionIDs;
+	int                   stackNeeded;
+
+	asCObjectType *       objectType;
+};
+
+#endif

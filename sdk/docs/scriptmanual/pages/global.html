@@ -1,0 +1,72 @@
+<HTML>
+<head>
+<title>AngelScript: Global declarations</title>
+<LINK rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<p><a href="../index.html">index</a><p>
+
+<h1>Global declarations</h1>
+
+<p>All global declarations share the same namespace so their names may not
+conflict. This includes extended data types and built in functions registered
+by the host application. Also, all declarations are visible to all, e.g. a
+function to be called do not have to be declared above the function that calls
+it.</p>
+
+	<ul>
+	<li><a href="#function">functions</a>
+	<li><a href="#variable">variables</a>
+        <li><a href="#import">imports</a>
+	</ul>
+
+
+<a name="function">
+<h2>Functions</h2>
+
+<pre><i>TYPE</i> FunctionName(<i>PARAMS</i>) {<i>IMPLEMENTATION</i>}</pre>
+
+<p>TYPE is one of the available return <a href="datatypes.html">data types</a>, e.g. <code><font color=blue>void</font></code>, <code><font color=blue>int</font></code>, or <code><font color=blue>bool</font></code>.</p>
+
+<p>Parameters are declared with data type, pointer level, and optionally <code>&</code> for
+data sent by reference and optionally an identifier to access the parameter from within
+the function. If more than one parameter is specified they are separated with commas.</p>
+
+<p>Parameters can also be declared as <code>const</code> which prohibits the alteration of their value. It is
+good practice to declare variables that will not be changed as <code>const</code>,
+because it makes for more readable code and the compiler is also able to take advantage of it some times.</p>
+
+<p>Note that functions are uniquely identified by their names, thus functions may
+not share the name with other functions or other global declarations for that matter.</p>
+
+<p>The IMPLEMENTATION is written through a series of <a href="statement.html">statements</a>.</p>
+
+<p>Note that although functions that return types by references can't be
+declared by scripts you may still see functions like these if the host
+application defines them. In that case you the returned value may also
+be used as the target in assignments.</p>
+
+<a name="variable">
+<h2>Variables</h2>
+
+<pre><i>TYPE</i> VariableName = <i>EXPR</i>, VariableName2;</pre>
+
+<p>TYPE is one of the available <a href="datatypes.html">data types</a>. The expression may not call any functions, assign any variables. The expression doesn't have to be constant, and it can even use the condition operator ?:.</p>
+
+<p>Variables declared globally like this are accessible from all functions. The value of the variables are initialized at compile time and any changes are maintained between calls. If a global variable holds a memory resource, e.g. an bstr, its memory is released when the script engine is reset.</p>
+
+<a name="import">
+<h2>Imports</h2>
+
+<pre>import <i>TYPE</i> FunctionName(<i>PARAMS</i>) from "ModuleName";</pre>
+
+<p>TYPE is one of the available return <a href="datatypes.html">data types</a>, e.g. <code><font color=blue>void</font></code>, <code><font color=blue>int</font></code>, or <code><font color=blue>bool</font></code>.</p>
+
+<p>This statement allow a script to declare function prototypes that will be imported from other modules. If the application support this, then the functions are bound after the module has been compiled, and can even be exchanged while running the script.</p>
+
+<p>Note: The <code>from</code> keyword is not a reserved keyword and can therefore be used as normal for function and variable names.</p>
+
+<p><a href="#">top</a></p>
+
+</body></HTML>

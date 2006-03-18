@@ -1,0 +1,378 @@
+<HTML>
+<head>
+<title>Upgrade instructions for AngelScript</title>
+
+<style>
+H1
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 24px;
+    FONT-FAMILY: Verdana
+}
+H2
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 18px;
+    FONT-FAMILY: Verdana
+}
+H3
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 16px;
+    FONT-FAMILY: Verdana
+}
+H4
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 14px;
+    FONT-FAMILY: Verdana
+}
+P
+{
+    FONT-SIZE: 12px;
+    FONT-FAMILY: Arial
+}
+BODY
+{
+    FONT-SIZE: 12px;
+    FONT-FAMILY: Arial
+}
+TD
+{
+    FONT-SIZE: 12px;
+    FONT-FAMILY: Arial
+}
+.text_small
+{
+    FONT-SIZE: 10px;
+    FONT-FAMILY: Arial
+}
+.text_normal
+{
+    FONT-SIZE: 12px;
+    FONT-FAMILY: Arial
+}
+.text_large
+{
+    FONT-SIZE: 14px;
+    FONT-FAMILY: Arial
+}
+.header_normal
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 18px;
+    FONT-FAMILY: Verdana
+}
+.header_small
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 16px;
+    FONT-FAMILY: Verdana
+}
+.header_large
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 24px;
+    FONT-FAMILY: Verdana
+}
+A
+{
+	TEXT-DECORATION: none
+}
+A:hover
+{
+	TEXT-DECORATION: underline
+}
+.border
+{
+    BORDER-RIGHT: gray 1px solid;
+    BORDER-TOP: gray 1px solid;
+    BORDER-LEFT: gray 1px solid;
+    BORDER-BOTTOM: gray 1px solid;
+    MARGIN-TOP: 0;
+    MARGIN-LEFT: 0;
+    MARGIN-RIGHT: 5;
+    MARGIN-BOTTOM: 5;
+    PADDING: 5 5 5 5;
+    DISPLAY: block;
+}
+.a
+{
+	BACKGROUND-COLOR: #FFFFCC;
+    DISPLAY: block;
+	margin-bottom: 2;
+    PADDING: 5 5 5 5;
+}
+.b
+{
+	BACKGROUND-COLOR: #EEEEEE;
+    DISPLAY: block;
+	margin-bottom: 2;
+    PADDING: 5 5 5 5;
+}
+</style>
+
+</head>
+
+<body>
+<h1>Upgrade instructions for AngelScript</h1>
+
+<p>2004/11/12, Andreas Jönsson</p>
+
+<p>This article will help you upgrading your existing application to use the 
+latest version of AngelScript. It will explain the necessary steps needed to 
+make the application work, though not necessarily to take advantage of the 
+new features.</p>
+
+<h2>Version 1.9.x to 1.10.x</h2>
+
+<h3>Application interface</h3>
+
+<span class=a>
+asIScriptEngine::RegisterObjectBehaviour() can now only register object 
+behaviours, i.e. those behaviours that require an object type. The behaviours
+that were registered with datatype = 0 should now be registered with 
+RegisterGlobalBehaviour().<br>
+<br>
+NOTE: Define AS_DEPRECATED for backwards compatibility.
+</span>
+<span class=b>
+Methods that are used to obtain a string from the engine have changed. Instead
+of passing a buffer to the methods, they now use an internal buffer and then 
+return a pointer to that one. The internal buffer is shared between all of 
+them so the returned pointer shouldn't be stored for later use. Affected 
+methods are:
+<ul>
+<li>asIScriptEngine::GetFunctionName()
+<li>asIScriptEngine::GetFunctionDeclaration()
+<li>asIScriptEngine::GetGlobalVarName()
+<li>asIScriptEngine::GetGlobalVarDeclaration()
+<li>asIScriptEngine::GetImportedFunctionDeclaration()
+<li>asIScriptContext::GetExceptionString()
+</ul>
+NOTE: Define AS_DEPRECATED for backwards compatibility.
+</span>
+<span class=a>
+asIScriptEngine::ExecuteString() has been altered to take one more parameter
+receives the pointer to the context used for the execution. The new parameter
+was inserted before the last parameter, and can be set to 0.<br>
+<br>
+NOTE: Define AS_DEPRECATED for backwards compatibility.
+</span>
+<span class=b>
+asIScriptEngine::GetContextForExecuteString() is deprecated and should no 
+longer be used. If you need the context you should pass a pointer to a 
+variable to ExecuteString(). ExecuteString() will then return the context in 
+that variable.<br>
+<br>
+NOTE: Define AS_DEPRECATED for backwards compatibility.
+</span>
+
+<h3>Project files</h3>
+
+<span class=a>
+as_compiler_expression.cpp was merged into as_compiler.cpp. 
+</span>
+<span class=b>
+as_thread.h and as_thread.cpp were created to add support for multithreading.
+</span>
+<span class=a>
+as_context_x86.cpp was created to add an x86 assembler optimized VM.
+</span>
+<span class=b>
+as_arrayobject.h and as_arrayobject.cpp were created to add support for native arrays.
+</span>
+<span class=a>
+as_debug.h was added to the code to hold code used for debugging reasons.
+</span>
+<span class=b>
+as_typeinfo.h and as_typeinfo.cpp were added to the project.
+</span>
+
+<h2>Version 1.8.x to 1.9.x</h2>
+
+<h3>Application interface</h3>
+
+
+<span class=a>
+The asIScriptEngine::RegisterTypeBehaviour() method was renamed to 
+RegisterObjectBehaviour(). This was done to make the method names more 
+consistent. 
+</span>
+<span class=b>
+The flags asCALL_RETURNBYVAL and asCALL_RETURNBYREF are no longer defined and 
+should be removed completely. 
+</span>
+<span class=a>
+The flags asOBJ_IS_COMPLEX and asOBJ_IS_NOT_COMPLEX for 
+asIScriptEngine::RegisterObjectType() should not be used any more. They should 
+be replaced with one of the following flags: 
+<ul>
+<li>asOBJ_CLASS - This is a structure or a class. Combine this flag with the 
+	following as needed: 
+	<ul>
+    <li>asOBJ_CLASS_CONSTRUCTOR - The default constructor is defined 
+    <li>asOBJ_CLASS_DESTRUCTOR - The destructor is defined 
+	<li>asOBJ_CLASS_ASSIGNMENT - The assignment operator is overloaded.
+	</ul>
+<li>asOBJ_PRIMITIVE - The datatype is really a primitive, except float or 
+	double 
+<li>asOBJ_FLOAT - The datatype is really a float or a double type 
+</ul>
+This was done because of how different compilers handles return of various
+types. The identification of the real C++ was necessary to make the 
+library portable between compilers and platforms. 
+</span>
+<span class=b>
+The compiler messages have changed to use a more standardized format so if 
+your application depended on the format returned you'll need to update your 
+code. 
+</span>
+<span class=a>
+The methods asIScriptContext::Prepare() and asIScriptEngine::ExecuteString()
+no longer take the stack size argument. The engine has been changed so that 
+the stack dynamically grows as needed which eliminates the need to set a 
+hardcoded limit. If you still want to control the size of the stack, then you 
+can do so through the new method 
+asIScriptEngine::SetDefaultContextStackSize(). 
+</span>
+<span class=b>
+The define AS_CALL was removed from the interface. Simply do a search and
+remove all use of this define. This also changes the exported symbol names for 
+the global functions. Where they previously followed the naming convention for 
+stdcall, they now use the cdecl naming convention. 
+</span>
+<span class=a>
+asIScriptEngine::GetModuleID() no longer exists. You could instead use the 
+new method asIScriptEngine::GetModuleIndex() and shift the value 16 bits to 
+the left. If you were using it for enumerating functions you can now use the 
+new method asIScriptEngine::GetFunctionIDByIndex() instead. 
+</span>
+<span class=b>
+asIScriptEngine::AddScriptSection() now takes an extra parameter to allow 
+adjustment of the line numbers in compiler and exception messages. Simply add 
+0 as a last argument to the call. 
+</span>
+
+
+<h3>Project files</h3>
+
+<span class=a>
+as_restore.cpp and as_restore.h was added to the library project. 
+</span>
+<span class=b>
+The source files ac_string.cpp, ac_string.h, and ac_array.h were renamed 
+to as_string.cpp, as_string.h and as_array.h respectively. 
+</span>
+
+<h2>Version 1.7.x to 1.8.x</h2>
+
+<h3>Application interface</h3>
+
+<span class=a>
+asIScriptEngine::RegisterGlobalProperty() and 
+asIScriptEngine::RegisterObjectProperty() no longer take the flags parameter. 
+If the property should be read only, add const to the declaration. 
+</span>
+<span class=b>
+The bstr type was removed from the library to allow the application to use 
+other string objects. The old bstr type can be registered externally using 
+the new asIScriptEngine::RegisterScriptFactory() method. There is an add-on 
+code available that does all this for you with a simple call to a function. 
+</span>
+<span class=a>
+The functions asBStrAlloc(), asBStrFree(), and asBStrLength() are no longer 
+exported by the library. 
+</span>
+<span class=b>
+The asMETHOD() macro has been improved. It now takes two arguments, the class 
+name and the method name, instead of both of them together. Where you 
+previously wrote <code>asMETHOD(CMyClass::Method)</code> you should now write 
+<code>asMETHOD(CMyClass, Method)</code>. There are also variants of macro 
+available that help in registering overloaded methods and functions. 
+</span>
+<span class=a>
+The internal script functions @init() and @exit() are no longer reported by 
+asIScriptEngine::GetFunctionCount(), 
+asIScriptEngine::GetFunctionDeclaration(), etc. These where previously 
+reported as the first two functions when enumerating the script functions. If 
+you were doing something to skip these you'll have to revise that code. 
+</span>
+<span class=b>
+asIScriptEngine::RegisterObjectType() should now use the flags 
+asOBJ_IS_COMPLEX, and asOBJ_IS_NOT_COMPLEX.<br>
+<br>
+NOTE: These flags were replaced with another set of flags for version 1.9.x.
+</span>
+<span class=a>
+With version 1.8.0 the support for separate modules was added, which meant 
+that many functions needed an extra parameter for naming the module. The 
+simplest upgrade is to add the argument 0 first to all calls to the following 
+methods: 
+<ul>
+<li>asIScriptEngine::AddScriptSection() 
+<li>asIScriptEngine::Build() 
+<li>asIScriptEngine::GetFunctionCount() 
+<li>asIScriptEngine::GetFunctionIDByName() 
+<li>asIScriptEngine::GetFunctionIDByDecl() 
+<li>asIScriptEngine::ExecuteString() 
+</ul>
+</span>
+
+<h3>Script language</h3>
+
+<span class=a>
+There is no longer a standard string type for the language. The application is 
+allowed to register the string type as it desires. There is existing code for 
+registering the bstr type for backwards compatibility. 
+</span>
+
+<h3>Project files</h3>
+
+<span class=a>
+A new source module was added to the project. You'll need to add as_module.cpp
+and as_module.h to you compilation. 
+</span>
+<span class=b>
+The source module as_callfunc.cpp was renamed to as_callfunc_x86.cpp. 
+</span>
+<span class=a>
+The files were changed to include 
+angelscript.h from the include directory instead of from the source directory. 
+</span>
+
+
+<h2>Version 1.6.x to 1.7.x</h2>
+
+<h3>Application interface</h3>
+
+
+<span class=a>
+The method asIScriptEngine::RegisterObjectType() now accepts the flags 
+asCALL_RETURNBYREF and asCALL_RETURNBYVAL, which makes it unnecessary to pass 
+these flags to the the various methods for registering functions and methods.
+<br>
+<br>
+NOTE: These flags have changed again in version 1.8.x and 1.9.x.
+</span>
+<span class=b>
+The method asIScriptEngine::ExecuteStep() now takes a flag that can be used to 
+control the execution even further. You can set it to 0 to maintain the same 
+behaviour as before. 
+</span>
+
+<h3>Script language</h3>
+
+<span class=a>
+The bstr.length property has become a method in order to better conform with 
+the rest of the library.<br>
+<br>
+NOTE: In version 1.8.x you can register own string type.
+</span>
+
+<h2>Earlier versions</h2>
+
+<p>Let me know if you need this information and I'll provide it for you.</p>
+
+</body>
+</html>

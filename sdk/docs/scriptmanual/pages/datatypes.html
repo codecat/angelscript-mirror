@@ -1,0 +1,178 @@
+<HTML>
+<head>
+<title>AngelScript: Data types</title>
+<LINK rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<p><a href="../index.html">index</a><p>
+
+<h1>Data types</h1>
+
+<p>Note that the host application may add types specific to that application, refer to the application's manual for more information.</p>
+
+	<ul>
+	<li><a href="#void">void</a>
+	<li><a href="#bool">bool</a>
+	<li><a href="#int">int, int8, int16</a>
+	<li><a href="#uint">uint, uint8, uint16</a>
+	<li><a href="#float">float</a>
+	<li><a href="#double">double</a>
+	<li><a href="#bits">bits, bits8, bits16</a>
+	<li><a href="#mod">Type modifiers</a>
+	<li><a href="#bstr">Strings</a>
+	</ul>
+
+<a name="void">
+<h2>void</h2>
+
+<p><code><font color=blue>void</font></code> is not really a data type, more like lack of data type. It can only be used to tell the compiler that a function doesn't return any data.</p>
+
+<a name="bool">
+<h2>bool</h2>
+
+<p><code><font color=blue>bool</font></code> is a boolean type with only two
+possible values: <code><font color=blue>true</font></code> or
+<code><font color=blue>false</font></code>. The keywords
+<code><font color=blue>true</font></code> and
+<code><font color=blue>false</font></code> are constants of type
+<code><font color=blue>bool</font></code> that can be used as such in
+expressions.</p>
+
+<a name="int">
+<h2>int, int8, int16</h2>
+
+<p><code><font color=blue>int</font></code> holds integer values in the range -2147483648 to 2147483647.</p>
+
+<p><code><font color=blue>int8</font></code> holds integer values in the range -128 to 128.</p>
+
+<p><code><font color=blue>int16</font></code> holds integer values in the range -32768 to 32767.</p>
+
+<p>As the scripting engine has been optimized for 32 bit datatypes, using the smaller variants is only recommended for accessing application specified variables. For local variables it is better to use the 32 bit variant.</p>
+
+<p><code><font color=blue>int32</font></code> is an alias for <code><font color=blue>int</font></code>.</p>
+
+<a name="uint">
+<h2>uint, uint8, uint16</h2>
+
+<p><code><font color=blue>uint</font></code> holds integer values in the range 0 to 4294967295.</p>
+
+<p><code><font color=blue>uint8</font></code> holds integer values in the range 0 to 255.</p>
+
+<p><code><font color=blue>uint16</font></code> holds integer values in the range 0 to 65535.</p>
+
+<p>As the scripting engine has been optimized for 32 bit datatypes, using the smaller variants is only recommended for accessing application specified variables. For local variables it is better to use the 32 bit variant.</p>
+
+<p><code><font color=blue>uint32</font></code> is an alias for <code><font color=blue>uint</font></code>.</p>
+
+<a name="float">
+<h2>float</h2>
+
+<p><code><font color=blue>float</font></code> holds real (or floating point) values in the range -/+3.402823466e38.</p>
+
+<p>The smallest possible positive number that a float can destinguish is: 1.175494351e-38. The maximum number of decimal digits that can be safely used is 6, i.e. if more digits are used they are prone to rounding errors during operations.</p>
+
+<p><b>Curiousity</b>: Floats may also have the additional values of positive and negative 0 or infinite, and NaN (Not-a-Number). NaN is represented by the 32 bit data word 0x7fc00000.</p>
+
+<a name="double">
+<h2>double</h2>
+
+<p><code><font color=blue>double</font></code> holds real (or floating point) values in the range -/+1.7976931348623158e+308.</p>
+
+<p>The smallest possible positive number that a double can destinguish is: 2.2250738585072014e-308. The maximum number of decimal digits that can be safely used is 15, i.e. if more digits are used they are prone to rounding errors during operations.</p>
+
+<p><b>Curiousity</b>: Doubles may also have the additional values of positive and negative 0 or infinite, and NaN (Not-a-Number).</p>
+
+<a name="bits">
+<h2>bits, bits8, bits16</h2>
+
+<p><code><font color=blue>bits</font></code> is a data type that allows manipulation of
+individual bits. The data type holds 32 bits in a word. It can be assigned by a
+<code><font color=blue>bits</font></code> constant that is written as a hexadecimal number, e.g.
+<code>0xDEADC0DE.</code></p>
+
+<p><code><font color=blue>bits8</font></code> holds 8 bits, and <code><font color=blue>bits16</font></code> holds 16 bits.</p>
+
+<p><code><font color=blue>bits32</font></code> is an alias for <code><font color=blue>bits</font></code>.</p>
+
+<p>Both <code><font color=blue>float</font></code> and
+<code><font color=blue>int</font></code> can be converted to and from
+<code><font color=blue>bits</font></code>. </p>
+
+<p>The bits in the data type can be manipulated through the many <a href="expression.html#bits">bitwise operators</a> available:
+<code>& | ^ ~ &lt;&lt; &gt;&gt; &gt;&gt;&gt;</code>
+
+<p>As the scripting engine has been optimized for 32 bit datatypes, using the smaller variants is only recommended for accessing application specified variables. For local variables it is better to use the 32 bit variant.</p>
+
+<a name="mod">
+<h2>Type modifiers</h2>
+
+<p>When specifying a function's parameter data type the <code>&</code> modifier
+can be used to specify that the argument should be sent by reference instead of
+by value. This can be used to allow a function to return more than one value,
+but is especially important when sending strings as they would be copied if
+sent by value.</p>
+
+<p>Another modifier is the <code>*</code>. This one is used to tell that the type
+is a pointer to a memory location, instead of the actual value. More than one
+<code>*</code> can be combined to form a pointer to a pointer.</p>
+
+<p>When declaring a variable with a type modifier, the type modifier only affects
+the variable directly after the modifier. Example:</p>
+
+<pre><font color=blue>int</font> a, *b, c;</pre>
+
+<p><code>a</code> and <code>c</code> are normal integers, while <code>b</code> is a pointer to an integer.</p>
+
+<p>It is also possible to make arrays of types like this:</p>
+
+<pre>TYPE[] a;
+TYPE[] b(LENGTH);</pre>
+
+<p>a is an empty array of TYPE. b is an array with the length of LENGTH. Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the range of valid indices are 0 to length - 1.</p>
+
+<pre>a[0] = EXPRESSION;</pre>
+
+<a name="bstr">
+<h2>Strings</h2>
+
+<p>Strings are a special type of data that can be used only if the application 
+registers support for them. They are a special data type that holds an array of 
+bytes. The only limit to how large this array can be is the memory available on 
+the computer.</p>
+
+<p>Constant strings are written between double quotation marks (<code>"</code>).
+Inside the constant strings some escape sequences can be used to write exact
+byte values that might not be possible to write in your normal editor. If more 
+than one string constants are written in sequence with only whitespace or 
+comments between them the compiler will concatenate them into one constant.
+</p>
+
+<table cellspacing=0 cellpadding=0 border=0>
+<tr><td width=80 valign=top><b>sequence</b></td>
+<td valign=top width=50><b>value</b></td>
+<td valign=top><b>description</b></td></tr>
+
+<tr><td width=80 valign=top><code>\0</code>&nbsp;  </td>
+<td valign=top width=50>0</td>
+<td valign=top>null character</td></tr>
+<tr><td width=80 valign=top><code>\\</code>&nbsp;  </td>
+<td valign=top width=50>92</td>
+<td valign=top>back-slash</td></tr>
+<tr><td width=80 valign=top><code>\"</code>&nbsp;  </td>
+<td valign=top width=50>34</td>
+<td valign=top>double quotation mark</td></tr>
+<tr><td width=80 valign=top><code>\n</code>&nbsp;  </td>
+<td valign=top width=50>10</td>
+<td valign=top>new line feed</td></tr>
+<tr><td width=80 valign=top><code>\r</code>&nbsp;  </td>
+<td valign=top width=50>13</td>
+<td valign=top>carriage return</td></tr>
+<tr><td width=80 valign=top><code>\xFF</code>&nbsp;</td>
+<td valign=top width=50>0xFF</td>
+<td valign=top>FF should be exchanged for the hexadecimal number representing the byte value wanted</td></tr>
+</table>
+
+<p><a href="#">top</a></p>
+
+</body></HTML>

@@ -1,0 +1,294 @@
+<HTML>
+<head>
+<title>Calling script functions with parameters</title>
+
+<style>
+H1
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 24px;
+    FONT-FAMILY: Verdana
+}
+H2
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 18px;
+    FONT-FAMILY: Verdana
+}
+H3
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 16px;
+    FONT-FAMILY: Verdana
+}
+H4
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 14px;
+    FONT-FAMILY: Verdana
+}
+P
+{
+    FONT-SIZE: 12px;
+    FONT-FAMILY: Arial
+}
+BODY
+{
+    FONT-SIZE: 12px;
+    FONT-FAMILY: Arial
+}
+TD
+{
+    FONT-SIZE: 12px;
+    FONT-FAMILY: Arial
+}
+.text_small
+{
+    FONT-SIZE: 10px;
+    FONT-FAMILY: Arial
+}
+.text_normal
+{
+    FONT-SIZE: 12px;
+    FONT-FAMILY: Arial
+}
+.text_large
+{
+    FONT-SIZE: 14px;
+    FONT-FAMILY: Arial
+}
+.header_normal
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 18px;
+    FONT-FAMILY: Verdana
+}
+.header_small
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 16px;
+    FONT-FAMILY: Verdana
+}
+.header_large
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 24px;
+    FONT-FAMILY: Verdana
+}
+A
+{
+    TEXT-DECORATION: none
+}
+A:hover
+{
+    TEXT-DECORATION: underline
+}
+.border
+{
+    BORDER-RIGHT: gray 1px solid;
+    BORDER-TOP: gray 1px solid;
+    BORDER-LEFT: gray 1px solid;
+    BORDER-BOTTOM: gray 1px solid;
+    MARGIN-TOP: 0;
+    MARGIN-LEFT: 0;
+    MARGIN-RIGHT: 5;
+    MARGIN-BOTTOM: 5;
+    PADDING: 5 5 5 5;
+    DISPLAY: block;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<h1>Calling script functions with parameters</h1>
+
+<p>2004/12/01, Andreas Jönsson</p>
+
+<p>Generally speaking the script functions use the same calling convention as 
+global C functions, i.e. the parameters are pushed on the stack in reverse 
+order and the return value is returned in a register, unless it is an object 
+in which case it is returned in memory allocated by the calling function.</p>
+
+<h2>Preparing context and executing the function</h2>
+
+<p>Normally a script function is executed in a few steps:</p>
+
+<ol>
+<li>Prepare the context
+<li>Set the function arguments
+<li>Execute the function
+<li>Retrieve the return value
+</ol>
+
+<p>This is assuming a script context is already available. The code for this 
+might look something like this:</p>
+
+<pre class=border>
+<font color=green>// Prepare() must be called to allow the context to prepare the stack</font>
+context->Prepare(engine->GetFunctionIDByDecl(module_name, function_declaration);
+
+<font color=green>// SetArguments() is used to push the arguments on the stack</font>
+context->SetArguments(...);
+
+int r = context->Execute();
+if( r == asEXECUTION_FINISHED )
+{
+  <font color=green>// The return value is only valid if the execution finished successfully</font>
+  context->GetReturnValue(...);
+}
+</pre>
+
+<p>If your application uses ExecuteStep() or registers a function that allow 
+the script to suspend its execution, then the execution function may return 
+before finishing with the return code asEXECUTION_SUSPENDED. In that case you
+can later resume the execution by simply calling the execution function again.
+</p>
+
+<p>Note that the return value retrieved with GetReturnValue() is only valid
+if the script function returned successfully, i.e. if Execute() returned 
+asEXECUTION_FINISHED.</p>
+
+<h2>Passing and returning primitives</h2>
+
+<p>When calling script functions that take arguments, the values of these 
+arguments must be pushed on the context stack after the call to Prepare() and
+before Execute(). The arguments are pushed on the stack using the method 
+SetArguments():</p>
+
+<pre class=border>
+int SetArguments(int stackPos, asDWORD *data, int count);
+</pre>
+
+<p><code>stackPos</code> is the position of the argument on the stack in dwords. 
+It is determined by summing the size of all previous parameters. <code>data</code> is a 
+pointer to the actual data the will be pushed on the stack. <code>count</code> is the size 
+in dwords of the data that should be pushed on the stack.</p>
+
+<pre class=border>
+  <font color=green>// The context has been prepared for a script 
+  // function with the following signature:
+  // int function(int, double, void*)
+
+  // Put the arguments on the context stack, starting with the first one</font>
+  int ival = 0;
+  ctx->SetArguments(0, &amp;ival, 1);
+  double dval = 0.0;
+  ctx->SetArguments(1, &amp;dval, 2);
+  void *pval = 0;
+  ctx->SetArguments(3, &amp;pval, 1);
+</pre>
+
+<p>It would also be possible to build a buffer with all the arguments and then
+copy the entire buffer in one call to SetArguments().</p>
+
+<p>Once the script function has been executed the return value is retrieved in 
+a similar way using the method GetReturnValue():</p>
+
+<pre class=border>
+int GetReturnValue(asDWORD *data, int count);
+</pre>
+
+<p><code>data</code> is a pointer to where the return value is to be copied. 
+<code>count</code> is the size of the value in dwords.</p>
+
+<p>Note that you must make sure the returned value is in fact valid, for 
+example if the script function was interrupted by a script exception the value
+would not be valid. You do this by verifying the return code from Execute() or
+GetState(), where the return code should be asEXECUTION_FINISHED.</p>
+
+<h2>Passing and returning objects by value</h2>
+
+<p>AngelScript is recognizably lacking when it comes to passing objects to 
+script functions, especially if the objects require special care because of 
+allocated resources. Future versions will remedy this, in the meantime, here
+is an explanation of how it can be done.</p>
+
+<p>Passing a simple object like struct Vector3 { float x; float y; float z; } 
+is as simple as passing a primitive, just call SetArguments() and pass the 
+pointer to the object and the size of the object in dwords. </p>
+
+<p>Passing a more complex object that allocate and free resources is a lot 
+more complicated. If you try to simply copy such an object to the context 
+stack, then you will be creating a duplicate. When this duplicate is later 
+destroyed it might destroy resources still held by the original object 
+(or vice versa). What you need is a way to move the object into the context 
+stack.</p>
+
+<pre class=border>
+<font color=green>// The complex object we wish to pass to the script function</font>
+CObject obj;
+
+<font color=green>// Allocate some generic memory</font>
+char *mem = new char[sizeof(CObject)];
+
+<font color=green>// Copy construct an object into the generic memory. This
+// should take care of the resources allocated by obj. 
+// The placement new operator is declared in new.h.</font>
+new(mem) CObject(obj);
+
+<font color=green>// Copy the memory into the context stack.
+Now the context is responsible for deleting the object.</font>
+ctx->SetArguments(pos, mem, ((sizeof(CObject)+3)&amp;~3)/4);
+
+<font color=green>// Free the memory without destroying the object</font>
+delete[] mem;
+</pre>
+
+<p>This piece of code is using some C++ trickery to make a valid duplicate of 
+the object. Valid in that it would also duplicate the resources, or correctly 
+share them depending on how the resources are handled. This of course requires
+that the class was in fact correctly implemented to support the copy 
+constructor. One the duplicate has been copied into the context stack the C++
+code must not delete the object, which is why we never call the object's 
+destructor.</p>
+
+<p>Getting an object returned by a script function is done in a similar way. 
+It's complicated further because the C++ application must allocate the memory
+for the object before calling the script function. The pointer to this memory
+should be passed to the script function as the first argument, i.e. in 
+position 0, and all other arguments have their position increased with 1.</p>
+
+<pre class=border>
+<font color=green>// The object where we want to store the return value</font>
+CObject obj;
+
+<font color=green>// Allocate memory for the returned object.
+// Make sure no object is constructed in the memory.</font>
+char *mem = new char[sizeof(CObject)];
+
+<font color=green>// Pass the pointer as the first argument</font>
+ctx->SetArguments(0, &amp;mem, 1);
+
+<font color=green>// Execute the function</font>
+int r = ctx->Execute();
+if( r == asEXECUTION_FINISHED )
+{
+  <font color=green>// Now the memory has been initialized with the object.
+  // If we called GetReturnValue() we would receive the pointer to the memory</font>
+  
+  <font color=green>// Copy the object to our true object</font>
+  obj = *(CObject*)mem;
+  
+  <font color=green>// Destroy the object before freeing the memory</font>
+  ((CObject*)mem)->~CObject();
+}
+
+<font color=green>// Free the memory</font>
+delete[] mem;
+</pre>
+
+<p>In this piece of code it is important to note that the object is destroyed
+by explicitly calling the objects destructor, before the memory is freed. If 
+the object was a simple struct, then it would not be necessary to call
+its destructor, but it would still be necessary to allocate the memory and 
+pass the pointer as shown in the code.</p>
+
+
+
+
+
+</body></HTML>
