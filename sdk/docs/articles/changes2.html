@@ -118,9 +118,13 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.6.0 WIP 4 - 2006/03/12</h2>
+<h2>Version 2.6.0 WIP 4 - 2006/03/26</h2>
 
 <ul>
+<li>Bug fixes
+<ul>
+<li>Type conversions may now be used in initialization of global variables. (Thanks iram)
+</ul>
 <li>Script language
 <ul>
 <li>Declaring constructors for script classes now works as well
@@ -128,6 +132,7 @@ A:hover
 <li>Library interface
 <ul>
 <li>Added the method SetObject() to the context for calling object methods
+<li>ExecuteString() now adds a line break after the given string. This allows for one-line comments to be used without producing an invalid script. (Thanks B_old)
 </ul>
 </ul>
 

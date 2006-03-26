@@ -4211,15 +4211,7 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 	}
 	else if( vnode->nodeType == snFunctionCall )
 	{
-		if( globalExpression )
-		{
-			Error(TXT_FUNCTION_IN_GLOBAL_EXPR, vnode);
-
-			// Output dummy code
-			ctx->type.SetDummy();
-		}
-		else
-			CompileFunctionCall(vnode, ctx, 0, false);
+		CompileFunctionCall(vnode, ctx, 0, false);
 	}
 	else if( vnode->nodeType == snAssignment )
 	{
@@ -4930,6 +4922,15 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 				ctx->bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
 			}
 		}
+	}
+
+	if( globalExpression && (isFunction || isConstructor) )
+	{
+		Error(TXT_FUNCTION_IN_GLOBAL_EXPR, node);
+
+		// Output dummy code
+		ctx->type.SetDummy();
+		return;
 	}
 
 	// Compile the arguments

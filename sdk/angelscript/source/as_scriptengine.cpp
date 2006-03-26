@@ -1190,7 +1190,14 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else
 	{
-		assert(false);
+		if( behaviour >= asBEHAVE_FIRST_DUAL &&
+			behaviour <= asBEHAVE_LAST_DUAL )
+		{
+			if( outStream )
+				outStream->Write(TXT_MUST_BE_GLOBAL_BEHAVIOUR);
+		}
+		else
+			assert(false);
 
 		return ConfigError(asINVALID_ARG);
 	}
@@ -1979,7 +1986,7 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 	builder.SetOutputStream(outStream);
 
 	asCString str = script;
-	str = "void ExecuteString(){\n" + str + ";}";
+	str = "void ExecuteString(){\n" + str + "\n;}";
 
 	int r = builder.BuildString(str.AddressOf(), (asCContext*)exec);
 	if( r < 0 )

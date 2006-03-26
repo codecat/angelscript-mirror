@@ -63,6 +63,8 @@ static const char *script4 =
 "  print(ld+\"\\n\");  \n"
 "}                    \n";
 
+static const char *script5 =
+"bits OFLAG_BSP = bits(1024);";
 
 void print(std::string &s)
 {
@@ -167,6 +169,15 @@ bool TestGlobalVar()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	r = engine->RegisterGlobalProperty("uint8[] @gPacketData", &gPacketData); assert( r >= 0 );
 	r = engine->RegisterGlobalProperty("uint gPacketLength", &gPacketLength); assert( r >= 0 );
+	engine->Release();
+
+	//-----------------------
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetCommonMessageStream(&out);
+	engine->AddScriptSection(0, "script", script5, strlen(script5), 0, false);
+	r = engine->Build(0); 
+	if( r < 0 )
+		ret = true;
 	engine->Release();
 
 	return ret;

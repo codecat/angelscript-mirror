@@ -164,6 +164,7 @@
 // Engine message
 
 #define TXT_INVALID_CONFIGURATION         "Invalid configuration\n"
+#define TXT_MUST_BE_GLOBAL_BEHAVIOUR      "This behaviour must be registered as global behaviour\n"
 
 // Message types
 
