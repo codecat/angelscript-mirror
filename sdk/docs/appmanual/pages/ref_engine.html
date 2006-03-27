@@ -43,7 +43,7 @@ public:
   int <a href="#cfgaccess">SetConfigGroupModuleAccess</a>(const char *groupName, const char *module, bool hasAccess);
 
   <font color=green>// Script modules</font>
-  int <a href="#addscript">AddScriptSection</a>(const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0, bool makeCopy = true);
+  int <a href="#addscript">AddScriptSection</a>(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0, bool makeCopy = true);
   int <a href="#build">Build</a>(const char *module);
   int <a href="#discard">Discard</a>(const char *module);
   int <a href="#reset">ResetModule</a>(const char *module);
@@ -845,7 +845,7 @@ The default module access is granted. The default for a group can be changed by 
 int AddScriptSection(const char *module,
                      const char *name,
                      const char *code,
-                     int codeLength,
+                     size_t codeLength,
                      int lineOffset = 0,
                      bool makeCopy = true);
 </pre>

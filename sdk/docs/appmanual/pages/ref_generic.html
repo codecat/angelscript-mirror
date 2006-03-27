@@ -24,12 +24,14 @@ public:
   asQWORD <a href="#getarg">GetArgQWord</a>(asUINT arg);
   float   <a href="#getarg">GetArgFloat</a>(asUINT arg);
   double  <a href="#getarg">GetArgDouble</a>(asUINT arg);
+  void   *<a href="#getarg">GetArgAddress</a>(asUINT arg);
   void   *<a href="#getarg">GetArgObject</a>(asUINT arg);
 
   int     <a href="#setret">SetReturnDWord</a>(asDWORD val);
   int     <a href="#setret">SetReturnQWord</a>(asQWORD val);
   int     <a href="#setret">SetReturnFloat</a>(float val);
   int     <a href="#setret">SetReturnDouble</a>(double val);
+  int     <a href="#setret">SetReturnAddress</a>(void *address);
   int     <a href="#setret">SetReturnObject</a>(void *obj);
 };
 </pre>
@@ -80,6 +82,7 @@ asDWORD GetArgDWord(asUINT arg);
 asQWORD GetArgQWord(asUINT arg);
 float   GetArgFloat(asUINT arg);
 double  GetArgDouble(asUINT arg);
+void   *GetArgAddress(asUINT arg);
 void   *GetArgObject(asUINT arg);
 </pre>
 
@@ -116,6 +119,7 @@ int SetReturnDWord(asDWORD val);
 int SetReturnQWord(asQWORD val);
 int SetReturnFloat(float val);
 int SetReturnDouble(double val);
+int SetReturnAddress(void *address);
 int SetReturnObject(void *obj);
 </pre>
 
@@ -135,6 +139,10 @@ a copy of the object.</p>
 <tr>
 <td valign=top width=100><code>val</code>&nbsp;</td>
 <td valign=top><p>The return value.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>address</code>&nbsp;</td>
+<td valign=top><p>The address of a value.</p></td>
 </tr>
 <tr>
 <td valign=top width=100><code>obj</code>&nbsp;</td>

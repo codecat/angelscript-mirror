@@ -32,12 +32,16 @@ public:
   int <a href="#args">SetArgQWord</a>(asUINT arg, asQWORD value);
   int <a href="#args">SetArgFloat</a>(asUINT arg, float value);
   int <a href="#args">SetArgDouble</a>(asUINT arg, double value);
+  int <a href="#args">SetArgAddress</a>(asUINT arg, void *address);
   int <a href="#args">SetArgObject</a>(asUINT arg, void *object);
+
+  int <a href="#setobj">SetObject</a>(void *object);
 
   asDWORD <a href="#return">GetReturnDWord</a>();
   asQWORD <a href="#return">GetReturnQWord</a>();
   float   <a href="#return">GetReturnFloat</a>();
   double  <a href="#return">GetReturnDouble</a>();
+  void   *<a href="#return">GetReturnAddress</a>();
   void   *<a href="#return">GetReturnObject</a>();
 
   int <a href="#exec">Execute</a>();
@@ -290,6 +294,7 @@ int SetArgDWord(asUINT arg, asDWORD value);
 int SetArgQWord(asUINT arg, asQWORD value);
 int SetArgFloat(asUINT arg, float value);
 int SetArgDouble(asUINT arg, double value);
+int SetArgAddress(asUINT arg, void *address);
 int SetArgObject(asUINT arg, void *object);
 </pre>
 
@@ -306,7 +311,11 @@ int SetArgObject(asUINT arg, void *object);
 </tr>
 <tr>
 <td valign=top width=100><code>value</code>&nbsp;</td>
-<td valign=top><p>This is the value of the argument. This should be used for passing primitive data to the function. Use DWord when passing a reference to a primitive variable.</p></td>
+<td valign=top><p>This is the value of the argument. This should be used for passing primitive data to the function.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>address</code>&nbsp;</td>
+<td valign=top><p>This is the address of a value. This should be used for passing values by reference to the function.</p></td>
 </tr>
 <tr>
 <td valign=top width=100><code>object</code>&nbsp;</td>
@@ -325,6 +334,34 @@ int SetArgObject(asUINT arg, void *object);
 
 
 
+<a name=args></a>
+<h2>SetObject</h2>
+
+<pre class=border>
+int SetObject(void *object);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method sets object pointer when calling class methods.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>object</code>&nbsp;</td>
+<td valign=top><p>The object pointer.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value if the function cannot be found. Returns 0 or greater if sucessful.</p>
+
+
+
+
+
 
 
 
@@ -336,6 +373,7 @@ asDWORD GetReturnDWord();
 asQWORD GetReturnQWord();
 float   GetReturnFloat();
 double  GetReturnDouble();
+void   *GetReturnAddress();
 void   *GetReturnObject();
 </pre>
 
