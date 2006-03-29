@@ -139,16 +139,37 @@ bool Test()
 	else
 	{
 		// Validate the property
+		int *v = 0;
 		int n = s->GetPropertyCount();
 		for( int c = 0; c < n; c++ )
 		{
 			std::string str = "value";
 			if( str == s->GetPropertyName(c) )
 			{	
-				int *v = (int*)s->GetPropertyPointer(c);
+				v = (int*)s->GetPropertyPointer(c);
 				if( *v != 1 ) fail = true;
 			}
 		}
+
+		// Call the script class method
+		if( engine->GetMethodCount(0, "myclass") != 1 ) fail = true;
+		int methodId = engine->GetMethodIDByDecl(0, "myclass", "void method()");
+		if( methodId < 0 ) 
+			fail = true;
+		else
+		{
+			asIScriptContext *ctx = engine->CreateContext();
+			ctx->Prepare(methodId);
+			ctx->SetObject(s);
+			int r = ctx->Execute();
+			if( r != asEXECUTION_FINISHED )
+				fail = true;
+
+			if( !v || *v != 3 ) fail = true;
+
+			ctx->Release();
+		}
+
 		s->Release();
 	}
 

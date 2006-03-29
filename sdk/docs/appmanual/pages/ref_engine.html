@@ -58,6 +58,10 @@ public:
   const char *<a href="#funcdecl">GetFunctionDeclaration</a>(int funcID, int *length = 0);
   const char *<a href="#funcname">GetFunctionName</a>(int funcID, int *length = 0);
   const char *<a href="#funcsection">GetFunctionSection</a>(int funcID, int *length = 0);
+  int <a href="#mthdcount">GetMethodCount</a>(const char *module, const char *object);
+  int <a href="#mthdidindex">GetMethodIDByIndex</a>(const char *module, const char *object, int index);
+  int <a href="#mthdidname">GetMethodIDByName</a>(const char *module, const char *object, const char *name);
+  int <a href="#mthdiddecl">GetMethodIDByDecl</a>(const char *module, const char *object, const char *decl);
 
   <font color=green>// Script global variables</font>
   int <a href="#varcount">GetGlobalVarCount</a>(const char *module);
@@ -1063,7 +1067,7 @@ int GetFunctionCount(const char *module);
 
 <h3>Description</h3>
 
-<p>This method retrieves the number of compiled script functions. It can be used for enumerating the script functions, as the IDs of the script functions will be between 0 and count - 1.</p>
+<p>This method retrieves the number of compiled script functions.</p>
 
 <h3>Parameters</h3>
 
@@ -1292,6 +1296,162 @@ implemented.</p>
 
 <p>A null-terminated string with the section name. Note, the string is
 shared with other functions in the library so you shouldn't store the pointer.</p>
+
+
+
+
+
+
+
+
+<a name=mthdcount></a>
+<h2>GetMethodCount</h2>
+
+<pre class=border>
+int GetMethodCount(const char *module, const char *object);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method retrieves the number of compiled script methods for a class.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>module</code>&nbsp;</td>
+<td valign=top><p>The name of the module. Can be null.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>object</code>&nbsp;</td>
+<td valign=top><p>The name of the class.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, or the number of script methods for the class if successful.</p>
+
+
+
+
+
+
+<a name=mthdidindex></a>
+<h2>GetMethodIDByIndex</h2>
+
+<pre class=border>
+int GetMethodIDByIndex(const char *module, const char *object, int index);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method should be used to retrieve the ID of the script method for the object that
+you wish to execute. The ID is then sent to the context's Prepare() method.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>module</code>&nbsp;</td>
+<td valign=top><p>The name of the module. Can be null.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>object</code>&nbsp;</td>
+<td valign=top><p>The name of the class.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>index</code>&nbsp;</td>
+<td valign=top><p>The index of the function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, or the ID of the script method.</p>
+
+
+
+
+
+
+
+
+<a name=mthdidname></a>
+<h2>GetMethodIDByName</h2>
+
+<pre class=border>
+int GetMethodIDByName(const char *module, const char *object, const char *name);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method should be used to retrieve the ID of the script method for the object that
+you wish to execute. The ID is then sent to the context's Prepare() method.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>module</code>&nbsp;</td>
+<td valign=top><p>The name of the module. Can be null.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>object</code>&nbsp;</td>
+<td valign=top><p>The name of the class.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>name</code>&nbsp;</td>
+<td valign=top><p>The name of the function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, or the ID of the script method.</p>
+
+
+
+
+<a name=mthdiddecl></a>
+<h2>GetMethodIDByDecl</h2>
+
+<pre class=border>
+int GetMethodIDByDecl(const char *module, const char *object, const char *decl);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method should be used to retrieve the ID of the script method for the object that
+you wish to execute. The ID is then sent to the context's Prepare() method.</p>
+
+<p>The method will find the script method with the exact same declaration.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>module</code>&nbsp;</td>
+<td valign=top><p>The name of the module. Can be null.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>object</code>&nbsp;</td>
+<td valign=top><p>The name of the class.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>decl</code>&nbsp;</td>
+<td valign=top><p>The declaration of the function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, or the ID of the script method.</p>
+
+
+
+
+
 
 
 

@@ -377,6 +377,14 @@ int asCScriptEngine::GetFunctionCount(const char *module)
 	return mod->GetFunctionCount();
 }
 
+int asCScriptEngine::GetFunctionIDByIndex(const char *module, int index)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->moduleID | index;
+}
+
 int asCScriptEngine::GetFunctionIDByName(const char *module, const char *name)
 {
 	asCModule *mod = GetModule(module, false);
@@ -392,6 +400,48 @@ int asCScriptEngine::GetFunctionIDByDecl(const char *module, const char *decl)
 
 	return mod->GetFunctionIDByDecl(decl);
 }
+
+//-----------------
+
+int asCScriptEngine::GetMethodCount(const char *module, const char *object)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetMethodCount(object);
+}
+
+int asCScriptEngine::GetMethodIDByIndex(const char *module, const char *object, int index)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	asCObjectType *ot = mod->GetObjectType(object);
+	if( ot == 0 )
+		return asINVALID_TYPE;
+
+	if( index < 0 || (unsigned)index >= ot->methods.GetLength() ) return asINVALID_ARG;
+
+	return ot->methods[index];
+}
+
+int asCScriptEngine::GetMethodIDByName(const char *module, const char *object, const char *name)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetMethodIDByName(object, name);
+}
+
+int asCScriptEngine::GetMethodIDByDecl(const char *module, const char *object, const char *decl)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetMethodIDByDecl(object, decl);
+}
+
+//----------------------
 
 const char *asCScriptEngine::GetFunctionDeclaration(int funcID, int *length)
 {
@@ -1860,14 +1910,6 @@ const char *asCScriptEngine::GetModuleNameFromIndex(int index, int *length)
 		*length = (int)strlen(str);
 
 	return str;
-}
-
-int asCScriptEngine::GetFunctionIDByIndex(const char *module, int index)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->moduleID | index;
 }
 
 int asCScriptEngine::GetModuleIndex(const char *module)

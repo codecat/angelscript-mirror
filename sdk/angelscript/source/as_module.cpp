@@ -292,6 +292,96 @@ int asCModule::GetFunctionIDByName(const char *name)
 	return moduleID | id;
 }
 
+int asCModule::GetMethodCount(const char *object)
+{
+	if( isBuildWithoutErrors == false )
+		return asERROR;
+
+	asCObjectType *ot = GetObjectType(object);
+	if( ot == 0 )
+		return asINVALID_TYPE;
+
+	return ot->methods.GetLength();
+}
+
+int asCModule::GetMethodIDByName(const char *object, const char *name)
+{
+	if( isBuildWithoutErrors == false )
+		return asERROR;
+
+	asCObjectType *ot = GetObjectType(object);
+	if( ot == 0 )
+		return asINVALID_TYPE;
+
+	// TODO: Improve linear search
+	// Find the function id
+	int id = -1;
+	for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+	{
+		if( scriptFunctions[ot->methods[n]]->name == name )
+		{
+			if( id == -1 )
+				id = ot->methods[n];
+			else
+				return asMULTIPLE_FUNCTIONS;
+		}
+	}
+
+	if( id == -1 ) return asNO_FUNCTION;
+
+	return moduleID | id;
+}
+
+int asCModule::GetMethodIDByDecl(const char *object, const char *decl)
+{
+	if( isBuildWithoutErrors == false )
+		return asERROR;
+
+	asCObjectType *ot = GetObjectType(object);
+	if( ot == 0 )
+		return asINVALID_TYPE;
+
+	asCBuilder bld(engine, this);
+
+	asCScriptFunction func;
+	int r = bld.ParseFunctionDeclaration(decl, &func);
+	if( r < 0 )
+		return asINVALID_DECLARATION;
+
+	// TODO: Improve linear search
+	// Search script functions for matching interface
+	int id = -1;
+	for( asUINT n = 0; n < ot->methods.GetLength(); ++n )
+	{
+		if( func.name == scriptFunctions[ot->methods[n]]->name && 
+			func.returnType == scriptFunctions[ot->methods[n]]->returnType &&
+			func.parameterTypes.GetLength() == scriptFunctions[ot->methods[n]]->parameterTypes.GetLength() )
+		{
+			bool match = true;
+			for( asUINT p = 0; p < func.parameterTypes.GetLength(); ++p )
+			{
+				if( func.parameterTypes[p] != scriptFunctions[ot->methods[n]]->parameterTypes[p] )
+				{
+					match = false;
+					break;
+				}
+			}
+
+			if( match )
+			{
+				if( id == -1 )
+					id = ot->methods[n];
+				else
+					return asMULTIPLE_FUNCTIONS;
+			}
+		}
+	}
+
+	if( id == -1 ) return asNO_FUNCTION;
+
+	return moduleID | id;
+}
+
 int asCModule::GetImportedFunctionCount()
 {
 	if( isBuildWithoutErrors == false )
