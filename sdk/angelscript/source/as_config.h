@@ -292,6 +292,13 @@
 	#define AS_SH4
 #endif
 
+// Is the target a 64bit system?
+#if defined(_LP64) || defined(__amd64__)
+    #ifndef AS_64BIT_PTR
+        #define AS_64BIT_PTR
+    #endif
+#endif
+
 // If there are no current support for native calling 
 // conventions, then compile with AS_MAX_PORTABILITY
 #if (!defined(AS_X86) && !defined(AS_SH4))
@@ -305,7 +312,7 @@
 
 
 // 
-// Internal defines (do not changes these)
+// Internal defines (do not change these)
 //----------------------------------------------------------------
 
 #ifdef AS_ALIGN
@@ -316,7 +323,7 @@
 
 #define	ARG_W(b)    ((asWORD*)&b)
 #define	ARG_DW(b)   ((asDWORD*)&b)
-#define	ARG_QW(b)   ((asQWORD*)&b)	
+#define	ARG_QW(b)   ((asQWORD*)&b)
 #define	BCARG_W(b)  ((asWORD*)&(b)[1])
 #define	BCARG_DW(b) ((asDWORD*)&(b)[1])
 #define	BCARG_QW(b) ((asQWORD*)&(b)[1])
