@@ -57,7 +57,7 @@ BEGIN_AS_NAMESPACE
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  6
 #define ANGELSCRIPT_VERSION_BUILD  0
-#define ANGELSCRIPT_VERSION_STRING "2.6.0 WIP 4"
+#define ANGELSCRIPT_VERSION_STRING "2.6.0 WIP 5"
 
 // Data types
 
@@ -183,10 +183,10 @@ extern "C"
 	AS_API const char *      asEngine_GetFunctionDeclaration(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length = 0);
-	AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, const char *module, const char *object);
-	AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, const char *module, const char *object, int index);
-	AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, const char *module, const char *object, const char *name);
-	AS_API int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, const char *module, const char *object, const char *decl);
+	AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, const char *module, const char *objectType);
+	AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, const char *module, const char *objectType, int index);
+	AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, const char *module, const char *objectType, const char *name);
+	AS_API int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, const char *module, const char *objectType, const char *decl);
 	AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name);
@@ -344,10 +344,10 @@ public:
 	virtual const char *GetFunctionName(int funcID, int *length = 0) = 0;
 	virtual const char *GetFunctionSection(int funcID, int *length = 0) = 0;
 
-	virtual int GetMethodCount(const char *module, const char *object) = 0;
-	virtual int GetMethodIDByIndex(const char *module, const char *object, int index) = 0;
-	virtual int GetMethodIDByName(const char *module, const char *object, const char *name) = 0;
-	virtual int GetMethodIDByDecl(const char *module, const char *object, const char *decl) = 0;
+	virtual int GetMethodCount(const char *module, const char *objectType) = 0;
+	virtual int GetMethodIDByIndex(const char *module, const char *objectType, int index) = 0;
+	virtual int GetMethodIDByName(const char *module, const char *objectType, const char *name) = 0;
+	virtual int GetMethodIDByDecl(const char *module, const char *objectType, const char *decl) = 0;
 	
 	// Script global variables
 	virtual int GetGlobalVarCount(const char *module) = 0;

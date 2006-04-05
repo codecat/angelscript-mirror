@@ -14,6 +14,8 @@ static const char *script1 =
 "   @a = @string[]@[](2);                        \n"
 "   Assert(@a != null);                          \n"
 "   Assert(@a[0] == null);                       \n"
+"   string@[] c(10);                             \n"
+"   Assert(c.length() == 10);                    \n"
 "}                                               \n";
 
 static const char *script2 =

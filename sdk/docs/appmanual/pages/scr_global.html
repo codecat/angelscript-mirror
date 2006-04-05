@@ -1,0 +1,107 @@
+<HTML>
+<head>
+<title>AngelScript: Script language: Global declarations</title>
+<LINK rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<p><a href="../index.html">index</a><p>
+
+<h1>Global declarations</h1>
+
+<p>All global declarations share the same namespace so their names may not
+conflict. This includes extended data types and built in functions registered
+by the host application. Also, all declarations are visible to all, e.g. a
+function to be called do not have to be declared above the function that calls
+it.</p>
+
+    <ul>
+    <li><a href="#function">functions</a>
+    <li><a href="#variable">variables</a>
+    <li><a href="#structs">classes</a>
+    <li><a href="#import">imports</a>
+    </ul>
+
+
+<a name="function">
+<h2>Functions</h2>
+
+<p>Global functions are declared normally, just as in C/C++. The function body must be defined, i.e. it is not possible to declare prototypes, nor is it necessary as the compiler can resolve the function names anyway.</p>
+
+<p>For parameters sent by reference, i.e. with the <code>&amp;</code> modifier it is necessary to specify in which direction the value is passed, in, out, or inout, e.g. &amp;out. If no keyword is used, the compiler assumes the inout modifier. For parameters marked with in, the value is passed in to the function, and for parameters marked with out the value is returned from the function.</p>
+
+<p>Parameters can also be declared as <code>const</code> which prohibits the alteration of their value. It is
+good practice to declare variables that will not be changed as <code>const</code>,
+because it makes for more readable code and the compiler is also able to take advantage of it some times. Especially for const &amp;in the compiler is many times able to avoid a copy of the value.</p>
+
+<p>Note that although functions that return types by references can't be
+declared by scripts you may still see functions like these if the host
+application defines them. In that case you the returned value may also
+be used as the target in assignments.</p>
+
+<pre class=border>
+int MyFunction(int a, int b)
+{
+  return a + b;
+}
+</pre>
+
+<a name="variable">
+<h2>Variables</h2>
+
+<p>Global variables may be declared in the scripts, which will then be shared between all contexts accessing the script module.</p>
+
+<p>The global variables may be initialized by simple expressions that do not require any functions to be called, i.e. the value can be evaluated at compile time.</p>
+
+<p>Variables declared globally like this are accessible from all functions. The value of the variables are initialized at compile time and any changes are maintained between calls. If a global variable holds a memory resource, e.g. a string, its memory is released when the module is discarded or the script engine is reset.</p>
+
+<pre class=border>
+int MyValue = 0;
+const bits Flag1 = 0x01;
+</pre>
+
+<a name="structs">
+<h2>Classes</h2>
+
+<p>In AngelScript the script writer may declare script classes. The syntax is similar to that of C++, except the public, protected, and private keywords are not available, and currently there is no support for inheritance. All the class methods must be declared with their implementation, like in Java.</p>
+
+<p>With classes the script writer can declare new data types that hold groups of variables and methods to manipulate them.</p>
+
+<pre class=border>
+class MyClass
+{
+  MyClass() 
+  {
+    this.a = 0;
+  } 
+  
+  MyClass(int a) 
+  {
+    this.a = a;
+  } 
+  
+  void DoSomething() 
+  {
+    this.a *= 2;
+  }
+  
+  int a;
+};
+</pre>
+
+<a name="import">
+<h2>Imports</h2>
+
+<p>Sometimes it may be useful to load script modules dynamically without having to recompile the main script, but still let the modules interact with each other. In that case the script may import functions from another module. This declaration is written using the import keyword, followed by the function signature, and then specifying which module to import from.</p>
+
+<p>This allows the script to be compiled using these imported functions, without them actually being available at compile time. The application can then bind the functions at a later time, and even unbind them again.</p>
+
+<p>If a script is calling an imported function that has not yet been bound the script will be aborted with a script exception.</p>
+
+<pre class=border>
+import void MyFunction(int a, int b) from "Another module";
+</pre>
+
+<p><a href="#">top</a></p>
+
+</body></HTML>
