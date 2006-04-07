@@ -69,6 +69,14 @@ static const char *script2 =
 "  Assert(c.value == 2);                         \n"
 "}                                               \n";
 
+static const char *script3 = 
+"class myclass                                   \n"
+"{                                               \n"
+"  void func() {}                                \n"
+"  void func(int x, int y) {}                    \n"
+"};                                              \n"
+"myclass c;                                      \n";
+
 void print(std::string &s)
 {
 //	printf("%s\n", s.c_str());
@@ -171,6 +179,43 @@ bool Test()
 		}
 
 		s->Release();
+	}
+
+	engine->Release();
+
+	//----------------------------------
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetCommonMessageStream(&out);
+	engine->AddScriptSection(0, "test3", script3, strlen(script3), 0, false);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+
+	int mtdId = engine->GetMethodIDByDecl(0, "myclass", "void func()");
+	void *obj = engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "c"));
+
+	if( mtdId < 0 || obj == 0 ) fail = true;
+	else
+	{
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(mtdId);
+		ctx->SetObject(obj);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED ) fail = true;
+		ctx->Release();
+	}
+
+	mtdId = engine->GetMethodIDByDecl(0, "myclass", "void func(int, int)");
+	if( mtdId < 0 || obj == 0 ) fail = true;
+	else
+	{
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(mtdId);
+		ctx->SetObject(obj);
+		ctx->SetArgDWord(0, 1);
+		ctx->SetArgDWord(1, 1);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED ) fail = true;
+		ctx->Release();
 	}
 
 	engine->Release();

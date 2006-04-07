@@ -16,7 +16,9 @@ static const char *script1 =
 "   Assert(@a[0] == null);                       \n"
 "   string@[] c(10);                             \n"
 "   Assert(c.length() == 10);                    \n"
-"}                                               \n";
+"   Assert(g.length() == 2);                     \n"
+"}                                               \n"
+"string@[] g(2);                                 \n";
 
 static const char *script2 =
 "void TestArrayHandle2()                         \n"

@@ -283,7 +283,7 @@ int asCContext::Prepare(int funcID)
 
 		// Reserve space for the arguments and return value
 		returnValueSize = currentFunction->GetSpaceNeededForReturnValue();
-		argumentsSize = currentFunction->GetSpaceNeededForArguments() + currentFunction->objectType ? PTR_SIZE : 0;
+		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? PTR_SIZE : 0);
 	}
 
 	byteCode = currentFunction->byteCode.AddressOf();
