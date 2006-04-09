@@ -118,64 +118,22 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.6.0 WIP 5 - 2006/04/07</h2>
-
-<ul>
-<li>Bug fixes
-<ul>
-<li>Fixed a bug in 2.6.0 where Prepare() didn't compute the stackFramePointer correctly, leading to a buffer overflow. (Thanks kunitoki)
-</ul>
-</ul>
-
-<h2>Version 2.6.0 WIP 4 - 2006/03/29</h2>
-
-<ul>
-<li>Bug fixes
-<ul>
-<li>Type conversions may now be used in initialization of global variables. (Thanks iram)
-</ul>
-<li>Script language
-<ul>
-<li>Declaring constructors for script classes now works as well
-</ul>
-<li>Library interface
-<ul>
-<li>Added the method SetObject() to the context for calling object methods
-<li>ExecuteString() now adds a line break after the given string. This allows for one-line comments to be used without producing an invalid script. (Thanks B_old)
-<li>Added the methods GetMethodCount(), GetMethodIDByIndex(), GetMethodIDByName(), and GetMethodIDByDecl() that should be used to obtain the function id for a script declared class method.
-</ul>
-</ul>
-
-<h2>Version 2.6.0 WIP 3 - 2006/03/11</h2>
+<h2>Version 2.6.0 - 2006/04/08</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed a bug with RegisterGlobalProperty() (Thanks loboWu)
-</ul>
-<li>Library interface
-<ul>
-<li>Improved the way the [Set|Get][Arg|Return][Address|Object]() methods work.
+<li>Type conversions may now be used in initialization of global variables. (Thanks iram)
 </ul>
 <li>Script language
 <ul>
-<li>Added the reserved keyword: int64. Currently this is only used internally, but in time it will be a fully implemented primitive.
-</ul>
-<li>Library
-<ul>
-<li>Added a new compiler flag AS_64BIT_PTR, which should be defined for 64bit platforms. Ideally the as_config.h file should automatically set the flag according to the target platform. When this flag is defined, all pointers will be stored in the bytecode as 64bit words.
-<li>Made improvements to better handle 64bit platforms
-</ul>
-</ul>
-
-<h2>Version 2.6.0 WIP 2 - 2006/02/25</h2>
-
-<ul>
-<li>Script language
-<ul>
+<li>It's now possible to define class methods and constructors for the script declared structures. The definition of the method must be written inside the struct declaration.
+<li>The this keyword can be used to access the object and its members from within the class method. It's not yet possible to access the struct members without using the this keyword.
 <li>Added the keyword 'class' as synonym for 'struct'
 <li>For &amp;inout parameter references the 'inout' keyword is now optional
 <li>Only object types that support object handles can now use the &amp;inout parameter references. Other types must use &amp;in or &amp;out, unless AS_ALLOW_UNSAFE_REFERENCES is defined.
+<li>Added the reserved keyword: int64. Currently this is only used internally, but in time it will be a fully implemented primitive.
 </ul>
 <li>Library interface
 <ul>
@@ -183,21 +141,17 @@ A:hover
 <li>Added SetArgAddress() and GetReturnAddress() methods to the context interface. These should be used to handle references
 <li>Added GetArgAddress() and SetReturnAddress() methods to the generic interface.
 <li>Changed AddScriptSection() to accept a size_t for the script length instead of int
+<li>Improved the way the [Set|Get][Arg|Return][Address|Object]() methods work.
+<li>Added the method SetObject() to the context for calling object methods
+<li>ExecuteString() now adds a line break after the given string. This allows for one-line comments to be used without producing an invalid script. (Thanks B_old)
+<li>Added the methods GetMethodCount(), GetMethodIDByIndex(), GetMethodIDByName(), and GetMethodIDByDecl() that should be used to obtain the function id for a script declared class method.
 </ul>
 <li>Library
 <ul>
 <li>Fixed a lot but not all of the compiler warnings that MSVC8 reports for 64bit incompatibilities.
 <li>If native calling conventions are not supported for the target platform, then AS_MAX_PORTABILITY will automatically be defined to allow compilation of the library. (Thanks mandrav)
-</ul>
-</ul>
-
-<h2>Version 2.5.1 WIP 1 - 2006/01/24</h2>
-
-<ul>
-<li>Script language
-<ul>
-<li>It's now possible to define class methods for the script declared structures. The definition of the method must be written inside the struct declaration.
-<li>The this keyword can be used to access the object and its members from within the class method. It's not yet possible to access the struct members without using the this keyword.
+<li>Added a new compiler flag AS_64BIT_PTR, which should be defined for 64bit platforms. Ideally the as_config.h file should automatically set the flag according to the target platform. When this flag is defined, all pointers will be stored in the bytecode as 64bit words.
+<li>Made improvements to better handle 64bit platforms
 </ul>
 </ul>
 
