@@ -55,7 +55,7 @@ asCString::asCString(const asCString &str)
 	Assign(str.buffer, str.length);
 }
 
-asCString::asCString(const char *str, asUINT len)
+asCString::asCString(const char *str, size_t len)
 {
 	length = 0;
 	bufferSize = 0;
@@ -101,7 +101,7 @@ const char *asCString::AddressOf() const
 	return buffer;
 }
 
-void asCString::SetLength(asUINT len)
+void asCString::SetLength(size_t len)
 {
 	if( len >= bufferSize )
 		Allocate(len, true);
@@ -110,7 +110,7 @@ void asCString::SetLength(asUINT len)
 	length = len;
 }
 
-void asCString::Allocate(asUINT len, bool keepData)
+void asCString::Allocate(size_t len, bool keepData)
 {
 	char *buf = new char[len+1];
 	bufferSize = len+1;
@@ -137,7 +137,7 @@ void asCString::Allocate(asUINT len, bool keepData)
 	buffer[length] = 0;
 }
 
-void asCString::Assign(const char *str, asUINT len)
+void asCString::Assign(const char *str, size_t len)
 {
 	// Allocate memory for the string
 	if( bufferSize < len + 1 )
@@ -279,7 +279,7 @@ int asCString::Compare(const asCString &str) const
 	return Compare(str.AddressOf(), str.GetLength());
 }
 
-int asCString::Compare(const char *str, asUINT len) const
+int asCString::Compare(const char *str, size_t len) const
 {
 	if( buffer == 0 ) 
 	{

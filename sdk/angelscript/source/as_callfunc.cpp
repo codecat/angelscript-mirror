@@ -57,14 +57,14 @@ int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSS
 	int base = callConv;
 	if( !isMethod )
 	{
-		if( base == asCALL_GENERIC )
+		if( base == (int)asCALL_GENERIC )
 			internal->callConv = ICC_GENERIC_FUNC;
 		else
 			return asNOT_SUPPORTED;
 	}
 	else
 	{
-		if( base == asCALL_GENERIC )
+		if( base == (int)asCALL_GENERIC )
 			internal->callConv = ICC_GENERIC_METHOD;
 		else
 			return asNOT_SUPPORTED;

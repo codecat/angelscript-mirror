@@ -106,13 +106,13 @@ asCArray<T>::~asCArray(void)
 }
 
 template <class T>
-asUINT asCArray<T>::GetLength() const
+size_t asCArray<T>::GetLength() const
 {
 	return length;
 }
 
 template <class T>
-const T &asCArray<T>::operator [](asUINT index) const
+const T &asCArray<T>::operator [](size_t index) const
 {
 	assert(index < length);
 
@@ -120,7 +120,7 @@ const T &asCArray<T>::operator [](asUINT index) const
 }
 
 template <class T>
-T &asCArray<T>::operator [](asUINT index)
+T &asCArray<T>::operator [](size_t index)
 {
 	assert(index < length);
 
@@ -145,7 +145,7 @@ T asCArray<T>::PopLast()
 }
 
 template <class T>
-void asCArray<T>::Allocate(asUINT numElements, bool keepData)
+void asCArray<T>::Allocate(size_t numElements, bool keepData)
 {
 	T *tmp = new T[numElements];
 
@@ -156,7 +156,7 @@ void asCArray<T>::Allocate(asUINT numElements, bool keepData)
 			if( length > numElements )
 				length = numElements;
 
-			for( asUINT n = 0; n < length; n++ )
+			for( size_t n = 0; n < length; n++ )
 				tmp[n] = array[n];
 		}
 		else
@@ -170,13 +170,13 @@ void asCArray<T>::Allocate(asUINT numElements, bool keepData)
 }
 
 template <class T>
-asUINT asCArray<T>::GetCapacity() const
+size_t asCArray<T>::GetCapacity() const
 {
 	return maxLength;
 }
 
 template <class T>
-void asCArray<T>::SetLength(asUINT numElements)
+void asCArray<T>::SetLength(size_t numElements)
 {
 	if( numElements > maxLength )
 		Allocate(numElements, true);
@@ -185,12 +185,12 @@ void asCArray<T>::SetLength(asUINT numElements)
 }
 
 template <class T>
-void asCArray<T>::Copy(const T *data, asUINT count)
+void asCArray<T>::Copy(const T *data, size_t count)
 {
 	if( maxLength < count )
 		Allocate(count, false);
 
-	for( asUINT n = 0; n < count; n++ )
+	for( size_t n = 0; n < count; n++ )
 		array[n] = data[n];
 
 	length = count;
@@ -210,7 +210,7 @@ void asCArray<T>::Concatenate(const asCArray<T> &other)
 	if( maxLength < length + other.length )
 		Allocate(length + other.length, true);
 
-	for( asUINT n = 0; n < other.length; n++ )
+	for( size_t n = 0; n < other.length; n++ )
 		array[length+n] = other.array[n];
 
 	length += other.length;
@@ -219,7 +219,7 @@ void asCArray<T>::Concatenate(const asCArray<T> &other)
 template <class T>
 T *asCArray<T>::Find(const T &e)
 {
-	for( asUINT n = 0; n < length; n++ )
+	for( size_t n = 0; n < length; n++ )
 		if( array[n] == e ) return &array[n];
 
 	return 0;

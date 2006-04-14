@@ -42,7 +42,7 @@
 
 BEGIN_AS_NAMESPACE
 
-asCGeneric::asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, size_t *stackPointer)
+asCGeneric::asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, asDWORD *stackPointer)
 {
 	this->engine = engine;
 	this->sysFunction = sysFunction;
@@ -174,7 +174,7 @@ void *asCGeneric::GetArgAddress(asUINT arg)
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
 
 	// Get the value
-	return (void*)stackPointer[offset];
+	return (void*)*(size_t*)(&stackPointer[offset]);
 }
 
 void *asCGeneric::GetArgObject(asUINT arg)

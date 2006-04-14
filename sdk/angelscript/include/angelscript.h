@@ -53,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        20600
+#define ANGELSCRIPT_VERSION        20601
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  6
-#define ANGELSCRIPT_VERSION_BUILD  0
-#define ANGELSCRIPT_VERSION_STRING "2.6.0"
+#define ANGELSCRIPT_VERSION_BUILD  1
+#define ANGELSCRIPT_VERSION_STRING "2.6.1 WIP"
 
 // Data types
 
@@ -74,10 +74,14 @@ typedef unsigned int   asDWORD;
 typedef unsigned short asWORD;
 typedef unsigned char  asBYTE;
 typedef unsigned int   asUINT;
-#if defined(__GNUC__) || defined(__MWERKS__)
-typedef long long asQWORD;
+#ifdef _LP64
+    typedef long asQWORD;
 #else
-typedef __int64 asQWORD;
+#if defined(__GNUC__) || defined(__MWERKS__)
+	typedef long long asQWORD;
+#else
+	typedef __int64 asQWORD;
+#endif
 #endif
 
 typedef void (*asFUNCTION_t)();
@@ -551,12 +555,14 @@ protected:
 class asIOutputStream
 {
 public:
+	virtual ~asIOutputStream() {}
 	virtual void Write(const char *text) = 0;
 };
 
 class asIBinaryStream
 {
 public:
+	virtual ~asIBinaryStream() {}
 	virtual void Read(void *ptr, asUINT size) = 0;
 	virtual void Write(const void *ptr, asUINT size) = 0;
 };

@@ -294,14 +294,21 @@
 
 // Is the target a 64bit system?
 #if defined(_LP64) || defined(__amd64__)
+    #ifdef __int64
+        #undef __int64
+    #endif
+    #define __int64 long
     #ifndef AS_64BIT_PTR
         #define AS_64BIT_PTR
     #endif
+//    #ifndef AS_X86_64
+//        #define AS_X86_64
+//    #endif
 #endif
 
 // If there are no current support for native calling 
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_SH4))
+#if (!defined(AS_X86) && !defined(AS_X86_64) && !defined(AS_SH4))
     #ifndef AS_MAX_PORTABILITY
         #define AS_MAX_PORTABILITY
     #endif

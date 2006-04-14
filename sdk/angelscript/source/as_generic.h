@@ -49,7 +49,7 @@ class asCScriptFunction;
 class asCGeneric : public asIScriptGeneric
 {
 public:
-	asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, size_t *stackPointer);
+	asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, asDWORD *stackPointer);
 	virtual ~asCGeneric();
 
 // interface - begin
@@ -74,7 +74,7 @@ public:
 	asCScriptEngine *engine;
 	asCScriptFunction *sysFunction;
 	void *currentObject;
-	size_t *stackPointer;
+	asDWORD *stackPointer;
 	void *objectRegister;
 
 	asQWORD returnVal;
