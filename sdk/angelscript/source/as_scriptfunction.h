@@ -48,6 +48,7 @@
 BEGIN_AS_NAMESPACE
 
 class asCScriptEngine;
+class asCModule;
 
 struct asSScriptVariable
 {
@@ -59,7 +60,7 @@ struct asSScriptVariable
 class asCScriptFunction
 {
 public:
-	asCScriptFunction() {objectType = 0; name = ""; isReadOnly = false;}
+	asCScriptFunction(asCModule *mod) {module = mod; objectType = 0; name = ""; isReadOnly = false;}
 	~asCScriptFunction();
 
 	void AddVariable(asCString &name, asCDataType &type, int stackOffset);
@@ -69,6 +70,7 @@ public:
 	asCString GetDeclaration(asCScriptEngine *engine);
 	int GetLineNumber(int programPosition);
 
+	asCModule                   *module;
 	asCString                    name;
 	asCDataType                  returnType;
 	asCArray<asCDataType>        parameterTypes;

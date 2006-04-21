@@ -55,6 +55,7 @@ asCModule::asCModule(const char *name, int id, asCScriptEngine *engine)
 	contextCount = 0;
 	moduleCount = 0;
 	isGlobalVarInitialized = false;
+	initFunction = 0;
 }
 
 asCModule::~asCModule()
@@ -146,7 +147,7 @@ void asCModule::CallInit()
 
 	memset(globalMem.AddressOf(), 0, globalMem.GetLength()*sizeof(asDWORD));
 
-	if( initFunction.byteCode.GetLength() == 0 ) return;
+	if( initFunction && initFunction->byteCode.GetLength() == 0 ) return;
 
 	int id = moduleID | asFUNC_INIT;
 	asIScriptContext *ctx = 0;
@@ -154,7 +155,7 @@ void asCModule::CallInit()
 	if( r >= 0 && ctx )
 	{
 		// TODO: Add error handling
-		((asCContext*)ctx)->PrepareSpecial(id);
+		((asCContext*)ctx)->PrepareSpecial(id, this);
 		ctx->Execute();
 		ctx->Release();
 		ctx = 0;
@@ -203,7 +204,6 @@ void asCModule::Reset()
 
 	CallExit();
 
-	initFunction.byteCode.SetLength(0);
 
 	// Free global variables
 	globalMem.SetLength(0);
@@ -212,9 +212,15 @@ void asCModule::Reset()
 	isBuildWithoutErrors = true;
 	isDiscarded = false;
 
+	if( initFunction )
+	{
+		engine->DeleteScriptFunction(initFunction->id);
+		initFunction = 0;
+	}
+
 	size_t n;
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
-		delete scriptFunctions[n];
+		engine->DeleteScriptFunction(scriptFunctions[n]->id);
 	scriptFunctions.SetLength(0);
 
 	for( n = 0; n < importedFunctions.GetLength(); n++ )
@@ -227,7 +233,7 @@ void asCModule::Reset()
 		int oldFuncID = bindInformations[n].importedFunction;
 		if( oldFuncID != -1 )
 		{
-			asCModule *oldModule = engine->GetModule(oldFuncID);
+			asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
 			if( oldModule != 0 ) 
 			{
 				// Release reference to the module
@@ -281,7 +287,7 @@ int asCModule::GetFunctionIDByName(const char *name)
 		if( scriptFunctions[n]->name == name )
 		{
 			if( id == -1 )
-				id = (int)n;
+				id = scriptFunctions[n]->id;
 			else
 				return asMULTIPLE_FUNCTIONS;
 		}
@@ -318,7 +324,7 @@ int asCModule::GetMethodIDByName(const char *object, const char *name)
 	int id = -1;
 	for( size_t n = 0; n < ot->methods.GetLength(); n++ )
 	{
-		if( scriptFunctions[ot->methods[n]]->name == name )
+		if( engine->scriptFunctions[ot->methods[n]]->name == name )
 		{
 			if( id == -1 )
 				id = ot->methods[n];
@@ -343,7 +349,7 @@ int asCModule::GetMethodIDByDecl(const char *object, const char *decl)
 
 	asCBuilder bld(engine, this);
 
-	asCScriptFunction func;
+	asCScriptFunction func(this);
 	int r = bld.ParseFunctionDeclaration(decl, &func);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
@@ -353,14 +359,14 @@ int asCModule::GetMethodIDByDecl(const char *object, const char *decl)
 	int id = -1;
 	for( size_t n = 0; n < ot->methods.GetLength(); ++n )
 	{
-		if( func.name == scriptFunctions[ot->methods[n]]->name && 
-			func.returnType == scriptFunctions[ot->methods[n]]->returnType &&
-			func.parameterTypes.GetLength() == scriptFunctions[ot->methods[n]]->parameterTypes.GetLength() )
+		if( func.name == engine->scriptFunctions[ot->methods[n]]->name && 
+			func.returnType == engine->scriptFunctions[ot->methods[n]]->returnType &&
+			func.parameterTypes.GetLength() == engine->scriptFunctions[ot->methods[n]]->parameterTypes.GetLength() )
 		{
 			bool match = true;
 			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
 			{
-				if( func.parameterTypes[p] != scriptFunctions[ot->methods[n]]->parameterTypes[p] )
+				if( func.parameterTypes[p] != engine->scriptFunctions[ot->methods[n]]->parameterTypes[p] )
 				{
 					match = false;
 					break;
@@ -397,7 +403,7 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 
 	asCBuilder bld(engine, this);
 
-	asCScriptFunction func;
+	asCScriptFunction func(this);
 	bld.ParseFunctionDeclaration(decl, &func);
 
 	// TODO: Improve linear search
@@ -449,7 +455,7 @@ int asCModule::GetFunctionIDByDecl(const char *decl)
 
 	asCBuilder bld(engine, this);
 
-	asCScriptFunction func;
+	asCScriptFunction func(this);
 	int r = bld.ParseFunctionDeclaration(decl, &func);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
@@ -476,7 +482,7 @@ int asCModule::GetFunctionIDByDecl(const char *decl)
 			if( match )
 			{
 				if( id == -1 )
-					id = (int)n;
+					id = scriptFunctions[n]->id;
 				else
 					return asMULTIPLE_FUNCTIONS;
 			}
@@ -574,7 +580,7 @@ const asCString &asCModule::GetConstantString(int id)
 
 int asCModule::GetNextFunctionId()
 {
-	return (int)scriptFunctions.GetLength();
+	return engine->GetNextScriptFunctionId();
 }
 
 int asCModule::GetNextImportedFunctionId()
@@ -587,7 +593,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	assert(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = new asCScriptFunction();
+	asCScriptFunction *func = new asCScriptFunction(this);
 	func->name       = name;
 	func->id         = id;
 	func->returnType = returnType;
@@ -600,6 +606,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	func->objectType = objType;
 
 	scriptFunctions.PushLast(func);
+	engine->scriptFunctions[id&0xFFFF] = func;
 
 	return 0;
 }
@@ -609,7 +616,7 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	assert(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = new asCScriptFunction();
+	asCScriptFunction *func = new asCScriptFunction(this);
 	func->name       = name;
 	func->id         = id;
 	func->returnType = returnType;
@@ -632,7 +639,7 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 
 asCScriptFunction *asCModule::GetScriptFunction(int funcID)
 {
-	return scriptFunctions[funcID & 0xFFFF];
+	return engine->scriptFunctions[funcID & 0xFFFF];
 }
 
 asCScriptFunction *asCModule::GetImportedFunction(int funcID)
@@ -647,13 +654,13 @@ asCScriptFunction *asCModule::GetSpecialFunction(int funcID)
 	else
 	{
 		if( (funcID & 0xFFFF) == asFUNC_INIT )
-			return &initFunction;
+			return initFunction;
 		else if( (funcID & 0xFFFF) == asFUNC_STRING )
 		{
 			assert(false);
 		}
 
-		return scriptFunctions[funcID & 0xFFFF];
+		return engine->scriptFunctions[funcID & 0xFFFF];
 	}
 }
 
@@ -730,7 +737,7 @@ bool asCModule::CanDelete()
 				int oldFuncID = bindInformations[n].importedFunction;
 				if( oldFuncID != -1 )
 				{
-					asCModule *oldModule = engine->GetModule(oldFuncID);
+					asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
 					if( oldModule != 0 ) 
 					{
 						// Release reference to the module
@@ -760,7 +767,7 @@ bool asCModule::CanDeleteAllReferences(asCArray<asCModule*> &modules)
 	for( size_t n = 0; n < bindInformations.GetLength(); n++ )
 	{
 		int funcID = bindInformations[n].importedFunction;
-		asCModule *module = engine->GetModule(funcID);
+		asCModule *module = engine->GetModuleFromFuncId(funcID);
 
 		// If the module is already in the list don't check it again
 		bool inList = false;
@@ -791,7 +798,7 @@ int asCModule::BindImportedFunction(int index, int sourceID)
 	int oldFuncID = bindInformations[index].importedFunction;
 	if( oldFuncID != -1 )
 	{
-		asCModule *oldModule = engine->GetModule(oldFuncID);
+		asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
 		if( oldModule != 0 ) 
 		{
 			// Release reference to the module
@@ -806,7 +813,7 @@ int asCModule::BindImportedFunction(int index, int sourceID)
 	}
 
 	// Must verify that the interfaces are equal
-	asCModule *srcModule = engine->GetModule(sourceID);
+	asCModule *srcModule = engine->GetModuleFromFuncId(sourceID);
 	if( srcModule == 0 ) return asNO_MODULE;
 
 	asCScriptFunction *dst = GetImportedFunction(index);

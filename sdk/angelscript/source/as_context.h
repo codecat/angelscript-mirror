@@ -65,7 +65,7 @@ public:
 	asIScriptEngine *GetEngine();
 
 	int  Prepare(int functionID);
-	int  PrepareSpecial(int functionID);
+	int  PrepareSpecial(int functionID, asCModule *mod);
 
 	int  Execute();
 	int  Abort();

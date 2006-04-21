@@ -491,7 +491,7 @@ static void *StringAlloc(int)
 static void StringFree(void *p)
 {
 	assert( p );
-	delete p;
+	delete[] (char*)p;
 }
 
 // This is the string factory that creates new strings for the script

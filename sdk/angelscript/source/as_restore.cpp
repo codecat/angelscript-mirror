@@ -84,14 +84,17 @@ int asCRestore::Save()
 	// globalVarPointers[]
 	WriteGlobalVarPointers();
 
-	// initFunction
-	WriteFunction(&module->initFunction);
-
 	// scriptFunctions[]
 	count = (asUINT)module->scriptFunctions.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
 		WriteFunction(module->scriptFunctions[i]);
+
+	// initFunction
+	count = module->initFunction ? 1 : 0;
+	WRITE_NUM(count);
+	if( module->initFunction )
+		WriteFunction(module->initFunction);
 
 	// stringConstants[]
 	count = (asUINT)module->stringConstants.GetLength();
@@ -166,17 +169,24 @@ int asCRestore::Restore()
 	// globalVarPointers[]
 	ReadGlobalVarPointers();
 
-	// initFunction
-	ReadFunction(&module->initFunction);
-
 	// scriptFunctions[]
 	READ_NUM(count);
 	module->scriptFunctions.Allocate(count, 0);
 	for( i = 0; i < count; ++i ) 
 	{
-		func = new asCScriptFunction;
+		func = new asCScriptFunction(module);
 		ReadFunction(func);
 		module->scriptFunctions.PushLast(func);
+		engine->scriptFunctions[func->id] = func;
+	}
+
+	// initFunction
+	READ_NUM(count);
+	if( count )
+	{
+		module->initFunction = new asCScriptFunction(module);
+		ReadFunction(module->initFunction);
+		engine->scriptFunctions[module->initFunction->id] = module->initFunction;
 	}
 
 	// stringConstants[]
@@ -195,7 +205,7 @@ int asCRestore::Restore()
 	module->bindInformations.SetLength(count);
 	for(i=0;i<count;++i)
 	{
-		func = new asCScriptFunction;
+		func = new asCScriptFunction(module);
 		ReadFunction(func);
 		module->importedFunctions.PushLast(func);
 
@@ -237,7 +247,8 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	for( i = 0; i < count; ++i ) 
 		WriteDataType(&func->parameterTypes[i]);
 
-	WRITE_NUM(func->id);
+	int id = FindFunctionIndex(func);
+	WRITE_NUM(id);
 	
 	count = (asUINT)func->byteCode.GetLength();
 	WRITE_NUM(count);
@@ -397,7 +408,9 @@ void asCRestore::ReadFunction(asCScriptFunction* func)
 		func->parameterTypes.PushLast(dt);
 	}
 
-	READ_NUM(func->id);
+	int id;
+	READ_NUM(id);
+	func->id = engine->GetNextScriptFunctionId();
 	
 	READ_NUM(count);
 	func->byteCode.Allocate(count, 0);
@@ -579,8 +592,27 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 		asDWORD c = (*bc)&0xFF;
 		WRITE_NUM(*bc);
 		bc += 1;
-		if( c == BC_ALLOC || c == BC_FREE ||
-			c == BC_REFCPY || c == BC_OBJTYPE )
+		if( c == BC_ALLOC )
+		{
+			asDWORD tmp[MAX_DATA_SIZE];
+			int n;
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+				tmp[n] = *bc++;
+
+			// Translate the object type 
+			asCObjectType *ot = *(asCObjectType**)tmp;
+			*(int*)tmp = FindObjectTypeIdx(ot);
+
+			// Translate the constructor func id, if it is a script class
+			if( ot->flags & asOBJ_SCRIPT_STRUCT )
+				*(int*)&tmp[PTR_SIZE] = FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[PTR_SIZE]]);
+
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+				WRITE_NUM(tmp[n]);
+		}
+		else if( c == BC_FREE   ||
+			     c == BC_REFCPY || 
+				 c == BC_OBJTYPE )
 		{
 			// Translate object type pointers into indices
 			asDWORD tmp[MAX_DATA_SIZE];
@@ -602,6 +634,19 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				tmp[n] = *bc++;
 
 			*(int*)tmp = FindTypeIdIdx(*(int*)tmp);
+
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+				WRITE_NUM(tmp[n]);
+		}
+		else if( c == BC_CALL )
+		{
+			// Translate the function id
+			asDWORD tmp[MAX_DATA_SIZE];
+			int n;
+			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+				tmp[n] = *bc++;
+
+			*(int*)tmp = FindFunctionIndex(engine->scriptFunctions[*(int*)tmp]);
 
 			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
 				WRITE_NUM(tmp[n]);
@@ -635,6 +680,14 @@ int asCRestore::FindTypeId(int idx)
 	return usedTypeIds[idx];
 }
 
+int asCRestore::FindFunctionIndex(asCScriptFunction *func)
+{
+	for( int n = 0; n < (int)module->scriptFunctions.GetLength(); n++ )
+		if( module->scriptFunctions[n] == func ) return n;
+
+	return -1;
+}
+
 void asCRestore::WriteUsedTypeIds()
 {
 	asUINT count = (asUINT)usedTypeIds.GetLength();
@@ -657,7 +710,8 @@ void asCRestore::ReadUsedTypeIds()
 	}
 
 	// Translate all the TYPEID bytecodes
-	TranslateFunction(&module->initFunction);
+	if( module->initFunction ) 
+		TranslateFunction(module->initFunction);
 	for( n = 0; n < module->scriptFunctions.GetLength(); n++ )
 		TranslateFunction(module->scriptFunctions[n]);
 }
@@ -674,6 +728,23 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			int *tid = (int*)&bc[n+1];
 
 			*tid = FindTypeId(*tid);
+		}
+		else if( c == BC_CALL )
+		{
+			// Translate the index to the func id
+			int *fid = (int*)&bc[n+1];
+
+			*fid = module->scriptFunctions[*fid]->id;
+		}
+		else if( c == BC_ALLOC )
+		{
+			// If the object type is a script class then the constructor id must be translated
+			asCObjectType *ot = *(asCObjectType**)&bc[n+1];
+			if( ot->flags & asOBJ_SCRIPT_STRUCT )
+			{
+				int *fid = (int*)&bc[n+1+PTR_SIZE];
+				*fid = module->scriptFunctions[*fid]->id;
+			}
 		}
 
 		n += asCByteCode::SizeOfType(bcTypes[c]);

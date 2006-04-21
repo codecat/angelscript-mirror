@@ -257,7 +257,7 @@ int asCContext::Prepare(int funcID)
 
 		// Remove reference to previous module. Add reference to new module
 		if( module ) module->ReleaseContextRef();
-		module = engine->GetModule(funcID);
+		module = initialFunction->module;
 		if( module ) 
 			module->AddContextRef(); 
 		else 
@@ -333,7 +333,7 @@ int asCContext::SetExecuteStringFunction(asCScriptFunction *func)
 	return 0;
 }
 
-int asCContext::PrepareSpecial(int funcID)
+int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 {
 	// Check engine pointer
 	if( engine == 0 ) return asERROR;
@@ -348,7 +348,7 @@ int asCContext::PrepareSpecial(int funcID)
 
 	if( module ) module->ReleaseContextRef();
 
-	module = engine->GetModule(funcID);
+	module = mod;
 	module->AddContextRef();
 
 	if( (funcID & 0xFFFF) == asFUNC_STRING )
@@ -475,7 +475,7 @@ void *asCContext::GetReturnObject()
 	if( !dt->IsObject() ) return 0;
 
 	if( dt->IsReference() )
-		return *(void**)register1;
+		return *(void**)(size_t)register1;
 	else
 		return objectRegister;
 }
@@ -1082,7 +1082,7 @@ void asCContext::ExecuteNext()
 
 	case BC_LdGRdR4:
 		*(void**)&register1 = module->globalVarPointers[WORDARG1(l_bc)];
-		*(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)register1;
+		*(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)(size_t)register1;
 		l_bc += 2;
 		break;
 
@@ -1539,8 +1539,8 @@ void asCContext::ExecuteNext()
 			}
 			else
 			{
-				asCModule *callModule = engine->GetModule(funcID);
-				asCScriptFunction *func = callModule->GetScriptFunction(funcID);
+				asCScriptFunction *func = engine->GetScriptFunction(funcID);
+				asCModule *callModule = func->module;
 
 				CallScriptFunction(callModule, func);
 			}

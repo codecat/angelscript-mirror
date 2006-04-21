@@ -181,7 +181,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	{
 		// Compile the function
 		asCCompiler compiler;
-		asCScriptFunction *execfunc = new asCScriptFunction;
+		asCScriptFunction *execfunc = new asCScriptFunction(module);
 		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, execfunc) >= 0 )
 		{
 			execfunc->id = asFUNC_STRING | module->moduleID;
@@ -881,10 +881,17 @@ void asCBuilder::CompileGlobalVariables()
 	asCByteCode cleanInit;
 	asCByteCode cleanExit;
 
-	module->initFunction.byteCode.SetLength(finalInit.GetSize());
+	int id = engine->GetNextScriptFunctionId();
+	asCScriptFunction *init = new asCScriptFunction(module);
+
+	init->id = id;
+	module->initFunction = init;
+	engine->scriptFunctions[id] = init;
+
+	init->byteCode.SetLength(finalInit.GetSize());
 	// TODO: Pass the function pointer directly
-	finalInit.Output(module->initFunction.byteCode.AddressOf());
-	module->initFunction.stackNeeded = finalInit.largestStackUsed;
+	finalInit.Output(init->byteCode.AddressOf());
+	init->stackNeeded = finalInit.largestStackUsed;
 
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
@@ -1138,7 +1145,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 
 	// Compile the bytecode
 	asCCompiler compiler;
-	compiler.CompileDefaultConstructor(this, file, module->scriptFunctions[funcId]);
+	compiler.CompileDefaultConstructor(this, file, engine->scriptFunctions[funcId]);
 
 	// Add a dummy function to the module so that it doesn't mix up the func Ids
 	functions.PushLast(0);
@@ -1358,7 +1365,7 @@ asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 	if( id < 0 )
 		return engine->systemFunctions[-id - 1];
 	else if( (id & 0xFFFF0000) == 0 )
-		return module->scriptFunctions[id];
+		return engine->scriptFunctions[id];
 	else 
 		return module->importedFunctions[id & 0xFFFF];
 }

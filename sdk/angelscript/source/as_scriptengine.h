@@ -243,6 +243,12 @@ public:
 	// Script modules
 	asCModule *GetModule(const char *name, bool create);
 	asCModule *GetModule(int id);
+	asCModule *GetModuleFromFuncId(int funcId);
+
+	int GetNextScriptFunctionId();
+	void DeleteScriptFunction(int id);
+	asCArray<asCScriptFunction *> scriptFunctions;
+	asCArray<int> freeScriptFunctionIds;
 
 	// These resources must be protected for multiple accesses
 	int refCount;

@@ -156,7 +156,7 @@ public:
 
 	bool CanDelete();
 
-	asCScriptFunction initFunction;
+	asCScriptFunction *initFunction;
 
 	asCArray<asCString *> scriptSections;
 	asCArray<asCScriptFunction *> scriptFunctions;

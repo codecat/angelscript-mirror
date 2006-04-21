@@ -130,17 +130,17 @@ bool Test()
 
 	// Make sure the default constructor can be overloaded
 	engine->SetCommonMessageStream(&out);
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
-	r = engine->Build(0);
+	engine->AddScriptSection("test", TESTNAME, script2, strlen(script2), 0, false);
+	r = engine->Build("test");
 	if( r < 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "Test()");
+	r = engine->ExecuteString("test", "Test()");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	int typeId = engine->GetTypeIdByDecl(0, "myclass");
+	int typeId = engine->GetTypeIdByDecl("test", "myclass");
 	asIScriptStruct *s = (asIScriptStruct*)engine->CreateScriptObject(typeId);
 	if( s == 0 ) 
 		fail = true;
@@ -160,8 +160,8 @@ bool Test()
 		}
 
 		// Call the script class method
-		if( engine->GetMethodCount(0, "myclass") != 1 ) fail = true;
-		int methodId = engine->GetMethodIDByDecl(0, "myclass", "void method()");
+		if( engine->GetMethodCount("test", "myclass") != 1 ) fail = true;
+		int methodId = engine->GetMethodIDByDecl("test", "myclass", "void method()");
 		if( methodId < 0 ) 
 			fail = true;
 		else

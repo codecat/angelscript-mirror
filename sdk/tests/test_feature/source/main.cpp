@@ -111,6 +111,7 @@ namespace TestUnsafeRef       { bool Test(); }
 namespace TestReturnString    { bool Test(); }
 namespace TestScriptClassMethod { bool Test(); }
 namespace TestPostProcess     { bool Test(); }
+namespace TestShark           { bool Test(); }
 
 
 void DetectMemoryLeaks()
@@ -143,10 +144,11 @@ int main(int argc, char **argv)
 #endif
 
 #ifndef AS_MAX_PORTABILITY
-	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
-	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
-	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
+	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
+	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
+	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
+	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");

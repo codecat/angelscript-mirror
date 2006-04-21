@@ -87,6 +87,8 @@ protected:
 	int FindTypeIdIdx(int typeId);
 	int FindTypeId(int idx);
 
+	int FindFunctionIndex(asCScriptFunction *func);
+
 	asCArray<int> usedTypeIds;
 };
 

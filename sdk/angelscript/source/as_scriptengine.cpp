@@ -382,7 +382,7 @@ int asCScriptEngine::GetFunctionIDByIndex(const char *module, int index)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->moduleID | index;
+	return mod->moduleID | mod->scriptFunctions[index]->id;
 }
 
 int asCScriptEngine::GetFunctionIDByName(const char *module, const char *name)
@@ -476,7 +476,7 @@ const char *asCScriptEngine::GetFunctionSection(int funcID, int *length)
 		asCScriptFunction *func = GetScriptFunction(funcID);
 		if( func == 0 ) return 0;
 
-		asCModule *module = GetModule(funcID);
+		asCModule *module = GetModuleFromFuncId(funcID);
 		if( module == 0 ) return 0;
 
 		*tempString = *module->scriptSections[func->scriptSectionIdx];
@@ -914,7 +914,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	type.MakeReference(true);
 
 	// Verify function declaration
-	asCScriptFunction func;
+	asCScriptFunction func(0);
 
 	r = bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
@@ -1070,7 +1070,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	type.MakeReference(true);
 
 	// Verify function declaration
-	asCScriptFunction func;
+	asCScriptFunction func(0);
 
 	r = bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
@@ -1276,7 +1276,7 @@ int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl
 	asSTypeBehaviour *beh = &globalBehaviours;
 
 	// Verify function declaration
-	asCScriptFunction func;
+	asCScriptFunction func(0);
 
 	r = bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
@@ -1336,7 +1336,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 
 	systemFunctionInterfaces.PushLast(newInterface);
 
-	asCScriptFunction *f = new asCScriptFunction;
+	asCScriptFunction *f = new asCScriptFunction(0);
 	f->returnType = func.returnType;
 	f->objectType = func.objectType;
 	f->id         = id;
@@ -1452,7 +1452,7 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 	memcpy(newInterface, &internal, sizeof(internal));
 	systemFunctionInterfaces.PushLast(newInterface);
 
-	asCScriptFunction *func = new asCScriptFunction();
+	asCScriptFunction *func = new asCScriptFunction(0);
 	func->objectType = objType;
 
 	objType->methods.PushLast((int)systemFunctions.GetLength());
@@ -1514,7 +1514,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	memcpy(newInterface, &internal, sizeof(internal));
 	systemFunctionInterfaces.PushLast(newInterface);
 
-	asCScriptFunction *func = new asCScriptFunction();
+	asCScriptFunction *func = new asCScriptFunction(0);
 	func->objectType = dt.GetObjectType();
 
 	func->objectType->methods.PushLast((int)systemFunctions.GetLength());
@@ -1574,7 +1574,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	memcpy(newInterface, &internal, sizeof(internal));
 	systemFunctionInterfaces.PushLast(newInterface);
 
-	asCScriptFunction *func = new asCScriptFunction();
+	asCScriptFunction *func = new asCScriptFunction(0);
 
 	asCBuilder bld(this, 0);
 	bld.SetOutputStream(outStream);
@@ -1621,14 +1621,14 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 
 asCScriptFunction *asCScriptEngine::GetScriptFunction(int funcID)
 {
-	asCModule *module = GetModule(funcID);
+	asCModule *module = GetModuleFromFuncId(funcID);
 	if( module )
 	{
 		int f = funcID & 0xFFFF;
-		if( f >= (int)module->scriptFunctions.GetLength() )
+		if( f >= (int)scriptFunctions.GetLength() )
 			return 0;
 
-		return module->GetScriptFunction(f);
+		return scriptFunctions[f];
 	}
 
 	return 0;
@@ -1688,7 +1688,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 	memcpy(newInterface, &internal, sizeof(internal));
 	systemFunctionInterfaces.PushLast(newInterface);
 
-	asCScriptFunction *func = new asCScriptFunction();
+	asCScriptFunction *func = new asCScriptFunction(0);
 
 	asCBuilder bld(this, 0);
 	bld.SetOutputStream(outStream);
@@ -1778,6 +1778,16 @@ asCModule *asCScriptEngine::GetModule(int id)
 	id = asMODULEIDX(id);
 	if( id >= (int)scriptModules.GetLength() ) return 0;
 	return scriptModules[id];
+}
+
+asCModule *asCScriptEngine::GetModuleFromFuncId(int id)
+{
+	if( id < 0 ) return 0;
+	id &= 0xFFFF;
+	if( id >= (int)scriptFunctions.GetLength() ) return 0;
+	asCScriptFunction *func = scriptFunctions[id];
+	if( func == 0 ) return 0;
+	return func->module;
 }
 
 
@@ -2043,7 +2053,7 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 	}
 
 	// Prepare and execute the context
-	r = ((asCContext*)exec)->PrepareSpecial(mod->moduleID | asFUNC_STRING);
+	r = ((asCContext*)exec)->PrepareSpecial(asFUNC_STRING, mod);
 	if( r < 0 )
 	{
 		if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
@@ -2917,6 +2927,38 @@ int asCScriptEngine::SetConfigGroupModuleAccess(const char *groupName, const cha
 
 	return group->SetModuleAccess(module, hasAccess);
 }
+
+int asCScriptEngine::GetNextScriptFunctionId()
+{
+	if( freeScriptFunctionIds.GetLength() )
+		return freeScriptFunctionIds.PopLast();
+
+	int id = (int)scriptFunctions.GetLength();
+	scriptFunctions.PushLast(0);
+	return id;
+}
+
+void asCScriptEngine::DeleteScriptFunction(int id)
+{
+	if( id < 0 ) return;
+	id &= 0xFFFF;
+	if( id >= (int)scriptFunctions.GetLength() ) return;
+
+	if( scriptFunctions[id] )
+	{
+		delete scriptFunctions[id];
+		if( id == scriptFunctions.GetLength() - 1 )
+		{
+			scriptFunctions.PopLast();
+		}
+		else
+		{
+			scriptFunctions[id] = 0;
+			freeScriptFunctionIds.PushLast(id);
+		}
+	}
+}
+
 
 END_AS_NAMESPACE
 
