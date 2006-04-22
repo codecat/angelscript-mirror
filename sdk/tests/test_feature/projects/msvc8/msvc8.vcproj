@@ -363,6 +363,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_parser.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_pointer.cpp"
 				>
 			</File>

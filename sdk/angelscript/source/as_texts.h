@@ -67,6 +67,7 @@
 #define TXT_EXPECTED_DATA_TYPE            "Expected data type"
 #define TXT_EXPECTED_EXPRESSION_VALUE     "Expected expression value"
 #define TXT_EXPECTED_IDENTIFIER           "Expected identifier"
+#define TXT_EXPECTED_METHOD_OR_PROPERTY   "Expected method or property"
 #define TXT_EXPECTED_ONE_OF               "Expected one of: "
 #define TXT_EXPECTED_OPERATOR             "Expected operator"
 #define TXT_EXPECTED_s_OR_s               "Expected '%s' or '%s'"
@@ -75,7 +76,6 @@
 #define TXT_EXPECTED_STRING               "Expected string"
 #define TXT_EXPR_MUST_BE_BOOL             "Expression must be of boolean type"
 #define TXT_EXPR_MUST_EVAL_TO_CONSTANT    "Expression must evaluate to a constant"
-
 
 #define TXT_FUNCTION_IN_GLOBAL_EXPR       "Function calls are not allowed in global expressions"
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"

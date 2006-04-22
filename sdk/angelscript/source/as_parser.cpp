@@ -322,7 +322,7 @@ bool asCParser::IsVarDecl()
 			GetToken(&t2);
 			if( t2.type != ttCloseBracket )
 			{
-				RewindTo(&t1);
+				RewindTo(&t);
 				return false;
 			}
 		}
@@ -362,6 +362,86 @@ bool asCParser::IsVarDecl()
 		RewindTo(&t);
 
 		return true;
+	}
+
+	RewindTo(&t);
+	return false;
+}
+
+bool asCParser::IsFuncDecl(bool isMethod)
+{
+	// Set start point so that we can rewind
+	sToken t;
+	GetToken(&t);
+	RewindTo(&t);
+
+	// A class constructor can start with identifier followed by parenthesis
+	if( isMethod )
+	{
+		sToken t1, t2;
+		GetToken(&t1);
+		GetToken(&t2);
+		RewindTo(&t);
+		if( t1.type == ttIdentifier && t2.type == ttOpenParanthesis )
+			return true;
+	}
+
+	// A function decl can start with a const
+	sToken t1;
+	GetToken(&t1);
+	if( t1.type == ttConst )
+		GetToken(&t1);
+
+	if( !IsDataType(t1.type) )
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	// Object handles can be interleaved with the array brackets
+	sToken t2;
+	GetToken(&t2);
+	while( t2.type == ttHandle || t2.type == ttOpenBracket )
+	{
+		if( t2.type == ttOpenBracket )
+		{
+			GetToken(&t2);
+			if( t2.type != ttCloseBracket )
+			{
+				RewindTo(&t);
+				return false;
+			}
+		}
+
+		GetToken(&t2);
+	}
+
+	if( t2.type != ttIdentifier )
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	GetToken(&t2);
+	if( t2.type == ttOpenParanthesis ) 
+	{	
+		// If the closing paranthesis is not followed by a  
+		// statement block then it is not a function. 
+		while( t2.type != ttCloseParanthesis && t2.type != ttEnd )
+			GetToken(&t2);
+
+		if( t2.type == ttEnd ) 
+			return false;
+		else
+		{
+			GetToken(&t1);
+			RewindTo(&t);
+			if( t1.type == ttStartStatementBlock )
+				return true;
+		}
+
+		RewindTo(&t);
+		return false;
 	}
 
 	RewindTo(&t);
@@ -423,15 +503,15 @@ asCScriptNode *asCParser::ParseStruct()
 	// Parse properties
 	GetToken(&t);
 	RewindTo(&t);
-	while( t.type != ttEndStatementBlock )
+	while( t.type != ttEndStatementBlock && t.type != ttEnd )
 	{
 		// Is it a property or a method?
-		if( !IsVarDecl() )
+		if( IsFuncDecl(true) )
 		{
 			// Parse the method
 			node->AddChildLast(ParseFunction(true));
 		}
-		else
+		else if( IsVarDecl() )
 		{
 			// Parse a property declaration
 			asCScriptNode *prop = new asCScriptNode(snDeclaration);
@@ -450,6 +530,11 @@ asCScriptNode *asCParser::ParseStruct()
 				return node;
 			}
 			prop->UpdateSourcePos(t.pos, t.length);
+		}
+		else
+		{
+			Error(TXT_EXPECTED_METHOD_OR_PROPERTY, &t);
+			return node;
 		}
 
 		GetToken(&t);

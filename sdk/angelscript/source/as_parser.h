@@ -152,6 +152,7 @@ protected:
 	asCScriptNode *ParseInitList();
 
 	bool IsVarDecl();
+	bool IsFuncDecl(bool isMethod);
 	bool IsRealType(int tokenType);
 	bool IsDataType(int tokenType);
 	bool IsOperator(int tokenType);
