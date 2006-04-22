@@ -175,6 +175,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\as_callfunc_mips.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\as_callfunc_sh4.cpp"
 				>
 			</File>

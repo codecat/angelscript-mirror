@@ -1411,9 +1411,9 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		{
 			if( objectType->flags & asOBJ_SCRIPT_STRUCT )
 			{
-				if( module->scriptFunctions[objectType->methods[n]]->name == name &&
-					module->scriptFunctions[objectType->methods[n]]->isReadOnly )
-					methods.PushLast(module->scriptFunctions[objectType->methods[n]]->id);
+				if( engine->scriptFunctions[objectType->methods[n]&0xFFFF]->name == name &&
+					engine->scriptFunctions[objectType->methods[n]&0xFFFF]->isReadOnly )
+					methods.PushLast(engine->scriptFunctions[objectType->methods[n]&0xFFFF]->id);
 			}
 			else
 			{
@@ -1430,8 +1430,8 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		{
 			if( objectType->flags & asOBJ_SCRIPT_STRUCT )
 			{
-				if( module->scriptFunctions[objectType->methods[n]]->name == name )
-					methods.PushLast(module->scriptFunctions[objectType->methods[n]]->id);
+				if( engine->scriptFunctions[objectType->methods[n]&0xFFFF]->name == name )
+					methods.PushLast(engine->scriptFunctions[objectType->methods[n]&0xFFFF]->id);
 			}
 			else
 			{

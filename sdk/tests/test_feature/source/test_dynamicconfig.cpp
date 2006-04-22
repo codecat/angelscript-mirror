@@ -156,8 +156,8 @@ bool Test()
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 3) : Error   : 'global' is not declared\n"
-								 "TestDynamicConfig (3, 10) : Error   : Reference is read-only\n"
-								 "TestDynamicConfig (3, 10) : Error   : Not a valid lvalue\n" ) 
+/*								 "TestDynamicConfig (3, 10) : Error   : Reference is read-only\n"
+								 "TestDynamicConfig (3, 10) : Error   : Not a valid lvalue\n"*/ ) 
 	{
 		fail = true;
 	}

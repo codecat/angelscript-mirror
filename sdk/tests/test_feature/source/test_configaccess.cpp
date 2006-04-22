@@ -45,8 +45,8 @@ bool Test()
 		fail = true;
 
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'val' is not declared\n"
-		               "ExecuteString (1, 5) : Error   : Reference is read-only\n"
-		               "ExecuteString (1, 5) : Error   : Not a valid lvalue\n")
+/*		               "ExecuteString (1, 5) : Error   : Reference is read-only\n"
+		               "ExecuteString (1, 5) : Error   : Not a valid lvalue\n"*/)
 		fail = true;
 
 	// Make sure the default access can be overridden

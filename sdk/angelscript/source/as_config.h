@@ -169,6 +169,9 @@
 // AS_SH4
 // Use assembler code for the SH4 CPU family
 
+// AS_MIPS
+// Use assembler code for the MIPS CPU family
+
 // AS_64BIT_PTR
 // Define this to make the engine store all pointers in 64bit words.
 
@@ -292,6 +295,13 @@
 	#define AS_SH4
 #endif
 
+// MIPS architexture (generally PS2 and PSP consoles)
+#if defined(_MIPS_ARCH) || defined(_PSP) || defined(_PS2) || defined(_EE_) || defined(_PSP)
+	#define AS_ALIGN				// align datastructures
+	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
+	#define AS_MIPS
+#endif
+
 // Is the target a 64bit system?
 #if defined(_LP64) || defined(__amd64__)
     #ifdef __int64
@@ -308,7 +318,7 @@
 
 // If there are no current support for native calling 
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_X86_64) && !defined(AS_SH4))
+#if (!defined(AS_X86) && !defined(AS_X86_64) && !defined(AS_SH4) && !defined(AS_MIPS))
     #ifndef AS_MAX_PORTABILITY
         #define AS_MAX_PORTABILITY
     #endif

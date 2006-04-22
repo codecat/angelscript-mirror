@@ -11,6 +11,7 @@ SRCNAMES = \
   as_builder.cpp  \
   as_bytecode.cpp \
   as_callfunc.cpp \
+  as_callfunc_mips.cpp \
   as_callfunc_sh4.cpp \
   as_callfunc_x86.cpp \
   as_compiler.cpp \

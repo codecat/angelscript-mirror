@@ -3744,12 +3744,21 @@ void asCCompiler::CompileAssignment(asCScriptNode *expr, asSExprContext *ctx)
 			return;
 		}
 
+		int currNumErrors = builder->numErrors;
+
 		// Compile the two expression terms
 		asSExprContext lctx, rctx;
 		CompileAssignment(lexpr->next->next, &rctx);
 		CompileCondition(lexpr, &lctx);
 
-		DoAssignment(ctx, &lctx, &rctx, lexpr, lexpr->next->next, lexpr->next->tokenType, lexpr->next);
+		if( currNumErrors == builder->numErrors )
+			DoAssignment(ctx, &lctx, &rctx, lexpr, lexpr->next->next, lexpr->next->tokenType, lexpr->next);
+		else
+		{
+			// Since the operands failed, the assignment was not computed
+			ctx->type.SetDummy();
+			return;
+		}
 	}
 	else
 		CompileCondition(lexpr, ctx);

@@ -57,6 +57,10 @@ static const char *script2 =
 "  {                                             \n"
 "    this.value = 3;                             \n"
 "  }                                             \n"
+"  void method2()                                \n"
+"  {                                             \n"
+"    this.method();                              \n"
+"  }                                             \n"
 "  int value;                                    \n"
 "};                                              \n"
 "void Test()                                     \n"
@@ -160,8 +164,9 @@ bool Test()
 		}
 
 		// Call the script class method
-		if( engine->GetMethodCount("test", "myclass") != 1 ) fail = true;
-		int methodId = engine->GetMethodIDByDecl("test", "myclass", "void method()");
+		if( engine->GetMethodCount("test", "myclass") != 2 ) 
+			fail = true;
+		int methodId = engine->GetMethodIDByDecl("test", "myclass", "void method2()");
 		if( methodId < 0 ) 
 			fail = true;
 		else
@@ -173,7 +178,8 @@ bool Test()
 			if( r != asEXECUTION_FINISHED )
 				fail = true;
 
-			if( !v || *v != 3 ) fail = true;
+			if( (!v) || (*v != 3) ) 
+				fail = true;
 
 			ctx->Release();
 		}

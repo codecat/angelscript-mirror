@@ -144,10 +144,12 @@ int main(int argc, char **argv)
 #endif
 
 #ifndef AS_MAX_PORTABILITY
+	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
+	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
+	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
-	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
@@ -175,14 +177,12 @@ int main(int argc, char **argv)
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
 	if( TestVector3_2::Test()         ) goto failed; else printf("-- TestVector3_2 passed\n");
-	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
 	if( TestImport2::Test()           ) goto failed; else printf("-- TestImport2 passed\n");
 	if( TestEnumGlobVar()             ) goto failed; else printf("-- TestEnumGlobVar passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
-	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
