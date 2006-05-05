@@ -2947,7 +2947,7 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 	if( scriptFunctions[id] )
 	{
 		delete scriptFunctions[id];
-		if( id == scriptFunctions.GetLength() - 1 )
+		if( id == (int)scriptFunctions.GetLength() - 1 )
 		{
 			scriptFunctions.PopLast();
 		}

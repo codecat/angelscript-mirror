@@ -243,6 +243,8 @@ asCScriptNode *asCParser::ParseScript()
 				node->AddChildLast(ParseImport());
 			else if( t1.type == ttStruct )
 				node->AddChildLast(ParseStruct());
+			else if( t1.type == ttInterface )
+				node->AddChildLast(ParseInterface());
 			else if( t1.type == ttConst )
 				node->AddChildLast(ParseGlobalVar());
 			else if( IsDataType(t1.type) )
@@ -251,6 +253,11 @@ asCScriptNode *asCParser::ParseScript()
 					node->AddChildLast(ParseGlobalVar());
 				else
 					node->AddChildLast(ParseFunction());
+			}
+			else if( t1.type == ttEndStatement )
+			{
+				// Ignore a semicolon by itself
+				GetToken(&t1);
 			}
 			else if( t1.type == ttEnd )
 				return node;
@@ -477,6 +484,89 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 	return node;
 }
 
+asCScriptNode *asCParser::ParseInterfaceMethod()
+{
+	asCScriptNode *node = new asCScriptNode(snFunction);
+
+	node->AddChildLast(ParseType(true));
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseTypeMod(false));
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseIdentifier());
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseParameterList());
+	if( isSyntaxError ) return node;
+
+	// Parse an optional const after the method definition
+	sToken t1;
+	GetToken(&t1);
+	RewindTo(&t1);
+	if( t1.type == ttConst )
+		node->AddChildLast(ParseToken(ttConst));
+
+	GetToken(&t1);
+	if( t1.type != ttEndStatement )
+	{
+		Error(ExpectedToken(";").AddressOf(), &t1);
+		return node;
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	return node;
+}
+
+asCScriptNode *asCParser::ParseInterface()
+{
+	asCScriptNode *node = new asCScriptNode(snInterface);
+
+	sToken t;
+	GetToken(&t);
+	if( t.type != ttInterface )
+	{
+		Error(ExpectedToken("interface").AddressOf(), &t);
+		return node;
+	}
+
+	node->SetToken(&t);
+
+	node->AddChildLast(ParseIdentifier());
+
+	GetToken(&t);
+	if( t.type != ttStartStatementBlock )
+	{
+		Error(ExpectedToken("{").AddressOf(), &t);
+		return node;
+	}
+
+	// Parse interface methods
+	GetToken(&t);
+	RewindTo(&t);
+	while( t.type != ttEndStatementBlock && t.type != ttEnd )
+	{
+		// Parse the method signature
+		node->AddChildLast(ParseInterfaceMethod());
+		if( isSyntaxError ) return node;
+		
+		GetToken(&t);
+		RewindTo(&t);
+	}
+
+	GetToken(&t);
+	if( t.type != ttEndStatementBlock )
+	{
+		Error(ExpectedToken("}").AddressOf(), &t);
+		return node;
+	}
+
+	node->UpdateSourcePos(t.pos, t.length);
+
+	return node;
+}
+
 asCScriptNode *asCParser::ParseStruct()
 {
 	asCScriptNode *node = new asCScriptNode(snStruct);
@@ -494,6 +584,19 @@ asCScriptNode *asCParser::ParseStruct()
 	node->AddChildLast(ParseIdentifier());
 
 	GetToken(&t);
+
+	// Optional list of interfaces that are being implemented and classes that are being inherited
+	if( t.type == ttColon )
+	{
+		node->AddChildLast(ParseIdentifier());
+		GetToken(&t);
+		while( t.type == ttListSeparator )
+		{
+			node->AddChildLast(ParseIdentifier());
+			GetToken(&t);
+		}
+	}
+
 	if( t.type != ttStartStatementBlock )
 	{
 		Error(ExpectedToken("{").AddressOf(), &t);
@@ -547,14 +650,6 @@ asCScriptNode *asCParser::ParseStruct()
 		Error(ExpectedToken("}").AddressOf(), &t);
 		return node;
 	}
-
-	GetToken(&t);
-	if( t.type != ttEndStatement )
-	{
-		Error(ExpectedToken(";").AddressOf(), &t);
-		return node;
-	}
-
 	node->UpdateSourcePos(t.pos, t.length);
 
 	return node;

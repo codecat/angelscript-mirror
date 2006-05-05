@@ -56,6 +56,7 @@ struct sFunctionDescription
 	asCScriptNode *node;
 	asCString name;
 	asCObjectType *objType;
+	int funcId;
 };
 
 struct sGlobalVariableDescription
@@ -122,11 +123,14 @@ protected:
 	void GetFunctionDescriptions(const char *name, asCArray<int> &funcs);
 	void GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst);
 
-	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0);
+	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false);
 	int RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
 	int RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file);
 	int RegisterStruct(asCScriptNode *node, asCScriptCode *file);
+	int RegisterInterface(asCScriptNode *node, asCScriptCode *file);
 	void CompileStructs();
+
+	bool DoesMethodExist(asCObjectType *objType, int methodId);
 
 	void AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file);
 
@@ -142,10 +146,11 @@ protected:
 	int numErrors;
 	int numWarnings;
 
-	asCArray<asCScriptCode *> scripts;
-	asCArray<sFunctionDescription *> functions;
+	asCArray<asCScriptCode *>              scripts;
+	asCArray<sFunctionDescription *>       functions;
 	asCArray<sGlobalVariableDescription *> globVariables;
-	asCArray<sStructDeclaration *> structDeclarations;
+	asCArray<sStructDeclaration *>         structDeclarations;
+	asCArray<sStructDeclaration *>         interfaceDeclarations;
 
 	asCScriptEngine *engine;
 	asCModule *module;

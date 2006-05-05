@@ -379,10 +379,6 @@ SOURCE=..\..\..\source\as_string_util.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_structs.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\source\as_texts.h
 # End Source File
 # Begin Source File

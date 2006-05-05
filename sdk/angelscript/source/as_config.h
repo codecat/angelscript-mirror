@@ -303,7 +303,7 @@
 #endif
 
 // Is the target a 64bit system?
-#if defined(_LP64) || defined(__amd64__)
+#if defined(__LP64__) || defined(__amd64__)
     #ifdef __int64
         #undef __int64
     #endif

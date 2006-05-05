@@ -238,6 +238,10 @@ SOURCE=..\..\source\test_import2.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_interface.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_multiassign.cpp
 # End Source File
 # Begin Source File
@@ -282,6 +286,10 @@ SOURCE=..\..\source\test_optimize.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_parser.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_pointer.cpp
 # End Source File
 # Begin Source File
@@ -315,6 +323,10 @@ SOURCE=..\..\source\test_scriptstring.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_scriptstruct.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_shark.cpp
 # End Source File
 # Begin Source File
 

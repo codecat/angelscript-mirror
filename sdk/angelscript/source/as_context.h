@@ -134,6 +134,7 @@ public:
 	void PushCallState();
 	void PopCallState();
 	void CallScriptFunction(asCModule *mod, asCScriptFunction *func);
+	void CallInterfaceMethod(asCModule *mod, asCScriptFunction *func);
 
 	void SetInternalException(const char *descr);
 

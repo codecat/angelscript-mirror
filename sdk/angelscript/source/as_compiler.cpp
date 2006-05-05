@@ -3059,7 +3059,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 		if( to.IsObjectHandle() )
 		{
-			// An object type can be directly converted to a handle to the same type
+			// An object type can be directly converted to a handle of the same type
 			if( !ctx->type.dataType.IsObjectHandle() &&
 				ctx->type.dataType.IsObject() &&
 				ctx->type.dataType.GetObjectType()->beh.addref &&
@@ -3099,6 +3099,14 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 						str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
 						Error(str.AddressOf(), node);
 					}
+				}
+
+				// If the to type is an interface and the from type implements it, then we can convert it immediately
+				if( ctx->type.dataType.GetObjectType() && 
+					ctx->type.dataType.GetObjectType()->Implements(to.GetObjectType()) )
+				{
+					assert(ctx->type.dataType.IsObjectHandle());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 			}
 			else
@@ -7043,8 +7051,11 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 	{
 		if( isConstructor )
 			ctx->bc.Alloc(BC_ALLOC, builder->module->RefObjectType(objType), descr->id, argSize+PTR_SIZE);
+		// TODO: The flag FUNC_IMPORTED should be read from funcType
 		else if( descr->id & FUNC_IMPORTED )
 			ctx->bc.Call(BC_CALLBND, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+		else if( descr->funcType == asFUNC_INTERFACE )
+			ctx->bc.Call(BC_CALLINTF, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
 		else
 			ctx->bc.Call(BC_CALL, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
 	}

@@ -57,10 +57,14 @@ struct asSScriptVariable
 	int stackOffset;
 };
 
+const int asFUNC_SYSTEM    = 0;
+const int asFUNC_SCRIPT    = 1;
+const int asFUNC_INTERFACE = 2;
+
 class asCScriptFunction
 {
 public:
-	asCScriptFunction(asCModule *mod) {module = mod; objectType = 0; name = ""; isReadOnly = false;}
+	asCScriptFunction(asCModule *mod);
 	~asCScriptFunction();
 
 	void AddVariable(asCString &name, asCDataType &type, int stackOffset);
@@ -70,6 +74,7 @@ public:
 	asCString GetDeclaration(asCScriptEngine *engine);
 	int GetLineNumber(int programPosition);
 
+	int                          funcType;
 	asCModule                   *module;
 	asCString                    name;
 	asCDataType                  returnType;

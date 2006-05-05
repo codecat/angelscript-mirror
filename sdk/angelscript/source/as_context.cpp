@@ -48,6 +48,7 @@
 #include "as_generic.h"
 #include "as_debug.h" // mkdir()
 #include "as_bytecode.h"
+#include "as_scriptstruct.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -286,7 +287,10 @@ int asCContext::Prepare(int funcID)
 		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? PTR_SIZE : 0);
 	}
 
-	byteCode = currentFunction->byteCode.AddressOf();
+	if( currentFunction->funcType == asFUNC_SCRIPT )
+		byteCode = currentFunction->byteCode.AddressOf();
+	else
+		byteCode = 0;
 
 	// Reset state
 	exceptionLine = -1;
@@ -310,10 +314,13 @@ int asCContext::Prepare(int funcID)
 	memset(stackPointer, 0, 4*argumentsSize);
 
 	// Set all object variables to 0
-	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+	if( currentFunction->funcType == asFUNC_SCRIPT )
 	{
-		int pos = currentFunction->objVariablePos[n];
-		stackFramePointer[-pos] = 0;
+		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+		{
+			int pos = currentFunction->objVariablePos[n];
+			stackFramePointer[-pos] = 0;
+		}
 	}
 
 	return asSUCCESS;
@@ -795,6 +802,57 @@ int asCContext::Execute()
 
 	asPushActiveContext((asIScriptContext *)this);
 
+	if( byteCode == 0 )
+	{
+		// The currentFunction is an interface method
+		assert( currentFunction->funcType == asFUNC_INTERFACE );
+
+		// Determine the true function from the object
+		asCScriptStruct *obj = *(asCScriptStruct**)(size_t*)stackFramePointer;
+		if( obj == 0 )
+		{
+			SetInternalException(TXT_NULL_POINTER_ACCESS);
+		}
+		else
+		{
+			asCObjectType *objType = obj->gc.objType;
+
+			// Search the object type for a function that matches the interface function
+			asCScriptFunction *realFunc = 0;
+			for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
+			{
+				// TODO: This needs to be way faster. Use a hash table for the comparison instead
+				asCScriptFunction *f2 = engine->GetScriptFunction(objType->methods[n]);
+				if( f2->name           == currentFunction->name       &&
+					f2->returnType     == currentFunction->returnType &&
+					f2->isReadOnly     == currentFunction->isReadOnly &&
+					f2->inOutFlags     == currentFunction->inOutFlags &&
+					f2->parameterTypes == currentFunction->parameterTypes )
+				{
+					realFunc = f2;
+					break;
+				}
+			}
+
+			if( realFunc == 0 )
+			{
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+			}
+			else
+			{
+				currentFunction = realFunc;
+				byteCode = currentFunction->byteCode.AddressOf();
+
+				// Set the local objects to 0
+				for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+				{
+					int pos = currentFunction->objVariablePos[n];
+					stackFramePointer[-pos] = 0;
+				}
+			}
+		}
+	}
+
 	while( !doSuspend && status == tsSuspended )
 	{
 		status = tsActive;
@@ -985,6 +1043,45 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 		int pos = currentFunction->objVariablePos[n];
 		stackFramePointer[-pos] = 0;
 	}
+}
+
+void asCContext::CallInterfaceMethod(asCModule *mod, asCScriptFunction *func)
+{
+	// Resolve the interface method using the current script type
+	asCScriptStruct *obj = *(asCScriptStruct**)(size_t*)stackPointer;
+	if( obj == 0 )
+	{
+		SetInternalException(TXT_NULL_POINTER_ACCESS);
+		return;
+	}
+
+	asCObjectType *objType = obj->gc.objType;
+
+	// Search the object type for a function that matches the interface function
+	asCScriptFunction *realFunc = 0;
+	for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
+	{
+		// TODO: This needs to be way faster. Use a hash table for the comparison instead
+		asCScriptFunction *f2 = engine->GetScriptFunction(objType->methods[n]);
+		if( f2->name           == func->name       &&
+			f2->returnType     == func->returnType &&
+			f2->isReadOnly     == func->isReadOnly &&
+			f2->inOutFlags     == func->inOutFlags &&
+			f2->parameterTypes == func->parameterTypes )
+		{
+			realFunc = f2;
+			break;
+		}
+	}
+
+	if( realFunc == 0 )
+	{
+		SetInternalException(TXT_NULL_POINTER_ACCESS);
+		return;
+	}
+
+	// Then call the true script function
+	CallScriptFunction(mod, realFunc);
 }
 
 #define DWORDARG(x)  (asDWORD(*(x+1)))
@@ -2220,9 +2317,34 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
+	case BC_CALLINTF:
+		{
+			int i = INTARG(l_bc);
+			l_bc += 2;
+
+			assert( i >= 0 );
+			assert( (i & FUNC_IMPORTED) == 0 );
+
+			// Need to move the values back to the context
+			byteCode = l_bc;
+			stackPointer = l_sp;
+			stackFramePointer = l_fp;
+
+			CallInterfaceMethod(module, module->GetScriptFunction(i));
+
+			// Extract the values from the context again
+			l_bc = byteCode;
+			l_sp = stackPointer;
+			l_fp = stackFramePointer;
+
+			// If status isn't active anymore then we must stop
+			if( status != tsActive )
+				return;
+		}
+		break;
+
 	// Don't let the optimizer optimize for size, 
 	// since it requires extra conditions and jumps
-	case 139: l_bc = (asDWORD*)139; break;
 	case 140: l_bc = (asDWORD*)140; break;
 	case 141: l_bc = (asDWORD*)141; break;
 	case 142: l_bc = (asDWORD*)142; break;
@@ -2356,7 +2478,7 @@ void asCContext::ExecuteNext()
 #ifdef AS_DEBUG
 		asDWORD instr = (*old)&0xFF;
 		if( instr != BC_JMP && instr != BC_JMPP && (instr < BC_JZ || instr > BC_JNP) &&
-			instr != BC_CALL && instr != BC_CALLBND && instr != BC_RET && instr != BC_ALLOC )
+			instr != BC_CALL && instr != BC_CALLBND && instr != BC_CALLINTF && instr != BC_RET && instr != BC_ALLOC )
 		{
 			assert( (l_bc - old) == asCByteCode::SizeOfType(bcTypes[instr]) );
 		}

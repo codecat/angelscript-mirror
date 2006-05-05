@@ -79,12 +79,15 @@ public:
 	asCObjectType(asCScriptEngine *engine);
 	~asCObjectType();
 
+	bool Implements(asCObjectType *objType);
+
 	asCString   name;
 	eTokenType  tokenType;
 	int         arrayType;
 	int         size;
 	asCArray<asCProperty*> properties;
 	asCArray<int> methods;
+	asCArray<asCObjectType*> interfaces;
 
 	asDWORD flags;
 

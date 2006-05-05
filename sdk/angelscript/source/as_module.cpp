@@ -588,12 +588,13 @@ int asCModule::GetNextImportedFunctionId()
 	return FUNC_IMPORTED | (asUINT)importedFunctions.GetLength();
 }
 
-int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, asCObjectType *objType)
+int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType)
 {
 	assert(id >= 0);
 
 	// Store the function information
 	asCScriptFunction *func = new asCScriptFunction(this);
+	func->funcType   = isInterface ? asFUNC_INTERFACE : asFUNC_SCRIPT;
 	func->name       = name;
 	func->id         = id;
 	func->returnType = returnType;

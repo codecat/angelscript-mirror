@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.6.1 WIP - 2006/04/22</h2>
+<h2>Version 2.7.0 WIP - 2006/05/05</h2>
 
 <ul>
 <li>Bug fixes
@@ -134,6 +134,18 @@ A:hover
 <li>(rev 22) Applied changes to make the library work better with 64bit platforms (Thanks Yiannis Mandravellos)
 <li>(rev 23) Fixed a couple of compiler warnings (Thanks Alraz)
 <li>(rev 24) Added support for native calling conventions on MIPS processors. (Contribution by Manu Evans)
+<li>(rev 26) Methods can now be called on interfaces correctly in the scripts and from the application
+</ul>
+<li>Script language
+<ul>
+<li>(rev 26) Added new token 'interface'
+<li>(rev 26) Semi-colon after class declaration is now optional
+<li>(rev 26) It's now possible to declare interfaces in the scripts
+<li>(rev 26) A class can declare that it implements an interface, in which case the compiler makes sure that all the methods of the interface is implemented
+</ul>
+<li>Virtual machine
+<ul>
+<li>(rev 26) Added bytecode CALLINTF which resolves interface methods to the real class method
 </ul>
 <li>Project
 <ul>

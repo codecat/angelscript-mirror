@@ -1612,6 +1612,7 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			case BC_CALL:
 			case BC_CALLSYS:
 			case BC_CALLBND:
+			case BC_CALLINTF:
 				{
 					int funcID = *(int*)ARG_DW(instr->arg) | module->moduleID;
 					asCString decl = engine->GetFunctionDeclaration(funcID);

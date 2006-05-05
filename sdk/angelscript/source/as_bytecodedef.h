@@ -214,8 +214,9 @@ enum bcInstr
 	BC_SetG4		= 136,	// Initialize the global variable with a DWORD
 	BC_ChkRefS      = 137,  // Verify that the reference to the handle on the stack is not null
 	BC_ChkNullV     = 138,  // Verify that the variable is not a null handle
+	BC_CALLINTF  	= 139,	// Call interface method 
 
-	BC_MAXBYTECODE  = 139,
+	BC_MAXBYTECODE  = 140,
 
 	// Temporary tokens, can't be output to the final program
 	BC_PSP			= 246,
@@ -416,6 +417,7 @@ const int BCT_MULIf     = BCTYPE_wW_rW_DW_ARG;
 const int BCT_SetG4     = BCTYPE_W_DW_ARG;
 const int BCT_ChkRefS   = BCTYPE_NO_ARG;
 const int BCT_ChkNullV  = BCTYPE_rW_ARG;
+const int BCT_CALLINTF  = BCTYPE_DW_ARG;
 
 // Temporary// Temporary
 const int BCT_PSP       = BCTYPE_W_ARG;
@@ -566,7 +568,7 @@ const int bcTypes[256] =
 	BCT_SetG4,
 	BCT_ChkRefS,
 	BCT_ChkNullV,
-	0,
+	BCT_CALLINTF,
 	0,
 	0,
 	0,
@@ -754,7 +756,7 @@ const int bcStackInc[256] =
 	0,			// BC_SetG4
 	0,			// BC_ChkRefS
 	0,			// BC_ChkNullV
-	0,
+	0xFFFF,		// BC_CALLINTF
 	0,
 	0,
 	0,
@@ -948,7 +950,7 @@ const sByteCodeName bcName[256] =
 	{"SetG4"},
 	{"ChkRefS"},
 	{"ChkNullV"},
-	{0},
+	{"CALLINTF"},
 	{0},
 	{0},
 	{0},

@@ -19,6 +19,7 @@ it.</p>
     <li><a href="#function">functions</a>
     <li><a href="#variable">variables</a>
     <li><a href="#structs">classes</a>
+    <li><a href="#interface">interfaces</a>
     <li><a href="#import">imports</a>
     </ul>
 
@@ -68,26 +69,61 @@ const bits Flag1 = 0x01;
 <p>With classes the script writer can declare new data types that hold groups of variables and methods to manipulate them.</p>
 
 <pre class=border>
+<font color=green>// The class declaration</font>
 class MyClass
 {
+  <font color=green>// The default constructor</font>
   MyClass() 
   {
     this.a = 0;
   } 
   
+  <font color=green>// Another constructor</font>
   MyClass(int a) 
   {
     this.a = a;
   } 
   
+  <font color=green>// A class method</font>
   void DoSomething() 
   {
     this.a *= 2;
   }
   
+  <font color=green>// A class property</font>
   int a;
-};
+}
 </pre>
+
+<a name="interface">
+<h2>Interfaces</h2>
+
+<p>An interface works like a contract, the classes that implements an interface 
+are guaranteed to implement the methods declared in the interface. This allows
+for the use of polymorphism, in that a function can specify that it wants an 
+object handle to an object that implements a certain interface. The function 
+can then call the methods on this interface without having to know what the 
+exact type of the object that is working with.</p>
+
+<pre class=border>
+<font color=green>// The interface declaration</font>
+interface MyInterface
+{
+  void DoSomething();
+}
+
+<font color=green>// A class that implements the interface MyInterface</font>
+class MyClass : MyInterface
+{
+  void DoSomething()
+  {
+    <font color=green>// Do something</font>
+  }
+}
+</pre>
+
+<p>A class can implement multiple interfaces; Simply list all the interfaces
+separated by a comma.</p>
 
 <a name="import">
 <h2>Imports</h2>

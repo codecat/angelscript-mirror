@@ -39,11 +39,12 @@
 
 /*
 
-SCRIPT        = (FUNCTION | GLOBVAR | IMPORT | STRUCT)*
+SCRIPT        = (FUNCTION | GLOBVAR | IMPORT | STRUCT | INTERFACE)*
 TYPE          = 'const'? DATATYPE
 TYPEMOD       = ('&' ('in' | 'out' | 'inout')?)?
 FUNCTION      = TYPE TYPEMOD IDENTIFIER PARAMLIST BLOCK
 IMPORT        = 'import' TYPE TYPEMOD IDENTIFIER PARAMLIST 'from' STRING ';'
+INTERFACE     = 'interface' IDENTIFIER '{' (TYPE TYPEMOD IDENTIFIER PARAMLIST ';')* '}' ';'
 GLOBVAR       = TYPE IDENTIFIER ('=' (INITLIST | ASSIGNMENT))? (',' IDENTIFIER ('=' (INITLIST | ASSIGNMENT))?)* ';'
 DATATYPE      = REALTYPE | IDENTIFIER
 REALTYPE      = 'void' | 'bool' | 'float' | 'int' | 'uint' | 'bits'
@@ -150,6 +151,8 @@ protected:
 	asCScriptNode *ParseOneOf(int *tokens, int num);
 	asCScriptNode *ParseStruct();
 	asCScriptNode *ParseInitList();
+	asCScriptNode *ParseInterface();
+	asCScriptNode *ParseInterfaceMethod();
 
 	bool IsVarDecl();
 	bool IsFuncDecl(bool isMethod);

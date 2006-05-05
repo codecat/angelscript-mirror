@@ -62,57 +62,58 @@ bool TestOptimize();
 bool TestNotInitialized();
 bool TestVector3();
 
-namespace TestCustomMem       { bool Test(); }
-namespace TestGeneric         { bool Test(); }
-namespace TestDebug           { bool Test(); }
-namespace TestSuspend         { bool Test(); }
-namespace TestConstProperty   { bool Test(); }
-namespace TestConstObject     { bool Test(); }
-namespace TestOutput          { bool Test(); }
-namespace TestImport          { bool Test(); }
-namespace TestImport2         { bool Test(); }
-namespace Test2Func           { bool Test(); }
-namespace TestDiscard         { bool Test(); }
-namespace TestCircularImport  { bool Test(); }
-namespace TestMultiAssign     { bool Test(); }
-namespace TestSaveLoad        { bool Test(); }
-namespace TestConstructor2    { bool Test(); }
-namespace TestScriptCall      { bool Test(); }
-namespace TestArray           { bool Test(); }
-namespace TestArrayHandle     { bool Test(); }
-namespace TestStdVector       { bool Test(); }
-namespace TestArrayObject     { bool Test(); }
-namespace TestPointer         { bool Test(); }
-namespace TestConversion      { bool Test(); }
-namespace TestObject          { bool Test(); }
-namespace TestObject2         { bool Test(); }
-namespace TestObject3         { bool Test(); }
-namespace TestExceptionMemory { bool Test(); }
-namespace TestArgRef          { bool Test(); }
-namespace TestObjHandle       { bool Test(); }
-namespace TestObjHandle2      { bool Test(); }
-namespace TestObjZeroSize     { bool Test(); }
-namespace TestRefArgument     { bool Test(); }
-namespace TestStack2          { bool Test(); }
-namespace TestScriptString    { bool Test(); }
-namespace TestScriptStruct    { bool Test(); }
-namespace TestStructIntf      { bool Test(); }
-namespace TestAutoHandle      { bool Test(); }
-namespace TestAny             { bool Test(); }
-namespace TestArrayIntf       { bool Test(); }
-namespace TestDynamicConfig   { bool Test(); }
-namespace TestStream          { bool Test(); }
-namespace TestConfig          { bool Test(); }
-namespace TestConfigAccess    { bool Test(); }
-namespace TestFloat           { bool Test(); }
-namespace TestVector3_2       { bool Test(); }
-namespace TestDict            { bool Test(); }
-namespace TestUnsafeRef       { bool Test(); }
-namespace TestReturnString    { bool Test(); }
+namespace TestCustomMem         { bool Test(); }
+namespace TestGeneric           { bool Test(); }
+namespace TestDebug             { bool Test(); }
+namespace TestSuspend           { bool Test(); }
+namespace TestConstProperty     { bool Test(); }
+namespace TestConstObject       { bool Test(); }
+namespace TestOutput            { bool Test(); }
+namespace TestImport            { bool Test(); }
+namespace TestImport2           { bool Test(); }
+namespace Test2Func             { bool Test(); }
+namespace TestDiscard           { bool Test(); }
+namespace TestCircularImport    { bool Test(); }
+namespace TestMultiAssign       { bool Test(); }
+namespace TestSaveLoad          { bool Test(); }
+namespace TestConstructor2      { bool Test(); }
+namespace TestScriptCall        { bool Test(); }
+namespace TestArray             { bool Test(); }
+namespace TestArrayHandle       { bool Test(); }
+namespace TestStdVector         { bool Test(); }
+namespace TestArrayObject       { bool Test(); }
+namespace TestPointer           { bool Test(); }
+namespace TestConversion        { bool Test(); }
+namespace TestObject            { bool Test(); }
+namespace TestObject2           { bool Test(); }
+namespace TestObject3           { bool Test(); }
+namespace TestExceptionMemory   { bool Test(); }
+namespace TestArgRef            { bool Test(); }
+namespace TestObjHandle         { bool Test(); }
+namespace TestObjHandle2        { bool Test(); }
+namespace TestObjZeroSize       { bool Test(); }
+namespace TestRefArgument       { bool Test(); }
+namespace TestStack2            { bool Test(); }
+namespace TestScriptString      { bool Test(); }
+namespace TestScriptStruct      { bool Test(); }
+namespace TestStructIntf        { bool Test(); }
+namespace TestAutoHandle        { bool Test(); }
+namespace TestAny               { bool Test(); }
+namespace TestArrayIntf         { bool Test(); }
+namespace TestDynamicConfig     { bool Test(); }
+namespace TestStream            { bool Test(); }
+namespace TestConfig            { bool Test(); }
+namespace TestConfigAccess      { bool Test(); }
+namespace TestFloat             { bool Test(); }
+namespace TestVector3_2         { bool Test(); }
+namespace TestDict              { bool Test(); }
+namespace TestUnsafeRef         { bool Test(); }
+namespace TestReturnString      { bool Test(); }
 namespace TestScriptClassMethod { bool Test(); }
-namespace TestPostProcess     { bool Test(); }
-namespace TestShark           { bool Test(); }
-namespace TestParser          { bool Test(); }
+namespace TestPostProcess       { bool Test(); }
+namespace TestShark             { bool Test(); }
+namespace TestParser            { bool Test(); }
+namespace TestInterface         { bool Test(); }
 
 
 void DetectMemoryLeaks()
@@ -145,6 +146,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifndef AS_MAX_PORTABILITY
+	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestParser::Test()            ) goto failed; else printf("-- TestParser passed\n");
 	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");

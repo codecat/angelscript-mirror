@@ -63,6 +63,9 @@ public:
 
 	T* Find(const T &element);
 
+	bool operator==(const asCArray<T> &) const;
+	bool operator!=(const asCArray<T> &) const;
+
 protected:
 	T   *array;
 	size_t  length;
@@ -202,6 +205,24 @@ asCArray<T> &asCArray<T>::operator =(const asCArray<T> &copy)
 	Copy(copy.array, copy.length);
 
 	return *this;
+}
+
+template <class T>
+bool asCArray<T>::operator ==(const asCArray<T> &other) const
+{
+	if( length != other.length ) return false;
+
+	for( asUINT n = 0; n < length; n++ )
+		if( array[n] != other.array[n] ) 
+			return false;
+
+	return true;
+}
+
+template <class T>
+bool asCArray<T>::operator !=(const asCArray<T> &other) const
+{
+	return !(*this == other);
 }
 
 template <class T>

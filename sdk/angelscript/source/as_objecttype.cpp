@@ -70,6 +70,14 @@ asCObjectType::~asCObjectType()
 	methods.SetLength(0);
 }
 
+bool asCObjectType::Implements(asCObjectType *objType)
+{
+	for( asUINT n = 0; n < interfaces.GetLength(); n++ )
+		if( interfaces[n] == objType ) return true;
+
+	return false;
+}
+
 END_AS_NAMESPACE
 
 

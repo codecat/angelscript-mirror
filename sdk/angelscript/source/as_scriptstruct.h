@@ -74,7 +74,7 @@ public:
 	void AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked);
 	void ReleaseAllHandles();
 
-protected:
+//protected:
 	// Used for properties
 	void *AllocateObject(asCObjectType *objType, asCScriptEngine *engine);
 	void FreeObject(void *ptr, asCObjectType *objType, asCScriptEngine *engine);
