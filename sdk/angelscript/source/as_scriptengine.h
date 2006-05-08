@@ -116,10 +116,10 @@ public:
 	const char *GetFunctionName(int funcID, int *length);
 	const char *GetFunctionSection(int funcID, int *length);
 
-	int GetMethodCount(const char *module, const char *object);
-	int GetMethodIDByIndex(const char *module, const char *object, int index);
-	int GetMethodIDByName(const char *module, const char *object, const char *name);
-	int GetMethodIDByDecl(const char *module, const char *object, const char *decl);
+	int GetMethodCount(int typeId);
+	int GetMethodIDByIndex(int typeId, int index);
+	int GetMethodIDByName(int typeId, const char *name);
+	int GetMethodIDByDecl(int typeId, const char *decl);
 
 	int GetGlobalVarCount(const char *module);
 	int GetGlobalVarIDByIndex(const char *module, int index);

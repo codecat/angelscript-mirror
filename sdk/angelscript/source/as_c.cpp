@@ -92,10 +92,10 @@ int               asEngine_GetFunctionIDByDecl(asIScriptEngine *e, const char *m
 const char *      asEngine_GetFunctionDeclaration(asIScriptEngine *e, int funcID, int *length)                                                                                       { return e->GetFunctionDeclaration(funcID, length); }
 const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length)                                                                                              { return e->GetFunctionName(funcID, length); }
 const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length)                                                                                           { return e->GetFunctionSection(funcID, length); }
-int               asEngine_GetMethodCount(asIScriptEngine *e, const char *module, const char *object)																				 { return e->GetMethodCount(module, object); }
-int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, const char *module, const char *object, int index)															     { return e->GetMethodIDByIndex(module, object, index); }
-int               asEngine_GetMethodIDByName(asIScriptEngine *e, const char *module, const char *object, const char *name)															 { return e->GetMethodIDByName(module, object, name); }
-int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, const char *module, const char *object, const char *decl)															 { return e->GetMethodIDByDecl(module, object, decl); }
+int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId)																				                             { return e->GetMethodCount(typeId); }
+int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index)															                                 { return e->GetMethodIDByIndex(typeId, index); }
+int               asEngine_GetMethodIDByName(asIScriptEngine *e, int typeId, const char *name)														                               	 { return e->GetMethodIDByName(typeId, name); }
+int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, int typeId, const char *decl)															                             { return e->GetMethodIDByDecl(typeId, decl); }
 int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module)                                                                                                 { return e->GetGlobalVarCount(module); }
 int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index)                                                                                  { return e->GetGlobalVarIDByIndex(module, index); }
 int               asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name)                                                                            { return e->GetGlobalVarIDByName(module, name); }

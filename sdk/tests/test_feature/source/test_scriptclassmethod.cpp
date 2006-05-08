@@ -164,9 +164,9 @@ bool Test()
 		}
 
 		// Call the script class method
-		if( engine->GetMethodCount("test", "myclass") != 2 ) 
+		if( engine->GetMethodCount(typeId) != 2 ) 
 			fail = true;
-		int methodId = engine->GetMethodIDByDecl("test", "myclass", "void method2()");
+		int methodId = engine->GetMethodIDByDecl(typeId, "void method2()");
 		if( methodId < 0 ) 
 			fail = true;
 		else
@@ -196,7 +196,8 @@ bool Test()
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 
-	int mtdId = engine->GetMethodIDByDecl(0, "myclass", "void func()");
+	typeId = engine->GetTypeIdByDecl(0, "myclass");
+	int mtdId = engine->GetMethodIDByDecl(typeId, "void func()");
 	void *obj = engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "c"));
 
 	if( mtdId < 0 || obj == 0 ) fail = true;
@@ -210,7 +211,7 @@ bool Test()
 		ctx->Release();
 	}
 
-	mtdId = engine->GetMethodIDByDecl(0, "myclass", "void func(int, int)");
+	mtdId = engine->GetMethodIDByDecl(typeId, "void func(int, int)");
 	if( mtdId < 0 || obj == 0 ) fail = true;
 	else
 	{

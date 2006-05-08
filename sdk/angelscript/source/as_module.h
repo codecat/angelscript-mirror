@@ -83,9 +83,7 @@ public:
 	int  GetFunctionIDByName(const char *name);
 	int  GetFunctionIDByDecl(const char *decl);
 
-	int  GetMethodCount(const char *object);
-	int  GetMethodIDByName(const char *object, const char *name);
-	int  GetMethodIDByDecl(const char *object, const char *decl);
+	int  GetMethodIDByDecl(asCObjectType *ot, const char *decl);
 
 	int  GetGlobalVarCount();
 	int  GetGlobalVarIDByName(const char *name);

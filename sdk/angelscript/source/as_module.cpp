@@ -298,54 +298,10 @@ int asCModule::GetFunctionIDByName(const char *name)
 	return moduleID | id;
 }
 
-int asCModule::GetMethodCount(const char *object)
+int asCModule::GetMethodIDByDecl(asCObjectType *ot, const char *decl)
 {
 	if( isBuildWithoutErrors == false )
 		return asERROR;
-
-	asCObjectType *ot = GetObjectType(object);
-	if( ot == 0 )
-		return asINVALID_TYPE;
-
-	return (int)ot->methods.GetLength();
-}
-
-int asCModule::GetMethodIDByName(const char *object, const char *name)
-{
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
-	asCObjectType *ot = GetObjectType(object);
-	if( ot == 0 )
-		return asINVALID_TYPE;
-
-	// TODO: Improve linear search
-	// Find the function id
-	int id = -1;
-	for( size_t n = 0; n < ot->methods.GetLength(); n++ )
-	{
-		if( engine->scriptFunctions[ot->methods[n]]->name == name )
-		{
-			if( id == -1 )
-				id = ot->methods[n];
-			else
-				return asMULTIPLE_FUNCTIONS;
-		}
-	}
-
-	if( id == -1 ) return asNO_FUNCTION;
-
-	return moduleID | id;
-}
-
-int asCModule::GetMethodIDByDecl(const char *object, const char *decl)
-{
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
-	asCObjectType *ot = GetObjectType(object);
-	if( ot == 0 )
-		return asINVALID_TYPE;
 
 	asCBuilder bld(engine, this);
 

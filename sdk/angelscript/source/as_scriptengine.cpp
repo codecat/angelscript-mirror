@@ -403,42 +403,72 @@ int asCScriptEngine::GetFunctionIDByDecl(const char *module, const char *decl)
 
 //-----------------
 
-int asCScriptEngine::GetMethodCount(const char *module, const char *object)
+int asCScriptEngine::GetMethodCount(int typeId)
 {
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	if( dt == 0 ) return asINVALID_ARG;
+	
+	asCObjectType *ot = dt->GetObjectType();
+	if( ot == 0 ) return asINVALID_TYPE;
 
-	return mod->GetMethodCount(object);
+	return (int)ot->methods.GetLength();
 }
 
-int asCScriptEngine::GetMethodIDByIndex(const char *module, const char *object, int index)
+int asCScriptEngine::GetMethodIDByIndex(int typeId, int index)
 {
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	asCObjectType *ot = mod->GetObjectType(object);
-	if( ot == 0 )
-		return asINVALID_TYPE;
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	if( dt == 0 ) return asINVALID_ARG;
+	
+	asCObjectType *ot = dt->GetObjectType();
+	if( ot == 0 ) return asINVALID_TYPE;
 
 	if( index < 0 || (unsigned)index >= ot->methods.GetLength() ) return asINVALID_ARG;
 
 	return ot->methods[index];
 }
 
-int asCScriptEngine::GetMethodIDByName(const char *module, const char *object, const char *name)
+int asCScriptEngine::GetMethodIDByName(int typeId, const char *name)
 {
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	if( dt == 0 ) return asINVALID_ARG;
+	
+	asCObjectType *ot = dt->GetObjectType();
+	if( ot == 0 ) return asINVALID_TYPE;
 
-	return mod->GetMethodIDByName(object, name);
+	int id = -1;
+	for( size_t n = 0; n < ot->methods.GetLength(); n++ )
+	{
+		if( scriptFunctions[ot->methods[n]]->name == name )
+		{
+			if( id == -1 )
+				id = ot->methods[n];
+			else
+				return asMULTIPLE_FUNCTIONS;
+		}
+	}
+
+	if( id == -1 ) return asNO_FUNCTION;
+
+	return id;
+
 }
 
-int asCScriptEngine::GetMethodIDByDecl(const char *module, const char *object, const char *decl)
+int asCScriptEngine::GetMethodIDByDecl(int typeId, const char *decl)
 {
-	asCModule *mod = GetModule(module, false);
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	if( dt == 0 ) return asINVALID_ARG;
+	
+	asCObjectType *ot = dt->GetObjectType();
+	if( ot == 0 ) return asINVALID_TYPE;
+
+	// Get the module from one of the methods
+	if( ot->methods.GetLength() == 0 )
+		return asNO_FUNCTION;
+
+	asCModule *mod = scriptFunctions[ot->methods[0]]->module;
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->GetMethodIDByDecl(object, decl);
+	return mod->GetMethodIDByDecl(ot, decl);
 }
 
 //----------------------
