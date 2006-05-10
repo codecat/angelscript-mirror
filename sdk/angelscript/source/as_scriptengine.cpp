@@ -214,6 +214,11 @@ asCScriptEngine::~asCScriptEngine()
 		if( systemFunctionInterfaces[n] )
 			delete systemFunctionInterfaces[n];
 	systemFunctionInterfaces.SetLength(0);
+
+	for( n = 0; n < scriptFunctions.GetLength(); n++ )
+		if( scriptFunctions[n] )
+			delete scriptFunctions[n];
+	scriptFunctions.SetLength(0);
 }
 
 int asCScriptEngine::AddRef()
@@ -466,10 +471,63 @@ int asCScriptEngine::GetMethodIDByDecl(int typeId, const char *decl)
 		return asNO_FUNCTION;
 
 	asCModule *mod = scriptFunctions[ot->methods[0]]->module;
-	if( mod == 0 ) return asNO_MODULE;
+	if( mod == 0 ) 
+	{	
+		if( scriptFunctions[ot->methods[0]]->funcType == asFUNC_INTERFACE )
+			return GetMethodIDByDecl(ot, decl, 0);
+
+		return asNO_MODULE;
+	}
 
 	return mod->GetMethodIDByDecl(ot, decl);
 }
+
+int asCScriptEngine::GetMethodIDByDecl(asCObjectType *ot, const char *decl, asCModule *mod)
+{
+	asCBuilder bld(this, mod);
+
+	asCScriptFunction func(mod);
+	int r = bld.ParseFunctionDeclaration(decl, &func);
+	if( r < 0 )
+		return asINVALID_DECLARATION;
+
+	// TODO: Improve linear search
+	// Search script functions for matching interface
+	int id = -1;
+	for( size_t n = 0; n < ot->methods.GetLength(); ++n )
+	{
+		if( func.name == scriptFunctions[ot->methods[n]]->name && 
+			func.returnType == scriptFunctions[ot->methods[n]]->returnType &&
+			func.parameterTypes.GetLength() == scriptFunctions[ot->methods[n]]->parameterTypes.GetLength() )
+		{
+			bool match = true;
+			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
+			{
+				if( func.parameterTypes[p] != scriptFunctions[ot->methods[n]]->parameterTypes[p] )
+				{
+					match = false;
+					break;
+				}
+			}
+
+			if( match )
+			{
+				if( id == -1 )
+					id = ot->methods[n];
+				else
+					return asMULTIPLE_FUNCTIONS;
+			}
+		}
+	}
+
+	if( id == -1 ) return asNO_FUNCTION;
+
+	if( mod )
+		return mod->moduleID | id;
+	else
+		return id;
+}
+
 
 //----------------------
 
@@ -751,6 +809,114 @@ int asCScriptEngine::RegisterSpecialObjectType(const char *name, int byteSize, a
 
 	// Add these types to the default config group
 	defaultGroup.objTypes.PushLast(type);
+
+	return asSUCCESS;
+}
+
+int asCScriptEngine::RegisterInterface(const char *name)
+{
+	if( name == 0 ) return ConfigError(asINVALID_NAME);
+
+	// Verify if the name has been registered as a type already
+	asUINT n;
+	for( n = 0; n < objectTypes.GetLength(); n++ )
+	{
+		if( objectTypes[n] && objectTypes[n]->name == name )
+			return asALREADY_REGISTERED;
+	}
+
+	// Use builder to parse the datatype
+	asCDataType dt;
+	asCBuilder bld(this, 0);
+	int r = bld.ParseDataType(name, &dt);
+	if( r >= 0 ) return ConfigError(asERROR);
+
+	// Make sure the name is not a reserved keyword
+	asCTokenizer t;
+	size_t tokenLen;
+	int token = t.GetToken(name, strlen(name), &tokenLen);
+	if( token != ttIdentifier || strlen(name) != tokenLen )
+		return ConfigError(asINVALID_NAME);
+
+	r = bld.CheckNameConflict(name, 0, 0);
+	if( r < 0 ) 
+		return ConfigError(asNAME_TAKEN);
+
+	// Don't have to check against members of object  
+	// types as they are allowed to use the names
+
+	// Register the object type for the interface
+	asCObjectType *st = new asCObjectType(this);
+	st->arrayType = 0;
+	st->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
+	st->size = 0; // Cannot be instanciated
+	st->name = name;
+	st->tokenType = ttIdentifier;
+
+	// Use the default script struct behaviours
+	st->beh.construct = 0;
+	st->beh.addref = scriptTypeBehaviours.beh.addref;
+	st->beh.release = scriptTypeBehaviours.beh.release;
+	st->beh.copy = 0; 
+
+	objectTypes.PushLast(st);
+
+	currentGroup->objTypes.PushLast(st);
+
+	return asSUCCESS;
+}
+
+int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *declaration)
+{
+	// Verify that the correct config group is set. 
+	if( currentGroup->FindType(intf) == 0 )
+		return ConfigError(asWRONG_CONFIG_GROUP);
+
+	asCDataType dt;
+	asCBuilder bld(this, 0);
+	bld.SetOutputStream(outStream);
+	int r = bld.ParseDataType(intf, &dt);
+	if( r < 0 )
+		return ConfigError(r);
+	
+	asCScriptFunction *func = new asCScriptFunction(0);
+	func->objectType = dt.GetObjectType();
+
+	func->objectType->methods.PushLast((int)scriptFunctions.GetLength());
+
+	r = bld.ParseFunctionDeclaration(declaration, func);
+	if( r < 0 ) 
+	{
+		delete func;
+		return ConfigError(asINVALID_DECLARATION);
+	}
+
+	// Check name conflicts
+	r = bld.CheckNameConflictMember(dt, func->name.AddressOf(), 0, 0);
+	if( r < 0 )
+	{
+		delete func;
+		return ConfigError(asNAME_TAKEN);
+	}
+
+	func->id = (int)scriptFunctions.GetLength();
+	func->funcType = asFUNC_INTERFACE;
+	scriptFunctions.PushLast(func);
+
+	// If parameter type from other groups are used, add references
+	if( func->returnType.GetObjectType() )
+	{
+		asCConfigGroup *group = FindConfigGroup(func->returnType.GetObjectType());
+		currentGroup->RefConfigGroup(group);
+	}
+	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
+	{
+		if( func->parameterTypes[n].GetObjectType() )
+		{
+			asCConfigGroup *group = FindConfigGroup(func->parameterTypes[n].GetObjectType());
+			currentGroup->RefConfigGroup(group);
+		}
+	}
 
 	return asSUCCESS;
 }
@@ -1651,17 +1817,11 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 
 asCScriptFunction *asCScriptEngine::GetScriptFunction(int funcID)
 {
-	asCModule *module = GetModuleFromFuncId(funcID);
-	if( module )
-	{
-		int f = funcID & 0xFFFF;
-		if( f >= (int)scriptFunctions.GetLength() )
-			return 0;
+	int f = funcID & 0xFFFF;
+	if( f >= (int)scriptFunctions.GetLength() )
+		return 0;
 
-		return scriptFunctions[f];
-	}
-
-	return 0;
+	return scriptFunctions[f];
 }
 
 

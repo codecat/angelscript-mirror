@@ -170,6 +170,8 @@ extern "C"
 	AS_API int               asEngine_RegisterGlobalProperty(asIScriptEngine *e, const char *declaration, void *pointer);
 	AS_API int               asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int               asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asDWORD behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
+	AS_API int				 asEngine_RegisterInterface(asIScriptEngine *e, const char *name);
+	AS_API int				 asEngine_RegisterInterfaceMethod(asIScriptEngine *e, const char *intf, const char *declaration);
 	AS_API int               asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv);
 	AS_API int               asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName);
 	AS_API int               asEngine_EndConfigGroup(asIScriptEngine *e);
@@ -324,6 +326,9 @@ public:
 	virtual int RegisterGlobalFunction(const char *declaration, const asUPtr &funcPointer, asDWORD callConv) = 0;
 	virtual int RegisterGlobalBehaviour(asDWORD behaviour, const char *declaration, const asUPtr &funcPointer, asDWORD callConv) = 0;
 
+	virtual int RegisterInterface(const char *name) = 0;
+	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
+
 	virtual int RegisterStringFactory(const char *datatype, const asUPtr &factoryFunc, asDWORD callConv) = 0;
 
 	virtual int BeginConfigGroup(const char *groupName) = 0;
@@ -403,7 +408,7 @@ public:
 	virtual int LoadByteCode(const char *module, asIBinaryStream *in) = 0;
 
 protected:
-	virtual ~asIScriptEngine() {};
+	virtual ~asIScriptEngine() {}
 };
 
 class asIScriptContext
@@ -465,7 +470,7 @@ public:
 	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
 
 protected:
-	virtual ~asIScriptContext() {};
+	virtual ~asIScriptContext() {}
 };
 
 class asIScriptGeneric
@@ -490,7 +495,7 @@ public:
 	virtual int     SetReturnObject(void *obj) = 0;
 
 protected:
-	virtual ~asIScriptGeneric() {};
+	virtual ~asIScriptGeneric() {}
 };
 
 class asIScriptAny
@@ -555,16 +560,20 @@ protected:
 class asIOutputStream
 {
 public:
-	virtual ~asIOutputStream() {}
 	virtual void Write(const char *text) = 0;
+
+public:
+	virtual ~asIOutputStream() {}
 };
 
 class asIBinaryStream
 {
 public:
-	virtual ~asIBinaryStream() {}
 	virtual void Read(void *ptr, asUINT size) = 0;
 	virtual void Write(const void *ptr, asUINT size) = 0;
+
+public:
+	virtual ~asIBinaryStream() {}
 };
 
 // Enumerations and constants

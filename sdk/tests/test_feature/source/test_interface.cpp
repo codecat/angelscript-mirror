@@ -8,12 +8,13 @@ namespace TestInterface
 // Test implementing multiple interfaces
 // Test implicit conversion from class to interface
 // Test calling method of interface handle from script
+// Register interface from application
 static const char *script1 =
 "interface myintf                                \n"
 "{                                               \n"
 "   void test();                                 \n"
 "}                                               \n"
-"class myclass : myintf, intf2                   \n"
+"class myclass : myintf, intf2, appintf          \n"
 "{                                               \n"
 "   myclass() {this.str = \"test\";}             \n"
 "   void test() {Assert(this.str == \"test\");}  \n"
@@ -36,6 +37,11 @@ static const char *script1 =
 "   @c = a;                                      \n"
 "   a.func2(\"test\");                           \n"
 "   c.func2(\"test\");                           \n"
+"   test(a);                                     \n"
+"}                                               \n"
+"void test(appintf@i)                            \n"
+"{                                               \n"
+"   i.test();                                    \n"
 "}                                               \n";
 
 // Test class that don't implement all functions of the interface.
@@ -66,8 +72,6 @@ static const char *script2 =
 
 // TODO: Test explicit conversion from interface to class. Should give null value if not the right class.
 
-// TODO: Register interface from application
-
 // TODO: Saving and loading bytecode with interfaces must work
 
 bool Test()
@@ -77,13 +81,17 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
+	COutStream out;
+	CBufferedOutStream bout;
+	engine->SetCommonMessageStream(&out);
+
 	RegisterScriptString(engine);
 
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
 
-	COutStream out;
-	CBufferedOutStream bout;
-	engine->SetCommonMessageStream(&out);
+	// Register an interface from the application
+	r = engine->RegisterInterface("appintf"); assert( r >= 0 );
+	r = engine->RegisterInterfaceMethod("appintf", "void test()"); assert( r >= 0 );
 
 	// Test working example
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
@@ -107,9 +115,18 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
-	obj->Release();
-	ctx->Release();
+	intfTypeId = engine->GetTypeIdByDecl(0, "appintf");
+	funcId = engine->GetMethodIDByDecl(intfTypeId, "void test()");
 
+	r = ctx->Prepare(funcId);
+	if( r < 0 ) fail = true;
+	ctx->SetObject(obj);
+	ctx->Execute();
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	if( ctx ) ctx->Release();
+	if( obj ) obj->Release();
 
 	// Test class that don't implement all functions of the interface.
 	// Test instanciating an interface. Shouldn't work.

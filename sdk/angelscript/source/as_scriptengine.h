@@ -94,6 +94,9 @@ public:
 	int RegisterGlobalFunction(const char *declaration, const asUPtr &funcPointer, asDWORD callConv);
 	int RegisterGlobalBehaviour(asDWORD behaviour, const char *decl, const asUPtr &funcPointer, asDWORD callConv);
 
+	int RegisterInterface(const char *name);
+	int RegisterInterfaceMethod(const char *intf, const char *declaration);
+
 	int RegisterStringFactory(const char *datatype, const asUPtr &factoryFunc, asDWORD callConv);
 
 	int BeginConfigGroup(const char *groupName);
@@ -244,6 +247,8 @@ public:
 	asCModule *GetModule(const char *name, bool create);
 	asCModule *GetModule(int id);
 	asCModule *GetModuleFromFuncId(int funcId);
+
+	int GetMethodIDByDecl(asCObjectType *ot, const char *decl, asCModule *mod);
 
 	int GetNextScriptFunctionId();
 	void DeleteScriptFunction(int id);

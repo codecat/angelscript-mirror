@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.7.0 WIP - 2006/05/08</h2>
+<h2>Version 2.7.0 WIP - 2006/05/10</h2>
 
 <ul>
 <li>Bug fixes
@@ -132,6 +132,7 @@ A:hover
 <li>Library interface
 <ul>
 <li>(rev 27) The engine methods GetMethodCount(), GetMethodIDByIndex(), GetMethodIDByName(), and GetMethodIDByDecl() were changed to take the typeId instead of the module name and object type name. This makes it unnecessary to know the module if you only have the type id, and it is also much more efficient.
+<li>(rev 28) Added methods RegisterInterface() and RegisterInterfaceMethod() that allow the application to register a script interface which can be passed to the application
 </ul>
 <li>Library
 <ul>

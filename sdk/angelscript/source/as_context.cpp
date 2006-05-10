@@ -261,8 +261,6 @@ int asCContext::Prepare(int funcID)
 		module = initialFunction->module;
 		if( module ) 
 			module->AddContextRef(); 
-		else 
-			return asNO_MODULE;
 
 		// Determine the minimum stack size needed
 		int stackSize = currentFunction->GetSpaceNeededForArguments() + currentFunction->stackNeeded + RESERVE_STACK;
@@ -842,6 +840,11 @@ int asCContext::Execute()
 			{
 				currentFunction = realFunc;
 				byteCode = currentFunction->byteCode.AddressOf();
+
+				if( module ) module->ReleaseContextRef();
+				module = currentFunction->module;
+				if( module ) 
+					module->AddContextRef(); 
 
 				// Set the local objects to 0
 				for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
@@ -2509,7 +2512,7 @@ void asCContext::SetInternalException(const char *descr)
 	status = tsUnhandledException;
 
 	exceptionString = descr;
-	exceptionFunction = module->moduleID | currentFunction->id;
+	exceptionFunction = (module ? module->moduleID : 0) | currentFunction->id;
 	exceptionLine = currentFunction->GetLineNumber(int(byteCode - currentFunction->byteCode.AddressOf()));
 	exceptionColumn = exceptionLine >> 20;
 	exceptionLine &= 0xFFFFF;

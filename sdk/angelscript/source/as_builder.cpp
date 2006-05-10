@@ -853,7 +853,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	st->beh.construct = 0;
 	st->beh.addref = engine->scriptTypeBehaviours.beh.addref;
 	st->beh.release = engine->scriptTypeBehaviours.beh.release;
-	st->beh.copy = 0; // TODO: Need to prevent assignments of this type
+	st->beh.copy = 0; 
 
 	return 0;
 }

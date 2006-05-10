@@ -303,45 +303,7 @@ int asCModule::GetMethodIDByDecl(asCObjectType *ot, const char *decl)
 	if( isBuildWithoutErrors == false )
 		return asERROR;
 
-	asCBuilder bld(engine, this);
-
-	asCScriptFunction func(this);
-	int r = bld.ParseFunctionDeclaration(decl, &func);
-	if( r < 0 )
-		return asINVALID_DECLARATION;
-
-	// TODO: Improve linear search
-	// Search script functions for matching interface
-	int id = -1;
-	for( size_t n = 0; n < ot->methods.GetLength(); ++n )
-	{
-		if( func.name == engine->scriptFunctions[ot->methods[n]]->name && 
-			func.returnType == engine->scriptFunctions[ot->methods[n]]->returnType &&
-			func.parameterTypes.GetLength() == engine->scriptFunctions[ot->methods[n]]->parameterTypes.GetLength() )
-		{
-			bool match = true;
-			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
-			{
-				if( func.parameterTypes[p] != engine->scriptFunctions[ot->methods[n]]->parameterTypes[p] )
-				{
-					match = false;
-					break;
-				}
-			}
-
-			if( match )
-			{
-				if( id == -1 )
-					id = ot->methods[n];
-				else
-					return asMULTIPLE_FUNCTIONS;
-			}
-		}
-	}
-
-	if( id == -1 ) return asNO_FUNCTION;
-
-	return moduleID | id;
+	return engine->GetMethodIDByDecl(ot, decl, this);
 }
 
 int asCModule::GetImportedFunctionCount()

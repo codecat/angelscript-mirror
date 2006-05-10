@@ -35,6 +35,9 @@ public:
   int <a href="#sysfunc">RegisterGlobalFunction</a>(const char *declaration, const asUPtr &amp;funcPointer, asDWORD callConv);
   int <a href="#gbehave">RegisterGlobalBehaviour</a>(asDWORD behaviour, const char *declaration, const asUPtr &amp;funcPointer, asDWORD callConv);
 
+  int <a href="#intf">RegisterInterface</a>(const char *name);
+  int <a href="#intfmthd">RegisterInterfaceMethod</a>(const char *intf, const char *declaration);
+
   int <a href="#string">RegisterStringFactory</a>(const char *datatype, const asUPtr &amp;factoryFunc, asDWORD callConv);
 
   int <a href="#begincfg">BeginConfigGroup</a>(const char *groupName);
@@ -642,7 +645,6 @@ not supported by behaviours.</p>
 <p>If the parameter is sent by reference, then declare it as const, as it may
 allow the compiler to optimize the code to execute faster.</p>
 
-
 <h3>Parameters</h3>
 
 <table border=0 cellspacing=0 cellpadding=0>
@@ -668,6 +670,69 @@ allow the compiler to optimize the code to execute faster.</p>
 <h3>Returns</h3>
 
 <p>A negative value on error, 0 or greater if successful.</p>
+
+
+
+
+
+<a name=intf></a>
+<h2>RegisterInterface</h2>
+
+<pre class=border>
+int RegisterInterface(const char *name);
+</pre>
+
+<h3>Description</h3>
+
+<p>This registers an interface that script classes can implement. By doing this
+the application can register functions and methods that receives an asIScriptStruct
+and still be sure that the structure implements certain methods needed by the application.
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>name</code>&nbsp;</td>
+<td valign=top><p>The name of the interface.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, 0 or greater if successful.</p>
+
+
+
+
+
+<a name=intfmthd></a>
+<h2>RegisterInterfaceMethod</h2>
+
+<pre class=border>
+int RegisterInterfaceMethod(const char *intf, const char *declaration);
+</pre>
+
+<h3>Description</h3>
+
+<p>This registers the method that the interface must implement.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>intf</code>&nbsp;</td>
+<td valign=top><p>The name of the interface.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>declaration</code>&nbsp;</td>
+<td valign=top><p>The method declaration.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, 0 or greater if successful.</p>
+
 
 
 
