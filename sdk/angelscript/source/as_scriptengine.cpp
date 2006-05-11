@@ -2429,7 +2429,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 	if( i->callConv == ICC_CDECL_OBJLAST )
 	{
 		void (*f)(void *, void *) = (void (*)(void *, void *))(i->func);
-		f(param, obj);			
+		f(param, obj);
 	}
 	else if( i->callConv == ICC_GENERIC_METHOD )
 	{
@@ -2440,7 +2440,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 	else /*if( i->callConv == ICC_CDECL_OBJFIRST || i->callConv == ICC_THISCALL )*/
 	{
 		void (*f)(void *, void *) = (void (*)(void *, void *))(i->func);
-		f(obj, param);			
+		f(obj, param);
 	}
 #else
 #ifndef AS_NO_CLASS_METHODS
@@ -2455,23 +2455,23 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 		void (asCSimpleDummy::*f)(void *) = (void (asCSimpleDummy::*)(void *))(p.mthd);
 			(((asCSimpleDummy*)obj)->*f)(param);
 	}
-	else 
-#endif		
+	else
+#endif
 	if( i->callConv == ICC_CDECL_OBJLAST )
 	{
 		void (*f)(void *, void *) = (void (*)(void *, void *))(i->func);
-		f(param, obj);			
+		f(param, obj);
 	}
 	else if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, (size_t*)&param);
+		asCGeneric gen(this, s, obj, (asDWORD*)&param);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
 	else /*if( i->callConv == ICC_CDECL_OBJFIRST )*/
 	{
 		void (*f)(void *, void *) = (void (*)(void *, void *))(i->func);
-		f(obj, param);			
+		f(obj, param);
 	}
 #endif
 }
@@ -2481,16 +2481,16 @@ void asCScriptEngine::CallGlobalFunction(void *param1, void *param2, asSSystemFu
 	if( i->callConv == ICC_CDECL )
 	{
 		void (*f)(void *, void *) = (void (*)(void *, void *))(i->func);
-		f(param1, param2);			
+		f(param1, param2);
 	}
 	else if( i->callConv == ICC_STDCALL )
 	{
 		void (STDCALL *f)(void *, void *) = (void (STDCALL *)(void *, void *))(i->func);
-		f(param1, param2);			
+		f(param1, param2);
 	}
 	else
 	{
-		asCGeneric gen(this, s, 0, (size_t*)&param1);
+		asCGeneric gen(this, s, 0, (asDWORD*)&param1);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}

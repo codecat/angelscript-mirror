@@ -30,25 +30,20 @@
 
 
 //
-// as_callfunc_sh4.cpp
+// as_callfunc_ppc.cpp
 //
 // These functions handle the actual calling of system functions
 //
-// This version is SH4 specific and was originally written
-// by Fredrik Ehnbom in May, 2004
-// Later updated for angelscript 2.0.0 by Fredrik Ehnbom in Jan, 2005
-
-// References:
-// * http://www.renesas.com/avs/resource/japan/eng/pdf/mpumcu/e602156_sh4.pdf
-// * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wcechp40/html/_callsh4_SH_4_Calling_Standard.asp
-
+// This version is PPC specific and was originally written
+// by Manu Evans in April, 2006
+//
 
 #include <stdio.h>
 
 #include "as_config.h"
 
 #ifndef MAX_PORTABILITY
-#ifdef AS_SH4
+#ifdef AS_PPC
 
 #include "as_callfunc.h"
 #include "as_scriptengine.h"
@@ -56,107 +51,114 @@
 #include "as_tokendef.h"
 
 #include <stdlib.h>
+#include <regdef.h>
 
 BEGIN_AS_NAMESPACE
 
-#define AS_SH4_MAX_ARGS 32
+#define AS_PPC_MAX_ARGS 32
+#define AS_NUM_REG_FLOATS 13
+#define AS_NUM_REG_INTS 8
+
 // The array used to send values to the correct places.
-// first 0-4 regular values to load into the r4-r7 registers
-// then 0-8 float values to load into the fr4-fr11 registers
-// then (AS_SH4_MAX_ARGS - 12) values to load onto the stack
+// first 0-8 regular values to load into the GPR3-10 registers
+// then 0-13 float values to load into the FPR1-13 registers
+// then (AS_PPC_MAX_ARGS - 16) values to load onto the stack
 // the +1 is for when CallThis (object methods) is used
 // extra +1 when returning in memory
 extern "C" {
-static asDWORD sh4Args[AS_SH4_MAX_ARGS + 1 + 1];
+static asDWORD ppcArgs[AS_PPC_MAX_ARGS + 1 + 1];
 }
 
 // Loads all data into the correct places and calls the function.
 // intArgSize is the size in bytes for how much data to put in int registers
 // floatArgSize is the size in bytes for how much data to put in float registers
 // stackArgSize is the size in bytes for how much data to put on the callstack
-extern "C" asQWORD sh4Func(int intArgSize, int floatArgSize, int stackArgSize, asDWORD func);
+extern "C" asQWORD ppcFunc(int intArgSize, int floatArgSize, int stackArgSize, asDWORD func);
 
-asm(""
+asm(
+"	.text\n"
 "	.align 4\n"
-"	.global _sh4Func\n"
-"_sh4Func:\n"
-"	mov.l	r14,@-r15\n"
-"	mov.l	r13,@-r15\n"
-"	mov.l	r12,@-r15\n"
-"	sts.l	pr,@-r15\n"		// must be saved since we call a subroutine
-"	mov	r7, r14\n"		// func
-"	mov	r6, r13\n"		// stackArgSize
-"	mov.l	r5,@-r15\n"		// floatArgSize
-"	mov.l	sh4Args,r0\n"
-"	pref	@r0\n"
-"	mov	r4, r1\n"		// intArgsize
-"	mov	#33*4,r2\n"
-"	extu.b	r2,r2\n"		// make unsigned (33*4 = 132 => 128)
-"	mov.l	@(r0,r2), r2\n"		// r2 has adress for when returning in memory
-"_sh4f_intarguments:\n"			// copy all the int arguments to the respective registers
-"	mov	#4*2*2,r3\n"		// calculate how many bytes to skip
-"	sub	r1,r3\n"
-"	braf	r3\n"
-"	add	#-4,r1\n"		// we are indexing the array backwards, so subtract one (delayed slot)
-"	mov.l	@(r0,r1),r7\n"		// 4 arguments
-"	add	#-4,r1\n"
-"	mov.l	@(r0,r1),r6\n"		// 3 arguments
-"	add	#-4,r1\n"
-"	mov.l	@(r0,r1),r5\n"		// 2 arguments
-"	add	#-4,r1\n"
-"	mov.l	@(r0,r1),r4\n"		// 1 argument
+"	.global ppcFunc\n"
+"	.ent	ppcFunc\n"
+"ppcFunc:\n"
+"	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0\n"
+"	.mask	0x00000000,0\n"
+"	.fmask	0x00000000,0\n"
+"	.set	noreorder\n"
+"	.set	nomacro\n"
+// align the stack frame to 8 bytes
+"	addiu	$12, $6, 7\n"
+"	li		$13, -4\n"			// 0xfffffffffffffffc
+"	and		$12, $12, $13\n"	// t4 holds the size of the argument block
+// and add 8 bytes for the return pointer and s0 backup
+"	addiu	$13, $12, 8\n"		// t5 holds the total size of the stack frame (including return pointer)
+// save the s0 register (so we can use it to remember where our return pointer is lives)
+"	sw		$16, -4($sp)\n"		// store the s0 register (so we can use it to remember how big our stack frame is)
+// push the stack
+"	subu	$sp, $sp, $13\n"
+// find the return address, place in s0
+"	addu	$16, $sp, $12\n"
+// store the return pointer
+"	sw		$31, 0($16)\n"
+
+// backup our function params
+"	addiu	$2, $7, 0\n"
+"	addiu	$3, $6, 0\n"
+
+// get global ppcArgs[] array pointer
+"	lui		$15, %hi(ppcArgs)\n"
+"	addiu	$15, $15, %lo(ppcArgs)\n"
+// load register params
+"	lw		$4, 0($15)\n"
+"	lw		$5, 4($15)\n"
+"	lw		$6, 8($15)\n"
+"	lw		$7, 12($15)\n"
+"	lw		$8, 16($15)\n"
+"	lw		$9, 20($15)\n"
+"	lw		$10, 24($15)\n"
+"	lw		$11, 28($15)\n"
+
+// load float params
+"	lwc1	$f12, 32($15)\n"
+"	lwc1	$f13, 36($15)\n"
+"	lwc1	$f14, 40($15)\n"
+"	lwc1	$f15, 44($15)\n"
+"	lwc1	$f16, 48($15)\n"
+"	lwc1	$f17, 52($15)\n"
+"	lwc1	$f18, 56($15)\n"
+"	lwc1	$f19, 60($15)\n"
+
+// skip stack paramaters if there are none
+"	beq		$3, $0, andCall\n"
+// push stack paramaters
+"	addiu	$15, $15, 64\n"
+"	addiu	$13, $sp, 0\n"
+"pushArgs:\n"
+"	addiu	$3, -4\n"
+"	addu	$14, $15, $3\n"
+"	lw		$15, 0($14)\n"
+"	sw		$15, 0($13)\n"
+"	bne		$3, $0, pushArgs\n"
+"	addiu	$13, $13, 4\n"
+
+// and call the function
+"andCall:\n"
+"	jal		$2\n"
 "	nop\n"
-"_sh4f_floatarguments:\n"		// copy all the float arguments to the respective registers
-"	add	#4*4, r0\n"
-"	mov.l	@r15+,r1\n"		// floatArgSize
-"	mov	#8*2*2,r3\n"		// calculate how many bytes to skip
-"	sub	r1,r3\n"
-"	braf	r3\n"
-"	add	#-4,r1\n"		// we are indexing the array backwards, so subtract one (delayed slot)
-"	fmov.s	@(r0,r1),fr11\n"	// 8 arguments
-"	add	#-4,r1\n"
-"	fmov.s	@(r0,r1),fr10\n"	// 7 arguments
-"	add	#-4,r1\n"
-"	fmov.s	@(r0,r1),fr9\n"		// 6 arguments
-"	add	#-4,r1\n"
-"	fmov.s	@(r0,r1),fr8\n"		// 5 arguments
-"	add	#-4,r1\n"
-"	fmov.s	@(r0,r1),fr7\n"		// 4 arguments
-"	add	#-4,r1\n"
-"	fmov.s	@(r0,r1),fr6\n"		// 3 arguments
-"	add	#-4,r1\n"
-"	fmov.s	@(r0,r1),fr5\n"		// 2 arguments
-"	add	#-4,r1\n"
-"	fmov.s	@(r0,r1),fr4\n"		// 1 argument
-"	nop\n"
-"_sh4f_stackarguments:\n"		// copy all the stack argument onto the stack
-"	add	#8*4, r0\n"
-"	mov	r0, r1\n"
-"	mov	#0, r0\n"		// init position counter (also used as a 0-check on the line after)
-"	cmp/eq	r0, r13\n"
-"	bt	_sh4f_functioncall\n"	// no arguments to push onto the stack
-"	mov	r13, r3\n"		// stackArgSize
-"	sub	r3,r15\n"		// "allocate" space on the stack
-"	shlr2	r3\n"			// make into a counter
-"_sh4f_stackloop:\n"
-"	mov.l	@r1+, r12\n"
-"	mov.l	r12, @(r0, r15)\n"
-"	add	#4, r0\n"
-"	dt	r3\n"
-"	bf	_sh4f_stackloop\n"
-"_sh4f_functioncall:\n"
-"	jsr	@r14\n"			// no arguments
-"	nop\n"
-"	add	r13, r15\n"		// restore stack position
-"	lds.l	@r15+,pr\n"
-"	mov.l	@r15+, r12\n"
-"	mov.l	@r15+, r13\n"
-"	rts\n"
-"	mov.l	@r15+, r14\n"		// delayed slot
-"\n"
-"	.align 4\n"
-"sh4Args:\n"
-"	.long	_sh4Args\n"
+
+// restore the return pointer
+"	lw		$31, 0($16)\n"
+// pop the stack pointer (remembering the return pointer was 8 bytes below the top)
+"	addiu	$sp, $16, 8\n"
+// and return from the function
+"	j		$31\n"
+// restore the s0 register (in the branch delay slot)
+"	lw		$16, -4($sp)\n"
+"	.set	macro\n"
+"	.set	reorder\n"
+"	.end	ppcFunc\n"
+"	.size	ppcFunc, .-ppcFunc\n"
+"	.align	4\n"
 );
 
 // puts the arguments in the correct place in the sh4Args-array. See comments above.
@@ -165,31 +167,42 @@ inline void splitArgs(const asDWORD *args, int argNum, int &numRegIntArgs, int &
 	int i;
 
 	int argBit = 1;
-	for (i = 0; i < argNum; i++) {
-		if (hostFlags & argBit) {
-			if (numRegFloatArgs < 12 - 4) {
+	for(i = 0; i < argNum; i++)
+	{
+		if(hostFlags & argBit)
+		{
+			if(numRegFloatArgs < AS_NUM_REG_FLOATS)
+			{
 				// put in float register
-				sh4Args[4 + numRegFloatArgs] = args[i];
+				ppcArgs[AS_NUM_REG_INTS + numRegFloatArgs] = args[i];
 				numRegFloatArgs++;
-			} else {
+			}
+			else
+			{
 				// put in stack
-				sh4Args[4 + 8 + numRestArgs] = args[i];
+				ppcArgs[AS_NUM_REG_INTS + AS_NUM_REG_FLOATS + numRestArgs] = args[i];
 				numRestArgs++;
 			}
-		} else {
-			if (numRegIntArgs < 8 - 4) {
+		}
+		else
+		{
+			if(numRegIntArgs < AS_NUM_REG_INTS)
+			{
 				// put in int register
-				sh4Args[numRegIntArgs] = args[i];
+				ppcArgs[numRegIntArgs] = args[i];
 				numRegIntArgs++;
-			} else {
+			}
+			else
+			{
 				// put in stack
-				sh4Args[4 + 8 + numRestArgs] = args[i];
+				ppcArgs[AS_NUM_REG_INTS + AS_NUM_REG_FLOATS + numRestArgs] = args[i];
 				numRestArgs++;
 			}
 		}
 		argBit <<= 1;
 	}
 }
+
 asQWORD CallCDeclFunction(const asDWORD *args, int argSize, asDWORD func, int flags)
 {
 	int argNum = argSize >> 2;
@@ -198,11 +211,12 @@ asQWORD CallCDeclFunction(const asDWORD *args, int argSize, asDWORD func, int fl
 	int floatArgs = 0;
 	int restArgs = 0;
 
-	// put the arguments in the correct places in the sh4Args array
-	if (argNum > 0)
+	// put the arguments in the correct places in the ppcArgs array
+	if(argNum > 0)
 		splitArgs(args, argNum, intArgs, floatArgs, restArgs, flags);
 
-	return sh4Func(intArgs << 2, floatArgs << 2, restArgs << 2, func);
+//	printf("calling cdecl, %d %d %d %p.. %p.. %d...\n", intArgs, floatArgs, restArgs, func, ppcFunc, ppcArgs[0]);
+	return ppcFunc(intArgs << 2, floatArgs << 2, restArgs << 2, func);
 }
 
 // This function is identical to CallCDeclFunction, with the only difference that
@@ -215,14 +229,16 @@ asQWORD CallThisCallFunction(const void *obj, const asDWORD *args, int argSize, 
 	int floatArgs = 0;
 	int restArgs = 0;
 
-	sh4Args[0] = (asDWORD) obj;
-	
-	// put the arguments in the correct places in the sh4Args array
-	if (argNum >= 1)
+	ppcArgs[0] = (asDWORD) obj;
+
+	// put the arguments in the correct places in the ppcArgs array
+	if (argNum > 0)
 		splitArgs(args, argNum, intArgs, floatArgs, restArgs, flags);
 
-	return sh4Func(intArgs << 2, floatArgs << 2, restArgs << 2, func);
+//	printf("calling this call...\n");
+	return ppcFunc(intArgs << 2, floatArgs << 2, restArgs << 2, func);
 }
+
 // This function is identical to CallCDeclFunction, with the only difference that
 // the value in the last parameter is the object
 asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD *args, int argSize, asDWORD func, int flags)
@@ -233,23 +249,28 @@ asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD *args, int a
 	int floatArgs = 0;
 	int restArgs = 0;
 
-
-	// put the arguments in the correct places in the sh4Args array
-	if (argNum >= 1)
+	// put the arguments in the correct places in the ppcArgs array
+	if(argNum > 0)
 		splitArgs(args, argNum, intArgs, floatArgs, restArgs, flags);
 
-	if (intArgs < 4) {
-		sh4Args[intArgs] = (asDWORD) obj;
+	if(intArgs < AS_NUM_REG_INTS)
+	{
+		ppcArgs[intArgs] = (asDWORD) obj;
 		intArgs++;
-	} else {
-		sh4Args[4 + 8 + restArgs] = (asDWORD) obj;
+	}
+	else
+	{
+		ppcArgs[AS_NUM_REG_INTS + AS_NUM_REG_FLOATS + restArgs] = (asDWORD) obj;
 		restArgs++;
 	}
-	
 
-	return sh4Func(intArgs << 2, floatArgs << 2, restArgs << 2, func);
+//	printf("calling this call objlast...\n");
+	return ppcFunc(intArgs << 2, floatArgs << 2, restArgs << 2, func);
 }
-int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal) {
+
+
+int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal)
+{
 	memset(internal, 0, sizeof(asSSystemFunctionInterface));
 
 	internal->func = (asDWORD)ptr.f.func;
@@ -407,7 +428,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	internal->paramSize = func->GetSpaceNeededForArguments();
 
 	// Verify if the function takes any objects by value
-	int n;
+	asUINT n;
 	internal->takesObjByVal = false;
 	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
@@ -436,10 +457,27 @@ asDWORD GetReturnedFloat()
 {
 	asDWORD f;
 
-	asm("fmov.s	fr0, %0\n" : "=m"(f));
+	asm("swc1 $f0, %0\n" : "=m"(f));
 
 	return f;
 }
+
+/*
+asDWORD GetReturnedFloat();
+
+asm(
+"	.align 4\n"
+"	.global GetReturnedFloat\n"
+"GetReturnedFloat:\n"
+"	.set	noreorder\n"
+"	.set	nomacro\n"
+"	j	$ra\n"
+"	mfc1 $v0, $f0\n"
+"	.set	macro\n"
+"	.set	reorder\n"
+"	.end	Func\n"
+*/
+
 
 // sizeof(double) == 4 with sh-elf-gcc (3.4.0) -m4
 // so this isn't really used...
@@ -447,8 +485,10 @@ asQWORD GetReturnedDouble()
 {
 	asQWORD d;
 
-	asm("fmov	dr0, %0\n" : "=m"(d));
-
+	printf("Broken!!!");
+/*
+	asm("sw $v0, %0\n" : "=m"(d));
+*/
 	return d;
 }
 
@@ -479,7 +519,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		// Allocate the memory for the object
 		retPointer = engine->CallAlloc(descr->returnType.GetObjectType());
-		sh4Args[AS_SH4_MAX_ARGS+1] = (asDWORD) retPointer;
+		ppcArgs[AS_PPC_MAX_ARGS+1] = (asDWORD) retPointer;
 
 		if( sysFunc->hostReturnInMemory )
 		{
@@ -519,7 +559,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			//	engine->CallObjectMethod(obj, descr->objectType->beh.addref);
 		}
 	}
-	assert(descr->parameterTypes.GetLength() <= 32);
+	assert(descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS);
 
 	// mark all float arguments
 	int argBit = 1;
@@ -538,7 +578,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		paramSize = 0;
 		int spos = 0;
 		int dpos = 1;
-		for( int n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
 			{
@@ -664,14 +704,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		if( sysFunc->hostReturnFloat )
 		{
 			if( sysFunc->hostReturnSize == 1 )
-				*(asDWORD*)&context->returnVal = GetReturnedFloat();
+				*(asDWORD*)&context->register1 = GetReturnedFloat();
 			else
-				context->returnVal = GetReturnedDouble();
+				context->register1 = GetReturnedDouble();
 		}
 		else if( sysFunc->hostReturnSize == 1 )
-			*(asDWORD*)&context->returnVal = (asDWORD)retQW;
+			*(asDWORD*)&context->register1 = (asDWORD)retQW;
 		else
-			context->returnVal = retQW;
+			context->register1 = retQW;
 	}
 
 	if( sysFunc->hasAutoHandles )
@@ -681,7 +721,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			args++;
 
 		int spos = 0;
-		for( int n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			if( sysFunc->paramAutoHandles[n] && args[spos] )
 			{
@@ -702,7 +742,5 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 END_AS_NAMESPACE
 
-#endif // AS_SH4
+#endif // AS_PPC
 #endif // AS_MAX_PORTABILITY
-
-

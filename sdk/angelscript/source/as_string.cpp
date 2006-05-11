@@ -28,12 +28,17 @@
    andreas@angelcode.com
 */
 
-#include <memory.h>
 #include <stdarg.h>		// va_list, va_start(), etc
 #include <stdlib.h>     // strtod(), strtol()
 #include <assert.h>     // assert()
+#include <string.h> // some compilers declare memcpy() here
 
 #include "as_config.h"
+
+#if !defined(AS_NO_MEMORY_H)
+#include <memory.h>
+#endif
+
 #include "as_string.h"
 
 asCString::asCString()

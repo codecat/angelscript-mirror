@@ -35,9 +35,6 @@
 // A class for constructing the final byte code
 //
 
-#include <memory.h> // memcpy()
-#include <string.h> // some compilers declare memcpy() here
-#include <assert.h>
 #include <stdio.h> // fopen(), fprintf(), fclose()
 
 #include "as_config.h"

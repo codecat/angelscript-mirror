@@ -31,7 +31,10 @@
 #ifndef AS_ARRAY_H
 #define AS_ARRAY_H
 
+#if !defined(AS_NO_MEMORY_H)
 #include <memory.h>
+#endif
+#include <string.h> // some compilers declare memcpy() here
 #include <assert.h>
 
 BEGIN_AS_NAMESPACE

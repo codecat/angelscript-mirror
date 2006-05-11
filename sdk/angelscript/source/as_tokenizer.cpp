@@ -35,13 +35,14 @@
 // This class identifies tokens from the script code
 //
 
-
 #include "as_config.h"
 #include "as_tokenizer.h"
 #include "as_tokendef.h"
 
+#if !defined(AS_NO_MEMORY_H)
+#include <memory.h>
+#endif
 #include <assert.h> // assert()
-#include <memory.h> // memcpy()
 #include <string.h> // strcmp()
 
 asCTokenizer::asCTokenizer()

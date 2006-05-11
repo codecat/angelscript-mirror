@@ -126,6 +126,8 @@
 // AS_USE_NAMESPACE
 // Adds the AngelScript namespace on the declarations.
 
+// AS_NO_MEMORY_H
+// Some compilers don't come with the memory.h header file.
 
 
 
@@ -171,6 +173,9 @@
 
 // AS_MIPS
 // Use assembler code for the MIPS CPU family
+
+// AS_PPC
+// Use assembler code for the PowerPC CPU family
 
 // AS_64BIT_PTR
 // Define this to make the engine store all pointers in 64bit words.
@@ -268,8 +273,30 @@
 	#define __int64 long long
 #endif
 
+// SN Systems ProDG (also experimental, let me know if something isn't working)
+#if defined(__SNC__) || defined(SNSYS)
+	#define GNU_STYLE_VIRTUAL_METHOD
+	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
+	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
+	#define COMPLEX_OBJS_PASSED_BY_REF
+	#define __int64 long long
+	#define ASM_AT_N_T
+	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
+  // SN doesnt seem to like STDCALL.
+  // Maybe it can work with some fiddling, but i cant imagine linking to any STDCALL functions with a console anyway...
+	#define STDCALL
+	#ifdef __linux__
+		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+		#define CDECL_RETURN_SIMPLE_IN_MEMORY
+		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+	#endif
+	#ifdef i386
+		#define AS_X86
+	#endif
+#endif
+
 // GNU C
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__SNC__)
 	#define GNU_STYLE_VIRTUAL_METHOD
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
@@ -295,12 +322,22 @@
 	#define AS_SH4
 #endif
 
-// MIPS architexture (generally PS2 and PSP consoles)
-#if defined(_MIPS_ARCH) || defined(_PSP) || defined(_PS2) || defined(_EE_) || defined(_PSP)
+// MIPS architexture (generally PS2 and PSP consoles, potentially supports N64 aswell)
+#if defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__) || defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
 	#define AS_ALIGN				// align datastructures
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 	#define AS_MIPS
+	#define AS_NO_MEMORY_H
 #endif
+
+// PPC architexture (Mac, Gamecube and hopefully PS3 + XBox360)
+#if defined(PPC) || defined(_GC)
+	#define AS_ALIGN				// align datastructures
+	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
+	#define AS_PPC
+	#define AS_NO_MEMORY_H
+#endif
+
 
 // Is the target a 64bit system?
 #if defined(__LP64__) || defined(__amd64__)
@@ -318,7 +355,7 @@
 
 // If there are no current support for native calling 
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_X86_64) && !defined(AS_SH4) && !defined(AS_MIPS))
+#if (!defined(AS_X86) && !defined(AS_X86_64) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC))
     #ifndef AS_MAX_PORTABILITY
         #define AS_MAX_PORTABILITY
     #endif

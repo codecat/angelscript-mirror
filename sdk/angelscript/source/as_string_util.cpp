@@ -29,13 +29,19 @@
 
 */
 
-#include <stdarg.h>		// va_list, va_start(), etc
+#include <stdarg.h>     // va_list, va_start(), etc
 #include <stdlib.h>     // strtod(), strtol()
 #include <assert.h>     // assert()
 #include <stdio.h>      // _vsnprintf()
 #include <memory.h>     // memcpy()
+#include <string.h>     // some compilers declare memcpy() here
 
 #include "as_config.h"
+
+#if !defined(AS_NO_MEMORY_H)
+#include <memory.h>
+#endif
+
 #include "as_string_util.h"
 
 // Returns the number of characters written or -1 if the buffer was too small
