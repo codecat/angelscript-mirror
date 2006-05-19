@@ -50,8 +50,6 @@ public:
   int <a href="#build">Build</a>(const char *module);
   int <a href="#discard">Discard</a>(const char *module);
   int <a href="#reset">ResetModule</a>(const char *module);
-  int <a href="#getmodindex">GetModuleIndex</a>(const char *module);
-  const char *<a href="#getmodname">GetModuleNameFromIndex</a>(int index, int *length = 0);
 
   <font color=green>// Script functions</font>
   int <a href="#funccount">GetFunctionCount</a>(const char *module);
@@ -60,6 +58,7 @@ public:
   int <a href="#funciddecl">GetFunctionIDByDecl</a>(const char *module, const char *decl);
   const char *<a href="#funcdecl">GetFunctionDeclaration</a>(int funcID, int *length = 0);
   const char *<a href="#funcname">GetFunctionName</a>(int funcID, int *length = 0);
+  const char *<a href="#funcmodule">GetFunctionModule</a>(int funcID, int *length = 0);
   const char *<a href="#funcsection">GetFunctionSection</a>(int funcID, int *length = 0);
   int <a href="#mthdcount">GetMethodCount</a>(int typeId);
   int <a href="#mthdidindex">GetMethodIDByIndex</a>(int typeId, int index);
@@ -1061,63 +1060,6 @@ int ResetModule(const char *module);
 
 
 
-<a name="getmodindex"></a>
-<h2>GetModuleIndex</h2>
-
-<pre class=border>
-int GetModuleIndex(const char *module);
-</pre>
-
-<h3>Description</h3>
-
-<p>Gets the module index from the module name.
-
-<h3>Parameters</h3>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr>
-<td valign=top width=100><code>module</code>&nbsp;</td>
-<td valign=top><p>The name of the module. Can be null.</p></td>
-</tr>
-</table>
-
-<h3>Returns</h3>
-
-<p>A negative value on error, or the index of the module.</p>
-
-
-
-
-
-
-<a name="getmodname"></a>
-<h2>GetModuleNameFromIndex</h2>
-
-<pre class=border>
-const char *GetModuleNameFromIndex(int index, int *length = 0);
-</pre>
-
-<h3>Description</h3>
-
-<p>Gets the module name from the module index.</p>
-
-<h3>Parameters</h3>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr>
-<td valign=top width=100><code>index</code>&nbsp;</td>
-<td valign=top><p>The index of the module.</p></td>
-</tr>
-<tr>
-<td valign=top width=100><code>length</code>&nbsp;</td>
-<td valign=top><p>Pointer to a variable that will receive the length of the string. Can be NULL.</p></td>
-</tr>
-</table>
-
-<h3>Returns</h3>
-
-<p>Null on error, or a pointer to the name of the module.</p>
-
 
 
 
@@ -1326,6 +1268,44 @@ obtaining the name of functions with ID obtained from GetExceptionFunction().</p
 
 <p>A null-terminated string with the function name. Note, the string is
 shared with other functions in the library so you shouldn't store the pointer.</p>
+
+
+
+
+
+
+<a name=funcmodule></a>
+<h2>GetFunctionModule</h2>
+
+<pre class=border>
+const char *GetFunctionModule(int funcID,
+                              int *length = 0);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method returns the name of the module where the function was 
+implemented.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>funcID</code>&nbsp;</td>
+<td valign=top><p>ID of the function.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>length</code>&nbsp;</td>
+<td valign=top><p>Pointer to a variable that will receive the length of the returned string. Can be NULL.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A null-terminated string with the module name. Note, the string is
+shared with other functions in the library so you shouldn't store the pointer.</p>
+
+
 
 
 

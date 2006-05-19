@@ -94,7 +94,7 @@ void LineCallback(asIScriptContext *ctx, void *param)
 	int indent = ctx->GetCallstackSize();
 	for( int n = 0; n < indent; n++ )
 		print(" ");
-	print("%s:%s:%d,%d\n", engine->GetModuleNameFromIndex(asMODULEIDX(funcID)),
+	print("%s:%s:%d,%d\n", engine->GetFunctionModule(funcID),
 	                    engine->GetFunctionDeclaration(funcID),
 	                    line, col);
 }
@@ -116,7 +116,7 @@ void ExceptionCallback(asIScriptContext *ctx, void *param)
 	print("--- exception ---\n");
 	print("desc: %s\n", ctx->GetExceptionString());
 	print("func: %s\n", engine->GetFunctionDeclaration(funcID));
-	print("modl: %s\n", engine->GetModuleNameFromIndex(asMODULEIDX(funcID)));
+	print("modl: %s\n", engine->GetFunctionModule(funcID));
 	print("sect: %s\n", engine->GetFunctionSection(funcID));
 	int col, line = ctx->GetExceptionLineNumber(&col);
 	print("line: %d,%d\n", line, col);
@@ -126,7 +126,7 @@ void ExceptionCallback(asIScriptContext *ctx, void *param)
 	{
 		funcID = ctx->GetCallstackFunction(n);
 		line = ctx->GetCallstackLineNumber(n,&col);
-		print("%s:%s:%d,%d\n", engine->GetModuleNameFromIndex(asMODULEIDX(funcID)),
+		print("%s:%s:%d,%d\n", engine->GetFunctionModule(funcID),
 		                       engine->GetFunctionDeclaration(funcID),
 							   line, col);
 		PrintVariables(ctx, n);

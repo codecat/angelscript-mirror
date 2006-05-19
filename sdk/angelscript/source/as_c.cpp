@@ -85,14 +85,17 @@ int               asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const 
 int               asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy)               { return e->AddScriptSection(module, name, code, codeLength, lineOffset, makeCopy); }
 int               asEngine_Build(asIScriptEngine *e, const char *module)                                                                                                             { return e->Build(module); }
 int               asEngine_Discard(asIScriptEngine *e, const char *module)                                                                                                           { return e->Discard(module); }
+#ifdef AS_DEPRECATED
 int               asEngine_GetModuleIndex(asIScriptEngine *e, const char *module)                                                                                                    { return e->GetModuleIndex(module); }
 const char *      asEngine_GetModuleNameFromIndex(asIScriptEngine *e, int index, int *length)                                                                                        { return e->GetModuleNameFromIndex(index, length); }
+#endif
 int               asEngine_GetFunctionCount(asIScriptEngine *e, const char *module)                                                                                                  { return e->GetFunctionCount(module); }
 int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index)                                                                                   { return e->GetFunctionIDByIndex(module, index); }
 int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name)                                                                             { return e->GetFunctionIDByName(module, name); }
 int               asEngine_GetFunctionIDByDecl(asIScriptEngine *e, const char *module, const char *decl)                                                                             { return e->GetFunctionIDByDecl(module, decl); }
 const char *      asEngine_GetFunctionDeclaration(asIScriptEngine *e, int funcID, int *length)                                                                                       { return e->GetFunctionDeclaration(funcID, length); }
 const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length)                                                                                              { return e->GetFunctionName(funcID, length); }
+const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length)                                                                                            { return e->GetFunctionModule(funcID, length); }
 const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length)                                                                                           { return e->GetFunctionSection(funcID, length); }
 int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId)																				                             { return e->GetMethodCount(typeId); }
 int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index)															                                 { return e->GetMethodIDByIndex(typeId, index); }

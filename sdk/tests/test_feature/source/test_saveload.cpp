@@ -59,6 +59,14 @@ static const char *script1 =
 "};                                           \n"
 "void TestHandle(string @str)                 \n"
 "{                                            \n"
+"}                                            \n"
+"interface MyIntf                             \n"
+"{                                            \n"
+"  void test();                               \n"
+"}                                            \n"
+"class MyClass : MyIntf                       \n"
+"{                                            \n"
+"  void test() {number = 1241;}               \n"
 "}                                            \n";
 
 static const char *script2 =
@@ -72,36 +80,26 @@ static const char *script2 =
 "    number = 1234567890;                  \n"
 "}                                         \n";
 
-bool Test()
+bool fail = false;
+int number = 0;
+COutStream out;
+asIScriptEngine *ConfigureEngine()
 {
-	bool fail = false;
-
-	int number = 0;
-	int r;
-
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetCommonMessageStream(&out);
 	RegisterScriptString(engine);
 	engine->RegisterGlobalProperty("int number", &number);
-
 	engine->RegisterObjectType("OBJ", sizeof(int), asOBJ_PRIMITIVE);
 
-	COutStream out;
-	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
-	engine->SetCommonMessageStream(&out);
-	engine->Build(0);
+	return engine;
+}
 
-	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("DynamicModule");
+void TestScripts(asIScriptEngine *engine)
+{
+	int r;
 
-	// Bind all functions that the module imports
+	// Bind the imported functions
 	r = engine->BindAllImportedFunctions(0); assert( r >= 0 );
-
-	// Save the compiled byte code
-	CBytecodeStream stream;
-	engine->SaveByteCode(0, &stream);
-
-	// Load the compiled byte code into the same module
-	engine->LoadByteCode(0, &stream);
 
 	// Verify if handles are properly resolved
 	int funcID = engine->GetFunctionIDByDecl(0, "void TestHandle(string @)");
@@ -111,18 +109,66 @@ bool Test()
 		fail = true;
 	}
 
-	// Bind the imported functions again
-	r = engine->BindAllImportedFunctions(0); assert( r >= 0 );
-
 	engine->ExecuteString(0, "main()");
-
-	engine->Release();
 
 	if( number != 1234567890 )
 	{
 		printf("%s: Failed to set the number as expected\n", TESTNAME);
 		fail = true;
 	}
+
+	// Call an interface method on a class that implements the interface
+	int typeId = engine->GetTypeIdByDecl(0, "MyClass");
+	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(typeId);
+
+	int intfTypeId = engine->GetTypeIdByDecl(0, "MyIntf");
+	int funcId = engine->GetMethodIDByDecl(intfTypeId, "void test()");
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ctx->Prepare(funcId);
+	if( r < 0 ) fail = true;
+	ctx->SetObject(obj);
+	ctx->Execute();
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	if( ctx ) ctx->Release();
+	if( obj ) obj->Release();
+
+	if( number != 1241 )
+	{
+		printf("%s: Interface method failed\n", TESTNAME);
+		fail = true;
+	}
+}
+
+bool Test()
+{
+ 	asIScriptEngine *engine = ConfigureEngine();
+
+	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
+	engine->Build(0);
+
+	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
+	engine->Build("DynamicModule");
+
+	TestScripts(engine);
+
+	// Save the compiled byte code
+	CBytecodeStream stream;
+	engine->SaveByteCode(0, &stream);
+
+//	engine->Release();
+//	engine = ConfigureEngine();
+
+	// Load the compiled byte code into the same module
+	engine->LoadByteCode(0, &stream);
+
+	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
+	engine->Build("DynamicModule");
+
+	TestScripts(engine);
+
+	engine->Release();
 
 	// Success
 	return fail;

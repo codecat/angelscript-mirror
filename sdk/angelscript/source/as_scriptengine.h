@@ -108,15 +108,17 @@ public:
 	int Build(const char *module);
 	int Discard(const char *module);
 	int ResetModule(const char *module);
+#ifdef AS_DEPRECATED
 	int GetModuleIndex(const char *module);
 	const char *GetModuleNameFromIndex(int index, int *length);
-
+#endif
 	int GetFunctionCount(const char *module);
 	int GetFunctionIDByIndex(const char *module, int index);
 	int GetFunctionIDByName(const char *module, const char *name);
 	int GetFunctionIDByDecl(const char *module, const char *decl);
 	const char *GetFunctionDeclaration(int funcID, int *length);
 	const char *GetFunctionName(int funcID, int *length);
+	const char *GetFunctionModule(int funcID, int *length);
 	const char *GetFunctionSection(int funcID, int *length);
 
 	int GetMethodCount(int typeId);

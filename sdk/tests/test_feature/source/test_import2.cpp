@@ -37,7 +37,7 @@ void CheckFunc()
 	{
 		asIScriptEngine *engine = ctx->GetEngine();
 		int funcID = ctx->GetCurrentFunction();
-		if( strcmp(engine->GetModuleNameFromIndex(funcID>>16), "DynamicModule") != 0 )
+		if( strcmp(engine->GetFunctionModule(funcID), "DynamicModule") != 0 )
 			failed = true;
 
 		if( strcmp(engine->GetFunctionDeclaration(funcID), "void Test()") != 0 )
@@ -73,7 +73,7 @@ bool Test()
 	if( r == asEXECUTION_EXCEPTION )
 	{
 		int funcID = ctx->GetExceptionFunction();
-		if( strcmp(engine->GetModuleNameFromIndex(funcID>>16), "DynamicModule") != 0 )
+		if( strcmp(engine->GetFunctionModule(funcID), "DynamicModule") != 0 )
 			failed = true;
 
 		if( strcmp(engine->GetFunctionDeclaration(funcID), "void Test()") != 0 )

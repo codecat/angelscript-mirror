@@ -276,7 +276,7 @@ int asCContext::Prepare(int funcID)
 
 			stackBlockSize = stackSize;
 
-			size_t *stack = new size_t[stackBlockSize];
+			asDWORD *stack = new asDWORD[stackBlockSize];
 			stackBlocks.PushLast(stack);
 		}
 
@@ -387,7 +387,7 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 
 		stackBlockSize = stackSize;
 
-		size_t *stack = new size_t[stackBlockSize];
+		asDWORD *stack = new asDWORD[stackBlockSize];
 		stackBlocks.PushLast(stack);
 	}
 
@@ -944,15 +944,14 @@ void asCContext::PushCallState()
 
 void asCContext::PopCallState()
 {
-	// TODO: Pointer size
 	size_t *s = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
 
-	stackFramePointer = (size_t *)s[0];
-	currentFunction   = (asCScriptFunction *)s[1];
-	byteCode          = (asDWORD *)s[2];
-	stackPointer      = (size_t *)s[3];
+	stackFramePointer = (asDWORD*)s[0];
+	currentFunction   = (asCScriptFunction*)s[1];
+	byteCode          = (asDWORD*)s[2];
+	stackPointer      = (asDWORD*)s[3];
 	stackIndex        = (int)s[4];
-	module            = (asCModule *)s[5];
+	module            = (asCModule*)s[5];
 
 	callStack.SetLength(callStack.GetLength() - CALLSTACK_FRAME_SIZE);
 }
@@ -997,7 +996,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	byteCode = currentFunction->byteCode.AddressOf();
 
 	// Verify if there is enough room in the stack block. Allocate new block if not
-	size_t *oldStackPointer = stackPointer;
+	asDWORD *oldStackPointer = stackPointer;
 	while( stackPointer - (func->stackNeeded + RESERVE_STACK) < stackBlocks[stackIndex] )
 	{
 		// The size of each stack block is determined by the following formula:
@@ -1023,7 +1022,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 		stackIndex++;
 		if( (int)stackBlocks.GetLength() == stackIndex )
 		{
-			size_t *stack = new size_t[stackBlockSize << stackIndex];
+			asDWORD *stack = new asDWORD[stackBlockSize << stackIndex];
 			stackBlocks.PushLast(stack);
 		}
 
@@ -1033,7 +1032,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	if( stackPointer != oldStackPointer )
 	{
 		// Copy the function arguments to the new stack space
-		memcpy(stackPointer, oldStackPointer, sizeof(size_t)*func->GetSpaceNeededForArguments());
+		memcpy(stackPointer, oldStackPointer, sizeof(asDWORD)*func->GetSpaceNeededForArguments());
 	}
 
 	// Update framepointer and programCounter
@@ -1815,9 +1814,9 @@ void asCContext::ExecuteNext()
 		break;
 	case BC_GETOBJ:
 		{
-			size_t *a = l_sp + WORDARG0(l_bc);
+			size_t *a = (size_t*)(l_sp + WORDARG0(l_bc));
 			asDWORD offset = *(asDWORD*)a;
-			size_t *v = l_fp - offset;
+			size_t *v = (size_t*)(l_fp - offset);
 			*a = *v;
 			*v = 0;
 		}
@@ -1869,8 +1868,8 @@ void asCContext::ExecuteNext()
 		break;
 	case BC_GETREF:
 		{
-			size_t *a = l_sp + WORDARG0(l_bc);
-			*(size_t**)a = l_fp - *a;
+			size_t *a = (size_t*)(l_sp + WORDARG0(l_bc));
+			*(size_t**)a = (size_t*)(l_fp - (int)*a);
 		}
 		l_bc++;
 		break;
@@ -2785,7 +2784,7 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 	asCScriptFunction *sysFunction = engine->systemFunctions[id];
 	void (*func)(asIScriptGeneric*) = (void (*)(asIScriptGeneric*))sysFunc->func;
 	int popSize = sysFunc->paramSize;
-	size_t *args = stackPointer;
+	asDWORD *args = stackPointer;
 
 	// Verify the object pointer if it is a class method
 	void *currentObject = 0;
@@ -2944,7 +2943,7 @@ void *asCContext::GetVarPointer(int varIndex, int stackLevel)
 	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
 
 	asCScriptFunction *func;
-	size_t *sf;
+	asDWORD *sf;
 	if( stackLevel == -1 ) 
 	{
 		func = currentFunction;
@@ -2954,7 +2953,7 @@ void *asCContext::GetVarPointer(int varIndex, int stackLevel)
 	{
 		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
 		func = (asCScriptFunction*)s[1];
-		sf = (size_t*)s[0];
+		sf = (asDWORD*)s[0];
 	}
 
 	if( func == 0 )

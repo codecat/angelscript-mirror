@@ -233,24 +233,24 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	return 0;
 }
 
-typedef asQWORD (*t_CallCDeclQW)(const size_t *, int, size_t);
-typedef asQWORD (*t_CallCDeclQWObj)(void *obj, const size_t *, int, size_t);
-typedef asDWORD (*t_CallCDeclRetByRef)(const size_t *, int, size_t, void *);
-typedef asDWORD (*t_CallCDeclObjRetByRef)(void *obj, const size_t *, int, size_t, void *);
-typedef asQWORD (*t_CallSTDCallQW)(const size_t *, int, size_t);
-typedef asQWORD (*t_CallThisCallQW)(const void *, const size_t *, int, size_t);
-typedef asDWORD (*t_CallThisCallRetByRef)(const void *, const size_t *, int, size_t, void *);
+typedef asQWORD (*t_CallCDeclQW)(const asDWORD *, int, size_t);
+typedef asQWORD (*t_CallCDeclQWObj)(void *obj, const asDWORD *, int, size_t);
+typedef asDWORD (*t_CallCDeclRetByRef)(const asDWORD *, int, size_t, void *);
+typedef asDWORD (*t_CallCDeclObjRetByRef)(void *obj, const asDWORD *, int, size_t, void *);
+typedef asQWORD (*t_CallSTDCallQW)(const asDWORD *, int, size_t);
+typedef asQWORD (*t_CallThisCallQW)(const void *, const asDWORD *, int, size_t);
+typedef asDWORD (*t_CallThisCallRetByRef)(const void *, const asDWORD *, int, size_t, void *);
 
 // Prototypes
-void CallCDeclFunction(const size_t *args, int paramSize, size_t func);
-void CallCDeclFunctionObjLast(const void *obj, const size_t *args, int paramSize, size_t func);
-void CallCDeclFunctionObjFirst(const void *obj, const size_t *args, int paramSize, size_t func);
-void CallCDeclFunctionRetByRef_impl(const size_t *args, int paramSize, size_t func, void *retPtr);
-void CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr);
-void CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr);
-void CallSTDCallFunction(const size_t *args, int paramSize, size_t func);
-void CallThisCallFunction(const void *obj, const size_t *args, int paramSize, size_t func);
-void CallThisCallFunctionRetByRef_impl(const void *, const size_t *, int, size_t, void *retPtr);
+void CallCDeclFunction(const asDWORD *args, int paramSize, size_t func);
+void CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int paramSize, size_t func);
+void CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, int paramSize, size_t func);
+void CallCDeclFunctionRetByRef_impl(const asDWORD *args, int paramSize, size_t func, void *retPtr);
+void CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr);
+void CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr);
+void CallSTDCallFunction(const asDWORD *args, int paramSize, size_t func);
+void CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, size_t func);
+void CallThisCallFunctionRetByRef_impl(const void *, const asDWORD *, int, size_t, void *retPtr);
 
 // Initialize function pointers
 const t_CallCDeclQW CallCDeclFunctionQWord = (t_CallCDeclQW)CallCDeclFunction;
@@ -282,7 +282,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 	void    *func              = (void*)sysFunc->func;
 	int      paramSize         = sysFunc->paramSize;
-	size_t  *args              = context->stackPointer;
+	asDWORD *args              = context->stackPointer;
 	void    *retPointer = 0;
 	void    *obj = 0;
 	asDWORD *vftable;
@@ -336,7 +336,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 
-	size_t paramBuffer[64];
+	asDWORD paramBuffer[64];
 	if( sysFunc->takesObjByVal )
 	{
 		paramSize = 0;
@@ -543,7 +543,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 }
 
 
-void CallCDeclFunction(const size_t *args, int paramSize, size_t func)
+void CallCDeclFunction(const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -601,7 +601,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionObjLast(const void *obj, const size_t *args, int paramSize, size_t func)
+void CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -665,7 +665,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionObjFirst(const void *obj, const size_t *args, int paramSize, size_t func)
+void CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -729,7 +729,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr)
+void CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -806,7 +806,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionRetByRef_impl(const size_t *args, int paramSize, size_t func, void *retPtr)
+void CallCDeclFunctionRetByRef_impl(const asDWORD *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -875,7 +875,7 @@ endcopy:
 #endif
 }
 
-void CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr)
+void CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -950,7 +950,7 @@ endcopy:
 #endif
 }
 
-void CallSTDCallFunction(const size_t *args, int paramSize, size_t func)
+void CallSTDCallFunction(const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -1007,7 +1007,7 @@ endcopy:
 }
 
 
-void CallThisCallFunction(const void *obj, const size_t *args, int paramSize, size_t func)
+void CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -1082,7 +1082,7 @@ endcopy:
 #endif
 }
 
-void CallThisCallFunctionRetByRef_impl(const void *obj, const size_t *args, int paramSize, size_t func, void *retPtr)
+void CallThisCallFunctionRetByRef_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 

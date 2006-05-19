@@ -66,6 +66,7 @@ AS_API const char * asGetLibraryVersion()
 
 AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 {
+	// Verify the version that the application expects
 	if( (version/10000) != ANGELSCRIPT_VERSION_MAJOR )
 		return 0;
 
@@ -74,6 +75,13 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 
 	if( (version%100) > ANGELSCRIPT_VERSION_BUILD )
 		return 0;
+
+	// Verify the size of the types
+	assert( sizeof(asBYTE)  == 1 );
+	assert( sizeof(asWORD)  == 2 );
+	assert( sizeof(asDWORD) == 4 );
+	assert( sizeof(asQWORD) == 8 );
+	assert( sizeof(asPWORD) == sizeof(void*) );
 
 	return new asCScriptEngine();
 }
@@ -550,6 +558,16 @@ const char *asCScriptEngine::GetFunctionDeclaration(int funcID, int *length)
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
+}
+
+const char *asCScriptEngine::GetFunctionModule(int funcId, int *length)
+{
+	asCModule *mod = GetModuleFromFuncId(funcId);
+	if( !mod ) return 0;
+
+	if( length ) *length = (int)mod->name.GetLength();
+
+	return mod->name.AddressOf();
 }
 
 const char *asCScriptEngine::GetFunctionSection(int funcID, int *length)
@@ -1965,7 +1983,8 @@ asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
 
 asCModule *asCScriptEngine::GetModule(int id)
 {
-	id = asMODULEIDX(id);
+	// TODO: This may not work any longer
+	id = (id >> 16) & 0x3FF;
 	if( id >= (int)scriptModules.GetLength() ) return 0;
 	return scriptModules[id];
 }
@@ -2099,6 +2118,7 @@ int asCScriptEngine::UnbindImportedFunction(const char *module, int index)
 	return dstModule->BindImportedFunction(index, -1);
 }
 
+#ifdef AS_DEPRECATED
 const char *asCScriptEngine::GetModuleNameFromIndex(int index, int *length)
 {
 	asCModule *module = GetModule(index << 16);
@@ -2119,6 +2139,7 @@ int asCScriptEngine::GetModuleIndex(const char *module)
 
 	return mod->moduleID >> 16;
 }
+#endif
 
 int asCScriptEngine::BindAllImportedFunctions(const char *module)
 {

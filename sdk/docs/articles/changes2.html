@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.7.0 WIP - 2006/05/11</h2>
+<h2>Version 2.7.0 WIP - 2006/05/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -134,6 +134,8 @@ A:hover
 <ul>
 <li>(rev 27) The engine methods GetMethodCount(), GetMethodIDByIndex(), GetMethodIDByName(), and GetMethodIDByDecl() were changed to take the typeId instead of the module name and object type name. This makes it unnecessary to know the module if you only have the type id, and it is also much more efficient.
 <li>(rev 28) Added methods RegisterInterface() and RegisterInterfaceMethod() that allow the application to register a script interface which can be passed to the application
+<li>(rev 30) Added method GetFunctionModule()
+<li>(rev 30) Deprecated the methods GetModuleIndex() and GetModuleNameFromIndex()
 </ul>
 <li>Library
 <ul>
@@ -142,6 +144,7 @@ A:hover
 <li>(rev 24) Added support for native calling conventions on MIPS processors. (Contribution by Manu Evans)
 <li>(rev 26) Methods can now be called on interfaces correctly in the scripts and from the application
 <li>(rev 29) Added first support for native calling conventions on PPC processors. It's not yet complete though. (Contribution by Manu Evans)
+<li>(rev 30) Saving/loading script classes with methods and interfaces have been implemented
 </ul>
 <li>Script language
 <ul>

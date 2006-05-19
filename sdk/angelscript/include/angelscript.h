@@ -70,18 +70,28 @@ class asIScriptArray;
 class asIOutputStream;
 class asIBinaryStream;
 
-typedef unsigned int   asDWORD;
-typedef unsigned short asWORD;
+// 
+// asBYTE  =  8 bits
+// asWORD  = 16 bits
+// asDWORD = 32 bits
+// asQWORD = 64 bits
+// asPWORD = size of pointer
+//
 typedef unsigned char  asBYTE;
+typedef unsigned short asWORD;
 typedef unsigned int   asUINT;
-#ifdef _LP64
-    typedef long asQWORD;
+#ifdef __LP64__
+    typedef unsigned int  asDWORD;
+    typedef unsigned long asQWORD;
+    typedef asQWORD asPWORD;
 #else
-#if defined(__GNUC__) || defined(__MWERKS__)
-	typedef long long asQWORD;
-#else
-	typedef __int64 asQWORD;
-#endif
+    typedef unsigned long asDWORD;
+    typedef asDWORD asPWORD;
+  #if defined(__GNUC__) || defined(__MWERKS__)
+    typedef unsigned long long asQWORD;
+  #else
+    typedef unsigned __int64 asQWORD;
+  #endif
 #endif
 
 typedef void (*asFUNCTION_t)();
@@ -90,8 +100,6 @@ typedef void (*asFREEFUNC_t)(void *);
 
 #define asFUNCTION(f) asFunctionPtr((void (*)())(f))
 #define asFUNCTIONPR(f,p,r) asFunctionPtr((void (*)())((r (*)p)(f)))
-
-#define asMODULEIDX(id) ((id >> 16) & 0x3FF)
 
 #ifndef AS_NO_CLASS_METHODS
 
@@ -180,14 +188,17 @@ extern "C"
 	AS_API int               asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0, bool makeCopy = true);
 	AS_API int               asEngine_Build(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_Discard(asIScriptEngine *e, const char *module);
+#ifdef AS_DEPRECATED
 	AS_API int               asEngine_GetModuleIndex(asIScriptEngine *e, const char *module);
 	AS_API const char *      asEngine_GetModuleNameFromIndex(asIScriptEngine *e, int index, int *length = 0);
+#endif
 	AS_API int               asEngine_GetFunctionCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name);
 	AS_API int               asEngine_GetFunctionIDByDecl(asIScriptEngine *e, const char *module, const char *decl);
 	AS_API const char *      asEngine_GetFunctionDeclaration(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length = 0);
+	AS_API const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId);
 	AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index);
@@ -341,8 +352,10 @@ public:
 	virtual int Build(const char *module) = 0;
     virtual int Discard(const char *module) = 0;
 	virtual int ResetModule(const char *module) = 0;
+#ifdef AS_DEPRECATED
 	virtual int GetModuleIndex(const char *module) = 0;
 	virtual const char *GetModuleNameFromIndex(int index, int *length = 0) = 0;
+#endif
 
 	// Script functions
 	virtual int GetFunctionCount(const char *module) = 0;
@@ -351,6 +364,7 @@ public:
 	virtual int GetFunctionIDByDecl(const char *module, const char *decl) = 0;
 	virtual const char *GetFunctionDeclaration(int funcID, int *length = 0) = 0;
 	virtual const char *GetFunctionName(int funcID, int *length = 0) = 0;
+	virtual const char *GetFunctionModule(int funcID, int *length = 0) = 0;
 	virtual const char *GetFunctionSection(int funcID, int *length = 0) = 0;
 
 	virtual int GetMethodCount(int typeId) = 0;

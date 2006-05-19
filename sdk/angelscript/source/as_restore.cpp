@@ -216,6 +216,19 @@ int asCRestore::Restore()
 	// usedTypeIds[]
 	ReadUsedTypeIds();
 
+	// Translate the function ids in the struct types
+	for( i = 0; i < module->structTypes.GetLength(); i++ )
+	{
+		asCObjectType *ot = module->structTypes[i];
+		asUINT n;
+		ot->beh.construct = module->scriptFunctions[ot->beh.construct]->id;
+		for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+			ot->beh.constructors[n] = module->scriptFunctions[ot->beh.constructors[n]]->id;
+		for( n = 0; n < ot->methods.GetLength(); n++ )
+			ot->methods[n] = module->scriptFunctions[ot->methods[n]]->id;
+
+	}
+
 	// Fake building
 	module->isBuildWithoutErrors = true;
 
@@ -250,6 +263,8 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	int id = FindFunctionIndex(func);
 	WRITE_NUM(id);
 	
+	WRITE_NUM(func->funcType);
+
 	count = (asUINT)func->byteCode.GetLength();
 	WRITE_NUM(count);
 	WriteByteCode(func->byteCode.AddressOf(), count);
@@ -372,14 +387,35 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot)
 	// properties[]
 	size = (asUINT)ot->properties.GetLength();
 	WRITE_NUM(size);
-	for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
+	asUINT n;
+	for( n = 0; n < ot->properties.GetLength(); n++ )
 	{
 		WriteProperty(ot->properties[n]);
 	}
 
-	// TODO:
-	// methods[]
 	// behaviours
+	int funcId;
+	funcId = FindFunctionIndex(engine->scriptFunctions[ot->beh.construct]);
+	WRITE_NUM(funcId);
+	size = ot->beh.constructors.GetLength();
+	WRITE_NUM(size);
+	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+	{
+		funcId = FindFunctionIndex(engine->scriptFunctions[ot->beh.constructors[n]]);
+		WRITE_NUM(funcId);
+	}
+
+	// methods[]
+	size = ot->methods.GetLength();
+	WRITE_NUM(size);
+	for( n = 0; n < ot->methods.GetLength(); n++ )
+	{
+		funcId = FindFunctionIndex(engine->scriptFunctions[ot->methods[n]]);
+		WRITE_NUM(funcId);
+	}
+
+	// TODO:
+	// interfaces
 }
 
 void asCRestore::ReadString(asCString* str) 
@@ -412,6 +448,8 @@ void asCRestore::ReadFunction(asCScriptFunction* func)
 	READ_NUM(id);
 	func->id = engine->GetNextScriptFunctionId();
 	
+	READ_NUM(func->funcType);
+
 	READ_NUM(count);
 	func->byteCode.Allocate(count, 0);
 	ReadByteCode(func->byteCode.AddressOf(), count);
@@ -564,8 +602,6 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot)
 	}
 
 	// Use the default script struct behaviours
-	ot->beh.construct = engine->scriptTypeBehaviours.beh.construct;
-	ot->beh.constructors.PushLast(ot->beh.construct);
 	ot->beh.addref = engine->scriptTypeBehaviours.beh.addref;
 	ot->beh.release = engine->scriptTypeBehaviours.beh.release;
 	ot->beh.copy = engine->scriptTypeBehaviours.beh.copy;
@@ -577,12 +613,30 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot)
 	ot->arrayType = 0;
 	ot->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
 
+	// behaviours
+	int funcId;
+	READ_NUM(funcId);
+	ot->beh.construct = funcId;
+	READ_NUM(size);
+	for( n = 0; n < size; n++ )
+	{
+		READ_NUM(funcId);
+		ot->beh.constructors.PushLast(funcId);
+	}
+
+	// methods[]
+	READ_NUM(size);
+	for( n = 0; n < size; n++ )
+	{
+		READ_NUM(funcId);
+		ot->methods.PushLast(funcId);
+	}
+
 	// TODO: The flag asOBJ_POTENTIAL_CIRCLE must be saved
 
 	// TODO: What about the arrays? the flag must be saved as well
 
-	// TODO:
-	// methods[]
+	// TODO: Interfaces
 }
 
 void asCRestore::WriteByteCode(asDWORD *bc, int length)
@@ -638,7 +692,8 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
-		else if( c == BC_CALL )
+		else if( c == BC_CALL ||
+			     c == BC_CALLINTF )
 		{
 			// Translate the function id
 			asDWORD tmp[MAX_DATA_SIZE];
@@ -729,7 +784,8 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 
 			*tid = FindTypeId(*tid);
 		}
-		else if( c == BC_CALL )
+		else if( c == BC_CALL ||
+			     c == BC_CALLINTF )
 		{
 			// Translate the index to the func id
 			int *fid = (int*)&bc[n+1];

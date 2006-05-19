@@ -72,8 +72,6 @@ static const char *script2 =
 
 // TODO: Test explicit conversion from interface to class. Should give null value if not the right class.
 
-// TODO: Saving and loading bytecode with interfaces must work
-
 bool Test()
 {
 	bool fail = false;
