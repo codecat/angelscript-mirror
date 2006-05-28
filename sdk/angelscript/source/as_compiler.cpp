@@ -4262,6 +4262,8 @@ void asCCompiler::ProcessStringConstant(asCString &cstr)
 				str.PushLast('\n');
 			else if( cstr[n] == 'r' )
 				str.PushLast('\r');
+			else if( cstr[n] == 't' )
+				str.PushLast('\t');
 			else if( cstr[n] == '0' )
 				str.PushLast('\0');
 			else if( cstr[n] == '\\' )
