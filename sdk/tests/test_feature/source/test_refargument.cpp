@@ -108,7 +108,7 @@ bool Test()
 	int func = engine->GetFunctionIDByName(0, "TestObjHandle"); assert(r >= 0);
 
 	CRefClass cref;	
-	r = ctx->Prepare(r); assert(r >= 0);
+	r = ctx->Prepare(func); assert(r >= 0);
 	ctx->SetArgObject(0, &cref);
 	r = ctx->Execute();  assert(r >= 0);
 

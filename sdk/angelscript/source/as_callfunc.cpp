@@ -183,13 +183,11 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 
 int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 {
-	id = -id - 1;
-
 	asCScriptEngine *engine = context->engine;
-	asSSystemFunctionInterface *sysFunc = engine->systemFunctionInterfaces[id];
+	asSSystemFunctionInterface *sysFunc = engine->scriptFunctions[id]->sysFuncIntf;
 	int callConv = sysFunc->callConv;
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-		return context->CallGeneric(-id-1, objectPointer);
+		return context->CallGeneric(id, objectPointer);
 
 	context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
 

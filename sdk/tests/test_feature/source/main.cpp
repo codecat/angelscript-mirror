@@ -146,19 +146,20 @@ int main(int argc, char **argv)
 #endif
 
 #ifndef AS_MAX_PORTABILITY
+	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
+	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
+	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
+	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
+	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestParser::Test()            ) goto failed; else printf("-- TestParser passed\n");
 	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
-	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
-	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
-	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
-	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestArrayHandle::Test()       ) goto failed; else printf("-- TestArrayHandle passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
 	if( TestStdVector::Test()         ) goto failed; else printf("-- TestStdVector passed\n");
@@ -181,7 +182,6 @@ int main(int argc, char **argv)
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
 	if( TestVector3_2::Test()         ) goto failed; else printf("-- TestVector3_2 passed\n");
-	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
 	if( TestImport2::Test()           ) goto failed; else printf("-- TestImport2 passed\n");
 	if( TestEnumGlobVar()             ) goto failed; else printf("-- TestEnumGlobVar passed\n");

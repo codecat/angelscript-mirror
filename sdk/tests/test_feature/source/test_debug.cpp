@@ -165,6 +165,7 @@ bool Test()
 		printBuffer != correctWithoutLineCues )
 	{
 		fail = true;
+		printf(printBuffer.c_str());
 		printf("%s: failed\n", TESTNAME);
 	}
 

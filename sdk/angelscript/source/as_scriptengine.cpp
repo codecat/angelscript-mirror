@@ -136,6 +136,9 @@ asCScriptEngine::asCScriptEngine()
 
 	outStream = 0;
 
+	// Reserve function id 0 for no function
+	scriptFunctions.PushLast(0);
+
 	// Make sure typeId for void is 0
 	GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttVoid, false));
 
@@ -212,16 +215,6 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 	objectTypes.SetLength(0);
-
-	for( n = 0; n < systemFunctions.GetLength(); n++ )
-		if( systemFunctions[n] )
-			delete systemFunctions[n];
-	systemFunctions.SetLength(0);
-
-	for( n = 0; n < systemFunctionInterfaces.GetLength(); n++ )
-		if( systemFunctionInterfaces[n] )
-			delete systemFunctionInterfaces[n];
-	systemFunctionInterfaces.SetLength(0);
 
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
 		if( scriptFunctions[n] )
@@ -395,7 +388,7 @@ int asCScriptEngine::GetFunctionIDByIndex(const char *module, int index)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->moduleID | mod->scriptFunctions[index]->id;
+	return mod->scriptFunctions[index]->id;
 }
 
 int asCScriptEngine::GetFunctionIDByName(const char *module, const char *name)
@@ -530,10 +523,7 @@ int asCScriptEngine::GetMethodIDByDecl(asCObjectType *ot, const char *decl, asCM
 
 	if( id == -1 ) return asNO_FUNCTION;
 
-	if( mod )
-		return mod->moduleID | id;
-	else
-		return id;
+	return id;
 }
 
 
@@ -727,19 +717,23 @@ int asCScriptEngine::GetGlobalVarPointer(int gvarID, void **pointer)
 asCString asCScriptEngine::GetFunctionDeclaration(int funcID)
 {
 	asCString str;
-	if( funcID < 0 && (-funcID - 1) < (int)systemFunctions.GetLength() )
-	{
-		str = systemFunctions[-funcID - 1]->GetDeclaration(this);
-	}
-	else
-	{
-		asCScriptFunction *func = GetScriptFunction(funcID);
-		if( func )
-			str = func->GetDeclaration(this);
-	}
+	asCScriptFunction *func = GetScriptFunction(funcID);
+	if( func )
+		str = func->GetDeclaration(this);
 
 	return str;
 }
+
+asCScriptFunction *asCScriptEngine::GetScriptFunction(int funcID)
+{
+	int f = funcID & 0xFFFF;
+	if( f >= (int)scriptFunctions.GetLength() )
+		return 0;
+
+	return scriptFunctions[f];
+}
+
+
 
 asIScriptContext *asCScriptEngine::CreateContext()
 {
@@ -917,9 +911,9 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 		return ConfigError(asNAME_TAKEN);
 	}
 
-	func->id = (int)scriptFunctions.GetLength();
+	func->id = GetNextScriptFunctionId();
 	func->funcType = asFUNC_INTERFACE;
-	scriptFunctions.PushLast(func);
+	scriptFunctions[func->id] = func;
 
 	// If parameter type from other groups are used, add references
 	if( func->returnType.GetObjectType() )
@@ -1532,7 +1526,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 {
 	asUINT n;
 
-	int id = -(int)systemFunctions.GetLength() - 1;
+	int id = GetNextScriptFunctionId();
 
 	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
 	newInterface->func               = internal.func;
@@ -1548,20 +1542,20 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	newInterface->returnAutoHandle   = internal.returnAutoHandle;
 	newInterface->hasAutoHandles     = internal.hasAutoHandles;
 
-	systemFunctionInterfaces.PushLast(newInterface);
-
 	asCScriptFunction *f = new asCScriptFunction(0);
-	f->returnType = func.returnType;
-	f->objectType = func.objectType;
-	f->id         = id;
-	f->isReadOnly = func.isReadOnly;
+	f->funcType    = asFUNC_SYSTEM;
+	f->sysFuncIntf = newInterface;
+	f->returnType  = func.returnType;
+	f->objectType  = func.objectType;
+	f->id          = id;
+	f->isReadOnly  = func.isReadOnly;
 	for( n = 0; n < func.parameterTypes.GetLength(); n++ )
 	{
 		f->parameterTypes.PushLast(func.parameterTypes[n]);
 		f->inOutFlags.PushLast(func.inOutFlags[n]);
 	}
 
-	systemFunctions.PushLast(f);
+	scriptFunctions[id] = f;
 
 	// If parameter type from other groups are used, add references
 	if( f->returnType.GetObjectType() )
@@ -1664,12 +1658,13 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 	// Put the system function in the list of system functions
 	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
 	memcpy(newInterface, &internal, sizeof(internal));
-	systemFunctionInterfaces.PushLast(newInterface);
 
 	asCScriptFunction *func = new asCScriptFunction(0);
-	func->objectType = objType;
+	func->funcType    = asFUNC_SYSTEM;
+	func->sysFuncIntf = newInterface;
+	func->objectType  = objType;
 
-	objType->methods.PushLast((int)systemFunctions.GetLength());
+	objType->methods.PushLast((int)scriptFunctions.GetLength());
 
 	asCBuilder bld(this, 0);
 	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
@@ -1689,8 +1684,8 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 		return ConfigError(asNAME_TAKEN);
 	}
 
-	func->id = -1 - (int)systemFunctions.GetLength();
-	systemFunctions.PushLast(func);
+	func->id = GetNextScriptFunctionId();
+	scriptFunctions[func->id] = func;
 
 	return 0;
 }
@@ -1726,12 +1721,13 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	// Put the system function in the list of system functions
 	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
 	memcpy(newInterface, &internal, sizeof(internal));
-	systemFunctionInterfaces.PushLast(newInterface);
 
 	asCScriptFunction *func = new asCScriptFunction(0);
-	func->objectType = dt.GetObjectType();
+	func->funcType    = asFUNC_SYSTEM;
+	func->sysFuncIntf = newInterface;
+	func->objectType  = dt.GetObjectType();
 
-	func->objectType->methods.PushLast((int)systemFunctions.GetLength());
+	func->objectType->methods.PushLast((int)scriptFunctions.GetLength());
 
 	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 ) 
@@ -1748,8 +1744,8 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		return ConfigError(asNAME_TAKEN);
 	}
 
-	func->id = -1 - (int)systemFunctions.GetLength();
-	systemFunctions.PushLast(func);
+	func->id = GetNextScriptFunctionId();
+	scriptFunctions[func->id] = func;
 
 	// If parameter type from other groups are used, add references
 	if( func->returnType.GetObjectType() )
@@ -1786,9 +1782,10 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	// Put the system function in the list of system functions
 	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
 	memcpy(newInterface, &internal, sizeof(internal));
-	systemFunctionInterfaces.PushLast(newInterface);
 
 	asCScriptFunction *func = new asCScriptFunction(0);
+	func->funcType    = asFUNC_SYSTEM;
+	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
 	bld.SetOutputStream(outStream);
@@ -1807,10 +1804,10 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 		return ConfigError(asNAME_TAKEN);
 	}
 
-	func->id = -1 - (int)systemFunctions.GetLength();
-	systemFunctions.PushLast(func);
+	func->id = GetNextScriptFunctionId();
+	scriptFunctions[func->id] = func;
 
-	currentGroup->systemFunctions.PushLast(func);
+	currentGroup->scriptFunctions.PushLast(func);
 
 	// If parameter type from other groups are used, add references
 	if( func->returnType.GetObjectType() )
@@ -1833,15 +1830,6 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 
 
 
-asCScriptFunction *asCScriptEngine::GetScriptFunction(int funcID)
-{
-	int f = funcID & 0xFFFF;
-	if( f >= (int)scriptFunctions.GetLength() )
-		return 0;
-
-	return scriptFunctions[f];
-}
-
 
 
 asCObjectType *asCScriptEngine::GetObjectType(const char *type, int arrayType)
@@ -1862,11 +1850,11 @@ void asCScriptEngine::PrepareEngine()
 {
 	if( isPrepared ) return;
 
-	for( asUINT n = 0; n < systemFunctions.GetLength(); n++ )
+	for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
 	{
 		// Determine the host application interface
-		if( systemFunctions[n] )
-			PrepareSystemFunction(systemFunctions[n], systemFunctionInterfaces[n], this);
+		if( scriptFunctions[n] && scriptFunctions[n]->funcType == asFUNC_SYSTEM )
+			PrepareSystemFunction(scriptFunctions[n], scriptFunctions[n]->sysFuncIntf, this);
 	}
 
 	isPrepared = true;
@@ -1894,9 +1882,10 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 	// Put the system function in the list of system functions
 	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
 	memcpy(newInterface, &internal, sizeof(internal));
-	systemFunctionInterfaces.PushLast(newInterface);
 
 	asCScriptFunction *func = new asCScriptFunction(0);
+	func->funcType    = asFUNC_SYSTEM;
+	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
 	bld.SetOutputStream(outStream);
@@ -1914,8 +1903,8 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 	asCDataType parm1 = asCDataType::CreatePrimitive(ttUInt8, true);
 	parm1.MakeReference(true);
 	func->parameterTypes.PushLast(parm1);
-	func->id = -1 - (int)systemFunctions.GetLength();
-	systemFunctions.PushLast(func);
+	func->id = GetNextScriptFunctionId();
+	scriptFunctions[func->id] = func;
 
 	stringFactory = func;
 
@@ -1923,7 +1912,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 	{
 		asCConfigGroup *group = FindConfigGroup(func->returnType.GetObjectType());
 		if( group == 0 ) group = &defaultGroup;
-		group->systemFunctions.PushLast(func);
+		group->scriptFunctions.PushLast(func);
 	}
 
 	return 0;
@@ -2388,9 +2377,8 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 
 void asCScriptEngine::CallObjectMethod(void *obj, int func)
 {
-	asSSystemFunctionInterface *i = systemFunctionInterfaces[-func-1];
-	asCScriptFunction *s = systemFunctions[-func-1];
-	CallObjectMethod(obj, i, s);
+	asCScriptFunction *s = scriptFunctions[func];
+	CallObjectMethod(obj, s->sysFuncIntf, s);
 }
 
 void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i, asCScriptFunction *s)
@@ -2439,9 +2427,8 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 
 void asCScriptEngine::CallObjectMethod(void *obj, void *param, int func)
 {
-	asSSystemFunctionInterface *i = systemFunctionInterfaces[-func-1];
-	asCScriptFunction *s = systemFunctions[-func-1];
-	CallObjectMethod(obj, param, i, s);
+	asCScriptFunction *s = scriptFunctions[func];
+	CallObjectMethod(obj, param, s->sysFuncIntf, s);
 }
 
 void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunctionInterface *i, asCScriptFunction *s)
@@ -2522,7 +2509,7 @@ void *asCScriptEngine::CallAlloc(asCObjectType *type)
 	asALLOCFUNC_t custom_alloc;
 	if( type->beh.alloc )
 	{
-		asSSystemFunctionInterface *intf = systemFunctionInterfaces[-type->beh.alloc - 1];
+		asSSystemFunctionInterface *intf = scriptFunctions[type->beh.alloc]->sysFuncIntf;
 		custom_alloc = (asALLOCFUNC_t)intf->func;
 	}
 	else
@@ -2536,7 +2523,7 @@ void asCScriptEngine::CallFree(asCObjectType *type, void *obj)
 	asFREEFUNC_t custom_free;
 	if( type->beh.free )
 	{
-		asSSystemFunctionInterface *intf = systemFunctionInterfaces[-type->beh.free - 1];
+		asSSystemFunctionInterface *intf = scriptFunctions[type->beh.free]->sysFuncIntf;
 		custom_free = (asFREEFUNC_t)intf->func;
 	}
 	else
@@ -3072,9 +3059,9 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForFunction(int funcId)
 	{
 		// Check global functions
 		asUINT m;
-		for( m = 0; m < configGroups[n]->systemFunctions.GetLength(); m++ )
+		for( m = 0; m < configGroups[n]->scriptFunctions.GetLength(); m++ )
 		{
-			if( configGroups[n]->systemFunctions[m]->id == funcId )
+			if( configGroups[n]->scriptFunctions[m]->id == funcId )
 				return configGroups[n];
 		}
 

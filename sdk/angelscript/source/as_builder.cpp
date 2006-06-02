@@ -196,7 +196,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		asCScriptFunction *execfunc = new asCScriptFunction(module);
 		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, execfunc) >= 0 )
 		{
-			execfunc->id = asFUNC_STRING | module->moduleID;
+			execfunc->id = asFUNC_STRING;
 
 			// Copy byte code to the registered function
 			execfunc->byteCode.SetLength(compiler.byteCode.GetSize());
@@ -1517,12 +1517,9 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 {
-	// The top 16 bits holds the moduleID
-
+	// TODO: This should be improved
 	// Get the description from the engine
-	if( id < 0 )
-		return engine->systemFunctions[-id - 1];
-	else if( (id & 0xFFFF0000) == 0 )
+	if( (id & 0xFFFF0000) == 0 )
 		return engine->scriptFunctions[id];
 	else 
 		return module->importedFunctions[id & 0xFFFF];
@@ -1547,14 +1544,17 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 	}
 
 	// TODO: Improve linear search
-	for( n = 0; n < engine->systemFunctions.GetLength(); n++ )
+	for( n = 0; n < engine->scriptFunctions.GetLength(); n++ )
 	{
-		if( engine->systemFunctions[n] && engine->systemFunctions[n]->objectType == 0 && engine->systemFunctions[n]->name == name )
+		if( engine->scriptFunctions[n] && 
+			engine->scriptFunctions[n]->funcType == asFUNC_SYSTEM && 
+			engine->scriptFunctions[n]->objectType == 0 && 
+			engine->scriptFunctions[n]->name == name )
 		{
 			// Find the config group for the global function
-			asCConfigGroup *group = engine->FindConfigGroupForFunction(engine->systemFunctions[n]->id);
+			asCConfigGroup *group = engine->FindConfigGroupForFunction(engine->scriptFunctions[n]->id);
 			if( !group || group->HasModuleAccess(module->name.AddressOf()) )
-				funcs.PushLast(engine->systemFunctions[n]->id);
+				funcs.PushLast(engine->scriptFunctions[n]->id);
 		}
 	}
 }
@@ -1567,18 +1567,9 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		// Only add const methods to the list
 		for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
 		{
-			if( objectType->flags & asOBJ_SCRIPT_STRUCT )
-			{
-				if( engine->scriptFunctions[objectType->methods[n]&0xFFFF]->name == name &&
-					engine->scriptFunctions[objectType->methods[n]&0xFFFF]->isReadOnly )
-					methods.PushLast(engine->scriptFunctions[objectType->methods[n]&0xFFFF]->id);
-			}
-			else
-			{
-				if( engine->systemFunctions[objectType->methods[n]]->name == name &&
-					engine->systemFunctions[objectType->methods[n]]->isReadOnly )
-					methods.PushLast(engine->systemFunctions[objectType->methods[n]]->id);
-			}
+			if( engine->scriptFunctions[objectType->methods[n]]->name == name &&
+				engine->scriptFunctions[objectType->methods[n]]->isReadOnly )
+				methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
 		}
 	}
 	else
@@ -1586,16 +1577,8 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		// TODO: Prefer non-const over const
 		for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
 		{
-			if( objectType->flags & asOBJ_SCRIPT_STRUCT )
-			{
-				if( engine->scriptFunctions[objectType->methods[n]&0xFFFF]->name == name )
-					methods.PushLast(engine->scriptFunctions[objectType->methods[n]&0xFFFF]->id);
-			}
-			else
-			{
-				if( engine->systemFunctions[objectType->methods[n]]->name == name )
-					methods.PushLast(engine->systemFunctions[objectType->methods[n]]->id);
-			}
+			if( engine->scriptFunctions[objectType->methods[n]]->name == name )
+				methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
 		}
 	}
 }

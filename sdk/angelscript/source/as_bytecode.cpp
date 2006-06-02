@@ -1611,7 +1611,7 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			case BC_CALLBND:
 			case BC_CALLINTF:
 				{
-					int funcID = *(int*)ARG_DW(instr->arg) | module->moduleID;
+					int funcID = *(int*)ARG_DW(instr->arg);
 					asCString decl = engine->GetFunctionDeclaration(funcID);
 
 					fprintf(file, "   %-8s %d           (%s)\n", bcName[instr->op].name, *((int*) ARG_DW(instr->arg)), decl.AddressOf());

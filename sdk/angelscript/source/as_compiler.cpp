@@ -638,7 +638,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 							if( !ltype.dataType.IsEqualExceptRefAndConst(expr.type.dataType) )
 								Error(TXT_BOTH_MUST_BE_SAME, node);
 
-						asCScriptFunction *descr = engine->systemFunctions[-match[0] - 1];
+						asCScriptFunction *descr = engine->scriptFunctions[match[0]];
 
 						// Add code for arguments
 						MergeExprContexts(&ctx, &expr);
@@ -1393,7 +1393,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 								if( !ltype.dataType.IsEqualExceptRefAndConst(expr.type.dataType) )
 									Error(TXT_BOTH_MUST_BE_SAME, node);
 
-							asCScriptFunction *descr = engine->systemFunctions[-match[0] - 1];
+							asCScriptFunction *descr = engine->scriptFunctions[match[0]];
 
 							// Add code for arguments
 							MergeExprContexts(&ctx, &expr);
@@ -3659,7 +3659,7 @@ void asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExp
 				Error(TXT_REF_IS_READ_ONLY, lexpr);
 
 			// Prepare the rvalue
-			asCScriptFunction *descr = engine->systemFunctions[-match[0] - 1];
+			asCScriptFunction *descr = engine->scriptFunctions[match[0]];
 			PrepareArgument(&descr->parameterTypes[0], rctx, rexpr, true, descr->inOutFlags[0]);
 
 			if( rctx->type.isTemporary && lctx->bc.IsVarUsed(rctx->type.stackOffset) )
@@ -5175,7 +5175,7 @@ void asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ct
 			{
 				// Only accept the negate operator
 				if( ttMinus == beh->operators[n] &&
-					engine->systemFunctions[-beh->operators[n+1] - 1]->parameterTypes.GetLength() == 0 )
+					engine->scriptFunctions[beh->operators[n+1]]->parameterTypes.GetLength() == 0 )
 				{
 					found = true;
 					opNegate = beh->operators[n+1];
@@ -5585,7 +5585,7 @@ void asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *c
 				// Only list const behaviours
 				for( n = 0; n < beh->operators.GetLength(); n += 2 )
 				{
-					if( ttOpenBracket == beh->operators[n] && engine->systemFunctions[-1-beh->operators[n+1]]->isReadOnly )
+					if( ttOpenBracket == beh->operators[n] && engine->scriptFunctions[beh->operators[n+1]]->isReadOnly )
 						ops.PushLast(beh->operators[n+1]);
 				}
 			}
@@ -5609,7 +5609,7 @@ void asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *c
 			// Did we find a suitable function?
 			if( ops1.GetLength() == 1 )
 			{
-				asCScriptFunction *descr = engine->systemFunctions[-ops1[0] - 1];
+				asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
 
 				// Store the code for the object
 				asCByteCode objBC;
@@ -5901,7 +5901,7 @@ bool asCCompiler::CompileOverloadedOperator(asCScriptNode *node, asSExprContext 
 	// Did we find an operator?
 	if( ops.GetLength() == 1 )
 	{
-		asCScriptFunction *descr = engine->systemFunctions[-ops[0] - 1];
+		asCScriptFunction *descr = engine->scriptFunctions[ops[0]];
 
 		// Add code for arguments
 		asCArray<int> reserved;
@@ -7037,29 +7037,19 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 	ctx->type.Set(descr->returnType);
 
-	// Script functions should be referenced locally (i.e module id == 0)
-	if( descr->id < 0 )
+	if( isConstructor )
+		ctx->bc.Alloc(BC_ALLOC, builder->module->RefObjectType(objType), descr->id, argSize+PTR_SIZE);
+	else if( descr->funcType == asFUNC_IMPORTED )
+		ctx->bc.Call(BC_CALLBND , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+	else if( descr->funcType == asFUNC_INTERFACE )
+		ctx->bc.Call(BC_CALLINTF, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+	else if( descr->funcType == asFUNC_SCRIPT )
+		ctx->bc.Call(BC_CALL    , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+	else // if( descr->funcType == asFUNC_SYSTEM )
 	{
-		if( !isConstructor )
-		{
-			ctx->bc.Call(BC_CALLSYS, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
-			// Add a reference for the configuration group here
-			builder->module->RefConfigGroupForFunction(descr->id);
-		}
-		else
-			ctx->bc.Alloc(BC_ALLOC, builder->module->RefObjectType(objType), descr->id, argSize+PTR_SIZE);
-	}
-	else
-	{
-		if( isConstructor )
-			ctx->bc.Alloc(BC_ALLOC, builder->module->RefObjectType(objType), descr->id, argSize+PTR_SIZE);
-		// TODO: The flag FUNC_IMPORTED should be read from funcType
-		else if( descr->id & FUNC_IMPORTED )
-			ctx->bc.Call(BC_CALLBND, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
-		else if( descr->funcType == asFUNC_INTERFACE )
-			ctx->bc.Call(BC_CALLINTF, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
-		else
-			ctx->bc.Call(BC_CALL, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+		ctx->bc.Call(BC_CALLSYS , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+		// Add a reference for the configuration group here
+		builder->module->RefConfigGroupForFunction(descr->id);
 	}
 
 	if( ctx->type.dataType.IsObject() && !descr->returnType.IsReference() )

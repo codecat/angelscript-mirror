@@ -52,7 +52,6 @@ BEGIN_AS_NAMESPACE
 const int asFUNC_INIT   = 0xFFFF;
 const int asFUNC_STRING = 0xFFFE;
 
-const int FUNC_SYSTEM   = 0x80000000;
 const int FUNC_IMPORTED = 0x40000000;
 
 class asCScriptEngine;

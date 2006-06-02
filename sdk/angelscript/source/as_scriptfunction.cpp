@@ -41,6 +41,7 @@
 #include "as_scriptfunction.h"
 #include "as_tokendef.h"
 #include "as_scriptengine.h"
+#include "as_callfunc.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -52,12 +53,16 @@ asCScriptFunction::asCScriptFunction(asCModule *mod)
 	name        = ""; 
 	isReadOnly  = false;
 	stackNeeded = 0;
+	sysFuncIntf = 0;
 }
 
 asCScriptFunction::~asCScriptFunction()
 {
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
 		delete variables[n];
+
+	if( sysFuncIntf )
+		delete sysFuncIntf;
 }
 
 int asCScriptFunction::GetSpaceNeededForArguments()

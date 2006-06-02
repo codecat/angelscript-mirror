@@ -446,7 +446,8 @@ bool Test()
 	any->Retrieve(&array, engine->GetTypeIdByDecl(0, "mytype[]@"));
 	if( array == 0 )
 		fail = true;
-	array->Release();
+	else
+		array->Release();
 
 	// The mytype variable is still stored in the any variable so we shouldn't be allowed to remove it's configuration group
 	r = engine->RemoveConfigGroup("group1"); assert( r < 0 );

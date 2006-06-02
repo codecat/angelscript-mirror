@@ -221,7 +221,7 @@ int asCRestore::Restore()
 	{
 		asCObjectType *ot = module->structTypes[i];
 		asUINT n;
-		ot->beh.construct = module->scriptFunctions[ot->beh.construct]->id;
+		ot->beh.construct = ot->beh.construct == -1 ? 0 : module->scriptFunctions[ot->beh.construct]->id;
 		for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 			ot->beh.constructors[n] = module->scriptFunctions[ot->beh.constructors[n]]->id;
 		for( n = 0; n < ot->methods.GetLength(); n++ )
@@ -594,7 +594,8 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot)
 	// properties[]
 	READ_NUM(size);
 	ot->properties.Allocate(size,0);
-	for( int n = 0; n < size; n++ )
+	int n;
+	for( n = 0; n < size; n++ )
 	{
 		asCProperty *prop = new asCProperty;
 		ReadProperty(prop);

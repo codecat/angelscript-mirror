@@ -969,7 +969,7 @@ int asCContext::GetCallstackFunction(int index)
 	asCScriptFunction *func = (asCScriptFunction*)s[1];
 	asCModule *module = (asCModule*)s[5];
 
-	return module->moduleID | func->id;
+	return func->id;
 }
 
 int asCContext::GetCallstackLineNumber(int index, int *column)
@@ -1582,7 +1582,6 @@ void asCContext::ExecuteNext()
 		{
 			// Get function ID from the argument
 			int i = INTARG(l_bc);
-			assert( i < 0 );
 
 			// Need to move the values back to the context 
 			byteCode = l_bc;
@@ -1690,7 +1689,7 @@ void asCContext::ExecuteNext()
 			if( objType->flags & asOBJ_SCRIPT_STRUCT )
 			{
 				// Set the allocated memory
-				asCScriptFunction *f = module->GetScriptFunction(func);
+				asCScriptFunction *f = engine->scriptFunctions[func & 0xFFFF];
 
 				asDWORD **a = (asDWORD**)*(size_t*)(l_sp + f->GetSpaceNeededForArguments());
 				if( a ) *a = mem;
@@ -2510,11 +2509,11 @@ void asCContext::SetInternalException(const char *descr)
 
 	status = tsUnhandledException;
 
-	exceptionString = descr;
-	exceptionFunction = (module ? module->moduleID : 0) | currentFunction->id;
-	exceptionLine = currentFunction->GetLineNumber(int(byteCode - currentFunction->byteCode.AddressOf()));
-	exceptionColumn = exceptionLine >> 20;
-	exceptionLine &= 0xFFFFF;
+	exceptionString   = descr;
+	exceptionFunction = currentFunction->id;
+	exceptionLine     = currentFunction->GetLineNumber(int(byteCode - currentFunction->byteCode.AddressOf()));
+	exceptionColumn   = exceptionLine >> 20;
+	exceptionLine    &= 0xFFFFF;
 
 	if( exceptionCallback )
 		CallExceptionCallback();
@@ -2650,7 +2649,7 @@ int asCContext::GetExceptionFunction()
 int asCContext::GetCurrentFunction()
 {
 	if( status == tsSuspended || status == tsActive )
-		return module->moduleID | currentFunction->id;
+		return currentFunction->id;
 
 	return -1;
 }
@@ -2779,9 +2778,8 @@ void asCContext::ClearExceptionCallback()
 
 int asCContext::CallGeneric(int id, void *objectPointer)
 {
-	id = -id - 1;
-	asSSystemFunctionInterface *sysFunc = engine->systemFunctionInterfaces[id];
-	asCScriptFunction *sysFunction = engine->systemFunctions[id];
+	asCScriptFunction *sysFunction = engine->scriptFunctions[id];
+	asSSystemFunctionInterface *sysFunc = sysFunction->sysFuncIntf;
 	void (*func)(asIScriptGeneric*) = (void (*)(asIScriptGeneric*))sysFunc->func;
 	int popSize = sysFunc->paramSize;
 	asDWORD *args = stackPointer;

@@ -124,22 +124,17 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 		engine->globalBehaviours.operators[globalBehaviours[n]+1] = 0;
 	
 		// Remove the system function as well
-		id = -id - 1;
-		delete engine->systemFunctions[id];
-		engine->systemFunctions[id] = 0;
+		engine->DeleteScriptFunction(id);
 	}
 
 	// Remove global functions
-	for( n = 0; n < systemFunctions.GetLength(); n++ )
+	for( n = 0; n < scriptFunctions.GetLength(); n++ )
 	{
-		for( asUINT m = 0; m < engine->systemFunctions.GetLength(); m++ )
+		for( asUINT m = 0; m < engine->scriptFunctions.GetLength(); m++ )
 		{
-			if( engine->systemFunctions[m] == systemFunctions[n] )
+			if( engine->scriptFunctions[m] == scriptFunctions[n] )
 			{
-				delete engine->systemFunctions[m];
-				engine->systemFunctions[m] = 0;
-				delete engine->systemFunctionInterfaces[m];
-				engine->systemFunctionInterfaces[m] = 0;
+				engine->DeleteScriptFunction(m);
 			}
 		}
 	}

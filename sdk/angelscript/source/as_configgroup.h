@@ -71,7 +71,7 @@ public:
 	int refCount;
 
 	asCArray<asCObjectType*>     objTypes;
-	asCArray<asCScriptFunction*> systemFunctions;
+	asCArray<asCScriptFunction*> scriptFunctions;
 	asCArray<asCProperty*>       globalProps;
 	asCArray<int>                globalBehaviours;
 	asCArray<asCConfigGroup*>    referencedConfigGroups;

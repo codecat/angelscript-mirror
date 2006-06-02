@@ -60,6 +60,9 @@ struct asSScriptVariable
 const int asFUNC_SYSTEM    = 0;
 const int asFUNC_SCRIPT    = 1;
 const int asFUNC_INTERFACE = 2;
+const int asFUNC_IMPORTED  = 3;
+
+struct asSSystemFunctionInterface;
 
 class asCScriptFunction
 {
@@ -90,6 +93,8 @@ public:
 	bool                         isReadOnly;
 	asCObjectType *              objectType;
 	asCArray<asSScriptVariable*> variables;
+
+	asSSystemFunctionInterface  *sysFuncIntf;
 };
 
 END_AS_NAMESPACE

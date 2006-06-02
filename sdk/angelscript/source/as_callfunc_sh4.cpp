@@ -454,17 +454,15 @@ asQWORD GetReturnedDouble()
 
 int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 {
-	id = -id - 1;
-
 	asCScriptEngine *engine = context->engine;
-	asSSystemFunctionInterface *sysFunc = engine->systemFunctionInterfaces[id];
+	asSSystemFunctionInterface *sysFunc = engine->scriptFunctions[id]->sysFuncIntf;
 	int callConv = sysFunc->callConv;
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-		return context->CallGeneric(-id-1, objectPointer);
+		return context->CallGeneric(id, objectPointer);
 
 	asQWORD retQW = 0;
 
-	asCScriptFunction *descr = engine->systemFunctions[id];
+	asCScriptFunction *descr = engine->scriptFunctions[id];
 
 	void    *func              = (void*)sysFunc->func;
 	int      paramSize         = sysFunc->paramSize;
@@ -660,18 +658,18 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 	else
 	{
-		// Store value in returnVal register
+		// Store value in register1 register
 		if( sysFunc->hostReturnFloat )
 		{
 			if( sysFunc->hostReturnSize == 1 )
-				*(asDWORD*)&context->returnVal = GetReturnedFloat();
+				*(asDWORD*)&context->register1 = GetReturnedFloat();
 			else
-				context->returnVal = GetReturnedDouble();
+				context->register1 = GetReturnedDouble();
 		}
 		else if( sysFunc->hostReturnSize == 1 )
-			*(asDWORD*)&context->returnVal = (asDWORD)retQW;
+			*(asDWORD*)&context->register1 = (asDWORD)retQW;
 		else
-			context->returnVal = retQW;
+			context->register1 = retQW;
 	}
 
 	if( sysFunc->hasAutoHandles )

@@ -228,19 +228,17 @@ public:
 
 	// Information registered by host
 	asSTypeBehaviour globalBehaviours;
-	asCObjectType *defaultArrayObjectType;
-	asCObjectType *anyObjectType;
-	asCObjectType scriptTypeBehaviours;
+	asCObjectType   *defaultArrayObjectType;
+	asCObjectType   *anyObjectType;
+	asCObjectType    scriptTypeBehaviours;
 
 	// Store information about registered object types
-	asCArray<asCObjectType *> objectTypes;
+	asCArray<asCObjectType *>      objectTypes;
 	// Store information about registered array types
-	asCArray<asCObjectType *> arrayTypes;
-	asCArray<asCProperty *> globalProps;
-	asCArray<void *> globalPropAddresses;
-	asCArray<asCScriptFunction *> systemFunctions;
-	asCArray<asSSystemFunctionInterface *> systemFunctionInterfaces;
-	asCScriptFunction *stringFactory;
+	asCArray<asCObjectType *>      arrayTypes;
+	asCArray<asCProperty *>        globalProps;
+	asCArray<void *>               globalPropAddresses;
+	asCScriptFunction             *stringFactory;
 
 	int ConfigError(int err);
 	bool configFailed;

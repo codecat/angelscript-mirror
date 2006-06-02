@@ -268,17 +268,14 @@ asQWORD GetReturnedDouble();
 
 int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 {
-	id = -id - 1;
-
 	asCScriptEngine *engine = context->engine;
-	asSSystemFunctionInterface *sysFunc = engine->systemFunctionInterfaces[id];
+	asCScriptFunction *descr = engine->scriptFunctions[id];
+	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
 	int callConv = sysFunc->callConv;
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-		return context->CallGeneric(-id-1, objectPointer);
+		return context->CallGeneric(id, objectPointer);
 
 	asQWORD retQW = 0;
-
-	asCScriptFunction *descr = engine->systemFunctions[id];
 
 	void    *func              = (void*)sysFunc->func;
 	int      paramSize         = sysFunc->paramSize;
@@ -502,7 +499,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 	else
 	{
-		// Store value in returnVal register
+		// Store value in register1 register
 		if( sysFunc->hostReturnFloat )
 		{
 			if( sysFunc->hostReturnSize == 1 )

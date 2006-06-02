@@ -149,7 +149,7 @@ void asCModule::CallInit()
 
 	if( initFunction && initFunction->byteCode.GetLength() == 0 ) return;
 
-	int id = moduleID | asFUNC_INIT;
+	int id = asFUNC_INIT;
 	asIScriptContext *ctx = 0;
 	int r = engine->CreateContext(&ctx, true);
 	if( r >= 0 && ctx )
@@ -295,7 +295,7 @@ int asCModule::GetFunctionIDByName(const char *name)
 
 	if( id == -1 ) return asNO_FUNCTION;
 
-	return moduleID | id;
+	return id;
 }
 
 int asCModule::GetMethodIDByDecl(asCObjectType *ot, const char *decl)
@@ -409,7 +409,7 @@ int asCModule::GetFunctionIDByDecl(const char *decl)
 
 	if( id == -1 ) return asNO_FUNCTION;
 
-	return moduleID | id;
+	return id;
 }
 
 int asCModule::GetGlobalVarCount()
@@ -438,7 +438,7 @@ int asCModule::GetGlobalVarIDByName(const char *name)
 
 	if( id == -1 ) return asNO_GLOBAL_VAR;
 
-	return moduleID | id;
+	return id;
 }
 
 int asCModule::GetGlobalVarIDByDecl(const char *decl)
@@ -466,7 +466,7 @@ int asCModule::GetGlobalVarIDByDecl(const char *decl)
 
 	if( id == -1 ) return asNO_GLOBAL_VAR;
 
-	return moduleID | id;
+	return id;
 }
 
 int asCModule::AddConstantString(const char *str, size_t len)
@@ -536,6 +536,7 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 
 	// Store the function information
 	asCScriptFunction *func = new asCScriptFunction(this);
+	func->funcType   = asFUNC_IMPORTED;
 	func->name       = name;
 	func->id         = id;
 	func->returnType = returnType;
