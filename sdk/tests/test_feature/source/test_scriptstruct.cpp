@@ -7,7 +7,7 @@ namespace TestScriptStruct
 
 // Normal structure
 static const char *script1 =
-"struct Test                  \n"
+"class Test                   \n"
 "{                            \n"
 "   int a;                    \n"
 "   bool b;                   \n"
@@ -31,18 +31,18 @@ static const char *script1 =
 
 // Do not allow const in properties
 static const char *script2 = 
-"struct Test                  \n"
+"class Test                   \n"
 "{                            \n"
 "   const int a;              \n"
 "};                           \n";
 
 // Test arrays in struct
 static const char *script3 =
-"struct Test                  \n"
+"class Test                   \n"
 "{                            \n"
 "   int[] a;                  \n"
 "};                           \n"
-"struct Test2                 \n"
+"class Test2                  \n"
 "{                            \n"
 "   Test2@[][] a;             \n"
 "};                           \n"
@@ -59,7 +59,7 @@ static const char *script3 =
 
 // Only allow primitives (at first)
 static const char *script4 =
-"struct B                     \n"
+"class B                      \n"
 "{                            \n"
 "   A a;                      \n"
 "   string b;                 \n"
@@ -79,16 +79,16 @@ static const char *script4 =
 "  Assert(a.b == \"Test\");   \n"
 "  Assert(a.c == 6);          \n"
 "}                            \n"
-"struct A                     \n"
+"class A                      \n"
 "{                            \n"
 "   bits a;                   \n"
 "};                           \n";
 
 // Verify that the struct names cannot conflict with one another
 static const char *script5 = 
-"struct A {};                 \n"
-"struct A {};                 \n"
-"struct B                     \n"
+"class A {};                  \n"
+"class A {};                  \n"
+"class B                      \n"
 "{                            \n"
 "  int a;                     \n"
 "  float a;                   \n"
@@ -96,21 +96,21 @@ static const char *script5 =
 
 // Verify that a structure cannot have itself as local member (directly or indirectly)
 static const char *script6 = 
-"struct A                     \n"
+"class A                      \n"
 "{                            \n"
 "  A a;                       \n"
 "};                           \n"
-"struct B                     \n"
+"class B                      \n"
 "{                            \n"
 "  C c;                       \n"
 "};                           \n"
-"struct C                     \n"
+"class C                      \n"
 "{                            \n"
 "  B b;                       \n"
 "};                           \n";
 
 static const char *script7 =
-"struct A                     \n"
+"class A                      \n"
 "{                            \n"
 "  string@ s;                 \n"
 "};                           \n"
@@ -125,19 +125,19 @@ static const char *script7 =
 
 // Verify that circular references are handled by the GC
 static const char *script8 = 
-"struct A                     \n"
+"class A                      \n"
 "{                            \n"
 "  A@ next;                   \n"
 "};                           \n"
-"struct B                     \n"
+"class B                      \n"
 "{                            \n"
 "  D@ next;                   \n"
 "};                           \n"
-"struct C                     \n"
+"class C                      \n"
 "{                            \n"
 "  B b;                       \n"
 "};                           \n"
-"struct D                     \n"
+"class D                      \n"
 "{                            \n"
 "  C c;                       \n"
 "};                           \n"
@@ -155,7 +155,7 @@ static const char *script8 =
 
 
 static const char *script9 = 
-"struct MyStruct              \n"
+"class MyStruct               \n"
 "{                            \n"
 "  bits myBits;               \n"
 "};                           \n"
@@ -174,14 +174,14 @@ static const char *script9 =
 
 // Don't allow arrays of the struct type as members (unless it is handles)
 static const char *script10 = 
-"struct Test2                 \n"
+"class Test2                  \n"
 "{                            \n"
 "   Test2[] a;                \n"
 "};                           \n";
 
 // Test array constness in members
 static const char *script11 = 
-"struct A                     \n"
+"class A                      \n"
 "{                            \n"
 "   int[] a;                  \n"
 "};                           \n"
@@ -201,11 +201,11 @@ static const char *script12 =
 "}                            \n";
 
 static const char *script13 =
-"struct A                     \n"
+"class A                      \n"
 "{                            \n"
 "  B b;                       \n"
 "};                           \n"
-"struct B                     \n"
+"class B                      \n"
 "{                            \n"
 "  int val;                   \n"
 "};                           \n";
@@ -243,7 +243,7 @@ bool Test()
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
 	engine->SetCommonMessageStream(&bout);
 	r = engine->Build(0);
-	if( r >= 0 || bout.buffer != "TestScriptStruct (3, 4) : Error   : Struct properties cannot be declared as const\n" ) fail = true;
+	if( r >= 0 || bout.buffer != "TestScriptStruct (3, 4) : Error   : Class properties cannot be declared as const\n" ) fail = true;
 
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0, false);
 	engine->SetCommonMessageStream(&out);
@@ -263,15 +263,15 @@ bool Test()
 	engine->SetCommonMessageStream(&bout);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != 
-		"TestScriptStruct (2, 8) : Error   : Name conflict. 'A' is a struct.\n"
+		"TestScriptStruct (2, 7) : Error   : Name conflict. 'A' is a class.\n"
 		"TestScriptStruct (6, 9) : Error   : Name conflict. 'a' is an object property.\n" ) fail = true;
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0, false);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer !=
-		"TestScriptStruct (1, 8) : Error   : Illegal member type\n"
-		"TestScriptStruct (5, 8) : Error   : Illegal member type\n" ) fail = true;
+		"TestScriptStruct (1, 7) : Error   : Illegal member type\n"
+		"TestScriptStruct (5, 7) : Error   : Illegal member type\n" ) fail = true;
 
 	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0, false);
 	engine->SetCommonMessageStream(&out);
@@ -305,7 +305,7 @@ bool Test()
 	engine->SetCommonMessageStream(&bout);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;
-	if( bout.buffer != "TestScriptStruct (1, 8) : Error   : Illegal member type\n" ) fail = true;
+	if( bout.buffer != "TestScriptStruct (1, 7) : Error   : Illegal member type\n" ) fail = true;
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script11, strlen(script11), 0, false);

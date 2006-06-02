@@ -260,7 +260,7 @@ public:
 	asCArray<asCModule *> scriptModules;
 	asCModule *lastModule;
 
-	asCArray<asCObjectType *> structTypes;
+	asCArray<asCObjectType *> classTypes;
 	asCArray<asCObjectType *> scriptArrayTypes;
 
 	// Type identifiers

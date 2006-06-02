@@ -255,9 +255,9 @@ void asCModule::Reset()
 		delete scriptSections[n];
 	scriptSections.SetLength(0);
 
-	for( n = 0; n < structTypes.GetLength(); n++ )
-		structTypes[n]->refCount--;
-	structTypes.SetLength(0);
+	for( n = 0; n < classTypes.GetLength(); n++ )
+		classTypes[n]->refCount--;
+	classTypes.SetLength(0);
 
 	for( n = 0; n < scriptArrayTypes.GetLength(); n++ )
 		scriptArrayTypes[n]->refCount--;
@@ -784,9 +784,9 @@ bool asCModule::IsUsed()
 asCObjectType *asCModule::GetObjectType(const char *type)
 {
 	// TODO: Improve linear search
-	for( size_t n = 0; n < structTypes.GetLength(); n++ )
-		if( structTypes[n]->name == type )
-			return structTypes[n];
+	for( size_t n = 0; n < classTypes.GetLength(); n++ )
+		if( classTypes[n]->name == type )
+			return classTypes[n];
 
 	return 0;
 }

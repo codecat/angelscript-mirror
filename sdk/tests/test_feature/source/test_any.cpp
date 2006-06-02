@@ -49,7 +49,7 @@ static const char *script1 =
 
 // Test circular references with any
 static const char *script2 =
-"struct s                               \n"
+"class s                                \n"
 "{                                      \n"
 "  any a;                               \n"
 "};                                     \n"
@@ -68,7 +68,7 @@ static const char *script2 =
 
 // Don't allow a ref to const in retrieve()
 static const char *script3 =
-"struct s                  \n"
+"class s                   \n"
 "{                         \n"
 "  string @a;              \n"
 "};                        \n"

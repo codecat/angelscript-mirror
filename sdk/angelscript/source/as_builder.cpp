@@ -95,16 +95,16 @@ asCBuilder::~asCBuilder()
 		scripts[n] = 0;
 	}
 
-	// Free all struct declarations
-	for( n = 0; n < structDeclarations.GetLength(); n++ )
+	// Free all class declarations
+	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
-		if( structDeclarations[n] )
+		if( classDeclarations[n] )
 		{
-			if( structDeclarations[n]->node )
-				delete structDeclarations[n]->node;
+			if( classDeclarations[n]->node )
+				delete classDeclarations[n]->node;
 
-			delete structDeclarations[n];
-			structDeclarations[n] = 0;
+			delete classDeclarations[n];
+			classDeclarations[n] = 0;
 		}
 	}
 
@@ -143,7 +143,7 @@ int asCBuilder::Build()
 	numWarnings = 0;
 
 	ParseScripts();
-	CompileStructs();
+	CompileClasses();
 	CompileGlobalVariables();
 	CompileFunctions();
 
@@ -252,10 +252,10 @@ void asCBuilder::ParseScripts()
 			while( node )
 			{
 				asCScriptNode *next = node->next;
-				if( node->nodeType == snStruct )
+				if( node->nodeType == snClass )
 				{
 					node->DisconnectParent();
-					RegisterStruct(node, scripts[n]);
+					RegisterClass(node, scripts[n]);
 				}
 				else if( node->nodeType == snInterface )
 				{
@@ -268,9 +268,9 @@ void asCBuilder::ParseScripts()
 		}
 
 		// Register script methods found in the structures
-		for( n = 0; n < structDeclarations.GetLength(); n++ )
+		for( n = 0; n < classDeclarations.GetLength(); n++ )
 		{
-			sStructDeclaration *decl = structDeclarations[n];
+			sClassDeclaration *decl = classDeclarations[n];
 
 			asCScriptNode *node = decl->node->firstChild->next;
 
@@ -300,7 +300,7 @@ void asCBuilder::ParseScripts()
 		// Register script methods found in the interfaces
 		for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
 		{
-			sStructDeclaration *decl = interfaceDeclarations[n];
+			sClassDeclaration *decl = interfaceDeclarations[n];
 
 			asCScriptNode *node = decl->node->firstChild->next;
 			while( node )
@@ -689,10 +689,10 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 
 	// TODO: Property names must be checked against function names
 
-	// Check against struct types
-	for( asUINT n = 0; n < structDeclarations.GetLength(); n++ )
+	// Check against class types
+	for( asUINT n = 0; n < classDeclarations.GetLength(); n++ )
 	{
-		if( structDeclarations[n]->name == name )
+		if( classDeclarations[n]->name == name )
 		{
 			if( code )
 			{
@@ -780,7 +780,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 	return 0;
 }
 
-int asCBuilder::RegisterStruct(asCScriptNode *node, asCScriptCode *file)
+int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 {
 	asCScriptNode *n = node->firstChild;
 	GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
@@ -790,8 +790,8 @@ int asCBuilder::RegisterStruct(asCScriptNode *node, asCScriptCode *file)
 
 	CheckNameConflict(name.AddressOf(), n, file);
 
-	sStructDeclaration *decl = new sStructDeclaration;
-	structDeclarations.PushLast(decl);
+	sClassDeclaration *decl = new sClassDeclaration;
+	classDeclarations.PushLast(decl);
 	decl->name = name;
 	decl->script = file;
 	decl->validState = 0;
@@ -803,12 +803,12 @@ int asCBuilder::RegisterStruct(asCScriptNode *node, asCScriptCode *file)
 	st->size = sizeof(asCScriptStruct);
 	st->name = name;
 	st->tokenType = ttIdentifier;
-	module->structTypes.PushLast(st);
-	engine->structTypes.PushLast(st);
+	module->classTypes.PushLast(st);
+	engine->classTypes.PushLast(st);
 	st->refCount++;
 	decl->objType = st;
 
-	// Use the default script struct behaviours
+	// Use the default script class behaviours
 	st->beh.construct = engine->scriptTypeBehaviours.beh.construct;
 	st->beh.constructors.PushLast(st->beh.construct);
 	st->beh.addref = engine->scriptTypeBehaviours.beh.addref;
@@ -830,7 +830,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 
 	CheckNameConflict(name.AddressOf(), n, file);
 
-	sStructDeclaration *decl = new sStructDeclaration;
+	sClassDeclaration *decl = new sClassDeclaration;
 	interfaceDeclarations.PushLast(decl);
 	decl->name       = name;
 	decl->script     = file;
@@ -844,12 +844,12 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	st->size = 0; // Cannot be instanciated
 	st->name = name;
 	st->tokenType = ttIdentifier;
-	module->structTypes.PushLast(st);
-	engine->structTypes.PushLast(st);
+	module->classTypes.PushLast(st);
+	engine->classTypes.PushLast(st);
 	st->refCount++;
 	decl->objType = st;
 
-	// Use the default script struct behaviours
+	// Use the default script class behaviours
 	st->beh.construct = 0;
 	st->beh.addref = engine->scriptTypeBehaviours.beh.addref;
 	st->beh.release = engine->scriptTypeBehaviours.beh.release;
@@ -980,15 +980,15 @@ void asCBuilder::CompileGlobalVariables()
 
 }
 
-void asCBuilder::CompileStructs()
+void asCBuilder::CompileClasses()
 {
 	asUINT n;
-	asCArray<sStructDeclaration*> toValidate;
+	asCArray<sClassDeclaration*> toValidate;
 
-	// Go through each of the structs and register the object type descriptions
-	for( n = 0; n < structDeclarations.GetLength(); n++ )
+	// Go through each of the classes and register the object type descriptions
+	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
-		sStructDeclaration *decl = structDeclarations[n];
+		sClassDeclaration *decl = classDeclarations[n];
 
 		// Enumerate each of the declared properties
 		asCScriptNode *node = decl->node->firstChild->next;
@@ -1062,12 +1062,12 @@ void asCBuilder::CompileStructs()
 	// doesn't contain a member of its own type directly or indirectly
 	while( toValidate.GetLength() > 0 ) 
 	{
-		asUINT numStructs = (asUINT)toValidate.GetLength();
+		asUINT numClasses = (asUINT)toValidate.GetLength();
 
-		asCArray<sStructDeclaration*> toValidateNext;
+		asCArray<sClassDeclaration*> toValidateNext;
 		while( toValidate.GetLength() > 0 )
 		{
-			sStructDeclaration *decl = toValidate[toValidate.GetLength()-1];
+			sClassDeclaration *decl = toValidate[toValidate.GetLength()-1];
 			int validState = 1;
 			for( asUINT n = 0; n < decl->objType->properties.GetLength(); n++ )
 			{
@@ -1086,13 +1086,13 @@ void asCBuilder::CompileStructs()
 
 				if( dt.IsObject() && !dt.IsObjectHandle() )
 				{
-					// Find the struct declaration
-					sStructDeclaration *pdecl = 0;
-					for( asUINT p = 0; p < structDeclarations.GetLength(); p++ )
+					// Find the class declaration
+					sClassDeclaration *pdecl = 0;
+					for( asUINT p = 0; p < classDeclarations.GetLength(); p++ )
 					{
-						if( structDeclarations[p]->objType == dt.GetObjectType() )
+						if( classDeclarations[p]->objType == dt.GetObjectType() )
 						{
-							pdecl = structDeclarations[p];
+							pdecl = classDeclarations[p];
 							break;
 						}
 					}
@@ -1135,7 +1135,7 @@ void asCBuilder::CompileStructs()
 		toValidate = toValidateNext;
 		toValidateNext.SetLength(0);
 
-		if( numStructs == toValidate.GetLength() )
+		if( numClasses == toValidate.GetLength() )
 		{
 			int r, c;
 			toValidate[0]->script->ConvertPosToRowCol(toValidate[0]->node->tokenPos, &r, &c);
@@ -1150,9 +1150,9 @@ void asCBuilder::CompileStructs()
 	//       the graph must be flagged as potential circles
 
 	// Verify potential circular references
-	for( n = 0; n < structDeclarations.GetLength(); n++ )
+	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
-		sStructDeclaration *decl = structDeclarations[n];
+		sClassDeclaration *decl = classDeclarations[n];
 		asCObjectType *ot = decl->objType;
 
 		// Is there some path in which this structure is involved in circular references?
@@ -1213,9 +1213,9 @@ void asCBuilder::CompileStructs()
 	}
 
 	// Verify that the class implements all the methods from the interfaces it implements
-	for( n = 0; n < structDeclarations.GetLength(); n++ )
+	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
-		sStructDeclaration *decl = structDeclarations[n];
+		sClassDeclaration *decl = classDeclarations[n];
 		asCScriptCode *file = decl->script;
 
 		// Enumerate each of the implemented interfaces

@@ -74,7 +74,7 @@ enum eScriptNode
 	snSwitch,
 	snCase,
 	snImport,
-	snStruct,
+	snClass,
 	snInitList,
 	snInterface
 };

@@ -56,11 +56,11 @@ int asCRestore::Save()
 	unsigned long i, count;
 
 	// structTypes[]
-	count = (asUINT)module->structTypes.GetLength();
+	count = (asUINT)module->classTypes.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
 	{
-		WriteObjectTypeDeclaration(module->structTypes[i]);
+		WriteObjectTypeDeclaration(module->classTypes[i]);
 	}
 
 	// usedTypeIndices[]
@@ -132,13 +132,13 @@ int asCRestore::Restore()
 
 	// structTypes[]
 	READ_NUM(count);
-	module->structTypes.Allocate(count, 0);
+	module->classTypes.Allocate(count, 0);
 	for( i = 0; i < count; ++i )
 	{
 		asCObjectType *ot = new asCObjectType(engine);
 		ReadObjectTypeDeclaration(ot);
-		engine->structTypes.PushLast(ot);
-		module->structTypes.PushLast(ot);
+		engine->classTypes.PushLast(ot);
+		module->classTypes.PushLast(ot);
 		ot->refCount++;
 	}
 
@@ -217,9 +217,9 @@ int asCRestore::Restore()
 	ReadUsedTypeIds();
 
 	// Translate the function ids in the struct types
-	for( i = 0; i < module->structTypes.GetLength(); i++ )
+	for( i = 0; i < module->classTypes.GetLength(); i++ )
 	{
-		asCObjectType *ot = module->structTypes[i];
+		asCObjectType *ot = module->classTypes[i];
 		asUINT n;
 		ot->beh.construct = ot->beh.construct == -1 ? 0 : module->scriptFunctions[ot->beh.construct]->id;
 		for( n = 0; n < ot->beh.constructors.GetLength(); n++ )

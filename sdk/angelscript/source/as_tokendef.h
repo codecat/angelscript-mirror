@@ -159,7 +159,7 @@ enum eTokenType
 	ttOut,                 // out
 	ttInOut,               // inout
 	ttNull,                // null
-    ttStruct               // struct
+    ttClass                // class
 };
 
 struct sTokenWord
@@ -260,8 +260,10 @@ sTokenWord const tokenWords[] =
 	{"uint16"    , ttUInt16},
 	{"uint32"    , ttUInt},
 	{"switch"    , ttSwitch},
-	{"class"     , ttStruct},
-	{"struct"    , ttStruct},
+	{"class"     , ttClass},
+#ifdef AS_DEPRECATED
+	{"struct"    , ttClass},
+#endif
 	{"case"      , ttCase}, 
 	{"default"   , ttDefault},
 	{"xor"       , ttXor},

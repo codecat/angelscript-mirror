@@ -107,7 +107,7 @@
 #define TXT_NAME_CONFLICT_s_FUNCTION        "Name conflict. '%s' is a function."
 #define TXT_NAME_CONFLICT_s_GLOBAL_VAR      "Name conflict. '%s' is a global variable."
 #define TXT_NAME_CONFLICT_s_GLOBAL_PROPERTY "Name conflict. '%s' is a global property."
-#define TXT_NAME_CONFLICT_s_STRUCT          "Name conflict. '%s' is a struct."
+#define TXT_NAME_CONFLICT_s_STRUCT          "Name conflict. '%s' is a class."
 #define TXT_NAME_CONFLICT_s_OBJ_PROPERTY    "Name conflict. '%s' is an object property."
 #define TXT_NAME_CONFLICT_s_OBJ_METHOD      "Name conflict. '%s' is an object method."
 #define TXT_NAME_CONFLICT_s_SYSTEM_FUNCTION "Name conflict. '%s' is a system function."
@@ -141,7 +141,7 @@
 #define TXT_PARAMETER_ALREADY_DECLARED    "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s           "Parameter type can't be '%s'"
 #define TXT_POSSIBLE_LOSS_OF_PRECISION    "Conversion from double to float, possible loss of precision"
-#define TXT_PROPERTY_CANT_BE_CONST        "Struct properties cannot be declared as const"
+#define TXT_PROPERTY_CANT_BE_CONST        "Class properties cannot be declared as const"
 
 #define TXT_REF_IS_READ_ONLY              "Reference is read-only"
 #define TXT_REF_IS_TEMP                   "Reference is temporary"

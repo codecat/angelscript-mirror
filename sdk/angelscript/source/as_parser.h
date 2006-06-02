@@ -149,7 +149,7 @@ protected:
 	asCScriptNode *ParseFunctionCall();
 	asCScriptNode *ParseToken(int token);
 	asCScriptNode *ParseOneOf(int *tokens, int num);
-	asCScriptNode *ParseStruct();
+	asCScriptNode *ParseClass();
 	asCScriptNode *ParseInitList();
 	asCScriptNode *ParseInterface();
 	asCScriptNode *ParseInterfaceMethod();

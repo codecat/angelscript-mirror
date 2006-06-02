@@ -241,8 +241,8 @@ asCScriptNode *asCParser::ParseScript()
 
 			if( t1.type == ttImport )
 				node->AddChildLast(ParseImport());
-			else if( t1.type == ttStruct )
-				node->AddChildLast(ParseStruct());
+			else if( t1.type == ttClass )
+				node->AddChildLast(ParseClass());
 			else if( t1.type == ttInterface )
 				node->AddChildLast(ParseInterface());
 			else if( t1.type == ttConst )
@@ -567,15 +567,15 @@ asCScriptNode *asCParser::ParseInterface()
 	return node;
 }
 
-asCScriptNode *asCParser::ParseStruct()
+asCScriptNode *asCParser::ParseClass()
 {
-	asCScriptNode *node = new asCScriptNode(snStruct);
+	asCScriptNode *node = new asCScriptNode(snClass);
 
 	sToken t;
 	GetToken(&t);
-	if( t.type != ttStruct )
+	if( t.type != ttClass )
 	{
-		Error(ExpectedToken("struct").AddressOf(), &t);
+		Error(ExpectedToken("class").AddressOf(), &t);
 		return node;
 	}
 

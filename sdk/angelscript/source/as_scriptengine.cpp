@@ -340,17 +340,17 @@ int asCScriptEngine::Discard(const char *module)
 void asCScriptEngine::ClearUnusedTypes()
 {
 	asUINT n;
-	for( n = 0; n < structTypes.GetLength(); n++ )
+	for( n = 0; n < classTypes.GetLength(); n++ )
 	{
-		if( structTypes[n]->refCount == 0 )
+		if( classTypes[n]->refCount == 0 )
 		{
-			RemoveFromTypeIdMap(structTypes[n]);
-			delete structTypes[n];
+			RemoveFromTypeIdMap(classTypes[n]);
+			delete classTypes[n];
 
-			if( n == structTypes.GetLength() - 1 )
-				structTypes.PopLast();
+			if( n == classTypes.GetLength() - 1 )
+				classTypes.PopLast();
 			else
-				structTypes[n] = structTypes.PopLast();
+				classTypes[n] = classTypes.PopLast();
 
 			n--;
 		}

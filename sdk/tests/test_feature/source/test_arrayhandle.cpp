@@ -19,18 +19,31 @@ static const char *script1 =
 "   Assert(g.length() == 2);                     \n"
 "}                                               \n"
 "string@[] g(2);                                 \n";
-
+ 
 static const char *script2 =
 "void TestArrayHandle2()                         \n"
 "{                                               \n"
 "   string[] s(10);                              \n"
 "   Append(s);                                   \n"
+"                                                \n"
+"   string[]@ sh = createArray();                \n"
+"   double d1 = atof(sh[0]);                     \n"
+"   double d2 = atof(s[0]);                      \n"
 "}                                               \n"
 "void Append(string[]@ s)                        \n"
 "{                                               \n"
 "   for( uint n = 0; n < s.length(); n++ )       \n"
 "      s[n] += \".\";                            \n"
+"}                                               \n"
+"string[]@ createArray()                         \n"
+"{                                               \n"
+"   return string[](2);                          \n"
 "}                                               \n";
+
+double StringToDouble(std::string &s)
+{
+	return atof(s.c_str());
+}
 
 bool Test()
 {
@@ -41,6 +54,8 @@ bool Test()
 
 	RegisterScriptString(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("double atof(const string &in)",asFUNCTION(StringToDouble),asCALL_CDECL);
 
 	COutStream out;
 

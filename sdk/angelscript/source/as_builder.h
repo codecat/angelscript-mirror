@@ -72,7 +72,7 @@ struct sGlobalVariableDescription
 	asQWORD constantValue;
 };
 
-struct sStructDeclaration
+struct sClassDeclaration
 {
 	asCScriptCode *script;
 	asCScriptNode *node;
@@ -126,9 +126,9 @@ protected:
 	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false);
 	int RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
 	int RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file);
-	int RegisterStruct(asCScriptNode *node, asCScriptCode *file);
+	int RegisterClass(asCScriptNode *node, asCScriptCode *file);
 	int RegisterInterface(asCScriptNode *node, asCScriptCode *file);
-	void CompileStructs();
+	void CompileClasses();
 
 	bool DoesMethodExist(asCObjectType *objType, int methodId);
 
@@ -149,8 +149,8 @@ protected:
 	asCArray<asCScriptCode *>              scripts;
 	asCArray<sFunctionDescription *>       functions;
 	asCArray<sGlobalVariableDescription *> globVariables;
-	asCArray<sStructDeclaration *>         structDeclarations;
-	asCArray<sStructDeclaration *>         interfaceDeclarations;
+	asCArray<sClassDeclaration *>          classDeclarations;
+	asCArray<sClassDeclaration *>          interfaceDeclarations;
 
 	asCScriptEngine *engine;
 	asCModule *module;

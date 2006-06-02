@@ -53,7 +53,7 @@ static const char *script1 =
 "  A[]@[] e(1);                               \n"
 "  @e[0] = @c;                                \n"
 "}                                            \n"
-"struct A                                     \n"
+"class A                                      \n"
 "{                                            \n"
 "  int a;                                     \n"
 "};                                           \n"

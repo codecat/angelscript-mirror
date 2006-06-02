@@ -40,7 +40,7 @@ static const char *script1 =
 "}                                      \n";
 
 static const char *script2 =
-"struct A                               \n"
+"class A                                \n"
 "{ int a; };                            \n"
 "void Test()                            \n"
 "{                                      \n"

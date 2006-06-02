@@ -45,7 +45,7 @@ static const char *script6 =
 "}                     \n";
 
 static const char *script7 =
-"struct mystruct       \n"
+"class mystruct        \n"
 "{                     \n"
 "  mytype var;         \n"
 "};                    \n";
