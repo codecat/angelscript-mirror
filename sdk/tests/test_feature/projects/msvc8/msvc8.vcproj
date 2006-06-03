@@ -319,6 +319,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_interface.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_multiassign.cpp"
 				>
 			</File>

@@ -267,6 +267,7 @@ extern "C"
 	AS_API int              asContext_GetVarCount(asIScriptContext *c, int stackLevel = 0);
 	AS_API const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *length = 0, int stackLevel = 0);
 	AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length = 0, int stackLevel = 0);
+	AS_API int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel = -1);
 	AS_API void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel = 0);
 
 
@@ -481,6 +482,7 @@ public:
 	virtual int GetVarCount(int stackLevel = -1) = 0;
 	virtual const char *GetVarName(int varIndex, int *length = 0, int stackLevel = -1) = 0;
 	virtual const char *GetVarDeclaration(int varIndex, int *length = 0, int stackLevel = -1) = 0;
+	virtual int GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
 	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
 
 protected:

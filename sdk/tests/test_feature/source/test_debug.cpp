@@ -15,6 +15,7 @@ static const char *script1 =
 "void main()                            \n"
 "{                                      \n"
 "  int a = 1;                           \n"
+"  string s = \"text\";                 \n"
 "  Test1();                             \n" // 5
 "  Test2();                             \n" // 6
 "}                                      \n"
@@ -41,9 +42,10 @@ std::string printBuffer;
 static const char *correct =
 "Module1:void main():4,3\n"
 "Module1:void main():5,3\n"
-" Module1:void Test1():10,3\n"
-" Module1:void Test1():11,2\n"
-"Module1:void main():6,3\n"    
+"Module1:void main():6,3\n"
+" Module1:void Test1():11,3\n"
+" Module1:void Test1():12,2\n"
+"Module1:void main():7,3\n"    
 " Module2:void Test2():3,3\n"
 " Module2:void Test2():4,3\n"
 "  Module2:void Test3():8,3\n"
@@ -56,8 +58,9 @@ static const char *correct =
 "sect: TestDebug:2\n"
 "line: 10,3\n"
 "--- call stack ---\n"
-"Module1:void main():7,2\n"
+"Module1:void main():8,2\n"
 " int a = 1\n"
+" string s = 'text'\n"
 "Module2:void Test2():5,2\n"
 " int b = 2\n";
 
@@ -102,10 +105,20 @@ void LineCallback(asIScriptContext *ctx, void *param)
 void PrintVariables(asIScriptContext *ctx, int stackLevel)
 {
 	int numVars = ctx->GetVarCount(stackLevel);
+	asIScriptEngine *engine = ctx->GetEngine();
 	for( int n = 0; n < numVars; n++ )
 	{
-		print(" %s = %d\n", ctx->GetVarDeclaration(n, 0, stackLevel),
-			                *(int*)ctx->GetVarPointer(n, stackLevel));
+		int typeId = ctx->GetVarTypeId(n, stackLevel); 
+		if( typeId == engine->GetTypeIdByDecl(0, "int") )
+		{
+			print(" %s = %d\n", ctx->GetVarDeclaration(n, 0, stackLevel),
+								*(int*)ctx->GetVarPointer(n, stackLevel));
+		}
+		else if( typeId == engine->GetTypeIdByDecl(0, "string") )
+		{
+			print(" %s = '%s'\n", ctx->GetVarDeclaration(n, 0, stackLevel),
+								(*(asCScriptString**)ctx->GetVarPointer(n, stackLevel))->buffer.c_str());
+		}
 	}
 }
 
@@ -140,6 +153,7 @@ bool Test()
 	int number = 0;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptString(engine);
 	engine->RegisterGlobalProperty("int number", &number);
 
 	COutStream out;

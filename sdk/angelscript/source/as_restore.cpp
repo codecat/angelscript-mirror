@@ -397,7 +397,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot)
 	int funcId;
 	funcId = FindFunctionIndex(engine->scriptFunctions[ot->beh.construct]);
 	WRITE_NUM(funcId);
-	size = ot->beh.constructors.GetLength();
+	size = (int)ot->beh.constructors.GetLength();
 	WRITE_NUM(size);
 	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 	{
@@ -406,7 +406,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot)
 	}
 
 	// methods[]
-	size = ot->methods.GetLength();
+	size = (int)ot->methods.GetLength();
 	WRITE_NUM(size);
 	for( n = 0; n < ot->methods.GetLength(); n++ )
 	{

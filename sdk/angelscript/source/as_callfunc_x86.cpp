@@ -310,7 +310,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			popSize++;
 
 			// Check for null pointer
-			obj = (void*)*(args);
+			obj = (void*)*(size_t*)(args);
 			if( obj == 0 )
 			{
 				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -393,7 +393,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		// Push the return pointer on the stack
 		paramSize++;
 		args--;
-		*args = (size_t)retPointer;
+		*(size_t*)args = (size_t)retPointer;
 
 		retQW = CallSTDCallFunctionQWord(args, paramSize<<2, (size_t)func);
 		break;
@@ -525,7 +525,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			if( sysFunc->paramAutoHandles[n] && args[spos] )
 			{
 				// Call the release method on the type
-				engine->CallObjectMethod((void*)args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
+				engine->CallObjectMethod((void*)*(size_t*)&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
 				args[spos] = 0;
 			}
 

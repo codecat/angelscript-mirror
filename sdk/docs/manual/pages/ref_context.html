@@ -69,6 +69,7 @@ public:
   int <a href="#getvarcount">GetVarCount</a>(int stackLevel = -1);
   const char *<a href="#getvarname">GetVarName</a>(int varIndex, int *length = 0, int stackLevel = -1);
   const char *<a href="#getvardecl">GetVarDeclaration</a>(int varIndex, int *length = 0, int stackLevel = -1);
+  int <a href="#getvartype">GetVarTypeId</a>(int varIndex, int stackLevel = -1);
   void *<a href="#getvarptr">GetVarPointer</a>(int varIndex, int stackLevel = -1);
 };
 </pre>
@@ -682,15 +683,16 @@ convention.</p>
 <pre class=border>
 void ClearExceptionCallback();
 </pre>
-	
+
 <h3>Description</h3>
 
 <p>This method removes the exception callback function.</p>
-	
-	
-	
-	
-	
+
+
+
+
+
+
 <a name=getcssize></a>
 <h2>GetCallstackSize</h2> 
 
@@ -863,6 +865,36 @@ const char *GetVarDeclaration(int varIndex, int *length, int stackLevel);
 <h3>Returns</h3>
 
 <p>Returns the pointer to a temporary string with the declaration of the variable.</p>
+
+
+
+
+
+<a name=getvartype></a>
+<h2>GetVarTypeId</h2>
+
+<pre class=border>
+int GetVarTypeId(int varIndex, int stackLevel);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the type id of the variable in the function.</p>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>varIndex</code>&nbsp;</td>
+<td valign=top><p>The index of the variable.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>stackLevel</code>&nbsp;</td>
+<td valign=top><p>The stack level in which the variables are enumerated. -1 is the default, and means the current function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns the type id of the variable.</p>
 
 
 

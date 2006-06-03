@@ -2801,7 +2801,7 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 			popSize += PTR_SIZE;
 
 			// Check for null pointer
-			currentObject = (void*)*(args);
+			currentObject = (void*)*(size_t*)(args);
 			if( currentObject == 0 )
 			{	
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -2934,6 +2934,28 @@ const char *asCContext::GetVarDeclaration(int varIndex, int *length, int stackLe
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
+}
+
+int asCContext::GetVarTypeId(int varIndex, int stackLevel)
+{
+	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
+
+	asCScriptFunction *func;
+	if( stackLevel == -1 ) 
+		func = currentFunction;
+	else
+	{
+		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
+		func = (asCScriptFunction*)s[1];
+	}
+
+	if( func == 0 )
+		return 0;
+
+	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
+		return 0;
+
+	return engine->GetTypeIdFromDataType(func->variables[varIndex]->type);
 }
 
 void *asCContext::GetVarPointer(int varIndex, int stackLevel)

@@ -108,6 +108,7 @@ public:
 	int GetVarCount(int stackLevel);
 	const char *GetVarName(int varIndex, int *length, int stackLevel);
 	const char *GetVarDeclaration(int varIndex, int *length, int stackLevel);
+	int GetVarTypeId(int varIndex, int stackLevel);
 	void *GetVarPointer(int varIndex, int stackLevel);
 
 	int  SetException(const char *descr);
