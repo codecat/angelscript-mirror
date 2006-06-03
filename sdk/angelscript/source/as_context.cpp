@@ -929,7 +929,6 @@ int asCContext::Execute()
 
 void asCContext::PushCallState()
 {
-	// TODO: Pointer size
 	callStack.SetLength(callStack.GetLength() + CALLSTACK_FRAME_SIZE);
 
 	size_t *s = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;

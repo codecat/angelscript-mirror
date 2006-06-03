@@ -909,7 +909,20 @@ const char *GetVarPointer(int varIndex, int stackLevel);
 
 <h3>Description</h3>
 
-<p>Returns a pointer to the variable, so that its value can be read and written. The address is valid until the script function returns.</p>
+<p>Returns a pointer to the variable, so that its value 
+can be read and written. The address is valid until the script 
+function returns.</p>
+
+<p>The address points to the position in the stack where the 
+variable is stored. As primitives are stored directly on the stack, 
+the value of primitive types is gotten by dereferencing the pointer.
+Object variables are not stored directly on the stack, instead the 
+stack holds a pointer to the object. Thus for object types the object
+is gotten by dereferencing the pointer twice.</p>
+
+<p>Note that object variables may not be initalized at all moments,
+thus you must verify if the address returned points to a null pointer,
+before you try to dereference it.</p>
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr>

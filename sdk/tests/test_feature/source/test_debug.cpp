@@ -39,24 +39,41 @@ static const char *script2 =
 
 
 std::string printBuffer;
+
 static const char *correct =
 "Module1:void main():4,3\n"
+" int a = -842150451\n"
+" string s = <null>\n"
 "Module1:void main():5,3\n"
+" int a = 1\n"
+" string s = <null>\n"
 "Module1:void main():6,3\n"
+" int a = 1\n"
+" string s = 'text'\n"
 " Module1:void Test1():11,3\n"
+" int d = 6179008\n"
 " Module1:void Test1():12,2\n"
-"Module1:void main():7,3\n"    
+" int d = 4\n"
+"Module1:void main():7,3\n"
+" int a = 1\n"
+" string s = 'text'\n"
 " Module2:void Test2():3,3\n"
+" int b = 4\n"
 " Module2:void Test2():4,3\n"
+" int b = 2\n"
 "  Module2:void Test3():8,3\n"
-"  Module2:void Test3():9,3\n" 
-"  Module2:void Test3():10,3\n" 
+" int c = -842150451\n"
+"  Module2:void Test3():9,3\n"
+" int c = 3\n"
+"  Module2:void Test3():10,3\n"
+" int c = 3\n"
 "--- exception ---\n"
 "desc: Out of range\n"
 "func: void Test3()\n"
 "modl: Module2\n"
 "sect: TestDebug:2\n"
 "line: 10,3\n"
+" int c = 3\n"
 "--- call stack ---\n"
 "Module1:void main():8,2\n"
 " int a = 1\n"
@@ -88,6 +105,8 @@ void print(const char *format, ...)
 	printBuffer += buf;
 }
 
+void PrintVariables(asIScriptContext *ctx, int stackLevel);
+
 void LineCallback(asIScriptContext *ctx, void *param)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
@@ -100,6 +119,8 @@ void LineCallback(asIScriptContext *ctx, void *param)
 	print("%s:%s:%d,%d\n", engine->GetFunctionModule(funcID),
 	                    engine->GetFunctionDeclaration(funcID),
 	                    line, col);
+
+	PrintVariables(ctx, -1);
 }
 
 void PrintVariables(asIScriptContext *ctx, int stackLevel)
@@ -109,15 +130,18 @@ void PrintVariables(asIScriptContext *ctx, int stackLevel)
 	for( int n = 0; n < numVars; n++ )
 	{
 		int typeId = ctx->GetVarTypeId(n, stackLevel); 
+		void *varPointer = ctx->GetVarPointer(n, stackLevel);
 		if( typeId == engine->GetTypeIdByDecl(0, "int") )
 		{
-			print(" %s = %d\n", ctx->GetVarDeclaration(n, 0, stackLevel),
-								*(int*)ctx->GetVarPointer(n, stackLevel));
+			print(" %s = %d\n", ctx->GetVarDeclaration(n, 0, stackLevel), *(int*)varPointer);
 		}
 		else if( typeId == engine->GetTypeIdByDecl(0, "string") )
 		{
-			print(" %s = '%s'\n", ctx->GetVarDeclaration(n, 0, stackLevel),
-								(*(asCScriptString**)ctx->GetVarPointer(n, stackLevel))->buffer.c_str());
+			asCScriptString *str = *(asCScriptString**)varPointer;
+			if( str )
+				print(" %s = '%s'\n", ctx->GetVarDeclaration(n, 0, stackLevel), str->buffer.c_str());
+			else
+				print(" %s = <null>\n", ctx->GetVarDeclaration(n, 0, stackLevel));
 		}
 	}
 }
@@ -134,6 +158,10 @@ void ExceptionCallback(asIScriptContext *ctx, void *param)
 	int col, line = ctx->GetExceptionLineNumber(&col);
 	print("line: %d,%d\n", line, col);
 
+	// Print the variables in the current function
+	PrintVariables(ctx, -1);
+
+	// Show the call stack with the variables
 	print("--- call stack ---\n");
 	for( int n = 0; n < ctx->GetCallstackSize(); n++ )
 	{
