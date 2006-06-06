@@ -76,6 +76,7 @@ public:
 	int GetSpaceNeededForReturnValue();
 	asCString GetDeclaration(asCScriptEngine *engine);
 	int GetLineNumber(int programPosition);
+	void ComputeSignatureId(asCScriptEngine *engine);
 
 	int                          funcType;
 	asCModule                   *module;
@@ -93,6 +94,7 @@ public:
 	bool                         isReadOnly;
 	asCObjectType *              objectType;
 	asCArray<asSScriptVariable*> variables;
+	int                          signatureId;
 
 	asSSystemFunctionInterface  *sysFuncIntf;
 };

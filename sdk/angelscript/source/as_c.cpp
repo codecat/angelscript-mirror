@@ -164,7 +164,7 @@ int              asContext_GetCallstackLineNumber(asIScriptContext *c, int index
 int              asContext_GetVarCount(asIScriptContext *c, int stackLevel)                                    { return c->GetVarCount(stackLevel); }
 const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *length, int stackLevel)          { return c->GetVarName(varIndex, length, stackLevel); }
 const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length, int stackLevel)   { return c->GetVarDeclaration(varIndex, length, stackLevel); }
-int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel = -1)                { return c->GetVarTypeId(varIndex, int stackLevel); }
+int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel)                     { return c->GetVarTypeId(varIndex, stackLevel); }
 void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel)                    { return c->GetVarPointer(varIndex, stackLevel); }
 
 

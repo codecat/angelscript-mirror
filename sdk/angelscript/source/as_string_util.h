@@ -38,8 +38,6 @@ int    asStringFormat(char *string, size_t maxLength, const char *format, ...);
 double asStringScanDouble(const char *string, size_t *numScanned);
 int    asStringScanInt(const char *string, int base, size_t *numScanned);
 acUINT asStringScanUInt(const char *string, int base, size_t *numScanned);
-acUINT asStringHash(const char *string);
-
 void   asStringCopy(const char *source, size_t srcLength, char *dest, size_t destLength);
 
 #define GETSTRING(name,src,len) \

@@ -1062,13 +1062,8 @@ void asCContext::CallInterfaceMethod(asCModule *mod, asCScriptFunction *func)
 	asCScriptFunction *realFunc = 0;
 	for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
 	{
-		// TODO: This needs to be way faster. Use a hash table for the comparison instead
-		asCScriptFunction *f2 = engine->GetScriptFunction(objType->methods[n]);
-		if( f2->name           == func->name       &&
-			f2->returnType     == func->returnType &&
-			f2->isReadOnly     == func->isReadOnly &&
-			f2->inOutFlags     == func->inOutFlags &&
-			f2->parameterTypes == func->parameterTypes )
+		asCScriptFunction *f2 = engine->scriptFunctions[objType->methods[n]];
+		if( f2->signatureId == func->signatureId )
 		{
 			realFunc = f2;
 			break;

@@ -915,6 +915,8 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	func->funcType = asFUNC_INTERFACE;
 	scriptFunctions[func->id] = func;
 
+	func->ComputeSignatureId(this);
+
 	// If parameter type from other groups are used, add references
 	if( func->returnType.GetObjectType() )
 	{
@@ -3144,7 +3146,9 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 
 	if( scriptFunctions[id] )
 	{
-		delete scriptFunctions[id];
+		asCScriptFunction *func = scriptFunctions[id];
+
+		// Remove the function from the list of script functions
 		if( id == (int)scriptFunctions.GetLength() - 1 )
 		{
 			scriptFunctions.PopLast();
@@ -3154,6 +3158,40 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 			scriptFunctions[id] = 0;
 			freeScriptFunctionIds.PushLast(id);
 		}
+
+		// Is the function used as signature id?
+		if( func->signatureId == id )
+		{
+			// Remove the signature id
+			asUINT n;
+			for( n = 0; n < signatureIds.GetLength(); n++ )
+			{
+				if( signatureIds[n] == func )
+				{
+					signatureIds[n] = signatureIds[signatureIds.GetLength()-1];
+					signatureIds.PopLast();
+				}
+			}
+
+			// Update all functions using the signature id
+			int newSigId = 0;
+			for( n = 0; n < scriptFunctions.GetLength(); n++ )
+			{
+				if( scriptFunctions[n] && scriptFunctions[n]->signatureId == id )
+				{
+					if( newSigId == 0 )
+					{
+						newSigId = scriptFunctions[n]->id;
+						signatureIds.PushLast(scriptFunctions[n]);
+					}
+
+					scriptFunctions[n]->signatureId = newSigId;
+				}
+			}
+		}
+
+		// Delete the script function
+		delete func;
 	}
 }
 

@@ -146,12 +146,12 @@ int main(int argc, char **argv)
 #endif
 
 #ifndef AS_MAX_PORTABILITY
-	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
+	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
+ 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
-	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestParser::Test()            ) goto failed; else printf("-- TestParser passed\n");
 	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");

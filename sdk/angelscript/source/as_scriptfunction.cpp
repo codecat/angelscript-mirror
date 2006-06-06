@@ -54,6 +54,7 @@ asCScriptFunction::asCScriptFunction(asCModule *mod)
 	isReadOnly  = false;
 	stackNeeded = 0;
 	sysFuncIntf = 0;
+	signatureId = 0;
 }
 
 asCScriptFunction::~asCScriptFunction()
@@ -170,6 +171,28 @@ void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stac
 	var->type = type;
 	var->stackOffset = stackOffset;
 	variables.PushLast(var);
+}
+
+void asCScriptFunction::ComputeSignatureId(asCScriptEngine *engine)
+{
+	// This function will compute the signatureId based on the 
+	// function name, return type, and parameter types. The object 
+	// type for methods is not used, so that class methods and  
+	// interface methods match each other.
+	for( asUINT n = 0; n < engine->signatureIds.GetLength(); n++ )
+	{
+		if( name != engine->signatureIds[n]->name ) continue;
+		if( returnType != engine->signatureIds[n]->returnType ) continue;
+		if( isReadOnly != engine->signatureIds[n]->isReadOnly ) continue;
+		if( inOutFlags != engine->signatureIds[n]->inOutFlags ) continue;
+		if( parameterTypes != engine->signatureIds[n]->parameterTypes ) continue;
+
+		signatureId = engine->signatureIds[n]->signatureId;
+		return;
+	}
+
+	signatureId = id;
+	engine->signatureIds.PushLast(this);
 }
 
 END_AS_NAMESPACE

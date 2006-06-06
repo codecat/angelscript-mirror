@@ -527,6 +527,10 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	scriptFunctions.PushLast(func);
 	engine->scriptFunctions[id&0xFFFF] = func;
 
+	// Compute the signature id
+	if( objType )
+		func->ComputeSignatureId(engine);
+
 	return 0;
 }
 

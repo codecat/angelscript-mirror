@@ -107,6 +107,14 @@ SOURCE=..\..\source\test_int.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_intf.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_mthd.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_string.cpp
 # End Source File
 # Begin Source File

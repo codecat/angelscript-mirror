@@ -42,31 +42,31 @@ std::string printBuffer;
 
 static const char *correct =
 "Module1:void main():4,3\n"
-" int a = -842150451\n"
-" string s = <null>\n"
+//" int a = -842150451\n"
+//" string s = <null>\n"
 "Module1:void main():5,3\n"
-" int a = 1\n"
-" string s = <null>\n"
+//" int a = 1\n"
+//" string s = <null>\n"
 "Module1:void main():6,3\n"
-" int a = 1\n"
-" string s = 'text'\n"
+//" int a = 1\n"
+//" string s = 'text'\n"
 " Module1:void Test1():11,3\n"
-" int d = 6179008\n"
+//" int d = 6179008\n"
 " Module1:void Test1():12,2\n"
-" int d = 4\n"
+//" int d = 4\n"
 "Module1:void main():7,3\n"
-" int a = 1\n"
-" string s = 'text'\n"
+//" int a = 1\n"
+//" string s = 'text'\n"
 " Module2:void Test2():3,3\n"
-" int b = 4\n"
+//" int b = 4\n"
 " Module2:void Test2():4,3\n"
-" int b = 2\n"
+//" int b = 2\n"
 "  Module2:void Test3():8,3\n"
-" int c = -842150451\n"
+//" int c = -842150451\n"
 "  Module2:void Test3():9,3\n"
-" int c = 3\n"
+//" int c = 3\n"
 "  Module2:void Test3():10,3\n"
-" int c = 3\n"
+//" int c = 3\n"
 "--- exception ---\n"
 "desc: Out of range\n"
 "func: void Test3()\n"
@@ -101,7 +101,6 @@ void print(const char *format, ...)
 	vsprintf(buf, format, args);
 	va_end(args);
 
-//	printf(buf);
 	printBuffer += buf;
 }
 
@@ -120,7 +119,7 @@ void LineCallback(asIScriptContext *ctx, void *param)
 	                    engine->GetFunctionDeclaration(funcID),
 	                    line, col);
 
-	PrintVariables(ctx, -1);
+//	PrintVariables(ctx, -1);
 }
 
 void PrintVariables(asIScriptContext *ctx, int stackLevel)

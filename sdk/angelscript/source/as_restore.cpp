@@ -225,8 +225,10 @@ int asCRestore::Restore()
 		for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 			ot->beh.constructors[n] = module->scriptFunctions[ot->beh.constructors[n]]->id;
 		for( n = 0; n < ot->methods.GetLength(); n++ )
+		{
 			ot->methods[n] = module->scriptFunctions[ot->methods[n]]->id;
-
+			engine->scriptFunctions[ot->methods[n]]->ComputeSignatureId(engine);
+		}
 	}
 
 	// Fake building

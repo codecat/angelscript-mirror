@@ -254,6 +254,7 @@ public:
 	void DeleteScriptFunction(int id);
 	asCArray<asCScriptFunction *> scriptFunctions;
 	asCArray<int> freeScriptFunctionIds;
+	asCArray<asCScriptFunction *> signatureIds;
 
 	// These resources must be protected for multiple accesses
 	int refCount;
