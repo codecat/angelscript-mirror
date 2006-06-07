@@ -50,6 +50,7 @@ void Test()
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.7.0 rev 36      : 3.365 secs\n");
+	printf("AngelScript 2.7.0 rev 37      : 2.947 secs\n");
 
 	printf("\nBuilding...\n");
 

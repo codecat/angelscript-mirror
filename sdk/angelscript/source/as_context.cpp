@@ -243,13 +243,14 @@ int asCContext::Prepare(int funcID)
 
 		currentFunction = initialFunction;
 	}
+	else if( initialFunction && initialFunction->id == funcID )
+	{
+		currentFunction = initialFunction;
+	}
 	else
 	{
 		// Check engine pointer
-		if( engine == 0 ) return asERROR;
-
-		if( status == tsActive || status == tsSuspended )
-			return asCONTEXT_ACTIVE;
+		assert( engine );
 
 		initialFunction = engine->GetScriptFunction(funcID);
 		currentFunction = initialFunction;
@@ -263,11 +264,12 @@ int asCContext::Prepare(int funcID)
 			module->AddContextRef(); 
 
 		// Determine the minimum stack size needed
+		// TODO: GetSpaceNeededForArguments() should be precomputed
 		int stackSize = currentFunction->GetSpaceNeededForArguments() + currentFunction->stackNeeded + RESERVE_STACK;
 
 		stackSize = stackSize > engine->initialContextStackSize ? stackSize : engine->initialContextStackSize;
 
-		if( stackSize != stackBlockSize )
+		if( stackSize > stackBlockSize )
 		{
 			for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
 				if( stackBlocks[n] )
@@ -282,6 +284,8 @@ int asCContext::Prepare(int funcID)
 
 		// Reserve space for the arguments and return value
 		returnValueSize = currentFunction->GetSpaceNeededForReturnValue();
+
+		// TODO: GetSpaceNeededForArguments() should be precomputed
 		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? PTR_SIZE : 0);
 	}
 
@@ -819,13 +823,8 @@ int asCContext::Execute()
 			asCScriptFunction *realFunc = 0;
 			for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
 			{
-				// TODO: This needs to be way faster. Use a hash table for the comparison instead
-				asCScriptFunction *f2 = engine->GetScriptFunction(objType->methods[n]);
-				if( f2->name           == currentFunction->name       &&
-					f2->returnType     == currentFunction->returnType &&
-					f2->isReadOnly     == currentFunction->isReadOnly &&
-					f2->inOutFlags     == currentFunction->inOutFlags &&
-					f2->parameterTypes == currentFunction->parameterTypes )
+				asCScriptFunction *f2 = engine->scriptFunctions[objType->methods[n]];
+				if( f2->signatureId == currentFunction->signatureId )
 				{
 					realFunc = f2;
 					break;
@@ -1683,7 +1682,7 @@ void asCContext::ExecuteNext()
 			if( objType->flags & asOBJ_SCRIPT_STRUCT )
 			{
 				// Set the allocated memory
-				asCScriptFunction *f = engine->scriptFunctions[func & 0xFFFF];
+				asCScriptFunction *f = engine->scriptFunctions[func];
 
 				asDWORD **a = (asDWORD**)*(size_t*)(l_sp + f->GetSpaceNeededForArguments());
 				if( a ) *a = mem;

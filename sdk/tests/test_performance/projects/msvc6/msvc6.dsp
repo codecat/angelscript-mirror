@@ -103,6 +103,14 @@ SOURCE=..\..\source\test_basic2.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_call.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_call2.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_int.cpp
 # End Source File
 # Begin Source File

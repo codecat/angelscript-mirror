@@ -543,6 +543,7 @@ engine->RegisterObjectBehaviour("object", asBEHAVE_ALLOC, "object &amp;f(uint)",
 
 <p>The function declaration should return a reference to the object type.</p>
 
+<p>NOTE: This behaviour must always be registered as asCALL_CDECL, despite being register as object behaviour. Even when the library is compiled with AS_MAX_PORTABILITY should the behaviour use the calling convention asCALL_CDECL.</p>
 
 
 
@@ -558,6 +559,7 @@ void my_free(void *mem);
 engine->RegisterObjectBehaviour("object", asBEHAVE_FREE, "void f(object &amp;in)", asFUNCTION(my_free), asCALL_CDECL);
 </pre>
 
+<p>NOTE: This behaviour must always be registered as asCALL_CDECL, despite being register as object behaviour. Even when the library is compiled with AS_MAX_PORTABILITY should the behaviour use the calling convention asCALL_CDECL.</p>
 
 
 

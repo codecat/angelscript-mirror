@@ -3,37 +3,28 @@
 //
 
 #include "utils.h"
+#include "../../add_on/scriptstring/scriptstring.h"
 
-namespace TestBasic2
+namespace TestCall2
 {
 
-#define TESTNAME "TestBasic2"
+#define TESTNAME "TestCall2"
 
 static const char *script =
-"void TestBasic2()                      \n"
-"{                                      \n"
-"    float a = 1, b = 2, c = 3;         \n"
-"    int i = 0;                         \n"
-"                                       \n"
-"    for ( i = 0; i < 10000000; i++ )   \n"
-"    {                                  \n"
-"       a = a + b * c;                  \n"
-"       if( a == 0 )                    \n"
-"         a = 100.0f;                   \n"
-"       if( b == 1 )                    \n"
-"         b = 2;                        \n"
-"    }                                  \n"
-"}                                      \n";
+"void TestCall2_A()                                               \n"
+"{                                                                \n"
+"}                                                                \n"
+"void TestCall2_B()                                               \n"
+"{                                                                \n"
+"}                                                                \n";
 
+
+                                         
 void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.4.1              : 2.365 secs\n");
-	printf("AngelScript 2.5.0 WIP 1        : 1.937 secs\n");
-	printf("AngelScript 2.7.0 rev 36       : 1.909 secs\n");
-	printf("AngelScript 2.7.0 rev 37       : 1.941 secs\n");
-
+	printf("AngelScript 2.7.0 rev 37      : 1.469 secs\n");
 
 	printf("\nBuilding...\n");
 
@@ -41,21 +32,33 @@ void Test()
 	COutStream out;
 	engine->SetCommonMessageStream(&out);
 
+	RegisterScriptString(engine);
+
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
 	engine->Build(0);
 
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestBasic2()"));
+	int funcId_A = engine->GetFunctionIDByDecl(0, "void TestCall2_A()");
+	int funcId_B = engine->GetFunctionIDByDecl(0, "void TestCall2_B()");
 
 	printf("Executing AngelScript version...\n");
 
 	double time = GetSystemTimer();
+	int r;
 
-	int r = ctx->Execute();
+	for( int n = 0; n < 5000000; n++ )
+	{
+		ctx->Prepare(funcId_A);
+		r = ctx->Execute();
+		if( r != 0 ) break;
+		ctx->Prepare(funcId_B);
+		r = ctx->Execute();
+		if( r != 0 ) break;
+	}
 
 	time = GetSystemTimer() - time;
 
-	if( r != asEXECUTION_FINISHED )
+	if( r != 0 )
 	{
 		printf("Execution didn't terminate with asEXECUTION_FINISHED\n", TESTNAME);
 		if( r == asEXECUTION_EXCEPTION )
@@ -74,5 +77,10 @@ void Test()
 }
 
 } // namespace
+
+
+
+
+
 
 
