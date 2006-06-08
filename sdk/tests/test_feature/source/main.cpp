@@ -114,6 +114,7 @@ namespace TestPostProcess       { bool Test(); }
 namespace TestShark             { bool Test(); }
 namespace TestParser            { bool Test(); }
 namespace TestInterface         { bool Test(); }
+namespace TestCompiler          { bool Test(); }
 
 
 void DetectMemoryLeaks()
@@ -146,6 +147,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifndef AS_MAX_PORTABILITY
+	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
  	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");

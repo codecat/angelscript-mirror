@@ -158,6 +158,10 @@ SOURCE=..\..\source\test_circularimport.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_compiler.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_condition.cpp
 # End Source File
 # Begin Source File

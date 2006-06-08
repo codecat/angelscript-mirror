@@ -4816,8 +4816,7 @@ void asCCompiler::CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *ct
 		Error(str.AddressOf(), node);
 
 		// Dummy value
-		ctx->bc.InstrDWORD(BC_PshC4, 0);
-		ctx->type.Set(asCDataType::CreatePrimitive(ttInt, true));
+		ctx->type.SetDummy();
 	}
 	else
 	{
@@ -5026,8 +5025,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		// The error was reported by MatchFunctions()
 
 		// Dummy value
-		ctx->bc.InstrDWORD(BC_PshC4, 0);
-		ctx->type.Set(asCDataType::CreatePrimitive(ttInt, true));
+		ctx->type.SetDummy();
 	}
 	else
 	{
