@@ -55,7 +55,7 @@ bool Test()
 	bool fail = false;
 	COutStream out;
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	engine->AddScriptSection(0, "script", script, strlen(script));
  	int r = engine->Build(0);

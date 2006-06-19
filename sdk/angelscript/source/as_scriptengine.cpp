@@ -86,19 +86,6 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	return new asCScriptEngine();
 }
 
-
-asCFunctionStream::asCFunctionStream()
-{
-	func = 0; 
-	param = 0;
-}
-
-void asCFunctionStream::Write(const char *text)
-{
-	if( func )
-		func(text, param);
-}
-
 int asCScriptEngine::SetCommonObjectMemoryFunctions(asALLOCFUNC_t a, asFREEFUNC_t f)
 {
 	global_alloc = a;
@@ -134,7 +121,7 @@ asCScriptEngine::asCScriptEngine()
 	global_alloc = malloc;
 	global_free = free;
 
-	outStream = 0;
+	msgCallback = 0;
 
 	// Reserve function id 0 for no function
 	scriptFunctions.PushLast(0);
@@ -261,20 +248,51 @@ void asCScriptEngine::Reset()
 	}
 }
 
-void asCScriptEngine::SetCommonMessageStream(asIOutputStream *out)
+int asCScriptEngine::SetMessageCallback(asUPtr callback, void *obj, asDWORD callConv)
 {
-	outStream = out;
+	msgCallback = true;
+	msgCallbackObj = obj;
+	bool isObj = false;
+	if( (unsigned)callConv == asCALL_GENERIC )
+	{
+		msgCallback = false;
+		return asNOT_SUPPORTED;
+	}
+	if( (unsigned)callConv >= asCALL_THISCALL )
+	{
+		isObj = true;
+		if( obj == 0 )
+		{
+			msgCallback = false;
+			return asINVALID_ARG;
+		}
+	}
+	int r = DetectCallingConvention(isObj, callback, callConv, &msgCallbackFunc);
+	if( r < 0 ) msgCallback = false;
+	return r;
 }
 
-void asCScriptEngine::SetCommonMessageStream(asOUTPUTFUNC_t outFunc, void *outParam)
+int asCScriptEngine::ClearMessageCallback()
 {
-	outStreamFunc.func = outFunc;
-	outStreamFunc.param = outParam;
+	msgCallback = false;
+	return 0;
+}
 
-	if( outFunc )
-		SetCommonMessageStream(&outStreamFunc);
+void asCScriptEngine::CallMessageCallback(const char *section, int row, int col, int type, const char *message)
+{
+	if( !msgCallback ) return;
+
+	asSMessageInfo msg;
+	msg.section = section;
+	msg.row     = row;
+	msg.col     = col;
+	msg.type    = type;
+	msg.message = message;
+
+	if( msgCallbackFunc.callConv < ICC_THISCALL )
+		CallGlobalFunction(&msg, msgCallbackObj, &msgCallbackFunc, 0);
 	else
-		SetCommonMessageStream((asIOutputStream*)0);
+		CallObjectMethod(msgCallbackObj, &msg, &msgCallbackFunc, 0);
 }
 
 int asCScriptEngine::AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset, bool makeCopy)
@@ -298,15 +316,14 @@ int asCScriptEngine::Build(const char *module)
 {
 	if( configFailed )
 	{
-		if( outStream )
-			outStream->Write(TXT_INVALID_CONFIGURATION);
+		CallMessageCallback("", 0, 0, 0, TXT_INVALID_CONFIGURATION);
 		return asINVALID_CONFIGURATION;
 	}
 
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->Build(outStream);
+	return mod->Build();
 }
 
 int asCScriptEngine::Discard(const char *module)
@@ -767,7 +784,6 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 
 	int r;
 	asCBuilder bld(this, 0);
-	bld.SetOutputStream(outStream);
 	r = bld.ParseDataType(obj, &dt);
 	if( r < 0 )
 		return ConfigError(r);
@@ -840,7 +856,9 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	// Use builder to parse the datatype
 	asCDataType dt;
 	asCBuilder bld(this, 0);
+	bool oldMsgCallback = msgCallback; msgCallback = false;
 	int r = bld.ParseDataType(name, &dt);
+	msgCallback = oldMsgCallback;
 	if( r >= 0 ) return ConfigError(asERROR);
 
 	// Make sure the name is not a reserved keyword
@@ -886,7 +904,6 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 
 	asCDataType dt;
 	asCBuilder bld(this, 0);
-	bld.SetOutputStream(outStream);
 	int r = bld.ParseDataType(intf, &dt);
 	if( r < 0 )
 		return ConfigError(r);
@@ -977,7 +994,9 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	// Use builder to parse the datatype
 	asCDataType dt;
 	asCBuilder bld(this, 0);
+	bool oldMsgCallback = msgCallback; msgCallback = false;
 	int r = bld.ParseDataType(name, &dt);
+	msgCallback = oldMsgCallback;
 
 	// If the builder fails, then the type name 
 	// is new and it should be registered 
@@ -1258,7 +1277,6 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	isPrepared = false;
 	
 	asCBuilder bld(this, 0);
-	bld.SetOutputStream(outStream);
 
 	asSTypeBehaviour *beh;
 	asCDataType type;
@@ -1453,8 +1471,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		if( behaviour >= asBEHAVE_FIRST_DUAL &&
 			behaviour <= asBEHAVE_LAST_DUAL )
 		{
-			if( outStream )
-				outStream->Write(TXT_MUST_BE_GLOBAL_BEHAVIOUR);
+			CallMessageCallback("", 0, 0, 0, TXT_MUST_BE_GLOBAL_BEHAVIOUR);
 		}
 		else
 			assert(false);
@@ -1475,7 +1492,6 @@ int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl
 	isPrepared = false;
 	
 	asCBuilder bld(this, 0);
-	bld.SetOutputStream(outStream);
 
 	if( callConv != asCALL_CDECL && 
 		callConv != asCALL_STDCALL &&
@@ -1584,7 +1600,6 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 
 	int r;
 	asCBuilder bld(this, 0);
-	bld.SetOutputStream(outStream);
 	if( (r = bld.VerifyProperty(0, declaration, name, type)) < 0 )
 		return ConfigError(r);
 
@@ -1713,7 +1728,6 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 
 	asCDataType dt;
 	asCBuilder bld(this, 0);
-	bld.SetOutputStream(outStream);
 	r = bld.ParseDataType(obj, &dt);
 	if( r < 0 )
 		return ConfigError(r);
@@ -1790,7 +1804,6 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
-	bld.SetOutputStream(outStream);
 	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 ) 
 	{
@@ -1890,7 +1903,6 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
-	bld.SetOutputStream(outStream);
 
 	asCDataType dt;
 	r = bld.ParseDataType(datatype, &dt);
@@ -2201,8 +2213,8 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 	{
 		if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
 			*ctx = 0;
-		if( outStream )
-			outStream->Write(TXT_INVALID_CONFIGURATION);
+
+		CallMessageCallback("",0,0,0,TXT_INVALID_CONFIGURATION);
 		return asINVALID_CONFIGURATION;
 	}
 
@@ -2237,8 +2249,6 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 
 	// Compile string function
 	asCBuilder builder(this, mod);
-	builder.SetOutputStream(outStream);
-
 	asCString str = script;
 	str = "void ExecuteString(){\n" + str + "\n;}";
 

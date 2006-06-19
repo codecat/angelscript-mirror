@@ -11,7 +11,7 @@ bool TestException()
 
 	COutStream out;	
 	asIScriptContext *ctx;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	int r = engine->ExecuteString(0, "int a = 0;\na = 10/a;", &ctx); // Throws an exception
 	if( r == asEXECUTION_EXCEPTION )
 	{

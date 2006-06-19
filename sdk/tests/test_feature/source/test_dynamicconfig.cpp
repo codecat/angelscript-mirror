@@ -102,7 +102,7 @@ bool Test()
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
 	r = engine->Build(0);
 	if( r < 0 ) 
@@ -117,7 +117,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	CBufferedOutStream bout;
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
@@ -137,7 +137,7 @@ bool Test()
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) 
 	{
@@ -152,7 +152,7 @@ bool Test()
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 3) : Error   : 'global' is not declared\n"
@@ -178,7 +178,7 @@ bool Test()
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) 
 	{
@@ -193,7 +193,7 @@ bool Test()
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0, false);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 3) : Error   : Identifier 'mytype' is not a data type\n" ) 
@@ -215,7 +215,7 @@ bool Test()
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) 
 	{
@@ -230,7 +230,7 @@ bool Test()
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0, false);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (5, 9) : Error   : No matching operator that takes the type 'string&' found\n" ) 
@@ -257,7 +257,7 @@ bool Test()
 	engine->EndConfigGroup();
 
 	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 		fail = true;
@@ -297,7 +297,7 @@ bool Test()
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) 
 	{
@@ -321,7 +321,7 @@ bool Test()
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) 
 	{
@@ -336,7 +336,7 @@ bool Test()
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0, false);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (3, 3) : Error   : Identifier 'mytype' is not a data type\n" ) 
 	{
@@ -354,7 +354,7 @@ bool Test()
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script8, strlen(script8), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) 
 	{
@@ -369,7 +369,7 @@ bool Test()
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script8, strlen(script8), 0, false);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 11) : Error   : Identifier 'mytype' is not a data type\n"
 								 "TestDynamicConfig (1, 1) : Info    : Compiling void Test(int&in)\n"
@@ -389,7 +389,7 @@ bool Test()
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script9, strlen(script9), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) 
 	{
@@ -404,7 +404,7 @@ bool Test()
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script9, strlen(script9), 0, false);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 4) : Error   : Identifier 'mytype' is not a data type\n" ) 
@@ -428,7 +428,7 @@ bool Test()
 	engine->EndConfigGroup();
 
 	engine->AddScriptSection(0, TESTNAME, script10, strlen(script10), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 		fail = true;

@@ -269,7 +269,7 @@ sTokenWord const tokenWords[] =
 	{"xor"       , ttXor},
 };
 
-int const numTokenWords = sizeof(tokenWords)/sizeof(sTokenWord);
+asUINT const numTokenWords = sizeof(tokenWords)/sizeof(sTokenWord);
 
 char * const whiteSpace = " \t\r\n";
 

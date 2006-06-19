@@ -89,7 +89,7 @@ int asCModule::AddScriptSection(const char *name, const char *code, int codeLeng
 	return asSUCCESS;
 }
 
-int asCModule::Build(asIOutputStream *out)
+int asCModule::Build()
 {
 	assert( contextCount == 0 );
 
@@ -97,8 +97,6 @@ int asCModule::Build(asIOutputStream *out)
 
 	if( !builder )
 		return asSUCCESS;
-
-	builder->SetOutputStream(out);
 
 	// Store the section names
 	for( size_t n = 0; n < builder->scripts.GetLength(); n++ )

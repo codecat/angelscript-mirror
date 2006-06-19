@@ -175,7 +175,7 @@ bool Test()
 	engine->AddScriptSection(0, "3", script3, strlen(script3));	
 	engine->AddScriptSection(0, "4", script4, strlen(script4));	
 	engine->AddScriptSection(0, "5", script5, strlen(script5));
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->Build(0);
 
 	

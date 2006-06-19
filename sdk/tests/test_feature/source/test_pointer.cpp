@@ -90,7 +90,7 @@ bool Test()
 	r = engine->RegisterGlobalProperty("ObjectInstance *ptr", &pnt); assert(r>=0);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	// Function call executed fine when using an object.
 	r = engine->ExecuteString(0, "obj.function(); obj.val = 23;");

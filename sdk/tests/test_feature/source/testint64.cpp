@@ -62,7 +62,7 @@ bool TestInt64()
 
 	COutStream out;
 	engine->AddScriptSection(0, "test", script, strlen(script), 0);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->Build(0);
 
 	int f = engine->GetFunctionIDByDecl(0, "int Main()");

@@ -184,7 +184,7 @@ bool Test()
 	engine->RegisterGlobalProperty("int number", &number);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection("Module1", TESTNAME ":1", script1, strlen(script1), 0);
 	engine->Build("Module1");
 

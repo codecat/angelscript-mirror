@@ -42,17 +42,32 @@
 
 #include "as_config.h"
 #include "as_string.h"
+#include "as_array.h"
 
 BEGIN_AS_NAMESPACE
 
-class asCOutputBuffer : public virtual asIOutputStream
+struct asSSystemFunctionInterface;
+class asCScriptEngine;
+
+class asCOutputBuffer
 {
 public:
-	virtual ~asCOutputBuffer() {}
+	~asCOutputBuffer ();
+	void Clear();
+	void Callback(asSMessageInfo *msg);
+	void Append(asCOutputBuffer &in);
+	void SendToCallback(asCScriptEngine *engine, asSSystemFunctionInterface *func, void *obj);
 
-	void Write(const char *text);
+	struct message_t
+	{
+		asCString section;
+		int row;
+		int col;
+		int type;
+		asCString msg;
+	};
 
-	asCString output;
+	asCArray<message_t*> messages;
 };
 
 END_AS_NAMESPACE

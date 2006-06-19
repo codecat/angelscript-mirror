@@ -33,7 +33,7 @@ bool TestFuncOverload()
 	COutStream out;	
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptString(engine);
 
 	engine->RegisterObjectType("Data", sizeof(void*), asOBJ_PRIMITIVE);

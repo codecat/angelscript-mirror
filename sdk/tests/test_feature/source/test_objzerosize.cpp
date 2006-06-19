@@ -63,7 +63,7 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "Object obj;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 8) : Error   : Data type can't be 'Object'\n" )
 	{
@@ -71,7 +71,7 @@ bool Test()
 		fail = true;
 	}
 
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "Object @obj;");
 	if( r < 0 )
 	{
@@ -101,7 +101,7 @@ bool Test()
 	}
 
 	bout.buffer = "";
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "Object@ obj = @CreateObject(); obj = CreateObject();");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 36) : Error   : There is no copy operator for this type available.\n" )
 	{

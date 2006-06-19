@@ -72,7 +72,7 @@ bool TestConstructor()
 
 	CBufferedOutStream out;	
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
 	engine->Build(0);
 
 	if( out.buffer != "" )

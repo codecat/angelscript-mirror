@@ -26,7 +26,7 @@ bool Test()
 	CBufferedOutStream out;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &out, asCALL_THISCALL);
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
 	engine->Build(0);

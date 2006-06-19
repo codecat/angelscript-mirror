@@ -129,7 +129,7 @@ bool Test()
 	r = engine->RegisterGlobalProperty("obj o", &obj);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->ExecuteString(0, "test(func1(23, 23, \"test\"))");
 
 	engine->ExecuteString(0, "test(o.mthd1(23, 23))");

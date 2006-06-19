@@ -89,7 +89,7 @@ bool Test()
 	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
     r = engine->RegisterObjectType ("Vector3", sizeof (csVector3), asOBJ_CLASS_C); assert( r >= 0 );
     r = engine->RegisterObjectProperty ("Vector3", "float x", offsetof(csVector3, x)); assert( r >= 0 );

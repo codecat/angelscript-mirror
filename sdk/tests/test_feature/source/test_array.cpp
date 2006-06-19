@@ -161,7 +161,7 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
 	r = engine->SetCommonObjectMemoryFunctions(ScriptAlloc, ScriptFree);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
@@ -253,7 +253,7 @@ bool Test()
 	if( ctx ) ctx->Release();
 
 	CBufferedOutStream bout;
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0, false);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;

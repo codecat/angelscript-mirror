@@ -131,7 +131,7 @@ bool Test()
 	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -159,7 +159,7 @@ bool Test()
 
 	// Verify that the compiler doesn't implicitly convert the lvalue in an assignment to a handle
 	CBufferedOutStream bout;
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "refclass @a; a = @a;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 18) : Error   : Can't implicitly convert from 'refclass@' to 'refclass'.\n" ) 
 	{
@@ -187,7 +187,7 @@ bool Test()
 	// Verify that it's not possible to do handle assignment to non object handles
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	bout.buffer = "";
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;

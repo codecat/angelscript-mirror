@@ -73,7 +73,7 @@ public:
 	~asCModule();
 
 	int  AddScriptSection(const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy);
-	int  Build(asIOutputStream *out);
+	int  Build();
 	void Discard();
 
 	int  ResetGlobalVars();

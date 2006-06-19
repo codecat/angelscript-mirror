@@ -56,7 +56,7 @@ bool TestVirtualMethod()
 	r = engine->RegisterGlobalProperty("class1 d", (CBase*)&d);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->ExecuteString(0, "b.CallMe(); d.CallMe();");
 	
 	if( output1 != "CBase: CBase::CallMe()\nCDerived: CDerived::CallMe()\n" )

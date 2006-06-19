@@ -38,12 +38,60 @@
 
 #include "as_config.h"
 #include "as_outputbuffer.h"
+#include "as_scriptengine.h"
 
 BEGIN_AS_NAMESPACE
 
-void asCOutputBuffer::Write(const char *text)
+asCOutputBuffer::~asCOutputBuffer()
 {
-	output += text;
+	Clear();
+}
+
+void asCOutputBuffer::Clear()
+{
+	for( asUINT n = 0; n < messages.GetLength(); n++ )
+	{
+		if( messages[n] ) delete messages[n];
+	}
+	messages.SetLength(0);
+}
+
+void asCOutputBuffer::Callback(asSMessageInfo *msg)
+{
+	message_t *msgInfo = new message_t;
+	msgInfo->section = msg->section;
+	msgInfo->row = msg->row;
+	msgInfo->col = msg->col;
+	msgInfo->type = msg->type;
+	msgInfo->msg = msg->message;
+
+	messages.PushLast(msgInfo);
+}
+
+void asCOutputBuffer::Append(asCOutputBuffer &in)
+{
+	for( asUINT n = 0; n < in.messages.GetLength(); n++ )
+		messages.PushLast(in.messages[n]);
+	in.messages.SetLength(0);
+}
+
+void asCOutputBuffer::SendToCallback(asCScriptEngine *engine, asSSystemFunctionInterface *func, void *obj)
+{
+	for( asUINT n = 0; n < messages.GetLength(); n++ )
+	{
+		asSMessageInfo msg;
+		msg.section = messages[n]->section.AddressOf();
+		msg.row     = messages[n]->row;
+		msg.col     = messages[n]->col;
+		msg.type    = messages[n]->type;
+		msg.message = messages[n]->msg.AddressOf();
+
+		if( func->callConv < ICC_THISCALL )
+			engine->CallGlobalFunction(&msg, obj, func, 0);
+		else
+			engine->CallObjectMethod(obj, &msg, func, 0);
+	}
+	Clear();
 }
 
 END_AS_NAMESPACE

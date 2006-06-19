@@ -99,7 +99,7 @@ bool Test()
 	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	engine->Build(0);
@@ -196,7 +196,7 @@ bool Test()
 	if( printOutput != "39" ) fail = true;
 
 	CBufferedOutStream bout;
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "print(\"\" + '')");
 	if( r != -1 ) fail = true;
 

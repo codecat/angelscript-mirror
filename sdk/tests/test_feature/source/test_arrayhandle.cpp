@@ -60,7 +60,7 @@ bool Test()
 	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -81,7 +81,7 @@ bool Test()
 	if( ctx ) ctx->Release();
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{

@@ -19,7 +19,6 @@ bool TestLongToken()
 	memset(&str[0], 'a', 400);
 	str += " = 1";
 
-	COutStream out;
 	engine->ExecuteString(0, str.c_str());
 
 	engine->Release();

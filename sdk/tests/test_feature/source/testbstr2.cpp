@@ -17,7 +17,6 @@ bool TestBStr2()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString(engine);
 
-	COutStream out;
 	int r = engine->ExecuteString(0, "MissingFunction(\"test\")");
 	if( r >= 0 )
 	{

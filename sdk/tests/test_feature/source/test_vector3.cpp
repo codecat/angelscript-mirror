@@ -48,7 +48,7 @@ bool TestVector3()
 
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script));
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{

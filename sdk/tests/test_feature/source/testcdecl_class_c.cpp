@@ -84,7 +84,7 @@ bool TestCDecl_ClassC()
 
 	c1.a = 0;
 
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	int r = engine->ExecuteString(0, "c1 = _class1();");
 	if( r < 0 )
 	{

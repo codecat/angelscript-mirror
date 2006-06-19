@@ -67,7 +67,6 @@ class asIScriptGeneric;
 class asIScriptAny;
 class asIScriptStruct;
 class asIScriptArray;
-class asIOutputStream;
 class asIBinaryStream;
 
 // 
@@ -120,14 +119,21 @@ union asUPtr
 
 union asUPtr
 {
-	char         dummy[20]; // largest known class method pointer
+	char         dummy[24]; // largest known class method pointer
 	asFUNCTION_t func;
 };
 
 #endif
 
+struct asSMessageInfo
+{
+	const char *section;
+	int         row;
+	int         col;
+	int         type;
+	const char *message;
+};
 
-typedef void (*asOUTPUTFUNC_t)(const char *text, void *param);
 #ifdef AS_C_INTERFACE
 typedef void (*asBINARYREADFUNC_t)(void *ptr, asUINT size, void *param);
 typedef void (*asBINARYWRITEFUNC_t)(const void *ptr, asUINT size, void *param);
@@ -169,8 +175,8 @@ extern "C"
 #ifdef AS_C_INTERFACE
 	AS_API int               asEngine_AddRef(asIScriptEngine *e);
 	AS_API int               asEngine_Release(asIScriptEngine *e);
-	AS_API void              asEngine_SetCommonMessageStream(asIScriptEngine *e, asOUTPUTFUNC_t outFunc, void *outParam = 0);
 	AS_API int               asEngine_SetCommonObjectMemoryFunctions(asIScriptEngine *e, asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+	// TODO: Add MessageCallback
 	AS_API int               asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags);
 	AS_API int               asEngine_RegisterObjectProperty(asIScriptEngine *e, const char *obj, const char *declaration, int byteOffset);
 	AS_API int               asEngine_RegisterObjectMethod(asIScriptEngine *e, const char *obj, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
@@ -325,8 +331,8 @@ public:
 	virtual int Release() = 0;
 
 	// Engine configuration
-	virtual void SetCommonMessageStream(asIOutputStream *out) = 0;
-	virtual void SetCommonMessageStream(asOUTPUTFUNC_t outFunc, void *outParam) = 0;
+	virtual int SetMessageCallback(asUPtr callback, void *obj, asDWORD callConv) = 0;
+	virtual int ClearMessageCallback() = 0;
 	virtual int SetCommonObjectMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc) = 0;
 
 	virtual int RegisterObjectType(const char *name, int byteSize, asDWORD flags) = 0;
@@ -571,15 +577,6 @@ public:
 
 protected:
 	virtual ~asIScriptArray() {}
-};
-
-class asIOutputStream
-{
-public:
-	virtual void Write(const char *text) = 0;
-
-public:
-	virtual ~asIOutputStream() {}
 };
 
 class asIBinaryStream

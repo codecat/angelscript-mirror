@@ -22,7 +22,7 @@ bool Test()
 	CBufferedOutStream bout;
 
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
 	r = engine->Build(0);

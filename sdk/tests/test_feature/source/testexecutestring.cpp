@@ -31,7 +31,7 @@ bool TestExecuteString()
 	g_Obj.b = true;
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->ExecuteString(0, "g_Obj.a = true;\n"
 		                     "g_Obj.b = false;\n");
 

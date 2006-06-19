@@ -965,7 +965,6 @@ int asCContext::GetCallstackFunction(int index)
 
 	size_t *s = callStack.AddressOf() + index*CALLSTACK_FRAME_SIZE;
 	asCScriptFunction *func = (asCScriptFunction*)s[1];
-	asCModule *module = (asCModule*)s[5];
 
 	return func->id;
 }

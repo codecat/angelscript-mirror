@@ -86,7 +86,7 @@ COutStream out;
 asIScriptEngine *ConfigureEngine()
 {
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptString(engine);
 	engine->RegisterGlobalProperty("int number", &number);
 	engine->RegisterObjectType("OBJ", sizeof(int), asOBJ_PRIMITIVE);

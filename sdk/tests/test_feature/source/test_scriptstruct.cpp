@@ -224,7 +224,7 @@ bool Test()
 
 	COutStream out;
 	CBufferedOutStream bout;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
 	r = engine->Build(0);
@@ -241,12 +241,12 @@ bool Test()
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestScriptStruct (3, 4) : Error   : Class properties cannot be declared as const\n" ) fail = true;
 
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 	r = engine->ExecuteString(0, "TestArrayInStruct()");
@@ -260,7 +260,7 @@ bool Test()
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0, false);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != 
 		"TestScriptStruct (2, 7) : Error   : Name conflict. 'A' is a class.\n"
@@ -274,7 +274,7 @@ bool Test()
 		"TestScriptStruct (5, 7) : Error   : Illegal member type\n" ) fail = true;
 
 	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 	r = engine->ExecuteString(0, "TestHandleInStruct()", &ctx);
@@ -302,7 +302,7 @@ bool Test()
 
 	bout.buffer = "";
 	engine->AddScriptSection(0, TESTNAME, script10, strlen(script10), 0, false);
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestScriptStruct (1, 7) : Error   : Illegal member type\n" ) fail = true;
@@ -315,7 +315,7 @@ bool Test()
 
 	engine->AddScriptSection(0, TESTNAME, script12, strlen(script12), 0, false);
 	engine->AddScriptSection(0, TESTNAME, script13, strlen(script13), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 

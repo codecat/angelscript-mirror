@@ -15,20 +15,40 @@
 using namespace AngelScript;
 #endif
 
-class COutStream : public asIOutputStream
+
+class COutStream
 {
 public:
-	void Write(const char *text) { printf(text); }
+	void Callback(asSMessageInfo *msg) 
+	{ 
+		const char *msgType;
+		if( msg->type == 0 ) msgType = "Error  ";
+		if( msg->type == 1 ) msgType = "Warning";
+		if( msg->type == 2 ) msgType = "Info   ";
+
+		printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+	}
 };
 
-class CBufferedOutStream : public asIOutputStream
+class CBufferedOutStream
 {
 public:
-	void Write(const char *text) { buffer += text; }
+	void Callback(asSMessageInfo *msg) 
+	{ 
+		const char *msgType;
+		if( msg->type == 0 ) msgType = "Error  ";
+		if( msg->type == 1 ) msgType = "Warning";
+		if( msg->type == 2 ) msgType = "Info   ";
+
+		char buf[256];
+
+		sprintf(buf, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+
+		buffer += buf;
+	}
 
 	std::string buffer;
 };
-
 
 void PrintException(asIScriptContext *ctx);
 void Assert(bool expr);

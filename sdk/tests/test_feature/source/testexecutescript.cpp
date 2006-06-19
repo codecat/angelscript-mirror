@@ -96,7 +96,7 @@ static int CompileScript()
 	// Create an output stream that will receive information about the build
 	COutStream out;
 
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	int r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -115,7 +115,7 @@ static int CompileScript()
 		return -1;
 	}
 
-	engine->SetCommonMessageStream(0);
+	engine->ClearMessageCallback();
 
 	return 0;
 }

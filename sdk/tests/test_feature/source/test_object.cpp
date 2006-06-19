@@ -169,7 +169,7 @@ bool Test()
 	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -197,7 +197,7 @@ bool Test()
 	}
 
 	CBufferedOutStream bout;
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "Object obj; float r = 0; obj = r;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 32) : Error   : Can't implicitly convert from 'float&' to 'Object&'.\n" )
 	{

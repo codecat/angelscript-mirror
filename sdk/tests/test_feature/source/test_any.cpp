@@ -110,7 +110,7 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_CDECL); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -137,7 +137,7 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_CDECL); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -164,7 +164,7 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_CDECL); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0, false );
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 )
 	{
@@ -187,7 +187,7 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_CDECL); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0, false);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{

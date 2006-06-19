@@ -453,7 +453,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		    args++;
 
 		int spos = 0;
-		for( int n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			if( descr->parameterTypes[n].IsObject() &&
 				!descr->parameterTypes[n].IsReference() &&

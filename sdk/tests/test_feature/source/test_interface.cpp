@@ -81,7 +81,7 @@ bool Test()
 
 	COutStream out;
 	CBufferedOutStream bout;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString(engine);
 
@@ -132,7 +132,7 @@ bool Test()
 	// Try copying an interface variable to another. Shouldn't work.
 	// Test implicit conversion from class to interface that is not being implemented. Should give compiler error
 	// Test implicit conversion from interface to class. Should give compiler error.
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;

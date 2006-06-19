@@ -99,7 +99,7 @@ bool TestGlobalVar()
 	}
 
 	engine->AddScriptSection("a", "script", script2, strlen(script2), 0);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	if( engine->Build("a") < 0 )
 	{
 		printf("%s: build failed\n", TESTNAME);
@@ -173,7 +173,7 @@ bool TestGlobalVar()
 
 	//-----------------------
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "script", script5, strlen(script5), 0, false);
 	r = engine->Build(0); 
 	if( r < 0 )

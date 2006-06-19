@@ -313,7 +313,7 @@ bool Test()
 	engine->RegisterGlobalFunction("void TestUI16ByRef(uint16 &in)", asFUNCTION(TestUI16ByRef), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void TestUI8ByRef(uint8 &in)", asFUNCTION(TestUI8ByRef), asCALL_CDECL);
 
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	d    = 12.3;  engine->ExecuteString(0, "d = double(d);");    if( d  !=   12.3  ) fail = true; 
 	f    = 12.3f; engine->ExecuteString(0, "d = double(f);");    if( d  !=   12.3f ) fail = true; 
 	ui   = 123;   engine->ExecuteString(0, "d = double(ui);");   if( d  !=  123.0  ) fail = true;
@@ -476,7 +476,7 @@ bool Test()
 	f = 0; engine->ExecuteString(0, "f = float(0x3f800000)"); if( f != 1 ) fail = true;
 
 	CBufferedOutStream bout;
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->ExecuteString(0, "i == ui"); 
 	if( bout.buffer != "ExecuteString (1, 3) : Warning : Signed/Unsigned mismatch\n" )
 		fail = true;
@@ -495,7 +495,7 @@ bool Test()
 	r = engine->ExecuteString(0, "TestDoubleByRef(i8); TestFloatByRef(i8); TestIntByRef(i8); TestI16ByRef(i8); TestI8ByRef(i8); TestUIntByRef(i8); TestUI16ByRef(i8); TestUI8ByRef(i8);"); if( r < 0 ) fail = true;
 	r = engine->ExecuteString(0, "TestDoubleByRef(i16); TestFloatByRef(i16); TestIntByRef(i16); TestI16ByRef(i16); TestI8ByRef(i16); TestUIntByRef(i16); TestUI16ByRef(i16); TestUI8ByRef(i16);"); if( r < 0 ) fail = true;
 
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "script", script, strlen(script));
 	engine->Build(0);
 

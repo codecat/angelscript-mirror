@@ -89,8 +89,6 @@ public:
 	asCBuilder(asCScriptEngine *engine, asCModule *module);
 	~asCBuilder();
 
-	void SetOutputStream(asIOutputStream *out);
-
 	int VerifyProperty(asCDataType *dt, const char *decl, asCString &outName, asCDataType &outType);
 
 	int ParseDataType(const char *datatype, asCDataType *result);
@@ -140,8 +138,13 @@ protected:
 	void CompileFunctions();
 	void CompileGlobalVariables();
 
-	asIOutputStream *out;
-	asCString preMessage;
+	struct preMessage_t
+	{
+		bool isSet;
+		asCString message;
+		int r;
+		int c;
+	} preMessage;
 
 	int numErrors;
 	int numWarnings;

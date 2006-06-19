@@ -40,17 +40,6 @@
 BEGIN_AS_NAMESPACE
 #ifdef AS_C_INTERFACE
 
-class asCOutputStreamC : public asIOutputStream
-{
-public:
-	asCOutputStreamC(asOUTPUTFUNC_t func, void *param) {this->func = func; this->param = param;}
-
-	void Write(const char *text) { func(text, param); }
-
-	asOUTPUTFUNC_t func;
-	void          *param;
-};
-
 class asCBinaryStreamC : public asIBinaryStream
 {
 public:
@@ -66,7 +55,6 @@ public:
 
 int               asEngine_AddRef(asIScriptEngine *e)                                                                                                                                { return e->AddRef(); }
 int               asEngine_Release(asIScriptEngine *e)                                                                                                                               { return e->Release(); }
-void              asEngine_SetCommonMessageStream(asIScriptEngine *e, asOUTPUTFUNC_t outFunc, void *outParam)                                                                        { e->SetCommonMessageStream(outFunc, outParam); }
 int               asEngine_SetCommonObjectMemoryFunctions(asIScriptEngine *e, asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc)                                                        { return e->SetCommonObjectMemoryFunctions(allocFunc, freeFunc); }
 int               asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags)                                                                     { return e->RegisterObjectType(name, byteSize, flags); }
 int               asEngine_RegisterObjectProperty(asIScriptEngine *e, const char *obj, const char *declaration, int byteOffset)                                                      { return e->RegisterObjectProperty(obj, declaration, byteOffset); }

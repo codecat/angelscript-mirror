@@ -85,7 +85,7 @@ bool TestSwitch()
 	engine->RegisterGlobalFunction("void add(int)", asFUNCTION(add), asCALL_CDECL);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "switch", script, strlen(script), 0);
 	int r = engine->Build(0);
 	if( r < 0 )

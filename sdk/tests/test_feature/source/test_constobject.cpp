@@ -85,7 +85,7 @@ bool Test()
 	RegisterScriptString(engine);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "script1", script2, strlen(script2), 0, false);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
@@ -101,13 +101,13 @@ bool Test()
 
 	// A member object of a const object is also const
 	bout.buffer = "";
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "c_obj.p.val = 1;");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : Reference is read-only\n" ) fail = true;
 
 	c_obj.val = 0;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "g_obj.p.val = 1;");
 	if( r < 0 ) fail = true;
 	if( c_obj.val != 1 ) fail = true;
@@ -122,7 +122,7 @@ bool Test()
 
 	// Do not allow the script to call object behaviour that is not const on a const object
 	bout.buffer = "";
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "c_obj[0] = 1;");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 10) : Error   : Reference is read-only\n" ) fail = true;
@@ -136,11 +136,11 @@ bool Test()
 
 	// Do not allow the script to pass a const obj@ to a parameter that is not a const obj@
 	engine->AddScriptSection(0, "script", script, strlen(script));
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->Build(0);
 	
 	bout.buffer = "";
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "Test(@c_obj);");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : No matching signatures to 'Test(const obj@const&)'\n" )
@@ -154,7 +154,7 @@ bool Test()
 		fail = true;
 
 	// Allow the script to change the object the handle points to
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "c_obj.next.val = 1;");
 	if( r != 3 ) fail = true;
 
@@ -167,20 +167,20 @@ bool Test()
 	if( r < 0 ) fail = true;
 
 	bout.buffer = "";
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "obj @a; const obj @b; @a = @b;");
 	if( r >= 0 ) fail = true;
 	if(bout.buffer != "ExecuteString (1, 28) : Error   : Can't implicitly convert from 'const obj@&' to 'obj@&'.\n" )
 		fail = true;
 
 	// Allow a non-const handle to be assigned to a const handle
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "obj @a; const obj @b; @b = @a;");
 	if( r < 0 ) fail = true;
 
 	// Do not allow the script to alter properties of a const object
 	bout.buffer = "";
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "c_obj.val = 1;");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 11) : Error   : Reference is read-only\n" )
@@ -194,7 +194,7 @@ bool Test()
 		fail = true;
 
 	// Allow the script to call const methods on a const object
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "c_obj.GetVal();");
 	if( r < 0 ) fail = true;
 

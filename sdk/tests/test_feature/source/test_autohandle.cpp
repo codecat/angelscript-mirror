@@ -53,7 +53,7 @@ bool Test()
 	engine->RegisterObjectBehaviour("object", asBEHAVE_CONSTRUCT, "void f(string@+, string@, double, string@+)", asFUNCTION(TestConstructor), asCALL_CDECL_OBJLAST);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "TestFunc(\"1\", \"2\", 1.0f, \"3\")");
 	if( r != 0 ) fail = true;
 

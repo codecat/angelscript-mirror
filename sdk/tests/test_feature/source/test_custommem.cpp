@@ -58,7 +58,7 @@ bool Test()
 	r = engine->RegisterGlobalFunction("obj retObj2(obj)", asFUNCTION(ReturnObjGeneric), asCALL_GENERIC); assert( r >= 0 );
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->ExecuteString(0, "obj o");
 
 	engine->ExecuteString(0, "retObj()");

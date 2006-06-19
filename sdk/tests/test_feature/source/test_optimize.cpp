@@ -301,7 +301,7 @@ bool TestOptimize()
 	COutStream out;	
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->Build(0);
 
 	int n;

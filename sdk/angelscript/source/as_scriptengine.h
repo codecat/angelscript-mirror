@@ -59,17 +59,6 @@ class asCBuilder;
 class asCContext;
 class asCGCObject;
 
-class asCFunctionStream : public asIOutputStream
-{
-public:
-	asCFunctionStream();
-
-	void Write(const char *text); 
-
-	asOUTPUTFUNC_t func;
-	void          *param;
-};
-
 class asCScriptEngine : public asIScriptEngine
 {
 public:
@@ -81,8 +70,8 @@ public:
 	int Release();
 
 	// Script building
-	void SetCommonMessageStream(asIOutputStream *out);
-    void SetCommonMessageStream(asOUTPUTFUNC_t outFunc, void *outParam);
+	int SetMessageCallback(asUPtr callback, void *obj, asDWORD callConv);
+	int ClearMessageCallback();
 	int SetCommonObjectMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
 	int RegisterObjectType(const char *objname, int byteSize, asDWORD flags);
@@ -199,6 +188,8 @@ public:
 	void CallObjectMethod(void *obj, void *param, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 	void CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 
+	void CallMessageCallback(const char *section, int row, int col, int type, const char *message);
+
 	void ClearUnusedTypes();
 	void RemoveArrayType(asCObjectType *t);
 
@@ -284,8 +275,10 @@ public:
 	asALLOCFUNC_t global_alloc;
 	asFREEFUNC_t  global_free;
 
-	asIOutputStream *outStream;
-	asCFunctionStream outStreamFunc;
+	// Message callback
+	bool msgCallback;
+	asSSystemFunctionInterface msgCallbackFunc;
+	void *msgCallbackObj;
 
 	// Critical sections for threads
 	DECLARECRITICALSECTION(engineCritical);

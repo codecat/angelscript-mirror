@@ -75,7 +75,7 @@ bool TestCondition()
 	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_CDECL);
 
 	COutStream out;	
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "print(a == \"a\" ? \"t\" : \"f\")");
 	if( r < 0 ) 
 	{

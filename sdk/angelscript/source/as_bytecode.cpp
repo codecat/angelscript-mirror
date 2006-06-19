@@ -350,8 +350,6 @@ bool asCByteCode::MatchPattern(cByteInstruction *curr)
 
 cByteInstruction *asCByteCode::OptimizePattern(cByteInstruction *curr)
 {
-	asDWORD op = curr->next->next->op;
-
 	// Delete the operator instruction
 	DeleteInstruction(curr->next->next);
 

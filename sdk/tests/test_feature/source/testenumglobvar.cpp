@@ -32,7 +32,7 @@ bool TestEnumGlobVar()
 	engine->AddScriptSection(0, "test", script, sizeof(script)-1, 0);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->Build(0);
 
 	int count = engine->GetGlobalVarCount(0);

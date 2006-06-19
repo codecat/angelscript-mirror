@@ -13,8 +13,8 @@ bool Test()
 	CBufferedOutStream bout;
 
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream(0); // Make sure this works
-	engine->SetCommonMessageStream(&bout);
+	engine->ClearMessageCallback(); // Make sure this works
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 	r = engine->RegisterGlobalFunction("void func(mytype)", asFUNCTION(0), asCALL_CDECL);
 	if( r >= 0 ) fail = true;

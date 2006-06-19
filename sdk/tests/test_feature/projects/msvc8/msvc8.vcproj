@@ -239,6 +239,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_compiler.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_condition.cpp"
 				>
 			</File>

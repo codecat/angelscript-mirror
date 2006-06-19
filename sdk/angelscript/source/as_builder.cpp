@@ -52,7 +52,6 @@ asCBuilder::asCBuilder(asCScriptEngine *engine, asCModule *module)
 {
 	this->engine = engine;
 	this->module = module;
-	out = 0;
 }
 
 asCBuilder::~asCBuilder()
@@ -121,11 +120,6 @@ asCBuilder::~asCBuilder()
 	}
 }
 
-void asCBuilder::SetOutputStream(asIOutputStream *out)
-{
-	this->out = out;
-}
-
 int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy)
 {
 	asCScriptCode *script = new asCScriptCode;
@@ -141,6 +135,7 @@ int asCBuilder::Build()
 {
 	numErrors = 0;
 	numWarnings = 0;
+	preMessage.isSet = false;
 
 	ParseScripts();
 	CompileClasses();
@@ -157,6 +152,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 {
 	numErrors = 0;
 	numWarnings = 0;
+	preMessage.isSet = false;
 
 	// Add the string to the script code
 	asCScriptCode *script = new asCScriptCode;
@@ -393,7 +389,7 @@ void asCBuilder::CompileFunctions()
 #endif
 		}
 
-		preMessage = "";
+		preMessage.isSet = false;
 	}
 }
 
@@ -401,6 +397,7 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 {
 	numErrors = 0;
 	numWarnings = 0;
+	preMessage.isSet = false;
 
 	asCScriptCode source;
 	source.SetCode("", datatype, true);
@@ -425,6 +422,7 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 {
 	numErrors = 0;
 	numWarnings = 0;
+	preMessage.isSet = false;
 
 	if( dt )
 	{
@@ -530,6 +528,7 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 {
 	numErrors = 0;
 	numWarnings = 0;
+	preMessage.isSet = false;
 
 	asCScriptCode source;
 	source.SetCode(TXT_SYSTEM_FUNCTION, decl, true);
@@ -592,6 +591,7 @@ int asCBuilder::ParseVariableDeclaration(const char *decl, asCProperty *var)
 {
 	numErrors = 0;
 	numWarnings = 0;
+	preMessage.isSet = false;
 
 	asCScriptCode source;
 	source.SetCode(TXT_VARIABLE_DECL, decl, true);
@@ -867,11 +867,17 @@ void asCBuilder::CompileGlobalVariables()
 	// Store state of compilation (errors, warning, output)
 	int currNumErrors = numErrors;
 	int currNumWarnings = numWarnings;
-	asIOutputStream *stream = out;
-	asCOutputBuffer outBuffer;
-	out = &outBuffer;
 
-	asCString finalOutput;
+	// Backup the original message stream
+	bool                       msgCallback     = engine->msgCallback;
+	asSSystemFunctionInterface msgCallbackFunc = engine->msgCallbackFunc;
+	void                      *msgCallbackObj  = engine->msgCallbackObj;
+
+	// Set the new temporary message stream
+	asCOutputBuffer outBuffer;
+	engine->SetMessageCallback(asMETHOD(asCOutputBuffer, Callback), &outBuffer, asCALL_THISCALL);	
+
+	asCOutputBuffer finalOutput;
 
 	while( compileSucceeded )
 	{
@@ -881,13 +887,13 @@ void asCBuilder::CompileGlobalVariables()
 		int accumWarnings = 0;
 
 		// Restore state of compilation
-		finalOutput = "";
+		finalOutput.Clear();
 
 		for( asUINT n = 0; n < globVariables.GetLength(); n++ )
 		{
 			numWarnings = 0;
 			numErrors = 0;
-			outBuffer.output = "";
+			outBuffer.Clear();
 			asCByteCode init;
 
 			sGlobalVariableDescription *gvar = globVariables[n];
@@ -920,7 +926,8 @@ void asCBuilder::CompileGlobalVariables()
 					if( numWarnings )
 					{
 						currNumWarnings += numWarnings;
-						stream->Write(outBuffer.output.AddressOf());
+						if( msgCallback )
+							outBuffer.SendToCallback(engine, &msgCallbackFunc, msgCallbackObj);
 					}
 
 					// Add compiled byte code to the final init and exit functions
@@ -929,12 +936,12 @@ void asCBuilder::CompileGlobalVariables()
 				else
 				{
 					// Add output to final output
-					finalOutput += outBuffer.output;
+					finalOutput.Append(outBuffer);
 					accumErrors += numErrors;
 					accumWarnings += numWarnings;
 				}
 
-				preMessage = "";
+				preMessage.isSet = false;
 			}
 		}
 
@@ -943,15 +950,18 @@ void asCBuilder::CompileGlobalVariables()
 			// Add errors and warnings to total build
 			currNumWarnings += accumWarnings;
 			currNumErrors += accumErrors;
-
-			if( stream && finalOutput != "" ) stream->Write(finalOutput.AddressOf());
+			if( msgCallback )
+				finalOutput.SendToCallback(engine, &msgCallbackFunc, msgCallbackObj);
 		}
 	}
 
 	// Restore states
-	out = stream;
+	engine->msgCallback     = msgCallback;
+	engine->msgCallbackFunc = msgCallbackFunc;
+	engine->msgCallbackObj  = msgCallbackObj;
+
 	numWarnings = currNumWarnings;
-	numErrors = currNumErrors;
+	numErrors   = currNumErrors;
 
 	// Register init code and clean up code
 	finalInit.Ret(0);
@@ -1585,15 +1595,18 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 
 void asCBuilder::WriteInfo(const char *scriptname, const char *message, int r, int c, bool pre)
 {
-	if( out )
+	// Need to store the pre message in a structure
+	if( pre )
 	{
-		asCString str;
-		str.Format("%s (%d, %d) : %s : %s\n", scriptname, r, c, TXT_INFO, message);
-
-		if( pre )
-			preMessage = str;
-		else
-			out->Write(str.AddressOf());
+		preMessage.isSet = true;
+		preMessage.c = c;
+		preMessage.r = r;
+		preMessage.message = message;
+	}
+	else
+	{
+		preMessage.isSet = false;
+		engine->CallMessageCallback(scriptname, r, c, 2, message);
 	}
 }
 
@@ -1601,38 +1614,22 @@ void asCBuilder::WriteError(const char *scriptname, const char *message, int r, 
 {
 	numErrors++;
 
-	if( out )
-	{
-		if( preMessage != "" )
-		{
-			out->Write(preMessage.AddressOf());
-			preMessage = "";
-		}
+	// Need to pass the preMessage first
+	if( preMessage.isSet )
+		WriteInfo(scriptname, preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
 
-		asCString str;
-		str.Format("%s (%d, %d) : %s : %s\n", scriptname, r, c, TXT_ERROR, message);
-
-		out->Write(str.AddressOf());
-	}
+	engine->CallMessageCallback(scriptname, r, c, 0, message);
 }
 
 void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r, int c)
 {
 	numWarnings++;
 
-	if( out )
-	{
-		if( preMessage != "" )
-		{
-			out->Write(preMessage.AddressOf());
-			preMessage = "";
-		}
+	// Need to pass the preMessage first
+	if( preMessage.isSet )
+		WriteInfo(scriptname, preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
 
-		asCString str;
-		str.Format("%s (%d, %d) : %s : %s\n", scriptname, r, c, TXT_WARNING, message);
-
-		out->Write(str.AddressOf());
-	}
+	engine->CallMessageCallback(scriptname, r, c, 1, message);
 }
 
 

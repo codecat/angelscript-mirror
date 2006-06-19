@@ -19,13 +19,14 @@ bool Test()
 	bool fail = false;
 	int r;
 	CBufferedOutStream bout;
+	COutStream out;
 
 	float val;
 
 	//------------
 	// Test global properties
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream((asOUTPUTFUNC_t)printf, 0);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	r = engine->BeginConfigGroup("group"); assert( r >= 0 );
 	r = engine->RegisterGlobalProperty("float val", &val); assert( r >= 0 );
@@ -37,7 +38,7 @@ bool Test()
 		fail = true;
 
 	// Make sure the default access can be turned off
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->SetConfigGroupModuleAccess("group", asALL_MODULES, false); assert( r >= 0 );
 
 	r = engine->ExecuteString(0, "val = 1.0f");
@@ -50,7 +51,7 @@ bool Test()
 		fail = true;
 
 	// Make sure the default access can be overridden
-	engine->SetCommonMessageStream((asOUTPUTFUNC_t)printf, 0);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->SetConfigGroupModuleAccess("group", 0, true); assert( r >= 0 );
 
 	r = engine->ExecuteString(0, "val = 1.0f");
@@ -62,7 +63,7 @@ bool Test()
 	//----------
 	// Test global functions
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream((asOUTPUTFUNC_t)printf, 0);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	r = engine->BeginConfigGroup("group"); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void Func()", asFUNCTION(Func), asCALL_CDECL); assert( r >= 0 );
@@ -70,7 +71,7 @@ bool Test()
 
 	r = engine->SetConfigGroupModuleAccess("group", "m", false); assert( r >= 0 );
 
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
 	r = engine->ExecuteString("m", "Func()");
 	if( r >= 0 )
@@ -81,7 +82,7 @@ bool Test()
 
 	r = engine->SetConfigGroupModuleAccess("group", "m", true); assert( r >= 0 );
 
-	engine->SetCommonMessageStream((asOUTPUTFUNC_t)printf, 0);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString("m", "Func()");
 	if( r < 0 )
 		fail = true;
@@ -91,7 +92,7 @@ bool Test()
 	//------------
 	// Test object types
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream((asOUTPUTFUNC_t)printf, 0);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	r = engine->BeginConfigGroup("group"); assert( r >= 0 );
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
@@ -99,7 +100,7 @@ bool Test()
 
 	r = engine->SetConfigGroupModuleAccess("group", 0, false); assert( r >= 0 );
 
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
 	r = engine->ExecuteString(0, "mytype a");
 	if( r >= 0 )
@@ -113,7 +114,7 @@ bool Test()
 	//------------
 	// Test global operators
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetCommonMessageStream((asOUTPUTFUNC_t)printf, 0);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
 
@@ -123,7 +124,7 @@ bool Test()
 
 	r = engine->SetConfigGroupModuleAccess("group", 0, false); assert( r >= 0 );
 
-	engine->SetCommonMessageStream(&bout);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
 	r = engine->ExecuteString(0, "mytype a; a + a;");
 	if( r >= 0 )
