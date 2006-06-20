@@ -334,7 +334,7 @@
 #if defined(PPC) || defined(_GC)
 	#define AS_ALIGN				// align datastructures
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
-	#define AS_PPC
+//	#define AS_PPC					// not working yet
 	#define AS_NO_MEMORY_H
 #endif
 
@@ -348,14 +348,11 @@
     #ifndef AS_64BIT_PTR
         #define AS_64BIT_PTR
     #endif
-//    #ifndef AS_X86_64
-//        #define AS_X86_64
-//    #endif
 #endif
 
 // If there are no current support for native calling 
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_X86_64) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC))
+#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC))
     #ifndef AS_MAX_PORTABILITY
         #define AS_MAX_PORTABILITY
     #endif
