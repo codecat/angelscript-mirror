@@ -257,10 +257,6 @@ void asCModule::Reset()
 		classTypes[n]->refCount--;
 	classTypes.SetLength(0);
 
-	for( n = 0; n < scriptArrayTypes.GetLength(); n++ )
-		scriptArrayTypes[n]->refCount--;
-	scriptArrayTypes.SetLength(0);
-
 	// Release all used object types
 	for( n = 0; n < usedTypes.GetLength(); n++ )
 		usedTypes[n]->refCount--;
@@ -523,7 +519,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	func->objectType = objType;
 
 	scriptFunctions.PushLast(func);
-	engine->scriptFunctions[id&0xFFFF] = func;
+	engine->SetScriptFunction(func);
 
 	// Compute the signature id
 	if( objType )

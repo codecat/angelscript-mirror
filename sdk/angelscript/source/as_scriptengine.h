@@ -70,7 +70,7 @@ public:
 	int Release();
 
 	// Script building
-	int SetMessageCallback(asUPtr callback, void *obj, asDWORD callConv);
+	int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv);
 	int ClearMessageCallback();
 	int SetCommonObjectMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
@@ -212,6 +212,8 @@ public:
 
 	asCScriptFunction *GetScriptFunction(int funcID);
 
+	bool IsTypeUsedInParams(asCObjectType *ot);
+
 	int GCInternal();
 
 	int initialContextStackSize;
@@ -242,6 +244,7 @@ public:
 	int GetMethodIDByDecl(asCObjectType *ot, const char *decl, asCModule *mod);
 
 	int GetNextScriptFunctionId();
+	void SetScriptFunction(asCScriptFunction *func);
 	void DeleteScriptFunction(int id);
 	asCArray<asCScriptFunction *> scriptFunctions;
 	asCArray<int> freeScriptFunctionIds;

@@ -248,7 +248,7 @@ void asCScriptEngine::Reset()
 	}
 }
 
-int asCScriptEngine::SetMessageCallback(asUPtr callback, void *obj, asDWORD callConv)
+int asCScriptEngine::SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv)
 {
 	msgCallback = true;
 	msgCallbackObj = obj;
@@ -356,32 +356,62 @@ int asCScriptEngine::Discard(const char *module)
 
 void asCScriptEngine::ClearUnusedTypes()
 {
-	asUINT n;
-	for( n = 0; n < classTypes.GetLength(); n++ )
+	for(;;)
 	{
-		if( classTypes[n]->refCount == 0 )
+		asUINT n;
+		for( n = 0; n < classTypes.GetLength(); n++ )
 		{
-			RemoveFromTypeIdMap(classTypes[n]);
-			delete classTypes[n];
+			if( classTypes[n]->refCount == 0 )
+			{
+				RemoveFromTypeIdMap(classTypes[n]);
+				delete classTypes[n];
 
-			if( n == classTypes.GetLength() - 1 )
-				classTypes.PopLast();
-			else
-				classTypes[n] = classTypes.PopLast();
+				if( n == classTypes.GetLength() - 1 )
+					classTypes.PopLast();
+				else
+					classTypes[n] = classTypes.PopLast();
 
-			n--;
+				n--;
+			}
+		}
+
+		bool didClearArrayType = false;
+		for( n = 0; n < scriptArrayTypes.GetLength(); n++ )
+		{
+			if( scriptArrayTypes[n] && 
+				scriptArrayTypes[n]->refCount == 0 &&
+				!IsTypeUsedInParams(scriptArrayTypes[n]) )
+			{
+				RemoveArrayType(scriptArrayTypes[n]);
+				didClearArrayType = true;
+				n--;
+			}
+		}
+
+		if( didClearArrayType == false )
+			break;
+	}
+}
+
+bool asCScriptEngine::IsTypeUsedInParams(asCObjectType *ot)
+{
+	for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
+	{
+		asCScriptFunction *func = scriptFunctions[n];
+		if( func )
+		{
+			if( func->returnType.GetObjectType() == ot ) 
+				return true;
+
+			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
+			{
+				if( func->parameterTypes[p].GetObjectType() == ot ) 
+					return true;
+			}
 		}
 	}
 
-	for( n = 0; n < scriptArrayTypes.GetLength(); n++ )
-	{
-		if( scriptArrayTypes[n] && scriptArrayTypes[n]->refCount == 0 )
-		{
-			RemoveArrayType(scriptArrayTypes[n]);
-
-			n--;
-		}
-	}
+	return false;
 }
 
 int asCScriptEngine::ResetModule(const char *module)
@@ -930,7 +960,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 
 	func->id = GetNextScriptFunctionId();
 	func->funcType = asFUNC_INTERFACE;
-	scriptFunctions[func->id] = func;
+	SetScriptFunction(func);
 
 	func->ComputeSignatureId(this);
 
@@ -1573,7 +1603,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 		f->inOutFlags.PushLast(func.inOutFlags[n]);
 	}
 
-	scriptFunctions[id] = f;
+	SetScriptFunction(f);
 
 	// If parameter type from other groups are used, add references
 	if( f->returnType.GetObjectType() )
@@ -1702,7 +1732,7 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 	}
 
 	func->id = GetNextScriptFunctionId();
-	scriptFunctions[func->id] = func;
+	SetScriptFunction(func);
 
 	return 0;
 }
@@ -1761,7 +1791,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	}
 
 	func->id = GetNextScriptFunctionId();
-	scriptFunctions[func->id] = func;
+	SetScriptFunction(func);
 
 	// If parameter type from other groups are used, add references
 	if( func->returnType.GetObjectType() )
@@ -1820,7 +1850,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	}
 
 	func->id = GetNextScriptFunctionId();
-	scriptFunctions[func->id] = func;
+	SetScriptFunction(func);
 
 	currentGroup->scriptFunctions.PushLast(func);
 
@@ -1918,7 +1948,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 	parm1.MakeReference(true);
 	func->parameterTypes.PushLast(parm1);
 	func->id = GetNextScriptFunctionId();
-	scriptFunctions[func->id] = func;
+	SetScriptFunction(func);
 
 	stringFactory = func;
 
@@ -3146,6 +3176,11 @@ int asCScriptEngine::GetNextScriptFunctionId()
 	int id = (int)scriptFunctions.GetLength();
 	scriptFunctions.PushLast(0);
 	return id;
+}
+
+void asCScriptEngine::SetScriptFunction(asCScriptFunction *func)
+{
+	scriptFunctions[func->id] = func;
 }
 
 void asCScriptEngine::DeleteScriptFunction(int id)

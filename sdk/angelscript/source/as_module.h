@@ -168,7 +168,6 @@ public:
 	asCArray<asCString*> stringConstants;
 
 	asCArray<asCObjectType*> classTypes;
-	asCArray<asCObjectType*> scriptArrayTypes;
 
 	// Reference to all used types
 	asCArray<asCObjectType*> usedTypes;

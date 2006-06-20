@@ -147,10 +147,11 @@ int main(int argc, char **argv)
 #endif
 
 #ifndef AS_MAX_PORTABILITY
-	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
-	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
  	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
+	if( TestDiscard::Test()           ) goto failed; else printf("-- TestDiscard passed\n");
+	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
+	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
@@ -238,7 +239,6 @@ int main(int argc, char **argv)
 	if( TestVirtualInheritance()      ) goto failed; else printf("-- TestVirtualInheritance passed\n");
 	if( TestOutput::Test()            ) goto failed; else printf("-- TestOutput passed\n");
 	if( Test2Func::Test()             ) goto failed; else printf("-- Test2Func passed\n");
-	if( TestDiscard::Test()           ) goto failed; else printf("-- TestDiscard passed\n");
 	if( TestCircularImport::Test()    ) goto failed; else printf("-- TestCircularImport passed\n");
 	if( TestNeverVisited()            ) goto failed; else printf("-- TestNeverVisited passed\n");
 	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");

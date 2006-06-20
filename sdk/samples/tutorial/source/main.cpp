@@ -25,6 +25,18 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+void MessageCallback(const asSMessageInfo *msg, void *param)
+{
+	const char *type = "ERR ";
+	if( msg->type == asMSGTYPE_WARNING ) 
+		type = "WARN";
+	else if( msg->type == asMSGTYPE_INFORMATION ) 
+		type = "INFO";
+
+	printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
+}
+
+
 int RunApplication()
 {
 	int r;
@@ -37,11 +49,8 @@ int RunApplication()
 		return -1;
 	}
 
-	// The script compiler will write any compiler messages with printf().
-	// If we wish to do something else with the messages, we might write 
-	// another function, or if preferred, derive a class from the 
-	// asIOutputStream interface, and then pass a pointer to that instead.
-	engine->SetCommonMessageStream((asOUTPUTFUNC_t)printf, 0);
+	// The script compiler will write any compiler messages to the callback.
+	engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 	// Configure the script engine with all the functions, 
 	// and variables that the script should be able to use.
@@ -128,7 +137,7 @@ int RunApplication()
 			// Write some information about the script exception
 			int funcID = ctx->GetExceptionFunction();
 			cout << "func: " << engine->GetFunctionDeclaration(funcID) << endl;
-			cout << "modl: " << engine->GetModuleNameFromIndex(asMODULEIDX(funcID)) << endl;
+			cout << "modl: " << engine->GetFunctionModule(funcID) << endl;
 			cout << "sect: " << engine->GetFunctionSection(funcID) << endl;
 			cout << "line: " << ctx->GetExceptionLineNumber() << endl;
 			cout << "desc: " << ctx->GetExceptionString() << endl;

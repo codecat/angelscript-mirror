@@ -38,11 +38,18 @@ public:
 	list<asIScriptContext*>::iterator currentCtx;
 } contextManager;
 
-class asCOutputStream : public asIOutputStream
+
+
+void MessageCallback(const asSMessageInfo *msg, void *param)
 {
-public:
-	void Write(const char *text) { printf(text); }
-};
+	const char *type = "ERR ";
+	if( msg->type == asMSGTYPE_WARNING ) 
+		type = "WARN";
+	else if( msg->type == asMSGTYPE_INFORMATION ) 
+		type = "INFO";
+
+	printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
+}
 
 
 asIScriptEngine *engine = 0;
@@ -65,9 +72,8 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	// The script compiler will send any compiler messages to the outstream
-	asCOutputStream out;
-	engine->SetCommonMessageStream(&out);
+	// The script compiler will send any compiler messages to the callback function
+	engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 	// Configure the script engine with all the functions, 
 	// and variables that the script should be able to use.
@@ -129,7 +135,7 @@ int CompileScript(asIScriptEngine *engine)
 	int r;
 
 	const char *script = 
-	"struct ThreadArg                           \n"
+	"class ThreadArg                            \n"
 	"{                                          \n"
 	"  int count;                               \n"
 	"  string str;                              \n"
@@ -194,7 +200,7 @@ void ScriptCreateCoRoutine(string &func, asIScriptAny *arg)
 	if( ctx )
 	{
 		asIScriptEngine *engine = ctx->GetEngine();
-		string mod = engine->GetModuleNameFromIndex(ctx->GetCurrentFunction()>>16);
+		string mod = engine->GetFunctionModule(ctx->GetCurrentFunction());
 
 		// We need to find the function that will be created as the co-routine
 		string decl = "void " + func + "(any &in)"; 

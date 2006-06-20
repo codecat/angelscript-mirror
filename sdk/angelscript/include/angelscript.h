@@ -176,7 +176,8 @@ extern "C"
 	AS_API int               asEngine_AddRef(asIScriptEngine *e);
 	AS_API int               asEngine_Release(asIScriptEngine *e);
 	AS_API int               asEngine_SetCommonObjectMemoryFunctions(asIScriptEngine *e, asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
-	// TODO: Add MessageCallback
+	AS_API int               asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv);
+	AS_API int               asEngine_ClearMessageCallback(asIScriptEngine *e);
 	AS_API int               asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags);
 	AS_API int               asEngine_RegisterObjectProperty(asIScriptEngine *e, const char *obj, const char *declaration, int byteOffset);
 	AS_API int               asEngine_RegisterObjectMethod(asIScriptEngine *e, const char *obj, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
@@ -331,8 +332,9 @@ public:
 	virtual int Release() = 0;
 
 	// Engine configuration
-	virtual int SetMessageCallback(asUPtr callback, void *obj, asDWORD callConv) = 0;
+	virtual int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv) = 0;
 	virtual int ClearMessageCallback() = 0;
+
 	virtual int SetCommonObjectMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc) = 0;
 
 	virtual int RegisterObjectType(const char *name, int byteSize, asDWORD flags) = 0;
@@ -703,6 +705,12 @@ const int asEXECUTION_ERROR         = 7;
 
 const asDWORD asEXECSTRING_ONLY_PREPARE	  = 1;
 const asDWORD asEXECSTRING_USE_MY_CONTEXT = 2;
+
+// Message types
+
+const int asMSGTYPE_ERROR       = 0;
+const int asMSGTYPE_WARNING     = 1;
+const int asMSGTYPE_INFORMATION = 2;
 
 // Prepare flags
 

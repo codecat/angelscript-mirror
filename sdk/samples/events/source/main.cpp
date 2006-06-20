@@ -13,11 +13,16 @@ int  CompileScript(asIScriptEngine *engine);
 void PrintString(string &str);
 void LineCallback(asIScriptContext *ctx, DWORD *timeOut);
 
-class asCOutputStream : public asIOutputStream
+void MessageCallback(const asSMessageInfo *msg, void *param)
 {
-public:
-	void Write(const char *text) { printf(text); }
-};
+	const char *type = "ERR ";
+	if( msg->type == asMSGTYPE_WARNING ) 
+		type = "WARN";
+	else if( msg->type == asMSGTYPE_INFORMATION ) 
+		type = "INFO";
+
+	printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
+}
 
 int main(int argc, char **argv)
 {
@@ -31,9 +36,8 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	// The script compiler will send any compiler messages to the outstream
-	asCOutputStream out;
-	engine->SetCommonMessageStream(&out);
+	// The script compiler will send any compiler messages to the callback
+	engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 	// Configure the script engine with all the functions, 
 	// and variables that the script should be able to use.

@@ -21,8 +21,8 @@ public:
   int <a href="#release">Release</a>();
 
   <font color=green>// Engine configuration</font>
-  void <a href="#msgstream">SetCommonMessageStream</a>(asIOutputStream *out);
-  void <a href="#msgstream">SetCommonMessageStream</a>(asOUTPUTFUNC_t outFunc, void *outParam);
+  int <a href="#setmsgcall">SetMessageCallback</a>(const asUPtr &amp;callback, void *obj, asDWORD callConv);
+  int <a href="#clrmsgcall">ClearMessageCallback</a>();
   
   int <a href="#memfunc">SetCommonObjectMemoryFunctions</a>(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
   
@@ -172,43 +172,106 @@ object references successfully.</p>
 
 
 
-<a name=msgstream></a>
-<h2>SetCommonMessageStream</h2>
+<a name=setmsgcall></a>
+<h2>SetMessageCallback</h2>
 
 <pre class=border>
-void SetCommonMessageStream(asIOutputStream *out);
-void SetCommonMessageStream(asOUTPUTFUNC_t outFunc, void *outParam);
+int SetMessageCallback(const asUPtr &amp;callback, void *obj, asDWORD callConv);
 </pre>
 
 <h3>Description</h3>
 
-<p>There are two possible ways of receiving the compiler messages, either 
-through a C++ interface, or a simpler C callback function.</p>
+<p>This method is used to set a callback function that will receive all the 
+messages from the script engine, such as configuration errors, and compiler
+messages.</p>
 
-<p>The outFunc must have the signature <code>void func(const char *msgText, 
-void *outParam)</code>, and use the cdecl calling convention. printf() is a 
-perfect candidate for this.</p>
+<p>The callback function can be either a global function or a class method. 
+Example:</p>
 
-<p>Since the pointer to this message stream will be held by the engine until 
+<pre class=border>
+<font color=green>// Global function</font>
+void MessageCallback(const asSMessageInfo *msg, void *param);
+
+<font color=green>// Registering the global function as callback</font>
+void *param;
+engine->SetMessageCallback(asFUNCTION(MessageCallback), param, asCALL_CDECL);
+</pre>
+
+<pre class=border>
+<font color=green>// Class method</font>
+void MyClass::MessageCallback(const asSMessageInfo *msg);
+
+<font color=green>// Registering the class method as callback</font>
+MyClass obj;
+engine->SetMessageCallback(asMETHOD(MyClass,MessageCallback), obj, asCALL_THISCALL);
+</pre>
+
+<p>Since the pointer to this callback function will be held by the engine until 
 the the next call to the method or the engine is released it is important 
 that the application makes sure that it isn't destroyed before its time.</p>
+
+<p>The first parameter sent to the callback is a structure with the following layout:</p>
+
+<pre class=border>
+struct asSMessageInfo
+{
+  const char *section;
+  int         row;
+  int         col;
+  int         type;
+  const char *message;
+};
+</pre>
+
+<p>
+The string buffers pointed to by the structure are temporary and shouldn't be 
+stored for later use. The type of the message is one of asMSGTYPE_ERROR, 
+asMSGTYPE_WARNING, or asMSGTYPE_INFORMATION.
+</p>
 
 <h3>Parameters</h3>
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr>
-<td valign=top width=100><code>out</code>&nbsp;</td>
-<td valign=top><p>A pointer to an output stream.</p></td>
+<td valign=top width=100><code>callback</code>&nbsp;</td>
+<td valign=top><p>A pointer to the callback function/method.</p></td>
 </tr>
 <tr>
-<td valign=top width=100><code>outFunc</code>&nbsp;</td>
-<td valign=top><p>The function pointer.</p></td>
+<td valign=top width=100><code>obj</code>&nbsp;</td>
+<td valign=top><p>A pointer to an object sent as the second parameter for global functions, or used as the object for class methods.</p></td>
 </tr>
 <tr>
-<td valign=top width=100><code>outParam</code>&nbsp;</td>
-<td valign=top><p>An extra parameter that will be passed together with the message text.</p></td>
+<td valign=top width=100><code>callConv</code>&nbsp;</td>
+<td valign=top><p>The calling convention for the callback function.</p></td>
 </tr>
 </table>
+
+<h3>Returns</h3>
+
+<p>A negative value on an error.</p>
+
+
+
+
+
+
+<a name=clrmsgcall></a>
+<h2>ClearMessageCallback</h2>
+
+<pre class=border>
+int ClearMessageCallback();
+</pre>
+
+<h3>Description</h3>
+
+<p>This method is used to clear the message callback.</p>
+
+<h3>Returns</h3>
+
+<p>A negative value on an error.</p>
+
+
+
 
 
 

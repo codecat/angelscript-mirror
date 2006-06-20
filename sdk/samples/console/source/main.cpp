@@ -117,12 +117,23 @@ void PrintHelp()
 	cout << "r_shadow  (bool)   - toggles shadows on/off" << endl;
 }
 
+void MessageCallback(const asSMessageInfo *msg, void *param)
+{
+	const char *type = "ERR ";
+	if( msg->type == asMSGTYPE_WARNING ) 
+		type = "WARN";
+	else if( msg->type == asMSGTYPE_INFORMATION ) 
+		type = "INFO";
+
+	printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
+}
+
 void ConfigureEngine(asIScriptEngine *engine)
 {
 	int r;
 
 	// Tell the engine to output any error messages to printf
-	engine->SetCommonMessageStream((asOUTPUTFUNC_t)printf, 0);
+	engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 	// Register the script string type
 	// Look at the implementation for this function for more information  
@@ -152,33 +163,20 @@ void ConfigureEngine(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("void _grab(string &in)", asFUNCTIONPR(grab, (string&), void), asCALL_CDECL); assert( r >= 0 );
 
 	// Do not output anything else to printf
-	engine->SetCommonMessageStream(0);
+	engine->ClearMessageCallback();
 }
-
-class asCOutputStream : public asIOutputStream
-{
-public:
-	void Write(const char *text) { buffer += text; }
-
-	string buffer;
-};
 
 void ExecString(asIScriptEngine *engine, string &arg)
 {
-	asCOutputStream out;
-
 	string script;
 
 	script = "_grab(" + arg + ")";
 
-	engine->SetCommonMessageStream(&out);
 	int r = engine->ExecuteString(0, script.c_str());
 	if( r < 0 )
 		cout << "Invalid script statement. " << endl;
 	else if( r == asEXECUTION_EXCEPTION )
 		cout << "A script exception was raised." << endl;
-
-	engine->SetCommonMessageStream(0);
 }
 
 void grab(int v)

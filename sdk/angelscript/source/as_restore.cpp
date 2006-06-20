@@ -177,7 +177,7 @@ int asCRestore::Restore()
 		func = new asCScriptFunction(module);
 		ReadFunction(func);
 		module->scriptFunctions.PushLast(func);
-		engine->scriptFunctions[func->id] = func;
+		engine->SetScriptFunction(func);
 	}
 
 	// initFunction
@@ -186,7 +186,7 @@ int asCRestore::Restore()
 	{
 		module->initFunction = new asCScriptFunction(module);
 		ReadFunction(module->initFunction);
-		engine->scriptFunctions[module->initFunction->id] = module->initFunction;
+		engine->SetScriptFunction(module->initFunction);
 	}
 
 	// stringConstants[]

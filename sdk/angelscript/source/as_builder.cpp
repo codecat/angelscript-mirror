@@ -976,7 +976,7 @@ void asCBuilder::CompileGlobalVariables()
 
 	init->id = id;
 	module->initFunction = init;
-	engine->scriptFunctions[id] = init;
+	engine->SetScriptFunction(init);
 
 	init->byteCode.SetLength(finalInit.GetSize());
 	// TODO: Pass the function pointer directly
@@ -1606,7 +1606,7 @@ void asCBuilder::WriteInfo(const char *scriptname, const char *message, int r, i
 	else
 	{
 		preMessage.isSet = false;
-		engine->CallMessageCallback(scriptname, r, c, 2, message);
+		engine->CallMessageCallback(scriptname, r, c, asMSGTYPE_INFORMATION, message);
 	}
 }
 
@@ -1618,7 +1618,7 @@ void asCBuilder::WriteError(const char *scriptname, const char *message, int r, 
 	if( preMessage.isSet )
 		WriteInfo(scriptname, preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
 
-	engine->CallMessageCallback(scriptname, r, c, 0, message);
+	engine->CallMessageCallback(scriptname, r, c, asMSGTYPE_ERROR, message);
 }
 
 void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r, int c)
@@ -1629,7 +1629,7 @@ void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r
 	if( preMessage.isSet )
 		WriteInfo(scriptname, preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
 
-	engine->CallMessageCallback(scriptname, r, c, 1, message);
+	engine->CallMessageCallback(scriptname, r, c, asMSGTYPE_WARNING, message);
 }
 
 
