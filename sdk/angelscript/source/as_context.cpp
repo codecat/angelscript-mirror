@@ -2803,11 +2803,6 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 			// Add the base offset for multiple inheritance
 			currentObject = (void*)(size_t(currentObject) + sysFunc->baseOffset);
 
-			// Keep a reference to the object to protect it 
-			// from being released before the method returns
-			if( sysFunction->objectType->beh.addref )
-				engine->CallObjectMethod(currentObject, sysFunction->objectType->beh.addref);
-
 			// Skip object pointer
 			args += PTR_SIZE;
 		}		
@@ -2846,10 +2841,6 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 		}
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
 	}
-
-	// Release the object pointer
-	if( currentObject && sysFunction->objectType->beh.release && !objectPointer )
-		engine->CallObjectMethod(currentObject, sysFunction->objectType->beh.release);
 
 	// Return how much should be popped from the stack
 	return popSize;

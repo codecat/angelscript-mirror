@@ -220,7 +220,7 @@ bool Test()
 
 	RegisterScriptString(engine);
 
-	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	COutStream out;
 	CBufferedOutStream bout;

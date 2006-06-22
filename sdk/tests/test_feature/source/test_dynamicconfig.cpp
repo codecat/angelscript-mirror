@@ -72,18 +72,21 @@ static void MyFunc()
 {
 }
 
-static void Construct(int *o)
+static void Construct(asIScriptGeneric *gen)
 {
+	int *o = (int*)gen->GetObject();
 	*o = 1;
 }
 
-static void AddRef(int *o)
+static void AddRef(asIScriptGeneric *gen)
 {
+	int *o = (int*)gen->GetObject();
 	(*o)++;
 }
 
-static void Release(int *o)
+static void Release(asIScriptGeneric *gen)
 {
+	int *o = (int*)gen->GetObject();
 	(*o)--;
 	if( *o == 0 ) delete o;
 }
@@ -98,7 +101,7 @@ bool Test()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void MyFunc()", asFUNCTION(MyFunc), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void MyFunc()", asFUNCTION(MyFunc), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	COutStream out;
@@ -207,11 +210,11 @@ bool Test()
 	// Test global behaviours
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string@ f(const string &in, const mytype &in)", asFUNCTION(MyFunc), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string@ f(const string &in, const mytype &in)", asFUNCTION(MyFunc), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0, false);
@@ -246,9 +249,9 @@ bool Test()
 
 	engine->BeginConfigGroup("group1");
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
-	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
-	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef), asCALL_CDECL_OBJLAST);
-	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_RELEASE, "void f()", asFUNCTION(Release), asCALL_CDECL_OBJLAST);
+	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_RELEASE, "void f()", asFUNCTION(Release), asCALL_GENERIC);
 
 	asIScriptAny *any = 0;
 	any = (asIScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
@@ -275,7 +278,8 @@ bool Test()
 	any->Retrieve(&o, engine->GetTypeIdByDecl(0, "mytype@"));
 	if( o == 0 )
 		fail = true;
-	Release(o);
+	if( --(*o) != 1 )
+		fail = true;
 
 	// The mytype variable is still stored in the any variable so we shouldn't be allowed to remove it's configuration group
 	r = engine->RemoveConfigGroup("group1"); assert( r < 0 );
@@ -469,7 +473,7 @@ bool Test()
 	engine->EndConfigGroup();
 
 	engine->BeginConfigGroup("group2");
-	r = engine->RegisterGlobalFunction("void func(mytype)", asFUNCTION(0), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void func(mytype)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 	engine->EndConfigGroup();
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
@@ -489,7 +493,7 @@ bool Test()
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
 	engine->EndConfigGroup();
 
-	r = engine->RegisterGlobalFunction("void func(mytype)", asFUNCTION(0), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void func(mytype)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
@@ -500,7 +504,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->BeginConfigGroup("g1"); assert( r >= 0 );
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
@@ -512,7 +516,7 @@ bool Test()
 
 	// again..
 	r = engine->BeginConfigGroup("g1"); assert( r >= 0 );
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );

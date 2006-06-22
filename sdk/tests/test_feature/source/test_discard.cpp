@@ -22,9 +22,8 @@ static const char *script1 =
 "}                            \n";
 
 
-static asBYTE func(asIScriptArray* cmd, asIScriptArray* rcv, asBYTE send_len, asUINT timeout)
+static void func(asIScriptGeneric *)
 {
-	return 0;
 }
 
 
@@ -39,7 +38,7 @@ bool Test()
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	r = engine->RegisterGlobalFunction("uint8 func(uint8[] &in, uint8[] &inout, uint8, uint32)", asFUNCTION(func), asCALL_CDECL); assert( r >= 0 ); 
+	r = engine->RegisterGlobalFunction("uint8 func(uint8[] &in, uint8[] &inout, uint8, uint32)", asFUNCTION(func), asCALL_GENERIC); assert( r >= 0 ); 
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	r = engine->Build(0);

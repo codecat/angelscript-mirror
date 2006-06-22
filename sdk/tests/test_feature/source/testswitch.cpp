@@ -56,20 +56,20 @@ static const char *script2 =
 
 static int sum = 0;
 
-static void add(int val)
+static void add(asIScriptGeneric *gen)
 {
-	sum += val;
+	sum += (int)gen->GetArgDWord(0);
 }
 
 static string log;
-static void Log(const char *txt)
+static void Log(asIScriptGeneric *gen)
 {
-	log += txt;
+	log += (const char *)gen->GetArgObject(0);
 }
 
-static const char *StrFactory(int length, const char *txt)
+static void StrFactory(asIScriptGeneric *gen)
 {
-	return txt;
+	gen->SetReturnObject(gen->GetArgAddress(1));
 }
 
 bool TestSwitch()
@@ -79,10 +79,10 @@ bool TestSwitch()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->RegisterObjectType("staticstring", sizeof(char*), asOBJ_PRIMITIVE);
-	engine->RegisterStringFactory("staticstring", asFUNCTION(StrFactory), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void Log(staticstring)", asFUNCTION(Log), asCALL_CDECL);
+	engine->RegisterStringFactory("staticstring", asFUNCTION(StrFactory), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void Log(staticstring)", asFUNCTION(Log), asCALL_GENERIC);
 
-	engine->RegisterGlobalFunction("void add(int)", asFUNCTION(add), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void add(int)", asFUNCTION(add), asCALL_GENERIC);
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);

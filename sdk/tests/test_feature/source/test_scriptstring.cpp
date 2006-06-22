@@ -94,7 +94,10 @@ bool Test()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString_Generic(engine);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		RegisterScriptString_Generic(engine);
+	else
+		RegisterScriptString(engine);
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
 

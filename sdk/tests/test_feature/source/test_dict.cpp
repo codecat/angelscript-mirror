@@ -53,7 +53,7 @@ bool Test()
 
 	RegisterStdString(engine);
 
-	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	engine->RegisterObjectType("Dict", sizeof(CDict), asOBJ_CLASS_CDA);	
 	engine->RegisterObjectBehaviour("Dict", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);

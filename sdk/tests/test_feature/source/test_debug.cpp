@@ -180,7 +180,7 @@ bool Test()
 	int number = 0;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalProperty("int number", &number);
 
 	COutStream out;

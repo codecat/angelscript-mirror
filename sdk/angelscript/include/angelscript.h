@@ -165,6 +165,7 @@ extern "C"
 	// Engine
 	AS_API asIScriptEngine * asCreateScriptEngine(asDWORD version);
 	AS_API const char * asGetLibraryVersion();
+	AS_API const char * asGetLibraryOptions();
 
 	// Context
 	AS_API asIScriptContext * asGetActiveContext();

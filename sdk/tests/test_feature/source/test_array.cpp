@@ -163,8 +163,8 @@ bool Test()
 	r = engine->SetCommonObjectMemoryFunctions(ScriptAlloc, ScriptFree);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	RegisterScriptString(engine);
-	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
+	RegisterScriptString_Generic(engine);
+	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);

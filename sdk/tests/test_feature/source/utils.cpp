@@ -11,8 +11,9 @@ void PrintException(asIScriptContext *ctx)
 	printf("desc: %s\n", ctx->GetExceptionString());
 }
 
-void Assert(bool expr)
+void Assert(asIScriptGeneric *gen)
 {
+	bool expr = (bool)gen->GetArgDWord(0);
 	if( !expr )
 	{
 		printf("--- Assert failed ---\n");

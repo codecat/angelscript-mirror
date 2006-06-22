@@ -100,6 +100,12 @@ static StringConsumer consumerObject;
 
 bool TestStdString()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
+		return false;
+	}
+
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

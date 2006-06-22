@@ -17,6 +17,7 @@ extern "C"
 {
   AS_API asIScriptEngine *  <a href="#create">asCreateScriptEngine</a>(asDWORD version);
   AS_API const char *       <a href="#version">asGetLibraryVersion</a>();
+  AS_API const char *       <a href="#options">asGetLibraryOptions</a>();
   AS_API asIScriptContext * <a href="#context">asGetActiveContext</a>();
   AS_API int                <a href="#threadclean">asThreadCleanup</a>();
 }
@@ -68,6 +69,28 @@ const char *asGetLibraryVersion();
 <h3>Returns</h3>
 
 <p>Returns a pointer to a constant string holding the library version.</p>
+
+
+
+
+
+<a name=options></a>
+<h2>asGetLibraryOptions</h2>
+
+<pre class=border>
+const char *asGetLibraryOptions();
+</pre>
+
+<p>Exported as "_asGetLibraryOptions".</p>
+
+<h3>Description</h3>
+
+<p>This can be used to verify with which options the library was compiled.</p>
+
+<h3>Returns</h3>
+
+<p>Returns a pointer to a constant string holding the name of the compiler options, separated by spaces.</p>
+
 
 
 

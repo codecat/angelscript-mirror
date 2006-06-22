@@ -180,58 +180,6 @@ asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD *args, int a
 	return mipsFunc(intArgs << 2, floatArgs << 2, restArgs << 2, func);
 }
 
-
-int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal)
-{
-	memset(internal, 0, sizeof(asSSystemFunctionInterface));
-
-	internal->func = (asDWORD)ptr.f.func;
-
-	int base = callConv;
-	if( !isMethod )
-	{
-		if( base == asCALL_CDECL )
-			internal->callConv = ICC_CDECL;
-		else if( base == asCALL_STDCALL )
-			internal->callConv = ICC_STDCALL;
-		else if( base == asCALL_GENERIC )
-			internal->callConv = ICC_GENERIC_FUNC;
-		else
-			return asNOT_SUPPORTED;
-	}
-	else
-	{
-#ifndef AS_NO_CLASS_METHODS
-		if( base == asCALL_THISCALL )
-		{
-			internal->callConv = ICC_THISCALL;
-#ifdef GNU_STYLE_VIRTUAL_METHOD
-			if( (asDWORD(ptr.f.func) & 1) )
-				internal->callConv = ICC_VIRTUAL_THISCALL;
-#endif
-			internal->baseOffset = MULTI_BASE_OFFSET(ptr);
-
-#ifdef HAVE_VIRTUAL_BASE_OFFSET
-			// We don't support virtual inheritance
-			if( VIRTUAL_BASE_OFFSET(ptr) != 0 )
-				return asNOT_SUPPORTED;
-#endif
-		}
-		else 
-#endif
-		if( base == asCALL_CDECL_OBJLAST )
-			internal->callConv = ICC_CDECL_OBJLAST;
-		else if( base == asCALL_CDECL_OBJFIRST )
-			internal->callConv = ICC_CDECL_OBJFIRST;
-		else if( base == asCALL_GENERIC )
-			internal->callConv = ICC_GENERIC_METHOD;
-		else
-			return asNOT_SUPPORTED;
-	}
-
-	return 0;
-}
-
 // This function should prepare system functions so that it will be faster to call them
 int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine)
 {
@@ -461,12 +409,6 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 			// Add the base offset for multiple inheritance
 			obj = (void*)(int(obj) + sysFunc->baseOffset);
-
-			// Don't keep a reference to the object pointer, as it is the 
-			// responsibility of the application to make sure the reference 
-			// is valid during the call 
-			// if( descr->objectType->beh.addref )
-			//	engine->CallObjectMethod(obj, descr->objectType->beh.addref);
 		}
 	}
 	assert(descr->parameterTypes.GetLength() <= AS_MIPS_MAX_ARGS);

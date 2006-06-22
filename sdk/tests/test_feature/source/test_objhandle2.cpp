@@ -126,7 +126,7 @@ bool Test()
 	r = engine->RegisterGlobalFunction("refclass @getRefClass()", asFUNCTIONPR(getRefClass,(),CRefClass*), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("refclass @getRefClass(refclass@)", asFUNCTIONPR(getRefClass,(CRefClass*),CRefClass*), asCALL_CDECL); assert( r >= 0 );
 
-	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	COutStream out;
 

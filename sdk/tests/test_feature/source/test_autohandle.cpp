@@ -38,6 +38,13 @@ asCScriptString *TestFunc2()
 
 bool Test()
 {
+	if( strstr(asGetLibraryOptions(),"AS_MAX_PORTABILITY") )
+	{
+		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
+		return false;
+	}
+
+
 	bool fail = false;
 	int r;
 
@@ -45,7 +52,7 @@ bool Test()
 
 	RegisterScriptString(engine);
 
-	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void TestFunc(string@+, string@, double, string@+)", asFUNCTION(TestFunc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string@+ TestFunc2()", asFUNCTION(TestFunc2), asCALL_CDECL);
 

@@ -48,6 +48,12 @@ static void Assert(bool expr)
 
 bool Test()
 {
+	if( !strstr(asGetLibraryOptions(), "AS_ALLOW_UNSAFE_REFERENCES") )
+	{
+		printf("%s: This test is only valid with AS_ALLOW_UNSAFE_REFERENCES\n", TESTNAME);
+		return false;
+	}
+
 	bool fail = false;
 	int r;
 
@@ -58,7 +64,7 @@ bool Test()
 
 	RegisterScriptString(engine);
 
-	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	r = engine->Build(0);

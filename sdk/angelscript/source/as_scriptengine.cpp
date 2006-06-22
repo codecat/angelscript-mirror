@@ -64,6 +64,35 @@ AS_API const char * asGetLibraryVersion()
 #endif
 }
 
+AS_API const char * asGetLibraryOptions()
+{
+	const char *string = " "
+#ifdef AS_MAX_PORTABILITY
+		"AS_MAX_PORTABILITY "
+#endif
+#ifdef BUILD_WITHOUT_LINE_CUES
+		"BUILD_WITHOUT_LINE_CUES "
+#endif
+#ifdef AS_DEBUG
+		"AS_DEBUG "
+#endif
+#ifdef AS_NO_CLASS_METHODS
+		"AS_NO_CLASS_METHODS "
+#endif
+#ifdef AS_ALLOW_UNSAFE_REFERENCES
+		"AS_ALLOW_UNSAFE_REFERENCES "
+#endif
+#ifdef AS_USE_DOUBLE_AS_FLOAT
+		"AS_USE_DOUBLE_AS_FLOAT "
+#endif
+#ifdef AS_64BIT_PTR
+		"AS_64BIT_PTR "
+#endif
+	;
+
+	return string;
+}
+
 AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 {
 	// Verify the version that the application expects
@@ -1293,11 +1322,16 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else
 	{
+#ifdef AS_MAX_PORTABILITY
+		if( callConv != asCALL_GENERIC )
+			return ConfigError(asNOT_SUPPORTED);
+#else
 		if( callConv != asCALL_THISCALL &&
 			callConv != asCALL_CDECL_OBJLAST &&
 			callConv != asCALL_CDECL_OBJFIRST &&
 			callConv != asCALL_GENERIC )
 			return ConfigError(asNOT_SUPPORTED);
+#endif
 
 		int r = DetectCallingConvention(datatype != 0, funcPointer, callConv, &internal);
 		if( r < 0 )
@@ -1523,10 +1557,15 @@ int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl
 	
 	asCBuilder bld(this, 0);
 
+#ifdef AS_MAX_PORTABILITY
+	if( callConv != asCALL_GENERIC )
+		return ConfigError(asNOT_SUPPORTED);
+#else
 	if( callConv != asCALL_CDECL && 
 		callConv != asCALL_STDCALL &&
 		callConv != asCALL_GENERIC )
 		return ConfigError(asNOT_SUPPORTED);
+#endif
 
 	// We need a global behaviour structure
 	asSTypeBehaviour *beh = &globalBehaviours;
@@ -1750,11 +1789,16 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		return ConfigError(r);
 
 	// We only support these calling conventions for object methods
+#ifdef AS_MAX_PORTABILITY
+	if( callConv != asCALL_GENERIC )
+		return ConfigError(asNOT_SUPPORTED);
+#else
 	if( callConv != asCALL_THISCALL &&
 		callConv != asCALL_CDECL_OBJLAST &&
 		callConv != asCALL_CDECL_OBJFIRST &&
 		callConv != asCALL_GENERIC )
 		return ConfigError(asNOT_SUPPORTED);
+#endif
 
 	asCDataType dt;
 	asCBuilder bld(this, 0);
@@ -1818,10 +1862,15 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	if( r < 0 )
 		return ConfigError(r);
 
+#ifdef AS_MAX_PORTABILITY
+	if( callConv != asCALL_GENERIC )
+		return ConfigError(asNOT_SUPPORTED);
+#else
 	if( callConv != asCALL_CDECL && 
 		callConv != asCALL_STDCALL && 
 		callConv != asCALL_GENERIC )
 		return ConfigError(asNOT_SUPPORTED);
+#endif
 
 	isPrepared = false;
 
@@ -1919,10 +1968,15 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 	if( r < 0 )
 		return ConfigError(r);
 
+#ifdef AS_MAX_PORTABILITY
+	if( callConv != asCALL_GENERIC )
+		return ConfigError(asNOT_SUPPORTED);
+#else
 	if( callConv != asCALL_CDECL && 
 		callConv != asCALL_STDCALL &&
 		callConv != asCALL_GENERIC )
 		return ConfigError(asNOT_SUPPORTED);
+#endif
 
 	// Put the system function in the list of system functions
 	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;

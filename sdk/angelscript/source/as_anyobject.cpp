@@ -105,7 +105,7 @@ static void AnyObjectAssignment_Generic(asIScriptGeneric *gen)
 
 static void AnyObject_Store_Generic(asIScriptGeneric *gen)
 {
-	void *ref = (void*)gen->GetArgObject(0);
+	void *ref = (void*)gen->GetArgAddress(0);
 	int refTypeId = gen->GetArgDWord(1);
 	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
 
@@ -114,7 +114,7 @@ static void AnyObject_Store_Generic(asIScriptGeneric *gen)
 
 static void AnyObject_Retrieve_Generic(asIScriptGeneric *gen)
 {
-	void *ref = (void*)gen->GetArgObject(0);
+	void *ref = (void*)gen->GetArgAddress(0);
 	int refTypeId = gen->GetArgDWord(1);
 	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
 

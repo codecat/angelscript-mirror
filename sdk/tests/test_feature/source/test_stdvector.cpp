@@ -161,7 +161,7 @@ bool Test()
 #endif
 	engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTIONPR(print, (std::string&), void), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void Print(int)", asFUNCTIONPR(print, (int), void), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	r = engine->RegisterObjectType("MyStruct", sizeof(MyStruct), asOBJ_CLASS); assert( r >= 0 );
 

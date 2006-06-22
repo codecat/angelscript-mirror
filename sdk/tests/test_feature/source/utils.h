@@ -51,7 +51,7 @@ public:
 };
 
 void PrintException(asIScriptContext *ctx);
-void Assert(bool expr);
+void Assert(asIScriptGeneric *gen);
 
 #endif
 

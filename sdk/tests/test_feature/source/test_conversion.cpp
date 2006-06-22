@@ -6,23 +6,23 @@ namespace TestConversion
 #define TESTNAME "TestConversion"
 
 
-void TestI8(char) {}
-void TestI16(short) {}
-void TestInt(long) {}
-void TestUI8(unsigned char) {}
-void TestUI16(unsigned short) {}
-void TestUInt(unsigned long) {}
-void TestFloat(float) {}
-void TestDouble(double) {}
+void TestI8(asIScriptGeneric*) {}
+void TestI16(asIScriptGeneric*) {}
+void TestInt(asIScriptGeneric*) {}
+void TestUI8(asIScriptGeneric*) {}
+void TestUI16(asIScriptGeneric*) {}
+void TestUInt(asIScriptGeneric*) {}
+void TestFloat(asIScriptGeneric*) {}
+void TestDouble(asIScriptGeneric*) {}
 
-void TestI8ByRef(char&) {}
-void TestI16ByRef(short&) {}
-void TestIntByRef(long&) {}
-void TestUI8ByRef(unsigned char&) {}
-void TestUI16ByRef(unsigned short&) {}
-void TestUIntByRef(unsigned long&) {}
-void TestFloatByRef(float&) {}
-void TestDoubleByRef(double&) {}
+void TestI8ByRef(asIScriptGeneric*) {}
+void TestI16ByRef(asIScriptGeneric*) {}
+void TestIntByRef(asIScriptGeneric*) {}
+void TestUI8ByRef(asIScriptGeneric*) {}
+void TestUI16ByRef(asIScriptGeneric*) {}
+void TestUIntByRef(asIScriptGeneric*) {}
+void TestFloatByRef(asIScriptGeneric*) {}
+void TestDoubleByRef(asIScriptGeneric*) {}
 /*
 void TestC()
 {
@@ -268,7 +268,7 @@ bool Test()
 	bool fail = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	COutStream out;
 
@@ -295,23 +295,23 @@ bool Test()
 	engine->RegisterGlobalProperty("bits8 b8", &b8);
 	engine->RegisterGlobalProperty("bits16 b16", &b16);
 
-	engine->RegisterGlobalFunction("void TestDouble(double)", asFUNCTION(TestDouble), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestFloat(float)", asFUNCTION(TestFloat), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestInt(int)", asFUNCTION(TestInt), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestI16(int16)", asFUNCTION(TestI16), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestI8(int8)", asFUNCTION(TestI8), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestUInt(uint)", asFUNCTION(TestUInt), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestUI16(uint16)", asFUNCTION(TestUI16), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestUI8(uint8)", asFUNCTION(TestUI8), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void TestDouble(double)", asFUNCTION(TestDouble), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestFloat(float)", asFUNCTION(TestFloat), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestInt(int)", asFUNCTION(TestInt), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestI16(int16)", asFUNCTION(TestI16), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestI8(int8)", asFUNCTION(TestI8), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestUInt(uint)", asFUNCTION(TestUInt), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestUI16(uint16)", asFUNCTION(TestUI16), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestUI8(uint8)", asFUNCTION(TestUI8), asCALL_GENERIC);
 
-	engine->RegisterGlobalFunction("void TestDoubleByRef(double &in)", asFUNCTION(TestDoubleByRef), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestFloatByRef(float &in)", asFUNCTION(TestFloatByRef), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestIntByRef(int &in)", asFUNCTION(TestIntByRef), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestI16ByRef(int16 &in)", asFUNCTION(TestI16ByRef), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestI8ByRef(int8 &in)", asFUNCTION(TestI8ByRef), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestUIntByRef(uint &in)", asFUNCTION(TestUIntByRef), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestUI16ByRef(uint16 &in)", asFUNCTION(TestUI16ByRef), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void TestUI8ByRef(uint8 &in)", asFUNCTION(TestUI8ByRef), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void TestDoubleByRef(double &in)", asFUNCTION(TestDoubleByRef), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestFloatByRef(float &in)", asFUNCTION(TestFloatByRef), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestIntByRef(int &in)", asFUNCTION(TestIntByRef), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestI16ByRef(int16 &in)", asFUNCTION(TestI16ByRef), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestI8ByRef(int8 &in)", asFUNCTION(TestI8ByRef), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestUIntByRef(uint &in)", asFUNCTION(TestUIntByRef), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestUI16ByRef(uint16 &in)", asFUNCTION(TestUI16ByRef), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void TestUI8ByRef(uint8 &in)", asFUNCTION(TestUI8ByRef), asCALL_GENERIC);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	d    = 12.3;  engine->ExecuteString(0, "d = double(d);");    if( d  !=   12.3  ) fail = true; 

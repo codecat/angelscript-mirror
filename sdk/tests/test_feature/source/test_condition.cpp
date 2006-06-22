@@ -5,7 +5,6 @@
 //
 
 #include "utils.h"
-#include "stdstring.h"
 
 #define TESTNAME "TestCondition"
 
@@ -39,22 +38,25 @@ static const char *script3 =
 "  int test2 = int((test == 5) ? 23 : 12);    \n"
 "}                                            \n";
 
-static string format(float f)
+static void formatf(asIScriptGeneric *gen)
 {
+	float f = gen->GetArgFloat(0);
 	char buffer[25];
 	sprintf(buffer, "%f", f);
-	return string(buffer);
+	gen->SetReturnAddress(new asCScriptString(buffer));
 }
 
-static string format(asUINT ui)
+static void formatUI(asIScriptGeneric *gen)
 {
+	asUINT ui = gen->GetArgDWord(0);
 	char buffer[25];
 	sprintf(buffer, "%d", ui);
-	return string(buffer);
+	gen->SetReturnAddress(new asCScriptString(buffer));
 }
 
-static void print(string &str)
+static void print(asIScriptGeneric *gen)
 {
+	asCScriptString *str = (asCScriptString*)gen->GetArgObject(0);
 //	printf((str + "\n").c_str());
 }
 
@@ -65,14 +67,14 @@ bool TestCondition()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterStdString(engine);
+	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalProperty("string a", &a);
 
 	engine->RegisterObjectType("Data", 0, 0);
 
-	engine->RegisterGlobalFunction("string format(float)", asFUNCTIONPR(format, (float), string), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string format(uint)", asFUNCTIONPR(format, (asUINT), string), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string@ format(float)", asFUNCTION(formatf), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("string@ format(uint)", asFUNCTION(formatUI), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
 
 	COutStream out;	
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);

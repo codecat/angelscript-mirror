@@ -41,7 +41,7 @@ static const char *script2 =
 "}                           \n";
 
 bool doSuspend = false;
-void Suspend()
+void Suspend(asIScriptGeneric *gen)
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx ) ctx->Suspend();
@@ -65,9 +65,9 @@ bool Test()
 	asIScriptContext *ctx = asGetActiveContext();
 	assert( ctx == 0 );
 
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 	
-	engine->RegisterGlobalFunction("void Suspend()", asFUNCTION(Suspend), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void Suspend()", asFUNCTION(Suspend), asCALL_GENERIC);
 	engine->RegisterGlobalProperty("int loopCount", &loopCount);
 
 	COutStream out;

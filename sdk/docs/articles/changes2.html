@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.7.0 WIP - 2006/06/20</h2>
+<h2>Version 2.7.0 WIP - 2006/06/22</h2>
 
 <ul>
 <li>Bug fixes
@@ -131,6 +131,8 @@ A:hover
 <li>(rev 29) Fixed bug in MIPS native code (Thanks Manu Evans)
 <li>(rev 38) Fixed assert hit for some compiler errors (Thanks kunitoki)
 <li>(rev 40) Discard() would remove array types from the configuration, leading to failure in following builds (Thanks loboWu)
+<li>(rev 43) Fixed bug with the any type and AS_MAX_PORTABILITY
+<li>(rev 43) Fixed bug with AS_MAX_PORTABILITY and script classes that were not constructed properly
 </ul>
 <li>Library interface
 <ul>
@@ -141,6 +143,7 @@ A:hover
 <li>(rev 34) Added GetVarTypeId() to the context interface
 <li>(rev 39) Replaced SetCommonMessageStream() with SetMessageCallback() which is more flexible in that it receives a structure with info instead of a string
 <li>(rev 39) asIOutputStream is removed
+<li>(rev 43) Added asGetLibraryOptions() which returns a string with the compile time options. Mostly used for testing.
 </ul>
 <li>Library
 <ul>
