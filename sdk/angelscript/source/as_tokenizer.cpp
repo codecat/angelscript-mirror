@@ -69,7 +69,7 @@ const char *asGetTokenDefinition(int tokenType)
 	if( tokenType == ttBitsConstant					) return "<bits constant>";
 	if( tokenType == ttHeredocStringConstant		) return "<heredoc string constant>";
 
-	for( int n = 0; n < numTokenWords; n++ )
+	for( asUINT n = 0; n < numTokenWords; n++ )
 		if( tokenWords[n].tokenType == tokenType )
 			return tokenWords[n].word;
 
@@ -353,7 +353,7 @@ bool asCTokenizer::IsIdentifier()
 		memcpy(test, source, tokenLength);
 		test[tokenLength] = 0;
 
-		for( int i = 0; i < numTokenWords; i++ )
+		for( asUINT i = 0; i < numTokenWords; i++ )
 		{
 			if( strcmp(test, tokenWords[i].word) == 0 )
 				return false;
