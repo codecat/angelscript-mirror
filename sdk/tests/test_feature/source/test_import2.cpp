@@ -55,7 +55,7 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterGlobalFunction("void CheckFunc()", asFUNCTION(CheckFunc), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void CheckFunc()", asFUNCTION(CheckFunc), asCALL_GENERIC);
 
 	COutStream out;
 	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);

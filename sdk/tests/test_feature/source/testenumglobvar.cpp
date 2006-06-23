@@ -10,7 +10,7 @@
 
 static const char script[] = "int a; float b; double c; bits d = 0xC0DE; string e = \"test\"; obj @f = @o;";
 
-void AddRef_Release_dummy(int *)
+void AddRef_Release_dummy(asIScriptGeneric *)
 {
 }
 
@@ -20,12 +20,12 @@ bool TestEnumGlobVar()
 	bool ret = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
 	int r;
 	r = engine->RegisterObjectType("obj", 0, 0); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef_Release_dummy), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_RELEASE, "void f()", asFUNCTION(AddRef_Release_dummy), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef_Release_dummy), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_RELEASE, "void f()", asFUNCTION(AddRef_Release_dummy), asCALL_GENERIC); assert( r >= 0 );
 	int o = 0xBAADF00D;
 	r = engine->RegisterGlobalProperty("obj o", &o);
 

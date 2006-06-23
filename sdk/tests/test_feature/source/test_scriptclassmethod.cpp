@@ -81,13 +81,15 @@ static const char *script3 =
 "};                                              \n"
 "myclass c;                                      \n";
 
-void print(std::string &s)
+void print(asIScriptGeneric *gen)
 {
+	std::string s = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
 //	printf("%s\n", s.c_str());
 }
 
-void Analyze(asIScriptAny *a)
+void Analyze(asIScriptGeneric *gen)
 {
+	asIScriptAny *a = (asIScriptAny*)gen->GetArgAddress(0);
 	int myclassId = a->GetTypeId();
 	asIScriptStruct *s = 0;
 	a->Retrieve(&s, myclassId);
@@ -101,11 +103,11 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void Analyze(any &inout)", asFUNCTION(Analyze), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void Analyze(any &inout)", asFUNCTION(Analyze), asCALL_GENERIC);
 
 	COutStream out;
 	CBufferedOutStream bout;

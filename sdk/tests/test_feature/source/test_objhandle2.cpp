@@ -114,7 +114,7 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
 	r = engine->RegisterObjectType("refclass", sizeof(CRefClass), asOBJ_CLASS_CDA); assert(r >= 0);
 	r = engine->RegisterObjectProperty("refclass", "int id", offsetof(CRefClass, id));

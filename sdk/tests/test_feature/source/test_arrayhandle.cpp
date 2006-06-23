@@ -40,9 +40,10 @@ static const char *script2 =
 "   return string[](2);                          \n"
 "}                                               \n";
 
-double StringToDouble(std::string &s)
+void StringToDouble(asIScriptGeneric *gen)
 {
-	return atof(s.c_str());
+	std::string s = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
+	gen->SetReturnDouble(atof(s.c_str()));
 }
 
 bool Test()
@@ -52,10 +53,9 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-
-	engine->RegisterGlobalFunction("double atof(const string &in)",asFUNCTION(StringToDouble),asCALL_CDECL);
+	engine->RegisterGlobalFunction("double atof(const string &in)",asFUNCTION(StringToDouble),asCALL_GENERIC);
 
 	COutStream out;
 

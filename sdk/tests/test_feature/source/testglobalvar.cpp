@@ -5,9 +5,9 @@ using std::string;
 static const char *script1 = "float global = func() * g_f * 2.0f;";
 static const char *script2 = "float global = 1.0f;";
 
-static float func()
+static void func(asIScriptGeneric *gen)
 {
-	return 3.0f;
+	gen->SetReturnFloat(3.0f);
 }
 
 static float cnst = 2.0f;
@@ -66,8 +66,10 @@ static const char *script4 =
 static const char *script5 =
 "bits OFLAG_BSP = bits(1024);";
 
-void print(std::string &s)
+void print(asIScriptGeneric *gen)
 {
+	std::string s = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
+
 	if( s != "12\n" && 
 		s != "5\n" &&
 		s != "35.2\n" &&
@@ -82,12 +84,12 @@ bool TestGlobalVar()
 	bool ret = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
-	engine->RegisterGlobalFunction("float func()", asFUNCTION(func), asCALL_CDECL);
+	engine->RegisterGlobalFunction("float func()", asFUNCTION(func), asCALL_GENERIC);
 	engine->RegisterGlobalProperty("float g_f", &cnst);
 	engine->RegisterGlobalProperty("string g_str", &g_str);
-	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
 
 	COutStream out;
 	engine->AddScriptSection("a", TESTNAME, script1, strlen(script1), 0);

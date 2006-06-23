@@ -82,6 +82,12 @@ static char *script =
 
 bool Test()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("%s: This test has not been adapted for AS_MAX_PORTABILITY\n", TESTNAME);
+		return false;
+	}
+
 	bool fail = false;
 	int r;
 

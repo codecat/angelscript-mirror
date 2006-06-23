@@ -151,31 +151,20 @@ int main(int argc, char **argv)
 #endif
 
 	// These need to be adjusted for AS_MAX_PORTABILITY
-	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
-	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
-	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
-	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
-	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
+	if( TestVector3_2::Test()         ) goto failed; else printf("-- TestVector3_2 passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
-	if( TestArrayHandle::Test()       ) goto failed; else printf("-- TestArrayHandle passed\n");
 	if( TestStdVector::Test()         ) goto failed; else printf("-- TestStdVector passed\n");
 	if( TestStack2::Test()            ) goto failed; else printf("-- TestStack2 passed\n");
 	if( TestArrayIntf::Test()         ) goto failed; else printf("-- TestArrayIntf passed\n");
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
 	if( TestExecute32MixedArgs()      ) goto failed; else printf("-- TestExecute32MixedArgs passed\n");
 	if( TestExecuteThis32MixedArgs()  ) goto failed; else printf("-- TestExecuteThis32MixedArgs passed\n");
-	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestPostProcess::Test()       ) goto failed; else printf("-- TestPostProcess passed\n");
 	if( TestConfig::Test()            ) goto failed; else printf("-- TestConfig passed\n");
 	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
 	if( TestObject::Test()            ) goto failed; else printf("-- TestObject passed\n");
 	if( TestDict::Test()              ) goto failed; else printf("-- TestDict passed\n");
-	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
-	if( TestVector3_2::Test()         ) goto failed; else printf("-- TestVector3_2 passed\n");
-	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
-	if( TestImport2::Test()           ) goto failed; else printf("-- TestImport2 passed\n");
-	if( TestEnumGlobVar()             ) goto failed; else printf("-- TestEnumGlobVar passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
@@ -207,6 +196,17 @@ int main(int argc, char **argv)
 	if( TestInt64()                   ) goto failed; else printf("-- TestInt64 passed\n");
 
 	// These tests work with AS_MAX_PORTABILITY
+	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
+	if( TestImport2::Test()           ) goto failed; else printf("-- TestImport2 passed\n");
+	if( TestEnumGlobVar()             ) goto failed; else printf("-- TestEnumGlobVar passed\n");
+	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
+	if( TestArrayHandle::Test()       ) goto failed; else printf("-- TestArrayHandle passed\n");
+	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
+	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
+	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
+	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
+	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
+	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");

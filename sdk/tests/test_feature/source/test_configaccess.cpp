@@ -5,13 +5,16 @@ namespace TestConfigAccess
           
 const char * const TESTNAME = "TestConfigAccess";
 
-static void Func()
+static void Func(asIScriptGeneric *)
 {
 }
 
-static int TypeAdd(int &a, int &b)
+static void TypeAdd(asIScriptGeneric *gen)
 {
-	return a + b;
+	int *a = (int*)gen->GetArgAddress(0);
+	int *b = (int*)gen->GetArgAddress(1);
+
+	gen->SetReturnDWord(*a + *b);
 }
 
 bool Test()
@@ -66,7 +69,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	r = engine->BeginConfigGroup("group"); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void Func()", asFUNCTION(Func), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void Func()", asFUNCTION(Func), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	r = engine->SetConfigGroupModuleAccess("group", "m", false); assert( r >= 0 );
@@ -119,7 +122,7 @@ bool Test()
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
 
 	r = engine->BeginConfigGroup("group"); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "mytype f(mytype &in, mytype &in)", asFUNCTION(TypeAdd), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "mytype f(mytype &in, mytype &in)", asFUNCTION(TypeAdd), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	r = engine->SetConfigGroupModuleAccess("group", 0, false); assert( r >= 0 );

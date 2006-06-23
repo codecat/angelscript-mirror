@@ -63,6 +63,12 @@ public:
 	int id;
 };
 
+static void Assign(asIScriptGeneric *gen)
+{
+	CRefClass *obj = (CRefClass*)gen->GetObject();
+	*obj = *(CRefClass*)gen->GetArgAddress(0);
+}
+
 static void Assert(bool expr)
 {
 	if( !expr )
@@ -86,11 +92,11 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
 	r = engine->RegisterObjectType("refclass", sizeof(CRefClass), asOBJ_CLASS_CDA); assert(r >= 0);
 	r = engine->RegisterObjectProperty("refclass", "int id", offsetof(CRefClass, id)); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ASSIGNMENT, "refclass &f(refclass &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ASSIGNMENT, "refclass &f(refclass &in)", asFUNCTION(Assign), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 

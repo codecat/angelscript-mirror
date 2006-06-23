@@ -35,7 +35,7 @@ bool Test()
 	int r;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalProperty("int number", &number);
 
 	COutStream out;
