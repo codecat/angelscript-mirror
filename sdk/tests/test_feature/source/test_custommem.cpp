@@ -49,19 +49,21 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
-
 	r = engine->RegisterObjectType("obj", 4, asOBJ_PRIMITIVE); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ALLOC, "obj &f(uint)", asFUNCTION(MyAlloc), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_FREE, "void f(obj &in)", asFUNCTION(MyFree), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("obj retObj()", asFUNCTION(ReturnObj), asCALL_CDECL); assert( r >= 0 );
+	if( !strstr(asGetLibraryOptions(),"AS_MAX_PORTABILITY") )
+	{
+		r = engine->RegisterGlobalFunction("obj retObj()", asFUNCTION(ReturnObj), asCALL_CDECL); assert( r >= 0 );
+	}
 	r = engine->RegisterGlobalFunction("obj retObj2(obj)", asFUNCTION(ReturnObjGeneric), asCALL_GENERIC); assert( r >= 0 );
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->ExecuteString(0, "obj o");
 
-	engine->ExecuteString(0, "retObj()");
+	if( !strstr(asGetLibraryOptions(),"AS_MAX_PORTABILITY") )
+		engine->ExecuteString(0, "retObj()");
 
 	engine->ExecuteString(0, "obj o; retObj2(o)");
 

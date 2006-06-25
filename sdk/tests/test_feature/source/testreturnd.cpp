@@ -16,13 +16,21 @@ static double cfunction()
 	return 88.32;
 }
 
+static void cfunction_gen(asIScriptGeneric *gen) 
+{
+	gen->SetReturnDouble(88.32);
+}
+
 bool TestReturnD()
 {
 	bool ret = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterGlobalProperty("double returnValue", &returnValue);
-	engine->RegisterGlobalFunction("double cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterGlobalFunction("double cfunction()", asFUNCTION(cfunction_gen), asCALL_GENERIC);
+	else
+		engine->RegisterGlobalFunction("double cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
 
 	engine->ExecuteString(0, "returnValue = cfunction()");
 

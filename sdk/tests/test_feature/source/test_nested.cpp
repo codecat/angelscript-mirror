@@ -18,6 +18,12 @@ static void CallExecuteString(string &str)
 		ctx->SetException("ExecuteString() failed\n");
 }
 
+static void CallExecuteString_gen(asIScriptGeneric *gen)
+{
+	string str = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
+	CallExecuteString(str);
+}
+
 static int i = 0;
 
 bool TestNested()
@@ -26,10 +32,13 @@ bool TestNested()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
 	engine->RegisterGlobalProperty("int i", &i);
-	engine->RegisterGlobalFunction("void CallExecuteString(string &in)", asFUNCTION(CallExecuteString), asCALL_CDECL);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterGlobalFunction("void CallExecuteString(string &in)", asFUNCTION(CallExecuteString_gen), asCALL_GENERIC);
+	else
+		engine->RegisterGlobalFunction("void CallExecuteString(string &in)", asFUNCTION(CallExecuteString), asCALL_CDECL);
 
 	COutStream out;	
 

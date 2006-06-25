@@ -26,12 +26,25 @@ static void cfunction(int f1, short f2, char f3, int f4)
 	testVal = (f1 == 5) && (f2 == 9) && (f3 == 1) && (f4 == 3);
 }
 
+static void cfunction_gen(asIScriptGeneric *gen)
+{
+	called = true;
+	t1 = gen->GetArgDWord(0);
+	t2 = (short)gen->GetArgDWord(1);
+	t3 = (char)gen->GetArgDWord(2);
+	t4 = gen->GetArgDWord(3);
+	testVal = (t1 == 5) && (t2 == 9) && (t3 == 1) && (t4 == 3);
+}
+
 bool TestExecute4Args()
 {
 	bool ret = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterGlobalFunction("void cfunction(int, int16, int8, int)", asFUNCTION(cfunction), asCALL_CDECL);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterGlobalFunction("void cfunction(int, int16, int8, int)", asFUNCTION(cfunction_gen), asCALL_GENERIC);
+	else
+		engine->RegisterGlobalFunction("void cfunction(int, int16, int8, int)", asFUNCTION(cfunction), asCALL_CDECL);
 
 	engine->ExecuteString(0, "cfunction(5, 9, 1, 3)");
 

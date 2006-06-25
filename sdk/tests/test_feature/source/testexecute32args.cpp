@@ -67,20 +67,43 @@ static void cfunction(int f1 , int f2 , int f3 , int f4 ,
 	          (f29 == 29) && (f30 == 30) && (f31 == 31) && (f32 == 32);
 }
 
+static void cfunction_gen(asIScriptGeneric *gen) 
+{
+	called = true;
+	testVal = true;
+	for( int n = 0; n < 32; n++ )
+	{
+		values[n] = gen->GetArgDWord(n);
+		if( values[n] != n+1 )
+			testVal = false;
+	}
+}
+
 bool TestExecute32Args()
 {
 	bool ret = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterGlobalFunction("void cfunction(int, int, int, int,"
-	                                              "int, int, int, int,"
-	                                              "int, int, int, int,"
-	                                              "int, int, int, int,"
-	                                              "int, int, int, int,"
-	                                              "int, int, int, int,"
-	                                              "int, int, int, int,"
-	                                              "int, int, int, int)", 
-				                   asFUNCTION(cfunction), asCALL_CDECL);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterGlobalFunction("void cfunction(int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int)", 
+									   asFUNCTION(cfunction_gen), asCALL_GENERIC);
+	else		
+		engine->RegisterGlobalFunction("void cfunction(int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int,"
+													  "int, int, int, int)", 
+									   asFUNCTION(cfunction), asCALL_CDECL);
 
 	engine->ExecuteString(0, "cfunction( 1,  2,  3,  4,"
 	                                " 5,  6,  7,  8,"

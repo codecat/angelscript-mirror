@@ -26,13 +26,26 @@ static void cfunction(float f1, float f2, double f3, float f4)
 	testVal = (f1 == 9.2f) && (f2 == 13.3f) && (f3 == 18.8) && (f4 == 3.1415f);
 }
 
+static void cfunction_gen(asIScriptGeneric *gen)
+{
+	called = true;
+	t1 = gen->GetArgFloat(0);
+	t2 = gen->GetArgFloat(1);
+	t3 = gen->GetArgDouble(2);
+	t4 = gen->GetArgFloat(3);
+	testVal = (t1 == 9.2f) && (t2 == 13.3f) && (t3 == 18.8) && (t4 == 3.1415f);
+}
+
 
 bool TestExecute4Argsf()
 {
 	bool ret = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterGlobalFunction("void cfunction(float, float, double, float)", asFUNCTION(cfunction), asCALL_CDECL);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterGlobalFunction("void cfunction(float, float, double, float)", asFUNCTION(cfunction_gen), asCALL_GENERIC);
+	else
+		engine->RegisterGlobalFunction("void cfunction(float, float, double, float)", asFUNCTION(cfunction), asCALL_CDECL);
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);

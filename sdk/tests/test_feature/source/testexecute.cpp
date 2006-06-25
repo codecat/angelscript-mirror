@@ -19,8 +19,14 @@ bool TestExecute()
 	bool ret = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
-
+	if( strstr(asGetLibraryOptions(),"AS_MAX_PORTABILITY") )
+	{
+		engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_GENERIC);
+	}
+	else
+	{
+		engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
+	}
 	engine->ExecuteString(0, "cfunction()");
 
 	if (!called) {

@@ -29,7 +29,7 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
 	engine->RegisterGlobalProperty("float[] @floatArray", &floatArray);
 	engine->RegisterGlobalProperty("string[] @stringArray", &stringArray);

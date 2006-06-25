@@ -1494,7 +1494,11 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		{
 			// Script arrays need the type id as well
 			arg2.bc.InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(var->dataType.GetObjectType()));
+#ifndef AS_64BIT_PTR
 			arg2.type.Set(asCDataType::CreatePrimitive(ttInt, false));
+#else
+			arg2.type.Set(asCDataType::CreatePrimitive(ttInt64, false));
+#endif
 			args.PushLast(&arg2);
 		}
 
@@ -1612,7 +1616,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				DoAssignment(&ctx, &lctx, &rctx, el, el, ttAssignment, el);
 
 				if( !lctx.type.dataType.IsPrimitive() )
-					ctx.bc.Pop(1);
+					ctx.bc.Pop(PTR_SIZE);
 
 				// Release temporary variables used by expression
 				ReleaseTemporaryVariable(ctx.type, &ctx.bc);
@@ -2388,7 +2392,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				PrepareArgument(&v->type, &expr, rnode->firstChild);
 
 				// Pop the reference to the temporary variable again
-				expr.bc.Pop(1);
+				expr.bc.Pop(PTR_SIZE);
 
 				// Load the object pointer into the object register
 				expr.bc.InstrSHORT(BC_LOADOBJ, expr.type.stackOffset);
@@ -4220,7 +4224,11 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 		}
 		else if( vnode->tokenType == ttNull )
 		{
+#ifndef AS_64BIT_PTR
 			ctx->bc.InstrDWORD(BC_PshC4, 0);
+#else
+			ctx->bc.InstrQWORD(BC_SET8, 0);
+#endif
 			ctx->type.SetNullConstant();
 		}
 		else
@@ -4731,7 +4739,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 				asSExprContext o;
 				DoAssignment(&o, expr, &rctx, outParam.argNode, outParam.argNode, ttAssignment, outParam.argNode);
 
-				if( !o.type.dataType.IsPrimitive() ) o.bc.Pop(1);
+				if( !o.type.dataType.IsPrimitive() ) o.bc.Pop(PTR_SIZE);
 
 				MergeExprContexts(ctx, &o);
 			}
@@ -6096,11 +6104,10 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *ex
 			}
 			else
 			{
-				// TODO: Adapt pointer size
 				// Copy the object handle to a variable
 				ctx->bc.InstrSHORT(BC_PSF, offset);
 				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
-				ctx->bc.Pop(1);
+				ctx->bc.Pop(PTR_SIZE);
 			}
 
 			ReleaseTemporaryVariable(ctx->type, &ctx->bc);

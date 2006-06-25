@@ -81,6 +81,14 @@ static const char *script3 =
 "};                                              \n"
 "myclass c;                                      \n";
 
+static const char *script4 =
+"class myclass        \n"
+"{                    \n"
+"  void func() {}     \n"
+"}                    \n"
+"void func() {}       \n";
+
+
 void print(asIScriptGeneric *gen)
 {
 	std::string s = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
@@ -226,6 +234,19 @@ bool Test()
 		if( r != asEXECUTION_FINISHED ) fail = true;
 		ctx->Release();
 	}
+
+	engine->Release();
+
+	//----------------------------
+	// Verify that global functions and class methods with the same name doesn't conflict
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	engine->AddScriptSection(0, "test4", script4, strlen(script4), 0, false);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	
+	int func = engine->GetFunctionIDByDecl(0, "void func()");
+	if( func < 0 ) fail = true;
 
 	engine->Release();
 

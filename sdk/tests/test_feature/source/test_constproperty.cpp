@@ -32,7 +32,7 @@ bool Test()
 
 	engine->RegisterObjectType("Obj1", sizeof(int), asOBJ_PRIMITIVE);
 	engine->RegisterObjectProperty("Obj1", "int val", 0);
-	engine->RegisterObjectBehaviour("Obj1", asBEHAVE_ASSIGNMENT, "Obj1 &f(Obj1 &in)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Obj1", asBEHAVE_ASSIGNMENT, "Obj1 &f(Obj1 &in)", asFUNCTION(0), asCALL_GENERIC);
 
 	engine->RegisterObjectType("Obj2", sizeof(int), asOBJ_PRIMITIVE);
 	engine->RegisterObjectProperty("Obj2", "int val", 0);

@@ -53,6 +53,11 @@ public:
 	int *mem;
 };
 
+void Assign_gen(asIScriptGeneric *gen)
+{
+	// Don't do anything
+}
+
 class CRefObject
 {
 public:
@@ -62,17 +67,41 @@ public:
 	int refCount;
 };
 
+void AddRef_gen(asIScriptGeneric*gen)
+{
+	CRefObject *o = (CRefObject*)gen->GetObject();
+	o->AddRef();
+}
+
+void Release_gen(asIScriptGeneric *gen)
+{
+	CRefObject *o = (CRefObject*)gen->GetObject();
+	o->Release();
+}
+
 void ConstructRefObj(CRefObject *o)
 {
 	new(o) CRefObject();
 }
- 
+
+void ConstructRefObj_gen(asIScriptGeneric *gen)
+{
+	CRefObject *o = (CRefObject*)gen->GetObject();
+	new(o) CRefObject();
+}
+
 void Construct(CObject *o)
 {
 	new(o) CObject();
 }
 
-void Construct2(CObject *o, int)
+void Construct_gen(asIScriptGeneric *gen)
+{
+	CObject *o = (CObject*)gen->GetObject();
+	new(o) CObject();
+}
+
+void Construct2(asIScriptGeneric *gen)
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx ) ctx->SetException("application exception");
@@ -80,6 +109,12 @@ void Construct2(CObject *o, int)
 
 void Destruct(CObject *o)
 {
+	o->~CObject();
+}
+
+void Destruct_gen(asIScriptGeneric *gen)
+{
+	CObject *o = (CObject*)gen->GetObject();
 	o->~CObject();
 }
 
@@ -97,12 +132,30 @@ CObject SuspendObj()
 	return CObject();
 }
 
+void SuspendObj_gen(asIScriptGeneric*gen)
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx ) ctx->Suspend();
+
+	CObject obj;
+	gen->SetReturnObject(&obj);
+}
+
 CObject ExceptionObj()
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx ) ctx->SetException("application exception");
 
 	return CObject();
+}
+
+void ExceptionObj_gen(asIScriptGeneric *gen)
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx ) ctx->SetException("application exception");
+
+	CObject obj;
+	gen->SetReturnObject(&obj);
 }
 
 CRefObject *ExceptionHandle()
@@ -113,6 +166,14 @@ CRefObject *ExceptionHandle()
 	return 0;
 }
 
+void ExceptionHandle_gen(asIScriptGeneric *gen)
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx ) ctx->SetException("application exception");
+
+	gen->SetReturnObject(0);
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -121,19 +182,36 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->RegisterObjectType("Object", sizeof(CObject), asOBJ_CLASS_CD);	
-	engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Construct2), asCALL_CDECL_OBJFIRST);
-	engine->RegisterObjectBehaviour("Object", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
-
 	r = engine->RegisterObjectType("RefObj", sizeof(CRefObject), asOBJ_CLASS_C); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructRefObj), asCALL_CDECL_OBJLAST); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefObject, AddRef), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefObject, Release), asCALL_THISCALL); assert(r >= 0);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Construct2), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct_gen), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Object", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct_gen), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Object", asBEHAVE_ASSIGNMENT, "Object &f(const Object &in)", asFUNCTION(Assign_gen), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructRefObj_gen), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef_gen), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_RELEASE, "void f()", asFUNCTION(Release_gen), asCALL_GENERIC); assert(r >= 0);
+		engine->RegisterGlobalFunction("void RaiseException()", asFUNCTION(RaiseException), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("Object SuspendObj()", asFUNCTION(SuspendObj_gen), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("Object ExceptionObj()", asFUNCTION(ExceptionObj_gen), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("RefObj@ ExceptionHandle()", asFUNCTION(ExceptionHandle_gen), asCALL_GENERIC);
+	}
+	else
+	{
+		engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Construct2), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("Object", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructRefObj), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefObject, AddRef), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefObject, Release), asCALL_THISCALL); assert(r >= 0);
+		engine->RegisterGlobalFunction("void RaiseException()", asFUNCTION(RaiseException), asCALL_CDECL);
+		engine->RegisterGlobalFunction("Object SuspendObj()", asFUNCTION(SuspendObj), asCALL_CDECL);
+		engine->RegisterGlobalFunction("Object ExceptionObj()", asFUNCTION(ExceptionObj), asCALL_CDECL);
+		engine->RegisterGlobalFunction("RefObj@ ExceptionHandle()", asFUNCTION(ExceptionHandle), asCALL_CDECL);
+	}
 
-	engine->RegisterGlobalFunction("void RaiseException()", asFUNCTION(RaiseException), asCALL_CDECL);
-	engine->RegisterGlobalFunction("Object SuspendObj()", asFUNCTION(SuspendObj), asCALL_CDECL);
-	engine->RegisterGlobalFunction("Object ExceptionObj()", asFUNCTION(ExceptionObj), asCALL_CDECL);
-	engine->RegisterGlobalFunction("RefObj@ ExceptionHandle()", asFUNCTION(ExceptionHandle), asCALL_CDECL);
+
 
 	COutStream out;
 

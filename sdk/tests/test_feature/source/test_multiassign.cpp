@@ -28,6 +28,14 @@ static asDWORD &Assign(asDWORD &src, asDWORD &dst)
 	return dst;
 }
 
+static void Assign_gen(asIScriptGeneric *gen)
+{
+	asDWORD *dst = (asDWORD*)gen->GetObject();
+	asDWORD *src = (asDWORD*)gen->GetArgAddress(0);
+	*dst = *src;
+	gen->SetReturnAddress(dst);
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -35,7 +43,11 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->RegisterObjectType("CLR", sizeof(asDWORD), asOBJ_PRIMITIVE);
-	engine->RegisterObjectBehaviour("CLR", asBEHAVE_ASSIGNMENT, "CLR &f(CLR &in)", asFUNCTION(Assign), asCALL_CDECL_OBJLAST);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterObjectBehaviour("CLR", asBEHAVE_ASSIGNMENT, "CLR &f(CLR &in)", asFUNCTION(Assign_gen), asCALL_GENERIC);
+	else
+		engine->RegisterObjectBehaviour("CLR", asBEHAVE_ASSIGNMENT, "CLR &f(CLR &in)", asFUNCTION(Assign), asCALL_CDECL_OBJLAST);
+
 
 	engine->RegisterGlobalProperty("CLR a", &a);
 	engine->RegisterGlobalProperty("CLR b", &b);

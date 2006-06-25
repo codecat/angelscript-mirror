@@ -84,9 +84,9 @@ static void ArrayObjectResize(asUINT size, asCArrayObject *self)
 static void ArrayObjectConstructor_Generic(asIScriptGeneric *gen)
 {
 #ifndef AS_64BIT_PTR
-	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(0);
+	asCObjectType *ot = (asCObjectType*)(size_t)gen->GetArgDWord(0);
 #else
-	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(0);
+	asCObjectType *ot = (asCObjectType*)(size_t)gen->GetArgQWord(0);
 #endif
 	asCArrayObject *obj = (asCArrayObject*)gen->GetObject();
 
@@ -97,9 +97,9 @@ static void ArrayObjectConstructor2_Generic(asIScriptGeneric *gen)
 {
 	asUINT length = gen->GetArgDWord(0);
 #ifndef AS_64BIT_PTR
-	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(1);
+	asCObjectType *ot = (asCObjectType*)(size_t)gen->GetArgDWord(1);
 #else
-	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(1);
+	asCObjectType *ot = (asCObjectType*)(size_t)gen->GetArgQWord(1);
 #endif
 	asCArrayObject *obj = (asCArrayObject*)gen->GetObject();
 
@@ -165,8 +165,8 @@ void RegisterArrayObject(asCScriptEngine *engine)
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ArrayObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int)", asFUNCTION(ArrayObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
 #else
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ArrayObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int)", asFUNCTION(ArrayObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(ArrayObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int64)", asFUNCTION(ArrayObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );

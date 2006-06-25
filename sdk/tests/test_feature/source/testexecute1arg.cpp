@@ -17,12 +17,21 @@ static void cfunction(int f1)
 	testVal = f1;
 }
 
+static void cfunction_gen(asIScriptGeneric*gen)
+{
+	called = true;
+	testVal = (int)gen->GetArgDWord(0);
+}
+
 bool TestExecute1Arg()
 {
 	bool ret = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction), asCALL_CDECL);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction_gen), asCALL_GENERIC);
+	else
+		engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction), asCALL_CDECL);
 
 	engine->ExecuteString(0, "cfunction(5)");
 

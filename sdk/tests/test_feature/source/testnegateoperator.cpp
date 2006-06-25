@@ -23,6 +23,22 @@ static int minus(int *f1, int *f2)
 	return *f1 - *f2;
 }
 
+static void negate_gen(asIScriptGeneric *gen) 
+{
+	int *f1 = (int*)gen->GetObject();
+	called = true;
+	int ret = -*f1;
+	gen->SetReturnObject(&ret);
+}
+
+static void minus_gen(asIScriptGeneric *gen)
+{
+	int *f1 = (int*)gen->GetArgAddress(0);
+	int *f2 = (int*)gen->GetArgAddress(1);
+	called = true;
+	int ret = *f1 - *f2;
+	gen->SetReturnObject(&ret);
+}
 
 bool TestNegateOperator()
 {
@@ -30,9 +46,16 @@ bool TestNegateOperator()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterObjectType("obj", sizeof(int), asOBJ_PRIMITIVE);
-	engine->RegisterObjectBehaviour("obj", asBEHAVE_NEGATE, "obj f()", asFUNCTION(negate), asCALL_CDECL_OBJLAST);
-	engine->RegisterGlobalBehaviour(asBEHAVE_SUBTRACT, "obj f(obj &in, obj &in)", asFUNCTION(minus), asCALL_CDECL);
-
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		engine->RegisterObjectBehaviour("obj", asBEHAVE_NEGATE, "obj f()", asFUNCTION(negate_gen), asCALL_GENERIC);
+		engine->RegisterGlobalBehaviour(asBEHAVE_SUBTRACT, "obj f(obj &in, obj &in)", asFUNCTION(minus_gen), asCALL_GENERIC);
+	}
+	else
+	{
+		engine->RegisterObjectBehaviour("obj", asBEHAVE_NEGATE, "obj f()", asFUNCTION(negate), asCALL_CDECL_OBJLAST);
+		engine->RegisterGlobalBehaviour(asBEHAVE_SUBTRACT, "obj f(obj &in, obj &in)", asFUNCTION(minus), asCALL_CDECL);
+	}
 	engine->RegisterGlobalProperty("obj testVal", &testVal);
 
 	testVal = 1000;

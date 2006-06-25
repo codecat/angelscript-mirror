@@ -69,22 +69,6 @@ static void Assign(asIScriptGeneric *gen)
 	*obj = *(CRefClass*)gen->GetArgAddress(0);
 }
 
-static void Assert(bool expr)
-{
-	if( !expr )
-	{
-		printf("Assert failed\n");
-		asIScriptContext *ctx = asGetActiveContext();
-		if( ctx )
-		{
-			asIScriptEngine *engine = ctx->GetEngine();
-			printf("func: %s\n", engine->GetFunctionDeclaration(ctx->GetCurrentFunction()));
-			printf("line: %d\n", ctx->GetCurrentLineNumber());
-			ctx->SetException("Assert failed");
-		}
-	}
-}
-
 bool Test()
 {
 	bool fail = false;
@@ -132,12 +116,13 @@ bool Test()
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build(0);
-#ifndef AS_ALLOW_UNSAFE_REFERENCES
-	if( r >= 0 ) fail = true;
-	if( bout.buffer != "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" ) fail = true;
-#else
-	if( r != 0 ) fail = true;
-#endif
+	if( !strstr(asGetLibraryOptions(), "AS_ALLOW_UNSAFE_REFERENCES") )
+	{
+		if( r >= 0 ) fail = true;
+		if( bout.buffer != "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" ) fail = true;
+	}
+	else
+		if( r != 0 ) fail = true;
 
 	//----------------------
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);

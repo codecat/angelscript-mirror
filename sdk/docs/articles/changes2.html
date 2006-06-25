@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.7.0 WIP - 2006/06/22</h2>
+<h2>Version 2.7.0 WIP - 2006/06/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -133,6 +133,10 @@ A:hover
 <li>(rev 40) Discard() would remove array types from the configuration, leading to failure in following builds (Thanks loboWu)
 <li>(rev 43) Fixed bug with the any type and AS_MAX_PORTABILITY
 <li>(rev 43) Fixed bug with AS_MAX_PORTABILITY and script classes that were not constructed properly
+<li>(rev 45) Fixed a bug with the bytecode optimization for 64bit processors
+<li>(rev 45) Fixed some bugs with the internal array object and AS_MAX_PORTABILITY and AS_64BIT_PTR
+<li>(rev 45) Fixed bug with null value and AS_64BIT_PTR
+<li>(rev 45) GetFunctionIDByDecl() was enumerating class methods as well (Thanks Maddi)
 </ul>
 <li>Library interface
 <ul>

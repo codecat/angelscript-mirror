@@ -40,7 +40,7 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
 	engine->RegisterObjectType("Obj", sizeof(Obj), asOBJ_CLASS);
 	engine->RegisterObjectProperty("Obj", "int v", offsetof(Obj, v));

@@ -13,13 +13,22 @@ static bool cfunction() {
 	return true;
 }
 
+static void cfunction_gen(asIScriptGeneric *gen) 
+{
+	gen->SetReturnDWord(true);
+}
+
+
 bool TestReturn()
 {
 	bool ret = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterGlobalProperty("bool returned", &returned);
-	engine->RegisterGlobalFunction("bool cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterGlobalFunction("bool cfunction()", asFUNCTION(cfunction_gen), asCALL_GENERIC);
+	else
+		engine->RegisterGlobalFunction("bool cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
 
 	engine->ExecuteString(0, "returned = cfunction()");
 

@@ -3,9 +3,9 @@ using namespace std;
 
 #define TESTNAME "TestNotInitialized"
 
-static void cfunction(int v)
+static void cfunction(asIScriptGeneric *gen)
 {
-
+	
 }
 
 bool TestNotInitialized()
@@ -14,7 +14,7 @@ bool TestNotInitialized()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction), asCALL_GENERIC);
 	
 	CBufferedOutStream out;	
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);

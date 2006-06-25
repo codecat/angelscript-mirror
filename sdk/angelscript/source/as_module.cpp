@@ -377,7 +377,8 @@ int asCModule::GetFunctionIDByDecl(const char *decl)
 	int id = -1;
 	for( size_t n = 0; n < scriptFunctions.GetLength(); ++n )
 	{
-		if( func.name == scriptFunctions[n]->name && 
+		if( scriptFunctions[n]->objectType == 0 && 
+			func.name == scriptFunctions[n]->name && 
 			func.returnType == scriptFunctions[n]->returnType &&
 			func.parameterTypes.GetLength() == scriptFunctions[n]->parameterTypes.GetLength() )
 		{

@@ -74,6 +74,55 @@ public:
 				(f25 == 25) && (f26 == 26) && (f27 == 27) && (f28 == 28) &&
 				(f29 == 29.0f) && (f30 == 30.0f) && (f31 == 31.0f) && (f32 == 32.0f);
 	}
+	static void cfunction_gen(asIScriptGeneric *gen) 
+	{
+		TestClass *self = (TestClass*)gen->GetObject();
+		self->called = true;
+		int *ivalues = self->ivalues;
+		float *fvalues = self->fvalues;
+		ivalues[ 0] = gen->GetArgDWord(0);
+		ivalues[ 1] = gen->GetArgDWord(1);
+		ivalues[ 2] = gen->GetArgDWord(2);
+		ivalues[ 3] = gen->GetArgDWord(3);
+		fvalues[ 0] = gen->GetArgFloat(4);
+		fvalues[ 1] = gen->GetArgFloat(5);
+		fvalues[ 2] = gen->GetArgFloat(6);
+		fvalues[ 3] = gen->GetArgFloat(7);
+		ivalues[ 4] = gen->GetArgDWord(8);
+		ivalues[ 5] = gen->GetArgDWord(9);
+		ivalues[ 6] = gen->GetArgDWord(10);
+		ivalues[ 7] = gen->GetArgDWord(11);
+		fvalues[ 4] = gen->GetArgFloat(12);
+		fvalues[ 5] = gen->GetArgFloat(13);
+		fvalues[ 6] = gen->GetArgFloat(14);
+		fvalues[ 7] = gen->GetArgFloat(15);
+		ivalues[ 8] = gen->GetArgDWord(16);
+		ivalues[ 9] = gen->GetArgDWord(17);
+		ivalues[10] = gen->GetArgDWord(18);
+		ivalues[11] = gen->GetArgDWord(19);
+		fvalues[ 8] = gen->GetArgFloat(20);
+		fvalues[ 9] = gen->GetArgFloat(21);
+		fvalues[10] = gen->GetArgFloat(22);
+		fvalues[11] = gen->GetArgFloat(23);
+		ivalues[12] = gen->GetArgDWord(24);
+		ivalues[13] = gen->GetArgDWord(25);
+		ivalues[14] = gen->GetArgDWord(26);
+		ivalues[15] = gen->GetArgDWord(27);
+		fvalues[12] = gen->GetArgFloat(28);
+		fvalues[13] = gen->GetArgFloat(29);
+		fvalues[14] = gen->GetArgFloat(30);
+		fvalues[15] = gen->GetArgFloat(31);
+		
+	
+		self->testVal =	(ivalues[0]  ==  1) && (ivalues[1]  ==  2) && (ivalues[2]  ==  3) && (ivalues[3]  ==  4) &&
+				(fvalues[0]  ==  5.0f) && (fvalues[1]  ==  6.0f) && (fvalues[2]  ==  7.0f) && (fvalues[3]  ==  8.0f) &&
+				(ivalues[4]  ==  9) && (ivalues[5] == 10) && (ivalues[6] == 11) && (ivalues[7] == 12) &&
+				(fvalues[4] == 13.0f) && (fvalues[5] == 14.0f) && (fvalues[6] == 15.0f) && (fvalues[7] == 16.0f) &&
+				(ivalues[8] == 17) && (ivalues[9] == 18) && (ivalues[10] == 19) && (ivalues[11] == 20) &&
+				(fvalues[8] == 21.0f) && (fvalues[9] == 22.0f) && (fvalues[10] == 23.0f) && (fvalues[11] == 24.0f) &&
+				(ivalues[12] == 25) && (ivalues[13] == 26) && (ivalues[14] == 27) && (ivalues[15] == 28) &&
+				(fvalues[12] == 29.0f) && (fvalues[13] == 30.0f) && (fvalues[14] == 31.0f) && (fvalues[15] == 32.0f);
+	}
 };
 
 static TestClass test;
@@ -85,21 +134,42 @@ bool TestExecuteThis32MixedArgs()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	int r;
 	r = engine->RegisterObjectType("TestClass", 0/*sizeof(TestClass)*/, 0); assert( r >= 0 );
-	r = engine->RegisterObjectMethod(
-		"TestClass",
-		"void cfunction("
-			"int, int, int, int,"
-			"float, float, float, float,"
-			"int, int, int, int,"
-			"float, float, float, float,"
-			"int, int, int, int,"
-			"float, float, float, float,"
-			"int, int, int, int,"
-			"float, float, float, float"
-		")",
-		
-		asMETHOD(TestClass,cfunction)
-		, asCALL_THISCALL); assert(r >= 0);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		r = engine->RegisterObjectMethod(
+			"TestClass",
+			"void cfunction("
+				"int, int, int, int,"
+				"float, float, float, float,"
+				"int, int, int, int,"
+				"float, float, float, float,"
+				"int, int, int, int,"
+				"float, float, float, float,"
+				"int, int, int, int,"
+				"float, float, float, float"
+			")",
+			
+			asFUNCTION(TestClass::cfunction_gen)
+			, asCALL_GENERIC); assert(r >= 0);
+	}
+	else
+	{
+		r = engine->RegisterObjectMethod(
+			"TestClass",
+			"void cfunction("
+				"int, int, int, int,"
+				"float, float, float, float,"
+				"int, int, int, int,"
+				"float, float, float, float,"
+				"int, int, int, int,"
+				"float, float, float, float,"
+				"int, int, int, int,"
+				"float, float, float, float"
+			")",
+			
+			asMETHOD(TestClass,cfunction)
+			, asCALL_THISCALL); assert(r >= 0);
+	}
 	r = engine->RegisterGlobalProperty("TestClass test", &test);
 
 	engine->ExecuteString(0, 

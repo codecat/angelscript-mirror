@@ -58,7 +58,7 @@ bool TestInt64()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterObjectType("Int64", 8, 0);
-	engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_GENERIC);
 
 	COutStream out;
 	engine->AddScriptSection(0, "test", script, strlen(script), 0);

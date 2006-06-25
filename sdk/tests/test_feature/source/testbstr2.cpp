@@ -15,7 +15,7 @@ bool TestBStr2()
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
 	int r = engine->ExecuteString(0, "MissingFunction(\"test\")");
 	if( r >= 0 )

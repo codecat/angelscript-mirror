@@ -17,7 +17,8 @@ static float  t2 = 0;
 static double t3 = 0;
 static char   t4 = 0;
 
-static void cfunction(int f1, float f2, double f3, int f4) {
+static void cfunction(int f1, float f2, double f3, int f4) 
+{
 	called = true;
 
 	t1 = f1;
@@ -28,12 +29,27 @@ static void cfunction(int f1, float f2, double f3, int f4) {
 	testVal = (f1 == 10) && (f2 == 1.92f) && (f3 == 3.88) && (f4 == 97);
 }
 
+static void cfunction_gen(asIScriptGeneric *gen) 
+{
+	called = true;
+
+	t1 = gen->GetArgDWord(0);
+	t2 = gen->GetArgFloat(1);
+	t3 = gen->GetArgDouble(2);
+	t4 = gen->GetArgDWord(3);
+	
+	testVal = (t1 == 10) && (t2 == 1.92f) && (t3 == 3.88) && (t4 == 97);
+}
+
 bool TestExecuteMixedArgs()
 {
 	bool ret = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterGlobalFunction("void cfunction(int, float, double, int)", asFUNCTION(cfunction), asCALL_CDECL);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterGlobalFunction("void cfunction(int, float, double, int)", asFUNCTION(cfunction_gen), asCALL_GENERIC);
+	else
+		engine->RegisterGlobalFunction("void cfunction(int, float, double, int)", asFUNCTION(cfunction), asCALL_CDECL);
 
 	engine->ExecuteString(0, "cfunction(10, 1.92f, 3.88, 97)");
 	

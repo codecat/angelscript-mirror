@@ -38,14 +38,14 @@ bool Test()
 
 	int r;
 	r = engine->RegisterObjectType("ClientData", 4, asOBJ_PRIMITIVE); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("ClientData", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);  assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("ClientData", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ClientData", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);  assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ClientData", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectType("Actor", 4, asOBJ_PRIMITIVE); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("Actor", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);  assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("Actor", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("Actor", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);  assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("Actor", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("ClientData", "Actor @getActor(int)", asFUNCTION(0), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ClientData", "Actor @getActor(int)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
 
 	engine->AddScriptSection(0, "script", script, strlen(script), 0, false);

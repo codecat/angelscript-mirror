@@ -16,13 +16,20 @@ static float cfunction()
 	return 18.87f;
 }
 
+static void cfunction_gen(asIScriptGeneric *gen) 
+{
+	gen->SetReturnFloat(18.87f);
+}
 bool TestReturnF()
 {
 	bool ret = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterGlobalProperty("float returnValue", &returnValue);
-	engine->RegisterGlobalFunction("float cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		engine->RegisterGlobalFunction("float cfunction()", asFUNCTION(cfunction_gen), asCALL_GENERIC);
+	else
+		engine->RegisterGlobalFunction("float cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
 
 	engine->ExecuteString(0, "returnValue = cfunction()");
 

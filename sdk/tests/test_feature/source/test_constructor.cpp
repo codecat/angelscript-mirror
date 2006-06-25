@@ -51,18 +51,42 @@ void ConstrObj(int a, int b, CTestConstructor *obj)
 	new(obj) CTestConstructor(a,b);
 }
 
+void ConstrObj_gen1(asIScriptGeneric *gen)
+{
+	CTestConstructor *obj = (CTestConstructor*)gen->GetObject();
+	new(obj) CTestConstructor();
+}
+
+void ConstrObj_gen2(asIScriptGeneric *gen)
+{
+	CTestConstructor *obj = (CTestConstructor*)gen->GetObject();
+	int a = gen->GetArgDWord(0);
+	int b = gen->GetArgDWord(1);
+	new(obj) CTestConstructor(a,b);
+}
+
+
 bool TestConstructor()
 {
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	RegisterScriptString(engine);
+	RegisterScriptString_Generic(engine);
 
 	int r;
 	r = engine->RegisterObjectType("obj", sizeof(CTestConstructor), asOBJ_CLASS_C); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstrObj, (CTestConstructor *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTIONPR(ConstrObj, (int, int, CTestConstructor *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstrObj_gen1), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTION(ConstrObj_gen2), asCALL_GENERIC); assert( r >= 0 );
+	}
+	else
+	{
+		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstrObj, (CTestConstructor *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTIONPR(ConstrObj, (int, int, CTestConstructor *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	}
+
 	r = engine->RegisterObjectProperty("obj", "int a", offsetof(CTestConstructor, a)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("obj", "int b", offsetof(CTestConstructor, b)); assert( r >= 0 );
 
