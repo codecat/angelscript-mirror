@@ -12,6 +12,8 @@ int  RunApplication();
 void ConfigureEngine(asIScriptEngine *engine);
 int  CompileScript(asIScriptEngine *engine);
 void PrintString(string &str);
+void PrintString_Generic(asIScriptGeneric *gen);
+void timeGetTime_Generic(asIScriptGeneric *gen);
 void LineCallback(asIScriptContext *ctx, DWORD *timeOut);
 
 int main(int argc, char **argv)
@@ -165,20 +167,35 @@ void ConfigureEngine(asIScriptEngine *engine)
 {
 	int r;
 
-	// Register the script string type
-	// Look at the implementation for this function for more information  
-	// on how to register a custom string type, and other object types.
-	// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
-	RegisterScriptString(engine);
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		// Register the script string type
+		// Look at the implementation for this function for more information  
+		// on how to register a custom string type, and other object types.
+		// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
+		RegisterScriptString(engine);
 
-	// Register the functions that the scripts will be allowed to use.
-	// Note how the return code is validated with an assert(). This helps
-	// us discover where a problem occurs, and doesn't pollute the code
-	// with a lot of if's. If an error occurs in release mode it will
-	// be caught when a script is being built, so it is not necessary
-	// to do the verification here as well.
-	r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("uint GetSystemTime()", asFUNCTION(timeGetTime), asCALL_STDCALL); assert( r >= 0 );
+		// Register the functions that the scripts will be allowed to use.
+		// Note how the return code is validated with an assert(). This helps
+		// us discover where a problem occurs, and doesn't pollute the code
+		// with a lot of if's. If an error occurs in release mode it will
+		// be caught when a script is being built, so it is not necessary
+		// to do the verification here as well.
+		r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("uint GetSystemTime()", asFUNCTION(timeGetTime), asCALL_STDCALL); assert( r >= 0 );
+	}
+	else
+	{
+		// If the library doesn't support native calling conventions it is
+		// necessary to register the functions using the specified signature
+		// used for the generic interface. I.e: void function(asIScriptGeneric *)
+		RegisterScriptString_Generic(engine);
+
+		// Notice how the registration is almost identical to the above. 
+		r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("uint GetSystemTime()", asFUNCTION(timeGetTime_Generic), asCALL_GENERIC); assert( r >= 0 );
+	}
+
 
 	// It is possible to register the functions, properties, and types in 
 	// configuration groups as well. When compiling the scripts it then
@@ -256,11 +273,6 @@ int CompileScript(asIScriptEngine *engine)
 	return 0;
 }
 
-void PrintString(string &str)
-{
-	cout << str;
-}
-
 void LineCallback(asIScriptContext *ctx, DWORD *timeOut)
 {
 	// If the time out is reached we abort the script
@@ -273,3 +285,21 @@ void LineCallback(asIScriptContext *ctx, DWORD *timeOut)
 	// time, by simply calling Execute() again.
 }
 
+// Function implementation with native calling convention
+void PrintString(string &str)
+{
+	cout << str;
+}
+
+// Function implementation with generic script interface
+void PrintString_Generic(asIScriptGeneric *gen)
+{
+	string *str = (string*)gen->GetArgAddress(0);
+	cout << *str;
+}
+
+// Function wrapper is needed when native calling conventions are not supported
+void timeGetTime_Generic(asIScriptGeneric *gen)
+{
+	gen->SetReturnDWord(timeGetTime());
+}
