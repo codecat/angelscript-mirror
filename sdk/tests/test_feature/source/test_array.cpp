@@ -141,7 +141,7 @@ static const char *script6 =
 "   int[] f = {,{23}};                           \n"
 "}                                               \n";
 
-void *ScriptAlloc(asUINT size)
+void *ScriptAlloc(size_t size)
 {
 	return malloc(size);
 }

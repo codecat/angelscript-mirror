@@ -321,7 +321,7 @@ int asCContext::Prepare(int funcID)
 		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
 			int pos = currentFunction->objVariablePos[n];
-			stackFramePointer[-pos] = 0;
+			*(size_t*)&stackFramePointer[-pos] = 0;
 		}
 	}
 
@@ -410,7 +410,7 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 	{
 		int pos = currentFunction->objVariablePos[n];
-		stackFramePointer[-pos] = 0;
+		*(size_t*)&stackFramePointer[-pos] = 0;
 	}
 
 	return asSUCCESS;
@@ -849,7 +849,7 @@ int asCContext::Execute()
 				for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 				{
 					int pos = currentFunction->objVariablePos[n];
-					stackFramePointer[-pos] = 0;
+					*(size_t*)&stackFramePointer[-pos] = 0;
 				}
 			}
 		}
@@ -1036,11 +1036,10 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	stackFramePointer = stackPointer;
 
 	// Set all object variables to 0
-	// TODO: Pointer size
 	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 	{
 		int pos = currentFunction->objVariablePos[n];
-		stackFramePointer[-pos] = 0;
+		*(size_t*)&stackFramePointer[-pos] = 0;
 	}
 }
 
@@ -1419,7 +1418,6 @@ void asCContext::ExecuteNext()
 
 	case BC_COPY:
 		{
-			// TODO: Pointer size
 			void *d = (void*)*(size_t*)l_sp; l_sp += PTR_SIZE;
 			void *s = (void*)*(size_t*)l_sp;
 			if( s == 0 || d == 0 )
@@ -2567,14 +2565,14 @@ void asCContext::CleanStackFrame()
 		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
 			int pos = currentFunction->objVariablePos[n];
-			if( stackFramePointer[-pos] )
+			if( *(size_t*)&stackFramePointer[-pos] )
 			{
 				// Call the object's destructor
 				asSTypeBehaviour *beh = &currentFunction->objVariableTypes[n]->beh;
 				if( beh->release )
 				{
 					engine->CallObjectMethod((void*)*(size_t*)&stackFramePointer[-pos], beh->release);
-					stackFramePointer[-pos] = 0;
+					*(size_t*)&stackFramePointer[-pos] = 0;
 				}
 				else
 				{
@@ -2583,7 +2581,7 @@ void asCContext::CleanStackFrame()
 
 					// Free the memory
 					engine->CallFree(currentFunction->objVariableTypes[n], (void*)*(size_t*)&stackFramePointer[-pos]);
-					stackFramePointer[-pos] = 0;
+					*(size_t*)&stackFramePointer[-pos] = 0;
 				}
 			}
 		}
@@ -2597,14 +2595,14 @@ void asCContext::CleanStackFrame()
 	{
 		if( currentFunction->parameterTypes[n].IsObject() && !currentFunction->parameterTypes[n].IsReference() )
 		{
-			if( stackFramePointer[offset] )
+			if( *(size_t*)&stackFramePointer[offset] )
 			{
 				// Call the object's destructor
 				asSTypeBehaviour *beh = currentFunction->parameterTypes[n].GetBehaviour();
 				if( beh->release )
 				{
 					engine->CallObjectMethod((void*)*(size_t*)&stackFramePointer[offset], beh->release);
-					stackFramePointer[offset] = 0;
+					*(size_t*)&stackFramePointer[offset] = 0;
 				}
 				else
 				{
@@ -2613,7 +2611,7 @@ void asCContext::CleanStackFrame()
 
 					// Free the memory
 					engine->CallFree(currentFunction->parameterTypes[n].GetObjectType(), (void*)*(size_t*)&stackFramePointer[offset]);
-					stackFramePointer[offset] = 0;
+					*(size_t*)&stackFramePointer[offset] = 0;
 				}
 			}
 		}

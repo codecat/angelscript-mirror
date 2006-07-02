@@ -5,7 +5,9 @@ namespace TestObject3
 
 #define TESTNAME "TestObject3"
 
-
+#ifdef __GNUC__
+#define __cdecl
+#endif
 struct cFloat
 {
 	float m_Float;
@@ -86,7 +88,7 @@ float cFloat::operator *= (float v )
 	m_Float *= v;
 	return m_Float;
 }
-cFloat &__cdecl AssignFloat2Float(float a,cFloat &b)
+cFloat & __cdecl AssignFloat2Float(float a,cFloat &b)
 {
 	b=a;
 	return b;

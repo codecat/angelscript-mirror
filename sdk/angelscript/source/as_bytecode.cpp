@@ -795,6 +795,8 @@ int asCByteCode::Optimize()
 		else if( IsCombination(curr, BC_PSF, BC_ChkRefS) &&
 			     IsCombination(instr, BC_ChkRefS, BC_RDS4) )
 		{
+			assert( PTRSIZE == 1 );
+
 			// TODO: Pointer size
 			curr->op = BC_PshV4;
 			instr->op = BC_CHKREF;
@@ -810,6 +812,8 @@ int asCByteCode::Optimize()
 				 IsCombination(instr, BC_CHKREF, BC_POP) &&
 				 instr->next->wArg > 0) )
 		{
+			assert( PTRSIZE == 1 );
+
 			// TODO: Pointer size
 			curr->op = BC_ChkNullV;
 			curr->stackInc = 0;
