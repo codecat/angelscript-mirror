@@ -149,7 +149,7 @@ bool asCByteCode::IsVarUsed(int offset)
 				return true;
 		}
 		else if( bcTypes[curr->op] == BCTYPE_rW_ARG    ||
-                 bcTypes[curr->op] == BCTYPE_wW_ARG    ||
+				 bcTypes[curr->op] == BCTYPE_wW_ARG    ||
 				 bcTypes[curr->op] == BCTYPE_wW_W_ARG  ||
 				 bcTypes[curr->op] == BCTYPE_rW_DW_ARG ||
 				 bcTypes[curr->op] == BCTYPE_wW_DW_ARG ||
@@ -193,7 +193,7 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 				curr->wArg[2] = newOffset;
 		}
 		else if( bcTypes[curr->op] == BCTYPE_rW_ARG    ||
-                 bcTypes[curr->op] == BCTYPE_wW_ARG    ||
+				 bcTypes[curr->op] == BCTYPE_wW_ARG    ||
 				 bcTypes[curr->op] == BCTYPE_wW_W_ARG  ||
 				 bcTypes[curr->op] == BCTYPE_rW_DW_ARG ||
 				 bcTypes[curr->op] == BCTYPE_wW_DW_ARG ||
@@ -754,7 +754,7 @@ int asCByteCode::Optimize()
 		}
 		// YYY y, POP x -> POP x+1
 		else if( (IsCombination(curr, BC_ADDi, BC_POP) ||
-		         IsCombination(curr, BC_SUBi, BC_POP)) && instr->wArg[0] > 0 )
+		          IsCombination(curr, BC_SUBi, BC_POP)) && instr->wArg[0] > 0 )
 		{
 			// Delete current
 			DeleteInstruction(curr);
@@ -793,9 +793,9 @@ int asCByteCode::Optimize()
 			instr = GoBack(DeleteInstruction(curr));
 		// PSF, ChkRefS, RDS4 -> PshV4, CHKREF
 		else if( IsCombination(curr, BC_PSF, BC_ChkRefS) &&
-			     IsCombination(instr, BC_ChkRefS, BC_RDS4) )
+		         IsCombination(instr, BC_ChkRefS, BC_RDS4) )
 		{
-			assert( PTRSIZE == 1 );
+			assert( PTR_SIZE == 1 );
 
 			// TODO: Pointer size
 			curr->op = BC_PshV4;
@@ -804,15 +804,24 @@ int asCByteCode::Optimize()
 			instr = GoBack(curr);
 		}
 		// PSF, ChkRefS, POP -> ChkNullV
-		// PshV4, CHKREF, POP -> ChkNullV
 		else if( (IsCombination(curr, BC_PSF, BC_ChkRefS) &&
-			     IsCombination(instr, BC_ChkRefS, BC_POP) &&
-				 instr->next->wArg > 0) ||
-				 (IsCombination(curr, BC_PshV4, BC_ChkRefS) &&
-				 IsCombination(instr, BC_CHKREF, BC_POP) &&
-				 instr->next->wArg > 0) )
+		          IsCombination(instr, BC_ChkRefS, BC_POP) &&
+		          instr->next->wArg[0] >= PTR_SIZE) )
 		{
-			assert( PTRSIZE == 1 );
+			curr->op = BC_ChkNullV;
+			curr->stackInc = 0;
+			// Decrease the number of DWORDs popped
+			instr->next->wArg[0] -= PTR_SIZE;
+			// Delete the ChkRefS instruction
+			DeleteInstruction(instr);
+			instr = GoBack(curr);
+		}
+		// PshV4, CHKREF, POP -> ChkNullV
+		else if( (IsCombination(curr, BC_PshV4, BC_ChkRefS) &&
+		          IsCombination(instr, BC_CHKREF, BC_POP) &&
+		          instr->next->wArg[0] > 0) )
+		{
+			assert( PTR_SIZE == 1 );
 
 			// TODO: Pointer size
 			curr->op = BC_ChkNullV;
