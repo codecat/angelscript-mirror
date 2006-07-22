@@ -66,7 +66,7 @@ int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSS
 		{
 			internal->callConv = ICC_THISCALL;
 #ifdef GNU_STYLE_VIRTUAL_METHOD
-			if( (asDWORD(ptr.f.func) & 1) )
+			if( (size_t(ptr.f.func) & 1) )
 				internal->callConv = ICC_VIRTUAL_THISCALL;
 #endif
 			internal->baseOffset = MULTI_BASE_OFFSET(ptr);

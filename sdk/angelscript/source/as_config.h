@@ -296,7 +296,7 @@
 #endif
 
 // GNU C
-#if defined(__GNUC__) && !defined(__SNC__)
+#if defined(__GNUC__) && !defined(__SNC__) && !defined(__APPLE__)
 	#define GNU_STYLE_VIRTUAL_METHOD
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
@@ -330,8 +330,28 @@
 	#define AS_NO_MEMORY_H
 #endif
 
+// MACOSX (PPC and X86)
+#if defined(__APPLE__)
+	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
+	#define AS_NO_MEMORY_H
+	#define GNU_STYLE_VIRTUAL_METHOD
+	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
+	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
+	#define COMPLEX_OBJS_PASSED_BY_REF
+	#define __int64 long long
+	#define ASM_AT_N_T
+	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
+	#define STDCALL
+	#ifdef __INTEL__
+		#define AS_X86
+	#else
+		#define AS_PPC
+		#define AS_USE_DOUBLE_AS_FLOAT
+	#endif
+#endif
+
 // PPC architexture (Mac, Gamecube and hopefully PS3 + XBox360)
-#if defined(PPC) || defined(_GC)
+#if defined(_GC) && defined(PPC)
 	#define AS_ALIGN				// align datastructures
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 //	#define AS_PPC					// not working yet

@@ -36,7 +36,7 @@
 //
 
 
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "as_config.h"
 #include "as_scriptengine.h"

@@ -139,6 +139,7 @@ A:hover
 <li>(rev 45) GetFunctionIDByDecl() was enumerating class methods as well (Thanks Maddi)
 <li>(rev 47) Fixed some bugs in the virtual machine on 64bit processors
 <li>(rev 49) Fixed the use of invalid variable in as_bytecode.cpp (Thanks Basiror)
+<li>(rev 50) Fixed compiler errors with as_callfunc_ppc.cpp (Thanks kunitoki)
 </ul>
 <li>Library interface
 <ul>
@@ -162,6 +163,7 @@ A:hover
 <li>(rev 32) Unified the way registered functions and script functions are stored in the engine
 <li>(rev 36) Calling interface methods is now only slightly slower than calling class methods, which is expected due to the dynamic lookup
 <li>(rev 37) Improved performance of Prepare() when using the same function as last Prepare()
+<li>(rev 50) Updated as_callfunc_ppc.cpp with assembler code for MacOS X (Thanks Pecan Heber)
 </ul>
 <li>Script language
 <ul>

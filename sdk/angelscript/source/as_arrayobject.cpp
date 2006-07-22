@@ -31,7 +31,7 @@
 
 #include <assert.h>
 #include <new>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "as_config.h"
 #include "as_arrayobject.h"
