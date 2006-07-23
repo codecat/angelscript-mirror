@@ -1037,10 +1037,30 @@ void asCBuilder::CompileClasses()
 				{
 					propSize = dt.GetSizeOnStackDWords()*4;
 					if( !dt.IsObjectHandle() )
+					{
+						if( dt.GetSizeInMemoryBytes() == 0 )
+						{
+							int r, c;
+							file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+							asCString str;
+							str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+							WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+						}
 						prop->type.MakeReference(true);
+					}
 				}
 				else
+				{
 					propSize = dt.GetSizeInMemoryBytes();
+					if( propSize == 0 )
+					{
+						int r, c;
+						file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+						asCString str;
+						str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format());
+						WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+					}
+				}
 
 				// Add extra bytes so that the property will be properly aligned
 				if( propSize == 2 && (decl->objType->size & 1) ) decl->objType->size += 1;

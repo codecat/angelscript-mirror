@@ -130,6 +130,21 @@ bool Test()
 		fail = true;
 	}
 
+	// Test object with zero size as member of script class
+	const char *script = "  \n\
+	 class myclass          \n\
+	 {                      \n\
+	   Object obj;          \n\
+	 }                      \n";
+	engine->AddScriptSection(0, "script", script, strlen(script));
+	bout.buffer = "";
+	r = engine->Build(0);
+	if( r >= 0 || bout.buffer != "script (4, 5) : Error   : Data type can't be 'Object'\n" )
+	{
+		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success
