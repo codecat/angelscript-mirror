@@ -79,7 +79,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../../angelscript/lib/angelscript.lib"
+				AdditionalDependencies="../../../../angelscript/lib/angelscript.lib"
 				OutputFile="$(OutDir)/msvc7.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"

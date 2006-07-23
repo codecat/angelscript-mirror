@@ -118,71 +118,61 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.7.0 WIP - 2006/07/23</h2>
+<h2>Version 2.7.0 - 2006/07/23</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
-<li>(rev 23) Fixed a problem with script classes and multiple modules where the engine failed to find the class methods (Thanks Dentoid)
-<li>(rev 24) Bug continued, where the compiler failed to find other class methods from the same class (Thanks Dentoid)
-<li>(rev 24) Fixed bug where an assert fails when the operands for an assignment has compiler errors (Thanks Dentoid)
-<li>(rev 25) Parser entered endless loop if the script ended before closing the class declaration (Thanks Dentoid)
-<li>(rev 25) Parser entered endless loop if a method declaration had syntax error (Thanks kunitoki)
-<li>(rev 29) Fixed bug in MIPS native code (Thanks Manu Evans)
-<li>(rev 38) Fixed assert hit for some compiler errors (Thanks kunitoki)
-<li>(rev 40) Discard() would remove array types from the configuration, leading to failure in following builds (Thanks loboWu)
-<li>(rev 43) Fixed bug with the any type and AS_MAX_PORTABILITY
-<li>(rev 43) Fixed bug with AS_MAX_PORTABILITY and script classes that were not constructed properly
-<li>(rev 45) Fixed a bug with the bytecode optimization for 64bit processors
-<li>(rev 45) Fixed some bugs with the internal array object and AS_MAX_PORTABILITY and AS_64BIT_PTR
-<li>(rev 45) Fixed bug with null value and AS_64BIT_PTR
-<li>(rev 45) GetFunctionIDByDecl() was enumerating class methods as well (Thanks Maddi)
-<li>(rev 47) Fixed some bugs in the virtual machine on 64bit processors
-<li>(rev 49) Fixed the use of invalid variable in as_bytecode.cpp (Thanks Basiror)
-<li>(rev 50) Fixed compiler errors with as_callfunc_ppc.cpp (Thanks kunitoki)
-<li>(rev 51) Added check to see if script property has a size 0 (Thanks Maddi)
+<li>Fixed a problem with script classes and multiple modules where the engine failed to find the class methods (Thanks Dentoid)
+<li>Fixed bug where an assert fails when the operands for an assignment has compiler errors (Thanks Dentoid)
+<li>Parser entered endless loop if the script ended before closing the class declaration (Thanks Dentoid)
+<li>Parser entered endless loop if a method declaration had syntax error (Thanks kunitoki)
+<li>Fixed assert hit for some compiler errors (Thanks kunitoki)
+<li>Discard() would remove array types from the configuration, leading to failure in following builds (Thanks loboWu)
+<li>Fixed bug with the any type and AS_MAX_PORTABILITY
+<li>Fixed bug with AS_MAX_PORTABILITY and script classes that were not constructed properly
+<li>Fixed a bug with the bytecode optimization for 64bit processors
+<li>Fixed some bugs with the internal array object and AS_MAX_PORTABILITY and AS_64BIT_PTR
+<li>Fixed bug with null value and AS_64BIT_PTR
+<li>Fixed some bugs in the virtual machine on 64bit processors
+<li>Added check to see if script property has a size 0 (Thanks Maddi)
 </ul>
 <li>Library interface
 <ul>
-<li>(rev 27) The engine methods GetMethodCount(), GetMethodIDByIndex(), GetMethodIDByName(), and GetMethodIDByDecl() were changed to take the typeId instead of the module name and object type name. This makes it unnecessary to know the module if you only have the type id, and it is also much more efficient.
-<li>(rev 28) Added methods RegisterInterface() and RegisterInterfaceMethod() that allow the application to register a script interface which can be passed to the application
-<li>(rev 30) Added method GetFunctionModule()
-<li>(rev 30) Deprecated the methods GetModuleIndex() and GetModuleNameFromIndex()
-<li>(rev 34) Added GetVarTypeId() to the context interface
-<li>(rev 39) Replaced SetCommonMessageStream() with SetMessageCallback() which is more flexible in that it receives a structure with info instead of a string
-<li>(rev 39) asIOutputStream is removed
-<li>(rev 43) Added asGetLibraryOptions() which returns a string with the compile time options. Mostly used for testing.
+<li>The engine methods GetMethodCount(), GetMethodIDByIndex(), GetMethodIDByName(), and GetMethodIDByDecl() were changed to take the typeId instead of the module name and object type name. This makes it unnecessary to know the module if you only have the type id, and it is also much more efficient.
+<li>Added methods RegisterInterface() and RegisterInterfaceMethod() that allow the application to register a script interface which can be passed to the application
+<li>Added method GetFunctionModule()
+<li>Deprecated the methods GetModuleIndex() and GetModuleNameFromIndex()
+<li>Added GetVarTypeId() to the context interface
+<li>Replaced SetCommonMessageStream() with SetMessageCallback() which is more flexible in that it receives a structure with info instead of a string
+<li>asIOutputStream is removed
+<li>Added asGetLibraryOptions() which returns a string with the compile time options. Mostly used for testing.
 </ul>
 <li>Library
 <ul>
-<li>(rev 22) Applied changes to make the library work better with 64bit platforms (Thanks Yiannis Mandravellos)
-<li>(rev 23) Fixed a couple of compiler warnings (Thanks Alraz)
-<li>(rev 24) Added support for native calling conventions on MIPS processors. (Contribution by Manu Evans)
-<li>(rev 26) Methods can now be called on interfaces correctly in the scripts and from the application
-<li>(rev 29) Added first support for native calling conventions on PPC processors. It's not yet complete though. (Contribution by Manu Evans)
-<li>(rev 30) Saving/loading script classes with methods and interfaces have been implemented
-<li>(rev 32) Unified the way registered functions and script functions are stored in the engine
-<li>(rev 36) Calling interface methods is now only slightly slower than calling class methods, which is expected due to the dynamic lookup
-<li>(rev 37) Improved performance of Prepare() when using the same function as last Prepare()
-<li>(rev 50) Updated as_callfunc_ppc.cpp with assembler code for MacOS X (Thanks Pecan Heber)
+<li>Applied changes to make the library work better with 64bit platforms (Thanks Yiannis Mandravellos)
+<li>Fixed a couple of compiler warnings (Thanks Alraz)
+<li>Added support for native calling conventions on MIPS processors. (Contribution by Manu Evans)
+<li>Added first support for native calling conventions on PPC processors. (Contribution by Pecan Heber)
+<li>Unified the way registered functions and script functions are stored in the engine
+<li>Improved performance of Prepare() when using the same function as last Prepare()
 </ul>
 <li>Script language
 <ul>
-<li>(rev 26) Added new token 'interface'
-<li>(rev 26) Semi-colon after class declaration is now optional
-<li>(rev 26) It's now possible to declare interfaces in the scripts
-<li>(rev 26) A class can declare that it implements an interface, in which case the compiler makes sure that all the methods of the interface is implemented
-<li>(rev 31) Added support for the '\t' escape sequence in strings. (Thanks Lbas)
-<li>(rev 33) Deprecated the keyword 'struct' in the script language
+<li>Added new token 'interface'
+<li>Semi-colon after class declaration is now optional
+<li>It's now possible to declare interfaces in the scripts
+<li>Added support for the '\t' escape sequence in strings. (Thanks Lbas)
+<li>Deprecated the keyword 'struct' in the script language
 </ul>
 <li>Virtual machine
 <ul>
-<li>(rev 26) Added bytecode CALLINTF which resolves interface methods to the real class method
+<li>Added bytecode CALLINTF which resolves interface methods to the real class method
 </ul>
 <li>Project
 <ul>
-<li>(rev 24) Added as_callfunc_mips.cpp
-<li>(rev 29) Added as_callfunc_ppc.cpp
+<li>Added as_callfunc_mips.cpp
+<li>Added as_callfunc_ppc.cpp
 </ul>
 </ul>
 
