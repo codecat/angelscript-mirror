@@ -88,16 +88,19 @@ static const char *script7 =
 "{                              \n"
 "}                              \n";
 
+bool Get(int *obj, const asCScriptString &szURL, asCScriptString &szHTML)
+{
+	assert(&szHTML != 0);
+	return false;
+}
+
 bool Test()
 {
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptString(engine);
 
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		RegisterScriptString_Generic(engine);
-	else
-		RegisterScriptString(engine);
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
 
@@ -208,6 +211,11 @@ bool Test()
 	engine->Build(0);
 	r = engine->ExecuteString(0, "test()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+
+	engine->RegisterObjectType("Http", sizeof(int), asOBJ_PRIMITIVE);
+	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_CDECL_OBJFIRST);
+	
+	engine->ExecuteString(0, "Http h; string str; h.get(\"string\", str);");
 
 	engine->Release();
 

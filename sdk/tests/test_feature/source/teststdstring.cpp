@@ -98,6 +98,16 @@ static StringConsumer consumerObject;
 //<-- new: object method string argument test
 
 
+class Http
+{
+public:
+bool Get(const string &szURL, string &szHTML)
+{
+	assert(&szHTML != 0);
+	return false;
+}
+};
+
 bool TestStdString()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -208,6 +218,9 @@ bool TestStdString()
 	if( printOutput != "This is my string") fail = true;
 	//<-- new: object method string argument test
 
+	engine->RegisterObjectType("Http", sizeof(Http), asOBJ_CLASS);
+	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asMETHOD(Http,Get),asCALL_THISCALL);
+	engine->ExecuteString(0, "Http h; string str; h.get(\"string\", str);");
 
 	engine->Release();
 

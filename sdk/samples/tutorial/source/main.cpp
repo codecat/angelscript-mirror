@@ -167,14 +167,14 @@ void ConfigureEngine(asIScriptEngine *engine)
 {
 	int r;
 
+	// Register the script string type
+	// Look at the implementation for this function for more information  
+	// on how to register a custom string type, and other object types.
+	// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
+	RegisterScriptString(engine);
+
 	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
-		// Register the script string type
-		// Look at the implementation for this function for more information  
-		// on how to register a custom string type, and other object types.
-		// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
-		RegisterScriptString(engine);
-
 		// Register the functions that the scripts will be allowed to use.
 		// Note how the return code is validated with an assert(). This helps
 		// us discover where a problem occurs, and doesn't pollute the code
@@ -186,11 +186,6 @@ void ConfigureEngine(asIScriptEngine *engine)
 	}
 	else
 	{
-		// If the library doesn't support native calling conventions it is
-		// necessary to register the functions using the specified signature
-		// used for the generic interface. I.e: void function(asIScriptGeneric *)
-		RegisterScriptString_Generic(engine);
-
 		// Notice how the registration is almost identical to the above. 
 		r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterGlobalFunction("uint GetSystemTime()", asFUNCTION(timeGetTime_Generic), asCALL_GENERIC); assert( r >= 0 );

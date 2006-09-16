@@ -579,7 +579,7 @@ static void StringLength_Generic(asIScriptGeneric *gen)
 }
 
 // This is where we register the string type
-void RegisterScriptString(asIScriptEngine *engine)
+void RegisterScriptString_Native(asIScriptEngine *engine)
 {
 	int r;
 
@@ -717,6 +717,14 @@ void RegisterScriptString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(bits)", asFUNCTION(AddAssignBitsToString_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(const string &in, bits)", asFUNCTION(AddStringBits_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(bits, const string &in)", asFUNCTION(AddBitsString_Generic), asCALL_GENERIC); assert( r >= 0 );
+}
+
+void RegisterScriptString(asIScriptEngine *engine)
+{
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		RegisterScriptString_Generic(engine);
+	else
+		RegisterScriptString_Native(engine);
 }
 
 END_AS_NAMESPACE

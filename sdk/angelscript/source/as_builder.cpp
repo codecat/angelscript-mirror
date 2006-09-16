@@ -1057,7 +1057,7 @@ void asCBuilder::CompileClasses()
 						int r, c;
 						file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 						asCString str;
-						str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format());
+						str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
 						WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
 					}
 				}

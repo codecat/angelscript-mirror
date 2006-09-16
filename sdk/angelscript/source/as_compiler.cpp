@@ -485,7 +485,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					funcs.SetLength(0);
 
 					// Build a readable string of the function with parameter types
-					asCString str = "any";
+					asCString str = ANY_TOKEN;
 					str += "(";
 					if( args.GetLength() )
 						str += args[0]->type.dataType.Format();
@@ -1746,6 +1746,13 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		}
 
 		cnode = cnode->next;
+	}
+
+    // check for empty switch
+	if (caseValues.GetLength() == 0)
+	{
+		Error(TXT_EMPTY_SWITCH, snode);
+		return;
 	}
 
 	if( defaultLabel == 0 )
@@ -4029,7 +4036,7 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 		sVariable *v = variables->GetVariable(name.AddressOf());
 		if( v == 0 )
 		{
-			if( outFunc && outFunc->objectType && name == "this" )
+			if( outFunc && outFunc->objectType && name == THIS_TOKEN )
 			{
 				asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
 

@@ -160,15 +160,15 @@ asCScriptNode *asCParser::ParseImport()
 	GetToken(&t);
 	if( t.type != ttIdentifier )
 	{
-		Error(ExpectedToken("from").AddressOf(), &t);
+		Error(ExpectedToken(FROM_TOKEN).AddressOf(), &t);
 		return node;
 	}
 
 	asCString str;
 	str.Assign(&script->code[t.pos], t.length);
-	if( str != "from" )
+	if( str != FROM_TOKEN )
 	{
-		Error(ExpectedToken("from").AddressOf(), &t);
+		Error(ExpectedToken(FROM_TOKEN).AddressOf(), &t);
 		return node;
 	}
 

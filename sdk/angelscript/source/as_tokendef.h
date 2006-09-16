@@ -269,8 +269,13 @@ sTokenWord const tokenWords[] =
 	{"xor"       , ttXor},
 };
 
-asUINT const numTokenWords = sizeof(tokenWords)/sizeof(sTokenWord);
+const asUINT numTokenWords = sizeof(tokenWords)/sizeof(sTokenWord);
 
-char * const whiteSpace = " \t\r\n";
+const char * const whiteSpace = " \t\r\n";
+
+// Some keywords that are not considered tokens by the parser
+const char * const THIS_TOKEN = "this";
+const char * const ANY_TOKEN  = "any";
+const char * const FROM_TOKEN = "from";
 
 #endif

@@ -36,7 +36,7 @@ static void cfunction_gen(asIScriptGeneric *gen)
 	t1 = gen->GetArgDWord(0);
 	t2 = gen->GetArgFloat(1);
 	t3 = gen->GetArgDouble(2);
-	t4 = gen->GetArgDWord(3);
+	t4 = (char)gen->GetArgDWord(3);
 	
 	testVal = (t1 == 10) && (t2 == 1.92f) && (t3 == 3.88) && (t4 == 97);
 }

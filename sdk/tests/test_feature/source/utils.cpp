@@ -13,7 +13,7 @@ void PrintException(asIScriptContext *ctx)
 
 void Assert(asIScriptGeneric *gen)
 {
-	bool expr = (bool)gen->GetArgDWord(0);
+	bool expr = gen->GetArgDWord(0) ? true : false;
 	if( !expr )
 	{
 		printf("--- Assert failed ---\n");

@@ -876,7 +876,7 @@ int asCScriptEngine::RegisterSpecialObjectType(const char *name, int byteSize, a
 		defaultArrayObjectType = type;
 		type->refCount++;
 	}
-	else if( strcmp(name, "any") == 0 )
+	else if( strcmp(name, ANY_TOKEN) == 0 )
 	{
 		type = new asCObjectType(this);
 		anyObjectType = type;

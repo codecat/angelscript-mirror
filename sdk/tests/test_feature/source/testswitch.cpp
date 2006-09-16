@@ -117,6 +117,12 @@ bool TestSwitch()
 		printf("%s: Switch failed. Got: %s\n", TESTNAME, log.c_str());
 	}
 
+	CBufferedOutStream bout;
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	engine->ExecuteString(0, "switch(1) {}"); 
+	if( bout.buffer != "ExecuteString (1, 1) : Error   : Empty switch statement\n" )
+		fail = true;
+
 	engine->Release();
 
 	return fail;

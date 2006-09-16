@@ -60,6 +60,7 @@
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
 
 #define TXT_EMPTY_CHAR_LITERAL            "Empty character literal"
+#define TXT_EMPTY_SWITCH                  "Empty switch statement"
 #define TXT_EXPECTED_s                    "Expected '%s'"
 #define TXT_EXPECTED_CONSTANT             "Expected constant"
 // TODO: Should be TXT_NO_CONVERSION

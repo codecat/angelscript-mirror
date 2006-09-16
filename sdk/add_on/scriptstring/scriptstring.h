@@ -43,9 +43,13 @@ protected:
 	int refCount;
 };
 
-// Call this function to register all the necessary 
-// functions for the scripts to use this type
+// This function will determine the configuration of the engine
+// and use one of the two functions below to register the string type
 void RegisterScriptString(asIScriptEngine *engine);
+
+// Call this function to register the string type 
+// using native calling conventions
+void RegisterScriptString_Native(asIScriptEngine *engine);
 
 // Use this one instead if native calling conventions 
 // are not supported on the target platform
