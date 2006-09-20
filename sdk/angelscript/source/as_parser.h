@@ -64,7 +64,7 @@ ASSIGNMENT    = CONDITION (ASSIGNOP ASSIGNMENT)?
 CONDITION     = EXPRESSION ('?' ASSIGNMENT ':' ASSIGNMENT)?
 EXPRESSION    = TERM (OP TERM)*
 TERM          = PRE* VALUE POST*
-VALUE         = '(' ASSIGNMENT ')' | CONSTANT | IDENTIFIER | FUNCTIONCALL | CONVERSION
+VALUE         = '(' ASSIGNMENT ')' | CONSTANT | IDENTIFIER | FUNCTIONCALL | CONVERSION | CAST
 PRE           = '-' | '+' | 'not' | '++' | '--' | '~'
 POST          = '++' | '--' | ('.' | '->') (IDENTIFIER | FUNCTIONCALL) | '[' ASSIGNMENT ']'
 FUNCTIONCALL  = IDENTIFIER ARGLIST
@@ -76,6 +76,7 @@ OP            = 'and' | 'or' |
 ASSIGNOP      = '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '|=' | '&=' | '^=' | '<<=' | '>>=' | '>>>='
 CONVERSION    = TYPE '(' ASSIGNMENT ')'
 INITLIST      = '{' ((INITLIST | ASSIGNMENT)? (',' (INITLIST | ASSIGNMENT)?)*)? '}'
+CAST          = 'cast' '<' TYPE '>' '(' ASSIGNMENT ')'
 
 */
 
@@ -153,6 +154,7 @@ protected:
 	asCScriptNode *ParseInitList();
 	asCScriptNode *ParseInterface();
 	asCScriptNode *ParseInterfaceMethod();
+	asCScriptNode *ParseCast();
 
 	bool IsVarDecl();
 	bool IsFuncDecl(bool isMethod);

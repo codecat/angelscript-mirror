@@ -4252,6 +4252,13 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 		MergeExprContexts(ctx, &e);
 		ctx->type = e.type;
 	}
+	else if( vnode->nodeType == snCast )
+	{
+		// TODO: Implement the cast operator
+		Error("Don't know how to compile the cast operator", vnode);
+		// Give dummy value
+		ctx->type.SetDummy();
+	}
 	else
 		assert(false);
 }

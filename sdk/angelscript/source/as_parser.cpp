@@ -906,6 +906,63 @@ asCScriptNode *asCParser::ParseIdentifier()
 	return node;
 }
 
+asCScriptNode *asCParser::ParseCast()
+{
+	asCScriptNode *node = new asCScriptNode(snCast);
+
+	sToken t1;
+	GetToken(&t1);
+	if( t1.type != ttCast )
+	{
+		Error(ExpectedToken("cast").AddressOf(), &t1);
+		return node;
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	GetToken(&t1);
+	if( t1.type != ttLessThan )
+	{
+		Error(ExpectedToken("<").AddressOf(), &t1);
+		return node;
+	}
+
+	// Parse the data type
+	node->AddChildLast(ParseType(true));
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseTypeMod(false));
+	if( isSyntaxError ) return node;
+
+	GetToken(&t1);
+	if( t1.type != ttGreaterThan )
+	{
+		Error(ExpectedToken(">").AddressOf(), &t1);
+		return node;
+	}
+
+	GetToken(&t1);
+	if( t1.type != ttOpenParanthesis )
+	{
+		Error(ExpectedToken("(").AddressOf(), &t1);
+		return node;
+	}
+
+	node->AddChildLast(ParseAssignment());
+	if( isSyntaxError ) return node;
+
+	GetToken(&t1);
+	if( t1.type != ttCloseParanthesis )
+	{
+		Error(ExpectedToken(")").AddressOf(), &t1);
+		return node;
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	return node;
+}
+
 asCScriptNode *asCParser::ParseParameterList()
 {
 	asCScriptNode *node = new asCScriptNode(snParameterList);
@@ -987,6 +1044,8 @@ asCScriptNode *asCParser::ParseExprValue()
 		else
 			node->AddChildLast(ParseIdentifier());
 	}
+	else if( t1.type == ttCast )
+		node->AddChildLast(ParseCast());
 	else if( IsConstant(t1.type) )
 		node->AddChildLast(ParseConstant());
 	else if( t1.type == ttOpenParanthesis )

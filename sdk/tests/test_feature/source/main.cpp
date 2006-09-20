@@ -116,6 +116,8 @@ namespace TestParser            { bool Test(); }
 namespace TestInterface         { bool Test(); }
 namespace TestCompiler          { bool Test(); }
 namespace TestSingleton         { bool Test(); }
+namespace TestCastOp            { bool Test(); }
+
 
 #include "utils.h"
 
@@ -151,6 +153,7 @@ int main(int argc, char **argv)
 	fs_chdir(asTestDir);
 #endif
 
+	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestSingleton::Test()         ) goto failed; else printf("-- TestSingleton passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");

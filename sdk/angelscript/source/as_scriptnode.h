@@ -76,7 +76,8 @@ enum eScriptNode
 	snImport,
 	snClass,
 	snInitList,
-	snInterface
+	snInterface,
+	snCast
 };
 
 struct sToken

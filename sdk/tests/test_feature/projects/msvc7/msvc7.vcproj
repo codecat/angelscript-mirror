@@ -156,6 +156,9 @@
 				RelativePath="..\..\source\test_autohandle.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_castop.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_circularimport.cpp">
 			</File>
 			<File

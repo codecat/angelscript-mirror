@@ -159,7 +159,8 @@ enum eTokenType
 	ttOut,                 // out
 	ttInOut,               // inout
 	ttNull,                // null
-    ttClass                // class
+    ttClass,               // class
+	ttCast                 // cast
 };
 
 struct sTokenWord
@@ -225,6 +226,7 @@ sTokenWord const tokenWords[] =
 	{"bits32"    , ttBits},
 	{"bool"      , ttBool},
 	{"break"     , ttBreak},
+	{"cast"      , ttCast},
 	{"const"     , ttConst},
 	{"continue"  , ttContinue},
 	{"do"        , ttDo},
