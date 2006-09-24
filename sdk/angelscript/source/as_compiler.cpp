@@ -4254,10 +4254,8 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 	}
 	else if( vnode->nodeType == snCast )
 	{
-		// TODO: Implement the cast operator
-		Error("Don't know how to compile the cast operator", vnode);
-		// Give dummy value
-		ctx->type.SetDummy();
+		// Implement the cast operator
+		CompileConversion(vnode, ctx);
 	}
 	else
 		assert(false);
@@ -4386,23 +4384,36 @@ void asCCompiler::ProcessHeredocStringConstant(asCString &str)
 
 void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 {
-	// Verify that there is only one argument
-	if( node->lastChild->firstChild != node->lastChild->lastChild )
-	{
-		Error(TXT_ONLY_ONE_ARGUMENT_IN_CAST, node->lastChild);
-	}
-
-	// Compile the expression
 	asSExprContext expr;
-	CompileAssignment(node->lastChild->firstChild, &expr);
+	asCDataType to;
+	if( node->nodeType == snFunctionCall )
+	{
+		// Verify that there is only one argument
+		if( node->lastChild->firstChild != node->lastChild->lastChild )
+		{
+			Error(TXT_ONLY_ONE_ARGUMENT_IN_CAST, node->lastChild);
+		}
+
+		// Compile the expression
+		CompileAssignment(node->lastChild->firstChild, &expr);
+
+		// Determine the requested type
+		to = builder->CreateDataTypeFromNode(node->firstChild, script);
+		to.MakeReadOnly(true); // Default to const
+		assert(to.IsPrimitive());
+	}
+	else
+	{
+		// Compile the expression
+		CompileAssignment(node->lastChild, &expr);
+
+		// Determine the requested type
+		to = builder->CreateDataTypeFromNode(node->firstChild, script);
+		to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
+	}
 
 	// Convert any reference to a variable
 	if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-
-	// Try an implicit conversion first
-	asCDataType to = builder->CreateDataTypeFromNode(node->firstChild, script);
-	to.MakeReadOnly(true); // Default to const
-	assert(to.IsPrimitive());
 
 	ImplicitConversion(&expr, to, node, true);
 
@@ -4428,7 +4439,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	bool conversionOK = false;
 	if( !expr.type.isConstant )
 	{
-		ConvertToTempVariable(&expr);
+		if( !expr.type.dataType.IsObject() )
+			ConvertToTempVariable(&expr);
 		MergeExprContexts(ctx, &expr);
 
 		int offset = expr.type.stackOffset;
@@ -4646,6 +4658,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 				expr.type.dataType.IsBitVectorType() )
 			{
 				ctx->type.dwordValue = expr.type.dwordValue;
+				conversionOK = true;
 
 				if( to.GetSizeInMemoryBytes() == 1 )
 					ctx->type.dwordValue = asBYTE(ctx->type.dwordValue);
