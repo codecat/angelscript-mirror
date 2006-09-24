@@ -881,5 +881,15 @@ int asCModule::GetGlobalVarIndex(int propIdx)
 	return (int)globalVarPointers.GetLength()-1;
 }
 
+void asCModule::UpdateGlobalVarPointer(void *pold, void *pnew)
+{
+	for( asUINT n = 0; n < globalVarPointers.GetLength(); n++ )
+		if( globalVarPointers[n] == pold )
+		{
+			globalVarPointers[n] = pnew;
+			return;
+		}
+}
+
 END_AS_NAMESPACE
 

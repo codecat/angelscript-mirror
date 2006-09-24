@@ -1714,6 +1714,14 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 		{
 			int idx = -globalProps[n]->index - 1;
 			void **pp = &globalPropAddresses[idx-1];
+
+			// Update the chached pointers in the modules
+			for( asUINT m = 0; m < scriptModules.GetLength(); m++ )
+			{
+				if( scriptModules[m] )
+					scriptModules[m]->UpdateGlobalVarPointer(globalPropAddresses[idx], (void*)pp);
+			}
+
 			globalPropAddresses[idx] = (void*)pp;
 		}
 	}

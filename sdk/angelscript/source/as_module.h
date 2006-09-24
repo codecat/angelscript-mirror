@@ -116,6 +116,8 @@ public:
 
 	bool CanDeleteAllReferences(asCArray<asCModule*> &modules);
 
+	void UpdateGlobalVarPointer(void *pold, void *pnew);
+
 	int  GetNextImportedFunctionId();
 	int  GetImportedFunctionCount();
 	int  GetImportedFunctionIndexByDecl(const char *decl);
