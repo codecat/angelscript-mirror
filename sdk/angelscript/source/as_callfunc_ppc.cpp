@@ -2,23 +2,23 @@
    AngelCode Scripting Library
    Copyright (c) 2003-2006 Andreas Jönsson
 
-   This software is provided 'as-is', without any express or implied 
-   warranty. In no event will the authors be held liable for any 
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the authors be held liable for any
    damages arising from the use of this software.
 
-   Permission is granted to anyone to use this software for any 
-   purpose, including commercial applications, and to alter it and 
+   Permission is granted to anyone to use this software for any
+   purpose, including commercial applications, and to alter it and
    redistribute it freely, subject to the following restrictions:
 
-   1. The origin of this software must not be misrepresented; you 
+   1. The origin of this software must not be misrepresented; you
       must not claim that you wrote the original software. If you use
-      this software in a product, an acknowledgment in the product 
+      this software in a product, an acknowledgment in the product
       documentation would be appreciated but is not required.
 
-   2. Altered source versions must be plainly marked as such, and 
+   2. Altered source versions must be plainly marked as such, and
       must not be misrepresented as being the original software.
 
-   3. This notice may not be removed or altered from any source 
+   3. This notice may not be removed or altered from any source
       distribution.
 
    The original version of this library can be located at:
@@ -375,7 +375,7 @@ void stackArgs(const asDWORD *args, int& numIntArgs, int& numFloatArgs, int& num
 			numDoubleArgs++;
 			argWordPos+=2; //add two words
 		}
-		
+
 		if( ppcArgsType[i] eq ppcINTARG )
 		{
 			// stow register
@@ -494,7 +494,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				}
 
 #ifdef THISCALL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_THISCALL || 
+				if( internal->callConv == ICC_THISCALL ||
 					internal->callConv == ICC_VIRTUAL_THISCALL )
 				{
 					internal->hostReturnInMemory = true;
@@ -502,7 +502,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				}
 #endif
 #ifdef CDECL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_CDECL || 
+				if( internal->callConv == ICC_CDECL ||
 					internal->callConv == ICC_CDECL_OBJLAST ||
 					internal->callConv == ICC_CDECL_OBJFIRST )
 				{
@@ -539,7 +539,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 		assert(false);
 
 		internal->hostReturnInMemory = true;
-		internal->hostReturnSize = 1; 
+		internal->hostReturnSize = 1;
 		internal->hostReturnFloat = false;
 	}
 	else if( func->returnType.GetSizeInMemoryDWords() == 2 )
@@ -626,7 +626,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	asCScriptEngine *engine = context->engine;
 	asCScriptFunction *descr = engine->scriptFunctions[id];
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
-	
+
 	int callConv = sysFunc->callConv;
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
 		return context->CallGeneric(-id-1, objectPointer);
@@ -670,7 +670,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			// Check for null pointer
 			obj = (void*)*(args + paramSize);
 			if( obj == 0 )
-			{	
+			{
 				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
 				if( retPointer )
 					engine->CallFree(descr->returnType.GetObjectType(), retPointer);
@@ -680,9 +680,9 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			// Add the base offset for multiple inheritance
 			obj = (void*)(int(obj) + sysFunc->baseOffset);
 
-			// Don't keep a reference to the object pointer, as it is the 
-			// responsibility of the application to make sure the reference 
-			// is valid during the call 
+			// Don't keep a reference to the object pointer, as it is the
+			// responsibility of the application to make sure the reference
+			// is valid during the call
 			// if( descr->objectType->beh.addref )
 			//	engine->CallObjectMethod(obj, descr->objectType->beh.addref);
 		}
@@ -736,7 +736,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				paramSize += descr->parameterTypes[n].GetSizeOnStackDWords();
 			}
 		}
-		
+
 		// Keep a free location at the beginning
 		args = &paramBuffer[1];
 	}
@@ -784,7 +784,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		int spos = 0;
 		for( int n = 0; n < (int)descr->parameterTypes.GetLength(); n++ )
 		{
-			if( descr->parameterTypes[n].IsObject() && 
+			if( descr->parameterTypes[n].IsObject() &&
 				!descr->parameterTypes[n].IsReference() &&
 				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )
 			{

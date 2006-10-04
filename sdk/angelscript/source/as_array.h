@@ -216,7 +216,7 @@ bool asCArray<T>::operator ==(const asCArray<T> &other) const
 	if( length != other.length ) return false;
 
 	for( asUINT n = 0; n < length; n++ )
-		if( array[n] != other.array[n] ) 
+		if( array[n] != other.array[n] )
 			return false;
 
 	return true;

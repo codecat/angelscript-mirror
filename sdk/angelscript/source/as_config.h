@@ -2,23 +2,23 @@
    AngelCode Scripting Library
    Copyright (c) 2003-2006 Andreas Jönsson
 
-   This software is provided 'as-is', without any express or implied 
-   warranty. In no event will the authors be held liable for any 
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the authors be held liable for any
    damages arising from the use of this software.
 
-   Permission is granted to anyone to use this software for any 
-   purpose, including commercial applications, and to alter it and 
+   Permission is granted to anyone to use this software for any
+   purpose, including commercial applications, and to alter it and
    redistribute it freely, subject to the following restrictions:
 
-   1. The origin of this software must not be misrepresented; you 
+   1. The origin of this software must not be misrepresented; you
       must not claim that you wrote the original software. If you use
-      this software in a product, an acknowledgment in the product 
+      this software in a product, an acknowledgment in the product
       documentation would be appreciated but is not required.
 
-   2. Altered source versions must be plainly marked as such, and 
+   2. Altered source versions must be plainly marked as such, and
       must not be misrepresented as being the original software.
 
-   3. This notice may not be removed or altered from any source 
+   3. This notice may not be removed or altered from any source
       distribution.
 
    The original version of this library can be located at:
@@ -45,12 +45,12 @@
 //-----------------------------------------
 
 // USE_THREADS
-// Adds basic support for multithreading. 
+// Adds basic support for multithreading.
 // This is currently only supported on Win32 platforms.
 
 // BUILD_WITHOUT_LINE_CUES
 // This flag makes the script compiler remove some extra bytecodes that is used
-// to allow the VM to call the line callback after each statement. The performance 
+// to allow the VM to call the line callback after each statement. The performance
 // is improved slightly but the scripts are only guaranteed to allow one suspension
 // per loop iteration, not one per statement.
 
@@ -59,7 +59,7 @@
 // compiling and executing scripts.
 
 // AS_DEPRECATED
-// If this flag is defined then some backwards compatibility is maintained. 
+// If this flag is defined then some backwards compatibility is maintained.
 // There is no guarantee for how well deprecated functionality will work though
 // so it is best to exchange it for the new functionality as soon as possible.
 
@@ -67,17 +67,17 @@
 // Make the C interface available.
 
 // AS_NO_CLASS_METHODS
-// Disables the possibility to add class methods. Can increase the  
+// Disables the possibility to add class methods. Can increase the
 // portability of the library.
 
 // AS_MAX_PORTABILITY
-// Disables all platform specific code. Only the asCALL_GENERIC calling 
+// Disables all platform specific code. Only the asCALL_GENERIC calling
 // convention will be available in with this flag set.
 
 // AS_ALLOW_UNSAFE_REFERENCES
-// When this flag is defined it is not required to define the in, out, or 
-// inout keywords for parameter references. The compiler will generate code 
-// that passes the true reference to functions. It is however possible to 
+// When this flag is defined it is not required to define the in, out, or
+// inout keywords for parameter references. The compiler will generate code
+// that passes the true reference to functions. It is however possible to
 // write scripts that could crash the application due to invalid references.
 
 
@@ -91,7 +91,7 @@
 // This flag should be defined when compiling the library as a lib or dll.
 
 // ANGELSCRIPT_DLL_LIBRARY_IMPORT
-// This flag should be defined when using AngelScript as a dll with automatic 
+// This flag should be defined when using AngelScript as a dll with automatic
 // library import.
 
 // ANGELSCRIPT_DLL_MANUAL_IMPORT
@@ -101,13 +101,13 @@
 
 
 
-// 
+//
 // Compiler differences
 //-----------------------------------------
 
-// vsnprintf() 
+// vsnprintf()
 // Some compilers use different names for this function. If your compiler
-// doesn't use the name vsnprintf() then you need to write a macro to translate 
+// doesn't use the name vsnprintf() then you need to write a macro to translate
 // the function into its real name.
 
 // ASM_AT_N_T or ASM_INTEL
@@ -154,10 +154,10 @@
 
 // AS_ALIGN
 // Some CPUs require that data words are aligned in some way. This macro
-// should be defined if the words should be aligned to boundaries of the same 
-// size as the word, i.e. 
-//  1 byte  on 1 byte boundaries 
-//  2 bytes on 2 byte boundaries 
+// should be defined if the words should be aligned to boundaries of the same
+// size as the word, i.e.
+//  1 byte  on 1 byte boundaries
+//  2 bytes on 2 byte boundaries
 //  4 bytes on 4 byte boundaries
 //  8 bytes on 4 byte boundaries (no it's not a typo)
 
@@ -187,8 +187,8 @@
 //-----------------------------------------
 
 // GNU_STYLE_VIRTUAL_METHOD
-// This constant should be defined if method pointers store index for virtual 
-// functions in the same location as the function pointer. In such cases the method 
+// This constant should be defined if method pointers store index for virtual
+// functions in the same location as the function pointer. In such cases the method
 // is identified as virtual if the least significant bit is set.
 
 // MULTI_BASE_OFFSET(x)
@@ -203,21 +203,21 @@
 
 // VIRTUAL_BASE_OFFSET(x)
 // This macro is used to retrieve the offset added to the object pointer in order to
-// find the virtual base object. x is the method pointer received by the register 
+// find the virtual base object. x is the method pointer received by the register
 // function;
 
 // COMPLEX_MASK
-// This constant shows what attributes determines if an object is returned in memory 
+// This constant shows what attributes determines if an object is returned in memory
 // or in the registers as normal structures
 
 // THISCALL_RETURN_SIMPLE_IN_MEMORY
 // CDECL_RETURN_SIMPLE_IN_MEMORY
 // STDCALL_RETURN_SIMPLE_IN_MEMORY
-// When these constants are defined then the corresponding calling convention always 
+// When these constants are defined then the corresponding calling convention always
 // return classes/structs in memory regardless of size or complexity.
 
 // CALLEE_POPS_HIDDEN_RETURN_POINTER
-// This constant should be defined if the callee pops the hidden return pointer, 
+// This constant should be defined if the callee pops the hidden return pointer,
 // used when returning an object in memory.
 
 // THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
@@ -227,13 +227,13 @@
 // If the callee pops arguments for class methods then define this constant
 
 // COMPLEX_OBJS_PASSED_BY_REF
-// Some compilers always pass certain objects by reference. GNUC for example does 
+// Some compilers always pass certain objects by reference. GNUC for example does
 // this if the the class has a defined destructor.
 
 
 
-// 
-// Configurations 
+//
+// Configurations
 //------------------------------------------------
 
 #define VALUE_OF_BOOLEAN_TRUE  1
@@ -370,7 +370,7 @@
     #endif
 #endif
 
-// If there are no current support for native calling 
+// If there are no current support for native calling
 // conventions, then compile with AS_MAX_PORTABILITY
 #if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC))
     #ifndef AS_MAX_PORTABILITY
@@ -382,7 +382,7 @@
 
 
 
-// 
+//
 // Internal defines (do not change these)
 //----------------------------------------------------------------
 
