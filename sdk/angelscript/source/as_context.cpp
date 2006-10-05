@@ -1101,12 +1101,12 @@ void asCContext::ExecuteNext()
 	{
 
 #ifdef AS_DEBUG
-	++stats.instrCount[(*l_bc)&0xFF];
+	++stats.instrCount[*(asBYTE*)l_bc];
 
-	++instrCount[(*l_bc)&0xFF];
+	++instrCount[*(asBYTE*)l_bc];
 
-	++instrCount2[lastBC][(*l_bc)&0xFF];
-	lastBC = (*l_bc)&0xFF;
+	++instrCount2[lastBC][*(asBYTE*)l_bc];
+	lastBC = *(asBYTE*)l_bc;
 
 	// Used to verify that the size of the instructions are correct
 	asDWORD *old = l_bc;
@@ -1940,36 +1940,36 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_WRTV1:
-		*(asBYTE*)(size_t)register1 = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
+		*(asBYTE*)*(size_t*)&register1 = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV2:
-		*(asWORD*)(size_t)register1 = *(asWORD*)(l_fp - SWORDARG0(l_bc));
+		*(asWORD*)*(size_t*)&register1 = *(asWORD*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV4:
-		*(asDWORD*)(size_t)register1 = *(asDWORD*)(l_fp - SWORDARG0(l_bc));
+		*(asDWORD*)*(size_t*)&register1 = *(asDWORD*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV8:
-		*(asQWORD*)(size_t)register1 = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
+		*(asQWORD*)*(size_t*)&register1 = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_RDR1:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asBYTE*)(size_t)register1;
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asBYTE*)*(size_t*)&register1;
 		l_bc++;
 		break;
 	case BC_RDR2:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asWORD*)(size_t)register1;
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asWORD*)*(size_t*)&register1;
 		l_bc++;
 		break;
 	case BC_RDR4:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)(size_t)register1;
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)*(size_t*)&register1;
 		l_bc++;
 		break;
 	case BC_RDR8:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(size_t)register1;
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)*(size_t*)&register1;
 		l_bc++;
 		break;
 
@@ -2467,7 +2467,7 @@ void asCContext::ExecuteNext()
 */	}
 
 #ifdef AS_DEBUG
-		asDWORD instr = (*old)&0xFF;
+		asDWORD instr = *(asBYTE*)old;
 		if( instr != BC_JMP && instr != BC_JMPP && (instr < BC_JZ || instr > BC_JNP) &&
 			instr != BC_CALL && instr != BC_CALLBND && instr != BC_CALLINTF && instr != BC_RET && instr != BC_ALLOC )
 		{

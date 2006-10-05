@@ -112,6 +112,15 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	assert( sizeof(asQWORD) == 8 );
 	assert( sizeof(asPWORD) == sizeof(void*) );
 
+	// Verify endianess
+#ifdef AS_BIG_ENDIAN
+	asDWORD test = 0xFF000000;
+	assert( (*reinterpret_cast<asBYTE*>(&test)) == 0xFF );
+#else
+	asDWORD test = 0x000000FF;
+	assert( (*reinterpret_cast<asBYTE*>(&test)) == 0xFF );
+#endif
+
 	return new asCScriptEngine();
 }
 

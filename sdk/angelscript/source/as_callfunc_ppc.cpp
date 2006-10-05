@@ -92,7 +92,9 @@ extern "C" {
 extern "C" asQWORD ppcFunc(const asDWORD* argsPtr, int StackArgSize, asDWORD func);
 // -------------------------------------------------------------------
 asm(""
-	" .align 4\n"
+	" .text\n"
+	" .align 2\n"
+	" .p2align 4,,15\n"
 	" .globl _ppcFunc\n"
 	"_ppcFunc:\n"
 	// setup stack

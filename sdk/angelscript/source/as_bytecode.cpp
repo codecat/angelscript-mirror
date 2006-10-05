@@ -950,7 +950,8 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 			// In case of jumps, we must follow the each of the paths
 			if( curr->op == BC_JMP )
 			{
-				int r = FindLabel(asDWORD(curr->arg), curr, &curr, 0); assert( r == 0 );
+				int label = *((int*)ARG_DW(curr->arg));
+				int r = FindLabel(label, curr, &curr, 0); assert( r == 0 );
 
 				if( !closedPaths.Find(curr) &&
 					!openPaths.Find(curr) )
@@ -963,7 +964,8 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 					 curr->op == BC_JP || curr->op == BC_JNP )
 			{
 				cByteInstruction *dest;
-				int r = FindLabel(asDWORD(curr->arg), curr, &dest, 0); assert( r == 0 );
+				int label = *((int*)ARG_DW(curr->arg));
+				int r = FindLabel(label, curr, &dest, 0); assert( r == 0 );
 
 				if( !closedPaths.Find(dest) &&
 					!openPaths.Find(dest) )
@@ -1353,52 +1355,55 @@ void asCByteCode::Output(asDWORD *array)
 	{
 		if( instr->GetSize() > 0 )
 		{
-			if( bcTypes[instr->op] == BCTYPE_NO_ARG )
+			*(asBYTE*)ap = asBYTE(instr->op);
+			*(((asBYTE*)ap)+1) = 0; // Second byte is always zero
+			switch( bcTypes[instr->op] ) 
 			{
-				*ap = instr->op;
-			}
-			else if( bcTypes[instr->op] == BCTYPE_wW_rW_rW_ARG )
-			{
-				*ap = instr->op | (instr->wArg[0] << 16);
-				*(ap+1) = asWORD(instr->wArg[1]) | (instr->wArg[2] << 16);
-			}
-			else if( bcTypes[instr->op] == BCTYPE_wW_DW_ARG ||
-				     bcTypes[instr->op] == BCTYPE_rW_DW_ARG ||
-					 bcTypes[instr->op] == BCTYPE_W_DW_ARG  )
-			{
-				*ap = (instr->op) | (instr->wArg[0] << 16);
-				*(ap+1) = asDWORD(instr->arg);
-			}
-			else if( bcTypes[instr->op] == BCTYPE_wW_rW_DW_ARG )
-			{
-				*ap = (instr->op) | (instr->wArg[0]<<16);
-				*(ap+1) = instr->wArg[1];
-				*(ap+2) = asDWORD(instr->arg);
-			}
-			else if( bcTypes[instr->op] == BCTYPE_wW_QW_ARG )
-			{
-				*ap = (instr->op) | (instr->wArg[0] << 16);
-				memcpy(ap+1, &instr->arg, instr->GetSize()*4-4);
-			}
-			else if( bcTypes[instr->op] == BCTYPE_W_ARG  ||
-				     bcTypes[instr->op] == BCTYPE_rW_ARG || 
-					 bcTypes[instr->op] == BCTYPE_wW_ARG )
-			{
-				*ap = (instr->op) | (instr->wArg[0]<<16);
-			}
-			else if( bcTypes[instr->op] == BCTYPE_wW_rW_ARG ||
-					 bcTypes[instr->op] == BCTYPE_rW_rW_ARG ||
-					 bcTypes[instr->op] == BCTYPE_W_rW_ARG  ||
-					 bcTypes[instr->op] == BCTYPE_wW_W_ARG  )
-			{
-				*ap = (instr->op) | (instr->wArg[0]<<16);
-				*(ap+1) = instr->wArg[1];
-			}
-			else
-			{
-				memcpy(ap, &instr->op, 4);
-				memcpy(ap+1, &instr->arg, instr->GetSize()*4-4);
-			}
+			case BCTYPE_NO_ARG:
+				break;
+			case BCTYPE_wW_rW_rW_ARG:
+				*(((asWORD*)ap)+1) = instr->wArg[0];
+				*(((asWORD*)ap)+2) = instr->wArg[1];
+				*(((asWORD*)ap)+3) = instr->wArg[2];
+				break;
+			case BCTYPE_wW_DW_ARG:
+			case BCTYPE_rW_DW_ARG:
+			case BCTYPE_W_DW_ARG:
+				*(((asWORD*)ap)+1) = instr->wArg[0];
+				*(ap+1) = *(asDWORD*)&instr->arg;
+				break;
+			case BCTYPE_wW_rW_DW_ARG:
+				*(((asWORD*)ap)+1) = instr->wArg[0];
+				*(((asWORD*)ap)+2) = instr->wArg[1];
+				*(ap+2) = *(asDWORD*)&instr->arg;
+				break;
+			case BCTYPE_wW_QW_ARG:
+				*(((asWORD*)ap)+1) = instr->wArg[0];
+				*(asQWORD*)(ap+1) = asQWORD(instr->arg);
+				break;
+			case BCTYPE_W_ARG:
+			case BCTYPE_rW_ARG: 
+			case BCTYPE_wW_ARG:
+				*(((asWORD*)ap)+1) = instr->wArg[0];
+				break;
+			case BCTYPE_wW_rW_ARG:
+			case BCTYPE_rW_rW_ARG:
+			case BCTYPE_W_rW_ARG:
+			case BCTYPE_wW_W_ARG:
+				*(((asWORD *)ap)+1) = instr->wArg[0];
+				*(((asWORD *)ap)+2) = instr->wArg[1];
+				break;
+			case BCTYPE_QW_DW_ARG:
+			case BCTYPE_DW_DW_ARG:
+			case BCTYPE_QW_ARG:
+			case BCTYPE_DW_ARG:
+ 				memcpy(ap+1, &instr->arg, instr->GetSize()*4-4);
+				break;
+			default:
+				// How did we get here?
+				assert(false);
+				break;
+ 			}
 		}
 
 		ap += instr->GetSize();
@@ -1630,7 +1635,7 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 
 			case BC_FREE:
 			case BC_REFCPY:
-				fprintf(file, "   %-8s %d\n", bcName[instr->op].name, *((int*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s 0x%x\n", bcName[instr->op].name, *((int*) ARG_DW(instr->arg)));
 				break;
 
 			case BC_JMP:

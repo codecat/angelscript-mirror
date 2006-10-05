@@ -40,7 +40,7 @@
 // Define mkdir for GNUC
 #include <sys/stat.h>
 #include <sys/types.h>
-#define mkdir(dirname) mkdir(dirname, S_IRWXU)
+#define _mkdir(dirname) mkdir(dirname, S_IRWXU)
 #else
 #include <direct.h>
 #endif

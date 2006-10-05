@@ -16,6 +16,7 @@ SRCNAMES = \
   test_arrayintf.cpp \
   test_arrayobject.cpp \
   test_autohandle.cpp \
+  test_castop.cpp \
   test_circularimport.cpp \
   test_compiler.cpp \
   test_config.cpp \
@@ -61,6 +62,7 @@ SRCNAMES = \
   test_scriptstring.cpp \
   test_scriptstruct.cpp \
   test_shark.cpp \
+  test_singleton.cpp \
   test_suspend.cpp \
   test_stack2.cpp \
   test_stdvector.cpp \

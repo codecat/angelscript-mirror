@@ -180,6 +180,8 @@
 // AS_64BIT_PTR
 // Define this to make the engine store all pointers in 64bit words.
 
+// AS_BIG_ENDIAN
+// Define this for CPUs that use big endian memory layout, e.g. PPC
 
 
 //
@@ -332,7 +334,6 @@
 
 // MACOSX (PPC and X86)
 #if defined(__APPLE__)
-	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 	#define AS_NO_MEMORY_H
 	#define GNU_STYLE_VIRTUAL_METHOD
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
@@ -342,11 +343,12 @@
 	#define ASM_AT_N_T
 	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
 	#define STDCALL
-	#ifdef __INTEL__
+	#if defined(__INTEL__) || defined(__i386__)
 		#define AS_X86
-	#else
-		#define AS_PPC
-		#define AS_USE_DOUBLE_AS_FLOAT
+	#endif
+	#if defined(__ppc__)
+//		#define AS_PPC				// not working yet
+		#define AS_BIG_ENDIAN
 	#endif
 #endif
 
@@ -356,6 +358,7 @@
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 //	#define AS_PPC					// not working yet
 	#define AS_NO_MEMORY_H
+	#define AS_BIG_ENDIAN
 #endif
 
 
