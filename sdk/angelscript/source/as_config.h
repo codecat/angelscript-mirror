@@ -235,7 +235,7 @@
 
 
 //
-// Configurations
+// Detect compiler
 //------------------------------------------------
 
 #define VALUE_OF_BOOLEAN_TRUE  1
@@ -247,13 +247,15 @@
 	#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+3))
 	#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 	#define THISCALL_PASS_OBJECT_POINTER_IN_ECX
-	#define ASM_INTEL
 	#define vsnprintf(a, b, c, d) _vsnprintf(a, b, c, d)
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define COMPLEX_MASK (asOBJ_CLASS_CONSTRUCTOR | asOBJ_CLASS_DESTRUCTOR | asOBJ_CLASS_ASSIGNMENT)
 	#define STDCALL __stdcall
-	#ifdef _M_IX86
+
+	// Support native calling conventions on x86, but not 64bit yet
+	#if defined(_M_IX86) && !defined(__LP64__)
 		#define AS_X86
+		#define ASM_INTEL  // Intel style for inline assembly
 	#endif
 #endif
 
@@ -264,15 +266,21 @@
 	#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+3))
 	#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 	#define THISCALL_PASS_OBJECT_POINTER_IN_ECX
-	#define ASM_INTEL
 	#define vsnprintf(a, b, c, d) _vsnprintf(a, b, c, d)
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define COMPLEX_MASK (asOBJ_CLASS_CONSTRUCTOR | asOBJ_CLASS_DESTRUCTOR | asOBJ_CLASS_ASSIGNMENT)
 	#define STDCALL __stdcall
-	#ifdef _M_IX86
-		#define AS_X86
+	#ifndef __LP64__
+		#define __int64 long long
+	#else
+		#define __int64 long
 	#endif
-	#define __int64 long long
+
+	// Support native calling conventions on x86, but not 64bit yet
+	#if defined(_M_IX86) && !defined(__LP64__)
+		#define AS_X86
+		#define ASM_INTEL  // Intel style for inline assembly
+	#endif
 #endif
 
 // SN Systems ProDG (also experimental, let me know if something isn't working)
@@ -281,39 +289,96 @@
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
 	#define COMPLEX_OBJS_PASSED_BY_REF
-	#define __int64 long long
-	#define ASM_AT_N_T
+	#ifndef __LP64__
+		#define __int64 long long
+	#else
+		#define __int64 long
+	#endif
+	#define ASM_AT_N_T  // AT&T style inline assembly
 	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
-  // SN doesnt seem to like STDCALL.
-  // Maybe it can work with some fiddling, but i cant imagine linking to any STDCALL functions with a console anyway...
+
+	// SN doesnt seem to like STDCALL.
+	// Maybe it can work with some fiddling, but i cant imagine linking to any STDCALL functions with a console anyway...
 	#define STDCALL
+
+	// Linux specific
 	#ifdef __linux__
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 	#endif
-	#ifdef i386
+
+	// Support native calling conventions on x86, but not 64bit yet
+	#if defined(i386) && !defined(__LP64__)
 		#define AS_X86
 	#endif
 #endif
 
 // GNU C
-#if defined(__GNUC__) && !defined(__SNC__) && !defined(__APPLE__)
+#if defined(__GNUC__) && !defined(__SNC__)
 	#define GNU_STYLE_VIRTUAL_METHOD
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
 	#define COMPLEX_OBJS_PASSED_BY_REF
-	#define __int64 long long
-	#define ASM_AT_N_T
+	#ifndef __LP64__
+		#define __int64 long long
+	#else
+		#define __int64 long
+	#endif
 	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
-	#define STDCALL __attribute__((stdcall))
-	#ifdef __linux__
+	#define AS_NO_MEMORY_H
+
+	// MacOSX
+	#ifdef __APPLE__
+		#define STDCALL
+	#endif
+
+	// Windows and Linux
+	#if defined(WIN32) || defined(__linux__)
+		#define STDCALL __attribute__((stdcall))
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 	#endif
-	#ifdef i386
-		#define AS_X86
+
+	// Support native calling conventions on x86, MIPS, and SH4, but not 64bit
+	#ifndef __LP64__
+		#define ASM_AT_N_T
+		#if defined(i386) && !defined(__LP64__)
+			#define AS_X86
+		#endif
+		#if defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__) || defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
+			#define AS_MIPS
+		#endif
+		#ifdef __SH4_SINGLE_ONLY__
+			#define AS_SH4
+		#endif
+	#endif
+#endif
+
+
+//
+// Detect target hardware
+//------------------------------------------------
+
+// X86, Intel, AMD, etc, i.e. most PCs
+#if defined(__i386__) || defined(_M_IX86)
+	// Nothing special here
+#endif
+
+// MIPS architecture (generally PS2 and PSP consoles, potentially supports N64 as well)
+#if defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__) || defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
+	#define AS_ALIGN				// align datastructures
+	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
+#endif
+
+// PowerPC, e.g. Mac, GameCube, maybe even PS3 and XBox 360
+#if defined(__PPC__)
+	#define AS_BIG_ENDIAN
+	// Gamecube
+	#if defined(_GC)
+		#define AS_ALIGN
+		#define AS_USE_DOUBLE_AS_FLOAT
 	#endif
 #endif
 
@@ -321,53 +386,10 @@
 #ifdef __SH4_SINGLE_ONLY__
 	#define AS_ALIGN				// align datastructures
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
-	#define AS_SH4
 #endif
-
-// MIPS architexture (generally PS2 and PSP consoles, potentially supports N64 aswell)
-#if defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__) || defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
-	#define AS_ALIGN				// align datastructures
-	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
-	#define AS_MIPS
-	#define AS_NO_MEMORY_H
-#endif
-
-// MACOSX (PPC and X86)
-#if defined(__APPLE__)
-	#define AS_NO_MEMORY_H
-	#define GNU_STYLE_VIRTUAL_METHOD
-	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
-	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
-	#define COMPLEX_OBJS_PASSED_BY_REF
-	#define __int64 long long
-	#define ASM_AT_N_T
-	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
-	#define STDCALL
-	#if defined(__INTEL__) || defined(__i386__)
-		#define AS_X86
-	#endif
-	#if defined(__ppc__)
-//		#define AS_PPC				// not working yet
-		#define AS_BIG_ENDIAN
-	#endif
-#endif
-
-// PPC architexture (Mac, Gamecube and hopefully PS3 + XBox360)
-#if defined(_GC) && defined(PPC)
-	#define AS_ALIGN				// align datastructures
-	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
-//	#define AS_PPC					// not working yet
-	#define AS_NO_MEMORY_H
-	#define AS_BIG_ENDIAN
-#endif
-
 
 // Is the target a 64bit system?
 #if defined(__LP64__) || defined(__amd64__)
-    #ifdef __int64
-        #undef __int64
-    #endif
-    #define __int64 long
     #ifndef AS_64BIT_PTR
         #define AS_64BIT_PTR
     #endif
