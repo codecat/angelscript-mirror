@@ -17,8 +17,9 @@ const char *script =
 "  Game.Test();       \n"
 "}                    \n";
 
-void TestMethod(int *obj)
+void TestMethod(asIScriptGeneric *gen)
 {
+	int *obj = (int*)gen->GetObject();
 	assert(obj == &GameMgr || obj == &SoundMgr);
 }
 
@@ -35,7 +36,7 @@ bool Test()
 
 	int inta = 0, intb = 0;
 	r = engine->RegisterObjectType("GameMgr", 0, 0); assert(r >= 0);
-	r = engine->RegisterObjectMethod("GameMgr", "void Test()", asFUNCTION(TestMethod), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectMethod("GameMgr", "void Test()", asFUNCTION(TestMethod), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalProperty("GameMgr Game", (void*)&GameMgr); assert(r >= 0);
 
 	// Test registering another object globabl property after 
@@ -44,7 +45,7 @@ bool Test()
 	engine->Build(0);
 
 	r = engine->RegisterObjectType("SoundMgr", 0, 0); assert(r >= 0);
-	r = engine->RegisterObjectMethod("SoundMgr", "void Test()", asFUNCTION(TestMethod), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectMethod("SoundMgr", "void Test()", asFUNCTION(TestMethod), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalProperty("SoundMgr SMgr", (void*)&SoundMgr); assert(r >= 0);
 
 	engine->ExecuteString(0, "Game.Test()");

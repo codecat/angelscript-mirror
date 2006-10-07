@@ -37,7 +37,7 @@ static const char *script =
 static const char *script2 =
 "const int a = 1;                   \n"
 "const int8 b = 2;                  \n"
-"void _switch()                     \n"
+"void _switch2()                    \n"
 "{                                  \n"
 "  const uint c = 3;                \n"
 "  for( uint8 n = 0; n <= 5; ++n )  \n"
@@ -109,7 +109,7 @@ bool TestSwitch()
 	engine->AddScriptSection(0, "switch", script2, strlen(script2), 0);
 	engine->Build(0);
 
-	engine->ExecuteString(0, "_switch()");
+	engine->ExecuteString(0, "_switch2()");
 
 	if( log != "d12345" )
 	{

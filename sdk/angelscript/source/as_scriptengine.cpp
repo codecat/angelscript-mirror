@@ -114,11 +114,11 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 
 	// Verify endianess
 #ifdef AS_BIG_ENDIAN
-	asDWORD test = 0xFF000000;
-	assert( (*reinterpret_cast<asBYTE*>(&test)) == 0xFF );
+	assert( *(asDWORD*)"\x00\x01\x02\x03" == 0x00010203 );
+	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == 0x0001020304050607ll );
 #else
-	asDWORD test = 0x000000FF;
-	assert( (*reinterpret_cast<asBYTE*>(&test)) == 0xFF );
+	assert( *(asDWORD*)"\x00\x01\x02\x03" == 0x03020100 );
+	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == 0x0706050403020100ll );
 #endif
 
 	return new asCScriptEngine();
