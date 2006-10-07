@@ -2901,16 +2901,13 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 		// This function don't deal with references
 		assert( !ctx->type.dataType.IsReference() );
 
-		// Only a primitive can be converted to a primitive
-		if( !ctx->type.dataType.IsPrimitive() )
-			return;
-
 		// Start by implicitly converting constant values
 		if( ctx->type.isConstant )
 			ImplicitConversionConstant(ctx, to, node, isExplicit);
 
 		// After the constant value has been converted we have the following possibilities
 
+		// TODO: PPC: Remove this part. Must convert the value through byte code, in case of big endian
 		// int8 -> int16 -> int32
 		// uint8 -> uint16 -> uint32
 		// bits8 -> bits16 -> bits32
@@ -2919,6 +2916,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 		{
 			if( ctx->type.dataType.IsIntegerType() )
 			{
+				// TODO: PPC: Must convert the value through byte code, in case of big endian
 				if( s == 1 )
 					ctx->type.dataType.SetTokenType(ttInt8);
 				else if( s == 2 )
@@ -2928,6 +2926,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 			}
 			else if( ctx->type.dataType.IsUnsignedType() )
 			{
+				// TODO: PPC: Must convert the value through byte code, in case of big endian
 				if( s == 1 )
 					ctx->type.dataType.SetTokenType(ttUInt8);
 				else if( s == 2 )
@@ -2937,6 +2936,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 			}
 			else if( ctx->type.dataType.IsBitVectorType() )
 			{
+				// TODO: PPC: Must convert the value through byte code, in case of big endian
 				if( s == 1 )
 					ctx->type.dataType.SetTokenType(ttBits8);
 				else if( s == 2 )
@@ -2952,6 +2952,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 			if( to.IsIntegerType() )
 			{
 				if( ctx->type.dataType.IsUnsignedType() )
+					// TODO: PPC: Must convert the value through byte code, in case of big endian
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
 				else if( ctx->type.dataType.IsFloatType() )
 				{
@@ -2968,11 +2969,16 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ctx->type.SetVariable(to, offset, true);
 				}
 				else if( ctx->type.dataType.IsBitVectorType() )
+					// TODO: PPC: Must convert the value through byte code, in case of big endian
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+
+				// TODO: PPC: Convert to smaller integer if necessary
+
 			}
 			else if( to.IsUnsignedType() )
 			{
 				if( ctx->type.dataType.IsIntegerType() )
+					// TODO: PPC: Must convert the value through byte code, in case of big endian
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
 				else if( ctx->type.dataType.IsFloatType() )
 				{
@@ -2989,25 +2995,40 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ctx->type.SetVariable(to, offset, true);
 				}
 				else if( ctx->type.dataType.IsBitVectorType() )
+					// TODO: PPC: Must convert the value through byte code, in case of big endian
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+
+				// TODO: PPC: Convert to smaller integer if necessary
+
 			}
 			else if( to.IsBitVectorType() )
 			{
+				// Don't permit implicit conversion from float or double  
+				// to bits due to it cause possible ambiguities
+
 				if( ctx->type.dataType.IsIntegerType() )
+					// TODO: PPC: Must convert the value through byte code, in case of big endian
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
 				else if( ctx->type.dataType.IsUnsignedType() )
+					// TODO: PPC: Must convert the value through byte code, in case of big endian
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+
+				// TODO: PPC: Convert to smaller integer if necessary
 			}
 			else if( to.IsFloatType() )
 			{
 				if( ctx->type.dataType.IsIntegerType() )
 				{
+					// TODO: PPC: Must convert to 32bit first
+
 					ConvertToTempVariable(ctx);
 					ctx->bc.InstrSHORT(BC_iTOf, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
 				}
 				else if( ctx->type.dataType.IsUnsignedType() )
 				{
+					// TODO: PPC: Must convert to 32bit first
+
 					ConvertToTempVariable(ctx);
 					ctx->bc.InstrSHORT(BC_uTOf, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
@@ -3025,6 +3046,8 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 			{
 				if( ctx->type.dataType.IsIntegerType() )
 				{
+					// TODO: PPC: Must convert to 32bit first
+
 					ConvertToTempVariable(ctx);
 					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 					int offset = reservedVars ? AllocateVariableNotIn(to, true, *reservedVars) : AllocateVariable(to, true);
@@ -3033,6 +3056,8 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 				}
 				else if( ctx->type.dataType.IsUnsignedType() )
 				{
+					// TODO: PPC: Must convert to 32bit first
+
 					ConvertToTempVariable(ctx);
 					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 					int offset = reservedVars ? AllocateVariableNotIn(to, true, *reservedVars) : AllocateVariable(to, true);
@@ -3289,6 +3314,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( !isExplicit && node ) Warning(str.AddressOf(), node);
 			}
 
+			// TODO: PPC: Must properly convert value in case the from value is smaller
 			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
 
 			// Try once more, in case of a smaller type
@@ -3296,12 +3322,15 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsBitVectorType() )
 		{
+			// TODO: PPC: Must properly convert value in case the from value is smaller
 			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, isExplicit);
 		}
-		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryBytes() < to.GetSizeInMemoryBytes() )
+		else if( from->type.dataType.IsIntegerType() && 
+		         from->type.dataType.GetSizeInMemoryBytes() < to.GetSizeInMemoryBytes() )
+			// TODO: PPC: Must properly convert the value in case of big endian systems
 			from->type.dataType = to;
 		else if( from->type.dataType.IsIntegerType() &&
 		         from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
@@ -3373,6 +3402,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( !isExplicit && node ) Warning(str.AddressOf(), node);
 			}
 
+			// TODO: PPC: Must properly convert value in case the from value is smaller
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 
 			// Try once more, in case of a smaller type
@@ -3380,12 +3410,15 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsBitVectorType() )
 		{
+			// TODO: PPC: Must properly convert value in case the from value is smaller
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, isExplicit);
 		}
-		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryBytes() < to.GetSizeInMemoryBytes() )
+		else if( from->type.dataType.IsUnsignedType() && 
+		         from->type.dataType.GetSizeInMemoryBytes() < to.GetSizeInMemoryBytes() )
+			// TODO: PPC: Must properly convert value in case of BIG ENDIAN
 			from->type.dataType = to;
 		else if( from->type.dataType.IsUnsignedType() &&
 		         from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
@@ -3428,6 +3461,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsIntegerType() )
 		{
+			// TODO: PPC: Must properly convert value in case the from value is smaller
 			int ic = from->type.intValue;
 			float fc = float(ic);
 
@@ -3443,6 +3477,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() )
 		{
+			// TODO: PPC: Must properly convert value in case the from value is smaller
 			unsigned int uic = from->type.dwordValue;
 			float fc = float(uic);
 
@@ -3477,6 +3512,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsIntegerType() )
 		{
+			// TODO: PPC: Must properly convert value in case the from value is smaller
 			int ic = from->type.intValue;
 			double fc = double(ic);
 
@@ -3492,6 +3528,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() )
 		{
+			// TODO: PPC: Must properly convert value in case the from value is smaller
 			unsigned int uic = from->type.dwordValue;
 			double fc = double(uic);
 
@@ -3513,12 +3550,16 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		if( from->type.dataType.IsIntegerType() ||
 			from->type.dataType.IsUnsignedType() )
 		{
+			// TODO: PPC: Must properly convert value in case the from value is smaller
+
 			from->type.dataType = asCDataType::CreatePrimitive(ttBits, true);
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, isExplicit);
 		}
-		else if( from->type.dataType.IsBitVectorType() && from->type.dataType.GetSizeInMemoryBytes() < to.GetSizeInMemoryBytes() )
+		else if( from->type.dataType.IsBitVectorType() && 
+		         from->type.dataType.GetSizeInMemoryBytes() < to.GetSizeInMemoryBytes() )
+			// TODO: PPC: Must properly convert value in case the from value is smaller
 			from->type.dataType = to;
 		else if( from->type.dataType.IsBitVectorType() &&
 		         from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
@@ -4464,6 +4505,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 					 expr.type.dataType.IsUnsignedType() )
 				conversionOK = true;
 
+			// TODO: PPC: This is wrong, we need iTOb instead
 			if( to.GetSizeInMemoryBytes() == 1 )
 				ctx->bc.InstrSHORT(BC_sbTOi, expr.type.stackOffset);
 			else if( to.GetSizeInMemoryBytes() == 2 )
@@ -4488,6 +4530,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 					 expr.type.dataType.IsUnsignedType() )
 				conversionOK = true;
 
+			// TODO: PPC: This is wrong, we need iTOb instead
 			if( to.GetSizeInMemoryBytes() == 1 )
 				ctx->bc.InstrSHORT(BC_ubTOi, expr.type.stackOffset);
 			else if( to.GetSizeInMemoryBytes() == 2 )
@@ -4504,15 +4547,20 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			}
 			else if( expr.type.dataType.IsIntegerType() )
 			{
+				// TODO: PPC: Convert to 32bit first
+
 				ctx->bc.InstrSHORT(BC_iTOf, expr.type.stackOffset);
 				conversionOK = true;
 			}
 			else if( expr.type.dataType.IsUnsignedType() )
 			{
+				// TODO: PPC: Convert to 32bit first
+
 				ctx->bc.InstrSHORT(BC_uTOf, expr.type.stackOffset);
 				conversionOK = true;
 			}
 			else if( expr.type.dataType.IsBitVectorType() )
+				// TODO: PPC: Convert to 32bit
 				conversionOK = true;
 		}
 		else if( to == asCDataType::CreatePrimitive(ttDouble, true) )
@@ -4526,6 +4574,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			}
 			else if( expr.type.dataType.IsIntegerType() )
 			{
+				// TODO: PPC: Convert to 32bit first
+
 				ReleaseTemporaryVariable(expr.type, &ctx->bc);
 				offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(BC_iTOd, offset, expr.type.stackOffset);
@@ -4533,6 +4583,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			}
 			else if( expr.type.dataType.IsUnsignedType() )
 			{
+				// TODO: PPC: Convert to 32bit first
+
 				ReleaseTemporaryVariable(expr.type, &ctx->bc);
 				offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(BC_uTOd, offset, expr.type.stackOffset);
@@ -4548,6 +4600,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			{
 				conversionOK = true;
 
+				// TODO: PPC: This is wrong, we need iTOb instead
 				if( to.GetSizeInMemoryBytes() == 1 )
 					ctx->bc.InstrSHORT(BC_ubTOi, expr.type.stackOffset);
 				else if( to.GetSizeInMemoryBytes() == 2 )
@@ -6165,6 +6218,8 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *ex
 				if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
 				{
 					ctx->bc.InstrSHORT(BC_RDR1, offset);
+
+					// TODO: PPC: This will not be necessary when we properly treat types
 					if( ctx->type.dataType.IsIntegerType() )
 						ctx->bc.InstrSHORT(BC_sbTOi, offset);
 					else
@@ -6173,6 +6228,8 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *ex
 				else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
 				{
 					ctx->bc.InstrSHORT(BC_RDR2, offset);
+
+					// TODO: PPC: This will not be necessary when we properly treat types
 					if( ctx->type.dataType.IsIntegerType() )
 						ctx->bc.InstrSHORT(BC_swTOi, offset);
 					else
@@ -7136,6 +7193,8 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 			{
 				// Move the value from the return register to the variable
 				ctx->bc.InstrSHORT(BC_CpyRtoV4, offset);
+
+				// TODO: PPC: This will not be necessary as we will convert when the value is used
 				if( descr->returnType.GetSizeInMemoryBytes() == 1 )
 				{
 					if( descr->returnType.IsIntegerType() )

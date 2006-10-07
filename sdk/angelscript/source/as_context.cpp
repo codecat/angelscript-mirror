@@ -2334,6 +2334,8 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
+	// TODO: PPC: Add BC_iTOb and BC_iTOw
+
 	// Don't let the optimizer optimize for size, 
 	// since it requires extra conditions and jumps
 	case 140: l_bc = (asDWORD*)140; break;

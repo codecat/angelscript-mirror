@@ -216,6 +216,8 @@ enum bcInstr
 	BC_ChkNullV     = 138,  // Verify that the variable is not a null handle
 	BC_CALLINTF  	= 139,	// Call interface method 
 
+	// TODO: PPC: Add BC_iTOb and BC_iTOw
+
 	BC_MAXBYTECODE  = 140,
 
 	// Temporary tokens, can't be output to the final program
@@ -419,7 +421,9 @@ const int BCT_ChkRefS   = BCTYPE_NO_ARG;
 const int BCT_ChkNullV  = BCTYPE_rW_ARG;
 const int BCT_CALLINTF  = BCTYPE_DW_ARG;
 
-// Temporary// Temporary
+// TODO: PPC: Add BCT_iTOb and BCT_iTOw
+
+// Temporary
 const int BCT_PSP       = BCTYPE_W_ARG;
 #ifndef BUILD_WITHOUT_LINE_CUES
 	const int BCT_LINE  = BCTYPE_NO_ARG;
@@ -569,6 +573,7 @@ const int bcTypes[256] =
 	BCT_ChkRefS,
 	BCT_ChkNullV,
 	BCT_CALLINTF,
+// TODO: PPC: Add BCT_iTOb and BCT_iTOw
 	0,
 	0,
 	0,

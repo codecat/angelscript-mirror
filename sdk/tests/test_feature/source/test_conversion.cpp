@@ -485,6 +485,7 @@ bool Test()
 
 	int r;
 
+	// TODO: PPC: We cannot allow this with PPC
 	// Allow the conversion of a type to another even for reference parameters (C++ doesn't allow this)
 	r = engine->ExecuteString(0, "TestDoubleByRef(d); TestFloatByRef(d); TestIntByRef(d); TestI16ByRef(d); TestI8ByRef(d); TestUIntByRef(d); TestUI16ByRef(d); TestUI8ByRef(d);"); if( r < 0 ) fail = true;
 	r = engine->ExecuteString(0, "TestDoubleByRef(f); TestFloatByRef(f); TestIntByRef(f); TestI16ByRef(f); TestI8ByRef(f); TestUIntByRef(f); TestUI16ByRef(f); TestUI8ByRef(f);"); if( r < 0 ) fail = true;

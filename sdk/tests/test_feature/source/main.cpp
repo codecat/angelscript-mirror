@@ -172,7 +172,6 @@ int main(int argc, char **argv)
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
  	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
-	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
@@ -253,6 +252,7 @@ int main(int argc, char **argv)
 	if( TestExecuteScript()           ) goto failed; else printf("-- TestExecuteScript passed\n"); 
 	if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
 	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");
+	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 
 	// No longer valid
 //	if( TestPointer::Test()           ) goto failed; else printf("-- TestPointer passed\n");
