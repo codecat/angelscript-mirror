@@ -112,22 +112,6 @@ void Construct(CRefClass *o)
 	new(o) CRefClass;
 }
 
-static void Assert(bool expr)
-{
-	if( !expr )
-	{
-		printf("Assert failed\n");
-		asIScriptContext *ctx = asGetActiveContext();
-		if( ctx )
-		{
-			asIScriptEngine *engine = ctx->GetEngine();
-			printf("func: %s\n", engine->GetFunctionDeclaration(ctx->GetCurrentFunction()));
-			printf("line: %d\n", ctx->GetCurrentLineNumber());
-			ctx->SetException("Assert failed");
-		}
-	}
-}
-
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -149,7 +133,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ASSIGNMENT, "refclass &f(refclass &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "refclass &f(refclass &in, refclass &in)", asFUNCTION(CRefClass::Add), asCALL_CDECL); assert(r >= 0);
 
-	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	COutStream out;
 

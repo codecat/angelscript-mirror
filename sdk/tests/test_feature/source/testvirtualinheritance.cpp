@@ -57,7 +57,7 @@ bool TestVirtualInheritance()
 #ifdef __GNUC__
 	printf("%s: GNUC: AngelScript cannot detect virtual inheritance thus this test doesn't apply\n", TESTNAME);
 	return false;
-#endif
+#else
 
 	bool fail = false;
 	int r;
@@ -97,4 +97,5 @@ bool TestVirtualInheritance()
 	engine->Release();
 
 	return fail;
+#endif
 }

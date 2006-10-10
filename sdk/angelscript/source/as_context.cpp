@@ -1172,7 +1172,7 @@ void asCContext::ExecuteNext()
 
 	case BC_LdGRdR4:
 		*(void**)&register1 = module->globalVarPointers[WORDARG1(l_bc)];
-		*(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)(size_t)register1;
+		*(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)*(size_t*)&register1;
 		l_bc += 2;
 		break;
 
@@ -1321,50 +1321,51 @@ void asCContext::ExecuteNext()
 //-------------------------
 // Increment value pointed to by address in register
 	case BC_INCi16:
-		(*(short*)(size_t)register1)++;
+		(*(short*)*(size_t*)&register1)++;
 		l_bc++;
 		break;
 
 	case BC_INCi8:
-		(*(char*)(size_t)register1)++;
+		(*(char*)*(size_t*)&register1)++;
 		l_bc++;
 		break;
 
 	case BC_DECi16:
-		(*(short*)(size_t)register1)--;
+		(*(short*)*(size_t*)&register1)--;
 		l_bc++;
 		break;
 
 	case BC_DECi8:
-		(*(char*)(size_t)register1)--;
+		(*(char*)*(size_t*)&register1)--;
 		l_bc++;
 		break;
+
 	case BC_INCi:
-		++(*(int*)(size_t)register1);
+		++(*(int*)*(size_t*)&register1);
 		l_bc++;
 		break;
 
 	case BC_DECi:
-		--(*(int*)(size_t)register1);
+		--(*(int*)*(size_t*)&register1);
 		l_bc++;
 		break;
 
 	case BC_INCf:
-		++(*(float*)(size_t)register1);
+		++(*(float*)*(size_t*)&register1);
 		l_bc++;
 		break;
 
 	case BC_DECf:
-		--(*(float*)(size_t)register1);
+		--(*(float*)*(size_t*)&register1);
 		l_bc++;
 		break;
 	case BC_INCd:
-		++(*(double*)(size_t)register1);
+		++(*(double*)*(size_t*)&register1);
 		l_bc++;
 		break;
 
 	case BC_DECd:
-		--(*(double*)(size_t)register1);
+		--(*(double*)*(size_t*)&register1);
 		l_bc++;
 		break;
 
@@ -1940,15 +1941,15 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_WRTV1:
-		*(asBYTE*)*(size_t*)&register1 = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
+		*(asBYTE*)*(size_t*)&register1 = (asBYTE)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV2:
-		*(asWORD*)*(size_t*)&register1 = *(asWORD*)(l_fp - SWORDARG0(l_bc));
+		*(asWORD*)*(size_t*)&register1 = (asWORD)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV4:
-		*(asDWORD*)*(size_t*)&register1 = *(asDWORD*)(l_fp - SWORDARG0(l_bc));
+		*(asDWORD*)*(size_t*)&register1 = *(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV8:
@@ -2027,22 +2028,22 @@ void asCContext::ExecuteNext()
 		break;
 		
 	case BC_sbTOi:
-		*(l_fp - SWORDARG0(l_bc)) = *(char*)(l_fp - SWORDARG0(l_bc));
+		*(l_fp - SWORDARG0(l_bc)) = (char)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_swTOi:
-		*(l_fp - SWORDARG0(l_bc)) = *(short*)(l_fp - SWORDARG0(l_bc));
+		*(l_fp - SWORDARG0(l_bc)) = (short)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_ubTOi:
-		*(l_fp - SWORDARG0(l_bc)) = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
+		*(l_fp - SWORDARG0(l_bc)) = (asBYTE)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_uwTOi:
-		*(l_fp - SWORDARG0(l_bc)) = *(asWORD*)(l_fp - SWORDARG0(l_bc));
+		*(l_fp - SWORDARG0(l_bc)) = (asWORD)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_dTOi:

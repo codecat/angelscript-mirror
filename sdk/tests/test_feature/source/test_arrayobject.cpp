@@ -151,22 +151,6 @@ void DestructIntArrayArray(CIntArrayArray *a)
 	a->~CIntArrayArray();
 }
 
-static void Assert(bool expr)
-{
-	if( !expr )
-	{
-		printf("Assert failed\n");
-		asIScriptContext *ctx = asGetActiveContext();
-		if( ctx )
-		{
-			asIScriptEngine *engine = ctx->GetEngine();
-			printf("func: %s\n", engine->GetFunctionDeclaration(ctx->GetCurrentFunction()));
-			printf("line: %d\n", ctx->GetCurrentLineNumber());
-			ctx->SetException("Assert failed");
-		}
-	}
-}
-
 static const char *script1 =
 "void Test()                         \n"
 "{                                   \n"

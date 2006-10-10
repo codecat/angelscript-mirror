@@ -112,6 +112,10 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	assert( sizeof(asQWORD) == 8 );
 	assert( sizeof(asPWORD) == sizeof(void*) );
 
+	// Verify the boolean type
+	assert( sizeof(bool) == 1 );
+	assert( true == VALUE_OF_BOOLEAN_TRUE );
+
 	// Verify endianess
 #ifdef AS_BIG_ENDIAN
 	assert( *(asDWORD*)"\x00\x01\x02\x03" == 0x00010203 );

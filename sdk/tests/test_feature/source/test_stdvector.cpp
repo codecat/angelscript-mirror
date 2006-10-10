@@ -19,17 +19,6 @@ static void print(int num)
 	printf("%d", num);
 }
 
-static void Assert(bool expr)
-{
-	if( !expr )
-	{
-		printf("Assert failed\n");
-		asIScriptContext *ctx = asGetActiveContext();
-		if( ctx )
-			ctx->SetException("Assert failed");
-	}
-}
-
 static const char *script1 =
 "void Test()                         \n"
 "{                                   \n"

@@ -5,23 +5,6 @@ namespace TestArray
 
 #define TESTNAME "TestArray"
 
-
-static void Assert(bool expr)
-{
-	if( !expr )
-	{
-		printf("Assert failed\n");
-		asIScriptContext *ctx = asGetActiveContext();
-		if( ctx )
-		{
-			asIScriptEngine *engine = ctx->GetEngine();
-			printf("func: %s\n", engine->GetFunctionDeclaration(ctx->GetCurrentFunction()));
-			printf("line: %d\n", ctx->GetCurrentLineNumber());
-			ctx->SetException("Assert failed");
-		}
-	}
-}
-
 static const char *script1 =
 "string[] b;                                     \n"
 "int[] g_a(3);                                   \n"
