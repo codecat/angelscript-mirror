@@ -1172,7 +1172,7 @@ void asCContext::ExecuteNext()
 
 	case BC_LdGRdR4:
 		*(void**)&register1 = module->globalVarPointers[WORDARG1(l_bc)];
-		*(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)*(size_t*)&register1;
+		*(l_fp - SWORDARG0(l_bc)) = **(asDWORD**)&register1;
 		l_bc += 2;
 		break;
 
@@ -1321,51 +1321,51 @@ void asCContext::ExecuteNext()
 //-------------------------
 // Increment value pointed to by address in register
 	case BC_INCi16:
-		(*(short*)*(size_t*)&register1)++;
+		(**(short**)&register1)++;
 		l_bc++;
 		break;
 
 	case BC_INCi8:
-		(*(char*)*(size_t*)&register1)++;
+		(**(char**)&register1)++;
 		l_bc++;
 		break;
 
 	case BC_DECi16:
-		(*(short*)*(size_t*)&register1)--;
+		(**(short**)&register1)--;
 		l_bc++;
 		break;
 
 	case BC_DECi8:
-		(*(char*)*(size_t*)&register1)--;
+		(**(char**)&register1)--;
 		l_bc++;
 		break;
 
 	case BC_INCi:
-		++(*(int*)*(size_t*)&register1);
+		++(**(int**)&register1);
 		l_bc++;
 		break;
 
 	case BC_DECi:
-		--(*(int*)*(size_t*)&register1);
+		--(**(int**)&register1);
 		l_bc++;
 		break;
 
 	case BC_INCf:
-		++(*(float*)*(size_t*)&register1);
+		++(**(float**)&register1);
 		l_bc++;
 		break;
 
 	case BC_DECf:
-		--(*(float*)*(size_t*)&register1);
+		--(**(float**)&register1);
 		l_bc++;
 		break;
 	case BC_INCd:
-		++(*(double*)*(size_t*)&register1);
+		++(**(double**)&register1);
 		l_bc++;
 		break;
 
 	case BC_DECd:
-		--(*(double*)*(size_t*)&register1);
+		--(**(double**)&register1);
 		l_bc++;
 		break;
 
@@ -1550,7 +1550,7 @@ void asCContext::ExecuteNext()
 
 	case BC_PshRPtr:
 		l_sp -= PTR_SIZE;
-		*(asPTRWORD*)l_sp = (asPTRWORD)*(size_t*)&register1;
+		*(asPTRWORD*)l_sp = *(asPTRWORD*)&register1;
 		l_bc++;
 		break;
 
@@ -1941,36 +1941,36 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_WRTV1:
-		*(asBYTE*)*(size_t*)&register1 = (asBYTE)*(l_fp - SWORDARG0(l_bc));
+		**(asBYTE**)&register1 = (asBYTE)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV2:
-		*(asWORD*)*(size_t*)&register1 = (asWORD)*(l_fp - SWORDARG0(l_bc));
+		**(asWORD**)&register1 = (asWORD)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV4:
-		*(asDWORD*)*(size_t*)&register1 = *(l_fp - SWORDARG0(l_bc));
+		**(asDWORD**)&register1 = *(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV8:
-		*(asQWORD*)*(size_t*)&register1 = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
+		**(asQWORD**)&register1 = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_RDR1:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asBYTE*)*(size_t*)&register1;
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = **(asBYTE**)&register1;
 		l_bc++;
 		break;
 	case BC_RDR2:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asWORD*)*(size_t*)&register1;
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = **(asWORD**)&register1;
 		l_bc++;
 		break;
 	case BC_RDR4:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)*(size_t*)&register1;
+		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = **(asDWORD**)&register1;
 		l_bc++;
 		break;
 	case BC_RDR8:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)*(size_t*)&register1;
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = **(asQWORD**)&register1;
 		l_bc++;
 		break;
 
@@ -1979,7 +1979,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 	case BC_LDV:
-		register1 = size_t(l_fp - SWORDARG0(l_bc));
+		*(asDWORD**)&register1 = (l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_PGA:

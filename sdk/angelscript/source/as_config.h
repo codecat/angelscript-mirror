@@ -120,6 +120,9 @@
 // VALUE_OF_BOOLEAN_TRUE
 // This flag allows to customize the exact value of boolean true.
 
+// AS_SIZEOF_BOOL
+// On some target platforms the sizeof(bool) is 4, but on most it is 1.
+
 // STDCALL
 // This is used to declare a function to use the stdcall calling convention.
 
@@ -251,6 +254,7 @@
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define COMPLEX_MASK (asOBJ_CLASS_CONSTRUCTOR | asOBJ_CLASS_DESTRUCTOR | asOBJ_CLASS_ASSIGNMENT)
 	#define STDCALL __stdcall
+	#define AS_SIZEOF_BOOL 1
 
 	// Support native calling conventions on x86, but not 64bit yet
 	#if defined(_M_IX86) && !defined(__LP64__)
@@ -269,6 +273,7 @@
 	#define vsnprintf(a, b, c, d) _vsnprintf(a, b, c, d)
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define COMPLEX_MASK (asOBJ_CLASS_CONSTRUCTOR | asOBJ_CLASS_DESTRUCTOR | asOBJ_CLASS_ASSIGNMENT)
+	#define AS_SIZEOF_BOOL 1
 	#define STDCALL __stdcall
 	#ifndef __LP64__
 		#define __int64 long long
@@ -296,6 +301,7 @@
 	#endif
 	#define ASM_AT_N_T  // AT&T style inline assembly
 	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
+	#define AS_SIZEOF_BOOL 1
 
 	// SN doesnt seem to like STDCALL.
 	// Maybe it can work with some fiddling, but i cant imagine linking to any STDCALL functions with a console anyway...
@@ -327,9 +333,17 @@
 	#endif
 	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
 	#define AS_NO_MEMORY_H
+	#define AS_SIZEOF_BOOL 1
 
 	// MacOSX
 	#ifdef __APPLE__
+		// The sizeof bool is different depending on the target CPU
+		#undef AS_SIZEOF_BOOL
+		#if defined(__ppc__)
+			#define AS_SIZEOF_BOOL 4
+		#else
+			#define AS_SIZEOF_BOOL 1
+		#endif
 		#define STDCALL
 	#endif
 

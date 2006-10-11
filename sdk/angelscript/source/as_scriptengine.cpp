@@ -113,7 +113,7 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	assert( sizeof(asPWORD) == sizeof(void*) );
 
 	// Verify the boolean type
-	assert( sizeof(bool) == 1 );
+	assert( sizeof(bool) == AS_SIZEOF_BOOL );
 	assert( true == VALUE_OF_BOOLEAN_TRUE );
 
 	// Verify endianess

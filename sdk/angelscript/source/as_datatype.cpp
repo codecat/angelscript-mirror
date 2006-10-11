@@ -457,8 +457,7 @@ int asCDataType::GetSizeInMemoryBytes() const
 
 	if( tokenType == ttInt8 ||
 		tokenType == ttUInt8 ||
-		tokenType == ttBits8 ||
-		tokenType == ttBool )
+		tokenType == ttBits8 )
 		return 1;
 
 	if( tokenType == ttInt16 ||
@@ -469,6 +468,9 @@ int asCDataType::GetSizeInMemoryBytes() const
 	if( tokenType == ttDouble ||
 		tokenType == ttInt64 )
 		return 8;
+
+	if( tokenType == ttBool )
+		return AS_SIZEOF_BOOL;
 
 	return 4;
 }
