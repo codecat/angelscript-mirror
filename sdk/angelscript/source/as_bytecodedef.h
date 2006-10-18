@@ -216,9 +216,10 @@ enum bcInstr
 	BC_ChkNullV     = 138,  // Verify that the variable is not a null handle
 	BC_CALLINTF  	= 139,	// Call interface method 
 
-	// TODO: PPC: Add BC_iTOb and BC_iTOw
+	BC_iTOb         = 140,
+	BC_iTOw         = 141,
 
-	BC_MAXBYTECODE  = 140,
+	BC_MAXBYTECODE  = 142,
 
 	// Temporary tokens, can't be output to the final program
 	BC_PSP			= 246,
@@ -421,7 +422,8 @@ const int BCT_ChkRefS   = BCTYPE_NO_ARG;
 const int BCT_ChkNullV  = BCTYPE_rW_ARG;
 const int BCT_CALLINTF  = BCTYPE_DW_ARG;
 
-// TODO: PPC: Add BCT_iTOb and BCT_iTOw
+const int BCT_iTOb      = BCTYPE_rW_ARG;
+const int BCT_iTOw      = BCTYPE_rW_ARG;
 
 // Temporary
 const int BCT_PSP       = BCTYPE_W_ARG;
@@ -573,9 +575,8 @@ const int bcTypes[256] =
 	BCT_ChkRefS,
 	BCT_ChkNullV,
 	BCT_CALLINTF,
-// TODO: PPC: Add BCT_iTOb and BCT_iTOw
-	0,
-	0,
+	BCT_iTOb,
+	BCT_iTOw,
 	0,
 	0,
 	0,
@@ -762,8 +763,8 @@ const int bcStackInc[256] =
 	0,			// BC_ChkRefS
 	0,			// BC_ChkNullV
 	0xFFFF,		// BC_CALLINTF
-	0,
-	0,
+	0,			// BC_iTOb
+	0,			// BC_iTOw
 	0,
 	0,
 	0,
@@ -956,8 +957,8 @@ const sByteCodeName bcName[256] =
 	{"ChkRefS"},
 	{"ChkNullV"},
 	{"CALLINTF"},
-	{0},
-	{0},
+	{"iTOb"},
+	{"iTOw"},
 	{0},
 	{0},
 	{0},

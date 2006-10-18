@@ -2335,12 +2335,18 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	// TODO: PPC: Add BC_iTOb and BC_iTOw
+	case BC_iTOb:
+		*(asBYTE*)(l_fp - SWORDARG0(l_bc)) = (asBYTE)*(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
+
+	case BC_iTOw:
+		*(asWORD*)(l_fp - SWORDARG0(l_bc)) = (asWORD)*(l_fp - SWORDARG0(l_bc));
+		l_bc++;
+		break;
 
 	// Don't let the optimizer optimize for size, 
 	// since it requires extra conditions and jumps
-	case 140: l_bc = (asDWORD*)140; break;
-	case 141: l_bc = (asDWORD*)141; break;
 	case 142: l_bc = (asDWORD*)142; break;
 	case 143: l_bc = (asDWORD*)143; break;
 	case 144: l_bc = (asDWORD*)144; break;

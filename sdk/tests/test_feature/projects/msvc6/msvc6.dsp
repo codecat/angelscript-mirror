@@ -154,6 +154,10 @@ SOURCE=..\..\source\test_autohandle.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_castop.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_circularimport.cpp
 # End Source File
 # Begin Source File
@@ -331,6 +335,10 @@ SOURCE=..\..\source\test_scriptstruct.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_shark.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_singleton.cpp
 # End Source File
 # Begin Source File
 

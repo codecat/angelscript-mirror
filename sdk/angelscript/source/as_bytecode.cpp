@@ -1397,13 +1397,13 @@ void asCByteCode::Output(asDWORD *array)
 			case BCTYPE_DW_DW_ARG:
 			case BCTYPE_QW_ARG:
 			case BCTYPE_DW_ARG:
- 				memcpy(ap+1, &instr->arg, instr->GetSize()*4-4);
+				memcpy(ap+1, &instr->arg, instr->GetSize()*4-4);
 				break;
 			default:
 				// How did we get here?
 				assert(false);
 				break;
- 			}
+			}
 		}
 
 		ap += instr->GetSize();

@@ -122,7 +122,7 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == 0x0001020304050607ll );
 #else
 	assert( *(asDWORD*)"\x00\x01\x02\x03" == 0x03020100 );
-	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == 0x0706050403020100ll );
+	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == 0x0706050403020100l );
 #endif
 
 	return new asCScriptEngine();

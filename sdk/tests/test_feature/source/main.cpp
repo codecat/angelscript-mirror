@@ -153,6 +153,8 @@ int main(int argc, char **argv)
 	fs_chdir(asTestDir);
 #endif
 
+	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
+	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestSingleton::Test()         ) goto failed; else printf("-- TestSingleton passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
@@ -169,7 +171,6 @@ int main(int argc, char **argv)
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
-	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
  	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
@@ -218,7 +219,6 @@ int main(int argc, char **argv)
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
-	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestDiscard::Test()           ) goto failed; else printf("-- TestDiscard passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");

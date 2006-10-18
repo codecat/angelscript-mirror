@@ -209,10 +209,12 @@ you should use the following macros:</p>
 </table>
 
 <p>Make sure you don't use a virtual method for the constructor behaviour as 
-one of it's task is to initialize the virtual function table pointer. 
-AngelScript doesn't support class methods for classes with virtual 
-inheritance. If you need to use such a class you will have to write wrapper 
-functions for the methods you wish to register. Classes with multiple 
+one of it's task is to initialize the virtual function table pointer.</p>
+
+<p>AngelScript doesn't support class methods for classes with virtual 
+inheritance, i.e. classes inheriting from multiple classes with shared base classes. 
+If you need to use such a class you will have to write wrapper 
+functions for the methods you wish to register. Classes with normal multiple 
 inheritance is supported though.</p>
 
 <p>The final parameter to RegisterObjectBehaviour() tells AngelScript what 

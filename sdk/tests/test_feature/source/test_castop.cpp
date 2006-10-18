@@ -24,7 +24,6 @@ void Test2() {}       \n\
 bool Test()
 {
 	bool fail = false;
-	int r;
 	asIScriptEngine *engine;
 
 	CBufferedOutStream bout;

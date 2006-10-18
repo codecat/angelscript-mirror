@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.7.1 WIP - 2006/10/04</h2>
+<h2>Version 2.7.1 WIP - 2006/10/18</h2>
 
 <ul>
 <li>Bug fixes
@@ -130,12 +130,17 @@ A:hover
 <li>Library
 <ul>
 <li>The non-reserved tokens, any, from, and this, are now also defined in the as_tokendef.h file (Thanks Deyja)
-<li>Adjustments have been made to make the library indepentent of CPU memory layout of words. This if for PPC. It's not finished however. (Thanks Edward Rudd)
+<li>Adjustments have been made to make the library indepentent of CPU memory layout of words. This if for PPC. (Thanks Edward Rudd)
 <li>Cleaned up as_config.h to make it easier to maintain
+<li>Changed compiler to do proper conversion between types of different sizes, for the sake of big-endian CPUs.
 </ul>
 <li>Script language
 <ul>
 <li>Added the reserved keyword 'cast'
+</ul>
+<li>Virtual machine
+<ul>
+<li>Added byte codes iTOb and iTOw
 </ul>
 </ul>
 
@@ -465,7 +470,7 @@ A:hover
 <li>Virtual machine
 <ul>
 <li>A new bytecode TYPEID has been implemented.
-<li>The object types are now passed as pointers directly in the bytecode, instead of by index. 
+<li>The object types are now passed as pointers directly in the bytecode, instead of by index.
 </ul>
 <li>Project
 <ul>
@@ -489,14 +494,14 @@ A:hover
 </ul>
 <li>Virtual machine
 <ul>
-<li>The bytecode now identifies object types locally to each module. 
+<li>The bytecode now identifies object types locally to each module.
 <li>There is a new bytecode OBJTYPE that translates a local object type id to the engine's object type id.
 </ul>
 <li>Library
 <ul>
 <li>Added a new preprocessor flag, AS_MAX_PORTABILITY, which removes all calls to assembler routines, which should make the library work on all platforms. In this mode, only asCALL_GENERIC can be used for application functions.
 <li>Changed the internal data type description class to be easier to work with. The intention is to allow the application to access this to get information about types for global variables, function declarations, etc.
-<li>Changed the implementation of the internal script array object to work more similar to the way script structures work. 
+<li>Changed the implementation of the internal script array object to work more similar to the way script structures work.
 </ul>
 <li>Project
 <ul>
@@ -559,8 +564,8 @@ A:hover
 </ul>
 <li>Script language
 <ul>
-<li>The script language now allows statements like: func(expr), where the function doesn't take any arguments and 
-    the expression evaluates to a void type. This is especially useful when using dynamically generating scripts where 
+<li>The script language now allows statements like: func(expr), where the function doesn't take any arguments and
+    the expression evaluates to a void type. This is especially useful when using dynamically generating scripts where
 	the expression type isn't known before hand.
 <li>Object variables and properties can be declared as const again
 <li>Properties of a const object are automatically const as well
@@ -598,7 +603,7 @@ A:hover
 <li>Added GetArgDWord(), GetArgQWord(), GetArgFloat(), GetArgDouble(), and GetArgObject() to the generic interface.
 <li>Added SetReturnDWord(), SetReturnQWord(), SetReturnFloat(), SetReturnDouble(), and SetReturnObject() to the generic interface.
 <li>Added two new behaviours asBEHAVE_ALLOC and asBEHAVE_FREE, that can be used to register custom memory allocation functions for an object type.
-<li>Overloaded operators have been limited to only allow parameter references marked as 'in' (non-references are still allowed). This means that you cannot rely on that you receive a reference to the actual operand, as it might be a copy. 
+<li>Overloaded operators have been limited to only allow parameter references marked as 'in' (non-references are still allowed). This means that you cannot rely on that you receive a reference to the actual operand, as it might be a copy.
 <li>The extra call to addref/release for the object pointer when calling class methods has been removed. The responsibility of making sure the pointer is valid during the call has been moved to the application.
 <li>RegisterObjectType() now returns asALREADY_REGISTERED if name has already been registered as a type. (Suggestion by Adrian Licu)
 <li>It is now possible to declare object methods as const, so that they can be called for constant objects. Ex: "void GetVal() const"
@@ -662,14 +667,14 @@ A:hover
 <li>Removed the -&gt; operator
 <li>In declarations the array brackets are now part of the type, i.e. for "int[] a, b;" both a and b are arrays
 <li>Arrays can now be resized by using the method resize().
-<li>Parameter references are now protected by copying the value into a 
-    temporary variable when calling the function, and then copying the 
-    temporary variable back to the original location when the function 
+<li>Parameter references are now protected by copying the value into a
+    temporary variable when calling the function, and then copying the
+    temporary variable back to the original location when the function
     returns. The expression is computed twice for in/out references.
 <li>Function parameters by reference should use the flags in, out, or inout to allow the compiler to optimize the use of the parameters.
 <li>Added the object handle type modifier so that object handles can be declared. The token @ is used so as not to confuse it with C++ pointers or references.
 <li>Added the null keyword for object handles.
-<li>const is now only available for variable and property declarations, and only for primitive types. This change was made for consistency and because the script language was not able to guarantee that an object isn't changed by object methods. 
+<li>const is now only available for variable and property declarations, and only for primitive types. This change was made for consistency and because the script language was not able to guarantee that an object isn't changed by object methods.
 <li>Arrays have been limited to only allow four dimensions
 </ul>
 
@@ -687,14 +692,14 @@ A:hover
 <li>Added REFCPY to support reference assignments for object handles
 <li>Added CHKREF to validate object handles when used as normal objects
 <li>Added the bytecodes RD1 and RD2 to fix alignment problems on CPUs that requires data to be aligned.
-<li>The VM keeps a reference to the object when calling a method, to protect the object from being released before the method returns. 
+<li>The VM keeps a reference to the object when calling a method, to protect the object from being released before the method returns.
 </ul>
 
 <li>Library
 <ul>
-<li>The library was made to work with Dreamcast once more. (Thanks Fredrik Ehnbom) 
-<li>The compile time flag BUILD_WITH_LINE_CUES was replaced with BUILD_WITHOUT_LINE_CUES. This flag is not 
-defined by default making ExecuteStep() work as specified, but for those that do not use this function the 
+<li>The library was made to work with Dreamcast once more. (Thanks Fredrik Ehnbom)
+<li>The compile time flag BUILD_WITH_LINE_CUES was replaced with BUILD_WITHOUT_LINE_CUES. This flag is not
+defined by default making ExecuteStep() work as specified, but for those that do not use this function the
 performance may be increased a little by specifying this flag when compiling the library.
 </ul>
 </ul>
