@@ -119,10 +119,10 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	// Verify endianess
 #ifdef AS_BIG_ENDIAN
 	assert( *(asDWORD*)"\x00\x01\x02\x03" == 0x00010203 );
-	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == 0x0001020304050607ll );
+	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == I64(0x0001020304050607) );
 #else
 	assert( *(asDWORD*)"\x00\x01\x02\x03" == 0x03020100 );
-	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == 0x0706050403020100l );
+	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == I64(0x0706050403020100) );
 #endif
 
 	return new asCScriptEngine();

@@ -261,6 +261,12 @@
 		#define AS_X86
 		#define ASM_INTEL  // Intel style for inline assembly
 	#endif
+
+	#if _MSC_VER <= 1200 // MSVC++ 6
+		#define I64(x) x##l
+	#else
+		#define I64(x) x##ll
+	#endif
 #endif
 
 // Metrowerks CodeWarrior (experimental, let me know if something isn't working)
@@ -285,6 +291,12 @@
 	#if defined(_M_IX86) && !defined(__LP64__)
 		#define AS_X86
 		#define ASM_INTEL  // Intel style for inline assembly
+	#endif
+
+	#if _MSC_VER <= 1200 // MSVC++ 6
+		#define I64(x) x##l
+	#else
+		#define I64(x) x##ll
 	#endif
 #endif
 
@@ -318,6 +330,8 @@
 	#if defined(i386) && !defined(__LP64__)
 		#define AS_X86
 	#endif
+
+	#define I64(x) x##ll
 #endif
 
 // GNU C
@@ -368,6 +382,8 @@
 			#define AS_SH4
 		#endif
 	#endif
+
+	#define I64(x) x##ll
 #endif
 
 
