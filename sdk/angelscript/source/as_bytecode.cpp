@@ -1709,7 +1709,11 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 
 		case BCTYPE_rW_DW_ARG:
 		case BCTYPE_wW_DW_ARG:
-			if( instr->op == BC_SetV4 )
+			if( instr->op == BC_SetV1 )
+				fprintf(file, "   %-8s v%d, 0x%x\n", bcName[instr->op].name, instr->wArg[0], *(asBYTE*)ARG_DW(instr->arg));
+			else if( instr->op == BC_SetV2 )
+				fprintf(file, "   %-8s v%d, 0x%x\n", bcName[instr->op].name, instr->wArg[0], *(asWORD*)ARG_DW(instr->arg));
+			else if( instr->op == BC_SetV4 )
 				fprintf(file, "   %-8s v%d, 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 			else if( instr->op == BC_CMPIf )
 				fprintf(file, "   %-8s v%d, %f\n", bcName[instr->op].name, instr->wArg[0], *(float*)ARG_DW(instr->arg));
@@ -1871,6 +1875,46 @@ int asCByteCode::InstrW_DW(bcInstr bc, asWORD a, asDWORD b)
 	last->op       = bc;
 	last->wArg[0]  = a;
 	*((int*) ARG_DW(last->arg)) = b;
+	last->size     = SizeOfType(bcTypes[bc]);
+	last->stackInc = bcStackInc[bc];
+
+	return last->stackInc;
+}
+
+int asCByteCode::InstrSHORT_B(bcInstr bc, short a, asBYTE b)
+{
+	assert(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
+	       bcTypes[bc] == BCTYPE_rW_DW_ARG);
+	assert(bcStackInc[bc] == 0);
+
+	if( AddInstruction() < 0 )
+		return 0;
+
+	last->op       = bc;
+	last->wArg[0]  = a;
+	// We'll have to be careful to store the byte correctly, indepenent of endianess
+	*ARG_DW(last->arg) = 0;          // Clear the other three bytes
+	*(asBYTE*)ARG_DW(last->arg) = b; // The lower byte holds the value
+	last->size     = SizeOfType(bcTypes[bc]);
+	last->stackInc = bcStackInc[bc];
+
+	return last->stackInc;
+}
+
+int asCByteCode::InstrSHORT_W(bcInstr bc, short a, asWORD b)
+{
+	assert(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
+	       bcTypes[bc] == BCTYPE_rW_DW_ARG);
+	assert(bcStackInc[bc] == 0);
+
+	if( AddInstruction() < 0 )
+		return 0;
+
+	last->op       = bc;
+	last->wArg[0]  = a;
+	// We'll have to be careful to store the byte correctly, indepenent of endianess
+	*ARG_DW(last->arg) = 0;          // Clear the other two bytes
+	*(asWORD*)ARG_DW(last->arg) = b; // The lower word holds the value
 	last->size     = SizeOfType(bcTypes[bc]);
 	last->stackInc = bcStackInc[bc];
 

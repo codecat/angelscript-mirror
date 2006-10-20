@@ -107,10 +107,12 @@ public:
 	int InstrFLOAT(bcInstr bc, float param);
 	int InstrINT(bcInstr bc, int param);
 	int InstrW_W_W(bcInstr bc, int a, int b, int c);
-	int InstrW_DW(bcInstr bc, asWORD a, asDWORD b);
+	int InstrSHORT_B(bcInstr bc, short a, asBYTE b);
+	int InstrSHORT_W(bcInstr bc, short a, asWORD b);
 	int InstrSHORT_DW(bcInstr bc, short a, asDWORD b);
-	int InstrW_QW(bcInstr bc, asWORD a, asQWORD b);
 	int InstrSHORT_QW(bcInstr bc, short a, asQWORD b);
+	int InstrW_DW(bcInstr bc, asWORD a, asDWORD b);
+	int InstrW_QW(bcInstr bc, asWORD a, asQWORD b);
 	int InstrW_FLOAT(bcInstr bc, asWORD a, float b);
 	int InstrW_W(bcInstr bc, int w, int b);
 

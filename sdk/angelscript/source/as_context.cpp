@@ -2355,12 +2355,20 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-// TODO: PPC: Add SetV1, SetV2
+	case BC_SetV1:
+		// The byte is already stored correctly in the argument
+		*(l_fp - SWORDARG0(l_bc)) = DWORDARG(l_bc);
+		l_bc += 2;
+		break;
+
+	case BC_SetV2:
+		// The word is already stored correctly in the argument
+		*(l_fp - SWORDARG0(l_bc)) = DWORDARG(l_bc);
+		l_bc += 2;
+		break;
 
 	// Don't let the optimizer optimize for size, 
 	// since it requires extra conditions and jumps
-	case 142: l_bc = (asDWORD*)142; break;
-	case 143: l_bc = (asDWORD*)143; break;
 	case 144: l_bc = (asDWORD*)144; break;
 	case 145: l_bc = (asDWORD*)145; break;
 	case 146: l_bc = (asDWORD*)146; break;

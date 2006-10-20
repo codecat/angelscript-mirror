@@ -3328,7 +3328,12 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( !isExplicit && node ) Warning(str.AddressOf(), node);
 			}
 
-			// TODO: PPC: Must properly convert value in case the from value is smaller
+			// Convert to 32bit
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				from->type.intValue = from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				from->type.intValue = from->type.wordValue;
+
 			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
 
 			// Try once more, in case of a smaller type
@@ -3336,16 +3341,31 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsBitVectorType() )
 		{
-			// TODO: PPC: Must properly convert value in case the from value is smaller
+			// Convert to 32bit
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				from->type.intValue = from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				from->type.intValue = from->type.wordValue;
+
 			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, isExplicit);
 		}
 		else if( from->type.dataType.IsIntegerType() && 
-		         from->type.dataType.GetSizeInMemoryBytes() < to.GetSizeInMemoryBytes() )
-			// TODO: PPC: Must properly convert the value in case of big endian systems
-			from->type.dataType = to;
+		         from->type.dataType.GetSizeInMemoryBytes() < 4 )
+		{
+			// Convert to 32bit
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				from->type.intValue = (char)from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				from->type.intValue = (short)from->type.wordValue;
+
+			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
+
+			// Try once more, in case of a smaller type
+			ImplicitConversionConstant(from, to, node, isExplicit);
+		}
 		else if( from->type.dataType.IsIntegerType() &&
 		         from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
 		{
@@ -3355,14 +3375,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( char(from->type.intValue) != from->type.intValue )
 					if( !isExplicit && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.intValue = char(from->type.intValue);
+				from->type.byteValue = char(from->type.intValue);
 			}
 			else if( to.GetSizeInMemoryBytes() == 2 )
 			{
 				if( short(from->type.intValue) != from->type.intValue )
 					if( !isExplicit && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.intValue = short(from->type.intValue);
+				from->type.wordValue = short(from->type.intValue);
 			}
 
 			from->type.dataType.SetTokenType(to.GetTokenType());
@@ -3388,7 +3408,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, isExplicit);
 		}
-		else if( from->type.dataType == asCDataType::CreatePrimitive(ttDouble, true) )
+		else if( from->type.dataType.IsDoubleType() )
 		{
 			double fc = from->type.doubleValue;
 			unsigned int uic = (unsigned int)(fc);
@@ -3416,7 +3436,12 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( !isExplicit && node ) Warning(str.AddressOf(), node);
 			}
 
-			// TODO: PPC: Must properly convert value in case the from value is smaller
+			// Convert to 32bit
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				from->type.intValue = (char)from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				from->type.intValue = (short)from->type.wordValue;
+
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 
 			// Try once more, in case of a smaller type
@@ -3424,16 +3449,31 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsBitVectorType() )
 		{
-			// TODO: PPC: Must properly convert value in case the from value is smaller
+			// Convert to 32bit
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				from->type.dwordValue = from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				from->type.dwordValue = from->type.wordValue;
+
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, isExplicit);
 		}
 		else if( from->type.dataType.IsUnsignedType() && 
-		         from->type.dataType.GetSizeInMemoryBytes() < to.GetSizeInMemoryBytes() )
-			// TODO: PPC: Must properly convert value in case of BIG ENDIAN
-			from->type.dataType = to;
+		         from->type.dataType.GetSizeInMemoryBytes() < 4 )
+		{
+			// Convert to 32bit
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				from->type.dwordValue = from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				from->type.dwordValue = from->type.wordValue;
+
+			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
+
+			// Try once more, in case of a smaller type
+			ImplicitConversionConstant(from, to, node, isExplicit);
+		}
 		else if( from->type.dataType.IsUnsignedType() &&
 		         from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
 		{
@@ -3443,14 +3483,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( asBYTE(from->type.dwordValue) != from->type.dwordValue )
 					if( !isExplicit && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.dwordValue = asBYTE(from->type.dwordValue);
+				from->type.byteValue = asBYTE(from->type.dwordValue);
 			}
 			else if( to.GetSizeInMemoryBytes() == 2 )
 			{
 				if( asWORD(from->type.dwordValue) != from->type.dwordValue )
 					if( !isExplicit && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.dwordValue = asWORD(from->type.dwordValue);
+				from->type.wordValue = asWORD(from->type.dwordValue);
 			}
 
 			from->type.dataType.SetTokenType(to.GetTokenType());
@@ -3475,8 +3515,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsIntegerType() )
 		{
-			// TODO: PPC: Must properly convert value in case the from value is smaller
-			int ic = from->type.intValue;
+			// Must properly convert value in case the from value is smaller
+			int ic;
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				ic = (char)from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				ic = (short)from->type.wordValue;
+			else
+				ic = from->type.intValue;
 			float fc = float(ic);
 
 			if( int(fc) != ic )
@@ -3491,8 +3537,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() )
 		{
-			// TODO: PPC: Must properly convert value in case the from value is smaller
-			unsigned int uic = from->type.dwordValue;
+			// Must properly convert value in case the from value is smaller
+			unsigned int uic;
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				uic = from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				uic = from->type.wordValue;
+			else
+				uic = from->type.dwordValue;
 			float fc = float(uic);
 
 			if( (unsigned int)(fc) != uic )
@@ -3526,8 +3578,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsIntegerType() )
 		{
-			// TODO: PPC: Must properly convert value in case the from value is smaller
-			int ic = from->type.intValue;
+			// Must properly convert value in case the from value is smaller
+			int ic;
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				ic = (char)from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				ic = (short)from->type.wordValue;
+			else
+				ic = from->type.intValue;
 			double fc = double(ic);
 
 			if( int(fc) != ic )
@@ -3542,8 +3600,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() )
 		{
-			// TODO: PPC: Must properly convert value in case the from value is smaller
-			unsigned int uic = from->type.dwordValue;
+			// Must properly convert value in case the from value is smaller
+			unsigned int uic;
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				uic = from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				uic = from->type.wordValue;
+			else
+				uic = from->type.dwordValue;
 			double fc = double(uic);
 
 			if( (unsigned int)(fc) != uic )
@@ -3564,7 +3628,11 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		if( from->type.dataType.IsIntegerType() ||
 			from->type.dataType.IsUnsignedType() )
 		{
-			// TODO: PPC: Must properly convert value in case the from value is smaller
+			// Must properly convert value in case the from value is smaller
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				from->type.dwordValue = from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				from->type.dwordValue = from->type.wordValue;
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttBits, true);
 
@@ -3572,9 +3640,19 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			ImplicitConversionConstant(from, to, node, isExplicit);
 		}
 		else if( from->type.dataType.IsBitVectorType() && 
-		         from->type.dataType.GetSizeInMemoryBytes() < to.GetSizeInMemoryBytes() )
-			// TODO: PPC: Must properly convert value in case the from value is smaller
-			from->type.dataType = to;
+		         from->type.dataType.GetSizeInMemoryBytes() < 4 )
+		{
+			// Must properly convert value in case the from value is smaller
+			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				from->type.dwordValue = from->type.byteValue;
+			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+				from->type.dwordValue = from->type.wordValue;
+
+			from->type.dataType = asCDataType::CreatePrimitive(ttBits, true);
+
+			// Try once more, in case of a smaller type
+			ImplicitConversionConstant(from, to, node, isExplicit);
+		}
 		else if( from->type.dataType.IsBitVectorType() &&
 		         from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
 		{
@@ -4240,7 +4318,11 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 		else if( vnode->tokenType == ttTrue ||
 			     vnode->tokenType == ttFalse )
 		{
+#if AS_SIZEOF_BOOL == 1 
 			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), vnode->tokenType == ttTrue ? VALUE_OF_BOOLEAN_TRUE : 0);
+#else
+			ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), vnode->tokenType == ttTrue ? VALUE_OF_BOOLEAN_TRUE : 0);
+#endif
 		}
 		else if( vnode->tokenType == ttStringConstant || vnode->tokenType == ttHeredocStringConstant )
 		{
@@ -6042,8 +6124,11 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *ex
 			if( ctx->type.isConstant )
 			{
 				offset = AllocateVariableNotIn(ctx->type.dataType, true, excludeVars);
-				// TODO: PPC: Use SetV1, SetV2
-				if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+				if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
+					ctx->bc.InstrSHORT_B(BC_SetV1, offset, ctx->type.byteValue);
+				else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
+					ctx->bc.InstrSHORT_W(BC_SetV2, offset, ctx->type.wordValue);
+				else if( ctx->type.dataType.GetSizeInMemoryBytes() == 4 )
 					ctx->bc.InstrSHORT_DW(BC_SetV4, offset, ctx->type.dwordValue);
 				else
 					ctx->bc.InstrSHORT_QW(BC_SetV8, offset, ctx->type.qwordValue);
@@ -6776,6 +6861,17 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 		else
 		{
 			// Make sure they are equal if not false
+#if AS_SIZEOF_BOOL == 1
+			if( lctx->type.byteValue != 0 ) lctx->type.byteValue = VALUE_OF_BOOLEAN_TRUE;
+			if( rctx->type.byteValue != 0 ) rctx->type.byteValue = VALUE_OF_BOOLEAN_TRUE;
+
+			asBYTE v = 0;
+			v = lctx->type.byteValue - rctx->type.byteValue;
+			if( v != 0 ) v = VALUE_OF_BOOLEAN_TRUE; else v = 0;
+
+			ctx->type.isConstant = true;
+			ctx->type.byteValue = v;
+#else
 			if( lctx->type.dwordValue != 0 ) lctx->type.dwordValue = VALUE_OF_BOOLEAN_TRUE;
 			if( rctx->type.dwordValue != 0 ) rctx->type.dwordValue = VALUE_OF_BOOLEAN_TRUE;
 
@@ -6783,11 +6879,9 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			v = lctx->type.intValue - rctx->type.intValue;
 			if( v != 0 ) v = VALUE_OF_BOOLEAN_TRUE; else v = 0;
 
-			// TODO: PPC: This should not be pushed on the stack
-			ctx->bc.InstrDWORD(BC_PshC4, v);
-
 			ctx->type.isConstant = true;
-			ctx->type.intValue = v;
+			ctx->type.dwordValue = v;
+#endif
 		}
 	}
 	else if( op == ttAnd ||
@@ -6816,8 +6910,11 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			{
 				ctx->bc.InstrSHORT(BC_CpyVtoR4, lctx->type.stackOffset);
 				ctx->bc.InstrDWORD(BC_JZ, label1);
-				// TODO: Use SetV1, SetV2, depending on size of bool
-				ctx->bc.InstrW_DW(BC_SetV4, offset, VALUE_OF_BOOLEAN_TRUE);
+#if AS_SIZEOF_BOOL == 1
+				ctx->bc.InstrSHORT_B(BC_SetV1, offset, VALUE_OF_BOOLEAN_TRUE);
+#else
+				ctx->bc.InstrSHORT_DW(BC_SetV4, offset, VALUE_OF_BOOLEAN_TRUE);
+#endif
 				ctx->bc.InstrINT(BC_JMP, label2);
 			}
 
@@ -6832,18 +6929,27 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 		}
 		else
 		{
+#if AS_SIZEOF_BOOL == 1
+			asBYTE v = 0;
+			if( op == ttAnd )
+				v = lctx->type.byteValue && rctx->type.byteValue;
+			else if( op == ttOr )
+				v = lctx->type.byteValue || rctx->type.byteValue;
+
+			// Remember the result
+			ctx->type.isConstant = true;
+			ctx->type.byteValue = v;
+#else
 			asDWORD v = 0;
 			if( op == ttAnd )
 				v = lctx->type.dwordValue && rctx->type.dwordValue;
 			else if( op == ttOr )
 				v = lctx->type.dwordValue || rctx->type.dwordValue;
 
-			// TODO: PPC: This shouldn't be pushed on the stack
-			ctx->bc.InstrDWORD(BC_PshC4, v);
-
 			// Remember the result
 			ctx->type.isConstant = true;
 			ctx->type.dwordValue = v;
+#endif
 		}
 	}
 }

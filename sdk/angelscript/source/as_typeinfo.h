@@ -51,6 +51,7 @@ struct asCTypeInfo
 	void Set(const asCDataType &dataType);
 
 	void SetVariable(const asCDataType &dataType, int stackOffset, bool isTemporary);
+	void SetConstantB(const asCDataType &dataType, asBYTE value);
 	void SetConstantQW(const asCDataType &dataType, asQWORD value);
 	void SetConstantDW(const asCDataType &dataType, asDWORD value);
 	void SetConstantF(const asCDataType &dataType, float value);
@@ -74,6 +75,8 @@ struct asCTypeInfo
 		asDWORD dwordValue;
 		float   floatValue;
 		int     intValue;
+		asWORD  wordValue;
+		asBYTE  byteValue;
 	};
 };
 
