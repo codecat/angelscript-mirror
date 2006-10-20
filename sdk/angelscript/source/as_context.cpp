@@ -1941,11 +1941,13 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_WRTV1:
-		**(asBYTE**)&register1 = (asBYTE)*(l_fp - SWORDARG0(l_bc));
+		// The pointer in the register points to a byte, and *(l_fp - offset) too
+		**(asBYTE**)&register1 = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV2:
-		**(asWORD**)&register1 = (asWORD)*(l_fp - SWORDARG0(l_bc));
+		// The pointer in the register points to a word, and *(l_fp - offset) too
+		**(asWORD**)&register1 = *(asWORD*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_WRTV4:
@@ -1958,11 +1960,13 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_RDR1:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = **(asBYTE**)&register1;
+		// The pointer in the register points to a byte, and *(l_fp - offset) will also point to a byte
+		*(asBYTE*)(l_fp - SWORDARG0(l_bc)) = **(asBYTE**)&register1;
 		l_bc++;
 		break;
 	case BC_RDR2:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = **(asWORD**)&register1;
+		// The pointer in the register points to a word, and *(l_fp - offset) will also point to a word
+		*(asWORD*)(l_fp - SWORDARG0(l_bc)) = **(asWORD**)&register1;
 		l_bc++;
 		break;
 	case BC_RDR4:
@@ -2028,22 +2032,26 @@ void asCContext::ExecuteNext()
 		break;
 		
 	case BC_sbTOi:
-		*(l_fp - SWORDARG0(l_bc)) = (char)*(l_fp - SWORDARG0(l_bc));
+		// *(l_fp - offset) points to a char, and will point to an int afterwards 
+		*(l_fp - SWORDARG0(l_bc)) = *(char*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_swTOi:
-		*(l_fp - SWORDARG0(l_bc)) = (short)*(l_fp - SWORDARG0(l_bc));
+		// *(l_fp - offset) points to a short, and will point to an int afterwards 
+		*(l_fp - SWORDARG0(l_bc)) = *(short*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_ubTOi:
-		*(l_fp - SWORDARG0(l_bc)) = (asBYTE)*(l_fp - SWORDARG0(l_bc));
+		// (l_fp - offset) points to a byte, and will point to an int afterwards 
+		*(l_fp - SWORDARG0(l_bc)) = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_uwTOi:
-		*(l_fp - SWORDARG0(l_bc)) = (asWORD)*(l_fp - SWORDARG0(l_bc));
+		// *(l_fp - offset) points to a word, and will point to an int afterwards 
+		*(l_fp - SWORDARG0(l_bc)) = *(asWORD*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 	case BC_dTOi:
@@ -2336,14 +2344,18 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_iTOb:
+		// *(l_fp - offset) points to an int, and will point to a byte afterwards
 		*(asBYTE*)(l_fp - SWORDARG0(l_bc)) = (asBYTE)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_iTOw:
+		// *(l_fp - offset) points to an int, and will point to word afterwards
 		*(asWORD*)(l_fp - SWORDARG0(l_bc)) = (asWORD)*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
+
+// TODO: PPC: Add SetV1, SetV2
 
 	// Don't let the optimizer optimize for size, 
 	// since it requires extra conditions and jumps

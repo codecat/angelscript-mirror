@@ -6042,6 +6042,7 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *ex
 			if( ctx->type.isConstant )
 			{
 				offset = AllocateVariableNotIn(ctx->type.dataType, true, excludeVars);
+				// TODO: PPC: Use SetV1, SetV2
 				if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 					ctx->bc.InstrSHORT_DW(BC_SetV4, offset, ctx->type.dwordValue);
 				else
@@ -6782,6 +6783,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			v = lctx->type.intValue - rctx->type.intValue;
 			if( v != 0 ) v = VALUE_OF_BOOLEAN_TRUE; else v = 0;
 
+			// TODO: PPC: This should not be pushed on the stack
 			ctx->bc.InstrDWORD(BC_PshC4, v);
 
 			ctx->type.isConstant = true;
@@ -6814,6 +6816,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			{
 				ctx->bc.InstrSHORT(BC_CpyVtoR4, lctx->type.stackOffset);
 				ctx->bc.InstrDWORD(BC_JZ, label1);
+				// TODO: Use SetV1, SetV2, depending on size of bool
 				ctx->bc.InstrW_DW(BC_SetV4, offset, VALUE_OF_BOOLEAN_TRUE);
 				ctx->bc.InstrINT(BC_JMP, label2);
 			}
@@ -6835,6 +6838,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			else if( op == ttOr )
 				v = lctx->type.dwordValue || rctx->type.dwordValue;
 
+			// TODO: PPC: This shouldn't be pushed on the stack
 			ctx->bc.InstrDWORD(BC_PshC4, v);
 
 			// Remember the result

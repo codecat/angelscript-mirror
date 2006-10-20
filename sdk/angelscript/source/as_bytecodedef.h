@@ -218,6 +218,7 @@ enum bcInstr
 
 	BC_iTOb         = 140,
 	BC_iTOw         = 141,
+// TODO: PPC: Add SetV1, SetV2
 
 	BC_MAXBYTECODE  = 142,
 
@@ -424,6 +425,7 @@ const int BCT_CALLINTF  = BCTYPE_DW_ARG;
 
 const int BCT_iTOb      = BCTYPE_rW_ARG;
 const int BCT_iTOw      = BCTYPE_rW_ARG;
+// TODO: PPC: Add SetV1, SetV2
 
 // Temporary
 const int BCT_PSP       = BCTYPE_W_ARG;
@@ -577,6 +579,7 @@ const int bcTypes[256] =
 	BCT_CALLINTF,
 	BCT_iTOb,
 	BCT_iTOw,
+// TODO: PPC: Add SetV1, SetV2
 	0,
 	0,
 	0,
@@ -765,6 +768,7 @@ const int bcStackInc[256] =
 	0xFFFF,		// BC_CALLINTF
 	0,			// BC_iTOb
 	0,			// BC_iTOw
+// TODO: PPC: Add SetV1, SetV2
 	0,
 	0,
 	0,
@@ -959,6 +963,7 @@ const sByteCodeName bcName[256] =
 	{"CALLINTF"},
 	{"iTOb"},
 	{"iTOw"},
+// TODO: PPC: Add SetV1, SetV2
 	{0},
 	{0},
 	{0},
