@@ -1160,7 +1160,18 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_NOT:
+#if AS_SIZEOF_BOOL == 1
+		{
+			// Read only the lower byte
+			asBYTE b = (*(asBYTE*)(l_fp - SWORDARG0(l_bc)) == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+			// Make sure the rest of the byte is 0
+			*(l_fp - SWORDARG0(l_bc)) = 0;
+			// The value is stored in the lower byte
+			*(asBYTE*)(l_fp - SWORDARG0(l_bc)) = b;
+		}
+#else
 		*(l_fp - SWORDARG0(l_bc)) = (*(l_fp - SWORDARG0(l_bc)) == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+#endif
 		l_bc++;
 		break;
 
@@ -1279,27 +1290,93 @@ void asCContext::ExecuteNext()
 //--------------------
 // test instructions
 	case BC_TZ:
+#if AS_SIZEOF_BOOL == 1
+		{
+			// Read only the lower byte
+			asBYTE b = (*(int*)&register1 == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+			// Make sure the rest of the byte is 0
+			register1 = 0;
+			// The value is stored in the lower byte
+			*(asBYTE*)&register1 = b;
+		}
+#else
 		*(int*)&register1 = (*(int*)&register1 == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+#endif
 		l_bc++;
 		break;
 	case BC_TNZ:
+#if AS_SIZEOF_BOOL == 1
+		{
+			// Read only the lower byte
+			asBYTE b = (*(int*)&register1 == 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
+			// Make sure the rest of the byte is 0
+			register1 = 0;
+			// The value is stored in the lower byte
+			*(asBYTE*)&register1 = b;
+		}
+#else
 		*(int*)&register1 = (*(int*)&register1 == 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
+#endif
 		l_bc++;
 		break;
 	case BC_TS:
+#if AS_SIZEOF_BOOL == 1
+		{
+			// Read only the lower byte
+			asBYTE b = (*(int*)&register1 < 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+			// Make sure the rest of the byte is 0
+			register1 = 0;
+			// The value is stored in the lower byte
+			*(asBYTE*)&register1 = b;
+		}
+#else
 		*(int*)&register1 = (*(int*)&register1 < 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+#endif
 		l_bc++;
 		break;
 	case BC_TNS:
+#if AS_SIZEOF_BOOL == 1
+		{
+			// Read only the lower byte
+			asBYTE b = (*(int*)&register1 < 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
+			// Make sure the rest of the byte is 0
+			register1 = 0;
+			// The value is stored in the lower byte
+			*(asBYTE*)&register1 = b;
+		}
+#else
 		*(int*)&register1 = (*(int*)&register1 < 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
+#endif
 		l_bc++;
 		break;
 	case BC_TP:
+#if AS_SIZEOF_BOOL == 1
+		{
+			// Read only the lower byte
+			asBYTE b = (*(int*)&register1 > 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+			// Make sure the rest of the byte is 0
+			register1 = 0;
+			// The value is stored in the lower byte
+			*(asBYTE*)&register1 = b;
+		}
+#else
 		*(int*)&register1 = (*(int*)&register1 > 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+#endif		
 		l_bc++;
 		break;
 	case BC_TNP:
+#if AS_SIZEOF_BOOL == 1
+		{
+			// Read only the lower byte
+			asBYTE b = (*(int*)&register1 > 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
+			// Make sure the rest of the byte is 0
+			register1 = 0;
+			// The value is stored in the lower byte
+			*(asBYTE*)&register1 = b;
+		}
+#else
 		*(int*)&register1 = (*(int*)&register1 > 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
+#endif		
 		l_bc++;
 		break;
 
@@ -2033,7 +2110,7 @@ void asCContext::ExecuteNext()
 		
 	case BC_sbTOi:
 		// *(l_fp - offset) points to a char, and will point to an int afterwards 
-		*(l_fp - SWORDARG0(l_bc)) = *(char*)(l_fp - SWORDARG0(l_bc));
+		*(l_fp - SWORDARG0(l_bc)) = *(signed char*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 

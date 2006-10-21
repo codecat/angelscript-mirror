@@ -205,8 +205,18 @@ int asCGeneric::SetReturnDWord(asDWORD val)
 	if( sysFunction->returnType.GetSizeOnStackDWords() != 1 )
 		return asINVALID_TYPE;
 
-	// Store the value
-	*(asDWORD*)&returnVal = val;
+// TODO: This is not the way to solve it, we need to find another way
+#ifdef AS_BIG_ENDIAN
+        if( sysFunction->returnType.GetSizeInMemoryBytes() == 1 )
+                *(asBYTE*)&returnVal = (asBYTE)val;
+        else if( sysFunction->returnType.GetSizeInMemoryBytes() == 2 )
+                *(asWORD*)&returnVal = (asWORD)val;
+        else
+                *(asDWORD*)&returnVal = val;
+#else
+        // Store the value
+        *(asDWORD*)&returnVal = val;
+#endif
 
 	return 0;
 }

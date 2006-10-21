@@ -259,7 +259,7 @@ bool Test()
 	double d = 0;
 	asUINT ui = 0;
 	int i = 0;
-	char i8 = 0;
+	signed char i8 = 0;
 	short i16 = 0;
 	unsigned char ui8 = 0;
 	unsigned short ui16 = 0;

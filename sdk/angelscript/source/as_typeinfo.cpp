@@ -87,6 +87,14 @@ void asCTypeInfo::SetConstantDW(const asCDataType &dt, asDWORD value)
 	dwordValue = value;
 }
 
+void asCTypeInfo::SetConstantB(const asCDataType &dt, asBYTE value)
+{
+	Set(dt);
+
+	isConstant = true;
+	byteValue = value;
+}
+
 void asCTypeInfo::SetConstantF(const asCDataType &dt, float value)
 {
 	Set(dt);

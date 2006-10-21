@@ -1735,7 +1735,15 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 				Error(TXT_SWITCH_MUST_BE_INTEGRAL, cnode->firstChild);
 
 			// Store constant for later use
-			caseValues.PushLast(c.type.intValue);
+			int val;
+			if( c.type.dataType.GetSizeInMemoryBytes() == 1 )
+				val = (signed char)c.type.byteValue;
+			else if( c.type.dataType.GetSizeInMemoryBytes() == 2 )
+				val = (short)c.type.wordValue;
+			else
+				val = c.type.intValue;
+
+			caseValues.PushLast(val);
 
 			// Reserve label for this case
 			caseLabels.PushLast(nextLabel++);
@@ -2975,7 +2983,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 				// Convert to smaller integer if necessary
 				int s = to.GetSizeInMemoryBytes();
-				if( s == 1 )
+				if( s < 4 )
 				{
 					ConvertToTempVariable(ctx);
 					if( s == 1 )
@@ -3007,7 +3015,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 				// Convert to smaller integer if necessary
 				int s = to.GetSizeInMemoryBytes();
-				if( s == 1 )
+				if( s < 4 )
 				{
 					ConvertToTempVariable(ctx);
 					if( s == 1 )
@@ -3028,7 +3036,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 				// Convert to smaller integer if necessary
 				int s = to.GetSizeInMemoryBytes();
-				if( s == 1 )
+				if( s < 4 )
 				{
 					ConvertToTempVariable(ctx);
 					if( s == 1 )
@@ -3357,7 +3365,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		{
 			// Convert to 32bit
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.intValue = (char)from->type.byteValue;
+				from->type.intValue = (signed char)from->type.byteValue;
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
 				from->type.intValue = (short)from->type.wordValue;
 
@@ -3438,7 +3446,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 
 			// Convert to 32bit
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.intValue = (char)from->type.byteValue;
+				from->type.intValue = (signed char)from->type.byteValue;
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
 				from->type.intValue = (short)from->type.wordValue;
 
@@ -3518,7 +3526,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			// Must properly convert value in case the from value is smaller
 			int ic;
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				ic = (char)from->type.byteValue;
+				ic = (signed char)from->type.byteValue;
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
 				ic = (short)from->type.wordValue;
 			else
@@ -3581,7 +3589,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			// Must properly convert value in case the from value is smaller
 			int ic;
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				ic = (char)from->type.byteValue;
+				ic = (signed char)from->type.byteValue;
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
 				ic = (short)from->type.wordValue;
 			else
@@ -4319,9 +4327,9 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 			     vnode->tokenType == ttFalse )
 		{
 #if AS_SIZEOF_BOOL == 1 
-			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), vnode->tokenType == ttTrue ? VALUE_OF_BOOLEAN_TRUE : 0);
-#else
 			ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), vnode->tokenType == ttTrue ? VALUE_OF_BOOLEAN_TRUE : 0);
+#else
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), vnode->tokenType == ttTrue ? VALUE_OF_BOOLEAN_TRUE : 0);
 #endif
 		}
 		else if( vnode->tokenType == ttStringConstant || vnode->tokenType == ttHeredocStringConstant )
