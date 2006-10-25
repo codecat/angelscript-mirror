@@ -16,7 +16,7 @@ void grab(asUINT);
 void grab(bool);
 void grab(float);
 void grab(double);
-void grab(string&);
+void grab(const string&);
 void grab(void);
 
 // Some global variables that the script can access
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 	}
 
 	// Allocate a script string for the player name.
-	// We must do this because the script string type that we use is  
+	// We must do this because the script string type that we use is
 	// reference counted and cannot be declared as local or global variable.
 	p_name = new asCScriptString("player");
 	if( p_name == 0 )
@@ -46,10 +46,10 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	// Configure the script engine with all the functions, 
+	// Configure the script engine with all the functions,
 	// and variables that the script should be able to use.
 	ConfigureEngine(engine);
-	
+
 	// Print some useful information and start the input loop
 	cout << "Sample console using AngelScript " << asGetLibraryVersion() << " to perform scripted tasks." << endl;
 	cout << "Type 'help' for more information." << endl;
@@ -120,9 +120,9 @@ void PrintHelp()
 void MessageCallback(const asSMessageInfo *msg, void *param)
 {
 	const char *type = "ERR ";
-	if( msg->type == asMSGTYPE_WARNING ) 
+	if( msg->type == asMSGTYPE_WARNING )
 		type = "WARN";
-	else if( msg->type == asMSGTYPE_INFORMATION ) 
+	else if( msg->type == asMSGTYPE_INFORMATION )
 		type = "INFO";
 
 	printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
@@ -136,7 +136,7 @@ void ConfigureEngine(asIScriptEngine *engine)
 	engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 	// Register the script string type
-	// Look at the implementation for this function for more information  
+	// Look at the implementation for this function for more information
 	// on how to register a custom string type, and other object types.
 	// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
 	RegisterScriptString(engine);
@@ -160,7 +160,7 @@ void ConfigureEngine(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("void _grab(float)", asFUNCTIONPR(grab, (float), void), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void _grab(double)", asFUNCTIONPR(grab, (double), void), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void _grab()", asFUNCTIONPR(grab, (void), void), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void _grab(string &in)", asFUNCTIONPR(grab, (string&), void), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void _grab(const string &in)", asFUNCTIONPR(grab, (const string&), void), asCALL_CDECL); assert( r >= 0 );
 
 	// Do not output anything else to printf
 	engine->ClearMessageCallback();
@@ -204,7 +204,7 @@ void grab(double v)
 	cout << v << endl;
 }
 
-void grab(string &v)
+void grab(const string &v)
 {
 	cout << v << endl;
 }
