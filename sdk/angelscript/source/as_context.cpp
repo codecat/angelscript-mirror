@@ -2444,9 +2444,28 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
+	case BC_Cast:
+		// Cast the handle at the top of the stack to the type in the argument
+		{	
+			asDWORD **a = (asDWORD**)*(size_t*)l_sp;
+			if( a && *a )
+			{
+				asDWORD typeId = DWORDARG(l_bc);
+
+				asCScriptStruct *obj = (asCScriptStruct *)* a;
+				asCObjectType *objType = obj->gc.objType;
+				if( !objType->Implements(engine->GetObjectTypeFromTypeId(typeId)) )
+				{
+					// The cast is not possible, set the reference on the stack to null
+					*(size_t*)l_sp = 0;
+				}
+			}
+		}
+		l_bc += 2;
+		break;
+
 	// Don't let the optimizer optimize for size, 
 	// since it requires extra conditions and jumps
-	case 144: l_bc = (asDWORD*)144; break;
 	case 145: l_bc = (asDWORD*)145; break;
 	case 146: l_bc = (asDWORD*)146; break;
 	case 147: l_bc = (asDWORD*)147; break;

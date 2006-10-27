@@ -92,6 +92,8 @@ public:
 	bool IsEqualExceptRefAndConst(const asCDataType &)  const;
 	bool IsEqualExceptConst(const asCDataType &)        const;
 
+	bool SupportHandles() const;
+
 	bool operator ==(const asCDataType &) const;
 	bool operator !=(const asCDataType &) const;
 

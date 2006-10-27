@@ -79,7 +79,7 @@ public:
 	asCObjectType(asCScriptEngine *engine);
 	~asCObjectType();
 
-	bool Implements(asCObjectType *objType);
+	bool Implements(const asCObjectType *objType);
 
 	asCString   name;
 	eTokenType  tokenType;

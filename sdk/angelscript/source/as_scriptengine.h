@@ -263,6 +263,7 @@ public:
 	asCMap<int, asCDataType*> mapTypeIdToDataType;
 	int GetTypeIdFromDataType(const asCDataType &dt);
 	const asCDataType *GetDataTypeFromTypeId(int typeId);
+	const asCObjectType *GetObjectTypeFromTypeId(int typeId);
 	void RemoveFromTypeIdMap(asCObjectType *type);
 
 	// Garbage collector

@@ -249,6 +249,17 @@ int asCDataType::MakeHandleToConst(bool b)
 	return 0;
 }
 
+bool asCDataType::SupportHandles() const
+{
+	if( objectType &&
+		objectType->beh.addref &&
+		objectType->beh.release &&
+		!isObjectHandle )
+		return true;
+
+	return false;
+}
+
 bool asCDataType::IsReadOnly() const
 {
 	if( isObjectHandle )

@@ -2990,6 +2990,14 @@ const asCDataType *asCScriptEngine::GetDataTypeFromTypeId(int typeId)
 	return 0;
 }
 
+const asCObjectType *asCScriptEngine::GetObjectTypeFromTypeId(int typeId)
+{
+	if( mapTypeIdToDataType.MoveTo(typeId) )
+		return mapTypeIdToDataType.GetValue()->GetObjectType();
+
+	return 0;
+}
+
 void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
 {
 	mapTypeIdToDataType.MoveFirst();

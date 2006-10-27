@@ -220,8 +220,9 @@ enum bcInstr
 	BC_iTOw         = 141,
 	BC_SetV1        = 142,
 	BC_SetV2        = 143,
+	BC_Cast         = 144,	// Cast handle type to another handle type
 
-	BC_MAXBYTECODE  = 144,
+	BC_MAXBYTECODE  = 145,
 
 	// Temporary tokens, can't be output to the final program
 	BC_PSP			= 246,
@@ -428,6 +429,7 @@ const int BCT_iTOb      = BCTYPE_rW_ARG;
 const int BCT_iTOw      = BCTYPE_rW_ARG;
 const int BCT_SetV1     = BCTYPE_wW_DW_ARG;
 const int BCT_SetV2     = BCTYPE_wW_DW_ARG;
+const int BCT_Cast      = BCTYPE_DW_ARG;
 
 // Temporary
 const int BCT_PSP       = BCTYPE_W_ARG;
@@ -583,7 +585,7 @@ const int bcTypes[256] =
 	BCT_iTOw,
 	BCT_SetV1,
 	BCT_SetV2,
-	0,
+	BCT_Cast,
 	0,
 	0,
 	0,
@@ -771,7 +773,7 @@ const int bcStackInc[256] =
 	0,			// BC_iTOw
 	0,			// BC_SetV1
 	0,			// BC_SetV2
-	0,
+	0,			// BC_Cast
 	0,
 	0,
 	0,
@@ -965,7 +967,7 @@ const sByteCodeName bcName[256] =
 	{"iTOw"},
 	{"SetV1"},
 	{"SetV2"},
-	{0},
+	{"Cast"},
 	{0},
 	{0},
 	{0},

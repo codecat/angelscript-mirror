@@ -127,6 +127,8 @@ void DetectMemoryLeaks()
 	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF|_CRTDBG_ALLOC_MEM_DF);
 	_CrtSetReportMode(_CRT_ASSERT,_CRTDBG_MODE_FILE);
 	_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
+
+	// Use _CrtSetBreakAlloc(n) to find a specific memory leak
 #endif
 }
 
@@ -153,9 +155,9 @@ int main(int argc, char **argv)
 	fs_chdir(asTestDir);
 #endif
 
+	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
-	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestSingleton::Test()         ) goto failed; else printf("-- TestSingleton passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");

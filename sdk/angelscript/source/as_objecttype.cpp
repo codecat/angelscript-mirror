@@ -70,8 +70,11 @@ asCObjectType::~asCObjectType()
 	methods.SetLength(0);
 }
 
-bool asCObjectType::Implements(asCObjectType *objType)
+bool asCObjectType::Implements(const asCObjectType *objType)
 {
+	if( this == objType )
+		return true;
+
 	for( asUINT n = 0; n < interfaces.GetLength(); n++ )
 		if( interfaces[n] == objType ) return true;
 

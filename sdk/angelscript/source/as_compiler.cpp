@@ -3118,10 +3118,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 		if( to.IsObjectHandle() )
 		{
 			// An object type can be directly converted to a handle of the same type
-			if( !ctx->type.dataType.IsObjectHandle() &&
-				ctx->type.dataType.IsObject() &&
-				ctx->type.dataType.GetObjectType()->beh.addref &&
-				ctx->type.dataType.GetObjectType()->beh.release )
+			if( ctx->type.dataType.SupportHandles() )
 			{
 				ctx->type.dataType.MakeHandle(true);
 			}
@@ -4555,6 +4552,13 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		// Determine the requested type
 		to = builder->CreateDataTypeFromNode(node->firstChild, script);
 		to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
+
+		// If the type support object handles, then use it
+		if( to.SupportHandles() )
+		{
+			to.MakeHandle(true);
+			to.MakeReference(true);
+		}
 	}
 
 	// Convert any reference to a variable
@@ -4605,6 +4609,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 
 				conversionOK = true;
 			}
+
+			ctx->type.SetVariable(to, offset, true);
 		}
 		// TODO: We need to allow conversion from bits64
 		// else if( to.IsDoubleType() )
@@ -4621,9 +4627,22 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 				else if( to.GetSizeInMemoryBytes() == 2 )
 					ctx->bc.InstrSHORT(BC_iTOw, expr.type.stackOffset);
 			}
-		}
 
-		ctx->type.SetVariable(to, offset, true);
+			ctx->type.SetVariable(to, offset, true);
+		}
+		else if( to.IsObjectHandle() &&
+			     expr.type.dataType.IsObjectHandle() &&
+				 (expr.type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) )
+		{
+			// Allow dynamic cast between object handles (only for script objects).
+			// At run time this may result in a null handle,   
+			// which when used will throw an exception
+			conversionOK = true;
+			ctx->bc.InstrDWORD(BC_Cast, engine->GetTypeIdFromDataType(to));
+
+			ctx->type = expr.type;
+			ctx->type.dataType = to;
+		}
 	}
 	else
 	{
