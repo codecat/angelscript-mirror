@@ -1912,6 +1912,7 @@ void asCContext::ExecuteNext()
 		break;
 	case BC_CHKREF:
 		{
+			// Verify if the pointer on the stack is null
 			size_t a = *(size_t*)l_sp;
 			if( a == 0 )
 			{

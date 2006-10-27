@@ -28,6 +28,7 @@ class clss : intf1, intf2  \n\
 bool Test()
 {
 	bool fail = false;
+	int r;
 	asIScriptEngine *engine;
 
 	CBufferedOutStream bout;
@@ -40,21 +41,33 @@ bool Test()
 	engine->RegisterGlobalProperty("int res", &res);
 
 	engine->ExecuteString(0, "res = cast<int>(2342.4)");
-	if( res != 2342 ) fail = true;
+	if( res != 2342 ) 
+		fail = true;
 
 	engine->ExecuteString(0, "double tmp = 3452.4; res = cast<int>(tmp)");
-	if( res != 3452 ) fail = true;
+	if( res != 3452 ) 
+		fail = true;
 
 	engine->AddScriptSection(0, "script", script, strlen(script));
 	engine->Build(0);
 
-	engine->ExecuteString(0, "clss c; cast<intf1>(c); cast<intf2>(c);");
-	engine->ExecuteString(0, "intf1 @a = clss(); cast<clss>(a).Test2(); cast<intf2>(a).Test2();");
+	r = engine->ExecuteString(0, "clss c; cast<intf1>(c); cast<intf2>(c);");
+	if( r < 0 )
+		fail = true;
+
+	r = engine->ExecuteString(0, "intf1 @a = clss(); cast<clss>(a).Test2(); cast<intf2>(a).Test2();");
+	if( r < 0 )
+		fail = true;
 
 	// Test use of handle after invalid cast (should throw a script exception)
-	engine->ExecuteString(0, "intf1 @a = clss(); cast<intf3>(a).Test3();");
+	r = engine->ExecuteString(0, "intf1 @a = clss(); cast<intf3>(a).Test3();");
+	if( r != asEXECUTION_EXCEPTION )
+		fail = true;
 
-	// TODO: Don't permit cast operator to remove constness
+	// Don't permit cast operator to remove constness
+	r = engine->ExecuteString(0, "const intf1 @a = clss(); cast<intf2>(a).Test2();");
+	if( r >= 0 )
+		fail = true;
 
 	engine->Release();
 

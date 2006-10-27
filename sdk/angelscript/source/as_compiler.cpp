@@ -2693,7 +2693,11 @@ void asCCompiler::Dereference(asSExprContext *ctx, bool generateCode)
 		if( ctx->type.dataType.IsObject() )
 		{
 			ctx->type.dataType.MakeReference(false);
-			if( generateCode ) ctx->bc.Instr(BC_RDSPTR);
+			if( generateCode ) 
+			{
+				ctx->bc.Instr(BC_CHKREF);
+				ctx->bc.Instr(BC_RDSPTR);
+			}
 		}
 		else
 		{

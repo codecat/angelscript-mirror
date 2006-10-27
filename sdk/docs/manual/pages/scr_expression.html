@@ -57,11 +57,26 @@
 <a name=conversion>
 <h2>Type conversions</h2>
 
-<pre><i>DATATYPE</i>(<i>EXPR</i>)</pre>
+<pre class=border>
+intf @a = clss(); 
 
-<p><code><font color=blue>int</font></code>, <code><font color=blue>float</font></code>, and <code><font color=blue>bits</font></code> can all be converted to and from each other. No other conversions are available.</p>
+<font color=green>// convert the intf handle to a clss handle</font>
+clss @b = cast&lt;clss&gt;(a);  
+</pre>
 
-<p>Implicit conversion is only made between int and float, and only for constant values. If the conversion cannot be made without loss of data a warning is issued.</p>
+<p>Object handles can be converted to other object handles with the cast operator. If the cast is valid, i.e. the true object implements the class or interface being requested, the operator returns a valid handle. If the cast is not valid, the cast returns a null handle.</p>
+
+<p>Primitive types can also be converted using the cast operator, but there is also an alternative syntax.</p>
+
+<pre class=border>
+int   a = 1;
+float b = float(a)/2;
+</pre>
+
+
+<p>In most cases an explicit cast is not necessary for primitive types, however, as the compiler is usually able to do an implicit cast to the correct type.</p>
+
+
 
 
 
