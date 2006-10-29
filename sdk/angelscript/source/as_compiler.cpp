@@ -2918,9 +2918,6 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 		// No conversion from objects to primitives yet
 		if( !ctx->type.dataType.IsPrimitive() ) return;
 
-		// This function don't deal with references
-		assert( !ctx->type.dataType.IsReference() );
-
 		// Start by implicitly converting constant values
 		if( ctx->type.isConstant )
 			ImplicitConversionConstant(ctx, to, node, isExplicit);
@@ -4636,7 +4633,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		}
 		else if( to.IsObjectHandle() &&
 			     expr.type.dataType.IsObjectHandle() &&
-				 (expr.type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) )
+				 (expr.type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) &&
+				 !(!to.IsHandleToConst() && expr.type.dataType.IsHandleToConst()) )
 		{
 			// Allow dynamic cast between object handles (only for script objects).
 			// At run time this may result in a null handle,   
@@ -4684,10 +4682,11 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		return;
 
 	// Conversion not available
+	ctx->type.SetDummy();
 
 	asCString strTo, strFrom;
 
-	strTo = ctx->type.dataType.Format();
+	strTo = to.Format();
 	strFrom = expr.type.dataType.Format();
 
 	asCString msg;
@@ -5602,6 +5601,15 @@ void asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *c
 		Dereference(ctx, true);
 		bool isConst = ctx->type.dataType.IsReadOnly();
 
+		if( ctx->type.dataType.IsObjectHandle() )
+		{
+			// Convert the handle to a normal object
+			asCDataType dt = ctx->type.dataType;
+			dt.MakeHandle(false);
+
+			ImplicitConversion(ctx, dt, node, false);
+		}
+
 		// Check if the variable is initialized (if it indeed is a variable)
 		IsVariableInitialized(&ctx->type, node);
 
@@ -6226,6 +6234,9 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_MATH_TYPE, lctx->type.dataType.Format().AddressOf());
 		Error(str.AddressOf(), node);
+
+		ctx->type.SetDummy();
+		return;
 	}
 
 	if( !rctx->type.dataType.IsIntegerType() &&
@@ -6236,6 +6247,9 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_MATH_TYPE, rctx->type.dataType.Format().AddressOf());
 		Error(str.AddressOf(), node);
+
+		ctx->type.SetDummy();
+		return;
 	}
 
 	bool isConstant = lctx->type.isConstant && rctx->type.isConstant;

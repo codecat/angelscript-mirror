@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.7.1 WIP - 2006/10/27</h2>
+<h2>Version 2.7.1 WIP - 2006/10/29</h2>
 
 <ul>
 <li>Bug fixes
@@ -127,6 +127,9 @@ A:hover
 <li>Empty switch statements would crash the compiler (Thanks the_bateman)
 <li>Registering global properties didn't update a cache in compiled script modules, sometimes invalidating pointers (Thanks Anthony Rufrano, a.k.a "paradoxnj")
 <li>Fixed compiler differences for 64bit integer constants
+<li>Fixed some compiler asserts (Thanks Anders Hansson)
+<li>The index operator on handles to array objects didn't work (Thanks Anders Hansson)
+<li>The compiler would crash if a script class inherited from an undeclared type (Thanks Anders Hansson)
 </ul>
 <li>Library
 <ul>
@@ -138,6 +141,7 @@ A:hover
 <li>Script language
 <ul>
 <li>Added the reserved keyword 'cast'
+<li>Support for dynamic casts between object handles with cast&lt;type&gt;(expr)
 </ul>
 <li>Virtual machine
 <ul>

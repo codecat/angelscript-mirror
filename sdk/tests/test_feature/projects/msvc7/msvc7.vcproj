@@ -213,6 +213,9 @@
 				RelativePath="..\..\source\test_float.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_for.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_funcoverload.cpp">
 			</File>
 			<File

@@ -65,8 +65,13 @@ bool Test()
 		fail = true;
 
 	// Don't permit cast operator to remove constness
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "const intf1 @a = clss(); cast<intf2>(a).Test2();");
 	if( r >= 0 )
+		fail = true;
+
+	if( bout.buffer != "ExecuteString (1, 26) : Error   : No conversion from 'const intf1@&' to 'intf2@&' available.\n"
+					   "ExecuteString (1, 40) : Error   : Illegal operation on 'const int'\n" )
 		fail = true;
 
 	engine->Release();

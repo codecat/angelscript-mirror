@@ -1258,27 +1258,38 @@ void asCBuilder::CompileClasses()
 			// Find the object type for the interface
 			asCObjectType *objType = GetObjectType(name.AddressOf());
 
-			if( decl->objType->Implements(objType) )
+			if( objType == 0 )
 			{
 				int r, c;
 				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-				WriteWarning(file->name.AddressOf(), TXT_INTERFACE_ALREADY_IMPLEMENTED, r, c);
+				asCString str;
+				str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
+				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
 			}
 			else
 			{
-				decl->objType->interfaces.PushLast(objType);
-
-				// Make sure all the methods of the interface are implemented
-				for( asUINT i = 0; i < objType->methods.GetLength(); i++ )
+				if( decl->objType->Implements(objType) )
 				{
-					if( !DoesMethodExist(decl->objType, objType->methods[i]) )
+					int r, c;
+					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+					WriteWarning(file->name.AddressOf(), TXT_INTERFACE_ALREADY_IMPLEMENTED, r, c);
+				}
+				else
+				{
+					decl->objType->interfaces.PushLast(objType);
+
+					// Make sure all the methods of the interface are implemented
+					for( asUINT i = 0; i < objType->methods.GetLength(); i++ )
 					{
-						int r, c;
-						file->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
-						asCString str;
-						str.Format(TXT_MISSING_IMPLEMENTATION_OF_s, 
-							engine->GetFunctionDeclaration(objType->methods[i]).AddressOf());
-						WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+						if( !DoesMethodExist(decl->objType, objType->methods[i]) )
+						{
+							int r, c;
+							file->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
+							asCString str;
+							str.Format(TXT_MISSING_IMPLEMENTATION_OF_s, 
+								engine->GetFunctionDeclaration(objType->methods[i]).AddressOf());
+							WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+						}
 					}
 				}
 			}
