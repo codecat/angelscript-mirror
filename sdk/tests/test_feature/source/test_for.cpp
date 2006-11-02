@@ -12,20 +12,20 @@ float aSize = 8;                           \n\
                                            \n\
 float MyFunction(float a)                  \n\
 {                                          \n\
-	return a;                              \n\
+  return a;                                \n\
 }                                          \n\
                                            \n\
 void Test()                                \n\
 {                                          \n\
   for (float k = 0; k< aSize; k++)         \n\
   {                                        \n\
-      myArray[MyFunction(k*aSize)] = k;    \n\
+    myArray[MyFunction(k*aSize)] = k;      \n\
   }                                        \n\
                                            \n\
   for (int i = 0; i< aSize*aSize; i++)     \n\
   {                                        \n\
-	Print(\"i = \" + i + \"\\n\");         \n\
-      myArray[i] = i;                      \n\
+//  Print(\"i = \" + i + \"\\n\");         \n\
+    myArray[i] = i;                        \n\
   }                                        \n\
 }                                          \n";
 

@@ -160,7 +160,9 @@ protected:
 	void FilterConst(asCArray<int> &funcs);
 	void ConvertToVariable(asSExprContext *ctx);
 	void ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *exclude);
+	void ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars);
 	void ConvertToTempVariable(asSExprContext *ctx);
+	void ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars);
 	void ConvertToReference(asSExprContext *ctx);
 	void PushVariableOnStack(asSExprContext *ctx, bool asReference);
 
@@ -190,7 +192,7 @@ protected:
 	asCArray<int> continueLabels;
 
 	int AllocateVariable(const asCDataType &type, bool isTemporary);
-	int AllocateVariableNotIn(const asCDataType &type, bool isTemporary, asCArray<int> &vars);
+	int AllocateVariableNotIn(const asCDataType &type, bool isTemporary, asCArray<int> *vars);
 	int GetVariableOffset(int varIndex);
 	int GetVariableSlot(int varOffset);
 	void DeallocateVariable(int pos);
