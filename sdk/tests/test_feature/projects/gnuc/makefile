@@ -35,6 +35,7 @@ SRCNAMES = \
   test_exception.cpp \
   test_exceptionmemory.cpp \
   test_float.cpp \
+  test_for.cpp \
   test_funcoverload.cpp \
   test_generic.cpp \
   test_import.cpp \

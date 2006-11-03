@@ -16,6 +16,7 @@ SRCNAMES = \
   test_arrayintf.cpp \
   test_arrayobject.cpp \
   test_autohandle.cpp \
+  test_castop.cpp \
   test_circularimport.cpp \
   test_config.cpp \
   test_configaccess.cpp \
@@ -33,6 +34,7 @@ SRCNAMES = \
   test_exception.cpp \
   test_exceptionmemory.cpp \
   test_float.cpp \
+  test_for.cpp \
   test_funcoverload.cpp \
   test_generic.cpp \
   test_import.cpp \

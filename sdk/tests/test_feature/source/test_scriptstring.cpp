@@ -31,6 +31,20 @@ static void SetString(asIScriptGeneric *gen)
 	}
 }
 
+// This function shows how to receive a reference 
+// to an object handle from the script engine
+static void SetString2(asIScriptGeneric *gen)
+{
+	asCScriptString *str = *(asCScriptString**)gen->GetArgAddress(0);
+	if( str )
+	{
+		str->buffer = "Handle to a string";
+
+		// The generic interface will release the handle in the parameter for us
+		// str->Release();
+	}
+}
+
 // This script tests that variables are created and destroyed in the correct order
 static const char *script2 =
 "void testString()                         \n"
@@ -103,6 +117,7 @@ bool Test()
 
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void set2(string@&in)", asFUNCTION(SetString2), asCALL_GENERIC);
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -149,8 +164,24 @@ bool Test()
 	engine->ExecuteString(0, "print(1.2 + \"a\")");
 	if( printOutput != "1.2a") fail = true;
 
+	// Passing a handle to a function
 	printOutput = "";
 	engine->ExecuteString(0, "string a; set(@a); print(a);");
+	if( printOutput != "Handle to a string" ) fail = true;
+
+	// Implicit conversion to handle
+	printOutput = ""; 
+	engine->ExecuteString(0, "string a; set(a); print(a);");
+	if( printOutput != "Handle to a string" ) fail = true;
+
+	// Passing a reference to a handle to the function
+	printOutput = ""; 
+	engine->ExecuteString(0, "string a; set2(@a); print(a);");
+	if( printOutput != "Handle to a string" ) fail = true;
+
+	// Implicit conversion to reference to a handle
+	printOutput = "";
+	engine->ExecuteString(0, "string a; set2(a); print(a);");
 	if( printOutput != "Handle to a string" ) fail = true;
 
     printOutput = "";
