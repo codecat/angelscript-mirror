@@ -154,6 +154,10 @@ SOURCE=..\..\source\test_autohandle.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_bits.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_castop.cpp
 # End Source File
 # Begin Source File
@@ -227,6 +231,10 @@ SOURCE=..\..\source\test_exceptionmemory.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_float.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_for.cpp
 # End Source File
 # Begin Source File
 

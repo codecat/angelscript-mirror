@@ -16,6 +16,7 @@ SRCNAMES = \
   test_arrayintf.cpp \
   test_arrayobject.cpp \
   test_autohandle.cpp \
+  test_bits.cpp \
   test_castop.cpp \
   test_circularimport.cpp \
   test_compiler.cpp \
@@ -113,25 +114,25 @@ SRCNAMES = \
   testvirtualmethod.cpp \
   utils.cpp \
   stdstring.cpp \
- 
+
 
 OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptstring.o
 BIN = ../../bin/testgnuc
 DELETER = rm -f
- 
+
 all: $(BIN)
 
 $(BIN): $(OBJ)
 	$(CXX) -o $(BIN) $(OBJ) -langelscript -L ../../../../angelscript/lib
 	@echo -------------------------------------------------------------------
-	@echo Done. 
+	@echo Done.
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
-	
+
 clean:
 	$(DELETER) $(OBJ) $(BIN)
 

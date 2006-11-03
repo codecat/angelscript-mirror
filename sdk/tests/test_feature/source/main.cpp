@@ -118,6 +118,7 @@ namespace TestCompiler          { bool Test(); }
 namespace TestSingleton         { bool Test(); }
 namespace TestCastOp            { bool Test(); }
 namespace TestFor               { bool Test(); }
+namespace TestBits              { bool Test(); }
 
 
 #include "utils.h"
@@ -156,6 +157,7 @@ int main(int argc, char **argv)
 	fs_chdir(asTestDir);
 #endif
 
+	if( TestBits::Test()              ) goto failed; else printf("-- TestBits passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestFor::Test()               ) goto failed; else printf("-- TestFor passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
