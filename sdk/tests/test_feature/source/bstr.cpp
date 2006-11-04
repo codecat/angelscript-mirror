@@ -229,7 +229,7 @@ asBSTR asBStrFormat(int number)
 {
 	char str[50];
 	sprintf(str, "%d", number);
-	int len = strlen(str);
+	int len = (int)strlen(str);
 
 	// We must allocate a new bstr that the script engine will free afterwards
 	asBSTR bstr = asBStrAlloc(len);
@@ -243,7 +243,7 @@ asBSTR asBStrFormat(unsigned int number)
 {
 	char str[50];
 	sprintf(str, "%u", number);
-	int len = strlen(str);
+	int len = (int)strlen(str);
 
 	// We must allocate a new bstr that the script engine will free afterwards
 	asBSTR bstr = asBStrAlloc(len);
@@ -257,7 +257,7 @@ asBSTR asBStrFormat(float number)
 {
 	char str[50];
 	sprintf(str, "%#6g", number);
-	int len = strlen(str);
+	int len = (int)strlen(str);
 
 	// We must allocate a new bstr that the script engine will free afterwards
 	asBSTR bstr = asBStrAlloc(len);
@@ -271,7 +271,7 @@ asBSTR asBStrFormat(double number)
 {
 	char str[50];
 	sprintf(str, "%#6g", number);
-	int len = strlen(str);
+	int len = (int)strlen(str);
 
 	// We must allocate a new bstr that the script engine will free afterwards
 	asBSTR bstr = asBStrAlloc(len);
@@ -285,7 +285,7 @@ asBSTR asBStrFormatBits(asDWORD bits)
 {
 	char str[50];
 	sprintf(str, "%X", bits);
-	int len = strlen(str);
+	int len = (int)strlen(str);
 
 	// We must allocate a new bstr that the script engine will free afterwards
 	asBSTR bstr = asBStrAlloc(len);

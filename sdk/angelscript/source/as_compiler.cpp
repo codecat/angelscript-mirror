@@ -3671,14 +3671,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( asBYTE(from->type.dwordValue) != from->type.dwordValue )
 					if( !isExplicit && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.dwordValue = asBYTE(from->type.dwordValue);
+				from->type.byteValue = asBYTE(from->type.dwordValue);
 			}
 			else if( to.GetSizeInMemoryBytes() == 2 )
 			{
 				if( asWORD(from->type.dwordValue) != from->type.dwordValue )
 					if( !isExplicit && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.dwordValue = asWORD(from->type.dwordValue);
+				from->type.wordValue = asWORD(from->type.dwordValue);
 			}
 
 			from->type.dataType.SetTokenType(to.GetTokenType());
