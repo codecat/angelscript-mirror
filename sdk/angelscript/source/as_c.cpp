@@ -55,6 +55,8 @@ public:
 
 int               asEngine_AddRef(asIScriptEngine *e)                                                                                                                                { return e->AddRef(); }
 int               asEngine_Release(asIScriptEngine *e)                                                                                                                               { return e->Release(); }
+int               asEngine_SetEngineProperty(asIScriptEngine *e, asDWORD property, asQWORD value)                                                                                    { return e->SetEngineProperty(property, value); }
+asQWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asDWORD property)                                                                                                   { return e->GetEngineProperty(property); }
 int               asEngine_SetCommonObjectMemoryFunctions(asIScriptEngine *e, asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc)                                                        { return e->SetCommonObjectMemoryFunctions(allocFunc, freeFunc); }
 int               asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv)                                                                { return e->SetMessageCallback(asFUNCTION(callback), obj, callConv); }
 int               asEngine_ClearMessageCallback(asIScriptEngine *e)                                                                                                                  { return e->ClearMessageCallback(); }
@@ -75,10 +77,6 @@ int               asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const 
 int               asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy)               { return e->AddScriptSection(module, name, code, codeLength, lineOffset, makeCopy); }
 int               asEngine_Build(asIScriptEngine *e, const char *module)                                                                                                             { return e->Build(module); }
 int               asEngine_Discard(asIScriptEngine *e, const char *module)                                                                                                           { return e->Discard(module); }
-#ifdef AS_DEPRECATED
-int               asEngine_GetModuleIndex(asIScriptEngine *e, const char *module)                                                                                                    { return e->GetModuleIndex(module); }
-const char *      asEngine_GetModuleNameFromIndex(asIScriptEngine *e, int index, int *length)                                                                                        { return e->GetModuleNameFromIndex(index, length); }
-#endif
 int               asEngine_GetFunctionCount(asIScriptEngine *e, const char *module)                                                                                                  { return e->GetFunctionCount(module); }
 int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index)                                                                                   { return e->GetFunctionIDByIndex(module, index); }
 int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name)                                                                             { return e->GetFunctionIDByName(module, name); }

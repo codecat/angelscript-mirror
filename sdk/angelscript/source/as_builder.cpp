@@ -1793,8 +1793,8 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 				*inOutFlags = 3; // ttInOut
 		}
 
-#ifndef AS_ALLOW_UNSAFE_REFERENCES
-		if( inOutFlags && *inOutFlags == 3 )
+		if( !engine->allowUnsafeReferences &&
+			inOutFlags && *inOutFlags == 3 )
 		{				
 			// Verify that the base type support &inout parameter types
 			if( !dt.IsObject() || dt.IsObjectHandle() || !dt.GetObjectType()->beh.addref || !dt.GetObjectType()->beh.release )
@@ -1804,7 +1804,6 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 				WriteError(file->name.AddressOf(), TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT, r, c);
 			}
 		}
-#endif
 	}
 
 	if( autoHandle ) *autoHandle = false;

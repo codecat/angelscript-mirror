@@ -855,12 +855,12 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		}
 		else if( refType == 3 ) // &inout
 		{
-#ifndef AS_ALLOW_UNSAFE_REFERENCES
 			// Only objects that support object handles 
 			// can be guaranteed to be safe. Local variables are
 			// already safe, so there is no need to add an extra
 			// references
-			if( !ctx->type.isVariable &&
+			if( !engine->allowUnsafeReferences &&
+				!ctx->type.isVariable &&
 				ctx->type.dataType.IsObject() &&
 				!ctx->type.dataType.IsObjectHandle() &&
 				ctx->type.dataType.GetBehaviour()->addref &&
@@ -883,7 +883,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				dt.MakeHandle(false);
 				ctx->type.SetVariable(dt, offset, true);
 			}
-#else
+
 			// Make sure the reference to the value is on the stack
 			if( ctx->type.dataType.IsObject() && ctx->type.dataType.IsReference() )
 				Dereference(ctx, true);
@@ -891,7 +891,6 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				ctx->bc.InstrSHORT(BC_PSF, ctx->type.stackOffset);
 			else if( ctx->type.dataType.IsPrimitive() )
 				ctx->bc.Instr(BC_PshRPtr);
-#endif
 		}
 	}
 	else
@@ -951,10 +950,9 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 	// Don't put any pointer on the stack yet
 	if( paramType->IsReference() || paramType->IsObject() )
 	{
-#ifdef AS_ALLOW_UNSAFE_REFERENCES
 		// &inout parameter may leave the reference on the stack already
-		if( !paramType->IsReference() || refType != 3 )
-#endif
+		if( !engine->allowUnsafeReferences ||
+			!paramType->IsReference() || refType != 3 )
 		{
 			ctx->bc.Pop(PTR_SIZE);
 			ctx->bc.InstrSHORT(BC_VAR, ctx->type.stackOffset);
@@ -993,17 +991,14 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 		{
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() )
 			{
-#ifdef AS_ALLOW_UNSAFE_REFERENCES
-				if( descr->inOutFlags[n] != 3 )
-#endif
-				bc->InstrWORD(BC_GETOBJREF, (asWORD)offset);
+				if( !engine->allowUnsafeReferences ||
+					descr->inOutFlags[n] != 3 )
+					bc->InstrWORD(BC_GETOBJREF, (asWORD)offset);
 				if( args[n]->type.dataType.IsObjectHandle() )
 					bc->Instr(BC_CHKREF);
 			}
-			else
-#ifdef AS_ALLOW_UNSAFE_REFERENCES
-				if( descr->inOutFlags[n] != 3 )
-#endif
+			else if( !engine->allowUnsafeReferences ||
+ 			         descr->inOutFlags[n] != 3 )
 				bc->InstrWORD(BC_GETREF, (asWORD)offset);
 		}
 		else if( descr->parameterTypes[n].IsObject() )
@@ -4714,10 +4709,9 @@ void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args,
 		{
 			assert( !(descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] == 2)) || args[n]->origExpr );
 
-#ifdef AS_ALLOW_UNSAFE_REFERENCES
 			// For &inout, only store the argument if it is for a temporary variable
-			if( descr->inOutFlags[n] != 3 || args[n]->type.isTemporary )
-#endif
+			if( engine->allowUnsafeReferences || 
+				descr->inOutFlags[n] != 3 || args[n]->type.isTemporary )
 			{
 				// Store the argument for later processing
 				asSDeferredParam outParam;

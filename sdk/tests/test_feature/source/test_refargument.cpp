@@ -116,7 +116,7 @@ bool Test()
 
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build(0);
-	if( !strstr(asGetLibraryOptions(), "AS_ALLOW_UNSAFE_REFERENCES") )
+	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
 		if( r >= 0 ) fail = true;
 		if( bout.buffer != "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" ) fail = true;

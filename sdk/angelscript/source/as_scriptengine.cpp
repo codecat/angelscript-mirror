@@ -79,9 +79,6 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_NO_CLASS_METHODS
 		"AS_NO_CLASS_METHODS "
 #endif
-#ifdef AS_ALLOW_UNSAFE_REFERENCES
-		"AS_ALLOW_UNSAFE_REFERENCES "
-#endif
 #ifdef AS_USE_DOUBLE_AS_FLOAT
 		"AS_USE_DOUBLE_AS_FLOAT "
 #endif
@@ -128,6 +125,24 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	return new asCScriptEngine();
 }
 
+int asCScriptEngine::SetEngineProperty(asDWORD property, asQWORD value)
+{
+	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
+		allowUnsafeReferences = value ? true : false;
+	else
+		return asINVALID_ARG;
+
+	return asSUCCESS;
+}
+
+asQWORD asCScriptEngine::GetEngineProperty(asDWORD property)
+{
+	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
+		return allowUnsafeReferences;
+
+	return 0;
+}
+
 int asCScriptEngine::SetCommonObjectMemoryFunctions(asALLOCFUNC_t a, asFREEFUNC_t f)
 {
 	global_alloc = a;
@@ -136,9 +151,13 @@ int asCScriptEngine::SetCommonObjectMemoryFunctions(asALLOCFUNC_t a, asFREEFUNC_
 	return 0;
 }
 
-
 asCScriptEngine::asCScriptEngine()
 {
+	// Engine properties
+	allowUnsafeReferences = false;
+
+
+
 	scriptTypeBehaviours.engine = this;
 
 	refCount = 1;
@@ -782,24 +801,7 @@ void *asCScriptEngine::GetGlobalVarPointer(int gvarID)
 	return 0;
 }
 
-#ifdef AS_DEPRECATED
-int asCScriptEngine::GetGlobalVarPointer(int gvarID, void **pointer)
-{
-	asCModule *mod = GetModule(gvarID);
-	if( mod == 0 ) return asNO_MODULE;
 
-	int id = gvarID & 0xFFFF;
-	if( id > (int)mod->scriptGlobals.GetLength() )
-		return asNO_GLOBAL_VAR;
-
-	if( mod->scriptGlobals[id]->type.IsObject() )
-		*pointer = *(void**)(mod->globalMem.AddressOf() + mod->scriptGlobals[id]->index);
-	else
-		*pointer = (void*)(mod->globalMem.AddressOf() + mod->scriptGlobals[id]->index);
-
-	return 0;
-}
-#endif
 
 
 // Internal
@@ -838,12 +840,6 @@ int asCScriptEngine::CreateContext(asIScriptContext **context, bool isInternal)
 	return 0;
 }
 
-#ifdef AS_DEPRECATED
-int asCScriptEngine::CreateContext(asIScriptContext **context)
-{
-	return CreateContext(context, false);
-}
-#endif
 
 int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset)
 {
@@ -1485,11 +1481,12 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		if( func.returnType != type )
 			return ConfigError(asINVALID_DECLARATION);
 
-#ifndef AS_ALLOW_UNSAFE_REFERENCES
-		// Verify that the rvalue is marked as in if a reference
-		if( func.parameterTypes[0].IsReference() && func.inOutFlags[0] != 1 )
-			return ConfigError(asINVALID_DECLARATION);
-#endif
+		if( !allowUnsafeReferences )
+		{
+			// Verify that the rvalue is marked as in if a reference
+			if( func.parameterTypes[0].IsReference() && func.inOutFlags[0] != 1 )
+				return ConfigError(asINVALID_DECLARATION);
+		}
 
 		if( behaviour == asBEHAVE_ASSIGNMENT && func.parameterTypes[0].IsEqualExceptConst(type) )
 		{
@@ -2226,29 +2223,6 @@ int asCScriptEngine::UnbindImportedFunction(const char *module, int index)
 	return dstModule->BindImportedFunction(index, -1);
 }
 
-#ifdef AS_DEPRECATED
-const char *asCScriptEngine::GetModuleNameFromIndex(int index, int *length)
-{
-	asCModule *module = GetModule(index << 16);
-	if( module == 0 ) return 0;
-
-	const char *str = module->name.AddressOf();
-
-	if( length && str )
-		*length = (int)strlen(str);
-
-	return str;
-}
-
-int asCScriptEngine::GetModuleIndex(const char *module)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->moduleID >> 16;
-}
-#endif
-
 int asCScriptEngine::BindAllImportedFunctions(const char *module)
 {
 	asCModule *mod = GetModule(module, false);
@@ -2297,19 +2271,6 @@ int asCScriptEngine::UnbindAllImportedFunctions(const char *module)
 	return asSUCCESS;
 }
 
-#ifdef AS_DEPRECATED
-int asCScriptEngine::ExecuteString(const char *module, const char *script, asIOutputStream *customOut, asIScriptContext **ctx, asDWORD flags)
-{
-	asIOutputStream *oldOut = outStream;
-	outStream = customOut;
-	
-	int r = ExecuteString(module, script, ctx, flags);
-
-	outStream = oldOut;
-
-	return r;
-}
-#endif
 
 int asCScriptEngine::ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)
 {

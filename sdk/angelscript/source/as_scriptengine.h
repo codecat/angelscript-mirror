@@ -69,6 +69,10 @@ public:
 	int AddRef();
 	int Release();
 
+	// Configuration
+	int     SetEngineProperty(asDWORD property, asQWORD value);
+	asQWORD GetEngineProperty(asDWORD property);
+
 	// Script building
 	int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv);
 	int ClearMessageCallback();
@@ -97,10 +101,6 @@ public:
 	int Build(const char *module);
 	int Discard(const char *module);
 	int ResetModule(const char *module);
-#ifdef AS_DEPRECATED
-	int GetModuleIndex(const char *module);
-	const char *GetModuleNameFromIndex(int index, int *length);
-#endif
 	int GetFunctionCount(const char *module);
 	int GetFunctionIDByIndex(const char *module, int index);
 	int GetFunctionIDByName(const char *module, const char *name);
@@ -122,9 +122,6 @@ public:
 	const char *GetGlobalVarDeclaration(int gvarID, int *length);
 	const char *GetGlobalVarName(int gvarID, int *length);
 	void *GetGlobalVarPointer(int gvarID);
-#ifdef AS_DEPRECATED
-	int GetGlobalVarPointer(int gvarID, void **ptr);
-#endif
 
 	// Dynamic binding between modules
 	int GetImportedFunctionCount(const char *module);
@@ -144,15 +141,9 @@ public:
 	// Script execution
 	int SetDefaultContextStackSize(asUINT initial, asUINT maximum);
 	asIScriptContext *CreateContext();
-#ifdef AS_DEPRECATED
-	int CreateContext(asIScriptContext **ctx);
-#endif
 	void *CreateScriptObject(int typeId);
 
 	// String interpretation
-#ifdef AS_DEPRECATED
-	int ExecuteString(const char *module, const char *script, asIOutputStream *out, asIScriptContext **ctx, asDWORD flags);
-#endif
 	int ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 
 	// Bytecode Saving/Restoring
@@ -287,6 +278,9 @@ public:
 	// Critical sections for threads
 	DECLARECRITICALSECTION(engineCritical);
 	DECLARECRITICALSECTION(moduleCritical);
+
+	// Engine properties
+	bool allowUnsafeReferences;
 };
 
 END_AS_NAMESPACE

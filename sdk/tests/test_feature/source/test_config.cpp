@@ -20,7 +20,7 @@ bool Test()
 	if( r >= 0 ) fail = true;
 
 	r = engine->RegisterGlobalFunction("void func(int &)", asFUNCTION(0), asCALL_GENERIC);
-	if( !strstr(asGetLibraryOptions(), "AS_ALLOW_UNSAFE_REFERENCES") )
+	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
 		if( r >= 0 ) fail = true;
 	}
@@ -42,7 +42,7 @@ bool Test()
 	if( r >= 0 ) fail = true;
 
 	r = engine->RegisterObjectMethod("mytype", "void method(int &)", asFUNCTION(0), asCALL_GENERIC);
-	if( !strstr(asGetLibraryOptions(), "AS_ALLOW_UNSAFE_REFERENCES") )
+	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
 		if( r >= 0 ) fail = true;
 	}
@@ -57,10 +57,8 @@ bool Test()
 	r = engine->RegisterStringFactory("type", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 ) fail = true;
 
-	engine->Release();
-
 	// Verify the output messages
-	if( !strstr(asGetLibraryOptions(), "AS_ALLOW_UNSAFE_REFERENCES") )
+	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
 		if( bout.buffer != "System function (1, 11) : Error   : Identifier 'mytype' is not a data type\n"
 						   "System function (1, 15) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
@@ -85,6 +83,8 @@ bool Test()
 						   " (1, 1) : Error   : Identifier 'type' is not a data type\n")
 			fail = true;
 	}
+
+	engine->Release();
 
 	// Success
  	return fail;

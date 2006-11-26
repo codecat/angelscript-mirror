@@ -263,9 +263,6 @@ sTokenWord const tokenWords[] =
 	{"uint32"    , ttUInt},
 	{"switch"    , ttSwitch},
 	{"class"     , ttClass},
-#ifdef AS_DEPRECATED
-	{"struct"    , ttClass},
-#endif
 	{"case"      , ttCase}, 
 	{"default"   , ttDefault},
 	{"xor"       , ttXor},

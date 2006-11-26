@@ -74,12 +74,6 @@
 // Disables all platform specific code. Only the asCALL_GENERIC calling
 // convention will be available in with this flag set.
 
-// AS_ALLOW_UNSAFE_REFERENCES
-// When this flag is defined it is not required to define the in, out, or
-// inout keywords for parameter references. The compiler will generate code
-// that passes the true reference to functions. It is however possible to
-// write scripts that could crash the application due to invalid references.
-
 
 
 

@@ -32,18 +32,13 @@ static const char *script1 =
 
 bool Test()
 {
-	if( !strstr(asGetLibraryOptions(), "AS_ALLOW_UNSAFE_REFERENCES") )
-	{
-		printf("%s: This test is only valid with AS_ALLOW_UNSAFE_REFERENCES\n", TESTNAME);
-		return false;
-	}
-
 	bool fail = false;
 	int r;
 
 	COutStream out;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString(engine);

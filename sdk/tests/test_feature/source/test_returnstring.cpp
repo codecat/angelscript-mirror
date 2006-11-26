@@ -51,13 +51,9 @@ std::string StringFactory(unsigned int length, const char *s)
 
 bool Test()
 {
-	if( !strstr(asGetLibraryOptions(), "AS_ALLOW_UNSAFE_REFERENCES") )
-	{
-		printf("%s: This test is only valid with AS_ALLOW_UNSAFE_REFERENCES\n", TESTNAME);
-		return false;
-	}
-
 	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+
 	int r = 0;
 	
 	r = engine->RegisterObjectType("Foo",sizeof(Foo),asOBJ_CLASS_CDA); assert( r >=0 );

@@ -53,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        20701
+#define ANGELSCRIPT_VERSION        20800
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  7
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "2.7.1a"
+#define ANGELSCRIPT_VERSION_MINOR  8
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.8.0 WIP"
 
 // Data types
 
@@ -176,6 +176,8 @@ extern "C"
 #ifdef AS_C_INTERFACE
 	AS_API int               asEngine_AddRef(asIScriptEngine *e);
 	AS_API int               asEngine_Release(asIScriptEngine *e);
+	AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asDWORD property, asQWORD value);
+	AS_API asQWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asDWORD property);
 	AS_API int               asEngine_SetCommonObjectMemoryFunctions(asIScriptEngine *e, asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 	AS_API int               asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv);
 	AS_API int               asEngine_ClearMessageCallback(asIScriptEngine *e);
@@ -196,10 +198,6 @@ extern "C"
 	AS_API int               asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0, bool makeCopy = true);
 	AS_API int               asEngine_Build(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_Discard(asIScriptEngine *e, const char *module);
-#ifdef AS_DEPRECATED
-	AS_API int               asEngine_GetModuleIndex(asIScriptEngine *e, const char *module);
-	AS_API const char *      asEngine_GetModuleNameFromIndex(asIScriptEngine *e, int index, int *length = 0);
-#endif
 	AS_API int               asEngine_GetFunctionCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name);
@@ -333,6 +331,9 @@ public:
 	virtual int Release() = 0;
 
 	// Engine configuration
+	virtual int     SetEngineProperty(asDWORD property, asQWORD value) = 0;
+	virtual asQWORD GetEngineProperty(asDWORD property) = 0;
+
 	virtual int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv) = 0;
 	virtual int ClearMessageCallback() = 0;
 
@@ -362,10 +363,6 @@ public:
 	virtual int Build(const char *module) = 0;
     virtual int Discard(const char *module) = 0;
 	virtual int ResetModule(const char *module) = 0;
-#ifdef AS_DEPRECATED
-	virtual int GetModuleIndex(const char *module) = 0;
-	virtual const char *GetModuleNameFromIndex(int index, int *length = 0) = 0;
-#endif
 
 	// Script functions
 	virtual int GetFunctionCount(const char *module) = 0;
@@ -390,9 +387,6 @@ public:
 	virtual const char *GetGlobalVarDeclaration(int gvarID, int *length = 0) = 0;
 	virtual const char *GetGlobalVarName(int gvarID, int *length = 0) = 0;
 	virtual void *GetGlobalVarPointer(int gvarID) = 0;
-#ifdef AS_DEPRECATED
-	virtual int GetGlobalVarPointer(int gvarID, void **ptr) = 0;
-#endif
 
 	// Dynamic binding between modules
 	virtual int GetImportedFunctionCount(const char *module) = 0;
@@ -412,15 +406,9 @@ public:
 	// Script execution
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
 	virtual asIScriptContext *CreateContext() = 0;
-#ifdef AS_DEPRECATED
-	virtual int CreateContext(asIScriptContext **ctx) = 0;
-#endif
 	virtual void *CreateScriptObject(int typeId) = 0;
 
 	// String interpretation
-#ifdef AS_DEPRECATED
-	virtual int ExecuteString(const char *module, const char *script, asIOutputStream *out, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
-#endif
 	virtual int ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
@@ -593,6 +581,10 @@ public:
 };
 
 // Enumerations and constants
+
+// Engine properties
+
+const asDWORD asEP_ALLOW_UNSAFE_REFERENCES = 1;
 
 // Calling conventions and flags
 

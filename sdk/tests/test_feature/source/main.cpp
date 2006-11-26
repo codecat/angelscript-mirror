@@ -143,7 +143,6 @@ extern "C" void BreakPoint()
 // Test with these flags as well
 //
 // + AS_MAX_PORTABILITY
-// + AS_ALLOW_UNSAFE_REFERENCES
 //----------------------------------
 
 int main(int argc, char **argv)
