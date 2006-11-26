@@ -2181,6 +2181,7 @@ bool asCParser::IsRealType(int tokenType)
 		tokenType == ttUInt ||
 		tokenType == ttUInt8 ||
 		tokenType == ttUInt16 ||
+		tokenType == ttUInt64 ||
 		tokenType == ttFloat ||
 		tokenType == ttBool ||
 		tokenType == ttDouble )

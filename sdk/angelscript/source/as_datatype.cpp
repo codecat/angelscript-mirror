@@ -400,7 +400,8 @@ bool asCDataType::IsIntegerType() const
 {
 	if( tokenType == ttInt ||
 		tokenType == ttInt8 ||
-		tokenType == ttInt16 )
+		tokenType == ttInt16 ||
+		tokenType == ttInt64 )
 		return true;
 
 	return false;
@@ -410,7 +411,8 @@ bool asCDataType::IsUnsignedType() const
 {
 	if( tokenType == ttUInt ||
 		tokenType == ttUInt8 ||
-		tokenType == ttUInt16 )
+		tokenType == ttUInt16 ||
+		tokenType == ttUInt64 )
 		return true;
 
 	return false;
@@ -464,7 +466,8 @@ int asCDataType::GetSizeInMemoryBytes() const
 		return 2;
 
 	if( tokenType == ttDouble ||
-		tokenType == ttInt64 )
+		tokenType == ttInt64 ||
+		tokenType == ttUInt64 )
 		return 8;
 
 	if( tokenType == ttBool )

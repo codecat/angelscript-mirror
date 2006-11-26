@@ -156,13 +156,14 @@ int main(int argc, char **argv)
 	fs_chdir(asTestDir);
 #endif
 
+	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
+	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
+	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
+	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestBits::Test()              ) goto failed; else printf("-- TestBits passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestFor::Test()               ) goto failed; else printf("-- TestFor passed\n");
-	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
-	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
-	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
 	if( TestSingleton::Test()         ) goto failed; else printf("-- TestSingleton passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
@@ -222,7 +223,6 @@ int main(int argc, char **argv)
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
 	if( TestImport2::Test()           ) goto failed; else printf("-- TestImport2 passed\n");
 	if( TestEnumGlobVar()             ) goto failed; else printf("-- TestEnumGlobVar passed\n");
-	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");

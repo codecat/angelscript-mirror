@@ -14,8 +14,8 @@
 	<ul>
 	<li><a href="#void">void</a>
 	<li><a href="#bool">bool</a>
-	<li><a href="#int">int, int8, int16</a>
-	<li><a href="#uint">uint, uint8, uint16</a>
+	<li><a href="#int">int, int8, int16, int64</a>
+	<li><a href="#uint">uint, uint8, uint16, uint64</a>
 	<li><a href="#float">float</a>
 	<li><a href="#double">double</a>
 	<li><a href="#any">any</a>
@@ -41,26 +41,30 @@ possible values: <code><font color=blue>true</font></code> or
 expressions.</p>
 
 <a name="int">
-<h2>int, int8, int16</h2>
+<h2>int, int8, int16, int64</h2>
 
-<p><code><font color=blue>int</font></code> holds integer values in the range -2147483648 to 2147483647.</p>
+<p><code><font color=blue>int64</font></code> holds integer values in the range -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807.</p>
+
+<p><code><font color=blue>int</font></code> holds integer values in the range -2,147,483,648 to 2,147,483,647.</p>
+
+<p><code><font color=blue>int16</font></code> holds integer values in the range -32,768 to 32,767.</p>
 
 <p><code><font color=blue>int8</font></code> holds integer values in the range -128 to 128.</p>
-
-<p><code><font color=blue>int16</font></code> holds integer values in the range -32768 to 32767.</p>
 
 <p>As the scripting engine has been optimized for 32 bit datatypes, using the smaller variants is only recommended for accessing application specified variables. For local variables it is better to use the 32 bit variant.</p>
 
 <p><code><font color=blue>int32</font></code> is an alias for <code><font color=blue>int</font></code>.</p>
 
 <a name="uint">
-<h2>uint, uint8, uint16</h2>
+<h2>uint, uint8, uint16, uint64</h2>
 
-<p><code><font color=blue>uint</font></code> holds integer values in the range 0 to 4294967295.</p>
+<p><code><font color=blue>uint64</font></code> holds integer values in the range 0 to 18,446,744,073,709,551,615.</p>
+
+<p><code><font color=blue>uint</font></code> holds integer values in the range 0 to 4,294,967,295.</p>
+
+<p><code><font color=blue>uint16</font></code> holds integer values in the range 0 to 65,535.</p>
 
 <p><code><font color=blue>uint8</font></code> holds integer values in the range 0 to 255.</p>
-
-<p><code><font color=blue>uint16</font></code> holds integer values in the range 0 to 65535.</p>
 
 <p>As the scripting engine has been optimized for 32 bit datatypes, using the smaller variants is only recommended for accessing application specified variables. For local variables it is better to use the 32 bit variant.</p>
 

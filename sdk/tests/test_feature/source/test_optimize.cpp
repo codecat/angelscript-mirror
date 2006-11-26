@@ -64,6 +64,66 @@ static const char *script1 =
 "  g_i5 = a;                   \n"
 "  g_i5 %= 13;                 \n"
 "}                             \n"
+"void TestOptimizeAdd64()      \n"
+"{                             \n"
+"  int64 a = 43, b = 13;       \n"
+"  g_i64_0 = a + b;            \n"
+"  g_i64_1 = a + 13;           \n"
+"  g_i64_2 = 43 + b;           \n"
+"  g_i64_3 = 43 + 13;          \n"
+"  g_i64_4 = a;                \n"
+"  g_i64_4 += b;               \n"
+"  g_i64_5 = a;                \n"
+"  g_i64_5 += 13;              \n"
+"}                             \n"
+"void TestOptimizeSub64()      \n"
+"{                             \n"
+"  int64 a = 43, b = 13;       \n"
+"  g_i64_0 = a - b;            \n"
+"  g_i64_1 = a - 13;           \n"
+"  g_i64_2 = 43 - b;           \n"
+"  g_i64_3 = 43 - 13;          \n"
+"  g_i64_4 = a;                \n"
+"  g_i64_4 -= b;               \n"
+"  g_i64_5 = a;                \n"
+"  g_i64_5 -= 13;              \n"
+"}                             \n"
+"void TestOptimizeMul64()      \n"
+"{                             \n"
+"  int64 a = 43, b = 13;       \n"
+"  g_i64_0 = a * b;            \n"
+"  g_i64_1 = a * 13;           \n"
+"  g_i64_2 = 43 * b;           \n"
+"  g_i64_3 = 43 * 13;          \n"
+"  g_i64_4 = a;                \n"
+"  g_i64_4 *= b;               \n"
+"  g_i64_5 = a;                \n"
+"  g_i64_5 *= 13;              \n"
+"}                             \n"
+"void TestOptimizeDiv64()      \n"
+"{                             \n"
+"  int64 a = 43, b = 13;       \n"
+"  g_i64_0 = a / b;            \n"
+"  g_i64_1 = a / 13;           \n"
+"  g_i64_2 = 43 / b;           \n"
+"  g_i64_3 = 43 / 13;          \n"
+"  g_i64_4 = a;                \n"
+"  g_i64_4 /= b;               \n"
+"  g_i64_5 = a;                \n"
+"  g_i64_5 /= 13;              \n"
+"}                             \n"
+"void TestOptimizeMod64()      \n"
+"{                             \n"
+"  int64 a = 43, b = 13;       \n"
+"  g_i64_0 = a % b;            \n"
+"  g_i64_1 = a % 13;           \n"
+"  g_i64_2 = 43 % b;           \n"
+"  g_i64_3 = 43 % 13;          \n"
+"  g_i64_4 = a;                \n"
+"  g_i64_4 %= b;               \n"
+"  g_i64_5 = a;                \n"
+"  g_i64_5 %= 13;              \n"
+"}                             \n"
 "void TestOptimizeAddf()       \n"
 "{                             \n"
 "  float a = 43, b = 13;       \n"
@@ -261,6 +321,7 @@ static const char *script1 =
 "}                             \n";
 
 
+static __int64 g_i64[6];
 static int g_i[6];
 static float g_f[6];
 static double g_d[6];
@@ -278,6 +339,12 @@ bool TestOptimize()
 	engine->RegisterGlobalProperty("int g_i3", &g_i[3]);
 	engine->RegisterGlobalProperty("int g_i4", &g_i[4]);
 	engine->RegisterGlobalProperty("int g_i5", &g_i[5]);
+	engine->RegisterGlobalProperty("int64 g_i64_0", &g_i64[0]);
+	engine->RegisterGlobalProperty("int64 g_i64_1", &g_i64[1]);
+	engine->RegisterGlobalProperty("int64 g_i64_2", &g_i64[2]);
+	engine->RegisterGlobalProperty("int64 g_i64_3", &g_i64[3]);
+	engine->RegisterGlobalProperty("int64 g_i64_4", &g_i64[4]);
+	engine->RegisterGlobalProperty("int64 g_i64_5", &g_i64[5]);
 	engine->RegisterGlobalProperty("float g_f0", &g_f[0]);
 	engine->RegisterGlobalProperty("float g_f1", &g_f[1]);
 	engine->RegisterGlobalProperty("float g_f2", &g_f[2]);
@@ -358,6 +425,63 @@ bool TestOptimize()
 	engine->ExecuteString(0, "g_i0 = 13; g_i1 = -g_i0; g_i2 = -13;"); if( g_i[1] != -13 || g_i[2] != -13 ) { printf("%s: negi failed\n", TESTNAME); }
 	engine->ExecuteString(0, "g_i0 = 0; g_i1 = g_i0++; g_i2 = ++g_i0;"); if( g_i[0] != 2 || g_i[1] != 0 || g_i[2] != 2 ) { printf("%s: inci failed\n", TESTNAME); }
 	engine->ExecuteString(0, "g_i0 = 0; g_i1 = g_i0--; g_i2 = --g_i0;"); if( g_i[0] != -2 || g_i[1] != 0 || g_i[2] != -2 ) { printf("%s: deci failed\n", TESTNAME); }
+
+
+	engine->ExecuteString(0, "TestOptimizeAdd64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_i64[n] != 56 )
+		{
+			printf("%s: Optimized add64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "TestOptimizeSub64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_i64[n] != 30 )
+		{
+			printf("%s: Optimized sub64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "TestOptimizeMul64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_i64[n] != 559 )
+		{
+			printf("%s: Optimized mul64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "TestOptimizeDiv64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_i64[n] != 3 )
+		{
+			printf("%s: Optimized div64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "TestOptimizeMod64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_i64[n] != 4 )
+		{
+			printf("%s: Optimized mod64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "g_i64_0 = 13; g_i64_1 = -g_i64_0; g_i64_2 = -13;"); if( g_i64[1] != -13 || g_i64[2] != -13 ) { printf("%s: negi64 failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_i64_0 = 0; g_i64_1 = g_i64_0++; g_i64_2 = ++g_i64_0;"); if( g_i64[0] != 2 || g_i64[1] != 0 || g_i64[2] != 2 ) { printf("%s: inci64 failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_i64_0 = 0; g_i64_1 = g_i64_0--; g_i64_2 = --g_i64_0;"); if( g_i64[0] != -2 || g_i64[1] != 0 || g_i64[2] != -2 ) { printf("%s: deci64 failed\n", TESTNAME); }
+
+
 
 	engine->ExecuteString(0, "TestOptimizeAddf()");
 	for( n = 0; n < 6; ++ n )
@@ -466,6 +590,8 @@ bool TestOptimize()
 	engine->ExecuteString(0, "g_d0 = 13; g_d1 = -g_d0; g_d2 = -13;"); if( g_d[1] != -13 || g_d[2] != -13 ) { printf("%s: negd failed\n", TESTNAME); }
 	engine->ExecuteString(0, "g_d0 = 0; g_d1 = g_d0++; g_d2 = ++g_d0;"); if( g_d[0] != 2 || g_d[1] != 0 || g_d[2] != 2 ) { printf("%s: incd failed\n", TESTNAME); }
 	engine->ExecuteString(0, "g_d0 = 0; g_d1 = g_d0--; g_d2 = --g_d0;"); if( g_d[0] != -2 || g_d[1] != 0 || g_d[2] != -2 ) { printf("%s: decd failed\n", TESTNAME); }
+
+	// TODO: Perform these tests for 64bit as well
 
 	engine->ExecuteString(0, "TestOptimizeAnd()");
 	for( n = 0; n < 6; ++ n )

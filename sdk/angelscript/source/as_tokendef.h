@@ -135,6 +135,7 @@ enum eTokenType
 	ttUInt,                // uint
 	ttUInt8,               // uint8
 	ttUInt16,              // uint16
+	ttUInt64,              // uint64
 	ttFloat,               // float
 	ttVoid,                // void
 	ttTrue,                // true
@@ -260,6 +261,7 @@ sTokenWord const tokenWords[] =
 	{"uint8"     , ttUInt8},
 	{"uint16"    , ttUInt16},
 	{"uint32"    , ttUInt},
+	{"uint64"    , ttUInt64},
 	{"switch"    , ttSwitch},
 	{"class"     , ttClass},
 	{"case"      , ttCase}, 
