@@ -2949,21 +2949,12 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 						ctx->bc.InstrSHORT(BC_uwTOi, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(ttUInt);
 				}
-				else if( ctx->type.dataType.IsBitVectorType() )
-				{
-					if( s == 1 )
-						ctx->bc.InstrSHORT(BC_ubTOi, ctx->type.stackOffset);
-					else if( s == 2 )
-						ctx->bc.InstrSHORT(BC_uwTOi, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(ttBits);
-				}
 			}
 
 			if( to.IsIntegerType() )
 			{
 				if( ctx->type.dataType.IsIntegerType() || 
-					ctx->type.dataType.IsUnsignedType() || 
-					ctx->type.dataType.IsBitVectorType() )
+					ctx->type.dataType.IsUnsignedType() )
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
 				else if( ctx->type.dataType.IsFloatType() )
 				{
@@ -2994,8 +2985,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 			else if( to.IsUnsignedType() )
 			{
 				if( ctx->type.dataType.IsIntegerType() || 
-					ctx->type.dataType.IsUnsignedType() || 
-					ctx->type.dataType.IsBitVectorType() )
+					ctx->type.dataType.IsUnsignedType() )
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
 				else if( ctx->type.dataType.IsFloatType() )
 				{
@@ -3011,27 +3001,6 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ctx->bc.InstrW_W(BC_dTOu, offset, ctx->type.stackOffset);
 					ctx->type.SetVariable(to, offset, true);
 				}
-
-				// Convert to smaller integer if necessary
-				int s = to.GetSizeInMemoryBytes();
-				if( s < 4 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					if( s == 1 )
-						ctx->bc.InstrSHORT(BC_iTOb, ctx->type.stackOffset);
-					else if( s == 2 )
-						ctx->bc.InstrSHORT(BC_iTOw, ctx->type.stackOffset);
-				}
-			}
-			else if( to.IsBitVectorType() )
-			{
-				// Don't permit implicit conversion from float or double  
-				// to bits due to it cause possible ambiguities
-
-				if( ctx->type.dataType.IsIntegerType() || 
-					ctx->type.dataType.IsUnsignedType() || 
-					ctx->type.dataType.IsBitVectorType() )
-					ctx->type.dataType.SetTokenType(to.GetTokenType());
 
 				// Convert to smaller integer if necessary
 				int s = to.GetSizeInMemoryBytes();
@@ -3099,9 +3068,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 		{
 			if( to.IsIntegerType() || to.IsUnsignedType() )
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
-			else if( to.IsBitVectorType() && (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType()) )
-				ctx->type.dataType.SetTokenType(to.GetTokenType());
-			else if( (to.IsFloatType() || to.IsDoubleType()) && !ctx->type.dataType.IsBitVectorType() )
+			else if( to.IsFloatType() || to.IsDoubleType() )
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 		}
 
@@ -3343,19 +3310,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, isExplicit);
 		}
-		else if( from->type.dataType.IsBitVectorType() )
-		{
-			// Convert to 32bit
-			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.intValue = from->type.byteValue;
-			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.intValue = from->type.wordValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
-		}
 		else if( from->type.dataType.IsIntegerType() && 
 		         from->type.dataType.GetSizeInMemoryBytes() < 4 )
 		{
@@ -3445,19 +3399,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				from->type.intValue = (signed char)from->type.byteValue;
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
 				from->type.intValue = (short)from->type.wordValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
-		}
-		else if( from->type.dataType.IsBitVectorType() )
-		{
-			// Convert to 32bit
-			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.dwordValue = from->type.byteValue;
-			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.dwordValue = from->type.wordValue;
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 
@@ -3626,58 +3567,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 
 		// A non-constant float cannot be implicitly converted to double
-	}
-	else if( to.IsBitVectorType() )
-	{
-		if( from->type.dataType.IsIntegerType() ||
-			from->type.dataType.IsUnsignedType() )
-		{
-			// Must properly convert value in case the from value is smaller
-			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.dwordValue = from->type.byteValue;
-			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.dwordValue = from->type.wordValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttBits, true);
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
-		}
-		else if( from->type.dataType.IsBitVectorType() && 
-		         from->type.dataType.GetSizeInMemoryBytes() < 4 )
-		{
-			// Must properly convert value in case the from value is smaller
-			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.dwordValue = from->type.byteValue;
-			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.dwordValue = from->type.wordValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttBits, true);
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
-		}
-		else if( from->type.dataType.IsBitVectorType() &&
-		         from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
-		{
-			// Verify if it is possible
-			if( to.GetSizeInMemoryBytes() == 1 )
-			{
-				if( asBYTE(from->type.dwordValue) != from->type.dwordValue )
-					if( !isExplicit && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
-
-				from->type.byteValue = asBYTE(from->type.dwordValue);
-			}
-			else if( to.GetSizeInMemoryBytes() == 2 )
-			{
-				if( asWORD(from->type.dwordValue) != from->type.dwordValue )
-					if( !isExplicit && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
-
-				from->type.wordValue = asWORD(from->type.dwordValue);
-			}
-
-			from->type.dataType.SetTokenType(to.GetTokenType());
-		}
 	}
 }
 
@@ -4301,7 +4190,7 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 
 			// TODO: Check for overflow
 			asDWORD val = asStringScanUInt(value.AddressOf(), 16, 0);
-			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBits, true), val);
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), val);
 		}
 		else if( vnode->tokenType == ttFloatConstant )
 		{
@@ -4596,43 +4485,10 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 
 		int offset = expr.type.stackOffset;
 
-		if( to.IsFloatType() )
-		{
-			if( expr.type.dataType.IsBitVectorType() )
-			{
-				// Convert the bitvector to 32bit
-				if( expr.type.dataType.GetSizeInMemoryBytes() == 1 )
-					ctx->bc.InstrSHORT(BC_ubTOi, expr.type.stackOffset);
-				else if( expr.type.dataType.GetSizeInMemoryBytes() == 2 )
-					ctx->bc.InstrSHORT(BC_uwTOi, expr.type.stackOffset);
-
-				conversionOK = true;
-			}
-
-			ctx->type.SetVariable(to, offset, true);
-		}
-		// TODO: We need to allow conversion from bits64
-		// else if( to.IsDoubleType() )
-		// {
-		// }
-		else if( to.IsBitVectorType() )
-		{
-			if( expr.type.dataType.IsFloatType() )
-			{
-				conversionOK = true;
-
-				if( to.GetSizeInMemoryBytes() == 1 )
-					ctx->bc.InstrSHORT(BC_iTOb, expr.type.stackOffset);
-				else if( to.GetSizeInMemoryBytes() == 2 )
-					ctx->bc.InstrSHORT(BC_iTOw, expr.type.stackOffset);
-			}
-
-			ctx->type.SetVariable(to, offset, true);
-		}
-		else if( to.IsObjectHandle() &&
-			     expr.type.dataType.IsObjectHandle() &&
-				 (expr.type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) &&
-				 !(!to.IsHandleToConst() && expr.type.dataType.IsHandleToConst()) )
+		if( to.IsObjectHandle() &&
+			expr.type.dataType.IsObjectHandle() &&
+			(expr.type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) &&
+			!(!to.IsHandleToConst() && expr.type.dataType.IsHandleToConst()) )
 		{
 			// Allow dynamic cast between object handles (only for script objects).
 			// At run time this may result in a null handle,   
@@ -4643,37 +4499,6 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			ctx->type = expr.type;
 			ctx->type.dataType = to;
 		}
-	}
-	else
-	{
-		if( to.IsFloatType() )
-		{
-			if( expr.type.dataType.IsBitVectorType() )
-			{
-				// First convert the bitvector to 32bit
-				if( expr.type.dataType.GetSizeInMemoryBytes() == 1 )
-					expr.type.dwordValue = (asDWORD)(asBYTE)expr.type.dwordValue;
-				else if( expr.type.dataType.GetSizeInMemoryBytes() == 2 )
-					expr.type.dwordValue = (asDWORD)(asWORD)expr.type.dwordValue;
-				ctx->type.dwordValue = expr.type.dwordValue;
-				conversionOK = true;
-			}
-		}
-		else if( to.IsBitVectorType() )
-		{
-			if( expr.type.dataType.IsFloatType() )
-			{
-				ctx->type.dwordValue = expr.type.dwordValue;
-				conversionOK = true;
-
-				if( to.GetSizeInMemoryBytes() == 1 )
-					ctx->type.dwordValue = asBYTE(ctx->type.dwordValue);
-				else if( to.GetSizeInMemoryBytes() == 2 )
-					ctx->type.dwordValue = asWORD(ctx->type.dwordValue);
-			}
-		}
-
-		ctx->type.SetConstantQW(to, ctx->type.qwordValue);
 	}
 
 	if( conversionOK )
@@ -5323,14 +5148,14 @@ void asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ct
 	{
 		asCDataType to = ctx->type.dataType;
 
-		if( ctx->type.dataType.IsUnsignedType() || ctx->type.dataType.IsIntegerType() )
+		if( ctx->type.dataType.IsIntegerType() )
 		{
 			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
-				to.SetTokenType(ttBits8);
+				to.SetTokenType(ttUInt8);
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
-				to.SetTokenType(ttBits16);
+				to.SetTokenType(ttUInt16);
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 4 )
-				to.SetTokenType(ttBits);
+				to.SetTokenType(ttUInt);
 			else
 				Error(TXT_INVALID_TYPE, node);
 		}
@@ -5338,7 +5163,7 @@ void asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ct
 		if( ctx->type.dataType.IsReference() ) ConvertToVariable(ctx);
 		ImplicitConversion(ctx, to, node, false);
 
-		if( ctx->type.dataType.IsBitVectorType() )
+		if( ctx->type.dataType.IsUnsignedType() )
 		{
 			if( ctx->type.isConstant )
 			{
@@ -6267,8 +6092,6 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 		to.SetTokenType(ttInt);
 	else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
 		to.SetTokenType(ttUInt);
-	else if( lctx->type.dataType.IsBitVectorType() || rctx->type.dataType.IsBitVectorType() )
-		to.SetTokenType(ttUInt);
 
 	// If doing an operation with double constant and float variable, the constant should be converted to float
 	if( (lctx->type.isConstant && lctx->type.dataType.IsDoubleType() && !rctx->type.isConstant && rctx->type.dataType.IsFloatType()) ||
@@ -6495,7 +6318,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 	{
 		// Both operands must be bitvectors of same length
 		asCDataType to;
-		to.SetTokenType(ttBits);
+		to.SetTokenType(ttUInt);
 
 		// Do the actual conversion
 		asCArray<int> reservedVars;
@@ -6504,14 +6327,14 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		ImplicitConversion(rctx, to, node, false);
 
 		// Verify that the conversion was successful
-		if( !lctx->type.dataType.IsBitVectorType() )
+		if( !lctx->type.dataType.IsUnsignedType() )
 		{
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), "bits");
 			Error(str.AddressOf(), node);
 		}
 
-		if( !rctx->type.dataType.IsBitVectorType() )
+		if( !rctx->type.dataType.IsUnsignedType() )
 		{
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), "bits");
@@ -6576,7 +6399,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 	{
 		// Left operand must be bitvector
 		asCDataType to;
-		to.SetTokenType(ttBits);
+		to.SetTokenType(ttUInt);
 		ImplicitConversion(lctx, to, node, false);
 
 		// Right operand must be uint
@@ -6584,7 +6407,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		ImplicitConversion(rctx, to, node, false);
 
 		// Verify that the conversion was successful
-		if( !lctx->type.dataType.IsBitVectorType() )
+		if( !lctx->type.dataType.IsUnsignedType() )
 		{
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), "bits");
@@ -6664,8 +6487,6 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	else if( lctx->type.dataType.IsIntegerType() || rctx->type.dataType.IsIntegerType() )
 		to.SetTokenType(ttInt);
 	else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
-		to.SetTokenType(ttUInt);
-	else if( lctx->type.dataType.IsBitVectorType() || rctx->type.dataType.IsBitVectorType() )
 		to.SetTokenType(ttUInt);
 	else if( lctx->type.dataType.IsBooleanType() || rctx->type.dataType.IsBooleanType() )
 		to.SetTokenType(ttBool);

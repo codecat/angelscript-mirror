@@ -81,7 +81,7 @@ static const char *script4 =
 "}                            \n"
 "class A                      \n"
 "{                            \n"
-"   bits a;                   \n"
+"   uint a;                   \n"
 "};                           \n";
 
 // Verify that the struct names cannot conflict with one another
@@ -157,16 +157,16 @@ static const char *script8 =
 static const char *script9 = 
 "class MyStruct               \n"
 "{                            \n"
-"  bits myBits;               \n"
+"  uint myBits;               \n"
 "};                           \n"
-"bits MyFunc(bits a)          \n"
+"uint MyFunc(uint a)          \n"
 "{                            \n"
 "  return a;                  \n"
 "}                            \n"
 "void MyFunc(string@) {}      \n"
 "void Test()                  \n"
 "{                            \n"
-"  bits val = 0x0;            \n"
+"  uint val = 0x0;            \n"
 "  MyStruct s;                \n"
 "  s.myBits = 0x5;            \n"
 "  val = MyFunc(s.myBits);    \n"

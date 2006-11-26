@@ -9,7 +9,7 @@ static const char *script1 =
 "void TestObjHandle()                   \n"
 "{                                      \n"
 "   refclass@ b = @getRefClass();       \n"
-"   Assert(b.id == 0xdeadc0de);         \n"
+"   Assert(b.id == int(0xdeadc0de));    \n"
 // Pass argument with explicit handle
 "   refclass@ c = @getRefClass(@b);     \n"
 "   Assert(@c == @b);                   \n"

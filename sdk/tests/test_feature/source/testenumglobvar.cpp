@@ -8,7 +8,7 @@
 
 #define TESTNAME "TestEnumGlobVar"
 
-static const char script[] = "int a; float b; double c; bits d = 0xC0DE; string e = \"test\"; obj @f = @o;";
+static const char script[] = "int a; float b; double c; uint d = 0xC0DE; string e = \"test\"; obj @f = @o;";
 
 void AddRef_Release_dummy(asIScriptGeneric *)
 {

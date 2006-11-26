@@ -48,7 +48,6 @@ void RegisterBStr(asIScriptEngine *engine)
 
 	// Register useful functions
 	r = engine->RegisterGlobalFunction("bstr bstrSubstr(bstr &in, uint, uint)", asFUNCTION(asBStrSubstr),                           asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("bstr bstrFormat(bits)",                 asFUNCTION(asBStrFormatBits),                       asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("bstr bstrFormat(int)",                  asFUNCTION((asBSTR (*)(int))asBStrFormat),          asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("bstr bstrFormat(uint)",                 asFUNCTION((asBSTR (*)(unsigned int))asBStrFormat), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("bstr bstrFormat(float)",                asFUNCTION((asBSTR (*)(float))asBStrFormat),        asCALL_CDECL); assert( r >= 0 );

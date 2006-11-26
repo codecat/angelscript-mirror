@@ -148,9 +148,6 @@ enum eTokenType
 	ttContinue,            // continue
 	ttConst,			   // const
 	ttDo,                  // do
-	ttBits,                // bits
-	ttBits8,               // bits8
-	ttBits16,              // bits16
 	ttDouble,              // double
 	ttSwitch,              // switch
 	ttCase,                // case
@@ -220,10 +217,12 @@ sTokenWord const tokenWords[] =
 	{"^^"        , ttXor},
 	{"@"         , ttHandle},
 	{"and"       , ttAnd},
-	{"bits"      , ttBits},
-	{"bits8"     , ttBits8},
-	{"bits16"    , ttBits16},
-	{"bits32"    , ttBits},
+#ifdef AS_DEPRECATED
+	{"bits"      , ttUInt},
+	{"bits8"     , ttUInt8},
+	{"bits16"    , ttUInt16},
+	{"bits32"    , ttUInt},
+#endif
 	{"bool"      , ttBool},
 	{"break"     , ttBreak},
 	{"cast"      , ttCast},

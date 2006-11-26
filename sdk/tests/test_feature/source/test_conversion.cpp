@@ -274,9 +274,6 @@ bool Test()
 	engine->RegisterGlobalProperty("int i", &i);
 	engine->RegisterGlobalProperty("int8 i8", &i8);
 	engine->RegisterGlobalProperty("int16 i16", &i16);
-	engine->RegisterGlobalProperty("bits b", &b);
-	engine->RegisterGlobalProperty("bits8 b8", &b8);
-	engine->RegisterGlobalProperty("bits16 b16", &b16);
 
 	engine->RegisterGlobalFunction("void TestDouble(double)", asFUNCTION(TestDouble), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void TestFloat(float)", asFUNCTION(TestFloat), asCALL_GENERIC);
@@ -453,10 +450,11 @@ bool Test()
 	d = 0; i8 = -22; engine->ExecuteString(0, "d = d + i8"); if( d != -22 ) fail = true;
 
 	engine->ExecuteString(0, "int[] a(1); a[0] == 1");
-	engine->ExecuteString(0, "b + i");
-	engine->ExecuteString(0, "int a = 0, b = 0; (a+b)&1;");
+	engine->ExecuteString(0, "ui + i");
+	engine->ExecuteString(0, "int a = 0, ui = 0; (a+ui)&1;");
 
-	f = 0; engine->ExecuteString(0, "f = float(0x3f800000)"); if( f != 1 ) fail = true;
+	// There is no bitwise conversion between uint to float anymore
+	// f = 0; engine->ExecuteString(0, "f = float(0x3f800000)"); if( f != 1 ) fail = true;
 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -487,7 +485,6 @@ bool Test()
 	engine->ExecuteString(0, "TestScript();");
 
 	// Make sure uint and int can be converted to bits when using the ~ operator
-	engine->ExecuteString(0, "bits x = 0x34; x = ~x;");
 	engine->ExecuteString(0, "uint x = 0x34; x = ~x;");
 	engine->ExecuteString(0, "int x = 0x34; x = ~x;");
 

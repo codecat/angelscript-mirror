@@ -186,7 +186,7 @@ static const char *script1 =
 "}                             \n"
 "void TestOptimizeAnd()        \n"
 "{                             \n"
-"  bits a = 0xF3, b = 0x17;    \n"
+"  uint a = 0xF3, b = 0x17;    \n"
 "  g_b0 = a & b;               \n"
 "  g_b1 = a & 0x17;            \n"
 "  g_b2 = 0xF3 & b;            \n"
@@ -198,7 +198,7 @@ static const char *script1 =
 "}                             \n"
 "void TestOptimizeOr()         \n"
 "{                             \n"
-"  bits a = 0xF3, b = 0x17;    \n"
+"  uint a = 0xF3, b = 0x17;    \n"
 "  g_b0 = a | b;               \n"
 "  g_b1 = a | 0x17;            \n"
 "  g_b2 = 0xF3 | b;            \n"
@@ -210,7 +210,7 @@ static const char *script1 =
 "}                             \n"
 "void TestOptimizeXor()        \n"
 "{                             \n"
-"  bits a = 0xF3, b = 0x17;    \n"
+"  uint a = 0xF3, b = 0x17;    \n"
 "  g_b0 = a ^ b;               \n"
 "  g_b1 = a ^ 0x17;            \n"
 "  g_b2 = 0xF3 ^ b;            \n"
@@ -222,7 +222,7 @@ static const char *script1 =
 "}                             \n"
 "void TestOptimizeSLL()        \n"
 "{                             \n"
-"  bits a = 0xF3;              \n"
+"  uint a = 0xF3;              \n"
 "  uint b = 3;                 \n"
 "  g_b0 = a << b;              \n"
 "  g_b1 = a << 3;              \n"
@@ -235,7 +235,7 @@ static const char *script1 =
 "}                             \n"
 "void TestOptimizeSRA()        \n"
 "{                             \n"
-"  bits a = 0xF3;              \n"
+"  uint a = 0xF3;              \n"
 "  uint b = 3;                 \n"
 "  g_b0 = a >>> b;             \n"
 "  g_b1 = a >>> 3;             \n"
@@ -248,7 +248,7 @@ static const char *script1 =
 "}                             \n"
 "void TestOptimizeSRL()        \n"
 "{                             \n"
-"  bits a = 0xF3;              \n"
+"  uint a = 0xF3;              \n"
 "  uint b = 3;                 \n"
 "  g_b0 = a >> b;              \n"
 "  g_b1 = a >> 3;              \n"
@@ -290,12 +290,12 @@ bool TestOptimize()
 	engine->RegisterGlobalProperty("double g_d3", &g_d[3]);
 	engine->RegisterGlobalProperty("double g_d4", &g_d[4]);
 	engine->RegisterGlobalProperty("double g_d5", &g_d[5]);
-	engine->RegisterGlobalProperty("bits g_b0", &g_b[0]);
-	engine->RegisterGlobalProperty("bits g_b1", &g_b[1]);
-	engine->RegisterGlobalProperty("bits g_b2", &g_b[2]);
-	engine->RegisterGlobalProperty("bits g_b3", &g_b[3]);
-	engine->RegisterGlobalProperty("bits g_b4", &g_b[4]);
-	engine->RegisterGlobalProperty("bits g_b5", &g_b[5]);
+	engine->RegisterGlobalProperty("uint g_b0", &g_b[0]);
+	engine->RegisterGlobalProperty("uint g_b1", &g_b[1]);
+	engine->RegisterGlobalProperty("uint g_b2", &g_b[2]);
+	engine->RegisterGlobalProperty("uint g_b3", &g_b[3]);
+	engine->RegisterGlobalProperty("uint g_b4", &g_b[4]);
+	engine->RegisterGlobalProperty("uint g_b5", &g_b[5]);
 
 
 	COutStream out;	
@@ -544,10 +544,10 @@ bool TestOptimize()
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "bits tmp = 50; bits x = tmp + 0x50;");
+	r = engine->ExecuteString(0, "uint tmp = 50; uint x = tmp + 0x50;");
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("%s: bits failed\n", TESTNAME);
+		printf("%s: uint failed\n", TESTNAME);
 		fail = true;
 	}
 

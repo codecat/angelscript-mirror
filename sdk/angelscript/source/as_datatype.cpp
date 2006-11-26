@@ -390,7 +390,6 @@ bool asCDataType::IsSamePrimitiveBaseType(const asCDataType &dt) const
 	if( IsIntegerType() && dt.IsIntegerType() ) return true;
 	if( IsUnsignedType() && dt.IsUnsignedType() ) return true;
 	if( IsFloatType() && dt.IsFloatType() ) return true;
-	if( IsBitVectorType() && dt.IsBitVectorType() ) return true;
 	if( IsDoubleType() && dt.IsDoubleType() ) return true;
 	if( IsBooleanType() && dt.IsBooleanType() ) return true;
 
@@ -433,16 +432,6 @@ bool asCDataType::IsDoubleType() const
 	return false;
 }
 
-bool asCDataType::IsBitVectorType() const
-{
-	if( tokenType == ttBits ||
-		tokenType == ttBits8 ||
-		tokenType == ttBits16 )
-		return true;
-
-	return false;
-}
-
 bool asCDataType::IsBooleanType() const
 {
 	if( tokenType == ttBool )
@@ -467,13 +456,11 @@ int asCDataType::GetSizeInMemoryBytes() const
 		return 0;
 
 	if( tokenType == ttInt8 ||
-		tokenType == ttUInt8 ||
-		tokenType == ttBits8 )
+		tokenType == ttUInt8 )
 		return 1;
 
 	if( tokenType == ttInt16 ||
-		tokenType == ttUInt16 ||
-		tokenType == ttBits16 )
+		tokenType == ttUInt16 )
 		return 2;
 
 	if( tokenType == ttDouble ||

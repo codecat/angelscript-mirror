@@ -18,7 +18,6 @@
 	<li><a href="#uint">uint, uint8, uint16</a>
 	<li><a href="#float">float</a>
 	<li><a href="#double">double</a>
-	<li><a href="#bits">bits, bits8, bits16</a>
 	<li><a href="#any">any</a>
 	<li><a href="#array">Arrays</a>
 	<li><a href="#objhandle">Object handles</a>
@@ -85,26 +84,6 @@ expressions.</p>
 
 <p><b>Curiousity</b>: Doubles may also have the additional values of positive and negative 0 or infinite, and NaN (Not-a-Number).</p>
 
-<a name="bits">
-<h2>bits, bits8, bits16</h2>
-
-<p><code><font color=blue>bits</font></code> is a data type that allows manipulation of
-individual bits. The data type holds 32 bits in a word. It can be assigned by a
-<code><font color=blue>bits</font></code> constant that is written as a hexadecimal number, e.g.
-<code>0xDEADC0DE.</code></p>
-
-<p><code><font color=blue>bits8</font></code> holds 8 bits, and <code><font color=blue>bits16</font></code> holds 16 bits.</p>
-
-<p><code><font color=blue>bits32</font></code> is an alias for <code><font color=blue>bits</font></code>.</p>
-
-<p>Both <code><font color=blue>float</font></code> and
-<code><font color=blue>int</font></code> can be converted to and from
-<code><font color=blue>bits</font></code>. </p>
-
-<p>The bits in the data type can be manipulated through the many <a href="expression.html#bits">bitwise operators</a> available:
-<code>& | ^ ~ &lt;&lt; &gt;&gt; &gt;&gt;&gt;</code>
-
-<p>As the scripting engine has been optimized for 32 bit datatypes, using the smaller variants is only recommended for accessing application specified variables. For local variables it is better to use the 32 bit variant.</p>
 
 
 

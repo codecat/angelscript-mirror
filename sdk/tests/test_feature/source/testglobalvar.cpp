@@ -64,7 +64,7 @@ static const char *script4 =
 "}                    \n";
 
 static const char *script5 =
-"bits OFLAG_BSP = bits(1024);";
+"uint OFLAG_BSP = uint(1024);";
 
 void print(asIScriptGeneric *gen)
 {

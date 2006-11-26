@@ -220,10 +220,9 @@ asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
 		if( gc.objType->tokenType == ttDouble )
 			elementSize = 8;
 		else if( gc.objType->tokenType == ttInt || gc.objType->tokenType == ttUInt ||
-			     gc.objType->tokenType == ttBits || gc.objType->tokenType == ttFloat )
+			     gc.objType->tokenType == ttFloat )
 			elementSize = 4;
-		else if( gc.objType->tokenType == ttInt16 || gc.objType->tokenType == ttUInt16 ||
-				 gc.objType->tokenType == ttBits16 )
+		else if( gc.objType->tokenType == ttInt16 || gc.objType->tokenType == ttUInt16 )
 			elementSize = 2;
 		else
 			elementSize = 1;
