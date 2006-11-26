@@ -2573,21 +2573,112 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
+	case BC_ADDi64:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) + *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_SUBi64:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) - *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_MULi64:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) * *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_DIVi64:
+		{
+			asQWORD divider = *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) / divider;
+		}
+		l_bc += 2;
+		break;
+
+	case BC_MODi64:
+		{
+			asQWORD divider = *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) % divider;
+		}
+		l_bc += 2;
+		break;
+
+	case BC_BAND64:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) & *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_BOR64:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) | *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_BXOR64:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) ^ *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_BSLL64:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) << *(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_BSRL64:
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) >> *(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_BSRA64:
+		*(__int64*)(l_fp - SWORDARG0(l_bc)) = *(__int64*)(l_fp - SWORDARG1(l_bc)) >> *(l_fp - SWORDARG2(l_bc));
+		l_bc += 2;
+		break;
+
+	case BC_CMPi64:
+		{
+			__int64 i = *(__int64*)(l_fp - SWORDARG0(l_bc)) - *(__int64*)(l_fp - SWORDARG1(l_bc));
+			if( i == 0 )     *(int*)&register1 =  0;
+			else if( i < 0 ) *(int*)&register1 = -1;
+			else             *(int*)&register1 =  1;
+			l_bc += 2;
+		}
+		break;
+
+	case BC_CMPu64:
+		{
+			asQWORD d = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
+			asQWORD d2 = *(asQWORD*)(l_fp - SWORDARG1(l_bc));
+			if( d == d2 )     *(int*)&register1 =  0;
+			else if( d < d2 ) *(int*)&register1 = -1;
+			else              *(int*)&register1 =  1;
+			l_bc += 2;
+		}
+		break;
+
 	// Don't let the optimizer optimize for size, 
 	// since it requires extra conditions and jumps
-	case 160: l_bc = (asDWORD*)160; break;
-	case 161: l_bc = (asDWORD*)161; break;
-	case 162: l_bc = (asDWORD*)162; break;
-	case 163: l_bc = (asDWORD*)163; break;
-	case 164: l_bc = (asDWORD*)164; break;
-	case 165: l_bc = (asDWORD*)165; break;
-	case 166: l_bc = (asDWORD*)166; break;
-	case 167: l_bc = (asDWORD*)167; break;
-	case 168: l_bc = (asDWORD*)168; break;
-	case 169: l_bc = (asDWORD*)169; break;
-	case 170: l_bc = (asDWORD*)170; break;
-	case 171: l_bc = (asDWORD*)171; break;
-	case 172: l_bc = (asDWORD*)172; break;
 	case 173: l_bc = (asDWORD*)173; break;
 	case 174: l_bc = (asDWORD*)174; break;
 	case 175: l_bc = (asDWORD*)175; break;

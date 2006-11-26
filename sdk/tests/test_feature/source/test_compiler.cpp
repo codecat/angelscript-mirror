@@ -58,8 +58,8 @@ bool Test()
 		fail = true;
 
 	if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void CompilerAssert()\n"
-					   "TestCompiler (3, 13) : Error   : Can't implicitly convert from 'uint64' to 'bool'.\n"
-					   "TestCompiler (4, 13) : Error   : Can't implicitly convert from 'uint64' to 'bool'.\n"
+					   "TestCompiler (3, 13) : Error   : Can't implicitly convert from 'uint' to 'bool'.\n"
+					   "TestCompiler (4, 13) : Error   : Can't implicitly convert from 'uint' to 'bool'.\n"
 					   "TestCompiler (5, 5) : Error   : No conversion from 'bool' to math type available.\n" )
 	   fail = true;
 

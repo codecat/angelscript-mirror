@@ -195,7 +195,7 @@ bool Test()
 	bout.buffer = "";
 	r = engine->ExecuteString(0, "c_obj.SetVal(1);");
 	if( r >= 0 ) fail = true;
-	if( bout.buffer != "ExecuteString (1, 7) : Error   : No matching signatures to 'SetVal(const uint64) const'\n" )
+	if( bout.buffer != "ExecuteString (1, 7) : Error   : No matching signatures to 'SetVal(const uint) const'\n" )
 		fail = true;
 
 	// Allow the script to call const methods on a const object

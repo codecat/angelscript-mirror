@@ -238,7 +238,21 @@ enum bcInstr
 	BC_DECi64       = 158,
 	BC_BNOT64       = 159,
 
-	BC_MAXBYTECODE  = 160,
+	BC_ADDi64   	= 160,
+	BC_SUBi64   	= 161,
+	BC_MULi64   	= 162,
+	BC_DIVi64		= 163,
+	BC_MODi64		= 164,
+	BC_BAND64		= 165,
+	BC_BOR64		= 166,
+	BC_BXOR64		= 167,
+	BC_BSLL64		= 168,
+	BC_BSRL64		= 169,
+	BC_BSRA64		= 170,
+	BC_CMPi64       = 171,
+	BC_CMPu64       = 172,
+
+	BC_MAXBYTECODE  = 173,
 
 	// Temporary tokens, can't be output to the final program
 	BC_PSP			= 246,
@@ -463,6 +477,19 @@ const int BCT_INCi64    = BCTYPE_NO_ARG;
 const int BCT_DECi64    = BCTYPE_NO_ARG;
 const int BCT_BNOT64    = BCTYPE_rW_ARG;
 
+const int BCT_ADDi64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_SUBi64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_MULi64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_DIVi64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_MODi64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BAND64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BOR64     = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BXOR64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BSLL64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BSRL64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_BSRA64    = BCTYPE_wW_rW_rW_ARG;
+const int BCT_CMPi64    = BCTYPE_rW_rW_ARG;
+const int BCT_CMPu64    = BCTYPE_rW_rW_ARG;
 
 // Temporary
 const int BCT_PSP       = BCTYPE_W_ARG;
@@ -634,13 +661,20 @@ const int bcTypes[256] =
 	BCT_INCi64,
 	BCT_DECi64,
 	BCT_BNOT64,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,0,0,0,0, // 165-169
-	0,0,0,0,0,0,0,0,0,0, // 170-179
+	BCT_ADDi64,
+	BCT_SUBi64,
+	BCT_MULi64,
+	BCT_DIVi64,
+	BCT_MODi64,
+	BCT_BAND64,
+	BCT_BOR64,
+	BCT_BXOR64,
+	BCT_BSLL64,
+	BCT_BSRL64,
+	BCT_BSRA64,
+	BCT_CMPi64,
+	BCT_CMPu64,
+	0,0,0,0,0,0,0, // 173-179
 	0,0,0,0,0,0,0,0,0,0, // 180-189
 	0,0,0,0,0,0,0,0,0,0, // 190-199
 	0,0,0,0,0,0,0,0,0,0, // 200-209
@@ -822,13 +856,20 @@ const int bcStackInc[256] =
 	0,          // BC_INCi64
 	0,          // BC_DECi64
 	0,          // BC_BNOT64
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,0,0,0,0, // 165-169
-	0,0,0,0,0,0,0,0,0,0, // 170-179
+	0,			// BC_ADDi64
+	0,			// BC_SUBi64
+	0,			// BC_MULi64
+	0,			// BC_DIVi64
+	0,			// BC_MODi64
+	0,			// BC_BAND64
+	0,			// BC_BOR64
+	0,			// BC_BXOR64
+	0,			// BC_BSLL64
+	0,			// BC_BSRL64
+	0,			// BC_BSRA64
+	0,			// BCT_CMPi64
+	0,			// BCT_CMPu64
+	0,0,0,0,0,0,0, // 173-179
 	0,0,0,0,0,0,0,0,0,0, // 180-189
 	0,0,0,0,0,0,0,0,0,0, // 190-199
 	0,0,0,0,0,0,0,0,0,0, // 200-209
@@ -1016,13 +1057,20 @@ const sByteCodeName bcName[256] =
 	{"INCi64"},
 	{"DECi64"},
 	{"BNOT64"},
-	{0},
-	{0},
-	{0},
-	{0},
-	{0},
-	{0},{0},{0},{0},{0}, // 165-169
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 170-179
+	{"ADDi64"},
+	{"SUBi64"},
+	{"MULi64"},
+	{"DIVi64"},
+	{"MODi64"},
+	{"BAND64"},
+	{"BOR64"},
+	{"BXOR64"},
+	{"BSLL64"},
+	{"BSRL64"},
+	{"BSRA64"},
+	{"CMPi64"},
+	{"CMPu64"},
+	{0},{0},{0},{0},{0},{0},{0}, // 173-179
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 180-189
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 190-199
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 200-209

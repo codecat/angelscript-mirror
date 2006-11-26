@@ -318,6 +318,81 @@ static const char *script1 =
 "  g_b4 >>= b;                 \n"
 "  g_b5 = a;                   \n"
 "  g_b5 >>= 3;                 \n"
+"}                             \n"
+"void TestOptimizeAnd64()      \n"
+"{                             \n"
+"  uint64 a = 0xF3, b = 0x17;  \n"
+"  g_b64_0 = a & b;            \n"
+"  g_b64_1 = a & 0x17;         \n"
+"  g_b64_2 = 0xF3 & b;         \n"
+"  g_b64_3 = 0xF3 & 0x17;      \n"
+"  g_b64_4 = a;                \n"
+"  g_b64_4 &= b;               \n"
+"  g_b64_5 = a;                \n"
+"  g_b64_5 &= 0x17;            \n"
+"}                             \n"
+"void TestOptimizeOr64()       \n"
+"{                             \n"
+"  uint64 a = 0xF3, b = 0x17;  \n"
+"  g_b64_0 = a | b;            \n"
+"  g_b64_1 = a | 0x17;         \n"
+"  g_b64_2 = 0xF3 | b;         \n"
+"  g_b64_3 = 0xF3 | 0x17;      \n"
+"  g_b64_4 = a;                \n"
+"  g_b64_4 |= b;               \n"
+"  g_b64_5 = a;                \n"
+"  g_b64_5 |= 0x17;            \n"
+"}                             \n"
+"void TestOptimizeXor64()      \n"
+"{                             \n"
+"  uint64 a = 0xF3, b = 0x17;  \n"
+"  g_b64_0 = a ^ b;            \n"
+"  g_b64_1 = a ^ 0x17;         \n"
+"  g_b64_2 = 0xF3 ^ b;         \n"
+"  g_b64_3 = 0xF3 ^ 0x17;      \n"
+"  g_b64_4 = a;                \n"
+"  g_b64_4 ^= b;               \n"
+"  g_b64_5 = a;                \n"
+"  g_b64_5 ^= 0x17;            \n"
+"}                             \n"
+"void TestOptimizeSLL64()      \n"
+"{                             \n"
+"  uint64 a = 0xF3;            \n"
+"  uint64 b = 3;               \n"
+"  g_b64_0 = a << b;           \n"
+"  g_b64_1 = a << 3;           \n"
+"  g_b64_2 = 0xF3 << b;        \n"
+"  g_b64_3 = 0xF3 << 3;        \n"
+"  g_b64_4 = a;                \n"
+"  g_b64_4 <<= b;              \n"
+"  g_b64_5 = a;                \n"
+"  g_b64_5 <<= 3;              \n"
+"}                             \n"
+"void TestOptimizeSRA64()      \n"
+"{                             \n"
+"  uint64 a = 0xF3;            \n"
+"  uint64 b = 3;               \n"
+"  g_b64_0 = a >>> b;          \n"
+"  g_b64_1 = a >>> 3;          \n"
+"  g_b64_2 = 0xF3 >>> b;       \n"
+"  g_b64_3 = 0xF3 >>> 3;       \n"
+"  g_b64_4 = a;                \n"
+"  g_b64_4 >>>= b;             \n"
+"  g_b64_5 = a;                \n"
+"  g_b64_5 >>>= 3;             \n"
+"}                             \n"
+"void TestOptimizeSRL64()      \n"
+"{                             \n"
+"  uint64 a = 0xF3;            \n"
+"  uint64 b = 3;               \n"
+"  g_b64_0 = a >> b;           \n"
+"  g_b64_1 = a >> 3;           \n"
+"  g_b64_2 = 0xF3 >> b;        \n"
+"  g_b64_3 = 0xF3 >> 3;        \n"
+"  g_b64_4 = a;                \n"
+"  g_b64_4 >>= b;              \n"
+"  g_b64_5 = a;                \n"
+"  g_b64_5 >>= 3;              \n"
 "}                             \n";
 
 
@@ -326,6 +401,7 @@ static int g_i[6];
 static float g_f[6];
 static double g_d[6];
 static asUINT g_b[6];
+static asQWORD g_b64[6];
 
 bool TestOptimize()
 {
@@ -363,6 +439,12 @@ bool TestOptimize()
 	engine->RegisterGlobalProperty("uint g_b3", &g_b[3]);
 	engine->RegisterGlobalProperty("uint g_b4", &g_b[4]);
 	engine->RegisterGlobalProperty("uint g_b5", &g_b[5]);
+	engine->RegisterGlobalProperty("uint64 g_b64_0", &g_b64[0]);
+	engine->RegisterGlobalProperty("uint64 g_b64_1", &g_b64[1]);
+	engine->RegisterGlobalProperty("uint64 g_b64_2", &g_b64[2]);
+	engine->RegisterGlobalProperty("uint64 g_b64_3", &g_b64[3]);
+	engine->RegisterGlobalProperty("uint64 g_b64_4", &g_b64[4]);
+	engine->RegisterGlobalProperty("uint64 g_b64_5", &g_b64[5]);
 
 
 	COutStream out;	
@@ -591,8 +673,6 @@ bool TestOptimize()
 	engine->ExecuteString(0, "g_d0 = 0; g_d1 = g_d0++; g_d2 = ++g_d0;"); if( g_d[0] != 2 || g_d[1] != 0 || g_d[2] != 2 ) { printf("%s: incd failed\n", TESTNAME); }
 	engine->ExecuteString(0, "g_d0 = 0; g_d1 = g_d0--; g_d2 = --g_d0;"); if( g_d[0] != -2 || g_d[1] != 0 || g_d[2] != -2 ) { printf("%s: decd failed\n", TESTNAME); }
 
-	// TODO: Perform these tests for 64bit as well
-
 	engine->ExecuteString(0, "TestOptimizeAnd()");
 	for( n = 0; n < 6; ++ n )
 	{
@@ -654,6 +734,71 @@ bool TestOptimize()
 	}
 	
 	engine->ExecuteString(0, "g_b0 = 0xF3; g_b1 = ~g_b0; g_b2 = ~0xF3;"); if( g_b[1] != ~0xF3 || g_b[2] != ~0xF3 ) { printf("%s: bnot failed\n", TESTNAME); }
+
+
+	engine->ExecuteString(0, "TestOptimizeAnd64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_b64[n] != (0xF3 & 0x17) )
+		{
+			printf("%s: Optimized and64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "TestOptimizeOr64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_b64[n] != (0xF3 | 0x17) )
+		{
+			printf("%s: Optimized or64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "TestOptimizeXor64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_b64[n] != (0xF3 ^ 0x17) )
+		{
+			printf("%s: Optimized xor64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "TestOptimizeSLL64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_b64[n] != (0xF3 << 3) )
+		{
+			printf("%s: Optimized sll64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "TestOptimizeSRL64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_b64[n] != (0xF3u >> 3) )
+		{
+			printf("%s: Optimized srl64 failed\n", TESTNAME);
+			break;
+		}
+	}
+
+	engine->ExecuteString(0, "TestOptimizeSRA64()");
+	for( n = 0; n < 6; ++ n )
+	{
+		if( g_b64[n] != (0xF3 >> 3) )
+		{
+			printf("%s: Optimized sra64 failed\n", TESTNAME);
+			break;
+		}
+	}
+	
+	engine->ExecuteString(0, "g_b64_0 = 0xF3; g_b64_1 = ~g_b64_0; g_b64_2 = ~uint64(0xF3);"); if( g_b64[1] != ~0xF3I64 || g_b64[2] != ~0xF3I64 ) { printf("%s: bnot64 failed\n", TESTNAME); }
+
+
 
 	int r;
 	r = engine->ExecuteString(0, "bool b = false; if( !b );");
