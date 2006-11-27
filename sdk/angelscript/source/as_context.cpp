@@ -2539,7 +2539,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_u64TOf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(asQWORD*)(l_fp - SWORDARG1(l_bc)));
+		*(float*)(l_fp - SWORDARG0(l_bc)) = float((signed)*(asQWORD*)(l_fp - SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
@@ -2549,7 +2549,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_u64TOd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(asQWORD*)(l_fp - SWORDARG0(l_bc)));
+		*(double*)(l_fp - SWORDARG0(l_bc)) = double((signed)*(asQWORD*)(l_fp - SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 

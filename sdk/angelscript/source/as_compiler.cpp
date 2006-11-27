@@ -3630,7 +3630,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			float fc = from->type.floatValue;
 			asQWORD uic = asQWORD(fc);
 
-			if( float(uic) != fc )
+			if( float((signed)uic) != fc )
 			{
 				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
 			}
@@ -3643,7 +3643,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			double fc = from->type.doubleValue;
 			asQWORD uic = asQWORD(fc);
 
-			if( double(uic) != fc )
+			if( double((signed)uic) != fc )
 			{
 				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
 			}
@@ -3762,7 +3762,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			float fc = float(from->type.qwordValue);
+			float fc = float((signed)from->type.qwordValue);
 
 			if( asQWORD(fc) != from->type.qwordValue )
 			{
@@ -3845,7 +3845,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			double fc = double(from->type.qwordValue);
+			double fc = double((signed)from->type.qwordValue);
 
 			if( asQWORD(fc) != from->type.qwordValue )
 			{
