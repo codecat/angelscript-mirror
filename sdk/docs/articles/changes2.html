@@ -118,9 +118,13 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.0 WIP - 2006/11/26</h2>
+<h2>Version 2.8.0 WIP - 2006/11/27</h2>
 
 <ul>
+<li>Bug fixes
+<ul>
+<li>Save/load of bytecode followed by ExecuteString() that called one of the script functions failed during compilation. Bug from 2.7.1a (Thanks coollofty)
+</ul>
 <li>Library interface
 <ul>
 <li>Added Set/GetEngineProperty() that will allow you to dynamically changes some settings that previously required a recompilation of the library.
@@ -134,9 +138,9 @@ A:hover
 </ul>
 <li>Virtual machine
 <ul>
-<li>New byte codes: 
-    i64TOi, uTOi64, iTOi64, fTOi64, dTOi64, fTOu64, dTOu64, i64TOf, u64TOf, i64TOd, u64TOd, 
-    NEGi64, INCi64, DECi64, BNOT64, 
+<li>New byte codes:
+    i64TOi, uTOi64, iTOi64, fTOi64, dTOi64, fTOu64, dTOu64, i64TOf, u64TOf, i64TOd, u64TOd,
+    NEGi64, INCi64, DECi64, BNOT64,
     ADDi64, SUBi64, MULi64, DIVi64, MODi64,
     BAND64, BOR64, BXOR64, BSLL64, BSRL64, BSRA64
     CMPi64, CMPu64
