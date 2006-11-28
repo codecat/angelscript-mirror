@@ -1658,24 +1658,24 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 		case BCTYPE_QW_ARG:
 #ifdef __GNUC__
 #ifdef _LP64
-			fprintf(file, "   %-8s 0x%lx           (i:%ld, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s 0x%lx           (i:%ld, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #else
-			fprintf(file, "   %-8s 0x%llx           (i:%lld, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s 0x%llx           (i:%lld, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #endif
 #else
-			fprintf(file, "   %-8s 0x%I64x          (i:%I64d, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s 0x%I64x          (i:%I64d, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #endif
 			break;
 
 		case BCTYPE_wW_QW_ARG:
 #ifdef __GNUC__
 #ifdef _LP64
-			fprintf(file, "   %-8s v%d, 0x%lx           (i:%ld, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s v%d, 0x%lx           (i:%ld, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #else
-			fprintf(file, "   %-8s v%d, 0x%llx           (i:%lld, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s v%d, 0x%llx           (i:%lld, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #endif
 #else
-			fprintf(file, "   %-8s v%d, 0x%I64x          (i:%I64d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((__int64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s v%d, 0x%I64x          (i:%I64d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #endif
 			break;
 
@@ -1689,15 +1689,15 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 		case BCTYPE_QW_DW_ARG:
 			if( instr->op == BC_ALLOC )
 #ifdef __GNUC__
-				fprintf(file, "   %-8s 0x%llx, %d\n", bcName[instr->op].name, *(__int64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+				fprintf(file, "   %-8s 0x%llx, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 #else
-				fprintf(file, "   %-8s 0x%I64x, %d\n", bcName[instr->op].name, *(__int64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+				fprintf(file, "   %-8s 0x%I64x, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 #endif
 			else
 #ifdef __GNUC__
-				fprintf(file, "   %-8s %llu, %d\n", bcName[instr->op].name, *(__int64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+				fprintf(file, "   %-8s %llu, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 #else
-				fprintf(file, "   %-8s %I64u, %d\n", bcName[instr->op].name, *(__int64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+				fprintf(file, "   %-8s %I64u, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 #endif
 			break;
 

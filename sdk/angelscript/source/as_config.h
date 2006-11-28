@@ -107,10 +107,6 @@
 // ASM_AT_N_T or ASM_INTEL
 // You should choose what inline assembly syntax to use when compiling.
 
-// __int64
-// If your compiler doesn't support the __int64 type you'll need to define
-// a substitute for it that is 64 bits large.
-
 // VALUE_OF_BOOLEAN_TRUE
 // This flag allows to customize the exact value of boolean true.
 
@@ -275,11 +271,6 @@
 	#define COMPLEX_MASK (asOBJ_CLASS_CONSTRUCTOR | asOBJ_CLASS_DESTRUCTOR | asOBJ_CLASS_ASSIGNMENT)
 	#define AS_SIZEOF_BOOL 1
 	#define STDCALL __stdcall
-	#ifndef __LP64__
-		#define __int64 long long
-	#else
-		#define __int64 long
-	#endif
 
 	// Support native calling conventions on x86, but not 64bit yet
 	#if defined(_M_IX86) && !defined(__LP64__)
@@ -300,11 +291,6 @@
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
 	#define COMPLEX_OBJS_PASSED_BY_REF
-	#ifndef __LP64__
-		#define __int64 long long
-	#else
-		#define __int64 long
-	#endif
 	#define ASM_AT_N_T  // AT&T style inline assembly
 	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
 	#define AS_SIZEOF_BOOL 1
@@ -334,11 +320,6 @@
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
 	#define COMPLEX_OBJS_PASSED_BY_REF
-	#ifndef __LP64__
-		#define __int64 long long
-	#else
-		#define __int64 long
-	#endif
 	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
 	#define AS_NO_MEMORY_H
 	#define AS_SIZEOF_BOOL 1

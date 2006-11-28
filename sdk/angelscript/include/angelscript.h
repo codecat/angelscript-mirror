@@ -82,14 +82,17 @@ typedef unsigned int   asUINT;
 #ifdef __LP64__
     typedef unsigned int  asDWORD;
     typedef unsigned long asQWORD;
+    typedef long asINT64;
     typedef asQWORD asPWORD;
 #else
     typedef unsigned long asDWORD;
     typedef asDWORD asPWORD;
   #if defined(__GNUC__) || defined(__MWERKS__)
     typedef unsigned long long asQWORD;
+    typedef long long asINT64;
   #else
     typedef unsigned __int64 asQWORD;
+    typedef __int64 asINT64;
   #endif
 #endif
 

@@ -2499,27 +2499,27 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_i64TOi:
-		*(l_fp - SWORDARG0(l_bc)) = int(*(__int64*)(l_fp - SWORDARG1(l_bc)));
+		*(l_fp - SWORDARG0(l_bc)) = int(*(asINT64*)(l_fp - SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_uTOi64:
-		*(__int64*)(l_fp - SWORDARG0(l_bc)) = __int64(*(asUINT*)(l_fp - SWORDARG1(l_bc)));
+		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = asINT64(*(asUINT*)(l_fp - SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_iTOi64:
-		*(__int64*)(l_fp - SWORDARG0(l_bc)) = __int64(*(int*)(l_fp - SWORDARG1(l_bc)));
+		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = asINT64(*(int*)(l_fp - SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_fTOi64:
-		*(__int64*)(l_fp - SWORDARG0(l_bc)) = __int64(*(float*)(l_fp - SWORDARG1(l_bc)));
+		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = asINT64(*(float*)(l_fp - SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_dTOi64:
-		*(__int64*)(l_fp - SWORDARG0(l_bc)) = __int64(*(double*)(l_fp - SWORDARG0(l_bc)));
+		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = asINT64(*(double*)(l_fp - SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
@@ -2534,27 +2534,29 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_i64TOf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(__int64*)(l_fp - SWORDARG1(l_bc)));
+		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(asINT64*)(l_fp - SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_u64TOf:
+		// TODO: MSVC6 doesn't permit UINT64 to double
 		*(float*)(l_fp - SWORDARG0(l_bc)) = float((signed)*(asQWORD*)(l_fp - SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_i64TOd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(__int64*)(l_fp - SWORDARG0(l_bc)));
+		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(asINT64*)(l_fp - SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
 	case BC_u64TOd:
+		// TODO: MSVC6 doesn't permit UINT64 to double
 		*(double*)(l_fp - SWORDARG0(l_bc)) = double((signed)*(asQWORD*)(l_fp - SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
 	case BC_NEGi64:
-		*(__int64*)(l_fp - SWORDARG0(l_bc)) = -*(__int64*)(l_fp - SWORDARG0(l_bc));
+		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = -*(asINT64*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
@@ -2652,13 +2654,13 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_BSRA64:
-		*(__int64*)(l_fp - SWORDARG0(l_bc)) = *(__int64*)(l_fp - SWORDARG1(l_bc)) >> *(l_fp - SWORDARG2(l_bc));
+		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = *(asINT64*)(l_fp - SWORDARG1(l_bc)) >> *(l_fp - SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_CMPi64:
 		{
-			__int64 i = *(__int64*)(l_fp - SWORDARG0(l_bc)) - *(__int64*)(l_fp - SWORDARG1(l_bc));
+			asINT64 i = *(asINT64*)(l_fp - SWORDARG0(l_bc)) - *(asINT64*)(l_fp - SWORDARG1(l_bc));
 			if( i == 0 )     *(int*)&register1 =  0;
 			else if( i < 0 ) *(int*)&register1 = -1;
 			else             *(int*)&register1 =  1;

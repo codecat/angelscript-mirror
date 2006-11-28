@@ -387,11 +387,11 @@ bool asCDataType::IsSamePrimitiveBaseType(const asCDataType &dt) const
 {
 	if( !IsPrimitive() || !dt.IsPrimitive() ) return false;
 	
-	if( IsIntegerType() && dt.IsIntegerType() ) return true;
+	if( IsIntegerType()  && dt.IsIntegerType()  ) return true;
 	if( IsUnsignedType() && dt.IsUnsignedType() ) return true;
-	if( IsFloatType() && dt.IsFloatType() ) return true;
-	if( IsDoubleType() && dt.IsDoubleType() ) return true;
-	if( IsBooleanType() && dt.IsBooleanType() ) return true;
+	if( IsFloatType()    && dt.IsFloatType()    ) return true;
+	if( IsDoubleType()   && dt.IsDoubleType()   ) return true;
+	if( IsBooleanType()  && dt.IsBooleanType()  ) return true;
 
 	return false;
 }

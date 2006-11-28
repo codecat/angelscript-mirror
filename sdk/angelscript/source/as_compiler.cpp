@@ -3474,7 +3474,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		if( from->type.dataType.IsFloatType() )
 		{
 			float fc = from->type.floatValue;
-			__int64 ic = __int64(fc);
+			asINT64 ic = asINT64(fc);
 
 			if( float(ic) != fc )
 			{
@@ -3488,7 +3488,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		else if( from->type.dataType.IsDoubleType() )
 		{
 			double fc = from->type.doubleValue;
-			__int64 ic = __int64(fc);
+			asINT64 ic = asINT64(fc);
 
 			if( double(ic) != fc )
 			{
@@ -3509,7 +3509,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				from->type.qwordValue = from->type.dwordValue;
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 8 )
 			{
-				if( __int64(from->type.qwordValue) < 0 )
+				if( asINT64(from->type.qwordValue) < 0 )
 				{
 					if( !isExplicit && node ) Warning(TXT_CHANGE_SIGN, node);
 				}
@@ -3630,6 +3630,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			float fc = from->type.floatValue;
 			asQWORD uic = asQWORD(fc);
 
+			// TODO: MSVC6 doesn't permit UINT64 to double
 			if( float((signed)uic) != fc )
 			{
 				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
@@ -3643,6 +3644,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			double fc = from->type.doubleValue;
 			asQWORD uic = asQWORD(fc);
 
+			// TODO: MSVC6 doesn't permit UINT64 to double
 			if( double((signed)uic) != fc )
 			{
 				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
@@ -3655,14 +3657,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		{
 			// Convert to 64bit
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.qwordValue = (__int64)(signed char)from->type.byteValue;
+				from->type.qwordValue = (asINT64)(signed char)from->type.byteValue;
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.qwordValue = (__int64)(short)from->type.wordValue;
+				from->type.qwordValue = (asINT64)(short)from->type.wordValue;
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 4 )
-				from->type.qwordValue = (__int64)from->type.intValue;
+				from->type.qwordValue = (asINT64)from->type.intValue;
 
 			// Verify that it is possible to convert to unsigned without loosing negative
-			if( __int64(from->type.qwordValue) < 0 )
+			if( asINT64(from->type.qwordValue) < 0 )
 			{
 				if( !isExplicit && node ) Warning(TXT_CHANGE_SIGN, node);
 			}
@@ -3672,7 +3674,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
 			// Verify that it is possible to convert to unsigned without loosing negative
-			if( __int64(from->type.qwordValue) < 0 )
+			if( asINT64(from->type.qwordValue) < 0 )
 			{
 				if( !isExplicit && node ) Warning(TXT_CHANGE_SIGN, node);
 			}
@@ -3731,8 +3733,8 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			float fc = float(__int64(from->type.qwordValue));
-			if( __int64(fc) != __int64(from->type.qwordValue) )
+			float fc = float(asINT64(from->type.qwordValue));
+			if( asINT64(fc) != asINT64(from->type.qwordValue) )
 			{
 				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
 			}
@@ -3762,6 +3764,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
+			// TODO: MSVC6 doesn't permit UINT64 to double
 			float fc = float((signed)from->type.qwordValue);
 
 			if( asQWORD(fc) != from->type.qwordValue )
@@ -3813,9 +3816,9 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			double fc = double(__int64(from->type.qwordValue));
+			double fc = double(asINT64(from->type.qwordValue));
 
-			if( __int64(fc) != __int64(from->type.qwordValue) )
+			if( asINT64(fc) != asINT64(from->type.qwordValue) )
 			{
 				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
 			}
@@ -3845,6 +3848,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
+			// TODO: MSVC6 doesn't permit UINT64 to double
 			double fc = double((signed)from->type.qwordValue);
 
 			if( asQWORD(fc) != from->type.qwordValue )
@@ -5410,7 +5414,7 @@ void asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ct
 				if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 					ctx->type.intValue = -ctx->type.intValue;
 				else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-					ctx->type.qwordValue = -(__int64)ctx->type.qwordValue;
+					ctx->type.qwordValue = -(asINT64)ctx->type.qwordValue;
 				else if( ctx->type.dataType.IsFloatType() )
 					ctx->type.floatValue = -ctx->type.floatValue;
 				else if( ctx->type.dataType.IsDoubleType() )
@@ -6909,7 +6913,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 				else if( op == ttBitShiftRight )
 					v = lctx->type.qwordValue >> rctx->type.dwordValue;
 				else if( op == ttBitShiftRightArith )
-					v = __int64(lctx->type.qwordValue) >> rctx->type.dwordValue;
+					v = asINT64(lctx->type.qwordValue) >> rctx->type.dwordValue;
 
 				ctx->type.SetConstantQW(lctx->type.dataType, v);
 			}
@@ -7155,7 +7159,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 			}
 			else if( lctx->type.dataType.IsIntegerType() && lctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
-				__int64 v = __int64(lctx->type.qwordValue) - __int64(rctx->type.qwordValue);
+				asINT64 v = asINT64(lctx->type.qwordValue) - asINT64(rctx->type.qwordValue);
 				if( v < 0 ) i = -1;
 				if( v > 0 ) i = 1;
 			}
