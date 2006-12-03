@@ -21,8 +21,8 @@ public:
   int <a href="#release">Release</a>();
 
   <font color=green>// Engine configuration</font>
-  int     <a href="#setengprop">SetEngineProperty</a>(asDWORD property, asQWORD value);
-  asQWORD <a href="#getengprop">GetEngineProperty</a>(asDWORD property);
+  int     <a href="#setengprop">SetEngineProperty</a>(asDWORD property, asPWORD value);
+  asPWORD <a href="#getengprop">GetEngineProperty</a>(asDWORD property);
   
   int <a href="#setmsgcall">SetMessageCallback</a>(const asUPtr &amp;callback, void *obj, asDWORD callConv);
   int <a href="#clrmsgcall">ClearMessageCallback</a>();
@@ -179,7 +179,7 @@ object references successfully.</p>
 <h2>SetEngineProperty</h2>
 
 <pre class=border>
-int SetEngineProperty(asDWORD property, asQWORD value);
+int SetEngineProperty(asDWORD property, asPWORD value);
 </pre>
 
 <h3>Description</h3>
@@ -227,7 +227,7 @@ unexpected behaviours.
 <h2>GetEngineProperty</h2>
 
 <pre class=border>
-asQWORD GetEngineProperty(asDWORD property);
+asPWORD GetEngineProperty(asDWORD property);
 </pre>
 
 <h3>Description</h3>

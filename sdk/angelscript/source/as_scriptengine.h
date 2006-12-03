@@ -70,8 +70,8 @@ public:
 	int Release();
 
 	// Configuration
-	int     SetEngineProperty(asDWORD property, asQWORD value);
-	asQWORD GetEngineProperty(asDWORD property);
+	int     SetEngineProperty(asDWORD property, asPWORD value);
+	asPWORD GetEngineProperty(asDWORD property);
 
 	// Script building
 	int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv);

@@ -121,10 +121,6 @@ A:hover
 <h2>Version 2.8.0 WIP - 2006/11/27</h2>
 
 <ul>
-<li>Bug fixes
-<ul>
-<li>Save/load of bytecode followed by ExecuteString() that called one of the script functions failed during compilation. Bug from 2.7.1a (Thanks coollofty)
-</ul>
 <li>Library interface
 <ul>
 <li>Added Set/GetEngineProperty() that will allow you to dynamically changes some settings that previously required a recompilation of the library.
@@ -144,6 +140,15 @@ A:hover
     ADDi64, SUBi64, MULi64, DIVi64, MODi64,
     BAND64, BOR64, BXOR64, BSLL64, BSRL64, BSRA64
     CMPi64, CMPu64
+</ul>
+</ul>
+
+<h2>Version 2.7.1b - 2006/12/03</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Save/load of bytecode followed by ExecuteString() that called one of the script functions failed during compilation. (Thanks coollofty)
 </ul>
 </ul>
 

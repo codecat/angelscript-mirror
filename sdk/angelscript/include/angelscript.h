@@ -179,8 +179,8 @@ extern "C"
 #ifdef AS_C_INTERFACE
 	AS_API int               asEngine_AddRef(asIScriptEngine *e);
 	AS_API int               asEngine_Release(asIScriptEngine *e);
-	AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asDWORD property, asQWORD value);
-	AS_API asQWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asDWORD property);
+	AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asDWORD property, asPWORD value);
+	AS_API asPWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asDWORD property);
 	AS_API int               asEngine_SetCommonObjectMemoryFunctions(asIScriptEngine *e, asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 	AS_API int               asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv);
 	AS_API int               asEngine_ClearMessageCallback(asIScriptEngine *e);
@@ -334,8 +334,8 @@ public:
 	virtual int Release() = 0;
 
 	// Engine configuration
-	virtual int     SetEngineProperty(asDWORD property, asQWORD value) = 0;
-	virtual asQWORD GetEngineProperty(asDWORD property) = 0;
+	virtual int     SetEngineProperty(asDWORD property, asPWORD value) = 0;
+	virtual asPWORD GetEngineProperty(asDWORD property) = 0;
 
 	virtual int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv) = 0;
 	virtual int ClearMessageCallback() = 0;

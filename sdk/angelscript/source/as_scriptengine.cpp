@@ -125,7 +125,7 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	return new asCScriptEngine();
 }
 
-int asCScriptEngine::SetEngineProperty(asDWORD property, asQWORD value)
+int asCScriptEngine::SetEngineProperty(asDWORD property, asPWORD value)
 {
 	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
 		allowUnsafeReferences = value ? true : false;
@@ -135,7 +135,7 @@ int asCScriptEngine::SetEngineProperty(asDWORD property, asQWORD value)
 	return asSUCCESS;
 }
 
-asQWORD asCScriptEngine::GetEngineProperty(asDWORD property)
+asPWORD asCScriptEngine::GetEngineProperty(asDWORD property)
 {
 	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
 		return allowUnsafeReferences;
