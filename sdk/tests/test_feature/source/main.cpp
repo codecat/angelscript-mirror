@@ -156,6 +156,7 @@ int main(int argc, char **argv)
 	fs_chdir(asTestDir);
 #endif
 
+	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
@@ -172,7 +173,6 @@ int main(int argc, char **argv)
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestCondition()               ) goto failed; else printf("-- TestCondition passed\n");
 	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
-	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestPostProcess::Test()       ) goto failed; else printf("-- TestPostProcess passed\n");
 	if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");

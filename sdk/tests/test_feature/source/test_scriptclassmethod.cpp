@@ -88,6 +88,33 @@ static const char *script4 =
 "}                    \n"
 "void func() {}       \n";
 
+static const char *script5 =
+"int b;               \n"
+"class myclass        \n"
+"{                    \n"
+"  void func()        \n"
+"  {                  \n"
+"     int a = 3;      \n"
+"     this.a = a;     \n"
+"     test();         \n"
+"  }                  \n"
+"  void test()        \n"
+"  {                  \n"
+"     b = a;          \n"
+"  }                  \n"
+"  int a;             \n"
+"  int b;             \n"
+"}                    \n"
+"void test()          \n"
+"{                    \n"
+"   b = 9;            \n"
+"   myclass m;        \n"
+"   m.func();         \n"
+"   Assert(b == 9);   \n"
+"   Assert(m.a == 3); \n"
+"   Assert(m.b == 3); \n"
+"}                    \n";
+
 
 void print(asIScriptGeneric *gen)
 {
@@ -247,6 +274,23 @@ bool Test()
 	
 	int func = engine->GetFunctionIDByDecl(0, "void func()");
 	if( func < 0 ) fail = true;
+
+	engine->Release();
+
+	//----------------------------
+	// Accessing member variables without this
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+	engine->AddScriptSection(0, "test5", script5, strlen(script5), 0, false);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+
+	r = engine->ExecuteString(0, "test()", 0, 0);
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
 
 	engine->Release();
 

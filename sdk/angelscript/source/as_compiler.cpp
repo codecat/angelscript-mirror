@@ -4354,16 +4354,68 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 		sVariable *v = variables->GetVariable(name.AddressOf());
 		if( v == 0 )
 		{
-			if( outFunc && outFunc->objectType && name == THIS_TOKEN )
+			bool found = false;
+			if( outFunc && outFunc->objectType )
 			{
-				asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
+				if( name == THIS_TOKEN )
+				{
+					asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
 
-				// The object pointer is located at stack position 0
-				ctx->bc.InstrSHORT(BC_PSF, 0);
-				ctx->type.SetVariable(dt, 0, false);
-				ctx->type.dataType.MakeReference(true);
+					// The object pointer is located at stack position 0
+					ctx->bc.InstrSHORT(BC_PSF, 0);
+					ctx->type.SetVariable(dt, 0, false);
+					ctx->type.dataType.MakeReference(true);
+
+					found = true;
+				}
+	
+				if( !found )
+				{
+					asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
+					asCProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
+					if( prop )
+					{
+						// The object pointer is located at stack position 0
+						ctx->bc.InstrSHORT(BC_PSF, 0);
+						ctx->type.SetVariable(dt, 0, false);
+						ctx->type.dataType.MakeReference(true);
+
+						Dereference(ctx, true);
+
+						// TODO: This is the same as what is in CompileExpressionPostOp
+						// Put the offset on the stack
+						ctx->bc.InstrINT(BC_ADDSi, prop->byteOffset);
+
+						if( prop->type.IsReference() )
+							ctx->bc.Instr(BC_RDSPTR);
+
+						// Reference to primitive must be stored in the temp register
+						if( prop->type.IsPrimitive() )
+						{
+							// The ADD offset command should store the reference in the register directly
+							ctx->bc.Instr(BC_PopRPtr);
+						}
+
+						// Set the new type (keeping info about temp variable)
+						ctx->type.dataType = prop->type;
+						ctx->type.dataType.MakeReference(true);
+						ctx->type.isVariable = false;
+
+						if( ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle() )
+						{
+							// Objects that are members are not references
+							ctx->type.dataType.MakeReference(false);
+						}
+
+						// TODO: Check constness
+						//ctx->type.dataType.MakeReadOnly(isConst ? true : prop->type.IsReadOnly());
+
+						found = true;
+					}
+				}
 			}
-			else
+
+			if( !found )
 			{
 				// Is it a global property?
 				bool isCompiled = true;
@@ -4574,7 +4626,37 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 	}
 	else if( vnode->nodeType == snFunctionCall )
 	{
-		CompileFunctionCall(vnode, ctx, 0, false);
+		bool found = false;
+		if( outFunc && outFunc->objectType )
+		{
+			// Check if a class method is being called
+			asCScriptNode *nm = vnode->firstChild->firstChild;
+			if( nm->tokenType == ttIdentifier && nm->next == 0 )
+			{
+				asCString name;
+				name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
+				asCArray<int> funcs;
+				// TODO: Verify the constness
+				builder->GetObjectMethodDescriptions(name.AddressOf(), outFunc->objectType, funcs, false);
+				if( funcs.GetLength() )
+				{
+					asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
+
+					// The object pointer is located at stack position 0
+					ctx->bc.InstrSHORT(BC_PSF, 0);
+					ctx->type.SetVariable(dt, 0, false);
+					ctx->type.dataType.MakeReference(true);
+
+					Dereference(ctx, true);
+
+                    CompileFunctionCall(vnode, ctx, outFunc->objectType, false);
+					found = true;
+				}
+			}
+		}
+
+		if( !found )
+			CompileFunctionCall(vnode, ctx, 0, false);
 	}
 	else if( vnode->nodeType == snAssignment )
 	{
