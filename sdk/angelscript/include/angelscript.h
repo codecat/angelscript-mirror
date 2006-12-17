@@ -250,6 +250,7 @@ extern "C"
 	AS_API int              asContext_SetArgDouble(asIScriptContext *c, asUINT arg, double value);
 	AS_API int              asContext_SetArgAddress(asIScriptContext *c, asUINT arg, void *addr);
 	AS_API int              asContext_SetArgObject(asIScriptContext *c, asUINT arg, void *obj);
+	AS_API void *           asContext_GetArgPointer(asIScriptContext *c, asUINT arg);
 	AS_API int              asContext_SetObject(asIScriptContext *c, void *obj);
 	AS_API asDWORD          asContext_GetReturnDWord(asIScriptContext *c);
 	AS_API asQWORD          asContext_GetReturnQWord(asIScriptContext *c);
@@ -257,6 +258,7 @@ extern "C"
 	AS_API double           asContext_GetReturnDouble(asIScriptContext *c);
 	AS_API void *           asContext_GetReturnAddress(asIScriptContext *c);
 	AS_API void *           asContext_GetReturnObject(asIScriptContext *c);
+	AS_API void *           asContext_GetReturnPointer(asIScriptContext *c);
 	AS_API int              asContext_Execute(asIScriptContext *c);
 	AS_API int              asContext_Abort(asIScriptContext *c);
 	AS_API int              asContext_Suspend(asIScriptContext *c);
@@ -288,12 +290,14 @@ extern "C"
 	AS_API double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg);
+	AS_API void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg);
 	AS_API int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val);
 	AS_API int              asGeneric_SetReturnQWord(asIScriptGeneric *g, asQWORD val);
 	AS_API int              asGeneric_SetReturnFloat(asIScriptGeneric *g, float val);
 	AS_API int              asGeneric_SetReturnDouble(asIScriptGeneric *g, double val);
 	AS_API int              asGeneric_SetReturnAddress(asIScriptGeneric *g, void *addr);
 	AS_API int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj);
+	AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g);
 
 	AS_API int  asAny_AddRef(asIScriptAny *a);
 	AS_API int  asAny_Release(asIScriptAny *a);
@@ -447,6 +451,7 @@ public:
 	virtual int SetArgDouble(asUINT arg, double value) = 0;
 	virtual int SetArgAddress(asUINT arg, void *addr) = 0;
 	virtual int SetArgObject(asUINT arg, void *obj) = 0;
+	virtual void *GetArgPointer(asUINT arg) = 0;
 
 	virtual int SetObject(void *obj) = 0;
 
@@ -456,6 +461,7 @@ public:
 	virtual double  GetReturnDouble() = 0;
 	virtual void   *GetReturnAddress() = 0;
 	virtual void   *GetReturnObject() = 0;
+	virtual void   *GetReturnPointer() = 0;
 
 	virtual int Execute() = 0;
 	virtual int Abort() = 0;
@@ -502,6 +508,7 @@ public:
 	virtual double  GetArgDouble(asUINT arg) = 0;
 	virtual void   *GetArgAddress(asUINT arg) = 0;
 	virtual void   *GetArgObject(asUINT arg) = 0;
+	virtual void   *GetArgPointer(asUINT arg) = 0;
 
 	virtual int     SetReturnDWord(asDWORD val) = 0;
 	virtual int     SetReturnQWord(asQWORD val) = 0;
@@ -509,6 +516,7 @@ public:
 	virtual int     SetReturnDouble(double val) = 0;
 	virtual int     SetReturnAddress(void *addr) = 0;
 	virtual int     SetReturnObject(void *obj) = 0;
+	virtual void   *GetReturnPointer() = 0;
 
 protected:
 	virtual ~asIScriptGeneric() {}

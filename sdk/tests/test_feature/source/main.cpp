@@ -119,6 +119,7 @@ namespace TestSingleton         { bool Test(); }
 namespace TestCastOp            { bool Test(); }
 namespace TestFor               { bool Test(); }
 namespace TestBits              { bool Test(); }
+namespace TestGetArgPtr         { bool Test(); }
 
 
 #include "utils.h"
@@ -156,6 +157,7 @@ int main(int argc, char **argv)
 	fs_chdir(asTestDir);
 #endif
 
+	if( TestGetArgPtr::Test()         ) goto failed; else printf("-- TestGetArgPtr passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");

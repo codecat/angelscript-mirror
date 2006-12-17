@@ -489,6 +489,20 @@ void *asCContext::GetReturnObject()
 		return objectRegister;
 }
 
+void *asCContext::GetReturnPointer()
+{
+	if( status != tsProgramFinished ) return 0;
+
+	asCDataType *dt = &initialFunction->returnType;
+
+	// An object is stored in the objectRegister
+	if( !dt->IsReference() && dt->IsObject() )
+		return &objectRegister;
+	
+	// Primitives and references are stored in register1
+	return &register1;
+}
+
 int asCContext::SetObject(void *obj)
 {
 	if( status != tsPrepared )
@@ -753,6 +767,24 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	*(size_t*)(&stackFramePointer[offset]) = (size_t)obj;
 
 	return 0;
+}
+
+void *asCContext::GetArgPointer(asUINT arg)
+{
+	if( status != tsPrepared )
+		return 0;
+
+	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
+		return 0;
+
+	// Determine the position of the argument
+	int offset = 0;
+	if( initialFunction->objectType )
+		offset += PTR_SIZE;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	return &stackFramePointer[offset];
 }
 
 

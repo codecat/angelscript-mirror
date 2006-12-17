@@ -225,6 +225,9 @@
 				RelativePath="..\..\source\test_generic.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_getargptr.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_import.cpp">
 			</File>
 			<File

@@ -62,6 +62,7 @@ public:
 	double  GetArgDouble(asUINT arg);
 	void   *GetArgAddress(asUINT arg);
 	void   *GetArgObject(asUINT arg);
+	void   *GetArgPointer(asUINT arg);
 
 	int     SetReturnDWord(asDWORD val);
 	int     SetReturnQWord(asQWORD val);
@@ -69,6 +70,7 @@ public:
 	int     SetReturnDouble(double val);
 	int     SetReturnAddress(void *addr);
 	int     SetReturnObject(void *obj);
+	void   *GetReturnPointer();
 // interface - end
 
 	asCScriptEngine *engine;

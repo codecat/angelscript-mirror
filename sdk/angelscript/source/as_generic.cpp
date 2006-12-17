@@ -196,6 +196,20 @@ void *asCGeneric::GetArgObject(asUINT arg)
 	return *(void**)(&stackPointer[offset]);
 }
 
+void *asCGeneric::GetArgPointer(asUINT arg)
+{
+	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
+		return 0;
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Get the value
+	return &stackPointer[offset];
+}
+
 int asCGeneric::SetReturnDWord(asDWORD val)
 {
 	// Verify the type of the return value
@@ -329,6 +343,16 @@ int asCGeneric::SetReturnObject(void *obj)
 	objectRegister = obj;
 
 	return 0;
+}
+
+void *asCGeneric::GetReturnPointer()
+{
+	asCDataType *dt = &sysFunction->returnType;
+
+	if( dt->IsObject() && !dt->IsReference() )
+		return &objectRegister;
+
+	return &returnVal;
 }
 
 END_AS_NAMESPACE

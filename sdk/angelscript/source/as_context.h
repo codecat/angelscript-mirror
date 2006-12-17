@@ -77,6 +77,7 @@ public:
 	int SetArgDouble(asUINT arg, double value);
 	int SetArgAddress(asUINT arg, void *addr);
 	int SetArgObject(asUINT arg, void *obj);
+	void *GetArgPointer(asUINT arg);
 
 	int SetObject(void *obj);
 
@@ -86,6 +87,7 @@ public:
 	double  GetReturnDouble();
 	void   *GetReturnAddress();
 	void   *GetReturnObject();
+	void   *GetReturnPointer();
 
 	int  GetState();
 
