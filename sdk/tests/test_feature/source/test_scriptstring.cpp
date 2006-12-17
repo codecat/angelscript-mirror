@@ -105,6 +105,8 @@ static const char *script7 =
 bool Get(int *obj, const asCScriptString &szURL, asCScriptString &szHTML)
 {
 	assert(&szHTML != 0);
+	assert(szURL.buffer == "stringtest");
+	szHTML.buffer = "output";
 	return false;
 }
 
@@ -238,6 +240,8 @@ bool Test()
 	if( r != -1 ) fail = true;
 
 	//-------------------------------------
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
 	engine->AddScriptSection(0, "test", script7, strlen(script7), 0, false);
 	engine->Build(0);
 	r = engine->ExecuteString(0, "test()");
@@ -245,8 +249,13 @@ bool Test()
 
 	engine->RegisterObjectType("Http", sizeof(int), asOBJ_PRIMITIVE);
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_CDECL_OBJFIRST);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	
-	engine->ExecuteString(0, "Http h; string str; h.get(\"string\", str);");
+	r = engine->ExecuteString(0, "Http h; string str; h.get(\"stringtest\", str); assert(str == \"output\");");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+
+	r = engine->ExecuteString(0, "Http h; string a = \"test\", b; h.get(\"string\"+a, b); assert(b == \"output\");");
+	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	engine->Release();
 
