@@ -495,7 +495,7 @@ static void StringFree(void *p)
 }
 
 // This is the string factory that creates new strings for the script
-static asCScriptString *StringFactory(asUINT length, const char *s)
+static asCScriptString *StringFactory(asUINT /*length*/, const char *s)
 {
 	// Return a script handle to a new string
 	return new asCScriptString(s);

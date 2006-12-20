@@ -33,7 +33,6 @@
 #include <stdlib.h>     // strtod(), strtol()
 #include <assert.h>     // assert()
 #include <stdio.h>      // _vsnprintf()
-#include <memory.h>     // memcpy()
 #include <string.h>     // some compilers declare memcpy() here
 
 #include "as_config.h"

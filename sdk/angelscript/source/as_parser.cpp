@@ -297,7 +297,7 @@ asCScriptNode *asCParser::ParseScript()
 			isSyntaxError = false;
 		}
 	}
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 bool asCParser::IsVarDecl()
@@ -713,7 +713,7 @@ asCScriptNode *asCParser::ParseGlobalVar()
 			return node;
 		}
 	}
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 asCScriptNode *asCParser::ParseTypeMod(bool isParam)
@@ -1026,7 +1026,7 @@ asCScriptNode *asCParser::ParseParameterList()
 			}
 		}
 	}
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 asCScriptNode *asCParser::ParseExprValue()
@@ -1253,7 +1253,7 @@ asCScriptNode *asCParser::ParseStatementBlock()
 			isSyntaxError = false;
 		}
 	}
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 asCScriptNode *asCParser::ParseInitList()
@@ -1357,7 +1357,7 @@ asCScriptNode *asCParser::ParseInitList()
 			}
 		}
 	}
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 bool asCParser::IsFunctionCall()
@@ -1457,7 +1457,7 @@ asCScriptNode *asCParser::ParseDeclaration()
 			return node;
 		}
 	}
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 asCScriptNode *asCParser::ParseStatement()
@@ -1993,7 +1993,7 @@ asCScriptNode *asCParser::ParseExpression()
 		node->AddChildLast(ParseExprTerm());
 		if( isSyntaxError ) return node;
 	}
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 asCScriptNode *asCParser::ParseExprTerm()
@@ -2027,7 +2027,7 @@ asCScriptNode *asCParser::ParseExprTerm()
 		node->AddChildLast(ParseExprPostOp());
 		if( isSyntaxError ) return node;
 	}
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 asCScriptNode *asCParser::ParseExprPreOp()

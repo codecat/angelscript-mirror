@@ -186,11 +186,11 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 		if( bcTypes[curr->op] == BCTYPE_wW_rW_rW_ARG )
 		{
 			if( curr->wArg[0] == oldOffset )
-				curr->wArg[0] = newOffset;
+				curr->wArg[0] = (short)newOffset;
 			if( curr->wArg[1] == oldOffset )
-				curr->wArg[1] = newOffset;
+				curr->wArg[1] = (short)newOffset;
 			if( curr->wArg[2] == oldOffset )
-				curr->wArg[2] = newOffset;
+				curr->wArg[2] = (short)newOffset;
 		}
 		else if( bcTypes[curr->op] == BCTYPE_rW_ARG    ||
 				 bcTypes[curr->op] == BCTYPE_wW_ARG    ||
@@ -200,20 +200,20 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 				 bcTypes[curr->op] == BCTYPE_wW_QW_ARG )
 		{
 			if( curr->wArg[0] == oldOffset )
-				curr->wArg[0] = newOffset;
+				curr->wArg[0] = (short)newOffset;
 		}
 		else if( bcTypes[curr->op] == BCTYPE_wW_rW_ARG ||
 				 bcTypes[curr->op] == BCTYPE_rW_rW_ARG )
 		{
 			if( curr->wArg[0] == oldOffset )
-				curr->wArg[0] = newOffset;
+				curr->wArg[0] = (short)newOffset;
 			if( curr->wArg[1] == oldOffset )
-				curr->wArg[1] = newOffset;
+				curr->wArg[1] = (short)newOffset;
 		}
 		else if( bcTypes[curr->op] == BCTYPE_W_rW_ARG )
 		{
 			if( curr->wArg[1] == oldOffset )
-				curr->wArg[1] = newOffset;
+				curr->wArg[1] = (short)newOffset;
 		}
 
 		curr = curr->next;
@@ -1206,7 +1206,7 @@ void asCByteCode::Ret(int pop)
 	last->op = BC_RET;
 	last->size = SizeOfType(BCT_RET);
 	last->stackInc = 0; // The instruction pops the argument, but it doesn't affect current function
-	last->wArg[0] = pop;
+	last->wArg[0] = (short)pop;
 }
 
 void asCByteCode::JmpP(int var, asDWORD max)
@@ -1219,7 +1219,7 @@ void asCByteCode::JmpP(int var, asDWORD max)
 	last->op       = BC_JMPP;
 	last->size     = SizeOfType(BCT_JMPP);
 	last->stackInc = bcStackInc[BC_JMPP];
-	last->wArg[0]  = var;
+	last->wArg[0]  = (short)var;
 
 	// Store the largest jump that is made for PostProcess()
 	*ARG_DW(last->arg) = max;
@@ -1452,7 +1452,7 @@ void asCByteCode::PostProcess()
 			if( instr->op == BC_PSP )
 			{
 				instr->op = BC_PSF;
-				instr->wArg[0] = instr->wArg[0] + instr->stackSize;
+				instr->wArg[0] = instr->wArg[0] + (short)instr->stackSize;
 			}
 
 			if( instr->op == BC_JMP )
@@ -1837,9 +1837,9 @@ int asCByteCode::InstrW_W_W(bcInstr bc, int a, int b, int c)
 		return 0;
 
 	last->op       = bc;
-	last->wArg[0]  = a;
-	last->wArg[1]  = b;
-	last->wArg[2]  = c;
+	last->wArg[0]  = (short)a;
+	last->wArg[1]  = (short)b;
+	last->wArg[2]  = (short)c;
 	last->size     = SizeOfType(bcTypes[bc]);
 	last->stackInc = bcStackInc[bc];
 
@@ -1856,8 +1856,8 @@ int asCByteCode::InstrW_W(bcInstr bc, int a, int b)
 		return 0;
 
 	last->op       = bc;
-	last->wArg[0]  = a;
-	last->wArg[1]  = b;
+	last->wArg[0]  = (short)a;
+	last->wArg[1]  = (short)b;
 	last->size     = SizeOfType(bcTypes[bc]);
 	last->stackInc = bcStackInc[bc];
 

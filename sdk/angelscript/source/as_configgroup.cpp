@@ -88,7 +88,7 @@ void asCConfigGroup::RefConfigGroup(asCConfigGroup *group)
 	group->AddRef();
 }
 
-bool asCConfigGroup::HasLiveObjects(asCScriptEngine *engine)
+bool asCConfigGroup::HasLiveObjects(asCScriptEngine * /*engine*/)
 {
 	for( asUINT n = 0; n < objTypes.GetLength(); n++ )
 		if( objTypes[n]->refCount != 0 )

@@ -358,7 +358,7 @@ void asCCompiler::CompileConstructor(asCDataType &type, int offset, asCByteCode 
 	// Call constructor for the data type
 	if( type.IsObject() && !type.IsObjectHandle() )
 	{
-		bc->InstrSHORT(BC_PSF, offset);
+		bc->InstrSHORT(BC_PSF, (short)offset);
 		DefaultConstructor(bc, type);
 	}
 }
@@ -371,7 +371,7 @@ void asCCompiler::CompileDestructor(asCDataType &type, int offset, asCByteCode *
 		if( type.IsObject() )
 		{
 			// Free the memory
-			bc->InstrSHORT(BC_PSF, offset);
+			bc->InstrSHORT(BC_PSF, (short)offset);
 			bc->InstrPTR(BC_FREE, builder->module->RefObjectType(type.GetObjectType()));
 		}
 	}
@@ -513,7 +513,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			if( funcs.GetLength() == 1 )
 			{
 				// TODO: This reference is open while evaluating the arguments. We must fix this
-				ctx.bc.InstrWORD(BC_PGA, builder->module->GetGlobalVarIndex(gvar->index));
+				ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 
 				// TODO: Ugly code
 				// Special case: If this is a constructor for any() with a parameter, then we can't use the normal PrepareFunctionCall
@@ -555,7 +555,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		ti.Set(gvar->datatype);
 		ti.isVariable = false;
 		ti.isTemporary = false;
-		ti.stackOffset = gvar->index;
+		ti.stackOffset = (short)gvar->index;
 
 		CompileInitList(&ti, node, &ctx.bc);
 
@@ -566,7 +566,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		// Call constructor for all data types
 		if( gvar->datatype.IsObject() && !gvar->datatype.IsObjectHandle() )
 		{
-			ctx.bc.InstrWORD(BC_PGA, builder->module->GetGlobalVarIndex(gvar->index));
+			ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 			DefaultConstructor(&ctx.bc, gvar->datatype);
 		}
 
@@ -589,7 +589,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				lctx.type.Set(gvar->datatype);
 				lctx.type.dataType.MakeReference(true);
 				lctx.type.dataType.MakeReadOnly(false);
-				lctx.bc.InstrWORD(BC_LDG, builder->module->GetGlobalVarIndex(gvar->index));
+				lctx.bc.InstrWORD(BC_LDG, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 
 				DoAssignment(&ctx, &lctx, &expr, node, node, ttAssignment, node);
 			}
@@ -652,7 +652,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 						MoveArgsToStack(match[0], &ctx.bc, args, false);
 
 						// Add the code for the object
-						ctx.bc.InstrWORD(BC_PGA, builder->module->GetGlobalVarIndex(gvar->index));
+						ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 						ctx.bc.Instr(BC_RDSPTR);
 
 						PerformFunctionCall(match[0], &ctx, false, &args);
@@ -684,7 +684,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					MergeExprContexts(&ctx, &expr);
 
 					// Add byte code for storing value of expression in variable
-					ctx.bc.InstrWORD(BC_PGA, builder->module->GetGlobalVarIndex(gvar->index));
+					ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 
 					PerformAssignment(&ltype, &expr.type, &ctx.bc, node->prev);
 
@@ -795,7 +795,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					if( dt.IsObjectHandle() )
 						type.isExplicitHandle = true;
 
-					ctx->bc.InstrSHORT(BC_PSF, offset);
+					ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 
 					PerformAssignment(&type, &ctx->type, &ctx->bc, node);
 
@@ -805,7 +805,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 					ctx->type = type;
 
-					ctx->bc.InstrSHORT(BC_PSF, offset);
+					ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 					if( dt.IsObject() && !dt.IsObjectHandle() )
 						ctx->bc.Instr(BC_RDSPTR);
 
@@ -845,7 +845,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 				ctx->type = type;
 
-				ctx->bc.InstrSHORT(BC_PSF, offset);
+				ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 				if( dt.IsObject() && !dt.IsObjectHandle() )
 					ctx->bc.Instr(BC_RDSPTR);
 			}
@@ -877,7 +877,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				offset = AllocateVariableNotIn(dt, true, &vars);
 
 				// Copy the handle
-				ctx->bc.InstrWORD(BC_PSF, offset);
+				ctx->bc.InstrWORD(BC_PSF, (asWORD)offset);
 				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
 
 				dt.MakeHandle(false);
@@ -1249,7 +1249,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					asSExprContext ctx;
 
 					sVariable *v = variables->GetVariable(name.AddressOf());
-					ctx.bc.InstrSHORT(BC_VAR, v->stackOffset);
+					ctx.bc.InstrSHORT(BC_VAR, (short)v->stackOffset);
 
 					// TODO: Ugly code
 					// Special case: If this is a constructor for any() with a parameter, then we can't use the normal PrepareFunctionCall
@@ -1303,7 +1303,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			ti.Set(type);
 			ti.isVariable = true;
 			ti.isTemporary = false;
-			ti.stackOffset = v->stackOffset;
+			ti.stackOffset = (short)v->stackOffset;
 
 			CompileInitList(&ti, node, bc);
 
@@ -1403,7 +1403,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 							// Add the code for the object
 							sVariable *v = variables->GetVariable(name.AddressOf());
 							ltype.stackOffset = (short)v->stackOffset;
-							ctx.bc.InstrSHORT(BC_PSF, v->stackOffset);
+							ctx.bc.InstrSHORT(BC_PSF, (short)v->stackOffset);
 							ctx.bc.Instr(BC_RDSPTR);
 
 							PerformFunctionCall(match[0], &ctx, false, &args);
@@ -1436,7 +1436,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						MergeExprContexts(&ctx, &expr);
 
 						// Add byte code for storing value of expression in variable
-						ctx.bc.InstrSHORT(BC_PSF, v->stackOffset);
+						ctx.bc.InstrSHORT(BC_PSF, (short)v->stackOffset);
 						ltype.stackOffset = (short)v->stackOffset;
 
 						PerformAssignment(&ltype, &expr.type, &ctx.bc, node->prev);
@@ -1508,7 +1508,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			if( var->isVariable )
 				ctx.bc.InstrSHORT(BC_PSF, var->stackOffset);
 			else
-				ctx.bc.InstrWORD(BC_PGA, builder->module->GetGlobalVarIndex(var->stackOffset));
+				ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(var->stackOffset));
 
 			PrepareFunctionCall(funcs[0], &ctx.bc, args);
 			MoveArgsToStack(funcs[0], &ctx.bc, args, false);
@@ -1582,7 +1582,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 					rctx.type.Set(var->dataType.GetSubType());
 					rctx.type.isVariable = true;
 					rctx.type.isTemporary = true;
-					rctx.type.stackOffset = offset;
+					rctx.type.stackOffset = (short)offset;
 
 					CompileInitList(&rctx.type, el, &rctx.bc);
 
@@ -1595,7 +1595,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				if( var->isVariable )
 					lctx.bc.InstrSHORT(BC_PSF, var->stackOffset);
 				else
-					lctx.bc.InstrWORD(BC_PGA, builder->module->GetGlobalVarIndex(var->stackOffset));
+					lctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(var->stackOffset));
 				lctx.bc.Instr(BC_RDSPTR);
 				lctx.bc.Call(BC_CALLSYS, funcId, 1+PTR_SIZE);
 
@@ -1812,7 +1812,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 
 	// If the value is larger than the largest case value, jump to default
 	int tmpOffset = AllocateVariable(asCDataType::CreatePrimitive(ttInt, false), true);
-	expr.bc.InstrSHORT_DW(BC_SetV4, tmpOffset, caseValues[caseValues.GetLength()-1]);
+	expr.bc.InstrSHORT_DW(BC_SetV4, (short)tmpOffset, caseValues[caseValues.GetLength()-1]);
 	expr.bc.InstrW_W(BC_CMPi, offset, tmpOffset);
 	expr.bc.InstrDWORD(BC_JP, defaultLabel);
 	ReleaseTemporaryVariable(tmpOffset, &expr.bc);
@@ -1835,7 +1835,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		{
 			// If the value is smaller than the smallest case value in the range, jump to default
 			tmpOffset = AllocateVariable(asCDataType::CreatePrimitive(ttInt, false), true);
-			expr.bc.InstrSHORT_DW(BC_SetV4, tmpOffset, caseValues[ranges[range]]);
+			expr.bc.InstrSHORT_DW(BC_SetV4, (short)tmpOffset, caseValues[ranges[range]]);
 			expr.bc.InstrW_W(BC_CMPi, offset, tmpOffset);
 			expr.bc.InstrDWORD(BC_JS, defaultLabel);
 			ReleaseTemporaryVariable(tmpOffset, &expr.bc);
@@ -1846,7 +1846,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 			{
 				// If the value is larger than the largest case value in the range, jump to the next range
 				tmpOffset = AllocateVariable(asCDataType::CreatePrimitive(ttInt, false), true);
-				expr.bc.InstrSHORT_DW(BC_SetV4, tmpOffset, maxRange);
+				expr.bc.InstrSHORT_DW(BC_SetV4, (short)tmpOffset, maxRange);
 				expr.bc.InstrW_W(BC_CMPi, offset, tmpOffset);
 				expr.bc.InstrDWORD(BC_JP, nextRangeLabel);
 				ReleaseTemporaryVariable(tmpOffset, &expr.bc);
@@ -1854,7 +1854,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 
 			// Jump forward according to the value
 			tmpOffset = AllocateVariable(asCDataType::CreatePrimitive(ttInt, false), true);
-			expr.bc.InstrSHORT_DW(BC_SetV4, tmpOffset, caseValues[ranges[range]]);
+			expr.bc.InstrSHORT_DW(BC_SetV4, (short)tmpOffset, caseValues[ranges[range]]);
 			expr.bc.InstrW_W_W(BC_SUBi, tmpOffset, offset, tmpOffset);
 			ReleaseTemporaryVariable(tmpOffset, &expr.bc);
 			expr.bc.JmpP(tmpOffset, maxRange - caseValues[ranges[range]]);
@@ -1878,7 +1878,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 			for( n = ranges[range]; n < index; ++n )
 			{
 				tmpOffset = AllocateVariable(asCDataType::CreatePrimitive(ttInt, false), true);
-				expr.bc.InstrSHORT_DW(BC_SetV4, tmpOffset, caseValues[n]);
+				expr.bc.InstrSHORT_DW(BC_SetV4, (short)tmpOffset, caseValues[n]);
 				expr.bc.InstrW_W(BC_CMPi, offset, tmpOffset);
 				expr.bc.InstrDWORD(BC_JZ, caseLabels[n]);
 				ReleaseTemporaryVariable(tmpOffset, &expr.bc);
@@ -2353,14 +2353,14 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 
 	PrepareForAssignment(&lvalue.dataType, ctx, node);
 
-	ctx->bc.InstrSHORT(BC_PSF, offset);
+	ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 	PerformAssignment(&lvalue, &ctx->type, &ctx->bc, node);
 
 	// Pop the original reference
 	ctx->bc.Pop(PTR_SIZE);
 
 	// Push the reference to the temporary variable on the stack
-	ctx->bc.InstrSHORT(BC_PSF, offset);
+	ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 	lvalue.dataType.MakeReference(true);
 
 	ctx->type = lvalue;
@@ -4174,7 +4174,7 @@ void asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 		if( !rtemp.dataType.IsPrimitive() )
 		{
-			ctx->bc.InstrSHORT(BC_PSF, offset);
+			ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 			rtemp.dataType.MakeReference(true);
 		}
 		PerformAssignment(&rtemp, &le.type, &ctx->bc, cexpr->next);
@@ -4193,7 +4193,7 @@ void asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 		if( !rtemp.dataType.IsPrimitive() )
 		{
-			ctx->bc.InstrSHORT(BC_PSF, offset);
+			ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 			rtemp.dataType.MakeReference(true);
 		}
 		PerformAssignment(&rtemp, &re.type, &ctx->bc, cexpr->next);
@@ -4215,7 +4215,7 @@ void asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 		if( !ctx->type.dataType.IsPrimitive() )
 		{
-			ctx->bc.InstrSHORT(BC_PSF, offset);
+			ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 			ctx->type.dataType.MakeReference(true);
 		}
 
@@ -4440,9 +4440,9 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 
 							// Push the address of the variable on the stack
 							if( ctx->type.dataType.IsPrimitive() )
-								ctx->bc.InstrWORD(BC_LDG, builder->module->GetGlobalVarIndex(prop->index));
+								ctx->bc.InstrWORD(BC_LDG, (asWORD)builder->module->GetGlobalVarIndex(prop->index));
 							else
-								ctx->bc.InstrWORD(BC_PGA, builder->module->GetGlobalVarIndex(prop->index));
+								ctx->bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(prop->index));
 
 							// If the global property is registered by the application
 							// then module must keep a reference to the config group
@@ -4485,7 +4485,7 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 				{
 					if( v->type.IsReference() )
 					{
-						ctx->bc.InstrSHORT(BC_CpyVtoR4, v->stackOffset);
+						ctx->bc.InstrSHORT(BC_CpyVtoR4, (short)v->stackOffset);
 						ctx->type.Set(v->type);
 					}
 					else
@@ -4493,7 +4493,7 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 				}
 				else
 				{
-					ctx->bc.InstrSHORT(BC_PSF, v->stackOffset);
+					ctx->bc.InstrSHORT(BC_PSF, (short)v->stackOffset);
 					ctx->type.SetVariable(v->type, v->stackOffset, false);
 					ctx->type.dataType.MakeReference(true);
 
@@ -6346,7 +6346,7 @@ void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> 
 			asCTypeInfo type;
 			type.SetVariable(ctx->type.dataType, offset, true);
 
-			ctx->bc.InstrSHORT(BC_PSF, offset);
+			ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 
 			PerformAssignment(&type, &ctx->type, &ctx->bc, 0);
 
@@ -6396,7 +6396,7 @@ void asCCompiler::ConvertToTempVariable(asSExprContext *ctx)
 			asCTypeInfo type;
 			type.SetVariable(ctx->type.dataType, offset, true);
 
-			ctx->bc.InstrSHORT(BC_PSF, offset);
+			ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 
 			PerformAssignment(&type, &ctx->type, &ctx->bc, 0);
 
@@ -6425,12 +6425,12 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 			if( ctx->type.IsNullConstant() )
 			{
 				// TODO: Adapt pointer size
-				ctx->bc.InstrSHORT_DW(BC_SetV4, offset, 0);
+				ctx->bc.InstrSHORT_DW(BC_SetV4, (short)offset, 0);
 			}
 			else
 			{
 				// Copy the object handle to a variable
-				ctx->bc.InstrSHORT(BC_PSF, offset);
+				ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
 				ctx->bc.Pop(PTR_SIZE);
 			}
@@ -6444,13 +6444,13 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 			{
 				offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
 				if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
-					ctx->bc.InstrSHORT_B(BC_SetV1, offset, ctx->type.byteValue);
+					ctx->bc.InstrSHORT_B(BC_SetV1, (short)offset, ctx->type.byteValue);
 				else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
-					ctx->bc.InstrSHORT_W(BC_SetV2, offset, ctx->type.wordValue);
+					ctx->bc.InstrSHORT_W(BC_SetV2, (short)offset, ctx->type.wordValue);
 				else if( ctx->type.dataType.GetSizeInMemoryBytes() == 4 )
-					ctx->bc.InstrSHORT_DW(BC_SetV4, offset, ctx->type.dwordValue);
+					ctx->bc.InstrSHORT_DW(BC_SetV4, (short)offset, ctx->type.dwordValue);
 				else
-					ctx->bc.InstrSHORT_QW(BC_SetV8, offset, ctx->type.qwordValue);
+					ctx->bc.InstrSHORT_QW(BC_SetV8, (short)offset, ctx->type.qwordValue);
 
 				ctx->type.SetVariable(ctx->type.dataType, offset, true);
 				return;
@@ -6465,13 +6465,13 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 
 				// Read the value from the address in the register directly into the variable
 				if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
-					ctx->bc.InstrSHORT(BC_RDR1, offset);
+					ctx->bc.InstrSHORT(BC_RDR1, (short)offset);
 				else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
-					ctx->bc.InstrSHORT(BC_RDR2, offset);
+					ctx->bc.InstrSHORT(BC_RDR2, (short)offset);
 				else if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-					ctx->bc.InstrSHORT(BC_RDR4, offset);
+					ctx->bc.InstrSHORT(BC_RDR4, (short)offset);
 				else
-					ctx->bc.InstrSHORT(BC_RDR8, offset);
+					ctx->bc.InstrSHORT(BC_RDR8, (short)offset);
 			}
 
 			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
@@ -7124,13 +7124,13 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 				{
 					ctx->bc.InstrW_W(BC_CMPi,b,c);
 					ctx->bc.Instr(BC_TZ);
-					ctx->bc.InstrSHORT(BC_CpyRtoV4, a);
+					ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)a);
 				}
 				else if( op == ttNotEqual )
 				{
 					ctx->bc.InstrW_W(BC_CMPi,b,c);
 					ctx->bc.Instr(BC_TNZ);
-					ctx->bc.InstrSHORT(BC_CpyRtoV4, a);
+					ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)a);
 				}
 
 				ctx->type.SetVariable(asCDataType::CreatePrimitive(ttBool, true), a, true);
@@ -7187,7 +7187,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 
 			ctx->bc.InstrW_W(iCmp, b, c);
 			ctx->bc.Instr(iT);
-			ctx->bc.InstrSHORT(BC_CpyRtoV4, a);
+			ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)a);
 
 			ctx->type.SetVariable(asCDataType::CreatePrimitive(ttBool, true), a, true);
 		}
@@ -7401,7 +7401,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			{
 				ctx->bc.InstrSHORT(BC_CpyVtoR4, lctx->type.stackOffset);
 				ctx->bc.InstrDWORD(BC_JNZ, label1);
-				ctx->bc.InstrW_DW(BC_SetV4, offset, 0);
+				ctx->bc.InstrW_DW(BC_SetV4, (asWORD)offset, 0);
 				ctx->bc.InstrINT(BC_JMP, label2);
 			}
 			else if( op == ttOr )
@@ -7409,9 +7409,9 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 				ctx->bc.InstrSHORT(BC_CpyVtoR4, lctx->type.stackOffset);
 				ctx->bc.InstrDWORD(BC_JZ, label1);
 #if AS_SIZEOF_BOOL == 1
-				ctx->bc.InstrSHORT_B(BC_SetV1, offset, VALUE_OF_BOOLEAN_TRUE);
+				ctx->bc.InstrSHORT_B(BC_SetV1, (short)offset, VALUE_OF_BOOLEAN_TRUE);
 #else
-				ctx->bc.InstrSHORT_DW(BC_SetV4, offset, VALUE_OF_BOOLEAN_TRUE);
+				ctx->bc.InstrSHORT_DW(BC_SetV4, (short)offset, VALUE_OF_BOOLEAN_TRUE);
 #endif
 				ctx->bc.InstrINT(BC_JMP, label2);
 			}
@@ -7528,7 +7528,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 			ctx->bc.InstrW_W(BC_CMPi, b, c);
 #endif
 			ctx->bc.Instr(BC_TZ);
-			ctx->bc.InstrSHORT(BC_CpyRtoV4, a);
+			ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)a);
 		}
 		else if( op == ttNotEqual )
 		{
@@ -7538,7 +7538,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 #else
 			ctx->bc.InstrW_W(BC_CMPi, b, c);
 #endif
-			ctx->bc.InstrSHORT(BC_CpyRtoV4, a);
+			ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)a);
 		}
 
 		ctx->type.SetVariable(asCDataType::CreatePrimitive(ttBool, true), a, true);
@@ -7585,7 +7585,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 		ctx->type.dataType.MakeReference(true);
 
 		// Move the pointer from the object register to the temporary variable
-		ctx->bc.InstrSHORT(BC_STOREOBJ, returnOffset);
+		ctx->bc.InstrSHORT(BC_STOREOBJ, (short)returnOffset);
 
 		// Clean up arguments
 		if( args )
@@ -7593,7 +7593,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 		ProcessDeferredParams(ctx);
 
-		ctx->bc.InstrSHORT(BC_PSF, returnOffset);
+		ctx->bc.InstrSHORT(BC_PSF, (short)returnOffset);
 	}
 	else if( descr->returnType.IsReference() )
 	{
@@ -7628,9 +7628,9 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 			// Move the value from the return register to the variable
 			if( descr->returnType.GetSizeOnStackDWords() == 1 )
-				ctx->bc.InstrSHORT(BC_CpyRtoV4, offset);
+				ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)offset);
 			else if( descr->returnType.GetSizeOnStackDWords() == 2 )
-				ctx->bc.InstrSHORT(BC_CpyRtoV8, offset);
+				ctx->bc.InstrSHORT(BC_CpyRtoV8, (short)offset);
 
 			ctx->type.SetVariable(descr->returnType, offset, true);
 		}

@@ -246,10 +246,16 @@
 	#define STDCALL __stdcall
 	#define AS_SIZEOF_BOOL 1
 
+	#define ASM_INTEL  // Intel style for inline assembly on microsoft compilers
+
+	#if _XBOX_VER >= 200
+		// 360 is PPC, big endian and 64 bit.
+		#define AS_PPC
+	#else
 	// Support native calling conventions on x86, but not 64bit yet
-	#if defined(_M_IX86) && !defined(__LP64__)
+		#if defined(_XBOX) || (defined(_M_IX86) && !defined(__LP64__))
 		#define AS_X86
-		#define ASM_INTEL  // Intel style for inline assembly
+		#endif
 	#endif
 
 	#if _MSC_VER <= 1200 // MSVC++ 6
@@ -257,6 +263,8 @@
 	#else
 		#define I64(x) x##ll
 	#endif
+
+	#define UNREACHABLE_RETURN
 #endif
 
 // Metrowerks CodeWarrior (experimental, let me know if something isn't working)
@@ -283,6 +291,8 @@
 	#else
 		#define I64(x) x##ll
 	#endif
+
+	#define UNREACHABLE_RETURN
 #endif
 
 // SN Systems ProDG (also experimental, let me know if something isn't working)
@@ -312,6 +322,8 @@
 	#endif
 
 	#define I64(x) x##ll
+
+	#define UNREACHABLE_RETURN
 #endif
 
 // GNU C
@@ -334,14 +346,17 @@
 			#define AS_SIZEOF_BOOL 1
 		#endif
 		#define STDCALL
-	#endif
 
 	// Windows and Linux
-	#if defined(WIN32) || defined(__linux__)
+	#elif defined(WIN32) || defined(__linux__)
 		#define STDCALL __attribute__((stdcall))
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+
+	// Other platforms
+	#else
+		#define STDCALL
 	#endif
 
 	// Support native calling conventions on x86, MIPS, and SH4, but not 64bit
@@ -359,6 +374,8 @@
 	#endif
 
 	#define I64(x) x##ll
+
+	#define UNREACHABLE_RETURN
 #endif
 
 
@@ -377,11 +394,16 @@
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 #endif
 
-// PowerPC, e.g. Mac, GameCube, maybe even PS3 and XBox 360
+// PowerPC, e.g. Mac, GameCube, XBox 360 and PS3
 #if defined(__PPC__) || defined(__ppc__)
 	#define AS_BIG_ENDIAN
 	// Gamecube
 	#if defined(_GC)
+		#define AS_ALIGN
+		#define AS_USE_DOUBLE_AS_FLOAT
+	#endif
+	// XBox 360 or PS3
+	#if _XBOX_VER >= 200 || defined(__PPU__)
 		#define AS_ALIGN
 		#define AS_USE_DOUBLE_AS_FLOAT
 	#endif

@@ -417,10 +417,12 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	int argBit = 1;
 	int hostFlags = 0;
 	int intArgs = 0;
-	for( int a = 0; a < descr->parameterTypes.GetLength(); a++ ) {
-		if (descr->parameterTypes[a].IsFloatType()) {
+	for( size_t a = 0; a < descr->parameterTypes.GetLength(); a++ )
+	{
+		if (descr->parameterTypes[a].IsFloatType()) 
 			hostFlags |= argBit;
-		} else intArgs++;
+		else 
+			intArgs++;
 		argBit <<= 1;
 	}
 
@@ -502,11 +504,11 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		// Need to free the complex objects passed by value
 		args = context->stackPointer;
-		if( callConv >= ICC_THISCALL && !objectPointer )
+		if( callConv >= (int)ICC_THISCALL && !objectPointer )
 		    args++;
 
 		int spos = 0;
-		for( int n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		for( size_t n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			if( descr->parameterTypes[n].IsObject() &&
 				!descr->parameterTypes[n].IsReference() &&
