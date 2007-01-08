@@ -192,6 +192,9 @@
 				RelativePath="..\..\source\test_conversion.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_cstring.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_custommem.cpp">
 			</File>
 			<File
@@ -456,6 +459,9 @@
 			</File>
 			<File
 				RelativePath="..\..\source\bstr.h">
+			</File>
+			<File
+				RelativePath="..\..\source\cstring.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h">

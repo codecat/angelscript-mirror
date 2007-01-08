@@ -221,6 +221,7 @@ bool TestStdString()
 	engine->RegisterObjectType("Http", sizeof(Http), asOBJ_CLASS);
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asMETHOD(Http,Get),asCALL_THISCALL);
 	engine->ExecuteString(0, "Http h; string str; h.get(\"string\", str);");
+	engine->ExecuteString(0, "Http h; string str; string a = \"a\"; h.get(\"string\"+a, str);");
 
 	engine->Release();
 
