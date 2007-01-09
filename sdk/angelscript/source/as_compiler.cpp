@@ -971,7 +971,15 @@ void asCCompiler::PrepareFunctionCall(int funcID, asCByteCode *bc, asCArray<asSE
 	asSExprContext e;
 	int n;
 	for( n = (int)args.GetLength()-1; n >= 0; n-- )
-		PrepareArgument2(&e, args[n], &descr->parameterTypes[n], true, descr->inOutFlags[n]);
+	{
+		// Make sure PrepareArgument doesn't use any variable that is already 
+		// being used by any of the following argument expressions
+		asCArray<int> reservedVars;
+		for( int m = n-1; m >= 0; m-- )
+			args[m]->bc.GetVarsUsed(reservedVars);
+
+		PrepareArgument2(&e, args[n], &descr->parameterTypes[n], true, descr->inOutFlags[n], &reservedVars);
+	}
 
 	bc->AddCode(&e.bc);
 }
