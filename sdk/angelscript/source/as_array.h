@@ -106,7 +106,7 @@ asCArray<T>::~asCArray(void)
 {
 	if( array )
 	{
-		delete[] array;
+		DELETEARRAY(array);
 		array = 0;
 	}
 }
@@ -153,10 +153,12 @@ T asCArray<T>::PopLast()
 template <class T>
 void asCArray<T>::Allocate(size_t numElements, bool keepData)
 {
-	T *tmp = new T[numElements];
+	T *tmp = NEWARRAY(T,numElements);
 
 	if( array )
 	{
+		size_t oldLength = length;
+
 		if( keepData )
 		{
 			if( length > numElements )
@@ -168,7 +170,7 @@ void asCArray<T>::Allocate(size_t numElements, bool keepData)
 		else
 			length = 0;
 
-		delete[] array;
+		DELETEARRAY(array);
 	}
 
 	array = tmp;

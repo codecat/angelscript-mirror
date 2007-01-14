@@ -1,5 +1,6 @@
 #include "utils.h"
 using std::string;
+/*
 #include "cstring.h"
 
 namespace TestCString
@@ -150,3 +151,4 @@ bool Test()
 
 } // namespace
 
+*/

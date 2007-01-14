@@ -65,7 +65,9 @@ void asCParser::Reset()
 	sourcePos = 0;
 
 	if( scriptNode )
-		delete scriptNode;
+	{
+		DELETE(scriptNode,asCScriptNode);
+	}
 
 	scriptNode = 0;
 
@@ -111,7 +113,7 @@ int asCParser::ParseDataType(asCScriptCode *script)
 
 	this->script = script;
 
-	scriptNode = new asCScriptNode(snDataType);
+	scriptNode = NEW(asCScriptNode)(snDataType);
 		
 	scriptNode->AddChildLast(ParseType(false));
 	if( isSyntaxError ) return -1;
@@ -128,7 +130,7 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 
 	this->script = script;
 
-	scriptNode = new asCScriptNode(snDeclaration);
+	scriptNode = NEW(asCScriptNode)(snDeclaration);
 
 	scriptNode->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return -1;
@@ -141,7 +143,7 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 
 asCScriptNode *asCParser::ParseImport()
 {
-	asCScriptNode *node = new asCScriptNode(snImport);
+	asCScriptNode *node = NEW(asCScriptNode)(snImport);
 
 	sToken t;
 	GetToken(&t);
@@ -181,7 +183,7 @@ asCScriptNode *asCParser::ParseImport()
 		return node;
 	}
 
-	asCScriptNode *mod = new asCScriptNode(snConstant);
+	asCScriptNode *mod = NEW(asCScriptNode)(snConstant);
 	node->AddChildLast(mod);
 
 	mod->SetToken(&t);
@@ -201,7 +203,7 @@ asCScriptNode *asCParser::ParseImport()
 
 asCScriptNode *asCParser::ParseFunctionDefinition()
 {
-	asCScriptNode *node = new asCScriptNode(snFunction);
+	asCScriptNode *node = NEW(asCScriptNode)(snFunction);
 
 	node->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return node;
@@ -227,7 +229,7 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 
 asCScriptNode *asCParser::ParseScript()
 {
-	asCScriptNode *node = new asCScriptNode(snScript);
+	asCScriptNode *node = NEW(asCScriptNode)(snScript);
 
 	// Determine type of node
 	sToken t1;
@@ -457,7 +459,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 
 asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
-	asCScriptNode *node = new asCScriptNode(snFunction);
+	asCScriptNode *node = NEW(asCScriptNode)(snFunction);
 
 	// If this is a class constructor then no return type will be declared
 	sToken t1,t2;
@@ -486,7 +488,7 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 
 asCScriptNode *asCParser::ParseInterfaceMethod()
 {
-	asCScriptNode *node = new asCScriptNode(snFunction);
+	asCScriptNode *node = NEW(asCScriptNode)(snFunction);
 
 	node->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return node;
@@ -521,7 +523,7 @@ asCScriptNode *asCParser::ParseInterfaceMethod()
 
 asCScriptNode *asCParser::ParseInterface()
 {
-	asCScriptNode *node = new asCScriptNode(snInterface);
+	asCScriptNode *node = NEW(asCScriptNode)(snInterface);
 
 	sToken t;
 	GetToken(&t);
@@ -569,7 +571,7 @@ asCScriptNode *asCParser::ParseInterface()
 
 asCScriptNode *asCParser::ParseClass()
 {
-	asCScriptNode *node = new asCScriptNode(snClass);
+	asCScriptNode *node = NEW(asCScriptNode)(snClass);
 
 	sToken t;
 	GetToken(&t);
@@ -617,7 +619,7 @@ asCScriptNode *asCParser::ParseClass()
 		else if( IsVarDecl() )
 		{
 			// Parse a property declaration
-			asCScriptNode *prop = new asCScriptNode(snDeclaration);
+			asCScriptNode *prop = NEW(asCScriptNode)(snDeclaration);
 			node->AddChildLast(prop);
 
 			prop->AddChildLast(ParseType(true));
@@ -657,7 +659,7 @@ asCScriptNode *asCParser::ParseClass()
 
 asCScriptNode *asCParser::ParseGlobalVar()
 {
-	asCScriptNode *node = new asCScriptNode(snGlobalVar);
+	asCScriptNode *node = NEW(asCScriptNode)(snGlobalVar);
 
 	// Parse data type
 	node->AddChildLast(ParseType(true));
@@ -718,7 +720,7 @@ asCScriptNode *asCParser::ParseGlobalVar()
 
 asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 {
-	asCScriptNode *node = new asCScriptNode(snDataType);
+	asCScriptNode *node = NEW(asCScriptNode)(snDataType);
 
 	sToken t;
 
@@ -757,7 +759,7 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 
 asCScriptNode *asCParser::ParseType(bool allowConst)
 {
-	asCScriptNode *node = new asCScriptNode(snDataType);
+	asCScriptNode *node = NEW(asCScriptNode)(snDataType);
 
 	sToken t;
 
@@ -806,7 +808,7 @@ asCScriptNode *asCParser::ParseType(bool allowConst)
 
 asCScriptNode *asCParser::ParseToken(int token)
 {
-	asCScriptNode *node = new asCScriptNode(snUndefined);
+	asCScriptNode *node = NEW(asCScriptNode)(snUndefined);
 
 	sToken t1;
 
@@ -825,7 +827,7 @@ asCScriptNode *asCParser::ParseToken(int token)
 
 asCScriptNode *asCParser::ParseOneOf(int *tokens, int count)
 {
-	asCScriptNode *node = new asCScriptNode(snUndefined);
+	asCScriptNode *node = NEW(asCScriptNode)(snUndefined);
 
 	sToken t1;
 
@@ -851,7 +853,7 @@ asCScriptNode *asCParser::ParseOneOf(int *tokens, int count)
 
 asCScriptNode *asCParser::ParseDataType()
 {
-	asCScriptNode *node = new asCScriptNode(snDataType);
+	asCScriptNode *node = NEW(asCScriptNode)(snDataType);
 
 	sToken t1;
 
@@ -870,7 +872,7 @@ asCScriptNode *asCParser::ParseDataType()
 
 asCScriptNode *asCParser::ParseRealType()
 {
-	asCScriptNode *node = new asCScriptNode(snDataType);
+	asCScriptNode *node = NEW(asCScriptNode)(snDataType);
 
 	sToken t1;
 
@@ -889,7 +891,7 @@ asCScriptNode *asCParser::ParseRealType()
 
 asCScriptNode *asCParser::ParseIdentifier()
 {
-	asCScriptNode *node = new asCScriptNode(snIdentifier);
+	asCScriptNode *node = NEW(asCScriptNode)(snIdentifier);
 
 	sToken t1;
 
@@ -908,7 +910,7 @@ asCScriptNode *asCParser::ParseIdentifier()
 
 asCScriptNode *asCParser::ParseCast()
 {
-	asCScriptNode *node = new asCScriptNode(snCast);
+	asCScriptNode *node = NEW(asCScriptNode)(snCast);
 
 	sToken t1;
 	GetToken(&t1);
@@ -965,7 +967,7 @@ asCScriptNode *asCParser::ParseCast()
 
 asCScriptNode *asCParser::ParseParameterList()
 {
-	asCScriptNode *node = new asCScriptNode(snParameterList);
+	asCScriptNode *node = NEW(asCScriptNode)(snParameterList);
 
 	sToken t1;
 	GetToken(&t1);
@@ -1031,7 +1033,7 @@ asCScriptNode *asCParser::ParseParameterList()
 
 asCScriptNode *asCParser::ParseExprValue()
 {
-	asCScriptNode *node = new asCScriptNode(snExprValue);
+	asCScriptNode *node = NEW(asCScriptNode)(snExprValue);
 
 	sToken t1;
 	GetToken(&t1);
@@ -1070,7 +1072,7 @@ asCScriptNode *asCParser::ParseExprValue()
 
 asCScriptNode *asCParser::ParseConstant()
 {
-	asCScriptNode *node = new asCScriptNode(snConstant);
+	asCScriptNode *node = NEW(asCScriptNode)(snConstant);
 
 	sToken t;
 	GetToken(&t);
@@ -1100,7 +1102,7 @@ asCScriptNode *asCParser::ParseConstant()
 
 asCScriptNode *asCParser::ParseStringConstant()
 {
-	asCScriptNode *node = new asCScriptNode(snConstant);
+	asCScriptNode *node = NEW(asCScriptNode)(snConstant);
 
 	sToken t;
 	GetToken(&t);
@@ -1118,7 +1120,7 @@ asCScriptNode *asCParser::ParseStringConstant()
 
 asCScriptNode *asCParser::ParseFunctionCall()
 {
-	asCScriptNode *node = new asCScriptNode(snFunctionCall);
+	asCScriptNode *node = NEW(asCScriptNode)(snFunctionCall);
 
 	node->AddChildLast(ParseType(false));
 	if( isSyntaxError ) return node;
@@ -1130,7 +1132,7 @@ asCScriptNode *asCParser::ParseFunctionCall()
 
 asCScriptNode *asCParser::ParseArgList()
 {
-	asCScriptNode *node = new asCScriptNode(snArgList);
+	asCScriptNode *node = NEW(asCScriptNode)(snArgList);
 
 	sToken t1;
 	GetToken(&t1);
@@ -1181,7 +1183,7 @@ asCScriptNode *asCParser::ParseArgList()
 
 asCScriptNode *asCParser::ParseStatementBlock()
 {
-	asCScriptNode *node = new asCScriptNode(snStatementBlock);
+	asCScriptNode *node = NEW(asCScriptNode)(snStatementBlock);
 
 	sToken t1;
 
@@ -1258,7 +1260,7 @@ asCScriptNode *asCParser::ParseStatementBlock()
 
 asCScriptNode *asCParser::ParseInitList()
 {
-	asCScriptNode *node = new asCScriptNode(snInitList);
+	asCScriptNode *node = NEW(asCScriptNode)(snInitList);
 
 	sToken t1;
 
@@ -1288,13 +1290,13 @@ asCScriptNode *asCParser::ParseInitList()
 			if( t1.type == ttListSeparator )
 			{
 				// No expression 
-				node->AddChildLast(new asCScriptNode(snUndefined));
+				node->AddChildLast(NEW(asCScriptNode)(snUndefined));
 
 				GetToken(&t1);
 				if( t1.type == ttEndStatementBlock )
 				{
 					// No expression
-					node->AddChildLast(new asCScriptNode(snUndefined));
+					node->AddChildLast(NEW(asCScriptNode)(snUndefined));
 					node->UpdateSourcePos(t1.pos, t1.length);
 					return node;
 				}
@@ -1303,7 +1305,7 @@ asCScriptNode *asCParser::ParseInitList()
 			else if( t1.type == ttEndStatementBlock )
 			{
 				// No expression 
-				node->AddChildLast(new asCScriptNode(snUndefined));
+				node->AddChildLast(NEW(asCScriptNode)(snUndefined));
 
 				node->UpdateSourcePos(t1.pos, t1.length);
 
@@ -1401,7 +1403,7 @@ bool asCParser::IsFunctionCall()
 
 asCScriptNode *asCParser::ParseDeclaration()
 {
-	asCScriptNode *node = new asCScriptNode(snDeclaration);
+	asCScriptNode *node = NEW(asCScriptNode)(snDeclaration);
 
 	// Parse data type
 	node->AddChildLast(ParseType(true));
@@ -1491,7 +1493,7 @@ asCScriptNode *asCParser::ParseStatement()
 
 asCScriptNode *asCParser::ParseExpressionStatement()
 {
-	asCScriptNode *node = new asCScriptNode(snExpressionStatement);
+	asCScriptNode *node = NEW(asCScriptNode)(snExpressionStatement);
 
 	sToken t;
 	GetToken(&t);
@@ -1521,7 +1523,7 @@ asCScriptNode *asCParser::ParseExpressionStatement()
 
 asCScriptNode *asCParser::ParseSwitch()
 {
-	asCScriptNode *node = new asCScriptNode(snSwitch);
+	asCScriptNode *node = NEW(asCScriptNode)(snSwitch);
 
 	sToken t;
 	GetToken(&t);
@@ -1597,7 +1599,7 @@ asCScriptNode *asCParser::ParseSwitch()
 
 asCScriptNode *asCParser::ParseCase()
 {
-	asCScriptNode *node = new asCScriptNode(snCase);
+	asCScriptNode *node = NEW(asCScriptNode)(snCase);
 
 	sToken t;
 	GetToken(&t);
@@ -1646,7 +1648,7 @@ asCScriptNode *asCParser::ParseCase()
 
 asCScriptNode *asCParser::ParseIf()
 {
-	asCScriptNode *node = new asCScriptNode(snIf);
+	asCScriptNode *node = NEW(asCScriptNode)(snIf);
 
 	sToken t;
 	GetToken(&t);
@@ -1693,7 +1695,7 @@ asCScriptNode *asCParser::ParseIf()
 
 asCScriptNode *asCParser::ParseFor()
 {
-	asCScriptNode *node = new asCScriptNode(snFor);
+	asCScriptNode *node = NEW(asCScriptNode)(snFor);
 
 	sToken t;
 	GetToken(&t);
@@ -1748,7 +1750,7 @@ asCScriptNode *asCParser::ParseFor()
 	
 asCScriptNode *asCParser::ParseWhile()
 {
-	asCScriptNode *node = new asCScriptNode(snWhile);
+	asCScriptNode *node = NEW(asCScriptNode)(snWhile);
 
 	sToken t;
 	GetToken(&t);
@@ -1784,7 +1786,7 @@ asCScriptNode *asCParser::ParseWhile()
 
 asCScriptNode *asCParser::ParseDoWhile()
 {
-	asCScriptNode *node = new asCScriptNode(snDoWhile);
+	asCScriptNode *node = NEW(asCScriptNode)(snDoWhile);
 
 	sToken t;
 	GetToken(&t);
@@ -1836,7 +1838,7 @@ asCScriptNode *asCParser::ParseDoWhile()
 
 asCScriptNode *asCParser::ParseReturn()
 {
-	asCScriptNode *node = new asCScriptNode(snReturn);
+	asCScriptNode *node = NEW(asCScriptNode)(snReturn);
 
 	sToken t;
 	GetToken(&t);
@@ -1874,7 +1876,7 @@ asCScriptNode *asCParser::ParseReturn()
 
 asCScriptNode *asCParser::ParseBreak()
 {
-	asCScriptNode *node = new asCScriptNode(snBreak);
+	asCScriptNode *node = NEW(asCScriptNode)(snBreak);
 
 	sToken t;
 	GetToken(&t);
@@ -1897,7 +1899,7 @@ asCScriptNode *asCParser::ParseBreak()
 
 asCScriptNode *asCParser::ParseContinue()
 {
-	asCScriptNode *node = new asCScriptNode(snContinue);
+	asCScriptNode *node = NEW(asCScriptNode)(snContinue);
 
 	sToken t;
 	GetToken(&t);
@@ -1920,7 +1922,7 @@ asCScriptNode *asCParser::ParseContinue()
 
 asCScriptNode *asCParser::ParseAssignment()
 {
-	asCScriptNode *node = new asCScriptNode(snAssignment);
+	asCScriptNode *node = NEW(asCScriptNode)(snAssignment);
 
 	node->AddChildLast(ParseCondition());
 	if( isSyntaxError ) return node;
@@ -1943,7 +1945,7 @@ asCScriptNode *asCParser::ParseAssignment()
 
 asCScriptNode *asCParser::ParseCondition()
 {
-	asCScriptNode *node = new asCScriptNode(snCondition);
+	asCScriptNode *node = NEW(asCScriptNode)(snCondition);
 
 	node->AddChildLast(ParseExpression());
 	if( isSyntaxError ) return node;
@@ -1973,7 +1975,7 @@ asCScriptNode *asCParser::ParseCondition()
 
 asCScriptNode *asCParser::ParseExpression()
 {
-	asCScriptNode *node = new asCScriptNode(snExpression);
+	asCScriptNode *node = NEW(asCScriptNode)(snExpression);
 
 	node->AddChildLast(ParseExprTerm());
 	if( isSyntaxError ) return node;
@@ -1998,7 +2000,7 @@ asCScriptNode *asCParser::ParseExpression()
 
 asCScriptNode *asCParser::ParseExprTerm()
 {
-	asCScriptNode *node = new asCScriptNode(snExprTerm);
+	asCScriptNode *node = NEW(asCScriptNode)(snExprTerm);
 
 	for(;;)
 	{
@@ -2032,7 +2034,7 @@ asCScriptNode *asCParser::ParseExprTerm()
 
 asCScriptNode *asCParser::ParseExprPreOp()
 {
-	asCScriptNode *node = new asCScriptNode(snExprPreOp);
+	asCScriptNode *node = NEW(asCScriptNode)(snExprPreOp);
 
 	sToken t;
 	GetToken(&t);
@@ -2050,7 +2052,7 @@ asCScriptNode *asCParser::ParseExprPreOp()
 
 asCScriptNode *asCParser::ParseExprPostOp()
 {
-	asCScriptNode *node = new asCScriptNode(snExprPostOp);
+	asCScriptNode *node = NEW(asCScriptNode)(snExprPostOp);
 
 	sToken t;
 	GetToken(&t);
@@ -2093,7 +2095,7 @@ asCScriptNode *asCParser::ParseExprPostOp()
 
 asCScriptNode *asCParser::ParseExprOperator()
 {
-	asCScriptNode *node = new asCScriptNode(snExprOperator);
+	asCScriptNode *node = NEW(asCScriptNode)(snExprOperator);
 
 	sToken t;
 	GetToken(&t);
@@ -2111,7 +2113,7 @@ asCScriptNode *asCParser::ParseExprOperator()
 
 asCScriptNode *asCParser::ParseAssignOperator()
 {
-	asCScriptNode *node = new asCScriptNode(snExprOperator);
+	asCScriptNode *node = NEW(asCScriptNode)(snExprOperator);
 
 	sToken t;
 	GetToken(&t);

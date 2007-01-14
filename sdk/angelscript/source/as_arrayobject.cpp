@@ -265,7 +265,7 @@ void asCArrayObject::Resize(asUINT numElements)
 	if( gc.objType->subType )
 	{
 		// Allocate memory for the buffer
-		newBuffer = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
+		newBuffer = (sArrayBuffer*)userAlloc(sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
 		newBuffer->numElements = numElements;
 
 		// Copy the elements from the old buffer
@@ -287,7 +287,7 @@ void asCArrayObject::Resize(asUINT numElements)
 	else
 	{
 		// Allocate memory for the buffer
-		newBuffer = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+elementSize*numElements);
+		newBuffer = (sArrayBuffer*)userAlloc(sizeof(sArrayBuffer)-1+elementSize*numElements);
 		newBuffer->numElements = numElements;
 
 		int c = numElements > buffer->numElements ? buffer->numElements : numElements;
@@ -295,7 +295,7 @@ void asCArrayObject::Resize(asUINT numElements)
 	}
 
 	// Release the old buffer
-	free(buffer);
+	userFree(buffer);
 
 	buffer = newBuffer;
 }
@@ -345,12 +345,12 @@ void asCArrayObject::CreateBuffer(sArrayBuffer **buf, asUINT numElements)
 {
 	if( gc.objType->subType )
 	{
-		*buf = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
+		*buf = (sArrayBuffer*)userAlloc(sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
 		(*buf)->numElements = numElements;
 	}
 	else
 	{
-		*buf = (sArrayBuffer*)malloc(sizeof(sArrayBuffer)-1+elementSize*numElements);
+		*buf = (sArrayBuffer*)userAlloc(sizeof(sArrayBuffer)-1+elementSize*numElements);
 		(*buf)->numElements = numElements;
 	}
 
@@ -362,7 +362,7 @@ void asCArrayObject::DeleteBuffer(sArrayBuffer *buf)
 	Destruct(buf, 0, buf->numElements);
 
 	// Free the buffer
-	free(buf);
+	userFree(buf);
 }
 
 void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
@@ -555,7 +555,7 @@ void asCArrayObject::Destruct()
 	this->~asCArrayObject();
 
 	// Free the memory
-	gc.objType->engine->global_free(this);
+	userFree(this);
 }
 
 void asCArrayObject::CountReferences()

@@ -143,7 +143,7 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
-	r = engine->SetCommonObjectMemoryFunctions(ScriptAlloc, ScriptFree);
+	r = asSetGlobalMemoryFunctions(ScriptAlloc, ScriptFree);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString_Generic(engine);
@@ -246,6 +246,8 @@ bool Test()
 		fail = true;
 
 	engine->Release();
+
+	asResetGlobalMemoryFunctions();
 
 	// Success
 	return fail;

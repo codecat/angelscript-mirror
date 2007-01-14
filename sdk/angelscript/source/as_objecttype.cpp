@@ -63,7 +63,10 @@ asCObjectType::~asCObjectType()
 		subType->refCount--;
 		
 	for( asUINT n = 0; n < properties.GetLength(); n++ )
-		if( properties[n] ) delete properties[n];
+		if( properties[n] ) 
+		{
+			DELETE(properties[n],asCProperty);
+		}
 
 	properties.SetLength(0);
 

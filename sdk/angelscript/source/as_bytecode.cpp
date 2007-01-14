@@ -81,7 +81,7 @@ void asCByteCode::ClearAll()
 	while( del ) 
 	{
 		first = del->next;
-		delete del;
+		DELETE(del,cByteInstruction);
 		del = first;
 	}
 
@@ -1139,7 +1139,7 @@ void asCByteCode::AddCode(asCByteCode *bc)
 
 int asCByteCode::AddInstruction()
 {
-	cByteInstruction *instr = new cByteInstruction();
+	cByteInstruction *instr = NEW(cByteInstruction)();
 	if( first == 0 )
 	{
 		first = last = instr;
@@ -1155,7 +1155,7 @@ int asCByteCode::AddInstruction()
 
 int asCByteCode::AddInstructionFirst()
 {
-	cByteInstruction *instr = new cByteInstruction();
+	cByteInstruction *instr = NEW(cByteInstruction)();
 	if( first == 0 )
 	{
 		first = last = instr;
@@ -1335,7 +1335,7 @@ cByteInstruction *asCByteCode::DeleteInstruction(cByteInstruction *instr)
 	
 	RemoveInstruction(instr);
 
-	delete instr;
+	DELETE(instr,cByteInstruction);
 	
 	return ret;
 }
@@ -2136,7 +2136,7 @@ int asCByteCode::RemoveLastInstr()
 
 	if( first == last )
 	{
-		delete last;
+		DELETE(last,cByteInstruction);
 		first = 0;
 		last = 0;
 	}
@@ -2146,7 +2146,7 @@ int asCByteCode::RemoveLastInstr()
 		last = bc->prev;
 
 		bc->Remove();
-		delete bc;
+		DELETE(bc,cByteInstruction);
 	}
 
 	return 0;

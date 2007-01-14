@@ -69,7 +69,7 @@ struct asSExprContext
 
 	asCByteCode bc;
 	asCTypeInfo type;
-	asCArray<asSDeferredParam> deferredParams;
+	asCObjectArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;
 	asSExprContext *origExpr;
 };
@@ -199,7 +199,7 @@ protected:
 	void ReleaseTemporaryVariable(asCTypeInfo &t, asCByteCode *bc);
 	void ReleaseTemporaryVariable(int offset, asCByteCode *bc);
 
-	asCArray<asCDataType> variableAllocations;
+	asCObjectArray<asCDataType> variableAllocations;
 	asCArray<bool> variableIsTemporary;
 	asCArray<int> freeVariables;
 	asCArray<int> tempVariables;

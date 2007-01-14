@@ -52,7 +52,10 @@ asCScriptCode::asCScriptCode()
 
 asCScriptCode::~asCScriptCode()
 {
-	if( !sharedCode && code ) delete[] (char*)code;
+	if( !sharedCode && code ) 
+	{
+		DELETEARRAY(code);
+	}
 }
 
 int asCScriptCode::SetCode(const char *name, const char *code, bool makeCopy)
@@ -63,10 +66,13 @@ int asCScriptCode::SetCode(const char *name, const char *code, bool makeCopy)
 int asCScriptCode::SetCode(const char *name, const char *code, size_t length, bool makeCopy)
 {
 	this->name = name;
-	if( !sharedCode && this->code ) delete[] (char*)this->code;
+	if( !sharedCode && this->code ) 
+	{
+		DELETEARRAY(this->code);
+	}
 	if( makeCopy )
 	{
-		this->code = new char[length];
+		this->code = NEWARRAY(char,length);
 		memcpy((char*)this->code, code, length);
 		codeLength = length;
 		sharedCode = false;
@@ -74,7 +80,7 @@ int asCScriptCode::SetCode(const char *name, const char *code, size_t length, bo
 	else
 	{
 		codeLength = length;
-		this->code = code;
+		this->code = const_cast<char*>(code);
 		sharedCode = true;
 	}
 

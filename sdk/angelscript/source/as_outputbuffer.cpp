@@ -51,14 +51,17 @@ void asCOutputBuffer::Clear()
 {
 	for( asUINT n = 0; n < messages.GetLength(); n++ )
 	{
-		if( messages[n] ) delete messages[n];
+		if( messages[n] ) 
+		{
+			DELETE(messages[n],message_t);
+		}
 	}
 	messages.SetLength(0);
 }
 
 void asCOutputBuffer::Callback(asSMessageInfo *msg)
 {
-	message_t *msgInfo = new message_t;
+	message_t *msgInfo = NEW(message_t);
 	msgInfo->section = msg->section;
 	msgInfo->row = msg->row;
 	msgInfo->col = msg->col;

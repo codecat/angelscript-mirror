@@ -202,6 +202,10 @@ SOURCE=..\..\source\test_conversion.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_cstring.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_custommem.cpp
 # End Source File
 # Begin Source File
@@ -243,6 +247,10 @@ SOURCE=..\..\source\test_funcoverload.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_generic.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_getargptr.cpp
 # End Source File
 # Begin Source File
 
@@ -539,6 +547,10 @@ SOURCE=..\..\source\testvirtualmethod.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\angelscript\include\angelscript.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\cstring.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

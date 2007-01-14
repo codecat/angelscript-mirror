@@ -199,6 +199,10 @@ SOURCE=..\..\..\source\as_generic.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\source\as_memory.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_module.cpp
 # End Source File
 # Begin Source File
@@ -331,7 +335,15 @@ SOURCE=..\..\..\source\as_map.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\source\as_memory.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_module.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\source\as_objectarray.h
 # End Source File
 # Begin Source File
 

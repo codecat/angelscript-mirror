@@ -131,7 +131,8 @@ int asCMap<KEY, VAL>::EraseAll(asSMapNode<KEY, VAL> *p)
 	EraseAll( p->left );
 	EraseAll( p->right );
 
-	delete p;
+	typedef asSMapNode<KEY,VAL> node_t;
+	DELETE(p,node_t);
 
 	count--;
 
@@ -147,7 +148,8 @@ int asCMap<KEY, VAL>::GetCount()
 template <class KEY, class VAL>
 int asCMap<KEY, VAL>::Insert(const KEY &key, const VAL &value)
 {
-	asSMapNode<KEY,VAL> *nnode = new asSMapNode<KEY,VAL>();
+	typedef asSMapNode<KEY,VAL> node_t;
+	asSMapNode<KEY,VAL> *nnode = NEW(node_t);
 	nnode->key   = key;
 	nnode->value = value;
 
@@ -395,7 +397,8 @@ bool asCMap<KEY, VAL>::Erase(bool moveNext)
 		if( remove->right ) remove->right->parent = remove;	
 	}
 
-	delete node;
+	typedef asSMapNode<KEY,VAL> node_t;
+	DELETE(node,node_t);
 
 	count--;
 

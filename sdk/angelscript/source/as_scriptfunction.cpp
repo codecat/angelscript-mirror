@@ -60,10 +60,14 @@ asCScriptFunction::asCScriptFunction(asCModule *mod)
 asCScriptFunction::~asCScriptFunction()
 {
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
-		delete variables[n];
+	{
+		DELETE(variables[n],asSScriptVariable);
+	}
 
 	if( sysFuncIntf )
-		delete sysFuncIntf;
+	{
+		DELETE(sysFuncIntf,asSSystemFunctionInterface);
+	}
 }
 
 int asCScriptFunction::GetSpaceNeededForArguments()
@@ -166,7 +170,7 @@ int asCScriptFunction::GetLineNumber(int programPosition)
 
 void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stackOffset)
 {
-	asSScriptVariable *var = new asSScriptVariable;
+	asSScriptVariable *var = NEW(asSScriptVariable);
 	var->name = name;
 	var->type = type;
 	var->stackOffset = stackOffset;

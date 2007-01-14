@@ -76,7 +76,6 @@ public:
 	// Script building
 	int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv);
 	int ClearMessageCallback();
-	int SetCommonObjectMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
 	int RegisterObjectType(const char *objname, int byteSize, asDWORD flags);
 	int RegisterObjectProperty(const char *objname, const char *declaration, int byteOffset);
@@ -266,9 +265,6 @@ public:
 	asCConfigGroup defaultGroup;
 	asCArray<asCConfigGroup*> configGroups;
 	asCConfigGroup *currentGroup;
-
-	asALLOCFUNC_t global_alloc;
-	asFREEFUNC_t  global_free;
 
 	// Message callback
 	bool msgCallback;

@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.0 WIP - 2007/01/08</h2>
+<h2>Version 2.8.0 WIP - 2007/01/13</h2>
 
 <ul>
 <li>Bug fixes
@@ -131,10 +131,13 @@ A:hover
 <li>ALLOW_UNSAFE_REFERENCES is now an engine property instead of a compile time flag.
 <li>Removed some deprecated functions.
 <li>Added GetArgPointer() and GetReturnPointer() to asIScriptContext and asIScriptGeneric.
+<li>Removed the SetCommonObjectMemoryFunctions() from the script engine.
+<li>Added the global SetGlobalMemoryFunctions() and ResetGlobalMemoryFunctions().
 </ul>
 <li>Library
 <ul>
 <li>Fixed a lot of compiler warnings (Thanks Manu Evans)
+<li>All dynamically allocated memory now uses the memory functions registered with SetGlobalMemoryFunctions.
 </ul>
 <li>Script language
 <ul>
@@ -150,6 +153,10 @@ A:hover
     ADDi64, SUBi64, MULi64, DIVi64, MODi64,
     BAND64, BOR64, BXOR64, BSLL64, BSRL64, BSRA64
     CMPi64, CMPu64
+</ul>
+<li>Project
+<ul>
+<li>Added as_memory.h, as_memory.cpp, and as_objectarray.h
 </ul>
 </ul>
 

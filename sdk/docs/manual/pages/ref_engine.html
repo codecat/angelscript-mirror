@@ -27,8 +27,6 @@ public:
   int <a href="#setmsgcall">SetMessageCallback</a>(const asUPtr &amp;callback, void *obj, asDWORD callConv);
   int <a href="#clrmsgcall">ClearMessageCallback</a>();
   
-  int <a href="#memfunc">SetCommonObjectMemoryFunctions</a>(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
-  
   int <a href="#datatype">RegisterObjectType</A>(const char *name, int byteSize, asDWORD flags);
   int <a href="#property">RegisterObjectProperty</a>(const char *obj, const char *declaration, int byteOffset);
   int <a href="#method">RegisterObjectMethod</a>(const char *obj, const char *declaration, const asUPtr &amp;funcPointer, asDWORD callConv);
@@ -354,46 +352,6 @@ int ClearMessageCallback();
 <h3>Returns</h3>
 
 <p>A negative value on an error.</p>
-
-
-
-
-
-
-
-<a name=memfunc></a>
-<h2>SetCommonObjectMemoryFunctions</h2>
-
-<pre class=border>
-int SetCommonObjectMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
-</pre>
-
-<h3>Description</h3>
-
-<p>This function allows the application to set the allocation and deallocation 
-functions used to manage memory for script objects. These functions will then
-be used for all objects, except those that have individually overidden the 
-functions by registering the behaviours asBEHAVE_ALLOC and asBEHAVE_FREE.</p>
-
-<p>The allocFunc must have the same signature as malloc(), and the freeFunc  
-must have the same signature as free().</p>
-
-<h3>Parameters</h3>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr>
-<td valign=top width=100><code>allocFunc</code>&nbsp;</td>
-<td valign=top><p>The allocation function pointer.</p></td>
-</tr>
-<tr>
-<td valign=top width=100><code>freeFunc</code>&nbsp;</td>
-<td valign=top><p>The deallocation function pointer.</p></td>
-</tr>
-</table>
-
-<h3>Returns</h3>
-
-<p>Negative value on error.</p>
 
 
 

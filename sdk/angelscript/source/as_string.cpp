@@ -91,7 +91,9 @@ asCString::asCString(char ch)
 asCString::~asCString()
 {
 	if( buffer )
-		delete[] buffer;
+	{
+		DELETEARRAY(buffer);
+	}
 }
 
 char *asCString::AddressOf()
@@ -117,7 +119,7 @@ void asCString::SetLength(size_t len)
 
 void asCString::Allocate(size_t len, bool keepData)
 {
-	char *buf = new char[len+1];
+	char *buf = NEWARRAY(char,len+1);
 	bufferSize = len+1;
 
 	if( buffer )
@@ -129,7 +131,7 @@ void asCString::Allocate(size_t len, bool keepData)
 			memcpy(buf, buffer, length);
 		}
 
-		delete[] buffer;
+		DELETEARRAY(buffer);
 	}
 
 	buffer = buf;

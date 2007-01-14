@@ -64,9 +64,11 @@ asCBuilder::~asCBuilder()
 		if( functions[n] )
 		{
 			if( functions[n]->node ) 
-				delete functions[n]->node;
+			{
+				DELETE(functions[n]->node,asCScriptNode);
+			}
 
-			delete functions[n];
+			DELETE(functions[n],sFunctionDescription);
 		}
 
 		functions[n] = 0;
@@ -78,9 +80,11 @@ asCBuilder::~asCBuilder()
 		if( globVariables[n] )
 		{
 			if( globVariables[n]->node )
-				delete globVariables[n]->node;
+			{
+				DELETE(globVariables[n]->node,asCScriptNode);
+			}
 
-			delete globVariables[n];
+			DELETE(globVariables[n],sGlobalVariableDescription);
 			globVariables[n] = 0;
 		}
 	}
@@ -89,7 +93,9 @@ asCBuilder::~asCBuilder()
 	for( n = 0; n < scripts.GetLength(); n++ )
 	{
 		if( scripts[n] )
-			delete scripts[n];
+		{
+			DELETE(scripts[n],asCScriptCode);
+		}
 
 		scripts[n] = 0;
 	}
@@ -100,9 +106,11 @@ asCBuilder::~asCBuilder()
 		if( classDeclarations[n] )
 		{
 			if( classDeclarations[n]->node )
-				delete classDeclarations[n]->node;
+			{
+				DELETE(classDeclarations[n]->node,asCScriptNode);
+			}
 
-			delete classDeclarations[n];
+			DELETE(classDeclarations[n],sClassDeclaration);
 			classDeclarations[n] = 0;
 		}
 	}
@@ -112,9 +120,11 @@ asCBuilder::~asCBuilder()
 		if( interfaceDeclarations[n] )
 		{
 			if( interfaceDeclarations[n]->node )
-				delete interfaceDeclarations[n]->node;
+			{
+				DELETE(interfaceDeclarations[n]->node,asCScriptNode);
+			}
 
-			delete interfaceDeclarations[n];
+			DELETE(interfaceDeclarations[n],sClassDeclaration);
 			interfaceDeclarations[n] = 0;
 		}
 	}
@@ -122,7 +132,7 @@ asCBuilder::~asCBuilder()
 
 int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy)
 {
-	asCScriptCode *script = new asCScriptCode;
+	asCScriptCode *script = NEW(asCScriptCode);
 	script->SetCode(name, code, codeLength, makeCopy);
 	script->lineOffset = lineOffset;
 	script->idx = sectionIdx;
@@ -155,7 +165,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	preMessage.isSet = false;
 
 	// Add the string to the script code
-	asCScriptCode *script = new asCScriptCode;
+	asCScriptCode *script = NEW(asCScriptCode);
 	script->SetCode(TXT_EXECUTESTRING, string, true);
 	script->lineOffset = -1; // Compensate for "void ExecuteString() {\n"
 	scripts.PushLast(script);
@@ -171,7 +181,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		{
 			node->DisconnectParent();
 
-			sFunctionDescription *func = new sFunctionDescription;
+			sFunctionDescription *func = NEW(sFunctionDescription);
 			functions.PushLast(func);
 
 			func->script = scripts[0];
@@ -189,7 +199,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	{
 		// Compile the function
 		asCCompiler compiler;
-		asCScriptFunction *execfunc = new asCScriptFunction(module);
+		asCScriptFunction *execfunc = NEW(asCScriptFunction)(module);
 		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, execfunc) >= 0 )
 		{
 			execfunc->id = asFUNC_STRING;
@@ -212,7 +222,9 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 #endif
 		}
 		else
-			delete execfunc;
+		{
+			DELETE(execfunc,asCScriptFunction);
+		}
 	}
 
 	if( numErrors > 0 )
@@ -229,7 +241,7 @@ void asCBuilder::ParseScripts()
 	asUINT n = 0;
 	for( n = 0; n < scripts.GetLength(); n++ )
 	{
-		asCParser *parser = new asCParser(this);
+		asCParser *parser = NEW(asCParser)(this);
 		parsers.PushLast(parser);
 
 		// Parse the script file
@@ -343,7 +355,7 @@ void asCBuilder::ParseScripts()
 
 					WriteWarning(scripts[n]->name.AddressOf(), TXT_UNUSED_SCRIPT_NODE, r, c);
 
-					delete node;
+					DELETE(node,asCScriptNode);
 				}
 
 				node = next;
@@ -352,7 +364,9 @@ void asCBuilder::ParseScripts()
 	}
 
 	for( n = 0; n < parsers.GetLength(); n++ )
-		delete parsers[n];
+	{
+		DELETE(parsers[n],asCParser);
+	}
 }
 
 void asCBuilder::CompileFunctions()
@@ -740,7 +754,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		CheckNameConflict(name.AddressOf(), n, file);
 
 		// Register the global variable
-		sGlobalVariableDescription *gvar = new sGlobalVariableDescription;
+		sGlobalVariableDescription *gvar = NEW(sGlobalVariableDescription);
 		globVariables.PushLast(gvar);
 
 		gvar->script     = file;
@@ -764,7 +778,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		}
 
 		// Add script variable to engine
-		asCProperty *prop = new asCProperty;
+		asCProperty *prop = NEW(asCProperty);
 		prop->index      = gvar->index;
 		prop->name       = name;
 		prop->type       = gvar->datatype;
@@ -775,7 +789,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		n = n->next;
 	}
 
-	delete node;
+	DELETE(node,asCScriptNode);
 
 	return 0;
 }
@@ -790,14 +804,14 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 
 	CheckNameConflict(name.AddressOf(), n, file);
 
-	sClassDeclaration *decl = new sClassDeclaration;
+	sClassDeclaration *decl = NEW(sClassDeclaration);
 	classDeclarations.PushLast(decl);
 	decl->name = name;
 	decl->script = file;
 	decl->validState = 0;
 	decl->node = node;
 
-	asCObjectType *st = new asCObjectType(engine);
+	asCObjectType *st = NEW(asCObjectType)(engine);
 	st->arrayType = 0;
 	st->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
 	st->size = sizeof(asCScriptStruct);
@@ -830,7 +844,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 
 	CheckNameConflict(name.AddressOf(), n, file);
 
-	sClassDeclaration *decl = new sClassDeclaration;
+	sClassDeclaration *decl = NEW(sClassDeclaration);
 	interfaceDeclarations.PushLast(decl);
 	decl->name       = name;
 	decl->script     = file;
@@ -838,7 +852,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	decl->node       = node;
 
 	// Register the object type for the interface
-	asCObjectType *st = new asCObjectType(engine);
+	asCObjectType *st = NEW(asCObjectType)(engine);
 	st->arrayType = 0;
 	st->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
 	st->size = 0; // Cannot be instanciated
@@ -972,7 +986,7 @@ void asCBuilder::CompileGlobalVariables()
 	asCByteCode cleanExit;
 
 	int id = engine->GetNextScriptFunctionId();
-	asCScriptFunction *init = new asCScriptFunction(module);
+	asCScriptFunction *init = NEW(asCScriptFunction)(module);
 
 	init->id = id;
 	module->initFunction = init;
@@ -1028,7 +1042,7 @@ void asCBuilder::CompileClasses()
 				CheckNameConflictMember(st, name.AddressOf(), node->lastChild, file);
 
 				// Store the properties in the object type descriptor
-				asCProperty *prop = new asCProperty;
+				asCProperty *prop = NEW(asCProperty);
 				prop->name = name;
 				prop->type = dt;
 
@@ -1324,7 +1338,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	int funcId = module->GetNextFunctionId();
 
 	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
-	asCArray<asCDataType> parameterTypes;
+	asCObjectArray<asCDataType> parameterTypes;
 	asCArray<int> inOutFlags;
 
 	// Add the script function
@@ -1372,7 +1386,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 
 	if( !isInterface )
 	{
-		sFunctionDescription *func = new sFunctionDescription;
+		sFunctionDescription *func = NEW(sFunctionDescription);
 		functions.PushLast(func);
 
 		func->script  = file;
@@ -1392,7 +1406,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		module->RefConfigGroupForObjectType(returnType.GetObjectType());
 	}
 
-	asCArray<asCDataType> parameterTypes;
+	asCObjectArray<asCDataType> parameterTypes;
 	asCArray<int> inOutFlags;
 	n = n->next->firstChild;
 	while( n )
@@ -1468,7 +1482,9 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 
 	// We need to delete the node already if this is an interface method
 	if( isInterface && node )
-		delete node;
+	{
+		DELETE(node,asCScriptNode);
+	}
 
 	return 0;
 }
@@ -1488,7 +1504,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	returnType = CreateDataTypeFromNode(f->firstChild, file);
 	returnType = ModifyDataTypeFromNode(returnType, f->firstChild->next, file, 0, 0);
 		
-	asCArray<asCDataType> parameterTypes;
+	asCObjectArray<asCDataType> parameterTypes;
 	asCArray<int> inOutFlags;
 	n = n->next->firstChild;
 	while( n )
@@ -1547,7 +1563,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	n = node->firstChild->next;
 	int moduleNameString = module->AddConstantString(&file->code[n->tokenPos+1], n->tokenLength-2);
 
-	delete node;
+	DELETE(node,asCScriptNode);
 
 	// Register the function
 	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), moduleNameString);

@@ -62,7 +62,7 @@ asCScriptNode::~asCScriptNode()
 	while( node )
 	{
 		next = node->next;
-		delete node;
+		DELETE(node,asCScriptNode);
 		node = next;
 	}
 }

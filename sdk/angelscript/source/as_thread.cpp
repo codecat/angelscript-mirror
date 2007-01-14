@@ -62,11 +62,7 @@ asCThreadManager threadManager;
 
 AS_API int asThreadCleanup()
 {
-#ifdef USE_THREADS
 	return threadManager.CleanupLocalData();
-#else
-	return asERROR;
-#endif
 }
 
 //======================================================================
@@ -89,20 +85,25 @@ asCThreadManager::~asCThreadManager()
 		do
 		{
 			if( tldMap.GetValue() ) 
-				delete tldMap.GetValue();
+			{
+				DELETE(tldMap.GetValue(),asCThreadLocalData);
+			}
 		} while( tldMap.MoveNext() );
 	}
 
 	LEAVECRITICALSECTION(criticalSection);
 #else
-	if( tld ) delete tld;
+	if( tld ) 
+	{
+		DELETE(tld,asCThreadLocalData);
+	}
 	tld = 0;
 #endif
 }
 
-#ifdef USE_THREADS
 int asCThreadManager::CleanupLocalData()
 {
+#ifdef USE_THREADS
 	asDWORD id = GetCurrentThreadId();
 	int r = 0;
 
@@ -115,7 +116,7 @@ int asCThreadManager::CleanupLocalData()
 		// Can we really remove it at this time?
 		if( tld->activeContexts.GetLength() == 0 )
 		{
-			delete tld;
+			DELETE(tld,asCThreadLocalData);
 			tldMap.Erase(true);
 			r = 0;
 		}
@@ -126,8 +127,22 @@ int asCThreadManager::CleanupLocalData()
 	LEAVECRITICALSECTION(criticalSection);
 
 	return r;
+#else
+	if( tld )
+	{
+		if( tld->activeContexts.GetLength() == 0 )
+		{
+			DELETE(tld,asCThreadLocalData);
+			tld = 0;
+		}
+		else
+			return asCONTEXT_ACTIVE;
+	}
+	return 0;
+#endif
 }
 
+#ifdef USE_THREADS
 asCThreadLocalData *asCThreadManager::GetLocalData(asDWORD threadId)
 {
 	asCThreadLocalData *tld = 0;
@@ -161,14 +176,14 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 	if( tld == 0 )
 	{
 		// Create a new tld
-		tld = new asCThreadLocalData();
+		tld = NEW(asCThreadLocalData)();
 		SetLocalData(id, tld);
 	}
 
 	return tld;
 #else
 	if( tld == 0 )
-		tld = new asCThreadLocalData();
+		tld = NEW(asCThreadLocalData)();
 
 	return tld;
 #endif

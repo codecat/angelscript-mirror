@@ -463,6 +463,7 @@
 
 
 #include "../include/angelscript.h"
+#include "as_memory.h"
 
 #endif
 

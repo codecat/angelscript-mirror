@@ -58,7 +58,10 @@ void asCVariableScope::Reset()
 	isContinueScope = false;
 
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
-		if( variables[n] ) delete variables[n];
+		if( variables[n] ) 
+		{
+			DELETE(variables[n],sVariable);
+		}
 	variables.SetLength(0);
 }
 
@@ -75,7 +78,7 @@ int asCVariableScope::DeclareVariable(const char *name, const asCDataType &type,
 		}
 	}
 
-	sVariable *var = new sVariable;
+	sVariable *var = NEW(sVariable);
 	var->name = name;
 	var->type = type;
 	var->stackOffset = stackOffset;

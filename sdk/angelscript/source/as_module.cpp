@@ -64,7 +64,7 @@ asCModule::~asCModule()
 
 	if( builder ) 
 	{
-		delete builder;
+		DELETE(builder,asCBuilder);
 		builder = 0;
 	}
 
@@ -82,7 +82,7 @@ asCModule::~asCModule()
 int asCModule::AddScriptSection(const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy)
 {
 	if( !builder )
-		builder = new asCBuilder(engine, this);
+		builder = NEW(asCBuilder)(engine, this);
 
 	builder->AddCode(name, code, codeLength, lineOffset, (int)builder->scripts.GetLength(), makeCopy);
 
@@ -101,13 +101,13 @@ int asCModule::Build()
 	// Store the section names
 	for( size_t n = 0; n < builder->scripts.GetLength(); n++ )
 	{
-		asCString *sectionName = new asCString(builder->scripts[n]->name);
+		asCString *sectionName = NEW(asCString)(builder->scripts[n]->name);
 		scriptSections.PushLast(sectionName);
 	}
 
 	// Compile the script
 	int r = builder->Build();
-	delete builder;
+	DELETE(builder,asCBuilder);
 	builder = 0;
 	
 	if( r < 0 )
@@ -222,7 +222,9 @@ void asCModule::Reset()
 	scriptFunctions.SetLength(0);
 
 	for( n = 0; n < importedFunctions.GetLength(); n++ )
-		delete importedFunctions[n];
+	{
+		DELETE(importedFunctions[n],asCScriptFunction);
+	}
 	importedFunctions.SetLength(0);
 
 	// Release bound functions
@@ -242,15 +244,21 @@ void asCModule::Reset()
 	bindInformations.SetLength(0);
 
 	for( n = 0; n < stringConstants.GetLength(); n++ )
-		delete stringConstants[n];
+	{
+		DELETE(stringConstants[n],asCString);
+	}
 	stringConstants.SetLength(0);
 
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
-		delete scriptGlobals[n];
+	{
+		DELETE(scriptGlobals[n],asCProperty);
+	}
 	scriptGlobals.SetLength(0);
 
 	for( n = 0; n < scriptSections.GetLength(); n++ )
-		delete scriptSections[n];
+	{
+		DELETE(scriptSections[n],asCString);
+	}
 	scriptSections.SetLength(0);
 
 	for( n = 0; n < classTypes.GetLength(); n++ )
@@ -467,7 +475,7 @@ int asCModule::GetGlobalVarIDByDecl(const char *decl)
 int asCModule::AddConstantString(const char *str, size_t len)
 {
 	//  The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
-	asCString *cstr = new asCString(str, len);
+	asCString *cstr = NEW(asCString)(str, len);
 
 	// TODO: Improve linear search
 	// Has the string been registered before?
@@ -475,7 +483,7 @@ int asCModule::AddConstantString(const char *str, size_t len)
 	{
 		if( *stringConstants[n] == *cstr )
 		{
-			delete cstr;
+			DELETE(cstr,asCString);
 			return (int)n;
 		}
 	}
@@ -506,7 +514,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	assert(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = new asCScriptFunction(this);
+	asCScriptFunction *func = NEW(asCScriptFunction)(this);
 	func->funcType   = isInterface ? asFUNC_INTERFACE : asFUNC_SCRIPT;
 	func->name       = name;
 	func->id         = id;
@@ -534,7 +542,7 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	assert(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = new asCScriptFunction(this);
+	asCScriptFunction *func = NEW(asCScriptFunction)(this);
 	func->funcType   = asFUNC_IMPORTED;
 	func->name       = name;
 	func->id         = id;

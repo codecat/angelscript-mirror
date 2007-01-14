@@ -110,7 +110,7 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 		{
 			if( engine->globalProps[m] == globalProps[n] )
 			{
-				delete engine->globalProps[m];
+				DELETE(engine->globalProps[m],asCProperty);
 				engine->globalProps[m] = 0;
 			}
 		}
@@ -146,7 +146,7 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 		{
 			if( engine->objectTypes[m] == objTypes[n] )
 			{
-				delete engine->objectTypes[m];
+				DELETE(engine->objectTypes[m],asCObjectType);
 				engine->objectTypes[m] = 0;
 			}
 		}

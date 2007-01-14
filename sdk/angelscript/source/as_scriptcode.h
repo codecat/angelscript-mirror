@@ -57,7 +57,7 @@ public:
 	void ConvertPosToRowCol(size_t pos, int *row, int *col);
 
 	asCString name;
-	const char *code;
+	char *code;
 	size_t   codeLength;
 	bool  sharedCode;
 	int idx;

@@ -63,7 +63,7 @@ asCCompiler::~asCCompiler()
 		asCVariableScope *var = variables;
 		variables = variables->parent;
 
-		delete var;
+		DELETE(var,asCVariableScope);
 	}
 }
 
@@ -523,7 +523,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					asSExprContext *ectx = args[1];
 					args.PushLast(ectx);
 
-					ectx = new asSExprContext;
+					ectx = NEW(asSExprContext);
 					ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
 					ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
 					args[1] = ectx;
@@ -546,7 +546,10 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 			// Cleanup
 			for( asUINT n = 0; n < args.GetLength(); n++ )
-				if( args[n] ) delete args[n];
+				if( args[n] ) 
+				{
+					DELETE(args[n],asSExprContext);
+				}
 		}
 	}
 	else if( node && node->nodeType == snInitList )
@@ -1049,7 +1052,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 	n = argCount-1;
 	if( type && (type->IsScriptArray() || type->IsScriptAny()) )
 	{
-		args[n] = new asSExprContext;
+		args[n] = NEW(asSExprContext);
 		args[n]->bc.InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(type->GetObjectType()));
 #ifndef AS_64BIT_PTR
 		args[n]->type.Set(asCDataType::CreatePrimitive(ttInt, false));
@@ -1066,7 +1069,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 		asSExprContext expr;
 		CompileAssignment(arg, &expr);
 
-		args[n] = new asSExprContext;
+		args[n] = NEW(asSExprContext);
 		MergeExprContexts(args[n], &expr);
 		args[n]->type = expr.type;
 		args[n]->exprNode = arg;
@@ -1267,7 +1270,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						asSExprContext *ectx = args[1];
 						args.PushLast(ectx);
 
-						ectx = new asSExprContext;
+						ectx = NEW(asSExprContext);
 						ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
 						ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
 						args[1] = ectx;
@@ -1298,7 +1301,10 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 				// Cleanup
 				for( asUINT n = 0; n < args.GetLength(); n++ )
-					if( args[n] ) delete args[n];
+					if( args[n] ) 
+					{
+						DELETE(args[n],asSExprContext);
+					}
 			}
 
 			node = node->next;
@@ -2458,7 +2464,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 
 void asCCompiler::AddVariableScope(bool isBreakScope, bool isContinueScope)
 {
-	variables = new asCVariableScope(variables);
+	variables = NEW(asCVariableScope)(variables);
 	variables->isBreakScope    = isBreakScope;
 	variables->isContinueScope = isContinueScope;
 }
@@ -2469,7 +2475,7 @@ void asCCompiler::RemoveVariableScope()
 	{
 		asCVariableScope *var = variables;
 		variables = variables->parent;
-		delete var;
+		DELETE(var,asCVariableScope);
 	}
 }
 
@@ -5007,7 +5013,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 			ReleaseTemporaryVariable(expr->type, &ctx->bc);
 
 			// Delete the original expression context
-			delete expr;
+			DELETE(expr,asSExprContext);
 		}
 		else // &inout
 		{
@@ -5079,7 +5085,7 @@ void asCCompiler::CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *ct
 	{
 		asCArray<asCTypeInfo> temporaryVariables;
 
-		asSExprContext *ectx = new asSExprContext;
+		asSExprContext *ectx = NEW(asSExprContext);
 		ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
 		ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
 		args.PushLast(ectx);
@@ -5135,7 +5141,10 @@ void asCCompiler::CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *ct
 
 	// Cleanup
 	for( asUINT n = 0; n < args.GetLength(); n++ )
-		if( args[n] ) delete args[n];
+		if( args[n] )
+		{
+			DELETE(args[n],asSExprContext);
+		}
 }
 
 void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, asCObjectType *objectType, bool objIsConst)
@@ -5210,7 +5219,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 
 	// Compile the arguments
 	asCArray<asSExprContext *> args;
-	asCArray<asCTypeInfo> temporaryVariables;
+	asCObjectArray<asCTypeInfo> temporaryVariables;
 
 	CompileArgumentList(node->lastChild, args, isConstructor ? &tempObj.dataType : 0);
 
@@ -5219,7 +5228,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	{
 		// Evaluate the expression before the function call
 		MergeExprContexts(ctx, args[0]);
-		delete args[0];
+		DELETE(args[0],asSExprContext);
 		args.SetLength(0);
 	}
 
@@ -5301,7 +5310,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 			asSExprContext *ectx = args[1];
 			args.PushLast(ectx);
 
-			ectx = new asSExprContext;
+			ectx = NEW(asSExprContext);
 			ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
 			ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
 			args[1] = ectx;
@@ -5372,7 +5381,10 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 
 	// Cleanup
 	for( asUINT n = 0; n < args.GetLength(); n++ )
-		if( args[n] ) delete args[n];
+		if( args[n] )
+		{
+			DELETE(args[n],asSExprContext);
+		}
 }
 
 void asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx)
@@ -6129,7 +6141,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	else
 	{
 		// Store the original bytecode so that it can be reused when processing the deferred output parameter
-		asSExprContext *orig = new asSExprContext;
+		asSExprContext *orig = NEW(asSExprContext);
 		MergeExprContexts(orig, arg);
 		orig->exprNode = arg->exprNode;
 		orig->type = arg->type;

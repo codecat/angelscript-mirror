@@ -169,12 +169,16 @@ asCContext::~asCContext()
 	for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
 	{
 		if( stackBlocks[n] )
-			delete[] stackBlocks[n];
+		{
+			DELETEARRAY(stackBlocks[n]);
+		}
 	}
 	stackBlocks.SetLength(0);
 
 	if( stringFunction )
-		delete stringFunction;
+	{
+		DELETE(stringFunction,asCScriptFunction);
+	}
 }
 
 int asCContext::AddRef()
@@ -194,7 +198,7 @@ int asCContext::Release()
 	if( refCount == 0 )
 	{
 		LEAVECRITICALSECTION(criticalSection);
-		delete this;
+		DELETE(this,asCContext);
 		return 0;
 	}
 	LEAVECRITICALSECTION(criticalSection);
@@ -273,12 +277,14 @@ int asCContext::Prepare(int funcID)
 		{
 			for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
 				if( stackBlocks[n] )
-					delete[] stackBlocks[n];
+				{
+					DELETEARRAY(stackBlocks[n]);
+				}
 			stackBlocks.SetLength(0);
 
 			stackBlockSize = stackSize;
 
-			asDWORD *stack = new asDWORD[stackBlockSize];
+			asDWORD *stack = NEWARRAY(asDWORD,stackBlockSize);
 			stackBlocks.PushLast(stack);
 		}
 
@@ -335,7 +341,9 @@ int asCContext::SetExecuteStringFunction(asCScriptFunction *func)
 	// TODO: Verify that the context isn't running
 
 	if( stringFunction )
-		delete stringFunction;
+	{
+		DELETE(stringFunction,asCScriptFunction);
+	}
 
 	stringFunction = func;
 
@@ -386,12 +394,14 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 	{
 		for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
 			if( stackBlocks[n] )
-				delete[] stackBlocks[n];
+			{
+				DELETEARRAY(stackBlocks[n]);
+			}
 		stackBlocks.SetLength(0);
 
 		stackBlockSize = stackSize;
 
-		asDWORD *stack = new asDWORD[stackBlockSize];
+		asDWORD *stack = NEWARRAY(asDWORD,stackBlockSize);
 		stackBlocks.PushLast(stack);
 	}
 
@@ -1051,7 +1061,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 		stackIndex++;
 		if( (int)stackBlocks.GetLength() == stackIndex )
 		{
-			asDWORD *stack = new asDWORD[stackBlockSize << stackIndex];
+			asDWORD *stack = NEWARRAY(asDWORD,(stackBlockSize << stackIndex));
 			stackBlocks.PushLast(stack);
 		}
 

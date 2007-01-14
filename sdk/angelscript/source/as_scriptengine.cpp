@@ -122,7 +122,7 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == I64(0x0706050403020100) );
 #endif
 
-	return new asCScriptEngine();
+	return NEW(asCScriptEngine)();
 }
 
 int asCScriptEngine::SetEngineProperty(asDWORD property, asPWORD value)
@@ -139,14 +139,6 @@ asPWORD asCScriptEngine::GetEngineProperty(asDWORD property)
 {
 	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
 		return allowUnsafeReferences;
-
-	return 0;
-}
-
-int asCScriptEngine::SetCommonObjectMemoryFunctions(asALLOCFUNC_t a, asFREEFUNC_t f)
-{
-	global_alloc = a;
-	global_free = f;
 
 	return 0;
 }
@@ -179,9 +171,6 @@ asCScriptEngine::asCScriptEngine()
 	typeIdSeqNbr = 0;
 	currentGroup = &defaultGroup;
 
-	global_alloc = malloc;
-	global_free = free;
-
 	msgCallback = 0;
 
 	// Reserve function id 0 for no function
@@ -209,7 +198,9 @@ asCScriptEngine::~asCScriptEngine()
 		if( scriptModules[n] ) 
 		{
 			if( scriptModules[n]->CanDelete() )
-				delete scriptModules[n];
+			{
+				DELETE(scriptModules[n],asCModule);
+			}
 			else
 				assert(false);
 		}
@@ -224,7 +215,7 @@ asCScriptEngine::~asCScriptEngine()
 	mapTypeIdToDataType.MoveFirst();
 	while( mapTypeIdToDataType.IsValidCursor() )
 	{
-		delete mapTypeIdToDataType.GetValue();
+		DELETE(mapTypeIdToDataType.GetValue(),asCDataType);
 		mapTypeIdToDataType.Erase(true);
 	}
 
@@ -233,13 +224,17 @@ asCScriptEngine::~asCScriptEngine()
 		// Delete config groups in the right order
 		asCConfigGroup *grp = configGroups.PopLast();
 		if( grp ) 
-			delete grp;
+		{
+			DELETE(grp,asCConfigGroup);
+		}
 	}
 
 	for( n = 0; n < globalProps.GetLength(); n++ )
 	{
 		if( globalProps[n] )
-			delete globalProps[n];
+		{
+			DELETE(globalProps[n],asCProperty);
+		}
 	}
 	globalProps.SetLength(0);
 	globalPropAddresses.SetLength(0);
@@ -249,7 +244,7 @@ asCScriptEngine::~asCScriptEngine()
 		if( arrayTypes[n] )
 		{
 			arrayTypes[n]->subType = 0;
-			delete arrayTypes[n];
+			DELETE(arrayTypes[n],asCObjectType);
 		}
 	}
 	arrayTypes.SetLength(0);
@@ -259,14 +254,16 @@ asCScriptEngine::~asCScriptEngine()
 		if( objectTypes[n] )
 		{
 			objectTypes[n]->subType = 0;
-			delete objectTypes[n];
+			DELETE(objectTypes[n],asCObjectType);
 		}
 	}
 	objectTypes.SetLength(0);
 
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
 		if( scriptFunctions[n] )
-			delete scriptFunctions[n];
+		{
+			DELETE(scriptFunctions[n],asCScriptFunction);
+		}
 	scriptFunctions.SetLength(0);
 }
 
@@ -288,7 +285,7 @@ int asCScriptEngine::Release()
 		// Must leave the critical section before deleting the object
 		LEAVECRITICALSECTION(engineCritical);
 
-		delete this;
+		DELETE(this,asCScriptEngine);
 		return 0;
 	}
 
@@ -402,7 +399,7 @@ int asCScriptEngine::Discard(const char *module)
 		if( scriptModules[n] && scriptModules[n]->CanDelete() )
 		{
 			hasDeletedModules = true;
-			delete scriptModules[n];
+			DELETE(scriptModules[n],asCModule);
 			scriptModules[n] = 0;
 		}
 	}
@@ -425,7 +422,7 @@ void asCScriptEngine::ClearUnusedTypes()
 			if( classTypes[n]->refCount == 0 )
 			{
 				RemoveFromTypeIdMap(classTypes[n]);
-				delete classTypes[n];
+				DELETE(classTypes[n],asCObjectType);
 
 				if( n == classTypes.GetLength() - 1 )
 					classTypes.PopLast();
@@ -835,7 +832,7 @@ asIScriptContext *asCScriptEngine::CreateContext()
 
 int asCScriptEngine::CreateContext(asIScriptContext **context, bool isInternal)
 {
-	*context = new asCContext(this, !isInternal);
+	*context = NEW(asCContext)(this, !isInternal);
 
 	return 0;
 }
@@ -863,7 +860,7 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	if( dt.GetObjectType() == 0 ) 
 		return ConfigError(asINVALID_OBJECT);
 
-	asCProperty *prop = new asCProperty;
+	asCProperty *prop = NEW(asCProperty);
 	prop->name            = name;
 	prop->type            = type;
 	prop->byteOffset      = byteOffset;
@@ -881,13 +878,13 @@ int asCScriptEngine::RegisterSpecialObjectType(const char *name, int byteSize, a
 	asCObjectType *type;
 	if( strcmp(name, asDEFAULT_ARRAY) == 0 )
 	{
-		type = new asCObjectType(this);
+		type = NEW(asCObjectType)(this);
 		defaultArrayObjectType = type;
 		type->refCount++;
 	}
 	else if( strcmp(name, ANY_TOKEN) == 0 )
 	{
-		type = new asCObjectType(this);
+		type = NEW(asCObjectType)(this);
 		anyObjectType = type;
 		type->refCount++;
 	}
@@ -944,7 +941,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	// types as they are allowed to use the names
 
 	// Register the object type for the interface
-	asCObjectType *st = new asCObjectType(this);
+	asCObjectType *st = NEW(asCObjectType)(this);
 	st->arrayType = 0;
 	st->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
 	st->size = 0; // Cannot be instanciated
@@ -976,7 +973,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	if( r < 0 )
 		return ConfigError(r);
 	
-	asCScriptFunction *func = new asCScriptFunction(0);
+	asCScriptFunction *func = NEW(asCScriptFunction)(0);
 	func->objectType = dt.GetObjectType();
 
 	func->objectType->methods.PushLast((int)scriptFunctions.GetLength());
@@ -984,7 +981,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	r = bld.ParseFunctionDeclaration(declaration, func);
 	if( r < 0 ) 
 	{
-		delete func;
+		DELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION);
 	}
 
@@ -992,7 +989,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	r = bld.CheckNameConflictMember(dt, func->name.AddressOf(), 0, 0);
 	if( r < 0 )
 	{
-		delete func;
+		DELETE(func,asCScriptFunction);
 		return ConfigError(asNAME_TAKEN);
 	}
 
@@ -1085,7 +1082,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		// types as they are allowed to use the names
 
 		// Put the data type in the list
-		asCObjectType *type = new asCObjectType(this);
+		asCObjectType *type = NEW(asCObjectType)(this);
 		type->name = name;
 		type->tokenType = ttIdentifier;
 		type->arrayType = 0;
@@ -1117,7 +1114,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			return asNOT_SUPPORTED;
 
 		// Put the data type in the list
-		asCObjectType *type = new asCObjectType(this);
+		asCObjectType *type = NEW(asCObjectType)(this);
 		type->name = name;
 		type->subType = dt.GetSubType().GetObjectType();
 		if( type->subType ) type->subType->refCount++;
@@ -1625,7 +1622,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 
 	int id = GetNextScriptFunctionId();
 
-	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
+	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface);
 	newInterface->func               = internal.func;
 	newInterface->baseOffset         = internal.baseOffset;
 	newInterface->callConv           = internal.callConv;
@@ -1639,7 +1636,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	newInterface->returnAutoHandle   = internal.returnAutoHandle;
 	newInterface->hasAutoHandles     = internal.hasAutoHandles;
 
-	asCScriptFunction *f = new asCScriptFunction(0);
+	asCScriptFunction *f = NEW(asCScriptFunction)(0);
 	f->funcType    = asFUNC_SYSTEM;
 	f->sysFuncIntf = newInterface;
 	f->returnType  = func.returnType;
@@ -1687,7 +1684,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 		return ConfigError(asINVALID_TYPE);
 
 	// Store the property info
-	asCProperty *prop = new asCProperty;
+	asCProperty *prop = NEW(asCProperty);
 	prop->name       = name;
 	prop->type       = type;
 	prop->index      = -1 - (int)globalPropAddresses.GetLength();
@@ -1760,10 +1757,10 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 	isPrepared = false;
 
 	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
+	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface);
 	memcpy(newInterface, &internal, sizeof(internal));
 
-	asCScriptFunction *func = new asCScriptFunction(0);
+	asCScriptFunction *func = NEW(asCScriptFunction)(0);
 	func->funcType    = asFUNC_SYSTEM;
 	func->sysFuncIntf = newInterface;
 	func->objectType  = objType;
@@ -1774,7 +1771,7 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 ) 
 	{
-		delete func;
+		DELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION);
 	}
 
@@ -1784,7 +1781,7 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 	r = bld.CheckNameConflictMember(dt, func->name.AddressOf(), 0, 0);
 	if( r < 0 )
 	{
-		delete func;
+		DELETE(func,asCScriptFunction);
 		return ConfigError(asNAME_TAKEN);
 	}
 
@@ -1827,10 +1824,10 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	isPrepared = false;
 
 	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
+	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface);
 	memcpy(newInterface, &internal, sizeof(internal));
 
-	asCScriptFunction *func = new asCScriptFunction(0);
+	asCScriptFunction *func = NEW(asCScriptFunction)(0);
 	func->funcType    = asFUNC_SYSTEM;
 	func->sysFuncIntf = newInterface;
 	func->objectType  = dt.GetObjectType();
@@ -1840,7 +1837,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 ) 
 	{
-		delete func;
+		DELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION);
 	}
 
@@ -1848,7 +1845,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	r = bld.CheckNameConflictMember(dt, func->name.AddressOf(), 0, 0);
 	if( r < 0 )
 	{
-		delete func;
+		DELETE(func,asCScriptFunction);
 		return ConfigError(asNAME_TAKEN);
 	}
 
@@ -1893,10 +1890,10 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	isPrepared = false;
 
 	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
+	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface);
 	memcpy(newInterface, &internal, sizeof(internal));
 
-	asCScriptFunction *func = new asCScriptFunction(0);
+	asCScriptFunction *func = NEW(asCScriptFunction)(0);
 	func->funcType    = asFUNC_SYSTEM;
 	func->sysFuncIntf = newInterface;
 
@@ -1904,7 +1901,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 ) 
 	{
-		delete func;
+		DELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION);
 	}
 
@@ -1912,7 +1909,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	r = bld.CheckNameConflict(func->name.AddressOf(), 0, 0);
 	if( r < 0 )
 	{
-		delete func;
+		DELETE(func,asCScriptFunction);
 		return ConfigError(asNAME_TAKEN);
 	}
 
@@ -1997,10 +1994,10 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 #endif
 
 	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = new asSSystemFunctionInterface;
+	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface);
 	memcpy(newInterface, &internal, sizeof(internal));
 
-	asCScriptFunction *func = new asCScriptFunction(0);
+	asCScriptFunction *func = NEW(asCScriptFunction)(0);
 	func->funcType    = asFUNC_SYSTEM;
 	func->sysFuncIntf = newInterface;
 
@@ -2010,7 +2007,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 	r = bld.ParseDataType(datatype, &dt);
 	if( r < 0 ) 
 	{
-		delete func;
+		DELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_TYPE);
 	}
 
@@ -2071,7 +2068,7 @@ asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
 		int moduleID = idx << 16;
 		assert(moduleID <= 0x3FF0000);
 
-		asCModule *module = new asCModule(name, moduleID, this);
+		asCModule *module = NEW(asCModule)(name, moduleID, this);
 
 		if( idx == scriptModules.GetLength() ) 
 			scriptModules.PushLast(module);
@@ -2381,7 +2378,7 @@ void asCScriptEngine::RemoveArrayType(asCObjectType *t)
 		}
 	}
 
-	delete t;
+	DELETE(t,asCObjectType);
 }
 
 asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
@@ -2420,7 +2417,7 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	// No previous array type has been registered
 
 	// Create a new array type based on the defaultArrayObjectType
-	asCObjectType *ot = new asCObjectType(this);
+	asCObjectType *ot = NEW(asCObjectType)(this);
 	ot->arrayType = arrayType;
 	ot->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_ARRAY;
 	ot->size = sizeof(asCArrayObject);
@@ -2591,7 +2588,7 @@ void *asCScriptEngine::CallAlloc(asCObjectType *type)
 		custom_alloc = (asALLOCFUNC_t)intf->func;
 	}
 	else
-		custom_alloc = global_alloc;
+		custom_alloc = userAlloc;
 
 	return custom_alloc(type->size);
 }
@@ -2605,7 +2602,7 @@ void asCScriptEngine::CallFree(asCObjectType *type, void *obj)
 		custom_free = (asFREEFUNC_t)intf->func;
 	}
 	else
-		custom_free = global_free;
+		custom_free = userFree;
 
 	custom_free(obj);
 }
@@ -2913,7 +2910,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 	}
 
 	// Insert the basic object type
-	asCDataType *newDt = new asCDataType(dt);
+	asCDataType *newDt = NEW(asCDataType)(dt);
 	newDt->MakeReference(false);
 	newDt->MakeReadOnly(false);
 	newDt->MakeHandle(false);
@@ -2923,7 +2920,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 	// If the object type supports object handles then register those types as well
 	if( dt.IsObject() && dt.GetObjectType()->beh.addref && dt.GetObjectType()->beh.release )
 	{
-		newDt = new asCDataType(dt);
+		newDt = NEW(asCDataType)(dt);
 		newDt->MakeReference(false);
 		newDt->MakeReadOnly(false);
 		newDt->MakeHandle(true);
@@ -2931,7 +2928,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 
 		mapTypeIdToDataType.Insert(typeId | asTYPEID_OBJHANDLE, newDt);
 
-		newDt = new asCDataType(dt);
+		newDt = NEW(asCDataType)(dt);
 		newDt->MakeReference(false);
 		newDt->MakeReadOnly(false);
 		newDt->MakeHandle(true);
@@ -2967,7 +2964,7 @@ void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
 		asCDataType *dt = mapTypeIdToDataType.GetValue();
 		if( dt->GetObjectType() == type )
 		{
-			delete dt;
+			DELETE(dt,asCDataType);
 			mapTypeIdToDataType.Erase(true);
 		}
 		else
@@ -3074,7 +3071,7 @@ int asCScriptEngine::BeginConfigGroup(const char *groupName)
 	if( currentGroup != &defaultGroup )
 		return asNOT_SUPPORTED;
 
-	asCConfigGroup *group = new asCConfigGroup();
+	asCConfigGroup *group = NEW(asCConfigGroup)();
 	group->groupName = groupName;
 
 	configGroups.PushLast(group);
@@ -3117,7 +3114,7 @@ int asCScriptEngine::RemoveConfigGroup(const char *groupName)
 			// Remove the configurations registered with this group
 			group->RemoveConfiguration(this);
 
-			delete group;
+			DELETE(group,asCConfigGroup);
 		}
 	}
 
@@ -3280,7 +3277,7 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 		}
 
 		// Delete the script function
-		delete func;
+		DELETE(func,asCScriptFunction);
 	}
 }
 

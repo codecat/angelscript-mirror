@@ -147,6 +147,9 @@
 				RelativePath="..\..\source\as_generic.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\as_memory.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\as_module.cpp">
 			</File>
 			<File
@@ -251,7 +254,13 @@
 				RelativePath="..\..\source\as_map.h">
 			</File>
 			<File
+				RelativePath="..\..\source\as_memory.h">
+			</File>
+			<File
 				RelativePath="..\..\source\as_module.h">
+			</File>
+			<File
+				RelativePath="..\..\source\as_objectarray.h">
 			</File>
 			<File
 				RelativePath="..\..\source\as_objecttype.h">

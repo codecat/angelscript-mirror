@@ -135,7 +135,7 @@ int asCRestore::Restore()
 	module->classTypes.Allocate(count, 0);
 	for( i = 0; i < count; ++i )
 	{
-		asCObjectType *ot = new asCObjectType(engine);
+		asCObjectType *ot = NEW(asCObjectType)(engine);
 		ReadObjectTypeDeclaration(ot);
 		engine->classTypes.PushLast(ot);
 		module->classTypes.PushLast(ot);
@@ -157,7 +157,7 @@ int asCRestore::Restore()
 	module->scriptGlobals.Allocate(count, 0);
 	for( i = 0; i < count; ++i ) 
 	{
-		prop = new asCProperty;
+		prop = NEW(asCProperty);
 		ReadProperty(prop);
 		module->scriptGlobals.PushLast(prop);
 	}
@@ -174,7 +174,7 @@ int asCRestore::Restore()
 	module->scriptFunctions.Allocate(count, 0);
 	for( i = 0; i < count; ++i ) 
 	{
-		func = new asCScriptFunction(module);
+		func = NEW(asCScriptFunction)(module);
 		ReadFunction(func);
 		module->scriptFunctions.PushLast(func);
 		engine->SetScriptFunction(func);
@@ -184,7 +184,7 @@ int asCRestore::Restore()
 	READ_NUM(count);
 	if( count )
 	{
-		module->initFunction = new asCScriptFunction(module);
+		module->initFunction = NEW(asCScriptFunction)(module);
 		ReadFunction(module->initFunction);
 		engine->SetScriptFunction(module->initFunction);
 	}
@@ -194,7 +194,7 @@ int asCRestore::Restore()
 	module->stringConstants.Allocate(count, 0);
 	for(i=0;i<count;++i) 
 	{
-		cstr = new asCString();
+		cstr = NEW(asCString)();
 		ReadString(cstr);
 		module->stringConstants.PushLast(cstr);
 	}
@@ -205,7 +205,7 @@ int asCRestore::Restore()
 	module->bindInformations.SetLength(count);
 	for(i=0;i<count;++i)
 	{
-		func = new asCScriptFunction(module);
+		func = NEW(asCScriptFunction)(module);
 		ReadFunction(func);
 		module->importedFunctions.PushLast(func);
 
@@ -612,7 +612,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot)
 	int n;
 	for( n = 0; n < size; n++ )
 	{
-		asCProperty *prop = new asCProperty;
+		asCProperty *prop = NEW(asCProperty);
 		ReadProperty(prop);
 		ot->properties.PushLast(prop);
 	}

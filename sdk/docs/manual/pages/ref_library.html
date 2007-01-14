@@ -20,6 +20,8 @@ extern "C"
   AS_API const char *       <a href="#options">asGetLibraryOptions</a>();
   AS_API asIScriptContext * <a href="#context">asGetActiveContext</a>();
   AS_API int                <a href="#threadclean">asThreadCleanup</a>();
+  AS_API int                <a href="#setmem">asSetGlobalMemoryFunctions</a>(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+  AS_API int                <a href="#resetmem">asResetGlobalMemoryFunctions</a>();
 }
 </pre>
 
@@ -137,6 +139,67 @@ memory that is local to the current running thread.</p>
 
 <p>If the cleanup couldn't be performed, e.g. if a context is currently 
 active, the function returns a negative value.</p>
+
+
+
+
+
+<a name=setmem></a>
+<h2>asSetGlobalMemoryFunctions</h2>
+
+<pre class=border>
+int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+</pre>
+
+<p>Exported as "_asSetGlobalMemoryFunctions".</p>
+
+<h3>Description</h3>
+
+<p>Sets the memory allocation and deallocation functions that the library will use. The default functions are the standard malloc and free functions from the C library.</p>
+
+<p>Setting these functions allows the application to maintain full control over the memory used by the script library. You should call this before calling the asCreateScriptEngine function, otherwise the library will allocate some memory with malloc and the rest with your function.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>allocFunc</code>&nbsp;</td>
+<td valign=top><p>The memory allocation function. Must have the same function signature as malloc.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>freeFunc</code>&nbsp;</td>
+<td valign=top><p>The memory deallocation function. Must have the same function signature as free.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns negative in case of error.</p>
+
+
+
+
+
+<a name=resetmem></a>
+<h2>asResetGlobalMemoryFunctions</h2>
+
+<pre class=border>
+int asResetGlobalMemoryFunctions();
+</pre>
+
+<p>Exported as "_asResetGlobalMemoryFunctions".</p>
+
+<h3>Description</h3>
+
+<p>Restores the memory functions to the default malloc and free functions from the standard C library.</p>
+
+<p>Only call this when you're sure that no memory is still allocated by the library. To simplify, this function calls the asThreadCleanup function to clean up the memory allocated for the thread.</p>
+
+<h3>Returns</h3>
+
+<p>Returns negative in case of error.</p>
+
+
 
 
 

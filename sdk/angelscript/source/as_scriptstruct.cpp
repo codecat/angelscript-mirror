@@ -115,7 +115,7 @@ void asCScriptStruct::Destruct()
 	this->~asCScriptStruct();
 
 	// Free the memory
-	gc.objType->engine->global_free(this);
+	userFree(this);
 }
 
 asCScriptStruct::~asCScriptStruct()

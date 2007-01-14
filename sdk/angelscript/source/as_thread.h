@@ -92,9 +92,7 @@ public:
 	~asCThreadManager();
 
 	asCThreadLocalData *GetLocalData();
-#ifdef USE_THREADS
 	int CleanupLocalData();
-#endif
 
 protected:
 

@@ -307,7 +307,7 @@ void asCAnyObject::Destruct()
 	this->~asCAnyObject();
 
 	// Free the memory
-	gc.objType->engine->global_free(this);
+	userFree(this);
 }
 
 void asCAnyObject::CountReferences()
