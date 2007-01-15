@@ -160,6 +160,8 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	exceptionCallback = false;
 
 	doProcessSuspend = false;
+
+	userData = 0;
 }
 
 asCContext::~asCContext()
@@ -229,6 +231,18 @@ void asCContext::DetachEngine()
 asIScriptEngine *asCContext::GetEngine()
 {
 	return engine;
+}
+
+void *asCContext::SetUserData(void *data)
+{
+	void *oldData = userData;
+	userData = data;
+	return oldData;
+}
+
+void *asCContext::GetUserData()
+{
+	return userData;
 }
 
 int asCContext::Prepare(int funcID)

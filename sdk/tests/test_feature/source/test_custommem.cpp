@@ -147,6 +147,10 @@ bool Test()
 		fail = true;
 	}
 
+	asThreadCleanup();
+	assert( numAllocs == numFrees );
+	assert( currentMemAlloc == 0 );
+
 	asResetGlobalMemoryFunctions();
 	PrintAllocIndices();
 

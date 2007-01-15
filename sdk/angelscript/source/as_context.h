@@ -117,6 +117,8 @@ public:
 
 	int  SetExecuteStringFunction(asCScriptFunction *func);
 
+	void *SetUserData(void *data);
+	void *GetUserData();
 
 //protected:
 	friend class asCScriptEngine;
@@ -194,6 +196,8 @@ public:
 	bool exceptionCallback;
 	asSSystemFunctionInterface exceptionCallbackFunc;
 	void *exceptionCallbackObj;
+
+	void *userData;
 
 	DECLARECRITICALSECTION(criticalSection);
 };

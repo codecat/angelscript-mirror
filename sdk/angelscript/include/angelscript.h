@@ -283,6 +283,8 @@ extern "C"
 	AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length = 0, int stackLevel = 0);
 	AS_API int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel = -1);
 	AS_API void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel = 0);
+	AS_API void *           asContext_SetUserData(asIScriptContext *c, void *data);
+	AS_API void *           asContext_GetUserData(asIScriptContext *c);
 
 
 	AS_API asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g);
@@ -491,6 +493,9 @@ public:
 	virtual const char *GetVarDeclaration(int varIndex, int *length = 0, int stackLevel = -1) = 0;
 	virtual int GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
 	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
+
+	virtual void *SetUserData(void *data) = 0;
+	virtual void *GetUserData() = 0;
 
 protected:
 	virtual ~asIScriptContext() {}
