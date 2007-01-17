@@ -124,15 +124,6 @@ static const char *script6 =
 "   int[] f = {,{23}};                           \n"
 "}                                               \n";
 
-void *ScriptAlloc(size_t size)
-{
-	return malloc(size);
-}
-
-void ScriptFree(void *mem)
-{
-	free(mem);
-}
 
 bool Test()
 {
@@ -143,7 +134,6 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
-	r = asSetGlobalMemoryFunctions(ScriptAlloc, ScriptFree);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString_Generic(engine);
@@ -246,8 +236,6 @@ bool Test()
 		fail = true;
 
 	engine->Release();
-
-	asResetGlobalMemoryFunctions();
 
 	// Success
 	return fail;

@@ -52,6 +52,11 @@ void CObj_Construct(CObj *o)
 	new(o) CObj();
 }
 
+void *CObj_Alloc(int size)
+{
+	return new char[size];
+}
+
 CObj c_obj;
 
 bool Test()
@@ -69,6 +74,7 @@ bool Test()
 	// Register an object type
 	r = engine->RegisterObjectType("obj", sizeof(CObj), asOBJ_CLASS_CDA); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CObj_Construct), asCALL_CDECL_OBJLAST); assert( r>=0 );
+	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ALLOC, "obj &f(uint)", asFUNCTION(CObj_Alloc), asCALL_CDECL); assert( r >=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ADDREF, "void f()", asMETHOD(CObj,AddRef), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_RELEASE, "void f()", asMETHOD(CObj,Release), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ASSIGNMENT, "obj &f(const obj &in)", asMETHOD(CObj,operator=), asCALL_THISCALL); assert( r>=0 );

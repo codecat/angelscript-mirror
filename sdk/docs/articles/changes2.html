@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.0 WIP - 2007/01/15</h2>
+<h2>Version 2.8.0 WIP - 2007/01/17</h2>
 
 <ul>
 <li>Bug fixes
@@ -139,6 +139,7 @@ A:hover
 <ul>
 <li>Fixed a lot of compiler warnings (Thanks Manu Evans)
 <li>All dynamically allocated memory now uses the memory functions registered with SetGlobalMemoryFunctions.
+<li>By changing the asCString implementation I was able to decrease the number of memory allocations by 15%.
 </ul>
 <li>Script language
 <ul>

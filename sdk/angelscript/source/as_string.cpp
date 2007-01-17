@@ -44,8 +44,7 @@
 asCString::asCString()
 {
 	length = 0;
-	bufferSize = 0;
-	buffer = 0;
+	local[0] = 0;
 
 //	Assign("", 0);
 }
@@ -54,17 +53,15 @@ asCString::asCString()
 asCString::asCString(const asCString &str)
 {
 	length = 0;
-	bufferSize = 0;
-	buffer = 0;
+	local[0] = 0;
 
-	Assign(str.buffer, str.length);
+	Assign(str.AddressOf(), str.length);
 }
 
 asCString::asCString(const char *str, size_t len)
 {
 	length = 0;
-	bufferSize = 0;
-	buffer = 0;
+	local[0] = 0;
 
 	Assign(str, len);
 }
@@ -72,8 +69,7 @@ asCString::asCString(const char *str, size_t len)
 asCString::asCString(const char *str)
 {
 	length = 0;
-	bufferSize = 0;
-	buffer = 0;
+	local[0] = 0;
 
 	size_t len = strlen(str);
 	Assign(str, len);
@@ -82,78 +78,85 @@ asCString::asCString(const char *str)
 asCString::asCString(char ch)
 {
 	length = 0;
-	bufferSize = 0;
-	buffer = 0;
+	local[0] = 0;
 
 	Assign(&ch, 1);
 }
 
 asCString::~asCString()
 {
-	if( buffer )
+	if( length > 11 && dynamic )
 	{
-		DELETEARRAY(buffer);
+		DELETEARRAY(dynamic);
 	}
 }
 
 char *asCString::AddressOf()
 {
-	if( buffer == 0 ) Assign("", 0);
-	return buffer;
+	if( length <= 11 )
+		return local;
+	else
+		return dynamic;
 }
 
 const char *asCString::AddressOf() const
 {
-	if( buffer == 0 ) return "";
-	return buffer;
+	if( length <= 11 )
+		return local;
+	else
+		return dynamic;
 }
 
 void asCString::SetLength(size_t len)
 {
-	if( len >= bufferSize )
-		Allocate(len, true);
-
-	buffer[len] = 0;
-	length = len;
+	Allocate(len, true);
 }
 
 void asCString::Allocate(size_t len, bool keepData)
 {
-	char *buf = NEWARRAY(char,len+1);
-	bufferSize = len+1;
-
-	if( buffer )
+	if( len > 11 )
 	{
+		char *buf = NEWARRAY(char,len+1);
+
 		if( keepData )
 		{
-			if( len < length )
-				length = len;
-			memcpy(buf, buffer, length);
+			int l = len < length ? len : length;
+			memcpy(buf, AddressOf(), l);
 		}
 
-		DELETEARRAY(buffer);
+		if( length > 11 )
+		{
+			DELETEARRAY(dynamic);
+		}
+
+		dynamic = buf;
+	}
+	else
+	{
+		if( length > 11 )
+		{
+			char *temp = dynamic;
+			if( keepData )
+			{
+				memcpy(&local, dynamic, len);
+			}
+			DELETEARRAY(dynamic);
+		}
 	}
 
-	buffer = buf;
-
-	// If no earlier data, set to empty string
-	if( !keepData )
-		length = 0;
+	length = len;
 
 	// Make sure the buffer is null terminated
-	buffer[length] = 0;
+	AddressOf()[length] = 0;
 }
 
 void asCString::Assign(const char *str, size_t len)
 {
-	// Allocate memory for the string
-	if( bufferSize < len + 1 )
-		Allocate(len, false);
+	Allocate(len, false);
 
 	// Copy the string
-	length = len;
-	memcpy(buffer, str, length);
-	buffer[length] = 0;
+	memcpy(AddressOf(), str, length);
+	AddressOf()[length] = 0;
 }
 
 asCString &asCString::operator =(const char *str)
@@ -166,7 +169,7 @@ asCString &asCString::operator =(const char *str)
 
 asCString &asCString::operator =(const asCString &str)
 {
-	Assign(str.buffer, str.length);
+	Assign(str.AddressOf(), str.length);
 
 	return *this;
 }
@@ -180,13 +183,11 @@ asCString &asCString::operator =(char ch)
 
 void asCString::Concatenate(const char *str, size_t len)
 {
-	// Allocate memory for the string
-	if( bufferSize < length + len + 1 )
-		Allocate(length + len, true);
+	asUINT oldLength = length;
+	SetLength(length + len);
 
-	memcpy(&buffer[length], str, len);
-	length = length + len;
-	buffer[length] = 0;
+	memcpy(AddressOf() + oldLength, str, len);
+	AddressOf()[length] = 0;
 }
 
 asCString &asCString::operator +=(const char *str)
@@ -199,7 +200,7 @@ asCString &asCString::operator +=(const char *str)
 
 asCString &asCString::operator +=(const asCString &str)
 {
-	Concatenate(str.buffer, str.length);
+	Concatenate(str.AddressOf(), str.length);
 
 	return *this;
 }
@@ -235,13 +236,13 @@ size_t asCString::Format(const char *format, ...)
 		asCString str; // Use temporary string in case the current buffer is a parameter
 		str.Allocate(n, false);
 
-		while( (r = vsnprintf(str.buffer, n, format, args)) < 0 )
+		while( (r = vsnprintf(str.AddressOf(), n, format, args)) < 0 )
 		{
 			n *= 2;
 			str.Allocate(n, false);
 		}
 
-		Assign(str.buffer, r);
+		Assign(str.AddressOf(), r);
 	}
 
 	va_end(args);
@@ -253,14 +254,14 @@ char &asCString::operator [](size_t index)
 {
 	assert(index < length);
 
-	return buffer[index];
+	return AddressOf()[index];
 }
 
 const char &asCString::operator [](size_t index) const
 {
 	assert(index < length);
 
-	return buffer[index];
+	return AddressOf()[index];
 }
 
 asCString asCString::SubString(size_t start, size_t length) const
@@ -271,7 +272,7 @@ asCString asCString::SubString(size_t start, size_t length) const
 	if( length == (size_t)(-1) ) length = GetLength() - start;
 
 	asCString tmp;
-	tmp.Assign(buffer + start, length);
+	tmp.Assign(AddressOf() + start, length);
 
 	return tmp;
 }
@@ -288,7 +289,7 @@ int asCString::Compare(const asCString &str) const
 
 int asCString::Compare(const char *str, size_t len) const
 {
-	if( buffer == 0 ) 
+	if( length == 0 ) 
 	{
 		if( str == 0 || len == 0 ) return 0; // Equal
 
@@ -305,13 +306,13 @@ int asCString::Compare(const char *str, size_t len) const
 
 	if( len < length )
 	{
-		int result = memcmp(buffer, str, len);
+		int result = memcmp(AddressOf(), str, len);
 		if( result == 0 ) return -1; // The other string is smaller than this
 
 		return result;
 	}
 
-	int result = memcmp(buffer, str, length);
+	int result = memcmp(AddressOf(), str, length);
 	if( result == 0 && length < len ) return 1; // The other string is larger than this
 
 	return result;
@@ -319,10 +320,7 @@ int asCString::Compare(const char *str, size_t len) const
 
 size_t asCString::RecalculateLength()
 {
-	if( buffer == 0 ) Assign("", 0);
-	length = strlen(buffer);
-
-	assert(length < bufferSize);
+	SetLength(strlen(AddressOf()));
 
 	return length;
 }

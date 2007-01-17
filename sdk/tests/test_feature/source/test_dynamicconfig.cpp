@@ -72,6 +72,11 @@ static void MyFunc()
 {
 }
 
+static void *Alloc(int size)
+{
+	return new char[size];
+}
+
 static void Construct(asIScriptGeneric *gen)
 {
 	int *o = (int*)gen->GetObject();
@@ -250,6 +255,7 @@ bool Test()
 	engine->BeginConfigGroup("group1");
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_ALLOC, "mytype &f(uint)", asFUNCTION(Alloc), asCALL_CDECL);
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef), asCALL_GENERIC);
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_RELEASE, "void f()", asFUNCTION(Release), asCALL_GENERIC);
 

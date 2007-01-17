@@ -158,9 +158,15 @@ int main(int argc, char **argv)
 	fs_chdir(asTestDir);
 #endif
 
+	InstallMemoryManager();
+
+	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
+	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
+	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
+	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
+	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
-//	if( TestCString::Test()           ) goto failed; else printf("-- TestCString passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestGetArgPtr::Test()         ) goto failed; else printf("-- TestGetArgPtr passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
@@ -183,12 +189,9 @@ int main(int argc, char **argv)
 	if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
- 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
-	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
-	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestArgRef::Test()            ) goto failed; else printf("-- TestArgRef passed\n");
 	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
@@ -198,7 +201,6 @@ int main(int argc, char **argv)
 	if( TestVector3_2::Test()         ) goto failed; else printf("-- TestVector3_2 passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
 	if( TestStack2::Test()            ) goto failed; else printf("-- TestStack2 passed\n");
-	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
 	if( TestObject::Test()            ) goto failed; else printf("-- TestObject passed\n");
 	if( TestDict::Test()              ) goto failed; else printf("-- TestDict passed\n");
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
@@ -229,7 +231,6 @@ int main(int argc, char **argv)
 	if( TestImport2::Test()           ) goto failed; else printf("-- TestImport2 passed\n");
 	if( TestEnumGlobVar()             ) goto failed; else printf("-- TestEnumGlobVar passed\n");
 	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
-	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestDiscard::Test()           ) goto failed; else printf("-- TestDiscard passed\n");
 	if( TestParser::Test()            ) goto failed; else printf("-- TestParser passed\n");
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
@@ -264,7 +265,10 @@ int main(int argc, char **argv)
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 
 	// No longer valid
+//	if( TestCString::Test()           ) goto failed; else printf("-- TestCString passed\n");
 //	if( TestPointer::Test()           ) goto failed; else printf("-- TestPointer passed\n");
+
+	RemoveMemoryManager();
 
 //succeed:
 	printf("--------------------------------------------\n");

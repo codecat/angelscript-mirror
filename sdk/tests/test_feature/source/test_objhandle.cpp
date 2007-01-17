@@ -107,6 +107,11 @@ public:
 	int refCount;
 };
 
+void *CRefClass_Alloc(int size)
+{
+	return new char[size];
+}
+
 void Construct(CRefClass *o)
 {
 	new(o) CRefClass;
@@ -127,6 +132,7 @@ bool Test()
 	RegisterScriptString(engine);
 
 	r = engine->RegisterObjectType("refclass", sizeof(CRefClass), asOBJ_CLASS_CDA); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ALLOC, "refclass &f(uint)", asFUNCTION(CRefClass_Alloc), asCALL_CDECL); assert( r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefClass, Release), asCALL_THISCALL); assert(r >= 0);

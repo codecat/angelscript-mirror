@@ -80,9 +80,12 @@ public:
 	size_t RecalculateLength();
 
 protected:
-	size_t length;
-	size_t bufferSize;
-	char *buffer;
+	asUINT length;
+	union
+	{
+		char *dynamic;
+		char local[12];
+	};
 };
 
 // Helper functions

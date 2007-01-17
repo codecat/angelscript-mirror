@@ -78,6 +78,11 @@ void CScriptStream_Construct(CScriptStream *o)
 	new(o) CScriptStream;
 }
 
+void *CScriptStream_Alloc(int size)
+{
+	return new char[size];
+}
+
 static const char *script1 =
 "void Test()                       \n"
 "{                                 \n"
@@ -114,6 +119,7 @@ bool Test()
 
 	engine->RegisterObjectType("stream", sizeof(CScriptStream), asOBJ_CLASS_CDA);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CScriptStream_Construct), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("stream", asBEHAVE_ALLOC, "stream &f(uint)", asFUNCTION(CScriptStream_Alloc), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptStream,AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptStream,Release), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_ASSIGNMENT, "stream &f(const stream &in)", asMETHOD(CScriptStream, operator=), asCALL_THISCALL);

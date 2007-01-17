@@ -70,6 +70,11 @@ void Point_Release(Point &point)
 	point.Release();
 }
 
+void *Point_Alloc(int size)
+{
+	return new char[size];
+}
+
 
 static char *script =
 "Point AddPoints(Point p1, Point p2) \n"
@@ -97,6 +102,7 @@ bool Test()
 	r = engine->RegisterObjectProperty("Point", "int y", offsetof(Point, y)); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Point", "void Add(Point)", asFUNCTION(Point_Add), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Point_Construct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_ALLOC, "Point &f(uint)", asFUNCTION(Point_Alloc), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Point_Destruct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_ASSIGNMENT, "Point &f(Point &in)", asFUNCTION(Point_Assign), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_INDEX, "int &f(int)", asFUNCTION(Point_Index), asCALL_CDECL_OBJFIRST); assert( r >= 0 );

@@ -14,8 +14,8 @@
 
 <h1>Registering a C++ class</h1>
 
-<p>Before registering a class with AngelScript you need to decide how the script 
-engine should interact with it. Basically there are two questions that needs 
+<p>Before registering a class with AngelScript you need to decide how the script
+engine should interact with it. Basically there are two questions that needs
 to be answered:</p>
 
 <ul>
@@ -36,7 +36,7 @@ how many references are held by the script.</p>
 object if it is registered as a global property, or if a registered function or method
 returns a reference to the object.</p>
 
-<p>If you answered yes to the first question, then you need to define the size of 
+<p>If you answered yes to the first question, then you need to define the size of
 the object type, and perhaps even register the constructor and destructor behaviours
 for initializing and cleaning up the objects.
 </p>
@@ -52,27 +52,27 @@ uses another memory heap than the main application.</p>
 give the name for which the class will be identified with in the scripts.</p>
 
 <pre class=border>
-int RegisterObjectType(const char *name, 
-                       int         byteSize, 
+int RegisterObjectType(const char *name,
+                       int         byteSize,
                        asDWORD     flags);
 </pre>
 
-<p>The name can be either a new identifier naming the new type, or it can be 
+<p>The name can be either a new identifier naming the new type, or it can be
 the name of an already existing datatype followed by [] (array brackets), e.g.
-"MyClass" or "int[]". The second case means that the application wants to 
+"MyClass" or "int[]". The second case means that the application wants to
 override the default array implementation for that specific type.</p>
 
-<p>The second parameter is as the name suggests the size of the class in 
-bytes, so normally you would use the sizeof() operator to determine this 
-value. It is however valid to register an object type with the size of 0, 
-which then means that the scripts may not declare local objects of that type. 
-The scripts can still hold handles to the object type, or use application 
+<p>The second parameter is as the name suggests the size of the class in
+bytes, so normally you would use the sizeof() operator to determine this
+value. It is however valid to register an object type with the size of 0,
+which then means that the scripts may not declare local objects of that type.
+The scripts can still hold handles to the object type, or use application
 registered global objects of that type.</p>
 
-<p>The third flag is perhaps the most important one, if this flag isn't 
-correctly set it is quite possible that you will find yourself searching for 
+<p>The third flag is perhaps the most important one, if this flag isn't
+correctly set it is quite possible that you will find yourself searching for
 bugs that corrupt the stack frame, or other horrible bugs. This flag tells
-AngelScript about the C++ properties of the object type, i.e. how C++ is 
+AngelScript about the C++ properties of the object type, i.e. how C++ is
 handling the objects in situations like returns, etc.</p>
 
 <p>There are three main types:</p>
@@ -95,7 +95,7 @@ float and double.</td></tr>
 
 <p>For the modifiers there is also a shorter form, example: asOBJ_CLASS_CDA. You can find these shorter forms in angelscript.h.</p>
 
-<p>It is extremely important that this flag is set correctly as it is the only 
+<p>It is extremely important that this flag is set correctly as it is the only
 way AngelScript has to know how the C++ application handles the objects, for
 example if the object is returned in memory, in the general registers, or in
 the floating point registers.</p>
@@ -104,36 +104,46 @@ the floating point registers.</p>
 
 <p>After the object type has been registered, AngelScript needs to know how
 an object should be moved around in memory. The important behaviours are the
-way an object is constructed, destroyed, and copied from one location to 
-another.</p>
+way an object is constructed, destroyed, copied from one location to
+another, and how the memory is allocated.</p>
 
 <p>If no constructor is registered then AngelScript will not do anything to
 initialize new objects of the registered type. This is fine for structures
-and unions that don't make any presumtion on the value of the members. But 
+and unions that don't make any presumtion on the value of the members. But
 for a class that needs to allocate resources at construction it could be big
-problem. If the class declares virtual functions it is also important to 
-register the constructor as the virtual function table must be initialized for 
+problem. If the class declares virtual functions it is also important to
+register the constructor as the virtual function table must be initialized for
 the class at allocation.</p>
 
 <p>If no destructor is registered then AngelScript again does nothing when
-the object is destroyed, e.g. when a variable of the type goes out of scope. 
+the object is destroyed, e.g. when a variable of the type goes out of scope.
 If the object allocates resources that must be freed upon destruction then it
 is necessary to register the destructor. The exception is if the addref/release
 behaviours are registered, since the library will then expect the application
 to destroy the object in the release method, thus it never calls the destructor.</p>
 
-<p>If no copy behaviour, or assignment behaviour as it is also called, is 
-registered, then AngelScript simply copies the memory byte for byte. If the 
+<p>When using the addref/release behaviours, you need to pay attention to the
+memory management. This is because AngelScript will allocate the memory for
+the object when it is constructed, but the object will deallocate the memory
+itself when the reference counter reaches 0. You need to make sure the memory
+allocation and deallocation are done using the same heap management. By default
+AngelScript uses malloc to allocate the memory, but this can be overridden with
+a call to asSetGlobalMemoryFunctions(). If you want the engine to use one heap
+manager and the registered object to use another you need to register alloc
+behaviour.</p>
+
+<p>If no copy behaviour, or assignment behaviour as it is also called, is
+registered, then AngelScript simply copies the memory byte for byte. If the
 class needs special behaviour when being copied, for example if a new resource
-must be allocated for the target object, then it is again necessary to 
+must be allocated for the target object, then it is again necessary to
 register the assignment behaviour.</p>
 
 <p>All object behaviours are registered with the following method:</p>
 
 <pre class=border>
-int RegisterObjectBehaviour(const char *datatype, 
-                            asDWORD     behaviour, 
-                            const char *declaration, 
+int RegisterObjectBehaviour(const char *datatype,
+                            asDWORD     behaviour,
+                            const char *declaration,
                             asUPtr      funcPointer,
                             asDWORD     callConv);
 </pre>
@@ -142,8 +152,8 @@ int RegisterObjectBehaviour(const char *datatype,
 RegisterObjectType(), e.g: "MyClass", or "int[]".</p>
 
 <p>behaviour should be one of the available behaviour constants declared in
-angelscript.h (see the reference manual). The most important behaviours are 
-the following:</p> 
+angelscript.h (see the reference manual). The most important behaviours are
+the following:</p>
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr><td width=200 valign=top>asBEHAVE_CONSTRUCT</td><td>The constructor behaviour.</td></tr>
@@ -151,16 +161,17 @@ the following:</p>
 <tr><td width=200 valign=top>asBEHAVE_ASSIGNMENT</td><td>The assignment or copy behaviour.</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_ADDREF</td><td>The addref behaviour.</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_RELEASE</td><td>The release behaviour.</td></tr>
+<tr><td width=200 valign=top>asBEHAVE_ALLOC</td><td>The memory allocator function.</td></tr>
 </table>
 
-<p>The declaration parameter, is used to show the parameter types and return 
-type for the behaviour functions. The constructor and destructor should have 
+<p>The declaration parameter, is used to show the parameter types and return
+type for the behaviour functions. The constructor and destructor should have
 the return type void, and no parameters. It is actually possible to register
-constructors that take parameters, but the default constructor must be 
+constructors that take parameters, but the default constructor must be
 registered without any parameters. The assignment should return a reference to
-the datatype in question and take a reference to the datatype, preferably a 
+the datatype in question and take a reference to the datatype, preferably a
 constant reference. It is also possible to register assignment behaviours that
-take other types in the parameter, but the default behaviour must use a 
+take other types in the parameter, but the default behaviour must use a
 reference to it's own type.</p>
 
 <p>Suggested declaration strings:</p>
@@ -171,14 +182,19 @@ reference to it's own type.</p>
 <tr><td width=200 valign=top>asBEHAVE_ASSIGNMENT</td><td>"obj &amp;f(obj &amp;in)"</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_ADDREF</td><td>"void f()"</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_RELEASE</td><td>"void f()"</td></tr>
+<tr><td width=200 valign=top>asBEHAVE_ALLOC</td><td>"obj &amp;f(uint)"</td></tr>
 </table>
 
-<p>The function name used in the declaration doesn't really matter as it will 
-not be stored by the engine. For the assignment the return value should be a reference to the actual object. The parameter type can be any type that AngelScript understand. If it is a reference to an object of the same type as the actual object, then the operator will also be used when copying the object in the VM, e.g. when passing the object by value to a function.</p>
+<p>The function name used in the declaration doesn't really matter as it will
+not be stored by the engine. For the assignment the return value should be a
+reference to the actual object. The parameter type can be any type that
+AngelScript understand. If it is a reference to an object of the same type as
+the actual object, then the operator will also be used when copying the object
+in the VM, e.g. when passing the object by value to a function.</p>
 
-<p>The fourth parameter is the actual function pointer. It is possible to 
-register class methods directly or global C++ functions that take an extra 
-parameter for the object pointer. It is not possible to register a class' 
+<p>The fourth parameter is the actual function pointer. It is possible to
+register class methods directly or global C++ functions that take an extra
+parameter for the object pointer. It is not possible to register a class'
 constructor and destructor directly as C++ doesn't allow taking the pointer
 to these methods. For these two it is therefor necessary to write a couple of
 wrapper functions. My suggestion is to do it like this:</p>
@@ -195,7 +211,7 @@ void Destructor(MyClass *obj)
 }
 </pre>
 
-<p>The placement new operator, new(void*), is declared in new.h in the 
+<p>The placement new operator, new(void*), is declared in new.h in the
 standard C++ library.</p>
 
 <p>To get the function pointer to the function or method you wish to register
@@ -208,17 +224,17 @@ you should use the following macros:</p>
 <tr><td width=200 valign=top>asMETHODPR(class, method, p, r)</td><td>Get the method pointer of an overloaded class method.</td></tr>
 </table>
 
-<p>Make sure you don't use a virtual method for the constructor behaviour as 
+<p>Make sure you don't use a virtual method for the constructor behaviour as
 one of it's task is to initialize the virtual function table pointer.</p>
 
-<p>AngelScript doesn't support class methods for classes with virtual 
-inheritance, i.e. classes inheriting from multiple classes with shared base classes. 
-If you need to use such a class you will have to write wrapper 
-functions for the methods you wish to register. Classes with normal multiple 
+<p>AngelScript doesn't support class methods for classes with virtual
+inheritance, i.e. classes inheriting from multiple classes with shared base classes.
+If you need to use such a class you will have to write wrapper
+functions for the methods you wish to register. Classes with normal multiple
 inheritance is supported though.</p>
 
-<p>The final parameter to RegisterObjectBehaviour() tells AngelScript what 
-calling convention that the function is using. For registered object 
+<p>The final parameter to RegisterObjectBehaviour() tells AngelScript what
+calling convention that the function is using. For registered object
 behaviours the supported calling conventions are:</p>
 
 <table border=0 cellspacing=0 cellpadding=0>
@@ -233,13 +249,13 @@ in a similar manner as described above.</p>
 
 <h2>Object properties and methods</h2>
 
-<p>Now that AngelScript knows how to properly handle the registered object 
+<p>Now that AngelScript knows how to properly handle the registered object
 type you can continue to add the interface that the script writer will have
 to access the object's internals such as it's properties and methods.</p>
 
 <pre class=border>
-int RegisterObjectProperty(const char *obj, 
-                           const char *declaration, 
+int RegisterObjectProperty(const char *obj,
+                           const char *declaration,
                            int         byteOffset);
 </pre>
 
@@ -249,52 +265,52 @@ int RegisterObjectProperty(const char *obj,
 and name, e.g. "int value". If you want to make the property read-only simply
 declare it with the const modifier.</p>
 
-<p>The third parameter is the byteoffset of the property in the class 
-structure. Normally you would determine this offset by using the macro 
+<p>The third parameter is the byteoffset of the property in the class
+structure. Normally you would determine this offset by using the macro
 offsetof(class, property) that is declared in stddef.h.</p>
 
 <pre class=border>
-int RegisterObjectMethod(const char *obj, 
-                         const char *declaration, 
-                         asUPtr      funcPointer, 
+int RegisterObjectMethod(const char *obj,
+                         const char *declaration,
+                         asUPtr      funcPointer,
                          asDWORD     callConv)
 </pre>
 
 <p>This method is used to register object methods that can be called from the
-script. The parameters are pretty much the same as for 
-RegisterObjectBehaviour(), except that there is no behaviour flag, and the 
-function name used in the declaration is used by the scripts to call the 
+script. The parameters are pretty much the same as for
+RegisterObjectBehaviour(), except that there is no behaviour flag, and the
+function name used in the declaration is used by the scripts to call the
 method.</p>
 
 <h2>Operator behaviours</h2>
 
-<p>Sometimes it can be useful to allow the scripts to manipulate objects 
-through operators, i.e. using + to concatenate two strings. These overloaded 
+<p>Sometimes it can be useful to allow the scripts to manipulate objects
+through operators, i.e. using + to concatenate two strings. These overloaded
 operator behaviours are registered with either RegisterObjectBehaviour() or
 RegisterGlobalBehaviour(). Binary operators are generally registered with
-RegisterGlobalBehaviour(), whereas unary operator are registered with 
+RegisterGlobalBehaviour(), whereas unary operator are registered with
 RegisterObjectBehaviour(). The exception is the assignment operators that are
 binary but are registered with RegisterObjectBehaviour().</p>
 
 <pre class=border>
-int RegisterGlobalBehaviour(asDWORD     behaviour, 
-                            const char *declaration, 
-                            asUPtr      funcPointer, 
+int RegisterGlobalBehaviour(asDWORD     behaviour,
+                            const char *declaration,
+                            asUPtr      funcPointer,
                             asDWORD     callConv)
 </pre>
 
-<p>The first parameter is the behaviour flag, as found in the reference 
+<p>The first parameter is the behaviour flag, as found in the reference
 manual.</p>
 
-<p>The second is the function signature, where just as for 
+<p>The second is the function signature, where just as for
 RegisterObjectBehaviour() the function name doesn't matter. Observe that it is
-not possible to override the operators for the built-in primitives in 
+not possible to override the operators for the built-in primitives in
 AngelScript, at least one of the parameters must be a registered object type.
 </p>
 
 <p>The function pointer is obtained with the same macros as earlier.</p>
 
-<p>The last parameter has a different set of calling conventions available 
+<p>The last parameter has a different set of calling conventions available
 though, as we are now registering a global function.</p>
 
 <table border=0 cellspacing=0 cellpadding=0>
@@ -303,8 +319,8 @@ though, as we are now registering a global function.</p>
 <tr><td width=200 valign=top>asCALL_GENERIC</td><td>Global function using the generic calling convention.</td></tr>
 </table>
 
-<p>Although it is possible to register a global function that takes a variable 
-number of parameters, AngelScript will always send a fixed number of arguments 
+<p>Although it is possible to register a global function that takes a variable
+number of parameters, AngelScript will always send a fixed number of arguments
 as it doesn't support variable number of arguments in functions.</p>
 
 
