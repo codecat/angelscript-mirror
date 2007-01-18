@@ -38,17 +38,21 @@ void Assert(asIScriptGeneric *gen)
 	}
 }
 
-static int numAllocs       = 0;
-static int numFrees        = 0;
-static size_t currentMemAlloc = 0;
-static size_t maxMemAlloc     = 0;
+static int numAllocs            = 0;
+static int numFrees             = 0;
+static size_t currentMemAlloc   = 0;
+static size_t maxMemAlloc       = 0;
+static int maxNumAllocsSameTime = 0;
+static asQWORD sumAllocSize     = 0;
 
 static map<void*,size_t> memSize;
 static map<void*,int> memCount;
+static map<size_t,int> meanSize;
 
 void *MyAllocWithStats(size_t size)
 {
 	numAllocs++;
+	sumAllocSize += size;
 
 	currentMemAlloc += size;
 	if( currentMemAlloc > maxMemAlloc ) maxMemAlloc = currentMemAlloc;
@@ -57,6 +61,15 @@ void *MyAllocWithStats(size_t size)
 	memSize.insert(map<void*,size_t>::value_type(ptr,size));
 
 	memCount.insert(map<void*,int>::value_type(ptr,numAllocs));
+
+	if( numAllocs - numFrees > maxNumAllocsSameTime )
+		maxNumAllocsSameTime = numAllocs - numFrees;
+
+	map<size_t,int>::iterator i = meanSize.find(size);
+	if( i != meanSize.end() )
+		i->second++;
+	else
+		meanSize.insert(map<size_t,int>::value_type(size,1));
 
 	return ptr;
 }
@@ -109,6 +122,37 @@ void RemoveMemoryManager()
 
 	assert( numAllocs == numFrees ); 
 	assert( currentMemAlloc == 0 );
+
+	printf("---------\n");
+	printf("MEMORY STATISTICS\n");
+	printf("number of allocations                 : %d\n", numAllocs);
+	printf("max allocated memory                  : %d\n", maxMemAlloc);
+	printf("max number of simultaneous allocations: %d\n", maxNumAllocsSameTime);
+	printf("medium size of allocations            : %d\n", (int)sumAllocSize/numAllocs);
+
+	// Find the mean size of allocations
+	map<size_t,int>::iterator i = meanSize.begin();
+	int n = 0;
+	int meanAllocSize = 0;
+	while( i != meanSize.end() )
+	{
+		if( n + i->second > numAllocs / 2 )
+		{
+			meanAllocSize = (int)i->first;
+			break;
+		}
+
+		n += i->second;
+		i++;
+	}
+	printf("mean size of allocations              : %d\n", meanAllocSize);
+	i = meanSize.begin();
+	printf("smallest allocation size              : %d\n", i->first);
+	printf("number of smallest allocations        : %d\n", i->second);
+	map<size_t,int>::reverse_iterator r = meanSize.rbegin();
+	printf("largest allocation size               : %d\n", i->first);
+	printf("number of largest allocations         : %d\n", i->second);
+	printf("number of different allocation sizes  : %d\n", meanSize.size());
 
 	asResetGlobalMemoryFunctions();
 }

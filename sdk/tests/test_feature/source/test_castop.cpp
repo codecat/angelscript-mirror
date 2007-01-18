@@ -24,6 +24,21 @@ class clss : intf1, intf2  \n\
   void Test2() {}          \n\
 }                          \n";
 
+const char *script2 = "\
+class TestObj                     \n\
+{                                 \n\
+    TestObj(int a) {this.a = a;}  \n\
+	int a;                        \n\
+}                                 \n\
+void Func(TestObj obj)            \n\
+{                                 \n\
+    assert(obj.a == 2);           \n\
+}                                 \n\
+void Test()                       \n\
+{                                 \n\
+	Func(2);                      \n\
+}                                 \n";
+
 
 bool Test()
 {
@@ -36,6 +51,7 @@ bool Test()
 
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	int res = 0;
 	engine->RegisterGlobalProperty("int res", &res);
@@ -74,6 +90,15 @@ bool Test()
 					   "ExecuteString (1, 40) : Error   : Illegal operation on 'const int'\n" )
 		fail = true;
 
+	//--------------
+	// Using constructor as implicit cast operator
+	// TODO:
+/*	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->AddScriptSection(0, "Test2", script2, strlen(script2));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+*/
 	engine->Release();
 
 	// Success

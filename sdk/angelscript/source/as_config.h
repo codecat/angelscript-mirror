@@ -252,9 +252,9 @@
 		// 360 is PPC, big endian and 64 bit.
 		#define AS_PPC
 	#else
-	// Support native calling conventions on x86, but not 64bit yet
+		// Support native calling conventions on x86, but not 64bit yet
 		#if defined(_XBOX) || (defined(_M_IX86) && !defined(__LP64__))
-		#define AS_X86
+			#define AS_X86
 		#endif
 	#endif
 
@@ -417,17 +417,17 @@
 
 // Is the target a 64bit system?
 #if defined(__LP64__) || defined(__amd64__)
-    #ifndef AS_64BIT_PTR
-        #define AS_64BIT_PTR
-    #endif
+	#ifndef AS_64BIT_PTR
+		#define AS_64BIT_PTR
+	#endif
 #endif
 
 // If there are no current support for native calling
 // conventions, then compile with AS_MAX_PORTABILITY
 #if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC))
-    #ifndef AS_MAX_PORTABILITY
-        #define AS_MAX_PORTABILITY
-    #endif
+	#ifndef AS_MAX_PORTABILITY
+		#define AS_MAX_PORTABILITY
+	#endif
 #endif
 
 

@@ -4542,7 +4542,7 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 
 			// Do we need 64 bits?
 			if( val>>32 )
-                ctx->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), val);
+				ctx->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), val);
 			else
 				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), asDWORD(val));
 		}

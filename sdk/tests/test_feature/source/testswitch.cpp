@@ -22,10 +22,10 @@ static const char *script =
 "    case -1:                    \n"  // 9
 "      add(-1);                  \n"  // 10
 "      break;                    \n"  // 11
-"    case 5:                     \n"  // 12
+"    case 0x5:                   \n"  // 12
 "      add(5);                   \n"  // 13
 "      break;                    \n"  // 14
-"    case 15:                    \n"  // 15
+"    case 0xF:                   \n"  // 15
 "      add(15);                  \n"  // 16
 "      break;                    \n"  // 17
 "    default:                    \n"  // 18

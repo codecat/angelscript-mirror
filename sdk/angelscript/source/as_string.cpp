@@ -120,7 +120,7 @@ void asCString::Allocate(size_t len, bool keepData)
 
 		if( keepData )
 		{
-			int l = len < length ? len : length;
+			int l = (int)len < length ? (int)len : length;
 			memcpy(buf, AddressOf(), l);
 		}
 
@@ -144,7 +144,7 @@ void asCString::Allocate(size_t len, bool keepData)
 		}
 	}
 
-	length = len;
+	length = (int)len;
 
 	// Make sure the buffer is null terminated
 	AddressOf()[length] = 0;

@@ -114,8 +114,8 @@ asQWORD asStringScanUInt64(const char *string, int base, size_t *numScanned)
 	else if( base == 16 )
 	{
 		while( (*end >= '0' && *end <= '9') ||
-			   (*end >= 'a' && *end <= 'f') ||
-               (*end >= 'A' && *end <= 'F') )
+		       (*end >= 'a' && *end <= 'f') ||
+		       (*end >= 'A' && *end <= 'F') )
 		{
 			res *= 16;
 			if( *end >= '0' && *end <= '9' )

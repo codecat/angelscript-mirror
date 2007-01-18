@@ -160,6 +160,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
@@ -176,7 +177,6 @@ int main(int argc, char **argv)
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestBits::Test()              ) goto failed; else printf("-- TestBits passed\n");
 	if( TestFor::Test()               ) goto failed; else printf("-- TestFor passed\n");
-	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestSingleton::Test()         ) goto failed; else printf("-- TestSingleton passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
@@ -264,8 +264,9 @@ int main(int argc, char **argv)
 	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 
-	// No longer valid
+	// This test uses ATL::CString thus it is turned off by default
 //	if( TestCString::Test()           ) goto failed; else printf("-- TestCString passed\n");
+	// Pointers are not supported by AngelScript at the moment, but they may be in the future
 //	if( TestPointer::Test()           ) goto failed; else printf("-- TestPointer passed\n");
 
 	RemoveMemoryManager();
