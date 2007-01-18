@@ -146,13 +146,18 @@ void RemoveMemoryManager()
 		i++;
 	}
 	printf("mean size of allocations              : %d\n", meanAllocSize);
-	i = meanSize.begin();
-	printf("smallest allocation size              : %d\n", i->first);
-	printf("number of smallest allocations        : %d\n", i->second);
-	map<size_t,int>::reverse_iterator r = meanSize.rbegin();
-	printf("largest allocation size               : %d\n", i->first);
-	printf("number of largest allocations         : %d\n", i->second);
+	printf("smallest allocation size              : %d\n", meanSize.begin()->first);
+	printf("largest allocation size               : %d\n", meanSize.rbegin()->first);
 	printf("number of different allocation sizes  : %d\n", meanSize.size());
+
+	// Print allocation sizes
+	i = meanSize.begin();
+	while( i != meanSize.end() )
+	{
+		if( i->second >= 1000 )
+			printf("alloc size %d: %d\n", i->first, i->second);
+		i++;
+	}
 
 	asResetGlobalMemoryFunctions();
 }

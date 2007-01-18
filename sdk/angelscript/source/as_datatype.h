@@ -110,7 +110,7 @@ public:
 
 	asCDataType &operator =(const asCDataType &);
 
-	asSTypeBehaviour *GetBehaviour();
+	asSTypeBehaviour *GetBehaviour() const;
 
 protected:
 	// Base object type

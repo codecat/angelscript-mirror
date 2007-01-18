@@ -1079,7 +1079,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 	}
 }
 
-void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, bool isConstMethod)
+void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, bool isConstMethod, bool silent)
 {
 	asUINT n;
 	if( funcs.GetLength() > 0 )
@@ -1137,7 +1137,7 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 	if( !isConstMethod )
 		FilterConst(funcs);
 
-	if( funcs.GetLength() != 1 )
+	if( funcs.GetLength() != 1 && !silent )
 	{
 		// Build a readable string of the function with parameter types
 		asCString str = name;
@@ -3230,15 +3230,15 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 		if( !to.IsReference() )
 		{
-			if( ctx->type.dataType.IsReference() )
-			{
-				Dereference(ctx, generateCode);
-
-				// TODO: Can't this leave unhandled deferred output params?
-			}
-
 			if( to.IsObjectHandle() )
 			{
+				if( ctx->type.dataType.IsReference() )
+				{
+					Dereference(ctx, generateCode);
+
+					// TODO: Can't this leave unhandled deferred output params?
+				}
+
 				// TODO: If the type is handle, then we can't use IsReadOnly to determine the constness of the basetype
 
 				// If the rvalue is a handle to a const object, then
@@ -3264,19 +3264,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 			}
 			else
 			{
-				if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
-				{
-					if( ctx->type.dataType.IsReference() )
-					{
-						if( generateCode ) ctx->bc.Instr(BC_RDSPTR);
-						ctx->type.dataType.MakeReference(false);
-					}
-
-					if( generateCode )
-						ctx->bc.Instr(BC_CHKREF);
-
-					ctx->type.dataType.MakeHandle(false);
-				}
+				ImplicitConversionToObject(ctx, to, node, isExplicit, generateCode, reservedVars);
 			}
 		}
 		else // to.IsReference()
@@ -3362,6 +3350,94 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 			}
 		}
 	}
+}
+
+void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars)
+{
+	if( ctx->type.dataType.IsReference() )
+	{
+		Dereference(ctx, generateCode);
+
+		// TODO: Can't this leave unhandled deferred output params?
+	}
+
+	if( ctx->type.dataType.IsObject() && ctx->type.dataType.GetObjectType() == to.GetObjectType() )
+	{
+		if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
+		{
+			if( ctx->type.dataType.IsReference() )
+			{
+				if( generateCode ) ctx->bc.Instr(BC_RDSPTR);
+				ctx->type.dataType.MakeReference(false);
+			}
+
+			if( generateCode )
+				ctx->bc.Instr(BC_CHKREF);
+
+			ctx->type.dataType.MakeHandle(false);
+		}
+	}
+/* TODO: Still working on this
+	else
+	{
+		// Since the expression is not of the same object type we need to check if there
+		// is any constructor that can be used to create an object of the correct type.
+
+		asCArray<int> funcs;
+		asSTypeBehaviour *beh = to.GetBehaviour();
+		if( beh )
+			funcs = beh->constructors;
+
+		// Compile the arguments
+		asCArray<asSExprContext *> args;
+		asCObjectArray<asCTypeInfo> temporaryVariables;
+
+		args.PushLast(ctx);
+
+		MatchFunctions(funcs, args, node, to.GetObjectType()->name.AddressOf(), false, true);
+
+		// Verify that we found 1 matching function
+		if( funcs.GetLength() == 1 && generateCode )
+		{
+			asCTypeInfo tempObj;
+			tempObj.dataType = to;
+			tempObj.stackOffset = (short)AllocateVariable(to, true);
+			tempObj.dataType.MakeReference(true);
+			tempObj.isTemporary = true;
+			tempObj.isVariable = true;
+
+			asSExprContext tmp;
+
+			// Push the address of the object on the stack
+			tmp.bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
+
+			PrepareFunctionCall(funcs[0], &tmp.bc, args);
+
+			MoveArgsToStack(funcs[0], &tmp.bc, args, false);
+
+			int offset = 0;
+			for( asUINT n = 0; n < args.GetLength(); n++ )
+				offset += args[n]->type.dataType.GetSizeOnStackDWords();
+
+			tmp.bc.InstrWORD(BC_GETREF, (asWORD)offset);
+
+			PerformFunctionCall(funcs[0], &tmp, true, &args, tempObj.dataType.GetObjectType());
+
+			// The constructor doesn't return anything,
+			// so we have to manually inform the type of
+			// the return value
+			tmp.type = tempObj;
+
+			// Push the address of the object on the stack again
+			tmp.bc.InstrSHORT(BC_PSF, tempObj.stackOffset);
+
+			// Copy the newly generated code to the input context
+			// ctx is already empty, since it was merged as part of argument expression
+			assert(ctx->bc.GetLastInstr() == -1);
+			MergeExprContexts(ctx, &tmp);
+		}
+	}
+*/
 }
 
 void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCDataType &to, asCScriptNode *node, bool isExplicit)

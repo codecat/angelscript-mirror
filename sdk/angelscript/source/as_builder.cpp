@@ -567,7 +567,23 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 			return asINVALID_DECLARATION;			
 	if( returnAutoHandle ) *returnAutoHandle = autoHandle;
 
+	// Count number of parameters
+	int paramCount = 0;
 	n = n->next->firstChild;
+	while( n )
+	{
+		paramCount++;
+		n = n->next->next;
+		if( n && n->nodeType == snIdentifier )
+			n = n->next;
+	}
+
+	// Preallocate memory
+	func->parameterTypes.Allocate(paramCount, false);
+	func->inOutFlags.Allocate(paramCount, false);
+	if( paramAutoHandles ) paramAutoHandles->Allocate(paramCount, false);
+
+	n = node->firstChild->next->next->next->firstChild;
 	while( n )
 	{
 		int inOutFlags;

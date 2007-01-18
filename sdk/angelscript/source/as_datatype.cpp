@@ -498,7 +498,7 @@ int asCDataType::GetArrayType() const
 	return objectType ? objectType->arrayType : 0;
 }
 
-asSTypeBehaviour *asCDataType::GetBehaviour()
+asSTypeBehaviour *asCDataType::GetBehaviour() const
 { 
 	return objectType ? &objectType->beh : 0; 
 }

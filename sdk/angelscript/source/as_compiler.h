@@ -134,7 +134,7 @@ protected:
 	void CompileConstructor(asCDataType &type, int offset, asCByteCode *bc);
 	void CompileDestructor(asCDataType &type, int offset, asCByteCode *bc);
 	void CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args, asCDataType *type = 0);
-	void MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, bool isConstMethod = false);
+	void MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, bool isConstMethod = false, bool silent = false);
 
 	// Helper functions
 	void SwapPostFixOperands(asCArray<asCScriptNode *> &postfix, asCArray<asCScriptNode *> &target);
@@ -146,6 +146,7 @@ protected:
 	void Dereference(asSExprContext *ctx, bool generateCode);
 	void ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0);
 	void ImplicitConversionConstant(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit);
+	void ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0);
 	int  MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum);
 	void PerformFunctionCall(int funcID, asSExprContext *out, bool isConstructor = false, asCArray<asSExprContext*> *args = 0, asCObjectType *objType = 0);
 	void MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprContext *> &args, bool addOneToOffset);

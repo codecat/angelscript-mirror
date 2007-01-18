@@ -156,7 +156,7 @@ T asCObjectArray<T>::PopLast()
 template <class T>
 void asCObjectArray<T>::Allocate(size_t numElements, bool keepData)
 {
-	T *tmp = NEWOBJARRAY(T,numElements);
+	T *tmp = numElements ? NEWOBJARRAY(T,numElements) : 0;
 
 	if( array )
 	{

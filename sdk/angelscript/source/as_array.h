@@ -153,7 +153,7 @@ T asCArray<T>::PopLast()
 template <class T>
 void asCArray<T>::Allocate(size_t numElements, bool keepData)
 {
-	T *tmp = NEWARRAY(T,numElements);
+	T *tmp = numElements ? NEWARRAY(T,numElements) : 0;
 
 	if( array )
 	{
