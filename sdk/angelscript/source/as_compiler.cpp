@@ -3377,7 +3377,6 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 			ctx->type.dataType.MakeHandle(false);
 		}
 	}
-/* TODO: Still working on this
 	else
 	{
 		// Since the expression is not of the same object type we need to check if there
@@ -3397,47 +3396,52 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 		MatchFunctions(funcs, args, node, to.GetObjectType()->name.AddressOf(), false, true);
 
 		// Verify that we found 1 matching function
-		if( funcs.GetLength() == 1 && generateCode )
+		if( funcs.GetLength() == 1 )
 		{
 			asCTypeInfo tempObj;
 			tempObj.dataType = to;
-			tempObj.stackOffset = (short)AllocateVariable(to, true);
 			tempObj.dataType.MakeReference(true);
 			tempObj.isTemporary = true;
 			tempObj.isVariable = true;
 
-			asSExprContext tmp;
+			if( generateCode )
+			{
+				tempObj.stackOffset = (short)AllocateVariable(to, true);
 
-			// Push the address of the object on the stack
-			tmp.bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
+				asSExprContext tmp;
 
-			PrepareFunctionCall(funcs[0], &tmp.bc, args);
+				// Push the address of the object on the stack
+				tmp.bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
 
-			MoveArgsToStack(funcs[0], &tmp.bc, args, false);
+				PrepareFunctionCall(funcs[0], &tmp.bc, args);
 
-			int offset = 0;
-			for( asUINT n = 0; n < args.GetLength(); n++ )
-				offset += args[n]->type.dataType.GetSizeOnStackDWords();
+				MoveArgsToStack(funcs[0], &tmp.bc, args, false);
 
-			tmp.bc.InstrWORD(BC_GETREF, (asWORD)offset);
+				int offset = 0;
+				for( asUINT n = 0; n < args.GetLength(); n++ )
+					offset += args[n]->type.dataType.GetSizeOnStackDWords();
 
-			PerformFunctionCall(funcs[0], &tmp, true, &args, tempObj.dataType.GetObjectType());
+				tmp.bc.InstrWORD(BC_GETREF, (asWORD)offset);
 
-			// The constructor doesn't return anything,
-			// so we have to manually inform the type of
-			// the return value
-			tmp.type = tempObj;
+				PerformFunctionCall(funcs[0], &tmp, true, &args, tempObj.dataType.GetObjectType());
 
-			// Push the address of the object on the stack again
-			tmp.bc.InstrSHORT(BC_PSF, tempObj.stackOffset);
+				// The constructor doesn't return anything,
+				// so we have to manually inform the type of
+				// the return value
+				tmp.type = tempObj;
 
-			// Copy the newly generated code to the input context
-			// ctx is already empty, since it was merged as part of argument expression
-			assert(ctx->bc.GetLastInstr() == -1);
-			MergeExprContexts(ctx, &tmp);
+				// Push the address of the object on the stack again
+				tmp.bc.InstrSHORT(BC_PSF, tempObj.stackOffset);
+
+				// Copy the newly generated code to the input context
+				// ctx is already empty, since it was merged as part of argument expression
+				assert(ctx->bc.GetLastInstr() == -1);
+				MergeExprContexts(ctx, &tmp);
+			}
+
+			ctx->type = tempObj;
 		}
 	}
-*/
 }
 
 void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCDataType &to, asCScriptNode *node, bool isExplicit)

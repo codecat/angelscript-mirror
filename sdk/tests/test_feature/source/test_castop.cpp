@@ -92,13 +92,15 @@ bool Test()
 
 	//--------------
 	// Using constructor as implicit cast operator
-	// TODO:
-/*	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "Test2", script2, strlen(script2));
 	r = engine->Build(0);
 	if( r < 0 )
 		fail = true;
-*/
+	r = engine->ExecuteString(0, "Test()");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
 	engine->Release();
 
 	// Success
