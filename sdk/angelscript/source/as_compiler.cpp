@@ -1079,7 +1079,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 	}
 }
 
-void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, bool isConstMethod, bool silent)
+void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, bool isConstMethod, bool silent, bool allowObjectConstruct)
 {
 	asUINT n;
 	if( funcs.GetLength() > 0 )
@@ -1106,7 +1106,7 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 		for( n = 0; n < args.GetLength(); ++n )
 		{
 			asCArray<int> tempFuncs;
-			MatchArgument(funcs, tempFuncs, &args[n]->type, n);
+			MatchArgument(funcs, tempFuncs, &args[n]->type, n, allowObjectConstruct);
 
 			// Intersect the found functions with the list of matching functions
 			for( asUINT f = 0; f < matchingFuncs.GetLength(); f++ )
@@ -2923,7 +2923,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 	}
 }
 
-void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars)
+void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {
 	// Do we want a primitive
 	if( to.IsPrimitive() )
@@ -3264,7 +3264,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 			}
 			else
 			{
-				ImplicitConversionToObject(ctx, to, node, isExplicit, generateCode, reservedVars);
+				ImplicitConversionToObject(ctx, to, node, isExplicit, generateCode, reservedVars, allowObjectConstruct);
 			}
 		}
 		else // to.IsReference()
@@ -3352,7 +3352,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 	}
 }
 
-void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars)
+void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {
 	if( ctx->type.dataType.IsReference() )
 	{
@@ -3377,7 +3377,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 			ctx->type.dataType.MakeHandle(false);
 		}
 	}
-	else
+	else if( allowObjectConstruct )
 	{
 		// Since the expression is not of the same object type we need to check if there
 		// is any constructor that can be used to create an object of the correct type.
@@ -3393,7 +3393,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 
 		args.PushLast(ctx);
 
-		MatchFunctions(funcs, args, node, to.GetObjectType()->name.AddressOf(), false, true);
+		MatchFunctions(funcs, args, node, to.GetObjectType()->name.AddressOf(), false, true, false);
 
 		// Verify that we found 1 matching function
 		if( funcs.GetLength() == 1 )
@@ -6119,7 +6119,7 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 	return 0;
 }
 
-int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum)
+int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum, bool allowObjectConstruct)
 {
 	bool isExactMatch = false;
 	bool isMatchExceptConst = false;
@@ -6142,7 +6142,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 		asSExprContext ti;
 		ti.type = *argType;
 		if( argType->dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
-		ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, false, false);
+		ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, false, false, 0, allowObjectConstruct);
 		if( desc->parameterTypes[paramNum].IsEqualExceptRef(ti.type.dataType) )
 		{
 			// Is it an exact match?

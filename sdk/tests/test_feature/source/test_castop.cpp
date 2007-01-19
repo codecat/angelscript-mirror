@@ -24,20 +24,51 @@ class clss : intf1, intf2  \n\
   void Test2() {}          \n\
 }                          \n";
 
+
+// In this test must be possible to call Func both
+// with an uint and a double. The path via TestObj2
+// must not be considered by the compiler, as that 
+// would make: Func(TestObj(TestObj2(2)));
 const char *script2 = "\
-class TestObj                     \n\
-{                                 \n\
-    TestObj(int a) {this.a = a;}  \n\
-	int a;                        \n\
-}                                 \n\
-void Func(TestObj obj)            \n\
-{                                 \n\
-    assert(obj.a == 2);           \n\
-}                                 \n\
-void Test()                       \n\
-{                                 \n\
-	Func(2);                      \n\
-}                                 \n";
+class TestObj                                     \n\
+{                                                 \n\
+    TestObj(int a) {this.a = a;}                  \n\
+	TestObj(TestObj2 a) {this.a = a.a;}           \n\
+	int a;                                        \n\
+}                                                 \n\
+// This object must not be used to get to TestObj \n\
+class TestObj2                                    \n\
+{                                                 \n\
+    TestObj2(int a) {assert(false);}              \n\
+	int a;                                        \n\
+}                                                 \n\
+void Func(TestObj obj)                            \n\
+{                                                 \n\
+    assert(obj.a == 2);                           \n\
+}                                                 \n\
+void Test()                                       \n\
+{                                                 \n\
+	Func(2);                                      \n\
+	Func(2.1);                                    \n\
+}                                                 \n";
+
+// In this test it must not be possible to implicitly convert using 
+// a path that requires multiple object constructions, e.g.
+// Func(TestObj1(TestObj2(2)));
+const char *script3 = 
+"class TestObj1                 \n"
+"{                              \n"
+"  TestObj1(TestObj2 a) {}      \n"
+"}                              \n"
+"class TestObj2                 \n"
+"{                              \n"
+"  TestObj2(int a) {}           \n"
+"}                              \n"
+"void Func(TestObj1 obj) {}     \n"
+"void Test()                    \n"
+"{                              \n"
+"  Func(2);                     \n"
+"}                              \n";
 
 
 bool Test()
@@ -99,6 +130,11 @@ bool Test()
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");
 	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	engine->AddScriptSection(0, "Test3", script3, strlen(script3));
+	r = engine->Build(0);
+	if( r >= 0 )
 		fail = true;
 
 	engine->Release();
