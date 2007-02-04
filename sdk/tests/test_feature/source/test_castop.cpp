@@ -132,6 +132,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	engine->AddScriptSection(0, "Test3", script3, strlen(script3));
 	r = engine->Build(0);
 	if( r >= 0 )

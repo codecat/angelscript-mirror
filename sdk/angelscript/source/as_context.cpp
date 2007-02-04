@@ -2959,6 +2959,19 @@ void asCContext::CleanStackFrame()
 
 	// Clean object parameters sent by reference
 	int offset = 0;
+	if( currentFunction->objectType )
+	{
+		offset += PTR_SIZE;
+
+		// If the object is a script declared object, then we must release it 
+		// as the compiler adds a reference at the entry of the function
+		asSTypeBehaviour *beh = &currentFunction->objectType->beh;
+		if( beh->release )
+		{
+			engine->CallObjectMethod((void*)*(size_t*)&stackFramePointer[0], beh->release);
+			*(size_t*)&stackFramePointer[offset] = 0;
+		}
+	}
 	for( asUINT n = 0; n < currentFunction->parameterTypes.GetLength(); n++ )
 	{
 		if( currentFunction->parameterTypes[n].IsObject() && !currentFunction->parameterTypes[n].IsReference() )

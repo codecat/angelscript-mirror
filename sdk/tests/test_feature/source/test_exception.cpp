@@ -3,11 +3,24 @@ using namespace std;
 
 #define TESTNAME "TestException"
 
+// This script will cause an exception inside a class method
+const char *script1 =
+"class A               \n"
+"{                     \n"
+"  void Test(string c) \n"
+"  {                   \n"
+"    int a = 0, b = 0; \n"
+"    a = a/b;          \n"
+"  }                   \n"
+"}                     \n";
+
 bool TestException()
 {
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptString(engine);
+
 
 	COutStream out;	
 	asIScriptContext *ctx;
@@ -52,6 +65,15 @@ bool TestException()
 	}
 
 	ctx->Release();
+
+	engine->AddScriptSection(0, "script", script1, strlen(script1));
+	engine->Build(0);
+	r = engine->ExecuteString(0, "A a; a.Test(\"test\");");
+	if( r != asEXECUTION_EXCEPTION )
+	{
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success

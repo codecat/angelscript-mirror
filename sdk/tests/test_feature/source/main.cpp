@@ -160,6 +160,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
@@ -248,7 +249,6 @@ int main(int argc, char **argv)
 	if( TestTempVar()                 ) goto failed; else printf("-- TestTempVar passed\n");
 	if( TestModuleRef()               ) goto failed; else printf("-- TestModuleRef passed\n");
 	if( TestExecuteString()           ) goto failed; else printf("-- TestExecuteString passed\n");
-	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
 	if( TestStack()                   ) goto failed; else printf("-- TestStack passed\n");
 	if( TestCreateEngine()            ) goto failed; else printf("-- TestCreateEngine passed\n");
 	if( TestStdcall4Args()            ) goto failed; else printf("-- TestStdcall4Args passed\n");
