@@ -265,7 +265,7 @@ void asCArrayObject::Resize(asUINT numElements)
 	if( gc.objType->subType )
 	{
 		// Allocate memory for the buffer
-		newBuffer = (sArrayBuffer*)userAlloc(sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
+		newBuffer = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
 		newBuffer->numElements = numElements;
 
 		// Copy the elements from the old buffer
@@ -287,7 +287,7 @@ void asCArrayObject::Resize(asUINT numElements)
 	else
 	{
 		// Allocate memory for the buffer
-		newBuffer = (sArrayBuffer*)userAlloc(sizeof(sArrayBuffer)-1+elementSize*numElements);
+		newBuffer = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+elementSize*numElements);
 		newBuffer->numElements = numElements;
 
 		int c = numElements > buffer->numElements ? buffer->numElements : numElements;
@@ -345,12 +345,12 @@ void asCArrayObject::CreateBuffer(sArrayBuffer **buf, asUINT numElements)
 {
 	if( gc.objType->subType )
 	{
-		*buf = (sArrayBuffer*)userAlloc(sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
+		*buf = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
 		(*buf)->numElements = numElements;
 	}
 	else
 	{
-		*buf = (sArrayBuffer*)userAlloc(sizeof(sArrayBuffer)-1+elementSize*numElements);
+		*buf = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+elementSize*numElements);
 		(*buf)->numElements = numElements;
 	}
 
@@ -362,7 +362,7 @@ void asCArrayObject::DeleteBuffer(sArrayBuffer *buf)
 	Destruct(buf, 0, buf->numElements);
 
 	// Free the buffer
-	userFree(buf);
+	DELETEARRAY(buf);
 }
 
 void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
@@ -551,11 +551,8 @@ void asCArrayObject::CopyBuffer(sArrayBuffer *dst, sArrayBuffer *src)
 
 void asCArrayObject::Destruct()
 {
-	// Call the destructor, which will also call the GCObject's destructor
-	this->~asCArrayObject();
-
-	// Free the memory
-	userFree(this);
+	// Call destructor and free the memory
+	DELETE(this, asCArrayObject);
 }
 
 void asCArrayObject::CountReferences()

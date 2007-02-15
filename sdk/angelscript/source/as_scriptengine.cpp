@@ -2590,7 +2590,11 @@ void *asCScriptEngine::CallAlloc(asCObjectType *type)
 	else
 		custom_alloc = userAlloc;
 
+#ifdef AS_DEBUG
+	return ((asALLOCFUNCDEBUG_t)(custom_alloc))(type->size, __FILE__, __LINE__);
+#else
 	return custom_alloc(type->size);
+#endif
 }
 
 void asCScriptEngine::CallFree(asCObjectType *type, void *obj)

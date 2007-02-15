@@ -2969,7 +2969,7 @@ void asCContext::CleanStackFrame()
 		if( beh->release )
 		{
 			engine->CallObjectMethod((void*)*(size_t*)&stackFramePointer[0], beh->release);
-			*(size_t*)&stackFramePointer[offset] = 0;
+			*(size_t*)&stackFramePointer[0] = 0;
 		}
 	}
 	for( asUINT n = 0; n < currentFunction->parameterTypes.GetLength(); n++ )

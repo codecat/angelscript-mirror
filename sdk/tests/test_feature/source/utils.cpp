@@ -38,6 +38,9 @@ void Assert(asIScriptGeneric *gen)
 	}
 }
 
+#define TRACK_LOCATIONS
+//#define TRACK_SIZES
+
 static int numAllocs            = 0;
 static int numFrees             = 0;
 static size_t currentMemAlloc   = 0;
@@ -47,46 +50,92 @@ static asQWORD sumAllocSize     = 0;
 
 static map<void*,size_t> memSize;
 static map<void*,int> memCount;
-static map<size_t,int> meanSize;
 
-void *MyAllocWithStats(size_t size)
+#ifdef TRACK_SIZES
+static map<size_t,int> meanSize;
+#endif
+
+#ifdef TRACK_LOCATIONS
+struct loc
 {
+	const char *file;
+	int line;
+
+	bool operator <(const loc &other) const
+	{
+		if( file < other.file ) return true;
+		if( file == other.file && line < other.line ) return true;
+		return false;
+	}
+};
+
+static map<loc, int> locCount;
+#endif
+
+void *MyAllocWithStats(size_t size, const char *file, int line)
+{
+	// Allocate the memory
+	void *ptr = new asBYTE[size];
+
+	// Count number of allocations made
 	numAllocs++;
+
+	// Count total amount of memory allocated
 	sumAllocSize += size;
 
+	// Update currently allocated memory
 	currentMemAlloc += size;
 	if( currentMemAlloc > maxMemAlloc ) maxMemAlloc = currentMemAlloc;
 
-	void *ptr = new asBYTE[size];
+	// Remember the size of the memory allocated at this pointer
 	memSize.insert(map<void*,size_t>::value_type(ptr,size));
 
+	// Remember the currently allocated memory blocks, with the allocation number so that we can debug later
 	memCount.insert(map<void*,int>::value_type(ptr,numAllocs));
 
+	// Determine the maximum number of allocations at the same time
 	if( numAllocs - numFrees > maxNumAllocsSameTime )
 		maxNumAllocsSameTime = numAllocs - numFrees;
 
+#ifdef TRACK_SIZES
+	// Determine the mean size of the memory allocations
 	map<size_t,int>::iterator i = meanSize.find(size);
 	if( i != meanSize.end() )
 		i->second++;
 	else
 		meanSize.insert(map<size_t,int>::value_type(size,1));
+#endif
+
+#ifdef TRACK_LOCATIONS
+	// Count the number of allocations for each location in the library
+	loc l = {file, line};
+	map<loc, int>::iterator i2 = locCount.find(l);
+	if( i2 != locCount.end() )
+		i2->second++;
+	else
+		locCount.insert(map<loc,int>::value_type(l,1));
+#endif
 
 	return ptr;
 }
 
 void MyFreeWithStats(void *address)
 {
+	// Count the number of deallocations made
 	numFrees++;
 
+	// Remove the memory block from the list of allocated blocks
 	map<void*,size_t>::iterator i = memSize.find(address);
 	if( i != memSize.end() )
 	{
+		// Decrease the current amount of allocated memory
 		currentMemAlloc -= i->second;
 		memSize.erase(i);
 	}
 	else
 		assert(false);
 
+	// Verify which memory we are currently removing so we know we did the allocation, and where it was allocated
 	map<void*,int>::iterator i2 = memCount.find(address);
 	if( i2 != memCount.end() )
 	{
@@ -96,12 +145,13 @@ void MyFreeWithStats(void *address)
 	else
 		assert(false);
 
+	// Free the actual memory
 	free(address);
 }
 
 void InstallMemoryManager()
 {
-	asSetGlobalMemoryFunctions(MyAllocWithStats, MyFreeWithStats);
+	asSetGlobalMemoryFunctions((asALLOCFUNC_t)MyAllocWithStats, MyFreeWithStats);
 }
 
 void PrintAllocIndices()
@@ -126,10 +176,12 @@ void RemoveMemoryManager()
 	printf("---------\n");
 	printf("MEMORY STATISTICS\n");
 	printf("number of allocations                 : %d\n", numAllocs);
-	printf("max allocated memory                  : %d\n", maxMemAlloc);
+	printf("max allocated memory at any one time  : %d\n", maxMemAlloc);
 	printf("max number of simultaneous allocations: %d\n", maxNumAllocsSameTime);
+	printf("total amount of allocated memory      : %d\n", sumAllocSize);
 	printf("medium size of allocations            : %d\n", (int)sumAllocSize/numAllocs);
 
+#ifdef TRACK_SIZES
 	// Find the mean size of allocations
 	map<size_t,int>::iterator i = meanSize.begin();
 	int n = 0;
@@ -158,6 +210,20 @@ void RemoveMemoryManager()
 			printf("alloc size %d: %d\n", i->first, i->second);
 		i++;
 	}
+#endif
+
+#ifdef TRACK_LOCATIONS
+	// Print allocation counts per location
+	map<loc,int>::iterator i2 = locCount.begin();
+	while( i2 != locCount.end() )
+	{
+		const char *file  = i2->first.file;
+		int         line  = i2->first.line;
+		int         count = i2->second;
+		printf("%s (%d): %d\n", file, line, count);
+		i2++;
+	}
+#endif
 
 	asResetGlobalMemoryFunctions();
 }
