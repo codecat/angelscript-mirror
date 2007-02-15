@@ -250,6 +250,18 @@
 			<Option target="MSVC++ 6 DEBUG"/>
 			<Option target="MinGW RELEASE"/>
 		</Unit>
+		<Unit filename="..\..\source\as_memory.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="MSVC++ 6 DEBUG"/>
+			<Option target="MinGW RELEASE"/>
+		</Unit>
+		<Unit filename="..\..\source\as_memory.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="MSVC++ 6 DEBUG"/>
+			<Option target="MinGW RELEASE"/>
+		</Unit>
 		<Unit filename="..\..\source\as_module.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="MSVC++ 6 DEBUG"/>

@@ -20,6 +20,7 @@ SRCNAMES = \
   as_datatype.cpp \
   as_gcobject.cpp \
   as_generic.cpp \
+  as_memory.cpp \
   as_module.cpp \
   as_objecttype.cpp \
   as_outputbuffer.cpp \
@@ -36,7 +37,7 @@ SRCNAMES = \
   as_tokenizer.cpp \
   as_typeinfo.cpp \
   as_variablescope.cpp \
- 
+
 OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o)))
 BIN = ../../lib/libangelscript.a
 OBJ_D = $(subst /,\,$(OBJ))
