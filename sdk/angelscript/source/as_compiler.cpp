@@ -3389,7 +3389,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 
 		// Compile the arguments
 		asCArray<asSExprContext *> args;
-		asCObjectArray<asCTypeInfo> temporaryVariables;
+		asCArray<asCTypeInfo> temporaryVariables;
 
 		args.PushLast(ctx);
 
@@ -5299,7 +5299,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 
 	// Compile the arguments
 	asCArray<asSExprContext *> args;
-	asCObjectArray<asCTypeInfo> temporaryVariables;
+	asCArray<asCTypeInfo> temporaryVariables;
 
 	CompileArgumentList(node->lastChild, args, isConstructor ? &tempObj.dataType : 0);
 

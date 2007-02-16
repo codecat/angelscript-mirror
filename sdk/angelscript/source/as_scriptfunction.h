@@ -43,7 +43,6 @@
 #include "as_config.h"
 #include "as_string.h"
 #include "as_array.h"
-#include "as_objectarray.h"
 #include "as_datatype.h"
 
 BEGIN_AS_NAMESPACE
@@ -83,7 +82,7 @@ public:
 	asCModule                   *module;
 	asCString                    name;
 	asCDataType                  returnType;
-	asCObjectArray<asCDataType>        parameterTypes;
+	asCArray<asCDataType>        parameterTypes;
 	asCArray<int>                inOutFlags;
 	int                          id;
 	int                          scriptSectionIdx;

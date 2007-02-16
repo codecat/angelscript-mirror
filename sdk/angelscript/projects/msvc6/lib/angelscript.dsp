@@ -343,10 +343,6 @@ SOURCE=..\..\..\source\as_module.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_objectarray.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\source\as_objecttype.h
 # End Source File
 # Begin Source File

@@ -60,9 +60,6 @@ extern asFREEFUNC_t  userFree;
 	#define NEWARRAY(x,cnt)  new x[cnt]
 	#define DELETEARRAY(ptr) delete[] ptr
 
-	#define NEWOBJARRAY(x,cnt)  new x[cnt]
-	#define DELETEOBJARRAY(ptr) delete[] ptr
-
 #else
 
 	#ifndef AS_DEBUG
@@ -71,13 +68,7 @@ extern asFREEFUNC_t  userFree;
 		#define DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
 
 		#define NEWARRAY(x,cnt)  (x*)userAlloc(sizeof(x)*cnt)
-		#define DELETEARRAY(ptr) userFree(&ptr[0])
-
-		// When new[] is used to allocate an array of objects with destructors it adds a word at the 
-		// beginning to hold the size of the array. This is done so that delete[] will know how many
-		// objects there are that needs to have their destructor called.
-		#define NEWOBJARRAY(x,cnt)  new(userAlloc(sizeof(x)*cnt+sizeof(size_t))) x[cnt]
-		#define DELETEOBJARRAY(ptr) userFree(((char*)&ptr[0])-sizeof(size_t))
+		#define DELETEARRAY(ptr) userFree(ptr)
 
 	#else
 
@@ -87,13 +78,7 @@ extern asFREEFUNC_t  userFree;
 		#define DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
 
 		#define NEWARRAY(x,cnt)  (x*)((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt, __FILE__, __LINE__)
-		#define DELETEARRAY(ptr) userFree(&ptr[0])
-
-		// When new[] is used to allocate an array of objects with destructors it adds a word at the 
-		// beginning to hold the size of the array. This is done so that delete[] will know how many
-		// objects there are that needs to have their destructor called.
-		#define NEWOBJARRAY(x,cnt)  new(((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt+sizeof(size_t), __FILE__, __LINE__)) x[cnt]
-		#define DELETEOBJARRAY(ptr) userFree(((char*)&ptr[0])-sizeof(size_t))
+		#define DELETEARRAY(ptr) userFree(ptr)
 
 	#endif
 #endif

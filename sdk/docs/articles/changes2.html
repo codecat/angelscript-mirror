@@ -118,20 +118,25 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.1 WIP - 2007/02/15</h2>
+<h2>Version 2.8.1 WIP - 2007/02/16</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed memory leak with exception handler inside script class method
+<li>Fixed the DELETEARRAY macro that didn't work on gnuc (Thanks droz)
 </ul>
 <li>Library
 <ul>
 <li>Improved the memory management facility
-<li>Added the config option AS_NO_USER_ALLOC. Define this to turn off the user defined memory 
+<li>Added the config option AS_NO_USER_ALLOC. Define this to turn off the user defined memory
     managements. The default memory management in the library may not be compatible with all compilers yet. By
-    defining this macro when you compile the library, you should be able to use the library anyway, though 
+    defining this macro when you compile the library, you should be able to use the library anyway, though
     without the functionality of asSetGlobalMemoryFunctions().
+</ul>
+<li>Project
+<ul>
+<li>Removed as_objectarray.h
 </ul>
 </ul>
 

@@ -1354,7 +1354,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	int funcId = module->GetNextFunctionId();
 
 	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
-	asCObjectArray<asCDataType> parameterTypes;
+	asCArray<asCDataType> parameterTypes;
 	asCArray<int> inOutFlags;
 
 	// Add the script function
@@ -1422,7 +1422,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		module->RefConfigGroupForObjectType(returnType.GetObjectType());
 	}
 
-	asCObjectArray<asCDataType> parameterTypes;
+	asCArray<asCDataType> parameterTypes;
 	asCArray<int> inOutFlags;
 	n = n->next->firstChild;
 	while( n )
@@ -1520,7 +1520,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	returnType = CreateDataTypeFromNode(f->firstChild, file);
 	returnType = ModifyDataTypeFromNode(returnType, f->firstChild->next, file, 0, 0);
 		
-	asCObjectArray<asCDataType> parameterTypes;
+	asCArray<asCDataType> parameterTypes;
 	asCArray<int> inOutFlags;
 	n = n->next->firstChild;
 	while( n )

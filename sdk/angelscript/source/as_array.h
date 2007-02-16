@@ -106,6 +106,9 @@ asCArray<T>::~asCArray(void)
 {
 	if( array )
 	{
+		// Call the destructor for all elements
+		for( size_t n = 0; n < length; n++ )
+			array[n].~T();
 		DELETEARRAY(array);
 		array = 0;
 	}
@@ -153,7 +156,14 @@ T asCArray<T>::PopLast()
 template <class T>
 void asCArray<T>::Allocate(size_t numElements, bool keepData)
 {
-	T *tmp = numElements ? NEWARRAY(T,numElements) : 0;
+	T *tmp = 0;
+	if( numElements )
+	{
+		// Allocate the array and construct each of the elements
+		tmp = NEWARRAY(T,numElements);
+		for( size_t n = 0; n < numElements; n++ )
+			new (&tmp[n]) T();
+	}
 
 	if( array )
 	{
@@ -170,6 +180,9 @@ void asCArray<T>::Allocate(size_t numElements, bool keepData)
 		else
 			length = 0;
 
+		// Call the destructor for all elements
+		for( size_t n = 0; n < oldLength; n++ )
+			array[n].~T();
 		DELETEARRAY(array);
 	}
 
