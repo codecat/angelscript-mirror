@@ -85,6 +85,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_64BIT_PTR
 		"AS_64BIT_PTR "
 #endif
+#ifdef AS_NO_USER_ALLOC
+		"AS_NO_USER_ALLOC "
+#endif
 	;
 
 	return string;
@@ -2590,7 +2593,7 @@ void *asCScriptEngine::CallAlloc(asCObjectType *type)
 	else
 		custom_alloc = userAlloc;
 
-#ifdef AS_DEBUG
+#if defined(AS_DEBUG) && !defined(AS_NO_USER_ALLOC)
 	return ((asALLOCFUNCDEBUG_t)(custom_alloc))(type->size, __FILE__, __LINE__);
 #else
 	return custom_alloc(type->size);

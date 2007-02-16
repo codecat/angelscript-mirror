@@ -74,6 +74,13 @@
 // Disables all platform specific code. Only the asCALL_GENERIC calling
 // convention will be available in with this flag set.
 
+// AS_NO_USER_ALLOC
+// With this macro defined, the library will not use the overrideable memory
+// allocation functions. Some compilers may not be compatible with this yet,
+// so defining this macro may allow usage of the library on those. The macro
+// will however criple the asSetGlobalMemoryFunctions so you won't get the same
+// result.
+
 
 
 

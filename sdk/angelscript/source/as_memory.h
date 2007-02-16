@@ -52,36 +52,50 @@ extern asFREEFUNC_t  userFree;
 
 // We don't overload the new operator as that would affect the application as well
 
-#ifndef AS_DEBUG
+#ifdef AS_NO_USER_ALLOC
 
-#define NEW(x)        new(userAlloc(sizeof(x))) x
-#define DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
+	#define NEW(x)        new x
+	#define DELETE(ptr,x) delete ptr
 
-#define NEWARRAY(x,cnt)  (x*)userAlloc(sizeof(x)*cnt)
-#define DELETEARRAY(ptr) userFree(&ptr[0])
+	#define NEWARRAY(x,cnt)  new x[cnt]
+	#define DELETEARRAY(ptr) delete[] ptr
 
-// When new[] is used to allocate an array of objects with destructors it adds a word at the 
-// beginning to hold the size of the array. This is done so that delete[] will know how many
-// objects there are that needs to have their destructor called.
-#define NEWOBJARRAY(x,cnt)  new(userAlloc(sizeof(x)*cnt+sizeof(size_t))) x[cnt]
-#define DELETEOBJARRAY(ptr) userFree(((char*)&ptr[0])-sizeof(size_t))
+	#define NEWOBJARRAY(x,cnt)  new x[cnt]
+	#define DELETEOBJARRAY(ptr) delete[] ptr
 
 #else
 
-typedef void *(*asALLOCFUNCDEBUG_t)(size_t, const char *, unsigned int);
+	#ifndef AS_DEBUG
 
-#define NEW(x)        new(((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x), __FILE__, __LINE__)) x
-#define DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
+		#define NEW(x)        new(userAlloc(sizeof(x))) x
+		#define DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
 
-#define NEWARRAY(x,cnt)  (x*)((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt, __FILE__, __LINE__)
-#define DELETEARRAY(ptr) userFree(&ptr[0])
+		#define NEWARRAY(x,cnt)  (x*)userAlloc(sizeof(x)*cnt)
+		#define DELETEARRAY(ptr) userFree(&ptr[0])
 
-// When new[] is used to allocate an array of objects with destructors it adds a word at the 
-// beginning to hold the size of the array. This is done so that delete[] will know how many
-// objects there are that needs to have their destructor called.
-#define NEWOBJARRAY(x,cnt)  new(((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt+sizeof(size_t), __FILE__, __LINE__)) x[cnt]
-#define DELETEOBJARRAY(ptr) userFree(((char*)&ptr[0])-sizeof(size_t))
+		// When new[] is used to allocate an array of objects with destructors it adds a word at the 
+		// beginning to hold the size of the array. This is done so that delete[] will know how many
+		// objects there are that needs to have their destructor called.
+		#define NEWOBJARRAY(x,cnt)  new(userAlloc(sizeof(x)*cnt+sizeof(size_t))) x[cnt]
+		#define DELETEOBJARRAY(ptr) userFree(((char*)&ptr[0])-sizeof(size_t))
 
+	#else
+
+		typedef void *(*asALLOCFUNCDEBUG_t)(size_t, const char *, unsigned int);
+
+		#define NEW(x)        new(((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x), __FILE__, __LINE__)) x
+		#define DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
+
+		#define NEWARRAY(x,cnt)  (x*)((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt, __FILE__, __LINE__)
+		#define DELETEARRAY(ptr) userFree(&ptr[0])
+
+		// When new[] is used to allocate an array of objects with destructors it adds a word at the 
+		// beginning to hold the size of the array. This is done so that delete[] will know how many
+		// objects there are that needs to have their destructor called.
+		#define NEWOBJARRAY(x,cnt)  new(((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt+sizeof(size_t), __FILE__, __LINE__)) x[cnt]
+		#define DELETEOBJARRAY(ptr) userFree(((char*)&ptr[0])-sizeof(size_t))
+
+	#endif
 #endif
 
 END_AS_NAMESPACE

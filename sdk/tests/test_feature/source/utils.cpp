@@ -38,7 +38,7 @@ void Assert(asIScriptGeneric *gen)
 	}
 }
 
-#define TRACK_LOCATIONS
+//#define TRACK_LOCATIONS
 //#define TRACK_SIZES
 
 static int numAllocs            = 0;
@@ -151,7 +151,8 @@ void MyFreeWithStats(void *address)
 
 void InstallMemoryManager()
 {
-	asSetGlobalMemoryFunctions((asALLOCFUNC_t)MyAllocWithStats, MyFreeWithStats);
+	if( !strstr(asGetLibraryOptions(), "AS_NO_USER_ALLOC") )
+		asSetGlobalMemoryFunctions((asALLOCFUNC_t)MyAllocWithStats, MyFreeWithStats);
 }
 
 void PrintAllocIndices()
@@ -166,6 +167,9 @@ void PrintAllocIndices()
 
 void RemoveMemoryManager()
 {
+	if( strstr(asGetLibraryOptions(), "AS_NO_USER_ALLOC") )
+		return;
+
 	asThreadCleanup();
 
 	PrintAllocIndices();
