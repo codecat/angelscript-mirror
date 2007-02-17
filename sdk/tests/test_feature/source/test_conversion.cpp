@@ -263,7 +263,7 @@ bool Test()
 	float f = 0;
 	double d = 0;
 	asUINT ui = 0;
-	__int64 i64 = 0;
+	asINT64 i64 = 0;
 	int i = 0;
 	signed char i8 = 0;
 	asQWORD ui64 = 0;

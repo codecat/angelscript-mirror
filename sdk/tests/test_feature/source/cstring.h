@@ -47,7 +47,7 @@ public:
 			szDestination.Format("%d",i);
 			return szDestination;
 		}
-		static CStringA& AssignInt64ToString(__int64 i,CStringA& szDestination)
+		static CStringA& AssignInt64ToString(asINT64 i,CStringA& szDestination)
 		{
 			szDestination.Format("%I64d",i);
 			return szDestination;
@@ -57,7 +57,7 @@ public:
 			szDestination.Format("%u",i);
 			return szDestination;
 		}
-		static CStringA& AssignUInt64ToString(unsigned __int64 i,CStringA& szDestination)
+		static CStringA& AssignUInt64ToString(asQWORD i,CStringA& szDestination)
 		{
 			szDestination.Format("%I64u",i);
 			return szDestination;
@@ -123,7 +123,7 @@ public:
 			szDestination.Format(L"%d",i);
 			return szDestination;
 		}
-		static CStringW& AssignInt64ToString(__int64 i,CStringW& szDestination)
+		static CStringW& AssignInt64ToString(asINT64 i,CStringW& szDestination)
 		{
 			szDestination.Format(L"%I64d",i);
 			return szDestination;
@@ -133,7 +133,7 @@ public:
 			szDestination.Format(L"%u",i);
 			return szDestination;
 		}
-		static CStringW& AssignUInt64ToString(unsigned __int64 i,CStringW& szDestination)
+		static CStringW& AssignUInt64ToString(asQWORD i,CStringW& szDestination)
 		{
 			szDestination.Format(L"%I64u",i);
 			return szDestination;
@@ -236,7 +236,7 @@ public:
 		return szDestination;
 	}
 
-	static T& AddAssignInt64ToString(__int64 i,T& szDestination)
+	static T& AddAssignInt64ToString(asINT64 i,T& szDestination)
 	{
 		T szBuffer;
 		szDestination.Append(asTraits<T>::AssignInt64ToString(i,szBuffer));
@@ -250,7 +250,7 @@ public:
 		return szDestination;
 	}
 
-	static T& AddAssignUInt64ToString(unsigned __int64 i,T& szDestination)
+	static T& AddAssignUInt64ToString(asQWORD i,T& szDestination)
 	{
 		T szBuffer;
 		szDestination.Append(asTraits<T>::AssignUInt64ToString(i,szBuffer));

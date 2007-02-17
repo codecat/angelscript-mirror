@@ -396,7 +396,7 @@ static const char *script1 =
 "}                             \n";
 
 
-static __int64 g_i64[6];
+static asINT64 g_i64[6];
 static int g_i[6];
 static float g_f[6];
 static double g_d[6];
