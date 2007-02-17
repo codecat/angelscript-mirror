@@ -796,7 +796,7 @@ bool TestOptimize()
 		}
 	}
 	
-	engine->ExecuteString(0, "g_b64_0 = 0xF3; g_b64_1 = ~g_b64_0; g_b64_2 = ~uint64(0xF3);"); if( g_b64[1] != ~0xF3I64 || g_b64[2] != ~0xF3I64 ) { printf("%s: bnot64 failed\n", TESTNAME); }
+	engine->ExecuteString(0, "g_b64_0 = 0xF3; g_b64_1 = ~g_b64_0; g_b64_2 = ~uint64(0xF3);"); if( g_b64[1] != ~I64(0xF3) || g_b64[2] != ~I64(0xF3) ) { printf("%s: bnot64 failed\n", TESTNAME); }
 
 
 

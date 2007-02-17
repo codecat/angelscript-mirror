@@ -52,6 +52,8 @@ extern asFREEFUNC_t  userFree;
 
 // We don't overload the new operator as that would affect the application as well
 
+// TODO: This macro is only temporary and should be removed once it
+// has been established that the macros are cross platform compatible
 #ifdef AS_NO_USER_ALLOC
 
 	#define NEW(x)        new x

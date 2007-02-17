@@ -5,14 +5,47 @@
 
 #include <iostream>  // cout
 #include <assert.h>  // assert()
-#include <conio.h>   // kbhit(), getch()
-#include <windows.h> // timeGetTime()
-#include <crtdbg.h>  // debugging routines
+#ifdef _LINUX_
+	#include <sys/time.h>
+	#include <stdio.h>
+	#include <termios.h>
+	#include <unistd.h>
+#else
+	#include <conio.h>   // kbhit(), getch()
+	#include <windows.h> // timeGetTime()
+	#include <crtdbg.h>  // debugging routines
+#endif
 #include <list>
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
 
 using namespace std;
+
+#ifdef _LINUX_
+
+#define UINT unsigned int 
+typedef unsigned int DWORD;
+
+#define Sleep usleep
+// kbhit() for linux
+int kbhit() 
+{
+	struct termios oldt, newt;
+	int ch;
+
+	tcgetattr(STDIN_FILENO, &oldt);
+	newt = oldt;
+	newt.c_lflag &= ~( ICANON | ECHO );
+	tcsetattr( STDIN_FILENO, TCSANOW, &newt );
+
+	while(!(ch = getchar()));
+
+
+	tcsetattr( STDIN_FILENO, TCSANOW, &oldt );
+	return ch;
+}
+
+#endif
 
 // Function prototypes
 void ConfigureEngine(asIScriptEngine *engine);

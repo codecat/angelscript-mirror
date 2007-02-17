@@ -36,9 +36,9 @@ bool TestExecute()
 
 	
 	asIScriptContext *ctx = engine->CreateContext();
-	assert(ctx->SetUserData((void*)0xDEADF00D) == 0);
-	assert(ctx->GetUserData() == (void*)0xDEADF00D);
-	assert(ctx->SetUserData(0) == (void*)0xDEADF00D);
+	assert(ctx->SetUserData((void*)(size_t)0xDEADF00D) == 0);
+	assert(ctx->GetUserData() == (void*)(size_t)0xDEADF00D);
+	assert(ctx->SetUserData(0) == (void*)(size_t)0xDEADF00D);
 	ctx->Release();
 
 	engine->Release();

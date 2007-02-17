@@ -1,12 +1,55 @@
 #include <iostream>  // cout
 #include <assert.h>  // assert()
-#include <conio.h>   // kbhit(), getch()
-#include <windows.h> // timeGetTime()
 #include <vector>
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
 
+#ifdef _LINUX_
+	#include <sys/time.h>
+	#include <stdio.h>
+	#include <termios.h>
+	#include <unistd.h>
+#else
+	#include <conio.h>   // kbhit(), getch()
+	#include <windows.h> // timeGetTime()
+#endif
+
 using namespace std;
+
+#ifdef _LINUX_
+
+#define UINT unsigned int 
+typedef unsigned int DWORD;
+
+// Linux doesn't have timeGetTime(), this essintially does the same
+// thing, except this is milliseconds since Epoch (Jan 1st 1970) instead
+// of system start. It will work the same though...
+DWORD timeGetTime()
+{
+	timeval time;
+	gettimeofday(&time, NULL);
+	return time.tv_usec;
+}
+
+// kbhit() for linux
+int kbhit() 
+{
+	struct termios oldt, newt;
+	int ch;
+
+	tcgetattr(STDIN_FILENO, &oldt);
+	newt = oldt;
+	newt.c_lflag &= ~( ICANON | ECHO );
+	tcsetattr( STDIN_FILENO, TCSANOW, &newt );
+
+	while(!(ch = getchar()));
+
+
+	tcsetattr( STDIN_FILENO, TCSANOW, &oldt );
+	return ch;
+}
+
+#endif
 
 // Function prototypes
 void ConfigureEngine(asIScriptEngine *engine);
@@ -14,6 +57,7 @@ int  CompileScript(asIScriptEngine *engine);
 void PrintString(string &str);
 void PrintNumber(int num);
 void ScriptSleep(UINT milliSeconds);
+
 
 struct SContextInfo
 {
@@ -211,7 +255,7 @@ void CContextManager::ExecuteScripts()
 {
 	// Check if the system time is higher than the time set for the contexts
 	UINT time = timeGetTime();
-	for( int n = 0; n < contexts.size(); n++ )
+	for( int n = 0; n < (signed)contexts.size(); n++ )
 	{
 		if( contexts[n].ctx && contexts[n].sleepUntil < time )
 		{
@@ -230,7 +274,7 @@ void CContextManager::AbortAll()
 {
 	// Abort all contexts and release them. The script engine will make 
 	// sure that all resources held by the scripts are properly released.
-	for( int n = 0; n < contexts.size(); n++ )
+	for( int n = 0; n < (signed)contexts.size(); n++ )
 	{
 		if( contexts[n].ctx )
 		{
@@ -268,7 +312,7 @@ void CContextManager::SetSleeping(asIScriptContext *ctx, UINT milliSeconds)
 {
 	// Find the context and update the timeStamp  
 	// for when the context is to be continued
-	for( int n = 0; n < contexts.size(); n++ )
+	for( int n = 0; n < (signed)contexts.size(); n++ )
 	{
 		if( contexts[n].ctx == ctx )
 		{

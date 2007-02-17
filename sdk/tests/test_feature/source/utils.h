@@ -56,5 +56,12 @@ void Assert(asIScriptGeneric *gen);
 void InstallMemoryManager();
 void RemoveMemoryManager();
 
+
+#if defined(_MSC_VER) && _MSC_VER <= 1200 // MSVC++ 6
+	#define I64(x) x##l
+#else // MSVC++ 7, GNUC, etc
+	#define I64(x) x##ll
+#endif
+
 #endif
 

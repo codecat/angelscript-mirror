@@ -1,11 +1,61 @@
 #include <iostream>  // cout
 #include <assert.h>  // assert()
-#include <conio.h>   // kbhit(), getch()
-#include <windows.h> // timeGetTime()
+#ifdef _LINUX_
+	#include <sys/time.h>
+	#include <stdio.h>
+	#include <termios.h>
+	#include <unistd.h>
+#else
+	#include <conio.h>   // kbhit(), getch()
+	#include <windows.h> // timeGetTime()
+	#include <crtdbg.h>  // debugging routines
+#endif
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
 
 using namespace std;
+
+#ifdef _LINUX_
+
+#define UINT unsigned int 
+typedef unsigned int DWORD;
+int ch;
+// Linux doesn't have timeGetTime(), this essintially does the same
+// thing, except this is milliseconds since Epoch (Jan 1st 1970) instead
+// of system start. It will work the same though...
+DWORD timeGetTime()
+{
+	timeval time;
+	gettimeofday(&time, NULL);
+	return time.tv_usec;
+}
+
+// Linux does have a getch() function in the curses library, but it doesn't
+// work like it does on DOS. So this does the same thing, with out the need
+// of the curses library.
+int getch() 
+{
+	return ch;
+}
+// kbhit() for linux
+int kbhit() 
+{
+	struct termios oldt, newt;
+	
+
+	tcgetattr(STDIN_FILENO, &oldt);
+	newt = oldt;
+	newt.c_lflag &= ~( ICANON | ECHO );
+	tcsetattr( STDIN_FILENO, TCSANOW, &newt );
+
+	while(!(ch = getchar()));
+
+
+	tcsetattr( STDIN_FILENO, TCSANOW, &oldt );
+	return ch;
+}
+
+#endif
 
 // Function prototypes
 void ConfigureEngine(asIScriptEngine *engine);

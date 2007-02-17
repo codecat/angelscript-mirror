@@ -260,9 +260,6 @@
 				RelativePath="..\..\source\as_module.h">
 			</File>
 			<File
-				RelativePath="..\..\source\as_objectarray.h">
-			</File>
-			<File
 				RelativePath="..\..\source\as_objecttype.h">
 			</File>
 			<File

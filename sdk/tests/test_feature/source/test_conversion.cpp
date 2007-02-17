@@ -266,7 +266,7 @@ bool Test()
 	__int64 i64 = 0;
 	int i = 0;
 	signed char i8 = 0;
-	unsigned __int64 ui64 = 0;
+	asQWORD ui64 = 0;
 	short i16 = 0;
 	unsigned char ui8 = 0;
 	unsigned short ui16 = 0;
@@ -563,7 +563,7 @@ bool Test()
 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->ExecuteString(0, "ui8 = 12.3;  "); if( ui8 != 12           ) fail = true; 
-	engine->ExecuteString(0, "ui8 = -12.3f;"); if( ui8 != asBYTE(-12.3f)  ) fail = true;
+	engine->ExecuteString(0, "ui8 = -12.3f;"); if( ui8 != asBYTE(-12)  ) fail = true; // asBYTE(-12.3f) doesn't seem to produce the same result on MSVC and GNUC
 	engine->ExecuteString(0, "ui8 = 123;   "); if( ui8 !=  123         ) fail = true;
 	engine->ExecuteString(0, "ui8 = -123;  "); if( ui8 != asBYTE(-123) ) fail = true;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -592,7 +592,7 @@ bool Test()
 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->ExecuteString(0, "ui16 = 12.3;  "); if( ui16 != 12           ) fail = true; 
-	engine->ExecuteString(0, "ui16 = -12.3f;"); if( ui16 != asWORD(-12.3f)  ) fail = true;
+	engine->ExecuteString(0, "ui16 = -12.3f;"); if( ui16 != asWORD(-12)  ) fail = true; // asWORD(-12.3f) doesn't seem to produce the same result on MSVC and GNUC
 	engine->ExecuteString(0, "ui16 = 123;   "); if( ui16 !=  123         ) fail = true;
 	engine->ExecuteString(0, "ui16 = -123;  "); if( ui16 != asWORD(-123) ) fail = true;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
