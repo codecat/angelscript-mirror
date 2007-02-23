@@ -302,6 +302,21 @@ asCScriptNode *asCParser::ParseScript()
 	UNREACHABLE_RETURN;
 }
 
+int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
+{
+	Reset();
+
+	this->script = script;
+	sourcePos = block->tokenPos;
+
+	scriptNode = ParseStatementBlock();	
+
+	if( isSyntaxError || errorWhileParsing )
+		return -1;
+
+	return 0;
+}
+
 bool asCParser::IsVarDecl()
 {
 	// Set start point so that we can rewind
@@ -481,7 +496,9 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 	node->AddChildLast(ParseParameterList());
 	if( isSyntaxError ) return node;
 
-	node->AddChildLast(ParseStatementBlock());
+	// We should just find the end of the statement block here. The statements 
+	// will be parsed on request by the compiler once it starts the compilation.
+	node->AddChildLast(SuperficiallyParseStatementBlock());
 
 	return node;
 }
@@ -1179,6 +1196,39 @@ asCScriptNode *asCParser::ParseArgList()
 		}
 	}
 	return 0;
+}
+
+asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
+{
+	asCScriptNode *node = NEW(asCScriptNode)(snStatementBlock);
+
+	// This function will only superficially parse the statement block in order to find the end of it
+	sToken t1;
+
+	GetToken(&t1);
+	if( t1.type != ttStartStatementBlock )
+	{
+		Error(ExpectedToken("{").AddressOf(), &t1);
+		return node;
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	int level = 1;
+	while( level > 0 && !isSyntaxError )
+	{
+		GetToken(&t1);
+		if( t1.type == ttEndStatementBlock )
+			level--;
+		else if( t1.type == ttStartStatementBlock )
+			level++;
+		else if( t1.type == ttEnd )
+			Error(TXT_UNEXPECTED_END_OF_FILE, &t1);
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	return node;
 }
 
 asCScriptNode *asCParser::ParseStatementBlock()

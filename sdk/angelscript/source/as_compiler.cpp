@@ -43,6 +43,7 @@
 #include "as_tokenizer.h"
 #include "as_string_util.h"
 #include "as_texts.h"
+#include "as_parser.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -208,10 +209,19 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	//--------------------------------------------
 	// Compile the statement block
+
+	// We need to parse the statement block now
+
+	// TODO: PARSER: We can parse the statement block one statement at a time, thus save even more memory
+	asCParser parser(builder);
+	int r = parser.ParseStatementBlock(script, func->lastChild);
+	if( r < 0 ) return -1;
+	asCScriptNode *block = parser.GetScriptNode();
+
 	bool hasReturn;
 	asCByteCode bc;
 	LineInstr(&bc, func->lastChild->tokenPos);
-	CompileStatementBlock(func->lastChild, false, &hasReturn, &bc);
+	CompileStatementBlock(block, false, &hasReturn, &bc);
 	LineInstr(&bc, func->lastChild->tokenPos + func->lastChild->tokenLength);
 
 	// Make sure there is a return in all paths (if not return type is void)

@@ -101,6 +101,8 @@ public:
 	int ParsePropertyDeclaration(asCScriptCode *script);
 	int ParseDataType(asCScriptCode *script);
 
+	int ParseStatementBlock(asCScriptCode *script, asCScriptNode *block);
+
 	asCScriptNode *GetScriptNode();
 
 protected:
@@ -119,6 +121,7 @@ protected:
 	asCScriptNode *ParseFunction(bool isMethod = false);
 	asCScriptNode *ParseGlobalVar();
 	asCScriptNode *ParseParameterList();
+	asCScriptNode *SuperficiallyParseStatementBlock();
 	asCScriptNode *ParseStatementBlock();
 	asCScriptNode *ParseDeclaration();
 	asCScriptNode *ParseStatement();
