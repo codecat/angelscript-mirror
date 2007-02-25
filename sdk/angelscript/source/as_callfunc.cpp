@@ -40,6 +40,7 @@
 #include "as_config.h"
 #include "as_callfunc.h"
 
+BEGIN_AS_NAMESPACE
 
 int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal)
 {
@@ -91,6 +92,8 @@ int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSS
 
 	return 0;
 }
+
+END_AS_NAMESPACE
 
 
 #ifdef AS_MAX_PORTABILITY
