@@ -472,6 +472,10 @@
 #include "../include/angelscript.h"
 #include "as_memory.h"
 
+#ifdef AS_USE_NAMESPACE
+using namespace AngelScript;
+#endif
+
 #endif
 
 

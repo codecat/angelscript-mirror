@@ -38,8 +38,6 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef unsigned int asUINT;
-
 class asCString
 {
 public:
@@ -80,7 +78,7 @@ public:
 	size_t RecalculateLength();
 
 protected:
-	asUINT length;
+	unsigned int length;
 	union
 	{
 		char *dynamic;
