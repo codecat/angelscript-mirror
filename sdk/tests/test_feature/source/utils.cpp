@@ -152,10 +152,10 @@ void MyFreeWithStats(void *address)
 void InstallMemoryManager()
 {
 #ifdef TRACK_LOCATIONS
-	assert( strstr(asGetLibraryOptions(), "AS_DEBUG") );
+	assert( strstr(asGetLibraryOptions(), " AS_DEBUG ") );
 #endif
 
-	if( !strstr(asGetLibraryOptions(), "AS_NO_USER_ALLOC") )
+	if( !strstr(asGetLibraryOptions(), " AS_NO_USER_ALLOC ") )
 		asSetGlobalMemoryFunctions((asALLOCFUNC_t)MyAllocWithStats, MyFreeWithStats);
 }
 
@@ -171,7 +171,7 @@ void PrintAllocIndices()
 
 void RemoveMemoryManager()
 {
-	if( strstr(asGetLibraryOptions(), "AS_NO_USER_ALLOC") )
+	if( strstr(asGetLibraryOptions(), " AS_NO_USER_ALLOC ") )
 		return;
 
 	asThreadCleanup();
@@ -183,10 +183,10 @@ void RemoveMemoryManager()
 
 	printf("---------\n");
 	printf("MEMORY STATISTICS\n");
-	printf("number of allocations                 : %d\n", numAllocs);                   // 260223   : 261053
-	printf("max allocated memory at any one time  : %d\n", maxMemAlloc);                 // 220196   : 62685
-	printf("max number of simultaneous allocations: %d\n", maxNumAllocsSameTime);        // 5390     : 1407
-	printf("total amount of allocated memory      : %d\n", sumAllocSize);                // 10849761 : 10879641
+	printf("number of allocations                 : %d\n", numAllocs);                   // 260223   : 199115
+	printf("max allocated memory at any one time  : %d\n", maxMemAlloc);                 // 220196   : 63832
+	printf("max number of simultaneous allocations: %d\n", maxNumAllocsSameTime);        // 5390     : 1408
+	printf("total amount of allocated memory      : %d\n", sumAllocSize);                // 10849761 : 9615673
 	printf("medium size of allocations            : %d\n", (int)sumAllocSize/numAllocs);
 
 #ifdef TRACK_SIZES

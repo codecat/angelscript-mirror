@@ -39,6 +39,7 @@
 
 #include "as_config.h"
 #include "as_scriptnode.h"
+#include "as_scriptengine.h"
 
 asCScriptNode::asCScriptNode(eScriptNode type)
 {
@@ -54,17 +55,21 @@ asCScriptNode::asCScriptNode(eScriptNode type)
 	lastChild   = 0;
 }
 
-asCScriptNode::~asCScriptNode()
+void asCScriptNode::Destroy(asCScriptEngine *engine)
 {
+	// Destroy all children
 	asCScriptNode *node = firstChild;
 	asCScriptNode *next;
 
 	while( node )
 	{
 		next = node->next;
-		DELETE(node,asCScriptNode);
+		node->Destroy(engine);
 		node = next;
 	}
+
+	// Return the memory to the memory manager
+	engine->memoryMgr.FreeScriptNode(this);
 }
 
 void asCScriptNode::SetToken(sToken *token)

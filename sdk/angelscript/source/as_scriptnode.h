@@ -87,11 +87,14 @@ struct sToken
 	size_t length;
 };
 
+class asCScriptEngine;
+
 class asCScriptNode
 {
 public:
 	asCScriptNode(eScriptNode nodeType);
-	~asCScriptNode();
+
+	void Destroy(asCScriptEngine *engine);
 
 	void SetToken(sToken *token);
 	void AddChildLast(asCScriptNode *node);
@@ -109,6 +112,10 @@ public:
 	asCScriptNode *prev;
 	asCScriptNode *firstChild;
 	asCScriptNode *lastChild;
+
+protected:
+	// Must call Destroy instead
+	~asCScriptNode() {}
 };
 
 #endif

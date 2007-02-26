@@ -47,6 +47,7 @@ BEGIN_AS_NAMESPACE
 asCParser::asCParser(asCBuilder *builder)
 {
 	this->builder    = builder;
+	this->engine     = builder->engine;
 
 	script			= 0;
 	scriptNode		= 0;
@@ -66,7 +67,7 @@ void asCParser::Reset()
 
 	if( scriptNode )
 	{
-		DELETE(scriptNode,asCScriptNode);
+		scriptNode->Destroy(engine);
 	}
 
 	scriptNode = 0;
@@ -113,7 +114,7 @@ int asCParser::ParseDataType(asCScriptCode *script)
 
 	this->script = script;
 
-	scriptNode = NEW(asCScriptNode)(snDataType);
+	scriptNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
 		
 	scriptNode->AddChildLast(ParseType(false));
 	if( isSyntaxError ) return -1;
@@ -130,7 +131,7 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 
 	this->script = script;
 
-	scriptNode = NEW(asCScriptNode)(snDeclaration);
+	scriptNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDeclaration);
 
 	scriptNode->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return -1;
@@ -143,7 +144,7 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 
 asCScriptNode *asCParser::ParseImport()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snImport);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snImport);
 
 	sToken t;
 	GetToken(&t);
@@ -183,7 +184,7 @@ asCScriptNode *asCParser::ParseImport()
 		return node;
 	}
 
-	asCScriptNode *mod = NEW(asCScriptNode)(snConstant);
+	asCScriptNode *mod = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snConstant);
 	node->AddChildLast(mod);
 
 	mod->SetToken(&t);
@@ -203,7 +204,7 @@ asCScriptNode *asCParser::ParseImport()
 
 asCScriptNode *asCParser::ParseFunctionDefinition()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snFunction);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunction);
 
 	node->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return node;
@@ -229,7 +230,7 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 
 asCScriptNode *asCParser::ParseScript()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snScript);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snScript);
 
 	// Determine type of node
 	sToken t1;
@@ -474,7 +475,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 
 asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snFunction);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunction);
 
 	// If this is a class constructor then no return type will be declared
 	sToken t1,t2;
@@ -505,7 +506,7 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 
 asCScriptNode *asCParser::ParseInterfaceMethod()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snFunction);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunction);
 
 	node->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return node;
@@ -540,7 +541,7 @@ asCScriptNode *asCParser::ParseInterfaceMethod()
 
 asCScriptNode *asCParser::ParseInterface()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snInterface);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snInterface);
 
 	sToken t;
 	GetToken(&t);
@@ -588,7 +589,7 @@ asCScriptNode *asCParser::ParseInterface()
 
 asCScriptNode *asCParser::ParseClass()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snClass);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snClass);
 
 	sToken t;
 	GetToken(&t);
@@ -636,7 +637,7 @@ asCScriptNode *asCParser::ParseClass()
 		else if( IsVarDecl() )
 		{
 			// Parse a property declaration
-			asCScriptNode *prop = NEW(asCScriptNode)(snDeclaration);
+			asCScriptNode *prop = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDeclaration);
 			node->AddChildLast(prop);
 
 			prop->AddChildLast(ParseType(true));
@@ -676,7 +677,7 @@ asCScriptNode *asCParser::ParseClass()
 
 asCScriptNode *asCParser::ParseGlobalVar()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snGlobalVar);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snGlobalVar);
 
 	// Parse data type
 	node->AddChildLast(ParseType(true));
@@ -737,7 +738,7 @@ asCScriptNode *asCParser::ParseGlobalVar()
 
 asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snDataType);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
 
 	sToken t;
 
@@ -776,7 +777,7 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 
 asCScriptNode *asCParser::ParseType(bool allowConst)
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snDataType);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
 
 	sToken t;
 
@@ -825,7 +826,7 @@ asCScriptNode *asCParser::ParseType(bool allowConst)
 
 asCScriptNode *asCParser::ParseToken(int token)
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snUndefined);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snUndefined);
 
 	sToken t1;
 
@@ -844,7 +845,7 @@ asCScriptNode *asCParser::ParseToken(int token)
 
 asCScriptNode *asCParser::ParseOneOf(int *tokens, int count)
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snUndefined);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snUndefined);
 
 	sToken t1;
 
@@ -870,7 +871,7 @@ asCScriptNode *asCParser::ParseOneOf(int *tokens, int count)
 
 asCScriptNode *asCParser::ParseDataType()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snDataType);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
 
 	sToken t1;
 
@@ -889,7 +890,7 @@ asCScriptNode *asCParser::ParseDataType()
 
 asCScriptNode *asCParser::ParseRealType()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snDataType);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
 
 	sToken t1;
 
@@ -908,7 +909,7 @@ asCScriptNode *asCParser::ParseRealType()
 
 asCScriptNode *asCParser::ParseIdentifier()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snIdentifier);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snIdentifier);
 
 	sToken t1;
 
@@ -927,7 +928,7 @@ asCScriptNode *asCParser::ParseIdentifier()
 
 asCScriptNode *asCParser::ParseCast()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snCast);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snCast);
 
 	sToken t1;
 	GetToken(&t1);
@@ -984,7 +985,7 @@ asCScriptNode *asCParser::ParseCast()
 
 asCScriptNode *asCParser::ParseParameterList()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snParameterList);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snParameterList);
 
 	sToken t1;
 	GetToken(&t1);
@@ -1050,7 +1051,7 @@ asCScriptNode *asCParser::ParseParameterList()
 
 asCScriptNode *asCParser::ParseExprValue()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snExprValue);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExprValue);
 
 	sToken t1;
 	GetToken(&t1);
@@ -1089,7 +1090,7 @@ asCScriptNode *asCParser::ParseExprValue()
 
 asCScriptNode *asCParser::ParseConstant()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snConstant);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snConstant);
 
 	sToken t;
 	GetToken(&t);
@@ -1119,7 +1120,7 @@ asCScriptNode *asCParser::ParseConstant()
 
 asCScriptNode *asCParser::ParseStringConstant()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snConstant);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snConstant);
 
 	sToken t;
 	GetToken(&t);
@@ -1137,7 +1138,7 @@ asCScriptNode *asCParser::ParseStringConstant()
 
 asCScriptNode *asCParser::ParseFunctionCall()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snFunctionCall);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunctionCall);
 
 	node->AddChildLast(ParseType(false));
 	if( isSyntaxError ) return node;
@@ -1149,7 +1150,7 @@ asCScriptNode *asCParser::ParseFunctionCall()
 
 asCScriptNode *asCParser::ParseArgList()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snArgList);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snArgList);
 
 	sToken t1;
 	GetToken(&t1);
@@ -1200,7 +1201,7 @@ asCScriptNode *asCParser::ParseArgList()
 
 asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snStatementBlock);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snStatementBlock);
 
 	// This function will only superficially parse the statement block in order to find the end of it
 	sToken t1;
@@ -1233,7 +1234,7 @@ asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 
 asCScriptNode *asCParser::ParseStatementBlock()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snStatementBlock);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snStatementBlock);
 
 	sToken t1;
 
@@ -1310,7 +1311,7 @@ asCScriptNode *asCParser::ParseStatementBlock()
 
 asCScriptNode *asCParser::ParseInitList()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snInitList);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snInitList);
 
 	sToken t1;
 
@@ -1340,13 +1341,13 @@ asCScriptNode *asCParser::ParseInitList()
 			if( t1.type == ttListSeparator )
 			{
 				// No expression 
-				node->AddChildLast(NEW(asCScriptNode)(snUndefined));
+				node->AddChildLast(new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snUndefined));
 
 				GetToken(&t1);
 				if( t1.type == ttEndStatementBlock )
 				{
 					// No expression
-					node->AddChildLast(NEW(asCScriptNode)(snUndefined));
+					node->AddChildLast(new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snUndefined));
 					node->UpdateSourcePos(t1.pos, t1.length);
 					return node;
 				}
@@ -1355,7 +1356,7 @@ asCScriptNode *asCParser::ParseInitList()
 			else if( t1.type == ttEndStatementBlock )
 			{
 				// No expression 
-				node->AddChildLast(NEW(asCScriptNode)(snUndefined));
+				node->AddChildLast(new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snUndefined));
 
 				node->UpdateSourcePos(t1.pos, t1.length);
 
@@ -1453,7 +1454,7 @@ bool asCParser::IsFunctionCall()
 
 asCScriptNode *asCParser::ParseDeclaration()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snDeclaration);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDeclaration);
 
 	// Parse data type
 	node->AddChildLast(ParseType(true));
@@ -1543,7 +1544,7 @@ asCScriptNode *asCParser::ParseStatement()
 
 asCScriptNode *asCParser::ParseExpressionStatement()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snExpressionStatement);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExpressionStatement);
 
 	sToken t;
 	GetToken(&t);
@@ -1573,7 +1574,7 @@ asCScriptNode *asCParser::ParseExpressionStatement()
 
 asCScriptNode *asCParser::ParseSwitch()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snSwitch);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snSwitch);
 
 	sToken t;
 	GetToken(&t);
@@ -1649,7 +1650,7 @@ asCScriptNode *asCParser::ParseSwitch()
 
 asCScriptNode *asCParser::ParseCase()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snCase);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snCase);
 
 	sToken t;
 	GetToken(&t);
@@ -1698,7 +1699,7 @@ asCScriptNode *asCParser::ParseCase()
 
 asCScriptNode *asCParser::ParseIf()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snIf);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snIf);
 
 	sToken t;
 	GetToken(&t);
@@ -1745,7 +1746,7 @@ asCScriptNode *asCParser::ParseIf()
 
 asCScriptNode *asCParser::ParseFor()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snFor);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFor);
 
 	sToken t;
 	GetToken(&t);
@@ -1800,7 +1801,7 @@ asCScriptNode *asCParser::ParseFor()
 	
 asCScriptNode *asCParser::ParseWhile()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snWhile);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snWhile);
 
 	sToken t;
 	GetToken(&t);
@@ -1836,7 +1837,7 @@ asCScriptNode *asCParser::ParseWhile()
 
 asCScriptNode *asCParser::ParseDoWhile()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snDoWhile);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDoWhile);
 
 	sToken t;
 	GetToken(&t);
@@ -1888,7 +1889,7 @@ asCScriptNode *asCParser::ParseDoWhile()
 
 asCScriptNode *asCParser::ParseReturn()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snReturn);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snReturn);
 
 	sToken t;
 	GetToken(&t);
@@ -1926,7 +1927,7 @@ asCScriptNode *asCParser::ParseReturn()
 
 asCScriptNode *asCParser::ParseBreak()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snBreak);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snBreak);
 
 	sToken t;
 	GetToken(&t);
@@ -1949,7 +1950,7 @@ asCScriptNode *asCParser::ParseBreak()
 
 asCScriptNode *asCParser::ParseContinue()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snContinue);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snContinue);
 
 	sToken t;
 	GetToken(&t);
@@ -1972,7 +1973,7 @@ asCScriptNode *asCParser::ParseContinue()
 
 asCScriptNode *asCParser::ParseAssignment()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snAssignment);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snAssignment);
 
 	node->AddChildLast(ParseCondition());
 	if( isSyntaxError ) return node;
@@ -1995,7 +1996,7 @@ asCScriptNode *asCParser::ParseAssignment()
 
 asCScriptNode *asCParser::ParseCondition()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snCondition);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snCondition);
 
 	node->AddChildLast(ParseExpression());
 	if( isSyntaxError ) return node;
@@ -2025,7 +2026,7 @@ asCScriptNode *asCParser::ParseCondition()
 
 asCScriptNode *asCParser::ParseExpression()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snExpression);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExpression);
 
 	node->AddChildLast(ParseExprTerm());
 	if( isSyntaxError ) return node;
@@ -2050,7 +2051,7 @@ asCScriptNode *asCParser::ParseExpression()
 
 asCScriptNode *asCParser::ParseExprTerm()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snExprTerm);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExprTerm);
 
 	for(;;)
 	{
@@ -2084,7 +2085,7 @@ asCScriptNode *asCParser::ParseExprTerm()
 
 asCScriptNode *asCParser::ParseExprPreOp()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snExprPreOp);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExprPreOp);
 
 	sToken t;
 	GetToken(&t);
@@ -2102,7 +2103,7 @@ asCScriptNode *asCParser::ParseExprPreOp()
 
 asCScriptNode *asCParser::ParseExprPostOp()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snExprPostOp);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExprPostOp);
 
 	sToken t;
 	GetToken(&t);
@@ -2145,7 +2146,7 @@ asCScriptNode *asCParser::ParseExprPostOp()
 
 asCScriptNode *asCParser::ParseExprOperator()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snExprOperator);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExprOperator);
 
 	sToken t;
 	GetToken(&t);
@@ -2163,7 +2164,7 @@ asCScriptNode *asCParser::ParseExprOperator()
 
 asCScriptNode *asCParser::ParseAssignOperator()
 {
-	asCScriptNode *node = NEW(asCScriptNode)(snExprOperator);
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExprOperator);
 
 	sToken t;
 	GetToken(&t);

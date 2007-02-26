@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.1 WIP - 2007/02/25</h2>
+<h2>Version 2.8.1 WIP - 2007/02/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -130,7 +130,10 @@ A:hover
 <li>Modified the parser to only parse the statements inside functions at the
     moment the function is compiled. This reduced the number of simultaneous
     memory allocations to about 25% of what it was before. The total number of
-    memory allocatiosn made, increased with less than 1%.
+    memory allocations made, increased with less than 1%.
+<li>Implemented a memory pool for the asCScriptNode, which is used during
+    script builds. This decreased the total number of allocations by 30% while
+    decreasing the total amount of allocated memory by 10%.
 </ul>
 </ul>
 

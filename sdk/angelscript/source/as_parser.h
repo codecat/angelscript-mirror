@@ -177,9 +177,10 @@ protected:
 	bool errorWhileParsing;
 	bool isSyntaxError;
 
-	asCBuilder    *builder;
-	asCScriptCode *script;
-	asCScriptNode *scriptNode;
+	asCScriptEngine *engine;
+	asCBuilder      *builder;
+	asCScriptCode   *script;
+	asCScriptNode   *scriptNode;
 
 	asCTokenizer tokenizer;
 	size_t       sourcePos;

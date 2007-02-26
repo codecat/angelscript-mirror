@@ -384,7 +384,11 @@ int asCScriptEngine::Build(const char *module)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->Build();
+	int r = mod->Build();
+
+	memoryMgr.FreeUnusedMemory();
+
+	return r;
 }
 
 int asCScriptEngine::Discard(const char *module)
@@ -2319,6 +2323,7 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 	str = "void ExecuteString(){\n" + str + "\n;}";
 
 	int r = builder.BuildString(str.AddressOf(), (asCContext*)exec);
+	memoryMgr.FreeUnusedMemory();
 	if( r < 0 )
 	{
 		if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )

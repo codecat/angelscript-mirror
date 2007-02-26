@@ -111,6 +111,7 @@ public:
 protected:
 	friend class asCCompiler;
 	friend class asCModule;
+	friend class asCParser;
 
 	const asCString &GetConstantString(int strID);
 

@@ -50,6 +50,7 @@
 #include "as_restore.h"
 #include "as_callfunc.h"
 #include "as_configgroup.h"
+#include "as_memory.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -205,6 +206,8 @@ public:
 	bool IsTypeUsedInParams(asCObjectType *ot);
 
 	int GCInternal();
+
+	asCMemoryMgr memoryMgr;
 
 	int initialContextStackSize;
 	int maximumContextStackSize;

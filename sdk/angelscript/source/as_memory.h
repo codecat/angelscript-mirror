@@ -87,4 +87,25 @@ extern asFREEFUNC_t  userFree;
 
 END_AS_NAMESPACE
 
+#include "as_array.h"
+
+BEGIN_AS_NAMESPACE
+
+class asCMemoryMgr
+{
+public:
+	asCMemoryMgr();
+	~asCMemoryMgr();
+
+	void FreeUnusedMemory();
+
+	void *AllocScriptNode();
+	void FreeScriptNode(void *ptr);
+
+protected:
+	asCArray<void *> scriptNodePool;
+};
+
+END_AS_NAMESPACE
+
 #endif

@@ -40,6 +40,7 @@
 
 #include "as_config.h"
 #include "as_memory.h"
+#include "as_scriptnode.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -63,6 +64,43 @@ int asResetGlobalMemoryFunctions()
 	userFree  = free;
 
 	return 0;
+}
+
+asCMemoryMgr::asCMemoryMgr()
+{
+}
+
+asCMemoryMgr::~asCMemoryMgr()
+{
+	FreeUnusedMemory();
+}
+
+void asCMemoryMgr::FreeUnusedMemory()
+{
+	for( int n = 0; n < (signed)scriptNodePool.GetLength(); n++ )
+		userFree(scriptNodePool[n]);
+	scriptNodePool.Allocate(0, false);
+}
+
+void *asCMemoryMgr::AllocScriptNode()
+{
+	if( scriptNodePool.GetLength() )
+		return scriptNodePool.PopLast();
+
+#ifdef AS_DEBUG
+	return ((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(asCScriptNode), __FILE__, __LINE__);
+#else
+	return userAlloc(sizeof(asCScriptNode));
+#endif
+}
+
+void asCMemoryMgr::FreeScriptNode(void *ptr)
+{
+	// Pre allocate memory for the array to avoid slow growth
+	if( scriptNodePool.GetLength() == 0 )
+		scriptNodePool.Allocate(100, 0);
+
+	scriptNodePool.PushLast(ptr);
 }
 
 END_AS_NAMESPACE

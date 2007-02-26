@@ -65,7 +65,7 @@ asCBuilder::~asCBuilder()
 		{
 			if( functions[n]->node ) 
 			{
-				DELETE(functions[n]->node,asCScriptNode);
+				functions[n]->node->Destroy(engine);
 			}
 
 			DELETE(functions[n],sFunctionDescription);
@@ -81,7 +81,7 @@ asCBuilder::~asCBuilder()
 		{
 			if( globVariables[n]->node )
 			{
-				DELETE(globVariables[n]->node,asCScriptNode);
+				globVariables[n]->node->Destroy(engine);
 			}
 
 			DELETE(globVariables[n],sGlobalVariableDescription);
@@ -107,7 +107,7 @@ asCBuilder::~asCBuilder()
 		{
 			if( classDeclarations[n]->node )
 			{
-				DELETE(classDeclarations[n]->node,asCScriptNode);
+				classDeclarations[n]->node->Destroy(engine);
 			}
 
 			DELETE(classDeclarations[n],sClassDeclaration);
@@ -121,7 +121,7 @@ asCBuilder::~asCBuilder()
 		{
 			if( interfaceDeclarations[n]->node )
 			{
-				DELETE(interfaceDeclarations[n]->node,asCScriptNode);
+				interfaceDeclarations[n]->node->Destroy(engine);
 			}
 
 			DELETE(interfaceDeclarations[n],sClassDeclaration);
@@ -355,7 +355,7 @@ void asCBuilder::ParseScripts()
 
 					WriteWarning(scripts[n]->name.AddressOf(), TXT_UNUSED_SCRIPT_NODE, r, c);
 
-					DELETE(node,asCScriptNode);
+					node->Destroy(engine);
 				}
 
 				node = next;
@@ -805,7 +805,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		n = n->next;
 	}
 
-	DELETE(node,asCScriptNode);
+	node->Destroy(engine);
 
 	return 0;
 }
@@ -1499,7 +1499,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	// We need to delete the node already if this is an interface method
 	if( isInterface && node )
 	{
-		DELETE(node,asCScriptNode);
+		node->Destroy(engine);
 	}
 
 	return 0;
@@ -1579,7 +1579,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	n = node->firstChild->next;
 	int moduleNameString = module->AddConstantString(&file->code[n->tokenPos+1], n->tokenLength-2);
 
-	DELETE(node,asCScriptNode);
+	node->Destroy(engine);
 
 	// Register the function
 	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), moduleNameString);
