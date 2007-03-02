@@ -57,7 +57,7 @@ class cByteInstruction;
 class asCByteCode
 {
 public:
-	asCByteCode();
+	asCByteCode(asCScriptEngine *engine);
 	~asCByteCode();
 
 	void ClearAll();
@@ -155,6 +155,8 @@ protected:
 	cByteInstruction *last;
 
 	asCArray<int> temporaryVariables;
+
+	asCScriptEngine *engine;
 };
 
 class cByteInstruction

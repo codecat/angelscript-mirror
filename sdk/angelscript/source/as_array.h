@@ -44,6 +44,7 @@ template <class T> class asCArray
 public:
 	asCArray();
 	asCArray(const asCArray<T> &);
+	asCArray(int reserve);
 	~asCArray();
 
 	void   Allocate(size_t numElements, bool keepData);
@@ -70,9 +71,10 @@ public:
 	bool operator!=(const asCArray<T> &) const;
 
 protected:
-	T   *array;
+	T      *array;
 	size_t  length;
 	size_t  maxLength;
+	char    buf[8];
 };
 
 // Implementation
@@ -102,16 +104,20 @@ asCArray<T>::asCArray(const asCArray<T> &copy)
 }
 
 template <class T>
+asCArray<T>::asCArray(int reserve)
+{
+	array     = 0;
+	length    = 0;
+	maxLength = 0;
+
+	Allocate(reserve, false);
+}
+
+template <class T>
 asCArray<T>::~asCArray(void)
 {
-	if( array )
-	{
-		// Call the destructor for all elements
-		for( size_t n = 0; n < length; n++ )
-			array[n].~T();
-		DELETEARRAY(array);
-		array = 0;
-	}
+	// Allocating a zero length array will free all memory
+	Allocate(0,0);
 }
 
 template <class T>
@@ -140,7 +146,10 @@ template <class T>
 void asCArray<T>::PushLast(const T &element)
 {
 	if( length == maxLength )
-		Allocate(maxLength + maxLength/2 + 1, true);
+		if( maxLength == 0 )
+			Allocate(1, false);
+		else
+			Allocate(2*maxLength, true);
 
 	array[length++] = element;
 }
@@ -156,34 +165,74 @@ T asCArray<T>::PopLast()
 template <class T>
 void asCArray<T>::Allocate(size_t numElements, bool keepData)
 {
+	// We have 4 situations
+	// 1. The previous array is 8 bytes or smaller and the new array is also 8 bytes or smaller
+	// 2. The previous array is 8 bytes or smaller and the new array is larger than 8 bytes
+	// 3. The previous array is larger than 8 bytes and the new array is 8 bytes or smaller
+	// 4. The previous array is larger than 8 bytes and the new array is also larger than 8 bytes
+
 	T *tmp = 0;
 	if( numElements )
 	{
-		// Allocate the array and construct each of the elements
-		tmp = NEWARRAY(T,numElements);
-		for( size_t n = 0; n < numElements; n++ )
-			new (&tmp[n]) T();
+		if( sizeof(T)*numElements <= 8 )
+			// Use the internal buffer
+			tmp = (T*)buf;
+		else
+			// Allocate the array and construct each of the elements
+			tmp = NEWARRAY(T,numElements);
+
+		if( array == tmp )
+		{
+			// Construct only the newly allocated elements
+			for( size_t n = length; n < numElements; n++ )
+				new (&tmp[n]) T();
+		}
+		else
+		{
+			// Construct all elements
+			for( size_t n = 0; n < numElements; n++ )
+				new (&tmp[n]) T();
+		}
 	}
 
 	if( array )
 	{
 		size_t oldLength = length;
 
-		if( keepData )
+		if( array == tmp )
 		{
-			if( length > numElements )
-				length = numElements;
+			if( keepData )
+			{
+				if( length > numElements )
+					length = numElements;
+			}
+			else
+				length = 0;
 
-			for( size_t n = 0; n < length; n++ )
-				tmp[n] = array[n];
+			// Call the destructor for elements that are no longer used
+			for( size_t n = length; n < oldLength; n++ )
+				array[n].~T();
 		}
 		else
-			length = 0;
+		{
+			if( keepData )
+			{
+				if( length > numElements )
+					length = numElements;
 
-		// Call the destructor for all elements
-		for( size_t n = 0; n < oldLength; n++ )
-			array[n].~T();
-		DELETEARRAY(array);
+				for( size_t n = 0; n < length; n++ )
+					tmp[n] = array[n];
+			}
+			else
+				length = 0;
+
+			// Call the destructor for all elements
+			for( size_t n = 0; n < oldLength; n++ )
+				array[n].~T();
+
+			if( array != (T*)buf )
+				DELETEARRAY(array);
+		}
 	}
 
 	array = tmp;

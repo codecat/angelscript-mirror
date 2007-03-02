@@ -47,11 +47,13 @@
 
 BEGIN_AS_NAMESPACE
 
-asCByteCode::asCByteCode()
+asCByteCode::asCByteCode(asCScriptEngine *engine)
 {
 	first = 0;
 	last  = 0;
 	largestStackUsed = -1;
+
+	this->engine = engine;
 }
 
 asCByteCode::~asCByteCode()
@@ -81,7 +83,7 @@ void asCByteCode::ClearAll()
 	while( del ) 
 	{
 		first = del->next;
-		DELETE(del,cByteInstruction);
+		engine->memoryMgr.FreeByteInstruction(del);
 		del = first;
 	}
 
@@ -1139,7 +1141,7 @@ void asCByteCode::AddCode(asCByteCode *bc)
 
 int asCByteCode::AddInstruction()
 {
-	cByteInstruction *instr = NEW(cByteInstruction)();
+	cByteInstruction *instr = new(engine->memoryMgr.AllocByteInstruction()) cByteInstruction();
 	if( first == 0 )
 	{
 		first = last = instr;
@@ -1155,7 +1157,7 @@ int asCByteCode::AddInstruction()
 
 int asCByteCode::AddInstructionFirst()
 {
-	cByteInstruction *instr = NEW(cByteInstruction)();
+	cByteInstruction *instr = new(engine->memoryMgr.AllocByteInstruction()) cByteInstruction();
 	if( first == 0 )
 	{
 		first = last = instr;
@@ -1335,8 +1337,8 @@ cByteInstruction *asCByteCode::DeleteInstruction(cByteInstruction *instr)
 	
 	RemoveInstruction(instr);
 
-	DELETE(instr,cByteInstruction);
-	
+	engine->memoryMgr.FreeByteInstruction(instr);
+
 	return ret;
 }
 
@@ -2136,7 +2138,7 @@ int asCByteCode::RemoveLastInstr()
 
 	if( first == last )
 	{
-		DELETE(last,cByteInstruction);
+		engine->memoryMgr.FreeByteInstruction(last);
 		first = 0;
 		last = 0;
 	}
@@ -2146,7 +2148,7 @@ int asCByteCode::RemoveLastInstr()
 		last = bc->prev;
 
 		bc->Remove();
-		DELETE(bc,cByteInstruction);
+		engine->memoryMgr.FreeByteInstruction(bc);
 	}
 
 	return 0;

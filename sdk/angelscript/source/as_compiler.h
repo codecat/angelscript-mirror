@@ -65,7 +65,7 @@ struct asSDeferredParam
 
 struct asSExprContext
 {
-	asSExprContext() {exprNode = 0; origExpr = 0;}
+	asSExprContext(asCScriptEngine *engine) : bc(engine) {exprNode = 0; origExpr = 0;}
 
 	asCByteCode bc;
 	asCTypeInfo type;
@@ -77,7 +77,7 @@ struct asSExprContext
 class asCCompiler
 {
 public:
-	asCCompiler();
+	asCCompiler(asCScriptEngine *engine);
 	~asCCompiler();
 
 	int CompileFunction(asCBuilder *builder, asCScriptCode *script, asCScriptNode *func, asCScriptFunction *outFunc);

@@ -47,7 +47,7 @@
 
 BEGIN_AS_NAMESPACE
 
-asCCompiler::asCCompiler()
+asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
 {
 	builder = 0;
 	script = 0;
@@ -219,7 +219,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	asCScriptNode *block = parser.GetScriptNode();
 
 	bool hasReturn;
-	asCByteCode bc;
+	asCByteCode bc(engine);
 	LineInstr(&bc, func->lastChild->tokenPos);
 	CompileStatementBlock(block, false, &hasReturn, &bc);
 	LineInstr(&bc, func->lastChild->tokenPos + func->lastChild->tokenLength);
@@ -415,7 +415,7 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 		if( node->nodeType == snBreak || node->nodeType == snContinue )
 			isFinished = true;
 
-		asCByteCode statement;
+		asCByteCode statement(engine);
 		if( node->nodeType == snDeclaration )
 			CompileDeclaration(node, &statement);
 		else
@@ -461,7 +461,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	// Add a variable scope (even though variables can't be declared)
 	AddVariableScope();
 
-	asSExprContext ctx;
+	asSExprContext ctx(engine);
 
 	gvar->isPureConstant = false;
 
@@ -533,7 +533,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					asSExprContext *ectx = args[1];
 					args.PushLast(ectx);
 
-					ectx = NEW(asSExprContext);
+					ectx = NEW(asSExprContext)(engine);
 					ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
 					ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
 					args[1] = ectx;
@@ -585,7 +585,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 		if( node )
 		{
-			asSExprContext expr;
+			asSExprContext expr(engine);
 			CompileAssignment(node, &expr);
 
 			if( gvar->datatype.IsPrimitive() )
@@ -598,7 +598,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					gvar->constantValue = expr.type.qwordValue;
 				}
 
-				asSExprContext lctx;
+				asSExprContext lctx(engine);
 				lctx.type.Set(gvar->datatype);
 				lctx.type.dataType.MakeReference(true);
 				lctx.type.dataType.MakeReadOnly(false);
@@ -789,7 +789,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					offset = AllocateVariableNotIn(dt, true, &vars);
 
 					// Allocate and construct the temporary object
-					asCByteCode tmpBC;
+					asCByteCode tmpBC(engine);
 					CompileConstructor(dt, offset, &tmpBC);
 
 					// Insert the code before the expression code
@@ -843,7 +843,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			else
 			{
 				// Allocate and construct the temporary object
-				asCByteCode tmpBC;
+				asCByteCode tmpBC(engine);
 				CompileConstructor(dt, offset, &tmpBC);
 
 				// Insert the code before the expression code
@@ -880,7 +880,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				ctx->type.dataType.GetBehaviour()->release )
 			{
 				// Store a handle to the object as local variable
-				asSExprContext tmp;
+				asSExprContext tmp(engine);
 				asCDataType dt = ctx->type.dataType;
 				dt.MakeHandle(true);
 
@@ -981,7 +981,7 @@ void asCCompiler::PrepareFunctionCall(int funcID, asCByteCode *bc, asCArray<asSE
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcID);
 
 	// Add code for arguments
-	asSExprContext e;
+	asSExprContext e(engine);
 	int n;
 	for( n = (int)args.GetLength()-1; n >= 0; n-- )
 	{
@@ -1062,7 +1062,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 	n = argCount-1;
 	if( type && (type->IsScriptArray() || type->IsScriptAny()) )
 	{
-		args[n] = NEW(asSExprContext);
+		args[n] = NEW(asSExprContext)(engine);
 		args[n]->bc.InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(type->GetObjectType()));
 #ifndef AS_64BIT_PTR
 		args[n]->type.Set(asCDataType::CreatePrimitive(ttInt, false));
@@ -1076,10 +1076,10 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 	arg = node->lastChild;
 	while( arg )
 	{
-		asSExprContext expr;
+		asSExprContext expr(engine);
 		CompileAssignment(arg, &expr);
 
-		args[n] = NEW(asSExprContext);
+		args[n] = NEW(asSExprContext)(engine);
 		MergeExprContexts(args[n], &expr);
 		args[n]->type = expr.type;
 		args[n]->exprNode = arg;
@@ -1267,7 +1267,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 				if( funcs.GetLength() == 1 )
 				{
-					asSExprContext ctx;
+					asSExprContext ctx(engine);
 
 					sVariable *v = variables->GetVariable(name.AddressOf());
 					ctx.bc.InstrSHORT(BC_VAR, (short)v->stackOffset);
@@ -1280,7 +1280,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						asSExprContext *ectx = args[1];
 						args.PushLast(ectx);
 
-						ectx = NEW(asSExprContext);
+						ectx = NEW(asSExprContext)(engine);
 						ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
 						ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
 						args[1] = ectx;
@@ -1335,7 +1335,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		}
 		else
 		{
-			asSExprContext ctx;
+			asSExprContext ctx(engine);
 
 			// Call the default constructor here
 			CompileConstructor(type, offset, &ctx.bc);
@@ -1344,7 +1344,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			if( node && node->nodeType == snAssignment )
 			{
 				// Compile the expression
-				asSExprContext expr;
+				asSExprContext expr(engine);
 				CompileAssignment(node, &expr);
 
 				if( type.IsPrimitive() )
@@ -1358,7 +1358,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						v->constantValue = expr.type.qwordValue;
 					}
 
-					asSExprContext lctx;
+					asSExprContext lctx(engine);
 					lctx.type.SetVariable(type, offset, false);
 					lctx.type.dataType.MakeReadOnly(false);
 
@@ -1504,7 +1504,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		funcs = var->dataType.GetBehaviour()->constructors;
 
 		asCArray<asSExprContext *> args;
-		asSExprContext arg1, arg2;
+		asSExprContext arg1(engine), arg2(engine);
 		arg1.bc.InstrDWORD(BC_PshC4, countElements);
 		arg1.type.Set(asCDataType::CreatePrimitive(ttUInt, false));
 		args.PushLast(&arg1);
@@ -1527,7 +1527,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 		if( funcs.GetLength() == 1 )
 		{
-			asSExprContext ctx;
+			asSExprContext ctx(engine);
 
 			if( var->isVariable )
 				ctx.bc.InstrSHORT(BC_PSF, var->stackOffset);
@@ -1591,8 +1591,8 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		{
 			if( el->nodeType == snAssignment || el->nodeType == snInitList )
 			{
-				asSExprContext lctx;
-				asSExprContext rctx;
+				asSExprContext lctx(engine);
+				asSExprContext rctx(engine);
 
 				if( el->nodeType == snAssignment )
 				{
@@ -1631,7 +1631,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				if( !lctx.type.dataType.IsObject() )
 					lctx.type.dataType.MakeReference(true);
 
-				asSExprContext ctx;
+				asSExprContext ctx(engine);
 				DoAssignment(&ctx, &lctx, &rctx, el, el, ttAssignment, el);
 
 				if( !lctx.type.dataType.IsPrimitive() )
@@ -1701,7 +1701,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 	//-------------------------------
 
 	// Compile the switch expression
-	asSExprContext expr;
+	asSExprContext expr(engine);
 	CompileAssignment(snode->firstChild, &expr);
 
 	// Verify that the expression is a primitive type
@@ -1743,7 +1743,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		if( cnode->firstChild && cnode->firstChild->nodeType == snExpression )
 		{
 			// Compile expression
-			asSExprContext c;
+			asSExprContext c(engine);
 			CompileExpression(cnode->firstChild, &c);
 
 			// Verify that the result is a constant
@@ -1974,7 +1974,7 @@ void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc)
 		if( node->nodeType == snBreak || node->nodeType == snContinue )
 			isFinished = true;
 
-		asCByteCode statement;
+		asCByteCode statement(engine);
 		CompileStatement(node, &hasReturn, &statement);
 
 		LineInstr(bc, node->tokenPos);
@@ -1994,7 +1994,7 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	int afterLabel = nextLabel++;
 
 	// Compile the expression
-	asSExprContext expr;
+	asSExprContext expr(engine);
 	CompileAssignment(inode->firstChild, &expr);
 	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 		Error(TXT_EXPR_MUST_BE_BOOL, inode->firstChild);
@@ -2024,7 +2024,7 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 	// Compile the if statement
 	bool hasReturn1;
-	asCByteCode ifBC;
+	asCByteCode ifBC(engine);
 	CompileStatement(inode->firstChild->next, &hasReturn1, &ifBC);
 
 	// Add the byte code
@@ -2047,7 +2047,7 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		bc->Label((short)afterLabel);
 
 		bool hasReturn2;
-		asCByteCode elseBC;
+		asCByteCode elseBC(engine);
 		CompileStatement(inode->lastChild, &hasReturn2, &elseBC);
 
 		// Add byte code for the else statement
@@ -2086,8 +2086,8 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 
 	//---------------------------------------
 	// Compile the initialization statement
-	asCByteCode initBC;
-	asSExprContext expr;
+	asCByteCode initBC(engine);
+	asSExprContext expr(engine);
 
 	if( fnode->firstChild->nodeType == snDeclaration )
 		CompileDeclaration(fnode->firstChild, &initBC);
@@ -2115,7 +2115,7 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 
 	//---------------------------
 	// Compile the increment statement
-	asSExprContext nextBC;
+	asSExprContext nextBC(engine);
 	asCScriptNode *third = second->next;
 	if( third->nodeType == snAssignment )
 	{
@@ -2129,7 +2129,7 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	//------------------------------
 	// Compile loop statement
 	bool hasReturn;
-	asCByteCode forBC;
+	asCByteCode forBC(engine);
 	CompileStatement(fnode->lastChild, &hasReturn, &forBC);
 
 	//-------------------------------
@@ -2184,7 +2184,7 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	bc->Label((short)beforeLabel);
 
 	// Compile expression
-	asSExprContext expr;
+	asSExprContext expr(engine);
 	CompileAssignment(wnode->firstChild, &expr);
 	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 		Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
@@ -2207,7 +2207,7 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 	// Compile statement
 	bool hasReturn;
-	asCByteCode whileBC;
+	asCByteCode whileBC(engine);
 	CompileStatement(wnode->lastChild, &hasReturn, &whileBC);
 
 	// Add byte code for the statement
@@ -2244,7 +2244,7 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 	// Compile statement
 	bool hasReturn;
-	asCByteCode whileBC;
+	asCByteCode whileBC(engine);
 	CompileStatement(wnode->firstChild, &hasReturn, &whileBC);
 
 	// Add byte code for the statement
@@ -2262,7 +2262,7 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	LineInstr(bc, wnode->lastChild->tokenPos);
 
 	// Compile expression
-	asSExprContext expr;
+	asSExprContext expr(engine);
 	CompileAssignment(wnode->lastChild, &expr);
 	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 		Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
@@ -2335,7 +2335,7 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 	if( enode->firstChild )
 	{
 		// Compile the expression
-		asSExprContext expr;
+		asSExprContext expr(engine);
 		CompileAssignment(enode->firstChild, &expr);
 
 		// Pop the value from the stack
@@ -2400,7 +2400,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 		if( rnode->firstChild )
 		{
 			// Compile the expression
-			asSExprContext expr;
+			asSExprContext expr(engine);
 			CompileAssignment(rnode->firstChild, &expr);
 
 			// Prepare the value for assignment
@@ -2884,7 +2884,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 		// TODO: Call the assignment operator, or do a BC_COPY if none exist
 
 		// TODO: Convert
-		asSExprContext ctx;
+		asSExprContext ctx(engine);
 		ctx.type = *lvalue;
 		Dereference(&ctx, true);
 		*lvalue = ctx.type;
@@ -3309,10 +3309,10 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 						CompileConstructor(ctx->type.dataType, offset, &ctx->bc);
 
-						asSExprContext rctx;
+						asSExprContext rctx(engine);
 						rctx.type = ctx->type;
 						rctx.bc.AddCode(&ctx->bc);
-						asSExprContext lctx;
+						asSExprContext lctx(engine);
 						lctx.type = ctx->type;
 						lctx.bc.InstrSHORT(BC_PSF, (short)offset);
 						DoAssignment(ctx, &lctx, &rctx, node, node, ttAssignment, node);
@@ -3418,7 +3418,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 			{
 				tempObj.stackOffset = (short)AllocateVariable(to, true);
 
-				asSExprContext tmp;
+				asSExprContext tmp(engine);
 
 				// Push the address of the object on the stack
 				tmp.bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
@@ -3974,7 +3974,7 @@ void asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExp
 		{
 			// Compute the operator before the assignment
 			asCTypeInfo lvalue = lctx->type;
-			asSExprContext o;
+			asSExprContext o(engine);
 			CompileOperator(opNode, lctx, rctx, &o);
 			MergeExprContexts(rctx, &o);
 			rctx->type = o.type;
@@ -4188,7 +4188,7 @@ void asCCompiler::CompileAssignment(asCScriptNode *expr, asSExprContext *ctx)
 		int currNumErrors = builder->numErrors;
 
 		// Compile the two expression terms
-		asSExprContext lctx, rctx;
+		asSExprContext lctx(engine), rctx(engine);
 		CompileAssignment(lexpr->next->next, &rctx);
 		CompileCondition(lexpr, &lctx);
 
@@ -4216,7 +4216,7 @@ void asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 	{
 		//-------------------------------
 		// Compile the expressions
-		asSExprContext e;
+		asSExprContext e(engine);
 		CompileExpression(cexpr, &e);
 		ctype = e.type;
 		if( !ctype.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
@@ -4225,10 +4225,10 @@ void asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 		if( e.type.dataType.IsReference() ) ConvertToVariable(&e);
 		ProcessDeferredParams(&e);
 
-		asSExprContext le;
+		asSExprContext le(engine);
 		CompileAssignment(cexpr->next, &le);
 
-		asSExprContext re;
+		asSExprContext re(engine);
 		CompileAssignment(cexpr->next->next, &re);
 
 		bool isExplicitHandle = le.type.isExplicitHandle || re.type.isExplicitHandle;
@@ -4334,12 +4334,21 @@ void asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 {
 	assert(expr->nodeType == snExpression);
 
-	// Convert to polish post fix, i.e: a+b => ab+
-	asCArray<asCScriptNode *> stack;
-	asCArray<asCScriptNode *> stack2;
-	asCArray<asCScriptNode *> postfix;
-
+	// Count the nodes
+	int count = 0;
 	asCScriptNode *node = expr->firstChild;
+	while( node )
+	{
+		count++;
+		node = node->next;
+	}
+
+	// Convert to polish post fix, i.e: a+b => ab+
+	asCArray<asCScriptNode *> stack(count);
+	asCArray<asCScriptNode *> stack2(count);
+	asCArray<asCScriptNode *> postfix(count);
+
+	node = expr->firstChild;
 	while( node )
 	{
 		int precedence = GetPrecedence(node);
@@ -4355,9 +4364,6 @@ void asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 
 	while( stack.GetLength() > 0 )
 		stack2.PushLast(stack.PopLast());
-
-	// Preallocate the memory
-	postfix.Allocate(stack.GetLength(), false);
 
 	// We need to swap operands so that the left
 	// operand is always computed before the right
@@ -4401,7 +4407,7 @@ void asCCompiler::CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, a
 	}
 
 	// Compile the two expression terms
-	asSExprContext r, l;
+	asSExprContext r(engine), l(engine);
 
 	CompilePostFixExpression(postfix, &l);
 	CompilePostFixExpression(postfix, &r);
@@ -4420,7 +4426,7 @@ void asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx
 	while( vnode->nodeType != snExprValue )
 		vnode = vnode->next;
 
-	asSExprContext v;
+	asSExprContext v(engine);
 	CompileExpressionValue(vnode, &v);
 
 	// Compile post fix operators
@@ -4764,7 +4770,7 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 	}
 	else if( vnode->nodeType == snAssignment )
 	{
-		asSExprContext e;
+		asSExprContext e(engine);
 		CompileAssignment(vnode, &e);
 		MergeExprContexts(ctx, &e);
 		ctx->type = e.type;
@@ -4781,8 +4787,7 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 void asCCompiler::ProcessStringConstant(asCString &cstr)
 {
 	// Process escape sequences
-	asCArray<char> str;
-	str.Allocate(cstr.GetLength(), false);
+	asCArray<char> str(cstr.GetLength());
 
 	for( asUINT n = 0; n < cstr.GetLength(); n++ )
 	{
@@ -4901,7 +4906,7 @@ void asCCompiler::ProcessHeredocStringConstant(asCString &str)
 
 void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 {
-	asSExprContext expr;
+	asSExprContext expr(engine);
 	asCDataType to;
 	if( node->nodeType == snFunctionCall )
 	{
@@ -5071,7 +5076,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 			// Verify that the expression result in a lvalue
 			if( IsLValue(expr->type) )
 			{
-				asSExprContext rctx;
+				asSExprContext rctx(engine);
 				rctx.type = outParam.argType;
 				if( rctx.type.dataType.IsPrimitive() )
 					rctx.type.dataType.MakeReference(false);
@@ -5081,7 +5086,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 					rctx.type.dataType.MakeReference(true);
 				}
 
-				asSExprContext o;
+				asSExprContext o(engine);
 				DoAssignment(&o, expr, &rctx, outParam.argNode, outParam.argNode, ttAssignment, outParam.argNode);
 
 				if( !o.type.dataType.IsPrimitive() ) o.bc.Pop(PTR_SIZE);
@@ -5175,12 +5180,12 @@ void asCCompiler::CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *ct
 	{
 		asCArray<asCTypeInfo> temporaryVariables;
 
-		asSExprContext *ectx = NEW(asSExprContext);
+		asSExprContext *ectx = NEW(asSExprContext)(engine);
 		ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
 		ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
 		args.PushLast(ectx);
 
-		asCByteCode objBC;
+		asCByteCode objBC(engine);
 		objBC.AddCode(&ctx->bc);
 
 		// Now push the objectType on the stack
@@ -5385,7 +5390,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	}
 	else
 	{
-		asCByteCode objBC;
+		asCByteCode objBC(engine);
 
 		if( !isConstructor )
 		{
@@ -5400,7 +5405,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 			asSExprContext *ectx = args[1];
 			args.PushLast(ectx);
 
-			ectx = NEW(asSExprContext);
+			ectx = NEW(asSExprContext)(engine);
 			ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
 			ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
 			args[1] = ectx;
@@ -5954,7 +5959,7 @@ void asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *c
 		IsVariableInitialized(&ctx->type, node);
 
 		// Compile the expression
-		asSExprContext expr;
+		asSExprContext expr(engine);
 		CompileAssignment(node->firstChild, &expr);
 
 		asCTypeInfo objType = ctx->type;
@@ -6003,7 +6008,7 @@ void asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *c
 				asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
 
 				// Store the code for the object
-				asCByteCode objBC;
+				asCByteCode objBC(engine);
 				objBC.AddCode(&ctx->bc);
 
 				// Add code for arguments
@@ -6131,10 +6136,10 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 
 int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum, bool allowObjectConstruct)
 {
-	bool isExactMatch = false;
-	bool isMatchExceptConst = false;
+	bool isExactMatch        = false;
+	bool isMatchExceptConst  = false;
 	bool isMatchWithBaseType = false;
-	bool isMatchExceptSign = false;
+	bool isMatchExceptSign   = false;
 
 	asUINT n;
 
@@ -6149,7 +6154,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 			continue;
 
 		// Can we make the match by implicit conversion?
-		asSExprContext ti;
+		asSExprContext ti(engine);
 		ti.type = *argType;
 		if( argType->dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
 		ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, false, false, 0, allowObjectConstruct);
@@ -6221,7 +6226,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 
 void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType, asCArray<int> *reservedVars)
 {
-	asSExprContext e;
+	asSExprContext e(engine);
 
 	// Reference parameters whose value won't be used don't evaluate the expression
 	if( !paramType->IsReference() || (refType & 1) )
@@ -6231,7 +6236,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	else
 	{
 		// Store the original bytecode so that it can be reused when processing the deferred output parameter
-		asSExprContext *orig = NEW(asSExprContext);
+		asSExprContext *orig = NEW(asSExprContext)(engine);
 		MergeExprContexts(orig, arg);
 		orig->exprNode = arg->exprNode;
 		orig->type = arg->type;
@@ -6311,7 +6316,7 @@ bool asCCompiler::CompileOverloadedOperator(asCScriptNode *node, asSExprContext 
 		else
 			ctx->bc.Instr(BC_SWAP4);
 
-		asCArray<asSExprContext*> args;
+		asCArray<asSExprContext*> args(2);
 		args.PushLast(lctx);
 		args.PushLast(rctx);
 
@@ -6443,7 +6448,7 @@ void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> 
 			int offset = AllocateVariableNotIn(ctx->type.dataType, true, &vars);
 
 			// Allocate and construct the temporary object
-			asCByteCode tmpBC;
+			asCByteCode tmpBC(engine);
 			CompileConstructor(ctx->type.dataType, offset, &tmpBC);
 
 			// Insert the code before the expression code
@@ -6493,7 +6498,7 @@ void asCCompiler::ConvertToTempVariable(asSExprContext *ctx)
 			int offset = AllocateVariableNotIn(ctx->type.dataType, true, &vars);
 
 			// Allocate and construct the temporary object
-			asCByteCode tmpBC;
+			asCByteCode tmpBC(engine);
 			CompileConstructor(ctx->type.dataType, offset, &tmpBC);
 
 			// Insert the code before the expression code

@@ -198,7 +198,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	if( numErrors == 0 )
 	{
 		// Compile the function
-		asCCompiler compiler;
+		asCCompiler compiler(engine);
 		asCScriptFunction *execfunc = NEW(asCScriptFunction)(module);
 		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, execfunc) >= 0 )
 		{
@@ -235,7 +235,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 
 void asCBuilder::ParseScripts()
 {
-	asCArray<asCParser*> parsers;
+	asCArray<asCParser*> parsers(scripts.GetLength());
 	
 	// Parse all the files as if they were one
 	asUINT n = 0;
@@ -376,7 +376,7 @@ void asCBuilder::CompileFunctions()
 	{
 		if( functions[n] == 0 ) continue;
 
-		asCCompiler compiler;
+		asCCompiler compiler(engine);
 
 		int r, c;
 		functions[n]->script->ConvertPosToRowCol(functions[n]->node->tokenPos, &r, &c);
@@ -892,7 +892,7 @@ void asCBuilder::CompileGlobalVariables()
 {
 	bool compileSucceeded = true;
 
-	asCByteCode finalInit;
+	asCByteCode finalInit(engine);
 
 	// Store state of compilation (errors, warning, output)
 	int currNumErrors = numErrors;
@@ -924,7 +924,7 @@ void asCBuilder::CompileGlobalVariables()
 			numWarnings = 0;
 			numErrors = 0;
 			outBuffer.Clear();
-			asCByteCode init;
+			asCByteCode init(engine);
 
 			sGlobalVariableDescription *gvar = globVariables[n];
 			if( gvar->isCompiled == false )
@@ -939,7 +939,7 @@ void asCBuilder::CompileGlobalVariables()
 					WriteInfo(gvar->script->name.AddressOf(), str.AddressOf(), r, c, true);
 				}
 
-				asCCompiler comp;
+				asCCompiler comp(engine);
 				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->node, gvar);
 				if( r >= 0 )
 				{
@@ -998,8 +998,8 @@ void asCBuilder::CompileGlobalVariables()
 
 	finalInit.Finalize();
 
-	asCByteCode cleanInit;
-	asCByteCode cleanExit;
+	asCByteCode cleanInit(engine);
+	asCByteCode cleanExit(engine);
 
 	int id = engine->GetNextScriptFunctionId();
 	asCScriptFunction *init = NEW(asCScriptFunction)(module);
@@ -1023,7 +1023,7 @@ void asCBuilder::CompileGlobalVariables()
 void asCBuilder::CompileClasses()
 {
 	asUINT n;
-	asCArray<sClassDeclaration*> toValidate;
+	asCArray<sClassDeclaration*> toValidate(classDeclarations.GetLength());
 
 	// Go through each of the classes and register the object type descriptions
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
@@ -1124,7 +1124,7 @@ void asCBuilder::CompileClasses()
 	{
 		asUINT numClasses = (asUINT)toValidate.GetLength();
 
-		asCArray<sClassDeclaration*> toValidateNext;
+		asCArray<sClassDeclaration*> toValidateNext(toValidate.GetLength());
 		while( toValidate.GetLength() > 0 )
 		{
 			sClassDeclaration *decl = toValidate[toValidate.GetLength()-1];
@@ -1365,7 +1365,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	objType->beh.constructors[0] = funcId;
 
 	// Compile the bytecode
-	asCCompiler compiler;
+	asCCompiler compiler(engine);
 	compiler.CompileDefaultConstructor(this, file, engine->scriptFunctions[funcId]);
 
 	// Add a dummy function to the module so that it doesn't mix up the func Ids
@@ -1422,8 +1422,19 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		module->RefConfigGroupForObjectType(returnType.GetObjectType());
 	}
 
-	asCArray<asCDataType> parameterTypes;
-	asCArray<int> inOutFlags;
+	// Count the number of parameters
+	int count = 0;
+	asCScriptNode *c = n->next->firstChild;
+	while( c )
+	{
+		count++;
+		c = c->next->next;
+		if( c && c->nodeType == snIdentifier )
+			c = c->next;
+	}
+
+	asCArray<asCDataType> parameterTypes(count);
+	asCArray<int> inOutFlags(count);
 	n = n->next->firstChild;
 	while( n )
 	{
@@ -1520,8 +1531,19 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	returnType = CreateDataTypeFromNode(f->firstChild, file);
 	returnType = ModifyDataTypeFromNode(returnType, f->firstChild->next, file, 0, 0);
 		
-	asCArray<asCDataType> parameterTypes;
-	asCArray<int> inOutFlags;
+	// Count the parameters
+	int count = 0;
+	asCScriptNode *c = n->next->firstChild;
+	while( c )
+	{
+		count++;
+		c = c->next->next;
+		if( c && c->nodeType == snIdentifier )
+			c = c->next;
+	}
+
+	asCArray<asCDataType> parameterTypes(count);
+	asCArray<int> inOutFlags(count);
 	n = n->next->firstChild;
 	while( n )
 	{

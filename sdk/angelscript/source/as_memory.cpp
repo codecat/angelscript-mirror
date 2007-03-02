@@ -41,6 +41,7 @@
 #include "as_config.h"
 #include "as_memory.h"
 #include "as_scriptnode.h"
+#include "as_bytecode.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -77,9 +78,14 @@ asCMemoryMgr::~asCMemoryMgr()
 
 void asCMemoryMgr::FreeUnusedMemory()
 {
-	for( int n = 0; n < (signed)scriptNodePool.GetLength(); n++ )
+	int n;
+	for( n = 0; n < (signed)scriptNodePool.GetLength(); n++ )
 		userFree(scriptNodePool[n]);
 	scriptNodePool.Allocate(0, false);
+
+	for( n = 0; n < (signed)byteInstructionPool.GetLength(); n++ )
+		userFree(byteInstructionPool[n]);
+	byteInstructionPool.Allocate(0, false);
 }
 
 void *asCMemoryMgr::AllocScriptNode()
@@ -101,6 +107,27 @@ void asCMemoryMgr::FreeScriptNode(void *ptr)
 		scriptNodePool.Allocate(100, 0);
 
 	scriptNodePool.PushLast(ptr);
+}
+
+void *asCMemoryMgr::AllocByteInstruction()
+{
+	if( byteInstructionPool.GetLength() )
+		return byteInstructionPool.PopLast();
+
+#ifdef AS_DEBUG
+	return ((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(cByteInstruction), __FILE__, __LINE__);
+#else
+	return userAlloc(sizeof(cByteInstruction));
+#endif
+}
+
+void asCMemoryMgr::FreeByteInstruction(void *ptr)
+{
+	// Pre allocate memory for the array to avoid slow growth
+	if( byteInstructionPool.GetLength() == 0 )
+		byteInstructionPool.Allocate(100, 0);
+
+	byteInstructionPool.PushLast(ptr);
 }
 
 END_AS_NAMESPACE

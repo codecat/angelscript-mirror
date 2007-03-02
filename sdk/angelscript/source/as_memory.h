@@ -102,8 +102,12 @@ public:
 	void *AllocScriptNode();
 	void FreeScriptNode(void *ptr);
 
+	void *AllocByteInstruction();
+	void FreeByteInstruction(void *ptr);
+
 protected:
 	asCArray<void *> scriptNodePool;
+	asCArray<void *> byteInstructionPool;
 };
 
 END_AS_NAMESPACE

@@ -164,6 +164,7 @@ public:
 	friend class asCDataType;
 	friend class asCModule;
 	friend class asCRestore;
+	friend class asCByteCode;
 	friend int CallSystemFunction(int id, asCContext *context);
 	friend int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 

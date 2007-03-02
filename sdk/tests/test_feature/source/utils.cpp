@@ -183,10 +183,10 @@ void RemoveMemoryManager()
 
 	printf("---------\n");
 	printf("MEMORY STATISTICS\n");
-	printf("number of allocations                 : %d\n", numAllocs);                   // 260223   : 199115
-	printf("max allocated memory at any one time  : %d\n", maxMemAlloc);                 // 220196   : 63832
-	printf("max number of simultaneous allocations: %d\n", maxNumAllocsSameTime);        // 5390     : 1408
-	printf("total amount of allocated memory      : %d\n", sumAllocSize);                // 10849761 : 9615673
+	printf("number of allocations                 : %d\n", numAllocs);                   // 260223   : 122703
+	printf("max allocated memory at any one time  : %d\n", maxMemAlloc);                 // 220196   : 77134
+	printf("max number of simultaneous allocations: %d\n", maxNumAllocsSameTime);        // 5390     : 1301
+	printf("total amount of allocated memory      : %d\n", sumAllocSize);                // 10849761 : 9920827
 	printf("medium size of allocations            : %d\n", (int)sumAllocSize/numAllocs);
 
 #ifdef TRACK_SIZES
