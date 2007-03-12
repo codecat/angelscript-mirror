@@ -4787,7 +4787,7 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 void asCCompiler::ProcessStringConstant(asCString &cstr)
 {
 	// Process escape sequences
-	asCArray<char> str(cstr.GetLength());
+	asCArray<char> str((int)cstr.GetLength());
 
 	for( asUINT n = 0; n < cstr.GetLength(); n++ )
 	{

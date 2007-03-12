@@ -235,7 +235,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 
 void asCBuilder::ParseScripts()
 {
-	asCArray<asCParser*> parsers(scripts.GetLength());
+	asCArray<asCParser*> parsers((int)scripts.GetLength());
 	
 	// Parse all the files as if they were one
 	asUINT n = 0;
@@ -1023,7 +1023,7 @@ void asCBuilder::CompileGlobalVariables()
 void asCBuilder::CompileClasses()
 {
 	asUINT n;
-	asCArray<sClassDeclaration*> toValidate(classDeclarations.GetLength());
+	asCArray<sClassDeclaration*> toValidate((int)classDeclarations.GetLength());
 
 	// Go through each of the classes and register the object type descriptions
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
@@ -1124,7 +1124,7 @@ void asCBuilder::CompileClasses()
 	{
 		asUINT numClasses = (asUINT)toValidate.GetLength();
 
-		asCArray<sClassDeclaration*> toValidateNext(toValidate.GetLength());
+		asCArray<sClassDeclaration*> toValidateNext((int)toValidate.GetLength());
 		while( toValidate.GetLength() > 0 )
 		{
 			sClassDeclaration *decl = toValidate[toValidate.GetLength()-1];
