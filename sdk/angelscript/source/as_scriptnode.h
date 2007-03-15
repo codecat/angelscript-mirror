@@ -60,6 +60,7 @@ enum eScriptNode
 	snExpression,
 	snExprTerm,
 	snFunctionCall,
+	snConstructCall,
 	snArgList,
 	snExprPreOp,
 	snExprPostOp,

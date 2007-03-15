@@ -51,6 +51,7 @@ asCParser::asCParser(asCBuilder *builder)
 
 	script			= 0;
 	scriptNode		= 0;
+	checkValidTypes = false;
 }
 
 asCParser::~asCParser()
@@ -62,6 +63,7 @@ void asCParser::Reset()
 {
 	errorWhileParsing = false;
 	isSyntaxError     = false;
+	checkValidTypes   = false;
 
 	sourcePos = 0;
 
@@ -250,7 +252,7 @@ asCScriptNode *asCParser::ParseScript()
 				node->AddChildLast(ParseInterface());
 			else if( t1.type == ttConst )
 				node->AddChildLast(ParseGlobalVar());
-			else if( IsDataType(t1.type) )
+			else if( IsDataType(t1) )
 			{
 				if( IsVarDecl() )
 					node->AddChildLast(ParseGlobalVar());
@@ -307,6 +309,9 @@ int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 {
 	Reset();
 
+	// Tell the parser to validate the identifiers as valid types
+	checkValidTypes = true;
+
 	this->script = script;
 	sourcePos = block->tokenPos;
 
@@ -331,7 +336,7 @@ bool asCParser::IsVarDecl()
 	if( t1.type == ttConst )
 		GetToken(&t1);
 
-	if( !IsDataType(t1.type) )
+	if( !IsDataType(t1) )
 	{
 		RewindTo(&t);
 		return false;
@@ -417,7 +422,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	if( t1.type == ttConst )
 		GetToken(&t1);
 
-	if( !IsDataType(t1.type) )
+	if( !IsDataType(t1) )
 	{
 		RewindTo(&t);
 		return false;
@@ -691,31 +696,14 @@ asCScriptNode *asCParser::ParseGlobalVar()
 		node->AddChildLast(ParseIdentifier());
 		if( isSyntaxError ) return node;
 
-		// If next token is assignment, parse expression
+		// Only superficially parse the initialization info for the variable
 		GetToken(&t);
-		if( t.type == ttAssignment )
+		RewindTo(&t);
+		if( t.type == ttAssignment || t.type == ttOpenParanthesis )
 		{
-			GetToken(&t);
-			RewindTo(&t);
-			if( t.type == ttStartStatementBlock )
-			{
-				node->AddChildLast(ParseInitList());
-				if( isSyntaxError ) return node;
-			}
-			else
-			{
-				node->AddChildLast(ParseAssignment());
-				if( isSyntaxError ) return node;
-			}
-		}
-		else if( t.type == ttOpenParanthesis ) 
-		{
-			RewindTo(&t);
-			node->AddChildLast(ParseArgList());
+			node->AddChildLast(SuperficiallyParseGlobalVarInit());
 			if( isSyntaxError ) return node;
 		}
-		else
-			RewindTo(&t);
 
 		// continue if list separator, else terminate with end statement
 		GetToken(&t);
@@ -734,6 +722,123 @@ asCScriptNode *asCParser::ParseGlobalVar()
 		}
 	}
 	UNREACHABLE_RETURN;
+}
+
+int asCParser::ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init)
+{
+	Reset();
+
+	// Tell the parser to validate the identifiers as valid types
+	checkValidTypes = true;
+
+	this->script = script;
+	sourcePos = init->tokenPos;
+
+	// If next token is assignment, parse expression
+	sToken t;
+	GetToken(&t);
+	if( t.type == ttAssignment )
+	{
+		GetToken(&t);
+		RewindTo(&t);
+		if( t.type == ttStartStatementBlock )
+			scriptNode = ParseInitList();
+		else
+			scriptNode = ParseAssignment();
+	}
+	else if( t.type == ttOpenParanthesis ) 
+	{
+		RewindTo(&t);
+		scriptNode = ParseArgList();
+	}
+	else
+	{
+		int tokens[] = {ttAssignment, ttOpenParanthesis};
+		Error(ExpectedOneOf(tokens, 2).AddressOf(), &t);
+	}
+
+	if( isSyntaxError || errorWhileParsing )
+		return -1;
+
+	return 0;
+}
+
+asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
+{
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snAssignment);
+
+	sToken t;
+	GetToken(&t);
+	node->UpdateSourcePos(t.pos, t.length);
+
+	if( t.type == ttAssignment )
+	{
+		GetToken(&t);
+		if( t.type == ttStartStatementBlock )
+		{
+			// Find the end of the initialization list
+			int indent = 1;
+			while( indent )
+			{
+				GetToken(&t);
+				if( t.type == ttStartStatementBlock )
+					indent++;
+				else if( t.type == ttEndStatementBlock )
+					indent--;
+				else if( t.type == ttEnd )
+				{
+					Error(TXT_UNEXPECTED_END_OF_FILE, &t);
+					break;
+				}
+			}
+		}
+		else
+		{
+			// Find the end of the expression
+			int indent = 0;
+			while( indent || t.type != ttListSeparator && t.type != ttEndStatement )
+			{
+				if( t.type == ttOpenParanthesis )
+					indent++;
+				else if( t.type == ttCloseParanthesis )
+					indent--;
+				else if( t.type == ttEnd )
+				{
+					Error(TXT_UNEXPECTED_END_OF_FILE, &t);
+					break;
+				}
+				GetToken(&t);
+			}
+
+			// Rewind so that the next token read is the list separator or end statement
+			RewindTo(&t);
+		}
+	}
+	else if( t.type == ttOpenParanthesis )
+	{
+		// Find the end of the argument list
+		int indent = 1;
+		while( indent )
+		{
+			GetToken(&t);
+			if( t.type == ttOpenParanthesis )
+				indent++;
+			else if( t.type == ttCloseParanthesis )
+				indent--;
+			else if( t.type == ttEnd )
+			{
+				Error(TXT_UNEXPECTED_END_OF_FILE, &t);
+				break;
+			}
+		}
+	}
+	else
+	{
+		int tokens[] = {ttAssignment, ttOpenParanthesis};
+		Error(ExpectedOneOf(tokens, 2).AddressOf(), &t);
+	}
+
+	return node;
 }
 
 asCScriptNode *asCParser::ParseTypeMod(bool isParam)
@@ -876,7 +981,7 @@ asCScriptNode *asCParser::ParseDataType()
 	sToken t1;
 
 	GetToken(&t1);
-	if( !IsDataType(t1.type) )
+	if( !IsDataType(t1) )
 	{
 		Error(TXT_EXPECTED_DATA_TYPE, &t1);
 		return node;
@@ -1057,7 +1162,9 @@ asCScriptNode *asCParser::ParseExprValue()
 	GetToken(&t1);
 	RewindTo(&t1);
 
-	if( t1.type == ttIdentifier || IsRealType(t1.type) )
+	if( IsDataType(t1) )
+		node->AddChildLast(ParseConstructCall());
+	else if( t1.type == ttIdentifier )
 	{
 		if( IsFunctionCall() )
 			node->AddChildLast(ParseFunctionCall());
@@ -1139,6 +1246,18 @@ asCScriptNode *asCParser::ParseStringConstant()
 asCScriptNode *asCParser::ParseFunctionCall()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunctionCall);
+
+	node->AddChildLast(ParseIdentifier());
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseArgList());
+
+	return node;
+}
+
+asCScriptNode *asCParser::ParseConstructCall()
+{
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snConstructCall);
 
 	node->AddChildLast(ParseType(false));
 	if( isSyntaxError ) return node;
@@ -1418,30 +1537,13 @@ bool asCParser::IsFunctionCall()
 	sToken t1, t2;
 
 	GetToken(&t1);
-
-	if( t1.type != ttIdentifier && !IsRealType(t1.type) )
+	if( t1.type != ttIdentifier || IsDataType(t1) )
 	{
 		RewindTo(&t1);
 		return false;
 	}
 
-	// The name can be followed by handle and closed array brackets
 	GetToken(&t2);
-	while( t2.type == ttHandle || t2.type == ttOpenBracket )
-	{
-		if( t2.type == ttOpenBracket )
-		{
-			GetToken(&t2);
-			if( t2.type != ttCloseBracket )
-			{
-				RewindTo(&t1);
-				return false;
-			}
-		}
-
-		GetToken(&t2);
-	}
-
 	if( t2.type == ttOpenParanthesis )
 	{
 		RewindTo(&t1);
@@ -2244,10 +2346,22 @@ bool asCParser::IsRealType(int tokenType)
 }
 
 
-bool asCParser::IsDataType(int tokenType)
+bool asCParser::IsDataType(const sToken &token)
 {
-	if( tokenType == ttIdentifier ||
-		IsRealType(tokenType) )
+	if( token.type == ttIdentifier )
+	{
+		if( checkValidTypes )
+		{
+			// Check if this is a registered type
+			asCString str;
+			str.Assign(&script->code[token.pos], token.length);
+			if( !builder->GetObjectType(str.AddressOf()) )
+				return false;
+		}
+		return true;
+	}
+
+	if( IsRealType(token.type) )
 		return true;
 
 	return false;

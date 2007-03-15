@@ -40,9 +40,7 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void testFunction()\n"
-                       "TestCompiler (3, 2) : Error   : Identifier 'Assert' is not a data type\n"
-                       "TestCompiler (3, 8) : Error   : Object handle is not supported for this type\n"
-                       "TestCompiler (3, 26) : Error   : No matching signatures to 'tryToAvoidMeLeak()'\n" )
+                       "TestCompiler (3, 8) : Error   : Expected ';'\n" )
 		fail = true;
 
 	engine->Release();
@@ -79,6 +77,15 @@ bool Test()
 		fail = true;
 
 	if( bout.buffer != "TestCompiler (1, 11) : Error   : Identifier 'I' is not a data type\n" )
+		fail = true;
+
+	// test 5
+	RegisterScriptString(engine);
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "string &ref");
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 8) : Error   : Expected '('\n" )
 		fail = true;
 
 	engine->Release();

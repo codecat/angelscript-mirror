@@ -118,12 +118,13 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.1 WIP - 2007/03/02</h2>
+<h2>Version 2.8.1 WIP - 2007/03/15</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed the behaviour of the AS_USE_NAMESPACE macro (Thanks SkunkGuru)
+<li>Fixed misleading message when compiling statement like 'Object &amp;ref' (Thanks Steve Williams)
 </ul>
 <li>Library
 <ul>
@@ -143,6 +144,8 @@ A:hover
     allocations from this object to about 20% of what it used before. Since I
     begun the optimizations, the medium size of the allocations have doubled,
     to 80 bytes.
+<li>When parsing statements the parser now has full knowledge of available
+    types so it is able to better distinguish the true semantic of identifiers.
 </ul>
 </ul>
 

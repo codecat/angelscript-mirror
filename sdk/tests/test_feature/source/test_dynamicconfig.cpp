@@ -204,7 +204,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
-                                 "TestDynamicConfig (3, 3) : Error   : Identifier 'mytype' is not a data type\n" ) 
+                                 "TestDynamicConfig (3, 10) : Error   : Expected ';'\n" ) 
 	{
 		fail = true;
 	}
@@ -417,7 +417,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
-                                 "TestDynamicConfig (3, 4) : Error   : Identifier 'mytype' is not a data type\n" ) 
+                                 "TestDynamicConfig (3, 11) : Error   : Expected expression value\n" ) 
 	{
 		fail = true;
 	}

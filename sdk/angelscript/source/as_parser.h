@@ -102,6 +102,7 @@ public:
 	int ParseDataType(asCScriptCode *script);
 
 	int ParseStatementBlock(asCScriptCode *script, asCScriptNode *block);
+	int ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init);
 
 	asCScriptNode *GetScriptNode();
 
@@ -122,6 +123,7 @@ protected:
 	asCScriptNode *ParseGlobalVar();
 	asCScriptNode *ParseParameterList();
 	asCScriptNode *SuperficiallyParseStatementBlock();
+	asCScriptNode *SuperficiallyParseGlobalVarInit();
 	asCScriptNode *ParseStatementBlock();
 	asCScriptNode *ParseDeclaration();
 	asCScriptNode *ParseStatement();
@@ -151,6 +153,7 @@ protected:
 	asCScriptNode *ParseConstant();
 	asCScriptNode *ParseStringConstant();
 	asCScriptNode *ParseFunctionCall();
+	asCScriptNode *ParseConstructCall();
 	asCScriptNode *ParseToken(int token);
 	asCScriptNode *ParseOneOf(int *tokens, int num);
 	asCScriptNode *ParseClass();
@@ -162,7 +165,7 @@ protected:
 	bool IsVarDecl();
 	bool IsFuncDecl(bool isMethod);
 	bool IsRealType(int tokenType);
-	bool IsDataType(int tokenType);
+	bool IsDataType(const sToken &token);
 	bool IsOperator(int tokenType);
 	bool IsPreOperator(int tokenType);
 	bool IsPostOperator(int tokenType);
@@ -176,6 +179,7 @@ protected:
 
 	bool errorWhileParsing;
 	bool isSyntaxError;
+	bool checkValidTypes;
 
 	asCScriptEngine *engine;
 	asCBuilder      *builder;

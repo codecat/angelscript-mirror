@@ -465,6 +465,17 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	gvar->isPureConstant = false;
 
+	// Parse the initialization nodes
+	asCParser parser(builder);
+	if( node )
+	{
+		int r = parser.ParseGlobalVarInit(script, node);
+		if( r < 0 )
+			return r;
+
+		node = parser.GetScriptNode();
+	}
+
 	// Compile the expression
 	if( node && node->nodeType == snArgList )
 	{
@@ -4740,33 +4751,34 @@ void asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ct
 		if( outFunc && outFunc->objectType )
 		{
 			// Check if a class method is being called
-			asCScriptNode *nm = vnode->firstChild->firstChild;
-			if( nm->tokenType == ttIdentifier && nm->next == 0 )
+			asCScriptNode *nm = vnode->firstChild;
+			asCString name;
+			name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
+			asCArray<int> funcs;
+			// TODO: Verify the constness
+			builder->GetObjectMethodDescriptions(name.AddressOf(), outFunc->objectType, funcs, false);
+			if( funcs.GetLength() )
 			{
-				asCString name;
-				name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
-				asCArray<int> funcs;
-				// TODO: Verify the constness
-				builder->GetObjectMethodDescriptions(name.AddressOf(), outFunc->objectType, funcs, false);
-				if( funcs.GetLength() )
-				{
-					asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
+				asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
 
-					// The object pointer is located at stack position 0
-					ctx->bc.InstrSHORT(BC_PSF, 0);
-					ctx->type.SetVariable(dt, 0, false);
-					ctx->type.dataType.MakeReference(true);
+				// The object pointer is located at stack position 0
+				ctx->bc.InstrSHORT(BC_PSF, 0);
+				ctx->type.SetVariable(dt, 0, false);
+				ctx->type.dataType.MakeReference(true);
 
-					Dereference(ctx, true);
+				Dereference(ctx, true);
 
-                    CompileFunctionCall(vnode, ctx, outFunc->objectType, false);
-					found = true;
-				}
+				CompileFunctionCall(vnode, ctx, outFunc->objectType, false);
+				found = true;
 			}
 		}
 
 		if( !found )
 			CompileFunctionCall(vnode, ctx, 0, false);
+	}
+	else if( vnode->nodeType == snConstructCall )
+	{
+		CompileConstructCall(vnode, ctx);
 	}
 	else if( vnode->nodeType == snAssignment )
 	{
@@ -4908,7 +4920,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 {
 	asSExprContext expr(engine);
 	asCDataType to;
-	if( node->nodeType == snFunctionCall )
+	if( node->nodeType == snConstructCall )
 	{
 		// Verify that there is only one argument
 		if( node->lastChild->firstChild != node->lastChild->lastChild )
@@ -5135,19 +5147,16 @@ void asCCompiler::CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *ct
 {
 	asCString name;
 	asCArray<int> funcs;
-	asCScriptNode *nm = node->firstChild->firstChild;
-	if( nm->tokenType == ttIdentifier && nm->next == 0 )
+	asCScriptNode *nm = node->firstChild;
+	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
+	if( name != "store" && name != "retrieve" )
 	{
-		name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
-		if( name != "store" && name != "retrieve" )
-		{
-			// Go back to the normal compiler path
-			CompileFunctionCall(node, ctx, objectType, objIsConst);
-			return;
-		}
-
-		builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
+		// Go back to the normal compiler path
+		CompileFunctionCall(node, ctx, objectType, objIsConst);
+		return;
 	}
+
+	builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
 
 	// Compile the arguments
 	asCArray<asSExprContext *> args;
@@ -5242,68 +5251,40 @@ void asCCompiler::CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *ct
 		}
 }
 
-void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, asCObjectType *objectType, bool objIsConst)
+
+void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 {
-	// The first node is a datatype node, we must determine if it really is a
-	// datatype in which case we are compiling a constructor or a cast, otherwise
-	// it is a function call
+	// The first node is a datatype node
 	asCString name;
-	bool isFunction = false;
-	bool isConstructor = false;
 	asCTypeInfo tempObj;
 	asCArray<int> funcs;
-	asCScriptNode *nm = node->firstChild->firstChild;
-	if( nm->tokenType == ttIdentifier && nm->next == 0 )
-	{
-		name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
-		if( !builder->GetObjectType(name.AddressOf()) )
-		{
-			if( objectType )
-				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
-			else
-				builder->GetFunctionDescriptions(name.AddressOf(), funcs);
 
-			isFunction = true;
-		}
+	// It is possible that the name is really a constructor
+	asCDataType dt;
+	dt = builder->CreateDataTypeFromNode(node->firstChild, script);
+	if( dt.GetObjectType() == 0 )
+	{
+		// This is a cast to a primitive type
+		CompileConversion(node, ctx);
+		return;
+	}
+	else
+	{
+		asSTypeBehaviour *beh = dt.GetBehaviour();
+		if( beh )
+			funcs = beh->constructors;
+
+		tempObj.dataType = dt;
+		tempObj.stackOffset = (short)AllocateVariable(dt, true);
+		tempObj.dataType.MakeReference(true);
+		tempObj.isTemporary = true;
+		tempObj.isVariable = true;
+
+		// Push the address of the object on the stack
+		ctx->bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
 	}
 
-	if( !isFunction )
-	{
-		// It is possible that the name is really a constructor
-		asCDataType dt;
-		dt = builder->CreateDataTypeFromNode(node->firstChild, script);
-		if( dt.GetObjectType() == 0 )
-		{
-			// This is a cast to a primitive type
-			CompileConversion(node, ctx);
-			return;
-		}
-		else
-		{
-			asSTypeBehaviour *beh = dt.GetBehaviour();
-			if( beh )
-				funcs = beh->constructors;
-
-			// Make sure it is not being called as a object method
-			if( objectType )
-				Error(TXT_ILLEGAL_CALL, node);
-			else
-			{
-				isConstructor = true;
-
-				tempObj.dataType = dt;
-				tempObj.stackOffset = (short)AllocateVariable(dt, true);
-				tempObj.dataType.MakeReference(true);
-				tempObj.isTemporary = true;
-				tempObj.isVariable = true;
-
-				// Push the address of the object on the stack
-				ctx->bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
-			}
-		}
-	}
-
-	if( globalExpression && (isFunction || isConstructor) )
+	if( globalExpression )
 	{
 		Error(TXT_FUNCTION_IN_GLOBAL_EXPR, node);
 
@@ -5316,7 +5297,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	asCArray<asSExprContext *> args;
 	asCArray<asCTypeInfo> temporaryVariables;
 
-	CompileArgumentList(node->lastChild, args, isConstructor ? &tempObj.dataType : 0);
+	CompileArgumentList(node->lastChild, args, &tempObj.dataType);
 
 	// Special case: Allow calling func(void) with a void expression.
 	if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) )
@@ -5329,7 +5310,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 
 	// Special case: If this is an object constructor and there are no arguments use the default constructor.
 	// If none has been registered, just allocate the variable and push it on the stack.
-	if( isConstructor && args.GetLength() == 0 )
+	if( args.GetLength() == 0 )
 	{
 		asSTypeBehaviour *beh = tempObj.dataType.GetBehaviour();
 		if( beh && beh->construct == 0 )
@@ -5347,7 +5328,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 
 	// TODO: Ugly code
 	// Special case: If this is a constructor for any() with a parameter, then we can't use the normal MatchFunctions
-	if( isConstructor && args.GetLength() == 2 && tempObj.dataType.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
+	if( args.GetLength() == 2 && tempObj.dataType.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
 	{
 		// TODO: Only accept object handles for now
 		if( !args[0]->type.dataType.IsObjectHandle() )
@@ -5363,9 +5344,6 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 				str += ", " + args[n]->type.dataType.Format();
 			str += ")";
 
-			if( objIsConst )
-				str += " const";
-
 			str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
 
 			Error(str.AddressOf(), node);
@@ -5378,7 +5356,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	}
 	else
 	{
-		MatchFunctions(funcs, args, node, name.AddressOf(), objIsConst);
+		MatchFunctions(funcs, args, node, name.AddressOf(), false);
 	}
 
 	if( funcs.GetLength() != 1 )
@@ -5392,14 +5370,9 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	{
 		asCByteCode objBC(engine);
 
-		if( !isConstructor )
-		{
-			objBC.AddCode(&ctx->bc);
-		}
-
 		// TODO: Ugly code
 		// Special case: If this is a constructor for any() with a parameter, then we can't use the normal PrepareFunctionCall
-		if( isConstructor && args.GetLength() == 2 && tempObj.dataType.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
+		if( args.GetLength() == 2 && tempObj.dataType.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
 		{
 			// Insert the argument type after the first argument
 			asSExprContext *ectx = args[1];
@@ -5422,56 +5395,124 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		else
 			PrepareFunctionCall(funcs[0], &ctx->bc, args);
 
-		if( !isConstructor )
-		{
-			// Verify if any of the args variable offsets are used in the other code.
-			// If they are exchange the offset for a new one
-			for( asUINT n = 0; n < args.GetLength(); n++ )
-			{
-				if( args[n]->type.isTemporary && objBC.IsVarUsed(args[n]->type.stackOffset) )
-				{
-					// Release the current temporary variable
-					ReleaseTemporaryVariable(args[n]->type, 0);
-
-					asCArray<int> usedVars;
-					objBC.GetVarsUsed(usedVars);
-					ctx->bc.GetVarsUsed(usedVars);
-
-					asCDataType dt = args[n]->type.dataType;
-					dt.MakeReference(false);
-					int newOffset = AllocateVariableNotIn(dt, true, &usedVars);
-
-					ctx->bc.ExchangeVar(args[n]->type.stackOffset, newOffset);
-					args[n]->type.stackOffset = (short)newOffset;
-					args[n]->type.isTemporary = true;
-					args[n]->type.isVariable = true;
-				}
-			}
-
-			ctx->bc.AddCode(&objBC);
-		}
-
-		MoveArgsToStack(funcs[0], &ctx->bc, args, objectType && !isConstructor);
+		MoveArgsToStack(funcs[0], &ctx->bc, args, false);
 
 		int offset = 0;
 		for( asUINT n = 0; n < args.GetLength(); n++ )
 			offset += args[n]->type.dataType.GetSizeOnStackDWords();
 
-		if( isConstructor )
-			ctx->bc.InstrWORD(BC_GETREF, (asWORD)offset);
+		ctx->bc.InstrWORD(BC_GETREF, (asWORD)offset);
 
-		PerformFunctionCall(funcs[0], ctx, isConstructor, &args, isConstructor ? tempObj.dataType.GetObjectType() : 0);
+		PerformFunctionCall(funcs[0], ctx, true, &args, tempObj.dataType.GetObjectType());
 
-		if( isConstructor )
+		// The constructor doesn't return anything,
+		// so we have to manually inform the type of
+		// the return value
+		ctx->type = tempObj;
+
+		// Push the address of the object on the stack again
+		ctx->bc.InstrSHORT(BC_PSF, tempObj.stackOffset);
+	}
+
+	// Cleanup
+	for( asUINT n = 0; n < args.GetLength(); n++ )
+		if( args[n] )
 		{
-			// The constructor doesn't return anything,
-			// so we have to manually inform the type of
-			// the return value
-			ctx->type = tempObj;
-
-			// Push the address of the object on the stack again
-			ctx->bc.InstrSHORT(BC_PSF, tempObj.stackOffset);
+			DELETE(args[n],asSExprContext);
 		}
+}
+
+
+void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, asCObjectType *objectType, bool objIsConst)
+{
+	asCString name;
+	asCTypeInfo tempObj;
+	asCArray<int> funcs;
+	asCScriptNode *nm = node->firstChild;
+	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
+	if( !builder->GetObjectType(name.AddressOf()) )
+	{
+		if( objectType )
+			builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
+		else
+			builder->GetFunctionDescriptions(name.AddressOf(), funcs);
+	}
+
+	if( globalExpression )
+	{
+		Error(TXT_FUNCTION_IN_GLOBAL_EXPR, node);
+
+		// Output dummy code
+		ctx->type.SetDummy();
+		return;
+	}
+
+	// Compile the arguments
+	asCArray<asSExprContext *> args;
+	asCArray<asCTypeInfo> temporaryVariables;
+
+	CompileArgumentList(node->lastChild, args, 0);
+
+	// Special case: Allow calling func(void) with a void expression.
+	if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) )
+	{
+		// Evaluate the expression before the function call
+		MergeExprContexts(ctx, args[0]);
+		DELETE(args[0],asSExprContext);
+		args.SetLength(0);
+	}
+
+	MatchFunctions(funcs, args, node, name.AddressOf(), objIsConst);
+
+	if( funcs.GetLength() != 1 )
+	{
+		// The error was reported by MatchFunctions()
+
+		// Dummy value
+		ctx->type.SetDummy();
+	}
+	else
+	{
+		asCByteCode objBC(engine);
+
+		objBC.AddCode(&ctx->bc);
+
+		PrepareFunctionCall(funcs[0], &ctx->bc, args);
+
+		// Verify if any of the args variable offsets are used in the other code.
+		// If they are exchange the offset for a new one
+		asUINT n;
+		for( n = 0; n < args.GetLength(); n++ )
+		{
+			if( args[n]->type.isTemporary && objBC.IsVarUsed(args[n]->type.stackOffset) )
+			{
+				// Release the current temporary variable
+				ReleaseTemporaryVariable(args[n]->type, 0);
+
+				asCArray<int> usedVars;
+				objBC.GetVarsUsed(usedVars);
+				ctx->bc.GetVarsUsed(usedVars);
+
+				asCDataType dt = args[n]->type.dataType;
+				dt.MakeReference(false);
+				int newOffset = AllocateVariableNotIn(dt, true, &usedVars);
+
+				ctx->bc.ExchangeVar(args[n]->type.stackOffset, newOffset);
+				args[n]->type.stackOffset = (short)newOffset;
+				args[n]->type.isTemporary = true;
+				args[n]->type.isVariable = true;
+			}
+		}
+
+		ctx->bc.AddCode(&objBC);
+
+		MoveArgsToStack(funcs[0], &ctx->bc, args, objectType ? true : false);
+
+		int offset = 0;
+		for( n = 0; n < args.GetLength(); n++ )
+			offset += args[n]->type.dataType.GetSizeOnStackDWords();
+
+		PerformFunctionCall(funcs[0], ctx, false, &args, 0);
 	}
 
 	// Cleanup
