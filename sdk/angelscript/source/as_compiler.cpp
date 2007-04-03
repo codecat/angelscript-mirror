@@ -2564,6 +2564,7 @@ int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary)
 	return offset;
 }
 
+// TODO: This function should share code with AllocateVariable
 int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary, asCArray<int> *vars)
 {
 	asCDataType t(type);
@@ -2578,7 +2579,7 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 	for( asUINT n = 0; n < freeVariables.GetLength(); n++ )
 	{
 		int slot = freeVariables[n];
-		if( variableAllocations[slot] == t && variableIsTemporary[slot] == isTemporary )
+		if( variableAllocations[slot].IsEqualExceptConst(t) && variableIsTemporary[slot] == isTemporary )
 		{
 			// We can't return by slot, must count variable sizes
 			int offset = GetVariableOffset(slot);
@@ -2612,7 +2613,7 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 		}
 	}
 
-	variableAllocations.PushLast(type);
+	variableAllocations.PushLast(t);
 	variableIsTemporary.PushLast(isTemporary);
 
 	int offset = GetVariableOffset((int)variableAllocations.GetLength()-1);
@@ -2801,7 +2802,9 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 			}
 
 			// Implicitly convert the value to the right type
-			ImplicitConversion(rctx, *lvalue, node, false);
+			asCArray<int> usedVars;
+			if( lvalueExpr ) lvalueExpr->bc.GetVarsUsed(usedVars);
+			ImplicitConversion(rctx, *lvalue, node, false, true, &usedVars);
 		}
 
 		// Check data type

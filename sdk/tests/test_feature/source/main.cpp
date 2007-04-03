@@ -121,6 +121,7 @@ namespace TestFor               { bool Test(); }
 namespace TestBits              { bool Test(); }
 namespace TestGetArgPtr         { bool Test(); }
 namespace TestCString           { bool Test(); }
+namespace TestBool              { bool Test(); }
 
 
 #include "utils.h"
@@ -160,6 +161,10 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
+	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
+	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
+	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
@@ -171,7 +176,6 @@ int main(int argc, char **argv)
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
-	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestGetArgPtr::Test()         ) goto failed; else printf("-- TestGetArgPtr passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
@@ -191,7 +195,6 @@ int main(int argc, char **argv)
 	if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
-	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
 	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestArgRef::Test()            ) goto failed; else printf("-- TestArgRef passed\n");
@@ -213,7 +216,6 @@ int main(int argc, char **argv)
 	if( TestStdVector::Test()         ) goto failed; else printf("-- TestStdVector passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestBStr2()                   ) goto failed; else printf("-- TestBStr2 passed\n");
-	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
 	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
 	if( TestReturnF()                 ) goto failed; else printf("-- TestReturnF passed\n");
 	if( TestReturnD()                 ) goto failed; else printf("-- TestReturnD passed\n");

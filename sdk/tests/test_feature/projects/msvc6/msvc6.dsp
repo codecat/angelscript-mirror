@@ -158,6 +158,10 @@ SOURCE=..\..\source\test_bits.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_bool.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_castop.cpp
 # End Source File
 # Begin Source File

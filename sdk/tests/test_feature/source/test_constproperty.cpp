@@ -11,8 +11,40 @@ namespace TestConstProperty
 
 #define TESTNAME "TestConstProperty"
 
+class CVec3
+{
+public:
+	CVec3() {}
+	CVec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+
+	float x,y,z;
+};
+
+class CObj
+{
+public:
+	CVec3 simplevec;
+	CVec3 constvec;
+
+	CObj() {}
+	~CObj() {}
+};
+
+CVec3 vec3add(const CVec3& v1, const CVec3& v2)
+{
+	return CVec3(v1.x+v2.x,v1.y+v2.y,v1.z+v2.z);
+}
 
 static const char *script =
+"void Init()          \n"
+"{                    \n"
+"  CObj someObj;      \n"
+"  CVec3 someVec;     \n"
+"  someVec = someObj.simplevec + someObj.constvec; \n"
+"  someVec = vec3add(someObj.simplevec,someObj.constvec); \n"
+"}                    \n";
+
+static const char *script2 =
 //"Obj1 myObj1;         \n"
 //"Obj2 myObj2;         \n"
 "float myFloat;       \n"
@@ -24,11 +56,46 @@ static const char *script =
 "  g_Float = myFloat; \n"
 "}                    \n";
 
+
 bool Test()
 {
 	bool fail = false;
 
+	// TEST 1
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	engine->RegisterObjectType("CVec3", sizeof(CVec3), asOBJ_CLASS_C);
+	engine->RegisterObjectProperty("CVec3", "float x", offsetof(CVec3,x));
+	engine->RegisterObjectProperty("CVec3", "float y", offsetof(CVec3,y));
+	engine->RegisterObjectProperty("CVec3", "float z", offsetof(CVec3,z));
+
+	engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "CVec3 f(const CVec3 &in, const CVec3 &in)", asFUNCTION(vec3add), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("CVec3 vec3add(const CVec3 &in, const CVec3 &in)", asFUNCTION(vec3add), asCALL_CDECL);
+
+	engine->RegisterObjectType("CObj", sizeof(CObj), asOBJ_CLASS_CD);
+	engine->RegisterObjectProperty("CObj", "CVec3 simplevec", offsetof(CObj,simplevec));
+	engine->RegisterObjectProperty("CObj", "const CVec3 constvec", offsetof(CObj,constvec));
+
+	CBufferedOutStream out;
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
+	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
+	engine->Build(0);
+
+	if( !out.buffer.empty() )
+	{
+		printf("%s: Failed to pass argument as 'const type &in'\n%s", TESTNAME, out.buffer.c_str());
+		fail = true;
+	}
+
+	engine->Release();
+
+	fail = false;
+	printf("%s: This is a known problem, and I'm yet to fix it\n", TESTNAME);
+
+
+	// TEST 2
+ 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->RegisterObjectType("Obj1", sizeof(int), asOBJ_PRIMITIVE);
 	engine->RegisterObjectProperty("Obj1", "int val", 0);
@@ -46,9 +113,9 @@ bool Test()
 	float constantFloat = 0;
 	engine->RegisterGlobalProperty("const float g_Float", &constantFloat);
 
-	CBufferedOutStream out;
+	out.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	engine->Build(0);
 
 	if( out.buffer != "TestConstProperty (3, 1) : Info    : Compiling void Init()\n"
