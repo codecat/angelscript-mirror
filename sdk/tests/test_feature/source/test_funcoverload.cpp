@@ -9,6 +9,11 @@ static const char *script1 =
 "  TX.Set(\"user\", i.Value());            \n"
 "}                                         \n";
 
+static const char *script2 =
+"void ScriptFunc(void)                     \n"
+"{                                         \n"
+"}                                         \n";
+
 class Obj
 {
 public:
@@ -52,13 +57,29 @@ bool TestFuncOverload()
 	engine->RegisterGlobalFunction("void func()", asFUNCTION(FuncVoid), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void func(int)", asFUNCTION(FuncInt), asCALL_CDECL);
 
+	engine->RegisterGlobalFunction("void func2(void)", asFUNCTION(FuncVoid), asCALL_CDECL);
+
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	engine->Build(0);
 
 	engine->ExecuteString(0, "func(func(3));");
 
+
+	engine->ExecuteString(0, "func2();");
+	printf("Known problem. Needs to be fixed. Script shouldn't permit void parameters\n");
+
+	CBufferedOutStream bout;
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+	int r = engine->Build(0);
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "TestFuncOverload (1, 1) : Info    : Compiling void ScriptFunc(void)\n"
+                       "TestFuncOverload (1, 17) : Error   : Parameter type can't be 'void'\n" )
+		fail = true;
+
+
 	engine->Release();
 
-	// Success
 	return fail;
 }

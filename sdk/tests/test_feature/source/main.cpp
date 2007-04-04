@@ -161,10 +161,11 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
-	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
-	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
+	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
 	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
+	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
+	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
@@ -198,7 +199,6 @@ int main(int argc, char **argv)
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
 	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestArgRef::Test()            ) goto failed; else printf("-- TestArgRef passed\n");
-	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
 	if( TestVirtualMethod()           ) goto failed; else printf("-- TestVirtualMethod passed\n");
 	if( TestMultipleInheritance()     ) goto failed; else printf("-- TestMultipleInheritance passed\n");
 	if( TestObjZeroSize::Test()       ) goto failed; else printf("-- TestObjZeroSize passed\n");
