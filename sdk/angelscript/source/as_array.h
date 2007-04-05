@@ -37,6 +37,10 @@
 #include <string.h> // some compilers declare memcpy() here
 #include <assert.h>
 
+#ifdef _MSC_VER
+#pragma warning(disable:4345) // warning about a change in how the code is handled in this version
+#endif
+
 BEGIN_AS_NAMESPACE
 
 template <class T> class asCArray

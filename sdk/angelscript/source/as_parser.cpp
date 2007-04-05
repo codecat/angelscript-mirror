@@ -42,6 +42,10 @@
 #include "as_tokendef.h"
 #include "as_texts.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable:4702) // unreachable code
+#endif
+
 BEGIN_AS_NAMESPACE
 
 asCParser::asCParser(asCBuilder *builder)

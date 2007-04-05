@@ -71,7 +71,7 @@ void CFunc(float f, int a, int b, const std::string &name)
 {
 	if( (a & 0xFFFFFF00) || (b & 0xFFFFFF00) )
 	{
-		printf("Receiving boolean value with scrap in higher bytes\n");
+		printf("Receiving boolean value with scrap in higher bytes. Not sure this is an error.\n");
 	}
 }
 

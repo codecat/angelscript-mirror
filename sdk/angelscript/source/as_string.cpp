@@ -120,7 +120,7 @@ void asCString::Allocate(size_t len, bool keepData)
 
 		if( keepData )
 		{
-			int l = (int)len < length ? (int)len : length;
+			int l = (int)len < (int)length ? (int)len : (int)length;
 			memcpy(buf, AddressOf(), l);
 		}
 
@@ -135,7 +135,6 @@ void asCString::Allocate(size_t len, bool keepData)
 	{
 		if( length > 11 )
 		{
-			char *temp = dynamic;
 			if( keepData )
 			{
 				memcpy(&local, dynamic, len);

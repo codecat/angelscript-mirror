@@ -3376,7 +3376,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 	}
 }
 
-void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
+void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool /*isExplicit*/, bool generateCode, asCArray<int> * /*reservedVars*/, bool allowObjectConstruct)
 {
 	if( ctx->type.dataType.IsReference() )
 	{
@@ -4989,8 +4989,6 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		if( !expr.type.dataType.IsObject() )
 			ConvertToTempVariable(&expr);
 		MergeExprContexts(ctx, &expr);
-
-		int offset = expr.type.stackOffset;
 
 		if( to.IsObjectHandle() &&
 			expr.type.dataType.IsObjectHandle() &&
