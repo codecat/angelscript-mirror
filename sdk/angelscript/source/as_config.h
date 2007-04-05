@@ -404,15 +404,24 @@
 // PowerPC, e.g. Mac, GameCube, XBox 360 and PS3
 #if defined(__PPC__) || defined(__ppc__)
 	#define AS_BIG_ENDIAN
+
 	// Gamecube
 	#if defined(_GC)
 		#define AS_ALIGN
 		#define AS_USE_DOUBLE_AS_FLOAT
 	#endif
-	// XBox 360 or PS3
-	#if _XBOX_VER >= 200 || defined(__PPU__)
+	// XBox 360
+	#if (_XBOX_VER >= 200 )
 		#define AS_ALIGN
 		#define AS_USE_DOUBLE_AS_FLOAT
+	#endif
+	// PS3
+	#if defined(__PPU__)
+		#define AS_ALIGN
+		#define AS_PPC
+		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+		#define CDECL_RETURN_SIMPLE_IN_MEMORY
+		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 	#endif
 #endif
 
@@ -467,6 +476,10 @@
 #endif
 #define ARG_PTR(b)   ((asPTRWORD*)&b)
 #define BCARG_PTR(b) ((asPTRWORD*)&(b)[1])
+
+// This macro is used to avoid warnings about unused variables.
+// Usually where the variables are only used in debug mode.
+#define UNUSED_VAR(x) (x)=(x)
 
 
 #include "../include/angelscript.h"

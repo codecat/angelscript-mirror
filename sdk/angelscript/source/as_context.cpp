@@ -50,6 +50,10 @@
 #include "as_bytecode.h"
 #include "as_scriptstruct.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable:4702) // unreachable code
+#endif
+
 BEGIN_AS_NAMESPACE
 
 // We need at least 2 DWORDs reserved for exception handling
@@ -125,6 +129,7 @@ void asPopActiveContext(asIScriptContext *ctx)
 
 	assert(tld->activeContexts.GetLength() > 0);
 	assert(tld->activeContexts[tld->activeContexts.GetLength()-1] == ctx);
+	UNUSED_VAR(ctx);
 
 	tld->activeContexts.PopLast();
 }
@@ -1220,6 +1225,7 @@ void asCContext::ExecuteNext()
 		{
 			// Read only the lower byte
 			asBYTE b = (*(asBYTE*)(l_fp - SWORDARG0(l_bc)) == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+			
 			// Make sure the rest of the byte is 0
 			*(l_fp - SWORDARG0(l_bc)) = 0;
 			// The value is stored in the lower byte
@@ -1348,12 +1354,22 @@ void asCContext::ExecuteNext()
 	case BC_TZ:
 #if AS_SIZEOF_BOOL == 1
 		{
-			// Read only the lower byte
-			asBYTE b = (*(int*)&register1 == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
-			// Make sure the rest of the byte is 0
-			register1 = 0;
-			// The value is stored in the lower byte
-			*(asBYTE*)&register1 = b;
+			// Set the value to true if it is equal to 0
+			
+			// We need to use volatile here to tell the compiler it cannot
+			// change the order of read and write operations on register1.
+
+			volatile int    *regPtr  = (int*)&register1;
+			volatile asBYTE *regBptr = (asBYTE*)&register1;
+			asBYTE val = (regPtr[0] == 0) ? VALUE_OF_BOOLEAN_TRUE : 0;
+			regBptr[0] = val; // The result is stored in the lower byte
+			regBptr[1] = 0;   // Make sure the rest of the register is 0
+			regBptr[2] = 0;
+			regBptr[3] = 0;
+			regBptr[4] = 0;
+			regBptr[5] = 0;
+			regBptr[6] = 0;
+			regBptr[7] = 0;
 		}
 #else
 		*(int*)&register1 = (*(int*)&register1 == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
@@ -1363,12 +1379,22 @@ void asCContext::ExecuteNext()
 	case BC_TNZ:
 #if AS_SIZEOF_BOOL == 1
 		{
-			// Read only the lower byte
-			asBYTE b = (*(int*)&register1 == 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
-			// Make sure the rest of the byte is 0
-			register1 = 0;
-			// The value is stored in the lower byte
-			*(asBYTE*)&register1 = b;
+			// Set the value to true if it is not equal to 0
+			
+			// We need to use volatile here to tell the compiler it cannot
+			// change the order of read and write operations on register1.
+
+			volatile int    *regPtr  = (int*)&register1;
+			volatile asBYTE *regBptr = (asBYTE*)&register1;
+			asBYTE val = (regPtr[0] == 0) ? 0 : VALUE_OF_BOOLEAN_TRUE;
+			regBptr[0] = val; // The result is stored in the lower byte
+			regBptr[1] = 0;   // Make sure the rest of the register is 0
+			regBptr[2] = 0;
+			regBptr[3] = 0;
+			regBptr[4] = 0;
+			regBptr[5] = 0;
+			regBptr[6] = 0;
+			regBptr[7] = 0;
 		}
 #else
 		*(int*)&register1 = (*(int*)&register1 == 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
@@ -1378,12 +1404,22 @@ void asCContext::ExecuteNext()
 	case BC_TS:
 #if AS_SIZEOF_BOOL == 1
 		{
-			// Read only the lower byte
-			asBYTE b = (*(int*)&register1 < 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
-			// Make sure the rest of the byte is 0
-			register1 = 0;
-			// The value is stored in the lower byte
-			*(asBYTE*)&register1 = b;
+			// Set the value to true if it is less than 0
+			
+			// We need to use volatile here to tell the compiler it cannot
+			// change the order of read and write operations on register1.
+
+			volatile int    *regPtr  = (int*)&register1;
+			volatile asBYTE *regBptr = (asBYTE*)&register1;
+			asBYTE val = (regPtr[0] < 0) ? VALUE_OF_BOOLEAN_TRUE : 0;
+			regBptr[0] = val; // The result is stored in the lower byte
+			regBptr[1] = 0;   // Make sure the rest of the register is 0
+			regBptr[2] = 0;
+			regBptr[3] = 0;
+			regBptr[4] = 0;
+			regBptr[5] = 0;
+			regBptr[6] = 0;
+			regBptr[7] = 0;
 		}
 #else
 		*(int*)&register1 = (*(int*)&register1 < 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
@@ -1393,12 +1429,22 @@ void asCContext::ExecuteNext()
 	case BC_TNS:
 #if AS_SIZEOF_BOOL == 1
 		{
-			// Read only the lower byte
-			asBYTE b = (*(int*)&register1 < 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
-			// Make sure the rest of the byte is 0
-			register1 = 0;
-			// The value is stored in the lower byte
-			*(asBYTE*)&register1 = b;
+			// Set the value to true if it is not less than 0
+			
+			// We need to use volatile here to tell the compiler it cannot
+			// change the order of read and write operations on register1.
+
+			volatile int    *regPtr  = (int*)&register1;
+			volatile asBYTE *regBptr = (asBYTE*)&register1;
+			asBYTE val = (regPtr[0] >= 0) ? VALUE_OF_BOOLEAN_TRUE : 0;
+			regBptr[0] = val; // The result is stored in the lower byte
+			regBptr[1] = 0;   // Make sure the rest of the register is 0
+			regBptr[2] = 0;
+			regBptr[3] = 0;
+			regBptr[4] = 0;
+			regBptr[5] = 0;
+			regBptr[6] = 0;
+			regBptr[7] = 0;
 		}
 #else
 		*(int*)&register1 = (*(int*)&register1 < 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
@@ -1408,12 +1454,22 @@ void asCContext::ExecuteNext()
 	case BC_TP:
 #if AS_SIZEOF_BOOL == 1
 		{
-			// Read only the lower byte
-			asBYTE b = (*(int*)&register1 > 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
-			// Make sure the rest of the byte is 0
-			register1 = 0;
-			// The value is stored in the lower byte
-			*(asBYTE*)&register1 = b;
+			// Set the value to true if it is greater than 0
+			
+			// We need to use volatile here to tell the compiler it cannot
+			// change the order of read and write operations on register1.
+
+			volatile int    *regPtr  = (int*)&register1;
+			volatile asBYTE *regBptr = (asBYTE*)&register1;
+			asBYTE val = (regPtr[0] > 0) ? VALUE_OF_BOOLEAN_TRUE : 0;
+			regBptr[0] = val; // The result is stored in the lower byte
+			regBptr[1] = 0;   // Make sure the rest of the register is 0
+			regBptr[2] = 0;
+			regBptr[3] = 0;
+			regBptr[4] = 0;
+			regBptr[5] = 0;
+			regBptr[6] = 0;
+			regBptr[7] = 0;
 		}
 #else
 		*(int*)&register1 = (*(int*)&register1 > 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
@@ -1423,12 +1479,22 @@ void asCContext::ExecuteNext()
 	case BC_TNP:
 #if AS_SIZEOF_BOOL == 1
 		{
-			// Read only the lower byte
-			asBYTE b = (*(int*)&register1 > 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
-			// Make sure the rest of the byte is 0
-			register1 = 0;
-			// The value is stored in the lower byte
-			*(asBYTE*)&register1 = b;
+			// Set the value to true if it is not greater than 0
+			
+			// We need to use volatile here to tell the compiler it cannot
+			// change the order of read and write operations on register1.
+
+			volatile int    *regPtr  = (int*)&register1;
+			volatile asBYTE *regBptr = (asBYTE*)&register1;
+			asBYTE val = (regPtr[0] <= 0) ? VALUE_OF_BOOLEAN_TRUE : 0;
+			regBptr[0] = val; // The result is stored in the lower byte
+			regBptr[1] = 0;   // Make sure the rest of the register is 0
+			regBptr[2] = 0;
+			regBptr[3] = 0;
+			regBptr[4] = 0;
+			regBptr[5] = 0;
+			regBptr[6] = 0;
+			regBptr[7] = 0;
 		}
 #else
 		*(int*)&register1 = (*(int*)&register1 > 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
@@ -2119,14 +2185,24 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_RDR1:
-		// The pointer in the register points to a byte, and *(l_fp - offset) will also point to a byte
-		*(asBYTE*)(l_fp - SWORDARG0(l_bc)) = **(asBYTE**)&register1;
+		{
+			// The pointer in the register points to a byte, and *(l_fp - offset) will also point to a byte
+			asBYTE *bPtr = (asBYTE*)(l_fp - SWORDARG0(l_bc));
+			bPtr[0] = **(asBYTE**)&register1; // read the byte
+			bPtr[1] = 0;                      // 0 the rest of the DWORD
+			bPtr[2] = 0;
+			bPtr[3] = 0;
+		}
 		l_bc++;
 		break;
 
 	case BC_RDR2:
-		// The pointer in the register points to a word, and *(l_fp - offset) will also point to a word
-		*(asWORD*)(l_fp - SWORDARG0(l_bc)) = **(asWORD**)&register1;
+		{
+			// The pointer in the register points to a word, and *(l_fp - offset) will also point to a word
+			asWORD *wPtr = (asWORD*)(l_fp - SWORDARG0(l_bc));
+			wPtr[0] = **(asWORD**)&register1; // read the word
+			wPtr[1] = 0;                      // 0 the rest of the DWORD
+		}
 		l_bc++;
 		break;
 
@@ -2511,14 +2587,32 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_iTOb:
-		// *(l_fp - offset) points to an int, and will point to a byte afterwards
-		*(asBYTE*)(l_fp - SWORDARG0(l_bc)) = (asBYTE)*(l_fp - SWORDARG0(l_bc));
+		{
+			// *(l_fp - offset) points to an int, and will point to a byte afterwards
+			
+			// We need to use volatile here to tell the compiler not to rearrange 
+			// read and write operations during optimizations.
+			volatile asDWORD val  = *(l_fp - SWORDARG0(l_bc));
+			volatile asBYTE *bPtr = (asBYTE*)(l_fp - SWORDARG0(l_bc));
+			bPtr[0] = (asBYTE)val; // write the byte
+			bPtr[1] = 0;           // 0 the rest of the DWORD
+			bPtr[2] = 0;
+			bPtr[3] = 0;
+		}
 		l_bc++;
 		break;
 
 	case BC_iTOw:
-		// *(l_fp - offset) points to an int, and will point to word afterwards
-		*(asWORD*)(l_fp - SWORDARG0(l_bc)) = (asWORD)*(l_fp - SWORDARG0(l_bc));
+		{
+			// *(l_fp - offset) points to an int, and will point to word afterwards
+
+			// We need to use volatile here to tell the compiler not to rearrange 
+			// read and write operations during optimizations.
+			volatile asDWORD val  = *(l_fp - SWORDARG0(l_bc));
+			volatile asWORD *wPtr = (asWORD*)(l_fp - SWORDARG0(l_bc));
+			wPtr[0] = (asWORD)val; // write the word
+			wPtr[1] = 0;           // 0 the rest of the DWORD
+		}
 		l_bc++;
 		break;
 

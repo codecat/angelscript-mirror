@@ -953,7 +953,7 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 			if( curr->op == BC_JMP )
 			{
 				int label = *((int*)ARG_DW(curr->arg));
-				int r = FindLabel(label, curr, &curr, 0); assert( r == 0 );
+				int r = FindLabel(label, curr, &curr, 0); assert( r == 0 ); UNUSED_VAR(r);
 
 				if( !closedPaths.Find(curr) &&
 					!openPaths.Find(curr) )
@@ -965,9 +965,9 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 				     curr->op == BC_JS || curr->op == BC_JNS ||
 					 curr->op == BC_JP || curr->op == BC_JNP )
 			{
-				cByteInstruction *dest;
+				cByteInstruction *dest = 0;
 				int label = *((int*)ARG_DW(curr->arg));
-				int r = FindLabel(label, curr, &dest, 0); assert( r == 0 );
+				int r = FindLabel(label, curr, &dest, 0); assert( r == 0 ); UNUSED_VAR(r);
 
 				if( !closedPaths.Find(dest) &&
 					!openPaths.Find(dest) )
@@ -1461,9 +1461,8 @@ void asCByteCode::PostProcess()
 			{
 				// Find the label that we should jump to
 				int label = *((int*) ARG_DW(instr->arg));
-				cByteInstruction *dest;
-				int r = FindLabel(label, instr, &dest, 0);
-				assert( r == 0 );
+				cByteInstruction *dest = 0;
+				int r = FindLabel(label, instr, &dest, 0); assert( r == 0 ); UNUSED_VAR(r);
 				
 				AddPath(paths, dest, stackSize);
 				break;
@@ -1474,9 +1473,8 @@ void asCByteCode::PostProcess()
 			{
 				// Find the label that is being jumped to
 				int label = *((int*) ARG_DW(instr->arg));
-				cByteInstruction *dest;
-				int r = FindLabel(label, instr, &dest, 0);
-				assert( r == 0 );
+				cByteInstruction *dest = 0;
+				int r = FindLabel(label, instr, &dest, 0); assert( r == 0 ); UNUSED_VAR(r);
 				
 				AddPath(paths, dest, stackSize);
 				
@@ -1530,9 +1528,13 @@ void asCByteCode::PostProcess()
 	}	
 }
 
+#ifndef AS_DEBUG
+void asCByteCode::DebugOutput(const char * /*name*/, asCModule * /*module*/, asCScriptEngine * /*engine*/)
+{
+}
+#else
 void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngine *engine)
 {
-#ifdef AS_DEBUG
 	_mkdir("AS_DEBUG");
 
 	asCString str = "AS_DEBUG/";
@@ -1557,7 +1559,7 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 		if( lineIndex < lineNumbers.GetLength() && lineNumbers[lineIndex] == pos )
 		{
 			asDWORD line = lineNumbers[lineIndex+1];
-			fprintf(file, "- %d,%d -\n", line&0xFFFFF, line>>20);
+			fprintf(file, "- %d,%d -\n", (int)(line&0xFFFFF), (int)(line>>20));
 			lineIndex += 2;
 		}
 
@@ -1573,7 +1575,7 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			{
 				int id = instr->wArg[0];
 				const asCString &str = module->GetConstantString(id);
-				fprintf(file, "   %-8s %d         (l:%ld s:\"%.10s\")\n", bcName[instr->op].name, instr->wArg[0], str.GetLength(), str.AddressOf());
+				fprintf(file, "   %-8s %d         (l:%ld s:\"%.10s\")\n", bcName[instr->op].name, instr->wArg[0], (long int)str.GetLength(), str.AddressOf());
 			}
 			else
 				fprintf(file, "   %-8s %d\n", bcName[instr->op].name, instr->wArg[0]);
@@ -1615,13 +1617,13 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			switch( instr->op )
 			{
 			case BC_OBJTYPE:
-				fprintf(file, "   %-8s 0x%x\n", bcName[instr->op].name, *ARG_DW(instr->arg));
+				fprintf(file, "   %-8s 0x%x\n", bcName[instr->op].name, (asUINT)*ARG_DW(instr->arg));
 				break;
 
 			case BC_PshC4:
 			case BC_TYPEID:
 			case BC_Cast:
-				fprintf(file, "   %-8s 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, *ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 				break;
 
 			case BC_CALL:
@@ -1717,16 +1719,16 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			else if( instr->op == BC_SetV2 )
 				fprintf(file, "   %-8s v%d, 0x%x\n", bcName[instr->op].name, instr->wArg[0], *(asWORD*)ARG_DW(instr->arg));
 			else if( instr->op == BC_SetV4 )
-				fprintf(file, "   %-8s v%d, 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s v%d, 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 			else if( instr->op == BC_CMPIf )
 				fprintf(file, "   %-8s v%d, %f\n", bcName[instr->op].name, instr->wArg[0], *(float*)ARG_DW(instr->arg));
 			else
-				fprintf(file, "   %-8s v%d, %d\n", bcName[instr->op].name, instr->wArg[0], *ARG_DW(instr->arg));
+				fprintf(file, "   %-8s v%d, %d\n", bcName[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg));
 			break;
 
 		case BCTYPE_W_DW_ARG:
 			if( instr->op == BC_SetG4 )
-				fprintf(file, "   %-8s %d, 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s %d, 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 			break;
 
 		case BCTYPE_wW_rW_rW_ARG:
@@ -1745,8 +1747,8 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 	}
 
 	fclose(file);
-#endif
 }
+#endif
 
 //=============================================================================
 
@@ -1895,9 +1897,16 @@ int asCByteCode::InstrSHORT_B(bcInstr bc, short a, asBYTE b)
 
 	last->op       = bc;
 	last->wArg[0]  = a;
-	// We'll have to be careful to store the byte correctly, indepenent of endianess
-	*ARG_DW(last->arg) = 0;          // Clear the other three bytes
-	*(asBYTE*)ARG_DW(last->arg) = b; // The lower byte holds the value
+
+	// We'll have to be careful to store the byte correctly, independent of endianess.
+	// Some optimizing compilers may change the order of operations, so we make sure 
+	// the value is not overwritten even if that happens.
+	asBYTE *argPtr = (asBYTE*)ARG_DW(last->arg);
+	argPtr[0] = b; // The value is always stored in the lower byte
+	argPtr[1] = 0; // and clear the rest of the DWORD
+	argPtr[2] = 0;
+	argPtr[3] = 0;
+
 	last->size     = SizeOfType(bcTypes[bc]);
 	last->stackInc = bcStackInc[bc];
 
@@ -1915,9 +1924,14 @@ int asCByteCode::InstrSHORT_W(bcInstr bc, short a, asWORD b)
 
 	last->op       = bc;
 	last->wArg[0]  = a;
-	// We'll have to be careful to store the byte correctly, indepenent of endianess
-	*ARG_DW(last->arg) = 0;          // Clear the other two bytes
-	*(asWORD*)ARG_DW(last->arg) = b; // The lower word holds the value
+	
+	// We'll have to be careful to store the word correctly, independent of endianess.
+	// Some optimizing compilers may change the order of operations, so we make sure 
+	// the value is not overwritten even if that happens.
+	asWORD *argPtr = (asWORD*)ARG_DW(last->arg);
+	argPtr[0] = b; // The value is always stored in the lower word
+	argPtr[1] = 0; // and clear the rest of the DWORD
+
 	last->size     = SizeOfType(bcTypes[bc]);
 	last->stackInc = bcStackInc[bc];
 

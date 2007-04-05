@@ -5,7 +5,11 @@ namespace TestBool
 
 #define TESTNAME "TestBool"
 
-static const char *script = "  \n\
+static const char *declarations = "  \n\
+bool south = false;              \n\
+bool north = true;               \n\
+bool east = false;              \n\
+bool west = true;               \n\
 class MyClass                  \n\
 {                              \n\
 	string myName;             \n\
@@ -14,40 +18,48 @@ class MyClass                  \n\
 	bool myBool2;              \n\
 }                              \n\
 MyClass[] a(4);                \n\
+int maxCnt = 4;				\n\
+int cnt = 0;				   \n\
+\n";
+
+static const char *script = "  \n\
+void addToArray(string _name, float _myFloat, bool _bool1, bool _bool2) \n\
+{							   \n\
+	if(maxCnt == cnt)		   \n\
+		return;				   \n\
+	a[cnt].myName = _name;	   \n\
+	a[cnt].myFloat = _myFloat; \n\
+	a[cnt].myBool1 = _bool1;   \n\
+	a[cnt].myBool2 = _bool2;   \n\
+	cnt++;					   \n\
+}							   \n\
+							   \n\
 void MyTest()                  \n\
 {                              \n\
   MyClass c;                   \n\
   c.myName = \"test\";         \n\
   c.myFloat = 3.14f;           \n\
-  c.myBool1 = false;           \n\
-  c.myBool2 = false;           \n\
+  c.myBool1 = south;           \n\
+  c.myBool2 = south;           \n\
   Assert(c.myBool1 == false);  \n\
   Assert(c.myBool2 == false);  \n\
-  c.myBool1 = true;            \n\
+  c.myBool1 = north;            \n\
   Assert(c.myBool1 == true);   \n\
   Assert(c.myBool2 == false);  \n\
-  c.myBool2 = true;            \n\
+  c.myBool2 = north;            \n\
   Assert(c.myBool1 == true);   \n\
   Assert(c.myBool2 == true);   \n\
-  c.myBool1 = false;           \n\
+  c.myBool1 = south;           \n\
   Assert(c.myBool1 == false);  \n\
   Assert(c.myBool2 == true);   \n\
   Assert(c.myFloat == 3.14f);  \n\
-                               \n\
   CFunc(c.myFloat, c.myBool1, c.myBool2, c.myName); \n\
-                               \n\
-  for( int n = 0; n < 4; n++ ) \n\
-  {                            \n\
-    a[n].myName = \"test\";    \n\
-    a[n].myFloat = n;      \n\
-	a[n].myBool1 = false;      \n\
-	a[n].myBool2 = false;      \n\
-  }                            \n\
-  a[1].myBool1 = true;         \n\
-  a[2].myBool2 = true;         \n\
-  a[3].myBool1 = true;         \n\
-  a[3].myBool2 = true;         \n\
-                               \n\
+								\n\
+  addToArray(c.myName, 3.14f, south, east); \n\
+  addToArray(c.myName, 3.14f, north, east); \n\
+  addToArray(c.myName, 3.14f, south, west); \n\
+  addToArray(c.myName, 3.14f, north, west); \n\
+								\n\
   Assert(a[0].myBool1 == false);  \n\
   Assert(a[0].myBool2 == false);  \n\
   Assert(a[1].myBool1 == true);   \n\
@@ -92,6 +104,7 @@ bool Test()
 	// TEST 1
 	engine->RegisterGlobalFunction("void CFunc(float, bool, bool, const string &in)", asFUNCTION(CFunc), asCALL_CDECL);
 
+	engine->AddScriptSection(0, "decl", declarations, strlen(declarations));
 	engine->AddScriptSection(0, "script", script, strlen(script));
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
