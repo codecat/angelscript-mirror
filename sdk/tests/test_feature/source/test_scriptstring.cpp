@@ -102,7 +102,7 @@ static const char *script7 =
 "{                              \n"
 "}                              \n";
 
-bool Get(int *obj, const asCScriptString &szURL, asCScriptString &szHTML)
+bool Get(int * /*obj*/, const asCScriptString &szURL, asCScriptString &szHTML)
 {
 	assert(&szHTML != 0);
 	assert(szURL.buffer == "stringtest");

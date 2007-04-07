@@ -67,17 +67,18 @@ static const char *script3 =
 
 static void Construct1(void *o)
 {
-
+	UNUSED_VAR(o);
 }
 
 static void Construct2(string &str, void *o)
 {
-
+	UNUSED_VAR(str);
+	UNUSED_VAR(o);
 }
 
 static void Destruct(void *o)
 {
-
+	UNUSED_VAR(o);
 }
 
 static void StringByVal(string &str1, string str2)
@@ -101,7 +102,7 @@ static StringConsumer consumerObject;
 class Http
 {
 public:
-bool Get(const string &szURL, string &szHTML)
+bool Get(const string & /*szURL*/, string &szHTML)
 {
 	assert(&szHTML != 0);
 	return false;

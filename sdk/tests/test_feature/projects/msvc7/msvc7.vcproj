@@ -159,6 +159,9 @@
 				RelativePath="..\..\source\test_bits.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_bool.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_castop.cpp">
 			</File>
 			<File

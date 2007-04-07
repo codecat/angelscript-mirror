@@ -1,6 +1,6 @@
 #include "utils.h"
-using std::string;
 /*
+using std::string;
 #include "cstring.h"
 
 namespace TestCString

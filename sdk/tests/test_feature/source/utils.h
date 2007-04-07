@@ -6,6 +6,7 @@
 #include <string.h>
 #include <string>
 #include <assert.h>
+#include <math.h>
 
 #include <angelscript.h>
 
@@ -21,7 +22,7 @@ class COutStream
 public:
 	void Callback(asSMessageInfo *msg) 
 	{ 
-		const char *msgType;
+		const char *msgType = 0;
 		if( msg->type == 0 ) msgType = "Error  ";
 		if( msg->type == 1 ) msgType = "Warning";
 		if( msg->type == 2 ) msgType = "Info   ";
@@ -35,14 +36,18 @@ class CBufferedOutStream
 public:
 	void Callback(asSMessageInfo *msg) 
 	{ 
-		const char *msgType;
+		const char *msgType = 0;
 		if( msg->type == 0 ) msgType = "Error  ";
 		if( msg->type == 1 ) msgType = "Warning";
 		if( msg->type == 2 ) msgType = "Info   ";
 
 		char buf[256];
-
-		sprintf(buf, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+		#ifdef _MSC_VER
+		_snprintf(buf, 255, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+		#else
+		snprintf(buf, 255, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+		#endif
+		buf[255] = '\0';
 
 		buffer += buf;
 	}
@@ -64,4 +69,13 @@ void RemoveMemoryManager();
 #endif
 
 #endif
+
+inline bool CompareDouble(double a,double b)
+{
+	if( fabs( a - b ) > 0.00000001 )
+		return false;
+	return true;
+}
+
+#define UNUSED_VAR(x) (x)=(x)
 

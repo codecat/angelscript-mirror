@@ -62,7 +62,6 @@ static const char *script5 =
 "  if( complex3(a) == 2 ); \n"
 "}                         \n";
 
-using std::string;
 string output;
 int a_int()
 {
@@ -133,7 +132,7 @@ public:
 	int rc;
 };
 
-CProp *GetProp(string &in)
+CProp *GetProp(string & /*in*/)
 {
 	// return with the ref already counted
 	return new CProp();

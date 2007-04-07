@@ -74,6 +74,10 @@ static map<loc, int> locCount;
 
 void *MyAllocWithStats(size_t size, const char *file, int line)
 {
+	// Avoid compiler warning when variables aren't used
+	UNUSED_VAR(line);
+	UNUSED_VAR(file);
+
 	// Allocate the memory
 	void *ptr = new asBYTE[size];
 
@@ -139,7 +143,7 @@ void MyFreeWithStats(void *address)
 	map<void*,int>::iterator i2 = memCount.find(address);
 	if( i2 != memCount.end() )
 	{
-		int numAlloc = i2->second;
+//		int numAlloc = i2->second;
 		memCount.erase(i2);
 	}
 	else

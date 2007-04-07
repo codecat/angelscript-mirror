@@ -12,8 +12,8 @@ struct Foo
 {
 	Foo() {}
 	~Foo() {}
-	Foo(const Foo& rhs) {}
-	Foo& operator=(const Foo& rhs) { return *this; }
+	Foo(const Foo& /*rhs*/) {}
+	Foo& operator=(const Foo& /*rhs*/) { return *this; }
 };
 
 //THIS CRASHES.

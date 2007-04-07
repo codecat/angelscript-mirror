@@ -34,7 +34,6 @@ bool Test()
 
 	RegisterScriptString(engine);
 
-	int inta = 0, intb = 0;
 	r = engine->RegisterObjectType("GameMgr", 0, 0); assert(r >= 0);
 	r = engine->RegisterObjectMethod("GameMgr", "void Test()", asFUNCTION(TestMethod), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalProperty("GameMgr Game", (void*)&GameMgr); assert(r >= 0);

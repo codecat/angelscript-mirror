@@ -120,7 +120,7 @@ bool TestGlobalVar()
 	float *f = (float*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "float f"));
 	string *str = (string*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "string str"));
 
-	float fv = *f;
+	float fv = *f; UNUSED_VAR(fv);
 	string strv = *str;
 
 	engine->ResetModule("a");

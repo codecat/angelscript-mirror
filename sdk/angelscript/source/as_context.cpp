@@ -1223,13 +1223,17 @@ void asCContext::ExecuteNext()
 	case BC_NOT:
 #if AS_SIZEOF_BOOL == 1
 		{
-			// Read only the lower byte
-			asBYTE b = (*(asBYTE*)(l_fp - SWORDARG0(l_bc)) == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
-			
-			// Make sure the rest of the byte is 0
-			*(l_fp - SWORDARG0(l_bc)) = 0;
-			// The value is stored in the lower byte
-			*(asBYTE*)(l_fp - SWORDARG0(l_bc)) = b;
+			// Set the value to true if it is equal to 0
+
+			// We need to use volatile here to tell the compiler it cannot
+			// change the order of read and write operations on the pointer.
+
+			volatile asBYTE *ptr = (asBYTE*)(l_fp - SWORDARG0(l_bc));
+			asBYTE val = (ptr[0] == 0) ? VALUE_OF_BOOLEAN_TRUE : 0;
+			ptr[0] = val; // The result is stored in the lower byte
+			ptr[1] = 0;   // Make sure the rest of the DWORD is 0
+			ptr[2] = 0;
+			ptr[3] = 0;
 		}
 #else
 		*(l_fp - SWORDARG0(l_bc)) = (*(l_fp - SWORDARG0(l_bc)) == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);

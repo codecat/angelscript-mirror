@@ -42,7 +42,7 @@
 #include <string>
 #include <assert.h>
 
-#include "angelscript.h"
+#include <angelscript.h>
 
 template <typename T>
 class vectorRegisterHelper

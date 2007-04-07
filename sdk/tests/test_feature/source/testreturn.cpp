@@ -9,7 +9,7 @@
 
 static bool returned = false;
 
-static bool cfunction() 
+static bool cfunction()
 {
 	return true;
 }

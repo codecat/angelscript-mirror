@@ -41,14 +41,14 @@ static const char *script2 =
 "}                           \n";
 
 bool doSuspend = false;
-void Suspend(asIScriptGeneric *gen)
+void Suspend(asIScriptGeneric * /*gen*/)
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx ) ctx->Suspend();
 	doSuspend = true;
 }
 
-void STDCALL LineCallback(asIScriptContext *ctx, void *param)
+void STDCALL LineCallback(asIScriptContext *ctx, void * /*param*/)
 {
 	// Suspend immediately
 	ctx->Suspend();

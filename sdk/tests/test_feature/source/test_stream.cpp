@@ -51,7 +51,7 @@ CScriptStream::~CScriptStream()
 //	printf("del (%X)\n", this);
 }
 
-CScriptStream &CScriptStream::operator=(const CScriptStream &other)
+CScriptStream &CScriptStream::operator=(const CScriptStream & /*other*/)
 {
 //	printf("(%X) = (%X)\n", this, &other);
 

@@ -61,10 +61,10 @@ static void add(asIScriptGeneric *gen)
 	sum += (int)gen->GetArgDWord(0);
 }
 
-static string log;
+static string _log;
 static void Log(asIScriptGeneric *gen)
 {
-	log += (const char *)gen->GetArgObject(0);
+	_log += (const char *)gen->GetArgObject(0);
 }
 
 static void StrFactory(asIScriptGeneric *gen)
@@ -111,10 +111,10 @@ bool TestSwitch()
 
 	engine->ExecuteString(0, "_switch2()");
 
-	if( log != "d12345" )
+	if( _log != "d12345" )
 	{
 		fail = true;
-		printf("%s: Switch failed. Got: %s\n", TESTNAME, log.c_str());
+		printf("%s: Switch failed. Got: %s\n", TESTNAME, _log.c_str());
 	}
 
 	CBufferedOutStream bout;

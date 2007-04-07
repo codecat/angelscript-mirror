@@ -83,7 +83,7 @@ extern "C"
 #define PPC_NUM_REGSTORE  (10)                                   // how many registers of the PPC we need to store/restore for ppcFunc64()
 #define PPC_REGSTORE_SIZE (8*PPC_NUM_REGSTORE)                   // how many bytes are required for register store/restore
 #define EXTRA_STACK_SIZE  (PPC_LINKAGE_SIZE + PPC_REGSTORE_SIZE) // memory required, not including parameters, for the stack frame
-#define PPC_STACK_SIZE(numParams)  ( ( ( (((numParams)<8)?8:(numParams))<<3) + EXTRA_STACK_SIZE + 15 ) & ~15 ) // calculates the total stack size needed for ppcFunc64, must pad to 16bytes
+#define PPC_STACK_SIZE(numParams)  ( -(( ( (((numParams)<8)?8:(numParams))<<3) + EXTRA_STACK_SIZE + 15 ) & ~15) ) // calculates the total stack size needed for ppcFunc64, must pad to 16bytes
 
 // macro to silence warnings about unused parameters
 #define UNUSED_PARAM(x) (x)=(x);
@@ -101,26 +101,24 @@ asm(""
 	".ppcFunc64:\n"
 
 	// function prolog
-	"std %r22, -0x08(%r1)\n"
-	"sub %r0, %r1, %r4\n"    // calculate where the base of our new stack frame is
-	"mflr %r22\n"            // get the caller's LR register
-	"std %r22, 0x10(%r1)\n"  // store the caller's LR register
-	"std %r23, -0x10(%r1)\n" //
-	"std %r24, -0x18(%r1)\n" //
-	"std %r25, -0x20(%r1)\n" //
-	"std %r26, -0x28(%r1)\n" //
-	"std %r27, -0x30(%r1)\n" //
-	"std %r28, -0x38(%r1)\n" //
-	"std %r29, -0x40(%r1)\n" //
-	"std %r30, -0x48(%r1)\n" //
-	"std %r31, -0x50(%r1)\n" //
-	"std %r3, 0x30(%r1)\n"   // save our parameters
-	"std %r4, 0x38(%r1)\n"   //
-	"std %r5, 0x40(%r1)\n"   //
-	"mr  %r22, %r0\n"
-	"std %r1, 0(%r22)\n"     // store the caller's stack frame pointer
-	"mr  %r1, %r0\n"         // set the stack pointer to the base of our stack frame
-	"mr  %r31, %r1\n"        // functions tend to store the stack pointer here too
+	"std %r22, -0x08(%r1)\n"  // we need a register other than r0, to store the old stack pointer
+	"mr    %r22, %r1\n"       // store the old stack pointer, for now (to make storing registers easier)
+	"stdux %r1, %r1, %r4\n"   // atomically store and update the stack pointer for the new stack frame (in case of a signal/interrupt)
+	"mflr %r0\n"              // get the caller's LR register
+	"std %r0,  0x10(%r22)\n"  // store the caller's LR register
+	"std %r23, -0x10(%r22)\n" //
+	"std %r24, -0x18(%r22)\n" //
+	"std %r25, -0x20(%r22)\n" //
+	"std %r26, -0x28(%r22)\n" //
+	"std %r27, -0x30(%r22)\n" //
+	"std %r28, -0x38(%r22)\n" //
+	"std %r29, -0x40(%r22)\n" //
+	"std %r30, -0x48(%r22)\n" //
+	"std %r31, -0x50(%r22)\n" //
+	"std %r3, 0x30(%r22)\n"   // save our parameters
+	"std %r4, 0x38(%r22)\n"   //
+	"std %r5, 0x40(%r22)\n"   //
+	"mr  %r31, %r1\n"         // functions tend to store the stack pointer here too
 
 	// initial registers for the function
 	"mr %r29, %r3\n"         // (r29) args list
@@ -776,6 +774,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				else
 				#endif
 				{
+					// NOTE: we may have to do endian flipping here
+
 					// Copy the object's memory to the buffer
 					memcpy( &paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes() );
 

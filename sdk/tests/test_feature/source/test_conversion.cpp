@@ -330,10 +330,10 @@ bool Test()
 	i64  = -123;  engine->ExecuteString(0, "d = i64;");  if( d  != -123.0  ) fail = true;
 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->ExecuteString(0, "d = 12.3; "); if( d  !=   12.3  ) fail = true; 
-	engine->ExecuteString(0, "d = 12.3f;"); if( d  !=   12.3f ) fail = true; 
-	engine->ExecuteString(0, "d = 123;  "); if( d  !=  123.0  ) fail = true;
-	engine->ExecuteString(0, "d = -123; "); if( d  != -123.0  ) fail = true;
+	engine->ExecuteString(0, "d = 12.3; "); if( !CompareDouble(d,12.3) ) fail = true; 
+	engine->ExecuteString(0, "d = 12.3f;"); if( !CompareDouble(d,12.3f) ) fail = true; 
+	engine->ExecuteString(0, "d = 123;  "); if( !CompareDouble(d,123.0) ) fail = true;
+	engine->ExecuteString(0, "d = -123; "); if( !CompareDouble(d,-123.0) ) fail = true;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;  engine->ExecuteString(0, "f = float(d);");     if( f  !=   12.3f ) fail = true; 

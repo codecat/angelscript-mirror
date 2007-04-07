@@ -24,7 +24,7 @@ static void cfunction(int f1, float f2, double f3, int f4)
 	t1 = f1;
 	t2 = f2;
 	t3 = f3;
-	t4 = f4;
+	t4 = (char)f4;
 	
 	testVal = (f1 == 10) && (f2 == 1.92f) && (f3 == 3.88) && (f4 == 97);
 }
