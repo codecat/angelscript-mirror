@@ -89,6 +89,12 @@ void CFunc(float f, int a, int b, const std::string &name)
 
 bool Test()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
+		return false;
+	}
+
 	bool fail = false;
 	int r;
 	COutStream out;

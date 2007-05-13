@@ -234,6 +234,13 @@
 
 
 
+// TODO:
+// The file should be restructured a bit
+// The support for native calling conventions must be turned on explicitly for the known combinations of compiler/os/cpu
+// The flags AS_X86, AS_PPC, AS_MIPS, AS_SH4 should always be defined if known
+
+
+
 //
 // Detect compiler
 //------------------------------------------------
@@ -342,6 +349,7 @@
 	#define COMPLEX_MASK (asOBJ_CLASS_DESTRUCTOR)
 	#define AS_NO_MEMORY_H
 	#define AS_SIZEOF_BOOL 1
+	#define STDCALL __attribute__((stdcall))
 
 	// MacOSX
 	#ifdef __APPLE__
@@ -352,18 +360,22 @@
 		#else
 			#define AS_SIZEOF_BOOL 1
 		#endif
-		#define STDCALL
+		// No support for native calling conventions yet
+		#define AS_MAX_PORTABILITY
 
 	// Windows and Linux
 	#elif defined(WIN32) || defined(__linux__)
-		#define STDCALL __attribute__((stdcall))
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 
-	// Other platforms
-	#else
-		#define STDCALL
+	// PS3
+	#elif defined(__ppc__) && defined(__PPU__)
+		// Support native calling conventions on PS3
+		#define AS_PPC
+		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+		#define CDECL_RETURN_SIMPLE_IN_MEMORY
+		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 	#endif
 
 	// Support native calling conventions on x86, MIPS, and SH4, but not 64bit
@@ -418,10 +430,6 @@
 	// PS3
 	#if defined(__PPU__)
 		#define AS_ALIGN
-		#define AS_PPC
-		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
-		#define CDECL_RETURN_SIMPLE_IN_MEMORY
-		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 	#endif
 #endif
 

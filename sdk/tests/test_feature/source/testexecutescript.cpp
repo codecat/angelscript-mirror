@@ -44,6 +44,8 @@ static int LoadScript(const char *filename)
 	FILE *f = fopen(filename, "rb");
 	if( f == 0 )
 	{
+		char buf[256];
+		printf("%s/%s\n", getcwd(buf, 256), filename);
 		printf("%s: Failed to open the script file.\n", TESTNAME);
 		return -1;
 	}

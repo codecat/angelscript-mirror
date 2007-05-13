@@ -51,6 +51,12 @@ std::string StringFactory(unsigned int length, const char *s)
 
 bool Test()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
+		return false;
+	}
+
 	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 

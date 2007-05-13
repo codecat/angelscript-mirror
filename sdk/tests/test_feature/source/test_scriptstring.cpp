@@ -102,12 +102,17 @@ static const char *script7 =
 "{                              \n"
 "}                              \n";
 
-bool Get(int * /*obj*/, const asCScriptString &szURL, asCScriptString &szHTML)
+//bool Get(int * /*obj*/, const asCScriptString &szURL, asCScriptString &szHTML)
+void Get(asIScriptGeneric *gen)
 {
-	assert(&szHTML != 0);
-	assert(szURL.buffer == "stringtest");
-	szHTML.buffer = "output";
-	return false;
+	const asCScriptString *szURL = (asCScriptString*)gen->GetArgObject(0);
+	asCScriptString *szHTML = (asCScriptString*)gen->GetArgObject(1);
+
+	assert(szHTML != 0);
+	assert(szURL->buffer == "stringtest");
+	szHTML->buffer = "output";
+
+	gen->SetReturnDWord(false);
 }
 
 bool Test()
@@ -248,7 +253,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	engine->RegisterObjectType("Http", sizeof(int), asOBJ_PRIMITIVE);
-	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_CDECL_OBJFIRST);
+	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	
 	r = engine->ExecuteString(0, "Http h; string str; h.get(\"stringtest\", str); assert(str == \"output\");");
