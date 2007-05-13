@@ -511,8 +511,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   engine->ExecuteString(0, "ui = uint(d);");    if( ui != 12           ) fail = true; 
-	// TODO: Problem on Mac OS X with XCode and Intel processor
-	// f    = -12.3f; engine->ExecuteString(0, "ui = uint(f);");    if( ui != asUINT(-12)  ) fail = true;
+	f    = -12.3f; engine->ExecuteString(0, "ui = uint(f);");    if( ui != asUINT(-12)  ) fail = true;
 	ui   = 123;    engine->ExecuteString(0, "ui = uint(ui);");   if( ui !=  123         ) fail = true;
 	ui8  = 123;    engine->ExecuteString(0, "ui = uint(ui8);");  if( ui !=  123         ) fail = true;
 	ui16 = 123;    engine->ExecuteString(0, "ui = uint(ui16);"); if( ui !=  123         ) fail = true;
@@ -523,8 +522,7 @@ bool Test()
 	i64  = -123;   engine->ExecuteString(0, "ui = uint(i64);");  if( ui != asUINT(-123) ) fail = true;
 
 	d    = 12.3;   engine->ExecuteString(0, "ui = d;");    if( ui != 12           ) fail = true; 
-	// TODO: Problem on Mac OS X with XCode and Intel processor
-	// f    = -12.3f; engine->ExecuteString(0, "ui = f;");    if( ui != asUINT(-12)  ) fail = true;
+	f    = -12.3f; engine->ExecuteString(0, "ui = f;");    if( ui != asUINT(-12)  ) fail = true;
 	ui   = 123;    engine->ExecuteString(0, "ui = ui;");   if( ui !=  123         ) fail = true;
 	ui8  = 123;    engine->ExecuteString(0, "ui = ui8;");  if( ui !=  123         ) fail = true;
 	ui16 = 123;    engine->ExecuteString(0, "ui = ui16;"); if( ui !=  123         ) fail = true;
@@ -542,8 +540,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   engine->ExecuteString(0, "ui8 = uint8(d);");    if( ui8 != 12           ) fail = true; 
-	// TODO: Problem on Mac OS X with XCode and Intel processor
-	// f    = -12.3f; engine->ExecuteString(0, "ui8 = uint8(f);");    if( ui8 != asBYTE(-12)  ) fail = true;
+	f    = -12.3f; engine->ExecuteString(0, "ui8 = uint8(f);");    if( ui8 != asBYTE(-12)  ) fail = true;
 	ui   = 123;    engine->ExecuteString(0, "ui8 = uint8(ui);");   if( ui8 !=  123         ) fail = true;
 	ui8  = 123;    engine->ExecuteString(0, "ui8 = uint8(ui8);");  if( ui8 !=  123         ) fail = true;
 	ui16 = 123;    engine->ExecuteString(0, "ui8 = uint8(ui16);"); if( ui8 !=  123         ) fail = true;
@@ -554,8 +551,7 @@ bool Test()
 	i64  = -123;   engine->ExecuteString(0, "ui8 = uint8(i64);");  if( ui8 != asBYTE(-123) ) fail = true;
 
 	d    = 12.3;   engine->ExecuteString(0, "ui8 = d;");    if( ui8 != 12           ) fail = true; 
-	// TODO: Problem on Mac OS X with XCode and Intel processor
-	// f    = -12.3f; engine->ExecuteString(0, "ui8 = f;");    if( ui8 != asBYTE(-12)  ) fail = true;
+	f    = -12.3f; engine->ExecuteString(0, "ui8 = f;");    if( ui8 != asBYTE(-12)  ) fail = true;
 	ui   = 123;    engine->ExecuteString(0, "ui8 = ui;");   if( ui8 !=  123         ) fail = true;
 	ui8  = 123;    engine->ExecuteString(0, "ui8 = ui8;");  if( ui8 !=  123         ) fail = true;
 	ui16 = 123;    engine->ExecuteString(0, "ui8 = ui16;"); if( ui8 !=  123         ) fail = true;
@@ -573,8 +569,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   engine->ExecuteString(0, "ui16 = uint16(d);");    if( ui16 != 12           ) fail = true; 
-	// TODO: Problem on Mac OS X with XCode and Intel processor
-	// f    = -12.3f; engine->ExecuteString(0, "ui16 = uint16(f);");    if( ui16 != asWORD(-12)  ) fail = true;
+	f    = -12.3f; engine->ExecuteString(0, "ui16 = uint16(f);");    if( ui16 != asWORD(-12)  ) fail = true;
 	ui   = 123;    engine->ExecuteString(0, "ui16 = uint16(ui);");   if( ui16 !=  123         ) fail = true;
 	ui8  = 123;    engine->ExecuteString(0, "ui16 = uint16(ui8);");  if( ui16 !=  123         ) fail = true;
 	ui16 = 123;    engine->ExecuteString(0, "ui16 = uint16(ui16);"); if( ui16 !=  123         ) fail = true;
@@ -585,8 +580,7 @@ bool Test()
 	i64  = -123;   engine->ExecuteString(0, "ui16 = uint16(i64);");  if( ui16 != asWORD(-123) ) fail = true;
 
 	d    = 12.3;   engine->ExecuteString(0, "ui16 = d;");    if( ui16 != 12           ) fail = true; 
-	// TODO: Problem on Mac OS X with XCode and Intel processor
-	// f    = -12.3f; engine->ExecuteString(0, "ui16 = f;");    if( ui16 != asWORD(-12)  ) fail = true;
+	f    = -12.3f; engine->ExecuteString(0, "ui16 = f;");    if( ui16 != asWORD(-12)  ) fail = true;
 	ui   = 123;    engine->ExecuteString(0, "ui16 = ui;");   if( ui16 !=  123         ) fail = true;
 	ui8  = 123;    engine->ExecuteString(0, "ui16 = ui8;");  if( ui16 !=  123         ) fail = true;
 	ui16 = 123;    engine->ExecuteString(0, "ui16 = ui16;"); if( ui16 !=  123         ) fail = true;

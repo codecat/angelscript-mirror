@@ -2273,7 +2273,8 @@ void asCContext::ExecuteNext()
 		break;
 	
 	case BC_fTOu:
-		*(l_fp - SWORDARG0(l_bc)) = asUINT(*(float*)(l_fp - SWORDARG0(l_bc)));
+		// We must cast to int first, because on some compilers the cast of a negative float value to uint result in 0
+		*(l_fp - SWORDARG0(l_bc)) = asUINT(int(*(float*)(l_fp - SWORDARG0(l_bc))));
 		l_bc++;
 		break;
 		
@@ -2307,7 +2308,8 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_dTOu:
-		*(l_fp - SWORDARG0(l_bc)) = asUINT(*(double*)(l_fp - SWORDARG1(l_bc)));
+		// We must cast to int first, because on some compilers the cast of a negative float value to uint result in 0
+		*(l_fp - SWORDARG0(l_bc)) = asUINT(int(*(double*)(l_fp - SWORDARG1(l_bc))));
 		l_bc += 2;
 		break;
 

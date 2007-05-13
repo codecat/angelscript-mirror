@@ -234,12 +234,6 @@
 
 
 
-// TODO:
-// The file should be restructured a bit
-// The support for native calling conventions must be turned on explicitly for the known combinations of compiler/os/cpu
-// The flags AS_X86, AS_PPC, AS_MIPS, AS_SH4 should always be defined if known
-
-
 
 //
 // Detect compiler
@@ -320,7 +314,8 @@
 	#define AS_SIZEOF_BOOL 1
 
 	// SN doesnt seem to like STDCALL.
-	// Maybe it can work with some fiddling, but i cant imagine linking to any STDCALL functions with a console anyway...
+	// Maybe it can work with some fiddling, but I can't imagine linking to 
+	// any STDCALL functions with a console anyway...
 	#define STDCALL
 
 	// Linux specific
@@ -381,7 +376,7 @@
 	// Support native calling conventions on x86, MIPS, and SH4, but not 64bit
 	#ifndef __LP64__
 		#define ASM_AT_N_T
-		#if defined(i386) && !defined(__LP64__)
+		#if defined(i386)
 			#define AS_X86
 		#endif
 		#if defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__) || defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
