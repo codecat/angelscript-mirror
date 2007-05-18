@@ -270,9 +270,6 @@ bool Test()
 	short i16 = 0;
 	unsigned char ui8 = 0;
 	unsigned short ui16 = 0;
-	asBYTE b8 = 0;
-	asWORD b16 = 0;
-	asDWORD b = 0;
 	engine->RegisterGlobalProperty("float f", &f);
 	engine->RegisterGlobalProperty("double d", &d);
 	engine->RegisterGlobalProperty("uint ui", &ui);

@@ -115,6 +115,7 @@ void Get(asIScriptGeneric *gen)
 	gen->SetReturnDWord(false);
 }
 
+
 bool Test()
 {
 	bool fail = false;

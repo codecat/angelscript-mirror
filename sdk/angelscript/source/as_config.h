@@ -234,6 +234,12 @@
 
 
 
+// TODO: 
+// First detect hardware and OS, set AngelScript defined variables for these
+// Then detect compiler and configure the library based on detected target system (using the AngelScript defined variables)
+
+
+
 
 //
 // Detect compiler
@@ -345,6 +351,7 @@
 	#define AS_NO_MEMORY_H
 	#define AS_SIZEOF_BOOL 1
 	#define STDCALL __attribute__((stdcall))
+	#define ASM_AT_N_T
 
 	// MacOSX
 	#ifdef __APPLE__
@@ -355,15 +362,36 @@
 		#else
 			#define AS_SIZEOF_BOOL 1
 		#endif
-		// No support for native calling conventions yet
-		#define AS_MAX_PORTABILITY
+		#if defined(i386) && !defined(__LP64__)
+			// Support native calling conventions on Mac OS X + Intel 32bit CPU
+			#define AS_X86
+		#else
+			// No support for native calling conventions yet
+			#define AS_MAX_PORTABILITY
+		#endif
 
 	// Windows and Linux
 	#elif defined(WIN32) || defined(__linux__)
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
-
+		#if defined(i386) && !defined(__LP64__)
+			// Support native calling conventions on Intel 32bit CPU
+			#define AS_X86
+		#else
+			// No support for native calling conventions yet
+			#define AS_MAX_PORTABILITY
+		#endif
+		
+	// PSP and PS2
+	#elif defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
+		// Support native calling conventions on MIPS architecture
+		#if (defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__)) && !defined(__LP64__)
+			#define AS_MIPS
+		#else
+			#define AS_MAX_PORTABILITY
+		#endif
+		
 	// PS3
 	#elif defined(__ppc__) && defined(__PPU__)
 		// Support native calling conventions on PS3
@@ -371,20 +399,11 @@
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
-	#endif
 
-	// Support native calling conventions on x86, MIPS, and SH4, but not 64bit
-	#ifndef __LP64__
-		#define ASM_AT_N_T
-		#if defined(i386)
-			#define AS_X86
-		#endif
-		#if defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__) || defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
-			#define AS_MIPS
-		#endif
-		#ifdef __SH4_SINGLE_ONLY__
-			#define AS_SH4
-		#endif
+	// Dreamcast
+	#elif __SH4_SINGLE_ONLY__
+		// Support native calling conventions on Dreamcast
+		#define AS_SH4
 	#endif
 
 	#define I64(x) x##ll

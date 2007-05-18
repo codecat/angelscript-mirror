@@ -523,6 +523,19 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
+
+		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
+		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
+		// to calculate how much we will put on the stack during this call.
+		"movl  12(%ebp), %eax \n" // paramSize
+		"addl  $4, %eax       \n" // counting esp that we will push on the stack
+		"movl  %esp, %ecx     \n"
+		"subl  %eax, %ecx     \n"
+		"andl  $15, %ecx      \n"
+		"movl  %esp, %eax     \n"
+		"subl  %ecx, %esp     \n"
+		"pushl %eax           \n" // Store the original stack pointer
+		
 		"movl  12(%ebp), %ecx \n" // paramSize
 		"movl  8(%ebp), %eax  \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -536,6 +549,10 @@ endcopy:
 		"endcopy:             \n"
 		"call  *16(%ebp)      \n"
 		"addl  12(%ebp), %esp \n" // pop arguments
+		
+		// Pop the alignment bytes
+		"popl  %esp           \n" 
+		
 		"popl  %ecx           \n");
 
 #endif
@@ -585,6 +602,21 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
+	
+		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
+		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
+		// to calculate how much we will put on the stack during this call.
+		"movl  16(%ebp), %eax \n" // paramSize
+		// TODO: 64 bit pointer, need to add 4 more here
+		"addl  $8, %eax       \n" // counting esp that we will push on the stack
+		"movl  %esp, %ecx     \n"
+		"subl  %eax, %ecx     \n"
+		"andl  $15, %ecx      \n"
+		"movl  %esp, %eax     \n"
+		"subl  %ecx, %esp     \n"
+		"pushl %eax           \n" // Store the original stack pointer
+	
+		// TODO: 64 bit pointer, need to push all 8 bytes on the stack here
 		"pushl 8(%ebp)        \n"
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
@@ -600,6 +632,10 @@ endcopy:
 		"call  *20(%ebp)      \n"
 		"addl  16(%ebp), %esp \n" // pop arguments
 		"addl  $4, %esp       \n"
+		
+		// Pop the alignment bytes
+		"popl  %esp           \n" 
+		
 		"popl  %ecx           \n");
 
 #endif
@@ -649,6 +685,20 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
+	
+		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
+		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
+		// to calculate how much we will put on the stack during this call.
+		"movl  16(%ebp), %eax \n" // paramSize
+		// TODO: 64 bit pointer, need to add 4 more here
+		"addl  $8, %eax       \n" // counting esp that we will push on the stack
+		"movl  %esp, %ecx     \n"
+		"subl  %eax, %ecx     \n"
+		"andl  $15, %ecx      \n"
+		"movl  %esp, %eax     \n"
+		"subl  %ecx, %esp     \n"
+		"pushl %eax           \n" // Store the original stack pointer
+	
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -660,10 +710,15 @@ endcopy:
 		"subl  $4, %ecx       \n"
 		"jne   copyloop6      \n"
 		"endcopy6:            \n"
+		// TODO: 64 bit pointer, need to push the entire 8 byte pointer
 		"pushl 8(%ebp)        \n" // push obj
 		"call  *20(%ebp)      \n"
 		"addl  16(%ebp), %esp \n" // pop arguments
         "addl  $4, %esp       \n"
+		
+		// Pop the alignment bytes
+		"popl  %esp           \n" 
+		
 		"popl  %ecx           \n");
 
 #endif
@@ -721,6 +776,19 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
+	
+		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
+		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
+		// to calculate how much we will put on the stack during this call.
+		"movl  16(%ebp), %eax \n" // paramSize
+		"addl  $12, %eax      \n" // counting esp that we will push on the stack
+		"movl  %esp, %ecx     \n"
+		"subl  %eax, %ecx     \n"
+		"andl  $15, %ecx      \n"
+		"movl  %esp, %eax     \n"
+		"subl  %ecx, %esp     \n"
+		"pushl %eax           \n" // Store the original stack pointer
+		
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -737,10 +805,13 @@ endcopy:
 		"call  *20(%ebp)      \n" // func
 		"addl  16(%ebp), %esp \n" // pop arguments
 #ifndef CALLEE_POPS_HIDDEN_RETURN_POINTER
-		"addl  $8, %esp       \n" // Pop the return pointer
+		"addl  $8, %esp       \n" // Pop the return pointer and object pointer
 #else
-		"addl  $4, %esp       \n" // Pop the return pointer
+		"addl  $4, %esp       \n" // Pop the object pointer
 #endif
+		// Pop the alignment bytes
+		"popl  %esp           \n" 
+
 		"popl  %ecx           \n");
 
 #endif
@@ -793,6 +864,19 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
+	
+		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
+		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
+		// to calculate how much we will put on the stack during this call.
+		"movl  12(%ebp), %eax \n" // paramSize
+		"addl  $8, %eax       \n" // counting esp that we will push on the stack
+		"movl  %esp, %ecx     \n"
+		"subl  %eax, %ecx     \n"
+		"andl  $15, %ecx      \n"
+		"movl  %esp, %eax     \n"
+		"subl  %ecx, %esp     \n"
+		"pushl %eax           \n" // Store the original stack pointer
+		
 		"movl  12(%ebp), %ecx \n" // paramSize
 		"movl  8(%ebp), %eax  \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -810,6 +894,9 @@ endcopy:
 #ifndef CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $4, %esp       \n" // Pop the return pointer
 #endif
+		// Pop the alignment bytes
+		"popl  %esp           \n" 
+
 		"popl  %ecx           \n");
 
 #endif
@@ -865,6 +952,19 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
+	
+		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
+		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
+		// to calculate how much we will put on the stack during this call.
+		"movl  16(%ebp), %eax \n" // paramSize
+		"addl  $12, %eax      \n" // counting esp that we will push on the stack
+		"movl  %esp, %ecx     \n"
+		"subl  %eax, %ecx     \n"
+		"andl  $15, %ecx      \n"
+		"movl  %esp, %eax     \n"
+		"subl  %ecx, %esp     \n"
+		"pushl %eax           \n" // Store the original stack pointer
+	
 		"pushl 8(%ebp)        \n"
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
@@ -885,6 +985,9 @@ endcopy:
 #else
 		"addl  $4, %esp       \n" // Pop the return pointer
 #endif
+		// Pop the alignment bytes
+		"popl  %esp           \n" 
+
 		"popl  %ecx           \n");
 
 #endif
@@ -929,6 +1032,19 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
+	
+		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
+		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
+		// to calculate how much we will put on the stack during this call.
+		"movl  12(%ebp), %eax \n" // paramSize
+		"addl  $4, %eax       \n" // counting esp that we will push on the stack
+		"movl  %esp, %ecx     \n"
+		"subl  %eax, %ecx     \n"
+		"andl  $15, %ecx      \n"
+		"movl  %esp, %eax     \n"
+		"subl  %ecx, %esp     \n"
+		"pushl %eax           \n" // Store the original stack pointer
+	
 		"movl  12(%ebp), %ecx \n" // paramSize
 		"movl  8(%ebp), %eax  \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -941,6 +1057,10 @@ endcopy:
 		"jne   copyloop2      \n"
 		"endcopy2:            \n"
 		"call  *16(%ebp)      \n" // callee pops the arguments
+		
+		// Pop the alignment bytes
+		"popl  %esp           \n" 
+		
 		"popl  %ecx           \n");
 
 #endif
@@ -1001,6 +1121,19 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
+	
+		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
+		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
+		// to calculate how much we will put on the stack during this call.
+		"movl  16(%ebp), %eax \n" // paramSize
+		"addl  $8, %eax       \n" // counting esp that we will push on the stack
+		"movl  %esp, %ecx     \n"
+		"subl  %eax, %ecx     \n"
+		"andl  $15, %ecx      \n"
+		"movl  %esp, %eax     \n"
+		"subl  %ecx, %esp     \n"
+		"pushl %eax           \n" // Store the original stack pointer
+	
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
 		"addl  %ecx, %eax     \n" // push all arguments on the stack
@@ -1017,6 +1150,10 @@ endcopy:
 		"call  *20(%ebp)      \n"
 		"addl  16(%ebp), %esp \n" // pop arguments
 		"addl  $4, %esp       \n" // pop obj
+		
+		// Pop the alignment bytes
+		"popl  %esp           \n" 
+		
 		"popl  %ecx           \n");
 
 #endif
@@ -1079,6 +1216,19 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
+	
+		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
+		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
+		// to calculate how much we will put on the stack during this call.
+		"movl  16(%ebp), %eax \n" // paramSize
+		"addl  $12, %eax      \n" // counting esp that we will push on the stack
+		"movl  %esp, %ecx     \n"
+		"subl  %eax, %ecx     \n"
+		"andl  $15, %ecx      \n"
+		"movl  %esp, %eax     \n"
+		"subl  %ecx, %esp     \n"
+		"pushl %eax           \n" // Store the original stack pointer
+	
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
 		"addl  %ecx, %eax     \n" // push all arguments to the stack
@@ -1097,6 +1247,9 @@ endcopy:
 		"addl  16(%ebp), %esp \n" // pop arguments
 		"addl  $4, %esp       \n" // pop the object pointer
 		                          // the return pointer was popped by the callee
+		// Pop the alignment bytes
+		"popl  %esp           \n" 
+		
 		"popl  %ecx           \n");
 
 #endif

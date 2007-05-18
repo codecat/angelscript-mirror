@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <sstream>
 #include "scriptstring.h"
 using namespace std;
 
@@ -126,29 +125,11 @@ static void ConcatenateStrings_Generic(asIScriptGeneric *gen)
 // string = value
 //----------------
 
-static asCScriptString &AssignBitsToString(asDWORD i, asCScriptString &dest)
-{
-	ostringstream stream;
-	stream << hex << i;
-	dest.buffer = stream.str(); 
-
-	// Return a reference to the object
-	return dest;
-}
-
-static void AssignBitsToString_Generic(asIScriptGeneric *gen)
-{
-	asDWORD i = gen->GetArgDWord(0);
-	asCScriptString *thisPointer = (asCScriptString*)gen->GetObject();
-	AssignBitsToString(i, *thisPointer);
-	gen->SetReturnAddress(thisPointer);
-}
-
 static asCScriptString &AssignUIntToString(unsigned int i, asCScriptString &dest)
 {
-	ostringstream stream;
-	stream << i;
-	dest.buffer = stream.str(); 
+	char buf[100];
+	sprintf(buf, "%u", i);
+	dest.buffer = buf; 
 	return dest;
 }
 
@@ -162,9 +143,9 @@ static void AssignUIntToString_Generic(asIScriptGeneric *gen)
 
 static asCScriptString &AssignIntToString(int i, asCScriptString &dest)
 {
-	ostringstream stream;
-	stream << i;
-	dest.buffer = stream.str(); 
+	char buf[100];
+	sprintf(buf, "%d", i);
+	dest.buffer = buf; 
 	return dest;
 }
 
@@ -178,9 +159,9 @@ static void AssignIntToString_Generic(asIScriptGeneric *gen)
 
 static asCScriptString &AssignFloatToString(float f, asCScriptString &dest)
 {
-	ostringstream stream;
-	stream << f;
-	dest.buffer = stream.str(); 
+	char buf[100];
+	sprintf(buf, "%g", f);
+	dest.buffer = buf; 
 	return dest;
 }
 
@@ -194,9 +175,9 @@ static void AssignFloatToString_Generic(asIScriptGeneric *gen)
 
 static asCScriptString &AssignDoubleToString(double f, asCScriptString &dest)
 {
-	ostringstream stream;
-	stream << f;
-	dest.buffer = stream.str(); 
+	char buf[100];
+	sprintf(buf, "%g", f);
+	dest.buffer = buf; 
 	return dest;
 }
 
@@ -212,27 +193,11 @@ static void AssignDoubleToString_Generic(asIScriptGeneric *gen)
 // string += value
 //-----------------
 
-static asCScriptString &AddAssignBitsToString(asDWORD i, asCScriptString &dest)
-{
-	ostringstream stream;
-	stream << hex << i;
-	dest.buffer += stream.str(); 
-	return dest;
-}
-
-static void AddAssignBitsToString_Generic(asIScriptGeneric *gen)
-{
-	asDWORD i = gen->GetArgDWord(0);
-	asCScriptString *thisPointer = (asCScriptString*)gen->GetObject();
-	AddAssignBitsToString(i, *thisPointer);
-	gen->SetReturnAddress(thisPointer);
-}
-
 static asCScriptString &AddAssignUIntToString(unsigned int i, asCScriptString &dest)
 {
-	ostringstream stream;
-	stream << i;
-	dest.buffer += stream.str(); 
+	char buf[100];
+	sprintf(buf, "%u", i);
+	dest.buffer += buf; 
 	return dest;
 }
 
@@ -246,9 +211,9 @@ static void AddAssignUIntToString_Generic(asIScriptGeneric *gen)
 
 static asCScriptString &AddAssignIntToString(int i, asCScriptString &dest)
 {
-	ostringstream stream;
-	stream << i;
-	dest.buffer += stream.str(); 
+	char buf[100];
+	sprintf(buf, "%d", i);
+	dest.buffer += buf; 
 	return dest;
 }
 
@@ -262,9 +227,9 @@ static void AddAssignIntToString_Generic(asIScriptGeneric *gen)
 
 static asCScriptString &AddAssignFloatToString(float f, asCScriptString &dest)
 {
-	ostringstream stream;
-	stream << f;
-	dest.buffer += stream.str(); 
+	char buf[100];
+	sprintf(buf, "%g", f);
+	dest.buffer += buf; 
 	return dest;
 }
 
@@ -278,9 +243,9 @@ static void AddAssignFloatToString_Generic(asIScriptGeneric *gen)
 
 static asCScriptString &AddAssignDoubleToString(double f, asCScriptString &dest)
 {
-	ostringstream stream;
-	stream << f;
-	dest.buffer += stream.str(); 
+	char buf[100];
+	sprintf(buf, "%g", f);
+	dest.buffer += buf; 
 	return dest;
 }
 
@@ -296,26 +261,11 @@ static void AddAssignDoubleToString_Generic(asIScriptGeneric *gen)
 // string + value
 //----------------
 
-static asCScriptString *AddStringBits(const asCScriptString &str, asDWORD i)
-{
-	ostringstream stream;
-	stream << hex << i;
-	return new asCScriptString(str.buffer + stream.str()); 
-}
-
-static void AddStringBits_Generic(asIScriptGeneric *gen)
-{
-	asCScriptString *str = (asCScriptString*)gen->GetArgAddress(0);
-	asDWORD i = gen->GetArgDWord(1);
-	asCScriptString *out = AddStringBits(*str, i);
-	gen->SetReturnAddress(out);
-}
-
 static asCScriptString *AddStringUInt(const asCScriptString &str, unsigned int i)
 {
-	ostringstream stream;
-	stream << i;
-	return new asCScriptString(str.buffer + stream.str());
+	char buf[100];
+	sprintf(buf, "%u", i);
+	return new asCScriptString(str.buffer + buf);
 }
 
 static void AddStringUInt_Generic(asIScriptGeneric *gen)
@@ -328,9 +278,9 @@ static void AddStringUInt_Generic(asIScriptGeneric *gen)
 
 static asCScriptString *AddStringInt(const asCScriptString &str, int i)
 {
-	ostringstream stream;
-	stream << i;
-	return new asCScriptString(str.buffer + stream.str());
+	char buf[100];
+	sprintf(buf, "%d", i);
+	return new asCScriptString(str.buffer + buf);
 }
 
 static void AddStringInt_Generic(asIScriptGeneric *gen)
@@ -343,9 +293,9 @@ static void AddStringInt_Generic(asIScriptGeneric *gen)
 
 static asCScriptString *AddStringFloat(const asCScriptString &str, float f)
 {
-	ostringstream stream;
-	stream << f;
-	return new asCScriptString(str.buffer + stream.str());
+	char buf[100];
+	sprintf(buf, "%g", f);
+	return new asCScriptString(str.buffer + buf);
 }
 
 static void AddStringFloat_Generic(asIScriptGeneric *gen)
@@ -358,9 +308,9 @@ static void AddStringFloat_Generic(asIScriptGeneric *gen)
 
 static asCScriptString *AddStringDouble(const asCScriptString &str, double f)
 {
-	ostringstream stream;
-	stream << f;
-	return new asCScriptString(str.buffer + stream.str());
+	char buf[100];
+	sprintf(buf, "%g", f);
+	return new asCScriptString(str.buffer + buf);
 }
 
 static void AddStringDouble_Generic(asIScriptGeneric *gen)
@@ -375,26 +325,11 @@ static void AddStringDouble_Generic(asIScriptGeneric *gen)
 // value + string
 //----------------
 
-static asCScriptString *AddBitsString(asDWORD i, const asCScriptString &str)
-{
-	ostringstream stream;
-	stream << hex << i;
-	return new asCScriptString(stream.str() + str.buffer);
-}
-
-static void AddBitsString_Generic(asIScriptGeneric *gen)
-{
-	asDWORD i = gen->GetArgDWord(0);
-	asCScriptString *str = (asCScriptString*)gen->GetArgAddress(1);
-	asCScriptString *out = AddBitsString(i, *str);
-	gen->SetReturnAddress(out);
-}
-
 static asCScriptString *AddIntString(int i, const asCScriptString &str)
 {
-	ostringstream stream;
-	stream << i;
-	return new asCScriptString(stream.str() + str.buffer);
+	char buf[100];
+	sprintf(buf, "%d", i);
+	return new asCScriptString(buf + str.buffer);
 }
 
 static void AddIntString_Generic(asIScriptGeneric *gen)
@@ -407,9 +342,9 @@ static void AddIntString_Generic(asIScriptGeneric *gen)
 
 static asCScriptString *AddUIntString(unsigned int i, const asCScriptString &str)
 {
-	ostringstream stream;
-	stream << i;
-	return new asCScriptString(stream.str() + str.buffer);
+	char buf[100];
+	sprintf(buf, "%u", i);
+	return new asCScriptString(buf + str.buffer);
 }
 
 static void AddUIntString_Generic(asIScriptGeneric *gen)
@@ -422,9 +357,9 @@ static void AddUIntString_Generic(asIScriptGeneric *gen)
 
 static asCScriptString *AddFloatString(float f, const asCScriptString &str)
 {
-	ostringstream stream;
-	stream << f;
-	return new asCScriptString(stream.str() + str.buffer);
+	char buf[100];
+	sprintf(buf, "%g", f);
+	return new asCScriptString(buf + str.buffer);
 }
 
 static void AddFloatString_Generic(asIScriptGeneric *gen)
@@ -437,9 +372,9 @@ static void AddFloatString_Generic(asIScriptGeneric *gen)
 
 static asCScriptString *AddDoubleString(double f, const asCScriptString &str)
 {
-	ostringstream stream;
-	stream << f;
-	return new asCScriptString(stream.str() + str.buffer);
+	char buf[100];
+	sprintf(buf, "%g", f);
+	return new asCScriptString(buf + str.buffer);
 }
 
 static void AddDoubleString_Generic(asIScriptGeneric *gen)
