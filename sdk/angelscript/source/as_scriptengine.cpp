@@ -132,6 +132,8 @@ int asCScriptEngine::SetEngineProperty(asDWORD property, asPWORD value)
 {
 	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
 		allowUnsafeReferences = value ? true : false;
+	else if( property == asEP_OPTIMIZE_BYTECODE )
+		optimizeByteCode = value ? true : false;
 	else
 		return asINVALID_ARG;
 
@@ -142,6 +144,8 @@ asPWORD asCScriptEngine::GetEngineProperty(asDWORD property)
 {
 	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
 		return allowUnsafeReferences;
+	else if( property == asEP_OPTIMIZE_BYTECODE )
+		return optimizeByteCode;
 
 	return 0;
 }
@@ -150,6 +154,7 @@ asCScriptEngine::asCScriptEngine()
 {
 	// Engine properties
 	allowUnsafeReferences = false;
+	optimizeByteCode      = true;
 
 
 

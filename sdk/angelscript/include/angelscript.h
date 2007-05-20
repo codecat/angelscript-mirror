@@ -601,7 +601,8 @@ public:
 
 // Engine properties
 
-const asDWORD asEP_ALLOW_UNSAFE_REFERENCES = 1;
+const asDWORD asEP_ALLOW_UNSAFE_REFERENCES = 1;	// Default: false
+const asDWORD asEP_OPTIMIZE_BYTECODE       = 2;	// Default: true
 
 // Calling conventions and flags
 

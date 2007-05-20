@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.1 WIP - 2007/05/17</h2>
+<h2>Version 2.8.1 WIP - 2007/05/20</h2>
 
 <ul>
 <li>Bug fixes
@@ -129,6 +129,7 @@ A:hover
 <li>Fixed problem with C++ compiler optimizations that changed the result of AngelScript code and thus breaking (Thanks Jeff Slutter)
 <li>Fixed the as_config.h file for XCode
 <li>Fixed conversion of negative floating point values to unsigned int on GNUC based compilers
+<li>Fixed bug with booleans returned from functions that didn't evaluate to false when expected. (Thanks Rakkar2)
 </ul>
 <li>Library
 <ul>
@@ -153,6 +154,10 @@ A:hover
 <li>Added support for PS3 native calling conventions. (Thanks Jeff Slutter)
 <li>GNUC assembler for native calling conventions now guarantee stack pointer alignment on 16 bytes.
 <li>Added support for Mac OS X with Intel native calling conventions. 
+</ul>
+<li>Library interface
+<ul>
+<li>Added OPTIMIZE_BYTECODE as engine property. 
 </ul>
 </ul>
 

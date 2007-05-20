@@ -7785,7 +7785,25 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 			// Move the value from the return register to the variable
 			if( descr->returnType.GetSizeOnStackDWords() == 1 )
+			{
 				ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)offset);
+				
+				// Don't trust that the function returns the upper bytes without trash
+				if( descr->returnType.GetSizeInMemoryBytes() == 1 )
+				{
+					if( descr->returnType.IsIntegerType() )
+						ctx->bc.InstrSHORT(BC_sbTOi, (short)offset);
+					else
+						ctx->bc.InstrSHORT(BC_ubTOi, (short)offset);
+				}
+				else if( descr->returnType.GetSizeInMemoryBytes() == 2 )
+				{	
+					if( descr->returnType.IsIntegerType() )
+						ctx->bc.InstrSHORT(BC_swTOi, (short)offset);
+					else
+						ctx->bc.InstrSHORT(BC_uwTOi, (short)offset);
+				}
+			}
 			else if( descr->returnType.GetSizeOnStackDWords() == 2 )
 				ctx->bc.InstrSHORT(BC_CpyRtoV8, (short)offset);
 

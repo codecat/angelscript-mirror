@@ -79,6 +79,18 @@ static const char *script2 =
 "void Set() {gFlag = true;}\n"
 "void DoNothing() {}\n";
 
+
+class tst
+{
+public:
+  int test_f(unsigned int param)
+  {
+	// Force return false with trash in upper bytes, to test if AngelScript is able to handle this
+    return 0xFFFFFF00;
+  }
+};
+
+
 void CFunc(float f, int a, int b, const std::string &name)
 {
 	if( (a & 0xFFFFFF00) || (b & 0xFFFFFF00) )
@@ -143,10 +155,26 @@ bool Test()
 		fail = false;
 	engine->ExecuteString(0, "Assert(gFlag == true)");
 
+
+	// TEST 3
+	// It was reported that if( t.test_f() ) would always be true, even though the method returns false
+	// The bug was that the function didn't return 0 in the upper bytes, thus the 32bit value was not 0, even though the low byte was
+	engine->RegisterObjectType("tst", sizeof(tst), asOBJ_CLASS);
+	engine->RegisterObjectMethod("tst", "bool test_f(uint)", asMETHOD(tst, test_f), asCALL_THISCALL);
+	
+	r = engine->ExecuteString(0, "tst t; if( t.test_f(2000) == true ) Assert(false);");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	r = engine->ExecuteString(0, "tst t; if( !(t.test_f(2000) == false) ) Assert(false);");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+//	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 0);
+	r = engine->ExecuteString(0, "tst t; if( t.test_f(2000) ) Assert(false);");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	
 	engine->Release();
 
 	return fail;
 }
 
 } // namespace
+
 

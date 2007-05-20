@@ -193,10 +193,16 @@ unexpected behaviours.
 <table border=0 cellspacing=0 cellpadding=0>
 <tr>
 <td valign=top width=220><code>asEP_ALLOW_UNSAFE_REFERENCES</code>&nbsp;</td>
-<td valign=top><p>By setting this property to a non-zero value, the script compiler will permit the use of 
+<td valign=top><p>Default: false. By setting this property to a non-zero value, the script compiler will permit the use of 
    unsafe references. It will no longer be necessary to use the keywords in, out, or inout, and the references 
    passed to functions will be the true reference. It will be the responsibility of the script writer to write 
    code that does not invalidate the reference before it is used.</p></td>
+</tr>
+<td valign=top width=220><code>asEP_OPTIMIZE_BYTECODE</code>&nbsp;</td>
+<td valign=top><p>Default: true. By setting this to a zero value, the byte code will not be optimized to remove redundant 
+instructions, which may result in slower execution times, but also slightly faster compile times. Note: This is
+mostly only used when developing the library itself, there is probably no benefit to application developers in
+turning off byte code optimization.</p></td>
 </tr>
 </table>
 

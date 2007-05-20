@@ -281,6 +281,7 @@ public:
 
 	// Engine properties
 	bool allowUnsafeReferences;
+	bool optimizeByteCode;
 };
 
 END_AS_NAMESPACE
