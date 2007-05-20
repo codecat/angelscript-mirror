@@ -115,6 +115,11 @@ void Get(asIScriptGeneric *gen)
 	gen->SetReturnDWord(false);
 }
 
+void GetConstStringRef(asIScriptGeneric *gen)
+{
+	static string test("test");
+	gen->SetReturnAddress(&test);
+}
 
 bool Test()
 {
@@ -126,10 +131,18 @@ bool Test()
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void set2(string@&in)", asFUNCTION(SetString2), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("const string &getconststringref()", asFUNCTION(GetConstStringRef), asCALL_GENERIC);
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
+	// Test string copy constructor
+	int r = engine->ExecuteString(0, "string tst(getconststringref()); print(tst);");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( printOutput != "test" ) fail = true;
+
+
+	printOutput = "";
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	engine->Build(0);
 
@@ -209,7 +222,7 @@ bool Test()
 
 	asCScriptString *a = new asCScriptString("a");
 	engine->RegisterGlobalProperty("string a", a);
-	int r = engine->ExecuteString(0, "print(a == \"a\" ? \"t\" : \"f\")");
+	r = engine->ExecuteString(0, "print(a == \"a\" ? \"t\" : \"f\")");
 	if( r != asEXECUTION_FINISHED ) 
 	{
 		fail = true;

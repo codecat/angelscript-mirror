@@ -3354,7 +3354,11 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 					ctx->bc.InstrSHORT(BC_PSF, type.stackOffset);
 
+					// If the input type is read-only we'll need to temporarily remove this constness, otherwise the assignment will fail
+					bool typeIsReadOnly = type.dataType.IsReadOnly();
+					type.dataType.MakeReadOnly(false);
 					PerformAssignment(&type, &ctx->type, &ctx->bc, node);
+					type.dataType.MakeReadOnly(typeIsReadOnly);
 
 					ctx->bc.Pop(ctx->type.dataType.GetSizeOnStackDWords());
 

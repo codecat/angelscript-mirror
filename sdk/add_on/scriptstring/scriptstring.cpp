@@ -452,10 +452,23 @@ static void ConstructString(asCScriptString *thisPointer)
 	new(thisPointer) asCScriptString();
 }
 
+static void ConstructStringCopy(const asCScriptString &other, asCScriptString *thisPointer)
+{
+	// Construct the string in the memory received
+	new(thisPointer) asCScriptString(other);
+}
+
 static void ConstructString_Generic(asIScriptGeneric *gen)
 {
 	asCScriptString *thisPointer = (asCScriptString *)gen->GetObject();
 	ConstructString(thisPointer);
+}
+
+static void ConstructStringCopy_Generic(asIScriptGeneric *gen)
+{
+	asCScriptString *thisPointer = (asCScriptString *)gen->GetObject();
+	asCScriptString *other = (asCScriptString *)gen->GetArgObject(0);
+	ConstructStringCopy(*other, thisPointer);
 }
 
 static void StringEqual_Generic(asIScriptGeneric *gen)
@@ -524,6 +537,7 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(ConstructStringCopy), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(asCScriptString,AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(asCScriptString,Release), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(const string &in)", asMETHODPR(asCScriptString, operator =, (const asCScriptString&), asCScriptString&), asCALL_THISCALL); assert( r >= 0 );
@@ -589,6 +603,7 @@ void RegisterScriptString_Generic(asIScriptEngine *engine)
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructString_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(ConstructStringCopy_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADDREF,     "void f()",                    asFUNCTION(StringAddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_RELEASE,    "void f()",                    asFUNCTION(StringRelease_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(const string &in)", asFUNCTION(AssignString_Generic), asCALL_GENERIC); assert( r >= 0 );
