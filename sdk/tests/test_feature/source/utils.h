@@ -77,5 +77,5 @@ inline bool CompareDouble(double a,double b)
 	return true;
 }
 
-#define UNUSED_VAR(x) (x)=(x)
+#define UNUSED_VAR(x) ((void)(x))
 

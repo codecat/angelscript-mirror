@@ -128,7 +128,7 @@ bool TestGlobalVar()
 	f = (float*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "float f"));
 	str = (string*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "string str"));
 
-	if( *f != 2 || *str != "test" )
+	if( !CompareDouble(*f, 2) || *str != "test" )
 	{
 		printf("%s: Failed to reset the module\n", TESTNAME);
 		ret = true;
@@ -145,13 +145,13 @@ bool TestGlobalVar()
 	if( c != 8 ) ret = true;
 	double d;
 	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 0)); 
-	if( d != 12 ) ret = true;
+	if( !CompareDouble(d, 12) ) ret = true;
 	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 1)); 
-	if( d != 5 ) ret = true;
+	if( !CompareDouble(d, 5) ) ret = true;
 	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 2)); 
-	if( d != 35.2 ) ret = true;
+	if( !CompareDouble(d, 35.2) ) ret = true;
 	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 3)); 
-	if( d != 4 ) ret = true;
+	if( !CompareDouble(d, 4) ) ret = true;
 	
 	engine->ExecuteString("a", "test()");
 

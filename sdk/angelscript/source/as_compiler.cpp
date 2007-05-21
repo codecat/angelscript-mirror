@@ -956,7 +956,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					// so that they are guaranteed to not be referenced anywhere else
 					PrepareTemporaryObject(node, ctx);
 
-					// The ímplicit conversion shouldn't convert the object to
+					// The implicit conversion shouldn't convert the object to
 					// non-reference yet. It will be dereferenced just before the call.
 					// Otherwise the object might be missed by the exception handler.
 					dt.MakeReference(true);
@@ -7792,6 +7792,8 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 			{
 				ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)offset);
 				
+				// TODO: See if it's not possible to unify the code here
+				#ifndef AS_BIG_ENDIAN
 				// Don't trust that the function returns the upper bytes without trash
 				if( descr->returnType.GetSizeInMemoryBytes() == 1 )
 				{
@@ -7807,6 +7809,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 					else
 						ctx->bc.InstrSHORT(BC_uwTOi, (short)offset);
 				}
+				#endif
 			}
 			else if( descr->returnType.GetSizeOnStackDWords() == 2 )
 				ctx->bc.InstrSHORT(BC_CpyRtoV8, (short)offset);

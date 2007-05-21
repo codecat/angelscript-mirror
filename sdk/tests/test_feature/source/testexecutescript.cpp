@@ -10,6 +10,9 @@
 
 #include "utils.h"
 #include <stdio.h>
+#ifdef _MSC_VER
+#include <direct.h>
+#endif
 
 #define TESTNAME "TestExecuteScript"
 
@@ -38,6 +41,17 @@ bool TestExecuteScript()
 	return ret;
 }
 
+const char *GetCurrentDir(char *buf, size_t size)
+{
+#ifdef _MSC_VER
+	return _getcwd(buf, size);
+#elsif __APPLE__
+	return getcwd(buf, size);
+#else
+	return "";
+#endif
+}
+
 static int LoadScript(const char *filename)
 {
 	// Read the entire script file
@@ -45,7 +59,7 @@ static int LoadScript(const char *filename)
 	if( f == 0 )
 	{
 		char buf[256];
-		printf("%s/%s\n", getcwd(buf, 256), filename);
+		printf("%s/%s\n", GetCurrentDir(buf, 256), filename);
 		printf("%s: Failed to open the script file.\n", TESTNAME);
 		return -1;
 	}

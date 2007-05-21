@@ -393,12 +393,15 @@
 		#endif
 		
 	// PS3
-	#elif defined(__ppc__) && defined(__PPU__)
+	#elif (defined(__PPC__) || defined(__ppc__)) && defined(__PPU__)
 		// Support native calling conventions on PS3
 		#define AS_PPC
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+		// PS3 doesn't have STDCALL
+		#undef STDCALL
+		#define STDCALL
 
 	// Dreamcast
 	#elif __SH4_SINGLE_ONLY__
