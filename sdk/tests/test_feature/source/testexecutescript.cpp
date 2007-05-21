@@ -44,8 +44,8 @@ bool TestExecuteScript()
 const char *GetCurrentDir(char *buf, size_t size)
 {
 #ifdef _MSC_VER
-	return _getcwd(buf, size);
-#elsif __APPLE__
+	return _getcwd(buf, (int)size);
+#elif defined(__APPLE__)
 	return getcwd(buf, size);
 #else
 	return "";

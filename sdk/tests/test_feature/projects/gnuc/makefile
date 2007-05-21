@@ -1,7 +1,7 @@
 # Test Framework MingW makefile
 
 CXX = g++
-CXXFLAGS = -ggdb -I../../../../angelscript/include
+CXXFLAGS = -ggdb -I../../../../angelscript/include -Wno-missing-field-initializers
 SRCDIR = ../../source
 OBJDIR = obj
 

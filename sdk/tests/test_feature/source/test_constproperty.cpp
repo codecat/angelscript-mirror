@@ -90,10 +90,6 @@ bool Test()
 
 	engine->Release();
 
-	fail = false;
-	printf("%s: This is a known problem, and I'm yet to fix it\n", TESTNAME);
-
-
 	// TEST 2
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
