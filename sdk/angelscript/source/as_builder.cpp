@@ -594,6 +594,10 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 		func->parameterTypes.PushLast(type);
 		func->inOutFlags.PushLast(inOutFlags);
 
+		// Don't permit void parameters
+		if( type.GetTokenType() == ttVoid )
+			return asINVALID_DECLARATION;
+
 		if( autoHandle && (!type.IsObjectHandle() || type.IsReference()) )
 			return asINVALID_DECLARATION;			
 

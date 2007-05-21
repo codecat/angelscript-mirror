@@ -57,16 +57,10 @@ bool TestFuncOverload()
 	engine->RegisterGlobalFunction("void func()", asFUNCTION(FuncVoid), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void func(int)", asFUNCTION(FuncInt), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("void func2(void)", asFUNCTION(FuncVoid), asCALL_CDECL);
-
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	engine->Build(0);
 
 	engine->ExecuteString(0, "func(func(3));");
-
-
-	engine->ExecuteString(0, "func2();");
-	printf("Known problem. Needs to be fixed. Script shouldn't permit void parameters\n");
 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -78,6 +72,8 @@ bool TestFuncOverload()
                        "TestFuncOverload (1, 17) : Error   : Parameter type can't be 'void'\n" )
 		fail = true;
 
+	// Don't permit void parameters
+	r = engine->RegisterGlobalFunction("void func2(void)", asFUNCTION(FuncVoid), asCALL_CDECL); assert( r < 0 );
 
 	engine->Release();
 
