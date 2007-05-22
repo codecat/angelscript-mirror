@@ -24,6 +24,10 @@ const char *script3 = "void CompilerAssert(uint8[]@ &in b) { b[0] == 1; }";
 
 const char *script4 = "class C : I {}";
 
+const char *script5 = 
+"void t() {} \n"
+"void crash() { bool b = t(); } \n";
+
 bool Test()
 {
 	bool fail = false;
@@ -86,6 +90,15 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 8) : Error   : Expected '('\n" )
+		fail = true;
+
+	bout.buffer = "";
+	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0, false);
+	r = engine->Build(0);
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "TestCompiler (2, 1) : Info    : Compiling void crash()\n"
+	                   "TestCompiler (2, 25) : Error   : Can't implicitly convert from 'void' to 'bool'.\n" )
 		fail = true;
 
 	engine->Release();

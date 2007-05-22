@@ -2813,6 +2813,8 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 			asCString str;
 			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lvalue->Format().AddressOf());
 			Error(str.AddressOf(), node);
+			
+			rctx->type.SetDummy();
 		}
 
 		// Make sure the rvalue is a variable
@@ -2949,6 +2951,9 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 
 void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {
+	// No conversion from void to any other type
+	if( ctx->type.dataType.GetTokenType() == ttVoid ) return;
+	
 	// Do we want a primitive
 	if( to.IsPrimitive() )
 	{
