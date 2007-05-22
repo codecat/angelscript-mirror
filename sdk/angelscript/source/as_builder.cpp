@@ -464,11 +464,15 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 
 	// Verify property name
 	if( dt )
+	{
 		if( CheckNameConflictMember(*dt, name.AddressOf(), nameNode, &source) < 0 )
 			return asINVALID_NAME;
+	}
 	else
+	{
 		if( CheckNameConflict(name.AddressOf(), nameNode, &source) < 0 )
 			return asINVALID_NAME;
+	}
 
 	if( numErrors > 0 )
 		return asINVALID_DECLARATION;
