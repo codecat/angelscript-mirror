@@ -8,12 +8,6 @@
 
 #define TESTNAME "TestNotComplexStdcall"
 
-#ifdef __GNUC__
-#define STDCALL __attribute__((stdcall))
-#else
-#define STDCALL __stdcall
-#endif
-
 class Class1
 {
 public:

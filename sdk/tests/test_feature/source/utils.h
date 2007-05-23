@@ -16,6 +16,13 @@
 using namespace AngelScript;
 #endif
 
+#if defined(__GNUC__) && !(defined(__ppc__) || defined(__PPC__))
+#define STDCALL __attribute__((stdcall))
+#elif defined(_MSC_VER)
+#define STDCALL __stdcall
+#else
+#define STDCALL
+#endif
 
 class COutStream
 {

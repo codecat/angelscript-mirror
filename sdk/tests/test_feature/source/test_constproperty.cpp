@@ -59,23 +59,30 @@ static const char *script2 =
 
 bool Test()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
+		return false;
+	}
+
 	bool fail = false;
+	int r;
 
 	// TEST 1
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType("CVec3", sizeof(CVec3), asOBJ_CLASS_C);
-	engine->RegisterObjectProperty("CVec3", "float x", offsetof(CVec3,x));
-	engine->RegisterObjectProperty("CVec3", "float y", offsetof(CVec3,y));
-	engine->RegisterObjectProperty("CVec3", "float z", offsetof(CVec3,z));
+	r = engine->RegisterObjectType("CVec3", sizeof(CVec3), asOBJ_CLASS_C); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("CVec3", "float x", offsetof(CVec3,x)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("CVec3", "float y", offsetof(CVec3,y)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("CVec3", "float z", offsetof(CVec3,z)); assert( r >= 0 );
 
-	engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "CVec3 f(const CVec3 &in, const CVec3 &in)", asFUNCTION(vec3add), asCALL_CDECL);
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "CVec3 f(const CVec3 &in, const CVec3 &in)", asFUNCTION(vec3add), asCALL_CDECL); assert( r >= 0 );
 
-	engine->RegisterGlobalFunction("CVec3 vec3add(const CVec3 &in, const CVec3 &in)", asFUNCTION(vec3add), asCALL_CDECL);
+	r = engine->RegisterGlobalFunction("CVec3 vec3add(const CVec3 &in, const CVec3 &in)", asFUNCTION(vec3add), asCALL_CDECL); assert( r >= 0 );
 
-	engine->RegisterObjectType("CObj", sizeof(CObj), asOBJ_CLASS_CD);
-	engine->RegisterObjectProperty("CObj", "CVec3 simplevec", offsetof(CObj,simplevec));
-	engine->RegisterObjectProperty("CObj", "const CVec3 constvec", offsetof(CObj,constvec));
+	r = engine->RegisterObjectType("CObj", sizeof(CObj), asOBJ_CLASS_CD); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("CObj", "CVec3 simplevec", offsetof(CObj,simplevec)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("CObj", "const CVec3 constvec", offsetof(CObj,constvec)); assert( r >= 0 );
 
 	CBufferedOutStream out;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);

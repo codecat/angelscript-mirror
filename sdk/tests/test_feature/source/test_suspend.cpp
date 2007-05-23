@@ -11,12 +11,6 @@ namespace TestSuspend
 
 #define TESTNAME "TestSuspend"
 
-#ifdef __GNUC__
-#define STDCALL __attribute__((stdcall))
-#else
-#define STDCALL __stdcall
-#endif
-
 static int loopCount = 0;
 
 static const char *script1 =

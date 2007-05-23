@@ -9,12 +9,6 @@
 
 #define TESTNAME "TestStdcall4Args"
 
-#ifdef __GNUC__
-#define STDCALL __attribute__((stdcall))
-#else
-#define STDCALL __stdcall
-#endif
-
 static bool testVal = false;
 static bool called = false;
 

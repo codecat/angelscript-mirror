@@ -359,6 +359,9 @@
 		#undef AS_SIZEOF_BOOL
 		#if defined(__ppc__)
 			#define AS_SIZEOF_BOOL 4
+			// STDCALL is not available on PPC
+			#undef STDCALL
+			#define STDCALL
 		#else
 			#define AS_SIZEOF_BOOL 1
 		#endif

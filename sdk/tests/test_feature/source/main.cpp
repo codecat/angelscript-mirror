@@ -161,15 +161,16 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
+	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
+	if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");
 	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestReturnF()                 ) goto failed; else printf("-- TestReturnF passed\n");
 	if( TestObject3::Test()           ) goto failed; else printf("-- TestObject3 passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
-	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
-	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
 	if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
@@ -228,7 +229,6 @@ int main(int argc, char **argv)
 	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
 	if( TestExecute1Arg()             ) goto failed; else printf("-- TestExecute1Arg passed\n");
 	if( TestExecute2Args()            ) goto failed; else printf("-- TestExecute2Args passed\n");
-	if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");
 	if( TestExecute4Argsf()           ) goto failed; else printf("-- TestExecute4Argsf passed\n");
 	if( TestExecute32Args()           ) goto failed; else printf("-- TestExecute32Args passed\n");
 	if( TestExecuteThis32MixedArgs()  ) goto failed; else printf("-- TestExecuteThis32MixedArgs passed\n");
