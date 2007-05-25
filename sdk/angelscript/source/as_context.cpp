@@ -2680,12 +2680,12 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_fTOu64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = asQWORD(*(float*)(l_fp - SWORDARG1(l_bc)));
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = asQWORD(asINT64(*(float*)(l_fp - SWORDARG1(l_bc))));
 		l_bc += 2;
 		break;
 
 	case BC_dTOu64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = asQWORD(*(double*)(l_fp - SWORDARG0(l_bc)));
+		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = asQWORD(asINT64(*(double*)(l_fp - SWORDARG0(l_bc))));
 		l_bc++;
 		break;
 

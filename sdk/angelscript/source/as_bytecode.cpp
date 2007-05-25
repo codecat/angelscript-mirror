@@ -792,7 +792,7 @@ int asCByteCode::Optimize()
 			instr = GoBack(DeleteFirstChangeNext(curr, BC_JP));
 // End PATTERN
 		// JMP +0 -> remove
-		else if( IsCombination(curr, BC_JMP, BC_LABEL) && int(curr->arg) == instr->wArg[0] )
+		else if( IsCombination(curr, BC_JMP, BC_LABEL) && *(int*)&curr->arg == instr->wArg[0] )
 			instr = GoBack(DeleteInstruction(curr));
 		// PSF, ChkRefS, RDS4 -> PshV4, CHKREF
 		else if( IsCombination(curr, BC_PSF, BC_ChkRefS) &&

@@ -3755,7 +3755,8 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		if( from->type.dataType.IsFloatType() )
 		{
 			float fc = from->type.floatValue;
-			asQWORD uic = asQWORD(fc);
+			// Convert first to int64 then to uint64 to avoid negative float becoming 0 on gnuc base compilers
+			asQWORD uic = asQWORD(asINT64(fc));
 
 			// TODO: MSVC6 doesn't permit UINT64 to double
 			if( float((signed)uic) != fc )
@@ -3769,7 +3770,8 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		else if( from->type.dataType.IsDoubleType() )
 		{
 			double fc = from->type.doubleValue;
-			asQWORD uic = asQWORD(fc);
+			// Convert first to int64 then to uint64 to avoid negative float becoming 0 on gnuc base compilers
+			asQWORD uic = asQWORD(asINT64(fc));
 
 			// TODO: MSVC6 doesn't permit UINT64 to double
 			if( double((signed)uic) != fc )
