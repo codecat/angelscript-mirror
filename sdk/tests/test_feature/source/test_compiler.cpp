@@ -28,6 +28,8 @@ const char *script5 =
 "void t() {} \n"
 "void crash() { bool b = t(); } \n";
 
+const char *script6 = "class t { bool Test(bool, float) {return false;} }";
+
 bool Test()
 {
 	bool fail = false;
@@ -99,6 +101,15 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "TestCompiler (2, 1) : Info    : Compiling void crash()\n"
 	                   "TestCompiler (2, 25) : Error   : Can't implicitly convert from 'void' to 'bool'.\n" )
+		fail = true;
+
+	// test 6
+	// Verify that script class methods can have the same signature as 
+	// globally registered functions since they are in different scope
+	engine->RegisterGlobalFunction("bool Test(bool, float)", asFUNCTION(Test), asCALL_CDECL);
+	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0, false);
+	r = engine->Build(0);
+	if( r < 0 )
 		fail = true;
 
 	engine->Release();

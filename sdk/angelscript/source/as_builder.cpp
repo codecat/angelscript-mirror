@@ -1474,6 +1474,12 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 			if( parameterTypes.GetLength() == func->parameterTypes.GetLength() )
 			{
 				bool match = true;
+				if( func->objectType != objType )
+				{
+					match = false;
+					break;
+				}
+				
 				for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )
 				{
 					if( parameterTypes[p] != func->parameterTypes[p] )
