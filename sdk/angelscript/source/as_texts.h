@@ -118,6 +118,7 @@
 #define TXT_NO_DEFAULT_COPY_OP              "There is no copy operator for this type available."
 #define TXT_NO_MATCHING_SIGNATURES_TO_s     "No matching signatures to '%s'"
 #define TXT_NO_MATCHING_OP_FOUND_FOR_TYPE_s "No matching operator that takes the type '%s' found"
+#define TXT_NO_MATCHING_OP_FOUND_FOR_TYPES_s_AND_s "No matching operator that takes the types '%s' and '%s' found"
 #define TXT_NOT_ALL_PATHS_RETURN            "Not all paths return a value"
 #define TXT_s_NOT_AVAILABLE_FOR_s           "'%s' is not available for '%s'"
 #define TXT_s_NOT_DECLARED                  "'%s' is not declared"

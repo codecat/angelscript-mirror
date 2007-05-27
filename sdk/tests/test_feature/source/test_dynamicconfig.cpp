@@ -241,7 +241,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
-                                 "TestDynamicConfig (5, 9) : Error   : No matching operator that takes the type 'string&' found\n" ) 
+                                 "TestDynamicConfig (5, 9) : Error   : No matching operator that takes the types 'string&' and 'mytype&' found\n" ) 
 	{
 		fail = true;
 	}

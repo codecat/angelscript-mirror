@@ -6413,7 +6413,7 @@ void asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asS
 		if( lctx->type.dataType.IsObject() || rctx->type.dataType.IsObject() )
 		{
 			asCString str;
-			str.Format(TXT_NO_MATCHING_OP_FOUND_FOR_TYPE_s, lctx->type.dataType.Format().AddressOf());
+			str.Format(TXT_NO_MATCHING_OP_FOUND_FOR_TYPES_s_AND_s, lctx->type.dataType.Format().AddressOf(), rctx->type.dataType.Format().AddressOf());
 			Error(str.AddressOf(), node);
 			ctx->type.SetDummy();
 			return;

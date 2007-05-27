@@ -133,7 +133,7 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 
-	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching operator that takes the type 'mytype&' found\n")
+	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching operator that takes the types 'mytype&' and 'mytype&' found\n")
 		fail = true;
 
 	engine->Release();
