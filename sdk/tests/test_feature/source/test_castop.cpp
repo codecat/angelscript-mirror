@@ -70,9 +70,11 @@ const char *script3 =
 "  Func(2);                     \n"
 "}                              \n";
 
-void TypeToString(int &i, asCScriptString &obj)
+void TypeToString(asIScriptGeneric *gen)
 {
-	new(&obj) asCScriptString("type");
+//	int *i = (int*)gen->GetArgPointer(0);
+	asCScriptString *s = (asCScriptString*)gen->GetObject();
+	new(s) asCScriptString("type");
 }
 
 bool Test()
@@ -148,7 +150,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	r = engine->RegisterObjectType("type", 4, asOBJ_PRIMITIVE); assert( r >= 0 );
 	RegisterScriptString(engine);
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const type &in)", asFUNCTION(TypeToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const type &in)", asFUNCTION(TypeToString), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->ExecuteString(0, "type t; string a = \"a\" + string(t) + \"b\";"); 
 	if( r < 0 )
 		fail = true;

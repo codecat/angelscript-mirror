@@ -7794,34 +7794,44 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 		{
 			int offset = AllocateVariable(descr->returnType, true);
 
+			ctx->type.SetVariable(descr->returnType, offset, true);
+
 			// Move the value from the return register to the variable
 			if( descr->returnType.GetSizeOnStackDWords() == 1 )
 			{
 				ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)offset);
 				
-				// TODO: See if it's not possible to unify the code here
-				#ifndef AS_BIG_ENDIAN
 				// Don't trust that the function returns the upper bytes without trash
 				if( descr->returnType.GetSizeInMemoryBytes() == 1 )
 				{
 					if( descr->returnType.IsIntegerType() )
+					{
 						ctx->bc.InstrSHORT(BC_sbTOi, (short)offset);
+						ctx->type.dataType.SetTokenType(ttInt);
+					}
 					else
+					{
 						ctx->bc.InstrSHORT(BC_ubTOi, (short)offset);
+						if( descr->returnType.IsUnsignedType() )
+							ctx->type.dataType.SetTokenType(ttUInt);
+					}
 				}
 				else if( descr->returnType.GetSizeInMemoryBytes() == 2 )
 				{	
 					if( descr->returnType.IsIntegerType() )
+					{
 						ctx->bc.InstrSHORT(BC_swTOi, (short)offset);
+						ctx->type.dataType.SetTokenType(ttInt);
+					}
 					else
+					{
 						ctx->bc.InstrSHORT(BC_uwTOi, (short)offset);
+						ctx->type.dataType.SetTokenType(ttUInt);
+					}
 				}
-				#endif
 			}
 			else if( descr->returnType.GetSizeOnStackDWords() == 2 )
 				ctx->bc.InstrSHORT(BC_CpyRtoV8, (short)offset);
-
-			ctx->type.SetVariable(descr->returnType, offset, true);
 		}
 		else
 			ctx->type.Set(descr->returnType);

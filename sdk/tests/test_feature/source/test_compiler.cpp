@@ -106,11 +106,15 @@ bool Test()
 	// test 6
 	// Verify that script class methods can have the same signature as 
 	// globally registered functions since they are in different scope
-	engine->RegisterGlobalFunction("bool Test(bool, float)", asFUNCTION(Test), asCALL_CDECL);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("bool Test(bool, float)", asFUNCTION(Test), asCALL_GENERIC);
 	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0, false);
 	r = engine->Build(0);
 	if( r < 0 )
+	{
+		printf("failed on 6\n");
 		fail = true;
+	}
 
 	engine->Release();
 		

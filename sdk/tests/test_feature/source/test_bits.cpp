@@ -18,6 +18,58 @@ void BitsTest(uint8 b)       \n\
   Assert((b&mask4) == 0);    \n\
 }                            \n";
 
+static const char *script2 =
+"uint8 gb;              \n"
+"uint16 gw;             \n"
+"void Test()            \n"
+"{                      \n"
+"  gb = ReturnByte(1);  \n"
+"  Assert(gb == 1);     \n"
+"  gb = ReturnByte(0);  \n"
+"  Assert(gb == 0);     \n"
+"  gw = ReturnWord(1);  \n"
+"  Assert(gw == 1);     \n"
+"  gw = ReturnWord(0);  \n"
+"  Assert(gw == 0);     \n"
+"}                      \n";  
+
+// uint8 ReturnByte(uint8)
+void ReturnByte(asIScriptGeneric *gen)
+{
+	asBYTE b = *(asBYTE*)gen->GetArgPointer(0);
+	// Return a full dword, even though AngelScript should only use a byte
+#ifdef __BIG_ENDIAN__
+	if( b )
+		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | (int(b)<<24);
+	else
+		*(asDWORD*)gen->GetReturnPointer() = 0x00FFFFFF | (int(b)<<24);
+#else
+	if( b )
+		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | b;
+	else
+		*(asDWORD*)gen->GetReturnPointer() = 0xFFFFFF00 | b;
+#endif
+}
+
+// uint16 ReturnWord(uint16)
+void ReturnWord(asIScriptGeneric *gen)
+{
+	asWORD w = *(asWORD*)gen->GetArgPointer(0);
+	// Return a full dword, even though AngelScript should only use a word
+#ifdef __BIG_ENDIAN__
+	if( w )
+		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | (int(w)<<16);
+	else
+		*(asDWORD*)gen->GetReturnPointer() = 0x0000FFFF | (int(w)<<16);
+#else
+	if( w )
+		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | w;
+	else
+		*(asDWORD*)gen->GetReturnPointer() = 0xFFFF0000 | w;
+#endif
+}
+
+
 bool Test()
 {
 	bool fail = false;
@@ -46,6 +98,18 @@ bool Test()
 
 	r = engine->ExecuteString(0, "uint8 b = 0xFF; b &= ~mask4; BitsTest(b);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+
+
+	engine->RegisterGlobalFunction("uint8 ReturnByte(uint8)", asFUNCTION(ReturnByte), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("uint16 ReturnWord(uint16)", asFUNCTION(ReturnWord), asCALL_GENERIC);
+	engine->AddScriptSection(0, "script", script2, strlen(script2));
+	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+	r = engine->Build(0);
+	if( r < 0 ) 
+		fail = true;
+	r = engine->ExecuteString(0, "Test()");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
 
 	engine->Release();
 

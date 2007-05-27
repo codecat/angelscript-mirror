@@ -86,7 +86,11 @@ public:
   int test_f(unsigned int param)
   {
 	// Force return false with trash in upper bytes, to test if AngelScript is able to handle this
+#ifdef __BIG_ENDIAN__
+	return 0x00FFFFFF;
+#else
     return 0xFFFFFF00;
+#endif
   }
 };
 
