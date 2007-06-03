@@ -88,6 +88,45 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_NO_USER_ALLOC
 		"AS_NO_USER_ALLOC "
 #endif
+#ifdef AS_WIN
+		"AS_WIN "
+#endif
+#ifdef AS_LINUX
+		"AS_LINUX "
+#endif
+#ifdef AS_MAC
+		"AS_MAC "
+#endif
+#ifdef AS_XBOX
+		"AS_XBOX "
+#endif
+#ifdef AS_XBOX360
+		"AS_XBOX360 "
+#endif
+#ifdef AS_PSP
+		"AS_PSP "
+#endif
+#ifdef AS_PS2
+		"AS_PS2 "
+#endif
+#ifdef AS_PS3
+		"AS_PS3 "
+#endif
+#ifdef AS_DC
+		"AS_DC "
+#endif
+#ifdef AS_PPC
+		"AS_PPC "
+#endif
+#ifdef AS_X86
+		"AS_X86 "
+#endif
+#ifdef AS_MIPS
+		"AS_MIPS "
+#endif
+#ifdef AS_SH4
+		"AS_SH4 "
+#endif
 	;
 
 	return string;

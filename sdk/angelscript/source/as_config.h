@@ -184,6 +184,28 @@
 // Define this for CPUs that use big endian memory layout, e.g. PPC
 
 
+
+// 
+// Target systems
+//--------------------------------
+// This group shows a few of the flags used to identify different target systems. 
+// Sometimes there are differences on different target systems, while both CPU and 
+// compiler is the same for both, when this is so these flags are used to produce the
+// right code.
+
+// AS_WIN     - Microsoft Windows
+// AS_LINUX   - Linux
+// AS_MAC     - Apple Macintosh
+// AS_XBOX    - Microsoft XBox 
+// AS_XBOX360 - Microsoft XBox 360
+// AS_PSP     - Sony Playstation Portable
+// AS_PS2     - Sony Playstation 2
+// AS_PS3     - Sony Playstation 3
+// AS_DC      - Sega Dreamcast
+
+
+
+
 //
 // Calling conventions
 //-----------------------------------------
@@ -264,6 +286,7 @@
 
 	#if _XBOX_VER >= 200
 		// 360 is PPC, big endian and 64 bit.
+		#define AS_XBOX360
 		#define AS_PPC
 	#else
 		// Support native calling conventions on x86, but not 64bit yet
@@ -356,6 +379,7 @@
 	// MacOSX
 	#ifdef __APPLE__
 		// The sizeof bool is different depending on the target CPU
+		#define AS_MAC
 		#undef AS_SIZEOF_BOOL
 		#if defined(__ppc__)
 			#define AS_SIZEOF_BOOL 4
@@ -368,6 +392,9 @@
 		#if defined(i386) && !defined(__LP64__)
 			// Support native calling conventions on Mac OS X + Intel 32bit CPU
 			#define AS_X86
+		#elif (defined(__ppc__) || defined(__PPC__)) && !defined(__LP64__)
+			// Support native calling conventions on Mac OS X + PPC 32bit CPU
+			#define AS_PPC
 		#else
 			// No support for native calling conventions yet
 			#define AS_MAX_PORTABILITY
@@ -398,6 +425,7 @@
 	// PS3
 	#elif (defined(__PPC__) || defined(__ppc__)) && defined(__PPU__)
 		// Support native calling conventions on PS3
+		#define AS_PS3
 		#define AS_PPC
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
@@ -409,6 +437,7 @@
 	// Dreamcast
 	#elif __SH4_SINGLE_ONLY__
 		// Support native calling conventions on Dreamcast
+		#define AS_DC
 		#define AS_SH4
 	#endif
 

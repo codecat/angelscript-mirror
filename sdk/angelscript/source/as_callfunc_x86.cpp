@@ -224,13 +224,12 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
 		return context->CallGeneric(id, objectPointer);
 
-	asQWORD retQW = 0;
-
+	asQWORD  retQW             = 0;
 	void    *func              = (void*)sysFunc->func;
 	int      paramSize         = sysFunc->paramSize;
 	asDWORD *args              = context->stackPointer;
-	void    *retPointer = 0;
-	void    *obj = 0;
+	void    *retPointer        = 0;
+	void    *obj               = 0;
 	asDWORD *vftable;
 	int      popSize           = paramSize;
 
@@ -297,6 +296,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				{
 					// Copy the object's memory to the buffer
 					memcpy(&paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
+					
 					// Delete the original memory
 					engine->CallFree(descr->parameterTypes[n].GetObjectType(), *(char**)(args+spos));
 					spos++;
