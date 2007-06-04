@@ -354,7 +354,8 @@ static void stackArgs( const asDWORD *args, const asBYTE *argsType, int &numIntA
 				ppcArgs[argWordPos] = args[i]; // it's just a bit copy
 				numFloatArgs++;
 				argWordPos++; //add one word
-			}break;
+			}
+			break;
 
 		case ppcDOUBLEARG:
 			{				
@@ -363,7 +364,8 @@ static void stackArgs( const asDWORD *args, const asBYTE *argsType, int &numIntA
 				numDoubleArgs++;
 				argWordPos+=2; //add two words
 				i++;//doubles take up 2 argument slots
-			}break;
+			}
+			break;
 
 		case ppcINTARG:
 			{
@@ -371,7 +373,8 @@ static void stackArgs( const asDWORD *args, const asBYTE *argsType, int &numIntA
 				ppcArgs[argWordPos] = args[i];
 				numIntArgs++;
 				argWordPos++;
-			}break;
+			}
+			break;
 		}
 	}
 
@@ -388,7 +391,7 @@ static asQWORD CallCDeclFunction(const asDWORD* pArgs, const asBYTE *pArgsType, 
 		ppcArgs[0]     = (asDWORD)retInMemory;
 		ppcArgsType[0] = ppcINTARG;
 		ppcArgsType[1] = ppcENDARG;
-		baseArgCount = 1;
+		baseArgCount   = 1;
 	}
 
 	// put the arguments in the correct places in the ppcArgs array
@@ -420,7 +423,7 @@ static asQWORD CallThisCallFunction(const void *obj, const asDWORD* pArgs, const
 		ppcArgs[0]     = (asDWORD)retInMemory;
 		ppcArgsType[0] = ppcINTARG;
 		ppcArgsType[1] = ppcENDARG;
-		baseArgCount = 1;
+		baseArgCount   = 1;
 	}
 
 	// the first argument is the 'this' of the object
@@ -476,149 +479,6 @@ static asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD* pArg
 	return ppcFunc64( ppcArgs, PPC_STACK_SIZE(numTotalArgs), func );
 }
 
-// This function should prepare system functions so that it will be faster to call them
-int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine)
-{
-	UNUSED_VAR(engine);
-
-	// References are always returned as primitive data
-	if( func->returnType.IsReference() || func->returnType.IsObjectHandle() )
-	{
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize     = 1;
-		internal->hostReturnFloat    = false;
-	}
-	// Registered types have special flags that determine how they are returned
-	else if( func->returnType.IsObject() )
-	{
-		asDWORD objType = func->returnType.GetObjectType()->flags;
-		if( objType & asOBJ_CLASS )
-		{
-			internal->hostReturnFloat = false;
-
-			if( objType & COMPLEX_MASK )
-			{
-				// Complex class
-				internal->hostReturnInMemory = true;
-				internal->hostReturnSize     = 1;
-			}
-			else
-			{
-				// Simple class
-				if( func->returnType.GetSizeInMemoryDWords() > 2 )
-				{
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize     = 1;
-				}
-				else
-				{
-					internal->hostReturnInMemory = false;
-					internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
-				}
-
-				// Simple class overrides
-				#ifdef THISCALL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_THISCALL || internal->callConv == ICC_VIRTUAL_THISCALL )
-				{
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize     = 1;
-				}
-				#endif
-
-				#ifdef CDECL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_CDECL         || 
-					internal->callConv == ICC_CDECL_OBJLAST ||
-					internal->callConv == ICC_CDECL_OBJFIRST )
-				{
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize     = 1;
-				}
-				#endif
-				
-				#ifdef STDCALL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_STDCALL )
-				{
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize     = 1;
-				}
-				#endif
-			}
-		}
-		else if( objType == asOBJ_PRIMITIVE )
-		{
-			// object/primitive types
-			internal->hostReturnInMemory = false;
-			internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
-			internal->hostReturnFloat    = false;
-		}
-		else if( objType == asOBJ_FLOAT )
-		{
-			// object/float types
-			internal->hostReturnInMemory = false;
-			internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
-			internal->hostReturnFloat    = true;
-		}
-	}
-	// Primitive types can easily be determined
-	else if( func->returnType.GetSizeInMemoryDWords() > 2 )
-	{
-		// Shouldn't be possible to get here
-		assert(false);
-		internal->hostReturnInMemory = true;
-		internal->hostReturnSize     = 1;
-		internal->hostReturnFloat    = false;
-	}
-	else if( func->returnType.GetSizeInMemoryDWords() == 2 )
-	{
-		// 64 bit primitives
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize     = 2;
-		internal->hostReturnFloat    = func->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttDouble, true));
-	}
-	else if( func->returnType.GetSizeInMemoryDWords() == 1 )
-	{
-		// 32 bit primitives
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize     = 1;
-		internal->hostReturnFloat    = func->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttFloat, true));
-	}
-	else
-	{
-		// void
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize     = 0;
-		internal->hostReturnFloat    = false;
-	}
-
-	// Calculate the size needed for the parameters
-	internal->paramSize = func->GetSpaceNeededForArguments();
-
-	// Verify if the function takes any objects by value
-	asUINT n;
-	internal->takesObjByVal = false;
-	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
-	{
-		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsObjectHandle() && !func->parameterTypes[n].IsReference() )
-		{
-			internal->takesObjByVal = true;
-			break;
-		}
-	}
-
-	// Verify if the function has any registered autohandles
-	internal->hasAutoHandles = false;
-	for( n = 0; n < internal->paramAutoHandles.GetLength(); n++ )
-	{
-		if( internal->paramAutoHandles[n] )
-		{
-			internal->hasAutoHandles = true;
-			break;
-		}
-	}
-
-	return 0;
-}
-
 int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 {
 	// use a working array of types, we'll configure the final one in stackArgs
@@ -671,14 +531,16 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				t = bPtr[1];
 				bPtr[1] = bPtr[2];
 				bPtr[2] = t;
-			}break;
+			}
+			break;
 		case 2:
 			{
 				volatile asWORD *wPtr = (asWORD*)ARG_DW(args[argDwordOffset]);
 				asWORD t = wPtr[0];
 				wPtr[0] = wPtr[1];
 				wPtr[1] = t;
-			}break;
+			}
+			break;
 		}
 		argDwordOffset++;
 	}
@@ -760,14 +622,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		{
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
 			{
-				#ifdef COMPLEX_OBJS_PASSED_BY_REF
+#ifdef COMPLEX_OBJS_PASSED_BY_REF
 				if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
 				{
 					paramBuffer[dpos++] = args[spos++];
 					paramSize++;
 				}
 				else
-				#endif
+#endif
 				{
 					// NOTE: we may have to do endian flipping here
 
@@ -831,7 +693,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 	context->isCallingSystemFunction = false;
 
-	#ifdef COMPLEX_OBJS_PASSED_BY_REF
+#ifdef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal )
 	{
 		// Need to free the complex objects passed by value
@@ -861,7 +723,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			}
 		}
 	}
-	#endif
+#endif
 
 	// Store the returned value in our stack
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() )
@@ -951,7 +813,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 					val[5] = 0;
 					val[6] = 0;
 					val[7] = 0;
-				}break;
+				}
+				break;
 			case 2:
 				{
 					// 16 bits
@@ -960,14 +823,16 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 					val[1] = 0;
 					val[2] = 0;
 					val[3] = 0;
-				}break;
+				}
+				break;
 			default:
 				{
 					// 32 bits
 					asDWORD *val = (asDWORD*)ARG_DW(context->register1);
 					val[0] = (asDWORD)retQW;
 					val[1] = 0;
-				}break;
+				}
+				break;
 			}
 		}
 		else
@@ -1033,6 +898,13 @@ extern "C"
 	static asBYTE ppcArgsType[AS_PPC_MAX_ARGS + 1 + 1 + 1];
 }
 
+// NOTE: these values are for PowerPC 32 bit. 
+#define PPC_LINKAGE_SIZE  (24)                                   // how big the PPC linkage area is in a stack frame
+#define PPC_NUM_REGSTORE  (10)                                   // how many registers of the PPC we need to store/restore for ppcFunc64()
+#define PPC_REGSTORE_SIZE (8*PPC_NUM_REGSTORE)                   // how many bytes are required for register store/restore
+#define EXTRA_STACK_SIZE  (PPC_LINKAGE_SIZE + PPC_REGSTORE_SIZE) // memory required, not including parameters, for the stack frame
+#define PPC_STACK_SIZE(numParams)  ( -(( ( (((numParams)<8)?8:(numParams))<<3) + EXTRA_STACK_SIZE + 15 ) & ~15) ) // calculates the total stack size needed for ppcFunc64, must pad to 16bytes
+
 // Loads all data into the correct places and calls the function.
 // ppcArgsType is an array containing a byte type (enum argTypes) for each argument.
 // stackArgSize is the size in bytes for how much data to put on the stack frame
@@ -1045,325 +917,768 @@ asm(""
 	" .globl _ppcFunc\n"
 	"_ppcFunc:\n"
 
-	// setup stack
-	" mflr r0 \n"
-	" stmw r30, -8(r1) \n"	// r1 is the stack pointer
-	" stw r0, 8(r1) \n"
-	" mr r30,r4 \n"			// stacksize
-	" addi r30, r30, 24 \n" // plus link/save area standard size
-	" mr r31, r1 \n"
-	" sub r1, r1, r30 \n"   // set our stack frame
-	" stw r31, 0(r1) \n"    // stow callers stack frame ptr
-	//
-	" mr r27, r5 \n"        // func, which is the ptr to call
-	" mr r29, r3 \n"        // argsPtr, arguments pointer
+	// We're receiving argsPtr in r3, StackArgSize in r4, and func in r5
 
-	// Obtain an address that we'll use as our position of reference
-	" bcl 20,31,address \n"
-	"address: \n"
-	" mflr r15 \n"
+	// Store register values and setup our stack frame
+	" mflr  r0            \n"   // move the return address into r0
+	" stmw  r30, -8(r1)   \n"   // Store r30 on the stack
+	" stw   r0, 8(r1)     \n"   // Store the return address on the stack
+	" mr    r30, r4       \n"   // Move StackArgSize to r30
+	" addi  r30, r30, 24  \n"   // Add space for link/save area (24 is the standard size on 32bit PPC)
+	" mr    r31, r1       \n"   // Move stack pointer to r31
+	" sub   r1, r1, r30   \n"   // Increase the stack with the needed space
+	" stw   r31, 0(r1)    \n"   // Store caller's stack frame pointer
 
-	// Clear some registers
-	" sub r0,r0,r0 \n"
-	" mr r23,r0 \n"			// We'll use r23 to count the number of used GPR registers
-	" mr r22,r0 \n"			// We'll use r22 to count the number of used float registers
+	// Obtain an address that we'll use as our position of reference when obtaining addresses of other labels
+	" bcl   20, 31, address \n"
+	"address:               \n"
+	" mflr  r15             \n"
 
-	// fetch address of argument types array (symbol: _ppcArgsType)
-	" addis r30,r15,ha16(_ppcArgsType-address) \n"
-	" la r30,lo16(_ppcArgsType-address)(r30) \n"
-
-	" subi r25, r25, 1 \n"  // Decrement one since the loop begins by incrementing
-
-	// Loop through the list of argument types
-	"ppcNextArg: \n"
-	" addi r25, r25, 1 \n"
-	// This is like switch{case:0; case:int; case:float; case:double}
-	" lbz r24, 0(r25) \n"		// Get the current argument type (1 byte)
-	" mulli r24, r24, 2 \n"		// Each switch case is 4 bytes (1 instruction)
-
-	// Determine the address of ppcTypeSwitch and store in r30
-	" addis r30,r15,ha16(ppcTypeSwitch-address) \n"
-	" la r30,lo16(ppcTypeSwitch-address)(r30) \n"
+    // initial registers for the function
+	" mr    r29, r3       \n"   // (r29) args list
+	" mr    r27, r5       \n"   // load the function pointer to call.  func actually holds the pointer to our function
+	" addi  r26, r1, 48   \n"   // setup the pointer to the parameter area to the function we're going to call
+	" sub   r0, r0, r0    \n"   // zero out r0
+	" mr    r23, r0       \n"   // zero out r23, which holds the number of used GPR registers
+	" mr    r22, r0       \n"   // zero our r22, which holds the number of used float registers
 	
-	" add r30, r30, r24 \n"     // Get the case by offsetting with the argument type value
-	" mtctr r30 \n"             // Load the jump address into CTR
-	" bctr \n"                  // Jump into the jump table (switch case)
-	// Our jump table (the switch cases)
-	"ppcTypeSwitch: \n"
-	" b ppcArgsEnd \n"
-	" b ppcArgIsInteger \n"
-	" b ppcArgIsFloat \n"
-	" b ppcArgIsDouble \n"
+	// load the global ppcArgsType which holds the types of arguments for each argument
+	" addis r25, r15, ha16(_ppcArgsType - address) \n" // load the upper 16 bits of the address to r25
+	" la    r25, lo16(_ppcArgsType - address)(r25) \n" // load the lower 16 bits of the address to r25
+	" subi  r25, r25, 1    \n"   // since we increment r25 on its use, we'll pre-decrement it
 
-	// Load and stack General Purpose registers (integer arguments)
-	"ppcArgIsInteger: \n"
+    // loop through the arguments
+	"ppcNextArg:           \n"
+	" addi r25, r25, 1     \n"   // increment r25, our arg type pointer
+	// switch based on the current argument type (0:end, 1:int, 2:float 3:double)
+	" lbz  r24, 0(r25)     \n"   // load the current argument type (it's a byte)
+	" mulli r24, r24, 4    \n"   // our jump table has 4 bytes per case (1 instruction)
+	" addis r30, r15, ha16(ppcTypeSwitch - address) \n"   // load the address of the jump table for the switch
+	" la    r30, lo16(ppcTypeSwitch - address)(r30) \n"
 	
-	// Determine the address of ppcLoadIntReg
-	" addis r30,r15,ha16(ppcLoadIntReg-address) \n"
-	" la r30,lo16(ppcLoadIntReg-address)(r30) \n"
-
-	" mulli r0, r23, 8 \n"					 // Each case is 2 instructions (8 bytes)
-	" add r30, r30, r0 \n"                   // Offset by the number of used GPR registers
-	" lwz r11,0(r29) \n"                     // Load the next argument from argsPtr
-	" cmpwi r23, 8 \n"                       // can only load GPR3 through GPR10 (8 registers)
-	" bgt ppcLoadIntRegUpd \n"               // The rest of the values will be stored on the stack so jump to that code
-	" mtctr r30 \n"                          // Load the calculated jump destination into CTR
-	" bctr \n"								 // Jump
-	"ppcLoadIntReg: \n"
-	" mr r3,r11 \n"                          // Load the argument value into the register
-	" b ppcLoadIntRegUpd \n"                 // Continue the iteration
-	" mr r4,r11 \n"
-	" b ppcLoadIntRegUpd \n"
-	" mr r5,r11 \n"
-	" b ppcLoadIntRegUpd \n"
-	" mr r6,r11 \n"
-	" b ppcLoadIntRegUpd \n"
-	" mr r7,r11 \n"
-	" b ppcLoadIntRegUpd \n"
-	" mr r8,r11 \n"
-	" b ppcLoadIntRegUpd \n"
-	" mr r9,r11 \n"
-	" b ppcLoadIntRegUpd \n"
-	" mr r10,r11 \n"
-	" b ppcLoadIntRegUpd \n"
+    " add    r0, r30, r24  \n"   // offset by our argument type
+	" mtctr  r0            \n"   // load the jump address into CTR
+	" bctr                 \n"   // jump into the jump table/switch
+	" nop                  \n"
 	
-	"ppcLoadIntRegUpd: \n"
-	" stw r11,0(r26) \n"      // The value should be stored on the stack as well
-	" addi r23, r23, 1 \n"    // Increment the number of used GPR registers
-	" addi r29, r29, 4 \n"    // Move to the next argument on the list
-	" addi r26, r26, 4 \n"    // Adjust the stack pointer
-	" b ppcNextArg \n"        // Next iteration
-
-	// Load and stack float single arguments
-	"ppcArgIsFloat: \n"
-
-	// Determine the address of ppcLoadFloatReg
-	" addis r30,r15,ha16(ppcLoadFloatReg-address) \n"
-	" la r30,lo16(ppcLoadFloatReg-address)(r30) \n"
-
-	" mulli r0, r22 ,8 \n"
-	" add r30, r30, r0 \n"
-	" lfs f15, 0(r29) \n"
-	" cmpwi r22, 13 \n" // can't load more than 14 float/double regs
-	" bgt ppcLoadFloatRegUpd \n" // store float into stack area
-	" mtctr r30 \n"
-	" bctr \n" // else load reg, then store into stack area
-	"ppcLoadFloatReg: \n"
-	" fmr f0,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f1,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f2,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f3,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f4,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f5,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f6,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f7,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f8,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f9,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f10,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f11,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f12,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f13,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	" fmr f14,f15 \n"
-	" b ppcLoadFloatRegUpd \n"
-	"ppcLoadFloatRegUpd: \n"
-	" stfs f15, 0(r26) \n"
-	" addi r22, r22, 1 \n"
-	" addi r23, r23, 1 \n" //a float reg eats up a GPR
-	" addi r29, r29, 4 \n"
-	" addi r26, r26, 4 \n"
-	" b ppcNextArg \n"
-
-	// Load and stack a Double float argument
-	"ppcArgIsDouble: \n"
+	// the jump table/switch based on the current argument type
+	"ppcTypeSwitch:        \n"
+	" b ppcArgsEnd         \n"
+	" b ppcArgIsInteger    \n"
+	" b ppcArgIsFloat      \n"
+	" b ppcArgIsDouble     \n"
 	
-	// Determine the address of ppcLoadDoubleReg
-	" addis r30,r15,ha16(ppcLoadDoubleReg-address) \n"
-	" la r30,lo16(ppcLoadDoubleReg-address)(r30) \n"
+	// when we get here we have finished processing all the arguments
+	// everything is ready to go to call the function
+	"ppcArgsEnd:           \n"
+	" mtctr r27            \n"   // the function pointer is stored in r27, load that into CTR
+	" bctrl                \n"   // call the function.  We have to do it this way so that the LR gets the proper
+	" nop                  \n"   // return value (the next instruction below).  So we have to branch from CTR instead of LR.
 	
-	" mulli r0, r22, 8 \n" //calc branch for float reg
-	" add r30, r30, r0 \n"
-	" lfd f15, 0(r29) \n"
-	" cmpwi r22,13 \n" // Can't load more than 14 float regs
-	" bgt ppcLoadDoubleRegUpd \n" // just store it into the stack
-	" mtctr r30 \n"
-	" bctr \n" // else load double, then store into stack
-	"ppcLoadDoubleReg: \n"
-	" fmr f0,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f1,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f2,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f3,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f4,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f5,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f6,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f7,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f8,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f9,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f10,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f11,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f12,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f13,f15 \n"
-	" b ppcLoadDoubleRegUpd \n"
-	" fmr f14,f15 \n"
-	" b ppcLoadIntRegUpd \n"
+	// Restore registers and caller's stack frame, then return to caller
+	" lwz   r1, 0(r1)      \n"   // load in the caller's stack pointer
+	" lwz   r0, 8(r1)      \n"   // load in the caller's LR
+	" mtlr  r0             \n"   // restore the caller's LR
+	" lmw   r30, -8(r1)   \n"    // restore r30
+    " blr                  \n"   // return back to the caller
+	" nop                  \n"
+	
+	// Integer argument (GPR register)
+	"ppcArgIsInteger:             \n"
+	" addis r30, r15, ha16(ppcLoadIntReg - address) \n" // load the address to the jump table for integer registers
+	" la    r30, lo16(ppcLoadIntReg - address)(r30) \n"
+	" mulli r0, r23, 8            \n"    // each item in the jump table is 2 instructions (8 bytes)
+	" add   r0, r0, r30           \n"    // calculate ppcLoadIntReg[numUsedGPRRegs]
+	" lwz   r30, 0(r29)           \n"    // load the next argument from the argument list into r30
+	" cmpwi r23, 8                \n"    // we can only load GPR3 through GPR10 (8 registers)
+	" bgt   ppcLoadIntRegUpd      \n"    // if we're beyond 8 GPR registers, we're in the stack, go there
+	" mtctr r0                    \n"    // load the address of our ppcLoadIntReg jump table (we're below 8 GPR registers)
+	" bctr                        \n"    // load the argument into a GPR register
+	" nop                         \n"
+	// jump table for GPR registers, for the first 8 GPR arguments
+	"ppcLoadIntReg:               \n"
+	" mr    r3, r30               \n"    // arg0 (to r3)
+	" b     ppcLoadIntRegUpd      \n"
+	" mr    r4, r30               \n"    // arg1 (to r4)
+	" b     ppcLoadIntRegUpd      \n"
+	" mr    r5, r30               \n"    // arg2 (to r5)
+	" b     ppcLoadIntRegUpd      \n"
+	" mr    r6, r30               \n"    // arg3 (to r6)
+	" b     ppcLoadIntRegUpd      \n"
+	" mr    r7, r30               \n"    // arg4 (to r7)
+	" b     ppcLoadIntRegUpd      \n"
+	" mr    r8, r30               \n"    // arg5 (to r8)
+	" b     ppcLoadIntRegUpd      \n"
+	" mr    r9, r30               \n"    // arg6 (to r9)
+	" b     ppcLoadIntRegUpd      \n"
+	" mr    r10, r30              \n"    // arg7 (to r10)
+	" b     ppcLoadIntRegUpd      \n"
+
+	// all GPR arguments still go on the stack
+	"ppcLoadIntRegUpd:            \n"
+	" stw   r30, 0(r26)           \n"    // store the argument into the next slot on the stack's argument list
+	" addi  r23, r23, 1           \n"    // count a used GPR register
+	" addi  r29, r29, 4           \n"    // move to the next argument on the list
+	" addi  r26, r26, 8           \n"    // adjust our argument stack pointer for the next
+	" b     ppcNextArg            \n"    // next argument
+
+	// single Float argument
+	"ppcArgIsFloat:\n"
+	" addis r30, r15, ha16(ppcLoadFloatReg - address) \n" // get the base address of the float register jump table
+	" la    r30, lo16(ppcLoadFloatReg - address)(r30) \n"
+	" mulli r0, r22, 8           \n"     // each jump table entry is 8 bytes
+	" add   r0, r0, r30          \n"     // calculate the offset to ppcLoadFloatReg[numUsedFloatReg]
+	" lfs   f0, 0(r29)           \n"     // load the next argument as a float into f0
+	" cmpwi r22, 13              \n"     // can't load more than 13 float/double registers
+	" bgt   ppcLoadFloatRegUpd   \n"     // if we're beyond 13 registers, just fall to inserting into the stack
+	" mtctr r0                   \n"     // jump into the float jump table
+	" bctr                       \n"
+	" nop                        \n"
+	// jump table for float registers, for the first 13 float arguments
+	"ppcLoadFloatReg:            \n"
+	" fmr   f1, f0               \n"     // arg0 (f1)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f2, f0               \n"     // arg1 (f2)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f3, f0               \n"     // arg2 (f3)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f4, f0               \n"     // arg3 (f4)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f5, f0               \n"     // arg4 (f5)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f6, f0               \n"     // arg5 (f6)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f7, f0               \n"     // arg6 (f7)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f8, f0               \n"     // arg7 (f8)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f9, f0               \n"     // arg8 (f9)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f10, f0              \n"     // arg9 (f10)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f11, f0              \n"     // arg10 (f11)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f12, f0              \n"     // arg11 (f12)
+	" b     ppcLoadFloatRegUpd   \n"
+	" fmr   f13, f0              \n"     // arg12 (f13)
+	" b     ppcLoadFloatRegUpd   \n"
+	" nop                        \n"
+	// all float arguments still go on the stack
+	"ppcLoadFloatRegUpd:         \n"
+	" stfs  f0, 4(r26)           \n"     // store, as a single float, f0 (current argument) on to the stack argument list
+	" addi  r23, r23, 1          \n"     // a float register eats up a GPR register
+	" addi  r22, r22, 1          \n"     // ...and, of course, a float register
+	" addi  r29, r29, 4          \n"     // move to the next argument in the list
+	" addi  r26, r26, 8          \n"     // move to the next stack slot
+	" b     ppcNextArg           \n"     // on to the next argument
+	" nop                        \n"
+	// double Float argument
+	"ppcArgIsDouble:             \n"
+	" addis r30, r15, ha16(ppcLoadDoubleReg - address) \n" // load the base address of the jump table for double registers
+	" la    r30, lo16(ppcLoadDoubleReg - address)(r30) \n"
+	" mulli r0, r22, 8           \n"     // each slot of the jump table is 8 bytes
+	" add   r0, r0, r30          \n"     // calculate ppcLoadDoubleReg[numUsedFloatReg]
+	" lfd   f0, 0(r29)           \n"     // load the next argument, as a double float, into f0
+	" cmpwi r22, 13              \n"     // the first 13 floats must go into float registers also
+	" bgt   ppcLoadDoubleRegUpd  \n"     // if we're beyond 13, then just put on to the stack
+	" mtctr r0                   \n"     // we're under 13, first load our register
+	" bctr                       \n"     // jump into the jump table
+	" nop                        \n"
+	// jump table for float registers, for the first 13 float arguments
+	"ppcLoadDoubleReg:           \n"
+	" fmr   f1, f0               \n"     // arg0 (f1)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f2, f0               \n"     // arg1 (f2)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f3, f0               \n"     // arg2 (f3)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f4, f0               \n"     // arg3 (f4)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f5, f0               \n"     // arg4 (f5)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f6, f0               \n"     // arg5 (f6)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f7, f0               \n"     // arg6 (f7)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f8, f0               \n"     // arg7 (f8)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f9, f0               \n"     // arg8 (f9)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f10, f0              \n"     // arg9 (f10)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f11, f0              \n"     // arg10 (f11)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f12, f0              \n"     // arg11 (f12)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" fmr   f13, f0              \n"     // arg12 (f13)
+	" b     ppcLoadDoubleRegUpd  \n"
+	" nop                        \n"
+	// all float arguments still go on the stack
 	"ppcLoadDoubleRegUpd: \n"
-	" stfd f14,0(r26) \n"
-	" addi r22, r22, 1 \n"
-	" addi r23, r23, 2 \n" //a double float eats up two GPRs
-	" addi r29, r29, 8 \n"
-	" addi r26, r26, 8 \n"
-	" b ppcNextArg \n" // go get next argument
-
-	// End of arguments, registers are loaded, stack is set, call function
-	"ppcArgsEnd: \n"
-	" mtlr r27 \n"
-//	" bl \n"
-	// function returned
-	" lwz r1, 0(r1) \n" // restore callers stack
-	" lwz r0, 8(r1) \n" // fetch return link to caller
-	" lmw r30, -8(r1) \n" // restore staved regs
-	" blr \n" // return to caller
-	"\n"
+	" stfd  f0, 0(r26)     \n"    // store f0, as a double, into the argument list on the stack
+	" addi  r23, r23, 1   \n"     // a double float eats up one GPR
+	" addi  r22, r22, 1   \n"     // ...and, of course, a float
+	" addi  r29, r29, 8   \n"     // increment to our next argument we need to process (8 bytes for the 64bit float)
+	" addi  r26, r26, 8   \n"     // increment to the next slot on the argument list on the stack (8 bytes)
+	" b     ppcNextArg    \n"     // on to the next argument
+	" nop                 \n"
 );
 
 asDWORD GetReturnedFloat()
 {
 	asDWORD f;
-	asm(" stfs f0, %0\n" : "=m"(f));
+	asm(" stfs f1, %0\n" : "=m"(f));
 	return f;
 }
 
 asQWORD GetReturnedDouble()
 {
 	asQWORD f;
-	asm(" stfd f0, %0\n" : "=m"(f));
+	asm(" stfd f1, %0\n" : "=m"(f));
 	return f;
 }
 
 // puts the arguments in the correct place in the stack array. See comments above.
-void stackArgs(const asDWORD *args, int& numIntArgs, int& numFloatArgs, int& numDoubleArgs)
+void stackArgs(const asDWORD *args, const asBYTE *argsType, int& numIntArgs, int& numFloatArgs, int& numDoubleArgs)
 {
 	int i;
-
 	int argWordPos = numIntArgs + numFloatArgs + (numDoubleArgs*2);
+	int typeOffset = numIntArgs + numFloatArgs + numDoubleArgs;
 
-	for(i = 0; i < AS_PPC_MAX_ARGS; i++)
+	int typeIndex;
+	for( i = 0, typeIndex = 0; i < AS_PPC_MAX_ARGS; i++, typeIndex++ )
 	{
-		if ( ppcArgsType[i] == ppcENDARG )
+		// store the type
+		ppcArgsType[typeOffset++] = argsType[typeIndex];
+		if( argsType[typeIndex] == ppcENDARG )
 			break;
 
-		if( ppcArgsType[i] == ppcFLOATARG )
+		switch( argsType[typeIndex] )
 		{
+		case ppcFLOATARG:
 			// stow float
-			((float*)ppcArgs)[argWordPos] = (float)(args[i]);
+			ppcArgs[argWordPos] = args[i]; // it's just a bit copy
 			numFloatArgs++;
 			argWordPos++; //add one word
-		}
-		if ( ppcArgsType[i] == ppcDOUBLEARG )
-		{
+			break;
+
+		case ppcDOUBLEARG:
 			// stow double
-			((double*)ppcArgs)[argWordPos] = (double)(args[i]);
+			memcpy( &ppcArgs[argWordPos], &args[i], sizeof(double) ); // we have to do this because of alignment
 			numDoubleArgs++;
 			argWordPos+=2; //add two words
-		}
+			i++;//doubles take up 2 argument slots
+			break;
 
-		if( ppcArgsType[i] == ppcINTARG )
-		{
+		case ppcINTARG:
 			// stow register
-			((int*)ppcArgs)[argWordPos] = (int)(args[i]);
+			ppcArgs[argWordPos] = args[i];
 			numIntArgs++;
 			argWordPos++;
+			break;
 		}
 	}
+
+	// close off the argument list (if we have max args we won't close it off until here)
+	ppcArgsType[typeOffset] = ppcENDARG;
 }
 
-asQWORD CallCDeclFunction(const asDWORD* pArgs, int argSize, asDWORD func)
+static asQWORD CallCDeclFunction(const asDWORD* pArgs, const asBYTE *pArgsType, int argSize, asDWORD func, void *retInMemory)
 {
-	int intArgs = 0;
-	int floatArgs = 0;
-	int doubleArgs = 0;
-
-	// put the arguments in the correct places in the ppcArgs array
-	if(argSize > 0)
-		stackArgs( pArgs, intArgs, floatArgs, doubleArgs );
-
-	// asm(" trap\n nop\n");
-	// printf("calling ppcFunc, %d %d %d %p.. %p.. %d...\n", intArgs, floatArgs, doubleArgs, (void*)func, ppcFunc, (int)ppcArgs[0]);
-
-	//-return ppcFunc(intArgs << 2, floatArgs << 2, restArgs << 2, func);
-	return ppcFunc( ppcArgs, argSize, func);
-}
-
-// This function is identical to CallCDeclFunction, with the only difference that
-// the value in the first parameter is the object
-asQWORD CallThisCallFunction(const void *obj, const asDWORD* pArgs, int argSize, asDWORD func )
-{
-	int intArgs = 1;
-	int floatArgs = 0;
-	int doubleArgs = 0;
-
-	ppcArgs[0] = (asDWORD) obj;
-	ppcArgsType[0] = ppcINTARG;
-
-	// put the arguments in the correct places in the ppcArgs array
-	if (argSize > 0)
-		stackArgs( pArgs, intArgs, floatArgs, doubleArgs );
-
-	// asm(" trap\n nop\n");
-	// printf("calling from CallThisCall...\n");
-	return ppcFunc( pArgs, argSize + sizeof(obj), func);
-}
-
-// This function is identical to CallCDeclFunction, with the only difference that
-// the value in the last parameter is the object
-asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD* pArgs, int argSize, asDWORD func)
-{
-	int intArgs = 0;
-	int floatArgs = 0;
-	int doubleArgs = 0;
-
-	stackArgs( pArgs, intArgs, floatArgs, doubleArgs );
-
-	int numArgs = intArgs + floatArgs + doubleArgs ;
-	if( numArgs < AS_PPC_MAX_ARGS )
+	int baseArgCount = 0;
+	if( retInMemory )
 	{
-		int argPos = intArgs + floatArgs + (doubleArgs*2/*words*/);
-		ppcArgs[argPos] = (asDWORD) obj;
-		ppcArgsType[numArgs] = ppcINTARG;
+		// the first argument is the 'return in memory' pointer
+		ppcArgs[0]     = (asDWORD)retInMemory;
+		ppcArgsType[0] = ppcINTARG;
+		ppcArgsType[1] = ppcENDARG;
+		baseArgCount   = 1;
 	}
 
-	// asm(" trap\n nop\n");
-	// printf("calling from CallThisCallFunction_objlast...\n");
-	return ppcFunc( pArgs, argSize+sizeof(obj), func );
+	// put the arguments in the correct places in the ppcArgs array
+	int numTotalArgs = baseArgCount;
+	if( argSize > 0 )
+	{
+		int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0;
+		stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs );
+		numTotalArgs = intArgs + floatArgs + doubleArgs;
+	}
+	else
+	{
+		// no arguments, cap the type list
+		ppcArgsType[baseArgCount] = ppcENDARG;
+	}
+
+	// call the function with the arguments
+	return ppcFunc( ppcArgs, PPC_STACK_SIZE(numTotalArgs), func );
 }
 
-// TODO: PrepareSystemFunction is equal for both PS3 and Mac
+// This function is identical to CallCDeclFunction, with the only difference that
+// the value in the first parameter is the object (unless we are returning in memory)
+static asQWORD CallThisCallFunction(const void *obj, const asDWORD* pArgs, const asBYTE *pArgsType, int argSize, asDWORD func, void *retInMemory )
+{
+	int baseArgCount = 0;
+	if( retInMemory )
+	{
+		// the first argument is the 'return in memory' pointer
+		ppcArgs[0]     = (asDWORD)retInMemory;
+		ppcArgsType[0] = ppcINTARG;
+		ppcArgsType[1] = ppcENDARG;
+		baseArgCount = 1;
+	}
+
+	// the first argument is the 'this' of the object
+	ppcArgs[baseArgCount]       = (asDWORD)obj;
+	ppcArgsType[baseArgCount++] = ppcINTARG;
+	ppcArgsType[baseArgCount]   = ppcENDARG;
+
+	// put the arguments in the correct places in the ppcArgs array
+	int numTotalArgs = baseArgCount;
+	if( argSize > 0 )
+	{
+		int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0;
+		stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs );
+		numTotalArgs = intArgs + floatArgs + doubleArgs;
+	}
+
+	// call the function with the arguments
+	return ppcFunc( ppcArgs, PPC_STACK_SIZE(numTotalArgs), func);
+}
+
+// This function is identical to CallCDeclFunction, with the only difference that
+// the value in the last parameter is the object 
+// NOTE: on PPC the order for the args is reversed
+static asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD* pArgs, const asBYTE *pArgsType, int argSize, asDWORD func, void *retInMemory)
+{
+	UNUSED_VAR(argSize);
+	int baseArgCount = 0;
+	if( retInMemory )
+	{
+		// the first argument is the 'return in memory' pointer
+		ppcArgs[0]     = (asDWORD)retInMemory;
+		ppcArgsType[0] = ppcINTARG;
+		ppcArgsType[1] = ppcENDARG;
+		baseArgCount = 1;
+	}
+
+	// stack any of the arguments
+	int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0;
+	stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs );
+	int numTotalArgs = intArgs + floatArgs + doubleArgs;
+
+	// can we fit the object in at the end?
+	if( numTotalArgs < AS_PPC_MAX_ARGS )
+	{
+		// put the object pointer at the end
+		int argPos = intArgs + floatArgs + (doubleArgs * 2);
+		ppcArgs[argPos]             = (asDWORD)obj;
+		ppcArgsType[numTotalArgs++] = ppcINTARG;
+		ppcArgsType[numTotalArgs]   = ppcENDARG;
+	}
+
+	// call the function with the arguments
+	return ppcFunc( ppcArgs, PPC_STACK_SIZE(numTotalArgs), func );
+}
+
+int CallSystemFunction(int id, asCContext *context, void *objectPointer)
+{
+	// use a working array of types, we'll configure the final one in stackArgs
+	asBYTE argsType[AS_PPC_MAX_ARGS + 1 + 1 + 1];
+	memset( argsType, 0, sizeof(argsType));
+
+	asCScriptEngine *engine = context->engine;
+	asCScriptFunction *descr = engine->scriptFunctions[id];
+	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
+
+	int callConv = sysFunc->callConv;
+	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
+	{
+		// we're only handling native calls, handle generic calls in here
+		return context->CallGeneric( id, objectPointer);
+	}
+
+	asQWORD  retQW           = 0;
+	void    *func            = (void*)sysFunc->func;
+	int      paramSize       = sysFunc->paramSize;
+	int      popSize         = paramSize;
+	asDWORD *args            = context->stackPointer;	
+	void    *obj             = NULL;
+	asDWORD *vftable         = NULL;
+	void    *retObjPointer   = NULL; // for system functions that return AngelScript objects
+	void    *retInMemPointer = NULL; // for host functions that need to return data in memory instead of by register
+	int      a;
+
+	// convert the parameters that are < 4 bytes from little endian to big endian
+	int argDwordOffset = 0;
+	for( a = 0; a < (int)descr->parameterTypes.GetLength(); a++ )
+	{
+		int numBytes = descr->parameterTypes[a].GetSizeInMemoryBytes();
+		if( numBytes >= 4 || descr->parameterTypes[a].IsReference() || descr->parameterTypes[a].IsObjectHandle() )
+		{
+			argDwordOffset += descr->parameterTypes[a].GetSizeOnStackDWords();
+			continue;
+		}
+
+		// flip
+		assert( numBytes == 1 || numBytes == 2 );
+		switch( numBytes )
+		{
+		case 1:
+			{
+				volatile asBYTE *bPtr = (asBYTE*)ARG_DW(args[argDwordOffset]);
+				asBYTE t = bPtr[0];
+				bPtr[0] = bPtr[3];
+				bPtr[3] = t;
+				t = bPtr[1];
+				bPtr[1] = bPtr[2];
+				bPtr[2] = t;
+			}
+			break;
+		case 2:
+			{
+				volatile asWORD *wPtr = (asWORD*)ARG_DW(args[argDwordOffset]);
+				asWORD t = wPtr[0];
+				wPtr[0] = wPtr[1];
+				wPtr[1] = t;
+			}
+			break;
+		}
+		argDwordOffset++;
+	}
+
+	// Objects returned to AngelScript must be via an object pointer.  This goes for
+	// ALL objects, including those of simple, complex, primitive or float.  Whether
+	// the host system (PPC in this case) returns the 'object' as a pointer depends on the type of object.
+	context->objectType = descr->returnType.GetObjectType();
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
+	{
+		// Allocate the memory for the object
+		retObjPointer = engine->CallAlloc( descr->returnType.GetObjectType() );
+		
+		if( sysFunc->hostReturnInMemory )
+		{
+			// The return is made in memory on the host system
+			callConv++;
+			retInMemPointer = retObjPointer;
+		}
+	}
+
+	// make sure that host functions that will be returning in memory have a memory pointer
+	assert( sysFunc->hostReturnInMemory==false || retInMemPointer!=NULL );
+
+	if( callConv >= ICC_THISCALL )
+	{
+		if( objectPointer )
+		{
+			obj = objectPointer;
+		}
+		else
+		{
+			// The object pointer should be popped from the context stack
+			popSize++;
+
+			// Check for null pointer
+			obj = (void*)*(args);
+			if( obj == NULL )
+			{
+				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
+				if( retObjPointer )
+				{
+					engine->CallFree(descr->returnType.GetObjectType(), retObjPointer);
+				}
+				return 0;
+			}
+
+			// Add the base offset for multiple inheritance
+			obj = (void*)(int(obj) + sysFunc->baseOffset);
+
+			// Skip the object pointer
+			args++;
+		}
+	}
+	assert( descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS );
+
+	// mark all float/double/int arguments
+	for( a = 0; a < (int)descr->parameterTypes.GetLength(); a++ )
+	{
+		argsType[a] = ppcINTARG;
+		if( descr->parameterTypes[a].IsFloatType() )
+		{
+			argsType[a] = ppcFLOATARG;
+		}
+		if( descr->parameterTypes[a].IsDoubleType() )
+		{
+			argsType[a] = ppcDOUBLEARG;
+		}
+	}
+
+	asDWORD paramBuffer[64];
+	if( sysFunc->takesObjByVal )
+	{
+		paramSize = 0;
+		int spos = 0;
+		int dpos = 1;
+
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		{
+			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
+			{
+#ifdef COMPLEX_OBJS_PASSED_BY_REF
+				if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
+				{
+					paramBuffer[dpos++] = args[spos++];
+					paramSize++;
+				}
+				else
+#endif
+				{
+					// NOTE: we may have to do endian flipping here
+
+					// Copy the object's memory to the buffer
+					memcpy( &paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes() );
+
+					// Delete the original memory
+					engine->CallFree( descr->parameterTypes[n].GetObjectType(), *(char**)(args+spos) );
+					spos++;
+					dpos += descr->parameterTypes[n].GetSizeInMemoryDWords();
+					paramSize += descr->parameterTypes[n].GetSizeInMemoryDWords();
+				}
+			}
+			else
+			{
+				// Copy the value directly
+				paramBuffer[dpos++] = args[spos++];
+				if( descr->parameterTypes[n].GetSizeOnStackDWords() > 1 )
+				{
+					paramBuffer[dpos++] = args[spos++];
+				}
+				paramSize += descr->parameterTypes[n].GetSizeOnStackDWords();
+			}
+		}
+
+		// Keep a free location at the beginning
+		args = &paramBuffer[1];
+	}
+	
+	// one last verification to make sure things are how we expect
+	assert( (retInMemPointer!=NULL && sysFunc->hostReturnInMemory) || (retInMemPointer==NULL && !sysFunc->hostReturnInMemory) );
+	context->isCallingSystemFunction = true;
+	switch( callConv )
+	{
+	case ICC_CDECL:
+	case ICC_CDECL_RETURNINMEM:
+	case ICC_STDCALL:
+	case ICC_STDCALL_RETURNINMEM:
+		retQW = CallCDeclFunction( args, argsType, paramSize, (asDWORD)func, retInMemPointer );
+		break;
+	case ICC_THISCALL:
+	case ICC_THISCALL_RETURNINMEM:
+		retQW = CallThisCallFunction(obj, args, argsType, paramSize, (asDWORD)func, retInMemPointer );
+		break;
+	case ICC_VIRTUAL_THISCALL:
+	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
+		// Get virtual function table from the object pointer
+		vftable = *(asDWORD**)obj;
+		retQW = CallThisCallFunction( obj, args, argsType, paramSize, vftable[asDWORD(func)>>2], retInMemPointer );
+		break;
+	case ICC_CDECL_OBJLAST:
+	case ICC_CDECL_OBJLAST_RETURNINMEM:
+		retQW = CallThisCallFunction_objLast( obj, args, argsType, paramSize, (asDWORD)func, retInMemPointer );
+		break;
+	case ICC_CDECL_OBJFIRST:
+	case ICC_CDECL_OBJFIRST_RETURNINMEM:
+		retQW = CallThisCallFunction( obj, args, argsType, paramSize, (asDWORD)func, retInMemPointer );
+		break;
+	default:
+		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
+	}
+	context->isCallingSystemFunction = false;
+
+#ifdef COMPLEX_OBJS_PASSED_BY_REF
+	if( sysFunc->takesObjByVal )
+	{
+		// Need to free the complex objects passed by value
+		args = context->stackPointer;
+		if( callConv >= ICC_THISCALL && !objectPointer )
+		    args++;
+
+		int spos = 0;
+		for( int n = 0; n < (int)descr->parameterTypes.GetLength(); n++ )
+		{
+			if( descr->parameterTypes[n].IsObject() &&
+				!descr->parameterTypes[n].IsReference() &&
+				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )
+			{
+				void *obj = (void*)args[spos++];
+				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
+				if( beh->destruct )
+				{
+					engine->CallObjectMethod(obj, beh->destruct);
+				}
+
+				engine->CallFree(descr->parameterTypes[n].GetObjectType(), obj);
+			}
+			else
+			{
+				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
+			}
+		}
+	}
+#endif
+
+	// Store the returned value in our stack
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() )
+	{
+		if( descr->returnType.IsObjectHandle() )
+		{
+			// returning an object handle
+			context->objectRegister = (void*)(asDWORD)retQW;
+
+			if( sysFunc->returnAutoHandle && context->objectRegister )
+			{
+				engine->CallObjectMethod(context->objectRegister, descr->returnType.GetObjectType()->beh.addref);
+			}
+		}
+		else
+		{
+			// returning an object
+			if( !sysFunc->hostReturnInMemory )
+			{
+				// In this case, AngelScript wants an object pointer back, but the host system
+				// didn't use 'return in memory', so its results were passed back by the return register.
+				// We have have to take the results of the return register and store them IN the pointer for the object.
+				// The data for the object could fit into a register; we need to copy that data to the object pointer's
+				// memory.
+				assert( retInMemPointer == NULL );
+				assert( retObjPointer != NULL );
+
+				// Copy the returned value to the pointer sent by the script engine
+				if( sysFunc->hostReturnSize == 1 )
+				{
+					*(asDWORD*)retObjPointer = (asDWORD)retQW;						
+				}
+				else
+				{
+					*(asQWORD*)retObjPointer = retQW;
+				}
+			}
+			else
+			{
+				// In this case, AngelScript wants an object pointer back, and the host system
+				// used 'return in memory'.  So its results were already passed back in memory, and
+				// stored in the object pointer.
+				assert( retInMemPointer != NULL );
+				assert( retObjPointer != NULL );
+			}
+
+			// store the return results into the object register
+			context->objectRegister = retObjPointer;
+		}
+	}
+	else
+	{
+		// Store value in returnVal register
+		if( sysFunc->hostReturnFloat )
+		{
+			// floating pointer primitives
+			if( sysFunc->hostReturnSize == 1 )
+			{
+				// single float
+				*(asDWORD*)&context->register1 = GetReturnedFloat();
+			}
+			else
+			{
+				// double float
+				context->register1 = GetReturnedDouble();
+			}
+		}
+		else if( sysFunc->hostReturnSize == 1 )
+		{
+			// <=32 bit primitives
+
+			// due to endian issues we need to handle return values, that are
+			// less than a DWORD (32 bits) in size, special
+			int numBytes = descr->returnType.GetSizeInMemoryBytes();
+			if( descr->returnType.IsReference() ) numBytes = 4;
+			switch( numBytes )
+			{
+			case 1:
+				{
+					// 8 bits
+					asBYTE *val = (asBYTE*)ARG_DW(context->register1);
+					val[0] = (asBYTE)retQW;
+					val[1] = 0;
+					val[2] = 0;
+					val[3] = 0;
+					val[4] = 0;
+					val[5] = 0;
+					val[6] = 0;
+					val[7] = 0;
+				}
+				break;
+			case 2:
+				{
+					// 16 bits
+					asWORD *val = (asWORD*)ARG_DW(context->register1);
+					val[0] = (asWORD)retQW;
+					val[1] = 0;
+					val[2] = 0;
+					val[3] = 0;
+				}
+				break;
+			default:
+				{
+					// 32 bits
+					asDWORD *val = (asDWORD*)ARG_DW(context->register1);
+					val[0] = (asDWORD)retQW;
+					val[1] = 0;
+				}
+				break;
+			}
+		}
+		else
+		{
+			// 64 bit primitive
+			context->register1 = retQW;
+		}
+	}
+
+	if( sysFunc->hasAutoHandles )
+	{
+		args = context->stackPointer;
+		if( callConv >= ICC_THISCALL && !objectPointer )
+		{
+			args++;
+		}
+
+		int spos = 0;
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		{
+			if( sysFunc->paramAutoHandles[n] && args[spos] )
+			{
+				// Call the release method on the type
+				engine->CallObjectMethod((void*)args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
+				args[spos] = 0;
+			}
+
+			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
+			{
+				spos++;
+			}
+			else
+			{
+				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
+			}
+		}
+	}
+
+	return popSize;
+}
+
+#endif
+
+// Everything below here is common to all PPC systems
+
 // This function should prepare system functions so that it will be faster to call them
 int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine)
 {
@@ -1498,268 +1813,6 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 
 	return 0;
 }
-
-int CallSystemFunction(int id, asCContext *context, void *objectPointer)
-{
-	asCScriptEngine *engine = context->engine;
-	asCScriptFunction *descr = engine->scriptFunctions[id];
-	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
-
-	int callConv = sysFunc->callConv;
-	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-		return context->CallGeneric(id, objectPointer);
-
-	memset(ppcArgsType, 0, sizeof(ppcArgsType));
-
-	asQWORD  retQW      = 0;
-	void    *func       = (void*)sysFunc->func;
-	int      paramSize  = sysFunc->paramSize;
-	asDWORD *args       = context->stackPointer;
-	void    *retPointer = 0;
-	void    *obj        = 0;
-	asDWORD *vftable;
-	int      popSize    = paramSize;
-
-	// Convert 1 and 2 byte types from little endian to big endian
-	// TODO:
-
-	// Objects returned to AngelScript must be via an object pointer.  This goes for
-	// ALL objects, including those of simple, complex, primitive or float.  Whether
-	// the host system (PPC in this case) returns the 'object' as a pointer depends on the type of object.
-	context->objectType = descr->returnType.GetObjectType();
-	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
-	{
-		// Allocate the memory for the object
-		retPointer = engine->CallAlloc(descr->returnType.GetObjectType());
-		
-		// TODO: This is different from PS3. Why?
-		ppcArgs[AS_PPC_MAX_ARGS+1] = (asDWORD) retPointer;
-		ppcArgsType[AS_PPC_MAX_ARGS+1] = ppcINTARG;
-
-		if( sysFunc->hostReturnInMemory )
-		{
-			// The return is made in memory
-			callConv++;
-		}
-	}
-
-	if( callConv >= ICC_THISCALL )
-	{
-		if( objectPointer )
-		{
-			obj = objectPointer;
-		}
-		else
-		{
-			// The object pointer should be popped from the context stack
-			popSize++;
-
-			// Check for null pointer
-			obj = (void*)*(args);
-			if( obj == 0 )
-			{
-				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
-				if( retPointer )
-					engine->CallFree(descr->returnType.GetObjectType(), retPointer);
-				return 0;
-			}
-
-			// Add the base offset for multiple inheritance
-			obj = (void*)(int(obj) + sysFunc->baseOffset);
-
-			// Skip the object pointer
-			args++;
-		}
-	}
-	assert(descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS);
-
-	// mark all float/double/int arguments
-	for( int a = 0; a < (int)descr->parameterTypes.GetLength(); a++ ) 
-	{
-		ppcArgsType[a] = ppcINTARG;
-		if( descr->parameterTypes[a].IsFloatType() )
-			ppcArgsType[a] = ppcFLOATARG;
-		if( descr->parameterTypes[a].IsDoubleType() )
-			ppcArgsType[a] = ppcDOUBLEARG;
-	}
-
-	asDWORD paramBuffer[64];
-	if( sysFunc->takesObjByVal )
-	{
-		paramSize = 0;
-		int spos = 0;
-		int dpos = 1;
-
-		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
-		{
-			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
-			{
-#ifdef COMPLEX_OBJS_PASSED_BY_REF
-				if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
-				{
-					paramBuffer[dpos++] = args[spos++];
-					paramSize++;
-				}
-				else
-#endif
-				{
-					// TODO: Do we need to convert from big endian to little endian here?
-				
-					// Copy the object's memory to the buffer
-					memcpy(&paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
-					
-					// Delete the original memory
-					engine->CallFree(descr->parameterTypes[n].GetObjectType(), *(char**)(args+spos));
-					spos++;
-					dpos += descr->parameterTypes[n].GetSizeInMemoryDWords();
-					paramSize += descr->parameterTypes[n].GetSizeInMemoryDWords();
-				}
-			}
-			else
-			{
-				// Copy the value directly
-				paramBuffer[dpos++] = args[spos++];
-				if( descr->parameterTypes[n].GetSizeOnStackDWords() > 1 )
-					paramBuffer[dpos++] = args[spos++];
-				paramSize += descr->parameterTypes[n].GetSizeOnStackDWords();
-			}
-		}
-
-		// Keep a free location at the beginning
-		args = &paramBuffer[1];
-	}
-
-	context->isCallingSystemFunction = true;
-	switch( callConv )
-	{
-	case ICC_CDECL:
-	case ICC_CDECL_RETURNINMEM:
-	case ICC_STDCALL:
-	case ICC_STDCALL_RETURNINMEM:
-		retQW = CallCDeclFunction( args, paramSize, (asDWORD)func );
-		break;
-	case ICC_THISCALL:
-	case ICC_THISCALL_RETURNINMEM:
-		retQW = CallThisCallFunction(obj, args, paramSize, (asDWORD)func );
-		break;
-	case ICC_VIRTUAL_THISCALL:
-	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
-		// Get virtual function table from the object pointer
-		vftable = *(asDWORD**)obj;
-		retQW = CallThisCallFunction( obj, args, paramSize, vftable[asDWORD(func)>>2] );
-		break;
-	case ICC_CDECL_OBJLAST:
-	case ICC_CDECL_OBJLAST_RETURNINMEM:
-		retQW = CallThisCallFunction_objLast( obj, args, paramSize, (asDWORD)func );
-		break;
-	case ICC_CDECL_OBJFIRST:
-	case ICC_CDECL_OBJFIRST_RETURNINMEM:
-		retQW = CallThisCallFunction( obj, args, paramSize, (asDWORD)func );
-		break;
-	default:
-		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
-	}
-	context->isCallingSystemFunction = false;
-
-#ifdef COMPLEX_OBJS_PASSED_BY_REF
-	if( sysFunc->takesObjByVal )
-	{
-		// Need to free the complex objects passed by value
-		args = context->stackPointer;
-		if( callConv >= ICC_THISCALL && !objectPointer )
-		    args++;
-
-		int spos = 0;
-		for( int n = 0; n < (int)descr->parameterTypes.GetLength(); n++ )
-		{
-			if( descr->parameterTypes[n].IsObject() &&
-				!descr->parameterTypes[n].IsReference() &&
-				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )
-			{
-				void *obj = (void*)args[spos++];
-				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
-				if( beh->destruct )
-					engine->CallObjectMethod(obj, beh->destruct);
-
-				engine->CallFree(descr->parameterTypes[n].GetObjectType(), obj);
-			}
-			else
-				spos += descr->parameterTypes[n].GetSizeInMemoryDWords();
-		}
-	}
-#endif
-
-	// Store the returned value in our stack
-	if( descr->returnType.IsObject() && !descr->returnType.IsReference() )
-	{
-		if( descr->returnType.IsObjectHandle() )
-		{
-			context->objectRegister = (void*)(asDWORD)retQW;
-
-			if( sysFunc->returnAutoHandle && context->objectRegister )
-				engine->CallObjectMethod(context->objectRegister, descr->returnType.GetObjectType()->beh.addref);
-		}
-		else
-		{
-			if( !sysFunc->hostReturnInMemory )
-			{
-				// Copy the returned value to the pointer sent by the script engine
-				if( sysFunc->hostReturnSize == 1 )
-					*(asDWORD*)retPointer = (asDWORD)retQW;
-				else
-					*(asQWORD*)retPointer = retQW;
-			}
-
-			// Store the object in the register
-			context->objectRegister = retPointer;
-		}
-	}
-	else
-	{
-		// Store value in returnVal register
-		if( sysFunc->hostReturnFloat )
-		{
-			if( sysFunc->hostReturnSize == 1 )
-				*(asDWORD*)&context->register1 = GetReturnedFloat();
-			else
-				context->register1 = GetReturnedDouble();
-		}
-		else if( sysFunc->hostReturnSize == 1 )
-		{
-			// TODO: AngelScript stores the value internally as little endian, so we need to convert from big endian here 
-			*(asDWORD*)&context->register1 = (asDWORD)retQW;
-		}
-		else
-			context->register1 = retQW;
-	}
-
-	if( sysFunc->hasAutoHandles )
-	{
-		args = context->stackPointer;
-		if( callConv >= ICC_THISCALL && !objectPointer )
-			args++;
-
-		int spos = 0;
-		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
-		{
-			if( sysFunc->paramAutoHandles[n] && args[spos] )
-			{
-				// Call the release method on the type
-				engine->CallObjectMethod((void*)args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
-				args[spos] = 0;
-			}
-
-			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
-				spos++;
-			else
-				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
-		}
-	}
-
-	return popSize;
-}
-
-#endif
 
 END_AS_NAMESPACE
 

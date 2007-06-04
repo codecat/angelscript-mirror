@@ -162,6 +162,7 @@ int main(int argc, char **argv)
 	InstallMemoryManager();
 
 	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
+	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestBits::Test()              ) goto failed; else printf("-- TestBits passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
 	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
@@ -241,7 +242,6 @@ int main(int argc, char **argv)
 	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");
 	if( TestDiscard::Test()           ) goto failed; else printf("-- TestDiscard passed\n");
 	if( TestParser::Test()            ) goto failed; else printf("-- TestParser passed\n");
-	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestVector3()                 ) goto failed; else printf("-- TestVector3 passed\n");
 	if( TestFloat::Test()             ) goto failed; else printf("-- TestFloat passed\n");
 	if( TestReturnWithCDeclObjFirst() ) goto failed; else printf("-- TestReturnWithCDeclObjFirst passed\n");
