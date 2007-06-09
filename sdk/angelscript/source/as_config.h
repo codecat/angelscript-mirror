@@ -395,6 +395,9 @@
 		#elif (defined(__ppc__) || defined(__PPC__)) && !defined(__LP64__)
 			// Support native calling conventions on Mac OS X + PPC 32bit CPU
 			#define AS_PPC
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 		#else
 			// No support for native calling conventions yet
 			#define AS_MAX_PORTABILITY

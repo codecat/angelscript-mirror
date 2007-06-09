@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7526F5C20BEE46B100BAE32D /* as_memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F5C00BEE46B100BAE32D /* as_memory.cpp */; };
+		7526F5C30BEE46B100BAE32D /* as_memory.h in Headers */ = {isa = PBXBuildFile; fileRef = 7526F5C10BEE46B100BAE32D /* as_memory.h */; };
+		75D1515C0C0FAFFC00EBF441 /* as_callfunc_ppc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358570A2DC0A1008FE303 /* as_callfunc_ppc.cpp */; };
 		9B2358CF0A2DC68D008FE303 /* angelscript.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358910A2DC0B4008FE303 /* angelscript.h */; };
 		9B2358D00A2DC68D008FE303 /* as_anyobject.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358050A2DC076008FE303 /* as_anyobject.h */; };
 		9B2358D10A2DC68D008FE303 /* as_array.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358060A2DC076008FE303 /* as_array.h */; };
@@ -49,7 +52,6 @@
 		9B2358F80A2DC696008FE303 /* as_bytecode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358540A2DC0A1008FE303 /* as_bytecode.cpp */; };
 		9B2358F90A2DC696008FE303 /* as_c.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358550A2DC0A1008FE303 /* as_c.cpp */; };
 		9B2358FA0A2DC696008FE303 /* as_callfunc_mips.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358560A2DC0A1008FE303 /* as_callfunc_mips.cpp */; };
-		9B2358FB0A2DC696008FE303 /* as_callfunc_ppc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358570A2DC0A1008FE303 /* as_callfunc_ppc.cpp */; };
 		9B2358FC0A2DC696008FE303 /* as_callfunc_sh4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358580A2DC0A1008FE303 /* as_callfunc_sh4.cpp */; };
 		9B2358FD0A2DC696008FE303 /* as_callfunc_x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358590A2DC0A1008FE303 /* as_callfunc_x86.cpp */; };
 		9B2358FE0A2DC696008FE303 /* as_callfunc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23585A0A2DC0A1008FE303 /* as_callfunc.cpp */; };
@@ -80,6 +82,8 @@
 /* Begin PBXFileReference section */
 		089C1667FE841158C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		32BAE0B70371A74B00C91783 /* angelscript_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = angelscript_Prefix.pch; sourceTree = SOURCE_ROOT; };
+		7526F5C00BEE46B100BAE32D /* as_memory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_memory.cpp; path = ../../source/as_memory.cpp; sourceTree = SOURCE_ROOT; };
+		7526F5C10BEE46B100BAE32D /* as_memory.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_memory.h; sourceTree = "<group>"; };
 		8D07F2C70486CC7A007CD1D0 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9B2358050A2DC076008FE303 /* as_anyobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_anyobject.h; path = ../../source/as_anyobject.h; sourceTree = SOURCE_ROOT; };
 		9B2358060A2DC076008FE303 /* as_array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_array.h; path = ../../source/as_array.h; sourceTree = SOURCE_ROOT; };
@@ -202,6 +206,7 @@
 			isa = PBXGroup;
 			children = (
 				9B5AC0F10A2C6F990089909E /* include */,
+				7526F5C00BEE46B100BAE32D /* as_memory.cpp */,
 				9B2358510A2DC0A1008FE303 /* as_anyobject.cpp */,
 				9B2358520A2DC0A1008FE303 /* as_arrayobject.cpp */,
 				9B2358530A2DC0A1008FE303 /* as_builder.cpp */,
@@ -241,6 +246,7 @@
 		9B5AC0F10A2C6F990089909E /* include */ = {
 			isa = PBXGroup;
 			children = (
+				7526F5C10BEE46B100BAE32D /* as_memory.h */,
 				9B2358910A2DC0B4008FE303 /* angelscript.h */,
 				9B2358050A2DC076008FE303 /* as_anyobject.h */,
 				9B2358060A2DC076008FE303 /* as_array.h */,
@@ -326,6 +332,7 @@
 				9B2358F00A2DC68D008FE303 /* as_tokenizer.h in Headers */,
 				9B2358F10A2DC68D008FE303 /* as_typeinfo.h in Headers */,
 				9B2358F20A2DC68D008FE303 /* as_variablescope.h in Headers */,
+				7526F5C30BEE46B100BAE32D /* as_memory.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,7 +383,6 @@
 				9B2358F80A2DC696008FE303 /* as_bytecode.cpp in Sources */,
 				9B2358F90A2DC696008FE303 /* as_c.cpp in Sources */,
 				9B2358FA0A2DC696008FE303 /* as_callfunc_mips.cpp in Sources */,
-				9B2358FB0A2DC696008FE303 /* as_callfunc_ppc.cpp in Sources */,
 				9B2358FC0A2DC696008FE303 /* as_callfunc_sh4.cpp in Sources */,
 				9B2358FD0A2DC696008FE303 /* as_callfunc_x86.cpp in Sources */,
 				9B2358FE0A2DC696008FE303 /* as_callfunc.cpp in Sources */,
@@ -402,6 +408,8 @@
 				9B2359120A2DC696008FE303 /* as_thread.cpp in Sources */,
 				9B2359130A2DC696008FE303 /* as_tokenizer.cpp in Sources */,
 				9B2359140A2DC696008FE303 /* as_typeinfo.cpp in Sources */,
+				7526F5C20BEE46B100BAE32D /* as_memory.cpp in Sources */,
+				75D1515C0C0FAFFC00EBF441 /* as_callfunc_ppc.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,7 +437,6 @@
 				GCC_DEBUGGING_SYMBOLS = full;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
 				PREBINDING = YES;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				USER_HEADER_SEARCH_PATHS = /usr/include/;
@@ -496,7 +503,7 @@
 				4FADC24808B4156D00ABE55E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		9B2358C60A2DC661008FE303 /* Build configuration list for PBXNativeTarget "as" */ = {
 			isa = XCConfigurationList;
@@ -505,7 +512,7 @@
 				9B2358C80A2DC661008FE303 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};

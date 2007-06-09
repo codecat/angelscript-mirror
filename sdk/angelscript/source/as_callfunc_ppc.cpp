@@ -900,39 +900,61 @@ extern "C"
 
 // NOTE: these values are for PowerPC 32 bit. 
 #define PPC_LINKAGE_SIZE  (24)                                   // how big the PPC linkage area is in a stack frame
-#define PPC_NUM_REGSTORE  (10)                                   // how many registers of the PPC we need to store/restore for ppcFunc64()
-#define PPC_REGSTORE_SIZE (8*PPC_NUM_REGSTORE)                   // how many bytes are required for register store/restore
+#define PPC_NUM_REGSTORE  (9)                                    // how many registers of the PPC we need to store/restore for ppcFunc()
+#define PPC_REGSTORE_SIZE (4*PPC_NUM_REGSTORE)                   // how many bytes are required for register store/restore
 #define EXTRA_STACK_SIZE  (PPC_LINKAGE_SIZE + PPC_REGSTORE_SIZE) // memory required, not including parameters, for the stack frame
-#define PPC_STACK_SIZE(numParams)  ( -(( ( (((numParams)<8)?8:(numParams))<<3) + EXTRA_STACK_SIZE + 15 ) & ~15) ) // calculates the total stack size needed for ppcFunc64, must pad to 16bytes
+#define PPC_STACK_SIZE(numParams)  (-( ( ((((numParams)<8)?8:(numParams))<<2) + EXTRA_STACK_SIZE + 15 ) & ~15 ))  // calculates the total stack size needed for ppcFunc64, must pad to 16bytes
 
 // Loads all data into the correct places and calls the function.
 // ppcArgsType is an array containing a byte type (enum argTypes) for each argument.
 // stackArgSize is the size in bytes for how much data to put on the stack frame
 extern "C" asQWORD ppcFunc(const asDWORD* argsPtr, int StackArgSize, asDWORD func);
 
-asm(""
-	" .text\n"
-	" .align 2\n"
-	" .p2align 4,,15\n"
+asm(" .text\n"
+	" .align 2\n"		  // align the code to 1 << 2 = 4 bytes
 	" .globl _ppcFunc\n"
 	"_ppcFunc:\n"
 
-	// We're receiving argsPtr in r3, StackArgSize in r4, and func in r5
+	// We're receiving the following parameters
+	
+	// r3 : argsPtr
+	// r4 : StackArgSize
+	// r5 : func
+
+	// The following registers are used through out the function
+	
+	// r31 : the address of the label address, as reference for all other labels
+	// r30 : temporary variable
+	// r29 : arg list pointer
+	// r28 : number of FPR registers used by the parameters
+	// r27 : the function pointer that will be called
+	// r26 : the location of the parameters for the call
+	// r25 : arg type list pointer
+	// r24 : temporary variable
+	// r23 : number of GPR registers used by the parameters
+	// r1  : this is stack pointer
+	// r0  : temporary variable
+	// f0  : temporary variable
+
+	// We need to store some of the registers for restoral before returning to caller
+	
+	// lr - always stored in 8(r1) - this is the return address
+	// cr - not required to be stored, but if it is, its place is in 4(r1) - this is the condition register 
+	// r1 - always stored in 0(r1) - this is the stack pointer
+	// r11 
+	// r13 to r31 
+	// f14 to f31
 
 	// Store register values and setup our stack frame
 	" mflr  r0            \n"   // move the return address into r0
-	" stmw  r30, -8(r1)   \n"   // Store r30 on the stack
 	" stw   r0, 8(r1)     \n"   // Store the return address on the stack
-	" mr    r30, r4       \n"   // Move StackArgSize to r30
-	" addi  r30, r30, 24  \n"   // Add space for link/save area (24 is the standard size on 32bit PPC)
-	" mr    r31, r1       \n"   // Move stack pointer to r31
-	" sub   r1, r1, r30   \n"   // Increase the stack with the needed space
-	" stw   r31, 0(r1)    \n"   // Store caller's stack frame pointer
-
+	" stmw  r23, -36(r1)  \n"   // Store registers r23 to r31 on the stack
+	" stwux r1, r1, r4    \n"   // Increase the stack with the needed space and store the original value in the destination	
+	
 	// Obtain an address that we'll use as our position of reference when obtaining addresses of other labels
-	" bcl   20, 31, address \n"
+	" bl    address         \n"
 	"address:               \n"
-	" mflr  r15             \n"
+	" mflr  r31             \n"
 
     // initial registers for the function
 	" mr    r29, r3       \n"   // (r29) args list
@@ -940,10 +962,10 @@ asm(""
 	" addi  r26, r1, 48   \n"   // setup the pointer to the parameter area to the function we're going to call
 	" sub   r0, r0, r0    \n"   // zero out r0
 	" mr    r23, r0       \n"   // zero out r23, which holds the number of used GPR registers
-	" mr    r22, r0       \n"   // zero our r22, which holds the number of used float registers
+	" mr    r28, r0       \n"   // zero our r22, which holds the number of used float registers
 	
 	// load the global ppcArgsType which holds the types of arguments for each argument
-	" addis r25, r15, ha16(_ppcArgsType - address) \n" // load the upper 16 bits of the address to r25
+	" addis r25, r31, ha16(_ppcArgsType - address) \n" // load the upper 16 bits of the address to r25
 	" la    r25, lo16(_ppcArgsType - address)(r25) \n" // load the lower 16 bits of the address to r25
 	" subi  r25, r25, 1    \n"   // since we increment r25 on its use, we'll pre-decrement it
 
@@ -953,7 +975,7 @@ asm(""
 	// switch based on the current argument type (0:end, 1:int, 2:float 3:double)
 	" lbz  r24, 0(r25)     \n"   // load the current argument type (it's a byte)
 	" mulli r24, r24, 4    \n"   // our jump table has 4 bytes per case (1 instruction)
-	" addis r30, r15, ha16(ppcTypeSwitch - address) \n"   // load the address of the jump table for the switch
+	" addis r30, r31, ha16(ppcTypeSwitch - address) \n"   // load the address of the jump table for the switch
 	" la    r30, lo16(ppcTypeSwitch - address)(r30) \n"
 	
     " add    r0, r30, r24  \n"   // offset by our argument type
@@ -976,16 +998,16 @@ asm(""
 	" nop                  \n"   // return value (the next instruction below).  So we have to branch from CTR instead of LR.
 	
 	// Restore registers and caller's stack frame, then return to caller
-	" lwz   r1, 0(r1)      \n"   // load in the caller's stack pointer
+	" lwz   r1, 0(r1)      \n"   // restore the caller's stack pointer
 	" lwz   r0, 8(r1)      \n"   // load in the caller's LR
 	" mtlr  r0             \n"   // restore the caller's LR
-	" lmw   r30, -8(r1)   \n"    // restore r30
+	" lmw   r23, -36(r1)   \n"   // restore registers r23 to r31 from the stack
     " blr                  \n"   // return back to the caller
 	" nop                  \n"
 	
 	// Integer argument (GPR register)
 	"ppcArgIsInteger:             \n"
-	" addis r30, r15, ha16(ppcLoadIntReg - address) \n" // load the address to the jump table for integer registers
+	" addis r30, r31, ha16(ppcLoadIntReg - address) \n" // load the address to the jump table for integer registers
 	" la    r30, lo16(ppcLoadIntReg - address)(r30) \n"
 	" mulli r0, r23, 8            \n"    // each item in the jump table is 2 instructions (8 bytes)
 	" add   r0, r0, r30           \n"    // calculate ppcLoadIntReg[numUsedGPRRegs]
@@ -1024,12 +1046,12 @@ asm(""
 
 	// single Float argument
 	"ppcArgIsFloat:\n"
-	" addis r30, r15, ha16(ppcLoadFloatReg - address) \n" // get the base address of the float register jump table
+	" addis r30, r31, ha16(ppcLoadFloatReg - address) \n" // get the base address of the float register jump table
 	" la    r30, lo16(ppcLoadFloatReg - address)(r30) \n"
-	" mulli r0, r22, 8           \n"     // each jump table entry is 8 bytes
+	" mulli r0, r28, 8           \n"     // each jump table entry is 8 bytes
 	" add   r0, r0, r30          \n"     // calculate the offset to ppcLoadFloatReg[numUsedFloatReg]
 	" lfs   f0, 0(r29)           \n"     // load the next argument as a float into f0
-	" cmpwi r22, 13              \n"     // can't load more than 13 float/double registers
+	" cmpwi r28, 13              \n"     // can't load more than 13 float/double registers
 	" bgt   ppcLoadFloatRegUpd   \n"     // if we're beyond 13 registers, just fall to inserting into the stack
 	" mtctr r0                   \n"     // jump into the float jump table
 	" bctr                       \n"
@@ -1067,19 +1089,19 @@ asm(""
 	"ppcLoadFloatRegUpd:         \n"
 	" stfs  f0, 4(r26)           \n"     // store, as a single float, f0 (current argument) on to the stack argument list
 	" addi  r23, r23, 1          \n"     // a float register eats up a GPR register
-	" addi  r22, r22, 1          \n"     // ...and, of course, a float register
+	" addi  r28, r28, 1          \n"     // ...and, of course, a float register
 	" addi  r29, r29, 4          \n"     // move to the next argument in the list
 	" addi  r26, r26, 8          \n"     // move to the next stack slot
 	" b     ppcNextArg           \n"     // on to the next argument
 	" nop                        \n"
 	// double Float argument
 	"ppcArgIsDouble:             \n"
-	" addis r30, r15, ha16(ppcLoadDoubleReg - address) \n" // load the base address of the jump table for double registers
+	" addis r30, r31, ha16(ppcLoadDoubleReg - address) \n" // load the base address of the jump table for double registers
 	" la    r30, lo16(ppcLoadDoubleReg - address)(r30) \n"
-	" mulli r0, r22, 8           \n"     // each slot of the jump table is 8 bytes
+	" mulli r0, r28, 8           \n"     // each slot of the jump table is 8 bytes
 	" add   r0, r0, r30          \n"     // calculate ppcLoadDoubleReg[numUsedFloatReg]
 	" lfd   f0, 0(r29)           \n"     // load the next argument, as a double float, into f0
-	" cmpwi r22, 13              \n"     // the first 13 floats must go into float registers also
+	" cmpwi r28, 13              \n"     // the first 13 floats must go into float registers also
 	" bgt   ppcLoadDoubleRegUpd  \n"     // if we're beyond 13, then just put on to the stack
 	" mtctr r0                   \n"     // we're under 13, first load our register
 	" bctr                       \n"     // jump into the jump table
@@ -1117,7 +1139,7 @@ asm(""
 	"ppcLoadDoubleRegUpd: \n"
 	" stfd  f0, 0(r26)     \n"    // store f0, as a double, into the argument list on the stack
 	" addi  r23, r23, 1   \n"     // a double float eats up one GPR
-	" addi  r22, r22, 1   \n"     // ...and, of course, a float
+	" addi  r28, r28, 1   \n"     // ...and, of course, a float
 	" addi  r29, r29, 8   \n"     // increment to our next argument we need to process (8 bytes for the 64bit float)
 	" addi  r26, r26, 8   \n"     // increment to the next slot on the argument list on the stack (8 bytes)
 	" b     ppcNextArg    \n"     // on to the next argument
@@ -1201,7 +1223,7 @@ static asQWORD CallCDeclFunction(const asDWORD* pArgs, const asBYTE *pArgsType, 
 	{
 		int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0;
 		stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs );
-		numTotalArgs = intArgs + floatArgs + doubleArgs;
+		numTotalArgs = intArgs + floatArgs + 2*doubleArgs; // doubles occupy two slots
 	}
 	else
 	{
@@ -1238,7 +1260,7 @@ static asQWORD CallThisCallFunction(const void *obj, const asDWORD* pArgs, const
 	{
 		int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0;
 		stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs );
-		numTotalArgs = intArgs + floatArgs + doubleArgs;
+		numTotalArgs = intArgs + floatArgs + 2*doubleArgs; // doubles occupy two slots
 	}
 
 	// call the function with the arguments
@@ -1531,6 +1553,10 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		if( descr->returnType.IsObjectHandle() )
 		{
+			// Since we're treating the system function as if it is returning a QWORD we are
+			// actually receiving the value in the high DWORD of retQW.
+			retQW >>= 32;
+		
 			// returning an object handle
 			context->objectRegister = (void*)(asDWORD)retQW;
 
@@ -1555,6 +1581,10 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				// Copy the returned value to the pointer sent by the script engine
 				if( sysFunc->hostReturnSize == 1 )
 				{
+					// Since we're treating the system function as if it is returning a QWORD we are
+					// actually receiving the value in the high DWORD of retQW.
+					retQW >>= 32;
+				
 					*(asDWORD*)retObjPointer = (asDWORD)retQW;						
 				}
 				else
@@ -1594,7 +1624,11 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 		else if( sysFunc->hostReturnSize == 1 )
 		{
-			// <=32 bit primitives
+			// <= 32 bit primitives
+			
+			// Since we're treating the system function as if it is returning a QWORD we are
+			// actually receiving the value in the high DWORD of retQW.
+			retQW >>= 32;
 
 			// due to endian issues we need to handle return values, that are
 			// less than a DWORD (32 bits) in size, special
