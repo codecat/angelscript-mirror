@@ -84,5 +84,12 @@ inline bool CompareDouble(double a,double b)
 	return true;
 }
 
+inline bool CompareFloat(float a,float b)
+{
+	if( fabsf( a - b ) > 0.000001f )
+		return false;
+	return true;
+}
+
 #define UNUSED_VAR(x) ((void)(x))
 

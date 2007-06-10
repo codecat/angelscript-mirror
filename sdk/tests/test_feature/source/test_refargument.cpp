@@ -69,10 +69,41 @@ static void Assign(asIScriptGeneric *gen)
 	*obj = *(CRefClass*)gen->GetArgAddress(0);
 }
 
+static const char *script4 = 
+"void Test()                            \n"
+"{                                      \n"
+"  int a = 0;                           \n"
+"  float b = 0.0f;                      \n"
+"  int c = 45;                          \n"
+"  float d = 4.0f;                      \n"
+"  TestNativeRefArgOut(a,b,c,d);        \n"
+"  Assert(a == 10);                     \n"
+"  Assert(b > 3.13f && b < 3.15f);      \n"
+"}                                      \n";
+
+static bool NativeTestFail = false;
+static void TestNativeRefArgOut( int *a, float *b, const int *c, const float *d )
+{
+	assert( a != NULL );
+	assert( b != NULL );
+	assert( c != NULL );
+	assert( d != NULL );
+	*a = 10;
+	*b = 3.14f;
+	if( (*c) != 45 ) NativeTestFail = true;
+	if( !CompareFloat( *d, 4.0f ) ) NativeTestFail = true;
+}
+
 bool Test()
 {
 	bool fail = false;
+	bool testNative = false;
 	int r;
+
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		testNative = true;
+	}
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -83,6 +114,11 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ASSIGNMENT, "refclass &f(refclass &in)", asFUNCTION(Assign), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+	if( testNative )
+	{
+		r = engine->RegisterGlobalFunction("void TestNativeRefArgOut(int &out,float &out,const int &in,const float &in)", asFUNCTION(TestNativeRefArgOut), asCALL_CDECL); assert( r >= 0 );
+	}
 
 	COutStream out;
 
@@ -131,6 +167,19 @@ bool Test()
 	if( r < 0 ) fail = true;
 	r = engine->ExecuteString(0, "Test()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+
+	//-------------------
+	if( testNative )
+	{
+		CBufferedOutStream dout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &dout, asCALL_THISCALL);
+		engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
+		r = engine->Build(0);
+		if( r < 0 ) fail = true;
+		r = engine->ExecuteString(0, "Test()");
+		if( r != asEXECUTION_FINISHED ) fail = true;
+		if( NativeTestFail ) fail = true;
+	}
 
 	engine->Release();
 

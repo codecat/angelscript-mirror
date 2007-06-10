@@ -601,11 +601,11 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	for( a = 0; a < (int)descr->parameterTypes.GetLength(); a++ )
 	{
 		argsType[a] = ppcINTARG;
-		if( descr->parameterTypes[a].IsFloatType() )
+		if( descr->parameterTypes[a].IsFloatType() && !descr->parameterTypes[a].IsReference() )
 		{
 			argsType[a] = ppcFLOATARG;
 		}
-		if( descr->parameterTypes[a].IsDoubleType() )
+		if( descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() )
 		{
 			argsType[a] = ppcDOUBLEARG;
 		}

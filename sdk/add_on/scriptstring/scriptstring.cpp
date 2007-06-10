@@ -55,7 +55,11 @@ static void StringAddRef_Generic(asIScriptGeneric *gen)
 void asCScriptString::Release()
 {
 	if( --refCount == 0 )
-		delete this;
+	{
+		// Manually call the destructor, then free the memory so that we match how the memory was allocated
+		this->~asCScriptString();
+		delete[] (char*)this;
+	}
 }
 
 static void StringRelease_Generic(asIScriptGeneric *gen)
@@ -433,7 +437,9 @@ static void StringFree(void *p)
 static asCScriptString *StringFactory(asUINT /*length*/, const char *s)
 {
 	// Return a script handle to a new string
-	return new asCScriptString(s);
+	asCScriptString *ptr = (asCScriptString*)StringAlloc(0);
+	new(ptr) asCScriptString(s);
+	return ptr;
 }
 
 static void StringFactory_Generic(asIScriptGeneric *gen)

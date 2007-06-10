@@ -116,6 +116,17 @@ bool Test()
 		fail = true;
 	}
 
+	// test 7
+	// Verify that declaring a void variable in script causes a compiler error, not an assert failure
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	bout.buffer = "";
+	engine->ExecuteString(0, "void m;");
+	if( bout.buffer != "ExecuteString (1, 6) : Error   : Data type can't be 'void'\n" )
+	{
+		printf("failed on 7\n");
+		fail = true;
+	}
+
 	engine->Release();
 		
 	// Success

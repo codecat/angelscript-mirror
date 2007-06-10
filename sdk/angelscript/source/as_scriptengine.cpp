@@ -118,6 +118,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_PPC
 		"AS_PPC "
 #endif
+#ifdef AS_PPC_64
+		"AS_PPC_64 "
+#endif
 #ifdef AS_X86
 		"AS_X86 "
 #endif

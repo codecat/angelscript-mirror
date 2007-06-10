@@ -1198,6 +1198,9 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			// TODO: Change to "'type' cannot be declared as variable"
 			str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format().AddressOf());
 			Error(str.AddressOf(), node);
+			
+			// Use int instead to avoid further problems
+			type = asCDataType::CreatePrimitive(ttInt, false);
 		}
 
 		// Get the name of the identifier
