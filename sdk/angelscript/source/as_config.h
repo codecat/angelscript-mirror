@@ -175,7 +175,10 @@
 // Use assembler code for the MIPS CPU family
 
 // AS_PPC
-// Use assembler code for the PowerPC CPU family
+// Use assembler code for the 32bit PowerPC CPU family
+
+// AS_PPC_64
+// Use assembler code for the 64bit PowerPC CPU family
 
 // AS_64BIT_PTR
 // Define this to make the engine store all pointers in 64bit words.
@@ -287,7 +290,7 @@
 	#if _XBOX_VER >= 200
 		// 360 is PPC, big endian and 64 bit.
 		#define AS_XBOX360
-		#define AS_PPC
+		#define AS_PPC_64
 	#else
 		// Support native calling conventions on x86, but not 64bit yet
 		#if defined(_XBOX) || (defined(_M_IX86) && !defined(__LP64__))
@@ -398,6 +401,8 @@
 			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+		#elif (defined(__ppc__) || defined(__PPC__)) && defined(__LP64__)
+			#define AS_PPC_64
 		#else
 			// No support for native calling conventions yet
 			#define AS_MAX_PORTABILITY
@@ -429,7 +434,7 @@
 	#elif (defined(__PPC__) || defined(__ppc__)) && defined(__PPU__)
 		// Support native calling conventions on PS3
 		#define AS_PS3
-		#define AS_PPC
+		#define AS_PPC_64
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY

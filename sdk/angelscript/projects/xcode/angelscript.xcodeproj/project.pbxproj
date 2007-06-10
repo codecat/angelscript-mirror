@@ -10,6 +10,7 @@
 		7526F5C20BEE46B100BAE32D /* as_memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F5C00BEE46B100BAE32D /* as_memory.cpp */; };
 		7526F5C30BEE46B100BAE32D /* as_memory.h in Headers */ = {isa = PBXBuildFile; fileRef = 7526F5C10BEE46B100BAE32D /* as_memory.h */; };
 		75D1515C0C0FAFFC00EBF441 /* as_callfunc_ppc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358570A2DC0A1008FE303 /* as_callfunc_ppc.cpp */; };
+		75DA88200C1C30CF00A15034 /* as_callfunc_ppc_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75DA881F0C1C30CF00A15034 /* as_callfunc_ppc_64.cpp */; };
 		9B2358CF0A2DC68D008FE303 /* angelscript.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358910A2DC0B4008FE303 /* angelscript.h */; };
 		9B2358D00A2DC68D008FE303 /* as_anyobject.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358050A2DC076008FE303 /* as_anyobject.h */; };
 		9B2358D10A2DC68D008FE303 /* as_array.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358060A2DC076008FE303 /* as_array.h */; };
@@ -84,6 +85,7 @@
 		32BAE0B70371A74B00C91783 /* angelscript_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = angelscript_Prefix.pch; sourceTree = SOURCE_ROOT; };
 		7526F5C00BEE46B100BAE32D /* as_memory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_memory.cpp; path = ../../source/as_memory.cpp; sourceTree = SOURCE_ROOT; };
 		7526F5C10BEE46B100BAE32D /* as_memory.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_memory.h; sourceTree = "<group>"; };
+		75DA881F0C1C30CF00A15034 /* as_callfunc_ppc_64.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_ppc_64.cpp; path = ../../source/as_callfunc_ppc_64.cpp; sourceTree = SOURCE_ROOT; };
 		8D07F2C70486CC7A007CD1D0 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9B2358050A2DC076008FE303 /* as_anyobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_anyobject.h; path = ../../source/as_anyobject.h; sourceTree = SOURCE_ROOT; };
 		9B2358060A2DC076008FE303 /* as_array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_array.h; path = ../../source/as_array.h; sourceTree = SOURCE_ROOT; };
@@ -214,6 +216,7 @@
 				9B2358550A2DC0A1008FE303 /* as_c.cpp */,
 				9B2358560A2DC0A1008FE303 /* as_callfunc_mips.cpp */,
 				9B2358570A2DC0A1008FE303 /* as_callfunc_ppc.cpp */,
+				75DA881F0C1C30CF00A15034 /* as_callfunc_ppc_64.cpp */,
 				9B2358580A2DC0A1008FE303 /* as_callfunc_sh4.cpp */,
 				9B2358590A2DC0A1008FE303 /* as_callfunc_x86.cpp */,
 				9B23585A0A2DC0A1008FE303 /* as_callfunc.cpp */,
@@ -410,6 +413,7 @@
 				9B2359140A2DC696008FE303 /* as_typeinfo.cpp in Sources */,
 				7526F5C20BEE46B100BAE32D /* as_memory.cpp in Sources */,
 				75D1515C0C0FAFFC00EBF441 /* as_callfunc_ppc.cpp in Sources */,
+				75DA88200C1C30CF00A15034 /* as_callfunc_ppc_64.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
