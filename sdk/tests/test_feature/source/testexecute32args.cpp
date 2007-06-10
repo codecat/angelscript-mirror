@@ -12,6 +12,8 @@ static bool testVal = false;
 static bool called  = false;
 
 static int values[32];
+static float fvalues[32];
+static double dvalues[32];
 
 static void cfunction(int f1 , int f2 , int f3 , int f4 ,
                       int f5 , int f6 , int f7 , int f8 ,
@@ -67,6 +69,115 @@ static void cfunction(int f1 , int f2 , int f3 , int f4 ,
 	          (f29 == 29) && (f30 == 30) && (f31 == 31) && (f32 == 32);
 }
 
+static void cfunctionf(float f1 , float f2 , float f3 , float f4 ,
+                      float f5 , float f6 , float f7 , float f8 ,
+                      float f9 , float f10, float f11, float f12,
+                      float f13, float f14, float f15, float f16,
+                      float f17, float f18, float f19, float f20,
+                      float f21, float f22, float f23, float f24,
+                      float f25, float f26, float f27, float f28,
+                      float f29, float f30, float f31, float f32) 
+{
+	called = true;
+	fvalues[ 0] = f1;
+	fvalues[ 1] = f2;
+	fvalues[ 2] = f3;
+	fvalues[ 3] = f4;
+	fvalues[ 4] = f5;
+	fvalues[ 5] = f6;
+	fvalues[ 6] = f7;
+	fvalues[ 7] = f8;
+	fvalues[ 8] = f9;
+	fvalues[ 9] = f10;
+	fvalues[10] = f11;
+	fvalues[11] = f12;
+	fvalues[12] = f13;
+	fvalues[13] = f14;
+	fvalues[14] = f15;
+	fvalues[15] = f16;
+	fvalues[16] = f17;
+	fvalues[17] = f18;
+	fvalues[18] = f19;
+	fvalues[19] = f20;
+	fvalues[20] = f21;
+	fvalues[21] = f22;
+	fvalues[22] = f23;
+	fvalues[23] = f24;
+	fvalues[24] = f25;
+	fvalues[25] = f26;
+	fvalues[26] = f27;
+	fvalues[27] = f28;
+	fvalues[28] = f29;
+	fvalues[29] = f30;
+	fvalues[30] = f31;
+	fvalues[31] = f32;
+	
+
+	testVal = (f1  ==  1) && (f2  ==  2) && (f3  ==  3) && (f4  ==  4) &&
+	          (f5  ==  5) && (f6  ==  6) && (f7  ==  7) && (f8  ==  8) &&
+	          (f9  ==  9) && (f10 == 10) && (f11 == 11) && (f12 == 12) &&
+	          (f13 == 13) && (f14 == 14) && (f15 == 15) && (f16 == 16) &&
+	          (f17 == 17) && (f18 == 18) && (f19 == 19) && (f20 == 20) &&
+	          (f21 == 21) && (f22 == 22) && (f23 == 23) && (f24 == 24) &&
+	          (f25 == 25) && (f26 == 26) && (f27 == 27) && (f28 == 28) &&
+	          (f29 == 29) && (f30 == 30) && (f31 == 31) && (f32 == 32);
+}
+
+static void cfunctiond(double f1 , double f2 , double f3 , double f4 ,
+                      double f5 , double f6 , double f7 , double f8 ,
+                      double f9 , double f10, double f11, double f12,
+                      double f13, double f14, double f15, double f16,
+                      double f17, double f18, double f19, double f20,
+                      double f21, double f22, double f23, double f24,
+                      double f25, double f26, double f27, double f28,
+                      double f29, double f30, double f31, double f32) 
+{
+	called = true;
+	dvalues[ 0] = f1;
+	dvalues[ 1] = f2;
+	dvalues[ 2] = f3;
+	dvalues[ 3] = f4;
+	dvalues[ 4] = f5;
+	dvalues[ 5] = f6;
+	dvalues[ 6] = f7;
+	dvalues[ 7] = f8;
+	dvalues[ 8] = f9;
+	dvalues[ 9] = f10;
+	dvalues[10] = f11;
+	dvalues[11] = f12;
+	dvalues[12] = f13;
+	dvalues[13] = f14;
+	dvalues[14] = f15;
+	dvalues[15] = f16;
+	dvalues[16] = f17;
+	dvalues[17] = f18;
+	dvalues[18] = f19;
+	dvalues[19] = f20;
+	dvalues[20] = f21;
+	dvalues[21] = f22;
+	dvalues[22] = f23;
+	dvalues[23] = f24;
+	dvalues[24] = f25;
+	dvalues[25] = f26;
+	dvalues[26] = f27;
+	dvalues[27] = f28;
+	dvalues[28] = f29;
+	dvalues[29] = f30;
+	dvalues[30] = f31;
+	dvalues[31] = f32;
+	
+
+	testVal = (f1  ==  1) && (f2  ==  2) && (f3  ==  3) && (f4  ==  4) &&
+	          (f5  ==  5) && (f6  ==  6) && (f7  ==  7) && (f8  ==  8) &&
+	          (f9  ==  9) && (f10 == 10) && (f11 == 11) && (f12 == 12) &&
+	          (f13 == 13) && (f14 == 14) && (f15 == 15) && (f16 == 16) &&
+	          (f17 == 17) && (f18 == 18) && (f19 == 19) && (f20 == 20) &&
+	          (f21 == 21) && (f22 == 22) && (f23 == 23) && (f24 == 24) &&
+	          (f25 == 25) && (f26 == 26) && (f27 == 27) && (f28 == 28) &&
+	          (f29 == 29) && (f30 == 30) && (f31 == 31) && (f32 == 32);
+}
+
+
 static void cfunction_gen(asIScriptGeneric *gen) 
 {
 	called = true;
@@ -95,6 +206,7 @@ bool TestExecute32Args()
 													  "int, int, int, int)", 
 									   asFUNCTION(cfunction_gen), asCALL_GENERIC);
 	else		
+	{
 		engine->RegisterGlobalFunction("void cfunction(int, int, int, int,"
 													  "int, int, int, int,"
 													  "int, int, int, int,"
@@ -104,6 +216,27 @@ bool TestExecute32Args()
 													  "int, int, int, int,"
 													  "int, int, int, int)", 
 									   asFUNCTION(cfunction), asCALL_CDECL);
+
+		engine->RegisterGlobalFunction("void cfunctionf(float, float, float, float,"
+													  "float, float, float, float,"
+													  "float, float, float, float,"
+													  "float, float, float, float,"
+													  "float, float, float, float,"
+													  "float, float, float, float,"
+													  "float, float, float, float,"
+													  "float, float, float, float)", 
+									   asFUNCTION(cfunctionf), asCALL_CDECL);
+
+		engine->RegisterGlobalFunction("void cfunctiond(double, double, double, double,"
+													  "double, double, double, double,"
+													  "double, double, double, double,"
+													  "double, double, double, double,"
+													  "double, double, double, double,"
+													  "double, double, double, double,"
+													  "double, double, double, double,"
+													  "double, double, double, double)", 
+									   asFUNCTION(cfunctiond), asCALL_CDECL);
+	}
 
 	engine->ExecuteString(0, "cfunction( 1,  2,  3,  4,"
 	                                " 5,  6,  7,  8,"
@@ -128,6 +261,65 @@ bool TestExecute32Args()
 			printf("value %d: %d\n", i, values[i]);
 		
 		ret = true;
+	}
+	
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		called = false;
+		testVal = false;
+		
+		engine->ExecuteString(0, "cfunctionf( 1,  2,  3,  4,"
+	                                " 5,  6,  7,  8,"
+	                                " 9, 10, 11, 12,"
+	                                "13, 14, 15, 16,"
+	                                "17, 18, 19, 20,"
+	                                "21, 22, 23, 24,"
+	                                "25, 26, 27, 28,"
+	                                "29, 30, 31, 32)");
+		
+		if( !called ) 
+		{
+			// failure
+			printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+			ret = true;
+		} 
+		else if( !testVal ) 
+		{
+			// failure
+			printf("\n%s: testVal is not of expected value. Got:\n\n", TESTNAME);
+			for (int i = 0; i < 32; i++) 
+				printf("value %d: %f\n", i, fvalues[i]);
+		
+			ret = true;
+		}
+		
+		called = false;
+		testVal = false;
+		
+		engine->ExecuteString(0, "cfunctiond( 1,  2,  3,  4,"
+	                                " 5,  6,  7,  8,"
+	                                " 9, 10, 11, 12,"
+	                                "13, 14, 15, 16,"
+	                                "17, 18, 19, 20,"
+	                                "21, 22, 23, 24,"
+	                                "25, 26, 27, 28,"
+	                                "29, 30, 31, 32)");
+		
+		if( !called ) 
+		{
+			// failure
+			printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+			ret = true;
+		} 
+		else if( !testVal ) 
+		{
+			// failure
+			printf("\n%s: testVal is not of expected value. Got:\n\n", TESTNAME);
+			for (int i = 0; i < 32; i++) 
+				printf("value %d: %f\n", i, dvalues[i]);
+		
+			ret = true;
+		}
 	}
 
 	engine->Release();

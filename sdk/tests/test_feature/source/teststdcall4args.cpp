@@ -17,7 +17,8 @@ static float	t2 = 0;
 static double	t3 = 0;
 static char	t4 = 0;
 
-static void STDCALL cfunction(int f1, float f2, double f3, int f4) {
+static void STDCALL cfunction(int f1, float f2, double f3, int f4) 
+{
 	called = true;
 
 	t1 = f1;

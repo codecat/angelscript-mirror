@@ -890,7 +890,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 // Extra +1 in ppcArgsType to ensure zero end-of-args marker
 
 enum argTypes { ppcENDARG, ppcINTARG, ppcFLOATARG, ppcDOUBLEARG };
-static asDWORD ppcArgs[AS_PPC_MAX_ARGS + 1 + 1];
+static asDWORD ppcArgs[2*AS_PPC_MAX_ARGS + 1 + 1];
 
 // Using extern "C" because we use this symbol name in the assembly code
 extern "C"
@@ -959,7 +959,7 @@ asm(" .text\n"
     // initial registers for the function
 	" mr    r29, r3       \n"   // (r29) args list
 	" mr    r27, r5       \n"   // load the function pointer to call.  func actually holds the pointer to our function
-	" addi  r26, r1, 48   \n"   // setup the pointer to the parameter area to the function we're going to call
+	" addi  r26, r1, 24   \n"   // setup the pointer to the parameter area to the function we're going to call
 	" sub   r0, r0, r0    \n"   // zero out r0
 	" mr    r23, r0       \n"   // zero out r23, which holds the number of used GPR registers
 	" mr    r28, r0       \n"   // zero our r22, which holds the number of used float registers
@@ -1035,13 +1035,12 @@ asm(" .text\n"
 	" b     ppcLoadIntRegUpd      \n"
 	" mr    r10, r30              \n"    // arg7 (to r10)
 	" b     ppcLoadIntRegUpd      \n"
-
 	// all GPR arguments still go on the stack
 	"ppcLoadIntRegUpd:            \n"
 	" stw   r30, 0(r26)           \n"    // store the argument into the next slot on the stack's argument list
 	" addi  r23, r23, 1           \n"    // count a used GPR register
 	" addi  r29, r29, 4           \n"    // move to the next argument on the list
-	" addi  r26, r26, 8           \n"    // adjust our argument stack pointer for the next
+	" addi  r26, r26, 4           \n"    // adjust our argument stack pointer for the next
 	" b     ppcNextArg            \n"    // next argument
 
 	// single Float argument
@@ -1087,13 +1086,14 @@ asm(" .text\n"
 	" nop                        \n"
 	// all float arguments still go on the stack
 	"ppcLoadFloatRegUpd:         \n"
-	" stfs  f0, 4(r26)           \n"     // store, as a single float, f0 (current argument) on to the stack argument list
+	" stfs  f0, 0(r26)           \n"     // store, as a single float, f0 (current argument) on to the stack argument list
 	" addi  r23, r23, 1          \n"     // a float register eats up a GPR register
 	" addi  r28, r28, 1          \n"     // ...and, of course, a float register
 	" addi  r29, r29, 4          \n"     // move to the next argument in the list
-	" addi  r26, r26, 8          \n"     // move to the next stack slot
+	" addi  r26, r26, 4          \n"     // move to the next stack slot
 	" b     ppcNextArg           \n"     // on to the next argument
 	" nop                        \n"
+	
 	// double Float argument
 	"ppcArgIsDouble:             \n"
 	" addis r30, r31, ha16(ppcLoadDoubleReg - address) \n" // load the base address of the jump table for double registers
@@ -1138,7 +1138,7 @@ asm(" .text\n"
 	// all float arguments still go on the stack
 	"ppcLoadDoubleRegUpd: \n"
 	" stfd  f0, 0(r26)     \n"    // store f0, as a double, into the argument list on the stack
-	" addi  r23, r23, 1   \n"     // a double float eats up one GPR
+	" addi  r23, r23, 2   \n"     // a double float eats up two GPRs
 	" addi  r28, r28, 1   \n"     // ...and, of course, a float
 	" addi  r29, r29, 8   \n"     // increment to our next argument we need to process (8 bytes for the 64bit float)
 	" addi  r26, r26, 8   \n"     // increment to the next slot on the argument list on the stack (8 bytes)
@@ -1168,7 +1168,7 @@ void stackArgs(const asDWORD *args, const asBYTE *argsType, int& numIntArgs, int
 	int typeOffset = numIntArgs + numFloatArgs + numDoubleArgs;
 
 	int typeIndex;
-	for( i = 0, typeIndex = 0; i < AS_PPC_MAX_ARGS; i++, typeIndex++ )
+	for( i = 0, typeIndex = 0; ; i++, typeIndex++ )
 	{
 		// store the type
 		ppcArgsType[typeOffset++] = argsType[typeIndex];
