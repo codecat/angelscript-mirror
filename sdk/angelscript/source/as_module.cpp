@@ -441,7 +441,7 @@ int asCModule::GetGlobalVarIDByName(const char *name)
 
 	if( id == -1 ) return asNO_GLOBAL_VAR;
 
-	return id;
+	return moduleID | id;
 }
 
 int asCModule::GetGlobalVarIDByDecl(const char *decl)
@@ -469,7 +469,7 @@ int asCModule::GetGlobalVarIDByDecl(const char *decl)
 
 	if( id == -1 ) return asNO_GLOBAL_VAR;
 
-	return id;
+	return moduleID | id;
 }
 
 int asCModule::AddConstantString(const char *str, size_t len)

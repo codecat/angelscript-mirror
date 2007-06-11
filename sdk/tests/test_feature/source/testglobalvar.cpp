@@ -134,26 +134,27 @@ bool TestGlobalVar()
 		ret = true;
 	}
 
-	engine->AddScriptSection("a", "script", script4, strlen(script4), 0, false);
-	if( engine->Build("a") < 0 )
+	// Use another module so that we can test that the variable id is correct even for multiple modules
+	engine->AddScriptSection("b", "script", script4, strlen(script4), 0, false);
+	if( engine->Build("b") < 0 )
 	{
 		printf("%s: build failed\n", TESTNAME);
 		ret = true;
 	}
 
-	int c = engine->GetGlobalVarCount("a");
+	int c = engine->GetGlobalVarCount("b");
 	if( c != 8 ) ret = true;
 	double d;
-	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 0)); 
+	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("b", 0)); 
 	if( !CompareDouble(d, 12) ) ret = true;
-	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 1)); 
+	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName("b", "gcb")); 
 	if( !CompareDouble(d, 5) ) ret = true;
-	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 2)); 
+	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("b", "const double gcc")); 
 	if( !CompareDouble(d, 35.2) ) ret = true;
-	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 3)); 
+	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("b", 3)); 
 	if( !CompareDouble(d, 4) ) ret = true;
 	
-	engine->ExecuteString("a", "test()");
+	engine->ExecuteString("b", "test()");
 
 	engine->Release();
 
