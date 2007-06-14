@@ -83,16 +83,15 @@ static const char *script2 =
 class tst
 {
 public:
+
   int test_f(unsigned int param)
   {
 	if( sizeof(bool) == 1 )
 	{
 		// Force return false with trash in upper bytes, to test if AngelScript is able to handle this
-#ifdef __BIG_ENDIAN__
-		return 0x00FFFFFF;
-#else
-		return 0xFFFFFF00;
-#endif
+		// We need to make both the high and low bytes 0, because depending on the system the high or low byte is used as the returned value,
+		// on intel it is the low byte, on 32 bit ppc it is the low byte, on 64 bit ppc it is the high byte
+		return 0x00FFFF00;
 	}
 	else
 		return 0;
@@ -106,6 +105,11 @@ void CFunc(float f, int a, int b, const std::string &name)
 	{
 		printf("Receiving boolean value with scrap in higher bytes. Not sure this is an error.\n");
 	}
+}
+
+bool test_t()
+{
+	return true;
 }
 
 bool Test()
@@ -164,7 +168,6 @@ bool Test()
 		fail = false;
 	engine->ExecuteString(0, "Assert(gFlag == true)");
 
-
 	// TEST 3
 	// It was reported that if( t.test_f() ) would always be true, even though the method returns false
 	// The bug was that the function didn't return 0 in the upper bytes, thus the 32bit value was not 0, even though the low byte was
@@ -173,12 +176,18 @@ bool Test()
 	
 	r = engine->ExecuteString(0, "tst t; if( t.test_f(2000) == true ) Assert(false);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+	
 	r = engine->ExecuteString(0, "tst t; if( !(t.test_f(2000) == false) ) Assert(false);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+	
 //	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 0);
 	r = engine->ExecuteString(0, "tst t; if( t.test_f(2000) ) Assert(false);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	
+		
+	engine->RegisterGlobalFunction("bool test_t()", asFUNCTION(test_t), asCALL_CDECL);
+	r = engine->ExecuteString(0, "Assert( test_t() );");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+		
 	engine->Release();
 
 	return fail;

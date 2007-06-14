@@ -331,11 +331,12 @@ static asQWORD GetReturnedDouble(void)
 static void stackArgs( const asDWORD *args, const asBYTE *argsType, int &numIntArgs, int &numFloatArgs, int &numDoubleArgs )
 {
 	// initialize our offset based on any already placed arguments
-	int i, argWordPos = numIntArgs + numFloatArgs + (numDoubleArgs*2);
+	int i;
+	int argWordPos = numIntArgs + numFloatArgs + (numDoubleArgs*2);
 	int typeOffset = numIntArgs + numFloatArgs + numDoubleArgs;
 
 	int typeIndex;
-	for( i = 0, typeIndex = 0; i < AS_PPC_MAX_ARGS; i++, typeIndex++ )
+	for( i = 0, typeIndex = 0; ; i++, typeIndex++ )
 	{
 		// store the type
 		ppcArgsType[typeOffset++] = argsType[typeIndex];
@@ -354,7 +355,7 @@ static void stackArgs( const asDWORD *args, const asBYTE *argsType, int &numIntA
 			break;
 
 		case ppcDOUBLEARG:
-			{				
+			{
 				// stow double
 				memcpy( &ppcArgs[argWordPos], &args[i], sizeof(double) ); // we have to do this because of alignment
 				numDoubleArgs++;
@@ -496,7 +497,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	void    *func            = (void*)sysFunc->func;
 	int      paramSize       = sysFunc->paramSize;
 	int      popSize         = paramSize;
-	asDWORD *args            = context->stackPointer;	
+	asDWORD *args            = context->stackPointer;
 	void    *obj             = NULL;
 	asDWORD *vftable         = NULL;
 	void    *retObjPointer   = NULL; // for system functions that return AngelScript objects
@@ -750,7 +751,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				// Copy the returned value to the pointer sent by the script engine
 				if( sysFunc->hostReturnSize == 1 )
 				{
-					*(asDWORD*)retObjPointer = (asDWORD)retQW;						
+					*(asDWORD*)retObjPointer = (asDWORD)retQW;
 				}
 				else
 				{
@@ -873,7 +874,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 // This function should prepare system functions so that it will be faster to call them
 int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine)
 {
-	UNUSED_VAR(engine); 
+	UNUSED_VAR(engine);
 
 	// References are always returned as primitive data
 	if( func->returnType.IsReference() || func->returnType.IsObjectHandle() )

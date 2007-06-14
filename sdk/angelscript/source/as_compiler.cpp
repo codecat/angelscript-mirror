@@ -7804,7 +7804,8 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 			{
 				ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)offset);
 				
-				// Don't trust that the function returns the upper bytes without trash
+				// TODO: integers should be converted to 32bit where 32bits are to be used
+				// TODO: booleans should clear upper bytes where it will be used, e.g. when testing in if statements
 				if( descr->returnType.GetSizeInMemoryBytes() == 1 )
 				{
 					if( descr->returnType.IsIntegerType() )
@@ -7812,11 +7813,16 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 						ctx->bc.InstrSHORT(BC_sbTOi, (short)offset);
 						ctx->type.dataType.SetTokenType(ttInt);
 					}
-					else
+					else if( descr->returnType.IsUnsignedType() )
 					{
 						ctx->bc.InstrSHORT(BC_ubTOi, (short)offset);
-						if( descr->returnType.IsUnsignedType() )
-							ctx->type.dataType.SetTokenType(ttUInt);
+						ctx->type.dataType.SetTokenType(ttUInt);
+					}
+					else
+					{
+						// Convert to int and then back again will clear upper bytes
+						ctx->bc.InstrSHORT(BC_ubTOi, (short)offset);
+						ctx->bc.InstrSHORT(BC_iTOb, (short)offset);
 					}
 				}
 				else if( descr->returnType.GetSizeInMemoryBytes() == 2 )

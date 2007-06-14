@@ -122,6 +122,7 @@ namespace TestBits              { bool Test(); }
 namespace TestGetArgPtr         { bool Test(); }
 namespace TestCString           { bool Test(); }
 namespace TestBool              { bool Test(); }
+namespace TestInt8              { bool Test(); }
 
 
 #include "utils.h"
@@ -162,6 +163,8 @@ int main(int argc, char **argv)
 	InstallMemoryManager();
 
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
+	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
+	if( TestInt8::Test()              ) goto failed; else printf("-- TestInt8 passed\n");
 	if( TestExecute32Args()           ) goto failed; else printf("-- TestExecute32Args passed\n");
 	if( TestExecuteThis32MixedArgs()  ) goto failed; else printf("-- TestExecuteThis32MixedArgs passed\n");
 	if( TestExecute32MixedArgs()      ) goto failed; else printf("-- TestExecute32MixedArgs passed\n");
@@ -185,7 +188,6 @@ int main(int argc, char **argv)
 	if( TestCDecl_ClassC()            ) goto failed; else printf("-- TestCDecl_ClassC passed\n");
 	if( TestNotComplexThisCall()      ) goto failed; else printf("-- TestNotComplexThisCall passed\n");
 	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");
-	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
 	if( TestObject3::Test()           ) goto failed; else printf("-- TestObject3 passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");

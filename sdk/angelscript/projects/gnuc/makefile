@@ -25,6 +25,7 @@ SRCNAMES = \
   as_callfunc.cpp \
   as_callfunc_mips.cpp \
   as_callfunc_ppc.cpp \
+  as_callfunc_ppc_64.cpp \
   as_callfunc_sh4.cpp \
   as_callfunc_x86.cpp \
   as_compiler.cpp \

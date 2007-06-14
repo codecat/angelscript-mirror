@@ -3447,6 +3447,76 @@ void *asCContext::GetVarPointer(int varIndex, int stackLevel)
 	return sf - func->variables[varIndex]->stackOffset;
 }
 
+/* TODO: Add this in 2.9.0
+// returns the typeId of the 'this' object at the given call stack level (-1 for current)
+// returns 0 if the function call at the given stack level is not a method
+int asCContext::GetThisTypeId(int stackLevel)
+{
+       if( stackLevel < -1 || stackLevel >= GetCallstackSize() )
+               return 0;
+
+       asCScriptFunction *func = 0;
+       if( stackLevel == -1 )
+       {
+               func = currentFunction;
+       }
+       else
+       {
+               size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
+               func = (asCScriptFunction*)s[1];
+       }
+
+       if( func == 0 )
+               return 0;
+
+       if( func->objectType == 0 )
+               return 0; // not in a method
+
+       // create a datatype
+       asCDataType dt = asCDataType::CreateObject( func->objectType, false);
+
+       // return a typeId from the data type
+       return engine->GetTypeIdFromDataType( dt );
+}
+
+// returns the 'this' object pointer at the given call stack level (-1 for current)
+// returns 0 if the function call at the given stack level is not a method
+void *asCContext::GetThisPointer(int stackLevel)
+{
+       if( stackLevel < -1 || stackLevel >= GetCallstackSize() )
+               return 0;
+
+       asCScriptFunction *func;
+       asDWORD *sf;
+       if( stackLevel == -1 )
+       {
+               func = currentFunction;
+               sf = stackFramePointer;
+       }
+       else
+       {
+               size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
+               func = (asCScriptFunction*)s[1];
+               sf = (asDWORD*)s[0];
+       }
+
+       if( func == 0 )
+               return 0;
+
+       if( func->objectType == 0 )
+               return 0; // not in a method
+
+       void *thisPointer = (void*)*(size_t*)(sf);
+       if( thisPointer == 0 )
+       {
+               return 0;
+       }
+
+       // NOTE: this returns the pointer to the 'this' while the GetVarPointer functions return
+       // a pointer to a pointer. I can't imagine someone would want to change the 'this'
+       return thisPointer;
+}
+*/
 END_AS_NAMESPACE
 
 

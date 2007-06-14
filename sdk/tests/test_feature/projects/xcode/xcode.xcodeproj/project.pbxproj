@@ -23,7 +23,7 @@
 		7526F5410BEE457800BAE32D /* test_arrayobject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F4CD0BEE457800BAE32D /* test_arrayobject.cpp */; };
 		7526F5420BEE457800BAE32D /* test_autohandle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F4CE0BEE457800BAE32D /* test_autohandle.cpp */; };
 		7526F5430BEE457800BAE32D /* test_bits.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F4CF0BEE457800BAE32D /* test_bits.cpp */; };
-		7526F5440BEE457800BAE32D /* test_bool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F4D00BEE457800BAE32D /* test_bool.cpp */; };
+		7526F5440BEE457800BAE32D /* test_int8.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F4D00BEE457800BAE32D /* test_int8.cpp */; };
 		7526F5450BEE457800BAE32D /* test_castop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F4D10BEE457800BAE32D /* test_castop.cpp */; };
 		7526F5460BEE457800BAE32D /* test_circularimport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F4D20BEE457800BAE32D /* test_circularimport.cpp */; };
 		7526F5470BEE457800BAE32D /* test_compiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F4D30BEE457800BAE32D /* test_compiler.cpp */; };
@@ -126,6 +126,7 @@
 		7526F5AA0BEE459600BAE32D /* scriptstring.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F5A80BEE459500BAE32D /* scriptstring.cpp */; };
 		7526F5AB0BEE459600BAE32D /* scriptstring.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7526F5A90BEE459500BAE32D /* scriptstring.h */; };
 		7526F5AD0BEE45A300BAE32D /* angelscript.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7526F5AC0BEE45A300BAE32D /* angelscript.h */; };
+		75CEB8D50C20D7D7009B3031 /* test_bool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75CEB8D40C20D7D7009B3031 /* test_bool.cpp */; };
 		7526F5B50BEE462100BAE32D /* libas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7526F5B40BEE462100BAE32D /* libas.a */; };
 		8DD76F6A0486A84900D96B5E /* xcode.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6859E8B029090EE04C91782 /* xcode.1 */; };
 /* End PBXBuildFile section */
@@ -167,7 +168,7 @@
 		7526F4CD0BEE457800BAE32D /* test_arrayobject.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_arrayobject.cpp; path = ../../source/test_arrayobject.cpp; sourceTree = SOURCE_ROOT; };
 		7526F4CE0BEE457800BAE32D /* test_autohandle.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_autohandle.cpp; path = ../../source/test_autohandle.cpp; sourceTree = SOURCE_ROOT; };
 		7526F4CF0BEE457800BAE32D /* test_bits.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_bits.cpp; path = ../../source/test_bits.cpp; sourceTree = SOURCE_ROOT; };
-		7526F4D00BEE457800BAE32D /* test_bool.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_bool.cpp; path = ../../source/test_bool.cpp; sourceTree = SOURCE_ROOT; };
+		7526F4D00BEE457800BAE32D /* test_int8.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_int8.cpp; path = ../../source/test_int8.cpp; sourceTree = SOURCE_ROOT; };
 		7526F4D10BEE457800BAE32D /* test_castop.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_castop.cpp; path = ../../source/test_castop.cpp; sourceTree = SOURCE_ROOT; };
 		7526F4D20BEE457800BAE32D /* test_circularimport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_circularimport.cpp; path = ../../source/test_circularimport.cpp; sourceTree = SOURCE_ROOT; };
 		7526F4D30BEE457800BAE32D /* test_compiler.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_compiler.cpp; path = ../../source/test_compiler.cpp; sourceTree = SOURCE_ROOT; };
@@ -270,6 +271,7 @@
 		7526F5A80BEE459500BAE32D /* scriptstring.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = scriptstring.cpp; path = ../../../../add_on/scriptstring/scriptstring.cpp; sourceTree = SOURCE_ROOT; };
 		7526F5A90BEE459500BAE32D /* scriptstring.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = scriptstring.h; path = ../../../../add_on/scriptstring/scriptstring.h; sourceTree = SOURCE_ROOT; };
 		7526F5AC0BEE45A300BAE32D /* angelscript.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = angelscript.h; path = ../../../../angelscript/include/angelscript.h; sourceTree = SOURCE_ROOT; };
+		75CEB8D40C20D7D7009B3031 /* test_bool.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_bool.cpp; path = ../../source/test_bool.cpp; sourceTree = SOURCE_ROOT; };
 		7526F5B40BEE462100BAE32D /* libas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libas.a; path = ../../../../angelscript/lib/build/Debug/libas.a; sourceTree = SOURCE_ROOT; };
 		8DD76F6C0486A84900D96B5E /* xcode */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = xcode; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6859E8B029090EE04C91782 /* xcode.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = xcode.1; sourceTree = "<group>"; };
@@ -320,7 +322,8 @@
 				7526F4CD0BEE457800BAE32D /* test_arrayobject.cpp */,
 				7526F4CE0BEE457800BAE32D /* test_autohandle.cpp */,
 				7526F4CF0BEE457800BAE32D /* test_bits.cpp */,
-				7526F4D00BEE457800BAE32D /* test_bool.cpp */,
+				7526F4D00BEE457800BAE32D /* test_int8.cpp */,
+				75CEB8D40C20D7D7009B3031 /* test_bool.cpp */,
 				7526F4D10BEE457800BAE32D /* test_castop.cpp */,
 				7526F4D20BEE457800BAE32D /* test_circularimport.cpp */,
 				7526F4D30BEE457800BAE32D /* test_compiler.cpp */,
@@ -493,7 +496,7 @@
 				7526F5410BEE457800BAE32D /* test_arrayobject.cpp in Sources */,
 				7526F5420BEE457800BAE32D /* test_autohandle.cpp in Sources */,
 				7526F5430BEE457800BAE32D /* test_bits.cpp in Sources */,
-				7526F5440BEE457800BAE32D /* test_bool.cpp in Sources */,
+				7526F5440BEE457800BAE32D /* test_int8.cpp in Sources */,
 				7526F5450BEE457800BAE32D /* test_castop.cpp in Sources */,
 				7526F5460BEE457800BAE32D /* test_circularimport.cpp in Sources */,
 				7526F5470BEE457800BAE32D /* test_compiler.cpp in Sources */,
@@ -593,6 +596,7 @@
 				7526F5A50BEE457800BAE32D /* testvirtualmethod.cpp in Sources */,
 				7526F5A60BEE457800BAE32D /* utils.cpp in Sources */,
 				7526F5AA0BEE459600BAE32D /* scriptstring.cpp in Sources */,
+				75CEB8D50C20D7D7009B3031 /* test_bool.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
