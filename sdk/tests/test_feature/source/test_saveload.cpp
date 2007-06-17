@@ -10,6 +10,8 @@
 namespace TestSaveLoad
 {
 
+using namespace std;
+
 #define TESTNAME "TestSaveLoad"
 
 
@@ -81,7 +83,8 @@ static const char *script2 =
 "}                                         \n";
 
 static const char *script3 = 
-"void Test(int a) {}";
+"float[] f(5); \n"
+"void Test(int a) {} \n";
 
 bool fail = false;
 int number = 0;
@@ -144,6 +147,22 @@ void TestScripts(asIScriptEngine *engine)
 	}
 }
 
+void ConstructFloatArray(vector<float> *p)
+{
+	new(p) vector<float>;
+}
+
+void ConstructFloatArray(int s, vector<float> *p)
+{
+	new(p) vector<float>(s);
+}
+
+void DestructFloatArray(vector<float> *p)
+{
+	p->~vector<float>();
+}
+
+
 bool Test()
 {
  	asIScriptEngine *engine = ConfigureEngine();
@@ -196,6 +215,30 @@ bool Test()
 	engine->LoadByteCode(0, &stream2);
 	engine->ExecuteString(0, "Test(3)");
 
+	engine->Release();
+
+	//-----------------------------------
+	// save/load with overloaded array types should work as well
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	int r = engine->RegisterObjectType("float[]", sizeof(vector<float>), asOBJ_CLASS_CDA); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructFloatArray, (vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructFloatArray, (int, vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructFloatArray), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_ASSIGNMENT, "float[] &f(float[]&in)", asMETHODPR(vector<float>, operator=, (const std::vector<float> &), vector<float>&), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_INDEX, "float &f(int)", asMETHODPR(vector<float>, operator[], (vector<float>::size_type), float &), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("float[]", "int length()", asMETHOD(vector<float>, size), asCALL_THISCALL); assert(r >= 0);
+	
+	engine->AddScriptSection(0, "script3", script3, strlen(script3));
+	engine->Build(0);
+	
+	CBytecodeStream stream3;
+	engine->SaveByteCode(0, &stream3);
+	
+	engine->Discard(0);
+	
+	engine->LoadByteCode(0, &stream3);
+	engine->ExecuteString(0, "Test(3)");
+	
 	engine->Release();
 
 	// Success

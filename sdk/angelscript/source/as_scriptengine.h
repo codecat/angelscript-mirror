@@ -196,7 +196,8 @@ public:
 
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
-	asCObjectType *GetObjectType(const char *type, int arrayType = 0);
+	asCObjectType *GetObjectType(const char *type);
+	asCObjectType *GetArrayType(const char *type);
 
 	int AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal);
 

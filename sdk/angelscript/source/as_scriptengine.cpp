@@ -1985,14 +1985,30 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 
 
 
-asCObjectType *asCScriptEngine::GetObjectType(const char *type, int arrayType)
+asCObjectType *asCScriptEngine::GetObjectType(const char *type)
 {
 	// TODO: Improve linear search
 	for( asUINT n = 0; n < objectTypes.GetLength(); n++ )
 		if( objectTypes[n] &&
 			objectTypes[n]->name == type &&
-			objectTypes[n]->arrayType == arrayType )
+			objectTypes[n]->arrayType == 0 )
 			return objectTypes[n];
+
+	return 0;
+}
+
+
+// This method will only return registered array types, since only they have the name stored
+asCObjectType *asCScriptEngine::GetArrayType(const char *type)
+{
+	if( type[0] == 0 )
+		return 0;
+
+	// TODO: Improve linear search
+	for( asUINT n = 0; n < arrayTypes.GetLength(); n++ )
+		if( arrayTypes[n] &&
+			arrayTypes[n]->name == type )
+			return arrayTypes[n];
 
 	return 0;
 }
