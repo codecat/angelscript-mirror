@@ -1081,16 +1081,6 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	if( name == 0 )
 		return ConfigError(asINVALID_NAME);
 
-	// Verify object size (valid sizes 0, 1, 2, or multiple of 4)
-	if( byteSize < 0 )
-		return ConfigError(asINVALID_ARG);
-	
-	if( byteSize < 4 && byteSize == 3 )
-		return ConfigError(asINVALID_ARG);
-
-	if( byteSize > 4 && (byteSize & 0x3) )
-		return ConfigError(asINVALID_ARG);
-
 	// Verify if the name has been registered as a type already
 	asUINT n;
 	for( n = 0; n < objectTypes.GetLength(); n++ )
