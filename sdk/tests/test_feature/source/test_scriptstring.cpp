@@ -127,6 +127,7 @@ bool Test()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString(engine);
+	RegisterScriptStringUtils(engine);
 
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
@@ -275,6 +276,12 @@ bool Test()
 
 	r = engine->ExecuteString(0, "Http h; string a = \"test\", b; h.get(\"string\"+a, b); assert(b == \"output\");");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+
+	// Test the string utils
+	engine->ExecuteString(0, "string str = \"abcdef\"; assert(findFirst(str, \"def\") == 3);");
+	engine->ExecuteString(0, "string str = \"abcdef\"; assert(findFirstOf(str, \"feb\") == 1);");
+	engine->ExecuteString(0, "string str = \"a|b||d\"; string@[]@ array = split(str, \"|\"); assert(array.length() == 4); assert(array[1] == \"b\");");
+	engine->ExecuteString(0, "string@[] array = {\"a\", \"b\", \"\", \"d\"}; assert(join(array, \"|\") == \"a|b||d\");");
 
 	engine->Release();
 

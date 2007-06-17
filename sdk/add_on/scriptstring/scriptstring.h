@@ -55,6 +55,9 @@ void RegisterScriptString_Native(asIScriptEngine *engine);
 // are not supported on the target platform
 void RegisterScriptString_Generic(asIScriptEngine *engine);
 
+// This function will register utility functions for the script string
+void RegisterScriptStringUtils(asIScriptEngine *engine);
+
 END_AS_NAMESPACE
 
 #endif

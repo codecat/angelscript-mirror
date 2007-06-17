@@ -162,13 +162,13 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
 	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
 	if( TestInt8::Test()              ) goto failed; else printf("-- TestInt8 passed\n");
 	if( TestExecute32Args()           ) goto failed; else printf("-- TestExecute32Args passed\n");
 	if( TestExecuteThis32MixedArgs()  ) goto failed; else printf("-- TestExecuteThis32MixedArgs passed\n");
 	if( TestExecute32MixedArgs()      ) goto failed; else printf("-- TestExecute32MixedArgs passed\n");
-	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestAutoHandle::Test()        ) goto failed; else printf("-- TestAutoHandle passed\n");
 	if( TestExecuteMixedArgs()        ) goto failed; else printf("-- TestExecuteMixedArgs passed\n");

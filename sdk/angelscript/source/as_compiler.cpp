@@ -1642,8 +1642,12 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 				lctx.type.Set(var->dataType.GetSubType());
 
-				if( !lctx.type.dataType.IsObject() )
+				if( !lctx.type.dataType.IsObject() || lctx.type.dataType.IsObjectHandle() )
 					lctx.type.dataType.MakeReference(true);
+				
+				// If the element type is handles, then we're expected to do handle assignments
+				if( lctx.type.dataType.IsObjectHandle() )
+					lctx.type.isExplicitHandle = true;
 
 				asSExprContext ctx(engine);
 				DoAssignment(&ctx, &lctx, &rctx, el, el, ttAssignment, el);
