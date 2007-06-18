@@ -43,6 +43,11 @@ static void retfalse_gen(asIScriptGeneric *gen)
 	gen->SetReturnDWord(false);
 }
 
+static asINT64 reti64()
+{
+	return I64(0x102030405);
+}
+
 bool TestReturn()
 {
 	bool ret = false;
@@ -61,6 +66,9 @@ bool TestReturn()
 		engine->RegisterGlobalFunction("bool cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
 		engine->RegisterGlobalFunction("bool retfalse()", asFUNCTION(retfalse), asCALL_CDECL);
 		engine->RegisterGlobalFunction("bool retfalse2()", asFUNCTION(retfalse_fake), asCALL_CDECL);
+		engine->RegisterGlobalFunction("int64 reti64()", asFUNCTION(reti64), asCALL_CDECL);
+		
+		engine->ExecuteString(0, "assert(reti64() == 0x102030405)");
 	}
 
 	engine->ExecuteString(0, "returned = cfunction()");

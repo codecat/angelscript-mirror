@@ -66,13 +66,15 @@ BEGIN_AS_NAMESPACE
 // Extra +1 when returning in memory
 // Extra +1 in ppcArgsType to ensure zero end-of-args marker
 
+// TODO: We need to remove these global variables for thread-safety
+
 enum argTypes { ppcENDARG, ppcINTARG, ppcFLOATARG, ppcDOUBLEARG };
 static asDWORD ppcArgs[2*AS_PPC_MAX_ARGS + 1 + 1];
 
 // Using extern "C" because we use this symbol name in the assembly code
 extern "C"
 {
-	static asBYTE ppcArgsType[AS_PPC_MAX_ARGS + 1 + 1 + 1];
+	static asBYTE ppcArgsType[2*AS_PPC_MAX_ARGS + 1 + 1 + 1];
 }
 
 // NOTE: these values are for PowerPC 32 bit. 
@@ -482,7 +484,7 @@ static asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD* pArg
 int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 {
 	// use a working array of types, we'll configure the final one in stackArgs
-	asBYTE argsType[AS_PPC_MAX_ARGS + 1 + 1 + 1];
+	asBYTE argsType[2*AS_PPC_MAX_ARGS + 1 + 1 + 1];
 	memset( argsType, 0, sizeof(argsType));
 
 	asCScriptEngine *engine = context->engine;
@@ -505,7 +507,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	asDWORD *vftable         = NULL;
 	void    *retObjPointer   = NULL; // for system functions that return AngelScript objects
 	void    *retInMemPointer = NULL; // for host functions that need to return data in memory instead of by register
-	int      a;
+	int      a, s;
 
 	// convert the parameters that are < 4 bytes from little endian to big endian
 	int argDwordOffset = 0;
@@ -598,16 +600,25 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	assert( descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS );
 
 	// mark all float/double/int arguments
-	for( a = 0; a < (int)descr->parameterTypes.GetLength(); a++ )
+	for( s = 0, a = 0; s < (int)descr->parameterTypes.GetLength(); s++, a++ )
 	{
-		argsType[a] = ppcINTARG;
-		if( descr->parameterTypes[a].IsFloatType() && !descr->parameterTypes[a].IsReference() )
+		if( descr->parameterTypes[s].IsFloatType() && !descr->parameterTypes[s].IsReference() )
 		{
 			argsType[a] = ppcFLOATARG;
 		}
-		if( descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() )
+		else if( descr->parameterTypes[s].IsDoubleType() && !descr->parameterTypes[s].IsReference() )
 		{
 			argsType[a] = ppcDOUBLEARG;
+		}
+		else
+		{
+			argsType[a] = ppcINTARG;
+			if( descr->parameterTypes[s].GetSizeOnStackDWords() == 2 )
+			{
+				// Add an extra integer argument for the extra size
+				a++;
+				argsType[a] = ppcINTARG;
+			}
 		}
 	}
 
