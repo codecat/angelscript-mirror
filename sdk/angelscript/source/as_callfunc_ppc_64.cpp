@@ -30,11 +30,11 @@
 
 
 //
-// as_callfunc_ppc.cpp
+// as_callfunc_ppc_64.cpp
 //
 // These functions handle the actual calling of system functions
 //
-// This version is PPC specific
+// This version is 64 bit PPC specific
 //
 
 #include <stdio.h>
@@ -70,11 +70,13 @@ BEGIN_AS_NAMESPACE
 // Extra +1 when returning in memory
 // Extra +1 in ppcArgsType to ensure zero end-of-args marker
 
+// TODO: The global variables must be removed to make the code thread safe
+
 extern "C"
 {
-	enum argTypes { ppcENDARG = 0, ppcINTARG = 1, ppcFLOATARG = 2, ppcDOUBLEARG = 3 };
+	enum argTypes { ppcENDARG = 0, ppcINTARG = 1, ppcFLOATARG = 2, ppcDOUBLEARG = 3, ppcLONGARG = 4 };
 	static asBYTE ppcArgsType[AS_PPC_MAX_ARGS + 1 + 1 + 1];
-	static asDWORD ppcArgs[AS_PPC_MAX_ARGS + 1 + 1];
+	static asDWORD ppcArgs[2*AS_PPC_MAX_ARGS + 1 + 1];
 }
 
 // NOTE: these values are for PowerPC 64 bit.  I'm sure things are different for PowerPC 32bit, but I don't have one.
@@ -148,6 +150,7 @@ asm(""
 	"b ppcArgIsInteger\n"
 	"b ppcArgIsFloat\n"
 	"b ppcArgIsDouble\n"
+	"b ppcArgIsLong\n"
 
 	// when we get here we have finished processing all the arguments
 	// everything is ready to go to call the function
@@ -311,6 +314,45 @@ asm(""
 	"addi %r26, %r26, 8\n"     // increment to the next slot on the argument list on the stack (8 bytes)
 	"b ppcNextArg\n"           // on to the next argument
 	"nop\n"
+
+	// Long (64 bit int) argument
+	"ppcArgIsLong:\n"
+	"lis %r30,ppcLoadLongReg@ha\n"  // load the address to the jump table for integer64
+	"addi %r30, %r30, ppcLoadLongReg@l\n"
+	"mulli %r0, %r23, 8\n"         // each item in the jump table is 2 instructions (8 bytes)
+	"add %r0, %r0, %r30\n"         // calculate ppcLoadLongReg[numUsedGPRRegs]
+	"ld  %r30,0(%r29)\n"           // load the next argument from the argument list into r30
+	"cmpwi %r23, 8\n"              // we can only load GPR3 through GPR10 (8 registers)
+	"bgt ppcLoadLongRegUpd\n"      // if we're beyond 8 GPR registers, we're in the stack, go there
+	"mtctr %r0\n"                  // load the address of our ppcLoadLongReg jump table (we're below 8 GPR registers)
+	"bctr\n"                       // load the argument into a GPR register
+	"nop\n"
+	// jump table for GPR registers, for the first 8 GPR arguments
+	"ppcLoadLongReg:\n"
+	"mr %r3,%r30\n"         // arg0 (to r3)
+	"b ppcLoadLongRegUpd\n"
+	"mr %r4,%r30\n"         // arg1 (to r4)
+	"b ppcLoadLongRegUpd\n"
+	"mr %r5,%r30\n"         // arg2 (to r5)
+	"b ppcLoadLongRegUpd\n"
+	"mr %r6,%r30\n"         // arg3 (to r6)
+	"b ppcLoadLongRegUpd\n"
+	"mr %r7,%r30\n"         // arg4 (to r7)
+	"b ppcLoadLongRegUpd\n"
+	"mr %r8,%r30\n"         // arg5 (to r8)
+	"b ppcLoadLongRegUpd\n"
+	"mr %r9,%r30\n"         // arg6 (to r9)
+	"b ppcLoadLongRegUpd\n"
+	"mr %r10,%r30\n"        // arg7 (to r10)
+	"b ppcLoadLongRegUpd\n"
+
+	// all GPR arguments still go on the stack
+	"ppcLoadLongRegUpd:\n"
+	"std  %r30,0(%r26)\n"   // store the argument into the next slot on the stack's argument list
+	"addi %r23, %r23, 1\n"  // count a used GPR register
+	"addi %r29, %r29, 8\n"  // move to the next argument on the list
+	"addi %r26, %r26, 8\n"  // adjust our argument stack pointer for the next
+	"b ppcNextArg\n"        // next argument
 );
 
 static asDWORD GetReturnedFloat(void)
@@ -328,12 +370,12 @@ static asQWORD GetReturnedDouble(void)
 }
 
 // puts the arguments in the correct place in the stack array. See comments above.
-static void stackArgs( const asDWORD *args, const asBYTE *argsType, int &numIntArgs, int &numFloatArgs, int &numDoubleArgs )
+static void stackArgs( const asDWORD *args, const asBYTE *argsType, int &numIntArgs, int &numFloatArgs, int &numDoubleArgs, int &numLongArgs )
 {
 	// initialize our offset based on any already placed arguments
 	int i;
-	int argWordPos = numIntArgs + numFloatArgs + (numDoubleArgs*2);
-	int typeOffset = numIntArgs + numFloatArgs + numDoubleArgs;
+	int argWordPos = numIntArgs + numFloatArgs + (numDoubleArgs*2) + (numLongArgs*2);
+	int typeOffset = numIntArgs + numFloatArgs + numDoubleArgs + numLongArgs;
 
 	int typeIndex;
 	for( i = 0, typeIndex = 0; ; i++, typeIndex++ )
@@ -372,6 +414,16 @@ static void stackArgs( const asDWORD *args, const asBYTE *argsType, int &numIntA
 				argWordPos++;
 			}
 			break;
+
+		case ppcLONGARG:
+			{
+				// stow long
+				memcpy( &ppcArgs[argWordPos], &args[i], 8 ); // for alignment purposes, we use memcpy
+				numLongArgs++;
+				argWordPos += 2; // add two words
+				i++; // longs take up 2 argument slots
+			}
+			break;
 		}
 	}
 
@@ -395,9 +447,9 @@ static asQWORD CallCDeclFunction(const asDWORD* pArgs, const asBYTE *pArgsType, 
 	int numTotalArgs = baseArgCount;
 	if( argSize > 0 )
 	{
-		int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0;
-		stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs );
-		numTotalArgs = intArgs + floatArgs + doubleArgs;
+		int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0, longArgs = 0;
+		stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs, longArgs );
+		numTotalArgs = intArgs + floatArgs + doubleArgs + longArgs;
 	}
 	else
 	{
@@ -432,9 +484,9 @@ static asQWORD CallThisCallFunction(const void *obj, const asDWORD* pArgs, const
 	int numTotalArgs = baseArgCount;
 	if( argSize > 0 )
 	{
-		int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0;
-		stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs );
-		numTotalArgs = intArgs + floatArgs + doubleArgs;
+		int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0, longArgs = 0;
+		stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs, longArgs );
+		numTotalArgs = intArgs + floatArgs + doubleArgs + longArgs;
 	}
 
 	// call the function with the arguments
@@ -458,15 +510,15 @@ static asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD* pArg
 	}
 
 	// stack any of the arguments
-	int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0;
-	stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs );
+	int intArgs = baseArgCount, floatArgs = 0, doubleArgs = 0, longArgs = 0;
+	stackArgs( pArgs, pArgsType, intArgs, floatArgs, doubleArgs, longArgs );
 	int numTotalArgs = intArgs + floatArgs + doubleArgs;
 
 	// can we fit the object in at the end?
 	if( numTotalArgs < AS_PPC_MAX_ARGS )
 	{
 		// put the object pointer at the end
-		int argPos = intArgs + floatArgs + (doubleArgs * 2);
+		int argPos = intArgs + floatArgs + (doubleArgs * 2) + (longArgs *2);
 		ppcArgs[argPos]             = (asDWORD)obj;
 		ppcArgsType[numTotalArgs++] = ppcINTARG;
 		ppcArgsType[numTotalArgs]   = ppcENDARG;
@@ -605,6 +657,10 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		if( descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() )
 		{
 			argsType[a] = ppcDOUBLEARG;
+		}
+		if( descr->parameterTypes[a].GetSizeOnStackDWords() == 2 && !descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() )
+		{
+			argsType[a] = ppcLONGARG;
 		}
 	}
 

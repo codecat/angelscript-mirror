@@ -259,7 +259,7 @@ void StringSplit_Generic(asIScriptGeneric *gen)
 
     // Find the existence of the delimiter in the input string
     int pos = 0, prev = 0, count = 0;
-    while( (pos = str->buffer.find(delim->buffer, prev)) != std::string::npos )
+    while( (pos = str->buffer.find(delim->buffer, prev)) != (int)std::string::npos )
     {
         // Add the part to the array
         asCScriptString *part = new asCScriptString();
@@ -306,7 +306,7 @@ void StringJoin_Generic(asIScriptGeneric *gen)
     // Create the new string
     asCScriptString *str = new asCScriptString();
     int n;
-    for( n = 0; n < array->GetElementCount() - 1; n++ )
+    for( n = 0; n < (int)array->GetElementCount() - 1; n++ )
     {
         asCScriptString *part = *(asCScriptString**)array->GetElementPointer(n);
         str->buffer += part->buffer;

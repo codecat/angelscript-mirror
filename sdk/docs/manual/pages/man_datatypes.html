@@ -22,20 +22,27 @@
 <p>Primitives in AngelScript have direct matches in C++.</p>
 
 <table cellspacing=0 cellpadding=0>
-<tr><td width=100><b>AngelScript</b></td><td width=100><b>C++</b></td><td width=100><b>Size (bits)</b></tr>
-<tr><td>void</td><td>void</td><td>0</td></tr>
-<tr><td>int8</td><td>signed char</td><td>8</td></tr>
-<tr><td>int16</td><td>signed short</td><td>16</td></tr>
-<tr><td>int</td><td>signed long</td><td>32</td></tr>
-<tr><td>uint8</td><td>unsigned char</td><td>8</td></tr>
-<tr><td>uint16</td><td>unsigned short</td><td>16</td></tr>
-<tr><td>uint</td><td>unsigned long</td><td>32</td></tr>
-<tr><td>float</td><td>float</td><td>32</td></tr>
-<tr><td>double</td><td>double</td><td>64</td></tr>
-<tr><td>bool</td><td>bool</td><td>8</td></tr>
+<tr><td width=100><b>AngelScript</b></td><td width=150><b>C++</b></td><td width=100><b>Size (bits)</b></tr>
+<tr><td>void  </td><td>void              </td><td>0     </td></tr>
+<tr><td>int8  </td><td>signed char       </td><td>8     </td></tr>
+<tr><td>int16 </td><td>signed short      </td><td>16    </td></tr>
+<tr><td>int   </td><td>signed long (*)   </td><td>32    </td></tr>
+<tr><td>int64 </td><td>signed long long  </td><td>64    </td></tr>
+<tr><td>uint8 </td><td>unsigned char     </td><td>8     </td></tr>
+<tr><td>uint16</td><td>unsigned short    </td><td>16    </td></tr>
+<tr><td>uint  </td><td>unsigned long (*) </td><td>32    </td></tr>
+<tr><td>uint64</td><td>unsigned long long</td><td>64    </td></tr>
+<tr><td>float </td><td>float             </td><td>32    </td></tr>
+<tr><td>double</td><td>double            </td><td>64    </td></tr>
+<tr><td>bool  </td><td>bool              </td><td>8 (**)</td></tr>
 </table>
 
-<p>There is currently no 64 bit integer available in AngelScript.</p>
+<p>
+*) If the target CPU is 32 bit, the C++ type long is 32 bit, but on 64 bit CPUs
+   it is commonly 64 bit, but in AngelScript an int is always 32 bits.
+<p>
+**) On 32 bit PowerPC platforms the bool type commonly have the size of 32 bit,
+   when compiled on such platforms AngelScript also uses 32 bits for the bool type</p>
 
 <h2>Arrays</h2>
 
@@ -54,26 +61,26 @@ with application specified objects, on a per array type basis.</p>
 This means that for object handles to work, the object must have some way of
 counting references, for example an AddRef/Release method pair.</p>
 
-<p>When AngelScript passes an object handle by value to a function it 
-increases the reference count to count for the argument instance, thus the 
-function is responsible for releasing the reference once it is finished with 
-it. In the same manner AngelScript expects any handle returned from a function 
+<p>When AngelScript passes an object handle by value to a function it
+increases the reference count to count for the argument instance, thus the
+function is responsible for releasing the reference once it is finished with
+it. In the same manner AngelScript expects any handle returned from a function
 to already have the reference accounted for.</p>
 
-<p>However, when registering functions/methods with AngelScript the 
-application can tell the library that it should automatically take care of 
-releasing the handle references once a function return, likewise for returned 
-handles. This is done by adding a + sign to the @ type modifier. When doing 
-this an object handle can be safely passed to a C++ function that expects a 
+<p>However, when registering functions/methods with AngelScript the
+application can tell the library that it should automatically take care of
+releasing the handle references once a function return, likewise for returned
+handles. This is done by adding a + sign to the @ type modifier. When doing
+this an object handle can be safely passed to a C++ function that expects a
 normal pointer, but don't release it afterwards.</p>
 
 <h2>Parameter references</h2>
 
 <p>Because AngelScript needs to guarantee validity of pointers at all times,
-it doesn't always pass references to the true object to the function 
-parameter. Instead it creates a copy of the object, whose reference is passed 
-to the function, and if the reference is marked to return a value, the clone 
-is copied back to the original object (if it still exists) once the function 
+it doesn't always pass references to the true object to the function
+parameter. Instead it creates a copy of the object, whose reference is passed
+to the function, and if the reference is marked to return a value, the clone
+is copied back to the original object (if it still exists) once the function
 returns.</p>
 
 <p>Because of this, AngelScript's parameter references are mostly compatible
