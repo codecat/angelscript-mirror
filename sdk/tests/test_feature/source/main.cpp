@@ -162,8 +162,9 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
-	if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
+	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
+	if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
 	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
@@ -227,7 +228,6 @@ int main(int argc, char **argv)
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestExecuteScript()           ) goto failed; else printf("-- TestExecuteScript passed\n"); 
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
-	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
 	if( TestGetArgPtr::Test()         ) goto failed; else printf("-- TestGetArgPtr passed\n");

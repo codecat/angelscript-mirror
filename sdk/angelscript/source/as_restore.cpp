@@ -56,11 +56,18 @@ int asCRestore::Save()
 	unsigned long i, count;
 
 	// structTypes[]
+	// First store the names of the structures, and then the properties
+	// This is necessary in order to be able to restore structures that contains
+	// members of other structure types if they have been declared out of order
 	count = (asUINT)module->classTypes.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
 	{
-		WriteObjectTypeDeclaration(module->classTypes[i]);
+		WriteObjectTypeDeclaration(module->classTypes[i], false);
+	}
+	for( i = 0; i < count; ++i )
+	{
+		WriteObjectTypeDeclaration(module->classTypes[i], true);
 	}
 
 	// usedTypeIndices[]
@@ -131,15 +138,20 @@ int asCRestore::Restore()
 	asCString *cstr;
 
 	// structTypes[]
+	// First restore the structure names, then the properties
 	READ_NUM(count);
 	module->classTypes.Allocate(count, 0);
 	for( i = 0; i < count; ++i )
 	{
 		asCObjectType *ot = NEW(asCObjectType)(engine);
-		ReadObjectTypeDeclaration(ot);
+		ReadObjectTypeDeclaration(ot, false);
 		engine->classTypes.PushLast(ot);
 		module->classTypes.PushLast(ot);
 		ot->refCount++;
+	}
+	for( i = 0; i < count; ++i )
+	{
+		ReadObjectTypeDeclaration(module->classTypes[i], true);
 	}
 
 	// usedTypes[]
@@ -384,45 +396,51 @@ void asCRestore::WriteObjectType(asCObjectType* ot)
 	}
 }
 
-void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot)
+void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writeProperties)
 {
-	// name
-	WriteString(&ot->name);
-	// size
-	int size = ot->size;
-	WRITE_NUM(size);
-	// properties[]
-	size = (asUINT)ot->properties.GetLength();
-	WRITE_NUM(size);
-	asUINT n;
-	for( n = 0; n < ot->properties.GetLength(); n++ )
+	if( !writeProperties )
 	{
-		WriteProperty(ot->properties[n]);
+		// name
+		WriteString(&ot->name);
+		// size
+		int size = ot->size;
+		WRITE_NUM(size);
 	}
+	else
+	{	
+		// properties[]
+		int size = (asUINT)ot->properties.GetLength();
+		WRITE_NUM(size);
+		asUINT n;
+		for( n = 0; n < ot->properties.GetLength(); n++ )
+		{
+			WriteProperty(ot->properties[n]);
+		}
 
-	// behaviours
-	int funcId;
-	funcId = FindFunctionIndex(engine->scriptFunctions[ot->beh.construct]);
-	WRITE_NUM(funcId);
-	size = (int)ot->beh.constructors.GetLength();
-	WRITE_NUM(size);
-	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
-	{
-		funcId = FindFunctionIndex(engine->scriptFunctions[ot->beh.constructors[n]]);
+		// behaviours
+		int funcId;
+		funcId = FindFunctionIndex(engine->scriptFunctions[ot->beh.construct]);
 		WRITE_NUM(funcId);
-	}
+		size = (int)ot->beh.constructors.GetLength();
+		WRITE_NUM(size);
+		for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+		{
+			funcId = FindFunctionIndex(engine->scriptFunctions[ot->beh.constructors[n]]);
+			WRITE_NUM(funcId);
+		}
 
-	// methods[]
-	size = (int)ot->methods.GetLength();
-	WRITE_NUM(size);
-	for( n = 0; n < ot->methods.GetLength(); n++ )
-	{
-		funcId = FindFunctionIndex(engine->scriptFunctions[ot->methods[n]]);
-		WRITE_NUM(funcId);
-	}
+		// methods[]
+		size = (int)ot->methods.GetLength();
+		WRITE_NUM(size);
+		for( n = 0; n < ot->methods.GetLength(); n++ )
+		{
+			funcId = FindFunctionIndex(engine->scriptFunctions[ot->methods[n]]);
+			WRITE_NUM(funcId);
+		}
 
-	// TODO:
-	// interfaces
+		// TODO:
+		// interfaces
+	}
 }
 
 void asCRestore::ReadString(asCString* str) 
@@ -573,6 +591,8 @@ asCObjectType* asCRestore::ReadObjectType()
 
 			dt.MakeArray(engine);
 			ot = dt.GetObjectType();
+			
+			assert(ot);
 		}
 		else
 		{
@@ -581,6 +601,8 @@ asCObjectType* asCRestore::ReadObjectType()
 			asCDataType dt = asCDataType::CreatePrimitive(tokenType, false);
 			dt.MakeArray(engine);
 			ot = dt.GetObjectType();
+			
+			assert(ot);
 		}
 	}
 	else
@@ -589,72 +611,86 @@ asCObjectType* asCRestore::ReadObjectType()
 		asCString typeName;
 		ReadString(&typeName);
 
-		// Find the object type
-		ot = module->GetObjectType(typeName.AddressOf());
-		if( !ot )
-			ot = engine->GetObjectType(typeName.AddressOf());
-		if( !ot )
-			ot = engine->GetArrayType(typeName.AddressOf());
+		if( typeName.GetLength() )
+		{
+			// Find the object type
+			ot = module->GetObjectType(typeName.AddressOf());
+			if( !ot )
+				ot = engine->GetObjectType(typeName.AddressOf());
+			if( !ot )
+				ot = engine->GetArrayType(typeName.AddressOf());
+			
+			assert(ot);
+		}
+		else
+			ot = 0;
 	}
 
 	return ot;
 }
 
-void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot)
+void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties)
 {
-	// name
-	ReadString(&ot->name);
-	// size
-	int size;
-	READ_NUM(size);
-	ot->size = size;
-	// properties[]
-	READ_NUM(size);
-	ot->properties.Allocate(size,0);
-	int n;
-	for( n = 0; n < size; n++ )
+	if( !readProperties )
 	{
-		asCProperty *prop = NEW(asCProperty);
-		ReadProperty(prop);
-		ot->properties.PushLast(prop);
+		// name
+		ReadString(&ot->name);
+		// size
+		int size;
+		READ_NUM(size);
+		ot->size = size;
 	}
+	else
+	{	
+		// properties[]
+		int size;
+		READ_NUM(size);
+		ot->properties.Allocate(size,0);
+		int n;
+		for( n = 0; n < size; n++ )
+		{
+			asCProperty *prop = NEW(asCProperty);
+			ReadProperty(prop);
+			ot->properties.PushLast(prop);
+		}
 
-	// Use the default script struct behaviours
-	ot->beh.addref = engine->scriptTypeBehaviours.beh.addref;
-	ot->beh.release = engine->scriptTypeBehaviours.beh.release;
-	ot->beh.copy = engine->scriptTypeBehaviours.beh.copy;
-	ot->beh.operators.PushLast(ttAssignment);
-	ot->beh.operators.PushLast(ot->beh.copy);
+		// Use the default script struct behaviours
+		ot->beh.addref = engine->scriptTypeBehaviours.beh.addref;
+		ot->beh.release = engine->scriptTypeBehaviours.beh.release;
+		ot->beh.copy = engine->scriptTypeBehaviours.beh.copy;
+		ot->beh.operators.PushLast(ttAssignment);
+		ot->beh.operators.PushLast(ot->beh.copy);
 
-	// Some implicit values
-	ot->tokenType = ttIdentifier;
-	ot->arrayType = 0;
-	ot->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
+		// Some implicit values
+		ot->tokenType = ttIdentifier;
+		ot->arrayType = 0;
+		ot->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
 
-	// behaviours
-	int funcId;
-	READ_NUM(funcId);
-	ot->beh.construct = funcId;
-	READ_NUM(size);
-	for( n = 0; n < size; n++ )
-	{
+		// behaviours
+		int funcId;
 		READ_NUM(funcId);
-		ot->beh.constructors.PushLast(funcId);
+		ot->beh.construct = funcId;
+		READ_NUM(size);
+		for( n = 0; n < size; n++ )
+		{
+			READ_NUM(funcId);
+			ot->beh.constructors.PushLast(funcId);
+		}
+
+		// methods[]
+		READ_NUM(size);
+		for( n = 0; n < size; n++ )
+		{
+			READ_NUM(funcId);
+			ot->methods.PushLast(funcId);
+		}
+
+		// TODO: The flag asOBJ_POTENTIAL_CIRCLE must be saved
+
+		// TODO: What about the arrays? the flag must be saved as well
+
+		// TODO: Interfaces
 	}
-
-	// methods[]
-	READ_NUM(size);
-	for( n = 0; n < size; n++ )
-	{
-		READ_NUM(funcId);
-		ot->methods.PushLast(funcId);
-	}
-
-	// TODO: The flag asOBJ_POTENTIAL_CIRCLE must be saved
-
-	// TODO: What about the arrays? the flag must be saved as well
-
-	// TODO: Interfaces
 }
 
 void asCRestore::WriteByteCode(asDWORD *bc, int length)

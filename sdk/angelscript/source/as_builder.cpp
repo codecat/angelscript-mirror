@@ -399,7 +399,10 @@ void asCBuilder::CompileFunctions()
 
 #ifdef AS_DEBUG
 			// DEBUG: output byte code
-			compiler.byteCode.DebugOutput(("__" + functions[n]->name + ".txt").AddressOf(), module, engine);
+			if( functions[n]->objType )
+				compiler.byteCode.DebugOutput(("__" + functions[n]->objType->name + "_" + functions[n]->name + ".txt").AddressOf(), module, engine);
+			else
+				compiler.byteCode.DebugOutput(("__" + functions[n]->name + ".txt").AddressOf(), module, engine);
 #endif
 		}
 

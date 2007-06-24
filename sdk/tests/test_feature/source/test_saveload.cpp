@@ -83,8 +83,32 @@ static const char *script2 =
 "}                                         \n";
 
 static const char *script3 = 
-"float[] f(5); \n"
+"float[] f(5);       \n"
 "void Test(int a) {} \n";
+
+static const char *script4 = "      \n\
+interface Actor {  }				\n\
+InGame g_inGame;                    \n\
+class InGame						\n\
+{									\n\
+	Ship _ship;						\n\
+	bool Initialize(int level)		\n\
+	{								\n\
+		if (!_ship.Initialize())    \n\
+			return false;           \n\
+									\n\
+		return true;                \n\
+	}								\n\
+}									\n\
+class Ship : Actor					\n\
+{									\n\
+	bool Initialize()				\n\
+	{								\n\
+		return true;				\n\
+	}								\n\
+}									\n";
+
+
 
 bool fail = false;
 int number = 0;
@@ -165,6 +189,8 @@ void DestructFloatArray(vector<float> *p)
 
 bool Test()
 {
+	int r;
+		
  	asIScriptEngine *engine = ConfigureEngine();
 
 	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
@@ -219,26 +245,62 @@ bool Test()
 
 	//-----------------------------------
 	// save/load with overloaded array types should work as well
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		int r = engine->RegisterObjectType("float[]", sizeof(vector<float>), asOBJ_CLASS_CDA); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructFloatArray, (vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructFloatArray, (int, vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructFloatArray), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_ASSIGNMENT, "float[] &f(float[]&in)", asMETHODPR(vector<float>, operator=, (const std::vector<float> &), vector<float>&), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_INDEX, "float &f(int)", asMETHODPR(vector<float>, operator[], (vector<float>::size_type), float &), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("float[]", "int length()", asMETHOD(vector<float>, size), asCALL_THISCALL); assert(r >= 0);
+		
+		engine->AddScriptSection(0, "script3", script3, strlen(script3));
+		engine->Build(0);
+		
+		CBytecodeStream stream3;
+		engine->SaveByteCode(0, &stream3);
+		
+		engine->Discard(0);
+		
+		engine->LoadByteCode(0, &stream3);
+		engine->ExecuteString(0, "Test(3)");
+		
+		engine->Release();
+	}
+
+	//---------------------------------
+	// Must be possible to load scripts with classes declared out of order
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	int r = engine->RegisterObjectType("float[]", sizeof(vector<float>), asOBJ_CLASS_CDA); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructFloatArray, (vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructFloatArray, (int, vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructFloatArray), asCALL_CDECL_OBJLAST); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_ASSIGNMENT, "float[] &f(float[]&in)", asMETHODPR(vector<float>, operator=, (const std::vector<float> &), vector<float>&), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_INDEX, "float &f(int)", asMETHODPR(vector<float>, operator[], (vector<float>::size_type), float &), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectMethod("float[]", "int length()", asMETHOD(vector<float>, size), asCALL_THISCALL); assert(r >= 0);
-	
-	engine->AddScriptSection(0, "script3", script3, strlen(script3));
-	engine->Build(0);
-	
-	CBytecodeStream stream3;
-	engine->SaveByteCode(0, &stream3);
-	
-	engine->Discard(0);
-	
-	engine->LoadByteCode(0, &stream3);
-	engine->ExecuteString(0, "Test(3)");
-	
+	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterScriptString(engine);
+	engine->AddScriptSection(0, "script", script4, strlen(script4));
+	r = engine->Build(0);
+	if( r < 0 ) 
+		fail = true;
+	else
+	{
+		// Test the script with compiled byte code
+		r = engine->ExecuteString(0, "g_inGame.Initialize(0);");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		// Save the bytecode
+		CBytecodeStream stream4;
+		engine->SaveByteCode(0, &stream4);
+		engine->Release();
+
+		// Now load the bytecode into a fresh engine and test the script again
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+		engine->LoadByteCode(0, &stream4);
+		r = engine->ExecuteString(0, "g_inGame.Initialize(0);");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+	}
 	engine->Release();
 
 	// Success

@@ -30,6 +30,16 @@ const char *script5 =
 
 const char *script6 = "class t { bool Test(bool, float) {return false;} }";
 
+const char *script7 =
+"class Ship                           \n\
+{                                     \n\
+	Sprite		_sprite;              \n\
+									  \n\
+	string GetName() {                \n\
+		return _sprite.GetName();     \n\
+	}								  \n\
+}";
+
 bool Test()
 {
 	bool fail = false;
@@ -126,6 +136,16 @@ bool Test()
 		printf("failed on 7\n");
 		fail = true;
 	}
+	
+	// test 8
+	// Don't assert on implicit conversion to object when a compile error has occurred
+	engine->AddScriptSection(0, "script", script7, strlen(script7));
+	r = engine->Build(0);
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+
 
 	engine->Release();
 		

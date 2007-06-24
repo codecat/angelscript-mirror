@@ -63,7 +63,7 @@ protected:
 	void WriteProperty(asCProperty *prop);
 	void WriteDataType(const asCDataType *dt);
 	void WriteObjectType(asCObjectType *ot);
-	void WriteObjectTypeDeclaration(asCObjectType *ot);
+	void WriteObjectTypeDeclaration(asCObjectType *ot, bool writeProperties);
 	void WriteGlobalVarPointers();
 
 	void ReadString(asCString *str);
@@ -71,7 +71,7 @@ protected:
 	void ReadProperty(asCProperty *prop);
 	void ReadDataType(asCDataType *dt);
 	asCObjectType *ReadObjectType();
-	void ReadObjectTypeDeclaration(asCObjectType *ot);
+	void ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties);
 	void ReadGlobalVarPointers();
 
 	void WriteByteCode(asDWORD *bc, int length);
