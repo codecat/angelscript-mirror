@@ -1027,7 +1027,7 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 					descr->inOutFlags[n] != 3 )
 					bc->InstrWORD(BC_GETOBJREF, (asWORD)offset);
 				if( args[n]->type.dataType.IsObjectHandle() )
-					bc->Instr(BC_CHKREF);
+					bc->InstrWORD(BC_ChkNullS, (asWORD)offset);
 			}
 			else if( !engine->allowUnsafeReferences ||
  			         descr->inOutFlags[n] != 3 )

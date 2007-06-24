@@ -251,8 +251,10 @@ enum bcInstr
 	BC_BSRA64		= 170,
 	BC_CMPi64       = 171,
 	BC_CMPu64       = 172,
+	
+	BC_ChkNullS     = 173,
 
-	BC_MAXBYTECODE  = 173,
+	BC_MAXBYTECODE  = 174,
 
 	// Temporary tokens, can't be output to the final program
 	BC_PSP			= 246,
@@ -490,6 +492,8 @@ const int BCT_BSRL64    = BCTYPE_wW_rW_rW_ARG;
 const int BCT_BSRA64    = BCTYPE_wW_rW_rW_ARG;
 const int BCT_CMPi64    = BCTYPE_rW_rW_ARG;
 const int BCT_CMPu64    = BCTYPE_rW_rW_ARG;
+const int BCT_ChkNullS  = BCTYPE_W_ARG;
+
 
 // Temporary
 const int BCT_PSP       = BCTYPE_W_ARG;
@@ -674,7 +678,8 @@ const int bcTypes[256] =
 	BCT_BSRA64,
 	BCT_CMPi64,
 	BCT_CMPu64,
-	0,0,0,0,0,0,0, // 173-179
+	BCT_ChkNullS,
+	0,0,0,0,0, // 174-179
 	0,0,0,0,0,0,0,0,0,0, // 180-189
 	0,0,0,0,0,0,0,0,0,0, // 190-199
 	0,0,0,0,0,0,0,0,0,0, // 200-209
@@ -867,9 +872,10 @@ const int bcStackInc[256] =
 	0,			// BC_BSLL64
 	0,			// BC_BSRL64
 	0,			// BC_BSRA64
-	0,			// BCT_CMPi64
-	0,			// BCT_CMPu64
-	0,0,0,0,0,0,0, // 173-179
+	0,			// BC_CMPi64
+	0,			// BC_CMPu64
+	0,			// BC_ChkNullS
+	0,0,0,0,0,0, // 174-179
 	0,0,0,0,0,0,0,0,0,0, // 180-189
 	0,0,0,0,0,0,0,0,0,0, // 190-199
 	0,0,0,0,0,0,0,0,0,0, // 200-209
@@ -1070,7 +1076,8 @@ const sByteCodeName bcName[256] =
 	{"BSRA64"},
 	{"CMPi64"},
 	{"CMPu64"},
-	{0},{0},{0},{0},{0},{0},{0}, // 173-179
+	{"ChkNullS"},
+	{0},{0},{0},{0},{0},{0}, // 174-179
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 180-189
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 190-199
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 200-209

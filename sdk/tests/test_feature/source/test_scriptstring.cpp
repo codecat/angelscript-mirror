@@ -121,6 +121,16 @@ void GetConstStringRef(asIScriptGeneric *gen)
 	gen->SetReturnAddress(&test);
 }
 
+// void TestFunc(int, string&)
+void TestFunc(asIScriptGeneric *gen)
+{
+	int arg0              = *(int*)gen->GetArgPointer(0);
+	asCScriptString *arg1 = *(asCScriptString**)gen->GetArgPointer(1);
+	
+	assert( arg0 == 0 );
+	assert( arg1->buffer == "test" );
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -282,6 +292,20 @@ bool Test()
 	engine->ExecuteString(0, "string str = \"abcdef\"; assert(findFirstOf(str, \"feb\") == 1);");
 	engine->ExecuteString(0, "string str = \"a|b||d\"; string@[]@ array = split(str, \"|\"); assert(array.length() == 4); assert(array[1] == \"b\");");
 	engine->ExecuteString(0, "string@[] array = {\"a\", \"b\", \"\", \"d\"}; assert(join(array, \"|\") == \"a|b||d\");");
+
+	engine->Release();
+
+	//---------------------------------------
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterScriptString(engine);
+
+	engine->RegisterGlobalFunction("void TestFunc(int, string&)", asFUNCTION(TestFunc), asCALL_GENERIC);
+	
+	// CHKREF was placed incorrectly
+	r = engine->ExecuteString(0, "TestFunc(0, \"test\");");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
 
 	engine->Release();
 

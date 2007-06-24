@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.1 WIP - 2007/06/23</h2>
+<h2>Version 2.8.1 WIP - 2007/06/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -141,6 +141,7 @@ A:hover
 <li>Fixed bug with initialization lists for arrays of object handles.
 <li>Fixed bug with loading bytecode that used registered array types. (Thanks Juan Pablo Bettini)
 <li>Fixed bug with loading bytecode with script classes that were declared out of order. (Thanks Juan Pablo Bettini)
+<li>Fixed bug where CHKREF was placed incorrectly to verify only the first parameter on the stack. (Thanks CyberGorgolith)
 </ul>
 <li>Library
 <ul>
@@ -171,6 +172,10 @@ A:hover
 <ul>
 <li>Added OPTIMIZE_BYTECODE as engine property. 
 <li>Removed restriction on registered object type's sizes, they can now be of any size, even non-multiple of 4. (Thanks Tonin) 
+</ul>
+<li>Virtual machine
+<ul>
+<li>New byte code: ChkNullS
 </ul>
 <li>Project
 <ul>

@@ -2835,9 +2835,24 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
+	case BC_ChkNullS:
+		{
+			size_t *a = (asDWORD*)*(size_t*)(l_sp + WORDARG0(l_bc));
+			if( *a == 0 )
+			{
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+				return;
+			}
+		}
+		l_bc++;
+		break;
+
 	// Don't let the optimizer optimize for size, 
 	// since it requires extra conditions and jumps
-	case 173: l_bc = (asDWORD*)173; break;
 	case 174: l_bc = (asDWORD*)174; break;
 	case 175: l_bc = (asDWORD*)175; break;
 	case 176: l_bc = (asDWORD*)176; break;
