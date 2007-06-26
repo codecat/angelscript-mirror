@@ -307,6 +307,10 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	r = engine->ExecuteString(0, "string @s; TestFunc(0, s);");
+	if( r != asEXECUTION_EXCEPTION )
+		fail = true;
+
 	engine->Release();
 
 	return fail;

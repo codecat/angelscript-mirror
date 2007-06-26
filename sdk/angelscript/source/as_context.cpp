@@ -2,23 +2,23 @@
    AngelCode Scripting Library
    Copyright (c) 2003-2007 Andreas Jönsson
 
-   This software is provided 'as-is', without any express or implied 
-   warranty. In no event will the authors be held liable for any 
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the authors be held liable for any
    damages arising from the use of this software.
 
-   Permission is granted to anyone to use this software for any 
-   purpose, including commercial applications, and to alter it and 
+   Permission is granted to anyone to use this software for any
+   purpose, including commercial applications, and to alter it and
    redistribute it freely, subject to the following restrictions:
 
-   1. The origin of this software must not be misrepresented; you 
+   1. The origin of this software must not be misrepresented; you
       must not claim that you wrote the original software. If you use
-      this software in a product, an acknowledgment in the product 
+      this software in a product, an acknowledgment in the product
       documentation would be appreciated but is not required.
 
-   2. Altered source versions must be plainly marked as such, and 
+   2. Altered source versions must be plainly marked as such, and
       must not be misrepresented as being the original software.
 
-   3. This notice may not be removed or altered from any source 
+   3. This notice may not be removed or altered from any source
       distribution.
 
    The original version of this library can be located at:
@@ -74,14 +74,14 @@ int lastBC;
 class asCDebugStats
 {
 public:
-	asCDebugStats() 
+	asCDebugStats()
 	{
-		memset(instrCount, 0, sizeof(instrCount)); 
+		memset(instrCount, 0, sizeof(instrCount));
 	}
 
-	~asCDebugStats() 
+	~asCDebugStats()
 	{
-		_mkdir("AS_DEBUG"); 
+		_mkdir("AS_DEBUG");
 		FILE *f = fopen("AS_DEBUG/total.txt", "at");
 		if( f )
 		{
@@ -143,7 +143,7 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 
 	lastBC = 255;
 #endif
-	
+
 	holdEngineRef = holdRef;
 	if( holdRef )
 		engine->AddRef();
@@ -257,7 +257,7 @@ int asCContext::Prepare(int funcID)
 
 	// Release the returned object (if any)
 	CleanReturnObject();
-		
+
 	if( funcID == -1 )
 	{
 		// Use the previously prepared function
@@ -283,8 +283,8 @@ int asCContext::Prepare(int funcID)
 		// Remove reference to previous module. Add reference to new module
 		if( module ) module->ReleaseContextRef();
 		module = initialFunction->module;
-		if( module ) 
-			module->AddContextRef(); 
+		if( module )
+			module->AddContextRef();
 
 		// Determine the minimum stack size needed
 		// TODO: GetSpaceNeededForArguments() should be precomputed
@@ -336,7 +336,7 @@ int asCContext::Prepare(int funcID)
 	stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize;
 	stackPointer = stackFramePointer;
 	stackIndex = 0;
-	
+
 	// Set arguments to 0
 	memset(stackPointer, 0, 4*argumentsSize);
 
@@ -431,7 +431,7 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 	stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize;
 	stackPointer = stackFramePointer;
 	stackIndex = 0;
-	
+
 	// Set arguments to 0
 	memset(stackPointer, 0, 4*argumentsSize);
 
@@ -527,7 +527,7 @@ void *asCContext::GetReturnPointer()
 	// An object is stored in the objectRegister
 	if( !dt->IsReference() && dt->IsObject() )
 		return &objectRegister;
-	
+
 	// Primitives and references are stored in register1
 	return &register1;
 }
@@ -561,7 +561,7 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
-	if( dt->IsObject() || dt->IsReference() ) 
+	if( dt->IsObject() || dt->IsReference() )
 	{
 		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -599,13 +599,13 @@ int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
-	if( dt->IsObject() || dt->IsReference() ) 
+	if( dt->IsObject() || dt->IsReference() )
 	{
 		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
-	if( dt->GetSizeOnStackDWords() != 2 ) 
+	if( dt->GetSizeOnStackDWords() != 2 )
 	{
 		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -637,7 +637,7 @@ int asCContext::SetArgFloat(asUINT arg, float value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
-	if( dt->IsObject() || dt->IsReference() ) 
+	if( dt->IsObject() || dt->IsReference() )
 	{
 		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -713,7 +713,7 @@ int asCContext::SetArgAddress(asUINT arg, void *value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
-	if( !dt->IsReference() && !dt->IsObjectHandle() ) 
+	if( !dt->IsReference() && !dt->IsObjectHandle() )
 	{
 		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -746,7 +746,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 
 	// Verify the type of the argument
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
-	if( !dt->IsObject() ) 
+	if( !dt->IsObject() )
 	{
 		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -829,7 +829,7 @@ int asCContext::Abort()
 		status = tsProgramAborted;
 		CleanStack();
 	}
-	
+
 	CleanReturnObject();
 
 	doSuspend = true;
@@ -903,8 +903,8 @@ int asCContext::Execute()
 
 				if( module ) module->ReleaseContextRef();
 				module = currentFunction->module;
-				if( module ) 
-					module->AddContextRef(); 
+				if( module )
+					module->AddContextRef();
 
 				// Set the local objects to 0
 				for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
@@ -1067,7 +1067,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 			if( stackBlockSize * ((1 << (stackIndex+1)) - 1) > engine->maximumContextStackSize )
 			{
 				isStackMemoryNotAllocated = true;
-				
+
 				// Set the stackFramePointer, even though the stackPointer wasn't updated
 				stackFramePointer = stackPointer;
 
@@ -1174,9 +1174,9 @@ void asCContext::ExecuteNext()
 #endif
 
 
-	// Remember to keep the cases in order and without 
-	// gaps, because that will make the switch faster. 
-	// It will be faster since only one lookup will be 
+	// Remember to keep the cases in order and without
+	// gaps, because that will make the switch faster.
+	// It will be faster since only one lookup will be
 	// made to find the correct jump destination. If not
 	// in order, the switch will make two lookups.
 	switch( *(asBYTE*)l_bc )
@@ -1359,7 +1359,7 @@ void asCContext::ExecuteNext()
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is equal to 0
-			
+
 			// We need to use volatile here to tell the compiler it cannot
 			// change the order of read and write operations on register1.
 
@@ -1384,7 +1384,7 @@ void asCContext::ExecuteNext()
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is not equal to 0
-			
+
 			// We need to use volatile here to tell the compiler it cannot
 			// change the order of read and write operations on register1.
 
@@ -1409,7 +1409,7 @@ void asCContext::ExecuteNext()
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is less than 0
-			
+
 			// We need to use volatile here to tell the compiler it cannot
 			// change the order of read and write operations on register1.
 
@@ -1434,7 +1434,7 @@ void asCContext::ExecuteNext()
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is not less than 0
-			
+
 			// We need to use volatile here to tell the compiler it cannot
 			// change the order of read and write operations on register1.
 
@@ -1459,7 +1459,7 @@ void asCContext::ExecuteNext()
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is greater than 0
-			
+
 			// We need to use volatile here to tell the compiler it cannot
 			// change the order of read and write operations on register1.
 
@@ -1477,14 +1477,14 @@ void asCContext::ExecuteNext()
 		}
 #else
 		*(int*)&register1 = (*(int*)&register1 > 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
-#endif		
+#endif
 		l_bc++;
 		break;
 	case BC_TNP:
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is not greater than 0
-			
+
 			// We need to use volatile here to tell the compiler it cannot
 			// change the order of read and write operations on register1.
 
@@ -1502,7 +1502,7 @@ void asCContext::ExecuteNext()
 		}
 #else
 		*(int*)&register1 = (*(int*)&register1 > 0 ? 0 : VALUE_OF_BOOLEAN_TRUE);
-#endif		
+#endif
 		l_bc++;
 		break;
 
@@ -1777,7 +1777,7 @@ void asCContext::ExecuteNext()
 			// Get function ID from the argument
 			int i = INTARG(l_bc);
 
-			// Need to move the values back to the context 
+			// Need to move the values back to the context
 			byteCode = l_bc;
 			stackPointer = l_sp;
 			stackFramePointer = l_fp;
@@ -1880,7 +1880,7 @@ void asCContext::ExecuteNext()
 			asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(l_bc);
 			int func = INTARG(l_bc+PTR_SIZE);
 			asDWORD *mem = (asDWORD*)engine->CallAlloc(objType);
-			
+
 			if( objType->flags & asOBJ_SCRIPT_STRUCT )
 			{
 				// Set the allocated memory
@@ -1915,7 +1915,7 @@ void asCContext::ExecuteNext()
 			{
 				if( func )
 				{
-					// Need to move the values back to the context 
+					// Need to move the values back to the context
 					byteCode = l_bc;
 					stackPointer = l_sp;
 					stackFramePointer = l_fp;
@@ -1965,7 +1965,7 @@ void asCContext::ExecuteNext()
 				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(l_bc);
 				asSTypeBehaviour *beh = &objType->beh;
 
-				// Need to move the values back to the context 
+				// Need to move the values back to the context
 				byteCode = l_bc;
 				stackPointer = l_sp;
 				stackFramePointer = l_fp;
@@ -2025,11 +2025,11 @@ void asCContext::ExecuteNext()
 		{
 			asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(l_bc);
 			asSTypeBehaviour *beh = &objType->beh;
-			void **d = (void**)*(size_t*)l_sp; 
+			void **d = (void**)*(size_t*)l_sp;
 			l_sp += PTR_SIZE;
 			void *s = (void*)*(size_t*)l_sp;
 
-			// Need to move the values back to the context 
+			// Need to move the values back to the context
 			byteCode = l_bc;
 			stackPointer = l_sp;
 			stackFramePointer = l_fp;
@@ -2046,6 +2046,7 @@ void asCContext::ExecuteNext()
 	case BC_CHKREF:
 		{
 			// Verify if the pointer on the stack is null
+			// This is used when validating a pointer that an operator will work on
 			size_t a = *(size_t*)l_sp;
 			if( a == 0 )
 			{
@@ -2271,33 +2272,33 @@ void asCContext::ExecuteNext()
 		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(l_fp - SWORDARG0(l_bc)));
 		l_bc++;
 		break;
-	
+
 	case BC_fTOu:
 		// We must cast to int first, because on some compilers the cast of a negative float value to uint result in 0
 		*(l_fp - SWORDARG0(l_bc)) = asUINT(int(*(float*)(l_fp - SWORDARG0(l_bc))));
 		l_bc++;
 		break;
-		
+
 	case BC_sbTOi:
-		// *(l_fp - offset) points to a char, and will point to an int afterwards 
+		// *(l_fp - offset) points to a char, and will point to an int afterwards
 		*(l_fp - SWORDARG0(l_bc)) = *(signed char*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_swTOi:
-		// *(l_fp - offset) points to a short, and will point to an int afterwards 
+		// *(l_fp - offset) points to a short, and will point to an int afterwards
 		*(l_fp - SWORDARG0(l_bc)) = *(short*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_ubTOi:
-		// (l_fp - offset) points to a byte, and will point to an int afterwards 
+		// (l_fp - offset) points to a byte, and will point to an int afterwards
 		*(l_fp - SWORDARG0(l_bc)) = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_uwTOi:
-		// *(l_fp - offset) points to a word, and will point to an int afterwards 
+		// *(l_fp - offset) points to a word, and will point to an int afterwards
 		*(l_fp - SWORDARG0(l_bc)) = *(asWORD*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
@@ -2445,7 +2446,7 @@ void asCContext::ExecuteNext()
 		*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) + *(double*)(l_fp - SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
-	
+
 	case BC_SUBd:
 		*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) - *(double*)(l_fp - SWORDARG2(l_bc));
 		l_bc += 2;
@@ -2470,7 +2471,7 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			
+
 			*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) / divider;
 			l_bc += 2;
 		}
@@ -2490,7 +2491,7 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			
+
 			*(double*)(l_fp - SWORDARG0(l_bc)) = fmod(*(double*)(l_fp - SWORDARG1(l_bc)), divider);
 			l_bc += 2;
 		}
@@ -2536,6 +2537,8 @@ void asCContext::ExecuteNext()
 
 	case BC_ChkRefS:
 		{
+			// Verify if the pointer on the stack refers to a non-null value
+			// This is used to validate a reference to a handle
 			asDWORD *a = (asDWORD*)*(size_t*)l_sp;
 			if( *a == 0 )
 			{
@@ -2552,6 +2555,7 @@ void asCContext::ExecuteNext()
 
 	case BC_ChkNullV:
 		{
+			// Verify if variable (on the stack) is not null
 			asDWORD *a = *(asDWORD**)(l_fp - SWORDARG0(l_bc));
 			if( a == 0 )
 			{
@@ -2595,8 +2599,8 @@ void asCContext::ExecuteNext()
 	case BC_iTOb:
 		{
 			// *(l_fp - offset) points to an int, and will point to a byte afterwards
-			
-			// We need to use volatile here to tell the compiler not to rearrange 
+
+			// We need to use volatile here to tell the compiler not to rearrange
 			// read and write operations during optimizations.
 			volatile asDWORD val  = *(l_fp - SWORDARG0(l_bc));
 			volatile asBYTE *bPtr = (asBYTE*)(l_fp - SWORDARG0(l_bc));
@@ -2612,7 +2616,7 @@ void asCContext::ExecuteNext()
 		{
 			// *(l_fp - offset) points to an int, and will point to word afterwards
 
-			// We need to use volatile here to tell the compiler not to rearrange 
+			// We need to use volatile here to tell the compiler not to rearrange
 			// read and write operations during optimizations.
 			volatile asDWORD val  = *(l_fp - SWORDARG0(l_bc));
 			volatile asWORD *wPtr = (asWORD*)(l_fp - SWORDARG0(l_bc));
@@ -2636,7 +2640,7 @@ void asCContext::ExecuteNext()
 
 	case BC_Cast:
 		// Cast the handle at the top of the stack to the type in the argument
-		{	
+		{
 			asDWORD **a = (asDWORD**)*(size_t*)l_sp;
 			if( a && *a )
 			{
@@ -2837,8 +2841,10 @@ void asCContext::ExecuteNext()
 
 	case BC_ChkNullS:
 		{
-			size_t *a = (asDWORD*)*(size_t*)(l_sp + WORDARG0(l_bc));
-			if( *a == 0 )
+			// Verify if the pointer on the stack is null
+			// This is used for example when validating handles passed as function arguments
+			size_t a = *(size_t*)(l_sp + WORDARG0(l_bc));
+			if( a == 0 )
 			{
 				byteCode = l_bc;
 				stackPointer = l_sp;
@@ -2851,7 +2857,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	// Don't let the optimizer optimize for size, 
+	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
 	case 174: l_bc = (asDWORD*)174; break;
 	case 175: l_bc = (asDWORD*)175; break;
@@ -2944,7 +2950,7 @@ void asCContext::ExecuteNext()
 	default:
 		// This Microsoft specific code allows the
 		// compiler to optimize the switch case as
-		// it will know that the code will never 
+		// it will know that the code will never
 		// reach this point
 		__assume(0);
 */	}
@@ -3078,7 +3084,7 @@ void asCContext::CleanStackFrame()
 	{
 		offset += PTR_SIZE;
 
-		// If the object is a script declared object, then we must release it 
+		// If the object is a script declared object, then we must release it
 		// as the compiler adds a reference at the entry of the function
 		asSTypeBehaviour *beh = &currentFunction->objectType->beh;
 		if( beh->release )
@@ -3289,7 +3295,7 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 			// Check for null pointer
 			currentObject = (void*)*(size_t*)(args);
 			if( currentObject == 0 )
-			{	
+			{
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
 				return 0;
 			}
@@ -3299,7 +3305,7 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 
 			// Skip object pointer
 			args += PTR_SIZE;
-		}		
+		}
 	}
 
 	asCGeneric gen(engine, sysFunction, currentObject, args);
@@ -3345,7 +3351,7 @@ int asCContext::GetVarCount(int stackLevel)
 	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return asINVALID_ARG;
 
 	asCScriptFunction *func;
-	if( stackLevel == -1 ) 
+	if( stackLevel == -1 )
 		func = currentFunction;
 	else
 	{
@@ -3364,7 +3370,7 @@ const char *asCContext::GetVarName(int varIndex, int *length, int stackLevel)
 	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
 
 	asCScriptFunction *func;
-	if( stackLevel == -1 ) 
+	if( stackLevel == -1 )
 		func = currentFunction;
 	else
 	{
@@ -3389,7 +3395,7 @@ const char *asCContext::GetVarDeclaration(int varIndex, int *length, int stackLe
 	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
 
 	asCScriptFunction *func;
-	if( stackLevel == -1 ) 
+	if( stackLevel == -1 )
 		func = currentFunction;
 	else
 	{
@@ -3418,7 +3424,7 @@ int asCContext::GetVarTypeId(int varIndex, int stackLevel)
 	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
 
 	asCScriptFunction *func;
-	if( stackLevel == -1 ) 
+	if( stackLevel == -1 )
 		func = currentFunction;
 	else
 	{
@@ -3441,7 +3447,7 @@ void *asCContext::GetVarPointer(int varIndex, int stackLevel)
 
 	asCScriptFunction *func;
 	asDWORD *sf;
-	if( stackLevel == -1 ) 
+	if( stackLevel == -1 )
 	{
 		func = currentFunction;
 		sf = stackFramePointer;
@@ -3458,7 +3464,7 @@ void *asCContext::GetVarPointer(int varIndex, int stackLevel)
 
 	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
 		return 0;
-	
+
 	return sf - func->variables[varIndex]->stackOffset;
 }
 
