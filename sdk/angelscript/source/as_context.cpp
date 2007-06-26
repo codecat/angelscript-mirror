@@ -2857,9 +2857,27 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
+	case BC_ClrHi:
+#if AS_SIZEOF_BOOL == 1
+		{
+			// Clear the upper bytes, so that trash data don't interfere with boolean operations
+
+			// We need to use volatile here to tell the compiler it cannot
+			// change the order of read and write operations on the pointer.
+
+			volatile asBYTE *ptr = (asBYTE*)&register1;
+			ptr[1] = 0;   // The boolean value is stored in the lower byte, so we clear the rest
+			ptr[2] = 0;
+			ptr[3] = 0;
+		}
+#else
+		// We don't have anything to do here
+#endif
+		l_bc++;
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 174: l_bc = (asDWORD*)174; break;
 	case 175: l_bc = (asDWORD*)175; break;
 	case 176: l_bc = (asDWORD*)176; break;
 	case 177: l_bc = (asDWORD*)177; break;

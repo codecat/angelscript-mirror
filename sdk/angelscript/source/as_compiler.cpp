@@ -2029,6 +2029,7 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 		// Add a test
 		bc->InstrSHORT(BC_CpyVtoR4, expr.type.stackOffset);
+		bc->Instr(BC_ClrHi);
 		bc->InstrDWORD(BC_JZ, afterLabel);
 		ReleaseTemporaryVariable(expr.type, bc);
 	}
@@ -2127,6 +2128,7 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 		// If expression is false exit the loop
 		ConvertToVariable(&expr);
 		expr.bc.InstrSHORT(BC_CpyVtoR4, expr.type.stackOffset);
+		expr.bc.Instr(BC_ClrHi);
 		expr.bc.InstrDWORD(BC_JZ, afterLabel);
 		ReleaseTemporaryVariable(expr.type, &expr.bc);
 	}
@@ -2216,6 +2218,7 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 	// Jump to end of statement if expression is false
 	bc->InstrSHORT(BC_CpyVtoR4, expr.type.stackOffset);
+	bc->Instr(BC_ClrHi);
 	bc->InstrDWORD(BC_JZ, afterLabel);
 	ReleaseTemporaryVariable(expr.type, bc);
 
@@ -2294,6 +2297,7 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 	// Jump to next iteration if expression is true
 	bc->InstrSHORT(BC_CpyVtoR4, expr.type.stackOffset);
+	bc->Instr(BC_ClrHi);
 	bc->InstrDWORD(BC_JNZ, beforeLabel);
 	ReleaseTemporaryVariable(expr.type, bc);
 
@@ -4296,6 +4300,7 @@ void asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 		ctx->type = e.type;
 		ConvertToVariable(ctx);
 		ctx->bc.InstrSHORT(BC_CpyVtoR4, ctx->type.stackOffset);
+		ctx->bc.Instr(BC_ClrHi);
 		ctx->bc.InstrDWORD(BC_JZ, elseLabel);
 		ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 
@@ -7575,6 +7580,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			if( op == ttAnd )
 			{
 				ctx->bc.InstrSHORT(BC_CpyVtoR4, lctx->type.stackOffset);
+				ctx->bc.Instr(BC_ClrHi);
 				ctx->bc.InstrDWORD(BC_JNZ, label1);
 				ctx->bc.InstrW_DW(BC_SetV4, (asWORD)offset, 0);
 				ctx->bc.InstrINT(BC_JMP, label2);
@@ -7582,6 +7588,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			else if( op == ttOr )
 			{
 				ctx->bc.InstrSHORT(BC_CpyVtoR4, lctx->type.stackOffset);
+				ctx->bc.Instr(BC_ClrHi);
 				ctx->bc.InstrDWORD(BC_JZ, label1);
 #if AS_SIZEOF_BOOL == 1
 				ctx->bc.InstrSHORT_B(BC_SetV1, (short)offset, VALUE_OF_BOOLEAN_TRUE);
@@ -7805,44 +7812,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 			// Move the value from the return register to the variable
 			if( descr->returnType.GetSizeOnStackDWords() == 1 )
-			{
 				ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)offset);
-				
-				// TODO: integers should be converted to 32bit where 32bits are to be used
-				// TODO: booleans should clear upper bytes where it will be used, e.g. when testing in if statements
-				if( descr->returnType.GetSizeInMemoryBytes() == 1 )
-				{
-					if( descr->returnType.IsIntegerType() )
-					{
-						ctx->bc.InstrSHORT(BC_sbTOi, (short)offset);
-						ctx->type.dataType.SetTokenType(ttInt);
-					}
-					else if( descr->returnType.IsUnsignedType() )
-					{
-						ctx->bc.InstrSHORT(BC_ubTOi, (short)offset);
-						ctx->type.dataType.SetTokenType(ttUInt);
-					}
-					else
-					{
-						// Convert to int and then back again will clear upper bytes
-						ctx->bc.InstrSHORT(BC_ubTOi, (short)offset);
-						ctx->bc.InstrSHORT(BC_iTOb, (short)offset);
-					}
-				}
-				else if( descr->returnType.GetSizeInMemoryBytes() == 2 )
-				{	
-					if( descr->returnType.IsIntegerType() )
-					{
-						ctx->bc.InstrSHORT(BC_swTOi, (short)offset);
-						ctx->type.dataType.SetTokenType(ttInt);
-					}
-					else
-					{
-						ctx->bc.InstrSHORT(BC_uwTOi, (short)offset);
-						ctx->type.dataType.SetTokenType(ttUInt);
-					}
-				}
-			}
 			else if( descr->returnType.GetSizeOnStackDWords() == 2 )
 				ctx->bc.InstrSHORT(BC_CpyRtoV8, (short)offset);
 		}

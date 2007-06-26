@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -253,8 +253,9 @@ enum bcInstr
 	BC_CMPu64       = 172,
 	
 	BC_ChkNullS     = 173,
+	BC_ClrHi        = 174,
 
-	BC_MAXBYTECODE  = 174,
+	BC_MAXBYTECODE  = 175,
 
 	// Temporary tokens, can't be output to the final program
 	BC_PSP			= 246,
@@ -493,6 +494,7 @@ const int BCT_BSRA64    = BCTYPE_wW_rW_rW_ARG;
 const int BCT_CMPi64    = BCTYPE_rW_rW_ARG;
 const int BCT_CMPu64    = BCTYPE_rW_rW_ARG;
 const int BCT_ChkNullS  = BCTYPE_W_ARG;
+const int BCT_ClrHi     = BCTYPE_NO_ARG;
 
 
 // Temporary
@@ -679,7 +681,8 @@ const int bcTypes[256] =
 	BCT_CMPi64,
 	BCT_CMPu64,
 	BCT_ChkNullS,
-	0,0,0,0,0, // 174-179
+	BCT_ClrHi,
+	0,0,0,0, // 175-179
 	0,0,0,0,0,0,0,0,0,0, // 180-189
 	0,0,0,0,0,0,0,0,0,0, // 190-199
 	0,0,0,0,0,0,0,0,0,0, // 200-209
@@ -875,7 +878,8 @@ const int bcStackInc[256] =
 	0,			// BC_CMPi64
 	0,			// BC_CMPu64
 	0,			// BC_ChkNullS
-	0,0,0,0,0,0, // 174-179
+	0,			// BC_ClrHi
+	0,0,0,0,0, // 175-179
 	0,0,0,0,0,0,0,0,0,0, // 180-189
 	0,0,0,0,0,0,0,0,0,0, // 190-199
 	0,0,0,0,0,0,0,0,0,0, // 200-209
@@ -1077,7 +1081,8 @@ const sByteCodeName bcName[256] =
 	{"CMPi64"},
 	{"CMPu64"},
 	{"ChkNullS"},
-	{0},{0},{0},{0},{0},{0}, // 174-179
+	{"ClrHi"},
+	{0},{0},{0},{0},{0}, // 175-179
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 180-189
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 190-199
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 200-209

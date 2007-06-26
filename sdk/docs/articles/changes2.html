@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.1 WIP - 2007/06/24</h2>
+<h2>Version 2.8.1 WIP - 2007/06/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -133,7 +133,7 @@ A:hover
 <li>Fixed bug where the compiler failed when passing constant references as function parameters. (Thanks Rakkar2)
 <li>Engine no longer permits the registration of functions with void parameters (Thanks Juan Pablo Bettini)
 <li>Fixed compiler assert when assigning a void value to a variable (Thanks Anders Hansson)
-<li>Fixed bug in compiler where the property name wasn't validated correctly for name conflicts (Thanks Andy R) 
+<li>Fixed bug in compiler where the property name wasn't validated correctly for name conflicts (Thanks Andy R)
 <li>Fixed intermittent bug in the byte code optimization that affected only big endian processors.
 <li>Fixed incorrect name conflict between script class methods and global functions (Thanks Anders Hansson)
 <li>Fixed assertion failure when declaring variables as void (Thanks Anders Hansson)
@@ -142,6 +142,7 @@ A:hover
 <li>Fixed bug with loading bytecode that used registered array types. (Thanks Juan Pablo Bettini)
 <li>Fixed bug with loading bytecode with script classes that were declared out of order. (Thanks Juan Pablo Bettini)
 <li>Fixed bug where CHKREF was placed incorrectly to verify only the first parameter on the stack. (Thanks CyberGorgolith)
+<li>Fixed bug with boolean operations that treated false values as true due to trash data in upper bytes of the boolean variable.
 </ul>
 <li>Library
 <ul>
@@ -165,17 +166,17 @@ A:hover
     types so it is able to better distinguish the true semantic of identifiers.
 <li>Added support for PS3 native calling conventions. (Thanks Jeff Slutter)
 <li>GNUC assembler for native calling conventions now guarantee stack pointer alignment on 16 bytes.
-<li>Added support for Mac OS X with Intel native calling conventions. 
+<li>Added support for Mac OS X with Intel native calling conventions.
 <li>Added support for Mac OS X with PPC native calling conventions.
 </ul>
 <li>Library interface
 <ul>
-<li>Added OPTIMIZE_BYTECODE as engine property. 
-<li>Removed restriction on registered object type's sizes, they can now be of any size, even non-multiple of 4. (Thanks Tonin) 
+<li>Added OPTIMIZE_BYTECODE as engine property.
+<li>Removed restriction on registered object type's sizes, they can now be of any size, even non-multiple of 4. (Thanks Tonin)
 </ul>
 <li>Virtual machine
 <ul>
-<li>New byte code: ChkNullS
+<li>New byte codes: ChkNullS, ClrHi
 </ul>
 <li>Project
 <ul>

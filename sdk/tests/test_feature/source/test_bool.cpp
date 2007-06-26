@@ -112,6 +112,19 @@ bool test_t()
 	return true;
 }
 
+void GiveFalse(int &boolean)
+{
+	if( sizeof(bool) == 1 )
+	{
+		// Force return false with trash in upper bytes, to test if AngelScript is able to handle this
+		// We need to make both the high and low bytes 0, because depending on the system the high or low byte is used as the returned value,
+		// on intel it is the low byte, on 32 bit ppc it is the low byte, on 64 bit ppc it is the high byte
+		boolean = 0x00FFFF00;
+	}
+	else
+		boolean = 0;
+}
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -188,6 +201,30 @@ bool Test()
 	r = engine->ExecuteString(0, "Assert( test_t() );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 		
+	// TEST 4
+	// Return a false value as out parameter. The value must be properly interpreted, even with trash in upper bytes
+	engine->RegisterGlobalFunction("void GiveFalse(bool &out)", asFUNCTION(GiveFalse), asCALL_CDECL);
+	r = engine->ExecuteString(0, "bool f; GiveFalse(f); Assert( !f );");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	r = engine->ExecuteString(0, "bool f; GiveFalse(f); if( f ) Assert(false);");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	r = engine->ExecuteString(0, "bool f, f2 = false; GiveFalse(f); Assert( !(f || f2) );");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+
+	// TEST 5
+	// The same test with global variable
+	int falseValue = 0;
+	if( sizeof(bool) == 1 )
+		falseValue = 0x00FFFF00;
+	engine->RegisterGlobalProperty("bool falseValue", &falseValue);
+	r = engine->ExecuteString(0, "Assert( !falseValue );");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	r = engine->ExecuteString(0, "if( falseValue ) Assert(false);");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	r = engine->ExecuteString(0, "bool f2 = false; Assert( !(falseValue || f2) );");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+
+
 	engine->Release();
 
 	return fail;
