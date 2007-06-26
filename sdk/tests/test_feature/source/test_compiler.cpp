@@ -139,13 +139,19 @@ bool Test()
 	
 	// test 8
 	// Don't assert on implicit conversion to object when a compile error has occurred
+	bout.buffer = "";
 	engine->AddScriptSection(0, "script", script7, strlen(script7));
 	r = engine->Build(0);
 	if( r >= 0 )
 	{
 		fail = true;
 	}
-
+	if( bout.buffer != "script (3, 2) : Error   : Identifier 'Sprite' is not a data type\n"
+					   "script (5, 2) : Info    : Compiling string Ship::GetName()\n"
+					   "script (6, 17) : Error   : Illegal operation on 'int&'\n" )
+	{
+		fail = true;
+	}
 
 	engine->Release();
 		

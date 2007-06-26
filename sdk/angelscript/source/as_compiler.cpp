@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -3394,7 +3394,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool /*isExplicit*/, bool generateCode, asCArray<int> * /*reservedVars*/, bool allowObjectConstruct)
 {
-	if( ctx->type.dataType.IsReference() )
+	if( ctx->type.dataType.IsReference() && !ctx->type.dataType.IsPrimitive() )
 	{
 		Dereference(ctx, generateCode);
 
