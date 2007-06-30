@@ -5906,7 +5906,8 @@ void asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *c
 			// Get the property name
 			GETSTRING(name, &script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);
 
-			Dereference(ctx, true);
+			if( !ctx->type.dataType.IsPrimitive() )
+				Dereference(ctx, true);
 
 			if( ctx->type.dataType.IsObjectHandle() )
 			{

@@ -86,27 +86,53 @@ static const char *script3 =
 "float[] f(5);       \n"
 "void Test(int a) {} \n";
 
-static const char *script4 = "      \n\
-interface Actor {  }				\n\
-InGame g_inGame;                    \n\
-class InGame						\n\
-{									\n\
-	Ship _ship;						\n\
-	bool Initialize(int level)		\n\
-	{								\n\
-		if (!_ship.Initialize())    \n\
-			return false;           \n\
-									\n\
-		return true;                \n\
-	}								\n\
-}									\n\
-class Ship : Actor					\n\
-{									\n\
-	bool Initialize()				\n\
-	{								\n\
-		return true;				\n\
-	}								\n\
-}									\n";
+static const char *script4 = 
+"class CheckCollision                          \n"
+"{                                             \n"
+"	Actor@[] _list1;                           \n"
+"                                              \n"
+"	void Initialize() {                        \n"
+"		_list1.resize(1);                      \n"
+"	}                                          \n"
+"                                              \n"
+"	void Register(Actor@ entity){              \n"
+"		@_list1[0] = @entity;                  \n"
+"	}                                          \n"
+"}                                             \n"
+"                                              \n"
+"CheckCollision g_checkCollision;              \n"
+"                                              \n"
+"class Shot : Actor {                          \n"
+"	void Initialize() {                        \n"
+"		g_checkCollision.Register(this);       \n"
+"	}                                          \n"
+"}                                             \n"
+"interface Actor {  }				           \n"
+"InGame g_inGame;                              \n"
+"class InGame					   	           \n"
+"{									           \n"
+"	Ship _ship;						           \n"
+"	void Initialize(int level)		           \n"
+"	{								           \n"
+"		g_checkCollision.Initialize();         \n"
+"		_ship.Initialize();	                   \n"
+"	}						   		           \n"
+"}									           \n"
+"class Ship : Actor							   \n"
+"{											   \n"
+"   Shot@[] _shots;							   \n"
+"	void Initialize()						   \n"
+"	{										   \n"
+"		_shots.resize(5);					   \n"
+"                                              \n"
+"		for (int i=0; i < 5; i++)              \n"
+"		{                                      \n"
+"			Shot shot;						   \n"
+"			@_shots[i] = @shot;                \n"
+"			_shots[i].Initialize();	           \n"
+"		}                                      \n"
+"	}										   \n"
+"}											   \n";
 
 
 
@@ -185,7 +211,6 @@ void DestructFloatArray(vector<float> *p)
 {
 	p->~vector<float>();
 }
-
 
 bool Test()
 {
@@ -272,6 +297,7 @@ bool Test()
 
 	//---------------------------------
 	// Must be possible to load scripts with classes declared out of order
+	// Built-in array types must be able to be declared even though the complete script structure hasn't been loaded yet
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -283,9 +309,14 @@ bool Test()
 	else
 	{
 		// Test the script with compiled byte code
-		r = engine->ExecuteString(0, "g_inGame.Initialize(0);");
+		asIScriptContext *ctx = 0;
+		r = engine->ExecuteString(0, "g_inGame.Initialize(0);", &ctx);
 		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
 			fail = true;
+		}
+		if( ctx ) ctx->Release();
 
 		// Save the bytecode
 		CBytecodeStream stream4;

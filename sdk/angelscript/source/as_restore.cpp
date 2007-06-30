@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -304,6 +304,8 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	WRITE_NUM(length);
 	for( i = 0; i < length; ++i )
 		WRITE_NUM(func->lineNumbers[i]);
+
+	// TODO: Write variables
 }
 
 void asCRestore::WriteProperty(asCProperty* prop) 
@@ -639,6 +641,18 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		int size;
 		READ_NUM(size);
 		ot->size = size;
+
+		// Use the default script struct behaviours
+		ot->beh.addref = engine->scriptTypeBehaviours.beh.addref;
+		ot->beh.release = engine->scriptTypeBehaviours.beh.release;
+		ot->beh.copy = engine->scriptTypeBehaviours.beh.copy;
+		ot->beh.operators.PushLast(ttAssignment);
+		ot->beh.operators.PushLast(ot->beh.copy);
+
+		// Some implicit values
+		ot->tokenType = ttIdentifier;
+		ot->arrayType = 0;
+		ot->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
 	}
 	else
 	{	
@@ -653,18 +667,6 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 			ReadProperty(prop);
 			ot->properties.PushLast(prop);
 		}
-
-		// Use the default script struct behaviours
-		ot->beh.addref = engine->scriptTypeBehaviours.beh.addref;
-		ot->beh.release = engine->scriptTypeBehaviours.beh.release;
-		ot->beh.copy = engine->scriptTypeBehaviours.beh.copy;
-		ot->beh.operators.PushLast(ttAssignment);
-		ot->beh.operators.PushLast(ot->beh.copy);
-
-		// Some implicit values
-		ot->tokenType = ttIdentifier;
-		ot->arrayType = 0;
-		ot->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
 
 		// behaviours
 		int funcId;
