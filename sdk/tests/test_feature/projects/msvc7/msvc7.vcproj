@@ -126,6 +126,9 @@
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\stdstring.cpp">
 			</File>
 			<File
@@ -238,6 +241,9 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_import2.cpp">
+			</File>
+			<File
+				RelativePath="..\..\source\test_int8.cpp">
 			</File>
 			<File
 				RelativePath="..\..\source\test_interface.cpp">
