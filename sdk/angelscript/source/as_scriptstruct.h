@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -91,6 +91,8 @@ void ScriptStruct_Construct_Generic(asIScriptGeneric *gen);
 void ScriptStruct_Assignment_Generic(asIScriptGeneric *gen);
 
 void RegisterScriptStruct(asCScriptEngine *engine);
+
+int ConstructScriptStruct(void *ptr, asCObjectType *objType, asCScriptEngine *engine);
 
 END_AS_NAMESPACE
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -41,6 +41,41 @@
 #include "as_anyobject.h"
 
 BEGIN_AS_NAMESPACE
+
+// This helper function will call the default constructor, that is a script function
+int ConstructScriptStruct(void *ptr, asCObjectType *objType, asCScriptEngine *engine)
+{
+	int funcIndex = objType->beh.construct;
+	
+	// Setup a context for calling the default constructor
+	asIScriptContext *ctx;
+	int r = engine->CreateContext(&ctx, true);
+	if( r < 0 )
+	{
+		engine->CallFree(objType, ptr);
+		return -1;
+	}
+	r = ctx->Prepare(funcIndex);
+	if( r < 0 )
+	{
+		engine->CallFree(objType, ptr);
+		ctx->Release();
+		return -1;
+	}
+	ctx->SetObject(ptr);
+	r = ctx->Execute();
+	if( r != asEXECUTION_FINISHED )
+	{
+		// The memory for the structure should have been released already
+		// TODO: Verify this
+		ctx->Release();
+		return -1;
+	}
+	ctx->Release();	
+	
+	return 0;
+}
+
 
 void RegisterScriptStruct(asCScriptEngine *engine)
 {

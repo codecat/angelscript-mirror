@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -388,7 +388,7 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 				for( ; d < max; d++ )
 				{
 					*d = (asDWORD*)engine->CallAlloc(subType);
-					ScriptStruct_Construct(subType, (asCScriptStruct*)*d);
+					ConstructScriptStruct(*d, subType, engine);
 				}
 			}
 			else if( subType->flags & asOBJ_SCRIPT_ARRAY )

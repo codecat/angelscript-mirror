@@ -124,6 +124,20 @@ static const char *script6 =
 "   int[] f = {,{23}};                           \n"
 "}                                               \n";
 
+static const char *script7 =
+"class TestC                                     \n"
+"{                                               \n"
+"  TestC() {count++; s = \"test\";}              \n"
+"  string s;                                     \n"
+"}                                               \n"
+"int count = 0;                                  \n"
+"void Test()                                     \n"
+"{                                               \n"
+"  TestC t;                                      \n"
+"  Assert(count == 1);                           \n"
+"  TestC[] array(5);                             \n"
+"  Assert(count == 6);                           \n"
+"}                                               \n";
 
 bool Test()
 {
@@ -233,6 +247,16 @@ bool Test()
 	if( bout.buffer != "TestArray (1, 1) : Info    : Compiling void Test()\n"
 	                   "TestArray (3, 15) : Error   : Initialization lists cannot be used with 'int[]@'\n"
 	                   "TestArray (4, 16) : Error   : Initialization lists cannot be used with 'int'\n" )
+		fail = true;
+
+	// Array object must call default constructor of the script classes
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0, false);
+	r = engine->Build(0);
+	if( r < 0 ) 
+		fail = true;
+	r = engine->ExecuteString(0, "Test()");
+	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
 	engine->Release();
