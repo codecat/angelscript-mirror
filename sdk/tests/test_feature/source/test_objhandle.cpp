@@ -57,7 +57,28 @@ static const char *script1 =
 "{                                                     \n"
 "   return null;                                       \n"
 "}                                                     \n";
- 
+
+// Make sure the handle can be explicitly taken for class properties, array members, and global variables
+static const char *script5 =
+"class C {int val; C() {val = 0;}}      \n"
+"class D {C c;}                         \n"
+"C g;                                   \n"
+"void Test()                            \n"
+"{                                      \n"
+"   Func(@g);                           \n"
+"   Assert(g.val == 1);                 \n"
+"   D d;                                \n"
+"   Func(@d.c);                         \n"
+"   C[] a1(1);                          \n"
+"   Func(@a1[0]);                       \n"
+"   Assert(a1[0].val == 1);             \n"
+"   C@[] a2(1);                         \n"
+"   @a2[0] = @C();                      \n"
+"   Func(@a2[0]);                       \n"
+"   Assert(a2[0].val == 1);             \n"
+"}                                      \n"
+"void Func(C@ c) {c.val = 1;}           \n";
+
 class CRefClass
 {
 public:
@@ -189,6 +210,17 @@ bool Test()
 	refclass->Release();
 	if( ctx ) ctx->Release();
 
+	engine->Release();
+
+	//--------------------
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "Test()");
+	if( r != asEXECUTION_FINISHED ) fail = true;
 	engine->Release();
 
 	// Success

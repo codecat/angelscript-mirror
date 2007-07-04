@@ -5561,7 +5561,8 @@ void asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ct
 			Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
 		}
 
-		if( !ctx->type.dataType.IsReference() )
+		// Objects that are not local variables are not references
+		if( !ctx->type.dataType.IsReference() && !(ctx->type.dataType.IsObject() && !ctx->type.isVariable) )
 		{
 			Error(TXT_NOT_VALID_REFERENCE, node);
 		}

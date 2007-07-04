@@ -4,11 +4,12 @@
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
 
-#ifdef _LINUX_
+#if defined(_LINUX_) || defined(__APPLE__)
 	#include <sys/time.h>
 	#include <stdio.h>
 	#include <termios.h>
 	#include <unistd.h>
+	#include <curses.h>
 #else
 	#include <conio.h>   // kbhit(), getch()
 	#include <windows.h> // timeGetTime()
@@ -16,7 +17,7 @@
 
 using namespace std;
 
-#ifdef _LINUX_
+#if defined(_LINUX_) || defined(__APPLE__)
 
 #define UINT unsigned int 
 typedef unsigned int DWORD;
@@ -34,19 +35,11 @@ DWORD timeGetTime()
 // kbhit() for linux
 int kbhit() 
 {
-	struct termios oldt, newt;
-	int ch;
-
-	tcgetattr(STDIN_FILENO, &oldt);
-	newt = oldt;
-	newt.c_lflag &= ~( ICANON | ECHO );
-	tcsetattr( STDIN_FILENO, TCSANOW, &newt );
-
-	while(!(ch = getchar()));
-
-
-	tcsetattr( STDIN_FILENO, TCSANOW, &oldt );
-	return ch;
+	int ch = getch();
+	if( ch != ERR )
+		return 1;
+	
+	return 0;
 }
 
 #endif
