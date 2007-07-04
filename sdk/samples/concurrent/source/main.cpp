@@ -4,11 +4,12 @@
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
 
-#if defined(_LINUX_) || defined(__APPLE__)
+#ifdef _LINUX_ 
 	#include <sys/time.h>
 	#include <stdio.h>
 	#include <termios.h>
 	#include <unistd.h>
+#elif defined(__APPLE__)
 	#include <curses.h>
 #else
 	#include <conio.h>   // kbhit(), getch()
@@ -17,7 +18,7 @@
 
 using namespace std;
 
-#if defined(_LINUX_) || defined(__APPLE__)
+#ifdef _LINUX_
 
 #define UINT unsigned int 
 typedef unsigned int DWORD;
@@ -35,11 +36,42 @@ DWORD timeGetTime()
 // kbhit() for linux
 int kbhit() 
 {
-	int ch = getch();
-	if( ch != ERR )
-		return 1;
-	
-	return 0;
+	struct termios oldt, newt;
+	int ch;
+
+	tcgetattr(STDIN_FILENO, &oldt);
+	newt = oldt;
+	newt.c_lflag &= ~( ICANON | ECHO );
+	tcsetattr( STDIN_FILENO, TCSANOW, &newt );
+
+	while(!(ch = getchar()));
+
+
+	tcsetattr( STDIN_FILENO, TCSANOW, &oldt );
+	return ch;
+}
+
+#elif defined(__APPLE__)
+
+#define UINT unsigned int
+typedef unsigned int DWORD;
+
+// Linux doesn't have timeGetTime(), this essintially does the same
+// thing, except this is milliseconds since Epoch (Jan 1st 1970) instead
+// of system start. It will work the same though...
+DWORD timeGetTime()
+{
+	timeval time;
+	gettimeofday(&time, NULL);
+	return time.tv_usec;
+}
+
+int kbhit()
+{
+	if( getch() == ERR )
+		return 0;
+		
+	return 1;
 }
 
 #endif
