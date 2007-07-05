@@ -134,7 +134,32 @@ static const char *script4 =
 "	}										   \n"
 "}											   \n";
 
-
+// Make sure the handle can be explicitly taken for class properties, array members, and global variables
+static const char *script5 =
+"IsoMap      _iso;                                      \n"
+"IsoSprite[] _sprite;                                   \n"
+"                                                       \n"
+"int which = 0;                                         \n"
+"                                                       \n"
+"bool Initialize() {                                    \n"
+"  if (!_iso.Load(\"data/iso/map.imp\"))                \n"
+"    return false;                                      \n"
+"                                                       \n"
+"  _sprite.resize(100);                                 \n"
+"                                                       \n"
+"  if (!_sprite[0].Load(\"data/iso/pacman.spr\"))       \n"
+"    return false;                                      \n"
+"                                                       \n"
+"  for (int i=1; i < 100; i++) {                        \n"
+"    if (!_sprite[i].Load(\"data/iso/residencia1.spr\"))\n"
+"      return false;                                    \n"
+"  }                                                    \n"
+"                                                       \n"
+"                                                       \n"
+"   _iso.AddEntity(_sprite[0], 0, 0, 0);                \n"
+"                                                       \n"
+"   return true;                                        \n"
+"}                                                      \n";
 
 bool fail = false;
 int number = 0;
@@ -211,6 +236,30 @@ void DestructFloatArray(vector<float> *p)
 {
 	p->~vector<float>();
 }
+void DummyConstruct(asIScriptGeneric *gen)
+{
+	int *object = (int*)gen->GetObject();
+	*object = 1;
+}
+
+void DummyAddref(asIScriptGeneric *gen)
+{
+	int *object = (int*)gen->GetObject();
+	(*object)++;
+}
+
+void DummyRelease(asIScriptGeneric *gen)
+{
+	int *object = (int*)gen->GetObject();
+	(*object)--;
+	if( *object == 0 )
+		free(object);
+}
+
+void Dummy(asIScriptGeneric *gen)
+{
+}
+
 
 bool Test()
 {
@@ -333,6 +382,81 @@ bool Test()
 			fail = true;
 	}
 	engine->Release();
+	//----------------
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterScriptString(engine);
+	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+	r = engine->RegisterObjectType("IsoSprite", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ALLOC, "IsoSprite &f(uint)", asFUNCTION(malloc), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyConstruct), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ASSIGNMENT, "IsoSprite &f(const IsoSprite &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("IsoSprite", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+
+	r = engine->RegisterObjectType("IsoMap", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ALLOC, "IsoMap &f(uint)", asFUNCTION(malloc), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyConstruct), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ASSIGNMENT, "IsoMap &f(const IsoMap &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("IsoMap", "bool AddEntity(const IsoSprite@+, int col, int row, int layer)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("IsoMap", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+
+	engine->AddScriptSection(0, "script", script5, strlen(script5));
+	r = engine->Build(0);
+	if( r < 0 ) 
+		fail = true;
+	else
+	{
+		// Test the script with compiled byte code
+		asIScriptContext *ctx = 0;
+		r = engine->ExecuteString(0, "Initialize();", &ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
+			fail = true;
+		}
+		if( ctx ) ctx->Release();
+
+		// Save the bytecode
+		CBytecodeStream stream;
+		engine->SaveByteCode(0, &stream);
+		engine->Release();
+
+		// Now load the bytecode into a fresh engine and test the script again
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+		r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+		r = engine->RegisterObjectType("IsoSprite", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ALLOC, "IsoSprite &f(uint)", asFUNCTION(malloc), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyConstruct), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ASSIGNMENT, "IsoSprite &f(const IsoSprite &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("IsoSprite", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+
+		r = engine->RegisterObjectType("IsoMap", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ALLOC, "IsoMap &f(uint)", asFUNCTION(malloc), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyConstruct), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ASSIGNMENT, "IsoMap &f(const IsoMap &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("IsoMap", "bool AddEntity(const IsoSprite@+, int col, int row, int layer)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("IsoMap", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+
+		engine->LoadByteCode(0, &stream);
+		r = engine->ExecuteString(0, "Initialize();");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+	}
+	engine->Release();
+
+
 
 	// Success
 	return fail;

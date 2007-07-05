@@ -279,7 +279,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	if( outFunc->objectType )
 	{
 		byteCode.InstrSHORT(BC_PSF, 0);
-		byteCode.InstrPTR(BC_FREE, outFunc->objectType);
+		byteCode.InstrPTR(BC_FREE, builder->module->RefObjectType(outFunc->objectType));
 	}
 
 	// Call destructors for function parameters
@@ -902,7 +902,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 				// Copy the handle
 				ctx->bc.InstrWORD(BC_PSF, (asWORD)offset);
-				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
+				ctx->bc.InstrPTR(BC_REFCPY, builder->module->RefObjectType(ctx->type.dataType.GetObjectType()));
 
 				dt.MakeHandle(false);
 				ctx->type.SetVariable(dt, offset, true);
@@ -2949,7 +2949,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 		}
 
 		// TODO: Convert to register based
-		bc->InstrPTR(BC_REFCPY, lvalue->dataType.GetObjectType());
+		bc->InstrPTR(BC_REFCPY, builder->module->RefObjectType(lvalue->dataType.GetObjectType()));
 
 		// Mark variable as initialized
 		if( variables )
@@ -6613,7 +6613,7 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 			{
 				// Copy the object handle to a variable
 				ctx->bc.InstrSHORT(BC_PSF, (short)offset);
-				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
+				ctx->bc.InstrPTR(BC_REFCPY, builder->module->RefObjectType(ctx->type.dataType.GetObjectType()));
 				ctx->bc.Pop(PTR_SIZE);
 			}
 
