@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.8.1 WIP - 2007/07/03</h2>
+<h2>Version 2.8.1 - 2007/07/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -127,7 +127,7 @@ A:hover
 <li>Fixed misleading message when compiling statement like 'Object &amp;ref' (Thanks Steve Williams)
 <li>Fixed bug in compiler where it didn't reuse temporary variables properly
 <li>Fixed problem with C++ compiler optimizations that changed the result of AngelScript code and thus breaking (Thanks Jeff Slutter)
-<li>Fixed the as_config.h file for XCode
+<li>Fixed the as_config.h file for GNUC/Apple
 <li>Fixed conversion of negative floating point values to unsigned int on GNUC based compilers
 <li>Fixed bug with booleans returned from functions that didn't evaluate to false when expected. (Thanks Rakkar2)
 <li>Fixed bug where the compiler failed when passing constant references as function parameters. (Thanks Rakkar2)
@@ -143,27 +143,12 @@ A:hover
 <li>Fixed bug with loading bytecode with script classes that were declared out of order. (Thanks Juan Pablo Bettini)
 <li>Fixed bug where CHKREF was placed incorrectly to verify only the first parameter on the stack. (Thanks CyberGorgolith)
 <li>Fixed bug with boolean operations that treated false values as true due to trash data in upper bytes of the boolean variable.
-<li>THe default constructor for script classes wasn't called for classes in arrays. (Thanks Jeff Slutter)
+<li>The default constructor for script classes wasn't called for classes in arrays. (Thanks Jeff Slutter)
 <li>Fixed bug with explicit handle for class members and array elements (Thanks Juan Pablo Bettini)
 </ul>
 <li>Library
 <ul>
-<li>Modified the parser to only parse the statements inside functions at the
-    moment the function is compiled. This reduced the number of simultaneous
-    memory allocations to about 25% of what it was before. The total number of
-    memory allocations made, increased with less than 1%.
-<li>Implemented a memory pool for the asCScriptNode, which is used during
-    script builds. This decreased the total number of allocations by 30% while
-    decreasing the total amount of allocated memory by 10%.
-<li>Implemented a memory pool for the cByteInstruction as well, but it didn't
-    have as much effect as I had hoped. This is probably because my test
-    programs, only use very small scripts anyway, so there's not much reuse
-    done.
-<li>Modified the dynamic array object to use internal buffer for tiny arrays.
-    This decreased the number of allocations by 30%. And cut the number of
-    allocations from this object to about 20% of what it used before. Since I
-    begun the optimizations, the medium size of the allocations have doubled,
-    to 80 bytes.
+<li>Improved memory foot print of the compiler.
 <li>When parsing statements the parser now has full knowledge of available
     types so it is able to better distinguish the true semantic of identifiers.
 <li>Added support for PS3 native calling conventions. (Thanks Jeff Slutter)
