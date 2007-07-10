@@ -81,12 +81,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		089C1667FE841158C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		32BAE0B70371A74B00C91783 /* angelscript_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = angelscript_Prefix.pch; sourceTree = SOURCE_ROOT; };
 		7526F5C00BEE46B100BAE32D /* as_memory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_memory.cpp; path = ../../source/as_memory.cpp; sourceTree = SOURCE_ROOT; };
 		7526F5C10BEE46B100BAE32D /* as_memory.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_memory.h; sourceTree = "<group>"; };
 		75DA881F0C1C30CF00A15034 /* as_callfunc_ppc_64.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_ppc_64.cpp; path = ../../source/as_callfunc_ppc_64.cpp; sourceTree = SOURCE_ROOT; };
-		8D07F2C70486CC7A007CD1D0 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9B2358050A2DC076008FE303 /* as_anyobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_anyobject.h; path = ../../source/as_anyobject.h; sourceTree = SOURCE_ROOT; };
 		9B2358060A2DC076008FE303 /* as_array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_array.h; path = ../../source/as_array.h; sourceTree = SOURCE_ROOT; };
 		9B2358070A2DC076008FE303 /* as_arrayobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_arrayobject.h; path = ../../source/as_arrayobject.h; sourceTree = SOURCE_ROOT; };
@@ -181,7 +178,6 @@
 			isa = PBXGroup;
 			children = (
 				08FB77ACFE841707C02AAC07 /* Source */,
-				089C1665FE841158C02AAC07 /* Resources */,
 				0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */,
 				034768DDFF38A45A11DB9C8B /* Products */,
 			);
@@ -193,15 +189,6 @@
 			children = (
 			);
 			name = "External Frameworks and Libraries";
-			sourceTree = "<group>";
-		};
-		089C1665FE841158C02AAC07 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				8D07F2C70486CC7A007CD1D0 /* Info.plist */,
-				089C1666FE841158C02AAC07 /* InfoPlist.strings */,
-			);
-			name = Resources;
 			sourceTree = "<group>";
 		};
 		08FB77ACFE841707C02AAC07 /* Source */ = {
@@ -286,7 +273,6 @@
 				9B2358250A2DC076008FE303 /* as_tokenizer.h */,
 				9B2358260A2DC076008FE303 /* as_typeinfo.h */,
 				9B2358270A2DC076008FE303 /* as_variablescope.h */,
-				32BAE0B70371A74B00C91783 /* angelscript_Prefix.pch */,
 			);
 			name = include;
 			path = ../../source;
@@ -418,17 +404,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXVariantGroup section */
-		089C1666FE841158C02AAC07 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				089C1667FE841158C02AAC07 /* English */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		4FADC24708B4156D00ABE55E /* Debug */ = {
