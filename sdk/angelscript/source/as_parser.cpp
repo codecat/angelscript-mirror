@@ -122,7 +122,7 @@ int asCParser::ParseDataType(asCScriptCode *script)
 
 	scriptNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
 		
-	scriptNode->AddChildLast(ParseType(false));
+	scriptNode->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return -1;
 
 	if( errorWhileParsing )
@@ -1120,6 +1120,7 @@ asCScriptNode *asCParser::ParseParameterList()
 
 		for(;;)
 		{
+			// TODO: variable type: Should allow ? type for application function interfaces
 			// Parse data type
 			node->AddChildLast(ParseType(true));
 			if( isSyntaxError ) return node;

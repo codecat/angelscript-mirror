@@ -193,6 +193,18 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString_Generic(engine);
+
+	// Test GetTypeIdByDecl
+	if( engine->GetTypeIdByDecl(0, "int") != engine->GetTypeIdByDecl(0, "const int") )
+		fail = true;
+	if( engine->GetTypeIdByDecl(0, "string") != engine->GetTypeIdByDecl(0, "const string") )
+		fail = true;
+
+	// A handle to a const is different from a handle to a non-const
+	if( engine->GetTypeIdByDecl(0, "string@") == engine->GetTypeIdByDecl(0, "const string@") )
+		fail = true;
+
+	// Test debugging
 	engine->RegisterGlobalProperty("int number", &number);
 
 	COutStream out;

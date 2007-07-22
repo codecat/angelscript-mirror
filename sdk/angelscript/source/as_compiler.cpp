@@ -349,6 +349,7 @@ void asCCompiler::DefaultConstructor(asCByteCode *bc, asCDataType &type)
 	asSTypeBehaviour *beh = type.GetBehaviour();
 	if( beh ) func = beh->construct;
 
+	// TODO: variable type: is this necessary for any?
 	if( type.IsScriptArray() || type.IsScriptAny() )
 	{
 		// The script struct constructor needs to know what type it is
@@ -496,6 +497,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			if( beh )
 				funcs = beh->constructors;
 
+			// TODO: variable type: This should no longer be a special case
 			// TODO: Ugly code
 			// Special case: If this is a constructor for any() with a parameter, then we can't use the normal MatchFunctions
 			if( args.GetLength() == 2 && gvar->datatype.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
@@ -536,6 +538,8 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				// TODO: This reference is open while evaluating the arguments. We must fix this
 				ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 
+				
+				// TODO: variable type: This should no longer be a special case
 				// TODO: Ugly code
 				// Special case: If this is a constructor for any() with a parameter, then we can't use the normal PrepareFunctionCall
 				if( args.GetLength() == 2 && gvar->datatype.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
@@ -1016,6 +1020,8 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 	if( addOneToOffset )
 		offset += PTR_SIZE;
 
+	// TODO: variable type: Need to push the type id on the stack as well
+
 	// Move the objects that are sent by value to the stack just before the call
 	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 	{
@@ -1059,6 +1065,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 		arg = arg->next;
 	}
 
+	// TODO: variable type: The any type shouldn't increase the arg type here. Only when it has been determined it is a ?& parm
 	if( type && (type->IsScriptArray() || type->IsScriptAny()) )
 	{
 		argCount += 1;
@@ -1071,6 +1078,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 		args[n] = 0;
 
 	n = argCount-1;
+	// TODO: variable type: The any type shouldn't increase the arg type here. Only when it has been determined it is a ?& parm
 	if( type && (type->IsScriptArray() || type->IsScriptAny()) )
 	{
 		args[n] = NEW(asSExprContext)(engine);
@@ -1246,6 +1254,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					funcs = beh->constructors;
 
 				// TODO: Ugly code
+				// TODO: variable type: This should no longer be a special case
 				// Special case: If this is a constructor for any() with a parameter, then we can't use the normal MatchFunctions
 				if( args.GetLength() == 2 && type.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
 				{
@@ -1287,6 +1296,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					ctx.bc.InstrSHORT(BC_VAR, (short)v->stackOffset);
 
 					// TODO: Ugly code
+					// TODO: variable type: This should no longer be a special case 
 					// Special case: If this is a constructor for any() with a parameter, then we can't use the normal PrepareFunctionCall
 					if( args.GetLength() == 2 && type.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
 					{
@@ -5167,6 +5177,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 	isProcessingDeferredParams = false;
 }
 
+// TODO: variable type: This would no longer be necessary
 void asCCompiler::CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *ctx, asCObjectType *objectType, bool objIsConst)
 {
 	asCString name;
@@ -5350,6 +5361,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		}
 	}
 
+	// TODO: variable type: This won't be necessary anymore
 	// TODO: Ugly code
 	// Special case: If this is a constructor for any() with a parameter, then we can't use the normal MatchFunctions
 	if( args.GetLength() == 2 && tempObj.dataType.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
@@ -5394,6 +5406,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	{
 		asCByteCode objBC(engine);
 
+		// TODO: variable type: This won't be necessary any more
 		// TODO: Ugly code
 		// Special case: If this is a constructor for any() with a parameter, then we can't use the normal PrepareFunctionCall
 		if( args.GetLength() == 2 && tempObj.dataType.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
@@ -5990,6 +6003,7 @@ void asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *c
 
 				asCTypeInfo objType = ctx->type;
 
+				// TODO: variable type: This won't be necessary anymore
 				// TODO: Ugly code
 				// If the object is any, then we need to treat the methods store/retrieve specially
 				if( ctx->type.dataType.IsEqualExceptConst(asCDataType::CreateObject(engine->anyObjectType, true)) ||
@@ -6282,6 +6296,8 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 
 						if( !isMatchExceptSign )
 							matches.PushLast(funcs[n]);
+
+						// TODO: variable type: Implicit conversion to ?& has the smallest priority
 					}
 				}
 			}

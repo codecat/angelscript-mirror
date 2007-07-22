@@ -2038,6 +2038,10 @@ recompiling script declared structures, or changing the engine configuration.</p
 the type ids are queried, thus is not guaranteed to always be the same for
 each execution of the application.</p>
 
+<p>A base type yields the same type id whether the declaration is const or not,
+however if the const is for the subtype then the type id is different, e.g.
+<tt>string@</tt> isn't the same as <tt>const string@</tt> but <tt>string</tt> is the same as <tt>const string</tt>.
+
 <h3>Parameters</h3>
 <table border=0 cellspacing=0 cellpadding=0>
 <tr>
