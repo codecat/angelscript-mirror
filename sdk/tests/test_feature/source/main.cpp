@@ -123,6 +123,7 @@ namespace TestGetArgPtr         { bool Test(); }
 namespace TestCString           { bool Test(); }
 namespace TestBool              { bool Test(); }
 namespace TestInt8              { bool Test(); }
+namespace TestScriptMath        { bool Test(); }
 
 
 #include "utils.h"
@@ -162,6 +163,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestScriptMath::Test()        ) goto failed; else printf("-- TestScriptMath passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");

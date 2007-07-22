@@ -118,10 +118,6 @@ SOURCE=..\..\source\main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\source\test2modules.cpp
 # End Source File
 # Begin Source File
@@ -354,6 +350,10 @@ SOURCE=..\..\source\test_scriptclassmethod.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_scriptmath.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_scriptstring.cpp
 # End Source File
 # Begin Source File
@@ -582,11 +582,23 @@ SOURCE=..\..\source\bstr.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\scriptmath\scriptmath.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptmath\scriptmath.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp
 # End Source File
 # Begin Source File
 

@@ -133,7 +133,7 @@ static asCScriptString &AssignUIntToString(unsigned int i, asCScriptString &dest
 {
 	char buf[100];
 	sprintf(buf, "%u", i);
-	dest.buffer = buf; 
+	dest.buffer = buf;
 	return dest;
 }
 
@@ -149,7 +149,7 @@ static asCScriptString &AssignIntToString(int i, asCScriptString &dest)
 {
 	char buf[100];
 	sprintf(buf, "%d", i);
-	dest.buffer = buf; 
+	dest.buffer = buf;
 	return dest;
 }
 
@@ -165,7 +165,7 @@ static asCScriptString &AssignFloatToString(float f, asCScriptString &dest)
 {
 	char buf[100];
 	sprintf(buf, "%g", f);
-	dest.buffer = buf; 
+	dest.buffer = buf;
 	return dest;
 }
 
@@ -181,7 +181,7 @@ static asCScriptString &AssignDoubleToString(double f, asCScriptString &dest)
 {
 	char buf[100];
 	sprintf(buf, "%g", f);
-	dest.buffer = buf; 
+	dest.buffer = buf;
 	return dest;
 }
 
@@ -201,7 +201,7 @@ static asCScriptString &AddAssignUIntToString(unsigned int i, asCScriptString &d
 {
 	char buf[100];
 	sprintf(buf, "%u", i);
-	dest.buffer += buf; 
+	dest.buffer += buf;
 	return dest;
 }
 
@@ -217,7 +217,7 @@ static asCScriptString &AddAssignIntToString(int i, asCScriptString &dest)
 {
 	char buf[100];
 	sprintf(buf, "%d", i);
-	dest.buffer += buf; 
+	dest.buffer += buf;
 	return dest;
 }
 
@@ -233,7 +233,7 @@ static asCScriptString &AddAssignFloatToString(float f, asCScriptString &dest)
 {
 	char buf[100];
 	sprintf(buf, "%g", f);
-	dest.buffer += buf; 
+	dest.buffer += buf;
 	return dest;
 }
 
@@ -249,7 +249,7 @@ static asCScriptString &AddAssignDoubleToString(double f, asCScriptString &dest)
 {
 	char buf[100];
 	sprintf(buf, "%g", f);
-	dest.buffer += buf; 
+	dest.buffer += buf;
 	return dest;
 }
 
@@ -482,10 +482,7 @@ static void StringEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a == *b;
-	if( sizeof(bool) == 4 )
-		gen->SetReturnDWord(r);
-	else
-		gen->SetReturnByte(r);
+    *(bool*)gen->GetReturnPointer() = r;
 }
 
 static void StringNotEqual_Generic(asIScriptGeneric *gen)
@@ -493,10 +490,7 @@ static void StringNotEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a != *b;
-	if( sizeof(bool) == 4 )
-		gen->SetReturnDWord(r);
-	else
-		gen->SetReturnByte(r);
+    *(bool*)gen->GetReturnPointer() = r;
 }
 
 static void StringLesserOrEqual_Generic(asIScriptGeneric *gen)
@@ -504,10 +498,7 @@ static void StringLesserOrEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a <= *b;
-	if( sizeof(bool) == 4 )
-		gen->SetReturnDWord(r);
-	else
-		gen->SetReturnByte(r);
+    *(bool*)gen->GetReturnPointer() = r;
 }
 
 static void StringGreaterOrEqual_Generic(asIScriptGeneric *gen)
@@ -515,10 +506,7 @@ static void StringGreaterOrEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a >= *b;
-	if( sizeof(bool) == 4 )
-		gen->SetReturnDWord(r);
-	else
-		gen->SetReturnByte(r);
+    *(bool*)gen->GetReturnPointer() = r;
 }
 
 static void StringLesser_Generic(asIScriptGeneric *gen)
@@ -526,10 +514,7 @@ static void StringLesser_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a < *b;
-	if( sizeof(bool) == 4 )
-		gen->SetReturnDWord(r);
-	else
-		gen->SetReturnByte(r);
+    *(bool*)gen->GetReturnPointer() = r;
 }
 
 static void StringGreater_Generic(asIScriptGeneric *gen)
@@ -537,10 +522,7 @@ static void StringGreater_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a > *b;
-	if( sizeof(bool) == 4 )
-		gen->SetReturnDWord(r);
-	else
-		gen->SetReturnByte(r);
+    *(bool*)gen->GetReturnPointer() = r;
 }
 
 static void StringLength_Generic(asIScriptGeneric *gen)
@@ -567,13 +549,13 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(const string &in)", asMETHODPR(asCScriptString, operator =, (const asCScriptString&), asCScriptString&), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(const string &in)", asMETHODPR(asCScriptString, operator+=, (const asCScriptString&), asCScriptString&), asCALL_THISCALL); assert( r >= 0 );
 
-	// Register the memory allocator routines. This will make all memory allocations for the string 
+	// Register the memory allocator routines. This will make all memory allocations for the string
 	// object be made in one place, which is important if for example the script library is used from a dll
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ALLOC, "string &f(uint)", asFUNCTION(StringAlloc), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FREE, "void f(string &in)", asFUNCTION(StringFree), asCALL_CDECL); assert( r >= 0 );
 
 	// Register the factory to return a handle to a new string
-	// Note: We must register the string factory after the basic behaviours, 
+	// Note: We must register the string factory after the basic behaviours,
 	// otherwise the library will not allow the use of object handles for this type
 	r = engine->RegisterStringFactory("string@", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
 
@@ -633,13 +615,13 @@ void RegisterScriptString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(const string &in)", asFUNCTION(AssignString_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(const string &in)", asFUNCTION(AddAssignString_Generic), asCALL_GENERIC); assert( r >= 0 );
 
-	// Register the memory allocator routines. This will make all memory allocations for the string 
+	// Register the memory allocator routines. This will make all memory allocations for the string
 	// object be made in one place, which is important if for example the script library is used from a dll
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ALLOC, "string &f(uint)", asFUNCTION(StringAlloc), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FREE, "void f(string &in)", asFUNCTION(StringFree), asCALL_CDECL); assert( r >= 0 );
 
 	// Register the factory to return a handle to a new string
-	// Note: We must register the string factory after the basic behaviours, 
+	// Note: We must register the string factory after the basic behaviours,
 	// otherwise the library will not allow the use of object handles for this type
 	r = engine->RegisterStringFactory("string@", asFUNCTION(StringFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
 
