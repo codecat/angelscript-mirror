@@ -3583,7 +3583,6 @@ void *asCContext::GetVarPointer(int varIndex, int stackLevel)
 	return sf - func->variables[varIndex]->stackOffset;
 }
 
-/* TODO: Add this in 2.9.0
 // returns the typeId of the 'this' object at the given call stack level (-1 for current)
 // returns 0 if the function call at the given stack level is not a method
 int asCContext::GetThisTypeId(int stackLevel)
@@ -3652,7 +3651,7 @@ void *asCContext::GetThisPointer(int stackLevel)
        // a pointer to a pointer. I can't imagine someone would want to change the 'this'
        return thisPointer;
 }
-*/
+
 END_AS_NAMESPACE
 
 

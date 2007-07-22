@@ -16,12 +16,15 @@ static const char *script1 =
 "{                                      \n"
 "  int a = 1;                           \n"
 "  string s = \"text\";                 \n"
-"  Test1();                             \n" // 5
+"  c _c; _c.Test1();                    \n" // 5
 "  Test2();                             \n" // 6
 "}                                      \n"
-"void Test1()                           \n"
-"{                                      \n" // 9
-"  int d = 4;                           \n"
+"class c                                \n"
+"{                                      \n" 
+"  void Test1()                         \n"
+"  {                                    \n" // 11
+"    int d = 4;                         \n"
+"  }                                    \n"
 "}                                      \n";
 
 static const char *script2 =
@@ -48,11 +51,12 @@ static const char *correct =
 //" int a = 1\n"
 //" string s = <null>\n"
 "Module1:void main():6,3\n"
+"Module1:void main():6,9\n"
 //" int a = 1\n"
 //" string s = 'text'\n"
-" Module1:void Test1():11,3\n"
+" Module1:void c::Test1():13,5\n"
 //" int d = 6179008\n"
-" Module1:void Test1():12,2\n"
+" Module1:void c::Test1():14,4\n"
 //" int d = 4\n"
 "Module1:void main():7,3\n"
 //" int a = 1\n"
@@ -124,8 +128,16 @@ void LineCallback(asIScriptContext *ctx, void *param)
 
 void PrintVariables(asIScriptContext *ctx, int stackLevel)
 {
-	int numVars = ctx->GetVarCount(stackLevel);
 	asIScriptEngine *engine = ctx->GetEngine();
+
+	int typeId = ctx->GetThisTypeId(stackLevel);
+	void *varPointer = ctx->GetThisPointer(stackLevel);
+	if( typeId )
+	{
+		print(" this = 0x%x\n", varPointer);
+	}
+
+	int numVars = ctx->GetVarCount(stackLevel);
 	for( int n = 0; n < numVars; n++ )
 	{
 		int typeId = ctx->GetVarTypeId(n, stackLevel); 

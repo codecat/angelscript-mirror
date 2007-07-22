@@ -77,6 +77,8 @@ public:
   const char *<a href="#getvardecl">GetVarDeclaration</a>(int varIndex, int *length = 0, int stackLevel = -1);
   int <a href="#getvartype">GetVarTypeId</a>(int varIndex, int stackLevel = -1);
   void *<a href="#getvarptr">GetVarPointer</a>(int varIndex, int stackLevel = -1);
+  int <a href="#getthistype">GetThisTypeId</a>(int stackLevel = -1);
+  void *<a href="#getthisptr">GetThisPointer</a>(int stackLevel = -1);
 
   void *<a href="#setuserdata">SetUserData</a>(void *data);
   void *<a href="#getuserdata">GetUserData</a>();
@@ -966,7 +968,7 @@ int GetVarTypeId(int varIndex, int stackLevel);
 <h2>GetVarPointer</h2>
 
 <pre class=border>
-const char *GetVarPointer(int varIndex, int stackLevel);
+void *GetVarPointer(int varIndex, int stackLevel);
 </pre>
 
 <h3>Description</h3>
@@ -992,10 +994,6 @@ before you try to dereference it.</p>
 <td valign=top><p>The index of the variable.</p></td>
 </tr>
 <tr>
-<td valign=top width=100><code>length</code>&nbsp;</td>
-<td valign=top><p>This argument will receive the length of the returned string. Can be 0.</p></td>
-</tr>
-<tr>
 <td valign=top width=100><code>stackLevel</code>&nbsp;</td>
 <td valign=top><p>The stack level in which the variables are enumerated. -1 is the default, and means the current function.</p></td>
 </tr>
@@ -1005,6 +1003,59 @@ before you try to dereference it.</p>
 
 <p>Returns the pointer to the variable.</p>
 
+
+
+
+
+<a name=getthistype></a>
+<h2>GetThisTypeId</h2>
+
+<pre class=border>
+int GetThisTypeId(int stackLevel);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the type id of the object for the class method.</p>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>stackLevel</code>&nbsp;</td>
+<td valign=top><p>The stack level. -1 is the default, and means the current function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns the type id of the object.</p>
+
+
+
+
+
+<a name=getthisptr></a>
+<h2>GetThisPointer</h2>
+
+<pre class=border>
+void *GetThisPointer(int stackLevel);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns a pointer to the object, so that its content
+can be read and written. The address is valid until the script
+function returns.</p>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>stackLevel</code>&nbsp;</td>
+<td valign=top><p>The stack level. -1 is the default, and means the current function.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns the pointer to the object.</p>
 
 
 

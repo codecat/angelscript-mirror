@@ -111,11 +111,13 @@ public:
 	int GetCallstackFunction(int index);
 	int GetCallstackLineNumber(int index, int *column);
 
-	int GetVarCount(int stackLevel);
+	int         GetVarCount(int stackLevel);
 	const char *GetVarName(int varIndex, int *length, int stackLevel);
 	const char *GetVarDeclaration(int varIndex, int *length, int stackLevel);
-	int GetVarTypeId(int varIndex, int stackLevel);
-	void *GetVarPointer(int varIndex, int stackLevel);
+	int         GetVarTypeId(int varIndex, int stackLevel);
+	void       *GetVarPointer(int varIndex, int stackLevel);
+	int         GetThisTypeId(int stackLevel);
+    void       *GetThisPointer(int stackLevel);
 
 	int  SetException(const char *descr);
 

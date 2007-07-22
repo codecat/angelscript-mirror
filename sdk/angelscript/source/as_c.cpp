@@ -159,6 +159,8 @@ const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *le
 const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length, int stackLevel)   { return c->GetVarDeclaration(varIndex, length, stackLevel); }
 int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel)                     { return c->GetVarTypeId(varIndex, stackLevel); }
 void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel)                    { return c->GetVarPointer(varIndex, stackLevel); }
+int              asContext_GetThisTypeId(asIScriptContext *c, int stackLevel)                                  { return c->GetThisTypeId(stackLevel); }
+void *           asContext_GetThisPointer(asIScriptContext *c, int stackLevel)                                 { return c->GetThisPointer(stackLevel); }
 void *           asContext_SetUserData(asIScriptContext *c, void *data)                                        { return c->SetUserData(data); }
 void *           asContext_GetUserData(asIScriptContext *c)                                                    { return c->GetUserData(); }
 
