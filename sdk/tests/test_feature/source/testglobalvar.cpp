@@ -66,6 +66,10 @@ static const char *script4 =
 static const char *script5 =
 "uint OFLAG_BSP = uint(1024);";
 
+static const char *script6 = 
+"string @handle = @object; \n"
+"string  object = \"t\";   \n";
+
 void print(asIScriptGeneric *gen)
 {
 	std::string s = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
@@ -118,7 +122,7 @@ bool TestGlobalVar()
 	engine->ExecuteString("a", "TestGlobalVar()");
 
 	float *f = (float*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "float f"));
-	string *str = (string*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "string str"));
+	string *str = *(string**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "string str"));
 
 	float fv = *f; UNUSED_VAR(fv);
 	string strv = *str;
@@ -126,7 +130,7 @@ bool TestGlobalVar()
 	engine->ResetModule("a");
 
 	f = (float*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "float f"));
-	str = (string*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "string str"));
+	str = *(string**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "string str"));
 
 	if( !CompareDouble(*f, 2) || *str != "test" )
 	{
@@ -181,6 +185,26 @@ bool TestGlobalVar()
 	r = engine->Build(0); 
 	if( r < 0 )
 		ret = true;
+	engine->Release();
+
+	//--------------------------
+	// Make sure GetGlobalVarPointer is able to handle objects and pointers correctly
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptString(engine);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	engine->AddScriptSection(0, "script", script6, strlen(script6), 0, false);
+	r = engine->Build(0);
+	if( r < 0 )
+		ret = true;
+	else
+	{
+		asCScriptString *object = *(asCScriptString**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "object"));
+		asCScriptString **handle = (asCScriptString**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "handle"));
+		if( *handle != object )
+			ret = true;
+		if( object->buffer != "t" )
+			ret = true;
+	}
 	engine->Release();
 
 	return ret;

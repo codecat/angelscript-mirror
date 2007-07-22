@@ -19,7 +19,9 @@ public:
   void   *<a href="#getengine">GetEngine</a>();
 
   void   *<a href="#getobj">GetObject</a>();
-	
+
+  asBYTE  <a href="#getarg">GetArgByte</a>(asUINT arg);
+  asWORD  <a href="#getarg">GetArgWord</a>(asUINT arg);
   asDWORD <a href="#getarg">GetArgDWord</a>(asUINT arg);
   asQWORD <a href="#getarg">GetArgQWord</a>(asUINT arg);
   float   <a href="#getarg">GetArgFloat</a>(asUINT arg);
@@ -28,6 +30,8 @@ public:
   void   *<a href="#getarg">GetArgObject</a>(asUINT arg);
   void   *<a href="#getargptr">GetArgPointer</a>(asUINT arg);
 
+  int     <a href="#setret">SetReturnByte</a>(asBYTE val);
+  int     <a href="#setret">SetReturnWord</a>(asWORD val);
   int     <a href="#setret">SetReturnDWord</a>(asDWORD val);
   int     <a href="#setret">SetReturnQWord</a>(asQWORD val);
   int     <a href="#setret">SetReturnFloat</a>(float val);
@@ -80,6 +84,8 @@ void *GetObject();
 <h2>GetArg</h2>
 
 <pre class=border>
+asBYTE  GetArgByte(asUINT arg);
+asWORD  GetArgWord(asUINT arg);
 asDWORD GetArgDWord(asUINT arg);
 asQWORD GetArgQWord(asUINT arg);
 float   GetArgFloat(asUINT arg);
@@ -92,7 +98,7 @@ void   *GetArgObject(asUINT arg);
 
 <p>Gets the value of an argument, based on the index of the argument.</p>
 
-<p>Arguments with the type of an object, shouldn't be released as the 
+<p>Arguments with the type of an object, shouldn't be released as the
 library will automatically do this when the function returns.</p>
 
 <h3>Parameters</h3>
@@ -122,8 +128,8 @@ void *GetArgPointer(asUINT arg);
 
 <p>Returns a pointer to the argument.</p>
 
-<p>For primitives you get a pointer to the primitive itself. 
-For references you get a pointer to the pointer to whatever is being referenced. 
+<p>For primitives you get a pointer to the primitive itself.
+For references you get a pointer to the pointer to whatever is being referenced.
 For object handles you get a pointer to the pointer to the object.
 For objects you get a pointer to the pointer to the object.</p>
 
@@ -148,6 +154,8 @@ For objects you get a pointer to the pointer to the object.</p>
 <h2>SetReturn</h2>
 
 <pre class=border>
+int SetReturnByte(asBYTE val);
+int SetReturnWord(asWORD val);
 int SetReturnDWord(asDWORD val);
 int SetReturnQWord(asQWORD val);
 int SetReturnFloat(float val);
@@ -162,8 +170,8 @@ int SetReturnObject(void *obj);
 
 <p>If the function returns an object, the library will automatically do what
 is necessary based on how the object was declared, i.e. if the function was
-registered to return a handle then the library will call the addref behaviour. 
-If it was registered to return an object by value, then the library will make 
+registered to return a handle then the library will call the addref behaviour.
+If it was registered to return an object by value, then the library will make
 a copy of the object.</p>
 
 <h3>Parameters</h3>
@@ -203,9 +211,9 @@ void *GetReturnPointer();
 <p>Gets the address to the location where the return value is to be placed.</p>
 
 <p>
-You should copy the value to the location pointed to by the address. 
-For primitives simply dereference and assign. For object handles, you must first 
-increase the reference counter. For objects, you must make a copy of the object, 
+You should copy the value to the location pointed to by the address.
+For primitives simply dereference and assign. For object handles, you must first
+increase the reference counter. For objects, you must make a copy of the object,
 and then pass the pointer to the new object.
 </p>
 

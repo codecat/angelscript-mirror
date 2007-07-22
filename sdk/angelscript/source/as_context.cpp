@@ -445,6 +445,27 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 	return asSUCCESS;
 }
 
+asBYTE asCContext::GetReturnByte()
+{
+	if( status != tsProgramFinished ) return 0;
+
+	asCDataType *dt = &initialFunction->returnType;
+
+	if( dt->IsObject() || dt->IsReference() ) return 0;
+
+	return *(asBYTE*)&register1;
+}
+
+asWORD asCContext::GetReturnWord()
+{
+	if( status != tsProgramFinished ) return 0;
+
+	asCDataType *dt = &initialFunction->returnType;
+
+	if( dt->IsObject() || dt->IsReference() ) return 0;
+
+	return *(asWORD*)&register1;
+}
 
 asDWORD asCContext::GetReturnDWord()
 {
@@ -548,6 +569,82 @@ int asCContext::SetObject(void *obj)
 	return 0;
 }
 
+int asCContext::SetArgByte(asUINT arg, asBYTE value)
+{
+	if( status != tsPrepared )
+		return asCONTEXT_NOT_PREPARED;
+
+	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_ARG;
+	}
+
+	// Verify the type of the argument
+	asCDataType *dt = &initialFunction->parameterTypes[arg];
+	if( dt->IsObject() || dt->IsReference() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	if( dt->GetSizeInMemoryBytes() != 1 )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	// Determine the position of the argument
+	int offset = 0;
+	if( initialFunction->objectType )
+		offset += PTR_SIZE;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Set the value
+	*(asBYTE*)&stackFramePointer[offset] = value;
+
+	return 0;
+}
+
+int asCContext::SetArgWord(asUINT arg, asWORD value)
+{
+	if( status != tsPrepared )
+		return asCONTEXT_NOT_PREPARED;
+
+	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_ARG;
+	}
+
+	// Verify the type of the argument
+	asCDataType *dt = &initialFunction->parameterTypes[arg];
+	if( dt->IsObject() || dt->IsReference() )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	if( dt->GetSizeInMemoryBytes() != 2 )
+	{
+		status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	// Determine the position of the argument
+	int offset = 0;
+	if( initialFunction->objectType )
+		offset += PTR_SIZE;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Set the value
+	*(asWORD*)&stackFramePointer[offset] = value;
+
+	return 0;
+}
+
 int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 {
 	if( status != tsPrepared )
@@ -567,7 +664,7 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 		return asINVALID_TYPE;
 	}
 
-	if( dt->GetSizeOnStackDWords() != 1 )
+	if( dt->GetSizeInMemoryBytes() != 4 )
 	{
 		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -581,7 +678,7 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
 	// Set the value
-	stackFramePointer[offset] = value;
+	*(asDWORD*)&stackFramePointer[offset] = value;
 
 	return 0;
 }

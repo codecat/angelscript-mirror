@@ -83,11 +83,7 @@ static void ArrayObjectResize(asUINT size, asCArrayObject *self)
 
 static void ArrayObjectConstructor_Generic(asIScriptGeneric *gen)
 {
-#ifndef AS_64BIT_PTR
-	asCObjectType *ot = (asCObjectType*)(size_t)gen->GetArgDWord(0);
-#else
-	asCObjectType *ot = (asCObjectType*)(size_t)gen->GetArgQWord(0);
-#endif
+	asCObjectType *ot = *(asCObjectType**)gen->GetArgPointer(0);
 	asCArrayObject *obj = (asCArrayObject*)gen->GetObject();
 
 	ArrayObjectConstructor(ot, obj);
@@ -96,11 +92,7 @@ static void ArrayObjectConstructor_Generic(asIScriptGeneric *gen)
 static void ArrayObjectConstructor2_Generic(asIScriptGeneric *gen)
 {
 	asUINT length = gen->GetArgDWord(0);
-#ifndef AS_64BIT_PTR
-	asCObjectType *ot = (asCObjectType*)(size_t)gen->GetArgDWord(1);
-#else
-	asCObjectType *ot = (asCObjectType*)(size_t)gen->GetArgQWord(1);
-#endif
+	asCObjectType *ot = *(asCObjectType**)gen->GetArgPointer(1);
 	asCArrayObject *obj = (asCArrayObject*)gen->GetObject();
 
 	ArrayObjectConstructor2(length, ot, obj);

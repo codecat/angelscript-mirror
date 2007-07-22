@@ -23,10 +23,10 @@ public:
   <font color=green>// Engine configuration</font>
   int     <a href="#setengprop">SetEngineProperty</a>(asDWORD property, asPWORD value);
   asPWORD <a href="#getengprop">GetEngineProperty</a>(asDWORD property);
-  
+
   int <a href="#setmsgcall">SetMessageCallback</a>(const asUPtr &amp;callback, void *obj, asDWORD callConv);
   int <a href="#clrmsgcall">ClearMessageCallback</a>();
-  
+
   int <a href="#datatype">RegisterObjectType</A>(const char *name, int byteSize, asDWORD flags);
   int <a href="#property">RegisterObjectProperty</a>(const char *obj, const char *declaration, int byteOffset);
   int <a href="#method">RegisterObjectMethod</a>(const char *obj, const char *declaration, const asUPtr &amp;funcPointer, asDWORD callConv);
@@ -183,8 +183,8 @@ int SetEngineProperty(asDWORD property, asPWORD value);
 <h3>Description</h3>
 
 <p>
-This method allows you to change the behaviour of the script engine. Calls to this method 
-should be made right after the engine is created. Any calls made at a later time may have 
+This method allows you to change the behaviour of the script engine. Calls to this method
+should be made right after the engine is created. Any calls made at a later time may have
 unexpected behaviours.
 </p>
 
@@ -193,13 +193,13 @@ unexpected behaviours.
 <table border=0 cellspacing=0 cellpadding=0>
 <tr>
 <td valign=top width=220><code>asEP_ALLOW_UNSAFE_REFERENCES</code>&nbsp;</td>
-<td valign=top><p>Default: false. By setting this property to a non-zero value, the script compiler will permit the use of 
-   unsafe references. It will no longer be necessary to use the keywords in, out, or inout, and the references 
-   passed to functions will be the true reference. It will be the responsibility of the script writer to write 
+<td valign=top><p>Default: false. By setting this property to a non-zero value, the script compiler will permit the use of
+   unsafe references. It will no longer be necessary to use the keywords in, out, or inout, and the references
+   passed to functions will be the true reference. It will be the responsibility of the script writer to write
    code that does not invalidate the reference before it is used.</p></td>
 </tr>
 <td valign=top width=220><code>asEP_OPTIMIZE_BYTECODE</code>&nbsp;</td>
-<td valign=top><p>Default: true. By setting this to a zero value, the byte code will not be optimized to remove redundant 
+<td valign=top><p>Default: true. By setting this to a zero value, the byte code will not be optimized to remove redundant
 instructions, which may result in slower execution times, but also slightly faster compile times. Note: This is
 mostly only used when developing the library itself, there is probably no benefit to application developers in
 turning off byte code optimization.</p></td>
@@ -270,11 +270,11 @@ int SetMessageCallback(const asUPtr &amp;callback, void *obj, asDWORD callConv);
 
 <h3>Description</h3>
 
-<p>This method is used to set a callback function that will receive all the 
+<p>This method is used to set a callback function that will receive all the
 messages from the script engine, such as configuration errors, and compiler
 messages.</p>
 
-<p>The callback function can be either a global function or a class method. 
+<p>The callback function can be either a global function or a class method.
 Example:</p>
 
 <pre class=border>
@@ -295,8 +295,8 @@ MyClass obj;
 engine->SetMessageCallback(asMETHOD(MyClass,MessageCallback), obj, asCALL_THISCALL);
 </pre>
 
-<p>Since the pointer to this callback function will be held by the engine until 
-the the next call to the method or the engine is released it is important 
+<p>Since the pointer to this callback function will be held by the engine until
+the the next call to the method or the engine is released it is important
 that the application makes sure that it isn't destroyed before its time.</p>
 
 <p>The first parameter sent to the callback is a structure with the following layout:</p>
@@ -313,8 +313,8 @@ struct asSMessageInfo
 </pre>
 
 <p>
-The string buffers pointed to by the structure are temporary and shouldn't be 
-stored for later use. The type of the message is one of asMSGTYPE_ERROR, 
+The string buffers pointed to by the structure are temporary and shouldn't be
+stored for later use. The type of the message is one of asMSGTYPE_ERROR,
 asMSGTYPE_WARNING, or asMSGTYPE_INFORMATION.
 </p>
 
@@ -486,11 +486,11 @@ int RegisterObjectMethod(const char *obj,
 <p>This method registers object methods that the scripts may use.
 The function pointer must be a pointer to a class method.</p>
 
-<p>If a parameter is declared as reference you must also specify 
-the direction in which the value travels, i.e. in, out, or inout. 
-If the reference is marked as only out, the argument will be a 
-default value, e.g. objects will be initialized with their default 
-constructors. Note that the reference will not be to the true object, 
+<p>If a parameter is declared as reference you must also specify
+the direction in which the value travels, i.e. in, out, or inout.
+If the reference is marked as only out, the argument will be a
+default value, e.g. objects will be initialized with their default
+constructors. Note that the reference will not be to the true object,
 so do not store the pointer thinking it will be valid at a later time.</p>
 
 <p>If the method receives object handles by value, the method must
@@ -502,12 +502,12 @@ it.</p>
 for example methods that alter a property of the object. Other methods
 are allowed to be called on constant objects because they don't alter them.
 You tell the script engine which methods can and cannot be called on constant
-objects by adding the keyword <code>const</code> after the parameter list in 
+objects by adding the keyword <code>const</code> after the parameter list in
 the declaration.</p>
 
-<p>If two methods with the same parameters but one with <code>const</code> 
-and one without is registered, then the compiler will use the one with 
-<code>code</code> for constant objects, and the other one for normal objects. 
+<p>If two methods with the same parameters but one with <code>const</code>
+and one without is registered, then the compiler will use the one with
+<code>code</code> for constant objects, and the other one for normal objects.
 This is called const-overloading.</p>
 
 <p>Example:</p>
@@ -584,10 +584,10 @@ lead to undefined behaviour. These is the same rule as C++ has for destructors. 
 is there because if a destructor calls an exception, the destructor will be called again
 by the exception handler, which might lead to an endless loop.</p>
 
-<p>Behaviours shouldn't be registered to take handles as their parameters, use 
-references instead. Unlike functions, methods, and constructors, overloaded 
-operators may receive a reference to the true object instead of a dummy object, 
-but it also may not so don't rely on it. Output reference parameters are not 
+<p>Behaviours shouldn't be registered to take handles as their parameters, use
+references instead. Unlike functions, methods, and constructors, overloaded
+operators may receive a reference to the true object instead of a dummy object,
+but it also may not so don't rely on it. Output reference parameters are not
 supported by behaviours.</p>
 
 <p>If the parameter is sent by reference, then declare it as const, as it may
@@ -650,7 +650,7 @@ int RegisterGlobalProperty(const char *declaration,
 are accessable by the scripts. The properties may optionally be declared as const
 to improve security.</p>
 
-<p>It is not allowed to register a property as reference, as the property is 
+<p>It is not allowed to register a property as reference, as the property is
 by default considered a reference, i.e. don't use the &amp; type modifier in
 the type declaration.</p>
 
@@ -692,11 +692,11 @@ int RegisterGlobalFunction(const char *declaration,
 <p>This method registers system functions that the scripts may use to communicate
 with the host application.</p>
 
-<p>If a parameter is declared as reference you must also specify 
-the direction in which the value travels, i.e. in, out, or inout. 
-If the reference is marked as only out, the argument will be a 
-default value, e.g. objects will be initialized with their default 
-constructors. Note that the reference will not be to the true object, 
+<p>If a parameter is declared as reference you must also specify
+the direction in which the value travels, i.e. in, out, or inout.
+If the reference is marked as only out, the argument will be a
+default value, e.g. objects will be initialized with their default
+constructors. Note that the reference will not be to the true object,
 so do not store the pointer thinking it will be valid at a later time.</p>
 
 <p>If the function receives object handles by value, the method must
@@ -747,10 +747,10 @@ can be manipulated in expressions through operators.</p>
 
 <p>Behaviours may only be registered for object types registered by the application.</p>
 
-<p>Behaviours shouldn't be registered to take handles as their parameters, use 
+<p>Behaviours shouldn't be registered to take handles as their parameters, use
 references instead. Unlike functions, methods, and constructors, overloaded operators
-may receive a reference to the true object instead of a dummy object, 
-but it also may not so don't rely on it. Output references are 
+may receive a reference to the true object instead of a dummy object,
+but it also may not so don't rely on it. Output references are
 not supported by behaviours.</p>
 
 <p>If the parameter is sent by reference, then declare it as const, as it may
@@ -860,8 +860,8 @@ int RegisterStringFactory(const char *datatype,
 
 <h3>Description</h3>
 
-<p>Use this function to register a string factory that will be called when the virtual engine finds a 
-string constant in an expression. The string factory function will receive two parameters, the length 
+<p>Use this function to register a string factory that will be called when the virtual engine finds a
+string constant in an expression. The string factory function will receive two parameters, the length
 of the string constant and a pointer to the character data.</p>
 
 <h3>Parameters</h3>
@@ -898,7 +898,7 @@ int BeginConfigGroup(const char *groupName);
 
 <h3>Description</h3>
 
-<p>Starts a new dynamic configuration group. This group can be setup so that 
+<p>Starts a new dynamic configuration group. This group can be setup so that
 it is only visible to specific modules, and it can also be removed when it is
 no longer used.</p>
 
@@ -929,7 +929,7 @@ int EndConfigGroup();
 
 <h3>Description</h3>
 
-<p>Ends the current configuration group. Once finished a config group cannot 
+<p>Ends the current configuration group. Once finished a config group cannot
 be changed, but it can be removed when it is no longer used.</p>
 
 <h3>Returns</h3>
@@ -950,8 +950,8 @@ int RemoveConfigGroup(const char *groupName);
 
 <h3>Description</h3>
 
-<p>Remove the configuration group. If something in the configuration group is 
-currently in use, the function will return with an error code. Examples of 
+<p>Remove the configuration group. If something in the configuration group is
+currently in use, the function will return with an error code. Examples of
 uses are compiled modules that have function calls to functions in the group
 and global variables of types registered in the group.</p>
 
@@ -1061,8 +1061,8 @@ int AddScriptSection(const char *module,
 </tr>
 <tr>
 <td valign=top width=100><code>makeCopy</code>&nbsp;</td>
-<td valign=top><p>Should the library make a copy of the script code, or use the pointer to the original 
-                  code. If this argument is false, the application will be responsible for making sure 
+<td valign=top><p>Should the library make a copy of the script code, or use the pointer to the original
+                  code. If this argument is false, the application will be responsible for making sure
                   the memory is available and unchanged until the Build() method has been called.</p></td>
 </tr>
 </table>
@@ -1396,7 +1396,7 @@ const char *GetFunctionModule(int funcID,
 
 <h3>Description</h3>
 
-<p>This method returns the name of the module where the function was 
+<p>This method returns the name of the module where the function was
 implemented.</p>
 
 <h3>Parameters</h3>
@@ -1433,7 +1433,7 @@ const char *GetFunctionSection(int funcID,
 
 <h3>Description</h3>
 
-<p>This method returns the name of the section where the function was 
+<p>This method returns the name of the section where the function was
 implemented.</p>
 
 <h3>Parameters</h3>
@@ -1757,7 +1757,7 @@ not have used the variable types as intended.</p>
 
 <h3>Returns</h3>
 
-<p>Returns a null-terminated string with the variable declaration. Note, this string is shared 
+<p>Returns a null-terminated string with the variable declaration. Note, this string is shared
 with other functions in the library so you shouldn't store the pointer.</p>
 
 
@@ -1795,7 +1795,7 @@ script variables that the host application can access.</p>
 
 <h3>Returns</h3>
 
-<p>Returns a null-terminated string with the variable name. Note, this string is shared 
+<p>Returns a null-terminated string with the variable name. Note, this string is shared
 with other functions in the library so you shouldn't store the pointer.</p>
 
 
@@ -1812,6 +1812,9 @@ void *GetGlobalVarPointer(int gvarID);
 
 <p>This method should be used to retrieve the pointer of a variable that
 you wish to access.</p>
+
+<p>For object variables, you'll receive a pointer to a pointer to the object, because that's how objects are stored in AngelScript.
+Note that the returned pointer may point to a null pointer if the variable hasn't been initialized yet.</p>
 
 <h3>Parameters</h3>
 
@@ -2025,14 +2028,14 @@ int UnbindAllImportedFunctions(const char *module);
 int GetTypeIdByDecl(const char *module, const char *decl);
 </pre>
 <h3>Description</h3>
-<p>Translates a type declaration into a type id. The returned type id is valid 
+<p>Translates a type declaration into a type id. The returned type id is valid
 for as long as the type is valid, so you can safely store it for later use to
 avoid potential overhead by calling this function each time. Just remember to
 update the type id, any time the type is changed within the engine, e.g. when
 recompiling script declared structures, or changing the engine configuration.</p>
 
-<p>The type id is based on a sequence number and depends on the order in which 
-the type ids are queried, thus is not guaranteed to always be the same for 
+<p>The type id is based on a sequence number and depends on the order in which
+the type ids are queried, thus is not guaranteed to always be the same for
 each execution of the application.</p>
 
 <h3>Parameters</h3>
@@ -2073,7 +2076,7 @@ const char *GetTypeDeclaration(int typeId, int *length = 0);
 </table>
 
 <h3>Returns</h3>
-<p>A pointer to the string that holds the type declaration. The memory for the 
+<p>A pointer to the string that holds the type declaration. The memory for the
 string is shared internally by the engine so do not store it for later use.</p>
 
 <p>If the typeId is not valid the returned pointer will be null.</p>
@@ -2144,10 +2147,10 @@ void *CreateScriptObject(int typeId);
 
 <h3>Description</h3>
 
-<p>This method is used to create a script object based on it's type id. The 
+<p>This method is used to create a script object based on it's type id. The
 method will allocate the memory and call the object's default constructor.</p>
 
-<p>This only works for objects, for primitive types and object handles the 
+<p>This only works for objects, for primitive types and object handles the
 method doesn't do anything and returns a null pointer.</p>
 
 <h3>Parameters</h3>
@@ -2173,8 +2176,8 @@ method doesn't do anything and returns a null pointer.</p>
 <h2>ExecuteString</h2>
 
 <pre class=border>
-int ExecuteString(const char *module, 
-                  const char *script, 
+int ExecuteString(const char *module,
+                  const char *script,
                   asIScriptContext **ctx = 0,
                   asDWORD flags = 0);
 </pre>
@@ -2252,14 +2255,14 @@ int GetObjectsInGarbageCollectorCount();
 
 <h3>Description</h3>
 
-<p>This method can be used to query the number of objects that the garbage 
-collector is keeping track of. If the number is very large then it is probably 
-time to call the GarbageCollect() method so that some of the objects can be 
+<p>This method can be used to query the number of objects that the garbage
+collector is keeping track of. If the number is very large then it is probably
+time to call the GarbageCollect() method so that some of the objects can be
 freed.</p>
 
-<p>Note, that the objects that the garbage collector keeps track of may in 
-turn hold references to other objects, but these are not reflected in the 
-return value. Thus there is no way of knowing the exact amount of memory 
+<p>Note, that the objects that the garbage collector keeps track of may in
+turn hold references to other objects, but these are not reflected in the
+return value. Thus there is no way of knowing the exact amount of memory
 allocated directly and indirectly by the objects referred to by this function.</p>
 
 <h3>Returns</h3>

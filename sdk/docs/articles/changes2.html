@@ -118,6 +118,18 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
+<h2>Version 2.9.0 WIP - 2007/07/18</h2>
+
+<ul>
+<li>Library interface
+<ul>
+<li>GetGlobalVarPointer returns the pointer to the pointer to the object for object variables. Likewise for object handles a pointer to the object handle is returned (Thanks Jeff Slutter)
+<li>Added GetArgByte(), GetArgWord(), SetReturnByte(), SetReturnWord() to asIScriptGeneric for better support on big endian processors
+<li>Added SetArgByte(), SetArgWord(), GetReturnByte(), GetReturnWord() to asIScriptContext for better support on big endian processors
+<li>GetArgDWord(), SetReturnDWord(), SetArgDWord(), and GetReturnDWord() now validates that type is 4 bytes
+</ul>
+</ul>
+
 <h2>Version 2.8.1 - 2007/07/09</h2>
 
 <ul>

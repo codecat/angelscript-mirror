@@ -53,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        20801
+#define ANGELSCRIPT_VERSION        20900
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  8
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "2.8.1"
+#define ANGELSCRIPT_VERSION_MINOR  9
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.9.0 WIP"
 
 // Data types
 
@@ -69,7 +69,7 @@ class asIScriptStruct;
 class asIScriptArray;
 class asIBinaryStream;
 
-// 
+//
 // asBYTE  =  8 bits
 // asWORD  = 16 bits
 // asDWORD = 32 bits
@@ -247,6 +247,8 @@ extern "C"
 	AS_API asIScriptEngine *asContext_GetEngine(asIScriptContext *c);
 	AS_API int              asContext_GetState(asIScriptContext *c);
 	AS_API int              asContext_Prepare(asIScriptContext *c, int funcID);
+	AS_API int              asContext_SetArgByte(asIScriptContext *c, asUINT arg, asBYTE value);
+	AS_API int              asContext_SetArgWord(asIScriptContext *c, asUINT arg, asWORD value);
 	AS_API int              asContext_SetArgDWord(asIScriptContext *c, asUINT arg, asDWORD value);
 	AS_API int              asContext_SetArgQWord(asIScriptContext *c, asUINT arg, asQWORD value);
 	AS_API int              asContext_SetArgFloat(asIScriptContext *c, asUINT arg, float value);
@@ -255,6 +257,8 @@ extern "C"
 	AS_API int              asContext_SetArgObject(asIScriptContext *c, asUINT arg, void *obj);
 	AS_API void *           asContext_GetArgPointer(asIScriptContext *c, asUINT arg);
 	AS_API int              asContext_SetObject(asIScriptContext *c, void *obj);
+	AS_API asBYTE           asContext_GetReturnByte(asIScriptContext *c);
+	AS_API asWORD           asContext_GetReturnWord(asIScriptContext *c);
 	AS_API asDWORD          asContext_GetReturnDWord(asIScriptContext *c);
 	AS_API asQWORD          asContext_GetReturnQWord(asIScriptContext *c);
 	AS_API float            asContext_GetReturnFloat(asIScriptContext *c);
@@ -289,6 +293,8 @@ extern "C"
 
 	AS_API asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g);
 	AS_API void *           asGeneric_GetObject(asIScriptGeneric *g);
+	AS_API asBYTE           asGeneric_GetArgByte(asIScriptGeneric *g, asUINT arg);
+	AS_API asWORD           asGeneric_GetArgWord(asIScriptGeneric *g, asUINT arg);
 	AS_API asDWORD          asGeneric_GetArgDWord(asIScriptGeneric *g, asUINT arg);
 	AS_API asQWORD          asGeneric_GetArgQWord(asIScriptGeneric *g, asUINT arg);
 	AS_API float            asGeneric_GetArgFloat(asIScriptGeneric *g, asUINT arg);
@@ -296,6 +302,8 @@ extern "C"
 	AS_API void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg);
+	AS_API int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val);
+	AS_API int              asGeneric_SetReturnWord(asIScriptGeneric *g, asWORD val);
 	AS_API int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val);
 	AS_API int              asGeneric_SetReturnQWord(asIScriptGeneric *g, asQWORD val);
 	AS_API int              asGeneric_SetReturnFloat(asIScriptGeneric *g, float val);
@@ -388,7 +396,7 @@ public:
 	virtual int GetMethodIDByIndex(int typeId, int index) = 0;
 	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
 	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
-	
+
 	// Script global variables
 	virtual int GetGlobalVarCount(const char *module) = 0;
 	virtual int GetGlobalVarIDByIndex(const char *module, int index) = 0;
@@ -448,6 +456,8 @@ public:
 
 	virtual int Prepare(int funcID) = 0;
 
+	virtual int SetArgByte(asUINT arg, asBYTE value) = 0;
+	virtual int SetArgWord(asUINT arg, asWORD value) = 0;
 	virtual int SetArgDWord(asUINT arg, asDWORD value) = 0;
 	virtual int SetArgQWord(asUINT arg, asQWORD value) = 0;
 	virtual int SetArgFloat(asUINT arg, float value) = 0;
@@ -458,6 +468,8 @@ public:
 
 	virtual int SetObject(void *obj) = 0;
 
+	virtual asBYTE  GetReturnByte() = 0;
+	virtual asWORD  GetReturnWord() = 0;
 	virtual asDWORD GetReturnDWord() = 0;
 	virtual asQWORD GetReturnQWord() = 0;
 	virtual float   GetReturnFloat() = 0;
@@ -508,6 +520,8 @@ public:
 
 	virtual void   *GetObject() = 0;
 
+	virtual asBYTE  GetArgByte(asUINT arg) = 0;
+	virtual asWORD  GetArgWord(asUINT arg) = 0;
 	virtual asDWORD GetArgDWord(asUINT arg) = 0;
 	virtual asQWORD GetArgQWord(asUINT arg) = 0;
 	virtual float   GetArgFloat(asUINT arg) = 0;
@@ -516,6 +530,8 @@ public:
 	virtual void   *GetArgObject(asUINT arg) = 0;
 	virtual void   *GetArgPointer(asUINT arg) = 0;
 
+	virtual int     SetReturnByte(asBYTE val) = 0;
+	virtual int     SetReturnWord(asWORD val) = 0;
 	virtual int     SetReturnDWord(asDWORD val) = 0;
 	virtual int     SetReturnQWord(asQWORD val) = 0;
 	virtual int     SetReturnFloat(float val) = 0;

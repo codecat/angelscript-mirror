@@ -93,7 +93,7 @@ bool TestEnumGlobVar()
 	}
 
 	std::string *e;
-	e = (std::string*)engine->GetGlobalVarPointer(4);
+	e = *(std::string**)engine->GetGlobalVarPointer(4); // We're getting a pointer to the pointer to the object
 	if( e == 0 )
 	{
 		printf("%s: Failed\n", TESTNAME);
@@ -107,7 +107,7 @@ bool TestEnumGlobVar()
 	}
 
 	int *f;
-	f = (int*)engine->GetGlobalVarPointer(5);
+	f = *(int**)engine->GetGlobalVarPointer(5); // We're getting a pointer to the handle
 	if( f == 0 )
 	{
 		printf("%s: failed\n", TESTNAME);

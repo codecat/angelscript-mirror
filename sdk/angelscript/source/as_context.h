@@ -71,6 +71,8 @@ public:
 	int  Abort();
 	int  Suspend();
 
+	int SetArgByte(asUINT arg, asBYTE value);
+	int SetArgWord(asUINT arg, asWORD value);
 	int SetArgDWord(asUINT arg, asDWORD value);
 	int SetArgQWord(asUINT arg, asQWORD value);
 	int SetArgFloat(asUINT arg, float value);
@@ -81,6 +83,8 @@ public:
 
 	int SetObject(void *obj);
 
+	asBYTE  GetReturnByte();
+	asWORD  GetReturnWord();
 	asDWORD GetReturnDWord();
 	asQWORD GetReturnQWord();
 	float   GetReturnFloat();

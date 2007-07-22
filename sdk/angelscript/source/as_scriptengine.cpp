@@ -835,6 +835,8 @@ const char *asCScriptEngine::GetGlobalVarName(int gvarID, int *length)
 	return tempString->AddressOf();
 }
 
+// For primitives, object handles and references the address of the value is returned
+// For objects the address of the reference that holds the object is returned
 void *asCScriptEngine::GetGlobalVarPointer(int gvarID)
 {
 	asCModule *mod = GetModule(gvarID);
@@ -844,10 +846,7 @@ void *asCScriptEngine::GetGlobalVarPointer(int gvarID)
 	if( id > (int)mod->scriptGlobals.GetLength() )
 		return 0;
 
-	if( mod->scriptGlobals[id]->type.IsObject() )
-		return *(void**)(mod->globalMem.AddressOf() + mod->scriptGlobals[id]->index);
-	else
-		return (void*)(mod->globalMem.AddressOf() + mod->scriptGlobals[id]->index);
+	return (void*)(mod->globalMem.AddressOf() + mod->scriptGlobals[id]->index);
 
 	UNREACHABLE_RETURN;
 }

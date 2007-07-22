@@ -23,7 +23,6 @@ bool Test()
 	}
 
 	bool fail = false;
-	int r;
 	COutStream out;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -28,6 +28,8 @@ public:
 
   int <a href="#prepare">Prepare</a>(int funcID);
 
+  int <a href="#args">SetArgByte</a>(asUINT arg, asBYTE value);
+  int <a href="#args">SetArgWord</a>(asUINT arg, asWORD value);
   int <a href="#args">SetArgDWord</a>(asUINT arg, asDWORD value);
   int <a href="#args">SetArgQWord</a>(asUINT arg, asQWORD value);
   int <a href="#args">SetArgFloat</a>(asUINT arg, float value);
@@ -38,6 +40,8 @@ public:
 
   int <a href="#setobj">SetObject</a>(void *object);
 
+  asBYTE  <a href="#return">GetReturnByte</a>();
+  asWORD  <a href="#return">GetReturnWord</a>();
   asDWORD <a href="#return">GetReturnDWord</a>();
   asQWORD <a href="#return">GetReturnQWord</a>();
   float   <a href="#return">GetReturnFloat</a>();
@@ -296,6 +300,8 @@ int Suspend();
 <h2>SetArg</h2>
 
 <pre class=border>
+int SetArgByte(asUINT arg, asBYTE value);
+int SetArgWord(asUINT arg, asWORD value);
 int SetArgDWord(asUINT arg, asDWORD value);
 int SetArgQWord(asUINT arg, asQWORD value);
 int SetArgFloat(asUINT arg, float value);
@@ -404,6 +410,8 @@ int SetObject(void *object);
 <h2>GetReturn</h2>
 
 <pre class=border>
+asBYTE  GetReturnByte();
+asWORD  GetReturnWord();
 asDWORD GetReturnDWord();
 asQWORD GetReturnQWord();
 float   GetReturnFloat();

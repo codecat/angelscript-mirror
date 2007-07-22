@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -67,17 +67,17 @@ void *asCGeneric::GetObject()
 	return currentObject;
 }
 
-asDWORD asCGeneric::GetArgDWord(asUINT arg)
+asBYTE asCGeneric::GetArgByte(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
 		return 0;
 
 	// Verify that the type is correct
 	asCDataType *dt = &sysFunction->parameterTypes[arg];
-	if( dt->IsObject() )
+	if( dt->IsObject() || dt->IsReference() )
 		return 0;
 
-	if( dt->GetSizeOnStackDWords() != 1 )
+	if( dt->GetSizeInMemoryBytes() != 1 )
 		return 0;
 
 	// Determine the position of the argument
@@ -86,7 +86,53 @@ asDWORD asCGeneric::GetArgDWord(asUINT arg)
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
 
 	// Get the value
-	return (asDWORD)stackPointer[offset];
+	return *(asBYTE*)&stackPointer[offset];
+}
+
+
+asWORD asCGeneric::GetArgWord(asUINT arg)
+{
+	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
+		return 0;
+
+	// Verify that the type is correct
+	asCDataType *dt = &sysFunction->parameterTypes[arg];
+	if( dt->IsObject() || dt->IsReference() )
+		return 0;
+
+	if( dt->GetSizeInMemoryBytes() != 2 )
+		return 0;
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Get the value
+	return *(asWORD*)&stackPointer[offset];
+}
+
+
+asDWORD asCGeneric::GetArgDWord(asUINT arg)
+{
+	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
+		return 0;
+
+	// Verify that the type is correct
+	asCDataType *dt = &sysFunction->parameterTypes[arg];
+	if( dt->IsObject() || dt->IsReference() )
+		return 0;
+
+	if( dt->GetSizeInMemoryBytes() != 4 )
+		return 0;
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Get the value
+	return *(asDWORD*)&stackPointer[offset];
 }
 
 asQWORD asCGeneric::GetArgQWord(asUINT arg)
@@ -96,13 +142,10 @@ asQWORD asCGeneric::GetArgQWord(asUINT arg)
 
 	// Verify that the type is correct
 	asCDataType *dt = &sysFunction->parameterTypes[arg];
-	if( dt->IsObject() )
+	if( dt->IsObject() || dt->IsReference() )
 		return 0;
 
-	if( dt->IsReference() )
-		return 0;
-
-	if( dt->GetSizeOnStackDWords() != 2 )
+	if( dt->GetSizeInMemoryBytes() != 8 )
 		return 0;
 
 	// Determine the position of the argument
@@ -121,10 +164,10 @@ float asCGeneric::GetArgFloat(asUINT arg)
 
 	// Verify that the type is correct
 	asCDataType *dt = &sysFunction->parameterTypes[arg];
-	if( dt->IsObject() )
+	if( dt->IsObject() || dt->IsReference() )
 		return 0;
 
-	if( dt->GetSizeOnStackDWords() != 1 )
+	if( dt->GetSizeInMemoryBytes() != 4 )
 		return 0;
 
 	// Determine the position of the argument
@@ -143,10 +186,10 @@ double asCGeneric::GetArgDouble(asUINT arg)
 
 	// Verify that the type is correct
 	asCDataType *dt = &sysFunction->parameterTypes[arg];
-	if( dt->IsObject() )
+	if( dt->IsObject() || dt->IsReference() )
 		return 0;
 
-	if( dt->GetSizeOnStackDWords() != 2 )
+	if( dt->GetSizeInMemoryBytes() != 8 )
 		return 0;
 
 	// Determine the position of the argument
@@ -210,27 +253,47 @@ void *asCGeneric::GetArgPointer(asUINT arg)
 	return &stackPointer[offset];
 }
 
+int asCGeneric::SetReturnByte(asBYTE val)
+{
+	// Verify the type of the return value
+	if( sysFunction->returnType.IsObject() || sysFunction->returnType.IsReference() )
+		return asINVALID_TYPE;
+
+	if( sysFunction->returnType.GetSizeInMemoryBytes() != 1 )
+		return asINVALID_TYPE;
+
+    // Store the value
+    *(asBYTE*)&returnVal = val;
+
+	return 0;
+}
+
+int asCGeneric::SetReturnWord(asWORD val)
+{
+	// Verify the type of the return value
+	if( sysFunction->returnType.IsObject() || sysFunction->returnType.IsReference() )
+		return asINVALID_TYPE;
+
+	if( sysFunction->returnType.GetSizeInMemoryBytes() != 2 )
+		return asINVALID_TYPE;
+
+    // Store the value
+    *(asWORD*)&returnVal = val;
+
+	return 0;
+}
+
 int asCGeneric::SetReturnDWord(asDWORD val)
 {
 	// Verify the type of the return value
 	if( sysFunction->returnType.IsObject() || sysFunction->returnType.IsReference() )
 		return asINVALID_TYPE;
 
-	if( sysFunction->returnType.GetSizeOnStackDWords() != 1 )
+	if( sysFunction->returnType.GetSizeInMemoryBytes() != 4 )
 		return asINVALID_TYPE;
 
-// TODO: This is not the way to solve it, we need to find another way
-#ifdef AS_BIG_ENDIAN
-        if( sysFunction->returnType.GetSizeInMemoryBytes() == 1 )
-                *(asBYTE*)&returnVal = (asBYTE)val;
-        else if( sysFunction->returnType.GetSizeInMemoryBytes() == 2 )
-                *(asWORD*)&returnVal = (asWORD)val;
-        else
-                *(asDWORD*)&returnVal = val;
-#else
-        // Store the value
-        *(asDWORD*)&returnVal = val;
-#endif
+    // Store the value
+    *(asDWORD*)&returnVal = val;
 
 	return 0;
 }

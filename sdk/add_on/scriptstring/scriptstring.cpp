@@ -482,7 +482,10 @@ static void StringEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a == *b;
-	gen->SetReturnDWord(r);
+	if( sizeof(bool) == 4 )
+		gen->SetReturnDWord(r);
+	else
+		gen->SetReturnByte(r);
 }
 
 static void StringNotEqual_Generic(asIScriptGeneric *gen)
@@ -490,7 +493,10 @@ static void StringNotEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a != *b;
-	gen->SetReturnDWord(r);
+	if( sizeof(bool) == 4 )
+		gen->SetReturnDWord(r);
+	else
+		gen->SetReturnByte(r);
 }
 
 static void StringLesserOrEqual_Generic(asIScriptGeneric *gen)
@@ -498,7 +504,10 @@ static void StringLesserOrEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a <= *b;
-	gen->SetReturnDWord(r);
+	if( sizeof(bool) == 4 )
+		gen->SetReturnDWord(r);
+	else
+		gen->SetReturnByte(r);
 }
 
 static void StringGreaterOrEqual_Generic(asIScriptGeneric *gen)
@@ -506,7 +515,10 @@ static void StringGreaterOrEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a >= *b;
-	gen->SetReturnDWord(r);
+	if( sizeof(bool) == 4 )
+		gen->SetReturnDWord(r);
+	else
+		gen->SetReturnByte(r);
 }
 
 static void StringLesser_Generic(asIScriptGeneric *gen)
@@ -514,7 +526,10 @@ static void StringLesser_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a < *b;
-	gen->SetReturnDWord(r);
+	if( sizeof(bool) == 4 )
+		gen->SetReturnDWord(r);
+	else
+		gen->SetReturnByte(r);
 }
 
 static void StringGreater_Generic(asIScriptGeneric *gen)
@@ -522,7 +537,10 @@ static void StringGreater_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a > *b;
-	gen->SetReturnDWord(r);
+	if( sizeof(bool) == 4 )
+		gen->SetReturnDWord(r);
+	else
+		gen->SetReturnByte(r);
 }
 
 static void StringLength_Generic(asIScriptGeneric *gen)

@@ -19,7 +19,11 @@ void PrintException(asIScriptContext *ctx)
 
 void Assert(asIScriptGeneric *gen)
 {
-	bool expr = gen->GetArgDWord(0) ? true : false;
+	bool expr;
+	if( sizeof(bool) == 1 )
+		expr = gen->GetArgByte(0) ? true : false;
+	else
+		expr = gen->GetArgDWord(0) ? true : false;
 	if( !expr )
 	{
 		printf("--- Assert failed ---\n");

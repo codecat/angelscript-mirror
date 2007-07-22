@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -119,6 +119,8 @@ int              asContext_Release(asIScriptContext *c)                         
 asIScriptEngine *asContext_GetEngine(asIScriptContext *c)                                                      { return c->GetEngine(); }
 int              asContext_GetState(asIScriptContext *c)                                                       { return c->GetState(); }
 int              asContext_Prepare(asIScriptContext *c, int funcID)                                            { return c->Prepare(funcID); }
+int              asContext_SetArgByte(asIScriptContext *c, asUINT arg, asBYTE value)                           { return c->SetArgByte(arg, value); } 
+int              asContext_SetArgWord(asIScriptContext *c, asUINT arg, asWORD value)                           { return c->SetArgWord(arg, value); } 
 int              asContext_SetArgDWord(asIScriptContext *c, asUINT arg, asDWORD value)                         { return c->SetArgDWord(arg, value); } 
 int              asContext_SetArgQWord(asIScriptContext *c, asUINT arg, asQWORD value)                         { return c->SetArgQWord(arg, value); }
 int              asContext_SetArgFloat(asIScriptContext *c, asUINT arg, float value)                           { return c->SetArgFloat(arg, value); }
@@ -127,6 +129,8 @@ int              asContext_SetArgAddress(asIScriptContext *c, asUINT arg, void *
 int              asContext_SetArgObject(asIScriptContext *c, asUINT arg, void *obj)                            { return c->SetArgObject(arg, obj); }
 void *           asContext_GetArgPointer(asIScriptContext *c, asUINT arg)                                      { return c->GetArgPointer(arg); }
 int              asContext_SetObject(asIScriptContext *c, void *obj)										   { return c->SetObject(obj); }
+asBYTE           asContext_GetReturnByte(asIScriptContext *c)                                                  { return c->GetReturnByte(); }
+asWORD           asContext_GetReturnWord(asIScriptContext *c)                                                  { return c->GetReturnWord(); }
 asDWORD          asContext_GetReturnDWord(asIScriptContext *c)                                                 { return c->GetReturnDWord(); }
 asQWORD          asContext_GetReturnQWord(asIScriptContext *c)                                                 { return c->GetReturnQWord(); }
 float            asContext_GetReturnFloat(asIScriptContext *c)                                                 { return c->GetReturnFloat(); }
@@ -160,6 +164,8 @@ void *           asContext_GetUserData(asIScriptContext *c)                     
 
 asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g)                   { return g->GetEngine(); }
 void *           asGeneric_GetObject(asIScriptGeneric *g)                   { return g->GetObject(); }
+asBYTE           asGeneric_GetArgByte(asIScriptGeneric *g, asUINT arg)      { return g->GetArgByte(arg); }
+asWORD           asGeneric_GetArgWord(asIScriptGeneric *g, asUINT arg)      { return g->GetArgWord(arg); }
 asDWORD          asGeneric_GetArgDWord(asIScriptGeneric *g, asUINT arg)     { return g->GetArgDWord(arg); }
 asQWORD          asGeneric_GetArgQWord(asIScriptGeneric *g, asUINT arg)     { return g->GetArgQWord(arg); }
 float            asGeneric_GetArgFloat(asIScriptGeneric *g, asUINT arg)     { return g->GetArgFloat(arg); }
@@ -167,6 +173,8 @@ double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg)    { re
 void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg)   { return g->GetArgAddress(arg); }
 void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg)    { return g->GetArgObject(arg); }
 void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg)   { return g->GetArgPointer(arg); }
+int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val)   { return g->SetReturnByte(val); }
+int              asGeneric_SetReturnWord(asIScriptGeneric *g, asWORD val)   { return g->SetReturnWord(val); }
 int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val) { return g->SetReturnDWord(val); }
 int              asGeneric_SetReturnQWord(asIScriptGeneric *g, asQWORD val) { return g->SetReturnQWord(val); }
 int              asGeneric_SetReturnFloat(asIScriptGeneric *g, float val)   { return g->SetReturnFloat(val); }

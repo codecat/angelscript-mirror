@@ -105,11 +105,7 @@ void RegisterScriptStruct(asCScriptEngine *engine)
 
 void ScriptStruct_Construct_Generic(asIScriptGeneric *gen)
 {
-#ifndef AS_64BIT_PTR
-	asCObjectType *objType = (asCObjectType*)(size_t)gen->GetArgDWord(0);
-#else
-	asCObjectType *objType = (asCObjectType*)(size_t)gen->GetArgQWord(0);
-#endif
+	asCObjectType *objType = (asCObjectType*)(size_t*)gen->GetArgPointer(0);
 	asCScriptStruct *self = (asCScriptStruct*)gen->GetObject();
 
 	ScriptStruct_Construct(objType, self);
@@ -275,12 +271,12 @@ void asCScriptStruct::ReleaseAllHandles()
 
 void ScriptStruct_Assignment_Generic(asIScriptGeneric *gen)
 {
-	asCScriptStruct *other = (asCScriptStruct*)gen->GetArgObject(0);
+	asCScriptStruct *other = *(asCScriptStruct**)gen->GetArgPointer(0);
 	asCScriptStruct *self = (asCScriptStruct*)gen->GetObject();
 
 	*self = *other;
 
-	gen->SetReturnObject(self);
+	*(asCScriptStruct**)gen->GetReturnPointer() = self;
 }
 
 asCScriptStruct &ScriptStruct_Assignment(asCScriptStruct *other, asCScriptStruct *self)

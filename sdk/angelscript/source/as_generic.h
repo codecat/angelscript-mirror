@@ -56,6 +56,8 @@ public:
 	asIScriptEngine *GetEngine();
 
 	void   *GetObject();
+	asBYTE  GetArgByte(asUINT arg);
+	asWORD  GetArgWord(asUINT arg);
 	asDWORD GetArgDWord(asUINT arg);
 	asQWORD GetArgQWord(asUINT arg);
 	float   GetArgFloat(asUINT arg);
@@ -64,6 +66,8 @@ public:
 	void   *GetArgObject(asUINT arg);
 	void   *GetArgPointer(asUINT arg);
 
+	int     SetReturnByte(asBYTE val);
+	int     SetReturnWord(asWORD val);
 	int     SetReturnDWord(asDWORD val);
 	int     SetReturnQWord(asQWORD val);
 	int     SetReturnFloat(float val);

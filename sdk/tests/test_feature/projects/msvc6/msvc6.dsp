@@ -118,6 +118,10 @@ SOURCE=..\..\source\main.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test2modules.cpp
 # End Source File
 # Begin Source File
@@ -263,6 +267,10 @@ SOURCE=..\..\source\test_import.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_import2.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_int8.cpp
 # End Source File
 # Begin Source File
 
