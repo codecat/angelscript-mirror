@@ -249,8 +249,30 @@ void *asCGeneric::GetArgPointer(asUINT arg)
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
 
-	// Get the value
+	// Get the address of the value
 	return &stackPointer[offset];
+}
+
+int asCGeneric::GetArgTypeId(asUINT arg)
+{
+	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
+		return 0;
+
+	asCDataType *dt = &sysFunction->parameterTypes[arg];
+	if( dt->GetTokenType() != ttQuestion )
+		return engine->GetTypeIdFromDataType(*dt);
+	else
+	{
+		int offset = 0;
+		for( asUINT n = 0; n < arg; n++ )
+			offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+		// Skip the actual value to get to the type id
+		offset += PTR_SIZE;
+
+		// Get the value
+		return stackPointer[offset];
+	}
 }
 
 int asCGeneric::SetReturnByte(asBYTE val)

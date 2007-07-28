@@ -29,6 +29,7 @@ public:
   void   *<a href="#getarg">GetArgAddress</a>(asUINT arg);
   void   *<a href="#getarg">GetArgObject</a>(asUINT arg);
   void   *<a href="#getargptr">GetArgPointer</a>(asUINT arg);
+  int     <a href="#getargtype">GetArgTypeId</a>(asUINT arg);
 
   int     <a href="#setret">SetReturnByte</a>(asBYTE val);
   int     <a href="#setret">SetReturnWord</a>(asWORD val);
@@ -145,6 +146,33 @@ For objects you get a pointer to the pointer to the object.</p>
 <h3>Returns</h3>
 
 <p>The address of the argument.</p>
+
+
+
+
+<a name=getargtype></a>
+<h2>GetArgTypeId</h2>
+
+<pre class=border>
+int GetArgTypeId(asUINT arg);
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the type id of the argument.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>arg</code>&nbsp;</td>
+<td valign=top><p>The index of the argument, beginning with 0.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>The type id of the argument.</p>
 
 
 

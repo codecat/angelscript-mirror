@@ -123,6 +123,12 @@
 				RelativePath="..\..\source\main.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptmath\scriptmath.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptmath\scriptmath.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp">
 			</File>
 			<File
@@ -306,6 +312,9 @@
 				RelativePath="..\..\source\test_scriptclassmethod.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_scriptmath.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_scriptstring.cpp">
 			</File>
 			<File
@@ -334,6 +343,9 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_unsaferef.cpp">
+			</File>
+			<File
+				RelativePath="..\..\source\test_vartype.cpp">
 			</File>
 			<File
 				RelativePath="..\..\source\test_vector3.cpp">

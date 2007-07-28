@@ -65,6 +65,7 @@ public:
 	void   *GetArgAddress(asUINT arg);
 	void   *GetArgObject(asUINT arg);
 	void   *GetArgPointer(asUINT arg);
+	int     GetArgTypeId(asUINT arg);
 
 	int     SetReturnByte(asBYTE val);
 	int     SetReturnWord(asWORD val);

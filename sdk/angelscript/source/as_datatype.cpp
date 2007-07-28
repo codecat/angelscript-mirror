@@ -487,10 +487,12 @@ int asCDataType::GetSizeInMemoryDWords() const
 
 int asCDataType::GetSizeOnStackDWords() const
 {
-	if( isReference ) return PTR_SIZE;
-	if( objectType ) return PTR_SIZE;
+	int size = tokenType == ttQuestion ? 1 : 0;
 
-	return GetSizeInMemoryDWords();
+	if( isReference ) return PTR_SIZE + size;
+	if( objectType ) return PTR_SIZE + size;
+
+	return GetSizeInMemoryDWords() + size;
 }
 
 int asCDataType::GetArrayType() const

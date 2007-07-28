@@ -10,11 +10,16 @@ namespace TestObjHandle
 static const char *script1 =
 "refclass@ g;                           \n"
 "refclass@ c = @g;                      \n"
+"class t                                \n"
+"{                                      \n"
+"  refclass @m;                         \n"
+"  void test() {Assert(@m != null);}    \n"
+"}                                      \n"
 "void TestObjHandle()                   \n"
 "{                                      \n"
 "   refclass@ b = @refclass();          \n"
-// Should generate an exception     
-// as g isn't initialized yet.      
+// Should generate an exception
+// as g isn't initialized yet.
 //"   g = b;                              \n"
 //"   b = g;                              \n"
 // Do a handle assignment
@@ -44,6 +49,12 @@ static const char *script1 =
 "   @g = @TestObjReturnHandle(b);       \n"
 "   Assert(@g == @b);                   \n"
 "   Assert(@TestReturnNull() == null);  \n"
+"   Assert(@TestObjReturnHandle(b) != null); \n"
+// Test for class members
+"   t cl;                               \n"
+"   @cl.m = @TestObjReturnHandle(b);    \n"
+"   Assert(@cl.m != null);              \n"
+"   cl.test();                          \n"
 "}                                      \n"
 "void TestObjHandleRef(refclass@ i, refclass@ &out o)  \n"
 "{                                                     \n"
@@ -82,40 +93,40 @@ static const char *script5 =
 class CRefClass
 {
 public:
-	CRefClass() 
+	CRefClass()
 	{
-//		asIScriptContext *ctx = asGetActiveContext(); 
-//		printf("ln:%d ", ctx->GetCurrentLineNumber()); 
-//		printf("Construct(%X)\n",this); 
+//		asIScriptContext *ctx = asGetActiveContext();
+//		printf("ln:%d ", ctx->GetCurrentLineNumber());
+//		printf("Construct(%X)\n",this);
 		refCount = 1;
 	}
-	~CRefClass() 
+	~CRefClass()
 	{
-//		asIScriptContext *ctx = asGetActiveContext(); 
-//		printf("ln:%d ", ctx->GetCurrentLineNumber()); 
+//		asIScriptContext *ctx = asGetActiveContext();
+//		printf("ln:%d ", ctx->GetCurrentLineNumber());
 //		printf("Destruct(%X)\n",this);
 	}
-	CRefClass &operator=(const CRefClass &o) 
+	CRefClass &operator=(const CRefClass &o)
 	{
-//		asIScriptContext *ctx = asGetActiveContext(); 
-//		printf("ln:%d ", ctx->GetCurrentLineNumber()); 
-//		printf("Assign(%X, %X)\n", this, &o); 
+//		asIScriptContext *ctx = asGetActiveContext();
+//		printf("ln:%d ", ctx->GetCurrentLineNumber());
+//		printf("Assign(%X, %X)\n", this, &o);
 		return *this;
 	}
-	int AddRef() 
+	int AddRef()
 	{
-//		asIScriptContext *ctx = asGetActiveContext(); 
-//		printf("ln:%d ", ctx->GetCurrentLineNumber()); 
-//		printf("AddRef(%X)\n",this); 
+//		asIScriptContext *ctx = asGetActiveContext();
+//		printf("ln:%d ", ctx->GetCurrentLineNumber());
+//		printf("AddRef(%X)\n",this);
 		return ++refCount;
 	}
-	int Release() 
+	int Release()
 	{
-//		asIScriptContext *ctx = asGetActiveContext(); 
-//		printf("ln:%d ", ctx->GetCurrentLineNumber()); 
-//		printf("Release(%X)\n",this); 
-		int r = --refCount; 
-		if( refCount == 0 ) delete this; 
+//		asIScriptContext *ctx = asGetActiveContext();
+//		printf("ln:%d ", ctx->GetCurrentLineNumber());
+//		printf("Release(%X)\n",this);
+		int r = --refCount;
+		if( refCount == 0 ) delete this;
 		return r;
 	}
 	static CRefClass &Add(CRefClass &self, CRefClass &other)

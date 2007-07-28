@@ -175,6 +175,7 @@ double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg)    { re
 void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg)   { return g->GetArgAddress(arg); }
 void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg)    { return g->GetArgObject(arg); }
 void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg)   { return g->GetArgPointer(arg); }
+int              asGeneric_GetArgTypeId(asIScriptGeneric *g, asUINT arg)    { return g->GetArgTypeId(arg); }
 int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val)   { return g->SetReturnByte(val); }
 int              asGeneric_SetReturnWord(asIScriptGeneric *g, asWORD val)   { return g->SetReturnWord(val); }
 int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val) { return g->SetReturnDWord(val); }

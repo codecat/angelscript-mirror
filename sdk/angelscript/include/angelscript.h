@@ -304,6 +304,7 @@ extern "C"
 	AS_API void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg);
+	AS_API int              asGeneric_GetArgTypeId(asIScriptGeneric *g, asUINT arg);
 	AS_API int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val);
 	AS_API int              asGeneric_SetReturnWord(asIScriptGeneric *g, asWORD val);
 	AS_API int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val);
@@ -533,6 +534,7 @@ public:
 	virtual void   *GetArgAddress(asUINT arg) = 0;
 	virtual void   *GetArgObject(asUINT arg) = 0;
 	virtual void   *GetArgPointer(asUINT arg) = 0;
+	virtual int     GetArgTypeId(asUINT arg) = 0;
 
 	virtual int     SetReturnByte(asBYTE val) = 0;
 	virtual int     SetReturnWord(asWORD val) = 0;

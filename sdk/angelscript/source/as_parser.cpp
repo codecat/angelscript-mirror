@@ -53,9 +53,10 @@ asCParser::asCParser(asCBuilder *builder)
 	this->builder    = builder;
 	this->engine     = builder->engine;
 
-	script			= 0;
-	scriptNode		= 0;
-	checkValidTypes = false;
+	script			      = 0;
+	scriptNode		      = 0;
+	checkValidTypes       = false;
+	isParsingAppInterface = false;
 }
 
 asCParser::~asCParser()
@@ -65,9 +66,10 @@ asCParser::~asCParser()
 
 void asCParser::Reset()
 {
-	errorWhileParsing = false;
-	isSyntaxError     = false;
-	checkValidTypes   = false;
+	errorWhileParsing     = false;
+	isSyntaxError         = false;
+	checkValidTypes       = false;
+	isParsingAppInterface = false;
 
 	sourcePos = 0;
 
@@ -103,6 +105,9 @@ int asCParser::ParseScript(asCScriptCode *script)
 int asCParser::ParseFunctionDefinition(asCScriptCode *script)
 {
 	Reset();
+
+	// Set flag that permits ? as datatype for parameters
+	isParsingAppInterface = true;
 
 	this->script = script;
 
@@ -884,7 +889,7 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 	return node;
 }
 
-asCScriptNode *asCParser::ParseType(bool allowConst)
+asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
 
@@ -901,7 +906,7 @@ asCScriptNode *asCParser::ParseType(bool allowConst)
 		}
 	}
 
-	node->AddChildLast(ParseDataType());
+	node->AddChildLast(ParseDataType(allowVariableType));
 
 	// Parse [] and @
 	GetToken(&t);
@@ -978,14 +983,14 @@ asCScriptNode *asCParser::ParseOneOf(int *tokens, int count)
 }
 
 
-asCScriptNode *asCParser::ParseDataType()
+asCScriptNode *asCParser::ParseDataType(bool allowVariableType)
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
 
 	sToken t1;
 
 	GetToken(&t1);
-	if( !IsDataType(t1) )
+	if( !IsDataType(t1) && !(allowVariableType && t1.type == ttQuestion) )
 	{
 		Error(TXT_EXPECTED_DATA_TYPE, &t1);
 		return node;
@@ -1120,9 +1125,8 @@ asCScriptNode *asCParser::ParseParameterList()
 
 		for(;;)
 		{
-			// TODO: variable type: Should allow ? type for application function interfaces
 			// Parse data type
-			node->AddChildLast(ParseType(true));
+			node->AddChildLast(ParseType(true, isParsingAppInterface));
 			if( isSyntaxError ) return node;
 
 			node->AddChildLast(ParseTypeMod(true));

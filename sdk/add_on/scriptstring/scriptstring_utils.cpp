@@ -39,7 +39,7 @@ void StringFindFirst_Generic(asIScriptGeneric *gen)
     int start = *(int*)gen->GetArgPointer(2);
 
     // Find the substring
-    int loc = str->buffer.find(sub->buffer, start);
+    int loc = (int)str->buffer.find(sub->buffer, start);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -52,7 +52,7 @@ void StringFindFirst0_Generic(asIScriptGeneric *gen)
     asCScriptString *sub = *(asCScriptString**)gen->GetArgPointer(1);
 
     // Find the substring
-    int loc = str->buffer.find(sub->buffer);
+    int loc = (int)str->buffer.find(sub->buffer);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -74,7 +74,7 @@ void StringFindLast_Generic(asIScriptGeneric *gen)
     int start = *(int*)gen->GetArgPointer(2);
 
     // Find the substring
-    int loc = str->buffer.rfind(sub->buffer, start);
+    int loc = (int)str->buffer.rfind(sub->buffer, start);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -86,7 +86,7 @@ void StringFindLast0_Generic(asIScriptGeneric *gen)
     asCScriptString *sub = *(asCScriptString**)gen->GetArgPointer(1);
 
     // Find the substring
-    int loc = str->buffer.rfind(sub->buffer);
+    int loc = (int)str->buffer.rfind(sub->buffer);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -108,7 +108,7 @@ void StringFindFirstOf_Generic(asIScriptGeneric *gen)
     int start = *(int*)gen->GetArgPointer(2);
 
     // Find the substring
-    int loc = str->buffer.find_first_of(chars->buffer, start);
+    int loc = (int)str->buffer.find_first_of(chars->buffer, start);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -120,7 +120,7 @@ void StringFindFirstOf0_Generic(asIScriptGeneric *gen)
     asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
 
     // Find the substring
-    int loc = str->buffer.find_first_of(chars->buffer);
+    int loc = (int)str->buffer.find_first_of(chars->buffer);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -141,7 +141,7 @@ void StringFindFirstNotOf_Generic(asIScriptGeneric *gen)
     int start = *(int*)gen->GetArgPointer(2);
 
     // Find the substring
-    int loc = str->buffer.find_first_not_of(chars->buffer, start);
+    int loc = (int)str->buffer.find_first_not_of(chars->buffer, start);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -153,7 +153,7 @@ void StringFindFirstNotOf0_Generic(asIScriptGeneric *gen)
     asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
 
     // Find the substring
-    int loc = str->buffer.find_first_not_of(chars->buffer);
+    int loc = (int)str->buffer.find_first_not_of(chars->buffer);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -175,7 +175,7 @@ void StringFindLastOf_Generic(asIScriptGeneric *gen)
     int start = *(int*)gen->GetArgPointer(2);
 
     // Find the substring
-    int loc = str->buffer.find_last_of(chars->buffer, start);
+    int loc = (int)str->buffer.find_last_of(chars->buffer, start);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -187,7 +187,7 @@ void StringFindLastOf0_Generic(asIScriptGeneric *gen)
     asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
 
     // Find the substring
-    int loc = str->buffer.find_last_of(chars->buffer);
+    int loc = (int)str->buffer.find_last_of(chars->buffer);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -209,7 +209,7 @@ void StringFindLastNotOf_Generic(asIScriptGeneric *gen)
     int start = *(int*)gen->GetArgPointer(2);
 
     // Find the substring
-    int loc = str->buffer.find_last_not_of(chars->buffer, start);
+    int loc = (int)str->buffer.find_last_not_of(chars->buffer, start);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -221,7 +221,7 @@ void StringFindLastNotOf0_Generic(asIScriptGeneric *gen)
     asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
 
     // Find the substring
-    int loc = str->buffer.find_last_not_of(chars->buffer);
+    int loc = (int)str->buffer.find_last_not_of(chars->buffer);
 
     // Return the result
     *(int*)gen->GetReturnPointer() = loc;
@@ -259,7 +259,7 @@ void StringSplit_Generic(asIScriptGeneric *gen)
 
     // Find the existence of the delimiter in the input string
     int pos = 0, prev = 0, count = 0;
-    while( (pos = str->buffer.find(delim->buffer, prev)) != (int)std::string::npos )
+    while( (pos = (int)str->buffer.find(delim->buffer, prev)) != (int)std::string::npos )
     {
         // Add the part to the array
         asCScriptString *part = new asCScriptString();
@@ -269,7 +269,7 @@ void StringSplit_Generic(asIScriptGeneric *gen)
 
         // Find the next part
         count++;
-        prev = pos + delim->buffer.length();
+        prev = pos + (int)delim->buffer.length();
     }
 
     // Add the remaining part

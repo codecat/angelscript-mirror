@@ -349,7 +349,6 @@ void asCCompiler::DefaultConstructor(asCByteCode *bc, asCDataType &type)
 	asSTypeBehaviour *beh = type.GetBehaviour();
 	if( beh ) func = beh->construct;
 
-	// TODO: variable type: is this necessary for any?
 	if( type.IsScriptArray() || type.IsScriptAny() )
 	{
 		// The script struct constructor needs to know what type it is
@@ -497,73 +496,15 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			if( beh )
 				funcs = beh->constructors;
 
-			// TODO: variable type: This should no longer be a special case
-			// TODO: Ugly code
-			// Special case: If this is a constructor for any() with a parameter, then we can't use the normal MatchFunctions
-			if( args.GetLength() == 2 && gvar->datatype.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
-			{
-				// TODO: Only accept object handles for now
-				if( !args[0]->type.dataType.IsObjectHandle() )
-				{
-					funcs.SetLength(0);
-
-					// Build a readable string of the function with parameter types
-					asCString str = ANY_TOKEN;
-					str += "(";
-					if( args.GetLength() )
-						str += args[0]->type.dataType.Format();
-					for( asUINT n = 1; n < args.GetLength(); n++ )
-						str += ", " + args[n]->type.dataType.Format();
-					str += ")";
-
-					str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
-
-					Error(str.AddressOf(), node);
-				}
-				else
-				{
-					// It is the second constructor
-					funcs[0] = funcs.PopLast();
-				}
-			}
-			else
-			{
-				asCString str = gvar->datatype.Format();
-				MatchFunctions(funcs, args, node, str.AddressOf());
-			}
-
+			asCString str = gvar->datatype.Format();
+			MatchFunctions(funcs, args, node, str.AddressOf());
 
 			if( funcs.GetLength() == 1 )
 			{
 				// TODO: This reference is open while evaluating the arguments. We must fix this
 				ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 
-				
-				// TODO: variable type: This should no longer be a special case
-				// TODO: Ugly code
-				// Special case: If this is a constructor for any() with a parameter, then we can't use the normal PrepareFunctionCall
-				if( args.GetLength() == 2 && gvar->datatype.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
-				{
-					// Insert the argument type after the first argument
-					asSExprContext *ectx = args[1];
-					args.PushLast(ectx);
-
-					ectx = NEW(asSExprContext)(engine);
-					ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
-					ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
-					args[1] = ectx;
-
-					// Push the object type on the stack
-					ctx.bc.AddCode(&args[2]->bc);
-					ctx.bc.AddCode(&args[1]->bc);
-
-					asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
-					asCDataType paramType = args[0]->type.dataType;
-					paramType.MakeReference(true);
-					PrepareArgument2(&ctx, args[0], &paramType, true, descr->inOutFlags[0]);
-				}
-				else
-					PrepareFunctionCall(funcs[0], &ctx.bc, args);
+				PrepareFunctionCall(funcs[0], &ctx.bc, args);
 				MoveArgsToStack(funcs[0], &ctx.bc, args, false);
 
 				PerformFunctionCall(funcs[0], &ctx, true, &args, gvar->datatype.GetObjectType());
@@ -757,11 +698,35 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType, asCArray<int> *reservedVars)
 {
-	asCDataType dt = *paramType;
+	asCDataType param = *paramType;
+	if( paramType->GetTokenType() == ttQuestion )
+	{
+		// Since the function is expecting a var type ?, then we don't want to convert the argument to anything else
+		param = ctx->type.dataType;
+		param.MakeHandle(ctx->type.isExplicitHandle);
+		param.MakeReference(paramType->IsReference());
+		param.MakeReadOnly(paramType->IsReadOnly());
+	}
+	else
+		param = *paramType;
+
+	asCDataType dt = param;
 
 	// Need to protect arguments by reference
 	if( isFunction && dt.IsReference() )
 	{
+		if( paramType->GetTokenType() == ttQuestion )
+		{
+			asCByteCode tmpBC(engine);
+
+			// Place the type id on the stack as a hidden parameter
+			tmpBC.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(param));
+
+			// Insert the code before the expression code
+			tmpBC.AddCode(&ctx->bc);
+			ctx->bc.AddCode(&tmpBC);
+		}
+
 		// Allocate a temporary variable of the same type as the argument
 		dt.MakeReference(false);
 		dt.MakeReadOnly(false);
@@ -778,24 +743,24 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				if( ctx->type.dataType.IsReference() ) ConvertToVariable(ctx);
 				ImplicitConversion(ctx, dt, node, false, true, reservedVars);
 
-				if( !(paramType->IsReadOnly() && ctx->type.isVariable) )
+				if( !(param.IsReadOnly() && ctx->type.isVariable) )
 					ConvertToTempVariable(ctx);
 
 				PushVariableOnStack(ctx, true);
-				ctx->type.dataType.MakeReadOnly(paramType->IsReadOnly());
+				ctx->type.dataType.MakeReadOnly(param.IsReadOnly());
 			}
 			else
 			{
 				IsVariableInitialized(&ctx->type, node);
 
-				ImplicitConversion(ctx, *paramType, node, false, true, reservedVars);
+				ImplicitConversion(ctx, param, node, false, true, reservedVars);
 
 				// If the argument already is a temporary
 				// variable we don't need to allocate another
 
 				// If the parameter is read-only and the object already is a local
 				// variable then it is not necessary to make a copy either
-				if( !ctx->type.isTemporary && !(paramType->IsReadOnly() && ctx->type.isVariable))
+				if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable))
 				{
 					// Make sure the variable is not used in the expression
 					asCArray<int> vars;
@@ -976,11 +941,11 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 	}
 
 	// Don't put any pointer on the stack yet
-	if( paramType->IsReference() || paramType->IsObject() )
+	if( param.IsReference() || param.IsObject() )
 	{
 		// &inout parameter may leave the reference on the stack already
 		if( !engine->allowUnsafeReferences ||
-			!paramType->IsReference() || refType != 3 )
+			!param.IsReference() || refType != 3 )
 		{
 			ctx->bc.Pop(PTR_SIZE);
 			ctx->bc.InstrSHORT(BC_VAR, ctx->type.stackOffset);
@@ -1019,8 +984,6 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 	int offset = 0;
 	if( addOneToOffset )
 		offset += PTR_SIZE;
-
-	// TODO: variable type: Need to push the type id on the stack as well
 
 	// Move the objects that are sent by value to the stack just before the call
 	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
@@ -1065,7 +1028,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 		arg = arg->next;
 	}
 
-	// TODO: variable type: The any type shouldn't increase the arg type here. Only when it has been determined it is a ?& parm
+	// The script array and script any needs to receive their object type
 	if( type && (type->IsScriptArray() || type->IsScriptAny()) )
 	{
 		argCount += 1;
@@ -1078,7 +1041,6 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 		args[n] = 0;
 
 	n = argCount-1;
-	// TODO: variable type: The any type shouldn't increase the arg type here. Only when it has been determined it is a ?& parm
 	if( type && (type->IsScriptArray() || type->IsScriptAny()) )
 	{
 		args[n] = NEW(asSExprContext)(engine);
@@ -1253,40 +1215,8 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 				if( beh )
 					funcs = beh->constructors;
 
-				// TODO: Ugly code
-				// TODO: variable type: This should no longer be a special case
-				// Special case: If this is a constructor for any() with a parameter, then we can't use the normal MatchFunctions
-				if( args.GetLength() == 2 && type.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
-				{
-					// TODO: Only accept object handles for now
-					if( !args[0]->type.dataType.IsObjectHandle() )
-					{
-						funcs.SetLength(0);
-
-						// Build a readable string of the function with parameter types
-						asCString str = name;
-						str += "(";
-						if( args.GetLength() )
-							str += args[0]->type.dataType.Format();
-						for( asUINT n = 1; n < args.GetLength(); n++ )
-							str += ", " + args[n]->type.dataType.Format();
-						str += ")";
-
-						str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
-
-						Error(str.AddressOf(), node);
-					}
-					else
-					{
-						// It is the second constructor
-						funcs[0] = funcs.PopLast();
-					}
-				}
-				else
-				{
-					asCString str = type.Format();
-					MatchFunctions(funcs, args, node, str.AddressOf());
-				}
+				asCString str = type.Format();
+				MatchFunctions(funcs, args, node, str.AddressOf());
 
 				if( funcs.GetLength() == 1 )
 				{
@@ -1295,36 +1225,13 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					sVariable *v = variables->GetVariable(name.AddressOf());
 					ctx.bc.InstrSHORT(BC_VAR, (short)v->stackOffset);
 
-					// TODO: Ugly code
-					// TODO: variable type: This should no longer be a special case 
-					// Special case: If this is a constructor for any() with a parameter, then we can't use the normal PrepareFunctionCall
-					if( args.GetLength() == 2 && type.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
-					{
-						// Insert the argument type after the first argument
-						asSExprContext *ectx = args[1];
-						args.PushLast(ectx);
-
-						ectx = NEW(asSExprContext)(engine);
-						ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
-						ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
-						args[1] = ectx;
-
-						// Push the object type on the stack
-						ctx.bc.AddCode(&args[2]->bc);
-						ctx.bc.AddCode(&args[1]->bc);
-
-						asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
-						asCDataType paramType = args[0]->type.dataType;
-						paramType.MakeReference(true);
-						PrepareArgument2(&ctx, args[0], &paramType, true, descr->inOutFlags[0]);
-					}
-					else
-						PrepareFunctionCall(funcs[0], &ctx.bc, args);
+					PrepareFunctionCall(funcs[0], &ctx.bc, args);
 					MoveArgsToStack(funcs[0], &ctx.bc, args, false);
 
 					int offset = 0;
+					asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
 					for( asUINT n = 0; n < args.GetLength(); n++ )
-						offset += args[n]->type.dataType.GetSizeOnStackDWords();
+						offset += descr->parameterTypes[n].GetSizeOnStackDWords();
 
 					ctx.bc.InstrWORD(BC_GETREF, (asWORD)offset);
 
@@ -2975,8 +2882,18 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 	// No conversion from void to any other type
 	if( ctx->type.dataType.GetTokenType() == ttVoid ) return;
 	
-	// Do we want a primitive
-	if( to.IsPrimitive() )
+	// Do we want a var type?
+	if( to.GetTokenType() == ttQuestion )
+	{
+		// Any type can be converted to a var type, but only when not generating code
+		assert( !generateCode );
+
+		ctx->type.dataType = to;
+
+		return;
+	}
+	// Do we want a primitive?
+	else if( to.IsPrimitive() )
 	{
 		// No conversion from objects to primitives yet
 		if( !ctx->type.dataType.IsPrimitive() ) return;
@@ -5177,115 +5094,6 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 	isProcessingDeferredParams = false;
 }
 
-// TODO: variable type: This would no longer be necessary
-void asCCompiler::CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *ctx, asCObjectType *objectType, bool objIsConst)
-{
-	asCString name;
-	asCArray<int> funcs;
-	asCScriptNode *nm = node->firstChild;
-	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
-	if( name != "store" && name != "retrieve" )
-	{
-		// Go back to the normal compiler path
-		CompileFunctionCall(node, ctx, objectType, objIsConst);
-		return;
-	}
-
-	builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
-
-	// Compile the arguments
-	asCArray<asSExprContext *> args;
-
-	CompileArgumentList(node->lastChild, args, 0);
-
-	// We don't call MatchFunctions as normally
-	if( args.GetLength() != 1 || !args[0]->type.dataType.IsObjectHandle() || (name == "retrieve" && args[0]->type.dataType.IsReadOnly()) )
-	{
-		// Build a readable string of the function with parameter types
-		asCString str = name;
-		str += "(";
-		if( args.GetLength() )
-			str += args[0]->type.dataType.Format();
-		for( asUINT n = 1; n < args.GetLength(); n++ )
-			str += ", " + args[n]->type.dataType.Format();
-		str += ")";
-
-		if( objIsConst )
-			str += " const";
-
-		str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
-
-		Error(str.AddressOf(), node);
-
-		// Dummy value
-		ctx->type.SetDummy();
-	}
-	else
-	{
-		asCArray<asCTypeInfo> temporaryVariables;
-
-		asSExprContext *ectx = NEW(asSExprContext)(engine);
-		ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
-		ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
-		args.PushLast(ectx);
-
-		asCByteCode objBC(engine);
-		objBC.AddCode(&ctx->bc);
-
-		// Now push the objectType on the stack
-		ctx->bc.AddCode(&ectx->bc);
-
-		// We cannot call PrepareFunctionCall() as normal
-		asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
-
-		asCDataType paramType = args[0]->type.dataType;
-		paramType.MakeReference(true);
-		PrepareArgument2(ctx, args[0], &paramType, true, descr->inOutFlags[0]);
-
-		// Verify if any of the args variable offsets are used in the other code.
-		// If they are exchange the offset for a new one
-		asUINT n;
-		for( n = 0; n < args.GetLength(); n++ )
-		{
-			if( args[n]->type.isTemporary && objBC.IsVarUsed(args[n]->type.stackOffset) )
-			{
-				// Release the current temporary variable
-				ReleaseTemporaryVariable(args[n]->type, 0);
-
-				asCArray<int> usedVars;
-				objBC.GetVarsUsed(usedVars);
-				ctx->bc.GetVarsUsed(usedVars);
-
-				asCDataType dt = args[n]->type.dataType;
-				dt.MakeReference(false);
-				int newOffset = AllocateVariableNotIn(dt, true, &usedVars);
-
-				ctx->bc.ExchangeVar(args[n]->type.stackOffset, newOffset);
-				args[n]->type.stackOffset = (short)newOffset;
-				args[n]->type.isTemporary = true;
-				args[n]->type.isVariable = true;
-			}
-		}
-
-		ctx->bc.AddCode(&objBC);
-
-		MoveArgsToStack(funcs[0], &ctx->bc, args, true);
-
-		int offset = 0;
-		for( n = 0; n < args.GetLength(); n++ )
-			offset += args[n]->type.dataType.GetSizeOnStackDWords();
-
-		PerformFunctionCall(funcs[0], ctx, false, &args);
-	}
-
-	// Cleanup
-	for( asUINT n = 0; n < args.GetLength(); n++ )
-		if( args[n] )
-		{
-			DELETE(args[n],asSExprContext);
-		}
-}
-
 
 void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 {
@@ -5361,39 +5169,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		}
 	}
 
-	// TODO: variable type: This won't be necessary anymore
-	// TODO: Ugly code
-	// Special case: If this is a constructor for any() with a parameter, then we can't use the normal MatchFunctions
-	if( args.GetLength() == 2 && tempObj.dataType.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
-	{
-		// TODO: Only accept object handles for now
-		if( !args[0]->type.dataType.IsObjectHandle() )
-		{
-			funcs.SetLength(0);
-
-			// Build a readable string of the function with parameter types
-			asCString str = name;
-			str += "(";
-			if( args.GetLength() )
-				str += args[0]->type.dataType.Format();
-			for( asUINT n = 1; n < args.GetLength(); n++ )
-				str += ", " + args[n]->type.dataType.Format();
-			str += ")";
-
-			str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
-
-			Error(str.AddressOf(), node);
-		}
-		else
-		{
-			// It is the second constructor
-			funcs[0] = funcs.PopLast();
-		}
-	}
-	else
-	{
-		MatchFunctions(funcs, args, node, name.AddressOf(), false);
-	}
+	MatchFunctions(funcs, args, node, name.AddressOf(), false);
 
 	if( funcs.GetLength() != 1 )
 	{
@@ -5406,37 +5182,14 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	{
 		asCByteCode objBC(engine);
 
-		// TODO: variable type: This won't be necessary any more
-		// TODO: Ugly code
-		// Special case: If this is a constructor for any() with a parameter, then we can't use the normal PrepareFunctionCall
-		if( args.GetLength() == 2 && tempObj.dataType.IsEqualExceptRef(asCDataType::CreateObject(engine->anyObjectType, false)) )
-		{
-			// Insert the argument type after the first argument
-			asSExprContext *ectx = args[1];
-			args.PushLast(ectx);
-
-			ectx = NEW(asSExprContext)(engine);
-			ectx->bc.InstrDWORD(BC_TYPEID, engine->GetTypeIdFromDataType(args[0]->type.dataType));
-			ectx->type.Set(asCDataType::CreatePrimitive(ttInt, false));
-			args[1] = ectx;
-
-			// Push the object type on the stack
-			ctx->bc.AddCode(&args[2]->bc);
-			ctx->bc.AddCode(&args[1]->bc);
-
-			asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
-			asCDataType paramType = args[0]->type.dataType;
-			paramType.MakeReference(true);
-			PrepareArgument2(ctx, args[0], &paramType, true, descr->inOutFlags[0]);
-		}
-		else
-			PrepareFunctionCall(funcs[0], &ctx->bc, args);
+		PrepareFunctionCall(funcs[0], &ctx->bc, args);
 
 		MoveArgsToStack(funcs[0], &ctx->bc, args, false);
 
 		int offset = 0;
+		asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
 		for( asUINT n = 0; n < args.GetLength(); n++ )
-			offset += args[n]->type.dataType.GetSizeOnStackDWords();
+			offset += descr->parameterTypes[n].GetSizeOnStackDWords();
 
 		ctx->bc.InstrWORD(BC_GETREF, (asWORD)offset);
 
@@ -6003,19 +5756,8 @@ void asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *c
 
 				asCTypeInfo objType = ctx->type;
 
-				// TODO: variable type: This won't be necessary anymore
-				// TODO: Ugly code
-				// If the object is any, then we need to treat the methods store/retrieve specially
-				if( ctx->type.dataType.IsEqualExceptConst(asCDataType::CreateObject(engine->anyObjectType, true)) ||
-					ctx->type.dataType.IsEqualExceptConst(asCDataType::CreateObjectHandle(engine->anyObjectType, true)) )
-				{
-					CompileMethodCallOnAny(node->firstChild, ctx, trueObj, isConst);
-				}
-				else
-				{
-					// Compile function call
-					CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
-				}
+				// Compile function call
+				CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
 
 				// Release the potentially temporary object
 				ReleaseTemporaryVariable(objType, &ctx->bc);
@@ -6297,7 +6039,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 						if( !isMatchExceptSign )
 							matches.PushLast(funcs[n]);
 
-						// TODO: variable type: Implicit conversion to ?& has the smallest priority
+						// TODO: Implicit conversion to ?& has the smallest priority. Do we have any conflicts here?
 					}
 				}
 			}

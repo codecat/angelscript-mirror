@@ -119,7 +119,6 @@ protected:
 	void CompileExpressionValue(asCScriptNode *node, asSExprContext *out);
 	void CompileFunctionCall(asCScriptNode *node, asSExprContext *out, asCObjectType *objectType, bool objIsConst);
 	void CompileConstructCall(asCScriptNode *node, asSExprContext *out);
-	void CompileMethodCallOnAny(asCScriptNode *node, asSExprContext *out, asCObjectType *objectType, bool objIsConst);
 	void CompileConversion(asCScriptNode *node, asSExprContext *out);
 	void CompileOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 	void CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);

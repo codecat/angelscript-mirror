@@ -82,11 +82,11 @@ static void AnyObjectConstructor_Generic(asIScriptGeneric *gen)
 static void AnyObjectConstructor2_Generic(asIScriptGeneric *gen)
 {
 	void *ref = (void*)gen->GetArgAddress(0);
-	int refType = gen->GetArgDWord(1);
+	int refType = gen->GetArgTypeId(0);
 #ifndef AS_64BIT_PTR
-	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(2);
+	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(1);
 #else
-	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(2);
+	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(1);
 #endif
 	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
 
@@ -106,7 +106,7 @@ static void AnyObjectAssignment_Generic(asIScriptGeneric *gen)
 static void AnyObject_Store_Generic(asIScriptGeneric *gen)
 {
 	void *ref = (void*)gen->GetArgAddress(0);
-	int refTypeId = gen->GetArgDWord(1);
+	int refTypeId = gen->GetArgTypeId(0);
 	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
 
 	self->Store(ref, refTypeId);
@@ -115,7 +115,7 @@ static void AnyObject_Store_Generic(asIScriptGeneric *gen)
 static void AnyObject_Retrieve_Generic(asIScriptGeneric *gen)
 {
 	void *ref = (void*)gen->GetArgAddress(0);
-	int refTypeId = gen->GetArgDWord(1);
+	int refTypeId = gen->GetArgTypeId(0);
 	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
 
 	self->Retrieve(ref, refTypeId);
@@ -131,35 +131,29 @@ void RegisterAnyObject(asCScriptEngine *engine)
 #ifndef AS_MAX_PORTABILITY
 #ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(AnyObjectConstructor, (asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	// TODO: variable type: Register as f(?&in, int)
-	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int&in, int, int)", asFUNCTIONPR(AnyObjectConstructor2, (void*, asCObjectType*, asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(?&in, int)", asFUNCTIONPR(AnyObjectConstructor2, (void*, int, asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 #else
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTIONPR(AnyObjectConstructor, (asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	// TODO: variable type: Register as f(?&in, int)
-	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int&in, int, int64)", asFUNCTIONPR(AnyObjectConstructor2, (void*, asCObjectType*, asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(?&in, int64)", asFUNCTIONPR(AnyObjectConstructor2, (void*, int, asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 #endif
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ASSIGNMENT, "any &f(any&in)", asFUNCTION(AnyObjectAssignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	// TODO: variable type: Register as store(?&in), retrieve(?&out)
-	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void store(int&in, int)", asFUNCTION(AnyObject_Store), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void retrieve(int&out, int) const", asFUNCTION(AnyObject_Retrieve), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void store(?&in)", asFUNCTION(AnyObject_Store), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void retrieve(?&out) const", asFUNCTION(AnyObject_Retrieve), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 #else
 #ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(AnyObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
-	// TODO: variable type: Register as f(?&in, int)
-	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int&in, int, int)", asFUNCTION(AnyObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(?&in, int)", asFUNCTION(AnyObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
 #else
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(AnyObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
-	// TODO: variable type: Register as f(?&in, int)
-	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int&in, int, int64)", asFUNCTION(AnyObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(?&in, int64)", asFUNCTION(AnyObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ASSIGNMENT, "any &f(any&in)", asFUNCTION(AnyObjectAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
-	// TODO: variable type: Register as store(?&in), retrieve(?&out)
-	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void store(int&in, int)", asFUNCTION(AnyObject_Store_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void retrieve(int&out, int) const", asFUNCTION(AnyObject_Retrieve_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void store(?&in)", asFUNCTION(AnyObject_Store_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void retrieve(?&out) const", asFUNCTION(AnyObject_Retrieve_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
 }
 

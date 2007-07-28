@@ -168,13 +168,13 @@ bool Test()
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0, false );
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
-	if( r >= 0 )
+	if( r < 0 )
 	{
 		fail = true;
-		printf("%s: Didn't fail to Build() as expected\n", TESTNAME);
+		printf("%s: Failed to Build()\n", TESTNAME);
 	}
 	if( bout.buffer != "TestAny (5, 1) : Info    : Compiling void TestAny()\n"
-	                   "TestAny (9, 5) : Error   : No matching signatures to 'retrieve(string@const&)'\n" )
+	                   "TestAny (9, 14) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
 	{
 		fail = true;
 	}

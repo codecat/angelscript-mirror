@@ -117,7 +117,7 @@ protected:
 	asCScriptNode *ParseFunctionDefinition();
 
 	asCScriptNode *ParseScript();
-	asCScriptNode *ParseType(bool allowConst);
+	asCScriptNode *ParseType(bool allowConst, bool allowVariableType = false);
 	asCScriptNode *ParseTypeMod(bool isParam);
 	asCScriptNode *ParseFunction(bool isMethod = false);
 	asCScriptNode *ParseGlobalVar();
@@ -147,7 +147,7 @@ protected:
 	asCScriptNode *ParseExprPostOp();
 	asCScriptNode *ParseExprValue();
 	asCScriptNode *ParseArgList();
-	asCScriptNode *ParseDataType();
+	asCScriptNode *ParseDataType(bool allowVariableType = false);
 	asCScriptNode *ParseRealType();
 	asCScriptNode *ParseIdentifier();
 	asCScriptNode *ParseConstant();
@@ -180,6 +180,7 @@ protected:
 	bool errorWhileParsing;
 	bool isSyntaxError;
 	bool checkValidTypes;
+	bool isParsingAppInterface;
 
 	asCScriptEngine *engine;
 	asCBuilder      *builder;
