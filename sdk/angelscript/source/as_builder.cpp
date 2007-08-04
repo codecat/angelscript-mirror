@@ -610,6 +610,11 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 
 		if( paramAutoHandles ) paramAutoHandles->PushLast(autoHandle);
 
+		// Make sure that var type parameters are references
+		if( type.GetTokenType() == ttQuestion &&
+			!type.IsReference() )
+			return asINVALID_DECLARATION;
+
 		// Move to next parameter
 		n = n->next->next;
 		if( n && n->nodeType == snIdentifier )

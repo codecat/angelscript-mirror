@@ -172,6 +172,8 @@ public:
 	int RegisterSpecialObjectMethod(const char *objname, const char *declaration, const asUPtr &funcPointer, int callConv);
 	int RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asUPtr &funcPointer, int callConv);
 
+	int VerifyVarTypeNotInFunction(asCScriptFunction *func);
+
 	void *CallAlloc(asCObjectType *objType);
 	void CallFree(asCObjectType *objType, void *obj);
 	void CallObjectMethod(void *obj, int func);

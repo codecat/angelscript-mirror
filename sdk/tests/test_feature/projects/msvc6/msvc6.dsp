@@ -222,6 +222,10 @@ SOURCE=..\..\source\test_dict.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_dictionary.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_discard.cpp
 # End Source File
 # Begin Source File
@@ -583,6 +587,14 @@ SOURCE=..\..\source\bstr.cpp
 # Begin Source File
 
 SOURCE=..\..\source\bstr.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptdictionary\scriptdictionary.h
 # End Source File
 # Begin Source File
 

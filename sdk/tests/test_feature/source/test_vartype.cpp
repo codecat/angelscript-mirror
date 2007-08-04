@@ -42,29 +42,38 @@ void testFuncO(asIScriptGeneric *gen)
 
 // AngelScript syntax: void testFuncIS(?& in, const string &in)
 // C++ syntax: void testFuncIS(void *ref, int typeId, asCScriptString &)
-void testFuncIS(asIScriptGeneric *gen)
+void testFuncIS(void *ref, int typeId, asCScriptString &str)
+{
+	assert(str.buffer == "test");
+	assert(*(int*)ref == 42);
+}
+
+void testFuncIS_generic(asIScriptGeneric *gen)
 {
 	void *ref = gen->GetArgAddress(0);
 	int typeId = gen->GetArgTypeId(0);
 	asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(1);
 
-	assert(str->buffer == "test");
-
-	assert(*(int*)ref == 42);
+	testFuncIS(ref,typeId,*str);
 }
 
 // AngelScript syntax: void testFuncSI(const string &in, ?& in)
 // C++ syntax: void testFuncSI(asCScriptString &, void *ref, int typeId)
-void testFuncSI(asIScriptGeneric *gen)
+void testFuncSI(asCScriptString &str, void *ref, int typeId)
+{
+	assert(str.buffer == "test");
+	assert(*(int*)ref == 42);
+}
+
+void testFuncSI_generic(asIScriptGeneric *gen)
 {
 	asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
 	void *ref = gen->GetArgAddress(1);
 	int typeId = gen->GetArgTypeId(1);
 
-	assert(str->buffer == "test");
-
-	assert(*(int*)ref == 42);
+	testFuncSI(*str, ref, typeId);
 }
+
 
 bool Test()
 {
@@ -216,15 +225,29 @@ bool Test()
 
 	// It must be possible to mix normal parameter types with the var type ?
 	// e.g. func(const string &in, const ?& in), or func(const ?& in, const string &in)
-	r = engine->RegisterGlobalFunction("void testFuncIS(?& in, const string &in)", asFUNCTION(testFuncIS), asCALL_GENERIC);
+	r = engine->RegisterGlobalFunction("void testFuncIS(?& in, const string &in)", asFUNCTION(testFuncIS_generic), asCALL_GENERIC);
 	if( r < 0 ) fail = true;
-	r = engine->RegisterGlobalFunction("void testFuncSI(const string &in, ?& in)", asFUNCTION(testFuncSI), asCALL_GENERIC);
+	r = engine->RegisterGlobalFunction("void testFuncSI(const string &in, ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
 	if( r < 0 ) fail = true;
 
 	r = engine->ExecuteString(0, "int a = 42; testFuncIS(a, \"test\");");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	r = engine->ExecuteString(0, "int a = 42; testFuncSI(\"test\", a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+
+	// It must be possible to use native functions
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		r = engine->RegisterGlobalFunction("void _testFuncIS(?& in, const string &in)", asFUNCTION(testFuncIS), asCALL_CDECL);
+		if( r < 0 ) fail = true;
+		r = engine->RegisterGlobalFunction("void _testFuncSI(const string &in, ?& in)", asFUNCTION(testFuncSI), asCALL_CDECL);
+		if( r < 0 ) fail = true;
+
+		r = engine->ExecuteString(0, "int a = 42; _testFuncIS(a, \"test\");");
+		if( r != asEXECUTION_FINISHED ) fail = true;
+		r = engine->ExecuteString(0, "int a = 42; _testFuncSI(\"test\", a);");
+		if( r != asEXECUTION_FINISHED ) fail = true;
+	}
 
 	// Don't give error on passing reference to const to ?&out
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -237,28 +260,36 @@ bool Test()
 	if( bout.buffer != "ExecuteString (1, 22) : Warning : Argument cannot be assigned. Output will be discarded.\n" ) fail = true;
 	bout.buffer = "";
 
+	// Don't allow ?& with operators yet
+	engine->RegisterObjectType("type", sizeof(int), asOBJ_PRIMITIVE);
+	r = engine->RegisterObjectBehaviour("type", asBEHAVE_ASSIGNMENT, "type &f(const ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
+	if( r >= 0 )
+		fail = true;
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "type f(const ?& in, const ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
+	if( r >= 0 )
+		fail = true;
+	
+	// Don't allow use of ? without being reference
+	r = engine->RegisterGlobalFunction("void testFunc_err(const ?)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
+	if( r >= 0 )
+		fail = true;
+
+	// Don't allow use of 'inout' reference, yet
+	// ? & [inout]
+	// const ? & [inout]
+	r = engine->RegisterGlobalFunction("void testFuncIO(?&)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
+	if( r >= 0 ) fail = true;
+	r = engine->RegisterGlobalFunction("void testFuncCIO(const?&)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
+	if( r >= 0 ) fail = true;
+
+	// TODO:
 	// It must be possible to overload functions that take parameters of the var type ?. 
 	// The var type function has less priority
-	
-	// Don't allow ?& with operators yet
-
-	// Don't allow use of ? without being reference
-
-	// It must be possible to use native functions
 
 	// If the user registers a container class that can hold any type, how can we prevent circular references?
 	// "class C { var v; } void func() { C c; c.v.store(@c); }"
 
 	// The built-in any type must handle at run time the type validation to make sure it knows how to handle the type that is used
-
-	// It must be possible to register with 'inout' references, in which case only objects that support object handles can be used
-	// ? & [inout]
-	// const ? & [inout]
-/*	r = engine->RegisterGlobalFunction("void testFuncIO(?&)", asFUNCTION(testFunc), asCALL_CDECL);
-	if( r < 0 ) fail = true;
-	r = engine->RegisterGlobalFunction("void testFuncCIO(const?&)", asFUNCTION(testFunc), asCALL_CDECL);
-	if( r < 0 ) fail = true;
-*/
 
 	engine->Release();
 

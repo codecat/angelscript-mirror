@@ -125,6 +125,7 @@ namespace TestBool              { bool Test(); }
 namespace TestInt8              { bool Test(); }
 namespace TestScriptMath        { bool Test(); }
 namespace TestVarType           { bool Test(); }
+namespace TestDictionary        { bool Test(); }
 
 
 #include "utils.h"
@@ -164,6 +165,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
 	if( TestVarType::Test()           ) goto failed; else printf("-- TestVarType passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestScriptMath::Test()        ) goto failed; else printf("-- TestScriptMath passed\n");

@@ -224,16 +224,27 @@ void asCAnyObject::Store(void *ref, int refTypeId)
 {
 	FreeObject();
 
-	valueTypeId = refTypeId;
-
-	const asCDataType *dt = gc.objType->engine->GetDataTypeFromTypeId(valueTypeId);
-
-	value = *(void**)ref; // We receive a reference to the handle
-	asCObjectType *ot = dt->GetObjectType();
-	if( ot && value )
+	// TODO: Improve this to support non-handles and primitives
+	// Only accept null and object handles
+	if( refTypeId && (refTypeId & asTYPEID_OBJHANDLE) == 0 )
 	{
-		ot->engine->CallObjectMethod(value, ot->beh.addref);
-		ot->refCount++;
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx )
+			ctx->SetException("Store received a type that is not an object handle");
+	}
+	else
+	{
+		valueTypeId = refTypeId;
+
+		const asCDataType *dt = gc.objType->engine->GetDataTypeFromTypeId(valueTypeId);
+
+		value = *(void**)ref; // We receive a reference to the handle
+		asCObjectType *ot = dt->GetObjectType();
+		if( ot && value )
+		{
+			ot->engine->CallObjectMethod(value, ot->beh.addref);
+			ot->refCount++;
+		}
 	}
 }
 

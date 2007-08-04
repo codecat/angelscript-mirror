@@ -40,6 +40,17 @@ const char *script7 =
 	}								  \n\
 }";
 
+const char *script8 = 
+"float calc(float x, float y) { Print(\"GOT THESE NUMBERS: \" + x + \", \" + y + \"\n\"); return x*y; }";
+
+
+const char *script9 = 
+"void noop() {}\n"
+"int fuzzy() {\n"
+"  return noop();\n"
+"}\n";
+
+
 bool Test()
 {
 	bool fail = false;
@@ -153,6 +164,36 @@ bool Test()
 		fail = true;
 	}
 
+	// test 9
+	// Don't hang on script with non-terminated string
+	bout.buffer = "";
+	engine->AddScriptSection(0, "script", script8, strlen(script8));
+	r = engine->Build(0);
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "script (2, 18) : Error   : Unexpected end of file\n" )
+	{
+		fail = true;
+	}
+
+	// test 10
+	// Properly handle error with returning a void expression
+	bout.buffer = "";
+	engine->AddScriptSection(0, "script", script9, strlen(script9));
+	r = engine->Build(0);
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "script (2, 1) : Info    : Compiling int fuzzy()\n"
+		               "script (3, 3) : Error   : No conversion from 'void' to 'int' available.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	
 	engine->Release();
 		
 	// Success

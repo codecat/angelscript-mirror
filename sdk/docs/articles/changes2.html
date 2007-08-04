@@ -118,9 +118,14 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.9.0 WIP - 2007/07/26</h2>
+<h2>Version 2.9.0 WIP - 2007/07/31</h2>
 
 <ul>
+<li>Bug fixes
+<ul>
+<li>Parser could hang on scripts with non-terminated strings. (Thanks derefed)
+<li>Compiler died when compiling a return statement with a void expression. (Thanks SiCrane)
+</ul>
 <li>Library interface
 <ul>
 <li>GetGlobalVarPointer returns the pointer to the pointer to the object for object variables. Likewise for object handles a pointer to the object handle is returned (Thanks Jeff Slutter)

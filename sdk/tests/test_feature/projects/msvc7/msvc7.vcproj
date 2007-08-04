@@ -123,6 +123,12 @@
 				RelativePath="..\..\source\main.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptdictionary\scriptdictionary.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptmath\scriptmath.cpp">
 			</File>
 			<File
@@ -214,6 +220,9 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_dict.cpp">
+			</File>
+			<File
+				RelativePath="..\..\source\test_dictionary.cpp">
 			</File>
 			<File
 				RelativePath="..\..\source\test_discard.cpp">

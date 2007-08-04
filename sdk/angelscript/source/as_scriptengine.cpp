@@ -1513,6 +1513,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else if( behaviour >= asBEHAVE_FIRST_ASSIGN && behaviour <= asBEHAVE_LAST_ASSIGN )
 	{
+		// Verify that the var type is not used
+		if( VerifyVarTypeNotInFunction(&func) < 0 )
+			return ConfigError(asINVALID_DECLARATION);
+
 		// Verify that there is exactly one parameter
 		if( func.parameterTypes.GetLength() != 1 )
 			return ConfigError(asINVALID_DECLARATION);
@@ -1549,6 +1553,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else if( behaviour == asBEHAVE_INDEX )
 	{
+		// Verify that the var type is not used
+		if( VerifyVarTypeNotInFunction(&func) < 0 )
+			return ConfigError(asINVALID_DECLARATION);
+
 		// Verify that there is only one parameter
 		if( func.parameterTypes.GetLength() != 1 )
 			return ConfigError(asINVALID_DECLARATION);
@@ -1629,6 +1637,10 @@ int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl
 
 	if( behaviour >= asBEHAVE_FIRST_DUAL && behaviour <= asBEHAVE_LAST_DUAL )
 	{
+		// Verify that the var type is not used
+		if( VerifyVarTypeNotInFunction(&func) < 0 )
+			return ConfigError(asINVALID_DECLARATION);
+
 		// Verify that there are exactly two parameters
 		if( func.parameterTypes.GetLength() != 2 )
 			return ConfigError(asINVALID_DECLARATION);
@@ -1657,6 +1669,19 @@ int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl
 	}
 
 	return asSUCCESS;
+}
+
+int asCScriptEngine::VerifyVarTypeNotInFunction(asCScriptFunction *func)
+{
+	// Don't allow var type in this function
+	if( func->returnType.GetTokenType() == ttQuestion )
+		return asINVALID_DECLARATION;
+
+	for( unsigned int n = 0; n < func->parameterTypes.GetLength(); n++ )
+		if( func->parameterTypes[n].GetTokenType() == ttQuestion )
+			return asINVALID_DECLARATION;
+
+	return 0;
 }
 
 int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal)

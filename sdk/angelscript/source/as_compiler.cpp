@@ -2359,15 +2359,17 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					str.Format(TXT_NO_CONVERSION_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
 					Error(str.AddressOf(), rnode);
 				}
-
-				ConvertToVariable(&expr);
-				ReleaseTemporaryVariable(expr.type, &expr.bc);
-
-				// Load the variable in the register
-				if( v->type.GetSizeOnStackDWords() == 1 )
-					expr.bc.InstrSHORT(BC_CpyVtoR4, expr.type.stackOffset);
 				else
-					expr.bc.InstrSHORT(BC_CpyVtoR8, expr.type.stackOffset);
+				{
+					ConvertToVariable(&expr);
+					ReleaseTemporaryVariable(expr.type, &expr.bc);
+
+					// Load the variable in the register
+					if( v->type.GetSizeOnStackDWords() == 1 )
+						expr.bc.InstrSHORT(BC_CpyVtoR4, expr.type.stackOffset);
+					else
+						expr.bc.InstrSHORT(BC_CpyVtoR8, expr.type.stackOffset);
+				}
 			}
 			else if( v->type.IsObject() )
 			{

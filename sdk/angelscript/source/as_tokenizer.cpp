@@ -316,7 +316,7 @@ bool asCTokenizer::IsConstant()
 			}
 
 			tokenType = ttNonTerminatedStringConstant;
-			tokenLength = n-1;
+			tokenLength = n;
 		}
 
 		return true;

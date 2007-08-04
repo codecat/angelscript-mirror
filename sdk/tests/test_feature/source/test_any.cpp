@@ -244,7 +244,18 @@ bool Test()
 	else
 		fail = true;
 
+	//--------------------------------------
+	// Make sure the any type gives an intelligent response when passed the wrong type.
+	r = engine->ExecuteString(0, "any a; a.store(1);");
+	if( r != asEXECUTION_EXCEPTION )
+		fail = true;
+
 	engine->Release();
+
+	//--------------------------------------
+	// Circular reference with app registered object that has 'any' members
+	// A script class has a member of app registered type with 'any' member. The any member is set to refer to the script class. Will the GC be able to handle this?
+	// TODO: Test this
 
 	// Success
  	return fail;
