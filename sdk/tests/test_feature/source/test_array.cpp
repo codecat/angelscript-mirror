@@ -154,7 +154,7 @@ bool Test()
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -173,7 +173,7 @@ bool Test()
 	}
 	if( ctx ) ctx->Release();
 
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -188,7 +188,7 @@ bool Test()
 		fail = true;
 	}
 
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -209,7 +209,7 @@ bool Test()
 	if( ctx ) ctx->Release();
 	ctx = 0;
 
-	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -229,7 +229,7 @@ bool Test()
 
 	if( ctx ) ctx->Release();
 
-	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 	r = engine->ExecuteString(0, "TestArrayInitList()", &ctx);
@@ -241,7 +241,7 @@ bool Test()
 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestArray (1, 1) : Info    : Compiling void Test()\n"
@@ -251,7 +251,7 @@ bool Test()
 
 	// Array object must call default constructor of the script classes
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0);
 	r = engine->Build(0);
 	if( r < 0 ) 
 		fail = true;

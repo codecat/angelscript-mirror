@@ -198,11 +198,17 @@ unexpected behaviours.
    passed to functions will be the true reference. It will be the responsibility of the script writer to write
    code that does not invalidate the reference before it is used.</p></td>
 </tr>
+<tr>
 <td valign=top width=220><code>asEP_OPTIMIZE_BYTECODE</code>&nbsp;</td>
 <td valign=top><p>Default: true. By setting this to a zero value, the byte code will not be optimized to remove redundant
 instructions, which may result in slower execution times, but also slightly faster compile times. Note: This is
 mostly only used when developing the library itself, there is probably no benefit to application developers in
 turning off byte code optimization.</p></td>
+</tr>
+<tr>
+<td valign=top width=220><code>asEP_COPY_SCRIPT_SECTIONS</code>&nbsp;</td>
+<td valign=top><p>Default: true. When true, a copy will be made of the script sections added, so that the application
+doesn't need to keep the memory buffer until the Build() call is made.</p></td>
 </tr>
 </table>
 

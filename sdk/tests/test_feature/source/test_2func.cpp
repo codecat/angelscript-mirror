@@ -28,7 +28,7 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	engine->Build(0);
 
 	if( out.buffer != "Test2Func (2, 1) : Error   : A function with the same name and parameters already exist\n" )
@@ -38,7 +38,7 @@ bool Test()
 	}
 
 	out.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;
 	if( out.buffer != "Test2Func (1, 1) : Info    : Compiling void Test(void)\nTest2Func (1, 11) : Error   : Parameter type can't be 'void'\n" )

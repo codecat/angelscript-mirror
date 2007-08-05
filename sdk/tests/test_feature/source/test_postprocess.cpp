@@ -48,7 +48,7 @@ bool Test()
 	r = engine->RegisterObjectMethod("ClientData", "Actor @getActor(int)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
 
-	engine->AddScriptSection(0, "script", script, strlen(script), 0, false);
+	engine->AddScriptSection(0, "script", script, strlen(script), 0);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 

@@ -92,7 +92,7 @@ bool Test()
 	r = engine->RegisterInterfaceMethod("appintf", "void test()"); assert( r >= 0 );
 
 	// Test working example
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 
@@ -133,7 +133,7 @@ bool Test()
 	// Test implicit conversion from class to interface that is not being implemented. Should give compiler error
 	// Test implicit conversion from interface to class. Should give compiler error.
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestInterface (5, 7) : Error   : Missing implementation of 'void intf::test()'\n"

@@ -27,7 +27,7 @@ bool Test()
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	r = engine->Build(0);
 	if( r >= 0 )
 		fail = true;
@@ -35,7 +35,7 @@ bool Test()
 		fail = true;
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build(0);
 	if( r >= 0 )
 		fail = true;

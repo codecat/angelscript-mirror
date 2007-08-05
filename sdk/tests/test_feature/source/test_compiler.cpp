@@ -62,7 +62,7 @@ bool Test()
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	r = engine->Build(0);
 	if( r >= 0 )
 		fail = true;
@@ -77,7 +77,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build(0);
 	if( r >= 0 )
 		fail = true;
@@ -90,7 +90,7 @@ bool Test()
 
 	// test 3
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
 	r = engine->Build(0);
 	if( r < 0 )
 		fail = true;
@@ -98,7 +98,7 @@ bool Test()
 	// test 4
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
 	r = engine->Build(0);
 	if( r >= 0 )
 		fail = true;
@@ -116,7 +116,7 @@ bool Test()
 		fail = true;
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
 	r = engine->Build(0);
 	if( r >= 0 )
 		fail = true;
@@ -129,7 +129,7 @@ bool Test()
 	// globally registered functions since they are in different scope
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("bool Test(bool, float)", asFUNCTION(Test), asCALL_GENERIC);
-	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0);
 	r = engine->Build(0);
 	if( r < 0 )
 	{

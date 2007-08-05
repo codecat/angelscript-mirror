@@ -148,7 +148,7 @@ bool Test()
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 
@@ -164,14 +164,14 @@ bool Test()
 	// Make sure that the error message for wrong constructor name works
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, "class t{ s() {} };", 18, 0, false);
+	engine->AddScriptSection(0, TESTNAME, "class t{ s() {} };", 18, 0);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestScriptClassMethod (1, 10) : Error   : The constructor name must be the same as the class\n" ) fail = true;
 
 	// Make sure the default constructor can be overloaded
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection("test", TESTNAME, script2, strlen(script2), 0, false);
+	engine->AddScriptSection("test", TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build("test");
 	if( r < 0 ) fail = true;
 
@@ -229,7 +229,7 @@ bool Test()
 	//----------------------------------
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "test3", script3, strlen(script3), 0, false);
+	engine->AddScriptSection(0, "test3", script3, strlen(script3), 0);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 
@@ -268,7 +268,7 @@ bool Test()
 	// Verify that global functions and class methods with the same name doesn't conflict
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "test4", script4, strlen(script4), 0, false);
+	engine->AddScriptSection(0, "test4", script4, strlen(script4), 0);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 	
@@ -282,7 +282,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-	engine->AddScriptSection(0, "test5", script5, strlen(script5), 0, false);
+	engine->AddScriptSection(0, "test5", script5, strlen(script5), 0);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 

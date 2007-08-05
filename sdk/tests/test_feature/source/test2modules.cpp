@@ -15,14 +15,14 @@ bool Test2Modules()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
-	engine->AddScriptSection("a", "script", script, strlen(script), 0, false);
+	engine->AddScriptSection("a", "script", script, strlen(script), 0);
 	if( engine->Build("a") < 0 )
 	{
 		printf("%s: failed to build module a\n", TESTNAME);
 		ret = true;
 	}
 
-	engine->AddScriptSection("b", "script", script, strlen(script), 0, false);
+	engine->AddScriptSection("b", "script", script, strlen(script), 0);
 	if( engine->Build("b") < 0 )
 	{
 		printf("%s: failed to build module b\n", TESTNAME);

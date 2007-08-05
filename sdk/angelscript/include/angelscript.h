@@ -201,7 +201,7 @@ extern "C"
 	AS_API int               asEngine_EndConfigGroup(asIScriptEngine *e);
 	AS_API int               asEngine_RemoveConfigGroup(asIScriptEngine *e, const char *groupName);
 	AS_API int               asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const char *groupName, const char *module, bool hasAccess);
-	AS_API int               asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0, bool makeCopy = true);
+	AS_API int               asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0);
 	AS_API int               asEngine_Build(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_Discard(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetFunctionCount(asIScriptEngine *e, const char *module);
@@ -380,7 +380,7 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
-	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0, bool makeCopy = true) = 0;
+	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
 	virtual int Build(const char *module) = 0;
     virtual int Discard(const char *module) = 0;
 	virtual int ResetModule(const char *module) = 0;
@@ -625,6 +625,7 @@ public:
 
 const asDWORD asEP_ALLOW_UNSAFE_REFERENCES = 1;	// Default: false
 const asDWORD asEP_OPTIMIZE_BYTECODE       = 2;	// Default: true
+const asDWORD asEP_COPY_SCRIPT_SECTIONS    = 3; // Default: true
 
 // Calling conventions and flags
 

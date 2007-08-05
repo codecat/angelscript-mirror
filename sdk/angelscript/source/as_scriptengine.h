@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -97,7 +97,7 @@ public:
 	int RemoveConfigGroup(const char *groupName);
 	int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool haveAccess);
 
-	int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset, bool makeCopy);
+	int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset);
 	int Build(const char *module);
 	int Discard(const char *module);
 	int ResetModule(const char *module);
@@ -285,6 +285,7 @@ public:
 	// Engine properties
 	bool allowUnsafeReferences;
 	bool optimizeByteCode;
+	bool copyScriptSections;
 };
 
 END_AS_NAMESPACE

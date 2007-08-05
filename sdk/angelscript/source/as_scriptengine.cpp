@@ -176,6 +176,8 @@ int asCScriptEngine::SetEngineProperty(asDWORD property, asPWORD value)
 		allowUnsafeReferences = value ? true : false;
 	else if( property == asEP_OPTIMIZE_BYTECODE )
 		optimizeByteCode = value ? true : false;
+	else if( property == asEP_COPY_SCRIPT_SECTIONS )
+		copyScriptSections = value ? true : false;
 	else
 		return asINVALID_ARG;
 
@@ -188,6 +190,8 @@ asPWORD asCScriptEngine::GetEngineProperty(asDWORD property)
 		return allowUnsafeReferences;
 	else if( property == asEP_OPTIMIZE_BYTECODE )
 		return optimizeByteCode;
+	else if( property == asEP_COPY_SCRIPT_SECTIONS )
+		return copyScriptSections;
 
 	return 0;
 }
@@ -197,6 +201,7 @@ asCScriptEngine::asCScriptEngine()
 	// Engine properties
 	allowUnsafeReferences = false;
 	optimizeByteCode      = true;
+	copyScriptSections    = true;
 
 
 
@@ -403,7 +408,7 @@ void asCScriptEngine::CallMessageCallback(const char *section, int row, int col,
 		CallObjectMethod(msgCallbackObj, &msg, &msgCallbackFunc, 0);
 }
 
-int asCScriptEngine::AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset, bool makeCopy)
+int asCScriptEngine::AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset)
 {
 	asCModule *mod = GetModule(module, true);
 	if( mod == 0 ) return asNO_MODULE;
@@ -417,7 +422,7 @@ int asCScriptEngine::AddScriptSection(const char *module, const char *name, cons
 		mod = GetModule(module, true);
 	}
 
-	return mod->AddScriptSection(name, code, (int)codeLength, lineOffset, makeCopy);
+	return mod->AddScriptSection(name, code, (int)codeLength, lineOffset, copyScriptSections);
 }
 
 int asCScriptEngine::Build(const char *module)

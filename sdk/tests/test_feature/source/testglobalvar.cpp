@@ -139,7 +139,7 @@ bool TestGlobalVar()
 	}
 
 	// Use another module so that we can test that the variable id is correct even for multiple modules
-	engine->AddScriptSection("b", "script", script4, strlen(script4), 0, false);
+	engine->AddScriptSection("b", "script", script4, strlen(script4), 0);
 	if( engine->Build("b") < 0 )
 	{
 		printf("%s: build failed\n", TESTNAME);
@@ -181,7 +181,7 @@ bool TestGlobalVar()
 	//-----------------------
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "script", script5, strlen(script5), 0, false);
+	engine->AddScriptSection(0, "script", script5, strlen(script5), 0);
 	r = engine->Build(0); 
 	if( r < 0 )
 		ret = true;
@@ -192,7 +192,7 @@ bool TestGlobalVar()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString(engine);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "script", script6, strlen(script6), 0, false);
+	engine->AddScriptSection(0, "script", script6, strlen(script6), 0);
 	r = engine->Build(0);
 	if( r < 0 )
 		ret = true;

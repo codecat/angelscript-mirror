@@ -272,7 +272,7 @@ bool Test()
 	//-------------------------------------
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, "test", script7, strlen(script7), 0, false);
+	engine->AddScriptSection(0, "test", script7, strlen(script7), 0);
 	engine->Build(0);
 	r = engine->ExecuteString(0, "test()");
 	if( r != asEXECUTION_FINISHED ) fail = true;

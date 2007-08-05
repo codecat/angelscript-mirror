@@ -97,7 +97,7 @@ bool Test()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "script1", script2, strlen(script2), 0, false);
+	engine->AddScriptSection(0, "script1", script2, strlen(script2), 0);
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 

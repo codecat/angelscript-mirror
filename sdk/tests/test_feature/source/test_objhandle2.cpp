@@ -193,7 +193,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0, false);
+	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	r = engine->Build(0);
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestObjHandle2 (3, 1) : Info    : Compiling void Test()\n"
