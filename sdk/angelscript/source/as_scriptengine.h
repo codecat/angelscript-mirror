@@ -136,12 +136,16 @@ public:
 
 	// Type identification
 	int GetTypeIdByDecl(const char *module, const char *decl);
-	const char *GetTypeDeclaration(int typeId, int *length);
+	const char *GetTypeDeclaration(int typeId, int *length = 0);
 
 	// Script execution
 	int SetDefaultContextStackSize(asUINT initial, asUINT maximum);
 	asIScriptContext *CreateContext();
 	void *CreateScriptObject(int typeId);
+	void *CreateScriptObjectCopy(void *obj, int typeId);
+	void CopyScriptObject(void *dstObj, void *srcObj, int typeId);
+	void ReleaseScriptObject(void *obj, int typeId);
+	void AddRefScriptObject(void *obj, int typeId);
 
 	// String interpretation
 	int ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);

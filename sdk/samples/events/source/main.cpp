@@ -262,14 +262,14 @@ int CompileScript(asIScriptEngine *engine)
 	"}                                  ";
 
 	// Add the script sections that will be compiled into executable code
-	r = engine->AddScriptSection(0, "scriptMain", scriptMain, strlen(scriptMain), 0, false);
+	r = engine->AddScriptSection(0, "scriptMain", scriptMain, strlen(scriptMain));
 	if( r < 0 ) 
 	{
 		cout << "AddScriptSection() failed" << endl;
 		return -1;
 	}
 	
-	r = engine->AddScriptSection(0, "scriptEvents", scriptEvents, strlen(scriptEvents), 0, false);
+	r = engine->AddScriptSection(0, "scriptEvents", scriptEvents, strlen(scriptEvents));
 	if( r < 0 )
 	{
 		cout << "AddScriptSection() failed" << endl;

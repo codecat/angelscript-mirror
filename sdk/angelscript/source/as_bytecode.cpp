@@ -1622,9 +1622,12 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 				break;
 
 			case BC_PshC4:
-			case BC_TYPEID:
 			case BC_Cast:
 				fprintf(file, "   %-8s 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
+				break;
+
+			case BC_TYPEID:
+				fprintf(file, "   %-8s 0x%x          '%s'\n", bcName[instr->op].name, (asUINT)*ARG_DW(instr->arg), engine->GetTypeDeclaration((int)*ARG_DW(instr->arg)));
 				break;
 
 			case BC_CALL:

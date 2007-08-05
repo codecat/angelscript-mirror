@@ -166,8 +166,8 @@ int main(int argc, char **argv)
 	InstallMemoryManager();
 
 	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
-	if( TestVarType::Test()           ) goto failed; else printf("-- TestVarType passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
+	if( TestVarType::Test()           ) goto failed; else printf("-- TestVarType passed\n");
 	if( TestScriptMath::Test()        ) goto failed; else printf("-- TestScriptMath passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");

@@ -280,7 +280,7 @@ int CompileScript(asIScriptEngine *engine)
 	// we can call AddScriptSection() several times for the same module and
 	// the script engine will treat them all as if they were one. The script
 	// section name, will allow us to localize any errors in the script code.
-	r = engine->AddScriptSection(0, "script", &script[0], len, 0, false);
+	r = engine->AddScriptSection(0, "script", &script[0], len);
 	if( r < 0 ) 
 	{
 		cout << "AddScriptSection() failed" << endl;

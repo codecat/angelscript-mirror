@@ -25,7 +25,7 @@ public:
     void Release();
 
     void Set(std::string &key, void *value, int typeId);
-    void Get(std::string &key, void *value, int typeId);
+    bool Get(std::string &key, void *value, int typeId);
     bool Exists(std::string &key);
     void Delete(std::string &key);
     void DeleteAll();

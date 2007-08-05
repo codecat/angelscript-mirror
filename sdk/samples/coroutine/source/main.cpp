@@ -205,7 +205,7 @@ int CompileScript(asIScriptEngine *engine)
 	// Build the two script into separate modules. This will make them have
 	// separate namespaces, which allows them to use the same name for functions
 	// and global variables.
-	r = engine->AddScriptSection("script", "script", script, strlen(script), 0, false);
+	r = engine->AddScriptSection("script", "script", script, strlen(script));
 	if( r < 0 ) 
 	{
 		cout << "AddScriptSection() failed" << endl;

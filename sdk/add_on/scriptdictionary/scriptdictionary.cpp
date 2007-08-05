@@ -48,9 +48,26 @@ CScriptDictionary &CScriptDictionary::operator =(const CScriptDictionary &other)
 
 void CScriptDictionary::Set(string &key, void *value, int typeId)
 {
-    v valStruct;
-    valStruct.valueObj = 0;
-    valStruct.typeId = 0;
+	v valStruct = {0,0};
+	if( typeId & asTYPEID_OBJHANDLE )
+	{
+		// We're receiving a reference to the handle, so we need to dereference it
+		valStruct.valueObj = *(void**)value;
+		valStruct.typeId = typeId;
+		engine->AddRefScriptObject(valStruct.valueObj, typeId);
+	}
+	else if( typeId & asTYPEID_MASK_OBJECT )
+	{
+		// Create a copy of the object
+		// We need to dereference the reference
+		valStruct.valueObj = engine->CreateScriptObjectCopy(*(void**)value, typeId);
+		valStruct.typeId = typeId;
+	}
+	else
+	{
+		// TODO:
+		// Copy the primitive value
+	}
 
     map<string, v>::iterator it;
     it = dict.find(key);
@@ -67,17 +84,63 @@ void CScriptDictionary::Set(string &key, void *value, int typeId)
     }
 }
 
-void CScriptDictionary::Get(string &key, void *value, int typeId)
+// Returns true if the value was successfully retrieved
+bool CScriptDictionary::Get(string &key, void *value, int typeId)
 {
     map<string, v>::iterator it;
     it = dict.find(key);
     if( it != dict.end() )
     {
         // Return the value
+		if( typeId & asTYPEID_OBJHANDLE )
+		{
+			// TODO: The engine should tell me if the handle is compatible with the type or not
+			// Verify if the wanted handle is compatible with the stored object
+			bool isCompatible = false;
+			if( it->second.typeId == typeId )
+				isCompatible = true;
+			// Allow obj@ to be copied to const obj@
+			else if( ((it->second.typeId & (asTYPEID_OBJHANDLE | asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) == (typeId & (asTYPEID_OBJHANDLE | asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR))) && // Handle to the same object type
+	 				((typeId & (asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) == (asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) )			   // Handle to const object
+				isCompatible = true;
+
+			// TODO:
+			// Allow retrieving a handle for an object that was stored as non-handle
+
+			// Add a reference to the handle, then return it
+			if( isCompatible )
+			{
+				engine->AddRefScriptObject(it->second.valueObj, it->second.typeId);
+				*(void**)value = it->second.valueObj;
+
+				return true;
+			}
+		}
+		else if( typeId & asTYPEID_MASK_OBJECT )
+		{
+			// Verify that the copy can be made
+			bool isCompatible = false;
+			if( it->second.typeId == typeId )
+				isCompatible = true;
+
+			// Copy the object into the given reference
+			if( isCompatible )
+			{
+				engine->CopyScriptObject(*(void**)value, it->second.valueObj, typeId);
+
+				return true;
+			}
+		}
+		else
+		{
+			// Copy the primitive value
+		}
     }
 
     // AngelScript has already initialized the value with a default value,
     // so we don't have to do anything if we don't find the element
+
+	return false;
 }
 
 bool CScriptDictionary::Exists(string &key)
@@ -118,8 +181,15 @@ void CScriptDictionary::DeleteAll()
 void CScriptDictionary::FreeValue(v &value)
 {
     // If it is a handle or a ref counted object, call release
+	if( value.typeId & asTYPEID_MASK_OBJECT )
+	{
+		// Let the engine release the object
+		engine->ReleaseScriptObject(value.valueObj, value.typeId);
+		value.valueObj = 0;
+		value.typeId = 0;
+	}
 
-    // If it is non ref counted object, call the destructor then free the memory
+    // For primitives, there's nothing to do
 }
 
 //--------------------------------------------------------------------------
@@ -163,7 +233,7 @@ void ScriptDictionarySet_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
     string *key = *(string**)gen->GetArgPointer(0);
-    void *ref = gen->GetArgPointer(1);
+    void *ref = *(void**)gen->GetArgPointer(1);
     int typeId = gen->GetArgTypeId(1);
     dict->Set(*key, ref, typeId);
 }
@@ -172,9 +242,9 @@ void ScriptDictionaryGet_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
     string *key = *(string**)gen->GetArgPointer(0);
-    void *ref = gen->GetArgPointer(1);
+    void *ref = *(void**)gen->GetArgPointer(1);
     int typeId = gen->GetArgTypeId(1);
-    dict->Get(*key, ref, typeId);
+    *(bool*)gen->GetReturnPointer() = dict->Get(*key, ref, typeId);
 }
 
 void ScriptDictionaryExists_Generic(asIScriptGeneric *gen)
@@ -226,7 +296,7 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
     r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FREE, "void f(dictionary &in)", asFUNCTION(ScriptDictionaryFree), asCALL_CDECL); assert( r >= 0 );
 
     r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, ?&in)", asFUNCTION(ScriptDictionarySet_Generic), asCALL_GENERIC); assert( r >= 0 );
-    r = engine->RegisterObjectMethod("dictionary", "void get(const string &in, ?&out)", asFUNCTION(ScriptDictionaryGet_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, ?&out)", asFUNCTION(ScriptDictionaryGet_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in)", asFUNCTION(ScriptDictionaryExists_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void delete(const string &in)", asFUNCTION(ScriptDictionaryDelete_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void deleteAll()", asFUNCTION(ScriptDictionaryDeleteAll_Generic), asCALL_GENERIC); assert( r >= 0 );

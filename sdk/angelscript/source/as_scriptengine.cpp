@@ -3101,7 +3101,7 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
 
-	// Is the type Id valid?
+	// Is the type id valid?
 	if( !dt ) return 0;
 
 	// Allocate the memory
@@ -3127,6 +3127,81 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	}
 
 	return ptr;
+}
+
+void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
+{
+	void *newObj = CreateScriptObject(typeId);
+	if( newObj == 0 ) return 0;
+
+	CopyScriptObject(newObj, origObj, typeId);
+
+	return newObj;
+}
+
+void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
+{
+	// Make sure the type id is for an object type, and not a primitive or a handle
+	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return;
+	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
+
+	// Copy the contents from the original object, using the assignment operator
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+
+	// Is the type id valid?
+	if( !dt ) return;
+
+	asCObjectType *objType = dt->GetObjectType();
+	if( objType->beh.copy )
+	{
+		CallObjectMethod(dstObj, srcObj, objType->beh.copy);
+	}
+}
+
+void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
+{
+	// Make sure the type id is for an object type or a handle
+	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
+
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+
+	// Is the type id valid?
+	if( !dt ) return;
+
+	asCObjectType *objType = dt->GetObjectType();
+
+	if( objType->beh.addref )
+	{
+		// Call the addref behaviour
+		CallObjectMethod(obj, objType->beh.addref);
+	}
+}
+
+void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
+{
+	// Make sure the type id is for an object type or a handle
+	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
+
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+
+	// Is the type id valid?
+	if( !dt ) return;
+
+	asCObjectType *objType = dt->GetObjectType();
+
+	if( objType->beh.release )
+	{
+		// Call the release behaviour
+		CallObjectMethod(obj, objType->beh.release);
+	}
+	else
+	{
+		// Call the destructor
+		CallObjectMethod(obj, objType->beh.destruct);
+
+		// Then free the memory
+		CallFree(objType, obj);
+	}
 }
 
 int asCScriptEngine::BeginConfigGroup(const char *groupName)

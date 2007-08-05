@@ -382,7 +382,7 @@ int ScriptLoader::LoadScript(const char *file)
 	// section name, will allow us to localize any errors in the script code.
 
 	// We'll tell AngelScript to make a copy of the script buffer, as we won't keep it in memory (last param).
-	r = engine->AddScriptSection(0, file, &script[0], len, 0, true);
+	r = engine->AddScriptSection(0, file, &script[0], len);
 	if( r < 0 ) 
 	{
 		cout << "AddScriptSection() failed" << endl;

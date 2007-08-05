@@ -16,6 +16,15 @@ const char *script =
 "  assert(dict.exists(\"a\"));     \n"
 "  dict.delete(\"a\");             \n"
 "  assert(!dict.exists(\"a\"));    \n"
+"  string a = \"t\";               \n"
+"  dict.set(\"a\", @a);            \n"
+"  string @b;                      \n"
+"  dict.get(\"a\", @b);            \n"
+"  assert(b == \"t\");             \n"
+"  dict.set(\"a\", a);             \n"
+"  string c;                       \n"
+"  dict.get(\"a\", c);             \n"
+"  assert(c == \"t\");             \n"
 "}                                 \n";
 
 bool Test()
@@ -39,9 +48,15 @@ bool Test()
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "Test()");
+	asIScriptContext *ctx = 0;
+	r = engine->ExecuteString(0, "Test()", &ctx);
 	if( r != asEXECUTION_FINISHED )
+	{
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
 		fail = true;
+	}
+	ctx->Release();
 
 	engine->Release();
 

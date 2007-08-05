@@ -236,6 +236,10 @@ extern "C"
 	AS_API int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum);
 	AS_API asIScriptContext *asEngine_CreateContext(asIScriptEngine *e);
 	AS_API void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId);
+	AS_API void *            asEngine_CreateScriptObjectCopy(asIScriptEngine *e, void *obj, int typeId);
+	AS_API void              asEngine_CopyScriptObject(asIScriptEngine *e, void *dstObj, void *srcObj, int typeId);
+	AS_API void              asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId);
+	AS_API void              asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId);
 	AS_API int               asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 	AS_API int               asEngine_GarbageCollect(asIScriptEngine *e, bool doFullCycle = true);
 	AS_API int               asEngine_GetObjectsInGarbageCollectorCount(asIScriptEngine *e);
@@ -428,6 +432,10 @@ public:
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
 	virtual asIScriptContext *CreateContext() = 0;
 	virtual void *CreateScriptObject(int typeId) = 0;
+	virtual void *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	virtual void CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+	virtual void ReleaseScriptObject(void *obj, int typeId) = 0;
+	virtual void AddRefScriptObject(void *obj, int typeId) = 0;
 
 	// String interpretation
 	virtual int ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
