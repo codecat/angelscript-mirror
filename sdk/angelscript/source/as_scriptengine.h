@@ -137,6 +137,7 @@ public:
 	// Type identification
 	int GetTypeIdByDecl(const char *module, const char *decl);
 	const char *GetTypeDeclaration(int typeId, int *length = 0);
+	int GetSizeOfPrimitiveType(int typeId);
 
 	// Script execution
 	int SetDefaultContextStackSize(asUINT initial, asUINT maximum);
@@ -146,6 +147,7 @@ public:
 	void CopyScriptObject(void *dstObj, void *srcObj, int typeId);
 	void ReleaseScriptObject(void *obj, int typeId);
 	void AddRefScriptObject(void *obj, int typeId);
+    bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId);
 
 	// String interpretation
 	int ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);

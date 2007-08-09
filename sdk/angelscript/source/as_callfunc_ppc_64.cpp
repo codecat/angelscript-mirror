@@ -528,6 +528,12 @@ static asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD* pArg
 	return ppcFunc64( ppcArgs, PPC_STACK_SIZE(numTotalArgs), func );
 }
 
+// returns true if the given parameter is a 'variable argument'
+inline bool IsVariableArgument( asCDataType type )
+{
+	return (type.GetTokenType() == ttQuestion) ? true : false;
+}
+
 int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 {
 	// use a working array of types, we'll configure the final one in stackArgs
@@ -558,40 +564,61 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 	// convert the parameters that are < 4 bytes from little endian to big endian
 	int argDwordOffset = 0;
-	for( a = 0; a < (int)descr->parameterTypes.GetLength(); a++ )
+	int totalArgumentCount = 0;
+	for( a = 0; a < (int)descr->parameterTypes.GetLength(); ++a )
 	{
+		// get the size for the parameter
 		int numBytes = descr->parameterTypes[a].GetSizeInMemoryBytes();
-		if( numBytes >= 4 || descr->parameterTypes[a].IsReference() || descr->parameterTypes[a].IsObjectHandle() )
+		++totalArgumentCount;
+
+		// is this a variable argument?
+		// for variable arguments, the typeID will always follow...but we know it is 4 bytes
+		// so we can skip that parameter automatically.
+		bool isVarArg = IsVariableArgument( descr->parameterTypes[a] );
+		if( isVarArg )
 		{
-			argDwordOffset += descr->parameterTypes[a].GetSizeOnStackDWords();
-			continue;
+			++totalArgumentCount;
 		}
 
-		// flip
-		assert( numBytes == 1 || numBytes == 2 );
-		switch( numBytes )
+		if( numBytes >= 4 || descr->parameterTypes[a].IsReference() || descr->parameterTypes[a].IsObjectHandle() )
 		{
-		case 1:
-			{
-				volatile asBYTE *bPtr = (asBYTE*)ARG_DW(args[argDwordOffset]);
-				asBYTE t = bPtr[0];
-				bPtr[0] = bPtr[3];
-				bPtr[3] = t;
-				t = bPtr[1];
-				bPtr[1] = bPtr[2];
-				bPtr[2] = t;
-			}
-			break;
-		case 2:
-			{
-				volatile asWORD *wPtr = (asWORD*)ARG_DW(args[argDwordOffset]);
-				asWORD t = wPtr[0];
-				wPtr[0] = wPtr[1];
-				wPtr[1] = t;
-			}
-			break;
+			// DWORD or larger parameter --- no flipping needed
+			argDwordOffset += descr->parameterTypes[a].GetSizeOnStackDWords();
 		}
-		argDwordOffset++;
+		else
+		{
+			// flip
+			assert( numBytes == 1 || numBytes == 2 );
+			switch( numBytes )
+			{
+			case 1:
+				{
+					volatile asBYTE *bPtr = (asBYTE*)ARG_DW(args[argDwordOffset]);
+					asBYTE t = bPtr[0];
+					bPtr[0] = bPtr[3];
+					bPtr[3] = t;
+					t = bPtr[1];
+					bPtr[1] = bPtr[2];
+					bPtr[2] = t;
+				}
+				break;
+			case 2:
+				{
+					volatile asWORD *wPtr = (asWORD*)ARG_DW(args[argDwordOffset]);
+					asWORD t = wPtr[0];
+					wPtr[0] = wPtr[1];
+					wPtr[1] = t;
+				}
+				break;
+			}
+			++argDwordOffset;
+		}
+
+		if( isVarArg )
+		{
+			// skip the implicit typeID
+			++argDwordOffset;
+		}
 	}
 
 	// Objects returned to AngelScript must be via an object pointer.  This goes for
@@ -644,25 +671,35 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			args++;
 		}
 	}
-	assert( descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS );
+	assert( totalArgumentCount <= AS_PPC_MAX_ARGS );
 
 	// mark all float/double/int arguments
-	for( a = 0; a < (int)descr->parameterTypes.GetLength(); a++ )
+	int argIndex = 0;
+	for( a = 0; a < (int)descr->parameterTypes.GetLength(); ++a, ++argIndex )
 	{
-		argsType[a] = ppcINTARG;
+		// get the base type
+		argsType[argIndex] = ppcINTARG;
 		if( descr->parameterTypes[a].IsFloatType() && !descr->parameterTypes[a].IsReference() )
 		{
-			argsType[a] = ppcFLOATARG;
+			argsType[argIndex] = ppcFLOATARG;
 		}
 		if( descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() )
 		{
-			argsType[a] = ppcDOUBLEARG;
+			argsType[argIndex] = ppcDOUBLEARG;
 		}
 		if( descr->parameterTypes[a].GetSizeOnStackDWords() == 2 && !descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() )
 		{
-			argsType[a] = ppcLONGARG;
+			argsType[argIndex] = ppcLONGARG;
+		}
+
+		// if it is a variable argument, account for the typeID
+		if( IsVariableArgument(descr->parameterTypes[a]) )
+		{
+			// implicitly add another parameter (AFTER the parameter above), for the TypeID
+			argsType[++argIndex] = ppcINTARG;
 		}
 	}
+	assert( argIndex == totalArgumentCount );
 
 	asDWORD paramBuffer[64];
 	if( sysFunc->takesObjByVal )
@@ -675,14 +712,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		{
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
 			{
-#ifdef COMPLEX_OBJS_PASSED_BY_REF
+				#ifdef COMPLEX_OBJS_PASSED_BY_REF
 				if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
 				{
 					paramBuffer[dpos++] = args[spos++];
-					paramSize++;
+					++paramSize;
 				}
 				else
-#endif
+				#endif
 				{
 					// NOTE: we may have to do endian flipping here
 
@@ -705,6 +742,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 					paramBuffer[dpos++] = args[spos++];
 				}
 				paramSize += descr->parameterTypes[n].GetSizeOnStackDWords();
+			}
+
+			// if this was a variable argument parameter, then account for the implicit typeID
+			if( IsVariableArgument( descr->parameterTypes[n] ) )
+			{
+				// the TypeID is just a DWORD
+				paramBuffer[dpos++] = args[spos++];
+				++paramSize;
 			}
 		}
 
@@ -773,6 +818,12 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			else
 			{
 				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
+			}
+
+			if( IsVariableArgument(descr->parameterTypes[n]) )
+			{
+				// account for the implicit TypeID
+				++spos;
 			}
 		}
 	}
@@ -920,6 +971,12 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			else
 			{
 				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
+			}
+
+			if( IsVariableArgument( descr->parameterTypes[n] ) )
+			{
+				// account for the implicit TypeID
+				++spos;
 			}
 		}
 	}

@@ -7482,6 +7482,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 #else
 			ctx->bc.InstrW_W(BC_CMPi, b, c);
 #endif
+			ctx->bc.Instr(BC_TNZ);
 			ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)a);
 		}
 

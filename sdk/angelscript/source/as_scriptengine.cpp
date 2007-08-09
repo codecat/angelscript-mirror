@@ -3093,6 +3093,15 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, int *length)
 	return tempString->AddressOf();
 }
 
+int asCScriptEngine::GetSizeOfPrimitiveType(int typeId)
+{
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	if( dt == 0 ) return 0;
+	if( !dt->IsPrimitive() ) return 0;
+
+	return dt->GetSizeInMemoryDWords();
+}
+
 void *asCScriptEngine::CreateScriptObject(int typeId)
 {
 	// Make sure the type id is for an object type, and not a primitive or a handle
@@ -3160,6 +3169,9 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 
 void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 {
+	// Make sure it is not a null pointer
+	if( obj == 0 ) return;
+
 	// Make sure the type id is for an object type or a handle
 	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
 
@@ -3179,6 +3191,9 @@ void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 
 void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 {
+	// Make sure it is not a null pointer
+	if( obj == 0 ) return;
+
 	// Make sure the type id is for an object type or a handle
 	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
 
@@ -3203,6 +3218,37 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 		CallFree(objType, obj);
 	}
 }
+
+bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId)
+{
+	// if equal, then it is obvious they are compatible
+	if( objTypeId == handleTypeId ) 
+		return true;
+
+	// Get the actual data types from the type ids
+	const asCDataType *objDt = GetDataTypeFromTypeId(objTypeId);
+	const asCDataType *hdlDt = GetDataTypeFromTypeId(handleTypeId);
+
+	// A handle to const cannot be passed to a handle that is not referencing a const object
+	if( objDt->IsHandleToConst() && !hdlDt->IsHandleToConst() )
+		return false;
+
+	if( objDt->GetObjectType() == hdlDt->GetObjectType() )
+	{
+		// The object type is equal
+		return true;
+	}
+	else if( objDt->IsScriptStruct() && obj )
+	{
+		// There's still a chance the object implements the requested interface
+		asCObjectType *objType = ((asCScriptStruct*)obj)->gc.objType;
+		if( objType->Implements(hdlDt->GetObjectType()) )
+			return true;
+	}
+
+	return false;
+}
+
 
 int asCScriptEngine::BeginConfigGroup(const char *groupName)
 {

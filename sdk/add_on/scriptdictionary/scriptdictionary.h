@@ -33,7 +33,7 @@ public:
 protected:
 
 	// The structure for holding the values
-    struct v
+    struct valueStruct
     {
         union
         {
@@ -51,12 +51,12 @@ protected:
     CScriptDictionary &operator =(const CScriptDictionary &other);
 
 	// Helper methods
-    void FreeValue(v &value);
+    void FreeValue(valueStruct &value);
 
 	// Our properties
     asIScriptEngine *engine;
     int refCount;
-    std::map<std::string, v> dict;
+    std::map<std::string, valueStruct> dict;
 };
 
 // This function will determine the configuration of the engine

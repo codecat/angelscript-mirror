@@ -55,6 +55,8 @@ public:
 // interface - begin
 	asIScriptEngine *GetEngine();
 
+	int     GetFunctionId();
+
 	void   *GetObject();
 	asBYTE  GetArgByte(asUINT arg);
 	asWORD  GetArgWord(asUINT arg);

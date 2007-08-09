@@ -12,8 +12,11 @@ const char *script =
 "void Test()                       \n"
 "{                                 \n"
 "  dictionary dict;                \n"
-"  dict.set(\"a\", 0);             \n"
+"  dict.set(\"a\", 42);            \n"
 "  assert(dict.exists(\"a\"));     \n"
+"  uint u = 0;                     \n"
+"  dict.get(\"a\", u);             \n"
+"  assert(u == 42);                \n"
 "  dict.delete(\"a\");             \n"
 "  assert(!dict.exists(\"a\"));    \n"
 "  string a = \"t\";               \n"
@@ -39,7 +42,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString(engine);
-	RegisterScriptDictionary(engine);
+	RegisterScriptDictionary_Native(engine);
 
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
@@ -59,6 +62,34 @@ bool Test()
 	ctx->Release();
 
 	engine->Release();
+
+	//-------------------------
+	// Test the generic interface as well
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+	RegisterScriptString(engine);
+	RegisterScriptDictionary_Generic(engine);
+
+	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+	engine->AddScriptSection(0, "script", script, strlen(script));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
+	r = engine->ExecuteString(0, "Test()", &ctx);
+	if( r != asEXECUTION_FINISHED )
+	{
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+		fail = true;
+	}
+	ctx->Release();
+
+	engine->Release();
+
 
 	return fail;
 }

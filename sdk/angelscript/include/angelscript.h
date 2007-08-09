@@ -233,6 +233,7 @@ extern "C"
 	AS_API int               asEngine_UnbindAllImportedFunctions(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetTypeIdByDecl(asIScriptEngine *e, const char *module, const char *decl);
 	AS_API const char *      asEngine_GetTypeDeclaration(asIScriptEngine *e, int typeId, int *length = 0);
+	AS_API int               asEngine_GetSizeOfPrimitiveType(asIScriptEngine *e, int typeId);
 	AS_API int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum);
 	AS_API asIScriptContext *asEngine_CreateContext(asIScriptEngine *e);
 	AS_API void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId);
@@ -240,6 +241,7 @@ extern "C"
 	AS_API void              asEngine_CopyScriptObject(asIScriptEngine *e, void *dstObj, void *srcObj, int typeId);
 	AS_API void              asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId);
 	AS_API void              asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId);
+	AS_API bool              asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
 	AS_API int               asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 	AS_API int               asEngine_GarbageCollect(asIScriptEngine *e, bool doFullCycle = true);
 	AS_API int               asEngine_GetObjectsInGarbageCollectorCount(asIScriptEngine *e);
@@ -296,8 +298,8 @@ extern "C"
 	AS_API void *           asContext_SetUserData(asIScriptContext *c, void *data);
 	AS_API void *           asContext_GetUserData(asIScriptContext *c);
 
-
 	AS_API asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g);
+	AS_API int              asGeneric_GetFunctionId(asIScriptGeneric *g);
 	AS_API void *           asGeneric_GetObject(asIScriptGeneric *g);
 	AS_API asBYTE           asGeneric_GetArgByte(asIScriptGeneric *g, asUINT arg);
 	AS_API asWORD           asGeneric_GetArgWord(asIScriptGeneric *g, asUINT arg);
@@ -427,6 +429,7 @@ public:
 	// Type identification
 	virtual int GetTypeIdByDecl(const char *module, const char *decl) = 0;
 	virtual const char *GetTypeDeclaration(int typeId, int *length = 0) = 0;
+	virtual int GetSizeOfPrimitiveType(int typeId) = 0;
 
 	// Script execution
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
@@ -436,6 +439,7 @@ public:
 	virtual void CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
 	virtual void ReleaseScriptObject(void *obj, int typeId) = 0;
 	virtual void AddRefScriptObject(void *obj, int typeId) = 0;
+    virtual bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
 
 	// String interpretation
 	virtual int ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
@@ -530,6 +534,8 @@ class asIScriptGeneric
 {
 public:
 	virtual asIScriptEngine *GetEngine() = 0;
+
+	virtual int     GetFunctionId() = 0;
 
 	virtual void   *GetObject() = 0;
 

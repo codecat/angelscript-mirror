@@ -62,6 +62,11 @@ asIScriptEngine *asCGeneric::GetEngine()
 	return (asIScriptEngine*)engine;
 }
 
+int asCGeneric::GetFunctionId()
+{
+	return sysFunction->id;
+}
+
 void *asCGeneric::GetObject()
 {
 	return currentObject;

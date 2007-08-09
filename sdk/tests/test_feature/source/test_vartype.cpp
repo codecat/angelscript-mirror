@@ -45,7 +45,11 @@ void testFuncO(asIScriptGeneric *gen)
 void testFuncIS(void *ref, int typeId, asCScriptString &str)
 {
 	assert(str.buffer == "test");
-	assert(*(int*)ref == 42);
+
+	// Primitives are received as a pointer to the value
+	// Handles are received as a pointer to the handle
+	// Objects are received as a pointer to a pointer to the object 
+	assert(*(int*)ref == 42 || **(std::string**)ref == "t");
 }
 
 void testFuncIS_generic(asIScriptGeneric *gen)
@@ -234,6 +238,11 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	r = engine->ExecuteString(0, "int a = 42; testFuncSI(\"test\", a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+	r = engine->ExecuteString(0, "string a = \"t\"; testFuncIS(a, \"test\");");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	r = engine->ExecuteString(0, "string a = \"t\"; testFuncIS(@a, \"test\");");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+
 
 	// It must be possible to use native functions
 	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -246,6 +255,10 @@ bool Test()
 		r = engine->ExecuteString(0, "int a = 42; _testFuncIS(a, \"test\");");
 		if( r != asEXECUTION_FINISHED ) fail = true;
 		r = engine->ExecuteString(0, "int a = 42; _testFuncSI(\"test\", a);");
+		if( r != asEXECUTION_FINISHED ) fail = true;
+		r = engine->ExecuteString(0, "string a = \"t\"; _testFuncIS(a, \"test\");");
+		if( r != asEXECUTION_FINISHED ) fail = true;
+		r = engine->ExecuteString(0, "string a = \"t\"; _testFuncIS(@a, \"test\");");
 		if( r != asEXECUTION_FINISHED ) fail = true;
 	}
 

@@ -105,6 +105,7 @@ int               asEngine_BindAllImportedFunctions(asIScriptEngine *e, const ch
 int               asEngine_UnbindAllImportedFunctions(asIScriptEngine *e, const char *module)                                                                                        { return e->UnbindAllImportedFunctions(module); }
 int               asEngine_GetTypeIdByDecl(asIScriptEngine *e, const char *module, const char *decl)                                                                                 { return e->GetTypeIdByDecl(module, decl); }
 const char *      asEngine_GetTypeDeclaration(asIScriptEngine *e, int typeId, int *length)                                                                                           { return e->GetTypeDeclaration(typeId, length); }
+int               asEngine_GetSizeOfPrimitiveType(asIScriptEngine *e, int typeId)                                                                                                    { return e->GetSizeOfPrimitiveType(typeId); }
 int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum)                                                                            { return e->SetDefaultContextStackSize(initial, maximum); }
 asIScriptContext *asEngine_CreateContext(asIScriptEngine *e)                                                                                                                         { return e->CreateContext(); }
 void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId)                                                                                                        { return e->CreateScriptObject(typeId); }
@@ -112,6 +113,7 @@ void *            asEngine_CreateScriptObjectCopy(asIScriptEngine *e, void *obj,
 void              asEngine_CopyScriptObject(asIScriptEngine *e, void *dstObj, void *srcObj, int typeId)                                                                              { e->CopyScriptObject(dstObj, srcObj, typeId); }
 void              asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId)                                                                                            { e->ReleaseScriptObject(obj, typeId); }
 void              asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId)                                                                                             { e->AddRefScriptObject(obj, typeId); }
+bool              asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId)                                                              { return e->IsHandleCompatibleWithObject(obj, objTypeId, handleTypeId); }
 int               asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)                                          { return e->ExecuteString(module, script, ctx, flags); }
 int               asEngine_GarbageCollect(asIScriptEngine *e, bool doFullCycle)                                                                                                      { return e->GarbageCollect(doFullCycle); }
 int               asEngine_GetObjectsInGarbageCollectorCount(asIScriptEngine *e)                                                                                                     { return e->GetObjectsInGarbageCollectorCount(); }
@@ -169,6 +171,7 @@ void *           asContext_SetUserData(asIScriptContext *c, void *data)         
 void *           asContext_GetUserData(asIScriptContext *c)                                                    { return c->GetUserData(); }
 
 asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g)                   { return g->GetEngine(); }
+int              asGeneric_GetFunctionId(asIScriptGeneric *g)               { return g->GetFunctionId(); }
 void *           asGeneric_GetObject(asIScriptGeneric *g)                   { return g->GetObject(); }
 asBYTE           asGeneric_GetArgByte(asIScriptGeneric *g, asUINT arg)      { return g->GetArgByte(arg); }
 asWORD           asGeneric_GetArgWord(asIScriptGeneric *g, asUINT arg)      { return g->GetArgWord(arg); }

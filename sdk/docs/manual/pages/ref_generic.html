@@ -18,6 +18,8 @@ class asIScriptGeneric
 public:
   void   *<a href="#getengine">GetEngine</a>();
 
+  int     <a href="#getfuncid">GetFunctionId</a>();
+
   void   *<a href="#getobj">GetObject</a>();
 
   asBYTE  <a href="#getarg">GetArgByte</a>(asUINT arg);
@@ -58,6 +60,24 @@ int GetEngine();
 
 <p>The engine pointer.</p>
 
+
+
+
+
+<a name=getfuncid></a>
+<h2>GetFunctionId</h2>
+
+<pre class=border>
+void *GetFunctionId();
+</pre>
+
+<h3>Description</h3>
+
+<p>Retrieve the function id for the function or method being executed.</p>
+
+<h3>Returns</h3>
+
+<p>The function id.</p>
 
 
 
