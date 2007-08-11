@@ -142,8 +142,6 @@ bool CScriptDictionary::Get(string &key, void *value, int typeId)
 				return true;
 			}
 
-			const char *type = engine->GetTypeDeclaration(typeId);
-
 			// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
 			int intTypeId = engine->GetTypeIdByDecl(0, "int64");
 			int fltTypeId = engine->GetTypeIdByDecl(0, "double");

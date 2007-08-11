@@ -14,6 +14,43 @@ char RetInt8(char in)
 	return 1;
 }
 
+class TestInt8Class
+{
+public:
+	TestInt8Class()
+	{
+		m_fail = false;
+	}
+
+	void Test1(char value)
+	{
+		if( value != 1 )
+		{
+			m_fail = true;
+		}
+	}
+
+	void Test0(char value)
+	{
+		if( value != 0 )
+		{
+			m_fail = true;
+		}
+	}
+
+	bool m_fail;
+};
+
+static const char *script3 =
+"void TestInt8ToMember()           \n"
+"{                                 \n"
+"   int8 flag = 1;                 \n"
+"   TestInt8Class.Test1(flag);     \n"
+"   flag = 0;                      \n"
+"   TestInt8Class.Test0(flag);     \n"
+"}                                 \n";
+
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -22,6 +59,7 @@ bool Test()
 		return false;
 	}
 
+	int r;
 	bool fail = false;
 	COutStream out;
 
@@ -48,6 +86,29 @@ bool Test()
 	}
 	
 	engine->ExecuteString(0, "Assert(RetInt8(1) == 1)");
+
+	
+	// Test to make sure bools can be passed to member functions properly
+	engine->RegisterObjectType("Int8Tester", 0, asOBJ_CLASS);
+	engine->RegisterObjectMethod("Int8Tester", "void Test1(int8)", asMETHOD(TestInt8Class, Test1), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Int8Tester", "void Test0(int8)", asMETHOD(TestInt8Class, Test0), asCALL_THISCALL);	
+	TestInt8Class testInt8;
+	r = engine->RegisterGlobalProperty("Int8Tester TestInt8Class", &testInt8 );
+	if( r < 0 ) fail = true;
+	engine->AddScriptSection(0, "script", script3, strlen(script3));
+	r = engine->Build(0);
+	if( r < 0 )
+	{
+		fail = true;
+	}
+	else
+	{
+		r = engine->ExecuteString(0, "TestInt8ToMember();");
+		if( r != asEXECUTION_FINISHED ) fail = true;
+
+		if( testInt8.m_fail ) fail = true;
+	}
+	
 	
 	engine->Release();
 
