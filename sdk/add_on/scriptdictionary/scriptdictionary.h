@@ -26,6 +26,13 @@ public:
 
     void Set(std::string &key, void *value, int typeId);
     bool Get(std::string &key, void *value, int typeId);
+
+	void Set(std::string &key, asINT64 &value);
+	bool Get(std::string &key, asINT64 &value);
+
+	void Set(std::string &key, double &value);
+	bool Get(std::string &key, double &value);
+
     bool Exists(std::string &key);
     void Delete(std::string &key);
     void DeleteAll();
@@ -37,7 +44,7 @@ protected:
     {
         union
         {
-            asQWORD valueInt;
+            asINT64 valueInt;
             double  valueFlt;
             void   *valueObj;
         };

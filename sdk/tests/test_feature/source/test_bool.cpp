@@ -79,6 +79,41 @@ static const char *script2 =
 "void Set() {gFlag = true;}\n"
 "void DoNothing() {}\n";
 
+static const char *script3 =
+"void TestBoolToMember()           \n"
+"{                                 \n"
+"   bool flag = true;              \n"
+"   TestBoolClass.TestTrue(flag);  \n"
+"   flag = false;                  \n"
+"   TestBoolClass.TestFalse(flag); \n"
+"}                                 \n";
+
+class TestBoolClass
+{
+public:
+	TestBoolClass()
+	{
+		m_fail = false;
+	}
+
+	void TestTrue(bool value)
+	{
+		if( !value )
+		{
+			m_fail = true;
+		}
+	}
+
+	void TestFalse(bool value)
+	{
+		if( value )
+		{
+			m_fail = true;
+		}
+	}
+
+	bool m_fail;
+};
 
 class tst
 {
@@ -224,6 +259,27 @@ bool Test()
 	r = engine->ExecuteString(0, "bool f2 = false; Assert( !(falseValue || f2) );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
+	// TEST 6
+	// Test to make sure bools can be passed to member functions properly
+	engine->RegisterObjectType("BoolTester", 0, asOBJ_CLASS);
+	engine->RegisterObjectMethod("BoolTester", "void TestTrue(bool)", asMETHOD(TestBoolClass, TestTrue), asCALL_THISCALL);
+	engine->RegisterObjectMethod("BoolTester", "void TestFalse(bool)", asMETHOD(TestBoolClass, TestFalse), asCALL_THISCALL);	
+	TestBoolClass testBool;
+	r = engine->RegisterGlobalProperty("BoolTester TestBoolClass", &testBool );
+	if( r < 0 ) fail = true;
+	engine->AddScriptSection(0, "script", script3, strlen(script3));
+	r = engine->Build(0);
+	if( r < 0 )
+	{
+		fail = true;
+	}
+	else
+	{
+		r = engine->ExecuteString(0, "TestBoolToMember();");
+		if( r != asEXECUTION_FINISHED ) fail = true;
+
+		if( testBool.m_fail ) fail = true;
+	}
 
 	engine->Release();
 

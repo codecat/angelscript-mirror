@@ -392,6 +392,8 @@ bool asCDataType::IsSamePrimitiveBaseType(const asCDataType &dt) const
 	if( IsFloatType()    && dt.IsFloatType()    ) return true;
 	if( IsDoubleType()   && dt.IsDoubleType()   ) return true;
 	if( IsBooleanType()  && dt.IsBooleanType()  ) return true;
+	if( IsFloatType()    && dt.IsDoubleType()   ) return true;
+	if( IsDoubleType()   && dt.IsFloatType()    ) return true;
 
 	return false;
 }

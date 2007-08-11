@@ -136,92 +136,92 @@ void RegisterVector(const std::string V_AS,  //The typename of the vector inside
 
 	int error_code = 0;
 	error_code = engine->RegisterObjectType(V_AS.c_str(), sizeof(std::vector<T>), asOBJ_CLASS_CDA);
-	assert(error_code == 0 && "Failed to register object type");
+	assert(error_code >= 0 && "Failed to register object type");
 	
 	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(), 
 		asBEHAVE_CONSTRUCT, 
 		"void f()", 
 		asFUNCTION(vectorRegisterHelper<T>::Construct), 
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register constructor");
+	assert(error_code >= 0 && "Failed to register constructor");
 	
 	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		asBEHAVE_DESTRUCT,
 		"void f()",
 		asFUNCTION(vectorRegisterHelper<T>::Destruct),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register destructor");
+	assert(error_code >= 0 && "Failed to register destructor");
 	
 	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		asBEHAVE_CONSTRUCT,
 		(std::string("void f(")+V_AS+"&in)").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::CopyConstruct),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register copy constructor");
+	assert(error_code >= 0 && "Failed to register copy constructor");
 	
 	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		asBEHAVE_CONSTRUCT,
 		"void f(int)",
 		asFUNCTION(vectorRegisterHelper<T>::NumConstruct),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register construct(size)");
+	assert(error_code >= 0 && "Failed to register construct(size)");
 
 	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		asBEHAVE_INDEX,
 		(T_AS+"& f(int)").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::Index),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register operator[]");
+	assert(error_code >= 0 && "Failed to register operator[]");
 
 	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		asBEHAVE_INDEX,
 		("const "+T_AS+"& f(int) const").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::Index),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register operator[]");
+	assert(error_code >= 0 && "Failed to register operator[]");
 	
 	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		asBEHAVE_ASSIGNMENT,
 		(V_AS+"& f(const "+V_AS+"&in)").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::Assign),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register operator=");
+	assert(error_code >= 0 && "Failed to register operator=");
 	
 	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		"int size() const",
 		asFUNCTION(vectorRegisterHelper<T>::Size),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register size");
+	assert(error_code >= 0 && "Failed to register size");
 	
 	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		"void resize(int)",
 		asFUNCTION(vectorRegisterHelper<T>::Resize),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register resize");
+	assert(error_code >= 0 && "Failed to register resize");
 	
 	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		(std::string("void push_back(")+T_AS+"&in)").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::PushBack),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register push_back");
+	assert(error_code >= 0 && "Failed to register push_back");
 	
 	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		"void pop_back()",
 		asFUNCTION(vectorRegisterHelper<T>::PopBack),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register pop_back");
+	assert(error_code >= 0 && "Failed to register pop_back");
 
 /*	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		"void erase(int)",
 		asFUNCTION(vectorRegisterHelper<T>::Erase),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register erase");
+	assert(error_code >= 0 && "Failed to register erase");
 
 	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		(std::string("void insert(int, const ")+T_AS+"&)").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::Insert),
 		asCALL_CDECL_OBJLAST);
-	assert(error_code == 0 && "Failed to register insert");
+	assert(error_code >= 0 && "Failed to register insert");
 */
 }
 

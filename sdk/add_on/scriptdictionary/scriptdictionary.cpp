@@ -85,6 +85,18 @@ void CScriptDictionary::Set(string &key, void *value, int typeId)
     }
 }
 
+void CScriptDictionary::Set(string &key, asINT64 &value)
+{
+	int typeId = engine->GetTypeIdByDecl(0, "int64");
+	Set(key, &value, typeId);
+}
+
+void CScriptDictionary::Set(string &key, double &value)
+{
+	int typeId = engine->GetTypeIdByDecl(0, "double");
+	Set(key, &value, typeId);
+}
+
 // Returns true if the value was successfully retrieved
 bool CScriptDictionary::Get(string &key, void *value, int typeId)
 {
@@ -123,18 +135,26 @@ bool CScriptDictionary::Get(string &key, void *value, int typeId)
 		}
 		else
 		{
-			// TODO: We should be more intelligent and convert primitive types if possible
-			// Verify that the copy can be made
-			bool isCompatible = false;
 			if( it->second.typeId == typeId )
-				isCompatible = true;
-
-			// Copy the primitive value
-			if( isCompatible )
 			{
 				int size = engine->GetSizeOfPrimitiveType(typeId);
 				memcpy(value, &it->second.valueInt, size);
+				return true;
+			}
 
+			const char *type = engine->GetTypeDeclaration(typeId);
+
+			// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
+			int intTypeId = engine->GetTypeIdByDecl(0, "int64");
+			int fltTypeId = engine->GetTypeIdByDecl(0, "double");
+			if( it->second.typeId == intTypeId && typeId == fltTypeId )
+			{
+				*(double*)value = double(it->second.valueInt);
+				return true;
+			}
+			else if( it->second.typeId == fltTypeId && typeId == intTypeId )
+			{
+				*(asINT64*)value = asINT64(it->second.valueFlt);
 				return true;
 			}
 		}
@@ -145,6 +165,18 @@ bool CScriptDictionary::Get(string &key, void *value, int typeId)
 	// the element is incompatible with the requested type.
 
 	return false;
+}
+
+bool CScriptDictionary::Get(string &key, asINT64 &value)
+{
+	int typeId = engine->GetTypeIdByDecl(0, "int64");
+	return Get(key, &value, typeId);
+}
+
+bool CScriptDictionary::Get(string &key, double &value)
+{
+	int typeId = engine->GetTypeIdByDecl(0, "double");
+	return Get(key, &value, typeId);
 }
 
 bool CScriptDictionary::Exists(string &key)
@@ -242,6 +274,22 @@ void ScriptDictionarySet_Generic(asIScriptGeneric *gen)
     dict->Set(*key, ref, typeId);
 }
 
+void ScriptDictionarySetInt_Generic(asIScriptGeneric *gen)
+{
+    CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
+    string *key = *(string**)gen->GetArgPointer(0);
+    void *ref = *(void**)gen->GetArgPointer(1);
+    dict->Set(*key, *(asINT64*)ref);
+}
+
+void ScriptDictionarySetFlt_Generic(asIScriptGeneric *gen)
+{
+    CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
+    string *key = *(string**)gen->GetArgPointer(0);
+    void *ref = *(void**)gen->GetArgPointer(1);
+    dict->Set(*key, *(double*)ref);
+}
+
 void ScriptDictionaryGet_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
@@ -249,6 +297,22 @@ void ScriptDictionaryGet_Generic(asIScriptGeneric *gen)
     void *ref = *(void**)gen->GetArgPointer(1);
     int typeId = gen->GetArgTypeId(1);
     *(bool*)gen->GetReturnPointer() = dict->Get(*key, ref, typeId);
+}
+
+void ScriptDictionaryGetInt_Generic(asIScriptGeneric *gen)
+{
+    CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
+    string *key = *(string**)gen->GetArgPointer(0);
+    void *ref = *(void**)gen->GetArgPointer(1);
+    *(bool*)gen->GetReturnPointer() = dict->Get(*key, *(asINT64*)ref);
+}
+
+void ScriptDictionaryGetFlt_Generic(asIScriptGeneric *gen)
+{
+    CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
+    string *key = *(string**)gen->GetArgPointer(0);
+    void *ref = *(void**)gen->GetArgPointer(1);
+    *(bool*)gen->GetReturnPointer() = dict->Get(*key, *(double*)ref);
 }
 
 void ScriptDictionaryExists_Generic(asIScriptGeneric *gen)
@@ -295,9 +359,16 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
     r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ALLOC, "dictionary &f(uint)", asFUNCTION(ScriptDictionaryAlloc), asCALL_CDECL); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FREE, "void f(dictionary &in)", asFUNCTION(ScriptDictionaryFree), asCALL_CDECL); assert( r >= 0 );
 
-    r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, ?&in)", asMETHOD(CScriptDictionary,Set), asCALL_THISCALL); assert( r >= 0 );
-    r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, ?&out)", asMETHOD(CScriptDictionary,Get), asCALL_THISCALL); assert( r >= 0 );
-    r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in)", asMETHOD(CScriptDictionary,Exists), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, ?&in)", asMETHODPR(CScriptDictionary,Set,(string&,void*,int),void), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, ?&out)", asMETHODPR(CScriptDictionary,Get,(string&,void*,int),bool), asCALL_THISCALL); assert( r >= 0 );
+
+    r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, int64&in)", asMETHODPR(CScriptDictionary,Set,(string&,asINT64&),void), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, int64&out)", asMETHODPR(CScriptDictionary,Get,(string&,asINT64&),bool), asCALL_THISCALL); assert( r >= 0 );
+
+    r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, double&in)", asMETHODPR(CScriptDictionary,Set,(string&,double&),void), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, double&out)", asMETHODPR(CScriptDictionary,Get,(string&,double&),bool), asCALL_THISCALL); assert( r >= 0 );
+    
+	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in)", asMETHOD(CScriptDictionary,Exists), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void delete(const string &in)", asMETHOD(CScriptDictionary,Delete), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void deleteAll()", asMETHOD(CScriptDictionary,DeleteAll), asCALL_THISCALL); assert( r >= 0 );
 }
@@ -315,7 +386,14 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 
     r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, ?&in)", asFUNCTION(ScriptDictionarySet_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, ?&out)", asFUNCTION(ScriptDictionaryGet_Generic), asCALL_GENERIC); assert( r >= 0 );
-    r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in)", asFUNCTION(ScriptDictionaryExists_Generic), asCALL_GENERIC); assert( r >= 0 );
+    
+    r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, int64&in)", asFUNCTION(ScriptDictionarySetInt_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, int64&out)", asFUNCTION(ScriptDictionaryGetInt_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+    r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, double&in)", asFUNCTION(ScriptDictionarySetFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, double&out)", asFUNCTION(ScriptDictionaryGetFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in)", asFUNCTION(ScriptDictionaryExists_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void delete(const string &in)", asFUNCTION(ScriptDictionaryDelete_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void deleteAll()", asFUNCTION(ScriptDictionaryDeleteAll_Generic), asCALL_GENERIC); assert( r >= 0 );
 }

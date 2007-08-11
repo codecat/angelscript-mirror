@@ -93,7 +93,13 @@ public:
   <font color=green>// Script execution</font>
   int <a href="#stacksize">SetDefaultContextStackSize</a>(asUINT initial, asUINT maximum);
   asIScriptContext *<a href="#createcontext">CreateContext</a>();
+
   void *<a href="#createobj">CreateScriptObject</a>(int typeId);
+  void *<a href="#createcpy">CreateScriptObjectCopy</a>(void *obj, int typeId);
+  void <a href="#copyobj">CopyScriptObject</a>(void *dstObj, void *srcObj, int typeId);
+  void <a href="#relrefobj">ReleaseScriptObject</a>(void *obj, int typeId);
+  void <a href="#addrefobj">AddRefScriptObject</a>(void *obj, int typeId);
+  bool <a href="#hndlcompat">IsHandleCompatibleWithObject</a>(void *obj, int objTypeId, int handleTypeId);
 
   <font color=green>// String interpretation</font>
   int <a href="#executestring">ExecuteString</a>(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0);
@@ -2176,6 +2182,171 @@ method doesn't do anything and returns a null pointer.</p>
 
 <p>Returns the pointer to the initialized object.</p>
 
+
+
+
+<a name="createcpy"></a>
+<h2>CreateScriptObjectCopy</h2>
+
+<pre class=border>
+void *CreateScriptObjectCopy(void *obj, int typeId);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method is used to create a copy of an existing object.</p>
+
+<p>This only works for objects, for primitive types and object handles the
+method doesn't do anything and returns a null pointer.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>obj</code>&nbsp;</td>
+<td valign=top><p>A pointer to the object of which the copy will be made.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The type id for the object type.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Returns the pointer to the initialized object.</p>
+
+
+
+
+<a name="copyobj"></a>
+<h2>CopyScriptObject</h2>
+
+<pre class=border>
+void CopyScriptObject(void *dstObj, void *srcObj, int typeId);
+</pre>
+
+<h3>Description</h3>
+
+<p>This calls the assignment operator to copy the object from one to the other.</p>
+
+<p>This only works for objects.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>dstObj</code>&nbsp;</td>
+<td valign=top><p>A pointer to the destination object.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>srcObj</code>&nbsp;</td>
+<td valign=top><p>A pointer to the source object.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The type id for the object type.</p></td>
+</tr>
+</table>
+
+
+
+
+<a name="relrefobj"></a>
+<h2>ReleaseScriptObject</h2>
+
+<pre class=border>
+void ReleaseScriptObject(void *obj, int typeId);
+</pre>
+
+<h3>Description</h3>
+
+<p>This calls the release method of the object to release the reference.</p>
+
+<p>This only works for objects.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>obj</code>&nbsp;</td>
+<td valign=top><p>A pointer to the object.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The type id for the object type.</p></td>
+</tr>
+</table>
+
+
+
+
+
+<a name="addrefobj"></a>
+<h2>AddRefScriptObject</h2>
+
+<pre class=border>
+void AddRefScriptObject(void *obj, int typeId);
+</pre>
+
+<h3>Description</h3>
+
+<p>This calls the add ref method of the object to increase the reference count.</p>
+
+<p>This only works for objects.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>obj</code>&nbsp;</td>
+<td valign=top><p>A pointer to the object.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The type id for the object type.</p></td>
+</tr>
+</table>
+
+
+
+
+
+
+<a name="hndlcompat"></a>
+<h2>IsHandleCompatibleWithObject</h2>
+
+<pre class=border>
+bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method can be used to determine if a handle of a certain type is
+compatible with an object of another type. This is useful if you have a
+pointer to a object, but only knows that it implements a certain interface
+and now you want to determine if it implements another interface.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>obj</code>&nbsp;</td>
+<td valign=top><p>A pointer to the object. Can be null.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>objTypeId</code>&nbsp;</td>
+<td valign=top><p>The type id for the object type.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>handleTypeId</code>&nbsp;</td>
+<td valign=top><p>The type id for the handle type.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>True if the handle is compatible with the object type.</p>
 
 
 

@@ -5965,6 +5965,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 	bool isMatchExceptConst  = false;
 	bool isMatchWithBaseType = false;
 	bool isMatchExceptSign   = false;
+	bool isMatchNotVarType   = false;
 
 	asUINT n;
 
@@ -6039,9 +6040,22 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 						}
 
 						if( !isMatchExceptSign )
-							matches.PushLast(funcs[n]);
+						{
+							// If there was any match without a var type it has higher priority
+							if( desc->parameterTypes[paramNum].GetTokenType() != ttQuestion )
+							{
+								if( !isMatchNotVarType ) matches.SetLength(0);
 
-						// TODO: Implicit conversion to ?& has the smallest priority. Do we have any conflicts here?
+								isMatchNotVarType = true;
+
+								matches.PushLast(funcs[n]);
+								continue;
+							}
+
+							// Implicit conversion to ?& has the smallest priority
+							if( !isMatchNotVarType )
+								matches.PushLast(funcs[n]);
+						}
 					}
 				}
 			}

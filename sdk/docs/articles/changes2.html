@@ -118,13 +118,14 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.9.0 WIP - 2007/08/06</h2>
+<h2>Version 2.9.0 WIP - 2007/08/10</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Parser could hang on scripts with non-terminated strings. (Thanks derefed)
 <li>Compiler died when compiling a return statement with a void expression. (Thanks SiCrane)
+<li>A bug when calling class methods with 1 or 2 byte arguments was fixed for PPC 64. (Thanks Jeff Slutter)
 </ul>
 <li>Library interface
 <ul>
@@ -137,6 +138,8 @@ A:hover
 <li>Added GetArgTypeId and GetFunctionId to the generic interface
 <li>Removed the makeCopy parameter from AddScriptSection, and instead added a new engine property asEP_COPY_SCRIPT_SECTIONS
 <li>Added CreateScriptObjectCopy, CopyScriptObject, AddRefScriptObject, ReleaseScriptObject, and GetSizeOfPrimitiveType to engine for easier development of generic container classes
+<li>All methods for registering functions, methods, or behaviours are now returning the function id as a success indicator. Negative values still indicate an error.
+<li>Implemented support for variable parameter type, ?&amp;, in object constructor, object methods, and global functions
 </ul>
 </ul>
 

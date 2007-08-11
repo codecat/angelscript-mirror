@@ -76,8 +76,10 @@ static const char *script2 =
 static const char *script3 = 
 "class myclass                                   \n"
 "{                                               \n"
-"  void func() {}                                \n"
-"  void func(int x, int y) {}                    \n"
+"  myclass() {value = 42;}                       \n"
+"  void func() {Assert(value == 42);}            \n"
+"  void func(int x, int y) {Assert(value == 42);}\n"
+"  int value;                                    \n"
 "};                                              \n"
 "myclass c;                                      \n";
 
@@ -228,6 +230,7 @@ bool Test()
 
 	//----------------------------------
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "test3", script3, strlen(script3), 0);
 	r = engine->Build(0);
@@ -235,7 +238,7 @@ bool Test()
 
 	typeId = engine->GetTypeIdByDecl(0, "myclass");
 	int mtdId = engine->GetMethodIDByDecl(typeId, "void func()");
-	void *obj = engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "c"));
+	asIScriptStruct *obj = *(asIScriptStruct **)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "c"));
 
 	if( mtdId < 0 || obj == 0 ) fail = true;
 	else

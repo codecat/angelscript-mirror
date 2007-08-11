@@ -28,6 +28,19 @@ const char *script =
 "  string c;                       \n"
 "  dict.get(\"a\", c);             \n"
 "  assert(c == \"t\");             \n"
+"  int8 q = 41;                    \n"
+"  dict.set(\"b\", q);             \n"
+"  dict.get(\"b\", q);             \n"
+"  assert(q == 41);                \n"
+"  float f = 300;                  \n"
+"  dict.set(\"c\", f);             \n"
+"  dict.get(\"c\", f);             \n"
+"  assert(f == 300);               \n"
+"  int i;                          \n"
+"  dict.get(\"c\", i);             \n"
+"  assert(i == 300);               \n"
+"  dict.get(\"b\", f);             \n"
+"  assert(f == 41);                \n"
 "}                                 \n";
 
 bool Test()
@@ -64,7 +77,7 @@ bool Test()
 	engine->Release();
 
 	//-------------------------
-	// Test the generic interface as well
+	// Test the generic interface as well 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

@@ -565,6 +565,15 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	// convert the parameters that are < 4 bytes from little endian to big endian
 	int argDwordOffset = 0;
 	int totalArgumentCount = 0;
+
+	// if this is a THISCALL function and no object pointer was given, then the
+	// first argument on the stack is the object pointer -- we MUST skip it for doing
+	// the endian flipping.
+	if( ( callConv >= ICC_THISCALL ) && (objectPointer == NULL) )
+	{
+		++argDwordOffset;
+	}
+
 	for( a = 0; a < (int)descr->parameterTypes.GetLength(); ++a )
 	{
 		// get the size for the parameter
