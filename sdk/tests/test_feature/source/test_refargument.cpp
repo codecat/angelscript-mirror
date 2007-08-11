@@ -40,6 +40,9 @@ static const char *script2 =
 static const char *script3 = 
 "void Test()                            \n"
 "{                                      \n"
+"  string b;                            \n"
+"  Testref(b);                          \n"
+"  Assert(b == \"test\");               \n"
 "  string[] a(1);                       \n"
 "  Testref(a[0]);                       \n"
 "  Assert(a[0] == \"test\");            \n"
@@ -99,6 +102,7 @@ bool Test()
 	bool fail = false;
 	bool testNative = false;
 	int r;
+	COutStream out;
 
 	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
@@ -108,19 +112,19 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString_Generic(engine);
+	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
 
 	r = engine->RegisterObjectType("refclass", sizeof(CRefClass), asOBJ_CLASS_CDA); assert(r >= 0);
 	r = engine->RegisterObjectProperty("refclass", "int id", offsetof(CRefClass, id)); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ASSIGNMENT, "refclass &f(refclass &in)", asFUNCTION(Assign), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	if( testNative )
 	{
 		r = engine->RegisterGlobalFunction("void TestNativeRefArgOut(int &out,float &out,const int &in,const float &in)", asFUNCTION(TestNativeRefArgOut), asCALL_CDECL); assert( r >= 0 );
 	}
 
-	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -164,9 +168,11 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
 	r = engine->Build(0);
-	if( r < 0 ) fail = true;
+	if( r < 0 ) 
+		fail = true;
 	r = engine->ExecuteString(0, "Test()");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) 
+		fail = true;
 
 	//-------------------
 	if( testNative )

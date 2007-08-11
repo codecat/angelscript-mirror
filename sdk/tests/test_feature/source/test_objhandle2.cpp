@@ -107,6 +107,8 @@ CRefClass *getRefClass(CRefClass *obj)
 	return obj;
 }
 
+bool TestHandleMemberCalling(void);
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -116,6 +118,9 @@ bool Test()
 	}
 	bool fail = false;
 	int r;
+
+	if( !TestHandleMemberCalling() )
+		return true;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -203,6 +208,252 @@ bool Test()
 
 	// Success
 	return fail;
+}
+
+
+//////////////////////////
+
+const char *script3 = 
+"class TestClass                            \n"
+"{                                          \n"
+"	ArgClass @m_arg;                        \n"
+"   CallerClass @m_caller;                  \n"
+"	TestClass()                             \n"
+"	{                                       \n"
+"		ArgClass _arg;                      \n"
+"		_arg.SetWeight( 2.0f );             \n"
+"		@m_arg = _arg;                      \n"
+"		m_arg.SetWeight( 3.0f );            \n"
+"		CallerClass _caller;                \n"
+"		@m_caller = _caller;                \n"
+"	}                                       \n"
+"	void Test()                             \n"
+"	{                                       \n"
+"		Point pos(0.0f,0.0f,0.0f);          \n"
+//////////////////////////////////////////////////
+// UNCOMMENT THE NEXT TWO LINES TO MAKE IT WORK
+//"		ArgClass @ap = m_arg;               \n"
+//"		m_caller.DoSomething( ap, pos );    \n"
+//////////////////////////////////////////////////
+// THIS LINE DOESN'T WORK
+"		m_caller.DoSomething( m_arg, pos ); \n"
+//////////////////////////////////////////////////
+"	}                                       \n"
+"}                                          \n"
+"void TestScript()                          \n"
+"{                                          \n"
+"	TestClass t;                            \n"
+"	t.Test();                               \n"
+"}                                          \n";
+
+class ArgClass
+{
+public:
+	ArgClass()
+	{
+		m_weight = 1.0f;
+		m_refcount = 1;
+	}
+	void AddRef()
+	{
+		++m_refcount;
+	}
+	void Release()
+	{
+		--m_refcount;
+		if( m_refcount > 0 )
+			return;
+		this->~ArgClass();
+		free( this );
+	}
+
+	static void *Allocate(unsigned int)
+	{
+		return malloc(sizeof(ArgClass));
+	}
+
+	static void DeAllocate(void *)
+	{
+		// this shouldn't get called
+	}
+
+	static void Construct(ArgClass *self)
+	{
+		new(self) ArgClass();
+	}
+	
+	float GetWeight(void) const
+	{
+		return m_weight;
+	}
+
+	void SetWeight(float t)
+	{
+		m_weight = t;
+	}
+
+	float m_weight;
+	int m_refcount;
+};
+
+class Point
+{
+public:
+	Point()
+	{
+		m_x[0] = m_x[1] = m_x[2] = m_x[3] = -1.0f;
+	}
+
+	Point(float x,float y,float z)
+	{
+		m_x[0] = x;
+		m_x[1] = y;
+		m_x[2] = z;
+		m_x[3] = 0.0f;
+	}
+
+	static void Construct(Point *self)
+	{
+		new(self) Point();
+	}
+
+	static void Construct2(float x,float y,float z,Point *self)
+	{
+		new(self) Point(x,y,z);
+	}
+
+	~Point()
+	{
+	}
+
+	float m_x[4];
+};
+
+class CallerClass
+{
+public:
+	CallerClass()
+	{
+		m_refcount = 1;
+	}
+
+	void AddRef()
+	{
+		++m_refcount;
+	}
+
+	void Release()
+	{
+		--m_refcount;
+		if( m_refcount > 0 )
+			return;
+		this->~CallerClass();
+		free( this );
+	}
+
+	static void *Allocate(unsigned int)
+	{
+		return malloc( sizeof(CallerClass) );
+	}
+
+	static void DeAllocate(void *)
+	{
+		// this shouldn't get called
+	}
+
+	static void Construct(CallerClass *self)
+	{
+		new(self) CallerClass();
+	}
+
+	void DoSomething(const ArgClass &arg, Point &pos )
+	{
+		float weight = arg.GetWeight();
+		if( (weight > 2.9f) && (weight < 3.1f) )
+		{
+			m_success = true;
+		}
+	}
+
+	int m_refcount;
+	static bool m_success;
+};
+
+bool CallerClass::m_success = false;
+
+bool TestHandleMemberCalling(void)
+{
+	int r;
+
+	// initialize the test
+	CallerClass::m_success = false;
+
+	// create AngelScript
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptString_Generic(engine);
+	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+	// register Point
+	r = engine->RegisterObjectType("Point", sizeof(Point), asOBJ_CLASS_C); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Point::Construct), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_CONSTRUCT, "void f(float,float,float)", asFUNCTION(Point::Construct2), asCALL_CDECL_OBJLAST); assert(r >= 0);
+
+	// register ArgClass
+	r = engine->RegisterObjectType("ArgClass", sizeof(ArgClass), asOBJ_CLASS_C); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_ADDREF, "void f()", asMETHOD(ArgClass, AddRef), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_RELEASE, "void f()", asMETHOD(ArgClass, Release), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_ALLOC, "ArgClass &f(uint)", asFUNCTION(ArgClass::Allocate), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_FREE, "void f(ArgClass &in)", asFUNCTION(ArgClass::DeAllocate), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ArgClass::Construct), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectMethod("ArgClass", "float GetWeight() const", asMETHOD(ArgClass,GetWeight), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("ArgClass", "void SetWeight(float)", asMETHOD(ArgClass,SetWeight), asCALL_THISCALL); assert(r >= 0);
+
+	// register CallerClass
+	r = engine->RegisterObjectType("CallerClass", sizeof(CallerClass), asOBJ_CLASS_C); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_ADDREF, "void f()", asMETHOD(CallerClass, AddRef), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_RELEASE, "void f()", asMETHOD(CallerClass, Release), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_ALLOC, "CallerClass &f(uint)", asFUNCTION(CallerClass::Allocate), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_FREE, "void f(CallerClass &in)", asFUNCTION(CallerClass::DeAllocate), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CallerClass::Construct), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectMethod("CallerClass", "void DoSomething(const ArgClass &inout, Point &out)", asMETHOD(CallerClass,DoSomething), asCALL_THISCALL); assert(r >= 0);
+
+	// setup output stream
+	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+	// add our script
+	r = engine->AddScriptSection(0, "script", script3, strlen(script3), 0); assert( r >= 0 );
+	r = engine->Build(0);
+	if( r < 0 )
+	{
+		return false;
+	}
+
+	asIScriptContext *ctx;
+	r = engine->ExecuteString(0, "TestScript()", &ctx);
+
+	if( r != asEXECUTION_FINISHED )
+	{
+		if( r == asEXECUTION_EXCEPTION )
+		{
+			int c;
+			int row = ctx->GetExceptionLineNumber(&c);
+			printf("Exception\n");
+			printf("line: %d, %d\n", row, c);
+			printf("desc: %s\n", ctx->GetExceptionString());
+		}		
+		printf("%s: Execution failed\n", TESTNAME);
+		return false;
+	}
+
+	if( ctx )
+	{
+		ctx->Release();
+	}
+
+	engine->Release();
+
+	return CallerClass::m_success;
 }
 
 } // namespace

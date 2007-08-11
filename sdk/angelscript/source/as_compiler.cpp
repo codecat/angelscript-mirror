@@ -872,8 +872,11 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				// Copy the handle
 				ctx->bc.InstrWORD(BC_PSF, (asWORD)offset);
 				ctx->bc.InstrPTR(BC_REFCPY, builder->module->RefObjectType(ctx->type.dataType.GetObjectType()));
+				ctx->bc.Pop(PTR_SIZE);
+				ctx->bc.InstrWORD(BC_PSF, (asWORD)offset);
 
 				dt.MakeHandle(false);
+				dt.MakeReference(true);
 				ctx->type.SetVariable(dt, offset, true);
 			}
 
@@ -944,8 +947,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 	if( param.IsReference() || param.IsObject() )
 	{
 		// &inout parameter may leave the reference on the stack already
-		if( !engine->allowUnsafeReferences ||
-			!param.IsReference() || refType != 3 )
+		if( refType != 3 )
 		{
 			ctx->bc.Pop(PTR_SIZE);
 			ctx->bc.InstrSHORT(BC_VAR, ctx->type.stackOffset);
@@ -992,14 +994,12 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 		{
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() )
 			{
-				if( !engine->allowUnsafeReferences ||
-					descr->inOutFlags[n] != 3 )
+				if( descr->inOutFlags[n] != 3 )
 					bc->InstrWORD(BC_GETOBJREF, (asWORD)offset);
 				if( args[n]->type.dataType.IsObjectHandle() )
 					bc->InstrWORD(BC_ChkNullS, (asWORD)offset);
 			}
-			else if( !engine->allowUnsafeReferences ||
- 			         descr->inOutFlags[n] != 3 )
+			else if( descr->inOutFlags[n] != 3 )
 				bc->InstrWORD(BC_GETREF, (asWORD)offset);
 		}
 		else if( descr->parameterTypes[n].IsObject() )
