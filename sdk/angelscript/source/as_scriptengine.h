@@ -271,7 +271,7 @@ public:
 
 	// Garbage collector
 	asCArray<asCGCObject*> gcObjects;
-	asCArray<asCGCObject*> unmarked;
+	asCArray<asCGCObject*> toMark;
 	int gcState;
 	asUINT gcIdx;
 

@@ -57,6 +57,7 @@
 
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
+#define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM  "The destructor must not have any parameters"
 
 #define TXT_EMPTY_CHAR_LITERAL            "Empty character literal"
 #define TXT_EMPTY_SWITCH                  "Empty switch statement"

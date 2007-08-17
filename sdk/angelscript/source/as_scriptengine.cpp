@@ -2726,7 +2726,7 @@ int asCScriptEngine::GarbageCollect(bool doFullCycle)
 	{
 		// Reset GC
 		gcState = 0;
-		unmarked.SetLength(0);
+		toMark.SetLength(0);
 
 		int r;
 		while( (r = GCInternal()) == 1 );
@@ -2785,22 +2785,34 @@ int asCScriptEngine::GCInternal()
 		{
 			// If the refCount has reached 1, then only the GC still holds a
 			// reference to the object, thus we don't need to worry about the
-			// application touching the objects during collection
+			// application touching the objects during collection.
 
-			// Destroy obvious garbage, i.e. objects with refCount == 1.
-			// If an object is released, then repeat since
-			// it may have created another
+			// Destroy all objects that have refCount == 1. If any objects are
+			// destroyed, go over the list again, because it may have made more
+			// objects reach refCount == 1.
 			while( ++gcIdx < gcObjects.GetLength() )
 			{
 				if( gcObjects[gcIdx]->gc.refCount == 1 )
 				{
 					// Release the object immediately
-					gcObjects[gcIdx]->Release();
-					if( gcIdx == gcObjects.GetLength() - 1 )
-						gcObjects.PopLast();
+
+					// Make sure the refCount is really 0, because the 
+					// destructor may have increased the refCount again.
+
+					if( gcObjects[gcIdx]->Release() == 0 )
+					{
+						if( gcIdx == gcObjects.GetLength() - 1 )
+							gcObjects.PopLast();
+						else
+							gcObjects[gcIdx] = gcObjects.PopLast();
+						gcIdx--;
+					}
 					else
-						gcObjects[gcIdx] = gcObjects.PopLast();
-					gcIdx--;
+					{
+						// Since the object was resurrected in the 
+						// destructor, we must add our reference again
+						gcObjects[gcIdx]->AddRef();
+					}
 
 					gcState = destroyGarbage_haveMore;
 
@@ -2819,6 +2831,16 @@ int asCScriptEngine::GCInternal()
 
 		case clearCounters:
 		{
+			// TODO: gc
+			// Build a map of objects that will be checked, the map will
+			// hold the object pointer as key, and the gcCount and the 
+			// objects index in the gcObjects as value. As objects are 
+			// added to the map the gcFlag must be set in the objects.
+
+			// This step can be incremental as newly created objects are
+			// added to the end of the list.
+			// :ODOT
+
 			// Clear the GC counter for the objects that are still alive.
 			// This counter will be used to count the references between
 			// objects on the list.
@@ -2844,14 +2866,33 @@ int asCScriptEngine::GCInternal()
 
 		case countReferences_loop:
 		{
+			// TODO: gc
+			// Count only the references for the entries in the map.
+			// If an entry has it's gcFlag cleared then its references won't 
+			// be counted, because then we know the object is alive.
+
+			// Instead of calling AddUnmarkedReference we should call EnumReferences, 
+			// which in turn calls NotifyGCOfReference on the engine. NotifyGCOfReference
+			// should then update the gcCount in the map if the object is in there.
+
+			// The map structure must be changed to permit multiple cursors.
+			// :ODOT
+
 			// It is possible that the application alters the reference count
 			// after we have cleared the gcCounter, so we need to detect this.
-			// What happens if the application creates a new object?
 
-			// Count references between objects on the list
+			// Any new object created during garbage collection will have the 
+			// flag cleared and the gcCount == -1, thus is automatically 
+			// considered alive.
+
+			// Count references between objects on the list. If the number of
+			// references counted during this step equals the refCount 
+			// (gcCount == 0), then it means that all the references reachable 
+			// from the objects referenced by the GC, thus is a potential 
+			// circular reference.
 			while( ++gcIdx < gcObjects.GetLength() )
 			{
-				if( !(gcObjects[gcIdx]->gc.refCount & 0x8000000) )
+				if( gcObjects[gcIdx]->gc.refCount & 0x80000000 )
 				{
 					gcObjects[gcIdx]->CountReferences();
 
@@ -2873,22 +2914,25 @@ int asCScriptEngine::GCInternal()
 
 		case detectGarbage_loop1:
 		{
-			// If an object's refCount decreased during the counting it will still be marked as live, since the gcCount will not reach 0
-			// If an object's refCount increased during the counting it will still be marked as live, since the flag will be cleared
+			// TODO:
+			// Only add objects from the map to the list of objects to mark as alive.
+			// Objects that are not in the map, that is objects that have been created 
+			// since the map was created, won't be considered as garbage anyway.
+			// :ODOT
 
-			// It is possible that the application has altered the reference count
-			// after it was checked. We need to mark those objects as live as well.
-			// What happens if an object is created?
+			// Whenever an object's reference is modified the gcFlag is cleared, 
+			// which the GC interprets as if the object is live.
 
-			// Any objects that have gcCount > 0 is referenced
-			// from outside the list. Mark them and all the
-			// objects they reference as live objects
+			// Any objects that have gcCount > 0 is referenced by someone else than
+			// the objects referenced by the GC, thus is considered alive.
+
+			// Put all objects that are alive in a list of objects to mark as alive
 			while( ++gcIdx < gcObjects.GetLength() )
 			{
 				// Objects that have been tampered with should also be marked as live
 				if( (gcObjects[gcIdx]->gc.gcCount != 0 || !(gcObjects[gcIdx]->gc.refCount & 0x80000000)) && gcObjects[gcIdx]->gc.gcCount != -1 )
 				{
-					unmarked.PushLast(gcObjects[gcIdx]);
+					toMark.PushLast(gcObjects[gcIdx]);
 
 					// Allow the application to work a little
 					return 1;
@@ -2901,19 +2945,26 @@ int asCScriptEngine::GCInternal()
 
 		case detectGarbage_loop2:
 		{
-			// It is possible that the application has altered the reference count
-			// after it was checked. We need to mark those objects as live as well.
-			// What happens if an object is created?
+			// TODO:
+			// An object is marked as alive by removing it from the map.
 
-			while( unmarked.GetLength() )
+			// Instead of calling AddUnmarkedReference we should call EnumReferences, 
+			// which in turn calls NotifyGCOfReference on the engine. NotifyGCOfReference
+			// should then add the object to the list, if it is in the map.
+			// :TODO
+
+			// Mark all of the objects in the list as alive by setting gcCount to -1.
+			// For each object marked as alive, add all the objects it references to 
+			// the list as well (unless it has already been marked as alive.)
+			while( toMark.GetLength() )
 			{
-				asCGCObject *gcObj = unmarked.PopLast();
+				asCGCObject *gcObj = toMark.PopLast();
 
 				// Mark the object as alive
 				gcObj->gc.gcCount = -1;
 
 				// Add unmarked references to the list
-				gcObj->AddUnmarkedReferences(unmarked);
+				gcObj->AddUnmarkedReferences(toMark);
 
 				// Allow the application to work a little
 				return 1;
@@ -2925,6 +2976,10 @@ int asCScriptEngine::GCInternal()
 
 		case verifyUnmarked:
 		{
+			// TODO:
+			// Only check the objects still in the map
+			// :ODOT
+
 			// In this step we must make sure that none of the still unmarked objects
 			// has been touched by the application. If they have then we must run the
 			// detectGarbage loop once more.
@@ -2954,6 +3009,12 @@ int asCScriptEngine::GCInternal()
 		case breakCircles_loop:
 		case breakCircles_haveGarbage:
 		{
+			// TODO:
+			// All objects in the map should now have gcCount == 0.
+			// When all circular references have been broken, the map 
+			// should be destroyed.
+			// :ODOT
+
 			// Any objects still with gcCount == 0 is garbage involved
 			// in circular references. Break the circular references, by
 			// having the objects release all their member handles.

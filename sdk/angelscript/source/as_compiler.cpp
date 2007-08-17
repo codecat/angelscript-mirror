@@ -133,6 +133,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	//----------------------------------------------
 	// Examine return type
 	bool isConstructor = false;
+	bool isDestructor = false;
 	asCDataType returnType;
 	if( func->firstChild->nodeType == snDataType )
 	{
@@ -142,7 +143,10 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	else
 	{
 		returnType = asCDataType::CreatePrimitive(ttVoid, false);
-		isConstructor = true;
+		if( func->firstChild->tokenType == ttBitNot )
+			isDestructor = true;
+		else
+			isConstructor = true;
 	}
 
 	//----------------------------------------------

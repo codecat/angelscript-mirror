@@ -1392,22 +1392,32 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 {
 	// Find name 
 	bool isConstructor = false;
+	bool isDestructor = false;
 	asCScriptNode *n = 0;
 	if( node->firstChild->nodeType == snDataType )
 		n = node->firstChild->next->next;
 	else
 	{
-		n = node->firstChild;
-		isConstructor = true;
+		// If the first node is a ~ token, then we know it is a destructor
+		if( node->firstChild->tokenType == ttBitNot )
+		{
+			n = node->firstChild->next;
+			isDestructor = true;
+		}
+		else
+		{
+			n = node->firstChild;
+			isConstructor = true;
+		}
 	}
 
 	// Check for name conflicts
 	GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
-	if( !isConstructor )
+	if( !isConstructor && !isDestructor )
 		CheckNameConflict(name.AddressOf(), n, file);
 	else
 	{
-		// Verify that the name of the function is the same as the class
+		// Verify that the name of the constructor/destructor is the same as the class
 		if( name != objType->name )
 		{
 			int r, c;
@@ -1423,14 +1433,17 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 
 		func->script  = file;
 		func->node    = node;
-		func->name    = name;
+		if( isDestructor )
+			func->name = "~" + name;
+		else
+			func->name = name;
 		func->objType = objType;
 		func->funcId  = funcID;
 	}
 
 	// Initialize a script function object for registration
 	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
-	if( !isConstructor )
+	if( !isConstructor && !isDestructor )
 	{
 		returnType = CreateDataTypeFromNode(node->firstChild, file);
 		returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next, file, 0, 0);
@@ -1447,6 +1460,15 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		c = c->next->next;
 		if( c && c->nodeType == snIdentifier )
 			c = c->next;
+	}
+
+	// Destructors may not have any parameters
+	if( isDestructor && count > 0 )
+	{
+		int r, c;
+		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+		WriteError(file->name.AddressOf(), TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM, r, c);
 	}
 
 	asCArray<asCDataType> parameterTypes(count);
@@ -1525,6 +1547,8 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 			else
 				objType->beh.constructors.PushLast(funcID);
 		}
+		else if( isDestructor )
+			objType->beh.destruct = funcID;
 		else
 			objType->methods.PushLast(funcID);
 	}

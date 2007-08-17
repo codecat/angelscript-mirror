@@ -126,6 +126,7 @@ namespace TestInt8              { bool Test(); }
 namespace TestScriptMath        { bool Test(); }
 namespace TestVarType           { bool Test(); }
 namespace TestDictionary        { bool Test(); }
+namespace TestDestructor        { bool Test(); }
 
 
 #include "utils.h"
@@ -165,6 +166,8 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestDestructor::Test()        ) goto failed; else printf("-- TestDestructor passed\n");
+	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
@@ -224,7 +227,6 @@ int main(int argc, char **argv)
 	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
-	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestVirtualMethod()           ) goto failed; else printf("-- TestVirtualMethod passed\n");
 	if( TestMultipleInheritance()     ) goto failed; else printf("-- TestMultipleInheritance passed\n");
 	if( TestVector3_2::Test()         ) goto failed; else printf("-- TestVector3_2 passed\n");

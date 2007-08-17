@@ -219,6 +219,9 @@
 				RelativePath="..\..\source\test_debug.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_destructor.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_dict.cpp">
 			</File>
 			<File

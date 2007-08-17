@@ -1108,7 +1108,7 @@ int Build(const char *module);
 
 <p>If Build() is to be called again new code sections must first be added again. Registered data types and functions are remembered by the engine though.</p>
 
-<p>Any compiler messages are sent to the message stream set with SetCommonMessageStream(). If there are no errors or warnings, no messages will be sent to the stream.</p>
+<p>Any compiler messages are sent to the message callback function set with SetMessageCallback(). If there are no errors or warnings, no messages will be sent to the callback function.</p>
 
 <h3>Parameters</h3>
 

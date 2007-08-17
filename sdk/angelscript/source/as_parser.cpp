@@ -414,14 +414,15 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	GetToken(&t);
 	RewindTo(&t);
 
-	// A class constructor can start with identifier followed by parenthesis
+	// A class constructor starts with identifier followed by parenthesis
+	// A class destructor starts with the ~ token
 	if( isMethod )
 	{
 		sToken t1, t2;
 		GetToken(&t1);
 		GetToken(&t2);
 		RewindTo(&t);
-		if( t1.type == ttIdentifier && t2.type == ttOpenParanthesis )
+		if( t1.type == ttIdentifier && t2.type == ttOpenParanthesis || t1.type == ttBitNot )
 			return true;
 	}
 
@@ -491,17 +492,25 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunction);
 
-	// If this is a class constructor then no return type will be declared
 	sToken t1,t2;
 	GetToken(&t1);
 	GetToken(&t2);
 	RewindTo(&t1);
-	if( !isMethod || t2.type != ttOpenParanthesis )
+
+	// If it is a global function, or a method, except constructor and destructor, then the return type is parsed
+	if( !isMethod || (t1.type != ttBitNot && t2.type != ttOpenParanthesis) )
 	{
 		node->AddChildLast(ParseType(false));
 		if( isSyntaxError ) return node;
 
 		node->AddChildLast(ParseTypeMod(false));
+		if( isSyntaxError ) return node;
+	}
+
+	// If this is a class destructor then it starts with ~, and no return type is declared
+	if( isMethod && t1.type == ttBitNot )
+	{
+		node->AddChildLast(ParseToken(ttBitNot));
 		if( isSyntaxError ) return node;
 	}
 

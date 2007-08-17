@@ -46,6 +46,32 @@ void DestrMySecondObj(CMySecondObj &obj)
 	obj.~CMySecondObj();
 }
 
+const char *script1 =
+"class InternalClass            \n"
+"{                              \n"
+"	InternalClass()             \n"
+"	{                           \n"
+"		m_x = 3;                \n"
+"       m_y = 773456;           \n"
+"	}                           \n"
+"                               \n"
+"	int8 m_x;                   \n"
+"   int m_y;                    \n"
+"}                              \n"
+"class MyClass                  \n"
+"{                              \n"
+"	MyClass()                   \n"
+"	{                           \n"
+"      m_c = InternalClass();   \n"
+"	}                           \n"
+"	void Test()                 \n"
+"	{                           \n"
+"		Assert( m_c.m_x == 3 ); \n"
+"       Assert( m_c.m_y == 773456 ); \n"
+"	}                           \n"
+"	InternalClass m_c;          \n"
+"}                              \n";
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -67,8 +93,30 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("MySecondObj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstrMySecondObj, (CMySecondObj &), void), asCALL_CDECL_OBJLAST);	assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MySecondObj", asBEHAVE_CONSTRUCT, "void f(MyObj &in)", asFUNCTIONPR(ConstrMySecondObj, (CMyObj &, CMySecondObj &), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MySecondObj", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestrMySecondObj), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	
+
 	engine->ExecuteString(0, "MyObj obj; {MySecondObj secObj(obj);}");
+	engine->Release();
+
+
+	// test to make sure default constructors of script classes are called
+	COutStream out;
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC ); assert( r >= 0 );
+	engine->AddScriptSection( 0, "test", script1, strlen(script1) );
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	r = engine->Build(0);
+	if( r < 0 )
+	{
+		fail = true;
+		printf("%s: Failed to compile\n", TESTNAME);
+	}
+
+	r = engine->ExecuteString(0, "{ MyClass test; test.Test(); }");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
 	engine->Release();
 
 

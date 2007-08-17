@@ -561,7 +561,7 @@ void asCArrayObject::CountReferences()
 	}
 }
 
-void asCArrayObject::AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked)
+void asCArrayObject::AddUnmarkedReferences(asCArray<asCGCObject*> &toMark)
 {
 	asCObjectType *subType = gc.objType->subType;
 	if( subType && subType->flags & asOBJ_POTENTIAL_CIRCLE )
@@ -570,7 +570,7 @@ void asCArrayObject::AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked)
 		for( asUINT n = 0; n < buffer->numElements; n++ )
 		{
 			if( d[n] && d[n]->gc.gcCount == 0 )
-				unmarked.PushLast(d[n]);
+				toMark.PushLast(d[n]);
 		}
 	}
 }

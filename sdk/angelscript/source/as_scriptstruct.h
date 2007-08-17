@@ -71,7 +71,7 @@ public:
 	// GC methods
 	void Destruct();
 	void CountReferences();
-	void AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked);
+	void AddUnmarkedReferences(asCArray<asCGCObject*> &toMark);
 	void ReleaseAllHandles();
 
 //protected:
@@ -82,6 +82,7 @@ public:
 	void CopyHandle(asDWORD *src, asDWORD *dst, asCObjectType *objType, asCScriptEngine *engine);
 
 	asSGCObject gc;
+	bool isDestructCalled;
 };
 
 void ScriptStruct_Construct(asCObjectType *objType, asCScriptStruct *self);

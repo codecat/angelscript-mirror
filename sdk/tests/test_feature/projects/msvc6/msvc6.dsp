@@ -218,6 +218,10 @@ SOURCE=..\..\source\test_debug.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_destructor.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_dict.cpp
 # End Source File
 # Begin Source File

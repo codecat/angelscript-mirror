@@ -83,7 +83,7 @@ public:
 	// Necessary GC methods
 	void Destruct();
 	void CountReferences();
-	void AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked);
+	void AddUnmarkedReferences(asCArray<asCGCObject*> &toMark);
 	void ReleaseAllHandles();
 
 //protected:

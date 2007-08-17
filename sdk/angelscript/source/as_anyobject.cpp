@@ -329,12 +329,12 @@ void asCAnyObject::CountReferences()
 		((asCGCObject*)value)->gc.gcCount--;
 }
 
-void asCAnyObject::AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked)
+void asCAnyObject::AddUnmarkedReferences(asCArray<asCGCObject*> &toMark)
 {
 	const asCDataType *valueType = gc.objType->engine->GetDataTypeFromTypeId(valueTypeId);
 
 	if( value && valueType && valueType->GetObjectType()->flags & asOBJ_POTENTIAL_CIRCLE )
-		unmarked.PushLast((asCGCObject*)value);
+		toMark.PushLast((asCGCObject*)value);
 }
 
 void asCAnyObject::ReleaseAllHandles()

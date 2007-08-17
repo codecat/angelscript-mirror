@@ -120,6 +120,8 @@ asCScriptStruct::asCScriptStruct(asCObjectType *ot)
 {
 	gc.Init(ot);
 
+	isDestructCalled = false;
+
 	// Construct all properties
 	asCScriptEngine *engine = gc.objType->engine;
 	for( asUINT n = 0; n < gc.objType->properties.GetLength(); n++ )
@@ -180,6 +182,34 @@ int asCScriptStruct::AddRef()
 
 int asCScriptStruct::Release()
 {
+	// Call the script destructor behaviour if the reference counter is 1.
+	if( gc.refCount == 1 && !isDestructCalled )
+	{
+		// Make sure the destructor is called once only, even if the  
+		// reference count is increased and then decreased again
+		isDestructCalled = true;
+
+		// Call the destructor
+		int funcIndex = gc.objType->beh.destruct;
+		if( funcIndex )
+		{
+			// Setup a context for calling the default constructor
+			asIScriptContext *ctx;
+			asCScriptEngine *engine = gc.objType->engine;
+			int r = engine->CreateContext(&ctx, true);
+			if( r >= 0 )
+				r = ctx->Prepare(funcIndex);
+			if( r >= 0 )
+			{
+				ctx->SetObject(this);
+				ctx->Execute();
+
+				// There's not much to do if the execution doesn't finish, so we just ignore the result
+			}
+			ctx->Release();	
+		}
+	}
+
 	return gc.Release();
 }
 
@@ -238,7 +268,7 @@ void asCScriptStruct::CountReferences()
 	}
 }
 
-void asCScriptStruct::AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked)
+void asCScriptStruct::AddUnmarkedReferences(asCArray<asCGCObject*> &toMark)
 {
 	for( asUINT n = 0; n < gc.objType->properties.GetLength(); n++ )
 	{
@@ -247,7 +277,7 @@ void asCScriptStruct::AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked)
 		{
 			asCGCObject *ptr = *(asCGCObject**)(((char*)this) + prop->byteOffset);
 			if( ptr && ptr->gc.gcCount == 0 )
-				unmarked.PushLast(ptr);
+				toMark.PushLast(ptr);
 		}
 	}
 }
@@ -333,7 +363,7 @@ void *asCScriptStruct::AllocateObject(asCObjectType *objType, asCScriptEngine *e
 
 	if( objType->flags & asOBJ_SCRIPT_STRUCT )
 	{
-		ScriptStruct_Construct(objType, (asCScriptStruct*)ptr);
+		ConstructScriptStruct(ptr, objType, engine);
 	}
 	else if( objType->flags & asOBJ_SCRIPT_ARRAY )
 	{

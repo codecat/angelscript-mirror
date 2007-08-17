@@ -64,45 +64,64 @@ const bits Flag1 = 0x01;
 <a name="structs">
 <h2>Classes</h2>
 
-<p>In AngelScript the script writer may declare script classes. The syntax is similar to that of C++, except the public, protected, and private keywords are not available, and currently there is no support for inheritance. All the class methods must be declared with their implementation, like in Java.</p>
+<p>In AngelScript the script writer may declare script classes. The syntax is
+similar to that of C++, except the public, protected, and private keywords are
+not available, and currently there is no support for inheritance. All the class
+methods must be declared with their implementation, like in Java.</p>
 
-<p>With classes the script writer can declare new data types that hold groups of variables and methods to manipulate them.</p>
+<p>The default constructor and destructor are not needed, unless specific
+logic is wanted. AngelScript will take care of the proper initialization of
+members upon construction, and releasing members upon destruction.</p>
+
+<p>With classes the script writer can declare new data types that hold groups
+of variables and methods to manipulate them.</p>
 
 <pre class=border>
 <font color=green>// The class declaration</font>
 class MyClass
 {
   <font color=green>// The default constructor</font>
-  MyClass() 
+  MyClass()
   {
     this.a = 0;
-  } 
-  
+  }
+
+  <font color=green>// Destructor</font>
+  ~MyClass()
+  {
+  }
+
   <font color=green>// Another constructor</font>
-  MyClass(int a) 
+  MyClass(int a)
   {
     this.a = a;
-  } 
-  
+  }
+
   <font color=green>// A class method</font>
-  void DoSomething() 
+  void DoSomething()
   {
     this.a *= 2;
   }
-  
+
   <font color=green>// A class property</font>
   int a;
 }
 </pre>
 
+<p>Note, that since AngelScript uses automatic memory management, it can be
+difficult to know exactly when the destructor is called, so you shouldn't rely
+on the destructor being called at a specific moment. AngelScript will also
+call the destructor only once, even if the object is resurrected by adding a
+reference to it while executing the destructor.</p>
+
 <a name="interface">
 <h2>Interfaces</h2>
 
-<p>An interface works like a contract, the classes that implements an interface 
+<p>An interface works like a contract, the classes that implements an interface
 are guaranteed to implement the methods declared in the interface. This allows
-for the use of polymorphism, in that a function can specify that it wants an 
-object handle to an object that implements a certain interface. The function 
-can then call the methods on this interface without having to know what the 
+for the use of polymorphism, in that a function can specify that it wants an
+object handle to an object that implements a certain interface. The function
+can then call the methods on this interface without having to know what the
 exact type of the object that is working with.</p>
 
 <pre class=border>

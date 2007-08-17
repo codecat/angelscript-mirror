@@ -104,6 +104,14 @@ int asCGCObject::AddRef()
 
 int asCGCObject::Release()
 {
+	// If the object is a script struct, then we must call the 
+	// asCScriptStruct's Release method, since it is implementing 
+	// the call of the script class destructor.
+	if( gc.objType->flags & asOBJ_SCRIPT_STRUCT )
+	{
+		return ((asCScriptStruct*)this)->Release();
+	}
+
 	return gc.Release();
 }
 
@@ -151,14 +159,14 @@ void asCGCObject::CountReferences()
 		((asCArrayObject*)this)->CountReferences();
 }
 
-void asCGCObject::AddUnmarkedReferences(asCArray<asCGCObject*> &unmarked)
+void asCGCObject::AddUnmarkedReferences(asCArray<asCGCObject*> &toMark)
 {
 	if( gc.objType->flags & asOBJ_SCRIPT_ANY )
-		((asCAnyObject*)this)->AddUnmarkedReferences(unmarked);
+		((asCAnyObject*)this)->AddUnmarkedReferences(toMark);
 	else if( gc.objType->flags & asOBJ_SCRIPT_STRUCT )
-		((asCScriptStruct*)this)->AddUnmarkedReferences(unmarked);
+		((asCScriptStruct*)this)->AddUnmarkedReferences(toMark);
 	else if( gc.objType->flags & asOBJ_SCRIPT_ARRAY )
-		((asCArrayObject*)this)->AddUnmarkedReferences(unmarked);
+		((asCArrayObject*)this)->AddUnmarkedReferences(toMark);
 }
 
 void asCGCObject::ReleaseAllHandles()
