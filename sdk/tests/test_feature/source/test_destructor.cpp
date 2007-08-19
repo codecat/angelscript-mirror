@@ -72,7 +72,7 @@ int count = 0;
 void Print(asIScriptGeneric *gen)
 {
 	std::string *str = (std::string*)gen->GetArgAddress(0);
-	printf("%s\n", str->c_str());
+//	printf("%s\n", str->c_str());
 	count++;
 }
 

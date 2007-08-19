@@ -3286,7 +3286,8 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 	else
 	{
 		// Call the destructor
-		CallObjectMethod(obj, objType->beh.destruct);
+		if( objType->beh.destruct )
+			CallObjectMethod(obj, objType->beh.destruct);
 
 		// Then free the memory
 		CallFree(objType, obj);
