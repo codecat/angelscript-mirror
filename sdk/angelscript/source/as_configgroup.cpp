@@ -168,9 +168,10 @@ int asCConfigGroup::SetModuleAccess(const char *module, bool hasAccess)
 	else
 	{
 		asCString mod(module ? module : "");
-		if( moduleAccess.MoveTo(mod) )
+		asSMapNode<asCString,bool> *cursor = 0;
+		if( moduleAccess.MoveTo(&cursor, mod) )
 		{
-			moduleAccess.GetValue() = hasAccess;
+			moduleAccess.GetValue(cursor) = hasAccess;
 		}
 		else
 		{
@@ -184,8 +185,9 @@ int asCConfigGroup::SetModuleAccess(const char *module, bool hasAccess)
 bool asCConfigGroup::HasModuleAccess(const char *module)
 {
 	asCString mod(module ? module : "");
-	if( moduleAccess.MoveTo(mod) )
-		return moduleAccess.GetValue();
+	asSMapNode<asCString,bool> *cursor = 0;
+	if( moduleAccess.MoveTo(&cursor, mod) )
+		return moduleAccess.GetValue(cursor);
 	
 	return defaultAccess;
 }

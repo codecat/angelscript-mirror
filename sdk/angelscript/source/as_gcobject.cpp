@@ -47,7 +47,6 @@ asSGCObject::asSGCObject()
 {
 	refCount = 1;
 	objType = 0;
-	gcCount = -1; // Initially marked as live
 }
 
 asSGCObject::~asSGCObject()
@@ -83,6 +82,21 @@ int asSGCObject::Release()
 		return 0;
 	}
 	return refCount;
+}
+
+int asSGCObject::GetRefCount()
+{
+	return refCount & 0x7FFFFFFF;
+}
+
+void asSGCObject::SetFlag()
+{
+	refCount |= 0x80000000;
+}
+
+bool asSGCObject::GetFlag()
+{
+	return (refCount & 0x80000000) ? true : false;
 }
 
 asCGCObject::asCGCObject()
@@ -149,26 +163,6 @@ void asCGCObject::Destruct()
 		((asCArrayObject*)this)->Destruct();
 }
 
-void asCGCObject::CountReferences()
-{
-	if( gc.objType->flags & asOBJ_SCRIPT_ANY )
-		((asCAnyObject*)this)->CountReferences();
-	else if( gc.objType->flags & asOBJ_SCRIPT_STRUCT )
-		((asCScriptStruct*)this)->CountReferences();
-	else if( gc.objType->flags & asOBJ_SCRIPT_ARRAY )
-		((asCArrayObject*)this)->CountReferences();
-}
-
-void asCGCObject::AddUnmarkedReferences(asCArray<asCGCObject*> &toMark)
-{
-	if( gc.objType->flags & asOBJ_SCRIPT_ANY )
-		((asCAnyObject*)this)->AddUnmarkedReferences(toMark);
-	else if( gc.objType->flags & asOBJ_SCRIPT_STRUCT )
-		((asCScriptStruct*)this)->AddUnmarkedReferences(toMark);
-	else if( gc.objType->flags & asOBJ_SCRIPT_ARRAY )
-		((asCArrayObject*)this)->AddUnmarkedReferences(toMark);
-}
-
 void asCGCObject::ReleaseAllHandles()
 {
 	if( gc.objType->flags & asOBJ_SCRIPT_ANY )
@@ -177,6 +171,16 @@ void asCGCObject::ReleaseAllHandles()
 		((asCScriptStruct*)this)->ReleaseAllHandles();
 	else if( gc.objType->flags & asOBJ_SCRIPT_ARRAY )
 		((asCArrayObject*)this)->ReleaseAllHandles();
+}
+
+void asCGCObject::EnumReferences(asIScriptEngine *engine)
+{
+	if( gc.objType->flags & asOBJ_SCRIPT_ANY )
+		((asCAnyObject*)this)->EnumReferences(engine);
+	else if( gc.objType->flags & asOBJ_SCRIPT_STRUCT )
+		((asCScriptStruct*)this)->EnumReferences(engine);
+	else if( gc.objType->flags & asOBJ_SCRIPT_ARRAY )
+		((asCArrayObject*)this)->EnumReferences(engine);
 }
 
 END_AS_NAMESPACE

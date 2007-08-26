@@ -69,8 +69,7 @@ public:
 
 	// GC methods
 	void Destruct();
-	void CountReferences();
-	void AddUnmarkedReferences(asCArray<asCGCObject*> &toMark);
+	void EnumReferences(asIScriptEngine *engine);
 	void ReleaseAllHandles();
 
 protected:

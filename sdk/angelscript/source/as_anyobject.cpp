@@ -321,20 +321,11 @@ void asCAnyObject::Destruct()
 	userFree(this);
 }
 
-void asCAnyObject::CountReferences()
+void asCAnyObject::EnumReferences(asIScriptEngine *engine)
 {
-	const asCDataType *valueType = gc.objType->engine->GetDataTypeFromTypeId(valueTypeId);
-
-	if( value && valueType && valueType->GetObjectType()->flags & asOBJ_POTENTIAL_CIRCLE )
-		((asCGCObject*)value)->gc.gcCount--;
-}
-
-void asCAnyObject::AddUnmarkedReferences(asCArray<asCGCObject*> &toMark)
-{
-	const asCDataType *valueType = gc.objType->engine->GetDataTypeFromTypeId(valueTypeId);
-
-	if( value && valueType && valueType->GetObjectType()->flags & asOBJ_POTENTIAL_CIRCLE )
-		toMark.PushLast((asCGCObject*)value);
+	// If we're holding a reference, we'll notify the garbage collector of it
+	if( value && (valueTypeId & asTYPEID_MASK_OBJECT) )
+		((asCScriptEngine*)engine)->GCEnumCallback(value);
 }
 
 void asCAnyObject::ReleaseAllHandles()

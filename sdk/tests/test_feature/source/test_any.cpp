@@ -106,7 +106,7 @@ bool Test()
 	CBufferedOutStream bout;
 
 	// ---------------------------------------------
- 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_GENERIC); assert( r >= 0 );
@@ -156,6 +156,11 @@ bool Test()
 		printf("%s: Execution failed\n", TESTNAME);
 	}
 	if( ctx ) ctx->Release();
+	
+	int gc = engine->GetObjectsInGarbageCollectorCount();
+	engine->GarbageCollect();
+	gc = engine->GetObjectsInGarbageCollectorCount();
+
 	engine->Release();
 
 	//-------------------------------------------------------

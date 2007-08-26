@@ -166,13 +166,13 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestDestructor::Test()        ) goto failed; else printf("-- TestDestructor passed\n");
 	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
 	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
-	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestVarType::Test()           ) goto failed; else printf("-- TestVarType passed\n");
 	if( TestScriptMath::Test()        ) goto failed; else printf("-- TestScriptMath passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");

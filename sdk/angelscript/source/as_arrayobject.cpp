@@ -547,30 +547,16 @@ void asCArrayObject::Destruct()
 	DELETE(this, asCArrayObject);
 }
 
-void asCArrayObject::CountReferences()
+void asCArrayObject::EnumReferences(asIScriptEngine *engine)
 {
-	asCObjectType *subType = gc.objType->subType;
-	if( subType && subType->flags & asOBJ_POTENTIAL_CIRCLE )
+	// If the array is holding handles, then we need to notify the GC of them
+	if( gc.objType->subType )
 	{
-		asCGCObject **d = (asCGCObject**)buffer->data;
+		void **d = (void**)buffer->data;
 		for( asUINT n = 0; n < buffer->numElements; n++ )
 		{
 			if( d[n] )
-				d[n]->gc.gcCount--;
-		}
-	}
-}
-
-void asCArrayObject::AddUnmarkedReferences(asCArray<asCGCObject*> &toMark)
-{
-	asCObjectType *subType = gc.objType->subType;
-	if( subType && subType->flags & asOBJ_POTENTIAL_CIRCLE )
-	{
-		asCGCObject **d = (asCGCObject**)buffer->data;
-		for( asUINT n = 0; n < buffer->numElements; n++ )
-		{
-			if( d[n] && d[n]->gc.gcCount == 0 )
-				toMark.PushLast(d[n]);
+				((asCScriptEngine*)engine)->GCEnumCallback(d[n]);
 		}
 	}
 }

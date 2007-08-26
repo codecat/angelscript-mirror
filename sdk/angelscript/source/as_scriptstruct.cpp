@@ -183,7 +183,7 @@ int asCScriptStruct::AddRef()
 int asCScriptStruct::Release()
 {
 	// Call the script destructor behaviour if the reference counter is 1.
-	if( gc.refCount == 1 && !isDestructCalled )
+	if( gc.GetRefCount() == 1 && !isDestructCalled )
 	{
 		// Make sure the destructor is called once only, even if the  
 		// reference count is increased and then decreased again
@@ -254,30 +254,17 @@ void *asCScriptStruct::GetPropertyPointer(asUINT prop)
 	return (void*)(((char*)this) + gc.objType->properties[prop]->byteOffset);
 }
 
-void asCScriptStruct::CountReferences()
+void asCScriptStruct::EnumReferences(asIScriptEngine *engine)
 {
+	// We'll notify the GC of all object handles that we're holding
 	for( asUINT n = 0; n < gc.objType->properties.GetLength(); n++ )
 	{
 		asCProperty *prop = gc.objType->properties[n];
-		if( prop->type.IsObject() && (prop->type.GetObjectType()->flags & asOBJ_POTENTIAL_CIRCLE) )
+		if( prop->type.IsObject() )
 		{
 			asCGCObject *ptr = *(asCGCObject**)(((char*)this) + prop->byteOffset);
 			if( ptr )
-				ptr->gc.gcCount--;
-		}
-	}
-}
-
-void asCScriptStruct::AddUnmarkedReferences(asCArray<asCGCObject*> &toMark)
-{
-	for( asUINT n = 0; n < gc.objType->properties.GetLength(); n++ )
-	{
-		asCProperty *prop = gc.objType->properties[n];
-		if( prop->type.IsObject() && (prop->type.GetObjectType()->flags & asOBJ_POTENTIAL_CIRCLE) )
-		{
-			asCGCObject *ptr = *(asCGCObject**)(((char*)this) + prop->byteOffset);
-			if( ptr && ptr->gc.gcCount == 0 )
-				toMark.PushLast(ptr);
+				((asCScriptEngine*)engine)->GCEnumCallback(ptr);
 		}
 	}
 }

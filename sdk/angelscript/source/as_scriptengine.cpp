@@ -267,11 +267,11 @@ asCScriptEngine::~asCScriptEngine()
 
 	ClearUnusedTypes();
 
-	mapTypeIdToDataType.MoveFirst();
-	while( mapTypeIdToDataType.IsValidCursor() )
+	asSMapNode<int,asCDataType*> *cursor = 0;
+	while( mapTypeIdToDataType.MoveFirst(&cursor) )
 	{
-		DELETE(mapTypeIdToDataType.GetValue(),asCDataType);
-		mapTypeIdToDataType.Erase(true);
+		DELETE(mapTypeIdToDataType.GetValue(cursor),asCDataType);
+		mapTypeIdToDataType.Erase(cursor);
 	}
 
 	while( configGroups.GetLength() )
@@ -2727,6 +2727,7 @@ int asCScriptEngine::GarbageCollect(bool doFullCycle)
 		// Reset GC
 		gcState = 0;
 		toMark.SetLength(0);
+		gcMap.EraseAll();
 
 		int r;
 		while( (r = GCInternal()) == 1 );
@@ -2746,25 +2747,26 @@ int asCScriptEngine::GetObjectsInGarbageCollectorCount()
 	return (int)gcObjects.GetLength();
 }
 
+enum egcState
+{
+	destroyGarbage_init = 0,
+	destroyGarbage_loop,
+	destroyGarbage_haveMore,
+	clearCounters_init,
+	clearCounters_loop,
+	countReferences_init,
+	countReferences_loop,
+	detectGarbage_init,
+	detectGarbage_loop1,
+	detectGarbage_loop2,
+	verifyUnmarked,
+	breakCircles_init,
+	breakCircles_loop,
+	breakCircles_haveGarbage
+};
+
 int asCScriptEngine::GCInternal()
 {
-	enum egcState
-	{
-		destroyGarbage_init = 0,
-		destroyGarbage_loop,
-		destroyGarbage_haveMore,
-		clearCounters,
-		countReferences_init,
-		countReferences_loop,
-		detectGarbage_init,
-		detectGarbage_loop1,
-		detectGarbage_loop2,
-		verifyUnmarked,
-		breakCircles_init,
-		breakCircles_loop,
-		breakCircles_haveGarbage
-	};
-
 	for(;;)
 	{
 		switch( gcState )
@@ -2792,7 +2794,7 @@ int asCScriptEngine::GCInternal()
 			// objects reach refCount == 1.
 			while( ++gcIdx < gcObjects.GetLength() )
 			{
-				if( gcObjects[gcIdx]->gc.refCount == 1 )
+				if( gcObjects[gcIdx]->gc.GetRefCount() == 1 )
 				{
 					// Release the object immediately
 
@@ -2825,11 +2827,18 @@ int asCScriptEngine::GCInternal()
 			if( gcState == destroyGarbage_haveMore )
 				gcState = destroyGarbage_init;
 			else
-				gcState = clearCounters;
+				gcState = clearCounters_init;
 		}
 		break;
 
-		case clearCounters:
+		case clearCounters_init:
+		{
+			gcMap.EraseAll();
+			gcState = clearCounters_loop;
+		}
+		break;
+
+		case clearCounters_loop:
 		{
 			// TODO: gc
 			// Build a map of objects that will be checked, the map will
@@ -2846,11 +2855,12 @@ int asCScriptEngine::GCInternal()
 			// objects on the list.
 			for( asUINT n = 0; n < gcObjects.GetLength(); n++ )
 			{
-				gcObjects[n]->gc.gcCount = gcObjects[n]->gc.refCount - 1;
+				// Add the gc count for this object
+				gcMap.Insert(gcObjects[n], gcObjects[n]->gc.GetRefCount() - 1);
 
 				// Mark the object so that we can
 				// see if it has changed since read
-				gcObjects[n]->gc.refCount |= 0x80000000;
+				gcObjects[n]->gc.SetFlag();
 			}
 
 			gcState = countReferences_init;
@@ -2860,6 +2870,7 @@ int asCScriptEngine::GCInternal()
 		case countReferences_init:
 		{
 			gcIdx = (asUINT)-1;
+			gcMap.MoveFirst(&gcMapCursor);
 			gcState = countReferences_loop;
 		}
 		break;
@@ -2890,11 +2901,14 @@ int asCScriptEngine::GCInternal()
 			// (gcCount == 0), then it means that all the references reachable 
 			// from the objects referenced by the GC, thus is a potential 
 			// circular reference.
-			while( ++gcIdx < gcObjects.GetLength() )
+			while( gcMapCursor )
 			{
-				if( gcObjects[gcIdx]->gc.refCount & 0x80000000 )
+				asCGCObject *obj = gcMap.GetKey(gcMapCursor);
+				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
+
+				if( obj->gc.GetFlag() )
 				{
-					gcObjects[gcIdx]->CountReferences();
+					obj->EnumReferences(this);
 
 					// Allow the application to work a little
 					return 1;
@@ -2908,6 +2922,7 @@ int asCScriptEngine::GCInternal()
 		case detectGarbage_init:
 		{
 			gcIdx = (asUINT)-1;
+			gcMap.MoveFirst(&gcMapCursor);
 			gcState = detectGarbage_loop1;
 		}
 		break;
@@ -2927,12 +2942,18 @@ int asCScriptEngine::GCInternal()
 			// the objects referenced by the GC, thus is considered alive.
 
 			// Put all objects that are alive in a list of objects to mark as alive
-			while( ++gcIdx < gcObjects.GetLength() )
+
+			while( gcMapCursor )
 			{
-				// Objects that have been tampered with should also be marked as live
-				if( (gcObjects[gcIdx]->gc.gcCount != 0 || !(gcObjects[gcIdx]->gc.refCount & 0x80000000)) && gcObjects[gcIdx]->gc.gcCount != -1 )
+				asSMapNode<asCGCObject*, int> *cursor = gcMapCursor;
+				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
+
+				asCGCObject *obj = gcMap.GetKey(cursor);
+				int gcCount = gcMap.GetValue(cursor);
+
+				if( !obj->gc.GetFlag() || gcCount > 0 )
 				{
-					toMark.PushLast(gcObjects[gcIdx]);
+					toMark.PushLast(obj);
 
 					// Allow the application to work a little
 					return 1;
@@ -2960,11 +2981,15 @@ int asCScriptEngine::GCInternal()
 			{
 				asCGCObject *gcObj = toMark.PopLast();
 
-				// Mark the object as alive
-				gcObj->gc.gcCount = -1;
+				// Remove the object from the map to mark it as alive
+				asSMapNode<asCGCObject*, int> *cursor = 0;
+				if( gcMap.MoveTo(&cursor, gcObj) )
+				{
+					gcMap.Erase(cursor);
+				}
 
-				// Add unmarked references to the list
-				gcObj->AddUnmarkedReferences(toMark);
+				// Enumerate all the object's references so that they too can be marked as alive
+				gcObj->EnumReferences(this);
 
 				// Allow the application to work a little
 				return 1;
@@ -2983,14 +3008,18 @@ int asCScriptEngine::GCInternal()
 			// In this step we must make sure that none of the still unmarked objects
 			// has been touched by the application. If they have then we must run the
 			// detectGarbage loop once more.
-			for( asUINT n = 0; n < gcObjects.GetLength(); n++ )
+
+			gcMap.MoveFirst(&gcMapCursor);
+			while( gcMapCursor )
 			{
-				if( gcObjects[n]->gc.gcCount != -1 && !(gcObjects[n]->gc.refCount & 0x80000000) )
+				if( !gcMap.GetKey(gcMapCursor)->gc.GetFlag() )
 				{
 					// The unmarked object was touched, rerun the detectGarbage loop
 					gcState = detectGarbage_init;
 					return 1;
 				}
+
+				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
 			}
 
 			// No unmarked object was touched, we can now be sure
@@ -3002,6 +3031,7 @@ int asCScriptEngine::GCInternal()
 		case breakCircles_init:
 		{
 			gcIdx = (asUINT)-1;
+			gcMap.MoveFirst(&gcMapCursor);
 			gcState = breakCircles_loop;
 		}
 		break;
@@ -3018,17 +3048,15 @@ int asCScriptEngine::GCInternal()
 			// Any objects still with gcCount == 0 is garbage involved
 			// in circular references. Break the circular references, by
 			// having the objects release all their member handles.
-			while( ++gcIdx < gcObjects.GetLength() )
+			while( gcMapCursor )
 			{
-				if( gcObjects[gcIdx]->gc.gcCount == 0 )
-				{
-					// Release all its members to break the circle
-					gcObjects[gcIdx]->ReleaseAllHandles();
-					gcState = breakCircles_haveGarbage;
+				gcMap.GetKey(gcMapCursor)->ReleaseAllHandles();
+				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
 
-					// Allow the application to work a little
-					return 1;
-				}
+				gcState = breakCircles_haveGarbage;
+
+				// Allow the application to work a little
+				return 1;
 			}
 
 			// If no handles garbage was detected we can finish now
@@ -3053,16 +3081,41 @@ int asCScriptEngine::GCInternal()
 	UNREACHABLE_RETURN;
 }
 
+void asCScriptEngine::GCEnumCallback(void *reference)
+{
+	if( gcState == countReferences_loop )
+	{
+		// Find the reference in the map
+		asSMapNode<asCGCObject*, int> *cursor = 0;
+		if( gcMap.MoveTo(&cursor, (asCGCObject*)reference) )
+		{
+			// Decrease the counter in the map for the reference
+			gcMap.GetValue(cursor)--;
+		}
+	}
+	else if( gcState == detectGarbage_loop2 )
+	{
+		// Find the reference in the map
+		asSMapNode<asCGCObject*, int> *cursor = 0;
+		if( gcMap.MoveTo(&cursor, (asCGCObject*)reference) )
+		{
+			// Add the object to the list of objects to mark as alive
+			toMark.PushLast((asCGCObject*)reference);
+		}
+	}
+}
+
 int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 {
 	// Find the existing type id
-	mapTypeIdToDataType.MoveFirst();
-	while( mapTypeIdToDataType.IsValidCursor() )
+	asSMapNode<int,asCDataType*> *cursor = 0;
+	mapTypeIdToDataType.MoveFirst(&cursor);
+	while( cursor )
 	{
-		if( mapTypeIdToDataType.GetValue()->IsEqualExceptRefAndConst(dt) )
-			return mapTypeIdToDataType.GetKey();
+		if( mapTypeIdToDataType.GetValue(cursor)->IsEqualExceptRefAndConst(dt) )
+			return mapTypeIdToDataType.GetKey(cursor);
 
-		mapTypeIdToDataType.MoveNext();
+		mapTypeIdToDataType.MoveNext(&cursor, cursor);
 	}
 
 	// The type id doesn't exist, create it
@@ -3110,33 +3163,36 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 
 const asCDataType *asCScriptEngine::GetDataTypeFromTypeId(int typeId)
 {
-	if( mapTypeIdToDataType.MoveTo(typeId) )
-		return mapTypeIdToDataType.GetValue();
+	asSMapNode<int,asCDataType*> *cursor = 0;
+	if( mapTypeIdToDataType.MoveTo(&cursor, typeId) )
+		return mapTypeIdToDataType.GetValue(cursor);
 
 	return 0;
 }
 
 const asCObjectType *asCScriptEngine::GetObjectTypeFromTypeId(int typeId)
 {
-	if( mapTypeIdToDataType.MoveTo(typeId) )
-		return mapTypeIdToDataType.GetValue()->GetObjectType();
+	asSMapNode<int,asCDataType*> *cursor = 0;
+	if( mapTypeIdToDataType.MoveTo(&cursor, typeId) )
+		return mapTypeIdToDataType.GetValue(cursor)->GetObjectType();
 
 	return 0;
 }
 
 void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
 {
-	mapTypeIdToDataType.MoveFirst();
-	while( mapTypeIdToDataType.IsValidCursor() )
+	asSMapNode<int,asCDataType*> *cursor = 0;
+	mapTypeIdToDataType.MoveFirst(&cursor);
+	while( cursor )
 	{
-		asCDataType *dt = mapTypeIdToDataType.GetValue();
+		asCDataType *dt = mapTypeIdToDataType.GetValue(cursor);
+		asSMapNode<int,asCDataType*> *old = cursor;
+		mapTypeIdToDataType.MoveNext(&cursor, cursor);
 		if( dt->GetObjectType() == type )
 		{
 			DELETE(dt,asCDataType);
-			mapTypeIdToDataType.Erase(true);
+			mapTypeIdToDataType.Erase(old);
 		}
-		else
-			mapTypeIdToDataType.MoveNext();
 	}
 }
 

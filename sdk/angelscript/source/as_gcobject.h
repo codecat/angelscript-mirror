@@ -58,13 +58,16 @@ struct asSGCObject
 
 	int AddRef();
 	int Release();
+	int GetRefCount();
+	void SetFlag();
+	bool GetFlag();
 
 	void Init(asCObjectType *objType);
 
-//protected:
-	int refCount;
+// protected:
 	asCObjectType *objType;
-	int gcCount;
+protected:
+	int refCount;
 };
 
 // This class is implemented so that we can treat the garbage
@@ -82,8 +85,7 @@ public:
 
 	// Necessary GC methods
 	void Destruct();
-	void CountReferences();
-	void AddUnmarkedReferences(asCArray<asCGCObject*> &toMark);
+	void EnumReferences(asIScriptEngine *engine);
 	void ReleaseAllHandles();
 
 //protected:

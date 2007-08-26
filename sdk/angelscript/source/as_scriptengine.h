@@ -272,8 +272,12 @@ public:
 	// Garbage collector
 	asCArray<asCGCObject*> gcObjects;
 	asCArray<asCGCObject*> toMark;
+	asCMap<asCGCObject*, int> gcMap;
+	asSMapNode<asCGCObject*, int> *gcMapCursor;
 	int gcState;
 	asUINT gcIdx;
+
+	void GCEnumCallback(void *reference);
 
 	asCConfigGroup defaultGroup;
 	asCArray<asCConfigGroup*> configGroups;

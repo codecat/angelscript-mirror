@@ -50,19 +50,20 @@ public:
 	int   Insert(const KEY &key, const VAL &value);
 	int   GetCount();
 	
-	const KEY &GetKey() const;
-	const VAL &GetValue() const;
-	VAL &GetValue();
+	const KEY &GetKey(const asSMapNode<KEY,VAL> *cursor) const;
+	const VAL &GetValue(const asSMapNode<KEY,VAL> *cursor) const;
+	VAL &GetValue(asSMapNode<KEY,VAL> *cursor);
+
+	void Erase(asSMapNode<KEY,VAL> *cursor);
+	void EraseAll();
 
 	// Returns true as long as cursor is valid
 
-	bool Erase(bool moveNext = true);
-	bool IsValidCursor();
-	bool MoveTo(const KEY &key);
-	bool MoveFirst();
-	bool MoveLast();
-	bool MoveNext();
-	bool MovePrev();
+	bool MoveTo(asSMapNode<KEY,VAL> **out, const KEY &key);
+	bool MoveFirst(asSMapNode<KEY,VAL> **out);
+	bool MoveLast(asSMapNode<KEY,VAL> **out);
+	bool MoveNext(asSMapNode<KEY,VAL> **out, asSMapNode<KEY,VAL> *cursor);
+	bool MovePrev(asSMapNode<KEY,VAL> **out, asSMapNode<KEY,VAL> *cursor);
 
 	// For debugging only
 
@@ -77,7 +78,6 @@ protected:
 	int RotateRight(asSMapNode<KEY,VAL> *node);
 
 	asSMapNode<KEY,VAL> *root;
-	asSMapNode<KEY,VAL> *cursor;
 	asSMapNode<KEY,VAL> dummy;
 
 	int count;
@@ -113,14 +113,20 @@ template <class KEY, class VAL>
 asCMap<KEY, VAL>::asCMap()
 {
 	root = 0;
-	cursor = 0;
 	count = 0;
 }
 
 template <class KEY, class VAL>
 asCMap<KEY, VAL>::~asCMap()
 {
+	EraseAll();
+}
+
+template <class KEY, class VAL>
+void asCMap<KEY, VAL>::EraseAll()
+{
 	EraseAll(root);
+	root = 0;
 }
 
 template <class KEY, class VAL>
@@ -309,7 +315,7 @@ int asCMap<KEY, VAL>::CheckIntegrity(asSMapNode<KEY, VAL> *node)
 
 // Returns true if successful
 template <class KEY, class VAL>
-bool asCMap<KEY, VAL>::MoveTo(const KEY &key)
+bool asCMap<KEY, VAL>::MoveTo(asSMapNode<KEY,VAL> **out, const KEY &key)
 {
 	asSMapNode<KEY,VAL> *p = root;
 	while( p )
@@ -318,27 +324,23 @@ bool asCMap<KEY, VAL>::MoveTo(const KEY &key)
 			p = p->left;
 		else if( key == p->key )
 		{
-			cursor = p;
+			*out = p;
 			return true;
 		}
 		else 
 			p = p->right;
 	}
 
-	cursor = 0;
+	*out = 0;
 	return false;
 }
 
 template <class KEY, class VAL>
-bool asCMap<KEY, VAL>::Erase(bool moveNext)
+void asCMap<KEY, VAL>::Erase(asSMapNode<KEY,VAL> *cursor)
 {
-	if( cursor == 0 ) return false;
+	if( cursor == 0 ) return;
 
 	asSMapNode<KEY,VAL> *node = cursor;
-	if( moveNext ) 
-		MoveNext(); 
-	else 
-		MovePrev();
 
 	//---------------------------------------------------
 	// Choose the node that will replace the erased one
@@ -401,8 +403,6 @@ bool asCMap<KEY, VAL>::Erase(bool moveNext)
 	DELETE(node,node_t);
 
 	count--;
-
-	return IsValidCursor();
 }
 
 // Call method only if removed node was black
@@ -624,7 +624,7 @@ int asCMap<KEY, VAL>::RotateLeft(asSMapNode<KEY, VAL> *node)
 }
 
 template <class KEY, class VAL>
-const VAL &asCMap<KEY, VAL>::GetValue() const 
+const VAL &asCMap<KEY, VAL>::GetValue(const asSMapNode<KEY,VAL> *cursor) const 
 {
 	if( cursor == 0 ) 
 		return dummy.value;
@@ -633,7 +633,7 @@ const VAL &asCMap<KEY, VAL>::GetValue() const
 }
 
 template <class KEY, class VAL>
-VAL &asCMap<KEY, VAL>::GetValue()
+VAL &asCMap<KEY, VAL>::GetValue(asSMapNode<KEY,VAL> *cursor)
 {
 	if( cursor == 0 ) 
 		return dummy.value;
@@ -642,7 +642,7 @@ VAL &asCMap<KEY, VAL>::GetValue()
 }
 
 template <class KEY, class VAL>
-const KEY &asCMap<KEY, VAL>::GetKey() const
+const KEY &asCMap<KEY, VAL>::GetKey(const asSMapNode<KEY,VAL> *cursor) const
 {
 	if( cursor == 0 )
 		return dummy.key;
@@ -651,39 +651,37 @@ const KEY &asCMap<KEY, VAL>::GetKey() const
 }
 
 template <class KEY, class VAL>
-bool asCMap<KEY, VAL>::IsValidCursor()
+bool asCMap<KEY, VAL>::MoveFirst(asSMapNode<KEY,VAL> **out)
 {
-	return cursor ? true : false;
-}
-
-template <class KEY, class VAL>
-bool asCMap<KEY, VAL>::MoveFirst()
-{
+	*out = root;
 	if( root == 0 ) return false;
 
-	cursor = root;
-	while( cursor->left ) 
-		cursor = cursor->left;
+	while( (*out)->left ) 
+		*out = (*out)->left;
 
 	return true;
 }
 
 template <class KEY, class VAL>
-bool asCMap<KEY, VAL>::MoveLast()
+bool asCMap<KEY, VAL>::MoveLast(asSMapNode<KEY,VAL> **out)
 {
+	*out = root;
 	if( root == 0 ) return false;
 
-	cursor = root;
-	while( cursor->right ) 
-		cursor = cursor->right;
+	while( (*out)->right ) 
+		*out = (*out)->right;
 
 	return true;
 }
 
 template <class KEY, class VAL>
-bool asCMap<KEY, VAL>::MoveNext()
+bool asCMap<KEY, VAL>::MoveNext(asSMapNode<KEY,VAL> **out, asSMapNode<KEY,VAL> *cursor)
 {
-	if( cursor == 0 ) return false;
+	if( cursor == 0 )
+	{
+		*out = 0;
+		return false;
+	}
 
 	if( cursor->right == 0 ) 
 	{
@@ -692,6 +690,7 @@ bool asCMap<KEY, VAL>::MoveNext()
 			cursor = cursor->parent;
 
 		cursor = cursor->parent;
+		*out = cursor;
 		if( cursor == 0 ) 
 			return false;
 
@@ -702,13 +701,18 @@ bool asCMap<KEY, VAL>::MoveNext()
 	while( cursor->left ) 
 		cursor = cursor->left;
 
+	*out = cursor;
 	return true;
 }
 
 template <class KEY, class VAL>
-bool asCMap<KEY, VAL>::MovePrev()
+bool asCMap<KEY, VAL>::MovePrev(asSMapNode<KEY,VAL> **out, asSMapNode<KEY,VAL> *cursor)
 {
-	if( cursor == 0 ) return false;
+	if( cursor == 0 ) 
+	{
+		*out = 0;
+		return false;
+	}
 
 	if( cursor->left == 0 )
 	{
@@ -717,6 +721,8 @@ bool asCMap<KEY, VAL>::MovePrev()
 			cursor = cursor->parent;
 
 		cursor = cursor->parent;
+
+		*out = cursor;
 		if( cursor == 0 )
 			return false;
 
@@ -727,6 +733,7 @@ bool asCMap<KEY, VAL>::MovePrev()
 	while( cursor->right )
 		cursor = cursor->right;
 
+	*out = cursor;
 	return true;
 }
 
