@@ -3295,6 +3295,10 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 	{
 		CallObjectMethod(dstObj, srcObj, objType->beh.copy);
 	}
+	else if( objType->size )
+	{
+		memcpy(dstObj, srcObj, objType->size);
+	}
 }
 
 void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)

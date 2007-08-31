@@ -105,7 +105,7 @@ void RegisterScriptStruct(asCScriptEngine *engine)
 
 void ScriptStruct_Construct_Generic(asIScriptGeneric *gen)
 {
-	asCObjectType *objType = (asCObjectType*)(size_t*)gen->GetArgPointer(0);
+	asCObjectType *objType = *(asCObjectType**)gen->GetArgPointer(0);
 	asCScriptStruct *self = (asCScriptStruct*)gen->GetObject();
 
 	ScriptStruct_Construct(objType, self);

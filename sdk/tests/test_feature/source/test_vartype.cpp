@@ -295,15 +295,6 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void testFuncCIO(const?&)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
 	if( r >= 0 ) fail = true;
 
-	// TODO:
-	// It must be possible to overload functions that take parameters of the var type ?. 
-	// The var type function has less priority
-
-	// If the user registers a container class that can hold any type, how can we prevent circular references?
-	// "class C { var v; } void func() { C c; c.v.store(@c); }"
-
-	// The built-in any type must handle at run time the type validation to make sure it knows how to handle the type that is used
-
 	engine->Release();
 
 	return fail;

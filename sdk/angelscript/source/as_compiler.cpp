@@ -3172,8 +3172,10 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 		}
 		else
 		{
-			if( to.IsIntegerType() || to.IsUnsignedType() ||
-				to.IsFloatType()   || to.IsDoubleType()   )
+			if( (to.IsIntegerType() || to.IsUnsignedType() ||
+				 to.IsFloatType()   || to.IsDoubleType()) &&
+				(ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() ||
+				 ctx->type.dataType.IsFloatType()   || ctx->type.dataType.IsDoubleType()) )
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 		}
 

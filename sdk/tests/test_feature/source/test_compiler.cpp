@@ -50,6 +50,10 @@ const char *script9 =
 "  return noop();\n"
 "}\n";
 
+const char *script10 =
+"void func() {}\n"
+"void test() { int v; v = func(); }\n";
+
 
 bool Test()
 {
@@ -194,6 +198,22 @@ bool Test()
 		fail = true;
 	}
 	
+	// test 11
+	// Properly handle error when assigning a void expression to a variable
+	bout.buffer = "";
+	engine->AddScriptSection(0, "script", script10, strlen(script10));
+	r = engine->Build(0);
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "script (2, 1) : Info    : Compiling void test()\n"
+		               "script (2, 26) : Error   : Can't implicitly convert from 'void' to 'int'.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 		
 	// Success

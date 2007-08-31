@@ -102,6 +102,17 @@ static const char *script7 =
 "{                              \n"
 "}                              \n";
 
+static const char *script8 =
+"void test()                    \n"
+"{                              \n"
+"   Func(\"test\");             \n"
+"}                              \n"
+"string Func(string & str)      \n"
+"{                              \n"
+"  return str;                  \n"
+"}                              \n";
+
+
 //bool Get(int * /*obj*/, const asCScriptString &szURL, asCScriptString &szHTML)
 void Get(asIScriptGeneric *gen)
 {
@@ -310,6 +321,18 @@ bool Test()
 	r = engine->ExecuteString(0, "string @s; TestFunc(0, s);");
 	if( r != asEXECUTION_EXCEPTION )
 		fail = true;
+
+	engine->Release();
+
+	//----------------------------------------
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterScriptString(engine);
+
+	engine->AddScriptSection(0, "test", script7, strlen(script7), 0);
+	engine->Build(0);
+	r = engine->ExecuteString(0, "test()");
+	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	engine->Release();
 

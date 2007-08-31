@@ -166,26 +166,26 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
+	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
+	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
+	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestDestructor::Test()        ) goto failed; else printf("-- TestDestructor passed\n");
 	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
-	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
 	if( TestVarType::Test()           ) goto failed; else printf("-- TestVarType passed\n");
 	if( TestScriptMath::Test()        ) goto failed; else printf("-- TestScriptMath passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
-	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestGetArgPtr::Test()         ) goto failed; else printf("-- TestGetArgPtr passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
-	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");
-	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
 	if( TestInt8::Test()              ) goto failed; else printf("-- TestInt8 passed\n");
 	if( TestExecute32Args()           ) goto failed; else printf("-- TestExecute32Args passed\n");
 	if( TestExecuteThis32MixedArgs()  ) goto failed; else printf("-- TestExecuteThis32MixedArgs passed\n");
