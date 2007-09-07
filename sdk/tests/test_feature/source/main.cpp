@@ -139,6 +139,7 @@ void DetectMemoryLeaks()
 	_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
 
 	// Use _CrtSetBreakAlloc(n) to find a specific memory leak
+	//_CrtSetBreakAlloc(425);
 #endif
 }
 
@@ -166,11 +167,11 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
+	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
 	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
-	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
-	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestDestructor::Test()        ) goto failed; else printf("-- TestDestructor passed\n");
 	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");

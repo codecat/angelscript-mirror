@@ -69,11 +69,7 @@ static void AnyObject_Retrieve(void *ref, int refTypeId, asCAnyObject *self)
 
 static void AnyObjectConstructor_Generic(asIScriptGeneric *gen)
 {
-#ifndef AS_64BIT_PTR
-	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(0);
-#else
-	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(0);
-#endif
+	asCObjectType *ot = *(asCObjectType**)gen->GetArgPointer(0);
 	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
 
 	new(self) asCAnyObject(ot);
@@ -83,11 +79,7 @@ static void AnyObjectConstructor2_Generic(asIScriptGeneric *gen)
 {
 	void *ref = (void*)gen->GetArgAddress(0);
 	int refType = gen->GetArgTypeId(0);
-#ifndef AS_64BIT_PTR
-	asCObjectType *ot = (asCObjectType*)gen->GetArgDWord(1);
-#else
-	asCObjectType *ot = (asCObjectType*)gen->GetArgQWord(1);
-#endif
+	asCObjectType *ot = *(asCObjectType**)gen->GetArgPointer(1);
 	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
 
 	new(self) asCAnyObject(ref,refType,ot);
@@ -121,6 +113,50 @@ static void AnyObject_Retrieve_Generic(asIScriptGeneric *gen)
 	self->Retrieve(ref, refTypeId);
 }
 
+static void AnyObject_AddRef_Generic(asIScriptGeneric *gen)
+{
+	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
+	self->AddRef();
+}
+
+static void AnyObject_Release_Generic(asIScriptGeneric *gen)
+{
+	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
+	self->Release();
+}
+
+static void AnyObject_GetRefCount_Generic(asIScriptGeneric *gen)
+{
+	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
+	*(int*)gen->GetReturnPointer() = self->GetRefCount();
+}
+
+static void AnyObject_SetFlag_Generic(asIScriptGeneric *gen)
+{
+	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
+	self->SetFlag();
+}
+
+static void AnyObject_GetFlag_Generic(asIScriptGeneric *gen)
+{
+	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
+	*(bool*)gen->GetReturnPointer() = self->GetFlag();
+}
+
+static void AnyObject_EnumReferences_Generic(asIScriptGeneric *gen)
+{
+	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	self->EnumReferences(engine);
+}
+
+static void AnyObject_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
+{
+	asCAnyObject *self = (asCAnyObject*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	self->ReleaseAllHandles(engine);
+}
+
 #endif
 
 
@@ -136,11 +172,18 @@ void RegisterAnyObject(asCScriptEngine *engine)
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTIONPR(AnyObjectConstructor, (asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(?&in, int64)", asFUNCTIONPR(AnyObjectConstructor2, (void*, int, asCObjectType*, asCAnyObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 #endif
-	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ADDREF, "void f()", asMETHOD(asCAnyObject,AddRef), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASE, "void f()", asMETHOD(asCAnyObject,Release), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ASSIGNMENT, "any &f(any&in)", asFUNCTION(AnyObjectAssignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void store(?&in)", asFUNCTION(AnyObject_Store), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void retrieve(?&out) const", asFUNCTION(AnyObject_Retrieve), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+	// Register GC behaviours
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(asCAnyObject,GetRefCount), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_SETGCFLAG, "void f()", asMETHOD(asCAnyObject,SetFlag), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCAnyObject,GetFlag), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCAnyObject,EnumReferences), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCAnyObject,ReleaseAllHandles), asCALL_THISCALL); assert( r >= 0 );
 #else
 #ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(AnyObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -149,22 +192,19 @@ void RegisterAnyObject(asCScriptEngine *engine)
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(AnyObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_CONSTRUCT, "void f(?&in, int64)", asFUNCTION(AnyObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
-	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(AnyObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(AnyObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ASSIGNMENT, "any &f(any&in)", asFUNCTION(AnyObjectAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void store(?&in)", asFUNCTION(AnyObject_Store_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(ANY_TOKEN, "void retrieve(?&out) const", asFUNCTION(AnyObject_Retrieve_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	// Register GC behaviours
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(AnyObject_GetRefCount_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(AnyObject_SetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(AnyObject_GetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(AnyObject_EnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->anyObjectType, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(AnyObject_ReleaseAllHandles_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
-}
-
-int asCAnyObject::AddRef()
-{
-	return gc.AddRef();
-}
-
-int asCAnyObject::Release()
-{
-	return gc.Release();
 }
 
 asCAnyObject &asCAnyObject::operator=(asCAnyObject &other)
@@ -176,7 +216,7 @@ asCAnyObject &asCAnyObject::operator=(asCAnyObject &other)
 	value = other.value;
 	if( valueTypeId && value )
 	{
-		const asCDataType *valueType = gc.objType->engine->GetDataTypeFromTypeId(valueTypeId);
+		const asCDataType *valueType = objType->engine->GetDataTypeFromTypeId(valueTypeId);
 
 		asCObjectType *ot = valueType->GetObjectType();
 		ot->engine->CallObjectMethod(value, ot->beh.addref);
@@ -197,18 +237,26 @@ int asCAnyObject::CopyFrom(asIScriptAny *other)
 
 asCAnyObject::asCAnyObject(asCObjectType *ot)
 {
-	gc.Init(ot);
+	objType = ot;
+	refCount = 1;
 
 	valueTypeId = 0;
 	value = 0;
+
+	// Notify the garbage collector of this object
+	objType->engine->NotifyGarbageCollectorOfNewObject(this, objType->engine->GetTypeIdByDecl(0, objType->name.AddressOf()));		
 }
 
 asCAnyObject::asCAnyObject(void *ref, int refTypeId, asCObjectType *ot)
 {
-	gc.Init(ot);
+	objType = ot;
+	refCount = 1;
 
 	valueTypeId = 0;
 	value = 0;
+
+	// Notify the garbage collector of this object
+	objType->engine->NotifyGarbageCollectorOfNewObject(this, objType->engine->GetTypeIdByDecl(0, objType->name.AddressOf()));		
 
 	Store(ref, refTypeId);
 }
@@ -216,8 +264,6 @@ asCAnyObject::asCAnyObject(void *ref, int refTypeId, asCObjectType *ot)
 asCAnyObject::~asCAnyObject()
 {
 	FreeObject();
-
-	// The GCObject's destructor will be called after this
 }
 
 void asCAnyObject::Store(void *ref, int refTypeId)
@@ -236,7 +282,7 @@ void asCAnyObject::Store(void *ref, int refTypeId)
 	{
 		valueTypeId = refTypeId;
 
-		const asCDataType *dt = gc.objType->engine->GetDataTypeFromTypeId(valueTypeId);
+		const asCDataType *dt = objType->engine->GetDataTypeFromTypeId(valueTypeId);
 
 		value = *(void**)ref; // We receive a reference to the handle
 		asCObjectType *ot = dt->GetObjectType();
@@ -259,7 +305,7 @@ int asCAnyObject::Retrieve(void *ref, int refTypeId)
 	 	     ((refTypeId & (asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) == (asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) )			   // Handle to const object
 		isCompatible = true;
 
-	const asCDataType *refType   = gc.objType->engine->GetDataTypeFromTypeId(refTypeId);
+	const asCDataType *refType   = objType->engine->GetDataTypeFromTypeId(refTypeId);
 	asCObjectType *ot = refType->GetObjectType();
 
 	// Release the old value held by the reference
@@ -291,7 +337,7 @@ void asCAnyObject::FreeObject()
 {
 	if( value && (valueTypeId & asTYPEID_OBJHANDLE) )
 	{
-		const asCDataType *valueType = gc.objType->engine->GetDataTypeFromTypeId(valueTypeId);
+		const asCDataType *valueType = objType->engine->GetDataTypeFromTypeId(valueTypeId);
 		asCObjectType *ot = valueType->GetObjectType();
 
 		if( !ot->beh.release )
@@ -314,7 +360,7 @@ void asCAnyObject::FreeObject()
 
 void asCAnyObject::Destruct()
 {
-	// Call the destructor, which will also call the GCObject's destructor
+	// Call the destructor
 	this->~asCAnyObject();
 
 	// Free the memory
@@ -325,19 +371,54 @@ void asCAnyObject::EnumReferences(asIScriptEngine *engine)
 {
 	// If we're holding a reference, we'll notify the garbage collector of it
 	if( value && (valueTypeId & asTYPEID_MASK_OBJECT) )
-		((asCScriptEngine*)engine)->GCEnumCallback(value);
+		engine->GCEnumCallback(value);
 }
 
-void asCAnyObject::ReleaseAllHandles()
+void asCAnyObject::ReleaseAllHandles(asIScriptEngine *engine)
 {
-	const asCDataType *valueType = gc.objType->engine->GetDataTypeFromTypeId(valueTypeId);
+	const asCDataType *valueType = objType->engine->GetDataTypeFromTypeId(valueTypeId);
 
 	if( value && valueType && valueType->GetObjectType()->flags & asOBJ_POTENTIAL_CIRCLE )
 	{
-		((asCGCObject*)value)->Release();
+		((asCScriptEngine*)engine)->CallObjectMethod(value, valueType->GetBehaviour()->release);
 		value = 0;
 		valueType->GetObjectType()->refCount--;
 	}
+}
+
+int asCAnyObject::AddRef()
+{
+	// Increase counter and clear flag set by GC
+	refCount = (refCount & 0x7FFFFFFF) + 1;
+	return refCount;
+}
+
+int asCAnyObject::Release()
+{
+	// Now do the actual releasing (clearing the flag set by GC)
+	refCount = (refCount & 0x7FFFFFFF) - 1;
+	if( refCount == 0 )
+	{
+		Destruct();
+		return 0;
+	}
+
+	return refCount;
+}
+
+int asCAnyObject::GetRefCount()
+{
+	return refCount & 0x7FFFFFFF;
+}
+
+void asCAnyObject::SetFlag()
+{
+	refCount |= 0x80000000;
+}
+
+bool asCAnyObject::GetFlag()
+{
+	return (refCount & 0x80000000) ? true : false;
 }
 
 

@@ -131,6 +131,50 @@ static void ArrayObjectResize_Generic(asIScriptGeneric *gen)
 	self->Resize(size);
 }
 
+static void ArrayObject_AddRef_Generic(asIScriptGeneric *gen)
+{
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+	self->AddRef();
+}
+
+static void ArrayObject_Release_Generic(asIScriptGeneric *gen)
+{
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+	self->Release();
+}
+
+static void ArrayObject_GetRefCount_Generic(asIScriptGeneric *gen)
+{
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+	*(int*)gen->GetReturnPointer() = self->GetRefCount();
+}
+
+static void ArrayObject_SetFlag_Generic(asIScriptGeneric *gen)
+{
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+	self->SetFlag();
+}
+
+static void ArrayObject_GetFlag_Generic(asIScriptGeneric *gen)
+{
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+	*(bool*)gen->GetReturnPointer() = self->GetFlag();
+}
+
+static void ArrayObject_EnumReferences_Generic(asIScriptGeneric *gen)
+{
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	self->EnumReferences(engine);
+}
+
+static void ArrayObject_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
+{
+	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	self->ReleaseAllHandles(engine);
+}
+
 #endif
 
 void RegisterArrayObject(asCScriptEngine *engine)
@@ -145,13 +189,20 @@ void RegisterArrayObject(asCScriptEngine *engine)
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTIONPR(ArrayObjectConstructor, (int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int64)", asFUNCTIONPR(ArrayObjectConstructor2, (asUINT, int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 #endif
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asMETHOD(asCArrayObject,AddRef), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asMETHOD(asCArrayObject,Release), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ASSIGNMENT, "void[] &f(void[]&in)", asFUNCTION(ArrayObjectAssignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int &f(uint)", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int &f(uint) const", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "uint length() const", asFUNCTION(ArrayObjectLength), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "void resize(uint)", asFUNCTION(ArrayObjectResize), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+	// Register GC behaviours
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(asCArrayObject,GetRefCount), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_SETGCFLAG, "void f()", asMETHOD(asCArrayObject,SetFlag), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCArrayObject,GetFlag), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCArrayObject,EnumReferences), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCArrayObject,ReleaseAllHandles), asCALL_THISCALL); assert( r >= 0 );
 #else
 #ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ArrayObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -160,13 +211,20 @@ void RegisterArrayObject(asCScriptEngine *engine)
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(ArrayObjectConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(uint, int64)", asFUNCTION(ArrayObjectConstructor2_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(GCObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(GCObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(ArrayObject_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(ArrayObject_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ASSIGNMENT, "void[] &f(void[]&in)", asFUNCTION(ArrayObjectAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int &f(uint)", asFUNCTION(ArrayObjectAt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int &f(uint) const", asFUNCTION(ArrayObjectAt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "uint length() const", asFUNCTION(ArrayObjectLength_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterSpecialObjectMethod(asDEFAULT_ARRAY, "void resize(uint)", asFUNCTION(ArrayObjectResize_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	// Register GC behaviours
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ArrayObject_GetRefCount_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ArrayObject_SetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ArrayObject_GetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ArrayObject_EnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ArrayObject_ReleaseAllHandles_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif 
 }
 
@@ -200,27 +258,32 @@ int asCArrayObject::CopyFrom(asIScriptArray *other)
 
 asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
 {
-	gc.Init(ot);
+	refCount = 1;
+	objType = ot;
+	objType->refCount++;
+
+	if( objType->flags & asOBJ_POTENTIAL_CIRCLE )
+		objType->engine->AddScriptObjectToGC(this, objType);		
 
 	// Determine element size
-	if( gc.objType->subType )
+	if( objType->subType )
 	{
 		elementSize = 4;
 	}
 	else
 	{
-		if( gc.objType->tokenType == ttDouble )
+		if( objType->tokenType == ttDouble || objType->tokenType == ttInt64 || objType->tokenType == ttUInt64 )
 			elementSize = 8;
-		else if( gc.objType->tokenType == ttInt || gc.objType->tokenType == ttUInt ||
-			     gc.objType->tokenType == ttFloat )
+		else if( objType->tokenType == ttInt || objType->tokenType == ttUInt ||
+			     objType->tokenType == ttFloat )
 			elementSize = 4;
-		else if( gc.objType->tokenType == ttInt16 || gc.objType->tokenType == ttUInt16 )
+		else if( objType->tokenType == ttInt16 || objType->tokenType == ttUInt16 )
 			elementSize = 2;
 		else
 			elementSize = 1;
 	}
 
-	arrayType = gc.objType->arrayType;
+	arrayType = objType->arrayType;
 
 	CreateBuffer(&buffer, length);
 }
@@ -232,18 +295,7 @@ asCArrayObject::~asCArrayObject()
 		DeleteBuffer(buffer);
 		buffer = 0;
 	}
-
-	// The GCObject's destructor will be called after this
-}
-
-int asCArrayObject::AddRef()
-{
-	return gc.AddRef();
-}
-
-int asCArrayObject::Release()
-{
-	return gc.Release();
+	if( objType ) objType->refCount--;
 }
 
 asUINT asCArrayObject::GetElementCount()
@@ -254,7 +306,7 @@ asUINT asCArrayObject::GetElementCount()
 void asCArrayObject::Resize(asUINT numElements)
 {
 	sArrayBuffer *newBuffer;
-	if( gc.objType->subType )
+	if( objType->subType )
 	{
 		// Allocate memory for the buffer
 		newBuffer = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
@@ -294,22 +346,22 @@ void asCArrayObject::Resize(asUINT numElements)
 
 int asCArrayObject::GetArrayTypeId()
 {
-	asCDataType dt = asCDataType::CreateObject(gc.objType, false);
-	return gc.objType->engine->GetTypeIdFromDataType(dt);
+	asCDataType dt = asCDataType::CreateObject(objType, false);
+	return objType->engine->GetTypeIdFromDataType(dt);
 }
 
 int asCArrayObject::GetElementTypeId()
 {
-	asCDataType dt = asCDataType::CreateObject(gc.objType, false);
+	asCDataType dt = asCDataType::CreateObject(objType, false);
 	dt = dt.GetSubType();
-	return gc.objType->engine->GetTypeIdFromDataType(dt);
+	return objType->engine->GetTypeIdFromDataType(dt);
 }
 
 void *asCArrayObject::GetElementPointer(asUINT index)
 {
 	if( index >= buffer->numElements ) return 0;
 
-	if( gc.objType->subType && !(arrayType & 1) )
+	if( objType->subType && !(arrayType & 1) )
 		return (void*)((size_t*)buffer->data)[index];
 	else
 		return buffer->data + elementSize*index;
@@ -326,7 +378,7 @@ void *asCArrayObject::at(asUINT index)
 	}
 	else
 	{
-		if( gc.objType->subType && !(arrayType & 1) )
+		if( objType->subType && !(arrayType & 1) )
 			return (void*)((size_t*)buffer->data)[index];
 		else
 			return buffer->data + elementSize*index;
@@ -335,7 +387,7 @@ void *asCArrayObject::at(asUINT index)
 
 void asCArrayObject::CreateBuffer(sArrayBuffer **buf, asUINT numElements)
 {
-	if( gc.objType->subType )
+	if( objType->subType )
 	{
 		*buf = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
 		(*buf)->numElements = numElements;
@@ -365,11 +417,11 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 		asDWORD *d = (asDWORD*)(buf->data + start * sizeof(void*));
 		memset(d, 0, (end-start)*sizeof(void*));
 	}
-	else if( gc.objType->subType )
+	else if( objType->subType )
 	{
 		// Call the constructor on all objects
-		asCScriptEngine *engine = gc.objType->engine;
-		asCObjectType *subType = gc.objType->subType;
+		asCScriptEngine *engine = objType->engine;
+		asCObjectType *subType = objType->subType;
 		if( subType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY | asOBJ_SCRIPT_ANY) )
 		{
 			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
@@ -426,17 +478,17 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 {
 	bool doDelete = true;
-	if( gc.objType->subType )
+	if( objType->subType )
 	{
-		asCScriptEngine *engine = gc.objType->engine;
+		asCScriptEngine *engine = objType->engine;
 		int funcIndex;
-		if( gc.objType->subType->beh.release )
+		if( objType->subType->beh.release )
 		{
-			funcIndex = gc.objType->subType->beh.release;
+			funcIndex = objType->subType->beh.release;
 			doDelete = false;
 		}
 		else
-			funcIndex = gc.objType->subType->beh.destruct;
+			funcIndex = objType->subType->beh.destruct;
 
 		// Call the destructor on all of the objects
 		asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
@@ -451,7 +503,7 @@ void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 					if( *d )
 					{
 						engine->CallObjectMethod(*d, funcIndex);
-						engine->CallFree(gc.objType->subType, *d);
+						engine->CallFree(objType->subType, *d);
 					}
 				}
 			}
@@ -460,7 +512,7 @@ void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 				for( ; d < max; d++ )
 				{
 					if( *d )
-						engine->CallFree(gc.objType->subType, *d);
+						engine->CallFree(objType->subType, *d);
 				}
 			}
 		}
@@ -479,11 +531,11 @@ void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 void asCArrayObject::CopyBuffer(sArrayBuffer *dst, sArrayBuffer *src)
 {
 	asUINT esize;
-	asCScriptEngine *engine = gc.objType->engine;
+	asCScriptEngine *engine = objType->engine;
 	if( arrayType & 1 )
 	{
 		// Copy the references and increase the reference counters
-		int funcIndex = gc.objType->subType->beh.addref;
+		int funcIndex = objType->subType->beh.addref;
 
 		if( dst->numElements > 0 && src->numElements > 0 )
 		{
@@ -505,16 +557,16 @@ void asCArrayObject::CopyBuffer(sArrayBuffer *dst, sArrayBuffer *src)
 	{
 		esize = elementSize;
 		int funcIndex = 0;
-		if( gc.objType->subType )
+		if( objType->subType )
 		{
-			funcIndex = gc.objType->subType->beh.copy;
-			esize = gc.objType->subType->size;
+			funcIndex = objType->subType->beh.copy;
+			esize = objType->subType->size;
 		}
 
 		if( dst->numElements > 0 && src->numElements > 0 )
 		{
 			int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
-			if( gc.objType->subType )
+			if( objType->subType )
 			{
 				// Call the assignment operator on all of the objects
 				asDWORD **max = (asDWORD**)(dst->data + count * sizeof(void*));
@@ -550,7 +602,7 @@ void asCArrayObject::Destruct()
 void asCArrayObject::EnumReferences(asIScriptEngine *engine)
 {
 	// If the array is holding handles, then we need to notify the GC of them
-	if( gc.objType->subType )
+	if( objType->subType )
 	{
 		void **d = (void**)buffer->data;
 		for( asUINT n = 0; n < buffer->numElements; n++ )
@@ -561,21 +613,57 @@ void asCArrayObject::EnumReferences(asIScriptEngine *engine)
 	}
 }
 
-void asCArrayObject::ReleaseAllHandles()
+void asCArrayObject::ReleaseAllHandles(asIScriptEngine *engine)
 {
-	asCObjectType *subType = gc.objType->subType;
+	asCObjectType *subType = objType->subType;
 	if( subType && subType->flags & asOBJ_POTENTIAL_CIRCLE )
 	{
-		asCGCObject **d = (asCGCObject**)buffer->data;
+		void **d = (void**)buffer->data;
 		for( asUINT n = 0; n < buffer->numElements; n++ )
 		{
 			if( d[n] )
 			{
-				d[n]->Release();
+				((asCScriptEngine*)engine)->CallObjectMethod(d[n], subType->beh.release);
 				d[n] = 0;
 			}
 		}
 	}
+}
+
+
+int asCArrayObject::AddRef()
+{
+	// Increase counter and clear flag set by GC
+	refCount = (refCount & 0x7FFFFFFF) + 1;
+	return refCount;
+}
+
+int asCArrayObject::Release()
+{
+	// Now do the actual releasing (clearing the flag set by GC)
+	refCount = (refCount & 0x7FFFFFFF) - 1;
+	if( refCount == 0 )
+	{
+		Destruct();
+		return 0;
+	}
+
+	return refCount;
+}
+
+int asCArrayObject::GetRefCount()
+{
+	return refCount & 0x7FFFFFFF;
+}
+
+void asCArrayObject::SetFlag()
+{
+	refCount |= 0x80000000;
+}
+
+bool asCArrayObject::GetFlag()
+{
+	return (refCount & 0x80000000) ? true : false;
 }
 
 END_AS_NAMESPACE

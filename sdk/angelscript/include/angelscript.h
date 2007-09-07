@@ -245,6 +245,8 @@ extern "C"
 	AS_API int               asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 	AS_API int               asEngine_GarbageCollect(asIScriptEngine *e, bool doFullCycle = true);
 	AS_API int               asEngine_GetObjectsInGarbageCollectorCount(asIScriptEngine *e);
+	AS_API void              asEngine_NotifyGarbageCollectorOfNewObject(asIScriptEngine *e, void *obj, int typeId);
+	AS_API void              asEngine_GCEnumCallback(asIScriptEngine *e, void *obj);
 	AS_API int               asEngine_SaveByteCode(asIScriptEngine *e, const char *module, asBINARYWRITEFUNC_t outFunc, void *outParam);
 	AS_API int               asEngine_LoadByteCode(asIScriptEngine *e, const char *module, asBINARYREADFUNC_t inFunc, void *inParam);
 
@@ -447,6 +449,8 @@ public:
 	// Garbage collection
 	virtual int GarbageCollect(bool doFullCycle = true) = 0;
 	virtual int GetObjectsInGarbageCollectorCount() = 0;
+	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId) = 0;
+	virtual void GCEnumCallback(void *obj) = 0;
 
 	// Bytecode Saving/Loading
 	virtual int SaveByteCode(const char *module, asIBinaryStream *out) = 0;
@@ -711,6 +715,13 @@ const asDWORD asBEHAVE_ADDREF        = 35;
 const asDWORD asBEHAVE_RELEASE       = 36;
 const asDWORD asBEHAVE_ALLOC         = 37;
 const asDWORD asBEHAVE_FREE          = 38;
+const asDWORD asBEHAVE_FIRST_GC      = 39;
+ const asDWORD asBEHAVE_GETREFCOUNT   = 39;
+ const asDWORD asBEHAVE_SETGCFLAG     = 40;
+ const asDWORD asBEHAVE_GETGCFLAG     = 41;
+ const asDWORD asBEHAVE_ENUMREFS      = 42;
+ const asDWORD asBEHAVE_RELEASEREFS   = 43;
+const asDWORD asBEHAVE_LAST_GC       = 43;
 
 // Return codes
 

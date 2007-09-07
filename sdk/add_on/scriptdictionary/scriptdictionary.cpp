@@ -15,8 +15,13 @@ CScriptDictionary::CScriptDictionary(asIScriptEngine *engine)
     refCount = 1;
 
     // Keep a reference to the engine for as long as we live
+	// We don't increment the reference counter, because the 
+	// engine will hold a pointer to the object. 
     this->engine = engine;
-    engine->AddRef();
+
+	// Notify the garbage collector of this object
+	// TODO: The type id should be cached
+	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl(0, "dictionary"));		
 }
 
 CScriptDictionary::~CScriptDictionary()
@@ -30,18 +35,55 @@ CScriptDictionary::~CScriptDictionary()
 
 void CScriptDictionary::AddRef()
 {
-    refCount++;
+	// We need to clear the GC flag
+	refCount = (refCount & 0x7FFFFFFF) + 1;
 }
 
 void CScriptDictionary::Release()
 {
-    if( --refCount == 0 )
+	// We need to clear the GC flag
+	refCount = (refCount & 0x7FFFFFFF) - 1;
+	if( refCount == 0 )
         delete this;
+}
+
+int CScriptDictionary::GetRefCount()
+{
+	return refCount & 0x7FFFFFFF;
+}
+
+void CScriptDictionary::SetGCFlag()
+{
+	refCount |= 0x80000000;
+}
+
+bool CScriptDictionary::GetGCFlag()
+{
+	return (refCount & 0x80000000) ? true : false;
+}
+
+void CScriptDictionary::EnumReferences(asIScriptEngine *engine)
+{
+	// Call the gc enum callback for each of the objects
+    map<string, valueStruct>::iterator it;
+    for( it = dict.begin(); it != dict.end(); it++ )
+    {
+		if( it->second.typeId & asTYPEID_MASK_OBJECT )
+			engine->GCEnumCallback(it->second.valueObj);
+    }
+}
+
+void CScriptDictionary::ReleaseAllReferences(asIScriptEngine *engine)
+{
+	// We're being told to release all references in 
+	// order to break circular references for dead objects
+	DeleteAll();
 }
 
 CScriptDictionary &CScriptDictionary::operator =(const CScriptDictionary & /*other*/)
 {
     // Do nothing
+	// TODO: Should do a shallow copy of the dictionary
 
     return *this;
 }
@@ -334,6 +376,38 @@ void ScriptDictionaryDeleteAll_Generic(asIScriptGeneric *gen)
     dict->DeleteAll();
 }
 
+static void ScriptDictionaryGetRefCount_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
+	*(int*)gen->GetReturnPointer() = self->GetRefCount();
+}
+
+static void ScriptDictionarySetGCFlag_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
+	self->SetGCFlag();
+}
+
+static void ScriptDictionaryGetGCFlag_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
+	*(bool*)gen->GetReturnPointer() = self->GetGCFlag();
+}
+
+static void ScriptDictionaryEnumReferences_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	self->EnumReferences(engine);
+}
+
+static void ScriptDictionaryReleaseAllReferences_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	self->ReleaseAllReferences(engine);
+}
+
 //--------------------------------------------------------------------------
 // Register the type
 
@@ -369,6 +443,13 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in)", asMETHOD(CScriptDictionary,Exists), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void delete(const string &in)", asMETHOD(CScriptDictionary,Delete), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void deleteAll()", asMETHOD(CScriptDictionary,DeleteAll), asCALL_THISCALL); assert( r >= 0 );
+
+	// Register GC behaviours
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(CScriptDictionary,GetRefCount), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_SETGCFLAG, "void f()", asMETHOD(CScriptDictionary,SetGCFlag), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(CScriptDictionary,GetGCFlag), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(CScriptDictionary,EnumReferences), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(CScriptDictionary,ReleaseAllReferences), asCALL_THISCALL); assert( r >= 0 );
 }
 
 void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
@@ -394,6 +475,13 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in)", asFUNCTION(ScriptDictionaryExists_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void delete(const string &in)", asFUNCTION(ScriptDictionaryDelete_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "void deleteAll()", asFUNCTION(ScriptDictionaryDeleteAll_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	// Register GC behaviours
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ScriptDictionaryGetRefCount_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ScriptDictionarySetGCFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptDictionaryGetGCFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryEnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryReleaseAllReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
 }
 
 END_AS_NAMESPACE

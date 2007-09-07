@@ -55,9 +55,13 @@ const asDWORD asOBJ_SCRIPT_ARRAY     = 1024;
 const asDWORD asOBJ_SCRIPT_ANY       = 2048;
 const asDWORD asOBJ_CONTAINS_ANY     = 4096;
 
+// TODO: gc
+// Instead of asOBJ_POTENTIAL_CIRCLE and asOBJ_CONTAINS_ANY use asOBJ_GARBAGE_COLLECTED
+// :ODOT
+
 struct asSTypeBehaviour
 {
-	asSTypeBehaviour() {construct = 0; destruct = 0; copy = 0; addref = 0; release = 0; alloc = 0; free = 0;}
+	asSTypeBehaviour() {construct = 0; destruct = 0; copy = 0; addref = 0; release = 0; alloc = 0; free = 0; gcGetRefCount = 0; gcSetFlag = 0; gcGetFlag = 0; gcEnumReferences = 0; gcReleaseAllReferences = 0;}
 
 	int construct;
 	int destruct;
@@ -66,6 +70,14 @@ struct asSTypeBehaviour
 	int release;
 	int alloc;
 	int free;
+	
+	// GC behaviours
+	int gcGetRefCount;
+	int gcSetFlag;
+	int gcGetFlag;
+	int gcEnumReferences;
+	int gcReleaseAllReferences;
+	
 	asCArray<int> constructors;
 	asCArray<int> operators;
 };

@@ -975,7 +975,7 @@ int asCContext::Execute()
 		}
 		else
 		{
-			asCObjectType *objType = obj->gc.objType;
+			asCObjectType *objType = obj->objType;
 
 			// Search the object type for a function that matches the interface function
 			asCScriptFunction *realFunc = 0;
@@ -1211,7 +1211,7 @@ void asCContext::CallInterfaceMethod(asCModule *mod, asCScriptFunction *func)
 		return;
 	}
 
-	asCObjectType *objType = obj->gc.objType;
+	asCObjectType *objType = obj->objType;
 
 	// Search the object type for a function that matches the interface function
 	asCScriptFunction *realFunc = 0;
@@ -2744,7 +2744,7 @@ void asCContext::ExecuteNext()
 				asDWORD typeId = DWORDARG(l_bc);
 
 				asCScriptStruct *obj = (asCScriptStruct *)* a;
-				asCObjectType *objType = obj->gc.objType;
+				asCObjectType *objType = obj->objType;
 				if( !objType->Implements(engine->GetObjectTypeFromTypeId(typeId)) )
 				{
 					// The cast is not possible, set the reference on the stack to null

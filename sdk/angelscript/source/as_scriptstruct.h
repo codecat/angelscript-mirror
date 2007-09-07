@@ -42,7 +42,6 @@
 #define AS_SCRIPTSTRUCT_H
 
 #include "as_config.h"
-#include "as_gcobject.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -70,8 +69,11 @@ public:
 
 	// GC methods
 	void Destruct();
+	int  GetRefCount();
+	void SetFlag();
+	bool GetFlag();
 	void EnumReferences(asIScriptEngine *engine);
-	void ReleaseAllHandles();
+	void ReleaseAllHandles(asIScriptEngine *engine);
 
 //protected:
 	// Used for properties
@@ -80,7 +82,8 @@ public:
 	void CopyObject(void *src, void *dst, asCObjectType *objType, asCScriptEngine *engine);
 	void CopyHandle(asDWORD *src, asDWORD *dst, asCObjectType *objType, asCScriptEngine *engine);
 
-	asSGCObject gc;
+	int refCount;
+	asCObjectType *objType;
 	bool isDestructCalled;
 };
 

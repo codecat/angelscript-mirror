@@ -42,7 +42,6 @@
 #define AS_ANYOBJECT_H
 
 #include "as_config.h"
-#include "as_gcobject.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -69,13 +68,17 @@ public:
 
 	// GC methods
 	void Destruct();
+	int  GetRefCount();
+	void SetFlag();
+	bool GetFlag();
 	void EnumReferences(asIScriptEngine *engine);
-	void ReleaseAllHandles();
+	void ReleaseAllHandles(asIScriptEngine *engine);
 
 protected:
 	void FreeObject();
 
-	asSGCObject gc;
+	int refCount;
+	asCObjectType *objType;
 	int valueTypeId;
 	void *value;
 };

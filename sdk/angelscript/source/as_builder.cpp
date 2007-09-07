@@ -860,6 +860,11 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	st->beh.addref = engine->scriptTypeBehaviours.beh.addref;
 	st->beh.release = engine->scriptTypeBehaviours.beh.release;
 	st->beh.copy = engine->scriptTypeBehaviours.beh.copy;
+	st->beh.gcGetRefCount = engine->scriptTypeBehaviours.beh.gcGetRefCount;
+	st->beh.gcSetFlag = engine->scriptTypeBehaviours.beh.gcSetFlag;
+	st->beh.gcGetFlag = engine->scriptTypeBehaviours.beh.gcGetFlag;
+	st->beh.gcEnumReferences = engine->scriptTypeBehaviours.beh.gcEnumReferences;
+	st->beh.gcReleaseAllReferences = engine->scriptTypeBehaviours.beh.gcReleaseAllReferences;
 	st->beh.operators.PushLast(ttAssignment);
 	st->beh.operators.PushLast(st->beh.copy);
 

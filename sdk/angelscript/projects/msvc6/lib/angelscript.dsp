@@ -191,10 +191,6 @@ SOURCE=..\..\..\source\as_datatype.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_gcobject.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\source\as_generic.cpp
 # End Source File
 # Begin Source File
@@ -320,10 +316,6 @@ SOURCE=..\..\..\source\as_datatype.h
 # Begin Source File
 
 SOURCE=..\..\..\source\as_debug.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\source\as_gcobject.h
 # End Source File
 # Begin Source File
 

@@ -159,9 +159,11 @@ public:
 
 	asCObjectType *GetArrayTypeFromSubType(asCDataType &subType);
 
-	void AddScriptObjectToGC(asCGCObject *obj);
+
 	int GarbageCollect(bool doFullCycle);
 	int GetObjectsInGarbageCollectorCount();
+	void NotifyGarbageCollectorOfNewObject(void *obj, int typeId);
+	void GCEnumCallback(void *reference);
 
 //protected:
 	friend class asCBuilder;
@@ -186,6 +188,8 @@ public:
 	void CallObjectMethod(void *obj, void *param, int func);
 	void CallObjectMethod(void *obj, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 	void CallObjectMethod(void *obj, void *param, asSSystemFunctionInterface *func, asCScriptFunction *desc);
+	bool CallObjectMethodRetBool(void *obj, int func);
+	int  CallObjectMethodRetInt(void *obj, int func);
 	void CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 
 	void CallMessageCallback(const char *section, int row, int col, int type, const char *message);
@@ -214,8 +218,6 @@ public:
 	asCScriptFunction *GetScriptFunction(int funcID);
 
 	bool IsTypeUsedInParams(asCObjectType *ot);
-
-	int GCInternal();
 
 	asCMemoryMgr memoryMgr;
 
@@ -266,19 +268,23 @@ public:
 	asCMap<int, asCDataType*> mapTypeIdToDataType;
 	int GetTypeIdFromDataType(const asCDataType &dt);
 	const asCDataType *GetDataTypeFromTypeId(int typeId);
-	const asCObjectType *GetObjectTypeFromTypeId(int typeId);
+	asCObjectType *GetObjectTypeFromTypeId(int typeId);
 	void RemoveFromTypeIdMap(asCObjectType *type);
 
 	// Garbage collector
-	asCArray<asCGCObject*> gcObjects;
-	asCArray<asCGCObject*> toMark;
-	asCMap<asCGCObject*, int> gcMap;
-	asSMapNode<asCGCObject*, int> *gcMapCursor;
-	int gcState;
-	asUINT gcIdx;
+	struct asSObjTypePair {void *obj; asCObjectType *type;};
+	asCArray<asSObjTypePair>           gcObjects;
+	asCArray<void*>                    toMark;
+	struct asSIntTypePair {int i; asCObjectType *type;};
+	asCMap<void*, asSIntTypePair>      gcMap;
+	asSMapNode<void*, asSIntTypePair> *gcMapCursor;
+	int                                gcState;
+	asUINT                             gcIdx;
 
-	void GCEnumCallback(void *reference);
+	int  GCInternal();
+	void AddScriptObjectToGC(void *obj, asCObjectType *objType);
 
+	// Dynamic groups
 	asCConfigGroup defaultGroup;
 	asCArray<asCConfigGroup*> configGroups;
 	asCConfigGroup *currentGroup;

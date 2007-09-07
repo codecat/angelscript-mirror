@@ -117,6 +117,8 @@ bool              asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void
 int               asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)                                          { return e->ExecuteString(module, script, ctx, flags); }
 int               asEngine_GarbageCollect(asIScriptEngine *e, bool doFullCycle)                                                                                                      { return e->GarbageCollect(doFullCycle); }
 int               asEngine_GetObjectsInGarbageCollectorCount(asIScriptEngine *e)                                                                                                     { return e->GetObjectsInGarbageCollectorCount(); }
+void              asEngine_NotifyGarbageCollectorOfNewObject(asIScriptEngine *e, void *obj, int typeId)                                                                              { e->NotifyGarbageCollectorOfNewObject(obj, typeId); }
+void              asEngine_GCEnumCallback(asIScriptEngine *e, void *obj)                                                                                                             { e->GCEnumCallback(obj); }
 int               asEngine_SaveByteCode(asIScriptEngine *e, const char *module, asBINARYWRITEFUNC_t outFunc, void *outParam)                                                         { asCBinaryStreamC out(outFunc, 0, outParam); return e->SaveByteCode(module, &out); }
 int               asEngine_LoadByteCode(asIScriptEngine *e, const char *module, asBINARYREADFUNC_t inFunc, void *inParam)                                                            { asCBinaryStreamC in(0, inFunc, inParam); return e->LoadByteCode(module, &in); }
 

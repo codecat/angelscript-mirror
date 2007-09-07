@@ -96,7 +96,7 @@ isn't enough, uses the following algorithm.</p>
     we know it has been referenced by the application, thus it is considered
     live along with all objects it holds references to.
 
-<li><b>Mark live objects:</b>Build a list of all objects in the GC that are
+<li><b>Mark live objects:</b> Build a list of all objects in the GC that are
     not flagged or that doesn't have the GC count equal to the reference
     counter. These are objects that are considered live. For each of the
     objects in the list, add all of the references in the object to the list

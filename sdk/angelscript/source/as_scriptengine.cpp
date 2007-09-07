@@ -51,7 +51,6 @@
 #include "as_anyobject.h"
 #include "as_generic.h"
 #include "as_scriptstruct.h"
-#include "as_gcobject.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -1348,6 +1347,49 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		beh->operators.PushLast(ttOpenBracket);
 		beh->operators.PushLast(AddBehaviourFunction(func, internal));
 	}
+	else if( behaviour >= asBEHAVE_FIRST_GC &&
+		     behaviour <= asBEHAVE_LAST_GC )
+	{
+		// Register the gc behaviours
+
+		// Verify parameter count
+		if( (behaviour == asBEHAVE_GETREFCOUNT ||
+			 behaviour == asBEHAVE_SETGCFLAG   ||
+			 behaviour == asBEHAVE_GETGCFLAG) &&
+			func.parameterTypes.GetLength() != 0 )
+			return ConfigError(asINVALID_DECLARATION);
+
+		if( (behaviour == asBEHAVE_ENUMREFS ||
+			 behaviour == asBEHAVE_RELEASEREFS) &&
+			func.parameterTypes.GetLength() != 1 )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// Verify return type
+		if( behaviour == asBEHAVE_GETREFCOUNT &&
+			func.returnType != asCDataType::CreatePrimitive(ttInt, false) )
+			return ConfigError(asINVALID_DECLARATION);
+		
+		if( behaviour == asBEHAVE_GETGCFLAG &&
+			func.returnType != asCDataType::CreatePrimitive(ttBool, false) )
+			return ConfigError(asINVALID_DECLARATION);
+		
+		if( (behaviour == asBEHAVE_SETGCFLAG ||
+			 behaviour == asBEHAVE_ENUMREFS  ||
+			 behaviour == asBEHAVE_RELEASEREFS) &&
+			func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
+			return ConfigError(asINVALID_DECLARATION);
+
+		if( behaviour == asBEHAVE_GETREFCOUNT )
+			beh->gcGetRefCount = AddBehaviourFunction(func, internal);
+		else if( behaviour == asBEHAVE_SETGCFLAG )
+			beh->gcSetFlag = AddBehaviourFunction(func, internal);
+		else if( behaviour == asBEHAVE_GETGCFLAG )
+			beh->gcGetFlag = AddBehaviourFunction(func, internal);
+		else if( behaviour == asBEHAVE_ENUMREFS )
+			beh->gcEnumReferences = AddBehaviourFunction(func, internal);
+		else if( behaviour == asBEHAVE_RELEASEREFS )
+			beh->gcReleaseAllReferences = AddBehaviourFunction(func, internal);
+	}
 	else
 	{
 		assert(false);
@@ -1599,6 +1641,49 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		beh->operators.PushLast(ttMinus);
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
+	}
+	else if( behaviour >= asBEHAVE_FIRST_GC &&
+		     behaviour <= asBEHAVE_LAST_GC )
+	{
+		// Register the gc behaviours
+
+		// Verify parameter count
+		if( (behaviour == asBEHAVE_GETREFCOUNT ||
+			 behaviour == asBEHAVE_SETGCFLAG   ||
+			 behaviour == asBEHAVE_GETGCFLAG) &&
+			func.parameterTypes.GetLength() != 0 )
+			return ConfigError(asINVALID_DECLARATION);
+
+		if( (behaviour == asBEHAVE_ENUMREFS ||
+			 behaviour == asBEHAVE_RELEASEREFS) &&
+			func.parameterTypes.GetLength() != 1 )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// Verify return type
+		if( behaviour == asBEHAVE_GETREFCOUNT &&
+			func.returnType != asCDataType::CreatePrimitive(ttInt, false) )
+			return ConfigError(asINVALID_DECLARATION);
+		
+		if( behaviour == asBEHAVE_GETGCFLAG &&
+			func.returnType != asCDataType::CreatePrimitive(ttBool, false) )
+			return ConfigError(asINVALID_DECLARATION);
+		
+		if( (behaviour == asBEHAVE_SETGCFLAG ||
+			 behaviour == asBEHAVE_ENUMREFS  ||
+			 behaviour == asBEHAVE_RELEASEREFS) &&
+			func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
+			return ConfigError(asINVALID_DECLARATION);
+
+		if( behaviour == asBEHAVE_GETREFCOUNT )
+			func.id = beh->gcGetRefCount = AddBehaviourFunction(func, internal);
+		else if( behaviour == asBEHAVE_SETGCFLAG )
+			func.id = beh->gcSetFlag = AddBehaviourFunction(func, internal);
+		else if( behaviour == asBEHAVE_GETGCFLAG )
+			func.id = beh->gcGetFlag = AddBehaviourFunction(func, internal);
+		else if( behaviour == asBEHAVE_ENUMREFS )
+			func.id = beh->gcEnumReferences = AddBehaviourFunction(func, internal);
+		else if( behaviour == asBEHAVE_RELEASEREFS )
+			func.id = beh->gcReleaseAllReferences = AddBehaviourFunction(func, internal);
 	}
 	else
 	{
@@ -2533,6 +2618,11 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	ot->beh.release = defaultArrayObjectType->beh.release;
 	ot->beh.copy = defaultArrayObjectType->beh.copy;
 	ot->beh.operators = defaultArrayObjectType->beh.operators;
+	ot->beh.gcGetRefCount = defaultArrayObjectType->beh.gcGetRefCount;
+	ot->beh.gcSetFlag = defaultArrayObjectType->beh.gcSetFlag;
+	ot->beh.gcGetFlag = defaultArrayObjectType->beh.gcGetFlag;
+	ot->beh.gcEnumReferences = defaultArrayObjectType->beh.gcEnumReferences;
+	ot->beh.gcReleaseAllReferences = defaultArrayObjectType->beh.gcReleaseAllReferences;
 
 	// The object type needs to store the sub type as well
 	ot->subType = type.GetObjectType();
@@ -2602,6 +2692,101 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 #endif
 }
 
+bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func)
+{
+	asCScriptFunction *s = scriptFunctions[func];
+	asSSystemFunctionInterface *i = s->sysFuncIntf;
+
+#ifdef __GNUC__
+	if( i->callConv == ICC_GENERIC_METHOD )
+	{
+		asCGeneric gen(this, s, obj, 0);
+		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
+		f(&gen);
+		return *(bool*)gen->GetReturnPointer();
+	}
+	else /*if( i->callConv == ICC_THISCALL || i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
+	{
+		bool (*f)(void *) = (bool (*)(void *))(i->func);
+		return f(obj);
+	}
+#else
+#ifndef AS_NO_CLASS_METHODS
+	if( i->callConv == ICC_THISCALL )
+	{
+		union
+		{
+			asSIMPLEMETHOD_t mthd;
+			asFUNCTION_t func;
+		} p;
+		p.func = (void (*)())(i->func);
+		bool (asCSimpleDummy::*f)() = (bool (asCSimpleDummy::*)())p.mthd;
+		return (((asCSimpleDummy*)obj)->*f)();
+	}
+	else
+#endif
+	if( i->callConv == ICC_GENERIC_METHOD )
+	{
+		asCGeneric gen(this, s, obj, 0);
+		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
+		f(&gen);
+		return *(bool*)gen.GetReturnPointer();
+	}
+	else /*if( i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
+	{
+		bool (*f)(void *) = (bool (*)(void *))(i->func);
+		return f(obj);
+	}
+#endif
+}
+
+int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
+{
+	asCScriptFunction *s = scriptFunctions[func];
+	asSSystemFunctionInterface *i = s->sysFuncIntf;
+
+#ifdef __GNUC__
+	if( i->callConv == ICC_GENERIC_METHOD )
+	{
+		asCGeneric gen(this, s, obj, 0);
+		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
+		f(&gen);
+		return *(int*)gen->GetReturnPointer();
+	}
+	else /*if( i->callConv == ICC_THISCALL || i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
+	{
+		int (*f)(void *) = (int (*)(void *))(i->func);
+		return f(obj);
+	}
+#else
+#ifndef AS_NO_CLASS_METHODS
+	if( i->callConv == ICC_THISCALL )
+	{
+		union
+		{
+			asSIMPLEMETHOD_t mthd;
+			asFUNCTION_t func;
+		} p;
+		p.func = (void (*)())(i->func);
+		int (asCSimpleDummy::*f)() = (int (asCSimpleDummy::*)())p.mthd;
+		return (((asCSimpleDummy*)obj)->*f)();
+	}
+	else
+#endif
+	if( i->callConv == ICC_GENERIC_METHOD )
+	{
+		asCGeneric gen(this, s, obj, 0);
+		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
+		f(&gen);
+		return *(int*)gen.GetReturnPointer();
+	}
+	else /*if( i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
+	{
+		int (*f)(void *) = (int (*)(void *))(i->func);
+		return f(obj);
+	}
+#endif
+}
 
 void asCScriptEngine::CallObjectMethod(void *obj, void *param, int func)
 {
@@ -2714,10 +2899,28 @@ void asCScriptEngine::CallFree(asCObjectType *type, void *obj)
 	custom_free(obj);
 }
 
-void asCScriptEngine::AddScriptObjectToGC(asCGCObject *obj)
+void asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, int typeId)
 {
-	obj->AddRef();
-	gcObjects.PushLast(obj);
+	asCObjectType *objType = GetObjectTypeFromTypeId(typeId);
+	AddScriptObjectToGC(obj, objType);
+}
+
+void asCScriptEngine::AddScriptObjectToGC(void *obj, asCObjectType *objType)
+{
+	// TODO: gc
+	// This method should take a void* and a typeId
+	// 
+	// The asCObjectType should be stored together with the object pointer
+	// 
+	// asCScriptStruct should call this method with its this pointer and its type id
+	// asCArrayObject should call this method with its this pointer and its type id
+	// asCAnyObject should call this method with its this pointer and its type id
+	// asCGCObject should no longer exist
+	// :ODOT
+
+	CallObjectMethod(obj, objType->beh.addref);
+	asSObjTypePair ot = {obj, objType};
+	gcObjects.PushLast(ot);
 }
 
 int asCScriptEngine::GarbageCollect(bool doFullCycle)
@@ -2794,14 +2997,25 @@ int asCScriptEngine::GCInternal()
 			// objects reach refCount == 1.
 			while( ++gcIdx < gcObjects.GetLength() )
 			{
-				if( gcObjects[gcIdx]->gc.GetRefCount() == 1 )
+				if( CallObjectMethodRetInt(gcObjects[gcIdx].obj, gcObjects[gcIdx].type->beh.gcGetRefCount) == 1 )
 				{
 					// Release the object immediately
 
 					// Make sure the refCount is really 0, because the 
 					// destructor may have increased the refCount again.
 
-					if( gcObjects[gcIdx]->Release() == 0 )
+					bool addRef = false;
+					if( gcObjects[gcIdx].type->flags & asOBJ_SCRIPT_STRUCT )
+					{
+						// Script structs may actually be resurrected in the destructor
+						int refCount = ((asCScriptStruct*)gcObjects[gcIdx].obj)->Release();
+						if( refCount > 0 ) addRef = true;
+					}
+					else
+						CallObjectMethod(gcObjects[gcIdx].obj, gcObjects[gcIdx].type->beh.release);
+
+					// Was the object really destroyed?
+					if( !addRef )
 					{
 						if( gcIdx == gcObjects.GetLength() - 1 )
 							gcObjects.PopLast();
@@ -2813,7 +3027,7 @@ int asCScriptEngine::GCInternal()
 					{
 						// Since the object was resurrected in the 
 						// destructor, we must add our reference again
-						gcObjects[gcIdx]->AddRef();
+						CallObjectMethod(gcObjects[gcIdx].obj, gcObjects[gcIdx].type->beh.addref);
 					}
 
 					gcState = destroyGarbage_haveMore;
@@ -2841,26 +3055,25 @@ int asCScriptEngine::GCInternal()
 		case clearCounters_loop:
 		{
 			// TODO: gc
-			// Build a map of objects that will be checked, the map will
-			// hold the object pointer as key, and the gcCount and the 
-			// objects index in the gcObjects as value. As objects are 
-			// added to the map the gcFlag must be set in the objects.
-
 			// This step can be incremental as newly created objects are
-			// added to the end of the list.
+			// added to the end of the gcObjects array.
 			// :ODOT
 
-			// Clear the GC counter for the objects that are still alive.
-			// This counter will be used to count the references between
-			// objects on the list.
+			// Build a map of objects that will be checked, the map will
+			// hold the object pointer as key, and the gcCount and the 
+			// objects index in the gcObjects array as value. As objects are 
+			// added to the map the gcFlag must be set in the objects, so
+			// we can be verify if the object is accessed during the GC cycle.
 			for( asUINT n = 0; n < gcObjects.GetLength(); n++ )
 			{
 				// Add the gc count for this object
-				gcMap.Insert(gcObjects[n], gcObjects[n]->gc.GetRefCount() - 1);
+				int refCount = CallObjectMethodRetInt(gcObjects[n].obj, gcObjects[n].type->beh.gcGetRefCount);
+				asSIntTypePair it = {refCount-1, gcObjects[n].type};
+				gcMap.Insert(gcObjects[n].obj, it);
 
 				// Mark the object so that we can
 				// see if it has changed since read
-				gcObjects[n]->gc.SetFlag();
+				CallObjectMethod(gcObjects[n].obj, gcObjects[n].type->beh.gcSetFlag);
 			}
 
 			gcState = countReferences_init;
@@ -2877,38 +3090,26 @@ int asCScriptEngine::GCInternal()
 
 		case countReferences_loop:
 		{
-			// TODO: gc
-			// Count only the references for the entries in the map.
-			// If an entry has it's gcFlag cleared then its references won't 
-			// be counted, because then we know the object is alive.
+			// Call EnumReferences on all objects in the map, to count the number
+			// of references reachable from between objects in the map. If all
+			// references for an object in the map is reachable from other objects 
+			// in the map, then we know that no outside references are held for 
+			// this object, thus it is a potential dead object in a circular reference.
 
-			// Instead of calling AddUnmarkedReference we should call EnumReferences, 
-			// which in turn calls NotifyGCOfReference on the engine. NotifyGCOfReference
-			// should then update the gcCount in the map if the object is in there.
+			// If the gcFlag is cleared for an object we consider the object alive 
+			// and referenced from outside the GC, thus we don't enumerate its references.
 
-			// The map structure must be changed to permit multiple cursors.
-			// :ODOT
-
-			// It is possible that the application alters the reference count
-			// after we have cleared the gcCounter, so we need to detect this.
-
-			// Any new object created during garbage collection will have the 
-			// flag cleared and the gcCount == -1, thus is automatically 
-			// considered alive.
-
-			// Count references between objects on the list. If the number of
-			// references counted during this step equals the refCount 
-			// (gcCount == 0), then it means that all the references reachable 
-			// from the objects referenced by the GC, thus is a potential 
-			// circular reference.
+			// Any new objects created after this step in the GC cycle won't be 
+			// in the map, and is thus automatically considered alive.
 			while( gcMapCursor )
 			{
-				asCGCObject *obj = gcMap.GetKey(gcMapCursor);
+				void *obj = gcMap.GetKey(gcMapCursor);
+				asCObjectType *type = gcMap.GetValue(gcMapCursor).type;
 				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
 
-				if( obj->gc.GetFlag() )
+				if( CallObjectMethodRetBool(obj, type->beh.gcGetFlag) )
 				{
-					obj->EnumReferences(this);
+					CallObjectMethod(obj, this, type->beh.gcEnumReferences);
 
 					// Allow the application to work a little
 					return 1;
@@ -2929,29 +3130,24 @@ int asCScriptEngine::GCInternal()
 
 		case detectGarbage_loop1:
 		{
-			// TODO:
-			// Only add objects from the map to the list of objects to mark as alive.
-			// Objects that are not in the map, that is objects that have been created 
-			// since the map was created, won't be considered as garbage anyway.
-			// :ODOT
+			// All objects that are known not to be dead must be removed from the map,
+			// along with all objects they reference. What remains in the map after 
+			// this pass is sure to be dead objects in circular references.
 
-			// Whenever an object's reference is modified the gcFlag is cleared, 
-			// which the GC interprets as if the object is live.
+			// An object is considered alive if its gcFlag is cleared, or all the 
+			// references where not found in the map.
 
-			// Any objects that have gcCount > 0 is referenced by someone else than
-			// the objects referenced by the GC, thus is considered alive.
-
-			// Put all objects that are alive in a list of objects to mark as alive
-
+			// Add all alive objects from the map to the toMark array
 			while( gcMapCursor )
 			{
-				asSMapNode<asCGCObject*, int> *cursor = gcMapCursor;
+				asSMapNode<void*, asSIntTypePair> *cursor = gcMapCursor;
 				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
 
-				asCGCObject *obj = gcMap.GetKey(cursor);
-				int gcCount = gcMap.GetValue(cursor);
+				void *obj = gcMap.GetKey(cursor);
+				asSIntTypePair it = gcMap.GetValue(cursor);
 
-				if( !obj->gc.GetFlag() || gcCount > 0 )
+				bool gcFlag = CallObjectMethodRetBool(obj, it.type->beh.gcGetFlag);
+				if( !gcFlag || it.i > 0 )
 				{
 					toMark.PushLast(obj);
 
@@ -2966,30 +3162,25 @@ int asCScriptEngine::GCInternal()
 
 		case detectGarbage_loop2:
 		{
-			// TODO:
-			// An object is marked as alive by removing it from the map.
-
-			// Instead of calling AddUnmarkedReference we should call EnumReferences, 
-			// which in turn calls NotifyGCOfReference on the engine. NotifyGCOfReference
-			// should then add the object to the list, if it is in the map.
-			// :TODO
-
-			// Mark all of the objects in the list as alive by setting gcCount to -1.
-			// For each object marked as alive, add all the objects it references to 
-			// the list as well (unless it has already been marked as alive.)
+			// In this step we are actually removing the alive objects from the map.
+			// As the object is removed, all the objects it references are added to the
+			// toMark list, by calling EnumReferences. Only objects still in the map
+			// will be added to the toMark list.
 			while( toMark.GetLength() )
 			{
-				asCGCObject *gcObj = toMark.PopLast();
+				void *gcObj = toMark.PopLast();
+				asCObjectType *type = 0;
 
 				// Remove the object from the map to mark it as alive
-				asSMapNode<asCGCObject*, int> *cursor = 0;
+				asSMapNode<void*, asSIntTypePair> *cursor = 0;
 				if( gcMap.MoveTo(&cursor, gcObj) )
 				{
+					type = gcMap.GetValue(cursor).type;
 					gcMap.Erase(cursor);
-				}
 
-				// Enumerate all the object's references so that they too can be marked as alive
-				gcObj->EnumReferences(this);
+					// Enumerate all the object's references so that they too can be marked as alive
+					CallObjectMethod(gcObj, this, type->beh.gcEnumReferences);
+				}
 
 				// Allow the application to work a little
 				return 1;
@@ -3001,18 +3192,17 @@ int asCScriptEngine::GCInternal()
 
 		case verifyUnmarked:
 		{
-			// TODO:
-			// Only check the objects still in the map
-			// :ODOT
-
-			// In this step we must make sure that none of the still unmarked objects
+			// In this step we must make sure that none of the objects still in the map
 			// has been touched by the application. If they have then we must run the
 			// detectGarbage loop once more.
-
 			gcMap.MoveFirst(&gcMapCursor);
 			while( gcMapCursor )
 			{
-				if( !gcMap.GetKey(gcMapCursor)->gc.GetFlag() )
+				void *gcObj = gcMap.GetKey(gcMapCursor);
+				asCObjectType *type = gcMap.GetValue(gcMapCursor).type;
+
+				bool gcFlag = CallObjectMethodRetBool(gcObj, type->beh.gcGetFlag);
+				if( !gcFlag )
 				{
 					// The unmarked object was touched, rerun the detectGarbage loop
 					gcState = detectGarbage_init;
@@ -3039,18 +3229,17 @@ int asCScriptEngine::GCInternal()
 		case breakCircles_loop:
 		case breakCircles_haveGarbage:
 		{
-			// TODO:
-			// All objects in the map should now have gcCount == 0.
-			// When all circular references have been broken, the map 
-			// should be destroyed.
-			// :ODOT
-
-			// Any objects still with gcCount == 0 is garbage involved
-			// in circular references. Break the circular references, by
-			// having the objects release all their member handles.
+			// All objects in the map are now known to be dead objects
+			// kept alive through circular references. To be able to free
+			// these objects we need to force the breaking of the circle
+			// by having the objects release their references.
 			while( gcMapCursor )
 			{
-				gcMap.GetKey(gcMapCursor)->ReleaseAllHandles();
+				//gcMap.GetKey(gcMapCursor)->ReleaseAllHandles();
+				void *gcObj = gcMap.GetKey(gcMapCursor);
+				asCObjectType *type = gcMap.GetValue(gcMapCursor).type;
+				CallObjectMethod(gcObj, this, type->beh.gcReleaseAllReferences);
+
 				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
 
 				gcState = breakCircles_haveGarbage;
@@ -3086,17 +3275,17 @@ void asCScriptEngine::GCEnumCallback(void *reference)
 	if( gcState == countReferences_loop )
 	{
 		// Find the reference in the map
-		asSMapNode<asCGCObject*, int> *cursor = 0;
+		asSMapNode<void*, asSIntTypePair> *cursor = 0;
 		if( gcMap.MoveTo(&cursor, (asCGCObject*)reference) )
 		{
 			// Decrease the counter in the map for the reference
-			gcMap.GetValue(cursor)--;
+			gcMap.GetValue(cursor).i--;
 		}
 	}
 	else if( gcState == detectGarbage_loop2 )
 	{
 		// Find the reference in the map
-		asSMapNode<asCGCObject*, int> *cursor = 0;
+		asSMapNode<void*, asSIntTypePair> *cursor = 0;
 		if( gcMap.MoveTo(&cursor, (asCGCObject*)reference) )
 		{
 			// Add the object to the list of objects to mark as alive
@@ -3170,7 +3359,7 @@ const asCDataType *asCScriptEngine::GetDataTypeFromTypeId(int typeId)
 	return 0;
 }
 
-const asCObjectType *asCScriptEngine::GetObjectTypeFromTypeId(int typeId)
+asCObjectType *asCScriptEngine::GetObjectTypeFromTypeId(int typeId)
 {
 	asSMapNode<int,asCDataType*> *cursor = 0;
 	if( mapTypeIdToDataType.MoveTo(&cursor, typeId) )
@@ -3376,7 +3565,7 @@ bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int
 	else if( objDt->IsScriptStruct() && obj )
 	{
 		// There's still a chance the object implements the requested interface
-		asCObjectType *objType = ((asCScriptStruct*)obj)->gc.objType;
+		asCObjectType *objType = ((asCScriptStruct*)obj)->objType;
 		if( objType->Implements(hdlDt->GetObjectType()) )
 			return true;
 	}

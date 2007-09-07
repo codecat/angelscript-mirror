@@ -37,6 +37,13 @@ public:
     void Delete(std::string &key);
     void DeleteAll();
 
+	// Garbage collections behaviours
+	int GetRefCount();
+	void SetGCFlag();
+	bool GetGCFlag();
+	void EnumReferences(asIScriptEngine *engine);
+	void ReleaseAllReferences(asIScriptEngine *engine);
+
 protected:
 
 	// The structure for holding the values

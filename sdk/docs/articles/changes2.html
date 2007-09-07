@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.10.0 WIP - 2007/08/30</h2>
+<h2>Version 2.10.0 WIP - 2007/09/06</h2>
 
 <ul>
 <li>Bug fixes
@@ -126,6 +126,15 @@ A:hover
 <li>Fixed a bug with matching functions with boolean arguments (Thanks Jeff Slutter)
 <li>CopyScriptObject is now able to copy registered types that have no registered copy behaviour (Thanks Jeff Slutter)
 <li>Script classes crashed on construction with AS_MAX_PORTABILITY (Thanks Carlos Campa&ntilde;a)
+</ul>
+<li>Library interface
+<ul>
+<li>Added GCEnumCallback and NotifyGarbageCollectorOfNewObject to engine
+<li>Added behaviours GETREFCOUNT, SETGCFLAG, GETGCFLAG, ENUMREFS, RELEASEREFS
+</ul>
+<li>Project
+<ul>
+<li>Removed as_gcobject.cpp and as_gcobject.h
 </ul>
 </ul>
 

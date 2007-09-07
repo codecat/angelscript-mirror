@@ -56,6 +56,8 @@ const char *script =
 "  assert( bl == true );           \n"
 "  dict.get(\"false\", bl);        \n"
 "  assert( bl == false );          \n"
+// Test circular reference with itself
+"  dict.set(\"self\", @dict);      \n"
 "}                                 \n";
 
 bool Test()
@@ -117,7 +119,6 @@ bool Test()
 	ctx->Release();
 
 	engine->Release();
-
 
 	return fail;
 }
