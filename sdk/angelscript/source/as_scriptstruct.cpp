@@ -76,6 +76,7 @@ int ConstructScriptStruct(void *ptr, asCObjectType *objType, asCScriptEngine *en
 	return 0;
 }
 
+#ifdef AS_MAX_PORTABILITY
 
 static void ScriptStruct_AddRef_Generic(asIScriptGeneric *gen)
 {
@@ -121,6 +122,7 @@ static void ScriptStruct_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 	self->ReleaseAllHandles(engine);
 }
 
+#endif
 
 void RegisterScriptStruct(asCScriptEngine *engine)
 {

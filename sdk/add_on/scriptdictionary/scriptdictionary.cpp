@@ -73,7 +73,7 @@ void CScriptDictionary::EnumReferences(asIScriptEngine *engine)
     }
 }
 
-void CScriptDictionary::ReleaseAllReferences(asIScriptEngine *engine)
+void CScriptDictionary::ReleaseAllReferences(asIScriptEngine * /*engine*/)
 {
 	// We're being told to release all references in 
 	// order to break circular references for dead objects
