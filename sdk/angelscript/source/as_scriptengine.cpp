@@ -2658,8 +2658,26 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
+	else if( i->callConv == ICC_VIRTUAL_THISCALL )
+	{
+		// For virtual thiscalls we must call the method as a true class method so that the compiler will lookup the function address in the vftable
+		union
+		{
+			asSIMPLEMETHOD_t mthd;
+			struct
+			{
+				asFUNCTION_t func;
+				asDWORD baseOffset;
+			} f;
+		} p;
+		p.f.func = (void (*)())(i->func);
+		p.f.baseOffset = i->baseOffset;
+		void (asCSimpleDummy::*f)() = p.mthd;
+		(((asCSimpleDummy*)obj)->*f)();
+	}
 	else /*if( i->callConv == ICC_THISCALL || i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
 	{
+		// Non-virtual thiscall can be called just like any global function, passing the object as the first parameter
 		void (*f)(void *) = (void (*)(void *))(i->func);
 		f(obj);
 	}
@@ -2703,10 +2721,28 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func)
 		asCGeneric gen(this, s, obj, 0);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
-		return *(bool*)gen->GetReturnPointer();
+		return *(bool*)gen.GetReturnPointer();
+	}
+	else if( i->callConv == ICC_VIRTUAL_THISCALL )
+	{
+		// For virtual thiscalls we must call the method as a true class method so that the compiler will lookup the function address in the vftable
+		union
+		{
+			asSIMPLEMETHOD_t mthd;
+			struct
+			{
+				asFUNCTION_t func;
+				asDWORD baseOffset;
+			} f;
+		} p;
+		p.f.func = (void (*)())(i->func);
+		p.f.baseOffset = i->baseOffset;
+		bool (asCSimpleDummy::*f)() = (bool (asCSimpleDummy::*)())(p.mthd);
+		return (((asCSimpleDummy*)obj)->*f)();
 	}
 	else /*if( i->callConv == ICC_THISCALL || i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
 	{
+		// Non-virtual thiscall can be called just like any global function, passing the object as the first parameter
 		bool (*f)(void *) = (bool (*)(void *))(i->func);
 		return f(obj);
 	}
@@ -2751,10 +2787,28 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
 		asCGeneric gen(this, s, obj, 0);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
-		return *(int*)gen->GetReturnPointer();
+		return *(int*)gen.GetReturnPointer();
+	}
+	else if( i->callConv == ICC_VIRTUAL_THISCALL )
+	{
+		// For virtual thiscalls we must call the method as a true class method so that the compiler will lookup the function address in the vftable
+		union
+		{
+			asSIMPLEMETHOD_t mthd;
+			struct
+			{
+				asFUNCTION_t func;
+				asDWORD baseOffset;
+			} f;
+		} p;
+		p.f.func = (void (*)())(i->func);
+		p.f.baseOffset = i->baseOffset;
+		int (asCSimpleDummy::*f)() = (int (asCSimpleDummy::*)())(p.mthd);
+		return (((asCSimpleDummy*)obj)->*f)();
 	}
 	else /*if( i->callConv == ICC_THISCALL || i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
 	{
+		// Non-virtual thiscall can be called just like any global function, passing the object as the first parameter
 		int (*f)(void *) = (int (*)(void *))(i->func);
 		return f(obj);
 	}
