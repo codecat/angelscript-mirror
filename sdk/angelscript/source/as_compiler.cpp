@@ -2761,25 +2761,24 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		to.MakeReference(false);
 		ImplicitConversion(rctx, to, node, false);
 
-		if( lvalue->IsObjectHandle() )
-		{
-			if( !rctx->type.dataType.IsObjectHandle() )
-			{
-				Error(TXT_NEED_TO_BE_A_HANDLE, node);
-			}
-		}
-
 		// Check data type
-		if( !lvalue->IsEqualExceptRefAndConst(rctx->type.dataType) )
+		if( lvalue->IsObjectHandle() &&
+			!rctx->type.dataType.IsObjectHandle() )
+		{
+			Error(TXT_NEED_TO_BE_A_HANDLE, node);
+		}
+		else if( !lvalue->IsEqualExceptRefAndConst(rctx->type.dataType) )
 		{
 			asCString str;
 			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lvalue->Format().AddressOf());
 			Error(str.AddressOf(), node);
 		}
-
-		// If the assignment will be made with the copy behaviour then the rvalue must not be a reference
-		if( lvalue->IsObject() )
-			assert(!rctx->type.dataType.IsReference());
+		else
+		{
+			// If the assignment will be made with the copy behaviour then the rvalue must not be a reference
+			if( lvalue->IsObject() )
+				assert(!rctx->type.dataType.IsReference());
+		}
 	}
 }
 

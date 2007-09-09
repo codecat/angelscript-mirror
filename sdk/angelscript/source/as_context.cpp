@@ -3202,7 +3202,7 @@ void asCContext::CleanStackFrame()
 		// If the object is a script declared object, then we must release it
 		// as the compiler adds a reference at the entry of the function
 		asSTypeBehaviour *beh = &currentFunction->objectType->beh;
-		if( beh->release )
+		if( beh->release && *(size_t*)&stackFramePointer[0] != 0 )
 		{
 			engine->CallObjectMethod((void*)*(size_t*)&stackFramePointer[0], beh->release);
 			*(size_t*)&stackFramePointer[0] = 0;

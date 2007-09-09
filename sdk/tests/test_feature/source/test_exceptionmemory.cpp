@@ -44,6 +44,17 @@ static const char *script2 =
 "  RefObj @a = @ExceptionHandle(); \n"
 "}                                 \n";
 
+static const char *script3 =
+"class Pie                             \n"
+"{                                     \n"
+"	void foo() {}                      \n"
+"}                                     \n"
+"void calc()                           \n"
+"{                                     \n"
+"    Pie@ thing = null;                \n"
+"    thing.foo(); // Null dereference  \n"
+"}                                     \n";
+
 class CObject
 {
 public:
@@ -292,6 +303,16 @@ bool Test()
 	}
 
 //	printf("---\n");
+
+	engine->AddScriptSection(0, "script", script3, strlen(script3));
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "calc()");
+	if( r != asEXECUTION_EXCEPTION )
+	{
+		printf("%s: Failed\n", TESTNAME);
+		fail = true;
+	}
 
  	engine->Release();
 

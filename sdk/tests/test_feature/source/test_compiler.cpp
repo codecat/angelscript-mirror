@@ -54,6 +54,14 @@ const char *script10 =
 "void func() {}\n"
 "void test() { int v; v = func(); }\n";
 
+const char *script11 =
+"class c                                       \n"
+"{                                             \n"
+"  object @obj;                                \n"
+"  void func()                                 \n"
+"  {type str = obj.GetTypeHandle();}           \n"
+"}                                             \n";
+
 
 bool Test()
 {
@@ -214,8 +222,28 @@ bool Test()
 		fail = true;
 	}
 
+	// Test 12
+	// Handle errors after use of undefined objects
+	bout.buffer = "";
+	engine->RegisterObjectType("type", 4, asOBJ_PRIMITIVE);
+	engine->AddScriptSection(0, "script", script11, strlen(script11));
+	r = engine->Build(0);
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "script (3, 3) : Error   : Identifier 'object' is not a data type\n"
+					   "script (3, 10) : Error   : Object handle is not supported for this type\n"
+                       "script (4, 3) : Info    : Compiling void c::func()\n"
+                       "script (5, 18) : Error   : Illegal operation on 'int&'\n"
+                       "script (5, 15) : Error   : Can't implicitly convert from 'int&' to 'type&'.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
-		
+
 	// Success
  	return fail;
 }
