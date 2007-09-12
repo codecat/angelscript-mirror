@@ -195,13 +195,6 @@ int              asGeneric_SetReturnAddress(asIScriptGeneric *g, void *addr) { r
 int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj)  { return g->SetReturnObject(obj); }
 void *           asGeneric_GetReturnPointer(asIScriptGeneric *g)            { return g->GetReturnPointer(); }
 
-int  asAny_AddRef(asIScriptAny *a)                          { return a->AddRef(); }
-int  asAny_Release(asIScriptAny *a)                         { return a->Release(); }
-void asAny_Store(asIScriptAny *a, void *ref, int typeId)    { a->Store(ref, typeId); }
-int  asAny_Retrieve(asIScriptAny *a, void *ref, int typeId) { return a->Retrieve(ref, typeId); }
-int  asAny_GetTypeId(asIScriptAny *a)                       { return a->GetTypeId(); }
-int  asAny_CopyFrom(asIScriptAny *a, asIScriptAny *other)   { return a->CopyFrom(other); }
-
 int         asStruct_AddRef(asIScriptStruct *s)                           { return s->AddRef(); }
 int         asStruct_Release(asIScriptStruct *s)                          { return s->Release(); }
 int         asStruct_GetStructTypeId(asIScriptStruct *s)                  { return s->GetStructTypeId(); }

@@ -91,6 +91,10 @@ SOURCE=..\..\source\main.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\scriptany\scriptany.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.cpp
 # End Source File
 # End Group
@@ -100,6 +104,10 @@ SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\angelscript\include\angelscript.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptany\scriptany.h
 # End Source File
 # Begin Source File
 

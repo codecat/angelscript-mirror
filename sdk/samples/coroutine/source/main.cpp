@@ -18,6 +18,7 @@
 #include <list>
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/scriptany/scriptany.h"
 
 using namespace std;
 
@@ -51,7 +52,7 @@ int kbhit()
 void ConfigureEngine(asIScriptEngine *engine);
 int  CompileScript(asIScriptEngine *engine);
 void PrintString(string &str);
-void ScriptCreateCoRoutine(string &func, asIScriptAny *arg);
+void ScriptCreateCoRoutine(string &func, CScriptAny *arg);
 void ScriptYield();
 
 // This simple manager will let us manage the contexts, 
@@ -157,6 +158,12 @@ void ConfigureEngine(asIScriptEngine *engine)
 	// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
 	RegisterScriptString(engine);
 
+	// Register the script any type
+	// This type will allow the script to pass a variable argument type to the function
+	// thus making the CreateCoRoutine much more flexible in how necessary values are 
+	// passed to the new function. The implementation is in "/add_on/scriptany/scriptany.cpp"
+	RegisterScriptAny(engine);
+
 	// Register the functions that the scripts will be allowed to use
 	r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void CreateCoRoutine(string &in, any &in)", asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL); assert( r >= 0 );
@@ -227,7 +234,7 @@ void PrintString(string &str)
 	cout << str;
 }
 
-void ScriptCreateCoRoutine(string &func, asIScriptAny *arg)
+void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx )

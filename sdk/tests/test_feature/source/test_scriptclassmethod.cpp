@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../../add_on/scriptany/scriptany.h"
 
 namespace TestScriptClassMethod
 {
@@ -126,7 +127,7 @@ void print(asIScriptGeneric *gen)
 
 void Analyze(asIScriptGeneric *gen)
 {
-	asIScriptAny *a = (asIScriptAny*)gen->GetArgAddress(0);
+	CScriptAny *a = (CScriptAny*)gen->GetArgAddress(0);
 	int myclassId = a->GetTypeId();
 	asIScriptStruct *s = 0;
 	a->Retrieve(&s, myclassId);
@@ -141,6 +142,7 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString_Generic(engine);
+	RegisterScriptAny(engine);
 
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
@@ -230,6 +232,7 @@ bool Test()
 
 	//----------------------------------
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "test3", script3, strlen(script3), 0);
@@ -270,6 +273,7 @@ bool Test()
 	//----------------------------
 	// Verify that global functions and class methods with the same name doesn't conflict
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptAny(engine);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "test4", script4, strlen(script4), 0);
 	r = engine->Build(0);
@@ -283,6 +287,7 @@ bool Test()
 	//----------------------------
 	// Accessing member variables without this
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptAny(engine);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->AddScriptSection(0, "test5", script5, strlen(script5), 0);

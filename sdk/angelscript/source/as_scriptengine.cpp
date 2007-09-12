@@ -48,7 +48,6 @@
 #include "as_module.h"
 #include "as_callfunc.h"
 #include "as_arrayobject.h"
-#include "as_anyobject.h"
 #include "as_generic.h"
 #include "as_scriptstruct.h"
 
@@ -234,7 +233,6 @@ asCScriptEngine::asCScriptEngine()
 	GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttVoid, false));
 
 	RegisterArrayObject(this);
-	RegisterAnyObject(this);
 	RegisterScriptStruct(this);
 }
 
@@ -939,12 +937,6 @@ int asCScriptEngine::RegisterSpecialObjectType(const char *name, int byteSize, a
 		defaultArrayObjectType = type;
 		type->refCount++;
 	}
-	else if( strcmp(name, ANY_TOKEN) == 0 )
-	{
-		type = NEW(asCObjectType)(this);
-		anyObjectType = type;
-		type->refCount++;
-	}
 	else
 		return asERROR;
 
@@ -1241,7 +1233,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 
 	if( isDefaultArray )
 		type = asCDataType::CreateDefaultArray(this);
-	else if( objType->flags & (asOBJ_SCRIPT_STRUCT|asOBJ_SCRIPT_ANY) )
+	else if( objType->flags & asOBJ_SCRIPT_STRUCT )
 	{
 		type.MakeHandle(false);
 		type.MakeReadOnly(false);
@@ -1273,7 +1265,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION);
 
-		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY | asOBJ_SCRIPT_ANY) )
+		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY) )
 		{
 			if( func.parameterTypes.GetLength() == 1 )
 			{
@@ -1320,7 +1312,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		if( func.parameterTypes.GetLength() != 1 )
 			return ConfigError(asINVALID_DECLARATION);
 
-		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY | asOBJ_SCRIPT_ANY) )
+		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY) )
 		{
 			if( beh->copy )
 				return ConfigError(asALREADY_REGISTERED);
@@ -1684,6 +1676,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 			func.id = beh->gcEnumReferences = AddBehaviourFunction(func, internal);
 		else if( behaviour == asBEHAVE_RELEASEREFS )
 			func.id = beh->gcReleaseAllReferences = AddBehaviourFunction(func, internal);
+
+		// Need to mark the type as potential circle so that script classes 
+		// and arrays that contain it also get garbage collected
+		type.GetObjectType()->flags |= asOBJ_POTENTIAL_CIRCLE;
 	}
 	else
 	{
@@ -2632,8 +2628,10 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	// behaviour should use the correct datatype
 
 	// Verify if the subtype contains an any object, in which case this array is a potential circular reference
-	if( ot->subType && (ot->subType->flags & asOBJ_CONTAINS_ANY) )
-		ot->flags |= asOBJ_POTENTIAL_CIRCLE | asOBJ_CONTAINS_ANY;
+	// TODO: We may be a bit smarter here. If we can guarantee that the array type cannot be part of the 
+	// potential circular reference then we don't need to set the flag 
+	if( ot->subType && (ot->subType->flags & asOBJ_POTENTIAL_CIRCLE) )
+		ot->flags |= asOBJ_POTENTIAL_CIRCLE;
 
 	arrayTypes.PushLast(ot);
 
@@ -2878,7 +2876,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 		} p;
 		p.func = (void (*)())(i->func);
 		void (asCSimpleDummy::*f)(void *) = (void (asCSimpleDummy::*)(void *))(p.mthd);
-			(((asCSimpleDummy*)obj)->*f)(param);
+		(((asCSimpleDummy*)obj)->*f)(param);
 	}
 	else
 #endif
@@ -3368,7 +3366,6 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 	if( dt.GetObjectType() )
 	{
 		if( dt.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT ) typeId |= asTYPEID_SCRIPTSTRUCT;
-		else if( dt.GetObjectType()->flags & asOBJ_SCRIPT_ANY ) typeId |= asTYPEID_SCRIPTANY;
 		else if( dt.GetObjectType()->flags & asOBJ_SCRIPT_ARRAY ) typeId |= asTYPEID_SCRIPTARRAY;
 		else typeId |= asTYPEID_APPOBJECT;
 	}
@@ -3499,8 +3496,6 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	}
 	else if( objType->flags & asOBJ_SCRIPT_ARRAY )
 		ArrayObjectConstructor(objType, (asCArrayObject*)ptr);
-	else if( objType->flags & asOBJ_SCRIPT_ANY )
-		AnyObjectConstructor(objType, (asCAnyObject*)ptr);
 	else
 	{
 		int funcIndex = objType->beh.construct;

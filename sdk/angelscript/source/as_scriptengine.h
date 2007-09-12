@@ -227,7 +227,6 @@ public:
 	// Information registered by host
 	asSTypeBehaviour globalBehaviours;
 	asCObjectType   *defaultArrayObjectType;
-	asCObjectType   *anyObjectType;
 	asCObjectType    scriptTypeBehaviours;
 
 	// Store information about registered object types

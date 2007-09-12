@@ -594,6 +594,14 @@ SOURCE=..\..\source\bstr.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\scriptany\scriptany.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptany\scriptany.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp
 # End Source File
 # Begin Source File

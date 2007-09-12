@@ -295,14 +295,6 @@ bool asCDataType::IsScriptStruct() const
 	return false;
 }
 
-bool asCDataType::IsScriptAny() const
-{
-	if( objectType && (objectType->flags & asOBJ_SCRIPT_ANY) )
-		return true;
-
-	return false;
-}
-
 asCDataType asCDataType::GetSubType() const
 {
 	asCDataType dt(*this);

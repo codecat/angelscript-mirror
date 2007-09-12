@@ -353,7 +353,7 @@ void asCCompiler::DefaultConstructor(asCByteCode *bc, asCDataType &type)
 	asSTypeBehaviour *beh = type.GetBehaviour();
 	if( beh ) func = beh->construct;
 
-	if( type.IsScriptArray() || type.IsScriptAny() )
+	if( type.IsScriptArray() )
 	{
 		// The script struct constructor needs to know what type it is
 		asCObjectType *objType = type.GetObjectType();
@@ -1033,7 +1033,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 	}
 
 	// The script array and script any needs to receive their object type
-	if( type && (type->IsScriptArray() || type->IsScriptAny()) )
+	if( type && type->IsScriptArray() )
 	{
 		argCount += 1;
 	}
@@ -1045,7 +1045,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 		args[n] = 0;
 
 	n = argCount-1;
-	if( type && (type->IsScriptArray() || type->IsScriptAny()) )
+	if( type && type->IsScriptArray() )
 	{
 		args[n] = NEW(asSExprContext)(engine);
 		args[n]->bc.InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(type->GetObjectType()));

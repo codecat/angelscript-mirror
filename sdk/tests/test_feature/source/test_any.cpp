@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../../add_on/scriptany/scriptany.h"
 
 namespace TestAny
 {
@@ -87,10 +88,10 @@ static const char *script4 =
 "  SetMyAny(a);            \n"
 "}                         \n";
 
-static asIScriptAny *myAny = 0;
+static CScriptAny *myAny = 0;
 void SetMyAny(asIScriptGeneric *gen)
 {
-	asIScriptAny *a = (asIScriptAny *)gen->GetArgObject(0);
+	CScriptAny *a = (CScriptAny *)gen->GetArgObject(0);
 	a->AddRef();
 	if( myAny ) myAny->Release();
 	myAny = a;
@@ -108,6 +109,7 @@ bool Test()
 	// ---------------------------------------------
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString_Generic(engine);
+	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_GENERIC); assert( r >= 0 );
 
@@ -135,6 +137,7 @@ bool Test()
 	// Verify that the GC can handle circles with any structures
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString_Generic(engine);
+	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_GENERIC); assert( r >= 0 );
 
@@ -167,6 +170,7 @@ bool Test()
 	// Don't allow const handle to retrieve()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString_Generic(engine);
+	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_GENERIC); assert( r >= 0 );
 
@@ -190,6 +194,7 @@ bool Test()
 	// Make sure it is possible to pass any to the application
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString_Generic(engine);
+	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_GENERIC); assert( r >= 0 );
 

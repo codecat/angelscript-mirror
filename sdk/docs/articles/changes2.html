@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.10.0 WIP - 2007/09/09</h2>
+<h2>Version 2.10.0 WIP - 2007/09/11</h2>
 
 <ul>
 <li>Bug fixes
@@ -129,14 +129,21 @@ A:hover
 <li>Fixed a null pointer access on stack clean up (Thanks Thomas Cowell)
 <li>Fixed an assert failure in the compiler (Thanks Jeff Slutter)
 </ul>
+<li>Script language
+<ul>
+<li>The any type is no longer a built-in type
+</ul>
 <li>Library interface
 <ul>
 <li>Added GCEnumCallback and NotifyGarbageCollectorOfNewObject to engine
 <li>Added behaviours GETREFCOUNT, SETGCFLAG, GETGCFLAG, ENUMREFS, RELEASEREFS
+<li>The any type is no longer a built-in type, thus the asIScriptAny interface
+    and the asTYPEID_SCRIPTANY constant have been removed (CScriptAny add-on was created to replace them)
 </ul>
 <li>Project
 <ul>
 <li>Removed as_gcobject.cpp and as_gcobject.h
+<li>Removed as_anyobject.cpp and as_anyobject.h
 </ul>
 </ul>
 

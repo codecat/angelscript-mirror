@@ -99,9 +99,6 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\source\as_anyobject.cpp">
-			</File>
-			<File
 				RelativePath="..\..\source\as_arrayobject.cpp">
 			</File>
 			<File
@@ -201,9 +198,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath="..\..\include\angelscript.h">
-			</File>
-			<File
-				RelativePath="..\..\source\as_anyobject.h">
 			</File>
 			<File
 				RelativePath="..\..\source\as_array.h">

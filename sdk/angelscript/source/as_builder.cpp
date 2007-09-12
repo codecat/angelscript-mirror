@@ -1242,16 +1242,11 @@ void asCBuilder::CompileClasses()
 			asCDataType dt = ot->properties[p]->type;
 			if( dt.IsObject() )
 			{
-				// Any structure that contains an any type can generate circular references
-				if( dt.GetObjectType()->flags & asOBJ_CONTAINS_ANY )
-				{
-					ot->flags |= asOBJ_POTENTIAL_CIRCLE | asOBJ_CONTAINS_ANY;
-				}
-
 				if( dt.IsObjectHandle() )
 				{
 					// TODO:
-					// Can this handle really generate a circular reference
+					// Can this handle really generate a circular reference?
+					// Only if the handle is of a type that can reference this type, either directly or indirectly
 
 					ot->flags |= asOBJ_POTENTIAL_CIRCLE;
 				}
@@ -1259,6 +1254,7 @@ void asCBuilder::CompileClasses()
 				{
 					// TODO:
 					// Just because the member type is a potential circle doesn't mean that this one is
+					// Only if the object is of a type that can reference this type, either directly or indirectly
 
 					ot->flags |= asOBJ_POTENTIAL_CIRCLE;
 				}

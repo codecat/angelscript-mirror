@@ -107,6 +107,8 @@ public:
   <font color=green>// Garbage collection</font>
   int <a href="#gc">GarbageCollect</a>(bool doFullCycle = true);
   int <a href="#gccount">GetObjectsInGarbageCollectorCount</a>();
+  void <a href="#notifygc">NotifyGarbageCollectorOfNewObject</a>(void *obj, int typeId);
+  void <a href="#gcenumcallback">GCEnumCallback</a>(void *obj);
 
   <font color=green>// Bytecode saving/loading</font>
   int <a href="#save">SaveByteCode</a>(const char *module, asIBinaryStream *out);
@@ -2449,6 +2451,71 @@ allocated directly and indirectly by the objects referred to by this function.</
 <h3>Returns</h3>
 
 <p>The number of objects.</p>
+
+
+
+
+
+
+<a name="notifygc"></a>
+<h2>NotifyGarbageCollectorOfNewObject</h2>
+
+<pre class=border>
+void NotifyGarbageCollectorOfNewObject(void *obj, int typeId);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method should be called when a new garbage collected object is created. The gc will then
+store a reference to the object so that it can automatically detect whether the object is involved
+in any circular references that should be released.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>obj</code>&nbsp;</td>
+<td valign=top><p>The object pointer.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The typeId of the object.</p></td>
+</tr>
+</table>
+
+
+
+
+
+
+
+<a name="gcenumcallback"></a>
+<h2>GCEnumCallback</h2>
+
+<pre class=border>
+void GCEnumCallback(void *obj);
+</pre>
+
+<h3>Description</h3>
+
+<p>When processing the EnumReferences call the called object should call
+GCEnumCallback for each of the references it holds to other objects.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>obj</code>&nbsp;</td>
+<td valign=top><p>The pointer to the object that is referenced.</p></td>
+</tr>
+</table>
+
+
+
+
+
+
+
 
 
 

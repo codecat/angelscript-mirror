@@ -64,7 +64,6 @@ BEGIN_AS_NAMESPACE
 class asIScriptEngine;
 class asIScriptContext;
 class asIScriptGeneric;
-class asIScriptAny;
 class asIScriptStruct;
 class asIScriptArray;
 class asIBinaryStream;
@@ -323,13 +322,6 @@ extern "C"
 	AS_API int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj);
 	AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g);
 
-	AS_API int  asAny_AddRef(asIScriptAny *a);
-	AS_API int  asAny_Release(asIScriptAny *a);
-	AS_API void asAny_Store(asIScriptAny *a, void *ref, int typeId);
-	AS_API int  asAny_Retrieve(asIScriptAny *a, void *ref, int typeId);
-	AS_API int  asAny_GetTypeId(asIScriptAny *a);
-	AS_API int  asAny_CopyFrom(asIScriptAny *a, asIScriptAny *other);
-
 	AS_API int         asStruct_AddRef(asIScriptStruct *s);
 	AS_API int         asStruct_Release(asIScriptStruct *s);
 	AS_API int         asStruct_GetStructTypeId(asIScriptStruct *s);
@@ -568,23 +560,6 @@ protected:
 	virtual ~asIScriptGeneric() {}
 };
 
-class asIScriptAny
-{
-public:
-	// Memory management
-	virtual int AddRef() = 0;
-	virtual int Release() = 0;
-
-	// Contained value
-	virtual void Store(void *ref, int typeId) = 0;
-	virtual int  Retrieve(void *ref, int typeId) = 0;
-	virtual int  GetTypeId() = 0;
-	virtual int  CopyFrom(asIScriptAny *other) = 0;
-
-protected:
-	virtual ~asIScriptAny() {}
-};
-
 class asIScriptStruct
 {
 public:
@@ -785,7 +760,6 @@ const int asTYPEID_OBJHANDLE      = 0x40000000;
 const int asTYPEID_HANDLETOCONST  = 0x20000000;
 const int asTYPEID_MASK_OBJECT    = 0x1C000000;
 const int  asTYPEID_APPOBJECT      = 0x04000000;
-const int  asTYPEID_SCRIPTANY      = 0x08000000;
 const int  asTYPEID_SCRIPTSTRUCT   = 0x0C000000;
 const int  asTYPEID_SCRIPTARRAY    = 0x10000000;
 const int asTYPEID_MASK_SEQNBR    = 0x03FFFFFF;

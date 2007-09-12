@@ -52,6 +52,11 @@
 <a href="#release">asBEHAVE_RELEASE</a>
 <a href="#alloc">asBEHAVE_ALLOC</a>
 <a href="#free">asBEHAVE_FREE</a>
+<a href="#refcount">asBEHAVE_GETREFCOUNT</a>
+<a href="#setgc">asBEHAVE_SETGCFLAG</a>
+<a href="#getgc">asBEHAVE_GETGCFLAG</a>
+<a href="#enumrefs">asBEHAVE_ENUMREFS</a>
+<a href="#releaserefs">asBEHAVE_RELEASEREFS</a>
 </pre>
 
 <a name="construct"></a>
@@ -73,6 +78,10 @@ void Constructor(Object *o)
 
 engine->RegisterObjectBehaviour("object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Constructor), asCALL_DECL_OBJLAST);
 </pre>
+
+<p>For objects that should be handled by the garbage collection, to be able to automatically detect and handle circular references, the constructor must call the method NotifyGarbageCollectorOfNewObject on the engine. When doing so the gc will take a reference to the object.</p>
+
+
 
 
 <a name="destruct"></a>
@@ -504,6 +513,19 @@ void Object::AddRef()
 engine->RegisterObjectBehaviour("object", asBEHAVE_ADDREF, "void f()", asMETHOD(Object, AddRef), asCALL_THISCALL);
 </pre>
 
+<p>For objects treated by the garbage collector, the AddRef method must clear the flag set by the SetGCFlag behaviour. Example:</p>
+
+<pre class=border>
+void Object::AddRef()
+{
+  // gc flag is kept in the most significant bit
+  refCount = (refCount & 0x80000000) + 1;
+}
+</pre>
+
+
+
+
 
 
 
@@ -524,6 +546,19 @@ void Object::Release()
 engine->RegisterObjectBehaviour("object", asBEHAVE_RELEASE, "void f()", asMETHOD(Object, Release), asCALL_THISCALL);
 </pre>
 
+<p>For objects treated by the garbage collector, the Release method must clear the flag set by the SetGCFlag behaviour.</p>
+
+<pre class=border>
+void Object::Release()
+{
+  // gc flag is kept in the most significant bit
+  refCount = (refCount & 0x80000000) + 1;
+  if( refCount == 0 )
+    delete this;
+}
+</pre>
+
+
 
 
 
@@ -543,7 +578,7 @@ engine->RegisterObjectBehaviour("object", asBEHAVE_ALLOC, "object &amp;f(uint)",
 
 <p>The function declaration should return a reference to the object type.</p>
 
-<p>NOTE: This behaviour must always be registered as asCALL_CDECL, despite being register as object behaviour. Even when the library is compiled with AS_MAX_PORTABILITY should the behaviour use the calling convention asCALL_CDECL.</p>
+<p>NOTE: This behaviour must always be registered as asCALL_CDECL, despite being registered as object behaviour. Even when the library is compiled with AS_MAX_PORTABILITY should the behaviour use the calling convention asCALL_CDECL.</p>
 
 
 
@@ -559,7 +594,108 @@ void my_free(void *mem);
 engine->RegisterObjectBehaviour("object", asBEHAVE_FREE, "void f(object &amp;in)", asFUNCTION(my_free), asCALL_CDECL);
 </pre>
 
-<p>NOTE: This behaviour must always be registered as asCALL_CDECL, despite being register as object behaviour. Even when the library is compiled with AS_MAX_PORTABILITY should the behaviour use the calling convention asCALL_CDECL.</p>
+<p>NOTE: This behaviour must always be registered as asCALL_CDECL, despite being registered as object behaviour. Even when the library is compiled with AS_MAX_PORTABILITY should the behaviour use the calling convention asCALL_CDECL.</p>
+
+
+
+
+
+<a name="refcount"></a>
+<h2>asBEHAVE_GETREFCOUNT</h2>
+
+<p>This behaviour is called by the garbage collector, and is required to be registered for those objects that should be handled by the gc.</p>
+
+<pre class=border>
+int Object::GetRefCount();
+
+engine->RegisterObjectBehaviour("object", asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(Object,GetRefCount), asCALL_THISCALL);
+</pre>
+
+<p>The GetRefCount() should return the ref count, which the gc will use to determine whether it can release the object or not. If the ref count is 1, then it means that the gc is the only one holding a reference to the object thus it can be released.</p>
+
+<p>The behaviour may use any compatible calling convention, including asCALL_THISCALL even if AS_MAX_PORTABILITY is defined.</p>
+
+
+
+
+<a name="setgc"></a>
+<h2>asBEHAVE_SETGCFLAG</h2>
+
+<p>This behaviour is called by the garbage collector, and is required to be registered for those objects that should be handled by the gc.</p>
+
+<pre class=border>
+void Object::SetGCFlag();
+
+engine->RegisterObjectBehaviour("object", asBEHAVE_SETGCFLAG, "void f()", asMETHOD(Object,SetGCFlag), asCALL_THISCALL);
+</pre>
+
+<p>This method is called by the gc when it's trying to determine which objects are really dead objects and should be released. When the method is called a flag must be set for the object. If the number of references to this object changes this flag must be cleared, e.g. when the AddRef and Release behaviours are called. This flag is what tells the gc that the reference count hasn't changed for this object since it started counting the references it sees.</p>
+
+<p>The behaviour may use any compatible calling convention, including asCALL_THISCALL even if AS_MAX_PORTABILITY is defined.</p>
+
+
+
+
+
+<a name="getgc"></a>
+<h2>asBEHAVE_GETGCFLAG</h2>
+
+<p>This behaviour is called by the garbage collector, and is required to be registered for those objects that should be handled by the gc.</p>
+
+<pre class=border>
+bool Object::GetGCFlag();
+
+engine->RegisterObjectBehaviour("object", asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(Object,GetGCFlag), asCALL_THISCALL);
+</pre>
+
+<p>This method should return true if the flag is still set, i.e. no calls to AddRef or Release has been made since the last SetGCFlag call.</p>
+
+<p>The behaviour may use any compatible calling convention, including asCALL_THISCALL even if AS_MAX_PORTABILITY is defined.</p>
+
+
+
+
+
+
+<a name="enumrefs"></a>
+<h2>asBEHAVE_ENUMREFS</h2>
+
+<p>This behaviour is called by the garbage collector, and is required to be registered for those objects that should be handled by the gc.</p>
+
+<pre class=border>
+void Object::EnumReferences(asIScriptEngine *engine);
+
+engine->RegisterObjectBehaviour("object", asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(Object,EnumReferences), asCALL_THISCALL);
+</pre>
+
+<p>When this method is called the object should enumerate over all the references it holds and call the asIScriptEngine::GCEnumCallback method for each of them. The engine pointer is passed in as a parameter to the method to simplify the implementation. The gc will use this to follow the 
+chain of references in order to determine which objects are dead even though the ref count may be larger than 1, i.e. circular references.</p>
+
+<p>The behaviour may use any compatible calling convention, including asCALL_THISCALL even if AS_MAX_PORTABILITY is defined.</p>
+
+
+
+
+
+
+<a name="releaserefs"></a>
+<h2>asBEHAVE_RELEASEREFS</h2>
+
+<p>This behaviour is called by the garbage collector, and is required to be registered for those objects that should be handled by the gc.</p>
+
+<pre class=border>
+void Object::ReleaseAllReferences(asIScriptEngine *engine);
+
+engine->RegisterObjectBehaviour("object", asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(Object,ReleaseAllReferences), asCALL_THISCALL);
+</pre>
+
+<p>When this method is called the object should enumerate over all the references it holds and release them. The engine pointer is passed in as a parameter to the method to simplify the implementation. This method is called when the gc has determined that the object is part of a group of objects with interchanging references isn't reachable from the application anymore. By releasing all of the references the circular references
+will be broken and the ref count brought down to 1, which is when the gc will release the final reference causing the object to be destroyed.</p>
+
+<p>The behaviour may use any compatible calling convention, including asCALL_THISCALL even if AS_MAX_PORTABILITY is defined.</p>
+
+
+
 
 
 

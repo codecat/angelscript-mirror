@@ -28,9 +28,6 @@ CScriptDictionary::~CScriptDictionary()
 {
     // Delete all keys and values
     DeleteAll();
-
-    // Release the engine reference
-    if( engine ) engine->Release();
 }
 
 void CScriptDictionary::AddRef()

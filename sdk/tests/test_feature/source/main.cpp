@@ -167,8 +167,9 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
-	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
+	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
+	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
 	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
 	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
@@ -224,7 +225,6 @@ int main(int argc, char **argv)
 	if( TestReturnF()                 ) goto failed; else printf("-- TestReturnF passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
 	if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
-	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");

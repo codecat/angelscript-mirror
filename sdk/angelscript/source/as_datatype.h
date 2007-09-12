@@ -72,7 +72,6 @@ public:
 
 	bool IsScriptArray()    const;
 	bool IsScriptStruct()   const;
-	bool IsScriptAny()      const;
 	bool IsPrimitive()      const;
 	bool IsObject()         const;
 	bool IsReference()      const {return isReference;}

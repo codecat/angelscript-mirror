@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../../add_on/scriptany/scriptany.h"
 
 namespace TestStructIntf
 {
@@ -24,7 +25,7 @@ static const char *script1 =
 
 
 
-asIScriptAny *any = 0;
+CScriptAny *any = 0;
 
 bool Test()
 {
@@ -35,7 +36,7 @@ bool Test()
 
 	RegisterScriptString(engine);
 
-	any = (asIScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
+	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
 	engine->RegisterGlobalProperty("any g_any", any);
 
 	COutStream out;

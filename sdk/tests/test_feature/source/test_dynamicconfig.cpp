@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../../add_on/scriptany/scriptany.h"
 
 namespace TestDynamicConfig
 {
@@ -100,6 +101,7 @@ bool Test()
 {
 	bool fail = false;
 	int r;
+	CScriptAny *any = 0;
 
 	//------------
 	// Test global function
@@ -250,7 +252,11 @@ bool Test()
 
 	//------------------
 	// Test object types held by external variable, i.e. any
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	// TODO: The application needs a way to tell the engine that the type is in use so that it won't be removed
+
+/*	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptAny(engine);
 
 	engine->BeginConfigGroup("group1");
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
@@ -259,8 +265,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef), asCALL_GENERIC);
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_RELEASE, "void f()", asFUNCTION(Release), asCALL_GENERIC);
 
-	asIScriptAny *any = 0;
-	any = (asIScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
+	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
 
 	r = engine->RegisterGlobalProperty("any g_any", any);
 	engine->EndConfigGroup();
@@ -297,7 +302,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 	
 	engine->Release();
-
+*/
 	//-------------
 	// Test array types
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -427,12 +432,13 @@ bool Test()
 
 	//------------------
 	// Test object types held by external variable, i.e. any
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+/*	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptAny(engine);
 
 	engine->BeginConfigGroup("group1");
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
 
-	any = (asIScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
+	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
 
 	r = engine->RegisterGlobalProperty("any g_any", any);
 	engine->EndConfigGroup();
@@ -459,6 +465,8 @@ bool Test()
 	else
 		array->Release();
 
+	engine->GarbageCollect();
+
 	// The mytype variable is still stored in the any variable so we shouldn't be allowed to remove it's configuration group
 	r = engine->RemoveConfigGroup("group1"); assert( r < 0 );
 	
@@ -469,7 +477,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 	
 	engine->Release();
-
+*/
 	//-------------------
 	// Test references between config groups
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

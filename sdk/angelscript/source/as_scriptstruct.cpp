@@ -38,7 +38,6 @@
 
 #include "as_scriptstruct.h"
 #include "as_arrayobject.h"
-#include "as_anyobject.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -443,10 +442,6 @@ void *asCScriptStruct::AllocateObject(asCObjectType *objType, asCScriptEngine *e
 	else if( objType->flags & asOBJ_SCRIPT_ARRAY )
 	{
 		ArrayObjectConstructor(objType, (asCArrayObject*)ptr);
-	}
-	else if( objType->flags & asOBJ_SCRIPT_ANY )
-	{
-		AnyObjectConstructor(objType, (asCAnyObject*)ptr);
 	}
 	else
 	{

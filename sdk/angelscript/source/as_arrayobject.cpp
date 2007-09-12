@@ -38,7 +38,6 @@
 #include "as_scriptengine.h"
 #include "as_texts.h"
 #include "as_scriptstruct.h"
-#include "as_anyobject.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -422,7 +421,7 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 		// Call the constructor on all objects
 		asCScriptEngine *engine = objType->engine;
 		asCObjectType *subType = objType->subType;
-		if( subType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY | asOBJ_SCRIPT_ANY) )
+		if( subType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY) )
 		{
 			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
 			asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
@@ -441,14 +440,6 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 				{
 					*d = (asDWORD*)engine->CallAlloc(subType);
 					ArrayObjectConstructor(subType, (asCArrayObject*)*d);
-				}
-			}
-			else if( subType->flags & asOBJ_SCRIPT_ANY )
-			{
-				for( ; d < max; d++ )
-				{
-					*d = (asDWORD*)engine->CallAlloc(subType);
-					AnyObjectConstructor(subType, (asCAnyObject*)*d);
 				}
 			}
 		}

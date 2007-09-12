@@ -60,6 +60,11 @@ const char *script =
 "  dict.set(\"self\", @dict);      \n"
 "}                                 \n";
 
+// Test circular reference including a script class and the dictionary
+const char *script2 = 
+"class C { dictionary dict; }                \n"
+"void f() { C c; c.dict.set(\"self\", @c); } \n"; 
+
 bool Test()
 {
 	bool fail = false;
@@ -90,6 +95,30 @@ bool Test()
 		fail = true;
 	}
 	ctx->Release();
+
+	int g = engine->GetObjectsInGarbageCollectorCount();
+	engine->GarbageCollect();
+	g = engine->GetObjectsInGarbageCollectorCount();
+
+	if( g != 0 )
+		fail = true;
+
+	// Test circular references including a script class and the dictionary
+	engine->AddScriptSection(0, "script", script2, strlen(script2));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
+	r = engine->ExecuteString(0, "f()");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	g = engine->GetObjectsInGarbageCollectorCount();
+	engine->GarbageCollect();
+	g = engine->GetObjectsInGarbageCollectorCount();
+
+	if( g != 0 )
+		fail = true;
 
 	engine->Release();
 
