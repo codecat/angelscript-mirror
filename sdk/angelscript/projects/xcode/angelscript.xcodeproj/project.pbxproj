@@ -12,7 +12,6 @@
 		75D1515C0C0FAFFC00EBF441 /* as_callfunc_ppc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358570A2DC0A1008FE303 /* as_callfunc_ppc.cpp */; };
 		75DA88200C1C30CF00A15034 /* as_callfunc_ppc_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75DA881F0C1C30CF00A15034 /* as_callfunc_ppc_64.cpp */; };
 		9B2358CF0A2DC68D008FE303 /* angelscript.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358910A2DC0B4008FE303 /* angelscript.h */; };
-		9B2358D00A2DC68D008FE303 /* as_anyobject.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358050A2DC076008FE303 /* as_anyobject.h */; };
 		9B2358D10A2DC68D008FE303 /* as_array.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358060A2DC076008FE303 /* as_array.h */; };
 		9B2358D20A2DC68D008FE303 /* as_arrayobject.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358070A2DC076008FE303 /* as_arrayobject.h */; };
 		9B2358D30A2DC68D008FE303 /* as_builder.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358080A2DC076008FE303 /* as_builder.h */; };
@@ -25,7 +24,6 @@
 		9B2358DA0A2DC68D008FE303 /* as_context.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B23580F0A2DC076008FE303 /* as_context.h */; };
 		9B2358DB0A2DC68D008FE303 /* as_datatype.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358100A2DC076008FE303 /* as_datatype.h */; };
 		9B2358DC0A2DC68D008FE303 /* as_debug.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358110A2DC076008FE303 /* as_debug.h */; };
-		9B2358DD0A2DC68D008FE303 /* as_gcobject.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358120A2DC076008FE303 /* as_gcobject.h */; };
 		9B2358DE0A2DC68D008FE303 /* as_generic.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358130A2DC076008FE303 /* as_generic.h */; };
 		9B2358DF0A2DC68D008FE303 /* as_map.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358140A2DC076008FE303 /* as_map.h */; };
 		9B2358E00A2DC68D008FE303 /* as_module.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358150A2DC076008FE303 /* as_module.h */; };
@@ -47,7 +45,6 @@
 		9B2358F00A2DC68D008FE303 /* as_tokenizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358250A2DC076008FE303 /* as_tokenizer.h */; };
 		9B2358F10A2DC68D008FE303 /* as_typeinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358260A2DC076008FE303 /* as_typeinfo.h */; };
 		9B2358F20A2DC68D008FE303 /* as_variablescope.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358270A2DC076008FE303 /* as_variablescope.h */; };
-		9B2358F50A2DC696008FE303 /* as_anyobject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358510A2DC0A1008FE303 /* as_anyobject.cpp */; };
 		9B2358F60A2DC696008FE303 /* as_arrayobject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358520A2DC0A1008FE303 /* as_arrayobject.cpp */; };
 		9B2358F70A2DC696008FE303 /* as_builder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358530A2DC0A1008FE303 /* as_builder.cpp */; };
 		9B2358F80A2DC696008FE303 /* as_bytecode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358540A2DC0A1008FE303 /* as_bytecode.cpp */; };
@@ -60,7 +57,6 @@
 		9B2359000A2DC696008FE303 /* as_configgroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23585C0A2DC0A1008FE303 /* as_configgroup.cpp */; };
 		9B2359010A2DC696008FE303 /* as_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23585D0A2DC0A1008FE303 /* as_context.cpp */; };
 		9B2359020A2DC696008FE303 /* as_datatype.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23585E0A2DC0A1008FE303 /* as_datatype.cpp */; };
-		9B2359030A2DC696008FE303 /* as_gcobject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23585F0A2DC0A1008FE303 /* as_gcobject.cpp */; };
 		9B2359040A2DC696008FE303 /* as_generic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358600A2DC0A1008FE303 /* as_generic.cpp */; };
 		9B2359050A2DC696008FE303 /* as_module.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358610A2DC0A1008FE303 /* as_module.cpp */; };
 		9B2359060A2DC696008FE303 /* as_objecttype.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358620A2DC0A1008FE303 /* as_objecttype.cpp */; };
@@ -84,7 +80,6 @@
 		7526F5C00BEE46B100BAE32D /* as_memory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_memory.cpp; path = ../../source/as_memory.cpp; sourceTree = SOURCE_ROOT; };
 		7526F5C10BEE46B100BAE32D /* as_memory.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_memory.h; sourceTree = "<group>"; };
 		75DA881F0C1C30CF00A15034 /* as_callfunc_ppc_64.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_ppc_64.cpp; path = ../../source/as_callfunc_ppc_64.cpp; sourceTree = SOURCE_ROOT; };
-		9B2358050A2DC076008FE303 /* as_anyobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_anyobject.h; path = ../../source/as_anyobject.h; sourceTree = SOURCE_ROOT; };
 		9B2358060A2DC076008FE303 /* as_array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_array.h; path = ../../source/as_array.h; sourceTree = SOURCE_ROOT; };
 		9B2358070A2DC076008FE303 /* as_arrayobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_arrayobject.h; path = ../../source/as_arrayobject.h; sourceTree = SOURCE_ROOT; };
 		9B2358080A2DC076008FE303 /* as_builder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_builder.h; path = ../../source/as_builder.h; sourceTree = SOURCE_ROOT; };
@@ -97,7 +92,6 @@
 		9B23580F0A2DC076008FE303 /* as_context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_context.h; path = ../../source/as_context.h; sourceTree = SOURCE_ROOT; };
 		9B2358100A2DC076008FE303 /* as_datatype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_datatype.h; path = ../../source/as_datatype.h; sourceTree = SOURCE_ROOT; };
 		9B2358110A2DC076008FE303 /* as_debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_debug.h; path = ../../source/as_debug.h; sourceTree = SOURCE_ROOT; };
-		9B2358120A2DC076008FE303 /* as_gcobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_gcobject.h; path = ../../source/as_gcobject.h; sourceTree = SOURCE_ROOT; };
 		9B2358130A2DC076008FE303 /* as_generic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_generic.h; path = ../../source/as_generic.h; sourceTree = SOURCE_ROOT; };
 		9B2358140A2DC076008FE303 /* as_map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_map.h; path = ../../source/as_map.h; sourceTree = SOURCE_ROOT; };
 		9B2358150A2DC076008FE303 /* as_module.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_module.h; path = ../../source/as_module.h; sourceTree = SOURCE_ROOT; };
@@ -119,7 +113,6 @@
 		9B2358250A2DC076008FE303 /* as_tokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_tokenizer.h; path = ../../source/as_tokenizer.h; sourceTree = SOURCE_ROOT; };
 		9B2358260A2DC076008FE303 /* as_typeinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_typeinfo.h; path = ../../source/as_typeinfo.h; sourceTree = SOURCE_ROOT; };
 		9B2358270A2DC076008FE303 /* as_variablescope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_variablescope.h; path = ../../source/as_variablescope.h; sourceTree = SOURCE_ROOT; };
-		9B2358510A2DC0A1008FE303 /* as_anyobject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_anyobject.cpp; path = ../../source/as_anyobject.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358520A2DC0A1008FE303 /* as_arrayobject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_arrayobject.cpp; path = ../../source/as_arrayobject.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358530A2DC0A1008FE303 /* as_builder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_builder.cpp; path = ../../source/as_builder.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358540A2DC0A1008FE303 /* as_bytecode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_bytecode.cpp; path = ../../source/as_bytecode.cpp; sourceTree = SOURCE_ROOT; };
@@ -133,7 +126,6 @@
 		9B23585C0A2DC0A1008FE303 /* as_configgroup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_configgroup.cpp; path = ../../source/as_configgroup.cpp; sourceTree = SOURCE_ROOT; };
 		9B23585D0A2DC0A1008FE303 /* as_context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_context.cpp; path = ../../source/as_context.cpp; sourceTree = SOURCE_ROOT; };
 		9B23585E0A2DC0A1008FE303 /* as_datatype.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_datatype.cpp; path = ../../source/as_datatype.cpp; sourceTree = SOURCE_ROOT; };
-		9B23585F0A2DC0A1008FE303 /* as_gcobject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_gcobject.cpp; path = ../../source/as_gcobject.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358600A2DC0A1008FE303 /* as_generic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_generic.cpp; path = ../../source/as_generic.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358610A2DC0A1008FE303 /* as_module.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_module.cpp; path = ../../source/as_module.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358620A2DC0A1008FE303 /* as_objecttype.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_objecttype.cpp; path = ../../source/as_objecttype.cpp; sourceTree = SOURCE_ROOT; };
@@ -196,7 +188,6 @@
 			children = (
 				9B5AC0F10A2C6F990089909E /* include */,
 				7526F5C00BEE46B100BAE32D /* as_memory.cpp */,
-				9B2358510A2DC0A1008FE303 /* as_anyobject.cpp */,
 				9B2358520A2DC0A1008FE303 /* as_arrayobject.cpp */,
 				9B2358530A2DC0A1008FE303 /* as_builder.cpp */,
 				9B2358540A2DC0A1008FE303 /* as_bytecode.cpp */,
@@ -211,7 +202,6 @@
 				9B23585C0A2DC0A1008FE303 /* as_configgroup.cpp */,
 				9B23585D0A2DC0A1008FE303 /* as_context.cpp */,
 				9B23585E0A2DC0A1008FE303 /* as_datatype.cpp */,
-				9B23585F0A2DC0A1008FE303 /* as_gcobject.cpp */,
 				9B2358600A2DC0A1008FE303 /* as_generic.cpp */,
 				9B2358610A2DC0A1008FE303 /* as_module.cpp */,
 				9B2358620A2DC0A1008FE303 /* as_objecttype.cpp */,
@@ -238,7 +228,6 @@
 			children = (
 				7526F5C10BEE46B100BAE32D /* as_memory.h */,
 				9B2358910A2DC0B4008FE303 /* angelscript.h */,
-				9B2358050A2DC076008FE303 /* as_anyobject.h */,
 				9B2358060A2DC076008FE303 /* as_array.h */,
 				9B2358070A2DC076008FE303 /* as_arrayobject.h */,
 				9B2358080A2DC076008FE303 /* as_builder.h */,
@@ -251,7 +240,6 @@
 				9B23580F0A2DC076008FE303 /* as_context.h */,
 				9B2358100A2DC076008FE303 /* as_datatype.h */,
 				9B2358110A2DC076008FE303 /* as_debug.h */,
-				9B2358120A2DC076008FE303 /* as_gcobject.h */,
 				9B2358130A2DC076008FE303 /* as_generic.h */,
 				9B2358140A2DC076008FE303 /* as_map.h */,
 				9B2358150A2DC076008FE303 /* as_module.h */,
@@ -286,7 +274,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				9B2358CF0A2DC68D008FE303 /* angelscript.h in Headers */,
-				9B2358D00A2DC68D008FE303 /* as_anyobject.h in Headers */,
 				9B2358D10A2DC68D008FE303 /* as_array.h in Headers */,
 				9B2358D20A2DC68D008FE303 /* as_arrayobject.h in Headers */,
 				9B2358D30A2DC68D008FE303 /* as_builder.h in Headers */,
@@ -299,7 +286,6 @@
 				9B2358DA0A2DC68D008FE303 /* as_context.h in Headers */,
 				9B2358DB0A2DC68D008FE303 /* as_datatype.h in Headers */,
 				9B2358DC0A2DC68D008FE303 /* as_debug.h in Headers */,
-				9B2358DD0A2DC68D008FE303 /* as_gcobject.h in Headers */,
 				9B2358DE0A2DC68D008FE303 /* as_generic.h in Headers */,
 				9B2358DF0A2DC68D008FE303 /* as_map.h in Headers */,
 				9B2358E00A2DC68D008FE303 /* as_module.h in Headers */,
@@ -366,7 +352,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9B2358F50A2DC696008FE303 /* as_anyobject.cpp in Sources */,
 				9B2358F60A2DC696008FE303 /* as_arrayobject.cpp in Sources */,
 				9B2358F70A2DC696008FE303 /* as_builder.cpp in Sources */,
 				9B2358F80A2DC696008FE303 /* as_bytecode.cpp in Sources */,
@@ -379,7 +364,6 @@
 				9B2359000A2DC696008FE303 /* as_configgroup.cpp in Sources */,
 				9B2359010A2DC696008FE303 /* as_context.cpp in Sources */,
 				9B2359020A2DC696008FE303 /* as_datatype.cpp in Sources */,
-				9B2359030A2DC696008FE303 /* as_gcobject.cpp in Sources */,
 				9B2359040A2DC696008FE303 /* as_generic.cpp in Sources */,
 				9B2359050A2DC696008FE303 /* as_module.cpp in Sources */,
 				9B2359060A2DC696008FE303 /* as_objecttype.cpp in Sources */,

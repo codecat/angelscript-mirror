@@ -2919,6 +2919,27 @@ void asCScriptEngine::CallGlobalFunction(void *param1, void *param2, asSSystemFu
 	}
 }
 
+bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *i, asCScriptFunction *s)
+{
+	if( i->callConv == ICC_CDECL )
+	{
+		bool (*f)(void *, void *) = (bool (*)(void *, void *))(i->func);
+		return f(param1, param2);
+	}
+	else if( i->callConv == ICC_STDCALL )
+	{
+		bool (STDCALL *f)(void *, void *) = (bool (STDCALL *)(void *, void *))(i->func);
+		return f(param1, param2);
+	}
+	else
+	{
+		asCGeneric gen(this, s, 0, (asDWORD*)&param1);
+		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
+		f(&gen);
+		return *(bool*)gen.GetReturnPointer();
+	}
+}
+
 void *asCScriptEngine::CallAlloc(asCObjectType *type)
 {
 	asALLOCFUNC_t custom_alloc;
@@ -2959,17 +2980,6 @@ void asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, int typeId)
 
 void asCScriptEngine::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 {
-	// TODO: gc
-	// This method should take a void* and a typeId
-	// 
-	// The asCObjectType should be stored together with the object pointer
-	// 
-	// asCScriptStruct should call this method with its this pointer and its type id
-	// asCArrayObject should call this method with its this pointer and its type id
-	// asCAnyObject should call this method with its this pointer and its type id
-	// asCGCObject should no longer exist
-	// :ODOT
-
 	CallObjectMethod(obj, objType->beh.addref);
 	asSObjTypePair ot = {obj, objType};
 	gcObjects.PushLast(ot);
@@ -3537,6 +3547,45 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 	{
 		memcpy(dstObj, srcObj, objType->size);
 	}
+}
+
+int asCScriptEngine::CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId)
+{
+	// Make sure the type id is for an object type, and not a primitive or a handle
+	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return asINVALID_TYPE;
+	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return asINVALID_TYPE;
+
+	// Is the behaviour valid?
+	if( behaviour < asBEHAVE_EQUAL || behaviour > asBEHAVE_GEQUAL ) return asINVALID_ARG;
+
+	// Get the object type information so we can find the comparison behaviours
+	asCObjectType *ot = GetObjectTypeFromTypeId(typeId);
+	if( !ot ) return asINVALID_TYPE;
+	asCDataType dt = asCDataType::CreateObject(ot, true);
+	dt.MakeReference(true);
+
+	// Find the behaviour
+	int n;
+	for( n = 0; n < globalBehaviours.operators.GetLength(); n += 2 )
+	{
+		// Is it the right comparison operator?
+		if( globalBehaviours.operators[n] == behave_dual_token[behaviour - asBEHAVE_FIRST_DUAL] )
+		{
+			// Is it the right datatype?
+			int func = globalBehaviours.operators[n+1];
+			if( scriptFunctions[func]->parameterTypes[0].IsEqualExceptConst(dt) &&
+				scriptFunctions[func]->parameterTypes[1].IsEqualExceptConst(dt) )
+			{
+				// Call the comparison function and return the result
+				result = CallGlobalFunctionRetBool(leftObj, rightObj, scriptFunctions[func]->sysFuncIntf, scriptFunctions[func]);
+				return 0;
+			}
+		}
+	}
+
+	// If the behaviour is not supported we return an error
+	result = false;
+	return asNOT_SUPPORTED;
 }
 
 void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)

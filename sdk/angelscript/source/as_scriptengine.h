@@ -147,7 +147,8 @@ public:
 	void CopyScriptObject(void *dstObj, void *srcObj, int typeId);
 	void ReleaseScriptObject(void *obj, int typeId);
 	void AddRefScriptObject(void *obj, int typeId);
-    bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId);
+	bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId);
+	int CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId);
 
 	// String interpretation
 	int ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
@@ -191,6 +192,7 @@ public:
 	bool CallObjectMethodRetBool(void *obj, int func);
 	int  CallObjectMethodRetInt(void *obj, int func);
 	void CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
+	bool CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 
 	void CallMessageCallback(const char *section, int row, int col, int type, const char *message);
 

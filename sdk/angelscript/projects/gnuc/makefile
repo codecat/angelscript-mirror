@@ -18,7 +18,6 @@ DELETER = rm -f
 COPIER = cp
 
 SRCNAMES = \
-  as_anyobject.cpp \
   as_arrayobject.cpp \
   as_builder.cpp  \
   as_bytecode.cpp \
@@ -32,7 +31,6 @@ SRCNAMES = \
   as_context.cpp \
   as_configgroup.cpp \
   as_datatype.cpp \
-  as_gcobject.cpp \
   as_generic.cpp \
   as_memory.cpp \
   as_module.cpp \

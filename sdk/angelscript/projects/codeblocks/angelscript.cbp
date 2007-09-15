@@ -63,18 +63,6 @@
 			<Option target="MSVC++ 6 DEBUG"/>
 			<Option target="MinGW RELEASE"/>
 		</Unit>
-		<Unit filename="..\..\source\as_anyobject.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="MSVC++ 6 DEBUG"/>
-			<Option target="MinGW RELEASE"/>
-		</Unit>
-		<Unit filename="..\..\source\as_anyobject.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="MSVC++ 6 DEBUG"/>
-			<Option target="MinGW RELEASE"/>
-		</Unit>
 		<Unit filename="..\..\source\as_array.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
@@ -213,18 +201,6 @@
 			<Option target="MinGW RELEASE"/>
 		</Unit>
 		<Unit filename="..\..\source\as_debug.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="MSVC++ 6 DEBUG"/>
-			<Option target="MinGW RELEASE"/>
-		</Unit>
-		<Unit filename="..\..\source\as_gcobject.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="MSVC++ 6 DEBUG"/>
-			<Option target="MinGW RELEASE"/>
-		</Unit>
-		<Unit filename="..\..\source\as_gcobject.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>

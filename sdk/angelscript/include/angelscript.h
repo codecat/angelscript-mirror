@@ -241,6 +241,7 @@ extern "C"
 	AS_API void              asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId);
 	AS_API void              asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId);
 	AS_API bool              asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
+	AS_API int               asEngine_CompareScriptObjects(asIScriptEngine *e, bool &result, int behaviour, void *leftObj, void *rightObj, int typeId);
 	AS_API int               asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 	AS_API int               asEngine_GarbageCollect(asIScriptEngine *e, bool doFullCycle = true);
 	AS_API int               asEngine_GetObjectsInGarbageCollectorCount(asIScriptEngine *e);
@@ -295,7 +296,7 @@ extern "C"
 	AS_API int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel = -1);
 	AS_API void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel = 0);
 	AS_API int              asContext_GetThisTypeId(asIScriptContext *c, int stackLevel = -1);
-    AS_API void *           asContext_GetThisPointer(asIScriptContext *c, int stackLevel = -1);
+	AS_API void *           asContext_GetThisPointer(asIScriptContext *c, int stackLevel = -1);
 	AS_API void *           asContext_SetUserData(asIScriptContext *c, void *data);
 	AS_API void *           asContext_GetUserData(asIScriptContext *c);
 
@@ -433,7 +434,8 @@ public:
 	virtual void CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
 	virtual void ReleaseScriptObject(void *obj, int typeId) = 0;
 	virtual void AddRefScriptObject(void *obj, int typeId) = 0;
-    virtual bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
+	virtual bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
+	virtual int CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
 	virtual int ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;

@@ -151,10 +151,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\source\as_anyobject.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\as_arrayobject.cpp"
 				>
 			</File>
@@ -200,10 +196,6 @@
 			</File>
 			<File
 				RelativePath="..\..\source\as_datatype.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\as_gcobject.cpp"
 				>
 			</File>
 			<File
@@ -289,10 +281,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\as_anyobject.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\as_array.h"
 				>
 			</File>
@@ -338,10 +326,6 @@
 			</File>
 			<File
 				RelativePath="..\..\source\as_debug.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\as_gcobject.h"
 				>
 			</File>
 			<File

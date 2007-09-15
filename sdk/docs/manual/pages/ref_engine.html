@@ -100,6 +100,7 @@ public:
   void <a href="#relrefobj">ReleaseScriptObject</a>(void *obj, int typeId);
   void <a href="#addrefobj">AddRefScriptObject</a>(void *obj, int typeId);
   bool <a href="#hndlcompat">IsHandleCompatibleWithObject</a>(void *obj, int objTypeId, int handleTypeId);
+  int <a href="#compare">CompareScriptObjects</a>(bool &amp;result, int behaviour, void *leftObj, void *rightObj, int typeId);
 
   <font color=green>// String interpretation</font>
   int <a href="#executestring">ExecuteString</a>(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0);
@@ -2350,6 +2351,52 @@ and now you want to determine if it implements another interface.</p>
 
 <p>True if the handle is compatible with the object type.</p>
 
+
+
+
+
+<a name="compare"></a>
+<h2>CompareScriptObjects</h2>
+
+<pre class=border>
+int CompareScriptObjects(bool &amp;result, int behaviour, void *leftObj, void *rightObj, int typeId);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method will allow the application compare two object types without
+having to know the exact type of the objects being compared. The function will
+only work on objects, and then only on those objects that permit comparisons,
+i.e. registered types that have the comparison behaviours registered.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>result</code>&nbsp;</td>
+<td valign=top><p>A reference to a boolean variable that will receive the result of the comparison.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>behaviour</code>&nbsp;</td>
+<td valign=top><p>The comparison behaviour that should be executed, i.e. asBEHAVE_EQUAL, asBEHAVE_NOTEQUAL, asBEHAVE_LESSTHAN, asBEHAVE_GREATERTHAN, asBEHAVE_LEQUAL, or asBEHAVE_GEQUAL.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>leftObj</code>&nbsp;</td>
+<td valign=top><p>A pointer to the left hand object in the comparison.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>rightObj</code>&nbsp;</td>
+<td valign=top><p>A pointer to the right hand object in the comparison.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The typeId for the objects.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>Negative value on error, e.g. if the comparison operator is not supported by the type.</p>
 
 
 

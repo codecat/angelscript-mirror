@@ -18,7 +18,13 @@ public:
 	CScriptAny &operator=(CScriptAny&);
 
 	void Store(void *ref, int refTypeId);
-	int  Retrieve(void *ref, int refTypeId);
+	void Store(asINT64 &value);
+	void Store(double &value);
+
+	bool Retrieve(void *ref, int refTypeId);
+	bool Retrieve(asINT64 &value);
+	bool Retrieve(double &value);
+
 	int  GetTypeId();
 	int  CopyFrom(CScriptAny *other);
 
@@ -34,8 +40,20 @@ protected:
 
 	int refCount;
 	asIScriptEngine *engine;
-	int valueTypeId;
-	void *value;
+
+	// The structure for holding the values
+    struct valueStruct
+    {
+        union
+        {
+            asINT64 valueInt;
+            double  valueFlt;
+            void   *valueObj;
+        };
+        int   typeId;
+    };
+
+	valueStruct value;
 };
 
 void RegisterScriptAny(asIScriptEngine *engine);

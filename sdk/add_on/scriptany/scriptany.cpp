@@ -29,16 +29,6 @@ static CScriptAny &ScriptAnyAssignment(CScriptAny *other, CScriptAny *self)
 	return *self = *other;
 }
 
-static void ScriptAny_Store(void *ref, int refTypeId, CScriptAny *self)
-{
-	self->Store(ref, refTypeId);
-}
-
-static void ScriptAny_Retrieve(void *ref, int refTypeId, CScriptAny *self)
-{
-	self->Retrieve(ref, refTypeId);
-}
-
 static void ScriptAnyAssignment_Generic(asIScriptGeneric *gen)
 {
 	CScriptAny *other = (CScriptAny*)gen->GetArgObject(0);
@@ -58,13 +48,45 @@ static void ScriptAny_Store_Generic(asIScriptGeneric *gen)
 	self->Store(ref, refTypeId);
 }
 
+static void ScriptAny_StoreInt_Generic(asIScriptGeneric *gen)
+{
+	asINT64 *ref = (asINT64*)gen->GetArgAddress(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	self->Store(*ref);
+}
+
+static void ScriptAny_StoreFlt_Generic(asIScriptGeneric *gen)
+{
+	double *ref = (double*)gen->GetArgAddress(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	self->Store(*ref);
+}
+
 static void ScriptAny_Retrieve_Generic(asIScriptGeneric *gen)
 {
 	void *ref = (void*)gen->GetArgAddress(0);
 	int refTypeId = gen->GetArgTypeId(0);
 	CScriptAny *self = (CScriptAny*)gen->GetObject();
 
-	self->Retrieve(ref, refTypeId);
+	*(bool*)gen->GetReturnPointer() = self->Retrieve(ref, refTypeId);
+}
+
+static void ScriptAny_RetrieveInt_Generic(asIScriptGeneric *gen)
+{
+	asINT64 *ref = (asINT64*)gen->GetArgAddress(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	*(bool*)gen->GetReturnPointer() = self->Retrieve(*ref);
+}
+
+static void ScriptAny_RetrieveFlt_Generic(asIScriptGeneric *gen)
+{
+	double *ref = (double*)gen->GetArgAddress(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	*(bool*)gen->GetReturnPointer() = self->Retrieve(*ref);
 }
 
 static void ScriptAny_AddRef_Generic(asIScriptGeneric *gen)
@@ -142,8 +164,12 @@ void RegisterScriptAny_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptAny,AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptAny,Release), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_ASSIGNMENT, "any &f(any&in)", asFUNCTION(ScriptAnyAssignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("any", "void store(?&in)", asFUNCTION(ScriptAny_Store), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("any", "void retrieve(?&out) const", asFUNCTION(ScriptAny_Retrieve), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "void store(?&in)", asMETHODPR(CScriptAny,Store,(void*,int),void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "void store(int64&in)", asMETHODPR(CScriptAny,Store,(asINT64&),void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "void store(double&in)", asMETHODPR(CScriptAny,Store,(double&),void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(?&out)", asMETHODPR(CScriptAny,Retrieve,(void*,int),bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(int64&out)", asMETHODPR(CScriptAny,Retrieve,(asINT64&),bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(double&out)", asMETHODPR(CScriptAny,Retrieve,(double&),bool), asCALL_THISCALL); assert( r >= 0 );
 
 	// Register GC behaviours
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(CScriptAny,GetRefCount), asCALL_THISCALL); assert( r >= 0 );
@@ -169,7 +195,11 @@ void RegisterScriptAny_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptAny_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_ASSIGNMENT, "any &f(any&in)", asFUNCTION(ScriptAnyAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("any", "void store(?&in)", asFUNCTION(ScriptAny_Store_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("any", "void retrieve(?&out) const", asFUNCTION(ScriptAny_Retrieve_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "void store(int64&in)", asFUNCTION(ScriptAny_StoreInt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "void store(double&in)", asFUNCTION(ScriptAny_StoreFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(?&out) const", asFUNCTION(ScriptAny_Retrieve_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(int64&out) const", asFUNCTION(ScriptAny_RetrieveInt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(double&out) const", asFUNCTION(ScriptAny_RetrieveFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	// Register GC behaviours
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ScriptAny_GetRefCount_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -187,11 +217,23 @@ CScriptAny &CScriptAny::operator=(CScriptAny &other)
 {
 	FreeObject();
 
-	// TODO: Need to know if it is a handle or not
-	valueTypeId = other.valueTypeId;
-	value = other.value;
-	if( valueTypeId && value )
-		engine->AddRefScriptObject(value, valueTypeId);
+	value.typeId = other.value.typeId;
+	if( value.typeId & asTYPEID_OBJHANDLE )
+	{
+		// For handles, copy the pointer and increment the reference count
+		value.valueObj = other.value.valueObj;
+		engine->AddRefScriptObject(value.valueObj, value.typeId);
+	}
+	else if( value.typeId & asTYPEID_MASK_OBJECT )
+	{
+		// Create a copy of the object
+		value.valueObj = engine->CreateScriptObjectCopy(other.value.valueObj, value.typeId);
+	}
+	else
+	{
+		// Primitives can be copied directly
+		value.valueInt = other.value.valueInt;
+	}
 
 	return *this;
 }
@@ -210,8 +252,8 @@ CScriptAny::CScriptAny(asIScriptEngine *engine)
 	this->engine = engine;
 	refCount = 1;
 
-	valueTypeId = 0;
-	value = 0;
+	value.typeId = 0;
+	value.valueInt = 0;
 
 	// Notify the garbage collector of this object
 	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl(0, "any"));		
@@ -222,8 +264,8 @@ CScriptAny::CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine)
 	this->engine = engine;
 	refCount = 1;
 
-	valueTypeId = 0;
-	value = 0;
+	value.typeId = 0;
+	value.valueInt = 0;
 
 	// Notify the garbage collector of this object
 	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl(0, "any"));		
@@ -240,75 +282,139 @@ void CScriptAny::Store(void *ref, int refTypeId)
 {
 	FreeObject();
 
-	// TODO: Improve this to support non-handles and primitives
-	// Only accept null and object handles
-	if( refTypeId && (refTypeId & asTYPEID_OBJHANDLE) == 0 )
+	value.typeId = refTypeId;
+	if( value.typeId & asTYPEID_OBJHANDLE )
 	{
-		asIScriptContext *ctx = asGetActiveContext();
-		if( ctx )
-			ctx->SetException("Store received a type that is not an object handle");
+		// We're receiving a reference to the handle, so we need to dereference it
+		value.valueObj = *(void**)ref;
+		engine->AddRefScriptObject(value.valueObj, value.typeId);
+	}
+	else if( value.typeId & asTYPEID_MASK_OBJECT )
+	{
+		// Create a copy of the object
+		// We need to dereference the reference, as we receive a pointer to a pointer to the object
+		value.valueObj = engine->CreateScriptObjectCopy(*(void**)ref, value.typeId);
 	}
 	else
 	{
-		valueTypeId = refTypeId;
-		value = *(void**)ref; // We receive a reference to the handle
+		// Primitives can be copied directly
+		value.valueInt = 0;
 
-		if( valueTypeId && value )
-			engine->AddRefScriptObject(value, valueTypeId);
+		// Copy the primitive value
+		// We receive a pointer to the value.
+		int size = engine->GetSizeOfPrimitiveType(value.typeId);
+		memcpy(&value.valueInt, ref, size);
 	}
 }
 
-int CScriptAny::Retrieve(void *ref, int refTypeId)
+void CScriptAny::Store(double &ref)
 {
-	// Verify if the value is compatible with the requested type
-	bool isCompatible = false;
-	if( valueTypeId == refTypeId )
-		isCompatible = true;
-	// Allow obj@ to be copied to const obj@
-	else if( ((valueTypeId & (asTYPEID_OBJHANDLE | asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) == (refTypeId & (asTYPEID_OBJHANDLE | asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR))) && // Handle to the same object type
-	 	     ((refTypeId & (asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) == (asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) )			   // Handle to const object
-		isCompatible = true;
+	int typeId = engine->GetTypeIdByDecl(0, "double");
+	Store(&ref, typeId);
+}
 
-	// Release the old value held by the reference
-	if( *(void**)ref && refTypeId )
+void CScriptAny::Store(asINT64 &ref)
+{
+	int typeId = engine->GetTypeIdByDecl(0, "int64");
+	Store(&ref, typeId);
+}
+
+
+bool CScriptAny::Retrieve(void *ref, int refTypeId)
+{
+	if( refTypeId & asTYPEID_OBJHANDLE )
 	{
-		engine->ReleaseScriptObject(*(void**)ref, refTypeId);
-		*(void**)ref = 0;
+		// Is the handle type compatible with the stored value?
+
+		// A handle can be retrieved if the stored type is a handle of same or compatible type
+		// or if the stored type is an object that implements the interface that the handle refer to.
+		if( (value.typeId & asTYPEID_MASK_OBJECT) && 
+			engine->IsHandleCompatibleWithObject(value.valueObj, value.typeId, refTypeId) )
+		{
+			engine->AddRefScriptObject(value.valueObj, value.typeId);
+			*(void**)ref = value.valueObj;
+
+			return true;
+		}
+	}
+	else if( refTypeId & asTYPEID_MASK_OBJECT )
+	{
+		// Is the object type compatible with the stored value?
+
+		// Copy the object into the given reference
+		if( value.typeId == refTypeId )
+		{
+			engine->CopyScriptObject(*(void**)ref, value.valueObj, value.typeId);
+
+			return true;
+		}
+	}
+	else
+	{
+		// Is the primitive type compatible with the stored value?
+
+		if( value.typeId == refTypeId )
+		{
+			int size = engine->GetSizeOfPrimitiveType(refTypeId);
+			memcpy(ref, &value.valueInt, size);
+			return true;
+		}
+
+		// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
+		int intTypeId = engine->GetTypeIdByDecl(0, "int64");
+		int fltTypeId = engine->GetTypeIdByDecl(0, "double");
+		if( value.typeId == intTypeId && refTypeId == fltTypeId )
+		{
+			*(double*)ref = double(value.valueInt);
+			return true;
+		}
+		else if( value.typeId == fltTypeId && refTypeId == intTypeId )
+		{
+			*(asINT64*)ref = asINT64(value.valueFlt);
+			return true;
+		}
 	}
 
-	if( isCompatible )
-	{
-		// Set the reference to the object handle
-		*(void**)ref = value;
-		if( value )
-			engine->AddRefScriptObject(value, valueTypeId);
+	return false;
+}
 
-		return 0;
-	}
+bool CScriptAny::Retrieve(asINT64 &value)
+{
+	int typeId = engine->GetTypeIdByDecl(0, "int64");
+	return Retrieve(&value, typeId);
+}
 
-	return -1;
+bool CScriptAny::Retrieve(double &value)
+{
+	int typeId = engine->GetTypeIdByDecl(0, "double");
+	return Retrieve(&value, typeId);
 }
 
 int CScriptAny::GetTypeId()
 {
-	return valueTypeId;
+	return value.typeId;
 }
 
 void CScriptAny::FreeObject()
 {
-	if( value && (valueTypeId & asTYPEID_OBJHANDLE) )
-		engine->ReleaseScriptObject(value, valueTypeId);
+    // If it is a handle or a ref counted object, call release
+	if( value.typeId & asTYPEID_MASK_OBJECT )
+	{
+		// Let the engine release the object
+		engine->ReleaseScriptObject(value.valueObj, value.typeId);
+		value.valueObj = 0;
+		value.typeId = 0;
+	}
 
-	value = 0;
-	valueTypeId = 0;
+    // For primitives, there's nothing to do
 }
 
 
 void CScriptAny::EnumReferences(asIScriptEngine *engine)
 {
 	// If we're holding a reference, we'll notify the garbage collector of it
-	if( value && (valueTypeId & asTYPEID_MASK_OBJECT) )
-		engine->GCEnumCallback(value);
+	if( value.valueObj && (value.typeId & asTYPEID_MASK_OBJECT) )
+		engine->GCEnumCallback(value.valueObj);
 }
 
 void CScriptAny::ReleaseAllHandles(asIScriptEngine *engine)

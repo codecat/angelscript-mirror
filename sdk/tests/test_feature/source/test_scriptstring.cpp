@@ -336,6 +336,33 @@ bool Test()
 
 	engine->Release();
 
+	//------------------------------------------
+	// Test the comparison method
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptString(engine);
+
+		std::string a = "a";
+		std::string b = "b";
+
+		int type = engine->GetTypeIdByDecl(0, "string");
+		bool c;
+		r = engine->CompareScriptObjects(c, asBEHAVE_EQUAL, &a, &b, type); assert( r >= 0 );
+		if( c ) fail = true;
+		r = engine->CompareScriptObjects(c, asBEHAVE_NOTEQUAL, &a, &b, type); assert( r >= 0 );
+		if( !c ) fail = true;
+		r = engine->CompareScriptObjects(c, asBEHAVE_LESSTHAN, &a, &b, type); assert( r >= 0 );
+		if( !c ) fail = true;
+		r = engine->CompareScriptObjects(c, asBEHAVE_GREATERTHAN, &a, &b, type); assert( r >= 0 );
+		if( c ) fail = true;
+		r = engine->CompareScriptObjects(c, asBEHAVE_LEQUAL, &a, &b, type); assert( r >= 0 );
+		if( !c ) fail = true;
+		r = engine->CompareScriptObjects(c, asBEHAVE_GEQUAL, &a, &b, type); assert( r >= 0 );
+		if( c ) fail = true;
+
+		engine->Release();
+	}
+
 	return fail;
 }
 
