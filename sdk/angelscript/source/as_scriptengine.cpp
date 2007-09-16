@@ -3556,7 +3556,7 @@ int asCScriptEngine::CompareScriptObjects(bool &result, int behaviour, void *lef
 	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return asINVALID_TYPE;
 
 	// Is the behaviour valid?
-	if( behaviour < asBEHAVE_EQUAL || behaviour > asBEHAVE_GEQUAL ) return asINVALID_ARG;
+	if( behaviour < (int)asBEHAVE_EQUAL || behaviour > (int)asBEHAVE_GEQUAL ) return asINVALID_ARG;
 
 	// Get the object type information so we can find the comparison behaviours
 	asCObjectType *ot = GetObjectTypeFromTypeId(typeId);
@@ -3565,7 +3565,7 @@ int asCScriptEngine::CompareScriptObjects(bool &result, int behaviour, void *lef
 	dt.MakeReference(true);
 
 	// Find the behaviour
-	int n;
+	unsigned int n;
 	for( n = 0; n < globalBehaviours.operators.GetLength(); n += 2 )
 	{
 		// Is it the right comparison operator?

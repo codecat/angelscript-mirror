@@ -417,7 +417,7 @@ void CScriptAny::EnumReferences(asIScriptEngine *engine)
 		engine->GCEnumCallback(value.valueObj);
 }
 
-void CScriptAny::ReleaseAllHandles(asIScriptEngine *engine)
+void CScriptAny::ReleaseAllHandles(asIScriptEngine * /*engine*/)
 {
 	FreeObject();
 }
