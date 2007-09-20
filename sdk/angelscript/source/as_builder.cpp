@@ -469,12 +469,12 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	if( dt )
 	{
 		if( CheckNameConflictMember(*dt, name.AddressOf(), nameNode, &source) < 0 )
-			return asINVALID_NAME;
+			return asNAME_TAKEN;
 	}
 	else
 	{
 		if( CheckNameConflict(name.AddressOf(), nameNode, &source) < 0 )
-			return asINVALID_NAME;
+			return asNAME_TAKEN;
 	}
 
 	if( numErrors > 0 )
@@ -510,10 +510,18 @@ asCProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, b
 	for( n = 0; n < props->GetLength(); ++n )
 		if( (*props)[n] && (*props)[n]->name == prop )
 		{
-			// Find the config group for the global property
-			asCConfigGroup *group = engine->FindConfigGroupForGlobalVar((*props)[n]->index);
-			if( !group || group->HasModuleAccess(module->name.AddressOf()) )
+			if( module )
+			{
+				// Find the config group for the global property
+				asCConfigGroup *group = engine->FindConfigGroupForGlobalVar((*props)[n]->index);
+				if( !group || group->HasModuleAccess(module->name.AddressOf()) )
+					return (*props)[n];
+			}
+			else
+			{
+				// We're not compiling a module right now, so it must be a registered global property
 				return (*props)[n];
+			}
 		}
 
 	// TODO: Improve linear search

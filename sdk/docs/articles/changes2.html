@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.10.0 WIP - 2007/09/13</h2>
+<h2>Version 2.10.0 WIP - 2007/09/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -128,10 +128,15 @@ A:hover
 <li>Script classes crashed on construction with AS_MAX_PORTABILITY (Thanks Carlos Campa&ntilde;a)
 <li>Fixed a null pointer access on stack clean up (Thanks Thomas Cowell)
 <li>Fixed an assert failure in the compiler (Thanks Jeff Slutter)
+<li>When compiling assignment the compiler made incorrect implicit conversions to object type (Thanks Anders Hansson)
+<li>Fixed access violation in RegisterGlobalProperty when the property had already been registered in another group (Thanks mono2k)
+<li>The condition operator didn't handle void expressions in the results (Thanks Anders Hansson)
+<li>Comparison with local boolean variable toggled the variable's value (Thanks Anders Hansson)
 </ul>
 <li>Script language
 <ul>
 <li>The any type is no longer a built-in type
+<li>Bitwise operators will maintain the signed/unsigned type of the left operand (Thanks Trikko)
 </ul>
 <li>Library interface
 <ul>

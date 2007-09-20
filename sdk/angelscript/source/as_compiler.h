@@ -163,6 +163,7 @@ protected:
 	void ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *exclude);
 	void ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars);
 	void ConvertToTempVariable(asSExprContext *ctx);
+	void ConvertToTempVariableNotIn(asSExprContext *ctx, asSExprContext *exclude);
 	void ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars);
 	void ConvertToReference(asSExprContext *ctx);
 	void PushVariableOnStack(asSExprContext *ctx, bool asReference);

@@ -111,6 +111,21 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	// bitwise operators should maintain signed/unsigned type of left hand operand
+	CBufferedOutStream bout;
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	r = engine->ExecuteString(0, "int a = 0, b = 0; bool c = (a < (b>>1));");
+	if( r < 0 )
+		fail = true;
+	r = engine->ExecuteString(0, "uint a = 0, b = 0; bool c = (a < (b>>1));");
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	
 	engine->Release();
 
 	// Success

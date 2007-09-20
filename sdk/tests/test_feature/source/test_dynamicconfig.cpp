@@ -543,6 +543,20 @@ bool Test()
 	engine->Release();
 
 
+	//-----------------------------
+	// Test
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	engine->BeginConfigGroup("a");
+
+	r = engine->RegisterGlobalProperty("int a", 0); assert( r >= 0 );
+
+	engine->EndConfigGroup();
+
+	r = engine->RegisterGlobalProperty("int a", 0); assert( r < 0 );
+
+	engine->Release();
+
 	// Success
 	return fail;
 }

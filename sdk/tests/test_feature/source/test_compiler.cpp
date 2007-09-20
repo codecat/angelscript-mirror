@@ -62,6 +62,14 @@ const char *script11 =
 "  {type str = obj.GetTypeHandle();}           \n"
 "}                                             \n";
 
+const char *script12 =
+"void f()       \n"
+"{}             \n"
+"               \n"
+"void assert()  \n"
+"{              \n"
+"   2<3?f():1;  \n"
+"}              \n";
 
 bool Test()
 {
@@ -237,6 +245,32 @@ bool Test()
                        "script (4, 3) : Info    : Compiling void c::func()\n"
                        "script (5, 18) : Error   : Illegal operation on 'int&'\n"
                        "script (5, 15) : Error   : Can't implicitly convert from 'int&' to 'type&'.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test 13
+	// Don't permit implicit conversion of integer to obj even though obj(int) is a possible constructor
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "uint32[] a = 0;");
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 14) : Error   : Can't implicitly convert from 'const uint' to 'uint[]&'.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test 14
+	// Calling void function in ternary operator ?:
+	bout.buffer = "";
+	r = engine->AddScriptSection(0, "script", script12, strlen(script12));
+	r = engine->Build(0);
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (4, 1) : Info    : Compiling void assert()\n"
+                       "script (6, 4) : Error   : Both expressions must have the same type\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

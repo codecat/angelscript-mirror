@@ -129,6 +129,13 @@ bool TestCondition()
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
+	r = engine->ExecuteString(0, "(true) ? print(\"true\") : print(\"false\")");
+	if( r < 0 )
+	{
+		fail = true;
+		printf("%s: ExecuteString() failed\n", TESTNAME);
+	}
+
 	engine->Release();
 
 	// Success

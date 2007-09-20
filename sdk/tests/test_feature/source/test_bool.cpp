@@ -88,6 +88,41 @@ static const char *script3 =
 "   TestBoolClass.TestFalse(flag); \n"
 "}                                 \n";
 
+static const char *script4 =
+"void test()                 \n"
+"{                           \n"
+"  bool low = false;         \n"
+"                            \n"
+"  if (low == false)         \n"
+"  {                         \n"
+"    Print(\"false\");       \n"
+"  }                         \n"
+"  else                      \n"
+"  {                         \n"
+"    Print(\"true\");        \n"
+"  }                         \n"
+"                            \n"
+"  if (low xor false)        \n"
+"  {                         \n"
+"    Print(\"false\");       \n"
+"  }                         \n"
+"  else                      \n"
+"  {                         \n"
+"    Print(\"true\");        \n"
+"  }                         \n"
+"                            \n"
+"  if (low == false)         \n"
+"  {                         \n"
+"    Print(\"false\");       \n"
+"  }                         \n"
+"  else                      \n"
+"  {                         \n"
+"    Print(\"true\");        \n"
+"  }                         \n"
+"}                           \n";
+
+
+
 class TestBoolClass
 {
 public:
@@ -158,6 +193,13 @@ void GiveFalse(int &boolean)
 	}
 	else
 		boolean = 0;
+}
+
+std::string buf;
+void Print(std::string &str)
+{
+	buf += str + "\n";
+//	printf("%s\n", str.c_str());
 }
 
 bool Test()
@@ -279,6 +321,21 @@ bool Test()
 		if( r != asEXECUTION_FINISHED ) fail = true;
 
 		if( testBool.m_fail ) fail = true;
+	}
+
+	// TEST 7
+	engine->RegisterGlobalFunction("void Print(const string &in)", asFUNCTION(Print), asCALL_CDECL); assert( r >= 0 );
+	engine->AddScriptSection(0, "script", script4, strlen(script4));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+	else
+	{
+		r = engine->ExecuteString(0, "test();");
+		if( r != asEXECUTION_FINISHED ) fail = true;
+
+		if( buf != "false\ntrue\nfalse\n" )
+			fail = true;
 	}
 
 	engine->Release();

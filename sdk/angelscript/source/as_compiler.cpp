@@ -2759,7 +2759,9 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 	{
 		asCDataType to = *lvalue;
 		to.MakeReference(false);
-		ImplicitConversion(rctx, to, node, false);
+
+		// Don't allow the implicit conversion to create an object
+		ImplicitConversion(rctx, to, node, false, true, 0, false);
 
 		// Check data type
 		if( lvalue->IsObjectHandle() &&
@@ -4217,85 +4219,123 @@ void asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 		int afterLabel = nextLabel++;
 		int elseLabel = nextLabel++;
 
-		// Allocate temporary variable and copy the result to that one
-		asCTypeInfo temp;
-		temp = le.type;
-		temp.dataType.MakeReference(false);
-		temp.dataType.MakeReadOnly(false);
-		// Make sure the variable isn't used in the initial expression
-		asCArray<int> vars;
-		e.bc.GetVarsUsed(vars);
-		int offset = AllocateVariableNotIn(temp.dataType, true, &vars);
-		temp.SetVariable(temp.dataType, offset, true);
-
-		CompileConstructor(temp.dataType, offset, &ctx->bc);
-
-		MergeExprContexts(ctx, &e);
-		ctx->type = e.type;
-		ConvertToVariable(ctx);
-		ctx->bc.InstrSHORT(BC_CpyVtoR4, ctx->type.stackOffset);
-		ctx->bc.Instr(BC_ClrHi);
-		ctx->bc.InstrDWORD(BC_JZ, elseLabel);
-		ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-
-
-		asCTypeInfo rtemp;
-		rtemp = temp;
-		if( rtemp.dataType.IsObjectHandle() )
-			rtemp.isExplicitHandle = true;
-
-		PrepareForAssignment(&rtemp.dataType, &le, cexpr->next);
-		MergeExprContexts(ctx, &le);
-
-		if( !rtemp.dataType.IsPrimitive() )
+		// If left expression is void, then we don't need to store the result
+		if( le.type.dataType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttVoid, false)) )
 		{
-			ctx->bc.InstrSHORT(BC_PSF, (short)offset);
-			rtemp.dataType.MakeReference(true);
+			// Put the code for the condition expression on the output
+			MergeExprContexts(ctx, &e);
+			
+			// Added the branch decision
+			ctx->type = e.type;
+			ConvertToVariable(ctx);
+			ctx->bc.InstrSHORT(BC_CpyVtoR4, ctx->type.stackOffset);
+			ctx->bc.Instr(BC_ClrHi);
+			ctx->bc.InstrDWORD(BC_JZ, elseLabel);
+			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+			// Add the left expression
+			MergeExprContexts(ctx, &le);
+			ctx->bc.InstrINT(BC_JMP, afterLabel);
+
+			// Add the right expression
+			ctx->bc.Label((short)elseLabel);
+			MergeExprContexts(ctx, &re);
+			ctx->bc.Label((short)afterLabel);
+
+			// Make sure both expressions have the same type
+			if( le.type.dataType != re.type.dataType )
+				Error(TXT_BOTH_MUST_BE_SAME, expr);
+
+			// Set the type of the result
+			ctx->type = le.type;
 		}
-		PerformAssignment(&rtemp, &le.type, &ctx->bc, cexpr->next);
-		if( !rtemp.dataType.IsPrimitive() )
-			ctx->bc.Pop(le.type.dataType.GetSizeOnStackDWords()); // Pop the original value
-
-		// Release the old temporary variable
-		ReleaseTemporaryVariable(le.type, &ctx->bc);
-
-		ctx->bc.InstrINT(BC_JMP, afterLabel);
-		ctx->bc.Label((short)elseLabel);
-
-		// Copy the result to the same temporary variable
-		PrepareForAssignment(&rtemp.dataType, &re, cexpr->next);
-		MergeExprContexts(ctx, &re);
-
-		if( !rtemp.dataType.IsPrimitive() )
+		else
 		{
-			ctx->bc.InstrSHORT(BC_PSF, (short)offset);
-			rtemp.dataType.MakeReference(true);
+			// Allocate temporary variable and copy the result to that one
+			asCTypeInfo temp;
+			temp = le.type;
+			temp.dataType.MakeReference(false);
+			temp.dataType.MakeReadOnly(false);
+			// Make sure the variable isn't used in the initial expression
+			asCArray<int> vars;
+			e.bc.GetVarsUsed(vars);
+			int offset = AllocateVariableNotIn(temp.dataType, true, &vars);
+			temp.SetVariable(temp.dataType, offset, true);
+
+			CompileConstructor(temp.dataType, offset, &ctx->bc);
+
+			// Put the code for the condition expression on the output
+			MergeExprContexts(ctx, &e);
+
+			// Added the branch decision
+			ctx->type = e.type;
+			ConvertToVariable(ctx);
+			ctx->bc.InstrSHORT(BC_CpyVtoR4, ctx->type.stackOffset);
+			ctx->bc.Instr(BC_ClrHi);
+			ctx->bc.InstrDWORD(BC_JZ, elseLabel);
+			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+			// Assign the result of the left expression to the temporary variable
+			asCTypeInfo rtemp;
+			rtemp = temp;
+			if( rtemp.dataType.IsObjectHandle() )
+				rtemp.isExplicitHandle = true;
+
+			PrepareForAssignment(&rtemp.dataType, &le, cexpr->next);
+			MergeExprContexts(ctx, &le);
+
+			if( !rtemp.dataType.IsPrimitive() )
+			{
+				ctx->bc.InstrSHORT(BC_PSF, (short)offset);
+				rtemp.dataType.MakeReference(true);
+			}
+			PerformAssignment(&rtemp, &le.type, &ctx->bc, cexpr->next);
+			if( !rtemp.dataType.IsPrimitive() )
+				ctx->bc.Pop(le.type.dataType.GetSizeOnStackDWords()); // Pop the original value
+
+			// Release the old temporary variable
+			ReleaseTemporaryVariable(le.type, &ctx->bc);
+
+			ctx->bc.InstrINT(BC_JMP, afterLabel);
+
+			// Start of the right expression
+			ctx->bc.Label((short)elseLabel);
+
+			// Copy the result to the same temporary variable
+			PrepareForAssignment(&rtemp.dataType, &re, cexpr->next);
+			MergeExprContexts(ctx, &re);
+
+			if( !rtemp.dataType.IsPrimitive() )
+			{
+				ctx->bc.InstrSHORT(BC_PSF, (short)offset);
+				rtemp.dataType.MakeReference(true);
+			}
+			PerformAssignment(&rtemp, &re.type, &ctx->bc, cexpr->next);
+			if( !rtemp.dataType.IsPrimitive() )
+				ctx->bc.Pop(le.type.dataType.GetSizeOnStackDWords()); // Pop the original value
+
+			// Release the old temporary variable
+			ReleaseTemporaryVariable(re.type, &ctx->bc);
+
+			ctx->bc.Label((short)afterLabel);
+
+			// Make sure both expressions have the same type
+			if( le.type.dataType != re.type.dataType )
+				Error(TXT_BOTH_MUST_BE_SAME, expr);
+
+			// Set the temporary variable as output
+			ctx->type = rtemp;
+			ctx->type.isExplicitHandle = isExplicitHandle;
+
+			if( !ctx->type.dataType.IsPrimitive() )
+			{
+				ctx->bc.InstrSHORT(BC_PSF, (short)offset);
+				ctx->type.dataType.MakeReference(true);
+			}
+
+			// Make sure the output isn't marked as being a literal constant
+			ctx->type.isConstant = false;
 		}
-		PerformAssignment(&rtemp, &re.type, &ctx->bc, cexpr->next);
-		if( !rtemp.dataType.IsPrimitive() )
-			ctx->bc.Pop(le.type.dataType.GetSizeOnStackDWords()); // Pop the original value
-
-		// Release the old temporary variable
-		ReleaseTemporaryVariable(re.type, &ctx->bc);
-
-		ctx->bc.Label((short)afterLabel);
-
-		// Make sure both expressions have the same type
-		if( le.type.dataType != re.type.dataType )
-			Error(TXT_BOTH_MUST_BE_SAME, expr);
-
-		// Set the temporary variable as output
-		ctx->type = rtemp;
-		ctx->type.isExplicitHandle = isExplicitHandle;
-
-		if( !ctx->type.dataType.IsPrimitive() )
-		{
-			ctx->bc.InstrSHORT(BC_PSF, (short)offset);
-			ctx->type.dataType.MakeReference(true);
-		}
-
-		// Make sure the output isn't marked as being a literal constant
-		ctx->type.isConstant = false;
 	}
 	else
 		CompileExpression(cexpr, ctx);
@@ -6268,6 +6308,13 @@ void asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asS
 	assert(false);
 }
 
+void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asSExprContext *exclude)
+{
+	asCArray<int> excludeVars;
+	if( exclude ) exclude->bc.GetVarsUsed(excludeVars);
+	ConvertToTempVariableNotIn(ctx, &excludeVars);
+}
+
 void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars)
 {
 	ConvertToVariableNotIn(ctx, reservedVars);
@@ -6744,32 +6791,36 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		op == ttBitOr  || op == ttOrAssign  ||
 		op == ttBitXor || op == ttXorAssign )
 	{
-		// Both operands must be bitvectors of same length
-		asCDataType to;
-		if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 ||
-			rctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-			to.SetTokenType(ttUInt64);
-		else
-			to.SetTokenType(ttUInt);
-
-		// Do the actual conversion
-		asCArray<int> reservedVars;
-		rctx->bc.GetVarsUsed(reservedVars);
-		ImplicitConversion(lctx, to, node, false, true, &reservedVars);
-		ImplicitConversion(rctx, to, node, false);
-
-		// Verify that the conversion was successful
-		if( !lctx->type.dataType.IsUnsignedType() )
+		// Convert left hand operand to integer if it's not already one
+		if( !(lctx->type.dataType.IsIntegerType() ||
+			  lctx->type.dataType.IsUnsignedType()) )
 		{
-			asCString str;
-			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), "bits");
-			Error(str.AddressOf(), node);
+			asCDataType to;
+			if( lctx->type.dataType.GetSizeInMemoryDWords() == 2  )
+				to.SetTokenType(ttInt64);
+			else
+				to.SetTokenType(ttInt);
+
+			// Do the actual conversion
+			asCArray<int> reservedVars;
+			rctx->bc.GetVarsUsed(reservedVars);
+			ImplicitConversion(lctx, to, node, false, true, &reservedVars);
+
+			// Verify that the conversion was successful
+			if( !lctx->type.dataType.IsUnsignedType() )
+			{
+				asCString str;
+				str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
+				Error(str.AddressOf(), node);
+			}
 		}
 
-		if( !rctx->type.dataType.IsUnsignedType() )
+		// Convert right hand operand to same type as left hand operand
+		ImplicitConversion(rctx, lctx->type.dataType, node, false);
+		if( !rctx->type.dataType.IsEqualExceptRef(lctx->type.dataType) )
 		{
 			asCString str;
-			str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), "bits");
+			str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
 			Error(str.AddressOf(), node);
 		}
 
@@ -6857,26 +6908,32 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		     op == ttBitShiftRight      || op == ttShiftRightLAssign ||
 			 op == ttBitShiftRightArith || op == ttShiftRightAAssign )
 	{
-		// Left operand must be bitvector
-		asCDataType to;
-		if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-			to.SetTokenType(ttUInt64);
-		else
-			to.SetTokenType(ttUInt);
-		ImplicitConversion(lctx, to, node, false);
-
-		// Right operand must be uint
-		to.SetTokenType(ttUInt);
-		ImplicitConversion(rctx, to, node, false);
-
-		// Verify that the conversion was successful
-		if( !lctx->type.dataType.IsUnsignedType() )
+		// Convert left hand operand to integer if it's not already one
+		if( !(lctx->type.dataType.IsIntegerType() ||
+			  lctx->type.dataType.IsUnsignedType()) )
 		{
-			asCString str;
-			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), "bits");
-			Error(str.AddressOf(), node);
+			asCDataType to;
+			if( lctx->type.dataType.GetSizeInMemoryDWords() == 2  )
+				to.SetTokenType(ttInt64);
+			else
+				to.SetTokenType(ttInt);
+
+			// Do the actual conversion
+			asCArray<int> reservedVars;
+			rctx->bc.GetVarsUsed(reservedVars);
+			ImplicitConversion(lctx, to, node, false, true, &reservedVars);
+
+			// Verify that the conversion was successful
+			if( !lctx->type.dataType.IsUnsignedType() )
+			{
+				asCString str;
+				str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
+				Error(str.AddressOf(), node);
+			}
 		}
 
+		// Right operand must be 32bit uint
+		ImplicitConversion(rctx, asCDataType::CreatePrimitive(ttUInt, true), node, false);
 		if( !rctx->type.dataType.IsUnsignedType() )
 		{
 			asCString str;
@@ -7065,8 +7122,9 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 			int op = node->tokenType;
 			if( op == ttEqual || op == ttNotEqual )
 			{
-				ConvertToVariableNotIn(lctx, rctx);
-				ConvertToVariable(rctx);
+				// Must convert to temporary variable, because we are changing the value before comparison
+				ConvertToTempVariableNotIn(lctx, rctx);
+				ConvertToTempVariable(rctx);
 				ReleaseTemporaryVariable(lctx->type, &lctx->bc);
 				ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 
@@ -7297,8 +7355,9 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	{
 		if( !isConstant )
 		{
-			ConvertToVariableNotIn(lctx, rctx);
-			ConvertToVariable(rctx);
+			// Must convert to temporary variable, because we are changing the value before comparison
+			ConvertToTempVariableNotIn(lctx, rctx);
+			ConvertToTempVariable(rctx);
 			ReleaseTemporaryVariable(lctx->type, &lctx->bc);
 			ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 
