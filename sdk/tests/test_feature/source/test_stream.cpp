@@ -117,7 +117,7 @@ bool Test()
 	RegisterScriptString(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	engine->RegisterObjectType("stream", sizeof(CScriptStream), asOBJ_CLASS_CDA);
+	engine->RegisterObjectType("stream", sizeof(CScriptStream), asOBJ_REF);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CScriptStream_Construct), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_ALLOC, "stream &f(uint)", asFUNCTION(CScriptStream_Alloc), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptStream,AddRef), asCALL_THISCALL);

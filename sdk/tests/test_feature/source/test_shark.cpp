@@ -45,7 +45,7 @@ Point &Point_Assign(Point &point, Point &pointOther)
 	return point;
 }
 
-void Point_Add(Point &point, Point p)
+void Point_Add(Point &point, Point &p)
 {
 	point.Add(p);
 }
@@ -97,13 +97,12 @@ bool Test()
 	int r;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	r = engine->RegisterObjectType("Point", sizeof(Point), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("Point", sizeof(Point), asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("Point", "int x", offsetof(Point, x)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("Point", "int y", offsetof(Point, y)); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("Point", "void Add(Point)", asFUNCTION(Point_Add), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("Point", "void Add(Point&in)", asFUNCTION(Point_Add), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Point_Construct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_ALLOC, "Point &f(uint)", asFUNCTION(Point_Alloc), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Point_Destruct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_ASSIGNMENT, "Point &f(Point &in)", asFUNCTION(Point_Assign), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_INDEX, "int &f(int)", asFUNCTION(Point_Index), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_ADDREF, "void f()", asFUNCTION(Point_AddRef), asCALL_CDECL_OBJFIRST); assert( r >= 0 );

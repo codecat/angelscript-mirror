@@ -98,7 +98,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	r = engine->BeginConfigGroup("group"); assert( r >= 0 );
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	r = engine->SetConfigGroupModuleAccess("group", 0, false); assert( r >= 0 );
@@ -119,7 +119,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 
 	r = engine->BeginConfigGroup("group"); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "mytype f(mytype &in, mytype &in)", asFUNCTION(TypeAdd), asCALL_GENERIC); assert( r >= 0 );

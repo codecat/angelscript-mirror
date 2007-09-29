@@ -51,7 +51,7 @@ bool TestVirtualMethod()
 	
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	r = engine->RegisterObjectType("class1", 0, 0);
+	r = engine->RegisterObjectType("class1", 0, asOBJ_REF);
 	r = engine->RegisterObjectMethod("class1", "void CallMe()", asMETHOD(CBase, CallMe), asCALL_THISCALL);
 	
 	// We must register the property as a pointer to the base class since

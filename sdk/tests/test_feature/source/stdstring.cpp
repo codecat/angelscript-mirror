@@ -151,7 +151,7 @@ void RegisterStdString(asIScriptEngine *engine)
 	int r;
 
 	// Register the bstr type
-	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 
 	// Register the bstr factory
 	r = engine->RegisterStringFactory("string", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );

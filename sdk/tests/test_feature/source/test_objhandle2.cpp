@@ -126,7 +126,7 @@ bool Test()
 
 	RegisterScriptString_Generic(engine);
 
-	r = engine->RegisterObjectType("refclass", sizeof(CRefClass), asOBJ_CLASS_CDA); assert(r >= 0);
+	r = engine->RegisterObjectType("refclass", sizeof(CRefClass), asOBJ_REF); assert(r >= 0);
 	r = engine->RegisterObjectProperty("refclass", "int id", offsetof(CRefClass, id));
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefClass, Release), asCALL_THISCALL); assert(r >= 0);
@@ -190,7 +190,7 @@ bool Test()
 
 	// Verify that the compiler doesn't allow the use of handles if addref/release aren't registered
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterObjectType("type", 0, asOBJ_PRIMITIVE);
+	engine->RegisterObjectType("type", 0, asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	engine->RegisterGlobalFunction("type @func()", asFUNCTION(0), asCALL_CDECL);
 	engine->Release();
 
@@ -394,12 +394,12 @@ bool TestHandleMemberCalling(void)
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	// register Point
-	r = engine->RegisterObjectType("Point", sizeof(Point), asOBJ_CLASS_C); assert(r >= 0);
+	r = engine->RegisterObjectType("Point", sizeof(Point), asOBJ_VALUE | asOBJ_APP_CLASS_C); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Point::Construct), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_CONSTRUCT, "void f(float,float,float)", asFUNCTION(Point::Construct2), asCALL_CDECL_OBJLAST); assert(r >= 0);
 
 	// register ArgClass
-	r = engine->RegisterObjectType("ArgClass", sizeof(ArgClass), asOBJ_CLASS_C); assert(r >= 0);
+	r = engine->RegisterObjectType("ArgClass", sizeof(ArgClass), asOBJ_REF); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_ADDREF, "void f()", asMETHOD(ArgClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_RELEASE, "void f()", asMETHOD(ArgClass, Release), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_ALLOC, "ArgClass &f(uint)", asFUNCTION(ArgClass::Allocate), asCALL_CDECL); assert(r >= 0);
@@ -409,7 +409,7 @@ bool TestHandleMemberCalling(void)
 	r = engine->RegisterObjectMethod("ArgClass", "void SetWeight(float)", asMETHOD(ArgClass,SetWeight), asCALL_THISCALL); assert(r >= 0);
 
 	// register CallerClass
-	r = engine->RegisterObjectType("CallerClass", sizeof(CallerClass), asOBJ_CLASS_C); assert(r >= 0);
+	r = engine->RegisterObjectType("CallerClass", sizeof(CallerClass), asOBJ_REF); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_ADDREF, "void f()", asMETHOD(CallerClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_RELEASE, "void f()", asMETHOD(CallerClass, Release), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_ALLOC, "CallerClass &f(uint)", asFUNCTION(CallerClass::Allocate), asCALL_CDECL); assert(r >= 0);

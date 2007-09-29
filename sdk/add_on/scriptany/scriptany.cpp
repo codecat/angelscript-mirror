@@ -155,7 +155,7 @@ static void AnyFree(void *p)
 void RegisterScriptAny_Native(asIScriptEngine *engine)
 {
 	int r;
-	r = engine->RegisterObjectType("any", sizeof(CScriptAny), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("any", sizeof(CScriptAny), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
 
 	// We'll use the generic interface for the constructor as we need the engine pointer
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ScriptAnyConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -185,7 +185,7 @@ void RegisterScriptAny_Native(asIScriptEngine *engine)
 void RegisterScriptAny_Generic(asIScriptEngine *engine)
 {
 	int r;
-	r = engine->RegisterObjectType("any", sizeof(CScriptAny), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("any", sizeof(CScriptAny), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
 
 	// We'll use the generic interface for the constructor as we need the engine pointer
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ScriptAnyConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );

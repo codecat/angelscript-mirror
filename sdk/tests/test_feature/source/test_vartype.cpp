@@ -116,7 +116,7 @@ bool Test()
 	// It must not be possible to register object members of the var type ?
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->RegisterObjectType("test", 0, 0); assert( r >= 0 );
+	r = engine->RegisterObjectType("test", 0, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("test", "? prop", 0);
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n" ) fail = true;
@@ -274,7 +274,7 @@ bool Test()
 	bout.buffer = "";
 
 	// Don't allow ?& with operators yet
-	engine->RegisterObjectType("type", sizeof(int), asOBJ_PRIMITIVE);
+	engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	r = engine->RegisterObjectBehaviour("type", asBEHAVE_ASSIGNMENT, "type &f(const ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
 	if( r >= 0 )
 		fail = true;

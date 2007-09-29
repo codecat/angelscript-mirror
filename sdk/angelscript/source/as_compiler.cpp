@@ -355,7 +355,7 @@ void asCCompiler::DefaultConstructor(asCByteCode *bc, asCDataType &type)
 
 	if( type.IsScriptArray() )
 	{
-		// The script struct constructor needs to know what type it is
+		// The script array constructor needs to know what type it is
 		asCObjectType *objType = type.GetObjectType();
 		bc->InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(objType));
 

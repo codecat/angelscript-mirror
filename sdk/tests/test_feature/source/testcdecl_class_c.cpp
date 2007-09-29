@@ -74,9 +74,9 @@ bool TestCDecl_ClassC()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType("class1", sizeof(ClassC1), asOBJ_CLASS_C);
-	engine->RegisterObjectType("class2", sizeof(ClassC2), asOBJ_CLASS_C);
-	engine->RegisterObjectType("class3", sizeof(ClassC3), asOBJ_CLASS_C);
+	engine->RegisterObjectType("class1", sizeof(ClassC1), asOBJ_VALUE | asOBJ_APP_CLASS_C);
+	engine->RegisterObjectType("class2", sizeof(ClassC2), asOBJ_VALUE | asOBJ_APP_CLASS_C);
+	engine->RegisterObjectType("class3", sizeof(ClassC3), asOBJ_VALUE | asOBJ_APP_CLASS_C);
 	
 	engine->RegisterGlobalProperty("class1 c1", &c1);
 	engine->RegisterGlobalProperty("class2 c2", &c2);

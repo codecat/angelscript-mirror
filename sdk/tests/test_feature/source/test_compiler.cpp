@@ -233,7 +233,7 @@ bool Test()
 	// Test 12
 	// Handle errors after use of undefined objects
 	bout.buffer = "";
-	engine->RegisterObjectType("type", 4, asOBJ_PRIMITIVE);
+	engine->RegisterObjectType("type", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	engine->AddScriptSection(0, "script", script11, strlen(script11));
 	r = engine->Build(0);
 	if( r >= 0 )

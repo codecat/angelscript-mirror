@@ -148,7 +148,7 @@ bool Test()
 	// "test" + string(type) + "\n"
 	// "test" + type + "\n" 
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	r = engine->RegisterObjectType("type", 4, asOBJ_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("type", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	RegisterScriptString(engine);
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const type &in)", asFUNCTION(TypeToString), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->ExecuteString(0, "type t; string a = \"a\" + string(t) + \"b\";"); 

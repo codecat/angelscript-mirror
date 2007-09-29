@@ -118,14 +118,16 @@ bool TestStdString()
 	}
 
 	bool fail = false;
+	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterStdString(engine);
 	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(PrintString), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void printVal(string)", asFUNCTION(PrintStringVal), asCALL_CDECL);
 
-	engine->RegisterObjectType("obj", 4, asOBJ_PRIMITIVE);
+	engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct1), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f(string &in)", asFUNCTION(Construct2), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("obj", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
@@ -133,15 +135,13 @@ bool TestStdString()
 	engine->RegisterGlobalFunction("void StringByVal(string &in, string)", asFUNCTION(StringByVal), asCALL_CDECL);
 
 	//--> new: object method string argument test
-	engine->RegisterObjectType("StringConsumer", 0, asOBJ_CLASS);
+	engine->RegisterObjectType("StringConsumer", sizeof(StringConsumer), asOBJ_VALUE | asOBJ_APP_CLASS);
 	engine->RegisterObjectMethod("StringConsumer", "void Consume(string str)", asMETHOD(StringConsumer,Consume), asCALL_THISCALL);
 	engine->RegisterGlobalProperty("StringConsumer consumerObject", &consumerObject);
 	//<-- new: object method string argument test
 
-	COutStream out;
 
 	engine->AddScriptSection(0, "string", script, strlen(script), 0);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->Build(0);
 
 	int r = engine->ExecuteString(0, "blah1(); blah2();");
@@ -219,7 +219,7 @@ bool TestStdString()
 	if( printOutput != "This is my string") fail = true;
 	//<-- new: object method string argument test
 
-	engine->RegisterObjectType("Http", sizeof(Http), asOBJ_CLASS);
+	engine->RegisterObjectType("Http", sizeof(Http), asOBJ_VALUE | asOBJ_APP_CLASS);
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asMETHOD(Http,Get),asCALL_THISCALL);
 	engine->ExecuteString(0, "Http h; string str; h.get(\"string\", str);");
 	engine->ExecuteString(0, "Http h; string str; string a = \"a\"; h.get(\"string\"+a, str);");

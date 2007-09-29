@@ -75,7 +75,7 @@ bool TestConstructor()
 	RegisterScriptString_Generic(engine);
 
 	int r;
-	r = engine->RegisterObjectType("obj", sizeof(CTestConstructor), asOBJ_CLASS_C); assert( r >= 0 );
+	r = engine->RegisterObjectType("obj", sizeof(CTestConstructor), asOBJ_VALUE | asOBJ_APP_CLASS_C); assert( r >= 0 );
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
 		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstrObj_gen1), asCALL_GENERIC); assert( r >= 0 );

@@ -207,20 +207,20 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	// Verify that it is possible to register arrays of registered types
-	r = engine->RegisterObjectType("char", sizeof(int), asOBJ_PRIMITIVE); assert( r>= 0 );
-	r = engine->RegisterObjectType( "char[]", sizeof(CIntArray), asOBJ_CLASS_CDA ); assert( r >= 0 );
+	r = engine->RegisterObjectType("char", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r>= 0 );
+	r = engine->RegisterObjectType( "char[]", sizeof(CIntArray), asOBJ_VALUE | asOBJ_APP_CLASS_CDA ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructIntArray), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArray, (CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArray, (int, CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("char[]", "int size()", asMETHOD(CIntArray, size), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectType("char[][]", sizeof(CIntArrayArray), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("char[][]", sizeof(CIntArrayArray), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[][]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArrayArray, (CIntArrayArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[][]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArrayArray, (int, CIntArrayArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[][]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructIntArrayArray), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("char[][]", "int size()", asMETHOD(CIntArrayArray, size), asCALL_THISCALL); assert( r >= 0 );
 
 	// Verify that it is possible to register arrays of built-in types
-	r = engine->RegisterObjectType("int[]", sizeof(CIntArray), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("int[]", sizeof(CIntArray), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArray, (CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArray, (int, CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructIntArray), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -232,7 +232,7 @@ bool Test()
 
 //	RegisterVector<CIntArray>("int[][]", "int[]", engine);
 
-	r = engine->RegisterObjectType("int[][]", sizeof(CIntArrayArray), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("int[][]", sizeof(CIntArrayArray), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[][]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArrayArray, (CIntArrayArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[][]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArrayArray, (int, CIntArrayArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[][]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructIntArrayArray), asCALL_CDECL_OBJLAST); assert( r >= 0 );

@@ -67,14 +67,14 @@ bool Test()
 	RegisterScriptString(engine);
 
 	int r;
-	r = engine->RegisterObjectType("ObjectInstance", sizeof(ObjectInstance), asOBJ_CLASS); assert(r>=0);
+	r = engine->RegisterObjectType("ObjectInstance", sizeof(ObjectInstance), asOBJ_VALUE | asOBJ_APP_CLASS); assert(r>=0);
 	r = engine->RegisterObjectProperty("ObjectInstance", "int val", offsetof(ObjectInstance, val)); assert(r>=0);
 	r = engine->RegisterObjectProperty("ObjectInstance", "int val2", offsetof(ObjectInstance, val)); assert(r>=0);
 	r = engine->RegisterObjectProperty("ObjectInstance", "int val3", offsetof(ObjectInstance, val)); assert(r>=0);
 	r = engine->RegisterObjectMethod("ObjectInstance", "void function()", asFUNCTION(ObjectFunction), asCALL_CDECL_OBJFIRST); assert(r>=0);
 	r = engine->RegisterObjectMethod("ObjectInstance", "void Method()", asMETHOD(ObjectInstance,Method), asCALL_THISCALL); assert(r>=0);
 
-	r = engine->RegisterObjectType("ObjectType", sizeof(ObjectType), asOBJ_CLASS); assert(r>=0);
+	r = engine->RegisterObjectType("ObjectType", sizeof(ObjectType), asOBJ_VALUE | asOBJ_APP_CLASS); assert(r>=0);
 
 	r = engine->RegisterGlobalFunction("ObjectType *CreateObjectType(string &in)", asFUNCTION(CreateObjectType), asCALL_CDECL); assert(r>=0);
 	r = engine->RegisterGlobalFunction("ObjectInstance *CreateObjectInstance(ObjectType *type)", asFUNCTION(CreateObjectInstance), asCALL_CDECL); assert(r>=0);

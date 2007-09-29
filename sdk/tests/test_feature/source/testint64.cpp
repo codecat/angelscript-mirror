@@ -57,7 +57,7 @@ bool TestInt64()
 	bool ret = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterObjectType("Int64", 8, 0);
+	engine->RegisterObjectType("Int64", 8, asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_GENERIC);
 
 	COutStream out;

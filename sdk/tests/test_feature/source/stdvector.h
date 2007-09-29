@@ -135,7 +135,7 @@ void RegisterVector(const std::string V_AS,  //The typename of the vector inside
 	assert(engine && "Passed NULL engine pointer to registerVector");
 
 	int error_code = 0;
-	error_code = engine->RegisterObjectType(V_AS.c_str(), sizeof(std::vector<T>), asOBJ_CLASS_CDA);
+	error_code = engine->RegisterObjectType(V_AS.c_str(), sizeof(std::vector<T>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
 	assert(error_code >= 0 && "Failed to register object type");
 	
 	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(), 

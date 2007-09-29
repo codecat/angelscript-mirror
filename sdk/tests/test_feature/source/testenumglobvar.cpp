@@ -23,7 +23,7 @@ bool TestEnumGlobVar()
 	RegisterScriptString_Generic(engine);
 
 	int r;
-	r = engine->RegisterObjectType("obj", 0, 0); assert( r >= 0 );
+	r = engine->RegisterObjectType("obj", 0, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef_Release_dummy), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_RELEASE, "void f()", asFUNCTION(AddRef_Release_dummy), asCALL_GENERIC); assert( r >= 0 );
 	int o = 0xBAADF00D;

@@ -166,7 +166,7 @@ bool Test()
 	string str;
 	engine->RegisterGlobalProperty("string str", &str);
 
-	engine->RegisterObjectType("prop", sizeof(CProp), asOBJ_CLASS_C);
+	engine->RegisterObjectType("prop", sizeof(CProp), asOBJ_REF);
 	engine->RegisterObjectBehaviour("prop", asBEHAVE_ADDREF, "void f()", asMETHOD(CProp, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("prop", asBEHAVE_RELEASE, "void f()", asMETHOD(CProp, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("prop", "void Get(string &out)", asMETHOD(CProp,Get), asCALL_THISCALL);

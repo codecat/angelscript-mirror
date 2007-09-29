@@ -318,6 +318,9 @@
 				RelativePath="..\..\source\test_refargument.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_registertype.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_return_with_cdecl_objfirst.cpp">
 			</File>
 			<File

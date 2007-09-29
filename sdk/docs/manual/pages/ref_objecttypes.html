@@ -13,53 +13,86 @@
 <h1>Reference: Object types</h1>
 
 <pre class=border>
-<a href="#class">asOBJ_CLASS</a>
-<a href="#constr">asOBJ_CLASS_CONSTRUCTOR</a>
-<a href="#destr">asOBJ_CLASS_DESTRUCTOR</a>
-<a href="#assign">asOBJ_CLASS_ASSIGNMENT</a>
-<a href="#primitive">asOBJ_PRIMITIVE</a>
-<a href="#float">asOBJ_FLOAT</a>
+<a href="#ref">asOBJ_REF</a>
+<a href="#value">asOBJ_VALUE</a>
+<a href="#gc">asOBJ_GC</a>
+<a href="#class">asOBJ_APP_CLASS</a>
+<a href="#constr">asOBJ_APP_CLASS_CONSTRUCTOR</a>
+<a href="#destr">asOBJ_APP_CLASS_DESTRUCTOR</a>
+<a href="#assign">asOBJ_APP_CLASS_ASSIGNMENT</a>
+<a href="#primitive">asOBJ_APP_PRIMITIVE</a>
+<a href="#float">asOBJ_APP_FLOAT</a>
 </pre>
 
+
+<a name=ref></a>
+<h2>asOBJ_REF</h2>
+
+<p>The object type should be treated as a reference type, i.e. it allows object handles to be taken and held.</p>
+
+<p>Objects of this type cannot be passed by value to the application.</p>
+
+
+
+<a name=value></a>
+<h2>asOBJ_VALUE</h2>
+
+<p>The object type should be treated as a value type, i.e. it doesn't allow references to be held longer than the scope of the variable.</p>
+
+<p>Objects of this type can be passed by value to the application, and must thus define how the type is treated by the application through the use of the asOBJ_APP_?? flags.</p>
+
+
+
+<a name="gc"></a>
+<h2>asOBJ_GC</h2>
+
+<p>This flag tells AngelScript that the object should be handled by the garbage collector. This flag can only be used together with asOBJ_REF.</p>
+
+
+
+
+
 <a name=class></a>
-<h2>asOBJ_CLASS</h2>
+<h2>asOBJ_APP_CLASS</h2>
 
-<p>The object is a class, structure, or union. This flag can optionally be combined with asOBJ_CLASS_CONSTRUCTOR, asOBJ_CLASS_DESTRUCTOR, and/or asOBJ_CLASS_ASSIGNMENT.</p>
+<p>The object is a class, structure, or union. This flag can optionally be combined with asOBJ_APP_CLASS_CONSTRUCTOR, asOBJ_APP_CLASS_DESTRUCTOR, and/or asOBJ_APP_CLASS_ASSIGNMENT.</p>
 
-<p>There is also a short name for each of the combinations in the form of asOBJ_CLASS_C, asOBJ_CLASS_CD, asOBJ_CLASS_CDA, etc.</p>
+<p>There is also a short name for each of the combinations in the form of asOBJ_APP_CLASS_C, asOBJ_APP_CLASS_CD, asOBJ_APP_CLASS_CDA, etc.</p>
+
+
 
 
 
 <a name=constr></a>
-<h2>asOBJ_CLASS_CONSTRUCTOR</h2>
+<h2>asOBJ_APP_CLASS_CONSTRUCTOR</h2>
 
 <p>The class has a constructor.</p>
 
 
 
 <a name=destr></a>
-<h2>asOBJ_CLASS_DESTRUCTOR</h2>
+<h2>asOBJ_APP_CLASS_DESTRUCTOR</h2>
 
 <p>The class has a destructor.</p>
 
 
 
 <a name="assign"></a>
-<h2>asOBJ_CLASS_ASSIGNMENT</h2>
+<h2>asOBJ_APP_CLASS_ASSIGNMENT</h2>
 
 <p>The class has an overloaded assignment operator.</p>
 
 
 
 <a name="primitive"></a>
-<h2>asOBJ_PRIMITIVE</h2>
+<h2>asOBJ_APP_PRIMITIVE</h2>
 
 <p>The object is really a primitive type, e.g. int, char, pointer, etc. All primitive types except float and double should use this flag.</p>
 
 
 
 <a name="float"></a>
-<h2>asOBJ_FLOAT</h2>
+<h2>asOBJ_APP_FLOAT</h2>
 
 <p>The object is really a float or a double.</p>
 

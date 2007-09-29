@@ -184,7 +184,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
@@ -218,7 +218,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
 	RegisterScriptString_Generic(engine);
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string@ f(const string &in, const mytype &in)", asFUNCTION(MyFunc), asCALL_GENERIC); assert( r >= 0 );
@@ -308,7 +308,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterObjectType("int[]", sizeof(int), asOBJ_PRIMITIVE);
+	r = engine->RegisterObjectType("int[]", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0);
@@ -332,7 +332,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0);
@@ -365,7 +365,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script8, strlen(script8), 0);
@@ -400,7 +400,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->AddScriptSection(0, TESTNAME, script9, strlen(script9), 0);
@@ -483,7 +483,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->BeginConfigGroup("group1");
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	engine->EndConfigGroup();
 
 	engine->BeginConfigGroup("group2");
@@ -504,7 +504,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->BeginConfigGroup("group1");
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	engine->EndConfigGroup();
 
 	r = engine->RegisterGlobalFunction("void func(mytype)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );

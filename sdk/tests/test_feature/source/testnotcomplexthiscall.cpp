@@ -75,10 +75,10 @@ bool TestNotComplexThisCall()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_CLASS);
-	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_CLASS);
-	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_CLASS);
-	engine->RegisterObjectType("factory", 0, 0);
+	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_VALUE | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("factory", 0, asOBJ_REF);
 
 	engine->RegisterGlobalProperty("class1 c1", &c1);
 	engine->RegisterGlobalProperty("class2 c2", &c2);

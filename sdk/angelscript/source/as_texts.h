@@ -164,8 +164,10 @@
 
 // Engine message
 
-#define TXT_INVALID_CONFIGURATION         "Invalid configuration\n"
-#define TXT_MUST_BE_GLOBAL_BEHAVIOUR      "This behaviour must be registered as global behaviour\n"
+#define TXT_INVALID_CONFIGURATION         "Invalid configuration"
+#define TXT_MUST_BE_GLOBAL_BEHAVIOUR      "This behaviour must be registered as global behaviour"
+#define TXT_VALUE_TYPE_MUST_HAVE_SIZE     "A value type must be registered with a non-zero size"
+#define TXT_TYPE_s_IS_MISSING_BEHAVIOURS  "Type '%s' is missing behaviours"
 
 // Internal names
 

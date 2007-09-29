@@ -36,9 +36,9 @@ bool TestTempVar()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-    engine->RegisterObjectType("Object1", sizeof(Object1), asOBJ_CLASS);
+    engine->RegisterObjectType("Object1", sizeof(Object1), asOBJ_VALUE | asOBJ_APP_CLASS);
     engine->RegisterObjectMethod("Object1", "int GetInt()", asMETHOD(Object1,GetInt), asCALL_THISCALL);
-    engine->RegisterObjectType("Object2", sizeof(Object2), asOBJ_CLASS); 
+    engine->RegisterObjectType("Object2", sizeof(Object2), asOBJ_VALUE | asOBJ_APP_CLASS); 
     engine->RegisterObjectMethod("Object2", "Object1 GetObject1()", asMETHOD(Object2,GetObject1), asCALL_THISCALL);
     engine->RegisterGlobalProperty("Object2 GlobalObject", &ScriptObject);
 

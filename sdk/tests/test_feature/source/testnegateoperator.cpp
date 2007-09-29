@@ -45,7 +45,7 @@ bool TestNegateOperator()
 	bool fail = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterObjectType("obj", sizeof(int), asOBJ_PRIMITIVE);
+	engine->RegisterObjectType("obj", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
 		engine->RegisterObjectBehaviour("obj", asBEHAVE_NEGATE, "obj f()", asFUNCTION(negate_gen), asCALL_GENERIC);

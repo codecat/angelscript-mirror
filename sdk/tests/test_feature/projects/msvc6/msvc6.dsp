@@ -342,6 +342,10 @@ SOURCE=..\..\source\test_refargument.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_registertype.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_return_with_cdecl_objfirst.cpp
 # End Source File
 # Begin Source File

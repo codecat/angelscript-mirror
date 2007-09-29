@@ -37,11 +37,11 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	int r;
-	r = engine->RegisterObjectType("ClientData", 4, asOBJ_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("ClientData", 4, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ClientData", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);  assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ClientData", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectType("Actor", 4, asOBJ_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("Actor", 4, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Actor", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);  assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Actor", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 

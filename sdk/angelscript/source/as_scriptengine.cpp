@@ -424,6 +424,8 @@ int asCScriptEngine::AddScriptSection(const char *module, const char *name, cons
 
 int asCScriptEngine::Build(const char *module)
 {
+	PrepareEngine();
+
 	if( configFailed )
 	{
 		CallMessageCallback("", 0, 0, 0, TXT_INVALID_CONFIGURATION);
@@ -992,7 +994,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	// Register the object type for the interface
 	asCObjectType *st = NEW(asCObjectType)(this);
 	st->arrayType = 0;
-	st->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
+	st->flags = asOBJ_REF | asOBJ_SCRIPT_STRUCT;
 	st->size = 0; // Cannot be instanciated
 	st->name = name;
 	st->tokenType = ttIdentifier;
@@ -1069,9 +1071,70 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 
 int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD flags)
 {
+	isPrepared = false;
+
 	// Verify flags
-	if( flags > 17 )
+	//   Must have either asOBJ_REF or asOBJ_VALUE
+	if( flags & asOBJ_REF )
+	{
+		// Can optionally have the asOBJ_GC flag set, but nothing else
+		if( flags & (asOBJ_VALUE                 |
+			         asOBJ_APP_CLASS             |
+					 asOBJ_APP_CLASS_CONSTRUCTOR |
+					 asOBJ_APP_CLASS_DESTRUCTOR  |
+					 asOBJ_APP_CLASS_ASSIGNMENT  |
+					 asOBJ_APP_PRIMITIVE         |
+					 asOBJ_APP_FLOAT) )
+			return ConfigError(asINVALID_ARG);
+	}
+	else if( flags & asOBJ_VALUE )
+	{
+		// Cannot use asOBJ_GC
+		if( flags & (asOBJ_REF | asOBJ_GC) )
+			return ConfigError(asINVALID_ARG);
+
+		// Must have either asOBJ_APP_CLASS, asOBJ_APP_PRIMITIVE, or asOBJ_APP_FLOAT
+		if( flags & asOBJ_APP_CLASS )
+		{
+			// Must not set the primitive or float flag
+			if( flags & (asOBJ_APP_PRIMITIVE |
+				         asOBJ_APP_FLOAT) )
+				return ConfigError(asINVALID_ARG);
+		}
+		else if( flags & asOBJ_APP_PRIMITIVE )
+		{
+			// Must not set the class flags nor the float flag
+			if( flags & (asOBJ_APP_CLASS             |
+				         asOBJ_APP_CLASS_CONSTRUCTOR |
+						 asOBJ_APP_CLASS_DESTRUCTOR  |
+						 asOBJ_APP_CLASS_ASSIGNMENT  |
+						 asOBJ_APP_FLOAT) )
+				return ConfigError(asINVALID_ARG);
+		}
+		else if( flags & asOBJ_APP_FLOAT )
+		{
+			// Must not set the class flags nor the primitive flag
+			if( flags & (asOBJ_APP_CLASS             |
+				         asOBJ_APP_CLASS_CONSTRUCTOR |
+						 asOBJ_APP_CLASS_DESTRUCTOR  |
+						 asOBJ_APP_CLASS_ASSIGNMENT  |
+						 asOBJ_APP_FLOAT) )
+				return ConfigError(asINVALID_ARG);
+		}
+	}
+	else
 		return ConfigError(asINVALID_ARG);
+
+	// Don't allow anything else than the defined flags
+	if( flags - (flags & asOBJ_MASK_VALID_FLAGS) )
+		return ConfigError(asINVALID_ARG);
+	
+	// Value types must have a defined size 
+	if( (flags & asOBJ_VALUE) && byteSize == 0 )
+	{
+		CallMessageCallback("", 0, 0, 0, TXT_VALUE_TYPE_MUST_HAVE_SIZE);
+		return ConfigError(asINVALID_ARG);
+	}
 
 	// Verify type name
 	if( name == 0 )
@@ -1511,6 +1574,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else if( behaviour == asBEHAVE_DESTRUCT )
 	{
+		// Must be a value type
+		if( !(func.objectType->flags & asOBJ_VALUE) )
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+
 		if( beh->destruct )
 			return ConfigError(asALREADY_REGISTERED);
 
@@ -1526,6 +1593,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else if( behaviour == asBEHAVE_ADDREF )
 	{
+		// Must be a ref type
+		if( !(func.objectType->flags & asOBJ_REF) )
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+
 		if( beh->addref )
 			return ConfigError(asALREADY_REGISTERED);
 
@@ -1541,6 +1612,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else if( behaviour == asBEHAVE_RELEASE)
 	{
+		// Must be a ref type
+		if( !(func.objectType->flags & asOBJ_REF) )
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+
 		if( beh->release )
 			return ConfigError(asALREADY_REGISTERED);
 
@@ -1637,7 +1712,9 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	else if( behaviour >= asBEHAVE_FIRST_GC &&
 		     behaviour <= asBEHAVE_LAST_GC )
 	{
-		// Register the gc behaviours
+		// Only allow GC behaviours for types registered to be garbage collected
+		if( !(func.objectType->flags & asOBJ_GC) )
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 
 		// Verify parameter count
 		if( (behaviour == asBEHAVE_GETREFCOUNT ||
@@ -1676,10 +1753,6 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 			func.id = beh->gcEnumReferences = AddBehaviourFunction(func, internal);
 		else if( behaviour == asBEHAVE_RELEASEREFS )
 			func.id = beh->gcReleaseAllReferences = AddBehaviourFunction(func, internal);
-
-		// Need to mark the type as potential circle so that script classes 
-		// and arrays that contain it also get garbage collected
-		type.GetObjectType()->flags |= asOBJ_POTENTIAL_CIRCLE;
 	}
 	else
 	{
@@ -2140,12 +2213,39 @@ asCObjectType *asCScriptEngine::GetArrayType(const char *type)
 void asCScriptEngine::PrepareEngine()
 {
 	if( isPrepared ) return;
+	if( configFailed ) return;
 
-	for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
+	asUINT n;
+	for( n = 0; n < scriptFunctions.GetLength(); n++ )
 	{
 		// Determine the host application interface
 		if( scriptFunctions[n] && scriptFunctions[n]->funcType == asFUNC_SYSTEM )
 			PrepareSystemFunction(scriptFunctions[n], scriptFunctions[n]->sysFuncIntf, this);
+	}
+
+	// Validate object type registrations
+	for( n = 0; n < objectTypes.GetLength(); n++ )
+	{
+		if( objectTypes[n] && !(objectTypes[n]->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY)) )
+		{
+			// Verify that GC types have all behaviours
+			if( objectTypes[n]->flags & asOBJ_GC )
+			{
+				if( objectTypes[n]->beh.addref                 == 0 ||
+					objectTypes[n]->beh.release                == 0 ||
+					objectTypes[n]->beh.gcGetRefCount          == 0 ||
+					objectTypes[n]->beh.gcSetFlag              == 0 ||
+					objectTypes[n]->beh.gcGetFlag              == 0 ||
+					objectTypes[n]->beh.gcEnumReferences       == 0 ||
+					objectTypes[n]->beh.gcReleaseAllReferences == 0 )
+				{
+					asCString str;
+					str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, objectTypes[n]->name.AddressOf());
+					CallMessageCallback("", 0, 0, 0, str.AddressOf());
+					ConfigError(asINVALID_CONFIGURATION);
+				}
+			}
+		}
 	}
 
 	isPrepared = true;
@@ -2454,6 +2554,8 @@ int asCScriptEngine::UnbindAllImportedFunctions(const char *module)
 
 int asCScriptEngine::ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)
 {
+	PrepareEngine();
+
 	// Make sure the config worked
 	if( configFailed )
 	{
@@ -2463,8 +2565,6 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 		CallMessageCallback("",0,0,0,TXT_INVALID_CONFIGURATION);
 		return asINVALID_CONFIGURATION;
 	}
-
-	PrepareEngine();
 
 	asIScriptContext *exec = 0;
 	if( !(flags & asEXECSTRING_USE_MY_CONTEXT) )
@@ -2603,7 +2703,7 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	// Create a new array type based on the defaultArrayObjectType
 	asCObjectType *ot = NEW(asCObjectType)(this);
 	ot->arrayType = arrayType;
-	ot->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_ARRAY;
+	ot->flags = asOBJ_REF | asOBJ_SCRIPT_ARRAY;
 	ot->size = sizeof(asCArrayObject);
 	ot->name = ""; // Built-in script arrays are registered without name
 	ot->tokenType = type.GetTokenType();
@@ -2630,8 +2730,8 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	// Verify if the subtype contains an any object, in which case this array is a potential circular reference
 	// TODO: We may be a bit smarter here. If we can guarantee that the array type cannot be part of the 
 	// potential circular reference then we don't need to set the flag 
-	if( ot->subType && (ot->subType->flags & asOBJ_POTENTIAL_CIRCLE) )
-		ot->flags |= asOBJ_POTENTIAL_CIRCLE;
+	if( ot->subType && (ot->subType->flags & asOBJ_GC) )
+		ot->flags |= asOBJ_GC;
 
 	arrayTypes.PushLast(ot);
 

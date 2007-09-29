@@ -158,11 +158,11 @@ bool Test()
 	engine->RegisterGlobalFunction("void Print(int)", asFUNCTIONPR(print, (int), void), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	r = engine->RegisterObjectType("MyStruct", sizeof(MyStruct), asOBJ_CLASS); assert( r >= 0 );
+	r = engine->RegisterObjectType("MyStruct", sizeof(MyStruct), asOBJ_VALUE | asOBJ_APP_CLASS); assert( r >= 0 );
 
 	RegisterVector<MyStruct>("MyStruct[]", "MyStruct", engine);
 
-	r = engine->RegisterObjectType("MyClass", sizeof(MyClass), asOBJ_CLASS_CD); assert( r >= 0 );
+	r = engine->RegisterObjectType("MyClass", sizeof(MyClass), asOBJ_VALUE | asOBJ_APP_CLASS_CD); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MyClass", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(MyClass_Construct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MyClass", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(MyClass_Destruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("MyClass", "MyStruct[] myVec", offsetof(MyClass,myVec)); assert( r >= 0 );

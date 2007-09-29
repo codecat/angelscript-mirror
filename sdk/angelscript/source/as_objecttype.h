@@ -49,18 +49,17 @@
 BEGIN_AS_NAMESPACE
 
 // Additional flag to the class object type
-const asDWORD asOBJ_SCRIPT_STRUCT    = 256;
-const asDWORD asOBJ_POTENTIAL_CIRCLE = 512;
-const asDWORD asOBJ_SCRIPT_ARRAY     = 1024;
+const asDWORD asOBJ_SCRIPT_STRUCT    = 0x10000;
+const asDWORD asOBJ_SCRIPT_ARRAY     = 0x20000;
 
-// asOBJ_POTENTIAL_CIRCLE is used to indicate that the type can potentially 
+// asOBJ_GC is used to indicate that the type can potentially 
 // form circular references, thus is garbage collected.
 
 // The fact that an object is garbage collected doesn't imply that an object that 
 // can references it also must be garbage collected, only if the garbage collected 
 // object can reference it as well.
 
-// For registered types however, we set the flag asOBJ_POTENTIAL_CIRCLE if the GC 
+// For registered types however, we set the flag asOBJ_GC if the GC 
 // behaviours are registered. For script types that contain any such type we 
 // automatically make garbage collected as well, because we cannot know what type
 // of references that object can contain, and must assume the worst.

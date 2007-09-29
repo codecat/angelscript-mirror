@@ -29,7 +29,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 	}
 	
-	r = engine->RegisterObjectType("mytype", 0, 0);
+	r = engine->RegisterObjectType("mytype", 0, asOBJ_REF);
 	if( r < 0 ) fail = true;
 
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_CONSTRUCT, "void f(othertype)", asFUNCTION(0), asCALL_GENERIC);

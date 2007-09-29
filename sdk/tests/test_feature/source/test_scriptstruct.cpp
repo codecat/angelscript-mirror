@@ -210,6 +210,16 @@ static const char *script13 =
 "  int val;                   \n"
 "};                           \n";
 
+static const char *script14 =
+"class A                     \n"
+"{                           \n"
+"  B @b;                     \n"
+"}                           \n"
+"class B                     \n"
+"{                           \n"
+"  int val;                  \n"
+"}                           \n";
+
 
 bool Test()
 {
@@ -319,11 +329,18 @@ bool Test()
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 
-
 	// The garbage collection doesn't have to be invoked immediately. Modules
 	// can even be discarded before calling the garbage collector.
 	engine->GarbageCollect();
 	
+	// Make sure it is possible to copy a script class that contains an object handle
+	engine->AddScriptSection(0, TESTNAME, script14, strlen(script14), 0);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "A a; B b; @a.b = @b; b.val = 1; A a2; a2 = a; Assert(a2.b.val == 1);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
 	engine->Release();
 
 	// Success

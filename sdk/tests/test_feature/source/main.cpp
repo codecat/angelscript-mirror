@@ -127,6 +127,7 @@ namespace TestScriptMath        { bool Test(); }
 namespace TestVarType           { bool Test(); }
 namespace TestDictionary        { bool Test(); }
 namespace TestDestructor        { bool Test(); }
+namespace TestRegisterType      { bool Test(); }
 
 
 #include "utils.h"
@@ -167,6 +168,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");

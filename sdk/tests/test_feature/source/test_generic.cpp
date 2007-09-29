@@ -111,7 +111,7 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(GenericString_Construct), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(GenericString_Destruct), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(string &in)", asFUNCTION(GenericString_Assignment), asCALL_GENERIC); assert( r >= 0 );
@@ -122,7 +122,7 @@ bool Test()
 
 	r = engine->RegisterGlobalFunction("double func1(int, double, string)", asFUNCTION(GenFunc1), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectType("obj", 4, asOBJ_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("obj", "string mthd1(int, double)", asFUNCTION(GenMethod1), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ASSIGNMENT, "obj &f(obj &in)", asFUNCTION(GenAssign), asCALL_GENERIC); assert( r >= 0 );
 

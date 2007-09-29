@@ -65,7 +65,7 @@ bool TestVirtualInheritance()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	// Register the CDerived class
-	r = engine->RegisterObjectType("class1", 0, 0);
+	r = engine->RegisterObjectType("class1", 0, asOBJ_REF);
 	r = engine->RegisterObjectMethod("class1", "void CallMe1()", asMETHOD(CDerivedVirtual, CallMe1), asCALL_THISCALL);
 	if( r != asNOT_SUPPORTED )
 	{

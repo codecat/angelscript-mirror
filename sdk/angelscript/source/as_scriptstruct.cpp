@@ -183,7 +183,7 @@ asCScriptStruct::asCScriptStruct(asCObjectType *ot)
 	isDestructCalled = false;
 
 	// Notify the garbage collector of this object
-	if( objType->flags & asOBJ_POTENTIAL_CIRCLE )
+	if( objType->flags & asOBJ_GC )
 		objType->engine->AddScriptObjectToGC(this, objType);		
 
 	// Construct all properties
@@ -481,10 +481,10 @@ void asCScriptStruct::CopyObject(void *src, void *dst, asCObjectType *objType, a
 void asCScriptStruct::CopyHandle(asDWORD *src, asDWORD *dst, asCObjectType *objType, asCScriptEngine *engine)
 {
 	if( *dst )
-		engine->CallObjectMethod(dst, objType->beh.release);
+		engine->CallObjectMethod(*(void**)dst, objType->beh.release);
 	*dst = *src;
 	if( *dst )
-		engine->CallObjectMethod(dst, objType->beh.addref);
+		engine->CallObjectMethod(*(void**)dst, objType->beh.addref);
 }
 
 END_AS_NAMESPACE

@@ -46,9 +46,9 @@ bool TestFuncOverload()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptString(engine);
 
-	engine->RegisterObjectType("Data", sizeof(void*), asOBJ_PRIMITIVE);
+	engine->RegisterObjectType("Data", sizeof(void*), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 
-	engine->RegisterObjectType("Obj", sizeof(Obj), 0);
+	engine->RegisterObjectType("Obj", sizeof(Obj), asOBJ_REF);
 	engine->RegisterObjectMethod("Obj", "Data &Value()", asMETHOD(Obj, Value), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Obj", "void Set(string &in, Data &in)", asMETHOD(Obj, Set), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Obj", "void Set(string &in, string &in)", asMETHOD(Obj, Set), asCALL_THISCALL);

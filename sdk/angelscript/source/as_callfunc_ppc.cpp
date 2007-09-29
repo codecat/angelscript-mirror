@@ -922,7 +922,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	else if( func->returnType.IsObject() )
 	{
 		asDWORD objType = func->returnType.GetObjectType()->flags;
-		if( objType & asOBJ_CLASS )
+		if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_CLASS) )
 		{
 			internal->hostReturnFloat    = false;
 			
@@ -970,13 +970,13 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 #endif
 			}
 		}
-		else if( objType == asOBJ_PRIMITIVE )
+		else if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_PRIMITIVE) )
 		{
 			internal->hostReturnInMemory = false;
 			internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
 			internal->hostReturnFloat    = false;
 		}
-		else if( objType == asOBJ_FLOAT )
+		else if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_FLOAT) )
 		{
 			internal->hostReturnInMemory = false;
 			internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();

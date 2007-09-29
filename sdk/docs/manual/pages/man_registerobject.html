@@ -75,6 +75,21 @@ bugs that corrupt the stack frame, or other horrible bugs. This flag tells
 AngelScript about the C++ properties of the object type, i.e. how C++ is
 handling the objects in situations like returns, etc.</p>
 
+<p>There are two main types:</p>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr><td width=150 valign=top>asOBJ_REF</td><td>The object is a reference type, i.e. the script is allowed to take handles to the object, and the memory is allocated on the heap.</td></tr>
+<tr><td width=150 valign=top>asOBJ_VALUE</td><td>The object is a value type, i.e. the script is not allowed to take handles to the object, and the memory may be allocated on the stack.</td></tr>
+</table>
+
+<p>When registering the object type as a reference type, you may also choose to tell AngelScript that the type should be garbage collected.</p>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr><td width=150 valign=top>asOBJ_GC</td><td>The object should be garbage collected, and follows the specified interface for garbage collected objects.</td></tr>
+</table>
+
+<p>When registering the object type as a value type, you must also tell AngelScript how the type is treated by the application. This is important for AngelScript to choose the right calling convention when passing or receiving the object by value from the application. </p>
+
 <p>There are three main types:</p>
 
 <table border=0 cellspacing=0 cellpadding=0>

@@ -538,7 +538,7 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 	int r;
 
 	// Register the type
-	r = engine->RegisterObjectType("string", sizeof(asCScriptString), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("string", sizeof(asCScriptString), asOBJ_REF); assert( r >= 0 );
 
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting
@@ -604,7 +604,7 @@ void RegisterScriptString_Generic(asIScriptEngine *engine)
 	int r;
 
 	// Register the type
-	r = engine->RegisterObjectType("string", sizeof(asCScriptString), asOBJ_CLASS_CDA); assert( r >= 0 );
+	r = engine->RegisterObjectType("string", sizeof(asCScriptString), asOBJ_REF); assert( r >= 0 );
 
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting

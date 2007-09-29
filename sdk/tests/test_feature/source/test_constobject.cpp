@@ -72,7 +72,7 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	// Register an object type
-	r = engine->RegisterObjectType("obj", sizeof(CObj), asOBJ_CLASS_CDA); assert( r>=0 );
+	r = engine->RegisterObjectType("obj", sizeof(CObj), asOBJ_REF); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CObj_Construct), asCALL_CDECL_OBJLAST); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ALLOC, "obj &f(uint)", asFUNCTION(CObj_Alloc), asCALL_CDECL); assert( r >=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ADDREF, "void f()", asMETHOD(CObj,AddRef), asCALL_THISCALL); assert( r>=0 );
@@ -81,7 +81,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_INDEX, "int &f(int)", asMETHODPR(CObj, operator[], (int), int&), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_INDEX, "const int &f(int) const", asMETHODPR(CObj, operator[], (int) const, const int&), asCALL_THISCALL); assert( r>=0 );
 
-	r = engine->RegisterObjectType("prop", sizeof(int), asOBJ_PRIMITIVE); assert( r>=0 );
+	r = engine->RegisterObjectType("prop", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r>=0 );
 	r = engine->RegisterObjectProperty("prop", "int val", 0); assert( r>=0 );
 
 	r = engine->RegisterObjectMethod("obj", "void SetVal(int)", asMETHOD(CObj, SetVal), asCALL_THISCALL); assert( r>=0 );

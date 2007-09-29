@@ -36,6 +36,7 @@
 <a href="#lowerarray"       >asLOWER_ARRAY_DIMENSION_NOT_REGISTERED</a>  -20
 <a href="#wrongcfggrp"      >asWRONG_CONFIG_GROUP</a>                    -21
 <a href="#groupinuse"       >asCONFIG_GROUP_IS_IN_USE</a>                -22
+<a href="#illegalbehave"    >asILLEGAL_BEHAVIOUR_FOR_TYPE</a>            -23
 </pre>
 
 <a name=success></a>
@@ -206,6 +207,16 @@ configuration group than the current one.</p>
 being used. A group is in use, if a script module uses the configuration in 
 the group, or if an object with a type from the group is still alive.</p>
 
+
+
+
+
+<a name="illegalbehave"></a>
+<h2>asILLEGAL_BEHAVIOUR_FOR_TYPE</h2>
+
+<p>This error means that the behaviour isn't allowed for the object type, i.e.
+it doesn't match the flags set with RegisterObjectType.
+</p>
 
 
 

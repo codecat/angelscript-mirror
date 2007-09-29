@@ -85,11 +85,11 @@ bool Test()
 	int r;
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	r = engine->RegisterObjectType("MyObj", sizeof(CMyObj), asOBJ_CLASS); assert( r >= 0 );
+	r = engine->RegisterObjectType("MyObj", sizeof(CMyObj), asOBJ_VALUE | asOBJ_APP_CLASS); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MyObj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstrMyObj), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MyObj", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestrMyObj), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
-	r = engine->RegisterObjectType("MySecondObj", sizeof(CMySecondObj), asOBJ_CLASS); assert( r >= 0 );
+	r = engine->RegisterObjectType("MySecondObj", sizeof(CMySecondObj), asOBJ_VALUE | asOBJ_APP_CLASS); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MySecondObj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstrMySecondObj, (CMySecondObj &), void), asCALL_CDECL_OBJLAST);	assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MySecondObj", asBEHAVE_CONSTRUCT, "void f(MyObj &in)", asFUNCTIONPR(ConstrMySecondObj, (CMyObj &, CMySecondObj &), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MySecondObj", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestrMySecondObj), asCALL_CDECL_OBJLAST); assert( r >= 0 );

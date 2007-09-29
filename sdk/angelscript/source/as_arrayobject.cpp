@@ -179,7 +179,7 @@ static void ArrayObject_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 void RegisterArrayObject(asCScriptEngine *engine)
 {
 	int r;
-	r = engine->RegisterSpecialObjectType(asDEFAULT_ARRAY, sizeof(asCArrayObject), asOBJ_CLASS_CDA | asOBJ_SCRIPT_ARRAY); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectType(asDEFAULT_ARRAY, sizeof(asCArrayObject), asOBJ_REF | asOBJ_SCRIPT_ARRAY); assert( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
 #ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ArrayObjectConstructor, (int, asCArrayObject*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -261,7 +261,7 @@ asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
 	objType = ot;
 	objType->refCount++;
 
-	if( objType->flags & asOBJ_POTENTIAL_CIRCLE )
+	if( objType->flags & asOBJ_GC )
 		objType->engine->AddScriptObjectToGC(this, objType);		
 
 	// Determine element size
@@ -607,7 +607,7 @@ void asCArrayObject::EnumReferences(asIScriptEngine *engine)
 void asCArrayObject::ReleaseAllHandles(asIScriptEngine *engine)
 {
 	asCObjectType *subType = objType->subType;
-	if( subType && subType->flags & asOBJ_POTENTIAL_CIRCLE )
+	if( subType && subType->flags & asOBJ_GC )
 	{
 		void **d = (void**)buffer->data;
 		for( asUINT n = 0; n < buffer->numElements; n++ )

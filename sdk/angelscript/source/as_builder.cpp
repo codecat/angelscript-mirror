@@ -582,6 +582,13 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 			return asINVALID_DECLARATION;			
 	if( returnAutoHandle ) *returnAutoHandle = autoHandle;
 
+	// Reference types cannot be returned by value from system functions
+	if( (func->returnType.GetObjectType() && 
+		 (func->returnType.GetObjectType()->flags & asOBJ_REF)) && 
+        !(func->returnType.IsReference() ||
+		  func->returnType.IsObjectHandle()) )
+		return asINVALID_DECLARATION;
+
 	// Count number of parameters
 	int paramCount = 0;
 	n = n->next->firstChild;
@@ -605,6 +612,13 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 		asCDataType type = CreateDataTypeFromNode(n, &source);
 		type = ModifyDataTypeFromNode(type, n->next, &source, &inOutFlags, &autoHandle);
 		
+		// Reference types cannot be passed by value to system functions
+		if( (type.GetObjectType() && 
+		     (type.GetObjectType()->flags & asOBJ_REF)) && 
+			!(type.IsReference() ||
+			  type.IsObjectHandle()) )
+			return asINVALID_DECLARATION;
+
 		// Store the parameter type
 		func->parameterTypes.PushLast(type);
 		func->inOutFlags.PushLast(inOutFlags);
@@ -853,7 +867,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 
 	asCObjectType *st = NEW(asCObjectType)(engine);
 	st->arrayType = 0;
-	st->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
+	st->flags = asOBJ_REF | asOBJ_SCRIPT_STRUCT;
 	st->size = sizeof(asCScriptStruct);
 	st->name = name;
 	st->tokenType = ttIdentifier;
@@ -899,7 +913,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	// Register the object type for the interface
 	asCObjectType *st = NEW(asCObjectType)(engine);
 	st->arrayType = 0;
-	st->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
+	st->flags = asOBJ_REF | asOBJ_SCRIPT_STRUCT;
 	st->size = 0; // Cannot be instanciated
 	st->name = name;
 	st->tokenType = ttIdentifier;
@@ -1256,15 +1270,15 @@ void asCBuilder::CompileClasses()
 					// Can this handle really generate a circular reference?
 					// Only if the handle is of a type that can reference this type, either directly or indirectly
 
-					ot->flags |= asOBJ_POTENTIAL_CIRCLE;
+					ot->flags |= asOBJ_GC;
 				}
-				else if( dt.GetObjectType()->flags & asOBJ_POTENTIAL_CIRCLE )
+				else if( dt.GetObjectType()->flags & asOBJ_GC )
 				{
 					// TODO:
 					// Just because the member type is a potential circle doesn't mean that this one is
 					// Only if the object is of a type that can reference this type, either directly or indirectly
 
-					ot->flags |= asOBJ_POTENTIAL_CIRCLE;
+					ot->flags |= asOBJ_GC;
 				}
 
 				if( dt.IsArrayType() )
@@ -1272,15 +1286,15 @@ void asCBuilder::CompileClasses()
 					asCDataType sub = dt.GetSubType();
 					while( sub.IsObject() )
 					{
-						if( sub.IsObjectHandle() || (sub.GetObjectType()->flags & asOBJ_POTENTIAL_CIRCLE) )
+						if( sub.IsObjectHandle() || (sub.GetObjectType()->flags & asOBJ_GC) )
 						{
-							decl->objType->flags |= asOBJ_POTENTIAL_CIRCLE;
+							decl->objType->flags |= asOBJ_GC;
 
 							// Make sure the array object is also marked as potential circle
 							sub = dt;
 							while( sub.IsScriptArray() )
 							{
-								sub.GetObjectType()->flags |= asOBJ_POTENTIAL_CIRCLE;
+								sub.GetObjectType()->flags |= asOBJ_GC;
 								sub = sub.GetSubType();
 							}
 

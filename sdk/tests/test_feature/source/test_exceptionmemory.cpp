@@ -192,8 +192,8 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType("Object", sizeof(CObject), asOBJ_CLASS_CD);	
-	r = engine->RegisterObjectType("RefObj", sizeof(CRefObject), asOBJ_CLASS_C); assert(r >= 0);
+	engine->RegisterObjectType("Object", sizeof(CObject), asOBJ_VALUE | asOBJ_APP_CLASS_CD);	
+	r = engine->RegisterObjectType("RefObj", sizeof(CRefObject), asOBJ_REF); assert(r >= 0);
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
 		engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Construct2), asCALL_GENERIC);

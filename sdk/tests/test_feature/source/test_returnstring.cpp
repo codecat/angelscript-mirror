@@ -62,7 +62,7 @@ bool Test()
 
 	int r = 0;
 	
-	r = engine->RegisterObjectType("Foo",sizeof(Foo),asOBJ_CLASS_CDA); assert( r >=0 );
+	r = engine->RegisterObjectType("Foo",sizeof(Foo),asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >=0 );
 
 	r = engine->RegisterObjectBehaviour("Foo",
 		asBEHAVE_CONSTRUCT,
@@ -88,7 +88,7 @@ bool Test()
 		asFUNCTION(CopyConstructFoo),
 		asCALL_CDECL_OBJLAST);	assert( r >=0 );				
 
-	r = engine->RegisterObjectType("string",sizeof(std::string),asOBJ_CLASS_CDA);assert( r >=0 );
+	r = engine->RegisterObjectType("string",sizeof(std::string),asOBJ_VALUE | asOBJ_APP_CLASS_CDA);assert( r >=0 );
 
 	r = engine->RegisterObjectBehaviour("string",
 		asBEHAVE_CONSTRUCT,

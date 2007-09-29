@@ -81,17 +81,17 @@ bool Test()
 
 	RegisterScriptString(engine);
 
-	engine->RegisterObjectType("Vector2", sizeof(CVector2), asOBJ_CLASS_C);
+	engine->RegisterObjectType("Vector2", sizeof(CVector2), asOBJ_VALUE | asOBJ_APP_CLASS_C);
 	engine->RegisterObjectBehaviour("Vector2", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(CVector2_Construct, (CVector2*), void), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Vector2", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTIONPR(CVector2_Construct, (int, int, CVector2*), void), asCALL_CDECL_OBJLAST);
 
-	engine->RegisterObjectType("GuiButton", sizeof(CGuiButton), asOBJ_CLASS_CD);	
+	engine->RegisterObjectType("GuiButton", sizeof(CGuiButton), asOBJ_REF);	
 	engine->RegisterObjectBehaviour("GuiButton", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CGuiButton_Construct), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("GuiButton", asBEHAVE_ADDREF, "void f()", asMETHOD(CGuiButton, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("GuiButton", asBEHAVE_RELEASE, "void f()", asMETHOD(CGuiButton, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("GuiButton", "void SetName(string@+)", asMETHOD(CGuiButton, SetName), asCALL_THISCALL);
 
-	engine->RegisterObjectType("Gui", 0, asOBJ_PRIMITIVE);
+	engine->RegisterObjectType("Gui", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectMethod("Gui", "GuiButton& AddButton(const string& in, const Vector2& in, const Vector2& in)", asFUNCTION(Gui_AddButton), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("Gui", "GuiButton& GetButton(string@+)", asFUNCTION(Gui_GetButton), asCALL_CDECL_OBJLAST);
 	engine->RegisterGlobalProperty("Gui GUI", &GUI);

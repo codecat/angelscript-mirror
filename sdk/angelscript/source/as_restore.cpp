@@ -652,7 +652,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		// Some implicit values
 		ot->tokenType = ttIdentifier;
 		ot->arrayType = 0;
-		ot->flags = asOBJ_CLASS_CDA | asOBJ_SCRIPT_STRUCT;
+		ot->flags = asOBJ_REF | asOBJ_SCRIPT_STRUCT;
 	}
 	else
 	{	
