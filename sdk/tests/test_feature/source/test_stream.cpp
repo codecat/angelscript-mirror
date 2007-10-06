@@ -73,14 +73,9 @@ void CScriptStream::Release()
 		delete this;
 }
 
-void CScriptStream_Construct(CScriptStream *o)
+CScriptStream *CScriptStream_Factory()
 {
-	new(o) CScriptStream;
-}
-
-void *CScriptStream_Alloc(int size)
-{
-	return new char[size];
+	return new CScriptStream;
 }
 
 static const char *script1 =
@@ -118,8 +113,7 @@ bool Test()
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	engine->RegisterObjectType("stream", sizeof(CScriptStream), asOBJ_REF);
-	engine->RegisterObjectBehaviour("stream", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CScriptStream_Construct), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectBehaviour("stream", asBEHAVE_ALLOC, "stream &f(uint)", asFUNCTION(CScriptStream_Alloc), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("stream", asBEHAVE_FACTORY, "stream@ f()", asFUNCTION(CScriptStream_Factory), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptStream,AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptStream,Release), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("stream", asBEHAVE_ASSIGNMENT, "stream &f(const stream &in)", asMETHOD(CScriptStream, operator=), asCALL_THISCALL);

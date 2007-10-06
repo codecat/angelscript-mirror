@@ -197,7 +197,7 @@ asCDataType &asCDataType::operator =(const asCDataType &dt)
 
 int asCDataType::MakeHandle(bool b)
 {
-	if( !objectType || objectType->beh.addref == 0 || objectType->beh.release == 0 )
+	if( !objectType || !(objectType->flags & asOBJ_REF) )
 		return -1;
 
 	if( !b || (b && !isObjectHandle) )

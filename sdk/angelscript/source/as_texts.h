@@ -168,6 +168,7 @@
 #define TXT_MUST_BE_GLOBAL_BEHAVIOUR      "This behaviour must be registered as global behaviour"
 #define TXT_VALUE_TYPE_MUST_HAVE_SIZE     "A value type must be registered with a non-zero size"
 #define TXT_TYPE_s_IS_MISSING_BEHAVIOURS  "Type '%s' is missing behaviours"
+#define TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE    "The behaviour is not compatible with the type"
 
 // Internal names
 

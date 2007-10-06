@@ -42,7 +42,7 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType("CLR", sizeof(asDWORD), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectType("CLR", sizeof(asDWORD), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 		engine->RegisterObjectBehaviour("CLR", asBEHAVE_ASSIGNMENT, "CLR &f(CLR &in)", asFUNCTION(Assign_gen), asCALL_GENERIC);
 	else

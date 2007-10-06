@@ -170,7 +170,7 @@ asIScriptEngine *ConfigureEngine()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalProperty("int number", &number);
-	engine->RegisterObjectType("OBJ", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectType("OBJ", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 
 	return engine;
 }
@@ -236,10 +236,15 @@ void DestructFloatArray(vector<float> *p)
 {
 	p->~vector<float>();
 }
-void DummyConstruct(asIScriptGeneric *gen)
+
+void IsoMapFactory(asIScriptGeneric *gen)
 {
-	int *object = (int*)gen->GetObject();
-	*object = 1;
+	*(int**)gen->GetReturnPointer() = new int(1);
+}
+
+void IsoSpriteFactory(asIScriptGeneric *gen)
+{
+	*(int**)gen->GetReturnPointer() = new int(1);
 }
 
 void DummyAddref(asIScriptGeneric *gen)
@@ -253,7 +258,7 @@ void DummyRelease(asIScriptGeneric *gen)
 	int *object = (int*)gen->GetObject();
 	(*object)--;
 	if( *object == 0 )
-		free(object);
+		delete object;
 }
 
 void Dummy(asIScriptGeneric *gen)
@@ -389,16 +394,14 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectType("IsoSprite", sizeof(int), asOBJ_REF); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ALLOC, "IsoSprite &f(uint)", asFUNCTION(malloc), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyConstruct), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_FACTORY, "IsoSprite@ f()", asFUNCTION(IsoSpriteFactory), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ASSIGNMENT, "IsoSprite &f(const IsoSprite &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("IsoSprite", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectType("IsoMap", sizeof(int), asOBJ_REF); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ALLOC, "IsoMap &f(uint)", asFUNCTION(malloc), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyConstruct), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_FACTORY, "IsoMap@ f()", asFUNCTION(IsoSpriteFactory), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ASSIGNMENT, "IsoMap &f(const IsoMap &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
@@ -433,16 +436,14 @@ bool Test()
 		r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 		r = engine->RegisterObjectType("IsoSprite", sizeof(int), asOBJ_REF); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ALLOC, "IsoSprite &f(uint)", asFUNCTION(malloc), asCALL_CDECL); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyConstruct), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_FACTORY, "IsoSprite@ f()", asFUNCTION(IsoSpriteFactory), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ASSIGNMENT, "IsoSprite &f(const IsoSprite &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("IsoSprite", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 
 		r = engine->RegisterObjectType("IsoMap", sizeof(int), asOBJ_REF); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ALLOC, "IsoMap &f(uint)", asFUNCTION(malloc), asCALL_CDECL); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyConstruct), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_FACTORY, "IsoMap@ f()", asFUNCTION(IsoMapFactory), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ASSIGNMENT, "IsoMap &f(const IsoMap &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );

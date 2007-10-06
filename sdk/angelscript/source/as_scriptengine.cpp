@@ -1078,13 +1078,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	if( flags & asOBJ_REF )
 	{
 		// Can optionally have the asOBJ_GC flag set, but nothing else
-		if( flags & (asOBJ_VALUE                 |
-			         asOBJ_APP_CLASS             |
-					 asOBJ_APP_CLASS_CONSTRUCTOR |
-					 asOBJ_APP_CLASS_DESTRUCTOR  |
-					 asOBJ_APP_CLASS_ASSIGNMENT  |
-					 asOBJ_APP_PRIMITIVE         |
-					 asOBJ_APP_FLOAT) )
+		if( flags & ~(asOBJ_REF | asOBJ_GC) )
 			return ConfigError(asINVALID_ARG);
 	}
 	else if( flags & asOBJ_VALUE )
@@ -1281,9 +1275,18 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	assert( objType );
 
 	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
-	if( r < 0 )
-		return ConfigError(r);
+	if( behaviour == asBEHAVE_FACTORY )
+	{
+		int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
+		if( r < 0 )
+			return ConfigError(r);
+	}
+	else
+	{
+		int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
+		if( r < 0 )
+			return ConfigError(r);
+	}
 
 	isPrepared = false;
 
@@ -1313,7 +1316,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	// Verify function declaration
 	asCScriptFunction func(0);
 
-	r = bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
+	int r = bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION);
 
@@ -1328,6 +1331,19 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION);
 
+		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY) )
+		{
+			if( func.parameterTypes.GetLength() == 1 )
+			{
+				beh->construct = AddBehaviourFunction(func, internal);
+				beh->constructors.PushLast(beh->construct);
+			}
+			else
+				beh->constructors.PushLast(AddBehaviourFunction(func, internal));
+		}
+	}
+	else if( behaviour == asBEHAVE_FACTORY )
+	{
 		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY) )
 		{
 			if( func.parameterTypes.GetLength() == 1 )
@@ -1464,13 +1480,11 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	if( datatype == 0 ) return ConfigError(asINVALID_ARG);
 
 	asSSystemFunctionInterface internal;
-	if( behaviour == asBEHAVE_ALLOC || behaviour == asBEHAVE_FREE )
+	if( behaviour == asBEHAVE_FACTORY )
 	{
-		if( callConv != asCALL_CDECL ) return ConfigError(asNOT_SUPPORTED);
-
-		memset(&internal, 0, sizeof(asSSystemFunctionInterface));
-		internal.func = (size_t)funcPointer.f.func;
-		internal.callConv = ICC_CDECL;
+		int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
+		if( r < 0 )
+			return ConfigError(r);
 	}
 	else
 	{
@@ -1522,38 +1536,15 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 
 	func.objectType = type.GetObjectType();
 
-	if( behaviour == asBEHAVE_ALLOC )
+	if( behaviour == asBEHAVE_CONSTRUCT )
 	{
-		// The declaration must be "type &f(uint)"
+		// Verify that it is a value type
+		if( !(func.objectType->flags & asOBJ_VALUE) )
+		{
+			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+		}
 
-		if( func.returnType != type )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( func.parameterTypes.GetLength() != 1 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( func.parameterTypes[0] != asCDataType::CreatePrimitive(ttUInt, false) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		func.id = beh->alloc = AddBehaviourFunction(func, internal);
-	}
-	else if( behaviour == asBEHAVE_FREE )
-	{
-		// The declaration must be "void f(type &in)"
-
-		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( func.parameterTypes.GetLength() != 1 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( func.parameterTypes[0] != type )
-			return ConfigError(asINVALID_DECLARATION);
-
-		func.id = beh->free = AddBehaviourFunction(func, internal);
-	}
-	else if( behaviour == asBEHAVE_CONSTRUCT )
-	{
 		// Verify that the return type is void
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION);
@@ -1576,7 +1567,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	{
 		// Must be a value type
 		if( !(func.objectType->flags & asOBJ_VALUE) )
+		{
+			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+		}
 
 		if( beh->destruct )
 			return ConfigError(asALREADY_REGISTERED);
@@ -1591,11 +1585,43 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 
 		func.id = beh->destruct = AddBehaviourFunction(func, internal);
 	}
+	else if( behaviour == asBEHAVE_FACTORY )
+	{
+		// Must be a ref type
+		if( !(func.objectType->flags & asOBJ_REF) )
+		{
+			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+		}
+
+		// Verify that the return type is a handle to the type
+		if( func.returnType != asCDataType::CreateObjectHandle(func.objectType, false) )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// TODO: Verify that the same factory function hasn't been registered already
+
+		// Store all factory functions in a list
+		if( func.parameterTypes.GetLength() == 0 )
+		{
+			// Share variable with constructor
+			func.id = beh->construct = AddBehaviourFunction(func, internal);
+			beh->constructors.PushLast(beh->construct);
+		}
+		else
+		{
+			// Share variable with constructor
+			func.id = AddBehaviourFunction(func, internal);
+			beh->constructors.PushLast(func.id);
+		}
+	}
 	else if( behaviour == asBEHAVE_ADDREF )
 	{
 		// Must be a ref type
 		if( !(func.objectType->flags & asOBJ_REF) )
+		{
+			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+		}
 
 		if( beh->addref )
 			return ConfigError(asALREADY_REGISTERED);
@@ -1614,7 +1640,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	{
 		// Must be a ref type
 		if( !(func.objectType->flags & asOBJ_REF) )
+		{
+			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+		}
 
 		if( beh->release )
 			return ConfigError(asALREADY_REGISTERED);
@@ -1714,7 +1743,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	{
 		// Only allow GC behaviours for types registered to be garbage collected
 		if( !(func.objectType->flags & asOBJ_GC) )
+		{
+			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+		}
 
 		// Verify parameter count
 		if( (behaviour == asBEHAVE_GETREFCOUNT ||
@@ -2238,6 +2270,19 @@ void asCScriptEngine::PrepareEngine()
 					objectTypes[n]->beh.gcGetFlag              == 0 ||
 					objectTypes[n]->beh.gcEnumReferences       == 0 ||
 					objectTypes[n]->beh.gcReleaseAllReferences == 0 )
+				{
+					asCString str;
+					str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, objectTypes[n]->name.AddressOf());
+					CallMessageCallback("", 0, 0, 0, str.AddressOf());
+					ConfigError(asINVALID_CONFIGURATION);
+				}
+			}
+			// Verify that non-pod value types have the constructor and destructor registered
+			else if( (objectTypes[n]->flags & asOBJ_VALUE) &&
+				     !(objectTypes[n]->flags & asOBJ_POD) )
+			{
+				if( objectTypes[n]->beh.construct == 0 ||
+					objectTypes[n]->beh.destruct  == 0 )
 				{
 					asCString str;
 					str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, objectTypes[n]->name.AddressOf());
@@ -2940,6 +2985,33 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
 #endif
 }
 
+void *asCScriptEngine::CallGlobalFunctionRetPtr(int func)
+{
+	asCScriptFunction *s = scriptFunctions[func];
+	return CallGlobalFunctionRetPtr(s->sysFuncIntf, s);
+}
+
+void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s)
+{
+	if( i->callConv == ICC_CDECL )
+	{
+		void *(*f)() = (void *(*)())(i->func);
+		return f();
+	}
+	else if( i->callConv == ICC_STDCALL )
+	{
+		void *(STDCALL *f)() = (void *(STDCALL *)())(i->func);
+		return f();
+	}
+	else
+	{
+		asCGeneric gen(this, s, 0, 0);
+		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
+		f(&gen);
+		return *(void**)gen.GetReturnPointer();
+	}
+}
+
 void asCScriptEngine::CallObjectMethod(void *obj, void *param, int func)
 {
 	asCScriptFunction *s = scriptFunctions[func];
@@ -3042,34 +3114,16 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 
 void *asCScriptEngine::CallAlloc(asCObjectType *type)
 {
-	asALLOCFUNC_t custom_alloc;
-	if( type->beh.alloc )
-	{
-		asSSystemFunctionInterface *intf = scriptFunctions[type->beh.alloc]->sysFuncIntf;
-		custom_alloc = (asALLOCFUNC_t)intf->func;
-	}
-	else
-		custom_alloc = userAlloc;
-
 #if defined(AS_DEBUG) && !defined(AS_NO_USER_ALLOC)
-	return ((asALLOCFUNCDEBUG_t)(custom_alloc))(type->size, __FILE__, __LINE__);
+	return ((asALLOCFUNCDEBUG_t)(userAlloc))(type->size, __FILE__, __LINE__);
 #else
-	return custom_alloc(type->size);
+	return userAlloc(type->size);
 #endif
 }
 
 void asCScriptEngine::CallFree(asCObjectType *type, void *obj)
 {
-	asFREEFUNC_t custom_free;
-	if( type->beh.free )
-	{
-		asSSystemFunctionInterface *intf = scriptFunctions[type->beh.free]->sysFuncIntf;
-		custom_free = (asFREEFUNC_t)intf->func;
-	}
-	else
-		custom_free = userFree;
-
-	custom_free(obj);
+	userFree(obj);
 }
 
 void asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, int typeId)
@@ -3595,19 +3649,18 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 
 	// Allocate the memory
 	asCObjectType *objType = dt->GetObjectType();
-	void *ptr = CallAlloc(objType);
-	if( ptr == 0 ) return 0;
+	void *ptr = 0;
 
 	// Construct the object
 	if( objType->flags & asOBJ_SCRIPT_STRUCT )
-	{
-		int r = ConstructScriptStruct(ptr, objType, this);
-		if( r < 0 )	return 0;
-	}
+		ptr = ScriptStructFactory(objType, this);
 	else if( objType->flags & asOBJ_SCRIPT_ARRAY )
-		ArrayObjectConstructor(objType, (asCArrayObject*)ptr);
+		ptr = ArrayObjectFactory(objType);
+	else if( objType->flags & asOBJ_REF )
+		ptr = CallGlobalFunctionRetPtr(objType->beh.construct);
 	else
 	{
+		ptr = CallAlloc(objType);
 		int funcIndex = objType->beh.construct;
 		if( funcIndex )
 			CallObjectMethod(ptr, funcIndex);

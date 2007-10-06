@@ -122,7 +122,7 @@ bool Test()
 
 	r = engine->RegisterGlobalFunction("double func1(int, double, string)", asFUNCTION(GenFunc1), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("obj", "string mthd1(int, double)", asFUNCTION(GenMethod1), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ASSIGNMENT, "obj &f(obj &in)", asFUNCTION(GenAssign), asCALL_GENERIC); assert( r >= 0 );
 

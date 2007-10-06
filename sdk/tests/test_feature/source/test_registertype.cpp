@@ -67,6 +67,10 @@ bool Test()
     // Only types registered with asOBJ_POD (plain-old-data) should allow
     // initialization and assignment with registered constructor and assignment behaviour
 
+	// Value types without asOBJ_POD must have the constructor and destructor registered
+
+	// Ref type must register ADDREF and RELEASE
+
 	// Success
  	return fail;
 }

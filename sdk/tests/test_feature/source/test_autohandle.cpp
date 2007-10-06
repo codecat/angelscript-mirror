@@ -56,7 +56,7 @@ bool Test()
 	engine->RegisterGlobalFunction("void TestFunc(string@+, string@, double, string@+)", asFUNCTION(TestFunc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string@+ TestFunc2()", asFUNCTION(TestFunc2), asCALL_CDECL);
 
-	engine->RegisterObjectType("object", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectType("object", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectBehaviour("object", asBEHAVE_CONSTRUCT, "void f(string@+, string@, double, string@+)", asFUNCTION(TestConstructor), asCALL_CDECL_OBJLAST);
 
 	COutStream out;

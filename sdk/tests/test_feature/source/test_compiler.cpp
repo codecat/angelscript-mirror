@@ -233,7 +233,7 @@ bool Test()
 	// Test 12
 	// Handle errors after use of undefined objects
 	bout.buffer = "";
-	engine->RegisterObjectType("type", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectType("type", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->AddScriptSection(0, "script", script11, strlen(script11));
 	r = engine->Build(0);
 	if( r >= 0 )
@@ -271,6 +271,18 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "script (4, 1) : Info    : Compiling void assert()\n"
                        "script (6, 4) : Error   : Both expressions must have the same type\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test 15
+	// Declaring a class inside a function
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "class XXX { int a; }; XXX b;");
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "ExecuteString (1, 1) : Error   : Expected expression value\n"
+	                   "ExecuteString (1, 27) : Error   : Expected ';'\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

@@ -18,14 +18,9 @@ public:
 	int refCount;
 };
 
-void Construct(CObject *o)
+CObject *Factory()
 {
-	new(o) CObject();
-}
-
-void Destruct(CObject *o)
-{
-	o->~CObject();
+	return new CObject();
 }
 
 CObject obj;
@@ -54,7 +49,7 @@ bool Test()
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	engine->RegisterObjectType("Object", 0, asOBJ_REF);
-	engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Object", asBEHAVE_FACTORY, "Object@ f()", asFUNCTION(Factory), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_ADDREF, "void f()", asMETHOD(CObject, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_RELEASE, "void f()", asMETHOD(CObject, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Object", "void Set(int)", asMETHOD(CObject, Set), asCALL_THISCALL);

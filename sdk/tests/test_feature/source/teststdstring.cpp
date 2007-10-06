@@ -135,7 +135,7 @@ bool TestStdString()
 	engine->RegisterGlobalFunction("void StringByVal(string &in, string)", asFUNCTION(StringByVal), asCALL_CDECL);
 
 	//--> new: object method string argument test
-	engine->RegisterObjectType("StringConsumer", sizeof(StringConsumer), asOBJ_VALUE | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("StringConsumer", sizeof(StringConsumer), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectMethod("StringConsumer", "void Consume(string str)", asMETHOD(StringConsumer,Consume), asCALL_THISCALL);
 	engine->RegisterGlobalProperty("StringConsumer consumerObject", &consumerObject);
 	//<-- new: object method string argument test
@@ -219,7 +219,7 @@ bool TestStdString()
 	if( printOutput != "This is my string") fail = true;
 	//<-- new: object method string argument test
 
-	engine->RegisterObjectType("Http", sizeof(Http), asOBJ_VALUE | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("Http", sizeof(Http), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asMETHOD(Http,Get),asCALL_THISCALL);
 	engine->ExecuteString(0, "Http h; string str; h.get(\"string\", str);");
 	engine->ExecuteString(0, "Http h; string str; string a = \"a\"; h.get(\"string\"+a, str);");

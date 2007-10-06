@@ -128,7 +128,6 @@ public:
 
 //protected:
 	friend class asCScriptEngine;
-	friend int CallSystemFunction(int id, asCContext *context);
 
 	void CallLineCallback();
 	void CallExceptionCallback();

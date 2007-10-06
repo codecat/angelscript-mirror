@@ -95,7 +95,7 @@ protected:
 };
 
 void RegisterArrayObject(asCScriptEngine *engine);
-void ArrayObjectConstructor(asCObjectType *ot, asCArrayObject *self);
+asCArrayObject *ArrayObjectFactory(asCObjectType *ot);
 
 END_AS_NAMESPACE
 

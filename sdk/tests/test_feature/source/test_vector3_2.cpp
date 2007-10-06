@@ -97,7 +97,7 @@ bool Test()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-    r = engine->RegisterObjectType ("Vector3", sizeof (csVector3), asOBJ_VALUE | asOBJ_APP_CLASS_C); assert( r >= 0 );
+    r = engine->RegisterObjectType ("Vector3", sizeof (csVector3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C); assert( r >= 0 );
     r = engine->RegisterObjectProperty ("Vector3", "float x", offsetof(csVector3, x)); assert( r >= 0 );
     r = engine->RegisterObjectProperty ("Vector3", "float y", offsetof(csVector3, y)); assert( r >= 0 );
     r = engine->RegisterObjectProperty ("Vector3", "float z", offsetof(csVector3, z)); assert( r >= 0 );

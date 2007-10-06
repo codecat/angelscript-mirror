@@ -123,6 +123,8 @@ bool Test()
 		return true;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString_Generic(engine);
 
@@ -138,10 +140,8 @@ bool Test()
 
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
-	COutStream out;
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -190,7 +190,7 @@ bool Test()
 
 	// Verify that the compiler doesn't allow the use of handles if addref/release aren't registered
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterObjectType("type", 0, asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectType("type", 0, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterGlobalFunction("type @func()", asFUNCTION(0), asCALL_CDECL);
 	engine->Release();
 
@@ -263,23 +263,12 @@ public:
 		--m_refcount;
 		if( m_refcount > 0 )
 			return;
-		this->~ArgClass();
-		free( this );
+		delete this;
 	}
 
-	static void *Allocate(unsigned int)
+	static ArgClass *Factory()
 	{
-		return malloc(sizeof(ArgClass));
-	}
-
-	static void DeAllocate(void *)
-	{
-		// this shouldn't get called
-	}
-
-	static void Construct(ArgClass *self)
-	{
-		new(self) ArgClass();
+		return new ArgClass();
 	}
 	
 	float GetWeight(void) const
@@ -347,23 +336,12 @@ public:
 		--m_refcount;
 		if( m_refcount > 0 )
 			return;
-		this->~CallerClass();
-		free( this );
+		delete this;
 	}
 
-	static void *Allocate(unsigned int)
+	static CallerClass *Factory()
 	{
-		return malloc( sizeof(CallerClass) );
-	}
-
-	static void DeAllocate(void *)
-	{
-		// this shouldn't get called
-	}
-
-	static void Construct(CallerClass *self)
-	{
-		new(self) CallerClass();
+		return new CallerClass();
 	}
 
 	void DoSomething(const ArgClass &arg, Point &pos )
@@ -390,11 +368,16 @@ bool TestHandleMemberCalling(void)
 
 	// create AngelScript
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	// setup output stream
+	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
 	RegisterScriptString_Generic(engine);
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	// register Point
-	r = engine->RegisterObjectType("Point", sizeof(Point), asOBJ_VALUE | asOBJ_APP_CLASS_C); assert(r >= 0);
+	r = engine->RegisterObjectType("Point", sizeof(Point), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Point::Construct), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_CONSTRUCT, "void f(float,float,float)", asFUNCTION(Point::Construct2), asCALL_CDECL_OBJLAST); assert(r >= 0);
 
@@ -402,9 +385,7 @@ bool TestHandleMemberCalling(void)
 	r = engine->RegisterObjectType("ArgClass", sizeof(ArgClass), asOBJ_REF); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_ADDREF, "void f()", asMETHOD(ArgClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_RELEASE, "void f()", asMETHOD(ArgClass, Release), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_ALLOC, "ArgClass &f(uint)", asFUNCTION(ArgClass::Allocate), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_FREE, "void f(ArgClass &in)", asFUNCTION(ArgClass::DeAllocate), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ArgClass::Construct), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("ArgClass", asBEHAVE_FACTORY, "ArgClass@ f()", asFUNCTION(ArgClass::Factory), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("ArgClass", "float GetWeight() const", asMETHOD(ArgClass,GetWeight), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("ArgClass", "void SetWeight(float)", asMETHOD(ArgClass,SetWeight), asCALL_THISCALL); assert(r >= 0);
 
@@ -412,14 +393,8 @@ bool TestHandleMemberCalling(void)
 	r = engine->RegisterObjectType("CallerClass", sizeof(CallerClass), asOBJ_REF); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_ADDREF, "void f()", asMETHOD(CallerClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_RELEASE, "void f()", asMETHOD(CallerClass, Release), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_ALLOC, "CallerClass &f(uint)", asFUNCTION(CallerClass::Allocate), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_FREE, "void f(CallerClass &in)", asFUNCTION(CallerClass::DeAllocate), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CallerClass::Construct), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("CallerClass", asBEHAVE_FACTORY, "CallerClass@ f()", asFUNCTION(CallerClass::Factory), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("CallerClass", "void DoSomething(const ArgClass &inout, Point &out)", asMETHOD(CallerClass,DoSomething), asCALL_THISCALL); assert(r >= 0);
-
-	// setup output stream
-	COutStream out;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	// add our script
 	r = engine->AddScriptSection(0, "script", script3, strlen(script3), 0); assert( r >= 0 );

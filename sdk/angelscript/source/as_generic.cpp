@@ -410,24 +410,7 @@ int asCGeneric::SetReturnObject(void *obj)
 	}
 	else
 	{
-		// Make a copy of the object
-		char *mem = (char*)engine->CallAlloc(dt->GetObjectType());
-
-		// Call the object's default constructor
-		asSTypeBehaviour *beh = &dt->GetObjectType()->beh;
-		if( beh->construct )
-			engine->CallObjectMethod(mem, beh->construct);
-
-		// Call the object's assignment operator
-		if( beh->copy )
-			engine->CallObjectMethod(mem, obj, beh->copy);
-		else
-		{
-			// Default operator is a simple copy
-			memcpy(mem, obj, dt->GetSizeInMemoryBytes());
-		}
-
-		obj = mem;
+		obj = engine->CreateScriptObjectCopy(obj, engine->GetTypeIdFromDataType(*dt));
 	}
 
 	objectRegister = obj;

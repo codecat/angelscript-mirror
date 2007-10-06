@@ -50,13 +50,12 @@
 <a href="#negate">asBEHAVE_NEGATE</a>
 <a href="#addref">asBEHAVE_ADDREF</a>
 <a href="#release">asBEHAVE_RELEASE</a>
-<a href="#alloc">asBEHAVE_ALLOC</a>
-<a href="#free">asBEHAVE_FREE</a>
 <a href="#refcount">asBEHAVE_GETREFCOUNT</a>
 <a href="#setgc">asBEHAVE_SETGCFLAG</a>
 <a href="#getgc">asBEHAVE_GETGCFLAG</a>
 <a href="#enumrefs">asBEHAVE_ENUMREFS</a>
 <a href="#releaserefs">asBEHAVE_RELEASEREFS</a>
+<a href="#factory">asBEHAVE_FACTORY</a>
 </pre>
 
 <a name="construct"></a>
@@ -64,8 +63,8 @@
 
 <p>Constructor, called when variables comes into scope.</p>
 
-<p><font color=red>Warning: Do not register a virtual method as a constructor. The virtual function 
-pointer table will be initialized by the constructor function, thus the 
+<p><font color=red>Warning: Do not register a virtual method as a constructor. The virtual function
+pointer table will be initialized by the constructor function, thus the
 virtual method will fail.</font></p>
 
 <p>Example:</p>
@@ -106,13 +105,13 @@ engine->RegisterObjectBehaviour("object", asBEHAVE_DESTRUCT, "void f()", asFUNCT
 
 <p>Assignment '='.</p>
 
-<p>The assignment behaviour should return a reference to itself. The operator 
-parameter can have any type. If the parameter is a reference to an object of 
-the same type as itself the function is used as a copy operator, which is 
-important if the object needs to treat members especially, for example if the 
+<p>The assignment behaviour should return a reference to itself. The operator
+parameter can have any type. If the parameter is a reference to an object of
+the same type as itself the function is used as a copy operator, which is
+important if the object needs to treat members especially, for example if the
 class holds pointers to resources.</p>
 
-<p>If you pass parameters by &amp;in, then it is a good idea to also make 
+<p>If you pass parameters by &amp;in, then it is a good idea to also make
 them const, as it can allow the compiler to make a few optimizations.</p>
 
 <p>Example 1:</p>
@@ -240,11 +239,11 @@ engine->RegisterObjectBehaviour("object", asBEHAVE_ASSIGNMENT, "object &amp;f(in
 <p>Add '+'.</p>
 
 <p>This is a global behaviour that takes two operands and creates a new value.
-The function should not return a reference and shouldn't store the input 
+The function should not return a reference and shouldn't store the input
 values. The operands can be any type, reference or not, but one of the operands
 must be a registered type.</p>
 
-<p>If you pass parameters by &amp;in, then it is a good idea to also make 
+<p>If you pass parameters by &amp;in, then it is a good idea to also make
 them const, as it can allow the compiler to make a few optimizations.</p>
 
 <p>Example 1:</p>
@@ -446,13 +445,13 @@ engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const object &amp;in, in
 
 <p>Indexing operator []. Must be registered as a object behaviour.</p>
 
-<p>This behaviour is normally used to access an element in a collection based 
-on an index, wether it be a numerical index or some other form. The behaviour 
-normally returns a reference to the element so that it can be altered by the 
+<p>This behaviour is normally used to access an element in a collection based
+on an index, wether it be a numerical index or some other form. The behaviour
+normally returns a reference to the element so that it can be altered by the
 script, but it is allowed to return the element by value.</p>
 
 <p>You'll normally want to register two versions of this behaviour, one that
-allow the element to be altered, and one that return a read-only value. This 
+allow the element to be altered, and one that return a read-only value. This
 is useful when having constant objects.</p>
 
 <p>Example:</p>
@@ -480,7 +479,7 @@ engine->RegisterObjectBehaviour("object", asBEHAVE_INDEX, "const int &amp;f(uint
 
 <p>Unary negate operator -. Must be registered as a object behaviour.</p>
 
-<p>This behaviour should return a new object with the effect of the operation 
+<p>This behaviour should return a new object with the effect of the operation
 applied to it.</p>
 
 <p>Example:</p>
@@ -563,43 +562,6 @@ void Object::Release()
 
 
 
-<a name="alloc"></a>
-<h2>asBEHAVE_ALLOC</h2>
-
-<p>If you want to use custom memory management for an object type, you should register this behaviour. Some examples where this might be needed is if the object type is allocated from a memory pool, or if it is dynamically allocated from a DLL which doesn't share the same heap as the application.</p>
-
-<p>This behaviour must be registered as an object behaviour despite the fact that it is a global function with the same signature as standard C's malloc() function, i.e:</p>
-
-<pre class=border>
-void *my_alloc(asUINT size);
-
-engine->RegisterObjectBehaviour("object", asBEHAVE_ALLOC, "object &amp;f(uint)", asFUNCTION(my_alloc), asCALL_CDECL);
-</pre>
-
-<p>The function declaration should return a reference to the object type.</p>
-
-<p>NOTE: This behaviour must always be registered as asCALL_CDECL, despite being registered as object behaviour. Even when the library is compiled with AS_MAX_PORTABILITY should the behaviour use the calling convention asCALL_CDECL.</p>
-
-
-
-
-<a name="free"></a>
-<h2>asBEHAVE_FREE</h2>
-
-<p>If the object type doesn't register the free behaviour then the library uses the standard C's free() function. Note that if the object type has the ADDREF and RELEASE behaviours registered then the library never frees the memory itself, since it expects that the application to free the memory when the reference count reaches zero.</p>
-
-<pre class=border>
-void my_free(void *mem);
-
-engine->RegisterObjectBehaviour("object", asBEHAVE_FREE, "void f(object &amp;in)", asFUNCTION(my_free), asCALL_CDECL);
-</pre>
-
-<p>NOTE: This behaviour must always be registered as asCALL_CDECL, despite being registered as object behaviour. Even when the library is compiled with AS_MAX_PORTABILITY should the behaviour use the calling convention asCALL_CDECL.</p>
-
-
-
-
-
 <a name="refcount"></a>
 <h2>asBEHAVE_GETREFCOUNT</h2>
 
@@ -668,7 +630,7 @@ void Object::EnumReferences(asIScriptEngine *engine);
 engine->RegisterObjectBehaviour("object", asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(Object,EnumReferences), asCALL_THISCALL);
 </pre>
 
-<p>When this method is called the object should enumerate over all the references it holds and call the asIScriptEngine::GCEnumCallback method for each of them. The engine pointer is passed in as a parameter to the method to simplify the implementation. The gc will use this to follow the 
+<p>When this method is called the object should enumerate over all the references it holds and call the asIScriptEngine::GCEnumCallback method for each of them. The engine pointer is passed in as a parameter to the method to simplify the implementation. The gc will use this to follow the
 chain of references in order to determine which objects are dead even though the ref count may be larger than 1, i.e. circular references.</p>
 
 <p>The behaviour may use any compatible calling convention, including asCALL_THISCALL even if AS_MAX_PORTABILITY is defined.</p>
@@ -696,6 +658,25 @@ will be broken and the ref count brought down to 1, which is when the gc will re
 
 
 
+
+
+<a name="factory"></a>
+<h2>asBEHAVE_FACTORY</h2>
+
+<p>Factory, called when variables comes into scope.</p>
+
+<p>Example:</p>
+
+<pre class=border>
+Object *Factory()
+{
+  return new Object();
+}
+
+engine->RegisterObjectBehaviour("object", asBEHAVE_FACTORY, "object@ f()", asFUNCTION(Factory), asCALL_DECL);
+</pre>
+
+<p>For objects that should be handled by the garbage collection, to be able to automatically detect and handle circular references, the constructor must call the method NotifyGarbageCollectorOfNewObject on the engine. When doing so the gc will take a reference to the object.</p>
 
 
 

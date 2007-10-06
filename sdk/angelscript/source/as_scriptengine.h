@@ -174,7 +174,6 @@ public:
 	friend class asCModule;
 	friend class asCRestore;
 	friend class asCByteCode;
-	friend int CallSystemFunction(int id, asCContext *context);
 	friend int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 
 	int RegisterSpecialObjectType(const char *objname, int byteSize, asDWORD flags);
@@ -185,6 +184,8 @@ public:
 
 	void *CallAlloc(asCObjectType *objType);
 	void CallFree(asCObjectType *objType, void *obj);
+	void *CallGlobalFunctionRetPtr(int func);
+	void *CallGlobalFunctionRetPtr(asSSystemFunctionInterface *func, asCScriptFunction *desc);
 	void CallObjectMethod(void *obj, int func);
 	void CallObjectMethod(void *obj, void *param, int func);
 	void CallObjectMethod(void *obj, asSSystemFunctionInterface *func, asCScriptFunction *desc);

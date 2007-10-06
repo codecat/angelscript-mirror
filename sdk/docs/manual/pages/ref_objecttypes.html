@@ -16,6 +16,7 @@
 <a href="#ref">asOBJ_REF</a>
 <a href="#value">asOBJ_VALUE</a>
 <a href="#gc">asOBJ_GC</a>
+<a href="#pod">asOBJ_POD</a>
 <a href="#class">asOBJ_APP_CLASS</a>
 <a href="#constr">asOBJ_APP_CLASS_CONSTRUCTOR</a>
 <a href="#destr">asOBJ_APP_CLASS_DESTRUCTOR</a>
@@ -48,6 +49,16 @@
 
 <p>This flag tells AngelScript that the object should be handled by the garbage collector. This flag can only be used together with asOBJ_REF.</p>
 
+
+
+<a name="pod"></a>
+<h2>asOBJ_POD</h2>
+
+<p>This flag tells AngelScript that the object is a binary structure that
+doesn't need special behaviour for initialization, uninitialization, and or
+copying. Combined with asOBJ_VALUE it will allow the use of the type without
+the need for registration of the asBEHAVE_CONSTRUCT, asBEHAVE_DESTRUCT, and
+asBEHAVE_ASSIGNMENT.</p>
 
 
 

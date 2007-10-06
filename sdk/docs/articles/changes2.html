@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.11.0 WIP - 2007/09/28</h2>
+<h2>Version 2.11.0 WIP - 2007/10/05</h2>
 
 <ul>
 <li>Bug fixes
@@ -127,10 +127,12 @@ A:hover
 </ul>
 <li>Library interface
 <ul>
-<li>Added new flags asOBJ_REF, asOBJ_VALUE, and asOBJ_GC that represents how the type is intended to work in AngelScript
+<li>Added new flags asOBJ_REF, asOBJ_VALUE, asOBJ_GC, and asOBJ_POD that represents how the type is intended to work in AngelScript
 <li>Changed prefix for previous asOBJ flags to asOBJ_APP. They should only be used with asOBJ_VALUE.
 <li>AngelScript now validates the behaviours, to check for missing behaviours or behaviours that shouldn't be registered for the type
 <li>Types registered as reference counted won't be allowed to be passed by value to system functions, nor returned by value
+<li>Reference types must now use the new FACTORY behaviour instead of the CONSTRUCT behaviour.
+<li>Removed the asBEHAVE_ALLOC and asBEHAVE_FREE behaviours.
 </ul>
 </ul>
 

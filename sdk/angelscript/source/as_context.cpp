@@ -859,26 +859,9 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 			if( beh->addref )
 				engine->CallObjectMethod(obj, beh->addref);
 		}
-		else
+		else 
 		{
-			// Allocate memory
-			char *mem = (char*)engine->CallAlloc(dt->GetObjectType());
-
-			// Call the object's default constructor
-			asSTypeBehaviour *beh = &dt->GetObjectType()->beh;
-			if( beh->construct )
-				engine->CallObjectMethod(mem, beh->construct);
-
-			// Call the object's assignment operator
-			if( beh->copy )
-				engine->CallObjectMethod(mem, obj, beh->copy);
-			else
-			{
-				// Default operator is a simple copy
-				memcpy(mem, obj, dt->GetSizeInMemoryBytes());
-			}
-
-			obj = mem;
+			obj = engine->CreateScriptObjectCopy(obj, engine->GetTypeIdFromDataType(*dt));
 		}
 	}
 
@@ -1976,11 +1959,14 @@ void asCContext::ExecuteNext()
 		{
 			asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(l_bc);
 			int func = INTARG(l_bc+PTR_SIZE);
-			asDWORD *mem = (asDWORD*)engine->CallAlloc(objType);
+			asDWORD *mem = 0;
 
 			if( objType->flags & asOBJ_SCRIPT_STRUCT )
 			{
-				// Set the allocated memory
+				// Pre-allocate the memory
+				mem = (asDWORD*)engine->CallAlloc(objType);
+
+				// Call the constructor to initalize the memory
 				asCScriptFunction *f = engine->scriptFunctions[func];
 
 				asDWORD **a = (asDWORD**)*(size_t*)(l_sp + f->GetSpaceNeededForArguments());
@@ -2008,8 +1994,51 @@ void asCContext::ExecuteNext()
 				if( status != tsActive )
 					return;
 			}
+			else if( objType->flags & asOBJ_REF )
+			{
+				// Need to move the values back to the context
+				byteCode = l_bc;
+				stackPointer = l_sp;
+				stackFramePointer = l_fp;
+
+				l_sp += CallSystemFunction(func, this, 0);
+
+				// Pop the variable address from the stack
+				void **a = (void**)*(size_t*)l_sp;
+				l_sp += PTR_SIZE;
+				if( a ) *a = (void*)(size_t)objectRegister;
+				objectRegister = 0;
+
+				l_bc += 2+PTR_SIZE;
+
+				// Should the execution be suspended?
+				if( doSuspend )
+				{
+					byteCode = l_bc;
+					stackPointer = l_sp;
+					stackFramePointer = l_fp;
+
+					status = tsSuspended;
+					return;
+				}
+				// An exception might have been raised
+				if( status != tsActive )
+				{
+					byteCode = l_bc;
+					stackPointer = l_sp;
+					stackFramePointer = l_fp;
+
+					engine->CallFree(objType, mem);
+					*a = 0;
+
+					return;
+				}
+			}
 			else
 			{
+				// Pre-allocate the memory
+				mem = (asDWORD*)engine->CallAlloc(objType);
+
 				if( func )
 				{
 					// Need to move the values back to the context

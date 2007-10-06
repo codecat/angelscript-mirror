@@ -636,6 +636,7 @@ const asDWORD asCALL_GENERIC          = 5;
 const asDWORD asOBJ_REF                   = 1;
 const asDWORD asOBJ_VALUE                 = 2;
 const asDWORD asOBJ_GC                    = 4;
+const asDWORD asOBJ_POD                   = 8;
 const asDWORD asOBJ_APP_CLASS             = 0x100;
 const asDWORD asOBJ_APP_CLASS_CONSTRUCTOR = 0x200;
 const asDWORD asOBJ_APP_CLASS_DESTRUCTOR  = 0x400;
@@ -649,7 +650,7 @@ const asDWORD asOBJ_APP_CLASS_A           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_A
 const asDWORD asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT);
 const asDWORD asOBJ_APP_PRIMITIVE         = 0x1000;
 const asDWORD asOBJ_APP_FLOAT             = 0x2000;
-const asDWORD asOBJ_MASK_VALID_FLAGS      = 0x3F07;
+const asDWORD asOBJ_MASK_VALID_FLAGS      = 0x3F0F;
 
 // Behaviours
 
@@ -694,15 +695,14 @@ const asDWORD asBEHAVE_INDEX         = 33;
 const asDWORD asBEHAVE_NEGATE        = 34;
 const asDWORD asBEHAVE_ADDREF        = 35;
 const asDWORD asBEHAVE_RELEASE       = 36;
-const asDWORD asBEHAVE_ALLOC         = 37;
-const asDWORD asBEHAVE_FREE          = 38;
-const asDWORD asBEHAVE_FIRST_GC      = 39;
- const asDWORD asBEHAVE_GETREFCOUNT   = 39;
- const asDWORD asBEHAVE_SETGCFLAG     = 40;
- const asDWORD asBEHAVE_GETGCFLAG     = 41;
- const asDWORD asBEHAVE_ENUMREFS      = 42;
- const asDWORD asBEHAVE_RELEASEREFS   = 43;
-const asDWORD asBEHAVE_LAST_GC       = 43;
+const asDWORD asBEHAVE_FIRST_GC      = 37;
+ const asDWORD asBEHAVE_GETREFCOUNT   = 37;
+ const asDWORD asBEHAVE_SETGCFLAG     = 38;
+ const asDWORD asBEHAVE_GETGCFLAG     = 39;
+ const asDWORD asBEHAVE_ENUMREFS      = 40;
+ const asDWORD asBEHAVE_RELEASEREFS   = 41;
+const asDWORD asBEHAVE_LAST_GC       = 41;
+const asDWORD asBEHAVE_FACTORY       = 42;
 
 // Return codes
 

@@ -14,6 +14,8 @@
 
 <h1>Registering a C++ class</h1>
 
+<p><font color="red">This article is out-of-date and should be rewritten</font></p>
+
 <p>Before registering a class with AngelScript you need to decide how the script
 engine should interact with it. Basically there are two questions that needs
 to be answered:</p>
@@ -40,11 +42,6 @@ returns a reference to the object.</p>
 the object type, and perhaps even register the constructor and destructor behaviours
 for initializing and cleaning up the objects.
 </p>
-
-<p>It is also possible to override how the memory is allocated for an object type,
-but this will not be described in this article. This can be useful if the object type
-is allocated from for example a memory pool, or if it is allocated from a DLL which
-uses another memory heap than the main application.</p>
 
 <h2>The object type</h2>
 
@@ -143,9 +140,7 @@ the object when it is constructed, but the object will deallocate the memory
 itself when the reference counter reaches 0. You need to make sure the memory
 allocation and deallocation are done using the same heap management. By default
 AngelScript uses malloc to allocate the memory, but this can be overridden with
-a call to asSetGlobalMemoryFunctions(). If you want the engine to use one heap
-manager and the registered object to use another you need to register alloc
-behaviour.</p>
+a call to asSetGlobalMemoryFunctions().</p>
 
 <p>If no copy behaviour, or assignment behaviour as it is also called, is
 registered, then AngelScript simply copies the memory byte for byte. If the
@@ -171,12 +166,12 @@ angelscript.h (see the reference manual). The most important behaviours are
 the following:</p>
 
 <table border=0 cellspacing=0 cellpadding=0>
+<tr><td width=200 valign=top>asBEHAVE_FACTORY</td><td>The factory behaviour.</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_CONSTRUCT</td><td>The constructor behaviour.</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_DESTRUCT</td><td>The destructor behaviour.</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_ASSIGNMENT</td><td>The assignment or copy behaviour.</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_ADDREF</td><td>The addref behaviour.</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_RELEASE</td><td>The release behaviour.</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_ALLOC</td><td>The memory allocator function.</td></tr>
 </table>
 
 <p>The declaration parameter, is used to show the parameter types and return
@@ -192,12 +187,12 @@ reference to it's own type.</p>
 <p>Suggested declaration strings:</p>
 
 <table border=0 cellspacing=0 cellpadding=0>
+<tr><td width=200 valign=top>asBEHAVE_FACTORY</td><td>"object@ f()"</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_CONSTRUCT</td><td>"void f()"</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_DESTRUCT</td><td>"void f()"</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_ASSIGNMENT</td><td>"obj &amp;f(obj &amp;in)"</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_ADDREF</td><td>"void f()"</td></tr>
 <tr><td width=200 valign=top>asBEHAVE_RELEASE</td><td>"void f()"</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_ALLOC</td><td>"obj &amp;f(uint)"</td></tr>
 </table>
 
 <p>The function name used in the declaration doesn't really matter as it will
@@ -215,6 +210,11 @@ to these methods. For these two it is therefor necessary to write a couple of
 wrapper functions. My suggestion is to do it like this:</p>
 
 <pre class=border>
+MyClass *Factory()
+{
+  return new MyClass();
+}
+
 void Constructor(MyClass *obj)
 {
   new(obj) MyClass();
@@ -257,6 +257,7 @@ behaviours the supported calling conventions are:</p>
 <tr><td width=200 valign=top>asCALL_CDECL_OBJLAST</td><td>Global cdecl function that takes the pointer to the object as the last parameter, after all declared parameters.</td></tr>
 <tr><td width=200 valign=top>asCALL_CDECL_OBJFIRST</td><td>Global cdecl function that takes the object pointer as the first parameter before any declared parameter.</td></tr>
 <tr><td width=200 valign=top>asCALL_GENERIC</td><td>Global function implementing the generic calling convention.</td></tr>
+<tr><td width=200 valign=top>asCALL_CDECL</a><td>Global cdecl function. Used with a few behaviours, such as the factory behaviour.</td></tr>
 </table>
 
 <p>The other object behaviours found in the reference manual are registered

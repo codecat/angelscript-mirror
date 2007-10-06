@@ -95,7 +95,7 @@ void ScriptStruct_Assignment_Generic(asIScriptGeneric *gen);
 
 void RegisterScriptStruct(asCScriptEngine *engine);
 
-int ConstructScriptStruct(void *ptr, asCObjectType *objType, asCScriptEngine *engine);
+asIScriptStruct *ScriptStructFactory(asCObjectType *objType, asCScriptEngine *engine);
 
 END_AS_NAMESPACE
 

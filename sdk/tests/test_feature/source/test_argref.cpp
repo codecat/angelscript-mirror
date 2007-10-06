@@ -42,7 +42,7 @@ bool Test()
 
 	RegisterScriptString_Generic(engine);
 
-	engine->RegisterObjectType("Obj", sizeof(Obj), asOBJ_VALUE | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("Obj", sizeof(Obj), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectProperty("Obj", "int v", offsetof(Obj, v));
 
 	COutStream out;

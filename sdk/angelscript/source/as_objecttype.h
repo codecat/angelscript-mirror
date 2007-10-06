@@ -66,15 +66,13 @@ const asDWORD asOBJ_SCRIPT_ARRAY     = 0x20000;
 
 struct asSTypeBehaviour
 {
-	asSTypeBehaviour() {construct = 0; destruct = 0; copy = 0; addref = 0; release = 0; alloc = 0; free = 0; gcGetRefCount = 0; gcSetFlag = 0; gcGetFlag = 0; gcEnumReferences = 0; gcReleaseAllReferences = 0;}
+	asSTypeBehaviour() {construct = 0; destruct = 0; copy = 0; addref = 0; release = 0; gcGetRefCount = 0; gcSetFlag = 0; gcGetFlag = 0; gcEnumReferences = 0; gcReleaseAllReferences = 0;}
 
 	int construct;
 	int destruct;
 	int copy;
 	int addref;
 	int release;
-	int alloc;
-	int free;
 	
 	// GC behaviours
 	int gcGetRefCount;

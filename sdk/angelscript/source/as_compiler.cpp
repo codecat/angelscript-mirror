@@ -7586,7 +7586,23 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 	ctx->type.Set(descr->returnType);
 
 	if( isConstructor )
+	{
 		ctx->bc.Alloc(BC_ALLOC, builder->module->RefObjectType(objType), descr->id, argSize+PTR_SIZE);
+
+		// TODO: In reality the reference objects shouldn't be allocated through ALLOC, 
+		// but rather through a normal call to a system function, since it returns the object handle
+
+		// The instruction has already moved the returned object to the variable
+		ctx->type.Set(asCDataType::CreatePrimitive(ttVoid, false));
+
+		// Clean up arguments
+		if( args )
+			AfterFunctionCall(funcID, *args, ctx, false);
+
+		ProcessDeferredParams(ctx);
+
+		return;
+	}
 	else if( descr->funcType == asFUNC_IMPORTED )
 		ctx->bc.Call(BC_CALLBND , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
 	else if( descr->funcType == asFUNC_INTERFACE )

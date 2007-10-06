@@ -55,11 +55,7 @@ static void StringAddRef_Generic(asIScriptGeneric *gen)
 void asCScriptString::Release()
 {
 	if( --refCount == 0 )
-	{
-		// Manually call the destructor, then free the memory so that we match how the memory was allocated
-		this->~asCScriptString();
-		delete[] (char*)this;
-	}
+		delete this;
 }
 
 static void StringRelease_Generic(asIScriptGeneric *gen)
@@ -420,26 +416,10 @@ static void StringCharAt_Generic(asIScriptGeneric *gen)
 // AngelScript functions
 //-----------------------
 
-// This function allocates memory for the string object
-static void *StringAlloc(int)
-{
-	return new char[sizeof(asCScriptString)];
-}
-
-// This function deallocates the memory for the string object
-static void StringFree(void *p)
-{
-	assert( p );
-	delete[] (char*)p;
-}
-
-// This is the string factory that creates new strings for the script
+// This is the string factory that creates new strings for the script based on string literals
 static asCScriptString *StringFactory(asUINT /*length*/, const char *s)
 {
-	// Return a script handle to a new string
-	asCScriptString *ptr = (asCScriptString*)StringAlloc(0);
-	new(ptr) asCScriptString(s);
-	return ptr;
+	return new asCScriptString(s);
 }
 
 static void StringFactory_Generic(asIScriptGeneric *gen)
@@ -450,31 +430,28 @@ static void StringFactory_Generic(asIScriptGeneric *gen)
 	gen->SetReturnAddress(str);
 }
 
-// This is a wrapper for the default asCScriptString constructor, since
-// it is not possible to take the address of the constructor directly
-static void ConstructString(asCScriptString *thisPointer)
+// This is the default string factory, that is responsible for creating empty string objects, e.g. when a variable is declared
+static asCScriptString *StringDefaultFactory()
 {
-	// Construct the string in the memory received
-	new(thisPointer) asCScriptString();
+	// Allocate and initialize with the default constructor
+	return new asCScriptString();
 }
 
-static void ConstructStringCopy(const asCScriptString &other, asCScriptString *thisPointer)
+static asCScriptString *StringCopyFactory(const asCScriptString &other)
 {
-	// Construct the string in the memory received
-	new(thisPointer) asCScriptString(other);
+	// Allocate and initialize with the copy constructor
+	return new asCScriptString(other);
 }
 
-static void ConstructString_Generic(asIScriptGeneric *gen)
+static void StringDefaultFactory_Generic(asIScriptGeneric *gen)
 {
-	asCScriptString *thisPointer = (asCScriptString *)gen->GetObject();
-	ConstructString(thisPointer);
+	*(asCScriptString**)gen->GetReturnPointer() = StringDefaultFactory();
 }
 
-static void ConstructStringCopy_Generic(asIScriptGeneric *gen)
+static void StringCopyFactory_Generic(asIScriptGeneric *gen)
 {
-	asCScriptString *thisPointer = (asCScriptString *)gen->GetObject();
 	asCScriptString *other = (asCScriptString *)gen->GetArgObject(0);
-	ConstructStringCopy(*other, thisPointer);
+	*(asCScriptString**)gen->GetReturnPointer() = StringCopyFactory(*other);
 }
 
 static void StringEqual_Generic(asIScriptGeneric *gen)
@@ -542,17 +519,12 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(ConstructStringCopy), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f()",                 asFUNCTION(StringDefaultFactory), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f(const string &in)", asFUNCTION(StringCopyFactory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(asCScriptString,AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(asCScriptString,Release), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(const string &in)", asMETHODPR(asCScriptString, operator =, (const asCScriptString&), asCScriptString&), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(const string &in)", asMETHODPR(asCScriptString, operator+=, (const asCScriptString&), asCScriptString&), asCALL_THISCALL); assert( r >= 0 );
-
-	// Register the memory allocator routines. This will make all memory allocations for the string
-	// object be made in one place, which is important if for example the script library is used from a dll
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ALLOC, "string &f(uint)", asFUNCTION(StringAlloc), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FREE, "void f(string &in)", asFUNCTION(StringFree), asCALL_CDECL); assert( r >= 0 );
 
 	// Register the factory to return a handle to a new string
 	// Note: We must register the string factory after the basic behaviours,
@@ -608,17 +580,12 @@ void RegisterScriptString_Generic(asIScriptEngine *engine)
 
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructString_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(ConstructStringCopy_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f()",                 asFUNCTION(StringDefaultFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f(const string &in)", asFUNCTION(StringCopyFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADDREF,     "void f()",                    asFUNCTION(StringAddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_RELEASE,    "void f()",                    asFUNCTION(StringRelease_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(const string &in)", asFUNCTION(AssignString_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(const string &in)", asFUNCTION(AddAssignString_Generic), asCALL_GENERIC); assert( r >= 0 );
-
-	// Register the memory allocator routines. This will make all memory allocations for the string
-	// object be made in one place, which is important if for example the script library is used from a dll
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ALLOC, "string &f(uint)", asFUNCTION(StringAlloc), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FREE, "void f(string &in)", asFUNCTION(StringFree), asCALL_CDECL); assert( r >= 0 );
 
 	// Register the factory to return a handle to a new string
 	// Note: We must register the string factory after the basic behaviours,

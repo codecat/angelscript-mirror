@@ -38,7 +38,7 @@ bool TestVector3()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	r = engine->RegisterObjectType("Vector3",sizeof(Vector3),asOBJ_VALUE | asOBJ_APP_CLASS_CDA);assert(r>=0);
+	r = engine->RegisterObjectType("Vector3",sizeof(Vector3),asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CDA);assert(r>=0);
 	r = engine->RegisterObjectProperty("Vector3","float x",offsetof(Vector3,x));assert(r>=0);
 	r = engine->RegisterObjectProperty("Vector3","float y",offsetof(Vector3,y));assert(r>=0);
 	r = engine->RegisterObjectProperty("Vector3","float z",offsetof(Vector3,z));assert(r>=0);

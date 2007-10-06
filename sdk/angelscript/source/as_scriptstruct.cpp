@@ -42,8 +42,10 @@
 BEGIN_AS_NAMESPACE
 
 // This helper function will call the default constructor, that is a script function
-int ConstructScriptStruct(void *ptr, asCObjectType *objType, asCScriptEngine *engine)
+asIScriptStruct *ScriptStructFactory(asCObjectType *objType, asCScriptEngine *engine)
 {
+	asIScriptStruct *ptr = (asIScriptStruct*)engine->CallAlloc(objType);
+
 	int funcIndex = objType->beh.construct;
 	
 	// Setup a context for calling the default constructor
@@ -52,14 +54,14 @@ int ConstructScriptStruct(void *ptr, asCObjectType *objType, asCScriptEngine *en
 	if( r < 0 )
 	{
 		engine->CallFree(objType, ptr);
-		return -1;
+		return 0;
 	}
 	r = ctx->Prepare(funcIndex);
 	if( r < 0 )
 	{
 		engine->CallFree(objType, ptr);
 		ctx->Release();
-		return -1;
+		return 0;
 	}
 	ctx->SetObject(ptr);
 	r = ctx->Execute();
@@ -68,11 +70,11 @@ int ConstructScriptStruct(void *ptr, asCObjectType *objType, asCScriptEngine *en
 		// The memory for the structure should have been released already
 		// TODO: Verify this
 		ctx->Release();
-		return -1;
+		return 0;
 	}
 	ctx->Release();	
 	
-	return 0;
+	return ptr;
 }
 
 #ifdef AS_MAX_PORTABILITY
@@ -432,19 +434,23 @@ int asCScriptStruct::CopyFrom(asIScriptStruct *other)
 
 void *asCScriptStruct::AllocateObject(asCObjectType *objType, asCScriptEngine *engine)
 {
-	void *ptr;
-	ptr = (void*)engine->CallAlloc(objType);
+	void *ptr = 0;
 
 	if( objType->flags & asOBJ_SCRIPT_STRUCT )
 	{
-		ConstructScriptStruct(ptr, objType, engine);
+		ptr = ScriptStructFactory(objType, engine);
 	}
 	else if( objType->flags & asOBJ_SCRIPT_ARRAY )
 	{
-		ArrayObjectConstructor(objType, (asCArrayObject*)ptr);
+		ptr = ArrayObjectFactory(objType);
+	}
+	else if( objType->flags & asOBJ_REF )
+	{
+		ptr = engine->CallGlobalFunctionRetPtr(objType->beh.construct);
 	}
 	else
 	{
+		ptr = engine->CallAlloc(objType);
 		int funcIndex = objType->beh.construct;
 		if( funcIndex )
 			engine->CallObjectMethod(ptr, funcIndex);

@@ -78,7 +78,7 @@ bool TestSwitch()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType("staticstring", sizeof(char*), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectType("staticstring", sizeof(char*), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterStringFactory("staticstring", asFUNCTION(StrFactory), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void Log(staticstring)", asFUNCTION(Log), asCALL_GENERIC);
 

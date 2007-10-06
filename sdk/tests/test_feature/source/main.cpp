@@ -140,7 +140,7 @@ void DetectMemoryLeaks()
 	_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
 
 	// Use _CrtSetBreakAlloc(n) to find a specific memory leak
-	//_CrtSetBreakAlloc(425);
+	//_CrtSetBreakAlloc(278802);
 #endif
 }
 
@@ -169,7 +169,16 @@ int main(int argc, char **argv)
 	InstallMemoryManager();
 
 	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
+	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
+	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
+	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
+	if( TestObjZeroSize::Test()       ) goto failed; else printf("-- TestObjZeroSize passed\n");
+	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
+	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
+	if( TestExceptionMemory::Test()   ) goto failed; else printf("-- TestExceptionMemory passed\n");
+	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
+	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
@@ -201,10 +210,6 @@ int main(int argc, char **argv)
 	if( TestExecuteMixedArgs()        ) goto failed; else printf("-- TestExecuteMixedArgs passed\n");
 	if( TestStdcall4Args()            ) goto failed; else printf("-- TestStdcall4Args passed\n");
 	if( TestCDecl_Class()             ) goto failed; else printf("-- TestCDecl_Class passed\n");
-	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
-	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
-	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
-	if( TestObjZeroSize::Test()       ) goto failed; else printf("-- TestObjZeroSize passed\n");
 	if( TestStack2::Test()            ) goto failed; else printf("-- TestStack2 passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
@@ -228,19 +233,14 @@ int main(int argc, char **argv)
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
 	if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
 	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
-	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestVirtualMethod()           ) goto failed; else printf("-- TestVirtualMethod passed\n");
 	if( TestMultipleInheritance()     ) goto failed; else printf("-- TestMultipleInheritance passed\n");
 	if( TestVector3_2::Test()         ) goto failed; else printf("-- TestVector3_2 passed\n");
 	if( TestDict::Test()              ) goto failed; else printf("-- TestDict passed\n");
-	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
 	if( TestNested()                  ) goto failed; else printf("-- TestNested passed\n");
 	if( TestConstructor()             ) goto failed; else printf("-- TestConstructor passed\n");
-	if( TestExceptionMemory::Test()   ) goto failed; else printf("-- TestExceptionMemory passed\n");
 	if( TestExecuteScript()           ) goto failed; else printf("-- TestExecuteScript passed\n"); 
-	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
-	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");

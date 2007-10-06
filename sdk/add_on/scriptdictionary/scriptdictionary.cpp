@@ -266,28 +266,11 @@ void CScriptDictionary::FreeValue(valueStruct &value)
 }
 
 //--------------------------------------------------------------------------
-// Custom memory management for the class
-
-// This function allocates memory for the string object
-static void *ScriptDictionaryAlloc(int)
-{
-	return new char[sizeof(CScriptDictionary)];
-}
-
-// This function deallocates the memory for the string object
-static void ScriptDictionaryFree(void *p)
-{
-	assert( p );
-	delete[] (char*)p;
-}
-
-//--------------------------------------------------------------------------
 // Generic wrappers
 
-void ScriptDictionaryConstruct_Generic(asIScriptGeneric *gen)
+void ScriptDictionaryFactory_Generic(asIScriptGeneric *gen)
 {
-    CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
-    new(dict) CScriptDictionary(gen->GetEngine());
+    *(CScriptDictionary**)gen->GetReturnPointer() = new CScriptDictionary(gen->GetEngine());
 }
 
 void ScriptDictionaryAddRef_Generic(asIScriptGeneric *gen)
@@ -422,11 +405,9 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 
     r = engine->RegisterObjectType("dictionary", sizeof(CScriptDictionary), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
 	// Use the generic interface to construct the object since we need the engine pointer, we could also have retrieved the engine pointer from the active context
-    r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ScriptDictionaryConstruct_Generic), asCALL_GENERIC); assert( r>= 0 );
+    r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FACTORY, "dictionary@ f()", asFUNCTION(ScriptDictionaryFactory_Generic), asCALL_GENERIC); assert( r>= 0 );
     r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptDictionary,AddRef), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptDictionary,Release), asCALL_THISCALL); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ALLOC, "dictionary &f(uint)", asFUNCTION(ScriptDictionaryAlloc), asCALL_CDECL); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FREE, "void f(dictionary &in)", asFUNCTION(ScriptDictionaryFree), asCALL_CDECL); assert( r >= 0 );
 
     r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, ?&in)", asMETHODPR(CScriptDictionary,Set,(string&,void*,int),void), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, ?&out)", asMETHODPR(CScriptDictionary,Get,(string&,void*,int),bool), asCALL_THISCALL); assert( r >= 0 );
@@ -454,11 +435,9 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
     int r;
 
     r = engine->RegisterObjectType("dictionary", sizeof(CScriptDictionary), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ScriptDictionaryConstruct_Generic), asCALL_GENERIC); assert( r>= 0 );
+    r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FACTORY, "dictionary@ f()", asFUNCTION(ScriptDictionaryFactory_Generic), asCALL_GENERIC); assert( r>= 0 );
     r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptDictionaryAddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptDictionaryRelease_Generic), asCALL_GENERIC); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ALLOC, "dictionary &f(uint)", asFUNCTION(ScriptDictionaryAlloc), asCALL_CDECL); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FREE, "void f(dictionary &in)", asFUNCTION(ScriptDictionaryFree), asCALL_CDECL); assert( r >= 0 );
 
     r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, ?&in)", asFUNCTION(ScriptDictionarySet_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, ?&out)", asFUNCTION(ScriptDictionaryGet_Generic), asCALL_GENERIC); assert( r >= 0 );

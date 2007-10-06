@@ -261,7 +261,7 @@ bool Test()
 	// TEST 3
 	// It was reported that if( t.test_f() ) would always be true, even though the method returns false
 	// The bug was that the function didn't return 0 in the upper bytes, thus the 32bit value was not 0, even though the low byte was
-	engine->RegisterObjectType("tst", sizeof(tst), asOBJ_VALUE | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("tst", sizeof(tst), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectMethod("tst", "bool test_f(uint)", asMETHOD(tst, test_f), asCALL_THISCALL);
 	
 	r = engine->ExecuteString(0, "tst t; if( t.test_f(2000) == true ) Assert(false);");
@@ -303,7 +303,7 @@ bool Test()
 
 	// TEST 6
 	// Test to make sure bools can be passed to member functions properly
-	engine->RegisterObjectType("BoolTester", sizeof(TestBoolClass), asOBJ_VALUE | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("BoolTester", sizeof(TestBoolClass), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectMethod("BoolTester", "void TestTrue(bool)", asMETHOD(TestBoolClass, TestTrue), asCALL_THISCALL);
 	engine->RegisterObjectMethod("BoolTester", "void TestFalse(bool)", asMETHOD(TestBoolClass, TestFalse), asCALL_THISCALL);	
 	TestBoolClass testBool;

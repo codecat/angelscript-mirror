@@ -48,9 +48,9 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	r = engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ALLOC, "obj &f(uint)", asFUNCTION(MyAlloc), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_FREE, "void f(obj &in)", asFUNCTION(MyFree), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
+//  r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ALLOC, "obj &f(uint)", asFUNCTION(MyAlloc), asCALL_CDECL); assert( r >= 0 );
+//  r = engine->RegisterObjectBehaviour("obj", asBEHAVE_FREE, "void f(obj &in)", asFUNCTION(MyFree), asCALL_CDECL); assert( r >= 0 );
 	if( !strstr(asGetLibraryOptions(),"AS_MAX_PORTABILITY") )
 	{
 		r = engine->RegisterGlobalFunction("obj retObj()", asFUNCTION(ReturnObj), asCALL_CDECL); assert( r >= 0 );

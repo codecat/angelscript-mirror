@@ -169,7 +169,7 @@ bool Test()
 	engine->RegisterGlobalProperty("Object obj", &obj);
 
 	// Test objects with no default constructor
-	engine->RegisterObjectType("ObjNoConstruct", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectType("ObjNoConstruct", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 
 	COutStream out;
 

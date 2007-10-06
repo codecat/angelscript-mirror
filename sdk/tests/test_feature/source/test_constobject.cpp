@@ -47,14 +47,9 @@ public:
 	CObj *next;
 };
 
-void CObj_Construct(CObj *o)
+CObj *CObj_Factory()
 {
-	new(o) CObj();
-}
-
-void *CObj_Alloc(int size)
-{
-	return new char[size];
+	return new CObj();
 }
 
 CObj c_obj;
@@ -73,15 +68,14 @@ bool Test()
 
 	// Register an object type
 	r = engine->RegisterObjectType("obj", sizeof(CObj), asOBJ_REF); assert( r>=0 );
-	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CObj_Construct), asCALL_CDECL_OBJLAST); assert( r>=0 );
-	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ALLOC, "obj &f(uint)", asFUNCTION(CObj_Alloc), asCALL_CDECL); assert( r >=0 );
+	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_FACTORY, "obj@ f()", asFUNCTION(CObj_Factory), asCALL_CDECL); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ADDREF, "void f()", asMETHOD(CObj,AddRef), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_RELEASE, "void f()", asMETHOD(CObj,Release), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ASSIGNMENT, "obj &f(const obj &in)", asMETHOD(CObj,operator=), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_INDEX, "int &f(int)", asMETHODPR(CObj, operator[], (int), int&), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_INDEX, "const int &f(int) const", asMETHODPR(CObj, operator[], (int) const, const int&), asCALL_THISCALL); assert( r>=0 );
 
-	r = engine->RegisterObjectType("prop", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r>=0 );
+	r = engine->RegisterObjectType("prop", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r>=0 );
 	r = engine->RegisterObjectProperty("prop", "int val", 0); assert( r>=0 );
 
 	r = engine->RegisterObjectMethod("obj", "void SetVal(int)", asMETHOD(CObj, SetVal), asCALL_THISCALL); assert( r>=0 );

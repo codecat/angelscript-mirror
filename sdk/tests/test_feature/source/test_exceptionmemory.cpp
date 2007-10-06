@@ -90,15 +90,14 @@ void Release_gen(asIScriptGeneric *gen)
 	o->Release();
 }
 
-void ConstructRefObj(CRefObject *o)
+CRefObject *RefObjFactory()
 {
-	new(o) CRefObject();
+	return new CRefObject();
 }
 
-void ConstructRefObj_gen(asIScriptGeneric *gen)
+void RefObjFactory_gen(asIScriptGeneric *gen)
 {
-	CRefObject *o = (CRefObject*)gen->GetObject();
-	new(o) CRefObject();
+	*(CRefObject**)gen->GetReturnPointer() = new CRefObject();
 }
 
 void Construct(CObject *o)
@@ -200,7 +199,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct_gen), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("Object", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct_gen), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("Object", asBEHAVE_ASSIGNMENT, "Object &f(const Object &in)", asFUNCTION(Assign_gen), asCALL_GENERIC);
-		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructRefObj_gen), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_FACTORY, "RefObj@ f()", asFUNCTION(RefObjFactory_gen), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef_gen), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_RELEASE, "void f()", asFUNCTION(Release_gen), asCALL_GENERIC); assert(r >= 0);
 		engine->RegisterGlobalFunction("void RaiseException()", asFUNCTION(RaiseException), asCALL_GENERIC);
@@ -213,7 +212,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Construct2), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
 		engine->RegisterObjectBehaviour("Object", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
-		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructRefObj), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_FACTORY, "RefObj@ f()", asFUNCTION(RefObjFactory), asCALL_CDECL); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefObject, AddRef), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefObject, Release), asCALL_THISCALL); assert(r >= 0);
 		engine->RegisterGlobalFunction("void RaiseException()", asFUNCTION(RaiseException), asCALL_CDECL);
