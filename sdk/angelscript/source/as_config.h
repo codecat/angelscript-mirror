@@ -180,6 +180,9 @@
 // AS_PPC_64
 // Use assembler code for the 64bit PowerPC CPU family
 
+// AS_XENON
+// Use assembler code for the Xenon (XBOX360) CPU family
+
 // AS_64BIT_PTR
 // Define this to make the engine store all pointers in 64bit words.
 
@@ -188,18 +191,18 @@
 
 
 
-// 
+//
 // Target systems
 //--------------------------------
-// This group shows a few of the flags used to identify different target systems. 
-// Sometimes there are differences on different target systems, while both CPU and 
+// This group shows a few of the flags used to identify different target systems.
+// Sometimes there are differences on different target systems, while both CPU and
 // compiler is the same for both, when this is so these flags are used to produce the
 // right code.
 
 // AS_WIN     - Microsoft Windows
 // AS_LINUX   - Linux
 // AS_MAC     - Apple Macintosh
-// AS_XBOX    - Microsoft XBox 
+// AS_XBOX    - Microsoft XBox
 // AS_XBOX360 - Microsoft XBox 360
 // AS_PSP     - Sony Playstation Portable
 // AS_PS2     - Sony Playstation 2
@@ -259,7 +262,7 @@
 
 
 
-// TODO: 
+// TODO:
 // First detect hardware and OS, set AngelScript defined variables for these
 // Then detect compiler and configure the library based on detected target system (using the AngelScript defined variables)
 
@@ -288,9 +291,10 @@
 	#define ASM_INTEL  // Intel style for inline assembly on microsoft compilers
 
 	#if _XBOX_VER >= 200
-		// 360 is PPC, big endian and 64 bit.
+		// 360 uses a Xenon processor (which is a modified 64bit PPC)
 		#define AS_XBOX360
-		#define AS_PPC_64
+		#define AS_XENON
+		#define AS_BIG_ENDIAN
 	#else
 		// Support native calling conventions on x86, but not 64bit yet
 		#if defined(_XBOX) || (defined(_M_IX86) && !defined(__LP64__))
@@ -346,7 +350,7 @@
 	#define AS_SIZEOF_BOOL 1
 
 	// SN doesnt seem to like STDCALL.
-	// Maybe it can work with some fiddling, but I can't imagine linking to 
+	// Maybe it can work with some fiddling, but I can't imagine linking to
 	// any STDCALL functions with a console anyway...
 	#define STDCALL
 
@@ -420,7 +424,7 @@
 			// No support for native calling conventions yet
 			#define AS_MAX_PORTABILITY
 		#endif
-		
+
 	// PSP and PS2
 	#elif defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
 		// Support native calling conventions on MIPS architecture
@@ -429,7 +433,7 @@
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
-		
+
 	// PS3
 	#elif (defined(__PPC__) || defined(__ppc__)) && defined(__PPU__)
 		// Support native calling conventions on PS3
@@ -470,7 +474,7 @@
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 #endif
 
-// PowerPC, e.g. Mac, GameCube, XBox 360 and PS3
+// PowerPC, e.g. Mac, GameCube, PS3
 #if defined(__PPC__) || defined(__ppc__)
 	#define AS_BIG_ENDIAN
 
@@ -505,7 +509,7 @@
 
 // If there are no current support for native calling
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64))
+#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON))
 	#ifndef AS_MAX_PORTABILITY
 		#define AS_MAX_PORTABILITY
 	#endif

@@ -70,7 +70,7 @@ bool TestCondition()
 	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalProperty("string a", &a);
 
-	engine->RegisterObjectType("Data", 0, asOBJ_REF);
+//	engine->RegisterObjectType("Data", 0, asOBJ_REF | asOBJ_NOHANDLE);
 
 	engine->RegisterGlobalFunction("string@ format(float)", asFUNCTION(formatf), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("string@ format(uint)", asFUNCTION(formatUI), asCALL_GENERIC);

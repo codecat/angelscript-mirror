@@ -133,7 +133,7 @@ bool TestExecuteThis32MixedArgs()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	int r;
-	r = engine->RegisterObjectType("TestClass", 0/*sizeof(TestClass)*/, asOBJ_REF); assert( r >= 0 );
+	r = engine->RegisterObjectType("TestClass", 0/*sizeof(TestClass)*/, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
 		r = engine->RegisterObjectMethod(

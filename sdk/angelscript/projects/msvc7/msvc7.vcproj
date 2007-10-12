@@ -126,6 +126,9 @@
 				RelativePath="..\..\source\as_callfunc_x86.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\as_callfunc_xenon.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\as_compiler.cpp">
 			</File>
 			<File

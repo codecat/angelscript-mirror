@@ -5267,13 +5267,10 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	asCArray<int> funcs;
 	asCScriptNode *nm = node->firstChild;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
-	if( !builder->GetObjectType(name.AddressOf()) )
-	{
-		if( objectType )
-			builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
-		else
-			builder->GetFunctionDescriptions(name.AddressOf(), funcs);
-	}
+	if( objectType )
+		builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
+	else
+		builder->GetFunctionDescriptions(name.AddressOf(), funcs);
 
 	if( globalExpression )
 	{

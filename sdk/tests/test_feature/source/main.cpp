@@ -168,7 +168,17 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
+	if( TestSingleton::Test()         ) goto failed; else printf("-- TestSingleton passed\n");
+	if( TestInt8::Test()              ) goto failed; else printf("-- TestInt8 passed\n");
+	if( TestExecuteThis32MixedArgs()  ) goto failed; else printf("-- TestExecuteThis32MixedArgs passed\n");
+	if( TestReturnWithCDeclObjFirst() ) goto failed; else printf("-- TestReturnWithCDeclObjFirst passed\n");
+	if( TestNotComplexThisCall()      ) goto failed; else printf("-- TestNotComplexThisCall passed\n");
+	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
+	if( TestVirtualMethod()           ) goto failed; else printf("-- TestVirtualMethod passed\n");
+	if( TestMultipleInheritance()     ) goto failed; else printf("-- TestMultipleInheritance passed\n");
+	if( TestCondition()               ) goto failed; else printf("-- TestCondition passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
@@ -201,9 +211,7 @@ int main(int argc, char **argv)
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");
-	if( TestInt8::Test()              ) goto failed; else printf("-- TestInt8 passed\n");
 	if( TestExecute32Args()           ) goto failed; else printf("-- TestExecute32Args passed\n");
-	if( TestExecuteThis32MixedArgs()  ) goto failed; else printf("-- TestExecuteThis32MixedArgs passed\n");
 	if( TestExecute32MixedArgs()      ) goto failed; else printf("-- TestExecute32MixedArgs passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestAutoHandle::Test()        ) goto failed; else printf("-- TestAutoHandle passed\n");
@@ -213,11 +221,9 @@ int main(int argc, char **argv)
 	if( TestStack2::Test()            ) goto failed; else printf("-- TestStack2 passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
-	if( TestReturnWithCDeclObjFirst() ) goto failed; else printf("-- TestReturnWithCDeclObjFirst passed\n");
 	if( TestNotComplexStdcall()       ) goto failed; else printf("-- TestNotComplexStdcall passed\n");
 	if( TestCDecl_ClassA()            ) goto failed; else printf("-- TestCDecl_ClassA passed\n");
 	if( TestCDecl_ClassC()            ) goto failed; else printf("-- TestCDecl_ClassC passed\n");
-	if( TestNotComplexThisCall()      ) goto failed; else printf("-- TestNotComplexThisCall passed\n");
 	if( TestObject3::Test()           ) goto failed; else printf("-- TestObject3 passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
 	if( TestObject::Test()            ) goto failed; else printf("-- TestObject passed\n");
@@ -228,14 +234,10 @@ int main(int argc, char **argv)
 	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
-	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
 	if( TestReturnF()                 ) goto failed; else printf("-- TestReturnF passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
 	if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
 	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
-	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
-	if( TestVirtualMethod()           ) goto failed; else printf("-- TestVirtualMethod passed\n");
-	if( TestMultipleInheritance()     ) goto failed; else printf("-- TestMultipleInheritance passed\n");
 	if( TestVector3_2::Test()         ) goto failed; else printf("-- TestVector3_2 passed\n");
 	if( TestDict::Test()              ) goto failed; else printf("-- TestDict passed\n");
 	if( TestNested()                  ) goto failed; else printf("-- TestNested passed\n");
@@ -244,8 +246,6 @@ int main(int argc, char **argv)
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
-	if( TestSingleton::Test()         ) goto failed; else printf("-- TestSingleton passed\n");
-	if( TestCondition()               ) goto failed; else printf("-- TestCondition passed\n");
 	if( TestPostProcess::Test()       ) goto failed; else printf("-- TestPostProcess passed\n");
 	if( TestArgRef::Test()            ) goto failed; else printf("-- TestArgRef passed\n");
 	if( TestMultiAssign::Test()       ) goto failed; else printf("-- TestMultiAssign passed\n");

@@ -89,7 +89,7 @@ bool Test()
 
 	
 	// Test to make sure bools can be passed to member functions properly
-	engine->RegisterObjectType("Int8Tester", 0, asOBJ_REF);
+	engine->RegisterObjectType("Int8Tester", 0, asOBJ_REF | asOBJ_NOHANDLE);
 	engine->RegisterObjectMethod("Int8Tester", "void Test1(int8)", asMETHOD(TestInt8Class, Test1), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Int8Tester", "void Test0(int8)", asMETHOD(TestInt8Class, Test0), asCALL_THISCALL);	
 	TestInt8Class testInt8;

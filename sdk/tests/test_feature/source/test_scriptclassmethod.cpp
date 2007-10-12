@@ -119,10 +119,30 @@ static const char *script5 =
 "}                    \n";
 
 
+static const char *script6 =
+"class Set             \n"
+"{                     \n"
+"   Set(int a) {print(\"Set::Set\");}      \n"
+"};                    \n"
+"class Test            \n"
+"{                     \n"
+"   void Set(int a) {print(\"Test::Set\");} \n"
+"   void Test2()       \n"
+"   {                  \n"
+"      int a = 0;      \n"
+       // Call class method
+"      this.Set(a);    \n"  // TODO: This should be just 'Set(a)'
+       // Call Set constructor
+"      Set(a);         \n"  // TODO: This should be '::Set(a)'
+"   }                  \n"
+"}                     \n";
+
+std::string outbuffer;
 void print(asIScriptGeneric *gen)
 {
 	std::string s = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
 //	printf("%s\n", s.c_str());
+	outbuffer += s + "\n";
 }
 
 void Analyze(asIScriptGeneric *gen)
@@ -297,6 +317,30 @@ bool Test()
 	r = engine->ExecuteString(0, "test()", 0, 0);
 	if( r != asEXECUTION_FINISHED )
 	{
+		fail = true;
+	}
+
+	engine->Release();
+
+	//-----------------------------
+	// Name conflict with class method and object type
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterScriptString(engine);
+	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
+	engine->AddScriptSection(0, "test6", script6, strlen(script6), 0);
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+
+	outbuffer = "";
+	r = engine->ExecuteString(0, "Test t; t.Set(1); t.Test2();");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+	if( outbuffer != "Test::Set\nTest::Set\nSet::Set\n" )
+	{
+		printf(outbuffer.c_str());
 		fail = true;
 	}
 

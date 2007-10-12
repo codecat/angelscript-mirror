@@ -1437,7 +1437,12 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	// Check for name conflicts
 	GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
 	if( !isConstructor && !isDestructor )
-		CheckNameConflict(name.AddressOf(), n, file);
+	{
+		if( objType )
+			CheckNameConflictMember(asCDataType::CreateObject(objType, false), name.AddressOf(), n, file);
+		else
+			CheckNameConflict(name.AddressOf(), n, file);
+	}
 	else
 	{
 		// Verify that the name of the constructor/destructor is the same as the class

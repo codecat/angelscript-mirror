@@ -71,6 +71,14 @@ bool Test()
 
 	// Ref type must register ADDREF and RELEASE
 
+	// Ref types without default factory must not be allowed to be initialized
+
+	// Ref types with asOBJ_NOHANDLE is allowed and must not register ADDREF, RELEASE, or FACTORY behaviours (used for singletons)
+	// It must not be possible to register functions that take handles of types with asOBJ_HANDLE
+
+    // Validate if the same behaviour is registered twice, e.g. if index
+    // behaviour is registered twice with signature 'int f(int)' and error should be given
+
 	// Success
  	return fail;
 }

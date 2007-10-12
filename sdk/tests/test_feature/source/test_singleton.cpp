@@ -34,7 +34,7 @@ bool Test()
 
 	RegisterScriptString(engine);
 
-	r = engine->RegisterObjectType("GameMgr", 0, asOBJ_REF); assert(r >= 0);
+	r = engine->RegisterObjectType("GameMgr", 0, asOBJ_REF | asOBJ_NOHANDLE); assert(r >= 0);
 	r = engine->RegisterObjectMethod("GameMgr", "void Test()", asFUNCTION(TestMethod), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalProperty("GameMgr Game", (void*)&GameMgr); assert(r >= 0);
 
@@ -43,7 +43,7 @@ bool Test()
 	engine->AddScriptSection(0, "script", script, strlen(script), 0);
 	engine->Build(0);
 
-	r = engine->RegisterObjectType("SoundMgr", 0, asOBJ_REF); assert(r >= 0);
+	r = engine->RegisterObjectType("SoundMgr", 0, asOBJ_REF | asOBJ_NOHANDLE); assert(r >= 0);
 	r = engine->RegisterObjectMethod("SoundMgr", "void Test()", asFUNCTION(TestMethod), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalProperty("SoundMgr SMgr", (void*)&SoundMgr); assert(r >= 0);
 

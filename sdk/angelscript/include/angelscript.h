@@ -633,10 +633,11 @@ const asDWORD asCALL_GENERIC          = 5;
 
 // Object type flags
 
-const asDWORD asOBJ_REF                   = 1;
-const asDWORD asOBJ_VALUE                 = 2;
-const asDWORD asOBJ_GC                    = 4;
-const asDWORD asOBJ_POD                   = 8;
+const asDWORD asOBJ_REF                   = 0x01;
+const asDWORD asOBJ_VALUE                 = 0x02;
+const asDWORD asOBJ_GC                    = 0x04;
+const asDWORD asOBJ_POD                   = 0x08;
+const asDWORD asOBJ_NOHANDLE              = 0x10;
 const asDWORD asOBJ_APP_CLASS             = 0x100;
 const asDWORD asOBJ_APP_CLASS_CONSTRUCTOR = 0x200;
 const asDWORD asOBJ_APP_CLASS_DESTRUCTOR  = 0x400;
@@ -650,7 +651,7 @@ const asDWORD asOBJ_APP_CLASS_A           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_A
 const asDWORD asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT);
 const asDWORD asOBJ_APP_PRIMITIVE         = 0x1000;
 const asDWORD asOBJ_APP_FLOAT             = 0x2000;
-const asDWORD asOBJ_MASK_VALID_FLAGS      = 0x3F0F;
+const asDWORD asOBJ_MASK_VALID_FLAGS      = 0x3F1F;
 
 // Behaviours
 

@@ -17,6 +17,7 @@
 <a href="#value">asOBJ_VALUE</a>
 <a href="#gc">asOBJ_GC</a>
 <a href="#pod">asOBJ_POD</a>
+<a href="#nohnd">asOBJ_NOHANDLE</a>
 <a href="#class">asOBJ_APP_CLASS</a>
 <a href="#constr">asOBJ_APP_CLASS_CONSTRUCTOR</a>
 <a href="#destr">asOBJ_APP_CLASS_DESTRUCTOR</a>
@@ -59,6 +60,16 @@ doesn't need special behaviour for initialization, uninitialization, and or
 copying. Combined with asOBJ_VALUE it will allow the use of the type without
 the need for registration of the asBEHAVE_CONSTRUCT, asBEHAVE_DESTRUCT, and
 asBEHAVE_ASSIGNMENT.</p>
+
+
+
+<a name="nohnd"></a>
+<h2>asOBJ_NOHANDLE</h2>
+
+<p>This flag tells AngelScript that the object type, although a reference type,
+doesn't allow handles to be used. This means that variables of this type
+cannot be instanciated in the script, only registered as property from the
+application. This is ideal for registering singleton classes.</p>
 
 
 

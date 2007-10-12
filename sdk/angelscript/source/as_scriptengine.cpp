@@ -128,6 +128,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_SH4
 		"AS_SH4 "
 #endif
+#ifdef AS_XENON
+		"AS_XENON "
+#endif
 	;
 
 	return string;
@@ -1077,8 +1080,12 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	//   Must have either asOBJ_REF or asOBJ_VALUE
 	if( flags & asOBJ_REF )
 	{
-		// Can optionally have the asOBJ_GC flag set, but nothing else
-		if( flags & ~(asOBJ_REF | asOBJ_GC) )
+		// Can optionally have the asOBJ_GC or asOBJ_NOHANDLE flag set, but nothing else
+		if( flags & ~(asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE) )
+			return ConfigError(asINVALID_ARG);
+
+		// asOBJ_GC and asOBJ_NOHANDLE are exclusive
+		if( (flags & asOBJ_GC) && (flags & asOBJ_NOHANDLE) )
 			return ConfigError(asINVALID_ARG);
 	}
 	else if( flags & asOBJ_VALUE )
@@ -1587,8 +1594,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else if( behaviour == asBEHAVE_FACTORY )
 	{
-		// Must be a ref type
-		if( !(func.objectType->flags & asOBJ_REF) )
+		// Must be a ref type and must not have asOBJ_NOHANDLE
+		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
 		{
 			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
@@ -1616,8 +1623,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else if( behaviour == asBEHAVE_ADDREF )
 	{
-		// Must be a ref type
-		if( !(func.objectType->flags & asOBJ_REF) )
+		// Must be a ref type and must not have asOBJ_NOHANDLE
+		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
 		{
 			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
@@ -1638,8 +1645,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else if( behaviour == asBEHAVE_RELEASE)
 	{
-		// Must be a ref type
-		if( !(func.objectType->flags & asOBJ_REF) )
+		// Must be a ref type and must not have asOBJ_NOHANDLE
+		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
 		{
 			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
@@ -2260,6 +2267,8 @@ void asCScriptEngine::PrepareEngine()
 	{
 		if( objectTypes[n] && !(objectTypes[n]->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY)) )
 		{
+			bool missingBehaviour = false;
+
 			// Verify that GC types have all behaviours
 			if( objectTypes[n]->flags & asOBJ_GC )
 			{
@@ -2271,10 +2280,17 @@ void asCScriptEngine::PrepareEngine()
 					objectTypes[n]->beh.gcEnumReferences       == 0 ||
 					objectTypes[n]->beh.gcReleaseAllReferences == 0 )
 				{
-					asCString str;
-					str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, objectTypes[n]->name.AddressOf());
-					CallMessageCallback("", 0, 0, 0, str.AddressOf());
-					ConfigError(asINVALID_CONFIGURATION);
+					missingBehaviour = true;
+				}
+			}
+			// Verify that ref types have add ref and release behaviours
+			else if( (objectTypes[n]->flags & asOBJ_REF) && 
+				     !(objectTypes[n]->flags & asOBJ_NOHANDLE) )
+			{
+				if( objectTypes[n]->beh.addref  == 0 ||
+					objectTypes[n]->beh.release == 0 )
+				{
+					missingBehaviour = true;
 				}
 			}
 			// Verify that non-pod value types have the constructor and destructor registered
@@ -2284,11 +2300,16 @@ void asCScriptEngine::PrepareEngine()
 				if( objectTypes[n]->beh.construct == 0 ||
 					objectTypes[n]->beh.destruct  == 0 )
 				{
-					asCString str;
-					str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, objectTypes[n]->name.AddressOf());
-					CallMessageCallback("", 0, 0, 0, str.AddressOf());
-					ConfigError(asINVALID_CONFIGURATION);
+					missingBehaviour = true;
 				}
+			}
+
+			if( missingBehaviour )
+			{
+				asCString str;
+				str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, objectTypes[n]->name.AddressOf());
+				CallMessageCallback("", 0, 0, 0, str.AddressOf());
+				ConfigError(asINVALID_CONFIGURATION);
 			}
 		}
 	}
