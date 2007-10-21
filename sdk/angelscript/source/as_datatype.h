@@ -91,6 +91,7 @@ public:
 	bool IsEqualExceptConst(const asCDataType &)        const;
 
 	bool SupportHandles() const;
+	bool CanBeInstanciated() const;
 
 	bool operator ==(const asCDataType &) const;
 	bool operator !=(const asCDataType &) const;

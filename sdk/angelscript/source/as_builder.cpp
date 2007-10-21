@@ -786,8 +786,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 	// What data type is it?
 	asCDataType type = CreateDataTypeFromNode(node->firstChild, file);
 
-	if( type.GetSizeOnStackDWords() == 0 || 
-		(type.IsObject() && !type.IsObjectHandle() && type.GetSizeInMemoryBytes() == 0) )
+	if( !type.CanBeInstanciated() )
 	{
 		asCString str;
 		// TODO: Change to "'type' cannot be declared as variable"
@@ -1438,8 +1437,9 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
 	if( !isConstructor && !isDestructor )
 	{
+		asCDataType dt = asCDataType::CreateObject(objType, false);
 		if( objType )
-			CheckNameConflictMember(asCDataType::CreateObject(objType, false), name.AddressOf(), n, file);
+			CheckNameConflictMember(dt, name.AddressOf(), n, file);
 		else
 			CheckNameConflict(name.AddressOf(), n, file);
 	}
@@ -1860,6 +1860,19 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	{
 		if( n->tokenType == ttOpenBracket )
 		{
+			// Make sure the sub type can be instanciated
+			if( !dt.CanBeInstanciated() )
+			{
+				int r, c;
+				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+
+				asCString str;
+				// TODO: Change to "Array sub type cannot be 'type'"
+				str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+
+				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+			}
+			
 			// Make the type an array (or multidimensional array)
 			if( dt.MakeArray(engine) < 0 )
 			{

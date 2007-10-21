@@ -246,6 +246,9 @@
 				RelativePath="..\..\source\test_exceptionmemory.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_factory.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_float.cpp">
 			</File>
 			<File

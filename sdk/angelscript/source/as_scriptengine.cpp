@@ -1211,11 +1211,11 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		// Was the script array type created before?
 		if( scriptArrayTypes[scriptArrayTypes.GetLength()-1] == mostRecentScriptArrayType ||
 			mostRecentScriptArrayType == dt.GetObjectType() )
-			return asNOT_SUPPORTED;
+			return ConfigError(asNOT_SUPPORTED);
 
 		// Is the script array type already being used?
 		if( dt.GetObjectType()->refCount > 1 )
-			return asNOT_SUPPORTED;
+			return ConfigError(asNOT_SUPPORTED);
 
 		// Put the data type in the list
 		asCObjectType *type = NEW(asCObjectType)(this);
@@ -1323,9 +1323,9 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	// Verify function declaration
 	asCScriptFunction func(0);
 
-	int r = bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
-	if( r < 0 )
-		return ConfigError(asINVALID_DECLARATION);
+	// The default array object is actually being registered 
+	// with incorrect declarations, but that's a concious decision
+	bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
 
 	if( isDefaultArray )
 		func.objectType = defaultArrayObjectType;
@@ -3135,6 +3135,7 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 
 void *asCScriptEngine::CallAlloc(asCObjectType *type)
 {
+	// TODO: Just pass the type size directly
 #if defined(AS_DEBUG) && !defined(AS_NO_USER_ALLOC)
 	return ((asALLOCFUNCDEBUG_t)(userAlloc))(type->size, __FILE__, __LINE__);
 #else
@@ -3142,8 +3143,9 @@ void *asCScriptEngine::CallAlloc(asCObjectType *type)
 #endif
 }
 
-void asCScriptEngine::CallFree(asCObjectType *type, void *obj)
+void asCScriptEngine::CallFree(asCObjectType * /*type*/, void *obj)
 {
+	// TODO: Shouldn't pass the type pointer to the method
 	userFree(obj);
 }
 

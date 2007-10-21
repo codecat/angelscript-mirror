@@ -59,6 +59,17 @@ bool Test()
 	engine->Release();
 
 	// Ref type without registered assignment behaviour won't allow the assignment
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 ); 
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_FACTORY, "ref@ f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "ref r1, r2; r1 = r2;");
+	if( r >= 0 )
+		fail = true;
+	engine->Release();
+
 
 	// Ref type must register addref and release
 

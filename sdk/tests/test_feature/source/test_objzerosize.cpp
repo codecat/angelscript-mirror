@@ -48,8 +48,8 @@ bool Test()
 
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
+	// Register an object type that cannot be instanciated by the script, but can be interacted with through object handles
 	engine->RegisterObjectType("Object", 0, asOBJ_REF);
-	engine->RegisterObjectBehaviour("Object", asBEHAVE_FACTORY, "Object@ f()", asFUNCTION(Factory), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_ADDREF, "void f()", asMETHOD(CObject, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_RELEASE, "void f()", asMETHOD(CObject, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Object", "void Set(int)", asMETHOD(CObject, Set), asCALL_THISCALL);
@@ -62,11 +62,33 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Must not allow it to be declared as local variable
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "Object obj;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 8) : Error   : Data type can't be 'Object'\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
+		fail = true;
+	}
+
+	// Must not allow it to be declared as global variable
+	bout.buffer = "";
+	const char *script = "Object obj2;";
+	engine->AddScriptSection(0, "script", script, strlen(script));
+	r = engine->Build(0);
+	if( r >= 0 || bout.buffer != "script (1, 1) : Error   : Data type can't be 'Object'\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	engine->Discard(0);
+
+	// It must not be allowed as sub type of array
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "Object[] obj;");
+	if( r >= 0 || bout.buffer != "ExecuteString (1, 7) : Error   : Data type can't be 'Object'\n" )
+	{
+		printf(bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -125,7 +147,7 @@ bool Test()
 	}
 
 	// Test object with zero size as member of script class
-	const char *script = "  \n\
+	script = "  \n\
 	 class myclass          \n\
 	 {                      \n\
 	   Object obj;          \n\

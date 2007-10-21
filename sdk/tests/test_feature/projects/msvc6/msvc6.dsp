@@ -246,6 +246,10 @@ SOURCE=..\..\source\test_exceptionmemory.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_factory.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_float.cpp
 # End Source File
 # Begin Source File

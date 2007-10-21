@@ -5,8 +5,7 @@
 static const char *script1 =
 "void Test()                               \n"
 "{                                         \n"
-"  Obj i;                                  \n"
-"  TX.Set(\"user\", i.Value());            \n"
+"  TX.Set(\"user\", TX.Value());           \n"
 "}                                         \n";
 
 static const char *script2 =
@@ -58,14 +57,16 @@ bool TestFuncOverload()
 	engine->RegisterGlobalFunction("void func(int)", asFUNCTION(FuncInt), asCALL_CDECL);
 
 	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->Build(0);
+	int r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
 
 	engine->ExecuteString(0, "func(func(3));");
 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	int r = engine->Build(0);
+	r = engine->Build(0);
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "TestFuncOverload (1, 1) : Info    : Compiling void ScriptFunc(void)\n"

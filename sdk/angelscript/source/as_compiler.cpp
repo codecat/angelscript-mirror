@@ -1165,8 +1165,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 	while( node )
 	{
 		// Is the type allowed?
-		if( type.GetSizeOnStackDWords() == 0 ||
-			(type.IsObject() && !type.IsObjectHandle() && type.GetSizeInMemoryBytes() == 0) )
+		if( !type.CanBeInstanciated() )
 		{
 			asCString str;
 			// TODO: Change to "'type' cannot be declared as variable"

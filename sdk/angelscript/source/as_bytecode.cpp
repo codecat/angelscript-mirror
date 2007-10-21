@@ -331,39 +331,6 @@ bool asCByteCode::CanBeSwapped(cByteInstruction *curr)
 	return true;
 }
 
-bool asCByteCode::MatchPattern(cByteInstruction *curr)
-{
-	if( !curr || !curr->next || !curr->next->next ) return false;
-
-	if( curr->op != BC_PshC4 ) return false;
-
-	asDWORD op = curr->next->next->op;
-	if( op != BC_ADDi &&
-		op != BC_MULi &&
-		op != BC_ADDf &&
-		op != BC_MULf ) return false;
-
-	asDWORD val = curr->next->op;
-	if( val != BC_PshV4 &&
-		val != BC_PSF )
-		return false;
-
-	return true;
-}
-
-cByteInstruction *asCByteCode::OptimizePattern(cByteInstruction *curr)
-{
-	// Delete the operator instruction
-	DeleteInstruction(curr->next->next);
-
-	// Swap the two value instructions
-	cByteInstruction *instr = curr->next;
-	RemoveInstruction(instr);
-	InsertBefore(curr, instr);
-
-	return GoBack(instr);
-}
-
 cByteInstruction *asCByteCode::GoBack(cByteInstruction *curr)
 {
 	// Go back 2 instructions
@@ -631,9 +598,6 @@ int asCByteCode::Optimize()
 
 			instr = GoBack(instr);
 		}
-		// PshC4 x, YYY y, OP -> YYY y, OPI x
-		else if( MatchPattern(curr) )
-			instr = OptimizePattern(curr);
 		// SWAP4, OP -> OP
 		else if( IsCombination(curr, BC_SWAP4, BC_ADDi) ||
 				 IsCombination(curr, BC_SWAP4, BC_MULi) ||

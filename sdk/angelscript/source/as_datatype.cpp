@@ -260,6 +260,19 @@ bool asCDataType::SupportHandles() const
 	return false;
 }
 
+bool asCDataType::CanBeInstanciated() const
+{
+	if( GetSizeOnStackDWords() == 0 ||
+		(IsObject() && 
+		 (objectType->flags & asOBJ_REF) &&        // It's a ref type and
+		 ((objectType->flags & asOBJ_NOHANDLE) ||  // the ref type doesn't support handles or
+		  (!IsObjectHandle() &&                    // it's not a handle and
+		   objectType->beh.construct == 0))) )     // the ref type cannot be instanciated
+		return false;
+
+	return true;
+}
+
 bool asCDataType::IsReadOnly() const
 {
 	if( isObjectHandle )

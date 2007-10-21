@@ -128,8 +128,6 @@ public:
 
 protected:
 	// Helpers for Optimize
-	bool MatchPattern(cByteInstruction *curr);
-	cByteInstruction *OptimizePattern(cByteInstruction *curr);
 	bool CanBeSwapped(cByteInstruction *curr);
 	bool IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2);
 	bool IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2, bcInstr bc3);
