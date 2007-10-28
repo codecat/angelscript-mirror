@@ -80,15 +80,16 @@ asCThreadManager::~asCThreadManager()
 	ENTERCRITICALSECTION(criticalSection);
 
 	// Delete all thread local datas
-	if( tldMap.MoveFirst() )
+	asSMapNode<asDWORD,asCThreadLocalData*> *cursor = 0;
+	if( tldMap.MoveFirst(&cursor) )
 	{
 		do
 		{
-			if( tldMap.GetValue() ) 
+			if( tldMap.GetValue(cursor) ) 
 			{
-				DELETE(tldMap.GetValue(),asCThreadLocalData);
+				DELETE(tldMap.GetValue(cursor),asCThreadLocalData);
 			}
-		} while( tldMap.MoveNext() );
+		} while( tldMap.MoveNext(&cursor, cursor) );
 	}
 
 	LEAVECRITICALSECTION(criticalSection);
@@ -109,15 +110,16 @@ int asCThreadManager::CleanupLocalData()
 
 	ENTERCRITICALSECTION(criticalSection);
 
-	if( tldMap.MoveTo(id) )
+	asSMapNode<asDWORD,asCThreadLocalData*> *cursor = 0;
+	if( tldMap.MoveTo(&cursor, id) )
 	{
-		asCThreadLocalData *tld = tldMap.GetValue();
+		asCThreadLocalData *tld = tldMap.GetValue(cursor);
 		
 		// Can we really remove it at this time?
 		if( tld->activeContexts.GetLength() == 0 )
 		{
 			DELETE(tld,asCThreadLocalData);
-			tldMap.Erase(true);
+			tldMap.Erase(cursor);
 			r = 0;
 		}
 		else
@@ -149,8 +151,9 @@ asCThreadLocalData *asCThreadManager::GetLocalData(asDWORD threadId)
 
 	ENTERCRITICALSECTION(criticalSection);
 
-	if( tldMap.MoveTo(threadId) )
-		tld = tldMap.GetValue();
+	asSMapNode<asDWORD,asCThreadLocalData*> *cursor = 0;
+	if( tldMap.MoveTo(&cursor, threadId) )
+		tld = tldMap.GetValue(cursor);
 
 	LEAVECRITICALSECTION(criticalSection);
 

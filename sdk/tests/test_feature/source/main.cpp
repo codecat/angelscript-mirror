@@ -168,15 +168,20 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
+	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
+	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
+	if( TestExceptionMemory::Test()   ) goto failed; else printf("-- TestExceptionMemory passed\n");
+	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
+	if( TestObject::Test()            ) goto failed; else printf("-- TestObject passed\n");
+	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestFactory::Test()           ) goto failed; else printf("-- TestFactory passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
 	if( TestObjZeroSize::Test()       ) goto failed; else printf("-- TestObjZeroSize passed\n");
-	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
-	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
 	if( TestSingleton::Test()         ) goto failed; else printf("-- TestSingleton passed\n");
 	if( TestInt8::Test()              ) goto failed; else printf("-- TestInt8 passed\n");
 	if( TestExecuteThis32MixedArgs()  ) goto failed; else printf("-- TestExecuteThis32MixedArgs passed\n");
@@ -189,7 +194,6 @@ int main(int argc, char **argv)
 	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
-	if( TestExceptionMemory::Test()   ) goto failed; else printf("-- TestExceptionMemory passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
@@ -202,8 +206,6 @@ int main(int argc, char **argv)
 	if( TestDestructor::Test()        ) goto failed; else printf("-- TestDestructor passed\n");
 	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");
-	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
-	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
 	if( TestVarType::Test()           ) goto failed; else printf("-- TestVarType passed\n");
 	if( TestScriptMath::Test()        ) goto failed; else printf("-- TestScriptMath passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
@@ -214,7 +216,6 @@ int main(int argc, char **argv)
 	if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");
 	if( TestExecute32Args()           ) goto failed; else printf("-- TestExecute32Args passed\n");
 	if( TestExecute32MixedArgs()      ) goto failed; else printf("-- TestExecute32MixedArgs passed\n");
-	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestAutoHandle::Test()        ) goto failed; else printf("-- TestAutoHandle passed\n");
 	if( TestExecuteMixedArgs()        ) goto failed; else printf("-- TestExecuteMixedArgs passed\n");
 	if( TestStdcall4Args()            ) goto failed; else printf("-- TestStdcall4Args passed\n");
@@ -227,7 +228,6 @@ int main(int argc, char **argv)
 	if( TestCDecl_ClassC()            ) goto failed; else printf("-- TestCDecl_ClassC passed\n");
 	if( TestObject3::Test()           ) goto failed; else printf("-- TestObject3 passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
-	if( TestObject::Test()            ) goto failed; else printf("-- TestObject passed\n");
 	if( TestStdVector::Test()         ) goto failed; else printf("-- TestStdVector passed\n");
 	if( TestFor::Test()               ) goto failed; else printf("-- TestFor passed\n");
 	if( TestArrayIntf::Test()         ) goto failed; else printf("-- TestArrayIntf passed\n");

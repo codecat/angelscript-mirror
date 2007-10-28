@@ -139,6 +139,15 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	{
 		returnType = builder->CreateDataTypeFromNode(func->firstChild, script);
 		returnType = builder->ModifyDataTypeFromNode(returnType, func->firstChild->next, script, 0, 0);
+
+		// Make sure the return type is instanciable or is void
+		if( !returnType.CanBeInstanciated() &&
+			returnType != asCDataType::CreatePrimitive(ttVoid, false) )
+		{
+			asCString str;
+			str.Format(TXT_DATA_TYPE_CANT_BE_s, returnType.Format().AddressOf());
+			Error(str.AddressOf(), func->firstChild);
+		}
 	}
 	else
 	{
@@ -165,10 +174,12 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		// Get the parameter type
 		asCDataType type = builder->CreateDataTypeFromNode(node, script);
 
-		type = builder->ModifyDataTypeFromNode(type, node->next, script, 0, 0);
+		int inoutFlag = 0;
+		type = builder->ModifyDataTypeFromNode(type, node->next, script, &inoutFlag, 0);
 
 		// Is the data type allowed?
-		if( type.GetSizeOnStackDWords() == 0 || type.IsReference() && type.GetSizeInMemoryBytes() == 0 )
+		if( (type.IsReference() && inoutFlag != 3 && !type.CanBeInstanciated()) ||
+			(!type.IsReference() && !type.CanBeInstanciated()) )
 		{
 			asCString str;
 			str.Format(TXT_PARAMETER_CANT_BE_s, type.Format().AddressOf());
@@ -2852,7 +2863,8 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 		else
 		{
 			// Default copy operator
-			if( lvalue->dataType.GetSizeInMemoryDWords() == 0 )
+			if( lvalue->dataType.GetSizeInMemoryDWords() == 0 ||
+				!(lvalue->dataType.GetObjectType()->flags & asOBJ_POD) )
 			{
 				Error(TXT_NO_DEFAULT_COPY_OP, node);
 			}

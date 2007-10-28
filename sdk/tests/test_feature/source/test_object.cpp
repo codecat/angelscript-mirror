@@ -149,14 +149,14 @@ bool Test()
 
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	engine->RegisterObjectType("Object", sizeof(CObject), asOBJ_VALUE | asOBJ_APP_CLASS_CD);	
+	engine->RegisterObjectType("Object", sizeof(CObject), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CD);	
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("Object", "void Set(int)", asMETHOD(CObject, Set), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Object", "int Get()", asMETHOD(CObject, Get), asCALL_THISCALL);
 	engine->RegisterObjectProperty("Object", "int val", offsetof(CObject, val));
 
-	engine->RegisterObjectType("Object2", sizeof(CObject2), asOBJ_VALUE | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("Object2", sizeof(CObject2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectBehaviour("Object2", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct2), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Object2", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct2), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectProperty("Object2", "Object obj", offsetof(CObject2, obj));

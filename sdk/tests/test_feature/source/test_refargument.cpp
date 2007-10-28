@@ -159,7 +159,13 @@ bool Test()
 	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
 		if( r >= 0 ) fail = true;
-		if( bout.buffer != "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" ) fail = true;
+		if( bout.buffer != "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
+			               "TestRefArgument (6, 1) : Info    : Compiling void Testf(float&inout)\n"
+						   "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
 	}
 	else
 		if( r != 0 ) fail = true;
