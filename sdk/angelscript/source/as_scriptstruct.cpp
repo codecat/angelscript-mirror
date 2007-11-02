@@ -182,6 +182,7 @@ asCScriptStruct::asCScriptStruct(asCObjectType *ot)
 {
 	refCount         = 1;
 	objType          = ot;
+	objType->refCount++;
 	isDestructCalled = false;
 
 	// Notify the garbage collector of this object
@@ -219,6 +220,8 @@ void asCScriptStruct::Destruct()
 
 asCScriptStruct::~asCScriptStruct()
 {
+	objType->refCount--;
+
 	// The engine pointer should be available from the objectType
 	asCScriptEngine *engine = objType->engine;
 

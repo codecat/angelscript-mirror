@@ -14,330 +14,313 @@
 
 <h1>Registering a C++ class</h1>
 
-<p><font color="red">This article is out-of-date and should be rewritten</font></p>
-
-<p>Before registering a class with AngelScript you need to decide how the script
-engine should interact with it. Basically there are two questions that needs
-to be answered:</p>
+<p>The are two principal paths to take when registering a new type, either the
+type is a reference type that is located in dynamic memory, or the type is a
+value type that is located on the stack. Complex types are usually registered
+as reference types, while simple types that are meant to be used as primitives
+are registered as value types. A reference type support object handles, but
+cannot be passed by value to application registered functions, a value type
+doesn't support handles and can be passed by value to application registered
+functions.</p>
 
 <ul>
-<li>Should local objects be allowed to be constructed in the script?
-<li>Should the script be able to take handles to the objects?
+<li><a href="#basicref">Registering a basic reference type</a>
+<li><a href="#gcref">Registering a garbage collected reference type</a>
+<li><a href="#noinst">Registering an uninstanciable reference type</a>
+<li><a href="#single">Registering a single-reference type</a>
+<li><a href="#val">Registering a value type</a>
+<li><a href="#opbeh">Registering operator behaviours</a>
+<li><a href="#objmeth">Registering object methods</a>
+<li><a href="#objprop">Registering object properties</a>
 </ul>
 
-<p>If you answered no on the first question, then you'll want to register the
-object with a size of 0. This is useful if you wish to register an object type
-for interacting with singletons, or you wish to have special control over how
-the objects are created.</p>
+<a name=basicref>
+<h2>Registering a basic reference type</h2>
 
-<p>If you answered yes to the second question, then you'll need to register the
-addref and release behaviours for the object type. These will be used to control
-how many references are held by the script.</p>
-
-<p>If you answered no to both questions then the script can only interact with the
-object if it is registered as a global property, or if a registered function or method
-returns a reference to the object.</p>
-
-<p>If you answered yes to the first question, then you need to define the size of
-the object type, and perhaps even register the constructor and destructor behaviours
-for initializing and cleaning up the objects.
-</p>
-
-<h2>The object type</h2>
-
-<p>The first method that must be called is RegisterObjectType(), which will
-give the name for which the class will be identified with in the scripts.</p>
+<p>The basic reference type should be registered with the following behaviours:
+asBEHAVE_FACTORY, asBEHAVE_ADDREF, and asBEHAVE_RELEASE. If it is desired that
+assignments should be allowed for the type the asBEHAVE_ASSIGNMENT behaviour
+must be registered as well. Other behaviours, such as math operators,
+comparisons, etc may be registered as needed.</p>
 
 <pre class=border>
-int RegisterObjectType(const char *name,
-                       int         byteSize,
-                       asDWORD     flags);
+<font color=green>// Registering the reference type</font>
+r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 );
 </pre>
 
-<p>The name can be either a new identifier naming the new type, or it can be
-the name of an already existing datatype followed by [] (array brackets), e.g.
-"MyClass" or "int[]". The second case means that the application wants to
-override the default array implementation for that specific type.</p>
+<h3>Factory function</h3>
 
-<p>The second parameter is as the name suggests the size of the class in
-bytes, so normally you would use the sizeof() operator to determine this
-value. It is however valid to register an object type with the size of 0,
-which then means that the scripts may not declare local objects of that type.
-The scripts can still hold handles to the object type, or use application
-registered global objects of that type.</p>
+<p>The factory function is the one that AngelScript will use to instanciate
+objects of this type when a variable is declared. It is responsible for
+allocating and initializing the object memory.</p>
 
-<p>The third flag is perhaps the most important one, if this flag isn't
-correctly set it is quite possible that you will find yourself searching for
-bugs that corrupt the stack frame, or other horrible bugs. This flag tells
-AngelScript about the C++ properties of the object type, i.e. how C++ is
-handling the objects in situations like returns, etc.</p>
-
-<p>There are two main types:</p>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=150 valign=top>asOBJ_REF</td><td>The object is a reference type, i.e. the script is allowed to take handles to the object, and the memory is allocated on the heap.</td></tr>
-<tr><td width=150 valign=top>asOBJ_VALUE</td><td>The object is a value type, i.e. the script is not allowed to take handles to the object, and the memory may be allocated on the stack.</td></tr>
-</table>
-
-<p>When registering the object type as a reference type, you may also choose to tell AngelScript that the type should be garbage collected.</p>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=150 valign=top>asOBJ_GC</td><td>The object should be garbage collected, and follows the specified interface for garbage collected objects.</td></tr>
-</table>
-
-<p>When registering the object type as a value type, you must also tell AngelScript how the type is treated by the application. This is important for AngelScript to choose the right calling convention when passing or receiving the object by value from the application. </p>
-
-<p>There are three main types:</p>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=150 valign=top>asOBJ_CLASS</td><td>The object type is a C++ class, structure, or union.</td></tr>
-<tr><td width=150 valign=top>asOBJ_PRIMITIVE</td><td>The object type is a C++ primitive, such as int,
-void *, MyClass *. The only primitives that aren't included by this flag is
-float and double.</td></tr>
-<tr><td width=150 valign=top>asOBJ_FLOAT</td><td>The object type is in reality a float or a double.</td></tr>
-</table>
-
-<p>For the asOBJ_CLASS flag there is also three important modifiers that should be combined with | (binary or):</p>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=200 valign=top>asOBJ_CLASS_CONSTRUCTOR</td><td>The class has a defined constructor.</td></tr>
-<tr><td width=200 valign=top>asOBJ_CLASS_DESTRUCTOR</td><td>The class has a defined destructor.</td></tr>
-<tr><td width=200 valign=top>asOBJ_CLASS_ASSIGNMENT</td><td>The class has an overloaded assignment operator.</td></tr>
-</table>
-
-<p>For the modifiers there is also a shorter form, example: asOBJ_CLASS_CDA. You can find these shorter forms in angelscript.h.</p>
-
-<p>It is extremely important that this flag is set correctly as it is the only
-way AngelScript has to know how the C++ application handles the objects, for
-example if the object is returned in memory, in the general registers, or in
-the floating point registers.</p>
-
-<h2>Basic behaviour</h2>
-
-<p>After the object type has been registered, AngelScript needs to know how
-an object should be moved around in memory. The important behaviours are the
-way an object is constructed, destroyed, copied from one location to
-another, and how the memory is allocated.</p>
-
-<p>If no constructor is registered then AngelScript will not do anything to
-initialize new objects of the registered type. This is fine for structures
-and unions that don't make any presumtion on the value of the members. But
-for a class that needs to allocate resources at construction it could be big
-problem. If the class declares virtual functions it is also important to
-register the constructor as the virtual function table must be initialized for
-the class at allocation.</p>
-
-<p>If no destructor is registered then AngelScript again does nothing when
-the object is destroyed, e.g. when a variable of the type goes out of scope.
-If the object allocates resources that must be freed upon destruction then it
-is necessary to register the destructor. The exception is if the addref/release
-behaviours are registered, since the library will then expect the application
-to destroy the object in the release method, thus it never calls the destructor.</p>
-
-<p>When using the addref/release behaviours, you need to pay attention to the
-memory management. This is because AngelScript will allocate the memory for
-the object when it is constructed, but the object will deallocate the memory
-itself when the reference counter reaches 0. You need to make sure the memory
-allocation and deallocation are done using the same heap management. By default
-AngelScript uses malloc to allocate the memory, but this can be overridden with
-a call to asSetGlobalMemoryFunctions().</p>
-
-<p>If no copy behaviour, or assignment behaviour as it is also called, is
-registered, then AngelScript simply copies the memory byte for byte. If the
-class needs special behaviour when being copied, for example if a new resource
-must be allocated for the target object, then it is again necessary to
-register the assignment behaviour.</p>
-
-<p>All object behaviours are registered with the following method:</p>
+<p>The default factory function doesn't take any parameters and should return
+an object handle for the new object. Make sure the object's reference counter
+is accounting for the reference being returned by the factory function, so
+that the object is properly released when all references to it are removed.</p>
 
 <pre class=border>
-int RegisterObjectBehaviour(const char *datatype,
-                            asDWORD     behaviour,
-                            const char *declaration,
-                            asUPtr      funcPointer,
-                            asDWORD     callConv);
+CRef::CRef()
+{
+    <font color=green>// Let the constructor initialize the reference counter to 1</font>
+    refCount = 1;
+}
+
+CRef *Ref_Factory()
+{
+    <font color=green>// The class constructor is initializing the reference counter to 1</font>
+    return new CRef();
+}
+
+<font color=green>// Registering the factory behaviour</font>
+r = engine->RegisterObjectBehaviour("ref", asBEHAVE_FACTORY, "ref@ f()", asFUNCTION(Ref_Factory), asCALL_CDECL); assert( r >= 0 );
 </pre>
 
-<p>The first parameter, datatype, should be the same string that was used in
-RegisterObjectType(), e.g: "MyClass", or "int[]".</p>
+<p>You may also register factory functions that take parameters, which may
+then be used when initializing the object.</p>
 
-<p>behaviour should be one of the available behaviour constants declared in
-angelscript.h (see the reference manual). The most important behaviours are
-the following:</p>
+<p>The factory function must be registered as a global function, but can be
+implemented as a static class method, common global function, or a global
+function following the generic calling convention.</p>
 
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=200 valign=top>asBEHAVE_FACTORY</td><td>The factory behaviour.</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_CONSTRUCT</td><td>The constructor behaviour.</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_DESTRUCT</td><td>The destructor behaviour.</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_ASSIGNMENT</td><td>The assignment or copy behaviour.</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_ADDREF</td><td>The addref behaviour.</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_RELEASE</td><td>The release behaviour.</td></tr>
-</table>
-
-<p>The declaration parameter, is used to show the parameter types and return
-type for the behaviour functions. The constructor and destructor should have
-the return type void, and no parameters. It is actually possible to register
-constructors that take parameters, but the default constructor must be
-registered without any parameters. The assignment should return a reference to
-the datatype in question and take a reference to the datatype, preferably a
-constant reference. It is also possible to register assignment behaviours that
-take other types in the parameter, but the default behaviour must use a
-reference to it's own type.</p>
-
-<p>Suggested declaration strings:</p>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=200 valign=top>asBEHAVE_FACTORY</td><td>"object@ f()"</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_CONSTRUCT</td><td>"void f()"</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_DESTRUCT</td><td>"void f()"</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_ASSIGNMENT</td><td>"obj &amp;f(obj &amp;in)"</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_ADDREF</td><td>"void f()"</td></tr>
-<tr><td width=200 valign=top>asBEHAVE_RELEASE</td><td>"void f()"</td></tr>
-</table>
-
-<p>The function name used in the declaration doesn't really matter as it will
-not be stored by the engine. For the assignment the return value should be a
-reference to the actual object. The parameter type can be any type that
-AngelScript understand. If it is a reference to an object of the same type as
-the actual object, then the operator will also be used when copying the object
-in the VM, e.g. when passing the object by value to a function.</p>
-
-<p>The fourth parameter is the actual function pointer. It is possible to
-register class methods directly or global C++ functions that take an extra
-parameter for the object pointer. It is not possible to register a class'
-constructor and destructor directly as C++ doesn't allow taking the pointer
-to these methods. For these two it is therefor necessary to write a couple of
-wrapper functions. My suggestion is to do it like this:</p>
+<h3>Addref and release behaviours</h3>
 
 <pre class=border>
-MyClass *Factory()
+void CRef::Addref()
 {
-  return new MyClass();
+    <font color=green>// Increase the reference counter</font>
+    refCount++;
 }
 
-void Constructor(MyClass *obj)
+void CRef::Release()
 {
-  new(obj) MyClass();
+    <font color=green>// Decrease ref count and delete if it reaches 0</font>
+    if( --refCount == 0 )
+        delete this;
 }
 
-void Destructor(MyClass *obj)
+<font color=green>// Registering the addref/release behaviours</font>
+r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asMETHOD(CRef,AddRef), asCALL_THISCALL); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asMETHOD(CRef,Release), asCALL_THISCALL); assert( r >= 0 );
+</pre>
+
+<h3>Assignment behaviour</h3>
+
+<pre class=border>
+CRef &amp;CRef::operator =(const CRef &amp;other)
 {
-  obj->~MyClass();
+    <font color=green>// Copy everything from the other class, except the reference counter</font>
+}
+
+<font color=green>// Registering the assignment behaviour</font>
+r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ASSIGNMENT, "ref &amp;f(const &amp;in)", asMETHOD(CRef,operator=), asCALL_THISCALL); assert( r >= 0 );
+</pre>
+
+<p>The assignment behaviour can be overloaded with other types if that is
+desired, that way the script writer doesn't have to manually convert the
+expressions before assigning the values to the type.</p>
+
+
+
+
+<a name=gcref></a>
+<h2>Registering a garbage collected reference type</h2>
+
+<p>Reference counting as memory management has a drawback in that it is
+difficult to detect circular references when determining dead objects.
+AngelScript allows the application to register types with special behaviours
+to support the garbage collection for detecting circular references. These
+behaviours make the class a bit more complex, but you should only have to
+register them for a few types, e.g. generic container classes.</p>
+
+<pre class=border>
+<font color=green>// Registering the garbage collected reference type</font>
+r = engine->RegisterObjectType("ref", 0, asOBJ_REF | asOBJ_GC); assert( r >= 0 );
+</pre>
+
+<p>The difference between the garbage collected and non-garbage collected
+types is in the addref and release behaviours, the class constructor, and
+the extra support behaviours.</p>
+
+<h3>GC support behaviours</h3>
+
+<p>The GC determines when objects should be destroyed by counting the
+references it can follow for each object. If the GC can see all references
+that points to an object, it knows that the object is part of a circular
+reference. If all the objects involved in that circular reference have no
+outside references it means that they should be destroyed.</p>
+
+<p>The process of determining the dead objects uses the first for of the
+behaviours below, while the destruction of the objects is done by forcing the
+release of the object's references.</p>
+
+<pre class=border>
+void CGCRef::SetGCFlag()
+{
+    <font color=green>// Set the gc flag as the high bit in the reference counter</font>
+    refCount |= 0x80000000;
+}
+
+bool CGCRef::GetGCFlag()
+{
+    <font color=green>// Return the gc flag</font>
+    return (refCount &amp; 0x80000000) ? true : false;
+}
+
+int CGCRef::GetRefCount()
+{
+    <font color=green>// Return the reference count, without the gc flag</font>
+    return (refCount &amp; 0x7FFFFFFF);
+}
+
+void CGCRef::EnumReferences()
+{
+    <font color=green>// Call the engine::GCEnumCallback for all references to other objects held</font>
+    engine->GCEnumCallback(myref);
+}
+
+void CGCRef::ReleaseAllReferences()
+{
+    <font color=green>// When we receive this call, we are as good as dead, but
+    // the garbage collector will still hold a references to us, so we
+    // cannot just delete ourself yet. Just free all references to other
+    // objects that we hold</font>
+    if( myref )
+    {
+        myref->Release();
+        myref = 0;
+    }
+}
+
+<font color=green>// Register the GC support behaviours</font>
+r = engine->RegisterObjectBehaviour("gc", asBEHAVE_SETGCFLAG, "void f()", asMETHOD(CGCRef,SetGCFlag), asCALL_THISCALL); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("gc", asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(CGCRef,GetGCFlag), asCALL_THISCALL); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("gc", asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(CGCRef,GetRefCount), asCALL_THISCALL); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("gc", asBEHAVE_ENUMREFS, "void f(int&amp;in)", asMETHOD(CGCRef,EnumReferences), asCALL_THISCALL); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("gc", asBEHAVE_RELEASEREFS, "void f(int&amp;in)", asMETHOD(CGCRef,ReleaseAllReferences), asCALL_THISCALL); assert( r >= 0 );
+</pre>
+
+<h3>Factory for garbage collection</h3>
+
+<p>Whenever a garbage collected class is created, the garbage collector must
+be notified of it's existence. The easiest way of doing that is to have the
+factory behaviour, or the class constructor call the
+NotifyGarbageCollectorOfNewObject() method on the engine when initializing the
+class.</p>
+
+<pre class=border>
+CGCRef *GCRef_Factory()
+{
+    <font color=green>// Create the object and then notify the GC of its existence</font>
+    CGCRef *obj = new CGCRef();
+    int typeId = engine->GetTypeIdByDecl("gc");
+    engine->NotifyGarbageCollectorOfNewObject(obj, typeId);
+    return obj;
 }
 </pre>
 
-<p>The placement new operator, new(void*), is declared in new.h in the
-standard C++ library.</p>
+<p>You may want to consider caching the typeId, so that it doesn't have to be
+looked up through the relatively expensive call to GetTypeIdByDecl every time
+an object of this type is created.</p>
 
-<p>To get the function pointer to the function or method you wish to register
-you should use the following macros:</p>
+<p>Note, if you create objects of this type from the application side, you
+must also notify the garbage collector of its existence, so it's a good idea
+to make sure all code use the same way of creating objects of this type.</p>
 
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=200 valign=top>asFUNCTION(function)</td><td>Get the function pointer of a global function.</td></tr>
-<tr><td width=200 valign=top>asFUNCTIONPR(function, p, r)</td><td>Get the function pointer of an overloaded function. p is the parameter list and r is the return type.</td></tr>
-<tr><td width=200 valign=top>asMETHOD(class, method)</td><td>Get the method pointer of a class method.</td></tr>
-<tr><td width=200 valign=top>asMETHODPR(class, method, p, r)</td><td>Get the method pointer of an overloaded class method.</td></tr>
-</table>
+<h3>Addref and release for garbage collection</h3>
 
-<p>Make sure you don't use a virtual method for the constructor behaviour as
-one of it's task is to initialize the virtual function table pointer.</p>
-
-<p>AngelScript doesn't support class methods for classes with virtual
-inheritance, i.e. classes inheriting from multiple classes with shared base classes.
-If you need to use such a class you will have to write wrapper
-functions for the methods you wish to register. Classes with normal multiple
-inheritance is supported though.</p>
-
-<p>The final parameter to RegisterObjectBehaviour() tells AngelScript what
-calling convention that the function is using. For registered object
-behaviours the supported calling conventions are:</p>
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=200 valign=top>asCALL_THISCALL</td><td>Class method with fixed number of parameters.</td></tr>
-<tr><td width=200 valign=top>asCALL_CDECL_OBJLAST</td><td>Global cdecl function that takes the pointer to the object as the last parameter, after all declared parameters.</td></tr>
-<tr><td width=200 valign=top>asCALL_CDECL_OBJFIRST</td><td>Global cdecl function that takes the object pointer as the first parameter before any declared parameter.</td></tr>
-<tr><td width=200 valign=top>asCALL_GENERIC</td><td>Global function implementing the generic calling convention.</td></tr>
-<tr><td width=200 valign=top>asCALL_CDECL</a><td>Global cdecl function. Used with a few behaviours, such as the factory behaviour.</td></tr>
-</table>
-
-<p>The other object behaviours found in the reference manual are registered
-in a similar manner as described above.</p>
-
-<h2>Object properties and methods</h2>
-
-<p>Now that AngelScript knows how to properly handle the registered object
-type you can continue to add the interface that the script writer will have
-to access the object's internals such as it's properties and methods.</p>
+<p>For garbage collected objects it is important to make sure the AddRef and
+Release behaviours clear the GC flag. Otherwise it is possible that the GC
+incorrectly determine that the object should be destroyed.</p>
 
 <pre class=border>
-int RegisterObjectProperty(const char *obj,
-                           const char *declaration,
-                           int         byteOffset);
+void CGCRef::AddRef()
+{
+    <font color=green>// Clear the gc flag and increase the reference counter</font>
+    refCount = (refCount&amp;0x7FFFFFFF) + 1;
+}
+
+void CGCRef::Release()
+{
+    <font color=green>// Clear the gc flag, decrease ref count and delete if it reaches 0</font>
+    refCount &amp;= 0x7FFFFFFF;
+    if( --refCount == 0 )
+        delete this;
+}
+
+<font color=green>// Registering the addref/release behaviours</font>
+r = engine->RegisterObjectBehaviour("gc", asBEHAVE_ADDREF, "void f()", asMETHOD(CGCRef,AddRef), asCALL_THISCALL); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("gc", asBEHAVE_RELEASE, "void f()", asMETHOD(CGCRef,Release), asCALL_THISCALL); assert( r >= 0 );
 </pre>
 
-<p>The first parameter is again the name of the object type.</p>
 
-<p>The seond parameter is the declaration of the property, with its datatype
-and name, e.g. "int value". If you want to make the property read-only simply
-declare it with the const modifier.</p>
+<a name=noinst></a>
+<h2>Registering an uninstanciable reference type</h2>
 
-<p>The third parameter is the byteoffset of the property in the class
-structure. Normally you would determine this offset by using the macro
-offsetof(class, property) that is declared in stddef.h.</p>
+<p>Sometimes it may be useful to register types that cannot be instanciated by
+the scripts, yet can be interacted with. You can do this by registering the
+type as a normal reference type, but omit the registration of the factory
+behaviour. You can later register global properties, or functions that allow the
+scripts to access objects created by the application via object handles.</p>
+
+<p>This would be used when the application has a limited number of objects
+available and doesn't want to create new ones. For example singletons, or
+pooled objects.</p>
+
+<a name=single></a>
+<h2>Registering a single-reference type</h2>
+
+<p>A variant of the uninstanciable reference types is the single-reference
+type. This is a type that have only 1 reference accessing it, i.e. the script
+cannot store any extra references to the object during execution. The script
+is forced to use the reference it receives from the application at the moment
+the application passes it on to the script.</p>
+
+<p>The reference can be passed to the script through a property, either global
+or a class member, or it can be returned from an application registered
+function or class method.</p>
 
 <pre class=border>
-int RegisterObjectMethod(const char *obj,
-                         const char *declaration,
-                         asUPtr      funcPointer,
-                         asDWORD     callConv)
+<font color=green>// Registering the type so that it cannot be instanciated
+// by the script, nor allow scripts to store references to the type</font>
+r = engine->RegisterObjectType("single", 0, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
 </pre>
 
-<p>This method is used to register object methods that can be called from the
-script. The parameters are pretty much the same as for
-RegisterObjectBehaviour(), except that there is no behaviour flag, and the
-function name used in the declaration is used by the scripts to call the
-method.</p>
+<p>This sort of type is most useful when you want to have complete control over
+references to an object, for example so that the application can destroy and
+recreate objects of the type without having to worry about potential references
+held by scripts. This allows the application to control when a script has access
+to an object and it's members.</p>
 
-<h2>Operator behaviours</h2>
+<a name=val></a>
+<h2>Registering a value type</h2>
 
-<p>Sometimes it can be useful to allow the scripts to manipulate objects
-through operators, i.e. using + to concatenate two strings. These overloaded
-operator behaviours are registered with either RegisterObjectBehaviour() or
-RegisterGlobalBehaviour(). Binary operators are generally registered with
-RegisterGlobalBehaviour(), whereas unary operator are registered with
-RegisterObjectBehaviour(). The exception is the assignment operators that are
-binary but are registered with RegisterObjectBehaviour().</p>
+<p><font color=red>Need more information</font></p>
 
 <pre class=border>
-int RegisterGlobalBehaviour(asDWORD     behaviour,
-                            const char *declaration,
-                            asUPtr      funcPointer,
-                            asDWORD     callConv)
+r = engine->RegisterObjectType("pod", sizeof(pod), asOBJ_VALUE | asOBJ_POD); assert( r >= 0 );
+r = engine->RegisterObjectType("val", sizeof(val), asOBJ_VALUE); assert( r >= 0 );
 </pre>
 
-<p>The first parameter is the behaviour flag, as found in the reference
-manual.</p>
 
-<p>The second is the function signature, where just as for
-RegisterObjectBehaviour() the function name doesn't matter. Observe that it is
-not possible to override the operators for the built-in primitives in
-AngelScript, at least one of the parameters must be a registered object type.
-</p>
 
-<p>The function pointer is obtained with the same macros as earlier.</p>
 
-<p>The last parameter has a different set of calling conventions available
-though, as we are now registering a global function.</p>
+<a name=opbeh></a>
+<h2>Registering operator behaviours</h2>
 
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=200 valign=top>asCALL_CDECL</td><td>Global cdecl function, that can have variable number of parameters.</td></tr>
-<tr><td width=200 valign=top>asCALL_STDCALL</td><td>Global stdcall function with fixed number of parameters.</td></tr>
-<tr><td width=200 valign=top>asCALL_GENERIC</td><td>Global function using the generic calling convention.</td></tr>
-</table>
+<p><font color=red>Need more information</font></p>
 
-<p>Although it is possible to register a global function that takes a variable
-number of parameters, AngelScript will always send a fixed number of arguments
-as it doesn't support variable number of arguments in functions.</p>
+<a name=objmeth></a>
+<h2>Registering object methods</h2>
+
+<p><font color=red>Need more information</font></p>
+
+<a name=objprop></a>
+<h2>Registering object properties</h2>
+
+<p><font color=red>Need more information</font></p>
+
+
 
 
 

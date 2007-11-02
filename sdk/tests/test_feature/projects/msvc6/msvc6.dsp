@@ -358,6 +358,10 @@ SOURCE=..\..\source\test_returnstring.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_rz.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_saveload.cpp
 # End Source File
 # Begin Source File

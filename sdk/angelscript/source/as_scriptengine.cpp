@@ -475,35 +475,82 @@ int asCScriptEngine::Discard(const char *module)
 
 void asCScriptEngine::ClearUnusedTypes()
 {
-	for(;;)
+	// Build a list of all types to check for
+	asCArray<asCObjectType*> types;
+	types = classTypes;
+	types.Concatenate(scriptArrayTypes);
+
+	// Go through all modules
+	asUINT n;
+	for( n = 0; n < scriptModules.GetLength() && types.GetLength(); n++ )
 	{
-		asUINT n;
-		for( n = 0; n < classTypes.GetLength(); n++ )
+		asCModule *mod = scriptModules[n];
+		if( mod )
 		{
-			if( classTypes[n]->refCount == 0 )
+			// Go through all globals
+			asUINT m;
+			for( m = 0; m < mod->scriptGlobals.GetLength() && types.GetLength(); m++ )
 			{
-				RemoveFromTypeIdMap(classTypes[n]);
-				DELETE(classTypes[n],asCObjectType);
+				if( mod->scriptGlobals[m]->type.GetObjectType() )
+					RemoveTypeAndRelatedFromList(types, mod->scriptGlobals[m]->type.GetObjectType());
+			}
 
-				if( n == classTypes.GetLength() - 1 )
-					classTypes.PopLast();
-				else
-					classTypes[n] = classTypes.PopLast();
+			// Go through all script class declarations
+			for( m = 0; m < mod->classTypes.GetLength() && types.GetLength(); m++ )
+				RemoveTypeAndRelatedFromList(types, mod->classTypes[m]);
+		}
+	}
 
-				n--;
+	// Go through all function parameters and remove used types
+	for( n = 0; n < scriptFunctions.GetLength() && types.GetLength(); n++ )
+	{
+		asCScriptFunction *func = scriptFunctions[n];
+		if( func )
+		{
+			asCObjectType *ot;
+			if( (ot = func->returnType.GetObjectType()) != 0 )
+				RemoveTypeAndRelatedFromList(types, ot);
+
+			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
+			{
+				if( (ot = func->parameterTypes[p].GetObjectType()) != 0 )
+					RemoveTypeAndRelatedFromList(types, ot);
 			}
 		}
+	}
 
+	// Go through all global properties
+	for( n = 0; n < globalProps.GetLength() && types.GetLength(); n++ )
+	{
+		if( globalProps[n] && globalProps[n]->type.GetObjectType() )
+			RemoveTypeAndRelatedFromList(types, globalProps[n]->type.GetObjectType());
+	}
+
+	// All that remains in the list after this can be discarded, since they are no longer used
+	for(;;)
+	{
 		bool didClearArrayType = false;
-		for( n = 0; n < scriptArrayTypes.GetLength(); n++ )
+
+		for( n = 0; n < types.GetLength(); n++ )
 		{
-			if( scriptArrayTypes[n] &&
-				scriptArrayTypes[n]->refCount == 0 &&
-				!IsTypeUsedInParams(scriptArrayTypes[n]) )
+			if( types[n]->refCount == 0 )
 			{
-				RemoveArrayType(scriptArrayTypes[n]);
-				didClearArrayType = true;
-				n--;
+				if( types[n]->arrayType )
+				{
+					didClearArrayType = true;
+					RemoveArrayType(types[n]);
+				}
+				else
+				{
+					RemoveFromTypeIdMap(types[n]);
+					DELETE(types[n],asCObjectType);
+
+					int i = classTypes.IndexOf(types[n]);
+					if( i == (signed)classTypes.GetLength() - 1 )
+						classTypes.PopLast();
+					else
+						classTypes[i] = classTypes.PopLast();
+				}
 			}
 		}
 
@@ -512,25 +559,34 @@ void asCScriptEngine::ClearUnusedTypes()
 	}
 }
 
-bool asCScriptEngine::IsTypeUsedInParams(asCObjectType *ot)
+void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot)
 {
-	for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
-	{
-		asCScriptFunction *func = scriptFunctions[n];
-		if( func )
-		{
-			if( func->returnType.GetObjectType() == ot )
-				return true;
+	// Remove the type from the list
+	int i = types.IndexOf(ot);
+	if( i == -1 ) return;
 
-			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
-			{
-				if( func->parameterTypes[p].GetObjectType() == ot )
-					return true;
-			}
+	if( i == (signed)types.GetLength() - 1 )
+		types.PopLast();
+	else
+		types[i] = types.PopLast();
+
+	// If the type is an array, then remove all sub types as well
+	if( ot->subType )
+	{
+		while( ot->subType )
+		{
+			ot = ot->subType;
+			RemoveTypeAndRelatedFromList(types, ot);
 		}
+		return;
 	}
 
-	return false;
+	// If the type is a class, then remove all properties types as well
+	if( ot->properties.GetLength() )
+	{
+		for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
+			RemoveTypeAndRelatedFromList(types, ot->properties[n]->type.GetObjectType());
+	}
 }
 
 int asCScriptEngine::ResetModule(const char *module)

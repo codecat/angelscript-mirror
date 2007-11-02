@@ -100,7 +100,7 @@ void asCByteCode::ClearAll()
 
 void asCByteCode::InsertIfNotExists(asCArray<int> &vars, int var)
 {
-	if( !vars.Find(var) )
+	if( !vars.Exists(var) )
 		vars.PushLast(var);
 }
 
@@ -920,8 +920,8 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 				int label = *((int*)ARG_DW(curr->arg));
 				int r = FindLabel(label, curr, &curr, 0); assert( r == 0 ); UNUSED_VAR(r);
 
-				if( !closedPaths.Find(curr) &&
-					!openPaths.Find(curr) )
+				if( !closedPaths.Exists(curr) &&
+					!openPaths.Exists(curr) )
 					openPaths.PushLast(curr);
 
 				break;
@@ -934,8 +934,8 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 				int label = *((int*)ARG_DW(curr->arg));
 				int r = FindLabel(label, curr, &dest, 0); assert( r == 0 ); UNUSED_VAR(r);
 
-				if( !closedPaths.Find(dest) &&
-					!openPaths.Find(dest) )
+				if( !closedPaths.Exists(dest) &&
+					!openPaths.Exists(dest) )
 					openPaths.PushLast(dest);
 			}
 			// We cannot optimize over BC_JMPP

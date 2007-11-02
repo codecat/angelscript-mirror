@@ -330,6 +330,9 @@
 				RelativePath="..\..\source\test_returnstring.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_rz.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_saveload.cpp">
 			</File>
 			<File

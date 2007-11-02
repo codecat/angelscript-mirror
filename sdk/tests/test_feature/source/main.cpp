@@ -129,6 +129,7 @@ namespace TestDictionary        { bool Test(); }
 namespace TestDestructor        { bool Test(); }
 namespace TestRegisterType      { bool Test(); }
 namespace TestFactory           { bool Test(); }
+namespace TestRZ                { bool Test(); }
 
 #include "utils.h"
 
@@ -168,6 +169,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestRZ::Test()                ) goto failed; else printf("-- TestRZ passed\n");
 	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");

@@ -199,6 +199,7 @@ public:
 
 	void ClearUnusedTypes();
 	void RemoveArrayType(asCObjectType *t);
+	void RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot);
 
 	asCConfigGroup *FindConfigGroup(asCObjectType *ot);
 	asCConfigGroup *FindConfigGroupForFunction(int funcId);
@@ -219,8 +220,6 @@ public:
 	asCString GetFunctionDeclaration(int funcID);
 
 	asCScriptFunction *GetScriptFunction(int funcID);
-
-	bool IsTypeUsedInParams(asCObjectType *ot);
 
 	asCMemoryMgr memoryMgr;
 

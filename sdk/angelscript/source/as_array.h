@@ -69,7 +69,8 @@ public:
 
 	void Concatenate(const asCArray<T> &);
 
-	T* Find(const T &element);
+	bool Exists(const T &element);
+	int  IndexOf(const T &element);
 
 	bool operator==(const asCArray<T> &) const;
 	bool operator!=(const asCArray<T> &) const;
@@ -309,12 +310,18 @@ void asCArray<T>::Concatenate(const asCArray<T> &other)
 }
 
 template <class T>
-T *asCArray<T>::Find(const T &e)
+bool asCArray<T>::Exists(const T &e)
+{
+	return IndexOf(e) == -1 ? false : true;
+}
+
+template <class T>
+int asCArray<T>::IndexOf(const T &e)
 {
 	for( size_t n = 0; n < length; n++ )
-		if( array[n] == e ) return &array[n];
+		if( array[n] == e ) return (int)n;
 
-	return 0;
+	return -1;
 }
 
 END_AS_NAMESPACE
