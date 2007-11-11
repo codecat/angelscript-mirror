@@ -1926,8 +1926,6 @@ int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl
 	}
 	else
 	{
-		assert(false);
-
 		return ConfigError(asINVALID_ARG);
 	}
 

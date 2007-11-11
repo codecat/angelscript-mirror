@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.11.0 WIP - 2007/11/01</h2>
+<h2>Version 2.11.0 WIP - 2007/11/07</h2>
 
 <ul>
 <li>Bug fixes
@@ -129,6 +129,8 @@ A:hover
 <li>The bytecode optimizer failed in a specific situation (Thanks Jeff Slutter)
 <li>The multithread support in as_thread.cpp was broken (Thanks Martin Kaeser)
 <li>Garbage collector could in certain cases removed type definitions that were still needed causing application crashes (Thanks Jeff Slutter)
+<li>Script classes inheriting from other classes didn't give a compiler error (Thanks Pris)
+<li>The script allow called to non const methods for handles to const objects (Thanks virtualcodewarrior)
 </ul>
 <li>Library interface
 <ul>
@@ -138,6 +140,7 @@ A:hover
 <li>Types registered as reference counted won't be allowed to be passed by value to system functions, nor returned by value
 <li>Reference types must now use the new FACTORY behaviour instead of the CONSTRUCT behaviour.
 <li>Removed the asBEHAVE_ALLOC and asBEHAVE_FREE behaviours.
+<li>Added Unprepare to context interface.
 </ul>
 <li>Library
 <ul>

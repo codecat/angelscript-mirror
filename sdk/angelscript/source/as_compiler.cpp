@@ -5805,7 +5805,11 @@ void asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *c
 				// We need the object pointer
 				Dereference(ctx, true);
 
-				bool isConst = ctx->type.dataType.IsReadOnly();
+				bool isConst = false;
+				if( ctx->type.dataType.IsObjectHandle() )
+					isConst = ctx->type.dataType.IsHandleToConst();
+				else
+					isConst = ctx->type.dataType.IsReadOnly();
 
 				asCObjectType *trueObj = ctx->type.dataType.GetObjectType();
 

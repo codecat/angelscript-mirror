@@ -284,10 +284,13 @@ bool Test()
 	}
 	engine->Release();
 
+	// TODO:
 	// Types that registers constructors/factories, must also register the default constructor/factory (unless asOBJ_POD is used)
 
+	// TODO:
 	// What about asOBJ_NOHANDLE and asEP_ALLOW_UNSAFE_REFERENCES? Should it allow &inout?
 
+	// TODO:
     // Validate if the same behaviour is registered twice, e.g. if index
     // behaviour is registered twice with signature 'int f(int)' and error should be given
 

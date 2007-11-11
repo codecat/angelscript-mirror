@@ -468,6 +468,7 @@ public:
 	virtual int GetState() = 0;
 
 	virtual int Prepare(int funcID) = 0;
+	virtual int Unprepare() = 0;
 
 	virtual int SetArgByte(asUINT arg, asBYTE value) = 0;
 	virtual int SetArgWord(asUINT arg, asWORD value) = 0;

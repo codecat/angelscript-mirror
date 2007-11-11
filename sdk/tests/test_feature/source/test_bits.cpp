@@ -60,12 +60,12 @@ void ReturnWord(asIScriptGeneric *gen)
 	if( w )
 		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | (int(w)<<16);
 	else
-		*(asDWORD*)gen->GetReturnPointer() = 0x0000FFFF | (int(w)<<16);
+		*(asDWORD*)gen->GetReturnPointer() = 0X0000FFFF | (int(w)<<16);
 #else
 	if( w )
 		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | w;
 	else
-		*(asDWORD*)gen->GetReturnPointer() = 0xFFFF0000 | w;
+		*(asDWORD*)gen->GetReturnPointer() = 0XFFFF0000 | w;
 #endif
 }
 
@@ -93,7 +93,7 @@ bool Test()
 	r = engine->ExecuteString(0, "uint8 newmask = 0xFF; newmask = newmask & (~mask2) & (~mask3) & (~mask5); Assert( newmask == 0xD3 );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	r = engine->ExecuteString(0, "uint8 newmask = 0xFE; Assert( (newmask & mask0) == 0 );");
+	r = engine->ExecuteString(0, "uint8 newmask = 0XFE; Assert( (newmask & mask0) == 0 );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	r = engine->ExecuteString(0, "uint8 b = 0xFF; b &= ~mask4; BitsTest(b);");

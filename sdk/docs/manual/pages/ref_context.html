@@ -27,6 +27,7 @@ public:
   int <a href="#state">GetState</a>();
 
   int <a href="#prepare">Prepare</a>(int funcID);
+  int <a href="#unprepare">Unprepare</a>();
 
   int <a href="#args">SetArgByte</a>(asUINT arg, asBYTE value);
   int <a href="#args">SetArgWord</a>(asUINT arg, asWORD value);
@@ -218,6 +219,34 @@ parameters. The default value for parameters and return value is 0.</p>
 
 <p>Returns a negative value if the function cannot be found. Returns 0 or greater if sucessful.</p>
 
+
+
+
+
+
+<a name="unprepare"></a>
+<h2>Unprepare</h2>
+
+<pre class=border>
+int Unprepare();
+</pre>
+
+<h3>Description</h3>
+
+<p>This method can be called to free resources held by the context, without
+freeing the context itself. This may be useful in a few instances where you
+want to guarantee that a reference counted object is freed at a specific
+moment.</p>
+
+<p>Resources that are freed with this call, include the returned object from
+the last execution, the script module from which the execution was made, and
+other internal resources.</p>
+
+<p>This call is optional, only call it if you absolutely must.</p>
+
+<h3>Returns</h3>
+
+<p>Returns a negative value on error.</p>
 
 
 

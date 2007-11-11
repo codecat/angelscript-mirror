@@ -172,20 +172,6 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 asCContext::~asCContext()
 {
 	DetachEngine();
-
-	for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
-	{
-		if( stackBlocks[n] )
-		{
-			DELETEARRAY(stackBlocks[n]);
-		}
-	}
-	stackBlocks.SetLength(0);
-
-	if( stringFunction )
-	{
-		DELETE(stringFunction,asCScriptFunction);
-	}
 }
 
 int asCContext::AddRef()
@@ -220,12 +206,8 @@ void asCContext::DetachEngine()
 	// Abort any execution
 	Abort();
 
-	// Release module
-	if( module )
-	{
-		module->ReleaseContextRef();
-		module = 0;
-	}
+	// Free all resources
+	Unprepare();
 
 	// Clear engine pointer
 	if( holdEngineRef )
@@ -351,6 +333,55 @@ int asCContext::Prepare(int funcID)
 	}
 
 	return asSUCCESS;
+}
+
+// Free all resources
+int asCContext::Unprepare()
+{
+	if( status == tsActive || status == tsSuspended )
+		return asCONTEXT_ACTIVE;
+
+	// Only clean the stack if the context was prepared but not executed
+	if( status == tsPrepared )
+		CleanStack();
+
+	// Release the returned object (if any)
+	CleanReturnObject();
+
+	// Clear function pointers
+	initialFunction = 0;
+	currentFunction = 0;
+	exceptionFunction = 0;
+	byteCode = 0;
+
+	// Release the module
+	if( module ) module->ReleaseContextRef();
+	module = 0;
+
+	// Reset status
+	status = asEXECUTION_UNINITIALIZED;
+
+	// Deallocate the stack blocks
+	for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
+	{
+		if( stackBlocks[n] )
+		{
+			DELETEARRAY(stackBlocks[n]);
+		}
+	}
+	stackBlocks.SetLength(0);
+	stackFramePointer = 0;
+	stackPointer = 0;
+	stackIndex = 0;
+
+	// Deallocate string function
+	if( stringFunction )
+	{
+		DELETE(stringFunction, asCScriptFunction);
+		stringFunction = 0;
+	}
+	
+	return 0;
 }
 
 int asCContext::SetExecuteStringFunction(asCScriptFunction *func)

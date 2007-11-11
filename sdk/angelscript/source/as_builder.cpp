@@ -1334,6 +1334,12 @@ void asCBuilder::CompileClasses()
 				str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
 				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
 			}
+			else if( !(objType->flags & asOBJ_SCRIPT_STRUCT) || objType->size != 0 )
+			{
+				int r, c;
+				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+				WriteError(file->name.AddressOf(), TXT_MUST_BE_AN_INTERFACE, r, c);
+			}
 			else
 			{
 				if( decl->objType->Implements(objType) )

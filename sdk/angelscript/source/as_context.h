@@ -66,6 +66,7 @@ public:
 
 	int  Prepare(int functionID);
 	int  PrepareSpecial(int functionID, asCModule *mod);
+	int  Unprepare();
 
 	int  Execute();
 	int  Abort();

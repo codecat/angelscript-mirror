@@ -69,6 +69,11 @@ static const char *script2 =
 "   myclass@f = b;          \n"
 "}                          \n";
 
+// Test inheriting from another class. Should give an error since this hasn't been implemented yet
+static const char *script3 =
+"class A {}       \n"
+"class B : A {}   \n";
+
 
 // TODO: Test explicit conversion from interface to class. Should give null value if not the right class.
 
@@ -149,6 +154,16 @@ bool Test()
 		fail = true;
 	}
 
+	// Test inheriting from another class
+	bout.buffer = "";
+	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
+	r = engine->Build(0);
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "TestInterface (2, 11) : Error   : The identifier must be an interface\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
 	engine->Release();
 

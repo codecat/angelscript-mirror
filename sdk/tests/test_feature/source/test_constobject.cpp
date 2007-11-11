@@ -14,6 +14,25 @@ static const char *script2 =
 static const char *script = 
 "void Test(obj@ o) { }";
 
+static const char *script3 =
+"class CTest                           \n"
+"{                                     \n"
+"	int m_Int;                         \n"
+"                                      \n"
+"	void SetInt(int iInt)              \n"
+"	{                                  \n"
+"		m_Int = iInt;                  \n"
+"	}                                  \n"
+"};                                    \n"
+"void func()                           \n"
+"{                                     \n"
+"	const CTest Test;                  \n"
+"	const CTest@ TestHandle = @Test;   \n"
+"                                      \n"
+"	TestHandle.SetInt(1);              \n"    
+"	Test.SetInt(1);                    \n"          
+"}                                     \n";
+
 class CObj
 {
 public: 
@@ -202,6 +221,20 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "c_obj.GetVal();");
 	if( r < 0 ) fail = true;
+
+	// Handle to const must not allow call to non-const methods
+	bout.buffer = "";
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	engine->AddScriptSection(0, "script", script3, strlen(script3));
+	r = engine->Build(0);
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "script (10, 1) : Info    : Compiling void func()\n"
+		               "script (15, 13) : Error   : No matching signatures to 'SetInt(const uint) const'\n"
+					   "script (16, 7) : Error   : No matching signatures to 'SetInt(const uint) const'\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
 	engine->Release();
 

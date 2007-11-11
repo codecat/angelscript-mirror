@@ -210,6 +210,13 @@ bool Test()
 		fail = true;
 	}
 
+	// Mustn't allow registration of assignment behaviour as global behaviour
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ASSIGNMENT, "Object &f(const Object &in, const Object &in)", asFUNCTION(0), asCALL_GENERIC);
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success
