@@ -103,6 +103,14 @@ void GenericString_Factory(asIScriptGeneric *gen)
 	gen->SetReturnObject(&str);
 }
 
+void nullPtr(asIScriptGeneric *gen)
+{
+	asIScriptStruct **intf = (asIScriptStruct**)gen->GetArgPointer(0);
+	assert( *intf == 0 );
+
+	*(asIScriptStruct **)gen->GetReturnPointer() = *intf;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -128,6 +136,9 @@ bool Test()
 
 	r = engine->RegisterGlobalProperty("obj o", &obj);
 
+	r = engine->RegisterInterface("intf");
+	r = engine->RegisterGlobalFunction("intf @nullPtr(intf @)", asFUNCTION(nullPtr), asCALL_GENERIC); assert( r >= 0 );
+
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->ExecuteString(0, "test(func1(23, 23, \"test\"))");
@@ -135,6 +146,8 @@ bool Test()
 	engine->ExecuteString(0, "test(o.mthd1(23, 23))");
 
 	engine->ExecuteString(0, "o = o");
+
+	engine->ExecuteString(0, "nullPtr(null)");
 
 	engine->Release();
 

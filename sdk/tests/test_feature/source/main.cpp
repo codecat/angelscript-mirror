@@ -169,6 +169,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestRZ::Test()                ) goto failed; else printf("-- TestRZ passed\n");
 	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
@@ -235,7 +236,6 @@ int main(int argc, char **argv)
 	if( TestArrayIntf::Test()         ) goto failed; else printf("-- TestArrayIntf passed\n");
 	if( TestArrayHandle::Test()       ) goto failed; else printf("-- TestArrayHandle passed\n");
 	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
-	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
 	if( TestReturnF()                 ) goto failed; else printf("-- TestReturnF passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");

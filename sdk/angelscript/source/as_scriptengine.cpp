@@ -551,6 +551,13 @@ void asCScriptEngine::ClearUnusedTypes()
 					else
 						classTypes[i] = classTypes.PopLast();
 				}
+
+				// Remove the type from the array
+				if( n < types.GetLength() - 1 )
+					types[n] = types.PopLast();
+				else
+					types.PopLast();
+				n--;
 			}
 		}
 

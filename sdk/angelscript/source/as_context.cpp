@@ -887,7 +887,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 		{
 			// Increase the reference counter
 			asSTypeBehaviour *beh = &dt->GetObjectType()->beh;
-			if( beh->addref )
+			if( obj && beh->addref )
 				engine->CallObjectMethod(obj, beh->addref);
 		}
 		else 
@@ -3500,18 +3500,20 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 		if( sysFunction->parameterTypes[n].IsObject() && !sysFunction->parameterTypes[n].IsReference() )
 		{
 			void *obj = *(void**)&args[offset];
-
-			// Release the object
-			asSTypeBehaviour *beh = &sysFunction->parameterTypes[n].GetObjectType()->beh;
-			if( beh->release )
-				engine->CallObjectMethod(obj, beh->release);
-			else
+			if( obj )
 			{
-				// Call the destructor then free the memory
-				if( beh->destruct )
-					engine->CallObjectMethod(obj, beh->destruct);
+				// Release the object
+				asSTypeBehaviour *beh = &sysFunction->parameterTypes[n].GetObjectType()->beh;
+				if( beh->release )
+					engine->CallObjectMethod(obj, beh->release);
+				else
+				{
+					// Call the destructor then free the memory
+					if( beh->destruct )
+						engine->CallObjectMethod(obj, beh->destruct);
 
-				engine->CallFree(sysFunction->parameterTypes[n].GetObjectType(), obj);
+					engine->CallFree(sysFunction->parameterTypes[n].GetObjectType(), obj);
+				}
 			}
 		}
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();

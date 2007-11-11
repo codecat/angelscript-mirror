@@ -405,7 +405,7 @@ int asCGeneric::SetReturnObject(void *obj)
 	{
 		// Increase the reference counter
 		asSTypeBehaviour *beh = &dt->GetObjectType()->beh;
-		if( beh->addref )
+		if( obj && beh->addref )
 			engine->CallObjectMethod(obj, beh->addref);
 	}
 	else
