@@ -9,20 +9,19 @@
 #include <string>
 #include <assert.h>
 
-class COutStream : public asIOutputStream
+class COutStream
 {
 public:
-	void Write(const char *text) { printf(text); }
+	void Callback(asSMessageInfo *msg) 
+	{ 
+		const char *msgType = 0;
+		if( msg->type == 0 ) msgType = "Error  ";
+		if( msg->type == 1 ) msgType = "Warning";
+		if( msg->type == 2 ) msgType = "Info   ";
+
+		printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+	}
 };
-
-class CBufferedOutStream : public asIOutputStream
-{
-public:
-	void Write(const char *text) { buffer += text; }
-
-	std::string buffer;
-};
-
 
 void PrintException(asIScriptContext *ctx);
 

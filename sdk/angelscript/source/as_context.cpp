@@ -3364,6 +3364,9 @@ int asCContext::GetState()
 	if( status == tsUninitialized )
 		return asEXECUTION_UNINITIALIZED;
 
+	if( status == tsProgramAborted )
+		return asEXECUTION_ABORTED;
+
 	return asERROR;
 }
 

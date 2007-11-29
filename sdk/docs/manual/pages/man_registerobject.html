@@ -295,32 +295,139 @@ to an object and it's members.</p>
 <a name=val></a>
 <h2>Registering a value type</h2>
 
-<p><font color=red>Need more information</font></p>
+<p>When registering a value type, the size of the type must be given so that AngelScript knows how much space is needed for it.
+If the type doesn't require any special treatment, i.e. doesn't contain any pointers or other resource references that must be
+maintained, then the type can be registered with the flag asOBJ_POD. In this case AngelScript doesn't require the default
+constructor, assignment behaviour, or destructor as it will be able to automatically handle these cases the same way it handles
+built-in primitives.</p>
+
+<p>If the type will be passed to and from the application by value using native calling conventions, it is important to inform
+AngelScript of its real type in C++, otherwise AngelScript won't be able to determine exactly how C++ is treating the type in
+a parameter or return value. There are a few different flags for this:</p>
+
+<p><table border=0 cellspacing=0 cellpadding=0>
+<tr><td>asOBJ_APP_CLASS             &nbsp; </td><td>The C++ type is a class, struct, or union</td></tr>
+<tr><td>asOBJ_APP_CLASS_CONSTRUCTOR &nbsp; </td><td>The C++ type has a defined constructor</td></tr>
+<tr><td>asOBJ_APP_CLASS_DESTRUCTOR  &nbsp; </td><td>The C++ type has a defined destructor</td></tr>
+<tr><td>asOBJ_APP_CLASS_ASSIGNMENT  &nbsp; </td><td>The C++ type has a defined assignment operator</td></tr>
+<tr><td>asOBJ_APP_PRIMITIVE         &nbsp; </td><td>The C++ type is a C++ primitive, but not a float or double</td></tr>
+<tr><td>asOBJ_APP_FLOAT             &nbsp; </td><td>The C++ type is a float or double</td></tr>
+</table></p>
+
 
 <pre class=border>
-r = engine->RegisterObjectType("pod", sizeof(pod), asOBJ_VALUE | asOBJ_POD); assert( r >= 0 );
-r = engine->RegisterObjectType("val", sizeof(val), asOBJ_VALUE); assert( r >= 0 );
+<font color=green>// Register a primitive type, that doesn't need any special management of the content</font>
+r = engine->RegisterObjectType("pod", sizeof(pod), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
+
+<font color=green>// Register a class that must be properly initialized and uninitialized</font>
+r = engine->RegisterObjectType("val", sizeof(val), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 </pre>
 
+<h3>Constructor and destructor</h3>
 
+<p>If a constructor or destructor is needed they shall be registered the following way:</p>
+
+<pre class=border>
+void Constructor(void *memory)
+{
+  <font color=green>// Initialize the pre-allocated memory by calling the
+  // object constructor with the placement-new operator</font>
+  new(memory) Object();
+}
+
+void Destructor(void *memory)
+{
+  <font color=green>// Uninitialize the memory by calling the object destructor</font>
+  ((Object*)memory)->~Object();
+}
+
+<font color=green>// Register the behaviours</font>
+r = engine->RegisterObjectBehaviour("val", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Constructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+</pre>
+
+<p>The assignment behaviour is registered the same way as for reference types.</p>
 
 
 <a name=opbeh></a>
 <h2>Registering operator behaviours</h2>
 
-<p><font color=red>Need more information</font></p>
+<p>You can register operator behaviours for your types as well. By doing this
+you'll allow the script to work with the types in expressions, just like the
+built-in types.</p>
+
+<p>There two forms of operator behaviours, either object behaviours or global
+behaviours. An object behaviour is implemented as a class method, and a global
+behaviour is implemented as a global function.</p>
+
+<pre class=border>
+<font color=green>// Registering an object behaviour</font>
+int &amp;MyClass::operator[] (int index)
+{
+  return internal_array[index];
+}
+
+r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_INDEX, "int &amp;f(int)", asMETHOD(MyClass,operator[]), asCALL_THISCALL); assert( r >= 0 );
+
+<font color=green>// Registering a global behaviour</font>
+MyClass operator+(const MyClass &amp;a, const MyClass &amp;b)
+{
+  MyClass res = a + b;
+  return res;
+}
+
+r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "mytype f(const mytype &amp;in, const mytype &amp;in)", asFUNCTIONPR(operator+, (const MyClass &amp;, const MyClass &amp;), MyClass), asCALL_CDECL); assert( r >= 0 );
+</pre>
+
+<p>You can find a complete list of behaviours <a href="ref_behaviours.html">here</a>.<p>
 
 <a name=objmeth></a>
 <h2>Registering object methods</h2>
 
-<p><font color=red>Need more information</font></p>
+<p>Class methods are registered with the RegisterObjectMethod call.</p>
+
+<pre class=border>
+<font color=green>// Register a class method</font>
+void MyClass::ClassMethod()
+{
+  <font color=green>// Do something</font>
+}
+
+r = engine->RegisterObjectMethod("mytype", "void ClassMethod()", asMETHOD(MyClass,ClassMethod), asCALL_THISCALL); assert( r >= 0 );
+</pre>
+
+<p>It is also possible to register a global function that takes a pointer to
+the object as a class method. This can be used to extend the functionality of
+a class when accessed via AngelScript, without actually changing the C++
+implementation of the class.</p>
+
+<pre class=border>
+<font color=green>// Register a global function as an object method</font>
+void MyClass_MethodWrapper(MyClass *obj)
+{
+   <font color=green>// Access the object</font>
+   obj->DoSomething();
+}
+
+r = engine->RegisterObjectMethod("mytype", "void MethodWrapper()", asFUNCTION(MyClass_MethodWrapper), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+</pre>
 
 <a name=objprop></a>
 <h2>Registering object properties</h2>
 
-<p><font color=red>Need more information</font></p>
+<p>Class member variables can be registered so that they can be directly
+accessed by the script without the need for any method calls.</p>
 
+<pre class=border>
+struct MyStruct
+{
+  int a;
+};
 
+r = engine->RegisterObjectProperty("mytype", "int a", offsetof(MyStruct,a)); assert( r >= 0 );
+</pre>
+
+<p>offsetof() is a macro declared in stddef.h header file.</p>
 
 
 

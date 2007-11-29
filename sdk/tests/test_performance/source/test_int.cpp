@@ -84,7 +84,7 @@ void Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	engine->RegisterGlobalFunction("int Average(int, int)", asFUNCTION(Average), asCALL_CDECL);
 

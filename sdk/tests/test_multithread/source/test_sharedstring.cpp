@@ -34,7 +34,7 @@ bool Test()
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback),&out,asCALL_THISCALL);
 
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
 	engine->Build(0);

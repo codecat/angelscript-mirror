@@ -50,6 +50,20 @@ static const char *script =
 "}                                              \n";
 
 
+static const char *script2 =
+"void start()           \n"
+"{                      \n"
+"float test = 1.9f;     \n"
+"print(test);           \n"
+"print(test + test);    \n"
+"}                      \n";
+
+void print_gen(asIScriptGeneric *gen)
+{
+	float val = *(float*)gen->GetArgPointer(0);
+}
+
+
 bool Test()
 {
 	bool fail = false;
@@ -61,10 +75,19 @@ bool Test()
  	int r = engine->Build(0);
 	if( r < 0 ) fail = true; 
 
-	if( fail )
-		printf("%s: failed\n", TESTNAME);
+
+	engine->RegisterGlobalFunction("void print(float)", asFUNCTION(print_gen), asCALL_GENERIC);
+
+	engine->AddScriptSection(0, "script", script2, strlen(script2));
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+
+	engine->ExecuteString(0, "start()");
 
 	engine->Release();
+
+	if( fail )
+		printf("%s: failed\n", TESTNAME);
 
 	// Success
  	return fail;

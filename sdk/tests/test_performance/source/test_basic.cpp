@@ -83,7 +83,7 @@ void Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	COutStream out;
-	engine->SetCommonMessageStream(&out);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("float Average(float, float)", asFUNCTION(Average), asCALL_CDECL);
 
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
