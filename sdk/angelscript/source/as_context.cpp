@@ -2856,8 +2856,18 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_u64TOf:
-		// TODO: MSVC6 doesn't permit UINT64 to double
-		*(float*)(l_fp - SWORDARG0(l_bc)) = float((signed)*(asQWORD*)(l_fp - SWORDARG1(l_bc)));
+#if _MSC_VER <= 1200 // MSVC6 
+		{
+			// MSVC6 doesn't permit UINT64 to double
+			asINT64 v = *(asINT64*)(l_fp - SWORDARG1(l_bc));
+			if( v < 0 )
+				*(float*)(l_fp - SWORDARG0(l_bc)) = 18446744073709551615.0f+float(v);
+			else
+				*(float*)(l_fp - SWORDARG0(l_bc)) = float(v);
+		}
+#else
+		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(asQWORD*)(l_fp - SWORDARG1(l_bc)));
+#endif
 		l_bc += 2;
 		break;
 
@@ -2867,8 +2877,18 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_u64TOd:
-		// TODO: MSVC6 doesn't permit UINT64 to double
-		*(double*)(l_fp - SWORDARG0(l_bc)) = double((signed)*(asQWORD*)(l_fp - SWORDARG0(l_bc)));
+#if _MSC_VER <= 1200 // MSVC6 
+		{
+			// MSVC6 doesn't permit UINT64 to double
+			asINT64 v = *(asINT64*)(l_fp - SWORDARG0(l_bc));
+			if( v < 0 )
+				*(double*)(l_fp - SWORDARG0(l_bc)) = 18446744073709551615.0+double(v);
+			else
+				*(double*)(l_fp - SWORDARG0(l_bc)) = double(v);
+		}
+#else
+		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(asQWORD*)(l_fp - SWORDARG0(l_bc)));
+#endif
 		l_bc++;
 		break;
 

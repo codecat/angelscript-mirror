@@ -315,6 +315,10 @@ bool Test()
 	i16  = -123;  engine->ExecuteString(0, "d = double(i16);");  if( d  != -123.0  ) fail = true;
 	i64  = -123;  engine->ExecuteString(0, "d = double(i64);");  if( d  != -123.0  ) fail = true;
 
+	ui64 = asQWORD(-1000000000000000000l); 
+	double d2 = 18446744073709551615.0 + double(asINT64(ui64));
+	engine->ExecuteString(0, "d = double(ui64);"); if( d  !=  d2  ) fail = true;
+
 	d    = 12.3;  engine->ExecuteString(0, "d = d;");    if( d  !=   12.3  ) fail = true; 
 	f    = 12.3f; engine->ExecuteString(0, "d = f;");    if( d  !=   12.3f ) fail = true; 
 	ui   = 123;   engine->ExecuteString(0, "d = ui;");   if( d  !=  123.0  ) fail = true;
