@@ -315,7 +315,7 @@ bool Test()
 	i16  = -123;  engine->ExecuteString(0, "d = double(i16);");  if( d  != -123.0  ) fail = true;
 	i64  = -123;  engine->ExecuteString(0, "d = double(i64);");  if( d  != -123.0  ) fail = true;
 
-	ui64 = asQWORD(-1000000000000000000l); 
+	ui64 = asQWORD(I64(-1000000000000000000)); 
 	double d2 = 18446744073709551615.0 + double(asINT64(ui64));
 	engine->ExecuteString(0, "d = double(ui64);"); if( d  !=  d2  ) fail = true;
 
