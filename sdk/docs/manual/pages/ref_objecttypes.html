@@ -18,6 +18,7 @@
 <a href="#gc">asOBJ_GC</a>
 <a href="#pod">asOBJ_POD</a>
 <a href="#nohnd">asOBJ_NOHANDLE</a>
+<a href="#scoped">asOBJ_SCOPED</a>
 <a href="#class">asOBJ_APP_CLASS</a>
 <a href="#constr">asOBJ_APP_CLASS_CONSTRUCTOR</a>
 <a href="#destr">asOBJ_APP_CLASS_DESTRUCTOR</a>
@@ -71,6 +72,20 @@ doesn't allow handles to be used. This means that variables of this type
 cannot be instanciated in the script, only registered as property from the
 application. This is ideal for registering singleton classes.</p>
 
+
+
+
+<a name="scoped"></a>
+<h2>asOBJ_SCOPED</h2>
+
+<p>
+This flag tells AngelScript that the reference type has a controlled scope,
+i.e. the life time of the object is scope of the variable in which it is
+declared. The consequence of this is that no handles are allowed to be held
+for types of this object. This is useful for registering types that would
+ideally be registered as value types, but has special memory needs, such as
+alignment restrictions.
+</p>
 
 
 

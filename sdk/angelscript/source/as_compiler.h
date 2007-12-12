@@ -109,18 +109,18 @@ protected:
 	void CompileExpressionStatement(asCScriptNode *node, asCByteCode *bc);
 
 	// Expressions
-	void CompileAssignment(asCScriptNode *expr, asSExprContext *out);
-	void CompileCondition(asCScriptNode *expr, asSExprContext *out);
-	void CompileExpression(asCScriptNode *expr, asSExprContext *out);
-	void CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, asSExprContext *out);
-	void CompileExpressionTerm(asCScriptNode *node, asSExprContext *out);
-	void CompileExpressionPreOp(asCScriptNode *node, asSExprContext *out);
-	void CompileExpressionPostOp(asCScriptNode *node, asSExprContext *out);
-	void CompileExpressionValue(asCScriptNode *node, asSExprContext *out);
+	int  CompileAssignment(asCScriptNode *expr, asSExprContext *out);
+	int  CompileCondition(asCScriptNode *expr, asSExprContext *out);
+	int  CompileExpression(asCScriptNode *expr, asSExprContext *out);
+	int  CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, asSExprContext *out);
+	int  CompileExpressionTerm(asCScriptNode *node, asSExprContext *out);
+	int  CompileExpressionPreOp(asCScriptNode *node, asSExprContext *out);
+	int  CompileExpressionPostOp(asCScriptNode *node, asSExprContext *out);
+	int  CompileExpressionValue(asCScriptNode *node, asSExprContext *out);
 	void CompileFunctionCall(asCScriptNode *node, asSExprContext *out, asCObjectType *objectType, bool objIsConst);
 	void CompileConstructCall(asCScriptNode *node, asSExprContext *out);
 	void CompileConversion(asCScriptNode *node, asSExprContext *out);
-	void CompileOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
+	int  CompileOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 	void CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 	void CompileMathOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 	void CompileBitwiseOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
@@ -156,7 +156,7 @@ protected:
 	void PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction = false, int refType = 0, asCArray<int> *reservedVars = 0);
 	void PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction = false, int refType = 0, asCArray<int> *reservedVars = 0);
 	bool IsLValue(asCTypeInfo &type);
-	void DoAssignment(asSExprContext *out, asSExprContext *lctx, asSExprContext *rctx, asCScriptNode *lexpr, asCScriptNode *rexpr, int op, asCScriptNode *opNode);
+	int  DoAssignment(asSExprContext *out, asSExprContext *lctx, asSExprContext *rctx, asCScriptNode *lexpr, asCScriptNode *rexpr, int op, asCScriptNode *opNode);
 	void MergeExprContexts(asSExprContext *before, asSExprContext *after);
 	void FilterConst(asCArray<int> &funcs);
 	void ConvertToVariable(asSExprContext *ctx);

@@ -69,7 +69,7 @@ enum eTokenType
 	ttSlash,               // /
 	ttPercent,             // %
 
-	ttHandle,              // #
+	ttHandle,              // @
 
 	ttAddAssign,           // +=
 	ttSubAssign,           // -=

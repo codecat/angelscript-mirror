@@ -324,7 +324,7 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 	asCBuilder bld(engine, this);
 
 	asCScriptFunction func(this);
-	bld.ParseFunctionDeclaration(decl, &func);
+	bld.ParseFunctionDeclaration(decl, &func, false);
 
 	// TODO: Improve linear search
 	// Search script functions for matching interface
@@ -376,7 +376,7 @@ int asCModule::GetFunctionIDByDecl(const char *decl)
 	asCBuilder bld(engine, this);
 
 	asCScriptFunction func(this);
-	int r = bld.ParseFunctionDeclaration(decl, &func);
+	int r = bld.ParseFunctionDeclaration(decl, &func, false);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 

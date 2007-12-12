@@ -212,6 +212,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("char[]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructIntArray), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArray, (CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArray, (int, CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("char[]", asBEHAVE_INDEX, "int &f(int)", asMETHOD(CIntArray, operator[]), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("char[]", "int size()", asMETHOD(CIntArray, size), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectType("char[][]", sizeof(CIntArrayArray), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("char[][]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArrayArray, (CIntArrayArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -270,6 +271,22 @@ bool Test()
 	}
 	
 	if( ctx ) ctx->Release();
+
+	
+	// Test a compile error, to make sure the error is reported as expected
+	CBufferedOutStream bout;
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	r = engine->ExecuteString(0, "char[] t; t[0][0] = 1;");
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "ExecuteString (1, 15) : Error   : Type 'int&' doesn't support the indexing operator\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	
 
 	engine->Release();
 

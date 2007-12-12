@@ -717,7 +717,7 @@ int asCScriptEngine::GetMethodIDByDecl(asCObjectType *ot, const char *decl, asCM
 	asCBuilder bld(this, mod);
 
 	asCScriptFunction func(mod);
-	int r = bld.ParseFunctionDeclaration(decl, &func);
+	int r = bld.ParseFunctionDeclaration(decl, &func, false);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
@@ -1095,7 +1095,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 
 	func->objectType->methods.PushLast((int)scriptFunctions.GetLength());
 
-	r = bld.ParseFunctionDeclaration(declaration, func);
+	r = bld.ParseFunctionDeclaration(declaration, func, false);
 	if( r < 0 )
 	{
 		DELETE(func,asCScriptFunction);
@@ -1143,18 +1143,22 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	//   Must have either asOBJ_REF or asOBJ_VALUE
 	if( flags & asOBJ_REF )
 	{
-		// Can optionally have the asOBJ_GC or asOBJ_NOHANDLE flag set, but nothing else
-		if( flags & ~(asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE) )
+		// Can optionally have the asOBJ_GC, asOBJ_NOHANDLE, or asOBJ_SCOPED flag set, but nothing else
+		if( flags & ~(asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE | asOBJ_SCOPED) )
 			return ConfigError(asINVALID_ARG);
 
-		// asOBJ_GC and asOBJ_NOHANDLE are exclusive
-		if( (flags & asOBJ_GC) && (flags & asOBJ_NOHANDLE) )
+		// flags are exclusive
+		if( (flags & asOBJ_GC) && (flags & (asOBJ_NOHANDLE|asOBJ_SCOPED)) )
+			return ConfigError(asINVALID_ARG);
+		if( (flags & asOBJ_NOHANDLE) && (flags & (asOBJ_GC|asOBJ_SCOPED)) )
+			return ConfigError(asINVALID_ARG);
+		if( (flags & asOBJ_SCOPED) && (flags & (asOBJ_GC|asOBJ_NOHANDLE)) )
 			return ConfigError(asINVALID_ARG);
 	}
 	else if( flags & asOBJ_VALUE )
 	{
-		// Cannot use asOBJ_GC
-		if( flags & (asOBJ_REF | asOBJ_GC) )
+		// Cannot use reference flags
+		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_SCOPED) )
 			return ConfigError(asINVALID_ARG);
 
 		// Must have either asOBJ_APP_CLASS, asOBJ_APP_PRIMITIVE, or asOBJ_APP_FLOAT
@@ -1388,7 +1392,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 
 	// The default array object is actually being registered 
 	// with incorrect declarations, but that's a concious decision
-	bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
+	bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
 
 	if( isDefaultArray )
 		func.objectType = defaultArrayObjectType;
@@ -1600,7 +1604,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	// Verify function declaration
 	asCScriptFunction func(0);
 
-	r = bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle, (behaviour == asBEHAVE_FACTORY) && (type.GetObjectType()->flags & asOBJ_SCOPED) );
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION);
 
@@ -1686,8 +1690,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	}
 	else if( behaviour == asBEHAVE_ADDREF )
 	{
-		// Must be a ref type and must not have asOBJ_NOHANDLE
-		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
+		// Must be a ref type and must not have asOBJ_NOHANDLE, nor asOBJ_SCOPED
+		if( !(func.objectType->flags & asOBJ_REF) || 
+			(func.objectType->flags & asOBJ_NOHANDLE) || 
+			(func.objectType->flags & asOBJ_SCOPED) )
 		{
 			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
@@ -1695,7 +1701,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 
 		if( beh->addref )
 			return ConfigError(asALREADY_REGISTERED);
-
+											 
 		// Verify that the return type is void
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION);
@@ -1900,7 +1906,7 @@ int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl
 	// Verify function declaration
 	asCScriptFunction func(0);
 
-	r = bld.ParseFunctionDeclaration(decl, &func, &internal.paramAutoHandles, &internal.returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION);
 
@@ -2105,7 +2111,7 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 	objType->methods.PushLast((int)scriptFunctions.GetLength());
 
 	asCBuilder bld(this, 0);
-	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 )
 	{
 		DELETE(func,asCScriptFunction);
@@ -2171,7 +2177,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 
 	func->objectType->methods.PushLast((int)scriptFunctions.GetLength());
 
-	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 )
 	{
 		DELETE(func,asCScriptFunction);
@@ -2236,7 +2242,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
-	r = bld.ParseFunctionDeclaration(declaration, func, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 )
 	{
 		DELETE(func,asCScriptFunction);
@@ -2340,6 +2346,14 @@ void asCScriptEngine::PrepareEngine()
 					objectTypes[n]->beh.gcGetFlag              == 0 ||
 					objectTypes[n]->beh.gcEnumReferences       == 0 ||
 					objectTypes[n]->beh.gcReleaseAllReferences == 0 )
+				{
+					missingBehaviour = true;
+				}
+			}
+			// Verify that scoped ref types have the release behaviour
+			else if( objectTypes[n]->flags & asOBJ_SCOPED )
+			{
+				if( objectTypes[n]->beh.release == 0 )
 				{
 					missingBehaviour = true;
 				}

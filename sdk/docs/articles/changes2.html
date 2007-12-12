@@ -118,6 +118,26 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
+<h2>Version 2.11.1 WIP - 2007/12/11</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Expressions that tried to use indexing operator on primitive types caused assert failure (Thanks Anders Hansson)
+<li>GetFunctionIDByDecl returned asINVALID_DECLARATION for functions that returned or passed reference types by value (Thanks loboWu)
+<li>Corrected as_config.h in regards to vsnprintf for MSVC9 (Thanks Schrompf)
+</ul>
+<li>Library interface
+<ul>
+<li>Added the new object type flag asOBJ_SCOPED, that allows applications to
+    register reference types that behaves like value types but with special memory management needs
+</ul>
+<li>Library
+<ul>
+<li>Compiler emits less error messages that are concequences of previously detected errors
+</ul>
+</ul>
+
 <h2>Version 2.11.0 - 2007/11/30</h2>
 
 <ul>

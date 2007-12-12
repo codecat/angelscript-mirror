@@ -553,7 +553,7 @@ asCProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, b
 	return 0;
 }
 
-int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle)
+int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle, bool isScopedFactory)
 {
 	numErrors = 0;
 	numWarnings = 0;
@@ -576,14 +576,31 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 
 	// Initialize a script function object for registration
 	bool autoHandle;
+
+	// A factory function for a scoped reference type must return a handle, even though handles are not allowed
+	bool isHandle = false;
+	if( isScopedFactory )
+	{
+		asCScriptNode *n = node->firstChild->lastChild;
+		if( n->tokenType == ttHandle )
+		{
+			// Remove the handle, as it won't be accepted
+			n->DisconnectParent();
+			n->Destroy(engine);
+			isHandle = true;
+		}
+	}
+
 	func->returnType = CreateDataTypeFromNode(node->firstChild, &source);
+	if( isHandle ) func->returnType.MakeHandle(true, true);
 	func->returnType = ModifyDataTypeFromNode(func->returnType, node->firstChild->next, &source, 0, &autoHandle);
 	if( autoHandle && (!func->returnType.IsObjectHandle() || func->returnType.IsReference()) )
 			return asINVALID_DECLARATION;			
 	if( returnAutoHandle ) *returnAutoHandle = autoHandle;
 
 	// Reference types cannot be returned by value from system functions
-	if( (func->returnType.GetObjectType() && 
+	if( isSystemFunction &&
+		(func->returnType.GetObjectType() && 
 		 (func->returnType.GetObjectType()->flags & asOBJ_REF)) && 
         !(func->returnType.IsReference() ||
 		  func->returnType.IsObjectHandle()) )
@@ -613,7 +630,8 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 		type = ModifyDataTypeFromNode(type, n->next, &source, &inOutFlags, &autoHandle);
 		
 		// Reference types cannot be passed by value to system functions
-		if( (type.GetObjectType() && 
+		if( isSystemFunction &&
+			(type.GetObjectType() && 
 		     (type.GetObjectType()->flags & asOBJ_REF)) && 
 			!(type.IsReference() ||
 			  type.IsObjectHandle()) )

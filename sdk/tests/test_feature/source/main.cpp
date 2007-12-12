@@ -169,9 +169,14 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
+	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
+	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
+	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
+	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
+	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestRZ::Test()                ) goto failed; else printf("-- TestRZ passed\n");
-	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestExceptionMemory::Test()   ) goto failed; else printf("-- TestExceptionMemory passed\n");
@@ -179,7 +184,6 @@ int main(int argc, char **argv)
 	if( TestObject::Test()            ) goto failed; else printf("-- TestObject passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestFactory::Test()           ) goto failed; else printf("-- TestFactory passed\n");
-	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
@@ -193,7 +197,6 @@ int main(int argc, char **argv)
 	if( TestVirtualMethod()           ) goto failed; else printf("-- TestVirtualMethod passed\n");
 	if( TestMultipleInheritance()     ) goto failed; else printf("-- TestMultipleInheritance passed\n");
 	if( TestCondition()               ) goto failed; else printf("-- TestCondition passed\n");
-	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
@@ -230,12 +233,10 @@ int main(int argc, char **argv)
 	if( TestCDecl_ClassA()            ) goto failed; else printf("-- TestCDecl_ClassA passed\n");
 	if( TestCDecl_ClassC()            ) goto failed; else printf("-- TestCDecl_ClassC passed\n");
 	if( TestObject3::Test()           ) goto failed; else printf("-- TestObject3 passed\n");
-	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
 	if( TestStdVector::Test()         ) goto failed; else printf("-- TestStdVector passed\n");
 	if( TestFor::Test()               ) goto failed; else printf("-- TestFor passed\n");
 	if( TestArrayIntf::Test()         ) goto failed; else printf("-- TestArrayIntf passed\n");
 	if( TestArrayHandle::Test()       ) goto failed; else printf("-- TestArrayHandle passed\n");
-	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
 	if( TestConstProperty::Test()     ) goto failed; else printf("-- TestConstProperty passed\n");
 	if( TestReturnF()                 ) goto failed; else printf("-- TestReturnF passed\n");
 	if( TestSuspend::Test()           ) goto failed; else printf("-- TestSuspend passed\n");
@@ -260,7 +261,6 @@ int main(int argc, char **argv)
 	if( TestExecute2Args()            ) goto failed; else printf("-- TestExecute2Args passed\n");
 	if( TestExecute4Argsf()           ) goto failed; else printf("-- TestExecute4Argsf passed\n");
 	if( TestInt64()                   ) goto failed; else printf("-- TestInt64 passed\n");
-	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
 	if( TestImport2::Test()           ) goto failed; else printf("-- TestImport2 passed\n");
 	if( TestEnumGlobVar()             ) goto failed; else printf("-- TestEnumGlobVar passed\n");
 	if( TestConfigAccess::Test()      ) goto failed; else printf("-- TestConfigAccess passed\n");

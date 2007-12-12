@@ -195,10 +195,13 @@ asCDataType &asCDataType::operator =(const asCDataType &dt)
 	return (asCDataType &)*this;
 }
 
-int asCDataType::MakeHandle(bool b)
+int asCDataType::MakeHandle(bool b, bool overrideValidation)
 {
-	if( !objectType || !(objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_NOHANDLE) )
-		return -1;
+	if( !overrideValidation )
+	{
+		if( !objectType || !(objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_NOHANDLE) || (objectType->flags & asOBJ_SCOPED) )
+			return -1;
+	}
 
 	if( !b || (b && !isObjectHandle) )
 	{

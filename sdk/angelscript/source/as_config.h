@@ -282,7 +282,9 @@
 	#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+3))
 	#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 	#define THISCALL_PASS_OBJECT_POINTER_IN_ECX
-	#define vsnprintf(a, b, c, d) _vsnprintf(a, b, c, d)
+	#if _MSC_VER < 1500 // MSVC++ 9 (aka MSVC++ .NET 2008)
+		#define vsnprintf(a, b, c, d) _vsnprintf(a, b, c, d)
+	#endif
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
 	#define STDCALL __stdcall

@@ -93,7 +93,7 @@ public:
 
 	int ParseDataType(const char *datatype, asCDataType *result);
 
-	int ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0);
+	int ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0, bool isScopedFactory = false);
 	int ParseVariableDeclaration(const char *decl, asCProperty *var);
 
 	int AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy);

@@ -18,7 +18,7 @@
 type is a reference type that is located in dynamic memory, or the type is a
 value type that is located on the stack. Complex types are usually registered
 as reference types, while simple types that are meant to be used as primitives
-are registered as value types. A reference type support object handles, but
+are registered as value types. A reference type support object handles (unless restricted by application), but
 cannot be passed by value to application registered functions, a value type
 doesn't support handles and can be passed by value to application registered
 functions.</p>
@@ -28,6 +28,7 @@ functions.</p>
 <li><a href="#gcref">Registering a garbage collected reference type</a>
 <li><a href="#noinst">Registering an uninstanciable reference type</a>
 <li><a href="#single">Registering a single-reference type</a>
+<li><a href="#scoped">Registering a scoped type</a>
 <li><a href="#val">Registering a value type</a>
 <li><a href="#opbeh">Registering operator behaviours</a>
 <li><a href="#objmeth">Registering object methods</a>
@@ -254,6 +255,10 @@ r = engine->RegisterObjectBehaviour("gc", asBEHAVE_RELEASE, "void f()", asMETHOD
 </pre>
 
 
+
+
+
+
 <a name=noinst></a>
 <h2>Registering an uninstanciable reference type</h2>
 
@@ -266,6 +271,11 @@ scripts to access objects created by the application via object handles.</p>
 <p>This would be used when the application has a limited number of objects
 available and doesn't want to create new ones. For example singletons, or
 pooled objects.</p>
+
+
+
+
+
 
 <a name=single></a>
 <h2>Registering a single-reference type</h2>
@@ -291,6 +301,53 @@ references to an object, for example so that the application can destroy and
 recreate objects of the type without having to worry about potential references
 held by scripts. This allows the application to control when a script has access
 to an object and it's members.</p>
+
+
+
+
+<a name=scoped></a>
+<h2>Registering a scoped type</h2>
+
+<p>Some C++ value types have special requirements for the memory where they
+are located, e.g. specific alignment needs, or memory pooling. Since
+AngelScript doesn't provide that much control over where and how value types
+are allocated, they must be registered as reference types. In this case you'd
+register the type as a scoped reference type.</p>
+
+<p>A scoped reference type will have the life time controlled by the scope of
+the variable that instanciate it, i.e. as soon as the variable goes out of
+scope the instance is destroyed. This means that the type doesn't permit
+handles to be taken for the type.</p>
+
+<p>A scoped reference type requires two behaviours to be registered, the
+factory and the release behaviour. The addref behaviour is not permitted.</p>
+
+<p>Since no handles can be taken for the object type, there is no need to keep
+track of the number of references held to the object. This means that the
+release behaviour should simply destroy and deallocate the object as soon as
+it's called.</p>
+
+<pre class=border>
+scoped *Scoped_Factory()
+{
+  return new scoped;
+}
+
+void Scoped_Release(scoped *s)
+{
+  if( s ) delete s;
+}
+
+<font color=green>// Registering a scoped reference type</font>
+r = engine->RegisterObjectType("scoped", 0, asOBJ_REF | asOBJ_SCOPED); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_FACTORY, "scoped @f()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_RELEASE, "void f()", asFUNCTION(Scoped_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+</pre>
+
+
+
+
+
 
 <a name=val></a>
 <h2>Registering a value type</h2>
@@ -347,6 +404,9 @@ r = engine->RegisterObjectBehaviour("val", asBEHAVE_DESTRUCT, "void f()", asFUNC
 </pre>
 
 <p>The assignment behaviour is registered the same way as for reference types.</p>
+
+
+
 
 
 <a name=opbeh></a>

@@ -64,7 +64,7 @@ public:
 	static asCDataType CreateDefaultArray(asCScriptEngine *engine);
 	static asCDataType CreateNullHandle();
 
-	int MakeHandle(bool b);
+	int MakeHandle(bool b, bool overrideValidation = false);
 	int MakeArray(asCScriptEngine *engine);
 	int MakeReference(bool b);
 	int MakeReadOnly(bool b);

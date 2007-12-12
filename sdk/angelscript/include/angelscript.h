@@ -53,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        21100
+#define ANGELSCRIPT_VERSION        21101
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  11
-#define ANGELSCRIPT_VERSION_BUILD  0
-#define ANGELSCRIPT_VERSION_STRING "2.11.0 WIP"
+#define ANGELSCRIPT_VERSION_BUILD  1
+#define ANGELSCRIPT_VERSION_STRING "2.11.1 WIP"
 
 // Data types
 
@@ -639,6 +639,7 @@ const asDWORD asOBJ_VALUE                 = 0x02;
 const asDWORD asOBJ_GC                    = 0x04;
 const asDWORD asOBJ_POD                   = 0x08;
 const asDWORD asOBJ_NOHANDLE              = 0x10;
+const asDWORD asOBJ_SCOPED                = 0x20;
 const asDWORD asOBJ_APP_CLASS             = 0x100;
 const asDWORD asOBJ_APP_CLASS_CONSTRUCTOR = 0x200;
 const asDWORD asOBJ_APP_CLASS_DESTRUCTOR  = 0x400;
@@ -652,7 +653,7 @@ const asDWORD asOBJ_APP_CLASS_A           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_A
 const asDWORD asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT);
 const asDWORD asOBJ_APP_PRIMITIVE         = 0x1000;
 const asDWORD asOBJ_APP_FLOAT             = 0x2000;
-const asDWORD asOBJ_MASK_VALID_FLAGS      = 0x3F1F;
+const asDWORD asOBJ_MASK_VALID_FLAGS      = 0x3F3F;
 
 // Behaviours
 

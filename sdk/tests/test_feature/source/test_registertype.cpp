@@ -7,6 +7,8 @@ namespace TestRegisterType
 
 void DummyFunc() {}
 
+bool TestRefScoped();
+
 bool Test()
 {
 	bool fail = false;
@@ -284,6 +286,10 @@ bool Test()
 	}
 	engine->Release();
 
+	// REF+SCOPED
+	if( !fail ) fail = TestRefScoped();
+
+
 	// TODO:
 	// Types that registers constructors/factories, must also register the default constructor/factory (unless asOBJ_POD is used)
 
@@ -296,6 +302,79 @@ bool Test()
 
 	// Success
  	return fail;
+}
+
+int *Scoped_Factory()
+{
+	return new int(42);
+}
+
+void Scoped_Release(int *p)
+{
+	if( p ) delete p;
+}
+
+bool TestRefScoped()
+{
+	bool fail = false;
+	int r = 0;
+	CBufferedOutStream bout;
+ 	asIScriptEngine *engine;
+
+	// REF+SCOPED
+	// This type requires a factory and a release behaviour. It cannot have the addref behaviour.
+	// The intention of this type is to permit value types, that have special needs for memory management,
+	// for example must be aligned on 16 byte boundaries, or must use a memory pool. The type must not allow
+	// object handles (though the factory behavour should still return a handle).
+	bout.buffer = "";
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	r = engine->RegisterObjectType("scoped", 0, asOBJ_REF | asOBJ_SCOPED); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_FACTORY, "scoped @f()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_RELEASE, "void f()", asFUNCTION(Scoped_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+	// Don't permit handles to be taken
+	r = engine->ExecuteString(0, "scoped @s = null");
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
+		               "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int@const' to 'scoped&'.\n"
+					   "ExecuteString (1, 9) : Error   : There is no copy operator for this type available.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test a legal action
+	r = engine->ExecuteString(0, "scoped a");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+
+	// Don't permit functions to be registered with handle
+	bout.buffer = "";
+	r = engine->RegisterGlobalFunction("scoped @f()", asFUNCTION(DummyFunc), asCALL_CDECL);
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "System function (1, 8) : Error   : Object handle is not supported for this type\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Don't permit functions to be registered to take type by reference (since that require handles)
+	bout.buffer = "";
+	r = engine->RegisterGlobalFunction("void f(scoped&)", asFUNCTION(DummyFunc), asCALL_CDECL);
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "System function (1, 14) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Permit &in
+	r = engine->RegisterGlobalFunction("void f(scoped&in)", asFUNCTION(DummyFunc), asCALL_CDECL);
+	if( r < 0 ) fail = true;
+
+	engine->Release();
+
+	return fail;
 }
 
 } // namespace

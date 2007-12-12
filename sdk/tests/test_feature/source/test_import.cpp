@@ -15,17 +15,18 @@ namespace TestImport
 
 
 static const char *script1 =
-"import void Test(string &in) from \"DynamicModule\"; \n"
-"void main()                                          \n"
-"{                                                    \n"
-"  Test(\"test\");                                    \n"
-"}                                                    \n";
+"import string Test(string s) from \"DynamicModule\";   \n"
+"void main()                                            \n"
+"{                                                      \n"
+"  Test(\"test\");                                      \n"
+"}                                                      \n";
 
 static const char *script2 =
-"void Test(string &in)  \n"
-"{                      \n"
-"  number = 1234567890; \n"
-"}                      \n";
+"string Test(string s)    \n"
+"{                        \n"
+"  number = 1234567890;   \n"
+"  return \"blah\";       \n"
+"}                        \n";
 
 bool Test()
 {

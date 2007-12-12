@@ -243,8 +243,7 @@ bool Test()
 	if( bout.buffer != "script (3, 3) : Error   : Identifier 'object' is not a data type\n"
 					   "script (3, 10) : Error   : Object handle is not supported for this type\n"
                        "script (4, 3) : Info    : Compiling void c::func()\n"
-                       "script (5, 18) : Error   : Illegal operation on 'int&'\n"
-                       "script (5, 15) : Error   : Can't implicitly convert from 'int&' to 'type&'.\n" )
+                       "script (5, 18) : Error   : Illegal operation on 'int&'\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
