@@ -42,6 +42,7 @@
 #include "as_tokendef.h"
 #include "as_scriptengine.h"
 #include "as_callfunc.h"
+#include "as_bytecode.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -59,6 +60,8 @@ asCScriptFunction::asCScriptFunction(asCModule *mod)
 
 asCScriptFunction::~asCScriptFunction()
 {
+	ReleaseReferences();
+
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
 	{
 		DELETE(variables[n],asSScriptVariable);
@@ -197,6 +200,205 @@ void asCScriptFunction::ComputeSignatureId(asCScriptEngine *engine)
 
 	signatureId = id;
 	engine->signatureIds.PushLast(this);
+}
+
+#define INTARG(x)    (int(*(x+1)))
+#define PTRARG(x)    (asPTRWORD(*(x+1)))
+#define WORDARG0(x)   (*(((asWORD*)x)+1))
+#define WORDARG1(x)   (*(((asWORD*)x)+2))
+
+void asCScriptFunction::AddReferences()
+{
+	// Only count references if there is any bytecode
+	if( byteCode.GetLength() ) 
+	{
+		if( returnType.IsObject() )
+			returnType.GetObjectType()->refCount++;
+
+		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
+			if( parameterTypes[p].IsObject() )
+				parameterTypes[p].GetObjectType()->refCount++;
+	}
+
+	// Go through the byte code and add references to all resources used by the function
+	for( asUINT n = 0; n < byteCode.GetLength(); n += asCByteCode::SizeOfType(bcTypes[*(asBYTE*)&byteCode[n]]) )
+	{
+		switch( *(asBYTE*)&byteCode[n] )
+		{
+		// Object types
+		case BC_OBJTYPE:
+		case BC_FREE:
+		case BC_ALLOC:
+		case BC_REFCPY:
+			{
+				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
+				objType->refCount++;
+				break;
+			}
+
+		// Global variables
+		case BC_LDG:
+		case BC_PGA:
+		case BC_PshG4:
+		case BC_SetG4:
+		case BC_CpyVtoG4:
+			{
+				int gvarId = WORDARG0(&byteCode[n]);
+				void *gvarPtr = module->globalVarPointers[gvarId];
+
+				gvarId = 0;
+				for( asUINT g = 0; g < module->engine->globalPropAddresses.GetLength(); g++ )
+				{
+					if( module->engine->globalPropAddresses[g] == gvarPtr )
+					{
+						gvarId = -int(g) - 1;
+						break;
+					}
+				}
+
+				if( gvarId < 0 )
+				{
+					// Find the config group from the property id
+					asCConfigGroup *group = module->engine->FindConfigGroupForGlobalVar(gvarId);
+					if( group != 0 ) group->AddRef();
+				}
+
+				break;
+			}
+
+		case BC_LdGRdR4:
+		case BC_CpyGtoV4:
+			{
+				int gvarId = WORDARG1(&byteCode[n]);
+				void *gvarPtr = module->globalVarPointers[gvarId];
+
+				gvarId = 0;
+				for( asUINT g = 0; g < module->engine->globalPropAddresses.GetLength(); g++ )
+				{
+					if( module->engine->globalPropAddresses[g] == gvarPtr )
+					{
+						gvarId = -int(g) - 1;
+						break;
+					}
+				}
+
+				if( gvarId < 0 )
+				{
+					// Find the config group from the property id
+					asCConfigGroup *group = module->engine->FindConfigGroupForGlobalVar(gvarId);
+					if( group != 0 ) group->AddRef();
+				}
+
+				break;
+			}
+
+		// System functions
+		case BC_CALLSYS:
+			{
+				int funcId = INTARG(&byteCode[n]);
+				asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
+				if( group != 0 ) group->AddRef();
+				break;
+			}
+		}
+	}
+}
+
+void asCScriptFunction::ReleaseReferences()
+{
+	// Only count references if there is any bytecode
+	if( byteCode.GetLength() )
+	{
+		if( returnType.IsObject() )
+			returnType.GetObjectType()->refCount--;
+
+		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
+			if( parameterTypes[p].IsObject() )
+				parameterTypes[p].GetObjectType()->refCount--;
+	}
+
+	// Go through the byte code and release references to all resources used by the function
+	for( asUINT n = 0; n < byteCode.GetLength(); n += asCByteCode::SizeOfType(bcTypes[*(asBYTE*)&byteCode[n]]) )
+	{
+		switch( *(asBYTE*)&byteCode[n] )
+		{
+		// Object types
+		case BC_OBJTYPE:
+		case BC_FREE:
+		case BC_ALLOC:
+		case BC_REFCPY:
+			{
+				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
+				objType->refCount--;
+				break;
+			}
+
+		// Global variables
+		case BC_LDG:
+		case BC_PGA:
+		case BC_PshG4:
+		case BC_SetG4:
+		case BC_CpyVtoG4:
+			{
+				int gvarId = WORDARG0(&byteCode[n]);
+				void *gvarPtr = module->globalVarPointers[gvarId];
+
+				gvarId = 0;
+				for( asUINT g = 0; g < module->engine->globalPropAddresses.GetLength(); g++ )
+				{
+					if( module->engine->globalPropAddresses[g] == gvarPtr )
+					{
+						gvarId = -int(g) - 1;
+						break;
+					}
+				}
+
+				if( gvarId < 0 )
+				{
+					// Find the config group from the property id
+					asCConfigGroup *group = module->engine->FindConfigGroupForGlobalVar(gvarId);
+					if( group != 0 ) group->Release();
+				}
+
+				break;
+			}
+
+		case BC_LdGRdR4:
+		case BC_CpyGtoV4:
+			{
+				int gvarId = WORDARG1(&byteCode[n]);
+				void *gvarPtr = module->globalVarPointers[gvarId];
+
+				gvarId = 0;
+				for( asUINT g = 0; g < module->engine->globalPropAddresses.GetLength(); g++ )
+				{
+					if( module->engine->globalPropAddresses[g] == gvarPtr )
+					{
+						gvarId = -int(g) - 1;
+						break;
+					}
+				}
+
+				if( gvarId < 0 )
+				{
+					// Find the config group from the property id
+					asCConfigGroup *group = module->engine->FindConfigGroupForGlobalVar(gvarId);
+					if( group != 0 ) group->Release();
+				}
+
+				break;
+			}
+
+		// System functions
+		case BC_CALLSYS:
+			{
+				int funcId = INTARG(&byteCode[n]);
+				asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
+				if( group != 0 ) group->Release();
+				break;
+			}
+		}
+	}
 }
 
 END_AS_NAMESPACE

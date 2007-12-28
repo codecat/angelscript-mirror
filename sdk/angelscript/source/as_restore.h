@@ -90,6 +90,7 @@ protected:
 	int FindFunctionIndex(asCScriptFunction *func);
 
 	asCArray<int> usedTypeIds;
+	asCArray<asCObjectType*> usedTypes;
 };
 
 END_AS_NAMESPACE

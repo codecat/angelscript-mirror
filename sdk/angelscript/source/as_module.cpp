@@ -202,30 +202,17 @@ void asCModule::Reset()
 
 	CallExit();
 
-
-	// Free global variables
-	globalMem.SetLength(0);
-	globalVarPointers.SetLength(0);
-
-	isBuildWithoutErrors = true;
-	isDiscarded = false;
+	// First free the functions
+	size_t n;
+	for( n = 0; n < scriptFunctions.GetLength(); n++ )
+		engine->DeleteScriptFunction(scriptFunctions[n]->id);
+	scriptFunctions.SetLength(0);
 
 	if( initFunction )
 	{
 		engine->DeleteScriptFunction(initFunction->id);
 		initFunction = 0;
 	}
-
-	size_t n;
-	for( n = 0; n < scriptFunctions.GetLength(); n++ )
-		engine->DeleteScriptFunction(scriptFunctions[n]->id);
-	scriptFunctions.SetLength(0);
-
-	for( n = 0; n < importedFunctions.GetLength(); n++ )
-	{
-		DELETE(importedFunctions[n],asCScriptFunction);
-	}
-	importedFunctions.SetLength(0);
 
 	// Release bound functions
 	for( n = 0; n < bindInformations.GetLength(); n++ )
@@ -242,6 +229,19 @@ void asCModule::Reset()
 		}
 	}
 	bindInformations.SetLength(0);
+
+	for( n = 0; n < importedFunctions.GetLength(); n++ )
+	{
+		DELETE(importedFunctions[n],asCScriptFunction);
+	}
+	importedFunctions.SetLength(0);
+
+	// Free global variables
+	globalMem.SetLength(0);
+	globalVarPointers.SetLength(0);
+
+	isBuildWithoutErrors = true;
+	isDiscarded = false;
 
 	for( n = 0; n < stringConstants.GetLength(); n++ )
 	{
@@ -264,16 +264,6 @@ void asCModule::Reset()
 	for( n = 0; n < classTypes.GetLength(); n++ )
 		classTypes[n]->refCount--;
 	classTypes.SetLength(0);
-
-	// Release all used object types
-	for( n = 0; n < usedTypes.GetLength(); n++ )
-		usedTypes[n]->refCount--;
-	usedTypes.SetLength(0);
-
-	// Release all config groups
-	for( n = 0; n < configGroups.GetLength(); n++ )
-		configGroups[n]->Release();
-	configGroups.SetLength(0);
 }
 
 int asCModule::GetFunctionIDByName(const char *name)
@@ -796,81 +786,6 @@ asCObjectType *asCModule::GetObjectType(const char *type)
 			return classTypes[n];
 
 	return 0;
-}
-
-asCObjectType *asCModule::RefObjectType(asCObjectType *type)
-{
-	if( !type ) return 0;
-
-	// Determine the index local to the module
-	for( size_t n = 0; n < usedTypes.GetLength(); n++ )
-		if( usedTypes[n] == type ) return type;
-
-	usedTypes.PushLast(type);
-	type->refCount++;
-
-	RefConfigGroupForObjectType(type);
-
-	return type;
-}
-
-void asCModule::RefConfigGroupForFunction(int funcId)
-{
-	// Find the config group where the function was registered
-	asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
-	if( group == 0 )
-		return;
-
-	// Verify if the module is already referencing the config group
-	for( size_t n = 0; n < configGroups.GetLength(); n++ )
-	{
-		if( configGroups[n] == group ) 
-			return;
-	}
-
-	// Add reference to the group
-	configGroups.PushLast(group);
-	group->AddRef();
-}
-
-void asCModule::RefConfigGroupForGlobalVar(int gvarId)
-{
-	// Find the config group where the function was registered
-	asCConfigGroup *group = engine->FindConfigGroupForGlobalVar(gvarId);
-	if( group == 0 )
-		return;
-
-	// Verify if the module is already referencing the config group
-	for( size_t n = 0; n < configGroups.GetLength(); n++ )
-	{
-		if( configGroups[n] == group ) 
-			return;
-	}
-
-	// Add reference to the group
-	configGroups.PushLast(group);
-	group->AddRef();
-}
-
-void asCModule::RefConfigGroupForObjectType(asCObjectType *type)
-{
-	if( type == 0 ) return;
-
-	// Find the config group where the function was registered
-	asCConfigGroup *group = engine->FindConfigGroupForObjectType(type);
-	if( group == 0 )
-		return;
-
-	// Verify if the module is already referencing the config group
-	for( size_t n = 0; n < configGroups.GetLength(); n++ )
-	{
-		if( configGroups[n] == group ) 
-			return;
-	}
-
-	// Add reference to the group
-	configGroups.PushLast(group);
-	group->AddRef();
 }
 
 int asCModule::GetGlobalVarIndex(int propIdx)

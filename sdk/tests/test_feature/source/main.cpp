@@ -141,7 +141,7 @@ void DetectMemoryLeaks()
 	_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
 
 	// Use _CrtSetBreakAlloc(n) to find a specific memory leak
-	//_CrtSetBreakAlloc(278802);
+	//_CrtSetBreakAlloc(108880);
 #endif
 }
 
@@ -169,6 +169,9 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
+	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
+	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
@@ -182,10 +185,8 @@ int main(int argc, char **argv)
 	if( TestExceptionMemory::Test()   ) goto failed; else printf("-- TestExceptionMemory passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
 	if( TestObject::Test()            ) goto failed; else printf("-- TestObject passed\n");
-	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestFactory::Test()           ) goto failed; else printf("-- TestFactory passed\n");
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
-	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
 	if( TestObjZeroSize::Test()       ) goto failed; else printf("-- TestObjZeroSize passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
@@ -217,7 +218,6 @@ int main(int argc, char **argv)
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestGetArgPtr::Test()         ) goto failed; else printf("-- TestGetArgPtr passed\n");
-	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");
 	if( TestExecute32Args()           ) goto failed; else printf("-- TestExecute32Args passed\n");

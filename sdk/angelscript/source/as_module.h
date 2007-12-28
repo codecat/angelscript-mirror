@@ -99,20 +99,28 @@ public:
 
 	void Reset();
 
+	int  AddContextRef();
+	int  ReleaseContextRef();
+	int  contextCount;
+
+	int  AddModuleRef();
+	int  ReleaseModuleRef();
+	int  moduleCount;
+
 	void CallInit();
 	void CallExit();
 	bool isGlobalVarInitialized;
 
 	bool IsUsed();
 
-	int AddConstantString(const char *str, size_t length);
+	int  AddConstantString(const char *str, size_t length);
 	const asCString &GetConstantString(int id);
 
-	int AllocGlobalMemory(int size);
+	int  AllocGlobalMemory(int size);
 
-	int GetNextFunctionId();
-	int AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType = 0);
-	int AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, int moduleNameStringID);
+	int  GetNextFunctionId();
+	int  AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType = 0);
+	int  AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, int moduleNameStringID);
 
 	bool CanDeleteAllReferences(asCArray<asCModule*> &modules);
 
@@ -123,58 +131,36 @@ public:
 	int  GetImportedFunctionIndexByDecl(const char *decl);
 	const char *GetImportedFunctionSourceModule(int index);
 	int  BindImportedFunction(int index, int sourceID);
-	asCScriptFunction *GetImportedFunction(int funcID);
 
+	asCScriptFunction *GetImportedFunction(int funcID);
 	asCScriptFunction *GetScriptFunction(int funcID);
 	asCScriptFunction *GetSpecialFunction(int funcID);
 
 	asCObjectType *GetObjectType(const char *type);
-	asCObjectType *RefObjectType(asCObjectType *type);
-	void RefConfigGroupForFunction(int funcId);
-	void RefConfigGroupForGlobalVar(int gvarId);
-	void RefConfigGroupForObjectType(asCObjectType *type);
+
+	int  GetScriptSectionIndex(const char *name);
+	bool CanDelete();
 
 	int GetGlobalVarIndex(int propIdx);
 
 	asCScriptEngine *engine;
-	asCBuilder *builder;
-	bool isBuildWithoutErrors;
+	asCBuilder      *builder;
+	bool             isBuildWithoutErrors;
 
-	int moduleID;
+	int  moduleID;
 	bool isDiscarded;
 
-	int AddContextRef();
-	int ReleaseContextRef();
-	int contextCount;
+	asCScriptFunction             *initFunction;
+	asCArray<asCString *>          scriptSections;
+	asCArray<asCScriptFunction *>  scriptFunctions;
+	asCArray<asCScriptFunction *>  importedFunctions;
+	asCArray<sBindInfo>            bindInformations;
+	asCArray<asCProperty *>        scriptGlobals;
+	asCArray<size_t>               globalMem;
+	asCArray<void*>                globalVarPointers;
+	asCArray<asCString*>           stringConstants;
+	asCArray<asCObjectType*>       classTypes;
 
-	int AddModuleRef();
-	int ReleaseModuleRef();
-	int moduleCount;
-
-	int GetScriptSectionIndex(const char *name);
-
-	bool CanDelete();
-
-	asCScriptFunction *initFunction;
-
-	asCArray<asCString *> scriptSections;
-	asCArray<asCScriptFunction *> scriptFunctions;
-	asCArray<asCScriptFunction *> importedFunctions;
-	asCArray<sBindInfo> bindInformations;
-
-	asCArray<asCProperty *> scriptGlobals;
-	asCArray<size_t> globalMem;
-
-	asCArray<void*> globalVarPointers;
-
-	asCArray<asCString*> stringConstants;
-
-	asCArray<asCObjectType*> classTypes;
-
-	// Reference to all used types
-	asCArray<asCObjectType*> usedTypes;
-	asCArray<asCConfigGroup*> configGroups;
-	
 	DECLARECRITICALSECTION(criticalSection);
 };
 

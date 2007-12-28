@@ -70,14 +70,6 @@ int asCRestore::Save()
 		WriteObjectTypeDeclaration(module->classTypes[i], true);
 	}
 
-	// usedTypeIndices[]
-	count = (asUINT)module->usedTypes.GetLength();
-	WRITE_NUM(count);
-	for( i = 0; i < count; ++i )
-	{
-		WriteObjectType(module->usedTypes[i]);
-	}
-
 	// scriptGlobals[]
 	count = (asUINT)module->scriptGlobals.GetLength();
 	WRITE_NUM(count);
@@ -118,13 +110,20 @@ int asCRestore::Save()
 		WRITE_NUM(module->bindInformations[i].importFrom);
 	}
 
+	// usedTypes[]
+	count = (asUINT)usedTypes.GetLength();
+	WRITE_NUM(count);
+	for( i = 0; i < count; ++i )
+	{
+		WriteObjectType(usedTypes[i]);
+	}
+
 	// usedTypeIds[]
 	WriteUsedTypeIds();
 
 	return asSUCCESS;
 }
 
-// NEXT: Must go through the bytecode and set the correct objecttype pointer where used
 int asCRestore::Restore() 
 {
 	// Before starting the load, make sure that 
@@ -152,16 +151,6 @@ int asCRestore::Restore()
 	for( i = 0; i < count; ++i )
 	{
 		ReadObjectTypeDeclaration(module->classTypes[i], true);
-	}
-
-	// usedTypes[]
-	READ_NUM(count);
-	module->usedTypes.Allocate(count, 0);
-	for( i = 0; i < count; ++i )
-	{
-		asCObjectType *ot = ReadObjectType();
-		module->usedTypes.PushLast(ot);
-		ot->refCount++;		
 	}
 
 	// scriptGlobals[]
@@ -225,6 +214,15 @@ int asCRestore::Restore()
 		module->bindInformations[i].importedFunction = -1;
 	}
 	
+	// usedTypes[]
+	READ_NUM(count);
+	usedTypes.Allocate(count, 0);
+	for( i = 0; i < count; ++i )
+	{
+		asCObjectType *ot = ReadObjectType();
+		usedTypes.PushLast(ot);
+	}
+
 	// usedTypeIds[]
 	ReadUsedTypeIds();
 
@@ -248,6 +246,13 @@ int asCRestore::Restore()
 
 	// Init system functions properly
 	engine->PrepareEngine();
+
+	// Add references for all functions
+	module->initFunction->AddReferences();
+	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
+	{
+		module->scriptFunctions[i]->AddReferences();
+	}
 
 	module->CallInit();
 
@@ -773,23 +778,6 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 	}
 }
 
-int asCRestore::FindTypeIdIdx(int typeId)
-{
-	asUINT n;
-	for( n = 0; n < usedTypeIds.GetLength(); n++ )
-	{
-		if( usedTypeIds[n] == typeId )
-			return n;
-	}
-
-	usedTypeIds.PushLast(typeId);
-	return (int)usedTypeIds.GetLength() - 1;
-}
-
-int asCRestore::FindTypeId(int idx)
-{
-	return usedTypeIds[idx];
-}
 
 int asCRestore::FindFunctionIndex(asCScriptFunction *func)
 {
@@ -833,11 +821,17 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 	for( asUINT n = 0; n < func->byteCode.GetLength(); )
 	{
 		int c = *(asBYTE*)&bc[n];
-		if( c == BC_TYPEID )
+		if( c == BC_FREE ||
+			c == BC_REFCPY || c == BC_OBJTYPE )
+		{
+			// Translate the index to the true object type
+			asPTRWORD *ot = (asPTRWORD*)&bc[n+1];
+			*(asCObjectType**)ot = FindObjectType(*(int*)ot);
+		}
+		else  if( c == BC_TYPEID )
 		{
 			// Translate the index to the type id
 			int *tid = (int*)&bc[n+1];
-
 			*tid = FindTypeId(*tid);
 		}
 		else if( c == BC_CALL ||
@@ -845,13 +839,16 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the index to the func id
 			int *fid = (int*)&bc[n+1];
-
 			*fid = module->scriptFunctions[*fid]->id;
 		}
 		else if( c == BC_ALLOC )
 		{
+			// Translate the index to the true object type
+			asPTRWORD *arg = (asPTRWORD*)&bc[n+1];
+			*(asCObjectType**)arg = FindObjectType(*(int*)arg);
+
 			// If the object type is a script class then the constructor id must be translated
-			asCObjectType *ot = *(asCObjectType**)&bc[n+1];
+			asCObjectType *ot = *(asCObjectType**)arg;
 			if( ot->flags & asOBJ_SCRIPT_STRUCT )
 			{
 				int *fid = (int*)&bc[n+1+PTR_SIZE];
@@ -863,22 +860,40 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 	}
 }
 
-int asCRestore::FindObjectTypeIdx(asCObjectType *obj)
+int asCRestore::FindTypeIdIdx(int typeId)
 {
 	asUINT n;
-	for( n = 0; n < module->usedTypes.GetLength(); n++ )
+	for( n = 0; n < usedTypeIds.GetLength(); n++ )
 	{
-		if( module->usedTypes[n] == obj )
+		if( usedTypeIds[n] == typeId )
 			return n;
 	}
 
-	assert( false );
-	return -1;
+	usedTypeIds.PushLast(typeId);
+	return (int)usedTypeIds.GetLength() - 1;
+}
+
+int asCRestore::FindTypeId(int idx)
+{
+	return usedTypeIds[idx];
+}
+
+int asCRestore::FindObjectTypeIdx(asCObjectType *obj)
+{
+	asUINT n;
+	for( n = 0; n < usedTypes.GetLength(); n++ )
+	{
+		if( usedTypes[n] == obj )
+			return n;
+	}
+
+	usedTypes.PushLast(obj);
+	return (int)usedTypes.GetLength() - 1;
 }
 
 asCObjectType *asCRestore::FindObjectType(int idx)
 {
-	return module->usedTypes[idx];
+	return usedTypes[idx];
 }
 
 void asCRestore::ReadByteCode(asDWORD *bc, int length)
@@ -890,26 +905,10 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 		*bc = c;
 		bc += 1;
 		c = *(asBYTE*)&c;
-		if( c == BC_ALLOC || c == BC_FREE ||
-			c == BC_REFCPY || c == BC_OBJTYPE )
-		{
-			// Translate the index to the true object type
-			asDWORD tmp[MAX_DATA_SIZE];
-			int n;
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
-				READ_NUM(tmp[n]);
 
-			*(asCObjectType**)tmp = FindObjectType(*(int*)tmp);
-
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
-				*bc++ = tmp[n];
-		}
-		else
-		{
-			// Read the bc as is
-			for( int n = 1; n < asCByteCode::SizeOfType(bcTypes[c]); n++ )
-				READ_NUM(*bc++);
-		}
+		// Read the bc as is
+		for( int n = 1; n < asCByteCode::SizeOfType(bcTypes[c]); n++ )
+			READ_NUM(*bc++);
 
 		length -= asCByteCode::SizeOfType(bcTypes[c]);
 	}

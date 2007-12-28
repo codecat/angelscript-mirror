@@ -2175,8 +2175,6 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	func->sysFuncIntf = newInterface;
 	func->objectType  = dt.GetObjectType();
 
-	func->objectType->methods.PushLast((int)scriptFunctions.GetLength());
-
 	r = bld.ParseFunctionDeclaration(declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 )
 	{
@@ -2193,6 +2191,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	}
 
 	func->id = GetNextScriptFunctionId();
+	func->objectType->methods.PushLast(func->id);
 	SetScriptFunction(func);
 
 	// If parameter type from other groups are used, add references

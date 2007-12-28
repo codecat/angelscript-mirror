@@ -39,6 +39,8 @@
 
 #include "as_config.h"
 #include "as_objecttype.h"
+#include "as_configgroup.h"
+#include "as_scriptengine.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -65,6 +67,13 @@ asCObjectType::~asCObjectType()
 	for( asUINT n = 0; n < properties.GetLength(); n++ )
 		if( properties[n] ) 
 		{
+			if( flags & asOBJ_SCRIPT_STRUCT )
+			{
+				// Release the config group for script structures that are being destroyed
+				asCConfigGroup *group = engine->FindConfigGroupForObjectType(properties[n]->type.GetObjectType());
+				if( group != 0 ) group->Release();
+			}
+
 			DELETE(properties[n],asCProperty);
 		}
 

@@ -208,6 +208,9 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 			execfunc->byteCode.SetLength(compiler.byteCode.GetSize());
 			// TODO: pass the function pointer directly
 			compiler.byteCode.Output(execfunc->byteCode.AddressOf());
+
+			execfunc->AddReferences();
+
 			execfunc->stackNeeded = compiler.byteCode.largestStackUsed;
 			execfunc->lineNumbers = compiler.byteCode.lineNumbers;
 
@@ -391,6 +394,9 @@ void asCBuilder::CompileFunctions()
 			func->byteCode.SetLength(compiler.byteCode.GetSize());
 			// TODO: Pass the function pointer directly
 			compiler.byteCode.Output(func->byteCode.AddressOf());
+
+			func->AddReferences();
+
 			func->stackNeeded = compiler.byteCode.largestStackUsed;
 			func->lineNumbers = compiler.byteCode.lineNumbers;
 
@@ -1071,6 +1077,7 @@ void asCBuilder::CompileGlobalVariables()
 	init->byteCode.SetLength(finalInit.GetSize());
 	// TODO: Pass the function pointer directly
 	finalInit.Output(init->byteCode.AddressOf());
+	init->AddReferences();
 	init->stackNeeded = finalInit.largestStackUsed;
 
 #ifdef AS_DEBUG
@@ -1161,8 +1168,9 @@ void asCBuilder::CompileClasses()
 
 				decl->objType->properties.PushLast(prop);
 
-				// Make sure the module holds a reference to the config group where the object is registered
-				module->RefConfigGroupForObjectType(dt.GetObjectType());
+				// Make sure the struct holds a reference to the config group where the object is registered
+				asCConfigGroup *group = engine->FindConfigGroupForObjectType(prop->type.GetObjectType());
+				if( group != 0 ) group->AddRef();
 			}
 			else if( node->nodeType == snFunction )
 			{
@@ -1499,8 +1507,6 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	{
 		returnType = CreateDataTypeFromNode(node->firstChild, file);
 		returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next, file, 0, 0);
-
-		module->RefConfigGroupForObjectType(returnType.GetObjectType());
 	}
 
 	// Count the number of parameters
@@ -1531,8 +1537,6 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		int inOutFlag;
 		asCDataType type = CreateDataTypeFromNode(n, file);
 		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
-
-		module->RefConfigGroupForObjectType(type.GetObjectType());
 
 		// Store the parameter type
 		parameterTypes.PushLast(type);

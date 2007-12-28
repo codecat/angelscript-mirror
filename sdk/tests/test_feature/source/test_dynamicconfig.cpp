@@ -165,9 +165,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
-                                 "TestDynamicConfig (3, 3) : Error   : 'global' is not declared\n"
-/*								 "TestDynamicConfig (3, 10) : Error   : Reference is read-only\n"
-								 "TestDynamicConfig (3, 10) : Error   : Not a valid lvalue\n"*/ ) 
+                                 "TestDynamicConfig (3, 3) : Error   : 'global' is not declared\n" ) 
 	{
 		fail = true;
 	}
@@ -514,7 +512,7 @@ bool Test()
 	engine->Release();
 
 	//----------------------
-	// Test
+	// Test that it is possible to repeat the registration of the config group
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->BeginConfigGroup("g1"); assert( r >= 0 );
@@ -544,7 +542,7 @@ bool Test()
 
 
 	//-----------------------------
-	// Test
+	// Test that it isn't possible to register the sample property in two different groups
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->BeginConfigGroup("a");
@@ -554,6 +552,22 @@ bool Test()
 	engine->EndConfigGroup();
 
 	r = engine->RegisterGlobalProperty("int a", 0); assert( r < 0 );
+
+	engine->Release();
+
+	//------------------------------
+	// Test that ExecuteString doesn't lock dynamic config groups
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	r = engine->BeginConfigGroup("g1"); assert( r >= 0 );
+	RegisterScriptString_Generic(engine);
+	r = engine->EndConfigGroup(); assert( r >= 0 );
+
+	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
+
+	// Garbage collect and remove config group before discarding module
+	r = engine->GarbageCollect(true); assert( r >= 0 );
+	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );
 
 	engine->Release();
 

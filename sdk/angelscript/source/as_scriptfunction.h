@@ -78,6 +78,9 @@ public:
 	int GetLineNumber(int programPosition);
 	void ComputeSignatureId(asCScriptEngine *engine);
 
+	void AddReferences();
+	void ReleaseReferences();
+
 	int                          funcType;
 	asCModule                   *module;
 	asCString                    name;

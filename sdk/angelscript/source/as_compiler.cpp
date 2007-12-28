@@ -93,7 +93,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	Reset(builder, script, outFunc);
 
 	// Initialize the asCScriptStruct object then return
-	byteCode.InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(outFunc->objectType));
+	byteCode.InstrPTR(BC_OBJTYPE, outFunc->objectType);
 	byteCode.InstrSHORT(BC_PSF, 0);
 	byteCode.Instr(BC_RDSPTR);
 	byteCode.Call(BC_CALLSYS, engine->scriptTypeBehaviours.beh.construct, 2*PTR_SIZE);
@@ -106,6 +106,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	// Copy byte code to the registered function
 	outFunc->byteCode.SetLength(byteCode.GetSize());
 	byteCode.Output(outFunc->byteCode.AddressOf());
+	outFunc->AddReferences();
 	outFunc->stackNeeded = byteCode.largestStackUsed;
 	outFunc->lineNumbers = byteCode.lineNumbers;
 	outFunc->objVariablePos = objVariablePos;
@@ -258,7 +259,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		if( isConstructor )
 		{
 			// Initialize the asCScriptStruct object first
-			byteCode.InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(outFunc->objectType));
+			byteCode.InstrPTR(BC_OBJTYPE, outFunc->objectType);
 			byteCode.InstrSHORT(BC_PSF, 0);
 			byteCode.Instr(BC_RDSPTR);
 			byteCode.Call(BC_CALLSYS, engine->scriptTypeBehaviours.beh.construct, 2*PTR_SIZE);
@@ -294,7 +295,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	if( outFunc->objectType )
 	{
 		byteCode.InstrSHORT(BC_PSF, 0);
-		byteCode.InstrPTR(BC_FREE, builder->module->RefObjectType(outFunc->objectType));
+		byteCode.InstrPTR(BC_FREE, outFunc->objectType);
 	}
 
 	// Call destructors for function parameters
@@ -368,13 +369,13 @@ void asCCompiler::DefaultConstructor(asCByteCode *bc, asCDataType &type)
 	{
 		// The script array constructor needs to know what type it is
 		asCObjectType *objType = type.GetObjectType();
-		bc->InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(objType));
+		bc->InstrPTR(BC_OBJTYPE, objType);
 
-		bc->Alloc(BC_ALLOC, builder->module->RefObjectType(objType), func, 2*PTR_SIZE);
+		bc->Alloc(BC_ALLOC, objType, func, 2*PTR_SIZE);
 	}
 	else
 	{
-		bc->Alloc(BC_ALLOC, builder->module->RefObjectType(type.GetObjectType()), func, PTR_SIZE);
+		bc->Alloc(BC_ALLOC, type.GetObjectType(), func, PTR_SIZE);
 	}
 }
 
@@ -397,7 +398,7 @@ void asCCompiler::CompileDestructor(asCDataType &type, int offset, asCByteCode *
 		{
 			// Free the memory
 			bc->InstrSHORT(BC_PSF, (short)offset);
-			bc->InstrPTR(BC_FREE, builder->module->RefObjectType(type.GetObjectType()));
+			bc->InstrPTR(BC_FREE, type.GetObjectType());
 		}
 	}
 }
@@ -886,7 +887,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 				// Copy the handle
 				ctx->bc.InstrWORD(BC_PSF, (asWORD)offset);
-				ctx->bc.InstrPTR(BC_REFCPY, builder->module->RefObjectType(ctx->type.dataType.GetObjectType()));
+				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
 				ctx->bc.Pop(PTR_SIZE);
 				ctx->bc.InstrWORD(BC_PSF, (asWORD)offset);
 
@@ -1059,7 +1060,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 	if( type && type->IsScriptArray() )
 	{
 		args[n] = NEW(asSExprContext)(engine);
-		args[n]->bc.InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(type->GetObjectType()));
+		args[n]->bc.InstrPTR(BC_OBJTYPE, type->GetObjectType());
 #ifndef AS_64BIT_PTR
 		args[n]->type.Set(asCDataType::CreatePrimitive(ttInt, false));
 #else
@@ -1459,7 +1460,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		if( var->dataType.IsScriptArray() )
 		{
 			// Script arrays need the type id as well
-			arg2.bc.InstrPTR(BC_OBJTYPE, builder->module->RefObjectType(var->dataType.GetObjectType()));
+			arg2.bc.InstrPTR(BC_OBJTYPE, var->dataType.GetObjectType());
 #ifndef AS_64BIT_PTR
 			arg2.type.Set(asCDataType::CreatePrimitive(ttInt, false));
 #else
@@ -1528,9 +1529,6 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			Error(TXT_NO_APPROPRIATE_INDEX_OPERATOR, node);
 			return;
 		}
-
-		// Add a reference for the configuration group
-		builder->module->RefConfigGroupForFunction(funcId);
 
 		asUINT index = 0;
 		el = node->firstChild;
@@ -2889,7 +2887,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 		}
 
 		// TODO: Convert to register based
-		bc->InstrPTR(BC_REFCPY, builder->module->RefObjectType(lvalue->dataType.GetObjectType()));
+		bc->InstrPTR(BC_REFCPY, lvalue->dataType.GetObjectType());
 
 		// Mark variable as initialized
 		if( variables )
@@ -4601,10 +4599,6 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 								ctx->bc.InstrWORD(BC_LDG, (asWORD)builder->module->GetGlobalVarIndex(prop->index));
 							else
 								ctx->bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(prop->index));
-
-							// If the global property is registered by the application
-							// then module must keep a reference to the config group
-							builder->module->RefConfigGroupForGlobalVar(prop->index);
 						}
 					}
 					else
@@ -6555,7 +6549,7 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 			{
 				// Copy the object handle to a variable
 				ctx->bc.InstrSHORT(BC_PSF, (short)offset);
-				ctx->bc.InstrPTR(BC_REFCPY, builder->module->RefObjectType(ctx->type.dataType.GetObjectType()));
+				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
 				ctx->bc.Pop(PTR_SIZE);
 			}
 
@@ -7703,7 +7697,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 	if( isConstructor )
 	{
-		ctx->bc.Alloc(BC_ALLOC, builder->module->RefObjectType(objType), descr->id, argSize+PTR_SIZE);
+		ctx->bc.Alloc(BC_ALLOC, objType, descr->id, argSize+PTR_SIZE);
 
 		// TODO: In reality the reference objects shouldn't be allocated through ALLOC, 
 		// but rather through a normal call to a system function, since it returns the object handle
@@ -7726,11 +7720,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 	else if( descr->funcType == asFUNC_SCRIPT )
 		ctx->bc.Call(BC_CALL    , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
 	else // if( descr->funcType == asFUNC_SYSTEM )
-	{
 		ctx->bc.Call(BC_CALLSYS , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
-		// Add a reference for the configuration group here
-		builder->module->RefConfigGroupForFunction(descr->id);
-	}
 
 	if( ctx->type.dataType.IsObject() && !descr->returnType.IsReference() )
 	{
