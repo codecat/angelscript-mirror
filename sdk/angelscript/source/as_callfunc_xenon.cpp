@@ -729,7 +729,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 			{
 				pContext->SetInternalException(TXT_NULL_POINTER_ACCESS);
 				if( pRetPointer )
-					pEngine->CallFree(pDescr->returnType.GetObjectType(), pRetPointer);
+					pEngine->CallFree(pRetPointer);
 				return 0;
 			}
 
@@ -777,7 +777,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 					// Copy the object's memory to the buffer
 					memcpy( &paramBuffer[iDpos], *(void**)(pArgs + iSpos), pDescr->parameterTypes[uParam].GetSizeInMemoryBytes() );
 					// Delete the original memory
-					pEngine->CallFree( pDescr->parameterTypes[uParam].GetObjectType(), *(char**)(pArgs + iSpos) );
+					pEngine->CallFree(*(char**)(pArgs + iSpos) );
 					pArgs[uParam] = (asDWORD)&paramBuffer[iDpos];
 					iSpos++;
 					iDpos += pDescr->parameterTypes[uParam].GetSizeInMemoryDWords();
@@ -865,7 +865,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 				if( pBeh->destruct )
 					pEngine->CallObjectMethod(pObj, pBeh->destruct);
 
-				pEngine->CallFree(pDescr->parameterTypes[iParam].GetObjectType(), pObj);
+				pEngine->CallFree(pObj);
 			}
 			else
 				iSpos += pDescr->parameterTypes[iParam].GetSizeInMemoryDWords();

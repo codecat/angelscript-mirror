@@ -407,7 +407,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				if( beh->destruct )
 					engine->CallObjectMethod(obj, beh->destruct);
 
-				engine->CallFree(descr->parameterTypes[n].GetObjectType(), obj);
+				engine->CallFree(obj);
 			}
 			else
 				spos += descr->parameterTypes[n].GetSizeInMemoryDWords();

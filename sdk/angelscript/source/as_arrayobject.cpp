@@ -92,7 +92,7 @@ static void ArrayObjectFactory2_Generic(asIScriptGeneric *gen)
 	asUINT length = gen->GetArgDWord(0);
 	asCObjectType *ot = *(asCObjectType**)gen->GetArgPointer(1);
 
-	*(asCArrayObject**)gen->GetReturnPointer() = ArrayObjectFactory2(length, ot, obj);
+	*(asCArrayObject**)gen->GetReturnPointer() = ArrayObjectFactory2(length, ot);
 }
 
 static void ArrayObjectAssignment_Generic(asIScriptGeneric *gen)
