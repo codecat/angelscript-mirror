@@ -53,13 +53,13 @@ asIScriptStruct *ScriptStructFactory(asCObjectType *objType, asCScriptEngine *en
 	int r = engine->CreateContext(&ctx, true);
 	if( r < 0 )
 	{
-		engine->CallFree(objType, ptr);
+		engine->CallFree(ptr);
 		return 0;
 	}
 	r = ctx->Prepare(funcIndex);
 	if( r < 0 )
 	{
-		engine->CallFree(objType, ptr);
+		engine->CallFree(ptr);
 		ctx->Release();
 		return 0;
 	}
@@ -313,7 +313,6 @@ int asCScriptStruct::GetStructTypeId()
 
 int asCScriptStruct::GetPropertyCount()
 {
-	// TODO: Return size_t
 	return (int)objType->properties.GetLength();
 }
 
@@ -469,7 +468,7 @@ void asCScriptStruct::FreeObject(void *ptr, asCObjectType *objType, asCScriptEng
 		if( objType->beh.destruct )
 			engine->CallObjectMethod(ptr, objType->beh.destruct);
 
-		engine->CallFree(objType, ptr);
+		engine->CallFree(ptr);
 	}
 	else
 	{

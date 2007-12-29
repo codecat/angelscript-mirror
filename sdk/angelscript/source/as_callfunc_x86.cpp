@@ -263,7 +263,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			{
 				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
 				if( retPointer )
-					engine->CallFree(descr->returnType.GetObjectType(), retPointer);
+					engine->CallFree(retPointer);
 				return 0;
 			}
 
@@ -298,7 +298,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 					memcpy(&paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
 					
 					// Delete the original memory
-					engine->CallFree(descr->parameterTypes[n].GetObjectType(), *(char**)(args+spos));
+					engine->CallFree(*(char**)(args+spos));
 					spos++;
 					dpos += descr->parameterTypes[n].GetSizeInMemoryDWords();
 					paramSize += descr->parameterTypes[n].GetSizeInMemoryDWords();

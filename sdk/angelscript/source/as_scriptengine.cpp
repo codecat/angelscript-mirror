@@ -773,7 +773,6 @@ const char *asCScriptEngine::GetFunctionDeclaration(int funcID, int *length)
 		*tempString = func->GetDeclaration(this);
 	}
 
-	// TODO: Return size_t
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
@@ -807,7 +806,6 @@ const char *asCScriptEngine::GetFunctionSection(int funcID, int *length)
 		*tempString = *module->scriptSections[func->scriptSectionIdx];
 	}
 
-	// TODO: Return size_t
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
@@ -828,7 +826,6 @@ const char *asCScriptEngine::GetFunctionName(int funcID, int *length)
 		*tempString = func->name;
 	}
 
-	// TODO: Return size_t
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
@@ -881,7 +878,6 @@ const char *asCScriptEngine::GetGlobalVarDeclaration(int gvarID, int *length)
 	*tempString = prop->type.Format();
 	*tempString += " " + prop->name;
 
-	// TODO: Return size_t
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
@@ -899,7 +895,6 @@ const char *asCScriptEngine::GetGlobalVarName(int gvarID, int *length)
 	asCString *tempString = &threadManager.GetLocalData()->string;
 	*tempString = mod->scriptGlobals[id]->name;
 
-	// TODO: return size_t
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
@@ -2609,7 +2604,6 @@ const char *asCScriptEngine::GetImportedFunctionDeclaration(const char *module, 
 	asCString *tempString = &threadManager.GetLocalData()->string;
 	*tempString = func->GetDeclaration(this);
 
-	// TODO: Return size_t
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
@@ -3209,7 +3203,6 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 
 void *asCScriptEngine::CallAlloc(asCObjectType *type)
 {
-	// TODO: Just pass the type size directly
 #if defined(AS_DEBUG) && !defined(AS_NO_USER_ALLOC)
 	return ((asALLOCFUNCDEBUG_t)(userAlloc))(type->size, __FILE__, __LINE__);
 #else
@@ -3217,9 +3210,8 @@ void *asCScriptEngine::CallAlloc(asCObjectType *type)
 #endif
 }
 
-void asCScriptEngine::CallFree(asCObjectType * /*type*/, void *obj)
+void asCScriptEngine::CallFree(void *obj)
 {
-	// TODO: Shouldn't pass the type pointer to the method
 	userFree(obj);
 }
 
@@ -3718,7 +3710,6 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, int *length)
 	asCString *tempString = &threadManager.GetLocalData()->string;
 	*tempString = dt->Format();
 
-	// TODO: Return size_t
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
@@ -3887,7 +3878,7 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 			CallObjectMethod(obj, objType->beh.destruct);
 
 		// Then free the memory
-		CallFree(objType, obj);
+		CallFree(obj);
 	}
 }
 

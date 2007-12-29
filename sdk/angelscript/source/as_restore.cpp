@@ -315,6 +315,7 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 
 void asCRestore::WriteProperty(asCProperty* prop) 
 {
+	// TODO: When writing class properties, we need to write the offset as well
 	WriteString(&prop->name);
 	WriteDataType(&prop->type);
 	WRITE_NUM(prop->index);
@@ -445,8 +446,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 			WRITE_NUM(funcId);
 		}
 
-		// TODO:
-		// interfaces
+		// TODO: interfaces
 	}
 }
 
@@ -518,6 +518,7 @@ void asCRestore::ReadFunction(asCScriptFunction* func)
 
 void asCRestore::ReadProperty(asCProperty* prop) 
 {
+	// TODO: When reading class properties, we need to read the offset as well
 	ReadString(&prop->name);
 	ReadDataType(&prop->type);
 	READ_NUM(prop->index);

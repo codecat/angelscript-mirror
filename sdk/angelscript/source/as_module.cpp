@@ -182,7 +182,7 @@ void asCModule::CallExit()
 					if( ot->beh.destruct )
 						engine->CallObjectMethod(obj, ot->beh.destruct);
 
-					engine->CallFree(ot, obj);
+					engine->CallFree(obj);
 				}
 			}
 		}

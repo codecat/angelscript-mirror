@@ -497,7 +497,7 @@ void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 					if( *d )
 					{
 						engine->CallObjectMethod(*d, funcIndex);
-						engine->CallFree(objType->subType, *d);
+						engine->CallFree(*d);
 					}
 				}
 			}
@@ -506,7 +506,7 @@ void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 				for( ; d < max; d++ )
 				{
 					if( *d )
-						engine->CallFree(objType->subType, *d);
+						engine->CallFree(*d);
 				}
 			}
 		}

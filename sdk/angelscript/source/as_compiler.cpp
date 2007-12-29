@@ -103,7 +103,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 
 	byteCode.Finalize();
 
-	// Copy byte code to the registered function
+	// Copy byte code to the function
 	outFunc->byteCode.SetLength(byteCode.GetSize());
 	byteCode.Output(outFunc->byteCode.AddressOf());
 	outFunc->AddReferences();
@@ -350,6 +350,23 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	}
 
 	if( hasCompileErrors ) return -1;
+
+	// Copy byte code to the function
+	outFunc->byteCode.SetLength(byteCode.GetSize());
+	byteCode.Output(outFunc->byteCode.AddressOf());
+	outFunc->AddReferences();
+	outFunc->stackNeeded = byteCode.largestStackUsed;
+	outFunc->lineNumbers = byteCode.lineNumbers;
+	outFunc->objVariablePos = objVariablePos;
+	outFunc->objVariableTypes = objVariableTypes;
+
+#ifdef AS_DEBUG
+	// DEBUG: output byte code
+	if( outFunc->objectType )
+		byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + ".txt").AddressOf(), builder->module, engine);
+	else
+		byteCode.DebugOutput(("__" + outFunc->name + ".txt").AddressOf(), builder->module, engine);
+#endif
 
 	return 0;
 }
@@ -1790,7 +1807,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 	expr.bc.InstrDWORD(BC_JP, defaultLabel);
 	ReleaseTemporaryVariable(tmpOffset, &expr.bc);
 
-	// TODO: We could possible optimize this even more by doing a
+	// TODO: We could possibly optimize this even more by doing a
 	// binary search instead of a linear search through the ranges
 
 	// For each range
@@ -2847,7 +2864,6 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 	{
 		// TODO: Call the assignment operator, or do a BC_COPY if none exist
 
-		// TODO: Convert
 		asSExprContext ctx(engine);
 		ctx.type = *lvalue;
 		Dereference(&ctx, true);
@@ -2878,7 +2894,6 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 	}
 	else
 	{
-		// TODO: Convert
 		// TODO: The object handle can be stored in a variable as well
 		if( !lvalue->dataType.IsReference() )
 		{
@@ -5967,8 +5982,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			}
 			else
 			{
-				// TODO:
-				// Prefer non-const over const
+				// TODO: Prefer non-const over const
 				for( n = 0; n < beh->operators.GetLength(); n += 2 )
 				{
 					if( ttOpenBracket == beh->operators[n] )

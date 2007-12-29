@@ -190,7 +190,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		}
 		else
 		{
-			// TODO: An error occurred
+			// An error occurred
 			assert(false);
 		}
 	}
@@ -204,25 +204,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		{
 			execfunc->id = asFUNC_STRING;
 
-			// Copy byte code to the registered function
-			execfunc->byteCode.SetLength(compiler.byteCode.GetSize());
-			// TODO: pass the function pointer directly
-			compiler.byteCode.Output(execfunc->byteCode.AddressOf());
-
-			execfunc->AddReferences();
-
-			execfunc->stackNeeded = compiler.byteCode.largestStackUsed;
-			execfunc->lineNumbers = compiler.byteCode.lineNumbers;
-
-			execfunc->objVariablePos = compiler.objVariablePos;
-			execfunc->objVariableTypes = compiler.objVariableTypes;
-
 			ctx->SetExecuteStringFunction(execfunc);
-
-#ifdef AS_DEBUG
-			// DEBUG: output byte code
-			compiler.byteCode.DebugOutput("__ExecuteString.txt", module, engine);
-#endif
 		}
 		else
 		{
@@ -388,29 +370,7 @@ void asCBuilder::CompileFunctions()
 		str.Format(TXT_COMPILING_s, str.AddressOf());
 		WriteInfo(functions[n]->script->name.AddressOf(), str.AddressOf(), r, c, true);
 
-		if( compiler.CompileFunction(this, functions[n]->script, functions[n]->node, func) >= 0 )
-		{
-			// Copy byte code to the registered function
-			func->byteCode.SetLength(compiler.byteCode.GetSize());
-			// TODO: Pass the function pointer directly
-			compiler.byteCode.Output(func->byteCode.AddressOf());
-
-			func->AddReferences();
-
-			func->stackNeeded = compiler.byteCode.largestStackUsed;
-			func->lineNumbers = compiler.byteCode.lineNumbers;
-
-			func->objVariablePos = compiler.objVariablePos;
-			func->objVariableTypes = compiler.objVariableTypes;
-
-#ifdef AS_DEBUG
-			// DEBUG: output byte code
-			if( functions[n]->objType )
-				compiler.byteCode.DebugOutput(("__" + functions[n]->objType->name + "_" + functions[n]->name + ".txt").AddressOf(), module, engine);
-			else
-				compiler.byteCode.DebugOutput(("__" + functions[n]->name + ".txt").AddressOf(), module, engine);
-#endif
-		}
+		compiler.CompileFunction(this, functions[n]->script, functions[n]->node, func);
 
 		preMessage.isSet = false;
 	}
@@ -1075,7 +1035,6 @@ void asCBuilder::CompileGlobalVariables()
 	engine->SetScriptFunction(init);
 
 	init->byteCode.SetLength(finalInit.GetSize());
-	// TODO: Pass the function pointer directly
 	finalInit.Output(init->byteCode.AddressOf());
 	init->AddReferences();
 	init->stackNeeded = finalInit.largestStackUsed;
@@ -1171,11 +1130,6 @@ void asCBuilder::CompileClasses()
 				// Make sure the struct holds a reference to the config group where the object is registered
 				asCConfigGroup *group = engine->FindConfigGroupForObjectType(prop->type.GetObjectType());
 				if( group != 0 ) group->AddRef();
-			}
-			else if( node->nodeType == snFunction )
-			{
-				// TODO: Register the method and add it to the list of functions to compile later 
-
 			}
 			else
 				assert(false);
@@ -1291,16 +1245,14 @@ void asCBuilder::CompileClasses()
 			{
 				if( dt.IsObjectHandle() )
 				{
-					// TODO:
-					// Can this handle really generate a circular reference?
+					// TODO: Can this handle really generate a circular reference?
 					// Only if the handle is of a type that can reference this type, either directly or indirectly
 
 					ot->flags |= asOBJ_GC;
 				}
 				else if( dt.GetObjectType()->flags & asOBJ_GC )
 				{
-					// TODO:
-					// Just because the member type is a potential circle doesn't mean that this one is
+					// TODO: Just because the member type is a potential circle doesn't mean that this one is
 					// Only if the object is of a type that can reference this type, either directly or indirectly
 
 					ot->flags |= asOBJ_GC;

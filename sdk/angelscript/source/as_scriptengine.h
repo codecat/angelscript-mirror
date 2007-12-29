@@ -183,7 +183,7 @@ public:
 	int VerifyVarTypeNotInFunction(asCScriptFunction *func);
 
 	void *CallAlloc(asCObjectType *objType);
-	void CallFree(asCObjectType *objType, void *obj);
+	void CallFree(void *obj);
 	void *CallGlobalFunctionRetPtr(int func);
 	void *CallGlobalFunctionRetPtr(asSSystemFunctionInterface *func, asCScriptFunction *desc);
 	void CallObjectMethod(void *obj, int func);

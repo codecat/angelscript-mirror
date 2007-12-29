@@ -2059,7 +2059,7 @@ void asCContext::ExecuteNext()
 					stackPointer = l_sp;
 					stackFramePointer = l_fp;
 
-					engine->CallFree(objType, mem);
+					engine->CallFree(mem);
 					*a = 0;
 
 					return;
@@ -2104,7 +2104,7 @@ void asCContext::ExecuteNext()
 					stackPointer = l_sp;
 					stackFramePointer = l_fp;
 
-					engine->CallFree(objType, mem);
+					engine->CallFree(mem);
 					*a = 0;
 
 					return;
@@ -2141,7 +2141,7 @@ void asCContext::ExecuteNext()
 						engine->CallObjectMethod(*a, beh->destruct);
 					}
 
-					engine->CallFree(objType, *a);
+					engine->CallFree(*a);
 				}
 				*a = 0;
 			}
@@ -3219,7 +3219,7 @@ void asCContext::CleanReturnObject()
 				engine->CallObjectMethod(objectRegister, beh->destruct);
 
 			// Free the memory
-			engine->CallFree(objectType, objectRegister);
+			engine->CallFree(objectRegister);
 			objectRegister = 0;
 		}
 	}
@@ -3264,7 +3264,7 @@ void asCContext::CleanStackFrame()
 						engine->CallObjectMethod((void*)*(size_t*)&stackFramePointer[-pos], beh->destruct);
 
 					// Free the memory
-					engine->CallFree(currentFunction->objVariableTypes[n], (void*)*(size_t*)&stackFramePointer[-pos]);
+					engine->CallFree((void*)*(size_t*)&stackFramePointer[-pos]);
 					*(size_t*)&stackFramePointer[-pos] = 0;
 				}
 			}
@@ -3307,7 +3307,7 @@ void asCContext::CleanStackFrame()
 						engine->CallObjectMethod((void*)*(size_t*)&stackFramePointer[offset], beh->destruct);
 
 					// Free the memory
-					engine->CallFree(currentFunction->parameterTypes[n].GetObjectType(), (void*)*(size_t*)&stackFramePointer[offset]);
+					engine->CallFree((void*)*(size_t*)&stackFramePointer[offset]);
 					*(size_t*)&stackFramePointer[offset] = 0;
 				}
 			}
@@ -3358,7 +3358,6 @@ const char *asCContext::GetExceptionString(int *length)
 {
 	if( GetState() != asEXECUTION_EXCEPTION ) return 0;
 
-	// TODO: Return size_t
 	if( length ) *length = (int)exceptionString.GetLength();
 
 	return exceptionString.AddressOf();
@@ -3535,7 +3534,7 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 					if( beh->destruct )
 						engine->CallObjectMethod(obj, beh->destruct);
 
-					engine->CallFree(sysFunction->parameterTypes[n].GetObjectType(), obj);
+					engine->CallFree(obj);
 				}
 			}
 		}
@@ -3584,7 +3583,6 @@ const char *asCContext::GetVarName(int varIndex, int *length, int stackLevel)
 	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
 		return 0;
 
-	// TODO: Return size_t
 	if( length ) *length = (int)func->variables[varIndex]->name.GetLength();
 
 	return func->variables[varIndex]->name.AddressOf();
@@ -3613,7 +3611,6 @@ const char *asCContext::GetVarDeclaration(int varIndex, int *length, int stackLe
 	*tempString = func->variables[varIndex]->type.Format();
 	*tempString += " " + func->variables[varIndex]->name;
 
-	// TODO: Return size_t
 	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
