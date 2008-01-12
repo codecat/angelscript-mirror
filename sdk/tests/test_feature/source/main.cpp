@@ -130,6 +130,7 @@ namespace TestDestructor        { bool Test(); }
 namespace TestRegisterType      { bool Test(); }
 namespace TestFactory           { bool Test(); }
 namespace TestRZ                { bool Test(); }
+namespace TestImplicitCast      { bool Test(); }
 
 #include "utils.h"
 
@@ -169,6 +170,8 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
+	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
@@ -249,7 +252,6 @@ int main(int argc, char **argv)
 	if( TestExecuteScript()           ) goto failed; else printf("-- TestExecuteScript passed\n"); 
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
-	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
 	if( TestPostProcess::Test()       ) goto failed; else printf("-- TestPostProcess passed\n");
 	if( TestArgRef::Test()            ) goto failed; else printf("-- TestArgRef passed\n");
 	if( TestMultiAssign::Test()       ) goto failed; else printf("-- TestMultiAssign passed\n");

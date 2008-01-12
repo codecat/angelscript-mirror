@@ -287,6 +287,34 @@ bool Test()
 		fail = true;
 	}
 
+	// Test 16
+	// Compiler should warn if uninitialized variable is used to index an array
+	bout.buffer = "";
+	const char *script_16 = "void func() { int[] a(1); int b; a[b] = 0; }";
+	engine->AddScriptSection(0, "script", script_16, strlen(script_16));
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
+		               "script (1, 36) : Warning : 'b' is not initialized.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test 17
+	// Compiler should warn if uninitialized variable is used with post increment operator
+	bout.buffer = "";
+	const char *script_17 = "void func() { int a; a++; }";
+	engine->AddScriptSection(0, "script", script_17, strlen(script_17));
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
+		               "script (1, 23) : Warning : 'a' is not initialized.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success

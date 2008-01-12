@@ -270,6 +270,10 @@ SOURCE=..\..\source\test_getargptr.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_implicitcast.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_import.cpp
 # End Source File
 # Begin Source File

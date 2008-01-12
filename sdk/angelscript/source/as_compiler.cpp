@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1720,16 +1720,10 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 			if( !c.type.dataType.IsIntegerType() && !c.type.dataType.IsUnsignedType() )
 				Error(TXT_SWITCH_MUST_BE_INTEGRAL, cnode->firstChild);
 
-			// Store constant for later use
-			int val;
-			if( c.type.dataType.GetSizeInMemoryBytes() == 1 )
-				val = (signed char)c.type.byteValue;
-			else if( c.type.dataType.GetSizeInMemoryBytes() == 2 )
-				val = (short)c.type.wordValue;
-			else
-				val = c.type.intValue;
+			ImplicitConversion(&c, to, cnode->firstChild, false, true);
 
-			caseValues.PushLast(val);
+			// Store constant for later use
+			caseValues.PushLast(c.type.intValue);
 
 			// Reserve label for this case
 			caseLabels.PushLast(nextLabel++);
@@ -5745,6 +5739,9 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 {
 	int op = node->tokenType;
 
+	// Check if the variable is initialized (if it indeed is a variable)
+	IsVariableInitialized(&ctx->type, node);
+
 	if( op == ttInc || op == ttDec )
 	{
 		if( globalExpression )
@@ -5819,9 +5816,6 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	}
 	else if( op == ttDot )
 	{
-		// Check if the variable is initialized (if it indeed is a variable)
-		IsVariableInitialized(&ctx->type, node);
-
 		if( node->firstChild->nodeType == snIdentifier )
 		{
 			// Get the property name
@@ -5949,9 +5943,6 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 			ImplicitConversion(ctx, dt, node, false);
 		}
-
-		// Check if the variable is initialized (if it indeed is a variable)
-		IsVariableInitialized(&ctx->type, node);
 
 		// Compile the expression
 		asSExprContext expr(engine);

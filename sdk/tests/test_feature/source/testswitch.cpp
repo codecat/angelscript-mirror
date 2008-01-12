@@ -52,7 +52,42 @@ static const char *script2 =
 "    default: Log(\"d\"); break;    \n"
 "    }                              \n"
 "  }                                \n"
-"}                                  \n";
+"  Log(\"\\n\");                    \n"
+"  myFunc127(127);                  \n"
+"  myFunc128(128);                  \n"
+"}                                  \n"
+"const uint8 c127 = 127;               \n"
+"void myFunc127(uint8 value)           \n"
+"{                                     \n"
+"  if(value == c127)                   \n"
+"    Log(\"It is the value we expect\\n\"); \n"
+"                                      \n"
+"  switch(value)                       \n"
+"  {                                   \n"
+"    case c127:                        \n"
+"      Log(\"The switch works\\n\");        \n"
+"      break;                          \n"
+"    default:                          \n"
+"      Log(\"I didnt work\\n\");            \n"
+"      break;                          \n"
+"  }                                   \n"
+"}                                     \n"
+"const uint8 c128 = 128;               \n"
+"void myFunc128(uint8 value)           \n"
+"{                                     \n"
+"  if(value == c128)                   \n"
+"    Log(\"It is the value we expect\\n\"); \n"
+"                                      \n"
+"  switch(value)                       \n"
+"  {                                   \n"
+"    case c128:                        \n"
+"      Log(\"The switch works\\n\");        \n"
+"      break;                          \n"
+"    default:                          \n"
+"      Log(\"I didnt work\\n\");            \n"
+"      break;                          \n"
+"  }                                   \n"
+"}                                     \n";
 
 static int sum = 0;
 
@@ -64,12 +99,8 @@ static void add(asIScriptGeneric *gen)
 static string _log;
 static void Log(asIScriptGeneric *gen)
 {
-	_log += (const char *)gen->GetArgObject(0);
-}
-
-static void StrFactory(asIScriptGeneric *gen)
-{
-	gen->SetReturnObject(gen->GetArgAddress(1));
+	asCScriptString *str = (asCScriptString *)gen->GetArgObject(0);
+	_log += str->buffer;
 }
 
 bool TestSwitch()
@@ -78,9 +109,8 @@ bool TestSwitch()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType("staticstring", sizeof(char*), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
-	engine->RegisterStringFactory("staticstring", asFUNCTION(StrFactory), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("void Log(staticstring)", asFUNCTION(Log), asCALL_GENERIC);
+	RegisterScriptString(engine);
+	engine->RegisterGlobalFunction("void Log(const string &in)", asFUNCTION(Log), asCALL_GENERIC);
 
 	engine->RegisterGlobalFunction("void add(int)", asFUNCTION(add), asCALL_GENERIC);
 
@@ -111,12 +141,16 @@ bool TestSwitch()
 
 	engine->ExecuteString(0, "_switch2()");
 
-	if( _log != "d12345" )
+	if( _log != "d12345\n"
+		        "It is the value we expect\n"
+                "The switch works\n"
+                "It is the value we expect\n"
+                "The switch works\n" )
 	{
 		fail = true;
 		printf("%s: Switch failed. Got: %s\n", TESTNAME, _log.c_str());
 	}
-
+ 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->ExecuteString(0, "switch(1) {}"); 
