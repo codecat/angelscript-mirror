@@ -1103,7 +1103,7 @@ void asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprConte
 	}
 }
 
-void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, bool isConstMethod, bool silent, bool allowObjectConstruct)
+void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct)
 {
 	asUINT n;
 	if( funcs.GetLength() > 0 )
@@ -1174,6 +1174,9 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 
 		if( isConstMethod )
 			str += " const";
+
+		if( objectType )
+			str = objectType->name + "::" + str;
 
 		if( funcs.GetLength() == 0 )
 			str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
@@ -3396,7 +3399,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 
 		args.PushLast(ctx);
 
-		MatchFunctions(funcs, args, node, to.GetObjectType()->name.AddressOf(), false, true, false);
+		MatchFunctions(funcs, args, node, to.GetObjectType()->name.AddressOf(), NULL, false, true, false);
 
 		// Verify that we found 1 matching function
 		if( funcs.GetLength() == 1 )
@@ -5262,7 +5265,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		}
 	}
 
-	MatchFunctions(funcs, args, node, name.AddressOf(), false);
+	MatchFunctions(funcs, args, node, name.AddressOf(), NULL, false);
 
 	if( funcs.GetLength() != 1 )
 	{
@@ -5342,7 +5345,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		args.SetLength(0);
 	}
 
-	MatchFunctions(funcs, args, node, name.AddressOf(), objIsConst);
+	MatchFunctions(funcs, args, node, name.AddressOf(), objectType, objIsConst);
 
 	if( funcs.GetLength() != 1 )
 	{
@@ -6372,7 +6375,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 
 		// Make sure we have two variables or constants
 		if( lctx->type.dataType.IsReference() ) ConvertToVariableNotIn(lctx, rctx);
-		if( rctx->type.dataType.IsReference() ) ConvertToVariable(rctx);
+		if( rctx->type.dataType.IsReference() ) ConvertToVariableNotIn(rctx, lctx);
 
 		// Math operators
 		// + - * / % += -= *= /= %=
@@ -6644,8 +6647,9 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	// Do the actual conversion
 	asCArray<int> reservedVars;
 	rctx->bc.GetVarsUsed(reservedVars);
+	lctx->bc.GetVarsUsed(reservedVars);
 	ImplicitConversion(lctx, to, node, false, true, &reservedVars);
-	ImplicitConversion(rctx, to, node, false);
+	ImplicitConversion(rctx, to, node, false, true, &reservedVars);
 
 	// Verify that the conversion was successful
 	if( !lctx->type.dataType.IsIntegerType() &&
@@ -6688,7 +6692,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	if( !isConstant )
 	{
 		ConvertToVariableNotIn(lctx, rctx);
-		ConvertToVariable(rctx);
+		ConvertToVariableNotIn(rctx, lctx);
 		ReleaseTemporaryVariable(lctx->type, &lctx->bc);
 		ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 
@@ -6931,7 +6935,9 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		}
 
 		// Convert right hand operand to same type as left hand operand
-		ImplicitConversion(rctx, lctx->type.dataType, node, false);
+		asCArray<int> vars;
+		lctx->bc.GetVarsUsed(vars);
+		ImplicitConversion(rctx, lctx->type.dataType, node, false, true, &vars);
 		if( !rctx->type.dataType.IsEqualExceptRef(lctx->type.dataType) )
 		{
 			asCString str;
@@ -6944,7 +6950,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		if( !isConstant )
 		{
 			ConvertToVariableNotIn(lctx, rctx);
-			ConvertToVariable(rctx);
+			ConvertToVariableNotIn(rctx, lctx);
 			ReleaseTemporaryVariable(lctx->type, &lctx->bc);
 			ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 
@@ -7048,7 +7054,9 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		}
 
 		// Right operand must be 32bit uint
-		ImplicitConversion(rctx, asCDataType::CreatePrimitive(ttUInt, true), node, false);
+		asCArray<int> vars;
+		lctx->bc.GetVarsUsed(vars);
+		ImplicitConversion(rctx, asCDataType::CreatePrimitive(ttUInt, true), node, false, true, &vars);
 		if( !rctx->type.dataType.IsUnsignedType() )
 		{
 			asCString str;
@@ -7061,7 +7069,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		if( !isConstant )
 		{
 			ConvertToVariableNotIn(lctx, rctx);
-			ConvertToVariable(rctx);
+			ConvertToVariableNotIn(rctx, lctx);
 			ReleaseTemporaryVariable(lctx->type, &lctx->bc);
 			ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 
@@ -7239,7 +7247,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 			{
 				// Must convert to temporary variable, because we are changing the value before comparison
 				ConvertToTempVariableNotIn(lctx, rctx);
-				ConvertToTempVariable(rctx);
+				ConvertToTempVariableNotIn(rctx, lctx);
 				ReleaseTemporaryVariable(lctx->type, &lctx->bc);
 				ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 
@@ -7278,7 +7286,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 		else
 		{
 			ConvertToVariableNotIn(lctx, rctx);
-			ConvertToVariable(rctx);
+			ConvertToVariableNotIn(rctx, lctx);
 			ReleaseTemporaryVariable(lctx->type, &lctx->bc);
 			ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 
@@ -7442,8 +7450,9 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	// Do the actual conversion
 	asCArray<int> reservedVars;
 	rctx->bc.GetVarsUsed(reservedVars);
+	lctx->bc.GetVarsUsed(reservedVars);
 	ImplicitConversion(lctx, to, node, false, true, &reservedVars);
-	ImplicitConversion(rctx, to, node, false);
+	ImplicitConversion(rctx, to, node, false, true, &reservedVars);
 
 	// Verify that the conversion was successful
 	if( !lctx->type.dataType.IsBooleanType() )
@@ -7472,7 +7481,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 		{
 			// Must convert to temporary variable, because we are changing the value before comparison
 			ConvertToTempVariableNotIn(lctx, rctx);
-			ConvertToTempVariable(rctx);
+			ConvertToTempVariableNotIn(rctx, lctx);
 			ReleaseTemporaryVariable(lctx->type, &lctx->bc);
 			ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 

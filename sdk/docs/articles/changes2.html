@@ -118,17 +118,19 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.11.2 WIP - 2008/01/11</h2>
+<h2>Version 2.11.2 WIP - 2008/01/14</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Compiler didn't warn when using post incremental/decremental operator on uninitialized variable (Thanks Noelia Rodriguez Matilla)
 <li>Switch cases didn't work properly for uint8 and uint16 types (Thanks Noelia Rodriguez Matilla)
+<li>Compound assignments in conjunction with arrays could give incorrect results (Thanks loboWu)
 </ul>
 <li>Library
 <ul>
 <li>ExecuteString no longer locks dynamic configuration groups. (Thanks mono2k)
+<li>Compiler gives better error message when it cannot match class methods for a call (Thanks Jeremy Harmon)
 </ul>
 </ul>
 

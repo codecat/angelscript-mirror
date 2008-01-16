@@ -150,6 +150,10 @@ SOURCE=..\..\source\test_arrayobject.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_assign.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_autohandle.cpp
 # End Source File
 # Begin Source File

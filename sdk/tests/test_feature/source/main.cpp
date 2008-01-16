@@ -131,6 +131,7 @@ namespace TestRegisterType      { bool Test(); }
 namespace TestFactory           { bool Test(); }
 namespace TestRZ                { bool Test(); }
 namespace TestImplicitCast      { bool Test(); }
+namespace TestAssign            { bool Test(); }
 
 #include "utils.h"
 
@@ -170,6 +171,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestAssign::Test()            ) goto failed; else printf("-- TestAssign passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");

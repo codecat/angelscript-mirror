@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -134,7 +134,7 @@ protected:
 	void CompileConstructor(asCDataType &type, int offset, asCByteCode *bc);
 	void CompileDestructor(asCDataType &type, int offset, asCByteCode *bc);
 	void CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args, asCDataType *type = 0);
-	void MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true);
+	void MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType = NULL, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true);
 
 	// Helper functions
 	void SwapPostFixOperands(asCArray<asCScriptNode *> &postfix, asCArray<asCScriptNode *> &target);
