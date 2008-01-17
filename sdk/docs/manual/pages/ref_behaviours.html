@@ -56,6 +56,7 @@
 <a href="#enumrefs">asBEHAVE_ENUMREFS</a>
 <a href="#releaserefs">asBEHAVE_RELEASEREFS</a>
 <a href="#factory">asBEHAVE_FACTORY</a>
+<a href="#valcast">asBEHAVE_VALUE_CAST</a>
 </pre>
 
 <a name="construct"></a>
@@ -673,10 +674,37 @@ Object *Factory()
   return new Object();
 }
 
-engine->RegisterObjectBehaviour("object", asBEHAVE_FACTORY, "object@ f()", asFUNCTION(Factory), asCALL_DECL);
+engine->RegisterObjectBehaviour("object", asBEHAVE_FACTORY, "object@ f()", asFUNCTION(Factory), asCALL_CDECL);
 </pre>
 
-<p>For objects that should be handled by the garbage collection, to be able to automatically detect and handle circular references, the constructor must call the method NotifyGarbageCollectorOfNewObject on the engine. When doing so the gc will take a reference to the object.</p>
+<p>For objects that should be handled by the garbage collection, to be able to
+automatically detect and handle circular references, the constructor must call
+the method NotifyGarbageCollectorOfNewObject on the engine. When doing so the
+gc will take a reference to the object.</p>
+
+
+
+
+
+<a name="valcast"></a>
+<h2>asBEHAVE_VALUE_CAST</h2>
+
+<p>An object behaviour, that permits a cast operator to be registered for an
+object. This can allow objects to be cast to different types, including
+primitives.</p>
+
+<p>Example:</p>
+
+<pre class=border>
+int Object::castToInt()
+{
+  return intValue;
+}
+
+engine->RegisterObjectBehaviour("object", asBEHAVE_VALUE_CAST, "int f()", asMETHOD(Object,castToInt), asCALL_THISCALL);
+</pre>
+
+
 
 
 

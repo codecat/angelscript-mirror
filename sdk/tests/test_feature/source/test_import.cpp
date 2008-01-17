@@ -28,20 +28,43 @@ static const char *script2 =
 "  return \"blah\";       \n"
 "}                        \n";
 
+
+static const char *script3 =
+"class A                                         \n"
+"{                                               \n"
+"  int a;                                        \n"
+"}                                               \n"
+"import void Func(A&out) from \"DynamicModule\"; \n"
+"import A@ Func2() from \"DynamicModule\";       \n";
+
+
+static const char *script4 = 
+"class A                   \n"
+"{                         \n"
+"  int a;                  \n"
+"}                         \n"
+"void Func(A&out) {}       \n"
+"A@ Func2() {return null;} \n";
+
+
+
 bool Test()
 {
 	bool fail = false;
 
 	int number = 0;
 	int r;
+	asIScriptEngine *engine = 0;
+	COutStream out;
 
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	// Test 1
+	// Importing a function from another module
+ 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalProperty("int number", &number);
 
-	COutStream out;
 	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->Build(0);
 
 	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
@@ -59,6 +82,23 @@ bool Test()
 		printf("%s: Failed to set the number as expected\n", TESTNAME);
 		fail = true;
 	}
+
+	// Test 2
+	// Two identical structures declared in different modules are not the same
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	RegisterScriptString_Generic(engine);
+
+	engine->AddScriptSection(0, TESTNAME ":3", script3, strlen(script3), 0);
+	r = engine->Build(0); assert( r >= 0 );
+
+	engine->AddScriptSection("DynamicModule", TESTNAME ":4", script4, strlen(script4), 0);
+	r = engine->Build("DynamicModule"); assert( r >= 0 );
+
+	// Bind all functions that the module imports
+	r = engine->BindAllImportedFunctions(0); assert( r < 0 );
+
+	engine->Release();
 
 	// Success
 	return fail;

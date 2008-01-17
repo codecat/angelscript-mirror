@@ -706,6 +706,7 @@ const asDWORD asBEHAVE_FIRST_GC      = 37;
  const asDWORD asBEHAVE_RELEASEREFS   = 41;
 const asDWORD asBEHAVE_LAST_GC       = 41;
 const asDWORD asBEHAVE_FACTORY       = 42;
+const asDWORD asBEHAVE_VALUE_CAST    = 43;
 
 // Return codes
 

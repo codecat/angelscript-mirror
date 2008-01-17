@@ -16,7 +16,9 @@ SRCNAMES = \
   test_arrayintf.cpp \
   test_arrayobject.cpp \
   test_autohandle.cpp \
+  test_assign.cpp \
   test_bits.cpp \
+  test_bool.cpp \
   test_castop.cpp \
   test_circularimport.cpp \
   test_compiler.cpp \
@@ -30,7 +32,9 @@ SRCNAMES = \
   test_conversion.cpp \
   test_custommem.cpp \
   test_debug.cpp \
+  test_destructor.cpp \
   test_dict.cpp \
+  test_dictionary.cpp \
   test_discard.cpp \
   test_dynamicconfig.cpp \
   test_exception.cpp \
@@ -40,6 +44,7 @@ SRCNAMES = \
   test_funcoverload.cpp \
   test_generic.cpp \
   test_getargptr.cpp \
+  test_implicitcast.cpp \
   test_import.cpp \
   test_import2.cpp \
   test_interface.cpp \
@@ -62,6 +67,7 @@ SRCNAMES = \
   test_return_with_cdecl_objfirst.cpp \
   test_saveload.cpp \
   test_scriptclassmethod.cpp \
+  test_scriptmath.cpp \
   test_scriptstring.cpp \
   test_scriptstruct.cpp \
   test_shark.cpp \
@@ -72,6 +78,7 @@ SRCNAMES = \
   test_stream.cpp \
   test_structintf.cpp \
   test_unsaferef.cpp \
+  test_vartype.cpp \
   test_vector3.cpp \
   test_vector3_2.cpp \
   test2modules.cpp \
@@ -94,7 +101,9 @@ SRCNAMES = \
   testexecutescript.cpp \
   testexecutestring.cpp \
   testexecutethis32mixedargs.cpp \
+  test_factory.cpp \
   testglobalvar.cpp \
+  test_int8.cpp \
   testint64.cpp \
   testlongtoken.cpp \
   testmoduleref.cpp \
@@ -103,9 +112,11 @@ SRCNAMES = \
   testnotcomplexstdcall.cpp \
   testnotcomplexthiscall.cpp \
   testoutput.cpp \
+  test_registertype.cpp \
   testreturn.cpp \
   testreturnd.cpp \
   testreturnf.cpp \
+  test_rz.cpp \
   teststdcall4args.cpp \
   teststdstring.cpp \
   teststack.cpp \
@@ -117,7 +128,13 @@ SRCNAMES = \
   stdstring.cpp \
 
 
-OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptstring.o
+OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
+  obj/scriptstring.o \
+  obj/scriptany.o \
+  obj/scriptstringutil.o \
+  obj/scriptmath.o \
+  obj/scriptdictionary.o \
+ 
 BIN = ../../bin/testgnuc
 DELETER = rm -f
 
@@ -133,6 +150,19 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptstringutil.o: ../../../../add_on/scriptstring/scriptstring_utils.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptdictionary.o: ../../../../add_on/scriptdictionary/scriptdictionary.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptmath.o: ../../../../add_on/scriptmath/scriptmath.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptany.o: ../../../../add_on/scriptany/scriptany.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
 
 clean:
 	$(DELETER) $(OBJ) $(BIN)

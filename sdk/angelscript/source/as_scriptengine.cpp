@@ -1857,6 +1857,25 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		else if( behaviour == asBEHAVE_RELEASEREFS )
 			func.id = beh->gcReleaseAllReferences = AddBehaviourFunction(func, internal);
 	}
+	else if( behaviour == asBEHAVE_VALUE_CAST )
+	{
+		// Verify parameter count
+		if( func.parameterTypes.GetLength() != 0 )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// Verify return type
+		if( func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, false)) ||
+			func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttVoid, false)) )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// TODO: verify that the cast is not returning a reference
+		// TODO: verify that the same cast is not registered already (const or non-const is treated the same for the return type)
+
+		// Map behaviour to token
+		beh->operators.PushLast(ttCast);
+		func.id = AddBehaviourFunction(func, internal);
+		beh->operators.PushLast(func.id);
+	}
 	else
 	{
 		if( behaviour >= asBEHAVE_FIRST_DUAL &&

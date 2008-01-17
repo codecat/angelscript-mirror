@@ -133,7 +133,7 @@ protected:
 	void DefaultConstructor(asCByteCode *bc, asCDataType &dt);
 	void CompileConstructor(asCDataType &type, int offset, asCByteCode *bc);
 	void CompileDestructor(asCDataType &type, int offset, asCByteCode *bc);
-	void CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args, asCDataType *type = 0);
+	int CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args, asCDataType *type = 0);
 	void MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType = NULL, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true);
 
 	// Helper functions
@@ -147,6 +147,7 @@ protected:
 	void ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
 	void ImplicitConversionConstant(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit);
 	void ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
+	void ImplicitConversionFromObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0);
 	int  MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum, bool allowObjectConstruct = true);
 	void PerformFunctionCall(int funcID, asSExprContext *out, bool isConstructor = false, asCArray<asSExprContext*> *args = 0, asCObjectType *objType = 0);
 	void MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprContext *> &args, bool addOneToOffset);
