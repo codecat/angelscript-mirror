@@ -50,22 +50,14 @@ bool Test()
 	// TODO: (Test) Cast from object to object can be either object behaviour or object constructor/factory, 
 	// depending on which object registers the cast
 
-	// TODO: (Test) Can't register casts from primitive to primitive
-
-	// TODO: (Test) It shall not be possible to register a cast behaviour from an object to a boolean type
-
-	// TODO: (Test) If an object has a cast to more than one matching primitive type, the cast to the 
-	// closest matching type will be used, i.e. Obj has cast to int and to float. A type of 
-	// int8 is requested, so the cast to int is used
-
 	// TODO: (Implement) It shall be possible to register cast operators as explicit casts. The constructor/factory 
 	// is by default an explicit cast, but shall be possible to register as implicit cast.
+
+	// TODO: (Implement) Type constructors should be made explicit cast only, or perhaps not permit casts at all
 
 	// TODO: (Test) When compiling operators with non-primitives, the compiler should first look for 
 	// compatible registered operator behaviours. If not found, the compiler should see if 
 	// there is any cast behaviour that allow conversion of the type to a primitive type.
-
-	// TODO: (Implement) Type constructors should be made explicit cast only, or perhaps not permit casts at all
 
 	// Test 1
 	// A class can be implicitly cast to a primitive, if registered the VALUE_CAST behaviour
@@ -132,7 +124,30 @@ bool Test()
 		fail = true;
 	}
 
+	// Test3
+	// If an object has a cast to more than one matching primitive type, the cast to the 
+	// closest matching type will be used, i.e. Obj has cast to int and to float. A type of 
+	// int8 is requested, so the cast to int is used
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	r = engine->ExecuteString(0, "type t(2); assert( (1.0 / t) == (1.0 / 2.0) );");
+	if( r != 0 ) fail = true;
+
 	engine->Release();
+
+	// Test3
+	// It shall not be possible to register a cast behaviour from an object to a boolean type
+ 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+	r = engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "bool f()", asFUNCTION(Type_castInt), asCALL_GENERIC); 
+	if( r != asNOT_SUPPORTED )
+	{
+		fail = true;
+	}
+
+	engine->Release();
+
 
 	//-----------------------------------------------------------------
 	// TODO: REFERENCE_CAST
@@ -154,6 +169,8 @@ bool Test()
 	// A handle to A can not be implicitly cast to a handle to B since it was registered as HANDLE_CAST_EXPLICIT
 	// A handle to A that truly points to a B can be explictly cast to a handle to B via the HANDLE_CAST_EXPLICIT behaviour
 	// A handle to A that truly points to an A will return a null handle when cast to B (this is detected via the dynamic_cast<> implementation of the behaviour)
+
+	// TODO: (Test) Can't register casts from primitive to primitive
 
 	// Success
  	return fail;

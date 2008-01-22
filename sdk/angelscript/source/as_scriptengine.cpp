@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1864,11 +1864,12 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 			return ConfigError(asINVALID_DECLARATION);
 
 		// Verify return type
-		if( func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, false)) ||
-			func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttVoid, false)) )
+		if( func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, false)) )
+			return ConfigError(asNOT_SUPPORTED);
+
+		if( func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttVoid, false)) )
 			return ConfigError(asINVALID_DECLARATION);
 
-		// TODO: verify that the cast is not returning a reference
 		// TODO: verify that the same cast is not registered already (const or non-const is treated the same for the return type)
 
 		// Map behaviour to token
