@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -35,7 +35,6 @@
 #include <memory.h>
 #endif
 #include <string.h> // some compilers declare memcpy() here
-#include <assert.h>
 
 #ifdef _MSC_VER
 #pragma warning(disable:4345) // warning about a change in how the code is handled in this version
@@ -134,7 +133,7 @@ size_t asCArray<T>::GetLength() const
 template <class T>
 const T &asCArray<T>::operator [](size_t index) const
 {
-	assert(index < length);
+	asASSERT(index < length);
 
 	return array[index];
 }
@@ -142,7 +141,7 @@ const T &asCArray<T>::operator [](size_t index) const
 template <class T>
 T &asCArray<T>::operator [](size_t index)
 {
-	assert(index < length);
+	asASSERT(index < length);
 
 	return array[index];
 }
@@ -162,7 +161,7 @@ void asCArray<T>::PushLast(const T &element)
 template <class T>
 T asCArray<T>::PopLast()
 {
-	assert(length > 0);
+	asASSERT(length > 0);
 
 	return array[--length];
 }

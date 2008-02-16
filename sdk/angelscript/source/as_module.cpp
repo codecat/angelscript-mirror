@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -91,7 +91,7 @@ int asCModule::AddScriptSection(const char *name, const char *code, int codeLeng
 
 int asCModule::Build()
 {
-	assert( contextCount == 0 );
+	asASSERT( contextCount == 0 );
 
  	Reset();
 
@@ -198,7 +198,7 @@ void asCModule::Discard()
 
 void asCModule::Reset()
 {
-	assert( !IsUsed() );
+	asASSERT( !IsUsed() );
 
 	CallExit();
 
@@ -501,7 +501,7 @@ int asCModule::GetNextImportedFunctionId()
 
 int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType)
 {
-	assert(id >= 0);
+	asASSERT(id >= 0);
 
 	// Store the function information
 	asCScriptFunction *func = NEW(asCScriptFunction)(this);
@@ -529,7 +529,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 
 int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, int moduleNameStringID)
 {
-	assert(id >= 0);
+	asASSERT(id >= 0);
 
 	// Store the function information
 	asCScriptFunction *func = NEW(asCScriptFunction)(this);
@@ -574,7 +574,7 @@ asCScriptFunction *asCModule::GetSpecialFunction(int funcID)
 			return initFunction;
 		else if( (funcID & 0xFFFF) == asFUNC_STRING )
 		{
-			assert(false);
+			asASSERT(false);
 		}
 
 		return engine->scriptFunctions[funcID & 0xFFFF];

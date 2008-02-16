@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -30,7 +30,6 @@
 
 #include <stdarg.h>		// va_list, va_start(), etc
 #include <stdlib.h>     // strtod(), strtol()
-#include <assert.h>     // assert()
 #include <string.h> // some compilers declare memcpy() here
 
 #include "as_config.h"
@@ -251,14 +250,14 @@ size_t asCString::Format(const char *format, ...)
 
 char &asCString::operator [](size_t index) 
 {
-	assert(index < length);
+	asASSERT(index < length);
 
 	return AddressOf()[index];
 }
 
 const char &asCString::operator [](size_t index) const
 {
-	assert(index < length);
+	asASSERT(index < length);
 
 	return AddressOf()[index];
 }

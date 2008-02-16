@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -228,7 +228,7 @@ void asCByteCode::AddPath(asCArray<cByteInstruction *> &paths, cByteInstruction 
 	if( instr->marked )
 	{
 		// Verify the size of the stack
-		assert(instr->stackSize == stackSize);
+		asASSERT(instr->stackSize == stackSize);
 	}
 	else
 	{
@@ -272,7 +272,7 @@ cByteInstruction *asCByteCode::ChangeFirstDeleteNext(cByteInstruction *curr, bcI
 
 cByteInstruction *asCByteCode::DeleteFirstChangeNext(cByteInstruction *curr, bcInstr bc)
 {
-	assert( curr->next );
+	asASSERT( curr->next );
 	
 	cByteInstruction *instr = curr->next;
 	instr->op = bc;
@@ -288,8 +288,8 @@ cByteInstruction *asCByteCode::DeleteFirstChangeNext(cByteInstruction *curr, bcI
 
 void asCByteCode::InsertBefore(cByteInstruction *before, cByteInstruction *instr)
 {
-	assert(instr->next == 0);
-	assert(instr->prev == 0);
+	asASSERT(instr->next == 0);
+	asASSERT(instr->prev == 0);
 
 	if( before->prev ) before->prev->next = instr;
 	instr->prev = before->prev;
@@ -762,7 +762,7 @@ int asCByteCode::Optimize()
 		else if( IsCombination(curr, BC_PSF, BC_ChkRefS) &&
 		         IsCombination(instr, BC_ChkRefS, BC_RDS4) )
 		{
-			assert( PTR_SIZE == 1 );
+			asASSERT( PTR_SIZE == 1 );
 
 			// TODO: Pointer size
 			curr->op = BC_PshV4;
@@ -788,7 +788,7 @@ int asCByteCode::Optimize()
 		          IsCombination(instr, BC_CHKREF, BC_POP) &&
 		          instr->next->wArg[0] > 0) )
 		{
-			assert( PTR_SIZE == 1 );
+			asASSERT( PTR_SIZE == 1 );
 
 			// TODO: Pointer size
 			curr->op = BC_ChkNullV;
@@ -831,7 +831,7 @@ int asCByteCode::SizeOfType(int type)
 	case BCTYPE_QW_DW_ARG:
 		return 4;
 	default:
-		assert(false);	
+		asASSERT(false);	
 		return 0;
 	}
 }
@@ -918,7 +918,7 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 			if( curr->op == BC_JMP )
 			{
 				int label = *((int*)ARG_DW(curr->arg));
-				int r = FindLabel(label, curr, &curr, 0); assert( r == 0 ); UNUSED_VAR(r);
+				int r = FindLabel(label, curr, &curr, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
 
 				if( !closedPaths.Exists(curr) &&
 					!openPaths.Exists(curr) )
@@ -932,7 +932,7 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 			{
 				cByteInstruction *dest = 0;
 				int label = *((int*)ARG_DW(curr->arg));
-				int r = FindLabel(label, curr, &dest, 0); assert( r == 0 ); UNUSED_VAR(r);
+				int r = FindLabel(label, curr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
 
 				if( !closedPaths.Exists(dest) &&
 					!openPaths.Exists(dest) )
@@ -1141,7 +1141,7 @@ void asCByteCode::Call(bcInstr instr, int funcID, int pop)
 	if( AddInstruction() < 0 )
 		return;
 
-	assert(bcTypes[instr] == BCTYPE_DW_ARG);
+	asASSERT(bcTypes[instr] == BCTYPE_DW_ARG);
 
 	last->op = instr;
 	last->size = SizeOfType(bcTypes[instr]);
@@ -1158,7 +1158,7 @@ void asCByteCode::Alloc(bcInstr instr, void *objID, int funcID, int pop)
 	last->size = SizeOfType(bcTypes[instr]);
 	last->stackInc = -pop; // BC_ALLOC
 
-	assert(bcTypes[instr] == BCTYPE_PTR_DW_ARG);
+	asASSERT(bcTypes[instr] == BCTYPE_PTR_DW_ARG);
 	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)objID;
 	*((int*)(ARG_DW(last->arg)+PTR_SIZE)) = funcID;
 }
@@ -1168,7 +1168,7 @@ void asCByteCode::Ret(int pop)
 	if( AddInstruction() < 0 )
 		return;
 
-	assert(BCT_RET == BCTYPE_W_ARG);
+	asASSERT(BCT_RET == BCTYPE_W_ARG);
 
 	last->op = BC_RET;
 	last->size = SizeOfType(BCT_RET);
@@ -1181,7 +1181,7 @@ void asCByteCode::JmpP(int var, asDWORD max)
 	if( AddInstruction() < 0 )
 		return;
 	
-	assert(bcTypes[BC_JMPP] == BCTYPE_rW_ARG);
+	asASSERT(bcTypes[BC_JMPP] == BCTYPE_rW_ARG);
 
 	last->op       = BC_JMPP;
 	last->size     = SizeOfType(BCT_JMPP);
@@ -1368,7 +1368,7 @@ void asCByteCode::Output(asDWORD *array)
 				break;
 			default:
 				// How did we get here?
-				assert(false);
+				asASSERT(false);
 				break;
 			}
 		}
@@ -1427,7 +1427,7 @@ void asCByteCode::PostProcess()
 				// Find the label that we should jump to
 				int label = *((int*) ARG_DW(instr->arg));
 				cByteInstruction *dest = 0;
-				int r = FindLabel(label, instr, &dest, 0); assert( r == 0 ); UNUSED_VAR(r);
+				int r = FindLabel(label, instr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
 				
 				AddPath(paths, dest, stackSize);
 				break;
@@ -1439,7 +1439,7 @@ void asCByteCode::PostProcess()
 				// Find the label that is being jumped to
 				int label = *((int*) ARG_DW(instr->arg));
 				cByteInstruction *dest = 0;
-				int r = FindLabel(label, instr, &dest, 0); assert( r == 0 ); UNUSED_VAR(r);
+				int r = FindLabel(label, instr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
 				
 				AddPath(paths, dest, stackSize);
 				
@@ -1708,7 +1708,7 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			break;
 
 		default:
-			assert(false);
+			asASSERT(false);
 		}
 
 		instr = instr->next;
@@ -1723,7 +1723,7 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 // Decrease stack with "numDwords"
 int asCByteCode::Pop(int numDwords)
 {
-	assert(BCT_POP == BCTYPE_W_ARG);
+	asASSERT(BCT_POP == BCTYPE_W_ARG);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1739,7 +1739,7 @@ int asCByteCode::Pop(int numDwords)
 // Increase stack with "numDwords"
 int asCByteCode::Push(int numDwords)
 {
-	assert(BCT_PUSH == BCTYPE_W_ARG);
+	asASSERT(BCT_PUSH == BCTYPE_W_ARG);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1755,8 +1755,8 @@ int asCByteCode::Push(int numDwords)
 
 int asCByteCode::InsertFirstInstrDWORD(bcInstr bc, asDWORD param)
 {
-	assert(bcTypes[bc] == BCTYPE_DW_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcTypes[bc] == BCTYPE_DW_ARG);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstructionFirst() < 0 )
 		return 0;
@@ -1771,8 +1771,8 @@ int asCByteCode::InsertFirstInstrDWORD(bcInstr bc, asDWORD param)
 
 int asCByteCode::InsertFirstInstrQWORD(bcInstr bc, asQWORD param)
 {
-	assert(bcTypes[bc] == BCTYPE_QW_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcTypes[bc] == BCTYPE_QW_ARG);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstructionFirst() < 0 )
 		return 0;
@@ -1787,8 +1787,8 @@ int asCByteCode::InsertFirstInstrQWORD(bcInstr bc, asQWORD param)
 
 int asCByteCode::Instr(bcInstr bc)
 {
-	assert(bcTypes[bc] == BCTYPE_NO_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcTypes[bc] == BCTYPE_NO_ARG);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1802,8 +1802,8 @@ int asCByteCode::Instr(bcInstr bc)
 
 int asCByteCode::InstrW_W_W(bcInstr bc, int a, int b, int c)
 {
-	assert(bcTypes[bc] == BCTYPE_wW_rW_rW_ARG);
-	assert(bcStackInc[bc] == 0);
+	asASSERT(bcTypes[bc] == BCTYPE_wW_rW_rW_ARG);
+	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1820,9 +1820,9 @@ int asCByteCode::InstrW_W_W(bcInstr bc, int a, int b, int c)
 
 int asCByteCode::InstrW_W(bcInstr bc, int a, int b)
 {
-	assert(bcTypes[bc] == BCTYPE_wW_rW_ARG ||
+	asASSERT(bcTypes[bc] == BCTYPE_wW_rW_ARG ||
 		   bcTypes[bc] == BCTYPE_rW_rW_ARG);
-	assert(bcStackInc[bc] == 0);
+	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1838,9 +1838,9 @@ int asCByteCode::InstrW_W(bcInstr bc, int a, int b)
 
 int asCByteCode::InstrW_DW(bcInstr bc, asWORD a, asDWORD b)
 {
-	assert(bcTypes[bc] == BCTYPE_wW_DW_ARG ||
+	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG ||
            bcTypes[bc] == BCTYPE_rW_DW_ARG);
-	assert(bcStackInc[bc] == 0);
+	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1856,9 +1856,9 @@ int asCByteCode::InstrW_DW(bcInstr bc, asWORD a, asDWORD b)
 
 int asCByteCode::InstrSHORT_B(bcInstr bc, short a, asBYTE b)
 {
-	assert(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
+	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
 	       bcTypes[bc] == BCTYPE_rW_DW_ARG);
-	assert(bcStackInc[bc] == 0);
+	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1883,9 +1883,9 @@ int asCByteCode::InstrSHORT_B(bcInstr bc, short a, asBYTE b)
 
 int asCByteCode::InstrSHORT_W(bcInstr bc, short a, asWORD b)
 {
-	assert(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
+	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
 	       bcTypes[bc] == BCTYPE_rW_DW_ARG);
-	assert(bcStackInc[bc] == 0);
+	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1908,9 +1908,9 @@ int asCByteCode::InstrSHORT_W(bcInstr bc, short a, asWORD b)
 
 int asCByteCode::InstrSHORT_DW(bcInstr bc, short a, asDWORD b)
 {
-	assert(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
+	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
 	       bcTypes[bc] == BCTYPE_rW_DW_ARG);
-	assert(bcStackInc[bc] == 0);
+	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1926,8 +1926,8 @@ int asCByteCode::InstrSHORT_DW(bcInstr bc, short a, asDWORD b)
 
 int asCByteCode::InstrW_QW(bcInstr bc, asWORD a, asQWORD b)
 {
-	assert(bcTypes[bc] == BCTYPE_wW_QW_ARG);
-	assert(bcStackInc[bc] == 0);
+	asASSERT(bcTypes[bc] == BCTYPE_wW_QW_ARG);
+	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1943,8 +1943,8 @@ int asCByteCode::InstrW_QW(bcInstr bc, asWORD a, asQWORD b)
 
 int asCByteCode::InstrSHORT_QW(bcInstr bc, short a, asQWORD b)
 {
-	assert(bcTypes[bc] == BCTYPE_wW_QW_ARG);
-	assert(bcStackInc[bc] == 0);
+	asASSERT(bcTypes[bc] == BCTYPE_wW_QW_ARG);
+	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1960,8 +1960,8 @@ int asCByteCode::InstrSHORT_QW(bcInstr bc, short a, asQWORD b)
 
 int asCByteCode::InstrW_FLOAT(bcInstr bc, asWORD a, float b)
 {
-	assert(bcTypes[bc] == BCTYPE_wW_DW_ARG);
-	assert(bcStackInc[bc] == 0);
+	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG);
+	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1977,10 +1977,10 @@ int asCByteCode::InstrW_FLOAT(bcInstr bc, asWORD a, float b)
 
 int asCByteCode::InstrSHORT(bcInstr bc, short param)
 {
-	assert(bcTypes[bc] == BCTYPE_rW_ARG || 
+	asASSERT(bcTypes[bc] == BCTYPE_rW_ARG || 
 		   bcTypes[bc] == BCTYPE_wW_ARG || 
 		   bcTypes[bc] == BCTYPE_W_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1995,8 +1995,8 @@ int asCByteCode::InstrSHORT(bcInstr bc, short param)
 
 int asCByteCode::InstrINT(bcInstr bc, int param)
 {
-	assert(bcTypes[bc] == BCTYPE_DW_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcTypes[bc] == BCTYPE_DW_ARG);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -2011,8 +2011,8 @@ int asCByteCode::InstrINT(bcInstr bc, int param)
 
 int asCByteCode::InstrDWORD(bcInstr bc, asDWORD param)
 {
-	assert(bcTypes[bc] == BCTYPE_DW_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcTypes[bc] == BCTYPE_DW_ARG);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -2027,13 +2027,13 @@ int asCByteCode::InstrDWORD(bcInstr bc, asDWORD param)
 
 int asCByteCode::InstrPTR(bcInstr bc, void *param)
 {
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op = bc;
-	assert(bcTypes[bc] == BCTYPE_PTR_ARG);
+	asASSERT(bcTypes[bc] == BCTYPE_PTR_ARG);
 	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)param;
 	last->size     = SizeOfType(bcTypes[bc]);
 	last->stackInc = bcStackInc[bc];
@@ -2043,8 +2043,8 @@ int asCByteCode::InstrPTR(bcInstr bc, void *param)
 
 int asCByteCode::InstrQWORD(bcInstr bc, asQWORD param)
 {
-	assert(bcTypes[bc] == BCTYPE_QW_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcTypes[bc] == BCTYPE_QW_ARG);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -2059,10 +2059,10 @@ int asCByteCode::InstrQWORD(bcInstr bc, asQWORD param)
 
 int asCByteCode::InstrWORD(bcInstr bc, asWORD param)
 {
-	assert(bcTypes[bc] == BCTYPE_W_ARG  || 
+	asASSERT(bcTypes[bc] == BCTYPE_W_ARG  || 
 		   bcTypes[bc] == BCTYPE_rW_ARG || 
 		   bcTypes[bc] == BCTYPE_wW_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -2077,8 +2077,8 @@ int asCByteCode::InstrWORD(bcInstr bc, asWORD param)
 
 int asCByteCode::InstrFLOAT(bcInstr bc, float param)
 {
-	assert(bcTypes[bc] == BCTYPE_DW_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcTypes[bc] == BCTYPE_DW_ARG);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -2093,8 +2093,8 @@ int asCByteCode::InstrFLOAT(bcInstr bc, float param)
 
 int asCByteCode::InstrDOUBLE(bcInstr bc, double param)
 {
-	assert(bcTypes[bc] == BCTYPE_QW_ARG);
-	assert(bcStackInc[bc] != 0xFFFF);
+	asASSERT(bcTypes[bc] == BCTYPE_QW_ARG);
+	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -42,7 +42,6 @@
 #if !defined(AS_NO_MEMORY_H)
 #include <memory.h>
 #endif
-#include <assert.h> // assert()
 #include <string.h> // strcmp()
 
 asCTokenizer::asCTokenizer()
@@ -78,8 +77,8 @@ const char *asGetTokenDefinition(int tokenType)
 
 eTokenType asCTokenizer::GetToken(const char *source, size_t sourceLength, size_t *tokenLength)
 {
-	assert(source != 0);
-	assert(tokenLength != 0);
+	asASSERT(source != 0);
+	asASSERT(tokenLength != 0);
 
 	this->source = source;
 	this->sourceLength = sourceLength;

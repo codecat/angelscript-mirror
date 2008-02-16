@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -35,8 +35,6 @@
 //
 // Functions for multi threading support
 //
-
-#include <assert.h>
 
 #include "as_config.h"
 #include "as_thread.h"

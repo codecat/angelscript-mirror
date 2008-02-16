@@ -149,23 +149,23 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 		return 0;
 
 	// Verify the size of the types
-	assert( sizeof(asBYTE)  == 1 );
-	assert( sizeof(asWORD)  == 2 );
-	assert( sizeof(asDWORD) == 4 );
-	assert( sizeof(asQWORD) == 8 );
-	assert( sizeof(asPWORD) == sizeof(void*) );
+	asASSERT( sizeof(asBYTE)  == 1 );
+	asASSERT( sizeof(asWORD)  == 2 );
+	asASSERT( sizeof(asDWORD) == 4 );
+	asASSERT( sizeof(asQWORD) == 8 );
+	asASSERT( sizeof(asPWORD) == sizeof(void*) );
 
 	// Verify the boolean type
-	assert( sizeof(bool) == AS_SIZEOF_BOOL );
-	assert( true == VALUE_OF_BOOLEAN_TRUE );
+	asASSERT( sizeof(bool) == AS_SIZEOF_BOOL );
+	asASSERT( true == VALUE_OF_BOOLEAN_TRUE );
 
 	// Verify endianess
 #ifdef AS_BIG_ENDIAN
-	assert( *(asDWORD*)"\x00\x01\x02\x03" == 0x00010203 );
-	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == I64(0x0001020304050607) );
+	asASSERT( *(asDWORD*)"\x00\x01\x02\x03" == 0x00010203 );
+	asASSERT( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == I64(0x0001020304050607) );
 #else
-	assert( *(asDWORD*)"\x00\x01\x02\x03" == 0x03020100 );
-	assert( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == I64(0x0706050403020100) );
+	asASSERT( *(asDWORD*)"\x00\x01\x02\x03" == 0x03020100 );
+	asASSERT( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == I64(0x0706050403020100) );
 #endif
 
 	return NEW(asCScriptEngine)();
@@ -241,7 +241,7 @@ asCScriptEngine::asCScriptEngine()
 
 asCScriptEngine::~asCScriptEngine()
 {
-	assert(refCount == 0);
+	asASSERT(refCount == 0);
 
 	Reset();
 
@@ -257,7 +257,7 @@ asCScriptEngine::~asCScriptEngine()
 				DELETE(scriptModules[n],asCModule);
 			}
 			else
-				assert(false);
+				asASSERT(false);
 		}
 	}
 	scriptModules.SetLength(0);
@@ -1341,7 +1341,7 @@ const int behave_assign_token[] =
 
 int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asUPtr &funcPointer, int callConv)
 {
-	assert( objType );
+	asASSERT( objType );
 
 	asSSystemFunctionInterface internal;
 	if( behaviour == asBEHAVE_FACTORY )
@@ -1532,7 +1532,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	}
 	else
 	{
-		assert(false);
+		asASSERT(false);
 
 		return ConfigError(asINVALID_ARG);
 	}
@@ -1885,7 +1885,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 			CallMessageCallback("", 0, 0, 0, TXT_MUST_BE_GLOBAL_BEHAVIOUR);
 		}
 		else
-			assert(false);
+			asASSERT(false);
 
 		return ConfigError(asINVALID_ARG);
 	}
@@ -2504,7 +2504,7 @@ asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
 				break;
 
 		int moduleID = idx << 16;
-		assert(moduleID <= 0x3FF0000);
+		asASSERT(moduleID <= 0x3FF0000);
 
 		asCModule *module = NEW(asCModule)(name, moduleID, this);
 

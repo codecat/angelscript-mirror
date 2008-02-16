@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -29,7 +29,6 @@
 */
 
 
-#include <assert.h>
 #include <new>
 
 #include "as_config.h"
@@ -132,36 +131,36 @@ void RegisterScriptStruct(asCScriptEngine *engine)
 	engine->scriptTypeBehaviours.flags = asOBJ_SCRIPT_STRUCT;
 #ifndef AS_MAX_PORTABILITY
 #ifndef AS_64BIT_PTR
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ScriptStruct_Construct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ScriptStruct_Construct), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
 #else
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(ScriptStruct_Construct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(ScriptStruct_Construct), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
 #endif
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ADDREF, "void f()", asMETHOD(asCScriptStruct,AddRef), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASE, "void f()", asMETHOD(asCScriptStruct,Release), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ASSIGNMENT, "int &f(int &in)", asFUNCTION(ScriptStruct_Assignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ADDREF, "void f()", asMETHOD(asCScriptStruct,AddRef), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASE, "void f()", asMETHOD(asCScriptStruct,Release), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ASSIGNMENT, "int &f(int &in)", asFUNCTION(ScriptStruct_Assignment), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
 
 	// Register GC behaviours
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(asCScriptStruct,GetRefCount), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_SETGCFLAG, "void f()", asMETHOD(asCScriptStruct,SetFlag), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCScriptStruct,GetFlag), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCScriptStruct,EnumReferences), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCScriptStruct,ReleaseAllHandles), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(asCScriptStruct,GetRefCount), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_SETGCFLAG, "void f()", asMETHOD(asCScriptStruct,SetFlag), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCScriptStruct,GetFlag), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCScriptStruct,EnumReferences), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCScriptStruct,ReleaseAllHandles), asCALL_THISCALL); asASSERT( r >= 0 );
 #else
 #ifndef AS_64BIT_PTR
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ScriptStruct_Construct_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ScriptStruct_Construct_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #else
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(ScriptStruct_Construct_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(ScriptStruct_Construct_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #endif
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptStruct_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptStruct_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ASSIGNMENT, "int &f(int &in)", asFUNCTION(ScriptStruct_Assignment_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptStruct_AddRef_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptStruct_Release_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ASSIGNMENT, "int &f(int &in)", asFUNCTION(ScriptStruct_Assignment_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 
 	// Register GC behaviours
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ScriptStruct_GetRefCount_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ScriptStruct_SetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptStruct_GetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptStruct_EnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptStruct_ReleaseAllHandles_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ScriptStruct_GetRefCount_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ScriptStruct_SetFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptStruct_GetFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptStruct_EnumReferences_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptStruct_ReleaseAllHandles_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #endif
 }
 
@@ -394,7 +393,7 @@ asCScriptStruct &ScriptStruct_Assignment(asCScriptStruct *other, asCScriptStruct
 
 asCScriptStruct &asCScriptStruct::operator=(const asCScriptStruct &other)
 {
-	assert( objType == other.objType );
+	asASSERT( objType == other.objType );
 
 	asCScriptEngine *engine = objType->engine;
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -127,8 +127,8 @@ void asPopActiveContext(asIScriptContext *ctx)
 {
 	asCThreadLocalData *tld = threadManager.GetLocalData();
 
-	assert(tld->activeContexts.GetLength() > 0);
-	assert(tld->activeContexts[tld->activeContexts.GetLength()-1] == ctx);
+	asASSERT(tld->activeContexts.GetLength() > 0);
+	asASSERT(tld->activeContexts[tld->activeContexts.GetLength()-1] == ctx);
 	UNUSED_VAR(ctx);
 
 	tld->activeContexts.PopLast();
@@ -255,7 +255,7 @@ int asCContext::Prepare(int funcID)
 	else
 	{
 		// Check engine pointer
-		assert( engine );
+		asASSERT( engine );
 
 		initialFunction = engine->GetScriptFunction(funcID);
 		currentFunction = initialFunction;
@@ -311,7 +311,7 @@ int asCContext::Prepare(int funcID)
 	externalSuspendRequest = false;
 	status = tsPrepared;
 
-	assert(objectRegister == 0);
+	asASSERT(objectRegister == 0);
 	objectRegister = 0;
 
 	// Reserve space for the arguments and return value
@@ -979,7 +979,7 @@ int asCContext::Execute()
 	if( byteCode == 0 )
 	{
 		// The currentFunction is an interface method
-		assert( currentFunction->funcType == asFUNC_INTERFACE );
+		asASSERT( currentFunction->funcType == asFUNC_INTERFACE );
 
 		// Determine the true function from the object
 		asCScriptStruct *obj = *(asCScriptStruct**)(size_t*)stackFramePointer;
@@ -1372,8 +1372,8 @@ void asCContext::ExecuteNext()
 			int i = INTARG(l_bc);
 			l_bc += 2;
 
-			assert( i >= 0 );
-			assert( (i & FUNC_IMPORTED) == 0 );
+			asASSERT( i >= 0 );
+			asASSERT( (i & FUNC_IMPORTED) == 0 );
 
 			// Need to move the values back to the context
 			byteCode = l_bc;
@@ -1926,8 +1926,8 @@ void asCContext::ExecuteNext()
 			int i = INTARG(l_bc);
 			l_bc += 2;
 
-			assert( i >= 0 );
-			assert( i & FUNC_IMPORTED );
+			asASSERT( i >= 0 );
+			asASSERT( i & FUNC_IMPORTED );
 
 			// Need to move the values back to the context
 			byteCode = l_bc;
@@ -2732,8 +2732,8 @@ void asCContext::ExecuteNext()
 			int i = INTARG(l_bc);
 			l_bc += 2;
 
-			assert( i >= 0 );
-			assert( (i & FUNC_IMPORTED) == 0 );
+			asASSERT( i >= 0 );
+			asASSERT( (i & FUNC_IMPORTED) == 0 );
 
 			// Need to move the values back to the context
 			byteCode = l_bc;
@@ -3139,7 +3139,7 @@ void asCContext::ExecuteNext()
 
 #ifdef AS_DEBUG
 	default:
-		assert(false);
+		asASSERT(false);
 #endif
 /*
 	default:
@@ -3155,7 +3155,7 @@ void asCContext::ExecuteNext()
 		if( instr != BC_JMP && instr != BC_JMPP && (instr < BC_JZ || instr > BC_JNP) &&
 			instr != BC_CALL && instr != BC_CALLBND && instr != BC_CALLINTF && instr != BC_RET && instr != BC_ALLOC )
 		{
-			assert( (l_bc - old) == asCByteCode::SizeOfType(bcTypes[instr]) );
+			asASSERT( (l_bc - old) == asCByteCode::SizeOfType(bcTypes[instr]) );
 		}
 #endif
 	}
@@ -3177,7 +3177,7 @@ void asCContext::SetInternalException(const char *descr)
 {
 	if( inExceptionHandler )
 	{
-		assert(false); // Shouldn't happen
+		asASSERT(false); // Shouldn't happen
 		return; // but if it does, at least this will not crash the application
 	}
 
@@ -3200,7 +3200,7 @@ void asCContext::CleanReturnObject()
 {
 	if( objectRegister == 0 ) return;
 
-	assert( objectType != 0 );
+	asASSERT( objectType != 0 );
 
 	if( objectType )
 	{

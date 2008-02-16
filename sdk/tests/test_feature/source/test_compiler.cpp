@@ -328,6 +328,25 @@ bool Test()
 		fail = true;
 	}
 
+	// Test 19
+	// TODO:
+	// Give proper error upon returning a reference from script function
+	bout.buffer = "";
+	const char *script19 =
+		"class Object {}\n"
+		"Object &Test(Object &in object)\n"
+		"{\n"
+		"  return object;\n"
+		"}\n";
+	engine->AddScriptSection(0, "script19", script19, strlen(script19));
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success

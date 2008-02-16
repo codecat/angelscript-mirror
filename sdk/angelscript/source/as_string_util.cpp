@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -31,7 +31,6 @@
 
 #include <stdarg.h>     // va_list, va_start(), etc
 #include <stdlib.h>     // strtod(), strtol()
-#include <assert.h>     // assert()
 #include <stdio.h>      // _vsnprintf()
 #include <string.h>     // some compilers declare memcpy() here
 
@@ -70,7 +69,7 @@ double asStringScanDouble(const char *string, size_t *numScanned)
 
 int asStringScanInt(const char *string, int base, size_t *numScanned)
 {
-	assert(base > 0);
+	asASSERT(base > 0);
 
 	char *end;
 
@@ -84,7 +83,7 @@ int asStringScanInt(const char *string, int base, size_t *numScanned)
 
 asUINT asStringScanUInt(const char *string, int base, size_t *numScanned)
 {
-	assert(base > 0);
+	asASSERT(base > 0);
 
 	char *end;
 
@@ -98,7 +97,7 @@ asUINT asStringScanUInt(const char *string, int base, size_t *numScanned)
 
 asQWORD asStringScanUInt64(const char *string, int base, size_t *numScanned)
 {
-	assert(base == 10 || base == 16);
+	asASSERT(base == 10 || base == 16);
 
 	const char *end = string;
 

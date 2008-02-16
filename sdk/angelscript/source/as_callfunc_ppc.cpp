@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -530,7 +530,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 
 		// flip
-		assert( numBytes == 1 || numBytes == 2 );
+		asASSERT( numBytes == 1 || numBytes == 2 );
 		switch( numBytes )
 		{
 		case 1:
@@ -574,7 +574,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 
 	// make sure that host functions that will be returning in memory have a memory pointer
-	assert( sysFunc->hostReturnInMemory==false || retInMemPointer!=NULL );
+	asASSERT( sysFunc->hostReturnInMemory==false || retInMemPointer!=NULL );
 
 	if( callConv >= ICC_THISCALL )
 	{
@@ -606,7 +606,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			args++;
 		}
 	}
-	assert( descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS );
+	asASSERT( descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS );
 
 	// mark all float/double/int arguments
 	for( s = 0, a = 0; s < (int)descr->parameterTypes.GetLength(); s++, a++ )
@@ -680,7 +680,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 	
 	// one last verification to make sure things are how we expect
-	assert( (retInMemPointer!=NULL && sysFunc->hostReturnInMemory) || (retInMemPointer==NULL && !sysFunc->hostReturnInMemory) );
+	asASSERT( (retInMemPointer!=NULL && sysFunc->hostReturnInMemory) || (retInMemPointer==NULL && !sysFunc->hostReturnInMemory) );
 	context->isCallingSystemFunction = true;
 	switch( callConv )
 	{
@@ -772,8 +772,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				// We have have to take the results of the return register and store them IN the pointer for the object.
 				// The data for the object could fit into a register; we need to copy that data to the object pointer's
 				// memory.
-				assert( retInMemPointer == NULL );
-				assert( retObjPointer != NULL );
+				asASSERT( retInMemPointer == NULL );
+				asASSERT( retObjPointer != NULL );
 
 				// Copy the returned value to the pointer sent by the script engine
 				if( sysFunc->hostReturnSize == 1 )
@@ -794,8 +794,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				// In this case, AngelScript wants an object pointer back, and the host system
 				// used 'return in memory'.  So its results were already passed back in memory, and
 				// stored in the object pointer.
-				assert( retInMemPointer != NULL );
-				assert( retObjPointer != NULL );
+				asASSERT( retInMemPointer != NULL );
+				asASSERT( retObjPointer != NULL );
 			}
 
 			// store the return results into the object register
@@ -987,7 +987,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	else if( func->returnType.GetSizeInMemoryDWords() > 2 )
 	{
 		// Shouldn't be possible to get here
-		assert(false);
+		asASSERT(false);
 
 		internal->hostReturnInMemory = true;
 		internal->hostReturnSize     = 1;

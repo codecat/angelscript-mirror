@@ -316,7 +316,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	if( hasCompileErrors ) return -1;
 
 	// At this point there should be no variables allocated
-	assert(variableAllocations.GetLength() == freeVariables.GetLength());
+	asASSERT(variableAllocations.GetLength() == freeVariables.GetLength());
 
 	// Remove the variable scope
 	RemoveVariableScope();
@@ -376,7 +376,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 void asCCompiler::DefaultConstructor(asCByteCode *bc, asCDataType &type)
 {
-	assert(!type.IsObjectHandle());
+	asASSERT(!type.IsObjectHandle());
 
 	int func = 0;
 	asSTypeBehaviour *beh = type.GetBehaviour();
@@ -458,7 +458,7 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 		bc->AddCode(&statement);
 
 		if( !hasCompileErrors )
-			assert( tempVariables.GetLength() == 0 );
+			asASSERT( tempVariables.GetLength() == 0 );
 
 		node = node->next;
 	}
@@ -720,7 +720,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	if( hasCompileErrors ) return -1;
 
 	// At this point there should be no variables allocated
-	assert(variableAllocations.GetLength() == freeVariables.GetLength());
+	asASSERT(variableAllocations.GetLength() == freeVariables.GetLength());
 
 	// Remove the variable scope again
 	RemoveVariableScope();
@@ -1051,7 +1051,7 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 
 int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext*> &args, asCDataType *type)
 {
-	assert(node->nodeType == snArgList);
+	asASSERT(node->nodeType == snArgList);
 
 	// Count arguments
 	asCScriptNode *arg = node->firstChild;
@@ -1950,7 +1950,7 @@ void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc)
 		bc->AddCode(&statement);
 
 		if( !hasCompileErrors )
-			assert( tempVariables.GetLength() == 0 );
+			asASSERT( tempVariables.GetLength() == 0 );
 
 		node = node->next;
 	}
@@ -2421,7 +2421,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					expr.bc.InstrSHORT(BC_LOADOBJ, expr.type.stackOffset);
 
 					// The temporary variable must not be freed as it will no longer hold an object
-					DeallocateVariable(expr.type.stackOffset);
+					//DeallocateVariable(expr.type.stackOffset);
+					ReleaseTemporaryVariable(expr.type, &expr.bc);
 					expr.type.isTemporary = false;
 				}
 
@@ -2654,7 +2655,7 @@ void asCCompiler::DeallocateVariable(int offset)
 	// because it was use before a formal declaration, in this case
 	// the offset is 0x7FFF
 
-	assert(offset == 0x7FFF);
+	asASSERT(offset == 0x7FFF);
 }
 
 void asCCompiler::ReleaseTemporaryVariable(asCTypeInfo &t, asCByteCode *bc)
@@ -2707,7 +2708,7 @@ void asCCompiler::Dereference(asSExprContext *ctx, bool generateCode)
 		else
 		{
 			// This should never happen as primitives are treated differently
-			assert(false);
+			asASSERT(false);
 		}
 	}
 }
@@ -2815,7 +2816,7 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		{
 			// If the assignment will be made with the copy behaviour then the rvalue must not be a reference
 			if( lvalue->IsObject() )
-				assert(!rctx->type.dataType.IsReference());
+				asASSERT(!rctx->type.dataType.IsReference());
 		}
 	}
 }
@@ -2928,7 +2929,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 	if( to.GetTokenType() == ttQuestion )
 	{
 		// Any type can be converted to a var type, but only when not generating code
-		assert( !generateCode );
+		asASSERT( !generateCode );
 
 		ctx->type.dataType = to;
 
@@ -3262,7 +3263,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 				{
 					if( isExplicit )
 					{
-						assert(node);
+						asASSERT(node);
 						asCString str;
 						str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
 						Error(str.AddressOf(), node);
@@ -3273,7 +3274,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 				if( ctx->type.dataType.GetObjectType() && 
 					ctx->type.dataType.GetObjectType()->Implements(to.GetObjectType()) )
 				{
-					assert(ctx->type.dataType.IsObjectHandle());
+					asASSERT(ctx->type.dataType.IsObjectHandle());
 					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 			}
@@ -3305,7 +3306,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 					if( generateCode )
 					{
-						assert(!ctx->type.isTemporary);
+						asASSERT(!ctx->type.isTemporary);
 
 						// Allocate a temporary variable
 						int offset = AllocateVariableNotIn(ctx->type.dataType, true, reservedVars);
@@ -3564,7 +3565,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 
 				// Copy the newly generated code to the input context
 				// ctx is already empty, since it was merged as part of argument expression
-				assert(ctx->bc.GetLastInstr() == -1);
+				asASSERT(ctx->bc.GetLastInstr() == -1);
 				MergeExprContexts(ctx, &tmp);
 			}
 
@@ -3575,7 +3576,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 
 void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCDataType &to, asCScriptNode *node, bool isExplicit)
 {
-	assert(from->type.isConstant);
+	asASSERT(from->type.isConstant);
 
 	// TODO: node should be the node of the value that is
 	// converted (not the operator that provokes the implicit
@@ -4188,7 +4189,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		// the default action is a direct copy if it is the same type
 		// and a simple assignment.
 		asSTypeBehaviour *beh = lctx->type.dataType.GetBehaviour();
-		assert(beh);
+		asASSERT(beh);
 
 		// Find the matching overloaded operators
 		asCArray<int> ops;
@@ -4513,7 +4514,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 int asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 {
-	assert(expr->nodeType == snExpression);
+	asASSERT(expr->nodeType == snExpression);
 
 	// Count the nodes
 	int count = 0;
@@ -4574,7 +4575,7 @@ void asCCompiler::SwapPostFixOperands(asCArray<asCScriptNode *> &postfix, asCArr
 int asCCompiler::CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, asSExprContext *ctx)
 {
 	// Shouldn't send any byte code
-	assert(ctx->bc.GetLastInstr() == -1);
+	asASSERT(ctx->bc.GetLastInstr() == -1);
 
 	// Pop the last node
 	asCScriptNode *node = postfix->PopLast();
@@ -4598,7 +4599,7 @@ int asCCompiler::CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, as
 int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 {
 	// Shouldn't send any byte code
-	assert(ctx->bc.GetLastInstr() == -1);
+	asASSERT(ctx->bc.GetLastInstr() == -1);
 
 	// Compile the value node
 	asCScriptNode *vnode = node->firstChild;
@@ -4635,7 +4636,7 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx)
 {
 	// Shouldn't receive any byte code
-	assert(ctx->bc.GetLastInstr() == -1);
+	asASSERT(ctx->bc.GetLastInstr() == -1);
 
 	asCScriptNode *vnode = node->firstChild;
 	if( vnode->nodeType == snIdentifier )
@@ -4758,7 +4759,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 
 					// Mark the variable as initialized so that the user will not be bother by it again
 					sVariable *v = variables->GetVariable(name.AddressOf());
-					assert(v);
+					asASSERT(v);
 					if( v ) v->isInitialized = true;
 
 					return -1;
@@ -4913,7 +4914,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			ctx->type.SetNullConstant();
 		}
 		else
-			assert(false);
+			asASSERT(false);
 	}
 	else if( vnode->nodeType == snFunctionCall )
 	{
@@ -4963,7 +4964,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		CompileConversion(vnode, ctx);
 	}
 	else
-		assert(false);
+		asASSERT(false);
 
 	return 0;
 }
@@ -5106,7 +5107,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		// Determine the requested type
 		to = builder->CreateDataTypeFromNode(node->firstChild, script);
 		to.MakeReadOnly(true); // Default to const
-		assert(to.IsPrimitive());
+		asASSERT(to.IsPrimitive());
 	}
 	else
 	{
@@ -5206,7 +5207,7 @@ void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args,
 		if( (descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] & 2)) ||
 		    (descr->parameterTypes[n].IsObject() && deferAll) )
 		{
-			assert( !(descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] == 2)) || args[n]->origExpr );
+			asASSERT( !(descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] == 2)) || args[n]->origExpr );
 
 			// For &inout, only store the argument if it is for a temporary variable
 			if( engine->allowUnsafeReferences || 
@@ -5846,7 +5847,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	else
 	{
 		// Unknown operator
-		assert(false);
+		asASSERT(false);
 		return -1;
 	}
 
@@ -6246,7 +6247,7 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 		return -9;
 
 	// Unknown operator
-	assert(false);
+	asASSERT(false);
 
 	return 0;
 }
@@ -6547,7 +6548,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 		}
 	}
 
-	assert(false);
+	asASSERT(false);
 	return -1;
 }
 
@@ -6574,7 +6575,7 @@ void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> 
 		}
 		else if( ctx->type.dataType.IsObjectHandle() )
 		{
-			assert(false);
+			asASSERT(false);
 		}
 		else // ctx->type.dataType.IsObject()
 		{
@@ -6624,7 +6625,7 @@ void asCCompiler::ConvertToTempVariable(asSExprContext *ctx)
 		}
 		else if( ctx->type.dataType.IsObjectHandle() )
 		{
-			assert(false);
+			asASSERT(false);
 		}
 		else // ctx->type.dataType.IsObject()
 		{
@@ -6708,8 +6709,8 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 			}
 			else
 			{
-				assert(ctx->type.dataType.IsPrimitive());
-				assert(ctx->type.dataType.IsReference());
+				asASSERT(ctx->type.dataType.IsPrimitive());
+				asASSERT(ctx->type.dataType.IsReference());
 
 				ctx->type.dataType.MakeReference(false);
 				offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
@@ -6895,7 +6896,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 		else
 		{
 			// Shouldn't be possible
-			assert(false);
+			asASSERT(false);
 		}
 
 		// Do the operation
@@ -7021,7 +7022,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 		else
 		{
 			// Shouldn't be possible
-			assert(false);
+			asASSERT(false);
 		}
 	}
 }
@@ -7457,7 +7458,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 			else if( lctx->type.dataType.IsDoubleType() )
 				iCmp = BC_CMPd;
 			else
-				assert(false);
+				asASSERT(false);
 
 			if( op == ttEqual )
 				iT = BC_TZ;
@@ -7963,7 +7964,7 @@ void asCCompiler::MergeExprContexts(asSExprContext *before, asSExprContext *afte
 
 	after->deferredParams.SetLength(0);
 
-	assert( after->origExpr == 0 );
+	asASSERT( after->origExpr == 0 );
 }
 
 void asCCompiler::FilterConst(asCArray<int> &funcs)

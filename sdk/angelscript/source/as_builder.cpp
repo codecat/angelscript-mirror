@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -191,7 +191,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		else
 		{
 			// An error occurred
-			assert(false);
+			asASSERT(false);
 		}
 	}
 
@@ -451,7 +451,7 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 
 asCProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *prop)
 {
-	assert(obj.GetObjectType() != 0);
+	asASSERT(obj.GetObjectType() != 0);
 
 	// TODO: Only search in config groups to which the module has access
 	// TODO: Improve linear search
@@ -800,7 +800,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		gvar->datatype   = type;
 
 		// TODO: Give error message if wrong
-		assert(!gvar->datatype.IsReference());
+		asASSERT(!gvar->datatype.IsReference());
 
 		// Allocate space on the global memory stack
 		gvar->index = module->AllocGlobalMemory(gvar->datatype.GetSizeOnStackDWords());
@@ -1132,7 +1132,7 @@ void asCBuilder::CompileClasses()
 				if( group != 0 ) group->AddRef();
 			}
 			else
-				assert(false);
+				asASSERT(false);
 
 			node = node->next;
 		}
@@ -1774,7 +1774,7 @@ void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r
 
 asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file)
 {
-	assert(node->nodeType == snDataType);
+	asASSERT(node->nodeType == snDataType);
 
 	asCDataType dt;
 
@@ -1903,7 +1903,7 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 				else if( n->tokenType == ttInOut )
 					*inOutFlags = 3;
 				else
-					assert(false);
+					asASSERT(false);
 			}
 
 			n = n->next;

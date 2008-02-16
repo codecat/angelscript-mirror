@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -584,7 +584,7 @@ int PrepareSystemFunction(asCScriptFunction* pFunc, asSSystemFunctionInterface* 
 	else if ( pFunc->returnType.GetSizeInMemoryDWords() > 2 )
 	{
 		// Shouldn't be possible to get here
-		assert(false);
+		asASSERT(false);
 
 		pInternal->hostReturnInMemory = true;
 		pInternal->hostReturnSize = 1;
@@ -748,7 +748,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 		iArgsPtr++;
 	}
 
-	assert(pDescr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS);
+	asASSERT(pDescr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS);
 
 	// Parameter calculation magic
 	asDWORD paramBuffer[64];
