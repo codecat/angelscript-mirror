@@ -1966,7 +1966,10 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	asSExprContext expr(engine);
 	CompileAssignment(inode->firstChild, &expr);
 	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
+	{
 		Error(TXT_EXPR_MUST_BE_BOOL, inode->firstChild);
+		expr.type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), 1);
+	}
 
 	if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
 	ProcessDeferredParams(&expr);
@@ -7426,6 +7429,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 			{
 				// TODO: Use TXT_ILLEGAL_OPERATION_ON
 				Error(TXT_ILLEGAL_OPERATION, node);
+				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), 0);
 			}
 		}
 		else

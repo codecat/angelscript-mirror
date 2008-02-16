@@ -315,6 +315,19 @@ bool Test()
 		fail = true;
 	}
 
+	// Test 18
+	// Properly notify the error of comparing boolean operands
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "bool b1,b2; if( b1 <= b2 ) {}");
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "ExecuteString (1, 20) : Warning : 'b1' is not initialized.\n"
+                       "ExecuteString (1, 20) : Warning : 'b2' is not initialized.\n"
+                       "ExecuteString (1, 20) : Error   : Illegal operation on this datatype\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success
