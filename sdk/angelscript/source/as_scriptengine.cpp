@@ -2115,8 +2115,7 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 	isPrepared = false;
 
 	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface);
-	memcpy(newInterface, &internal, sizeof(internal));
+	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface)(internal);
 
 	asCScriptFunction *func = NEW(asCScriptFunction)(0);
 	func->funcType    = asFUNC_SYSTEM;
@@ -2182,8 +2181,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	isPrepared = false;
 
 	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface);
-	memcpy(newInterface, &internal, sizeof(internal));
+	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface)(internal);
 
 	asCScriptFunction *func = NEW(asCScriptFunction)(0);
 	func->funcType    = asFUNC_SYSTEM;
@@ -2248,8 +2246,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPt
 	isPrepared = false;
 
 	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface);
-	memcpy(newInterface, &internal, sizeof(internal));
+	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface)(internal);
 
 	asCScriptFunction *func = NEW(asCScriptFunction)(0);
 	func->funcType    = asFUNC_SYSTEM;
@@ -2431,8 +2428,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &f
 #endif
 
 	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface);
-	memcpy(newInterface, &internal, sizeof(internal));
+	asSSystemFunctionInterface *newInterface = NEW(asSSystemFunctionInterface)(internal);
 
 	asCScriptFunction *func = NEW(asCScriptFunction)(0);
 	func->funcType    = asFUNC_SYSTEM;

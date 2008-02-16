@@ -88,6 +88,30 @@ struct asSSystemFunctionInterface
 	asCArray<bool>       paramAutoHandles;
 	bool                 returnAutoHandle;
 	bool                 hasAutoHandles;
+
+	asSSystemFunctionInterface() {}
+
+	asSSystemFunctionInterface(const asSSystemFunctionInterface &in)
+	{
+		*this = in;
+	}
+
+	asSSystemFunctionInterface &operator=(const asSSystemFunctionInterface &in)
+	{
+		func               = in.func;
+		baseOffset         = in.baseOffset;
+		callConv           = in.callConv;
+		scriptReturnSize   = in.scriptReturnSize;
+		hostReturnInMemory = in.hostReturnInMemory;
+		hostReturnFloat    = in.hostReturnFloat;
+		hostReturnSize     = in.hostReturnSize;
+		paramSize          = in.paramSize;
+		takesObjByVal      = in.takesObjByVal;
+		paramAutoHandles   = in.paramAutoHandles;
+		returnAutoHandle   = in.returnAutoHandle;
+		hasAutoHandles     = in.hasAutoHandles;
+		return *this;
+	}
 };
 
 END_AS_NAMESPACE
