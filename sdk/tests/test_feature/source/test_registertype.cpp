@@ -284,6 +284,10 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
+
+	// Must be possible to register float types
+	r = engine->RegisterObjectType("real", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_FLOAT); assert( r >= 0 );
+
 	engine->Release();
 
 	// REF+SCOPED

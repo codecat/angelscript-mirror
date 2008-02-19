@@ -15,19 +15,6 @@ using namespace std;
 #define TESTNAME "TestSaveLoad"
 
 
-class CBytecodeStream : public asIBinaryStream
-{
-public:
-	CBytecodeStream() {wpointer = 0;rpointer = 0;}
-
-	void Write(const void *ptr, asUINT size) {if( size == 0 ) return; buffer.resize(buffer.size() + size); memcpy(&buffer[wpointer], ptr, size); wpointer += size;}
-	void Read(void *ptr, asUINT size) {memcpy(ptr, &buffer[rpointer], size); rpointer += size;}
-
-	int rpointer;
-	int wpointer;
-	std::vector<asBYTE> buffer;
-};
-
 
 static const char *script1 =
 "import void Test() from \"DynamicModule\";   \n"

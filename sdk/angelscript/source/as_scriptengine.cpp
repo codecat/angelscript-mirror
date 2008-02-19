@@ -1181,7 +1181,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				         asOBJ_APP_CLASS_CONSTRUCTOR |
 						 asOBJ_APP_CLASS_DESTRUCTOR  |
 						 asOBJ_APP_CLASS_ASSIGNMENT  |
-						 asOBJ_APP_FLOAT) )
+						 asOBJ_APP_PRIMITIVE) )
 				return ConfigError(asINVALID_ARG);
 		}
 	}
@@ -4151,6 +4151,80 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 	}
 }
 
+int asCScriptEngine::RegisterNamedType(const char *type, const char *name)
+{
+	if( name == 0 ) return ConfigError(asINVALID_NAME);
+
+	// Verify if the name has been registered as a type already
+	asUINT n;
+	for( n = 0; n < objectTypes.GetLength(); n++ )
+	{
+		if( objectTypes[n] && objectTypes[n]->name == name )
+			return asALREADY_REGISTERED;
+	}
+
+	// Grab the data type
+	asCTokenizer t;
+	size_t tokenLen;
+	eTokenType token;
+	asCDataType dataType;
+
+	//	Create the data type
+	token = t.GetToken(type, strlen(type), &tokenLen);
+	switch(token) 
+	{
+	case ttBool:
+	case ttInt:
+	case ttInt8:
+	case ttInt16:
+	case ttInt64:
+	case ttUInt:
+	case ttUInt8:
+	case ttUInt16:
+	case ttUInt64:
+	case ttFloat:
+	case ttDouble:
+		if( strlen(type) != tokenLen ) 
+		{
+			return ConfigError(asINVALID_TYPE);
+		}
+		break;
+
+	default:
+		return ConfigError(asINVALID_TYPE);
+	}
+
+
+	dataType.CreatePrimitive(token, false);
+	dataType.SetTokenType(token);
+
+	// Make sure the name is not a reserved keyword
+	token = t.GetToken(name, strlen(name), &tokenLen);
+	if( token != ttIdentifier || strlen(name) != tokenLen )
+		return ConfigError(asINVALID_NAME);
+
+	asCBuilder bld(this, 0);
+	int r = bld.CheckNameConflict(name, 0, 0);
+	if( r < 0 )
+		return ConfigError(asNAME_TAKEN);
+
+	// Don't have to check against members of object
+	// types as they are allowed to use the names
+
+	// Put the data type in the list
+	asCObjectType *object= NEW(asCObjectType)(this);
+	object->arrayType = 0;
+	object->flags = asOBJ_NAMED_PSEUDO;
+	object->size = dataType.GetSizeInMemoryBytes();
+	object->name = name;
+	object->tokenType = dataType.GetTokenType();
+
+	objectTypes.PushLast(object);
+
+	currentGroup->objTypes.PushLast(object);
+
+	return asSUCCESS;
+}
 
 END_AS_NAMESPACE
 

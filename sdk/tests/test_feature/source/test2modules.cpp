@@ -12,6 +12,7 @@ static const char *script = "int global; void Test() {global = 0;} float Test2()
 bool Test2Modules()
 {
 	bool ret = false;
+	int r;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
@@ -45,6 +46,35 @@ bool Test2Modules()
 			ret = true;
 		}
 	}
+
+	engine->Release();
+
+	// Test using an object created in another module
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->RegisterInterface("ITest");
+	engine->RegisterInterfaceMethod("ITest", "void test()");
+	const char *scriptA = "ITest @obj;";
+	const char *scriptB = 
+	"class CTest : ITest        \n"
+	"{                          \n"
+	"  void test() {glob = 42;} \n"
+	"}                          \n"
+	"int glob = 0;              \n";
+
+	engine->AddScriptSection("a", "scriptA", scriptA, strlen(scriptA));
+	r = engine->Build("a");
+	if( r < 0 ) ret = true;
+
+	engine->AddScriptSection("b", "scriptB", scriptB, strlen(scriptB));
+	engine->Build("b");
+	if( r < 0 ) ret = true;
+
+	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(engine->GetTypeIdByDecl("b", "CTest"));
+	*((asIScriptStruct**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 0))) = obj;
+	r = engine->ExecuteString("a", "obj.test()");
+	if( r != asEXECUTION_FINISHED ) ret = true;
+	int val = *(int*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName("b", "glob"));
+	if( val != 42 ) ret = true;
 
 	engine->Release();
 

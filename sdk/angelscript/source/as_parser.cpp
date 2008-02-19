@@ -255,6 +255,8 @@ asCScriptNode *asCParser::ParseScript()
 
 			if( t1.type == ttImport )
 				node->AddChildLast(ParseImport());
+			else if( t1.type == ttTypedef )
+				node->AddChildLast(ParseTypedef());		//	Handle primitive typedefs
 			else if( t1.type == ttClass )
 				node->AddChildLast(ParseClass());
 			else if( t1.type == ttInterface )
@@ -2501,6 +2503,94 @@ asCString asCParser::ExpectedOneOf(int *tokens, int count)
 	}
 
 	return str;
+}
+
+asCScriptNode *asCParser::ParseTypedef()
+{
+	sToken	token;
+	asCScriptNode *tmp;
+
+
+	GetToken(&token);
+
+	//	Create the typedef node
+	asCScriptNode *node;
+	node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snTypedef);
+	node->SetToken(&token);
+	node->UpdateSourcePos(token.pos, token.length);
+	if( token.type != ttTypedef)
+	{
+		Error(ExpectedToken(asGetTokenDefinition(token.type)).AddressOf(), &token);
+		return node;
+	}
+
+	//	Process the base type
+	GetToken(&token);
+	if(ttConst == token.type) 
+	{
+		tmp = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snConstant);
+		tmp->SetToken(&token);
+		tmp->UpdateSourcePos(token.pos, token.length);
+		node->AddChildLast(tmp);
+
+		//	Get the next token
+		GetToken(&token);
+	}
+
+	switch(token.type) 
+	{
+	case ttBool:
+	case ttInt:
+	case ttInt8:
+	case ttInt16:
+	case ttInt64:
+	case ttUInt:
+	case ttUInt8:
+	case ttUInt16:
+	case ttUInt64:
+		break;
+
+	default:
+		{
+			asCString str;
+			str.Format(TXT_UNEXPECTED_TOKEN_s, token);
+			Error(str.AddressOf(), &token);
+			RewindTo(&token);
+			return node;
+		}
+		break;
+	}
+
+	tmp = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
+	tmp->SetToken(&token);
+	tmp->UpdateSourcePos(token.pos, token.length);
+	node->AddChildLast(tmp);
+
+
+	//	Get the identifier
+	GetToken(&token);
+	if(ttIdentifier != token.type) 
+	{
+		Error(TXT_EXPECTED_IDENTIFIER, &token);
+		return node;
+	}
+
+	tmp = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snIdentifier);
+	tmp->SetToken(&token);
+	tmp->UpdateSourcePos(token.pos, token.length);
+	node->AddChildLast(tmp);
+
+	//	check for the start of the declaration block
+	GetToken(&token);
+	if( token.type != ttEndStatement ) 
+	{
+		RewindTo(&token);
+		Error(ExpectedToken(asGetTokenDefinition(token.type)).AddressOf(), &token);
+	}
+
+
+	//	Parse the declarations
+	return node;
 }
 
 END_AS_NAMESPACE

@@ -7,6 +7,7 @@
 #include <string>
 #include <assert.h>
 #include <math.h>
+#include <vector>
 
 #include <angelscript.h>
 
@@ -60,6 +61,19 @@ public:
 	}
 
 	std::string buffer;
+};
+
+class CBytecodeStream : public asIBinaryStream
+{
+public:
+	CBytecodeStream() {wpointer = 0;rpointer = 0;}
+
+	void Write(const void *ptr, asUINT size) {if( size == 0 ) return; buffer.resize(buffer.size() + size); memcpy(&buffer[wpointer], ptr, size); wpointer += size;}
+	void Read(void *ptr, asUINT size) {memcpy(ptr, &buffer[rpointer], size); rpointer += size;}
+
+	int rpointer;
+	int wpointer;
+	std::vector<asBYTE> buffer;
 };
 
 void PrintException(asIScriptContext *ctx);

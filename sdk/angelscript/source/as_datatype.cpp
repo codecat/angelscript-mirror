@@ -384,6 +384,10 @@ bool asCDataType::IsEqualExceptConst(const asCDataType &dt) const
 
 bool asCDataType::IsPrimitive() const
 {
+	//	Enumerations and Pseudo types are considered primitives
+	if( IsPseudoType() )
+		return true;
+
 	// A registered object is never a primitive neither is a pointer, nor an array
 	if( objectType )
 		return false;
@@ -454,6 +458,10 @@ bool asCDataType::IsBooleanType() const
 
 bool asCDataType::IsObject() const
 {
+	//	Enumerations and pseudo data are named objects but treated as integral.
+	if( IsPseudoType() )
+		return false;
+
 	if( objectType ) return true;
 
 	return false;
@@ -513,6 +521,23 @@ int asCDataType::GetArrayType() const
 asSTypeBehaviour *asCDataType::GetBehaviour() const
 { 
 	return objectType ? &objectType->beh : 0; 
+}
+
+//	Named and special data types
+bool asCDataType::IsNamedType() const
+{
+	if( objectType && (objectType->flags & asOBJ_NAMED_TYPE) )
+		return true;
+
+	return false;
+}
+
+bool asCDataType::IsPseudoType() const
+{
+	if( objectType && (objectType->flags & asOBJ_NAMED_PSEUDO) )
+		return true;
+
+	return false;
 }
 
 END_AS_NAMESPACE

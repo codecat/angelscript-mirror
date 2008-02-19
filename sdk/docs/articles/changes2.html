@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.11.3 WIP - 2008/02/16</h2>
+<h2>Version 2.11.3 WIP - 2008/02/18</h2>
 
 <ul>
 <li>Bug fixes
@@ -126,6 +126,12 @@ A:hover
 <li>Fixed assert failure when compiling if statement with incorrect expression (Thanks Chet Simpson)
 <li>Fixed assert failure when returning an input reference by reference from script function (Thanks Chet Simpson)
 <li>Fixed potential heap corruption when internally copying system function information (Thanks Chet Simpson)
+<li>Fixed asOBJ_VALUE | asOBJ_APP_FLOAT with RegisterObjectType (Thanks RsblsbShawn)
+<li>Fixed access to global variables when the object method is from another module (Thanks Chet Simpson)
+</ul>
+<li>Script language
+<ul>
+<li>Added typedef. Currently it allows to define aliases of built-in primitive types (Thanks Chet Simpson)
 </ul>
 </ul>
 

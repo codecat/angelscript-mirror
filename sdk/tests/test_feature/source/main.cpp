@@ -132,6 +132,7 @@ namespace TestFactory           { bool Test(); }
 namespace TestRZ                { bool Test(); }
 namespace TestImplicitCast      { bool Test(); }
 namespace TestAssign            { bool Test(); }
+namespace TestTypedef           { bool Test(); }
 
 #include "utils.h"
 
@@ -171,6 +172,8 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestTypedef::Test()           ) goto failed; else printf("-- TestTypedef passed\n");
+	if( Test2Modules()                ) goto failed; else printf("-- Test2Modules passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
 	if( TestAssign::Test()            ) goto failed; else printf("-- TestAssign passed\n");
@@ -278,7 +281,6 @@ int main(int argc, char **argv)
 	if( TestExecuteString()           ) goto failed; else printf("-- TestExecuteString passed\n");
 	if( TestStack()                   ) goto failed; else printf("-- TestStack passed\n");
 	if( TestCreateEngine()            ) goto failed; else printf("-- TestCreateEngine passed\n");
-	if( Test2Modules()                ) goto failed; else printf("-- Test2Modules passed\n");
 	if( TestLongToken()               ) goto failed; else printf("-- TestLongToken passed\n");
 	if( TestVirtualInheritance()      ) goto failed; else printf("-- TestVirtualInheritance passed\n");
 	if( TestOutput::Test()            ) goto failed; else printf("-- TestOutput passed\n");

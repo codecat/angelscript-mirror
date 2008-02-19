@@ -128,6 +128,20 @@ asCBuilder::~asCBuilder()
 			interfaceDeclarations[n] = 0;
 		}
 	}
+
+	for( n = 0; n < namedTypeDeclarations.GetLength(); n++ )
+	{
+		if( namedTypeDeclarations[n] )
+		{
+			if( namedTypeDeclarations[n]->node )
+			{
+				namedTypeDeclarations[n]->node->Destroy(engine);
+			}
+
+			DELETE(namedTypeDeclarations[n],sClassDeclaration);
+			namedTypeDeclarations[n] = 0;
+		}
+	}
 }
 
 int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy)
@@ -254,6 +268,12 @@ void asCBuilder::ParseScripts()
 				{
 					node->DisconnectParent();
 					RegisterInterface(node, scripts[n]);
+				}
+				//	Handle typedef
+				else if( node->nodeType == snTypedef )
+				{
+					node->DisconnectParent();
+					RegisterTypedef(node, scripts[n]);
 				}
 
 				node = next;
@@ -761,6 +781,27 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		}
 	}
 
+	// Check against named types
+	for( asUINT n = 0; n < namedTypeDeclarations.GetLength(); n++ )
+	{
+		if( namedTypeDeclarations[n]->name == name )
+		{
+			if( code )
+			{
+				int r, c;
+				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+				asCString str;
+
+				// TODO: Need a TXT constant
+				str.Format("Name conflict. '%s' is a named type (FIXME!).", name);
+
+				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+			}
+
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -1394,6 +1435,72 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	functions.PushLast(0);
 }
 
+int asCBuilder::RegisterTypedef(asCScriptNode *const node, asCScriptCode *file)
+{
+	int r, c;
+	asCString		name;
+	asCScriptNode	*tmp;
+	bool			isConst;
+
+	isConst = false;
+
+	// Grab the name of the enumeration
+	tmp = node->firstChild;
+	assert(NULL != tmp);
+	if(snConstant == tmp->nodeType) 
+	{
+		isConst = true;
+		tmp = node->next;
+	}
+
+	// Get the native data type
+	assert(NULL != tmp && snDataType == tmp->nodeType);
+	asCDataType dataType;
+	dataType.CreatePrimitive(tmp->tokenType, false);
+	dataType.SetTokenType(tmp->tokenType);
+	tmp = tmp->next;
+
+	// Grab the identifier
+	assert(NULL != tmp && NULL == tmp->next);
+	name.Assign(&file->code[tmp->tokenPos], tmp->tokenLength);
+	file->ConvertPosToRowCol(tmp->tokenPos, &r, &c);
+
+	// If the name is not already in use add it!
+ 	r = CheckNameConflict(name.AddressOf(), tmp, file);
+	if(asSUCCESS == r) 
+	{
+		// Create the new type
+		sClassDeclaration *decl = NEW(sClassDeclaration);
+		asCObjectType *st = NEW(asCObjectType)(engine);
+
+
+		st->arrayType = 0;
+		st->flags = asOBJ_NAMED_PSEUDO;
+		st->size = dataType.GetSizeInMemoryBytes();
+		st->name = name;
+		st->tokenType = dataType.GetTokenType();
+
+		decl->name = name;
+		decl->script = file;
+		decl->validState = 0;
+		decl->node = NULL;
+		decl->objType = st;
+
+		st->refCount++;
+		module->classTypes.PushLast(st);
+		engine->classTypes.PushLast(st);
+		namedTypeDeclarations.PushLast(decl);
+	}
+
+	node->Destroy(engine);
+
+	if(r < 0) 
+	{
+		engine->ConfigError(r);
+	}
+	return 0;
+}
+
 int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface)
 {
 	// Find name 
@@ -1811,8 +1918,16 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			asCConfigGroup *group = engine->FindConfigGroupForObjectType(ot);
 			if( !module || !group || group->HasModuleAccess(module->name.AddressOf()) )
 			{
-				// Create object data type
-				dt = asCDataType::CreateObject(ot, isConst);
+				if(asOBJ_NAMED_PSEUDO == (ot->flags & asOBJ_NAMED_PSEUDO))
+				{
+					// Create primitive data type based on object flags
+					dt = asCDataType::CreatePrimitive(ot->tokenType, isConst);
+				}
+				else
+				{
+					// Create object data type
+					dt = asCDataType::CreateObject(ot, isConst);
+				}
 			}
 			else
 			{

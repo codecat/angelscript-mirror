@@ -78,6 +78,8 @@ public:
 	int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv);
 	int ClearMessageCallback();
 
+	int RegisterNamedType(const char *type, const char *name);
+
 	int RegisterObjectType(const char *objname, int byteSize, asDWORD flags);
 	int RegisterObjectProperty(const char *objname, const char *declaration, int byteOffset);
 	int RegisterObjectMethod(const char *objname, const char *declaration, const asUPtr &funcPointer, asDWORD callConv);

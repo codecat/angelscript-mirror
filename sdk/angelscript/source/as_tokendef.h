@@ -158,6 +158,7 @@ enum eTokenType
 	ttInOut,               // inout
 	ttNull,                // null
     ttClass,               // class
+	ttTypedef,
 	ttCast                 // cast
 };
 
@@ -267,6 +268,7 @@ sTokenWord const tokenWords[] =
 	{"case"      , ttCase}, 
 	{"default"   , ttDefault},
 	{"xor"       , ttXor},
+	{"typedef"   , ttTypedef},
 };
 
 const unsigned int numTokenWords = sizeof(tokenWords)/sizeof(sTokenWord);

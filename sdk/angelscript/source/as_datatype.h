@@ -84,6 +84,8 @@ public:
 	bool IsObjectHandle()   const {return isObjectHandle;}
 	bool IsHandleToConst()  const;
 	bool IsArrayType()      const;
+	bool IsNamedType()		const;
+	bool IsPseudoType()     const;
 
 	bool IsSamePrimitiveBaseType(const asCDataType &dt) const;
 	bool IsEqualExceptRef(const asCDataType &)          const;

@@ -127,6 +127,7 @@ protected:
 	int RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file);
 	int RegisterClass(asCScriptNode *node, asCScriptCode *file);
 	int RegisterInterface(asCScriptNode *node, asCScriptCode *file);
+	int RegisterTypedef(asCScriptNode *node, asCScriptCode *file);
 	void CompileClasses();
 
 	bool DoesMethodExist(asCObjectType *objType, int methodId);
@@ -155,6 +156,7 @@ protected:
 	asCArray<sGlobalVariableDescription *> globVariables;
 	asCArray<sClassDeclaration *>          classDeclarations;
 	asCArray<sClassDeclaration *>          interfaceDeclarations;
+	asCArray<sClassDeclaration *>          namedTypeDeclarations;
 
 	asCScriptEngine *engine;
 	asCModule *module;

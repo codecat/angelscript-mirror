@@ -375,6 +375,9 @@
 				RelativePath="..\..\source\test_suspend.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_typedef.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_unsaferef.cpp">
 			</File>
 			<File

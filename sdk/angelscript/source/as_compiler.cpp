@@ -2421,7 +2421,6 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					expr.bc.InstrSHORT(BC_LOADOBJ, expr.type.stackOffset);
 
 					// The temporary variable must not be freed as it will no longer hold an object
-					//DeallocateVariable(expr.type.stackOffset);
 					ReleaseTemporaryVariable(expr.type, &expr.bc);
 					expr.type.isTemporary = false;
 				}

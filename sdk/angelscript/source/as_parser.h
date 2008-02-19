@@ -39,7 +39,8 @@
 
 /*
 
-SCRIPT        = (FUNCTION | GLOBVAR | IMPORT | STRUCT | INTERFACE)*
+TYPEDEF       = 'typedef' REALTYPE IDENTIFIER ';'
+SCRIPT        = (FUNCTION | GLOBVAR | IMPORT | STRUCT | INTERFACE | TYPEDEF)*
 TYPE          = 'const'? DATATYPE
 TYPEMOD       = ('&' ('in' | 'out' | 'inout')?)?
 FUNCTION      = TYPE TYPEMOD IDENTIFIER PARAMLIST BLOCK
@@ -161,6 +162,7 @@ protected:
 	asCScriptNode *ParseInterface();
 	asCScriptNode *ParseInterfaceMethod();
 	asCScriptNode *ParseCast();
+	asCScriptNode *ParseTypedef();					//	Parse named type declaration
 
 	bool IsVarDecl();
 	bool IsFuncDecl(bool isMethod);

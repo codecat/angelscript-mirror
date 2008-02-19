@@ -1161,7 +1161,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	PushCallState();
 
 	currentFunction = func;
-	module = mod;
+	module = func->module ? func->module : mod;
 	byteCode = currentFunction->byteCode.AddressOf();
 
 	// Verify if there is enough room in the stack block. Allocate new block if not
