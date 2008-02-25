@@ -255,6 +255,8 @@ asCScriptNode *asCParser::ParseScript()
 
 			if( t1.type == ttImport )
 				node->AddChildLast(ParseImport());
+			else if( t1.type == ttEnum )
+				node->AddChildLast(ParseEnumeration());	//	Handle enumerations
 			else if( t1.type == ttTypedef )
 				node->AddChildLast(ParseTypedef());		//	Handle primitive typedefs
 			else if( t1.type == ttClass )
@@ -332,6 +334,132 @@ int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 		return -1;
 
 	return 0;
+}
+
+// TODO: Analyze this properly
+asCScriptNode *asCParser::ParseEnumeration()
+{
+	asCScriptNode *ident;
+	asCScriptNode *dataType;
+
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snEnum);
+
+	sToken	token;
+	bool	isConst;
+
+	//	Check for enum
+	GetToken(&token);
+	if( token.type == ttConst ) 
+	{
+		isConst = true;
+	}
+	else {
+		isConst = false;
+		RewindTo(&token);
+	}
+
+	//	Check for enum
+	GetToken(&token);
+	if( token.type != ttEnum )
+	{
+		Error(ExpectedToken(asGetTokenDefinition(ttEnum)).AddressOf(), &token);
+		return node;
+	}
+
+	node->SetToken(&token);
+	node->UpdateSourcePos(token.pos, token.length);
+
+	//	Get the identifier
+	GetToken(&token);
+	if(ttIdentifier != token.type) 
+	{
+		Error(TXT_EXPECTED_IDENTIFIER, &token);
+		return node;
+	}
+
+	dataType = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
+	node->AddChildLast(dataType);
+
+	if(true == isConst) 
+	{
+		dataType->AddChildLast(new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snConstant));
+	}
+
+	ident = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snIdentifier);
+	ident->SetToken(&token);
+	ident->UpdateSourcePos(token.pos, token.length);
+	dataType->AddChildLast(ident);
+
+
+
+
+	//	check for the start of the declaration block
+	GetToken(&token);
+	if( token.type != ttStartStatementBlock ) 
+	{
+		RewindTo(&token);
+		Error(ExpectedToken(asGetTokenDefinition(token.type)).AddressOf(), &token);
+		return node;
+	}
+
+	while(ttEnd != token.type) 
+	{
+		GetToken(&token);
+
+		if( ttEndStatementBlock == token.type ) 
+		{
+			RewindTo(&token);
+			break;
+		}
+
+		if(ttIdentifier != token.type) 
+		{
+			Error(TXT_EXPECTED_IDENTIFIER, &token);
+			return node;
+		}
+
+		//	Add the enum element
+		ident = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snIdentifier);
+		ident->SetToken(&token);
+		ident->UpdateSourcePos(token.pos, token.length);
+		node->AddChildLast(ident);
+
+		GetToken(&token);
+
+		if( token.type == ttAssignment )
+		{
+			asCScriptNode	*tmp;
+
+			RewindTo(&token);
+
+			tmp = SuperficiallyParseGlobalVarInit();
+
+			node->AddChildLast(tmp);
+			if( isSyntaxError ) return node;
+			GetToken(&token);
+		}
+
+
+
+
+		if(ttListSeparator != token.type) 
+		{
+			RewindTo(&token);
+			break;
+		}
+	}
+
+	//	check for the end of the declaration block
+	GetToken(&token);
+	if( token.type != ttEndStatementBlock ) 
+	{
+		RewindTo(&token);
+		Error(ExpectedToken(asGetTokenDefinition(token.type)).AddressOf(), &token);
+		return node;
+	}
+
+	//	Parse the declarations
+	return node;
 }
 
 bool asCParser::IsVarDecl()

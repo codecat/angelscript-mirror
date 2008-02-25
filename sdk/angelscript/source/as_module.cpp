@@ -527,6 +527,11 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	return 0;
 }
 
+
+
+
+
+
 int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, int moduleNameStringID)
 {
 	asASSERT(id >= 0);

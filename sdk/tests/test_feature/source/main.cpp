@@ -133,6 +133,7 @@ namespace TestRZ                { bool Test(); }
 namespace TestImplicitCast      { bool Test(); }
 namespace TestAssign            { bool Test(); }
 namespace TestTypedef           { bool Test(); }
+namespace TestEnum              { bool Test(); }
 
 #include "utils.h"
 
@@ -172,6 +173,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
 	if( TestTypedef::Test()           ) goto failed; else printf("-- TestTypedef passed\n");
 	if( Test2Modules()                ) goto failed; else printf("-- Test2Modules passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");

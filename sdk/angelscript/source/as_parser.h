@@ -40,7 +40,9 @@
 /*
 
 TYPEDEF       = 'typedef' REALTYPE IDENTIFIER ';'
-SCRIPT        = (FUNCTION | GLOBVAR | IMPORT | STRUCT | INTERFACE | TYPEDEF)*
+ENUM          = 'enum' IDENTIFIER '{' ENUMELEMENT? (',' ENUMELEMENT)* '}'
+ENUMELEMENT   = IDENTIFIER ('=' EXPRESSION)
+SCRIPT        = (FUNCTION | GLOBVAR | IMPORT | STRUCT | INTERFACE | TYPEDEF | ENUM)*
 TYPE          = 'const'? DATATYPE
 TYPEMOD       = ('&' ('in' | 'out' | 'inout')?)?
 FUNCTION      = TYPE TYPEMOD IDENTIFIER PARAMLIST BLOCK
@@ -162,6 +164,7 @@ protected:
 	asCScriptNode *ParseInterface();
 	asCScriptNode *ParseInterfaceMethod();
 	asCScriptNode *ParseCast();
+	asCScriptNode *ParseEnumeration();				//	Parse enumeration enum { X, Y }
 	asCScriptNode *ParseTypedef();					//	Parse named type declaration
 
 	bool IsVarDecl();

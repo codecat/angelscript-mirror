@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -78,6 +78,7 @@
 #define TXT_EXPR_MUST_BE_BOOL             "Expression must be of boolean type"
 #define TXT_EXPR_MUST_EVAL_TO_CONSTANT    "Expression must evaluate to a constant"
 
+#define TXT_FOUND_MULTIPLE_ENUM_VALUES    "Found multiple matching enum values"
 #define TXT_FUNCTION_IN_GLOBAL_EXPR       "Function calls are not allowed in global expressions"
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -53,6 +53,7 @@ const asDWORD asOBJ_SCRIPT_STRUCT    = 0x10000;
 const asDWORD asOBJ_SCRIPT_ARRAY     = 0x20000;
 const asDWORD asOBJ_NAMED_TYPE       = 0x80000000;
 const asDWORD asOBJ_NAMED_PSEUDO     = 0x40000000 | asOBJ_NAMED_TYPE;
+const asDWORD asOBJ_NAMED_ENUM       = 0x10000000 | asOBJ_NAMED_TYPE;
 
 // asOBJ_GC is used to indicate that the type can potentially 
 // form circular references, thus is garbage collected.
@@ -87,8 +88,15 @@ struct asSTypeBehaviour
 	asCArray<int> operators;
 };
 
+struct asSEnumValue
+{
+	asCString name;
+	int       value;
+};
+
 class asCScriptEngine;
 
+// TODO: Need to minimize used memory here, because not all types use all properties of the class
 class asCObjectType
 {
 public:
@@ -105,6 +113,7 @@ public:
 	asCArray<asCProperty*> properties;
 	asCArray<int> methods;
 	asCArray<asCObjectType*> interfaces;
+	asCArray<asSEnumValue*> enumValues;
 
 	asDWORD flags;
 

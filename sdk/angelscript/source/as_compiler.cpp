@@ -3669,6 +3669,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, isExplicit);
 		}
+		else if( from->type.dataType.IsEnumType() )
+		{
+			// Enum type is already an integer type
+			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
+
+			// Try once more, in case of a smaller type
+			ImplicitConversionConstant(from, to, node, isExplicit);
+		}
 		else if( from->type.dataType.IsIntegerType() &&
 		         from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
 		{
@@ -3740,6 +3748,11 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttInt64, true);
 		}
+		else if( from->type.dataType.IsEnumType() )
+		{
+			from->type.qwordValue = from->type.intValue;
+			from->type.dataType = asCDataType::CreatePrimitive(ttInt64, true);
+		}
 		else if( from->type.dataType.IsIntegerType() )
 		{
 			// Convert to 64bit
@@ -3787,6 +3800,13 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
 			from->type.intValue = uic;
+
+			// Try once more, in case of a smaller type
+			ImplicitConversionConstant(from, to, node, isExplicit);
+		}
+		else if( from->type.dataType.IsEnumType() )
+		{
+			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, isExplicit);
@@ -3878,6 +3898,11 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt64, true);
 			from->type.qwordValue = uic;
 		}
+		else if( from->type.dataType.IsEnumType() )
+		{
+			from->type.qwordValue = (asINT64)from->type.intValue;
+			from->type.dataType = asCDataType::CreatePrimitive(ttUInt64, true);
+		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 		{
 			// Convert to 64bit
@@ -3931,6 +3956,18 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				asCString str;
 				str.Format(TXT_POSSIBLE_LOSS_OF_PRECISION);
 				if( !isExplicit && node ) Warning(str.AddressOf(), node);
+			}
+
+			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.floatValue = fc;
+		}
+		else if( from->type.dataType.IsEnumType() )
+		{
+			float fc = float(from->type.intValue);
+
+			if( int(fc) != from->type.intValue )
+			{
+				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
 			from->type.dataType.SetTokenType(to.GetTokenType());
@@ -4015,6 +4052,18 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		//		str.Format(TXT_NOT_EXACT_g_g_g, ic, fc, float(fc));
 		//		if( !isExplicit ) Warning(str, node);
 		//	}
+
+			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.doubleValue = fc;
+		}
+		else if( from->type.dataType.IsEnumType() )
+		{
+			double fc = double(from->type.intValue);
+
+			if( int(fc) != from->type.intValue )
+			{
+				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
+			}
 
 			from->type.dataType.SetTokenType(to.GetTokenType());
 			from->type.doubleValue = fc;
@@ -4715,6 +4764,8 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				asCProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue);
 				if( prop )
 				{
+					found = true;
+
 					// Verify that the global property has been compiled already
 					if( isCompiled )
 					{
@@ -4744,25 +4795,46 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 						return -1;
 					}
 				}
-				else
+			}
+
+			if( !found )
+			{
+				// Is it an enum value?
+				asDWORD value;
+				asCDataType dt;
+				int e = builder->GetEnumValue(name.AddressOf(), dt, value);
+				if( e == 1 )
 				{
-					asCString str;
-					str.Format(TXT_s_NOT_DECLARED, name.AddressOf());
-					Error(str.AddressOf(), vnode);
-
-					// Give dummy value
-					ctx->type.SetDummy();
-
-					// Declare the variable now so that it will not be reported again
-					variables->DeclareVariable(name.AddressOf(), asCDataType::CreatePrimitive(ttInt, false), 0x7FFF);
-
-					// Mark the variable as initialized so that the user will not be bother by it again
-					sVariable *v = variables->GetVariable(name.AddressOf());
-					asASSERT(v);
-					if( v ) v->isInitialized = true;
-
-					return -1;
+					found = true;
+					ctx->type.SetConstantDW(dt, value);
 				}
+				else if( e == 2 )
+				{
+					// Found multiple values
+					found = true;
+					ctx->type.SetConstantDW(dt, value);
+					Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, vnode);
+				}
+			}
+
+			if( !found )
+			{
+				asCString str;
+				str.Format(TXT_s_NOT_DECLARED, name.AddressOf());
+				Error(str.AddressOf(), vnode);
+
+				// Give dummy value
+				ctx->type.SetDummy();
+
+				// Declare the variable now so that it will not be reported again
+				variables->DeclareVariable(name.AddressOf(), asCDataType::CreatePrimitive(ttInt, false), 0x7FFF);
+
+				// Mark the variable as initialized so that the user will not be bother by it again
+				sVariable *v = variables->GetVariable(name.AddressOf());
+				asASSERT(v);
+				if( v ) v->isInitialized = true;
+
+				return -1;
 			}
 		}
 		else

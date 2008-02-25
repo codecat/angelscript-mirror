@@ -53,7 +53,8 @@ static int TestTypedef(CBytecodeStream &codeStream, bool save)
 	int					r;
 
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	if(NULL == engine) {
+	if(NULL == engine) 
+	{
 		return -1;
 	}
 
@@ -62,19 +63,23 @@ static int TestTypedef(CBytecodeStream &codeStream, bool save)
 	// Test working example
 	if(true == save)
 	{
-		if(r >= 0) {
+		if(r >= 0) 
+		{
 			r = engine->AddScriptSection(NULL, NULL, script, strlen(script), 0);
 		}
 
-		if(r >= 0) {
+		if(r >= 0) 
+		{
 			r = engine->Build(NULL);
 		}
 
 		r = engine->SaveByteCode(NULL, &codeStream);
 	}
-	else {
+	else 
+	{
 		r = engine->LoadByteCode(NULL, &codeStream);
-		if(r >= 0) {
+		if(r >= 0) 
+		{
 			engine->BindAllImportedFunctions(NULL);
 		}
 	}
@@ -92,8 +97,8 @@ bool Test()
 	CBytecodeStream	stream;
 
 	r = TestTypedef(stream, true);
-	if(r >= 0) {
-		printf("\n");
+	if(r >= 0) 
+	{
 		r = TestTypedef(stream, false);
 	}
 

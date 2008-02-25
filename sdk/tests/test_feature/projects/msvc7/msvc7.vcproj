@@ -243,6 +243,9 @@
 				RelativePath="..\..\source\test_dynamicconfig.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_enum.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_exception.cpp">
 			</File>
 			<File

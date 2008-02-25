@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -80,6 +80,14 @@ asCObjectType::~asCObjectType()
 	properties.SetLength(0);
 
 	methods.SetLength(0);
+
+	for( asUINT n = 0; n < enumValues.GetLength(); n++ )
+	{
+		if( enumValues[n] )
+			DELETE(enumValues[n],asSEnumValue);
+	}
+
+	enumValues.SetLength(0);
 }
 
 bool asCObjectType::Implements(const asCObjectType *objType)

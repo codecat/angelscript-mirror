@@ -269,6 +269,12 @@ void asCBuilder::ParseScripts()
 					node->DisconnectParent();
 					RegisterInterface(node, scripts[n]);
 				}
+				//	Handle enumeration
+				else if( node->nodeType == snEnum )
+				{
+					node->DisconnectParent();
+					RegisterEnum(node, scripts[n]);
+				}
 				//	Handle typedef
 				else if( node->nodeType == snTypedef )
 				{
@@ -802,6 +808,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 			return -1;
 		}
 	}
+
 	return 0;
 }
 
@@ -957,6 +964,8 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 
 void asCBuilder::CompileGlobalVariables()
 {
+	// TODO: Enumerations are not global variables and should be removed from the global variable scope
+
 	bool compileSucceeded = true;
 
 	asCByteCode finalInit(engine);
@@ -986,6 +995,84 @@ void asCBuilder::CompileGlobalVariables()
 		// Restore state of compilation
 		finalOutput.Clear();
 
+		// Build enumerations first
+		asQWORD enumIndex = 0;
+		asCObjectType *lastObject = NULL;
+		for( asUINT n = 0; n < globVariables.GetLength(); n++ )
+		{
+			asCObjectType *objectType;
+
+			numWarnings = 0;
+			numErrors = 0;
+			outBuffer.Clear();
+
+			sGlobalVariableDescription *gvar = globVariables[n];
+			if( gvar->isCompiled || !gvar->datatype.IsEnumType() ) 
+				continue;
+
+			objectType = gvar->datatype.GetObjectType();
+			asASSERT(NULL != objectType);
+
+			if( objectType != lastObject ) 
+			{
+				lastObject = objectType;
+				enumIndex = 0;
+			}
+
+			int r;
+			if( gvar->node )
+			{
+				asCCompiler comp(engine);
+				int row, col;
+				gvar->script->ConvertPosToRowCol(gvar->node->tokenPos, &row, &col);
+				asCString str = gvar->datatype.Format();
+				str += " " + gvar->name;
+				str.Format(TXT_COMPILING_s, str.AddressOf());
+				WriteInfo(gvar->script->name.AddressOf(), str.AddressOf(), row, col, true);
+
+				//	Temporarily switch the type of the variable to int so it can be compiled properly
+				asCDataType saveType;
+				saveType = gvar->datatype;
+				gvar->datatype = asCDataType::CreatePrimitive(ttInt, true);
+				r = comp.CompileGlobalVariable(this, gvar->script, gvar->node, gvar);
+				gvar->datatype = saveType;
+			}
+			else 
+			{
+				gvar->constantValue = enumIndex;
+				r = 0;
+			}
+
+			if( r >= 0 )
+			{
+				enumIndex = gvar->constantValue;
+
+				// Add warnings for this constant to the total build
+				if( numWarnings )
+				{
+					currNumWarnings += numWarnings;
+					if( msgCallback )
+						outBuffer.SendToCallback(engine, &msgCallbackFunc, msgCallbackObj);
+				}
+			}
+			else
+			{
+				// Add output to final output
+				finalOutput.Append(outBuffer);
+				accumErrors += numErrors;
+				accumWarnings += numWarnings;
+				gvar->constantValue = enumIndex;
+			}
+
+			enumIndex++;
+
+			// We always set them as having been compiled
+			gvar->isCompiled = true;
+
+			preMessage.isSet = false;
+		}
+
+		// Compile the global variables next
 		for( asUINT n = 0; n < globVariables.GetLength(); n++ )
 		{
 			numWarnings = 0;
@@ -1084,7 +1171,6 @@ void asCBuilder::CompileGlobalVariables()
 	// DEBUG: output byte code
 	finalInit.DebugOutput("__@init.txt", module, engine);
 #endif
-
 }
 
 void asCBuilder::CompileClasses()
@@ -1435,6 +1521,117 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	functions.PushLast(0);
 }
 
+int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
+{
+	int r, c;
+	asCString		name;
+	asCScriptNode	*tmp;
+
+	//	Grab the name of the enumeration
+	tmp = node->firstChild;
+	asASSERT(snDataType == tmp->nodeType);
+	tmp->DisconnectParent();
+
+	//	Get the name of the enumeration
+	asASSERT(snIdentifier == tmp->firstChild->nodeType);
+	name.Assign(&file->code[tmp->firstChild->tokenPos], tmp->firstChild->tokenLength);
+	file->ConvertPosToRowCol(tmp->firstChild->tokenPos, &r, &c);
+
+	//	Check the name and add the enum
+	r = CheckNameConflict(name.AddressOf(), tmp->firstChild, file);
+	if(asSUCCESS == r) 
+	{
+		sClassDeclaration *decl;
+		asCObjectType *st;
+		asCDataType dataType;
+
+		decl = NEW(sClassDeclaration);
+		st = NEW(asCObjectType)(engine);
+		dataType.CreatePrimitive(ttInt, false);
+
+		st->arrayType = 0;
+		st->flags = asOBJ_NAMED_ENUM;
+		st->size = dataType.GetSizeInMemoryBytes();
+		st->name = name;
+		st->tokenType = ttIdentifier;
+
+		decl->name = name;
+		decl->script = file;
+		decl->validState = 0;
+		decl->node = NULL;
+		decl->objType = st;
+
+		module->classTypes.PushLast(st);
+		st->refCount++;
+		engine->classTypes.PushLast(st);
+		namedTypeDeclarations.PushLast(decl);
+
+		asCDataType type = CreateDataTypeFromNode(tmp, file);
+		// TODO: Give error message if wrong
+		asASSERT(!type.IsReference());
+
+		tmp->Destroy(engine);
+
+		while(NULL != node->firstChild) 
+		{
+			asCScriptNode	*tmp;
+
+			tmp = node->firstChild;
+			asASSERT(snIdentifier == tmp->nodeType);
+
+			GETSTRING(name, &file->code[tmp->tokenPos], tmp->tokenLength);
+			tmp->DisconnectParent();
+			tmp->Destroy(engine);
+
+			// TODO: Should only have to check for conflicts within the enum type
+			// Check for name conflict errors
+			r = CheckNameConflict(name.AddressOf(), tmp, file);
+			if(asSUCCESS != r) 
+			{
+				continue;
+			}
+
+			//	check for assignment
+			tmp = node->firstChild;
+			if(tmp && snAssignment == tmp->nodeType) 
+			{
+				tmp->DisconnectParent();
+			}
+			else 
+			{
+				tmp = NULL;
+			}
+
+			// Create the global variable description so the enum value can be evaluated
+			sGlobalVariableDescription *gvar = NEW(sGlobalVariableDescription);
+			globVariables.PushLast(gvar);
+
+			gvar->script		  = file;
+			gvar->node			  = tmp;
+			gvar->name			  = name;
+			gvar->property        = NEW(asCProperty);
+			gvar->datatype		  = type;
+			// No need to allocate space on the global memory stack since the values are stored in the asCObjectType
+			gvar->index			  = 0;
+			gvar->isCompiled	  = false;
+			gvar->isPureConstant  = true;
+			gvar->constantValue   = 0xdeadbeef;
+
+			// Add script variable to engine
+			gvar->property->name  = name;
+			gvar->property->type  = gvar->datatype;
+			gvar->property->index = gvar->index;
+
+			module->scriptGlobals.PushLast(gvar->property);
+		}
+	}
+
+	node->Destroy(engine);
+
+	return r;
+}
+
+// TODO: Analyze this properly
 int asCBuilder::RegisterTypedef(asCScriptNode *const node, asCScriptCode *file)
 {
 	int r, c;
@@ -1446,7 +1643,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *const node, asCScriptCode *file)
 
 	// Grab the name of the enumeration
 	tmp = node->firstChild;
-	assert(NULL != tmp);
+	asASSERT(NULL != tmp);
 	if(snConstant == tmp->nodeType) 
 	{
 		isConst = true;
@@ -1454,14 +1651,14 @@ int asCBuilder::RegisterTypedef(asCScriptNode *const node, asCScriptCode *file)
 	}
 
 	// Get the native data type
-	assert(NULL != tmp && snDataType == tmp->nodeType);
+	asASSERT(NULL != tmp && snDataType == tmp->nodeType);
 	asCDataType dataType;
 	dataType.CreatePrimitive(tmp->tokenType, false);
 	dataType.SetTokenType(tmp->tokenType);
 	tmp = tmp->next;
 
 	// Grab the identifier
-	assert(NULL != tmp && NULL == tmp->next);
+	asASSERT(NULL != tmp && NULL == tmp->next);
 	name.Assign(&file->code[tmp->tokenPos], tmp->tokenLength);
 	file->ConvertPosToRowCol(tmp->tokenPos, &r, &c);
 
@@ -1472,7 +1669,6 @@ int asCBuilder::RegisterTypedef(asCScriptNode *const node, asCScriptCode *file)
 		// Create the new type
 		sClassDeclaration *decl = NEW(sClassDeclaration);
 		asCObjectType *st = NEW(asCObjectType)(engine);
-
 
 		st->arrayType = 0;
 		st->flags = asOBJ_NAMED_PSEUDO;
@@ -2065,6 +2261,44 @@ asCObjectType *asCBuilder::GetObjectType(const char *type)
 		ot = module->GetObjectType(type);
 
 	return ot;
+}
+
+int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue)
+{
+	bool found = false;
+
+	// Search all available enum types
+	for( asUINT t = 0; t < engine->objectTypes.GetLength(); t++ )
+	{
+		asCObjectType *ot = engine->objectTypes[t];
+		if( ot && (ot->flags & asOBJ_NAMED_ENUM) )
+		{
+			for( asUINT n = 0; n < ot->enumValues.GetLength(); n++ )
+			{
+				if( ot->enumValues[n]->name == name )
+				{
+					if( !found )
+					{
+						found = true;
+						outDt = asCDataType::CreateObject(ot, true);
+						outValue = ot->enumValues[n]->value;
+						break;
+					}
+					else
+					{
+						// Found more than one value in different enum types
+						return 2;
+					}
+				}
+			}
+		}
+	}
+
+	if( found )
+		return 1;
+
+	// Didn't find any value
+	return 0;
 }
 
 END_AS_NAMESPACE

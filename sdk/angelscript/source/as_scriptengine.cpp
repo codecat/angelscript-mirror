@@ -4151,6 +4151,8 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 	}
 }
 
+// TODO: Analyze this properly
+// TODO: Should probably be RegisterTypedef()
 int asCScriptEngine::RegisterNamedType(const char *type, const char *name)
 {
 	if( name == 0 ) return ConfigError(asINVALID_NAME);
@@ -4222,6 +4224,92 @@ int asCScriptEngine::RegisterNamedType(const char *type, const char *name)
 	objectTypes.PushLast(object);
 
 	currentGroup->objTypes.PushLast(object);
+
+	return asSUCCESS;
+}
+
+int asCScriptEngine::RegisterEnum(const char *name)
+{
+	//	Check the name
+	if( NULL == name ) 
+		return ConfigError(asINVALID_NAME);
+
+	// Verify if the name has been registered as a type already
+	asUINT n;
+	for( n = 0; n < objectTypes.GetLength(); n++ ) 
+		if( objectTypes[n] && objectTypes[n]->name == name ) 
+			return asALREADY_REGISTERED;
+
+	// Use builder to parse the datatype
+	asCDataType dt;
+	asCBuilder bld(this, 0);
+	bool oldMsgCallback = msgCallback; msgCallback = false;
+	int r = bld.ParseDataType(name, &dt);
+	msgCallback = oldMsgCallback;
+	if( r >= 0 ) 
+		return ConfigError(asERROR);
+
+	// Make sure the name is not a reserved keyword
+	asCTokenizer t;
+	size_t tokenLen;
+	int token = t.GetToken(name, strlen(name), &tokenLen);
+	if( token != ttIdentifier || strlen(name) != tokenLen ) 
+		return ConfigError(asINVALID_NAME);
+
+	r = bld.CheckNameConflict(name, 0, 0);
+	if( r < 0 ) 
+		return ConfigError(asNAME_TAKEN);
+
+	asCObjectType *st = NEW(asCObjectType)(this);
+
+	asCDataType dataType;
+	dataType.CreatePrimitive(ttInt, false);
+
+	st->arrayType = 0;
+	st->flags = asOBJ_NAMED_ENUM;
+	st->size = dataType.GetSizeInMemoryBytes();
+	st->name = name;
+	st->tokenType = ttIdentifier;
+
+	objectTypes.PushLast(st);
+
+	currentGroup->objTypes.PushLast(st);
+
+	return asSUCCESS;
+}
+
+int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueName, int value)
+{
+	// Verify that the correct config group is used
+	if( currentGroup->FindType(typeName) == 0 )
+		return asWRONG_CONFIG_GROUP;
+
+	asCDataType dt;
+	int r;
+	asCBuilder bld(this, 0);
+	r = bld.ParseDataType(typeName, &dt);
+	if( r < 0 )
+		return ConfigError(r);
+
+	// Store the enum value
+	asCObjectType *ot = dt.GetObjectType();
+	if( ot == 0 || !(ot->flags & asOBJ_NAMED_ENUM) )
+		return ConfigError(asINVALID_TYPE);
+
+	if( NULL == valueName ) 
+		return ConfigError(asINVALID_NAME);
+
+	for( unsigned int n = 0; n < ot->enumValues.GetLength(); n++ )
+	{
+		if( ot->enumValues[n]->name == valueName )
+			return ConfigError(asALREADY_REGISTERED);
+	}
+
+	asSEnumValue *e = NEW(asSEnumValue);
+	e->name = valueName;
+	e->value = value;
+
+	ot->enumValues.PushLast(e);
 
 	return asSUCCESS;
 }

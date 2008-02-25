@@ -79,6 +79,8 @@ public:
 	int ClearMessageCallback();
 
 	int RegisterNamedType(const char *type, const char *name);
+	int RegisterEnum(const char *type);
+	int RegisterEnumValue(const char *type, const char *name, int value);
 
 	int RegisterObjectType(const char *objname, int byteSize, asDWORD flags);
 	int RegisterObjectProperty(const char *objname, const char *declaration, int byteOffset);

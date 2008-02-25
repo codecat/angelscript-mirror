@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -127,6 +127,7 @@ protected:
 	int RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file);
 	int RegisterClass(asCScriptNode *node, asCScriptCode *file);
 	int RegisterInterface(asCScriptNode *node, asCScriptCode *file);
+	int RegisterEnum(asCScriptNode *node, asCScriptCode *file);
 	int RegisterTypedef(asCScriptNode *node, asCScriptCode *file);
 	void CompileClasses();
 
@@ -135,6 +136,8 @@ protected:
 	void AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file);
 
 	asCObjectType *GetObjectType(const char *type);
+
+	int GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue);
 
 	void ParseScripts();
 	void CompileFunctions();

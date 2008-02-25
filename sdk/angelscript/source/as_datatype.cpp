@@ -385,7 +385,7 @@ bool asCDataType::IsEqualExceptConst(const asCDataType &dt) const
 bool asCDataType::IsPrimitive() const
 {
 	//	Enumerations and Pseudo types are considered primitives
-	if( IsPseudoType() )
+	if( IsEnumType() || IsPseudoType() )
 		return true;
 
 	// A registered object is never a primitive neither is a pointer, nor an array
@@ -459,7 +459,7 @@ bool asCDataType::IsBooleanType() const
 bool asCDataType::IsObject() const
 {
 	//	Enumerations and pseudo data are named objects but treated as integral.
-	if( IsPseudoType() )
+	if( IsEnumType() || IsPseudoType() )
 		return false;
 
 	if( objectType ) return true;
@@ -535,6 +535,14 @@ bool asCDataType::IsNamedType() const
 bool asCDataType::IsPseudoType() const
 {
 	if( objectType && (objectType->flags & asOBJ_NAMED_PSEUDO) )
+		return true;
+
+	return false;
+}
+
+bool asCDataType::IsEnumType() const
+{
+	if( objectType && (objectType->flags & asOBJ_NAMED_ENUM) )
 		return true;
 
 	return false;

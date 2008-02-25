@@ -78,6 +78,7 @@ enum eScriptNode
 	snClass,
 	snInitList,
 	snInterface,
+	snEnum,
 	snTypedef,
 	snCast
 };

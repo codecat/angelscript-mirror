@@ -53,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        21103
+#define ANGELSCRIPT_VERSION        21200
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  11
-#define ANGELSCRIPT_VERSION_BUILD  3
-#define ANGELSCRIPT_VERSION_STRING "2.11.3 WIP"
+#define ANGELSCRIPT_VERSION_MINOR  12
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.12.0 WIP"
 
 // Data types
 
@@ -372,6 +372,9 @@ public:
 
 	virtual int RegisterInterface(const char *name) = 0;
 	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
+
+	virtual int RegisterEnum(const char *type) = 0;
+	virtual int RegisterEnumValue(const char *type, const char *name, int value) = 0;
 
 	virtual int RegisterStringFactory(const char *datatype, const asUPtr &factoryFunc, asDWORD callConv) = 0;
 
