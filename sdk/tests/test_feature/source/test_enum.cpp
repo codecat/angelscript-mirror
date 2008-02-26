@@ -15,7 +15,7 @@ static const char *const script =
 "	TEST1 = 1,										\n"
 "	TEST2,											\n"
 "	TEST1200 = 300 * 4,								\n"
-"	TEST1201,										\n"
+"	TEST1201 = TEST1200 + 1,						\n"
 "	TEST1202,										\n"
 "	TEST1203										\n"
 "}													\n"
@@ -36,7 +36,8 @@ static const char *const script =
 enum TEST_ENUM
 {
 	ENUM1 = 1,
-	ENUM2 = ENUM1*10
+	ENUM2 = ENUM1*10,
+	ENUM3
 };
 
 std::string buffer;
@@ -61,6 +62,7 @@ static bool TestEnum()
 	r = engine->RegisterEnum("TEST_ENUM"); assert(r >= 0);
 	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM1", ENUM1); assert(r >= 0);
 	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM2", ENUM2); assert(r >= 0);
+	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM3", ENUM3); assert(r >= 0);
 
 	r = engine->RegisterGlobalFunction("void output(int val1)", asFUNCTION(scriptOutput), asCALL_CDECL); assert(r >= 0);
 
@@ -87,6 +89,7 @@ static bool TestEnum()
 	engine->Release();
 
 	// TEST: enums are literal constants
+	// TEST: enum values can't be declared with expressions including subsequent values
 	// TEST: enum type name can be overloaded with variable name in another scope
 	// TEST: enum value name can be overloaded with variable name in another scope
 	// TEST: enum value can be given as expression of constants
@@ -97,6 +100,7 @@ static bool TestEnum()
 	// TEST: math operator with enums
 	// TEST: comparison operator with enums
 	// TEST: bitwise operators with enums
+	// TEST: circular reference between enum value and global constant variable
 
 	// TEST: enum throws exception if number is cast to non-declared value?
 

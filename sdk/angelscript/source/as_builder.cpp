@@ -521,7 +521,7 @@ asCProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, b
 	asCArray<sGlobalVariableDescription *> *gvars = &globVariables;
 	for( n = 0; n < gvars->GetLength(); ++n )
 	{
-		if( (*gvars)[n]->name == prop )
+		if( (*gvars)[n] && (*gvars)[n]->name == prop )
 		{
 			if( isCompiled ) *isCompiled = (*gvars)[n]->isCompiled;
 
@@ -1152,9 +1152,6 @@ void asCBuilder::CompileGlobalVariables()
 
 	finalInit.Finalize();
 
-	asCByteCode cleanInit(engine);
-	asCByteCode cleanExit(engine);
-
 	int id = engine->GetNextScriptFunctionId();
 	asCScriptFunction *init = NEW(asCScriptFunction)(module);
 
@@ -1166,6 +1163,33 @@ void asCBuilder::CompileGlobalVariables()
 	finalInit.Output(init->byteCode.AddressOf());
 	init->AddReferences();
 	init->stackNeeded = finalInit.largestStackUsed;
+
+	// Convert all variables compiled for the enums to true enum values
+	for( asUINT n = 0; n < globVariables.GetLength(); n++ )
+	{
+		asCObjectType *objectType;
+		sGlobalVariableDescription *gvar = globVariables[n];
+		if( !gvar->datatype.IsEnumType() ) 
+			continue;
+
+		objectType = gvar->datatype.GetObjectType();
+		asASSERT(NULL != objectType);
+
+		asSEnumValue *e = NEW(asSEnumValue);
+		e->name = gvar->name;
+		e->value = (int)gvar->constantValue;
+
+		objectType->enumValues.PushLast(e);
+
+		// Destroy the gvar property
+		if( gvar->node )
+			gvar->node->Destroy(engine);
+		if( gvar->property )
+			DELETE(gvar->property, asCProperty);
+
+		DELETE(gvar, sGlobalVariableDescription);
+		globVariables[n] = 0;
+	}
 
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
@@ -1621,8 +1645,6 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			gvar->property->name  = name;
 			gvar->property->type  = gvar->datatype;
 			gvar->property->index = gvar->index;
-
-			module->scriptGlobals.PushLast(gvar->property);
 		}
 	}
 
@@ -2271,6 +2293,32 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 	for( asUINT t = 0; t < engine->objectTypes.GetLength(); t++ )
 	{
 		asCObjectType *ot = engine->objectTypes[t];
+		if( ot && (ot->flags & asOBJ_NAMED_ENUM) )
+		{
+			for( asUINT n = 0; n < ot->enumValues.GetLength(); n++ )
+			{
+				if( ot->enumValues[n]->name == name )
+				{
+					if( !found )
+					{
+						found = true;
+						outDt = asCDataType::CreateObject(ot, true);
+						outValue = ot->enumValues[n]->value;
+						break;
+					}
+					else
+					{
+						// Found more than one value in different enum types
+						return 2;
+					}
+				}
+			}
+		}
+	}
+
+	for( asUINT t = 0; t < engine->classTypes.GetLength(); t++ )
+	{
+		asCObjectType *ot = engine->classTypes[t];
 		if( ot && (ot->flags & asOBJ_NAMED_ENUM) )
 		{
 			for( asUINT n = 0; n < ot->enumValues.GetLength(); n++ )

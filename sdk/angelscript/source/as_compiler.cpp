@@ -576,7 +576,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		if( node )
 		{
 			asSExprContext expr(engine);
-			CompileAssignment(node, &expr);
+			int r = CompileAssignment(node, &expr); if( r < 0 ) return r;
 
 			if( gvar->datatype.IsPrimitive() )
 			{
