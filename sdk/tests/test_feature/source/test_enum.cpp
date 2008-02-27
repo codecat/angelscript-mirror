@@ -32,7 +32,6 @@ static const char *const script =
 "	return TEST2;									\n"
 "}													\n";
 
-
 enum TEST_ENUM
 {
 	ENUM1 = 1,
@@ -86,9 +85,22 @@ static bool TestEnum()
 	if( buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n" )
 		fail = true;
 
-	engine->Release();
+	// Registered enums are literal constants
+	buffer = "";
+	r = engine->ExecuteString(0, "TEST_ENUM e = ENUM1; switch( e ) { case ENUM1: output(e); }");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( buffer != "1\n" )
+		fail = true;
 
-	// TEST: enums are literal constants
+	// Script declared enums behave the same
+	buffer = "";
+	r = engine->ExecuteString(0, "TEST2_ENUM e = TEST_1; switch( e ) {case TEST_1: output(e); }");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( buffer != "-1\n" )
+		fail = true;
+
 	// TEST: enum values can't be declared with expressions including subsequent values
 	// TEST: enum type name can be overloaded with variable name in another scope
 	// TEST: enum value name can be overloaded with variable name in another scope
@@ -102,7 +114,9 @@ static bool TestEnum()
 	// TEST: bitwise operators with enums
 	// TEST: circular reference between enum value and global constant variable
 
-	// TEST: enum throws exception if number is cast to non-declared value?
+	// TEST: ?enum throws exception if number is cast to non-declared value?
+	
+	engine->Release();
 
 	// Success
 	return fail;
