@@ -2986,14 +2986,18 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 				}
 			}
 
-			if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 )
+			if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 ||
+				to.IsEnumType() && isExplicit )
 			{
 				if( ctx->type.dataType.IsIntegerType() || 
 					ctx->type.dataType.IsUnsignedType() ||
 					ctx->type.dataType.IsEnumType() )
 				{
 					if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+					{
 						ctx->type.dataType.SetTokenType(to.GetTokenType());
+						ctx->type.dataType.SetObjectType(to.GetObjectType());
+					}
 					else
 					{
 						ConvertToTempVariableNotIn(ctx, reservedVars);
@@ -3008,6 +3012,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ConvertToTempVariableNotIn(ctx, reservedVars);
 					ctx->bc.InstrSHORT(BC_fTOi, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 				else if( ctx->type.dataType.IsDoubleType() )
 				{
@@ -3036,7 +3041,10 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ctx->type.dataType.IsEnumType() )
 				{
 					if( ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
+					{
 						ctx->type.dataType.SetTokenType(to.GetTokenType());
+						ctx->type.dataType.SetObjectType(to.GetObjectType());
+					}
 					else
 					{
 						ConvertToTempVariableNotIn(ctx, reservedVars);
@@ -3062,6 +3070,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ConvertToTempVariableNotIn(ctx, reservedVars);
 					ctx->bc.InstrSHORT(BC_dTOi64, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 			}
 			else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1  )
@@ -3071,7 +3080,10 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ctx->type.dataType.IsEnumType() )
 				{
 					if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+					{
 						ctx->type.dataType.SetTokenType(to.GetTokenType());
+						ctx->type.dataType.SetObjectType(to.GetObjectType());
+					}
 					else
 					{
 						ConvertToTempVariableNotIn(ctx, reservedVars);
@@ -3086,6 +3098,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ConvertToTempVariableNotIn(ctx, reservedVars);
 					ctx->bc.InstrSHORT(BC_fTOu, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 				else if( ctx->type.dataType.IsDoubleType() )
 				{
@@ -3114,7 +3127,10 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ctx->type.dataType.IsEnumType() )
 				{
 					if( ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
+					{
 						ctx->type.dataType.SetTokenType(to.GetTokenType());
+						ctx->type.dataType.SetObjectType(to.GetObjectType());
+					}
 					else
 					{
 						ConvertToTempVariableNotIn(ctx, reservedVars);
@@ -3140,6 +3156,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ConvertToTempVariableNotIn(ctx, reservedVars);
 					ctx->bc.InstrSHORT(BC_dTOu64, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 			}
 			else if( to.IsFloatType() )
@@ -3149,6 +3166,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ConvertToTempVariableNotIn(ctx, reservedVars);
 					ctx->bc.InstrSHORT(BC_iTOf, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 				else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 				{
@@ -3163,6 +3181,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ConvertToTempVariableNotIn(ctx, reservedVars);
 					ctx->bc.InstrSHORT(BC_uTOf, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 				else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 				{
@@ -3196,6 +3215,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ConvertToTempVariableNotIn(ctx, reservedVars);
 					ctx->bc.InstrSHORT(BC_i64TOd, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 				else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 				{
@@ -3210,6 +3230,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ConvertToTempVariableNotIn(ctx, reservedVars);
 					ctx->bc.InstrSHORT(BC_u64TOd, ctx->type.stackOffset);
 					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
 				else if( ctx->type.dataType.IsFloatType() )
 				{
@@ -3224,16 +3245,16 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 		else
 		{
 			if( (to.IsIntegerType() || to.IsUnsignedType() ||
-				 to.IsFloatType()   || to.IsDoubleType()) &&
+				 to.IsFloatType()   || to.IsDoubleType() ||
+				 to.IsEnumType() && isExplicit) &&
 				(ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() ||
 				 ctx->type.dataType.IsFloatType()   || ctx->type.dataType.IsDoubleType() ||
 				 ctx->type.dataType.IsEnumType()) )
+			{
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
 		}
-
-		// TODO: Instead of using SetTokenType above, should use a SetBaseType that copies both token and object type
-		// When an enum is converted to a primitive we need to clear the object type
-		ctx->type.dataType.SetObjectType(0);
 
 		// Primitive types on the stack, can be const or non-const
 		ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
@@ -3606,95 +3627,86 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 	// Arrays can't be constants
 	if( to.IsArrayType() ) return;
 
-	if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 )
+	if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 ||
+		to.IsEnumType() && isExplicit )
 	{
-		// Float constants can be implicitly converted to int
-		if( from->type.dataType.IsFloatType() )
+		if( from->type.dataType.IsFloatType() ||
+			from->type.dataType.IsDoubleType() ||
+			from->type.dataType.IsUnsignedType() ||
+			from->type.dataType.IsIntegerType() ||
+			from->type.dataType.IsEnumType() )
 		{
-			float fc = from->type.floatValue;
-			int ic = int(fc);
-
-			if( float(ic) != fc )
+			// Transform the value
+			// Float constants can be implicitly converted to int
+			if( from->type.dataType.IsFloatType() )
 			{
-				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
+				float fc = from->type.floatValue;
+				int ic = int(fc);
+
+				if( float(ic) != fc )
+				{
+					if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
+				}
+
+				from->type.intValue = ic;
+			}
+			// Double constants can be implicitly converted to int
+			else if( from->type.dataType.IsDoubleType() )
+			{
+				double fc = from->type.doubleValue;
+				int ic = int(fc);
+
+				if( double(ic) != fc )
+				{
+					if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
+				}
+
+				from->type.intValue = ic;
+			}
+			else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
+			{
+				// Verify that it is possible to convert to signed without getting negative
+				if( from->type.intValue < 0 )
+				{
+					if( !isExplicit && node ) Warning(TXT_CHANGE_SIGN, node);
+				}
+
+				// Convert to 32bit
+				if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+					from->type.intValue = from->type.byteValue;
+				else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+					from->type.intValue = from->type.wordValue;
+			}
+			else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
+			{
+				// Convert to 32bit
+				from->type.intValue = int(from->type.qwordValue);
+			}
+			else if( from->type.dataType.IsIntegerType() && 
+					from->type.dataType.GetSizeInMemoryBytes() < 4 )
+			{
+				// Convert to 32bit
+				if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+					from->type.intValue = (signed char)from->type.byteValue;
+				else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+					from->type.intValue = (short)from->type.wordValue;
+			}
+			else if( from->type.dataType.IsEnumType() )
+			{
+				// Enum type is already an integer type
 			}
 
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
-			from->type.intValue = ic;
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
+			// Set the resulting type
+			if( to.IsEnumType() )
+				from->type.dataType = to;
+			else
+				from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
 		}
-		// Double constants can be implicitly converted to int
-		else if( from->type.dataType.IsDoubleType() )
-		{
-			double fc = from->type.doubleValue;
-			int ic = int(fc);
 
-			if( double(ic) != fc )
-			{
-				if( !isExplicit && node ) Warning(TXT_NOT_EXACT, node);
-			}
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
-			from->type.intValue = ic;
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
-		}
-		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
-		{
-			// Verify that it is possible to convert to signed without getting negative
-			if( from->type.intValue < 0 )
-			{
-				if( !isExplicit && node ) Warning(TXT_CHANGE_SIGN, node);
-			}
-
-			// Convert to 32bit
-			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.intValue = from->type.byteValue;
-			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.intValue = from->type.wordValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
-		}
-		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
-		{
-			// Convert to 32bit
-			from->type.intValue = int(from->type.qwordValue);
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
-		}
-		else if( from->type.dataType.IsIntegerType() && 
-		         from->type.dataType.GetSizeInMemoryBytes() < 4 )
-		{
-			// Convert to 32bit
-			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.intValue = (signed char)from->type.byteValue;
-			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.intValue = (short)from->type.wordValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
-		}
-		else if( from->type.dataType.IsEnumType() )
-		{
-			// Enum type is already an integer type
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, isExplicit);
-		}
-		else if( from->type.dataType.IsIntegerType() &&
-		         from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
+		// Check if a downsize is necessary
+		if( to.IsIntegerType() && 
+			from->type.dataType.IsIntegerType() &&
+		    from->type.dataType.GetSizeInMemoryBytes() > to.GetSizeInMemoryBytes() )
 		{
 			// Verify if it is possible
 			if( to.GetSizeInMemoryBytes() == 1 )
@@ -5412,7 +5424,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	// It is possible that the name is really a constructor
 	asCDataType dt;
 	dt = builder->CreateDataTypeFromNode(node->firstChild, script);
-	if( dt.GetObjectType() == 0 )
+	if( dt.IsPrimitive() )
 	{
 		// This is a cast to a primitive type
 		CompileConversion(node, ctx);

@@ -7,7 +7,7 @@ namespace TestEnum
 #define TESTMODULE		"TestEnum"
 
 
-//	Script for testing attributes
+// Script for testing attributes
 static const char *const script =
 "enum TEST2_ENUM  									\n"
 "{													\n"
@@ -73,6 +73,8 @@ static bool TestEnum()
 		fail = true;
 
 	// Test script that declare an enum
+	// enum value can be given as expression of constants
+	// enum can be implicitly cast to number
 	buffer = "";
 	r = engine->AddScriptSection(NULL, NULL, script, strlen(script), 0);
 	r = engine->Build(NULL);
@@ -86,6 +88,7 @@ static bool TestEnum()
 		fail = true;
 
 	// Registered enums are literal constants
+	// variable of enum type can be implictly cast to primitive
 	buffer = "";
 	r = engine->ExecuteString(0, "TEST_ENUM e = ENUM1; switch( e ) { case ENUM1: output(e); }");
 	if( r != asEXECUTION_FINISHED )
@@ -101,21 +104,56 @@ static bool TestEnum()
 	if( buffer != "-1\n" )
 		fail = true;
 
-	// TEST: enum values can't be declared with expressions including subsequent values
-	// TEST: enum type name can be overloaded with variable name in another scope
-	// TEST: enum value name can be overloaded with variable name in another scope
-	// TEST: enum value can be given as expression of constants
-	// TEST: number cannot be implicitly cast to enum type
-	// TEST: enum can be implicitly cast to number
-	// TEST: number can be explicitly cast to enum type 
+	// enum values can't be declared with expressions including subsequent values
+	const char *script2 = "enum TEST_ERR { ERR1 = ERR2, ERR2 }";
+	r = engine->AddScriptSection("error", "error", script2, strlen(script2));
+	r = engine->Build("error");
+	if( r >= 0 )
+		fail = true;
+
+	// enum type name can't be overloaded with variable name in another scope
+	r = engine->ExecuteString(0, "int TEST_ENUM = 999");
+	if( r >= 0  )
+		fail = true;
+
+	// enum value name can be overloaded with variable name in another scope
+	buffer = "";
+	r = engine->ExecuteString(0, "int ENUM1 = 999; output(ENUM1)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( buffer != "999\n" )
+		fail = true;
+
+	// number cannot be implicitly cast to enum type
+	r = engine->ExecuteString(0, "TEST_ENUM val = 1");
+	if( r >= 0 )
+		fail = true;
+	r = engine->ExecuteString(0, "float f = 1.2f; TEST_ENUM val = f");
+	if( r >= 0 )
+		fail = true;
+
+	// constant number can be explicitly cast to enum type 
+	r = engine->ExecuteString(0, "TEST_ENUM val = TEST_ENUM(1)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	r = engine->ExecuteString(0, "TEST_ENUM val = cast<TEST_ENUM>(1)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	// primitive value can be explicitly cast to enum type
+	r = engine->ExecuteString(0, "float f = 1.2f; TEST_ENUM val = TEST_ENUM(f)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	r = engine->ExecuteString(0, "float f = 1.2f; TEST_ENUM val = cast<TEST_ENUM>(f)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
 	// TEST: functions can be overloaded for parameters with enum type
 	// TEST: math operator with enums
 	// TEST: comparison operator with enums
 	// TEST: bitwise operators with enums
 	// TEST: circular reference between enum value and global constant variable
 
-	// TEST: ?enum throws exception if number is cast to non-declared value?
-	
 	engine->Release();
 
 	// Success
