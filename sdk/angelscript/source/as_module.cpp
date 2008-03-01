@@ -261,6 +261,7 @@ void asCModule::Reset()
 	}
 	scriptSections.SetLength(0);
 
+	// Free declared types, including classes, typedefs, and enums
 	for( n = 0; n < classTypes.GetLength(); n++ )
 		classTypes[n]->refCount--;
 	classTypes.SetLength(0);

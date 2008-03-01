@@ -964,8 +964,6 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 
 void asCBuilder::CompileGlobalVariables()
 {
-	// TODO: Enumerations are not global variables and should be removed from the global variable scope
-
 	bool compileSucceeded = true;
 
 	asCByteCode finalInit(engine);
@@ -994,105 +992,85 @@ void asCBuilder::CompileGlobalVariables()
 
 		// Restore state of compilation
 		finalOutput.Clear();
-
-		// Build enumerations first
-		asQWORD enumIndex = 0;
-		asCObjectType *lastObject = NULL;
 		for( asUINT n = 0; n < globVariables.GetLength(); n++ )
 		{
-			asCObjectType *objectType;
-
+			asCByteCode init(engine);
 			numWarnings = 0;
 			numErrors = 0;
 			outBuffer.Clear();
 
 			sGlobalVariableDescription *gvar = globVariables[n];
-			if( gvar->isCompiled || !gvar->datatype.IsEnumType() ) 
+			if( gvar->isCompiled )
 				continue;
 
-			objectType = gvar->datatype.GetObjectType();
-			asASSERT(NULL != objectType);
-
-			if( objectType != lastObject ) 
-			{
-				lastObject = objectType;
-				enumIndex = 0;
-			}
-
-			int r;
 			if( gvar->node )
 			{
-				asCCompiler comp(engine);
-				int row, col;
-				gvar->script->ConvertPosToRowCol(gvar->node->tokenPos, &row, &col);
+				int r, c;
+				gvar->script->ConvertPosToRowCol(gvar->node->tokenPos, &r, &c);
 				asCString str = gvar->datatype.Format();
 				str += " " + gvar->name;
 				str.Format(TXT_COMPILING_s, str.AddressOf());
-				WriteInfo(gvar->script->name.AddressOf(), str.AddressOf(), row, col, true);
-
-				//	Temporarily switch the type of the variable to int so it can be compiled properly
-				asCDataType saveType;
-				saveType = gvar->datatype;
-				gvar->datatype = asCDataType::CreatePrimitive(ttInt, true);
-				r = comp.CompileGlobalVariable(this, gvar->script, gvar->node, gvar);
-				gvar->datatype = saveType;
-			}
-			else 
-			{
-				gvar->constantValue = enumIndex;
-				r = 0;
+				WriteInfo(gvar->script->name.AddressOf(), str.AddressOf(), r, c, true);
 			}
 
-			if( r >= 0 )
+			if( gvar->datatype.IsEnumType() ) 
 			{
-				enumIndex = gvar->constantValue;
-
-				// Add warnings for this constant to the total build
-				if( numWarnings )
+				int r;
+				if( gvar->node )
 				{
-					currNumWarnings += numWarnings;
-					if( msgCallback )
-						outBuffer.SendToCallback(engine, &msgCallbackFunc, msgCallbackObj);
+					asCCompiler comp(engine);
+
+					// Temporarily switch the type of the variable to int so it can be compiled properly
+					asCDataType saveType;
+					saveType = gvar->datatype;
+					gvar->datatype = asCDataType::CreatePrimitive(ttInt, true);
+					r = comp.CompileGlobalVariable(this, gvar->script, gvar->node, gvar);
+					gvar->datatype = saveType;
+				}
+				else 
+				{
+					r = 0;
+
+					// When there is no assignment the value is the last + 1
+					int enumVal = 0;
+					if( n > 0 )
+					{
+						sGlobalVariableDescription *gvar2 = globVariables[n-1];
+						if( gvar2->datatype == gvar->datatype )
+						{
+							enumVal = int(gvar2->constantValue) + 1;
+
+							if( !gvar2->isCompiled )
+							{
+								// TODO: Need to get the correct script position
+								int row, col;
+								gvar->script->ConvertPosToRowCol(0, &row, &col);
+
+								asCString str = gvar->datatype.Format();
+								str += " " + gvar->name;
+								str.Format(TXT_COMPILING_s, str.AddressOf());
+								WriteInfo(gvar->script->name.AddressOf(), str.AddressOf(), row, col, true);
+
+								str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, gvar2->name.AddressOf());
+								WriteError(gvar->script->name.AddressOf(), str.AddressOf(), row, col);
+								r = -1;
+							}
+						}
+					}
+
+					gvar->constantValue = enumVal;
+				}
+
+				if( r >= 0 )
+				{
+					// Set the value as compiled
+					gvar->isCompiled = true;
+					compileSucceeded = true;
 				}
 			}
 			else
 			{
-				// Add output to final output
-				finalOutput.Append(outBuffer);
-				accumErrors += numErrors;
-				accumWarnings += numWarnings;
-				gvar->constantValue = enumIndex;
-			}
-
-			enumIndex++;
-
-			// We always set them as having been compiled
-			gvar->isCompiled = true;
-
-			preMessage.isSet = false;
-		}
-
-		// Compile the global variables next
-		for( asUINT n = 0; n < globVariables.GetLength(); n++ )
-		{
-			numWarnings = 0;
-			numErrors = 0;
-			outBuffer.Clear();
-			asCByteCode init(engine);
-
-			sGlobalVariableDescription *gvar = globVariables[n];
-			if( gvar->isCompiled == false )
-			{
-				if( gvar->node )
-				{
-					int r, c;
-					gvar->script->ConvertPosToRowCol(gvar->node->tokenPos, &r, &c);
-					asCString str = gvar->datatype.Format();
-					str += " " + gvar->name;
-					str.Format(TXT_COMPILING_s, str.AddressOf());
-					WriteInfo(gvar->script->name.AddressOf(), str.AddressOf(), r, c, true);
-				}
-
+				// Compile the global variable
 				asCCompiler comp(engine);
 				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->node, gvar);
 				if( r >= 0 )
@@ -1103,30 +1081,30 @@ void asCBuilder::CompileGlobalVariables()
 
 					init.AddCode(&comp.byteCode);
 				}
-
-				if( gvar->isCompiled )
-				{
-					// Add warnings for this constant to the total build
-					if( numWarnings )
-					{
-						currNumWarnings += numWarnings;
-						if( msgCallback )
-							outBuffer.SendToCallback(engine, &msgCallbackFunc, msgCallbackObj);
-					}
-
-					// Add compiled byte code to the final init and exit functions
-					finalInit.AddCode(&init);
-				}
-				else
-				{
-					// Add output to final output
-					finalOutput.Append(outBuffer);
-					accumErrors += numErrors;
-					accumWarnings += numWarnings;
-				}
-
-				preMessage.isSet = false;
 			}
+
+			if( gvar->isCompiled )
+			{
+				// Add warnings for this constant to the total build
+				if( numWarnings )
+				{
+					currNumWarnings += numWarnings;
+					if( msgCallback )
+						outBuffer.SendToCallback(engine, &msgCallbackFunc, msgCallbackObj);
+				}
+
+				// Add compiled byte code to the final init and exit functions
+				finalInit.AddCode(&init);
+			}
+			else
+			{
+				// Add output to final output
+				finalOutput.Append(outBuffer);
+				accumErrors += numErrors;
+				accumWarnings += numWarnings;
+			}
+
+			preMessage.isSet = false;
 		}
 
 		if( !compileSucceeded )
@@ -2316,9 +2294,9 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 		}
 	}
 
-	for( asUINT t = 0; t < engine->classTypes.GetLength(); t++ )
+	for( asUINT t = 0; t < module->classTypes.GetLength(); t++ )
 	{
-		asCObjectType *ot = engine->classTypes[t];
+		asCObjectType *ot = module->classTypes[t];
 		if( ot && (ot->flags & asOBJ_NAMED_ENUM) )
 		{
 			for( asUINT n = 0; n < ot->enumValues.GetLength(); n++ )

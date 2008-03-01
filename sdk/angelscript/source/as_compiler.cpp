@@ -6858,7 +6858,8 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	}
 	else
 	{
-		if( lctx->type.dataType.IsIntegerType() || rctx->type.dataType.IsIntegerType() )
+		if( lctx->type.dataType.IsIntegerType() || rctx->type.dataType.IsIntegerType() ||
+			lctx->type.dataType.IsEnumType() || rctx->type.dataType.IsEnumType() )
 			to.SetTokenType(ttInt);
 		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
 			to.SetTokenType(ttUInt);
@@ -7400,7 +7401,8 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	}
 	else
 	{
-		if( lctx->type.dataType.IsIntegerType() || rctx->type.dataType.IsIntegerType() )
+		if( lctx->type.dataType.IsIntegerType() || rctx->type.dataType.IsIntegerType() ||
+			lctx->type.dataType.IsEnumType() || rctx->type.dataType.IsEnumType() )
 			to.SetTokenType(ttInt);
 		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
 			to.SetTokenType(ttUInt);
