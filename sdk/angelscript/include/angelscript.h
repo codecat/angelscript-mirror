@@ -197,6 +197,7 @@ extern "C"
 	AS_API int               asEngine_RegisterInterfaceMethod(asIScriptEngine *e, const char *intf, const char *declaration);
 	AS_API int               asEngine_RegisterEnum(asIScriptEngine *e, const char *type);
 	AS_API int               asEngine_RegisterEnumValue(asIScriptEngine *e, const char *type, const char *name, int value);
+	AS_API int               asEngine_RegisterTypedef(asIScriptEngine *e, const char *type, const char *decl);
 	AS_API int               asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv);
 	AS_API int               asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName);
 	AS_API int               asEngine_EndConfigGroup(asIScriptEngine *e);
@@ -377,6 +378,8 @@ public:
 
 	virtual int RegisterEnum(const char *type) = 0;
 	virtual int RegisterEnumValue(const char *type, const char *name, int value) = 0;
+
+	virtual int RegisterTypedef(const char *type, const char *decl) = 0;
 
 	virtual int RegisterStringFactory(const char *datatype, const asUPtr &factoryFunc, asDWORD callConv) = 0;
 

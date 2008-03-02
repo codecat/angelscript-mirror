@@ -60,6 +60,8 @@ static int TestTypedef(CBytecodeStream &codeStream, bool save)
 
 	r = engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
+	if( r >= 0 ) r = engine->RegisterTypedef("float32", "float");
+
 	// Test working example
 	if(true == save)
 	{

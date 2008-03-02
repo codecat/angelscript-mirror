@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -272,6 +272,26 @@ bool asCDataType::CanBeInstanciated() const
 		  (!IsObjectHandle() &&                    // it's not a handle and
 		   objectType->beh.construct == 0))) )     // the ref type cannot be instanciated
 		return false;
+
+	return true;
+}
+
+bool asCDataType::CanBeCopied() const
+{
+	// All primitives can be copied
+	if( IsPrimitive() ) return true;
+
+	// Plain-old-data structures can always be copied
+	if( objectType->flags & asOBJ_POD ) return true;
+
+	// It must be possible to instanciate the type
+	if( !CanBeInstanciated() ) return false;
+
+	// It must have a default constructor
+	if( objectType->beh.construct == 0 ) return false;
+
+	// It must be possible to copy the type
+	if( objectType->beh.copy == 0 ) return false;
 
 	return true;
 }

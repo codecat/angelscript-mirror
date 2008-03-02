@@ -128,6 +128,7 @@ A:hover
 <li>Fixed potential heap corruption when internally copying system function information (Thanks Chet Simpson)
 <li>Fixed asOBJ_VALUE | asOBJ_APP_FLOAT with RegisterObjectType (Thanks RsblsbShawn)
 <li>Fixed access to global variables when the object method is from another module (Thanks Chet Simpson)
+<li>A const object can now be passed to a function expecting a non-const object by making a copy (Thanks Jeff Slutter)
 </ul>
 <li>Script language
 <ul>
@@ -137,6 +138,7 @@ A:hover
 <li>Library interface
 <ul>
 <li>Added RegisterEnum and RegisterEnumValue to asIScriptEngine (Thanks Chet Simpson)
+<li>Added RegisterTypedef to asIScriptEngine (Thanks Chet Simpson)
 </ul>
 </ul>
 

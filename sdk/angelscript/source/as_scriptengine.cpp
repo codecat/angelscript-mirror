@@ -4151,17 +4151,15 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 	}
 }
 
-// TODO: Analyze this properly
-// TODO: Should probably be RegisterTypedef()
-int asCScriptEngine::RegisterNamedType(const char *type, const char *name)
+int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 {
-	if( name == 0 ) return ConfigError(asINVALID_NAME);
+	if( type == 0 ) return ConfigError(asINVALID_NAME);
 
 	// Verify if the name has been registered as a type already
 	asUINT n;
 	for( n = 0; n < objectTypes.GetLength(); n++ )
 	{
-		if( objectTypes[n] && objectTypes[n]->name == name )
+		if( objectTypes[n] && objectTypes[n]->name == type )
 			return asALREADY_REGISTERED;
 	}
 
@@ -4172,7 +4170,7 @@ int asCScriptEngine::RegisterNamedType(const char *type, const char *name)
 	asCDataType dataType;
 
 	//	Create the data type
-	token = t.GetToken(type, strlen(type), &tokenLen);
+	token = t.GetToken(decl, strlen(decl), &tokenLen);
 	switch(token) 
 	{
 	case ttBool:
@@ -4186,7 +4184,7 @@ int asCScriptEngine::RegisterNamedType(const char *type, const char *name)
 	case ttUInt64:
 	case ttFloat:
 	case ttDouble:
-		if( strlen(type) != tokenLen ) 
+		if( strlen(decl) != tokenLen ) 
 		{
 			return ConfigError(asINVALID_TYPE);
 		}
@@ -4196,17 +4194,15 @@ int asCScriptEngine::RegisterNamedType(const char *type, const char *name)
 		return ConfigError(asINVALID_TYPE);
 	}
 
-
-	dataType.CreatePrimitive(token, false);
-	dataType.SetTokenType(token);
+	dataType = asCDataType::CreatePrimitive(token, false);
 
 	// Make sure the name is not a reserved keyword
-	token = t.GetToken(name, strlen(name), &tokenLen);
-	if( token != ttIdentifier || strlen(name) != tokenLen )
+	token = t.GetToken(type, strlen(type), &tokenLen);
+	if( token != ttIdentifier || strlen(type) != tokenLen )
 		return ConfigError(asINVALID_NAME);
 
 	asCBuilder bld(this, 0);
-	int r = bld.CheckNameConflict(name, 0, 0);
+	int r = bld.CheckNameConflict(type, 0, 0);
 	if( r < 0 )
 		return ConfigError(asNAME_TAKEN);
 
@@ -4218,7 +4214,7 @@ int asCScriptEngine::RegisterNamedType(const char *type, const char *name)
 	object->arrayType = 0;
 	object->flags = asOBJ_NAMED_PSEUDO;
 	object->size = dataType.GetSizeInMemoryBytes();
-	object->name = name;
+	object->name = type;
 	object->tokenType = dataType.GetTokenType();
 
 	objectTypes.PushLast(object);

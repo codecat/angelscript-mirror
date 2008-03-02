@@ -81,6 +81,10 @@ public:
 
 	~asCDebugStats()
 	{
+/*
+		// This code writes out some statistics for the VM. 
+		// It's useful for determining what needs to be optimized.
+
 		_mkdir("AS_DEBUG");
 		FILE *f = fopen("AS_DEBUG/total.txt", "at");
 		if( f )
@@ -103,6 +107,7 @@ public:
 
 			fclose(f);
 		}
+*/
 	}
 
 	double instrCount[256];
@@ -1041,7 +1046,10 @@ int asCContext::Execute()
 
 
 #ifdef AS_DEBUG
+/*
 	// Output instruction statistics
+	// This is useful for determining what needs to be optimized.
+
 	_mkdir("AS_DEBUG");
 	FILE *f = fopen("AS_DEBUG/stats.txt", "at");
 	fprintf(f, "\n");
@@ -1070,6 +1078,7 @@ int asCContext::Execute()
 		}
 	}
 	fclose(f);
+*/
 #endif
 
 	if( doAbort )

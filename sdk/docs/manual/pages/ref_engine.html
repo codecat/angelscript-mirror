@@ -42,6 +42,8 @@ public:
   int <a href="#enum">RegisterEnum</a>(const char *type);
   int <a href="#enumval">RegisterEnumValue</a>(const char *type, const char *name, int value);
 
+  int <a href="#typedef">RegisterTypedef</a>(const char *type, const char *decl);
+
   int <a href="#string">RegisterStringFactory</a>(const char *datatype, const asUPtr &amp;factoryFunc, asDWORD callConv);
 
   int <a href="#begincfg">BeginConfigGroup</a>(const char *groupName);
@@ -934,6 +936,35 @@ int RegisterEnumValue(const char *type, const char *name, int value);
 <p>A negative value on error, 0 or greater if successful.</p>
 
 
+
+
+<a name=typedef></a>
+<h2>RegisterTypedef</h2>
+
+<pre class=border>
+int RegisterTypedef(const char *type, const char *decl);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method registers an alias for a data type.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>type</code>&nbsp;</td>
+<td valign=top><p>The new name of the type.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>decl</code>&nbsp;</td>
+<td valign=top><p>The data type declaration.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, 0 or greater if successful.</p>
 
 
 

@@ -3542,6 +3542,23 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 
 			ctx->type.dataType.MakeHandle(false);
 		}
+
+		// A const object can be converted to a non-const object through a copy
+		if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() &&
+			allowObjectConstruct )
+		{
+			// Does the object type allow a copy to be made?
+			if( ctx->type.dataType.CanBeCopied() )
+			{
+				if( generateCode )
+				{
+					// Make a temporary object with the copy
+					PrepareTemporaryObject(node, ctx);
+				}
+				else 
+					ctx->type.dataType.MakeReadOnly(false);
+			}
+		}
 	}
 	else if( allowObjectConstruct )
 	{

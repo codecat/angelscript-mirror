@@ -70,6 +70,7 @@ int               asEngine_RegisterInterface(asIScriptEngine *e, const char *nam
 int               asEngine_RegisterInterfaceMethod(asIScriptEngine *e, const char *intf, const char *declaration)                                                                    { return e->RegisterInterfaceMethod(intf, declaration); }
 int               asEngine_RegisterEnum(asIScriptEngine *e, const char *type)																										 { return e->RegisterEnum(type); }
 int               asEngine_RegisterEnumValue(asIScriptEngine *e, const char *type, const char *name, int value)																		 { return e->RegisterEnumValue(type,name,value); }
+int               asEngine_RegisterTypedef(asIScriptEngine *e, const char *type, const char *decl)                                                                                   { return e->RegisterTypedef(type,decl); }
 int               asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv)                                               { return e->RegisterStringFactory(datatype, asFUNCTION(factoryFunc), callConv); }
 int               asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName)                                                                                               { return e->BeginConfigGroup(groupName); }
 int               asEngine_EndConfigGroup(asIScriptEngine *e)                                                                                                                        { return e->EndConfigGroup(); }

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -78,7 +78,7 @@ public:
 	int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv);
 	int ClearMessageCallback();
 
-	int RegisterNamedType(const char *type, const char *name);
+	int RegisterTypedef(const char *type, const char *decl);
 	int RegisterEnum(const char *type);
 	int RegisterEnumValue(const char *type, const char *name, int value);
 

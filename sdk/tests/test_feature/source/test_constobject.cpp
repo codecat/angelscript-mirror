@@ -236,6 +236,22 @@ bool Test()
 		fail = true;
 	}
 
+	// Allow passing a const object to a function that takes a non-const object by value
+	bout.buffer = "";
+	const char *script4 = "void func(prop val) {}";
+	engine->AddScriptSection(0, "script", script4, strlen(script4));
+	r = engine->Build(0);
+	if( r < 0 ) 
+		fail = true;
+	r = engine->ExecuteString(0, "const prop val; func(val)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 
 	if( fail )

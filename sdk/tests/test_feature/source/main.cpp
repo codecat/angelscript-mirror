@@ -173,8 +173,9 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
-	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
+	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestTypedef::Test()           ) goto failed; else printf("-- TestTypedef passed\n");
+	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
 	if( Test2Modules()                ) goto failed; else printf("-- Test2Modules passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
@@ -209,7 +210,6 @@ int main(int argc, char **argv)
 	if( TestMultipleInheritance()     ) goto failed; else printf("-- TestMultipleInheritance passed\n");
 	if( TestCondition()               ) goto failed; else printf("-- TestCondition passed\n");
 	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
-	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
