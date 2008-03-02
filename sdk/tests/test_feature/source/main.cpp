@@ -173,6 +173,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestTypedef::Test()           ) goto failed; else printf("-- TestTypedef passed\n");
 	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
@@ -237,7 +238,6 @@ int main(int argc, char **argv)
 	if( TestStdcall4Args()            ) goto failed; else printf("-- TestStdcall4Args passed\n");
 	if( TestCDecl_Class()             ) goto failed; else printf("-- TestCDecl_Class passed\n");
 	if( TestStack2::Test()            ) goto failed; else printf("-- TestStack2 passed\n");
-	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
 	if( TestNotComplexStdcall()       ) goto failed; else printf("-- TestNotComplexStdcall passed\n");
 	if( TestCDecl_ClassA()            ) goto failed; else printf("-- TestCDecl_ClassA passed\n");
