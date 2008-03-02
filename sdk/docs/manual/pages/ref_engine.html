@@ -39,6 +39,9 @@ public:
   int <a href="#intf">RegisterInterface</a>(const char *name);
   int <a href="#intfmthd">RegisterInterfaceMethod</a>(const char *intf, const char *declaration);
 
+  int <a href="#enum">RegisterEnum</a>(const char *type);
+  int <a href="#enumval">RegisterEnumValue</a>(const char *type, const char *name, int value);
+
   int <a href="#string">RegisterStringFactory</a>(const char *datatype, const asUPtr &amp;factoryFunc, asDWORD callConv);
 
   int <a href="#begincfg">BeginConfigGroup</a>(const char *groupName);
@@ -858,6 +861,71 @@ int RegisterInterfaceMethod(const char *intf, const char *declaration);
 <tr>
 <td valign=top width=100><code>declaration</code>&nbsp;</td>
 <td valign=top><p>The method declaration.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, 0 or greater if successful.</p>
+
+
+
+
+
+<a name=enum></a>
+<h2>RegisterEnum</h2>
+
+<pre class=border>
+int RegisterEnum(const char *type);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method registers an enum type in the engine. The enum values should then be registered with RegisterEnumValue.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>type</code>&nbsp;</td>
+<td valign=top><p>The name of the enum type.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A negative value on error, 0 or greater if successful.</p>
+
+
+
+
+
+
+<a name=enumval></a>
+<h2>RegisterEnumValue</h2>
+
+<pre class=border>
+int RegisterEnumValue(const char *type, const char *name, int value);
+</pre>
+
+<h3>Description</h3>
+
+<p>This method registers an enum value for a previously registered enum type.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>type</code>&nbsp;</td>
+<td valign=top><p>The name of the enum type.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>name</code>&nbsp;</td>
+<td valign=top><p>The name of the enum value.</p></td>
+</tr>
+<tr>
+<td valign=top width=100><code>value</code>&nbsp;</td>
+<td valign=top><p>The value of the enum value.</p></td>
 </tr>
 </table>
 

@@ -209,18 +209,31 @@ static bool TestEnum()
 	"  EN3,                      \n"
 	"}                           \n"
 	"const int gvar = EN1 + 10;  \n";
-	engine->AddScriptSection("err", "error", script3, strlen(script3));
-	r = engine->Build("err");
+	engine->AddScriptSection("en", "en", script3, strlen(script3));
+	r = engine->Build("en");
 	if( r < 0 )
 		fail = true;
 	buffer = "";
-	r = engine->ExecuteString("err", "output(EN2); output(EN3)");
+	r = engine->ExecuteString("en", "output(EN2); output(EN3)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( buffer != "10\n11\n" )
 		fail = true;
 	
-	// TEST: functions can be overloaded for parameters with enum type
+	// functions can be overloaded for parameters with enum type
+	const char *script4 = 
+	"void func(TEST_ENUM) { output(1); } \n"
+	"void func(int) { output(2); } \n";
+	engine->AddScriptSection(0, "script", script4, strlen(script4));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+	buffer = "";
+	r = engine->ExecuteString(0, "func(1); func(1.0f); TEST_ENUM e = ENUM1; func(e)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( buffer != "2\n2\n1\n" )
+		fail = true;
 
 	engine->Release();
 

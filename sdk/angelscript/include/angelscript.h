@@ -195,6 +195,8 @@ extern "C"
 	AS_API int               asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asDWORD behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int               asEngine_RegisterInterface(asIScriptEngine *e, const char *name);
 	AS_API int               asEngine_RegisterInterfaceMethod(asIScriptEngine *e, const char *intf, const char *declaration);
+	AS_API int               asEngine_RegisterEnum(asIScriptEngine *e, const char *type);
+	AS_API int               asEngine_RegisterEnumValue(asIScriptEngine *e, const char *type, const char *name, int value);
 	AS_API int               asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv);
 	AS_API int               asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName);
 	AS_API int               asEngine_EndConfigGroup(asIScriptEngine *e);

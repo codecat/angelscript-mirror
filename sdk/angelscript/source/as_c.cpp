@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -68,6 +68,8 @@ int               asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char
 int               asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asDWORD behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv)                       { return e->RegisterGlobalBehaviour(behaviour, declaration, asFUNCTION(funcPointer), callConv); }
 int               asEngine_RegisterInterface(asIScriptEngine *e, const char *name)                                                                                                   { return e->RegisterInterface(name); }
 int               asEngine_RegisterInterfaceMethod(asIScriptEngine *e, const char *intf, const char *declaration)                                                                    { return e->RegisterInterfaceMethod(intf, declaration); }
+int               asEngine_RegisterEnum(asIScriptEngine *e, const char *type)																										 { return e->RegisterEnum(type); }
+int               asEngine_RegisterEnumValue(asIScriptEngine *e, const char *type, const char *name, int value)																		 { return e->RegisterEnumValue(type,name,value); }
 int               asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv)                                               { return e->RegisterStringFactory(datatype, asFUNCTION(factoryFunc), callConv); }
 int               asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName)                                                                                               { return e->BeginConfigGroup(groupName); }
 int               asEngine_EndConfigGroup(asIScriptEngine *e)                                                                                                                        { return e->EndConfigGroup(); }
