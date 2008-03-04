@@ -108,7 +108,11 @@ void nullPtr(asIScriptGeneric *gen)
 	asIScriptStruct **intf = (asIScriptStruct**)gen->GetArgPointer(0);
 	assert( *intf == 0 );
 
+	assert(gen->GetArgCount() == 1);
+
 	*(asIScriptStruct **)gen->GetReturnPointer() = *intf;
+
+	assert(gen->GetReturnTypeId() == gen->GetEngine()->GetTypeIdByDecl(0, "intf@"));
 }
 
 bool Test()

@@ -306,6 +306,8 @@ extern "C"
 	AS_API asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g);
 	AS_API int              asGeneric_GetFunctionId(asIScriptGeneric *g);
 	AS_API void *           asGeneric_GetObject(asIScriptGeneric *g);
+	AS_API int              asGeneric_GetObjectTypeId(asIScriptGeneric *g);
+	AS_API int              asGeneric_GetArgCount(asIScriptGeneric *g);
 	AS_API asBYTE           asGeneric_GetArgByte(asIScriptGeneric *g, asUINT arg);
 	AS_API asWORD           asGeneric_GetArgWord(asIScriptGeneric *g, asUINT arg);
 	AS_API asDWORD          asGeneric_GetArgDWord(asIScriptGeneric *g, asUINT arg);
@@ -325,6 +327,7 @@ extern "C"
 	AS_API int              asGeneric_SetReturnAddress(asIScriptGeneric *g, void *addr);
 	AS_API int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj);
 	AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g);
+	AS_API int              asGeneric_GetReturnTypeId(asIScriptGeneric *g);
 
 	AS_API int         asStruct_AddRef(asIScriptStruct *s);
 	AS_API int         asStruct_Release(asIScriptStruct *s);
@@ -545,7 +548,9 @@ public:
 	virtual int     GetFunctionId() = 0;
 
 	virtual void   *GetObject() = 0;
+	virtual int     GetObjectTypeId() = 0;
 
+	virtual int     GetArgCount() = 0;
 	virtual asBYTE  GetArgByte(asUINT arg) = 0;
 	virtual asWORD  GetArgWord(asUINT arg) = 0;
 	virtual asDWORD GetArgDWord(asUINT arg) = 0;
@@ -566,6 +571,7 @@ public:
 	virtual int     SetReturnAddress(void *addr) = 0;
 	virtual int     SetReturnObject(void *obj) = 0;
 	virtual void   *GetReturnPointer() = 0;
+	virtual int     GetReturnTypeId() = 0;
 
 protected:
 	virtual ~asIScriptGeneric() {}

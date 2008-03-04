@@ -21,7 +21,9 @@ public:
   int     <a href="#getfuncid">GetFunctionId</a>();
 
   void   *<a href="#getobj">GetObject</a>();
+  int     <a href="#getobjtypeid">GetObjectTypeId</a>();
 
+  int     <a href="#getargcnt">GetArgCount</a>();
   asBYTE  <a href="#getarg">GetArgByte</a>(asUINT arg);
   asWORD  <a href="#getarg">GetArgWord</a>(asUINT arg);
   asDWORD <a href="#getarg">GetArgDWord</a>(asUINT arg);
@@ -42,6 +44,7 @@ public:
   int     <a href="#setret">SetReturnAddress</a>(void *address);
   int     <a href="#setret">SetReturnObject</a>(void *obj);
   void   *<a href="#getretptr">GetReturnPointer</a>();
+  int     <a href="#getrettypeid">GetReturnTypeId</a>();
 };
 </pre>
 
@@ -97,6 +100,41 @@ void *GetObject();
 <h3>Returns</h3>
 
 <p>The object pointer.</p>
+
+
+
+<a name=getobjtypeid></a>
+<h2>GetObjectTypeId</h2>
+
+<pre class=border>
+int GetObjectTypeId();
+</pre>
+
+<h3>Description</h3>
+
+<p>Retrieves the object type id.</p>
+
+<h3>Returns</h3>
+
+<p>The object type id.</p>
+
+
+
+
+<a name=getargcnt></a>
+<h2>GetArgCount</h2>
+
+<pre class=border>
+int GetArgCount();
+</pre>
+
+<h3>Description</h3>
+
+<p>Retrieves the number of the arguments for the function.</p>
+
+<h3>Returns</h3>
+
+<p>The argument count.</p>
 
 
 
@@ -269,6 +307,23 @@ and then pass the pointer to the new object.
 
 <p>The address to where the return value is to be stored.</p>
 
+
+
+
+<a name=getrettypeid></a>
+<h2>GetReturnTypeId</h2>
+
+<pre class=border>
+int GetReturnTypeId();
+</pre>
+
+<h3>Description</h3>
+
+<p>Retrieves the type id of the return value.</p>
+
+<h3>Returns</h3>
+
+<p>The return type id.</p>
 
 
 

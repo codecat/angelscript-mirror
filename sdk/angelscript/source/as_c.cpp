@@ -179,6 +179,8 @@ void *           asContext_GetUserData(asIScriptContext *c)                     
 asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g)                   { return g->GetEngine(); }
 int              asGeneric_GetFunctionId(asIScriptGeneric *g)               { return g->GetFunctionId(); }
 void *           asGeneric_GetObject(asIScriptGeneric *g)                   { return g->GetObject(); }
+int              asGeneric_GetObjectTypeId(asIScriptGeneric *g)             { return g->GetObjectTypeId(); }
+int              asGeneric_GetArgCount(asIScriptGeneric *g)                 { return g->GetArgCount(); }
 asBYTE           asGeneric_GetArgByte(asIScriptGeneric *g, asUINT arg)      { return g->GetArgByte(arg); }
 asWORD           asGeneric_GetArgWord(asIScriptGeneric *g, asUINT arg)      { return g->GetArgWord(arg); }
 asDWORD          asGeneric_GetArgDWord(asIScriptGeneric *g, asUINT arg)     { return g->GetArgDWord(arg); }
@@ -198,6 +200,7 @@ int              asGeneric_SetReturnDouble(asIScriptGeneric *g, double val) { re
 int              asGeneric_SetReturnAddress(asIScriptGeneric *g, void *addr) { return g->SetReturnAddress(addr); }
 int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj)  { return g->SetReturnObject(obj); }
 void *           asGeneric_GetReturnPointer(asIScriptGeneric *g)            { return g->GetReturnPointer(); }
+int              asGeneric_GetReturnTypeId(asIScriptGeneric *g)             { return g->GetReturnTypeId(); }
 
 int         asStruct_AddRef(asIScriptStruct *s)                           { return s->AddRef(); }
 int         asStruct_Release(asIScriptStruct *s)                          { return s->Release(); }
