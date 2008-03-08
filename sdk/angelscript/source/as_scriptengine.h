@@ -79,6 +79,7 @@ public:
 	int ClearMessageCallback();
 
 	int RegisterTypedef(const char *type, const char *decl);
+
 	int RegisterEnum(const char *type);
 	int RegisterEnumValue(const char *type, const char *name, int value);
 
@@ -142,6 +143,9 @@ public:
 	int GetTypeIdByDecl(const char *module, const char *decl);
 	const char *GetTypeDeclaration(int typeId, int *length = 0);
 	int GetSizeOfPrimitiveType(int typeId);
+	asIObjectType *GetObjectTypeById(int typeId);
+	asIObjectType *GetObjectTypeByIndex(asUINT index);
+	int GetObjectTypeCount();
 
 	// Script execution
 	int SetDefaultContextStackSize(asUINT initial, asUINT maximum);

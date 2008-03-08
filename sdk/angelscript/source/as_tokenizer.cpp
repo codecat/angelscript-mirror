@@ -111,10 +111,11 @@ int asCTokenizer::ParseToken()
 bool asCTokenizer::IsWhiteSpace()
 {
 	size_t n;
+	int numWsChars = (int)strlen(whiteSpace);
 	for( n = 0; n < sourceLength; n++ )
 	{
 		bool isWhiteSpace = false;
-		for( int w = 0; w < (int)sizeof(whiteSpace); w++ )
+		for( int w = 0; w < numWsChars; w++ )
 		{
 			if( source[n] == whiteSpace[w] )
 			{

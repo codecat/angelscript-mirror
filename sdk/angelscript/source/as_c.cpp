@@ -109,6 +109,9 @@ int               asEngine_UnbindAllImportedFunctions(asIScriptEngine *e, const 
 int               asEngine_GetTypeIdByDecl(asIScriptEngine *e, const char *module, const char *decl)                                                                                 { return e->GetTypeIdByDecl(module, decl); }
 const char *      asEngine_GetTypeDeclaration(asIScriptEngine *e, int typeId, int *length)                                                                                           { return e->GetTypeDeclaration(typeId, length); }
 int               asEngine_GetSizeOfPrimitiveType(asIScriptEngine *e, int typeId)                                                                                                    { return e->GetSizeOfPrimitiveType(typeId); }
+asIObjectType *   asEngine_GetObjectTypeById(asIScriptEngine *e, int typeId)                                                                                                         { return e->GetObjectTypeById(typeId); }
+asIObjectType *   asEngine_GetObjectTypeByIndex(asIScriptEngine *e, asUINT index)                                                                                                    { return e->GetObjectTypeByIndex(index); }
+int               asEngine_GetObjectTypeCount(asIScriptEngine *e)                                                                                                                    { return e->GetObjectTypeCount(); }
 int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum)                                                                            { return e->SetDefaultContextStackSize(initial, maximum); }
 asIScriptContext *asEngine_CreateContext(asIScriptEngine *e)                                                                                                                         { return e->CreateContext(); }
 void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId)                                                                                                        { return e->CreateScriptObject(typeId); }
@@ -176,40 +179,41 @@ void *           asContext_GetThisPointer(asIScriptContext *c, int stackLevel)  
 void *           asContext_SetUserData(asIScriptContext *c, void *data)                                        { return c->SetUserData(data); }
 void *           asContext_GetUserData(asIScriptContext *c)                                                    { return c->GetUserData(); }
 
-asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g)                   { return g->GetEngine(); }
-int              asGeneric_GetFunctionId(asIScriptGeneric *g)               { return g->GetFunctionId(); }
-void *           asGeneric_GetObject(asIScriptGeneric *g)                   { return g->GetObject(); }
-int              asGeneric_GetObjectTypeId(asIScriptGeneric *g)             { return g->GetObjectTypeId(); }
-int              asGeneric_GetArgCount(asIScriptGeneric *g)                 { return g->GetArgCount(); }
-asBYTE           asGeneric_GetArgByte(asIScriptGeneric *g, asUINT arg)      { return g->GetArgByte(arg); }
-asWORD           asGeneric_GetArgWord(asIScriptGeneric *g, asUINT arg)      { return g->GetArgWord(arg); }
-asDWORD          asGeneric_GetArgDWord(asIScriptGeneric *g, asUINT arg)     { return g->GetArgDWord(arg); }
-asQWORD          asGeneric_GetArgQWord(asIScriptGeneric *g, asUINT arg)     { return g->GetArgQWord(arg); }
-float            asGeneric_GetArgFloat(asIScriptGeneric *g, asUINT arg)     { return g->GetArgFloat(arg); }
-double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg)    { return g->GetArgDouble(arg); }
-void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg)   { return g->GetArgAddress(arg); }
-void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg)    { return g->GetArgObject(arg); }
-void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg)   { return g->GetArgPointer(arg); }
-int              asGeneric_GetArgTypeId(asIScriptGeneric *g, asUINT arg)    { return g->GetArgTypeId(arg); }
-int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val)   { return g->SetReturnByte(val); }
-int              asGeneric_SetReturnWord(asIScriptGeneric *g, asWORD val)   { return g->SetReturnWord(val); }
-int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val) { return g->SetReturnDWord(val); }
-int              asGeneric_SetReturnQWord(asIScriptGeneric *g, asQWORD val) { return g->SetReturnQWord(val); }
-int              asGeneric_SetReturnFloat(asIScriptGeneric *g, float val)   { return g->SetReturnFloat(val); }
-int              asGeneric_SetReturnDouble(asIScriptGeneric *g, double val) { return g->SetReturnDouble(val); }
+asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g)                    { return g->GetEngine(); }
+int              asGeneric_GetFunctionId(asIScriptGeneric *g)                { return g->GetFunctionId(); }
+void *           asGeneric_GetObject(asIScriptGeneric *g)                    { return g->GetObject(); }
+int              asGeneric_GetObjectTypeId(asIScriptGeneric *g)              { return g->GetObjectTypeId(); }
+int              asGeneric_GetArgCount(asIScriptGeneric *g)                  { return g->GetArgCount(); }
+asBYTE           asGeneric_GetArgByte(asIScriptGeneric *g, asUINT arg)       { return g->GetArgByte(arg); }
+asWORD           asGeneric_GetArgWord(asIScriptGeneric *g, asUINT arg)       { return g->GetArgWord(arg); }
+asDWORD          asGeneric_GetArgDWord(asIScriptGeneric *g, asUINT arg)      { return g->GetArgDWord(arg); }
+asQWORD          asGeneric_GetArgQWord(asIScriptGeneric *g, asUINT arg)      { return g->GetArgQWord(arg); }
+float            asGeneric_GetArgFloat(asIScriptGeneric *g, asUINT arg)      { return g->GetArgFloat(arg); }
+double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg)     { return g->GetArgDouble(arg); }
+void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg)    { return g->GetArgAddress(arg); }
+void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg)     { return g->GetArgObject(arg); }
+void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg)    { return g->GetArgPointer(arg); }
+int              asGeneric_GetArgTypeId(asIScriptGeneric *g, asUINT arg)     { return g->GetArgTypeId(arg); }
+int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val)    { return g->SetReturnByte(val); }
+int              asGeneric_SetReturnWord(asIScriptGeneric *g, asWORD val)    { return g->SetReturnWord(val); }
+int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val)  { return g->SetReturnDWord(val); }
+int              asGeneric_SetReturnQWord(asIScriptGeneric *g, asQWORD val)  { return g->SetReturnQWord(val); }
+int              asGeneric_SetReturnFloat(asIScriptGeneric *g, float val)    { return g->SetReturnFloat(val); }
+int              asGeneric_SetReturnDouble(asIScriptGeneric *g, double val)  { return g->SetReturnDouble(val); }
 int              asGeneric_SetReturnAddress(asIScriptGeneric *g, void *addr) { return g->SetReturnAddress(addr); }
-int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj)  { return g->SetReturnObject(obj); }
-void *           asGeneric_GetReturnPointer(asIScriptGeneric *g)            { return g->GetReturnPointer(); }
-int              asGeneric_GetReturnTypeId(asIScriptGeneric *g)             { return g->GetReturnTypeId(); }
+int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj)   { return g->SetReturnObject(obj); }
+void *           asGeneric_GetReturnPointer(asIScriptGeneric *g)             { return g->GetReturnPointer(); }
+int              asGeneric_GetReturnTypeId(asIScriptGeneric *g)              { return g->GetReturnTypeId(); }
 
-int         asStruct_AddRef(asIScriptStruct *s)                           { return s->AddRef(); }
-int         asStruct_Release(asIScriptStruct *s)                          { return s->Release(); }
-int         asStruct_GetStructTypeId(asIScriptStruct *s)                  { return s->GetStructTypeId(); }
-int         asStruct_GetPropertyCount(asIScriptStruct *s)                 { return s->GetPropertyCount(); }
-int         asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop)   { return s->GetPropertyTypeId(prop); }
-const char *asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop)     { return s->GetPropertyName(prop); }
-void *      asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop)  { return s->GetPropertyPointer(prop); }
-int         asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other) { return s->CopyFrom(other); }
+int            asStruct_AddRef(asIScriptStruct *s)                           { return s->AddRef(); }
+int            asStruct_Release(asIScriptStruct *s)                          { return s->Release(); }
+int            asStruct_GetStructTypeId(asIScriptStruct *s)                  { return s->GetStructTypeId(); }
+asIObjectType *asStruct_GetObjectType(asIScriptStruct *s)                    { return s->GetObjectType(); }
+int            asStruct_GetPropertyCount(asIScriptStruct *s)                 { return s->GetPropertyCount(); }
+int            asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop)   { return s->GetPropertyTypeId(prop); }
+const char *   asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop)     { return s->GetPropertyName(prop); }
+void *         asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop)  { return s->GetPropertyPointer(prop); }
+int            asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other) { return s->CopyFrom(other); }
 
 int    asArray_AddRef(asIScriptArray *a)                          { return a->AddRef(); }
 int    asArray_Release(asIScriptArray *a)                         { return a->Release(); }
@@ -219,6 +223,13 @@ asUINT asArray_GetElementCount(asIScriptArray *a)                 { return a->Ge
 void * asArray_GetElementPointer(asIScriptArray *a, asUINT index) { return a->GetElementPointer(index); }
 void   asArray_Resize(asIScriptArray *a, asUINT size)             { a->Resize(size); }
 int    asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other) { return a->CopyFrom(other); }
+
+asIScriptEngine *    asObjectType_GetEngine(const asIObjectType *o)                  { return o->GetEngine(); }
+const char *         asObjectType_GetName(const asIObjectType *o)                    { return o->GetName(); }
+const asIObjectType *asObjectType_GetSubType(const asIObjectType *o)                 { return o->GetSubType(); }
+int                  asObjectType_GetInterfaceCount(const asIObjectType *o)          { return o->GetInterfaceCount(); }
+const asIObjectType *asObjectType_GetInterface(const asIObjectType *o, asUINT index) { return o->GetInterface(index); }
+bool                 asObjectType_IsInterface(const asIObjectType *o)                { return o->IsInterface(); }
 
 #endif
 END_AS_NAMESPACE

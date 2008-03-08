@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.12.0 WIP - 2008/03/03</h2>
+<h2>Version 2.12.0 WIP - 2008/03/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -129,6 +129,7 @@ A:hover
 <li>Fixed asOBJ_VALUE | asOBJ_APP_FLOAT with RegisterObjectType (Thanks RsblsbShawn)
 <li>Fixed access to global variables when the object method is from another module (Thanks Chet Simpson)
 <li>A const object can now be passed to a function expecting a non-const object by making a copy (Thanks Jeff Slutter)
+<li>Fixed a bug in tokenizer on 64 bit platforms (Thanks DaBono)
 </ul>
 <li>Script language
 <ul>
@@ -140,6 +141,7 @@ A:hover
 <li>Added RegisterEnum and RegisterEnumValue to asIScriptEngine (Thanks Chet Simpson)
 <li>Added RegisterTypedef to asIScriptEngine (Thanks Chet Simpson)
 <li>Added GetObjectTypeId, GetArgCount, and GetReturnTypeId to asIScriptGeneric.
+<li>Added the asIObjectType interface (Thanks Chet Simpson)
 </ul>
 </ul>
 

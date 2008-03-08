@@ -66,6 +66,7 @@ class asIScriptContext;
 class asIScriptGeneric;
 class asIScriptStruct;
 class asIScriptArray;
+class asIObjectType;
 class asIBinaryStream;
 
 //
@@ -236,6 +237,9 @@ extern "C"
 	AS_API int               asEngine_GetTypeIdByDecl(asIScriptEngine *e, const char *module, const char *decl);
 	AS_API const char *      asEngine_GetTypeDeclaration(asIScriptEngine *e, int typeId, int *length = 0);
 	AS_API int               asEngine_GetSizeOfPrimitiveType(asIScriptEngine *e, int typeId);
+	AS_API asIObjectType *   asEngine_GetObjectTypeById(asIScriptEngine *e, int typeId);
+	AS_API asIObjectType *   asEngine_GetObjectTypeByIndex(asIScriptEngine *e, asUINT index);
+	AS_API int               asEngine_GetObjectTypeCount(asIScriptEngine *e);
 	AS_API int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum);
 	AS_API asIScriptContext *asEngine_CreateContext(asIScriptEngine *e);
 	AS_API void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId);
@@ -329,14 +333,15 @@ extern "C"
 	AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g);
 	AS_API int              asGeneric_GetReturnTypeId(asIScriptGeneric *g);
 
-	AS_API int         asStruct_AddRef(asIScriptStruct *s);
-	AS_API int         asStruct_Release(asIScriptStruct *s);
-	AS_API int         asStruct_GetStructTypeId(asIScriptStruct *s);
-	AS_API int         asStruct_GetPropertyCount(asIScriptStruct *s);
-	AS_API int         asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop);
-	AS_API const char *asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop);
-	AS_API void *      asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop);
-	AS_API int         asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other);
+	AS_API int            asStruct_AddRef(asIScriptStruct *s);
+	AS_API int            asStruct_Release(asIScriptStruct *s);
+	AS_API int            asStruct_GetStructTypeId(asIScriptStruct *s);
+	AS_API asIObjectType *asStruct_GetObjectType(asIScriptStruct *s);
+	AS_API int            asStruct_GetPropertyCount(asIScriptStruct *s);
+	AS_API int            asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop);
+	AS_API const char *   asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop);
+	AS_API void *         asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop);
+	AS_API int            asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other);
 
 	AS_API int    asArray_AddRef(asIScriptArray *a);
 	AS_API int    asArray_Release(asIScriptArray *a);
@@ -346,6 +351,13 @@ extern "C"
 	AS_API void * asArray_GetElementPointer(asIScriptArray *a, asUINT index);
 	AS_API void   asArray_Resize(asIScriptArray *a, asUINT size);
 	AS_API int    asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other);
+
+	AS_API asIScriptEngine *    asObjectType_GetEngine(const asIObjectType *o);
+	AS_API const char *         asObjectType_GetName(const asIObjectType *o);
+	AS_API const asIObjectType *asObjectType_GetSubType(const asIObjectType *o);
+	AS_API int                  asObjectType_GetInterfaceCount(const asIObjectType *o);
+	AS_API const asIObjectType *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
+	AS_API bool                 asObjectType_IsInterface(const asIObjectType *o);
 
 #endif // AS_C_INTERFACE
 }
@@ -436,6 +448,9 @@ public:
 	virtual int GetTypeIdByDecl(const char *module, const char *decl) = 0;
 	virtual const char *GetTypeDeclaration(int typeId, int *length = 0) = 0;
 	virtual int GetSizeOfPrimitiveType(int typeId) = 0;
+	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+	virtual int GetObjectTypeCount() = 0;
 
 	// Script execution
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
@@ -586,6 +601,7 @@ public:
 
 	// Struct type
 	virtual int GetStructTypeId() = 0;
+	virtual asIObjectType *GetObjectType() = 0;
 
 	// Struct properties
 	virtual int GetPropertyCount() = 0;
@@ -617,6 +633,30 @@ public:
 
 protected:
 	virtual ~asIScriptArray() {}
+};
+
+class asIObjectType
+{
+public:
+	// Returns a pointer to the script engine
+	virtual asIScriptEngine *GetEngine() const = 0;
+
+	// Returns a temporary pointer to the name of the datatype
+	virtual const char *GetName() const = 0;
+
+	// Returns a temporary pointer to the type associated with this descriptor
+	virtual const asIObjectType *GetSubType() const = 0;
+
+	// Returns the number of interfaces implemented
+	virtual int GetInterfaceCount() const = 0;
+
+	// Returns a temporary pointer to the specified interface or NULL if none are found
+	virtual const asIObjectType *GetInterface(asUINT index) const = 0;
+
+	virtual bool IsInterface() const = 0;
+
+protected:
+	virtual ~asIObjectType() {}
 };
 
 class asIBinaryStream

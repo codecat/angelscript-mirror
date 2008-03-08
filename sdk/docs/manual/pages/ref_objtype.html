@@ -1,0 +1,165 @@
+<HTML>
+<head>
+<title>AngelScript: Reference: asIObjectType</title>
+<LINK rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+<p>
+<a href="../index.html">index</a>
+</p>
+
+<h1>Reference: asIObjectType</h1>
+
+<pre class=border>
+class asIObjectType
+{
+public:
+  asIScriptEngine *    <a href="#getengine">GetEngine</a>() const;
+  const char *         <a href="#getname">GetName</a>() const;
+  const asIObjectType *<a href="#getsubtype">GetSubType</a>() const;
+  int                  <a href="#getintfcnt">GetInterfaceCount</a>() const;
+  const asIObjectType *<a href="#getintf">GetInterface</a>(asUINT index) const;
+  bool                 <a href="#isintf">IsInterface</a>() const;
+};
+</pre>
+
+
+
+<a name=getengine></a>
+<h2>GetEngine</h2>
+
+<pre class=border>
+asIScriptEngine *GetEngine() const;
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the engine pointer.</p>
+
+<h3>Returns</h3>
+
+<p>The engine pointer.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+<a name=getname></a>
+<h2>GetName</h2>
+
+<pre class=border>
+const char *GetName() const;
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the name of the object type.</p>
+
+<h3>Returns</h3>
+
+<p>The name of the object type.</p>
+
+
+
+
+
+
+<a name=getsubtype></a>
+<h2>GetSubType</h2>
+
+<pre class=border>
+const asIObjectType *GetSubType() const;
+</pre>
+
+<h3>Description</h3>
+
+<p>Returns the sub type of this type, e.g. an array of objects will return the type of the objects as the sub type.</p>
+
+<h3>Returns</h3>
+
+<p>The sub type.</p>
+
+
+
+
+<a name=getintfcnt></a>
+<h2>GetInterfaceCount</h2>
+
+<pre class=border>
+int GetInterfaceCount() const;
+</pre>
+
+<h3>Description</h3>
+<p>Returns the number of interfaces implemented by this object type.</p>
+
+<h3>Returns</h3>
+
+<p>The number of implemented interfaces.</p>
+
+
+
+
+<a name=getintf></a>
+<h2>GetInterface</h2>
+
+<pre class=border>
+const asIObjectType *GetInterface(asUINT index) const;
+</pre>
+
+<h3>Description</h3>
+
+<p>Use this method to enumerate the implemented interfaces.</p>
+
+<h3>Parameters</h3>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>index</code>&nbsp;</td>
+<td valign=top><p>The zero based index of the interface of interest.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+
+<p>A interface object type.</p>
+
+
+
+
+
+
+<a name=isintf></a>
+<h2>IsInterface</h2>
+
+<pre class=border>
+bool IsInterface() const;
+</pre>
+
+<h3>Description</h3>
+
+<p>Use this to determine if the object type is an interface or a class type.</p>
+
+<h3>Returns</h3>
+
+<p>True of the type is an interface type.</p>
+
+
+
+
+
+
+
+
+
+<p><a href="#">top</a></p>
+
+</body></HTML>

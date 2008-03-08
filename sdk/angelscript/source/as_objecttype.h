@@ -97,13 +97,19 @@ struct asSEnumValue
 class asCScriptEngine;
 
 // TODO: Need to minimize used memory here, because not all types use all properties of the class
-class asCObjectType
+class asCObjectType : public asIObjectType
 {
 public:
 	asCObjectType(); 
 	asCObjectType(asCScriptEngine *engine);
 	~asCObjectType();
 
+	asIScriptEngine *GetEngine() const;
+	const char *GetName() const;
+	const asIObjectType *GetSubType() const;
+	virtual int GetInterfaceCount() const;
+	const asIObjectType *GetInterface(asUINT index) const;
+	bool IsInterface() const;
 	bool Implements(const asCObjectType *objType);
 
 	asCString   name;

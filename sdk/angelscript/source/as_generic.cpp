@@ -80,7 +80,7 @@ int asCGeneric::GetObjectTypeId()
 
 int asCGeneric::GetArgCount()
 {
-	return sysFunction->parameterTypes.GetLength();
+	return (int)sysFunction->parameterTypes.GetLength();
 }
 
 asBYTE asCGeneric::GetArgByte(asUINT arg)

@@ -289,6 +289,11 @@ int asCScriptStruct::Release()
 	return refCount;
 }
 
+asIObjectType *asCScriptStruct::GetObjectType()
+{
+	return objType;
+}
+
 int asCScriptStruct::GetRefCount()
 {
 	return refCount & 0x7FFFFFFF;

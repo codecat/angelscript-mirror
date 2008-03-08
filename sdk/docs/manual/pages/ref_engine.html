@@ -94,6 +94,10 @@ public:
   <font color=green>// Type identification</font>
   int <a href="#typebydecl">GetTypeIdByDecl</a>(const char *module, const char *decl);
   const char *<a href="#typedecl">GetTypeDeclaration</a>(int typeId, int *length = 0);
+  int <a href="#sizeofprim">GetSizeOfPrimitiveType</a>(int typeId);
+  asIObjectType *<a href="#getobjtypeid">GetObjectTypeById</a>(int typeId);
+  asIObjectType *<a href="#getobjtypebyidx">GetObjectTypeByIndex</a>(asUINT index);
+  int <a href="#getobjtypecnt">GetObjectTypeCount</a>();
 
   <font color=green>// Script execution</font>
   int <a href="#stacksize">SetDefaultContextStackSize</a>(asUINT initial, asUINT maximum);
@@ -2142,6 +2146,10 @@ int UnbindAllImportedFunctions(const char *module);
 <p>Negative on error.</p>
 
 
+
+
+
+
 <a name=typebydecl></a>
 <h2>GetTypeIdByDecl</h2>
 <pre class=border>
@@ -2204,6 +2212,94 @@ const char *GetTypeDeclaration(int typeId, int *length = 0);
 string is shared internally by the engine so do not store it for later use.</p>
 
 <p>If the typeId is not valid the returned pointer will be null.</p>
+
+
+
+<a name=sizeofprim></a>
+<h2>GetSizeOfPrimitiveType</h2>
+<pre class=border>
+int GetSizeOfPrimitiveType(int typeId);
+</pre>
+
+<h3>Description</h3>
+<p>Returns the size of the primitive type identified by the type id.</p>
+
+<h3>Parameters</h3>
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The typeId.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+<p>The size of the type.</p> 
+ 
+ 
+ 
+ 
+<a name=getobjtypeid></a>
+<h2>GetObjectTypeById</h2>
+<pre class=border>
+asIObjectType *GetObjectTypeById(int typeId);
+</pre>
+
+<h3>Description</h3>
+<p>Returns the object type interface that provides detailed information about the object type.</p>
+
+<h3>Parameters</h3>
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>typeId</code>&nbsp;</td>
+<td valign=top><p>The typeId.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+<p>The pointer to the asIObjectType interface. The pointer is valid for as long as the type remains valid.</p> 
+ 
+ 
+ 
+ 
+<a name=getobjtypebyidx></a>
+<h2>GetObjectTypeByIndex</h2>
+<pre class=border>
+asIObjectType *GetObjectTypeByIndex(asUINT index);
+</pre>
+  
+<h3>Description</h3>
+<p>Returns the object type interface that provides detailed information about the object type.</p>
+
+<h3>Parameters</h3>
+<table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top width=100><code>index</code>&nbsp;</td>
+<td valign=top><p>The index of the object type.</p></td>
+</tr>
+</table>
+
+<h3>Returns</h3>
+<p>The pointer to the asIObjectType interface. The pointer is valid for as long as the type remains valid.</p> 
+  
+  
+  
+<a name="getobjtypecnt"></a>
+<h2>GetObjectTypeCount</h2>
+<pre class=border>
+int GetObjectTypeCount();
+</pre>
+
+<h3>Description</h3>
+<p>Returns the number of object types currently known by the engine, used for iterating over object types.</p>
+
+<h3>Returns</h3>
+<p>The number of object types.</p> 
+  
+
+
+
+
+
 
 
 

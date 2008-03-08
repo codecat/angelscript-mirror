@@ -101,6 +101,41 @@ bool asCObjectType::Implements(const asCObjectType *objType)
 	return false;
 }
 
+const char *asCObjectType::GetName() const
+{
+	return name.AddressOf();
+}
+
+const asIObjectType *asCObjectType::GetSubType() const
+{
+	return subType;
+}
+
+int asCObjectType::GetInterfaceCount() const
+{
+	return (int)interfaces.GetLength();
+}
+
+const asIObjectType *asCObjectType::GetInterface(asUINT index) const
+{
+	assert(index < interfaces.GetLength());
+
+	return interfaces[index];
+}
+
+asIScriptEngine *asCObjectType::GetEngine() const
+{
+	return engine;
+}
+
+bool asCObjectType::IsInterface() const
+{
+	if( (flags & asOBJ_SCRIPT_STRUCT) && size == 0 )
+		return true;
+
+	return false;
+}
+
 END_AS_NAMESPACE
 
 

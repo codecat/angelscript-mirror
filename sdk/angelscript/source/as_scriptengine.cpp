@@ -4310,5 +4310,28 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 	return asSUCCESS;
 }
 
+int asCScriptEngine::GetObjectTypeCount()
+{
+	return (int)classTypes.GetLength();
+}
+
+asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index)
+{	
+	if( index >= classTypes.GetLength() )
+		return 0;
+
+	return classTypes[index];
+}
+
+asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId)
+{
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+
+	// Is the type id valid?
+	if( !dt ) return 0;
+
+	return dt->GetObjectType();
+}
+
 END_AS_NAMESPACE
 
