@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -94,7 +94,7 @@ public:
 	void   *GetReturnObject();
 	void   *GetReturnPointer();
 
-	int  GetState();
+	asEContextState GetState();
 
 	int  GetCurrentLineNumber(int *column);
 	int  GetCurrentFunction();
@@ -103,9 +103,9 @@ public:
 	int  GetExceptionFunction();
 	const char *GetExceptionString(int *length);
 
-	int  SetLineCallback(asUPtr callback, void *obj, int callConv);
+	int  SetLineCallback(asSFuncPtr callback, void *obj, int callConv);
 	void ClearLineCallback();
-	int  SetExceptionCallback(asUPtr callback, void *obj, int callConv);
+	int  SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv);
 	void ClearExceptionCallback();
 
 	int GetCallstackSize();
@@ -208,6 +208,7 @@ public:
 	DECLARECRITICALSECTION(criticalSection);
 };
 
+// TODO: Use the asEContextState instead
 enum eContextState
 {
 	tsUninitialized,
@@ -216,7 +217,8 @@ enum eContextState
 	tsActive,
 	tsProgramFinished,
 	tsProgramAborted,
-	tsUnhandledException
+	tsUnhandledException,
+	tsError,
 };
 
 END_AS_NAMESPACE

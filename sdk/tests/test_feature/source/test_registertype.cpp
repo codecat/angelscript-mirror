@@ -5,7 +5,7 @@ namespace TestRegisterType
 
 #define TESTNAME "TestRegisterType"
 
-void DummyFunc() {}
+void DummyFunc(asIScriptGeneric *) {}
 
 bool TestRefScoped();
 
@@ -354,7 +354,7 @@ bool TestRefScoped()
 
 	// Don't permit functions to be registered with handle
 	bout.buffer = "";
-	r = engine->RegisterGlobalFunction("scoped @f()", asFUNCTION(DummyFunc), asCALL_CDECL);
+	r = engine->RegisterGlobalFunction("scoped @f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "System function (1, 8) : Error   : Object handle is not supported for this type\n" )
 	{
@@ -364,7 +364,7 @@ bool TestRefScoped()
 
 	// Don't permit functions to be registered to take type by reference (since that require handles)
 	bout.buffer = "";
-	r = engine->RegisterGlobalFunction("void f(scoped&)", asFUNCTION(DummyFunc), asCALL_CDECL);
+	r = engine->RegisterGlobalFunction("void f(scoped&)", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "System function (1, 14) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
 	{
@@ -373,7 +373,7 @@ bool TestRefScoped()
 	}
 
 	// Permit &in
-	r = engine->RegisterGlobalFunction("void f(scoped&in)", asFUNCTION(DummyFunc), asCALL_CDECL);
+	r = engine->RegisterGlobalFunction("void f(scoped&in)", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r < 0 ) fail = true;
 
 	engine->Release();

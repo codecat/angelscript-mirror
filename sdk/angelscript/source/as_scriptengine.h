@@ -71,11 +71,11 @@ public:
 	int Release();
 
 	// Configuration
-	int     SetEngineProperty(asDWORD property, asPWORD value);
-	asPWORD GetEngineProperty(asDWORD property);
+	int     SetEngineProperty(asEEngineProp property, asPWORD value);
+	asPWORD GetEngineProperty(asEEngineProp property);
 
 	// Script building
-	int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv);
+	int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv);
 	int ClearMessageCallback();
 
 	int RegisterTypedef(const char *type, const char *decl);
@@ -85,17 +85,17 @@ public:
 
 	int RegisterObjectType(const char *objname, int byteSize, asDWORD flags);
 	int RegisterObjectProperty(const char *objname, const char *declaration, int byteOffset);
-	int RegisterObjectMethod(const char *objname, const char *declaration, const asUPtr &funcPointer, asDWORD callConv);
-	int RegisterObjectBehaviour(const char *objname, asDWORD behaviour, const char *decl, const asUPtr &funcPointer, asDWORD callConv);
+	int RegisterObjectMethod(const char *objname, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	int RegisterObjectBehaviour(const char *objname, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv);
 
 	int RegisterGlobalProperty(const char *declaration, void *pointer);
-	int RegisterGlobalFunction(const char *declaration, const asUPtr &funcPointer, asDWORD callConv);
-	int RegisterGlobalBehaviour(asDWORD behaviour, const char *decl, const asUPtr &funcPointer, asDWORD callConv);
+	int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	int RegisterGlobalBehaviour(asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv);
 
 	int RegisterInterface(const char *name);
 	int RegisterInterfaceMethod(const char *intf, const char *declaration);
 
-	int RegisterStringFactory(const char *datatype, const asUPtr &factoryFunc, asDWORD callConv);
+	int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv);
 
 	int BeginConfigGroup(const char *groupName);
 	int EndConfigGroup();
@@ -185,8 +185,8 @@ public:
 	friend int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 
 	int RegisterSpecialObjectType(const char *objname, int byteSize, asDWORD flags);
-	int RegisterSpecialObjectMethod(const char *objname, const char *declaration, const asUPtr &funcPointer, int callConv);
-	int RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asUPtr &funcPointer, int callConv);
+	int RegisterSpecialObjectMethod(const char *objname, const char *declaration, const asSFuncPtr &funcPointer, int callConv);
+	int RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv);
 
 	int VerifyVarTypeNotInFunction(asCScriptFunction *func);
 
@@ -203,7 +203,7 @@ public:
 	void CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 	bool CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 
-	void CallMessageCallback(const char *section, int row, int col, int type, const char *message);
+	void CallMessageCallback(const char *section, int row, int col, asEMsgType type, const char *message);
 
 	void ClearUnusedTypes();
 	void RemoveArrayType(asCObjectType *t);

@@ -173,6 +173,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
@@ -198,7 +199,6 @@ int main(int argc, char **argv)
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
 	if( TestObject::Test()            ) goto failed; else printf("-- TestObject passed\n");
 	if( TestFactory::Test()           ) goto failed; else printf("-- TestFactory passed\n");
-	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
 	if( TestObjZeroSize::Test()       ) goto failed; else printf("-- TestObjZeroSize passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");

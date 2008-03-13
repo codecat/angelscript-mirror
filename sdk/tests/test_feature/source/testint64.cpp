@@ -48,7 +48,7 @@ static char *script =
 
 static int called = 0;
 
-static void cfunction() {
+static void cfunction(asIScriptGeneric *) {
 	++called;
 }
 

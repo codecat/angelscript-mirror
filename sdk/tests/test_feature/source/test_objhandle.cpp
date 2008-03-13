@@ -136,6 +136,10 @@ public:
 //		printf("Add(%X, %X)\n", &self, &other);
 		return self;
 	}
+	CRefClass &Do()
+	{
+		return *this;
+	}
 	int refCount;
 };
 
@@ -163,6 +167,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefClass, Release), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ASSIGNMENT, "refclass &f(refclass &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("refclass", "refclass &Do()", asMETHOD(CRefClass,Do), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "refclass &f(refclass &in, refclass &in)", asFUNCTION(CRefClass::Add), asCALL_CDECL); assert(r >= 0);
 
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
@@ -214,6 +219,16 @@ bool Test()
 
 	refclass->Release();
 	if( ctx ) ctx->Release();
+
+	// Test returning a reference to the object from an object method
+	r = engine->GarbageCollect();
+	assert( engine->GetObjectsInGarbageCollectorCount() == 0 );
+
+	r = engine->ExecuteString(0, "refclass ref; ref.Do()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
 
 	engine->Release();
 

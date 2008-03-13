@@ -69,7 +69,7 @@ static const char *script10 =
 "  g_any.store(@var);  \n"
 "}                     \n";
 
-static void MyFunc()
+static void MyFunc(asIScriptGeneric *)
 {
 }
 

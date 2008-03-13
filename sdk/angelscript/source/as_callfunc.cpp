@@ -42,11 +42,22 @@
 
 BEGIN_AS_NAMESPACE
 
-int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal)
+int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, asSSystemFunctionInterface *internal)
 {
 	memset(internal, 0, sizeof(asSSystemFunctionInterface));
 
-	internal->func = (size_t)ptr.f.func;
+	internal->func = (size_t)ptr.ptr.f.func;
+
+	// Was a compatible calling convention specified?
+	if( internal->func )
+	{
+		if( ptr.flag == 1 && callConv != asCALL_GENERIC )
+			return asWRONG_CALLING_CONV;
+		else if( ptr.flag == 2 && (callConv == asCALL_GENERIC || callConv == asCALL_THISCALL) )
+			return asWRONG_CALLING_CONV;
+		else if( ptr.flag == 3 && callConv != asCALL_THISCALL )
+			return asWRONG_CALLING_CONV;
+	}
 
 	asDWORD base = callConv;
 	if( !isMethod )

@@ -171,7 +171,7 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	return NEW(asCScriptEngine)();
 }
 
-int asCScriptEngine::SetEngineProperty(asDWORD property, asPWORD value)
+int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 {
 	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
 		allowUnsafeReferences = value ? true : false;
@@ -185,7 +185,7 @@ int asCScriptEngine::SetEngineProperty(asDWORD property, asPWORD value)
 	return asSUCCESS;
 }
 
-asPWORD asCScriptEngine::GetEngineProperty(asDWORD property)
+asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 {
 	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
 		return allowUnsafeReferences;
@@ -361,7 +361,7 @@ void asCScriptEngine::Reset()
 	}
 }
 
-int asCScriptEngine::SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv)
+int asCScriptEngine::SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv)
 {
 	msgCallback = true;
 	msgCallbackObj = obj;
@@ -391,7 +391,7 @@ int asCScriptEngine::ClearMessageCallback()
 	return 0;
 }
 
-void asCScriptEngine::CallMessageCallback(const char *section, int row, int col, int type, const char *message)
+void asCScriptEngine::CallMessageCallback(const char *section, int row, int col, asEMsgType type, const char *message)
 {
 	if( !msgCallback ) return;
 
@@ -431,7 +431,7 @@ int asCScriptEngine::Build(const char *module)
 
 	if( configFailed )
 	{
-		CallMessageCallback("", 0, 0, 0, TXT_INVALID_CONFIGURATION);
+		CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_INVALID_CONFIGURATION);
 		return asINVALID_CONFIGURATION;
 	}
 
@@ -1195,7 +1195,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	// Value types must have a defined size 
 	if( (flags & asOBJ_VALUE) && byteSize == 0 )
 	{
-		CallMessageCallback("", 0, 0, 0, TXT_VALUE_TYPE_MUST_HAVE_SIZE);
+		CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_VALUE_TYPE_MUST_HAVE_SIZE);
 		return ConfigError(asINVALID_ARG);
 	}
 
@@ -1339,7 +1339,7 @@ const int behave_assign_token[] =
 	ttShiftRightAAssign		// asBEHAVE_SRA_ASSIGN
 };
 
-int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asUPtr &funcPointer, int callConv)
+int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv)
 {
 	asASSERT( objType );
 
@@ -1540,7 +1540,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	return asSUCCESS;
 }
 
-int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behaviour, const char *decl, const asUPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	// Verify that the correct config group is used
 	if( currentGroup->FindType(datatype) == 0 )
@@ -1610,7 +1610,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		// Verify that it is a value type
 		if( !(func.objectType->flags & asOBJ_VALUE) )
 		{
-			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 		}
 
@@ -1637,7 +1637,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		// Must be a value type
 		if( !(func.objectType->flags & asOBJ_VALUE) )
 		{
-			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 		}
 
@@ -1659,7 +1659,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		// Must be a ref type and must not have asOBJ_NOHANDLE
 		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
 		{
-			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 		}
 
@@ -1690,7 +1690,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 			(func.objectType->flags & asOBJ_NOHANDLE) || 
 			(func.objectType->flags & asOBJ_SCOPED) )
 		{
-			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 		}
 
@@ -1712,7 +1712,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		// Must be a ref type and must not have asOBJ_NOHANDLE
 		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
 		{
-			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 		}
 
@@ -1815,7 +1815,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		// Only allow GC behaviours for types registered to be garbage collected
 		if( !(func.objectType->flags & asOBJ_GC) )
 		{
-			CallMessageCallback("", 0, 0, 0, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 		}
 
@@ -1882,7 +1882,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 		if( behaviour >= asBEHAVE_FIRST_DUAL &&
 			behaviour <= asBEHAVE_LAST_DUAL )
 		{
-			CallMessageCallback("", 0, 0, 0, TXT_MUST_BE_GLOBAL_BEHAVIOUR);
+			CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_MUST_BE_GLOBAL_BEHAVIOUR);
 		}
 		else
 			asASSERT(false);
@@ -1894,7 +1894,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behav
 	return func.id;
 }
 
-int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl, const asUPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
 	int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
@@ -2094,7 +2094,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	return asSUCCESS;
 }
 
-int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *declaration, const asUPtr &funcPointer, int callConv)
+int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, int callConv)
 {
 	asSSystemFunctionInterface internal;
 	int r = DetectCallingConvention(obj != 0, funcPointer, callConv, &internal);
@@ -2149,7 +2149,7 @@ int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *de
 }
 
 
-int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declaration, const asUPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	// Verify that the correct config group is set.
 	if( currentGroup->FindType(obj) == 0 )
@@ -2226,7 +2226,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	return func->id;
 }
 
-int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asUPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
 	int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
@@ -2394,7 +2394,7 @@ void asCScriptEngine::PrepareEngine()
 			{
 				asCString str;
 				str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, objectTypes[n]->name.AddressOf());
-				CallMessageCallback("", 0, 0, 0, str.AddressOf());
+				CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				ConfigError(asINVALID_CONFIGURATION);
 			}
 		}
@@ -2410,7 +2410,7 @@ int asCScriptEngine::ConfigError(int err)
 }
 
 
-int asCScriptEngine::RegisterStringFactory(const char *datatype, const asUPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
 	int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
@@ -2712,7 +2712,7 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 		if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
 			*ctx = 0;
 
-		CallMessageCallback("",0,0,0,TXT_INVALID_CONFIGURATION);
+		CallMessageCallback("",0,0,asMSGTYPE_ERROR,TXT_INVALID_CONFIGURATION);
 		return asINVALID_CONFIGURATION;
 	}
 

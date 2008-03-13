@@ -162,9 +162,9 @@ int              asContext_SetException(asIScriptContext *c, const char *string)
 int              asContext_GetExceptionLineNumber(asIScriptContext *c, int *column)                            { return c->GetExceptionLineNumber(column); }
 int              asContext_GetExceptionFunction(asIScriptContext *c)                                           { return c->GetExceptionFunction(); }
 const char *     asContext_GetExceptionString(asIScriptContext *c, int *length)                                { return c->GetExceptionString(length); }
-int              asContext_SetLineCallback(asIScriptContext *c, asUPtr callback, void *obj, int callConv)      { return c->SetLineCallback(callback, obj, callConv); }
+int              asContext_SetLineCallback(asIScriptContext *c, asSFuncPtr callback, void *obj, int callConv)      { return c->SetLineCallback(callback, obj, callConv); }
 void             asContext_ClearLineCallback(asIScriptContext *c)                                              { c->ClearLineCallback(); }
-int              asContext_SetExceptionCallback(asIScriptContext *c, asUPtr callback, void *obj, int callConv) { return c->SetExceptionCallback(callback, obj, callConv); }
+int              asContext_SetExceptionCallback(asIScriptContext *c, asSFuncPtr callback, void *obj, int callConv) { return c->SetExceptionCallback(callback, obj, callConv); }
 void             asContext_ClearExceptionCallback(asIScriptContext *c)                                         { c->ClearExceptionCallback(); }
 int              asContext_GetCallstackSize(asIScriptContext *c)                                               { return c->GetCallstackSize(); }
 int              asContext_GetCallstackFunction(asIScriptContext *c, int index)                                { return c->GetCallstackFunction(index); }

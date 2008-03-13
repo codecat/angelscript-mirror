@@ -364,7 +364,7 @@ int asCContext::Unprepare()
 	module = 0;
 
 	// Reset status
-	status = asEXECUTION_UNINITIALIZED;
+	status = tsUninitialized;
 
 	// Deallocate the stack blocks
 	for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
@@ -596,7 +596,7 @@ int asCContext::SetObject(void *obj)
 
 	if( !initialFunction->objectType )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asERROR;
 	}
 
@@ -612,7 +612,7 @@ int asCContext::SetArgByte(asUINT arg, asBYTE value)
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_ARG;
 	}
 
@@ -620,13 +620,13 @@ int asCContext::SetArgByte(asUINT arg, asBYTE value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeInMemoryBytes() != 1 )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
@@ -650,7 +650,7 @@ int asCContext::SetArgWord(asUINT arg, asWORD value)
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_ARG;
 	}
 
@@ -658,13 +658,13 @@ int asCContext::SetArgWord(asUINT arg, asWORD value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeInMemoryBytes() != 2 )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
@@ -688,7 +688,7 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_ARG;
 	}
 
@@ -696,13 +696,13 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeInMemoryBytes() != 4 )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
@@ -726,7 +726,7 @@ int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_ARG;
 	}
 
@@ -734,13 +734,13 @@ int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeOnStackDWords() != 2 )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
@@ -764,7 +764,7 @@ int asCContext::SetArgFloat(asUINT arg, float value)
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_ARG;
 	}
 
@@ -772,13 +772,13 @@ int asCContext::SetArgFloat(asUINT arg, float value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeOnStackDWords() != 1 )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
@@ -802,7 +802,7 @@ int asCContext::SetArgDouble(asUINT arg, double value)
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_ARG;
 	}
 
@@ -810,13 +810,13 @@ int asCContext::SetArgDouble(asUINT arg, double value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeOnStackDWords() != 2 )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
@@ -840,7 +840,7 @@ int asCContext::SetArgAddress(asUINT arg, void *value)
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_ARG;
 	}
 
@@ -848,7 +848,7 @@ int asCContext::SetArgAddress(asUINT arg, void *value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( !dt->IsReference() && !dt->IsObjectHandle() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
@@ -873,7 +873,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_ARG;
 	}
 
@@ -881,7 +881,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( !dt->IsObject() )
 	{
-		status = asEXECUTION_ERROR;
+		status = tsError;
 		return asINVALID_TYPE;
 	}
 
@@ -3372,7 +3372,7 @@ const char *asCContext::GetExceptionString(int *length)
 	return exceptionString.AddressOf();
 }
 
-int asCContext::GetState()
+asEContextState asCContext::GetState()
 {
 	if( status == tsSuspended )
 		return asEXECUTION_SUSPENDED;
@@ -3395,10 +3395,10 @@ int asCContext::GetState()
 	if( status == tsProgramAborted )
 		return asEXECUTION_ABORTED;
 
-	return asERROR;
+	return asEXECUTION_ERROR;
 }
 
-int asCContext::SetLineCallback(asUPtr callback, void *obj, int callConv)
+int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)
 {
 	lineCallback = true;
 	doProcessSuspend = true;
@@ -3434,7 +3434,7 @@ void asCContext::CallLineCallback()
 		engine->CallObjectMethod(lineCallbackObj, this, &lineCallbackFunc, 0);
 }
 
-int asCContext::SetExceptionCallback(asUPtr callback, void *obj, int callConv)
+int asCContext::SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv)
 {
 	exceptionCallback = true;
 	exceptionCallbackObj = obj;

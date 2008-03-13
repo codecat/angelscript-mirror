@@ -48,7 +48,7 @@ class asCScriptEngine;
 class asCScriptFunction;
 struct asSSystemFunctionInterface;
 
-int DetectCallingConvention(bool isMethod, const asUPtr &ptr, int callConv, asSSystemFunctionInterface *internal);
+int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, asSSystemFunctionInterface *internal);
 
 int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 
