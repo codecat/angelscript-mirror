@@ -241,21 +241,52 @@ extern "C"
     //!@{
 
 	// Engine
-	//! Creates the script engine. The argument should always be ANGELSCRIPT_VERSION.
+	//! \brief Creates the script engine. 
+    //!
+    //! \param[in] version The library version. Should always be \ref ANGELSCRIPT_VERSION.
+    //! \return A pointer to the script engine interface.
+    //!
+    //! Call this function to create a new script engine. When you're done with the
+    //! script engine, i.e. after you've executed all your scripts, you should call
+    //! \ref asIScriptEngine::Release "Release" on the pointer to free the engine object.
 	AS_API asIScriptEngine * asCreateScriptEngine(asDWORD version);
-	//! Returns the version of the compiled library.
+	//! \brief Returns the version of the compiled library.
+    //! 
+    //! \return A null terminated string with the library version.
+    //!
+    //! The returned string can be used for presenting the library version in a log file, or in the GUI.
 	AS_API const char * asGetLibraryVersion();
-	//! Returns the options used to compile the library.
+	//! \brief Returns the options used to compile the library.
+    //!
+    //! \return A null terminated string with indicators that identify the options 
+    //!         used to compile the script library.
+    //!
+    //! This can be used to identify at run-time different ways to configure the engine.
+    //! For example, if the returned string contain the identifier AS_MAX_PORTABILITY then
+    //! functions and methods must be registered with the \ref asCALL_GENERIC calling convention.
 	AS_API const char * asGetLibraryOptions();
 
 	// Context
-	//! Returns the currently active context.
+	//! \brief Returns the currently active context.
+    //! 
+    //! \return A pointer to the currently executing context, or null if no context is executing.
+    //!
+    //! This function is most useful for registered functions, as it will allow them to obtain
+    //! a pointer to the context that is calling the function, and through that get the engine,
+    //! or custom user data. 
+    //!
+    //! If the script library is compiled with multithread support, this function will return
+    //! the context that is currently active in the thread that is being executed. It will thus
+    //! work even if there are multiple threads executing scripts at the same time.
 	AS_API asIScriptContext * asGetActiveContext();
 
 	// Thread support
 	//! \brief Cleans up memory allocated for the current thread. 
 	//!
-	//! Call this method before terminating a thread that has 
+    //! \return A negative value on error.
+    //! \retval asCONTEXT_ACTIVE A context is still active.
+    //!
+    //! Call this method before terminating a thread that has 
 	//! accessed the engine to clean up memory allocated for that thread.
 	//!
 	//! It's not necessary to call this if only a single thread accesses the engine.
@@ -264,15 +295,23 @@ extern "C"
 	// Memory management
 	//! \brief Set the memory management functions that AngelScript should use.
 	//!
-	//! Call this method to register the global memory allocation and deallocation
+    //! \param[in] allocFunc The function that will be used to allocate memory.
+    //! \param[in] freeFunc The function that will be used to free the memory.
+    //! \return A negative value on error.
+    //!
+    //! Call this method to register the global memory allocation and deallocation
 	//! functions that AngelScript should use for memory management. This function
-	//! Should be called before asCreateScriptEngine.
+	//! Should be called before \ref asCreateScriptEngine.
 	//!
 	//! If not called, AngelScript will use the malloc and free functions from the
 	//! standard C library.
 	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
-	//! Remove previously registered memory management functions.
+	//! \brief Remove previously registered memory management functions.
+    //! 
+    //! \return A negative value on error.
+    //!
+    //! Call this method to restore the default memory management functions.
 	AS_API int asResetGlobalMemoryFunctions();
 
     //!@}
@@ -710,7 +749,7 @@ public:
 	// Script context
 	virtual asEContextState GetState() = 0;
 
-	//! Prepares the context for execution of the function identified by 'funcId'.
+	//! Prepares the context for execution of the function identified by funcId.
 	virtual int Prepare(int funcID) = 0;
 	//! Frees resources held by the context. This function is usually not necessary to call.
 	virtual int Unprepare() = 0;
@@ -903,13 +942,13 @@ public:
 	//! Returns the number of properties that the object contains.
 	virtual int GetPropertyCount() = 0;
 
-    //! Returns the type id of the property referenced by 'prop'.
+    //! Returns the type id of the property referenced by prop.
 	virtual int GetPropertyTypeId(asUINT prop) = 0;
 
-    //! Returns the name of the property referenced by 'prop'.
+    //! Returns the name of the property referenced by prop.
 	virtual const char *GetPropertyName(asUINT prop) = 0;
 
-    //! Returns a pointer to the property referenced by 'prop'.
+    //! Returns a pointer to the property referenced by prop.
 	virtual void *GetPropertyPointer(asUINT prop) = 0;
     
     //! Copies the content from another object of the same type.
@@ -941,7 +980,7 @@ public:
     //! Returns the size of the array.
 	virtual asUINT GetElementCount() = 0;
 
-    //! Returns a pointer to the element referenced by 'index'.
+    //! Returns a pointer to the element referenced by index.
 	virtual void * GetElementPointer(asUINT index) = 0;
 
     //! Resizes the array.
@@ -970,7 +1009,7 @@ public:
 	//! Returns the number of interfaces implemented.
 	virtual int GetInterfaceCount() const = 0;
 
-	//! Returns a temporary pointer to the specified interface or NULL if none are found.
+	//! Returns a temporary pointer to the specified interface or null if none are found.
 	virtual const asIObjectType *GetInterface(asUINT index) const = 0;
 
     //! Returns true if the type is an interface.
@@ -1004,12 +1043,24 @@ protected:
 //! \brief A binary stream interface.
 //!
 //! This interface is used when storing compiled bytecode to disk or memory, and then loading it into the engine again.
+//!
+//! \see asIScriptEngine::SaveByteCode, asIScriptEngine::LoadByteCode
 class asIBinaryStream
 {
 public:
-    //! Read 'size' bytes from the stream into the memory pointed to by 'ptr'.
+    //! \brief Read size bytes from the stream into the memory pointed to by ptr.
+    //!
+    //! \param[out] ptr A pointer to the buffer that will receive the data.
+    //! \param[in] size The number of bytes to read.
+    //!
+    //! Read \a size bytes from the data stream into the memory pointed to by \a ptr.
 	virtual void Read(void *ptr, asUINT size) = 0;
-    //! Write 'size' bytes to the stream from the memory pointed to by 'ptr'.
+    //! \brief Write size bytes to the stream from the memory pointed to by ptr.
+    //!
+    //! \param[in] ptr A pointer to the buffer that the data should written from.
+    //! \param[in] size The number of bytes to write.
+    //!
+    //! Write \a size bytes to the data stream from the memory pointed to by \a ptr.
 	virtual void Write(const void *ptr, asUINT size) = 0;
 
 public:
@@ -1095,100 +1146,111 @@ enum asEObjTypeFlags
 //! Behaviours
 enum asEBehaviours
 {
-	//! Constructor
-	asBEHAVE_CONSTRUCT     = 0,
-	//! Destructor
-	asBEHAVE_DESTRUCT      = 1,
-	asBEHAVE_FIRST_ASSIGN  = 2,
-	 //! operator =
-	 asBEHAVE_ASSIGNMENT    = 2,
-	 //! operator +=
-	 asBEHAVE_ADD_ASSIGN    = 3,
-	 //! operator -=
-	 asBEHAVE_SUB_ASSIGN    = 4,
-	 //! operator *=
-	 asBEHAVE_MUL_ASSIGN    = 5,
-	 //! operator /=
-	 asBEHAVE_DIV_ASSIGN    = 6,
-	 //! operator %=
-	 asBEHAVE_MOD_ASSIGN    = 7,
-	 //! operator |=
-	 asBEHAVE_OR_ASSIGN     = 8,
-	 //! operator &=
-	 asBEHAVE_AND_ASSIGN    = 9,
-	 //! operator ^=
-	 asBEHAVE_XOR_ASSIGN    = 10,
-	 //! operator <<=
-	 asBEHAVE_SLL_ASSIGN    = 11,
-	 //! operator >>= (Logical right shift)
-	 asBEHAVE_SRL_ASSIGN    = 12,
-	 //! operator >>>= (Arithmetic right shift)
-	 asBEHAVE_SRA_ASSIGN    = 13,
-	asBEHAVE_LAST_ASSIGN   = 13,
-	asBEHAVE_FIRST_DUAL    = 14,
-	 //! operator +
-	 asBEHAVE_ADD           = 14,
-	 //! operator -
-	 asBEHAVE_SUBTRACT      = 15,
-	 //! operator *
-	 asBEHAVE_MULTIPLY      = 16,
-	 //! operator /
-	 asBEHAVE_DIVIDE        = 17,
-	 //! operator %
-	 asBEHAVE_MODULO        = 18,
-	 //! operator ==
-	 asBEHAVE_EQUAL         = 19,
-	 //! operator != 
-	 asBEHAVE_NOTEQUAL      = 20,
-	 //! operator <
-	 asBEHAVE_LESSTHAN      = 21,
-	 //! operator >
-	 asBEHAVE_GREATERTHAN   = 22,
-	 //! operator <=
-	 asBEHAVE_LEQUAL        = 23,
-	 //! operator >=
-	 asBEHAVE_GEQUAL        = 24,
-	 //! operator ||
-	 asBEHAVE_LOGIC_OR      = 25,
-	 //! operator &&
-	 asBEHAVE_LOGIC_AND     = 26,
-	 //! operator |
-	 asBEHAVE_BIT_OR        = 27,
-	 //! operator &
-	 asBEHAVE_BIT_AND       = 28,
-	 //! operator ^
-	 asBEHAVE_BIT_XOR       = 29,
-	 //! operator <<
-	 asBEHAVE_BIT_SLL       = 30,
-	 //! operator >> (Logical right shift)
-	 asBEHAVE_BIT_SRL       = 31,
-	 //! operator >>> (Arithmetic right shift)
-	 asBEHAVE_BIT_SRA       = 32,
-	asBEHAVE_LAST_DUAL     = 32,
-	//! operator []
-	asBEHAVE_INDEX         = 33,
-	//! operator - (Unary negate)
-	asBEHAVE_NEGATE        = 34,
-	//! AddRef 
-	asBEHAVE_ADDREF        = 35,
-	//! Release
-	asBEHAVE_RELEASE       = 36,
-	asBEHAVE_FIRST_GC      = 37,
-	//! \brief (GC behaviour) Get reference count
-	 asBEHAVE_GETREFCOUNT   = 37,
-	 //! (GC behaviour) Set GC flag
-	 asBEHAVE_SETGCFLAG     = 38,
-	 //! (GC behaviour) Get GC flag
-	 asBEHAVE_GETGCFLAG     = 39,
-	 //! (GC behaviour) Enumerate held references
-	 asBEHAVE_ENUMREFS      = 40,
-	 //! (GC behaviour) Release all references
-	 asBEHAVE_RELEASEREFS   = 41,
-	asBEHAVE_LAST_GC       = 41,
-	//! Factory
-	asBEHAVE_FACTORY       = 42,
-	//! Value cast operator
-	asBEHAVE_VALUE_CAST    = 43,
+	// Value object memory management
+	//! (Object) Constructor
+	asBEHAVE_CONSTRUCT,
+	//! (Object) Destructor
+	asBEHAVE_DESTRUCT,
+
+	// Reference object memory management
+	//! (Object) Factory
+	asBEHAVE_FACTORY,
+	//! (Object) AddRef 
+	asBEHAVE_ADDREF,
+	//! (Object) Release
+	asBEHAVE_RELEASE,
+
+	// Object operators
+	//! (Object) Value cast operator
+	asBEHAVE_VALUE_CAST,
+	//! (Object) operator []
+	asBEHAVE_INDEX,
+	//! (Object) operator - (Unary negate)
+	asBEHAVE_NEGATE,
+
+	// Assignment operators
+	asBEHAVE_FIRST_ASSIGN,
+	 //! (Object) operator =
+	 asBEHAVE_ASSIGNMENT,
+	 //! (Object) operator +=
+	 asBEHAVE_ADD_ASSIGN,
+	 //! (Object) operator -=
+	 asBEHAVE_SUB_ASSIGN,
+	 //! (Object) operator *=
+	 asBEHAVE_MUL_ASSIGN,
+	 //! (Object) operator /=
+	 asBEHAVE_DIV_ASSIGN,
+	 //! (Object) operator %=
+	 asBEHAVE_MOD_ASSIGN,
+	 //! (Object) operator |=
+	 asBEHAVE_OR_ASSIGN,
+	 //! (Object) operator &=
+	 asBEHAVE_AND_ASSIGN,
+	 //! (Object) operator ^=
+	 asBEHAVE_XOR_ASSIGN,
+	 //! (Object) operator <<=
+	 asBEHAVE_SLL_ASSIGN,
+	 //! (Object) operator >>= (Logical right shift)
+	 asBEHAVE_SRL_ASSIGN,
+	 //! (Object) operator >>>= (Arithmetic right shift)
+	 asBEHAVE_SRA_ASSIGN,
+	asBEHAVE_LAST_ASSIGN,
+
+	// Global operators
+	asBEHAVE_FIRST_DUAL,
+	 //! (Global) operator +
+	 asBEHAVE_ADD,
+	 //! (Global) operator -
+	 asBEHAVE_SUBTRACT,
+	 //! (Global) operator *
+	 asBEHAVE_MULTIPLY,
+	 //! (Global) operator /
+	 asBEHAVE_DIVIDE,
+	 //! (Global) operator %
+	 asBEHAVE_MODULO,
+	 //! (Global) operator ==
+	 asBEHAVE_EQUAL,
+	 //! (Global) operator != 
+	 asBEHAVE_NOTEQUAL,
+	 //! (Global) operator <
+	 asBEHAVE_LESSTHAN,
+	 //! (Global) operator >
+	 asBEHAVE_GREATERTHAN,
+	 //! (Global) operator <=
+	 asBEHAVE_LEQUAL,
+	 //! (Global) operator >=
+	 asBEHAVE_GEQUAL,
+	 //! (Global) operator ||
+	 asBEHAVE_LOGIC_OR,
+	 //! (Global) operator &&
+	 asBEHAVE_LOGIC_AND,
+	 //! (Global) operator |
+	 asBEHAVE_BIT_OR,
+	 //! (Global) operator &
+	 asBEHAVE_BIT_AND,
+	 //! (Global) operator ^
+	 asBEHAVE_BIT_XOR,
+	 //! (Global) operator <<
+	 asBEHAVE_BIT_SLL,
+	 //! (Global) operator >> (Logical right shift)
+	 asBEHAVE_BIT_SRL,
+	 //! (Global) operator >>> (Arithmetic right shift)
+	 asBEHAVE_BIT_SRA,
+	asBEHAVE_LAST_DUAL,
+
+	// Garbage collection behaviours
+	asBEHAVE_FIRST_GC,
+	//! \brief (GC) Get reference count
+	 asBEHAVE_GETREFCOUNT,
+	 //! (GC) Set GC flag
+	 asBEHAVE_SETGCFLAG,
+	 //! (GC) Get GC flag
+	 asBEHAVE_GETGCFLAG,
+	 //! (GC) Enumerate held references
+	 asBEHAVE_ENUMREFS,
+	 //! (GC) Release all references
+	 asBEHAVE_RELEASEREFS,
+	asBEHAVE_LAST_GC,
 };
 
 // Return codes
