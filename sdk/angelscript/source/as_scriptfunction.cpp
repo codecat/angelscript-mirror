@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -71,6 +71,42 @@ asCScriptFunction::~asCScriptFunction()
 	{
 		DELETE(sysFuncIntf,asSSystemFunctionInterface);
 	}
+}
+
+const char *asCScriptFunction::GetModuleName() const
+{
+	if( module )
+		return module->name.AddressOf();
+
+	return 0;
+}
+
+const asIObjectType *asCScriptFunction::GetObjectType() const
+{
+	return objectType;
+}
+
+const char *asCScriptFunction::GetObjectName() const 
+{
+	if( objectType )
+		return objectType->GetName();
+
+	return 0;
+}
+
+const char *asCScriptFunction::GetFunctionName() const
+{
+	return name.AddressOf();
+}
+
+bool asCScriptFunction::IsClassMethod() const
+{
+	return objectType && objectType->IsInterface() == false;
+}
+
+bool asCScriptFunction::IsInterfaceMethod() const
+{
+	return objectType && objectType->IsInterface();
 }
 
 int asCScriptFunction::GetSpaceNeededForArguments()

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -64,11 +64,18 @@ const int asFUNC_IMPORTED  = 3;
 
 struct asSSystemFunctionInterface;
 
-class asCScriptFunction
+class asCScriptFunction : public asIScriptFunction
 {
 public:
 	asCScriptFunction(asCModule *mod);
 	~asCScriptFunction();
+
+	const char *GetModuleName() const;
+	const char *GetFunctionName() const;
+	const char *GetObjectName() const;
+	const asIObjectType *GetObjectType() const;
+	bool IsClassMethod() const;
+	bool IsInterfaceMethod() const;
 
 	void AddVariable(asCString &name, asCDataType &type, int stackOffset);
 

@@ -30,7 +30,7 @@ static const char *script2 =
 
 bool failed = false;
 
-void CheckFunc()
+void CheckFunc(asIScriptGeneric *)
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx )

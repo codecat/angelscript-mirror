@@ -71,7 +71,6 @@ BEGIN_AS_NAMESPACE
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  12
 #define ANGELSCRIPT_VERSION_BUILD  0
-//! The library version as a string.
 #define ANGELSCRIPT_VERSION_STRING "2.12.0 WIP"
 
 // Data types
@@ -82,6 +81,7 @@ class asIScriptGeneric;
 class asIScriptStruct;
 class asIScriptArray;
 class asIObjectType;
+class asIScriptFunction;
 class asIBinaryStream;
 
 enum asEMsgType;
@@ -312,10 +312,12 @@ extern "C"
 	AS_API const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length = 0);
+	AS_API const asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId);
 	AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index);
 	AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, int typeId, const char *name);
 	AS_API int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, int typeId, const char *decl);
+	AS_API const asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index);
 	AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name);
@@ -456,6 +458,13 @@ extern "C"
 	AS_API const asIObjectType *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
 	AS_API bool                 asObjectType_IsInterface(const asIObjectType *o);
 
+	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);
+	AS_API const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f);
+	AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f);
+	AS_API const char          *asScriptFunction_GetFunctionName(const asIScriptFunction *f);
+	AS_API bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f);
+	AS_API bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f);
+
 #endif // AS_C_INTERFACE
 }
 #endif // ANGELSCRIPT_DLL_MANUAL_IMPORT
@@ -483,9 +492,9 @@ public:
 
 	//! \brief Sets a message callback that will receive compiler messages.
 	//!
-	//! \param callback A function or class method pointer.
-	//! \param obj      The object for methods, or an optional parameter for functions.
-	//! \param callConv The calling convention.
+	//! \param[in] callback A function or class method pointer.
+	//! \param[in] obj      The object for methods, or an optional parameter for functions.
+	//! \param[in] callConv The calling convention.
 	//! \return         A negative value for an error.
 	//! \retval asINVALID_ARG   One of the arguments is incorrect, e.g. obj is null for a class method.
 	//! \retval asNOT_SUPPORTED The arguments are not supported, e.g. asCALL_GENERIC.
@@ -576,6 +585,8 @@ public:
 	virtual const char *GetFunctionModule(int funcID, int *length = 0) = 0;
 	//! Returns the section where the function was implemented.
 	virtual const char *GetFunctionSection(int funcID, int *length = 0) = 0;
+	//! Returns the function descriptor for the script function
+	virtual const asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
 
 	//! Returns the number of methods for the object type.
 	virtual int GetMethodCount(int typeId) = 0;
@@ -585,6 +596,8 @@ public:
 	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
 	//! Returns the method id by declaration.
 	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
+	//! Returns the function descriptor for the script method
+	virtual const asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index) = 0;
 
 	// Script global variables
 	//! Returns the number of global variables in the module.
@@ -967,6 +980,27 @@ protected:
 	virtual ~asIObjectType() {}
 };
 
+//! \brief The interface for a script function description
+class asIScriptFunction
+{
+public:
+	//! \brief Returns the name of the module where the function was implemented
+	virtual const char          *GetModuleName() const = 0;
+	//! \brief Returns the object type for class or interface method
+	virtual const asIObjectType *GetObjectType() const = 0;
+	//! \brief Returns the name of the object for class or interface methods
+	virtual const char          *GetObjectName() const = 0;
+	//! \brief Returns the name of the function or method
+	virtual const char          *GetFunctionName() const = 0;
+	//! \brief Returns true if it is a class method
+	virtual bool                 IsClassMethod() const = 0;
+	//! \brief Returns true if it is an interface method
+	virtual bool                 IsInterfaceMethod() const = 0;
+
+protected:
+	virtual ~asIScriptFunction() {};
+};
+
 //! \brief A binary stream interface.
 //!
 //! This interface is used when storing compiled bytecode to disk or memory, and then loading it into the engine again.
@@ -1308,7 +1342,7 @@ inline asSFuncPtr asFunctionPtr(T func)
 {
 	asSFuncPtr p;
 	asMemClear(&p, sizeof(p));
-	p.ptr.f.func = (asFUNCTION_t)func;
+	p.ptr.f.func = (asFUNCTION_t)(size_t)func;
 
 	// Mark this as a global function
 	p.flag = 2;

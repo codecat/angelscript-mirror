@@ -67,6 +67,7 @@ class asIScriptGeneric;
 class asIScriptStruct;
 class asIScriptArray;
 class asIObjectType;
+class asIScriptFunction;
 class asIBinaryStream;
 
 enum asEMsgType;
@@ -230,10 +231,12 @@ extern "C"
 	AS_API const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length = 0);
+	AS_API const asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId);
 	AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index);
 	AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, int typeId, const char *name);
 	AS_API int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, int typeId, const char *decl);
+	AS_API const asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index);
 	AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name);
@@ -374,6 +377,13 @@ extern "C"
 	AS_API const asIObjectType *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
 	AS_API bool                 asObjectType_IsInterface(const asIObjectType *o);
 
+	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);
+	AS_API const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f);
+	AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f);
+	AS_API const char          *asScriptFunction_GetFunctionName(const asIScriptFunction *f);
+	AS_API bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f);
+	AS_API bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f);
+
 #endif // AS_C_INTERFACE
 }
 #endif // ANGELSCRIPT_DLL_MANUAL_IMPORT
@@ -433,11 +443,13 @@ public:
 	virtual const char *GetFunctionName(int funcID, int *length = 0) = 0;
 	virtual const char *GetFunctionModule(int funcID, int *length = 0) = 0;
 	virtual const char *GetFunctionSection(int funcID, int *length = 0) = 0;
+	virtual const asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
 
 	virtual int GetMethodCount(int typeId) = 0;
 	virtual int GetMethodIDByIndex(int typeId, int index) = 0;
 	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
 	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
+	virtual const asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index) = 0;
 
 	// Script global variables
 	virtual int GetGlobalVarCount(const char *module) = 0;
@@ -662,6 +674,20 @@ public:
 
 protected:
 	virtual ~asIObjectType() {}
+};
+
+class asIScriptFunction
+{
+public:
+	virtual const char          *GetModuleName() const = 0;
+	virtual const asIObjectType *GetObjectType() const = 0;
+	virtual const char          *GetObjectName() const = 0;
+	virtual const char          *GetFunctionName() const = 0;
+	virtual bool                 IsClassMethod() const = 0;
+	virtual bool                 IsInterfaceMethod() const = 0;
+
+protected:
+	virtual ~asIScriptFunction() {};
 };
 
 class asIBinaryStream

@@ -114,11 +114,13 @@ public:
 	const char *GetFunctionName(int funcID, int *length);
 	const char *GetFunctionModule(int funcID, int *length);
 	const char *GetFunctionSection(int funcID, int *length);
+	const asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index);
 
 	int GetMethodCount(int typeId);
 	int GetMethodIDByIndex(int typeId, int index);
 	int GetMethodIDByName(int typeId, const char *name);
 	int GetMethodIDByDecl(int typeId, const char *decl);
+	const asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index);
 
 	int GetGlobalVarCount(const char *module);
 	int GetGlobalVarIDByIndex(const char *module, int index);

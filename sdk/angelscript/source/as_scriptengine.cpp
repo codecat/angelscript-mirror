@@ -4333,5 +4333,27 @@ asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId)
 	return dt->GetObjectType();
 }
 
+//	Additional functionality for to access internal objects
+const asIScriptFunction *asCScriptEngine::GetMethodDescriptorByIndex(int typeId, int index)
+{
+	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	if( dt == 0 ) return 0;
+
+	asCObjectType *ot = dt->GetObjectType();
+	if( ot == 0 ) return 0;
+
+	if( index < 0 || (unsigned)index >= ot->methods.GetLength() ) return 0;
+
+	return scriptFunctions[ot->methods[index]];
+}
+
+const asIScriptFunction *asCScriptEngine::GetFunctionDescriptorByIndex(const char *module, int index)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return 0;
+
+	return mod->scriptFunctions[index];
+}
+
 END_AS_NAMESPACE
 
