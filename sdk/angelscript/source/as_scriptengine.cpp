@@ -2553,7 +2553,7 @@ int asCScriptEngine::SaveByteCode(const char *_module, asIBinaryStream *stream)
 		return asNO_MODULE;
 	}
 
-	return asERROR;
+	return asINVALID_ARG;
 }
 
 
@@ -2581,7 +2581,7 @@ int asCScriptEngine::LoadByteCode(const char *_module, asIBinaryStream *stream)
 		return asNO_MODULE;
 	}
 
-	return asERROR;
+	return asINVALID_ARG;
 }
 
 int asCScriptEngine::SetDefaultContextStackSize(asUINT initial, asUINT maximum)
