@@ -86,7 +86,7 @@ public:
 	int RegisterObjectType(const char *objname, int byteSize, asDWORD flags);
 	int RegisterObjectProperty(const char *objname, const char *declaration, int byteOffset);
 	int RegisterObjectMethod(const char *objname, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-	int RegisterObjectBehaviour(const char *objname, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv);
+	int RegisterObjectBehaviour(const char *objname, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv);
 
 	int RegisterGlobalProperty(const char *declaration, void *pointer);
 	int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);

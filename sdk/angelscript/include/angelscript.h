@@ -76,6 +76,7 @@ enum asEExecStrFlags;
 enum asEEngineProp;
 enum asECallConvTypes;
 enum asETypeIdFlags;
+enum asEBehaviours;
 
 //
 // asBYTE  =  8 bits
@@ -118,7 +119,7 @@ typedef void (asCUnknownClass::*asMETHOD_t)();
 
 struct asSFuncPtr
 {
-	union 
+	union
 	{
 		char dummy[24]; // largest known class method pointer
 		struct {asMETHOD_t   mthd; char dummy[24-sizeof(asMETHOD_t)];} m;
@@ -134,7 +135,7 @@ struct asSFuncPtr
 
 struct asSFuncPtr
 {
-	union 
+	union
 	{
 		char dummy[24]; // largest known class method pointer
 		struct {asFUNCTION_t func; char dummy[24-sizeof(asFUNCTION_t)];} f;
@@ -206,7 +207,7 @@ extern "C"
 	AS_API int               asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags);
 	AS_API int               asEngine_RegisterObjectProperty(asIScriptEngine *e, const char *obj, const char *declaration, int byteOffset);
 	AS_API int               asEngine_RegisterObjectMethod(asIScriptEngine *e, const char *obj, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
-	AS_API int               asEngine_RegisterObjectBehaviour(asIScriptEngine *e, const char *datatype, asDWORD behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
+	AS_API int               asEngine_RegisterObjectBehaviour(asIScriptEngine *e, const char *datatype, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int               asEngine_RegisterGlobalProperty(asIScriptEngine *e, const char *declaration, void *pointer);
 	AS_API int               asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int               asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asDWORD behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
@@ -407,7 +408,7 @@ public:
 	virtual int RegisterObjectType(const char *name, int byteSize, asDWORD flags) = 0;
 	virtual int RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
 	virtual int RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-	virtual int RegisterObjectBehaviour(const char *datatype, asDWORD behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 
 	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
@@ -439,10 +440,10 @@ public:
 	virtual int GetFunctionIDByIndex(const char *module, int index) = 0;
 	virtual int GetFunctionIDByName(const char *module, const char *name) = 0;
 	virtual int GetFunctionIDByDecl(const char *module, const char *decl) = 0;
-	virtual const char *GetFunctionDeclaration(int funcID, int *length = 0) = 0;
-	virtual const char *GetFunctionName(int funcID, int *length = 0) = 0;
-	virtual const char *GetFunctionModule(int funcID, int *length = 0) = 0;
-	virtual const char *GetFunctionSection(int funcID, int *length = 0) = 0;
+	virtual const char *GetFunctionDeclaration(int funcId, int *length = 0) = 0;
+	virtual const char *GetFunctionName(int funcId, int *length = 0) = 0;
+	virtual const char *GetFunctionModule(int funcId, int *length = 0) = 0;
+	virtual const char *GetFunctionSection(int funcId, int *length = 0) = 0;
 	virtual const asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
 
 	virtual int GetMethodCount(int typeId) = 0;
@@ -465,7 +466,7 @@ public:
 	virtual int GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
 	virtual const char *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length = 0) = 0;
 	virtual const char *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length = 0) = 0;
-	virtual int BindImportedFunction(const char *module, int importIndex, int funcID) = 0;
+	virtual int BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
 	virtual int UnbindImportedFunction(const char *module, int importIndex) = 0;
 
 	virtual int BindAllImportedFunctions(const char *module) = 0;
@@ -520,7 +521,7 @@ public:
 	// Script context
 	virtual asEContextState GetState() = 0;
 
-	virtual int Prepare(int funcID) = 0;
+	virtual int Prepare(int funcId) = 0;
 	virtual int Unprepare() = 0;
 
 	virtual int SetArgByte(asUINT arg, asBYTE value) = 0;
@@ -909,7 +910,7 @@ inline void asMemCopy(void *_d, const void *_s, int size)
 		*d = *s;
 }
 
-// Template function to capture all global functions, 
+// Template function to capture all global functions,
 // except the ones using the generic calling convention
 template <class T>
 inline asSFuncPtr asFunctionPtr(T func)
@@ -975,7 +976,7 @@ struct asSMethodPtr<SINGLE_PTR_SIZE>
 
 		// Mark this as a class method
 		p.flag = 3;
-			
+
 		return p;
 	}
 };

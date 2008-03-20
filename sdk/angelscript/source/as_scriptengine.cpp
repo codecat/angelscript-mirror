@@ -1540,7 +1540,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	return asSUCCESS;
 }
 
-int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	// Verify that the correct config group is used
 	if( currentGroup->FindType(datatype) == 0 )
