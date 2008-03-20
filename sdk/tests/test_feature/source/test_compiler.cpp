@@ -329,8 +329,7 @@ bool Test()
 	}
 
 	// Test 19
-	// TODO:
-	// Give proper error upon returning a reference from script function
+	// TODO: Give proper error upon returning a reference from script function
 	bout.buffer = "";
 	const char *script19 =
 		"class Object {}\n"

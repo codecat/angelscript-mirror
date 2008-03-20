@@ -601,7 +601,7 @@ public:
     //! Reference types, which have their memory managed by the application, should be registered with \ref asOBJ_REF.
     //! Value types, which have their memory managed by the engine, should be registered with \ref asOBJ_VALUE.
     //!
-    //! \todo Link to article on how to register types
+    //! \see \ref doc_register_type
 	virtual int RegisterObjectType(const char *name, int byteSize, asDWORD flags) = 0;
 	//! \brief Registers a property for the object type.
     //!
@@ -644,7 +644,7 @@ public:
     //! that takes the object pointer as either the first or last parameter. Or
     //! it may be a global function implemented with the generic calling convention.
     //!
-    //! \todo Link to article on how to register functions/methods
+    //! \see \ref doc_register_func
 	virtual int RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Registers a behaviour for the object type.
     //!
@@ -667,8 +667,7 @@ public:
     //! the virtual machine to perform certain operations, such as memory management,
     //! math operations, comparisons, etc.
     //!
-    //! \todo Link to article on how to register functions/methods
-    //! \todo Link to article on behaviours
+    //! \see \ref doc_register_func, \ref doc_behaviours
 	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 
 	//! \brief Registers a global property.
@@ -695,9 +694,8 @@ public:
     //! \param[in] callConv The calling convention for the function.
     //! \return A negative value on error.
     //!
-    //! \todo List error codes
-    //! \todo Link to article on how to register functions/methods
-    //! \todo Describe method
+    //! \todo Describe method, List error codes
+    //! \see \ref doc_register_func
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Registers a global behaviour, e.g. operators.
     //!
@@ -707,9 +705,8 @@ public:
     //! \param[in] callConv The calling convention for the function.
     //! \return A negative value on error.
     //!
-    //! \todo List error codes
-    //! \todo Link to article on how to register functions/methods
-    //! \todo Describe method
+    //! \todo Describe method, List error codes
+    //! \see \ref doc_register_func
 	virtual int RegisterGlobalBehaviour(asDWORD behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 
 	//! \brief Registers an interface.
@@ -717,8 +714,7 @@ public:
     //! \param[in] name The name of the interface.
     //! \return A negative value on error.
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int RegisterInterface(const char *name) = 0;
 	//! \brief Registers an interface method.
     //!
@@ -726,8 +722,7 @@ public:
     //! \param[in] declaration The method declaration.
     //! \return A negative value on error.
     //!
-    //! \todo List the error codes
-    //! \todo Describe method
+    //! \todo List the error codes, Describe method
 	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 
 	//! \brief Registers an enum type.
@@ -735,8 +730,7 @@ public:
     //! \param[in] type The name of the enum type.
     //! \return A negative value on error.
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int RegisterEnum(const char *type) = 0;
 	//! \brief Registers an enum value.
     //!
@@ -745,8 +739,7 @@ public:
     //! \param[in] value The integer value of the enum value.
     //! \return A negative value on error.
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int RegisterEnumValue(const char *type, const char *name, int value) = 0;
 
 	//! \brief Registers a typedef.
@@ -755,8 +748,7 @@ public:
     //! \param[in] decl The datatype that the typedef represents
     //! \return A negative value on error.
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int RegisterTypedef(const char *type, const char *decl) = 0;
 
 	//! \brief Registers the string factory.
@@ -766,8 +758,7 @@ public:
     //! \param[in] callConv The calling convention of the factory function
     //! \return A negative value on error.
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv) = 0;
 
 	//! \brief Starts a new dynamic configuration group.
@@ -775,23 +766,20 @@ public:
     //! \param[in] groupName The name of the configuration group
     //! \return A negative value on error
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int BeginConfigGroup(const char *groupName) = 0;
 	//! \brief Ends the configuration group.
     //!
     //! \return A negative value on error
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int EndConfigGroup() = 0;
 	//! \brief Removes a previously registered configuration group.
     //!
     //! \param[in] groupName The name of the configuration group
     //! \return A negative value on error
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int RemoveConfigGroup(const char *groupName) = 0;
 	//! \brief Tell AngelScript which modules have access to which configuration groups.
     //!
@@ -800,8 +788,7 @@ public:
     //! \param[in] hasAccess Whether the module has access or not to the group members
     //! \return A negative value on error
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
@@ -814,61 +801,53 @@ public:
     //! \param[in] lineOffset An offset that will be added to compiler message line numbers
     //! \return A negative value on error
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
 	//! \brief Build the previously added script sections.
     //!
     //! \param[in] module The name of the module
     //! \return A negative value on error
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int Build(const char *module) = 0;
 	//! \brief Discard a compiled module.
     //!
     //! \param[in] module The name of the module
     //! \return A negative value on error
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
     virtual int Discard(const char *module) = 0;
 	//! \brief Reset the global variables of a module.
     //!
     //! \param[in] module The name of the module
     //! \return A negative value on error
     //!
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int ResetModule(const char *module) = 0;
 
 	// Script functions
 	//! \brief Returns the number of global functions in the module.
     //! \param[in] module The name of the module.
     //! \return A negative value on error, or the number of global functions in this module.
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int GetFunctionCount(const char *module) = 0;
 	//! \brief Returns the function id by index.
     //! \param[in] module The name of the module.
     //! \param[in] index The index of the function.
     //! \return A negative value on error, or the function id.
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int GetFunctionIDByIndex(const char *module, int index) = 0;
 	//! \brief Returns the function id by name.
     //! \param[in] module The name of the module.
     //! \param[in] name The name of the function.
     //! \return A negative value on error, or the function id.
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int GetFunctionIDByName(const char *module, const char *name) = 0;
 	//! \brief Returns the function id by declaration.
     //! \param[in] module The name of the module.
     //! \param[in] decl The function signature.
     //! \return A negative value on error, or the function id.
-    //! \todo Describe method
-    //! \todo List error codes
+    //! \todo Describe method, List error codes
 	virtual int GetFunctionIDByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns the function declaration.
     //! \param[in] funcId The function id.
@@ -904,8 +883,7 @@ public:
 	//! \brief Returns the number of methods for the object type.
     //! \param[in] typeId The object type id.
     //! \return A negative value on error, or the number of methods for this object.
-    //! \todo Describe method
-    //! \todo List error codes.
+    //! \todo Describe method, List error codes
 	virtual int GetMethodCount(int typeId) = 0;
 	//! \brief Returns the method id by index.
     //! \param[in] typeId The object type id.
@@ -917,15 +895,13 @@ public:
     //! \param[in] typeId The object type id.
     //! \param[in] name The name of the method.
     //! \return A negative value on error, or the method id.
-    //! \todo Describe method
-    //! \todo List errors.
+    //! \todo Describe method, List error codes
 	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
 	//! \brief Returns the method id by declaration.
     //! \param[in] typeId The object type id.
     //! \param[in] decl The method signature.
     //! \return A negative value on error, or the method id.
-    //! \todo Describe method
-    //! \todo List errors.
+    //! \todo Describe method, List error codes
 	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
 	//! \brief Returns the function descriptor for the script method
     //! \param[in] typeId The object type id.
@@ -938,29 +914,25 @@ public:
 	//! \brief Returns the number of global variables in the module.
     //! \param[in] module The name of the module.
     //! \return A negative value on error, or the number of global variables.
-    //! \todo Describe method
-    //! \todo List errors.
+    //! \todo Describe method, List error codes
 	virtual int GetGlobalVarCount(const char *module) = 0;
 	//! \brief Returns the global variable id by index.
     //! \param[in] module The name of the module.
     //! \param[in] index The index of the global variable.
     //! \return A negative value on error, or the global variable id.
-    //! \todo Describe method
-    //! \todo List errors.
+    //! \todo Describe method, List error codes
 	virtual int GetGlobalVarIDByIndex(const char *module, int index) = 0;
 	//! \brief Returns the global variable id by name.
     //! \param[in] module The name of the module.
     //! \param[in] name The name of the global variable.
     //! \return A negative value on error, or the global variable id.
-    //! \todo Describe method
-    //! \todo List errors.
+    //! \todo Describe method, List error codes
 	virtual int GetGlobalVarIDByName(const char *module, const char *name) = 0;
 	//! \brief Returns the global variable id by declaration.
     //! \param[in] module The name of the module.
     //! \param[in] decl The global variable declaration.
     //! \return A negative value on error, or the global variable id.
-    //! \todo Describe method
-    //! \todo List errors.
+    //! \todo Describe method, List error codes
 	virtual int GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns the global variable declaration.
     //! \param[in] gvarID The global variable id.
@@ -984,15 +956,13 @@ public:
 	//! \brief Returns the number of functions declared for import.
     //! \param[in] module The name of the module.
     //! \return A negative value on error, or the number of imported functions.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int GetImportedFunctionCount(const char *module) = 0;
 	//! \brief Returns the imported function index by declaration.
     //! \param[in] module The name of the module.
     //! \param[in] decl The function declaration of the imported function.
     //! \return A negative value on error, or the index of the imported function.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns the imported function declaration.
     //! \param[in] module The name of the module.
@@ -1013,28 +983,24 @@ public:
     //! \param[in] importIndex The index of the imported function.
     //! \param[in] funcId The function id of the function that will be bound to the imported function.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
 	//! \brief Unbinds an imported function.
     //! \param[in] module The name of the module.
     //! \param[in] importIndex The index of the imported function.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int UnbindImportedFunction(const char *module, int importIndex) = 0;
 
 	//! \brief Binds all imported functions in a module, by searching their equivalents in the declared source modules.
     //! \param[in] module The name of the module.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int BindAllImportedFunctions(const char *module) = 0;
 	//! \brief Unbinds all imported functions.
     //! \param[in] module The name of the module.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int UnbindAllImportedFunctions(const char *module) = 0;
 
 	// Type identification
@@ -1042,8 +1008,7 @@ public:
     //! \param[in] module The name of the module.
     //! \param[in] decl The declaration of the type.
     //! \return A negative value on error, or the type id of the type.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int GetTypeIdByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns a type declaration.
     //! \param[in] typeId The type id of the type.
@@ -1054,8 +1019,7 @@ public:
 	//! \brief Returns the size of a primitive type.
     //! \param[in] typeId The type id of the type.
     //! \return A negative value on error, or the size of the type in bytes.
-    //! \todo Describe method
-    //! \todo List errors.
+    //! \todo Describe method, List error codes
 	virtual int GetSizeOfPrimitiveType(int typeId) = 0;
 	//! \brief Returns the object type interface for type.
     //! \param[in] typeId The type id of the type.
@@ -1069,8 +1033,7 @@ public:
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
 	//! \brief Returns the number of object types.
     //! \return A negative value on error, or the number of object types known to the engine.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int GetObjectTypeCount() = 0;
 
 	// Script execution
@@ -1135,16 +1098,14 @@ public:
     //! \param[in,out] ctx Either pass in your own context or receive the default context, depending on the flags parameter.
     //! \param[in] flags A combination of the values from \ref asEExecStrFlags.
     //! \return One of \ref asEContextState values, or a negative value on compiler error.
-    //! \todo Describe method
-    //! \todo List error codes.
+    //! \todo Describe method, List error codes
 	virtual int ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
 	//! \brief Perform garbage collection.
     //! \param[in] doFullCycle Set to true if a full cycle should be done, or false if only an iterative step should be done.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List error codes.
+    //! \todo Describe method, List error codes
 	virtual int GarbageCollect(bool doFullCycle = true) = 0;
 	//! \brief Returns the number of objects currently referenced by the garbage collector.
     //! \return The number of objects currently known by the garbage collector.
@@ -1232,71 +1193,62 @@ public:
     //! \brief Prepares the context for execution of the function identified by funcId.
     //! \param[in] funcId The id of the function/method that will be executed.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
+    //! \see \ref doc_call_script_func
 	virtual int Prepare(int funcId) = 0;
 	//! \brief Frees resources held by the context.
     //! \return A negative value on error.
     //! This function is usually not necessary to call.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int Unprepare() = 0;
 
 	//! \brief Sets an 8-bit argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetArgByte(asUINT arg, asBYTE value) = 0;
 	//! \brief Sets a 16-bit argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetArgWord(asUINT arg, asWORD value) = 0;
 	//! \brief Sets a 32-bit integer argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetArgDWord(asUINT arg, asDWORD value) = 0;
 	//! \brief Sets a 64-bit integer argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetArgQWord(asUINT arg, asQWORD value) = 0;
 	//! \brief Sets a float argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetArgFloat(asUINT arg, float value) = 0;
 	//! \brief Sets a double argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetArgDouble(asUINT arg, double value) = 0;
 	//! \brief Sets the address of a reference or handle argument.
     //! \param[in] arg The argument index.
     //! \param[in] addr The address that should be passed in the argument.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetArgAddress(asUINT arg, void *addr) = 0;
 	//! \brief Sets the object argument value.
     //! \param[in] arg The argument index.
     //! \param[in] obj A pointer to the object.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetArgObject(asUINT arg, void *obj) = 0;
 	//! \brief Returns a pointer to the argument for assignment.
     //! \param[in] arg The argument index.
@@ -1307,8 +1259,7 @@ public:
 	//! \brief Sets the object for a class method call.
     //! \param[in] obj A pointer to the object.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetObject(void *obj) = 0;
 
 	//! \brief Returns the 8-bit return value.
@@ -1350,18 +1301,17 @@ public:
 
 	//! \brief Executes the prepared function.
     //! \return A negative value on error, or one of \ref asEContextState.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
+    //! \see \ref doc_call_script_func
 	virtual int Execute() = 0;
 	//! \brief Aborts the execution.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int Abort() = 0;
 	//! \brief Suspends the execution, which can then be resumed by calling Execute again.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
+    //! \see \ref doc_call_script_func
 	virtual int Suspend() = 0;
 
 	//! \brief Get the current line number that is being executed.
@@ -1378,8 +1328,7 @@ public:
  	//! \brief Sets an exception, which aborts the execution.
     //! \param[in] string A string that describes the exception that occurred.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int SetException(const char *string) = 0;
 	//! \brief Returns the line number where the exception occurred.
     //! \param[out] column The variable will receive the column number.
@@ -1401,8 +1350,7 @@ public:
     //! \param[in] obj The object pointer on which the callback is called.
     //! \param[in] callConv The calling convention of the callback function/method.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int  SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes a previously registered callback.
     //! Removes a previously registered callback.
@@ -1412,8 +1360,7 @@ public:
     //! \param[in] obj The object pointer on which the callback is called.
     //! \param[in] callConv The calling convention of the callback function/method.
     //! \return A negative value on error.
-    //! \todo Describe method
-    //! \todo List errors
+    //! \todo Describe method, List error codes
 	virtual int  SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes a previously registered callback.
     //! Removes a previously registered callback.
@@ -1916,7 +1863,7 @@ enum asEBehaviours
 	// Assignment operators
 	asBEHAVE_FIRST_ASSIGN,
 	 //! \brief (Object) operator =
-	 asBEHAVE_ASSIGNMENT,
+	 asBEHAVE_ASSIGNMENT = asBEHAVE_FIRST_ASSIGN,
 	 //! \brief (Object) operator +=
 	 asBEHAVE_ADD_ASSIGN,
 	 //! \brief (Object) operator -=
@@ -1939,12 +1886,12 @@ enum asEBehaviours
 	 asBEHAVE_SRL_ASSIGN,
 	 //! \brief (Object) operator >>>= (Arithmetic right shift)
 	 asBEHAVE_SRA_ASSIGN,
-	asBEHAVE_LAST_ASSIGN,
+	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
 
 	// Global operators
 	asBEHAVE_FIRST_DUAL,
 	 //! \brief (Global) operator +
-	 asBEHAVE_ADD,
+	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
 	 //! \brief (Global) operator -
 	 asBEHAVE_SUBTRACT,
 	 //! \brief (Global) operator *
@@ -1981,12 +1928,12 @@ enum asEBehaviours
 	 asBEHAVE_BIT_SRL,
 	 //! \brief (Global) operator >>> (Arithmetic right shift)
 	 asBEHAVE_BIT_SRA,
-	asBEHAVE_LAST_DUAL,
+	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,
 	//! \brief (Object, GC) Get reference count
-	 asBEHAVE_GETREFCOUNT,
+	 asBEHAVE_GETREFCOUNT = asBEHAVE_FIRST_GC,
 	 //! \brief (Object, GC) Set GC flag
 	 asBEHAVE_SETGCFLAG,
 	 //! \brief (Object, GC) Get GC flag
@@ -1995,7 +1942,7 @@ enum asEBehaviours
 	 asBEHAVE_ENUMREFS,
 	 //! \brief (Object, GC) Release all references
 	 asBEHAVE_RELEASEREFS,
-	asBEHAVE_LAST_GC,
+	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
 };
 
 // Return codes
