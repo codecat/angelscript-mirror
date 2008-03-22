@@ -90,7 +90,7 @@ public:
 
 	int RegisterGlobalProperty(const char *declaration, void *pointer);
 	int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-	int RegisterGlobalBehaviour(asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv);
+	int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv);
 
 	int RegisterInterface(const char *name);
 	int RegisterInterfaceMethod(const char *intf, const char *declaration);

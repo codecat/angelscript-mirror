@@ -1894,7 +1894,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	return func.id;
 }
 
-int asCScriptEngine::RegisterGlobalBehaviour(asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
 	int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
@@ -2584,6 +2584,8 @@ int asCScriptEngine::LoadByteCode(const char *_module, asIBinaryStream *stream)
 	return asINVALID_ARG;
 }
 
+// TODO: Create a new engine property asEP_MAX_STACK_SIZE
+// TODO: Remove this method. The contexts should determine their initial automatically
 int asCScriptEngine::SetDefaultContextStackSize(asUINT initial, asUINT maximum)
 {
 	// Sizes are given in bytes, but we store them in dwords
