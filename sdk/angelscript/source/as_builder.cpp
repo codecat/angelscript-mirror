@@ -768,7 +768,8 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	// TODO: Property names must be checked against function names
 
 	// Check against class types
-	for( asUINT n = 0; n < classDeclarations.GetLength(); n++ )
+	asUINT n;
+	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
 		if( classDeclarations[n]->name == name )
 		{
@@ -788,7 +789,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	}
 
 	// Check against named types
-	for( asUINT n = 0; n < namedTypeDeclarations.GetLength(); n++ )
+	for( n = 0; n < namedTypeDeclarations.GetLength(); n++ )
 	{
 		if( namedTypeDeclarations[n]->name == name )
 		{
@@ -2268,7 +2269,8 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 	bool found = false;
 
 	// Search all available enum types
-	for( asUINT t = 0; t < engine->objectTypes.GetLength(); t++ )
+	asUINT t;
+	for( t = 0; t < engine->objectTypes.GetLength(); t++ )
 	{
 		asCObjectType *ot = engine->objectTypes[t];
 		if( ot && (ot->flags & asOBJ_NAMED_ENUM) )
@@ -2294,7 +2296,7 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 		}
 	}
 
-	for( asUINT t = 0; t < module->classTypes.GetLength(); t++ )
+	for( t = 0; t < module->classTypes.GetLength(); t++ )
 	{
 		asCObjectType *ot = module->classTypes[t];
 		if( ot && (ot->flags & asOBJ_NAMED_ENUM) )

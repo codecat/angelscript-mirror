@@ -63,8 +63,9 @@ asCObjectType::~asCObjectType()
 {
 	if( subType )
 		subType->refCount--;
-		
-	for( asUINT n = 0; n < properties.GetLength(); n++ )
+
+	asUINT n;
+	for( n = 0; n < properties.GetLength(); n++ )
 		if( properties[n] ) 
 		{
 			if( flags & asOBJ_SCRIPT_STRUCT )
@@ -81,7 +82,7 @@ asCObjectType::~asCObjectType()
 
 	methods.SetLength(0);
 
-	for( asUINT n = 0; n < enumValues.GetLength(); n++ )
+	for( n = 0; n < enumValues.GetLength(); n++ )
 	{
 		if( enumValues[n] )
 			DELETE(enumValues[n],asSEnumValue);
