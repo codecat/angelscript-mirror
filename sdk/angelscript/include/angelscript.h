@@ -200,8 +200,8 @@ extern "C"
 #ifdef AS_C_INTERFACE
 	AS_API int               asEngine_AddRef(asIScriptEngine *e);
 	AS_API int               asEngine_Release(asIScriptEngine *e);
-	AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asDWORD property, asPWORD value);
-	AS_API asPWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asDWORD property);
+	AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asEEngineProp property, asPWORD value);
+	AS_API asPWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asEEngineProp property);
 	AS_API int               asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv);
 	AS_API int               asEngine_ClearMessageCallback(asIScriptEngine *e);
 	AS_API int               asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags);

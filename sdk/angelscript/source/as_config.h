@@ -425,6 +425,9 @@
 		#else
 			// No support for native calling conventions yet
 			#define AS_MAX_PORTABILITY
+			// STDCALL is not available on 64bit Linux
+			#undef STDCALL
+			#define STDCALL
 		#endif
 
 	// PSP and PS2

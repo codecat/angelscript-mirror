@@ -55,8 +55,8 @@ public:
 
 int               asEngine_AddRef(asIScriptEngine *e)                                                                                                                                { return e->AddRef(); }
 int               asEngine_Release(asIScriptEngine *e)                                                                                                                               { return e->Release(); }
-int               asEngine_SetEngineProperty(asIScriptEngine *e, asDWORD property, asPWORD value)                                                                                    { return e->SetEngineProperty(property, value); }
-asPWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asDWORD property)                                                                                                   { return e->GetEngineProperty(property); }
+int               asEngine_SetEngineProperty(asIScriptEngine *e, asEEngineProp property, asPWORD value)                                                                                    { return e->SetEngineProperty(property, value); }
+asPWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asEEngineProp property)                                                                                                   { return e->GetEngineProperty(property); }
 int               asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv)                                                                { return e->SetMessageCallback(asFUNCTION(callback), obj, callConv); }
 int               asEngine_ClearMessageCallback(asIScriptEngine *e)                                                                                                                  { return e->ClearMessageCallback(); }
 int               asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags)                                                                     { return e->RegisterObjectType(name, byteSize, flags); }

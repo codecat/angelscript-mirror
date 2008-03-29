@@ -67,11 +67,11 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! The library version.
-#define ANGELSCRIPT_VERSION        21200
+#define ANGELSCRIPT_VERSION        21201
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  12
-#define ANGELSCRIPT_VERSION_BUILD  0
-#define ANGELSCRIPT_VERSION_STRING "2.12.0"
+#define ANGELSCRIPT_VERSION_BUILD  1
+#define ANGELSCRIPT_VERSION_STRING "2.12.1 WIP"
 
 // Data types
 
@@ -320,8 +320,8 @@ extern "C"
 #ifdef AS_C_INTERFACE
 	AS_API int               asEngine_AddRef(asIScriptEngine *e);
 	AS_API int               asEngine_Release(asIScriptEngine *e);
-	AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asDWORD property, asPWORD value);
-	AS_API asPWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asDWORD property);
+	AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asEEngineProp property, asPWORD value);
+	AS_API asPWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asEEngineProp property);
 	AS_API int               asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv);
 	AS_API int               asEngine_ClearMessageCallback(asIScriptEngine *e);
 	AS_API int               asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags);
