@@ -617,6 +617,8 @@ int asCScriptEngine::GetFunctionIDByIndex(const char *module, int index)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
+	// TODO: Check for out-of-bounds
+
 	return mod->scriptFunctions[index]->id;
 }
 

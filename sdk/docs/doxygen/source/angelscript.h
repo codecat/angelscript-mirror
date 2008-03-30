@@ -789,12 +789,15 @@ public:
     //! \param[in] type The name of the new typedef
     //! \param[in] decl The datatype that the typedef represents
     //! \return A negative value on error.
+    //! \retval asINVALID_NAME The \a type is null.
+    //! \retval asALREADY_REGISTERED A type with the same name already exists.
+    //! \retval asINVALID_TYPE The \a decl is not a primitive type.
+    //! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
+    //! \retval asNAME_TAKEN The name is already used elsewhere.
     //!
     //! This method registers an alias for a data type.
     //!
     //! Currently typedefs can only be registered for built-in primitive types.
-    //!
-    //! \todo List error codes
 	virtual int RegisterTypedef(const char *type, const char *decl) = 0;
 
 	//! \brief Registers the string factory.
@@ -802,46 +805,59 @@ public:
     //! \param[in] datatype The datatype that the string factory returns
     //! \param[in] factoryFunc The pointer to the factory function
     //! \param[in] callConv The calling convention of the factory function
-    //! \return A negative value on error.
+    //! \return A negative value on error, or the function id if successful.
+    //! \retval asNOT_SUPPORTED The calling convention is not supported.
+    //! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
+    //! \retval asINVALID_TYPE The \a datatype is not a valid type.
     //!
     //! Use this function to register a string factory that will be called when the 
     //! virtual machine finds a string constant in an expression. The string factory 
     //! function will receive two parameters, the length of the string constant and a 
-    //! pointer to the character data.
+    //! pointer to the character data. The factory should return a value to a previously 
+    //! registered type that will represent the string. Example:
     //!
-    //! \todo List error codes, give example for string factory 
+    //! \code
+    //! // Our string factory implementation
+    //! std::string StringFactory(unsigned int length, const char *s)
+    //! {
+    //!     return std::string(s);
+    //! }
+    //!
+    //! // Registering the string factory
+    //! int r = engine->RegisterStringFactory("string", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
+    //! \endcode
+    //!
+    //! The example assumes that the std::string type has been registered as the string type, with \ref RegisterObjectType.
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv) = 0;
 
 	//! \brief Starts a new dynamic configuration group.
     //!
     //! \param[in] groupName The name of the configuration group
     //! \return A negative value on error
+    //! \retval asNAME_TAKEN Another group with the same name already exists.
+    //! \retval asNOT_SUPPORTED Nesting configuration groups is not supported.
     //!
     //! Starts a new dynamic configuration group. This group can be setup so that it is only 
     //! visible to specific modules, and it can also be removed when it is no longer used.
-    //!
-    //! \todo List error codes
 	virtual int BeginConfigGroup(const char *groupName) = 0;
 	//! \brief Ends the configuration group.
     //!
     //! \return A negative value on error
+    //! \retval asNOT_SUPPORTED Can't end a group that hasn't been begun.
     //!
     //! Ends the current configuration group. Once finished a config group cannot be changed, 
     //! but it can be removed when it is no longer used.
-    //!
-    //! \todo List error codes
 	virtual int EndConfigGroup() = 0;
 	//! \brief Removes a previously registered configuration group.
     //!
     //! \param[in] groupName The name of the configuration group
     //! \return A negative value on error
+    //! \retval asCONFIG_GROUP_IS_IN_USE The group is in use and cannot be removed.
     //!
     //! Remove the configuration group. If something in the configuration group is currently in 
     //! use, the function will return with an error code. Examples of uses are compiled modules 
     //! that have function calls to functions in the group and global variables of types registered 
     //! in the group.
-    //!
-    //! \todo List error codes
 	virtual int RemoveConfigGroup(const char *groupName) = 0;
 	//! \brief Tell AngelScript which modules have access to which configuration groups.
     //!
@@ -849,6 +865,7 @@ public:
     //! \param[in] module The module name
     //! \param[in] hasAccess Whether the module has access or not to the group members
     //! \return A negative value on error
+    //! \retval asWRONG_CONFIG_GROUP No group with the \a groupName was found.
     //!
     //! With this method the application can give modules access to individual configuration groups. 
     //! This is useful when exposing more than one script interface for various parts of the application, 
@@ -856,8 +873,6 @@ public:
     //!
     //! The default module access is granted. The default for a group can be changed by specifying 
     //! the modulename asALL_MODULES. 
-    //!
-    //! \todo List error codes
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
@@ -869,6 +884,7 @@ public:
     //! \param[in] codeLength The length of the script code
     //! \param[in] lineOffset An offset that will be added to compiler message line numbers
     //! \return A negative value on error
+    //! \retval asNO_MODULE The module was not found.
     //!
     //! This adds a script section to the engine. All sections added will be treated as if one 
     //! large script. Errors reported will give the name of the corresponding section.
@@ -876,13 +892,14 @@ public:
     //! The code added is copied by the engine, so there is no need to keep the original buffer after the call.
     //! Note that this can be changed by setting the engine property \ref asEP_COPY_SCRIPT_SECTIONS
     //! with \ref SetEngineProperty.
-    //!
-    //! \todo List error codes
 	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
 	//! \brief Build the previously added script sections.
     //!
     //! \param[in] module The name of the module
     //! \return A negative value on error
+    //! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR The script failed to build.
     //!
     //! Builds the script based on the added sections, and registered types and functions. After the
     //! build is complete the script sections are removed to free memory. If the script module needs 
@@ -890,68 +907,69 @@ public:
     //! 
     //! Compiler messages are sent to the message callback function set with \ref SetMessageCallback. 
     //! If there are no errors or warnings, no messages will be sent to the callback function.
-    //!
-    //! \todo List error codes
 	virtual int Build(const char *module) = 0;
 	//! \brief Discard a compiled module.
     //!
     //! \param[in] module The name of the module
     //! \return A negative value on error
+    //! \retval asNO_MODULE The module was not found.
     //!
     //! Discards a module and frees its memory.
-    //!
-    //! \todo List error codes
     virtual int Discard(const char *module) = 0;
 	//! \brief Reset the global variables of a module.
     //!
     //! \param[in] module The name of the module
     //! \return A negative value on error
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR The module was not compiled successfully.
     //!
     //! Resets the global variables declared in this module to their initial value.
-    //!
-   //! \todo List error codes
 	virtual int ResetModule(const char *module) = 0;
 
 	// Script functions
 	//! \brief Returns the number of global functions in the module.
     //! \param[in] module The name of the module.
     //! \return A negative value on error, or the number of global functions in this module.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR The module was not compiled successfully.
     //!
     //! This method retrieves the number of compiled script functions.
-    //!
-    //! \todo List error codes
 	virtual int GetFunctionCount(const char *module) = 0;
 	//! \brief Returns the function id by index.
     //! \param[in] module The name of the module.
     //! \param[in] index The index of the function.
     //! \return A negative value on error, or the function id.
+    //! \retval asNO_MODULE The module was not found.
     //!
     //! This method should be used to retrieve the ID of the script function that you wish to 
     //! execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare"  method.
-    //!
-    //! \todo List error codes
 	virtual int GetFunctionIDByIndex(const char *module, int index) = 0;
 	//! \brief Returns the function id by name.
     //! \param[in] module The name of the module.
     //! \param[in] name The name of the function.
     //! \return A negative value on error, or the function id.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR The module was not compiled successfully.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
+    //! \retval asNO_FUNCTION Didn't find any matching functions.
     //!
     //! This method should be used to retrieve the ID of the script function that you 
     //! wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-    //!
-    //! \todo List error codes
 	virtual int GetFunctionIDByName(const char *module, const char *name) = 0;
 	//! \brief Returns the function id by declaration.
     //! \param[in] module The name of the module.
     //! \param[in] decl The function signature.
     //! \return A negative value on error, or the function id.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR The module was not compiled successfully.
+    //! \retval asINVALID_DECLARATION The \a decl is invalid.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
+    //! \retval asNO_FUNCTION Didn't find any matching functions.
     //!
     //! This method should be used to retrieve the ID of the script function that you wish 
     //! to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
     //!
     //! The method will find the script function with the exact same declaration.
-    //!
-    //! \todo List error codes
 	virtual int GetFunctionIDByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns the function declaration.
     //! \param[in] funcId The function id.
@@ -995,39 +1013,47 @@ public:
 	//! \brief Returns the number of methods for the object type.
     //! \param[in] typeId The object type id.
     //! \return A negative value on error, or the number of methods for this object.
-    //! \todo List error codes
+    //! \retval asINVALID_ARG \a typeId is not a type.
+    //! \retval asINVALID_TYPE \a typeId is not an object type.
 	virtual int GetMethodCount(int typeId) = 0;
 	//! \brief Returns the method id by index.
     //! \param[in] typeId The object type id.
     //! \param[in] index The index of the method.
     //! \return A negative value on error, or the method id.
+    //! \retval asINVALID_ARG \a typeId is not a type, or index is out of bounds.
+    //! \retval asINVALID_TYPE \a typeId is not an object type.
     //!
     //! This method should be used to retrieve the ID of the script method for the object 
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-    //!
-    //! \todo List error codes
 	virtual int GetMethodIDByIndex(int typeId, int index) = 0;
 	//! \brief Returns the method id by name.
     //! \param[in] typeId The object type id.
     //! \param[in] name The name of the method.
     //! \return A negative value on error, or the method id.
+    //! \retval asINVALID_ARG \a typeId is not a type, or index is out of bounds.
+    //! \retval asINVALID_TYPE \a typeId is not an object type.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
+    //! \retval asNO_FUNCTION Didn't find any matching method.
     //!
     //! This method should be used to retrieve the ID of the script method for the object 
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-    //!
-    //! \todo List error codes
 	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
 	//! \brief Returns the method id by declaration.
     //! \param[in] typeId The object type id.
     //! \param[in] decl The method signature.
     //! \return A negative value on error, or the method id.
+    //! \retval asINVALID_ARG \a typeId is not a type, or index is out of bounds.
+    //! \retval asINVALID_TYPE \a typeId is not an object type.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
+    //! \retval asNO_FUNCTION Didn't find any matching method.
+    //! \retval asINVALID_DECLARATION \a decl is not a valid declaration.
+    //! \retval asNO_MODULE The type is not a script class or interface.
+    //! \retval asERROR The module for the type was not built successfully.
     //!
     //! This method should be used to retrieve the ID of the script method for the object 
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
     //!
     //! The method will find the script method with the exact same declaration.
-    //!
-    //! \todo List error codes
 	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
 	//! \brief Returns the function descriptor for the script method
     //! \param[in] typeId The object type id.
@@ -1039,36 +1065,37 @@ public:
 	//! \brief Returns the number of global variables in the module.
     //! \param[in] module The name of the module.
     //! \return A negative value on error, or the number of global variables in the module.
-    //! \todo List error codes
+    //! \retval asNO_MODULE The module was not found.
 	virtual int GetGlobalVarCount(const char *module) = 0;
 	//! \brief Returns the global variable id by index.
     //! \param[in] module The name of the module.
     //! \param[in] index The index of the global variable.
     //! \return A negative value on error, or the global variable id.
+    //! \retval asNO_MODULE The module was not found.
     //!
     //! This method should be used to retrieve the ID of the script variable that you wish to access.
-    //!
-    //! \todo List error codes
 	virtual int GetGlobalVarIDByIndex(const char *module, int index) = 0;
 	//! \brief Returns the global variable id by name.
     //! \param[in] module The name of the module.
     //! \param[in] name The name of the global variable.
     //! \return A negative value on error, or the global variable id.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR The module for the type was not built successfully.
+    //! \retval asNO_GLOBAL_VAR The matching global variable was found.
     //!
     //! This method should be used to retrieve the ID of the script variable that you wish to access.
-    //!
-    //! \todo List error codes
 	virtual int GetGlobalVarIDByName(const char *module, const char *name) = 0;
 	//! \brief Returns the global variable id by declaration.
     //! \param[in] module The name of the module.
     //! \param[in] decl The global variable declaration.
     //! \return A negative value on error, or the global variable id.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR The module for the type was not built successfully.
+    //! \retval asNO_GLOBAL_VAR The matching global variable was found.
     //!
     //! This method should be used to retrieve the ID of the script variable that you wish to access.
     //!
     //! The method will find the script variable with the exact same declaration.
-    //!
-    //! \todo List error codes
 	virtual int GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns the global variable declaration.
     //! \param[in] gvarID The global variable id.
@@ -1100,20 +1127,22 @@ public:
 	//! \brief Returns the number of functions declared for import.
     //! \param[in] module The name of the module.
     //! \return A negative value on error, or the number of imported functions.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR The module was not built successfully.
     //!
     //! This function returns the number of functions that are imported in a module. These 
     //! functions need to be bound before they can be used, or a script exception will be thrown.
-    //!
-    //! \todo List error codes
 	virtual int GetImportedFunctionCount(const char *module) = 0;
 	//! \brief Returns the imported function index by declaration.
     //! \param[in] module The name of the module.
     //! \param[in] decl The function declaration of the imported function.
     //! \return A negative value on error, or the index of the imported function.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR The module was not built successfully.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
+    //! \retval asNO_FUNCTION Didn't find any matching function.
     //!
     //! This function is used to find a specific imported function by its declaration.
-    //!
-    //! \todo List error codes
 	virtual int GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns the imported function declaration.
     //! \param[in] module The name of the module.
@@ -1138,39 +1167,39 @@ public:
     //! \param[in] importIndex The index of the imported function.
     //! \param[in] funcId The function id of the function that will be bound to the imported function.
     //! \return A negative value on error.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asNO_FUNCTION \a importIndex or \a fundId is incorrect.
+    //! \retval asINVALID_INTERFACE The signature of function doesn't match the import statement.
     //!
     //! The imported function is only bound if the functions have the exact same signature, 
     //! i.e the same return type, and parameters.
-    //!
-    //! \todo List error codes
 	virtual int BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
 	//! \brief Unbinds an imported function.
     //! \param[in] module The name of the module.
     //! \param[in] importIndex The index of the imported function.
     //! \return A negative value on error.
+    //! \retval asNO_MODULE The module was not found.
     //!
     //! Unbinds the imported function.
-    //!
-    //! \todo List error codes
 	virtual int UnbindImportedFunction(const char *module, int importIndex) = 0;
 
 	//! \brief Binds all imported functions in a module, by searching their equivalents in the declared source modules.
     //! \param[in] module The name of the module.
     //! \return A negative value on error.
+    //! \retval asNO_MODULE The module was not found.
+    //! \retval asERROR An error occurred.
+    //! \retval asCANT_BIND_ALL_FUNCTIONS Not all functions where bound.
     //!
     //! This functions tries to bind all imported functions in the module by searching for matching 
     //! functions in the suggested modules. If a function cannot be bound the function will give an 
     //! error \ref asCANT_BIND_ALL_FUNCTIONS, but it will continue binding the rest of the functions.
-    //!
-    //! \todo List error codes
 	virtual int BindAllImportedFunctions(const char *module) = 0;
 	//! \brief Unbinds all imported functions.
     //! \param[in] module The name of the module.
     //! \return A negative value on error.
+    //! \retval asNO_MODULE The module was not found.
     //!
     //! Unbinds all imported functions in the module.
-    //!
-    //! \todo List error codes
 	virtual int UnbindAllImportedFunctions(const char *module) = 0;
 
 	// Type identification
@@ -1178,6 +1207,7 @@ public:
     //! \param[in] module The name of the module.
     //! \param[in] decl The declaration of the type.
     //! \return A negative value on error, or the type id of the type.
+    //! \retval asINVALID_TYPE \a decl is not a valid type.
     //!
     //! Translates a type declaration into a type id. The returned type id is valid for as long as
     //! the type is valid, so you can safely store it for later use to avoid potential overhead by 
@@ -1191,8 +1221,6 @@ public:
     //! A base type yields the same type id whether the declaration is const or not, however if the 
     //! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
     //! string@ but string is the same as const string. 
-    //!
-    //! \todo List error codes
 	virtual int GetTypeIdByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns a type declaration.
     //! \param[in] typeId The type id of the type.
@@ -1201,8 +1229,7 @@ public:
 	virtual const char *GetTypeDeclaration(int typeId, int *length = 0) = 0;
 	//! \brief Returns the size of a primitive type.
     //! \param[in] typeId The type id of the type.
-    //! \return A negative value on error, or the size of the type in bytes.
-    //! \todo List error codes
+    //! \return The size of the type in bytes.
 	virtual int GetSizeOfPrimitiveType(int typeId) = 0;
 	//! \brief Returns the object type interface for type.
     //! \param[in] typeId The type id of the type.
@@ -1213,15 +1240,14 @@ public:
     //! \return The object type interface for the type, or null if not found.
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
 	//! \brief Returns the number of object types.
-    //! \return A negative value on error, or the number of object types known to the engine.
-    //! \todo List error codes
+    //! \return The number of object types known to the engine.
 	virtual int GetObjectTypeCount() = 0;
 
 	// Script execution
 	//! \brief Sets the default context stack size.
     //! \param[in] initial The smallest stack size
     //! \param[in] maximum The largest stack size
-    //! \return A negative value on error.
+    //! \return Success.
     //!
     //! This method allow the application define the initial and maximum context stack sizes. 
     //! All contexts will use these values when allocating the stack size.
@@ -1231,8 +1257,6 @@ public:
     //! than 0 then the stack size will only until the size has been reached. Each time the 
     //! stack grows its size is doubled, which means that the stack size can be at most 2 times 
     //! the maximum size.
-    //!
-    //! \todo List error codes
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
 	//! \brief Creates a new script context.
     //! \return A pointer to the new script context.
@@ -1305,13 +1329,14 @@ public:
     //! \param[in] rightObj A pointer to the right object.
     //! \param[in] typeId The type id of the objects.
     //! \return A negative value on error.
+    //! \retval asINVALID_TYPE The \a typeId must be an object type.
+    //! \retval asINVALID_ARG The \a behaviour must be one of the comparison behaviours.
+    //! \retval asNOT_SUPPORTED The comparison operator is not supported by this type.
     //!
     //! This method will allow the application compare two object types without having to 
     //! know the exact type of the objects being compared. The function will only work on 
     //! objects, and then only on those objects that permit comparisons, i.e. registered types 
     //! that have the comparison behaviours registered.
-    //!
-    //! \todo List errors
 	virtual int CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
@@ -1321,16 +1346,23 @@ public:
     //! \param[in,out] ctx Either pass in your own context or receive the default context, depending on the flags parameter.
     //! \param[in] flags A combination of the values from \ref asEExecStrFlags.
     //! \return One of \ref asEContextState values, or a negative value on compiler error.
+    //! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
+    //! \retval asINVALID_ARG \a ctx is null and \a flags is asEXECSTRING_USE_MY_CONTEXT.
+    //! \retval asERROR The string failed to build.
+    //! \retval asCONTEXT_ACTIVE The context is already active or in suspended state.
+    //! \retval asEXECUTION_PREPARED The context has been prepared and is ready for execution.
+    //! \retval asEXECUTION_ABORTED The execution was aborted with a call to \ref asIScriptContext::Abort.
+    //! \retval asEXECUTION_SUSPENDED The execution was suspended with a call to \ref asIScriptContext::Suspend.
+    //! \retval asEXECUTION_FINISHED The execution finished successfully.
+    //! \retval asEXECUTION_EXCEPTION The execution ended with an exception.
     //!
     //! This method allow an application to interpret script statements using the currently compiled code.
-    //!
-    //! \todo List error codes
 	virtual int ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
 	//! \brief Perform garbage collection.
     //! \param[in] doFullCycle Set to true if a full cycle should be done, or false if only an iterative step should be done.
-    //! \return 1 if the cycle wasn't completed, 0 if it was, or a negative value on error.
+    //! \return 1 if the cycle wasn't completed, 0 if it was.
     //!
     //! This method will free script objects that can no longer be reached. When the engine 
     //! is released the garbage collector will automatically do a full cycle to release all 
@@ -1342,8 +1374,6 @@ public:
     //! It is not necessary to do a full cycle with every call. This makes it possible to spread 
     //! out the garbage collection time over a large period, thus not impacting the responsiveness 
     //! of the application.
-    //!
-    //! \todo List error codes
 	virtual int GarbageCollect(bool doFullCycle = true) = 0;
 	//! \brief Returns the number of objects currently referenced by the garbage collector.
     //! \return The number of objects currently known by the garbage collector.
