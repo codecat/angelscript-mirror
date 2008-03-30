@@ -675,6 +675,9 @@ public:
     //! \param[in] declaration The declaration of the global property in script syntax.
     //! \param[in] pointer The address of the property that will be used to access the property value.
     //! \return A negative value on error.
+    //! \retval asINVALID_DECLARATION The declaration has invalid syntax.
+    //! \retval asINVALID_TYPE The declaration is a reference.
+    //! \retval asNAME_TAKEN The name is already taken.
     //!
     //! Use this method to register a global property that the scripts will be
     //! able to access as global variables. The property may optionally be registered
@@ -684,19 +687,20 @@ public:
     //! the actual value. The application must also make sure that this address
     //! remains valid throughout the life time of this registration, i.e. until
     //! the engine is released or the dynamic configuration group is removed.
-    //!
-    //! \todo List error codes
 	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
 	//! \brief Registers a global function.
     //!
     //! \param[in] declaration The declaration of the global function in script syntax.
     //! \param[in] funcPointer The function pointer.
     //! \param[in] callConv The calling convention for the function.
-    //! \return A negative value on error.
+    //! \return A negative value on error, or the function id if successful.
+    //! \retval asNOT_SUPPORTED The calling convention is not supported.
+    //! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
+    //! \retval asINVALID_DECLARATION The function declaration is invalid.
+    //! \retval asNAME_TAKEN The function name is already used elsewhere.
     //!
     //! This method registers system functions that the scripts may use to communicate with the host application.
     //! 
-    //! \todo List error codes
     //! \see \ref doc_register_func
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Registers a global behaviour, e.g. operators.
@@ -705,7 +709,11 @@ public:
     //! \param[in] declaration The declaration of the behaviour function in script syntax.
     //! \param[in] funcPointer The function pointer.
     //! \param[in] callConv The calling convention for the function.
-    //! \return A negative value on error.
+    //! \return A negative value on error, or the function id if successful.
+    //! \retval asNOT_SUPPORTED The calling convention is not supported.
+    //! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
+    //! \retval asINVALID_DECLARATION The function declaration is invalid.
+    //! \retval asINVALID_ARG The behaviour is not a global behaviour.
     //!
     //! By registering behaviour functions for a data type AngelScript is able to improve object handling. 
     //! You can for example easily control how references are counted, or create objects that can be 
@@ -721,7 +729,6 @@ public:
     //! If the parameter is sent by reference, then declare it as const, as it may allow the compiler to 
     //! optimize the code to execute faster.
     //!
-    //! \todo List error codes
     //! \see \ref doc_register_func
 	virtual int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 
@@ -729,33 +736,40 @@ public:
     //!
     //! \param[in] name The name of the interface.
     //! \return A negative value on error.
+    //! \retval asINVALID_NAME The \a name is null, or a reserved keyword.
+    //! \retval asALREADY_REGISTERED An object type with this name already exists.
+    //! \retval asERROR The \a name is not a proper identifier.
+    //! \retval asNAME_TAKEN The \a name is already used elsewhere.
     //!
     //! This registers an interface that script classes can implement. By doing this the application 
     //! can register functions and methods that receives an asIScriptStruct and still be sure that the 
     //! structure implements certain methods needed by the application. 
-    //!
-    //! \todo List error codes
 	virtual int RegisterInterface(const char *name) = 0;
 	//! \brief Registers an interface method.
     //!
     //! \param[in] intf The name of the interface.
     //! \param[in] declaration The method declaration.
     //! \return A negative value on error.
+    //! \retval asWRONG_CONFIG_GROUP The interface was registered in another configuration group.
+    //! \retval asINVALID_TYPE \a intf is not an interface type.
+    //! \retval asINVALID_DECLARATION The \a declaration is invalid.
+    //! \retval asNAME_TAKEN The method name is already taken.
     //!
     //! This registers a method that the class that implements the interface must have.
-    //!
-    //! \todo List the error codes
 	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 
 	//! \brief Registers an enum type.
     //!
     //! \param[in] type The name of the enum type.
     //! \return A negative value on error.
+    //! \retval asINVALID_NAME \a type is null.
+    //! \retval asALREADY_REGISTERED Another type with this name already exists.
+    //! \retval asERROR The \a type couldn't be parsed.
+    //! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
+    //! \retval asNAME_TAKEN The type name is already taken.
     //!
     //! This method registers an enum type in the engine. The enum values should then be registered 
     //! with \ref RegisterEnumValue.
-    //!
-    //! \todo List error codes
 	virtual int RegisterEnum(const char *type) = 0;
 	//! \brief Registers an enum value.
     //!
@@ -763,10 +777,11 @@ public:
     //! \param[in] name The name of the enum value.
     //! \param[in] value The integer value of the enum value.
     //! \return A negative value on error.
+    //! \retval asWRONG_CONFIG_GROUP The enum \a type was registered in a different configuration group.
+    //! \retval asINVALID_TYPE The \a type is invalid.
+    //! \retval asALREADY_REGISTERED The \a name is already registered for this enum.
     //!
     //! This method registers an enum value for a previously registered enum type.
-    //!
-    //! \todo List error codes
 	virtual int RegisterEnumValue(const char *type, const char *name, int value) = 0;
 
 	//! \brief Registers a typedef.
@@ -1431,87 +1446,104 @@ public:
     //! \brief Prepares the context for execution of the function identified by funcId.
     //! \param[in] funcId The id of the function/method that will be executed.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_ACTIVE The context is still active or suspended.
+    //! \retval asNO_FUNCTION The function id doesn't exist.
     //!
     //! This method prepares the context for execution of a script function. It allocates 
     //! the stack space required and reserves space for return value and parameters. The 
     //! default value for parameters and return value is 0.
     //!
-    //! \todo List error codes
     //! \see \ref doc_call_script_func
 	virtual int Prepare(int funcId) = 0;
 	//! \brief Frees resources held by the context.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_ACTIVE The context is still active or suspended.
     //!
     //! This function frees resources held by the context. It's usually not necessary 
     //! to call this function as the resources are automatically freed when the context
     //! is released, or reused when \ref Prepare is called again.
-    //! \todo List error codes
 	virtual int Unprepare() = 0;
 
 	//! \brief Sets an 8-bit argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asINVALID_ARG The \a arg is larger than the number of arguments in the prepared function.
+    //! \retval asINVALID_TYPE The argument is not an 8-bit value.
     //!
     //! Sets a 1 byte argument.
-    //! \todo List error codes
 	virtual int SetArgByte(asUINT arg, asBYTE value) = 0;
 	//! \brief Sets a 16-bit argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asINVALID_ARG The \a arg is larger than the number of arguments in the prepared function.
+    //! \retval asINVALID_TYPE The argument is not a 16-bit value.
     //!
     //! Sets a 2 byte argument.
-    //! \todo List error codes
 	virtual int SetArgWord(asUINT arg, asWORD value) = 0;
 	//! \brief Sets a 32-bit integer argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asINVALID_ARG The \a arg is larger than the number of arguments in the prepared function.
+    //! \retval asINVALID_TYPE The argument is not a 32-bit value.
     //!
     //! Sets a 4 byte argument.
-    //! \todo List error codes
 	virtual int SetArgDWord(asUINT arg, asDWORD value) = 0;
 	//! \brief Sets a 64-bit integer argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asINVALID_ARG The \a arg is larger than the number of arguments in the prepared function.
+    //! \retval asINVALID_TYPE The argument is not a 64-bit value.
     //!
     //! Sets an 8 byte argument.
-    //! \todo List error codes
 	virtual int SetArgQWord(asUINT arg, asQWORD value) = 0;
 	//! \brief Sets a float argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asINVALID_ARG The \a arg is larger than the number of arguments in the prepared function.
+    //! \retval asINVALID_TYPE The argument is not a 32-bit value.
     //!
     //! Sets a float argument.
-    //! \todo List error codes
 	virtual int SetArgFloat(asUINT arg, float value) = 0;
 	//! \brief Sets a double argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asINVALID_ARG The \a arg is larger than the number of arguments in the prepared function.
+    //! \retval asINVALID_TYPE The argument is not a 64-bit value.
     //!
     //! Sets a double argument.
-    //! \todo List error codes
 	virtual int SetArgDouble(asUINT arg, double value) = 0;
 	//! \brief Sets the address of a reference or handle argument.
     //! \param[in] arg The argument index.
     //! \param[in] addr The address that should be passed in the argument.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asINVALID_ARG The \a arg is larger than the number of arguments in the prepared function.
+    //! \retval asINVALID_TYPE The argument is not a reference or an object handle.
     //!
     //! Sets an address argument, e.g. an object handle or a reference.
-    //! \todo List error codes
 	virtual int SetArgAddress(asUINT arg, void *addr) = 0;
 	//! \brief Sets the object argument value.
     //! \param[in] arg The argument index.
     //! \param[in] obj A pointer to the object.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asINVALID_ARG The \a arg is larger than the number of arguments in the prepared function.
+    //! \retval asINVALID_TYPE The argument is not an object or handle.
     //!
     //! Sets an object argument. If the argument is an object handle AngelScript will increment the reference
     //! for the object. If the argument is an object value AngelScript will make a copy of the object.
-    //! \todo List error codes
 	virtual int SetArgObject(asUINT arg, void *obj) = 0;
 	//! \brief Returns a pointer to the argument for assignment.
     //! \param[in] arg The argument index.
@@ -1525,10 +1557,10 @@ public:
 	//! \brief Sets the object for a class method call.
     //! \param[in] obj A pointer to the object.
     //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asERROR The prepared function is not a class method.
     //!
     //! This method sets object pointer when calling class methods.
-    //!
-    //! \todo List error codes
 	virtual int SetObject(void *obj) = 0;
 
 	//! \brief Returns the 8-bit return value.
@@ -1561,27 +1593,32 @@ public:
 
 	//! \brief Executes the prepared function.
     //! \return A negative value on error, or one of \ref asEContextState.
+    //! \retval asERROR Invalid context object, the context is not prepared, or it is not in suspended state.
+    //! \retval asEXECUTION_ABORTED The execution was aborted with a call to \ref Abort.
+    //! \retval asEXECUTION_SUSPENDED The execution was suspended with a call to \ref Suspend.
+    //! \retval asEXECUTION_FINISHED The execution finished successfully.
+    //! \retval asEXECUTION_EXCEPTION The execution ended with an exception.
     //!
-    //! Executes the prepared function until the script returns. If the execution was previously suspended the function resumes where it left of.
+    //! Executes the prepared function until the script returns. If the execution was previously 
+    //! suspended the function resumes where it left of.
     //! 
-    //! Note that if the script freezes, e.g. if trapped in a never ending loop, you may call Abort() from another thread to stop execution.
+    //! Note that if the script freezes, e.g. if trapped in a never ending loop, you may call 
+    //! \ref Abort from another thread to stop execution.
     //! 
-    //! \todo List error codes
     //! \see \ref doc_call_script_func
 	virtual int Execute() = 0;
 	//! \brief Aborts the execution.
     //! \return A negative value on error.
+    //! \retval asERROR Invalid context object.
     //!
     //! Aborts the current execution of a script.
-    //!
-    //! \todo List error codes
 	virtual int Abort() = 0;
 	//! \brief Suspends the execution, which can then be resumed by calling Execute again.
     //! \return A negative value on error.
+    //! \retval asERROR Invalid context object.
     //!
     //! Suspends the current execution of a script. The execution can then be resumed by calling \ref Execute again.
     //!
-    //! \todo List error codes
     //! \see \ref doc_call_script_func
 	virtual int Suspend() = 0;
 
@@ -1600,6 +1637,7 @@ public:
  	//! \brief Sets an exception, which aborts the execution.
     //! \param[in] string A string that describes the exception that occurred.
     //! \return A negative value on error.
+    //! \retval asERROR The context isn't currently calling an application registered function.
     //!
     //! This method sets a script exception in the context. This will only work if the 
     //! context is currently calling a system function, thus this method can only be 
@@ -1607,8 +1645,6 @@ public:
     //!
     //! Note that if your system function sets an exception, it should not return any 
     //! object references because the engine will not release the returned reference.
-    //!
-    //! \todo List error codes
 	virtual int SetException(const char *string) = 0;
 	//! \brief Returns the line number where the exception occurred.
     //! \param[out] column The variable will receive the column number.
@@ -1630,6 +1666,9 @@ public:
     //! \param[in] obj The object pointer on which the callback is called.
     //! \param[in] callConv The calling convention of the callback function/method.
     //! \return A negative value on error.
+    //! \retval asNOT_SUPPORTED Calling convention must not be asCALL_GENERIC, or the routine's calling convention is not supported.
+    //! \retval asINVALID_ARG   \a obj must not be null for class methods.
+    //! \retval asWRONG_CALLING_CONV \a callConv isn't compatible with the routines' calling convention.
     //!
     //! This function sets a callback function that will be called by the VM each time the SUSPEND 
     //! instruction is encounted. Generally this instruction is placed before each statement. Thus by 
@@ -1650,7 +1689,6 @@ public:
     //! \ref asCALL_THISCALL, \ref asCALL_CDECL_OBJLAST, or \ref asCALL_CDECL_OBJFIRST.
     //!
     //! \see \ref doc_debug
-    //! \todo List error codes
 	virtual int  SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes a previously registered callback.
     //! Removes a previously registered callback.
@@ -1660,14 +1698,15 @@ public:
     //! \param[in] obj The object pointer on which the callback is called.
     //! \param[in] callConv The calling convention of the callback function/method.
     //! \return A negative value on error.
+    //! \retval asNOT_SUPPORTED Calling convention must not be asCALL_GENERIC, or the routine's calling convention is not supported.
+    //! \retval asINVALID_ARG   \a obj must not be null for class methods.
+    //! \retval asWRONG_CALLING_CONV \a callConv isn't compatible with the routines' calling convention.
     //!
     //! This callback function will be called by the VM when a script exception is raised, which 
     //! allow the application to examine the callstack and generate a detailed report before the 
     //! callstack is cleaned up.
     //!
     //! See \ref SetLineCallback for details on the calling convention.
-    //!
-    //! \todo List error codes
 	virtual int  SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes a previously registered callback.
     //! Removes a previously registered callback.
@@ -1830,59 +1869,57 @@ public:
     //! \brief Sets the 8-bit return value.
     //! \param[in] val The return value.
     //! \return A negative value on error.
+    //! \retval asINVALID_TYPE The return type is not an 8-bit value.
     //! Sets the 1 byte return value.
-    //! \todo List errors
 	virtual int     SetReturnByte(asBYTE val) = 0;
     //! \brief Sets the 16-bit return value.
     //! \param[in] val The return value.
     //! \return A negative value on error.
+    //! \retval asINVALID_TYPE The return type is not a 16-bit value.
     //! Sets the 2 byte return value.
-    //! \todo List errors
 	virtual int     SetReturnWord(asWORD val) = 0;
     //! \brief Sets the 32-bit integer return value.
     //! \param[in] val The return value.
     //! \return A negative value on error.
+    //! \retval asINVALID_TYPE The return type is not a 32-bit value.
     //! Sets the 4 byte return value.
-    //! \todo List errors
 	virtual int     SetReturnDWord(asDWORD val) = 0;
     //! \brief Sets the 64-bit integer return value.
     //! \param[in] val The return value.
     //! \return A negative value on error.
+    //! \retval asINVALID_TYPE The return type is not a 64-bit value.
     //! Sets the 8 byte return value.
-    //! \todo List errors
 	virtual int     SetReturnQWord(asQWORD val) = 0;
     //! \brief Sets the float return value.
     //! \param[in] val The return value.
     //! \return A negative value on error.
+    //! \retval asINVALID_TYPE The return type is not a 32-bit value.
     //! Sets the float return value.
-    //! \todo List errors
 	virtual int     SetReturnFloat(float val) = 0;
     //! \brief Sets the double return value.
     //! \param[in] val The return value.
     //! \return A negative value on error.
+    //! \retval asINVALID_TYPE The return type is not a 64-bit value.
     //! Sets the double return value.
-    //! \todo List errors
 	virtual int     SetReturnDouble(double val) = 0;
     //! \brief Sets the address return value when the return is a reference or handle.
     //! \param[in] addr The return value, which is an address.
     //! \return A negative value on error.
+    //! \retval asINVALID_TYPE The return type is not a reference or handle.
     //!
     //! Sets the address return value. If an object handle the application must first 
     //! increment the reference counter, unless it won't keep a reference itself.
-    //!
-    //! \todo List errors
 	virtual int     SetReturnAddress(void *addr) = 0;
     //! \brief Sets the object return value.
     //! \param[in] obj A pointer to the object return value.
     //! \return A negative value on error.
+    //! \retval asINVALID_TYPE The return type is not an object value or handle.
     //!
     //! If the function returns an object, the library will automatically do what is 
     //! necessary based on how the object was declared, i.e. if the function was 
     //! registered to return a handle then the library will call the addref behaviour. 
     //! If it was registered to return an object by value, then the library will make 
     //! a copy of the object.
-    //!
-    //! \todo List errors
 	virtual int     SetReturnObject(void *obj) = 0;
     //! \brief Gets the pointer to the return value so it can be assigned a value.
     //! \return A pointer to the return value.
@@ -1955,9 +1992,10 @@ public:
     //! \brief Copies the content from another object of the same type.
     //! \param[in] other A pointer to the source object.
     //! \return A negative value on error.
+    //! \retval asINVALID_ARG  The argument is null.
+    //! \retval asINVALID_TYPE The other object is of different type.
     //!
     //! This method copies the contents of the other object to this one.
-    //! \todo List errors
 	virtual int CopyFrom(asIScriptStruct *other) = 0;
 
 protected:
@@ -2013,9 +2051,10 @@ public:
     //! \brief Copies the elements from another array, overwriting the current content.
     //! \param[in] other A pointer to the source array.
     //! \return A negative value on error.
+    //! \retval asINVALID_ARG  The argument is null.
+    //! \retval asINVALID_TYPE The other array is of different type.
     //! 
     //! This method copies the contents of the other object to this one.
-    //! \todo List errors
 	virtual int    CopyFrom(asIScriptArray *other) = 0;
 
 protected:

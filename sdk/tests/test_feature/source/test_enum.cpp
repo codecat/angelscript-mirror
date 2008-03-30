@@ -39,6 +39,11 @@ enum TEST_ENUM
 	ENUM3
 };
 
+void func(asIScriptGeneric *g)
+{
+	TEST_ENUM e = (TEST_ENUM)g->GetArgDWord(0);
+}
+
 std::string buffer;
 static void scriptOutput(int val1)
 {
@@ -64,7 +69,13 @@ static bool TestEnum()
 	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM2", ENUM2); assert(r >= 0);
 	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM3", ENUM3); assert(r >= 0);
 
+	r = engine->RegisterGlobalFunction("void funce(TEST_ENUM)", asFUNCTION(func), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void output(int val1)", asFUNCTION(scriptOutput), asCALL_CDECL); assert(r >= 0);
+
+	// Test calling generic function with enum value
+	r = engine->ExecuteString(0, "funce(ENUM1);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
 
 	// Test using the registered enum values
 	r = engine->ExecuteString(0, "output(ENUM1); output(ENUM2)");
