@@ -84,13 +84,313 @@ class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
 
-enum asEMsgType;
-enum asEContextState;
-enum asEExecStrFlags;
-enum asEEngineProp;
-enum asECallConvTypes;
-enum asETypeIdFlags;
-enum asEBehaviours;
+//! \defgroup const Constants
+//!@{
+
+// Enumerations and constants
+
+// Engine properties
+//! Engine properties
+enum asEEngineProp
+{
+	//! Allow unsafe references. Default: false.
+	asEP_ALLOW_UNSAFE_REFERENCES = 1,
+	//! Optimize byte code. Default: true.
+	asEP_OPTIMIZE_BYTECODE       = 2,
+	//! Copy script section memory. Default: true.
+	asEP_COPY_SCRIPT_SECTIONS    = 3,
+};
+
+// Calling conventions
+//! Calling conventions
+enum asECallConvTypes
+{
+	//! A cdecl function.
+	asCALL_CDECL            = 0,
+	//! A stdcall function.
+	asCALL_STDCALL          = 1,
+	//! A thiscall class method.
+	asCALL_THISCALL         = 2,
+	//! A cdecl function that takes the object pointer as the last parameter.
+	asCALL_CDECL_OBJLAST    = 3,
+	//! A cdecl function that takes the object pointer as the first parameter.
+	asCALL_CDECL_OBJFIRST   = 4,
+	//! A function using the generic calling convention.
+	asCALL_GENERIC          = 5,
+};
+
+// Object type flags
+//! Object type flags
+enum asEObjTypeFlags
+{
+	//! A reference type.
+	asOBJ_REF                   = 0x01,
+	//! A value type.
+	asOBJ_VALUE                 = 0x02,
+	//! A garbage collected type. Only valid with asOBJ_REF.
+	asOBJ_GC                    = 0x04,
+	//! A plain-old-data type. Only valid with asOBJ_VALUE.
+	asOBJ_POD                   = 0x08,
+	//! This reference type doesn't allow handles to be held. Only value with asOBJ_REF.
+	asOBJ_NOHANDLE              = 0x10,
+	//! The life time of objects of this type are controlled by the scope of the variable. Only valid with asOBJ_REF.
+	asOBJ_SCOPED                = 0x20,
+	//! The C++ type is a class type. Only valid with asOBJ_VALUE.
+	asOBJ_APP_CLASS             = 0x100,
+	//! The C++ class has an explicit constructor. Only valid with asOBJ_VALUE.
+	asOBJ_APP_CLASS_CONSTRUCTOR = 0x200,
+	//! The C++ class has an explicit destructor. Only valid with asOBJ_VALUE.
+	asOBJ_APP_CLASS_DESTRUCTOR  = 0x400,
+	//! The C++ class has an explicit assignment operator. Only valid with asOBJ_VALUE.
+	asOBJ_APP_CLASS_ASSIGNMENT  = 0x800,
+	asOBJ_APP_CLASS_C           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
+	asOBJ_APP_CLASS_CD          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
+	asOBJ_APP_CLASS_CA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_CDA         = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_D           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
+	asOBJ_APP_CLASS_A           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	//! The C++ type is a primitive type. Only valid with asOBJ_VALUE.
+	asOBJ_APP_PRIMITIVE         = 0x1000,
+	//! The C++ type is a float or double. Only valid with asOBJ_VALUE.
+	asOBJ_APP_FLOAT             = 0x2000,
+	asOBJ_MASK_VALID_FLAGS      = 0x3F3F,
+};
+
+// Behaviours
+//! Behaviours
+enum asEBehaviours
+{
+	// Value object memory management
+	//! \brief (Object) Constructor
+	asBEHAVE_CONSTRUCT,
+	//! \brief (Object) Destructor
+	asBEHAVE_DESTRUCT,
+
+	// Reference object memory management
+	//! \brief (Object) Factory
+	asBEHAVE_FACTORY,
+	//! \brief (Object) AddRef
+	asBEHAVE_ADDREF,
+	//! \brief (Object) Release
+	asBEHAVE_RELEASE,
+
+	// Object operators
+	//! \brief (Object) Value cast operator
+	asBEHAVE_VALUE_CAST,
+	//! \brief (Object) operator []
+	asBEHAVE_INDEX,
+	//! \brief (Object) operator - (Unary negate)
+	asBEHAVE_NEGATE,
+
+	// Assignment operators
+	asBEHAVE_FIRST_ASSIGN,
+	 //! \brief (Object) operator =
+	 asBEHAVE_ASSIGNMENT = asBEHAVE_FIRST_ASSIGN,
+	 //! \brief (Object) operator +=
+	 asBEHAVE_ADD_ASSIGN,
+	 //! \brief (Object) operator -=
+	 asBEHAVE_SUB_ASSIGN,
+	 //! \brief (Object) operator *=
+	 asBEHAVE_MUL_ASSIGN,
+	 //! \brief (Object) operator /=
+	 asBEHAVE_DIV_ASSIGN,
+	 //! \brief (Object) operator %=
+	 asBEHAVE_MOD_ASSIGN,
+	 //! \brief (Object) operator |=
+	 asBEHAVE_OR_ASSIGN,
+	 //! \brief (Object) operator &=
+	 asBEHAVE_AND_ASSIGN,
+	 //! \brief (Object) operator ^=
+	 asBEHAVE_XOR_ASSIGN,
+	 //! \brief (Object) operator <<=
+	 asBEHAVE_SLL_ASSIGN,
+	 //! \brief (Object) operator >>= (Logical right shift)
+	 asBEHAVE_SRL_ASSIGN,
+	 //! \brief (Object) operator >>>= (Arithmetic right shift)
+	 asBEHAVE_SRA_ASSIGN,
+	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
+
+	// Global operators
+	asBEHAVE_FIRST_DUAL,
+	 //! \brief (Global) operator +
+	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
+	 //! \brief (Global) operator -
+	 asBEHAVE_SUBTRACT,
+	 //! \brief (Global) operator *
+	 asBEHAVE_MULTIPLY,
+	 //! \brief (Global) operator /
+	 asBEHAVE_DIVIDE,
+	 //! \brief (Global) operator %
+	 asBEHAVE_MODULO,
+	 //! \brief (Global) operator ==
+	 asBEHAVE_EQUAL,
+	 //! \brief (Global) operator !=
+	 asBEHAVE_NOTEQUAL,
+	 //! \brief (Global) operator <
+	 asBEHAVE_LESSTHAN,
+	 //! \brief (Global) operator >
+	 asBEHAVE_GREATERTHAN,
+	 //! \brief (Global) operator <=
+	 asBEHAVE_LEQUAL,
+	 //! \brief (Global) operator >=
+	 asBEHAVE_GEQUAL,
+	 //! \brief (Global) operator ||
+	 asBEHAVE_LOGIC_OR,
+	 //! \brief (Global) operator &&
+	 asBEHAVE_LOGIC_AND,
+	 //! \brief (Global) operator |
+	 asBEHAVE_BIT_OR,
+	 //! \brief (Global) operator &
+	 asBEHAVE_BIT_AND,
+	 //! \brief (Global) operator ^
+	 asBEHAVE_BIT_XOR,
+	 //! \brief (Global) operator <<
+	 asBEHAVE_BIT_SLL,
+	 //! \brief (Global) operator >> (Logical right shift)
+	 asBEHAVE_BIT_SRL,
+	 //! \brief (Global) operator >>> (Arithmetic right shift)
+	 asBEHAVE_BIT_SRA,
+	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
+
+	// Garbage collection behaviours
+	asBEHAVE_FIRST_GC,
+	//! \brief (Object, GC) Get reference count
+	 asBEHAVE_GETREFCOUNT = asBEHAVE_FIRST_GC,
+	 //! \brief (Object, GC) Set GC flag
+	 asBEHAVE_SETGCFLAG,
+	 //! \brief (Object, GC) Get GC flag
+	 asBEHAVE_GETGCFLAG,
+	 //! \brief (Object, GC) Enumerate held references
+	 asBEHAVE_ENUMREFS,
+	 //! \brief (Object, GC) Release all references
+	 asBEHAVE_RELEASEREFS,
+	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
+};
+
+// Return codes
+//! Return codes
+enum asERetCodes
+{
+	//! Success
+	asSUCCESS                              =  0,
+	//! Failure
+	asERROR                                = -1,
+	//! The context is active
+	asCONTEXT_ACTIVE                       = -2,
+	//! The context is not finished
+	asCONTEXT_NOT_FINISHED                 = -3,
+	//! The context is not prepared
+	asCONTEXT_NOT_PREPARED                 = -4,
+	//! Invalid argument
+	asINVALID_ARG                          = -5,
+	//! The function was not found
+	asNO_FUNCTION                          = -6,
+	//! Not supported
+	asNOT_SUPPORTED                        = -7,
+	//! Invalid name
+	asINVALID_NAME                         = -8,
+	//! The name is already taken
+	asNAME_TAKEN                           = -9,
+	//! Invalid declaration
+	asINVALID_DECLARATION                  = -10,
+	//! Invalid object
+	asINVALID_OBJECT                       = -11,
+	//! Invalid type
+	asINVALID_TYPE                         = -12,
+	//! Already registered
+	asALREADY_REGISTERED                   = -13,
+	//! Multiple matching functions
+	asMULTIPLE_FUNCTIONS                   = -14,
+	//! The module was not found
+	asNO_MODULE                            = -15,
+	//! The global variable was not found
+	asNO_GLOBAL_VAR                        = -16,
+	//! Invalid configuration
+	asINVALID_CONFIGURATION                = -17,
+	//! Invalid interface
+	asINVALID_INTERFACE                    = -18,
+	//! All imported functions couldn't be bound
+	asCANT_BIND_ALL_FUNCTIONS              = -19,
+	//! The array sub type has not been registered yet
+	asLOWER_ARRAY_DIMENSION_NOT_REGISTERED = -20,
+	//! Wrong configuration group
+	asWRONG_CONFIG_GROUP                   = -21,
+	//! The configuration group is in use
+	asCONFIG_GROUP_IS_IN_USE               = -22,
+	//! Illegal behaviour for the type
+	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
+	//! The specified calling convention doesn't match the function/method pointer
+	asWRONG_CALLING_CONV                   = -24,
+};
+
+// Context states
+
+//! \brief Context states.
+enum asEContextState
+{
+	//! The context has successfully completed the execution.
+    asEXECUTION_FINISHED      = 0,
+    //! The execution is suspended and can be resumed.
+    asEXECUTION_SUSPENDED     = 1,
+    //! The execution was aborted by the application.
+    asEXECUTION_ABORTED       = 2,
+    //! The execution was terminated by an unhandled script exception.
+    asEXECUTION_EXCEPTION     = 3,
+    //! The context has been prepared for a new execution.
+    asEXECUTION_PREPARED      = 4,
+    //! The context is not initialized.
+    asEXECUTION_UNINITIALIZED = 5,
+    //! The context is currently executing a function call.
+    asEXECUTION_ACTIVE        = 6,
+    //! The context has encountered an error and must be reinitialized.
+    asEXECUTION_ERROR         = 7,
+};
+
+// ExecuteString flags
+
+//! \brief ExecuteString flags.
+enum asEExecStrFlags
+{
+	//! Only prepare the context
+	asEXECSTRING_ONLY_PREPARE	= 1,
+	//! Use the pre-allocated context
+	asEXECSTRING_USE_MY_CONTEXT = 2,
+};
+
+// Message types
+
+//! \brief Compiler message types.
+enum asEMsgType
+{
+	//! The message is an error.
+    asMSGTYPE_ERROR       = 0,
+    //! The message is a warning.
+    asMSGTYPE_WARNING     = 1,
+    //! The message is informational only.
+    asMSGTYPE_INFORMATION = 2,
+};
+
+// Prepare flags
+const int asPREPARE_PREVIOUS = -1;
+
+// Config groups
+const char * const asALL_MODULES = (const char * const)-1;
+
+// Type id flags
+enum asETypeIdFlags
+{
+	asTYPEID_OBJHANDLE      = 0x40000000,
+	asTYPEID_HANDLETOCONST  = 0x20000000,
+	asTYPEID_MASK_OBJECT    = 0x1C000000,
+	asTYPEID_APPOBJECT      = 0x04000000,
+	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
+	asTYPEID_SCRIPTARRAY    = 0x10000000,
+	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF,
+};
+
+//!@}
+
 
 //! \typedef asBYTE
 //! \brief 8 bit unsigned integer
@@ -2176,313 +2476,6 @@ public:
 
 public:
 	virtual ~asIBinaryStream() {}
-};
-
-//!@}
-
-//! \defgroup const Constants
-//!@{
-
-// Enumerations and constants
-
-// Engine properties
-//! Engine properties
-enum asEEngineProp
-{
-	//! Allow unsafe references. Default: false.
-	asEP_ALLOW_UNSAFE_REFERENCES = 1,
-	//! Optimize byte code. Default: true.
-	asEP_OPTIMIZE_BYTECODE       = 2,
-	//! Copy script section memory. Default: true.
-	asEP_COPY_SCRIPT_SECTIONS    = 3,
-};
-
-// Calling conventions
-//! Calling conventions
-enum asECallConvTypes
-{
-	//! A cdecl function.
-	asCALL_CDECL            = 0,
-	//! A stdcall function.
-	asCALL_STDCALL          = 1,
-	//! A thiscall class method.
-	asCALL_THISCALL         = 2,
-	//! A cdecl function that takes the object pointer as the last parameter.
-	asCALL_CDECL_OBJLAST    = 3,
-	//! A cdecl function that takes the object pointer as the first parameter.
-	asCALL_CDECL_OBJFIRST   = 4,
-	//! A function using the generic calling convention.
-	asCALL_GENERIC          = 5,
-};
-
-// Object type flags
-//! Object type flags
-enum asEObjTypeFlags
-{
-	//! A reference type.
-	asOBJ_REF                   = 0x01,
-	//! A value type.
-	asOBJ_VALUE                 = 0x02,
-	//! A garbage collected type. Only valid with asOBJ_REF.
-	asOBJ_GC                    = 0x04,
-	//! A plain-old-data type. Only valid with asOBJ_VALUE.
-	asOBJ_POD                   = 0x08,
-	//! This reference type doesn't allow handles to be held. Only value with asOBJ_REF.
-	asOBJ_NOHANDLE              = 0x10,
-	//! The life time of objects of this type are controlled by the scope of the variable. Only valid with asOBJ_REF.
-	asOBJ_SCOPED                = 0x20,
-	//! The C++ type is a class type. Only valid with asOBJ_VALUE.
-	asOBJ_APP_CLASS             = 0x100,
-	//! The C++ class has an explicit constructor. Only valid with asOBJ_VALUE.
-	asOBJ_APP_CLASS_CONSTRUCTOR = 0x200,
-	//! The C++ class has an explicit destructor. Only valid with asOBJ_VALUE.
-	asOBJ_APP_CLASS_DESTRUCTOR  = 0x400,
-	//! The C++ class has an explicit assignment operator. Only valid with asOBJ_VALUE.
-	asOBJ_APP_CLASS_ASSIGNMENT  = 0x800,
-	asOBJ_APP_CLASS_C           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
-	asOBJ_APP_CLASS_CD          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
-	asOBJ_APP_CLASS_CA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
-	asOBJ_APP_CLASS_CDA         = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
-	asOBJ_APP_CLASS_D           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
-	asOBJ_APP_CLASS_A           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
-	asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
-	//! The C++ type is a primitive type. Only valid with asOBJ_VALUE.
-	asOBJ_APP_PRIMITIVE         = 0x1000,
-	//! The C++ type is a float or double. Only valid with asOBJ_VALUE.
-	asOBJ_APP_FLOAT             = 0x2000,
-	asOBJ_MASK_VALID_FLAGS      = 0x3F3F,
-};
-
-// Behaviours
-//! Behaviours
-enum asEBehaviours
-{
-	// Value object memory management
-	//! \brief (Object) Constructor
-	asBEHAVE_CONSTRUCT,
-	//! \brief (Object) Destructor
-	asBEHAVE_DESTRUCT,
-
-	// Reference object memory management
-	//! \brief (Object) Factory
-	asBEHAVE_FACTORY,
-	//! \brief (Object) AddRef
-	asBEHAVE_ADDREF,
-	//! \brief (Object) Release
-	asBEHAVE_RELEASE,
-
-	// Object operators
-	//! \brief (Object) Value cast operator
-	asBEHAVE_VALUE_CAST,
-	//! \brief (Object) operator []
-	asBEHAVE_INDEX,
-	//! \brief (Object) operator - (Unary negate)
-	asBEHAVE_NEGATE,
-
-	// Assignment operators
-	asBEHAVE_FIRST_ASSIGN,
-	 //! \brief (Object) operator =
-	 asBEHAVE_ASSIGNMENT = asBEHAVE_FIRST_ASSIGN,
-	 //! \brief (Object) operator +=
-	 asBEHAVE_ADD_ASSIGN,
-	 //! \brief (Object) operator -=
-	 asBEHAVE_SUB_ASSIGN,
-	 //! \brief (Object) operator *=
-	 asBEHAVE_MUL_ASSIGN,
-	 //! \brief (Object) operator /=
-	 asBEHAVE_DIV_ASSIGN,
-	 //! \brief (Object) operator %=
-	 asBEHAVE_MOD_ASSIGN,
-	 //! \brief (Object) operator |=
-	 asBEHAVE_OR_ASSIGN,
-	 //! \brief (Object) operator &=
-	 asBEHAVE_AND_ASSIGN,
-	 //! \brief (Object) operator ^=
-	 asBEHAVE_XOR_ASSIGN,
-	 //! \brief (Object) operator <<=
-	 asBEHAVE_SLL_ASSIGN,
-	 //! \brief (Object) operator >>= (Logical right shift)
-	 asBEHAVE_SRL_ASSIGN,
-	 //! \brief (Object) operator >>>= (Arithmetic right shift)
-	 asBEHAVE_SRA_ASSIGN,
-	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
-
-	// Global operators
-	asBEHAVE_FIRST_DUAL,
-	 //! \brief (Global) operator +
-	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
-	 //! \brief (Global) operator -
-	 asBEHAVE_SUBTRACT,
-	 //! \brief (Global) operator *
-	 asBEHAVE_MULTIPLY,
-	 //! \brief (Global) operator /
-	 asBEHAVE_DIVIDE,
-	 //! \brief (Global) operator %
-	 asBEHAVE_MODULO,
-	 //! \brief (Global) operator ==
-	 asBEHAVE_EQUAL,
-	 //! \brief (Global) operator !=
-	 asBEHAVE_NOTEQUAL,
-	 //! \brief (Global) operator <
-	 asBEHAVE_LESSTHAN,
-	 //! \brief (Global) operator >
-	 asBEHAVE_GREATERTHAN,
-	 //! \brief (Global) operator <=
-	 asBEHAVE_LEQUAL,
-	 //! \brief (Global) operator >=
-	 asBEHAVE_GEQUAL,
-	 //! \brief (Global) operator ||
-	 asBEHAVE_LOGIC_OR,
-	 //! \brief (Global) operator &&
-	 asBEHAVE_LOGIC_AND,
-	 //! \brief (Global) operator |
-	 asBEHAVE_BIT_OR,
-	 //! \brief (Global) operator &
-	 asBEHAVE_BIT_AND,
-	 //! \brief (Global) operator ^
-	 asBEHAVE_BIT_XOR,
-	 //! \brief (Global) operator <<
-	 asBEHAVE_BIT_SLL,
-	 //! \brief (Global) operator >> (Logical right shift)
-	 asBEHAVE_BIT_SRL,
-	 //! \brief (Global) operator >>> (Arithmetic right shift)
-	 asBEHAVE_BIT_SRA,
-	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
-
-	// Garbage collection behaviours
-	asBEHAVE_FIRST_GC,
-	//! \brief (Object, GC) Get reference count
-	 asBEHAVE_GETREFCOUNT = asBEHAVE_FIRST_GC,
-	 //! \brief (Object, GC) Set GC flag
-	 asBEHAVE_SETGCFLAG,
-	 //! \brief (Object, GC) Get GC flag
-	 asBEHAVE_GETGCFLAG,
-	 //! \brief (Object, GC) Enumerate held references
-	 asBEHAVE_ENUMREFS,
-	 //! \brief (Object, GC) Release all references
-	 asBEHAVE_RELEASEREFS,
-	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
-};
-
-// Return codes
-//! Return codes
-enum asERetCodes
-{
-	//! Success
-	asSUCCESS                              =  0,
-	//! Failure
-	asERROR                                = -1,
-	//! The context is active
-	asCONTEXT_ACTIVE                       = -2,
-	//! The context is not finished
-	asCONTEXT_NOT_FINISHED                 = -3,
-	//! The context is not prepared
-	asCONTEXT_NOT_PREPARED                 = -4,
-	//! Invalid argument
-	asINVALID_ARG                          = -5,
-	//! The function was not found
-	asNO_FUNCTION                          = -6,
-	//! Not supported
-	asNOT_SUPPORTED                        = -7,
-	//! Invalid name
-	asINVALID_NAME                         = -8,
-	//! The name is already taken
-	asNAME_TAKEN                           = -9,
-	//! Invalid declaration
-	asINVALID_DECLARATION                  = -10,
-	//! Invalid object
-	asINVALID_OBJECT                       = -11,
-	//! Invalid type
-	asINVALID_TYPE                         = -12,
-	//! Already registered
-	asALREADY_REGISTERED                   = -13,
-	//! Multiple matching functions
-	asMULTIPLE_FUNCTIONS                   = -14,
-	//! The module was not found
-	asNO_MODULE                            = -15,
-	//! The global variable was not found
-	asNO_GLOBAL_VAR                        = -16,
-	//! Invalid configuration
-	asINVALID_CONFIGURATION                = -17,
-	//! Invalid interface
-	asINVALID_INTERFACE                    = -18,
-	//! All imported functions couldn't be bound
-	asCANT_BIND_ALL_FUNCTIONS              = -19,
-	//! The array sub type has not been registered yet
-	asLOWER_ARRAY_DIMENSION_NOT_REGISTERED = -20,
-	//! Wrong configuration group
-	asWRONG_CONFIG_GROUP                   = -21,
-	//! The configuration group is in use
-	asCONFIG_GROUP_IS_IN_USE               = -22,
-	//! Illegal behaviour for the type
-	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
-	//! The specified calling convention doesn't match the function/method pointer
-	asWRONG_CALLING_CONV                   = -24,
-};
-
-// Context states
-
-//! \brief Context states.
-enum asEContextState
-{
-	//! The context has successfully completed the execution.
-    asEXECUTION_FINISHED      = 0,
-    //! The execution is suspended and can be resumed.
-    asEXECUTION_SUSPENDED     = 1,
-    //! The execution was aborted by the application.
-    asEXECUTION_ABORTED       = 2,
-    //! The execution was terminated by an unhandled script exception.
-    asEXECUTION_EXCEPTION     = 3,
-    //! The context has been prepared for a new execution.
-    asEXECUTION_PREPARED      = 4,
-    //! The context is not initialized.
-    asEXECUTION_UNINITIALIZED = 5,
-    //! The context is currently executing a function call.
-    asEXECUTION_ACTIVE        = 6,
-    //! The context has encountered an error and must be reinitialized.
-    asEXECUTION_ERROR         = 7,
-};
-
-// ExecuteString flags
-
-//! \brief ExecuteString flags.
-enum asEExecStrFlags
-{
-	//! Only prepare the context
-	asEXECSTRING_ONLY_PREPARE	= 1,
-	//! Use the pre-allocated context
-	asEXECSTRING_USE_MY_CONTEXT = 2,
-};
-
-// Message types
-
-//! \brief Compiler message types.
-enum asEMsgType
-{
-	//! The message is an error.
-    asMSGTYPE_ERROR       = 0,
-    //! The message is a warning.
-    asMSGTYPE_WARNING     = 1,
-    //! The message is informational only.
-    asMSGTYPE_INFORMATION = 2,
-};
-
-// Prepare flags
-const int asPREPARE_PREVIOUS = -1;
-
-// Config groups
-const char * const asALL_MODULES = (const char * const)-1;
-
-// Type id flags
-enum asETypeIdFlags
-{
-	asTYPEID_OBJHANDLE      = 0x40000000,
-	asTYPEID_HANDLETOCONST  = 0x20000000,
-	asTYPEID_MASK_OBJECT    = 0x1C000000,
-	asTYPEID_APPOBJECT      = 0x04000000,
-	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
-	asTYPEID_SCRIPTARRAY    = 0x10000000,
-	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF,
 };
 
 //!@}
