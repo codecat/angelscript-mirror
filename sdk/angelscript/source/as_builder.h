@@ -69,6 +69,7 @@ struct sGlobalVariableDescription
 	int index;
 	bool isCompiled;
 	bool isPureConstant;
+	bool isEnumValue;
 	asQWORD constantValue;
 };
 

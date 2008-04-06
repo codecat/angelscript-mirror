@@ -246,6 +246,19 @@ static bool TestEnum()
 	if( buffer != "2\n2\n1\n" )
 		fail = true;
 
+	// Using registered enum type in a script
+	engine->RegisterEnum("game_type_t");
+	const char *script5 =
+	"game_type_t random_game_type;\n"
+	"void foo(game_type_t game_type)\n"
+	"{\n"
+	"   random_game_type = game_type;\n"
+	"};\n";
+	r = engine->AddScriptSection(0, "script", script5, strlen(script5));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
 	engine->Release();
 
 	// Success

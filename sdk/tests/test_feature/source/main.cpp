@@ -173,12 +173,12 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestTypedef::Test()           ) goto failed; else printf("-- TestTypedef passed\n");
-	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
 	if( Test2Modules()                ) goto failed; else printf("-- Test2Modules passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");

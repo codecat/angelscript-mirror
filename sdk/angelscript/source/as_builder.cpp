@@ -847,6 +847,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		gvar->name       = name;
 		gvar->isCompiled = false;
 		gvar->datatype   = type;
+		gvar->isEnumValue = false;
 
 		// TODO: Give error message if wrong
 		asASSERT(!gvar->datatype.IsReference());
@@ -1014,7 +1015,7 @@ void asCBuilder::CompileGlobalVariables()
 				WriteInfo(gvar->script->name.AddressOf(), str.AddressOf(), r, c, true);
 			}
 
-			if( gvar->datatype.IsEnumType() ) 
+			if( gvar->isEnumValue ) 
 			{
 				int r;
 				if( gvar->node )
@@ -1148,7 +1149,7 @@ void asCBuilder::CompileGlobalVariables()
 	{
 		asCObjectType *objectType;
 		sGlobalVariableDescription *gvar = globVariables[n];
-		if( !gvar->datatype.IsEnumType() ) 
+		if( !gvar->isEnumValue ) 
 			continue;
 
 		objectType = gvar->datatype.GetObjectType();
@@ -1618,6 +1619,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			gvar->index			  = 0;
 			gvar->isCompiled	  = false;
 			gvar->isPureConstant  = true;
+			gvar->isEnumValue     = true;
 			gvar->constantValue   = 0xdeadbeef;
 
 			// Add script variable to engine
