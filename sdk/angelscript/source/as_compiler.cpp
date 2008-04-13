@@ -7285,14 +7285,20 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		}
 
 		// Convert left hand operand to integer if it's not already one
-		if( !(lctx->type.dataType.IsIntegerType() ||
-			  lctx->type.dataType.IsUnsignedType()) )
+		asCDataType to = lctx->type.dataType;
+		if( lctx->type.dataType.IsUnsignedType() && 
+			lctx->type.dataType.GetSizeInMemoryBytes() < 4 )
+		{
+			to = asCDataType::CreatePrimitive(ttUInt, false);
+		}
+		else if( !lctx->type.dataType.IsUnsignedType() )
 		{
 			asCDataType to;
 			if( lctx->type.dataType.GetSizeInMemoryDWords() == 2  )
 				to.SetTokenType(ttInt64);
 			else
 				to.SetTokenType(ttInt);
+		}
 
 			// Do the actual conversion
 			asCArray<int> reservedVars;
@@ -7300,12 +7306,11 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 			ImplicitConversion(lctx, to, node, false, true, &reservedVars);
 
 			// Verify that the conversion was successful
-			if( !lctx->type.dataType.IsIntegerType() )
+		if( lctx->type.dataType != to )
 			{
 				asCString str;
 				str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
 				Error(str.AddressOf(), node);
-			}
 		}
 
 		// Right operand must be 32bit uint

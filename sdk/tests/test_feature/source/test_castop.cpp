@@ -76,6 +76,12 @@ void TypeToString(asIScriptGeneric *gen)
 	*(asCScriptString**)gen->GetReturnPointer() = new asCScriptString("type");
 }
 
+class A
+{
+public:
+	operator const char * ( ) const { return 0; }
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -162,6 +168,9 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 24) : Error   : No matching operator that takes the types 'string@&' and 'type&' found\n" )
 		fail = true;
+
+	// Try using the asMETHOD macro with a cast operator
+	engine->RegisterObjectMethod("obj", "void f()", asMETHOD(A, operator const char *), asCALL_THISCALL);
 
 	engine->Release();
 

@@ -109,6 +109,19 @@ bool Test()
 		if( testInt8.m_fail ) fail = true;
 	}
 	
+	// Shift operations with int8 should result in int32
+	r = engine->ExecuteString(0, "uint8[] buf={1,2,3,4,5,6}; "
+                                 "uint32 version; "
+                                 "version = buf[0]<<24; "
+                                 "version |= buf[1]<<16; "
+                                 "version |= buf[2]<<8; "
+                                 "version |= buf[3]; "
+								 "Assert(version == 0x01020304);");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
 	
 	engine->Release();
 
