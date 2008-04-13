@@ -179,6 +179,13 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		optimizeByteCode = value ? true : false;
 	else if( property == asEP_COPY_SCRIPT_SECTIONS )
 		copyScriptSections = value ? true : false;
+	else if( property == asEP_MAX_STACK_SIZE )
+	{
+		// The size is given in bytes, but we only store dwords
+		maximumContextStackSize = (int)value/4;
+		if( initialContextStackSize > maximumContextStackSize )
+			initialContextStackSize = maximumContextStackSize;
+	}
 	else
 		return asINVALID_ARG;
 
@@ -193,6 +200,8 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 		return optimizeByteCode;
 	else if( property == asEP_COPY_SCRIPT_SECTIONS )
 		return copyScriptSections;
+	else if( property == asEP_MAX_STACK_SIZE )
+		return maximumContextStackSize*4;
 
 	return 0;
 }
@@ -203,7 +212,7 @@ asCScriptEngine::asCScriptEngine()
 	allowUnsafeReferences = false;
 	optimizeByteCode      = true;
 	copyScriptSections    = true;
-
+	maximumContextStackSize = 0;         // no limit
 
 
 	scriptTypeBehaviours.engine = this;
@@ -222,7 +231,7 @@ asCScriptEngine::asCScriptEngine()
 	gcState = 0;
 
 	initialContextStackSize = 1024;      // 1 KB
-	maximumContextStackSize = 0;         // no limit
+	
 
 	typeIdSeqNbr = 0;
 	currentGroup = &defaultGroup;
@@ -2586,8 +2595,7 @@ int asCScriptEngine::LoadByteCode(const char *_module, asIBinaryStream *stream)
 	return asINVALID_ARG;
 }
 
-// TODO: Create a new engine property asEP_MAX_STACK_SIZE
-// TODO: Remove this method. The contexts should determine their initial automatically
+// TODO: Remove this method. It's deprecated
 int asCScriptEngine::SetDefaultContextStackSize(asUINT initial, asUINT maximum)
 {
 	// Sizes are given in bytes, but we store them in dwords

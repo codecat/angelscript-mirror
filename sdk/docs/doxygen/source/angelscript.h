@@ -99,6 +99,8 @@ enum asEEngineProp
 	asEP_OPTIMIZE_BYTECODE       = 2,
 	//! Copy script section memory. Default: true.
 	asEP_COPY_SCRIPT_SECTIONS    = 3,
+	//! Maximum stack size for script contexts. Default: 0 (no limit)
+	asEP_MAX_STACK_SIZE          = 4,
 };
 
 // Calling conventions
@@ -1557,6 +1559,8 @@ public:
     //! than 0 then the stack size will only until the size has been reached. Each time the 
     //! stack grows its size is doubled, which means that the stack size can be at most 2 times 
     //! the maximum size.
+    //!
+    //! \deprecated Use \ref SetEngineProperty with \ref asEP_MAX_STACK_SIZE instead
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
 	//! \brief Creates a new script context.
     //! \return A pointer to the new script context.

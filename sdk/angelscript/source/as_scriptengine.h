@@ -234,7 +234,6 @@ public:
 	asCMemoryMgr memoryMgr;
 
 	int initialContextStackSize;
-	int maximumContextStackSize;
 
 	// Information registered by host
 	asSTypeBehaviour globalBehaviours;
@@ -313,6 +312,7 @@ public:
 	bool allowUnsafeReferences;
 	bool optimizeByteCode;
 	bool copyScriptSections;
+	int  maximumContextStackSize;
 };
 
 END_AS_NAMESPACE

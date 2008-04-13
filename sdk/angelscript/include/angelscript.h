@@ -78,6 +78,7 @@ enum asEEngineProp
 	asEP_ALLOW_UNSAFE_REFERENCES = 1,
 	asEP_OPTIMIZE_BYTECODE       = 2,
 	asEP_COPY_SCRIPT_SECTIONS    = 3,
+	asEP_MAX_STACK_SIZE          = 4,
 };
 
 // Calling conventions
