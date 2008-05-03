@@ -46,7 +46,7 @@ static const char *const script =
 //
 //////////////////////////////////////////////////////////////////////////////
 
-static int TestTypedef(CBytecodeStream &codeStream, bool save)
+static int testTypedef(CBytecodeStream &codeStream, bool save)
 {
 	asIScriptEngine		*engine;
 	COutStream			out;
@@ -98,10 +98,10 @@ bool Test()
 	int r;
 	CBytecodeStream	stream;
 
-	r = TestTypedef(stream, true);
+	r = testTypedef(stream, true);
 	if(r >= 0) 
 	{
-		r = TestTypedef(stream, false);
+		r = testTypedef(stream, false);
 	}
 
 	return (r < 0);

@@ -258,6 +258,23 @@ bool Test()
 	r = engine->ExecuteString(0, "Test()");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
+		
+	// Test bool[] on Mac OS X with PPC CPU
+	// Submitted by Edward Rudd
+	const char *script8 =
+	"bool[] f(10);              \n"
+	"for (int i=0; i<10; i++) { \n"
+	"	f[i] = false;           \n"
+	"}                          \n"
+	"Assert(f[0] == false);     \n"
+	"Assert(f[1] == false);     \n"
+	"f[0] = true;               \n"
+	"Assert(f[0] == true);      \n"
+	"Assert(f[1] == false);     \n";
+	
+	r = engine->ExecuteString(0, script8);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
 
 	engine->Release();
 

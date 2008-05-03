@@ -129,6 +129,12 @@
 		7526F5AD0BEE45A300BAE32D /* angelscript.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7526F5AC0BEE45A300BAE32D /* angelscript.h */; };
 		7526F5B50BEE462100BAE32D /* libas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7526F5B40BEE462100BAE32D /* libas.a */; };
 		75A792F50C92DFFC00F96481 /* test_destructor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75A792F40C92DFFC00F96481 /* test_destructor.cpp */; };
+		75B81B640DCC0E1400FD2C4F /* test_assign.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B5E0DCC0E1400FD2C4F /* test_assign.cpp */; };
+		75B81B650DCC0E1400FD2C4F /* test_enum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B5F0DCC0E1400FD2C4F /* test_enum.cpp */; };
+		75B81B660DCC0E1400FD2C4F /* test_factory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B600DCC0E1400FD2C4F /* test_factory.cpp */; };
+		75B81B670DCC0E1400FD2C4F /* test_implicitcast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B610DCC0E1400FD2C4F /* test_implicitcast.cpp */; };
+		75B81B680DCC0E1400FD2C4F /* test_rz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B620DCC0E1400FD2C4F /* test_rz.cpp */; };
+		75B81B690DCC0E1400FD2C4F /* test_typedef.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B630DCC0E1400FD2C4F /* test_typedef.cpp */; };
 		75C5F4E10C6E1B8B00CAEC26 /* test_dictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75C5F4E00C6E1B8B00CAEC26 /* test_dictionary.cpp */; };
 		75C5F4E40C6E1BA400CAEC26 /* scriptdictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75C5F4E20C6E1BA400CAEC26 /* scriptdictionary.cpp */; };
 		75C5F4E50C6E1BA400CAEC26 /* scriptdictionary.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 75C5F4E30C6E1BA400CAEC26 /* scriptdictionary.h */; };
@@ -289,6 +295,12 @@
 		7526F5AC0BEE45A300BAE32D /* angelscript.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = angelscript.h; path = ../../../../angelscript/include/angelscript.h; sourceTree = SOURCE_ROOT; };
 		7526F5B40BEE462100BAE32D /* libas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libas.a; path = ../../../../angelscript/lib/build/Debug/libas.a; sourceTree = SOURCE_ROOT; };
 		75A792F40C92DFFC00F96481 /* test_destructor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_destructor.cpp; path = ../../source/test_destructor.cpp; sourceTree = SOURCE_ROOT; };
+		75B81B5E0DCC0E1400FD2C4F /* test_assign.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_assign.cpp; path = ../../source/test_assign.cpp; sourceTree = SOURCE_ROOT; };
+		75B81B5F0DCC0E1400FD2C4F /* test_enum.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_enum.cpp; path = ../../source/test_enum.cpp; sourceTree = SOURCE_ROOT; };
+		75B81B600DCC0E1400FD2C4F /* test_factory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_factory.cpp; path = ../../source/test_factory.cpp; sourceTree = SOURCE_ROOT; };
+		75B81B610DCC0E1400FD2C4F /* test_implicitcast.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_implicitcast.cpp; path = ../../source/test_implicitcast.cpp; sourceTree = SOURCE_ROOT; };
+		75B81B620DCC0E1400FD2C4F /* test_rz.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_rz.cpp; path = ../../source/test_rz.cpp; sourceTree = SOURCE_ROOT; };
+		75B81B630DCC0E1400FD2C4F /* test_typedef.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_typedef.cpp; path = ../../source/test_typedef.cpp; sourceTree = SOURCE_ROOT; };
 		75C5F4E00C6E1B8B00CAEC26 /* test_dictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_dictionary.cpp; path = ../../source/test_dictionary.cpp; sourceTree = SOURCE_ROOT; };
 		75C5F4E20C6E1BA400CAEC26 /* scriptdictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = scriptdictionary.cpp; path = ../../../../add_on/scriptdictionary/scriptdictionary.cpp; sourceTree = SOURCE_ROOT; };
 		75C5F4E30C6E1BA400CAEC26 /* scriptdictionary.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = scriptdictionary.h; path = ../../../../add_on/scriptdictionary/scriptdictionary.h; sourceTree = SOURCE_ROOT; };
@@ -330,6 +342,12 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				75B81B5E0DCC0E1400FD2C4F /* test_assign.cpp */,
+				75B81B5F0DCC0E1400FD2C4F /* test_enum.cpp */,
+				75B81B600DCC0E1400FD2C4F /* test_factory.cpp */,
+				75B81B610DCC0E1400FD2C4F /* test_implicitcast.cpp */,
+				75B81B620DCC0E1400FD2C4F /* test_rz.cpp */,
+				75B81B630DCC0E1400FD2C4F /* test_typedef.cpp */,
 				75CD2F6D0CB47F07000A99A8 /* test_registertype.cpp */,
 				75D5B45E0CA6ED2D000F5015 /* scriptany.cpp */,
 				75D5B45F0CA6ED2D000F5015 /* scriptany.h */,
@@ -645,6 +663,12 @@
 				75A792F50C92DFFC00F96481 /* test_destructor.cpp in Sources */,
 				75D5B4600CA6ED2D000F5015 /* scriptany.cpp in Sources */,
 				75CD2F6E0CB47F07000A99A8 /* test_registertype.cpp in Sources */,
+				75B81B640DCC0E1400FD2C4F /* test_assign.cpp in Sources */,
+				75B81B650DCC0E1400FD2C4F /* test_enum.cpp in Sources */,
+				75B81B660DCC0E1400FD2C4F /* test_factory.cpp in Sources */,
+				75B81B670DCC0E1400FD2C4F /* test_implicitcast.cpp in Sources */,
+				75B81B680DCC0E1400FD2C4F /* test_rz.cpp in Sources */,
+				75B81B690DCC0E1400FD2C4F /* test_typedef.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

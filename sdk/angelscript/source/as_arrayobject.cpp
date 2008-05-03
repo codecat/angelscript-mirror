@@ -275,6 +275,8 @@ asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
 			elementSize = 4;
 		else if( objType->tokenType == ttInt16 || objType->tokenType == ttUInt16 )
 			elementSize = 2;
+		else if( objType->tokenType == ttBool )
+			elementSize = AS_SIZEOF_BOOL;
 		else
 			elementSize = 1;
 	}
