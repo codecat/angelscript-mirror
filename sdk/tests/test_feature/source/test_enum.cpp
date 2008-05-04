@@ -97,7 +97,10 @@ static bool TestEnum()
 	if( r != asEXECUTION_FINISHED ) 
 		fail = true;
 	if( buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n" )
+	{
 		fail = true;
+		printf(buffer.c_str());
+	}
 
 	// Registered enums are literal constants
 	// variable of enum type can be implictly cast to primitive

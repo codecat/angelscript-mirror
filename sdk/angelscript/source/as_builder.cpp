@@ -1040,7 +1040,8 @@ void asCBuilder::CompileGlobalVariables()
 						sGlobalVariableDescription *gvar2 = globVariables[n-1];
 						if( gvar2->datatype == gvar->datatype )
 						{
-							enumVal = int(gvar2->constantValue) + 1;
+							// The integer value is stored in the lower bytes
+							enumVal = (*(int*)&gvar2->constantValue) + 1;
 
 							if( !gvar2->isCompiled )
 							{
@@ -1060,7 +1061,8 @@ void asCBuilder::CompileGlobalVariables()
 						}
 					}
 
-					gvar->constantValue = enumVal;
+					// The integer value is stored in the lower bytes
+					*(int*)&gvar->constantValue = enumVal;
 				}
 
 				if( r >= 0 )
@@ -1157,7 +1159,7 @@ void asCBuilder::CompileGlobalVariables()
 
 		asSEnumValue *e = NEW(asSEnumValue);
 		e->name = gvar->name;
-		e->value = (int)gvar->constantValue;
+		e->value = *(int*)&gvar->constantValue;
 
 		objectType->enumValues.PushLast(e);
 
