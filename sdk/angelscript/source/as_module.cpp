@@ -291,7 +291,7 @@ int asCModule::GetFunctionIDByName(const char *name)
 	return id;
 }
 
-int asCModule::GetMethodIDByDecl(asCObjectType *ot, const char *decl)
+int asCModule::GetMethodIDByDecl(const asCObjectType *ot, const char *decl)
 {
 	if( isBuildWithoutErrors == false )
 		return asERROR;

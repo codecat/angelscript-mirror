@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -82,7 +82,7 @@ public:
 	int  GetFunctionIDByName(const char *name);
 	int  GetFunctionIDByDecl(const char *decl);
 
-	int  GetMethodIDByDecl(asCObjectType *ot, const char *decl);
+	int  GetMethodIDByDecl(const asCObjectType *ot, const char *decl);
 
 	int  GetGlobalVarCount();
 	int  GetGlobalVarIDByName(const char *name);

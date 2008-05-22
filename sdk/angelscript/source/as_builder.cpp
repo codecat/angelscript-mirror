@@ -843,10 +843,10 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		sGlobalVariableDescription *gvar = NEW(sGlobalVariableDescription);
 		globVariables.PushLast(gvar);
 
-		gvar->script     = file;
-		gvar->name       = name;
-		gvar->isCompiled = false;
-		gvar->datatype   = type;
+		gvar->script      = file;
+		gvar->name        = name;
+		gvar->isCompiled  = false;
+		gvar->datatype    = type;
 		gvar->isEnumValue = false;
 
 		// TODO: Give error message if wrong

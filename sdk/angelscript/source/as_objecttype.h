@@ -112,6 +112,13 @@ public:
 	bool IsInterface() const;
 	bool Implements(const asCObjectType *objType);
 
+	// Methods
+	int                      GetMethodCount() const;
+	int                      GetMethodIdByIndex(int index) const;
+	int                      GetMethodIdByName(const char *name) const;
+	int                      GetMethodIdByDecl(const char *decl) const;
+	const asIScriptFunction *GetMethodDescriptorByIndex(int index) const;
+
 	asCString   name;
 	eTokenType  tokenType;
 	int         arrayType;

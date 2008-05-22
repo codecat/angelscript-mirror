@@ -209,9 +209,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 asCScriptEngine::asCScriptEngine()
 {
 	// Engine properties
-	allowUnsafeReferences = false;
-	optimizeByteCode      = true;
-	copyScriptSections    = true;
+	allowUnsafeReferences   = false;
+	optimizeByteCode        = true;
+	copyScriptSections      = true;
 	maximumContextStackSize = 0;         // no limit
 
 
@@ -649,6 +649,7 @@ int asCScriptEngine::GetFunctionIDByDecl(const char *module, const char *decl)
 
 //-----------------
 
+// Deprecated since 2008-05-22
 int asCScriptEngine::GetMethodCount(int typeId)
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
@@ -657,9 +658,10 @@ int asCScriptEngine::GetMethodCount(int typeId)
 	asCObjectType *ot = dt->GetObjectType();
 	if( ot == 0 ) return asINVALID_TYPE;
 
-	return (int)ot->methods.GetLength();
+	return ot->GetMethodCount();
 }
 
+// Deprecated since 2008-05-22
 int asCScriptEngine::GetMethodIDByIndex(int typeId, int index)
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
@@ -668,11 +670,10 @@ int asCScriptEngine::GetMethodIDByIndex(int typeId, int index)
 	asCObjectType *ot = dt->GetObjectType();
 	if( ot == 0 ) return asINVALID_TYPE;
 
-	if( index < 0 || (unsigned)index >= ot->methods.GetLength() ) return asINVALID_ARG;
-
-	return ot->methods[index];
+	return ot->GetMethodIdByIndex(index);
 }
 
+// Deprecated since 2008-05-22
 int asCScriptEngine::GetMethodIDByName(int typeId, const char *name)
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
@@ -681,24 +682,10 @@ int asCScriptEngine::GetMethodIDByName(int typeId, const char *name)
 	asCObjectType *ot = dt->GetObjectType();
 	if( ot == 0 ) return asINVALID_TYPE;
 
-	int id = -1;
-	for( size_t n = 0; n < ot->methods.GetLength(); n++ )
-	{
-		if( scriptFunctions[ot->methods[n]]->name == name )
-		{
-			if( id == -1 )
-				id = ot->methods[n];
-			else
-				return asMULTIPLE_FUNCTIONS;
-		}
-	}
-
-	if( id == -1 ) return asNO_FUNCTION;
-
-	return id;
-
+	return ot->GetMethodIdByName(name);
 }
 
+// Deprecated since 2008-05-22
 int asCScriptEngine::GetMethodIDByDecl(int typeId, const char *decl)
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
@@ -707,23 +694,10 @@ int asCScriptEngine::GetMethodIDByDecl(int typeId, const char *decl)
 	asCObjectType *ot = dt->GetObjectType();
 	if( ot == 0 ) return asINVALID_TYPE;
 
-	// Get the module from one of the methods
-	if( ot->methods.GetLength() == 0 )
-		return asNO_FUNCTION;
-
-	asCModule *mod = scriptFunctions[ot->methods[0]]->module;
-	if( mod == 0 )
-	{
-		if( scriptFunctions[ot->methods[0]]->funcType == asFUNC_INTERFACE )
-			return GetMethodIDByDecl(ot, decl, 0);
-
-		return asNO_MODULE;
-	}
-
-	return mod->GetMethodIDByDecl(ot, decl);
+	return ot->GetMethodIdByDecl(decl);
 }
 
-int asCScriptEngine::GetMethodIDByDecl(asCObjectType *ot, const char *decl, asCModule *mod)
+int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl, asCModule *mod)
 {
 	asCBuilder bld(this, mod);
 
@@ -4345,7 +4319,8 @@ asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId)
 	return dt->GetObjectType();
 }
 
-//	Additional functionality for to access internal objects
+// Deprecated since 2008-05-22
+// Additional functionality for to access internal objects
 const asIScriptFunction *asCScriptEngine::GetMethodDescriptorByIndex(int typeId, int index)
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
@@ -4354,9 +4329,7 @@ const asIScriptFunction *asCScriptEngine::GetMethodDescriptorByIndex(int typeId,
 	asCObjectType *ot = dt->GetObjectType();
 	if( ot == 0 ) return 0;
 
-	if( index < 0 || (unsigned)index >= ot->methods.GetLength() ) return 0;
-
-	return scriptFunctions[ot->methods[index]];
+	return ot->GetMethodDescriptorByIndex(index);
 }
 
 const asIScriptFunction *asCScriptEngine::GetFunctionDescriptorByIndex(const char *module, int index)

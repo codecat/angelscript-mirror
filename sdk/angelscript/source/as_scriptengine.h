@@ -256,7 +256,7 @@ public:
 	asCModule *GetModule(int id);
 	asCModule *GetModuleFromFuncId(int funcId);
 
-	int GetMethodIDByDecl(asCObjectType *ot, const char *decl, asCModule *mod);
+	int GetMethodIDByDecl(const asCObjectType *ot, const char *decl, asCModule *mod);
 
 	int GetNextScriptFunctionId();
 	void SetScriptFunction(asCScriptFunction *func);

@@ -226,12 +226,17 @@ void * asArray_GetElementPointer(asIScriptArray *a, asUINT index) { return a->Ge
 void   asArray_Resize(asIScriptArray *a, asUINT size)             { a->Resize(size); }
 int    asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other) { return a->CopyFrom(other); }
 
-asIScriptEngine *    asObjectType_GetEngine(const asIObjectType *o)                  { return o->GetEngine(); }
-const char *         asObjectType_GetName(const asIObjectType *o)                    { return o->GetName(); }
-const asIObjectType *asObjectType_GetSubType(const asIObjectType *o)                 { return o->GetSubType(); }
-int                  asObjectType_GetInterfaceCount(const asIObjectType *o)          { return o->GetInterfaceCount(); }
-const asIObjectType *asObjectType_GetInterface(const asIObjectType *o, asUINT index) { return o->GetInterface(index); }
-bool                 asObjectType_IsInterface(const asIObjectType *o)                { return o->IsInterface(); }
+asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o)                             { return o->GetEngine(); }
+const char              *asObjectType_GetName(const asIObjectType *o)                               { return o->GetName(); }
+const asIObjectType     *asObjectType_GetSubType(const asIObjectType *o)                            { return o->GetSubType(); }
+int                      asObjectType_GetInterfaceCount(const asIObjectType *o)                     { return o->GetInterfaceCount(); }
+const asIObjectType     *asObjectType_GetInterface(const asIObjectType *o, asUINT index)            { return o->GetInterface(index); }
+bool                     asObjectType_IsInterface(const asIObjectType *o)                           { return o->IsInterface(); }
+int                      asObjectType_GetMethodCount(const asIObjectType *o)                        { return o->GetMethodCount(); }
+int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index)         { return o->GetMethodIdByIndex(index); }
+int                      asObjectType_GetMethodIdByName(const asIObjectType *o, const char *name)   { return o->GetMethodIdByName(name); }
+int                      asObjectType_GetMethodIdByDecl(const asIObjectType *o, const char *decl)   { return o->GetMethodIdByDecl(decl); }
+const asIScriptFunction *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index) { return o->GetMethodDescriptorByIndex(index); }
 
 const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f)     { return f->GetModuleName(); }
 const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f)     { return f->GetObjectType(); }

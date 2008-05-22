@@ -7300,17 +7300,17 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 				to.SetTokenType(ttInt);
 		}
 
-			// Do the actual conversion
-			asCArray<int> reservedVars;
-			rctx->bc.GetVarsUsed(reservedVars);
-			ImplicitConversion(lctx, to, node, false, true, &reservedVars);
+		// Do the actual conversion
+		asCArray<int> reservedVars;
+		rctx->bc.GetVarsUsed(reservedVars);
+		ImplicitConversion(lctx, to, node, false, true, &reservedVars);
 
-			// Verify that the conversion was successful
+		// Verify that the conversion was successful
 		if( lctx->type.dataType != to )
-			{
-				asCString str;
-				str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-				Error(str.AddressOf(), node);
+		{
+			asCString str;
+			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
+			Error(str.AddressOf(), node);
 		}
 
 		// Right operand must be 32bit uint

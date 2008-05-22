@@ -137,6 +137,64 @@ bool asCObjectType::IsInterface() const
 	return false;
 }
 
+int asCObjectType::GetMethodCount() const
+{
+	return (int)methods.GetLength();
+}
+
+int asCObjectType::GetMethodIdByIndex(int index) const
+{
+	if( index < 0 || (unsigned)index >= methods.GetLength() )
+		return asINVALID_ARG;
+
+	return methods[index];
+}
+
+int asCObjectType::GetMethodIdByName(const char *name) const
+{
+	int id = -1;
+	for( size_t n = 0; n < methods.GetLength(); n++ )
+	{
+		if( engine->scriptFunctions[methods[n]]->name == name )
+		{
+			if( id == -1 )
+				id = methods[n];
+			else
+				return asMULTIPLE_FUNCTIONS;
+		}
+	}
+
+	if( id == -1 ) return asNO_FUNCTION;
+
+	return id;
+}
+
+int asCObjectType::GetMethodIdByDecl(const char *decl) const
+{
+	// Get the module from one of the methods
+	if( methods.GetLength() == 0 )
+		return asNO_FUNCTION;
+
+	asCModule *mod = engine->scriptFunctions[methods[0]]->module;
+	if( mod == 0 )
+	{
+		if( engine->scriptFunctions[methods[0]]->funcType == asFUNC_INTERFACE )
+			return engine->GetMethodIDByDecl(this, decl, 0);
+
+		return asNO_MODULE;
+	}
+
+	return mod->GetMethodIDByDecl(this, decl);
+}
+
+const asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(int index) const
+{
+	if( index < 0 || (unsigned)index >= methods.GetLength() ) 
+		return 0;
+
+	return engine->scriptFunctions[methods[index]];
+}
+
 END_AS_NAMESPACE
 
 

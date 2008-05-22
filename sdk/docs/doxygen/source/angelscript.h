@@ -793,12 +793,17 @@ extern "C"
 	AS_API void   asArray_Resize(asIScriptArray *a, asUINT size);
 	AS_API int    asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other);
 
-	AS_API asIScriptEngine *    asObjectType_GetEngine(const asIObjectType *o);
-	AS_API const char *         asObjectType_GetName(const asIObjectType *o);
-	AS_API const asIObjectType *asObjectType_GetSubType(const asIObjectType *o);
-	AS_API int                  asObjectType_GetInterfaceCount(const asIObjectType *o);
-	AS_API const asIObjectType *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
-	AS_API bool                 asObjectType_IsInterface(const asIObjectType *o);
+	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
+	AS_API const char              *asObjectType_GetName(const asIObjectType *o);
+	AS_API const asIObjectType     *asObjectType_GetSubType(const asIObjectType *o);
+	AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o);
+	AS_API const asIObjectType     *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
+	AS_API bool                     asObjectType_IsInterface(const asIObjectType *o);
+	AS_API int                      asObjectType_GetMethodCount(const asIObjectType *o);
+	AS_API int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index);
+	AS_API int                      asObjectType_GetMethodIdByName(const asIObjectType *o, const char *name);
+	AS_API int                      asObjectType_GetMethodIdByDecl(const asIObjectType *o, const char *decl);
+	AS_API const asIScriptFunction *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index);
 
 	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);
 	AS_API const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f);
@@ -1317,6 +1322,8 @@ public:
     //! \return A negative value on error, or the number of methods for this object.
     //! \retval asINVALID_ARG \a typeId is not a type.
     //! \retval asINVALID_TYPE \a typeId is not an object type.
+    //!
+    //! \deprecated Use \ref asIObjectType::GetMethodCount instead
 	virtual int GetMethodCount(int typeId) = 0;
 	//! \brief Returns the method id by index.
     //! \param[in] typeId The object type id.
@@ -1327,6 +1334,8 @@ public:
     //!
     //! This method should be used to retrieve the ID of the script method for the object 
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+    //!
+    //! \deprecated Use \ref asIObjectType::GetMethodIdByIndex instead
 	virtual int GetMethodIDByIndex(int typeId, int index) = 0;
 	//! \brief Returns the method id by name.
     //! \param[in] typeId The object type id.
@@ -1339,6 +1348,8 @@ public:
     //!
     //! This method should be used to retrieve the ID of the script method for the object 
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+    //!
+    //! \deprecated Use \ref asIObjectType::GetMethodIdByName instead
 	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
 	//! \brief Returns the method id by declaration.
     //! \param[in] typeId The object type id.
@@ -1356,11 +1367,15 @@ public:
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
     //!
     //! The method will find the script method with the exact same declaration.
+    //!
+    //! \deprecated Use \ref asIObjectType::GetMethodIdByDecl instead
 	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
 	//! \brief Returns the function descriptor for the script method
     //! \param[in] typeId The object type id.
     //! \param[in] index The index of the method.
     //! \return A pointer to the method description interface, or null if not found.
+    //!
+    //! \deprecated Use \ref asIObjectType::GetMethodDescriptorByIndex instead
 	virtual const asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index) = 0;
 
 	// Script global variables
@@ -1560,7 +1575,7 @@ public:
     //! stack grows its size is doubled, which means that the stack size can be at most 2 times 
     //! the maximum size.
     //!
-    //! \deprecated Use \ref SetEngineProperty with \ref asEP_MAX_STACK_SIZE instead
+    //! \deprecated Use \ref asIScriptEngine::SetEngineProperty "SetEngineProperty" with \ref asEP_MAX_STACK_SIZE instead
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
 	//! \brief Creates a new script context.
     //! \return A pointer to the new script context.
@@ -2294,7 +2309,7 @@ public:
 	// Struct type
 	//! \brief Returns the type id of the object.
     //! \return The type id of the script object.
-	virtual int GetStructTypeId() = 0;
+	virtual int            GetStructTypeId() = 0;
 
     //! \brief Returns the object type interface for the object.
     //! \return The object type interface of the script object.
@@ -2303,12 +2318,12 @@ public:
 	// Struct properties
 	//! \brief Returns the number of properties that the object contains.
     //! \return The number of member properties of the script object.
-	virtual int GetPropertyCount() = 0;
+	virtual int         GetPropertyCount() = 0;
 
     //! \brief Returns the type id of the property referenced by prop.
     //! \param[in] prop The property index.
     //! \return The type id of the member property.
-	virtual int GetPropertyTypeId(asUINT prop) = 0;
+	virtual int         GetPropertyTypeId(asUINT prop) = 0;
 
     //! \brief Returns the name of the property referenced by prop.
     //! \param[in] prop The property index.
@@ -2321,7 +2336,7 @@ public:
     //!
     //! The method returns a pointer to the memory location for the property. Use the type 
     //! id for the property to determine the content of the pointer, and how to handle it.
-	virtual void *GetPropertyPointer(asUINT prop) = 0;
+	virtual void       *GetPropertyPointer(asUINT prop) = 0;
 
     //! \brief Copies the content from another object of the same type.
     //! \param[in] other A pointer to the source object.
@@ -2330,7 +2345,7 @@ public:
     //! \retval asINVALID_TYPE The other object is of different type.
     //!
     //! This method copies the contents of the other object to this one.
-	virtual int CopyFrom(asIScriptStruct *other) = 0;
+	virtual int         CopyFrom(asIScriptStruct *other) = 0;
 
 protected:
 	virtual ~asIScriptStruct() {}
@@ -2401,11 +2416,11 @@ class asIObjectType
 public:
 	//! \brief Returns a pointer to the script engine.
     //! \return A pointer to the engine.
-	virtual asIScriptEngine *GetEngine() const = 0;
+	virtual asIScriptEngine     *GetEngine() const = 0;
 
 	//! \brief Returns a temporary pointer to the name of the datatype.
     //! \return A null terminated string with the name of the object type.
-	virtual const char *GetName() const = 0;
+	virtual const char          *GetName() const = 0;
 
 	//! \brief Returns a temporary pointer to the type associated with this descriptor.
     //! \return A pointer to the sub type.
@@ -2413,7 +2428,7 @@ public:
 
 	//! \brief Returns the number of interfaces implemented.
     //! \return The number of interfaces implemented by this type.
-	virtual int GetInterfaceCount() const = 0;
+	virtual int                  GetInterfaceCount() const = 0;
 
 	//! \brief Returns a temporary pointer to the specified interface or null if none are found.
     //! \param[in] index The interface index.
@@ -2422,7 +2437,46 @@ public:
 
     //! \brief Returns true if the type is an interface.
     //! \return True if the type is an interface.
-	virtual bool IsInterface() const = 0;
+	virtual bool                 IsInterface() const = 0;
+
+	// Methods
+	//! \brief Returns the number of methods for the object type.
+    //! \return A negative value on error, or the number of methods for this object.
+	virtual int                      GetMethodCount() const = 0;
+	//! \brief Returns the method id by index.
+    //! \param[in] index The index of the method.
+    //! \return A negative value on error, or the method id.
+    //! \retval asINVALID_ARG \a index is out of bounds.
+    //!
+    //! This method should be used to retrieve the ID of the script method for the object 
+    //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	virtual int                      GetMethodIdByIndex(int index) const = 0;
+	//! \brief Returns the method id by name.
+    //! \param[in] name The name of the method.
+    //! \return A negative value on error, or the method id.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
+    //! \retval asNO_FUNCTION Didn't find any matching method.
+    //!
+    //! This method should be used to retrieve the ID of the script method for the object 
+    //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	virtual int                      GetMethodIdByName(const char *name) const = 0;
+	//! \brief Returns the method id by declaration.
+    //! \param[in] decl The method signature.
+    //! \return A negative value on error, or the method id.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
+    //! \retval asNO_FUNCTION Didn't find any matching method.
+    //! \retval asINVALID_DECLARATION \a decl is not a valid declaration.
+    //! \retval asERROR The module for the type was not built successfully.
+    //!
+    //! This method should be used to retrieve the ID of the script method for the object 
+    //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+    //!
+    //! The method will find the script method with the exact same declaration.
+	virtual int                      GetMethodIdByDecl(const char *decl) const = 0;
+	//! \brief Returns the function descriptor for the script method
+    //! \param[in] index The index of the method.
+    //! \return A pointer to the method description interface, or null if not found.
+	virtual const asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
 
 protected:
 	virtual ~asIObjectType() {}

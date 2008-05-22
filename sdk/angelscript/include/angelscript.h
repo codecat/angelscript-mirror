@@ -552,12 +552,17 @@ extern "C"
 	AS_API void   asArray_Resize(asIScriptArray *a, asUINT size);
 	AS_API int    asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other);
 
-	AS_API asIScriptEngine *    asObjectType_GetEngine(const asIObjectType *o);
-	AS_API const char *         asObjectType_GetName(const asIObjectType *o);
-	AS_API const asIObjectType *asObjectType_GetSubType(const asIObjectType *o);
-	AS_API int                  asObjectType_GetInterfaceCount(const asIObjectType *o);
-	AS_API const asIObjectType *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
-	AS_API bool                 asObjectType_IsInterface(const asIObjectType *o);
+	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
+	AS_API const char              *asObjectType_GetName(const asIObjectType *o);
+	AS_API const asIObjectType     *asObjectType_GetSubType(const asIObjectType *o);
+	AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o);
+	AS_API const asIObjectType     *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
+	AS_API bool                     asObjectType_IsInterface(const asIObjectType *o);
+	AS_API int                      asObjectType_GetMethodCount(const asIObjectType *o);
+	AS_API int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index);
+	AS_API int                      asObjectType_GetMethodIdByName(const asIObjectType *o, const char *name);
+	AS_API int                      asObjectType_GetMethodIdByDecl(const asIObjectType *o, const char *decl);
+	AS_API const asIScriptFunction *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index);
 
 	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);
 	AS_API const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f);
@@ -809,15 +814,15 @@ public:
 	virtual int Release() = 0;
 
 	// Struct type
-	virtual int GetStructTypeId() = 0;
+	virtual int            GetStructTypeId() = 0;
 	virtual asIObjectType *GetObjectType() = 0;
 
 	// Struct properties
-	virtual int GetPropertyCount() = 0;
-	virtual int GetPropertyTypeId(asUINT prop) = 0;
+	virtual int         GetPropertyCount() = 0;
+	virtual int         GetPropertyTypeId(asUINT prop) = 0;
 	virtual const char *GetPropertyName(asUINT prop) = 0;
-	virtual void *GetPropertyPointer(asUINT prop) = 0;
-	virtual int CopyFrom(asIScriptStruct *other) = 0;
+	virtual void       *GetPropertyPointer(asUINT prop) = 0;
+	virtual int         CopyFrom(asIScriptStruct *other) = 0;
 
 protected:
 	virtual ~asIScriptStruct() {}
@@ -847,12 +852,19 @@ protected:
 class asIObjectType
 {
 public:
-	virtual asIScriptEngine *GetEngine() const = 0;
-	virtual const char *GetName() const = 0;
+	virtual asIScriptEngine     *GetEngine() const = 0;
+	virtual const char          *GetName() const = 0;
 	virtual const asIObjectType *GetSubType() const = 0;
-	virtual int GetInterfaceCount() const = 0;
+	virtual int                  GetInterfaceCount() const = 0;
 	virtual const asIObjectType *GetInterface(asUINT index) const = 0;
-	virtual bool IsInterface() const = 0;
+	virtual bool                 IsInterface() const = 0;
+
+	// Methods
+	virtual int                      GetMethodCount() const = 0;
+	virtual int                      GetMethodIdByIndex(int index) const = 0;
+	virtual int                      GetMethodIdByName(const char *name) const = 0;
+	virtual int                      GetMethodIdByDecl(const char *decl) const = 0;
+	virtual const asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
 
 protected:
 	virtual ~asIObjectType() {}
