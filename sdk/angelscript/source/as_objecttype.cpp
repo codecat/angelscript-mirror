@@ -102,8 +102,9 @@ bool asCObjectType::Implements(const asCObjectType *objType)
 	return false;
 }
 
-const char *asCObjectType::GetName() const
+const char *asCObjectType::GetName(int *length) const
 {
+	if( length ) *length = (int)name.GetLength();
 	return name.AddressOf();
 }
 

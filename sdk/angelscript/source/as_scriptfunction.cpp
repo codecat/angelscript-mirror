@@ -74,10 +74,13 @@ asCScriptFunction::~asCScriptFunction()
 	}
 }
 
-const char *asCScriptFunction::GetModuleName() const
+const char *asCScriptFunction::GetModuleName(int *length) const
 {
 	if( module )
+	{
+		if( length ) *length = (int)module->name.GetLength();
 		return module->name.AddressOf();
+	}
 
 	return 0;
 }
@@ -87,16 +90,18 @@ const asIObjectType *asCScriptFunction::GetObjectType() const
 	return objectType;
 }
 
-const char *asCScriptFunction::GetObjectName() const 
+const char *asCScriptFunction::GetObjectName(int *length) const 
 {
 	if( objectType )
-		return objectType->GetName();
+		return objectType->GetName(length);
 
 	return 0;
 }
 
-const char *asCScriptFunction::GetFunctionName() const
+const char *asCScriptFunction::GetFunctionName(int *length) const
 {
+	if( length )
+		*length = (int)name.GetLength();
 	return name.AddressOf();
 }
 
@@ -125,7 +130,7 @@ int asCScriptFunction::GetSpaceNeededForReturnValue()
 	return returnType.GetSizeOnStackDWords();
 }
 
-asCString asCScriptFunction::GetDeclaration()
+asCString asCScriptFunction::GetDeclaration() const
 {
 	asCString str;
 
@@ -459,6 +464,25 @@ int asCScriptFunction::GetParamTypeId(int index) const
 asIScriptEngine *asCScriptFunction::GetEngine() const
 {
 	return engine;
+}
+
+const char *asCScriptFunction::GetFunctionDeclaration(int *length) const
+{
+	asCString *tempString = &threadManager.GetLocalData()->string;
+	*tempString = GetDeclaration();
+	if( length ) *length = (int)tempString->GetLength();
+	return tempString->AddressOf();
+}
+
+const char *asCScriptFunction::GetScriptSectionName(int *length) const
+{
+	if( module )
+	{
+		if( length ) *length = (int)module->scriptSections[scriptSectionIdx]->GetLength();
+		return module->scriptSections[scriptSectionIdx]->AddressOf();
+	}
+	
+	return 0;
 }
 
 END_AS_NAMESPACE

@@ -743,6 +743,7 @@ int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl
 
 //----------------------
 
+// Deprecated since 2008-05-22
 const char *asCScriptEngine::GetFunctionDeclaration(int funcID, int *length)
 {
 	asCString *tempString = &threadManager.GetLocalData()->string;

@@ -135,11 +135,13 @@ A:hover
 <li>Library interface
 <ul>
 <li>Added engine property asEP_MAX_STACK_SIZE
-<li>Deprecated asIScriptEngine::SetDefaultContextStackSize
 <li>Added methods for enumerating object type methods to the asIObjectType interface
-<li>Deprecated the methods for enumerating object type methods in the asIScriptEngine interface
 <li>Added methods for enumerating parameter types to the asIScriptFunction interface
 <li>Added GetFunctionDescriptorById to the asIScriptEngine interface
+<li>Added methods for getting function declaration and script section to asIScriptFunction
+<li>Deprecated SetDefaultContextStackSize in asIScriptEngine
+<li>Deprecated GetFunctionName, GetFunctionDeclaration, GetFunctionModule, GetFunctionSection in asIScriptEngine
+<li>Deprecated GetMethodCount, GetMethodIDByIndex, GetMethodIDByName, GetMethodIDByDecl, GetMethodDescriptorByIndex in asIScriptEngine
 </ul>
 </ul>
 

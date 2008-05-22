@@ -859,7 +859,7 @@ class asIObjectType
 {
 public:
 	virtual asIScriptEngine     *GetEngine() const = 0;
-	virtual const char          *GetName() const = 0;
+	virtual const char          *GetName(int *length = 0) const = 0;
 	virtual const asIObjectType *GetSubType() const = 0;
 	virtual int                  GetInterfaceCount() const = 0;
 	virtual const asIObjectType *GetInterface(asUINT index) const = 0;
@@ -880,10 +880,13 @@ class asIScriptFunction
 {
 public:
 	virtual asIScriptEngine     *GetEngine() const = 0;
-	virtual const char          *GetModuleName() const = 0;
+	virtual const char          *GetModuleName(int *length = 0) const = 0;
 	virtual const asIObjectType *GetObjectType() const = 0;
-	virtual const char          *GetObjectName() const = 0;
-	virtual const char          *GetFunctionName() const = 0;
+	virtual const char          *GetObjectName(int *length = 0) const = 0;
+	virtual const char          *GetFunctionName(int *length = 0) const = 0;
+	virtual const char          *GetFunctionDeclaration(int *length = 0) const = 0;
+	virtual const char          *GetScriptSectionName(int *length = 0) const = 0;
+
 	virtual bool                 IsClassMethod() const = 0;
 	virtual bool                 IsInterfaceMethod() const = 0;
 

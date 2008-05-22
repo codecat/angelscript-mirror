@@ -1292,6 +1292,8 @@ public:
     //! that the host application will call. Verifying the declaration is important because, 
     //! even though the script may compile correctly the user may not have written the function 
     //! interface as intended.
+    //!
+    //! \deprecated Use \ref asIScriptFunction::GetFunctionDeclaration instead.
 	virtual const char *GetFunctionDeclaration(int funcId, int *length = 0) = 0;
 	//! \brief Returns the function name.
     //! \param[in] funcId The function id.
@@ -1301,6 +1303,8 @@ public:
     //! This method can be used to retrieve the function name of the script functions that 
     //! the host application can call. Useful for obtaining the name of functions with ID obtained 
     //! from \ref asIScriptContext::GetExceptionFunction "GetExceptionFunction".
+    //!
+    //! \deprecated Use \ref asIScriptFunction::GetFunctionName instead.
 	virtual const char *GetFunctionName(int funcId, int *length = 0) = 0;
 	//! \brief Returns the module where the function was implemented.
     //! \param[in] funcId The function id.
@@ -1308,6 +1312,8 @@ public:
     //! \return A null terminated string with the module name, or null if not found.
     //!
     //! This method returns the name of the module where the function was implemented.
+    //!
+    //! \deprecated Use \ref asIScriptFunction::GetModuleName instead.
 	virtual const char *GetFunctionModule(int funcId, int *length = 0) = 0;
 	//! \brief Returns the section where the function was implemented.
     //! \param[in] funcId The function id.
@@ -1315,6 +1321,8 @@ public:
     //! \return A null terminated string with the section name, or null if not found.
     //!
     //! This method returns the name of the section where the function was implemented.
+    //!
+    //! \deprecated Use \ref asIScriptFunction::GetScriptSectionName instead.
 	virtual const char *GetFunctionSection(int funcId, int *length = 0) = 0;
 	//! \brief Returns the function descriptor for the script function
     //! \param[in] module The module name.
@@ -2428,8 +2436,9 @@ public:
 	virtual asIScriptEngine     *GetEngine() const = 0;
 
 	//! \brief Returns a temporary pointer to the name of the datatype.
-    //! \return A null terminated string with the name of the object type.
-	virtual const char          *GetName() const = 0;
+	//! \param[out] length The length of the string
+	//! \return A null terminated string with the name of the object type.
+	virtual const char          *GetName(int *length = 0) const = 0;
 
 	//! \brief Returns a temporary pointer to the type associated with this descriptor.
     //! \return A pointer to the sub type.
@@ -2499,17 +2508,29 @@ public:
     //! \return A pointer to the engine.
 	virtual asIScriptEngine     *GetEngine() const = 0;
 	//! \brief Returns the name of the module where the function was implemented
+	//! \param[out] length The length of the string
     //! \return A null terminated string with the module name.
-	virtual const char          *GetModuleName() const = 0;
+	virtual const char          *GetModuleName(int *length = 0) const = 0;
 	//! \brief Returns the object type for class or interface method
     //! \return A pointer to the object type interface if this is a method.
 	virtual const asIObjectType *GetObjectType() const = 0;
 	//! \brief Returns the name of the object for class or interface methods
+	//! \param[out] length The length of the string
     //! \return A null terminated string with the name of the object type if this a method.
-	virtual const char          *GetObjectName() const = 0;
+	virtual const char          *GetObjectName(int *length = 0) const = 0;
 	//! \brief Returns the name of the function or method
+	//! \param[out] length The length of the string
     //! \return A null terminated string with the name of the function.
-	virtual const char          *GetFunctionName() const = 0;
+	virtual const char          *GetFunctionName(int *length = 0) const = 0;
+	//! \brief Returns the function declaration
+	//! \param[out] length The length of the string
+    //! \return A null terminated string with the function declaration.
+	virtual const char          *GetFunctionDeclaration(int *length = 0) const = 0;
+	//! \brief Returns the name of the script section where the function was implemented
+	//! \param[out] length The length of the string
+    //! \return A null terminated string with the script section name where the function was implemented.
+	virtual const char          *GetScriptSectionName(int *length = 0) const = 0;
+
 	//! \brief Returns true if it is a class method
     //! \return True if this a class method.
 	virtual bool                 IsClassMethod() const = 0;

@@ -105,7 +105,7 @@ public:
 	~asCObjectType();
 
 	asIScriptEngine *GetEngine() const;
-	const char *GetName() const;
+	const char *GetName(int *length = 0) const;
 	const asIObjectType *GetSubType() const;
 	virtual int GetInterfaceCount() const;
 	const asIObjectType *GetInterface(asUINT index) const;
