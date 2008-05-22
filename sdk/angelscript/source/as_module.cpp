@@ -314,7 +314,7 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 
 	asCBuilder bld(engine, this);
 
-	asCScriptFunction func(this);
+	asCScriptFunction func(engine, this);
 	bld.ParseFunctionDeclaration(decl, &func, false);
 
 	// TODO: Improve linear search
@@ -366,7 +366,7 @@ int asCModule::GetFunctionIDByDecl(const char *decl)
 
 	asCBuilder bld(engine, this);
 
-	asCScriptFunction func(this);
+	asCScriptFunction func(engine, this);
 	int r = bld.ParseFunctionDeclaration(decl, &func, false);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
@@ -505,7 +505,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	asASSERT(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = NEW(asCScriptFunction)(this);
+	asCScriptFunction *func = NEW(asCScriptFunction)(engine, this);
 	func->funcType   = isInterface ? asFUNC_INTERFACE : asFUNC_SCRIPT;
 	func->name       = name;
 	func->id         = id;
@@ -523,7 +523,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 
 	// Compute the signature id
 	if( objType )
-		func->ComputeSignatureId(engine);
+		func->ComputeSignatureId();
 
 	return 0;
 }
@@ -538,7 +538,7 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	asASSERT(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = NEW(asCScriptFunction)(this);
+	asCScriptFunction *func = NEW(asCScriptFunction)(engine, this);
 	func->funcType   = asFUNC_IMPORTED;
 	func->name       = name;
 	func->id         = id;

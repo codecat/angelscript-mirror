@@ -441,7 +441,7 @@ void *asCGeneric::GetReturnPointer()
 
 int asCGeneric::GetReturnTypeId()
 {
-	return engine->GetTypeIdFromDataType(sysFunction->returnType);
+	return sysFunction->GetReturnTypeId();
 }
 
 END_AS_NAMESPACE

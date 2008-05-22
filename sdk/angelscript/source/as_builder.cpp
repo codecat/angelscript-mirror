@@ -213,7 +213,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	{
 		// Compile the function
 		asCCompiler compiler(engine);
-		asCScriptFunction *execfunc = NEW(asCScriptFunction)(module);
+		asCScriptFunction *execfunc = NEW(asCScriptFunction)(engine,module);
 		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, execfunc) >= 0 )
 		{
 			execfunc->id = asFUNC_STRING;
@@ -392,7 +392,7 @@ void asCBuilder::CompileFunctions()
 		int r, c;
 		functions[n]->script->ConvertPosToRowCol(functions[n]->node->tokenPos, &r, &c);
 		asCScriptFunction *func = engine->scriptFunctions[functions[n]->funcId];
-		asCString str = func->GetDeclaration(engine);
+		asCString str = func->GetDeclaration();
 		str.Format(TXT_COMPILING_s, str.AddressOf());
 		WriteInfo(functions[n]->script->name.AddressOf(), str.AddressOf(), r, c, true);
 
@@ -1135,7 +1135,7 @@ void asCBuilder::CompileGlobalVariables()
 	finalInit.Finalize();
 
 	int id = engine->GetNextScriptFunctionId();
-	asCScriptFunction *init = NEW(asCScriptFunction)(module);
+	asCScriptFunction *init = NEW(asCScriptFunction)(engine,module);
 
 	init->id = id;
 	module->initFunction = init;

@@ -175,7 +175,7 @@ int asCRestore::Restore()
 	module->scriptFunctions.Allocate(count, 0);
 	for( i = 0; i < count; ++i ) 
 	{
-		func = NEW(asCScriptFunction)(module);
+		func = NEW(asCScriptFunction)(engine,module);
 		ReadFunction(func);
 		module->scriptFunctions.PushLast(func);
 		engine->SetScriptFunction(func);
@@ -185,7 +185,7 @@ int asCRestore::Restore()
 	READ_NUM(count);
 	if( count )
 	{
-		module->initFunction = NEW(asCScriptFunction)(module);
+		module->initFunction = NEW(asCScriptFunction)(engine,module);
 		ReadFunction(module->initFunction);
 		engine->SetScriptFunction(module->initFunction);
 	}
@@ -206,7 +206,7 @@ int asCRestore::Restore()
 	module->bindInformations.SetLength(count);
 	for(i=0;i<count;++i)
 	{
-		func = NEW(asCScriptFunction)(module);
+		func = NEW(asCScriptFunction)(engine,module);
 		ReadFunction(func);
 		module->importedFunctions.PushLast(func);
 
@@ -237,7 +237,7 @@ int asCRestore::Restore()
 		for( n = 0; n < ot->methods.GetLength(); n++ )
 		{
 			ot->methods[n] = module->scriptFunctions[ot->methods[n]]->id;
-			engine->scriptFunctions[ot->methods[n]]->ComputeSignatureId(engine);
+			engine->scriptFunctions[ot->methods[n]]->ComputeSignatureId();
 		}
 	}
 

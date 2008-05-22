@@ -46,8 +46,9 @@
 
 BEGIN_AS_NAMESPACE
 
-asCScriptFunction::asCScriptFunction(asCModule *mod)
+asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
 {
+	this->engine = engine;
 	funcType    = -1;
 	module      = mod; 
 	objectType  = 0; 
@@ -124,7 +125,7 @@ int asCScriptFunction::GetSpaceNeededForReturnValue()
 	return returnType.GetSizeOnStackDWords();
 }
 
-asCString asCScriptFunction::GetDeclaration(asCScriptEngine *)
+asCString asCScriptFunction::GetDeclaration()
 {
 	asCString str;
 
@@ -216,7 +217,7 @@ void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stac
 	variables.PushLast(var);
 }
 
-void asCScriptFunction::ComputeSignatureId(asCScriptEngine *engine)
+void asCScriptFunction::ComputeSignatureId()
 {
 	// This function will compute the signatureId based on the 
 	// function name, return type, and parameter types. The object 
@@ -435,6 +436,29 @@ void asCScriptFunction::ReleaseReferences()
 			}
 		}
 	}
+}
+
+int asCScriptFunction::GetReturnTypeId() const
+{
+	return engine->GetTypeIdFromDataType(returnType);
+}
+
+int asCScriptFunction::GetParamCount() const
+{
+	return (int)parameterTypes.GetLength();
+}
+
+int asCScriptFunction::GetParamTypeId(int index) const
+{
+	if( index < 0 || (unsigned)index >= parameterTypes.GetLength() )
+		return asINVALID_ARG;
+
+	return engine->GetTypeIdFromDataType(parameterTypes[index]);
+}
+
+asIScriptEngine *asCScriptFunction::GetEngine() const
+{
+	return engine;
 }
 
 END_AS_NAMESPACE

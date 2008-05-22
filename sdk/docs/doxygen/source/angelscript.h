@@ -655,6 +655,7 @@ extern "C"
 	AS_API const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index);
+	AS_API const asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId);
 	AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId);
 	AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index);
 	AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, int typeId, const char *name);
@@ -805,12 +806,16 @@ extern "C"
 	AS_API int                      asObjectType_GetMethodIdByDecl(const asIObjectType *o, const char *decl);
 	AS_API const asIScriptFunction *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index);
 
+	AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);
 	AS_API const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetFunctionName(const asIScriptFunction *f);
 	AS_API bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f);
 	AS_API bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f);
+	AS_API int                  asScriptFunction_GetParamCount(const asIScriptFunction *f);
+	AS_API int                  asScriptFunction_GetParamTypeId(const asIScriptFunction *f, int index);
+	AS_API int                  asScriptFunction_GetReturnTypeId(const asIScriptFunction *f);
 
 #endif // AS_C_INTERFACE
 }
@@ -1316,6 +1321,10 @@ public:
     //! \param[in] index The index of the function.
     //! \return A pointer to the function description interface, or null if not found.
 	virtual const asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
+	//! \brief Returns the function descriptor for the script function
+    //! \param[in] funcId The id of the function or method.
+    //! \return A pointer to the function description interface, or null if not found.
+	virtual const asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
 
 	//! \brief Returns the number of methods for the object type.
     //! \param[in] typeId The object type id.
@@ -2486,6 +2495,9 @@ protected:
 class asIScriptFunction
 {
 public:
+	//! \brief Returns a pointer to the script engine.
+    //! \return A pointer to the engine.
+	virtual asIScriptEngine     *GetEngine() const = 0;
 	//! \brief Returns the name of the module where the function was implemented
     //! \return A null terminated string with the module name.
 	virtual const char          *GetModuleName() const = 0;
@@ -2504,6 +2516,18 @@ public:
 	//! \brief Returns true if it is an interface method
     //! \return True if this is an interface method.
 	virtual bool                 IsInterfaceMethod() const = 0;
+
+    //! \brief Returns the number of parameters for this function.
+    //! \return The number of parameters.
+	virtual int                  GetParamCount() const = 0;
+    //! \brief Returns the type id of the specified parameter.
+    //! \param[in] index The zero based parameter index.
+    //! \return A negative value on error, or the type id of the specified parameter.
+    //! \retval asINVALID_ARG The index is out of bounds.
+	virtual int                  GetParamTypeId(int index) const = 0;
+    //! \brief Returns the type id of the return type.
+    //! \return The type id of the return type.
+	virtual int                  GetReturnTypeId() const = 0;
 
 protected:
 	virtual ~asIScriptFunction() {};

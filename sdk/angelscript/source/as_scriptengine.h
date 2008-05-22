@@ -115,6 +115,7 @@ public:
 	const char *GetFunctionModule(int funcID, int *length);
 	const char *GetFunctionSection(int funcID, int *length);
 	const asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index);
+	const asIScriptFunction *GetFunctionDescriptorById(int funcId);
 
 	int GetMethodCount(int typeId);
 	int GetMethodIDByIndex(int typeId, int index);

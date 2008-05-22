@@ -67,9 +67,10 @@ struct asSSystemFunctionInterface;
 class asCScriptFunction : public asIScriptFunction
 {
 public:
-	asCScriptFunction(asCModule *mod);
+	asCScriptFunction(asCScriptEngine *engine, asCModule *mod);
 	~asCScriptFunction();
 
+	asIScriptEngine *GetEngine() const;
 	const char *GetModuleName() const;
 	const char *GetFunctionName() const;
 	const char *GetObjectName() const;
@@ -77,18 +78,23 @@ public:
 	bool IsClassMethod() const;
 	bool IsInterfaceMethod() const;
 
+	int                  GetParamCount() const;
+	int                  GetParamTypeId(int index) const;
+	int                  GetReturnTypeId() const;
+
 	void AddVariable(asCString &name, asCDataType &type, int stackOffset);
 
 	int GetSpaceNeededForArguments();
 	int GetSpaceNeededForReturnValue();
-	asCString GetDeclaration(asCScriptEngine *engine);
+	asCString GetDeclaration();
 	int GetLineNumber(int programPosition);
-	void ComputeSignatureId(asCScriptEngine *engine);
+	void ComputeSignatureId();
 
 	void AddReferences();
 	void ReleaseReferences();
 
 	int                          funcType;
+	asCScriptEngine             *engine;
 	asCModule                   *module;
 	asCString                    name;
 	asCDataType                  returnType;

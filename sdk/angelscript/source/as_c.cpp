@@ -88,6 +88,7 @@ const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *
 const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length)                                                                                            { return e->GetFunctionModule(funcID, length); }
 const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length)                                                                                           { return e->GetFunctionSection(funcID, length); }
 const asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index)                                                                    { return e->GetFunctionDescriptorByIndex(module, index); }
+const asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId)                                                                                          { return e->GetFunctionDescriptorById(funcId); }
 int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId)																				                             { return e->GetMethodCount(typeId); }
 int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index)															                                 { return e->GetMethodIDByIndex(typeId, index); }
 int               asEngine_GetMethodIDByName(asIScriptEngine *e, int typeId, const char *name)														                               	 { return e->GetMethodIDByName(typeId, name); }
@@ -238,12 +239,16 @@ int                      asObjectType_GetMethodIdByName(const asIObjectType *o, 
 int                      asObjectType_GetMethodIdByDecl(const asIObjectType *o, const char *decl)   { return o->GetMethodIdByDecl(decl); }
 const asIScriptFunction *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index) { return o->GetMethodDescriptorByIndex(index); }
 
-const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f)     { return f->GetModuleName(); }
-const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f)     { return f->GetObjectType(); }
-const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f)     { return f->GetObjectName(); }
-const char          *asScriptFunction_GetFunctionName(const asIScriptFunction *f)   { return f->GetFunctionName(); }
-bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f)     { return f->IsClassMethod(); }
-bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f) { return f->IsInterfaceMethod(); }
+asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f)                 { return f->GetEngine(); }
+const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f)             { return f->GetModuleName(); }
+const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f)             { return f->GetObjectType(); }
+const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f)             { return f->GetObjectName(); }
+const char          *asScriptFunction_GetFunctionName(const asIScriptFunction *f)           { return f->GetFunctionName(); }
+bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f)             { return f->IsClassMethod(); }
+bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f)         { return f->IsInterfaceMethod(); }
+int                  asScriptFunction_GetParamCount(const asIScriptFunction *f)             { return f->GetParamCount(); }
+int                  asScriptFunction_GetParamTypeId(const asIScriptFunction *f, int index) { return f->GetParamTypeId(index); }
+int                  asScriptFunction_GetReturnTypeId(const asIScriptFunction *f)           { return f->GetReturnTypeId(); }
 
 #endif
 END_AS_NAMESPACE
