@@ -72,12 +72,12 @@ public:
 
 	asIScriptEngine     *GetEngine() const;
 	const char          *GetModuleName(int *length = 0) const;
-	const char          *GetFunctionName(int *length = 0) const;
+	const char          *GetName(int *length = 0) const;
 	const char          *GetObjectName(int *length = 0) const;
-	const asIObjectType *GetObjectType() const;
+	asIObjectType       *GetObjectType() const;
 	bool                 IsClassMethod() const;
 	bool                 IsInterfaceMethod() const;
-	const char          *GetFunctionDeclaration(int *length = 0) const;
+	const char          *GetDeclaration(int *length = 0) const;
 	const char          *GetScriptSectionName(int *length = 0) const;
 
 	int                  GetParamCount() const;
@@ -88,7 +88,7 @@ public:
 
 	int GetSpaceNeededForArguments();
 	int GetSpaceNeededForReturnValue();
-	asCString GetDeclaration() const;
+	asCString GetDeclarationStr() const;
 	int GetLineNumber(int programPosition);
 	void ComputeSignatureId();
 

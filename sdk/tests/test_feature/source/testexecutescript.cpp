@@ -124,7 +124,7 @@ static int CompileScript()
 
 	// Now we will verify the interface of the script functions we wish to call
 	const char *buffer = 0;
-	buffer = engine->GetFunctionDeclaration(engine->GetFunctionIDByName(0, "main"));
+	buffer = engine->GetFunctionDescriptorById(engine->GetFunctionIDByName(0, "main"))->GetDeclaration();
 	if( buffer == 0 )
 	{
 		printf("%s: Failed to retrieve declaration of function 'main'\n", TESTNAME);
@@ -197,7 +197,8 @@ static bool ExecuteScript()
 		// execution where it last stopped.
 
 		int funcID = ctx->GetCurrentFunction();
-		printf("func : %s\n", engine->GetFunctionName(funcID));
+		const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcID);
+		printf("func : %s\n", func->GetName());
 		printf("line : %d\n", ctx->GetCurrentLineNumber());
 	}
 	else if( r == asEXECUTION_ABORTED )
@@ -210,7 +211,8 @@ static bool ExecuteScript()
 
 		// Print exception description
 		int funcID = ctx->GetExceptionFunction();
-		printf("func : %s\n", engine->GetFunctionName(funcID));
+		const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcID);
+		printf("func : %s\n", func->GetName());
 		printf("line : %d\n", ctx->GetExceptionLineNumber());
 		printf("desc : %s\n", ctx->GetExceptionString());
 	}

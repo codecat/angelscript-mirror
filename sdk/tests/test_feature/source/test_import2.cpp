@@ -37,10 +37,11 @@ void CheckFunc(asIScriptGeneric *)
 	{
 		asIScriptEngine *engine = ctx->GetEngine();
 		int funcID = ctx->GetCurrentFunction();
-		if( strcmp(engine->GetFunctionModule(funcID), "DynamicModule") != 0 )
+		const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcID);
+		if( strcmp(func->GetModuleName(), "DynamicModule") != 0 )
 			failed = true;
 
-		if( strcmp(engine->GetFunctionDeclaration(funcID), "void Test()") != 0 )
+		if( strcmp(func->GetDeclaration(), "void Test()") != 0 )
 			failed = true;
 
 		ctx->SetException("Generated exception");
@@ -73,10 +74,11 @@ bool Test()
 	if( r == asEXECUTION_EXCEPTION )
 	{
 		int funcID = ctx->GetExceptionFunction();
-		if( strcmp(engine->GetFunctionModule(funcID), "DynamicModule") != 0 )
+		const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcID);
+		if( strcmp(func->GetModuleName(), "DynamicModule") != 0 )
 			failed = true;
 
-		if( strcmp(engine->GetFunctionDeclaration(funcID), "void Test()") != 0 )
+		if( strcmp(func->GetDeclaration(), "void Test()") != 0 )
 			failed = true;
 	}
 	if( ctx ) ctx->Release();

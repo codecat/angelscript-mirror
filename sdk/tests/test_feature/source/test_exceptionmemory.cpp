@@ -263,7 +263,7 @@ bool Test()
 
 //	printf("---\n");
 
-	engine->SetDefaultContextStackSize(20, 4);
+	engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 4);
 	r = engine->ExecuteString(0, "Test3()");
 	if( r != asEXECUTION_EXCEPTION )
 	{
@@ -274,7 +274,7 @@ bool Test()
 //	printf("---\n");
 
 	asIScriptContext *ctx;
-	engine->SetDefaultContextStackSize(1024, 0);
+	engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 0);
 	r = engine->ExecuteString(0, "Test4()", &ctx);
 	if( r != asEXECUTION_SUSPENDED )
 	{

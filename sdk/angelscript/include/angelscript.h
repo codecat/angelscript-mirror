@@ -409,17 +409,21 @@ extern "C"
 	AS_API int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name);
 	AS_API int               asEngine_GetFunctionIDByDecl(asIScriptEngine *e, const char *module, const char *decl);
+#ifdef AS_DEPRECATED
 	AS_API const char *      asEngine_GetFunctionDeclaration(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length = 0);
-	AS_API const asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index);
-	AS_API const asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId);
+#endif
+	AS_API asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index);
+	AS_API asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId);
+#ifdef AS_DEPRECATED
 	AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId);
 	AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index);
 	AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, int typeId, const char *name);
 	AS_API int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, int typeId, const char *decl);
-	AS_API const asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index);
+	AS_API asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index);
+#endif
 	AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name);
@@ -441,7 +445,9 @@ extern "C"
 	AS_API asIObjectType *   asEngine_GetObjectTypeById(asIScriptEngine *e, int typeId);
 	AS_API asIObjectType *   asEngine_GetObjectTypeByIndex(asIScriptEngine *e, asUINT index);
 	AS_API int               asEngine_GetObjectTypeCount(asIScriptEngine *e);
+#ifdef AS_DEPRECATED
 	AS_API int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum);
+#endif
 	AS_API asIScriptContext *asEngine_CreateContext(asIScriptEngine *e);
 	AS_API void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId);
 	AS_API void *            asEngine_CreateScriptObjectCopy(asIScriptEngine *e, void *obj, int typeId);
@@ -555,21 +561,21 @@ extern "C"
 
 	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
 	AS_API const char              *asObjectType_GetName(const asIObjectType *o);
-	AS_API const asIObjectType     *asObjectType_GetSubType(const asIObjectType *o);
+	AS_API asIObjectType           *asObjectType_GetSubType(const asIObjectType *o);
 	AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o);
-	AS_API const asIObjectType     *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
+	AS_API asIObjectType           *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
 	AS_API bool                     asObjectType_IsInterface(const asIObjectType *o);
 	AS_API int                      asObjectType_GetMethodCount(const asIObjectType *o);
 	AS_API int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index);
 	AS_API int                      asObjectType_GetMethodIdByName(const asIObjectType *o, const char *name);
 	AS_API int                      asObjectType_GetMethodIdByDecl(const asIObjectType *o, const char *decl);
-	AS_API const asIScriptFunction *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index);
+	AS_API asIScriptFunction       *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index);
 
 	AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);
-	AS_API const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f);
+	AS_API asIObjectType       *asScriptFunction_GetObjectType(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f);
-	AS_API const char          *asScriptFunction_GetFunctionName(const asIScriptFunction *f);
+	AS_API const char          *asScriptFunction_GetName(const asIScriptFunction *f);
 	AS_API bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f);
 	AS_API bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f);
 	AS_API int                  asScriptFunction_GetParamCount(const asIScriptFunction *f);
@@ -631,18 +637,22 @@ public:
 	virtual int GetFunctionIDByIndex(const char *module, int index) = 0;
 	virtual int GetFunctionIDByName(const char *module, const char *name) = 0;
 	virtual int GetFunctionIDByDecl(const char *module, const char *decl) = 0;
+#ifdef AS_DEPRECATED
 	virtual const char *GetFunctionDeclaration(int funcId, int *length = 0) = 0;
 	virtual const char *GetFunctionName(int funcId, int *length = 0) = 0;
 	virtual const char *GetFunctionModule(int funcId, int *length = 0) = 0;
 	virtual const char *GetFunctionSection(int funcId, int *length = 0) = 0;
-	virtual const asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
-	virtual const asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+#endif
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
 
+#ifdef AS_DEPRECATED
 	virtual int GetMethodCount(int typeId) = 0;
 	virtual int GetMethodIDByIndex(int typeId, int index) = 0;
 	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
 	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
-	virtual const asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index) = 0;
+	virtual asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index) = 0;
+#endif
 
 	// Script global variables
 	virtual int GetGlobalVarCount(const char *module) = 0;
@@ -673,7 +683,9 @@ public:
 	virtual int GetObjectTypeCount() = 0;
 
 	// Script execution
+#ifdef AS_DEPRECATED
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
+#endif
 	virtual asIScriptContext *CreateContext() = 0;
 	virtual void *CreateScriptObject(int typeId) = 0;
 	virtual void *CreateScriptObjectCopy(void *obj, int typeId) = 0;
@@ -681,14 +693,14 @@ public:
 	virtual void ReleaseScriptObject(void *obj, int typeId) = 0;
 	virtual void AddRefScriptObject(void *obj, int typeId) = 0;
 	virtual bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
-	virtual int CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
+	virtual int  CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
-	virtual int ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
+	virtual int  ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
-	virtual int GarbageCollect(bool doFullCycle = true) = 0;
-	virtual int GetObjectsInGarbageCollectorCount() = 0;
+	virtual int  GarbageCollect(bool doFullCycle = true) = 0;
+	virtual int  GetObjectsInGarbageCollectorCount() = 0;
 	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId) = 0;
 	virtual void GCEnumCallback(void *obj) = 0;
 
@@ -858,19 +870,24 @@ protected:
 class asIObjectType
 {
 public:
-	virtual asIScriptEngine     *GetEngine() const = 0;
-	virtual const char          *GetName(int *length = 0) const = 0;
-	virtual const asIObjectType *GetSubType() const = 0;
-	virtual int                  GetInterfaceCount() const = 0;
-	virtual const asIObjectType *GetInterface(asUINT index) const = 0;
-	virtual bool                 IsInterface() const = 0;
+	virtual asIScriptEngine *GetEngine() const = 0;
+	virtual const char      *GetName(int *length = 0) const = 0;
+	virtual asIObjectType   *GetSubType() const = 0;
+	virtual int              GetInterfaceCount() const = 0;
+	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
+	virtual bool             IsInterface() const = 0;
 
 	// Methods
-	virtual int                      GetMethodCount() const = 0;
-	virtual int                      GetMethodIdByIndex(int index) const = 0;
-	virtual int                      GetMethodIdByName(const char *name) const = 0;
-	virtual int                      GetMethodIdByDecl(const char *decl) const = 0;
-	virtual const asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
+	virtual int                GetMethodCount() const = 0;
+	virtual int                GetMethodIdByIndex(int index) const = 0;
+	virtual int                GetMethodIdByName(const char *name) const = 0;
+	virtual int                GetMethodIdByDecl(const char *decl) const = 0;
+	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
+
+	// Properties
+	virtual int         GetPropertyCount() = 0;
+	virtual int         GetPropertyTypeId(asUINT prop) = 0;
+	virtual const char *GetPropertyName(asUINT prop, int *length = 0) = 0;
 
 protected:
 	virtual ~asIObjectType() {}
@@ -879,20 +896,20 @@ protected:
 class asIScriptFunction
 {
 public:
-	virtual asIScriptEngine     *GetEngine() const = 0;
-	virtual const char          *GetModuleName(int *length = 0) const = 0;
-	virtual const asIObjectType *GetObjectType() const = 0;
-	virtual const char          *GetObjectName(int *length = 0) const = 0;
-	virtual const char          *GetFunctionName(int *length = 0) const = 0;
-	virtual const char          *GetFunctionDeclaration(int *length = 0) const = 0;
-	virtual const char          *GetScriptSectionName(int *length = 0) const = 0;
+	virtual asIScriptEngine *GetEngine() const = 0;
+	virtual const char      *GetModuleName(int *length = 0) const = 0;
+	virtual asIObjectType   *GetObjectType() const = 0;
+	virtual const char      *GetObjectName(int *length = 0) const = 0;
+	virtual const char      *GetName(int *length = 0) const = 0;
+	virtual const char      *GetDeclaration(int *length = 0) const = 0;
+	virtual const char      *GetScriptSectionName(int *length = 0) const = 0;
 
-	virtual bool                 IsClassMethod() const = 0;
-	virtual bool                 IsInterfaceMethod() const = 0;
+	virtual bool             IsClassMethod() const = 0;
+	virtual bool             IsInterfaceMethod() const = 0;
 
-	virtual int                  GetParamCount() const = 0;
-	virtual int                  GetParamTypeId(int index) const = 0;
-	virtual int                  GetReturnTypeId() const = 0;
+	virtual int              GetParamCount() const = 0;
+	virtual int              GetParamTypeId(int index) const = 0;
+	virtual int              GetReturnTypeId() const = 0;
 
 protected:
 	virtual ~asIScriptFunction() {};

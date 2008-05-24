@@ -108,7 +108,7 @@ const char *asCObjectType::GetName(int *length) const
 	return name.AddressOf();
 }
 
-const asIObjectType *asCObjectType::GetSubType() const
+asIObjectType *asCObjectType::GetSubType() const
 {
 	return subType;
 }
@@ -118,7 +118,7 @@ int asCObjectType::GetInterfaceCount() const
 	return (int)interfaces.GetLength();
 }
 
-const asIObjectType *asCObjectType::GetInterface(asUINT index) const
+asIObjectType *asCObjectType::GetInterface(asUINT index) const
 {
 	assert(index < interfaces.GetLength());
 
@@ -188,12 +188,34 @@ int asCObjectType::GetMethodIdByDecl(const char *decl) const
 	return mod->GetMethodIDByDecl(this, decl);
 }
 
-const asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(int index) const
+asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(int index) const
 {
 	if( index < 0 || (unsigned)index >= methods.GetLength() ) 
 		return 0;
 
 	return engine->scriptFunctions[methods[index]];
+}
+
+int asCObjectType::GetPropertyCount()
+{
+	return (int)properties.GetLength();
+}
+
+int asCObjectType::GetPropertyTypeId(asUINT prop)
+{
+	if( prop >= properties.GetLength() )
+		return asINVALID_ARG;
+
+	return engine->GetTypeIdFromDataType(properties[prop]->type);
+}
+
+const char *asCObjectType::GetPropertyName(asUINT prop, int *length)
+{
+	if( prop >= properties.GetLength() )
+		return 0;
+
+	if( length ) *length = (int)properties[prop]->name.GetLength();
+	return properties[prop]->name.AddressOf();
 }
 
 END_AS_NAMESPACE

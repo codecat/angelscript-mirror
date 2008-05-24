@@ -650,17 +650,21 @@ extern "C"
 	AS_API int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name);
 	AS_API int               asEngine_GetFunctionIDByDecl(asIScriptEngine *e, const char *module, const char *decl);
+#ifdef AS_DEPRECATED
 	AS_API const char *      asEngine_GetFunctionDeclaration(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length = 0);
 	AS_API const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length = 0);
-	AS_API const asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index);
-	AS_API const asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId);
+#endif
+	AS_API asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index);
+	AS_API asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId);
+#ifdef AS_DEPRECATED
 	AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId);
 	AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index);
 	AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, int typeId, const char *name);
 	AS_API int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, int typeId, const char *decl);
-	AS_API const asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index);
+	AS_API asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index);
+#endif
 	AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name);
@@ -682,7 +686,9 @@ extern "C"
 	AS_API asIObjectType *   asEngine_GetObjectTypeById(asIScriptEngine *e, int typeId);
 	AS_API asIObjectType *   asEngine_GetObjectTypeByIndex(asIScriptEngine *e, asUINT index);
 	AS_API int               asEngine_GetObjectTypeCount(asIScriptEngine *e);
+#ifdef AS_DEPRECATED
 	AS_API int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum);
+#endif
 	AS_API asIScriptContext *asEngine_CreateContext(asIScriptEngine *e);
 	AS_API void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId);
 	AS_API void *            asEngine_CreateScriptObjectCopy(asIScriptEngine *e, void *obj, int typeId);
@@ -796,21 +802,21 @@ extern "C"
 
 	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
 	AS_API const char              *asObjectType_GetName(const asIObjectType *o);
-	AS_API const asIObjectType     *asObjectType_GetSubType(const asIObjectType *o);
+	AS_API asIObjectType           *asObjectType_GetSubType(const asIObjectType *o);
 	AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o);
-	AS_API const asIObjectType     *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
+	AS_API asIObjectType           *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
 	AS_API bool                     asObjectType_IsInterface(const asIObjectType *o);
 	AS_API int                      asObjectType_GetMethodCount(const asIObjectType *o);
 	AS_API int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index);
 	AS_API int                      asObjectType_GetMethodIdByName(const asIObjectType *o, const char *name);
 	AS_API int                      asObjectType_GetMethodIdByDecl(const asIObjectType *o, const char *decl);
-	AS_API const asIScriptFunction *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index);
+	AS_API asIScriptFunction       *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index);
 
 	AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);
-	AS_API const asIObjectType *asScriptFunction_GetObjectType(const asIScriptFunction *f);
+	AS_API asIObjectType       *asScriptFunction_GetObjectType(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f);
-	AS_API const char          *asScriptFunction_GetFunctionName(const asIScriptFunction *f);
+	AS_API const char          *asScriptFunction_GetName(const asIScriptFunction *f);
 	AS_API bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f);
 	AS_API bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f);
 	AS_API int                  asScriptFunction_GetParamCount(const asIScriptFunction *f);
@@ -1283,6 +1289,7 @@ public:
     //!
     //! The method will find the script function with the exact same declaration.
 	virtual int GetFunctionIDByDecl(const char *module, const char *decl) = 0;
+#ifdef AS_DEPRECATED
 	//! \brief Returns the function declaration.
     //! \param[in] funcId The function id.
     //! \param[out] length A pointer to the variable that will receive the length of the returned string.
@@ -1293,7 +1300,7 @@ public:
     //! even though the script may compile correctly the user may not have written the function 
     //! interface as intended.
     //!
-    //! \deprecated Use \ref asIScriptFunction::GetFunctionDeclaration instead.
+    //! \deprecated Use \ref asIScriptFunction::GetDeclaration instead.
 	virtual const char *GetFunctionDeclaration(int funcId, int *length = 0) = 0;
 	//! \brief Returns the function name.
     //! \param[in] funcId The function id.
@@ -1304,7 +1311,7 @@ public:
     //! the host application can call. Useful for obtaining the name of functions with ID obtained 
     //! from \ref asIScriptContext::GetExceptionFunction "GetExceptionFunction".
     //!
-    //! \deprecated Use \ref asIScriptFunction::GetFunctionName instead.
+    //! \deprecated Use \ref asIScriptFunction::GetName instead.
 	virtual const char *GetFunctionName(int funcId, int *length = 0) = 0;
 	//! \brief Returns the module where the function was implemented.
     //! \param[in] funcId The function id.
@@ -1324,16 +1331,18 @@ public:
     //!
     //! \deprecated Use \ref asIScriptFunction::GetScriptSectionName instead.
 	virtual const char *GetFunctionSection(int funcId, int *length = 0) = 0;
+#endif
 	//! \brief Returns the function descriptor for the script function
     //! \param[in] module The module name.
     //! \param[in] index The index of the function.
     //! \return A pointer to the function description interface, or null if not found.
-	virtual const asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
 	//! \brief Returns the function descriptor for the script function
     //! \param[in] funcId The id of the function or method.
     //! \return A pointer to the function description interface, or null if not found.
-	virtual const asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
 
+#ifdef AS_DEPRECATED
 	//! \brief Returns the number of methods for the object type.
     //! \param[in] typeId The object type id.
     //! \return A negative value on error, or the number of methods for this object.
@@ -1393,7 +1402,8 @@ public:
     //! \return A pointer to the method description interface, or null if not found.
     //!
     //! \deprecated Use \ref asIObjectType::GetMethodDescriptorByIndex instead
-	virtual const asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index) = 0;
+	virtual asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index) = 0;
+#endif
 
 	// Script global variables
 	//! \brief Returns the number of global variables in the module.
@@ -1578,6 +1588,7 @@ public:
 	virtual int GetObjectTypeCount() = 0;
 
 	// Script execution
+#ifdef AS_DEPRECATED
 	//! \brief Sets the default context stack size.
     //! \param[in] initial The smallest stack size
     //! \param[in] maximum The largest stack size
@@ -1594,6 +1605,7 @@ public:
     //!
     //! \deprecated Use \ref asIScriptEngine::SetEngineProperty "SetEngineProperty" with \ref asEP_MAX_STACK_SIZE instead
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
+#endif
 	//! \brief Creates a new script context.
     //! \return A pointer to the new script context.
     //!
@@ -1673,7 +1685,7 @@ public:
     //! know the exact type of the objects being compared. The function will only work on 
     //! objects, and then only on those objects that permit comparisons, i.e. registered types 
     //! that have the comparison behaviours registered.
-	virtual int CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
+	virtual int  CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
 	//! \brief Compiles and executes script statements within the context of a module.
@@ -1693,7 +1705,7 @@ public:
     //! \retval asEXECUTION_EXCEPTION The execution ended with an exception.
     //!
     //! This method allow an application to interpret script statements using the currently compiled code.
-	virtual int ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
+	virtual int  ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
 	//! \brief Perform garbage collection.
@@ -1710,7 +1722,7 @@ public:
     //! It is not necessary to do a full cycle with every call. This makes it possible to spread 
     //! out the garbage collection time over a large period, thus not impacting the responsiveness 
     //! of the application.
-	virtual int GarbageCollect(bool doFullCycle = true) = 0;
+	virtual int  GarbageCollect(bool doFullCycle = true) = 0;
 	//! \brief Returns the number of objects currently referenced by the garbage collector.
     //! \return The number of objects currently known by the garbage collector.
     //!
@@ -1722,7 +1734,7 @@ public:
     //! references to other objects, but these are not reflected in the return value. Thus 
     //! there is no way of knowing the exact amount of memory allocated directly and indirectly 
     //! by the objects referred to by this function.
-	virtual int GetObjectsInGarbageCollectorCount() = 0;
+	virtual int  GetObjectsInGarbageCollectorCount() = 0;
 	//! \brief Notify the garbage collector of a new object that needs to be managed.
     //! \param[in] obj A pointer to the newly created object.
     //! \param[in] typeId The type id of the object.
@@ -2339,7 +2351,8 @@ public:
 
     //! \brief Returns the type id of the property referenced by prop.
     //! \param[in] prop The property index.
-    //! \return The type id of the member property.
+    //! \return The type id of the member property, or a negative value on error.
+    //! \retval asINVALID_ARG \a prop is too large
 	virtual int         GetPropertyTypeId(asUINT prop) = 0;
 
     //! \brief Returns the name of the property referenced by prop.
@@ -2433,34 +2446,34 @@ class asIObjectType
 public:
 	//! \brief Returns a pointer to the script engine.
     //! \return A pointer to the engine.
-	virtual asIScriptEngine     *GetEngine() const = 0;
+	virtual asIScriptEngine *GetEngine() const = 0;
 
 	//! \brief Returns a temporary pointer to the name of the datatype.
 	//! \param[out] length The length of the string
 	//! \return A null terminated string with the name of the object type.
-	virtual const char          *GetName(int *length = 0) const = 0;
+	virtual const char      *GetName(int *length = 0) const = 0;
 
 	//! \brief Returns a temporary pointer to the type associated with this descriptor.
     //! \return A pointer to the sub type.
-	virtual const asIObjectType *GetSubType() const = 0;
+	virtual asIObjectType   *GetSubType() const = 0;
 
 	//! \brief Returns the number of interfaces implemented.
     //! \return The number of interfaces implemented by this type.
-	virtual int                  GetInterfaceCount() const = 0;
+	virtual int              GetInterfaceCount() const = 0;
 
 	//! \brief Returns a temporary pointer to the specified interface or null if none are found.
     //! \param[in] index The interface index.
     //! \return A pointer to the interface type.
-	virtual const asIObjectType *GetInterface(asUINT index) const = 0;
+	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
 
     //! \brief Returns true if the type is an interface.
     //! \return True if the type is an interface.
-	virtual bool                 IsInterface() const = 0;
+	virtual bool             IsInterface() const = 0;
 
 	// Methods
 	//! \brief Returns the number of methods for the object type.
     //! \return A negative value on error, or the number of methods for this object.
-	virtual int                      GetMethodCount() const = 0;
+	virtual int                GetMethodCount() const = 0;
 	//! \brief Returns the method id by index.
     //! \param[in] index The index of the method.
     //! \return A negative value on error, or the method id.
@@ -2468,7 +2481,7 @@ public:
     //!
     //! This method should be used to retrieve the ID of the script method for the object 
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	virtual int                      GetMethodIdByIndex(int index) const = 0;
+	virtual int                GetMethodIdByIndex(int index) const = 0;
 	//! \brief Returns the method id by name.
     //! \param[in] name The name of the method.
     //! \return A negative value on error, or the method id.
@@ -2477,7 +2490,7 @@ public:
     //!
     //! This method should be used to retrieve the ID of the script method for the object 
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	virtual int                      GetMethodIdByName(const char *name) const = 0;
+	virtual int                GetMethodIdByName(const char *name) const = 0;
 	//! \brief Returns the method id by declaration.
     //! \param[in] decl The method signature.
     //! \return A negative value on error, or the method id.
@@ -2490,11 +2503,26 @@ public:
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
     //!
     //! The method will find the script method with the exact same declaration.
-	virtual int                      GetMethodIdByDecl(const char *decl) const = 0;
+	virtual int                GetMethodIdByDecl(const char *decl) const = 0;
 	//! \brief Returns the function descriptor for the script method
     //! \param[in] index The index of the method.
     //! \return A pointer to the method description interface, or null if not found.
-	virtual const asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
+	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
+
+	// Properties
+	//! \brief Returns the number of properties that the object contains.
+    //! \return The number of member properties of the script object.
+	virtual int         GetPropertyCount() = 0;
+    //! \brief Returns the type id of the property referenced by \a prop.
+    //! \param[in] prop The property index.
+    //! \return The type id of the member property, or a negative value on error.
+    //! \retval asINVALID_ARG \a prop is too large
+	virtual int         GetPropertyTypeId(asUINT prop) = 0;
+    //! \brief Returns the name of the property referenced by \a prop.
+    //! \param[in] prop The property index.
+    //! \param[out] length The length of the string
+    //! \return A null terminated string with the property name.
+	virtual const char *GetPropertyName(asUINT prop, int *length = 0) = 0;
 
 protected:
 	virtual ~asIObjectType() {}
@@ -2506,49 +2534,49 @@ class asIScriptFunction
 public:
 	//! \brief Returns a pointer to the script engine.
     //! \return A pointer to the engine.
-	virtual asIScriptEngine     *GetEngine() const = 0;
+	virtual asIScriptEngine *GetEngine() const = 0;
 	//! \brief Returns the name of the module where the function was implemented
 	//! \param[out] length The length of the string
     //! \return A null terminated string with the module name.
-	virtual const char          *GetModuleName(int *length = 0) const = 0;
+	virtual const char      *GetModuleName(int *length = 0) const = 0;
 	//! \brief Returns the object type for class or interface method
     //! \return A pointer to the object type interface if this is a method.
-	virtual const asIObjectType *GetObjectType() const = 0;
+	virtual asIObjectType   *GetObjectType() const = 0;
 	//! \brief Returns the name of the object for class or interface methods
 	//! \param[out] length The length of the string
     //! \return A null terminated string with the name of the object type if this a method.
-	virtual const char          *GetObjectName(int *length = 0) const = 0;
+	virtual const char      *GetObjectName(int *length = 0) const = 0;
 	//! \brief Returns the name of the function or method
 	//! \param[out] length The length of the string
     //! \return A null terminated string with the name of the function.
-	virtual const char          *GetFunctionName(int *length = 0) const = 0;
+	virtual const char      *GetName(int *length = 0) const = 0;
 	//! \brief Returns the function declaration
 	//! \param[out] length The length of the string
     //! \return A null terminated string with the function declaration.
-	virtual const char          *GetFunctionDeclaration(int *length = 0) const = 0;
+	virtual const char      *GetDeclaration(int *length = 0) const = 0;
 	//! \brief Returns the name of the script section where the function was implemented
 	//! \param[out] length The length of the string
     //! \return A null terminated string with the script section name where the function was implemented.
-	virtual const char          *GetScriptSectionName(int *length = 0) const = 0;
+	virtual const char      *GetScriptSectionName(int *length = 0) const = 0;
 
 	//! \brief Returns true if it is a class method
     //! \return True if this a class method.
-	virtual bool                 IsClassMethod() const = 0;
+	virtual bool             IsClassMethod() const = 0;
 	//! \brief Returns true if it is an interface method
     //! \return True if this is an interface method.
-	virtual bool                 IsInterfaceMethod() const = 0;
+	virtual bool             IsInterfaceMethod() const = 0;
 
     //! \brief Returns the number of parameters for this function.
     //! \return The number of parameters.
-	virtual int                  GetParamCount() const = 0;
+	virtual int              GetParamCount() const = 0;
     //! \brief Returns the type id of the specified parameter.
     //! \param[in] index The zero based parameter index.
     //! \return A negative value on error, or the type id of the specified parameter.
     //! \retval asINVALID_ARG The index is out of bounds.
-	virtual int                  GetParamTypeId(int index) const = 0;
+	virtual int              GetParamTypeId(int index) const = 0;
     //! \brief Returns the type id of the return type.
     //! \return The type id of the return type.
-	virtual int                  GetReturnTypeId() const = 0;
+	virtual int              GetReturnTypeId() const = 0;
 
 protected:
 	virtual ~asIScriptFunction() {};

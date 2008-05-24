@@ -392,7 +392,7 @@ void asCBuilder::CompileFunctions()
 		int r, c;
 		functions[n]->script->ConvertPosToRowCol(functions[n]->node->tokenPos, &r, &c);
 		asCScriptFunction *func = engine->scriptFunctions[functions[n]->funcId];
-		asCString str = func->GetDeclaration();
+		asCString str = func->GetDeclarationStr();
 		str.Format(TXT_COMPILING_s, str.AddressOf());
 		WriteInfo(functions[n]->script->name.AddressOf(), str.AddressOf(), r, c, true);
 

@@ -106,9 +106,9 @@ public:
 
 	asIScriptEngine *GetEngine() const;
 	const char *GetName(int *length = 0) const;
-	const asIObjectType *GetSubType() const;
+	asIObjectType *GetSubType() const;
 	virtual int GetInterfaceCount() const;
-	const asIObjectType *GetInterface(asUINT index) const;
+	asIObjectType *GetInterface(asUINT index) const;
 	bool IsInterface() const;
 	bool Implements(const asCObjectType *objType);
 
@@ -117,7 +117,12 @@ public:
 	int                      GetMethodIdByIndex(int index) const;
 	int                      GetMethodIdByName(const char *name) const;
 	int                      GetMethodIdByDecl(const char *decl) const;
-	const asIScriptFunction *GetMethodDescriptorByIndex(int index) const;
+	asIScriptFunction       *GetMethodDescriptorByIndex(int index) const;
+
+	// Properties
+	int         GetPropertyCount();
+	int         GetPropertyTypeId(asUINT prop);
+	const char *GetPropertyName(asUINT prop, int *length = 0);
 
 	asCString   name;
 	eTokenType  tokenType;

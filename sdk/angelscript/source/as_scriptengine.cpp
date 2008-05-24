@@ -649,6 +649,7 @@ int asCScriptEngine::GetFunctionIDByDecl(const char *module, const char *decl)
 
 //-----------------
 
+#ifdef AS_DEPRECATED
 // Deprecated since 2008-05-22
 int asCScriptEngine::GetMethodCount(int typeId)
 {
@@ -696,6 +697,7 @@ int asCScriptEngine::GetMethodIDByDecl(int typeId, const char *decl)
 
 	return ot->GetMethodIdByDecl(decl);
 }
+#endif
 
 int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl, asCModule *mod)
 {
@@ -743,6 +745,7 @@ int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl
 
 //----------------------
 
+#ifdef AS_DEPRECATED
 // Deprecated since 2008-05-22
 const char *asCScriptEngine::GetFunctionDeclaration(int funcID, int *length)
 {
@@ -756,7 +759,7 @@ const char *asCScriptEngine::GetFunctionDeclaration(int funcID, int *length)
 		asCScriptFunction *func = GetScriptFunction(funcID);
 		if( func == 0 ) return 0;
 
-		*tempString = func->GetDeclaration();
+		*tempString = func->GetDeclarationStr();
 	}
 
 	if( length ) *length = (int)tempString->GetLength();
@@ -764,6 +767,7 @@ const char *asCScriptEngine::GetFunctionDeclaration(int funcID, int *length)
 	return tempString->AddressOf();
 }
 
+// Deprecated since 2008-05-22
 const char *asCScriptEngine::GetFunctionModule(int funcId, int *length)
 {
 	asCModule *mod = GetModuleFromFuncId(funcId);
@@ -774,6 +778,7 @@ const char *asCScriptEngine::GetFunctionModule(int funcId, int *length)
 	return mod->name.AddressOf();
 }
 
+// Deprecated since 2008-05-22
 const char *asCScriptEngine::GetFunctionSection(int funcID, int *length)
 {
 	asCString *tempString = &threadManager.GetLocalData()->string;
@@ -797,6 +802,7 @@ const char *asCScriptEngine::GetFunctionSection(int funcID, int *length)
 	return tempString->AddressOf();
 }
 
+// Deprecated since 2008-05-22
 const char *asCScriptEngine::GetFunctionName(int funcID, int *length)
 {
 	asCString *tempString = &threadManager.GetLocalData()->string;
@@ -816,6 +822,7 @@ const char *asCScriptEngine::GetFunctionName(int funcID, int *length)
 
 	return tempString->AddressOf();
 }
+#endif
 
 int asCScriptEngine::GetGlobalVarCount(const char *module)
 {
@@ -911,7 +918,7 @@ asCString asCScriptEngine::GetFunctionDeclaration(int funcID)
 	asCString str;
 	asCScriptFunction *func = GetScriptFunction(funcID);
 	if( func )
-		str = func->GetDeclaration();
+		str = func->GetDeclarationStr();
 
 	return str;
 }
@@ -2570,7 +2577,7 @@ int asCScriptEngine::LoadByteCode(const char *_module, asIBinaryStream *stream)
 	return asINVALID_ARG;
 }
 
-// TODO: Remove this method. It's deprecated
+#ifdef AS_DEPRECATED
 int asCScriptEngine::SetDefaultContextStackSize(asUINT initial, asUINT maximum)
 {
 	// Sizes are given in bytes, but we store them in dwords
@@ -2579,6 +2586,7 @@ int asCScriptEngine::SetDefaultContextStackSize(asUINT initial, asUINT maximum)
 
 	return asSUCCESS;
 }
+#endif
 
 int asCScriptEngine::GetImportedFunctionCount(const char *module)
 {
@@ -2605,7 +2613,7 @@ const char *asCScriptEngine::GetImportedFunctionDeclaration(const char *module, 
 	if( func == 0 ) return 0;
 
 	asCString *tempString = &threadManager.GetLocalData()->string;
-	*tempString = func->GetDeclaration();
+	*tempString = func->GetDeclarationStr();
 
 	if( length ) *length = (int)tempString->GetLength();
 
@@ -2654,7 +2662,7 @@ int asCScriptEngine::BindAllImportedFunctions(const char *module)
 		asCScriptFunction *func = mod->GetImportedFunction(n);
 		if( func == 0 ) return asERROR;
 
-		asCString str = func->GetDeclaration();
+		asCString str = func->GetDeclarationStr();
 
 		// Get module name from where the function should be imported
 		const char *moduleName = mod->GetImportedFunctionSourceModule(n);
@@ -4320,9 +4328,10 @@ asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId)
 	return dt->GetObjectType();
 }
 
+#ifdef AS_DEPRECATED
 // Deprecated since 2008-05-22
 // Additional functionality for to access internal objects
-const asIScriptFunction *asCScriptEngine::GetMethodDescriptorByIndex(int typeId, int index)
+asIScriptFunction *asCScriptEngine::GetMethodDescriptorByIndex(int typeId, int index)
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
 	if( dt == 0 ) return 0;
@@ -4332,8 +4341,9 @@ const asIScriptFunction *asCScriptEngine::GetMethodDescriptorByIndex(int typeId,
 
 	return ot->GetMethodDescriptorByIndex(index);
 }
+#endif
 
-const asIScriptFunction *asCScriptEngine::GetFunctionDescriptorByIndex(const char *module, int index)
+asIScriptFunction *asCScriptEngine::GetFunctionDescriptorByIndex(const char *module, int index)
 {
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return 0;
@@ -4341,7 +4351,7 @@ const asIScriptFunction *asCScriptEngine::GetFunctionDescriptorByIndex(const cha
 	return mod->scriptFunctions[index];
 }
 
-const asIScriptFunction *asCScriptEngine::GetFunctionDescriptorById(int funcId)
+asIScriptFunction *asCScriptEngine::GetFunctionDescriptorById(int funcId)
 {
 	return GetScriptFunction(funcId);
 }

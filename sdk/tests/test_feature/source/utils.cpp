@@ -9,10 +9,11 @@ using namespace std;
 void PrintException(asIScriptContext *ctx)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
-	int funcID = ctx->GetExceptionFunction();
-	printf("func: %s\n", engine->GetFunctionDeclaration(funcID));
-	printf("modl: %s\n", engine->GetFunctionModule(funcID));
-	printf("sect: %s\n", engine->GetFunctionSection(funcID));
+	int funcId = ctx->GetExceptionFunction();
+	const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
+	printf("func: %s\n", function->GetDeclaration());
+	printf("modl: %s\n", function->GetModuleName());
+	printf("sect: %s\n", function->GetScriptSectionName());
 	printf("line: %d\n", ctx->GetExceptionLineNumber());
 	printf("desc: %s\n", ctx->GetExceptionString());
 }
@@ -32,9 +33,10 @@ void Assert(asIScriptGeneric *gen)
 		{
 			asIScriptEngine *engine = ctx->GetEngine();
 			int funcID = ctx->GetCurrentFunction();
-			printf("func: %s\n", engine->GetFunctionDeclaration(funcID));
-			printf("mdle: %s\n", engine->GetFunctionModule(funcID));
-			printf("sect: %s\n", engine->GetFunctionSection(funcID));
+			const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcID);
+			printf("func: %s\n", function->GetDeclaration());
+			printf("mdle: %s\n", function->GetModuleName());
+			printf("sect: %s\n", function->GetScriptSectionName());
 			printf("line: %d\n", ctx->GetCurrentLineNumber());
 			ctx->SetException("Assert failed");
 			printf("---------------------\n");

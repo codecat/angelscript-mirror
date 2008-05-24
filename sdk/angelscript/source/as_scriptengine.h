@@ -110,18 +110,22 @@ public:
 	int GetFunctionIDByIndex(const char *module, int index);
 	int GetFunctionIDByName(const char *module, const char *name);
 	int GetFunctionIDByDecl(const char *module, const char *decl);
+#ifdef AS_DEPRECATED
 	const char *GetFunctionDeclaration(int funcID, int *length);
 	const char *GetFunctionName(int funcID, int *length);
 	const char *GetFunctionModule(int funcID, int *length);
 	const char *GetFunctionSection(int funcID, int *length);
-	const asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index);
-	const asIScriptFunction *GetFunctionDescriptorById(int funcId);
+#endif
+	asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index);
+	asIScriptFunction *GetFunctionDescriptorById(int funcId);
 
+#ifdef AS_DEPRECATED
 	int GetMethodCount(int typeId);
 	int GetMethodIDByIndex(int typeId, int index);
 	int GetMethodIDByName(int typeId, const char *name);
 	int GetMethodIDByDecl(int typeId, const char *decl);
-	const asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index);
+	asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index);
+#endif
 
 	int GetGlobalVarCount(const char *module);
 	int GetGlobalVarIDByIndex(const char *module, int index);
@@ -151,7 +155,9 @@ public:
 	int GetObjectTypeCount();
 
 	// Script execution
+#ifdef AS_DEPRECATED
 	int SetDefaultContextStackSize(asUINT initial, asUINT maximum);
+#endif
 	asIScriptContext *CreateContext();
 	void *CreateScriptObject(int typeId);
 	void *CreateScriptObjectCopy(void *obj, int typeId);

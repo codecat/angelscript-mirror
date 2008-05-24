@@ -225,9 +225,10 @@ bool Test()
 		}
 
 		// Call the script class method
-		if( engine->GetMethodCount(typeId) != 2 ) 
+		asIObjectType *type = engine->GetObjectTypeById(typeId);
+		if( type->GetMethodCount() != 2 ) 
 			fail = true;
-		int methodId = engine->GetMethodIDByDecl(typeId, "void method2()");
+		int methodId = type->GetMethodIdByDecl("void method2()");
 		if( methodId < 0 ) 
 			fail = true;
 		else
@@ -260,7 +261,8 @@ bool Test()
 	if( r < 0 ) fail = true;
 
 	typeId = engine->GetTypeIdByDecl(0, "myclass");
-	int mtdId = engine->GetMethodIDByDecl(typeId, "void func()");
+	asIObjectType *type = engine->GetObjectTypeById(typeId);
+	int mtdId = type->GetMethodIdByDecl("void func()");
 	asIScriptStruct *obj = *(asIScriptStruct **)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "c"));
 
 	if( mtdId < 0 || obj == 0 ) fail = true;
@@ -274,7 +276,8 @@ bool Test()
 		ctx->Release();
 	}
 
-	mtdId = engine->GetMethodIDByDecl(typeId, "void func(int, int)");
+	type = engine->GetObjectTypeById(typeId);
+	mtdId = type->GetMethodIdByDecl("void func(int, int)");
 	if( mtdId < 0 || obj == 0 ) fail = true;
 	else
 	{
