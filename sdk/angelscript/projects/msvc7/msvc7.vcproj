@@ -123,6 +123,9 @@
 				RelativePath="..\..\source\as_callfunc_sh4.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\as_callfunc_x64_gcc.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\as_callfunc_x86.cpp">
 			</File>
 			<File

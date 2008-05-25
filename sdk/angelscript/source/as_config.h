@@ -202,6 +202,7 @@
 // AS_WIN     - Microsoft Windows
 // AS_LINUX   - Linux
 // AS_MAC     - Apple Macintosh
+// AS_BSD     - FreeBSD
 // AS_XBOX    - Microsoft XBox
 // AS_XBOX360 - Microsoft XBox 360
 // AS_PSP     - Sony Playstation Portable
@@ -430,6 +431,15 @@
 			#define STDCALL
 		#endif
 
+	// Free BSD
+	#elif __FreeBSD__
+		#define AS_BSD
+		#if defined(i386) && !defined(__LP64__)
+			#define AS_X86
+		#else
+			#define AS_MAX_PORTABILITY
+		#endif
+
 	// PSP and PS2
 	#elif defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
 		// Support native calling conventions on MIPS architecture
@@ -456,6 +466,7 @@
 		// Support native calling conventions on Dreamcast
 		#define AS_DC
 		#define AS_SH4
+
 	#endif
 
 	#define I64(x) x##ll

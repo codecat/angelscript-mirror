@@ -95,6 +95,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_MAC
 		"AS_MAC "
 #endif
+#ifdef AS_BSD
+		"AS_BSD "
+#endif
 #ifdef AS_XBOX
 		"AS_XBOX "
 #endif
