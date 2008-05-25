@@ -163,8 +163,10 @@ enum asEBehaviours
 	 asBEHAVE_GREATERTHAN,
 	 asBEHAVE_LEQUAL,
 	 asBEHAVE_GEQUAL,
+#ifdef AS_DEPRECATED
 	 asBEHAVE_LOGIC_OR,
 	 asBEHAVE_LOGIC_AND,
+#endif
 	 asBEHAVE_BIT_OR,
 	 asBEHAVE_BIT_AND,
 	 asBEHAVE_BIT_XOR,
@@ -172,6 +174,7 @@ enum asEBehaviours
 	 asBEHAVE_BIT_SRL,
 	 asBEHAVE_BIT_SRA,
 	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
+	asBEHAVE_REF_CAST,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,

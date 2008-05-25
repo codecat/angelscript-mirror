@@ -237,10 +237,12 @@ enum asEBehaviours
 	 asBEHAVE_LEQUAL,
 	 //! \brief (Global) operator >=
 	 asBEHAVE_GEQUAL,
+#ifdef AS_DEPRECATED
 	 //! \brief (Global) operator ||
 	 asBEHAVE_LOGIC_OR,
 	 //! \brief (Global) operator &&
 	 asBEHAVE_LOGIC_AND,
+#endif
 	 //! \brief (Global) operator |
 	 asBEHAVE_BIT_OR,
 	 //! \brief (Global) operator &
@@ -254,6 +256,8 @@ enum asEBehaviours
 	 //! \brief (Global) operator >>> (Arithmetic right shift)
 	 asBEHAVE_BIT_SRA,
 	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
+	//! \brief (Global) Reference cast operator
+	asBEHAVE_REF_CAST,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,
@@ -1047,7 +1051,7 @@ public:
     //! If the parameter is sent by reference, then declare it as const, as it may allow the compiler to 
     //! optimize the code to execute faster.
     //!
-    //! \see \ref doc_register_func
+    //! \see \ref doc_register_func, \ref doc_behaviours
 	virtual int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 
 	//! \brief Registers an interface.

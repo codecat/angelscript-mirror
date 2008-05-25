@@ -25,6 +25,73 @@ void Type_castInt(asIScriptGeneric *gen)
 	*(int*)gen->GetReturnPointer() = *a;
 }
 
+// Class A is the base class
+class A
+{
+public:
+	virtual int test() 
+	{
+		return 1;
+	}
+
+	static A* factory() 
+	{
+		return new A;
+	}
+	virtual void addref() 
+	{
+		refCount++;
+	}
+	virtual void release() 
+	{
+		refCount--; 
+		if( refCount == 0 ) 
+			delete this;
+	}
+protected:
+	A() {refCount = 1;}
+	virtual ~A() {}
+	int refCount;
+};
+
+// Class B is the sub class, derived from A
+class B : public A
+{
+public:
+	virtual int test() 
+	{
+		return 2;
+	}
+
+	static B* factory() 
+	{
+		return new B;
+	}
+	static A* castToA(B*b) 
+	{
+		A *a = dynamic_cast<A*>(b);
+		if( a == 0 )
+		{
+			// Since the cast failed, we need to release the handle we received
+			a->release();
+		}
+		return a;
+	}
+	static B* AcastToB(A*a) 
+	{
+		B *b = dynamic_cast<B*>(a);
+		if( b == 0 )
+		{
+			// Since the cast failed, we need to release the handle we received
+			a->release();
+		}
+		return b;
+	}
+protected:
+	B() : A() {}
+	~B() {}
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -150,27 +217,71 @@ bool Test()
 
 
 	//-----------------------------------------------------------------
-	// TODO: REFERENCE_CAST
+	// REFERENCE_CAST
 
 	// It must be possible to cast an object handle to another object handle, without 
 	// losing the reference to the original object. This is what will allow applications
-	// to register inheritance for registered types. This should perhaps be a special 
-	// behaviour, e.g. HANDLE_CAST. How to provide a cast from a base class to a derived class?
-	// The base class may not know about the derived class, so it must be the derived class that 
-	// registers the behaviour. 
+	// to register inheritance for registered types. This should be a special 
+	// behaviour, i.e. REF_CAST. 
+	
+	// How to provide a cast from a base class to a derived class?
+	// The base class may not know about the derived class, so it must
+	// be the derived class that registers the behaviour. 
 	
 	// How to provide interface functionalities to registered types? I.e. a class implements 
 	// various interfaces, and a handle to one of the interfaces may be converted to a handle
 	// of another interface that is implemented by the class.
 
-	// Class A is the base class
-	// Class B inherits from class A
-	// A handle to B can be implicitly cast to a handle to A via the HANDLE_CAST behaviour
-	// A handle to A can not be implicitly cast to a handle to B since it was registered as HANDLE_CAST_EXPLICIT
-	// A handle to A that truly points to a B can be explictly cast to a handle to B via the HANDLE_CAST_EXPLICIT behaviour
-	// A handle to A that truly points to an A will return a null handle when cast to B (this is detected via the dynamic_cast<> implementation of the behaviour)
+	// TODO: Can't register casts from primitive to primitive
 
-	// TODO: (Test) Can't register casts from primitive to primitive
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	// Class A is the base class
+	engine->RegisterObjectType("A", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("A", asBEHAVE_FACTORY, "A@f()", asFUNCTION(A::factory), asCALL_CDECL); 
+	engine->RegisterObjectBehaviour("A", asBEHAVE_RELEASE, "void f()", asMETHOD(A, release), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("A", asBEHAVE_ADDREF, "void f()", asMETHOD(A, addref), asCALL_THISCALL);
+	engine->RegisterObjectMethod("A", "int test()", asMETHOD(A, test), asCALL_THISCALL);
+
+	// Class B inherits from class A
+	engine->RegisterObjectType("B", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("B", asBEHAVE_FACTORY, "B@f()", asFUNCTION(B::factory), asCALL_CDECL); 
+	engine->RegisterObjectBehaviour("B", asBEHAVE_RELEASE, "void f()", asMETHOD(B, release), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("B", asBEHAVE_ADDREF, "void f()", asMETHOD(B, addref), asCALL_THISCALL);
+	engine->RegisterObjectMethod("B", "int test()", asMETHOD(B, test), asCALL_THISCALL);
+	
+	// Test the classes to make sure they work
+	r = engine->ExecuteString(0, "A a; assert(a.test() == 1); B b; assert(b.test() == 2);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	// Test REF_CAST from subclass to baseclass
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "A@ f(B@)", asFUNCTION(B::castToA), asCALL_CDECL); assert( r >= 0 );
+	r = engine->ExecuteString(0, "B b; A@ a = cast<A@>(b); assert(a.test() == 2);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	// Test REF_CAST from baseclass to subclass
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "B@ f(A@)", asFUNCTION(B::AcastToB), asCALL_CDECL); assert( r >= 0 );
+	r = engine->ExecuteString(0, "B b; A@ a = cast<A@>(b); B@ _b = cast<B@>(a); assert(_b.test() == 2);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	// Test REF_CAST from baseclass to subclass, where the cast is invalid
+	r = engine->ExecuteString(0, "A a; B@ b = cast<B@>(a); assert(@b == null);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	// TODO: It shouldn't be possible to cast away constness
+
+	// TODO: It should be possible to register a REF_CAST to allow implicit cast
+	// TODO: A handle to B can be implicitly cast to a handle to A via the REF_CAST behaviour
+	// TODO: A handle to A can not be implicitly cast to a handle to B since it was registered as explicit REF_CAST
+
+
+	engine->Release();
 
 	// Success
  	return fail;

@@ -173,6 +173,8 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
+	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
 	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
@@ -183,7 +185,6 @@ int main(int argc, char **argv)
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestTypedef::Test()           ) goto failed; else printf("-- TestTypedef passed\n");
 	if( Test2Modules()                ) goto failed; else printf("-- Test2Modules passed\n");
-	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
 	if( TestAssign::Test()            ) goto failed; else printf("-- TestAssign passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
@@ -191,7 +192,6 @@ int main(int argc, char **argv)
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
-	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
 	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
 	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");

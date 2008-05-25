@@ -5274,21 +5274,74 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	{
 		if( !expr.type.dataType.IsObject() )
 			ConvertToTempVariable(&expr);
-		MergeExprContexts(ctx, &expr);
 
 		if( to.IsObjectHandle() &&
 			expr.type.dataType.IsObjectHandle() &&
-			(expr.type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) &&
 			!(!to.IsHandleToConst() && expr.type.dataType.IsHandleToConst()) )
 		{
-			// Allow dynamic cast between object handles (only for script objects).
-			// At run time this may result in a null handle,   
-			// which when used will throw an exception
-			conversionOK = true;
-			ctx->bc.InstrDWORD(BC_Cast, engine->GetTypeIdFromDataType(to));
+			if( expr.type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT )
+			{
+				MergeExprContexts(ctx, &expr);
 
-			ctx->type = expr.type;
-			ctx->type.dataType = to;
+				// Allow dynamic cast between object handles (only for script objects).
+				// At run time this may result in a null handle,   
+				// which when used will throw an exception
+				conversionOK = true;
+				ctx->bc.InstrDWORD(BC_Cast, engine->GetTypeIdFromDataType(to));
+
+				ctx->type = expr.type;
+				ctx->type.dataType = to;
+			}
+			else
+			{
+				// Find a suitable REF_CAST behaviour
+				asCArray<int> ops;
+				asUINT n;
+
+				// Find a suitable REF_CAST behaviour
+				for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n += 2 )
+				{
+					if( ttCast == engine->globalBehaviours.operators[n] )
+					{
+						int funcId = engine->globalBehaviours.operators[n+1];
+
+						// Is the operator for the input type?
+						asCScriptFunction *func = engine->scriptFunctions[funcId];
+						if( func->parameterTypes[0].GetObjectType() != expr.type.dataType.GetObjectType() )
+							continue;
+
+						// Is the operator for the output type?
+						if( func->returnType.GetObjectType() != to.GetObjectType() )
+							continue;
+
+						// Find the config group for the global function
+						asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
+						if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
+							ops.PushLast(funcId);
+					}
+				}
+
+				// Find the best match for the argument
+				asCArray<int> ops1;
+				MatchArgument(ops, ops1, &expr.type, 0);
+
+				// Did we find a unique suitable operator?
+				if( ops1.GetLength() == 1 )
+				{
+					conversionOK = true;
+					asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
+
+					// Add code for argument
+					PrepareArgument2(ctx, &expr, &descr->parameterTypes[0], true, descr->inOutFlags[0]);
+
+					asCArray<asSExprContext*> args(1);
+					args.PushLast(&expr);
+
+					MoveArgsToStack(descr->id, &ctx->bc, args, false);
+
+					PerformFunctionCall(descr->id, ctx, false, &args);
+				}
+			}
 		}
 	}
 

@@ -1306,8 +1306,10 @@ const int behave_dual_token[] =
 	ttGreaterThan,        // asBEHAVE_GREATERTHAN
 	ttLessThanOrEqual,    // asBEHAVE_LEQUAL
 	ttGreaterThanOrEqual, // asBEHAVE_GEQUAL
+#ifdef AS_DEPRECATED
 	ttOr,                 // asBEHAVE_LOGIC_OR
 	ttAnd,                // asBEHAVE_LOGIC_AND
+#endif AS_DEPRECATED
 	ttBitOr,              // asBEHAVE_BIT_OR
 	ttAmp,                // asBEHAVE_BIT_AND
 	ttBitXor,             // asBEHAVE_BIT_XOR
@@ -1784,6 +1786,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
+	// TODO: We also need asBEHAVE_BIT_NOT
 	else if( behaviour == asBEHAVE_NEGATE )
 	{
 		// Verify that there are no parameters
@@ -1873,7 +1876,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	else
 	{
 		if( behaviour >= asBEHAVE_FIRST_DUAL &&
-			behaviour <= asBEHAVE_LAST_DUAL )
+			behaviour <= asBEHAVE_LAST_DUAL ||
+			behaviour == asBEHAVE_REF_CAST )
 		{
 			CallMessageCallback("", 0, 0, asMSGTYPE_ERROR, TXT_MUST_BE_GLOBAL_BEHAVIOUR);
 		}
@@ -1941,6 +1945,27 @@ int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char
 
 		// Map behaviour to token
 		beh->operators.PushLast(behave_dual_token[behaviour - asBEHAVE_FIRST_DUAL]);
+		func.id = AddBehaviourFunction(func, internal);
+		beh->operators.PushLast(func.id);
+		currentGroup->globalBehaviours.PushLast((int)beh->operators.GetLength()-2);
+	}
+	else if( behaviour == asBEHAVE_REF_CAST )
+	{
+		// Verify that the var type not used
+		if( VerifyVarTypeNotInFunction(&func) < 0 )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// Verify that the only parameter is a handle
+		if( func.parameterTypes.GetLength() != 1 ||
+			!func.parameterTypes[0].IsObjectHandle() )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// Verify that the return type is a handle
+		if( !func.returnType.IsObjectHandle() )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// Map behaviour to token
+		beh->operators.PushLast(ttCast);
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 		currentGroup->globalBehaviours.PushLast((int)beh->operators.GetLength()-2);

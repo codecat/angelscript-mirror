@@ -174,6 +174,8 @@ bool Test()
 
 	engine->Release();
 
+	// TODO: There is a difference between cast<intf>() and cast<intf@>()
+
 	// Success
  	return fail;
 }
