@@ -137,7 +137,7 @@
 #define TXT_OBJECT_DOESNT_SUPPORT_NEGATE_OP "Object doesn't have the negate operator"
 #define TXT_OBJECT_HANDLE_NOT_SUPPORTED   "Object handle is not supported for this type"
 #define TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT "Only object types that support object handles can use &inout. Use &in or &out instead"
-#define TXT_ONLY_ONE_ARGUMENT_IN_CAST     "There is only one argument in a cast"
+#define TXT_ONLY_ONE_ARGUMENT_IN_CAST     "A cast operator has one argument"
 
 #define TXT_PARAMETER_ALREADY_DECLARED    "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s           "Parameter type can't be '%s'"

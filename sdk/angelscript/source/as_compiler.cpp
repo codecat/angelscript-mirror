@@ -5212,13 +5212,17 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	if( node->nodeType == snConstructCall )
 	{
 		// Verify that there is only one argument
-		if( node->lastChild->firstChild != node->lastChild->lastChild )
+		if( node->lastChild->firstChild == 0 || 
+			node->lastChild->firstChild != node->lastChild->lastChild )
 		{
 			Error(TXT_ONLY_ONE_ARGUMENT_IN_CAST, node->lastChild);
+			expr.type.SetDummy();
 		}
-
-		// Compile the expression
-		CompileAssignment(node->lastChild->firstChild, &expr);
+		else
+		{
+			// Compile the expression
+			CompileAssignment(node->lastChild->firstChild, &expr);
+		}
 
 		// Determine the requested type
 		to = builder->CreateDataTypeFromNode(node->firstChild, script);

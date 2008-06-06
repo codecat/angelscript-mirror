@@ -176,6 +176,23 @@ bool Test()
 
 	// TODO: There is a difference between cast<intf>() and cast<intf@>()
 
+	//-------------------
+	// Illegal cast statement
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	bout.buffer = "";
+
+	r = engine->ExecuteString(0, "uint8 a=0x80; int j=int();");
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 24) : Error   : A cast operator has one argument\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	engine->Release();
+
 	// Success
  	return fail;
 }
