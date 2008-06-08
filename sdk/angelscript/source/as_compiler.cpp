@@ -702,7 +702,11 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	// Concatenate the bytecode
 	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
-	byteCode.Push(varSize);
+
+	// We need to push zeroes on the stack to guarantee 
+	// that temporary object handles are clear
+	for( int n = 0; n < varSize; n++ )
+		byteCode.InstrINT(BC_PshC4, 0);
 
 	byteCode.AddCode(&ctx.bc);
 

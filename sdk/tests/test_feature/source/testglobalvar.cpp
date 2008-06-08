@@ -207,6 +207,34 @@ bool TestGlobalVar()
 	}
 	engine->Release();
 
+	//----------------------
+	// Global object handles initialized with other global variables
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script =
+			"class b {}         \n"
+			"b a;               \n"
+			"b @h = @a;         \n"
+			"b@[] v = {@a, @h}; \n";
+
+		engine->AddScriptSection(0, "script", script, strlen(script));
+
+		r = engine->Build(0);
+		if( r < 0 )
+			ret = true;
+		else
+		{
+			r = engine->ExecuteString(0, "assert(@a == @h); assert(v.length() == 2); assert(@v[0] == @v[1]);");
+			if( r != asEXECUTION_FINISHED )
+				ret = true;
+		}		
+
+		engine->Release();
+	}
+
 	return ret;
 }
 

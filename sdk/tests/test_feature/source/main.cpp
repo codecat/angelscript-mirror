@@ -173,6 +173,8 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
+	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
@@ -217,10 +219,8 @@ int main(int argc, char **argv)
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");
 	if( TestShark::Test()             ) goto failed; else printf("-- TestShark passed\n");
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
-	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
 	if( TestBits::Test()              ) goto failed; else printf("-- TestBits passed\n");
-	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
 	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
 	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
