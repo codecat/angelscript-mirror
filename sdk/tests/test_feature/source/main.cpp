@@ -173,6 +173,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
@@ -230,7 +231,6 @@ int main(int argc, char **argv)
 	if( TestScriptMath::Test()        ) goto failed; else printf("-- TestScriptMath passed\n");
 	if( TestDebug::Test()             ) goto failed; else printf("-- TestDebug passed\n");
 	if( TestGetArgPtr::Test()         ) goto failed; else printf("-- TestGetArgPtr passed\n");
-	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");
 	if( TestExecute32Args()           ) goto failed; else printf("-- TestExecute32Args passed\n");
 	if( TestExecute32MixedArgs()      ) goto failed; else printf("-- TestExecute32MixedArgs passed\n");

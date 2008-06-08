@@ -897,6 +897,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				asSExprContext tmp(engine);
 				asCDataType dt = ctx->type.dataType;
 				dt.MakeHandle(true);
+				dt.MakeReference(false);
 
 				asCArray<int> vars;
 				ctx->bc.GetVarsUsed(vars);

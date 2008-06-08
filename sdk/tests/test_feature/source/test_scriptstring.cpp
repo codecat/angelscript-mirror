@@ -142,11 +142,19 @@ void TestFunc(asIScriptGeneric *gen)
 	assert( arg1->buffer == "test" );
 }
 
+void PrintRef(string &ref)
+{
+	assert( &ref != 0 );
+}
+
 bool Test()
 {
 	bool fail = false;
+	COutStream out;
+	asIScriptEngine *engine = 0;
+	int r;
 
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString(engine);
 	RegisterScriptStringUtils(engine);
 
@@ -155,11 +163,10 @@ bool Test()
 	engine->RegisterGlobalFunction("void set2(string@&in)", asFUNCTION(SetString2), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("const string &getconststringref()", asFUNCTION(GetConstStringRef), asCALL_GENERIC);
 
-	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	// Test string copy constructor
-	int r = engine->ExecuteString(0, "string tst(getconststringref()); print(tst);");
+	r = engine->ExecuteString(0, "string tst(getconststringref()); print(tst);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( printOutput != "test" ) fail = true;
 
@@ -359,6 +366,30 @@ bool Test()
 		if( !c ) fail = true;
 		r = engine->CompareScriptObjects(c, asBEHAVE_GEQUAL, &a, &b, type); assert( r >= 0 );
 		if( c ) fail = true;
+
+		engine->Release();
+	}
+
+	//-----
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+		engine->RegisterGlobalFunction("void Print(string &str)",asFUNCTION(PrintRef), asCALL_CDECL);
+
+		const char *script =
+			"string str = \"Some String\"; \n"
+			"void Update() \n"
+			"{ \n"
+			" Print(str); \n"
+			"} \n";
+
+		engine->AddScriptSection(0, "script", script, strlen(script));
+		engine->Build(0);
+
+		r = engine->ExecuteString(0, "Update()");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
 
 		engine->Release();
 	}
