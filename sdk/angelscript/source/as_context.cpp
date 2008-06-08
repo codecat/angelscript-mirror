@@ -1303,34 +1303,41 @@ void asCContext::ExecuteNext()
 	{
 //--------------
 // memory access functions
+
+	// Decrease the stack pointer with n dwords (stack grows downward)
 	case BC_POP:
 		l_sp += WORDARG0(l_bc);
 		l_bc++;
 		break;
 
+	// Increase the stack pointer with n dwords
 	case BC_PUSH:
 		l_sp -= WORDARG0(l_bc);
 		l_bc++;
 		break;
 
+	// Push a dword value on the stack
 	case BC_PshC4:
 		--l_sp;
 		*l_sp = DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
+	// Push the dword value of a variable on the stack
 	case BC_PshV4:
 		--l_sp;
 		*l_sp = *(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
+	// Push the address of a variable on the stack
 	case BC_PSF:
 		l_sp -= PTR_SIZE;
 		*(asPTRWORD*)l_sp = (asPTRWORD)size_t(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
+	// Swap the top 2 dwords on the stack
 	case BC_SWAP4:
 		{
 			asDWORD d = (asDWORD)*l_sp;
@@ -1340,6 +1347,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
+	// Do a boolean not operation, modifying the value of the variable
 	case BC_NOT:
 #if AS_SIZEOF_BOOL == 1
 		{
@@ -1361,21 +1369,25 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
+	// Push the dword value of a global variable on the stack
 	case BC_PshG4:
 		--l_sp;
 		*l_sp = *(asDWORD*)module->globalVarPointers[WORDARG0(l_bc)];
 		l_bc++;
 		break;
 
+	// Load the address of a globar variable in the register, then  
+	// copy the value of the global variable into a local variable
 	case BC_LdGRdR4:
 		*(void**)&register1 = module->globalVarPointers[WORDARG1(l_bc)];
 		*(l_fp - SWORDARG0(l_bc)) = **(asDWORD**)&register1;
 		l_bc += 2;
 		break;
 
-
 //----------------
 // path control instructions
+
+	// Begin execution of a script function
 	case BC_CALL:
 		{
 			int i = INTARG(l_bc);
@@ -1402,6 +1414,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
+	// Return to the caller, and remove the arguments from the stack
 	case BC_RET:
 		{
 			if( callStack.GetLength() == 0 )
@@ -1430,12 +1443,15 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
+	// Jump to a relative position
 	case BC_JMP:
 		l_bc += 2 + INTARG(l_bc);
 		break;
 
 //----------------
 // Conditional jumps
+
+	// Jump to a relative position if the value in the register is 0
 	case BC_JZ:
 		if( *(int*)&register1 == 0 )
 			l_bc += INTARG(l_bc) + 2;
@@ -1443,30 +1459,39 @@ void asCContext::ExecuteNext()
 			l_bc += 2;
 		break;
 
+	// Jump to a relative position if the value in the register is not 0
 	case BC_JNZ:
 		if( *(int*)&register1 != 0 )
 			l_bc += INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
+
+	// Jump to a relative position if the value in the register is negative
 	case BC_JS:
 		if( *(int*)&register1 < 0 )
 			l_bc += INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
+
+	// Jump to a relative position if the value in the register it not negative
 	case BC_JNS:
 		if( *(int*)&register1 >= 0 )
 			l_bc += INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
+
+	// Jump to a relative position if the value in the register is greater than 0
 	case BC_JP:
 		if( *(int*)&register1 > 0 )
 			l_bc += INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
+
+	// Jump to a relative position if the value in the register is not greater than 0
 	case BC_JNP:
 		if( *(int*)&register1 <= 0 )
 			l_bc += INTARG(l_bc) + 2;
@@ -1475,6 +1500,8 @@ void asCContext::ExecuteNext()
 		break;
 //--------------------
 // test instructions
+
+	// If the value in the register is 0, then set the register to 1, else to 0
 	case BC_TZ:
 #if AS_SIZEOF_BOOL == 1
 		{
@@ -1500,6 +1527,8 @@ void asCContext::ExecuteNext()
 #endif
 		l_bc++;
 		break;
+
+	// If the value in the register is not 0, then set the register to 1, else to 0
 	case BC_TNZ:
 #if AS_SIZEOF_BOOL == 1
 		{
@@ -1525,6 +1554,8 @@ void asCContext::ExecuteNext()
 #endif
 		l_bc++;
 		break;
+
+	// If the value in the register is negative, then set the register to 1, else to 0
 	case BC_TS:
 #if AS_SIZEOF_BOOL == 1
 		{
@@ -1550,6 +1581,8 @@ void asCContext::ExecuteNext()
 #endif
 		l_bc++;
 		break;
+
+	// If the value in the register is not negative, then set the register to 1, else to 0
 	case BC_TNS:
 #if AS_SIZEOF_BOOL == 1
 		{
@@ -1575,6 +1608,8 @@ void asCContext::ExecuteNext()
 #endif
 		l_bc++;
 		break;
+
+	// If the value in the register is greater than 0, then set the register to 1, else to 0
 	case BC_TP:
 #if AS_SIZEOF_BOOL == 1
 		{
@@ -1600,6 +1635,8 @@ void asCContext::ExecuteNext()
 #endif
 		l_bc++;
 		break;
+
+	// If the value in the register is not greater than 0, then set the register to 1, else to 0
 	case BC_TNP:
 #if AS_SIZEOF_BOOL == 1
 		{
@@ -1628,14 +1665,20 @@ void asCContext::ExecuteNext()
 
 //--------------------
 // negate value
+
+	// Negate the integer value in the variable
 	case BC_NEGi:
 		*(l_fp - SWORDARG0(l_bc)) = asDWORD(-int(*(l_fp - SWORDARG0(l_bc))));
 		l_bc++;
 		break;
+
+	// Negate the float value in the variable
 	case BC_NEGf:
 		*(float*)(l_fp - SWORDARG0(l_bc)) = -*(float*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
+
+	// Negate the double value in the variable
 	case BC_NEGd:
 		*(double*)(l_fp - SWORDARG0(l_bc)) = -*(double*)(l_fp - SWORDARG0(l_bc));
 		l_bc++;
@@ -1643,61 +1686,74 @@ void asCContext::ExecuteNext()
 
 //-------------------------
 // Increment value pointed to by address in register
+
+	// Increment the short value pointed to by the register
 	case BC_INCi16:
 		(**(short**)&register1)++;
 		l_bc++;
 		break;
 
+	// Increment the byte value pointed to by the register
 	case BC_INCi8:
 		(**(char**)&register1)++;
 		l_bc++;
 		break;
 
+	// Decrement the short value pointed to by the register
 	case BC_DECi16:
 		(**(short**)&register1)--;
 		l_bc++;
 		break;
 
+	// Decrement the byte value pointed to by the register
 	case BC_DECi8:
 		(**(char**)&register1)--;
 		l_bc++;
 		break;
 
+	// Increment the integer value pointed to by the register
 	case BC_INCi:
 		++(**(int**)&register1);
 		l_bc++;
 		break;
 
+	// Decrement the integer value pointed to by the register
 	case BC_DECi:
 		--(**(int**)&register1);
 		l_bc++;
 		break;
 
+	// Increment the float value pointed to by the register
 	case BC_INCf:
 		++(**(float**)&register1);
 		l_bc++;
 		break;
 
+	// Decrement the float value pointed to by the register
 	case BC_DECf:
 		--(**(float**)&register1);
 		l_bc++;
 		break;
+
+	// Increment the double value pointed to by the register
 	case BC_INCd:
 		++(**(double**)&register1);
 		l_bc++;
 		break;
 
+	// Decrement the double value pointed to by the register
 	case BC_DECd:
 		--(**(double**)&register1);
 		l_bc++;
 		break;
 
-//--------------------
-// Increment value pointed to by address in register
+	// Increment the local integer variable
 	case BC_IncVi:
 		(*(int*)(l_fp - SWORDARG0(l_bc)))++;
 		l_bc++;
 		break;
+
+	// Decrement the local integer variable
 	case BC_DecVi:
 		(*(int*)(l_fp - SWORDARG0(l_bc)))--;
 		l_bc++;
@@ -1705,36 +1761,44 @@ void asCContext::ExecuteNext()
 
 //--------------------
 // bits instructions
+
+	// Do a bitwise not on the value in the variable
 	case BC_BNOT:
 		*(l_fp - SWORDARG0(l_bc)) = ~*(l_fp - SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
+	// Do a bitwise and of two variables and store the result in a third variable
 	case BC_BAND:
 		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) & *(l_fp - SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
+	// Do a bitwise or of two variables and store the result in a third variable
 	case BC_BOR:
 		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) | *(l_fp - SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
+	// Do a bitwise xor of two variables and store the result in a third variable
 	case BC_BXOR:
 		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) ^ *(l_fp - SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
+	// Do a logical shift left of two variables and store the result in a third variable
 	case BC_BSLL:
 		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) << *(l_fp - SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
+	// Do a logical shift right of two variables and store the result in a third variable
 	case BC_BSRL:
 		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) >> *(l_fp - SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
+	// Do an arithmetic shift right of two variables and store the result in a third variable
 	case BC_BSRA:
 		*(l_fp - SWORDARG0(l_bc)) = int(*(l_fp - SWORDARG1(l_bc))) >> *(l_fp - SWORDARG2(l_bc));
 		l_bc += 2;
