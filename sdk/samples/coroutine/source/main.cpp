@@ -240,7 +240,7 @@ void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
 	if( ctx )
 	{
 		asIScriptEngine *engine = ctx->GetEngine();
-		string mod = engine->GetFunctionModule(ctx->GetCurrentFunction());
+		string mod = engine->GetFunctionDescriptorById(ctx->GetCurrentFunction())->GetModuleName();
 
 		// We need to find the function that will be created as the co-routine
 		string decl = "void " + func + "(any &in)"; 
