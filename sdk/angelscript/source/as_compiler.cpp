@@ -705,13 +705,14 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	// We need to push zeroes on the stack to guarantee 
 	// that temporary object handles are clear
-	for( int n = 0; n < varSize; n++ )
+	int n;
+	for( n = 0; n < varSize; n++ )
 		byteCode.InstrINT(BC_PshC4, 0);
 
 	byteCode.AddCode(&ctx.bc);
 
 	// Deallocate variables in this block, in reverse order
-	for( int n = (int)variables->variables.GetLength() - 1; n >= 0; --n )
+	for( n = (int)variables->variables.GetLength() - 1; n >= 0; --n )
 	{
 		sVariable *v = variables->variables[n];
 
@@ -5251,8 +5252,12 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		}
 	}
 
-	// Convert any reference to a variable
-	if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
+	// We don't want a reference
+	if( expr.type.dataType.IsReference() ) 
+		if( expr.type.dataType.IsObject() )
+			Dereference(&expr, true);
+		else
+			ConvertToVariable(&expr);
 
 	ImplicitConversion(&expr, to, node, true);
 

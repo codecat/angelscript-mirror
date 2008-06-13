@@ -1,0 +1,185 @@
+#include "utils.h"
+
+
+namespace TestRefCast
+{
+
+
+class typeA
+{
+public:
+	int iRef;
+
+	typeA()
+	{
+		iRef = 1;
+	}
+
+	virtual ~typeA()
+	{
+	}
+
+	void AddRef()
+	{
+		iRef++;
+	}
+
+	void Release()
+	{
+		if (--iRef == 0)
+		{
+			delete this;
+		}
+	}
+
+};
+
+
+class typeB : public typeA
+{
+public:
+	int a;
+	typeB()
+	{
+		a = 3;
+	}
+};
+
+
+typeA *typeA_Factory()
+{
+    return new typeA();
+}
+
+typeB *typeB_Factory()
+{
+    return new typeB();
+}
+
+
+
+typeA* B_to_A(typeB* obj)
+{
+	if( !obj ) return 0;
+	typeA* o = dynamic_cast<typeA*>(obj);
+	if (!o)
+	{
+		obj->Release();
+	}
+
+	return o;
+}
+
+
+typeB* A_to_B(typeA* obj)
+{
+	if( !obj ) return 0;
+	typeB* o = dynamic_cast<typeB*>(obj);
+	if (!o)
+	{
+		obj->Release();
+	}
+
+	return o;
+}
+
+
+
+void RegisterA(asIScriptEngine* engine)
+{
+	int r = 0;
+	r = engine->RegisterObjectType("typeA", sizeof(typeA), asOBJ_REF);
+
+	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_FACTORY, "typeA@ f()", asFUNCTION(typeA_Factory), asCALL_CDECL);
+	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_ADDREF, "void f()", asMETHOD(typeA, AddRef), asCALL_THISCALL);
+	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_RELEASE, "void f()", asMETHOD(typeA, Release), asCALL_THISCALL);
+}
+
+
+void RegisterB(asIScriptEngine* engine)
+{
+	int r = 0;
+	r = engine->RegisterObjectType("typeB", sizeof(typeB), asOBJ_REF);
+
+	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_FACTORY, "typeB@ f()", asFUNCTION(typeB_Factory), asCALL_CDECL);
+	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_ADDREF, "void f()", asMETHOD(typeB, AddRef), asCALL_THISCALL);
+	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_RELEASE, "void f()", asMETHOD(typeB, Release), asCALL_THISCALL);
+
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "typeA@ f(typeB@)", asFUNCTION(B_to_A), asCALL_CDECL);
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "typeB@ f(typeA@)", asFUNCTION(A_to_B), asCALL_CDECL);
+}
+
+
+
+
+
+char* script =
+"class CTest\n"
+"{\n"
+"	typeA@ m_a;\n"
+"	typeB@ m_b;\n"
+
+"	CTest()\n"
+"	{\n"
+"		@m_a = null;\n"
+"		@m_b = null;\n"
+"	}\n"
+
+"	void dont_work(typeA@ arg)\n"
+"	{\n"
+"		@m_a = @arg;\n"
+"		@m_b = cast<typeB@>(m_a);\n"
+"	}\n"
+
+"	void work(typeA@ arg)\n"
+"	{\n"
+"		typeA@ a = @arg;\n"
+"		@m_b = cast<typeB@>(a);\n"
+"	}\n"
+"};\n";
+
+
+
+
+bool Test()
+{
+	bool fail = false;
+	int r = 0;
+	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+
+	RegisterA(engine);
+	RegisterB(engine);
+
+
+	r = engine->AddScriptSection("test", "test", script, strlen(script));
+	r = engine->Build("test");
+
+	int objType = engine->GetTypeIdByDecl("test", "CTest");
+	asIScriptStruct* testClassObj = (asIScriptStruct*)engine->CreateScriptObject(objType);
+
+	typeA* a = new typeB();
+
+	if (testClassObj)
+	{
+		int methodID = testClassObj->GetObjectType()->GetMethodIdByName("dont_work");
+		asIScriptContext* ctx = engine->CreateContext();
+
+		r = ctx->Prepare(methodID);
+		r = ctx->SetObject(testClassObj);
+		r = ctx->SetArgObject(0, a);
+		r = ctx->Execute();
+
+		ctx->Release();
+		testClassObj->Release();
+	}
+
+	a->Release();
+
+	engine->Release();
+	return fail;
+}
+
+
+
+}

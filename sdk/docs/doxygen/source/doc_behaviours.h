@@ -16,9 +16,9 @@
  - \ref asBEHAVE_DIVIDE
  - \ref asBEHAVE_MODULO
  - \ref asBEHAVE_NEGATE
- 
-All of these, with exception to asBEHAVE_NEGATE, should be registered with two 
-parameters using \ref asIScriptEngine::RegisterGlobalBehaviour. asBEHAVE_NEGATE should be 
+
+All of these, with exception to asBEHAVE_NEGATE, should be registered with two
+parameters using \ref asIScriptEngine::RegisterGlobalBehaviour. asBEHAVE_NEGATE should be
 registered with no parameters using \ref asIScriptEngine::RegisterObjectBehaviour.
 
 
@@ -33,8 +33,8 @@ registered with no parameters using \ref asIScriptEngine::RegisterObjectBehaviou
  - \ref asBEHAVE_GREATERTHAN,
  - \ref asBEHAVE_LEQUAL,
  - \ref asBEHAVE_GEQUAL
- 
-These should be registered with two parameters using 
+
+These should be registered with two parameters using
 \ref asIScriptEngine::RegisterGlobalBehaviour. All of them should return a bool type.
 
 
@@ -49,7 +49,7 @@ These should be registered with two parameters using
  - \ref asBEHAVE_BIT_SLL
  - \ref asBEHAVE_BIT_SRL
  - \ref asBEHAVE_BIT_SRA
- 
+
 These should be registered with two parameters using
 \ref asIScriptEngine::RegisterGlobalBehaviour.
 
@@ -78,7 +78,7 @@ Preferably the functions should return a reference to the object itself.
 \section idxop Index operator
 
  - \ref asBEHAVE_INDEX
- 
+
 This behaviour should be registered with one parameter using \ref asIScriptEngine::RegisterObjectBehaviour.
 
 
@@ -89,17 +89,21 @@ This behaviour should be registered with one parameter using \ref asIScriptEngin
 
  - \ref asBEHAVE_VALUE_CAST
  - \ref asBEHAVE_REF_CAST
- 
-asBEHAVE_VALUE_CAST must be registered without parameters using \ref asIScriptEngine::RegisterObjectBehaviour. 
+
+asBEHAVE_VALUE_CAST must be registered without parameters using \ref asIScriptEngine::RegisterObjectBehaviour.
 The return type can be any type, except bool and void.
 
-asBEHAVE_REF_CAST must be registered with one parameter using \ref asIScriptEngine::RegisterGlobalBehaviour. 
+asBEHAVE_REF_CAST must be registered with one parameter using \ref asIScriptEngine::RegisterGlobalBehaviour.
 The parameter must be an object handle, as must the return type.
 
 \code
 // Example REF_CAST behaviour
 B* castAtoB(A* a)
 {
+    // If the handle already is a null handle, then just return the null handle
+    if( !a ) return 0;
+
+    // Now try to dynamically cast the pointer to the wanted type
     B* b = dynamic_cast<B*>(a);
     if( b == 0 )
     {
@@ -126,10 +130,10 @@ r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "B@ f(A@)", asFUNCTION(ca
  - \ref asBEHAVE_FACTORY
  - \ref asBEHAVE_ADDREF
  - \ref asBEHAVE_RELEASE
- 
-These must be registered using \ref asIScriptEngine::RegisterObjectBehaviour. asBEHAVE_CONSTRUCT and 
+
+These must be registered using \ref asIScriptEngine::RegisterObjectBehaviour. asBEHAVE_CONSTRUCT and
 asBEHAVE_FACTORY may take parameters for object initialization, but the others shouldn't use parameters.
- 
+
 \see \ref doc_register_type for more information on how to register types.
 
 

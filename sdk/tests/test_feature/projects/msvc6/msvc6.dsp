@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Console Application" 0x0103
 
-CFG=msvc6 - Win32 Debug with Release lib
+CFG=msvc6 - Win32 Release
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,13 +13,12 @@ CFG=msvc6 - Win32 Debug with Release lib
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "msvc6.mak" CFG="msvc6 - Win32 Debug with Release lib"
+!MESSAGE NMAKE /f "msvc6.mak" CFG="msvc6 - Win32 Release"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
 !MESSAGE "msvc6 - Win32 Release" (based on "Win32 (x86) Console Application")
 !MESSAGE "msvc6 - Win32 Debug" (based on "Win32 (x86) Console Application")
-!MESSAGE "msvc6 - Win32 Debug with Release lib" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -67,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../../../angelscript/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GR /GX /ZI /Od /I "../../../../angelscript/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x416 /d "_DEBUG"
 # ADD RSC /l 0x416 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -77,38 +76,12 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ../../../../angelscript/lib/angelscriptd.lib /nologo /subsystem:console /debug /machine:I386 /out:"../../bin/msvc6.exe" /pdbtype:sept
 
-!ELSEIF  "$(CFG)" == "msvc6 - Win32 Debug with Release lib"
-
-# PROP BASE Use_MFC 0
-# PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "msvc6___Win32_Debug_with_Release_lib"
-# PROP BASE Intermediate_Dir "msvc6___Win32_Debug_with_Release_lib"
-# PROP BASE Ignore_Export_Lib 0
-# PROP BASE Target_Dir ""
-# PROP Use_MFC 0
-# PROP Use_Debug_Libraries 1
-# PROP Output_Dir "msvc6___Win32_Debug_with_Release_lib"
-# PROP Intermediate_Dir "msvc6___Win32_Debug_with_Release_lib"
-# PROP Ignore_Export_Lib 0
-# PROP Target_Dir ""
-# ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../../angelscript/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../../../angelscript/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD BASE RSC /l 0x416 /d "_DEBUG"
-# ADD RSC /l 0x416 /d "_DEBUG"
-BSC32=bscmake.exe
-# ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
-LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ../../../angelscript/lib/angelscriptd.lib /nologo /subsystem:console /debug /machine:I386 /out:"../../bin/msvc6.exe" /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ../../../../angelscript/lib/angelscript.lib /nologo /subsystem:console /debug /machine:I386 /out:"../../bin/msvc6.exe" /pdbtype:sept
-
 !ENDIF 
 
 # Begin Target
 
 # Name "msvc6 - Win32 Release"
 # Name "msvc6 - Win32 Debug"
-# Name "msvc6 - Win32 Debug with Release lib"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -242,6 +215,10 @@ SOURCE=..\..\source\test_dynamicconfig.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_enum.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_exception.cpp
 # End Source File
 # Begin Source File
@@ -251,6 +228,10 @@ SOURCE=..\..\source\test_exceptionmemory.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_factory.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_file.cpp
 # End Source File
 # Begin Source File
 
@@ -354,6 +335,10 @@ SOURCE=..\..\source\test_refargument.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_refcast.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_registertype.cpp
 # End Source File
 # Begin Source File
@@ -415,6 +400,10 @@ SOURCE=..\..\source\test_structintf.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_suspend.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_typedef.cpp
 # End Source File
 # Begin Source File
 
@@ -627,6 +616,14 @@ SOURCE=..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\add_on\scriptdictionary\scriptdictionary.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptfile\scriptfile.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptfile\scriptfile.h
 # End Source File
 # Begin Source File
 

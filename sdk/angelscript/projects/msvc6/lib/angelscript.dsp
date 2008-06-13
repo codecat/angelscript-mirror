@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
-CFG=angelscript lib - Win32 Debug NO ASM
+CFG=angelscript lib - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,14 +13,13 @@ CFG=angelscript lib - Win32 Debug NO ASM
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "angelscript.mak" CFG="angelscript lib - Win32 Debug NO ASM"
+!MESSAGE NMAKE /f "angelscript.mak" CFG="angelscript lib - Win32 Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
 !MESSAGE "angelscript lib - Win32 Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "angelscript lib - Win32 Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE "angelscript lib - Win32 Debug with stats" (based on "Win32 (x86) Static Library")
-!MESSAGE "angelscript lib - Win32 Debug NO ASM" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -99,29 +98,6 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo /out:"..\..\..\lib\angelscript.lib"
 # ADD LIB32 /nologo /out:"..\..\..\lib\angelscriptd.lib"
 
-!ELSEIF  "$(CFG)" == "angelscript lib - Win32 Debug NO ASM"
-
-# PROP BASE Use_MFC 0
-# PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "angelscript_lib___Win32_Debug_NO_ASM"
-# PROP BASE Intermediate_Dir "angelscript_lib___Win32_Debug_NO_ASM"
-# PROP BASE Target_Dir ""
-# PROP Use_MFC 0
-# PROP Use_Debug_Libraries 1
-# PROP Output_Dir "angelscript_lib___Win32_Debug_NO_ASM"
-# PROP Intermediate_Dir "angelscript_lib___Win32_Debug_NO_ASM"
-# PROP Target_Dir ""
-# ADD BASE CPP /nologo /MDd /W3 /Gm /ZI /Od /D "AS_C_INTERFACE" /D "AS_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /ZI /Od /D "AS_MAX_PORTABILITY" /D "AS_C_INTERFACE" /D "AS_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /GZ /c
-# ADD BASE RSC /l 0x416 /d "_DEBUG"
-# ADD RSC /l 0x416 /d "_DEBUG"
-BSC32=bscmake.exe
-# ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
-LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"..\..\..\lib\angelscriptd.lib"
-# ADD LIB32 /nologo /out:"..\..\..\lib\angelscriptd.lib"
-
 !ENDIF 
 
 # Begin Target
@@ -129,7 +105,6 @@ LIB32=link.exe -lib
 # Name "angelscript lib - Win32 Release"
 # Name "angelscript lib - Win32 Debug"
 # Name "angelscript lib - Win32 Debug with stats"
-# Name "angelscript lib - Win32 Debug NO ASM"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"

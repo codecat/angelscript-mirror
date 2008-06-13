@@ -134,6 +134,8 @@ namespace TestImplicitCast      { bool Test(); }
 namespace TestAssign            { bool Test(); }
 namespace TestTypedef           { bool Test(); }
 namespace TestEnum              { bool Test(); }
+namespace TestFile              { bool Test(); }
+namespace TestRefCast           { bool Test(); }
 
 #include "utils.h"
 
@@ -173,6 +175,8 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestRefCast::Test()           ) goto failed; else printf("-- TestRefCast passed\n");
+	if( TestFile::Test()              ) goto failed; else printf("-- TestFile passed\n");
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");

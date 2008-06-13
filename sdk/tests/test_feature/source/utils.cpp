@@ -34,9 +34,12 @@ void Assert(asIScriptGeneric *gen)
 			asIScriptEngine *engine = ctx->GetEngine();
 			int funcID = ctx->GetCurrentFunction();
 			const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcID);
-			printf("func: %s\n", function->GetDeclaration());
-			printf("mdle: %s\n", function->GetModuleName());
-			printf("sect: %s\n", function->GetScriptSectionName());
+			if( function != 0 )
+			{
+				printf("func: %s\n", function->GetDeclaration());
+				printf("mdle: %s\n", function->GetModuleName());
+				printf("sect: %s\n", function->GetScriptSectionName());
+			}
 			printf("line: %d\n", ctx->GetCurrentLineNumber());
 			ctx->SetException("Assert failed");
 			printf("---------------------\n");

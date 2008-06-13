@@ -137,6 +137,9 @@
 				RelativePath="..\..\..\..\add_on\scriptdictionary\scriptdictionary.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptfile\scriptfile.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptmath\scriptmath.cpp">
 			</File>
 			<File
@@ -257,6 +260,9 @@
 				RelativePath="..\..\source\test_factory.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_file.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_float.cpp">
 			</File>
 			<File
@@ -330,6 +336,9 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_refargument.cpp">
+			</File>
+			<File
+				RelativePath="..\..\source\test_refcast.cpp">
 			</File>
 			<File
 				RelativePath="..\..\source\test_registertype.cpp">
@@ -524,6 +533,9 @@
 			</File>
 			<File
 				RelativePath="..\..\source\cstring.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptfile\scriptfile.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h">
