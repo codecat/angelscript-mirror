@@ -189,6 +189,8 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		if( initialContextStackSize > maximumContextStackSize )
 			initialContextStackSize = maximumContextStackSize;
 	}
+	else if( property == asEP_USE_CHARACTER_LITERALS )
+		useCharacterLiterals = value ? true : false;
 	else
 		return asINVALID_ARG;
 
@@ -205,6 +207,8 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 		return copyScriptSections;
 	else if( property == asEP_MAX_STACK_SIZE )
 		return maximumContextStackSize*4;
+	else if( property == asEP_USE_CHARACTER_LITERALS )
+		return useCharacterLiterals;
 
 	return 0;
 }
@@ -216,6 +220,7 @@ asCScriptEngine::asCScriptEngine()
 	optimizeByteCode        = true;
 	copyScriptSections      = true;
 	maximumContextStackSize = 0;         // no limit
+	useCharacterLiterals    = false;
 
 
 	scriptTypeBehaviours.engine = this;

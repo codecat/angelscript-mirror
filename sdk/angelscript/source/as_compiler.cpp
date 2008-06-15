@@ -4923,21 +4923,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		{
 			GETSTRING(value, &script->code[vnode->tokenPos], vnode->tokenLength);
 
-			asQWORD val = 0;
-
-			// Process either character literal or numeric constant
-			if( value[0] == '\'' )
-			{
-				asCString cat;
-				cat = value.SubString(1, value.GetLength()-2);
-				ProcessStringConstant(cat);
-				if( cat.GetLength() == 0 )
-					Error(TXT_EMPTY_CHAR_LITERAL, vnode);
-				else
-					val = (unsigned)cat[0];
-			}
-			else
-				val = asStringScanUInt64(value.AddressOf(), 10, 0);
+			asQWORD val = asStringScanUInt64(value.AddressOf(), 10, 0);
 
 			// Do we need 64 bits?
 			if( val>>32 )
@@ -4986,44 +4972,60 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		else if( vnode->tokenType == ttStringConstant || vnode->tokenType == ttHeredocStringConstant )
 		{
 			asCString str;
-
 			asCScriptNode *snode = vnode->firstChild;
-			while( snode )
+			if( script->code[snode->tokenPos] == '\'' && engine->useCharacterLiterals )
 			{
-				asCString cat;
-				if( snode->tokenType == ttStringConstant )
-				{
-					cat.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
-					ProcessStringConstant(cat);
-				}
-				else if( snode->tokenType == ttHeredocStringConstant )
-				{
-					cat.Assign(&script->code[snode->tokenPos+3], snode->tokenLength-6);
-					ProcessHeredocStringConstant(cat);
-				}
+				// Treat the single quoted string as a single character literal
+				str.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
+				ProcessStringConstant(str);
+				asDWORD val = 0;
+				if( str.GetLength() == 0 )
+					Error(TXT_EMPTY_CHAR_LITERAL, vnode);
+				else
+					val = (unsigned)str[0];
 
-				str += cat;
-
-				snode = snode->next;
-			}
-
-			// Call the string factory function to create a string object
-			asCScriptFunction *descr = engine->stringFactory;
-			if( descr == 0 )
-			{
-				// Error
-				Error(TXT_STRINGS_NOT_RECOGNIZED, vnode);
-
-				// Give dummy value
-				ctx->type.SetDummy();
-				return -1;
+				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), val);
 			}
 			else
 			{
-				// Register the constant string with the engine
-				int id = builder->module->AddConstantString(str.AddressOf(), str.GetLength());
-				ctx->bc.InstrWORD(BC_STR, (asWORD)id);
-				PerformFunctionCall(descr->id, ctx);
+				// Process the string constants
+				while( snode )
+				{
+					asCString cat;
+					if( snode->tokenType == ttStringConstant )
+					{
+						cat.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
+						ProcessStringConstant(cat);
+					}
+					else if( snode->tokenType == ttHeredocStringConstant )
+					{
+						cat.Assign(&script->code[snode->tokenPos+3], snode->tokenLength-6);
+						ProcessHeredocStringConstant(cat);
+					}
+
+					str += cat;
+
+					snode = snode->next;
+				}
+
+				// Call the string factory function to create a string object
+				asCScriptFunction *descr = engine->stringFactory;
+				if( descr == 0 )
+				{
+					// Error
+					Error(TXT_STRINGS_NOT_RECOGNIZED, vnode);
+
+					// Give dummy value
+					ctx->type.SetDummy();
+					return -1;
+				}
+				else
+				{
+					// Register the constant string with the engine
+					int id = builder->module->AddConstantString(str.AddressOf(), str.GetLength());
+					ctx->bc.InstrWORD(BC_STR, (asWORD)id);
+					PerformFunctionCall(descr->id, ctx);
+				}
 			}
 		}
 		else if( vnode->tokenType == ttNull )

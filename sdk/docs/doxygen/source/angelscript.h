@@ -67,11 +67,11 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! The library version.
-#define ANGELSCRIPT_VERSION        21300
+#define ANGELSCRIPT_VERSION        21301
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  13
-#define ANGELSCRIPT_VERSION_BUILD  0
-#define ANGELSCRIPT_VERSION_STRING "2.13.0"
+#define ANGELSCRIPT_VERSION_BUILD  1
+#define ANGELSCRIPT_VERSION_STRING "2.13.1 WIP"
 
 // Data types
 
@@ -99,8 +99,10 @@ enum asEEngineProp
 	asEP_OPTIMIZE_BYTECODE       = 2,
 	//! Copy script section memory. Default: true.
 	asEP_COPY_SCRIPT_SECTIONS    = 3,
-	//! Maximum stack size for script contexts. Default: 0 (no limit)
+	//! Maximum stack size for script contexts. Default: 0 (no limit).
 	asEP_MAX_STACK_SIZE          = 4,
+	//! Interpret single quoted strings as character literals. Default: false.
+	asEP_USE_CHARACTER_LITERALS  = 5,
 };
 
 // Calling conventions

@@ -79,6 +79,7 @@ enum asEEngineProp
 	asEP_OPTIMIZE_BYTECODE       = 2,
 	asEP_COPY_SCRIPT_SECTIONS    = 3,
 	asEP_MAX_STACK_SIZE          = 4,
+	asEP_USE_CHARACTER_LITERALS  = 5,
 };
 
 // Calling conventions

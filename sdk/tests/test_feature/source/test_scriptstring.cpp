@@ -251,7 +251,7 @@ bool Test()
 
 	asCScriptString *a = new asCScriptString("a");
 	engine->RegisterGlobalProperty("string a", a);
-	r = engine->ExecuteString(0, "print(a == \"a\" ? \"t\" : \"f\")");
+	r = engine->ExecuteString(0, "print(a == 'a' ? 't' : 'f')");
 	if( r != asEXECUTION_FINISHED ) 
 	{
 		fail = true;
@@ -272,6 +272,7 @@ bool Test()
 
 
 	// Test character literals
+	r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); assert( r >= 0 );
 	printOutput = "";
 	r = engine->ExecuteString(0, "print(\"\" + 'a')");
 	if( r != asEXECUTION_FINISHED ) fail = true;
@@ -286,6 +287,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "print(\"\" + '')");
 	if( r != -1 ) fail = true;
+	r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false); assert( r >= 0 );
 
 	//-------------------------------------
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -299,17 +301,17 @@ bool Test()
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	
-	r = engine->ExecuteString(0, "Http h; string str; h.get(\"stringtest\", str); assert(str == \"output\");");
+	r = engine->ExecuteString(0, "Http h; string str; h.get('stringtest', str); assert(str == 'output');");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	r = engine->ExecuteString(0, "Http h; string a = \"test\", b; h.get(\"string\"+a, b); assert(b == \"output\");");
+	r = engine->ExecuteString(0, "Http h; string a = 'test', b; h.get('string'+a, b); assert(b == 'output');");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// Test the string utils
-	engine->ExecuteString(0, "string str = \"abcdef\"; assert(findFirst(str, \"def\") == 3);");
-	engine->ExecuteString(0, "string str = \"abcdef\"; assert(findFirstOf(str, \"feb\") == 1);");
-	engine->ExecuteString(0, "string str = \"a|b||d\"; string@[]@ array = split(str, \"|\"); assert(array.length() == 4); assert(array[1] == \"b\");");
-	engine->ExecuteString(0, "string@[] array = {\"a\", \"b\", \"\", \"d\"}; assert(join(array, \"|\") == \"a|b||d\");");
+	engine->ExecuteString(0, "string str = 'abcdef'; assert(findFirst(str, 'def') == 3);");
+	engine->ExecuteString(0, "string str = 'abcdef'; assert(findFirstOf(str, 'feb') == 1);");
+	engine->ExecuteString(0, "string str = 'a|b||d'; string@[]@ array = split(str, '|'); assert(array.length() == 4); assert(array[1] == 'b');");
+	engine->ExecuteString(0, "string@[] array = {'a', 'b', '', 'd'}; assert(join(array, '|') == 'a|b||d');");
 
 	engine->Release();
 
@@ -321,7 +323,7 @@ bool Test()
 	engine->RegisterGlobalFunction("void TestFunc(int, string&)", asFUNCTION(TestFunc), asCALL_GENERIC);
 	
 	// CHKREF was placed incorrectly
-	r = engine->ExecuteString(0, "TestFunc(0, \"test\");");
+	r = engine->ExecuteString(0, "TestFunc(0, 'test');");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -378,7 +380,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void Print(string &str)",asFUNCTION(PrintRef), asCALL_CDECL);
 
 		const char *script =
-			"string str = \"Some String\"; \n"
+			"string str = 'Some String'; \n"
 			"void Update() \n"
 			"{ \n"
 			" Print(str); \n"

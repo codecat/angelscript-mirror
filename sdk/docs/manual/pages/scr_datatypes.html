@@ -156,7 +156,7 @@ the computer.</p>
 language, the normal double quoted string, and the documentation strings,
 called heredoc strings.</p>
 
-<p>The normal strings are written between double quotation marks (<code>"</code>).
+<p>The normal strings are written between double quotation marks (<code>"</code>) or single quotation marks (<code>'</code>)<a href="#foot1"><sup>1</sup></a>.
 Inside the constant strings some escape sequences can be used to write exact
 byte values that might not be possible to write in your normal editor.
 </p>
@@ -172,6 +172,9 @@ byte values that might not be possible to write in your normal editor.
 <tr><td width=80 valign=top><code>\\</code>&nbsp;  </td>
 <td valign=top width=50>92</td>
 <td valign=top>back-slash</td></tr>
+<tr><td width=80 valign=top><code>\'</code>&nbsp;  </td>
+<td valign=top width=50>39</td>
+<td valign=top>single quotation mark (apostrophe)</td></tr>
 <tr><td width=80 valign=top><code>\"</code>&nbsp;  </td>
 <td valign=top width=50>34</td>
 <td valign=top>double quotation mark</td></tr>
@@ -191,7 +194,8 @@ byte values that might not be possible to write in your normal editor.
 <br>
 
 <pre class=border>
-string str = "This is a string with \"escape sequences\".";
+string str1 = "This is a string with \"escape sequences\".";
+string str2 = 'If single quotes are used then double quotes can be included without "escape sequences".';
 </pre>
 
 <p>
@@ -225,6 +229,10 @@ string str = "First line.\n"
              "Third line.\n";
 </pre>
 
+<p>
+<a name="foot1"></a>
+<sup>1) The application can change the interpretation of single quoted strings by setting an engine property. If this is done the first character in the single quoted string will be interpreted as a single uint8 value instead of a string literal.</sup>
+</p>
 <p><a href="#">top</a></p>
 
 </body></HTML>

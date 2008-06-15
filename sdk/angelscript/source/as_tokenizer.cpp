@@ -256,34 +256,11 @@ bool asCTokenizer::IsConstant()
 		return true;
 	}
 
-	// Character literal between single-quotes
-	if( source[0] == '\'' )
-	{
-		bool evenSlashes = true;
-		size_t n;
-		for( n = 1; n < sourceLength; n++ )
-		{
-			if( source[n] == '\n' ) break;
-			if( source[n] == '\'' && evenSlashes )
-			{
-				tokenType = ttIntConstant;
-				tokenLength = n+1;
-				return true;
-			}
-			if( source[n] == '\\' ) evenSlashes = !evenSlashes; else evenSlashes = true;
-		}
-
-		tokenType = ttNonTerminatedStringConstant;
-		tokenLength = n-1;
-
-		return true;
-	}
-
-	// String constant between double-quotes
-	if( source[0] == '"' )
+	// String constant between double or single quotes
+	if( source[0] == '"' || source[0] == '\'' )
 	{
 		// Is it a normal string constant or a heredoc string constant?
-		if( sourceLength >= 6 && source[1] == '"' && source[2] == '"' )
+		if( sourceLength >= 6 && source[0] == '"' && source[1] == '"' && source[2] == '"' )
 		{
 			// Heredoc string constant (spans multiple lines, no escape sequences)
 
@@ -301,12 +278,13 @@ bool asCTokenizer::IsConstant()
 		else
 		{
 			// Normal string constant
+			char quote = source[0];
 			bool evenSlashes = true;
 			size_t n;
 			for( n = 1; n < sourceLength; n++ )
 			{
 				if( source[n] == '\n' ) break;
-				if( source[n] == '"' && evenSlashes )
+				if( source[n] == quote && evenSlashes )
 				{
 					tokenType = ttStringConstant;
 					tokenLength = n+1;

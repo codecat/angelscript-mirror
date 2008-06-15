@@ -320,6 +320,7 @@ public:
 	bool optimizeByteCode;
 	bool copyScriptSections;
 	int  maximumContextStackSize;
+	bool useCharacterLiterals;
 };
 
 END_AS_NAMESPACE
