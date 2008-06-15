@@ -40,6 +40,9 @@
 BEGIN_AS_NAMESPACE
 #ifdef AS_C_INTERFACE
 
+typedef void (*asBINARYREADFUNC_t)(void *ptr, asUINT size, void *param);
+typedef void (*asBINARYWRITEFUNC_t)(const void *ptr, asUINT size, void *param);
+
 class asCBinaryStreamC : public asIBinaryStream
 {
 public:
