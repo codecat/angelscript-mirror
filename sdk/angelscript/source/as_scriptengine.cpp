@@ -191,6 +191,8 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 	}
 	else if( property == asEP_USE_CHARACTER_LITERALS )
 		useCharacterLiterals = value ? true : false;
+	else if( property == asEP_ALLOW_MULTILINE_STRINGS )
+		allowMultilineStrings = value ? true : false;
 	else
 		return asINVALID_ARG;
 
@@ -209,6 +211,8 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 		return maximumContextStackSize*4;
 	else if( property == asEP_USE_CHARACTER_LITERALS )
 		return useCharacterLiterals;
+	else if( property == asEP_ALLOW_MULTILINE_STRINGS )
+		return allowMultilineStrings;
 
 	return 0;
 }
@@ -221,6 +225,7 @@ asCScriptEngine::asCScriptEngine()
 	copyScriptSections      = true;
 	maximumContextStackSize = 0;         // no limit
 	useCharacterLiterals    = false;
+	allowMultilineStrings   = false;
 
 
 	scriptTypeBehaviours.engine = this;

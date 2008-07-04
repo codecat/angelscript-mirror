@@ -396,6 +396,27 @@ bool Test()
 		engine->Release();
 	}
 
+	//-------
+	// Multiline strings
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+		engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, true);
+		engine->RegisterGlobalFunction("void assert(bool)",asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script =
+			"string str1 = '1\\n' '2'; \n"
+			"string str2 = '1\n2';     \n"
+			"assert(str1 == str2);     \n";
+
+		r = engine->ExecuteString(0, script);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	return fail;
 }
 

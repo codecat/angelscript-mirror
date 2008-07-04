@@ -193,8 +193,11 @@ bool Test()
 	{
 		fail = true;
 	}
-	if( bout.buffer != "script (2, 18) : Error   : Unexpected end of file\n" )
+	if( bout.buffer != "script (1, 1) : Info    : Compiling float calc(float, float)\n"
+	                   "script (1, 77) : Error   : Multiline strings are not allowed in this application\n"
+	                   "script (1, 32) : Error   : No matching signatures to 'Print(string@&)'\n" )
 	{
+		printf(bout.buffer.c_str());
 		fail = true;
 	}
 

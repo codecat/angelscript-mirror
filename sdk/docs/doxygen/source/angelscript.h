@@ -103,6 +103,8 @@ enum asEEngineProp
 	asEP_MAX_STACK_SIZE          = 4,
 	//! Interpret single quoted strings as character literals. Default: false.
 	asEP_USE_CHARACTER_LITERALS  = 5,
+	//! Allow linebreaks in string constants. Default: false.
+	asEP_ALLOW_MULTILINE_STRINGS = 6
 };
 
 // Calling conventions
@@ -120,7 +122,7 @@ enum asECallConvTypes
 	//! A cdecl function that takes the object pointer as the first parameter.
 	asCALL_CDECL_OBJFIRST   = 4,
 	//! A function using the generic calling convention.
-	asCALL_GENERIC          = 5,
+	asCALL_GENERIC          = 5
 };
 
 // Object type flags
@@ -158,7 +160,7 @@ enum asEObjTypeFlags
 	asOBJ_APP_PRIMITIVE         = 0x1000,
 	//! The C++ type is a float or double. Only valid with asOBJ_VALUE.
 	asOBJ_APP_FLOAT             = 0x2000,
-	asOBJ_MASK_VALID_FLAGS      = 0x3F3F,
+	asOBJ_MASK_VALID_FLAGS      = 0x3F3F
 };
 
 // Behaviours
@@ -273,7 +275,7 @@ enum asEBehaviours
 	 asBEHAVE_ENUMREFS,
 	 //! \brief (Object, GC) Release all references
 	 asBEHAVE_RELEASEREFS,
-	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
+	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS
 };
 
 // Return codes
@@ -329,7 +331,7 @@ enum asERetCodes
 	//! Illegal behaviour for the type
 	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
 	//! The specified calling convention doesn't match the function/method pointer
-	asWRONG_CALLING_CONV                   = -24,
+	asWRONG_CALLING_CONV                   = -24
 };
 
 // Context states
@@ -352,7 +354,7 @@ enum asEContextState
     //! The context is currently executing a function call.
     asEXECUTION_ACTIVE        = 6,
     //! The context has encountered an error and must be reinitialized.
-    asEXECUTION_ERROR         = 7,
+    asEXECUTION_ERROR         = 7
 };
 
 // ExecuteString flags
@@ -363,7 +365,7 @@ enum asEExecStrFlags
 	//! Only prepare the context
 	asEXECSTRING_ONLY_PREPARE	= 1,
 	//! Use the pre-allocated context
-	asEXECSTRING_USE_MY_CONTEXT = 2,
+	asEXECSTRING_USE_MY_CONTEXT = 2
 };
 
 // Message types
@@ -376,7 +378,7 @@ enum asEMsgType
     //! The message is a warning.
     asMSGTYPE_WARNING     = 1,
     //! The message is informational only.
-    asMSGTYPE_INFORMATION = 2,
+    asMSGTYPE_INFORMATION = 2
 };
 
 // Prepare flags
@@ -394,7 +396,7 @@ enum asETypeIdFlags
 	asTYPEID_APPOBJECT      = 0x04000000,
 	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
 	asTYPEID_SCRIPTARRAY    = 0x10000000,
-	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF,
+	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
 
 //!@}

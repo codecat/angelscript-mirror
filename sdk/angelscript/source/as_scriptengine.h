@@ -321,6 +321,7 @@ public:
 	bool copyScriptSections;
 	int  maximumContextStackSize;
 	bool useCharacterLiterals;
+	bool allowMultilineStrings;
 };
 
 END_AS_NAMESPACE

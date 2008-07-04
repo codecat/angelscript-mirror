@@ -64,7 +64,8 @@ const char *asGetTokenDefinition(int tokenType)
 	if( tokenType == ttFloatConstant				) return "<float constant>";
 	if( tokenType == ttDoubleConstant				) return "<double constant>";
 	if( tokenType == ttStringConstant				) return "<string constant>";
-	if( tokenType == ttNonTerminatedStringConstant	) return "<unterminated string constant>";
+	if( tokenType == ttMultilineStringConstant      ) return "<multiline string constant>";
+	if( tokenType == ttNonTerminatedStringConstant	) return "<nonterminated string constant>";
 	if( tokenType == ttBitsConstant					) return "<bits constant>";
 	if( tokenType == ttHeredocStringConstant		) return "<heredoc string constant>";
 
@@ -278,15 +279,16 @@ bool asCTokenizer::IsConstant()
 		else
 		{
 			// Normal string constant
+			tokenType = ttStringConstant;
 			char quote = source[0];
 			bool evenSlashes = true;
 			size_t n;
 			for( n = 1; n < sourceLength; n++ )
 			{
-				if( source[n] == '\n' ) break;
+				if( source[n] == '\n' ) 
+					tokenType = ttMultilineStringConstant;
 				if( source[n] == quote && evenSlashes )
 				{
-					tokenType = ttStringConstant;
 					tokenLength = n+1;
 					return true;
 				}

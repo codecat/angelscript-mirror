@@ -53,14 +53,15 @@ enum eTokenType
 	ttMultilineComment,    // /* */
 
 	// Atoms
-	ttIdentifier,            // abc123
-	ttIntConstant,           // 1234
-	ttFloatConstant,         // 12.34e56f
-	ttDoubleConstant,        // 12.34e56
-	ttStringConstant,        // "123"
-	ttHeredocStringConstant, // """text"""
+	ttIdentifier,                  // abc123
+	ttIntConstant,                 // 1234
+	ttFloatConstant,               // 12.34e56f
+	ttDoubleConstant,              // 12.34e56
+	ttStringConstant,              // "123"
+	ttMultilineStringConstant,     //
+	ttHeredocStringConstant,       // """text"""
 	ttNonTerminatedStringConstant, // "123
-	ttBitsConstant,          // 0xFFFF
+	ttBitsConstant,                // 0xFFFF
 
 	// Math operators
 	ttPlus,                // +

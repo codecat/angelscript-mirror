@@ -80,6 +80,7 @@ enum asEEngineProp
 	asEP_COPY_SCRIPT_SECTIONS    = 3,
 	asEP_MAX_STACK_SIZE          = 4,
 	asEP_USE_CHARACTER_LITERALS  = 5,
+	asEP_ALLOW_MULTILINE_STRINGS = 6
 };
 
 // Calling conventions
@@ -90,7 +91,7 @@ enum asECallConvTypes
 	asCALL_THISCALL         = 2,
 	asCALL_CDECL_OBJLAST    = 3,
 	asCALL_CDECL_OBJFIRST   = 4,
-	asCALL_GENERIC          = 5,
+	asCALL_GENERIC          = 5
 };
 
 // Object type flags
@@ -115,7 +116,7 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
 	asOBJ_APP_PRIMITIVE         = 0x1000,
 	asOBJ_APP_FLOAT             = 0x2000,
-	asOBJ_MASK_VALID_FLAGS      = 0x3F3F,
+	asOBJ_MASK_VALID_FLAGS      = 0x3F3F
 };
 
 // Behaviours
@@ -184,7 +185,7 @@ enum asEBehaviours
 	 asBEHAVE_GETGCFLAG,
 	 asBEHAVE_ENUMREFS,
 	 asBEHAVE_RELEASEREFS,
-	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
+	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS
 };
 
 // Return codes
@@ -214,7 +215,7 @@ enum asERetCodes
 	asWRONG_CONFIG_GROUP                   = -21,
 	asCONFIG_GROUP_IS_IN_USE               = -22,
 	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
-	asWRONG_CALLING_CONV                   = -24,
+	asWRONG_CALLING_CONV                   = -24
 };
 
 // Context states
@@ -227,14 +228,14 @@ enum asEContextState
     asEXECUTION_PREPARED      = 4,
     asEXECUTION_UNINITIALIZED = 5,
     asEXECUTION_ACTIVE        = 6,
-    asEXECUTION_ERROR         = 7,
+    asEXECUTION_ERROR         = 7
 };
 
 // ExecuteString flags
 enum asEExecStrFlags
 {
 	asEXECSTRING_ONLY_PREPARE	= 1,
-	asEXECSTRING_USE_MY_CONTEXT = 2,
+	asEXECSTRING_USE_MY_CONTEXT = 2
 };
 
 // Message types
@@ -242,7 +243,7 @@ enum asEMsgType
 {
     asMSGTYPE_ERROR       = 0,
     asMSGTYPE_WARNING     = 1,
-    asMSGTYPE_INFORMATION = 2,
+    asMSGTYPE_INFORMATION = 2
 };
 
 // Prepare flags
@@ -260,7 +261,7 @@ enum asETypeIdFlags
 	asTYPEID_APPOBJECT      = 0x04000000,
 	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
 	asTYPEID_SCRIPTARRAY    = 0x10000000,
-	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF,
+	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
 
 //

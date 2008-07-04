@@ -4969,7 +4969,9 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), vnode->tokenType == ttTrue ? VALUE_OF_BOOLEAN_TRUE : 0);
 #endif
 		}
-		else if( vnode->tokenType == ttStringConstant || vnode->tokenType == ttHeredocStringConstant )
+		else if( vnode->tokenType == ttStringConstant || 
+			     vnode->tokenType == ttMultilineStringConstant || 
+				 vnode->tokenType == ttHeredocStringConstant )
 		{
 			asCString str;
 			asCScriptNode *snode = vnode->firstChild;
@@ -4994,6 +4996,14 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 					asCString cat;
 					if( snode->tokenType == ttStringConstant )
 					{
+						cat.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
+						ProcessStringConstant(cat);
+					}
+					else if( snode->tokenType == ttMultilineStringConstant )
+					{
+						if( !engine->allowMultilineStrings )
+							Error(TXT_MULTILINE_STRINGS_NOT_ALLOWED, snode);
+
 						cat.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
 						ProcessStringConstant(cat);
 					}
