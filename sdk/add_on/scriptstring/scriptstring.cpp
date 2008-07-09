@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h> // strstr
 #include "scriptstring.h"
 using namespace std;
 

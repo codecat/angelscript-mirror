@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -63,7 +63,11 @@ BEGIN_AS_NAMESPACE
 // From windows.h
 struct CRITICAL_SECTION 
 {
+#ifdef AS_64BIT_PTR
+    int reserved[10];
+#else
     int reserved[6];
+#endif
 };
 
 class asCThreadCriticalSection
