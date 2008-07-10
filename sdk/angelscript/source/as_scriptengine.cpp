@@ -134,6 +134,11 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_XENON
 		"AS_XENON "
 #endif
+#ifdef AS_NO_THREADS
+		"AS_NO_THREADS "
+#else
+		"!AS_NO_THREADS "
+#endif
 	;
 
 	return string;

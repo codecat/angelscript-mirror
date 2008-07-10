@@ -41,7 +41,8 @@
 
 BEGIN_AS_NAMESPACE
 
-#ifdef USE_THREADS
+#ifndef AS_NO_THREADS
+#ifdef AS_WINDOWS_THREADS
 // From windows.h
 extern "C"
 {
@@ -51,6 +52,7 @@ extern "C"
 	void __stdcall LeaveCriticalSection(CRITICAL_SECTION *);
 	unsigned long __stdcall GetCurrentThreadId();
 }
+#endif
 #endif
 
 // Singleton
@@ -67,14 +69,14 @@ AS_API int asThreadCleanup()
 
 asCThreadManager::asCThreadManager()
 {
-#ifndef USE_THREADS
+#ifdef AS_NO_THREADS
 	tld = 0;
 #endif
 }
 
 asCThreadManager::~asCThreadManager()
 {
-#ifdef USE_THREADS
+#ifndef AS_NO_THREADS
 	ENTERCRITICALSECTION(criticalSection);
 
 	// Delete all thread local datas
@@ -102,9 +104,13 @@ asCThreadManager::~asCThreadManager()
 
 int asCThreadManager::CleanupLocalData()
 {
-#ifdef USE_THREADS
-	asDWORD id = GetCurrentThreadId();
+#ifndef AS_NO_THREADS
 	int r = 0;
+#if defined AS_POSIX_THREADS
+	asDWORD id = pthread_self();
+#elif defined AS_WINDOWS_THREADS
+	asDWORD id = GetCurrentThreadId();
+#endif
 
 	ENTERCRITICALSECTION(criticalSection);
 
@@ -142,7 +148,7 @@ int asCThreadManager::CleanupLocalData()
 #endif
 }
 
-#ifdef USE_THREADS
+#ifndef AS_NO_THREADS
 asCThreadLocalData *asCThreadManager::GetLocalData(asDWORD threadId)
 {
 	asCThreadLocalData *tld = 0;
@@ -170,8 +176,12 @@ void asCThreadManager::SetLocalData(asDWORD threadId, asCThreadLocalData *tld)
 
 asCThreadLocalData *asCThreadManager::GetLocalData()
 {
-#ifdef USE_THREADS
+#ifndef AS_NO_THREADS
+#if defined AS_POSIX_THREADS
+	asDWORD id = pthread_self();
+#elif defined AS_WINDOWS_THREADS
 	asDWORD id = GetCurrentThreadId();
+#endif
 		
 	asCThreadLocalData *tld = GetLocalData(id);
 	if( tld == 0 )
@@ -202,25 +212,41 @@ asCThreadLocalData::~asCThreadLocalData()
 
 //=========================================================================
 
-#ifdef USE_THREADS
+#ifndef AS_NO_THREADS
 asCThreadCriticalSection::asCThreadCriticalSection()
 {
+#if defined AS_POSIX_THREADS
+	pthread_mutex_init(&criticalSection, 0);
+#elif defined AS_WINDOWS_THREADS
 	InitializeCriticalSection(&criticalSection);
+#endif
 }
 
 asCThreadCriticalSection::~asCThreadCriticalSection()
 {
+#if defined AS_POSIX_THREADS
+	pthread_mutex_destroy(&criticalSection);
+#elif defined AS_WINDOWS_THREADS
 	DeleteCriticalSection(&criticalSection);
+#endif
 }
 
 void asCThreadCriticalSection::Enter()
 {
+#if defined AS_POSIX_THREADS
+	pthread_mutex_lock(&criticalSection);
+#elif defined AS_WINDOWS_THREADS
 	EnterCriticalSection(&criticalSection);
+#endif
 }
 
 void asCThreadCriticalSection::Leave()
 {
+#if defined AS_POSIX_THREADS
+	pthread_mutex_unlock(&criticalSection);
+#elif defined AS_WINDOWS_THREADS
 	LeaveCriticalSection(&criticalSection);
+#endif
 }
 #endif
 

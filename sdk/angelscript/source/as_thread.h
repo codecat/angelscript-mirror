@@ -48,7 +48,7 @@ BEGIN_AS_NAMESPACE
 
 //========================================================================
 
-#ifndef USE_THREADS
+#ifdef AS_NO_THREADS
 
 #define DECLARECRITICALSECTION(x) 
 #define ENTERCRITICALSECTION(x) 
@@ -57,8 +57,28 @@ BEGIN_AS_NAMESPACE
 #else
 
 #define DECLARECRITICALSECTION(x) asCThreadCriticalSection x
-#define ENTERCRITICALSECTION(x) x.Enter()
-#define LEAVECRITICALSECTION(x) x.Leave()
+#define ENTERCRITICALSECTION(x)   x.Enter()
+#define LEAVECRITICALSECTION(x)   x.Leave()
+
+#ifdef AS_POSIX_THREADS
+
+#include <pthread.h>
+
+class asCThreadCriticalSection
+{
+public:
+	asCThreadCriticalSection();
+	~asCThreadCriticalSection();
+
+	void Enter();
+	void Leave();
+
+protected:
+	pthread_mutex_t criticalSection;
+};
+
+#endif
+#ifdef AS_WINDOWS_THREADS
 
 // From windows.h
 struct CRITICAL_SECTION 
@@ -85,6 +105,8 @@ protected:
 
 #endif
 
+#endif
+
 //=======================================================================
 
 class asCThreadLocalData;
@@ -100,7 +122,7 @@ public:
 
 protected:
 
-#ifdef USE_THREADS
+#ifndef AS_NO_THREADS
 	asCThreadLocalData *GetLocalData(asDWORD threadId);
 	void SetLocalData(asDWORD threadId, asCThreadLocalData *tld);
 

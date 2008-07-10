@@ -44,9 +44,15 @@
 // Features
 //-----------------------------------------
 
-// USE_THREADS
-// Adds basic support for multithreading.
-// This is currently only supported on Win32 platforms.
+// AS_NO_THREADS
+// Turns off support for multithreading. By turning off
+// this when it's not needed a bit of performance is gained.
+
+// AS_WINDOWS_THREADS
+// If the library should be compiled using windows threads.
+
+// AS_POSIX_THREADS
+// If the library should be compiled using posix threads.
 
 // BUILD_WITHOUT_LINE_CUES
 // This flag makes the script compiler remove some extra bytecodes that is used
@@ -290,6 +296,7 @@
 	#define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
 	#define STDCALL __stdcall
 	#define AS_SIZEOF_BOOL 1
+	#define AS_WINDOWS_THREADS
 
 	#define ASM_INTEL  // Intel style for inline assembly on microsoft compilers
 
@@ -325,6 +332,7 @@
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
 	#define AS_SIZEOF_BOOL 1
+	#define AS_WINDOWS_THREADS
 	#define STDCALL __stdcall
 
 	// Support native calling conventions on x86, but not 64bit yet
@@ -430,7 +438,7 @@
 			#undef STDCALL
 			#define STDCALL
 		#endif
-
+    	#define AS_POSIX_THREADS
 	// Free BSD
 	#elif __FreeBSD__
 		#define AS_BSD
@@ -439,7 +447,7 @@
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
-
+    	#define AS_POSIX_THREADS
 	// PSP and PS2
 	#elif defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
 		// Support native calling conventions on MIPS architecture
@@ -529,6 +537,13 @@
 	#ifndef AS_MAX_PORTABILITY
 		#define AS_MAX_PORTABILITY
 	#endif
+#endif
+
+// If the form of threads to use hasn't been chosen
+// then the library will be compiled without support
+// for multithreading
+#if !defined(AS_POSIX_THREADS) && !defined(AS_WINDOWS_THREADS)
+	#define AS_NO_THREADS
 #endif
 
 

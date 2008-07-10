@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.13.1 WIP - 2008/07/08</h2>
+<h2>Version 2.13.1 WIP - 2008/07/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -128,12 +128,17 @@ A:hover
 </ul>
 <li>Script language
 <ul>
-<li>Single quoted strings can now be used instead of double quoted strings
+<li>Single quoted strings can now be used instead of double quoted strings.
 </ul>
 <li>Library interface
 <ul>
-<li>Added asEP_USE_CHARACTER_LITERALS to allow applications to interpret single quoted strings as character literals 
-<li>Added asEP_ALLOW_MULTILINE_STRINGS that will allow the compiler to accept string constants with line breaks
+<li>Added asEP_USE_CHARACTER_LITERALS to allow applications to interpret single quoted strings as character literals. 
+<li>Added asEP_ALLOW_MULTILINE_STRINGS that will allow the compiler to accept string constants with line breaks.
+</ul>
+<li>Library
+<ul>
+<li>Added support for posix threads on the platforms that support it (Thanks kunitoki)
+<li>Support for multithreading is now turned on by default, it can be turned off by defining AS_NO_THREADS.
 </ul>
 </ul>
 
