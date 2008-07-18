@@ -30,7 +30,7 @@ DWORD timeGetTime()
 {
 	timeval time;
 	gettimeofday(&time, NULL);
-	return time.tv_usec;
+	return time.tv_sec*1000 + time.tv_usec/1000;
 }
 
 // kbhit() for linux
@@ -63,7 +63,7 @@ DWORD timeGetTime()
 {
 	timeval time;
 	gettimeofday(&time, NULL);
-	return time.tv_usec;
+	return time.tv_sec*1000 + time.tv_usec/1000;
 }
 
 int kbhit()

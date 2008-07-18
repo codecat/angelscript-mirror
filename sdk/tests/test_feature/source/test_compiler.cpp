@@ -71,10 +71,19 @@ const char *script12 =
 "   2<3?f():1;  \n"
 "}              \n";
 
+bool Test2();
+bool Test3();
+bool Test4();
+
 bool Test()
 {
 	bool fail = false;
 	int r;
+
+	fail = Test2() || fail;
+	fail = Test3() || fail;
+	fail = Test4() || fail;
+
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
 	COutStream out;
@@ -353,6 +362,134 @@ bool Test()
 
 	// Success
  	return fail;
+}
+
+
+//------------------------------------
+// Test 2 was reported by Dentoid
+float add(float &a, float &b)
+{
+	return a+b;
+}
+
+void doStuff(float a, float b)
+{
+}
+
+bool Test2()
+{
+	bool fail = false;
+	int r;
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	engine->RegisterObjectType( "Test", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C );
+	engine->RegisterGlobalBehaviour( asBEHAVE_ADD, "Test f(Test &in, Test &in)", asFUNCTION(add), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void doStuff(Test, Test)", asFUNCTION(doStuff), asCALL_CDECL);
+
+	const char *script =
+	"Test test1, test2;                \n"
+	"doStuff( test1, test1 + test2 );  \n"  // This one will work
+	"doStuff( test1 + test2, test1 );  \n"; // This one will blow
+
+	r = engine->ExecuteString(0, script);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	engine->Release();
+	return fail;
+}
+
+//-----------------------------------------
+// Test 3 was reported by loboWu
+bool Test3()
+{
+	bool fail = false;
+	COutStream out;
+	int r;
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	const char *script = 
+	"uint8 search_no(uint8[]@ cmd, uint16 len, uint8[] @rcv)    \n" //mbno is nx5 array, static
+	"{														    \n"
+	"	if (@rcv == null) assert(false);						\n"
+	"		return(255);										\n" 
+	"}															\n"
+	"void main()												\n"
+	"{															\n"
+	"	uint8[] cmd = { 0x02, 0x95, 0x45, 0x42, 0x32 };			\n"
+	"	uint8[] rcv;											\n"
+	"	uint16 len = 8;											\n"
+	"	search_no(cmd, cmd.length(), rcv);						\n" //This is OK! @rcv won't be null
+	"	search_no(cmd, GET_LEN2(cmd), rcv);						\n" //This is OK!
+	"	len = GET_LEN(cmd);										\n"
+	"	search_no(cmd, len, rcv);								\n" //This is OK!
+	"															\n"//but 
+	"	search_no(cmd, GET_LEN(cmd), rcv);						\n" //@rcv is null
+	"}															\n"
+	"uint16 GET_LEN(uint8[]@ cmd)								\n"
+	"{															\n"
+	"	return cmd[0]+3;										\n"
+	"}															\n"
+	"uint16 GET_LEN2(uint8[] cmd)								\n"
+	"{															\n"
+	"	return cmd[0]+3;										\n"
+	"}															\n";
+
+	engine->AddScriptSection(0, "script", script, strlen(script));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
+	r = engine->ExecuteString(0, "main()");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	engine->Release();
+	return fail;
+}
+
+//----------------------------------------
+// Test 4 reported by dxj19831029
+bool Test4()
+{
+	bool fail = false;
+	COutStream out;
+	int r;
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+	engine->RegisterObjectType("Chars", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+
+	engine->RegisterObjectType("Struct", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectProperty("Struct", "Chars FieldName", 0);
+
+	engine->RegisterObjectType("TestObject2", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("TestObject2", asBEHAVE_FACTORY, "TestObject2@ f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("TestObject2", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("TestObject2", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectProperty("TestObject2", "Struct Save", 0); 
+
+	engine->RegisterObjectType("TestObject", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectMethod("TestObject", "TestObject2 @f()", asFUNCTION(0), asCALL_GENERIC);
+
+	engine->RegisterGlobalFunction("void print(?&in)", asFUNCTION(0), asCALL_GENERIC);
+
+	const char *script1 = "void main() { TestObject current; print(current.f().Save.FieldName); }"; 
+	engine->AddScriptSection(0, "test", script1, strlen(script1));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
+	const char *script2 = "void main() { TestObject current; Chars a = current.f().Save.FieldName; print(a); }";
+	engine->AddScriptSection(0, "test", script2, strlen(script2));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
+	engine->Release();
+	return fail;
 }
 
 } // namespace

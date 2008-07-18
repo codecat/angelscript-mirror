@@ -32,7 +32,7 @@ DWORD timeGetTime()
 {
 	timeval time;
 	gettimeofday(&time, NULL);
-	return time.tv_usec;
+	return time.tv_sec*1000 + time.tv_usec/1000;
 }
 
 // Linux does have a getch() function in the curses library, but it doesn't

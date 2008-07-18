@@ -235,6 +235,23 @@ bool TestGlobalVar()
 		engine->Release();
 	}
 
+	//-----------
+	// It's not valid to attempt registering global properties with values
+	{
+		CBufferedOutStream bout;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		int r = engine->RegisterGlobalProperty("const int value = 3345;", 0);
+		if( r >= 0 )
+			ret = true;
+		if( bout.buffer != "error" )
+		{
+			ret = true;
+			printf(bout.buffer.c_str());
+		}
+		engine->Release();
+	}
+
 	return ret;
 }
 
