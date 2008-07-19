@@ -966,7 +966,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				{
 					// Objects passed by value must be placed in temporary variables
 					// so that they are guaranteed to not be referenced anywhere else
-					PrepareTemporaryObject(node, ctx);
+					PrepareTemporaryObject(node, ctx, reservedVars);
 
 					// The implicit conversion shouldn't convert the object to
 					// non-reference yet. It will be dereferenced just before the call.
@@ -2333,7 +2333,7 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 	}
 }
 
-void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx)
+void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, asCArray<int> *reservedVars)
 {
 	// If the object already is stored in temporary variable then nothing needs to be done
 	if( ctx->type.isTemporary ) return;
@@ -2343,7 +2343,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	dt.MakeReference(false);
 	dt.MakeReadOnly(false);
 
-	int offset = AllocateVariable(dt, true);
+	int offset = AllocateVariableNotIn(dt, true, reservedVars);
 
 	// Allocate and construct the temporary object
 	CompileConstructor(dt, offset, &ctx->bc);
@@ -3524,7 +3524,7 @@ void asCCompiler::ImplicitConversionFromObject(asSExprContext *ctx, const asCDat
 	}
 }
 
-void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool /*isExplicit*/, bool generateCode, asCArray<int> * /*reservedVars*/, bool allowObjectConstruct)
+void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool /*isExplicit*/, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {
 	if( ctx->type.dataType.IsReference() && !ctx->type.dataType.IsPrimitive() )
 	{
@@ -3559,7 +3559,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 				if( generateCode )
 				{
 					// Make a temporary object with the copy
-					PrepareTemporaryObject(node, ctx);
+					PrepareTemporaryObject(node, ctx, reservedVars);
 				}
 				else 
 					ctx->type.dataType.MakeReadOnly(false);
