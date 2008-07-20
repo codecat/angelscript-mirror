@@ -113,6 +113,18 @@ int asCParser::ParseFunctionDefinition(asCScriptCode *script)
 
 	scriptNode = ParseFunctionDefinition();
 
+	// The declaration should end after the definition
+	if( !isSyntaxError )
+	{
+		sToken t;
+		GetToken(&t);
+		if( t.type != ttEnd )
+		{
+			Error(ExpectedToken(asGetTokenDefinition(ttEnd)).AddressOf(), &t);
+			return -1;
+		}
+	}
+
 	if( errorWhileParsing )
 		return -1;
 
@@ -129,6 +141,15 @@ int asCParser::ParseDataType(asCScriptCode *script)
 		
 	scriptNode->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return -1;
+
+	// The declaration should end after the type
+	sToken t;
+	GetToken(&t);
+	if( t.type != ttEnd )
+	{
+		Error(ExpectedToken(asGetTokenDefinition(ttEnd)).AddressOf(), &t);
+		return -1;
+	}
 
 	if( errorWhileParsing )
 		return -1;
@@ -149,6 +170,15 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 
 	scriptNode->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return -1;
+
+	// The declaration should end after the identifier
+	sToken t;
+	GetToken(&t);
+	if( t.type != ttEnd )
+	{
+		Error(ExpectedToken(asGetTokenDefinition(ttEnd)).AddressOf(), &t);
+		return -1;
+	}
 
 	return 0;
 }

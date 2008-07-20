@@ -244,7 +244,7 @@ bool TestGlobalVar()
 		int r = engine->RegisterGlobalProperty("const int value = 3345;", 0);
 		if( r >= 0 )
 			ret = true;
-		if( bout.buffer != "error" )
+		if( bout.buffer != "Property (1, 17) : Error   : Expected '<end of file>'\n" )
 		{
 			ret = true;
 			printf(bout.buffer.c_str());
