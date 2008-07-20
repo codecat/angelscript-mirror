@@ -128,7 +128,7 @@ int asCRestore::Restore()
 {
 	// Before starting the load, make sure that 
 	// any existing resources have been freed
-	module->Reset();
+	module->InternalReset();
 
 	unsigned long i, count;
 

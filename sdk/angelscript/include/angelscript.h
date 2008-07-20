@@ -215,7 +215,8 @@ enum asERetCodes
 	asWRONG_CONFIG_GROUP                   = -21,
 	asCONFIG_GROUP_IS_IN_USE               = -22,
 	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
-	asWRONG_CALLING_CONV                   = -24
+	asWRONG_CALLING_CONV                   = -24,
+	asMODULE_IS_IN_USE                     = -25
 };
 
 // Context states

@@ -66,27 +66,84 @@ struct sBindInfo
 	int importedFunction;
 };
 
-class asCModule
+// TODO: Move this to angelscript.h
+class asIScriptModule
+{
+public:
+	virtual asIScriptEngine *GetEngine() = 0;
+	virtual void SetName(const char *name) = 0;
+	virtual const char *GetName(int *length = 0) = 0; 
+
+	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
+	virtual int  Build() = 0;
+    virtual void Discard() = 0;
+	virtual int  Reinitialize() = 0;
+
+	// Script functions
+	virtual int GetFunctionCount() = 0;
+	virtual int GetFunctionIdByIndex(int index) = 0;
+	virtual int GetFunctionIdByName(const char *name) = 0;
+	virtual int GetFunctionIdByDecl(const char *decl) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+
+	// Script global variables
+	virtual int GetGlobalVarCount() = 0;
+	virtual int GetGlobalVarIndexByName(const char *name) = 0;
+	virtual int GetGlobalVarIndexByDecl(const char *decl) = 0;
+	virtual const char *GetGlobalVarDeclaration(int index, int *length = 0) = 0;
+	virtual const char *GetGlobalVarName(int index, int *length = 0) = 0;
+	virtual void *GetAddressOfGlobalVar(int index) = 0;
+
+	// Dynamic binding between modules
+	virtual int GetImportedFunctionCount() = 0;
+	virtual int GetImportedFunctionIndexByDecl(const char *decl) = 0;
+//	virtual const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0) = 0;
+//	virtual const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0) = 0;
+	virtual int BindImportedFunction(int importIndex, int funcId) = 0;
+//	virtual int UnbindImportedFunction(int importIndex) = 0;
+
+//	virtual int BindAllImportedFunctions() = 0;
+//	virtual int UnbindAllImportedFunctions() = 0;
+
+	// Type identification
+//	virtual int GetTypeIdByDecl(const char *decl) = 0;
+//	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+//	virtual int GetObjectTypeCount() = 0;
+
+protected:
+	virtual ~asIScriptModule() {}
+};
+
+class asCModule : public asIScriptModule
 {
 public:
 	asCModule(const char *name, int id, asCScriptEngine *engine);
 	~asCModule();
 
-	int  AddScriptSection(const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy);
+	asIScriptEngine *GetEngine();
+	void             SetName(const char *name);
+	const char      *GetName(int *length);
+
+	int  AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);
 	int  Build();
 	void Discard();
 
-	int  ResetGlobalVars();
+	int  Reinitialize();
 
 	int  GetFunctionCount();
-	int  GetFunctionIDByName(const char *name);
-	int  GetFunctionIDByDecl(const char *decl);
-
-	int  GetMethodIDByDecl(const asCObjectType *ot, const char *decl);
+	int  GetFunctionIdByIndex(int index);
+	int  GetFunctionIdByName(const char *name);
+	int  GetFunctionIdByDecl(const char *decl);
+	asIScriptFunction *GetFunctionDescriptorByIndex(int index);
+	asIScriptFunction *GetFunctionDescriptorById(int funcId);
 
 	int  GetGlobalVarCount();
-	int  GetGlobalVarIDByName(const char *name);
-	int  GetGlobalVarIDByDecl(const char *decl);
+	int  GetGlobalVarIndexByName(const char *name);
+	int  GetGlobalVarIndexByDecl(const char *decl);
+	const char *GetGlobalVarDeclaration(int index, int *length);
+	const char *GetGlobalVarName(int index, int *length);
+	void *GetAddressOfGlobalVar(int index);
 
 	asCString name;
 
@@ -97,7 +154,7 @@ public:
 	friend class asCContext;
 	friend class asCRestore;
 
-	void Reset();
+	void InternalReset();
 
 	int  AddContextRef();
 	int  ReleaseContextRef();

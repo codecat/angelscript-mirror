@@ -449,7 +449,7 @@ int asCScriptEngine::AddScriptSection(const char *module, const char *name, cons
 		mod = GetModule(module, true);
 	}
 
-	return mod->AddScriptSection(name, code, (int)codeLength, lineOffset, copyScriptSections);
+	return mod->AddScriptSection(name, code, (int)codeLength, lineOffset);
 }
 
 int asCScriptEngine::Build(const char *module)
@@ -628,7 +628,7 @@ int asCScriptEngine::ResetModule(const char *module)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->ResetGlobalVars();
+	return mod->Reinitialize();
 }
 
 int asCScriptEngine::GetFunctionCount(const char *module)
@@ -644,9 +644,7 @@ int asCScriptEngine::GetFunctionIDByIndex(const char *module, int index)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	// TODO: Check for out-of-bounds
-
-	return mod->scriptFunctions[index]->id;
+	return mod->GetFunctionIdByIndex(index);
 }
 
 int asCScriptEngine::GetFunctionIDByName(const char *module, const char *name)
@@ -654,7 +652,7 @@ int asCScriptEngine::GetFunctionIDByName(const char *module, const char *name)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->GetFunctionIDByName(name);
+	return mod->GetFunctionIdByName(name);
 }
 
 int asCScriptEngine::GetFunctionIDByDecl(const char *module, const char *decl)
@@ -662,7 +660,7 @@ int asCScriptEngine::GetFunctionIDByDecl(const char *module, const char *decl)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->GetFunctionIDByDecl(decl);
+	return mod->GetFunctionIdByDecl(decl);
 }
 
 //-----------------
@@ -719,6 +717,9 @@ int asCScriptEngine::GetMethodIDByDecl(int typeId, const char *decl)
 
 int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl, asCModule *mod)
 {
+	if( mod && !mod->isBuildWithoutErrors )
+		return asERROR;
+
 	asCBuilder bld(this, mod);
 
 	asCScriptFunction func(this, mod);
@@ -863,7 +864,7 @@ int asCScriptEngine::GetGlobalVarIDByName(const char *module, const char *name)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->GetGlobalVarIDByName(name);
+	return mod->moduleID | mod->GetGlobalVarIndexByName(name);
 }
 
 int asCScriptEngine::GetGlobalVarIDByDecl(const char *module, const char *decl)
@@ -871,7 +872,7 @@ int asCScriptEngine::GetGlobalVarIDByDecl(const char *module, const char *decl)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->GetGlobalVarIDByDecl(decl);
+	return mod->moduleID | mod->GetGlobalVarIndexByDecl(decl);
 }
 
 const char *asCScriptEngine::GetGlobalVarDeclaration(int gvarID, int *length)
@@ -879,19 +880,7 @@ const char *asCScriptEngine::GetGlobalVarDeclaration(int gvarID, int *length)
 	asCModule *mod = GetModule(gvarID);
 	if( mod == 0 ) return 0;
 
-	int id = gvarID & 0xFFFF;
-	if( id > (int)mod->scriptGlobals.GetLength() )
-		return 0;
-
-	asCProperty *prop = mod->scriptGlobals[id];
-
-	asCString *tempString = &threadManager.GetLocalData()->string;
-	*tempString = prop->type.Format();
-	*tempString += " " + prop->name;
-
-	if( length ) *length = (int)tempString->GetLength();
-
-	return tempString->AddressOf();
+	return mod->GetGlobalVarDeclaration(gvarID & 0xFFFF, length);
 }
 
 const char *asCScriptEngine::GetGlobalVarName(int gvarID, int *length)
@@ -899,16 +888,7 @@ const char *asCScriptEngine::GetGlobalVarName(int gvarID, int *length)
 	asCModule *mod = GetModule(gvarID);
 	if( mod == 0 ) return 0;
 
-	int id = gvarID & 0xFFFF;
-	if( id > (int)mod->scriptGlobals.GetLength() )
-		return 0;
-
-	asCString *tempString = &threadManager.GetLocalData()->string;
-	*tempString = mod->scriptGlobals[id]->name;
-
-	if( length ) *length = (int)tempString->GetLength();
-
-	return tempString->AddressOf();
+	return mod->GetGlobalVarName(gvarID & 0xFFFF, length);
 }
 
 // For primitives, object handles and references the address of the value is returned
@@ -918,13 +898,7 @@ void *asCScriptEngine::GetGlobalVarPointer(int gvarID)
 	asCModule *mod = GetModule(gvarID);
 	if( mod == 0 ) return 0;
 
-	int id = gvarID & 0xFFFF;
-	if( id > (int)mod->scriptGlobals.GetLength() )
-		return 0;
-
-	return (void*)(mod->globalMem.AddressOf() + mod->scriptGlobals[id]->index);
-
-	UNREACHABLE_RETURN;
+	return mod->GetAddressOfGlobalVar(gvarID & 0xFFFF);
 }
 
 
@@ -4391,7 +4365,7 @@ asIScriptFunction *asCScriptEngine::GetFunctionDescriptorByIndex(const char *mod
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return 0;
 
-	return mod->scriptFunctions[index];
+	return mod->GetFunctionDescriptorByIndex(index);
 }
 
 asIScriptFunction *asCScriptEngine::GetFunctionDescriptorById(int funcId)

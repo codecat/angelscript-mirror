@@ -185,7 +185,7 @@ int asCObjectType::GetMethodIdByDecl(const char *decl) const
 		return asNO_MODULE;
 	}
 
-	return mod->GetMethodIDByDecl(this, decl);
+	return engine->GetMethodIDByDecl(this, decl, mod);
 }
 
 asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(int index) const

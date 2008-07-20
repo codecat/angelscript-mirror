@@ -60,7 +60,7 @@ asCModule::asCModule(const char *name, int id, asCScriptEngine *engine)
 
 asCModule::~asCModule()
 {
-	Reset();
+	InternalReset();
 
 	if( builder ) 
 	{
@@ -79,21 +79,45 @@ asCModule::~asCModule()
 	}
 }
 
-int asCModule::AddScriptSection(const char *name, const char *code, int codeLength, int lineOffset, bool makeCopy)
+// interface
+asIScriptEngine *asCModule::GetEngine()
 {
+	return engine;
+}
+
+// interface
+void asCModule::SetName(const char *name)
+{
+	this->name = name;
+}
+
+// interface
+const char *asCModule::GetName(int *length)
+{
+	if( length ) *length = (int)name.GetLength();
+	return name.AddressOf();
+}
+
+// interface
+int asCModule::AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset)
+{
+	if( IsUsed() )
+		return asMODULE_IS_IN_USE;
+
 	if( !builder )
 		builder = NEW(asCBuilder)(engine, this);
 
-	builder->AddCode(name, code, codeLength, lineOffset, (int)builder->scripts.GetLength(), makeCopy);
+	builder->AddCode(name, code, (int)codeLength, lineOffset, (int)builder->scripts.GetLength(), engine->copyScriptSections);
 
 	return asSUCCESS;
 }
 
+// interface
 int asCModule::Build()
 {
 	asASSERT( contextCount == 0 );
 
- 	Reset();
+ 	InternalReset();
 
 	if( !builder )
 		return asSUCCESS;
@@ -113,7 +137,7 @@ int asCModule::Build()
 	if( r < 0 )
 	{
 		// Reset module again
-		Reset();
+		InternalReset();
 
 		isBuildWithoutErrors = false;
 		return r;
@@ -128,7 +152,8 @@ int asCModule::Build()
 	return r;
 }
 
-int asCModule::ResetGlobalVars()
+// interface
+int asCModule::Reinitialize()
 {
 	if( !isGlobalVarInitialized ) return asERROR;
 
@@ -137,6 +162,15 @@ int asCModule::ResetGlobalVars()
 	CallInit();
 
 	return 0;
+}
+
+// interface
+int asCModule::GetFunctionIdByIndex(int index)
+{
+	if( index < 0 || index >= (int)scriptFunctions.GetLength() )
+		return asNO_FUNCTION;
+
+	return scriptFunctions[index]->id;
 }
 
 void asCModule::CallInit()
@@ -196,7 +230,7 @@ void asCModule::Discard()
 	isDiscarded = true;
 }
 
-void asCModule::Reset()
+void asCModule::InternalReset()
 {
 	asASSERT( !IsUsed() );
 
@@ -267,7 +301,7 @@ void asCModule::Reset()
 	classTypes.SetLength(0);
 }
 
-int asCModule::GetFunctionIDByName(const char *name)
+int asCModule::GetFunctionIdByName(const char *name)
 {
 	if( isBuildWithoutErrors == false )
 		return asERROR;
@@ -289,14 +323,6 @@ int asCModule::GetFunctionIDByName(const char *name)
 	if( id == -1 ) return asNO_FUNCTION;
 
 	return id;
-}
-
-int asCModule::GetMethodIDByDecl(const asCObjectType *ot, const char *decl)
-{
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
-	return engine->GetMethodIDByDecl(ot, decl, this);
 }
 
 int asCModule::GetImportedFunctionCount()
@@ -359,7 +385,7 @@ int asCModule::GetFunctionCount()
 	return (int)scriptFunctions.GetLength();
 }
 
-int asCModule::GetFunctionIDByDecl(const char *decl)
+int asCModule::GetFunctionIdByDecl(const char *decl)
 {
 	if( isBuildWithoutErrors == false )
 		return asERROR;
@@ -414,7 +440,7 @@ int asCModule::GetGlobalVarCount()
 	return (int)scriptGlobals.GetLength();
 }
 
-int asCModule::GetGlobalVarIDByName(const char *name)
+int asCModule::GetGlobalVarIndexByName(const char *name)
 {
 	if( isBuildWithoutErrors == false )
 		return asERROR;
@@ -432,10 +458,26 @@ int asCModule::GetGlobalVarIDByName(const char *name)
 
 	if( id == -1 ) return asNO_GLOBAL_VAR;
 
-	return moduleID | id;
+	return id;
 }
 
-int asCModule::GetGlobalVarIDByDecl(const char *decl)
+// interface
+asIScriptFunction *asCModule::GetFunctionDescriptorByIndex(int index)
+{
+	if( index < 0 || index >= (int)scriptFunctions.GetLength() )
+		return 0;
+
+	return scriptFunctions[index];
+}
+
+// interface
+asIScriptFunction *asCModule::GetFunctionDescriptorById(int funcId)
+{
+	return engine->GetFunctionDescriptorById(funcId);
+}
+
+// interface
+int asCModule::GetGlobalVarIndexByDecl(const char *decl)
 {
 	if( isBuildWithoutErrors == false )
 		return asERROR;
@@ -460,8 +502,44 @@ int asCModule::GetGlobalVarIDByDecl(const char *decl)
 
 	if( id == -1 ) return asNO_GLOBAL_VAR;
 
-	return moduleID | id;
+	return id;
 }
+
+// interface
+void *asCModule::GetAddressOfGlobalVar(int index)
+{
+	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
+		return 0;
+
+	return (void*)(globalMem.AddressOf() + scriptGlobals[index]->index);
+}
+
+// interface
+const char *asCModule::GetGlobalVarDeclaration(int index, int *length)
+{
+	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
+		return 0;
+
+	asCProperty *prop = scriptGlobals[index];
+
+	asCString *tempString = &threadManager.GetLocalData()->string;
+	*tempString = prop->type.Format();
+	*tempString += " " + prop->name;
+
+	if( length ) *length = (int)tempString->GetLength();
+	return tempString->AddressOf();
+}
+
+// interface
+const char *asCModule::GetGlobalVarName(int index, int *length)
+{
+	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
+		return 0;
+
+	if( length ) *length = (int)scriptGlobals[index]->name.GetLength();
+	return scriptGlobals[index]->name.AddressOf();
+}
+
 
 int asCModule::AddConstantString(const char *str, size_t len)
 {
