@@ -460,29 +460,35 @@ bool Test4()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-	engine->RegisterObjectType("Chars", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectType("Chars", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("Chars", asBEHAVE_FACTORY, "Chars@ f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("Chars", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("Chars", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("Chars", asBEHAVE_ASSIGNMENT, "Chars &f(const Chars &in)", asFUNCTION(0), asCALL_GENERIC);
 
-	engine->RegisterObjectType("Struct", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
-	engine->RegisterObjectProperty("Struct", "Chars FieldName", 0);
+	engine->RegisterObjectType("_Save", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectProperty("_Save", "Chars FieldName", 0);
 
-	engine->RegisterObjectType("TestObject2", 0, asOBJ_REF);
-	engine->RegisterObjectBehaviour("TestObject2", asBEHAVE_FACTORY, "TestObject2@ f()", asFUNCTION(0), asCALL_GENERIC);
-	engine->RegisterObjectBehaviour("TestObject2", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
-	engine->RegisterObjectBehaviour("TestObject2", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
-	engine->RegisterObjectProperty("TestObject2", "Struct Save", 0); 
+	engine->RegisterObjectType("Struct", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("Struct", asBEHAVE_FACTORY, "Struct@ f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("Struct", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("Struct", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectProperty("Struct", "_Save Save", 0); 
 
-	engine->RegisterObjectType("TestObject", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
-	engine->RegisterObjectMethod("TestObject", "TestObject2 @f()", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectType("ScriptObject", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectMethod("ScriptObject", "Struct @f()", asFUNCTION(0), asCALL_GENERIC);
 
-	engine->RegisterGlobalFunction("void print(?&in)", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterGlobalProperty("ScriptObject current", 0);
 
-	const char *script1 = "void main() { TestObject current; print(current.f().Save.FieldName); }"; 
+	engine->RegisterGlobalFunction("void print(Chars&)", asFUNCTION(0), asCALL_GENERIC);
+
+	const char *script1 = "void main() { print(current.f().Save.FieldName); }"; 
 	engine->AddScriptSection(0, "test", script1, strlen(script1));
 	r = engine->Build(0);
 	if( r < 0 )
 		fail = true;
 
-	const char *script2 = "void main() { TestObject current; Chars a = current.f().Save.FieldName; print(a); }";
+	const char *script2 = "void main() { Chars a = current.f().Save.FieldName; print(a); }";
 	engine->AddScriptSection(0, "test", script2, strlen(script2));
 	r = engine->Build(0);
 	if( r < 0 )

@@ -71,8 +71,8 @@ class asIScriptModule
 {
 public:
 	virtual asIScriptEngine *GetEngine() = 0;
-	virtual void SetName(const char *name) = 0;
-	virtual const char *GetName(int *length = 0) = 0; 
+	virtual void             SetName(const char *name) = 0;
+	virtual const char      *GetName(int *length = 0) = 0; 
 
 	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
 	virtual int  Build() = 0;
@@ -80,20 +80,20 @@ public:
 	virtual int  Reinitialize() = 0;
 
 	// Script functions
-	virtual int GetFunctionCount() = 0;
-	virtual int GetFunctionIdByIndex(int index) = 0;
-	virtual int GetFunctionIdByName(const char *name) = 0;
-	virtual int GetFunctionIdByDecl(const char *decl) = 0;
+	virtual int                GetFunctionCount() = 0;
+	virtual int                GetFunctionIdByIndex(int index) = 0;
+	virtual int                GetFunctionIdByName(const char *name) = 0;
+	virtual int                GetFunctionIdByDecl(const char *decl) = 0;
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) = 0;
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
 
 	// Script global variables
-	virtual int GetGlobalVarCount() = 0;
-	virtual int GetGlobalVarIndexByName(const char *name) = 0;
-	virtual int GetGlobalVarIndexByDecl(const char *decl) = 0;
+	virtual int         GetGlobalVarCount() = 0;
+	virtual int         GetGlobalVarIndexByName(const char *name) = 0;
+	virtual int         GetGlobalVarIndexByDecl(const char *decl) = 0;
 	virtual const char *GetGlobalVarDeclaration(int index, int *length = 0) = 0;
 	virtual const char *GetGlobalVarName(int index, int *length = 0) = 0;
-	virtual void *GetAddressOfGlobalVar(int index) = 0;
+	virtual void       *GetAddressOfGlobalVar(int index) = 0;
 
 	// Dynamic binding between modules
 	virtual int GetImportedFunctionCount() = 0;

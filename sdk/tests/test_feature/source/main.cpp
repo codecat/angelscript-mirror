@@ -175,8 +175,8 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
-	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
+	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestRefCast::Test()           ) goto failed; else printf("-- TestRefCast passed\n");
 	if( TestFile::Test()              ) goto failed; else printf("-- TestFile passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
