@@ -917,6 +917,13 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 				dt.MakeHandle(false);
 				dt.MakeReference(true);
+
+				// Release previous temporary variable stored in the context (if any)
+				if( ctx->type.isTemporary )
+				{
+					ReleaseTemporaryVariable(ctx->type.stackOffset, &ctx->bc);
+				}
+
 				ctx->type.SetVariable(dt, offset, true);
 			}
 

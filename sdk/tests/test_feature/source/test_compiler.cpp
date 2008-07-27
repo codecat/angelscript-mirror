@@ -456,7 +456,7 @@ bool Test4()
 {
 	bool fail = false;
 	COutStream out;
-	int r;
+	int r = 0;
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
