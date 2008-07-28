@@ -792,26 +792,12 @@ bool asCModule::CanDeleteAllReferences(asCArray<asCModule*> &modules)
 	return true;
 }
 
-
+// interface
 int asCModule::BindImportedFunction(int index, int sourceID)
 {
-	// Remove reference to old module
-	int oldFuncID = bindInformations[index].importedFunction;
-	if( oldFuncID != -1 )
-	{
-		asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
-		if( oldModule != 0 ) 
-		{
-			// Release reference to the module
-			oldModule->ReleaseModuleRef();
-		}
-	}
-
-	if( sourceID == -1 )
-	{
-		bindInformations[index].importedFunction = -1;
-		return asSUCCESS;
-	}
+	// First unbind the old function
+	int r = UnbindImportedFunction(index);
+	if( r < 0 ) return r;
 
 	// Must verify that the interfaces are equal
 	asCModule *srcModule = engine->GetModuleFromFuncId(sourceID);
@@ -844,14 +830,99 @@ int asCModule::BindImportedFunction(int index, int sourceID)
 	return asSUCCESS;
 }
 
-const char *asCModule::GetImportedFunctionSourceModule(int index)
+// interface
+int asCModule::UnbindImportedFunction(int index)
+{
+	if( index < 0 || index > (int)bindInformations.GetLength() )
+		return asINVALID_ARG;
+
+	// Remove reference to old module
+	int oldFuncID = bindInformations[index].importedFunction;
+	if( oldFuncID != -1 )
+	{
+		asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
+		if( oldModule != 0 ) 
+		{
+			// Release reference to the module
+			oldModule->ReleaseModuleRef();
+		}
+	}
+
+	bindInformations[index].importedFunction = -1;
+	return asSUCCESS;
+}
+
+// interface
+const char *asCModule::GetImportedFunctionDeclaration(int index, int *length)
+{
+	asCScriptFunction *func = GetImportedFunction(index);
+	if( func == 0 ) return 0;
+
+	asCString *tempString = &threadManager.GetLocalData()->string;
+	*tempString = func->GetDeclarationStr();
+
+	if( length ) *length = (int)tempString->GetLength();
+
+	return tempString->AddressOf();
+}
+
+// interface
+const char *asCModule::GetImportedFunctionSourceModule(int index, int *length)
 {
 	if( index >= (int)bindInformations.GetLength() )
 		return 0;
 
 	index = bindInformations[index].importFrom;
 
-	return stringConstants[index]->AddressOf();
+	const char *str = stringConstants[index]->AddressOf();
+	if( length )
+		*length = (int)stringConstants[index]->GetLength();
+
+	return str;
+}
+
+// inteface
+int asCModule::BindAllImportedFunctions()
+{
+	bool notAllFunctionsWereBound = false;
+
+	// Bind imported functions
+	int c = GetImportedFunctionCount();
+	for( int n = 0; n < c; ++n )
+	{
+		asCScriptFunction *func = GetImportedFunction(n);
+		if( func == 0 ) return asERROR;
+
+		asCString str = func->GetDeclarationStr();
+
+		// Get module name from where the function should be imported
+		const char *moduleName = GetImportedFunctionSourceModule(n);
+		if( moduleName == 0 ) return asERROR;
+
+		int funcID = engine->GetFunctionIDByDecl(moduleName, str.AddressOf());
+		if( funcID < 0 )
+			notAllFunctionsWereBound = true;
+		else
+		{
+			if( BindImportedFunction(n, funcID) < 0 )
+				notAllFunctionsWereBound = true;
+		}
+	}
+
+	if( notAllFunctionsWereBound )
+		return asCANT_BIND_ALL_FUNCTIONS;
+
+	return asSUCCESS;
+}
+
+// interface
+int asCModule::UnbindAllImportedFunctions()
+{
+	int c = GetImportedFunctionCount();
+	for( int n = 0; n < c; ++n )
+		UnbindImportedFunction(n);
+
+	return asSUCCESS;
 }
 
 bool asCModule::IsUsed()

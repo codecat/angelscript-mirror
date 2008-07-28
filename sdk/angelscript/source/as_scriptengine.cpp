@@ -2626,15 +2626,7 @@ const char *asCScriptEngine::GetImportedFunctionDeclaration(const char *module, 
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return 0;
 
-	asCScriptFunction *func = mod->GetImportedFunction(index);
-	if( func == 0 ) return 0;
-
-	asCString *tempString = &threadManager.GetLocalData()->string;
-	*tempString = func->GetDeclarationStr();
-
-	if( length ) *length = (int)tempString->GetLength();
-
-	return tempString->AddressOf();
+	return mod->GetImportedFunctionDeclaration(index, length);
 }
 
 const char *asCScriptEngine::GetImportedFunctionSourceModule(const char *module, int index, int *length)
@@ -2642,11 +2634,7 @@ const char *asCScriptEngine::GetImportedFunctionSourceModule(const char *module,
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return 0;
 
-	const char *str = mod->GetImportedFunctionSourceModule(index);
-	if( length && str )
-		*length = (int)strlen(str);
-
-	return str;
+	return mod->GetImportedFunctionSourceModule(index, length);
 }
 
 int asCScriptEngine::BindImportedFunction(const char *module, int index, int funcID)
@@ -2662,7 +2650,7 @@ int asCScriptEngine::UnbindImportedFunction(const char *module, int index)
 	asCModule *dstModule = GetModule(module, false);
 	if( dstModule == 0 ) return asNO_MODULE;
 
-	return dstModule->BindImportedFunction(index, -1);
+	return dstModule->UnbindImportedFunction(index);
 }
 
 int asCScriptEngine::BindAllImportedFunctions(const char *module)
@@ -2670,35 +2658,7 @@ int asCScriptEngine::BindAllImportedFunctions(const char *module)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	bool notAllFunctionsWereBound = false;
-
-	// Bind imported functions
-	int c = mod->GetImportedFunctionCount();
-	for( int n = 0; n < c; ++n )
-	{
-		asCScriptFunction *func = mod->GetImportedFunction(n);
-		if( func == 0 ) return asERROR;
-
-		asCString str = func->GetDeclarationStr();
-
-		// Get module name from where the function should be imported
-		const char *moduleName = mod->GetImportedFunctionSourceModule(n);
-		if( moduleName == 0 ) return asERROR;
-
-		int funcID = GetFunctionIDByDecl(moduleName, str.AddressOf());
-		if( funcID < 0 )
-			notAllFunctionsWereBound = true;
-		else
-		{
-			if( mod->BindImportedFunction(n, funcID) < 0 )
-				notAllFunctionsWereBound = true;
-		}
-	}
-
-	if( notAllFunctionsWereBound )
-		return asCANT_BIND_ALL_FUNCTIONS;
-
-	return asSUCCESS;
+	return mod->BindAllImportedFunctions();
 }
 
 int asCScriptEngine::UnbindAllImportedFunctions(const char *module)
@@ -2706,11 +2666,7 @@ int asCScriptEngine::UnbindAllImportedFunctions(const char *module)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	int c = mod->GetImportedFunctionCount();
-	for( int n = 0; n < c; ++n )
-		mod->BindImportedFunction(n, -1);
-
-	return asSUCCESS;
+	return mod->UnbindAllImportedFunctions();
 }
 
 

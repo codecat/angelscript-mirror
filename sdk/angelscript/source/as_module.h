@@ -98,13 +98,13 @@ public:
 	// Dynamic binding between modules
 	virtual int GetImportedFunctionCount() = 0;
 	virtual int GetImportedFunctionIndexByDecl(const char *decl) = 0;
-//	virtual const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0) = 0;
-//	virtual const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0) = 0;
+	virtual const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0) = 0;
+	virtual const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0) = 0;
 	virtual int BindImportedFunction(int importIndex, int funcId) = 0;
-//	virtual int UnbindImportedFunction(int importIndex) = 0;
+	virtual int UnbindImportedFunction(int importIndex) = 0;
 
-//	virtual int BindAllImportedFunctions() = 0;
-//	virtual int UnbindAllImportedFunctions() = 0;
+	virtual int BindAllImportedFunctions() = 0;
+	virtual int UnbindAllImportedFunctions() = 0;
 
 	// Type identification
 //	virtual int GetTypeIdByDecl(const char *decl) = 0;
@@ -144,6 +144,12 @@ public:
 	const char *GetGlobalVarDeclaration(int index, int *length);
 	const char *GetGlobalVarName(int index, int *length);
 	void *GetAddressOfGlobalVar(int index);
+
+	const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0);
+	const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0);
+
+	int BindAllImportedFunctions();
+	int UnbindAllImportedFunctions();
 
 	asCString name;
 
@@ -186,8 +192,8 @@ public:
 	int  GetNextImportedFunctionId();
 	int  GetImportedFunctionCount();
 	int  GetImportedFunctionIndexByDecl(const char *decl);
-	const char *GetImportedFunctionSourceModule(int index);
 	int  BindImportedFunction(int index, int sourceID);
+	int  UnbindImportedFunction(int importIndex);
 
 	asCScriptFunction *GetImportedFunction(int funcID);
 	asCScriptFunction *GetScriptFunction(int funcID);
