@@ -375,20 +375,8 @@ asCScriptNode *asCParser::ParseEnumeration()
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snEnum);
 
 	sToken	token;
-	bool	isConst;
 
-	//	Check for enum
-	GetToken(&token);
-	if( token.type == ttConst ) 
-	{
-		isConst = true;
-	}
-	else {
-		isConst = false;
-		RewindTo(&token);
-	}
-
-	//	Check for enum
+	// Check for enum
 	GetToken(&token);
 	if( token.type != ttEnum )
 	{
@@ -399,7 +387,7 @@ asCScriptNode *asCParser::ParseEnumeration()
 	node->SetToken(&token);
 	node->UpdateSourcePos(token.pos, token.length);
 
-	//	Get the identifier
+	// Get the identifier
 	GetToken(&token);
 	if(ttIdentifier != token.type) 
 	{
@@ -410,20 +398,12 @@ asCScriptNode *asCParser::ParseEnumeration()
 	dataType = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
 	node->AddChildLast(dataType);
 
-	if(true == isConst) 
-	{
-		dataType->AddChildLast(new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snConstant));
-	}
-
 	ident = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snIdentifier);
 	ident->SetToken(&token);
 	ident->UpdateSourcePos(token.pos, token.length);
 	dataType->AddChildLast(ident);
 
-
-
-
-	//	check for the start of the declaration block
+	// check for the start of the declaration block
 	GetToken(&token);
 	if( token.type != ttStartStatementBlock ) 
 	{
@@ -468,9 +448,6 @@ asCScriptNode *asCParser::ParseEnumeration()
 			if( isSyntaxError ) return node;
 			GetToken(&token);
 		}
-
-
-
 
 		if(ttListSeparator != token.type) 
 		{
@@ -974,7 +951,7 @@ asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 		{
 			// Find the end of the expression
 			int indent = 0;
-			while( indent || t.type != ttListSeparator && t.type != ttEndStatement )
+			while( indent || t.type != ttListSeparator && t.type != ttEndStatement && t.type != ttEndStatementBlock )
 			{
 				if( t.type == ttOpenParanthesis )
 					indent++;
@@ -988,7 +965,7 @@ asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 				GetToken(&t);
 			}
 
-			// Rewind so that the next token read is the list separator or end statement
+			// Rewind so that the next token read is the list separator, end statement, or end statement block
 			RewindTo(&t);
 		}
 	}

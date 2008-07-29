@@ -262,6 +262,13 @@ static bool TestEnum()
 	if( r < 0 )
 		fail = true;
 
+	// enum with assignment without comma
+	const char *script6 = "enum test_wo_comma { value = 0 }";
+	r = engine->AddScriptSection(0, "script", script6, strlen(script6));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
 	engine->Release();
 
 	// Success

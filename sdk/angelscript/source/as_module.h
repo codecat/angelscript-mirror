@@ -96,12 +96,12 @@ public:
 	virtual void       *GetAddressOfGlobalVar(int index) = 0;
 
 	// Dynamic binding between modules
-	virtual int GetImportedFunctionCount() = 0;
-	virtual int GetImportedFunctionIndexByDecl(const char *decl) = 0;
+	virtual int         GetImportedFunctionCount() = 0;
+	virtual int         GetImportedFunctionIndexByDecl(const char *decl) = 0;
 	virtual const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0) = 0;
 	virtual const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0) = 0;
-	virtual int BindImportedFunction(int importIndex, int funcId) = 0;
-	virtual int UnbindImportedFunction(int importIndex) = 0;
+	virtual int         BindImportedFunction(int importIndex, int funcId) = 0;
+	virtual int         UnbindImportedFunction(int importIndex) = 0;
 
 	virtual int BindAllImportedFunctions() = 0;
 	virtual int UnbindAllImportedFunctions() = 0;
