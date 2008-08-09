@@ -257,9 +257,10 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
-	// Test REF_CAST from subclass to baseclass
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "A@ f(B@)", asFUNCTION(B::castToA), asCALL_CDECL); assert( r >= 0 );
-	r = engine->ExecuteString(0, "B b; A@ a = cast<A@>(b); assert(a.test() == 2);");
+	// It should be possible to register a REF_CAST to allow implicit cast
+	// Test IMPLICIT_REF_CAST from subclass to baseclass
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST, "A@ f(B@)", asFUNCTION(B::castToA), asCALL_CDECL); assert( r >= 0 );
+	r = engine->ExecuteString(0, "B b; A@ a = @b; assert(a.test() == 2);");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -274,12 +275,8 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
-	// TODO: It shouldn't be possible to cast away constness
-
-	// TODO: It should be possible to register a REF_CAST to allow implicit cast
-	// TODO: A handle to B can be implicitly cast to a handle to A via the REF_CAST behaviour
 	// TODO: A handle to A can not be implicitly cast to a handle to B since it was registered as explicit REF_CAST
-
+	// TODO: It shouldn't be possible to cast away constness
 
 	engine->Release();
 

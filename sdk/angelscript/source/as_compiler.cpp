@@ -47,6 +47,46 @@
 
 BEGIN_AS_NAMESPACE
 
+// map token to behaviour
+const int behave_dual_token[] =
+{
+	ttPlus,               asBEHAVE_ADD,
+	ttMinus,              asBEHAVE_SUBTRACT,
+	ttStar,               asBEHAVE_MULTIPLY,
+	ttSlash,              asBEHAVE_DIVIDE,
+	ttPercent,            asBEHAVE_MODULO,
+	ttEqual,              asBEHAVE_EQUAL,
+	ttNotEqual,           asBEHAVE_NOTEQUAL,
+	ttLessThan,           asBEHAVE_LESSTHAN,
+	ttGreaterThan,        asBEHAVE_GREATERTHAN,
+	ttLessThanOrEqual,    asBEHAVE_LEQUAL,
+	ttGreaterThanOrEqual, asBEHAVE_GEQUAL,
+#ifdef AS_DEPRECATED
+	ttOr,                 asBEHAVE_LOGIC_OR,
+	ttAnd,                asBEHAVE_LOGIC_AND,
+#endif AS_DEPRECATED
+	ttBitOr,              asBEHAVE_BIT_OR,
+	ttAmp,                asBEHAVE_BIT_AND,
+	ttBitXor,             asBEHAVE_BIT_XOR,
+	ttBitShiftLeft,       asBEHAVE_BIT_SLL,
+	ttBitShiftRight,      asBEHAVE_BIT_SRL,
+	ttBitShiftRightArith, asBEHAVE_BIT_SRA,
+	ttAssignment,         asBEHAVE_ASSIGNMENT,
+	ttAddAssign,          asBEHAVE_ADD_ASSIGN,
+	ttSubAssign,          asBEHAVE_SUB_ASSIGN,
+	ttMulAssign,          asBEHAVE_MUL_ASSIGN,
+	ttDivAssign,          asBEHAVE_DIV_ASSIGN,
+	ttModAssign,          asBEHAVE_MOD_ASSIGN,
+	ttOrAssign,           asBEHAVE_OR_ASSIGN,
+	ttAndAssign,          asBEHAVE_AND_ASSIGN,
+	ttXorAssign,          asBEHAVE_XOR_ASSIGN,
+	ttShiftLeftAssign,    asBEHAVE_SLL_ASSIGN,
+	ttShiftRightLAssign,  asBEHAVE_SRL_ASSIGN,
+	ttShiftRightAAssign,  asBEHAVE_SRA_ASSIGN
+};
+
+const int num_dual_tokens = sizeof(behave_dual_token)/sizeof(int)/2;
+
 asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
 {
 	builder = 0;
@@ -619,7 +659,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				if( beh )
 				{
 					// Find the matching overloaded operators
-					int op = ttAssignment;
+					int op = asBEHAVE_ASSIGNMENT;
 					asCArray<int> ops;
 					asUINT n;
 					for( n = 0; n < beh->operators.GetLength(); n += 2 )
@@ -1376,7 +1416,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						if( beh )
 						{
 							// Find the matching overloaded operators
-							int op = ttAssignment;
+							int op = asBEHAVE_ASSIGNMENT;
 							asCArray<int> ops;
 							asUINT n;
 							for( n = 0; n < beh->operators.GetLength(); n += 2 )
@@ -1548,7 +1588,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		asSTypeBehaviour *beh = var->dataType.GetBehaviour();
 		for( asUINT n = 0; n < beh->operators.GetLength(); n += 2 )
 		{
-			if( ttOpenBracket == beh->operators[n] )
+			if( asBEHAVE_INDEX == beh->operators[n] )
 			{
 				asCScriptFunction *desc = builder->GetFunctionDescription(beh->operators[n+1]);
 				if( !desc->isReadOnly &&
@@ -3445,7 +3485,8 @@ void asCCompiler::ImplicitConversionFromObject(asSExprContext *ctx, const asCDat
 	{
 		for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
 		{
-			if( beh->operators[n] == ttCast && 
+			// TODO: cast: accept only implitict cast
+			if( beh->operators[n] == asBEHAVE_VALUE_CAST && 
 				builder->GetFunctionDescription(beh->operators[n+1])->returnType.IsPrimitive() )
 				funcs.PushLast(beh->operators[n+1]);
 		}
@@ -4297,12 +4338,14 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		asSTypeBehaviour *beh = lctx->type.dataType.GetBehaviour();
 		asASSERT(beh);
 
+		int behaviour = TokenToBehaviour(op);
+
 		// Find the matching overloaded operators
 		asCArray<int> ops;
 		asUINT n;
 		for( n = 0; n < beh->operators.GetLength(); n += 2 )
 		{
-			if( op == beh->operators[n] )
+			if( behaviour == beh->operators[n] )
 				ops.PushLast(beh->operators[n+1]);
 		}
 
@@ -5334,7 +5377,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 				// Find a suitable REF_CAST behaviour
 				for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n += 2 )
 				{
-					if( ttCast == engine->globalBehaviours.operators[n] )
+					// TODO: cast: accept implicit ref cast behaviour as well
+					if( asBEHAVE_REF_CAST == engine->globalBehaviours.operators[n] )
 					{
 						int funcId = engine->globalBehaviours.operators[n+1];
 
@@ -5792,7 +5836,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			for( n = 0; n < beh->operators.GetLength(); n+= 2 )
 			{
 				// Only accept the negate operator
-				if( ttMinus == beh->operators[n] &&
+				if( asBEHAVE_NEGATE == beh->operators[n] &&
 					engine->scriptFunctions[beh->operators[n+1]]->parameterTypes.GetLength() == 0 )
 				{
 					found = true;
@@ -6298,7 +6342,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				// Only list const behaviours
 				for( n = 0; n < beh->operators.GetLength(); n += 2 )
 				{
-					if( ttOpenBracket == beh->operators[n] && engine->scriptFunctions[beh->operators[n+1]]->isReadOnly )
+					if( asBEHAVE_INDEX == beh->operators[n] && engine->scriptFunctions[beh->operators[n+1]]->isReadOnly )
 						ops.PushLast(beh->operators[n+1]);
 				}
 			}
@@ -6307,7 +6351,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				// TODO: Prefer non-const over const
 				for( n = 0; n < beh->operators.GetLength(); n += 2 )
 				{
-					if( ttOpenBracket == beh->operators[n] )
+					if( asBEHAVE_INDEX == beh->operators[n] )
 						ops.PushLast(beh->operators[n+1]);
 				}
 			}
@@ -6586,20 +6630,48 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	ctx->bc.AddCode(&e.bc);
 }
 
-bool asCCompiler::CompileOverloadedOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
+int asCCompiler::TokenToBehaviour(int token)
+{
+	// Find the correct behaviour for the token
+	asUINT n;
+	int behaviour = -1;
+	for( n = 0; n < num_dual_tokens*2; n += 2 )
+	{
+		if( behave_dual_token[n] == token )
+		{
+			behaviour = behave_dual_token[n+1];
+			break;
+		}
+	}
+
+	assert( behaviour != -1 );
+
+	return behaviour;
+}
+
+bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
 	// TODO: An operator can be overloaded for an object or can be global
 
 	// What type of operator is it?
 	int token = node->tokenType;
 
+	// boolean operators are not overloadable
+	if( token == ttAnd ||
+		token == ttOr ||
+		token == ttXor )
+		return false;
+
+	// Find the correct behaviour for the token
+	int behaviour = TokenToBehaviour(token);
+
 	// TODO: Only search in config groups to which the module has access
 	// What overloaded operators of this type do we have?
-	asCArray<int> ops;
 	asUINT n;
+	asCArray<int> ops;
 	for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n += 2 )
 	{
-		if( token == engine->globalBehaviours.operators[n] )
+		if( behaviour == engine->globalBehaviours.operators[n] )
 		{
 			int funcId = engine->globalBehaviours.operators[n+1];
 
@@ -6688,7 +6760,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 	else
 	{
 		// Compile an overloaded operator for the two operands
-		if( CompileOverloadedOperator(node, lctx, rctx, ctx) )
+		if( CompileOverloadedDualOperator(node, lctx, rctx, ctx) )
 			return 0;
 
 		// If both operands are objects, then we shouldn't continue

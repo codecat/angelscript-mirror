@@ -177,6 +177,7 @@ enum asEBehaviours
 	 asBEHAVE_BIT_SRA,
 	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
 	asBEHAVE_REF_CAST,
+	asBEHAVE_IMPLICIT_REF_CAST,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,

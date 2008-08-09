@@ -1285,47 +1285,6 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	return asSUCCESS;
 }
 
-const int behave_dual_token[] =
-{
-	ttPlus,               // asBEHAVE_ADD
-	ttMinus,              // asBEHAVE_SUBTRACT
-	ttStar,               // asBEHAVE_MULTIPLY
-	ttSlash,              // asBEHAVE_DIVIDE
-	ttPercent,            // ssBEHAVE_MODULO
-	ttEqual,              // asBEHAVE_EQUAL
-	ttNotEqual,           // asBEHAVE_NOTEQUAL
-	ttLessThan,           // asBEHAVE_LESSTHAN
-	ttGreaterThan,        // asBEHAVE_GREATERTHAN
-	ttLessThanOrEqual,    // asBEHAVE_LEQUAL
-	ttGreaterThanOrEqual, // asBEHAVE_GEQUAL
-#ifdef AS_DEPRECATED
-	ttOr,                 // asBEHAVE_LOGIC_OR
-	ttAnd,                // asBEHAVE_LOGIC_AND
-#endif AS_DEPRECATED
-	ttBitOr,              // asBEHAVE_BIT_OR
-	ttAmp,                // asBEHAVE_BIT_AND
-	ttBitXor,             // asBEHAVE_BIT_XOR
-	ttBitShiftLeft,       // asBEHAVE_BIT_SLL
-	ttBitShiftRight,      // asBEHAVE_BIT_SRL
-	ttBitShiftRightArith  // asBEHAVE_BIT_SRA
-};
-
-const int behave_assign_token[] =
-{
-	ttAssignment,			// asBEHAVE_ASSIGNMENT
-	ttAddAssign,			// asBEHAVE_ADD_ASSIGN
-	ttSubAssign,			// asBEHAVE_SUB_ASSIGN
-	ttMulAssign,			// asBEHAVE_MUL_ASSIGN
-	ttDivAssign,			// asBEHAVE_DIV_ASSIGN
-	ttModAssign,			// asBEHAVE_MOD_ASSIGN
-	ttOrAssign,				// asBEHAVE_OR_ASSIGN
-	ttAndAssign,			// asBEHAVE_AND_ASSIGN
-	ttXorAssign,			// asBEHAVE_XOR_ASSIGN
-	ttShiftLeftAssign,		// asBEHAVE_SLL_ASSIGN
-	ttShiftRightLAssign,	// asBEHAVE_SRL_ASSIGN
-	ttShiftRightAAssign		// asBEHAVE_SRA_ASSIGN
-};
-
 int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv)
 {
 	asASSERT( objType );
@@ -1470,8 +1429,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 
 		// TODO: Verify that the operator hasn't been registered already
 
-		// Map behaviour to token
-		beh->operators.PushLast(ttOpenBracket);
+		beh->operators.PushLast(behaviour);
 		beh->operators.PushLast(AddBehaviourFunction(func, internal));
 	}
 	else if( behaviour >= asBEHAVE_FIRST_GC &&
@@ -1744,15 +1702,14 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 			func.id = beh->copy = AddBehaviourFunction(func, internal);
 
-			beh->operators.PushLast(ttAssignment);
+			beh->operators.PushLast(behaviour);
 			beh->operators.PushLast(beh->copy);
 		}
 		else
 		{
 			// TODO: Verify that the operator hasn't been registered with the same parameter already
 
-			// Map behaviour to token
-			beh->operators.PushLast(behave_assign_token[behaviour - asBEHAVE_FIRST_ASSIGN]);
+			beh->operators.PushLast(behaviour);
 			func.id = AddBehaviourFunction(func, internal);
 			beh->operators.PushLast(func.id);
 		}
@@ -1773,8 +1730,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		// TODO: Verify that the operator hasn't been registered already
 
-		// Map behaviour to token
-		beh->operators.PushLast(ttOpenBracket);
+		beh->operators.PushLast(behaviour);
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
@@ -1792,8 +1748,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		// TODO: Verify that the operator hasn't been registered already
 
-		// Map behaviour to token
-		beh->operators.PushLast(ttMinus);
+		beh->operators.PushLast(behaviour);
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
@@ -1847,6 +1802,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	}
 	else if( behaviour == asBEHAVE_VALUE_CAST )
 	{
+		// TODO: cast: accept asBEHAVE_IMPLICIT_VALUE_CAST
+
 		// Verify parameter count
 		if( func.parameterTypes.GetLength() != 0 )
 			return ConfigError(asINVALID_DECLARATION);
@@ -1860,8 +1817,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		// TODO: verify that the same cast is not registered already (const or non-const is treated the same for the return type)
 
-		// Map behaviour to token
-		beh->operators.PushLast(ttCast);
+		beh->operators.PushLast(behaviour);
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
@@ -1935,14 +1891,15 @@ int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char
 
 		// TODO: Verify that the operator hasn't been registered with the same parameters already
 
-		// Map behaviour to token
-		beh->operators.PushLast(behave_dual_token[behaviour - asBEHAVE_FIRST_DUAL]);
+		beh->operators.PushLast(behaviour);
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 		currentGroup->globalBehaviours.PushLast((int)beh->operators.GetLength()-2);
 	}
 	else if( behaviour == asBEHAVE_REF_CAST )
 	{
+		// TODO: cast: accept asBEHAVE_IMPLICIT_REF_CAST
+
 		// Verify that the var type not used
 		if( VerifyVarTypeNotInFunction(&func) < 0 )
 			return ConfigError(asINVALID_DECLARATION);
@@ -1956,8 +1913,7 @@ int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char
 		if( !func.returnType.IsObjectHandle() )
 			return ConfigError(asINVALID_DECLARATION);
 
-		// Map behaviour to token
-		beh->operators.PushLast(ttCast);
+		beh->operators.PushLast(behaviour);
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 		currentGroup->globalBehaviours.PushLast((int)beh->operators.GetLength()-2);
@@ -3794,7 +3750,7 @@ int asCScriptEngine::CompareScriptObjects(bool &result, int behaviour, void *lef
 	for( n = 0; n < globalBehaviours.operators.GetLength(); n += 2 )
 	{
 		// Is it the right comparison operator?
-		if( globalBehaviours.operators[n] == behave_dual_token[behaviour - asBEHAVE_FIRST_DUAL] )
+		if( globalBehaviours.operators[n] == behaviour )
 		{
 			// Is it the right datatype?
 			int func = globalBehaviours.operators[n+1];
