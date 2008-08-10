@@ -273,7 +273,8 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
-	// It should be possible to assign a value of type B to and variable of type A due to the implicit ref cast
+	// It should be possible to assign a value of type B 
+	// to and variable of type A due to the implicit ref cast
 	r = engine->ExecuteString(0, "A a; B b; a = b;");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
@@ -289,6 +290,19 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	// TODO: This requires implicit value cast
+	// Test passing a value of B to a function expecting its base class
+	// the compiler will automatically create a copy
+/*	const char *script = 
+		"void func(A a) {assert(a.test() == 1);}\n";
+	r = engine->AddScriptSection(0, "script", script, strlen(script));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+	r = engine->ExecuteString(0, "B b; func(b)");
+	if( r < 0 )
+		fail = true;
+*/
 	// TODO: A handle to A can not be implicitly cast to a handle to B since it was registered as explicit REF_CAST
 	// TODO: It shouldn't be possible to cast away constness
 

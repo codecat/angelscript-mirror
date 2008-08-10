@@ -35,14 +35,6 @@
 // The script engine interface
 //
 
-//! \mainpage
-//!
-//! This is the reference documentation for the AngelScript application programming interface.
-//!
-//!  - \subpage funcs \n
-//!  - \subpage class \n
-//!  - \subpage const \n
-
 
 //! \file angelscript.h
 //! \brief The API definition for AngelScript.
@@ -260,8 +252,10 @@ enum asEBehaviours
 	 //! \brief (Global) operator >>> (Arithmetic right shift)
 	 asBEHAVE_BIT_SRA,
 	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
-	//! \brief (Global) Reference cast operator
+	//! \brief (Global) Explicit reference cast operator
 	asBEHAVE_REF_CAST,
+	//! \brief (Global) Implicit reference cast operator
+	asBEHAVE_IMPLICIT_REF_CAST,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,
@@ -331,7 +325,9 @@ enum asERetCodes
 	//! Illegal behaviour for the type
 	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
 	//! The specified calling convention doesn't match the function/method pointer
-	asWRONG_CALLING_CONV                   = -24
+	asWRONG_CALLING_CONV                   = -24,
+	//! The module is currently in use
+	asMODULE_IS_IN_USE                     = -25
 };
 
 // Context states

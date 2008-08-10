@@ -89,12 +89,12 @@ This behaviour should be registered with one parameter using \ref asIScriptEngin
 
  - \ref asBEHAVE_VALUE_CAST
  - \ref asBEHAVE_REF_CAST
+ - \ref asBEHAVE_IMPLICIT_REF_CAST
 
 asBEHAVE_VALUE_CAST must be registered without parameters using \ref asIScriptEngine::RegisterObjectBehaviour.
 The return type can be any type, except bool and void.
 
-asBEHAVE_REF_CAST must be registered with one parameter using \ref asIScriptEngine::RegisterGlobalBehaviour.
-The parameter must be an object handle, as must the return type.
+asBEHAVE_REF_CAST and asBEHAVE_IMPLICIT_REF_CAST must be registered with one parameter using \ref asIScriptEngine::RegisterGlobalBehaviour. The parameter must be an object handle, as must the return type. The only difference between the two is that the script compiler may use the later for implicit casts, while the former can only be used by explicitly calling the cast operator. This distinction is very useful when registering class hierarchies, where cast to a base class usually is registered with an implicit cast, whereas a cast to a derived class usually is registered with an explicit cast.
 
 \code
 // Example REF_CAST behaviour
@@ -152,5 +152,4 @@ These behaviours are exclusive for objects that have been registered with the fl
 should be registered using \ref asIScriptEngine::RegisterObjectBehaviour.
 
 \see \ref doc_gc_object for more information on using these.
-
 */

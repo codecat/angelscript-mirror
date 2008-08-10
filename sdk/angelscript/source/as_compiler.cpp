@@ -3490,6 +3490,19 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 						DoAssignment(ctx, &lctx, &rctx, node, node, ttAssignment, node);
 					}
 				}
+
+				// We can convert from a reference to A to a reference to B if there is an implicit ref cast behaviour available
+				if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
+				{
+					CompileRefCast(ctx, to, false, generateCode);
+
+					if( !to.IsObjectHandle() && ctx->type.dataType.IsObjectHandle() )
+					{
+						ctx->type.dataType.MakeHandle(false);
+						if( generateCode )
+							ctx->bc.Instr(BC_ChkRefS);
+					}
+				}
 			}
 			else
 			{
@@ -3512,7 +3525,8 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 					ctx->bc.InstrSHORT(BC_PSF, type.stackOffset);
 
-					// If the input type is read-only we'll need to temporarily remove this constness, otherwise the assignment will fail
+					// If the input type is read-only we'll need to temporarily 
+					// remove this constness, otherwise the assignment will fail
 					bool typeIsReadOnly = type.dataType.IsReadOnly();
 					type.dataType.MakeReadOnly(false);
 					PerformAssignment(&type, &ctx->type, &ctx->bc, node);
