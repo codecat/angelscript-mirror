@@ -1896,10 +1896,9 @@ int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char
 		beh->operators.PushLast(func.id);
 		currentGroup->globalBehaviours.PushLast((int)beh->operators.GetLength()-2);
 	}
-	else if( behaviour == asBEHAVE_REF_CAST )
+	else if( behaviour == asBEHAVE_REF_CAST ||
+		     behaviour == asBEHAVE_IMPLICIT_REF_CAST )
 	{
-		// TODO: cast: accept asBEHAVE_IMPLICIT_REF_CAST
-
 		// Verify that the var type not used
 		if( VerifyVarTypeNotInFunction(&func) < 0 )
 			return ConfigError(asINVALID_DECLARATION);

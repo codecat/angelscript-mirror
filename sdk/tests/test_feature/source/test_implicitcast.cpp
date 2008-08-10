@@ -48,6 +48,10 @@ public:
 		if( refCount == 0 ) 
 			delete this;
 	}
+	virtual A& assign(const A &other)
+	{
+		return *this;
+	}
 protected:
 	A() {refCount = 1;}
 	virtual ~A() {}
@@ -215,7 +219,6 @@ bool Test()
 
 	engine->Release();
 
-
 	//-----------------------------------------------------------------
 	// REFERENCE_CAST
 
@@ -243,6 +246,7 @@ bool Test()
 	engine->RegisterObjectBehaviour("A", asBEHAVE_FACTORY, "A@f()", asFUNCTION(A::factory), asCALL_CDECL); 
 	engine->RegisterObjectBehaviour("A", asBEHAVE_RELEASE, "void f()", asMETHOD(A, release), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("A", asBEHAVE_ADDREF, "void f()", asMETHOD(A, addref), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("A", asBEHAVE_ASSIGNMENT, "A& f(const A &in)", asMETHOD(A, assign), asCALL_THISCALL);
 	engine->RegisterObjectMethod("A", "int test()", asMETHOD(A, test), asCALL_THISCALL);
 
 	// Class B inherits from class A
@@ -261,6 +265,16 @@ bool Test()
 	// Test IMPLICIT_REF_CAST from subclass to baseclass
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST, "A@ f(B@)", asFUNCTION(B::castToA), asCALL_CDECL); assert( r >= 0 );
 	r = engine->ExecuteString(0, "B b; A@ a = @b; assert(a.test() == 2);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	// Test explicit cast with registered IMPLICIT_REF_CAST
+	r = engine->ExecuteString(0, "B b; A@ a = cast<A@>(b); assert(a.test() == 2);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	// It should be possible to assign a value of type B to and variable of type A due to the implicit ref cast
+	r = engine->ExecuteString(0, "A a; B b; a = b;");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 

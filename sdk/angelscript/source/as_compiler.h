@@ -146,6 +146,7 @@ protected:
 	void Dereference(asSExprContext *ctx, bool generateCode);
 	void ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
 	void ImplicitConversionConstant(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit);
+	bool CompileRefCast(asSExprContext *ctx, const asCDataType &to, bool isExplicit, bool generateCode = true);
 	void ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
 	void ImplicitConversionFromObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0);
 	int  MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum, bool allowObjectConstruct = true);

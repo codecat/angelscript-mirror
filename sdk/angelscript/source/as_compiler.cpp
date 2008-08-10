@@ -2972,6 +2972,71 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 	}
 }
 
+bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, bool isExplicit, bool generateCode)
+{
+	bool conversionDone = false;
+
+	asCArray<int> ops;
+	asUINT n;
+	int behaviour = isExplicit ? asBEHAVE_REF_CAST : asBEHAVE_IMPLICIT_REF_CAST;
+
+	// Find a suitable registered behaviour
+	for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n+= 2 )
+	{
+		if( behaviour == engine->globalBehaviours.operators[n] )
+		{
+			int funcId = engine->globalBehaviours.operators[n+1];
+
+			// Is the operator for the input type?
+			asCScriptFunction *func = engine->scriptFunctions[funcId];
+			if( func->parameterTypes[0].GetObjectType() != ctx->type.dataType.GetObjectType() )
+				continue;
+
+			// Is the operator for the output type?
+			if( func->returnType.GetObjectType() != to.GetObjectType() )
+				continue;
+
+			// Find the config group for the global function
+			asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
+			if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
+				ops.PushLast(funcId);
+		}
+	}
+
+	// Find the best match for the argument
+	asCArray<int> ops1;
+	MatchArgument(ops, ops1, &ctx->type, 0);
+
+	// Did we find a unique suitable operator?
+	if( ops1.GetLength() == 1 )
+	{
+		conversionDone = true;
+		asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
+
+		if( generateCode )
+		{
+			// Add code for argument
+			asSExprContext expr(engine);
+			MergeExprContexts(&expr, ctx);
+			expr.type = ctx->type;
+			PrepareArgument2(ctx, &expr, &descr->parameterTypes[0], true, descr->inOutFlags[0]);
+
+			asCArray<asSExprContext*> args(1);
+			args.PushLast(&expr);
+
+			MoveArgsToStack(descr->id, &ctx->bc, args, false);
+
+			PerformFunctionCall(descr->id, ctx, false, &args);
+		}
+		else
+		{
+			ctx->type.Set(descr->returnType);
+		}
+	}
+
+	return conversionDone;
+}
+
 void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {
 	// No conversion from void to any other type
@@ -3365,6 +3430,18 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 				{
 					asASSERT(ctx->type.dataType.IsObjectHandle());
 					ctx->type.dataType.SetObjectType(to.GetObjectType());
+				}
+				else if( ctx->type.dataType.GetObjectType() )
+				{
+					// We may still be able to find an implicit ref cast behaviour
+					CompileRefCast(ctx, to, false, generateCode);
+
+					if( ctx->type.dataType.IsReference() )
+					{
+						Dereference(ctx, generateCode);
+
+						// TODO: Can't this leave unhandled deferred output params?
+					}
 				}
 			}
 			else
@@ -5370,54 +5447,10 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			}
 			else
 			{
-				// Find a suitable REF_CAST behaviour
-				asCArray<int> ops;
-				asUINT n;
+				conversionOK = CompileRefCast(&expr, to, true); 
 
-				// Find a suitable REF_CAST behaviour
-				for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n += 2 )
-				{
-					// TODO: cast: accept implicit ref cast behaviour as well
-					if( asBEHAVE_REF_CAST == engine->globalBehaviours.operators[n] )
-					{
-						int funcId = engine->globalBehaviours.operators[n+1];
-
-						// Is the operator for the input type?
-						asCScriptFunction *func = engine->scriptFunctions[funcId];
-						if( func->parameterTypes[0].GetObjectType() != expr.type.dataType.GetObjectType() )
-							continue;
-
-						// Is the operator for the output type?
-						if( func->returnType.GetObjectType() != to.GetObjectType() )
-							continue;
-
-						// Find the config group for the global function
-						asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
-						if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
-							ops.PushLast(funcId);
-					}
-				}
-
-				// Find the best match for the argument
-				asCArray<int> ops1;
-				MatchArgument(ops, ops1, &expr.type, 0);
-
-				// Did we find a unique suitable operator?
-				if( ops1.GetLength() == 1 )
-				{
-					conversionOK = true;
-					asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
-
-					// Add code for argument
-					PrepareArgument2(ctx, &expr, &descr->parameterTypes[0], true, descr->inOutFlags[0]);
-
-					asCArray<asSExprContext*> args(1);
-					args.PushLast(&expr);
-
-					MoveArgsToStack(descr->id, &ctx->bc, args, false);
-
-					PerformFunctionCall(descr->id, ctx, false, &args);
-				}
+				MergeExprContexts(ctx, &expr);
+				ctx->type = expr.type;
 			}
 		}
 	}
