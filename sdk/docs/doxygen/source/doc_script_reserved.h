@@ -1,21 +1,14 @@
-<HTML>
-<head>
-<title>AngelScript: Script language: Reserved keywords and tokens</title>
-<LINK rel="stylesheet" type="text/css" href="style.css">
-</head>
-<body>
+/**
 
-<p><a href="../index.html">index</a><p>
+\page doc_reserved_keywords Reserved keywords and tokens
 
-<h1>Reserved keywords and tokens</h1>
-
-<p>These are the keywords that are reserved by the language, i.e. they can't
+These are the keywords that are reserved by the language, i.e. they can't
 be used by any script defined identifiers. Remember that the host application
-may reserve additional keywords that are specific to that application.</p>
+may reserve additional keywords that are specific to that application.
 
 <table cellspacing=0 cellpadding=0 border=0>
 <tr>
-<td width=100 valign=top><code><font color=blue>
+<td width=100 valign=top><code>
 and<br>
 bool<br>
 break<br>
@@ -26,8 +19,8 @@ const<br>
 continue<br>
 default<br>
 do<br>
-</font></code></td>
-<td width=100 valign=top><code><font color=blue>
+</code></td>
+<td width=100 valign=top><code>
 double<br>
 else<br>
 enum<br>
@@ -38,8 +31,8 @@ from*<br>
 if<br>
 import<br>
 in<br>
-</font></code></td>
-<td width=100 valign=top><code><font color=blue>
+</code></td>
+<td width=100 valign=top><code>
 inout<br>
 int<br>
 interface<br>
@@ -50,8 +43,8 @@ int64<br>
 not<br>
 null<br>
 or<br>
-</font></code></td>
-<td width=100 valign=top><code><font color=blue>
+</code></td>
+<td width=100 valign=top><code>
 out<br>
 return<br>
 switch<br>
@@ -62,24 +55,24 @@ uint<br>
 uint8<br>
 uint16<br>
 uint32<br>
-</font></code></td>
-<td width=100 valign=top><code><font color=blue>
+</code></td>
+<td width=100 valign=top><code>
 uint64<br>
 void<br>
 while<br>
 xor<br>
-</font></code></td>
+</code></td>
 </tr>
 </table>
 
-<p>* Not really a reserved keyword, but is recognized by the compiler as a built-in keyword.</p>
+<small>%* Not really a reserved keyword, but is recognized by the compiler as a built-in keyword.</small>
 
-<p>These are the non-alphabetical tokens that are also used in the language syntax.</p>
+These are the non-alphabetical tokens that are also used in the language syntax.
 
 <table cellspacing=0 cellpadding=0 border=0>
 <tr>
 <td width=100 valign=top><code>
-*<br>
+%*<br>
 /<br>
 %<br>
 +<br>
@@ -130,12 +123,12 @@ xor<br>
 [<br>
 ]<br>
 ^^<br>
-@<br>
+@ <br>
 </code></td>
 </tr>
 </table>
 
-<p>Other than the above tokens there are also numerical, string, identifier, and comment tokens.</p>
+Other than the above tokens there are also numerical, string, identifier, and comment tokens.
 
 <pre>
 123456789
@@ -146,11 +139,9 @@ xor<br>
 "abc"
 """heredoc"""
 _Abc123
-<font color=green>//
+//
 /*
-*/</font>
+*/
 </pre>
 
-<p><a href="#">top</a></p>
-
-</body></HTML>
+*/

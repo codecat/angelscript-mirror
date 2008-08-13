@@ -1,21 +1,14 @@
-<HTML>
-<head>
-<title>AngelScript: Script language: Operator precedence</title>
-<LINK rel="stylesheet" type="text/css" href="style.css">
-</head>
-<body>
+/**
 
-<p><a href="../index.html">index</a><p>
+\page doc_operator_precedence Operator precedence
 
-<h1>Operator precedence</h1>
+In expressions, the operator with the highest precedence is always computed first.
 
-<p>In expressions, the operator with the highest precedence is always computed first.</p>
+\section unary Unary operators
 
-<h2>Unary operators</h2>
+Unary operators have the higher precedence than other operators, and between unary operators the operator closest to the actual value has the highest precedence. Post-operators have higher precedence than pre-operators.
 
-<p>Unary operators have the higher precedence than other operators, and between unary operators the operator closest to the actual value has the highest precedence. Post-operators have higher precedence than pre-operators.</p>
-
-<p>This list shows the available unary operators.</p>
+This list shows the available unary operators.
 
 <table cellspacing=0 cellpadding=0 border=0>
 <tr><td width=150 valign=top>
@@ -35,7 +28,7 @@ member access
 </td><td valign=top>
 pre increment and decrement
 </td></tr><tr><td width=150 valign=top>
-<code><font color=blue>not</font> !</code>
+<code>not !</code>
 </td><td valign=top>
 logical not
 </td></tr><tr><td width=150 valign=top>
@@ -47,20 +40,20 @@ unary positive and negative
 </td><td valign=top>
 bitwise complement
 </td></tr><tr><td width=150 valign=top>
-<code>@</code>
+<code>@ </code>
 </td><td valign=top>
 handle of
 </td></tr>
 </table>
 
-<h2>Binary and ternary operators</h2>
+\section binary Binary and ternary operators
 
-<p>This list shows the dual and ternary operator precedence in decreasing order.</p>
+This list shows the dual and ternary operator precedence in decreasing order.
 
 <table cellspacing=0 cellpadding=0 border=0>
 <tr><td width=150 valign=top>
 <code>* / %</code>
-</td><td width=250 valign=top>
+</td><td width=300 valign=top>
 multiply, divide, and modulo
 </td><td valign=top>
 left to right
@@ -73,7 +66,7 @@ left to right
 </td></tr><tr><td width=150 valign=top>
 <code>&lt;&lt; &gt;&gt; &gt;&gt;&gt;</code>
 </td><td width=250 valign=top>
-left shift, right shift, and arithmetic right shift
+left shift, right shift, and arithmetic right shift 
 </td><td valign=top>
 left to right
 </td></tr><tr><td width=150 valign=top>
@@ -101,19 +94,19 @@ comparison
 </td><td valign=top>
 left to right
 </td></tr><tr><td width=150 valign=top>
-<code>== != <font color=blue>xor</font> ^^</code>
+<code>== != xor ^^</code>
 </td><td width=250 valign=top>
 equality, and logical exclusive or
 </td><td valign=top>
 left to right
 </td></tr><tr><td width=150 valign=top>
-<code><font color=blue>and</font> &amp;&amp;</code>
+<code>and &amp;&amp;</code>
 </td><td width=250 valign=top>
 logical and
 </td><td valign=top>
 left to right
 </td></tr><tr><td width=150 valign=top>
-<code><font color=blue>or</font> ||</code>
+<code>or ||</code>
 </td><td width=250 valign=top>
 logical or
 </td><td valign=top>
@@ -134,6 +127,4 @@ right to left
 </td></tr>
 </table>
 
-<p><a href="#">top</a></p>
-
-</body></HTML>
+*/
