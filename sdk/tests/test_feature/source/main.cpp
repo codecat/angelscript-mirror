@@ -175,6 +175,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
@@ -263,7 +264,6 @@ int main(int argc, char **argv)
 	if( TestConstructor()             ) goto failed; else printf("-- TestConstructor passed\n");
 	if( TestExecuteScript()           ) goto failed; else printf("-- TestExecuteScript passed\n"); 
 	if( TestCustomMem::Test()         ) goto failed; else printf("-- TestCustomMem passed\n");
-	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestPostProcess::Test()       ) goto failed; else printf("-- TestPostProcess passed\n");
 	if( TestArgRef::Test()            ) goto failed; else printf("-- TestArgRef passed\n");
 	if( TestNotInitialized()          ) goto failed; else printf("-- TestNotInitialized passed\n");

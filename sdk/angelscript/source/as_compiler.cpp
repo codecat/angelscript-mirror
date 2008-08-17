@@ -7261,6 +7261,10 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				}
 
 				ctx->type.SetConstantDW(lctx->type.dataType, v);
+
+				// If the right value is greater than the left value in a minus operation, then we need to convert the type to int
+				if( lctx->type.dataType.GetTokenType() == ttUInt && op == ttMinus && lctx->type.intValue < rctx->type.intValue )
+					ctx->type.dataType.SetTokenType(ttInt);
 			}
 			else
 			{
@@ -7287,6 +7291,10 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				}
 
 				ctx->type.SetConstantQW(lctx->type.dataType, v);
+
+				// If the right value is greater than the left value in a minus operation, then we need to convert the type to int
+				if( lctx->type.dataType.GetTokenType() == ttUInt64 && op == ttMinus && lctx->type.qwordValue < rctx->type.qwordValue )
+					ctx->type.dataType.SetTokenType(ttInt64);
 			}
 		}
 		else if( lctx->type.dataType.IsFloatType() )

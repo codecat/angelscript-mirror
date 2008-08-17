@@ -872,6 +872,10 @@ bool TestOptimize()
 	r = engine->ExecuteString(0, "bool a = false; bool b = a == false; boolValue = b;"); assert( r == asEXECUTION_FINISHED );
 	if( boolValue != true ) fail = true;
 
+	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "assert(float(5-10) == float(-5));");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+
 	engine->Release();
 
 	// Success
