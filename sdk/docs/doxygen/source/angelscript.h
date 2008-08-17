@@ -989,7 +989,7 @@ public:
     //! the virtual machine to perform certain operations, such as memory management,
     //! math operations, comparisons, etc.
     //!
-    //! \see \ref doc_register_func, \ref doc_behaviours
+    //! \see \ref doc_register_func, \ref doc_api_behaviours
 	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 
 	//! \brief Registers a global property.
@@ -1051,7 +1051,7 @@ public:
     //! If the parameter is sent by reference, then declare it as const, as it may allow the compiler to 
     //! optimize the code to execute faster.
     //!
-    //! \see \ref doc_register_func, \ref doc_behaviours
+    //! \see \ref doc_register_func, \ref doc_api_behaviours
 	virtual int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 
 	//! \brief Registers an interface.

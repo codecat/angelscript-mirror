@@ -9,35 +9,37 @@ function to be called do not have to be declared above the function that calls
 it.
 
     <ul>
-    <li>\ref function
-    <li>\ref variable
-    <li>\ref class
-    <li>\ref interface
-    <li>\ref import
-    <li>\ref enums
-    <li>\ref typedef
+    <li>\ref doc_global_function
+    <li>\ref doc_global_variable
+    <li>\ref doc_global_class
+    <li>\ref doc_global_interface
+    <li>\ref doc_global_import
+    <li>\ref doc_global_enums
+    <li>\ref doc_global_typedef
     </ul>
 
 
-\section function Functions
+
+
+\section doc_global_function Functions
 
 Global functions are declared normally, just as in C/C++. The function body must be defined, 
 i.e. it is not possible to declare prototypes, nor is it necessary as the compiler can resolve 
 the function names anyway.
 
 For parameters sent by reference, i.e. with the <code>&amp;</code> modifier it is necessary to 
-specify in which direction the value is passed, in, out, or inout, e.g. &amp;out. If no keyword 
-is used, the compiler assumes the inout modifier. For parameters marked with in, the value is 
-passed in to the function, and for parameters marked with out the value is returned from the function.
+specify in which direction the value is passed, <code>in</code>, <code>out</code>, or <code>inout</code>, e.g. <code>&amp;out</code>. If no keyword 
+is used, the compiler assumes the <code>inout</code> modifier. For parameters marked with <code>in</code>, the value is 
+passed in to the function, and for parameters marked with <code>out</code> the value is returned from the function.
 
 Parameters can also be declared as <code>const</code> which prohibits the alteration of their value. It is
 good practice to declare variables that will not be changed as <code>const</code>,
 because it makes for more readable code and the compiler is also able to take advantage 
-of it some times. Especially for const &amp;in the compiler is many times able to avoid a copy of the value.
+of it some times. Especially for <code>const &amp;in</code> the compiler is many times able to avoid a copy of the value.
 
 Note that although functions that return types by references can't be
 declared by scripts you may still see functions like these if the host
-application defines them. In that case you the returned value may also
+application defines them. In that case the returned value may also
 be used as the target in assignments.
 
 <pre>
@@ -47,7 +49,11 @@ int MyFunction(int a, int b)
 }
 </pre>
 
-\section variable Variables
+
+
+
+
+\section doc_global_variable Variables
 
 Global variables may be declared in the scripts, which will then be shared between 
 all contexts accessing the script module.
@@ -62,10 +68,14 @@ a string, its memory is released when the module is discarded or the script engi
 
 <pre>
 int MyValue = 0;
-const bits Flag1 = 0x01;
+const uint Flag1 = 0x01;
 </pre>
 
-\section class Classes
+
+
+
+
+\section doc_global_class Classes
 
 In AngelScript the script writer may declare script classes. The syntax is
 similar to that of C++, except the public, protected, and private keywords are
@@ -117,11 +127,15 @@ on the destructor being called at a specific moment. AngelScript will also
 call the destructor only once, even if the object is resurrected by adding a
 reference to it while executing the destructor.
 
-\section interface Interfaces
+
+
+
+
+\section doc_global_interface Interfaces
 
 An interface works like a contract, the classes that implements an interface
 are guaranteed to implement the methods declared in the interface. This allows
-for the use of polymorphism, in that a function can specify that it wants an
+for the use of polymorphism in that a function can specify that it wants an
 object handle to an object that implements a certain interface. The function
 can then call the methods on this interface without having to know what the
 exact type of the object that is working with.
@@ -146,7 +160,11 @@ class MyClass : MyInterface
 A class can implement multiple interfaces; Simply list all the interfaces
 separated by a comma.
 
-\section import Imports
+
+
+
+
+\section doc_global_import Imports
 
 Sometimes it may be useful to load script modules dynamically without having to recompile 
 the main script, but still let the modules interact with each other. In that case the script 
@@ -164,7 +182,11 @@ aborted with a script exception.
 import void MyFunction(int a, int b) from "Another module";
 </pre>
 
-\section enums Enums
+
+
+
+
+\section doc_global_enums Enums
 
 Enums are a convenient way of registering a family of integer constants that may be used throughout the script 
 as named literals instead of numeric constants. Using enums often help improve the readability of the code, as
@@ -189,7 +211,11 @@ enum MyEnum
 </pre>
 
 
-\section typedef Typedefs
+
+
+
+
+\section doc_global_typedef Typedefs
 
 Typedefs are used to define aliases for other types.
 

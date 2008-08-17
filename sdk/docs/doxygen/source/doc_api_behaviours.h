@@ -1,6 +1,6 @@
 /**
 
-\page doc_behaviours Type behaviours
+\page doc_api_behaviours Type behaviours
 
 \todo Complete this page with more examples
 
