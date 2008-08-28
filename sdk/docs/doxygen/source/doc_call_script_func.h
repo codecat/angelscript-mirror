@@ -63,15 +63,15 @@ SetArgDWord() method and pass the pointer as the value. For non-primitive types 
 method SetArgObject() should be used, which will be described in the next section.
 
 \code
-  // The context has been prepared for a script 
-  // function with the following signature:
-  // int function(int, double, int&in)
+// The context has been prepared for a script 
+// function with the following signature:
+// int function(int, double, int&in)
 
-  // Put the arguments on the context stack, starting with the first one
-  ctx->SetArgDWord(0, 1);
-  ctx->SetArgDouble(1, 3.141592);
-  int val;
-  ctx->SetArgDWord(2, (asDWORD)&val);
+// Put the arguments on the context stack, starting with the first one
+ctx->SetArgDWord(0, 1);
+ctx->SetArgDouble(1, 3.141592);
+int val;
+ctx->SetArgDWord(2, (asDWORD)&val);
 \endcode
 
 Once the script function has been executed the return value is retrieved in 

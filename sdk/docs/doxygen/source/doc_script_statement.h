@@ -18,9 +18,9 @@
 \section variable Variable declarations
 
 <pre>
-int var = 0, var2 = 10;
-object\@ handle, handle2;
-const float pi = 3.141592f;
+  int var = 0, var2 = 10;
+  object\@ handle, handle2;
+  const float pi = 3.141592f;
 </pre>
 
 Variables must be declared before they are used within the statement block, 
@@ -49,8 +49,8 @@ what is defined by the object's default constructor.
 \section expression Expression statement
 
 <pre>
-a = b;  // a variable assignment
-func(); // a function call
+  a = b;  // a variable assignment
+  func(); // a function call
 </pre>
 
 Any \ref doc_expressions "expression" may be placed alone on a line as a statement. This will 
@@ -67,19 +67,19 @@ All expression statements must end with a <code>;</code>.
 \section if Conditions: if / if-else / switch-case
 
 <pre>
-if( condition ) 
-{
-  // Do something if condition is true
-}
+  if( condition ) 
+  {
+    // Do something if condition is true
+  }
 
-if( value < 10 ) 
-{
-  // Do something if value is less than 10
-}
-else
-{
-  // Do something else if value is greater than or equal to 10
-}
+  if( value < 10 ) 
+  {
+    // Do something if value is less than 10
+  }
+  else
+  {
+    // Do something else if value is greater than or equal to 10
+  }
 </pre>
 
 If statements are used to decide whether to execute a part of the logic
@@ -90,20 +90,20 @@ It's possible to chain several <code>if-else</code> statements, in which case
 each condition will be evaluated sequencially until one is found to be <code>true</code>.
 
 <pre>
-switch( value )
-{
-case 0:
-  // Do something if value equals 0, then leave
-  break;
+  switch( value )
+  {
+  case 0:
+    // Do something if value equals 0, then leave
+    break;
 
-case 2:
-case constant_value:
-  // This will be executed if value equals 2 or the constant_value
-  break;
+  case 2:
+  case constant_value:
+    // This will be executed if value equals 2 or the constant_value
+    break;
 
-default:
-  // This will be executed if value doesn't equal any of the cases
-}
+  default:
+    // This will be executed if value doesn't equal any of the cases
+  }
 </pre>
 
 If you have an integer (signed or unsigned) expression that have many 
@@ -124,21 +124,21 @@ cannot be determined at compile time it cannot be used in the case values.
 \section while Loops: while / do-while / for
 
 <pre>
-// Loop, where the condition is checked before the logic is executed
-int i = 0;
-while( i < 10 )
-{
-  // Do something
-  i++;
-}
+  // Loop, where the condition is checked before the logic is executed
+  int i = 0;
+  while( i < 10 )
+  {
+    // Do something
+    i++;
+  }
 
-// Loop, where the logic is executed before the condition is checked
-int j = 0;
-do 
-{
-  // Do something
-  j++;
-} while( j < 10 );
+  // Loop, where the logic is executed before the condition is checked
+  int j = 0;
+  do 
+  {
+    // Do something
+    j++;
+  } while( j < 10 );
 </pre>
 
 For both <code>while</code> and <code>do-while</code> the expression that determines
@@ -147,11 +147,11 @@ to true, the loop continues, otherwise it stops and the code will continue with 
 statement immediately following the loop.
 
 <pre>
-// More compact loop, where condituion is checked before the logic is executed
-for( int n = 0; n < 10; n++ ) 
-{
-  // Do something
-}
+  // More compact loop, where condituion is checked before the logic is executed
+  for( int n = 0; n < 10; n++ ) 
+  {
+    // Do something
+  }
 </pre>
 
 The <code>for</code> loop is a more compact form of a <code>while</code> loop. The 
@@ -170,26 +170,26 @@ part is executed after the logic within the loop, e.g. used to increment an iter
 \section break Loop control: break / continue
 
 <pre>
-for(;;) // endless loop
-{
-  // Do something 
+  for(;;) // endless loop
+  {
+    // Do something 
 
-  // End the loop when condition is true
-  if( condition )
-    break;
-}
+    // End the loop when condition is true
+    if( condition )
+      break;
+  }
 </pre>
 
 <code>break</code> terminates the smallest enclosing loop statement or switch statement.
 
 <pre>
-for(int n = 0; n < 10; n++ )
-{
-  if( n == 5 )
-    continue;
+  for(int n = 0; n < 10; n++ )
+  {
+    if( n == 5 )
+      continue;
 
-  // Do something for all values from 0 to 9, except for the value 5
-}
+    // Do something for all values from 0 to 9, except for the value 5
+  }
 </pre>
 
 <code>continue</code> jumps to the next iteration of the smallest enclosing loop statement.
@@ -201,10 +201,10 @@ for(int n = 0; n < 10; n++ )
 \section return Return statement
 
 <pre>
-float valueOfPI()
-{
-  return 3.141592f; // return a value 
-}
+  float valueOfPI()
+  {
+    return 3.141592f; // return a value 
+  }
 </pre>
 
 Any function with a return type other than <code>void</code> must be finished with a 
@@ -222,20 +222,20 @@ data type as the function return type. Functions declared as <code>void</code> c
 \section block Statement blocks
 
 <pre>
-{
-  int a; 
-  float b;
-
   {
-    float a; // Override the declaration of the outer variable
-             // but only within the scope of this block.
+    int a; 
+    float b;
 
-    // variables from outer blocks are still visible
-    b = a;
-  }
+    {
+      float a; // Override the declaration of the outer variable
+               // but only within the scope of this block.
+
+      // variables from outer blocks are still visible
+      b = a;
+    }
   
-  // a now refers to the integer variable again
-}
+    // a now refers to the integer variable again
+  }
 </pre>
 
 A statement block is a collection of statements. Each statement block has its own scope of

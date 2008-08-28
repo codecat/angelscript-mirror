@@ -43,10 +43,10 @@ application defines them. In that case the returned value may also
 be used as the target in assignments.
 
 <pre>
-int MyFunction(int a, int b)
-{
-  return a + b;
-}
+  int MyFunction(int a, int b)
+  {
+    return a + b;
+  }
 </pre>
 
 
@@ -67,8 +67,8 @@ maintained between calls. If a global variable holds a memory resource, e.g.
 a string, its memory is released when the module is discarded or the script engine is reset.
 
 <pre>
-int MyValue = 0;
-const uint Flag1 = 0x01;
+  int MyValue = 0;
+  const uint Flag1 = 0x01;
 </pre>
 
 
@@ -90,35 +90,35 @@ With classes the script writer can declare new data types that hold groups
 of variables and methods to manipulate them.
 
 <pre>
-// The class declaration
-class MyClass
-{
-  // The default constructor
-  MyClass()
+  // The class declaration
+  class MyClass
   {
-    this.a = 0;
-  }
+    // The default constructor
+    MyClass()
+    {
+      this.a = 0;
+    }
 
-  // Destructor
-  ~MyClass()
-  {
-  }
+    // Destructor
+    ~MyClass()
+    {
+    }
 
-  // Another constructor
-  MyClass(int a)
-  {
-    this.a = a;
-  }
+    // Another constructor
+    MyClass(int a)
+    {
+      this.a = a;
+    }
 
-  // A class method
-  void DoSomething()
-  {
-    this.a *= 2;
-  }
+    // A class method
+    void DoSomething()
+    {
+      this.a *= 2;
+    }
 
-  // A class property
-  int a;
-}
+    // A class property
+    int a;
+  }
 </pre>
 
 Note, that since AngelScript uses automatic memory management, it can be
@@ -141,20 +141,20 @@ can then call the methods on this interface without having to know what the
 exact type of the object that is working with.
 
 <pre>
-// The interface declaration
-interface MyInterface
-{
-  void DoSomething();
-}
-
-// A class that implements the interface MyInterface
-class MyClass : MyInterface
-{
-  void DoSomething()
+  // The interface declaration
+  interface MyInterface
   {
-    // Do something
+    void DoSomething();
   }
-}
+
+  // A class that implements the interface MyInterface
+  class MyClass : MyInterface
+  {
+    void DoSomething()
+    {
+      // Do something
+    }
+  }
 </pre>
 
 A class can implement multiple interfaces; Simply list all the interfaces
@@ -179,7 +179,7 @@ If a script is calling an imported function that has not yet been bound the scri
 aborted with a script exception.
 
 <pre>
-import void MyFunction(int a, int b) from "Another module";
+  import void MyFunction(int a, int b) from "Another module";
 </pre>
 
 
@@ -201,13 +201,13 @@ constant it will take the value of the previous constant + 1. The first constant
 unless otherwise specified.
 
 <pre>
-enum MyEnum
-{
+  enum MyEnum
+  {
     eValue0,
     eValue2 = 2,
     eValue3,
     eValue200 = eValue2 * 100
-}
+  }
 </pre>
 
 
@@ -223,8 +223,8 @@ Currently a typedef can only be used to define an alias for primitive types, but
 more complete support for all kinds of types.
 
 <pre>
-typedef float  real32;
-typedef double real64;
+  typedef float  real32;
+  typedef double real64;
 </pre>
 
 

@@ -1,6 +1,6 @@
 /**
 
-\page doc_adv_timeout Use the line callback to timeout long running scripts
+\page doc_adv_timeout Timeout long running scripts
 
 The line callback feature is used to be able to some special treatment 
 during execution of the scripts. The callback is called for every script 
@@ -8,7 +8,7 @@ statement, which for example makes it possible to verify if the script has
 executed for too long time and if so suspend the execution to be resumed at
 a later time.
 
-Before calling the context's <code>Execute()</code> method, set the callback function 
+Before calling the context's \ref asIScriptContext::Execute "Execute" method, set the callback function 
 like so:
 
 \code

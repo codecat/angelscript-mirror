@@ -20,7 +20,7 @@ the applications documentation.
 An object handle is declared by appending the @ symbol to the data type.
 
 <pre>
-object\@ obj_h;
+  object\@ obj_h;
 </pre>
 
 This code declares the object handle obj and initializes it to null, i.e.
@@ -32,10 +32,10 @@ not guaranteed to actually reference an object, and if you try to access the
 contents of an object in a handle that is null an exception will be raised.
 
 <pre>
-object obj;
-object\@ obj_h;
-obj.Method();
-obj_h.Method();
+  object obj;
+  object\@ obj_h;
+  obj.Method();
+  obj_h.Method();
 </pre>
 
 Operators like = or any other operator registered for the object type work
@@ -43,9 +43,9 @@ on the actual object that the handle references. These will also throw an
 exception if the handle is empty.
 
 <pre>
-object obj;
-object\@ obj_h;
-obj_h = obj;
+  object obj;
+  object\@ obj_h;
+  obj_h = obj;
 </pre>
 
 When you need to make an operation on the actual handle, you should prepend
@@ -53,9 +53,9 @@ the expression with the \@ symbol. Setting the object handle to point to an
 object is for example done like this:
 
 <pre>
-object obj;
-object\@ obj_h;
-\@obj_h = \@obj;
+  object obj;
+  object\@ obj_h;
+  \@obj_h = \@obj;
 </pre>
 
 An object handle can be compared against another object handle
@@ -64,9 +64,9 @@ It can also be compared against null, which is a special keyword that
 represents an empty handle.
 
 <pre>
-object\@ obj_a, obj_b;
-if( \@obj_a == \@obj_b ) {}
-if( \@obj_a == null ) {}
+  object\@ obj_a, obj_b;
+  if( \@obj_a == \@obj_b ) {}
+  if( \@obj_a == null ) {}
 </pre>
 
 An object's life time is normally for the duration of the scope the
@@ -75,21 +75,21 @@ reference the object, the object will live on until all object handles are
 released.
 
 <pre>
-object\@ obj_h;
-{
-  object obj;
-  \@obj_h = \@obj;
+  object\@ obj_h;
+  {
+    object obj;
+    \@obj_h = \@obj;
 
-  // The object would normally die when the block ends,
-  // but the handle is still holding a reference to it
-}
+    // The object would normally die when the block ends,
+    // but the handle is still holding a reference to it
+  }
 
-// The object still lives on in obj_h ...
-obj_h.Method();
+  // The object still lives on in obj_h ...
+  obj_h.Method();
 
-// ... until the reference is explicitly released
-// or the object handle goes out of scope
-\@obj_h = null;
+  // ... until the reference is explicitly released
+  // or the object handle goes out of scope
+  \@obj_h = null;
 </pre>
 
 \section doc_obj_handle_2 Behaviours to support object handles

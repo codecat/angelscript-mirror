@@ -89,25 +89,25 @@ It is also possible to declare array variables by appending the [] brackets to t
 When declaring a variable with a type modifier, the type modifier affects the type of all variables in the list.
 Example:
 
-<pre class=border>
-int[] a, b, c;
+<pre>
+  int[] a, b, c;
 </pre>
 
 <code>a</code>, <code>b</code>, and <code>c</code> are now arrays of integers.
 
 When declaring arrays it is possible to define the initial size of the array by passing the length as a parameter to the constructor. The elements can also be individually initialized by specifying an initialization list. Example:
 
-<pre class=border>
-int[] a;           // A zero-length array of integers
-int[] b(3);        // An array of integers with 3 elements
-int[] c = {,3,4,}; // An array of integers with 4 elements, where
-                   // the second and third elements are initialized
+<pre>
+  int[] a;           // A zero-length array of integers
+  int[] b(3);        // An array of integers with 3 elements
+  int[] c = {,3,4,}; // An array of integers with 4 elements, where
+                     // the second and third elements are initialized
 </pre>
 
 Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the range of valid indices are from 0 to length - 1.
 
-<pre class=border>
-a[0] = some_value;
+<pre>
+  a[0] = some_value;
 </pre>
 
 An array also have two methods. length() allow you to determine how many elements are in the array, and resize() lets you resize the array.
@@ -117,17 +117,17 @@ An array also have two methods. length() allow you to determine how many element
 
 Object handles are a special type that can be used to hold references to other objects. When calling methods or accessing properties on a variable that is an object handle you will be accessing the actual object that the handle references, just as if it was an alias. Note that unless initialized with the handle of an object, the handle is <code>null</code>.
 
-<pre class=border>
-obj o;
-obj@ a;           // a is initialized to null
-obj@ b = \@o;      // b holds a reference to o
+<pre>
+  obj o;
+  obj@ a;           // a is initialized to null
+  obj@ b = \@o;      // b holds a reference to o
 
-b.ModifyMe();     // The method modifies the original object
+  b.ModifyMe();     // The method modifies the original object
 
-if( \@a == null )  // Verify if the object points to an object
-{
-  \@a = \@b;        // Make a hold a reference to the same object as b
-}
+  if( \@a == null )  // Verify if the object points to an object
+  {
+    \@a = \@b;        // Make a hold a reference to the same object as b
+  }
 </pre>
 
 Not all types allow a handle to be taken. Neither of the primitive types can have handles, and there may exist some object types that do not allow handles. Which objects allow handles or not, are up to the application that registers them.
@@ -182,9 +182,9 @@ byte values that might not be possible to write in your normal editor.
 </table>
 
 
-<pre class=border>
-string str1 = "This is a string with \"escape sequences\".";
-string str2 = 'If single quotes are used then double quotes can be included without "escape sequences".';
+<pre>
+  string str1 = "This is a string with \"escape sequences\".";
+  string str2 = 'If single quotes are used then double quotes can be included without "escape sequences".';
 </pre>
 
 
@@ -198,23 +198,23 @@ end of the string only contains white space this is also remove, including the
 linebreak.
 
 
-<pre class=border>
-string str = """
-This is some text without "escape sequences". This is some text.
-This is some text. This is some text. This is some text. This is
-some text. This is some text. This is some text. This is some
-text. This is some text. This is some text. This is some text.
-This is some text.
-""";
+<pre>
+  string str = """
+  This is some text without "escape sequences". This is some text.
+  This is some text. This is some text. This is some text. This is
+  some text. This is some text. This is some text. This is some
+  text. This is some text. This is some text. This is some text.
+  This is some text.
+  """;
 </pre>
 
 If more than one string constants are written in sequence with only whitespace or
 comments between them the compiler will concatenate them into one constant.
 
-<pre class=border>
-string str = "First line.\n"
-             "Second line.\n"
-             "Third line.\n";
+<pre>
+  string str = "First line.\n"
+               "Second line.\n"
+               "Third line.\n";
 </pre>
 
 <sup>1) The application can change the interpretation of single quoted strings by setting an engine property. If this is done the first character in the single quoted string will be interpreted as a single uint8 value instead of a string literal.</sup>

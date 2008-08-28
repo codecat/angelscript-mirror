@@ -6,16 +6,17 @@ This is the documentation for the AngelScript library.
 
 \section main_topics Topics
 
+ - \subpage doc_license
  - \subpage doc_start
  - \subpage doc_using
  - \subpage doc_advanced
  - \subpage doc_script
  - \subpage doc_api 
  - \subpage doc_samples
+ - \subpage doc_addon
 
 \todo Write introduction page
 
-\todo Document the add-ons
 
 
 
@@ -59,12 +60,14 @@ This is the documentation for the AngelScript library.
  - \subpage doc_debug
  - \subpage doc_adv_c_dll
  - \subpage doc_adv_timeout
+ - \subpage doc_adv_multithread
+ - \subpage doc_adv_concurrent
  
 \todo Add page about dynamic config groups
 \todo Add page about pre-compiled bytecode
 \todo Add page about custom memory management
 \todo Add page about customizations/optimizations
-\todo Add page about using the library in multithreaded environment
+\todo Add page about co-routines
  
  
  

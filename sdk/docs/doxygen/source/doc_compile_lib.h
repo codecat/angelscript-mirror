@@ -52,7 +52,7 @@ need for any special settings.
 The most recommended way is to compile a static library that your project will link with. 
 When compiling the static library you have to make sure that the correct compiler settings 
 are used so that you don't get conflicts in linkage with the CRT functions. This happens 
-if you for example compile the library with dynamically linked multi-threaded CRT and you
+if you for example compile the library with dynamically linked multi-threaded CRT and your
 application with statically linked single-threaded CRT.
 
 To use the library you only need to include the %angelscript.h header file.
