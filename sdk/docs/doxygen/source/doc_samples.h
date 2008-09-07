@@ -5,16 +5,18 @@
 
 This page gives a brief description of the samples that you'll find in the /sdk/samples/ folder.
 
- - \ref doc_samples_tutorial
- - \ref doc_samples_concurrent
- - \ref doc_samples_console
- - \ref doc_samples_corout
- - \ref doc_samples_events
- - \ref doc_samples_incl
+ - \subpage doc_samples_tutorial
+ - \subpage doc_samples_concurrent
+ - \subpage doc_samples_console
+ - \subpage doc_samples_corout
+ - \subpage doc_samples_events
+ - \subpage doc_samples_incl
 
 
 
-\section doc_samples_tutorial Tutorial
+\page doc_samples_tutorial Tutorial
+
+<b>Path:</b> /sdk/samples/tutorial/
 
 This sample was written with the intention of explaining the basics of 
 AngelScript, that is, how to configure the engine, load and compile a script, 
@@ -33,7 +35,9 @@ and finally execute a script function with parameters and return value.
 
 
 
-\section doc_samples_concurrent Concurrent scripts
+\page doc_samples_concurrent Concurrent scripts
+
+<b>Path:</b> /sdk/samples/concurrent/
 
 This sample shows how to execute two or more long running scripts in 
 parallel. The scripts voluntarily hand over the control to the next script in 
@@ -48,7 +52,9 @@ the queue by calling the function Sleep().
 
 
 
-\section doc_samples_console Console
+\page doc_samples_console Console
+
+<b>Path:</b> /sdk/samples/console/
 
 This sample implements a simple console, which lets the user type in 
 commands and also evaluate simple script statements.
@@ -61,7 +67,9 @@ commands and also evaluate simple script statements.
 
 
 
-\section doc_samples_corout Co-routines
+\page doc_samples_corout Co-routines
+
+<b>Path:</b> /sdk/samples/coroutine/
 
 This sample shows how co-routines can be implemented with AngelScript. Co-routines are
 threads that can be created from the scripts, and that work together by voluntarily passing control
@@ -74,7 +82,9 @@ to each other by calling Yield().
  - Passing arguments to script functions
 
 
-\section doc_samples_events Events
+\page doc_samples_events Events
+
+<b>Path:</b> /sdk/samples/events/
 
 This sample has the script engine execute a long running script. The script execution is regularly 
 interrupted by the application so that keyboard events can be processed, which execute another short 
@@ -88,7 +98,9 @@ of the long running script.
 
 
 
-\section doc_samples_incl Implementing the include directive
+\page doc_samples_incl Include directive
+
+<b>Path:</b> /sdk/samples/include/
 
 This sample shows how to implement a very simple preprocessor to add support for the \#include 
 directive, which allow the script writer to reuse common script code. The preprocessor simply adds 

@@ -43,9 +43,10 @@ This is the documentation for the AngelScript library.
  - \subpage doc_register_type
  - \subpage doc_obj_handle
  - \subpage doc_call_script_func
+ - \subpage doc_generic
 
-\todo Write a page about the generic interface
 \todo Write a page about registering global properties
+\todo Write a page about garbage collection
  
  
  

@@ -26,11 +26,6 @@ redistribute it freely, subject to the following restrictions:
      distribution.
  </ol>
 
-The original version of this library can be located at:
-http://www.angelcode.com/angelscript/
-
-Andreas J&ouml;nsson<br>
-andreas@angelcode.com
 
 
 

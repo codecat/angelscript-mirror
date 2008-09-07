@@ -2,7 +2,6 @@
 
 \page doc_api_behaviours Type behaviours
 
-\todo Complete this page with more examples
 
 
 
@@ -21,6 +20,19 @@ All of these, with exception to asBEHAVE_NEGATE, should be registered with two
 parameters using \ref asIScriptEngine::RegisterGlobalBehaviour. asBEHAVE_NEGATE should be
 registered with no parameters using \ref asIScriptEngine::RegisterObjectBehaviour.
 
+\code
+// Example ADD behaviour for a value type
+value operator+(const value &a, const value &b)
+{
+    // Perform the add operation and return the new value
+    value result;
+    result.attr = a.attr + b.attr;
+    return result;
+}
+
+// Example registration of the behaviour
+r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "value f(const value &in, const value &in)", asFUNCTIONPR(operator+, (const value&,const value&), value), asCALL_CDECL); assert( r >= 0 );
+\endcode
 
 
 
@@ -74,6 +86,22 @@ These should be registered with two parameters using
 
 All of these should be registered with one parameter using \ref asIScriptEngine::RegisterObjectBehaviour.
 Preferably the functions should return a reference to the object itself.
+
+\code
+// Example ASSIGNMENT behaviour for a reference type
+object &object::operator=(const object &other)
+{
+    // Copy only the buffer, not the reference counter
+    attr = other.attr;
+
+    // Return a reference to this object
+    return *this;
+}
+
+// Example registration of the behaviour
+r = engine->RegisterObjectBehaviour("object", asBEHAVE_ASSIGNMENT, "object &f(const object &in)", asMETHODPR(object, operator =, (const object&), object&), asCALL_THISCALL); assert( r >= 0 );
+\endcode
+
 
 \section idxop Index operator
 
