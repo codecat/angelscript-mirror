@@ -31,6 +31,8 @@ void FuncInt(int v)
 {
 }
 
+bool Test2();
+
 bool TestFuncOverload()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -38,7 +40,8 @@ bool TestFuncOverload()
 		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
 		return false;
 	}
-	bool fail = false;
+	// TODO: Add Test2 again
+	bool fail = false; //Test2();
 	COutStream out;	
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -75,6 +78,59 @@ bool TestFuncOverload()
 
 	// Don't permit void parameters
 	r = engine->RegisterGlobalFunction("void func2(void)", asFUNCTION(FuncVoid), asCALL_CDECL); assert( r < 0 );
+
+	engine->Release();
+
+	return fail;
+}
+
+// TODO: Implement this support 
+// (It currently doesn't work because the first argument gives an exact match for another function. 
+// I need to weigh this limitation against the possibility of increasing multiple matches)
+//
+// This test verifies that it is possible to find a best match even if the first argument 
+// may give a better match for another function. Also the order of the function declarations
+// should not affect the result.
+bool Test2()
+{
+	bool fail = false;
+	COutStream out;
+	int r;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+	const char *script1 = 
+		"class A{}  \n"
+		"class B{}  \n"
+		"void func(A&in, A&in) {} \n"
+		"void func(const A&in, const B&in) {} \n"
+		"void test()  \n"
+		"{ \n"
+		"  A a; B b; \n"
+		"  func(a,b); \n"
+		"}\n";
+
+	r = engine->AddScriptSection(0, "test", script1, strlen(script1));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
+	const char *script2 = 
+		"class A{}  \n"
+		"class B{}  \n"
+		"void func(const A&in, const B&in) {} \n"
+		"void func(A&in, A&in) {} \n"
+		"void test()  \n"
+		"{ \n"
+		"  A a; B b; \n"
+		"  func(a,b); \n"
+		"}\n";
+
+	r = engine->AddScriptSection(0, "test", script2, strlen(script2));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
 
 	engine->Release();
 

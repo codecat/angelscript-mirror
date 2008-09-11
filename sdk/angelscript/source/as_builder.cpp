@@ -545,7 +545,7 @@ asCProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, b
 	return 0;
 }
 
-int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle, bool isScopedFactory)
+int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle)
 {
 	numErrors = 0;
 	numWarnings = 0;
@@ -569,22 +569,8 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 	// Initialize a script function object for registration
 	bool autoHandle;
 
-	// A factory function for a scoped reference type must return a handle, even though handles are not allowed
-	bool isHandle = false;
-	if( isScopedFactory )
-	{
-		asCScriptNode *n = node->firstChild->lastChild;
-		if( n->tokenType == ttHandle )
-		{
-			// Remove the handle, as it won't be accepted
-			n->DisconnectParent();
-			n->Destroy(engine);
-			isHandle = true;
-		}
-	}
-
-	func->returnType = CreateDataTypeFromNode(node->firstChild, &source);
-	if( isHandle ) func->returnType.MakeHandle(true, true);
+	// Scoped reference types are allowed to use handle when returned from application functions
+	func->returnType = CreateDataTypeFromNode(node->firstChild, &source, true);
 	func->returnType = ModifyDataTypeFromNode(func->returnType, node->firstChild->next, &source, 0, &autoHandle);
 	if( autoHandle && (!func->returnType.IsObjectHandle() || func->returnType.IsReference()) )
 			return asINVALID_DECLARATION;			
@@ -2080,7 +2066,7 @@ void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r
 }
 
 
-asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file)
+asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope)
 {
 	asASSERT(node->nodeType == snDataType);
 
@@ -2181,7 +2167,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		else
 		{
 			// Make the type a handle
-			if( dt.MakeHandle(true) < 0 )
+			if( dt.MakeHandle(true, acceptHandleForScope) < 0 )
 			{
 				int r, c;
 				file->ConvertPosToRowCol(n->tokenPos, &r, &c);

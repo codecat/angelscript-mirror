@@ -109,6 +109,8 @@ bool Get(const string & /*szURL*/, string &szHTML)
 }
 };
 
+bool TestTwoStringTypes();
+
 bool TestStdString()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -117,7 +119,8 @@ bool TestStdString()
 		return false;
 	}
 
-	bool fail = false;
+	bool fail = TestTwoStringTypes();
+
 	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -223,6 +226,118 @@ bool TestStdString()
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asMETHOD(Http,Get),asCALL_THISCALL);
 	engine->ExecuteString(0, "Http h; string str; h.get(\"string\", str);");
 	engine->ExecuteString(0, "Http h; string str; string a = \"a\"; h.get(\"string\"+a, str);");
+
+	engine->Release();
+
+	return fail;
+}
+
+//////////////////////////////
+// This test was reported by dxj19831029 on Sep 9th, 2008
+
+class _String 
+{
+public:
+	_String() {}
+	_String(_String &o) {buffer = o.buffer;}
+	~_String() {}
+	_String &operator=(const _String&o) {buffer = o.buffer; return *this;}
+	_String &operator=(const std::string&o) {buffer = o; return *this;}
+	_String &operator+=(const _String&o) {buffer += o.buffer; return *this;}
+	_String &operator+=(const std::string&o) {buffer += o; return *this;}
+	std::string buffer;
+};
+
+void stringDefaultCoonstructor(void *mem)
+{
+	new(mem) _String();
+}
+
+void stringCopyConstructor(_String &o, void *mem)
+{
+	new(mem) _String(o);
+}
+
+void stringStringConstructor(std::string &o, void *mem)
+{
+	new(mem) _String();
+	((_String*)mem)->buffer = o;
+}
+
+void stringDecontructor(_String &s)
+{
+	s.~_String();
+}
+
+_String operation_StringAdd(_String &a, _String &b)
+{
+	_String r;
+	r.buffer = a.buffer + b.buffer;
+	return r;
+}
+
+_String operation_StringStringAdd(_String &a, std::string &b)
+{
+	_String r;
+	r.buffer = a.buffer + b;
+	return r;
+}
+
+_String operationString_StringAdd(std::string &a, _String &b)
+{
+	_String r;
+	r.buffer = a + b.buffer;
+	return r;
+}
+
+bool TestTwoStringTypes()
+{
+	bool fail = false;
+	int r;
+	COutStream out;	
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	RegisterStdString(engine);
+
+	// Register the second string type
+	// TODO: The second line works
+//	engine->RegisterObjectType("_String", sizeof(_String),   asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT);
+	engine->RegisterObjectType("_String", sizeof(_String),   asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f()",                 asFUNCTION(stringDefaultCoonstructor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f(const _String &in )",		asFUNCTION(stringCopyConstructor), asCALL_CDECL_OBJLAST); 
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(stringStringConstructor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(stringDecontructor), asCALL_CDECL_OBJLAST);
+	// = 
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const string &in )", asMETHODPR(_String, operator=, (const string &), _String& ), asCALL_THISCALL); 
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const _String &in )", asMETHODPR(_String, operator=, (const _String &), _String& ), asCALL_THISCALL); 
+	// +=
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_ADD_ASSIGN , "_String &f(const string &in )", asMETHODPR(_String, operator+=, (const string &), _String& ), asCALL_THISCALL); 
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_ADD_ASSIGN , "_String &f(const _String &in )", asMETHODPR(_String, operator+=, (const _String &), _String& ), asCALL_THISCALL); 
+	// comparison
+/*	engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const _String &in, const _String &in)", asFUNCTION(compare_StringEqual), asCALL_CDECL);
+	engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const _String &in, const string &in)", asFUNCTION(compare_StringStringEqual), asCALL_CDECL);
+	engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const string &in, const _String &in)", asFUNCTION(compareString_StringEqual), asCALL_CDECL);
+	// not equal
+	engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL , "bool f(const _String &in, const _String &in)", asFUNCTION(compare_StringNotEqual), asCALL_CDECL);
+	engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL , "bool f(const _String &in, const string &in)", asFUNCTION(compare_StringStringNotEqual), asCALL_CDECL);
+	engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL , "bool f(const string &in, const _String &in)", asFUNCTION(compareString_StringNotEqual), asCALL_CDECL);
+*/	// +
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD , "_String f(const _String &in, const _String &in)", asFUNCTION(operation_StringAdd), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD , "_String f(const _String &in, const string &in)", asFUNCTION(operation_StringStringAdd), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD , "_String f(const string &in, const _String &in)", asFUNCTION(operationString_StringAdd), asCALL_CDECL); assert( r >= 0 );
+
+	r = engine->ExecuteString(0, "_String('ab') + 'a'");
+	if( r < 0 )
+		fail = true;
+
+	r = engine->ExecuteString(0, "_String a; a+= 'a' + 'b' ; _String b = 'c'; a += b + 'c';");
+	if( r < 0 )
+		fail = true;
+
+	r = engine->ExecuteString(0, "string a; a+= 'a' + 'b' ; string b = 'c'; a += b + 'c';");
+	if( r < 0 )
+		fail = true;
 
 	engine->Release();
 

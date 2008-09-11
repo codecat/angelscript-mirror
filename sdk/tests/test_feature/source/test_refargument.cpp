@@ -195,6 +195,24 @@ bool Test()
 
 	engine->Release();
 
+	//-------------------------
+	// Test error message when registering a value type as &inout (or just &)
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		r = engine->RegisterGlobalFunction("void func(float &)", asFUNCTION(0), asCALL_GENERIC);
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != "System function (1, 17) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
+			fail = true;
+
+		engine->Release();
+	}
+	
+
 	// Success
 	return fail;
 }

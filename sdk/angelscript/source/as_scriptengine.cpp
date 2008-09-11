@@ -1544,7 +1544,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	// Verify function declaration
 	asCScriptFunction func(this, 0);
 
-	r = bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle, (behaviour == asBEHAVE_FACTORY) && (type.GetObjectType()->flags & asOBJ_SCOPED) );
+	r = bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION);
 
@@ -1743,7 +1743,15 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		// Verify that the return type is a the same as the type
 		type.MakeReference(false);
-		if( func.returnType != type  )
+		if( type.GetObjectType()->flags & asOBJ_SCOPED )
+		{
+			// Scoped types must be returned by handle
+			asCDataType t = type;
+			t.MakeHandle(true, true);
+			if( func.returnType != t )
+				return ConfigError(asINVALID_DECLARATION);
+		}
+		else if( func.returnType != type )
 			return ConfigError(asINVALID_DECLARATION);
 
 		// TODO: Verify that the operator hasn't been registered already

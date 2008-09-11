@@ -175,8 +175,10 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
-	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
+	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
+	if( TestRefCast::Test()           ) goto failed; else printf("-- TestRefCast passed\n");
+	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
@@ -189,7 +191,6 @@ int main(int argc, char **argv)
 	if( TestMultiAssign::Test()       ) goto failed; else printf("-- TestMultiAssign passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
-	if( TestRefCast::Test()           ) goto failed; else printf("-- TestRefCast passed\n");
 	if( TestFile::Test()              ) goto failed; else printf("-- TestFile passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
@@ -208,7 +209,6 @@ int main(int argc, char **argv)
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
-	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
 	if( TestRZ::Test()                ) goto failed; else printf("-- TestRZ passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");

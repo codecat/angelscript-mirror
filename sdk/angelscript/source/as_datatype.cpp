@@ -195,16 +195,23 @@ asCDataType &asCDataType::operator =(const asCDataType &dt)
 	return (asCDataType &)*this;
 }
 
-int asCDataType::MakeHandle(bool b, bool overrideValidation)
+int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 {
-	if( !overrideValidation )
+	if( !b )
 	{
-		if( !objectType || !(objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_NOHANDLE) || (objectType->flags & asOBJ_SCOPED) )
-			return -1;
+		isObjectHandle = b;
+		isConstHandle = false;
 	}
-
-	if( !b || (b && !isObjectHandle) )
+	else if( b && !isObjectHandle )
 	{
+		// Only reference types are allowed to be handles, 
+		// but not nohandle reference types, and not scoped references (except when returned from registered function)
+		if( !objectType || 
+			!objectType->flags & asOBJ_REF || 
+			objectType->flags & asOBJ_NOHANDLE || 
+			(objectType->flags & asOBJ_SCOPED) && !acceptHandleForScope )
+			return -1;
+
 		isObjectHandle = b;
 		isConstHandle = false;
 	}

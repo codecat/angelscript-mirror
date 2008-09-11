@@ -308,6 +308,8 @@ bool Test()
  	return fail;
 }
 
+//////////////////////////////////////
+
 int *Scoped_Factory()
 {
 	return new int(42);
@@ -316,6 +318,24 @@ int *Scoped_Factory()
 void Scoped_Release(int *p)
 {
 	if( p ) delete p;
+}
+
+int *Scoped_Negate(int *p)
+{
+	if( p ) 
+		return new int(-*p);
+	return 0;
+}
+
+int &Scoped_Assignment(int &a, int *p)
+{
+	*p = a;
+	return *p;
+}
+
+int *Scoped_Add(int &a, int b)
+{
+	return new int(a + b);
 }
 
 bool TestRefScoped()
@@ -327,36 +347,41 @@ bool TestRefScoped()
 
 	// REF+SCOPED
 	// This type requires a factory and a release behaviour. It cannot have the addref behaviour.
-	// The intention of this type is to permit value types, that have special needs for memory management,
+	// The intention of this type is to permit value types that have special needs for memory management,
 	// for example must be aligned on 16 byte boundaries, or must use a memory pool. The type must not allow
-	// object handles (though the factory behavour should still return a handle).
+	// object handles (except when returning a new value from registered functions).
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	r = engine->RegisterObjectType("scoped", 0, asOBJ_REF | asOBJ_SCOPED); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_FACTORY, "scoped @f()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_RELEASE, "void f()", asFUNCTION(Scoped_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_NEGATE, "scoped @f()", asFUNCTION(Scoped_Negate), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_ASSIGNMENT, "scoped &f(const scoped &in)", asFUNCTION(Scoped_Assignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "scoped @f(const scoped &in, int)", asFUNCTION(Scoped_Add), asCALL_CDECL); assert( r >= 0 );
 
 	// Don't permit handles to be taken
 	r = engine->ExecuteString(0, "scoped @s = null");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
-		               "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int@const' to 'scoped&'.\n"
-					   "ExecuteString (1, 9) : Error   : There is no copy operator for this type available.\n" )
+		               "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int@const' to 'scoped&'.\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
 
-	// Test a legal action
+	// Test a legal actions
 	r = engine->ExecuteString(0, "scoped a");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	// Don't permit functions to be registered with handle
+	r = engine->ExecuteString(0, "scoped s; scoped t = s + 10;");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+
+	// Don't permit functions to be registered with handle for parameters
 	bout.buffer = "";
-	r = engine->RegisterGlobalFunction("scoped @f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
+	r = engine->RegisterGlobalFunction("void f(scoped@)", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r >= 0 ) fail = true;
-	if( bout.buffer != "System function (1, 8) : Error   : Object handle is not supported for this type\n" )
+	if( bout.buffer != "System function (1, 14) : Error   : Object handle is not supported for this type\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
@@ -375,6 +400,8 @@ bool TestRefScoped()
 	// Permit &in
 	r = engine->RegisterGlobalFunction("void f(scoped&in)", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r < 0 ) fail = true;
+
+
 
 	engine->Release();
 
