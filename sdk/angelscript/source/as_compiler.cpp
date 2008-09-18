@@ -64,7 +64,7 @@ const int behave_dual_token[] =
 #ifdef AS_DEPRECATED
 	ttOr,                 asBEHAVE_LOGIC_OR,
 	ttAnd,                asBEHAVE_LOGIC_AND,
-#endif AS_DEPRECATED
+#endif
 	ttBitOr,              asBEHAVE_BIT_OR,
 	ttAmp,                asBEHAVE_BIT_AND,
 	ttBitXor,             asBEHAVE_BIT_XOR,
@@ -2113,8 +2113,6 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	//---------------------------------------
 	// Compile the initialization statement
 	asCByteCode initBC(engine);
-	asSExprContext expr(engine);
-
 	if( fnode->firstChild->nodeType == snDeclaration )
 		CompileDeclaration(fnode->firstChild, &initBC);
 	else
@@ -2122,6 +2120,7 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 
 	//-----------------------------------
 	// Compile the condition statement
+	asSExprContext expr(engine);
 	asCScriptNode *second = fnode->firstChild->next;
 	if( second->firstChild )
 	{
@@ -2142,16 +2141,10 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 
 	//---------------------------
 	// Compile the increment statement
-	asSExprContext nextBC(engine);
+	asCByteCode nextBC(engine);
 	asCScriptNode *third = second->next;
-	if( third->nodeType == snAssignment )
-	{
-		CompileAssignment(third, &nextBC);
-		expr.type = nextBC.type;
-
-		// Release temporary variables used by expression
-		ReleaseTemporaryVariable(expr.type, &nextBC.bc);
-	}
+	if( third->nodeType == snExpressionStatement )
+		CompileExpressionStatement(third, &nextBC);
 
 	//------------------------------
 	// Compile loop statement
@@ -2172,7 +2165,7 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	LineInstr(bc, fnode->lastChild->tokenPos);
 	bc->AddCode(&forBC);
 	bc->Label((short)continueLabel);
-	bc->AddCode(&nextBC.bc);
+	bc->AddCode(&nextBC);
 	bc->InstrINT(BC_JMP, beforeLabel);
 	bc->Label((short)afterLabel);
 

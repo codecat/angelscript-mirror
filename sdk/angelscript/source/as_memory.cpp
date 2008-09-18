@@ -49,6 +49,9 @@ BEGIN_AS_NAMESPACE
 asALLOCFUNC_t userAlloc = malloc;
 asFREEFUNC_t  userFree  = free;
 
+extern "C"
+{
+
 int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc)
 {
 	userAlloc = allocFunc;
@@ -66,6 +69,8 @@ int asResetGlobalMemoryFunctions()
 
 	return 0;
 }
+
+} // extern "C"
 
 asCMemoryMgr::asCMemoryMgr()
 {

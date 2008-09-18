@@ -74,6 +74,7 @@ const char *script12 =
 bool Test2();
 bool Test3();
 bool Test4();
+bool Test5();
 
 bool Test()
 {
@@ -83,6 +84,7 @@ bool Test()
 	fail = Test2() || fail;
 	fail = Test3() || fail;
 	fail = Test4() || fail;
+	fail = Test5() || fail;
 
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
@@ -490,6 +492,37 @@ bool Test4()
 
 	const char *script2 = "void main() { Chars a = current.f().Save.FieldName; print(a); }";
 	engine->AddScriptSection(0, "test", script2, strlen(script2));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
+	engine->Release();
+	return fail;
+}
+
+//-----------------------------------------------
+// Test5 reported by jal
+bool Test5()
+{
+	// This script caused an assert failure during compilation
+	const char *script = 
+		"class cFlagBase {} \n"
+		"void CTF_getBaseForOwner( )   \n"
+		"{  \n"
+		"   for ( cFlagBase @flagBase; ; @flagBase = null ) \n"
+		"   {  \n"
+		"	}  \n"
+		"}   ";
+
+	bool fail = false;
+	COutStream out;
+	int r = 0;
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 0);
+
+	engine->AddScriptSection(0, "test", script, strlen(script));
 	r = engine->Build(0);
 	if( r < 0 )
 		fail = true;

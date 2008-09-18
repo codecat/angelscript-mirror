@@ -53,6 +53,9 @@
 
 BEGIN_AS_NAMESPACE
 
+extern "C"
+{
+
 AS_API const char * asGetLibraryVersion()
 {
 #ifdef _DEBUG
@@ -221,6 +224,12 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 
 	return 0;
 }
+
+} // extern "C"
+
+
+
+
 
 asCScriptEngine::asCScriptEngine()
 {
@@ -1168,6 +1177,13 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 						 asOBJ_APP_CLASS_ASSIGNMENT  |
 						 asOBJ_APP_PRIMITIVE) )
 				return ConfigError(asINVALID_ARG);
+		}
+		else 
+		{
+			// The application type was not informed
+			// TODO: This should be ok, as long as the application doesn't register any functions 
+			// that take the type by value or return it by value using native calling convention
+			return ConfigError(asINVALID_ARG);
 		}
 	}
 	else

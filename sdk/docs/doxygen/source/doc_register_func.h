@@ -88,7 +88,7 @@ functions, methods, and behaviours.
 
 All primitive types in C++ have a corresponding type in AngelScript, though sometimes with a slightly different name, i.e.
 <code>char</code> in C++ is <code>int8</code> in AngelScript. You can see a list of all types and their match in respective 
-language \ref doc_datatypes "here".
+language \ref doc_as_vs_cpp_types "here".
 
 Pointers do not exist in AngelScript in the same way as in C++, so you need to decide on how they should be passed. For this you
 have two options, either as reference, or as an \ref doc_obj_handle "object handle". Most common uses of pointers in parameters

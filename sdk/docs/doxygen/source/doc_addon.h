@@ -9,6 +9,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
+ - \subpage doc_addon_clib
 
 
 
@@ -172,5 +173,91 @@ The following functions are registered:
   - float abs(float)
   - float floor(float)
   - float fraction(float)
-    
+ 
+ 
+ 
+\page doc_addon_clib C library
+
+<b>Path:</b> /sdk/add_on/clib/
+
+This add-on defines a pure C interface, that can be used in those applications that do not
+understand C++ code but do understand C. 
+
+To compile the AngelScript C library, you first need to compile the ordinary AngelScript library 
+with the pre-processor word <code>AS_C_LIBRARY</code> defined. Then you compile the AngelScript C library, 
+linking with the ordinary AngelScript library.
+
+In the application that will use the AngelScript C library, you'll include the <code>angelscript_c.h</code>
+header file, instead of the ordinary <code>%angelscript.h</code> header file. After that you can use the library
+much the same way that it's used in C++. 
+
+To find the name of the C functions to call, you normally take the corresponding interface method
+and give a prefix according to the following table:
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr><td><b>interface      &nbsp;</b></td><td><b>prefix&nbsp;</b></td></tr>
+<tr><td>asIScriptEngine   &nbsp;</td>    <td>asEngine_</td></tr>
+<tr><td>asIScriptContext  &nbsp;</td>    <td>asContext_</td></tr>
+<tr><td>asIScriptGeneric  &nbsp;</td>    <td>asGeneric_</td></tr>
+<tr><td>asIScriptArray    &nbsp;</td>    <td>asArray_</td></tr>
+<tr><td>asIObjectType     &nbsp;</td>    <td>asObjectType_</td></tr>
+<tr><td>asIScriptFunction &nbsp;</td>    <td>asScriptFunction_</td></tr>
+</table>
+
+All interface methods take the interface pointer as the first parameter when in the C function format, the rest
+of the parameters are the same as in the C++ interface. There are a few exceptions though, e.g. all parameters that
+take an <code>asSFuncPtr</code> take a normal function pointer in the C function format. 
+
+Example:
+
+\code
+#include <stdio.h>
+#include <assert.h>
+#include "angelscript_c.h"
+
+void MessageCallback(asSMessageInfo *msg, void *);
+void PrintSomething();
+
+int main(int argc, char **argv)
+{
+  int r = 0;
+
+  // Create and initialize the script engine
+  asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+  r = asEngine_SetMessageCallback(engine, (asFUNCTION_t)MessageCallback, 0, asCALL_CDECL); assert( r >= 0 );
+  r = asEngine_RegisterGlobalFunction(engine, "void print()", (asFUNCTION_t)PrintSomething, asCALL_CDECL); assert( r >= 0 );
+
+  // Execute a simple script
+  r = asEngine_ExecuteString(engine, 0, "print()", 0, 0);
+  if( r != asEXECUTION_FINISHED )
+  {
+      printf("Something wen't wrong with the execution\n");
+  }
+  else
+  {
+      printf("The script was executed successfully\n");
+  }
+
+  // Release the script engine
+  asEngine_Release(engine);
+  
+  return r;
+}
+
+void MessageCallback(asSMessageInfo *msg, void *)
+{
+  const char *msgType = 0;
+  if( msg->type == 0 ) msgType = "Error  ";
+  if( msg->type == 1 ) msgType = "Warning";
+  if( msg->type == 2 ) msgType = "Info   ";
+
+  printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+}
+
+void PrintSomething()
+{
+  printf("Called from the script\n");
+}
+\endcode
+
 */  

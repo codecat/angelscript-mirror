@@ -150,7 +150,7 @@ bool Test()
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE | asOBJ_POD); assert( r >= 0 );
+	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->ExecuteString(0, "val v1, v2; v1 = v2;");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
@@ -165,7 +165,7 @@ bool Test()
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE); assert( r >= 0 );
+	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("val", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = engine->RegisterObjectBehaviour("val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = engine->ExecuteString(0, "val v1, v2; v1 = v2;");
@@ -183,10 +183,10 @@ bool Test()
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE); assert( r >= 0 );
-	r = engine->RegisterObjectType("val1", 4, asOBJ_VALUE); assert( r >= 0 );
+	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("val1", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("val1", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	r = engine->RegisterObjectType("val2", 4, asOBJ_VALUE); assert( r >= 0 );
+	r = engine->RegisterObjectType("val2", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("val2", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = engine->ExecuteString(0, "val v1, v2; v1 = v2;");
 	if( r >= 0 )
@@ -288,11 +288,19 @@ bool Test()
 	// Must be possible to register float types
 	r = engine->RegisterObjectType("real", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_FLOAT); assert( r >= 0 );
 
+	// It must not be possible to register a value type without defining the application type
+	r = engine->RegisterObjectType("test1", 4, asOBJ_VALUE);
+	if( r >= 0 ) fail = true;
+	r = engine->RegisterObjectType("test2", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CONSTRUCTOR);
+	if( r >= 0 ) fail = true;
+
 	engine->Release();
 
 	// REF+SCOPED
 	if( !fail ) fail = TestRefScoped();
 
+	// TODO: It should be allowed to register the type without specifying the application type, 
+	// if the engine won't use it (i.e. no native functions take or return the type by value)
 
 	// TODO:
 	// Types that registers constructors/factories, must also register the default constructor/factory (unless asOBJ_POD is used)

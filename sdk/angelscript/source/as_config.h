@@ -382,7 +382,7 @@
 	#define UNREACHABLE_RETURN
 #endif
 
-// GNU C
+// GNU C (and MinGW on Windows)
 #if defined(__GNUC__) && !defined(__SNC__)
 	#define GNU_STYLE_VIRTUAL_METHOD
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
@@ -438,7 +438,11 @@
 			#undef STDCALL
 			#define STDCALL
 		#endif
-    	#define AS_POSIX_THREADS
+		#if defined(WIN32)
+			#define AS_WINDOWS_THREADS
+		#else
+			#define AS_POSIX_THREADS
+		#endif
 	// Free BSD
 	#elif __FreeBSD__
 		#define AS_BSD

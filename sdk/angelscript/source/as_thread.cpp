@@ -60,9 +60,14 @@ asCThreadManager threadManager;
 
 //======================================================================
 
+extern "C"
+{
+
 AS_API int asThreadCleanup()
 {
 	return threadManager.CleanupLocalData();
+}
+
 }
 
 //======================================================================

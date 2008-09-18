@@ -2036,7 +2036,9 @@ asCScriptNode *asCParser::ParseFor()
 	{
 		RewindTo(&t);
 
-		node->AddChildLast(ParseAssignment());
+		asCScriptNode *n = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExpressionStatement);
+		node->AddChildLast(n);
+		n->AddChildLast(ParseAssignment());
 		if( isSyntaxError ) return node;
 
 		GetToken(&t);

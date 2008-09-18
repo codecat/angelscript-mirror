@@ -249,7 +249,7 @@ void asCBuilder::ParseScripts()
 
 	if( numErrors == 0 )
 	{
-		// Find all type declarations	
+		// Find all type declarations
 		for( n = 0; n < scripts.GetLength(); n++ )
 		{
 			asCScriptNode *node = parsers[n]->GetScriptNode();

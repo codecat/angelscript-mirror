@@ -118,12 +118,18 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.14.0 WIP - 2008/09/10</h2>
+<h2>Version 2.14.0 WIP - 2008/09/17</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed some issues with the scoped reference type (Thanks Jeff Slutter)
+<li>Improved validation of type flags on RegisterObjectType with asOBJ_VALUE (Thanks dxj19831029)
+<li>Fixed bug with for loop that was not using primitives in the loop increment statement (Thanks jal)
+</ul>
+<li>Library interface
+<ul>
+<li>The C interface now has a dedicated header file with it's own project in the add_on directory.
 </ul>
 </ul>
 
