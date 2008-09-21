@@ -409,6 +409,23 @@ bool asCDataType::IsEqualExceptConst(const asCDataType &dt) const
 	return true;
 }
 
+bool asCDataType::IsEqualExceptInterfaceType(const asCDataType &dt) const
+{
+	if( tokenType != dt.tokenType )           return false;
+	if( isReference != dt.isReference )       return false;
+	if( isObjectHandle != dt.isObjectHandle ) return false;
+	if( isReadOnly != dt.isReadOnly )         return false;
+	if( isConstHandle != dt.isConstHandle )   return false;
+
+	if( objectType != dt.objectType )
+	{
+		if( !objectType || !dt.objectType ) return false;
+		if( !objectType->IsInterface() || !dt.objectType->IsInterface() ) return false;
+	}
+
+	return true;
+}
+
 bool asCDataType::IsPrimitive() const
 {
 	//	Enumerations and Pseudo types are considered primitives

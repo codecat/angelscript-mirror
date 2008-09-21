@@ -286,6 +286,29 @@ void asCBuilder::ParseScripts()
 			}
 		}
 
+		// Register script methods found in the interfaces
+		for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
+		{
+			sClassDeclaration *decl = interfaceDeclarations[n];
+
+			asCScriptNode *node = decl->node->firstChild->next;
+			while( node )
+			{
+				asCScriptNode *next = node->next;
+				if( node->nodeType == snFunction )
+				{
+					node->DisconnectParent();
+					RegisterScriptFunction(module->GetNextFunctionId(), node, decl->script, decl->objType, true);
+				}
+				
+				node = next;
+			}
+		}
+
+		// Now the interfaces have been completely established, now we need to determine if
+		// the same interface has already been registered before, and if so reuse the interface id.
+		ResolveInterfaceIds();
+
 		// Register script methods found in the structures
 		for( n = 0; n < classDeclarations.GetLength(); n++ )
 		{
@@ -313,25 +336,6 @@ void asCBuilder::ParseScripts()
 			if( decl->objType->beh.construct == engine->scriptTypeBehaviours.beh.construct )
 			{
 				AddDefaultConstructor(decl->objType, decl->script);
-			}
-		}
-
-		// Register script methods found in the interfaces
-		for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
-		{
-			sClassDeclaration *decl = interfaceDeclarations[n];
-
-			asCScriptNode *node = decl->node->firstChild->next;
-			while( node )
-			{
-				asCScriptNode *next = node->next;
-				if( node->nodeType == snFunction )
-				{
-					node->DisconnectParent();
-					RegisterScriptFunction(module->GetNextFunctionId(), node, decl->script, decl->objType, true);
-				}
-				
-				node = next;
 			}
 		}
 
@@ -378,6 +382,286 @@ void asCBuilder::ParseScripts()
 	{
 		DELETE(parsers[n],asCParser);
 	}
+}
+
+// internal
+void asCBuilder::ResolveInterfaceIds()
+{
+	// For each of the interfaces declared in the script find identical interface in the engine.
+	// If an identical interface was found then substitute the current id for the identical interface's id, 
+	// then remove this interface declaration. If an interface was modified by the declaration, then 
+	// retry the detection of identical interface for it since it may now match another.
+
+	// For an interface to be equal to another the name and methods must match. If the interface
+	// references another interface, then that must be checked as well, which can lead to circular references.
+
+	// Example:
+	//
+	// interface A { void f(B@); }
+	// interface B { void f(A@); void f(C@); }
+	// interface C { void f(A@); }
+	//
+	// A1 equals A2 if and only if B1 equals B2
+	// B1 equals B2 if and only if A1 equals A2 and C1 equals C2
+	// C1 equals C2 if and only if A1 equals A2
+
+
+	unsigned int i;
+
+	// The interface can only be equal to interfaces declared in other modules. 
+	// Interfaces registered by the application will conflict with this one if it has the same name.
+	// This means that we only need to look for the interfaces in the engine->classTypes, but not in engine->objectTypes.
+	asCArray<sObjectTypePair> equals;
+	for( i = 0; i < interfaceDeclarations.GetLength(); i++ )
+	{
+		asCObjectType *intf1 = interfaceDeclarations[i]->objType;
+		for( unsigned int n = 0; n < engine->classTypes.GetLength(); n++ )
+		{
+			// Don't compare against self
+			if( engine->classTypes[n] == intf1 )
+				continue;
+	
+			asCObjectType *intf2 = engine->classTypes[n];
+
+			// Assume the interface are equal, then validate this
+			sObjectTypePair pair = {intf1,intf2};
+			equals.PushLast(pair);
+
+			if( !AreInterfacesEqual(intf1, intf2, equals) )
+				equals.PopLast();
+		}
+	}
+
+	// For each of the interfaces that have been found to be equal we need to 
+	// remove the new declaration and instead have the module use the existing one.
+	for( i = 0; i < equals.GetLength(); i++ )
+	{
+		for( unsigned int n = 0; n < interfaceDeclarations.GetLength(); n++ )
+		{
+			if( equals[i].a == interfaceDeclarations[n]->objType )
+			{
+				// Substitute the old object type from the module's class types
+				unsigned int c;
+				for( c = 0; c < module->classTypes.GetLength(); c++ )
+				{
+					if( module->classTypes[c] == equals[i].a )
+					{
+						module->classTypes[c] = equals[i].b;
+						equals[i].b->refCount++;
+						break;
+					}
+				}
+
+				// Remove the old object type from the engine's class types
+				for( c = 0; c < engine->classTypes.GetLength(); c++ )
+				{
+					if( engine->classTypes[c] == equals[i].a )
+					{
+						engine->classTypes[c] = engine->classTypes[engine->classTypes.GetLength()-1];
+						engine->classTypes.PopLast();
+						break;
+					}
+				}
+
+				// Substitute all uses of this object type
+				// Only interfaces in the module is using the type so far
+				for( c = 0; c < module->classTypes.GetLength(); c++ )
+				{
+					if( module->classTypes[c]->IsInterface() )
+					{
+						asCObjectType *intf = module->classTypes[c];
+						for( int m = 0; m < intf->GetMethodCount(); m++ )
+						{
+							asCScriptFunction *func = engine->GetScriptFunction(intf->methods[m]);
+							if( func )
+							{
+								if( func->returnType.GetObjectType() == equals[i].a )
+									func->returnType.SetObjectType(equals[i].b);
+
+								for( int p = 0; p < func->GetParamCount(); p++ )
+								{
+									if( func->parameterTypes[p].GetObjectType() == equals[i].a )
+										func->parameterTypes[p].SetObjectType(equals[i].b);
+								}
+							}
+						}
+					}
+				}
+
+				// Substitute all interface methods in the module. Delete all methods for the old interface
+				for( unsigned int m = 0; m < equals[i].a->methods.GetLength(); m++ )
+				{
+					for( c = 0; c < module->scriptFunctions.GetLength(); c++ )
+					{
+						if( module->scriptFunctions[c]->id == equals[i].a->methods[m] )
+						{
+							engine->DeleteScriptFunction(module->scriptFunctions[c]->id);
+							module->scriptFunctions[c] = engine->GetScriptFunction(equals[i].b->methods[m]);
+						}
+					}
+				}
+
+				// Deallocate the object type and interfaceDeclaration
+				DELETE(interfaceDeclarations[n]->objType,asCObjectType);
+
+				if( interfaceDeclarations[n]->node )
+				{
+					interfaceDeclarations[n]->node->Destroy(engine);
+				}
+
+				DELETE(interfaceDeclarations[n],sClassDeclaration);
+				interfaceDeclarations[n] = interfaceDeclarations[interfaceDeclarations.GetLength()-1];
+				interfaceDeclarations.PopLast();
+				n--;
+			}
+		}
+	}
+}
+
+// internal
+bool asCBuilder::AreInterfacesEqual(asCObjectType *a, asCObjectType *b, asCArray<sObjectTypePair> &equals)
+{
+	// An interface is considered equal to another if the following criterias apply:
+	//
+	// - The interface names are equal
+	// - The number of methods is equal
+	// - All the methods are equal
+	// - The order of the methods is equal
+	// - If a method returns or takes an interface by handle or reference, both interfaces must be equal
+
+
+	// ------------
+	// TODO: Study the possiblity of allowing interfaces where methods are declared in different orders to
+	// be considered equal. The compiler and VM can handle this, but it complicates the comparison of interfaces
+	// where multiple methods take different interfaces as parameters (or return values). Example:
+	// 
+	// interface A
+	// {
+	//    void f(B, C);
+	//    void f(B);
+	//    void f(C);
+	// }
+	//
+	// If 'void f(B)' in module A is compared against 'void f(C)' in module B, then the code will assume
+	// interface B in module A equals interface C in module B. Thus 'void f(B, C)' in module A won't match
+	// 'void f(C, B)' in module B.
+	// ------------
+
+
+	// Are both interfaces?
+	if( !a->IsInterface() || !b->IsInterface() )
+		return false;
+
+	// Are the names equal?
+	if( a->name != b->name )
+		return false;
+
+	// Are the number of methods equal?
+	if( a->methods.GetLength() != b->methods.GetLength() )
+		return false;
+
+	// Keep the number of equals in the list so we can restore it later if necessary
+	int prevEquals = (int)equals.GetLength();
+
+	// Are the methods equal to each other?
+	bool match = true;
+	for( unsigned int n = 0; n < a->methods.GetLength(); n++ )
+	{
+		match = false;
+
+		asCScriptFunction *funcA = (asCScriptFunction*)engine->GetFunctionDescriptorById(a->methods[n]);
+		asCScriptFunction *funcB = (asCScriptFunction*)engine->GetFunctionDescriptorById(b->methods[n]);
+
+		// funcB can be null if the module that created the interface has been  
+		// discarded but the type has not yet been released by the engine.
+		if( funcB == 0 )
+			break;
+
+		// The methods must have the same name and the same number of parameters
+		if( funcA->name != funcB->name ||
+			funcA->parameterTypes.GetLength() != funcB->parameterTypes.GetLength() )
+			break;
+		
+		// The return types must be equal. If the return type is an interface the interfaces must match.
+		if( !AreTypesEqual(funcA->returnType, funcB->returnType, equals) )
+			break;
+
+		match = true;
+		for( unsigned int p = 0; p < funcA->parameterTypes.GetLength(); p++ )
+		{
+			if( !AreTypesEqual(funcA->parameterTypes[p], funcB->parameterTypes[p], equals) ||
+				funcA->inOutFlags[p] != funcB->inOutFlags[p] )
+			{
+				match = false;
+				break;
+			}
+		}
+
+		if( !match )
+			break;
+	}
+
+	// For each of the new interfaces that we're assuming to be equal, we need to validate this
+	if( match )
+	{
+		for( unsigned int n = prevEquals; n < equals.GetLength(); n++ )
+		{
+			if( !AreInterfacesEqual(equals[n].a, equals[n].b, equals) )
+			{
+				match = false;
+				break;
+			}
+		}
+	}
+
+	if( !match )
+	{
+		// The interfaces doesn't match. 
+		// Restore the list of previous equals before we go on, so  
+		// the caller can continue comparing with another interface
+		equals.SetLength(prevEquals);
+	}
+
+	return match;
+}
+
+bool asCBuilder::AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArray<sObjectTypePair> &equals)
+{
+	if( !a.IsEqualExceptInterfaceType(b) )
+		return false;
+
+	asCObjectType *ai = a.GetObjectType();
+	asCObjectType *bi = b.GetObjectType();
+
+	if( ai && ai->IsInterface() )
+	{
+		// If the interface is in the equals list, then the pair must match the pair in the list
+		bool found = false;
+		unsigned int e;
+		for( e = 0; e < equals.GetLength(); e++ )
+		{
+			if( equals[e].a == ai )
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if( found )
+		{
+			// Do the pairs match?
+			if( equals[e].b != bi )
+				return false;
+		}
+		else
+		{
+			// Assume they are equal from now on
+			sObjectTypePair pair = {ai, bi};
+			equals.PushLast(pair);
+		}
+	}
+
+	return true;
 }
 
 void asCBuilder::CompileFunctions()
@@ -2039,7 +2323,7 @@ void asCBuilder::WriteInfo(const char *scriptname, const char *message, int r, i
 	else
 	{
 		preMessage.isSet = false;
-		engine->CallMessageCallback(scriptname, r, c, asMSGTYPE_INFORMATION, message);
+		engine->WriteMessage(scriptname, r, c, asMSGTYPE_INFORMATION, message);
 	}
 }
 
@@ -2051,7 +2335,7 @@ void asCBuilder::WriteError(const char *scriptname, const char *message, int r, 
 	if( preMessage.isSet )
 		WriteInfo(scriptname, preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
 
-	engine->CallMessageCallback(scriptname, r, c, asMSGTYPE_ERROR, message);
+	engine->WriteMessage(scriptname, r, c, asMSGTYPE_ERROR, message);
 }
 
 void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r, int c)
@@ -2062,7 +2346,7 @@ void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r
 	if( preMessage.isSet )
 		WriteInfo(scriptname, preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
 
-	engine->CallMessageCallback(scriptname, r, c, asMSGTYPE_WARNING, message);
+	engine->WriteMessage(scriptname, r, c, asMSGTYPE_WARNING, message);
 }
 
 

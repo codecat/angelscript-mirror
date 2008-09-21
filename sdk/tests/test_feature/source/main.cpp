@@ -147,7 +147,7 @@ void DetectMemoryLeaks()
 	_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
 
 	// Use _CrtSetBreakAlloc(n) to find a specific memory leak
-	//_CrtSetBreakAlloc(4537);
+	//_CrtSetBreakAlloc(524);
 #endif
 }
 
@@ -175,6 +175,8 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
+	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestFor::Test()               ) goto failed; else printf("-- TestFor passed\n");
 	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
@@ -207,11 +209,9 @@ int main(int argc, char **argv)
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
 	if( TestAssign::Test()            ) goto failed; else printf("-- TestAssign passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
-	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
 	if( TestRZ::Test()                ) goto failed; else printf("-- TestRZ passed\n");
-	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestExceptionMemory::Test()   ) goto failed; else printf("-- TestExceptionMemory passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");

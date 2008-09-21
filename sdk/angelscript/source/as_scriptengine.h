@@ -77,6 +77,7 @@ public:
 	// Script building
 	int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv);
 	int ClearMessageCallback();
+	int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message);
 
 	int RegisterTypedef(const char *type, const char *decl);
 
@@ -211,8 +212,6 @@ public:
 	int  CallObjectMethodRetInt(void *obj, int func);
 	void CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 	bool CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
-
-	void CallMessageCallback(const char *section, int row, int col, asEMsgType type, const char *message);
 
 	void ClearUnusedTypes();
 	void RemoveArrayType(asCObjectType *t);

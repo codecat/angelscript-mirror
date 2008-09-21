@@ -88,10 +88,11 @@ public:
 	bool IsEnumType()       const;
 	bool IsPseudoType()     const;
 
-	bool IsSamePrimitiveBaseType(const asCDataType &dt) const;
-	bool IsEqualExceptRef(const asCDataType &)          const;
-	bool IsEqualExceptRefAndConst(const asCDataType &)  const;
-	bool IsEqualExceptConst(const asCDataType &)        const;
+	bool IsSamePrimitiveBaseType(const asCDataType &dt)    const;
+	bool IsEqualExceptRef(const asCDataType &)             const;
+	bool IsEqualExceptRefAndConst(const asCDataType &)     const;
+	bool IsEqualExceptConst(const asCDataType &)           const;
+	bool IsEqualExceptInterfaceType(const asCDataType &dt) const;
 
 	bool SupportHandles() const;
 	bool CanBeInstanciated() const;

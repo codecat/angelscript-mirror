@@ -398,6 +398,7 @@ public:
 
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv) = 0;
 	virtual int ClearMessageCallback() = 0;
+	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
 
 	virtual int RegisterObjectType(const char *name, int byteSize, asDWORD flags) = 0;
 	virtual int RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;

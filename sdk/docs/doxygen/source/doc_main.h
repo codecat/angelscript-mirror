@@ -69,6 +69,7 @@ This is the documentation for the AngelScript library.
 \todo Add page about custom memory management
 \todo Add page about customizations/optimizations
 \todo Add page about co-routines
+\todo Add page about registering class hierarchies
  
  
  

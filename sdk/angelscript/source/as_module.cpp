@@ -239,7 +239,16 @@ void asCModule::InternalReset()
 	// First free the functions
 	size_t n;
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
+	{
+		if( scriptFunctions[n] == 0 )
+			continue;
+
+		// Don't delete interface methods, if the module isn't the only owner of the interface
+		if( scriptFunctions[n]->objectType && scriptFunctions[n]->objectType->IsInterface() && scriptFunctions[n]->objectType->refCount > 1 )
+			continue;
+
 		engine->DeleteScriptFunction(scriptFunctions[n]->id);
+	}
 	scriptFunctions.SetLength(0);
 
 	if( initFunction )

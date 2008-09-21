@@ -59,11 +59,11 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! The library version.
-#define ANGELSCRIPT_VERSION        21301
+#define ANGELSCRIPT_VERSION        21400
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  13
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "2.13.1"
+#define ANGELSCRIPT_VERSION_MINOR  14
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.14.0 WIP"
 
 // Data types
 
@@ -539,51 +539,51 @@ extern "C"
 {
 	// Engine
 	//! \brief Creates the script engine.
-    //!
-    //! \param[in] version The library version. Should always be \ref ANGELSCRIPT_VERSION.
-    //! \return A pointer to the script engine interface.
-    //!
-    //! Call this function to create a new script engine. When you're done with the
-    //! script engine, i.e. after you've executed all your scripts, you should call
-    //! \ref asIScriptEngine::Release "Release" on the pointer to free the engine object.
+	//!
+	//! \param[in] version The library version. Should always be \ref ANGELSCRIPT_VERSION.
+	//! \return A pointer to the script engine interface.
+	//!
+	//! Call this function to create a new script engine. When you're done with the
+	//! script engine, i.e. after you've executed all your scripts, you should call
+	//! \ref asIScriptEngine::Release "Release" on the pointer to free the engine object.
 	AS_API asIScriptEngine * asCreateScriptEngine(asDWORD version);
 	//! \brief Returns the version of the compiled library.
-    //!
-    //! \return A null terminated string with the library version.
-    //!
-    //! The returned string can be used for presenting the library version in a log file, or in the GUI.
+	//!
+	//! \return A null terminated string with the library version.
+	//!
+	//! The returned string can be used for presenting the library version in a log file, or in the GUI.
 	AS_API const char * asGetLibraryVersion();
 	//! \brief Returns the options used to compile the library.
-    //!
-    //! \return A null terminated string with indicators that identify the options
-    //!         used to compile the script library.
-    //!
-    //! This can be used to identify at run-time different ways to configure the engine.
-    //! For example, if the returned string contain the identifier AS_MAX_PORTABILITY then
-    //! functions and methods must be registered with the \ref asCALL_GENERIC calling convention.
+	//!
+	//! \return A null terminated string with indicators that identify the options
+	//!         used to compile the script library.
+	//!
+	//! This can be used to identify at run-time different ways to configure the engine.
+	//! For example, if the returned string contain the identifier AS_MAX_PORTABILITY then
+	//! functions and methods must be registered with the \ref asCALL_GENERIC calling convention.
 	AS_API const char * asGetLibraryOptions();
 
 	// Context
 	//! \brief Returns the currently active context.
-    //!
-    //! \return A pointer to the currently executing context, or null if no context is executing.
-    //!
-    //! This function is most useful for registered functions, as it will allow them to obtain
-    //! a pointer to the context that is calling the function, and through that get the engine,
-    //! or custom user data.
-    //!
-    //! If the script library is compiled with multithread support, this function will return
-    //! the context that is currently active in the thread that is being executed. It will thus
-    //! work even if there are multiple threads executing scripts at the same time.
+	//!
+	//! \return A pointer to the currently executing context, or null if no context is executing.
+	//!
+	//! This function is most useful for registered functions, as it will allow them to obtain
+	//! a pointer to the context that is calling the function, and through that get the engine,
+	//! or custom user data.
+	//!
+	//! If the script library is compiled with multithread support, this function will return
+	//! the context that is currently active in the thread that is being executed. It will thus
+	//! work even if there are multiple threads executing scripts at the same time.
 	AS_API asIScriptContext * asGetActiveContext();
 
 	// Thread support
 	//! \brief Cleans up memory allocated for the current thread.
 	//!
-    //! \return A negative value on error.
-    //! \retval asCONTEXT_ACTIVE A context is still active.
-    //!
-    //! Call this method before terminating a thread that has
+	//! \return A negative value on error.
+	//! \retval asCONTEXT_ACTIVE A context is still active.
+	//!
+	//! Call this method before terminating a thread that has
 	//! accessed the engine to clean up memory allocated for that thread.
 	//!
 	//! It's not necessary to call this if only a single thread accesses the engine.
@@ -592,11 +592,11 @@ extern "C"
 	// Memory management
 	//! \brief Set the memory management functions that AngelScript should use.
 	//!
-    //! \param[in] allocFunc The function that will be used to allocate memory.
-    //! \param[in] freeFunc The function that will be used to free the memory.
-    //! \return A negative value on error.
-    //!
-    //! Call this method to register the global memory allocation and deallocation
+	//! \param[in] allocFunc The function that will be used to allocate memory.
+	//! \param[in] freeFunc The function that will be used to free the memory.
+	//! \return A negative value on error.
+	//!
+	//! Call this method to register the global memory allocation and deallocation
 	//! functions that AngelScript should use for memory management. This function
 	//! Should be called before \ref asCreateScriptEngine.
 	//!
@@ -605,10 +605,10 @@ extern "C"
 	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
 	//! \brief Remove previously registered memory management functions.
-    //!
-    //! \return A negative value on error.
-    //!
-    //! Call this method to restore the default memory management functions.
+	//!
+	//! \return A negative value on error.
+	//!
+	//! Call this method to restore the default memory management functions.
 	AS_API int asResetGlobalMemoryFunctions();
 }
 #endif // ANGELSCRIPT_DLL_MANUAL_IMPORT
@@ -621,36 +621,36 @@ class asIScriptEngine
 public:
 	// Memory management
 	//! \brief Increase reference counter.
-    //!
-    //! \return The number of references to this object.
-    //!
-    //! Call this method when storing an additional reference to the object.
-    //! Remember that the first reference that is received from \ref asCreateScriptEngine
-    //! is already accounted for.
+	//!
+	//! \return The number of references to this object.
+	//!
+	//! Call this method when storing an additional reference to the object.
+	//! Remember that the first reference that is received from \ref asCreateScriptEngine
+	//! is already accounted for.
 	virtual int AddRef() = 0;
 	//! \brief Decrease reference counter.
-    //!
-    //! \return The number of references to this object.
-    //!
-    //! Call this method when you will no longer use the references that you own.
+	//!
+	//! \return The number of references to this object.
+	//!
+	//! Call this method when you will no longer use the references that you own.
 	virtual int Release() = 0;
 
 	// Engine configuration
 	//! \brief Dynamically change some engine properties.
-    //!
-    //! \param[in] property One of the \ref asEEngineProp values.
-    //! \param[in] value The new value of the property.
-    //! \return Negative value on error.
-    //! \retval asINVALID_ARG Invalid property.
-    //!
-    //! With this method you can change the way the script engine works in some regards.
+	//!
+	//! \param[in] property One of the \ref asEEngineProp values.
+	//! \param[in] value The new value of the property.
+	//! \return Negative value on error.
+	//! \retval asINVALID_ARG Invalid property.
+	//!
+	//! With this method you can change the way the script engine works in some regards.
 	virtual int     SetEngineProperty(asEEngineProp property, asPWORD value) = 0;
 	//! \brief Retrieve current engine property settings.
-    //!
-    //! \param[in] property One of the \ref asEEngineProp values.
-    //! \return The value of the property, or 0 if it is an invalid property.
-    //!
-    //! Calling this method lets you determine the current value of the engine properties.
+	//!
+	//! \param[in] property One of the \ref asEEngineProp values.
+	//! \return The value of the property, or 0 if it is an invalid property.
+	//!
+	//! Calling this method lets you determine the current value of the engine properties.
 	virtual asPWORD GetEngineProperty(asEEngineProp property) = 0;
 
 	//! \brief Sets a message callback that will receive compiler messages.
@@ -678,11 +678,26 @@ public:
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv) = 0;
 
 	//! \brief Clears the registered message callback routine.
-    //!
-    //! \return A negative value on error.
-    //!
-    //! Call this method to remove the message callback.
+	//!
+	//! \return A negative value on error.
+	//!
+	//! Call this method to remove the message callback.
 	virtual int ClearMessageCallback() = 0;
+
+	//! \brief Writes a message to the message callback.
+	//!
+	//! \param[in] section The name of the script section.
+	//! \param[in] row The row number.
+	//! \param[in] col The column number.
+	//! \param[in] type The message type.
+	//! \param[in] message The message text.
+	//! \return A negative value on error.
+	//! \retval asINVALID_ARG The section or message is null.
+	//! 
+	//! This method can be used by the application to write messages
+	//! to the same message callback that the script compiler uses. This
+	//! is useful for example if a preprocessor is used.
+	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
 
 	//! \brief Registers a new object type.
     //!

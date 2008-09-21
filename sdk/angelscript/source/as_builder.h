@@ -82,6 +82,12 @@ struct sClassDeclaration
 	asCObjectType *objType;
 };
 
+struct sObjectTypePair
+{
+	asCObjectType *a;
+	asCObjectType *b;
+};
+
 class asCCompiler;
 
 class asCBuilder
@@ -130,6 +136,9 @@ protected:
 	int RegisterInterface(asCScriptNode *node, asCScriptCode *file);
 	int RegisterEnum(asCScriptNode *node, asCScriptCode *file);
 	int RegisterTypedef(asCScriptNode *node, asCScriptCode *file);
+	void ResolveInterfaceIds();
+	bool AreInterfacesEqual(asCObjectType *a, asCObjectType *b, asCArray<sObjectTypePair> &equals);
+	bool AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArray<sObjectTypePair> &equals);
 	void CompileClasses();
 
 	bool DoesMethodExist(asCObjectType *objType, int methodId);
