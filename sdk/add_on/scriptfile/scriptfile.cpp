@@ -110,7 +110,7 @@ asCScriptString *asCScriptFile::ReadString(unsigned int length)
 	// Read the string
 	string buf;
 	buf.resize(length);
-	int size = fread(&buf[0], 1, length, file); 
+	int size = (int)fread(&buf[0], 1, length, file); 
 	buf.resize(size);
 
 	// Create the string object that will be returned

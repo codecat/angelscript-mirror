@@ -91,6 +91,7 @@ protected:
 
 	asCArray<int> usedTypeIds;
 	asCArray<asCObjectType*> usedTypes;
+	asCMap<int, int> mapFuncIdxToId;
 };
 
 END_AS_NAMESPACE

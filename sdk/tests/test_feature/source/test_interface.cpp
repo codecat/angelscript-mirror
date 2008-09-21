@@ -306,13 +306,29 @@ bool Test2()
 	if( func->GetReturnTypeId() != typeBA )
 		fail = true;
 
-	engine->Release();
-
-	// TODO: This must work for pre-compiled byte code as well, i.e. when loading the byte code 
+	// This must work for pre-compiled byte code as well, i.e. when loading the byte code 
 	// the interface ids must be resolved in the same way it is for compiled scripts
+	engine->AddScriptSection("a", "script", script1, strlen(script1));
+	r = engine->Build("a");
+	if( r < 0 )
+		fail = true;
+
+	CBytecodeStream stream;
+	engine->SaveByteCode("a", &stream);
+	r = engine->LoadByteCode("b", &stream);
+	if( r < 0 )
+		fail = true;
+
+	typeAA = engine->GetTypeIdByDecl("a", "A");
+	typeBA = engine->GetTypeIdByDecl("b", "A");
+
+	if( typeAA != typeBA )
+		fail = true;
 
 	// TODO: The interfaces should be equal if they use enums declared in the 
 	// scripts as well (we don't bother checking the enum values)
+
+	engine->Release();
 
 	return fail;
 }

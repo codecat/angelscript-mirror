@@ -257,6 +257,7 @@ void Dummy(asIScriptGeneric *gen)
 bool Test()
 {
 	int r;
+	COutStream out;
 		
  	asIScriptEngine *engine = ConfigureEngine();
 
@@ -341,7 +342,6 @@ bool Test()
 	// Must be possible to load scripts with classes declared out of order
 	// Built-in array types must be able to be declared even though the complete script structure hasn't been loaded yet
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterScriptString(engine);
 	engine->AddScriptSection(0, "script", script4, strlen(script4));
@@ -444,8 +444,6 @@ bool Test()
 			fail = true;
 	}
 	engine->Release();
-
-
 
 	// Success
 	return fail;

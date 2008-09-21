@@ -66,6 +66,12 @@ struct sBindInfo
 	int importedFunction;
 };
 
+struct sObjectTypePair
+{
+	asCObjectType *a;
+	asCObjectType *b;
+};
+
 // TODO: Move this to angelscript.h
 class asIScriptModule
 {
@@ -194,6 +200,10 @@ public:
 	int  GetImportedFunctionIndexByDecl(const char *decl);
 	int  BindImportedFunction(int index, int sourceID);
 	int  UnbindImportedFunction(int importIndex);
+
+	void ResolveInterfaceIds();
+	bool AreInterfacesEqual(asCObjectType *a, asCObjectType *b, asCArray<sObjectTypePair> &equals);
+	bool AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArray<sObjectTypePair> &equals);
 
 	asCScriptFunction *GetImportedFunction(int funcID);
 	asCScriptFunction *GetScriptFunction(int funcID);
