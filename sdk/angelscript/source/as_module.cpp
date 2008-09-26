@@ -441,6 +441,7 @@ int asCModule::GetFunctionIdByDecl(const char *decl)
 	return id;
 }
 
+// interface
 int asCModule::GetGlobalVarCount()
 {
 	if( isBuildWithoutErrors == false )
@@ -449,6 +450,7 @@ int asCModule::GetGlobalVarCount()
 	return (int)scriptGlobals.GetLength();
 }
 
+// interface
 int asCModule::GetGlobalVarIndexByName(const char *name)
 {
 	if( isBuildWithoutErrors == false )
@@ -519,6 +521,10 @@ void *asCModule::GetAddressOfGlobalVar(int index)
 {
 	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
 		return 0;
+
+	// For object variables it's necessary to dereference the pointer to get the address of the value
+	if( scriptGlobals[index]->type.IsObject() && !scriptGlobals[index]->type.IsObjectHandle() )
+		return *(void**)(globalMem.AddressOf() + scriptGlobals[index]->index);
 
 	return (void*)(globalMem.AddressOf() + scriptGlobals[index]->index);
 }

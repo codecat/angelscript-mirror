@@ -105,13 +105,20 @@ AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, int type
 AS_API int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, int typeId, const char *decl)                                                                                             { return e->GetMethodIDByDecl(typeId, decl); }
 AS_API asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index)                                                                                          { return e->GetMethodDescriptorByIndex(typeId, index); }
 #endif
-AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module)                                                                                                       { return e->GetGlobalVarCount(module); }
+AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module)                               { return e->GetGlobalVarCount(module); }
+AS_API int               asEngine_GetGlobalVarIndexByName(asIScriptEngine *e, const char *module, const char *name)       { return e->GetGlobalVarIndexByName(module, name); }
+AS_API int               asEngine_GetGlobalVarIndexByDecl(asIScriptEngine *e, const char *module, const char *decl)       { return e->GetGlobalVarIndexByDecl(module, decl); }
+AS_API const char *      asEngine_GetGlobalVarDeclaration(asIScriptEngine *e, const char *module, int index, int *length) { return e->GetGlobalVarDeclaration(module, index, length); }
+AS_API const char *      asEngine_GetGlobalVarName(asIScriptEngine *e, const char *module, int index, int *length)        { return e->GetGlobalVarName(module, index, length); }
+AS_API void *            asEngine_GetAddressOfGlobalVar(asIScriptEngine *e, const char *module, int index)                { return e->GetAddressOfGlobalVar(module, index); }
+#ifdef AS_DEPRECATED
 AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index)                                                                                        { return e->GetGlobalVarIDByIndex(module, index); }
 AS_API int               asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name)                                                                                  { return e->GetGlobalVarIDByName(module, name); }
 AS_API int               asEngine_GetGlobalVarIDByDecl(asIScriptEngine *e, const char *module, const char *decl)                                                                                  { return e->GetGlobalVarIDByDecl(module, decl); }
 AS_API const char *      asEngine_GetGlobalVarDeclaration(asIScriptEngine *e, int gvarID, int *length)                                                                                            { return e->GetGlobalVarDeclaration(gvarID, length); }
 AS_API const char *      asEngine_GetGlobalVarName(asIScriptEngine *e, int gvarID, int *length)                                                                                                   { return e->GetGlobalVarName(gvarID, length); }
 AS_API void *            asEngine_GetGlobalVarPointer(asIScriptEngine *e, int gvarID)                                                                                                             { return e->GetGlobalVarPointer(gvarID); }
+#endif
 AS_API int               asEngine_GetImportedFunctionCount(asIScriptEngine *e, const char *module)                                                                                                { return e->GetImportedFunctionCount(module); }
 AS_API int               asEngine_GetImportedFunctionIndexByDecl(asIScriptEngine *e, const char *module, const char *decl)                                                                        { return e->GetImportedFunctionIndexByDecl(module, decl); }
 AS_API const char *      asEngine_GetImportedFunctionDeclaration(asIScriptEngine *e, const char *module, int importIndex, int *length)                                                            { return e->GetImportedFunctionDeclaration(module, importIndex, length); }

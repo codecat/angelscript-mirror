@@ -25,6 +25,11 @@ void Type_castInt(asIScriptGeneric *gen)
 	*(int*)gen->GetReturnPointer() = *a;
 }
 
+bool Type_equal(int &a, int &b)
+{
+	return a == b;
+}
+
 // Class A is the base class
 class A
 {
@@ -140,7 +145,7 @@ bool Test()
 	r = engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Type_construct0), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Type_construct1), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "int f()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "int f()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
 
 	asIScriptContext *ctx = 0;
 	r = engine->ExecuteString(0, "type t(5); \n"
@@ -205,19 +210,64 @@ bool Test()
 
 	engine->Release();
 
-	// Test3
+	// Test4
 	// It shall not be possible to register a cast behaviour from an object to a boolean type
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	r = engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "bool f()", asFUNCTION(Type_castInt), asCALL_GENERIC); 
+	r = engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "bool f()", asFUNCTION(Type_castInt), asCALL_GENERIC); 
 	if( r != asNOT_SUPPORTED )
 	{
 		fail = true;
 	}
 
 	engine->Release();
+
+	// Test5
+	// Exclicit value cast
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+	r = engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+	r = engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Type_construct0), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Type_construct1), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "int f()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const type &in, const type &in)", asFUNCTION(Type_equal), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("type", "int v", 0);
+
+	// explicit cast to int is allowed
+	r = engine->ExecuteString(0, "type t; t.v = 5; int a = int(t); assert(a == 5);"); 
+	if( r < 0 )
+		fail = true;
+
+	// as cast to int is allowed, AngelScript also allows cast to float (using cast to int then implicit cast to int)
+	r = engine->ExecuteString(0, "type t; t.v = 5; float a = float(t); assert(a == 5.0f);");
+	if( r < 0 )
+		fail = true;
+
+	// implicit cast to int is not allowed
+	bout.buffer = "";
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	r = engine->ExecuteString(0, "type t; int a = t;");
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'type&' to 'int'.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+/*
+	// Having an implicit constructor with an int param makes it possible to compare the type with int
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	r = engine->ExecuteString(0, "type t(5); assert( t == 5 );");
+	if( r < 0 )
+		fail = true;
+*/
+	engine->Release();
+
 
 	//-----------------------------------------------------------------
 	// REFERENCE_CAST

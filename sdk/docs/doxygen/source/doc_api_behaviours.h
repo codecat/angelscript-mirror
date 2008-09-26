@@ -116,13 +116,19 @@ This behaviour should be registered with one parameter using \ref asIScriptEngin
 \section castop Cast operators
 
  - \ref asBEHAVE_VALUE_CAST
+ - \ref asBEHAVE_IMPLICIT_VALUE_CAST
  - \ref asBEHAVE_REF_CAST
  - \ref asBEHAVE_IMPLICIT_REF_CAST
 
-asBEHAVE_VALUE_CAST must be registered without parameters using \ref asIScriptEngine::RegisterObjectBehaviour.
-The return type can be any type, except bool and void.
+asBEHAVE_VALUE_CAST and asBEHAVE_IMPLICIT_VALUE_CAST must be registered without parameters using \ref asIScriptEngine::RegisterObjectBehaviour.
+The return type can be any type, except bool and void. The value cast allows explicit casts through construct calls, whereas the implicit value
+cast also allow the compiler to implicitly use the behaviour to convert expressions as necessary.
 
-asBEHAVE_REF_CAST and asBEHAVE_IMPLICIT_REF_CAST must be registered with one parameter using \ref asIScriptEngine::RegisterGlobalBehaviour. The parameter must be an object handle, as must the return type. The only difference between the two is that the script compiler may use the later for implicit casts, while the former can only be used by explicitly calling the cast operator. This distinction is very useful when registering class hierarchies, where cast to a base class usually is registered with an implicit cast, whereas a cast to a derived class usually is registered with an explicit cast.
+asBEHAVE_REF_CAST and asBEHAVE_IMPLICIT_REF_CAST must be registered with one parameter using \ref asIScriptEngine::RegisterGlobalBehaviour. 
+The parameter must be an object handle, as must the return type. The only difference between the two is that the script compiler may use 
+the later for implicit casts, while the former can only be used by explicitly calling the cast operator. This distinction is very useful 
+when registering class hierarchies, where cast to a base class usually is registered with an implicit cast, whereas a cast to a derived 
+class usually is registered with an explicit cast.
 
 \code
 // Example REF_CAST behaviour

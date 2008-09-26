@@ -239,8 +239,8 @@ bool Test()
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 
-	int id = engine->GetGlobalVarIDByName(0, "gFlag");
-	bool *flag = (bool*)engine->GetGlobalVarPointer(id);
+	int idx = engine->GetGlobalVarIndexByName(0, "gFlag");
+	bool *flag = (bool*)engine->GetAddressOfGlobalVar(0, idx);
 	*(int*)flag = 0xCDCDCDCD;
 
 	engine->ExecuteString(0, "Set()");

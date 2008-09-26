@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.14.0 WIP - 2008/09/21</h2>
+<h2>Version 2.14.0 WIP - 2008/09/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -131,10 +131,20 @@ A:hover
 <ul>
 <li>The C interface now has a dedicated header file with it's own project in the add_on directory.
 <li>Added WriteMessage to the engine interface, for writing to the message callback.
+<li>Deprecated GetGlobalVarIDByIndex, GetGlobalVarIDByName, GetGlobalVarIDByDecl, and GetGlobalVarPointer.
+<li>Added GetGlobalVarIndexByName, GetGlobalVarIndexByDecl, and GetAddressOfGlobalVar.
+<li>The method GetAddressOfGlobalVar that replaces GetGlobalVarPointer now returns the address of objects directly, rather than a pointer to the address of the objects, for object variables.
+<li>Added asBEHAVE_IMPLICIT_VALUE_CAST to differenciate between implicit and explicit value cast behaviours.
 </ul>
 <li>Library
 <ul>
 <li>Identical interfaces declared in different modules will now share type id.
+<li>Added constraint against multiple threads trying to compile scripts at the same time.
+<li>The script compiler no longer uses constructor/factory behaviours in implicit value casts.
+</ul>
+<li>Script language
+<ul>
+<li>The cast&lt;type&gt;(expr) operator can now only be used for reference casts. Value casts must use the construct cast, i.e. type(expr).
 </ul>
 </ul>
 

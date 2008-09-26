@@ -263,7 +263,7 @@ bool Test()
 	typeId = engine->GetTypeIdByDecl(0, "myclass");
 	asIObjectType *type = engine->GetObjectTypeById(typeId);
 	int mtdId = type->GetMethodIdByDecl("void func()");
-	asIScriptStruct *obj = *(asIScriptStruct **)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "c"));
+	asIScriptStruct *obj = (asIScriptStruct *)engine->GetAddressOfGlobalVar(0, engine->GetGlobalVarIndexByName(0, "c"));
 
 	if( mtdId < 0 || obj == 0 ) fail = true;
 	else

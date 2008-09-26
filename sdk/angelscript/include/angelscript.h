@@ -133,6 +133,7 @@ enum asEBehaviours
 
 	// Object operators
 	asBEHAVE_VALUE_CAST,
+	asBEHAVE_IMPLICIT_VALUE_CAST,
 	asBEHAVE_INDEX,
 	asBEHAVE_NEGATE,
 
@@ -217,7 +218,8 @@ enum asERetCodes
 	asCONFIG_GROUP_IS_IN_USE               = -22,
 	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
 	asWRONG_CALLING_CONV                   = -24,
-	asMODULE_IS_IN_USE                     = -25
+	asMODULE_IS_IN_USE                     = -25,
+	asBUILD_IN_PROGRESS                    = -26
 };
 
 // Context states
@@ -453,13 +455,20 @@ public:
 #endif
 
 	// Script global variables
-	virtual int GetGlobalVarCount(const char *module) = 0;
-	virtual int GetGlobalVarIDByIndex(const char *module, int index) = 0;
-	virtual int GetGlobalVarIDByName(const char *module, const char *name) = 0;
-	virtual int GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
+	virtual int         GetGlobalVarCount(const char *module) = 0;
+	virtual int         GetGlobalVarIndexByName(const char *module, const char *name) = 0;
+	virtual int         GetGlobalVarIndexByDecl(const char *module, const char *decl) = 0;
+	virtual const char *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
+	virtual const char *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
+	virtual void       *GetAddressOfGlobalVar(const char *module, int index) = 0;
+#ifdef AS_DEPRECATED
+	virtual int         GetGlobalVarIDByIndex(const char *module, int index) = 0;
+	virtual int         GetGlobalVarIDByName(const char *module, const char *name) = 0;
+	virtual int         GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
 	virtual const char *GetGlobalVarDeclaration(int gvarID, int *length = 0) = 0;
 	virtual const char *GetGlobalVarName(int gvarID, int *length = 0) = 0;
-	virtual void *GetGlobalVarPointer(int gvarID) = 0;
+	virtual void       *GetGlobalVarPointer(int gvarID) = 0;
+#endif
 
 	// Dynamic binding between modules
 	virtual int GetImportedFunctionCount(const char *module) = 0;

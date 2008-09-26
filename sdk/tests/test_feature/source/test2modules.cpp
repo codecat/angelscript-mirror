@@ -70,10 +70,10 @@ bool Test2Modules()
 	if( r < 0 ) ret = true;
 
 	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(engine->GetTypeIdByDecl("b", "CTest"));
-	*((asIScriptStruct**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("a", 0))) = obj;
+	*((asIScriptStruct**)engine->GetAddressOfGlobalVar("a", 0)) = obj;
 	r = engine->ExecuteString("a", "obj.test()");
 	if( r != asEXECUTION_FINISHED ) ret = true;
-	int val = *(int*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName("b", "glob"));
+	int val = *(int*)engine->GetAddressOfGlobalVar("b", engine->GetGlobalVarIndexByName("b", "glob"));
 	if( val != 42 ) ret = true;
 
 	engine->Release();

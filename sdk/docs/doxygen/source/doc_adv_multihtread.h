@@ -17,12 +17,12 @@ Even if you don't want or can't use multithreading, you can still write applicat
 
  - Multiple threads may execute scripts in separate contexts. The contexts may execute scripts from the 
    same module, but if the module has global variables you need to make sure the scripts perform proper
-   access control so that they do not get corrupted, as multiple threads try to update them simultaneously.
+   access control so that they do not get corrupted, if multiple threads try to update them simultaneously.
 
- - Only one thread at a time must be allowed to compile scripts. You may however have threads that 
-   execute scripts while another thread is compiling new modules.
+ - The engine will only allow one thread to build scripts at any one time, since this is something that 
+   changes the internal state of the engine and cannot safely be done in multiple threads simultaneously.
 
  - Resources that are shared by script modules such as registered properties and objects must be protected 
-   by the application for simultaneous access, as the script engine doesn't do this.
+   by the application for simultaneous access, as the script engine doesn't do this automatically.
    
 */

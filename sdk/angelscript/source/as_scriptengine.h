@@ -128,13 +128,20 @@ public:
 	asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index);
 #endif
 
-	int GetGlobalVarCount(const char *module);
+	int         GetGlobalVarCount(const char *module);
+	int         GetGlobalVarIndexByName(const char *module, const char *name);
+	int         GetGlobalVarIndexByDecl(const char *module, const char *decl);
+	const char *GetGlobalVarDeclaration(const char *module, int index, int *length = 0);
+	const char *GetGlobalVarName(const char *module, int index, int *length = 0);
+	void       *GetAddressOfGlobalVar(const char *module, int index);
+#ifdef AS_DEPRECATED
 	int GetGlobalVarIDByIndex(const char *module, int index);
 	int GetGlobalVarIDByName(const char *module, const char *name);
 	int GetGlobalVarIDByDecl(const char *module, const char *decl);
 	const char *GetGlobalVarDeclaration(int gvarID, int *length);
 	const char *GetGlobalVarName(int gvarID, int *length);
 	void *GetGlobalVarPointer(int gvarID);
+#endif
 
 	// Dynamic binding between modules
 	int GetImportedFunctionCount(const char *module);
@@ -275,6 +282,7 @@ public:
 	int refCount;
 	asCArray<asCModule *> scriptModules;
 	asCModule *lastModule;
+	bool isBuilding;
 
 	asCArray<asCObjectType *> classTypes;
 	asCArray<asCObjectType *> scriptArrayTypes;

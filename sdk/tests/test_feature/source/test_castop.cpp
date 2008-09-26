@@ -29,6 +29,7 @@ class clss : intf1, intf2  \n\
 // with an uint and a double. The path via TestObj2
 // must not be considered by the compiler, as that 
 // would make: Func(TestObj(TestObj2(2)));
+/*
 const char *script2 = "\
 class TestObj                                     \n\
 {                                                 \n\
@@ -51,6 +52,7 @@ void Test()                                       \n\
 	Func(2);                                      \n\
 	Func(2.1);                                    \n\
 }                                                 \n";
+*/
 
 // In this test it must not be possible to implicitly convert using 
 // a path that requires multiple object constructions, e.g.
@@ -91,18 +93,18 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 
- 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	int res = 0;
 	engine->RegisterGlobalProperty("int res", &res);
 
-	engine->ExecuteString(0, "res = cast<int>(2342.4)");
+	engine->ExecuteString(0, "res = int(2342.4)");
 	if( res != 2342 ) 
 		fail = true;
 
-	engine->ExecuteString(0, "double tmp = 3452.4; res = cast<int>(tmp)");
+	engine->ExecuteString(0, "double tmp = 3452.4; res = int(tmp)");
 	if( res != 3452 ) 
 		fail = true;
 
@@ -134,7 +136,8 @@ bool Test()
 
 	//--------------
 	// Using constructor as implicit cast operator
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	// TODO: Script classes should perhaps allow implicit casts to be implemented as well
+/*	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "Test2", script2, strlen(script2));
 	r = engine->Build(0);
 	if( r < 0 )
@@ -142,7 +145,7 @@ bool Test()
 	r = engine->ExecuteString(0, "Test()");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
-
+*/
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	engine->AddScriptSection(0, "Test3", script3, strlen(script3));
 	r = engine->Build(0);

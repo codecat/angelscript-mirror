@@ -95,12 +95,7 @@ created.
 In most cases an explicit cast is not necessary for primitive types, however, 
 as the compiler is usually able to do an implicit cast to the correct type.
 
-The compiler is also able to use declared object constructors when performing 
-implicit conversions. For example, if you have an object type that can be 
-constructed with an integer parameter, you will be able to pass integer
-expressions to functions that expect that object type, as the compiler will 
-automatically construct the object for you. Note, however that this conversion 
-cannot be done implicitly if the function expects a reference argument.
+
 
 
 

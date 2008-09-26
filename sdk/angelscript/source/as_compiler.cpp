@@ -3567,12 +3567,26 @@ void asCCompiler::ImplicitConversionFromObject(asSExprContext *ctx, const asCDat
 	asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
 	if( beh )
 	{
-		for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
+		if( isExplicit )
 		{
-			// TODO: cast: accept only implitict cast
-			if( beh->operators[n] == asBEHAVE_VALUE_CAST && 
-				builder->GetFunctionDescription(beh->operators[n+1])->returnType.IsPrimitive() )
-				funcs.PushLast(beh->operators[n+1]);
+			for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
+			{
+				// accept both implicit and explicit cast
+				if( (beh->operators[n] == asBEHAVE_VALUE_CAST ||
+					 beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST) && 
+					builder->GetFunctionDescription(beh->operators[n+1])->returnType.IsPrimitive() )
+					funcs.PushLast(beh->operators[n+1]);
+			}
+		}
+		else
+		{
+			for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
+			{
+				// accept only implicit cast
+				if( beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST && 
+					builder->GetFunctionDescription(beh->operators[n+1])->returnType.IsPrimitive() )
+					funcs.PushLast(beh->operators[n+1]);
+			}
 		}
 	}
 
@@ -3706,7 +3720,16 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 		asCArray<int> funcs;
 		asSTypeBehaviour *beh = to.GetBehaviour();
 		if( beh )
-			funcs = beh->constructors;
+		{
+			// TODO: Add implicit conversion to object types via contructor/factory
+
+			// Find the implicit constructor calls
+/*			for( int n = 0; n < beh->operators.GetLength(); n += 2 )
+				if( beh->operators[n] == asBEHAVE_IMPLICIT_CONSTRUCT ||
+					beh->operators[n] == asBEHAVE_IMPLICIT_FACTORY )
+					funcs.PushLast(beh->operators[n+1]);
+*/
+		}
 
 		// Compile the arguments
 		asCArray<asSExprContext *> args;
@@ -5395,6 +5418,11 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		{
 			to.MakeHandle(true);
 			to.MakeReference(true);
+		}
+		else if( !to.IsObjectHandle() )
+		{
+			// The cast<type> operator can only be used for reference casts
+			Error(TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST, node->firstChild);
 		}
 	}
 

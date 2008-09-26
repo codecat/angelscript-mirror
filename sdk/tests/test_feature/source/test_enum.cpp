@@ -177,15 +177,9 @@ static bool TestEnum()
 	r = engine->ExecuteString(0, "TEST_ENUM val = TEST_ENUM(1)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
-	r = engine->ExecuteString(0, "TEST_ENUM val = cast<TEST_ENUM>(1)");
-	if( r != asEXECUTION_FINISHED )
-		fail = true;
 
 	// primitive value can be explicitly cast to enum type
 	r = engine->ExecuteString(0, "float f = 1.2f; TEST_ENUM val = TEST_ENUM(f)");
-	if( r != asEXECUTION_FINISHED )
-		fail = true;
-	r = engine->ExecuteString(0, "float f = 1.2f; TEST_ENUM val = cast<TEST_ENUM>(f)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 

@@ -175,12 +175,12 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestFor::Test()               ) goto failed; else printf("-- TestFor passed\n");
 	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
-	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestRefCast::Test()           ) goto failed; else printf("-- TestRefCast passed\n");
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");

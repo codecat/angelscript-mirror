@@ -386,12 +386,19 @@ extern "C"
 	AS_API asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index);
 	#endif
 	AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module);
+	AS_API int               asEngine_GetGlobalVarIndexByName(asIScriptEngine *e, const char *module, const char *name);
+	AS_API int               asEngine_GetGlobalVarIndexByDecl(asIScriptEngine *e, const char *module, const char *decl);
+	AS_API const char *      asEngine_GetGlobalVarDeclaration(asIScriptEngine *e, const char *module, int index, int *length /* = 0 */);
+	AS_API const char *      asEngine_GetGlobalVarName(asIScriptEngine *e, const char *module, int index, int *length /* = 0 */);
+	AS_API void *            asEngine_GetAddressOfGlobalVar(asIScriptEngine *e, const char *module, int index);
+	#ifdef AS_DEPRECATED
 	AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name);
 	AS_API int               asEngine_GetGlobalVarIDByDecl(asIScriptEngine *e, const char *module, const char *decl);
 	AS_API const char *      asEngine_GetGlobalVarDeclaration(asIScriptEngine *e, int gvarID, int *length /* = 0 */);
 	AS_API const char *      asEngine_GetGlobalVarName(asIScriptEngine *e, int gvarID, int *length /* = 0 */);
 	AS_API void *            asEngine_GetGlobalVarPointer(asIScriptEngine *e, int gvarID);
+	#endif
 	AS_API int               asEngine_GetImportedFunctionCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetImportedFunctionIndexByDecl(asIScriptEngine *e, const char *module, const char *decl);
 	AS_API const char *      asEngine_GetImportedFunctionDeclaration(asIScriptEngine *e, const char *module, int importIndex, int *length /* = 0 */);

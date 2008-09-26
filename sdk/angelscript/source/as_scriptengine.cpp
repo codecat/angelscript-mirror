@@ -243,15 +243,11 @@ asCScriptEngine::asCScriptEngine()
 
 
 	scriptTypeBehaviours.engine = this;
-
 	refCount = 1;
-
 	stringFactory = 0;
-
 	configFailed = false;
-
 	isPrepared = false;
-
+	isBuilding = false;
 	lastModule = 0;
 
 	// Reset the GC state
@@ -475,21 +471,36 @@ int asCScriptEngine::AddScriptSection(const char *module, const char *name, cons
 
 int asCScriptEngine::Build(const char *module)
 {
+	ENTERCRITICALSECTION(engineCritical);
+	if( isBuilding )
+	{
+		LEAVECRITICALSECTION(engineCritical);
+		return asBUILD_IN_PROGRESS;
+	}
+	isBuilding = true;
+	LEAVECRITICALSECTION(engineCritical);
+
 	PrepareEngine();
 
 	if( configFailed )
 	{
 		WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_INVALID_CONFIGURATION);
+		isBuilding = false;
 		return asINVALID_CONFIGURATION;
 	}
 
 	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
+	if( mod == 0 ) 
+	{
+		isBuilding = false;
+		return asNO_MODULE;
+	}
 
 	int r = mod->Build();
 
 	memoryMgr.FreeUnusedMemory();
 
+	isBuilding = false;
 	return r;
 }
 
@@ -873,6 +884,48 @@ int asCScriptEngine::GetGlobalVarCount(const char *module)
 	return mod->GetGlobalVarCount();
 }
 
+int asCScriptEngine::GetGlobalVarIndexByName(const char *module, const char *name)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetGlobalVarIndexByName(name);
+}
+
+int asCScriptEngine::GetGlobalVarIndexByDecl(const char *module, const char *decl)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetGlobalVarIndexByDecl(decl);
+}
+
+const char *asCScriptEngine::GetGlobalVarDeclaration(const char *module, int index, int *length)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return 0;
+
+	return mod->GetGlobalVarDeclaration(index, length);
+}
+
+const char *asCScriptEngine::GetGlobalVarName(const char *module, int index, int *length)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return 0;
+
+	return mod->GetGlobalVarName(index, length);
+}
+
+void *asCScriptEngine::GetAddressOfGlobalVar(const char *module, int index)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return 0;
+
+	return mod->GetAddressOfGlobalVar(index);
+}
+
+#ifdef AS_DEPRECATED
+// Deprecated since 2008-09-25
 int asCScriptEngine::GetGlobalVarIDByIndex(const char *module, int index)
 {
 	asCModule *mod = GetModule(module, false);
@@ -881,6 +934,7 @@ int asCScriptEngine::GetGlobalVarIDByIndex(const char *module, int index)
 	return mod->moduleID | index;
 }
 
+// Deprecated since 2008-09-25
 int asCScriptEngine::GetGlobalVarIDByName(const char *module, const char *name)
 {
 	asCModule *mod = GetModule(module, false);
@@ -889,6 +943,7 @@ int asCScriptEngine::GetGlobalVarIDByName(const char *module, const char *name)
 	return mod->moduleID | mod->GetGlobalVarIndexByName(name);
 }
 
+// Deprecated since 2008-09-25
 int asCScriptEngine::GetGlobalVarIDByDecl(const char *module, const char *decl)
 {
 	asCModule *mod = GetModule(module, false);
@@ -897,6 +952,7 @@ int asCScriptEngine::GetGlobalVarIDByDecl(const char *module, const char *decl)
 	return mod->moduleID | mod->GetGlobalVarIndexByDecl(decl);
 }
 
+// Deprecated since 2008-09-25
 const char *asCScriptEngine::GetGlobalVarDeclaration(int gvarID, int *length)
 {
 	asCModule *mod = GetModule(gvarID);
@@ -905,6 +961,7 @@ const char *asCScriptEngine::GetGlobalVarDeclaration(int gvarID, int *length)
 	return mod->GetGlobalVarDeclaration(gvarID & 0xFFFF, length);
 }
 
+// Deprecated since 2008-09-25
 const char *asCScriptEngine::GetGlobalVarName(int gvarID, int *length)
 {
 	asCModule *mod = GetModule(gvarID);
@@ -913,6 +970,7 @@ const char *asCScriptEngine::GetGlobalVarName(int gvarID, int *length)
 	return mod->GetGlobalVarName(gvarID & 0xFFFF, length);
 }
 
+// Deprecated since 2008-09-25
 // For primitives, object handles and references the address of the value is returned
 // For objects the address of the reference that holds the object is returned
 void *asCScriptEngine::GetGlobalVarPointer(int gvarID)
@@ -922,7 +980,7 @@ void *asCScriptEngine::GetGlobalVarPointer(int gvarID)
 
 	return mod->GetAddressOfGlobalVar(gvarID & 0xFFFF);
 }
-
+#endif
 
 
 
@@ -1581,6 +1639,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 	if( behaviour == asBEHAVE_CONSTRUCT )
 	{
+		// TODO: Add asBEHAVE_IMPLICIT_CONSTRUCT
+
 		// Verify that it is a value type
 		if( !(func.objectType->flags & asOBJ_VALUE) )
 		{
@@ -1592,6 +1652,11 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION);
 
+		// Implicit constructors must take one and only one parameter
+/*		if( behaviour == asBEHAVE_IMPLICIT_CONSTRUCT &&
+			func.parameterTypes.GetLength() != 1 )
+			return ConfigError(asINVALID_DECLARATION);
+*/
 		// TODO: Verify that the same constructor hasn't been registered already
 
 		// Store all constructors in a list
@@ -1604,7 +1669,13 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		{
 			func.id = AddBehaviourFunction(func, internal);
 			beh->constructors.PushLast(func.id);
-		}
+/*
+			if( behaviour == asBEHAVE_IMPLICIT_CONSTRUCT )
+			{
+				beh->operators.PushLast(behaviour);
+				beh->operators.PushLast(func.id);
+			}
+*/		}
 	}
 	else if( behaviour == asBEHAVE_DESTRUCT )
 	{
@@ -1630,6 +1701,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	}
 	else if( behaviour == asBEHAVE_FACTORY )
 	{
+		// TODO: Add asBEHAVE_IMPLICIT_FACTORY
+
 		// Must be a ref type and must not have asOBJ_NOHANDLE
 		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
 		{
@@ -1641,6 +1714,11 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		if( func.returnType != asCDataType::CreateObjectHandle(func.objectType, false) )
 			return ConfigError(asINVALID_DECLARATION);
 
+		// Implicit factories must take one and only one parameter
+/*		if( behaviour == asBEHAVE_IMPLICIT_FACTORY &&
+			func.parameterTypes.GetLength() != 1 )
+			return ConfigError(asINVALID_DECLARATION);
+*/
 		// TODO: Verify that the same factory function hasn't been registered already
 
 		// Store all factory functions in a list
@@ -1655,7 +1733,13 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 			// Share variable with constructor
 			func.id = AddBehaviourFunction(func, internal);
 			beh->constructors.PushLast(func.id);
-		}
+/*
+			if( behaviour == asBEHAVE_IMPLICIT_FACTORY )
+			{
+				beh->operators.PushLast(behaviour);
+				beh->operators.PushLast(func.id);
+			}
+*/		}
 	}
 	else if( behaviour == asBEHAVE_ADDREF )
 	{
@@ -1837,10 +1921,9 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		else if( behaviour == asBEHAVE_RELEASEREFS )
 			func.id = beh->gcReleaseAllReferences = AddBehaviourFunction(func, internal);
 	}
-	else if( behaviour == asBEHAVE_VALUE_CAST )
+	else if( behaviour == asBEHAVE_IMPLICIT_VALUE_CAST ||
+		     behaviour == asBEHAVE_VALUE_CAST )
 	{
-		// TODO: cast: accept asBEHAVE_IMPLICIT_VALUE_CAST
-
 		// Verify parameter count
 		if( func.parameterTypes.GetLength() != 0 )
 			return ConfigError(asINVALID_DECLARATION);
@@ -2561,10 +2644,23 @@ int asCScriptEngine::SaveByteCode(const char *_module, asIBinaryStream *stream)
 
 int asCScriptEngine::LoadByteCode(const char *_module, asIBinaryStream *stream)
 {
+	ENTERCRITICALSECTION(engineCritical);
+	if( isBuilding )
+	{
+		LEAVECRITICALSECTION(engineCritical);
+		return asBUILD_IN_PROGRESS;
+	}
+	isBuilding = true;
+	LEAVECRITICALSECTION(engineCritical);
+
 	if( stream )
 	{
 		asCModule* module = GetModule(_module, true);
-		if( module == 0 ) return asNO_MODULE;
+		if( module == 0 ) 
+		{
+			isBuilding = false;
+			return asNO_MODULE;
+		}
 
 		if( module->IsUsed() )
 		{
@@ -2577,12 +2673,16 @@ int asCScriptEngine::LoadByteCode(const char *_module, asIBinaryStream *stream)
 		if( module )
 		{
 			asCRestore rest(module, stream, this);
-			return rest.Restore();
+			int r = rest.Restore();
+			isBuilding = false;
+			return r;
 		}
 
+		isBuilding = false;
 		return asNO_MODULE;
 	}
 
+	isBuilding = false;
 	return asINVALID_ARG;
 }
 
@@ -2664,6 +2764,15 @@ int asCScriptEngine::UnbindAllImportedFunctions(const char *module)
 
 int asCScriptEngine::ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)
 {
+	ENTERCRITICALSECTION(engineCritical);
+	if( isBuilding )
+	{
+		LEAVECRITICALSECTION(engineCritical);
+		return asBUILD_IN_PROGRESS;
+	}
+	isBuilding = true;
+	LEAVECRITICALSECTION(engineCritical);
+
 	PrepareEngine();
 
 	// Make sure the config worked
@@ -2673,6 +2782,7 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 			*ctx = 0;
 
 		WriteMessage("",0,0,asMSGTYPE_ERROR,TXT_INVALID_CONFIGURATION);
+		isBuilding = false;
 		return asINVALID_CONFIGURATION;
 	}
 
@@ -2684,6 +2794,7 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 		{
 			if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
 				*ctx = 0;
+			isBuilding = false;
 			return r;
 		}
 		if( ctx )
@@ -2695,7 +2806,10 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 	else
 	{
 		if( *ctx == 0 )
+		{
+			isBuilding = false;
 			return asINVALID_ARG;
+		}
 		exec = *ctx;
 		exec->AddRef();
 	}
@@ -2718,8 +2832,12 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 			*ctx = 0;
 		}
 		exec->Release();
+		isBuilding = false;
 		return asERROR;
 	}
+
+	// The build has ended
+	isBuilding = false;
 
 	// Prepare and execute the context
 	r = ((asCContext*)exec)->PrepareSpecial(asFUNC_STRING, mod);
@@ -2740,7 +2858,6 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 		r = exec->Execute();
 
 	exec->Release();
-
 	return r;
 }
 

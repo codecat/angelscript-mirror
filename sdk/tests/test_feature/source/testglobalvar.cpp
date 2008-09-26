@@ -121,16 +121,16 @@ bool TestGlobalVar()
 
 	engine->ExecuteString("a", "TestGlobalVar()");
 
-	float *f = (float*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "float f"));
-	string *str = *(string**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "string str"));
+	float *f = (float*)engine->GetAddressOfGlobalVar("a", engine->GetGlobalVarIndexByDecl("a", "float f"));
+	string *str = (string*)engine->GetAddressOfGlobalVar("a", engine->GetGlobalVarIndexByDecl("a", "string str"));
 
 	float fv = *f; UNUSED_VAR(fv);
 	string strv = *str;
 
 	engine->ResetModule("a");
 
-	f = (float*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "float f"));
-	str = *(string**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("a", "string str"));
+	f = (float*)engine->GetAddressOfGlobalVar("a", engine->GetGlobalVarIndexByDecl("a", "float f"));
+	str = (string*)engine->GetAddressOfGlobalVar("a", engine->GetGlobalVarIndexByDecl("a", "string str"));
 
 	if( !CompareDouble(*f, 2) || *str != "test" )
 	{
@@ -149,13 +149,13 @@ bool TestGlobalVar()
 	int c = engine->GetGlobalVarCount("b");
 	if( c != 8 ) ret = true;
 	double d;
-	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("b", 0)); 
+	d = *(double*)engine->GetAddressOfGlobalVar("b", 0); 
 	if( !CompareDouble(d, 12) ) ret = true;
-	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName("b", "gcb")); 
+	d = *(double*)engine->GetAddressOfGlobalVar("b", engine->GetGlobalVarIndexByName("b", "gcb")); 
 	if( !CompareDouble(d, 5) ) ret = true;
-	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByDecl("b", "const double gcc")); 
+	d = *(double*)engine->GetAddressOfGlobalVar("b", engine->GetGlobalVarIndexByDecl("b", "const double gcc")); 
 	if( !CompareDouble(d, 35.2) ) ret = true;
-	d = *(double*)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByIndex("b", 3)); 
+	d = *(double*)engine->GetAddressOfGlobalVar("b", 3); 
 	if( !CompareDouble(d, 4) ) ret = true;
 	
 	engine->ExecuteString("b", "test()");
@@ -198,8 +198,8 @@ bool TestGlobalVar()
 		ret = true;
 	else
 	{
-		asCScriptString *object = *(asCScriptString**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "object"));
-		asCScriptString **handle = (asCScriptString**)engine->GetGlobalVarPointer(engine->GetGlobalVarIDByName(0, "handle"));
+		asCScriptString *object = (asCScriptString*)engine->GetAddressOfGlobalVar(0, engine->GetGlobalVarIndexByName(0, "object"));
+		asCScriptString **handle = (asCScriptString**)engine->GetAddressOfGlobalVar(0, engine->GetGlobalVarIndexByName(0, "handle"));
 		if( *handle != object )
 			ret = true;
 		if( object->buffer != "t" )
