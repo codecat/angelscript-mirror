@@ -240,6 +240,13 @@ bool Test()
 	r = engine->Build(0);
 	if( r < 0 ) fail = true;
 
+	// Verify that GetObjectTypeByIndex recognizes the script class
+	if( engine->GetObjectTypeCount() != 2 )
+		fail = true;
+	asIObjectType *type = engine->GetObjectTypeByIndex(1);
+	if( strcmp(type->GetName(), "Test") != 0 )
+		fail = true;
+
 	asIScriptContext *ctx = 0;
 	r = engine->ExecuteString(0, "TestStruct()", &ctx);
 	if( r != asEXECUTION_FINISHED ) 

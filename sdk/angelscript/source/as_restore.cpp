@@ -339,7 +339,7 @@ void asCRestore::WriteProperty(asCProperty* prop)
 
 void asCRestore::WriteDataType(const asCDataType *dt) 
 {
-	if( dt->IsScriptArray() )
+	if( dt->IsTemplate() )
 	{
 		bool b = true;
 		WRITE_NUM(b);
@@ -382,7 +382,8 @@ void asCRestore::WriteObjectType(asCObjectType* ot)
 	// Only write the object type name
 	if( ot )
 	{
-		if( ot->flags & asOBJ_SCRIPT_ARRAY && ot->name != asDEFAULT_ARRAY )
+		// TODO: Template: Check for template instances, rather than the template itself
+		if( ot->flags & asOBJ_TEMPLATE && ot->name != "array<T>" )
 		{
 			ch = 'a';
 			WRITE_NUM(ch);

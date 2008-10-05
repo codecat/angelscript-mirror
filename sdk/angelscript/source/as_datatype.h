@@ -70,7 +70,7 @@ public:
 	int MakeReadOnly(bool b);
 	int MakeHandleToConst(bool b);
 
-	bool IsScriptArray()    const;
+	bool IsTemplate()       const;
 	bool IsScriptStruct()   const;
 	bool IsPrimitive()      const;
 	bool IsObject()         const;

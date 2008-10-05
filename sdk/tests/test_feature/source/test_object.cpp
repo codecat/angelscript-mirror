@@ -144,6 +144,7 @@ bool Test()
 	}
 	bool fail = false;
 	int r;
+	int funcId;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -152,7 +153,7 @@ bool Test()
 	engine->RegisterObjectType("Object", sizeof(CObject), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CD);	
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectMethod("Object", "void Set(int)", asMETHOD(CObject, Set), asCALL_THISCALL);
+	funcId = engine->RegisterObjectMethod("Object", "void Set(int)", asMETHOD(CObject, Set), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Object", "int Get()", asMETHOD(CObject, Get), asCALL_THISCALL);
 	engine->RegisterObjectProperty("Object", "int val", offsetof(CObject, val));
 
@@ -216,6 +217,26 @@ bool Test()
 	{
 		fail = true;
 	}
+
+	// Verify that the registered types can be enumerated
+	int count = engine->GetObjectTypeCount();
+	if( count != 3 )
+		fail = true;
+	asIObjectType *type = engine->GetObjectTypeByIndex(0);
+	if( strcmp(type->GetName(), "Object") != 0 )
+		fail = true;
+	
+	// Test calling an application registered method directly with context
+	ctx = engine->CreateContext();
+	ctx->Prepare(funcId);
+	ctx->SetObject(&obj);
+	ctx->SetArgDWord(0, 42);
+	r = ctx->Execute();
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( obj.val != 42 )
+		fail = true;
+	ctx->Release();
 
 	engine->Release();
 

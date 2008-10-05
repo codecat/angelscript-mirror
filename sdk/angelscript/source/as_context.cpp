@@ -983,52 +983,72 @@ int asCContext::Execute()
 
 	if( byteCode == 0 )
 	{
-		// The currentFunction is an interface method
-		asASSERT( currentFunction->funcType == asFUNC_INTERFACE );
-
-		// Determine the true function from the object
-		asCScriptStruct *obj = *(asCScriptStruct**)(size_t*)stackFramePointer;
-		if( obj == 0 )
+		if( currentFunction->funcType == asFUNC_INTERFACE )
 		{
-			SetInternalException(TXT_NULL_POINTER_ACCESS);
-		}
-		else
-		{
-			asCObjectType *objType = obj->objType;
-
-			// Search the object type for a function that matches the interface function
-			asCScriptFunction *realFunc = 0;
-			for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
-			{
-				asCScriptFunction *f2 = engine->scriptFunctions[objType->methods[n]];
-				if( f2->signatureId == currentFunction->signatureId )
-				{
-					realFunc = f2;
-					break;
-				}
-			}
-
-			if( realFunc == 0 )
+			// The currentFunction is an interface method
+	
+			// Determine the true function from the object
+			asCScriptStruct *obj = *(asCScriptStruct**)(size_t*)stackFramePointer;
+			if( obj == 0 )
 			{
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
 			}
 			else
 			{
-				currentFunction = realFunc;
-				byteCode = currentFunction->byteCode.AddressOf();
+				asCObjectType *objType = obj->objType;
 
-				if( module ) module->ReleaseContextRef();
-				module = currentFunction->module;
-				if( module )
-					module->AddContextRef();
-
-				// Set the local objects to 0
-				for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+				// Search the object type for a function that matches the interface function
+				asCScriptFunction *realFunc = 0;
+				for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
 				{
-					int pos = currentFunction->objVariablePos[n];
-					*(size_t*)&stackFramePointer[-pos] = 0;
+					asCScriptFunction *f2 = engine->scriptFunctions[objType->methods[n]];
+					if( f2->signatureId == currentFunction->signatureId )
+					{
+						realFunc = f2;
+						break;
+					}
+				}
+
+				if( realFunc == 0 )
+				{
+					SetInternalException(TXT_NULL_POINTER_ACCESS);
+				}
+				else
+				{
+					currentFunction = realFunc;
+					byteCode = currentFunction->byteCode.AddressOf();
+
+					if( module ) module->ReleaseContextRef();
+					module = currentFunction->module;
+					if( module )
+						module->AddContextRef();
+
+					// Set the local objects to 0
+					for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+					{
+						int pos = currentFunction->objVariablePos[n];
+						*(size_t*)&stackFramePointer[-pos] = 0;
+					}
 				}
 			}
+		}
+		else if( currentFunction->funcType == asFUNC_SYSTEM )
+		{
+			// The current function is an application registered function
+
+			// Call the function directly
+			CallSystemFunction(currentFunction->id, this, 0);
+			
+			// Was the call successful?
+			if( status == tsSuspended )
+			{
+				status = tsProgramFinished;
+			}
+		}
+		else
+		{
+			// This shouldn't happen
+			asASSERT(false);
 		}
 	}
 

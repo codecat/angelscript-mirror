@@ -1280,10 +1280,10 @@ void asCBuilder::CompileClasses()
 				asCProperty *prop = decl->objType->properties[n];
 				asCDataType dt = prop->type;
 
-				if( dt.IsScriptArray() )
+				if( dt.IsTemplate() )
 				{
 					asCDataType sub = dt;
-					while( sub.IsScriptArray() && !sub.IsObjectHandle() )
+					while( sub.IsTemplate() && !sub.IsObjectHandle() )
 						sub = sub.GetSubType();
 
 					dt = sub;
@@ -1392,7 +1392,7 @@ void asCBuilder::CompileClasses()
 
 							// Make sure the array object is also marked as potential circle
 							sub = dt;
-							while( sub.IsScriptArray() )
+							while( sub.IsTemplate() )
 							{
 								sub.GetObjectType()->flags |= asOBJ_GC;
 								sub = sub.GetSubType();
@@ -1401,7 +1401,7 @@ void asCBuilder::CompileClasses()
 							break;
 						}
 
-						if( sub.IsScriptArray() )
+						if( sub.IsTemplate() )
 							sub = sub.GetSubType();
 						else
 							break;

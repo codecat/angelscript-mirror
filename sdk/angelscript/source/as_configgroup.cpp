@@ -147,7 +147,9 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 			if( engine->objectTypes[m] == objTypes[n] )
 			{
 				DELETE(engine->objectTypes[m],asCObjectType);
-				engine->objectTypes[m] = 0;
+				engine->objectTypes[m] = engine->objectTypes[engine->objectTypes.GetLength()-1];
+				engine->objectTypes.PopLast();
+				m--;
 			}
 		}
 	}

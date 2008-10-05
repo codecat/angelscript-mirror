@@ -25,13 +25,15 @@ static void cfunction_gen(asIScriptGeneric*gen)
 
 bool TestExecute1Arg()
 {
-	bool ret = false;
+	bool fail = false;
+	int funcId;
+	int r;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction_gen), asCALL_GENERIC);
+		funcId = engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction_gen), asCALL_GENERIC);
 	else
-		engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction), asCALL_CDECL);
+		funcId = engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction), asCALL_CDECL);
 
 	engine->ExecuteString(0, "cfunction(5)");
 
@@ -39,17 +41,54 @@ bool TestExecute1Arg()
 	{
 		// failure
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
-		ret = true;
+		fail = true;
 	} 
 	else if( testVal != 5 ) 
 	{
 		// failure
 		printf("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, 5);
-		ret = true;
+		fail = true;
 	}
+
+	// Now try to call the function directly via a context
+	testVal = 0;
+	called = false;
+	asIScriptContext *ctx = engine->CreateContext();
+
+	r = ctx->Prepare(funcId);
+	if( r < 0 )
+	{
+		fail = true;
+	}
+	else
+	{
+		ctx->SetArgDWord(0, 5);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+		{
+			fail = true;
+		}
+		else
+		{
+			if( !called ) 
+			{
+				// failure
+				printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+				fail = true;
+			} 
+			else if( testVal != 5 ) 
+			{
+				// failure
+				printf("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, 5);
+				fail = true;
+			}
+		}
+	}
+
+	ctx->Release();
 
 	engine->Release();
 	
 	// Success
-	return ret;
+	return fail;
 }

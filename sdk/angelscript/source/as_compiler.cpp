@@ -422,7 +422,7 @@ void asCCompiler::DefaultConstructor(asCByteCode *bc, asCDataType &type)
 	asSTypeBehaviour *beh = type.GetBehaviour();
 	if( beh ) func = beh->construct;
 
-	if( type.IsScriptArray() )
+	if( type.IsTemplate() )
 	{
 		// The script array constructor needs to know what type it is
 		asCObjectType *objType = type.GetObjectType();
@@ -1115,8 +1115,8 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		arg = arg->next;
 	}
 
-	// The script array and script any needs to receive their object type
-	if( type && type->IsScriptArray() )
+	// The script array needs to receive their object type
+	if( type && type->IsTemplate() )
 	{
 		argCount += 1;
 	}
@@ -1128,7 +1128,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		args[n] = 0;
 
 	n = argCount-1;
-	if( type && type->IsScriptArray() )
+	if( type && type->IsTemplate() )
 	{
 		args[n] = NEW(asSExprContext)(engine);
 		args[n]->bc.InstrPTR(BC_OBJTYPE, type->GetObjectType());
@@ -1536,7 +1536,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		arg1.type.Set(asCDataType::CreatePrimitive(ttUInt, false));
 		args.PushLast(&arg1);
 
-		if( var->dataType.IsScriptArray() )
+		if( var->dataType.IsTemplate() )
 		{
 			// Script arrays need the type id as well
 			arg2.bc.InstrPTR(BC_OBJTYPE, var->dataType.GetObjectType());
@@ -1573,8 +1573,9 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 		// Find the indexing operator that is not read-only that will be used for all elements
 		asCDataType retType;
-		if( var->dataType.IsScriptArray() )
+		if( var->dataType.IsTemplate() )
 		{
+			// TODO: Template: The return type should be the template subtype
 			retType = asCDataType::CreatePrimitive(ttInt, false);
 			retType.MakeReference(true);
 		}
@@ -6467,9 +6468,9 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				args.PushLast(&expr);
 				PerformFunctionCall(descr->id, ctx, false, &args);
 
-				// TODO: Ugly code
+				// TODO: Template: Remove this. PerformFunctionCall should set the correct return type based on the template type
 				// The default array returns a reference to the subtype
-				if( objType.dataType.IsScriptArray() )
+				if( objType.dataType.IsTemplate() )
 				{
 					ctx->type.dataType = objType.dataType.GetSubType();
 					if( !ctx->type.dataType.IsPrimitive() )
@@ -8214,6 +8215,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 	int argSize = descr->GetSpaceNeededForArguments();
 
+	// TODO: Template: The compiler should determine the correct return type from the template type defined for the object
 	ctx->type.Set(descr->returnType);
 
 	if( isConstructor )

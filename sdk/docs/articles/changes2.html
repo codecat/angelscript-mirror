@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.14.0 WIP - 2008/09/25</h2>
+<h2>Version 2.14.0 WIP - 2008/10/03</h2>
 
 <ul>
 <li>Bug fixes
@@ -141,6 +141,8 @@ A:hover
 <li>Identical interfaces declared in different modules will now share type id.
 <li>Added constraint against multiple threads trying to compile scripts at the same time.
 <li>The script compiler no longer uses constructor/factory behaviours in implicit value casts.
+<li>The engine's GetObjectTypeCount and GetObjectTypeByIndex now return application registered types as well.
+<li>The context can be used to call registered functions/class methods directly.
 </ul>
 <li>Script language
 <ul>

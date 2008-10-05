@@ -45,8 +45,6 @@
 
 BEGIN_AS_NAMESPACE
 
-#define asDEFAULT_ARRAY "#array"
-
 class asCScriptEngine;
 struct sArrayBuffer;
 class asCObjectType;

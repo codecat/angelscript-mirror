@@ -446,7 +446,7 @@ void *asCScriptStruct::AllocateObject(asCObjectType *objType, asCScriptEngine *e
 	{
 		ptr = ScriptStructFactory(objType, engine);
 	}
-	else if( objType->flags & asOBJ_SCRIPT_ARRAY )
+	else if( objType->flags & asOBJ_TEMPLATE )
 	{
 		ptr = ArrayObjectFactory(objType);
 	}

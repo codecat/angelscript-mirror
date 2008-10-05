@@ -253,7 +253,7 @@ public:
 	asCObjectType   *defaultArrayObjectType;
 	asCObjectType    scriptTypeBehaviours;
 
-	// Store information about registered object types
+	// Stores all known object types, both application registered, and script declared
 	asCArray<asCObjectType *>      objectTypes;
 	// Store information about registered array types
 	asCArray<asCObjectType *>      arrayTypes;
@@ -284,6 +284,7 @@ public:
 	asCModule *lastModule;
 	bool isBuilding;
 
+	// Stores script declared object types
 	asCArray<asCObjectType *> classTypes;
 	asCArray<asCObjectType *> scriptArrayTypes;
 

@@ -1059,7 +1059,7 @@ int asCScriptEngine::RegisterSpecialObjectType(const char *name, int byteSize, a
 {
 	// Put the data type in the list
 	asCObjectType *type;
-	if( strcmp(name, asDEFAULT_ARRAY) == 0 )
+	if( strcmp(name, "array<T>") == 0 )
 	{
 		type = NEW(asCObjectType)(this);
 		defaultArrayObjectType = type;
@@ -1333,9 +1333,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	}
 	else
 	{
+		// TODO: Template: This ought to be covered automatically by the new template code
 		// int[][] must not be allowed to be registered
 		// if int[] hasn't been registered first
-		if( dt.GetSubType().IsScriptArray() )
+		if( dt.GetSubType().IsTemplate() )
 			return ConfigError(asLOWER_ARRAY_DIMENSION_NOT_REGISTERED);
 
 		if( dt.IsReadOnly() ||
@@ -1397,7 +1398,8 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	asSTypeBehaviour *beh;
 	asCDataType type;
 
-	bool isDefaultArray = (objType->flags & asOBJ_SCRIPT_ARRAY) ? true : false;
+	// TODO: Template: When the template feature is completed, this function should only be used for script structs
+	bool isDefaultArray = (objType->flags & asOBJ_TEMPLATE) ? true : false;
 
 	if( isDefaultArray )
 		type = asCDataType::CreateDefaultArray(this);
@@ -1418,6 +1420,9 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	// Verify function declaration
 	asCScriptFunction func(this, 0);
 
+	// TODO: Template: How do we make the code handle the template subtype? The engine needs to have a 
+	// special object type, so that asCDataType can represent the generic template subtype. 
+
 	// The default array object is actually being registered 
 	// with incorrect declarations, but that's a concious decision
 	bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
@@ -1433,7 +1438,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION);
 
-		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY) )
+		if( objType->flags & asOBJ_SCRIPT_STRUCT )
 		{
 			if( func.parameterTypes.GetLength() == 1 )
 			{
@@ -1446,7 +1451,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	}
 	else if( behaviour == asBEHAVE_FACTORY )
 	{
-		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY) )
+		if( objType->flags & asOBJ_TEMPLATE )
 		{
 			if( func.parameterTypes.GetLength() == 1 )
 			{
@@ -1493,7 +1498,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		if( func.parameterTypes.GetLength() != 1 )
 			return ConfigError(asINVALID_DECLARATION);
 
-		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY) )
+		if( objType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_TEMPLATE) )
 		{
 			if( beh->copy )
 				return ConfigError(asALREADY_REGISTERED);
@@ -2428,7 +2433,7 @@ void asCScriptEngine::PrepareEngine()
 	// Validate object type registrations
 	for( n = 0; n < objectTypes.GetLength(); n++ )
 	{
-		if( objectTypes[n] && !(objectTypes[n]->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_SCRIPT_ARRAY)) )
+		if( objectTypes[n] && !(objectTypes[n]->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_TEMPLATE)) )
 		{
 			bool missingBehaviour = false;
 
@@ -2930,7 +2935,7 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	// Create a new array type based on the defaultArrayObjectType
 	asCObjectType *ot = NEW(asCObjectType)(this);
 	ot->arrayType = arrayType;
-	ot->flags = asOBJ_REF | asOBJ_SCRIPT_ARRAY;
+	ot->flags = asOBJ_REF | asOBJ_TEMPLATE;
 	ot->size = sizeof(asCArrayObject);
 	ot->name = ""; // Built-in script arrays are registered without name
 	ot->tokenType = type.GetTokenType();
@@ -3712,7 +3717,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 	if( dt.GetObjectType() )
 	{
 		if( dt.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT ) typeId |= asTYPEID_SCRIPTSTRUCT;
-		else if( dt.GetObjectType()->flags & asOBJ_SCRIPT_ARRAY ) typeId |= asTYPEID_SCRIPTARRAY;
+		else if( dt.GetObjectType()->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_SCRIPTARRAY;
 		else typeId |= asTYPEID_APPOBJECT;
 	}
 
@@ -3835,7 +3840,7 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	// Construct the object
 	if( objType->flags & asOBJ_SCRIPT_STRUCT )
 		ptr = ScriptStructFactory(objType, this);
-	else if( objType->flags & asOBJ_SCRIPT_ARRAY )
+	else if( objType->flags & asOBJ_TEMPLATE )
 		ptr = ArrayObjectFactory(objType);
 	else if( objType->flags & asOBJ_REF )
 		ptr = CallGlobalFunctionRetPtr(objType->beh.construct);
@@ -4387,19 +4392,26 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 	return asSUCCESS;
 }
 
+// interface
 int asCScriptEngine::GetObjectTypeCount()
 {
-	return (int)classTypes.GetLength();
+	// Don't count the first object type, which is the built-in array object type
+	return (int)objectTypes.GetLength() - 1 + (int)classTypes.GetLength();
 }
 
+// interface
 asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index)
 {	
-	if( index >= classTypes.GetLength() )
+	if( index+1 >= objectTypes.GetLength() + classTypes.GetLength() )
 		return 0;
 
-	return classTypes[index];
+	if( index+1 < objectTypes.GetLength() )
+		return objectTypes[index+1];
+	
+	return classTypes[index-objectTypes.GetLength()+1];
 }
 
+// interface
 asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId)
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);

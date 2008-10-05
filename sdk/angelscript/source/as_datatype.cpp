@@ -322,9 +322,9 @@ bool asCDataType::IsArrayType() const
 	return objectType ? (objectType->arrayType != 0) : false;
 }
 
-bool asCDataType::IsScriptArray() const
+bool asCDataType::IsTemplate() const
 {
-	if( objectType && (objectType->flags & asOBJ_SCRIPT_ARRAY) )
+	if( objectType && (objectType->flags & asOBJ_TEMPLATE) )
 		return true;
 
 	return false;
