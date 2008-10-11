@@ -118,6 +118,27 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
+<h2>Version 2.14.1 - 2008/10/10</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Removed the need to inform @ when performing explicit ref cast with an implicit ref cast behaviour
+</ul>
+<li>Library
+<ul>
+<li>Added engine property asEP_ALLOW_IMPLICIT_HANDLE_TYPES to turn on the experimental feature.
+</ul>
+<li>Script language
+<ul>
+<li>Added experimental support for implicit handle types. These are declared with 'class@ name {}' (Thanks George Yohng)
+</ul>
+<li>Library
+<ul>
+<li>Added compiler warning when compiling handle comparison where either of the operands have not been explicitly set as handle.
+</ul>
+</ul>
+
 <h2>Version 2.14.0 - 2008/10/05</h2>
 
 <ul>

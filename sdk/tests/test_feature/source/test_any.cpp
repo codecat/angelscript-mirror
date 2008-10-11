@@ -19,10 +19,10 @@ static const char *script1 =
 "  string @s;                           \n"
 "  a.retrieve(@s);                      \n"
 "  Assert(s == str);                    \n"
-"  Assert(@s == str);                   \n"
+"  Assert(@s == @str);                  \n"
 "  int[]@ c;                            \n"
 "  a.retrieve(@c);                      \n"
-"  Assert(c == null);                   \n"
+"  Assert(@c == null);                  \n"
 "  a = any(@str);                       \n"
 "  a.retrieve(@s);                      \n"
 "  Assert(s == str);                    \n"
@@ -30,7 +30,7 @@ static const char *script1 =
 "  d.retrieve(@s);                      \n"
 "  Assert(s == str);                    \n"
 "  g_any.retrieve(@s);                  \n"
-"  Assert(@s == g_str);                 \n"
+"  Assert(@s == @g_str);                \n"
 // If the container holds a handle to a const object, it must not copy this to a handle to a non-const object
 "  const string @cs = str;              \n"
 "  a.store(@cs);                        \n"
@@ -38,12 +38,12 @@ static const char *script1 =
 "  Assert(@s == null);                  \n"
 "  @cs = null;                          \n"
 "  a.retrieve(@cs);                     \n"
-"  Assert(@cs == str);                  \n"
+"  Assert(@cs == @str);                 \n"
 // If the container holds a handle to a non-const object, it should be able to copy it to a handle to a const object
 "  @s = str;                            \n"
 "  a.store(@s);                         \n"
 "  a.retrieve(@cs);                     \n"
-"  Assert(@cs == str);                  \n"
+"  Assert(@cs == @str);                 \n"
 // Allow storing null
 "  a.store(null);                       \n"
 "}                                      \n";

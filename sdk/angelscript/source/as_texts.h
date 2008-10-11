@@ -82,6 +82,9 @@
 #define TXT_FUNCTION_IN_GLOBAL_EXPR       "Function calls are not allowed in global expressions"
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"
 
+#define TXT_HANDLE_ASSIGNMENT             "The rvalue is implicitly converted to handle in order to perform handle assignment"
+#define TXT_HANDLE_COMPARISON             "The operand is implicitly converted to handle in order to compare them"
+
 #define TXT_IDENTIFIER_s_NOT_DATA_TYPE    "Identifier '%s' is not a data type"
 #define TXT_ILLEGAL_CALL                  "Illegal call"
 // TODO: Should be TXT_ILLEGAL_OPERATION_ON_s

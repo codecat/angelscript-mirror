@@ -4345,6 +4345,13 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 
 int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExprContext *rctx, asCScriptNode *lexpr, asCScriptNode *rexpr, int op, asCScriptNode *opNode)
 {
+	// Implicit handle types should always be treated as handles in assignments
+	if (lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
+	{
+		lctx->type.dataType.MakeHandle(true);
+		lctx->type.isExplicitHandle = true;
+	}
+
 	if( lctx->type.dataType.IsPrimitive() )
 	{
 		if( op != ttAssignment )
@@ -4978,6 +4985,12 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 					// Verify that the global property has been compiled already
 					if( isCompiled )
 					{
+						if( ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
+						{
+							ctx->type.dataType.MakeHandle(true);
+							ctx->type.isExplicitHandle = true;
+						}
+
 						// If the global property is a pure constant
 						// we can allow the compiler to optimize it. Pure
 						// constants are global constant variables that were
@@ -5048,6 +5061,12 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		}
 		else
 		{
+			if (ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE))
+			{
+				ctx->type.dataType.MakeHandle(true);
+				ctx->type.isExplicitHandle = true;
+			}
+
 			if( v->isPureConstant )
 				ctx->type.SetConstantQW(v->type, v->constantValue);
 			else
@@ -5418,7 +5437,6 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		if( to.SupportHandles() )
 		{
 			to.MakeHandle(true);
-			to.MakeReference(true);
 		}
 		else if( !to.IsObjectHandle() )
 		{
@@ -5470,12 +5488,21 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		{
 			if( expr.type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT )
 			{
+				// We need it to be a reference
+				if( !expr.type.dataType.IsReference() )
+				{
+					asCDataType to = expr.type.dataType;
+					to.MakeReference(true);
+					ImplicitConversion(&expr, to, node, true);
+				}
+
 				MergeExprContexts(ctx, &expr);
 
 				// Allow dynamic cast between object handles (only for script objects).
 				// At run time this may result in a null handle,   
 				// which when used will throw an exception
 				conversionOK = true;
+				to.MakeReference(true);
 				ctx->bc.InstrDWORD(BC_Cast, engine->GetTypeIdFromDataType(to));
 
 				ctx->type = expr.type;
@@ -5582,6 +5609,8 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 				{
 					rctx.bc.InstrSHORT(BC_PSF, outParam.argType.stackOffset);
 					rctx.type.dataType.MakeReference(true);
+					if( expr->type.isExplicitHandle )
+						rctx.type.isExplicitHandle = true;
 				}
 
 				asSExprContext o(engine);
@@ -8108,6 +8137,13 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 
 void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
+	// Warn if not both operands are explicit handles
+	if( !lctx->type.isExplicitHandle && !(lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) ||
+		!rctx->type.isExplicitHandle && !(rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
+	{
+		Warning(TXT_HANDLE_COMPARISON, node);
+	}
+
 	// Implicitly convert null to the other type
 	asCDataType to;
 	if( lctx->type.IsNullConstant() )

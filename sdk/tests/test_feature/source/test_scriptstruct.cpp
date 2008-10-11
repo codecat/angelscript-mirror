@@ -117,7 +117,7 @@ static const char *script7 =
 "void TestHandleInStruct()    \n"
 "{                            \n"
 "  A a;                       \n"
-"  Assert(a.s == null);       \n"
+"  Assert(@a.s == null);      \n"
 "  a = a;                     \n"
 "  @a.s = \"Test\";           \n"
 "  Assert(a.s == \"Test\");   \n"

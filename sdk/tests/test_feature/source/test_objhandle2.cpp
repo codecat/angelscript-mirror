@@ -29,8 +29,6 @@ static const char *script1 =
 "   @c = b;                             \n"
 // Handle comparison        
 "   @c == @b;                           \n"
-"   @c == b;                            \n"
-"   c == @b;                            \n"
 "}                                      \n"
 "void t(refclass@ &in a)                \n"
 "{                                      \n"

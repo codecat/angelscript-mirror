@@ -130,7 +130,7 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 
-	if( bout.buffer != "ExecuteString (1, 26) : Error   : No conversion from 'const intf1@&' to 'intf2@&' available.\n"
+	if( bout.buffer != "ExecuteString (1, 26) : Error   : No conversion from 'const intf1@' to 'intf2@' available.\n"
 					   "ExecuteString (1, 40) : Error   : Illegal operation on 'const int'\n" )
 		fail = true;
 

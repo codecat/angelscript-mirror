@@ -314,12 +314,12 @@ bool Test()
 	// It should be possible to register a REF_CAST to allow implicit cast
 	// Test IMPLICIT_REF_CAST from subclass to baseclass
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST, "A@ f(B@)", asFUNCTION(B::castToA), asCALL_CDECL); assert( r >= 0 );
-	r = engine->ExecuteString(0, "B b; A@ a = @b; assert(a.test() == 2);");
+	r = engine->ExecuteString(0, "B b; A@ a = b; assert(a.test() == 2);");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
 	// Test explicit cast with registered IMPLICIT_REF_CAST
-	r = engine->ExecuteString(0, "B b; A@ a = cast<A@>(b); assert(a.test() == 2);");
+	r = engine->ExecuteString(0, "B b; A@ a = cast<A>(b); assert(a.test() == 2);");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -331,12 +331,12 @@ bool Test()
 
 	// Test REF_CAST from baseclass to subclass
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "B@ f(A@)", asFUNCTION(B::AcastToB), asCALL_CDECL); assert( r >= 0 );
-	r = engine->ExecuteString(0, "B b; A@ a = cast<A@>(b); B@ _b = cast<B@>(a); assert(_b.test() == 2);");
+	r = engine->ExecuteString(0, "B b; A@ a = cast<A>(b); B@ _b = cast<B>(a); assert(_b.test() == 2);");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
 	// Test REF_CAST from baseclass to subclass, where the cast is invalid
-	r = engine->ExecuteString(0, "A a; B@ b = cast<B@>(a); assert(@b == null);");
+	r = engine->ExecuteString(0, "A a; B@ b = cast<B>(a); assert(@b == null);");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 

@@ -201,6 +201,8 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		useCharacterLiterals = value ? true : false;
 	else if( property == asEP_ALLOW_MULTILINE_STRINGS )
 		allowMultilineStrings = value ? true : false;
+	else if( property == asEP_ALLOW_IMPLICIT_HANDLE_TYPES )
+		allowImplicitHandleTypes = value ? true : false;
 	else
 		return asINVALID_ARG;
 
@@ -221,6 +223,8 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 		return useCharacterLiterals;
 	else if( property == asEP_ALLOW_MULTILINE_STRINGS )
 		return allowMultilineStrings;
+	else if( property == asEP_ALLOW_IMPLICIT_HANDLE_TYPES )
+		return allowImplicitHandleTypes;
 
 	return 0;
 }
@@ -234,12 +238,13 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 asCScriptEngine::asCScriptEngine()
 {
 	// Engine properties
-	allowUnsafeReferences   = false;
-	optimizeByteCode        = true;
-	copyScriptSections      = true;
-	maximumContextStackSize = 0;         // no limit
-	useCharacterLiterals    = false;
-	allowMultilineStrings   = false;
+	allowUnsafeReferences    = false;
+	optimizeByteCode         = true;
+	copyScriptSections       = true;
+	maximumContextStackSize  = 0;         // no limit
+	useCharacterLiterals     = false;
+	allowMultilineStrings    = false;
+	allowImplicitHandleTypes = false;
 
 
 	scriptTypeBehaviours.engine = this;

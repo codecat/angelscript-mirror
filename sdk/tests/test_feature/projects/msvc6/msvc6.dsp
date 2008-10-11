@@ -259,6 +259,10 @@ SOURCE=..\..\source\test_implicitcast.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_implicithandle.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_import.cpp
 # End Source File
 # Begin Source File

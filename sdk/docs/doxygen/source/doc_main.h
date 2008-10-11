@@ -2,7 +2,19 @@
 
 \mainpage Manual
 
-This is the documentation for the AngelScript library.
+AngelScript is an extremely flexible cross-platform scripting library designed to allow applications to extend 
+their functionality through external scripts. It has been designed from the beginning to be an easy to use 
+component, both for the application programmer and the script writer. 
+
+Efforts have been made to let it call standard C functions and C++ methods with little to no need for proxy functions. 
+The application simply registers the functions, objects, and methods that the scripts should be able to work 
+with and nothing more has to be done with your code. The same functions used by the application internally can 
+also be used by the scripting engine, which eliminates the need to duplicate functionality. 
+
+The scripting language is very similar to the widely known syntax of C++, but without the need to worry about 
+pointers and memory leaks. Contrary to most scripting languages that are weakly typed, AngelScript uses the 
+common C/C++ datatypes for more efficient communication with the host application. 
+
 
 \section main_topics Topics
 
@@ -15,7 +27,6 @@ This is the documentation for the AngelScript library.
  - \subpage doc_samples
  - \subpage doc_addon
 
-\todo Write introduction page
 
 
 

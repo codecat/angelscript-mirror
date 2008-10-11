@@ -243,6 +243,136 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	engine->Release();
 
+	//---------------------
+	// These tests are designed to make sure ambiguities with handles is avoided
+	CBufferedOutStream bout;
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+	r = engine->RegisterObjectType("A", sizeof(CRefClass), asOBJ_REF); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("A", asBEHAVE_FACTORY, "A@ f()", asFUNCTION(Factory), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("A", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefClass, AddRef), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("A", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefClass, Release), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("A", asBEHAVE_ASSIGNMENT, "A &f(const A &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert(r >= 0);
+
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; a == null;");    // Should give warning
+	if( r < 0 || bout.buffer == "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; null == a;");    // Should give warning
+	if( r < 0 || bout.buffer == "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; @a == null;");   // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; null == @a;");   // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; @a == a;");      // Should give warning
+	if( r < 0 || bout.buffer == "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; a == @a;");      // Should give warning
+	if( r < 0 || bout.buffer == "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; @a == @a;");     // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A @a = null;");       // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; A @b = a;");     // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; A @b = @a;");    // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; A b = @b;");     // Should give error
+	if( r >= 0 || bout.buffer == "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A @a, b; @a = @b;");  // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A @a, b; @a = b;");   // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A @a, b; a = @b;");   // Should give error
+	if( r >= 0 || bout.buffer == "" )
+	{
+		fail = true;
+	}
+	// TODO: Implement 'is' operator
+/*	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; null is a;");    // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; a is null;");    // OK
+	if( r < 0 || bout.buffer != "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; null is @a;");    // Should give error
+	if( r >= 0 || bout.buffer == "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; a is @a;");       // Should give error
+	if( r >= 0 || bout.buffer == "" )
+	{
+		fail = true;
+	}
+	bout.buffer = "";
+	r = engine->ExecuteString(0, "A a; @a is @a;");      // Should give error
+	if( r >= 0 || bout.buffer == "" )
+	{
+		fail = true;
+	}
+*/
+	engine->Release();
+
 	// Success
 	return fail;
 }

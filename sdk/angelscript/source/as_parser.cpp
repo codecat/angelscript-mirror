@@ -761,6 +761,17 @@ asCScriptNode *asCParser::ParseClass()
 
 	node->SetToken(&t);
 
+	if( engine->allowImplicitHandleTypes )
+	{
+		// Parse 'implicit handle class' construct
+		GetToken(&t);
+		
+		if ( t.type == ttHandle )
+			node->SetToken(&t);
+		else
+			RewindTo(&t);
+	}
+
 	node->AddChildLast(ParseIdentifier());
 
 	GetToken(&t);

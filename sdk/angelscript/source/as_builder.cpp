@@ -891,6 +891,10 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	asCObjectType *st = NEW(asCObjectType)(engine);
 	st->arrayType = 0;
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_STRUCT;
+
+	if( node->tokenType == ttHandle )
+		st->flags |= asOBJ_IMPLICIT_HANDLE;
+
 	st->size = sizeof(asCScriptStruct);
 	st->name = name;
 	st->tokenType = ttIdentifier;
@@ -2079,6 +2083,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	asCScriptNode *n = node->firstChild;
 
 	bool isConst = false;
+	bool isImplicitHandle = false;
 	if( n->tokenType == ttConst )
 	{
 		isConst = true;
@@ -2105,6 +2110,9 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		}
 		else
 		{
+			if( ot->flags & asOBJ_IMPLICIT_HANDLE )
+				isImplicitHandle = true;
+
 			// Find the config group for the object type
 			asCConfigGroup *group = engine->FindConfigGroupForObjectType(ot);
 			if( !module || !group || group->HasModuleAccess(module->name.AddressOf()) )
@@ -2180,6 +2188,17 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			}
 		}
 		n = n->next;
+	}
+
+	if( isImplicitHandle )
+	{
+		// Make the type a handle
+		if( dt.MakeHandle(true, acceptHandleForScope) < 0 )
+		{
+			int r, c;
+			file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+			WriteError(file->name.AddressOf(), TXT_OBJECT_HANDLE_NOT_SUPPORTED, r, c);
+		}
 	}
 
 	return dt;

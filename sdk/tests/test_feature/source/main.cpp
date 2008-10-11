@@ -136,6 +136,7 @@ namespace TestTypedef           { bool Test(); }
 namespace TestEnum              { bool Test(); }
 namespace TestFile              { bool Test(); }
 namespace TestRefCast           { bool Test(); }
+namespace TestImplicitHandle    { bool Test(); }
 
 #include "utils.h"
 
@@ -175,7 +176,10 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
+	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
+	if( TestImplicitHandle::Test()    ) goto failed; else printf("-- TestImplicitHandle passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
@@ -196,12 +200,10 @@ int main(int argc, char **argv)
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestFile::Test()              ) goto failed; else printf("-- TestFile passed\n");
 	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
-	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
 	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
 	if( TestInt8::Test()              ) goto failed; else printf("-- TestInt8 passed\n");
-	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestTypedef::Test()           ) goto failed; else printf("-- TestTypedef passed\n");

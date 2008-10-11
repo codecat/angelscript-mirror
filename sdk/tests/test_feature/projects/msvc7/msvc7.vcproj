@@ -281,6 +281,9 @@
 				RelativePath="..\..\source\test_implicitcast.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_implicithandle.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_import.cpp">
 			</File>
 			<File

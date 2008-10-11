@@ -330,6 +330,7 @@ public:
 	int  maximumContextStackSize;
 	bool useCharacterLiterals;
 	bool allowMultilineStrings;
+	bool allowImplicitHandleTypes;
 };
 
 END_AS_NAMESPACE
