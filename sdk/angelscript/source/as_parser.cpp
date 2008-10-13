@@ -611,6 +611,14 @@ bool asCParser::IsFuncDecl(bool isMethod)
 			return false;
 		else
 		{
+			// A class method can have a 'const' token after the parameter list
+			if( isMethod )
+			{
+				GetToken(&t1);
+				if( t1.type != ttConst )
+					RewindTo(&t1);
+			}
+
 			GetToken(&t1);
 			RewindTo(&t);
 			if( t1.type == ttStartStatementBlock )
@@ -656,6 +664,15 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 
 	node->AddChildLast(ParseParameterList());
 	if( isSyntaxError ) return node;
+
+	if( isMethod )
+	{
+		// Is the method a const?
+		GetToken(&t1);
+		RewindTo(&t1);
+		if( t1.type == ttConst )
+			node->AddChildLast(ParseToken(ttConst));
+	}
 
 	// We should just find the end of the statement block here. The statements 
 	// will be parsed on request by the compiler once it starts the compilation.

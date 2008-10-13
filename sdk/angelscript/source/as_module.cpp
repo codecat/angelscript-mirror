@@ -593,7 +593,7 @@ int asCModule::GetNextImportedFunctionId()
 	return FUNC_IMPORTED | (asUINT)importedFunctions.GetLength();
 }
 
-int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType)
+int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType, bool isConstMethod)
 {
 	asASSERT(id >= 0);
 
@@ -610,6 +610,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 		func->inOutFlags.PushLast(inOutFlags[n]);
 	}
 	func->objectType = objType;
+	func->isReadOnly = isConstMethod;
 
 	scriptFunctions.PushLast(func);
 	engine->SetScriptFunction(func);

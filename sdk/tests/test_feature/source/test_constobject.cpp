@@ -73,15 +73,13 @@ CObj *CObj_Factory()
 
 CObj c_obj;
 
+bool Test2();
+
 bool Test()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
-		return false;
-	}
+	bool fail = Test2();
+
 	int r;
-	bool fail = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -258,6 +256,128 @@ bool Test()
 		printf("%s: failed\n", TESTNAME);
 
 	// Success
+	return fail;
+}
+
+
+
+bool Test2()
+{
+	bool fail = false;
+
+	int r;
+	COutStream out;
+	CBufferedOutStream bout;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	// Try calling a const method on a const object (success)
+	const char *script = 
+	"class MyType                  \n"
+	"{                             \n"
+	"   int val;                   \n"
+	"   void TestConst() const     \n"
+	"   {                          \n"
+	"      assert(val == 5);       \n"
+	"   }                          \n"
+	"}                             \n"
+	"void Func(const MyType &in a) \n"
+	"{                             \n"
+	"   a.TestConst();             \n"
+	"}                             \n";
+
+	engine->AddScriptSection("module", "script", script, strlen(script));
+	r = engine->Build("module");
+	if( r < 0 )
+	{
+		fail = true;
+	}
+
+	// Try calling a non-const method on a const object (should fail)
+	script =
+	"class MyType                  \n"
+	"{                             \n"
+	"   int val;                   \n"
+	"   void TestConst()           \n"
+	"   {                          \n"
+	"      assert(val == 5);       \n"
+	"   }                          \n"
+	"}                             \n"
+	"void Func(const MyType &in a) \n"
+	"{                             \n"
+	"   a.TestConst();             \n"
+	"}                             \n";
+
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+	bout.buffer = "";
+	engine->AddScriptSection("module", "script", script, strlen(script));
+	r = engine->Build("module");
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "script (9, 1) : Info    : Compiling void Func(const MyType&in)\n"
+					   "script (11, 6) : Error   : No matching signatures to 'MyType::TestConst() const'\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Try modifying self in a const method (should fail)
+	script = 
+	"class MyType                  \n"
+	"{                             \n"
+	"   int val;                   \n"
+	"   void TestConst() const     \n"
+	"   {                          \n"
+	"      val = 5;                \n"
+	"   }                          \n"
+	"}                             \n";
+	
+	bout.buffer = "";
+	engine->AddScriptSection("module", "script", script, strlen(script));
+	r = engine->Build("module");
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "script (4, 4) : Info    : Compiling void MyType::TestConst() const\n"
+					   "script (6, 11) : Error   : Reference is read-only\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Try modifying self via 'this' in a const method (should fail)
+	script = 
+	"class MyType                  \n"
+	"{                             \n"
+	"   int val;                   \n"
+	"   void TestConst() const     \n"
+	"   {                          \n"
+	"      this.val = 5;           \n"
+	"   }                          \n"
+	"}                             \n";
+	
+	bout.buffer = "";
+	engine->AddScriptSection("module", "script", script, strlen(script));
+	r = engine->Build("module");
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "script (4, 4) : Info    : Compiling void MyType::TestConst() const\n"
+					   "script (6, 16) : Error   : Reference is read-only\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	engine->Release();
+
 	return fail;
 }
 

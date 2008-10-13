@@ -1763,6 +1763,11 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next, file, 0, 0);
 	}
 
+	// Is this a const method?
+	bool isConstMethod = false;
+	if( objType && n->next->next && n->next->next->tokenType == ttConst )
+		isConstMethod = true;
+
 	// Count the number of parameters
 	int count = 0;
 	asCScriptNode *c = n->next->firstChild;
@@ -1842,7 +1847,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	}
 
 	// Register the function
-	module->AddScriptFunction(file->idx, funcID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType);
+	module->AddScriptFunction(file->idx, funcID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod);
 
 	if( objType )
 	{

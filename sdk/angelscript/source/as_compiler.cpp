@@ -4915,7 +4915,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			{
 				if( name == THIS_TOKEN )
 				{
-					asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
+					asCDataType dt = asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly);
 
 					// The object pointer is located at stack position 0
 					ctx->bc.InstrSHORT(BC_PSF, 0);
@@ -4963,8 +4963,8 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 							ctx->type.dataType.MakeReference(false);
 						}
 
-						// TODO: Check constness
-						//ctx->type.dataType.MakeReadOnly(isConst ? true : prop->type.IsReadOnly());
+						// If the object reference is const, the property will also be const
+						ctx->type.dataType.MakeReadOnly(outFunc->isReadOnly);
 
 						found = true;
 					}

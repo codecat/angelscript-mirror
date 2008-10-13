@@ -174,6 +174,9 @@ asCString asCScriptFunction::GetDeclarationStr() const
 
 	str += ")";
 
+	if( isReadOnly )
+		str += " const";
+
 	return str;
 }
 
