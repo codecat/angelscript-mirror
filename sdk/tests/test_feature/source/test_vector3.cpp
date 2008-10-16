@@ -1,30 +1,22 @@
 #include "utils.h"
+#include "../../../add_on/scriptmath3d/scriptmath3d.h"
 
 #define TESTNAME "TestVector3"
 
-class Vector3
-{
-public:
-	inline Vector3() {}
-	inline Vector3( float fX, float fY, float fZ ) : x( fX ), y( fY ), z( fZ ) {}
-
-	float x,y,z;
-};
-
 static char *script =
-"Vector3 TestVector3()  \n"
+"vector3 TestVector3()  \n"
 "{                      \n"
-"  Vector3 v;           \n"
+"  vector3 v;           \n"
 "  v.x=1;               \n"
 "  v.y=2;               \n"
 "  v.z=3;               \n"
 "  return v;            \n"
 "}                      \n"
-"Vector3 TestVector3Val(Vector3 v)  \n"
+"vector3 TestVector3Val(vector3 v)  \n"
 "{                                  \n"
 "  return v;                        \n"
 "}                                  \n"
-"void TestVector3Ref(Vector3 &out v)\n"
+"void TestVector3Ref(vector3 &out v)\n"
 "{                                  \n"
 "  v.x=1;                           \n"
 "  v.y=2;                           \n"
@@ -34,21 +26,17 @@ static char *script =
 bool TestVector3()
 {
 	bool fail = false;
+	COutStream out;
 	int r;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	r = engine->RegisterObjectType("Vector3",sizeof(Vector3),asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CDA);assert(r>=0);
-	r = engine->RegisterObjectProperty("Vector3","float x",offsetof(Vector3,x));assert(r>=0);
-	r = engine->RegisterObjectProperty("Vector3","float y",offsetof(Vector3,y));assert(r>=0);
-	r = engine->RegisterObjectProperty("Vector3","float z",offsetof(Vector3,z));assert(r>=0);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	RegisterScriptMath3D(engine);
 
 	Vector3 v;
-	engine->RegisterGlobalProperty("Vector3 v", &v);
+	engine->RegisterGlobalProperty("vector3 v", &v);
 
-	COutStream out;
 	engine->AddScriptSection(0, TESTNAME, script, strlen(script));
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->Build(0);
 	if( r < 0 )
 	{
@@ -74,7 +62,7 @@ bool TestVector3()
 		v.x = 0; v.y = 0; v.z = 0;
 
 		asIScriptContext *ctx = engine->CreateContext();
-		ctx->Prepare(engine->GetFunctionIDByDecl(0, "Vector3 TestVector3()"));
+		ctx->Prepare(engine->GetFunctionIDByDecl(0, "vector3 TestVector3()"));
 
 		ctx->Execute();
 		Vector3 *ret = (Vector3*)ctx->GetReturnObject();
@@ -84,7 +72,7 @@ bool TestVector3()
 			fail = true;
 		}
 
-		ctx->Prepare(engine->GetFunctionIDByDecl(0, "Vector3 TestVector3Val(Vector3)"));
+		ctx->Prepare(engine->GetFunctionIDByDecl(0, "vector3 TestVector3Val(vector3)"));
 		v.x = 3; v.y = 2; v.z = 1;
 		ctx->SetArgObject(0, &v);
 		ctx->Execute();
@@ -95,7 +83,7 @@ bool TestVector3()
 			fail = true;
 		}
 
-		ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestVector3Ref(Vector3 &out)"));
+		ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestVector3Ref(vector3 &out)"));
 		ctx->SetArgObject(0, &v);
 		ctx->Execute();
 		if( v.x != 1 || v.y != 2 || v.z != 3 )

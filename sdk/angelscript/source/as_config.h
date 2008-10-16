@@ -529,7 +529,7 @@
 #endif
 
 // Is the target a 64bit system?
-#if defined(__LP64__) || defined(__amd64__)
+#if defined(__LP64__) || defined(__amd64__) || defined(_M_X64)
 	#ifndef AS_64BIT_PTR
 		#define AS_64BIT_PTR
 	#endif

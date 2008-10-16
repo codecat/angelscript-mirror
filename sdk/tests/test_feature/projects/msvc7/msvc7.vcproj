@@ -146,6 +146,12 @@
 				RelativePath="..\..\..\..\add_on\scriptmath\scriptmath.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp">
 			</File>
 			<File

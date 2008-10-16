@@ -9,6 +9,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
+ - \subpage doc_addon_math3d
  - \subpage doc_addon_clib
 
 
@@ -173,6 +174,21 @@ The following functions are registered:
   - float abs(float)
   - float floor(float)
   - float fraction(float)
+ 
+ 
+ 
+ 
+\page doc_addon_math3d 3D math functions
+
+<b>Path:</b> /sdk/add_on/scriptmath3d/
+
+This add-on registers some value types and functions that permit the scripts to perform 
+3D mathematical operations. Use <code>RegisterScriptMath3D(asIScriptEngine*)</code> to
+perform the registration.
+
+Currently the only thing registered is the <code>vector3</code> type, representing a 3D vector, with
+basic math operators, such as add, subtract, scalar multiply, equality comparison, etc.
+ 
  
  
  
