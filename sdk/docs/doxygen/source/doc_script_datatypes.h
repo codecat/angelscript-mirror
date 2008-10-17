@@ -124,7 +124,7 @@ Object handles are a special type that can be used to hold references to other o
 
   b.ModifyMe();     // The method modifies the original object
 
-  if( \@a == null )  // Verify if the object points to an object
+  if( a is null )   // Verify if the object points to an object
   {
     \@a = \@b;        // Make a hold a reference to the same object as b
   }

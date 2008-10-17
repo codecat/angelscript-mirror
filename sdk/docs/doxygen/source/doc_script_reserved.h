@@ -40,11 +40,12 @@ int8<br>
 int16<br>
 int32<br>
 int64<br>
+is<br>
 not<br>
 null<br>
-or<br>
 </code></td>
 <td width=100 valign=top><code>
+or<br>
 out<br>
 return<br>
 switch<br>
@@ -54,9 +55,9 @@ typedef<br>
 uint<br>
 uint8<br>
 uint16<br>
-uint32<br>
 </code></td>
 <td width=100 valign=top><code>
+uint32<br>
 uint64<br>
 void<br>
 while<br>
@@ -124,6 +125,7 @@ These are the non-alphabetical tokens that are also used in the language syntax.
 ]<br>
 ^^<br>
 @ <br>
+!is<br>
 </code></td>
 </tr>
 </table>

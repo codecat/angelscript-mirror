@@ -18,6 +18,8 @@ The difference between the garbage collected and non-garbage collected
 types is in the addref and release behaviours, the class constructor, and
 the extra support behaviours.
 
+\see The \ref doc_addon_dict "dictionary" add-on for an example of a garbage collected object
+
 \section doc_reg_gcref_1 GC support behaviours
 
 The GC determines when objects should be destroyed by counting the

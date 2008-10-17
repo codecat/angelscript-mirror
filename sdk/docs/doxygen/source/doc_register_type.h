@@ -41,6 +41,9 @@ comparisons, etc may be registered as needed.
 r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 );
 \endcode
 
+\see The \ref doc_addon_string "string" add-on for an example of a reference type
+
+
 \subsection doc_reg_basicref_1 Factory function
 
 The factory function is the one that AngelScript will use to instanciate
@@ -238,6 +241,9 @@ r = engine->RegisterObjectType("pod", sizeof(pod), asOBJ_VALUE | asOBJ_POD | asO
 // Register a class that must be properly initialized and uninitialized
 r = engine->RegisterObjectType("val", sizeof(val), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 \endcode
+
+\see The \ref doc_addon_math3d "vector3" add-on for an example of a value type
+
 
 \section doc_reg_val_1 Constructor and destructor
 

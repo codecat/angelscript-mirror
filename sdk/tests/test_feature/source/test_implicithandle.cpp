@@ -23,7 +23,7 @@ static const char *script1 =
 "                                            \n"
 "    p = p2;                                 \n"
 "                                            \n"
-"    if (p == null) { print('Hello!\\n'); }  \n" // TODO: Should use 'is' instead of '=='
+"    if (p is null) { print('Hello!\\n'); }  \n"
 "                                            \n"
 "    p = MyClass();                          \n"
 "                                            \n"
@@ -74,6 +74,16 @@ bool Test()
 		fail = true;
 		printf("Got: \n%s", output.c_str());
 	}
+
+	
+	// TODO: The equality operator shouldn't perform handle comparison
+	/*
+	r = engine->ExecuteString(0, "MyClass a; assert( a == null );");
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	*/
 
 	engine->Release();
 

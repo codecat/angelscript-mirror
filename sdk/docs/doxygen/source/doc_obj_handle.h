@@ -61,12 +61,12 @@ object is for example done like this:
 An object handle can be compared against another object handle
 (of the same type) to verify if they are pointing to the same object or not.
 It can also be compared against null, which is a special keyword that
-represents an empty handle.
+represents an empty handle. This is done using the identity operator, <code>is</code>.
 
 <pre>
   object\@ obj_a, obj_b;
-  if( \@obj_a == \@obj_b ) {}
-  if( \@obj_a == null ) {}
+  if( obj_a is obj_b ) {}
+  if( obj_a is null ) {}
 </pre>
 
 An object's life time is normally for the duration of the scope the

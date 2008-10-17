@@ -133,6 +133,8 @@ enum eTokenType
 	ttInt16,               // int16
 	ttInt64,               // int64
 	ttInterface,           // interface
+	ttIs,                  // is
+	ttNotIs,               // !is
 	ttUInt,                // uint
 	ttUInt8,               // uint8
 	ttUInt16,              // uint16
@@ -252,6 +254,8 @@ sTokenWord const tokenWords[] =
 	{"int32"     , ttInt},  
 	{"int64"     , ttInt64},
 	{"interface" , ttInterface},
+	{"is"        , ttIs},
+	{"!is"       , ttNotIs},
 	{"not"       , ttNot},
 	{"null"      , ttNull},
 	{"or"        , ttOr},

@@ -9,7 +9,9 @@
  - \ref math
  - \ref bits
  - \ref logic
- - \ref comparison
+ - \ref equal
+ - \ref relation
+ - \ref identity
  - \ref increment
  - \ref index
  - \ref condition
@@ -179,7 +181,7 @@ for <code>or</code>, <code>&&</code> for <code>and</code>, <code>^^</code> for
 
 
 
-\section comparison Comparison operators
+\section equal Equality comparison operators
 
 <pre>
   if( a == b )
@@ -188,15 +190,45 @@ for <code>or</code>, <code>&&</code> for <code>and</code>, <code>^^</code> for
   }
 </pre>
 
-<table cellspacing=0 cellpadding=0 border=0>
-<tr><td width=70 valign=top><b>operator</b></td>   <td width=100 valign=top><b>description</b></td><td width=80 valign=top><b>left hand</b></td><td width=80 valign=top><b>right hand</b></td><td width=80 valign=top><b>result</b></td></tr>
-<tr><td width=70 valign=top><code>==</code></td>   <td width=100 valign=top>equal</td>             <td width=80 valign=top><i>value</i></td>      <td width=80 valign=top><i>value</i></td>       <td width=80 valign=top><code>bool</code></td></tr>
-<tr><td width=70 valign=top><code>!=</code></td>   <td width=100 valign=top>not equal</td>         <td width=80 valign=top><i>value</i></td>      <td width=80 valign=top><i>value</i></td>       <td width=80 valign=top><code>bool</code></td></tr>
-<tr><td width=70 valign=top><code>&lt;</code></td> <td width=100 valign=top>less than</td>         <td width=80 valign=top><i>value</i></td>      <td width=80 valign=top><i>value</i></td>       <td width=80 valign=top><code>bool</code></td></tr>
-<tr><td width=70 valign=top><code>&gt;</code></td> <td width=100 valign=top>greater than</td>      <td width=80 valign=top><i>value</i></td>      <td width=80 valign=top><i>value</i></td>       <td width=80 valign=top><code>bool</code></td></tr>
-<tr><td width=70 valign=top><code>&lt;=</code></td><td width=100 valign=top>less or equal</td>     <td width=80 valign=top><i>value</i></td>      <td width=80 valign=top><i>value</i></td>       <td width=80 valign=top><code>bool</code></td></tr>
-<tr><td width=70 valign=top><code>&gt;=</code></td><td width=100 valign=top>greater or equal</td>  <td width=80 valign=top><i>value</i></td>      <td width=80 valign=top><i>value</i></td>       <td width=80 valign=top><code>bool</code></td></tr>
-</table>
+The operators <code>==</code> and <code>!=</code> are used to compare two values to determine if they are equal 
+or not equal, respectively. The result of this operation is always a boolean value.
+
+
+
+
+
+\section relation Relational comparison operators
+
+<pre>
+  if( a > b )
+  {
+    // ... do something
+  }
+</pre>
+
+The operators <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, and <code>&gt;=</code> are used to compare two
+values to determine their relationship. The result is always a boolean value.
+
+
+
+\section identity Identity comparison operators
+
+<pre>
+  if( a is null )
+  {
+    // ... do something
+  }
+  else if( a is b )
+  {
+    // ... do something
+  }
+</pre>
+
+The operators <code>is</code> and <code>!is</code> are used to compare the identity of two objects, i.e. to determine if 
+the two are the same object or not. These operators are only valid for reference types as they compare the address of two
+objects. The result is always a boolean value.
+
+
 
 
 
@@ -262,12 +294,6 @@ method that can be called on the object.
 <pre>
   // Make handle reference the object instance
   \@handle = \@object;
-  
-  // Verify that the handle is not a null handle
-  if( \@handle == null ) {}
-  
-  // Compare the handle reference to another handle
-  if( \@handle == \@object ) {}
   
   // Clear the handle and release the object it references
   \@handle = null;

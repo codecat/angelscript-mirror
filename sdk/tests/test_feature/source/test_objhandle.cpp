@@ -28,9 +28,9 @@ static const char *script1 =
 "   g = b;                              \n"
 // Compare with null
 "   if( @g != null );                   \n"
-"   if( null == @g );                   \n"
+"   if( null != @g );                   \n"
 // Compare with another object
-"   if( @g == @b );                     \n"
+"   if( @g == @b );                       \n"
 "   if( @b == @g );                     \n"
 // Value comparison
 //"   if( g == b );                       \n"
@@ -339,38 +339,20 @@ bool Test()
 	{
 		fail = true;
 	}
-	// TODO: Implement 'is' operator
-/*	bout.buffer = "";
+
+	bout.buffer = "";
 	r = engine->ExecuteString(0, "A a; null is a;");    // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; a is null;");    // OK
+	r = engine->ExecuteString(0, "A a; a !is null;");    // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
-	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; null is @a;");    // Should give error
-	if( r >= 0 || bout.buffer == "" )
-	{
-		fail = true;
-	}
-	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; a is @a;");       // Should give error
-	if( r >= 0 || bout.buffer == "" )
-	{
-		fail = true;
-	}
-	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; @a is @a;");      // Should give error
-	if( r >= 0 || bout.buffer == "" )
-	{
-		fail = true;
-	}
-*/
+
 	engine->Release();
 
 	// Success

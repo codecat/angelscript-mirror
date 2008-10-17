@@ -2573,7 +2573,9 @@ bool asCParser::IsOperator(int tokenType)
 		tokenType == ttBitXor ||
 		tokenType == ttBitShiftLeft ||
 		tokenType == ttBitShiftRight ||
-		tokenType == ttBitShiftRightArith )
+		tokenType == ttBitShiftRightArith ||
+		tokenType == ttIs ||
+		tokenType == ttNotIs )
 		return true;
 
 	return false;

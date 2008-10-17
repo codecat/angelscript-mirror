@@ -6536,12 +6536,11 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 int asCCompiler::GetPrecedence(asCScriptNode *op)
 {
-	// x*y, x/y, x%y
-	// x+y, x-y
-	// x<=y, x<y, x>=y, x>y
-	// x==y, x!=y
+	// x * y, x / y, x % y
+	// x + y, x - y
+	// x <= y, x < y, x >= y, x > y
+	// x = =y, x != y, x xor y, x is y, x !is y
 	// x and y
-	// (x xor y)
 	// x or y
 
 	// The following are not used in this function,
@@ -6581,7 +6580,7 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 		tokenType == ttGreaterThan )
 		return -6;
 
-	if( tokenType == ttEqual || tokenType == ttNotEqual || tokenType == ttXor )
+	if( tokenType == ttEqual || tokenType == ttNotEqual || tokenType == ttXor || tokenType == ttIs || tokenType == ttNotIs )
 		return -7;
 
 	if( tokenType == ttAnd )
@@ -6850,7 +6849,8 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 	IsVariableInitialized(&lctx->type, node);
 	IsVariableInitialized(&rctx->type, node);
 
-	if( lctx->type.isExplicitHandle || rctx->type.isExplicitHandle )
+	if( lctx->type.isExplicitHandle || rctx->type.isExplicitHandle || 
+		node->tokenType == ttIs || node->tokenType == ttNotIs )
 	{
 		CompileOperatorOnHandles(node, lctx, rctx, ctx);
 		return 0;
@@ -8138,8 +8138,9 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
 	// Warn if not both operands are explicit handles
-	if( !lctx->type.isExplicitHandle && !(lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) ||
-		!rctx->type.isExplicitHandle && !(rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
+	if( (node->tokenType == ttEqual || node->tokenType == ttNotEqual) &&
+		(!lctx->type.isExplicitHandle && !(lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) ||
+		 !rctx->type.isExplicitHandle && !(rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE)) )
 	{
 		Warning(TXT_HANDLE_COMPARISON, node);
 	}
@@ -8190,7 +8191,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	ctx->type.Set(asCDataType::CreatePrimitive(ttBool, true));
 
 	int op = node->tokenType;
-	if( op == ttEqual || op == ttNotEqual )
+	if( op == ttEqual || op == ttNotEqual || op == ttIs || op == ttNotIs )
 	{
 		// If the object handle already is in a variable we must manually pop it from the stack
 		if( lctx->type.isVariable )
@@ -8209,7 +8210,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		int b = lctx->type.stackOffset;
 		int c = rctx->type.stackOffset;
 
-		if( op == ttEqual )
+		if( op == ttEqual || op == ttIs )
 		{
 #ifdef AS_64BIT_PTR
 			// TODO: Use a 64bit integer comparison instead of double
@@ -8220,7 +8221,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 			ctx->bc.Instr(BC_TZ);
 			ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)a);
 		}
-		else if( op == ttNotEqual )
+		else if( op == ttNotEqual || op == ttNotIs )
 		{
 #ifdef AS_64BIT_PTR
 			// TODO: Use a 64bit integer comparison instead of double

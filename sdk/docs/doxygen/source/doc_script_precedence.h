@@ -51,76 +51,76 @@ handle of
 This list shows the dual and ternary operator precedence in decreasing order.
 
 <table cellspacing=0 cellpadding=0 border=0>
-<tr><td width=150 valign=top>
+<tr><td width=180 valign=top>
 <code>* / %</code>
-</td><td width=300 valign=top>
+</td><td width=350 valign=top>
 multiply, divide, and modulo
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
+</td></tr><tr><td valign=top>
 <code>+ -</code>
-</td><td width=250 valign=top>
+</td><td valign=top>
 add and subtract
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
+</td></tr><tr><td valign=top>
 <code>&lt;&lt; &gt;&gt; &gt;&gt;&gt;</code>
-</td><td width=250 valign=top>
+</td><td valign=top>
 left shift, right shift, and arithmetic right shift 
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
+</td></tr><tr><td valign=top>
 <code>&amp;</code>
-</td><td width=250 valign=top>
+</td><td valign=top>
 bitwise and
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
+</td></tr><tr><td valign=top>
 <code>^</code>
-</td><td width=250 valign=top>
+</td><td valign=top>
 bitwise xor
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
+</td></tr><tr><td valign=top>
 <code>|</code>
-</td><td width=250 valign=top>
+</td><td valign=top>
 bitwise or
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
+</td></tr><tr><td valign=top>
 <code>&lt;= &lt; &gt;= &gt;</code>
-</td><td width=250 valign=top>
+</td><td valign=top>
 comparison
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
-<code>== != xor ^^</code>
-</td><td width=250 valign=top>
-equality, and logical exclusive or
+</td></tr><tr><td valign=top>
+<code>== != is !is xor ^^</code>
+</td><td valign=top>
+equality, identity, and logical exclusive or
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
+</td></tr><tr><td valign=top>
 <code>and &amp;&amp;</code>
-</td><td width=250 valign=top>
+</td><td valign=top>
 logical and
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
+</td></tr><tr><td valign=top>
 <code>or ||</code>
-</td><td width=250 valign=top>
+</td><td valign=top>
 logical or
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
+</td></tr><tr><td valign=top>
 <code>?:</code>
-</td><td width=250 valign=top>
+</td><td valign=top>
 condition
 </td><td valign=top>
 left to right
-</td></tr><tr><td width=150 valign=top>
-<code>= += -= *= /= %=
-&amp;= |= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code>
-</td><td width=250 valign=top>
+</td></tr><tr><td valign=top>
+<code>= += -= *= /= %= &amp;=<br>
+|= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code>
+</td><td valign=top>
 assignment and compound assignments
 </td><td valign=top>
 right to left
