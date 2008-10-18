@@ -274,7 +274,7 @@ asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
 	objType->refCount++;
 
 	if( objType->flags & asOBJ_GC )
-		objType->engine->AddScriptObjectToGC(this, objType);		
+		objType->engine->gc.AddScriptObjectToGC(this, objType);		
 
 	// Determine element size
 	if( objType->subType )

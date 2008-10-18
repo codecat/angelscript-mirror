@@ -2244,7 +2244,7 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 				*inOutFlags = 3; // ttInOut
 		}
 
-		if( !engine->allowUnsafeReferences &&
+		if( !engine->ep.allowUnsafeReferences &&
 			inOutFlags && *inOutFlags == 3 )
 		{				
 			// Verify that the base type support &inout parameter types

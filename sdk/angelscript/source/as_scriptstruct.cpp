@@ -186,7 +186,7 @@ asCScriptStruct::asCScriptStruct(asCObjectType *ot)
 
 	// Notify the garbage collector of this object
 	if( objType->flags & asOBJ_GC )
-		objType->engine->AddScriptObjectToGC(this, objType);		
+		objType->engine->gc.AddScriptObjectToGC(this, objType);
 
 	// Construct all properties
 	asCScriptEngine *engine = objType->engine;

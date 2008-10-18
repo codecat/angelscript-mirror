@@ -67,7 +67,7 @@ void asCByteCode::Finalize()
 	PostProcess();
 
 	// Optimize the code (optionally)
-	if( engine->optimizeByteCode )
+	if( engine->ep.optimizeByteCode )
 		Optimize();
 
 	// Resolve jumps

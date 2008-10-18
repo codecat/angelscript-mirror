@@ -51,6 +51,7 @@
 #include "as_callfunc.h"
 #include "as_configgroup.h"
 #include "as_memory.h"
+#include "as_gc.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -58,7 +59,6 @@ BEGIN_AS_NAMESPACE
 
 class asCBuilder;
 class asCContext;
-class asCGCObject;
 
 class asCScriptEngine : public asIScriptEngine
 {
@@ -297,17 +297,7 @@ public:
 	void RemoveFromTypeIdMap(asCObjectType *type);
 
 	// Garbage collector
-	struct asSObjTypePair {void *obj; asCObjectType *type;};
-	asCArray<asSObjTypePair>           gcObjects;
-	asCArray<void*>                    toMark;
-	struct asSIntTypePair {int i; asCObjectType *type;};
-	asCMap<void*, asSIntTypePair>      gcMap;
-	asSMapNode<void*, asSIntTypePair> *gcMapCursor;
-	int                                gcState;
-	asUINT                             gcIdx;
-
-	int  GCInternal();
-	void AddScriptObjectToGC(void *obj, asCObjectType *objType);
+	asCGarbageCollector gc;
 
 	// Dynamic groups
 	asCConfigGroup defaultGroup;
@@ -324,13 +314,16 @@ public:
 	DECLARECRITICALSECTION(moduleCritical);
 
 	// Engine properties
-	bool allowUnsafeReferences;
-	bool optimizeByteCode;
-	bool copyScriptSections;
-	int  maximumContextStackSize;
-	bool useCharacterLiterals;
-	bool allowMultilineStrings;
-	bool allowImplicitHandleTypes;
+	struct
+	{
+		bool allowUnsafeReferences;
+		bool optimizeByteCode;
+		bool copyScriptSections;
+		int  maximumContextStackSize;
+		bool useCharacterLiterals;
+		bool allowMultilineStrings;
+		bool allowImplicitHandleTypes;
+	} ep;
 };
 
 END_AS_NAMESPACE

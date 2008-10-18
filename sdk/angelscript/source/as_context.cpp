@@ -1201,10 +1201,10 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 		// size = stackBlockSize << index
 
 		// Make sure we don't allocate more space than allowed
-		if( engine->maximumContextStackSize )
+		if( engine->ep.maximumContextStackSize )
 		{
 			// This test will only stop growth once it has already crossed the limit
-			if( stackBlockSize * ((1 << (stackIndex+1)) - 1) > engine->maximumContextStackSize )
+			if( stackBlockSize * ((1 << (stackIndex+1)) - 1) > engine->ep.maximumContextStackSize )
 			{
 				isStackMemoryNotAllocated = true;
 

@@ -107,7 +107,7 @@ int asCModule::AddScriptSection(const char *name, const char *code, size_t codeL
 	if( !builder )
 		builder = NEW(asCBuilder)(engine, this);
 
-	builder->AddCode(name, code, (int)codeLength, lineOffset, (int)builder->scripts.GetLength(), engine->copyScriptSections);
+	builder->AddCode(name, code, (int)codeLength, lineOffset, (int)builder->scripts.GetLength(), engine->ep.copyScriptSections);
 
 	return asSUCCESS;
 }

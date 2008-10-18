@@ -931,7 +931,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			// can be guaranteed to be safe. Local variables are
 			// already safe, so there is no need to add an extra
 			// references
-			if( !engine->allowUnsafeReferences &&
+			if( !engine->ep.allowUnsafeReferences &&
 				!ctx->type.isVariable &&
 				ctx->type.dataType.IsObject() &&
 				!ctx->type.dataType.IsObjectHandle() &&
@@ -5152,7 +5152,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		{
 			asCString str;
 			asCScriptNode *snode = vnode->firstChild;
-			if( script->code[snode->tokenPos] == '\'' && engine->useCharacterLiterals )
+			if( script->code[snode->tokenPos] == '\'' && engine->ep.useCharacterLiterals )
 			{
 				// Treat the single quoted string as a single character literal
 				str.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
@@ -5178,7 +5178,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 					}
 					else if( snode->tokenType == ttMultilineStringConstant )
 					{
-						if( !engine->allowMultilineStrings )
+						if( !engine->ep.allowMultilineStrings )
 							Error(TXT_MULTILINE_STRINGS_NOT_ALLOWED, snode);
 
 						cat.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
@@ -5552,7 +5552,7 @@ void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args,
 			asASSERT( !(descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] == 2)) || args[n]->origExpr );
 
 			// For &inout, only store the argument if it is for a temporary variable
-			if( engine->allowUnsafeReferences || 
+			if( engine->ep.allowUnsafeReferences || 
 				descr->inOutFlags[n] != 3 || args[n]->type.isTemporary )
 			{
 				// Store the argument for later processing

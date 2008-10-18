@@ -778,7 +778,7 @@ asCScriptNode *asCParser::ParseClass()
 
 	node->SetToken(&t);
 
-	if( engine->allowImplicitHandleTypes )
+	if( engine->ep.allowImplicitHandleTypes )
 	{
 		// Parse 'implicit handle class' construct
 		GetToken(&t);

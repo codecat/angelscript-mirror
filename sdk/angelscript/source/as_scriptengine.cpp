@@ -185,24 +185,24 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 {
 	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
-		allowUnsafeReferences = value ? true : false;
+		ep.allowUnsafeReferences = value ? true : false;
 	else if( property == asEP_OPTIMIZE_BYTECODE )
-		optimizeByteCode = value ? true : false;
+		ep.optimizeByteCode = value ? true : false;
 	else if( property == asEP_COPY_SCRIPT_SECTIONS )
-		copyScriptSections = value ? true : false;
+		ep.copyScriptSections = value ? true : false;
 	else if( property == asEP_MAX_STACK_SIZE )
 	{
 		// The size is given in bytes, but we only store dwords
-		maximumContextStackSize = (int)value/4;
-		if( initialContextStackSize > maximumContextStackSize )
-			initialContextStackSize = maximumContextStackSize;
+		ep.maximumContextStackSize = (int)value/4;
+		if( initialContextStackSize > ep.maximumContextStackSize )
+			initialContextStackSize = ep.maximumContextStackSize;
 	}
 	else if( property == asEP_USE_CHARACTER_LITERALS )
-		useCharacterLiterals = value ? true : false;
+		ep.useCharacterLiterals = value ? true : false;
 	else if( property == asEP_ALLOW_MULTILINE_STRINGS )
-		allowMultilineStrings = value ? true : false;
+		ep.allowMultilineStrings = value ? true : false;
 	else if( property == asEP_ALLOW_IMPLICIT_HANDLE_TYPES )
-		allowImplicitHandleTypes = value ? true : false;
+		ep.allowImplicitHandleTypes = value ? true : false;
 	else
 		return asINVALID_ARG;
 
@@ -212,19 +212,19 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 {
 	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
-		return allowUnsafeReferences;
+		return ep.allowUnsafeReferences;
 	else if( property == asEP_OPTIMIZE_BYTECODE )
-		return optimizeByteCode;
+		return ep.optimizeByteCode;
 	else if( property == asEP_COPY_SCRIPT_SECTIONS )
-		return copyScriptSections;
+		return ep.copyScriptSections;
 	else if( property == asEP_MAX_STACK_SIZE )
-		return maximumContextStackSize*4;
+		return ep.maximumContextStackSize*4;
 	else if( property == asEP_USE_CHARACTER_LITERALS )
-		return useCharacterLiterals;
+		return ep.useCharacterLiterals;
 	else if( property == asEP_ALLOW_MULTILINE_STRINGS )
-		return allowMultilineStrings;
+		return ep.allowMultilineStrings;
 	else if( property == asEP_ALLOW_IMPLICIT_HANDLE_TYPES )
-		return allowImplicitHandleTypes;
+		return ep.allowImplicitHandleTypes;
 
 	return 0;
 }
@@ -238,14 +238,15 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 asCScriptEngine::asCScriptEngine()
 {
 	// Engine properties
-	allowUnsafeReferences    = false;
-	optimizeByteCode         = true;
-	copyScriptSections       = true;
-	maximumContextStackSize  = 0;         // no limit
-	useCharacterLiterals     = false;
-	allowMultilineStrings    = false;
-	allowImplicitHandleTypes = false;
+	ep.allowUnsafeReferences    = false;
+	ep.optimizeByteCode         = true;
+	ep.copyScriptSections       = true;
+	ep.maximumContextStackSize  = 0;         // no limit
+	ep.useCharacterLiterals     = false;
+	ep.allowMultilineStrings    = false;
+	ep.allowImplicitHandleTypes = false;
 
+	gc.engine = this;
 
 	scriptTypeBehaviours.engine = this;
 	refCount = 1;
@@ -255,8 +256,6 @@ asCScriptEngine::asCScriptEngine()
 	isBuilding = false;
 	lastModule = 0;
 
-	// Reset the GC state
-	gcState = 0;
 
 	initialContextStackSize = 1024;      // 1 KB
 	
@@ -1811,7 +1810,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		if( func.returnType != type )
 			return ConfigError(asINVALID_DECLARATION);
 
-		if( !allowUnsafeReferences )
+		if( !ep.allowUnsafeReferences )
 		{
 			// Verify that the rvalue is marked as in if a reference
 			if( func.parameterTypes[0].IsReference() && func.inOutFlags[0] != 1 )
@@ -3318,388 +3317,29 @@ void asCScriptEngine::CallFree(void *obj)
 	userFree(obj);
 }
 
+// interface
 void asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, int typeId)
 {
 	asCObjectType *objType = GetObjectTypeFromTypeId(typeId);
-	AddScriptObjectToGC(obj, objType);
+	gc.AddScriptObjectToGC(obj, objType);
 }
 
-void asCScriptEngine::AddScriptObjectToGC(void *obj, asCObjectType *objType)
-{
-	CallObjectMethod(obj, objType->beh.addref);
-	asSObjTypePair ot = {obj, objType};
-	gcObjects.PushLast(ot);
-}
-
+// interface
 int asCScriptEngine::GarbageCollect(bool doFullCycle)
 {
-	if( doFullCycle )
-	{
-		// Reset GC
-		gcState = 0;
-		toMark.SetLength(0);
-		gcMap.EraseAll();
-
-		int r;
-		while( (r = GCInternal()) == 1 );
-
-		// Take the opportunity to clear unused types as well
-		ClearUnusedTypes();
-
-		return r;
-	}
-
-	// Run another step
-	return GCInternal();
+	return gc.GarbageCollect(doFullCycle);
 }
 
+// interface
 int asCScriptEngine::GetObjectsInGarbageCollectorCount()
 {
-	return (int)gcObjects.GetLength();
+	return gc.GetObjectsInGarbageCollectorCount();
 }
 
-enum egcState
-{
-	destroyGarbage_init = 0,
-	destroyGarbage_loop,
-	destroyGarbage_haveMore,
-	clearCounters_init,
-	clearCounters_loop,
-	countReferences_init,
-	countReferences_loop,
-	detectGarbage_init,
-	detectGarbage_loop1,
-	detectGarbage_loop2,
-	verifyUnmarked,
-	breakCircles_init,
-	breakCircles_loop,
-	breakCircles_haveGarbage
-};
-
-int asCScriptEngine::GCInternal()
-{
-	for(;;)
-	{
-		switch( gcState )
-		{
-		case destroyGarbage_init:
-		{
-			// If there are no objects to be freed then don't start
-			if( gcObjects.GetLength() == 0 )
-				return 0;
-
-			gcIdx = (asUINT)-1;
-			gcState = destroyGarbage_loop;
-		}
-		break;
-
-		case destroyGarbage_loop:
-		case destroyGarbage_haveMore:
-		{
-			// If the refCount has reached 1, then only the GC still holds a
-			// reference to the object, thus we don't need to worry about the
-			// application touching the objects during collection.
-
-			// Destroy all objects that have refCount == 1. If any objects are
-			// destroyed, go over the list again, because it may have made more
-			// objects reach refCount == 1.
-			while( ++gcIdx < gcObjects.GetLength() )
-			{
-				if( CallObjectMethodRetInt(gcObjects[gcIdx].obj, gcObjects[gcIdx].type->beh.gcGetRefCount) == 1 )
-				{
-					// Release the object immediately
-
-					// Make sure the refCount is really 0, because the 
-					// destructor may have increased the refCount again.
-
-					bool addRef = false;
-					if( gcObjects[gcIdx].type->flags & asOBJ_SCRIPT_STRUCT )
-					{
-						// Script structs may actually be resurrected in the destructor
-						int refCount = ((asCScriptStruct*)gcObjects[gcIdx].obj)->Release();
-						if( refCount > 0 ) addRef = true;
-					}
-					else
-						CallObjectMethod(gcObjects[gcIdx].obj, gcObjects[gcIdx].type->beh.release);
-
-					// Was the object really destroyed?
-					if( !addRef )
-					{
-						if( gcIdx == gcObjects.GetLength() - 1 )
-							gcObjects.PopLast();
-						else
-							gcObjects[gcIdx] = gcObjects.PopLast();
-						gcIdx--;
-					}
-					else
-					{
-						// Since the object was resurrected in the 
-						// destructor, we must add our reference again
-						CallObjectMethod(gcObjects[gcIdx].obj, gcObjects[gcIdx].type->beh.addref);
-					}
-
-					gcState = destroyGarbage_haveMore;
-
-					// Allow the application to work a little
-					return 1;
-				}
-			}
-
-			// Only move to the next step if no garbage was detected in this step
-			if( gcState == destroyGarbage_haveMore )
-				gcState = destroyGarbage_init;
-			else
-				gcState = clearCounters_init;
-		}
-		break;
-
-		case clearCounters_init:
-		{
-			gcMap.EraseAll();
-			gcState = clearCounters_loop;
-		}
-		break;
-
-		case clearCounters_loop:
-		{
-			// TODO: gc
-			// This step can be incremental as newly created objects are
-			// added to the end of the gcObjects array.
-			// :ODOT
-
-			// Build a map of objects that will be checked, the map will
-			// hold the object pointer as key, and the gcCount and the 
-			// objects index in the gcObjects array as value. As objects are 
-			// added to the map the gcFlag must be set in the objects, so
-			// we can be verify if the object is accessed during the GC cycle.
-			for( asUINT n = 0; n < gcObjects.GetLength(); n++ )
-			{
-				// Add the gc count for this object
-				int refCount = CallObjectMethodRetInt(gcObjects[n].obj, gcObjects[n].type->beh.gcGetRefCount);
-				asSIntTypePair it = {refCount-1, gcObjects[n].type};
-				gcMap.Insert(gcObjects[n].obj, it);
-
-				// Mark the object so that we can
-				// see if it has changed since read
-				CallObjectMethod(gcObjects[n].obj, gcObjects[n].type->beh.gcSetFlag);
-			}
-
-			gcState = countReferences_init;
-		}
-		break;
-
-		case countReferences_init:
-		{
-			gcIdx = (asUINT)-1;
-			gcMap.MoveFirst(&gcMapCursor);
-			gcState = countReferences_loop;
-		}
-		break;
-
-		case countReferences_loop:
-		{
-			// Call EnumReferences on all objects in the map, to count the number
-			// of references reachable from between objects in the map. If all
-			// references for an object in the map is reachable from other objects 
-			// in the map, then we know that no outside references are held for 
-			// this object, thus it is a potential dead object in a circular reference.
-
-			// If the gcFlag is cleared for an object we consider the object alive 
-			// and referenced from outside the GC, thus we don't enumerate its references.
-
-			// Any new objects created after this step in the GC cycle won't be 
-			// in the map, and is thus automatically considered alive.
-			while( gcMapCursor )
-			{
-				void *obj = gcMap.GetKey(gcMapCursor);
-				asCObjectType *type = gcMap.GetValue(gcMapCursor).type;
-				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
-
-				if( CallObjectMethodRetBool(obj, type->beh.gcGetFlag) )
-				{
-					CallObjectMethod(obj, this, type->beh.gcEnumReferences);
-
-					// Allow the application to work a little
-					return 1;
-				}
-			}
-
-			gcState = detectGarbage_init;
-		}
-		break;
-
-		case detectGarbage_init:
-		{
-			gcIdx = (asUINT)-1;
-			gcMap.MoveFirst(&gcMapCursor);
-			gcState = detectGarbage_loop1;
-		}
-		break;
-
-		case detectGarbage_loop1:
-		{
-			// All objects that are known not to be dead must be removed from the map,
-			// along with all objects they reference. What remains in the map after 
-			// this pass is sure to be dead objects in circular references.
-
-			// An object is considered alive if its gcFlag is cleared, or all the 
-			// references where not found in the map.
-
-			// Add all alive objects from the map to the toMark array
-			while( gcMapCursor )
-			{
-				asSMapNode<void*, asSIntTypePair> *cursor = gcMapCursor;
-				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
-
-				void *obj = gcMap.GetKey(cursor);
-				asSIntTypePair it = gcMap.GetValue(cursor);
-
-				bool gcFlag = CallObjectMethodRetBool(obj, it.type->beh.gcGetFlag);
-				if( !gcFlag || it.i > 0 )
-				{
-					toMark.PushLast(obj);
-
-					// Allow the application to work a little
-					return 1;
-				}
-			}
-
-			gcState = detectGarbage_loop2;
-		}
-		break;
-
-		case detectGarbage_loop2:
-		{
-			// In this step we are actually removing the alive objects from the map.
-			// As the object is removed, all the objects it references are added to the
-			// toMark list, by calling EnumReferences. Only objects still in the map
-			// will be added to the toMark list.
-			while( toMark.GetLength() )
-			{
-				void *gcObj = toMark.PopLast();
-				asCObjectType *type = 0;
-
-				// Remove the object from the map to mark it as alive
-				asSMapNode<void*, asSIntTypePair> *cursor = 0;
-				if( gcMap.MoveTo(&cursor, gcObj) )
-				{
-					type = gcMap.GetValue(cursor).type;
-					gcMap.Erase(cursor);
-
-					// Enumerate all the object's references so that they too can be marked as alive
-					CallObjectMethod(gcObj, this, type->beh.gcEnumReferences);
-				}
-
-				// Allow the application to work a little
-				return 1;
-			}
-
-			gcState = verifyUnmarked;
-		}
-		break;
-
-		case verifyUnmarked:
-		{
-			// In this step we must make sure that none of the objects still in the map
-			// has been touched by the application. If they have then we must run the
-			// detectGarbage loop once more.
-			gcMap.MoveFirst(&gcMapCursor);
-			while( gcMapCursor )
-			{
-				void *gcObj = gcMap.GetKey(gcMapCursor);
-				asCObjectType *type = gcMap.GetValue(gcMapCursor).type;
-
-				bool gcFlag = CallObjectMethodRetBool(gcObj, type->beh.gcGetFlag);
-				if( !gcFlag )
-				{
-					// The unmarked object was touched, rerun the detectGarbage loop
-					gcState = detectGarbage_init;
-					return 1;
-				}
-
-				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
-			}
-
-			// No unmarked object was touched, we can now be sure
-			// that objects that have gcCount == 0 really is garbage
-			gcState = breakCircles_init;
-		}
-		break;
-
-		case breakCircles_init:
-		{
-			gcIdx = (asUINT)-1;
-			gcMap.MoveFirst(&gcMapCursor);
-			gcState = breakCircles_loop;
-		}
-		break;
-
-		case breakCircles_loop:
-		case breakCircles_haveGarbage:
-		{
-			// All objects in the map are now known to be dead objects
-			// kept alive through circular references. To be able to free
-			// these objects we need to force the breaking of the circle
-			// by having the objects release their references.
-			while( gcMapCursor )
-			{
-				//gcMap.GetKey(gcMapCursor)->ReleaseAllHandles();
-				void *gcObj = gcMap.GetKey(gcMapCursor);
-				asCObjectType *type = gcMap.GetValue(gcMapCursor).type;
-				CallObjectMethod(gcObj, this, type->beh.gcReleaseAllReferences);
-
-				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
-
-				gcState = breakCircles_haveGarbage;
-
-				// Allow the application to work a little
-				return 1;
-			}
-
-			// If no handles garbage was detected we can finish now
-			if( gcState != breakCircles_haveGarbage )
-			{
-				// Restart the GC
-				gcState = destroyGarbage_init;
-				return 0;
-			}
-			else
-			{
-				// Restart the GC
-				gcState = destroyGarbage_init;
-				return 1;
-			}
-		}
-		break;
-		} // switch
-	}
-
-	// Shouldn't reach this point
-	UNREACHABLE_RETURN;
-}
-
+// interface
 void asCScriptEngine::GCEnumCallback(void *reference)
 {
-	if( gcState == countReferences_loop )
-	{
-		// Find the reference in the map
-		asSMapNode<void*, asSIntTypePair> *cursor = 0;
-		if( gcMap.MoveTo(&cursor, (asCGCObject*)reference) )
-		{
-			// Decrease the counter in the map for the reference
-			gcMap.GetValue(cursor).i--;
-		}
-	}
-	else if( gcState == detectGarbage_loop2 )
-	{
-		// Find the reference in the map
-		asSMapNode<void*, asSIntTypePair> *cursor = 0;
-		if( gcMap.MoveTo(&cursor, (asCGCObject*)reference) )
-		{
-			// Add the object to the list of objects to mark as alive
-			toMark.PushLast((asCGCObject*)reference);
-		}
-	}
+	gc.GCEnumCallback(reference);
 }
 
 int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)

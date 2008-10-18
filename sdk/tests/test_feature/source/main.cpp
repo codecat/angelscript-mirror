@@ -176,6 +176,11 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
+	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
+	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
+	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
+	if( TestRZ::Test()                ) goto failed; else printf("-- TestRZ passed\n");
 	if( TestVector3()                 ) goto failed; else printf("-- TestVector3 passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
@@ -183,7 +188,6 @@ int main(int argc, char **argv)
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
 	if( TestImplicitHandle::Test()    ) goto failed; else printf("-- TestImplicitHandle passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
-	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestFor::Test()               ) goto failed; else printf("-- TestFor passed\n");
 	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
@@ -200,7 +204,6 @@ int main(int argc, char **argv)
 	if( TestMultiAssign::Test()       ) goto failed; else printf("-- TestMultiAssign passed\n");
 	if( TestGlobalVar()               ) goto failed; else printf("-- TestGlobalVar passed\n");
 	if( TestFile::Test()              ) goto failed; else printf("-- TestFile passed\n");
-	if( TestAny::Test()               ) goto failed; else printf("-- TestAny passed\n");
 	if( TestException()               ) goto failed; else printf("-- TestException passed\n");
 	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
 	if( TestArray::Test()             ) goto failed; else printf("-- TestArray passed\n");
@@ -214,7 +217,6 @@ int main(int argc, char **argv)
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
-	if( TestRZ::Test()                ) goto failed; else printf("-- TestRZ passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestExceptionMemory::Test()   ) goto failed; else printf("-- TestExceptionMemory passed\n");
 	if( TestObjHandle2::Test()        ) goto failed; else printf("-- TestObjHandle2 passed\n");
@@ -236,9 +238,7 @@ int main(int argc, char **argv)
 	if( TestBool::Test()              ) goto failed; else printf("-- TestBool passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
 	if( TestBits::Test()              ) goto failed; else printf("-- TestBits passed\n");
-	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
 	if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
-	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
 	if( TestDestructor::Test()        ) goto failed; else printf("-- TestDestructor passed\n");
 	if( TestConstructor2::Test()      ) goto failed; else printf("-- TestConstructor2 passed\n");
 	if( TestUnsafeRef::Test()         ) goto failed; else printf("-- TestUnsafeRef passed\n");
