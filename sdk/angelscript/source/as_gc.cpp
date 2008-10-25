@@ -38,7 +38,6 @@
 
 #include <stdlib.h>
 
-#include "as_config.h"
 #include "as_gc.h"
 #include "as_scriptengine.h"
 #include "as_scriptstruct.h"

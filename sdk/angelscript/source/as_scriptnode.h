@@ -39,7 +39,10 @@
 #ifndef AS_SCRIPTNODE_H
 #define AS_SCRIPTNODE_H
 
+#include "as_config.h"
 #include "as_tokendef.h"
+
+BEGIN_AS_NAMESPACE
 
 enum eScriptNode
 {
@@ -120,5 +123,7 @@ protected:
 	// Must call Destroy instead
 	~asCScriptNode() {}
 };
+
+END_AS_NAMESPACE
 
 #endif

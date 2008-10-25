@@ -37,9 +37,10 @@
 
 
 
-#include "as_config.h"
 #include "as_scriptnode.h"
 #include "as_scriptengine.h"
+
+BEGIN_AS_NAMESPACE
 
 asCScriptNode::asCScriptNode(eScriptNode type)
 {
@@ -143,4 +144,6 @@ void asCScriptNode::DisconnectParent()
 	next = 0;
 	prev = 0;
 }
+
+END_AS_NAMESPACE
 
