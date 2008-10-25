@@ -97,13 +97,17 @@ struct asSEnumValue
 
 class asCScriptEngine;
 
-// TODO: Need to minimize used memory here, because not all types use all properties of the class
+// TODO: memory: Need to minimize used memory here, because not all types use all properties of the class
 class asCObjectType : public asIObjectType
 {
 public:
 	asCObjectType(); 
 	asCObjectType(asCScriptEngine *engine);
 	~asCObjectType();
+
+	void AddRef();
+	void Release();
+	int  GetRefCount();
 
 	asIScriptEngine *GetEngine() const;
 	const char *GetName(int *length = 0) const;
@@ -141,6 +145,8 @@ public:
 	asCObjectType *subType;
 
 	asCScriptEngine *engine;
+
+protected:
 	int refCount;
 };
 

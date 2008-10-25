@@ -41,20 +41,6 @@
 
 BEGIN_AS_NAMESPACE
 
-#ifndef AS_NO_THREADS
-#ifdef AS_WINDOWS_THREADS
-// From windows.h
-extern "C"
-{
-	void __stdcall InitializeCriticalSection(CRITICAL_SECTION *);
-	void __stdcall DeleteCriticalSection(CRITICAL_SECTION *);
-	void __stdcall EnterCriticalSection(CRITICAL_SECTION *);
-	void __stdcall LeaveCriticalSection(CRITICAL_SECTION *);
-	unsigned long __stdcall GetCurrentThreadId();
-}
-#endif
-#endif
-
 // Singleton
 asCThreadManager threadManager;
 
@@ -92,7 +78,7 @@ asCThreadManager::~asCThreadManager()
 		{
 			if( tldMap.GetValue(cursor) ) 
 			{
-				DELETE(tldMap.GetValue(cursor),asCThreadLocalData);
+				asDELETE(tldMap.GetValue(cursor),asCThreadLocalData);
 			}
 		} while( tldMap.MoveNext(&cursor, cursor) );
 	}
@@ -101,7 +87,7 @@ asCThreadManager::~asCThreadManager()
 #else
 	if( tld ) 
 	{
-		DELETE(tld,asCThreadLocalData);
+		asDELETE(tld,asCThreadLocalData);
 	}
 	tld = 0;
 #endif
@@ -127,7 +113,7 @@ int asCThreadManager::CleanupLocalData()
 		// Can we really remove it at this time?
 		if( tld->activeContexts.GetLength() == 0 )
 		{
-			DELETE(tld,asCThreadLocalData);
+			asDELETE(tld,asCThreadLocalData);
 			tldMap.Erase(cursor);
 			r = 0;
 		}
@@ -143,7 +129,7 @@ int asCThreadManager::CleanupLocalData()
 	{
 		if( tld->activeContexts.GetLength() == 0 )
 		{
-			DELETE(tld,asCThreadLocalData);
+			asDELETE(tld,asCThreadLocalData);
 			tld = 0;
 		}
 		else
@@ -192,14 +178,14 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 	if( tld == 0 )
 	{
 		// Create a new tld
-		tld = NEW(asCThreadLocalData)();
+		tld = asNEW(asCThreadLocalData)();
 		SetLocalData(id, tld);
 	}
 
 	return tld;
 #else
 	if( tld == 0 )
-		tld = NEW(asCThreadLocalData)();
+		tld = asNEW(asCThreadLocalData)();
 
 	return tld;
 #endif

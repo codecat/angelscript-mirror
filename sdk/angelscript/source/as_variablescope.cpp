@@ -60,14 +60,14 @@ void asCVariableScope::Reset()
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
 		if( variables[n] ) 
 		{
-			DELETE(variables[n],sVariable);
+			asDELETE(variables[n],sVariable);
 		}
 	variables.SetLength(0);
 }
 
 int asCVariableScope::DeclareVariable(const char *name, const asCDataType &type, int stackOffset)
 {
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// See if the variable is already declared
 	if( strcmp(name, "") != 0 )
 	{
@@ -78,7 +78,7 @@ int asCVariableScope::DeclareVariable(const char *name, const asCDataType &type,
 		}
 	}
 
-	sVariable *var = NEW(sVariable);
+	sVariable *var = asNEW(sVariable);
 	var->name = name;
 	var->type = type;
 	var->stackOffset = stackOffset;
@@ -96,7 +96,7 @@ int asCVariableScope::DeclareVariable(const char *name, const asCDataType &type,
 
 sVariable *asCVariableScope::GetVariable(const char *name)
 {
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Find the variable
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
 	{
@@ -112,7 +112,7 @@ sVariable *asCVariableScope::GetVariable(const char *name)
 
 sVariable *asCVariableScope::GetVariableByOffset(int offset)
 {
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Find the variable
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
 	{

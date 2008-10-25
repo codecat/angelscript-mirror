@@ -54,7 +54,7 @@ asCScriptCode::~asCScriptCode()
 {
 	if( !sharedCode && code ) 
 	{
-		DELETEARRAY(code);
+		asDELETEARRAY(code);
 	}
 }
 
@@ -68,11 +68,11 @@ int asCScriptCode::SetCode(const char *name, const char *code, size_t length, bo
 	this->name = name;
 	if( !sharedCode && this->code ) 
 	{
-		DELETEARRAY(this->code);
+		asDELETEARRAY(this->code);
 	}
 	if( makeCopy )
 	{
-		this->code = NEWARRAY(char,length);
+		this->code = asNEWARRAY(char,length);
 		memcpy((char*)this->code, code, length);
 		codeLength = length;
 		sharedCode = false;

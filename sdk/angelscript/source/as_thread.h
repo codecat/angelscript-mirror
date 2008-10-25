@@ -80,15 +80,11 @@ protected:
 #endif
 #ifdef AS_WINDOWS_THREADS
 
-// From windows.h
-struct CRITICAL_SECTION 
-{
-#ifdef AS_64BIT_PTR
-    int reserved[10];
-#else
-    int reserved[6];
-#endif
-};
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+// Undefine macros that cause problems in our code
+#undef GetObject
 
 class asCThreadCriticalSection
 {

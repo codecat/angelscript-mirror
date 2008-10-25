@@ -57,9 +57,9 @@ common C/C++ datatypes for more efficient communication with the host applicatio
  - \subpage doc_obj_handle
  - \subpage doc_call_script_func
  - \subpage doc_generic
+ - \subpage doc_gc
 
 \todo Write a page about registering global properties
-\todo Write a page about garbage collection
  
  
  

@@ -104,7 +104,7 @@ asCCompiler::~asCCompiler()
 		asCVariableScope *var = variables;
 		variables = variables->parent;
 
-		DELETE(var,asCVariableScope);
+		asDELETE(var,asCVariableScope);
 	}
 }
 
@@ -268,7 +268,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	// We need to parse the statement block now
 
-	// TODO: PARSER: We can parse the statement block one statement at a time, thus save even more memory
+	// TODO: memory: We can parse the statement block one statement at a time, thus save even more memory
 	asCParser parser(builder);
 	int r = parser.ParseStatementBlock(script, func->lastChild);
 	if( r < 0 ) return -1;
@@ -588,7 +588,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			for( asUINT n = 0; n < args.GetLength(); n++ )
 				if( args[n] ) 
 				{
-					DELETE(args[n],asSExprContext);
+					asDELETE(args[n],asSExprContext);
 				}
 		}
 	}
@@ -1130,7 +1130,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 	n = argCount-1;
 	if( type && type->IsTemplate() )
 	{
-		args[n] = NEW(asSExprContext)(engine);
+		args[n] = asNEW(asSExprContext)(engine);
 		args[n]->bc.InstrPTR(BC_OBJTYPE, type->GetObjectType());
 #ifndef AS_64BIT_PTR
 		args[n]->type.Set(asCDataType::CreatePrimitive(ttInt, false));
@@ -1149,7 +1149,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		int r = CompileAssignment(arg, &expr);
 		if( r < 0 ) anyErrors = true;
 
-		args[n] = NEW(asSExprContext)(engine);
+		args[n] = asNEW(asSExprContext)(engine);
 		MergeExprContexts(args[n], &expr);
 		args[n]->type = expr.type;
 		args[n]->exprNode = arg;
@@ -1338,7 +1338,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 				for( asUINT n = 0; n < args.GetLength(); n++ )
 					if( args[n] ) 
 					{
-						DELETE(args[n],asSExprContext);
+						asDELETE(args[n],asSExprContext);
 					}
 			}
 
@@ -2502,7 +2502,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 
 void asCCompiler::AddVariableScope(bool isBreakScope, bool isContinueScope)
 {
-	variables = NEW(asCVariableScope)(variables);
+	variables = asNEW(asCVariableScope)(variables);
 	variables->isBreakScope    = isBreakScope;
 	variables->isContinueScope = isContinueScope;
 }
@@ -2513,7 +2513,7 @@ void asCCompiler::RemoveVariableScope()
 	{
 		asCVariableScope *var = variables;
 		variables = variables->parent;
-		DELETE(var,asCVariableScope);
+		asDELETE(var,asCVariableScope);
 	}
 }
 
@@ -5635,7 +5635,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 			ReleaseTemporaryVariable(expr->type, &ctx->bc);
 
 			// Delete the original expression context
-			DELETE(expr,asSExprContext);
+			asDELETE(expr,asSExprContext);
 		}
 		else // &inout
 		{
@@ -5711,7 +5711,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		{
 			// Evaluate the expression before the function call
 			MergeExprContexts(ctx, args[0]);
-			DELETE(args[0],asSExprContext);
+			asDELETE(args[0],asSExprContext);
 			args.SetLength(0);
 		}
 
@@ -5773,7 +5773,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	for( asUINT n = 0; n < args.GetLength(); n++ )
 		if( args[n] )
 		{
-			DELETE(args[n],asSExprContext);
+			asDELETE(args[n],asSExprContext);
 		}
 }
 
@@ -5810,7 +5810,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		{
 			// Evaluate the expression before the function call
 			MergeExprContexts(ctx, args[0]);
-			DELETE(args[0],asSExprContext);
+			asDELETE(args[0],asSExprContext);
 			args.SetLength(0);
 		}
 
@@ -5872,7 +5872,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	for( asUINT n = 0; n < args.GetLength(); n++ )
 		if( args[n] )
 		{
-			DELETE(args[n],asSExprContext);
+			asDELETE(args[n],asSExprContext);
 		}
 }
 
@@ -6713,7 +6713,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	else
 	{
 		// Store the original bytecode so that it can be reused when processing the deferred output parameter
-		asSExprContext *orig = NEW(asSExprContext)(engine);
+		asSExprContext *orig = asNEW(asSExprContext)(engine);
 		MergeExprContexts(orig, arg);
 		orig->exprNode = arg->exprNode;
 		orig->type = arg->type;

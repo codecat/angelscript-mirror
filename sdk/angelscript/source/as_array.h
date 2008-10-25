@@ -183,7 +183,7 @@ void asCArray<T>::Allocate(size_t numElements, bool keepData)
 			tmp = (T*)buf;
 		else
 			// Allocate the array and construct each of the elements
-			tmp = NEWARRAY(T,numElements);
+			tmp = asNEWARRAY(T,numElements);
 
 		if( array == tmp )
 		{
@@ -235,7 +235,7 @@ void asCArray<T>::Allocate(size_t numElements, bool keepData)
 				array[n].~T();
 
 			if( array != (T*)buf )
-				DELETEARRAY(array);
+				asDELETEARRAY(array);
 		}
 	}
 

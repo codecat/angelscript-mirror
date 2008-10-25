@@ -65,12 +65,12 @@ asCScriptFunction::~asCScriptFunction()
 
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
 	{
-		DELETE(variables[n],asSScriptVariable);
+		asDELETE(variables[n],asSScriptVariable);
 	}
 
 	if( sysFuncIntf )
 	{
-		DELETE(sysFuncIntf,asSSystemFunctionInterface);
+		asDELETE(sysFuncIntf,asSSystemFunctionInterface);
 	}
 }
 
@@ -218,7 +218,7 @@ int asCScriptFunction::GetLineNumber(int programPosition)
 
 void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stackOffset)
 {
-	asSScriptVariable *var = NEW(asSScriptVariable);
+	asSScriptVariable *var = asNEW(asSScriptVariable);
 	var->name = name;
 	var->type = type;
 	var->stackOffset = stackOffset;
@@ -258,11 +258,11 @@ void asCScriptFunction::AddReferences()
 	if( byteCode.GetLength() ) 
 	{
 		if( returnType.IsObject() )
-			returnType.GetObjectType()->refCount++;
+			returnType.GetObjectType()->AddRef();
 
 		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
 			if( parameterTypes[p].IsObject() )
-				parameterTypes[p].GetObjectType()->refCount++;
+				parameterTypes[p].GetObjectType()->AddRef();
 	}
 
 	// Go through the byte code and add references to all resources used by the function
@@ -277,7 +277,7 @@ void asCScriptFunction::AddReferences()
 		case BC_REFCPY:
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
-				objType->refCount++;
+				objType->AddRef();
 				break;
 			}
 
@@ -355,11 +355,11 @@ void asCScriptFunction::ReleaseReferences()
 	if( byteCode.GetLength() )
 	{
 		if( returnType.IsObject() )
-			returnType.GetObjectType()->refCount--;
+			returnType.GetObjectType()->Release();
 
 		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
 			if( parameterTypes[p].IsObject() )
-				parameterTypes[p].GetObjectType()->refCount--;
+				parameterTypes[p].GetObjectType()->Release();
 	}
 
 	// Go through the byte code and release references to all resources used by the function
@@ -374,7 +374,7 @@ void asCScriptFunction::ReleaseReferences()
 		case BC_REFCPY:
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
-				objType->refCount--;
+				objType->Release();
 				break;
 			}
 

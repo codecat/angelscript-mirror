@@ -28,11 +28,13 @@ objects that have a member variable as a handle to the same type as itself.
 Whenever such an object is created, the garbage collector is informed so that
 it can keep track of the object.
 
-The garbage collector is not executed manually, because the application
+The garbage collector is executed manually, because the application
 will want to control when that extra processing should be done, usually at
 idle moments of the application execution. The garbage collector in
 AngelScript is also incremental, so that it can be executed in tiny steps
 throughout the application execution.
+
+\see \ref doc_gc
 
 
 
@@ -53,6 +55,8 @@ This is usually done by having an integer member variable in the object
 structure itself to hold the reference count. It can also be implemented with
 a separate structure for holding the reference counter, but it adds extra
 overhead as the reference counter must be searched for with each change.
+
+\see \ref doc_register_type
 
 
 
@@ -97,7 +101,7 @@ isn't enough, uses the following algorithm.
     objects' step again.
 
 <li><b>Break circular references:</b> All objects that have not been marked as
-    alive by this time are involved in circular references and must be
+    alive by this time are involved in unreachable circular references and must be
     destroyed. The objects are destroyed by telling the objects to release the
     references they hold, thus breaking the circular references. When all
     circular references have been broken, the entire GC routine is restarted
@@ -106,9 +110,12 @@ isn't enough, uses the following algorithm.
 
 </ol>
 
-All of the steps, except 'clear counters' and 'verify unmarked objects' are
-incremental, i.e. they can be interrupted to allow the application and scripts
-to execute before continuing the garbage collection.
+All of the steps, except 'verify unmarked objects' are incremental, i.e. they 
+can be interrupted to allow the application and scripts to execute before 
+continuing the garbage collection. Step 1 can also be executed individually
+at any time during the cycle, this permits to free up memory for objects that
+are not involved in cyclic memory without having to wait for the detection cycle
+to complete.
 
 The application should ideally invoke the garbage collector every once in
 a while to make sure too much garbage isn't accumulated over long periods.
@@ -117,11 +124,10 @@ It may also be a good idea to do a complete run of the GC when it doesn't
 matter if the application pauses for a little while, for example when in menu
 mode.
 
-Currently the garbage collector cannot handle application registered object
-types as it doesn't have enough knowledge of the internals of the objects to
-be able to follow all the references. It is therefore important that the
-application itself keeps track of application registered types that can form
-circular references. A future release will remedy this though.
+The garbage collector can also take care of application registered types
+if the application registers the appropriate object behaviours.
+
+\see \ref doc_gc_object
 
 \section doc_memory_4 Memory heap
 
@@ -138,7 +144,7 @@ or many small allocations. AngelScript aids these applications as well as it
 is possible to register custom memory allocation routines with the library,
 giving the application exact control over the memory used by AngelScript.
 
-
+\see \ref asSetGlobalMemoryFunctions
 
 
 */

@@ -66,8 +66,7 @@ asIScriptStruct *ScriptStructFactory(asCObjectType *objType, asCScriptEngine *en
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
-		// The memory for the structure should have been released already
-		// TODO: Verify this
+		// TODO: Verify that the memory for the structure have been released already
 		ctx->Release();
 		return 0;
 	}
@@ -181,7 +180,7 @@ asCScriptStruct::asCScriptStruct(asCObjectType *ot)
 {
 	refCount         = 1;
 	objType          = ot;
-	objType->refCount++;
+	objType->AddRef();
 	isDestructCalled = false;
 
 	// Notify the garbage collector of this object
@@ -219,7 +218,7 @@ void asCScriptStruct::Destruct()
 
 asCScriptStruct::~asCScriptStruct()
 {
-	objType->refCount--;
+	objType->Release();
 
 	// The engine pointer should be available from the objectType
 	asCScriptEngine *engine = objType->engine;
@@ -243,6 +242,9 @@ asCScriptStruct::~asCScriptStruct()
 
 int asCScriptStruct::AddRef()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+	// Need two operations, one for clearing the GC flag, and another for changing the ref count
+
 	// Increase counter and clear flag set by GC
 	refCount = (refCount & 0x7FFFFFFF) + 1;
 	return refCount;
@@ -250,6 +252,9 @@ int asCScriptStruct::AddRef()
 
 int asCScriptStruct::Release()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+	// Need two operations, one for clearing the GC flag, and another for changing the ref count
+
 	// Call the script destructor behaviour if the reference counter is 1.
 	if( GetRefCount() == 1 && !isDestructCalled )
 	{
@@ -296,16 +301,22 @@ asIObjectType *asCScriptStruct::GetObjectType()
 
 int asCScriptStruct::GetRefCount()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+
 	return refCount & 0x7FFFFFFF;
 }
 
 void asCScriptStruct::SetFlag()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+
 	refCount |= 0x80000000;
 }
 
 bool asCScriptStruct::GetFlag()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+
 	return (refCount & 0x80000000) ? true : false;
 }
 

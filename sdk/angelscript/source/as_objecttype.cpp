@@ -58,11 +58,28 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 	subType      = 0;
 }
 
+void asCObjectType::AddRef()
+{
+	// TODO: multithread: Use interlocked operations to access refCount
+	refCount++;
+}
+
+void asCObjectType::Release()
+{
+	// TODO: multithread: Use interlocked operations to access refCount
+	refCount--;
+}
+
+int asCObjectType::GetRefCount()
+{
+	// TODO: multithread: Use interlocked operations to access refCount
+	return refCount;
+}
 
 asCObjectType::~asCObjectType()
 {
 	if( subType )
-		subType->refCount--;
+		subType->Release();
 
 	asUINT n;
 	for( n = 0; n < properties.GetLength(); n++ )
@@ -75,7 +92,7 @@ asCObjectType::~asCObjectType()
 				if( group != 0 ) group->Release();
 			}
 
-			DELETE(properties[n],asCProperty);
+			asDELETE(properties[n],asCProperty);
 		}
 
 	properties.SetLength(0);
@@ -85,7 +102,7 @@ asCObjectType::~asCObjectType()
 	for( n = 0; n < enumValues.GetLength(); n++ )
 	{
 		if( enumValues[n] )
-			DELETE(enumValues[n],asSEnumValue);
+			asDELETE(enumValues[n],asSEnumValue);
 	}
 
 	enumValues.SetLength(0);

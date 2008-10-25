@@ -156,11 +156,11 @@ int asCRestore::Restore()
 	module->classTypes.Allocate(count, 0);
 	for( i = 0; i < count; ++i )
 	{
-		asCObjectType *ot = NEW(asCObjectType)(engine);
+		asCObjectType *ot = asNEW(asCObjectType)(engine);
 		ReadObjectTypeDeclaration(ot, false);
 		engine->classTypes.PushLast(ot);
 		module->classTypes.PushLast(ot);
-		ot->refCount++;
+		ot->AddRef();
 	}
 
 	// Read interface methods
@@ -184,7 +184,7 @@ int asCRestore::Restore()
 	module->scriptGlobals.Allocate(count, 0);
 	for( i = 0; i < count; ++i ) 
 	{
-		prop = NEW(asCProperty);
+		prop = asNEW(asCProperty);
 		ReadProperty(prop);
 		module->scriptGlobals.PushLast(prop);
 	}
@@ -200,7 +200,7 @@ int asCRestore::Restore()
 	READ_NUM(count);
 	for( i = 0; i < count; ++i ) 
 	{
-		func = NEW(asCScriptFunction)(engine,module);
+		func = asNEW(asCScriptFunction)(engine,module);
 		ReadFunction(func);
 		module->scriptFunctions.PushLast(func);
 		engine->SetScriptFunction(func);
@@ -210,7 +210,7 @@ int asCRestore::Restore()
 	READ_NUM(count);
 	if( count )
 	{
-		module->initFunction = NEW(asCScriptFunction)(engine,module);
+		module->initFunction = asNEW(asCScriptFunction)(engine,module);
 		ReadFunction(module->initFunction);
 		engine->SetScriptFunction(module->initFunction);
 	}
@@ -220,7 +220,7 @@ int asCRestore::Restore()
 	module->stringConstants.Allocate(count, 0);
 	for(i=0;i<count;++i) 
 	{
-		cstr = NEW(asCString)();
+		cstr = asNEW(asCString)();
 		ReadString(cstr);
 		module->stringConstants.PushLast(cstr);
 	}
@@ -231,7 +231,7 @@ int asCRestore::Restore()
 	module->bindInformations.SetLength(count);
 	for(i=0;i<count;++i)
 	{
-		func = NEW(asCScriptFunction)(engine,module);
+		func = asNEW(asCScriptFunction)(engine,module);
 		ReadFunction(func);
 		module->importedFunctions.PushLast(func);
 
@@ -464,8 +464,6 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 		{
 			WriteFunction(engine->scriptFunctions[ot->methods[n]]);
 		}
-
-		// TODO: interfaces
 	}
 }
 
@@ -688,7 +686,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		int n;
 		for( n = 0; n < size; n++ )
 		{
-			asCProperty *prop = NEW(asCProperty);
+			asCProperty *prop = asNEW(asCProperty);
 			ReadProperty(prop);
 			ot->properties.PushLast(prop);
 		}
@@ -696,7 +694,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		// behaviours
 		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO )
 		{
-			asCScriptFunction *func = NEW(asCScriptFunction)(engine,module);
+			asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
 			ReadFunction(func);
 			ot->beh.construct = func->id;
 			ot->beh.constructors.PushLast(func->id);
@@ -705,7 +703,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 			READ_NUM(size);
 			for( n = 0; n < size; n++ )
 			{
-				asCScriptFunction *func = NEW(asCScriptFunction)(engine,module);
+				asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
 				ReadFunction(func);
 				ot->beh.constructors.PushLast(func->id);
 				module->scriptFunctions.PushLast(func);
@@ -717,18 +715,13 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		READ_NUM(size);
 		for( n = 0; n < size; n++ ) 
 		{
-			asCScriptFunction *func = NEW(asCScriptFunction)(engine,module);
+			asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
 			ReadFunction(func);
 			ot->methods.PushLast(func->id);
 			module->scriptFunctions.PushLast(func);
 			engine->SetScriptFunction(func);
 			func->ComputeSignatureId();
 		}
-
-
-		// TODO: The flag asOBJ_POTENTIAL_CIRCLE must be saved
-
-		// TODO: What about the arrays? the flag must be saved as well
 	}
 }
 

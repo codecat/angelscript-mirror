@@ -68,7 +68,7 @@ asCBuilder::~asCBuilder()
 				functions[n]->node->Destroy(engine);
 			}
 
-			DELETE(functions[n],sFunctionDescription);
+			asDELETE(functions[n],sFunctionDescription);
 		}
 
 		functions[n] = 0;
@@ -84,7 +84,7 @@ asCBuilder::~asCBuilder()
 				globVariables[n]->node->Destroy(engine);
 			}
 
-			DELETE(globVariables[n],sGlobalVariableDescription);
+			asDELETE(globVariables[n],sGlobalVariableDescription);
 			globVariables[n] = 0;
 		}
 	}
@@ -94,7 +94,7 @@ asCBuilder::~asCBuilder()
 	{
 		if( scripts[n] )
 		{
-			DELETE(scripts[n],asCScriptCode);
+			asDELETE(scripts[n],asCScriptCode);
 		}
 
 		scripts[n] = 0;
@@ -110,7 +110,7 @@ asCBuilder::~asCBuilder()
 				classDeclarations[n]->node->Destroy(engine);
 			}
 
-			DELETE(classDeclarations[n],sClassDeclaration);
+			asDELETE(classDeclarations[n],sClassDeclaration);
 			classDeclarations[n] = 0;
 		}
 	}
@@ -124,7 +124,7 @@ asCBuilder::~asCBuilder()
 				interfaceDeclarations[n]->node->Destroy(engine);
 			}
 
-			DELETE(interfaceDeclarations[n],sClassDeclaration);
+			asDELETE(interfaceDeclarations[n],sClassDeclaration);
 			interfaceDeclarations[n] = 0;
 		}
 	}
@@ -138,7 +138,7 @@ asCBuilder::~asCBuilder()
 				namedTypeDeclarations[n]->node->Destroy(engine);
 			}
 
-			DELETE(namedTypeDeclarations[n],sClassDeclaration);
+			asDELETE(namedTypeDeclarations[n],sClassDeclaration);
 			namedTypeDeclarations[n] = 0;
 		}
 	}
@@ -146,7 +146,7 @@ asCBuilder::~asCBuilder()
 
 int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy)
 {
-	asCScriptCode *script = NEW(asCScriptCode);
+	asCScriptCode *script = asNEW(asCScriptCode);
 	script->SetCode(name, code, codeLength, makeCopy);
 	script->lineOffset = lineOffset;
 	script->idx = sectionIdx;
@@ -179,7 +179,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	preMessage.isSet = false;
 
 	// Add the string to the script code
-	asCScriptCode *script = NEW(asCScriptCode);
+	asCScriptCode *script = asNEW(asCScriptCode);
 	script->SetCode(TXT_EXECUTESTRING, string, true);
 	script->lineOffset = -1; // Compensate for "void ExecuteString() {\n"
 	scripts.PushLast(script);
@@ -195,7 +195,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		{
 			node->DisconnectParent();
 
-			sFunctionDescription *func = NEW(sFunctionDescription);
+			sFunctionDescription *func = asNEW(sFunctionDescription);
 			functions.PushLast(func);
 
 			func->script = scripts[0];
@@ -213,7 +213,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	{
 		// Compile the function
 		asCCompiler compiler(engine);
-		asCScriptFunction *execfunc = NEW(asCScriptFunction)(engine,module);
+		asCScriptFunction *execfunc = asNEW(asCScriptFunction)(engine,module);
 		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, execfunc) >= 0 )
 		{
 			execfunc->id = asFUNC_STRING;
@@ -222,7 +222,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		}
 		else
 		{
-			DELETE(execfunc,asCScriptFunction);
+			asDELETE(execfunc,asCScriptFunction);
 		}
 	}
 
@@ -240,7 +240,7 @@ void asCBuilder::ParseScripts()
 	asUINT n = 0;
 	for( n = 0; n < scripts.GetLength(); n++ )
 	{
-		asCParser *parser = NEW(asCParser)(this);
+		asCParser *parser = asNEW(asCParser)(this);
 		parsers.PushLast(parser);
 
 		// Parse the script file
@@ -380,7 +380,7 @@ void asCBuilder::ParseScripts()
 
 	for( n = 0; n < parsers.GetLength(); n++ )
 	{
-		DELETE(parsers[n],asCParser);
+		asDELETE(parsers[n],asCParser);
 	}
 }
 
@@ -484,7 +484,7 @@ asCProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *prop)
 	asASSERT(obj.GetObjectType() != 0);
 
 	// TODO: Only search in config groups to which the module has access
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	asCArray<asCProperty *> &props = obj.GetObjectType()->properties;
 	for( asUINT n = 0; n < props.GetLength(); n++ )
 		if( props[n]->name == prop )
@@ -500,7 +500,7 @@ asCProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, b
 	if( isCompiled ) *isCompiled = true;
 	if( isPureConstant ) *isPureConstant = false;
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Check application registered properties
 	asCArray<asCProperty *> *props = &(engine->globalProps);
 	for( n = 0; n < props->GetLength(); ++n )
@@ -520,7 +520,7 @@ asCProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, b
 			}
 		}
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Check properties being compiled now
 	asCArray<sGlobalVariableDescription *> *gvars = &globVariables;
 	for( n = 0; n < gvars->GetLength(); ++n )
@@ -536,7 +536,7 @@ asCProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, b
 		}
 	}
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Check previously compiled global variables
 	if( module )
 	{
@@ -692,7 +692,7 @@ int asCBuilder::CheckNameConflictMember(asCDataType &dt, const char *name, asCSc
 	// Check against other members
 	asCObjectType *t = dt.GetObjectType();
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	asCArray<asCProperty *> &props = t->properties;
 	for( asUINT n = 0; n < props.GetLength(); n++ )
 	{
@@ -830,7 +830,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		CheckNameConflict(name.AddressOf(), n, file);
 
 		// Register the global variable
-		sGlobalVariableDescription *gvar = NEW(sGlobalVariableDescription);
+		sGlobalVariableDescription *gvar = asNEW(sGlobalVariableDescription);
 		globVariables.PushLast(gvar);
 
 		gvar->script      = file;
@@ -855,7 +855,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		}
 
 		// Add script variable to engine
-		asCProperty *prop = NEW(asCProperty);
+		asCProperty *prop = asNEW(asCProperty);
 		prop->index      = gvar->index;
 		prop->name       = name;
 		prop->type       = gvar->datatype;
@@ -881,14 +881,14 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 
 	CheckNameConflict(name.AddressOf(), n, file);
 
-	sClassDeclaration *decl = NEW(sClassDeclaration);
+	sClassDeclaration *decl = asNEW(sClassDeclaration);
 	classDeclarations.PushLast(decl);
 	decl->name = name;
 	decl->script = file;
 	decl->validState = 0;
 	decl->node = node;
 
-	asCObjectType *st = NEW(asCObjectType)(engine);
+	asCObjectType *st = asNEW(asCObjectType)(engine);
 	st->arrayType = 0;
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_STRUCT;
 
@@ -900,7 +900,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	st->tokenType = ttIdentifier;
 	module->classTypes.PushLast(st);
 	engine->classTypes.PushLast(st);
-	st->refCount++;
+	st->AddRef();
 	decl->objType = st;
 
 	// Use the default script class behaviours
@@ -930,7 +930,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 
 	CheckNameConflict(name.AddressOf(), n, file);
 
-	sClassDeclaration *decl = NEW(sClassDeclaration);
+	sClassDeclaration *decl = asNEW(sClassDeclaration);
 	interfaceDeclarations.PushLast(decl);
 	decl->name       = name;
 	decl->script     = file;
@@ -938,7 +938,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	decl->node       = node;
 
 	// Register the object type for the interface
-	asCObjectType *st = NEW(asCObjectType)(engine);
+	asCObjectType *st = asNEW(asCObjectType)(engine);
 	st->arrayType = 0;
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_STRUCT;
 	st->size = 0; // Cannot be instanciated
@@ -946,7 +946,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	st->tokenType = ttIdentifier;
 	module->classTypes.PushLast(st);
 	engine->classTypes.PushLast(st);
-	st->refCount++;
+	st->AddRef();
 	decl->objType = st;
 
 	// Use the default script class behaviours
@@ -1129,7 +1129,7 @@ void asCBuilder::CompileGlobalVariables()
 	finalInit.Finalize();
 
 	int id = engine->GetNextScriptFunctionId();
-	asCScriptFunction *init = NEW(asCScriptFunction)(engine,module);
+	asCScriptFunction *init = asNEW(asCScriptFunction)(engine,module);
 
 	init->id = id;
 	module->initFunction = init;
@@ -1151,7 +1151,7 @@ void asCBuilder::CompileGlobalVariables()
 		objectType = gvar->datatype.GetObjectType();
 		asASSERT(NULL != objectType);
 
-		asSEnumValue *e = NEW(asSEnumValue);
+		asSEnumValue *e = asNEW(asSEnumValue);
 		e->name = gvar->name;
 		e->value = *(int*)&gvar->constantValue;
 
@@ -1161,9 +1161,9 @@ void asCBuilder::CompileGlobalVariables()
 		if( gvar->node )
 			gvar->node->Destroy(engine);
 		if( gvar->property )
-			DELETE(gvar->property, asCProperty);
+			asDELETE(gvar->property, asCProperty);
 
-		DELETE(gvar, sGlobalVariableDescription);
+		asDELETE(gvar, sGlobalVariableDescription);
 		globVariables[n] = 0;
 	}
 
@@ -1211,7 +1211,7 @@ void asCBuilder::CompileClasses()
 				CheckNameConflictMember(st, name.AddressOf(), node->lastChild, file);
 
 				// Store the properties in the object type descriptor
-				asCProperty *prop = NEW(asCProperty);
+				asCProperty *prop = asNEW(asCProperty);
 				prop->name = name;
 				prop->type = dt;
 
@@ -1545,8 +1545,8 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 		asCObjectType *st;
 		asCDataType dataType;
 
-		decl = NEW(sClassDeclaration);
-		st = NEW(asCObjectType)(engine);
+		decl = asNEW(sClassDeclaration);
+		st = asNEW(asCObjectType)(engine);
 		dataType.CreatePrimitive(ttInt, false);
 
 		st->arrayType = 0;
@@ -1562,7 +1562,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 		decl->objType = st;
 
 		module->classTypes.PushLast(st);
-		st->refCount++;
+		st->AddRef();
 		engine->classTypes.PushLast(st);
 		namedTypeDeclarations.PushLast(decl);
 
@@ -1603,13 +1603,13 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			}
 
 			// Create the global variable description so the enum value can be evaluated
-			sGlobalVariableDescription *gvar = NEW(sGlobalVariableDescription);
+			sGlobalVariableDescription *gvar = asNEW(sGlobalVariableDescription);
 			globVariables.PushLast(gvar);
 
 			gvar->script		  = file;
 			gvar->node			  = tmp;
 			gvar->name			  = name;
-			gvar->property        = NEW(asCProperty);
+			gvar->property        = asNEW(asCProperty);
 			gvar->datatype		  = type;
 			// No need to allocate space on the global memory stack since the values are stored in the asCObjectType
 			gvar->index			  = 0;
@@ -1666,8 +1666,8 @@ int asCBuilder::RegisterTypedef(asCScriptNode *const node, asCScriptCode *file)
 	if(asSUCCESS == r) 
 	{
 		// Create the new type
-		sClassDeclaration *decl = NEW(sClassDeclaration);
-		asCObjectType *st = NEW(asCObjectType)(engine);
+		sClassDeclaration *decl = asNEW(sClassDeclaration);
+		asCObjectType *st = asNEW(asCObjectType)(engine);
 
 		st->arrayType = 0;
 		st->flags = asOBJ_NAMED_PSEUDO;
@@ -1681,7 +1681,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *const node, asCScriptCode *file)
 		decl->node = NULL;
 		decl->objType = st;
 
-		st->refCount++;
+		st->AddRef();
 		module->classTypes.PushLast(st);
 		engine->classTypes.PushLast(st);
 		namedTypeDeclarations.PushLast(decl);
@@ -1742,7 +1742,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 
 	if( !isInterface )
 	{
-		sFunctionDescription *func = NEW(sFunctionDescription);
+		sFunctionDescription *func = asNEW(sFunctionDescription);
 		functions.PushLast(func);
 
 		func->script  = file;
@@ -1984,7 +1984,7 @@ asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 {
 	asUINT n;
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	for( n = 0; n < module->scriptFunctions.GetLength(); n++ )
 	{
 		if( module->scriptFunctions[n]->name == name &&
@@ -1992,14 +1992,14 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 			funcs.PushLast(module->scriptFunctions[n]->id);
 	}
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	for( n = 0; n < module->importedFunctions.GetLength(); n++ )
 	{
 		if( module->importedFunctions[n]->name == name )
 			funcs.PushLast(module->importedFunctions[n]->id);
 	}
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	for( n = 0; n < engine->scriptFunctions.GetLength(); n++ )
 	{
 		if( engine->scriptFunctions[n] && 
@@ -2017,7 +2017,7 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 
 void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst)
 {
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	if( objIsConst )
 	{
 		// Only add const methods to the list

@@ -86,7 +86,7 @@ asCString::~asCString()
 {
 	if( length > 11 && dynamic )
 	{
-		DELETEARRAY(dynamic);
+		asDELETEARRAY(dynamic);
 	}
 }
 
@@ -115,7 +115,7 @@ void asCString::Allocate(size_t len, bool keepData)
 {
 	if( len > 11 )
 	{
-		char *buf = NEWARRAY(char,len+1);
+		char *buf = asNEWARRAY(char,len+1);
 
 		if( keepData )
 		{
@@ -125,7 +125,7 @@ void asCString::Allocate(size_t len, bool keepData)
 
 		if( length > 11 )
 		{
-			DELETEARRAY(dynamic);
+			asDELETEARRAY(dynamic);
 		}
 
 		dynamic = buf;
@@ -138,7 +138,7 @@ void asCString::Allocate(size_t len, bool keepData)
 			{
 				memcpy(&local, dynamic, len);
 			}
-			DELETEARRAY(dynamic);
+			asDELETEARRAY(dynamic);
 		}
 	}
 

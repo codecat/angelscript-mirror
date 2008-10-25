@@ -43,6 +43,7 @@
 #include "as_config.h"
 #include "as_array.h"
 #include "as_map.h"
+#include "as_thread.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -59,18 +60,15 @@ public:
 	void GCEnumCallback(void *reference);
 	void AddScriptObjectToGC(void *obj, asCObjectType *objType);
 
-	int  GCInternal();
-	void ClearMap();
+	asCScriptEngine                   *engine;
 
+protected:
 	struct asSObjTypePair {void *obj; asCObjectType *type;};
 	struct asSIntTypePair {int i; asCObjectType *type;};
 
 	enum egcState
 	{
-		destroyGarbage_init = 0,
-		destroyGarbage_loop,
-		destroyGarbage_haveMore,
-		clearCounters_init,
+		clearCounters_init = 0,
 		clearCounters_loop,
 		countReferences_init,
 		countReferences_loop,
@@ -83,7 +81,11 @@ public:
 		breakCircles_haveGarbage
 	};
 
-	asCScriptEngine                   *engine;
+	int            DestroyGarbage();
+	int            IdentifyGarbageWithCyclicRefs();
+	void           ClearMap();
+	asSObjTypePair GetObjectAtIdx(int idx);
+	void           RemoveObjectAtIdx(int idx);
 
 	// Holds all the objects known by the garbage collector
 	asCArray<asSObjTypePair>           gcObjects;
@@ -99,6 +101,9 @@ public:
 	egcState                           state;
 	asUINT                             idx;
 	asSMapNode<void*, asSIntTypePair> *gcMapCursor;
+
+	// Critical section for multithreaded access
+	DECLARECRITICALSECTION(gcCritical);
 };
 
 END_AS_NAMESPACE

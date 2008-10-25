@@ -64,7 +64,7 @@ asCModule::~asCModule()
 
 	if( builder ) 
 	{
-		DELETE(builder,asCBuilder);
+		asDELETE(builder,asCBuilder);
 		builder = 0;
 	}
 
@@ -105,7 +105,7 @@ int asCModule::AddScriptSection(const char *name, const char *code, size_t codeL
 		return asMODULE_IS_IN_USE;
 
 	if( !builder )
-		builder = NEW(asCBuilder)(engine, this);
+		builder = asNEW(asCBuilder)(engine, this);
 
 	builder->AddCode(name, code, (int)codeLength, lineOffset, (int)builder->scripts.GetLength(), engine->ep.copyScriptSections);
 
@@ -125,13 +125,13 @@ int asCModule::Build()
 	// Store the section names
 	for( size_t n = 0; n < builder->scripts.GetLength(); n++ )
 	{
-		asCString *sectionName = NEW(asCString)(builder->scripts[n]->name);
+		asCString *sectionName = asNEW(asCString)(builder->scripts[n]->name);
 		scriptSections.PushLast(sectionName);
 	}
 
 	// Compile the script
 	int r = builder->Build();
-	DELETE(builder,asCBuilder);
+	asDELETE(builder,asCBuilder);
 	builder = 0;
 	
 	if( r < 0 )
@@ -244,7 +244,7 @@ void asCModule::InternalReset()
 			continue;
 
 		// Don't delete interface methods, if the module isn't the only owner of the interface
-		if( scriptFunctions[n]->objectType && scriptFunctions[n]->objectType->IsInterface() && scriptFunctions[n]->objectType->refCount > 1 )
+		if( scriptFunctions[n]->objectType && scriptFunctions[n]->objectType->IsInterface() && scriptFunctions[n]->objectType->GetRefCount() > 1 )
 			continue;
 
 		engine->DeleteScriptFunction(scriptFunctions[n]->id);
@@ -275,7 +275,7 @@ void asCModule::InternalReset()
 
 	for( n = 0; n < importedFunctions.GetLength(); n++ )
 	{
-		DELETE(importedFunctions[n],asCScriptFunction);
+		asDELETE(importedFunctions[n],asCScriptFunction);
 	}
 	importedFunctions.SetLength(0);
 
@@ -288,25 +288,25 @@ void asCModule::InternalReset()
 
 	for( n = 0; n < stringConstants.GetLength(); n++ )
 	{
-		DELETE(stringConstants[n],asCString);
+		asDELETE(stringConstants[n],asCString);
 	}
 	stringConstants.SetLength(0);
 
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
-		DELETE(scriptGlobals[n],asCProperty);
+		asDELETE(scriptGlobals[n],asCProperty);
 	}
 	scriptGlobals.SetLength(0);
 
 	for( n = 0; n < scriptSections.GetLength(); n++ )
 	{
-		DELETE(scriptSections[n],asCString);
+		asDELETE(scriptSections[n],asCString);
 	}
 	scriptSections.SetLength(0);
 
 	// Free declared types, including classes, typedefs, and enums
 	for( n = 0; n < classTypes.GetLength(); n++ )
-		classTypes[n]->refCount--;
+		classTypes[n]->Release();
 	classTypes.SetLength(0);
 }
 
@@ -315,7 +315,7 @@ int asCModule::GetFunctionIdByName(const char *name)
 	if( isBuildWithoutErrors == false )
 		return asERROR;
 	
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Find the function id
 	int id = -1;
 	for( size_t n = 0; n < scriptFunctions.GetLength(); n++ )
@@ -352,7 +352,7 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 	asCScriptFunction func(engine, this);
 	bld.ParseFunctionDeclaration(decl, &func, false);
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Search script functions for matching interface
 	int id = -1;
 	for( asUINT n = 0; n < importedFunctions.GetLength(); ++n )
@@ -406,7 +406,7 @@ int asCModule::GetFunctionIdByDecl(const char *decl)
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Search script functions for matching interface
 	int id = -1;
 	for( size_t n = 0; n < scriptFunctions.GetLength(); ++n )
@@ -498,7 +498,7 @@ int asCModule::GetGlobalVarIndexByDecl(const char *decl)
 	asCProperty gvar;
 	bld.ParseVariableDeclaration(decl, &gvar);
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Search script functions for matching interface
 	int id = -1;
 	for( size_t n = 0; n < scriptGlobals.GetLength(); ++n )
@@ -559,15 +559,15 @@ const char *asCModule::GetGlobalVarName(int index, int *length)
 int asCModule::AddConstantString(const char *str, size_t len)
 {
 	//  The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
-	asCString *cstr = NEW(asCString)(str, len);
+	asCString *cstr = asNEW(asCString)(str, len);
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Has the string been registered before?
 	for( size_t n = 0; n < stringConstants.GetLength(); n++ )
 	{
 		if( *stringConstants[n] == *cstr )
 		{
-			DELETE(cstr,asCString);
+			asDELETE(cstr,asCString);
 			return (int)n;
 		}
 	}
@@ -598,7 +598,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	asASSERT(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = NEW(asCScriptFunction)(engine, this);
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this);
 	func->funcType   = isInterface ? asFUNC_INTERFACE : asFUNC_SCRIPT;
 	func->name       = name;
 	func->id         = id;
@@ -632,7 +632,7 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	asASSERT(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = NEW(asCScriptFunction)(engine, this);
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this);
 	func->funcType   = asFUNC_IMPORTED;
 	func->name       = name;
 	func->id         = id;
@@ -951,7 +951,7 @@ bool asCModule::IsUsed()
 
 asCObjectType *asCModule::GetObjectType(const char *type)
 {
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	for( size_t n = 0; n < classTypes.GetLength(); n++ )
 		if( classTypes[n]->name == type )
 			return classTypes[n];
@@ -1064,7 +1064,7 @@ void asCModule::ResolveInterfaceIds()
 			if( classTypes[c] == equals[i].a )
 			{
 				classTypes[c] = equals[i].b;
-				equals[i].b->refCount++;
+				equals[i].b->AddRef();
 				break;
 			}
 		}
@@ -1119,7 +1119,7 @@ void asCModule::ResolveInterfaceIds()
 		}
 
 		// Deallocate the object type
-		DELETE(equals[i].a, asCObjectType);
+		asDELETE(equals[i].a, asCObjectType);
 	}
 }
 

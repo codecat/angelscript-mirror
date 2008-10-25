@@ -56,31 +56,31 @@ extern asFREEFUNC_t  userFree;
 // has been established that the macros are cross platform compatible
 #ifdef AS_NO_USER_ALLOC
 
-	#define NEW(x)        new x
-	#define DELETE(ptr,x) delete ptr
+	#define asNEW(x)        new x
+	#define asDELETE(ptr,x) delete ptr
 
-	#define NEWARRAY(x,cnt)  new x[cnt]
-	#define DELETEARRAY(ptr) delete[] ptr
+	#define asNEWARRAY(x,cnt)  new x[cnt]
+	#define asDELETEARRAY(ptr) delete[] ptr
 
 #else
 
 	#ifndef AS_DEBUG
 
-		#define NEW(x)        new(userAlloc(sizeof(x))) x
-		#define DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
+		#define asNEW(x)        new(userAlloc(sizeof(x))) x
+		#define asDELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
 
-		#define NEWARRAY(x,cnt)  (x*)userAlloc(sizeof(x)*cnt)
-		#define DELETEARRAY(ptr) userFree(ptr)
+		#define asNEWARRAY(x,cnt)  (x*)userAlloc(sizeof(x)*cnt)
+		#define asDELETEARRAY(ptr) userFree(ptr)
 
 	#else
 
 		typedef void *(*asALLOCFUNCDEBUG_t)(size_t, const char *, unsigned int);
 
-		#define NEW(x)        new(((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x), __FILE__, __LINE__)) x
-		#define DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
+		#define asNEW(x)        new(((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x), __FILE__, __LINE__)) x
+		#define asDELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
 
-		#define NEWARRAY(x,cnt)  (x*)((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt, __FILE__, __LINE__)
-		#define DELETEARRAY(ptr) userFree(ptr)
+		#define asNEWARRAY(x,cnt)  (x*)((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt, __FILE__, __LINE__)
+		#define asDELETEARRAY(ptr) userFree(ptr)
 
 	#endif
 #endif

@@ -48,38 +48,64 @@ BEGIN_AS_NAMESPACE
 asCGarbageCollector::asCGarbageCollector()
 {
 	engine  = 0;
-	state = destroyGarbage_init;
+	state = clearCounters_init;
 }
 
 void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 {
 	engine->CallObjectMethod(obj, objType->beh.addref);
 	asSObjTypePair ot = {obj, objType};
+
+	// Add the data to the gcObjects array in a critical section as
+	// another thread might be calling this method at the same time
+	ENTERCRITICALSECTION(gcCritical);
 	gcObjects.PushLast(ot);
+	LEAVECRITICALSECTION(gcCritical);
 }
 
 int asCGarbageCollector::GarbageCollect(bool doFullCycle)
 {
+	// The application is responsible for making sure  
+	// the gc is only executed by one thread at a time. 
+
 	if( doFullCycle )
 	{
-		// Reset GC
-		state = destroyGarbage_init;
+		state = clearCounters_init;
+		int r = 1;
+		unsigned int count = (unsigned int)gcObjects.GetLength();
+		for(;;)
+		{
+			// Detect all garbage with cyclic references
+			while( (r = IdentifyGarbageWithCyclicRefs()) == 1 );
 
-		int r;
-		while( (r = GCInternal()) == 1 );
+			// Now destroy all known garbage
+			while( (r = DestroyGarbage()) == 1 );
+
+			// Run another iteration if any garbage was destroyed
+			if( count != gcObjects.GetLength() )
+				count = (unsigned int)gcObjects.GetLength();
+			else
+				break;
+		}
 
 		// Take the opportunity to clear unused types as well
 		engine->ClearUnusedTypes();
 
-		return r;
+		return 0;
 	}
 
-	// Run another step
-	return GCInternal();
+	// Destroy the garbage that we know of
+	DestroyGarbage();
+
+	// Run another incremental step of the identification of cyclic references
+	return IdentifyGarbageWithCyclicRefs();
 }
 
 int asCGarbageCollector::GetObjectsInGarbageCollectorCount()
 {
+	// It's not necessary to protect this access, as 
+	// it doesn't matter if another thread is currently
+	// appending a new object. 
 	return (int)gcObjects.GetLength();
 }
 
@@ -101,11 +127,43 @@ void asCGarbageCollector::ClearMap()
 	gcMap.EraseAll();
 }
 
-int asCGarbageCollector::GCInternal()
+asCGarbageCollector::asSObjTypePair asCGarbageCollector::GetObjectAtIdx(int idx)
 {
+	// We need to protect this access with a critical section as
+	// another thread might be appending an object at the same time
+	ENTERCRITICALSECTION(gcCritical);
+	asSObjTypePair gcObj = gcObjects[idx];
+	LEAVECRITICALSECTION(gcCritical);
+
+	return gcObj;
+}
+
+void asCGarbageCollector::RemoveObjectAtIdx(int idx)
+{
+	// We need to protect this update with a critical section as
+	// another thread might be appending an object at the same time
+	ENTERCRITICALSECTION(gcCritical);
+	if( idx == (int)gcObjects.GetLength() - 1)
+		gcObjects.PopLast();
+	else
+		gcObjects[idx] = gcObjects.PopLast();
+	LEAVECRITICALSECTION(gcCritical);
+}
+
+int asCGarbageCollector::DestroyGarbage()
+{
+	enum 
+	{
+		destroyGarbage_init = 0,
+		destroyGarbage_loop,
+		destroyGarbage_haveMore,
+	} localState = destroyGarbage_init;
+
+	int localIdx = 0;
+
 	for(;;)
 	{
-		switch( state )
+		switch( localState )
 		{
 		case destroyGarbage_init:
 		{
@@ -113,10 +171,8 @@ int asCGarbageCollector::GCInternal()
 			if( gcObjects.GetLength() == 0 )
 				return 0;
 
-			ClearMap();
-
-			idx = (asUINT)-1;
-			state = destroyGarbage_loop;
+			localIdx = (asUINT)-1;
+			localState = destroyGarbage_loop;
 		}
 		break;
 
@@ -130,41 +186,39 @@ int asCGarbageCollector::GCInternal()
 			// Destroy all objects that have refCount == 1. If any objects are
 			// destroyed, go over the list again, because it may have made more
 			// objects reach refCount == 1.
-			while( ++idx < gcObjects.GetLength() )
+			while( ++localIdx < (int)gcObjects.GetLength() )
 			{
-				if( engine->CallObjectMethodRetInt(gcObjects[idx].obj, gcObjects[idx].type->beh.gcGetRefCount) == 1 )
+				asSObjTypePair gcObj = GetObjectAtIdx(localIdx);
+				if( engine->CallObjectMethodRetInt(gcObj.obj, gcObj.type->beh.gcGetRefCount) == 1 )
 				{
 					// Release the object immediately
 
 					// Make sure the refCount is really 0, because the 
 					// destructor may have increased the refCount again.
 					bool addRef = false;
-					if( gcObjects[idx].type->flags & asOBJ_SCRIPT_STRUCT )
+					if( gcObj.type->flags & asOBJ_SCRIPT_STRUCT )
 					{
 						// Script structs may actually be resurrected in the destructor
-						int refCount = ((asCScriptStruct*)gcObjects[idx].obj)->Release();
+						int refCount = ((asCScriptStruct*)gcObj.obj)->Release();
 						if( refCount > 0 ) addRef = true;
 					}
 					else
-						engine->CallObjectMethod(gcObjects[idx].obj, gcObjects[idx].type->beh.release);
+						engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.release);
 
 					// Was the object really destroyed?
 					if( !addRef )
 					{
-						if( idx == gcObjects.GetLength() - 1 )
-							gcObjects.PopLast();
-						else
-							gcObjects[idx] = gcObjects.PopLast();
-						idx--;
+						RemoveObjectAtIdx(localIdx);
+						localIdx--;
 					}
 					else
 					{
 						// Since the object was resurrected in the 
 						// destructor, we must add our reference again
-						engine->CallObjectMethod(gcObjects[idx].obj, gcObjects[idx].type->beh.addref);
+						engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.addref);
 					}
 
-					state = destroyGarbage_haveMore;
+					localState = destroyGarbage_haveMore;
 
 					// Allow the application to work a little
 					return 1;
@@ -172,15 +226,28 @@ int asCGarbageCollector::GCInternal()
 			}
 
 			// Only move to the next step if no garbage was detected in this step
-			if( state == destroyGarbage_haveMore )
-				state = destroyGarbage_init;
+			if( localState == destroyGarbage_haveMore )
+				localState = destroyGarbage_init;
 			else
-				state = clearCounters_init;
+				return 0;
 		}
 		break;
+		}
+	}
 
+	// Shouldn't reach this point
+	UNREACHABLE_RETURN;
+}
+
+int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
+{
+	for(;;)
+	{
+		switch( state )
+		{
 		case clearCounters_init:
 		{
+			ClearMap();
 			state = clearCounters_loop;
 			idx = 0;
 		}
@@ -202,18 +269,19 @@ int asCGarbageCollector::GCInternal()
 			while( idx < gcObjects.GetLength() )
 			{
 				// Add the gc count for this object
-				int refCount = engine->CallObjectMethodRetInt(gcObjects[idx].obj, gcObjects[idx].type->beh.gcGetRefCount);
+				asSObjTypePair gcObj = GetObjectAtIdx(idx);
+				int refCount = engine->CallObjectMethodRetInt(gcObj.obj, gcObj.type->beh.gcGetRefCount);
 				if( refCount > 1 )
 				{
-					asSIntTypePair it = {refCount-1, gcObjects[idx].type};
-					gcMap.Insert(gcObjects[idx].obj, it);
+					asSIntTypePair it = {refCount-1, gcObj.type};
+					gcMap.Insert(gcObj.obj, it);
 
 					// Increment the object's reference counter when putting it in the map
-					engine->CallObjectMethod(gcObjects[idx].obj, gcObjects[idx].type->beh.addref);
+					engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.addref);
 
 					// Mark the object so that we can
 					// see if it has changed since read
-					engine->CallObjectMethod(gcObjects[idx].obj, gcObjects[idx].type->beh.gcSetFlag);
+					engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.gcSetFlag);
 
 					idx++;
 
@@ -403,13 +471,13 @@ int asCGarbageCollector::GCInternal()
 			if( state != breakCircles_haveGarbage )
 			{
 				// Restart the GC
-				state = destroyGarbage_init;
+				state = clearCounters_init;
 				return 0;
 			}
 			else
 			{
 				// Restart the GC
-				state = destroyGarbage_init;
+				state = clearCounters_init;
 				return 1;
 			}
 		}

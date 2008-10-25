@@ -91,7 +91,7 @@ void asCConfigGroup::RefConfigGroup(asCConfigGroup *group)
 bool asCConfigGroup::HasLiveObjects(asCScriptEngine * /*engine*/)
 {
 	for( asUINT n = 0; n < objTypes.GetLength(); n++ )
-		if( objTypes[n]->refCount != 0 )
+		if( objTypes[n]->GetRefCount() != 0 )
 			return true;
 
 	return false;
@@ -110,7 +110,7 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 		{
 			if( engine->globalProps[m] == globalProps[n] )
 			{
-				DELETE(engine->globalProps[m],asCProperty);
+				asDELETE(engine->globalProps[m],asCProperty);
 				engine->globalProps[m] = 0;
 			}
 		}
@@ -146,7 +146,7 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 		{
 			if( engine->objectTypes[m] == objTypes[n] )
 			{
-				DELETE(engine->objectTypes[m],asCObjectType);
+				asDELETE(engine->objectTypes[m],asCObjectType);
 				engine->objectTypes[m] = engine->objectTypes[engine->objectTypes.GetLength()-1];
 				engine->objectTypes.PopLast();
 				m--;

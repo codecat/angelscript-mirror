@@ -83,9 +83,11 @@ public:
 	void CopyObject(void *src, void *dst, asCObjectType *objType, asCScriptEngine *engine);
 	void CopyHandle(asDWORD *src, asDWORD *dst, asCObjectType *objType, asCScriptEngine *engine);
 
-	int refCount;
 	asCObjectType *objType;
 	bool isDestructCalled;
+
+protected:
+	int refCount;
 };
 
 void ScriptStruct_Construct(asCObjectType *objType, asCScriptStruct *self);

@@ -311,7 +311,6 @@ public:
 
 	// Critical sections for threads
 	DECLARECRITICALSECTION(engineCritical);
-	DECLARECRITICALSECTION(moduleCritical);
 
 	// Engine properties
 	struct

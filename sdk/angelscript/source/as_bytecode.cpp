@@ -1478,14 +1478,11 @@ void asCByteCode::PostProcess()
 	{
 		if( instr->marked == false )
 		{
-			// TODO:
-			// Give warning of unvisited code
+			// TODO: Give warning of unvisited code
 
 			// Remove it
 			cByteInstruction *curr = instr;
 			instr = instr->next;
-
-			// TODO: Add instruction again
 			DeleteInstruction(curr);
 		}
 		else

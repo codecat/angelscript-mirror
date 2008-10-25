@@ -48,12 +48,12 @@ struct sArrayBuffer
 
 asCArrayObject* ArrayObjectFactory(asCObjectType *ot)
 {
-	return NEW(asCArrayObject)(0, ot);
+	return asNEW(asCArrayObject)(0, ot);
 }
 
 static asCArrayObject* ArrayObjectFactory2(asUINT length, asCObjectType *ot)
 {
-	return NEW(asCArrayObject)(length, ot);
+	return asNEW(asCArrayObject)(length, ot);
 }
 
 #ifndef AS_MAX_PORTABILITY
@@ -271,7 +271,7 @@ asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
 {
 	refCount = 1;
 	objType = ot;
-	objType->refCount++;
+	objType->AddRef();
 
 	if( objType->flags & asOBJ_GC )
 		objType->engine->gc.AddScriptObjectToGC(this, objType);		
@@ -308,7 +308,7 @@ asCArrayObject::~asCArrayObject()
 		DeleteBuffer(buffer);
 		buffer = 0;
 	}
-	if( objType ) objType->refCount--;
+	if( objType ) objType->Release();
 }
 
 asUINT asCArrayObject::GetElementCount()
@@ -322,7 +322,7 @@ void asCArrayObject::Resize(asUINT numElements)
 	if( objType->subType )
 	{
 		// Allocate memory for the buffer
-		newBuffer = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
+		newBuffer = (sArrayBuffer*)asNEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
 		newBuffer->numElements = numElements;
 
 		// Copy the elements from the old buffer
@@ -344,7 +344,7 @@ void asCArrayObject::Resize(asUINT numElements)
 	else
 	{
 		// Allocate memory for the buffer
-		newBuffer = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+elementSize*numElements);
+		newBuffer = (sArrayBuffer*)asNEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+elementSize*numElements);
 		newBuffer->numElements = numElements;
 
 		int c = numElements > buffer->numElements ? buffer->numElements : numElements;
@@ -402,12 +402,12 @@ void asCArrayObject::CreateBuffer(sArrayBuffer **buf, asUINT numElements)
 {
 	if( objType->subType )
 	{
-		*buf = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
+		*buf = (sArrayBuffer*)asNEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
 		(*buf)->numElements = numElements;
 	}
 	else
 	{
-		*buf = (sArrayBuffer*)NEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+elementSize*numElements);
+		*buf = (sArrayBuffer*)asNEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+elementSize*numElements);
 		(*buf)->numElements = numElements;
 	}
 
@@ -419,7 +419,7 @@ void asCArrayObject::DeleteBuffer(sArrayBuffer *buf)
 	Destruct(buf, 0, buf->numElements);
 
 	// Free the buffer
-	DELETEARRAY(buf);
+	asDELETEARRAY(buf);
 }
 
 void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
@@ -606,7 +606,7 @@ void asCArrayObject::CopyBuffer(sArrayBuffer *dst, sArrayBuffer *src)
 void asCArrayObject::Destruct()
 {
 	// Call destructor and free the memory
-	DELETE(this, asCArrayObject);
+	asDELETE(this, asCArrayObject);
 }
 
 void asCArrayObject::EnumReferences(asIScriptEngine *engine)
@@ -643,6 +643,9 @@ void asCArrayObject::ReleaseAllHandles(asIScriptEngine *engine)
 
 int asCArrayObject::AddRef()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+	// Need two operations, one for clearing the GC flag, and another for changing the ref count
+
 	// Increase counter and clear flag set by GC
 	refCount = (refCount & 0x7FFFFFFF) + 1;
 	return refCount;
@@ -650,6 +653,9 @@ int asCArrayObject::AddRef()
 
 int asCArrayObject::Release()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+	// Need two operations, one for clearing the GC flag, and another for changing the ref count
+
 	// Now do the actual releasing (clearing the flag set by GC)
 	refCount = (refCount & 0x7FFFFFFF) - 1;
 	if( refCount == 0 )
@@ -663,16 +669,22 @@ int asCArrayObject::Release()
 
 int asCArrayObject::GetRefCount()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+
 	return refCount & 0x7FFFFFFF;
 }
 
 void asCArrayObject::SetFlag()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+
 	refCount |= 0x80000000;
 }
 
 bool asCArrayObject::GetFlag()
 {
+	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
+
 	return (refCount & 0x80000000) ? true : false;
 }
 

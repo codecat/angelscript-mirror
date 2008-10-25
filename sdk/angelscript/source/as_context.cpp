@@ -196,7 +196,7 @@ int asCContext::Release()
 	if( refCount == 0 )
 	{
 		LEAVECRITICALSECTION(criticalSection);
-		DELETE(this,asCContext);
+		asDELETE(this,asCContext);
 		return 0;
 	}
 	LEAVECRITICALSECTION(criticalSection);
@@ -284,13 +284,13 @@ int asCContext::Prepare(int funcID)
 			for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
 				if( stackBlocks[n] )
 				{
-					DELETEARRAY(stackBlocks[n]);
+					asDELETEARRAY(stackBlocks[n]);
 				}
 			stackBlocks.SetLength(0);
 
 			stackBlockSize = stackSize;
 
-			asDWORD *stack = NEWARRAY(asDWORD,stackBlockSize);
+			asDWORD *stack = asNEWARRAY(asDWORD,stackBlockSize);
 			stackBlocks.PushLast(stack);
 		}
 
@@ -371,7 +371,7 @@ int asCContext::Unprepare()
 	{
 		if( stackBlocks[n] )
 		{
-			DELETEARRAY(stackBlocks[n]);
+			asDELETEARRAY(stackBlocks[n]);
 		}
 	}
 	stackBlocks.SetLength(0);
@@ -382,7 +382,7 @@ int asCContext::Unprepare()
 	// Deallocate string function
 	if( stringFunction )
 	{
-		DELETE(stringFunction, asCScriptFunction);
+		asDELETE(stringFunction, asCScriptFunction);
 		stringFunction = 0;
 	}
 	
@@ -391,13 +391,13 @@ int asCContext::Unprepare()
 
 int asCContext::SetExecuteStringFunction(asCScriptFunction *func)
 {
-	// TODO: Make thread safe
+	// TODO: multithread: Make thread safe
 
 	// TODO: Verify that the context isn't running
 
 	if( stringFunction )
 	{
-		DELETE(stringFunction,asCScriptFunction);
+		asDELETE(stringFunction,asCScriptFunction);
 	}
 
 	stringFunction = func;
@@ -450,13 +450,13 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 		for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
 			if( stackBlocks[n] )
 			{
-				DELETEARRAY(stackBlocks[n]);
+				asDELETEARRAY(stackBlocks[n]);
 			}
 		stackBlocks.SetLength(0);
 
 		stackBlockSize = stackSize;
 
-		asDWORD *stack = NEWARRAY(asDWORD,stackBlockSize);
+		asDWORD *stack = asNEWARRAY(asDWORD,stackBlockSize);
 		stackBlocks.PushLast(stack);
 	}
 
@@ -935,7 +935,7 @@ void *asCContext::GetArgPointer(asUINT arg)
 
 int asCContext::Abort()
 {
-	// TODO: Make thread safe
+	// TODO: multithread: Make thread safe
 
 	if( engine == 0 ) return asERROR;
 
@@ -958,7 +958,7 @@ int asCContext::Abort()
 
 int asCContext::Suspend()
 {
-	// TODO: Make thread safe
+	// TODO: multithread: Make thread safe
 
 	if( engine == 0 ) return asERROR;
 
@@ -1220,7 +1220,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 		stackIndex++;
 		if( (int)stackBlocks.GetLength() == stackIndex )
 		{
-			asDWORD *stack = NEWARRAY(asDWORD,(stackBlockSize << stackIndex));
+			asDWORD *stack = asNEWARRAY(asDWORD,(stackBlockSize << stackIndex));
 			stackBlocks.PushLast(stack);
 		}
 

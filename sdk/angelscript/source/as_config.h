@@ -269,9 +269,6 @@
 
 
 
-// TODO:
-// First detect hardware and OS, set AngelScript defined variables for these
-// Then detect compiler and configure the library based on detected target system (using the AngelScript defined variables)
 
 
 
