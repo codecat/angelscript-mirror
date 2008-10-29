@@ -38,11 +38,12 @@
 
 #include "as_config.h"
 #include "as_thread.h"
+#include "as_atomic.h"
 
 BEGIN_AS_NAMESPACE
 
 // Singleton
-asCThreadManager threadManager;
+asCThreadManager *threadManager = 0;
 
 //======================================================================
 
@@ -51,7 +52,12 @@ extern "C"
 
 AS_API int asThreadCleanup()
 {
-	return threadManager.CleanupLocalData();
+	// As this function can be called globally, 
+	// we can't assume the threadManager exists
+	if( threadManager )
+		return threadManager->CleanupLocalData();
+
+	return 0;
 }
 
 }
@@ -63,6 +69,24 @@ asCThreadManager::asCThreadManager()
 #ifdef AS_NO_THREADS
 	tld = 0;
 #endif
+	refCount = new asCAtomic();
+	refCount->set(1);
+}
+
+void asCThreadManager::AddRef()
+{
+	refCount->atomicInc();
+}
+
+void asCThreadManager::Release()
+{
+	if( refCount->atomicDec() == 0 )
+	{
+		// The last engine has been destroyed, so we 
+		// need to delete the thread manager as well
+		delete this;
+		threadManager = 0;
+	}
 }
 
 asCThreadManager::~asCThreadManager()
@@ -91,6 +115,9 @@ asCThreadManager::~asCThreadManager()
 	}
 	tld = 0;
 #endif
+
+	if( refCount )
+		delete refCount;
 }
 
 int asCThreadManager::CleanupLocalData()

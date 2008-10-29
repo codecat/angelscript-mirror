@@ -93,6 +93,10 @@ SOURCE=..\..\source\main.cpp
 
 SOURCE=..\..\source\test_sharedstring.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_threadmgr.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 

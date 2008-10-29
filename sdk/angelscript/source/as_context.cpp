@@ -116,7 +116,8 @@ public:
 
 AS_API asIScriptContext *asGetActiveContext()
 {
-	asCThreadLocalData *tld = threadManager.GetLocalData();
+	asASSERT(threadManager);
+	asCThreadLocalData *tld = threadManager->GetLocalData();
 	if( tld->activeContexts.GetLength() == 0 )
 		return 0;
 	return tld->activeContexts[tld->activeContexts.GetLength()-1];
@@ -124,13 +125,15 @@ AS_API asIScriptContext *asGetActiveContext()
 
 void asPushActiveContext(asIScriptContext *ctx)
 {
-	asCThreadLocalData *tld = threadManager.GetLocalData();
+	asASSERT(threadManager);
+	asCThreadLocalData *tld = threadManager->GetLocalData();
 	tld->activeContexts.PushLast(ctx);
 }
 
 void asPopActiveContext(asIScriptContext *ctx)
 {
-	asCThreadLocalData *tld = threadManager.GetLocalData();
+	asASSERT(threadManager);
+	asCThreadLocalData *tld = threadManager->GetLocalData();
 
 	asASSERT(tld->activeContexts.GetLength() > 0);
 	asASSERT(tld->activeContexts[tld->activeContexts.GetLength()-1] == ctx);
@@ -3693,7 +3696,8 @@ const char *asCContext::GetVarDeclaration(int varIndex, int *length, int stackLe
 	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
 		return 0;
 
-	asCString *tempString = &threadManager.GetLocalData()->string;
+	asASSERT(threadManager);
+	asCString *tempString = &threadManager->GetLocalData()->string;
 	*tempString = func->variables[varIndex]->type.Format();
 	*tempString += " " + func->variables[varIndex]->name;
 

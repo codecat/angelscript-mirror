@@ -105,18 +105,23 @@ protected:
 
 //=======================================================================
 
+class asCAtomic;
 class asCThreadLocalData;
 
 class asCThreadManager
 {
 public:
 	asCThreadManager();
-	~asCThreadManager();
 
 	asCThreadLocalData *GetLocalData();
 	int CleanupLocalData();
 
+	void AddRef();
+	void Release();
+
 protected:
+	~asCThreadManager();
+	asCAtomic *refCount;
 
 #ifndef AS_NO_THREADS
 	asCThreadLocalData *GetLocalData(asDWORD threadId);
@@ -129,7 +134,7 @@ protected:
 #endif
 };
 
-extern asCThreadManager threadManager;
+extern asCThreadManager *threadManager;
 
 //======================================================================
 

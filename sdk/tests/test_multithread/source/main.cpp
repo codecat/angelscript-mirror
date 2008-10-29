@@ -5,6 +5,7 @@
 #endif
 
 namespace TestSharedString { bool Test(); }
+namespace TestThreadMgr { bool Test(); }
 
 void DetectMemoryLeaks()
 {
@@ -19,7 +20,8 @@ int main(int argc, char **argv)
 {
 	DetectMemoryLeaks();
 
-	if( TestSharedString::Test()      ) goto failed;
+	if( TestSharedString::Test()      ) goto failed; else printf("TestSharedString passed\n");
+	if( TestThreadMgr::Test()         ) goto failed; else printf("TestThreadMgr passed\n");
 
 	printf("--------------------------------------------\n");
 	printf("All of the tests passed with success.\n\n");

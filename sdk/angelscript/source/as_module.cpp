@@ -537,7 +537,8 @@ const char *asCModule::GetGlobalVarDeclaration(int index, int *length)
 
 	asCProperty *prop = scriptGlobals[index];
 
-	asCString *tempString = &threadManager.GetLocalData()->string;
+	asASSERT(threadManager);
+	asCString *tempString = &threadManager->GetLocalData()->string;
 	*tempString = prop->type.Format();
 	*tempString += " " + prop->name;
 
@@ -555,6 +556,14 @@ const char *asCModule::GetGlobalVarName(int index, int *length)
 	return scriptGlobals[index]->name.AddressOf();
 }
 
+// interface
+int asCModule::GetGlobalVarTypeId(int index)
+{
+	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
+		return asINVALID_ARG;
+
+	return engine->GetTypeIdFromDataType(scriptGlobals[index]->type);
+}
 
 int asCModule::AddConstantString(const char *str, size_t len)
 {
@@ -860,7 +869,8 @@ const char *asCModule::GetImportedFunctionDeclaration(int index, int *length)
 	asCScriptFunction *func = GetImportedFunction(index);
 	if( func == 0 ) return 0;
 
-	asCString *tempString = &threadManager.GetLocalData()->string;
+	asASSERT(threadManager);
+	asCString *tempString = &threadManager->GetLocalData()->string;
 	*tempString = func->GetDeclarationStr();
 
 	if( length ) *length = (int)tempString->GetLength();

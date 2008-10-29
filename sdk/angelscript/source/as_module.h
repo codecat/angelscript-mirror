@@ -99,6 +99,7 @@ public:
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) = 0;
 	virtual const char *GetGlobalVarDeclaration(int index, int *length = 0) = 0;
 	virtual const char *GetGlobalVarName(int index, int *length = 0) = 0;
+	virtual int         GetGlobalVarTypeId(int index) = 0;
 	virtual void       *GetAddressOfGlobalVar(int index) = 0;
 
 	// Dynamic binding between modules
@@ -144,12 +145,13 @@ public:
 	asIScriptFunction *GetFunctionDescriptorByIndex(int index);
 	asIScriptFunction *GetFunctionDescriptorById(int funcId);
 
-	int  GetGlobalVarCount();
-	int  GetGlobalVarIndexByName(const char *name);
-	int  GetGlobalVarIndexByDecl(const char *decl);
+	int         GetGlobalVarCount();
+	int         GetGlobalVarIndexByName(const char *name);
+	int         GetGlobalVarIndexByDecl(const char *decl);
 	const char *GetGlobalVarDeclaration(int index, int *length);
 	const char *GetGlobalVarName(int index, int *length);
-	void *GetAddressOfGlobalVar(int index);
+	int         GetGlobalVarTypeId(int index);
+	void       *GetAddressOfGlobalVar(int index);
 
 	const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0);
 	const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0);

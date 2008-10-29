@@ -471,7 +471,8 @@ asIScriptEngine *asCScriptFunction::GetEngine() const
 
 const char *asCScriptFunction::GetDeclaration(int *length) const
 {
-	asCString *tempString = &threadManager.GetLocalData()->string;
+	asASSERT(threadManager);
+	asCString *tempString = &threadManager->GetLocalData()->string;
 	*tempString = GetDeclarationStr();
 	if( length ) *length = (int)tempString->GetLength();
 	return tempString->AddressOf();

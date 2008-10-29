@@ -133,6 +133,7 @@ public:
 	int         GetGlobalVarIndexByDecl(const char *module, const char *decl);
 	const char *GetGlobalVarDeclaration(const char *module, int index, int *length = 0);
 	const char *GetGlobalVarName(const char *module, int index, int *length = 0);
+	int         GetGlobalVarTypeId(const char *module, int index);
 	void       *GetAddressOfGlobalVar(const char *module, int index);
 #ifdef AS_DEPRECATED
 	int GetGlobalVarIDByIndex(const char *module, int index);

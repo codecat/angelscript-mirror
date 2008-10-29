@@ -237,6 +237,12 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 
 asCScriptEngine::asCScriptEngine()
 {
+	// Instanciate the thread manager
+	if( threadManager == 0 ) 
+		threadManager = new asCThreadManager;
+	else
+		threadManager->AddRef();
+
 	// Engine properties
 	ep.allowUnsafeReferences    = false;
 	ep.optimizeByteCode         = true;
@@ -356,6 +362,9 @@ asCScriptEngine::~asCScriptEngine()
 			asDELETE(scriptFunctions[n],asCScriptFunction);
 		}
 	scriptFunctions.SetLength(0);
+
+	// Release the thread manager
+	threadManager->Release();
 }
 
 int asCScriptEngine::AddRef()
@@ -872,6 +881,7 @@ const char *asCScriptEngine::GetFunctionName(int funcID, int *length)
 }
 #endif
 
+// interface
 int asCScriptEngine::GetGlobalVarCount(const char *module)
 {
 	asCModule *mod = GetModule(module, false);
@@ -880,6 +890,7 @@ int asCScriptEngine::GetGlobalVarCount(const char *module)
 	return mod->GetGlobalVarCount();
 }
 
+// interface
 int asCScriptEngine::GetGlobalVarIndexByName(const char *module, const char *name)
 {
 	asCModule *mod = GetModule(module, false);
@@ -888,6 +899,7 @@ int asCScriptEngine::GetGlobalVarIndexByName(const char *module, const char *nam
 	return mod->GetGlobalVarIndexByName(name);
 }
 
+// interface
 int asCScriptEngine::GetGlobalVarIndexByDecl(const char *module, const char *decl)
 {
 	asCModule *mod = GetModule(module, false);
@@ -896,6 +908,7 @@ int asCScriptEngine::GetGlobalVarIndexByDecl(const char *module, const char *dec
 	return mod->GetGlobalVarIndexByDecl(decl);
 }
 
+// interface
 const char *asCScriptEngine::GetGlobalVarDeclaration(const char *module, int index, int *length)
 {
 	asCModule *mod = GetModule(module, false);
@@ -904,6 +917,7 @@ const char *asCScriptEngine::GetGlobalVarDeclaration(const char *module, int ind
 	return mod->GetGlobalVarDeclaration(index, length);
 }
 
+// interface
 const char *asCScriptEngine::GetGlobalVarName(const char *module, int index, int *length)
 {
 	asCModule *mod = GetModule(module, false);
@@ -912,6 +926,16 @@ const char *asCScriptEngine::GetGlobalVarName(const char *module, int index, int
 	return mod->GetGlobalVarName(index, length);
 }
 
+// interface
+int asCScriptEngine::GetGlobalVarTypeId(const char *module, int index)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetGlobalVarTypeId(index);
+}
+
+// interface
 void *asCScriptEngine::GetAddressOfGlobalVar(const char *module, int index)
 {
 	asCModule *mod = GetModule(module, false);
@@ -3444,7 +3468,8 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, int *length)
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
 	if( dt == 0 ) return 0;
 
-	asCString *tempString = &threadManager.GetLocalData()->string;
+	asASSERT(threadManager);
+	asCString *tempString = &threadManager->GetLocalData()->string;
 	*tempString = dt->Format();
 
 	if( length ) *length = (int)tempString->GetLength();
