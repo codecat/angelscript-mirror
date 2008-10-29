@@ -42,6 +42,7 @@
 #define AS_ARRAYOBJECT_H
 
 #include "as_config.h"
+#include "as_atomic.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -78,7 +79,8 @@ public:
 	void ReleaseAllHandles(asIScriptEngine *engine);
 
 protected:
-	int refCount;
+	asCAtomic refCount;
+	bool gcFlag;
 	asCObjectType *objType;
 	sArrayBuffer *buffer;
 	int arrayType;

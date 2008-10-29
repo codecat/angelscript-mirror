@@ -114,6 +114,10 @@ SOURCE=..\..\..\source\as_arrayobject.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\source\as_atomic.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_builder.cpp
 # End Source File
 # Begin Source File
@@ -255,6 +259,10 @@ SOURCE=..\..\..\source\as_array.h
 # Begin Source File
 
 SOURCE=..\..\..\source\as_arrayobject.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\source\as_atomic.h
 # End Source File
 # Begin Source File
 

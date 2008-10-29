@@ -41,6 +41,7 @@
 #ifndef AS_OBJECTTYPE_H
 #define AS_OBJECTTYPE_H
 
+#include "as_atomic.h"
 #include "as_string.h"
 #include "as_property.h"
 #include "as_array.h"
@@ -147,7 +148,7 @@ public:
 	asCScriptEngine *engine;
 
 protected:
-	int refCount;
+	asCAtomic refCount;
 };
 
 END_AS_NAMESPACE

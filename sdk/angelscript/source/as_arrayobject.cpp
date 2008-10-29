@@ -269,7 +269,8 @@ int asCArrayObject::CopyFrom(asIScriptArray *other)
 
 asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
 {
-	refCount = 1;
+	refCount.set(1);
+	gcFlag = false;
 	objType = ot;
 	objType->AddRef();
 
@@ -643,49 +644,38 @@ void asCArrayObject::ReleaseAllHandles(asIScriptEngine *engine)
 
 int asCArrayObject::AddRef()
 {
-	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
-	// Need two operations, one for clearing the GC flag, and another for changing the ref count
-
-	// Increase counter and clear flag set by GC
-	refCount = (refCount & 0x7FFFFFFF) + 1;
-	return refCount;
+	// Clear the GC flag then increase the counter
+	gcFlag = false;
+	return refCount.atomicInc();
 }
 
 int asCArrayObject::Release()
 {
-	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
-	// Need two operations, one for clearing the GC flag, and another for changing the ref count
-
 	// Now do the actual releasing (clearing the flag set by GC)
-	refCount = (refCount & 0x7FFFFFFF) - 1;
-	if( refCount == 0 )
+	gcFlag = false;
+	int r = refCount.atomicDec();
+	if( r == 0 )
 	{
 		Destruct();
 		return 0;
 	}
 
-	return refCount;
+	return r;
 }
 
 int asCArrayObject::GetRefCount()
 {
-	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
-
-	return refCount & 0x7FFFFFFF;
+	return refCount.get();
 }
 
 void asCArrayObject::SetFlag()
 {
-	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
-
-	refCount |= 0x80000000;
+	gcFlag = true;
 }
 
 bool asCArrayObject::GetFlag()
 {
-	// TODO: multithread: Use Interlocked operations to make updates to refCount be atomic
-
-	return (refCount & 0x80000000) ? true : false;
+	return gcFlag;
 }
 
 END_AS_NAMESPACE

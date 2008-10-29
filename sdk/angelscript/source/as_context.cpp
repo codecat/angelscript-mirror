@@ -156,7 +156,7 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 
 	status = tsUninitialized;
 	stackBlockSize = 0;
-	refCount = 1;
+	refCount.set(1);
 	module = 0;
 	inExceptionHandler = false;
 	isStackMemoryNotAllocated = false;
@@ -181,25 +181,18 @@ asCContext::~asCContext()
 
 int asCContext::AddRef()
 {
-	ENTERCRITICALSECTION(criticalSection);
-	int r = ++refCount;
-	LEAVECRITICALSECTION(criticalSection);
-
-	return r;
+	return refCount.atomicInc();
 }
 
 int asCContext::Release()
 {
-	ENTERCRITICALSECTION(criticalSection);
-	int r = --refCount;
+	int r = refCount.atomicDec();
 
-	if( refCount == 0 )
+	if( r == 0 )
 	{
-		LEAVECRITICALSECTION(criticalSection);
 		asDELETE(this,asCContext);
 		return 0;
 	}
-	LEAVECRITICALSECTION(criticalSection);
 
 	return r;
 }

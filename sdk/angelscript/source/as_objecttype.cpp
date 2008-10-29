@@ -47,33 +47,30 @@ BEGIN_AS_NAMESPACE
 asCObjectType::asCObjectType()
 {
 	engine   = 0; 
-	refCount = 0; 
+	refCount.set(0); 
 	subType  = 0;
 }
 
 asCObjectType::asCObjectType(asCScriptEngine *engine) 
 {
 	this->engine = engine; 
-	refCount     = 0; 
+	refCount.set(0); 
 	subType      = 0;
 }
 
 void asCObjectType::AddRef()
 {
-	// TODO: multithread: Use interlocked operations to access refCount
-	refCount++;
+	refCount.atomicInc();
 }
 
 void asCObjectType::Release()
 {
-	// TODO: multithread: Use interlocked operations to access refCount
-	refCount--;
+	refCount.atomicDec();
 }
 
 int asCObjectType::GetRefCount()
 {
-	// TODO: multithread: Use interlocked operations to access refCount
-	return refCount;
+	return refCount.get();
 }
 
 asCObjectType::~asCObjectType()

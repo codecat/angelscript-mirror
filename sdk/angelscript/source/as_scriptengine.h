@@ -41,7 +41,7 @@
 #define AS_SCRIPTENGINE_H
 
 #include "as_config.h"
-#include "as_thread.h"
+#include "as_atomic.h"
 #include "as_scriptfunction.h"
 #include "as_array.h"
 #include "as_datatype.h"
@@ -279,7 +279,7 @@ public:
 	asCArray<asCScriptFunction *> signatureIds;
 
 	// These resources must be protected for multiple accesses
-	int refCount;
+	asCAtomic refCount;
 	asCArray<asCModule *> scriptModules;
 	asCModule *lastModule;
 	bool isBuilding;

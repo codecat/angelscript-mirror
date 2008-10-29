@@ -52,8 +52,8 @@ asCModule::asCModule(const char *name, int id, asCScriptEngine *engine)
 	builder = 0;
 	isDiscarded = false;
 	isBuildWithoutErrors = false;
-	contextCount = 0;
-	moduleCount = 0;
+	contextCount.set(0);
+	moduleCount.set(0);
 	isGlobalVarInitialized = false;
 	initFunction = 0;
 }
@@ -115,7 +115,7 @@ int asCModule::AddScriptSection(const char *name, const char *code, size_t codeL
 // interface
 int asCModule::Build()
 {
-	asASSERT( contextCount == 0 );
+	asASSERT( contextCount.get() == 0 );
 
  	InternalReset();
 
@@ -701,36 +701,22 @@ int asCModule::AllocGlobalMemory(int size)
 
 int asCModule::AddContextRef()
 {
-	ENTERCRITICALSECTION(criticalSection);
-	int r = ++contextCount;
-	LEAVECRITICALSECTION(criticalSection);
-	return r;
+	return contextCount.atomicInc();
 }
 
 int asCModule::ReleaseContextRef()
 {
-	ENTERCRITICALSECTION(criticalSection);
-	int r = --contextCount;
-	LEAVECRITICALSECTION(criticalSection);
-
-	return r;
+	return contextCount.atomicDec();
 }
 
 int asCModule::AddModuleRef()
 {
-	ENTERCRITICALSECTION(criticalSection);
-	int r = ++moduleCount;
-	LEAVECRITICALSECTION(criticalSection);
-	return r;
+	return moduleCount.atomicInc();
 }
 
 int asCModule::ReleaseModuleRef()
 {
-	ENTERCRITICALSECTION(criticalSection);
-	int r = --moduleCount;
-	LEAVECRITICALSECTION(criticalSection);
-
-	return r;
+	return moduleCount.atomicDec();
 }
 
 bool asCModule::CanDelete()
@@ -739,10 +725,10 @@ bool asCModule::CanDelete()
 	if( !isDiscarded ) return false;
 
 	// Are there any contexts still referencing the module?
-	if( contextCount ) return false;
+	if( contextCount.get() ) return false;
 
 	// If there are modules referencing this one we need to check for circular referencing
-	if( moduleCount )
+	if( moduleCount.get() )
 	{
 		// Check if all the modules are without external reference
 		asCArray<asCModule*> modules;
@@ -776,7 +762,7 @@ bool asCModule::CanDeleteAllReferences(asCArray<asCModule*> &modules)
 {
 	if( !isDiscarded ) return false;
 
-	if( contextCount ) return false;
+	if( contextCount.get() ) return false;
 
 	modules.PushLast(this);
 
@@ -943,8 +929,8 @@ int asCModule::UnbindAllImportedFunctions()
 
 bool asCModule::IsUsed()
 {
-	if( contextCount ) return true;
-	if( moduleCount ) return true;
+	if( contextCount.get() ) return true;
+	if( moduleCount.get() ) return true;
 
 	return false;
 }

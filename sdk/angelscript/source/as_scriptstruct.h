@@ -42,6 +42,7 @@
 #define AS_SCRIPTSTRUCT_H
 
 #include "as_config.h"
+#include "as_atomic.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -84,10 +85,11 @@ public:
 	void CopyHandle(asDWORD *src, asDWORD *dst, asCObjectType *objType, asCScriptEngine *engine);
 
 	asCObjectType *objType;
-	bool isDestructCalled;
 
 protected:
-	int refCount;
+	asCAtomic refCount;
+	bool gcFlag;
+	bool isDestructCalled;
 };
 
 void ScriptStruct_Construct(asCObjectType *objType, asCScriptStruct *self);

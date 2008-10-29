@@ -102,6 +102,9 @@
 				RelativePath="..\..\source\as_arrayobject.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\as_atomic.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\as_builder.cpp">
 			</File>
 			<File
@@ -216,6 +219,9 @@
 			</File>
 			<File
 				RelativePath="..\..\source\as_arrayobject.h">
+			</File>
+			<File
+				RelativePath="..\..\source\as_atomic.h">
 			</File>
 			<File
 				RelativePath="..\..\source\as_builder.h">

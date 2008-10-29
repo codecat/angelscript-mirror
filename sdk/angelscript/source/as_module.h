@@ -40,7 +40,7 @@
 #define AS_MODULE_H
 
 #include "as_config.h"
-#include "as_thread.h"
+#include "as_atomic.h"
 #include "as_string.h"
 #include "as_array.h"
 #include "as_datatype.h"
@@ -170,11 +170,11 @@ public:
 
 	int  AddContextRef();
 	int  ReleaseContextRef();
-	int  contextCount;
+	asCAtomic contextCount;
 
 	int  AddModuleRef();
 	int  ReleaseModuleRef();
-	int  moduleCount;
+	asCAtomic moduleCount;
 
 	void CallInit();
 	void CallExit();
@@ -233,8 +233,6 @@ public:
 	asCArray<void*>                globalVarPointers;
 	asCArray<asCString*>           stringConstants;
 	asCArray<asCObjectType*>       classTypes;
-
-	DECLARECRITICALSECTION(criticalSection);
 };
 
 END_AS_NAMESPACE

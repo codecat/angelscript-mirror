@@ -21,7 +21,8 @@ static asIScriptEngine *engine = 0;
 
 void Thread(void *)
 {
-	const char *str = engine->GetFunctionDeclaration(engine->GetFunctionIDByIndex(0, 1));
+	asIScriptFunction *func = engine->GetFunctionDescriptorByIndex(0, 1);
+	const char *str = func->GetDeclaration();
 
 	// Give AngelScript a chance to cleanup some memory 
 	asThreadCleanup();
@@ -40,7 +41,8 @@ bool Test()
 	engine->Build(0);
 
 	// Get a function declaration, this should be the same after the other thread terminates
-	const char *str = engine->GetFunctionDeclaration(engine->GetFunctionIDByIndex(0, 0));
+	asIScriptFunction *func = engine->GetFunctionDescriptorByIndex(0, 0);
+	const char *str = func->GetDeclaration();
 
 	// Create the second thread that in turn will get the declaration of another function
 	HANDLE threadId = (HANDLE)_beginthread(Thread, 0, 0);

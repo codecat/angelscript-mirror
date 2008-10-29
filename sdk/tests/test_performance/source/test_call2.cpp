@@ -64,7 +64,8 @@ void Test()
 		if( r == asEXECUTION_EXCEPTION )
 		{
 			printf("Script exception\n");
-			printf("Func: %s\n", engine->GetFunctionName(ctx->GetExceptionFunction()));
+			asIScriptFunction *func = engine->GetFunctionDescriptorById(ctx->GetExceptionFunction());
+			printf("Func: %s\n", func->GetName());
 			printf("Line: %d\n", ctx->GetExceptionLineNumber());
 			printf("Desc: %s\n", ctx->GetExceptionString());
 		}

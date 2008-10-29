@@ -249,7 +249,7 @@ asCScriptEngine::asCScriptEngine()
 	gc.engine = this;
 
 	scriptTypeBehaviours.engine = this;
-	refCount = 1;
+	refCount.set(1);
 	stringFactory = 0;
 	configFailed = false;
 	isPrepared = false;
@@ -277,7 +277,7 @@ asCScriptEngine::asCScriptEngine()
 
 asCScriptEngine::~asCScriptEngine()
 {
-	asASSERT(refCount == 0);
+	asASSERT(refCount.get() == 0);
 
 	Reset();
 
@@ -360,27 +360,18 @@ asCScriptEngine::~asCScriptEngine()
 
 int asCScriptEngine::AddRef()
 {
-	ENTERCRITICALSECTION(engineCritical);
-	int r = ++refCount;
-	LEAVECRITICALSECTION(engineCritical);
-	return r;
+	return refCount.atomicInc();
 }
 
 int asCScriptEngine::Release()
 {
-	ENTERCRITICALSECTION(engineCritical);
-	int r = --refCount;
+	int r = refCount.atomicDec();
 
-	if( refCount == 0 )
+	if( r == 0 )
 	{
-		// Must leave the critical section before deleting the object
-		LEAVECRITICALSECTION(engineCritical);
-
 		asDELETE(this,asCScriptEngine);
 		return 0;
 	}
-
-	LEAVECRITICALSECTION(engineCritical);
 
 	return r;
 }
