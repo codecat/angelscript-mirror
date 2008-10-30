@@ -68,7 +68,7 @@ asDWORD asCAtomic::atomicDec()
 	return --value;
 }
 
-#elif AS_WIN
+#elif defined(AS_WIN)
 
 END_AS_NAMESPACE
 #define WIN32_MEAN_AND_LEAN
@@ -85,7 +85,7 @@ asDWORD asCAtomic::atomicDec()
 	return InterlockedDecrement((LONG*)&value);
 }
 
-#elif AS_LINUX
+#elif defined(AS_LINUX)
 
 END_AS_NAMESPACE
 #include <asm/atomic.h>
@@ -99,6 +99,22 @@ asDWORD asCAtomic::atomicInc()
 asDWORD asCAtomic::atomicDec()
 {
 	return atomic_dec_and_test(value);
+}
+
+#elif defined(AS_MAC)
+
+END_AS_NAMESPACE
+#include <libkern/OSAtomic.h>
+BEGIN_AS_NAMESPACE
+
+asDWORD asCAtomic::atomicInc()
+{
+	return OSAtomicIncrement32((int32_t*)&value);
+}
+
+asDWORD asCAtomic::atomicDec()
+{
+	return OSAtomicDecrement32((int32_t*)&value);
 }
 
 #else

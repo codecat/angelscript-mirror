@@ -4588,15 +4588,13 @@ int asCCompiler::CompileAssignment(asCScriptNode *expr, asSExprContext *ctx)
 
 		if( lr >= 0 && rr >= 0 )
 			return DoAssignment(ctx, &lctx, &rctx, lexpr, lexpr->next->next, lexpr->next->tokenType, lexpr->next);
-		else
-		{			 
-			// Since the operands failed, the assignment was not computed
-			ctx->type.SetDummy();
-			return -1;
-		}
+
+		// Since the operands failed, the assignment was not computed
+		ctx->type.SetDummy();
+		return -1;
 	}
-	else
-		return CompileCondition(lexpr, ctx);
+
+	return CompileCondition(lexpr, ctx);
 }
 
 int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)

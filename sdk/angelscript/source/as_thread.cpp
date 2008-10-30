@@ -125,7 +125,7 @@ int asCThreadManager::CleanupLocalData()
 #ifndef AS_NO_THREADS
 	int r = 0;
 #if defined AS_POSIX_THREADS
-	asDWORD id = pthread_self();
+	asDWORD id = (asDWORD)pthread_self();
 #elif defined AS_WINDOWS_THREADS
 	asDWORD id = GetCurrentThreadId();
 #endif
@@ -196,7 +196,7 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 {
 #ifndef AS_NO_THREADS
 #if defined AS_POSIX_THREADS
-	asDWORD id = pthread_self();
+	asDWORD id = (asDWORD)pthread_self();
 #elif defined AS_WINDOWS_THREADS
 	asDWORD id = GetCurrentThreadId();
 #endif

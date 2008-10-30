@@ -419,6 +419,7 @@
 			// No support for native calling conventions yet
 			#define AS_MAX_PORTABILITY
 		#endif
+		#define AS_POSIX_THREADS
 
 	// Windows and Linux
 	#elif defined(WIN32) || defined(__linux__)
