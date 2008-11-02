@@ -645,7 +645,7 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 	// If it is a global function, or a method, except constructor and destructor, then the return type is parsed
 	if( !isMethod || (t1.type != ttBitNot && t2.type != ttOpenParanthesis) )
 	{
-		node->AddChildLast(ParseType(false));
+		node->AddChildLast(ParseType(true));
 		if( isSyntaxError ) return node;
 
 		node->AddChildLast(ParseTypeMod(false));

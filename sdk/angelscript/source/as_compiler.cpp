@@ -2125,19 +2125,24 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	asCScriptNode *second = fnode->firstChild->next;
 	if( second->firstChild )
 	{
-		CompileAssignment(second->firstChild, &expr);
-		if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
-			Error(TXT_EXPR_MUST_BE_BOOL, second);
+		int r = CompileAssignment(second->firstChild, &expr);
+		if( r >= 0 )
+		{
+			if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
+				Error(TXT_EXPR_MUST_BE_BOOL, second);
+			else
+			{
+				if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
+				ProcessDeferredParams(&expr);
 
-		if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-		ProcessDeferredParams(&expr);
-
-		// If expression is false exit the loop
-		ConvertToVariable(&expr);
-		expr.bc.InstrSHORT(BC_CpyVtoR4, expr.type.stackOffset);
-		expr.bc.Instr(BC_ClrHi);
-		expr.bc.InstrDWORD(BC_JZ, afterLabel);
-		ReleaseTemporaryVariable(expr.type, &expr.bc);
+				// If expression is false exit the loop
+				ConvertToVariable(&expr);
+				expr.bc.InstrSHORT(BC_CpyVtoR4, expr.type.stackOffset);
+				expr.bc.Instr(BC_ClrHi);
+				expr.bc.InstrDWORD(BC_JZ, afterLabel);
+				ReleaseTemporaryVariable(expr.type, &expr.bc);
+			}
+		}
 	}
 
 	//---------------------------
@@ -5402,6 +5407,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 {
 	asSExprContext expr(engine);
 	asCDataType to;
+	bool anyErrors = false;
 	if( node->nodeType == snConstructCall )
 	{
 		// Verify that there is only one argument
@@ -5410,11 +5416,14 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		{
 			Error(TXT_ONLY_ONE_ARGUMENT_IN_CAST, node->lastChild);
 			expr.type.SetDummy();
+			anyErrors = true;
 		}
 		else
 		{
 			// Compile the expression
-			CompileAssignment(node->lastChild->firstChild, &expr);
+			int r = CompileAssignment(node->lastChild->firstChild, &expr);
+			if( r < 0 )
+				anyErrors = true;
 		}
 
 		// Determine the requested type
@@ -5425,22 +5434,34 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	else
 	{
 		// Compile the expression
-		CompileAssignment(node->lastChild, &expr);
-
-		// Determine the requested type
-		to = builder->CreateDataTypeFromNode(node->firstChild, script);
-		to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
-
-		// If the type support object handles, then use it
-		if( to.SupportHandles() )
+		int r = CompileAssignment(node->lastChild, &expr);
+		if( r < 0 )
+			anyErrors = true;
+		else
 		{
-			to.MakeHandle(true);
+			// Determine the requested type
+			to = builder->CreateDataTypeFromNode(node->firstChild, script);
+			to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
+
+			// If the type support object handles, then use it
+			if( to.SupportHandles() )
+			{
+				to.MakeHandle(true);
+			}
+			else if( !to.IsObjectHandle() )
+			{
+				// The cast<type> operator can only be used for reference casts
+				Error(TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST, node->firstChild);
+				return;
+			}
 		}
-		else if( !to.IsObjectHandle() )
-		{
-			// The cast<type> operator can only be used for reference casts
-			Error(TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST, node->firstChild);
-		}
+	}
+
+	if( anyErrors )
+	{
+		// Assume that the error can be fixed and allow the compilation to continue
+		ctx->type.SetConstantDW(to, 0);
+		return;
 	}
 
 	// We don't want a reference

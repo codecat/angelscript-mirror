@@ -75,6 +75,7 @@ bool Test2();
 bool Test3();
 bool Test4();
 bool Test5();
+bool Test6();
 
 bool Test()
 {
@@ -85,6 +86,7 @@ bool Test()
 	fail = Test3() || fail;
 	fail = Test4() || fail;
 	fail = Test5() || fail;
+	fail = Test6() || fail;
 
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
@@ -528,6 +530,93 @@ bool Test5()
 		fail = true;
 
 	engine->Release();
+	return fail;
+}
+
+//-------------------------------------------------
+// Test6 reported by SiCrane
+bool Test6()
+{
+	bool fail = false;
+	int r;
+	CBufferedOutStream bout;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+	// The following script would enter an infinite loop while building
+	const char *script1 =
+		"class Foo { \n"
+		"const int foo(int a) { return a; } \n"
+		"} \n";
+
+	engine->AddScriptSection(0, "script", script1, strlen(script1));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// This should also work
+	const char *script2 = 
+		"interface IFoo { \n"
+		"	const int foo(int a); \n"
+		"} \n";
+
+	bout.buffer = "";
+	engine->AddScriptSection(0, "script", script2, strlen(script2));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// This would cause an assert failure 
+	const char *script3 =
+		"class MyClass { \n"
+		"    MyClass(int a) {} \n"
+		"} \n"
+		"const MyClass foo(int (a) ,bar); \n";
+
+	bout.buffer = "";
+	engine->AddScriptSection(0, "script", script3, strlen(script3));
+	r = engine->Build(0);
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (4, 18) : Info    : Compiling const MyClass foo\n"
+					   "script (4, 28) : Error   : 'bar' is not declared\n"
+					   "script (4, 24) : Error   : 'a' is not declared\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// This would also cause an assert failure
+	const char *script4 = 
+		"void main() { \n"
+		"  for (;i < 10;); \n"
+		"} \n";
+
+	bout.buffer = "";
+	engine->AddScriptSection(0, "script", script4, strlen(script4));
+	r = engine->Build(0);
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"
+					   "script (2, 9) : Error   : 'i' is not declared\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	engine->Release();
+
 	return fail;
 }
 
