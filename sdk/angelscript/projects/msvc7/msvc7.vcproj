@@ -212,9 +212,6 @@
 				RelativePath="..\..\include\angelscript.h">
 			</File>
 			<File
-				RelativePath="..\..\include\angelscript_c.h">
-			</File>
-			<File
 				RelativePath="..\..\source\as_array.h">
 			</File>
 			<File
