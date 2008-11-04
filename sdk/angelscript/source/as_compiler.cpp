@@ -4568,7 +4568,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 		ReleaseTemporaryVariable(rctx->type, &ctx->bc);
 
-		ctx->type = rctx->type;
+		ctx->type = lctx->type;
 	}
 
 	return 0;

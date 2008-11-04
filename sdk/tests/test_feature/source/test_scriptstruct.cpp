@@ -221,12 +221,14 @@ static const char *script14 =
 "}                           \n";
 
 
+bool Test2();
+
 bool Test()
 {
-	bool fail = false;
+	bool fail = Test2();
 	int r;
 
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString_Generic(engine);
 
@@ -351,6 +353,63 @@ bool Test()
 	engine->Release();
 
 	// Success
+	return fail;
+}
+
+
+//--------------------------------
+// Test reported by SiCrane
+// 
+// Doing an assignment of a temporary object would give an incorrect result, even crashing the application
+bool Test2()
+{
+	bool fail = false;
+	COutStream out;
+	int r;
+
+
+	const char *script1 = 
+		"class MyClass {                  \n"
+		"  int a;                         \n"
+		"  MyClass(int a) { this.a = a; } \n"
+		"  int foo() { return a; }        \n"
+		"}                                \n"
+		"                                 \n"
+		"void main() {                    \n"
+		"  int i;                         \n"
+		"  MyClass m(5);                  \n"
+		"  MyClass t(10);                 \n"
+		"  i = (m = t).a;                 \n"
+		"  assert(i == 10);               \n"
+		"  i = (m = MyClass(10)).a;       \n"
+		"  assert(i == 10);               \n"
+		"  MyClass n(10);                 \n"
+		"  MyClass o(15);                 \n"
+		"  m = n = o;                     \n"
+		"  m = n = MyClass(20);           \n"
+		"  (m = n).foo();                 \n"
+		"  (m = MyClass(20)).foo();       \n"
+		"}                                \n";
+
+ 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	engine->AddScriptSection(0, "script", script1, strlen(script1), 0);
+	r = engine->Build(0);
+	if( r < 0 )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "main()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	engine->Release();
+
 	return fail;
 }
 

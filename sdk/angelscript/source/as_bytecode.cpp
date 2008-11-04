@@ -1650,18 +1650,24 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 
 		case BCTYPE_DW_DW_ARG:
 			if( instr->op == BC_ALLOC )
-				fprintf(file, "   %-8s 0x%x, %d\n", bcName[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1));
+			{
+				asCObjectType *ot = *(asCObjectType**)ARG_DW(instr->arg);
+				fprintf(file, "   %-8s 0x%x, %d             (type:%s)\n", bcName[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1), ot->GetName());
+			}
 			else
 				fprintf(file, "   %-8s %u, %d\n", bcName[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1));
 			break;
 
 		case BCTYPE_QW_DW_ARG:
 			if( instr->op == BC_ALLOC )
+			{
+				asCObjectType *ot = *(asCObjectType**)ARG_QW(instr->arg);
 #ifdef __GNUC__
-				fprintf(file, "   %-8s 0x%llx, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+				fprintf(file, "   %-8s 0x%llx, %d             (type:%s)\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
 #else
-				fprintf(file, "   %-8s 0x%I64x, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+				fprintf(file, "   %-8s 0x%I64x, %d             (type:%s)\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
 #endif
+			}
 			else
 #ifdef __GNUC__
 				fprintf(file, "   %-8s %llu, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));

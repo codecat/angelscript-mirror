@@ -1836,6 +1836,9 @@ void asCContext::ExecuteNext()
 				return;
 			}
 			memcpy(d, s, WORDARG0(l_bc)*4);
+
+			// replace the pointer on the stack with the lvalue
+			*(size_t**)l_sp = (size_t*)d;
 		}
 		l_bc++;
 		break;

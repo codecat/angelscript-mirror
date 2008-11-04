@@ -32,6 +32,7 @@ bool TestVector3()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptMath3D(engine);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	Vector3 v;
 	engine->RegisterGlobalProperty("vector3 v", &v);
@@ -93,6 +94,13 @@ bool TestVector3()
 		}
 
 		ctx->Release();
+	}
+
+	// Assignment of temporary object
+	r = engine->ExecuteString(0, "vector3 v; float x = (v = vector3(10.0f,7,8)).x; assert( x > 9.9999f && x < 10.0001f );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
 	}
 
 	engine->Release();
