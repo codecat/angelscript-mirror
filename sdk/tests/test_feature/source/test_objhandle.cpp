@@ -222,7 +222,9 @@ bool Test()
 
 	// Test returning a reference to the object from an object method
 	r = engine->GarbageCollect();
-	assert( engine->GetObjectsInGarbageCollectorCount() == 0 );
+	asUINT gcCurrentSize;
+	engine->GetGCStatistics(&gcCurrentSize, 0, 0);
+	assert( gcCurrentSize == 0 );
 
 	r = engine->ExecuteString(0, "refclass ref; ref.Do()");
 	if( r != asEXECUTION_FINISHED )

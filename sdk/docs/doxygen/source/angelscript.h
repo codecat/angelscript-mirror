@@ -59,11 +59,11 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! The library version.
-#define ANGELSCRIPT_VERSION        21401
+#define ANGELSCRIPT_VERSION        21500
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  14
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "2.14.1"
+#define ANGELSCRIPT_VERSION_MINOR  15
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.15.0 WIP"
 
 // Data types
 
@@ -378,6 +378,21 @@ enum asEMsgType
     asMSGTYPE_WARNING     = 1,
     //! The message is informational only.
     asMSGTYPE_INFORMATION = 2
+};
+
+// Garbage collector flags
+
+//! \brief Garbage collector flags.
+enum asEGCFlags
+{
+	//! Execute a full cycle.
+	asGC_FULL_CYCLE      = 1,
+	//! Execute only one step
+	asGC_ONE_STEP        = 2,
+	//! Destroy known garbage
+	asGC_DESTROY_GARBAGE = 4,
+	//! Detect garbage with circular references
+	asGC_DETECT_GARBAGE  = 8
 };
 
 // Prepare flags
@@ -1575,7 +1590,7 @@ public:
 
 	// Garbage collection
 	//! \brief Perform garbage collection.
-    //! \param[in] doFullCycle Set to true if a full cycle should be done, or false if only an iterative step should be done.
+    //! \param[in] flags Set to a combination of the asEGCFlags.
     //! \return 1 if the cycle wasn't completed, 0 if it was.
     //!
     //! This method will free script objects that can no longer be reached. When the engine 
@@ -1588,8 +1603,22 @@ public:
     //! It is not necessary to do a full cycle with every call. This makes it possible to spread 
     //! out the garbage collection time over a large period, thus not impacting the responsiveness 
     //! of the application.
-	virtual int  GarbageCollect(bool doFullCycle = true) = 0;
-	//! \brief Returns the number of objects currently referenced by the garbage collector.
+	//!
+	//! \see \ref doc_gc
+	virtual int  GarbageCollect(asEGCFlags flags = asGC_FULL_CYCLE) = 0;
+	//! \brief Obtain statistics from the garbage collector.
+	//! \param[out] currentSize The current number of objects known to the garbage collector.
+	//! \param[out] totalDestroyed The total number of objects destroyed by the garbage collector.
+	//! \param[out] totalDetected The total number of objects detected as garbage with circular references.
+	//!
+	//! This method can be used to query the number of objects that the garbage collector is 
+	//! keeping track of. If the number is very large then it is probably time to call the 
+	//! \ref GarbageCollect method so that some of the objects ca be freed.
+	//!
+	//! \see \ref doc_gc
+	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0) = 0;
+#ifdef AS_DEPRECATED
+	//! \brief (deprecated) Returns the number of objects currently referenced by the garbage collector.
     //! \return The number of objects currently known by the garbage collector.
     //!
     //! This method can be used to query the number of objects that the garbage collector is 
@@ -1600,7 +1629,10 @@ public:
     //! references to other objects, but these are not reflected in the return value. Thus 
     //! there is no way of knowing the exact amount of memory allocated directly and indirectly 
     //! by the objects referred to by this function.
+	//! 
+	//! \deprecated Use \ref GetGCStatistics instead.
 	virtual int  GetObjectsInGarbageCollectorCount() = 0;
+#endif
 	//! \brief Notify the garbage collector of a new object that needs to be managed.
     //! \param[in] obj A pointer to the newly created object.
     //! \param[in] typeId The type id of the object.

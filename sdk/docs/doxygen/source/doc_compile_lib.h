@@ -5,8 +5,8 @@
 
 \section doc_compile_lib_1 Set compile time options
 
-I try to contain compiler differences in as few places as possible. The header as_config.h 
-was created for that purpose. Here you will find some \#defines that allow different compilers 
+The code tries to contain compiler differences in as few places as possible. The header as_config.h 
+was created for that purpose. There you will find some \#defines that allow different compilers 
 to work. You'll probably not have to change this file, but if you're using a compiler not 
 previously used and you're getting compiler errors it might be worth it to take a look at 
 this file.
@@ -18,7 +18,8 @@ shouldn't have to define this flag.</p>
 
 If AS_DEPRECATED is defined then some backwards compatibility is maintained, this can help 
 you do the upgrade to the latest version a little more smoothly. There is no guarantee that 
-the backwards compatibility will be maintained though so try to upgrade as soon as possible.
+the backwards compatibility will be maintained though so try to remove use of deprecated functions
+as soon as possible.
 
 \section doc_compile_lib_2 Linking with the library
 
@@ -90,7 +91,7 @@ the %angelscript.h header file.
 \subsection doc_compile_lib_2_4 4. Load the dynamically loaded library manually
 
 If you want to use a dll, e.g. to share code between applications, I recommend loading the 
-library manually as you can treat any failures to load or bind functtions graciously.
+library manually as you can treat any failures to load or bind functions graciously.
 
 To use manually loaded dll, you should define ANGELSCRIPT_DLL_MANUAL_IMPORT before including 
 the %angelscript.h header file. This will insure that the header file doesn't declare the 

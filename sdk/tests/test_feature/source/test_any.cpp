@@ -160,9 +160,12 @@ bool Test()
 	}
 	if( ctx ) ctx->Release();
 	
-	int gc = engine->GetObjectsInGarbageCollectorCount();
+	asUINT gcCurrentSize, gcTotalDestroyed, gcTotalDetected;
+	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 	engine->GarbageCollect();
-	gc = engine->GetObjectsInGarbageCollectorCount();
+	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
+
+	assert( gcCurrentSize == 0 && gcTotalDestroyed == 7 && gcTotalDetected == 7 );
 
 	engine->Release();
 

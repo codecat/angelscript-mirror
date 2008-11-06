@@ -187,8 +187,11 @@ public:
 	asCObjectType *GetArrayTypeFromSubType(asCDataType &subType);
 
 
-	int GarbageCollect(bool doFullCycle);
+	int GarbageCollect(asEGCFlags flags = asGC_FULL_CYCLE);
+	void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected);
+#ifdef AS_DEPRECATED
 	int GetObjectsInGarbageCollectorCount();
+#endif
 	void NotifyGarbageCollectorOfNewObject(void *obj, int typeId);
 	void GCEnumCallback(void *reference);
 

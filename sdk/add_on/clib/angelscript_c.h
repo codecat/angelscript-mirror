@@ -257,6 +257,15 @@ typedef enum
     asMSGTYPE_INFORMATION = 2
 } asEMsgType;
 
+// Garbage collector flags
+typedef enum
+{
+	asGC_FULL_CYCLE      = 1,
+	asGC_ONE_STEP        = 2,
+	asGC_DESTROY_GARBAGE = 4,
+	asGC_DETECT_GARBAGE  = 8
+} asEGCFlags;
+
 // Prepare flags
 const int asPREPARE_PREVIOUS = -1;
 
@@ -425,8 +434,11 @@ extern "C"
 	AS_API bool              asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
 	AS_API int               asEngine_CompareScriptObjects(asIScriptEngine *e, bool &result, int behaviour, void *leftObj, void *rightObj, int typeId);
 	AS_API int               asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx /* = 0 */, asDWORD flags /* = 0 */);
-	AS_API int               asEngine_GarbageCollect(asIScriptEngine *e, bool doFullCycle /* = true */);
+	AS_API int               asEngine_GarbageCollect(asIScriptEngine *e, asEGCFlags flags /* = asGC_FULL_CYCLE */);
+	AS_API void              asEngine_GetGCStatistics(asIScriptEngine *e, asUINT *currentSize, asUINT *totalDestroyed /* = 0 */, asUINT *totalDetected /* = 0 */);
+	#ifdef AS_DEPRECATED
 	AS_API int               asEngine_GetObjectsInGarbageCollectorCount(asIScriptEngine *e);
+	#endif
 	AS_API void              asEngine_NotifyGarbageCollectorOfNewObject(asIScriptEngine *e, void *obj, int typeId);
 	AS_API void              asEngine_GCEnumCallback(asIScriptEngine *e, void *obj);
 	AS_API int               asEngine_SaveByteCode(asIScriptEngine *e, const char *module, asBINARYWRITEFUNC_t outFunc, void *outParam);

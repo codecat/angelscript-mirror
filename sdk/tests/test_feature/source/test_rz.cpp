@@ -48,7 +48,7 @@ bool Test1()
 
 	// Calling the garbage collector mustn't free the object types, even though they are not used yet
 	int tid1 = engine->GetTypeIdByDecl(0, "MyGame@[]");
-	engine->GarbageCollect(true);
+	engine->GarbageCollect();
 	int tid2 = engine->GetTypeIdByDecl(0, "MyGame@[]");
 
 	if( tid1 != tid2 )
@@ -136,7 +136,7 @@ bool Test1()
 	}
 
 	// Call garbage collection
-	engine->GarbageCollect(true);
+	engine->GarbageCollect();
 
 	// What is the refcount?
 	myGame->AddRef();
@@ -296,7 +296,7 @@ bool Test2()
 	}
 
 	// Call garbage collection
-	engine->GarbageCollect(true);
+	engine->GarbageCollect();
 
 	// What is the refcount?
 	myGame->AddRef();

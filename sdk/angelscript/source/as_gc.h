@@ -55,18 +55,25 @@ class asCGarbageCollector
 public:
 	asCGarbageCollector();
 
-	int  GarbageCollect(bool doFullCycle);
-	int  GetObjectsInGarbageCollectorCount();
+	int  GarbageCollect(asEGCFlags flags);
+	void GetStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected);
 	void GCEnumCallback(void *reference);
 	void AddScriptObjectToGC(void *obj, asCObjectType *objType);
 
-	asCScriptEngine                   *engine;
+	asCScriptEngine *engine;
 
 protected:
 	struct asSObjTypePair {void *obj; asCObjectType *type;};
 	struct asSIntTypePair {int i; asCObjectType *type;};
 
-	enum egcState
+	enum egcDestroyState
+	{
+		destroyGarbage_init = 0,
+		destroyGarbage_loop,
+		destroyGarbage_haveMore
+	};
+
+	enum egcDetectState
 	{
 		clearCounters_init = 0,
 		clearCounters_loop,
@@ -98,8 +105,12 @@ protected:
 	asCMap<void*, asSIntTypePair>      gcMap;
 
 	// State variables
-	egcState                           state;
-	asUINT                             idx;
+	egcDestroyState                    destroyState;
+	asUINT                             destroyIdx;
+	asUINT                             numDestroyed;
+	egcDetectState                     detectState;
+	asUINT                             detectIdx;
+	asUINT                             numDetected;
 	asSMapNode<void*, asSIntTypePair> *gcMapCursor;
 
 	// Critical section for multithreaded access

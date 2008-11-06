@@ -40,10 +40,10 @@ common C/C++ datatypes for more efficient communication with the host applicatio
 \page doc_start Getting started
 
  - \subpage doc_compile_lib
+ - \subpage doc_hello_world
  - \subpage doc_good_practice
  
 \todo Add a page explaining the structure of the engine, modules, contexts, etc
-\todo Write a page "Your first script" that will go through the basics of executing a script
 
 
 

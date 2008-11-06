@@ -53,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        21401
+#define ANGELSCRIPT_VERSION        21500
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  14
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "2.14.1"
+#define ANGELSCRIPT_VERSION_MINOR  15
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.15.0 WIP"
 
 // Data types
 
@@ -249,6 +249,15 @@ enum asEMsgType
     asMSGTYPE_ERROR       = 0,
     asMSGTYPE_WARNING     = 1,
     asMSGTYPE_INFORMATION = 2
+};
+
+// Garbage collector flags
+enum asEGCFlags
+{
+	asGC_FULL_CYCLE      = 1,
+	asGC_ONE_STEP        = 2,
+	asGC_DESTROY_GARBAGE = 4,
+	asGC_DETECT_GARBAGE  = 8
 };
 
 // Prepare flags
@@ -507,8 +516,11 @@ public:
 	virtual int  ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
-	virtual int  GarbageCollect(bool doFullCycle = true) = 0;
+	virtual int  GarbageCollect(asEGCFlags flags = asGC_FULL_CYCLE) = 0;
+	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0) = 0;
+#ifdef AS_DEPRECATED
 	virtual int  GetObjectsInGarbageCollectorCount() = 0;
+#endif
 	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId) = 0;
 	virtual void GCEnumCallback(void *obj) = 0;
 

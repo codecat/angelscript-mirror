@@ -190,7 +190,7 @@ bool asCTokenizer::IsConstant()
 	if( source[0] >= '0' && source[0] <= '9' )
 	{
 		// Is it a hexadecimal number?
-		if( sourceLength >= 1 && (source[1] == 'x' || source[1] == 'X') )
+		if( source[0] == '0' && sourceLength >= 1 && (source[1] == 'x' || source[1] == 'X') )
 		{
 			size_t n;
 			for( n = 2; n < sourceLength; n++ )

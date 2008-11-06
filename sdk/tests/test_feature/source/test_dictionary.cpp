@@ -96,11 +96,12 @@ bool Test()
 	}
 	ctx->Release();
 
-	int g = engine->GetObjectsInGarbageCollectorCount();
+	asUINT gcCurrentSize, gcTotalDestroyed, gcTotalDetected;
+	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 	engine->GarbageCollect();
-	g = engine->GetObjectsInGarbageCollectorCount();
+	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-	if( g != 0 )
+	if( gcCurrentSize != 0 || gcTotalDestroyed != 1 || gcTotalDetected != 1 )
 		fail = true;
 
 	// Test circular references including a script class and the dictionary
@@ -113,11 +114,11 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
-	g = engine->GetObjectsInGarbageCollectorCount();
+	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 	engine->GarbageCollect();
-	g = engine->GetObjectsInGarbageCollectorCount();
+	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-	if( g != 0 )
+	if( gcCurrentSize != 0 || gcTotalDestroyed != 3 || gcTotalDetected != 3  )
 		fail = true;
 
 	engine->Release();

@@ -522,7 +522,7 @@ bool Test()
 	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
 
 	r = engine->Discard(0);  assert( r >= 0 );
-	r = engine->GarbageCollect(true); assert( r >= 0 );
+	r = engine->GarbageCollect(); assert( r >= 0 );
 
 	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );
 
@@ -534,7 +534,7 @@ bool Test()
 	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
 
 	r = engine->Discard(0);  assert( r >= 0 );
-	r = engine->GarbageCollect(true); assert( r >= 0 );
+	r = engine->GarbageCollect(); assert( r >= 0 );
 
 	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );
 
@@ -566,7 +566,7 @@ bool Test()
 	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
 
 	// Garbage collect and remove config group before discarding module
-	r = engine->GarbageCollect(true); assert( r >= 0 );
+	r = engine->GarbageCollect(); assert( r >= 0 );
 	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );
 
 	engine->Release();

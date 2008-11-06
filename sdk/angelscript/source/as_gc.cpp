@@ -46,8 +46,11 @@ BEGIN_AS_NAMESPACE
 
 asCGarbageCollector::asCGarbageCollector()
 {
-	engine  = 0;
-	state = clearCounters_init;
+	engine       = 0;
+	detectState  = clearCounters_init;
+	destroyState = destroyGarbage_init;
+	numDestroyed = 0;
+	numDetected  = 0;
 }
 
 void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
@@ -62,23 +65,33 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 	LEAVECRITICALSECTION(gcCritical);
 }
 
-int asCGarbageCollector::GarbageCollect(bool doFullCycle)
+int asCGarbageCollector::GarbageCollect(asEGCFlags flags)
 {
 	// The application is responsible for making sure  
 	// the gc is only executed by one thread at a time. 
 
-	if( doFullCycle )
+	bool doDetect  = (flags & asGC_DETECT_GARBAGE)  || !(flags & asGC_DESTROY_GARBAGE);
+	bool doDestroy = (flags & asGC_DESTROY_GARBAGE) || !(flags & asGC_DETECT_GARBAGE);
+	
+	if( flags & asGC_FULL_CYCLE )
 	{
-		state = clearCounters_init;
+		// Reset the state
+		if( doDetect )
+			detectState  = clearCounters_init;
+		if( doDestroy )
+			destroyState = destroyGarbage_init;
+
 		int r = 1;
 		unsigned int count = (unsigned int)gcObjects.GetLength();
 		for(;;)
 		{
 			// Detect all garbage with cyclic references
-			while( (r = IdentifyGarbageWithCyclicRefs()) == 1 );
+			if( doDetect )
+				while( (r = IdentifyGarbageWithCyclicRefs()) == 1 );
 
 			// Now destroy all known garbage
-			while( (r = DestroyGarbage()) == 1 );
+			if( doDestroy )
+				while( (r = DestroyGarbage()) == 1 );
 
 			// Run another iteration if any garbage was destroyed
 			if( count != gcObjects.GetLength() )
@@ -92,20 +105,34 @@ int asCGarbageCollector::GarbageCollect(bool doFullCycle)
 
 		return 0;
 	}
+	else
+	{
+		// Destroy the garbage that we know of
+		if( doDestroy )
+			DestroyGarbage();
 
-	// Destroy the garbage that we know of
-	DestroyGarbage();
+		// Run another incremental step of the identification of cyclic references
+		if( doDetect )
+			IdentifyGarbageWithCyclicRefs();
+	}
 
-	// Run another incremental step of the identification of cyclic references
-	return IdentifyGarbageWithCyclicRefs();
+	// Return 1 to indicate that the cycle wasn't finished
+	return 1;
 }
 
-int asCGarbageCollector::GetObjectsInGarbageCollectorCount()
+void asCGarbageCollector::GetStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected)
 {
 	// It's not necessary to protect this access, as 
 	// it doesn't matter if another thread is currently
 	// appending a new object. 
-	return (int)gcObjects.GetLength();
+	if( currentSize )
+		*currentSize = (asUINT)gcObjects.GetLength();
+
+	if( totalDestroyed )
+		*totalDestroyed = numDestroyed;
+
+	if( totalDetected )
+		*totalDetected = numDetected;
 }
 
 void asCGarbageCollector::ClearMap()
@@ -151,18 +178,9 @@ void asCGarbageCollector::RemoveObjectAtIdx(int idx)
 
 int asCGarbageCollector::DestroyGarbage()
 {
-	enum 
-	{
-		destroyGarbage_init = 0,
-		destroyGarbage_loop,
-		destroyGarbage_haveMore,
-	} localState = destroyGarbage_init;
-
-	int localIdx = 0;
-
 	for(;;)
 	{
-		switch( localState )
+		switch( destroyState )
 		{
 		case destroyGarbage_init:
 		{
@@ -170,8 +188,8 @@ int asCGarbageCollector::DestroyGarbage()
 			if( gcObjects.GetLength() == 0 )
 				return 0;
 
-			localIdx = (asUINT)-1;
-			localState = destroyGarbage_loop;
+			destroyIdx = (asUINT)-1;
+			destroyState = destroyGarbage_loop;
 		}
 		break;
 
@@ -185,9 +203,9 @@ int asCGarbageCollector::DestroyGarbage()
 			// Destroy all objects that have refCount == 1. If any objects are
 			// destroyed, go over the list again, because it may have made more
 			// objects reach refCount == 1.
-			while( ++localIdx < (int)gcObjects.GetLength() )
+			while( ++destroyIdx < (int)gcObjects.GetLength() )
 			{
-				asSObjTypePair gcObj = GetObjectAtIdx(localIdx);
+				asSObjTypePair gcObj = GetObjectAtIdx(destroyIdx);
 				if( engine->CallObjectMethodRetInt(gcObj.obj, gcObj.type->beh.gcGetRefCount) == 1 )
 				{
 					// Release the object immediately
@@ -207,8 +225,9 @@ int asCGarbageCollector::DestroyGarbage()
 					// Was the object really destroyed?
 					if( !addRef )
 					{
-						RemoveObjectAtIdx(localIdx);
-						localIdx--;
+						numDestroyed++;
+						RemoveObjectAtIdx(destroyIdx);
+						destroyIdx--;
 					}
 					else
 					{
@@ -217,7 +236,7 @@ int asCGarbageCollector::DestroyGarbage()
 						engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.addref);
 					}
 
-					localState = destroyGarbage_haveMore;
+					destroyState = destroyGarbage_haveMore;
 
 					// Allow the application to work a little
 					return 1;
@@ -225,8 +244,8 @@ int asCGarbageCollector::DestroyGarbage()
 			}
 
 			// Only move to the next step if no garbage was detected in this step
-			if( localState == destroyGarbage_haveMore )
-				localState = destroyGarbage_init;
+			if( destroyState == destroyGarbage_haveMore )
+				destroyState = destroyGarbage_init;
 			else
 				return 0;
 		}
@@ -242,13 +261,13 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 {
 	for(;;)
 	{
-		switch( state )
+		switch( detectState )
 		{
 		case clearCounters_init:
 		{
 			ClearMap();
-			state = clearCounters_loop;
-			idx = 0;
+			detectState = clearCounters_loop;
+			detectIdx = 0;
 		}
 		break;
 
@@ -265,10 +284,10 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 			// be used during the analyzing for cyclic references. This 
 			// isn't a problem, as the next time the GC cycle starts the 
 			// object will be verified.
-			while( idx < gcObjects.GetLength() )
+			while( detectIdx < gcObjects.GetLength() )
 			{
 				// Add the gc count for this object
-				asSObjTypePair gcObj = GetObjectAtIdx(idx);
+				asSObjTypePair gcObj = GetObjectAtIdx(detectIdx);
 				int refCount = engine->CallObjectMethodRetInt(gcObj.obj, gcObj.type->beh.gcGetRefCount);
 				if( refCount > 1 )
 				{
@@ -282,24 +301,24 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 					// see if it has changed since read
 					engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.gcSetFlag);
 
-					idx++;
+					detectIdx++;
 
 					// Let the application work a little
 					return 1;
 				}
 				else
-					idx++;
+					detectIdx++;
 			}
 
-			state = countReferences_init;
+			detectState = countReferences_init;
 		}
 		break;
 
 		case countReferences_init:
 		{
-			idx = (asUINT)-1;
+			detectIdx = (asUINT)-1;
 			gcMap.MoveFirst(&gcMapCursor);
-			state = countReferences_loop;
+			detectState = countReferences_loop;
 		}
 		break;
 
@@ -331,16 +350,16 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 				}
 			}
 
-			state = detectGarbage_init;
+			detectState = detectGarbage_init;
 		}
 		break;
 
 		case detectGarbage_init:
 		{
-			idx = (asUINT)-1;
+			detectIdx = (asUINT)-1;
 			gcMap.MoveFirst(&gcMapCursor);
 			liveObjects.SetLength(0);
-			state = detectGarbage_loop1;
+			detectState = detectGarbage_loop1;
 		}
 		break;
 
@@ -372,7 +391,7 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 				}
 			}
 
-			state = detectGarbage_loop2;
+			detectState = detectGarbage_loop2;
 		}
 		break;
 
@@ -405,7 +424,7 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 				return 1;
 			}
 
-			state = verifyUnmarked;
+			detectState = verifyUnmarked;
 		}
 		break;
 
@@ -424,7 +443,7 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 				if( !gcFlag )
 				{
 					// The unmarked object was touched, rerun the detectGarbage loop
-					state = detectGarbage_init;
+					detectState = detectGarbage_init;
 					return 1;
 				}
 
@@ -433,15 +452,15 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 
 			// No unmarked object was touched, we can now be sure
 			// that objects that have gcCount == 0 really is garbage
-			state = breakCircles_init;
+			detectState = breakCircles_init;
 		}
 		break;
 
 		case breakCircles_init:
 		{
-			idx = (asUINT)-1;
+			detectIdx = (asUINT)-1;
 			gcMap.MoveFirst(&gcMapCursor);
-			state = breakCircles_loop;
+			detectState = breakCircles_loop;
 		}
 		break;
 
@@ -454,29 +473,30 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 			// by having the objects release their references.
 			while( gcMapCursor )
 			{
+				numDetected++;
 				void *gcObj = gcMap.GetKey(gcMapCursor);
 				asCObjectType *type = gcMap.GetValue(gcMapCursor).type;
 				engine->CallObjectMethod(gcObj, engine, type->beh.gcReleaseAllReferences);
 
 				gcMap.MoveNext(&gcMapCursor, gcMapCursor);
 
-				state = breakCircles_haveGarbage;
+				detectState = breakCircles_haveGarbage;
 
 				// Allow the application to work a little
 				return 1;
 			}
 
 			// If no garbage was detected we can finish now
-			if( state != breakCircles_haveGarbage )
+			if( detectState != breakCircles_haveGarbage )
 			{
 				// Restart the GC
-				state = clearCounters_init;
+				detectState = clearCounters_init;
 				return 0;
 			}
 			else
 			{
 				// Restart the GC
-				state = clearCounters_init;
+				detectState = clearCounters_init;
 				return 1;
 			}
 		}
@@ -490,7 +510,7 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 
 void asCGarbageCollector::GCEnumCallback(void *reference)
 {
-	if( state == countReferences_loop )
+	if( detectState == countReferences_loop )
 	{
 		// Find the reference in the map
 		asSMapNode<void*, asSIntTypePair> *cursor = 0;
@@ -500,7 +520,7 @@ void asCGarbageCollector::GCEnumCallback(void *reference)
 			gcMap.GetValue(cursor).i--;
 		}
 	}
-	else if( state == detectGarbage_loop2 )
+	else if( detectState == detectGarbage_loop2 )
 	{
 		// Find the reference in the map
 		asSMapNode<void*, asSIntTypePair> *cursor = 0;

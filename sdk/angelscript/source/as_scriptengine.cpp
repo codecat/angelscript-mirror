@@ -305,7 +305,7 @@ asCScriptEngine::~asCScriptEngine()
 	scriptModules.SetLength(0);
 
 	// Do one more garbage collect to free gc objects that were global variables
-	GarbageCollect(true);
+	GarbageCollect(asGC_FULL_CYCLE);
 
 	ClearUnusedTypes();
 
@@ -387,7 +387,7 @@ int asCScriptEngine::Release()
 
 void asCScriptEngine::Reset()
 {
-	GarbageCollect(true);
+	GarbageCollect(asGC_FULL_CYCLE);
 
 	asUINT n;
 	for( n = 0; n < scriptModules.GetLength(); ++n )
@@ -3341,15 +3341,26 @@ void asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, int typeId)
 }
 
 // interface
-int asCScriptEngine::GarbageCollect(bool doFullCycle)
+int asCScriptEngine::GarbageCollect(asEGCFlags flags)
 {
-	return gc.GarbageCollect(doFullCycle);
+	return gc.GarbageCollect(flags);
 }
 
+#ifdef AS_DEPRECATED
 // interface
+// Deprecated since 2008-11-05
 int asCScriptEngine::GetObjectsInGarbageCollectorCount()
 {
-	return gc.GetObjectsInGarbageCollectorCount();
+	asUINT currentSize;
+	gc.GetStatistics(&currentSize, 0, 0);
+	return currentSize;
+}
+#endif
+
+// interface
+void asCScriptEngine::GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected)
+{
+	gc.GetStatistics(currentSize, totalDestroyed, totalDetected);
 }
 
 // interface

@@ -118,12 +118,18 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.14.1a - 2008/11/03</h2>
+<h2>Version 2.15.0 WIP - 2008/11/05</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed assignments where the rvalue is a temporary object instanciated with a construct call (Thanks SiCrane)
+<li>The parser no longer accepts other digits than 0 to initiate a hex literal value (Thanks SiCrane)
+</ul>
+<li>Library interface
+<ul>
+<li>Changed the parameters for the engine's GarbageCollect method to give more control to the application.
+<li>Deprecated GetObjectsInGarbageCollectorCount, and replaced it with GetGCStatistics
 </ul>
 </ul>
 
