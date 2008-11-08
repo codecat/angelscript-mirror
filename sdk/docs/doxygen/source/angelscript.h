@@ -1270,6 +1270,13 @@ public:
     //! \param[out] length The length of the returned string.
     //! \return A null terminated string with the variable name, or null if not found.
 	virtual const char *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
+	//! \brief Returns the type id for the global variable.
+	//! \param[in] module The name of the module.
+	//! \param[in] index The index of the global variable.
+	//! \return The type id of the global variable, or a negative value on error.
+	//! \retval asNO_MODULE The module doesn't exist.
+	//! \retval asINVALID_ARG The index is out of range.
+	virtual int         GetGlobalVarTypeId(const char *module, int index) = 0;
 	//! \brief Returns the pointer to the global variable.
     //! \param[in] module The name of the module.
     //! \param[in] index The index of the global variable.
@@ -1630,7 +1637,7 @@ public:
     //! there is no way of knowing the exact amount of memory allocated directly and indirectly 
     //! by the objects referred to by this function.
 	//! 
-	//! \deprecated Use \ref GetGCStatistics instead.
+	//! \deprecated Use \ref asIScriptEngine::GetGCStatistics "GetGCStatistics" instead.
 	virtual int  GetObjectsInGarbageCollectorCount() = 0;
 #endif
 	//! \brief Notify the garbage collector of a new object that needs to be managed.
@@ -2027,7 +2034,8 @@ public:
 	//! \brief Returns the type id of a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
-    //! \return The type id of the variable.
+    //! \return The type id of the variable, or a negative value on error.
+	//! \retval asINVALID_ARG The index or stack level is invalid.
 	virtual int         GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
 	//! \brief Returns a pointer to a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
@@ -2220,6 +2228,10 @@ protected:
 class asIScriptStruct
 {
 public:
+	//! \brief Return the script engine.
+	//! \return The script engine.
+	virtual asIScriptEngine *GetEngine() const = 0;
+
 	// Memory management
 	//! \brief Increase reference counter.
     //!
@@ -2284,6 +2296,10 @@ protected:
 class asIScriptArray
 {
 public:
+	//! \brief Return the script engine.
+	//! \return The script engine.
+	virtual asIScriptEngine *GetEngine() const = 0;
+
 	// Memory management
 	//! \brief Increase reference counter.
     //!

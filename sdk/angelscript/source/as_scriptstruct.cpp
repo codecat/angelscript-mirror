@@ -240,6 +240,11 @@ asCScriptStruct::~asCScriptStruct()
 	}
 }
 
+asIScriptEngine *asCScriptStruct::GetEngine() const
+{
+	return objType->engine;
+}
+
 int asCScriptStruct::AddRef()
 {
 	// Increase counter and clear flag set by GC

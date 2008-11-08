@@ -110,6 +110,7 @@ AS_API int               asEngine_GetGlobalVarIndexByName(asIScriptEngine *e, co
 AS_API int               asEngine_GetGlobalVarIndexByDecl(asIScriptEngine *e, const char *module, const char *decl)       { return e->GetGlobalVarIndexByDecl(module, decl); }
 AS_API const char *      asEngine_GetGlobalVarDeclaration(asIScriptEngine *e, const char *module, int index, int *length) { return e->GetGlobalVarDeclaration(module, index, length); }
 AS_API const char *      asEngine_GetGlobalVarName(asIScriptEngine *e, const char *module, int index, int *length)        { return e->GetGlobalVarName(module, index, length); }
+AS_API int               asEngine_GetGlobalVarTypeId(asIScriptEngine *e, const char *module, int index)                   { return e->GetGlobalVarTypeId(module, index); }
 AS_API void *            asEngine_GetAddressOfGlobalVar(asIScriptEngine *e, const char *module, int index)                { return e->GetAddressOfGlobalVar(module, index); }
 #ifdef AS_DEPRECATED
 AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index)                                                                                        { return e->GetGlobalVarIDByIndex(module, index); }
@@ -231,24 +232,26 @@ AS_API int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj
 AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g)             { return g->GetReturnPointer(); }
 AS_API int              asGeneric_GetReturnTypeId(asIScriptGeneric *g)              { return g->GetReturnTypeId(); }
 
-AS_API int            asStruct_AddRef(asIScriptStruct *s)                           { return s->AddRef(); }
-AS_API int            asStruct_Release(asIScriptStruct *s)                          { return s->Release(); }
-AS_API int            asStruct_GetStructTypeId(asIScriptStruct *s)                  { return s->GetStructTypeId(); }
-AS_API asIObjectType *asStruct_GetObjectType(asIScriptStruct *s)                    { return s->GetObjectType(); }
-AS_API int            asStruct_GetPropertyCount(asIScriptStruct *s)                 { return s->GetPropertyCount(); }
-AS_API int            asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop)   { return s->GetPropertyTypeId(prop); }
-AS_API const char *   asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop)     { return s->GetPropertyName(prop); }
-AS_API void *         asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop)  { return s->GetPropertyPointer(prop); }
-AS_API int            asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other) { return s->CopyFrom(other); }
+AS_API asIScriptEngine *asStruct_GetEngine(asIScriptStruct *s)                        { return s->GetEngine(); }
+AS_API int              asStruct_AddRef(asIScriptStruct *s)                           { return s->AddRef(); }
+AS_API int              asStruct_Release(asIScriptStruct *s)                          { return s->Release(); }
+AS_API int              asStruct_GetStructTypeId(asIScriptStruct *s)                  { return s->GetStructTypeId(); }
+AS_API asIObjectType *  asStruct_GetObjectType(asIScriptStruct *s)                    { return s->GetObjectType(); }
+AS_API int              asStruct_GetPropertyCount(asIScriptStruct *s)                 { return s->GetPropertyCount(); }
+AS_API int              asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop)   { return s->GetPropertyTypeId(prop); }
+AS_API const char *     asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop)     { return s->GetPropertyName(prop); }
+AS_API void *           asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop)  { return s->GetPropertyPointer(prop); }
+AS_API int              asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other) { return s->CopyFrom(other); }
 
-AS_API int    asArray_AddRef(asIScriptArray *a)                          { return a->AddRef(); }
-AS_API int    asArray_Release(asIScriptArray *a)                         { return a->Release(); }
-AS_API int    asArray_GetArrayTypeId(asIScriptArray *a)                  { return a->GetArrayTypeId(); }
-AS_API int    asArray_GetElementTypeId(asIScriptArray *a)                { return a->GetElementTypeId(); }
-AS_API asUINT asArray_GetElementCount(asIScriptArray *a)                 { return a->GetElementCount(); }
-AS_API void * asArray_GetElementPointer(asIScriptArray *a, asUINT index) { return a->GetElementPointer(index); }
-AS_API void   asArray_Resize(asIScriptArray *a, asUINT size)             { a->Resize(size); }
-AS_API int    asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other) { return a->CopyFrom(other); }
+AS_API asIScriptEngine *asArray_GetEngine(asIScriptArray *a)                       { return a->GetEngine(); }                
+AS_API int              asArray_AddRef(asIScriptArray *a)                          { return a->AddRef(); }
+AS_API int              asArray_Release(asIScriptArray *a)                         { return a->Release(); }
+AS_API int              asArray_GetArrayTypeId(asIScriptArray *a)                  { return a->GetArrayTypeId(); }
+AS_API int              asArray_GetElementTypeId(asIScriptArray *a)                { return a->GetElementTypeId(); }
+AS_API asUINT           asArray_GetElementCount(asIScriptArray *a)                 { return a->GetElementCount(); }
+AS_API void *           asArray_GetElementPointer(asIScriptArray *a, asUINT index) { return a->GetElementPointer(index); }
+AS_API void             asArray_Resize(asIScriptArray *a, asUINT size)             { a->Resize(size); }
+AS_API int              asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other) { return a->CopyFrom(other); }
 
 AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o)                             { return o->GetEngine(); }
 AS_API const char              *asObjectType_GetName(const asIObjectType *o)                               { return o->GetName(); }

@@ -56,6 +56,8 @@ public:
 	asCArrayObject(asUINT length, asCObjectType *ot);
 	virtual ~asCArrayObject();
 
+	asIScriptEngine *GetEngine() const;
+
 	int AddRef();
 	int Release();
 

@@ -470,6 +470,7 @@ public:
 	virtual int         GetGlobalVarIndexByDecl(const char *module, const char *decl) = 0;
 	virtual const char *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
 	virtual const char *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
+	virtual int         GetGlobalVarTypeId(const char *module, int index) = 0;
 	virtual void       *GetAddressOfGlobalVar(const char *module, int index) = 0;
 #ifdef AS_DEPRECATED
 	virtual int         GetGlobalVarIDByIndex(const char *module, int index) = 0;
@@ -647,6 +648,8 @@ protected:
 class asIScriptStruct
 {
 public:
+	virtual asIScriptEngine *GetEngine() const = 0;
+
 	// Memory management
 	virtual int AddRef() = 0;
 	virtual int Release() = 0;
@@ -669,6 +672,8 @@ protected:
 class asIScriptArray
 {
 public:
+	virtual asIScriptEngine *GetEngine() const = 0;
+
 	// Memory management
 	virtual int AddRef() = 0;
 	virtual int Release() = 0;

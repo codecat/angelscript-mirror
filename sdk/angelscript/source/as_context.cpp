@@ -3711,7 +3711,7 @@ const char *asCContext::GetVarDeclaration(int varIndex, int *length, int stackLe
 
 int asCContext::GetVarTypeId(int varIndex, int stackLevel)
 {
-	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
+	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return asINVALID_ARG;
 
 	asCScriptFunction *func;
 	if( stackLevel == -1 )
@@ -3723,10 +3723,10 @@ int asCContext::GetVarTypeId(int varIndex, int stackLevel)
 	}
 
 	if( func == 0 )
-		return 0;
+		return asINVALID_ARG;
 
 	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
-		return 0;
+		return asINVALID_ARG;
 
 	return engine->GetTypeIdFromDataType(func->variables[varIndex]->type);
 }

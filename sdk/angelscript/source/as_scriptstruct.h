@@ -54,6 +54,8 @@ public:
 	asCScriptStruct(asCObjectType *objType);
 	virtual ~asCScriptStruct();
 
+	asIScriptEngine *GetEngine() const;
+
 	int AddRef();
 	int Release();
 

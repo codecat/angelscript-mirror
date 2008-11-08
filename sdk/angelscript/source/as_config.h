@@ -215,6 +215,8 @@
 // AS_PS2     - Sony Playstation 2
 // AS_PS3     - Sony Playstation 3
 // AS_DC      - Sega Dreamcast
+// AS_GC      - Nintendo GameCube
+// AS_WII     - Nintendo Wii
 
 
 
@@ -319,7 +321,7 @@
 #endif
 
 // Metrowerks CodeWarrior (experimental, let me know if something isn't working)
-#if defined(__MWERKS__)
+#if defined(__MWERKS__) && !defined(EPPC) // JWC -- If Wii DO NOT use this even when using Metrowerks Compiler. Even though they are called Freescale...
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define HAVE_VIRTUAL_BASE_OFFSET
 	#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+3))
@@ -380,7 +382,7 @@
 #endif
 
 // GNU C (and MinGW on Windows)
-#if defined(__GNUC__) && !defined(__SNC__)
+#if (defined(__GNUC__) && !defined(__SNC__)) || defined(EPPC) // JWC -- use this instead for Wii
 	#define GNU_STYLE_VIRTUAL_METHOD
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
@@ -441,6 +443,7 @@
 		#else
 			#define AS_POSIX_THREADS
 		#endif
+
 	// Free BSD
 	#elif __FreeBSD__
 		#define AS_BSD
@@ -449,7 +452,8 @@
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
-    	#define AS_POSIX_THREADS
+		#define AS_POSIX_THREADS
+
 	// PSP and PS2
 	#elif defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
 		// Support native calling conventions on MIPS architecture
@@ -477,6 +481,15 @@
 		#define AS_DC
 		#define AS_SH4
 
+	// Wii JWC - Close to PS3 just no PPC_64 and AS_PS3
+	#elif defined(EPPC)
+		#define AS_WII
+		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+		#define CDECL_RETURN_SIMPLE_IN_MEMORY
+		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+		#undef STDCALL
+		#define STDCALL
+
 	#endif
 
 	#define I64(x) x##ll
@@ -500,8 +513,8 @@
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 #endif
 
-// PowerPC, e.g. Mac, GameCube, PS3
-#if defined(__PPC__) || defined(__ppc__)
+// PowerPC, e.g. Mac, GameCube, PS3, XBox 360, Wii
+#if defined(__PPC__) || defined(__ppc__) || defined(EPPC)
 	#define AS_BIG_ENDIAN
 
 	// Gamecube
@@ -516,6 +529,10 @@
 	#endif
 	// PS3
 	#if defined(__PPU__)
+		#define AS_ALIGN
+	#endif
+	// Wii
+	#if defined(EPPC)
 		#define AS_ALIGN
 	#endif
 #endif

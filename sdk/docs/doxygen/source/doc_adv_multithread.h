@@ -4,7 +4,8 @@
 
 AngelScript supports multithreading, though not yet on all platforms. You can determine if multithreading 
 is supported on your platform by calling the \ref asGetLibraryOptions function and checking the returned 
-string for <code>"AS_NO_THREADS"</code> or <code>"!AS_NO_THREADS"</code>.
+string for <code>"AS_NO_THREADS"</code>. If the identifier is in the returned string, then the library
+doesn't support multithreading.
 
 Even if you don't want or can't use multithreading, you can still write applications that execute 
 \ref doc_adv_concurrent "multiple scripts simultaneously". 

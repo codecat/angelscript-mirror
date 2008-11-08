@@ -68,6 +68,8 @@ AS_API const char * asGetLibraryVersion()
 AS_API const char * asGetLibraryOptions()
 {
 	const char *string = " "
+
+	// Options
 #ifdef AS_MAX_PORTABILITY
 		"AS_MAX_PORTABILITY "
 #endif
@@ -89,6 +91,11 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_NO_USER_ALLOC
 		"AS_NO_USER_ALLOC "
 #endif
+#ifdef AS_NO_THREADS
+		"AS_NO_THREADS "
+#endif
+
+	// Target system
 #ifdef AS_WIN
 		"AS_WIN "
 #endif
@@ -119,6 +126,14 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_DC
 		"AS_DC "
 #endif
+#ifdef AS_GC
+		"AS_GC "
+#endif
+#ifdef AS_WII
+		"AS_WII "
+#endif
+
+	// CPU family
 #ifdef AS_PPC
 		"AS_PPC "
 #endif
@@ -136,11 +151,6 @@ AS_API const char * asGetLibraryOptions()
 #endif
 #ifdef AS_XENON
 		"AS_XENON "
-#endif
-#ifdef AS_NO_THREADS
-		"AS_NO_THREADS "
-#else
-		"!AS_NO_THREADS "
 #endif
 	;
 

@@ -399,6 +399,7 @@ extern "C"
 	AS_API int               asEngine_GetGlobalVarIndexByDecl(asIScriptEngine *e, const char *module, const char *decl);
 	AS_API const char *      asEngine_GetGlobalVarDeclaration(asIScriptEngine *e, const char *module, int index, int *length /* = 0 */);
 	AS_API const char *      asEngine_GetGlobalVarName(asIScriptEngine *e, const char *module, int index, int *length /* = 0 */);
+	AS_API int               asEngine_GetGlobalVarTypeId(asIScriptEngine *e, const char *module, int index);
 	AS_API void *            asEngine_GetAddressOfGlobalVar(asIScriptEngine *e, const char *module, int index);
 	#ifdef AS_DEPRECATED
 	AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index);
@@ -520,24 +521,26 @@ extern "C"
 	AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g);
 	AS_API int              asGeneric_GetReturnTypeId(asIScriptGeneric *g);
 
-	AS_API int            asStruct_AddRef(asIScriptStruct *s);
-	AS_API int            asStruct_Release(asIScriptStruct *s);
-	AS_API int            asStruct_GetStructTypeId(asIScriptStruct *s);
-	AS_API asIObjectType *asStruct_GetObjectType(asIScriptStruct *s);
-	AS_API int            asStruct_GetPropertyCount(asIScriptStruct *s);
-	AS_API int            asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop);
-	AS_API const char *   asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop);
-	AS_API void *         asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop);
-	AS_API int            asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other);
+	AS_API asIScriptEngine *asStruct_GetEngine(asIScriptStruct *s);
+	AS_API int              asStruct_AddRef(asIScriptStruct *s);
+	AS_API int              asStruct_Release(asIScriptStruct *s);
+	AS_API int              asStruct_GetStructTypeId(asIScriptStruct *s);
+	AS_API asIObjectType *  asStruct_GetObjectType(asIScriptStruct *s);
+	AS_API int              asStruct_GetPropertyCount(asIScriptStruct *s);
+	AS_API int              asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop);
+	AS_API const char *     asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop);
+	AS_API void *           asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop);
+	AS_API int              asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other);
 
-	AS_API int    asArray_AddRef(asIScriptArray *a);
-	AS_API int    asArray_Release(asIScriptArray *a);
-	AS_API int    asArray_GetArrayTypeId(asIScriptArray *a);
-	AS_API int    asArray_GetElementTypeId(asIScriptArray *a);
-	AS_API asUINT asArray_GetElementCount(asIScriptArray *a);
-	AS_API void * asArray_GetElementPointer(asIScriptArray *a, asUINT index);
-	AS_API void   asArray_Resize(asIScriptArray *a, asUINT size);
-	AS_API int    asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other);
+	AS_API asIScriptEngine *asArray_GetEngine(asIScriptArray *a);
+	AS_API int              asArray_AddRef(asIScriptArray *a);
+	AS_API int              asArray_Release(asIScriptArray *a);
+	AS_API int              asArray_GetArrayTypeId(asIScriptArray *a);
+	AS_API int              asArray_GetElementTypeId(asIScriptArray *a);
+	AS_API asUINT           asArray_GetElementCount(asIScriptArray *a);
+	AS_API void *           asArray_GetElementPointer(asIScriptArray *a, asUINT index);
+	AS_API void             asArray_Resize(asIScriptArray *a, asUINT size);
+	AS_API int              asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other);
 
 	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
 	AS_API const char              *asObjectType_GetName(const asIObjectType *o);

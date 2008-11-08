@@ -312,6 +312,11 @@ asCArrayObject::~asCArrayObject()
 	if( objType ) objType->Release();
 }
 
+asIScriptEngine *asCArrayObject::GetEngine() const
+{
+	return objType->engine;
+}
+
 asUINT asCArrayObject::GetElementCount()
 {
 	return buffer->numElements;
