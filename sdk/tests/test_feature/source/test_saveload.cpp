@@ -253,12 +253,15 @@ void Dummy(asIScriptGeneric *gen)
 {
 }
 
+bool Test2();
 
 bool Test()
 {
 	int r;
 	COutStream out;
 		
+	Test2();
+
  	asIScriptEngine *engine = ConfigureEngine();
 
 	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
@@ -446,6 +449,46 @@ bool Test()
 	engine->Release();
 
 	// Success
+	return fail;
+}
+
+bool Test2()
+{
+	int r;
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	const char *script = 
+		"enum ENUM1{          \n"
+		"_ENUM_1 = 1          \n"
+		"}                    \n"
+		"void main()          \n"
+		"{                    \n"
+		"int item = _ENUM_1;  \n"
+		"}                    \n";
+
+	r = engine->AddScriptSection(0, "script", script, strlen(script));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
+	CBytecodeStream stream;
+	r = engine->SaveByteCode(0, &stream);
+	if( r < 0 )
+		fail = true;
+	engine->Release();
+
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	r = engine->LoadByteCode(0, &stream);
+	if( r < 0 )
+		fail = true;
+
+	r = engine->ExecuteString(0, "main()");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	engine->Release();
+
 	return fail;
 }
 

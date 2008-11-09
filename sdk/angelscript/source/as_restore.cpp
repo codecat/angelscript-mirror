@@ -446,7 +446,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 		}
 
 		// behaviours
-		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO )
+		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
 		{
 			WriteFunction(engine->scriptFunctions[ot->beh.construct]);
 			size = (int)ot->beh.constructors.GetLength() - 1;
@@ -692,7 +692,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		}
 
 		// behaviours
-		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO )
+		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
 		{
 			asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
 			ReadFunction(func);
