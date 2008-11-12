@@ -162,8 +162,24 @@ bool Test()
 	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void set2(string@&in)", asFUNCTION(SetString2), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("const string &getconststringref()", asFUNCTION(GetConstStringRef), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+
+	// Test index operator for temp strings
+	r = engine->ExecuteString(0, "assert('abc'[0] == 97)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	r = engine->ExecuteString(0, "assert(string('abc')[0] == 97)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	r = engine->ExecuteString(0, "string a = 'abc'; assert(a[0] == 97)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
 
 	// Test string copy constructor
 	r = engine->ExecuteString(0, "string tst(getconststringref()); print(tst);");
@@ -299,7 +315,6 @@ bool Test()
 
 	engine->RegisterObjectType("Http", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_GENERIC);
-	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	
 	r = engine->ExecuteString(0, "Http h; string str; h.get('stringtest', str); assert(str == 'output');");
 	if( r != asEXECUTION_FINISHED ) fail = true;

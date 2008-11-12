@@ -44,11 +44,11 @@
 #ifndef ANGELSCRIPT_C_H
 #define ANGELSCRIPT_C_H
 
-#define ANGELSCRIPT_VERSION        21401
+#define ANGELSCRIPT_VERSION        21500
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  14
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "2.14.1"
+#define ANGELSCRIPT_VERSION_MINOR  15
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.15.0"
 
 #ifdef AS_USE_NAMESPACE
  #define BEGIN_AS_NAMESPACE namespace AngelScript {
@@ -468,7 +468,10 @@ extern "C"
 	AS_API double           asContext_GetReturnDouble(asIScriptContext *c);
 	AS_API void *           asContext_GetReturnAddress(asIScriptContext *c);
 	AS_API void *           asContext_GetReturnObject(asIScriptContext *c);
+#ifdef AS_DEPRECATED
 	AS_API void *           asContext_GetReturnPointer(asIScriptContext *c);
+#endif
+	AS_API void *           asContext_GetAddressOfReturnValue(asIScriptContext *c);
 	AS_API int              asContext_Execute(asIScriptContext *c);
 	AS_API int              asContext_Abort(asIScriptContext *c);
 	AS_API int              asContext_Suspend(asIScriptContext *c);
@@ -485,11 +488,14 @@ extern "C"
 	AS_API int              asContext_GetCallstackSize(asIScriptContext *c);
 	AS_API int              asContext_GetCallstackFunction(asIScriptContext *c, int index);
 	AS_API int              asContext_GetCallstackLineNumber(asIScriptContext *c, int index, int *column /* = 0 */);
-	AS_API int              asContext_GetVarCount(asIScriptContext *c, int stackLevel /* = 0 */);
-	AS_API const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *length /* = 0 */, int stackLevel /* = 0 */);
-	AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length /* = 0 */, int stackLevel /* = 0 */);
+	AS_API int              asContext_GetVarCount(asIScriptContext *c, int stackLevel /* = -1 */);
+	AS_API const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *length /* = 0 */, int stackLevel /* = -1 */);
+	AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length /* = 0 */, int stackLevel /* = -1 */);
 	AS_API int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel /* = -1 */);
-	AS_API void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel /* = 0 */);
+#ifdef AS_DEPRECATED
+	AS_API void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel /* = -1 */);
+#endif
+	AS_API void *           asContext_GetAddressOfVar(asIScriptContext *c, int varIndex, int stackLevel /* = -1 */);
 	AS_API int              asContext_GetThisTypeId(asIScriptContext *c, int stackLevel /* = -1 */);
 	AS_API void *           asContext_GetThisPointer(asIScriptContext *c, int stackLevel /* = -1 */);
 	AS_API void *           asContext_SetUserData(asIScriptContext *c, void *data);

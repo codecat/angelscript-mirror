@@ -179,7 +179,10 @@ AS_API float            asContext_GetReturnFloat(asIScriptContext *c)           
 AS_API double           asContext_GetReturnDouble(asIScriptContext *c)                                                    { return c->GetReturnDouble(); }
 AS_API void *           asContext_GetReturnAddress(asIScriptContext *c)                                                   { return c->GetReturnAddress(); }
 AS_API void *           asContext_GetReturnObject(asIScriptContext *c)                                                    { return c->GetReturnObject(); }
+#ifdef AS_DEPRECATED
 AS_API void *           asContext_GetReturnPointer(asIScriptContext *c)                                                   { return c->GetReturnPointer(); }
+#endif
+AS_API void *           asContext_GetAddressOfReturnValue(asIScriptContext *c)                                            { return c->GetAddressOfReturnValue(); }
 AS_API int              asContext_Execute(asIScriptContext *c)                                                            { return c->Execute(); }
 AS_API int              asContext_Abort(asIScriptContext *c)                                                              { return c->Abort(); }
 AS_API int              asContext_Suspend(asIScriptContext *c)                                                            { return c->Suspend(); }
@@ -200,7 +203,10 @@ AS_API int              asContext_GetVarCount(asIScriptContext *c, int stackLeve
 AS_API const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *length, int stackLevel)              { return c->GetVarName(varIndex, length, stackLevel); }
 AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length, int stackLevel)       { return c->GetVarDeclaration(varIndex, length, stackLevel); }
 AS_API int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel)                         { return c->GetVarTypeId(varIndex, stackLevel); }
+#ifdef AS_DEPRECATED
 AS_API void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel)                        { return c->GetVarPointer(varIndex, stackLevel); }
+#endif
+AS_API void *           asContext_GetAddressOfVar(asIScriptContext *c, int varIndex, int stackLevel)                      { return c->GetAddressOfVar(varIndex, stackLevel); }
 AS_API int              asContext_GetThisTypeId(asIScriptContext *c, int stackLevel)                                      { return c->GetThisTypeId(stackLevel); }
 AS_API void *           asContext_GetThisPointer(asIScriptContext *c, int stackLevel)                                     { return c->GetThisPointer(stackLevel); }
 AS_API void *           asContext_SetUserData(asIScriptContext *c, void *data)                                            { return c->SetUserData(data); }

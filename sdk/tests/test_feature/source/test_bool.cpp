@@ -338,6 +338,20 @@ bool Test()
 			fail = true;
 	}
 
+
+	// The tokenizer must not mistake '!isTrue' for '!is' + 'True' instead of '!' + 'isTrue'
+	const char *script5 = 
+		"class CTest                        \n"
+		"{                                  \n"
+		"  bool isTrue() { return true; }   \n"
+		"  void func() { if( !isTrue() ); } \n"
+		"}                                  \n";
+
+	engine->AddScriptSection(0, "script", script5, strlen(script5));
+	r = engine->Build(0);
+	if( r < 0 )
+		fail = true;
+
 	engine->Release();
 
 	return fail;

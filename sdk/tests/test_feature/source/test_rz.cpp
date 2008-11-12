@@ -68,7 +68,7 @@ bool Test1()
 	}
 	else
 	{
-		CScriptAny *any = *(CScriptAny**)ctx->GetReturnPointer();
+		CScriptAny *any = *(CScriptAny**)ctx->GetAddressOfReturnValue();
 		int typeId = any->GetTypeId();
 		if( !(typeId & asTYPEID_OBJHANDLE) )
 		{
@@ -228,7 +228,7 @@ bool Test2()
 	}
 	else
 	{
-		CScriptAny *any = *(CScriptAny**)ctx->GetReturnPointer();
+		CScriptAny *any = *(CScriptAny**)ctx->GetAddressOfReturnValue();
 		int typeId = any->GetTypeId();
 		if( !(typeId & asTYPEID_OBJHANDLE) )
 		{

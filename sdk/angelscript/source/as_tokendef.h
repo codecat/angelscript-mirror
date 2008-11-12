@@ -160,9 +160,9 @@ enum eTokenType
 	ttOut,                 // out
 	ttInOut,               // inout
 	ttNull,                // null
-    ttClass,               // class
-	ttTypedef,
-	ttEnum,
+	ttClass,               // class
+	ttTypedef,             // typedef
+	ttEnum,                // enum
 	ttCast                 // cast
 };
 

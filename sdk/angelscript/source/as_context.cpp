@@ -571,6 +571,8 @@ void *asCContext::GetReturnObject()
 		return objectRegister;
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2008-11-11
 void *asCContext::GetReturnPointer()
 {
 	if( status != tsProgramFinished ) return 0;
@@ -580,6 +582,26 @@ void *asCContext::GetReturnPointer()
 	// An object is stored in the objectRegister
 	if( !dt->IsReference() && dt->IsObject() )
 		return &objectRegister;
+
+	// Primitives and references are stored in register1
+	return &register1;
+}
+#endif
+
+void *asCContext::GetAddressOfReturnValue()
+{
+	if( status != tsProgramFinished ) return 0;
+
+	asCDataType *dt = &initialFunction->returnType;
+
+	// An object is stored in the objectRegister
+	if( !dt->IsReference() && dt->IsObject() )
+	{
+		// Need to dereference objects 
+		if( !dt->IsObjectHandle() )
+			return *(void**)&objectRegister;
+		return &objectRegister;
+	}
 
 	// Primitives and references are stored in register1
 	return &register1;
@@ -910,6 +932,13 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	return 0;
 }
 
+
+// TODO: We should deprecate this, and implement the GetAddressOfArg instead.
+// however, I first need to decide what to do when the argument type is a value type, passed by value. 
+// These are currently passed by reference, so the caller is responsible for providing the memory space.
+// I'll probably need to provide a temporary storage for these values within the context, so that
+// the application do not have to keep its own memory until the function returns. This is especially
+// important when context is executing a long running script.
 void *asCContext::GetArgPointer(asUINT arg)
 {
 	if( status != tsPrepared )
@@ -3731,6 +3760,8 @@ int asCContext::GetVarTypeId(int varIndex, int stackLevel)
 	return engine->GetTypeIdFromDataType(func->variables[varIndex]->type);
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2008-11-11
 void *asCContext::GetVarPointer(int varIndex, int stackLevel)
 {
 	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
@@ -3754,6 +3785,38 @@ void *asCContext::GetVarPointer(int varIndex, int stackLevel)
 
 	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
 		return 0;
+
+	return sf - func->variables[varIndex]->stackOffset;
+}
+#endif
+
+void *asCContext::GetAddressOfVar(int varIndex, int stackLevel)
+{
+	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
+
+	asCScriptFunction *func;
+	asDWORD *sf;
+	if( stackLevel == -1 )
+	{
+		func = currentFunction;
+		sf = stackFramePointer;
+	}
+	else
+	{
+		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
+		func = (asCScriptFunction*)s[1];
+		sf = (asDWORD*)s[0];
+	}
+
+	if( func == 0 )
+		return 0;
+
+	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
+		return 0;
+
+	// For object variables it's necessary to dereference the pointer to get the address of the value
+	if( func->variables[varIndex]->type.IsObject() && !func->variables[varIndex]->type.IsObjectHandle() )
+		return *(void**)(sf - func->variables[varIndex]->stackOffset);
 
 	return sf - func->variables[varIndex]->stackOffset;
 }

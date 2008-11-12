@@ -142,14 +142,14 @@ void PrintVariables(asIScriptContext *ctx, int stackLevel)
 	for( int n = 0; n < numVars; n++ )
 	{
 		int typeId = ctx->GetVarTypeId(n, stackLevel); 
-		void *varPointer = ctx->GetVarPointer(n, stackLevel);
+		void *varPointer = ctx->GetAddressOfVar(n, stackLevel);
 		if( typeId == engine->GetTypeIdByDecl(0, "int") )
 		{
 			print(" %s = %d\n", ctx->GetVarDeclaration(n, 0, stackLevel), *(int*)varPointer);
 		}
 		else if( typeId == engine->GetTypeIdByDecl(0, "string") )
 		{
-			asCScriptString *str = *(asCScriptString**)varPointer;
+			asCScriptString *str = (asCScriptString*)varPointer;
 			if( str )
 				print(" %s = '%s'\n", ctx->GetVarDeclaration(n, 0, stackLevel), str->buffer.c_str());
 			else

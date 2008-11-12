@@ -92,7 +92,10 @@ public:
 	double  GetReturnDouble();
 	void   *GetReturnAddress();
 	void   *GetReturnObject();
+#ifdef AS_DEPRECATED
 	void   *GetReturnPointer();
+#endif
+	void   *GetAddressOfReturnValue();
 
 	asEContextState GetState();
 
@@ -116,7 +119,10 @@ public:
 	const char *GetVarName(int varIndex, int *length, int stackLevel);
 	const char *GetVarDeclaration(int varIndex, int *length, int stackLevel);
 	int         GetVarTypeId(int varIndex, int stackLevel);
+#ifdef AS_DEPRECATED
 	void       *GetVarPointer(int varIndex, int stackLevel);
+#endif
+	void       *GetAddressOfVar(int varIndex, int stackLevel);
 	int         GetThisTypeId(int stackLevel);
     void       *GetThisPointer(int stackLevel);
 

@@ -6546,8 +6546,18 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			}
 		}
 
-		// Release the potentially temporary object
-		ReleaseTemporaryVariable(objType, &ctx->bc);
+		if( ctx->type.dataType.IsReference() && objType.isTemporary )
+		{
+			// Remember the object's variable, so that it can be released 
+			// later on when the reference goes out of scope
+			ctx->type.isTemporary = true;
+			ctx->type.stackOffset = objType.stackOffset;
+		}
+		else
+		{
+			// Release the temporary variable the object was held by
+			ReleaseTemporaryVariable(objType, &ctx->bc);
+		}
 	}
 
 	return 0;

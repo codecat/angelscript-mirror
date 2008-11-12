@@ -569,7 +569,10 @@ public:
 	virtual double  GetReturnDouble() = 0;
 	virtual void   *GetReturnAddress() = 0;
 	virtual void   *GetReturnObject() = 0;
+#ifdef AS_DEPRECATED
 	virtual void   *GetReturnPointer() = 0;
+#endif
+	virtual void   *GetAddressOfReturnValue() = 0;
 
 	virtual int Execute() = 0;
 	virtual int Abort() = 0;
@@ -597,7 +600,10 @@ public:
 	virtual const char *GetVarName(int varIndex, int *length = 0, int stackLevel = -1) = 0;
 	virtual const char *GetVarDeclaration(int varIndex, int *length = 0, int stackLevel = -1) = 0;
 	virtual int         GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
+#ifdef AS_DEPRECATED
 	virtual void       *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
+#endif
+	virtual void       *GetAddressOfVar(int varIndex, int stackLevel = -1) = 0;
 	virtual int         GetThisTypeId(int stackLevel = -1) = 0;
 	virtual void       *GetThisPointer(int stackLevel = -1) = 0;
 

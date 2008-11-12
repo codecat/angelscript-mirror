@@ -49,7 +49,7 @@ bool Test()
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	if( *(int*)ctx->GetReturnPointer() != 107 ) fail = true;
+	if( *(int*)ctx->GetAddressOfReturnValue() != 107 ) fail = true;
 
 	func = engine->GetFunctionIDByName(0, "test2");
 	ctx->Prepare(func);
@@ -57,7 +57,7 @@ bool Test()
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	if( (*(asCScriptString**)ctx->GetReturnPointer())->buffer != "tst" ) fail = true;
+	if( ((asCScriptString*)ctx->GetAddressOfReturnValue())->buffer != "tst" ) fail = true;
 
 	ctx->Release();
 

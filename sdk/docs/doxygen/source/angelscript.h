@@ -1871,9 +1871,15 @@ public:
 	//! \brief Return a pointer to the returned object.
     //! \return A pointer to the object returned from the script function, or 0 on error.
 	virtual void   *GetReturnObject() = 0;
-	//! \brief Returns a pointer to the returned value independent of type.
+#ifdef AS_DEPRECATED
+	//! \brief (deprecated) Returns a pointer to the returned value independent of type.
     //! \return A pointer to the return value returned from the script function, or 0 on error.
+	//! \deprecated Use \ref asIScriptContext::GetAddressOfReturnValue "GetAddressOfReturnValue" instead.
 	virtual void   *GetReturnPointer() = 0;
+#endif
+	//! \brief Returns the address of the returned value
+	//! \return A pointer to the return value returned from the script function, or 0 on error.
+	virtual void   *GetAddressOfReturnValue() = 0;
 
 	//! \brief Executes the prepared function.
     //! \return A negative value on error, or one of \ref asEContextState.
@@ -2037,7 +2043,8 @@ public:
     //! \return The type id of the variable, or a negative value on error.
 	//! \retval asINVALID_ARG The index or stack level is invalid.
 	virtual int         GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
-	//! \brief Returns a pointer to a local variable at the specified callstack level.
+#ifdef AS_DEPRECATED
+	//! \brief (deprecated) Returns a pointer to a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
     //! \return A pointer to the variable.
@@ -2053,7 +2060,21 @@ public:
     //!
     //! Note that object variables may not be initalized at all moments, thus you must verify 
     //! if the address returned points to a null pointer, before you try to dereference it.
+	//!
+	//! \deprecated Use \ref asIScriptContext::GetAddressOfVar "GetAddressOfVar" instead.
 	virtual void       *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
+#endif
+	//! \brief Returns a pointer to a local variable at the specified callstack level.
+    //! \param[in] varIndex The index of the variable.
+    //! \param[in] stackLevel The index on the call stack.
+    //! \return A pointer to the variable.
+    //!
+    //! Returns a pointer to the variable, so that its value can be read and written. The 
+    //! address is valid until the script function returns.
+    //!
+    //! Note that object variables may not be initalized at all moments, thus you must verify 
+    //! if the address returned points to a null pointer, before you try to dereference it.
+	virtual void       *GetAddressOfVar(int varIndex, int stackLevel = -1) = 0;
 	//! \brief Returns the type id of the object, if a class method is being executed.
     //! \param[in] stackLevel The index on the call stack.
     //! \return Returns the type id of the object if it is a class method.

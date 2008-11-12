@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.15.0 WIP - 2008/11/08</h2>
+<h2>Version 2.15.0 WIP - 2008/11/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -127,6 +127,8 @@ A:hover
 <li>The parser no longer accepts other digits than 0 to initiate a hex literal value (Thanks SiCrane)
 <li>Fixed compiler error in as_callfunc_ppc_64.cpp (Thanks James Chan)
 <li>Fixed saving bytecode with enums (Thanks loboWu)
+<li>Fixed the index operator call on temporary object that caused an invalid reference (Thanks dxj19831029)
+<li>Fixed bug in the tokenizer and the !in token versus identifier (Thanks xivVerge)
 </ul>
 <li>Library interface
 <ul>
@@ -134,6 +136,8 @@ A:hover
 <li>Deprecated GetObjectsInGarbageCollectorCount, and replaced it with GetGCStatistics
 <li>Added GetEngine to asIScriptStruct and asIScriptArray
 <li>Added GetGlobalVarTypeId to asIScriptEngine
+<li>Deprecated GetVarPointer and GetReturnPointer in the context interface
+<li>Added GetAddressOfVar and GetAddressOfReturnValue in the context interface
 </ul>
 <li>Library
 <ul>
