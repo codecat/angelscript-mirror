@@ -1693,6 +1693,17 @@ public:
     //! engine has been configured in the same way as when the byte code was first compiled.
 	virtual int LoadByteCode(const char *module, asIBinaryStream *in) = 0;
 
+	// User data
+	//! \brief Register the memory address of some user data.
+	//! \param[in] data A pointer to the user data.
+	//! \return The previous pointer stored in the engine.
+	//!
+	//! This method allows the application to associate a value, e.g. a pointer, with the engine instance.
+	virtual void *SetUserData(void *data) = 0;
+	//! \brief Returns the address of the previously registered user data.
+	//! \return The pointer to the user data.
+	virtual void *GetUserData() = 0;
+
 protected:
 	virtual ~asIScriptEngine() {}
 };
@@ -1873,7 +1884,7 @@ public:
 	virtual void   *GetReturnObject() = 0;
 #ifdef AS_DEPRECATED
 	//! \brief (deprecated) Returns a pointer to the returned value independent of type.
-    //! \return A pointer to the return value returned from the script function, or 0 on error.
+	//! \return A pointer to the return value returned from the script function, or 0 on error.
 	//! \deprecated Use \ref asIScriptContext::GetAddressOfReturnValue "GetAddressOfReturnValue" instead.
 	virtual void   *GetReturnPointer() = 0;
 #endif
@@ -1881,7 +1892,7 @@ public:
 	//! \return A pointer to the return value returned from the script function, or 0 on error.
 	virtual void   *GetAddressOfReturnValue() = 0;
 
-	//! \brief Executes the prepared function.
+    //! \brief Executes the prepared function.
     //! \return A negative value on error, or one of \ref asEContextState.
     //! \retval asERROR Invalid context object, the context is not prepared, or it is not in suspended state.
     //! \retval asEXECUTION_ABORTED The execution was aborted with a call to \ref Abort.
@@ -2158,7 +2169,8 @@ public:
     //! Don't release the pointer if this is an object handle, the asIScriptGeneric object will 
     //! do that for you.
 	virtual void   *GetArgObject(asUINT arg) = 0;
-    //! \brief Returns a pointer to the argument value.
+#ifdef AS_DEPRECATED
+    //! \brief (deprecated) Returns a pointer to the argument value.
     //! \param[in] arg The argument index.
     //! \return A pointer to the argument value.
     //! 
@@ -2166,7 +2178,13 @@ public:
     //! pointer to the pointer to whatever is being referenced. For object handles you get a 
     //! pointer to the object handle, which itself is a pointer to the object. For objects you 
     //! get a pointer to the pointer to the object.
+	//! \deprecated Use \ref asIScriptGeneric::GetAddressOfArg "GetAddressOfArg" instead.
 	virtual void   *GetArgPointer(asUINT arg) = 0;
+#endif
+    //! \brief Returns a pointer to the argument value.
+    //! \param[in] arg The argument index.
+    //! \return A pointer to the argument value.
+	virtual void   *GetAddressOfArg(asUINT arg) = 0;
     //! \brief Returns the type id of the argument.
     //! \param[in] arg The argument index.
     //! \return The type id of the argument.

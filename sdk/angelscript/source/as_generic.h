@@ -69,7 +69,10 @@ public:
 	double  GetArgDouble(asUINT arg);
 	void   *GetArgAddress(asUINT arg);
 	void   *GetArgObject(asUINT arg);
+#ifdef AS_DEPRECATED
 	void   *GetArgPointer(asUINT arg);
+#endif
+	void   *GetAddressOfArg(asUINT arg);
 	int     GetArgTypeId(asUINT arg);
 
 	int     SetReturnByte(asBYTE val);

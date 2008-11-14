@@ -273,6 +273,8 @@ asCScriptEngine::asCScriptEngine()
 	lastModule = 0;
 
 
+	userData = 0;
+
 	initialContextStackSize = 1024;      // 1 KB
 	
 
@@ -377,11 +379,13 @@ asCScriptEngine::~asCScriptEngine()
 	threadManager->Release();
 }
 
+// interface
 int asCScriptEngine::AddRef()
 {
 	return refCount.atomicInc();
 }
 
+// interface
 int asCScriptEngine::Release()
 {
 	int r = refCount.atomicDec();
@@ -393,6 +397,20 @@ int asCScriptEngine::Release()
 	}
 
 	return r;
+}
+
+// interface
+void *asCScriptEngine::SetUserData(void *data)
+{
+	void *old = userData;
+	userData = data;
+	return old;
+}
+
+// interface
+void *asCScriptEngine::GetUserData()
+{
+	return userData;
 }
 
 void asCScriptEngine::Reset()

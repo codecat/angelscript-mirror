@@ -16,7 +16,7 @@ void Type_construct0(asIScriptGeneric *gen)
 void Type_construct1(asIScriptGeneric *gen)
 {
 	int *a = (int*)gen->GetObject();
-	*a = *(int*)gen->GetArgPointer(0);;
+	*a = *(int*)gen->GetAddressOfArg(0);;
 }
 
 void Type_castInt(asIScriptGeneric *gen)

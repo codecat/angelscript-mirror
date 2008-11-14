@@ -47,8 +47,8 @@ static void cfunction_gen(asIScriptGeneric *gen)
 {
 	called = true;
 	t1 = gen->GetArgDWord(0);
-	t2 = *(short*)gen->GetArgPointer(1);
-	t3 = *(char*)gen->GetArgPointer(2);
+	t2 = *(short*)gen->GetAddressOfArg(1);
+	t3 = *(char*)gen->GetAddressOfArg(2);
 	t4 = gen->GetArgDWord(3);
 	testVal = (t1 == 5) && (t2 == 9) && (t3 == 1) && (t4 == 3);
 }

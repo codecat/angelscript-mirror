@@ -11,9 +11,9 @@
 void StringSubString_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    int start = *(int*)gen->GetArgPointer(1);
-    int count = *(int*)gen->GetArgPointer(2);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    int start = *(int*)gen->GetAddressOfArg(1);
+    int count = *(int*)gen->GetAddressOfArg(2);
 
     // Create the substring
     asCScriptString *sub = new asCScriptString();
@@ -34,9 +34,9 @@ void StringSubString_Generic(asIScriptGeneric *gen)
 void StringFindFirst_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *sub = *(asCScriptString**)gen->GetArgPointer(1);
-    int start = *(int*)gen->GetArgPointer(2);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *sub = *(asCScriptString**)gen->GetAddressOfArg(1);
+    int start = *(int*)gen->GetAddressOfArg(2);
 
     // Find the substring
     int loc = (int)str->buffer.find(sub->buffer, start);
@@ -48,8 +48,8 @@ void StringFindFirst_Generic(asIScriptGeneric *gen)
 void StringFindFirst0_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *sub = *(asCScriptString**)gen->GetArgPointer(1);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *sub = *(asCScriptString**)gen->GetAddressOfArg(1);
 
     // Find the substring
     int loc = (int)str->buffer.find(sub->buffer);
@@ -69,9 +69,9 @@ void StringFindFirst0_Generic(asIScriptGeneric *gen)
 void StringFindLast_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *sub = *(asCScriptString**)gen->GetArgPointer(1);
-    int start = *(int*)gen->GetArgPointer(2);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *sub = *(asCScriptString**)gen->GetAddressOfArg(1);
+    int start = *(int*)gen->GetAddressOfArg(2);
 
     // Find the substring
     int loc = (int)str->buffer.rfind(sub->buffer, start);
@@ -82,8 +82,8 @@ void StringFindLast_Generic(asIScriptGeneric *gen)
 void StringFindLast0_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *sub = *(asCScriptString**)gen->GetArgPointer(1);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *sub = *(asCScriptString**)gen->GetAddressOfArg(1);
 
     // Find the substring
     int loc = (int)str->buffer.rfind(sub->buffer);
@@ -103,9 +103,9 @@ void StringFindLast0_Generic(asIScriptGeneric *gen)
 void StringFindFirstOf_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
-    int start = *(int*)gen->GetArgPointer(2);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *chars = *(asCScriptString**)gen->GetAddressOfArg(1);
+    int start = *(int*)gen->GetAddressOfArg(2);
 
     // Find the substring
     int loc = (int)str->buffer.find_first_of(chars->buffer, start);
@@ -116,8 +116,8 @@ void StringFindFirstOf_Generic(asIScriptGeneric *gen)
 void StringFindFirstOf0_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *chars = *(asCScriptString**)gen->GetAddressOfArg(1);
 
     // Find the substring
     int loc = (int)str->buffer.find_first_of(chars->buffer);
@@ -136,9 +136,9 @@ void StringFindFirstOf0_Generic(asIScriptGeneric *gen)
 void StringFindFirstNotOf_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
-    int start = *(int*)gen->GetArgPointer(2);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *chars = *(asCScriptString**)gen->GetAddressOfArg(1);
+    int start = *(int*)gen->GetAddressOfArg(2);
 
     // Find the substring
     int loc = (int)str->buffer.find_first_not_of(chars->buffer, start);
@@ -149,8 +149,8 @@ void StringFindFirstNotOf_Generic(asIScriptGeneric *gen)
 void StringFindFirstNotOf0_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *chars = *(asCScriptString**)gen->GetAddressOfArg(1);
 
     // Find the substring
     int loc = (int)str->buffer.find_first_not_of(chars->buffer);
@@ -170,9 +170,9 @@ void StringFindFirstNotOf0_Generic(asIScriptGeneric *gen)
 void StringFindLastOf_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
-    int start = *(int*)gen->GetArgPointer(2);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *chars = *(asCScriptString**)gen->GetAddressOfArg(1);
+    int start = *(int*)gen->GetAddressOfArg(2);
 
     // Find the substring
     int loc = (int)str->buffer.find_last_of(chars->buffer, start);
@@ -183,8 +183,8 @@ void StringFindLastOf_Generic(asIScriptGeneric *gen)
 void StringFindLastOf0_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *chars = *(asCScriptString**)gen->GetAddressOfArg(1);
 
     // Find the substring
     int loc = (int)str->buffer.find_last_of(chars->buffer);
@@ -204,9 +204,9 @@ void StringFindLastOf0_Generic(asIScriptGeneric *gen)
 void StringFindLastNotOf_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
-    int start = *(int*)gen->GetArgPointer(2);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *chars = *(asCScriptString**)gen->GetAddressOfArg(1);
+    int start = *(int*)gen->GetAddressOfArg(2);
 
     // Find the substring
     int loc = (int)str->buffer.find_last_not_of(chars->buffer, start);
@@ -217,8 +217,8 @@ void StringFindLastNotOf_Generic(asIScriptGeneric *gen)
 void StringFindLastNotOf0_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *chars = *(asCScriptString**)gen->GetArgPointer(1);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *chars = *(asCScriptString**)gen->GetAddressOfArg(1);
 
     // Find the substring
     int loc = (int)str->buffer.find_last_not_of(chars->buffer);
@@ -254,8 +254,8 @@ void StringSplit_Generic(asIScriptGeneric *gen)
     asIScriptArray *array = (asIScriptArray*)engine->CreateScriptObject(stringArrayType);
 
     // Get the arguments
-    asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
-    asCScriptString *delim = *(asCScriptString**)gen->GetArgPointer(1);
+    asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+    asCScriptString *delim = *(asCScriptString**)gen->GetAddressOfArg(1);
 
     // Find the existence of the delimiter in the input string
     int pos = 0, prev = 0, count = 0;
@@ -300,8 +300,8 @@ void StringSplit_Generic(asIScriptGeneric *gen)
 void StringJoin_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asIScriptArray *array = *(asIScriptArray**)gen->GetArgPointer(0);
-    asCScriptString *delim = *(asCScriptString**)gen->GetArgPointer(1);
+    asIScriptArray *array = *(asIScriptArray**)gen->GetAddressOfArg(0);
+    asCScriptString *delim = *(asCScriptString**)gen->GetAddressOfArg(1);
 
     // Create the new string
     asCScriptString *str = new asCScriptString();

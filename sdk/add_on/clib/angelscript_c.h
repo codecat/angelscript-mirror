@@ -444,6 +444,8 @@ extern "C"
 	AS_API void              asEngine_GCEnumCallback(asIScriptEngine *e, void *obj);
 	AS_API int               asEngine_SaveByteCode(asIScriptEngine *e, const char *module, asBINARYWRITEFUNC_t outFunc, void *outParam);
 	AS_API int               asEngine_LoadByteCode(asIScriptEngine *e, const char *module, asBINARYREADFUNC_t inFunc, void *inParam);
+	AS_API void *            asEngine_SetUserData(asIScriptEngine *e, void *data);
+	AS_API void *            asEngine_GetUserData(asIScriptEngine *e);
 
 	AS_API int              asContext_AddRef(asIScriptContext *c);
 	AS_API int              asContext_Release(asIScriptContext *c);
@@ -514,7 +516,10 @@ extern "C"
 	AS_API double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg);
+#ifdef AS_DEPRECATED
 	AS_API void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg);
+#endif
+	AS_API void *           asGeneric_GetAddressOfArg(asIScriptGeneric *g, asUINT arg);
 	AS_API int              asGeneric_GetArgTypeId(asIScriptGeneric *g, asUINT arg);
 	AS_API int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val);
 	AS_API int              asGeneric_SetReturnWord(asIScriptGeneric *g, asWORD val);

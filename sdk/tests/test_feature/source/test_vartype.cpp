@@ -56,7 +56,7 @@ void testFuncIS_generic(asIScriptGeneric *gen)
 {
 	void *ref = gen->GetArgAddress(0);
 	int typeId = gen->GetArgTypeId(0);
-	asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(1);
+	asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(1);
 
 	testFuncIS(ref,typeId,*str);
 }
@@ -71,7 +71,7 @@ void testFuncSI(asCScriptString &str, void *ref, int typeId)
 
 void testFuncSI_generic(asIScriptGeneric *gen)
 {
-	asCScriptString *str = *(asCScriptString**)gen->GetArgPointer(0);
+	asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
 	void *ref = gen->GetArgAddress(1);
 	int typeId = gen->GetArgTypeId(1);
 

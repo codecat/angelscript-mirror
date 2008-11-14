@@ -155,6 +155,8 @@ AS_API void              asEngine_NotifyGarbageCollectorOfNewObject(asIScriptEng
 AS_API void              asEngine_GCEnumCallback(asIScriptEngine *e, void *obj)                                                                                                                   { e->GCEnumCallback(obj); }
 AS_API int               asEngine_SaveByteCode(asIScriptEngine *e, const char *module, asBINARYWRITEFUNC_t outFunc, void *outParam)                                                               { asCBinaryStreamC out(outFunc, 0, outParam); return e->SaveByteCode(module, &out); }
 AS_API int               asEngine_LoadByteCode(asIScriptEngine *e, const char *module, asBINARYREADFUNC_t inFunc, void *inParam)                                                                  { asCBinaryStreamC in(0, inFunc, inParam); return e->LoadByteCode(module, &in); }
+AS_API void *            asEngine_SetUserData(asIScriptEngine *e, void *data) {return e->SetUserData(data);}
+AS_API void *            asEngine_GetUserData(asIScriptEngine *e) {return e->GetUserData();}
 
 AS_API int              asContext_AddRef(asIScriptContext *c)                                                             { return c->AddRef(); }
 AS_API int              asContext_Release(asIScriptContext *c)                                                            { return c->Release(); }
@@ -225,7 +227,10 @@ AS_API float            asGeneric_GetArgFloat(asIScriptGeneric *g, asUINT arg)  
 AS_API double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg)     { return g->GetArgDouble(arg); }
 AS_API void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg)    { return g->GetArgAddress(arg); }
 AS_API void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg)     { return g->GetArgObject(arg); }
+#ifdef AS_DEPRECATED
 AS_API void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg)    { return g->GetArgPointer(arg); }
+#endif
+AS_API void *           asGeneric_GetAddressOfArg(asIScriptGeneric *g, asUINT arg)  { return g->GetAddressOfArg(arg); }
 AS_API int              asGeneric_GetArgTypeId(asIScriptGeneric *g, asUINT arg)     { return g->GetArgTypeId(arg); }
 AS_API int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val)    { return g->SetReturnByte(val); }
 AS_API int              asGeneric_SetReturnWord(asIScriptGeneric *g, asWORD val)    { return g->SetReturnWord(val); }

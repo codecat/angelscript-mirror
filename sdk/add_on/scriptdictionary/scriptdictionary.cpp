@@ -288,8 +288,8 @@ void ScriptDictionaryRelease_Generic(asIScriptGeneric *gen)
 void ScriptDictionarySet_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
-    string *key = *(string**)gen->GetArgPointer(0);
-    void *ref = *(void**)gen->GetArgPointer(1);
+    string *key = *(string**)gen->GetAddressOfArg(0);
+    void *ref = *(void**)gen->GetAddressOfArg(1);
     int typeId = gen->GetArgTypeId(1);
     dict->Set(*key, ref, typeId);
 }
@@ -297,24 +297,24 @@ void ScriptDictionarySet_Generic(asIScriptGeneric *gen)
 void ScriptDictionarySetInt_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
-    string *key = *(string**)gen->GetArgPointer(0);
-    void *ref = *(void**)gen->GetArgPointer(1);
+    string *key = *(string**)gen->GetAddressOfArg(0);
+    void *ref = *(void**)gen->GetAddressOfArg(1);
     dict->Set(*key, *(asINT64*)ref);
 }
 
 void ScriptDictionarySetFlt_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
-    string *key = *(string**)gen->GetArgPointer(0);
-    void *ref = *(void**)gen->GetArgPointer(1);
+    string *key = *(string**)gen->GetAddressOfArg(0);
+    void *ref = *(void**)gen->GetAddressOfArg(1);
     dict->Set(*key, *(double*)ref);
 }
 
 void ScriptDictionaryGet_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
-    string *key = *(string**)gen->GetArgPointer(0);
-    void *ref = *(void**)gen->GetArgPointer(1);
+    string *key = *(string**)gen->GetAddressOfArg(0);
+    void *ref = *(void**)gen->GetAddressOfArg(1);
     int typeId = gen->GetArgTypeId(1);
     *(bool*)gen->GetReturnPointer() = dict->Get(*key, ref, typeId);
 }
@@ -322,23 +322,23 @@ void ScriptDictionaryGet_Generic(asIScriptGeneric *gen)
 void ScriptDictionaryGetInt_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
-    string *key = *(string**)gen->GetArgPointer(0);
-    void *ref = *(void**)gen->GetArgPointer(1);
+    string *key = *(string**)gen->GetAddressOfArg(0);
+    void *ref = *(void**)gen->GetAddressOfArg(1);
     *(bool*)gen->GetReturnPointer() = dict->Get(*key, *(asINT64*)ref);
 }
 
 void ScriptDictionaryGetFlt_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
-    string *key = *(string**)gen->GetArgPointer(0);
-    void *ref = *(void**)gen->GetArgPointer(1);
+    string *key = *(string**)gen->GetAddressOfArg(0);
+    void *ref = *(void**)gen->GetAddressOfArg(1);
     *(bool*)gen->GetReturnPointer() = dict->Get(*key, *(double*)ref);
 }
 
 void ScriptDictionaryExists_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
-    string *key = *(string**)gen->GetArgPointer(0);
+    string *key = *(string**)gen->GetAddressOfArg(0);
     bool ret = dict->Exists(*key);
     *(bool*)gen->GetReturnPointer() = ret;
 }
@@ -346,7 +346,7 @@ void ScriptDictionaryExists_Generic(asIScriptGeneric *gen)
 void ScriptDictionaryDelete_Generic(asIScriptGeneric *gen)
 {
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
-    string *key = *(string**)gen->GetArgPointer(0);
+    string *key = *(string**)gen->GetAddressOfArg(0);
     dict->Delete(*key);
 }
 
@@ -377,14 +377,14 @@ static void ScriptDictionaryGetGCFlag_Generic(asIScriptGeneric *gen)
 static void ScriptDictionaryEnumReferences_Generic(asIScriptGeneric *gen)
 {
 	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
-	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
 	self->EnumReferences(engine);
 }
 
 static void ScriptDictionaryReleaseAllReferences_Generic(asIScriptGeneric *gen)
 {
 	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
-	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
 	self->ReleaseAllReferences(engine);
 }
 

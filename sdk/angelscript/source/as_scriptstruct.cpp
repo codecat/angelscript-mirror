@@ -165,7 +165,7 @@ void RegisterScriptStruct(asCScriptEngine *engine)
 
 void ScriptStruct_Construct_Generic(asIScriptGeneric *gen)
 {
-	asCObjectType *objType = *(asCObjectType**)gen->GetArgPointer(0);
+	asCObjectType *objType = *(asCObjectType**)gen->GetAddressOfArg(0);
 	asCScriptStruct *self = (asCScriptStruct*)gen->GetObject();
 
 	ScriptStruct_Construct(objType, self);
@@ -390,7 +390,7 @@ void asCScriptStruct::ReleaseAllHandles(asIScriptEngine *engine)
 
 void ScriptStruct_Assignment_Generic(asIScriptGeneric *gen)
 {
-	asCScriptStruct *other = *(asCScriptStruct**)gen->GetArgPointer(0);
+	asCScriptStruct *other = *(asCScriptStruct**)gen->GetAddressOfArg(0);
 	asCScriptStruct *self = (asCScriptStruct*)gen->GetObject();
 
 	*self = *other;

@@ -120,14 +120,14 @@ static void ScriptAny_GetFlag_Generic(asIScriptGeneric *gen)
 static void ScriptAny_EnumReferences_Generic(asIScriptGeneric *gen)
 {
 	CScriptAny *self = (CScriptAny*)gen->GetObject();
-	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
 	self->EnumReferences(engine);
 }
 
 static void ScriptAny_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 {
 	CScriptAny *self = (CScriptAny*)gen->GetObject();
-	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
 	self->ReleaseAllHandles(engine);
 }
 

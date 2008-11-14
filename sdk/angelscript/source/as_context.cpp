@@ -933,12 +933,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 }
 
 
-// TODO: We should deprecate this, and implement the GetAddressOfArg instead.
-// however, I first need to decide what to do when the argument type is a value type, passed by value. 
-// These are currently passed by reference, so the caller is responsible for providing the memory space.
-// I'll probably need to provide a temporary storage for these values within the context, so that
-// the application do not have to keep its own memory until the function returns. This is especially
-// important when context is executing a long running script.
+// TODO: We should deprecate this, and implement the SetArgValue(int arg, void *value, bool takeOwnership) instead.
 void *asCContext::GetArgPointer(asUINT arg)
 {
 	if( status != tsPrepared )

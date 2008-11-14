@@ -293,9 +293,7 @@ asCScriptNode *asCParser::ParseScript()
 				node->AddChildLast(ParseClass());
 			else if( t1.type == ttInterface )
 				node->AddChildLast(ParseInterface());
-			else if( t1.type == ttConst )
-				node->AddChildLast(ParseGlobalVar());
-			else if( IsDataType(t1) )
+			else if( t1.type == ttConst || IsDataType(t1) )
 			{
 				if( IsVarDecl() )
 					node->AddChildLast(ParseGlobalVar());

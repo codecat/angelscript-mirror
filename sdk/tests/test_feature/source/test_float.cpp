@@ -60,7 +60,7 @@ static const char *script2 =
 
 void print_gen(asIScriptGeneric *gen)
 {
-	float val = *(float*)gen->GetArgPointer(0);
+	float val = *(float*)gen->GetAddressOfArg(0);
 }
 
 

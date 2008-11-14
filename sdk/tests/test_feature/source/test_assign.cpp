@@ -21,7 +21,7 @@ static const char *script1 =
 
 void print_generic(asIScriptGeneric *gen)
 {
-	int a = *(int*)gen->GetArgPointer(0);
+	int a = *(int*)gen->GetAddressOfArg(0);
 //	printf("%d\n", a);
 }
 

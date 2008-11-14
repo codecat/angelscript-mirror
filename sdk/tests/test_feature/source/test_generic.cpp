@@ -105,7 +105,7 @@ void GenericString_Factory(asIScriptGeneric *gen)
 
 void nullPtr(asIScriptGeneric *gen)
 {
-	asIScriptStruct **intf = (asIScriptStruct**)gen->GetArgPointer(0);
+	asIScriptStruct **intf = (asIScriptStruct**)gen->GetAddressOfArg(0);
 	assert( *intf == 0 );
 
 	assert(gen->GetArgCount() == 1);

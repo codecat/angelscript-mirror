@@ -245,6 +245,16 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	engine->Release();
 
+	//----------------------
+	// It should be allowed to have a global function return a handle to a const object
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	const char *scriptC = "class T {} const T@ func() {return T();}";
+	engine->AddScriptSection(0, "script", scriptC, strlen(scriptC));
+	r = engine->Build(0);
+	if( r < 0 ) fail = true;
+	engine->Release();
+
 	//---------------------
 	// These tests are designed to make sure ambiguities with handles is avoided
 	CBufferedOutStream bout;

@@ -135,8 +135,8 @@ void GetConstStringRef(asIScriptGeneric *gen)
 // void TestFunc(int, string&)
 void TestFunc(asIScriptGeneric *gen)
 {
-	int arg0              = *(int*)gen->GetArgPointer(0);
-	asCScriptString *arg1 = *(asCScriptString**)gen->GetArgPointer(1);
+	int arg0              = *(int*)gen->GetAddressOfArg(0);
+	asCScriptString *arg1 = *(asCScriptString**)gen->GetAddressOfArg(1);
 	
 	assert( arg0 == 0 );
 	assert( arg1->buffer == "test" );

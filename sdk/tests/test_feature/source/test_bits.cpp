@@ -36,7 +36,7 @@ static const char *script2 =
 // uint8 ReturnByte(uint8)
 void ReturnByte(asIScriptGeneric *gen)
 {
-	asBYTE b = *(asBYTE*)gen->GetArgPointer(0);
+	asBYTE b = *(asBYTE*)gen->GetAddressOfArg(0);
 	// Return a full dword, even though AngelScript should only use a byte
 #ifdef __BIG_ENDIAN__
 	if( b )
@@ -54,7 +54,7 @@ void ReturnByte(asIScriptGeneric *gen)
 // uint16 ReturnWord(uint16)
 void ReturnWord(asIScriptGeneric *gen)
 {
-	asWORD w = *(asWORD*)gen->GetArgPointer(0);
+	asWORD w = *(asWORD*)gen->GetAddressOfArg(0);
 	// Return a full dword, even though AngelScript should only use a word
 #ifdef __BIG_ENDIAN__
 	if( w )

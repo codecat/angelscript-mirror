@@ -183,6 +183,8 @@ public:
 	int SaveByteCode(const char *module, asIBinaryStream *out);
 	int LoadByteCode(const char *module, asIBinaryStream *in);
 
+	void *SetUserData(void *data);
+	void *GetUserData();
 
 	asCObjectType *GetArrayTypeFromSubType(asCDataType &subType);
 
@@ -312,6 +314,9 @@ public:
 	bool msgCallback;
 	asSSystemFunctionInterface msgCallbackFunc;
 	void *msgCallbackObj;
+
+	// User data
+	void *userData;
 
 	// Critical sections for threads
 	DECLARECRITICALSECTION(engineCritical);

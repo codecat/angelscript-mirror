@@ -52,7 +52,7 @@ void RegisterScriptMath_Native(asIScriptEngine *engine)
 #define GENERICff(x) \
 void x##_generic(asIScriptGeneric *gen) \
 { \
-	float f = *(float*)gen->GetArgPointer(0); \
+	float f = *(float*)gen->GetAddressOfArg(0); \
 	*(float*)gen->GetReturnPointer() = x(f); \
 }
 
@@ -75,8 +75,8 @@ GENERICff(fraction)
 
 void powf_generic(asIScriptGeneric *gen)
 {
-	float f1 = *(float*)gen->GetArgPointer(0);
-	float f2 = *(float*)gen->GetArgPointer(1);
+	float f1 = *(float*)gen->GetAddressOfArg(0);
+	float f2 = *(float*)gen->GetAddressOfArg(1);
 	*(float*)gen->GetReturnPointer() = powf(f1, f2);
 }
 

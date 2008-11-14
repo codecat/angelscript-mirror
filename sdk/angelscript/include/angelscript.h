@@ -529,6 +529,10 @@ public:
 	virtual int SaveByteCode(const char *module, asIBinaryStream *out) = 0;
 	virtual int LoadByteCode(const char *module, asIBinaryStream *in) = 0;
 
+	// User data
+	virtual void *SetUserData(void *data) = 0;
+	virtual void *GetUserData() = 0;
+
 protected:
 	virtual ~asIScriptEngine() {}
 };
@@ -633,7 +637,10 @@ public:
 	virtual double  GetArgDouble(asUINT arg) = 0;
 	virtual void   *GetArgAddress(asUINT arg) = 0;
 	virtual void   *GetArgObject(asUINT arg) = 0;
+#ifdef AS_DEPRECATED
 	virtual void   *GetArgPointer(asUINT arg) = 0;
+#endif
+	virtual void   *GetAddressOfArg(asUINT arg) = 0;
 	virtual int     GetArgTypeId(asUINT arg) = 0;
 
 	virtual int     SetReturnByte(asBYTE val) = 0;

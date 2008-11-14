@@ -255,6 +255,8 @@ void *asCGeneric::GetArgObject(asUINT arg)
 	return *(void**)(&stackPointer[offset]);
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2008-11-13
 void *asCGeneric::GetArgPointer(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -267,6 +269,28 @@ void *asCGeneric::GetArgPointer(asUINT arg)
 
 	// Get the address of the value
 	return &stackPointer[offset];
+}
+#endif
+
+void *asCGeneric::GetAddressOfArg(asUINT arg)
+{
+	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
+		return 0;
+
+	// Determine the position of the argument
+	int offset = 0;
+	for( asUINT n = 0; n < arg; n++ )
+		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// For object variables it's necessary to dereference the pointer to get the address of the value
+	if( !sysFunction->parameterTypes[arg].IsReference() && 
+		sysFunction->parameterTypes[arg].IsObject() && 
+		!sysFunction->parameterTypes[arg].IsObjectHandle() )
+		return *(void**)&stackPointer[offset];
+
+	// Get the address of the value
+	return &stackPointer[offset];
+
 }
 
 int asCGeneric::GetArgTypeId(asUINT arg)
@@ -429,6 +453,7 @@ int asCGeneric::SetReturnObject(void *obj)
 	return 0;
 }
 
+// TODO: This should be deprecated and substituted with SetReturnValue(void *val, bool takeOwnership)
 void *asCGeneric::GetReturnPointer()
 {
 	asCDataType *dt = &sysFunction->returnType;
