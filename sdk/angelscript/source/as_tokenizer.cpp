@@ -76,7 +76,7 @@ const char *asGetTokenDefinition(int tokenType)
 	return 0;
 }
 
-eTokenType asCTokenizer::GetToken(const char *source, size_t sourceLength, size_t *tokenLength)
+eTokenType asCTokenizer::GetToken(const char *source, size_t sourceLength, size_t *tokenLength, asETokenClass *tc)
 {
 	asASSERT(source != 0);
 	asASSERT(tokenLength != 0);
@@ -84,7 +84,8 @@ eTokenType asCTokenizer::GetToken(const char *source, size_t sourceLength, size_
 	this->source = source;
 	this->sourceLength = sourceLength;
 
-	ParseToken();
+	asETokenClass t = ParseToken();
+	if( tc ) *tc = t;
 
 	// Copy the output to the token
 	*tokenLength = this->tokenLength;
@@ -92,13 +93,13 @@ eTokenType asCTokenizer::GetToken(const char *source, size_t sourceLength, size_
 	return tokenType;
 }
 
-int asCTokenizer::ParseToken()
+asETokenClass asCTokenizer::ParseToken()
 {
-	if( IsWhiteSpace() ) return 0;
-	if( IsComment()    ) return 0;
-	if( IsConstant()   ) return 0;
-	if( IsIdentifier() ) return 0;
-	if( IsKeyWord()    ) return 0;
+	if( IsWhiteSpace() ) return asTC_WHITESPACE;
+	if( IsComment()    ) return asTC_COMMENT;
+	if( IsConstant()   ) return asTC_VALUE;
+	if( IsIdentifier() ) return asTC_IDENTIFIER;
+	if( IsKeyWord()    ) return asTC_KEYWORD;
 
 	// If none of the above this is an unrecognized token
 	// We can find the length of the token by advancing
@@ -106,7 +107,7 @@ int asCTokenizer::ParseToken()
 	tokenType = ttUnrecognizedToken;
 	tokenLength = 1;
 
-	return -1;
+	return asTC_UNKNOWN;
 }
 
 bool asCTokenizer::IsWhiteSpace()

@@ -260,6 +260,17 @@ enum asEGCFlags
 	asGC_DETECT_GARBAGE  = 8
 };
 
+// Token classes
+enum asETokenClass
+{
+	asTC_UNKNOWN    = 0,
+	asTC_KEYWORD    = 1,
+	asTC_VALUE      = 2,
+	asTC_IDENTIFIER = 3,
+	asTC_COMMENT    = 4,
+	asTC_WHITESPACE = 5
+};
+
 // Prepare flags
 const int asPREPARE_PREVIOUS = -1;
 
@@ -437,6 +448,7 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
+	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
 	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
 	virtual int Build(const char *module) = 0;
     virtual int Discard(const char *module) = 0;

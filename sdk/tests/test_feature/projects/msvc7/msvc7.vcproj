@@ -302,6 +302,9 @@
 				RelativePath="..\..\source\test_interface.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_metadata.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_multiassign.cpp">
 			</File>
 			<File

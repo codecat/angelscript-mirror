@@ -137,6 +137,7 @@ namespace TestEnum              { bool Test(); }
 namespace TestFile              { bool Test(); }
 namespace TestRefCast           { bool Test(); }
 namespace TestImplicitHandle    { bool Test(); }
+namespace TestMetaData          { bool Test(); }
 
 #include "utils.h"
 
@@ -176,6 +177,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestMetaData::Test()          ) goto failed; else printf("-- TestMetaData passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestScriptStruct::Test()      ) goto failed; else printf("-- TestScriptStruct passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");

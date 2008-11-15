@@ -395,6 +395,24 @@ enum asEGCFlags
 	asGC_DETECT_GARBAGE  = 8
 };
 
+// Token classes
+//! \brief Token classes.
+enum asETokenClass
+{
+	//! Unknown token.
+	asTC_UNKNOWN    = 0,
+	//! Keyword token.
+	asTC_KEYWORD    = 1,
+	//! Literal value token.
+	asTC_VALUE      = 2,
+	//! Identifier token.
+	asTC_IDENTIFIER = 3,
+	//! Comment token.
+	asTC_COMMENT    = 4,
+	//! White space token.
+	asTC_WHITESPACE = 5
+};
+
 // Prepare flags
 const int asPREPARE_PREVIOUS = -1;
 
@@ -1013,6 +1031,16 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
+	//! \brief Returns the class and length of the first token in the string.
+	//! \param[in] string The string to parse.
+	//! \param[in] stringLength The length of the string. Can be 0 if the string is null terminated.
+	//! \param[out] tokenLength Gives the length of the identified token.
+	//! \return One of the \ref asETokenClass values.
+	//!
+	//! This function is useful for those applications that want to tokenize strings into 
+	//! tokens that the script language uses, e.g. IDEs providing syntax highlighting, or intellisense.
+	//! It can also be used to parse the meta data strings that may be declared for script entities.
+	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
 	//! \brief Add a script section for the next build.
     //!
     //! \param[in] module The name of the module

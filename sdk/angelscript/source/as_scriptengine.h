@@ -103,6 +103,7 @@ public:
 	int RemoveConfigGroup(const char *groupName);
 	int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool haveAccess);
 
+	asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0);
 	int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset);
 	int Build(const char *module);
 	int Discard(const char *module);

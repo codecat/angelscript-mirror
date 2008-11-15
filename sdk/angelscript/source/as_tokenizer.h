@@ -50,10 +50,10 @@ public:
 	asCTokenizer();
 	~asCTokenizer();
 
-	eTokenType GetToken(const char *source, size_t sourceLength, size_t *tokenLength);
+	eTokenType GetToken(const char *source, size_t sourceLength, size_t *tokenLength, asETokenClass *tc = 0);
 
 protected:
-	int  ParseToken();
+	asETokenClass ParseToken();
 	bool IsWhiteSpace();
 	bool IsComment();
 	bool IsConstant();

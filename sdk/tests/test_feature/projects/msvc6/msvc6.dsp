@@ -279,6 +279,10 @@ SOURCE=..\..\source\test_interface.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_metadata.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_multiassign.cpp
 # End Source File
 # Begin Source File

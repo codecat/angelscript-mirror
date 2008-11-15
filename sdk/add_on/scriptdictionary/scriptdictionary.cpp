@@ -124,12 +124,21 @@ void CScriptDictionary::Set(string &key, void *value, int typeId)
     }
 }
 
+// This overloaded method is implemented so that all integer and
+// unsigned integers types will be stored in the dictionary as int64
+// through implicit conversions. This simplifies the management of the
+// numeric types when the script retrieves the stored value using a 
+// different type.
 void CScriptDictionary::Set(string &key, asINT64 &value)
 {
 	int typeId = engine->GetTypeIdByDecl(0, "int64");
 	Set(key, &value, typeId);
 }
 
+// This overloaded method is implemented so that all floating point types 
+// will be stored in the dictionary as double through implicit conversions. 
+// This simplifies the management of the numeric types when the script 
+// retrieves the stored value using a different type.
 void CScriptDictionary::Set(string &key, double &value)
 {
 	int typeId = engine->GetTypeIdByDecl(0, "double");

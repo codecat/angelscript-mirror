@@ -484,6 +484,24 @@ int asCScriptEngine::WriteMessage(const char *section, int row, int col, asEMsgT
 	return 0;
 }
 
+// interface
+asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLength, int *tokenLength)
+{
+	if( stringLength == 0 )
+		stringLength = strlen(string);
+
+	size_t len;
+	asCTokenizer t;
+	asETokenClass tc;
+	int r = t.GetToken(string, stringLength, &len, &tc);
+
+	if( tokenLength ) 
+		*tokenLength = (int)len;
+
+	return tc;
+}
+
+// interface
 int asCScriptEngine::AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset)
 {
 	asCModule *mod = GetModule(module, true);
@@ -501,6 +519,7 @@ int asCScriptEngine::AddScriptSection(const char *module, const char *name, cons
 	return mod->AddScriptSection(name, code, (int)codeLength, lineOffset);
 }
 
+// interface
 int asCScriptEngine::Build(const char *module)
 {
 	// TODO: multithread: We can use interlocked operations to check the isBuilding flag
