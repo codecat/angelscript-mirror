@@ -41,6 +41,8 @@
 
 #include "as_config.h"
 
+BEGIN_AS_NAMESPACE
+
 enum eTokenType
 {
 	ttUnrecognizedToken,
@@ -285,5 +287,7 @@ const char * const whiteSpace = " \t\r\n";
 // Some keywords that are not considered tokens by the parser
 const char * const THIS_TOKEN = "this";
 const char * const FROM_TOKEN = "from";
+
+END_AS_NAMESPACE
 
 #endif

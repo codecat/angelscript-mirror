@@ -249,7 +249,7 @@ asCScriptEngine::asCScriptEngine()
 {
 	// Instanciate the thread manager
 	if( threadManager == 0 ) 
-		threadManager = new asCThreadManager;
+		threadManager = asNEW(asCThreadManager);
 	else
 		threadManager->AddRef();
 
@@ -493,7 +493,7 @@ asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLengt
 	size_t len;
 	asCTokenizer t;
 	asETokenClass tc;
-	int r = t.GetToken(string, stringLength, &len, &tc);
+	t.GetToken(string, stringLength, &len, &tc);
 
 	if( tokenLength ) 
 		*tokenLength = (int)len;

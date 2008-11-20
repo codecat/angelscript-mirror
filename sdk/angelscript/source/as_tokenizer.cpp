@@ -44,6 +44,8 @@
 #endif
 #include <string.h> // strcmp()
 
+BEGIN_AS_NAMESPACE
+
 asCTokenizer::asCTokenizer()
 {
 }
@@ -434,4 +436,5 @@ bool asCTokenizer::IsKeyWord()
 	return false;
 }
 
+END_AS_NAMESPACE
 

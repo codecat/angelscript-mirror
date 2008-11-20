@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="9.00"
 	Name="angelscript"
 	ProjectGUID="{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}"
 	RootNamespace="angelscript"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -62,6 +63,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				LinkLibraryDependencies="true"
 				OutputFile="$(OutDir)\$(ProjectName)d.lib"
 			/>
 			<Tool

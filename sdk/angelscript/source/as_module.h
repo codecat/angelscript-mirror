@@ -80,7 +80,7 @@ public:
 	virtual void             SetName(const char *name) = 0;
 	virtual const char      *GetName(int *length = 0) = 0; 
 
-	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
+	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	virtual int  Build() = 0;
     virtual void Discard() = 0;
 	virtual int  Reinitialize() = 0;

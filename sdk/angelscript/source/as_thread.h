@@ -43,69 +43,11 @@
 #include "as_string.h"
 #include "as_array.h"
 #include "as_map.h"
+#include "as_atomic.h"
+#include "as_criticalsection.h"
 
 BEGIN_AS_NAMESPACE
 
-//========================================================================
-
-#ifdef AS_NO_THREADS
-
-#define DECLARECRITICALSECTION(x) 
-#define ENTERCRITICALSECTION(x) 
-#define LEAVECRITICALSECTION(x) 
-
-#else
-
-#define DECLARECRITICALSECTION(x) asCThreadCriticalSection x
-#define ENTERCRITICALSECTION(x)   x.Enter()
-#define LEAVECRITICALSECTION(x)   x.Leave()
-
-#ifdef AS_POSIX_THREADS
-
-#include <pthread.h>
-
-class asCThreadCriticalSection
-{
-public:
-	asCThreadCriticalSection();
-	~asCThreadCriticalSection();
-
-	void Enter();
-	void Leave();
-
-protected:
-	pthread_mutex_t criticalSection;
-};
-
-#endif
-#ifdef AS_WINDOWS_THREADS
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
-// Undefine macros that cause problems in our code
-#undef GetObject
-
-class asCThreadCriticalSection
-{
-public:
-	asCThreadCriticalSection();
-	~asCThreadCriticalSection();
-
-	void Enter();
-	void Leave();
-
-protected:
-	CRITICAL_SECTION criticalSection;
-};
-
-#endif
-
-#endif
-
-//=======================================================================
-
-class asCAtomic;
 class asCThreadLocalData;
 
 class asCThreadManager
@@ -121,7 +63,7 @@ public:
 
 protected:
 	~asCThreadManager();
-	asCAtomic *refCount;
+	asCAtomic refCount;
 
 #ifndef AS_NO_THREADS
 	asCThreadLocalData *GetLocalData(asDWORD threadId);

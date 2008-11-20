@@ -29,45 +29,73 @@
 */
 
 
+
 //
-// as_tokenizer.cpp
+// as_criticalsection.h
 //
-// This class identifies tokens from the script code
+// Classes for multi threading support
 //
 
+#ifndef AS_CRITICALSECTION_H
+#define AS_CRITICALSECTION_H
 
-
-#ifndef AS_TOKENIZER_H
-#define AS_TOKENIZER_H
-
-#include "as_tokendef.h"
+#include "as_config.h"
 
 BEGIN_AS_NAMESPACE
 
-const char *asGetTokenDefinition(int tokenType);
+#ifdef AS_NO_THREADS
 
-class asCTokenizer
+#define DECLARECRITICALSECTION(x) 
+#define ENTERCRITICALSECTION(x) 
+#define LEAVECRITICALSECTION(x) 
+
+#else
+
+#define DECLARECRITICALSECTION(x) asCThreadCriticalSection x
+#define ENTERCRITICALSECTION(x)   x.Enter()
+#define LEAVECRITICALSECTION(x)   x.Leave()
+
+#ifdef AS_POSIX_THREADS
+
+#include <pthread.h>
+
+class asCThreadCriticalSection
 {
 public:
-	asCTokenizer();
-	~asCTokenizer();
+	asCThreadCriticalSection();
+	~asCThreadCriticalSection();
 
-	eTokenType GetToken(const char *source, size_t sourceLength, size_t *tokenLength, asETokenClass *tc = 0);
+	void Enter();
+	void Leave();
 
 protected:
-	asETokenClass ParseToken();
-	bool IsWhiteSpace();
-	bool IsComment();
-	bool IsConstant();
-	bool IsKeyWord();
-	bool IsIdentifier();
-
-	const char *source;
-	size_t sourceLength;
-
-	eTokenType tokenType;
-	size_t tokenLength;
+	pthread_mutex_t criticalSection;
 };
+
+#elif defined(AS_WINDOWS_THREADS)
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+// Undefine macros that cause problems in our code
+#undef GetObject
+
+class asCThreadCriticalSection
+{
+public:
+	asCThreadCriticalSection();
+	~asCThreadCriticalSection();
+
+	void Enter();
+	void Leave();
+
+protected:
+	CRITICAL_SECTION criticalSection;
+};
+
+#endif
+
+#endif
 
 END_AS_NAMESPACE
 

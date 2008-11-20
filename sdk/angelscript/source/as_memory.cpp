@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2008 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -83,11 +83,21 @@ asCMemoryMgr::~asCMemoryMgr()
 
 void asCMemoryMgr::FreeUnusedMemory()
 {
+	// It's necessary to protect the scriptNodePool from multiple 
+	// simultaneous accesses, as the parser is used by several methods
+	// that can be executed simultaneously.
+	ENTERCRITICALSECTION(cs);
+
 	int n;
 	for( n = 0; n < (signed)scriptNodePool.GetLength(); n++ )
 		userFree(scriptNodePool[n]);
 	scriptNodePool.Allocate(0, false);
 
+	LEAVECRITICALSECTION(cs);
+
+	// The engine already protects against multiple threads 
+	// compiling scripts simultaneously so this pool doesn't have 
+	// to be protected again.
 	for( n = 0; n < (signed)byteInstructionPool.GetLength(); n++ )
 		userFree(byteInstructionPool[n]);
 	byteInstructionPool.Allocate(0, false);
@@ -95,8 +105,16 @@ void asCMemoryMgr::FreeUnusedMemory()
 
 void *asCMemoryMgr::AllocScriptNode()
 {
+	ENTERCRITICALSECTION(cs);
+
 	if( scriptNodePool.GetLength() )
-		return scriptNodePool.PopLast();
+	{
+		void *tRet = scriptNodePool.PopLast();
+		LEAVECRITICALSECTION(cs);
+		return tRet;
+	}
+
+	LEAVECRITICALSECTION(cs);
 
 #ifdef AS_DEBUG
 	return ((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(asCScriptNode), __FILE__, __LINE__);
@@ -107,11 +125,15 @@ void *asCMemoryMgr::AllocScriptNode()
 
 void asCMemoryMgr::FreeScriptNode(void *ptr)
 {
+	ENTERCRITICALSECTION(cs);
+
 	// Pre allocate memory for the array to avoid slow growth
 	if( scriptNodePool.GetLength() == 0 )
 		scriptNodePool.Allocate(100, 0);
 
 	scriptNodePool.PushLast(ptr);
+
+	LEAVECRITICALSECTION(cs);
 }
 
 void *asCMemoryMgr::AllocByteInstruction()

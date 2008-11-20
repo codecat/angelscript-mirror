@@ -43,7 +43,7 @@
 #define AS_ATOMIC_H
 
 #include "as_config.h"
-#include "as_thread.h"
+#include "as_criticalsection.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -60,7 +60,9 @@ public:
 
 protected:
 	asDWORD value;
-#if !defined(AS_NO_THREADS) && !defined(AS_WIN) && !defined(AS_LINUX)
+
+	// Windows, Linux, and Mac have atomic instructions, so they don't need a critical section
+#if !defined(AS_WIN) && !defined(AS_LINUX) && !defined(AS_MAC)
 	DECLARECRITICALSECTION(cs);
 #endif
 };

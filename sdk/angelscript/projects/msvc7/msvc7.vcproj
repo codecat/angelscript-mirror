@@ -245,6 +245,9 @@
 				RelativePath="..\..\source\as_context.h">
 			</File>
 			<File
+				RelativePath="..\..\source\as_criticalsection.h">
+			</File>
+			<File
 				RelativePath="..\..\source\as_datatype.h">
 			</File>
 			<File

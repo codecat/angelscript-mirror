@@ -448,8 +448,7 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
-	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
-	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
+	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	virtual int Build(const char *module) = 0;
     virtual int Discard(const char *module) = 0;
 	virtual int ResetModule(const char *module) = 0;
@@ -526,6 +525,7 @@ public:
 	virtual int  CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
+	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
 	virtual int  ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection

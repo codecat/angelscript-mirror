@@ -310,6 +310,7 @@ void asCModule::InternalReset()
 	classTypes.SetLength(0);
 }
 
+// interface
 int asCModule::GetFunctionIdByName(const char *name)
 {
 	if( isBuildWithoutErrors == false )
@@ -334,6 +335,7 @@ int asCModule::GetFunctionIdByName(const char *name)
 	return id;
 }
 
+// interface
 int asCModule::GetImportedFunctionCount()
 {
 	if( isBuildWithoutErrors == false )
@@ -342,6 +344,7 @@ int asCModule::GetImportedFunctionCount()
 	return (int)importedFunctions.GetLength();
 }
 
+// interface
 int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 {
 	if( isBuildWithoutErrors == false )

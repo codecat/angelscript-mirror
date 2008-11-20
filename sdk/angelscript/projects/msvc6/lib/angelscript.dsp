@@ -298,6 +298,10 @@ SOURCE=..\..\..\source\as_context.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\source\as_criticalsection.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_datatype.h
 # End Source File
 # Begin Source File

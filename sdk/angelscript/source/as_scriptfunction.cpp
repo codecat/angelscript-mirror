@@ -464,11 +464,13 @@ int asCScriptFunction::GetParamTypeId(int index) const
 	return engine->GetTypeIdFromDataType(parameterTypes[index]);
 }
 
+// interface
 asIScriptEngine *asCScriptFunction::GetEngine() const
 {
 	return engine;
 }
 
+// interface
 const char *asCScriptFunction::GetDeclaration(int *length) const
 {
 	asASSERT(threadManager);
@@ -478,6 +480,7 @@ const char *asCScriptFunction::GetDeclaration(int *length) const
 	return tempString->AddressOf();
 }
 
+// interface
 const char *asCScriptFunction::GetScriptSectionName(int *length) const
 {
 	if( module )

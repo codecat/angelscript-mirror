@@ -69,22 +69,21 @@ asCThreadManager::asCThreadManager()
 #ifdef AS_NO_THREADS
 	tld = 0;
 #endif
-	refCount = new asCAtomic();
-	refCount->set(1);
+	refCount.set(1);
 }
 
 void asCThreadManager::AddRef()
 {
-	refCount->atomicInc();
+	refCount.atomicInc();
 }
 
 void asCThreadManager::Release()
 {
-	if( refCount->atomicDec() == 0 )
+	if( refCount.atomicDec() == 0 )
 	{
 		// The last engine has been destroyed, so we 
 		// need to delete the thread manager as well
-		delete this;
+		asDELETE(this,asCThreadManager);
 		threadManager = 0;
 	}
 }
@@ -115,9 +114,6 @@ asCThreadManager::~asCThreadManager()
 	}
 	tld = 0;
 #endif
-
-	if( refCount )
-		delete refCount;
 }
 
 int asCThreadManager::CleanupLocalData()
