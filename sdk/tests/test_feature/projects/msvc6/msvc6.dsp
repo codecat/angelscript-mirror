@@ -619,6 +619,14 @@ SOURCE=..\..\..\..\add_on\scriptany\scriptany.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptbuilder\scriptbuilder.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp
 # End Source File
 # Begin Source File

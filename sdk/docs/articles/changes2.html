@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.15.0 WIP - 2008/11/19</h2>
+<h2>Version 2.15.0 WIP - 2008/11/21</h2>
 
 <ul>
 <li>Bug fixes
@@ -131,6 +131,7 @@ A:hover
 <li>Fixed bug in the tokenizer and the !in token versus identifier (Thanks xivVerge)
 <li>Script functions can now be declared to return const types (Thanks SiCrane)
 <li>Fixed multithread problem in memory manager for the script node pool (Thanks xivVerge)
+<li>Fixed assert failure after compilation error with ref cast operator (Thanks Jeff Slutter)
 </ul>
 <li>Library interface
 <ul>
@@ -152,6 +153,10 @@ A:hover
 <li>Project
 <ul>
 <li>Added as_criticalsection.h
+</ul>
+<li>Add-ons
+<ul>
+<li>Added CScriptBuilder with ability to extract metadata from scripts through a pre-processing pass
 </ul>
 </ul>
 

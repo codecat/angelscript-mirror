@@ -5452,7 +5452,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			{
 				// The cast<type> operator can only be used for reference casts
 				Error(TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST, node->firstChild);
-				return;
+				anyErrors = true;
 			}
 		}
 	}

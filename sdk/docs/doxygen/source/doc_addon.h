@@ -10,6 +10,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_file
  - \subpage doc_addon_math
  - \subpage doc_addon_math3d
+ - \subpage doc_addon_build
  - \subpage doc_addon_clib
 
 
@@ -188,10 +189,83 @@ perform the registration.
 
 Currently the only thing registered is the <code>vector3</code> type, representing a 3D vector, with
 basic math operators, such as add, subtract, scalar multiply, equality comparison, etc.
- 
- 
- 
- 
+
+
+
+
+
+
+\page doc_addon_build Script builder helper
+
+<b>Path:</b> /sdk/add_on/scriptbuilder/
+
+This class is a helper class for building scripts. 
+
+Currently the only benefit of it is the ability to extract metadata from the scripts.
+This metadata can then be used by the application to perform specific actions.
+
+The class will eventually have methods for loading scripts from disk, and to look for
+include directives, which can in turn load more script files.
+
+Example usage:
+
+\code
+CScriptBuilder builder;
+int r = builder.BuildScriptFromMemory(engine, "my module", script);
+if( r >= 0 )
+{
+  // Find global variables that have been marked as editable by user
+  int count = engine->GetGlobalVarCount("my module");
+  for( int n = 0; n < count; n++ )
+  {
+    string metadata = builder.GetMetadataStringForVar(n);
+    if( metadata == "editable" )
+    {
+      // Show the global variable in a GUI
+      ...
+    }
+  }
+}
+\endcode
+
+
+\section doc_addon_build_metadata Metadata in scripts
+
+Metadata can be added before script class, interface, function, and global variable 
+declarations. The metadata is removed from the script by the builder class and stored
+for post build lookup by the type id, function id, or variable index.
+
+Exactly what the metadata looks like is up to the application. The builder class doesn't
+impose any rules, except that the metadata should be added between brackets []. After 
+the script has been built the application can obtain the metadata strings and interpret
+them as it sees fit.
+
+Example script with meta data:
+
+<pre>
+  [factory func = CreateOgre,
+   editable: myPosition,
+   editable: myStrength [10, 100]]
+  class COgre
+  {
+    vector3 myPosition;
+    int     myStrength;
+  }
+  
+  [factory]
+  COgre \@CreateOgre()
+  {
+    return \@COgre();
+  }
+</pre>
+
+
+
+
+
+
+
+
 \page doc_addon_clib C library
 
 <b>Path:</b> /sdk/add_on/clib/

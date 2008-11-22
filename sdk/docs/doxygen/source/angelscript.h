@@ -1031,16 +1031,6 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
-	//! \brief Returns the class and length of the first token in the string.
-	//! \param[in] string The string to parse.
-	//! \param[in] stringLength The length of the string. Can be 0 if the string is null terminated.
-	//! \param[out] tokenLength Gives the length of the identified token.
-	//! \return One of the \ref asETokenClass values.
-	//!
-	//! This function is useful for those applications that want to tokenize strings into 
-	//! tokens that the script language uses, e.g. IDEs providing syntax highlighting, or intellisense.
-	//! It can also be used to parse the meta data strings that may be declared for script entities.
-	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
 	//! \brief Add a script section for the next build.
     //!
     //! \param[in] module The name of the module
@@ -1057,7 +1047,7 @@ public:
     //! The code added is copied by the engine, so there is no need to keep the original buffer after the call.
     //! Note that this can be changed by setting the engine property \ref asEP_COPY_SCRIPT_SECTIONS
     //! with \ref SetEngineProperty.
-	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
+	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	//! \brief Build the previously added script sections.
     //!
     //! \param[in] module The name of the module
@@ -1603,6 +1593,16 @@ public:
 	virtual int  CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
+	//! \brief Returns the class and length of the first token in the string.
+	//! \param[in] string The string to parse.
+	//! \param[in] stringLength The length of the string. Can be 0 if the string is null terminated.
+	//! \param[out] tokenLength Gives the length of the identified token.
+	//! \return One of the \ref asETokenClass values.
+	//!
+	//! This function is useful for those applications that want to tokenize strings into 
+	//! tokens that the script language uses, e.g. IDEs providing syntax highlighting, or intellisense.
+	//! It can also be used to parse the meta data strings that may be declared for script entities.
+	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
 	//! \brief Compiles and executes script statements within the context of a module.
     //! \param[in] module The name of the module in which the string should be executed.
     //! \param[in] script The script string that will be executed.

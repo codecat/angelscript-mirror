@@ -173,11 +173,11 @@ bool Test()
 		fail = true;
 
 	// Try using the asMETHOD macro with a cast operator
-	engine->RegisterObjectMethod("obj", "void f()", asMETHOD(A, operator const char *), asCALL_THISCALL);
+	// The first option fail to compile on MSVC2005 (Thanks Jeff Slutter)
+//	engine->RegisterObjectMethod("obj", "void f()", asMETHOD(A, operator const char *), asCALL_THISCALL);
+	engine->RegisterObjectMethod("obj", "void f()", asMETHODPR(A, operator const char *, () const, const char *), asCALL_THISCALL);
 
 	engine->Release();
-
-	// TODO: There is a difference between cast<intf>() and cast<intf@>()
 
 	//-------------------
 	// Illegal cast statement

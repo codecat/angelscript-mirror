@@ -131,6 +131,9 @@
 				RelativePath="..\..\..\..\add_on\scriptany\scriptany.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp">
 			</File>
 			<File
@@ -545,6 +548,9 @@
 			</File>
 			<File
 				RelativePath="..\..\source\cstring.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptbuilder\scriptbuilder.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\add_on\scriptfile\scriptfile.h">

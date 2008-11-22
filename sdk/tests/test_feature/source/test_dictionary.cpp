@@ -70,6 +70,7 @@ bool Test()
 	bool fail = false;
 	int r;
 	COutStream out;
+	CBufferedOutStream bout;
  	asIScriptEngine *engine = 0;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -120,6 +121,18 @@ bool Test()
 
 	if( gcCurrentSize != 0 || gcTotalDestroyed != 3 || gcTotalDetected != 3  )
 		fail = true;
+
+	// Test invalid ref cast together with the variable argument
+	bout.buffer = "";
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	r = engine->ExecuteString(0, "dictionary d; d.set('hello', cast<int>(4));");
+	if( r >= 0 ) 
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 35) : Error   : Illegal target type for reference cast\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
 
 	engine->Release();
 
