@@ -225,12 +225,6 @@ sTokenWord const tokenWords[] =
 	{"^^"        , ttXor},
 	{"@"         , ttHandle},
 	{"and"       , ttAnd},
-#ifdef AS_DEPRECATED
-	{"bits"      , ttUInt},
-	{"bits8"     , ttUInt8},
-	{"bits16"    , ttUInt16},
-	{"bits32"    , ttUInt},
-#endif
 	{"bool"      , ttBool},
 	{"break"     , ttBreak},
 	{"cast"      , ttCast},

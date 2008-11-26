@@ -234,12 +234,6 @@ enum asEBehaviours
 	 asBEHAVE_LEQUAL,
 	 //! \brief (Global) operator >=
 	 asBEHAVE_GEQUAL,
-#ifdef AS_DEPRECATED
-	 //! \brief (Global) operator ||
-	 asBEHAVE_LOGIC_OR,
-	 //! \brief (Global) operator &&
-	 asBEHAVE_LOGIC_AND,
-#endif
 	 //! \brief (Global) operator |
 	 asBEHAVE_BIT_OR,
 	 //! \brief (Global) operator &
@@ -740,7 +734,7 @@ public:
 
 	//! \brief Registers a new object type.
     //!
-    //! \param[in] name The name of the type.
+    //! \param[in] obj The name of the type.
     //! \param[in] byteSize The size of the type in bytes. Only necessary for value types.
     //! \param[in] flags One or more of the asEObjTypeFlags.
     //! \return A negative value on error.
@@ -757,7 +751,7 @@ public:
     //! Value types, which have their memory managed by the engine, should be registered with \ref asOBJ_VALUE.
     //!
     //! \see \ref doc_register_type
-	virtual int RegisterObjectType(const char *name, int byteSize, asDWORD flags) = 0;
+	virtual int RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
 	//! \brief Registers a property for the object type.
     //!
     //! \param[in] obj The name of the type.
@@ -1090,7 +1084,7 @@ public:
     //! \retval asERROR The module was not compiled successfully.
     //!
     //! This method retrieves the number of compiled script functions.
-	virtual int GetFunctionCount(const char *module) = 0;
+	virtual int                GetFunctionCount(const char *module) = 0;
 	//! \brief Returns the function id by index.
     //! \param[in] module The name of the module.
     //! \param[in] index The index of the function.
@@ -1099,7 +1093,7 @@ public:
     //!
     //! This method should be used to retrieve the ID of the script function that you wish to 
     //! execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare"  method.
-	virtual int GetFunctionIDByIndex(const char *module, int index) = 0;
+	virtual int                GetFunctionIDByIndex(const char *module, int index) = 0;
 	//! \brief Returns the function id by name.
     //! \param[in] module The name of the module.
     //! \param[in] name The name of the function.
@@ -1111,7 +1105,7 @@ public:
     //!
     //! This method should be used to retrieve the ID of the script function that you 
     //! wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	virtual int GetFunctionIDByName(const char *module, const char *name) = 0;
+	virtual int                GetFunctionIDByName(const char *module, const char *name) = 0;
 	//! \brief Returns the function id by declaration.
     //! \param[in] module The name of the module.
     //! \param[in] decl The function signature.
@@ -1126,50 +1120,8 @@ public:
     //! to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
     //!
     //! The method will find the script function with the exact same declaration.
-	virtual int GetFunctionIDByDecl(const char *module, const char *decl) = 0;
-#ifdef AS_DEPRECATED
-	//! \brief (deprecated) Returns the function declaration.
-    //! \param[in] funcId The function id.
-    //! \param[out] length A pointer to the variable that will receive the length of the returned string.
-    //! \return A null terminated string with the function declaration, or null if not found.
-    //!
-    //! This method can be used to retrieve the function declaration of the script functions 
-    //! that the host application will call. Verifying the declaration is important because, 
-    //! even though the script may compile correctly the user may not have written the function 
-    //! interface as intended.
-    //!
-    //! \deprecated Use \ref asIScriptFunction::GetDeclaration instead.
-	virtual const char *GetFunctionDeclaration(int funcId, int *length = 0) = 0;
-	//! \brief (deprecated) Returns the function name.
-    //! \param[in] funcId The function id.
-    //! \param[out] length A pointer to the variable that will receive the length of the returned string.
-    //! \return A null terminated string with the function name, or null if not found.
-    //!
-    //! This method can be used to retrieve the function name of the script functions that 
-    //! the host application can call. Useful for obtaining the name of functions with ID obtained 
-    //! from \ref asIScriptContext::GetExceptionFunction "GetExceptionFunction".
-    //!
-    //! \deprecated Use \ref asIScriptFunction::GetName instead.
-	virtual const char *GetFunctionName(int funcId, int *length = 0) = 0;
-	//! \brief (deprecated) Returns the module where the function was implemented.
-    //! \param[in] funcId The function id.
-    //! \param[out] length A pointer to the variable that will receive the length of the returned string.
-    //! \return A null terminated string with the module name, or null if not found.
-    //!
-    //! This method returns the name of the module where the function was implemented.
-    //!
-    //! \deprecated Use \ref asIScriptFunction::GetModuleName instead.
-	virtual const char *GetFunctionModule(int funcId, int *length = 0) = 0;
-	//! \brief (deprecated) Returns the section where the function was implemented.
-    //! \param[in] funcId The function id.
-    //! \param[out] length A pointer to the variable that will receive the length of the returned string.
-    //! \return A null terminated string with the section name, or null if not found.
-    //!
-    //! This method returns the name of the section where the function was implemented.
-    //!
-    //! \deprecated Use \ref asIScriptFunction::GetScriptSectionName instead.
-	virtual const char *GetFunctionSection(int funcId, int *length = 0) = 0;
-#endif
+	virtual int                GetFunctionIDByDecl(const char *module, const char *decl) = 0;
+
 	//! \brief Returns the function descriptor for the script function
     //! \param[in] module The module name.
     //! \param[in] index The index of the function.
@@ -1179,69 +1131,6 @@ public:
     //! \param[in] funcId The id of the function or method.
     //! \return A pointer to the function description interface, or null if not found.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
-
-#ifdef AS_DEPRECATED
-	//! \brief (deprecated) Returns the number of methods for the object type.
-    //! \param[in] typeId The object type id.
-    //! \return A negative value on error, or the number of methods for this object.
-    //! \retval asINVALID_ARG \a typeId is not a type.
-    //! \retval asINVALID_TYPE \a typeId is not an object type.
-    //!
-    //! \deprecated Use \ref asIObjectType::GetMethodCount instead
-	virtual int GetMethodCount(int typeId) = 0;
-	//! \brief (deprecated) Returns the method id by index.
-    //! \param[in] typeId The object type id.
-    //! \param[in] index The index of the method.
-    //! \return A negative value on error, or the method id.
-    //! \retval asINVALID_ARG \a typeId is not a type, or index is out of bounds.
-    //! \retval asINVALID_TYPE \a typeId is not an object type.
-    //!
-    //! This method should be used to retrieve the ID of the script method for the object 
-    //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-    //!
-    //! \deprecated Use \ref asIObjectType::GetMethodIdByIndex instead
-	virtual int GetMethodIDByIndex(int typeId, int index) = 0;
-	//! \brief (deprecated) Returns the method id by name.
-    //! \param[in] typeId The object type id.
-    //! \param[in] name The name of the method.
-    //! \return A negative value on error, or the method id.
-    //! \retval asINVALID_ARG \a typeId is not a type, or index is out of bounds.
-    //! \retval asINVALID_TYPE \a typeId is not an object type.
-    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
-    //! \retval asNO_FUNCTION Didn't find any matching method.
-    //!
-    //! This method should be used to retrieve the ID of the script method for the object 
-    //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-    //!
-    //! \deprecated Use \ref asIObjectType::GetMethodIdByName instead
-	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
-	//! \brief (deprecated) Returns the method id by declaration.
-    //! \param[in] typeId The object type id.
-    //! \param[in] decl The method signature.
-    //! \return A negative value on error, or the method id.
-    //! \retval asINVALID_ARG \a typeId is not a type, or index is out of bounds.
-    //! \retval asINVALID_TYPE \a typeId is not an object type.
-    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
-    //! \retval asNO_FUNCTION Didn't find any matching method.
-    //! \retval asINVALID_DECLARATION \a decl is not a valid declaration.
-    //! \retval asNO_MODULE The type is not a script class or interface.
-    //! \retval asERROR The module for the type was not built successfully.
-    //!
-    //! This method should be used to retrieve the ID of the script method for the object 
-    //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-    //!
-    //! The method will find the script method with the exact same declaration.
-    //!
-    //! \deprecated Use \ref asIObjectType::GetMethodIdByDecl instead
-	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
-	//! \brief (deprecated) Returns the function descriptor for the script method
-    //! \param[in] typeId The object type id.
-    //! \param[in] index The index of the method.
-    //! \return A pointer to the method description interface, or null if not found.
-    //!
-    //! \deprecated Use \ref asIObjectType::GetMethodDescriptorByIndex instead
-	virtual asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index) = 0;
-#endif
 
 	// Script global variables
 	//! \brief Returns the number of global variables in the module.
@@ -1381,7 +1270,7 @@ public:
     //!
     //! This function returns the number of functions that are imported in a module. These 
     //! functions need to be bound before they can be used, or a script exception will be thrown.
-	virtual int GetImportedFunctionCount(const char *module) = 0;
+	virtual int         GetImportedFunctionCount(const char *module) = 0;
 	//! \brief Returns the imported function index by declaration.
     //! \param[in] module The name of the module.
     //! \param[in] decl The function declaration of the imported function.
@@ -1392,7 +1281,7 @@ public:
     //! \retval asNO_FUNCTION Didn't find any matching function.
     //!
     //! This function is used to find a specific imported function by its declaration.
-	virtual int GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
+	virtual int         GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns the imported function declaration.
     //! \param[in] module The name of the module.
     //! \param[in] importIndex The index of the imported function.
@@ -1422,7 +1311,7 @@ public:
     //!
     //! The imported function is only bound if the functions have the exact same signature, 
     //! i.e the same return type, and parameters.
-	virtual int BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
+	virtual int         BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
 	//! \brief Unbinds an imported function.
     //! \param[in] module The name of the module.
     //! \param[in] importIndex The index of the imported function.
@@ -1430,7 +1319,7 @@ public:
     //! \retval asNO_MODULE The module was not found.
     //!
     //! Unbinds the imported function.
-	virtual int UnbindImportedFunction(const char *module, int importIndex) = 0;
+	virtual int         UnbindImportedFunction(const char *module, int importIndex) = 0;
 
 	//! \brief Binds all imported functions in a module, by searching their equivalents in the declared source modules.
     //! \param[in] module The name of the module.
@@ -1452,6 +1341,18 @@ public:
 	virtual int UnbindAllImportedFunctions(const char *module) = 0;
 
 	// Type identification
+	//! \brief Returns the number of object types.
+    //! \return The number of object types known to the engine.
+	virtual int            GetObjectTypeCount() = 0;
+	//! \brief Returns the object type interface by index.
+    //! \param[in] index The index of the type.
+    //! \return The object type interface for the type, or null if not found.
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+	//! \brief Returns the object type interface for type.
+    //! \param[in] typeId The type id of the type.
+    //! \return The object type interface for the type, or null if not found.
+	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
+
 	//! \brief Returns a type id by declaration.
     //! \param[in] module The name of the module.
     //! \param[in] decl The declaration of the type.
@@ -1470,47 +1371,20 @@ public:
     //! A base type yields the same type id whether the declaration is const or not, however if the 
     //! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
     //! string@ but string is the same as const string. 
-	virtual int GetTypeIdByDecl(const char *module, const char *decl) = 0;
+	virtual int            GetTypeIdByDecl(const char *module, const char *decl) = 0;
 	//! \brief Returns a type declaration.
     //! \param[in] typeId The type id of the type.
     //! \param[out] length The length of the returned string.
     //! \return A null terminated string with the type declaration, or null if not found.
-	virtual const char *GetTypeDeclaration(int typeId, int *length = 0) = 0;
+	virtual const char    *GetTypeDeclaration(int typeId, int *length = 0) = 0;
 	//! \brief Returns the size of a primitive type.
     //! \param[in] typeId The type id of the type.
     //! \return The size of the type in bytes.
-	virtual int GetSizeOfPrimitiveType(int typeId) = 0;
-	//! \brief Returns the object type interface for type.
-    //! \param[in] typeId The type id of the type.
-    //! \return The object type interface for the type, or null if not found.
-	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
-	//! \brief Returns the object type interface by index.
-    //! \param[in] index The index of the type.
-    //! \return The object type interface for the type, or null if not found.
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
-	//! \brief Returns the number of object types.
-    //! \return The number of object types known to the engine.
-	virtual int GetObjectTypeCount() = 0;
+	virtual int            GetSizeOfPrimitiveType(int typeId) = 0;
+
 
 	// Script execution
-#ifdef AS_DEPRECATED
-	//! \brief (deprecated) Sets the default context stack size.
-    //! \param[in] initial The smallest stack size
-    //! \param[in] maximum The largest stack size
-    //! \return Success.
-    //!
-    //! This method allow the application define the initial and maximum context stack sizes. 
-    //! All contexts will use these values when allocating the stack size.
-    //!
-    //! The context will always make sure there is enough stack size to execute the function, 
-    //! even if the initial stack size is set too low. If the maximum stack size is larger 
-    //! than 0 then the stack size will only until the size has been reached. Each time the 
-    //! stack grows its size is doubled, which means that the stack size can be at most 2 times 
-    //! the maximum size.
-    //!
-    //! \deprecated Use \ref asIScriptEngine::SetEngineProperty "SetEngineProperty" with \ref asEP_MAX_STACK_SIZE instead
-	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
-#endif
+
 	//! \brief Creates a new script context.
     //! \return A pointer to the new script context.
     //!
@@ -1528,7 +1402,7 @@ public:
     //!
     //! This only works for objects, for primitive types and object handles the method 
     //! doesn't do anything and returns a null pointer.
-	virtual void *CreateScriptObject(int typeId) = 0;
+	virtual void             *CreateScriptObject(int typeId) = 0;
 	//! \brief Creates a copy of a script object.
     //! \param[in] obj A pointer to the source object.
     //! \param[in] typeId The type id of the object.
@@ -1538,7 +1412,7 @@ public:
     //!
     //! This only works for objects, for primitive types and object handles the method 
     //! doesn't do anything and returns a null pointer.
-	virtual void *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	virtual void             *CreateScriptObjectCopy(void *obj, int typeId) = 0;
 	//! \brief Copy one script object to another.
     //! \param[in] dstObj A pointer to the destination object.
     //! \param[in] srcObj A pointer to the source object.
@@ -1547,7 +1421,7 @@ public:
     //! This calls the assignment operator to copy the object from one to the other.
     //! 
     //! This only works for objects.
-	virtual void CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
 	//! \brief Release the script object pointer.
     //! \param[in] obj A pointer to the object.
     //! \param[in] typeId The type id of the object.
@@ -1555,7 +1429,7 @@ public:
     //! This calls the release method of the object to release the reference.
     //! 
     //! This only works for objects.
-	virtual void ReleaseScriptObject(void *obj, int typeId) = 0;
+	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
 	//! \brief Increase the reference counter for the script object.
     //! \param[in] obj A pointer to the object.
     //! \param[in] typeId The type id of the object.
@@ -1563,7 +1437,7 @@ public:
     //! This calls the add ref method of the object to increase the reference count.
     //! 
     //! This only works for objects.
-	virtual void AddRefScriptObject(void *obj, int typeId) = 0;
+	virtual void              AddRefScriptObject(void *obj, int typeId) = 0;
 	//! \brief Returns true if the object referenced by a handle compatible with the specified type.
     //! \param[in] obj A pointer to the object.
     //! \param[in] objTypeId The type id of the object.
@@ -1574,7 +1448,7 @@ public:
     //! compatible with an object of another type. This is useful if you have a pointer 
     //! to a object, but only knows that it implements a certain interface and now you 
     //! want to determine if it implements another interface.
-	virtual bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
+	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
 	//! \brief Performs a comparison of two objects using the specified operator behaviour.
     //! \param[out] result The result of the comparison
     //! \param[in] behaviour One of the comparison behaviours from \ref asEBehaviours.
@@ -1590,7 +1464,7 @@ public:
     //! know the exact type of the objects being compared. The function will only work on 
     //! objects, and then only on those objects that permit comparisons, i.e. registered types 
     //! that have the comparison behaviours registered.
-	virtual int  CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
+	virtual int               CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
 	//! \brief Returns the class and length of the first token in the string.
@@ -1621,7 +1495,7 @@ public:
     //! \retval asEXECUTION_EXCEPTION The execution ended with an exception.
     //!
     //! This method allow an application to interpret script statements using the currently compiled code.
-	virtual int  ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
+	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
 	//! \brief Perform garbage collection.
@@ -1679,13 +1553,13 @@ public:
     //! \see \ref doc_gc_object
 	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId) = 0;
 	//! \brief Used by the garbage collector to enumerate all references held by an object.
-    //! \param[in] obj A pointer to the references object.
+    //! \param[in] reference A pointer to the referenced object.
     //!
     //! When processing the EnumReferences call the called object should call GCEnumCallback 
     //! for each of the references it holds to other objects.
     //!
     //! \see \ref doc_gc_object
-	virtual void GCEnumCallback(void *obj) = 0;
+	virtual void GCEnumCallback(void *reference) = 0;
 
 	// Bytecode Saving/Loading
 	//! \brief Save compiled bytecode to a binary stream.

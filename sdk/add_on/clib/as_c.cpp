@@ -35,10 +35,10 @@
 // A C interface to the library 
 //
 
-#include "as_config.h"
+// Include the C++ interface header so we can call the proper methods
+#include "../../angelscript/include/angelscript.h"
 
 BEGIN_AS_NAMESPACE
-#ifdef AS_C_INTERFACE
 
 typedef void (*asBINARYREADFUNC_t)(void *ptr, asUINT size, void *param);
 typedef void (*asBINARYWRITEFUNC_t)(const void *ptr, asUINT size, void *param);
@@ -59,6 +59,7 @@ public:
 extern "C"
 {
 
+// Implement a global wrapper function for each of the library's interface methods
 AS_API int               asEngine_AddRef(asIScriptEngine *e)                                                                                                                                      { return e->AddRef(); }
 AS_API int               asEngine_Release(asIScriptEngine *e)                                                                                                                                     { return e->Release(); }
 AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asEEngineProp property, asPWORD value)                                                                                    { return e->SetEngineProperty(property, value); }
@@ -90,21 +91,8 @@ AS_API int               asEngine_GetFunctionCount(asIScriptEngine *e, const cha
 AS_API int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index)                                                                                         { return e->GetFunctionIDByIndex(module, index); }
 AS_API int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name)                                                                                   { return e->GetFunctionIDByName(module, name); }
 AS_API int               asEngine_GetFunctionIDByDecl(asIScriptEngine *e, const char *module, const char *decl)                                                                                   { return e->GetFunctionIDByDecl(module, decl); }
-#ifdef AS_DEPRECATED
-AS_API const char *      asEngine_GetFunctionDeclaration(asIScriptEngine *e, int funcID, int *length)                                                                                             { return e->GetFunctionDeclaration(funcID, length); }
-AS_API const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length)                                                                                                    { return e->GetFunctionName(funcID, length); }
-AS_API const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length)                                                                                                  { return e->GetFunctionModule(funcID, length); }
-AS_API const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length)                                                                                                 { return e->GetFunctionSection(funcID, length); }
-#endif
 AS_API asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index)                                                                                { return e->GetFunctionDescriptorByIndex(module, index); }
 AS_API asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId)                                                                                                      { return e->GetFunctionDescriptorById(funcId); }
-#ifdef AS_DEPRECATED
-AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId)                                                                                                                  { return e->GetMethodCount(typeId); }
-AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index)                                                                                                   { return e->GetMethodIDByIndex(typeId, index); }
-AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, int typeId, const char *name)                                                                                             { return e->GetMethodIDByName(typeId, name); }
-AS_API int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, int typeId, const char *decl)                                                                                             { return e->GetMethodIDByDecl(typeId, decl); }
-AS_API asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index)                                                                                          { return e->GetMethodDescriptorByIndex(typeId, index); }
-#endif
 AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module)                               { return e->GetGlobalVarCount(module); }
 AS_API int               asEngine_GetGlobalVarIndexByName(asIScriptEngine *e, const char *module, const char *name)       { return e->GetGlobalVarIndexByName(module, name); }
 AS_API int               asEngine_GetGlobalVarIndexByDecl(asIScriptEngine *e, const char *module, const char *decl)       { return e->GetGlobalVarIndexByDecl(module, decl); }
@@ -134,9 +122,6 @@ AS_API int               asEngine_GetSizeOfPrimitiveType(asIScriptEngine *e, int
 AS_API asIObjectType *   asEngine_GetObjectTypeById(asIScriptEngine *e, int typeId)                                                                                                               { return e->GetObjectTypeById(typeId); }
 AS_API asIObjectType *   asEngine_GetObjectTypeByIndex(asIScriptEngine *e, asUINT index)                                                                                                          { return e->GetObjectTypeByIndex(index); }
 AS_API int               asEngine_GetObjectTypeCount(asIScriptEngine *e)                                                                                                                          { return e->GetObjectTypeCount(); }
-#ifdef AS_DEPRECATED
-AS_API int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum)                                                                                  { return e->SetDefaultContextStackSize(initial, maximum); }
-#endif
 AS_API asIScriptContext *asEngine_CreateContext(asIScriptEngine *e)                                                                                                                               { return e->CreateContext(); }
 AS_API void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId)                                                                                                              { return e->CreateScriptObject(typeId); }
 AS_API void *            asEngine_CreateScriptObjectCopy(asIScriptEngine *e, void *obj, int typeId)                                                                                               { return e->CreateScriptObjectCopy(obj, typeId); }
@@ -289,7 +274,6 @@ AS_API int                  asScriptFunction_GetReturnTypeId(const asIScriptFunc
 
 }
 
-#endif
 END_AS_NAMESPACE
 
 

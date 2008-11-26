@@ -750,56 +750,7 @@ int asCScriptEngine::GetFunctionIDByDecl(const char *module, const char *decl)
 
 //-----------------
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2008-05-22
-int asCScriptEngine::GetMethodCount(int typeId)
-{
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
-	if( dt == 0 ) return asINVALID_ARG;
-
-	asCObjectType *ot = dt->GetObjectType();
-	if( ot == 0 ) return asINVALID_TYPE;
-
-	return ot->GetMethodCount();
-}
-
-// Deprecated since 2008-05-22
-int asCScriptEngine::GetMethodIDByIndex(int typeId, int index)
-{
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
-	if( dt == 0 ) return asINVALID_ARG;
-
-	asCObjectType *ot = dt->GetObjectType();
-	if( ot == 0 ) return asINVALID_TYPE;
-
-	return ot->GetMethodIdByIndex(index);
-}
-
-// Deprecated since 2008-05-22
-int asCScriptEngine::GetMethodIDByName(int typeId, const char *name)
-{
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
-	if( dt == 0 ) return asINVALID_ARG;
-
-	asCObjectType *ot = dt->GetObjectType();
-	if( ot == 0 ) return asINVALID_TYPE;
-
-	return ot->GetMethodIdByName(name);
-}
-
-// Deprecated since 2008-05-22
-int asCScriptEngine::GetMethodIDByDecl(int typeId, const char *decl)
-{
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
-	if( dt == 0 ) return asINVALID_ARG;
-
-	asCObjectType *ot = dt->GetObjectType();
-	if( ot == 0 ) return asINVALID_TYPE;
-
-	return ot->GetMethodIdByDecl(decl);
-}
-#endif
-
+// internal
 int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl, asCModule *mod)
 {
 	if( mod && !mod->isBuildWithoutErrors )
@@ -848,85 +799,6 @@ int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl
 
 
 //----------------------
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2008-05-22
-const char *asCScriptEngine::GetFunctionDeclaration(int funcID, int *length)
-{
-	asCString *tempString = &threadManager.GetLocalData()->string;
-	if( (funcID & 0xFFFF) == asFUNC_STRING )
-	{
-		*tempString = "void @ExecuteString()";
-	}
-	else
-	{
-		asCScriptFunction *func = GetScriptFunction(funcID);
-		if( func == 0 ) return 0;
-
-		*tempString = func->GetDeclarationStr();
-	}
-
-	if( length ) *length = (int)tempString->GetLength();
-
-	return tempString->AddressOf();
-}
-
-// Deprecated since 2008-05-22
-const char *asCScriptEngine::GetFunctionModule(int funcId, int *length)
-{
-	asCModule *mod = GetModuleFromFuncId(funcId);
-	if( !mod ) return 0;
-
-	if( length ) *length = (int)mod->name.GetLength();
-
-	return mod->name.AddressOf();
-}
-
-// Deprecated since 2008-05-22
-const char *asCScriptEngine::GetFunctionSection(int funcID, int *length)
-{
-	asCString *tempString = &threadManager.GetLocalData()->string;
-	if( (funcID & 0xFFFF) == asFUNC_STRING )
-	{
-		*tempString = "@ExecuteString";
-	}
-	else
-	{
-		asCScriptFunction *func = GetScriptFunction(funcID);
-		if( func == 0 ) return 0;
-
-		asCModule *module = GetModuleFromFuncId(funcID);
-		if( module == 0 ) return 0;
-
-		*tempString = *module->scriptSections[func->scriptSectionIdx];
-	}
-
-	if( length ) *length = (int)tempString->GetLength();
-
-	return tempString->AddressOf();
-}
-
-// Deprecated since 2008-05-22
-const char *asCScriptEngine::GetFunctionName(int funcID, int *length)
-{
-	asCString *tempString = &threadManager.GetLocalData()->string;
-	if( (funcID & 0xFFFF) == asFUNC_STRING )
-	{
-		*tempString = "@ExecuteString";
-	}
-	else
-	{
-		asCScriptFunction *func = GetScriptFunction(funcID);
-		if( func == 0 ) return 0;
-
-		*tempString = func->name;
-	}
-
-	if( length ) *length = (int)tempString->GetLength();
-
-	return tempString->AddressOf();
-}
-#endif
 
 // interface
 int asCScriptEngine::GetGlobalVarCount(const char *module)
@@ -2237,7 +2109,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 			int idx = -globalProps[n]->index - 1;
 			void **pp = &globalPropAddresses[idx-1];
 
-			// Update the chached pointers in the modules
+			// Update the cached pointers in the modules
 			for( asUINT m = 0; m < scriptModules.GetLength(); m++ )
 			{
 				if( scriptModules[m] )
@@ -2692,29 +2564,8 @@ asCModule *asCScriptEngine::GetModuleFromFuncId(int id)
 	return func->module;
 }
 
-
-int asCScriptEngine::SaveByteCode(const char *_module, asIBinaryStream *stream)
-{
-	if( stream )
-	{
-		asCModule* module = GetModule(_module, false);
-
-		// TODO: Shouldn't allow saving if the build wasn't successful
-
-		if( module )
-		{
-			asCRestore rest(module, stream, this);
-			return rest.Save();
-		}
-
-		return asNO_MODULE;
-	}
-
-	return asINVALID_ARG;
-}
-
-
-int asCScriptEngine::LoadByteCode(const char *_module, asIBinaryStream *stream)
+// internal
+int asCScriptEngine::RequestBuild()
 {
 	ENTERCRITICALSECTION(engineCritical);
 	if( isBuilding )
@@ -2725,49 +2576,38 @@ int asCScriptEngine::LoadByteCode(const char *_module, asIBinaryStream *stream)
 	isBuilding = true;
 	LEAVECRITICALSECTION(engineCritical);
 
-	if( stream )
+	return 0;
+}
+
+// internal
+void asCScriptEngine::BuildCompleted()
+{
+	isBuilding = false;
+}
+
+int asCScriptEngine::SaveByteCode(const char *module, asIBinaryStream *stream)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->SaveByteCode(stream);
+}
+
+// internal
+int asCScriptEngine::LoadByteCode(const char *module, asIBinaryStream *stream)
+{
+	asCModule *mod = GetModule(module, true);
+	if( mod == 0 ) return asNO_MODULE;
+
+	if( mod->IsUsed() )
 	{
-		asCModule* module = GetModule(_module, true);
-		if( module == 0 ) 
-		{
-			isBuilding = false;
-			return asNO_MODULE;
-		}
-
-		if( module->IsUsed() )
-		{
-			module->Discard();
-
-			// Get another module
-			module = GetModule(_module, true);
-		}
-
-		if( module )
-		{
-			asCRestore rest(module, stream, this);
-			int r = rest.Restore();
-			isBuilding = false;
-			return r;
-		}
-
-		isBuilding = false;
-		return asNO_MODULE;
+		// Discard this module and get another
+		mod->Discard();
+		mod = GetModule(module, true);
 	}
 
-	isBuilding = false;
-	return asINVALID_ARG;
+	return mod->LoadByteCode(stream);
 }
-
-#ifdef AS_DEPRECATED
-int asCScriptEngine::SetDefaultContextStackSize(asUINT initial, asUINT maximum)
-{
-	// Sizes are given in bytes, but we store them in dwords
-	initialContextStackSize = initial/4;
-	maximumContextStackSize = maximum/4;
-
-	return asSUCCESS;
-}
-#endif
 
 int asCScriptEngine::GetImportedFunctionCount(const char *module)
 {
@@ -4143,21 +3983,6 @@ asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId)
 
 	return dt->GetObjectType();
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2008-05-22
-// Additional functionality for to access internal objects
-asIScriptFunction *asCScriptEngine::GetMethodDescriptorByIndex(int typeId, int index)
-{
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
-	if( dt == 0 ) return 0;
-
-	asCObjectType *ot = dt->GetObjectType();
-	if( ot == 0 ) return 0;
-
-	return ot->GetMethodDescriptorByIndex(index);
-}
-#endif
 
 asIScriptFunction *asCScriptEngine::GetFunctionDescriptorByIndex(const char *module, int index)
 {

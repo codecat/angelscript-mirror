@@ -61,10 +61,6 @@ const int behave_dual_token[] =
 	ttGreaterThan,        asBEHAVE_GREATERTHAN,
 	ttLessThanOrEqual,    asBEHAVE_LEQUAL,
 	ttGreaterThanOrEqual, asBEHAVE_GEQUAL,
-#ifdef AS_DEPRECATED
-	ttOr,                 asBEHAVE_LOGIC_OR,
-	ttAnd,                asBEHAVE_LOGIC_AND,
-#endif
 	ttBitOr,              asBEHAVE_BIT_OR,
 	ttAmp,                asBEHAVE_BIT_AND,
 	ttBitXor,             asBEHAVE_BIT_XOR,
@@ -2546,47 +2542,9 @@ void asCCompiler::Warning(const char *msg, asCScriptNode *node)
 
 int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary)
 {
-	asCDataType t(type);
-
-	if( t.IsPrimitive() && t.GetSizeOnStackDWords() == 1 )
-		t.SetTokenType(ttInt);
-
-	if( t.IsPrimitive() && t.GetSizeOnStackDWords() == 2 )
-		t.SetTokenType(ttDouble);
-
-	// Find a free location with the same type
-	for( asUINT n = 0; n < freeVariables.GetLength(); n++ )
-	{
-		int slot = freeVariables[n];
-		if( variableAllocations[slot].IsEqualExceptConst(t) && variableIsTemporary[slot] == isTemporary )
-		{
-			if( n != freeVariables.GetLength() - 1 )
-				freeVariables[n] = freeVariables.PopLast();
-			else
-				freeVariables.PopLast();
-
-			// We can't return by slot, must count variable sizes
-			int offset = GetVariableOffset(slot);
-
-			if( isTemporary )
-				tempVariables.PushLast(offset);
-
-			return offset;
-		}
-	}
-
-	variableAllocations.PushLast(t);
-	variableIsTemporary.PushLast(isTemporary);
-
-	int offset = GetVariableOffset((int)variableAllocations.GetLength()-1);
-
-	if( isTemporary )
-		tempVariables.PushLast(offset);
-
-	return offset;
+	return AllocateVariableNotIn(type, isTemporary, 0);
 }
 
-// TODO: This function should share code with AllocateVariable
 int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary, asCArray<int> *vars)
 {
 	asCDataType t(type);

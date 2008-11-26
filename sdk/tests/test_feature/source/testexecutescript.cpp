@@ -9,15 +9,12 @@
 // 
 
 #include "utils.h"
-#include <stdio.h>
-#ifdef _MSC_VER
-#include <direct.h>
-#endif
+
+#pragma warning (disable:4786)
+#include "../../../add_on/scriptbuilder/scriptbuilder.h"
 
 #define TESTNAME "TestExecuteScript"
 
-static int LoadScript(const char *filename);
-static int CompileScript();
 static bool ExecuteScript();
 
 static asIScriptEngine *engine;
@@ -25,15 +22,18 @@ static asIScriptEngine *engine;
 bool TestExecuteScript()
 {
 	bool ret = false;
+	COutStream out;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	if( LoadScript("scripts/TestExecuteScript.as") < 0 )
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+	CScriptBuilder builder;
+
+	int r = builder.BuildScriptFromFile(engine, 0, "scripts/TestExecuteScript.as");
+	if( r >= 0 )
 	{
-		engine->Release();
-	    return false;
+		ret = ExecuteScript();
 	}
-	CompileScript();
-	ret = ExecuteScript();
 
 	engine->Release();
 	engine = NULL;
@@ -41,100 +41,6 @@ bool TestExecuteScript()
 	return ret;
 }
 
-const char *GetCurrentDir(char *buf, size_t size)
-{
-#ifdef _MSC_VER
-	return _getcwd(buf, (int)size);
-#elif defined(__APPLE__)
-	return getcwd(buf, size);
-#else
-	return "";
-#endif
-}
-
-static int LoadScript(const char *filename)
-{
-	// Read the entire script file
-	FILE *f = fopen(filename, "rb");
-	if( f == 0 )
-	{
-		char buf[256];
-		printf("%s/%s\n", GetCurrentDir(buf, 256), filename);
-		printf("%s: Failed to open the script file.\n", TESTNAME);
-		return -1;
-	}
-
-	
-	fseek(f, 0, SEEK_END);
-	int len = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	// On Win32 it is possible to do the following instead
-	// int len = _filelength(_fileno(f));
-
-	std::string code;
-	code.resize(len);
-
-	size_t c = fread(&code[0], len, 1, f);
-	fclose(f);
-
-	if( c == 0 ) 
-	{
-		printf("%s: Failed to load script file.\n", TESTNAME);
-		return -1;
-	}
-
-	// Give the code to the script engine
-	int r = engine->AddScriptSection(0, filename, code.c_str(), len, 0);
-	if( r < 0 ) 
-	{
-		printf("%s: An error occured while adding the script section.\n", TESTNAME);
-		return r;
-	}
-
-	// At this point the engine has copied the code to an 
-	// internal buffer so we are free to release the memory we 
-	// allocated. 
-
-	// We can also add other script sections if we would like.
-	// All script sections will be compiled together as if they
-	// where one large script. 
-
-	return 0;
-}
-
-
-
-
-
-static int CompileScript()
-{
-	// Create an output stream that will receive information about the build
-	COutStream out;
-
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	int r = engine->Build(0);
-	if( r < 0 )
-	{
-		printf("%s: Failed to compile script\n", TESTNAME);
-		return -1;
-	}
-
-	// If we wish to build again, the script sections has to be added again.
-
-	// Now we will verify the interface of the script functions we wish to call
-	const char *buffer = 0;
-	buffer = engine->GetFunctionDescriptorById(engine->GetFunctionIDByName(0, "main"))->GetDeclaration();
-	if( buffer == 0 )
-	{
-		printf("%s: Failed to retrieve declaration of function 'main'\n", TESTNAME);
-		return -1;
-	}
-
-	engine->ClearMessageCallback();
-
-	return 0;
-}
 
 static bool ExecuteScript()
 {

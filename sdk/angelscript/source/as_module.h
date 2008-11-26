@@ -115,8 +115,12 @@ public:
 
 	// Type identification
 //	virtual int GetTypeIdByDecl(const char *decl) = 0;
-//	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
 //	virtual int GetObjectTypeCount() = 0;
+//	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+
+	// Bytecode Saving/Loading
+	virtual int SaveByteCode(asIBinaryStream *out) = 0;
+	virtual int LoadByteCode(asIBinaryStream *in) = 0;
 
 protected:
 	virtual ~asIScriptModule() {}
@@ -158,6 +162,9 @@ public:
 
 	int BindAllImportedFunctions();
 	int UnbindAllImportedFunctions();
+
+	int SaveByteCode(asIBinaryStream *out);
+	int LoadByteCode(asIBinaryStream *in);
 
 	asCString name;
 
@@ -230,9 +237,19 @@ public:
 	asCArray<asCScriptFunction *>  scriptFunctions;
 	asCArray<asCScriptFunction *>  importedFunctions;
 	asCArray<sBindInfo>            bindInformations;
+
+	// TODO: global: the memory for the global variables must be allocated individually, 
+	// so that they can be managed individually. It must be possible to add/remove 
+	// globals to an already compiled module. Functions that reference a global
+	// variable should protect the global so that it isn't removed too early 
+	// (or possibly it should be through weak pointers, which would cause script 
+	//  exception if a removed variable is accessed)
+	// Later on, all globals should be managed by the engine so that a module
+	// can be discarded without having to remove the global attribute itself.
 	asCArray<asCProperty *>        scriptGlobals;
 	asCArray<size_t>               globalMem;
 	asCArray<void*>                globalVarPointers;
+
 	asCArray<asCString*>           stringConstants;
 	asCArray<asCObjectType*>       classTypes;
 };

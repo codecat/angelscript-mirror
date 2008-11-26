@@ -693,24 +693,6 @@ asCScriptFunction *asCModule::GetSpecialFunction(int funcID)
 	}
 }
 
-int asCModule::AllocGlobalMemory(int size)
-{
-	int index = (int)globalMem.GetLength();
-
-	size_t *start = globalMem.AddressOf();
-
-	globalMem.SetLength(index + size);
-
-	// Update the addresses in the globalVarPointers
-	for( size_t n = 0; n < globalVarPointers.GetLength(); n++ )
-	{
-		if( globalVarPointers[n] >= start && globalVarPointers[n] < (start+index) )
-			globalVarPointers[n] = &globalMem[0] + (size_t(globalVarPointers[n]) - size_t(start))/sizeof(void*);
-	}
-
-	return index;
-}
-
 int asCModule::AddContextRef()
 {
 	return contextCount.atomicInc();
@@ -958,6 +940,29 @@ asCObjectType *asCModule::GetObjectType(const char *type)
 	return 0;
 }
 
+// internal
+int asCModule::AllocGlobalMemory(int size)
+{
+	// TODO: global: the memory for each global variable should be independent, 
+	// so that we can add/remove variables freely without having to update the 
+	// pointers to the other variables.
+	int index = (int)globalMem.GetLength();
+
+	size_t *start = globalMem.AddressOf();
+
+	globalMem.SetLength(index + size);
+
+	// Update the addresses in the globalVarPointers
+	for( size_t n = 0; n < globalVarPointers.GetLength(); n++ )
+	{
+		if( globalVarPointers[n] >= start && globalVarPointers[n] < (start+index) )
+			globalVarPointers[n] = &globalMem[0] + (size_t(globalVarPointers[n]) - size_t(start))/sizeof(void*);
+	}
+
+	return index;
+}
+
+// internal
 int asCModule::GetGlobalVarIndex(int propIdx)
 {
 	void *ptr = 0;
@@ -974,8 +979,14 @@ int asCModule::GetGlobalVarIndex(int propIdx)
 	return (int)globalVarPointers.GetLength()-1;
 }
 
+// internal
+// This method allows the engine to update the pointer that the module 
+// holds in case the memory used by the engine is reallocated.
 void asCModule::UpdateGlobalVarPointer(void *pold, void *pnew)
 {
+	// TODO: global: the memory for each global variable should be independent,
+	// so that we can add/remove variales freely without having to update the
+	// pointers to the other variables.
 	for( asUINT n = 0; n < globalVarPointers.GetLength(); n++ )
 		if( globalVarPointers[n] == pold )
 		{
@@ -1266,6 +1277,39 @@ bool asCModule::AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArr
 	}
 
 	return true;
+}
+
+// interface
+int asCModule::SaveByteCode(asIBinaryStream *out)
+{
+	if( out == 0 ) return asINVALID_ARG;
+
+	// TODO: Shouldn't allow saving if the build wasn't successful
+
+	asCRestore rest(this, out, engine);
+	return rest.Save();
+}
+
+// interface
+int asCModule::LoadByteCode(asIBinaryStream *in)
+{
+	if( in == 0 ) return asINVALID_ARG;
+
+	// Is the module currently in use?
+	if( IsUsed() )
+		return asMODULE_IS_IN_USE;
+
+	// Only permit loading bytecode if no other thread is currently compiling
+	int r = engine->RequestBuild();
+	if( r < 0 )
+		return r;
+
+	asCRestore rest(this, in, engine);
+	r = rest.Restore();
+
+	engine->BuildCompleted();
+
+	return r;
 }
 
 

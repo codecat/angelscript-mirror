@@ -10,7 +10,8 @@ BEGIN_AS_NAMESPACE
 class CScriptBuilder
 {
 public:
-	int BuildScriptFromMemory(asIScriptEngine *engine, const char *module, const char *script);
+	int BuildScriptFromFile(asIScriptEngine *engine, const char *module, const char *filename);
+	int BuildScriptFromMemory(asIScriptEngine *engine, const char *module, const char *script, const char *sectionname = "");
 
 	const char *GetMetadataStringForType(int typeId);
 	const char *GetMetadataStringForFunc(int funcId);

@@ -379,21 +379,8 @@ extern "C"
 	AS_API int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name);
 	AS_API int               asEngine_GetFunctionIDByDecl(asIScriptEngine *e, const char *module, const char *decl);
-	#ifdef AS_DEPRECATED
-	AS_API const char *      asEngine_GetFunctionDeclaration(asIScriptEngine *e, int funcID, int *length /* = 0 */);
-	AS_API const char *      asEngine_GetFunctionName(asIScriptEngine *e, int funcID, int *length /* = 0 */);
-	AS_API const char *      asEngine_GetFunctionModule(asIScriptEngine *e, int funcID, int *length /* = 0 */);
-	AS_API const char *      asEngine_GetFunctionSection(asIScriptEngine *e, int funcID, int *length /* = 0 */);
-	#endif
 	AS_API asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId);
-	#ifdef AS_DEPRECATED
-	AS_API int               asEngine_GetMethodCount(asIScriptEngine *e, int typeId);
-	AS_API int               asEngine_GetMethodIDByIndex(asIScriptEngine *e, int typeId, int index);
-	AS_API int               asEngine_GetMethodIDByName(asIScriptEngine *e, int typeId, const char *name);
-	AS_API int               asEngine_GetMethodIDByDecl(asIScriptEngine *e, int typeId, const char *decl);
-	AS_API asIScriptFunction *asEngine_GetMethodDescriptorByIndex(asIScriptEngine *e, int typeId, int index);
-	#endif
 	AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetGlobalVarIndexByName(asIScriptEngine *e, const char *module, const char *name);
 	AS_API int               asEngine_GetGlobalVarIndexByDecl(asIScriptEngine *e, const char *module, const char *decl);
@@ -423,9 +410,6 @@ extern "C"
 	AS_API asIObjectType *   asEngine_GetObjectTypeById(asIScriptEngine *e, int typeId);
 	AS_API asIObjectType *   asEngine_GetObjectTypeByIndex(asIScriptEngine *e, asUINT index);
 	AS_API int               asEngine_GetObjectTypeCount(asIScriptEngine *e);
-	#ifdef AS_DEPRECATED
-	AS_API int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum);
-	#endif
 	AS_API asIScriptContext *asEngine_CreateContext(asIScriptEngine *e);
 	AS_API void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId);
 	AS_API void *            asEngine_CreateScriptObjectCopy(asIScriptEngine *e, void *obj, int typeId);

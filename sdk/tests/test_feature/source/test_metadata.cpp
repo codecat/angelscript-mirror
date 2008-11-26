@@ -2,7 +2,6 @@
 
 #pragma warning (disable:4786)
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
-#include <map>
 
 namespace TestMetaData
 {

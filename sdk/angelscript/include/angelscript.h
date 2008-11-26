@@ -167,10 +167,6 @@ enum asEBehaviours
 	 asBEHAVE_GREATERTHAN,
 	 asBEHAVE_LEQUAL,
 	 asBEHAVE_GEQUAL,
-#ifdef AS_DEPRECATED
-	 asBEHAVE_LOGIC_OR,
-	 asBEHAVE_LOGIC_AND,
-#endif
 	 asBEHAVE_BIT_OR,
 	 asBEHAVE_BIT_AND,
 	 asBEHAVE_BIT_XOR,
@@ -423,7 +419,7 @@ public:
 	virtual int ClearMessageCallback() = 0;
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
 
-	virtual int RegisterObjectType(const char *name, int byteSize, asDWORD flags) = 0;
+	virtual int RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
 	virtual int RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
 	virtual int RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
@@ -454,26 +450,12 @@ public:
 	virtual int ResetModule(const char *module) = 0;
 
 	// Script functions
-	virtual int GetFunctionCount(const char *module) = 0;
-	virtual int GetFunctionIDByIndex(const char *module, int index) = 0;
-	virtual int GetFunctionIDByName(const char *module, const char *name) = 0;
-	virtual int GetFunctionIDByDecl(const char *module, const char *decl) = 0;
-#ifdef AS_DEPRECATED
-	virtual const char *GetFunctionDeclaration(int funcId, int *length = 0) = 0;
-	virtual const char *GetFunctionName(int funcId, int *length = 0) = 0;
-	virtual const char *GetFunctionModule(int funcId, int *length = 0) = 0;
-	virtual const char *GetFunctionSection(int funcId, int *length = 0) = 0;
-#endif
+	virtual int                GetFunctionCount(const char *module) = 0;
+	virtual int                GetFunctionIDByIndex(const char *module, int index) = 0;
+	virtual int                GetFunctionIDByName(const char *module, const char *name) = 0;
+	virtual int                GetFunctionIDByDecl(const char *module, const char *decl) = 0;
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
-
-#ifdef AS_DEPRECATED
-	virtual int GetMethodCount(int typeId) = 0;
-	virtual int GetMethodIDByIndex(int typeId, int index) = 0;
-	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
-	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
-	virtual asIScriptFunction *GetMethodDescriptorByIndex(int typeId, int index) = 0;
-#endif
 
 	// Script global variables
 	virtual int         GetGlobalVarCount(const char *module) = 0;
@@ -493,40 +475,38 @@ public:
 #endif
 
 	// Dynamic binding between modules
-	virtual int GetImportedFunctionCount(const char *module) = 0;
-	virtual int GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
+	virtual int         GetImportedFunctionCount(const char *module) = 0;
+	virtual int         GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
 	virtual const char *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length = 0) = 0;
 	virtual const char *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length = 0) = 0;
-	virtual int BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
-	virtual int UnbindImportedFunction(const char *module, int importIndex) = 0;
+	virtual int         BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
+	virtual int         UnbindImportedFunction(const char *module, int importIndex) = 0;
 
 	virtual int BindAllImportedFunctions(const char *module) = 0;
 	virtual int UnbindAllImportedFunctions(const char *module) = 0;
 
 	// Type identification
-	virtual int GetTypeIdByDecl(const char *module, const char *decl) = 0;
-	virtual const char *GetTypeDeclaration(int typeId, int *length = 0) = 0;
-	virtual int GetSizeOfPrimitiveType(int typeId) = 0;
-	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
+	virtual int            GetObjectTypeCount() = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
-	virtual int GetObjectTypeCount() = 0;
+	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
+
+	virtual int            GetTypeIdByDecl(const char *module, const char *decl) = 0;
+	virtual const char    *GetTypeDeclaration(int typeId, int *length = 0) = 0;
+	virtual int            GetSizeOfPrimitiveType(int typeId) = 0;
 
 	// Script execution
-#ifdef AS_DEPRECATED
-	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
-#endif
 	virtual asIScriptContext *CreateContext() = 0;
-	virtual void *CreateScriptObject(int typeId) = 0;
-	virtual void *CreateScriptObjectCopy(void *obj, int typeId) = 0;
-	virtual void CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
-	virtual void ReleaseScriptObject(void *obj, int typeId) = 0;
-	virtual void AddRefScriptObject(void *obj, int typeId) = 0;
-	virtual bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
-	virtual int  CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
+	virtual void             *CreateScriptObject(int typeId) = 0;
+	virtual void             *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
+	virtual void              AddRefScriptObject(void *obj, int typeId) = 0;
+	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
+	virtual int               CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
-	virtual int  ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
+	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
 	virtual int  GarbageCollect(asEGCFlags flags = asGC_FULL_CYCLE) = 0;
@@ -535,7 +515,7 @@ public:
 	virtual int  GetObjectsInGarbageCollectorCount() = 0;
 #endif
 	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId) = 0;
-	virtual void GCEnumCallback(void *obj) = 0;
+	virtual void GCEnumCallback(void *reference) = 0;
 
 	// Bytecode Saving/Loading
 	virtual int SaveByteCode(const char *module, asIBinaryStream *out) = 0;

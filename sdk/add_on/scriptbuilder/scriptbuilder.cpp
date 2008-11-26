@@ -2,7 +2,16 @@
 #include <vector>
 using namespace std;
 
+#include <stdio.h>
+#ifdef _MSC_VER
+#include <direct.h>
+#endif
+
+
 BEGIN_AS_NAMESPACE
+
+// Helper functions
+static const char *GetCurrentDir(char *buf, size_t size);
 
 // Temporary structure for storing metadata and declaration
 struct SMetadataDecl
@@ -13,7 +22,46 @@ struct SMetadataDecl
 	int    type;
 };
 
-int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *module, const char *script)
+int CScriptBuilder::BuildScriptFromFile(asIScriptEngine *engine, const char *module, const char *filename)
+{
+	FILE *f = fopen(filename, "rb");
+	if( f == 0 )
+	{
+		// Write a message to the engine's message callback
+		char buf[256];
+		string msg = "Failed to open script file in path: '" + string(GetCurrentDir(buf, 256)) + "'";
+		engine->WriteMessage(filename, 0, 0, asMSGTYPE_ERROR, msg.c_str());
+		return -1;
+	}
+	
+	// Determine size of the file
+	fseek(f, 0, SEEK_END);
+	int len = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	// On Win32 it is possible to do the following instead
+	// int len = _filelength(_fileno(f));
+
+	// Read the entire file
+	string code;
+	code.resize(len);
+	size_t c = fread(&code[0], len, 1, f);
+
+	fclose(f);
+
+	if( c == 0 ) 
+	{
+		// Write a message to the engine's message callback
+		char buf[256];
+		string msg = "Failed to load script file in path: '" + string(GetCurrentDir(buf, 256)) + "'";
+		engine->WriteMessage(filename, 0, 0, asMSGTYPE_ERROR, msg.c_str());
+		return -1;
+	}
+
+	return BuildScriptFromMemory(engine, module, code.c_str(), filename);
+}
+
+int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *module, const char *script, const char *sectionname)
 {
 	// Perform a superficial parsing of the script first to store the metadata
 	modifiedScript = script;
@@ -62,7 +110,7 @@ int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *m
 
 	// Build the actual script
 	engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, 0);
-	engine->AddScriptSection(module, "script", modifiedScript.c_str(), modifiedScript.size());
+	engine->AddScriptSection(module, sectionname, modifiedScript.c_str(), modifiedScript.size());
 	int r = engine->Build(module);
 	if( r < 0 )
 		return r;
@@ -272,6 +320,17 @@ const char *CScriptBuilder::GetMetadataStringForVar(int varIdx)
 		return it->second.c_str();
 
 	return "";
+}
+
+static const char *GetCurrentDir(char *buf, size_t size)
+{
+#ifdef _MSC_VER
+	return _getcwd(buf, (int)size);
+#elif defined(__APPLE__)
+	return getcwd(buf, size);
+#else
+	return "";
+#endif
 }
 
 END_AS_NAMESPACE

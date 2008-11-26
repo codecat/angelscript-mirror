@@ -88,7 +88,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "Debug_with_stats"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /ZI /Od /D "AS_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /ZI /Od /D "AS_C_INTERFACE" /D "AS_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /ZI /Od /D "AS_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANGELSCRIPT_EXPORT" /YX /FD /opt:nowin98 /GZ /c
 # ADD BASE RSC /l 0x416 /d "_DEBUG"
 # ADD RSC /l 0x416 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -123,10 +123,6 @@ SOURCE=..\..\..\source\as_builder.cpp
 # Begin Source File
 
 SOURCE=..\..\..\source\as_bytecode.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\source\as_c.cpp
 # End Source File
 # Begin Source File
 
