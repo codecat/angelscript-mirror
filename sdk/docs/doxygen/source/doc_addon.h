@@ -199,13 +199,81 @@ basic math operators, such as add, subtract, scalar multiply, equality compariso
 
 <b>Path:</b> /sdk/add_on/scriptbuilder/
 
-This class is a helper class for building scripts. 
+This class is a helper class for loading and building scripts, with a basic pre-processor 
+that supports include directives and metadata declarations.
 
-Currently the only benefit of it is the ability to extract metadata from the scripts.
-This metadata can then be used by the application to perform specific actions.
+\section doc_addon_build_1 Public interface
 
-The class will eventually have methods for loading scripts from disk, and to look for
-include directives, which can in turn load more script files.
+\code
+class CScriptBuilder
+{
+public:
+  // Load and build a script file from disk
+  int BuildScriptFromFile(asIScriptEngine *engine, 
+                          const char      *module, 
+                          const char      *filename);
+
+  // Build a script file from a memory buffer
+  int BuildScriptFromMemory(asIScriptEngine *engine, 
+                            const char      *module, 
+                            const char      *script, 
+                            const char      *sectionname = "");
+
+  // Get metadata declared for class types and interfaces
+  const char *GetMetadataStringForType(int typeId);
+
+  // Get metadata declared for functions
+  const char *GetMetadataStringForFunc(int funcId);
+
+  // Get metadata declared for global variables
+  const char *GetMetadataStringForVar(int varIdx);
+};
+\endcode
+
+\section doc_addon_build_2 Include directives
+
+Example script with include directive:
+
+<pre>
+  \#include "commonfuncs.as"
+  
+  void main()
+  {
+    // Call a function from the included file
+    CommonFunc();
+  }
+</pre>
+
+
+\section doc_addon_build_metadata Metadata in scripts
+
+Metadata can be added before script class, interface, function, and global variable 
+declarations. The metadata is removed from the script by the builder class and stored
+for post build lookup by the type id, function id, or variable index.
+
+Exactly what the metadata looks like is up to the application. The builder class doesn't
+impose any rules, except that the metadata should be added between brackets []. After 
+the script has been built the application can obtain the metadata strings and interpret
+them as it sees fit.
+
+Example script with metadata:
+
+<pre>
+  [factory func = CreateOgre,
+   editable: myPosition,
+   editable: myStrength [10, 100]]
+  class COgre
+  {
+    vector3 myPosition;
+    int     myStrength;
+  }
+  
+  [factory]
+  COgre \@CreateOgre()
+  {
+    return \@COgre();
+  }
+</pre>
 
 Example usage:
 
@@ -227,38 +295,6 @@ if( r >= 0 )
   }
 }
 \endcode
-
-
-\section doc_addon_build_metadata Metadata in scripts
-
-Metadata can be added before script class, interface, function, and global variable 
-declarations. The metadata is removed from the script by the builder class and stored
-for post build lookup by the type id, function id, or variable index.
-
-Exactly what the metadata looks like is up to the application. The builder class doesn't
-impose any rules, except that the metadata should be added between brackets []. After 
-the script has been built the application can obtain the metadata strings and interpret
-them as it sees fit.
-
-Example script with meta data:
-
-<pre>
-  [factory func = CreateOgre,
-   editable: myPosition,
-   editable: myStrength [10, 100]]
-  class COgre
-  {
-    vector3 myPosition;
-    int     myStrength;
-  }
-  
-  [factory]
-  COgre \@CreateOgre()
-  {
-    return \@COgre();
-  }
-</pre>
-
 
 
 

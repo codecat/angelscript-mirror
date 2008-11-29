@@ -52,7 +52,6 @@ HEADERS += ../../source/as_array.h \
 SOURCES += ../../source/as_arrayobject.cpp \
            ../../source/as_builder.cpp \
            ../../source/as_bytecode.cpp \
-           ../../source/as_c.cpp \
            ../../source/as_callfunc.cpp \
            ../../source/as_compiler.cpp \
            ../../source/as_configgroup.cpp \

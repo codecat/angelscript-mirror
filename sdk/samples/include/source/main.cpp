@@ -17,6 +17,7 @@
 #include <angelscript.h>
 
 #include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/scriptbuilder/scriptbuilder.h"
 
 using namespace std;
 
@@ -36,7 +37,7 @@ DWORD timeGetTime()
 }
 
 // Linux does have a getch() function in the curses library, but it doesn't
-// work like it does on DOS. So this does the same thing, with out the need
+// work like it does on DOS. So this does the same thing, without the need
 // of the curses library.
 int getch() 
 {
@@ -55,21 +56,6 @@ int getch()
 }
 
 #endif
-
-// This class is a helper for loading scripts, and support the #include directive
-class ScriptLoader
-{
-public:
-	ScriptLoader(asIScriptEngine *engine);
-
-	int LoadScript(const char *file);
-	int ProcessInclude(string &script);
-
-	asIScriptEngine *engine;
-
-	set<string> includedScripts;
-};
-
 
 // Function prototypes
 int  RunApplication();
@@ -260,23 +246,23 @@ void ConfigureEngine(asIScriptEngine *engine)
 int CompileScript(asIScriptEngine *engine)
 {
 	int r;
-	ScriptLoader loader(engine);
 
-	// Load the script from disk, and process #include directives
-	r = loader.LoadScript("script.as");
-	if( r < 0 ) return r;
-	
-	// Compile the script. If there are any compiler messages they will
+	// The builder is a helper class that will load the script file, 
+	// search for #include directives, and load any included files as 
+	// well.
+	CScriptBuilder builder;
+
+	// Build the script. If there are any compiler messages they will
 	// be written to the message stream that we set right after creating the 
 	// script engine. If there are no errors, and no warnings, nothing will
 	// be written to the stream.
-	r = engine->Build(0);
+	r = builder.BuildScriptFromFile(engine, 0, "script.as");
 	if( r < 0 )
 	{
-		cout << "Build() failed" << endl;
-		return -1;
+		cout << "Build failed" << endl;
+		return r;
 	}
-
+	
 	// The engine doesn't keep a copy of the script sections after Build() has
 	// returned. So if the script needs to be recompiled, then all the script
 	// sections must be added again.
@@ -316,140 +302,3 @@ void PrintString_Generic(asIScriptGeneric *gen)
 }
 
 
-//---------------------------------------------
-// Implementation for the script loader
-
-ScriptLoader::ScriptLoader(asIScriptEngine *engine)
-{
-	this->engine = engine;
-}
-
-int ScriptLoader::LoadScript(const char *file)
-{
-	int r;
-
-	// TODO: The file name stored in the set should be the fully resolved name because
-	// it is possible to name the same file in multiple ways using relative paths.
-
-	// Has the script been loaded already?
-	string scriptFile = file;
-	if( includedScripts.find(scriptFile) != includedScripts.end() )
-	{
-		// Already loaded 
-		cout << "File '" << scriptFile << "' already included. Ignoring." << endl;
-		return 0;
-	}
-
-	// Included the script as loaded
-	cout << "Loading '" << scriptFile << "'." << endl;
-	includedScripts.insert(scriptFile);
-
-	// We will load the script from a file on the disk.
-	FILE *f = fopen(file, "rb");
-	if( f == 0 )
-	{
-		cout << "Failed to open the script file 'script.as'." << endl;
-		return -1;
-	}
-
-	// Determine the size of the file	
-	fseek(f, 0, SEEK_END);
-	int len = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	// On Win32 it is possible to do the following instead
-	// int len = _filelength(_fileno(f));
-
-	// Read the entire file
-	string script;
-	script.resize(len);
-	int c =	fread(&script[0], len, 1, f);
-	fclose(f);
-
-	if( c == 0 ) 
-	{
-		cout << "Failed to load script file." << endl;
-		return -1;
-	}
-
-	// Search the script file for #include directives
-	r = ProcessInclude(script);
-	if( r < 0 ) return r;
-
-	// Add the script sections that will be compiled into executable code.
-	// If we want to combine more than one file into the same script, then 
-	// we can call AddScriptSection() several times for the same module and
-	// the script engine will treat them all as if they were one. The script
-	// section name, will allow us to localize any errors in the script code.
-
-	// We'll tell AngelScript to make a copy of the script buffer, as we won't keep it in memory (last param).
-	r = engine->AddScriptSection(0, file, &script[0], len);
-	if( r < 0 ) 
-	{
-		cout << "AddScriptSection() failed" << endl;
-		return -1;
-	}
-
-	return 0;
-}
-
-int ScriptLoader::ProcessInclude(string &script)
-{
-	// Go through the script line by line, searching for #include directives
-	for( int pos = 0; pos != script.npos && pos < (signed)script.length(); )
-	{
-		// Find the end of the line
-		int end = script.find('\n', pos);
-		if( end == script.npos ) 
-		{
-			// End of script
-			end = script.length(); 
-		}
-		else 
-		{
-			// Don't include the newline character
-			--end; 
-		}
-		
-		// Skip white spaces
-		int start = script.find_first_not_of(" \t", pos, 2);
-		if( start == script.npos || start > end ) start = end;
-		
-		if( start < end && script[start] == '#' && (end-start) > 10 )
-		{
-			// Is it an #include directive?
-			if( strncmp("#include", &script[start], 8) == 0 )
-			{
-				start += 8;
-				
-				// Skip white spaces
-				start = script.find_first_not_of(" \t", start, 2);
-				if( start == script.npos || start > end ) start = end;
-				
-				if( script[start] == '\"' )
-				{
-					++start;
-					
-					// Find second "
-					int stop = script.find('\"', start);
-					if( stop != script.npos && stop <= end )
-					{
-						string filename = script.substr(start, stop-start);
-						
-						// Load the included script (if not already loaded)
-						LoadScript(filename.c_str());
-						
-						// Comment this line so that the compiler doesn't complain
-						script[pos] = '/';
-						script[pos+1] = '/';
-					}
-				}
-			}
-		}
-		
-		// Move to the next line
-		pos = end + 2;
-	}
-
-	return 0;
-}

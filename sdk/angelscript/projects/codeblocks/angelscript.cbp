@@ -113,11 +113,6 @@
 			<Option target="MSVC++ 6 DEBUG"/>
 			<Option target="MinGW RELEASE"/>
 		</Unit>
-		<Unit filename="..\..\source\as_c.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="MSVC++ 6 DEBUG"/>
-			<Option target="MinGW RELEASE"/>
-		</Unit>
 		<Unit filename="..\..\source\as_callfunc.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="MSVC++ 6 DEBUG"/>

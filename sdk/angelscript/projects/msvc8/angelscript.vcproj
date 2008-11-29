@@ -167,10 +167,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\as_c.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\as_callfunc.cpp"
 				>
 			</File>

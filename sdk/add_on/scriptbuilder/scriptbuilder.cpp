@@ -13,17 +13,60 @@ BEGIN_AS_NAMESPACE
 // Helper functions
 static const char *GetCurrentDir(char *buf, size_t size);
 
-// Temporary structure for storing metadata and declaration
-struct SMetadataDecl
-{
-	SMetadataDecl(string m, string d, int t) : metadata(m), declaration(d), type(t) {}
-	string metadata;
-	string declaration;
-	int    type;
-};
-
 int CScriptBuilder::BuildScriptFromFile(asIScriptEngine *engine, const char *module, const char *filename)
 {
+	this->engine = engine;
+	this->module = module;
+
+	ClearAll();
+
+	int r = LoadScriptSection(filename);
+	if( r < 0 )
+		Build();
+
+	return Build();
+}
+
+int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *module, const char *script, const char *sectionname)
+{
+	this->engine = engine;
+	this->module = module;
+
+	ClearAll();
+
+	int r = ProcessScriptSection(script, sectionname);
+	if( r < 0 )
+		return r;
+
+	return Build();
+}
+
+void CScriptBuilder::ClearAll()
+{
+	foundDeclarations.clear();
+	includedScripts.clear();
+	typeMetadataMap.clear();
+	funcMetadataMap.clear();
+	varMetadataMap.clear();
+}
+
+int CScriptBuilder::LoadScriptSection(const char *filename)
+{
+	// TODO: The file name stored in the set should be the fully resolved name because
+	// it is possible to name the same file in multiple ways using relative paths.
+
+	// Skip loading this script file if it has been loaded already
+	string scriptFile = filename;
+	if( includedScripts.find(scriptFile) != includedScripts.end() )
+	{
+		// Already loaded 
+		return 0;
+	}
+
+	// Add the file to the set of loaded script files
+	includedScripts.insert(scriptFile);
+
+	// Open the script file
 	FILE *f = fopen(filename, "rb");
 	if( f == 0 )
 	{
@@ -58,19 +101,18 @@ int CScriptBuilder::BuildScriptFromFile(asIScriptEngine *engine, const char *mod
 		return -1;
 	}
 
-	return BuildScriptFromMemory(engine, module, code.c_str(), filename);
+	return ProcessScriptSection(code.c_str(), filename);
 }
 
-int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *module, const char *script, const char *sectionname)
+int CScriptBuilder::ProcessScriptSection(const char *script, const char *sectionname)
 {
+	vector<string> includes;
+
 	// Perform a superficial parsing of the script first to store the metadata
 	modifiedScript = script;
-	this->engine = engine;
-
-	vector<SMetadataDecl> foundDeclarations;
 
 	// Preallocate memory
-	std::string metadata, declaration;
+	string metadata, declaration;
 	metadata.reserve(500);
 	declaration.reserve(100);
 
@@ -79,7 +121,7 @@ int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *m
 	{
 		int len;
 		asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-		if( t == asTC_KEYWORD )
+		if( t == asTC_KEYWORD || t == asTC_UNKNOWN )
 		{
 			// Is this the start of metadata?
 			if( modifiedScript[pos] == '[' )
@@ -98,7 +140,43 @@ int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *m
 					foundDeclarations.push_back(decl);
 				}
 			}
-			// Don't search for metadata within statement blocks
+			// Is this an include directive?
+			else if( modifiedScript[pos] == '#' )
+			{
+				int start = pos++;
+
+				asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+				if( t == asTC_IDENTIFIER )
+				{
+					string token;
+					token.assign(&modifiedScript[pos], len);
+					if( token == "include" )
+					{
+						pos += len;
+						t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+						if( t == asTC_WHITESPACE )
+						{
+							pos += len;
+							t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+						}
+
+						if( t == asTC_VALUE && len > 2 && modifiedScript[pos] == '"' )
+						{
+							// Get the include file
+							string includefile;
+							includefile.assign(&modifiedScript[pos+1], len-2);
+							pos += len;
+
+							// Store it for later processing
+							includes.push_back(includefile);
+
+							// Overwrite the include directive with space characters to avoid compiler error
+							memset(&modifiedScript[start], ' ', pos-start);
+						}
+					}
+				}
+			}
+			// Don't search for metadata/includes within statement blocks
 			else if( modifiedScript[pos] == '{' )
 				pos = SkipStatementBlock(pos);
 			else
@@ -109,8 +187,22 @@ int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *m
 	}
 
 	// Build the actual script
-	engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, 0);
+	engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
 	engine->AddScriptSection(module, sectionname, modifiedScript.c_str(), modifiedScript.size());
+
+	// Load the included scripts
+	for( int n = 0; n < (int)includes.size(); n++ )
+	{
+		int r = LoadScriptSection(includes[n].c_str());
+		if( r < 0 )
+			return r;
+	}
+
+	return 0;
+}
+
+int CScriptBuilder::Build()
+{
 	int r = engine->Build(module);
 	if( r < 0 )
 		return r;

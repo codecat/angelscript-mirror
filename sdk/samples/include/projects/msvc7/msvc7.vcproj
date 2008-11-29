@@ -160,6 +160,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -185,6 +188,9 @@
 			Filter="h;hpp;hxx;hm;inl">
 			<File
 				RelativePath="..\..\..\..\angelscript\include\angelscript.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptbuilder\scriptbuilder.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h">
