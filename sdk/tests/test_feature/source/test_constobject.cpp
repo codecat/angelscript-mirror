@@ -78,6 +78,8 @@ bool Test2();
 bool Test()
 {
 	bool fail = Test2();
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		return false;
 
 	int r;
 

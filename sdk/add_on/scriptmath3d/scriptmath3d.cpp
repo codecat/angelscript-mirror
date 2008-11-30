@@ -309,7 +309,7 @@ void RegisterScriptMath3D_Generic(asIScriptEngine *engine)
 	// Register the object operator overloads
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,    "void f()",                     asFUNCTION(Vector3DefaultConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,    "void f(const vector3 &in)",       asFUNCTION(Vector3CopyConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,    "void f(float, float, float))", asFUNCTION(Vector3InitConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,    "void f(float, float, float)", asFUNCTION(Vector3InitConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_ADD_ASSIGN,   "vector3 &f(const vector3 &in)",      asFUNCTION(Vector3AddAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_SUB_ASSIGN,   "vector3 &f(const vector3 &in)",      asFUNCTION(Vector3SubAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_MUL_ASSIGN,   "vector3 &f(float)",               asFUNCTION(Vector3MulAssign_Generic), asCALL_GENERIC); assert( r >= 0 );

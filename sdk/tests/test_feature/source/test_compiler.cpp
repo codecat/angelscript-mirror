@@ -382,6 +382,9 @@ void doStuff(float a, float b)
 
 bool Test2()
 {
+	if( strstr(asGetLibraryOptions(), " AS_MAX_PORTABILITY ") )
+		return false;
+
 	bool fail = false;
 	int r;
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

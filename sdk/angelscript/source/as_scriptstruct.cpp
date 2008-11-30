@@ -110,14 +110,14 @@ static void ScriptStruct_GetFlag_Generic(asIScriptGeneric *gen)
 static void ScriptStruct_EnumReferences_Generic(asIScriptGeneric *gen)
 {
 	asCScriptStruct *self = (asCScriptStruct*)gen->GetObject();
-	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
 	self->EnumReferences(engine);
 }
 
 static void ScriptStruct_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 {
 	asCScriptStruct *self = (asCScriptStruct*)gen->GetObject();
-	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
 	self->ReleaseAllHandles(engine);
 }
 

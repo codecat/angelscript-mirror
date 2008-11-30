@@ -81,7 +81,7 @@ static void ArrayObjectResize(asUINT size, asCArrayObject *self)
 
 static void ArrayObjectFactory_Generic(asIScriptGeneric *gen)
 {
-	asCObjectType *ot = *(asCObjectType**)gen->GetArgPointer(0);
+	asCObjectType *ot = *(asCObjectType**)gen->GetAddressOfArg(0);
 
 	*(asCArrayObject**)gen->GetReturnPointer() = ArrayObjectFactory(ot);
 }
@@ -89,7 +89,7 @@ static void ArrayObjectFactory_Generic(asIScriptGeneric *gen)
 static void ArrayObjectFactory2_Generic(asIScriptGeneric *gen)
 {
 	asUINT length = gen->GetArgDWord(0);
-	asCObjectType *ot = *(asCObjectType**)gen->GetArgPointer(1);
+	asCObjectType *ot = *(asCObjectType**)gen->GetAddressOfArg(1);
 
 	*(asCArrayObject**)gen->GetReturnPointer() = ArrayObjectFactory2(length, ot);
 }
@@ -160,14 +160,14 @@ static void ArrayObject_GetFlag_Generic(asIScriptGeneric *gen)
 static void ArrayObject_EnumReferences_Generic(asIScriptGeneric *gen)
 {
 	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
-	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
 	self->EnumReferences(engine);
 }
 
 static void ArrayObject_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 {
 	asCArrayObject *self = (asCArrayObject*)gen->GetObject();
-	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetArgPointer(0);
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
 	self->ReleaseAllHandles(engine);
 }
 

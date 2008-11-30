@@ -142,9 +142,10 @@ void TestFunc(asIScriptGeneric *gen)
 	assert( arg1->buffer == "test" );
 }
 
-void PrintRef(string &ref)
+void PrintRef(asIScriptGeneric *gen)
 {
-	assert( &ref != 0 );
+	std::string *ref = *(std::string**)gen->GetAddressOfArg(0);
+	assert( ref != 0 );
 }
 
 bool Test()
@@ -392,7 +393,7 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptString(engine);
-		engine->RegisterGlobalFunction("void Print(string &str)",asFUNCTION(PrintRef), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void Print(string &str)",asFUNCTION(PrintRef), asCALL_GENERIC);
 
 		const char *script =
 			"string str = 'Some String'; \n"
