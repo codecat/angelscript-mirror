@@ -72,6 +72,26 @@ struct sObjectTypePair
 	asCObjectType *b;
 };
 
+// TODO: AngelScript 3.0: The module should have AddRef/Release methods. Only when 
+// the application releases the last reference is the module discarded. The engine
+// will not have methods for enumerating modules, the application will have to do it
+// by itself. The engine will just have a CreateModule method for creating new modules.
+// I'm leaving this change for 3.0, because it changes the way the application has 
+// to manage modules.
+
+// TODO: global: The module represents the current scope. Global variables may be added/removed
+// from the scope through DeclareGlobalVar, UndeclareGlobalVar. Undeclaring a global variable
+// doesn't destroy it, it just means the variable is no longer visible from the module, e.g. for
+// new function compilations. Only when no more functions are accessing the global variables is
+// the variable removed.
+
+// TODO: dynamic functions: It must be possible to compile new functions dynamically within the 
+// scope of a module. The new functions can be added to the scope of the module, or it can be 
+// left outside, thus only accessible through the function id that is returned. This can be used
+// by scripts to dynamically compile new functions. It will also be possible to undeclare functions,
+// in which case the function is removed from the scope of the module. When no one else is accessing
+// the function anymore, will it be removed.
+
 // TODO: Move this to angelscript.h
 class asIScriptModule
 {
