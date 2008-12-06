@@ -250,7 +250,8 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	}
 
 	// Is the return type allowed?
-	if( (returnType.GetSizeOnStackDWords() == 0 && returnType != asCDataType::CreatePrimitive(ttVoid, false) )   || returnType.IsReference() && returnType.GetSizeInMemoryBytes() == 0 )
+	if( (returnType.GetSizeOnStackDWords() == 0 && returnType != asCDataType::CreatePrimitive(ttVoid, false)) || 
+		(returnType.IsReference() && returnType.GetSizeInMemoryBytes() == 0) )
 	{
 		asCString str;
 		str.Format(TXT_RETURN_CANT_BE_s, returnType.Format().AddressOf());
@@ -3061,8 +3062,8 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 				}
 			}
 
-			if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 ||
-				to.IsEnumType() && isExplicit )
+			if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1) ||
+				(to.IsEnumType() && isExplicit) )
 			{
 				if( ctx->type.dataType.IsIntegerType() || 
 					ctx->type.dataType.IsUnsignedType() ||
@@ -3321,7 +3322,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 		{
 			if( (to.IsIntegerType() || to.IsUnsignedType() ||
 				 to.IsFloatType()   || to.IsDoubleType() ||
-				 to.IsEnumType() && isExplicit) &&
+				 (to.IsEnumType() && isExplicit)) &&
 				(ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() ||
 				 ctx->type.dataType.IsFloatType()   || ctx->type.dataType.IsDoubleType() ||
 				 ctx->type.dataType.IsEnumType()) )
@@ -3769,8 +3770,8 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 	// Arrays can't be constants
 	if( to.IsArrayType() ) return;
 
-	if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 ||
-		to.IsEnumType() && isExplicit )
+	if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1) ||
+		(to.IsEnumType() && isExplicit) )
 	{
 		if( from->type.dataType.IsFloatType() ||
 			from->type.dataType.IsDoubleType() ||
@@ -5424,10 +5425,12 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 
 	// We don't want a reference
 	if( expr.type.dataType.IsReference() ) 
+	{
 		if( expr.type.dataType.IsObject() )
 			Dereference(&expr, true);
 		else
 			ConvertToVariable(&expr);
+	}
 
 	ImplicitConversion(&expr, to, node, true);
 
@@ -6651,8 +6654,8 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 						// Conversion between signed and unsigned integer is better than between integer and float
 
 						// Is it a match except for sign?
-						if( argType->dataType.IsIntegerType() && ti.type.dataType.IsUnsignedType() ||
-							argType->dataType.IsUnsignedType() && ti.type.dataType.IsIntegerType() )
+						if( (argType->dataType.IsIntegerType() && ti.type.dataType.IsUnsignedType()) ||
+							(argType->dataType.IsUnsignedType() && ti.type.dataType.IsIntegerType()) )
 						{
 							if( !isMatchExceptSign ) matches.SetLength(0);
 
@@ -8126,8 +8129,8 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 {
 	// Warn if not both operands are explicit handles
 	if( (node->tokenType == ttEqual || node->tokenType == ttNotEqual) &&
-		(!lctx->type.isExplicitHandle && !(lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) ||
-		 !rctx->type.isExplicitHandle && !(rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE)) )
+		((!lctx->type.isExplicitHandle && !(lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE)) ||
+		 (!rctx->type.isExplicitHandle && !(rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE))) )
 	{
 		Warning(TXT_HANDLE_COMPARISON, node);
 	}

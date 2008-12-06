@@ -46,11 +46,12 @@ void Test()
 
 	RegisterScriptString(engine);
 
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
+	mod->Build();
 
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestString()"));
+	ctx->Prepare(mod->GetFunctionIdByDecl("void TestString()"));
 
 	printf("Executing AngelScript version...\n");
 

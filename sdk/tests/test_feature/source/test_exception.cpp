@@ -71,8 +71,9 @@ bool TestException()
 
 	ctx->Release();
 
-	engine->AddScriptSection(0, "script", script1, strlen(script1));
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script1, strlen(script1));
+	mod->Build();
 	r = engine->ExecuteString(0, "A a; a.Test(\"test\");");
 	if( r != asEXECUTION_EXCEPTION )
 	{

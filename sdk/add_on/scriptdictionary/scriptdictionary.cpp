@@ -21,7 +21,7 @@ CScriptDictionary::CScriptDictionary(asIScriptEngine *engine)
 
 	// Notify the garbage collector of this object
 	// TODO: The type id should be cached
-	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl(0, "dictionary"));
+	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl("dictionary"));
 }
 
 CScriptDictionary::~CScriptDictionary()
@@ -131,7 +131,7 @@ void CScriptDictionary::Set(string &key, void *value, int typeId)
 // different type.
 void CScriptDictionary::Set(string &key, asINT64 &value)
 {
-	int typeId = engine->GetTypeIdByDecl(0, "int64");
+	int typeId = engine->GetTypeIdByDecl("int64");
 	Set(key, &value, typeId);
 }
 
@@ -141,7 +141,7 @@ void CScriptDictionary::Set(string &key, asINT64 &value)
 // retrieves the stored value using a different type.
 void CScriptDictionary::Set(string &key, double &value)
 {
-	int typeId = engine->GetTypeIdByDecl(0, "double");
+	int typeId = engine->GetTypeIdByDecl("double");
 	Set(key, &value, typeId);
 }
 
@@ -191,8 +191,8 @@ bool CScriptDictionary::Get(string &key, void *value, int typeId)
 			}
 
 			// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
-			int intTypeId = engine->GetTypeIdByDecl(0, "int64");
-			int fltTypeId = engine->GetTypeIdByDecl(0, "double");
+			int intTypeId = engine->GetTypeIdByDecl("int64");
+			int fltTypeId = engine->GetTypeIdByDecl("double");
 			if( it->second.typeId == intTypeId && typeId == fltTypeId )
 			{
 				*(double*)value = double(it->second.valueInt);
@@ -215,13 +215,13 @@ bool CScriptDictionary::Get(string &key, void *value, int typeId)
 
 bool CScriptDictionary::Get(string &key, asINT64 &value)
 {
-	int typeId = engine->GetTypeIdByDecl(0, "int64");
+	int typeId = engine->GetTypeIdByDecl("int64");
 	return Get(key, &value, typeId);
 }
 
 bool CScriptDictionary::Get(string &key, double &value)
 {
-	int typeId = engine->GetTypeIdByDecl(0, "double");
+	int typeId = engine->GetTypeIdByDecl("double");
 	return Get(key, &value, typeId);
 }
 

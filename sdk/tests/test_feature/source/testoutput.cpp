@@ -30,11 +30,13 @@ bool Test()
 
 	CBufferedOutStream out;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->Build(0);
 
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1);
+	mod->Build();
+
+	mod->AddScriptSection(TESTNAME, script2);
+	mod->Build();
 
 	if( out.buffer != "TestOutput (1, 1) : Info    : Compiling void test()\n"
 		              "TestOutput (4, 7) : Error   : 'a' is not declared\n"

@@ -27,16 +27,17 @@ bool Test()
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "TestParser (3, 1) : Error   : Expected '}'\n" )
 		fail = true;
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build(0);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "TestParser (3, 17) : Error   : Expected ')' or ','\n"

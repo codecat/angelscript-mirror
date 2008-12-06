@@ -59,8 +59,9 @@ bool TestFuncOverload()
 	engine->RegisterGlobalFunction("void func()", asFUNCTION(FuncVoid), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void func(int)", asFUNCTION(FuncInt), asCALL_CDECL);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	int r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	int r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
@@ -68,8 +69,9 @@ bool TestFuncOverload()
 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "TestFuncOverload (1, 1) : Info    : Compiling void ScriptFunc(void)\n"
@@ -111,8 +113,9 @@ bool Test2()
 		"  func(a,b); \n"
 		"}\n";
 
-	r = engine->AddScriptSection(0, "test", script1, strlen(script1));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("test", script1, strlen(script1));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
@@ -127,8 +130,9 @@ bool Test2()
 		"  func(a,b); \n"
 		"}\n";
 
-	r = engine->AddScriptSection(0, "test", script2, strlen(script2));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("test", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 

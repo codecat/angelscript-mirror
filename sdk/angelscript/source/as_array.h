@@ -150,10 +150,12 @@ template <class T>
 void asCArray<T>::PushLast(const T &element)
 {
 	if( length == maxLength )
+	{
 		if( maxLength == 0 )
 			Allocate(1, false);
 		else
 			Allocate(2*maxLength, true);
+	}
 
 	array[length++] = element;
 }

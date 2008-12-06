@@ -557,7 +557,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 		GetToken(&t1);
 		GetToken(&t2);
 		RewindTo(&t);
-		if( t1.type == ttIdentifier && t2.type == ttOpenParanthesis || t1.type == ttBitNot )
+		if( (t1.type == ttIdentifier && t2.type == ttOpenParanthesis) || t1.type == ttBitNot )
 			return true;
 	}
 
@@ -977,7 +977,7 @@ asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 		{
 			// Find the end of the expression
 			int indent = 0;
-			while( indent || t.type != ttListSeparator && t.type != ttEndStatement && t.type != ttEndStatementBlock )
+			while( indent || (t.type != ttListSeparator && t.type != ttEndStatement && t.type != ttEndStatementBlock) )
 			{
 				if( t.type == ttOpenParanthesis )
 					indent++;

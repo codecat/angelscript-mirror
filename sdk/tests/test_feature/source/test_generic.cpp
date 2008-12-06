@@ -112,7 +112,7 @@ void nullPtr(asIScriptGeneric *gen)
 
 	*(asIScriptStruct **)gen->GetReturnPointer() = *intf;
 
-	assert(gen->GetReturnTypeId() == gen->GetEngine()->GetTypeIdByDecl(0, "intf@"));
+	assert(gen->GetReturnTypeId() == gen->GetEngine()->GetTypeIdByDecl("intf@"));
 }
 
 bool Test()

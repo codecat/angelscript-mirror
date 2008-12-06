@@ -5,6 +5,7 @@
 \section doc_api_intf_1 Principal interfaces
 
  - \ref asIScriptEngine
+ - \ref asIScriptModule
  - \ref asIScriptContext
  
 \section doc_api_intf_2 Secondary interfaces

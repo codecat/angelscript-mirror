@@ -40,6 +40,7 @@
 #include "as_module.h"
 #include "as_builder.h"
 #include "as_context.h"
+#include "as_texts.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -47,7 +48,7 @@ asCModule::asCModule(const char *name, int id, asCScriptEngine *engine)
 {
 	this->name     = name;
 	this->engine   = engine;
-	this->moduleID = id;
+	this->moduleId = id;
 
 	builder = 0;
 	isDiscarded = false;
@@ -74,7 +75,7 @@ asCModule::~asCModule()
 		if( engine->lastModule == this )
 			engine->lastModule = 0;
 
-		int index = (moduleID >> 16);
+		int index = (moduleId >> 16);
 		engine->scriptModules[index] = 0;
 	}
 }
@@ -116,11 +117,27 @@ int asCModule::AddScriptSection(const char *name, const char *code, size_t codeL
 int asCModule::Build()
 {
 	asASSERT( contextCount.get() == 0 );
+	
+	// Only one thread may build at one time
+	int r = engine->RequestBuild();
+	if( r < 0 )
+		return r;
+
+	engine->PrepareEngine();
+	if( engine->configFailed )
+	{
+		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_INVALID_CONFIGURATION);
+		engine->BuildCompleted();
+		return asINVALID_CONFIGURATION;
+	}
 
  	InternalReset();
 
 	if( !builder )
+	{
+		engine->BuildCompleted();
 		return asSUCCESS;
+	}
 
 	// Store the section names
 	for( size_t n = 0; n < builder->scripts.GetLength(); n++ )
@@ -130,7 +147,7 @@ int asCModule::Build()
 	}
 
 	// Compile the script
-	int r = builder->Build();
+	r = builder->Build();
 	asDELETE(builder,asCBuilder);
 	builder = 0;
 	
@@ -140,6 +157,7 @@ int asCModule::Build()
 		InternalReset();
 
 		isBuildWithoutErrors = false;
+		engine->BuildCompleted();
 		return r;
 	}
 
@@ -149,11 +167,12 @@ int asCModule::Build()
 
 	CallInit();
 
+	engine->BuildCompleted();
 	return r;
 }
 
 // interface
-int asCModule::Reinitialize()
+int asCModule::ResetGlobalVars()
 {
 	if( !isGlobalVarInitialized ) return asERROR;
 
@@ -389,6 +408,7 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 	return id;
 }
 
+// interface
 int asCModule::GetFunctionCount()
 {
 	if( isBuildWithoutErrors == false )
@@ -397,6 +417,7 @@ int asCModule::GetFunctionCount()
 	return (int)scriptFunctions.GetLength();
 }
 
+// interface
 int asCModule::GetFunctionIdByDecl(const char *decl)
 {
 	if( isBuildWithoutErrors == false )
@@ -566,6 +587,33 @@ int asCModule::GetGlobalVarTypeId(int index)
 		return asINVALID_ARG;
 
 	return engine->GetTypeIdFromDataType(scriptGlobals[index]->type);
+}
+
+// interface
+int asCModule::GetObjectTypeCount()
+{
+	return (int)classTypes.GetLength();
+}
+
+// interface 
+asIObjectType *asCModule::GetObjectTypeByIndex(asUINT index)
+{
+	if( index >= classTypes.GetLength() ) 
+		return 0;
+
+	return classTypes[index];
+}
+
+// interface
+int asCModule::GetTypeIdByDecl(const char *decl)
+{
+	asCDataType dt;
+	asCBuilder bld(engine, this);
+	int r = bld.ParseDataType(decl, &dt);
+	if( r < 0 )
+		return asINVALID_TYPE;
+
+	return engine->GetTypeIdFromDataType(dt);
 }
 
 int asCModule::AddConstantString(const char *str, size_t len)
@@ -896,12 +944,16 @@ int asCModule::BindAllImportedFunctions()
 		const char *moduleName = GetImportedFunctionSourceModule(n);
 		if( moduleName == 0 ) return asERROR;
 
-		int funcID = engine->GetFunctionIDByDecl(moduleName, str.AddressOf());
-		if( funcID < 0 )
+		asCModule *srcMod = engine->GetModule(moduleName, false);
+		int funcId = -1;
+		if( srcMod )
+			funcId = srcMod->GetFunctionIdByDecl(str.AddressOf());
+
+		if( funcId < 0 )
 			notAllFunctionsWereBound = true;
 		else
 		{
-			if( BindImportedFunction(n, funcID) < 0 )
+			if( BindImportedFunction(n, funcId) < 0 )
 				notAllFunctionsWereBound = true;
 		}
 	}

@@ -36,18 +36,19 @@ bool Test()
 
 	RegisterScriptString(engine);
 
-	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
+	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl("any"));
 	engine->RegisterGlobalProperty("any g_any", any);
 
 	COutStream out;
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	// Try retrieving the type Id for the structure
-	int typeId = engine->GetTypeIdByDecl(0, "MyStruct");
+	int typeId = mod->GetTypeIdByDecl("MyStruct");
 	if( typeId < 0 )
 	{
 		printf("%s: Failed to retrieve the type id for the script struct\n", TESTNAME);
@@ -79,7 +80,7 @@ bool Test()
 		if( strcmp(s->GetPropertyName(0), "a") )
 			fail = true;
 
-		if( s->GetPropertyTypeId(0) != engine->GetTypeIdByDecl(0, "float") )
+		if( s->GetPropertyTypeId(0) != engine->GetTypeIdByDecl("float") )
 			fail = true;
 
 		if( *(float*)s->GetPropertyPointer(0) != 3.141592f )
@@ -88,7 +89,7 @@ bool Test()
 		if( strcmp(s->GetPropertyName(1), "b") )
 			fail = true;
 
-		if( s->GetPropertyTypeId(1) != engine->GetTypeIdByDecl(0, "string") )
+		if( s->GetPropertyTypeId(1) != engine->GetTypeIdByDecl("string") )
 			fail = true;
 
 		if( ((asCScriptString*)s->GetPropertyPointer(1))->buffer != "test" )
@@ -97,7 +98,7 @@ bool Test()
 		if( strcmp(s->GetPropertyName(2), "c") )
 			fail = true;
 
-		if( s->GetPropertyTypeId(2) != engine->GetTypeIdByDecl(0, "string@") )
+		if( s->GetPropertyTypeId(2) != engine->GetTypeIdByDecl("string@") )
 			fail = true;
 
 		if( (*(asCScriptString**)s->GetPropertyPointer(2))->buffer != "test2" )
@@ -115,7 +116,7 @@ bool Test()
 		fail = true;
 
 	// Make sure the type is not used anywhere
-	engine->Discard(0);
+	engine->DiscardModule(0);
 	engine->GarbageCollect();
 
 	// The type id is no longer valid

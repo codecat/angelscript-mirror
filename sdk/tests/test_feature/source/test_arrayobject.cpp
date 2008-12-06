@@ -249,8 +249,9 @@ bool Test()
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;

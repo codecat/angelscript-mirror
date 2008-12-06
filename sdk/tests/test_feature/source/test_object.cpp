@@ -174,9 +174,10 @@ bool Test()
 
 	COutStream out;
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -211,13 +212,6 @@ bool Test()
 		fail = true;
 	}
 
-	// Mustn't allow registration of assignment behaviour as global behaviour
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ASSIGNMENT, "Object &f(const Object &in, const Object &in)", asFUNCTION(0), asCALL_GENERIC);
-	if( r >= 0 )
-	{
-		fail = true;
-	}
-
 	// Verify that the registered types can be enumerated
 	int count = engine->GetObjectTypeCount();
 	if( count != 3 )
@@ -237,6 +231,28 @@ bool Test()
 	if( obj.val != 42 )
 		fail = true;
 	ctx->Release();
+
+	// Test GetObjectTypeCount for the module
+	const char *script2 = "class ScriptType {}";
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script2);
+	mod->Build();
+
+	count = engine->GetObjectTypeCount();
+	if( count != 4 )
+		fail = true;
+
+	count = engine->GetModule(0)->GetObjectTypeCount();
+	if( count != 1 )
+		fail = true;
+
+	// Mustn't allow registration of assignment behaviour as global behaviour
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ASSIGNMENT, "Object &f(const Object &in, const Object &in)", asFUNCTION(0), asCALL_GENERIC);
+	if( r >= 0 )
+	{
+		fail = true;
+	}
 
 	engine->Release();
 

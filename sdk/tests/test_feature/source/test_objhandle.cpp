@@ -174,9 +174,10 @@ bool Test()
 
 	COutStream out;
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -197,7 +198,7 @@ bool Test()
 
 	// Call TestObjReturnHandle() from the application to verify that references are updated as necessary
 	ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetFunctionIDByDecl(0, "refclass@ TestObjReturnHandle(refclass@)"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("refclass@ TestObjReturnHandle(refclass@)"));
 	CRefClass *refclass = new CRefClass();
 
 	ctx->SetArgObject(0, refclass);
@@ -238,8 +239,9 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
-	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 	r = engine->ExecuteString(0, "Test()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
@@ -250,8 +252,9 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	const char *scriptC = "class T {} const T@ func() {return T();}";
-	engine->AddScriptSection(0, "script", scriptC, strlen(scriptC));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", scriptC, strlen(scriptC));
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 	engine->Release();
 

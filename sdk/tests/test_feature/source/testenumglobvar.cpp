@@ -29,13 +29,14 @@ bool TestEnumGlobVar()
 	int o = 0xBAADF00D;
 	r = engine->RegisterGlobalProperty("obj o", &o);
 
-	engine->AddScriptSection(0, "test", script, sizeof(script)-1, 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script, sizeof(script)-1, 0);
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->Build(0);
+	mod->Build();
 
-	int count = engine->GetGlobalVarCount(0);
+	int count = mod->GetGlobalVarCount();
 	if( count != 6 )
 	{
 		printf("%s: GetGlobalVarCount() returned %d, expected 6.\n", TESTNAME, count);
@@ -43,7 +44,7 @@ bool TestEnumGlobVar()
 	}
 
 	const char *buffer = 0;
-	if( (buffer = engine->GetGlobalVarDeclaration(0,0)) == 0 )
+	if( (buffer = mod->GetGlobalVarDeclaration(0)) == 0 )
 	{
 		printf("%s: GetGlobalVarDeclaration() failed\n", TESTNAME);
 		ret = true;
@@ -54,21 +55,21 @@ bool TestEnumGlobVar()
 		ret = true;
 	}
 
-	int idx = engine->GetGlobalVarIndexByName(0, "b");
+	int idx = mod->GetGlobalVarIndexByName("b");
 	if( idx < 0 )
 	{
 		printf("%s: GetGlobalVarIndexByName() returned %d\n", TESTNAME, idx);
 		ret = true;
 	}
 
-	idx = engine->GetGlobalVarIndexByDecl(0, "double c");
+	idx = mod->GetGlobalVarIndexByDecl("double c");
 	if( idx < 0 )
 	{
 		printf("%s: GetGlobalVarIndexByDecl() returned %d\n", TESTNAME, idx);
 		ret = true;
 	}
 
-	if( (buffer = engine->GetGlobalVarName(0, 3)) == 0 )
+	if( (buffer = mod->GetGlobalVarName(3)) == 0 )
 	{
 		printf("%s: GetGlobalVarName() failed\n", TESTNAME);
 		ret = true;
@@ -80,7 +81,7 @@ bool TestEnumGlobVar()
 	}
 
 	unsigned long *d;
-	d = (unsigned long *)engine->GetAddressOfGlobalVar(0, 3);
+	d = (unsigned long *)mod->GetAddressOfGlobalVar(3);
 	if( d == 0 )
 	{
 		printf("%s: GetGlobalVarPointer() returned %d\n", TESTNAME, r);
@@ -93,7 +94,7 @@ bool TestEnumGlobVar()
 	}
 
 	std::string *e;
-	e = (std::string*)engine->GetAddressOfGlobalVar(0, 4);
+	e = (std::string*)mod->GetAddressOfGlobalVar(4);
 	if( e == 0 )
 	{
 		printf("%s: Failed\n", TESTNAME);
@@ -107,7 +108,7 @@ bool TestEnumGlobVar()
 	}
 
 	int *f;
-	f = *(int**)engine->GetAddressOfGlobalVar(0, 5); // We're getting a pointer to the handle
+	f = *(int**)mod->GetAddressOfGlobalVar(5); // We're getting a pointer to the handle
 	if( f == 0 )
 	{
 		printf("%s: failed\n", TESTNAME);

@@ -74,14 +74,15 @@ bool Test()
 	// Must not allow it to be declared as global variable
 	bout.buffer = "";
 	const char *script = "Object obj2;";
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r >= 0 || bout.buffer != "script (1, 1) : Error   : Data type can't be 'Object'\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	// It must not be allowed as sub type of array
 	bout.buffer = "";
@@ -152,9 +153,10 @@ bool Test()
 	 {                      \n\
 	   Object obj;          \n\
 	 }                      \n";
-	engine->AddScriptSection(0, "script", script, strlen(script));
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
 	bout.buffer = "";
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r >= 0 || bout.buffer != "script (4, 5) : Error   : Data type can't be 'Object'\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);

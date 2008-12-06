@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 	r = CompileScript(engine);
 	if( r < 0 ) return -1;
 
-	contextManager.SetRunningContext(engine->GetFunctionIDByDecl("script", "void main()"));
+	contextManager.SetRunningContext(engine->GetModule("script")->GetFunctionIdByDecl("void main()"));
 	
 	// Print some useful information and start the input loop
 	cout << "This sample shows how to use co-routines with AngelScript. Co-routines" << endl; 
@@ -212,14 +212,15 @@ int CompileScript(asIScriptEngine *engine)
 	// Build the two script into separate modules. This will make them have
 	// separate namespaces, which allows them to use the same name for functions
 	// and global variables.
-	r = engine->AddScriptSection("script", "script", script, strlen(script));
+	asIScriptModule *mod = engine->GetModule("script", asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("script", script, strlen(script));
 	if( r < 0 ) 
 	{
 		cout << "AddScriptSection() failed" << endl;
 		return -1;
 	}
 	
-	r = engine->Build("script");
+	r = mod->Build();
 	if( r < 0 )
 	{
 		cout << "Build() failed" << endl;
@@ -244,7 +245,7 @@ void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
 
 		// We need to find the function that will be created as the co-routine
 		string decl = "void " + func + "(any &in)"; 
-		int funcId = engine->GetFunctionIDByDecl(mod.c_str(), decl.c_str());
+		int funcId = engine->GetModule(mod.c_str())->GetFunctionIdByDecl(decl.c_str());
 		if( funcId < 0 )
 		{
 			// No function could be found, raise an exception

@@ -154,8 +154,9 @@ bool Test()
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -173,8 +174,9 @@ bool Test()
 	}
 	if( ctx ) ctx->Release();
 
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -188,8 +190,9 @@ bool Test()
 		fail = true;
 	}
 
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -209,8 +212,9 @@ bool Test()
 	if( ctx ) ctx->Release();
 	ctx = 0;
 
-	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -229,8 +233,9 @@ bool Test()
 
 	if( ctx ) ctx->Release();
 
-	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 	r = engine->ExecuteString(0, "TestArrayInitList()", &ctx);
 	if( r != asEXECUTION_FINISHED ) fail = true;
@@ -241,8 +246,9 @@ bool Test()
 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestArray (1, 1) : Info    : Compiling void Test()\n"
 	                   "TestArray (3, 15) : Error   : Initialization lists cannot be used with 'int[]@'\n"
@@ -251,8 +257,9 @@ bool Test()
 
 	// Array object must call default constructor of the script classes
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
+	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");

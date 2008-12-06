@@ -16,7 +16,7 @@ static const char *GetCurrentDir(char *buf, size_t size);
 int CScriptBuilder::BuildScriptFromFile(asIScriptEngine *engine, const char *module, const char *filename)
 {
 	this->engine = engine;
-	this->module = module;
+	this->module = engine->GetModule(module, asGM_ALWAYS_CREATE);
 
 	ClearAll();
 
@@ -30,7 +30,7 @@ int CScriptBuilder::BuildScriptFromFile(asIScriptEngine *engine, const char *mod
 int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *module, const char *script, const char *sectionname)
 {
 	this->engine = engine;
-	this->module = module;
+	this->module = engine->GetModule(module, asGM_ALWAYS_CREATE);
 
 	ClearAll();
 
@@ -188,7 +188,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 
 	// Build the actual script
 	engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
-	engine->AddScriptSection(module, sectionname, modifiedScript.c_str(), modifiedScript.size());
+	module->AddScriptSection(sectionname, modifiedScript.c_str(), modifiedScript.size());
 
 	// Load the included scripts
 	for( int n = 0; n < (int)includes.size(); n++ )
@@ -203,7 +203,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 
 int CScriptBuilder::Build()
 {
-	int r = engine->Build(module);
+	int r = module->Build();
 	if( r < 0 )
 		return r;
 
@@ -215,21 +215,21 @@ int CScriptBuilder::Build()
 		if( decl->type == 1 )
 		{
 			// Find the type id
-			int typeId = engine->GetTypeIdByDecl(module, decl->declaration.c_str());
+			int typeId = module->GetTypeIdByDecl(decl->declaration.c_str());
 			if( typeId >= 0 )
 				typeMetadataMap.insert(map<int, string>::value_type(typeId, decl->metadata));
 		}
 		else if( decl->type == 2 )
 		{
 			// Find the function id
-			int funcId = engine->GetFunctionIDByDecl(module, decl->declaration.c_str());
+			int funcId = module->GetFunctionIdByDecl(decl->declaration.c_str());
 			if( funcId >= 0 )
 				funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
 		}
 		else if( decl->type == 3 )
 		{
 			// Find the global variable index
-			int varIdx = engine->GetGlobalVarIndexByDecl(module, decl->declaration.c_str());
+			int varIdx = module->GetGlobalVarIndexByDecl(decl->declaration.c_str());
 			if( varIdx >= 0 )
 				varMetadataMap.insert(map<int, string>::value_type(varIdx, decl->metadata));
 		}

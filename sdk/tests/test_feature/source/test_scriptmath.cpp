@@ -43,8 +43,9 @@ bool Test()
 
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
@@ -61,8 +62,9 @@ bool Test()
 
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 

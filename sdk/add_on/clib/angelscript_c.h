@@ -284,6 +284,14 @@ typedef enum
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 } asETypeIdFlags;
 
+// GetModule flags
+typedef enum
+{
+	asGM_ONLY_IF_EXISTS       = 0,
+	asGM_CREATE_IF_NOT_EXISTS = 1,
+	asGM_ALWAYS_CREATE        = 2
+} asEGMFlags;
+
 typedef struct 
 {
 	const char *section;
@@ -294,6 +302,7 @@ typedef struct
 } asSMessageInfo;
 
 typedef struct asIScriptEngine asIScriptEngine;
+typedef struct asIScriptModule asIScriptModule;
 typedef struct asIScriptContext asIScriptContext;
 typedef struct asIScriptGeneric asIScriptGeneric;
 typedef struct asIScriptStruct asIScriptStruct;
@@ -348,88 +357,87 @@ extern "C"
 	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 	AS_API int asResetGlobalMemoryFunctions();
 
-	AS_API int               asEngine_AddRef(asIScriptEngine *e);
-	AS_API int               asEngine_Release(asIScriptEngine *e);
-	AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asEEngineProp property, asPWORD value);
-	AS_API asPWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asEEngineProp property);
-	AS_API int               asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv);
-	AS_API int               asEngine_ClearMessageCallback(asIScriptEngine *e);
-	AS_API int               asEngine_WriteMessage(asIScriptEngine *e, const char *section, int row, int col, asEMsgType type, const char *message);
-	AS_API int               asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags);
-	AS_API int               asEngine_RegisterObjectProperty(asIScriptEngine *e, const char *obj, const char *declaration, int byteOffset);
-	AS_API int               asEngine_RegisterObjectMethod(asIScriptEngine *e, const char *obj, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
-	AS_API int               asEngine_RegisterObjectBehaviour(asIScriptEngine *e, const char *datatype, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
-	AS_API int               asEngine_RegisterGlobalProperty(asIScriptEngine *e, const char *declaration, void *pointer);
-	AS_API int               asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
-	AS_API int               asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
-	AS_API int               asEngine_RegisterInterface(asIScriptEngine *e, const char *name);
-	AS_API int               asEngine_RegisterInterfaceMethod(asIScriptEngine *e, const char *intf, const char *declaration);
-	AS_API int               asEngine_RegisterEnum(asIScriptEngine *e, const char *type);
-	AS_API int               asEngine_RegisterEnumValue(asIScriptEngine *e, const char *type, const char *name, int value);
-	AS_API int               asEngine_RegisterTypedef(asIScriptEngine *e, const char *type, const char *decl);
-	AS_API int               asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv);
-	AS_API int               asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName);
-	AS_API int               asEngine_EndConfigGroup(asIScriptEngine *e);
-	AS_API int               asEngine_RemoveConfigGroup(asIScriptEngine *e, const char *groupName);
-	AS_API int               asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const char *groupName, const char *module, bool hasAccess);
-	AS_API int               asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset /* = 0 */);
-	AS_API int               asEngine_Build(asIScriptEngine *e, const char *module);
-	AS_API int               asEngine_Discard(asIScriptEngine *e, const char *module);
-	AS_API int               asEngine_GetFunctionCount(asIScriptEngine *e, const char *module);
-	AS_API int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index);
-	AS_API int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name);
-	AS_API int               asEngine_GetFunctionIDByDecl(asIScriptEngine *e, const char *module, const char *decl);
-	AS_API asIScriptFunction *asEngine_GetFunctionDescriptorByIndex(asIScriptEngine *e, const char *module, int index);
+	AS_API int                asEngine_AddRef(asIScriptEngine *e);
+	AS_API int                asEngine_Release(asIScriptEngine *e);
+	AS_API int                asEngine_SetEngineProperty(asIScriptEngine *e, asEEngineProp property, asPWORD value);
+	AS_API asPWORD            asEngine_GetEngineProperty(asIScriptEngine *e, asEEngineProp property);
+	AS_API int                asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv);
+	AS_API int                asEngine_ClearMessageCallback(asIScriptEngine *e);
+	AS_API int                asEngine_WriteMessage(asIScriptEngine *e, const char *section, int row, int col, asEMsgType type, const char *message);
+	AS_API int                asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags);
+	AS_API int                asEngine_RegisterObjectProperty(asIScriptEngine *e, const char *obj, const char *declaration, int byteOffset);
+	AS_API int                asEngine_RegisterObjectMethod(asIScriptEngine *e, const char *obj, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
+	AS_API int                asEngine_RegisterObjectBehaviour(asIScriptEngine *e, const char *datatype, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
+	AS_API int                asEngine_RegisterGlobalProperty(asIScriptEngine *e, const char *declaration, void *pointer);
+	AS_API int                asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
+	AS_API int                asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
+	AS_API int                asEngine_RegisterInterface(asIScriptEngine *e, const char *name);
+	AS_API int                asEngine_RegisterInterfaceMethod(asIScriptEngine *e, const char *intf, const char *declaration);
+	AS_API int                asEngine_RegisterEnum(asIScriptEngine *e, const char *type);
+	AS_API int                asEngine_RegisterEnumValue(asIScriptEngine *e, const char *type, const char *name, int value);
+	AS_API int                asEngine_RegisterTypedef(asIScriptEngine *e, const char *type, const char *decl);
+	AS_API int                asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv);
+	AS_API int                asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName);
+	AS_API int                asEngine_EndConfigGroup(asIScriptEngine *e);
+	AS_API int                asEngine_RemoveConfigGroup(asIScriptEngine *e, const char *groupName);
+	AS_API int                asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const char *groupName, const char *module, bool hasAccess);
+	AS_API asIScriptModule *  asEngine_GetModule(asIScriptEngine *e, const char *module, asEGMFlags flag);
+	AS_API int                asEngine_DiscardModule(asIScriptEngine *e, const char *module);
 	AS_API asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId);
-	AS_API int               asEngine_GetGlobalVarCount(asIScriptEngine *e, const char *module);
-	AS_API int               asEngine_GetGlobalVarIndexByName(asIScriptEngine *e, const char *module, const char *name);
-	AS_API int               asEngine_GetGlobalVarIndexByDecl(asIScriptEngine *e, const char *module, const char *decl);
-	AS_API const char *      asEngine_GetGlobalVarDeclaration(asIScriptEngine *e, const char *module, int index, int *length /* = 0 */);
-	AS_API const char *      asEngine_GetGlobalVarName(asIScriptEngine *e, const char *module, int index, int *length /* = 0 */);
-	AS_API int               asEngine_GetGlobalVarTypeId(asIScriptEngine *e, const char *module, int index);
-	AS_API void *            asEngine_GetAddressOfGlobalVar(asIScriptEngine *e, const char *module, int index);
-	#ifdef AS_DEPRECATED
-	AS_API int               asEngine_GetGlobalVarIDByIndex(asIScriptEngine *e, const char *module, int index);
-	AS_API int               asEngine_GetGlobalVarIDByName(asIScriptEngine *e, const char *module, const char *name);
-	AS_API int               asEngine_GetGlobalVarIDByDecl(asIScriptEngine *e, const char *module, const char *decl);
-	AS_API const char *      asEngine_GetGlobalVarDeclaration(asIScriptEngine *e, int gvarID, int *length /* = 0 */);
-	AS_API const char *      asEngine_GetGlobalVarName(asIScriptEngine *e, int gvarID, int *length /* = 0 */);
-	AS_API void *            asEngine_GetGlobalVarPointer(asIScriptEngine *e, int gvarID);
-	#endif
-	AS_API int               asEngine_GetImportedFunctionCount(asIScriptEngine *e, const char *module);
-	AS_API int               asEngine_GetImportedFunctionIndexByDecl(asIScriptEngine *e, const char *module, const char *decl);
-	AS_API const char *      asEngine_GetImportedFunctionDeclaration(asIScriptEngine *e, const char *module, int importIndex, int *length /* = 0 */);
-	AS_API const char *      asEngine_GetImportedFunctionSourceModule(asIScriptEngine *e, const char *module, int importIndex, int *length /* = 0 */);
-	AS_API int               asEngine_BindImportedFunction(asIScriptEngine *e, const char *module, int importIndex, int funcID);
-	AS_API int               asEngine_UnbindImportedFunction(asIScriptEngine *e, const char *module, int importIndex);
-	AS_API int               asEngine_BindAllImportedFunctions(asIScriptEngine *e, const char *module);
-	AS_API int               asEngine_UnbindAllImportedFunctions(asIScriptEngine *e, const char *module);
-	AS_API int               asEngine_GetTypeIdByDecl(asIScriptEngine *e, const char *module, const char *decl);
-	AS_API const char *      asEngine_GetTypeDeclaration(asIScriptEngine *e, int typeId, int *length /* = 0 */);
-	AS_API int               asEngine_GetSizeOfPrimitiveType(asIScriptEngine *e, int typeId);
-	AS_API asIObjectType *   asEngine_GetObjectTypeById(asIScriptEngine *e, int typeId);
-	AS_API asIObjectType *   asEngine_GetObjectTypeByIndex(asIScriptEngine *e, asUINT index);
-	AS_API int               asEngine_GetObjectTypeCount(asIScriptEngine *e);
-	AS_API asIScriptContext *asEngine_CreateContext(asIScriptEngine *e);
-	AS_API void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId);
-	AS_API void *            asEngine_CreateScriptObjectCopy(asIScriptEngine *e, void *obj, int typeId);
-	AS_API void              asEngine_CopyScriptObject(asIScriptEngine *e, void *dstObj, void *srcObj, int typeId);
-	AS_API void              asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId);
-	AS_API void              asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId);
-	AS_API bool              asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
-	AS_API int               asEngine_CompareScriptObjects(asIScriptEngine *e, bool &result, int behaviour, void *leftObj, void *rightObj, int typeId);
-	AS_API int               asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx /* = 0 */, asDWORD flags /* = 0 */);
-	AS_API int               asEngine_GarbageCollect(asIScriptEngine *e, asEGCFlags flags /* = asGC_FULL_CYCLE */);
-	AS_API void              asEngine_GetGCStatistics(asIScriptEngine *e, asUINT *currentSize, asUINT *totalDestroyed /* = 0 */, asUINT *totalDetected /* = 0 */);
-	#ifdef AS_DEPRECATED
-	AS_API int               asEngine_GetObjectsInGarbageCollectorCount(asIScriptEngine *e);
-	#endif
-	AS_API void              asEngine_NotifyGarbageCollectorOfNewObject(asIScriptEngine *e, void *obj, int typeId);
-	AS_API void              asEngine_GCEnumCallback(asIScriptEngine *e, void *obj);
-	AS_API int               asEngine_SaveByteCode(asIScriptEngine *e, const char *module, asBINARYWRITEFUNC_t outFunc, void *outParam);
-	AS_API int               asEngine_LoadByteCode(asIScriptEngine *e, const char *module, asBINARYREADFUNC_t inFunc, void *inParam);
-	AS_API void *            asEngine_SetUserData(asIScriptEngine *e, void *data);
-	AS_API void *            asEngine_GetUserData(asIScriptEngine *e);
+	AS_API int                asEngine_GetTypeIdByDecl(asIScriptEngine *e, const char *decl);
+	AS_API const char *       asEngine_GetTypeDeclaration(asIScriptEngine *e, int typeId, int *length /* = 0 */);
+	AS_API int                asEngine_GetSizeOfPrimitiveType(asIScriptEngine *e, int typeId);
+	AS_API asIObjectType *    asEngine_GetObjectTypeById(asIScriptEngine *e, int typeId);
+	AS_API asIObjectType *    asEngine_GetObjectTypeByIndex(asIScriptEngine *e, asUINT index);
+	AS_API int                asEngine_GetObjectTypeCount(asIScriptEngine *e);
+	AS_API asIScriptContext * asEngine_CreateContext(asIScriptEngine *e);
+	AS_API void *             asEngine_CreateScriptObject(asIScriptEngine *e, int typeId);
+	AS_API void *             asEngine_CreateScriptObjectCopy(asIScriptEngine *e, void *obj, int typeId);
+	AS_API void               asEngine_CopyScriptObject(asIScriptEngine *e, void *dstObj, void *srcObj, int typeId);
+	AS_API void               asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId);
+	AS_API void               asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId);
+	AS_API bool               asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
+	AS_API int                asEngine_CompareScriptObjects(asIScriptEngine *e, bool &result, int behaviour, void *leftObj, void *rightObj, int typeId);
+	AS_API int                asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx /* = 0 */, asDWORD flags /* = 0 */);
+	AS_API int                asEngine_GarbageCollect(asIScriptEngine *e, asEGCFlags flags /* = asGC_FULL_CYCLE */);
+	AS_API void               asEngine_GetGCStatistics(asIScriptEngine *e, asUINT *currentSize, asUINT *totalDestroyed /* = 0 */, asUINT *totalDetected /* = 0 */);
+	AS_API void               asEngine_NotifyGarbageCollectorOfNewObject(asIScriptEngine *e, void *obj, int typeId);
+	AS_API void               asEngine_GCEnumCallback(asIScriptEngine *e, void *obj);
+	AS_API void *             asEngine_SetUserData(asIScriptEngine *e, void *data);
+	AS_API void *             asEngine_GetUserData(asIScriptEngine *e);
+
+	AS_API asIScriptEngine   *asModule_GetEngine(asIScriptModule *m);
+	AS_API void               asModule_SetName(asIScriptModule *m, const char *name);
+	AS_API const char        *asModule_GetName(asIScriptModule *m, int *length /*= 0*/); 
+	AS_API int                asModule_AddScriptSection(asIScriptModule *m, const char *name, const char *code, size_t codeLength /*= 0*/, int lineOffset /*= 0*/);
+	AS_API int                asModule_Build(asIScriptModule *m);
+	AS_API int                asModule_GetFunctionCount(asIScriptModule *m);
+	AS_API int                asModule_GetFunctionIdByIndex(asIScriptModule *m, int index);
+	AS_API int                asModule_GetFunctionIdByName(asIScriptModule *m, const char *name);
+	AS_API int                asModule_GetFunctionIdByDecl(asIScriptModule *m, const char *decl);
+	AS_API asIScriptFunction *asModule_GetFunctionDescriptorByIndex(asIScriptModule *m, int index);
+	AS_API asIScriptFunction *asModule_GetFunctionDescriptorById(asIScriptModule *m, int funcId);
+	AS_API int                asModule_ResetGlobalVars(asIScriptModule *m);
+	AS_API int                asModule_GetGlobalVarCount(asIScriptModule *m);
+	AS_API int                asModule_GetGlobalVarIndexByName(asIScriptModule *m, const char *name);
+	AS_API int                asModule_GetGlobalVarIndexByDecl(asIScriptModule *m, const char *decl);
+	AS_API const char        *asModule_GetGlobalVarDeclaration(asIScriptModule *m, int index, int *length /* = 0 */);
+	AS_API const char        *asModule_GetGlobalVarName(asIScriptModule *m, int index, int *length /* = 0 */);
+	AS_API int                asModule_GetGlobalVarTypeId(asIScriptModule *m, int index);
+	AS_API void              *asModule_GetAddressOfGlobalVar(asIScriptModule *m, int index);
+	AS_API int                asModule_GetObjectTypeCount(asIScriptModule *m);
+	AS_API asIObjectType     *asModule_GetObjectTypeByIndex(asIScriptModule *m, asUINT index);
+	AS_API int                asModule_GetTypeIdByDecl(asIScriptModule *m, const char *decl);
+	AS_API int                asModule_GetImportedFunctionCount(asIScriptModule *m);
+	AS_API int                asModule_GetImportedFunctionIndexByDecl(asIScriptModule *m, const char *decl);
+	AS_API const char        *asModule_GetImportedFunctionDeclaration(asIScriptModule *m, int importIndex, int *length /* = 0 */);
+	AS_API const char        *asModule_GetImportedFunctionSourceModule(asIScriptModule *m, int importIndex, int *length /* = 0 */);
+	AS_API int                asModule_BindImportedFunction(asIScriptModule *m, int importIndex, int funcId);
+	AS_API int                asModule_UnbindImportedFunction(asIScriptModule *m, int importIndex);
+	AS_API int                asModule_BindAllImportedFunctions(asIScriptModule *m);
+	AS_API int                asModule_UnbindAllImportedFunctions(asIScriptModule *m);
+	AS_API int                asModule_SaveByteCode(asIScriptModule *m, asIBinaryStream *out);
+	AS_API int                asModule_LoadByteCode(asIScriptModule *m, asIBinaryStream *in);
 
 	AS_API int              asContext_AddRef(asIScriptContext *c);
 	AS_API int              asContext_Release(asIScriptContext *c);
@@ -454,9 +462,6 @@ extern "C"
 	AS_API double           asContext_GetReturnDouble(asIScriptContext *c);
 	AS_API void *           asContext_GetReturnAddress(asIScriptContext *c);
 	AS_API void *           asContext_GetReturnObject(asIScriptContext *c);
-#ifdef AS_DEPRECATED
-	AS_API void *           asContext_GetReturnPointer(asIScriptContext *c);
-#endif
 	AS_API void *           asContext_GetAddressOfReturnValue(asIScriptContext *c);
 	AS_API int              asContext_Execute(asIScriptContext *c);
 	AS_API int              asContext_Abort(asIScriptContext *c);
@@ -478,9 +483,6 @@ extern "C"
 	AS_API const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *length /* = 0 */, int stackLevel /* = -1 */);
 	AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length /* = 0 */, int stackLevel /* = -1 */);
 	AS_API int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel /* = -1 */);
-#ifdef AS_DEPRECATED
-	AS_API void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel /* = -1 */);
-#endif
 	AS_API void *           asContext_GetAddressOfVar(asIScriptContext *c, int varIndex, int stackLevel /* = -1 */);
 	AS_API int              asContext_GetThisTypeId(asIScriptContext *c, int stackLevel /* = -1 */);
 	AS_API void *           asContext_GetThisPointer(asIScriptContext *c, int stackLevel /* = -1 */);
@@ -500,9 +502,6 @@ extern "C"
 	AS_API double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg);
-#ifdef AS_DEPRECATED
-	AS_API void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg);
-#endif
 	AS_API void *           asGeneric_GetAddressOfArg(asIScriptGeneric *g, asUINT arg);
 	AS_API int              asGeneric_GetArgTypeId(asIScriptGeneric *g, asUINT arg);
 	AS_API int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val);

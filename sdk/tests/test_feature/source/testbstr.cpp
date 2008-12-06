@@ -51,21 +51,22 @@ bool TestBStr()
 	}
 
 	// Test passing bstr strings to a script function
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		ret = true;
 	}
 
-	int funcId = engine->GetFunctionIDByIndex(0, 0);
+	int funcId = mod->GetFunctionIdByIndex(0);
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(funcId);
 
 	// Create the object and initialize it, then give 
 	// the pointer directly to the script engine. 
 	// The script engine will free the object.
-	asBSTR *a = (asBSTR*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "bstr"));
+	asBSTR *a = (asBSTR*)engine->CreateScriptObject(engine->GetTypeIdByDecl("bstr"));
 	*a = asBStrAlloc(1);
 	strcpy((char*)*a, "a");
 	*(asBSTR**)ctx->GetArgPointer(0) = a;

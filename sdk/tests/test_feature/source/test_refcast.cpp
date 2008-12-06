@@ -152,10 +152,11 @@ bool Test()
 	RegisterB(engine);
 
 
-	r = engine->AddScriptSection("test", "test", script, strlen(script));
-	r = engine->Build("test");
+	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("test", script, strlen(script));
+	r = mod->Build();
 
-	int objType = engine->GetTypeIdByDecl("test", "CTest");
+	int objType = engine->GetModule("test")->GetTypeIdByDecl("CTest");
 	asIScriptStruct* testClassObj = (asIScriptStruct*)engine->CreateScriptObject(objType);
 
 	typeA* a = new typeB();

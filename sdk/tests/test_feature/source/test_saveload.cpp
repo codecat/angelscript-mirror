@@ -167,10 +167,11 @@ void TestScripts(asIScriptEngine *engine)
 	int r;
 
 	// Bind the imported functions
-	r = engine->BindAllImportedFunctions(0); assert( r >= 0 );
+	asIScriptModule *mod = engine->GetModule(0);
+	r = mod->BindAllImportedFunctions(); assert( r >= 0 );
 
 	// Verify if handles are properly resolved
-	int funcID = engine->GetFunctionIDByDecl(0, "void TestHandle(string @)");
+	int funcID = mod->GetFunctionIdByDecl("void TestHandle(string @)");
 	if( funcID < 0 ) 
 	{
 		printf("%s: Failed to identify function with handle\n", TESTNAME);
@@ -186,10 +187,10 @@ void TestScripts(asIScriptEngine *engine)
 	}
 
 	// Call an interface method on a class that implements the interface
-	int typeId = engine->GetTypeIdByDecl(0, "MyClass");
+	int typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass");
 	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(typeId);
 
-	int intfTypeId = engine->GetTypeIdByDecl(0, "MyIntf");
+	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
 	asIObjectType *type = engine->GetObjectTypeById(intfTypeId);
 	int funcId = type->GetMethodIdByDecl("void test()");
 	asIScriptContext *ctx = engine->CreateContext();
@@ -264,23 +265,27 @@ bool Test()
 
  	asIScriptEngine *engine = ConfigureEngine();
 
-	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
+	mod->Build();
 
-	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("DynamicModule");
+	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->Build();
 
 	TestScripts(engine);
 
 	// Save the compiled byte code
 	CBytecodeStream stream;
-	engine->SaveByteCode(0, &stream);
+	mod = engine->GetModule(0);
+	mod->SaveByteCode(&stream);
 
 	// Test loading without releasing the engine first
-	engine->LoadByteCode(0, &stream);
+	mod->LoadByteCode(&stream);
 
-	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("DynamicModule");
+	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->Build();
 
 	TestScripts(engine);
 
@@ -289,10 +294,12 @@ bool Test()
 	engine = ConfigureEngine();
 
 	stream.rpointer = 0;
-	engine->LoadByteCode(0, &stream);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->LoadByteCode(&stream);
 
-	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("DynamicModule");
+	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->Build();
 
 	TestScripts(engine);
 
@@ -301,15 +308,17 @@ bool Test()
 	//-----------------------------------------
 	// A different case
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->AddScriptSection(0, "script3", script3, strlen(script3));
-	engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script3", script3, strlen(script3));
+	mod->Build();
 	CBytecodeStream stream2;
-	engine->SaveByteCode(0, &stream2);
+	mod->SaveByteCode(&stream2);
 
 	engine->Release();
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->LoadByteCode(0, &stream2);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->LoadByteCode(&stream2);
 	engine->ExecuteString(0, "Test(3)");
 
 	engine->Release();
@@ -327,15 +336,15 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_INDEX, "float &f(int)", asMETHODPR(vector<float>, operator[], (vector<float>::size_type), float &), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("float[]", "int length()", asMETHOD(vector<float>, size), asCALL_THISCALL); assert(r >= 0);
 		
-		engine->AddScriptSection(0, "script3", script3, strlen(script3));
-		engine->Build(0);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script3", script3, strlen(script3));
+		mod->Build();
 		
 		CBytecodeStream stream3;
-		engine->SaveByteCode(0, &stream3);
+		mod->SaveByteCode(&stream3);
 		
-		engine->Discard(0);
-		
-		engine->LoadByteCode(0, &stream3);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->LoadByteCode(&stream3);
 		engine->ExecuteString(0, "Test(3)");
 		
 		engine->Release();
@@ -347,8 +356,9 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterScriptString(engine);
-	engine->AddScriptSection(0, "script", script4, strlen(script4));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script4, strlen(script4));
+	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
 	else
@@ -365,14 +375,16 @@ bool Test()
 
 		// Save the bytecode
 		CBytecodeStream stream4;
-		engine->SaveByteCode(0, &stream4);
+		mod = engine->GetModule(0);
+		mod->SaveByteCode(&stream4);
 		engine->Release();
 
 		// Now load the bytecode into a fresh engine and test the script again
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptString(engine);
-		engine->LoadByteCode(0, &stream4);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->LoadByteCode(&stream4);
 		r = engine->ExecuteString(0, "g_inGame.Initialize(0);");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
@@ -399,8 +411,9 @@ bool Test()
 	r = engine->RegisterObjectMethod("IsoMap", "bool AddEntity(const IsoSprite@+, int col, int row, int layer)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("IsoMap", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 
-	engine->AddScriptSection(0, "script", script5, strlen(script5));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script5, strlen(script5));
+	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
 	else
@@ -417,7 +430,8 @@ bool Test()
 
 		// Save the bytecode
 		CBytecodeStream stream;
-		engine->SaveByteCode(0, &stream);
+		mod = engine->GetModule(0);
+		mod->SaveByteCode(&stream);
 		engine->Release();
 
 		// Now load the bytecode into a fresh engine and test the script again
@@ -441,7 +455,8 @@ bool Test()
 		r = engine->RegisterObjectMethod("IsoMap", "bool AddEntity(const IsoSprite@+, int col, int row, int layer)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("IsoMap", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 
-		engine->LoadByteCode(0, &stream);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->LoadByteCode(&stream);
 		r = engine->ExecuteString(0, "Initialize();");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
@@ -466,20 +481,22 @@ bool Test2()
 		"int item = _ENUM_1;  \n"
 		"}                    \n";
 
-	r = engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
 	CBytecodeStream stream;
-	r = engine->SaveByteCode(0, &stream);
+	mod = engine->GetModule(0);
+	r = mod->SaveByteCode(&stream);
 	if( r < 0 )
 		fail = true;
 	engine->Release();
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	r = engine->LoadByteCode(0, &stream);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->LoadByteCode(&stream);
 	if( r < 0 )
 		fail = true;
 

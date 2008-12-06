@@ -40,8 +40,9 @@ bool Test()
 
 	// Test registering another object globabl property after 
 	// compiling script that uses previous global property
-	engine->AddScriptSection(0, "script", script, strlen(script), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script), 0);
+	mod->Build();
 
 	r = engine->RegisterObjectType("SoundMgr", 0, asOBJ_REF | asOBJ_NOHANDLE); assert(r >= 0);
 	r = engine->RegisterObjectMethod("SoundMgr", "void Test()", asFUNCTION(TestMethod), asCALL_GENERIC); assert(r >= 0);

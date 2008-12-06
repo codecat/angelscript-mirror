@@ -40,14 +40,16 @@ bool Test()
 
 	r = engine->RegisterGlobalFunction("uint8 func(uint8[] &in, uint8[] &inout, uint8, uint32)", asFUNCTION(func), asCALL_GENERIC); assert( r >= 0 ); 
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	engine->Release();

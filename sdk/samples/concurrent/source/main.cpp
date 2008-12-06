@@ -142,8 +142,8 @@ int main(int argc, char **argv)
 	r = CompileScript(engine);
 	if( r < 0 ) return -1;
 
-	contextManager.AddContext(engine->GetFunctionIDByDecl("script1", "void main()"));
-	contextManager.AddContext(engine->GetFunctionIDByDecl("script2", "void main()"));
+	contextManager.AddContext(engine->GetModule("script1")->GetFunctionIdByDecl("void main()"));
+	contextManager.AddContext(engine->GetModule("script2")->GetFunctionIdByDecl("void main()"));
 	
 	// Print some useful information and start the input loop
 	cout << "This sample shows how two scripts can be executed concurrently." << endl; 
@@ -220,28 +220,30 @@ int CompileScript(asIScriptEngine *engine)
 	// Build the two script into separate modules. This will make them have
 	// separate namespaces, which allows them to use the same name for functions
 	// and global variables.
-	r = engine->AddScriptSection("script1", "script1", script1, strlen(script1));
+	asIScriptModule *mod = engine->GetModule("script1", asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("script1", script1, strlen(script1));
 	if( r < 0 ) 
 	{
 		cout << "AddScriptSection() failed" << endl;
 		return -1;
 	}
 	
-	r = engine->Build("script1");
+	r = mod->Build();
 	if( r < 0 )
 	{
 		cout << "Build() failed" << endl;
 		return -1;
 	}
 
-	r = engine->AddScriptSection("script2", "script2", script2, strlen(script2));
+	mod = engine->GetModule("script2", asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("script2", script2, strlen(script2));
 	if( r < 0 )
 	{
 		cout << "AddScriptSection() failed" << endl;
 		return -1;
 	}
 
-	r = engine->Build("script2");
+	r = mod->Build();
 	if( r < 0 )
 	{
 		cout << "Build() failed" << endl;

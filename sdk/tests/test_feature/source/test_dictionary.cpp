@@ -82,8 +82,9 @@ bool Test()
 
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
@@ -106,8 +107,8 @@ bool Test()
 		fail = true;
 
 	// Test circular references including a script class and the dictionary
-	engine->AddScriptSection(0, "script", script2, strlen(script2));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
@@ -147,8 +148,9 @@ bool Test()
 
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 

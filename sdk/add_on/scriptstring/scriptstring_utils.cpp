@@ -248,7 +248,7 @@ void StringSplit_Generic(asIScriptGeneric *gen)
     asIScriptEngine *engine = ctx->GetEngine();
 
     // TODO: This should only be done once
-    int stringArrayType = engine->GetTypeIdByDecl(0, "string@[]");
+    int stringArrayType = engine->GetTypeIdByDecl("string@[]");
 
     // Create the array object
     asIScriptArray *array = (asIScriptArray*)engine->CreateScriptObject(stringArrayType);

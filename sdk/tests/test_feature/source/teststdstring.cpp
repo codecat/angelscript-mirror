@@ -144,8 +144,9 @@ bool TestStdString()
 	//<-- new: object method string argument test
 
 
-	engine->AddScriptSection(0, "string", script, strlen(script), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("string", script);
+	mod->Build();
 
 	int r = engine->ExecuteString(0, "blah1(); blah2();");
 	if( r < 0 )
@@ -154,8 +155,9 @@ bool TestStdString()
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2);
+	mod->Build();
 
 	engine->ExecuteString(0, "testString()");
 
@@ -210,8 +212,9 @@ bool TestStdString()
 
 	engine->ExecuteString(0, "StringByVal(\"test\", \"test\")");
 
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	if( engine->Build(0) < 0 )
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script3);
+	if( mod->Build() < 0 )
 	{
 		fail = true;
 	}

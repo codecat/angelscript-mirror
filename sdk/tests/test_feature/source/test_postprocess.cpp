@@ -48,8 +48,9 @@ bool Test()
 	r = engine->RegisterObjectMethod("ClientData", "Actor @getActor(int)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
 
-	engine->AddScriptSection(0, "script", script, strlen(script), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	engine->Release();

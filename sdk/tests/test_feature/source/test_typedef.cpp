@@ -65,24 +65,26 @@ static int testTypedef(CBytecodeStream &codeStream, bool save)
 	// Test working example
 	if(true == save)
 	{
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		if(r >= 0) 
 		{
-			r = engine->AddScriptSection(NULL, NULL, script, strlen(script), 0);
+			r = mod->AddScriptSection(NULL, script);
 		}
 
 		if(r >= 0) 
 		{
-			r = engine->Build(NULL);
+			r = mod->Build();
 		}
 
-		r = engine->SaveByteCode(NULL, &codeStream);
+		r = mod->SaveByteCode(&codeStream);
 	}
 	else 
 	{
-		r = engine->LoadByteCode(NULL, &codeStream);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&codeStream);
 		if(r >= 0) 
 		{
-			engine->BindAllImportedFunctions(NULL);
+			mod->BindAllImportedFunctions();
 		}
 	}
 

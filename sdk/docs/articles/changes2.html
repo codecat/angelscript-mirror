@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.15.0 WIP - 2008/11/25</h2>
+<h2>Version 2.15.0 WIP - 2008/12/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -132,22 +132,26 @@ A:hover
 <li>Script functions can now be declared to return const types (Thanks SiCrane)
 <li>Fixed multithread problem in memory manager for the script node pool (Thanks xivVerge)
 <li>Fixed assert failure after compilation error with ref cast operator (Thanks Jeff Slutter)
+<li>Fixed compiler warnings for g++ 4.3.2 (Thanks Matt Williams)
 </ul>
 <li>Library interface
 <ul>
 <li>Changed the parameters for the engine's GarbageCollect method to give more control to the application
-<li>Deprecated GetObjectsInGarbageCollectorCount, and replaced it with GetGCStatistics
+<li>Replaced GetObjectsInGarbageCollectorCount in the engine interface with GetGCStatistics
 <li>Added GetEngine to asIScriptStruct and asIScriptArray
-<li>Added GetGlobalVarTypeId to asIScriptEngine
-<li>Deprecated GetVarPointer and GetReturnPointer in the context interface
-<li>Added GetAddressOfVar and GetAddressOfReturnValue in the context interface
-<li>Deprecated GetArgPointer in the generic interface
-<li>Added GetAddressOfArg in the generic interface
+<li>Replaced GetVarPointer and GetReturnPointer in the context interface with GetAddressOfVar and GetAddressOfReturnValue respectively
+<li>Replaced GetArgPointer in the generic interface with GetAddressOfArg
 <li>Added SetUserData/GetUserData to the engine interface
 <li>Added the ParseToken method to the engine interface, useful for IDEs that provide syntax highlighting or intellisense
 <li>Removed deprecated GetMethodDescriptorByIndex, GetMethodCount, GetMethodIDByIndex, GetMethodIDByName, GetMethodIDByDecl from engine interface
 <li>Removed deprecated GetFunctionDeclaration, GetFunctionModule, GetFunctionSection, GetFunctionName from engine interface
 <li>Removed deprecated SetDefaultContextStackSize from engine interface
+<li>Added asIScriptModule, which will be used to interact with the modules directly, instead of through the engine interface
+<li>Added GetModule to the engine
+<li>Deprecated the methods in the engine for interacting with the modules, as these methods are now available in the module interface
+<li>Added GetGlobalVarTypeId to the module interface. There were no corresponding method for this in the engine interface
+<li>Renamed Discard in the engine interface to DiscardModule
+<li>Modified the GetTypeIdByDecl in the engine interface to take only the declaration and not the module name
 </ul>
 <li>Library
 <ul>

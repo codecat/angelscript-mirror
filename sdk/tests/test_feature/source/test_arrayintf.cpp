@@ -36,9 +36,10 @@ bool Test()
 
 	COutStream out;
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	r = engine->ExecuteString(0, "Test()");
@@ -49,10 +50,10 @@ bool Test()
 		if( (floatArray->GetArrayTypeId() & asTYPEID_MASK_OBJECT) != asTYPEID_SCRIPTARRAY )
 			fail = true;
 
-		if( floatArray->GetArrayTypeId() != engine->GetTypeIdByDecl(0, "float[]") )
+		if( floatArray->GetArrayTypeId() != engine->GetTypeIdByDecl("float[]") )
 			fail = true;
 
-		if( floatArray->GetElementTypeId() != engine->GetTypeIdByDecl(0, "float") )
+		if( floatArray->GetElementTypeId() != engine->GetTypeIdByDecl("float") )
 			fail = true;
 
 		if( floatArray->GetElementCount() != 2 )
@@ -64,10 +65,10 @@ bool Test()
 		if( *(float*)floatArray->GetElementPointer(1) != 1.2f )
 			fail = true;
 
-		if( stringArray->GetArrayTypeId() != engine->GetTypeIdByDecl(0, "string[]") )
+		if( stringArray->GetArrayTypeId() != engine->GetTypeIdByDecl("string[]") )
 			fail = true;
 
-		if( stringArray->GetElementTypeId() != engine->GetTypeIdByDecl(0, "string") )
+		if( stringArray->GetElementTypeId() != engine->GetTypeIdByDecl("string") )
 			fail = true;
 
 		if( stringArray->GetElementCount() != 1 )

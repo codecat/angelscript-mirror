@@ -121,9 +121,10 @@ bool Test()
 	engine->RegisterGlobalBehaviour(asBEHAVE_BIT_SRL, "stream &f(stream &inout, string &out)", asFUNCTIONPR(operator>>, (CScriptStream &s, string &other), CScriptStream &), asCALL_CDECL);
 
 	COutStream out;
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -151,8 +152,9 @@ bool Test()
 	stream.clear();
 	
 	//-------------------------------
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	r = engine->ExecuteString(0, "Test2()", &ctx);

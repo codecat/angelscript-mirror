@@ -39,17 +39,18 @@ bool Test1()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterScriptAny(engine);
 
-	engine->AddScriptSection(0, "script", script1, strlen(script1));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script1, strlen(script1));
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
 	}
 
 	// Calling the garbage collector mustn't free the object types, even though they are not used yet
-	int tid1 = engine->GetTypeIdByDecl(0, "MyGame@[]");
+	int tid1 = engine->GetModule(0)->GetTypeIdByDecl("MyGame@[]");
 	engine->GarbageCollect();
-	int tid2 = engine->GetTypeIdByDecl(0, "MyGame@[]");
+	int tid2 = engine->GetModule(0)->GetTypeIdByDecl("MyGame@[]");
 
 	if( tid1 != tid2 )
 	{
@@ -59,7 +60,7 @@ bool Test1()
 
 	// Make sure ref count is properly updated
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetFunctionIDByName(0, "CreateInstance"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByName("CreateInstance"));
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
@@ -150,7 +151,7 @@ bool Test1()
 	}
 
 	// Discard the module, freeing the global variable
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	// What is the refcount?
 	myGame->AddRef();
@@ -210,8 +211,9 @@ bool Test2()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterScriptAny(engine);
 
-	engine->AddScriptSection(0, "script", script2, strlen(script2));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -219,7 +221,7 @@ bool Test2()
 
 	// Make sure ref count is properly updated
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetFunctionIDByName(0, "CreateInstance"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByName("CreateInstance"));
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
@@ -310,7 +312,7 @@ bool Test2()
 	}
 
 	// Discard the module, freeing the global variable
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	// What is the refcount?
 	myGame->AddRef();

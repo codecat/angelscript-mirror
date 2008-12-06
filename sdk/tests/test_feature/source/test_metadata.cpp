@@ -45,32 +45,32 @@ bool Test()
 	if( r < 0 )
 		fail = true;
 
-	int funcId = engine->GetFunctionIDByName(0, "func1");
+	int funcId = engine->GetModule(0)->GetFunctionIdByName("func1");
 	string metadata = builder.GetMetadataStringForFunc(funcId);
 	if( metadata != " my meta data test " )
 		fail = true;
 
-	funcId = engine->GetFunctionIDByName(0, "func2");
+	funcId = engine->GetModule(0)->GetFunctionIdByName("func2");
 	metadata = builder.GetMetadataStringForFunc(funcId);
 	if( metadata != " test['hello'] " )
 		fail = true;
 
-	int typeId = engine->GetTypeIdByDecl(0, "MyClass");
+	int typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass");
 	metadata = builder.GetMetadataStringForType(typeId);
 	if( metadata != " myclass " )
 		fail = true;
 
-	typeId = engine->GetTypeIdByDecl(0, "MyIntf");
+	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
 	metadata = builder.GetMetadataStringForType(typeId);
 	if( metadata != " myintf " )
 		fail = true;
 
-	int varIdx = engine->GetGlobalVarIndexByName(0, "g_var");
+	int varIdx = engine->GetModule(0)->GetGlobalVarIndexByName("g_var");
 	metadata = builder.GetMetadataStringForVar(varIdx);
 	if( metadata != " init " )
 		fail = true;
 
-	varIdx = engine->GetGlobalVarIndexByName(0, "g_obj");
+	varIdx = engine->GetModule(0)->GetGlobalVarIndexByName("g_obj");
 	metadata = builder.GetMetadataStringForVar(varIdx);
 	if( metadata != " var of type myclass " )
 		fail = true;

@@ -89,8 +89,9 @@ bool Test()
 
 	// Test destructor for script class as local variable and global variable
 	count = 0;
-	engine->AddScriptSection(0, "script", script1, strlen(script1));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script1, strlen(script1));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");
@@ -98,14 +99,15 @@ bool Test()
 		fail = true;
 	if( count != 1 )
 		fail = true;
-	engine->Discard(0);
+	engine->DiscardModule(0);
 	if( count != 2 )
 		fail = true;
 
 	// Test destructor for script class in array
 	count = 0;
-	engine->AddScriptSection(0, "script", script2, strlen(script2));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");
@@ -116,8 +118,9 @@ bool Test()
 
 	// Test destructor for script class cleaned up by garbage collector
 	count = 0;
-	engine->AddScriptSection(0, "script", script3, strlen(script3));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script3, strlen(script3));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");
@@ -129,8 +132,9 @@ bool Test()
 
 	// Make sure destructor is only called once in the life time of the object, even if resurrected
 	count = 0;
-	engine->AddScriptSection(0, "script", script4, strlen(script4));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script4, strlen(script4));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");
@@ -138,14 +142,15 @@ bool Test()
 		fail = true;
 	if( count != 1 )
 		fail = true;
-	engine->Discard(0);
+	engine->DiscardModule(0);
 	if( count != 1 )
 		fail = true;
 
 	// Destructor for member
 	count = 0;
-	engine->AddScriptSection(0, "script", script5, strlen(script5));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script5, strlen(script5));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");

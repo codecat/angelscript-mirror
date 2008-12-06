@@ -117,8 +117,9 @@ bool Test()
 		fail = true;
 	}
 
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 	{
 		printf("%s: failed\n", TESTNAME, r);

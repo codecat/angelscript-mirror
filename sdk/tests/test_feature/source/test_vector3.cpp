@@ -37,8 +37,9 @@ bool TestVector3()
 	Vector3 v;
 	engine->RegisterGlobalProperty("vector3 v", &v);
 
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		printf("%s: Failed to build\n", TESTNAME);
@@ -63,7 +64,7 @@ bool TestVector3()
 		v.x = 0; v.y = 0; v.z = 0;
 
 		asIScriptContext *ctx = engine->CreateContext();
-		ctx->Prepare(engine->GetFunctionIDByDecl(0, "vector3 TestVector3()"));
+		ctx->Prepare(mod->GetFunctionIdByDecl("vector3 TestVector3()"));
 
 		ctx->Execute();
 		Vector3 *ret = (Vector3*)ctx->GetReturnObject();
@@ -73,7 +74,7 @@ bool TestVector3()
 			fail = true;
 		}
 
-		ctx->Prepare(engine->GetFunctionIDByDecl(0, "vector3 TestVector3Val(vector3)"));
+		ctx->Prepare(mod->GetFunctionIdByDecl("vector3 TestVector3Val(vector3)"));
 		v.x = 3; v.y = 2; v.z = 1;
 		ctx->SetArgObject(0, &v);
 		ctx->Execute();
@@ -84,7 +85,7 @@ bool TestVector3()
 			fail = true;
 		}
 
-		ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestVector3Ref(vector3 &out)"));
+		ctx->Prepare(mod->GetFunctionIdByDecl("void TestVector3Ref(vector3 &out)"));
 		ctx->SetArgObject(0, &v);
 		ctx->Execute();
 		if( v.x != 1 || v.y != 2 || v.z != 3 )

@@ -85,8 +85,9 @@ bool TestCondition()
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	mod->Build();
 
 	r = engine->ExecuteString(0, "Test(\"t\", \"f\")");
 	if( r < 0 )
@@ -95,8 +96,8 @@ bool TestCondition()
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
-/*	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->Build(0);
+/*	mod->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+	mod->Build(0);
 
 	r = engine->ExecuteString(0, "Test()");
 	if( r < 0 )
@@ -105,8 +106,8 @@ bool TestCondition()
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 */
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	engine->Build(0);
+	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+	mod->Build();
 
 	r = engine->ExecuteString(0, "Test()");
 	if( r < 0 )

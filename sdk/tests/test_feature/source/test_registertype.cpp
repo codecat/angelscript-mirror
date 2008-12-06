@@ -231,8 +231,9 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	script = "ref func(ref r) { ref r2; return ref(); }";
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling ref func(ref)\n"
@@ -253,8 +254,9 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	script = "void func(ref &in r1, ref &out r2, ref &inout r3) { }";
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func(ref&in, ref&out, ref&inout)\n"

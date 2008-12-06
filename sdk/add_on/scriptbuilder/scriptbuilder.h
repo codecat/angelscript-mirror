@@ -53,7 +53,7 @@ protected:
 	int  ExtractDeclaration(int pos, std::string &outDeclaration, int &outType);
 
 	asIScriptEngine           *engine;
-	const char                *module;
+	asIScriptModule           *module;
 	std::string                modifiedScript;
 	std::vector<SMetadataDecl> foundDeclarations;
 

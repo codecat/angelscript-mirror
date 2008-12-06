@@ -49,10 +49,11 @@ LoadScriptFile("test.as", &script);
 // Add the script to the module as a section. If desired, multiple script
 // sections can be added to the same module. They will then be compiled
 // together as if it was one large script. 
-engine->AddScriptSection("MyModule", "test.as", script.c_str(), script.length());
+asIScriptModule *mod = engine->GetModule("MyModule", asGM_ALWAYS_CREATE);
+mod->AddScriptSection("test.as", script.c_str(), script.length());
 
 // Build the module
-r = engine->Build("MyModule");
+r = mod->Build();
 if( r < 0 )
 {
   // An error occurred. Instruct the script writer to fix the compilation errors
@@ -67,7 +68,7 @@ for executing it.
 
 \code
 // Find the function that is to be called. 
-int funcId = engine->GetFunctionIDByDecl("MyModule", "void main()");
+int funcId = mod->GetFunctionIdByDecl("void main()");
 if( funcId < 0 )
 {
   // The function couldn't be found. Instruct the script writer to include the

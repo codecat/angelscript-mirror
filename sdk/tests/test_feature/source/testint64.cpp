@@ -61,11 +61,12 @@ bool TestInt64()
 	engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_GENERIC);
 
 	COutStream out;
-	engine->AddScriptSection(0, "test", script, strlen(script), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script);
+	mod->Build();
 
-	int f = engine->GetFunctionIDByDecl(0, "int Main()");
+	int f = engine->GetModule(0)->GetFunctionIdByDecl("int Main()");
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(f);
 	int r = ctx->Execute();

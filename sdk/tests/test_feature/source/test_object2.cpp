@@ -96,8 +96,9 @@ bool Test()
 	engine->RegisterObjectMethod("Gui", "GuiButton& GetButton(string@+)", asFUNCTION(Gui_GetButton), asCALL_CDECL_OBJLAST);
 	engine->RegisterGlobalProperty("Gui GUI", &GUI);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;

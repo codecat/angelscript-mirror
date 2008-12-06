@@ -345,8 +345,8 @@ bool Test()
 	// the compiler will automatically create a copy
 /*	const char *script = 
 		"void func(A a) {assert(a.test() == 1);}\n";
-	r = engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	r = mod->AddScriptSection(0, "script", script, strlen(script));
+	r = mod->Build(0);
 	if( r < 0 )
 		fail = true;
 	r = engine->ExecuteString(0, "B b; func(b)");

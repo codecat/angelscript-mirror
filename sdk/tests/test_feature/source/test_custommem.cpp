@@ -68,10 +68,11 @@ bool Test()
 
 	engine->ExecuteString(0, "obj[] o(2)");
 
-	engine->AddScriptSection(0, 0, script, strlen(script));
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(0, script, strlen(script));
+	mod->Build();
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetFunctionIDByName(0, "test"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByName("test"));
 	int v = 0;
 	ctx->SetArgObject(0, &v);
 	ctx->Execute();

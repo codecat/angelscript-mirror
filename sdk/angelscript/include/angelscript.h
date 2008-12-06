@@ -62,6 +62,7 @@ BEGIN_AS_NAMESPACE
 // Data types
 
 class asIScriptEngine;
+class asIScriptModule;
 class asIScriptContext;
 class asIScriptGeneric;
 class asIScriptStruct;
@@ -285,6 +286,14 @@ enum asETypeIdFlags
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
 
+// GetModule flags
+enum asEGMFlags
+{
+	asGM_ONLY_IF_EXISTS       = 0,
+	asGM_CREATE_IF_NOT_EXISTS = 1,
+	asGM_ALWAYS_CREATE        = 2
+};
+
 //
 // asBYTE  =  8 bits
 // asWORD  = 16 bits
@@ -444,53 +453,17 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
-	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
-	virtual int Build(const char *module) = 0;
-    virtual int Discard(const char *module) = 0;
-	virtual int ResetModule(const char *module) = 0;
+	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag = asGM_ONLY_IF_EXISTS) = 0;
+	virtual int              DiscardModule(const char *module) = 0;
 
 	// Script functions
-	virtual int                GetFunctionCount(const char *module) = 0;
-	virtual int                GetFunctionIDByIndex(const char *module, int index) = 0;
-	virtual int                GetFunctionIDByName(const char *module, const char *name) = 0;
-	virtual int                GetFunctionIDByDecl(const char *module, const char *decl) = 0;
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
-
-	// Script global variables
-	virtual int         GetGlobalVarCount(const char *module) = 0;
-	virtual int         GetGlobalVarIndexByName(const char *module, const char *name) = 0;
-	virtual int         GetGlobalVarIndexByDecl(const char *module, const char *decl) = 0;
-	virtual const char *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
-	virtual const char *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
-	virtual int         GetGlobalVarTypeId(const char *module, int index) = 0;
-	virtual void       *GetAddressOfGlobalVar(const char *module, int index) = 0;
-#ifdef AS_DEPRECATED
-	virtual int         GetGlobalVarIDByIndex(const char *module, int index) = 0;
-	virtual int         GetGlobalVarIDByName(const char *module, const char *name) = 0;
-	virtual int         GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
-	virtual const char *GetGlobalVarDeclaration(int gvarID, int *length = 0) = 0;
-	virtual const char *GetGlobalVarName(int gvarID, int *length = 0) = 0;
-	virtual void       *GetGlobalVarPointer(int gvarID) = 0;
-#endif
-
-	// Dynamic binding between modules
-	virtual int         GetImportedFunctionCount(const char *module) = 0;
-	virtual int         GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
-	virtual const char *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length = 0) = 0;
-	virtual const char *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length = 0) = 0;
-	virtual int         BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
-	virtual int         UnbindImportedFunction(const char *module, int importIndex) = 0;
-
-	virtual int BindAllImportedFunctions(const char *module) = 0;
-	virtual int UnbindAllImportedFunctions(const char *module) = 0;
 
 	// Type identification
 	virtual int            GetObjectTypeCount() = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
 	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
-
-	virtual int            GetTypeIdByDecl(const char *module, const char *decl) = 0;
+	virtual int            GetTypeIdByDecl(const char *decl) = 0;
 	virtual const char    *GetTypeDeclaration(int typeId, int *length = 0) = 0;
 	virtual int            GetSizeOfPrimitiveType(int typeId) = 0;
 
@@ -511,22 +484,103 @@ public:
 	// Garbage collection
 	virtual int  GarbageCollect(asEGCFlags flags = asGC_FULL_CYCLE) = 0;
 	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0) = 0;
-#ifdef AS_DEPRECATED
-	virtual int  GetObjectsInGarbageCollectorCount() = 0;
-#endif
 	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId) = 0;
 	virtual void GCEnumCallback(void *reference) = 0;
-
-	// Bytecode Saving/Loading
-	virtual int SaveByteCode(const char *module, asIBinaryStream *out) = 0;
-	virtual int LoadByteCode(const char *module, asIBinaryStream *in) = 0;
 
 	// User data
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() = 0;
 
+#ifdef AS_DEPRECATED
+	virtual int                AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
+	virtual int                Build(const char *module) = 0;
+    virtual int                Discard(const char *module) = 0;
+	virtual int                ResetModule(const char *module) = 0;
+	virtual int                GetFunctionCount(const char *module) = 0;
+	virtual int                GetFunctionIDByIndex(const char *module, int index) = 0;
+	virtual int                GetFunctionIDByName(const char *module, const char *name) = 0;
+	virtual int                GetFunctionIDByDecl(const char *module, const char *decl) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
+	virtual int                GetGlobalVarCount(const char *module) = 0;
+	virtual int                GetGlobalVarIndexByName(const char *module, const char *name) = 0;
+	virtual int                GetGlobalVarIndexByDecl(const char *module, const char *decl) = 0;
+	virtual const char        *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
+	virtual const char        *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
+	virtual void              *GetAddressOfGlobalVar(const char *module, int index) = 0;
+	virtual int                GetGlobalVarIDByIndex(const char *module, int index) = 0;
+	virtual int                GetGlobalVarIDByName(const char *module, const char *name) = 0;
+	virtual int                GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
+	virtual const char        *GetGlobalVarDeclaration(int gvarID, int *length = 0) = 0;
+	virtual const char        *GetGlobalVarName(int gvarID, int *length = 0) = 0;
+	virtual void              *GetGlobalVarPointer(int gvarID) = 0;
+	virtual int                GetTypeIdByDecl(const char *module, const char *decl) = 0;
+	virtual int                GetImportedFunctionCount(const char *module) = 0;
+	virtual int                GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
+	virtual const char        *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length = 0) = 0;
+	virtual const char        *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length = 0) = 0;
+	virtual int                BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
+	virtual int                UnbindImportedFunction(const char *module, int importIndex) = 0;
+	virtual int                BindAllImportedFunctions(const char *module) = 0;
+	virtual int                UnbindAllImportedFunctions(const char *module) = 0;
+	virtual int                GetObjectsInGarbageCollectorCount() = 0;
+	virtual int                SaveByteCode(const char *module, asIBinaryStream *out) = 0;
+	virtual int                LoadByteCode(const char *module, asIBinaryStream *in) = 0;
+#endif
+
 protected:
 	virtual ~asIScriptEngine() {}
+};
+
+class asIScriptModule
+{
+public:
+	virtual asIScriptEngine *GetEngine() = 0;
+	virtual void             SetName(const char *name) = 0;
+	virtual const char      *GetName(int *length = 0) = 0; 
+
+	// Compilation
+    virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
+	virtual int  Build() = 0;
+
+	// Script functions
+	virtual int                GetFunctionCount() = 0;
+	virtual int                GetFunctionIdByIndex(int index) = 0;
+	virtual int                GetFunctionIdByName(const char *name) = 0;
+	virtual int                GetFunctionIdByDecl(const char *decl) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+
+	// Script global variables
+	virtual int         ResetGlobalVars() = 0;
+	virtual int         GetGlobalVarCount() = 0;
+	virtual int         GetGlobalVarIndexByName(const char *name) = 0;
+	virtual int         GetGlobalVarIndexByDecl(const char *decl) = 0;
+	virtual const char *GetGlobalVarDeclaration(int index, int *length = 0) = 0;
+	virtual const char *GetGlobalVarName(int index, int *length = 0) = 0;
+	virtual int         GetGlobalVarTypeId(int index) = 0;
+	virtual void       *GetAddressOfGlobalVar(int index) = 0;
+
+	// Type identification
+	virtual int            GetObjectTypeCount() = 0;
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+	virtual int            GetTypeIdByDecl(const char *decl) = 0;
+
+	// Dynamic binding between modules
+	virtual int         GetImportedFunctionCount() = 0;
+	virtual int         GetImportedFunctionIndexByDecl(const char *decl) = 0;
+	virtual const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0) = 0;
+	virtual const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0) = 0;
+	virtual int         BindImportedFunction(int importIndex, int funcId) = 0;
+	virtual int         UnbindImportedFunction(int importIndex) = 0;
+	virtual int         BindAllImportedFunctions() = 0;
+	virtual int         UnbindAllImportedFunctions() = 0;
+
+	// Bytecode Saving/Loading
+	virtual int SaveByteCode(asIBinaryStream *out) = 0;
+	virtual int LoadByteCode(asIBinaryStream *in) = 0;
+
+protected:
+	virtual ~asIScriptModule() {}
 };
 
 class asIScriptContext

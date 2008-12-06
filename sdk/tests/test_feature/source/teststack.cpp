@@ -19,13 +19,14 @@ static const char *script =
 bool TestStack()
 {
 	bool fail = false;
+	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	COutStream out;
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	int r = engine->Build(0);
+
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script);
+	int r = mod->Build();
 	if( r < 0 )
 	{
 		printf("%s: Failed to build script\n", TESTNAME);
@@ -34,7 +35,7 @@ bool TestStack()
 
 	asIScriptContext *ctx = engine->CreateContext();
 	engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 32); // 32 byte limit
-	ctx->Prepare(engine->GetFunctionIDByDecl(0, "void recursive(int)"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("void recursive(int)"));
 	ctx->SetArgDWord(0, 100);
 	r = ctx->Execute();
 	if( r != asEXECUTION_EXCEPTION )

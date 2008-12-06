@@ -134,7 +134,7 @@ int RunApplication()
 	}
 
 	// Find the function id for the function we want to execute.
-	int funcId = engine->GetFunctionIDByDecl(0, "float calc(float, float)");
+	int funcId = engine->GetModule(0)->GetFunctionIdByDecl("float calc(float, float)");
 	if( funcId < 0 )
 	{
 		cout << "The function 'float calc(float, float)' was not found." << endl;
@@ -281,7 +281,8 @@ int CompileScript(asIScriptEngine *engine)
 	// we can call AddScriptSection() several times for the same module and
 	// the script engine will treat them all as if they were one. The script
 	// section name, will allow us to localize any errors in the script code.
-	r = engine->AddScriptSection(0, "script", &script[0], len);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("script", &script[0], len);
 	if( r < 0 ) 
 	{
 		cout << "AddScriptSection() failed" << endl;
@@ -292,7 +293,7 @@ int CompileScript(asIScriptEngine *engine)
 	// be written to the message stream that we set right after creating the 
 	// script engine. If there are no errors, and no warnings, nothing will
 	// be written to the stream.
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		cout << "Build() failed" << endl;

@@ -172,8 +172,9 @@ bool Test()
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	asIScriptContext *ctx = 0;
@@ -188,15 +189,17 @@ bool Test()
 	// Make sure that the error message for wrong constructor name works
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, "class t{ s() {} };", 18, 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, "class t{ s() {} };", 18, 0);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestScriptClassMethod (1, 10) : Error   : The constructor name must be the same as the class\n" ) fail = true;
 
 	// Make sure the default constructor can be overloaded
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection("test", TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build("test");
+	mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	r = engine->ExecuteString("test", "Test()");
@@ -205,7 +208,7 @@ bool Test()
 		fail = true;
 	}
 
-	int typeId = engine->GetTypeIdByDecl("test", "myclass");
+	int typeId = engine->GetModule("test")->GetTypeIdByDecl("myclass");
 	asIScriptStruct *s = (asIScriptStruct*)engine->CreateScriptObject(typeId);
 	if( s == 0 ) 
 		fail = true;
@@ -256,14 +259,15 @@ bool Test()
 	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "test3", script3, strlen(script3), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test3", script3, strlen(script3), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	typeId = engine->GetTypeIdByDecl(0, "myclass");
+	typeId = engine->GetModule(0)->GetTypeIdByDecl("myclass");
 	asIObjectType *type = engine->GetObjectTypeById(typeId);
 	int mtdId = type->GetMethodIdByDecl("void func()");
-	asIScriptStruct *obj = (asIScriptStruct *)engine->GetAddressOfGlobalVar(0, engine->GetGlobalVarIndexByName(0, "c"));
+	asIScriptStruct *obj = (asIScriptStruct *)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("c"));
 
 	if( mtdId < 0 || obj == 0 ) fail = true;
 	else
@@ -298,11 +302,12 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptAny(engine);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "test4", script4, strlen(script4), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test4", script4, strlen(script4), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 	
-	int func = engine->GetFunctionIDByDecl(0, "void func()");
+	int func = mod->GetFunctionIdByDecl("void func()");
 	if( func < 0 ) fail = true;
 
 	engine->Release();
@@ -313,8 +318,9 @@ bool Test()
 	RegisterScriptAny(engine);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-	engine->AddScriptSection(0, "test5", script5, strlen(script5), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test5", script5, strlen(script5), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	r = engine->ExecuteString(0, "test()", 0, 0);
@@ -331,8 +337,9 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterScriptString(engine);
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
-	engine->AddScriptSection(0, "test6", script6, strlen(script6), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test6", script6, strlen(script6), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	outbuffer = "";

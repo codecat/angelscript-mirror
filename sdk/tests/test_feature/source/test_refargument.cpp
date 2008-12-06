@@ -126,16 +126,17 @@ bool Test()
 	}
 
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 	asIScriptContext *ctx = engine->CreateContext();
-	int func = engine->GetFunctionIDByName(0, "TestObjHandle"); assert(r >= 0);
+	int func = engine->GetModule(0)->GetFunctionIdByName("TestObjHandle"); assert(r >= 0);
 
 	CRefClass cref;	
 	r = ctx->Prepare(func); assert(r >= 0);
@@ -154,8 +155,9 @@ bool Test()
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	r = mod->Build();
 	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
 		if( r >= 0 ) fail = true;
@@ -172,8 +174,9 @@ bool Test()
 
 	//----------------------
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");
@@ -185,8 +188,9 @@ bool Test()
 	{
 		CBufferedOutStream dout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &dout, asCALL_THISCALL);
-		engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
-		r = engine->Build(0);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
+		r = mod->Build();
 		if( r < 0 ) fail = true;
 		r = engine->ExecuteString(0, "Test()");
 		if( r != asEXECUTION_FINISHED ) fail = true;

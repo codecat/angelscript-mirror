@@ -141,8 +141,9 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -198,8 +199,9 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestObjHandle2 (3, 1) : Info    : Compiling void Test()\n"
                        "TestObjHandle2 (6, 6) : Error   : Reference is read-only\n" )
@@ -397,8 +399,9 @@ bool TestHandleMemberCalling(void)
 	r = engine->RegisterObjectMethod("CallerClass", "void DoSomething(const ArgClass &inout, Point &out)", asMETHOD(CallerClass,DoSomething), asCALL_THISCALL); assert(r >= 0);
 
 	// add our script
-	r = engine->AddScriptSection(0, "script", script3, strlen(script3), 0); assert( r >= 0 );
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("script", script3, strlen(script3), 0); assert( r >= 0 );
+	r = mod->Build();
 	if( r < 0 )
 	{
 		return false;

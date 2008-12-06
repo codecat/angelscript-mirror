@@ -49,8 +49,9 @@ void Test()
 
 	double time = GetSystemTimer();
 
-	engine->AddScriptSection(0, TESTNAME, script.c_str(), script.size(), 0);
-	int r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script.c_str(), script.size(), 0);
+	int r = mod->Build();
 
 	time = GetSystemTimer() - time;
 

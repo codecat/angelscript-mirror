@@ -108,8 +108,9 @@ bool Test()
 	if( res != 3452 ) 
 		fail = true;
 
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	mod->Build();
 
 	r = engine->ExecuteString(0, "clss c; cast<intf1>(c); cast<intf2>(c);");
 	if( r < 0 )
@@ -139,7 +140,7 @@ bool Test()
 	// TODO: Script classes should perhaps allow implicit casts to be implemented as well
 /*	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->AddScriptSection(0, "Test2", script2, strlen(script2));
-	r = engine->Build(0);
+	r = mod->Build(0);
 	if( r < 0 )
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");
@@ -147,8 +148,9 @@ bool Test()
 		fail = true;
 */
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, "Test3", script3, strlen(script3));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("Test3", script3, strlen(script3));
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 

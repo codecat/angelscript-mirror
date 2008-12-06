@@ -95,9 +95,10 @@ bool TestConstructor()
 	r = engine->RegisterGlobalProperty("int b", &b); assert( r >= 0 );
 
 	CBufferedOutStream out;	
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
-	engine->Build(0);
+	mod->Build();
 
 	if( out.buffer != "" )
 	{
@@ -105,8 +106,8 @@ bool TestConstructor()
 		printf("%s: Failed to compile global constructors\n", TESTNAME);
 	}
 
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2));
-	engine->Build(0);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2));
+	mod->Build();
 
 	if( out.buffer != "" )
 	{
@@ -124,8 +125,8 @@ bool TestConstructor()
 	}
 
 /*
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3));
-	engine->Build(0);
+	mod->AddScriptSection(0, TESTNAME, script3, strlen(script3));
+	mod->Build(0);
 
 	if( out.buffer != "TestConstructor (1, 12) : Info    : Compiling obj* g_obj4\n"
 	                  "TestConstructor (1, 12) : Error   : Only objects have constructors\n" )
@@ -135,8 +136,8 @@ bool TestConstructor()
 	}
 */
 	out.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4));
-	engine->Build(0);
+	mod->AddScriptSection(TESTNAME, script4, strlen(script4));
+	mod->Build();
 
 	if( out.buffer != "" ) 
 	{

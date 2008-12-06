@@ -439,9 +439,9 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		 curr->next->op == BC_SUBf ||
 		 curr->next->op == BC_MULf) &&
 		curr->wArg[0] == curr->next->wArg[2] &&
-		(curr->next->wArg[0] == curr->wArg[0] ||     // The variable is overwritten
-		 IsTemporary(curr->wArg[0]) &&                       // The variable is temporary and never used again
-		 !IsTempVarRead(curr->next, curr->wArg[0])) )
+		(curr->next->wArg[0] == curr->wArg[0] ||        // The variable is overwritten
+		 (IsTemporary(curr->wArg[0]) &&                 // The variable is temporary and never used again
+		  !IsTempVarRead(curr->next, curr->wArg[0]))) )
 	{
 		if(      curr->next->op == BC_ADDi ) curr->next->op = BC_ADDIi;
 		else if( curr->next->op == BC_SUBi ) curr->next->op = BC_SUBIi;
@@ -462,9 +462,9 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		 curr->next->op == BC_ADDf ||
 		 curr->next->op == BC_MULf) &&
 		curr->wArg[0] == curr->next->wArg[1] &&
-		(curr->next->wArg[0] == curr->wArg[0] ||     // The variable is overwritten
-		 IsTemporary(curr->wArg[0]) &&                       // The variable is temporary and never used again
-		 !IsTempVarRead(curr->next, curr->wArg[0])) )
+		(curr->next->wArg[0] == curr->wArg[0] ||        // The variable is overwritten
+		 (IsTemporary(curr->wArg[0]) &&                 // The variable is temporary and never used again
+		  !IsTempVarRead(curr->next, curr->wArg[0]))) )
 	{
 		if(      curr->next->op == BC_ADDi ) curr->next->op = BC_ADDIi;
 		else if( curr->next->op == BC_MULi ) curr->next->op = BC_MULIi;

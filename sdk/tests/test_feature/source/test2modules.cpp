@@ -16,15 +16,17 @@ bool Test2Modules()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
-	engine->AddScriptSection("a", "script", script, strlen(script), 0);
-	if( engine->Build("a") < 0 )
+	asIScriptModule *mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script), 0);
+	if( mod->Build() < 0 )
 	{
 		printf("%s: failed to build module a\n", TESTNAME);
 		ret = true;
 	}
 
-	engine->AddScriptSection("b", "script", script, strlen(script), 0);
-	if( engine->Build("b") < 0 )
+	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script), 0);
+	if( mod->Build() < 0 )
 	{
 		printf("%s: failed to build module b\n", TESTNAME);
 		ret = true;
@@ -32,14 +34,14 @@ bool Test2Modules()
 
 	if( !ret )
 	{
-		int aFuncID = engine->GetFunctionIDByName("a", "Test");
+		int aFuncID = engine->GetModule("a")->GetFunctionIdByName("Test");
 		if( aFuncID < 0 )
 		{
 			printf("%s: failed to retrieve func ID for module a\n", TESTNAME);
 			ret = true;
 		}
 
-		int bFuncID = engine->GetFunctionIDByName("b", "Test");
+		int bFuncID = engine->GetModule("b")->GetFunctionIdByName("Test");
 		if( bFuncID < 0 )
 		{
 			printf("%s: failed to retrieve func ID for module b\n", TESTNAME);
@@ -61,19 +63,21 @@ bool Test2Modules()
 	"}                          \n"
 	"int glob = 0;              \n";
 
-	engine->AddScriptSection("a", "scriptA", scriptA, strlen(scriptA));
-	r = engine->Build("a");
+	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("scriptA", scriptA, strlen(scriptA));
+	r = mod->Build();
 	if( r < 0 ) ret = true;
 
-	engine->AddScriptSection("b", "scriptB", scriptB, strlen(scriptB));
-	engine->Build("b");
+	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("scriptB", scriptB, strlen(scriptB));
+	mod->Build();
 	if( r < 0 ) ret = true;
 
-	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(engine->GetTypeIdByDecl("b", "CTest"));
-	*((asIScriptStruct**)engine->GetAddressOfGlobalVar("a", 0)) = obj;
+	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(engine->GetModule("b")->GetTypeIdByDecl("CTest"));
+	*((asIScriptStruct**)engine->GetModule("a")->GetAddressOfGlobalVar(0)) = obj;
 	r = engine->ExecuteString("a", "obj.test()");
 	if( r != asEXECUTION_FINISHED ) ret = true;
-	int val = *(int*)engine->GetAddressOfGlobalVar("b", engine->GetGlobalVarIndexByName("b", "glob"));
+	int val = *(int*)engine->GetModule("b")->GetAddressOfGlobalVar(engine->GetModule("b")->GetGlobalVarIndexByName("glob"));
 	if( val != 42 ) ret = true;
 
 	engine->Release();

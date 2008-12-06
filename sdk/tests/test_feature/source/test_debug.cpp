@@ -143,11 +143,11 @@ void PrintVariables(asIScriptContext *ctx, int stackLevel)
 	{
 		int typeId = ctx->GetVarTypeId(n, stackLevel); 
 		void *varPointer = ctx->GetAddressOfVar(n, stackLevel);
-		if( typeId == engine->GetTypeIdByDecl(0, "int") )
+		if( typeId == engine->GetTypeIdByDecl("int") )
 		{
 			print(" %s = %d\n", ctx->GetVarDeclaration(n, 0, stackLevel), *(int*)varPointer);
 		}
-		else if( typeId == engine->GetTypeIdByDecl(0, "string") )
+		else if( typeId == engine->GetTypeIdByDecl("string") )
 		{
 			asCScriptString *str = (asCScriptString*)varPointer;
 			if( str )
@@ -198,13 +198,13 @@ bool Test()
 	RegisterScriptString_Generic(engine);
 
 	// Test GetTypeIdByDecl
-	if( engine->GetTypeIdByDecl(0, "int") != engine->GetTypeIdByDecl(0, "const int") )
+	if( engine->GetTypeIdByDecl("int") != engine->GetTypeIdByDecl("const int") )
 		fail = true;
-	if( engine->GetTypeIdByDecl(0, "string") != engine->GetTypeIdByDecl(0, "const string") )
+	if( engine->GetTypeIdByDecl("string") != engine->GetTypeIdByDecl("const string") )
 		fail = true;
 
 	// A handle to a const is different from a handle to a non-const
-	if( engine->GetTypeIdByDecl(0, "string@") == engine->GetTypeIdByDecl(0, "const string@") )
+	if( engine->GetTypeIdByDecl("string@") == engine->GetTypeIdByDecl("const string@") )
 		fail = true;
 
 	// Test debugging
@@ -212,19 +212,22 @@ bool Test()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection("Module1", TESTNAME ":1", script1, strlen(script1), 0);
-	engine->Build("Module1");
+	asIScriptModule *mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
+	mod->Build();
 
-	engine->AddScriptSection("Module2", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("Module2");
+	mod = engine->GetModule("Module2", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->Build();
 
 	// Bind all functions that the module imports
-	engine->BindAllImportedFunctions("Module1");
+	mod = engine->GetModule("Module1");
+	mod->BindAllImportedFunctions();
 
 	asIScriptContext *ctx =	engine->CreateContext();
 	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_CDECL);
 	ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
-	ctx->Prepare(engine->GetFunctionIDByDecl("Module1", "void main()"));
+	ctx->Prepare(mod->GetFunctionIdByDecl("void main()"));
 	ctx->Execute();
 	ctx->Release();
 	engine->Release();

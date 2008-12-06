@@ -59,9 +59,10 @@ bool Test()
 	clr = 0x12345678;
 
 	COutStream out;
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->Build(0);
+	mod->Build();
 
 	engine->ExecuteString(0, "Init();");
 

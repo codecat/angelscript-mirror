@@ -116,8 +116,9 @@ bool Test()
     r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_DIV_ASSIGN, "Vector3 &f(float)", asMETHODPR(csVector3, operator/=, (float), csVector3&), asCALL_THISCALL); assert( r >= 0 );
 
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		printf("%s: Failed to build\n", TESTNAME);

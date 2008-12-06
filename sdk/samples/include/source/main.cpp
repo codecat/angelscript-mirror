@@ -141,7 +141,7 @@ int RunApplication()
 	}
 
 	// Find the function id for the function we want to execute.
-	int funcId = engine->GetFunctionIDByDecl(0, "void main()");
+	int funcId = engine->GetModule(0)->GetFunctionIdByDecl("void main()");
 	if( funcId < 0 )
 	{
 		cout << "The function 'void main()' was not found." << endl;

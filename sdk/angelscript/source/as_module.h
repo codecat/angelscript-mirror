@@ -72,12 +72,12 @@ struct sObjectTypePair
 	asCObjectType *b;
 };
 
-// TODO: AngelScript 3.0: The module should have AddRef/Release methods. Only when 
-// the application releases the last reference is the module discarded. The engine
-// will not have methods for enumerating modules, the application will have to do it
-// by itself. The engine will just have a CreateModule method for creating new modules.
-// I'm leaving this change for 3.0, because it changes the way the application has 
-// to manage modules.
+// TODO: addref/release for the module. The Module should have addref/release methods so that 
+// the application can keep its own references. If DiscardModule is called on the module from
+// the engine the module is not discarded immediately if the application holds it's own reference.
+// Only when the application releases its references is the module discarded. Discard will however
+// remove the reference from the engine's list of valid modules, so GetModule won't return it any
+// more.
 
 // TODO: global: The module represents the current scope. Global variables may be added/removed
 // from the scope through DeclareGlobalVar, UndeclareGlobalVar. Undeclaring a global variable
@@ -92,101 +92,62 @@ struct sObjectTypePair
 // in which case the function is removed from the scope of the module. When no one else is accessing
 // the function anymore, will it be removed.
 
-// TODO: Move this to angelscript.h
-class asIScriptModule
-{
-public:
-	virtual asIScriptEngine *GetEngine() = 0;
-	virtual void             SetName(const char *name) = 0;
-	virtual const char      *GetName(int *length = 0) = 0; 
-
-	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
-	virtual int  Build() = 0;
-    virtual void Discard() = 0;
-	virtual int  Reinitialize() = 0;
-
-	// Script functions
-	virtual int                GetFunctionCount() = 0;
-	virtual int                GetFunctionIdByIndex(int index) = 0;
-	virtual int                GetFunctionIdByName(const char *name) = 0;
-	virtual int                GetFunctionIdByDecl(const char *decl) = 0;
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) = 0;
-	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
-
-	// Script global variables
-	virtual int         GetGlobalVarCount() = 0;
-	virtual int         GetGlobalVarIndexByName(const char *name) = 0;
-	virtual int         GetGlobalVarIndexByDecl(const char *decl) = 0;
-	virtual const char *GetGlobalVarDeclaration(int index, int *length = 0) = 0;
-	virtual const char *GetGlobalVarName(int index, int *length = 0) = 0;
-	virtual int         GetGlobalVarTypeId(int index) = 0;
-	virtual void       *GetAddressOfGlobalVar(int index) = 0;
-
-	// Dynamic binding between modules
-	virtual int         GetImportedFunctionCount() = 0;
-	virtual int         GetImportedFunctionIndexByDecl(const char *decl) = 0;
-	virtual const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0) = 0;
-	virtual const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0) = 0;
-	virtual int         BindImportedFunction(int importIndex, int funcId) = 0;
-	virtual int         UnbindImportedFunction(int importIndex) = 0;
-
-	virtual int BindAllImportedFunctions() = 0;
-	virtual int UnbindAllImportedFunctions() = 0;
-
-	// Type identification
-//	virtual int GetTypeIdByDecl(const char *decl) = 0;
-//	virtual int GetObjectTypeCount() = 0;
-//	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
-
-	// Bytecode Saving/Loading
-	virtual int SaveByteCode(asIBinaryStream *out) = 0;
-	virtual int LoadByteCode(asIBinaryStream *in) = 0;
-
-protected:
-	virtual ~asIScriptModule() {}
-};
-
 class asCModule : public asIScriptModule
 {
+//-------------------------------------------
+// Public interface
+//--------------------------------------------
 public:
+	virtual asIScriptEngine *GetEngine();
+	virtual void             SetName(const char *name);
+	virtual const char      *GetName(int *length);
+
+	// Compilation
+	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);
+	virtual int  Build();
+
+	// Script functions
+	virtual int                GetFunctionCount();
+	virtual int                GetFunctionIdByIndex(int index);
+	virtual int                GetFunctionIdByName(const char *name);
+	virtual int                GetFunctionIdByDecl(const char *decl);
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index);
+	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId);
+
+	// Script global variables
+	virtual int         ResetGlobalVars();
+	virtual int         GetGlobalVarCount();
+	virtual int         GetGlobalVarIndexByName(const char *name);
+	virtual int         GetGlobalVarIndexByDecl(const char *decl);
+	virtual const char *GetGlobalVarDeclaration(int index, int *length);
+	virtual const char *GetGlobalVarName(int index, int *length);
+	virtual int         GetGlobalVarTypeId(int index);
+	virtual void       *GetAddressOfGlobalVar(int index);
+
+	// Type identification
+	virtual int            GetObjectTypeCount();
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index);
+	virtual int            GetTypeIdByDecl(const char *decl);
+
+	// Dynamic binding between modules
+	virtual int         GetImportedFunctionCount();
+	virtual int         GetImportedFunctionIndexByDecl(const char *decl);
+	virtual const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0);
+	virtual const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0);
+	virtual int         BindImportedFunction(int index, int sourceID);
+	virtual int         UnbindImportedFunction(int importIndex);
+	virtual int         BindAllImportedFunctions();
+	virtual int         UnbindAllImportedFunctions();
+
+	// Bytecode Saving/Loading
+	virtual int SaveByteCode(asIBinaryStream *out);
+	virtual int LoadByteCode(asIBinaryStream *in);
+
+//-----------------------------------------------
+// Internal
+//-----------------------------------------------
 	asCModule(const char *name, int id, asCScriptEngine *engine);
 	~asCModule();
-
-	asIScriptEngine *GetEngine();
-	void             SetName(const char *name);
-	const char      *GetName(int *length);
-
-	int  AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);
-	int  Build();
-	void Discard();
-
-	int  Reinitialize();
-
-	int  GetFunctionCount();
-	int  GetFunctionIdByIndex(int index);
-	int  GetFunctionIdByName(const char *name);
-	int  GetFunctionIdByDecl(const char *decl);
-	asIScriptFunction *GetFunctionDescriptorByIndex(int index);
-	asIScriptFunction *GetFunctionDescriptorById(int funcId);
-
-	int         GetGlobalVarCount();
-	int         GetGlobalVarIndexByName(const char *name);
-	int         GetGlobalVarIndexByDecl(const char *decl);
-	const char *GetGlobalVarDeclaration(int index, int *length);
-	const char *GetGlobalVarName(int index, int *length);
-	int         GetGlobalVarTypeId(int index);
-	void       *GetAddressOfGlobalVar(int index);
-
-	const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0);
-	const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0);
-
-	int BindAllImportedFunctions();
-	int UnbindAllImportedFunctions();
-
-	int SaveByteCode(asIBinaryStream *out);
-	int LoadByteCode(asIBinaryStream *in);
-
-	asCString name;
 
 //protected:
 	friend class asCScriptEngine;
@@ -195,6 +156,7 @@ public:
 	friend class asCContext;
 	friend class asCRestore;
 
+	void Discard();
 	void InternalReset();
 
 	int  AddContextRef();
@@ -225,18 +187,14 @@ public:
 	void UpdateGlobalVarPointer(void *pold, void *pnew);
 
 	int  GetNextImportedFunctionId();
-	int  GetImportedFunctionCount();
-	int  GetImportedFunctionIndexByDecl(const char *decl);
-	int  BindImportedFunction(int index, int sourceID);
-	int  UnbindImportedFunction(int importIndex);
 
 	void ResolveInterfaceIds();
 	bool AreInterfacesEqual(asCObjectType *a, asCObjectType *b, asCArray<sObjectTypePair> &equals);
 	bool AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArray<sObjectTypePair> &equals);
 
-	asCScriptFunction *GetImportedFunction(int funcID);
-	asCScriptFunction *GetScriptFunction(int funcID);
-	asCScriptFunction *GetSpecialFunction(int funcID);
+	asCScriptFunction *GetImportedFunction(int funcId);
+	asCScriptFunction *GetScriptFunction(int funcId);
+	asCScriptFunction *GetSpecialFunction(int funcId);
 
 	asCObjectType *GetObjectType(const char *type);
 
@@ -245,11 +203,13 @@ public:
 
 	int GetGlobalVarIndex(int propIdx);
 
+	asCString name;
+
 	asCScriptEngine *engine;
 	asCBuilder      *builder;
 	bool             isBuildWithoutErrors;
 
-	int  moduleID;
+	int  moduleId;
 	bool isDiscarded;
 
 	asCScriptFunction             *initFunction;

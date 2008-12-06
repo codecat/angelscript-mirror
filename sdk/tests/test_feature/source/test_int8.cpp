@@ -95,8 +95,9 @@ bool Test()
 	TestInt8Class testInt8;
 	r = engine->RegisterGlobalProperty("Int8Tester TestInt8Class", &testInt8 );
 	if( r < 0 ) fail = true;
-	engine->AddScriptSection(0, "script", script3, strlen(script3));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script3, strlen(script3));
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;

@@ -116,8 +116,9 @@ bool TestSwitch()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "switch", script, strlen(script), 0);
-	int r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("switch", script);
+	int r = mod->Build();
 	if( r < 0 )
 	{
 		printf("%s: Failed to build script\n", TESTNAME);
@@ -125,7 +126,7 @@ bool TestSwitch()
 	}
 
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetFunctionIDByDecl(0, "void _switch()"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("void _switch()"));
 	ctx->Execute();
 
 	if( sum != 254 )
@@ -136,8 +137,9 @@ bool TestSwitch()
 
 	ctx->Release();
 
-	engine->AddScriptSection(0, "switch", script2, strlen(script2), 0);
-	engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("switch", script2);
+	mod->Build();
 
 	engine->ExecuteString(0, "_switch2()");
 

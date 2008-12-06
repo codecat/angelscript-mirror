@@ -209,7 +209,7 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 		if( !objectType || 
 			!objectType->flags & asOBJ_REF || 
 			objectType->flags & asOBJ_NOHANDLE || 
-			(objectType->flags & asOBJ_SCOPED) && !acceptHandleForScope )
+			((objectType->flags & asOBJ_SCOPED) && !acceptHandleForScope) )
 			return -1;
 
 		isObjectHandle = b;

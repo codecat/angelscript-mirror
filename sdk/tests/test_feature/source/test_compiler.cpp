@@ -95,8 +95,9 @@ bool Test()
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void testFunction()\n"
@@ -110,8 +111,9 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 
@@ -123,16 +125,18 @@ bool Test()
 
 	// test 3
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
 	// test 4
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 
@@ -149,8 +153,9 @@ bool Test()
 		fail = true;
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "TestCompiler (2, 1) : Info    : Compiling void crash()\n"
@@ -162,8 +167,9 @@ bool Test()
 	// globally registered functions since they are in different scope
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("bool Test(bool, float)", asFUNCTION(0), asCALL_GENERIC);
-	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		printf("failed on 6\n");
@@ -184,8 +190,9 @@ bool Test()
 	// test 8
 	// Don't assert on implicit conversion to object when a compile error has occurred
 	bout.buffer = "";
-	engine->AddScriptSection(0, "script", script7, strlen(script7));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script7, strlen(script7));
+	r = mod->Build();
 	if( r >= 0 )
 	{
 		fail = true;
@@ -200,8 +207,9 @@ bool Test()
 	// test 9
 	// Don't hang on script with non-terminated string
 	bout.buffer = "";
-	engine->AddScriptSection(0, "script", script8, strlen(script8));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script8, strlen(script8));
+	r = mod->Build();
 	if( r >= 0 )
 	{
 		fail = true;
@@ -217,8 +225,9 @@ bool Test()
 	// test 10
 	// Properly handle error with returning a void expression
 	bout.buffer = "";
-	engine->AddScriptSection(0, "script", script9, strlen(script9));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script9, strlen(script9));
+	r = mod->Build();
 	if( r >= 0 )
 	{
 		fail = true;
@@ -233,8 +242,9 @@ bool Test()
 	// test 11
 	// Properly handle error when assigning a void expression to a variable
 	bout.buffer = "";
-	engine->AddScriptSection(0, "script", script10, strlen(script10));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script10, strlen(script10));
+	r = mod->Build();
 	if( r >= 0 )
 	{
 		fail = true;
@@ -250,8 +260,9 @@ bool Test()
 	// Handle errors after use of undefined objects
 	bout.buffer = "";
 	engine->RegisterObjectType("type", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
-	engine->AddScriptSection(0, "script", script11, strlen(script11));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script11, strlen(script11));
+	r = mod->Build();
 	if( r >= 0 )
 	{
 		fail = true;
@@ -280,8 +291,9 @@ bool Test()
 	// Test 14
 	// Calling void function in ternary operator ?:
 	bout.buffer = "";
-	r = engine->AddScriptSection(0, "script", script12, strlen(script12));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("script", script12, strlen(script12));
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "script (4, 1) : Info    : Compiling void assert()\n"
@@ -307,8 +319,9 @@ bool Test()
 	// Compiler should warn if uninitialized variable is used to index an array
 	bout.buffer = "";
 	const char *script_16 = "void func() { int[] a(1); int b; a[b] = 0; }";
-	engine->AddScriptSection(0, "script", script_16, strlen(script_16));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script_16, strlen(script_16));
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 		               "script (1, 36) : Warning : 'b' is not initialized.\n" )
@@ -321,8 +334,9 @@ bool Test()
 	// Compiler should warn if uninitialized variable is used with post increment operator
 	bout.buffer = "";
 	const char *script_17 = "void func() { int a; a++; }";
-	engine->AddScriptSection(0, "script", script_17, strlen(script_17));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script_17, strlen(script_17));
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 		               "script (1, 23) : Warning : 'a' is not initialized.\n" )
@@ -353,8 +367,9 @@ bool Test()
 		"{\n"
 		"  return object;\n"
 		"}\n";
-	engine->AddScriptSection(0, "script19", script19, strlen(script19));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script19", script19, strlen(script19));
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 	if( bout.buffer != "" )
 	{
@@ -444,8 +459,9 @@ bool Test3()
 	"	return cmd[0]+3;										\n"
 	"}															\n";
 
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
@@ -490,14 +506,16 @@ bool Test4()
 	engine->RegisterGlobalFunction("void print(Chars&)", asFUNCTION(0), asCALL_GENERIC);
 
 	const char *script1 = "void main() { print(current.f().Save.FieldName); }"; 
-	engine->AddScriptSection(0, "test", script1, strlen(script1));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script1, strlen(script1));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
 	const char *script2 = "void main() { Chars a = current.f().Save.FieldName; print(a); }";
-	engine->AddScriptSection(0, "test", script2, strlen(script2));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
@@ -527,8 +545,9 @@ bool Test5()
 
 	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 0);
 
-	engine->AddScriptSection(0, "test", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
@@ -553,8 +572,9 @@ bool Test6()
 		"const int foo(int a) { return a; } \n"
 		"} \n";
 
-	engine->AddScriptSection(0, "script", script1, strlen(script1));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script1, strlen(script1));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	if( bout.buffer != "" )
@@ -570,8 +590,9 @@ bool Test6()
 		"} \n";
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, "script", script2, strlen(script2));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	if( bout.buffer != "" )
@@ -588,8 +609,9 @@ bool Test6()
 		"const MyClass foo(int (a) ,bar); \n";
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, "script", script3, strlen(script3));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script3, strlen(script3));
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "script (4, 18) : Info    : Compiling const MyClass foo\n"
@@ -607,8 +629,9 @@ bool Test6()
 		"} \n";
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, "script", script4, strlen(script4));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script4, strlen(script4));
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"

@@ -46,14 +46,15 @@ bool TestNeverVisited()
 	CBufferedOutStream out;	
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME"1", script1, strlen(script1), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME"1", script1, strlen(script1), 0);
+	mod->Build();
 
-	engine->AddScriptSection(0, TESTNAME"2", script2, strlen(script2), 0);
-	engine->Build(0);
+	mod->AddScriptSection(TESTNAME"2", script2, strlen(script2), 0);
+	mod->Build();
 
-	engine->AddScriptSection(0, TESTNAME"3", script3, strlen(script3), 0);
-	engine->Build(0);
+	mod->AddScriptSection(TESTNAME"3", script3, strlen(script3), 0);
+	mod->Build();
 
 	engine->Release();
 

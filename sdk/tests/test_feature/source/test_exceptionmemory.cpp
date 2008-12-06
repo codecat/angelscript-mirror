@@ -226,10 +226,11 @@ bool Test()
 
 	COutStream out;
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -304,8 +305,8 @@ bool Test()
 
 //	printf("---\n");
 
-	engine->AddScriptSection(0, "script", script3, strlen(script3));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script3, strlen(script3));
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 	r = engine->ExecuteString(0, "calc()");
 	if( r != asEXECUTION_EXCEPTION )

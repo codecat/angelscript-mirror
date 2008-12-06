@@ -237,7 +237,7 @@ CScriptAny::CScriptAny(asIScriptEngine *engine)
 	value.valueInt = 0;
 
 	// Notify the garbage collector of this object
-	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl(0, "any"));		
+	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl("any"));		
 }
 
 CScriptAny::CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine)
@@ -249,7 +249,7 @@ CScriptAny::CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine)
 	value.valueInt = 0;
 
 	// Notify the garbage collector of this object
-	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl(0, "any"));		
+	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl("any"));		
 
 	Store(ref, refTypeId);
 }
@@ -290,13 +290,13 @@ void CScriptAny::Store(void *ref, int refTypeId)
 
 void CScriptAny::Store(double &ref)
 {
-	int typeId = engine->GetTypeIdByDecl(0, "double");
+	int typeId = engine->GetTypeIdByDecl("double");
 	Store(&ref, typeId);
 }
 
 void CScriptAny::Store(asINT64 &ref)
 {
-	int typeId = engine->GetTypeIdByDecl(0, "int64");
+	int typeId = engine->GetTypeIdByDecl("int64");
 	Store(&ref, typeId);
 }
 
@@ -342,8 +342,8 @@ bool CScriptAny::Retrieve(void *ref, int refTypeId)
 		}
 
 		// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
-		int intTypeId = engine->GetTypeIdByDecl(0, "int64");
-		int fltTypeId = engine->GetTypeIdByDecl(0, "double");
+		int intTypeId = engine->GetTypeIdByDecl("int64");
+		int fltTypeId = engine->GetTypeIdByDecl("double");
 		if( value.typeId == intTypeId && refTypeId == fltTypeId )
 		{
 			*(double*)ref = double(value.valueInt);
@@ -361,13 +361,13 @@ bool CScriptAny::Retrieve(void *ref, int refTypeId)
 
 bool CScriptAny::Retrieve(asINT64 &value)
 {
-	int typeId = engine->GetTypeIdByDecl(0, "int64");
+	int typeId = engine->GetTypeIdByDecl("int64");
 	return Retrieve(&value, typeId);
 }
 
 bool CScriptAny::Retrieve(double &value)
 {
-	int typeId = engine->GetTypeIdByDecl(0, "double");
+	int typeId = engine->GetTypeIdByDecl("double");
 	return Retrieve(&value, typeId);
 }
 

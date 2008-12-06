@@ -15,25 +15,26 @@ bool TestModuleRef()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
-	engine->AddScriptSection("a", "script", script, strlen(script), 0);
-	if( engine->Build("a") < 0 )
+	asIScriptModule *mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	if( mod->Build() < 0 )
 	{
 		printf("%s: failed to build module a\n", TESTNAME);
 		ret = true;
 	}
 
-	int funcID = engine->GetFunctionIDByDecl("a", "void Test()");
+	int funcID = engine->GetModule("a")->GetFunctionIdByDecl("void Test()");
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(funcID);
 
-	if( engine->GetFunctionCount("a") < 0 )
+	if( engine->GetModule("a")->GetFunctionCount() < 0 )
 	{
 		printf("%s: Failed to get function count\n", TESTNAME);
 		ret = true;
 	}
 
-	engine->Discard("a");
-	if( engine->GetFunctionCount("a") != asNO_MODULE )
+	engine->DiscardModule("a");
+	if( engine->GetModule("a") )
 	{
 		printf("%s: Module was not discarded\n", TESTNAME);
 		ret = true;

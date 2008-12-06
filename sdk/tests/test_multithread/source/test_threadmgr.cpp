@@ -38,8 +38,9 @@ bool Test()
 	COutStream out;
 	g_engine.engine->SetMessageCallback(asMETHOD(COutStream,Callback),&out,asCALL_THISCALL);
 
-	g_engine.engine->AddScriptSection(0, "script", script, strlen(script), 0);
-	g_engine.engine->Build(0);
+	asIScriptModule *mod = g_engine.engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script), 0);
+	mod->Build();
 
 	g_engine.engine->ClearMessageCallback();
 

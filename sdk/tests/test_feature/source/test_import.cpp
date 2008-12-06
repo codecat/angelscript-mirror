@@ -64,14 +64,16 @@ bool Test()
 	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalProperty("int number", &number);
 
-	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
+	mod->Build();
 
-	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("DynamicModule");
+	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->Build();
 
 	// Bind all functions that the module imports
-	r = engine->BindAllImportedFunctions(0); assert( r >= 0 );
+	r = engine->GetModule(0)->BindAllImportedFunctions(); assert( r >= 0 );
 
 	engine->ExecuteString(0, "main()");
 
@@ -89,14 +91,16 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptString_Generic(engine);
 
-	engine->AddScriptSection(0, TESTNAME ":3", script3, strlen(script3), 0);
-	r = engine->Build(0); assert( r >= 0 );
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":3", script3, strlen(script3), 0);
+	r = mod->Build(); assert( r >= 0 );
 
-	engine->AddScriptSection("DynamicModule", TESTNAME ":4", script4, strlen(script4), 0);
-	r = engine->Build("DynamicModule"); assert( r >= 0 );
+	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":4", script4, strlen(script4), 0);
+	r = mod->Build(); assert( r >= 0 );
 
 	// Bind all functions that the module imports
-	r = engine->BindAllImportedFunctions(0); assert( r < 0 );
+	r = engine->GetModule(0)->BindAllImportedFunctions(); assert( r < 0 );
 
 	engine->Release();
 

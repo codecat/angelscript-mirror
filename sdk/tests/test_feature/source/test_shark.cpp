@@ -103,9 +103,10 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_RELEASE, "void f()", asFUNCTION(Point_Release), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 
 	COutStream out;
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script));
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script, strlen(script));
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		printf("%s: Failed to build\n", TESTNAME);
@@ -114,7 +115,7 @@ bool Test()
 	else
 	{
 		// Internal return
-		int funcId = engine->GetFunctionIDByName(0, "AddPoints");
+		int funcId = engine->GetModule(0)->GetFunctionIdByName("AddPoints");
 		asIScriptContext *ctx = engine->CreateContext();
 		ctx->Prepare(funcId);
 		Point a, b, c;

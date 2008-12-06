@@ -18,8 +18,12 @@ This is assuming a script context is already available. The code for this
 might look something like this:
 
 \code
+// Obtain the function id from the module. This value should preferrably  
+// be cached if the same function is called multiple times.
+int funcId = engine->GetModule(module_name)->GetFunctionIdByDecl(function_declaration);
+
 // Prepare() must be called to allow the context to prepare the stack
-context->Prepare(engine->GetFunctionIDByDecl(module_name, function_declaration);
+context->Prepare(funcId);
 
 // Set the function arguments
 context->SetArgDWord(...);

@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 	}
 
 	// Prepare the script context with the function we wish to execute
-	r = mainCtx->Prepare(engine->GetFunctionIDByDecl(0, "void main()"));
+	r = mainCtx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("void main()"));
 	if( r < 0 ) 
 	{
 		cout << "Failed to prepare the context." << endl;
@@ -126,8 +126,8 @@ int main(int argc, char **argv)
 	}
 
 	// Get the function IDs for the event functions already
-	int onKeyPressID = engine->GetFunctionIDByDecl(0, "void OnKeyPress()");
-	int onQuitID = engine->GetFunctionIDByDecl(0, "void OnQuit()");
+	int onKeyPressID = engine->GetModule(0)->GetFunctionIdByDecl("void OnKeyPress()");
+	int onQuitID = engine->GetModule(0)->GetFunctionIdByDecl("void OnQuit()");
 
 	// Set the line callback so that we can suspend the script execution
 	// after a certain time. Before executing the script the timeOut variable
@@ -262,14 +262,15 @@ int CompileScript(asIScriptEngine *engine)
 	"}                                  ";
 
 	// Add the script sections that will be compiled into executable code
-	r = engine->AddScriptSection(0, "scriptMain", scriptMain, strlen(scriptMain));
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("scriptMain", scriptMain, strlen(scriptMain));
 	if( r < 0 ) 
 	{
 		cout << "AddScriptSection() failed" << endl;
 		return -1;
 	}
 	
-	r = engine->AddScriptSection(0, "scriptEvents", scriptEvents, strlen(scriptEvents));
+	r = mod->AddScriptSection("scriptEvents", scriptEvents, strlen(scriptEvents));
 	if( r < 0 )
 	{
 		cout << "AddScriptSection() failed" << endl;
@@ -277,7 +278,7 @@ int CompileScript(asIScriptEngine *engine)
 	}
 
 	// Compile the script
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		cout << "Build() failed" << endl;

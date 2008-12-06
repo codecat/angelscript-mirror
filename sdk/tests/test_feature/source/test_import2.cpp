@@ -59,15 +59,17 @@ bool Test()
 	engine->RegisterGlobalFunction("void CheckFunc()", asFUNCTION(CheckFunc), asCALL_GENERIC);
 
 	COutStream out;
-	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->Build(0);
+	mod->Build();
 
-	engine->AddScriptSection("DynamicModule", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("DynamicModule");
+	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->Build();
 
 	// Bind all functions that the module imports
-	engine->BindAllImportedFunctions(0);
+	engine->GetModule(0)->BindAllImportedFunctions();
 
 	asIScriptContext *ctx;
 	int r = engine->ExecuteString(0, "Run()", &ctx);

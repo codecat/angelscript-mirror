@@ -83,8 +83,9 @@ bool Test()
 	RegisterScriptString(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	r = engine->ExecuteString(0, "uint8 newmask = 0xFF, mask = 0x15; Assert( (newmask & ~mask) == 0xEA );");
@@ -102,9 +103,10 @@ bool Test()
 
 	engine->RegisterGlobalFunction("uint8 ReturnByte(uint8)", asFUNCTION(ReturnByte), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("uint16 ReturnWord(uint16)", asFUNCTION(ReturnWord), asCALL_GENERIC);
-	engine->AddScriptSection(0, "script", script2, strlen(script2));
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script2, strlen(script2));
 	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");

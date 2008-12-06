@@ -134,12 +134,13 @@ bool Test()
 		asCALL_CDECL);assert( r >=0 );
 
 	std::string script = "void test(Foo f) { free_fun(\"foo\"); f.member_two(\"foo\"); f.member_one(\"foo\"); }";
-	engine->AddScriptSection(0,"test",script.c_str(),script.length());
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test",script.c_str(),script.length());
 	
-	r = engine->Build(0);
+	r = mod->Build();
 	if (r < 0) std::cout << "Error: " << r;
 
-	int func_id = engine->GetFunctionIDByName(0,"test");
+	int func_id = engine->GetModule(0)->GetFunctionIdByName("test");
 	if (func_id < 0) std::cout << r;
 
 	asIScriptContext* ctx = engine->CreateContext();
@@ -159,12 +160,13 @@ bool Test()
 	//------------------------
 
 	script = "void test(Foo f) { string s = f.member_one(\"foo\"); s = \"test\"; }";
-	engine->AddScriptSection(0, "test", script.c_str(), script.length());
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script.c_str(), script.length());
 
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) std::cout << "Error: " << r;
 
-	func_id = engine->GetFunctionIDByName(0, "test");
+	func_id = engine->GetModule(0)->GetFunctionIdByName("test");
 	if( func_id < 0 ) std::cout << r;
 
 	ctx = engine->CreateContext();
@@ -181,12 +183,13 @@ bool Test()
 
 	//-------------------------
 	script = "void test() { Func(\"test\"); } void Func(const string &in str) {}";
-	engine->AddScriptSection(0, "test", script.c_str(), script.length());
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script.c_str(), script.length());
 
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) std::cout << "Error: " << r;
 
-	func_id = engine->GetFunctionIDByName(0, "test");
+	func_id = engine->GetModule(0)->GetFunctionIdByName("test");
 	if( func_id < 0 ) std::cout << r;
 
 	ctx = engine->CreateContext();

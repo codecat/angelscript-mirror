@@ -642,8 +642,9 @@ bool Test()
 	r = engine->ExecuteString(0, "TestDoubleByRef(i64); TestFloatByRef(i64); TestIntByRef(i64); TestI16ByRef(i64); TestI8ByRef(i64); TestUIntByRef(i64); TestUI16ByRef(i64); TestUI8ByRef(i64);"); if( r < 0 ) fail = true;
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	mod->Build();
 
 	// This test is to make sure that the float is in fact converted to a double
 	engine->ExecuteString(0, "TestScript();");

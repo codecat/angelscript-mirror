@@ -71,15 +71,17 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, "script", script, strlen(script));
- 	int r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+ 	int r = mod->Build();
 	if( r < 0 ) fail = true; 
 
 
 	engine->RegisterGlobalFunction("void print(float)", asFUNCTION(print_gen), asCALL_GENERIC);
 
-	engine->AddScriptSection(0, "script", script2, strlen(script2));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	engine->ExecuteString(0, "start()");

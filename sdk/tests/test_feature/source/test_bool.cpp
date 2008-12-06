@@ -225,9 +225,10 @@ bool Test()
 	// TEST 1
 	engine->RegisterGlobalFunction("void CFunc(float, bool, bool, const string &in)", asFUNCTION(CFunc), asCALL_CDECL);
 
-	engine->AddScriptSection(0, "decl", declarations, strlen(declarations));
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("decl", declarations, strlen(declarations));
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	r = engine->ExecuteString(0, "MyTest()");
@@ -235,12 +236,12 @@ bool Test()
 
 	
 	// TEST 2
-	engine->AddScriptSection(0, "script", script2, strlen(script2));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	int idx = engine->GetGlobalVarIndexByName(0, "gFlag");
-	bool *flag = (bool*)engine->GetAddressOfGlobalVar(0, idx);
+	int idx = engine->GetModule(0)->GetGlobalVarIndexByName("gFlag");
+	bool *flag = (bool*)engine->GetModule(0)->GetAddressOfGlobalVar(idx);
 	*(int*)flag = 0xCDCDCDCD;
 
 	engine->ExecuteString(0, "Set()");
@@ -309,8 +310,8 @@ bool Test()
 	TestBoolClass testBool;
 	r = engine->RegisterGlobalProperty("BoolTester TestBoolClass", &testBool );
 	if( r < 0 ) fail = true;
-	engine->AddScriptSection(0, "script", script3, strlen(script3));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script3, strlen(script3));
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -325,8 +326,8 @@ bool Test()
 
 	// TEST 7
 	engine->RegisterGlobalFunction("void Print(const string &in)", asFUNCTION(Print), asCALL_CDECL); assert( r >= 0 );
-	engine->AddScriptSection(0, "script", script4, strlen(script4));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script4, strlen(script4));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	else
@@ -347,8 +348,8 @@ bool Test()
 		"  void func() { if( !isTrue() ); } \n"
 		"}                                  \n";
 
-	engine->AddScriptSection(0, "script", script5, strlen(script5));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script5, strlen(script5));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 

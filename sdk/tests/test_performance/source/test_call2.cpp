@@ -34,12 +34,13 @@ void Test()
 
 	RegisterScriptString(engine);
 
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
+	mod->Build();
 
 	asIScriptContext *ctx = engine->CreateContext();
-	int funcId_A = engine->GetFunctionIDByDecl(0, "void TestCall2_A()");
-	int funcId_B = engine->GetFunctionIDByDecl(0, "void TestCall2_B()");
+	int funcId_A = mod->GetFunctionIdByDecl("void TestCall2_A()");
+	int funcId_B = mod->GetFunctionIdByDecl("void TestCall2_B()");
 
 	printf("Executing AngelScript version...\n");
 

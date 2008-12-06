@@ -88,8 +88,9 @@ static bool TestEnum()
 	// enum value can be given as expression of constants
 	// enum can be implicitly cast to number
 	buffer = "";
-	r = engine->AddScriptSection(NULL, NULL, script, strlen(script), 0);
-	r = engine->Build(NULL);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection(NULL, script, strlen(script), 0);
+	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
 
@@ -123,8 +124,9 @@ static bool TestEnum()
 	bout.buffer = "";
 	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	const char *script2 = "enum TEST_ERR { ERR1 = ERR2, ERR2 }";
-	r = engine->AddScriptSection("error", "error", script2, strlen(script2));
-	r = engine->Build("error");
+	mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("error", script2, strlen(script2));
+	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "error (1, 22) : Info    : Compiling TEST_ERR ERR1\n"
@@ -217,8 +219,9 @@ static bool TestEnum()
 	"  EN3,                      \n"
 	"}                           \n"
 	"const int gvar = EN1 + 10;  \n";
-	engine->AddScriptSection("en", "en", script3, strlen(script3));
-	r = engine->Build("en");
+	mod = engine->GetModule("en", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("en", script3, strlen(script3));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	buffer = "";
@@ -232,8 +235,9 @@ static bool TestEnum()
 	const char *script4 = 
 	"void func(TEST_ENUM) { output(1); } \n"
 	"void func(int) { output(2); } \n";
-	engine->AddScriptSection(0, "script", script4, strlen(script4));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script4, strlen(script4));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 	buffer = "";
@@ -251,15 +255,15 @@ static bool TestEnum()
 	"{\n"
 	"   random_game_type = game_type;\n"
 	"};\n";
-	r = engine->AddScriptSection(0, "script", script5, strlen(script5));
-	r = engine->Build(0);
+	r = mod->AddScriptSection("script", script5, strlen(script5));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
 	// enum with assignment without comma
 	const char *script6 = "enum test_wo_comma { value = 0 }";
-	r = engine->AddScriptSection(0, "script", script6, strlen(script6));
-	r = engine->Build(0);
+	r = mod->AddScriptSection("script", script6, strlen(script6));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 

@@ -102,9 +102,10 @@ bool Test()
 	COutStream out;
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC ); assert( r >= 0 );
-	engine->AddScriptSection( 0, "test", script1, strlen(script1) );
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script1, strlen(script1));
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;

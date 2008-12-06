@@ -113,8 +113,9 @@ bool Test()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r < 0 ) 
 	{
 		fail = true;
@@ -122,14 +123,15 @@ bool Test()
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 3) : Error   : No matching signatures to 'MyFunc()'\n" ) 
 	{
@@ -146,9 +148,10 @@ bool Test()
 	r = engine->RegisterGlobalProperty("int global", 0); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) 
 	{
 		fail = true;
@@ -156,14 +159,15 @@ bool Test()
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 3) : Error   : 'global' is not declared\n" ) 
 	{
@@ -185,9 +189,10 @@ bool Test()
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) 
 	{
 		fail = true;
@@ -195,14 +200,15 @@ bool Test()
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 10) : Error   : Expected ';'\n" ) 
 	{
@@ -222,9 +228,10 @@ bool Test()
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string@ f(const string &in, const mytype &in)", asFUNCTION(MyFunc), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) 
 	{
 		fail = true;
@@ -232,14 +239,15 @@ bool Test()
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (5, 9) : Error   : No matching operator that takes the types 'string&' and 'mytype&' found\n" ) 
 	{
@@ -268,9 +276,9 @@ bool Test()
 	r = engine->RegisterGlobalProperty("any g_any", any);
 	engine->EndConfigGroup();
 
-	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
+	mod->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build(0);
 	if( r < 0 )
 		fail = true;
 
@@ -309,9 +317,10 @@ bool Test()
 	r = engine->RegisterObjectType("int[]", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) 
 	{
 		fail = true;
@@ -319,7 +328,7 @@ bool Test()
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
@@ -333,9 +342,10 @@ bool Test()
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) 
 	{
 		fail = true;
@@ -343,14 +353,15 @@ bool Test()
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script7, strlen(script7), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (3, 3) : Error   : Identifier 'mytype' is not a data type\n" ) 
 	{
 		fail = true;
@@ -366,9 +377,10 @@ bool Test()
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	engine->AddScriptSection(0, TESTNAME, script8, strlen(script8), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script8, strlen(script8), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) 
 	{
 		fail = true;
@@ -376,14 +388,15 @@ bool Test()
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script8, strlen(script8), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script8, strlen(script8), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 11) : Error   : Identifier 'mytype' is not a data type\n"
 								 "TestDynamicConfig (1, 1) : Info    : Compiling void Test(int&in)\n"
 		                         "TestDynamicConfig (1, 11) : Error   : Identifier 'mytype' is not a data type\n" ) 
@@ -401,9 +414,10 @@ bool Test()
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	engine->AddScriptSection(0, TESTNAME, script9, strlen(script9), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script9, strlen(script9), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 ) 
 	{
 		fail = true;
@@ -411,14 +425,15 @@ bool Test()
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script9, strlen(script9), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script9, strlen(script9), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 11) : Error   : Expected expression value\n" ) 
 	{
@@ -441,9 +456,9 @@ bool Test()
 	r = engine->RegisterGlobalProperty("any g_any", any);
 	engine->EndConfigGroup();
 
-	engine->AddScriptSection(0, TESTNAME, script10, strlen(script10), 0);
+	mod->AddScriptSection(0, TESTNAME, script10, strlen(script10), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->Build(0);
+	r = mod->Build(0);
 	if( r < 0 )
 		fail = true;
 
@@ -521,7 +536,7 @@ bool Test()
 
 	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
 
-	r = engine->Discard(0);  assert( r >= 0 );
+	r = engine->DiscardModule(0);  assert( r >= 0 );
 	r = engine->GarbageCollect(); assert( r >= 0 );
 
 	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );
@@ -533,7 +548,7 @@ bool Test()
 
 	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
 
-	r = engine->Discard(0);  assert( r >= 0 );
+	r = engine->DiscardModule(0);  assert( r >= 0 );
 	r = engine->GarbageCollect(); assert( r >= 0 );
 
 	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );

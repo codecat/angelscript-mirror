@@ -311,8 +311,8 @@ bool asCTokenizer::IsConstant()
 bool asCTokenizer::IsIdentifier()
 {
 	// Starting with letter or underscore
-	if( source[0] >= 'a' && source[0] <= 'z' ||
-		source[0] >= 'A' && source[0] <= 'Z' ||
+	if( (source[0] >= 'a' && source[0] <= 'z') ||
+		(source[0] >= 'A' && source[0] <= 'Z') ||
 		source[0] == '_' )
 	{
 		tokenType = ttIdentifier;
@@ -320,9 +320,9 @@ bool asCTokenizer::IsIdentifier()
 
 		for( size_t n = 1; n < sourceLength; n++ )
 		{
-			if( source[n] >= 'a' && source[n] <= 'z' ||
-				source[n] >= 'A' && source[n] <= 'Z' ||
-				source[n] >= '0' && source[n] <= '9' ||
+			if( (source[n] >= 'a' && source[n] <= 'z') ||
+				(source[n] >= 'A' && source[n] <= 'Z') ||
+				(source[n] >= '0' && source[n] <= '9') ||
 				source[n] == '_' )
 				tokenLength++;
 			else

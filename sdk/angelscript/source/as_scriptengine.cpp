@@ -502,61 +502,27 @@ asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLengt
 }
 
 // interface
-int asCScriptEngine::AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset)
+asIScriptModule *asCScriptEngine::GetModule(const char *module, asEGMFlags flag)
 {
-	asCModule *mod = GetModule(module, true);
-	if( mod == 0 ) return asNO_MODULE;
+	asCModule *mod = GetModule(module, false);
 
-	// Discard the module if it is in use
-	if( mod->IsUsed() )
+	if( flag == asGM_ALWAYS_CREATE )
 	{
-		mod->Discard();
-
-		// Get another module
-		mod = GetModule(module, true);
+		if( mod != 0 )
+			mod->Discard();
+		return GetModule(module, true);
 	}
 
-	return mod->AddScriptSection(name, code, (int)codeLength, lineOffset);
+	if( mod == 0 && flag == asGM_CREATE_IF_NOT_EXISTS )
+	{
+		return GetModule(module, true);
+	}
+
+	return mod;
 }
 
 // interface
-int asCScriptEngine::Build(const char *module)
-{
-	// TODO: multithread: We can use interlocked operations to check the isBuilding flag
-	ENTERCRITICALSECTION(engineCritical);
-	if( isBuilding )
-	{
-		LEAVECRITICALSECTION(engineCritical);
-		return asBUILD_IN_PROGRESS;
-	}
-	isBuilding = true;
-	LEAVECRITICALSECTION(engineCritical);
-
-	PrepareEngine();
-
-	if( configFailed )
-	{
-		WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_INVALID_CONFIGURATION);
-		isBuilding = false;
-		return asINVALID_CONFIGURATION;
-	}
-
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) 
-	{
-		isBuilding = false;
-		return asNO_MODULE;
-	}
-
-	int r = mod->Build();
-
-	memoryMgr.FreeUnusedMemory();
-
-	isBuilding = false;
-	return r;
-}
-
-int asCScriptEngine::Discard(const char *module)
+int asCScriptEngine::DiscardModule(const char *module)
 {
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
@@ -581,8 +547,6 @@ int asCScriptEngine::Discard(const char *module)
 
 	return 0;
 }
-
-
 
 void asCScriptEngine::ClearUnusedTypes()
 {
@@ -708,47 +672,7 @@ void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &typ
 	}
 }
 
-int asCScriptEngine::ResetModule(const char *module)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
 
-	return mod->Reinitialize();
-}
-
-int asCScriptEngine::GetFunctionCount(const char *module)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetFunctionCount();
-}
-
-int asCScriptEngine::GetFunctionIDByIndex(const char *module, int index)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetFunctionIdByIndex(index);
-}
-
-int asCScriptEngine::GetFunctionIDByName(const char *module, const char *name)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetFunctionIdByName(name);
-}
-
-int asCScriptEngine::GetFunctionIDByDecl(const char *module, const char *decl)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetFunctionIdByDecl(decl);
-}
-
-//-----------------
 
 // internal
 int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl, asCModule *mod)
@@ -796,131 +720,6 @@ int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl
 
 	return id;
 }
-
-
-//----------------------
-
-// interface
-int asCScriptEngine::GetGlobalVarCount(const char *module)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetGlobalVarCount();
-}
-
-// interface
-int asCScriptEngine::GetGlobalVarIndexByName(const char *module, const char *name)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetGlobalVarIndexByName(name);
-}
-
-// interface
-int asCScriptEngine::GetGlobalVarIndexByDecl(const char *module, const char *decl)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetGlobalVarIndexByDecl(decl);
-}
-
-// interface
-const char *asCScriptEngine::GetGlobalVarDeclaration(const char *module, int index, int *length)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return 0;
-
-	return mod->GetGlobalVarDeclaration(index, length);
-}
-
-// interface
-const char *asCScriptEngine::GetGlobalVarName(const char *module, int index, int *length)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return 0;
-
-	return mod->GetGlobalVarName(index, length);
-}
-
-// interface
-int asCScriptEngine::GetGlobalVarTypeId(const char *module, int index)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetGlobalVarTypeId(index);
-}
-
-// interface
-void *asCScriptEngine::GetAddressOfGlobalVar(const char *module, int index)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return 0;
-
-	return mod->GetAddressOfGlobalVar(index);
-}
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2008-09-25
-int asCScriptEngine::GetGlobalVarIDByIndex(const char *module, int index)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->moduleID | index;
-}
-
-// Deprecated since 2008-09-25
-int asCScriptEngine::GetGlobalVarIDByName(const char *module, const char *name)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->moduleID | mod->GetGlobalVarIndexByName(name);
-}
-
-// Deprecated since 2008-09-25
-int asCScriptEngine::GetGlobalVarIDByDecl(const char *module, const char *decl)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->moduleID | mod->GetGlobalVarIndexByDecl(decl);
-}
-
-// Deprecated since 2008-09-25
-const char *asCScriptEngine::GetGlobalVarDeclaration(int gvarID, int *length)
-{
-	asCModule *mod = GetModule(gvarID);
-	if( mod == 0 ) return 0;
-
-	return mod->GetGlobalVarDeclaration(gvarID & 0xFFFF, length);
-}
-
-// Deprecated since 2008-09-25
-const char *asCScriptEngine::GetGlobalVarName(int gvarID, int *length)
-{
-	asCModule *mod = GetModule(gvarID);
-	if( mod == 0 ) return 0;
-
-	return mod->GetGlobalVarName(gvarID & 0xFFFF, length);
-}
-
-// Deprecated since 2008-09-25
-// For primitives, object handles and references the address of the value is returned
-// For objects the address of the reference that holds the object is returned
-void *asCScriptEngine::GetGlobalVarPointer(int gvarID)
-{
-	asCModule *mod = GetModule(gvarID);
-	if( mod == 0 ) return 0;
-
-	return mod->GetAddressOfGlobalVar(gvarID & 0xFFFF);
-}
-#endif
-
 
 
 // Internal
@@ -1887,8 +1686,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	}
 	else
 	{
-		if( behaviour >= asBEHAVE_FIRST_DUAL &&
-			behaviour <= asBEHAVE_LAST_DUAL ||
+		if( (behaviour >= asBEHAVE_FIRST_DUAL &&
+			 behaviour <= asBEHAVE_LAST_DUAL) ||
 			behaviour == asBEHAVE_REF_CAST )
 		{
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_MUST_BE_GLOBAL_BEHAVIOUR);
@@ -2582,98 +2381,13 @@ int asCScriptEngine::RequestBuild()
 // internal
 void asCScriptEngine::BuildCompleted()
 {
+	// Always free up pooled memory after a completed build
+	memoryMgr.FreeUnusedMemory();
+
 	isBuilding = false;
 }
 
-int asCScriptEngine::SaveByteCode(const char *module, asIBinaryStream *stream)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->SaveByteCode(stream);
-}
-
-// internal
-int asCScriptEngine::LoadByteCode(const char *module, asIBinaryStream *stream)
-{
-	asCModule *mod = GetModule(module, true);
-	if( mod == 0 ) return asNO_MODULE;
-
-	if( mod->IsUsed() )
-	{
-		// Discard this module and get another
-		mod->Discard();
-		mod = GetModule(module, true);
-	}
-
-	return mod->LoadByteCode(stream);
-}
-
-int asCScriptEngine::GetImportedFunctionCount(const char *module)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetImportedFunctionCount();
-}
-
-int asCScriptEngine::GetImportedFunctionIndexByDecl(const char *module, const char *decl)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->GetImportedFunctionIndexByDecl(decl);
-}
-
-const char *asCScriptEngine::GetImportedFunctionDeclaration(const char *module, int index, int *length)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return 0;
-
-	return mod->GetImportedFunctionDeclaration(index, length);
-}
-
-const char *asCScriptEngine::GetImportedFunctionSourceModule(const char *module, int index, int *length)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return 0;
-
-	return mod->GetImportedFunctionSourceModule(index, length);
-}
-
-int asCScriptEngine::BindImportedFunction(const char *module, int index, int funcID)
-{
-	asCModule *dstModule = GetModule(module, false);
-	if( dstModule == 0 ) return asNO_MODULE;
-
-	return dstModule->BindImportedFunction(index, funcID);
-}
-
-int asCScriptEngine::UnbindImportedFunction(const char *module, int index)
-{
-	asCModule *dstModule = GetModule(module, false);
-	if( dstModule == 0 ) return asNO_MODULE;
-
-	return dstModule->UnbindImportedFunction(index);
-}
-
-int asCScriptEngine::BindAllImportedFunctions(const char *module)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->BindAllImportedFunctions();
-}
-
-int asCScriptEngine::UnbindAllImportedFunctions(const char *module)
-{
-	asCModule *mod = GetModule(module, false);
-	if( mod == 0 ) return asNO_MODULE;
-
-	return mod->UnbindAllImportedFunctions();
-}
-
-
+// interface
 int asCScriptEngine::ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)
 {
 	ENTERCRITICALSECTION(engineCritical);
@@ -3233,17 +2947,6 @@ int asCScriptEngine::GarbageCollect(asEGCFlags flags)
 	return gc.GarbageCollect(flags);
 }
 
-#ifdef AS_DEPRECATED
-// interface
-// Deprecated since 2008-11-05
-int asCScriptEngine::GetObjectsInGarbageCollectorCount()
-{
-	asUINT currentSize;
-	gc.GetStatistics(&currentSize, 0, 0);
-	return currentSize;
-}
-#endif
-
 // interface
 void asCScriptEngine::GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected)
 {
@@ -3348,18 +3051,19 @@ void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
 	}
 }
 
-int asCScriptEngine::GetTypeIdByDecl(const char *module, const char *decl)
+// interface
+int asCScriptEngine::GetTypeIdByDecl(const char *decl)
 {
-	asCModule *mod = GetModule(module, false);
-
 	asCDataType dt;
-	asCBuilder bld(this, mod);
+	asCBuilder bld(this, 0);
 	int r = bld.ParseDataType(decl, &dt);
 	if( r < 0 )
 		return asINVALID_TYPE;
 
 	return GetTypeIdFromDataType(dt);
 }
+
+
 
 const char *asCScriptEngine::GetTypeDeclaration(int typeId, int *length)
 {
@@ -3984,6 +3688,16 @@ asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId)
 	return dt->GetObjectType();
 }
 
+
+asIScriptFunction *asCScriptEngine::GetFunctionDescriptorById(int funcId)
+{
+	return GetScriptFunction(funcId);
+}
+
+
+#ifdef AS_DEPRECATED
+
+// deprecated since 2008-12-02
 asIScriptFunction *asCScriptEngine::GetFunctionDescriptorByIndex(const char *module, int index)
 {
 	asCModule *mod = GetModule(module, false);
@@ -3992,10 +3706,314 @@ asIScriptFunction *asCScriptEngine::GetFunctionDescriptorByIndex(const char *mod
 	return mod->GetFunctionDescriptorByIndex(index);
 }
 
-asIScriptFunction *asCScriptEngine::GetFunctionDescriptorById(int funcId)
+// Deprecated since 2008-11-05
+int asCScriptEngine::GetObjectsInGarbageCollectorCount()
 {
-	return GetScriptFunction(funcId);
+	asUINT currentSize;
+	gc.GetStatistics(&currentSize, 0, 0);
+	return currentSize;
 }
+
+// deprecated since 2008-12-01
+int asCScriptEngine::SaveByteCode(const char *module, asIBinaryStream *stream)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->SaveByteCode(stream);
+}
+
+// deprecated since 2008-12-01
+int asCScriptEngine::LoadByteCode(const char *module, asIBinaryStream *stream)
+{
+	asCModule *mod = GetModule(module, true);
+	if( mod == 0 ) return asNO_MODULE;
+
+	if( mod->IsUsed() )
+	{
+		// Discard this module and get another
+		mod->Discard();
+		mod = GetModule(module, true);
+	}
+
+	return mod->LoadByteCode(stream);
+}
+
+// deprecated since 2008-12-01
+int asCScriptEngine::GetImportedFunctionCount(const char *module)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetImportedFunctionCount();
+}
+
+// deprecated since 2008-12-01
+int asCScriptEngine::GetImportedFunctionIndexByDecl(const char *module, const char *decl)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetImportedFunctionIndexByDecl(decl);
+}
+
+// deprecated since 2008-12-01
+const char *asCScriptEngine::GetImportedFunctionDeclaration(const char *module, int index, int *length)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return 0;
+
+	return mod->GetImportedFunctionDeclaration(index, length);
+}
+
+// deprecated since 2008-12-01
+const char *asCScriptEngine::GetImportedFunctionSourceModule(const char *module, int index, int *length)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return 0;
+
+	return mod->GetImportedFunctionSourceModule(index, length);
+}
+
+// deprecated since 2008-12-01
+int asCScriptEngine::BindImportedFunction(const char *module, int index, int funcID)
+{
+	asCModule *dstModule = GetModule(module, false);
+	if( dstModule == 0 ) return asNO_MODULE;
+
+	return dstModule->BindImportedFunction(index, funcID);
+}
+
+// deprecated since 2008-12-01
+int asCScriptEngine::UnbindImportedFunction(const char *module, int index)
+{
+	asCModule *dstModule = GetModule(module, false);
+	if( dstModule == 0 ) return asNO_MODULE;
+
+	return dstModule->UnbindImportedFunction(index);
+}
+
+// deprecated since 2008-12-01
+int asCScriptEngine::BindAllImportedFunctions(const char *module)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->BindAllImportedFunctions();
+}
+
+// deprecated since 2008-12-01
+int asCScriptEngine::UnbindAllImportedFunctions(const char *module)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->UnbindAllImportedFunctions();
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::GetGlobalVarCount(const char *module)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetGlobalVarCount();
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::GetGlobalVarIndexByName(const char *module, const char *name)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetGlobalVarIndexByName(name);
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::GetGlobalVarIndexByDecl(const char *module, const char *decl)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetGlobalVarIndexByDecl(decl);
+}
+
+// deprecated since 2008-12-02
+const char *asCScriptEngine::GetGlobalVarDeclaration(const char *module, int index, int *length)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return 0;
+
+	return mod->GetGlobalVarDeclaration(index, length);
+}
+
+// deprecated since 2008-12-02
+const char *asCScriptEngine::GetGlobalVarName(const char *module, int index, int *length)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return 0;
+
+	return mod->GetGlobalVarName(index, length);
+}
+
+// deprecated since 2008-12-02
+void *asCScriptEngine::GetAddressOfGlobalVar(const char *module, int index)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return 0;
+
+	return mod->GetAddressOfGlobalVar(index);
+}
+
+// Deprecated since 2008-09-25
+int asCScriptEngine::GetGlobalVarIDByIndex(const char *module, int index)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->moduleID | index;
+}
+
+// Deprecated since 2008-09-25
+int asCScriptEngine::GetGlobalVarIDByName(const char *module, const char *name)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->moduleID | mod->GetGlobalVarIndexByName(name);
+}
+
+// Deprecated since 2008-09-25
+int asCScriptEngine::GetGlobalVarIDByDecl(const char *module, const char *decl)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->moduleID | mod->GetGlobalVarIndexByDecl(decl);
+}
+
+// Deprecated since 2008-09-25
+const char *asCScriptEngine::GetGlobalVarDeclaration(int gvarID, int *length)
+{
+	asCModule *mod = GetModule(gvarID);
+	if( mod == 0 ) return 0;
+
+	return mod->GetGlobalVarDeclaration(gvarID & 0xFFFF, length);
+}
+
+// Deprecated since 2008-09-25
+const char *asCScriptEngine::GetGlobalVarName(int gvarID, int *length)
+{
+	asCModule *mod = GetModule(gvarID);
+	if( mod == 0 ) return 0;
+
+	return mod->GetGlobalVarName(gvarID & 0xFFFF, length);
+}
+
+// Deprecated since 2008-09-25
+// For primitives, object handles and references the address of the value is returned
+// For objects the address of the reference that holds the object is returned
+void *asCScriptEngine::GetGlobalVarPointer(int gvarID)
+{
+	asCModule *mod = GetModule(gvarID);
+	if( mod == 0 ) return 0;
+
+	return mod->GetAddressOfGlobalVar(gvarID & 0xFFFF);
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::ResetModule(const char *module)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->Reinitialize();
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::GetFunctionCount(const char *module)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetFunctionCount();
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::GetFunctionIDByIndex(const char *module, int index)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetFunctionIdByIndex(index);
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::GetFunctionIDByName(const char *module, const char *name)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetFunctionIdByName(name);
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::GetFunctionIDByDecl(const char *module, const char *decl)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->GetFunctionIdByDecl(decl);
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset)
+{
+	asCModule *mod = GetModule(module, true);
+	if( mod == 0 ) return asNO_MODULE;
+
+	// Discard the module if it is in use
+	if( mod->IsUsed() )
+	{
+		mod->Discard();
+
+		// Get another module
+		mod = GetModule(module, true);
+	}
+
+	return mod->AddScriptSection(name, code, (int)codeLength, lineOffset);
+}
+
+// deprecated since 2008-12-02
+int asCScriptEngine::Build(const char *module)
+{
+	asCModule *mod = GetModule(module, false);
+	if( mod == 0 ) return asNO_MODULE;
+
+	return mod->Build();
+}
+
+// deprecated since 2008-12-03
+int asCScriptEngine::Discard(const char *module)
+{
+	return DiscardModule(module);
+}
+
+// deprecated since 2008-12-04
+int asCScriptEngine::GetTypeIdByDecl(const char *module, const char *decl)
+{
+	asCModule *mod = GetModule(module, false);
+
+	asCDataType dt;
+	asCBuilder bld(this, mod);
+	int r = bld.ParseDataType(decl, &dt);
+	if( r < 0 )
+		return asINVALID_TYPE;
+
+	return GetTypeIdFromDataType(dt);
+}
+
+#endif
 
 
 END_AS_NAMESPACE

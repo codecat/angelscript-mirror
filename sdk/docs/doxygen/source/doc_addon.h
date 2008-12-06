@@ -323,9 +323,11 @@ and give a prefix according to the following table:
 <table border=0 cellspacing=0 cellpadding=0>
 <tr><td><b>interface      &nbsp;</b></td><td><b>prefix&nbsp;</b></td></tr>
 <tr><td>asIScriptEngine   &nbsp;</td>    <td>asEngine_</td></tr>
+<tr><td>asIScriptModule   &nbsp;</td>    <td>asModule_</td></tr>
 <tr><td>asIScriptContext  &nbsp;</td>    <td>asContext_</td></tr>
 <tr><td>asIScriptGeneric  &nbsp;</td>    <td>asGeneric_</td></tr>
 <tr><td>asIScriptArray    &nbsp;</td>    <td>asArray_</td></tr>
+<tr><td>asIScriptStruct   &nbsp;</td>    <td>asStruct_</td></tr>
 <tr><td>asIObjectType     &nbsp;</td>    <td>asObjectType_</td></tr>
 <tr><td>asIScriptFunction &nbsp;</td>    <td>asScriptFunction_</td></tr>
 </table>

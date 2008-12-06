@@ -30,18 +30,20 @@ bool Test()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection("Module1", TESTNAME ":1", script1, strlen(script1), 0);
-	engine->Build("Module1");
+	asIScriptModule *mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
+	mod->Build();
 
-	engine->AddScriptSection("Module2", TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build("Module2");
+	mod = engine->GetModule("Module2", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->Build();
 
 	BindImportedFunctions(engine, "Module1");
 	BindImportedFunctions(engine, "Module2");
 
 	// Discard the modules
-	engine->Discard("Module1");
-	engine->Discard("Module2");
+	engine->DiscardModule("Module1");
+	engine->DiscardModule("Module2");
 	
 	engine->Release();
 
@@ -52,16 +54,17 @@ bool Test()
 static void BindImportedFunctions(asIScriptEngine *engine, const char *module)
 {
 	// Bind imported functions
-	int c = engine->GetImportedFunctionCount(module);
+	asIScriptModule *mod = engine->GetModule(module);
+	int c = mod->GetImportedFunctionCount();
 	for( int n = 0; n < c; ++n )
 	{
-		const char *decl = engine->GetImportedFunctionDeclaration(module, n);
+		const char *decl = mod->GetImportedFunctionDeclaration(n);
 
 		// Get module name from where the function should be imported
-		const char *moduleName = engine->GetImportedFunctionSourceModule(module, n);
+		const char *moduleName = mod->GetImportedFunctionSourceModule(n);
 
-		int funcID = engine->GetFunctionIDByDecl(moduleName, decl);
-		engine->BindImportedFunction(module, n, funcID);
+		int funcID = engine->GetModule(moduleName)->GetFunctionIdByDecl(decl);
+		mod->BindImportedFunction(n, funcID);
 	}
 }
 

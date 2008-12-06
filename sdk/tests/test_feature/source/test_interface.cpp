@@ -102,18 +102,19 @@ bool Test()
 	r = engine->RegisterInterfaceMethod("appintf", "void test()"); assert( r >= 0 );
 
 	// Test working example
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 	r = engine->ExecuteString(0, "test()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// Test calling the interface method from the application
-	int typeId = engine->GetTypeIdByDecl(0, "myclass");
+	int typeId = engine->GetModule(0)->GetTypeIdByDecl("myclass");
 	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(typeId);
 
-	int intfTypeId = engine->GetTypeIdByDecl(0, "myintf");
+	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("myintf");
 	asIObjectType *type = engine->GetObjectTypeById(intfTypeId);
 	int funcId = type->GetMethodIdByDecl("void test()");
 	asIScriptContext *ctx = engine->CreateContext();
@@ -124,7 +125,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
-	intfTypeId = engine->GetTypeIdByDecl(0, "appintf");
+	intfTypeId = engine->GetTypeIdByDecl("appintf");
 	type = engine->GetObjectTypeById(intfTypeId);
 	funcId = type->GetMethodIdByDecl("void test()");
 
@@ -145,8 +146,9 @@ bool Test()
 	// Test implicit conversion from class to interface that is not being implemented. Should give compiler error
 	// Test implicit conversion from interface to class. Should give compiler error.
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestInterface (5, 7) : Error   : Missing implementation of 'void intf::test()'\n"
 					   "TestInterface (5, 23) : Warning : The interface is already implemented\n"
@@ -163,8 +165,9 @@ bool Test()
 
 	// Test inheriting from another class
 	bout.buffer = "";
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestInterface (2, 11) : Error   : The identifier must be an interface\n" )
 	{
@@ -191,46 +194,51 @@ bool Test2()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	const char *script = "interface Simple { void function(int); }";
-	engine->AddScriptSection("a", "script", script, strlen(script));
-	r = engine->Build("a");
+	asIScriptModule *mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	engine->AddScriptSection("b", "script", script, strlen(script));
-	r = engine->Build("b");
+	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	int typeA = engine->GetTypeIdByDecl("a", "Simple");
-	int typeB = engine->GetTypeIdByDecl("b", "Simple");
+	int typeA = engine->GetModule("a")->GetTypeIdByDecl("Simple");
+	int typeB = engine->GetModule("b")->GetTypeIdByDecl("Simple");
 
 	if( typeA != typeB )
 		fail = true;
 
 	// Test recompiling a module
-	engine->AddScriptSection("a", "script", script, strlen(script));
-	r = engine->Build("a");
+	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	typeA = engine->GetTypeIdByDecl("a", "Simple");
+	typeA = engine->GetModule("a")->GetTypeIdByDecl("Simple");
 	if( typeA != typeB )
 		fail = true;
 
 	// Test interface that references itself
 	const char *script1 = "interface A { A@ f(); }";
-	engine->AddScriptSection("a", "script", script1, strlen(script1));
-	r = engine->Build("a");
+	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script1, strlen(script1));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	engine->AddScriptSection("b", "script", script1, strlen(script1));
-	r = engine->Build("b");
+	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script1, strlen(script1));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	int typeAA = engine->GetTypeIdByDecl("a", "A");
-	int typeBA = engine->GetTypeIdByDecl("b", "A");
+	int typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
+	int typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
 
 	if( typeAA != typeBA )
 		fail = true;
@@ -238,23 +246,25 @@ bool Test2()
 
 	// Test with more complex interfaces
 	const char *script2 = "interface A { B@ f(); } interface B { A@ f(); C@ f(); } interface C { A@ f(); }";
-	engine->AddScriptSection("a", "script", script2, strlen(script2));
-	r = engine->Build("a");
+	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	engine->AddScriptSection("b", "script", script2, strlen(script2));
-	r = engine->Build("b");
+	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script2, strlen(script2));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	typeAA = engine->GetTypeIdByDecl("a", "A");
-	int typeAB = engine->GetTypeIdByDecl("a", "B");
-	int typeAC = engine->GetTypeIdByDecl("a", "C");
+	typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
+	int typeAB = engine->GetModule("a")->GetTypeIdByDecl("B");
+	int typeAC = engine->GetModule("a")->GetTypeIdByDecl("C");
 	
-	typeBA = engine->GetTypeIdByDecl("b", "A");
-	int typeBB = engine->GetTypeIdByDecl("b", "B");
-	int typeBC = engine->GetTypeIdByDecl("b", "C");
+	typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
+	int typeBB = engine->GetModule("b")->GetTypeIdByDecl("B");
+	int typeBC = engine->GetModule("b")->GetTypeIdByDecl("C");
 
 	if( typeAA != typeBA ||
 		typeAB != typeBB ||
@@ -265,21 +275,23 @@ bool Test2()
 	const char *script3 = "interface A { B@ f(); } interface B { int f(); }";
 	const char *script4 = "interface A { B@ f(); } interface B { float f(); }";
 
-	engine->AddScriptSection("a", "script", script3, strlen(script3));
-	r = engine->Build("a");
+	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script3, strlen(script3));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	engine->AddScriptSection("b", "script", script4, strlen(script4));
-	r = engine->Build("b");
+	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script4, strlen(script4));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	typeAA = engine->GetTypeIdByDecl("a", "A");
-	typeAB = engine->GetTypeIdByDecl("a", "B");
+	typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
+	typeAB = engine->GetModule("a")->GetTypeIdByDecl("B");
 	
-	typeBA = engine->GetTypeIdByDecl("b", "A");
-	typeBB = engine->GetTypeIdByDecl("b", "B");
+	typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
+	typeBB = engine->GetModule("b")->GetTypeIdByDecl("B");
 
 	if( typeAA == typeBA ||
 		typeAB == typeBB )
@@ -288,19 +300,21 @@ bool Test2()
 	// Interfaces that uses the interfaces that are substituted must be updated
 	const char *script5 = "interface A { float f(); }";
 	const char *script6 = "interface B { A@ f(); }";
-	engine->AddScriptSection("a", "script5", script5, strlen(script5));
-	r = engine->Build("a");
+	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script5", script5, strlen(script5));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	engine->AddScriptSection("b", "script5", script5, strlen(script5));
-	engine->AddScriptSection("b", "script6", script6, strlen(script6));
-	r = engine->Build("b");
+	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script5", script5, strlen(script5));
+	mod->AddScriptSection("script6", script6, strlen(script6));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	typeBA = engine->GetTypeIdByDecl("b", "A@");
-	typeBB = engine->GetTypeIdByDecl("b", "B");
+	typeBA = engine->GetModule("b")->GetTypeIdByDecl("A@");
+	typeBB = engine->GetModule("b")->GetTypeIdByDecl("B");
 	asIObjectType *objType = engine->GetObjectTypeById(typeBB);
 	asIScriptFunction *func = objType->GetMethodDescriptorByIndex(0);
 	if( func->GetReturnTypeId() != typeBA )
@@ -308,19 +322,22 @@ bool Test2()
 
 	// This must work for pre-compiled byte code as well, i.e. when loading the byte code 
 	// the interface ids must be resolved in the same way it is for compiled scripts
-	engine->AddScriptSection("a", "script", script1, strlen(script1));
-	r = engine->Build("a");
+	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script1, strlen(script1));
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
 	CBytecodeStream stream;
-	engine->SaveByteCode("a", &stream);
-	r = engine->LoadByteCode("b", &stream);
+	asIScriptModule *module = engine->GetModule("a");
+	module->SaveByteCode(&stream);
+	module = engine->GetModule("b", asGM_CREATE_IF_NOT_EXISTS);
+	r = module->LoadByteCode(&stream);
 	if( r < 0 )
 		fail = true;
 
-	typeAA = engine->GetTypeIdByDecl("a", "A");
-	typeBA = engine->GetTypeIdByDecl("b", "A");
+	typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
+	typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
 
 	if( typeAA != typeBA )
 		fail = true;

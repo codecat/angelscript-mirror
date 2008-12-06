@@ -174,13 +174,14 @@ bool Test()
 
 	COutStream out;
 
-	engine->AddScriptSection(0, "1", script1, strlen(script1));
-	engine->AddScriptSection(0, "2", script2, strlen(script2));
-	engine->AddScriptSection(0, "3", script3, strlen(script3));	
-	engine->AddScriptSection(0, "4", script4, strlen(script4));	
-	engine->AddScriptSection(0, "5", script5, strlen(script5));
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("1", script1);
+	mod->AddScriptSection("2", script2);
+	mod->AddScriptSection("3", script3);	
+	mod->AddScriptSection("4", script4);	
+	mod->AddScriptSection("5", script5);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->Build(0);
+	mod->Build();
 
 	
 	// Verify order of calculations

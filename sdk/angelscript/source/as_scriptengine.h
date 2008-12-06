@@ -103,53 +103,17 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess);
 
 	// Script modules
-	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset);
-	virtual int Build(const char *module);
-	virtual int Discard(const char *module);
-	virtual int ResetModule(const char *module);
+	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag);
+	virtual int              DiscardModule(const char *module);
 
 	// Script functions
-	virtual int                GetFunctionCount(const char *module);
-	virtual int                GetFunctionIDByIndex(const char *module, int index);
-	virtual int                GetFunctionIDByName(const char *module, const char *name);
-	virtual int                GetFunctionIDByDecl(const char *module, const char *decl);
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index);
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId);
-
-	// Script global variables
-	virtual int         GetGlobalVarCount(const char *module);
-	virtual int         GetGlobalVarIndexByName(const char *module, const char *name);
-	virtual int         GetGlobalVarIndexByDecl(const char *module, const char *decl);
-	virtual const char *GetGlobalVarDeclaration(const char *module, int index, int *length = 0);
-	virtual const char *GetGlobalVarName(const char *module, int index, int *length = 0);
-	virtual int         GetGlobalVarTypeId(const char *module, int index);
-	virtual void       *GetAddressOfGlobalVar(const char *module, int index);
-#ifdef AS_DEPRECATED
-	virtual int         GetGlobalVarIDByIndex(const char *module, int index);
-	virtual int         GetGlobalVarIDByName(const char *module, const char *name);
-	virtual int         GetGlobalVarIDByDecl(const char *module, const char *decl);
-	virtual const char *GetGlobalVarDeclaration(int gvarID, int *length);
-	virtual const char *GetGlobalVarName(int gvarID, int *length);
-	virtual void       *GetGlobalVarPointer(int gvarID);
-#endif
-
-	// Dynamic binding between modules
-	virtual int         GetImportedFunctionCount(const char *module);
-	virtual int         GetImportedFunctionIndexByDecl(const char *module, const char *decl);
-	virtual const char *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length);
-	virtual const char *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length);
-	virtual int         BindImportedFunction(const char *module, int importIndex, int funcId);
-	virtual int         UnbindImportedFunction(const char *module, int importIndex);
-
-	virtual int BindAllImportedFunctions(const char *module);
-	virtual int UnbindAllImportedFunctions(const char *module);
 
 	// Type identification
 	virtual int            GetObjectTypeCount();
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index);
 	virtual asIObjectType *GetObjectTypeById(int typeId);
-
-	virtual int            GetTypeIdByDecl(const char *module, const char *decl);
+	virtual int            GetTypeIdByDecl(const char *decl);
 	virtual const char    *GetTypeDeclaration(int typeId, int *length = 0);
 	virtual int            GetSizeOfPrimitiveType(int typeId);
 
@@ -170,19 +134,48 @@ public:
 	// Garbage collection
 	virtual int  GarbageCollect(asEGCFlags flags = asGC_FULL_CYCLE);
 	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected);
-#ifdef AS_DEPRECATED
-	virtual int  GetObjectsInGarbageCollectorCount();
-#endif
 	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId);
 	virtual void GCEnumCallback(void *reference);
-
-	// Bytecode Saving/Loading
-	virtual int SaveByteCode(const char *module, asIBinaryStream *out);
-	virtual int LoadByteCode(const char *module, asIBinaryStream *in);
 
 	// User data
 	virtual void *SetUserData(void *data);
 	virtual void *GetUserData();
+
+#ifdef AS_DEPRECATED
+	virtual int                AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset);
+	virtual int                Build(const char *module);
+	virtual int                Discard(const char *module);
+	virtual int                ResetModule(const char *module);
+	virtual int                GetFunctionCount(const char *module);
+	virtual int                GetFunctionIDByIndex(const char *module, int index);
+	virtual int                GetFunctionIDByName(const char *module, const char *name);
+	virtual int                GetFunctionIDByDecl(const char *module, const char *decl);
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index);
+	virtual int                GetGlobalVarCount(const char *module);
+	virtual int                GetGlobalVarIndexByName(const char *module, const char *name);
+	virtual int                GetGlobalVarIndexByDecl(const char *module, const char *decl);
+	virtual const char        *GetGlobalVarDeclaration(const char *module, int index, int *length = 0);
+	virtual const char        *GetGlobalVarName(const char *module, int index, int *length = 0);
+	virtual void              *GetAddressOfGlobalVar(const char *module, int index);
+	virtual int                GetGlobalVarIDByIndex(const char *module, int index);
+	virtual int                GetGlobalVarIDByName(const char *module, const char *name);
+	virtual int                GetGlobalVarIDByDecl(const char *module, const char *decl);
+	virtual const char        *GetGlobalVarDeclaration(int gvarID, int *length);
+	virtual const char        *GetGlobalVarName(int gvarID, int *length);
+	virtual void              *GetGlobalVarPointer(int gvarID);
+	virtual int                GetImportedFunctionCount(const char *module);
+	virtual int                GetImportedFunctionIndexByDecl(const char *module, const char *decl);
+	virtual const char        *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length);
+	virtual const char        *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length);
+	virtual int                BindImportedFunction(const char *module, int importIndex, int funcId);
+	virtual int                UnbindImportedFunction(const char *module, int importIndex);
+	virtual int                BindAllImportedFunctions(const char *module);
+	virtual int                UnbindAllImportedFunctions(const char *module);
+	virtual int                GetTypeIdByDecl(const char *module, const char *decl);
+	virtual int                GetObjectsInGarbageCollectorCount();
+	virtual int                SaveByteCode(const char *module, asIBinaryStream *out);
+	virtual int                LoadByteCode(const char *module, asIBinaryStream *in);
+#endif
 
 //===========================================================
 // internal methods

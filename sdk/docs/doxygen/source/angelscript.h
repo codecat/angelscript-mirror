@@ -68,6 +68,7 @@ BEGIN_AS_NAMESPACE
 // Data types
 
 class asIScriptEngine;
+class asIScriptModule;
 class asIScriptContext;
 class asIScriptGeneric;
 class asIScriptStruct;
@@ -425,6 +426,17 @@ enum asETypeIdFlags
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
 
+// GetModule flags
+//! \brief Flags for GetModule.
+enum asEGMFlags
+{
+	//! \brief Don't return any module if it is not found.
+	asGM_ONLY_IF_EXISTS       = 0,
+	//! \brief Create the module if it doesn't exist.
+	asGM_CREATE_IF_NOT_EXISTS = 1,
+	//! \brief Always create a new module, discarding the existing one.
+	asGM_ALWAYS_CREATE        = 2
+};
 
 
 
@@ -1025,320 +1037,35 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
-	//! \brief Add a script section for the next build.
-    //!
-    //! \param[in] module The name of the module
-    //! \param[in] name The name of the script section
-    //! \param[in] code The script code buffer
-    //! \param[in] codeLength The length of the script code
-    //! \param[in] lineOffset An offset that will be added to compiler message line numbers
-    //! \return A negative value on error
-    //! \retval asNO_MODULE The module was not found.
-    //!
-    //! This adds a script section to the engine. All sections added will be treated as if one 
-    //! large script. Errors reported will give the name of the corresponding section.
-    //! 
-    //! The code added is copied by the engine, so there is no need to keep the original buffer after the call.
-    //! Note that this can be changed by setting the engine property \ref asEP_COPY_SCRIPT_SECTIONS
-    //! with \ref SetEngineProperty.
-	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
-	//! \brief Build the previously added script sections.
-    //!
-    //! \param[in] module The name of the module
-    //! \return A negative value on error
-    //! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The script failed to build.
-    //! \retval asBUILD_IN_PROGRESS Another thread is currently building.
-    //!
-    //! Builds the script based on the added sections, and registered types and functions. After the
-    //! build is complete the script sections are removed to free memory. If the script module needs 
-    //! to be rebuilt, all of the script sections needs to be added again.
-    //! 
-    //! Compiler messages are sent to the message callback function set with \ref SetMessageCallback. 
-    //! If there are no errors or warnings, no messages will be sent to the callback function.
-	virtual int Build(const char *module) = 0;
-	//! \brief Discard a compiled module.
+	//! \brief Return an interface pointer to the module.
+	//!
+	//! \param[in] module The name of the module
+	//! \param[in] flag One of the \ref asEGMFlags flags
+	//! \return A pointer to the module interface
+	//!
+	//! Use this method to get access to the module interface, which will
+	//! let you build new scripts, and enumerate functions and types in
+	//! existing modules.
+	//!
+	//! If \ref asGM_ALWAYS_CREATE is informed as the flag the previous
+	//! module with the same name will be discarded, thus any pointers that
+	//! the engine holds to it will be invalid after the call.
+	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag = asGM_ONLY_IF_EXISTS) = 0;
+	//! \brief Discard a module.
     //!
     //! \param[in] module The name of the module
     //! \return A negative value on error
     //! \retval asNO_MODULE The module was not found.
     //!
-    //! Discards a module and frees its memory.
-    virtual int Discard(const char *module) = 0;
-	//! \brief Reset the global variables of a module.
-    //!
-    //! \param[in] module The name of the module
-    //! \return A negative value on error
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module was not compiled successfully.
-    //!
-    //! Resets the global variables declared in this module to their initial value.
-	virtual int ResetModule(const char *module) = 0;
+    //! Discards a module and frees its memory. Any pointers that the application holds 
+	//! to this module will be invalid after this call.
+	virtual int              DiscardModule(const char *module) = 0;
 
 	// Script functions
-	//! \brief Returns the number of global functions in the module.
-    //! \param[in] module The name of the module.
-    //! \return A negative value on error, or the number of global functions in this module.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module was not compiled successfully.
-    //!
-    //! This method retrieves the number of compiled script functions.
-	virtual int                GetFunctionCount(const char *module) = 0;
-	//! \brief Returns the function id by index.
-    //! \param[in] module The name of the module.
-    //! \param[in] index The index of the function.
-    //! \return A negative value on error, or the function id.
-    //! \retval asNO_MODULE The module was not found.
-    //!
-    //! This method should be used to retrieve the ID of the script function that you wish to 
-    //! execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare"  method.
-	virtual int                GetFunctionIDByIndex(const char *module, int index) = 0;
-	//! \brief Returns the function id by name.
-    //! \param[in] module The name of the module.
-    //! \param[in] name The name of the function.
-    //! \return A negative value on error, or the function id.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module was not compiled successfully.
-    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
-    //! \retval asNO_FUNCTION Didn't find any matching functions.
-    //!
-    //! This method should be used to retrieve the ID of the script function that you 
-    //! wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	virtual int                GetFunctionIDByName(const char *module, const char *name) = 0;
-	//! \brief Returns the function id by declaration.
-    //! \param[in] module The name of the module.
-    //! \param[in] decl The function signature.
-    //! \return A negative value on error, or the function id.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module was not compiled successfully.
-    //! \retval asINVALID_DECLARATION The \a decl is invalid.
-    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
-    //! \retval asNO_FUNCTION Didn't find any matching functions.
-    //!
-    //! This method should be used to retrieve the ID of the script function that you wish 
-    //! to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-    //!
-    //! The method will find the script function with the exact same declaration.
-	virtual int                GetFunctionIDByDecl(const char *module, const char *decl) = 0;
-
-	//! \brief Returns the function descriptor for the script function
-    //! \param[in] module The module name.
-    //! \param[in] index The index of the function.
-    //! \return A pointer to the function description interface, or null if not found.
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
 	//! \brief Returns the function descriptor for the script function
     //! \param[in] funcId The id of the function or method.
     //! \return A pointer to the function description interface, or null if not found.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
-
-	// Script global variables
-	//! \brief Returns the number of global variables in the module.
-    //! \param[in] module The name of the module.
-    //! \return A negative value on error, or the number of global variables in the module.
-    //! \retval asNO_MODULE The module was not found.
-	virtual int         GetGlobalVarCount(const char *module) = 0;
-	//! \brief Returns the global variable index by name.
-    //! \param[in] module The name of the module.
-    //! \param[in] name The name of the global variable.
-    //! \return A negative value on error, or the global variable index.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module for the type was not built successfully.
-    //! \retval asNO_GLOBAL_VAR The matching global variable was found.
-    //!
-    //! This method should be used to retrieve the index of the script variable that you wish to access.
-	virtual int         GetGlobalVarIndexByName(const char *module, const char *name) = 0;
-	//! \brief Returns the global variable index by declaration.
-    //! \param[in] module The name of the module.
-    //! \param[in] decl The global variable declaration.
-    //! \return A negative value on error, or the global variable index.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module for the type was not built successfully.
-    //! \retval asNO_GLOBAL_VAR The matching global variable was found.
-    //!
-    //! This method should be used to retrieve the index of the script variable that you wish to access.
-    //!
-    //! The method will find the script variable with the exact same declaration.
-	virtual int         GetGlobalVarIndexByDecl(const char *module, const char *decl) = 0;
-	//! \brief Returns the global variable declaration.
-    //! \param[in] module The name of the module.
-    //! \param[in] index The index of the global variable.
-    //! \param[out] length The length of the returned string.
-    //! \return A null terminated string with the variable declaration, or null if not found.
-    //!
-    //! This method can be used to retrieve the variable declaration of the script variables 
-    //! that the host application will access. Verifying the declaration is important because, 
-    //! even though the script may compile correctly the user may not have used the variable 
-    //! types as intended.
-	virtual const char *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
-	//! \brief Returns the global variable name.
-    //! \param[in] module The name of the module.
-    //! \param[in] index The index of the global variable.
-    //! \param[out] length The length of the returned string.
-    //! \return A null terminated string with the variable name, or null if not found.
-	virtual const char *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
-	//! \brief Returns the type id for the global variable.
-	//! \param[in] module The name of the module.
-	//! \param[in] index The index of the global variable.
-	//! \return The type id of the global variable, or a negative value on error.
-	//! \retval asNO_MODULE The module doesn't exist.
-	//! \retval asINVALID_ARG The index is out of range.
-	virtual int         GetGlobalVarTypeId(const char *module, int index) = 0;
-	//! \brief Returns the pointer to the global variable.
-    //! \param[in] module The name of the module.
-    //! \param[in] index The index of the global variable.
-    //! \return A pointer to the global variable, or null if not found.
-    //!
-    //! This method should be used to retrieve the pointer of a variable that you wish to access.
-	virtual void       *GetAddressOfGlobalVar(const char *module, int index) = 0;
-#ifdef AS_DEPRECATED
-	//! \brief (deprecated) Returns the global variable id by index.
-    //! \param[in] module The name of the module.
-    //! \param[in] index The index of the global variable.
-    //! \return A negative value on error, or the global variable id.
-    //! \retval asNO_MODULE The module was not found.
-    //!
-    //! This method should be used to retrieve the ID of the script variable that you wish to access.
-    //!
-    //! \deprecated Global variables are uniquely identified by module name and index.
-	virtual int         GetGlobalVarIDByIndex(const char *module, int index) = 0;
-	//! \brief (deprecated) Returns the global variable id by name.
-    //! \param[in] module The name of the module.
-    //! \param[in] name The name of the global variable.
-    //! \return A negative value on error, or the global variable id.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module for the type was not built successfully.
-    //! \retval asNO_GLOBAL_VAR The matching global variable was found.
-    //!
-    //! This method should be used to retrieve the ID of the script variable that you wish to access.
-    //!
-    //! \deprecated Use \ref asIScriptEngine::GetGlobalVarIndexByName "GetGlobalVarIndexByName" instead
-	virtual int         GetGlobalVarIDByName(const char *module, const char *name) = 0;
-	//! \brief (deprecated) Returns the global variable id by declaration.
-    //! \param[in] module The name of the module.
-    //! \param[in] decl The global variable declaration.
-    //! \return A negative value on error, or the global variable id.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module for the type was not built successfully.
-    //! \retval asNO_GLOBAL_VAR The matching global variable was found.
-    //!
-    //! This method should be used to retrieve the ID of the script variable that you wish to access.
-    //!
-    //! The method will find the script variable with the exact same declaration.
-    //!
-    //! \deprecated Use \ref asIScriptEngine::GetGlobalVarIndexByDecl "GetGlobalVarIndexByDecl" instead
-	virtual int         GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
-	//! \brief (deprecated) Returns the global variable declaration.
-    //! \param[in] gvarID The global variable id.
-    //! \param[out] length The length of the returned string.
-    //! \return A null terminated string with the variable declaration, or null if not found.
-    //!
-    //! This method can be used to retrieve the variable declaration of the script variables 
-    //! that the host application will access. Verifying the declaration is important because, 
-    //! even though the script may compile correctly the user may not have used the variable 
-    //! types as intended.
-    //!
-    //! \deprecated Use \ref asIScriptEngine::GetGlobalVarDeclaration(const char *, int, int *) "GetGlobalVarDeclaration" instead
-	virtual const char *GetGlobalVarDeclaration(int gvarID, int *length = 0) = 0;
-	//! \brief (deprecated) Returns the global variable name.
-    //! \param[in] gvarID The global variable id.
-    //! \param[out] length The length of the returned string.
-    //! \return A null terminated string with the variable name, or null if not found.
-    //!
-    //! \deprecated Use \ref asIScriptEngine::GetGlobalVarName(const char *, int, int *) "GetGlobalVarName" instead
-	virtual const char *GetGlobalVarName(int gvarID, int *length = 0) = 0;
-	//! \brief (deprecated) Returns the pointer to the global variable.
-    //! \param[in] gvarID The global variable id.
-    //! \return A pointer to the global variable, or null if not found.
-    //!
-    //! This method should be used to retrieve the pointer of a variable that you wish to access.
-    //!
-    //! For object variables, you'll receive a pointer to a pointer to the object, because that's 
-    //! how objects are stored in AngelScript. Note that the returned pointer may point to a null 
-    //! pointer if the variable hasn't been initialized yet.
-    //!
-    //! \deprecated Use \ref asIScriptEngine::GetAddressOfGlobalVar "GetAddressOfGlobalVar" instead
-	virtual void       *GetGlobalVarPointer(int gvarID) = 0;
-#endif
-
-	// Dynamic binding between modules
-	//! \brief Returns the number of functions declared for import.
-    //! \param[in] module The name of the module.
-    //! \return A negative value on error, or the number of imported functions.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module was not built successfully.
-    //!
-    //! This function returns the number of functions that are imported in a module. These 
-    //! functions need to be bound before they can be used, or a script exception will be thrown.
-	virtual int         GetImportedFunctionCount(const char *module) = 0;
-	//! \brief Returns the imported function index by declaration.
-    //! \param[in] module The name of the module.
-    //! \param[in] decl The function declaration of the imported function.
-    //! \return A negative value on error, or the index of the imported function.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR The module was not built successfully.
-    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
-    //! \retval asNO_FUNCTION Didn't find any matching function.
-    //!
-    //! This function is used to find a specific imported function by its declaration.
-	virtual int         GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
-	//! \brief Returns the imported function declaration.
-    //! \param[in] module The name of the module.
-    //! \param[in] importIndex The index of the imported function.
-    //! \param[out] length The length of the returned string.
-    //! \return A null terminated string with the function declaration, or null if not found.
-    //!
-    //! Use this function to get the declaration of the imported function. The returned 
-    //! declaration can be used to find a matching function in another module that can be bound 
-    //! to the imported function. 
-	virtual const char *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length = 0) = 0;
-	//! \brief Returns the declared imported function source module.
-    //! \param[in] module The name of the module.
-    //! \param[in] importIndex The index of the imported function.
-    //! \param[out] length The length of the returned string.
-    //! \return A null terminated string with the name of the source module, or null if not found.
-    //!
-    //! Use this function to get the name of the suggested module to import the function from.
-	virtual const char *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length = 0) = 0;
-	//! \brief Binds an imported function to the function from another module.
-    //! \param[in] module The name of the module.
-    //! \param[in] importIndex The index of the imported function.
-    //! \param[in] funcId The function id of the function that will be bound to the imported function.
-    //! \return A negative value on error.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asNO_FUNCTION \a importIndex or \a fundId is incorrect.
-    //! \retval asINVALID_INTERFACE The signature of function doesn't match the import statement.
-    //!
-    //! The imported function is only bound if the functions have the exact same signature, 
-    //! i.e the same return type, and parameters.
-	virtual int         BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
-	//! \brief Unbinds an imported function.
-    //! \param[in] module The name of the module.
-    //! \param[in] importIndex The index of the imported function.
-    //! \return A negative value on error.
-    //! \retval asNO_MODULE The module was not found.
-    //!
-    //! Unbinds the imported function.
-	virtual int         UnbindImportedFunction(const char *module, int importIndex) = 0;
-
-	//! \brief Binds all imported functions in a module, by searching their equivalents in the declared source modules.
-    //! \param[in] module The name of the module.
-    //! \return A negative value on error.
-    //! \retval asNO_MODULE The module was not found.
-    //! \retval asERROR An error occurred.
-    //! \retval asCANT_BIND_ALL_FUNCTIONS Not all functions where bound.
-    //!
-    //! This functions tries to bind all imported functions in the module by searching for matching 
-    //! functions in the suggested modules. If a function cannot be bound the function will give an 
-    //! error \ref asCANT_BIND_ALL_FUNCTIONS, but it will continue binding the rest of the functions.
-	virtual int BindAllImportedFunctions(const char *module) = 0;
-	//! \brief Unbinds all imported functions.
-    //! \param[in] module The name of the module.
-    //! \return A negative value on error.
-    //! \retval asNO_MODULE The module was not found.
-    //!
-    //! Unbinds all imported functions in the module.
-	virtual int UnbindAllImportedFunctions(const char *module) = 0;
 
 	// Type identification
 	//! \brief Returns the number of object types.
@@ -1352,26 +1079,28 @@ public:
     //! \param[in] typeId The type id of the type.
     //! \return The object type interface for the type, or null if not found.
 	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
-
 	//! \brief Returns a type id by declaration.
-    //! \param[in] module The name of the module.
-    //! \param[in] decl The declaration of the type.
-    //! \return A negative value on error, or the type id of the type.
-    //! \retval asINVALID_TYPE \a decl is not a valid type.
-    //!
-    //! Translates a type declaration into a type id. The returned type id is valid for as long as
-    //! the type is valid, so you can safely store it for later use to avoid potential overhead by 
-    //! calling this function each time. Just remember to update the type id, any time the type is 
-    //! changed within the engine, e.g. when recompiling script declared structures, or changing the 
-    //! engine configuration.
-    //! 
-    //! The type id is based on a sequence number and depends on the order in which the type ids are 
-    //! queried, thus is not guaranteed to always be the same for each execution of the application.
-    //! 
-    //! A base type yields the same type id whether the declaration is const or not, however if the 
-    //! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
-    //! string@ but string is the same as const string. 
-	virtual int            GetTypeIdByDecl(const char *module, const char *decl) = 0;
+	//! \param[in] decl The declaration of the type.
+	//! \return A negative value on error, or the type id of the type.
+	//! \retval asINVALID_TYPE \a decl is not a valid type.
+	//!
+	//! Translates a type declaration into a type id. The returned type id is valid for as long as
+	//! the type is valid, so you can safely store it for later use to avoid potential overhead by 
+	//! calling this function each time. Just remember to update the type id, any time the type is 
+	//! changed within the engine, e.g. when recompiling script declared structures, or changing the 
+	//! engine configuration.
+	//! 
+	//! The type id is based on a sequence number and depends on the order in which the type ids are 
+	//! queried, thus is not guaranteed to always be the same for each execution of the application.
+	//! 
+	//! A base type yields the same type id whether the declaration is const or not, however if the 
+	//! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
+	//! string@ but string is the same as const string. 
+	//! 
+	//! This method is only able to return the type id that are not specific for a script module, i.e.
+	//! built-in types, and application registered types. Type ids for script declared types should
+	//! be obtained through the script module's \ref asIScriptModule::GetTypeIdByDecl "GetTypeIdByDecl".
+	virtual int            GetTypeIdByDecl(const char *decl) = 0;
 	//! \brief Returns a type declaration.
     //! \param[in] typeId The type id of the type.
     //! \param[out] length The length of the returned string.
@@ -1526,22 +1255,6 @@ public:
 	//!
 	//! \see \ref doc_gc
 	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0) = 0;
-#ifdef AS_DEPRECATED
-	//! \brief (deprecated) Returns the number of objects currently referenced by the garbage collector.
-    //! \return The number of objects currently known by the garbage collector.
-    //!
-    //! This method can be used to query the number of objects that the garbage collector is 
-    //! keeping track of. If the number is very large then it is probably time to call the 
-    //! \ref GarbageCollect method so that some of the objects can be freed.
-    //!
-    //! Note, that the objects that the garbage collector keeps track of may in turn hold 
-    //! references to other objects, but these are not reflected in the return value. Thus 
-    //! there is no way of knowing the exact amount of memory allocated directly and indirectly 
-    //! by the objects referred to by this function.
-	//! 
-	//! \deprecated Use \ref asIScriptEngine::GetGCStatistics "GetGCStatistics" instead.
-	virtual int  GetObjectsInGarbageCollectorCount() = 0;
-#endif
 	//! \brief Notify the garbage collector of a new object that needs to be managed.
     //! \param[in] obj A pointer to the newly created object.
     //! \param[in] typeId The type id of the object.
@@ -1561,40 +1274,6 @@ public:
     //! \see \ref doc_gc_object
 	virtual void GCEnumCallback(void *reference) = 0;
 
-	// Bytecode Saving/Loading
-	//! \brief Save compiled bytecode to a binary stream.
-    //!
-    //! \param[in] module The name of the module.
-    //! \param[in] out The output stream.
-    //! \return A negative value on error.
-    //! \retval asNO_MODULE The module couldn't be found.
-    //! \retval asINVALID_ARG The stream object wasn't specified.
-    //!
-    //! This method is used to save pre-compiled byte code to disk or memory, for a later restoral.
-    //! The application must implement an object that inherits from \ref asIBinaryStream to provide
-    //! the necessary stream operations.
-    //!
-    //! The pre-compiled byte code is currently not platform independent, so you need to make
-    //! sure the byte code is compiled on a platform that is compatible with the one that will load it.
-	virtual int SaveByteCode(const char *module, asIBinaryStream *out) = 0;
-	//! \brief Load pre-compiled bytecode from a binary stream.
-    //!
-    //! \param[in] module The name of the module.
-    //! \param[in] in The input stream.
-    //! \return A negative value on error.
-    //! \retval asNO_MODULE The module couldn't be found.
-    //! \retval asINVALID_ARG The stream object wasn't specified.
-    //! \retval asBUILD_IN_PROGRESS Another thread is currently building.
-    //!
-    //! This method is used to load pre-compiled byte code from disk or memory. The application must
-    //! implement an object that inherits from \ref asIBinaryStream to provide the necessary stream operations.
-    //!
-    //! It is expected that the application performs the necessary validations to make sure the
-    //! pre-compiled byte code is from a trusted source. The application should also make sure the
-    //! pre-compiled byte code is compatible with the current engine configuration, i.e. that the
-    //! engine has been configured in the same way as when the byte code was first compiled.
-	virtual int LoadByteCode(const char *module, asIBinaryStream *in) = 0;
-
 	// User data
 	//! \brief Register the memory address of some user data.
 	//! \param[in] data A pointer to the user data.
@@ -1606,8 +1285,356 @@ public:
 	//! \return The pointer to the user data.
 	virtual void *GetUserData() = 0;
 
+#ifdef AS_DEPRECATED
+	//! \deprecated Use \ref asIScriptModule::AddScriptSection instead.
+	virtual int                AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
+	//! \deprecated Use \ref asIScriptModule::Build instead.
+	virtual int                Build(const char *module) = 0;
+	//! \deprecated Use \ref asIScriptEngine::DiscardModule "DiscardModule" instead.
+    virtual int                Discard(const char *module) = 0;
+	//! \deprecated Use \ref asIScriptModule::ResetGlobalVars instead.
+	virtual int                ResetModule(const char *module) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetFunctionCount instead.
+	virtual int                GetFunctionCount(const char *module) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetFunctionIdByIndex instead.
+	virtual int                GetFunctionIDByIndex(const char *module, int index) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetFunctionIdByName instead.
+	virtual int                GetFunctionIDByName(const char *module, const char *name) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetFunctionIdByDecl instead.
+	virtual int                GetFunctionIDByDecl(const char *module, const char *decl) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetFunctionDescriptorByIndex instead.
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetGlobalVarCount instead.
+	virtual int                GetGlobalVarCount(const char *module) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetGlobalVarIndexByName instead.
+	virtual int                GetGlobalVarIndexByName(const char *module, const char *name) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetGlobalVarIndexByDecl instead.
+	virtual int                GetGlobalVarIndexByDecl(const char *module, const char *decl) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetGlobalVarDeclaration instead.
+	virtual const char        *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetGlobalVarName instead.
+	virtual const char        *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetAddressOfGlobalVar instead.
+	virtual void              *GetAddressOfGlobalVar(const char *module, int index) = 0;
+    //! \deprecated Global variables are uniquely identified by module name and index.
+	virtual int                GetGlobalVarIDByIndex(const char *module, int index) = 0;
+    //! \deprecated Use \ref asIScriptModule::GetGlobalVarIndexByName instead
+	virtual int                GetGlobalVarIDByName(const char *module, const char *name) = 0;
+    //! \deprecated Use \ref asIScriptModule::GetGlobalVarIndexByDecl instead
+	virtual int                GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
+    //! \deprecated Use \ref asIScriptModule::GetGlobalVarDeclaration instead
+	virtual const char        *GetGlobalVarDeclaration(int gvarID, int *length = 0) = 0;
+    //! \deprecated Use \ref asIScriptModule::GetGlobalVarName instead
+	virtual const char        *GetGlobalVarName(int gvarID, int *length = 0) = 0;
+    //! \deprecated Use \ref asIScriptModule::GetAddressOfGlobalVar instead
+	virtual void              *GetGlobalVarPointer(int gvarID) = 0;
+	//! \deprecated Use \ref asIScriptEngine::GetTypeIdByDecl(const char *) "GetTypeIdByDecl" or asIScriptModule::GetTypeIdByDecl instead.
+	virtual int                GetTypeIdByDecl(const char *module, const char *decl) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetImportedFunctionCount instead.
+	virtual int                GetImportedFunctionCount(const char *module) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetImportedFunctionIndexByDecl instead.
+	virtual int                GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetImportedFunctionDeclaration instead.
+	virtual const char        *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length = 0) = 0;
+	//! \deprecated Use \ref asIScriptModule::GetImportedFunctionSourceModule instead.
+	virtual const char        *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length = 0) = 0;
+	//! \deprecated Use \ref asIScriptModule::BindImportedFunction instead.
+	virtual int                BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
+	//! \deprecated Use \ref asIScriptModule::UnbindImportedFunction instead.
+	virtual int                UnbindImportedFunction(const char *module, int importIndex) = 0;
+	//! \deprecated Use \ref asIScriptModule::BindAllImportedFunctions instead.
+	virtual int                BindAllImportedFunctions(const char *module) = 0;
+	//! \deprecated Use \ref asIScriptModule::UnbindAllImportedFunctions instead.
+	virtual int                UnbindAllImportedFunctions(const char *module) = 0;
+	//! \deprecated Use \ref asIScriptEngine::GetGCStatistics "GetGCStatistics" instead.
+	virtual int                GetObjectsInGarbageCollectorCount() = 0;
+	//! \deprecated Use \ref asIScriptModule::SaveByteCode instead.
+	virtual int                SaveByteCode(const char *module, asIBinaryStream *out) = 0;
+	//! \deprecated Use \ref asIScriptModule::LoadByteCode instead.
+	virtual int                LoadByteCode(const char *module, asIBinaryStream *in) = 0;
+#endif
+
 protected:
 	virtual ~asIScriptEngine() {}
+};
+
+//! \brief The interface to the script modules
+class asIScriptModule
+{
+public:
+	//! \brief Returns a pointer to the engine.
+    //! \return A pointer to the engine.
+	virtual asIScriptEngine *GetEngine() = 0;
+	//! \brief Sets the name of the module.
+	//! \param[in] name The new name.
+	//!
+	//! Sets the name of the script module.
+	virtual void             SetName(const char *name) = 0;
+	//! \brief Gets the name of the module.
+	//! \param[out] length The length of the name.
+	//! \return The name of the module.
+	virtual const char      *GetName(int *length = 0) = 0; 
+
+	// Compilation
+    //! \brief Add a script section for the next build.
+    //!
+    //! \param[in] name The name of the script section
+    //! \param[in] code The script code buffer
+    //! \param[in] codeLength The length of the script code
+    //! \param[in] lineOffset An offset that will be added to compiler message line numbers
+    //! \return A negative value on error.
+    //! \retval asMODULE_IS_IN_USE The module is currently in use.
+    //!
+    //! This adds a script section to the module. All sections added will be treated as if one 
+    //! large script. Errors reported will give the name of the corresponding section.
+    //! 
+    //! The code added is copied by the engine, so there is no need to keep the original buffer after the call.
+    //! Note that this can be changed by setting the engine property \ref asEP_COPY_SCRIPT_SECTIONS
+    //! with \ref asIScriptEngine::SetEngineProperty.
+    virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
+    //! \brief Build the previously added script sections.
+    //!
+    //! \return A negative value on error
+    //! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
+    //! \retval asERROR The script failed to build.
+    //! \retval asBUILD_IN_PROGRESS Another thread is currently building. 
+    //!
+    //! Builds the script based on the added sections, and registered types and functions. After the
+    //! build is complete the script sections are removed to free memory. If the script module needs 
+    //! to be rebuilt all of the script sections needs to be added again.
+    //! 
+    //! Compiler messages are sent to the message callback function set with \ref asIScriptEngine::SetMessageCallback. 
+    //! If there are no errors or warnings, no messages will be sent to the callback function.
+	virtual int  Build() = 0;
+
+	// Script functions
+	//! \brief Returns the number of global functions in the module.
+    //! \return A negative value on error, or the number of global functions in this module.
+    //! \retval asERROR The module was not compiled successfully.
+    //!
+    //! This method retrieves the number of compiled script functions.
+	virtual int                GetFunctionCount() = 0;
+	//! \brief Returns the function id by index.
+    //! \param[in] index The index of the function.
+    //! \return A negative value on error, or the function id.
+    //! \retval asNO_FUNCTION There is no function with that index. 
+    //!
+    //! This method should be used to retrieve the id of the script function that you wish to 
+    //! execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare"  method.
+	virtual int                GetFunctionIdByIndex(int index) = 0;
+	//! \brief Returns the function id by name.
+    //! \param[in] name The name of the function.
+    //! \return A negative value on error, or the function id.
+    //! \retval asERROR The module was not compiled successfully.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
+    //! \retval asNO_FUNCTION Didn't find any matching functions.
+    //!
+    //! This method should be used to retrieve the id of the script function that you 
+    //! wish to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	virtual int                GetFunctionIdByName(const char *name) = 0;
+	//! \brief Returns the function id by declaration.
+    //! \param[in] decl The function signature.
+    //! \return A negative value on error, or the function id.
+    //! \retval asERROR The module was not compiled successfully.
+    //! \retval asINVALID_DECLARATION The \a decl is invalid.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
+    //! \retval asNO_FUNCTION Didn't find any matching functions.
+    //!
+    //! This method should be used to retrieve the id of the script function that you wish 
+    //! to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+    //!
+    //! The method will find the script function with the exact same declaration.
+	virtual int                GetFunctionIdByDecl(const char *decl) = 0;
+	//! \brief Returns the function descriptor for the script function
+    //! \param[in] index The index of the function.
+    //! \return A pointer to the function description interface, or null if not found.
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) = 0;
+	//! \brief Returns the function descriptor for the script function
+    //! \param[in] funcId The id of the function or method.
+    //! \return A pointer to the function description interface, or null if not found.
+	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+
+	// Script global variables
+	//! \brief Reset the global variables of the module.
+    //!
+    //! \return A negative value on error.
+    //! \retval asERROR The module was not compiled successfully.
+    //!
+    //! Resets the global variables declared in this module to their initial value.
+	virtual int         ResetGlobalVars() = 0;
+	//! \brief Returns the number of global variables in the module.
+    //! \return A negative value on error, or the number of global variables in the module.
+	//! \retval asERROR The module was not compiled successfully.
+	virtual int         GetGlobalVarCount() = 0;
+	//! \brief Returns the global variable index by name.
+    //! \param[in] name The name of the global variable.
+    //! \return A negative value on error, or the global variable index.
+    //! \retval asERROR The module was not built successfully.
+    //! \retval asNO_GLOBAL_VAR The matching global variable was found.
+    //!
+    //! This method should be used to retrieve the index of the script variable that you wish to access.
+	virtual int         GetGlobalVarIndexByName(const char *name) = 0;
+	//! \brief Returns the global variable index by declaration.
+    //! \param[in] decl The global variable declaration.
+    //! \return A negative value on error, or the global variable index.
+    //! \retval asERROR The module was not built successfully.
+    //! \retval asNO_GLOBAL_VAR The matching global variable was found.
+    //!
+    //! This method should be used to retrieve the index of the script variable that you wish to access.
+    //!
+    //! The method will find the script variable with the exact same declaration.
+	virtual int         GetGlobalVarIndexByDecl(const char *decl) = 0;
+	//! \brief Returns the global variable declaration.
+    //! \param[in] index The index of the global variable.
+    //! \param[out] length The length of the returned string.
+    //! \return A null terminated string with the variable declaration, or null if not found.
+    //!
+    //! This method can be used to retrieve the variable declaration of the script variables 
+    //! that the host application will access. Verifying the declaration is important because, 
+    //! even though the script may compile correctly the user may not have used the variable 
+    //! types as intended.
+	virtual const char *GetGlobalVarDeclaration(int index, int *length = 0) = 0;
+	//! \brief Returns the global variable name.
+    //! \param[in] index The index of the global variable.
+    //! \param[out] length The length of the returned string.
+    //! \return A null terminated string with the variable name, or null if not found.
+	virtual const char *GetGlobalVarName(int index, int *length = 0) = 0;
+	//! \brief Returns the type id for the global variable.
+	//! \param[in] index The index of the global variable.
+	//! \return The type id of the global variable, or a negative value on error.
+	//! \retval asINVALID_ARG The index is out of range.
+	virtual int         GetGlobalVarTypeId(int index) = 0;
+	//! \brief Returns the pointer to the global variable.
+    //! \param[in] index The index of the global variable.
+    //! \return A pointer to the global variable, or null if not found.
+    //!
+    //! This method should be used to retrieve the pointer of a variable that you wish to access.
+	virtual void       *GetAddressOfGlobalVar(int index) = 0;
+
+	// Type identification
+	//! \brief Returns the number of object types.
+    //! \return The number of object types declared in the module.
+	virtual int            GetObjectTypeCount() = 0;
+	//! \brief Returns the object type interface by index.
+    //! \param[in] index The index of the type.
+    //! \return The object type interface for the type, or null if not found.
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+	//! \brief Returns a type id by declaration.
+    //! \param[in] decl The declaration of the type.
+    //! \return A negative value on error, or the type id of the type.
+    //! \retval asINVALID_TYPE \a decl is not a valid type.
+    //!
+    //! Translates a type declaration into a type id. The returned type id is valid for as long as
+    //! the type is valid, so you can safely store it for later use to avoid potential overhead by 
+    //! calling this function each time. Just remember to update the type id, any time the type is 
+    //! changed within the engine, e.g. when recompiling script declared structures, or changing the 
+    //! engine configuration.
+    //! 
+    //! The type id is based on a sequence number and depends on the order in which the type ids are 
+    //! queried, thus is not guaranteed to always be the same for each execution of the application.
+    //! 
+    //! A base type yields the same type id whether the declaration is const or not, however if the 
+    //! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
+    //! string@ but string is the same as const string. 
+	virtual int            GetTypeIdByDecl(const char *decl) = 0;
+
+	// Dynamic binding between modules
+	//! \brief Returns the number of functions declared for import.
+    //! \return A negative value on error, or the number of imported functions.
+    //! \retval asERROR The module was not built successfully.
+    //!
+    //! This function returns the number of functions that are imported in a module. These 
+    //! functions need to be bound before they can be used, or a script exception will be thrown.
+	virtual int         GetImportedFunctionCount() = 0;
+	//! \brief Returns the imported function index by declaration.
+    //! \param[in] decl The function declaration of the imported function.
+    //! \return A negative value on error, or the index of the imported function.
+    //! \retval asERROR The module was not built successfully.
+    //! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
+    //! \retval asNO_FUNCTION Didn't find any matching function.
+    //!
+    //! This function is used to find a specific imported function by its declaration.
+	virtual int         GetImportedFunctionIndexByDecl(const char *decl) = 0;
+	//! \brief Returns the imported function declaration.
+    //! \param[in] importIndex The index of the imported function.
+    //! \param[out] length The length of the returned string.
+    //! \return A null terminated string with the function declaration, or null if not found.
+    //!
+    //! Use this function to get the declaration of the imported function. The returned 
+    //! declaration can be used to find a matching function in another module that can be bound 
+    //! to the imported function. 
+	virtual const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0) = 0;
+	//! \brief Returns the declared imported function source module.
+    //! \param[in] importIndex The index of the imported function.
+    //! \param[out] length The length of the returned string.
+    //! \return A null terminated string with the name of the source module, or null if not found.
+    //!
+    //! Use this function to get the name of the suggested module to import the function from.
+	virtual const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0) = 0;
+	//! \brief Binds an imported function to the function from another module.
+    //! \param[in] importIndex The index of the imported function.
+    //! \param[in] funcId The function id of the function that will be bound to the imported function.
+    //! \return A negative value on error.
+    //! \retval asNO_FUNCTION \a importIndex or \a fundId is incorrect.
+    //! \retval asINVALID_INTERFACE The signature of function doesn't match the import statement.
+    //!
+    //! The imported function is only bound if the functions have the exact same signature, 
+    //! i.e the same return type, and parameters.
+	virtual int         BindImportedFunction(int importIndex, int funcId) = 0;
+	//! \brief Unbinds an imported function.
+    //! \param[in] importIndex The index of the imported function.
+    //! \return A negative value on error.
+	//! \retval asINVALID_ARG The index is not valid.
+    //!
+    //! Unbinds the imported function.
+	virtual int         UnbindImportedFunction(int importIndex) = 0;
+
+	//! \brief Binds all imported functions in a module, by searching their equivalents in the declared source modules.
+    //! \return A negative value on error.
+    //! \retval asERROR An error occurred.
+    //! \retval asCANT_BIND_ALL_FUNCTIONS Not all functions where bound.
+    //!
+    //! This functions tries to bind all imported functions in the module by searching for matching 
+    //! functions in the suggested modules. If a function cannot be bound the function will give an 
+    //! error \ref asCANT_BIND_ALL_FUNCTIONS, but it will continue binding the rest of the functions.
+	virtual int         BindAllImportedFunctions() = 0;
+	//! \brief Unbinds all imported functions.
+    //! \return A negative value on error.
+    //!
+    //! Unbinds all imported functions in the module.
+	virtual int         UnbindAllImportedFunctions() = 0;
+
+	// Bytecode Saving/Loading
+	//! \brief Save compiled bytecode to a binary stream.
+    //! \param[in] out The output stream.
+    //! \return A negative value on error.
+    //! \retval asINVALID_ARG The stream object wasn't specified.
+    //!
+    //! This method is used to save pre-compiled byte code to disk or memory, for a later restoral.
+    //! The application must implement an object that inherits from \ref asIBinaryStream to provide
+    //! the necessary stream operations.
+    //!
+    //! The pre-compiled byte code is currently not platform independent, so you need to make
+    //! sure the byte code is compiled on a platform that is compatible with the one that will load it.	
+	virtual int SaveByteCode(asIBinaryStream *out) = 0;
+	//! \brief Load pre-compiled bytecode from a binary stream.
+    //!
+    //! \param[in] in The input stream.
+    //! \return A negative value on error.
+    //! \retval asINVALID_ARG The stream object wasn't specified.
+    //! \retval asBUILD_IN_PROGRESS Another thread is currently building.
+    //!
+    //! This method is used to load pre-compiled byte code from disk or memory. The application must
+    //! implement an object that inherits from \ref asIBinaryStream to provide the necessary stream operations.
+    //!
+    //! It is expected that the application performs the necessary validations to make sure the
+    //! pre-compiled byte code is from a trusted source. The application should also make sure the
+    //! pre-compiled byte code is compatible with the current engine configuration, i.e. that the
+    //! engine has been configured in the same way as when the byte code was first compiled.
+	virtual int LoadByteCode(asIBinaryStream *in) = 0;
+
+protected:
+	virtual ~asIScriptModule() {}
 };
 
 //! \brief The interface to the virtual machine
@@ -1785,8 +1812,6 @@ public:
     //! \return A pointer to the object returned from the script function, or 0 on error.
 	virtual void   *GetReturnObject() = 0;
 #ifdef AS_DEPRECATED
-	//! \brief (deprecated) Returns a pointer to the returned value independent of type.
-	//! \return A pointer to the return value returned from the script function, or 0 on error.
 	//! \deprecated Use \ref asIScriptContext::GetAddressOfReturnValue "GetAddressOfReturnValue" instead.
 	virtual void   *GetReturnPointer() = 0;
 #endif
@@ -1957,23 +1982,6 @@ public:
 	//! \retval asINVALID_ARG The index or stack level is invalid.
 	virtual int         GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
 #ifdef AS_DEPRECATED
-	//! \brief (deprecated) Returns a pointer to a local variable at the specified callstack level.
-    //! \param[in] varIndex The index of the variable.
-    //! \param[in] stackLevel The index on the call stack.
-    //! \return A pointer to the variable.
-    //!
-    //! Returns a pointer to the variable, so that its value can be read and written. The 
-    //! address is valid until the script function returns.
-    //!
-    //! The address points to the position in the stack where the variable is stored. As 
-    //! primitives are stored directly on the stack, the value of primitive types is gotten 
-    //! by dereferencing the pointer. Object variables are not stored directly on the stack, 
-    //! instead the stack holds a pointer to the object. Thus for object types the object is 
-    //! gotten by dereferencing the pointer twice.
-    //!
-    //! Note that object variables may not be initalized at all moments, thus you must verify 
-    //! if the address returned points to a null pointer, before you try to dereference it.
-	//!
 	//! \deprecated Use \ref asIScriptContext::GetAddressOfVar "GetAddressOfVar" instead.
 	virtual void       *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
 #endif
@@ -2072,14 +2080,6 @@ public:
     //! do that for you.
 	virtual void   *GetArgObject(asUINT arg) = 0;
 #ifdef AS_DEPRECATED
-    //! \brief (deprecated) Returns a pointer to the argument value.
-    //! \param[in] arg The argument index.
-    //! \return A pointer to the argument value.
-    //! 
-    //! For primitives you get a pointer to the primitive itself. For references you get a 
-    //! pointer to the pointer to whatever is being referenced. For object handles you get a 
-    //! pointer to the object handle, which itself is a pointer to the object. For objects you 
-    //! get a pointer to the pointer to the object.
 	//! \deprecated Use \ref asIScriptGeneric::GetAddressOfArg "GetAddressOfArg" instead.
 	virtual void   *GetArgPointer(asUINT arg) = 0;
 #endif

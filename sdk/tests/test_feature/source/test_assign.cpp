@@ -40,9 +40,10 @@ bool Test()
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void print(int)", asFUNCTION(print_generic), asCALL_GENERIC);
 
-	engine->AddScriptSection(0, TESTNAME, script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 0);
-	r = engine->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;

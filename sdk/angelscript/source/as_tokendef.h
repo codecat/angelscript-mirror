@@ -170,8 +170,8 @@ enum eTokenType
 
 struct sTokenWord
 {
-	char *word;
-	eTokenType   tokenType;
+	const char *word;
+	eTokenType  tokenType;
 };
 
 sTokenWord const tokenWords[] =

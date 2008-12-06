@@ -13,11 +13,11 @@ void testFuncI(asIScriptGeneric *gen)
 {
 	void *ref = gen->GetArgAddress(0);
 	int typeId = gen->GetArgTypeId(0);
-	if( typeId == gen->GetEngine()->GetTypeIdByDecl(0, "int") )
+	if( typeId == gen->GetEngine()->GetTypeIdByDecl("int") )
 		assert(*(int*)ref == 42);
-	else if( typeId == gen->GetEngine()->GetTypeIdByDecl(0, "string") )
+	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string") )
 		assert((*(asCScriptString**)ref)->buffer == "test");
-	else if( typeId == gen->GetEngine()->GetTypeIdByDecl(0, "string@") )
+	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string@") )
 		assert((*(asCScriptString**)ref)->buffer == "test");
 	else
 		assert(false);
@@ -30,11 +30,11 @@ void testFuncO(asIScriptGeneric *gen)
 {
 	void *ref = gen->GetArgAddress(0);
 	int typeId = gen->GetArgTypeId(0);
-	if( typeId == gen->GetEngine()->GetTypeIdByDecl(0, "int") )
+	if( typeId == gen->GetEngine()->GetTypeIdByDecl("int") )
 		*(int*)ref = 42;
-	else if( typeId == gen->GetEngine()->GetTypeIdByDecl(0, "string") )
+	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string") )
 		(*(asCScriptString**)ref)->buffer = "test";
-	else if( typeId == gen->GetEngine()->GetTypeIdByDecl(0, "string@") )
+	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string@") )
 		*(asCScriptString**)ref = new asCScriptString("test");
 	else
 		assert(false);
@@ -86,21 +86,23 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
  	asIScriptEngine *engine = 0;
+	asIScriptModule *mod = 0;
 
 	// It must not be possible to declare global variables of the var type ?
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	const char *script1 = "? globvar;";
-	engine->AddScriptSection(0, "script", script1, strlen(script1));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script1);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (1, 1) : Error   : Unexpected token '?'\n" ) fail = true;
 	bout.buffer = "";
 
 	// It must not be possible to declare local variables of the var type ?
 	const char *script2 = "void func() {? localvar;}";
-	engine->AddScriptSection(0, "script", script2, strlen(script2));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script2);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
                        "script (1, 14) : Error   : Expected expression value\n" ) fail = true;
@@ -127,8 +129,9 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	const char *script3 = "class c {? member;}";
-	engine->AddScriptSection(0, "script", script3, strlen(script3));
-	r = engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script3);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (1, 10) : Error   : Expected method or property\n"
 		               "script (1, 19) : Error   : Unexpected token '}'\n" ) fail = true;
@@ -136,24 +139,24 @@ bool Test()
 	
 	// It must not be possible to declare script functions that take the var type ? as parameter 
 	const char *script4 = "void func(?&in a) {}";
-	engine->AddScriptSection(0, "script", script4, strlen(script4));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script4);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (1, 11) : Error   : Expected data type\n" ) fail = true;
 	bout.buffer = "";
 
 	// It must not be possible to declare script functions that return the var type ?
 	const char *script5 = "? func() {}";
-	engine->AddScriptSection(0, "script", script5, strlen(script5));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script5);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (1, 1) : Error   : Unexpected token '?'\n" ) fail = true;
 	bout.buffer = "";
 
 	// It must not be possible to declare script class methods that take the var type ? as parameter
 	const char *script6 = "class c {void method(?& in a) {}}";
-	engine->AddScriptSection(0, "script", script6, strlen(script6));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script6);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (1, 22) : Error   : Expected data type\n" 
 		               "script (1, 22) : Error   : Expected method or property\n" 
@@ -162,8 +165,8 @@ bool Test()
 
 	// It must not be possible to declare script class methods that return the var type ?
 	const char *script7 = "class c {? method() {}}";
-	engine->AddScriptSection(0, "script", script7, strlen(script7));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script7);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (1, 10) : Error   : Expected method or property\n"
 		               "script (1, 23) : Error   : Unexpected token '}'\n" ) fail = true;
@@ -171,8 +174,8 @@ bool Test()
 
 	// It must not be possible to declare arrays of the var type ?
 	const char *script8 = "void func() { ?[] array; }";
-	engine->AddScriptSection(0, "script", script8, strlen(script8));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script8);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 		               "script (1, 15) : Error   : Expected expression value\n" ) fail = true;
@@ -180,8 +183,8 @@ bool Test()
 
 	// It must not be possible to declare handles of the var type ?
 	const char *script9 = "void func() { ?@ handle; }";
-	engine->AddScriptSection(0, "script", script9, strlen(script9));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script9);
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 		               "script (1, 15) : Error   : Expected expression value\n" ) fail = true;
@@ -266,8 +269,9 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	const char *script = 
 	"class C { string @a; } \n";
-	engine->AddScriptSection(0, "script", script, strlen(script));
-	engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	mod->Build();
 	r = engine->ExecuteString(0, "const C c; testFuncO(@c.a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 22) : Warning : Argument cannot be assigned. Output will be discarded.\n" ) fail = true;

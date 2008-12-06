@@ -75,8 +75,8 @@ bool Test()
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->Build(0);
+	mod->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+	mod->Build(0);
 
 	engine->ExecuteString(0, "testString()");
 
@@ -105,13 +105,13 @@ bool Test()
     engine->ExecuteString(0, "string a = \" \"; a[0] = 65; print(a);");
     if( printOutput != "A" ) fail = true;
 
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	if( engine->Build(0) < 0 )
+	mod->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
+	if( mod->Build(0) < 0 )
 		fail = true;
 
 	printOutput = "";
-	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
-	if( engine->Build(0) < 0 )
+	mod->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
+	if( mod->Build(0) < 0 )
 		fail = true;
 	engine->ExecuteString(0, "test()");
 	if( printOutput != "Heredoc\\x20test!" ) fail = true;
@@ -129,8 +129,8 @@ bool Test()
 	//-------------------------------------
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, "test", script7, strlen(script7), 0, false);
-	engine->Build(0);
+	mod->AddScriptSection(0, "test", script7, strlen(script7), 0, false);
+	mod->Build(0);
 	r = engine->ExecuteString(0, "test()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 

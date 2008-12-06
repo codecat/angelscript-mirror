@@ -110,8 +110,9 @@ bool Test()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, "script1", script2, strlen(script2), 0);
-	r = engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script1", script2, strlen(script2), 0);
+	r = mod->Build();
 	if( r < 0 ) fail = true;
 
 
@@ -159,9 +160,9 @@ bool Test()
 		fail = true;
 
 	// Do not allow the script to pass a const obj@ to a parameter that is not a const obj@
-	engine->AddScriptSection(0, "script", script, strlen(script));
+	mod->AddScriptSection("script", script, strlen(script));
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->Build(0);
+	mod->Build();
 	
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -225,8 +226,8 @@ bool Test()
 	// Handle to const must not allow call to non-const methods
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->AddScriptSection(0, "script", script3, strlen(script3));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script3, strlen(script3));
+	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script (10, 1) : Info    : Compiling void func()\n"
 		               "script (15, 13) : Error   : No matching signatures to 'CTest::SetInt(const uint) const'\n"
@@ -239,8 +240,8 @@ bool Test()
 	// Allow passing a const object to a function that takes a non-const object by value
 	bout.buffer = "";
 	const char *script4 = "void func(prop val) {}";
-	engine->AddScriptSection(0, "script", script4, strlen(script4));
-	r = engine->Build(0);
+	mod->AddScriptSection("script", script4, strlen(script4));
+	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
 	r = engine->ExecuteString(0, "const prop val; func(val)");
@@ -290,8 +291,9 @@ bool Test2()
 	"   a.TestConst();             \n"
 	"}                             \n";
 
-	engine->AddScriptSection("module", "script", script, strlen(script));
-	r = engine->Build("module");
+	asIScriptModule *mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -315,8 +317,8 @@ bool Test2()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 	bout.buffer = "";
-	engine->AddScriptSection("module", "script", script, strlen(script));
-	r = engine->Build("module");
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r >= 0 )
 	{
 		fail = true;
@@ -340,8 +342,8 @@ bool Test2()
 	"}                             \n";
 	
 	bout.buffer = "";
-	engine->AddScriptSection("module", "script", script, strlen(script));
-	r = engine->Build("module");
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r >= 0 )
 	{
 		fail = true;
@@ -365,8 +367,8 @@ bool Test2()
 	"}                             \n";
 	
 	bout.buffer = "";
-	engine->AddScriptSection("module", "script", script, strlen(script));
-	r = engine->Build("module");
+	mod->AddScriptSection("script", script, strlen(script));
+	r = mod->Build();
 	if( r >= 0 )
 	{
 		fail = true;

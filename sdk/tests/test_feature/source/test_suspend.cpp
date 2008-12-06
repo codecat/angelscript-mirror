@@ -65,14 +65,15 @@ bool Test()
 	engine->RegisterGlobalProperty("int loopCount", &loopCount);
 
 	COutStream out;
-	engine->AddScriptSection(0, TESTNAME ":1", script1, strlen(script1), 0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":1", script1);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->Build(0);
+	mod->Build();
 
 	ctx = engine->CreateContext();
 	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_STDCALL);
-	if( ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestSuspend()")) >= 0 )
+	if( ctx->Prepare(mod->GetFunctionIdByDecl("void TestSuspend()")) >= 0 )
 	{
 		while( loopCount < 5 && !doSuspend )
 			ctx->Execute();
@@ -90,12 +91,13 @@ bool Test()
 	// will return after each increment of the loopCount variable.
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterGlobalProperty("int loopCount", &loopCount);
-	engine->AddScriptSection(0, TESTNAME ":2", script2, strlen(script2), 0);
-	engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME ":2", script2);
+	mod->Build();
 
 	ctx = engine->CreateContext();
 	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_STDCALL);
-	ctx->Prepare(engine->GetFunctionIDByDecl(0, "void TestSuspend2()"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("void TestSuspend2()"));
 	loopCount = 0;
 	while( ctx->GetState() != asEXECUTION_FINISHED )
 		ctx->Execute();

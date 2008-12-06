@@ -86,8 +86,9 @@ bool Test()
 
 	CBufferedOutStream out;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script, strlen(script), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
+	mod->Build();
 
 	if( !out.buffer.empty() )
 	{
@@ -118,8 +119,9 @@ bool Test()
 
 	out.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	mod->Build();
 
 	if( out.buffer != "TestConstProperty (3, 1) : Info    : Compiling void Init()\n"
 		              "TestConstProperty (5, 11) : Error   : Reference is read-only\n" )

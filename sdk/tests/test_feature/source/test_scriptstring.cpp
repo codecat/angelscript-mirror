@@ -189,8 +189,9 @@ bool Test()
 
 
 	printOutput = "";
-	engine->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	engine->Build(0);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	mod->Build();
 
 	engine->ExecuteString(0, "testString()");
 
@@ -255,13 +256,15 @@ bool Test()
     engine->ExecuteString(0, "string a = \" \"; a[0] = 65; print(a);");
     if( printOutput != "A" ) fail = true;
 
-	engine->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	if( engine->Build(0) < 0 )
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+	if( mod->Build() < 0 )
 		fail = true;
 
 	printOutput = "";
-	engine->AddScriptSection(0, TESTNAME, script4, strlen(script4), 0);
-	if( engine->Build(0) < 0 )
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
+	if( mod->Build() < 0 )
 		fail = true;
 	engine->ExecuteString(0, "test()");
 	if( printOutput != "Heredoc\\x20test!" ) fail = true;
@@ -277,13 +280,15 @@ bool Test()
 	a->Release();
 
 	// test new
-	engine->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
-	if( engine->Build(0) < 0 ) fail = true;
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
+	if( mod->Build() < 0 ) fail = true;
 	r = engine->ExecuteString(0, "Main()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	engine->AddScriptSection(0, TESTNAME, script6, strlen(script6), 0);
-	if( engine->Build(0) < 0 ) fail = true;
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
+	if( mod->Build() < 0 ) fail = true;
 	r = engine->ExecuteString(0, "Main()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
@@ -309,8 +314,9 @@ bool Test()
 	//-------------------------------------
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	engine->AddScriptSection(0, "test", script7, strlen(script7), 0);
-	engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script7, strlen(script7), 0);
+	mod->Build();
 	r = engine->ExecuteString(0, "test()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
@@ -354,8 +360,9 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterScriptString(engine);
 
-	engine->AddScriptSection(0, "test", script7, strlen(script7), 0);
-	engine->Build(0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script7, strlen(script7), 0);
+	mod->Build();
 	r = engine->ExecuteString(0, "test()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
@@ -370,7 +377,7 @@ bool Test()
 		std::string a = "a";
 		std::string b = "b";
 
-		int type = engine->GetTypeIdByDecl(0, "string");
+		int type = engine->GetTypeIdByDecl("string");
 		bool c;
 		r = engine->CompareScriptObjects(c, asBEHAVE_EQUAL, &a, &b, type); assert( r >= 0 );
 		if( c ) fail = true;
@@ -402,8 +409,9 @@ bool Test()
 			" Print(str); \n"
 			"} \n";
 
-		engine->AddScriptSection(0, "script", script, strlen(script));
-		engine->Build(0);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script, strlen(script));
+		mod->Build();
 
 		r = engine->ExecuteString(0, "Update()");
 		if( r != asEXECUTION_FINISHED )
