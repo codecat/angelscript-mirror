@@ -15,12 +15,12 @@
 
 BEGIN_AS_NAMESPACE
 
-class asCScriptString;
+class CScriptString;
 
-class asCScriptFile
+class CScriptFile
 {
 public:
-    asCScriptFile();
+    CScriptFile();
 
     void AddRef();
     void Release();
@@ -31,7 +31,7 @@ public:
     int GetSize();
 
     // Reading
-    asCScriptString *ReadString(unsigned int length);
+    CScriptString *ReadString(unsigned int length);
 
 	// TODO: Add the following functions
 /*  bool             IsEOF();
@@ -57,7 +57,7 @@ public:
     int MovePos(int delta); */
 
 protected:
-    ~asCScriptFile();
+    ~CScriptFile();
 
     int   refCount;
     FILE *file;

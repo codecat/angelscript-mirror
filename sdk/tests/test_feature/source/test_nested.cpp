@@ -20,7 +20,7 @@ static void CallExecuteString(string &str)
 
 static void CallExecuteString_gen(asIScriptGeneric *gen)
 {
-	string str = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
+	string str = ((CScriptString*)gen->GetArgAddress(0))->buffer;
 	CallExecuteString(str);
 }
 

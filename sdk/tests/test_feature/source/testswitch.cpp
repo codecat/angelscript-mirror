@@ -99,7 +99,7 @@ static void add(asIScriptGeneric *gen)
 static string _log;
 static void Log(asIScriptGeneric *gen)
 {
-	asCScriptString *str = (asCScriptString *)gen->GetArgObject(0);
+	CScriptString *str = (CScriptString *)gen->GetArgObject(0);
 	_log += str->buffer;
 }
 

@@ -42,7 +42,7 @@ static const char *script2 =
 
 void StringToDouble(asIScriptGeneric *gen)
 {
-	std::string s = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
+	std::string s = ((CScriptString*)gen->GetArgAddress(0))->buffer;
 	gen->SetReturnDouble(atof(s.c_str()));
 }
 

@@ -140,7 +140,7 @@ static const char *script6 =
 std::string outbuffer;
 void print(asIScriptGeneric *gen)
 {
-	std::string s = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
+	std::string s = ((CScriptString*)gen->GetArgAddress(0))->buffer;
 //	printf("%s\n", s.c_str());
 	outbuffer += s + "\n";
 }

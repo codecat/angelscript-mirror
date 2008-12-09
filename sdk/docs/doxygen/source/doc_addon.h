@@ -23,6 +23,59 @@ The <code>any</code> type is a generic container that can hold any value. It is 
 
 The type is registered with <code>RegisterScriptAny(asIScriptEngine*);</code>.
 
+\section doc_addon_any_1 Public C++ interface
+
+\code
+class CScriptAny
+{
+public:
+  // Constructors
+  CScriptAny(asIScriptEngine *engine);
+  CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine);
+
+  // Memory management
+  int AddRef();
+  int Release();
+
+  // Copy the stored value from another any object
+  CScriptAny &operator=(const CScriptAny&);
+  int CopyFrom(const CScriptAny *other);
+
+  // Store the value, either as variable type, integer number, or real number
+  void Store(void *ref, int refTypeId);
+  void Store(asINT64 &value);
+  void Store(double &value);
+
+  // Retrieve the stored value, either as variable type, integer number, or real number
+  bool Retrieve(void *ref, int refTypeId) const;
+  bool Retrieve(asINT64 &value) const;
+  bool Retrieve(double &value) const;
+
+  // Get the type id of the stored value
+  int GetTypeId() const;
+};
+\endcode
+
+\section doc_addon_any_2 Public script interface
+
+<pre>
+class any
+{
+  any();
+  any(? &in value);
+  
+  void store(? &in value);
+  void store(int64 &in value);
+  void store(double &in value);
+  
+  bool retrieve(? &out value) const;
+  bool retrieve(int64 &out value) const;
+  bool retrieve(double &out value) const;
+}
+</pre>
+
+\section doc_addon_any_3 Example usage
+
 In the scripts it can be used as follows:
 
 <pre>
@@ -43,13 +96,12 @@ In C++ the type can be used as follows:
 
 \code
 CScriptAny *myAny;
-int typeId = engine->GetTypeIdByDecl(0, "string@");
-asCScriptString *str = new asCScriptString("hello world");
+int typeId = engine->GetTypeIdByDecl("string@");
+CScriptString *str = new CScriptString("hello world");
 myAny->Store((void*)&str, typeId);
 myAny->Retrieve((void*)&str, typeId);
 \endcode
 
-\todo Expand the documentation for script any
 
 
 
@@ -60,32 +112,124 @@ myAny->Retrieve((void*)&str, typeId);
 This add-on registers a string type that is in most situations compatible with the 
 std::string, except that it uses reference counting. This means that if you have an
 application function that takes a std::string by reference, you can register it 
-with AngelScript to take a script string by reference. This works because the asCScriptString
-wraps the std::string type, with the std::string type at the first byte of the asCScriptString
+with AngelScript to take a script string by reference. This works because the CScriptString
+wraps the std::string type, with the std::string type at the first byte of the CScriptString
 object.
 
 Register the type with <code>RegisterScriptString(asIScriptEngine*)</code>. Register the 
 utility functions with <code>RegisterScriptStringUtils(asIScriptEngine*)</code>.
 
-Utility functions:
+\section doc_addon_string_1 Public C++ interface
 
- - string@    substring(const string &in, int, int)
- - int        findFirst(const string &in, const string &in)
- - int        findFirst(const string &in, const string &in, int)
- - int        findLast(const string &in, const string &in)
- - int        findLast(const string &in, const string &in, int)
- - int        findFirstOf(const string &in, const string &in)
- - int        findFirstOf(const string &in, const string &in, int) 
- - int        findFirstNotOf(const string &in, const string &in)
- - int        findFirstNotOf(const string &in, const string &in, int)
- - int        findLastOf(const string &in, const string &in)
- - int        findLastOf(const string &in, const string &in, int)
- - int        findLastNotOf(const string &in, const string &in)
- - int        findLastNotOf(const string &in, const string &in, int)
- - string@[]@ split(const string &in, const string &in)
- - string@    join(const string@[] &in, const string &in)
- 
-\todo Expand the documentation for script string
+\code
+class CScriptString
+{
+public:
+  // Constructors
+  CScriptString();
+  CScriptString(const CScriptString &other);
+  CScriptString(const char *s);
+  CScriptString(const std::string &s);
+
+  // Memory management
+  void AddRef();
+  void Release();
+
+  // Assignment
+  CScriptString &operator=(const CScriptString &other);
+  
+  // Concatenation
+  CScriptString &operator+=(const CScriptString &other);
+  friend CScriptString *operator+(const CScriptString &a, const CScriptString &b);
+  
+  // Memory buffer
+  std::string buffer;
+};
+\endcode
+
+\section doc_addon_string_2 Public script interface
+
+<pre>
+  class string
+  {
+    // Constructors
+    string();
+    string(const string &in other);
+    
+    // Returns the length of the string
+    uint length() const;
+    
+    // The string class has several operators that are not expressable in the script syntax yet
+
+    // Assignment and concatenation
+    // string & operator = (const string &in other)
+    // string & operator += (const string &in other)
+    // string @ operator + (const string &in a, const string &in b)
+    
+    // Access individual characters
+    // uint8 & operator [] (uint)
+    // const uint8 & operator [] (uint) const
+    
+    // Comparison operators
+    // bool operator == (const string &in a, const string &in b)
+    // bool operator != (const string &in a, const string &in b)
+    // bool operator <  (const string &in a, const string &in b)
+    // bool operator <= (const string &in a, const string &in b)
+    // bool operator >  (const string &in a, const string &in b)
+    // bool operator >= (const string &in a, const string &in b)
+    
+    // Automatic conversion from number types to string type
+    // string & operator =  (double val)
+    // string & operator += (double val)
+    // string @ operator +  (double val, const string &in str)
+    // string @ operator +  (const string &in str, double val)
+    // string & operator =  (float val)
+    // string & operator += (float val)
+    // string @ operator +  (float val, const string &in str)
+    // string @ operator +  (const string &in str, float val)
+    // string & operator =  (int val)
+    // string & operator += (int val)
+    // string @ operator +  (int val, const string &in str)
+    // string @ operator +  (const string &in str, int val)
+    // string & operator =  (uint val)
+    // string & operator += (uint val)
+    // string @ operator +  (uint val, const string &in str)
+    // string @ operator +  (const string &in str, uint val)
+  }
+
+  // Get a substring of a string
+  string @ substring(const string &in str, int start, int length);
+
+  // Find the first occurrance of the substring
+  int findFirst(const string &in str, const string &in sub);
+  int findFirst(const string &in str, const string &in sub, int startAt)
+  
+  // Find the last occurrance of the substring
+  int findLast(const string &in str, const string &in sub);
+  int findLast(const string &in str, const string &in sub, int startAt);
+  
+  // Find the first character from the set 
+  int findFirstOf(const string &in str, const string &in set);
+  int findFirstOf(const string &in str, const string &in set, int startAt);
+  
+  // Find the first character not in the set
+  int findFirstNotOf(const string &in str, const string &in set);
+  int findFirstNotOf(const string &in str, const string &in set, int startAt);
+  
+  // Find the last character from the set
+  int findLastOf(const string &in str, const string &in set);
+  int findLastOf(const string &in str, const string &in set, int startAt);
+  
+  // Find the last character not in the set
+  int findLastNotOf(const string &in str, const string &in set);
+  int findLastNotOf(const string &in str, const string &in set, int startAt);
+  
+  // Split the string into an array of substrings
+  string@[]@ split(const string &in str, const string &in delimiter);
+  
+  // Join an array of strings into a larger string separated by a delimiter
+  string@ join(const string@[] &in str, const string &in delimiter);
+</pre>
 
 
 
@@ -98,7 +242,61 @@ The dictionary object maps string values to values or objects of other types.
 
 Register with <code>RegisterScriptDictionary(asIScriptEngine*)</code>.
 
-Script example:
+\section doc_addon_dict_1 Public C++ interface
+
+\code
+class CScriptDictionary
+{
+public:
+  // Memory management
+  CScriptDictionary(asIScriptEngine *engine);
+  void AddRef();
+  void Release();
+
+  // Sets/Gets a variable type value for a key
+  void Set(const std::string &key, void *value, int typeId);
+  bool Get(const std::string &key, void *value, int typeId) const;
+
+  // Sets/Gets an integer number value for a key
+  void Set(const std::string &key, asINT64 &value);
+  bool Get(const std::string &key, asINT64 &value) const;
+
+  // Sets/Gets a real number value for a key
+  void Set(const std::string &key, double &value);
+  bool Get(const std::string &key, double &value) const;
+
+  // Returns true if the key is set
+  bool Exists(const std::string &key) const;
+  
+  // Deletes the key
+  void Delete(const std::string &key);
+  
+  // Deletes all keys
+  void DeleteAll();
+};
+\endcode
+
+\section doc_addon_dict_2 Public script interface
+
+<pre>
+  class dictionary
+  {
+    void set(const string &in key, ? &in value);
+    bool get(const string &in value, ? &out value) const;
+    
+    void set(const string &in key, int64 &in value);
+    bool get(const string &in key, int64 &out value) const;
+    
+    void set(const string &in key, double &in value);
+    bool get(const string &in key, double &out value) const;
+    
+    bool exists(const string &in key) const;
+    void delete(const string &in key);
+    void deleteAll();
+  }
+</pre>
+
+\section doc_addon_dict_3 Script example
 
 <pre>
   dictionary dict;
@@ -121,7 +319,7 @@ Script example:
   dict.deleteAll();
 </pre>
 
-\todo Expand the documentation for the dictionary object
+
 
 
 
@@ -133,7 +331,45 @@ This is currently only a basic foundation for a file object that will allow scri
 
 Register with <code>RegisterScriptFile(asIScriptEngine*)</code>.
 
-Script example:
+\section doc_addon_file_1 Public C++ interface
+
+\code
+class CScriptFile
+{
+public:
+  // Constructor
+  CScriptFile();
+
+  // Memory management
+  void AddRef();
+  void Release();
+
+  // Opening and closing file handles
+  // mode = "r" -> open the file for reading
+  int Open(const std::string &filename, const std::string &mode);
+  int Close();
+  
+  // Returns the size of the file
+  int GetSize();
+
+  // Reads a specified number of bytes into the string
+  CScriptString *ReadString(unsigned int length);
+};
+\endcode
+
+\section doc_addon_file_2 Public script interface
+
+<pre>
+  class file
+  {
+    int open(const string &in filename, const string &in mode);
+    int close();
+    int getSize();
+    string @ readString(uint length);
+  }
+</pre>
+
+\section doc_addon_file_3 Script example
 
 <pre>
   file f;
@@ -149,6 +385,7 @@ Script example:
 
 
 
+
 \page doc_addon_math math functions
 
 <b>Path:</b> /sdk/add_on/scriptmath/
@@ -156,27 +393,30 @@ Script example:
 This add-on registers the math functions from the standard C runtime library with the script 
 engine. Use <code>RegisterScriptMath(asIScriptEngine*)</code> to perform the registration.
 
-The following functions are registered:
+\section doc_addon_math_1 Public script interface
 
-  - float cos(float)
-  - float sin(float)
-  - float tan(float)
-  - float acos(float)
-  - float asin(float)
-  - float atan(float)
-  - float cosh(float)
-  - float sinh(float)
-  - float tanh(float)
-  - float log(float)
-  - float log10(float)
-  - float pow(float, float)
-  - float sqrt(float)
-  - float ceil(float)
-  - float abs(float)
-  - float floor(float)
-  - float fraction(float)
+<pre>
+  float cos(float rad);
+  float sin(float rad);
+  float tan(float rad);
+  float acos(float val);
+  float asin(float val);
+  float atan(float val);
+  float cosh(float rad);
+  float sinh(float rad);
+  float tanh(float rad);
+  float log(float val);
+  float log10(float val);
+  float pow(float val, float exp);
+  float sqrt(float val);
+  float ceil(float val);
+  float abs(float val);
+  float floor(float val);
+  float fraction(float val);
+</pre>
  
- 
+
+
  
  
 \page doc_addon_math3d 3D math functions
@@ -187,8 +427,13 @@ This add-on registers some value types and functions that permit the scripts to 
 3D mathematical operations. Use <code>RegisterScriptMath3D(asIScriptEngine*)</code> to
 perform the registration.
 
-Currently the only thing registered is the <code>vector3</code> type, representing a 3D vector, with
-basic math operators, such as add, subtract, scalar multiply, equality comparison, etc.
+Currently the only thing registered is the <code>vector3</code> type, representing a 3D vector, 
+with basic math operators, such as add, subtract, scalar multiply, equality comparison, etc.
+
+This add-on serves mostly as a sample on how to register a value type. Application
+developers will most likely want to register their own math library rather than use 
+this add-on as-is. 
+
 
 
 
@@ -202,7 +447,7 @@ basic math operators, such as add, subtract, scalar multiply, equality compariso
 This class is a helper class for loading and building scripts, with a basic pre-processor 
 that supports include directives and metadata declarations.
 
-\section doc_addon_build_1 Public interface
+\section doc_addon_build_1 Public C++ interface
 
 \code
 class CScriptBuilder

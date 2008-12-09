@@ -16,9 +16,9 @@ void testFuncI(asIScriptGeneric *gen)
 	if( typeId == gen->GetEngine()->GetTypeIdByDecl("int") )
 		assert(*(int*)ref == 42);
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string") )
-		assert((*(asCScriptString**)ref)->buffer == "test");
+		assert((*(CScriptString**)ref)->buffer == "test");
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string@") )
-		assert((*(asCScriptString**)ref)->buffer == "test");
+		assert((*(CScriptString**)ref)->buffer == "test");
 	else
 		assert(false);
 }
@@ -33,16 +33,16 @@ void testFuncO(asIScriptGeneric *gen)
 	if( typeId == gen->GetEngine()->GetTypeIdByDecl("int") )
 		*(int*)ref = 42;
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string") )
-		(*(asCScriptString**)ref)->buffer = "test";
+		(*(CScriptString**)ref)->buffer = "test";
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string@") )
-		*(asCScriptString**)ref = new asCScriptString("test");
+		*(CScriptString**)ref = new CScriptString("test");
 	else
 		assert(false);
 }
 
 // AngelScript syntax: void testFuncIS(?& in, const string &in)
-// C++ syntax: void testFuncIS(void *ref, int typeId, asCScriptString &)
-void testFuncIS(void *ref, int typeId, asCScriptString &str)
+// C++ syntax: void testFuncIS(void *ref, int typeId, CScriptString &)
+void testFuncIS(void *ref, int typeId, CScriptString &str)
 {
 	assert(str.buffer == "test");
 
@@ -56,14 +56,14 @@ void testFuncIS_generic(asIScriptGeneric *gen)
 {
 	void *ref = gen->GetArgAddress(0);
 	int typeId = gen->GetArgTypeId(0);
-	asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(1);
+	CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(1);
 
 	testFuncIS(ref,typeId,*str);
 }
 
 // AngelScript syntax: void testFuncSI(const string &in, ?& in)
-// C++ syntax: void testFuncSI(asCScriptString &, void *ref, int typeId)
-void testFuncSI(asCScriptString &str, void *ref, int typeId)
+// C++ syntax: void testFuncSI(CScriptString &, void *ref, int typeId)
+void testFuncSI(CScriptString &str, void *ref, int typeId)
 {
 	assert(str.buffer == "test");
 	assert(*(int*)ref == 42);
@@ -71,7 +71,7 @@ void testFuncSI(asCScriptString &str, void *ref, int typeId)
 
 void testFuncSI_generic(asIScriptGeneric *gen)
 {
-	asCScriptString *str = *(asCScriptString**)gen->GetAddressOfArg(0);
+	CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
 	void *ref = gen->GetArgAddress(1);
 	int typeId = gen->GetArgTypeId(1);
 

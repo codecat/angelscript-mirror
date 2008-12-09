@@ -6,7 +6,7 @@ using std::string;
 
 #define TESTNAME "TestAutoHandle"
 
-void TestConstructor(string &arg1, asCScriptString *arg2, double d, string &arg3, void *obj)
+void TestConstructor(string &arg1, CScriptString *arg2, double d, string &arg3, void *obj)
 {
 	assert(arg1 == "1");
 	assert(arg2->buffer == "2");
@@ -15,7 +15,7 @@ void TestConstructor(string &arg1, asCScriptString *arg2, double d, string &arg3
 	arg2->Release();
 }
 
-void TestFunc(string &arg1, asCScriptString *arg2, double d, string &arg3)
+void TestFunc(string &arg1, CScriptString *arg2, double d, string &arg3)
 {
 	assert(arg1 == "1");
 	assert(arg2->buffer == "2");
@@ -24,11 +24,11 @@ void TestFunc(string &arg1, asCScriptString *arg2, double d, string &arg3)
 	arg2->Release();
 }
 
-asCScriptString *str = 0;
-asCScriptString *TestFunc2()
+CScriptString *str = 0;
+CScriptString *TestFunc2()
 {
 	if( str == 0 )
-		str = new asCScriptString();
+		str = new CScriptString();
 
 	str->buffer = "Test";
 

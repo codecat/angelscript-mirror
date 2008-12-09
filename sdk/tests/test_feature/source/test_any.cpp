@@ -244,7 +244,7 @@ bool Test()
 			printf("%s: Failed to return the correct type\n", TESTNAME);
 		}
 
-		asCScriptString *str = 0;
+		CScriptString *str = 0;
 		myAny->Retrieve((void*)&str, typeId);
 
 		if( str->buffer != "test" )

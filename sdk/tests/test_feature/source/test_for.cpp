@@ -32,7 +32,7 @@ void Test()                                \n\
 
 void Print_Generic(asIScriptGeneric *gen)
 {
-	asCScriptString *str = (asCScriptString*)gen->GetArgAddress(0);
+	CScriptString *str = (CScriptString*)gen->GetArgAddress(0);
 	printf(str->buffer.c_str());
 }
 

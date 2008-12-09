@@ -20,21 +20,30 @@ BEGIN_AS_NAMESPACE
 class CScriptDictionary
 {
 public:
+    // Memory management
     CScriptDictionary(asIScriptEngine *engine);
     void AddRef();
     void Release();
 
-    void Set(std::string &key, void *value, int typeId);
-    bool Get(std::string &key, void *value, int typeId);
+    // Sets/Gets a variable type value for a key
+    void Set(const std::string &key, void *value, int typeId);
+    bool Get(const std::string &key, void *value, int typeId) const;
 
-	void Set(std::string &key, asINT64 &value);
-	bool Get(std::string &key, asINT64 &value);
+    // Sets/Gets an integer number value for a key
+    void Set(const std::string &key, asINT64 &value);
+    bool Get(const std::string &key, asINT64 &value) const;
 
-	void Set(std::string &key, double &value);
-	bool Get(std::string &key, double &value);
+    // Sets/Gets a real number value for a key
+    void Set(const std::string &key, double &value);
+    bool Get(const std::string &key, double &value) const;
 
-    bool Exists(std::string &key);
-    void Delete(std::string &key);
+    // Returns true if the key is set
+    bool Exists(const std::string &key) const;
+
+    // Deletes the key
+    void Delete(const std::string &key);
+
+    // Deletes all keys
     void DeleteAll();
 
 	// Garbage collections behaviours
@@ -45,7 +54,6 @@ public:
 	void ReleaseAllReferences(asIScriptEngine *engine);
 
 protected:
-
 	// The structure for holding the values
     struct valueStruct
     {
@@ -66,7 +74,7 @@ protected:
 
 	// Helper methods
     void FreeValue(valueStruct &value);
-
+	
 	// Our properties
     asIScriptEngine *engine;
     int refCount;

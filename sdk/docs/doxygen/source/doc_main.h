@@ -4,23 +4,19 @@
 
 \image html aslogo.png 
 
-AngelScript is an extremely flexible cross-platform scripting library designed to allow applications to extend 
-their functionality through external scripts. It has been designed from the beginning to be an easy to use 
-component, both for the application programmer and the script writer. 
+\ref doc_overview "AngelScript" is a \ref doc_license "free, open source", flexible, and cross-platform scripting library meant to be
+embedded in applications. The purpose is to provide an easy to use library that is powerful, but that isn't weighed 
+down by a large amount of rarely used features.
 
-Efforts have been made to let it call standard C functions and C++ methods with little to no need for proxy functions. 
-The application simply registers the functions, objects, and methods that the scripts should be able to work 
-with and nothing more has to be done with your code. The same functions used by the application internally can 
-also be used by the scripting engine, which eliminates the need to duplicate functionality. 
+Development of AngelScript begun in February, 2003, with the first public release on March 28th, 2003, with only the most basic
+of functionality. Ever since that day the world has seen frequent releases with new features and improvements. The author is still 
+dedicated to the continued improvement and growth of this library. 
 
-The scripting language is very similar to the widely known syntax of C++, but without the need to worry about 
-pointers and memory leaks. Contrary to most scripting languages that are weakly typed, AngelScript uses the 
-common C/C++ datatypes for more efficient communication with the host application. 
+The official site for the library is <a href="http://www.angelcode.com/angelscript" target="_blank">http://www.angelcode.com/angelscript</a>.
 
 
 \section main_topics Topics
 
- - \subpage doc_license
  - \subpage doc_start
  - \subpage doc_using
  - \subpage doc_advanced
@@ -39,11 +35,13 @@ common C/C++ datatypes for more efficient communication with the host applicatio
  
 \page doc_start Getting started
 
+ - \subpage doc_overview
+ - \subpage doc_license
  - \subpage doc_compile_lib
  - \subpage doc_hello_world
  - \subpage doc_good_practice
  
-\todo Add a page explaining the structure of the engine, modules, contexts, etc
+
 
 
 
@@ -54,12 +52,12 @@ common C/C++ datatypes for more efficient communication with the host applicatio
 
  - \subpage doc_register_func
  - \subpage doc_register_type
+ - \subpage doc_register_prop
  - \subpage doc_obj_handle
  - \subpage doc_call_script_func
  - \subpage doc_generic
  - \subpage doc_gc
 
-\todo Write a page about registering global properties
  
  
  
@@ -76,12 +74,12 @@ common C/C++ datatypes for more efficient communication with the host applicatio
  - \subpage doc_adv_timeout
  - \subpage doc_adv_multithread
  - \subpage doc_adv_concurrent
+ - \subpage doc_adv_coroutine
  
 \todo Add page about dynamic config groups
 \todo Add page about pre-compiled bytecode
 \todo Add page about custom memory management
 \todo Add page about customizations/optimizations
-\todo Add page about co-routines
 \todo Add page about registering class hierarchies
  
  

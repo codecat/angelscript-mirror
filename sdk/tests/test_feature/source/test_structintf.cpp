@@ -92,7 +92,7 @@ bool Test()
 		if( s->GetPropertyTypeId(1) != engine->GetTypeIdByDecl("string") )
 			fail = true;
 
-		if( ((asCScriptString*)s->GetPropertyPointer(1))->buffer != "test" )
+		if( ((CScriptString*)s->GetPropertyPointer(1))->buffer != "test" )
 			fail = true;
 
 		if( strcmp(s->GetPropertyName(2), "c") )
@@ -101,7 +101,7 @@ bool Test()
 		if( s->GetPropertyTypeId(2) != engine->GetTypeIdByDecl("string@") )
 			fail = true;
 
-		if( (*(asCScriptString**)s->GetPropertyPointer(2))->buffer != "test2" )
+		if( (*(CScriptString**)s->GetPropertyPointer(2))->buffer != "test2" )
 			fail = true;
 
 		if( s )

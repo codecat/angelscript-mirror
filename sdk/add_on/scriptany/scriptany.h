@@ -8,25 +8,30 @@ BEGIN_AS_NAMESPACE
 class CScriptAny 
 {
 public:
+	// Constructors
 	CScriptAny(asIScriptEngine *engine);
 	CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine);
-	virtual ~CScriptAny();
 
+	// Memory management
 	int AddRef();
 	int Release();
 
-	CScriptAny &operator=(CScriptAny&);
+	// Copy the stored value from another any object
+	CScriptAny &operator=(const CScriptAny&);
+	int CopyFrom(const CScriptAny *other);
 
+	// Store the value, either as variable type, integer number, or real number
 	void Store(void *ref, int refTypeId);
 	void Store(asINT64 &value);
 	void Store(double &value);
 
-	bool Retrieve(void *ref, int refTypeId);
-	bool Retrieve(asINT64 &value);
-	bool Retrieve(double &value);
+	// Retrieve the stored value, either as variable type, integer number, or real number
+	bool Retrieve(void *ref, int refTypeId) const;
+	bool Retrieve(asINT64 &value) const;
+	bool Retrieve(double &value) const;
 
-	int  GetTypeId();
-	int  CopyFrom(CScriptAny *other);
+	// Get the type id of the stored value
+	int  GetTypeId() const;
 
 	// GC methods
 	int  GetRefCount();
@@ -36,6 +41,7 @@ public:
 	void ReleaseAllHandles(asIScriptEngine *engine);
 
 protected:
+	virtual ~CScriptAny();
 	void FreeObject();
 
 	int refCount;

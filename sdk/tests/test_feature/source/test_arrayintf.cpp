@@ -74,7 +74,7 @@ bool Test()
 		if( stringArray->GetElementCount() != 1 )
 			fail = true;
 
-		if( ((asCScriptString*)stringArray->GetElementPointer(0))->buffer != "test" )
+		if( ((CScriptString*)stringArray->GetElementPointer(0))->buffer != "test" )
 			fail = true;
 
 		stringArray->Resize(2);

@@ -42,8 +42,8 @@ bool Test()
 	ctx->Prepare(func);
 
 	*(int*)ctx->GetArgPointer(0) = 3;
-	*(asCScriptString**)ctx->GetArgPointer(1) = new asCScriptString("tst");
-	*(asCScriptString**)ctx->GetArgPointer(2) = new asCScriptString("42"); // We don't have to add a reference, because we don't want to keep a copy
+	*(CScriptString**)ctx->GetArgPointer(1) = new CScriptString("tst");
+	*(CScriptString**)ctx->GetArgPointer(2) = new CScriptString("42"); // We don't have to add a reference, because we don't want to keep a copy
 	float pi = 3.14f;
 	*(float**)ctx->GetArgPointer(3) = &pi;
 
@@ -58,7 +58,7 @@ bool Test()
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	if( ((asCScriptString*)ctx->GetAddressOfReturnValue())->buffer != "tst" ) fail = true;
+	if( ((CScriptString*)ctx->GetAddressOfReturnValue())->buffer != "tst" ) fail = true;
 
 	ctx->Release();
 

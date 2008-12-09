@@ -149,7 +149,7 @@ void PrintVariables(asIScriptContext *ctx, int stackLevel)
 		}
 		else if( typeId == engine->GetTypeIdByDecl("string") )
 		{
-			asCScriptString *str = (asCScriptString*)varPointer;
+			CScriptString *str = (CScriptString*)varPointer;
 			if( str )
 				print(" %s = '%s'\n", ctx->GetVarDeclaration(n, 0, stackLevel), str->buffer.c_str());
 			else

@@ -2106,12 +2106,11 @@ void asCContext::ExecuteNext()
 		{
 			asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(l_bc);
 			int func = INTARG(l_bc+PTR_SIZE);
-			asDWORD *mem = 0;
 
 			if( objType->flags & asOBJ_SCRIPT_STRUCT )
 			{
 				// Pre-allocate the memory
-				mem = (asDWORD*)engine->CallAlloc(objType);
+				asDWORD *mem = (asDWORD*)engine->CallAlloc(objType);
 
 				// Call the constructor to initalize the memory
 				asCScriptFunction *f = engine->scriptFunctions[func];
@@ -2175,7 +2174,6 @@ void asCContext::ExecuteNext()
 					stackPointer = l_sp;
 					stackFramePointer = l_fp;
 
-					engine->CallFree(mem);
 					*a = 0;
 
 					return;
@@ -2184,7 +2182,7 @@ void asCContext::ExecuteNext()
 			else
 			{
 				// Pre-allocate the memory
-				mem = (asDWORD*)engine->CallAlloc(objType);
+				asDWORD *mem = (asDWORD*)engine->CallAlloc(objType);
 
 				if( func )
 				{

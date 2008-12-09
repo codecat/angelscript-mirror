@@ -43,7 +43,7 @@ static void formatf(asIScriptGeneric *gen)
 	float f = gen->GetArgFloat(0);
 	char buffer[25];
 	sprintf(buffer, "%f", f);
-	gen->SetReturnAddress(new asCScriptString(buffer));
+	gen->SetReturnAddress(new CScriptString(buffer));
 }
 
 static void formatUI(asIScriptGeneric *gen)
@@ -51,12 +51,12 @@ static void formatUI(asIScriptGeneric *gen)
 	asUINT ui = gen->GetArgDWord(0);
 	char buffer[25];
 	sprintf(buffer, "%d", ui);
-	gen->SetReturnAddress(new asCScriptString(buffer));
+	gen->SetReturnAddress(new CScriptString(buffer));
 }
 
 static void print(asIScriptGeneric *gen)
 {
-	asCScriptString *str = (asCScriptString*)gen->GetArgObject(0);
+	CScriptString *str = (CScriptString*)gen->GetArgObject(0);
 //	printf((str + "\n").c_str());
 }
 

@@ -13,7 +13,7 @@ static string printOutput;
 // (in fact it is a reference to copy of the string)
 static void PrintString(asIScriptGeneric *gen)
 {
-	asCScriptString *str = (asCScriptString*)gen->GetArgAddress(0);
+	CScriptString *str = (CScriptString*)gen->GetArgAddress(0);
 	printOutput = str->buffer;
 }
 
@@ -21,7 +21,7 @@ static void PrintString(asIScriptGeneric *gen)
 // object handle from the script engine
 static void SetString(asIScriptGeneric *gen)
 {
-	asCScriptString *str = (asCScriptString*)gen->GetArgAddress(0);
+	CScriptString *str = (CScriptString*)gen->GetArgAddress(0);
 	if( str )
 	{
 		str->buffer = "Handle to a string";
@@ -35,7 +35,7 @@ static void SetString(asIScriptGeneric *gen)
 // to an object handle from the script engine
 static void SetString2(asIScriptGeneric *gen)
 {
-	asCScriptString *str = *(asCScriptString**)gen->GetArgAddress(0);
+	CScriptString *str = *(CScriptString**)gen->GetArgAddress(0);
 	if( str )
 	{
 		str->buffer = "Handle to a string";
@@ -113,11 +113,11 @@ static const char *script8 =
 "}                              \n";
 
 
-//bool Get(int * /*obj*/, const asCScriptString &szURL, asCScriptString &szHTML)
+//bool Get(int * /*obj*/, const CScriptString &szURL, CScriptString &szHTML)
 void Get(asIScriptGeneric *gen)
 {
-	const asCScriptString *szURL = (asCScriptString*)gen->GetArgObject(0);
-	asCScriptString *szHTML = (asCScriptString*)gen->GetArgObject(1);
+	const CScriptString *szURL = (CScriptString*)gen->GetArgObject(0);
+	CScriptString *szHTML = (CScriptString*)gen->GetArgObject(1);
 
 	assert(szHTML != 0);
 	assert(szURL->buffer == "stringtest");
@@ -136,7 +136,7 @@ void GetConstStringRef(asIScriptGeneric *gen)
 void TestFunc(asIScriptGeneric *gen)
 {
 	int arg0              = *(int*)gen->GetAddressOfArg(0);
-	asCScriptString *arg1 = *(asCScriptString**)gen->GetAddressOfArg(1);
+	CScriptString *arg1 = *(CScriptString**)gen->GetAddressOfArg(1);
 	
 	assert( arg0 == 0 );
 	assert( arg1->buffer == "test" );
@@ -269,7 +269,7 @@ bool Test()
 	engine->ExecuteString(0, "test()");
 	if( printOutput != "Heredoc\\x20test!" ) fail = true;
 
-	asCScriptString *a = new asCScriptString("a");
+	CScriptString *a = new CScriptString("a");
 	engine->RegisterGlobalProperty("string a", a);
 	r = engine->ExecuteString(0, "print(a == 'a' ? 't' : 'f')");
 	if( r != asEXECUTION_FINISHED ) 

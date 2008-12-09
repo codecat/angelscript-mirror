@@ -72,7 +72,7 @@ static const char *script6 =
 
 void print(asIScriptGeneric *gen)
 {
-	std::string s = ((asCScriptString*)gen->GetArgAddress(0))->buffer;
+	std::string s = ((CScriptString*)gen->GetArgAddress(0))->buffer;
 
 	if( s != "12\n" && 
 		s != "5\n" &&
@@ -202,8 +202,8 @@ bool TestGlobalVar()
 		ret = true;
 	else
 	{
-		asCScriptString *object = (asCScriptString*)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("object"));
-		asCScriptString **handle = (asCScriptString**)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("handle"));
+		CScriptString *object = (CScriptString*)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("object"));
+		CScriptString **handle = (CScriptString**)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("handle"));
 		if( *handle != object )
 			ret = true;
 		if( object->buffer != "t" )

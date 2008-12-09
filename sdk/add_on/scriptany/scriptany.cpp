@@ -154,9 +154,9 @@ void RegisterScriptAny_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("any", "void store(?&in)", asMETHODPR(CScriptAny,Store,(void*,int),void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("any", "void store(int64&in)", asMETHODPR(CScriptAny,Store,(asINT64&),void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("any", "void store(double&in)", asMETHODPR(CScriptAny,Store,(double&),void), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("any", "bool retrieve(?&out)", asMETHODPR(CScriptAny,Retrieve,(void*,int),bool), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("any", "bool retrieve(int64&out)", asMETHODPR(CScriptAny,Retrieve,(asINT64&),bool), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("any", "bool retrieve(double&out)", asMETHODPR(CScriptAny,Retrieve,(double&),bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(?&out)", asMETHODPR(CScriptAny,Retrieve,(void*,int) const,bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(int64&out)", asMETHODPR(CScriptAny,Retrieve,(asINT64&) const,bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(double&out)", asMETHODPR(CScriptAny,Retrieve,(double&) const,bool), asCALL_THISCALL); assert( r >= 0 );
 
 	// Register GC behaviours
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(CScriptAny,GetRefCount), asCALL_THISCALL); assert( r >= 0 );
@@ -194,7 +194,7 @@ void RegisterScriptAny_Generic(asIScriptEngine *engine)
 }
 
 
-CScriptAny &CScriptAny::operator=(CScriptAny &other)
+CScriptAny &CScriptAny::operator=(const CScriptAny &other)
 {
 	FreeObject();
 
@@ -219,7 +219,7 @@ CScriptAny &CScriptAny::operator=(CScriptAny &other)
 	return *this;
 }
 
-int CScriptAny::CopyFrom(CScriptAny *other)
+int CScriptAny::CopyFrom(const CScriptAny *other)
 {
 	if( other == 0 ) return asINVALID_ARG;
 
@@ -301,7 +301,7 @@ void CScriptAny::Store(asINT64 &ref)
 }
 
 
-bool CScriptAny::Retrieve(void *ref, int refTypeId)
+bool CScriptAny::Retrieve(void *ref, int refTypeId) const
 {
 	if( refTypeId & asTYPEID_OBJHANDLE )
 	{
@@ -359,19 +359,19 @@ bool CScriptAny::Retrieve(void *ref, int refTypeId)
 	return false;
 }
 
-bool CScriptAny::Retrieve(asINT64 &value)
+bool CScriptAny::Retrieve(asINT64 &value) const
 {
 	int typeId = engine->GetTypeIdByDecl("int64");
 	return Retrieve(&value, typeId);
 }
 
-bool CScriptAny::Retrieve(double &value)
+bool CScriptAny::Retrieve(double &value) const
 {
 	int typeId = engine->GetTypeIdByDecl("double");
 	return Retrieve(&value, typeId);
 }
 
-int CScriptAny::GetTypeId()
+int CScriptAny::GetTypeId() const
 {
 	return value.typeId;
 }

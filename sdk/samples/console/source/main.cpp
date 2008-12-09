@@ -20,11 +20,11 @@ void grab(const string&);
 void grab(void);
 
 // Some global variables that the script can access
-float            g_gravity;
-asUINT           p_health;
-asUINT           r_fov;
-bool             r_shadow;
-asCScriptString *p_name = 0;
+float          g_gravity;
+asUINT         p_health;
+asUINT         r_fov;
+bool           r_shadow;
+CScriptString *p_name = 0;
 
 int main(int argc, char **argv)
 {
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 	// Allocate a script string for the player name.
 	// We must do this because the script string type that we use is
 	// reference counted and cannot be declared as local or global variable.
-	p_name = new asCScriptString("player");
+	p_name = new CScriptString("player");
 	if( p_name == 0 )
 	{
 		cout << "Failed to allocate script string." << endl;

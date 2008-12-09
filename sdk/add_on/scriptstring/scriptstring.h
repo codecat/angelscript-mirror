@@ -1,5 +1,5 @@
 //
-// asCScriptString
+// CScriptString
 //
 // This class is used to pass strings between the application and the script engine.
 // It is basically a container for the normal std::string, with the addition of a
@@ -22,24 +22,25 @@
 
 BEGIN_AS_NAMESPACE
 
-class asCScriptString
+class CScriptString
 {
 public:
-	asCScriptString();
-	asCScriptString(const asCScriptString &other);
-	asCScriptString(const char *s);
-	asCScriptString(const std::string &s);
+	CScriptString();
+	CScriptString(const CScriptString &other);
+	CScriptString(const char *s);
+	CScriptString(const std::string &s);
 
 	void AddRef();
 	void Release();
 
-	asCScriptString &operator=(const asCScriptString &other);
-	asCScriptString &operator+=(const asCScriptString &other);
+	CScriptString &operator=(const CScriptString &other);
+	CScriptString &operator+=(const CScriptString &other);
+	friend CScriptString *operator+(const CScriptString &a, const CScriptString &b);
 
 	std::string buffer;
 
 protected:
-	~asCScriptString();
+	~CScriptString();
 	int refCount;
 };
 

@@ -79,7 +79,7 @@ public:
 };
 MyFactory *MyFactory::m_factory = NULL;
 
-void TestManager(const asCScriptString *text, signed int x, signed int y, unsigned int z, MyFactory &manager)
+void TestManager(const CScriptString *text, signed int x, signed int y, unsigned int z, MyFactory &manager)
 {
 	manager.Test(text->buffer.c_str(), x, y, z);
 }
