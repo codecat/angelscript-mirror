@@ -22,7 +22,7 @@ int CScriptBuilder::BuildScriptFromFile(asIScriptEngine *engine, const char *mod
 
 	int r = LoadScriptSection(filename);
 	if( r < 0 )
-		Build();
+		return r;
 
 	return Build();
 }
