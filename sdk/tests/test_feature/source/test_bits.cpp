@@ -69,10 +69,11 @@ void ReturnWord(asIScriptGeneric *gen)
 #endif
 }
 
+bool Test2();
 
 bool Test()
 {
-	bool fail = false;
+	bool fail = Test2();
 	int r;
 	COutStream out;
 
@@ -131,6 +132,44 @@ bool Test()
 	engine->Release();
 
 	// Success
+	return fail;
+}
+
+// Reported by jkhax0r
+bool Test2()
+{
+	const char *script = 
+	"uint16 Z1; \n"
+	"uint8 b1 = 2; \n"
+	"uint8 b2 = 2; \n"
+
+	//Using '+'
+	"Z1 = (b1 & 0x00FF) + ((b2 << 8) & 0xFF00); \n"
+	"b1 = Z1 & 0x00FF; \n"
+	"b2 = (Z1 >> 8) & 0x00FF; \n"
+	"assert( b1 == 2 && b2 == 2 ); \n"
+
+	//Using '|'
+	"Z1 = (b1 & 0x00FF) | ((b2 << 8) & 0xFF00); \n"
+	"b1 = Z1 & 0x00FF; \n"
+	"b2 = (Z1 >> 8) & 0x00FF;  \n"
+	"assert( b1 == 2 && b2 == 2 ); \n";
+
+	bool fail = false;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	int r = engine->ExecuteString(0, script);
+	if( r != asEXECUTION_FINISHED ) 
+	{
+		fail = true;
+	}
+
+	engine->Release();
+
 	return fail;
 }
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -53,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        21500
+#define ANGELSCRIPT_VERSION        21501
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  15
-#define ANGELSCRIPT_VERSION_BUILD  0
-#define ANGELSCRIPT_VERSION_STRING "2.15.0"
+#define ANGELSCRIPT_VERSION_BUILD  1
+#define ANGELSCRIPT_VERSION_STRING "2.15.1 WIP"
 
 // Data types
 

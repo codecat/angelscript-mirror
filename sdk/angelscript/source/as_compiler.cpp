@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -7408,27 +7408,24 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		op == ttBitXor || op == ttXorAssign )
 	{
 		// Convert left hand operand to integer if it's not already one
-		if( !(lctx->type.dataType.IsIntegerType() ||
-			  lctx->type.dataType.IsUnsignedType()) )
+		asCDataType to;
+		if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 ||
+			rctx->type.dataType.GetSizeInMemoryDWords() == 2 )
+			to.SetTokenType(ttUInt64);
+		else
+			to.SetTokenType(ttUInt);
+
+		// Do the actual conversion
+		asCArray<int> reservedVars;
+		rctx->bc.GetVarsUsed(reservedVars);
+		ImplicitConversion(lctx, to, node, false, true, &reservedVars);
+
+		// Verify that the conversion was successful
+		if( !lctx->type.dataType.IsUnsignedType() )
 		{
-			asCDataType to;
-			if( lctx->type.dataType.GetSizeInMemoryDWords() == 2  )
-				to.SetTokenType(ttInt64);
-			else
-				to.SetTokenType(ttInt);
-
-			// Do the actual conversion
-			asCArray<int> reservedVars;
-			rctx->bc.GetVarsUsed(reservedVars);
-			ImplicitConversion(lctx, to, node, false, true, &reservedVars);
-
-			// Verify that the conversion was successful
-			if( !lctx->type.dataType.IsUnsignedType() )
-			{
-				asCString str;
-				str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-				Error(str.AddressOf(), node);
-			}
+			asCString str;
+			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
+			Error(str.AddressOf(), node);
 		}
 
 		// Convert right hand operand to same type as left hand operand
