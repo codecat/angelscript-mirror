@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -2142,6 +2142,8 @@ void asCContext::ExecuteNext()
 			}
 			else if( objType->flags & asOBJ_REF )
 			{
+				asASSERT(objType->flags & asOBJ_TEMPLATE);
+
 				// Need to move the values back to the context
 				byteCode = l_bc;
 				stackPointer = l_sp;

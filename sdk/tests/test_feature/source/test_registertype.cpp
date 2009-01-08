@@ -239,7 +239,8 @@ bool Test()
 	if( bout.buffer != "script (1, 1) : Info    : Compiling ref func(ref)\n"
 		               "script (1, 1) : Error   : Data type can't be 'ref'\n"
 					   "script (1, 10) : Error   : Parameter type can't be 'ref'\n"
-					   "script (1, 23) : Error   : Data type can't be 'ref'\n" )
+					   "script (1, 23) : Error   : Data type can't be 'ref'\n"
+					   "script (1, 34) : Error   : No matching signatures to 'ref()'\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

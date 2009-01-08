@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -40,29 +40,21 @@
 
 BEGIN_AS_NAMESPACE
 
-// This helper function will call the default constructor, that is a script function
+// This helper function will call the default factory, that is a script function
 asIScriptStruct *ScriptStructFactory(asCObjectType *objType, asCScriptEngine *engine)
 {
-	asIScriptStruct *ptr = (asIScriptStruct*)engine->CallAlloc(objType);
-
-	int funcIndex = objType->beh.construct;
-	
-	// Setup a context for calling the default constructor
 	asIScriptContext *ctx;
 	int r = engine->CreateContext(&ctx, true);
 	if( r < 0 )
-	{
-		engine->CallFree(ptr);
 		return 0;
-	}
-	r = ctx->Prepare(funcIndex);
+
+	r = ctx->Prepare(objType->beh.factory);
 	if( r < 0 )
 	{
-		engine->CallFree(ptr);
 		ctx->Release();
 		return 0;
 	}
-	ctx->SetObject(ptr);
+
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
@@ -70,8 +62,14 @@ asIScriptStruct *ScriptStructFactory(asCObjectType *objType, asCScriptEngine *en
 		ctx->Release();
 		return 0;
 	}
-	ctx->Release();	
-	
+
+	asIScriptStruct *ptr = (asIScriptStruct*)ctx->GetReturnAddress();
+
+	// Increase the reference, because the context will release it's pointer
+	ptr->AddRef();
+
+	ctx->Release();
+
 	return ptr;
 }
 
@@ -459,7 +457,7 @@ void *asCScriptStruct::AllocateObject(asCObjectType *objType, asCScriptEngine *e
 	}
 	else if( objType->flags & asOBJ_REF )
 	{
-		ptr = engine->CallGlobalFunctionRetPtr(objType->beh.construct);
+		ptr = engine->CallGlobalFunctionRetPtr(objType->beh.factory);
 	}
 	else
 	{

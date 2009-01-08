@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -459,7 +459,7 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 		}
 		else if( subType->flags & asOBJ_REF )
 		{
-			int funcIndex = subType->beh.construct;
+			int funcIndex = subType->beh.factory;
 			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
 			asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
 

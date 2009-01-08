@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -864,7 +864,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	st->tokenType = ttIdentifier;
 
 	// Use the default script struct behaviours
-	st->beh.construct = 0;
+	st->beh.factory = 0;
 	st->beh.addref = scriptTypeBehaviours.beh.addref;
 	st->beh.release = scriptTypeBehaviours.beh.release;
 	st->beh.copy = 0;
@@ -1181,10 +1181,16 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 			if( func.parameterTypes.GetLength() == 1 )
 			{
 				beh->construct = AddBehaviourFunction(func, internal);
+				beh->factory = beh->construct;
 				beh->constructors.PushLast(beh->construct);
+				beh->factories.PushLast(beh->factory);
 			}
 			else
-				beh->constructors.PushLast(AddBehaviourFunction(func, internal));
+			{
+				int id = AddBehaviourFunction(func, internal);
+				beh->constructors.PushLast(id);
+				beh->factories.PushLast(id);
+			}
 		}
 	}
 	else if( behaviour == asBEHAVE_FACTORY )
@@ -1193,11 +1199,13 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		{
 			if( func.parameterTypes.GetLength() == 1 )
 			{
-				beh->construct = AddBehaviourFunction(func, internal);
-				beh->constructors.PushLast(beh->construct);
+				beh->factory = AddBehaviourFunction(func, internal);
+				beh->factories.PushLast(beh->factory);
 			}
 			else
-				beh->constructors.PushLast(AddBehaviourFunction(func, internal));
+			{
+				beh->factories.PushLast(AddBehaviourFunction(func, internal));
+			}
 		}
 	}
 	else if( behaviour == asBEHAVE_ADDREF )
@@ -1378,7 +1386,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION);
 
-	func.objectType = type.GetObjectType();
+	if( behaviour != asBEHAVE_FACTORY )
+		func.objectType = type.GetObjectType();
 
 	if( behaviour == asBEHAVE_CONSTRUCT )
 	{
@@ -1447,14 +1456,14 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		// TODO: Add asBEHAVE_IMPLICIT_FACTORY
 
 		// Must be a ref type and must not have asOBJ_NOHANDLE
-		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
+		if( !(type.GetObjectType()->flags & asOBJ_REF) || (type.GetObjectType()->flags & asOBJ_NOHANDLE) )
 		{
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 		}
 
 		// Verify that the return type is a handle to the type
-		if( func.returnType != asCDataType::CreateObjectHandle(func.objectType, false) )
+		if( func.returnType != asCDataType::CreateObjectHandle(type.GetObjectType(), false) )
 			return ConfigError(asINVALID_DECLARATION);
 
 		// Implicit factories must take one and only one parameter
@@ -1467,15 +1476,13 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		// Store all factory functions in a list
 		if( func.parameterTypes.GetLength() == 0 )
 		{
-			// Share variable with constructor
-			func.id = beh->construct = AddBehaviourFunction(func, internal);
-			beh->constructors.PushLast(beh->construct);
+			func.id = beh->factory = AddBehaviourFunction(func, internal);
+			beh->factories.PushLast(beh->factory);
 		}
 		else
 		{
-			// Share variable with constructor
 			func.id = AddBehaviourFunction(func, internal);
-			beh->constructors.PushLast(func.id);
+			beh->factories.PushLast(func.id);
 /*
 			if( behaviour == asBEHAVE_IMPLICIT_FACTORY )
 			{
@@ -2561,8 +2568,8 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	ot->name = ""; // Built-in script arrays are registered without name
 	ot->tokenType = type.GetTokenType();
 	ot->methods = defaultArrayObjectType->methods;
-	ot->beh.construct = defaultArrayObjectType->beh.construct;
-	ot->beh.constructors = defaultArrayObjectType->beh.constructors;
+	ot->beh.factory = defaultArrayObjectType->beh.factory;
+	ot->beh.factories = defaultArrayObjectType->beh.factories;
 	ot->beh.addref = defaultArrayObjectType->beh.addref;
 	ot->beh.release = defaultArrayObjectType->beh.release;
 	ot->beh.copy = defaultArrayObjectType->beh.copy;
@@ -3109,7 +3116,7 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	else if( objType->flags & asOBJ_TEMPLATE )
 		ptr = ArrayObjectFactory(objType);
 	else if( objType->flags & asOBJ_REF )
-		ptr = CallGlobalFunctionRetPtr(objType->beh.construct);
+		ptr = CallGlobalFunctionRetPtr(objType->beh.factory);
 	else
 	{
 		ptr = CallAlloc(objType);

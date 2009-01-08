@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -71,8 +71,9 @@ const asDWORD asOBJ_NAMED_ENUM       = 0x10000000 | asOBJ_NAMED_TYPE;
 
 struct asSTypeBehaviour
 {
-	asSTypeBehaviour() {construct = 0; destruct = 0; copy = 0; addref = 0; release = 0; gcGetRefCount = 0; gcSetFlag = 0; gcGetFlag = 0; gcEnumReferences = 0; gcReleaseAllReferences = 0;}
+	asSTypeBehaviour() {factory = 0; construct = 0; destruct = 0; copy = 0; addref = 0; release = 0; gcGetRefCount = 0; gcSetFlag = 0; gcGetFlag = 0; gcEnumReferences = 0; gcReleaseAllReferences = 0;}
 
+	int factory;
 	int construct;
 	int destruct;
 	int copy;
@@ -86,6 +87,7 @@ struct asSTypeBehaviour
 	int gcEnumReferences;
 	int gcReleaseAllReferences;
 	
+	asCArray<int> factories;
 	asCArray<int> constructors;
 	asCArray<int> operators;
 };

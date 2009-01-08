@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -332,7 +332,7 @@ void asCBuilder::ParseScripts()
 				node = next;
 			}
 
-			// Make sure the default constructor exists for classes
+			// Make sure the default factory & constructor exists for classes
 			if( decl->objType->beh.construct == engine->scriptTypeBehaviours.beh.construct )
 			{
 				AddDefaultConstructor(decl->objType, decl->script);
@@ -904,6 +904,8 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	decl->objType = st;
 
 	// Use the default script class behaviours
+	st->beh.factory = engine->scriptTypeBehaviours.beh.factory;
+	st->beh.factories = engine->scriptTypeBehaviours.beh.factories;
 	st->beh.construct = engine->scriptTypeBehaviours.beh.construct;
 	st->beh.constructors.PushLast(st->beh.construct);
 	st->beh.addref = engine->scriptTypeBehaviours.beh.addref;
@@ -1519,6 +1521,15 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 
 	// Add a dummy function to the module so that it doesn't mix up the func Ids
 	functions.PushLast(0);
+
+	// Add a default factory as well
+	funcId = module->GetNextFunctionId();
+	objType->beh.factory = funcId;
+	objType->beh.factories[0] = funcId;
+	returnType = asCDataType::CreateObjectHandle(objType, false);
+	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
+	functions.PushLast(0);
+	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
 }
 
 int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
@@ -1858,9 +1869,40 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 				// Overload the default constructor
 				objType->beh.construct = funcID;
 				objType->beh.constructors[0] = funcID;
+
+				// Register the default factory as well
+				objType->beh.factory = module->GetNextFunctionId();
+				objType->beh.factories[0] = objType->beh.factory;
+
+				asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
+				module->AddScriptFunction(file->idx, objType->beh.factory, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
+
+				// Add a dummy function to the module so that it doesn't mix up the func Ids
+				functions.PushLast(0);
+
+				// Compile the factory immediately
+				asCCompiler	compiler(engine);
+				compiler.CompileFactory(this, file, engine->scriptFunctions[objType->beh.factory]);
 			}
 			else
+			{
 				objType->beh.constructors.PushLast(funcID);
+
+				// TODO: This is almost identical to above if block. Should be reduced to common code.
+				// Register the factory as well
+				int factoryId = module->GetNextFunctionId();
+				objType->beh.factories.PushLast(factoryId);
+
+				asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
+				module->AddScriptFunction(file->idx, factoryId, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
+
+				// Add a dummy function to the module so that it doesn't mix up the fund Ids
+				functions.PushLast(0);
+
+				// Compile the factory immediately
+				asCCompiler compiler(engine);
+				compiler.CompileFactory(this, file, engine->scriptFunctions[factoryId]);
+			}
 		}
 		else if( isDestructor )
 			objType->beh.destruct = funcID;

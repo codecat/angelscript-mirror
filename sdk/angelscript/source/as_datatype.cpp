@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -277,7 +277,7 @@ bool asCDataType::CanBeInstanciated() const
 		 (objectType->flags & asOBJ_REF) &&        // It's a ref type and
 		 ((objectType->flags & asOBJ_NOHANDLE) ||  // the ref type doesn't support handles or
 		  (!IsObjectHandle() &&                    // it's not a handle and
-		   objectType->beh.construct == 0))) )     // the ref type cannot be instanciated
+		   objectType->beh.factory == 0))) )       // the ref type cannot be instanciated
 		return false;
 
 	return true;

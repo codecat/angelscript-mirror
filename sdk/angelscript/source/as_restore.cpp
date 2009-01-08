@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -449,11 +449,13 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
 		{
 			WriteFunction(engine->scriptFunctions[ot->beh.construct]);
+			WriteFunction(engine->scriptFunctions[ot->beh.factory]);
 			size = (int)ot->beh.constructors.GetLength() - 1;
 			WRITE_NUM(size);
 			for( n = 1; n < ot->beh.constructors.GetLength(); n++ )
 			{
 				WriteFunction(engine->scriptFunctions[ot->beh.constructors[n]]);
+				WriteFunction(engine->scriptFunctions[ot->beh.factories[n]]);
 			}
 		}
 
@@ -700,12 +702,26 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 			ot->beh.constructors.PushLast(func->id);
 			module->scriptFunctions.PushLast(func);
 			engine->SetScriptFunction(func);
+
+			func = asNEW(asCScriptFunction)(engine,module);
+			ReadFunction(func);
+			ot->beh.factory = func->id;
+			ot->beh.factories.PushLast(func->id);
+			module->scriptFunctions.PushLast(func);
+			engine->SetScriptFunction(func);
+
 			READ_NUM(size);
 			for( n = 0; n < size; n++ )
 			{
 				asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
 				ReadFunction(func);
 				ot->beh.constructors.PushLast(func->id);
+				module->scriptFunctions.PushLast(func);
+				engine->SetScriptFunction(func);
+
+				func = asNEW(asCScriptFunction)(engine,module);
+				ReadFunction(func);
+				ot->beh.factories.PushLast(func->id);
 				module->scriptFunctions.PushLast(func);
 				engine->SetScriptFunction(func);
 			}
