@@ -2,6 +2,18 @@
 
 \page doc_compile_lib Compile the library
 
+In the sdk/angelscript/projects directory you'll find project files for many of the popular compilers. 
+However, these project files are not always up to date with the latest version of the library. If you get 
+any compiler or linker errors please make sure the project file include all the files in the 
+sdk/angelscript/source directory, and that the project settings are set according to this article.
+
+If you don't find a project file for your compiler, you can easily create your own project by adding
+all the files in the sdk/angelscript/source directory, and configuring the project apropriately. If you
+have a new compiler/target that hasn't been used with AngelScript before, you may need to edit the 
+as_config.h file to make sure the library is compiled properly.
+
+
+
 
 \section doc_compile_lib_1 Set compile time options
 
@@ -21,6 +33,8 @@ you do the upgrade to the latest version a little more smoothly. There is no gua
 the backwards compatibility will be maintained though so try to remove use of deprecated functions
 as soon as possible.
 
+
+
 \section doc_compile_lib_2 Linking with the library
 
 There are four ways of compiling and linking with AngelScript in order to use it. I 
@@ -28,6 +42,8 @@ recommend linking with a static library. Note that all four ways are interchanga
 only a small change in your code, i.e a defined flag before including the header file, and 
 possibly a routine for manually loading the dll. The rest of your code should look exactly 
 the same for each of the alternatives.
+
+
 
 \subsection doc_compile_lib_2_1 1. Include library source files in project
 
@@ -54,7 +70,8 @@ The most recommended way is to compile a static library that your project will l
 When compiling the static library you have to make sure that the correct compiler settings 
 are used so that you don't get conflicts in linkage with the CRT functions. This happens 
 if you for example compile the library with dynamically linked multi-threaded CRT and your
-application with statically linked single-threaded CRT.
+application with statically linked single-threaded CRT. (For Visual C++ you'll find these 
+settings under Project -> Settings -> C/C++ -> Category: Code Generation)
 
 To use the library you only need to include the %angelscript.h header file.
 

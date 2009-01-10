@@ -181,14 +181,14 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	byteCode.InstrSHORT(BC_PSF, (short)varOffset);
 
 	// Copy all arguments to the top of the stack
-	int argDwords = outFunc->GetSpaceNeededForArguments();
+	unsigned int argDwords = outFunc->GetSpaceNeededForArguments();
 	for( n = 0; n < argDwords; n++ )
-		byteCode.InstrSHORT(BC_PshV4, n);
+		byteCode.InstrSHORT(BC_PshV4, (short)n);
 
 	byteCode.Alloc(BC_ALLOC, dt.GetObjectType(), constructor, argDwords + PTR_SIZE);
 
 	// Return a handle to the newly created object
-	byteCode.InstrSHORT(BC_LOADOBJ, varOffset);
+	byteCode.InstrSHORT(BC_LOADOBJ, (short)varOffset);
 
 	byteCode.Pop(PTR_SIZE);
 	byteCode.Ret(argDwords);
@@ -6719,16 +6719,19 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			}
 		}
 
-		if( ctx->type.dataType.IsReference() && objType.isTemporary )
+		if( objType.isTemporary && 
+			ctx->type.dataType.IsReference() && 
+			!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not to a member
 		{
 			// Remember the object's variable, so that it can be released 
-			// later on when the reference goes out of scope
+			// later on when the reference to its member goes out of scope
 			ctx->type.isTemporary = true;
 			ctx->type.stackOffset = objType.stackOffset;
 		}
 		else
 		{
-			// Release the temporary variable the object was held by
+			// As the index operator didn't return a reference to a 
+			// member we can release the original object now
 			ReleaseTemporaryVariable(objType, &ctx->bc);
 		}
 	}

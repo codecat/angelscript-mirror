@@ -194,6 +194,8 @@ static const char *script1 =
 
 using namespace std;
 
+bool Test2();
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -201,7 +203,7 @@ bool Test()
 		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
 		return false;
 	}
-	bool fail = false;
+	bool fail = Test2();
 	int r;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -292,6 +294,62 @@ bool Test()
 	engine->Release();
 
 	// Success
+	return fail;
+}
+
+//---------------------------------------------------
+// Reported by dxj19831029
+class Value {
+public:
+	Value() {
+		a = 4;
+	}
+	int a;
+};
+static Value v_static;
+class A {
+public:
+	Value &operator[] (int n) {
+		return v_static;
+	}
+};
+class AArray {
+public:
+	A operator[] (int n) {
+		return A();
+	}
+};
+class AArrayArray {
+public:
+	AArray operator[] (int n) {
+		return AArray();
+	}
+};
+
+
+bool Test2()
+{
+	int nRet;
+	bool fail = false;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	nRet = engine->RegisterObjectType("Value", sizeof(Value),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
+
+	nRet = engine->RegisterObjectType("A", sizeof(A),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectBehaviour("A", asBEHAVE_INDEX , "Value &f(int)", asMETHODPR(A, operator[], (int ), Value &), asCALL_THISCALL); 	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectType("A[]", sizeof(AArray),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectBehaviour("A[]", asBEHAVE_INDEX , "A f( int )", asMETHODPR(AArray, operator[], (int ), A), asCALL_THISCALL); 	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectType("A[][]", sizeof(AArrayArray),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectBehaviour("A[][]", asBEHAVE_INDEX , "A[] f(int)", asMETHODPR(AArrayArray, operator[], (int ), AArray), asCALL_THISCALL); 	assert( nRet >= 0 );
+
+	nRet = engine->ExecuteString(NULL, "A[][] f;", NULL);	assert( nRet >= 0 );
+	nRet = engine->ExecuteString(NULL, "A[][] f; f[0];", NULL);	assert( nRet >= 0 );
+	nRet = engine->ExecuteString(NULL, "A[][] f; f[0][0];", NULL);	assert( nRet >= 0 );
+	nRet = engine->ExecuteString(NULL, "A[][] f; f[0][0][0];", NULL);	assert( nRet >= 0 );
+
+	engine->Release();
+
 	return fail;
 }
 

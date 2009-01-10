@@ -260,5 +260,28 @@ bool Test()
 	return fail;
 }
 
+// TODO: 
+// Test registering a class that have a member method that returns a reference to a member property.
+// When calling this member method the object must not be deallocated until the returned reference goes out of scope.
+//
+// Exemple:
+//
+// class A
+// {
+//   int &getValue() { return value; }
+//   int value;
+// };
+//
+// void Test()
+// {
+//   A a;
+//   a.getValue() = 10;  // This probably works already
+//   A().getValue() = 10; // This probably doesn't work, as the temporary object will be deallocated as soon as the reference is returned
+// }
+//
+// This same test should also be done for the index operator.
+//
+
+
 } // namespace
 

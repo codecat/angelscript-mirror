@@ -782,9 +782,9 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 		return ConfigError(asINVALID_OBJECT);
 
 	asCProperty *prop = asNEW(asCProperty);
-	prop->name            = name;
-	prop->type            = type;
-	prop->byteOffset      = byteOffset;
+	prop->name       = name;
+	prop->type       = type;
+	prop->byteOffset = byteOffset;
 
 	dt.GetObjectType()->properties.PushLast(prop);
 
@@ -807,10 +807,10 @@ int asCScriptEngine::RegisterSpecialObjectType(const char *name, int byteSize, a
 		return asERROR;
 
 	type->tokenType = ttIdentifier;
-	type->name = name;
+	type->name      = name;
 	type->arrayType = 0;
-	type->size = byteSize;
-	type->flags = flags;
+	type->size      = byteSize;
+	type->flags     = flags;
 
 	// Store it in the object types
 	objectTypes.PushLast(type);
@@ -1059,11 +1059,11 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 		// Put the data type in the list
 		asCObjectType *type = asNEW(asCObjectType)(this);
-		type->name = name;
+		type->name      = name;
 		type->tokenType = ttIdentifier;
 		type->arrayType = 0;
-		type->size = byteSize;
-		type->flags = flags;
+		type->size      = byteSize;
+		type->flags     = flags;
 
 		objectTypes.PushLast(type);
 
@@ -1092,13 +1092,13 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 		// Put the data type in the list
 		asCObjectType *type = asNEW(asCObjectType)(this);
-		type->name = name;
-		type->subType = dt.GetSubType().GetObjectType();
+		type->name      = name;
+		type->subType   = dt.GetSubType().GetObjectType();
 		if( type->subType ) type->subType->AddRef();
 		type->tokenType = dt.GetSubType().GetTokenType();
 		type->arrayType = dt.GetArrayType();
-		type->size = byteSize;
-		type->flags = flags;
+		type->size      = byteSize;
+		type->flags     = flags;
 
 		arrayTypes.PushLast(type);
 
@@ -1159,7 +1159,8 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	asCScriptFunction func(this, 0);
 
 	// TODO: Template: How do we make the code handle the template subtype? The engine needs to have a 
-	// special object type, so that asCDataType can represent the generic template subtype. 
+	// special object type, so that asCDataType can represent the generic template subtype. Need to tell
+	// the builder/parser that the type T is a template subtype.
 
 	// The default array object is actually being registered 
 	// with incorrect declarations, but that's a concious decision
@@ -1181,7 +1182,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 			if( func.parameterTypes.GetLength() == 1 )
 			{
 				beh->construct = AddBehaviourFunction(func, internal);
-				beh->factory = beh->construct;
+				beh->factory   = beh->construct;
 				beh->constructors.PushLast(beh->construct);
 				beh->factories.PushLast(beh->factory);
 			}
