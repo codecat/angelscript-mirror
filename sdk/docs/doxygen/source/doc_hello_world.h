@@ -133,7 +133,7 @@ void print(string &msg)
 // Load the entire script file into a string buffer
 void LoadScriptFile(const char *fileName, string &script)
 {
-  FILE *f = fopen("test.as", "r");
+  FILE *f = fopen("test.as", "rb");
   
   // Determine the size of the file
   fseek(f, 0, SEEK_END);

@@ -907,7 +907,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	st->beh.factory = engine->scriptTypeBehaviours.beh.factory;
 	st->beh.factories = engine->scriptTypeBehaviours.beh.factories;
 	st->beh.construct = engine->scriptTypeBehaviours.beh.construct;
-	st->beh.constructors.PushLast(st->beh.construct);
+	st->beh.constructors = engine->scriptTypeBehaviours.beh.constructors;
 	st->beh.addref = engine->scriptTypeBehaviours.beh.addref;
 	st->beh.release = engine->scriptTypeBehaviours.beh.release;
 	st->beh.copy = engine->scriptTypeBehaviours.beh.copy;

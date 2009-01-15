@@ -135,6 +135,9 @@ int asCRestore::Save()
 	// usedTypeIds[]
 	WriteUsedTypeIds();
 
+	// usedFunctions[]
+	WriteUsedFunctions();
+
 	return asSUCCESS;
 }
 
@@ -251,6 +254,9 @@ int asCRestore::Restore()
 	// usedTypeIds[]
 	ReadUsedTypeIds();
 
+	// usedFunctions[]
+	ReadUsedFunctions();
+
 	if( module->initFunction ) 
 		TranslateFunction(module->initFunction);
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
@@ -282,14 +288,89 @@ void asCRestore::WriteString(asCString* str)
 	stream->Write(str->AddressOf(), (asUINT)len);
 }
 
-void asCRestore::WriteFunction(asCScriptFunction* func) 
+void asCRestore::WriteUsedFunctions()
+{
+	asUINT count = (asUINT)usedFunctions.GetLength();
+	WRITE_NUM(count);
+
+	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
+	{
+		char c;
+
+		// Write enough data to be able to uniquely identify the function upon load
+
+		// Is the function from the module or the application?
+		c = usedFunctions[n]->module ? 'm' : 'a';
+		WRITE_NUM(c);
+
+		WriteFunctionSignature(usedFunctions[n]);
+	}
+}
+
+void asCRestore::ReadUsedFunctions()
+{
+	asUINT count;
+	READ_NUM(count);
+	usedFunctions.SetLength(count);
+
+	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
+	{
+		char c;
+
+		// Read the data to be able to uniquely identify the function
+
+		// Is the function from the module or the application?
+		READ_NUM(c);
+
+		asCScriptFunction func(engine, c == 'm' ? module : 0);
+		ReadFunctionSignature(&func);
+
+		// Find the correct function
+		if( c == 'm' )
+		{
+			for( asUINT i = 0; i < module->scriptFunctions.GetLength(); i++ )
+			{
+				// TODO: Should have a compare signature method in asCScriptFunction for this
+				asCScriptFunction *f = module->scriptFunctions[i];
+				if( func.name           != f->name           ||
+					func.objectType     != f->objectType     || 
+					func.returnType     != f->returnType     ||
+					func.parameterTypes != f->parameterTypes ||
+					func.inOutFlags     != f->inOutFlags     ||
+					func.isReadOnly     != f->isReadOnly )
+					continue;
+
+				usedFunctions[n] = f;
+				break;
+			}
+		}
+		else
+		{
+			for( asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++ )
+			{
+				asCScriptFunction *f = engine->scriptFunctions[i];
+				if( f                   == 0                 ||
+					func.name           != f->name           ||
+					func.objectType     != f->objectType     || 
+					func.returnType     != f->returnType     ||
+					func.parameterTypes != f->parameterTypes ||
+					func.inOutFlags     != f->inOutFlags     ||
+					func.isReadOnly     != f->isReadOnly )
+					continue;
+
+				usedFunctions[n] = f;
+				break;
+			}
+		}
+	}
+}
+
+void asCRestore::WriteFunctionSignature(asCScriptFunction *func)
 {
 	asUINT i, count;
 
 	WriteString(&func->name);
-
 	WriteDataType(&func->returnType);
-
 	count = (asUINT)func->parameterTypes.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i ) 
@@ -300,10 +381,49 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	for( i = 0; i < count; ++i )
 		WRITE_NUM(func->inOutFlags[i]);
 
-	int id = FindFunctionIndex(func);
-	WRITE_NUM(id);
-	
 	WRITE_NUM(func->funcType);
+
+	WriteObjectType(func->objectType);
+
+	WRITE_NUM(func->isReadOnly);
+}
+
+void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
+{
+	int i, count;
+	asCDataType dt;
+	int num;
+
+	ReadString(&func->name);
+	ReadDataType(&func->returnType);
+	READ_NUM(count);
+	func->parameterTypes.Allocate(count, 0);
+	for( i = 0; i < count; ++i ) 
+	{
+		ReadDataType(&dt);
+		func->parameterTypes.PushLast(dt);
+	}
+
+	READ_NUM(count);
+	func->inOutFlags.Allocate(count, 0);
+	for( i = 0; i < count; ++i )
+	{
+		READ_NUM(num);
+		func->inOutFlags.PushLast(num);
+	}
+
+	READ_NUM(func->funcType);
+
+	func->objectType = ReadObjectType();
+
+	READ_NUM(func->isReadOnly);
+}
+
+void asCRestore::WriteFunction(asCScriptFunction* func) 
+{
+	asUINT i, count;
+
+	WriteFunctionSignature(func);
 
 	count = (asUINT)func->byteCode.GetLength();
 	WRITE_NUM(count);
@@ -318,8 +438,6 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	}
 
 	WRITE_NUM(func->stackNeeded);
-
-	WriteObjectType(func->objectType);
 
 	asUINT length = (asUINT)func->lineNumbers.GetLength();
 	WRITE_NUM(length);
@@ -483,32 +601,10 @@ void asCRestore::ReadFunction(asCScriptFunction* func)
 	asCDataType dt;
 	int num;
 
-	ReadString(&func->name);
+	ReadFunctionSignature(func);
 
-	ReadDataType(&func->returnType);
-
-	READ_NUM(count);
-	func->parameterTypes.Allocate(count, 0);
-	for( i = 0; i < count; ++i ) 
-	{
-		ReadDataType(&dt);
-		func->parameterTypes.PushLast(dt);
-	}
-
-	READ_NUM(count);
-	func->inOutFlags.Allocate(count, 0);
-	for( i = 0; i < count; ++i )
-	{
-		READ_NUM(num);
-		func->inOutFlags.PushLast(num);
-	}
-
-	int id;
-	READ_NUM(id);
 	func->id = engine->GetNextScriptFunctionId();
-	mapFuncIdxToId.Insert(id, func->id);
 	
-	READ_NUM(func->funcType);
 
 	READ_NUM(count);
 	func->byteCode.Allocate(count, 0);
@@ -526,8 +622,6 @@ void asCRestore::ReadFunction(asCScriptFunction* func)
 	}
 
 	READ_NUM(func->stackNeeded);
-
-	func->objectType = ReadObjectType();
 
 	int length;
 	READ_NUM(length);
@@ -822,10 +916,20 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 
 int asCRestore::FindFunctionIndex(asCScriptFunction *func)
 {
-	for( int n = 0; n < (int)module->scriptFunctions.GetLength(); n++ )
-		if( module->scriptFunctions[n] == func ) return n;
+	asUINT n;
+	for( n = 0; n < usedFunctions.GetLength(); n++ )
+	{
+		if( usedFunctions[n] == func )
+			return n;
+	}
 
-	return -1;
+	usedFunctions.PushLast(func);
+	return (int)usedFunctions.GetLength() - 1;
+}
+
+asCScriptFunction *asCRestore::FindFunction(int idx)
+{
+	return usedFunctions[idx];
 }
 
 void asCRestore::WriteUsedTypeIds()
@@ -874,9 +978,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the index to the func id
 			int *fid = (int*)&bc[n+1];
-			asSMapNode<int, int> *node;
-			if( mapFuncIdxToId.MoveTo(&node, *fid) )
-				*fid = node->value;
+			*fid = FindFunction(*fid)->id;
 		}
 		else if( c == BC_ALLOC )
 		{
@@ -889,9 +991,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			if( ot->flags & asOBJ_SCRIPT_STRUCT )
 			{
 				int *fid = (int*)&bc[n+1+PTR_SIZE];
-				asSMapNode<int, int> *node;
-				if( mapFuncIdxToId.MoveTo(&node, *fid) )
-					*fid = node->value;
+				*fid = FindFunction(*fid)->id;
 			}
 		}
 

@@ -57,6 +57,8 @@ const asDWORD asOBJ_NAMED_TYPE       = 0x80000000;
 const asDWORD asOBJ_NAMED_PSEUDO     = 0x40000000 | asOBJ_NAMED_TYPE;
 const asDWORD asOBJ_NAMED_ENUM       = 0x10000000 | asOBJ_NAMED_TYPE;
 
+// TODO: template: Need a flag to define a template subtype. asOBJ_TEMPLATE_SUB1
+
 // asOBJ_GC is used to indicate that the type can potentially 
 // form circular references, thus is garbage collected.
 

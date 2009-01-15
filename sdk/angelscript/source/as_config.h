@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -296,6 +296,10 @@
 
 	#define ASM_INTEL  // Intel style for inline assembly on microsoft compilers
 
+	#if defined(WIN32)
+		#define AS_WIN
+	#endif
+
 	#if _XBOX_VER >= 200
 		// 360 uses a Xenon processor (which is a modified 64bit PPC)
 		#define AS_XBOX360
@@ -436,8 +440,10 @@
 			#define STDCALL
 		#endif
 		#if defined(WIN32)
+			#define AS_WIN
 			#define AS_WINDOWS_THREADS
 		#else
+			#define AS_LINUX
 			#define AS_POSIX_THREADS
 		#endif
 

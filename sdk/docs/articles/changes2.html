@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.15.1 WIP - 2009/01/09</h2>
+<h2>Version 2.15.1 WIP - 2009/01/14</h2>
 
 <ul>
 <li>Bug fixes
@@ -126,10 +126,13 @@ A:hover
 <li>Fixed a bug with bitwise operators and 8/16 bit integer types (Thanks jkhax0r)
 <li>Fixed the error message when no matching constructor is found for a construct call
 <li>Fixed bug when compiling expressions that called index operator that returned an object by value on a temporary variable (Thanks dxj19831029)
+<li>Saved pre-compiled bytecode didn't store the read-only flag for class methods
 </ul>
 <li>Library
 <ul>
 <li>Internally reference types (including script classes) are now allocated by calling the factory function directly
+<li>Updated as_config to properly identify operating system, thus improving multithreading performance
+<li>Created script factory stub functions for instanciating template types, thus simplifying script compiler
 </ul>
 </ul>
 

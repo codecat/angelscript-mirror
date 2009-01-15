@@ -174,7 +174,7 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 		}
 	}
 
-	// Allocate the class and instanciate it with the default constructor
+	// Allocate the class and instanciate it with the constructor
 	int varOffset = AllocateVariable(dt, true);
 
 	byteCode.Push(PTR_SIZE);
@@ -210,6 +210,30 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	args.Format("%d", outFunc->parameterTypes.GetLength());
 	byteCode.DebugOutput(("__" + outFunc->name + "__factory" + args + ".txt").AddressOf(), builder->module, engine);
 #endif
+
+	return 0;
+}
+
+int asCCompiler::CompileTemplateFactoryStub(asCBuilder *builder, int trueFactoryId, asCObjectType *objType, asCScriptFunction *outFunc)
+{
+	Reset(builder, 0, outFunc);
+
+	asCScriptFunction *descr = builder->GetFunctionDescription(trueFactoryId);
+
+	byteCode.InstrPTR(BC_OBJTYPE, objType);
+	byteCode.Call(BC_CALLSYS, trueFactoryId, descr->GetSpaceNeededForArguments());
+	byteCode.Ret(0);
+
+	byteCode.Finalize();
+
+	// Copy byte code to the function
+	outFunc->byteCode.SetLength(byteCode.GetSize());
+	byteCode.Output(outFunc->byteCode.AddressOf());
+	outFunc->AddReferences();
+	outFunc->stackNeeded = byteCode.largestStackUsed;
+	outFunc->lineNumbers = byteCode.lineNumbers;
+	outFunc->objVariablePos = objVariablePos;
+	outFunc->objVariableTypes = objVariableTypes;
 
 	return 0;
 }
@@ -482,8 +506,7 @@ void asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteC
 	// Call constructor for the data type
 	if( type.IsObject() && !type.IsObjectHandle() )
 	{
-		// TODO: template: Array types should also be created with the factory function
-		if( (type.GetObjectType()->flags & asOBJ_REF) && !(type.GetObjectType()->flags & asOBJ_TEMPLATE) )
+		if( type.GetObjectType()->flags & asOBJ_REF )
 		{
 			asSExprContext ctx(engine);
 
@@ -526,21 +549,10 @@ void asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteC
 
 			asSTypeBehaviour *beh = type.GetBehaviour();
 
-			if( type.IsTemplate() )
-			{
-				// The script array constructor needs to know what type it is
-				asCObjectType *objType = type.GetObjectType();
-				bc->InstrPTR(BC_OBJTYPE, objType);
+			int func = 0;
+			if( beh ) func = beh->construct;
 
-				bc->Alloc(BC_ALLOC, objType, beh->factory, 2*PTR_SIZE);
-			}
-			else
-			{
-				int func = 0;
-				if( beh ) func = beh->construct;
-
-				bc->Alloc(BC_ALLOC, type.GetObjectType(), func, PTR_SIZE);
-			}
+			bc->Alloc(BC_ALLOC, type.GetObjectType(), func, PTR_SIZE);
 		}
 	}
 }
@@ -660,7 +672,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		{
 			// Compile the arguments
 			asCArray<asSExprContext *> args;
-			if( CompileArgumentList(node, args, &gvar->datatype) >= 0 )
+			if( CompileArgumentList(node, args) >= 0 )
 			{
 				// Find all constructors
 				asCArray<int> funcs;
@@ -678,8 +690,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 				if( funcs.GetLength() == 1 )
 				{
-					// TODO: template: All reference types should be created with the factory function
-					if( (gvar->datatype.GetObjectType()->flags & asOBJ_REF) && !(gvar->datatype.GetObjectType()->flags & asOBJ_TEMPLATE) )
+					if( gvar->datatype.GetObjectType()->flags & asOBJ_REF )
 					{
 						PrepareFunctionCall(funcs[0], &ctx.bc, args);
 						MoveArgsToStack(funcs[0], &ctx.bc, args, false);
@@ -1223,7 +1234,7 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 	}
 }
 
-int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext*> &args, asCDataType *type)
+int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext*> &args)
 {
 	asASSERT(node->nodeType == snArgList);
 
@@ -1236,12 +1247,6 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		arg = arg->next;
 	}
 
-	// The script array needs to receive their object type
-	if( type && type->IsTemplate() )
-	{
-		argCount += 1;
-	}
-
 	// Prepare the arrays
 	args.SetLength(argCount);
 	int n;
@@ -1249,17 +1254,6 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		args[n] = 0;
 
 	n = argCount-1;
-	if( type && type->IsTemplate() )
-	{
-		args[n] = asNEW(asSExprContext)(engine);
-		args[n]->bc.InstrPTR(BC_OBJTYPE, type->GetObjectType());
-#ifndef AS_64BIT_PTR
-		args[n]->type.Set(asCDataType::CreatePrimitive(ttInt, false));
-#else
-		args[n]->type.Set(asCDataType::CreatePrimitive(ttInt64, false));
-#endif
-		n--;
-	}
 
 	// Compile the arguments in reverse order (as they will be pushed on the stack)
 	bool anyErrors = false;
@@ -1421,7 +1415,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 				// Compile the arguments
 				asCArray<asSExprContext *> args;
 
-				if( CompileArgumentList(node, args, &type) >= 0 )
+				if( CompileArgumentList(node, args) >= 0 )
 				{
 					// Find all constructors
 					asCArray<int> funcs;
@@ -1439,10 +1433,9 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 					if( funcs.GetLength() == 1 )
 					{
-						// TODO: template: All reference types should be created with the factory function
 						sVariable *v = variables->GetVariable(name.AddressOf());
 						asSExprContext ctx(engine);
-						if( (v->type.GetObjectType()->flags & asOBJ_REF) && !(v->type.GetObjectType()->flags & asOBJ_TEMPLATE) )
+						if( v->type.GetObjectType()->flags & asOBJ_REF )
 						{
 							PrepareFunctionCall(funcs[0], &ctx.bc, args);
 							MoveArgsToStack(funcs[0], &ctx.bc, args, false);
@@ -1673,23 +1666,10 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			funcs = var->dataType.GetBehaviour()->constructors;
 
 		asCArray<asSExprContext *> args;
-		asSExprContext arg1(engine), arg2(engine);
+		asSExprContext arg1(engine);
 		arg1.bc.InstrDWORD(BC_PshC4, countElements);
 		arg1.type.Set(asCDataType::CreatePrimitive(ttUInt, false));
 		args.PushLast(&arg1);
-
-		if( var->dataType.IsTemplate() )
-		{
-			// Script arrays need the type id as well
-			arg2.bc.InstrPTR(BC_OBJTYPE, var->dataType.GetObjectType());
-#ifndef AS_64BIT_PTR
-			arg2.type.Set(asCDataType::CreatePrimitive(ttInt, false));
-#else
-			arg2.type.Set(asCDataType::CreatePrimitive(ttInt64, false));
-#endif
-			args.PushLast(&arg2);
-		}
-
 
 		asCString str = var->dataType.Format();
 		MatchFunctions(funcs, args, node, str.AddressOf());
@@ -1698,8 +1678,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		{
 			asSExprContext ctx(engine);
 
-			// TODO: template: All reference types should be created with the factory function
-			if( (var->dataType.GetObjectType()->flags & asOBJ_REF) && !(var->dataType.GetObjectType()->flags & asOBJ_TEMPLATE) )
+			if( var->dataType.GetObjectType()->flags & asOBJ_REF )
 			{
 				PrepareFunctionCall(funcs[0], &ctx.bc, args);
 				MoveArgsToStack(funcs[0], &ctx.bc, args, false);
@@ -3891,8 +3870,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 
 				asSExprContext tmp(engine);
 
-				// TODO: template: All reference types should be created with the factory function
-				if( (tempObj.dataType.GetObjectType()->flags & asOBJ_REF) && !(tempObj.dataType.GetObjectType()->flags & asOBJ_TEMPLATE) )
+				if( tempObj.dataType.GetObjectType()->flags & asOBJ_REF )
 				{
 					PrepareFunctionCall(funcs[0], &tmp.bc, args);
 					MoveArgsToStack(funcs[0], &tmp.bc, args, false);
@@ -5846,14 +5824,9 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 		asSTypeBehaviour *beh = dt.GetBehaviour();
 
-		// TODO: template: All reference types should be allocated through factory
-		if( !(dt.GetObjectType()->flags & asOBJ_REF) || (dt.GetObjectType()->flags & asOBJ_TEMPLATE) )
+		if( !(dt.GetObjectType()->flags & asOBJ_REF) )
 		{
-			// TODO: template: Array objects shouldn't need this special behaviour
-			if( dt.IsTemplate() )
-				funcs = beh->factories;
-			else
-				funcs = beh->constructors;
+			funcs = beh->constructors;
 
 			// Value types and script types are allocated through the constructor
 			tempObj.dataType = dt;
@@ -5884,7 +5857,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	asCArray<asSExprContext *> args;
 	asCArray<asCTypeInfo> temporaryVariables;
 
-	if( CompileArgumentList(node->lastChild, args, &tempObj.dataType) >= 0 )
+	if( CompileArgumentList(node->lastChild, args) >= 0 )
 	{
 		// Special case: Allow calling func(void) with a void expression.
 		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) )
@@ -5933,8 +5906,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 			MoveArgsToStack(funcs[0], &ctx->bc, args, false);
 
-			// TODO: template: All reference types should be allocated through factory
-			if( !(dt.GetObjectType()->flags & asOBJ_REF) || (dt.GetObjectType()->flags & asOBJ_TEMPLATE) )
+			if( !(dt.GetObjectType()->flags & asOBJ_REF) )
 			{
 				int offset = 0;
 				asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
@@ -5995,7 +5967,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	asCArray<asSExprContext *> args;
 	asCArray<asCTypeInfo> temporaryVariables;
 
-	if( CompileArgumentList(node->lastChild, args, 0) >= 0 )
+	if( CompileArgumentList(node->lastChild, args) >= 0 )
 	{
 		// Special case: Allow calling func(void) with a void expression.
 		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) )

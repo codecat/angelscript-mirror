@@ -139,9 +139,11 @@ static const char *script7 =
 "  Assert(count == 6);                           \n"
 "}                                               \n";
 
+bool Test2();
+
 bool Test()
 {
-	bool fail = false;
+	bool fail = Test2();
 	int r;
 	COutStream out;
 	asIScriptContext *ctx;
@@ -286,6 +288,52 @@ bool Test()
 	engine->Release();
 
 	// Success
+	return fail;
+}
+
+bool Test2()
+{
+	bool fail = false;
+
+	const char *script =
+	"class A                               \n"
+	"{                                     \n"
+	"	int x;                             \n"
+	"}                                     \n"
+	"int sum(const A[]& a)                 \n"
+	"{                                     \n"
+	"	int s = 0;                         \n"
+	"	for (uint i=0; i<a.length(); i++)  \n"
+	"		s+=a[i].x;                     \n"
+	"	return s;                          \n"
+	"}                                     \n";
+
+	const char *exec =
+	"A[] As;       \n"
+    "As.resize(2); \n"
+	"As[0].x = 1;  \n"
+	"As[1].x = 2;  \n"
+	"sum(As);      \n";
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	asIScriptModule *module = engine->GetModule("module", asGM_ALWAYS_CREATE);
+
+	module->AddScriptSection("script", script);
+	int r = module->Build();
+	if( r < 0 )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString("module", exec);
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	engine->Release();
+
 	return fail;
 }
 

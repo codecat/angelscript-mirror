@@ -50,6 +50,7 @@
 #include "as_arrayobject.h"
 #include "as_generic.h"
 #include "as_scriptstruct.h"
+#include "as_compiler.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -296,12 +297,26 @@ asCScriptEngine::asCScriptEngine()
 asCScriptEngine::~asCScriptEngine()
 {
 	asASSERT(refCount.get() == 0);
+	asUINT n;
 
 	Reset();
 
+	// Delete the factory stubs for the array types
+	for( n = 0; n < arrayTypes.GetLength(); n++ )
+	{
+		if( arrayTypes[n] )
+		{
+			// Delete the factory stubs first
+			for( asUINT f = 0; f < arrayTypes[n]->beh.factories.GetLength(); f++ )
+			{
+				DeleteScriptFunction(arrayTypes[n]->beh.factories[f]);
+			}
+			arrayTypes[n]->beh.factories.Allocate(0, false);
+		}
+	}	
+
 	// The modules must be deleted first, as they may use
 	// object types from the config groups
-	asUINT n;
 	for( n = 0; n < scriptModules.GetLength(); n++ )
 	{
 		if( scriptModules[n] )
@@ -347,6 +362,7 @@ asCScriptEngine::~asCScriptEngine()
 	}
 	globalProps.SetLength(0);
 	globalPropAddresses.SetLength(0);
+
 
 	for( n = 0; n < arrayTypes.GetLength(); n++ )
 	{
@@ -582,6 +598,10 @@ void asCScriptEngine::ClearUnusedTypes()
 		asCScriptFunction *func = scriptFunctions[n];
 		if( func )
 		{
+			// Ignore factory stubs
+			if( func->name == "factstub" )
+				continue;
+
 			asCObjectType *ot = func->returnType.GetObjectType();
 			if( ot != 0 && ot != func->objectType )
 				RemoveTypeAndRelatedFromList(types, ot);
@@ -609,7 +629,10 @@ void asCScriptEngine::ClearUnusedTypes()
 
 		for( n = 0; n < types.GetLength(); n++ )
 		{
-			if( types[n]->GetRefCount() == 0 )
+			// Template types will have two references for each factory stub
+			int refCount = (types[n]->flags & asOBJ_TEMPLATE) ? 2*(int)types[n]->beh.factories.GetLength() : 0;
+					
+			if( types[n]->GetRefCount() == refCount )
 			{
 				if( types[n]->arrayType )
 				{
@@ -1086,9 +1109,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			mostRecentScriptArrayType == dt.GetObjectType() )
 			return ConfigError(asNOT_SUPPORTED);
 
+		// TODO: Add this again. The type is used by the factory stubs so we need to discount that
 		// Is the script array type already being used?
-		if( dt.GetObjectType()->GetRefCount() > 1 )
-			return ConfigError(asNOT_SUPPORTED);
+//		if( dt.GetObjectType()->GetRefCount() > 1 )
+//			return ConfigError(asNOT_SUPPORTED);
 
 		// Put the data type in the list
 		asCObjectType *type = asNEW(asCObjectType)(this);
@@ -1157,6 +1181,9 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 
 	// Verify function declaration
 	asCScriptFunction func(this, 0);
+
+	// TODO: Template: When parsing methods for the template type, the builder needs to know about the
+	// template subtype so that it will recognize it as a legal datatype.
 
 	// TODO: Template: How do we make the code handle the template subtype? The engine needs to have a 
 	// special object type, so that asCDataType can represent the generic template subtype. Need to tell
@@ -2497,10 +2524,16 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 
 void asCScriptEngine::RemoveArrayType(asCObjectType *t)
 {
+	int n;
+
+	// Destroy the factory stubs
+	for( n = 0; n < (int)t->beh.factories.GetLength(); n++ )
+	{
+		DeleteScriptFunction(t->beh.factories[n]);
+	}
+
 	// Start searching from the end of the list, as most of
 	// the time it will be the last two types
-
-	int n;
 	for( n = (int)arrayTypes.GetLength()-1; n >= 0; n-- )
 	{
 		if( arrayTypes[n] == t )
@@ -2569,18 +2602,56 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	ot->name = ""; // Built-in script arrays are registered without name
 	ot->tokenType = type.GetTokenType();
 	ot->methods = defaultArrayObjectType->methods;
-	ot->beh.factory = defaultArrayObjectType->beh.factory;
-	ot->beh.factories = defaultArrayObjectType->beh.factories;
-	ot->beh.addref = defaultArrayObjectType->beh.addref;
-	ot->beh.release = defaultArrayObjectType->beh.release;
-	ot->beh.copy = defaultArrayObjectType->beh.copy;
-	ot->beh.operators = defaultArrayObjectType->beh.operators;
-	ot->beh.gcGetRefCount = defaultArrayObjectType->beh.gcGetRefCount;
-	ot->beh.gcSetFlag = defaultArrayObjectType->beh.gcSetFlag;
-	ot->beh.gcGetFlag = defaultArrayObjectType->beh.gcGetFlag;
-	ot->beh.gcEnumReferences = defaultArrayObjectType->beh.gcEnumReferences;
+	// Store the real factory in the constructor
+	ot->beh.construct = defaultArrayObjectType->beh.factory;
+	ot->beh.constructors = defaultArrayObjectType->beh.factories;
+	// Generate factory stubs for each of the factories
+	for( asUINT n = 0; n < defaultArrayObjectType->beh.factories.GetLength(); n++ )
+	{
+		int factoryId = defaultArrayObjectType->beh.factories[n];
+		asCScriptFunction *factory = scriptFunctions[factoryId];
+
+		asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
+		func->funcType         = asFUNC_SCRIPT;
+		func->name             = "factstub";
+		func->id               = GetNextScriptFunctionId();
+		func->returnType       = asCDataType::CreateObjectHandle(ot, false);
+
+		// Skip the first parameter as this is the object type pointer that the stub will add
+		for( asUINT p = 1; p < factory->parameterTypes.GetLength(); p++ )
+		{
+			func->parameterTypes.PushLast(factory->parameterTypes[p]);
+			func->inOutFlags.PushLast(factory->inOutFlags[p]);
+		}
+
+		SetScriptFunction(func);
+
+		asCBuilder builder(this, 0);
+		asCCompiler compiler(this);
+		compiler.CompileTemplateFactoryStub(&builder, factoryId, ot, func);
+
+		ot->beh.factories.PushLast(func->id);
+	}
+	if( ot->beh.factories.GetLength() )
+		ot->beh.factory = ot->beh.factories[0];
+	else
+		ot->beh.factory = defaultArrayObjectType->beh.factory;
+
+
+
+	ot->beh.addref                 = defaultArrayObjectType->beh.addref;
+	ot->beh.release                = defaultArrayObjectType->beh.release;
+	ot->beh.copy                   = defaultArrayObjectType->beh.copy;
+	ot->beh.operators              = defaultArrayObjectType->beh.operators;
+	ot->beh.gcGetRefCount          = defaultArrayObjectType->beh.gcGetRefCount;
+	ot->beh.gcSetFlag              = defaultArrayObjectType->beh.gcSetFlag;
+	ot->beh.gcGetFlag              = defaultArrayObjectType->beh.gcGetFlag;
+	ot->beh.gcEnumReferences       = defaultArrayObjectType->beh.gcEnumReferences;
 	ot->beh.gcReleaseAllReferences = defaultArrayObjectType->beh.gcReleaseAllReferences;
 
+	// TODO: Template: As the new array type is instanciated, the engine should 
+	// generate new functions to substitute the ones with the template subtype.
+	
 	// The object type needs to store the sub type as well
 	ot->subType = type.GetObjectType();
 	if( ot->subType ) ot->subType->AddRef();

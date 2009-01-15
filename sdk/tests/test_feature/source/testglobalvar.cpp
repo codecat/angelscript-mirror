@@ -86,8 +86,11 @@ void print(asIScriptGeneric *gen)
 bool TestGlobalVar()
 {
 	bool ret = false;
+	asIScriptEngine *engine;
+	COutStream out;
+	int r;
 
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString_Generic(engine);
 
 	engine->RegisterGlobalFunction("float func()", asFUNCTION(func), asCALL_GENERIC);
@@ -95,7 +98,6 @@ bool TestGlobalVar()
 	engine->RegisterGlobalProperty("string g_str", &g_str);
 	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
 
-	COutStream out;
 	asIScriptModule *mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	// This should fail, since we are trying to call a function in the initialization
@@ -168,7 +170,6 @@ bool TestGlobalVar()
 
 	asIScriptArray *gPacketData = 0;
 	unsigned int gPacketLength = 0;
-	int r;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	r = engine->RegisterGlobalProperty("uint gPacketLength", &gPacketLength); assert( r >= 0 );

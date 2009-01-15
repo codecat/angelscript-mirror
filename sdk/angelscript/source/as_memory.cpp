@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -116,7 +116,7 @@ void *asCMemoryMgr::AllocScriptNode()
 
 	LEAVECRITICALSECTION(cs);
 
-#ifdef AS_DEBUG
+#if defined(AS_DEBUG) && !defined(AS_NO_USER_ALLOC)
 	return ((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(asCScriptNode), __FILE__, __LINE__);
 #else
 	return userAlloc(sizeof(asCScriptNode));
@@ -141,7 +141,7 @@ void *asCMemoryMgr::AllocByteInstruction()
 	if( byteInstructionPool.GetLength() )
 		return byteInstructionPool.PopLast();
 
-#ifdef AS_DEBUG
+#if defined(AS_DEBUG) && !defined(AS_NO_USER_ALLOC)
 	return ((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(cByteInstruction), __FILE__, __LINE__);
 #else
 	return userAlloc(sizeof(cByteInstruction));

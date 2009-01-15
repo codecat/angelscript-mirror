@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -60,6 +60,7 @@ protected:
 
 	void WriteString(asCString *str);
 	void WriteFunction(asCScriptFunction *func);
+	void WriteFunctionSignature(asCScriptFunction *func);
 	void WriteProperty(asCProperty *prop);
 	void WriteDataType(const asCDataType *dt);
 	void WriteObjectType(asCObjectType *ot);
@@ -68,6 +69,7 @@ protected:
 
 	void ReadString(asCString *str);
 	void ReadFunction(asCScriptFunction *func);
+	void ReadFunctionSignature(asCScriptFunction *func);
 	void ReadProperty(asCProperty *prop);
 	void ReadDataType(asCDataType *dt);
 	asCObjectType *ReadObjectType();
@@ -88,10 +90,13 @@ protected:
 	int FindTypeId(int idx);
 
 	int FindFunctionIndex(asCScriptFunction *func);
+	asCScriptFunction *FindFunction(int idx);
+	void WriteUsedFunctions();
+	void ReadUsedFunctions();
 
-	asCArray<int> usedTypeIds;
-	asCArray<asCObjectType*> usedTypes;
-	asCMap<int, int> mapFuncIdxToId;
+	asCArray<int>                usedTypeIds;
+	asCArray<asCObjectType*>     usedTypes;
+	asCArray<asCScriptFunction*> usedFunctions;
 };
 
 END_AS_NAMESPACE

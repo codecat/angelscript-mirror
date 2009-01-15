@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -574,6 +574,14 @@ bool asCByteCode::IsTemporary(short offset)
 
 int asCByteCode::Optimize()
 {
+	// TODO: The optimizer should be able to inline function calls.
+	//       If the called function has only a few instructions, the function call should be inlined.
+	//       This is especially useful with the factory stubs used for template types and script classes.
+
+	// TODO: Optimize the release of script objects. Most of the time the instructions PSV and FREE are used for this.
+	//       We could optimize this to one instruction that frees the object in a variable directly.
+	
+
 	cByteInstruction *instr = first;
 	while( instr )
 	{

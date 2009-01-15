@@ -157,8 +157,12 @@ bool Test()
 	}
 	bool fail = false;
 	int r;
+	COutStream out;
+	asIScriptEngine *engine;
+	asIScriptModule *mod;
+	asIScriptContext *ctx;
 
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+ 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString(engine);
 
@@ -172,9 +176,7 @@ bool Test()
 
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
-	COutStream out;
-
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
@@ -184,7 +186,6 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	asIScriptContext *ctx;
 	r = engine->ExecuteString(0, "TestObjHandle()", &ctx);
 	if( r != asEXECUTION_FINISHED )
 	{

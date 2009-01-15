@@ -2140,47 +2140,6 @@ void asCContext::ExecuteNext()
 				if( status != tsActive )
 					return;
 			}
-			else if( objType->flags & asOBJ_REF )
-			{
-				asASSERT(objType->flags & asOBJ_TEMPLATE);
-
-				// Need to move the values back to the context
-				byteCode = l_bc;
-				stackPointer = l_sp;
-				stackFramePointer = l_fp;
-
-				l_sp += CallSystemFunction(func, this, 0);
-
-				// Pop the variable address from the stack
-				void **a = (void**)*(size_t*)l_sp;
-				l_sp += PTR_SIZE;
-				if( a ) *a = (void*)(size_t)objectRegister;
-				objectRegister = 0;
-
-				l_bc += 2+PTR_SIZE;
-
-				// Should the execution be suspended?
-				if( doSuspend )
-				{
-					byteCode = l_bc;
-					stackPointer = l_sp;
-					stackFramePointer = l_fp;
-
-					status = tsSuspended;
-					return;
-				}
-				// An exception might have been raised
-				if( status != tsActive )
-				{
-					byteCode = l_bc;
-					stackPointer = l_sp;
-					stackFramePointer = l_fp;
-
-					*a = 0;
-
-					return;
-				}
-			}
 			else
 			{
 				// Pre-allocate the memory
