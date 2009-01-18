@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -277,8 +277,13 @@ public:
 	// Store information about registered array types
 	asCArray<asCObjectType *>      arrayTypes;
 
-	asCArray<asCProperty *>        globalProps;
+	// This array stores the type and names of the registered global properties
+	asCArray<asCGlobalProperty *>  globalProps;
+
+	// This array stores pointers to each registered global property. It allows the virtual 
+	// machine to directly find the value of the global property using an index into this array.
 	asCArray<void *>               globalPropAddresses;
+
 	asCScriptFunction             *stringFactory;
 
 	bool configFailed;

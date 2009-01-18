@@ -80,6 +80,7 @@ public:
 	~CObject() {/*printf("D:%x\n", this);*/}
 	void Set(int v) {val = v;}
 	int Get() {return val;}
+	int &GetRef() {return val;}
 	int val;
 };
 
@@ -135,6 +136,8 @@ void TestSysArgRef(CObject &obj)
 	obj.val = 2;
 }
 
+bool Test2();
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -142,7 +145,7 @@ bool Test()
 		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
 		return false;
 	}
-	bool fail = false;
+	bool fail = Test2();
 	int r;
 	int funcId;
 
@@ -156,6 +159,7 @@ bool Test()
 	funcId = engine->RegisterObjectMethod("Object", "void Set(int)", asMETHOD(CObject, Set), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Object", "int Get()", asMETHOD(CObject, Get), asCALL_THISCALL);
 	engine->RegisterObjectProperty("Object", "int val", offsetof(CObject, val));
+	r = engine->RegisterObjectMethod("Object", "int &GetRef()", asMETHOD(CObject, GetRef), asCALL_THISCALL); assert( r >= 0 );
 
 	engine->RegisterObjectType("Object2", sizeof(CObject2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectBehaviour("Object2", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct2), asCALL_CDECL_OBJLAST);
@@ -247,6 +251,23 @@ bool Test()
 	if( count != 1 )
 		fail = true;
 
+
+	// Test assigning value to reference returned by class method where the reference points to a member of the class
+	// This test attempts to verify that the object isn't freed before the reference goes out of scope.
+	r = engine->ExecuteString(0, "Object o; o.GetRef() = 10;");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "Object().GetRef() = 10;");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	// TODO: Make the same test with the index operator
+
 	// Mustn't allow registration of assignment behaviour as global behaviour
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ASSIGNMENT, "Object &f(const Object &in, const Object &in)", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 )
@@ -260,28 +281,47 @@ bool Test()
 	return fail;
 }
 
-// TODO: 
-// Test registering a class that have a member method that returns a reference to a member property.
-// When calling this member method the object must not be deallocated until the returned reference goes out of scope.
-//
-// Exemple:
-//
-// class A
-// {
-//   int &getValue() { return value; }
-//   int value;
-// };
-//
-// void Test()
-// {
-//   A a;
-//   a.getValue() = 10;  // This probably works already
-//   A().getValue() = 10; // This probably doesn't work, as the temporary object will be deallocated as soon as the reference is returned
-// }
-//
-// This same test should also be done for the index operator.
-//
+class Creep
+{
+};
 
+void dummy(void*)
+{
+}
+
+bool Test2()
+{
+	bool fail = false;
+
+	int r;
+	CBufferedOutStream bout;
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	r = engine->RegisterObjectType("Creep", sizeof(Creep), asOBJ_VALUE | asOBJ_APP_CLASS); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("Creep", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(dummy), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("Creep", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(dummy), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+	// Must not allow a value type to be declared as object handle
+	const char *script = "void Test(Creep @c) {}";
+	asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "script (1, 17) : Error   : Object handle is not supported for this type\n"
+	                   "script (1, 1) : Info    : Compiling void Test(Creep)\n"
+	                   "script (1, 17) : Error   : Object handle is not supported for this type\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	engine->Release();
+
+	return fail;
+}
 
 } // namespace
 

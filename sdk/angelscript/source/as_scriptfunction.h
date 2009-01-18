@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -67,33 +67,37 @@ struct asSSystemFunctionInterface;
 class asCScriptFunction : public asIScriptFunction
 {
 public:
-	asCScriptFunction(asCScriptEngine *engine, asCModule *mod);
-	~asCScriptFunction();
-
+	// From asIScriptFunction
 	asIScriptEngine     *GetEngine() const;
 	const char          *GetModuleName(int *length = 0) const;
-	const char          *GetName(int *length = 0) const;
-	const char          *GetObjectName(int *length = 0) const;
 	asIObjectType       *GetObjectType() const;
-	bool                 IsClassMethod() const;
-	bool                 IsInterfaceMethod() const;
+	const char          *GetObjectName(int *length = 0) const;
+	const char          *GetName(int *length = 0) const;
 	const char          *GetDeclaration(int *length = 0) const;
 	const char          *GetScriptSectionName(int *length = 0) const;
+
+	bool                 IsClassMethod() const;
+	bool                 IsInterfaceMethod() const;
 
 	int                  GetParamCount() const;
 	int                  GetParamTypeId(int index) const;
 	int                  GetReturnTypeId() const;
 
-	void AddVariable(asCString &name, asCDataType &type, int stackOffset);
+public:
+	asCScriptFunction(asCScriptEngine *engine, asCModule *mod);
+	~asCScriptFunction();
 
-	int GetSpaceNeededForArguments();
-	int GetSpaceNeededForReturnValue();
+	void      AddVariable(asCString &name, asCDataType &type, int stackOffset);
+
+	int       GetSpaceNeededForArguments();
+	int       GetSpaceNeededForReturnValue();
 	asCString GetDeclarationStr() const;
-	int GetLineNumber(int programPosition);
-	void ComputeSignatureId();
+	int       GetLineNumber(int programPosition);
+	void      ComputeSignatureId();
+	bool      IsSignatureEqual(const asCScriptFunction *func) const;
 
-	void AddReferences();
-	void ReleaseReferences();
+	void      AddReferences();
+	void      ReleaseReferences();
 
 	int                          funcType;
 	asCScriptEngine             *engine;
@@ -110,7 +114,7 @@ public:
 	asCArray<int>                lineNumbers;
 	int                          stackNeeded;
 	bool                         isReadOnly;
-	asCObjectType *              objectType;
+	asCObjectType               *objectType;
 	asCArray<asSScriptVariable*> variables;
 	int                          signatureId;
 

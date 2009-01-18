@@ -764,7 +764,11 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				lctx.type.Set(gvar->datatype);
 				lctx.type.dataType.MakeReference(true);
 				lctx.type.dataType.MakeReadOnly(false);
-				lctx.bc.InstrWORD(BC_LDG, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
+
+				// If it is an enum value that is being compiled, then
+				// we skip this, as the bytecode won't be used anyway
+				if( !gvar->isEnumValue )
+					lctx.bc.InstrWORD(BC_LDG, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 
 				DoAssignment(&ctx, &lctx, &expr, node, node, ttAssignment, node);
 			}
@@ -1082,6 +1086,8 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				offset = AllocateVariableNotIn(dt, true, &vars);
 
 				// Copy the handle
+				if( !ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReference() )
+					ctx->bc.Instr(BC_RDSPTR);
 				ctx->bc.InstrWORD(BC_PSF, (asWORD)offset);
 				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
 				ctx->bc.Pop(PTR_SIZE);
@@ -5053,7 +5059,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				if( !found )
 				{
 					asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
-					asCProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
+					asCObjectProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
 					if( prop )
 					{
 						// The object pointer is located at stack position 0
@@ -5102,7 +5108,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				bool isCompiled = true;
 				bool isPureConstant = false;
 				asQWORD constantValue;
-				asCProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue);
+				asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue);
 				if( prop )
 				{
 					found = true;
@@ -6475,7 +6481,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			{
 				bool isConst = ctx->type.dataType.IsReadOnly();
 
-				asCProperty *prop = builder->GetObjectProperty(ctx->type.dataType, name.AddressOf());
+				asCObjectProperty *prop = builder->GetObjectProperty(ctx->type.dataType, name.AddressOf());
 				if( prop )
 				{
 					// Put the offset on the stack
@@ -6536,25 +6542,36 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				Error(str.AddressOf(), node);
 				return -1;
 			}
+
+			// We need the object pointer
+			Dereference(ctx, true);
+
+			bool isConst = false;
+			if( ctx->type.dataType.IsObjectHandle() )
+				isConst = ctx->type.dataType.IsHandleToConst();
+			else
+				isConst = ctx->type.dataType.IsReadOnly();
+
+			asCObjectType *trueObj = ctx->type.dataType.GetObjectType();
+
+			asCTypeInfo objType = ctx->type;
+
+			// Compile function call
+			CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
+
+			if( objType.isTemporary &&
+				ctx->type.dataType.IsReference() &&
+				!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
+			{
+				// Remember the original object's variable, so that it can be released
+				// later on when the reference to its member goes out of scope
+				ctx->type.isTemporary = true;
+				ctx->type.stackOffset = objType.stackOffset;
+			}
 			else
 			{
-				// We need the object pointer
-				Dereference(ctx, true);
-
-				bool isConst = false;
-				if( ctx->type.dataType.IsObjectHandle() )
-					isConst = ctx->type.dataType.IsHandleToConst();
-				else
-					isConst = ctx->type.dataType.IsReadOnly();
-
-				asCObjectType *trueObj = ctx->type.dataType.GetObjectType();
-
-				asCTypeInfo objType = ctx->type;
-
-				// Compile function call
-				CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
-
-				// Release the potentially temporary object
+				// As the method didn't return a reference to a member
+				// we can safely release the original object now
 				ReleaseTemporaryVariable(objType, &ctx->bc);
 			}
 		}

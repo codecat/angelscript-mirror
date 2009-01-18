@@ -138,10 +138,10 @@ public:
 	eTokenType  tokenType;
 	int         arrayType;
 	int         size;
-	asCArray<asCProperty*> properties;
-	asCArray<int> methods;
-	asCArray<asCObjectType*> interfaces;
-	asCArray<asSEnumValue*> enumValues;
+	asCArray<asCObjectProperty*> properties;
+	asCArray<int>                methods;
+	asCArray<asCObjectType*>     interfaces;
+	asCArray<asSEnumValue*>      enumValues;
 
 	asDWORD flags;
 

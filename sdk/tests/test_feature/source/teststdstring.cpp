@@ -304,8 +304,6 @@ bool TestTwoStringTypes()
 	RegisterStdString(engine);
 
 	// Register the second string type
-	// TODO: The second line works
-//	engine->RegisterObjectType("_String", sizeof(_String),   asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT);
 	engine->RegisterObjectType("_String", sizeof(_String),   asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
 	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f()",                 asFUNCTION(stringDefaultCoonstructor), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f(const _String &in )",		asFUNCTION(stringCopyConstructor), asCALL_CDECL_OBJLAST); 

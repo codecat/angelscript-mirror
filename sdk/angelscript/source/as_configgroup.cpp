@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -110,7 +110,7 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 		{
 			if( engine->globalProps[m] == globalProps[n] )
 			{
-				asDELETE(engine->globalProps[m],asCProperty);
+				asDELETE(engine->globalProps[m],asCGlobalProperty);
 				engine->globalProps[m] = 0;
 			}
 		}

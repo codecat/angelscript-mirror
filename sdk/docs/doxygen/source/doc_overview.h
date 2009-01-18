@@ -3,7 +3,7 @@
 \page doc_overview Overview
 
 AngelScript is structured around an \ref asIScriptEngine "engine" where the application should
-register the \ref doc_register_func "functions", \ref doc_register_prop "properties", and even \ref doc_register_type "types", 
+\ref doc_register_api "register" the \ref doc_register_func "functions", \ref doc_register_prop "properties", and even \ref doc_register_type "types", 
 that the scripts will be able to use. The scripts are then compiled into \ref asIScriptModule "modules",
 where the application may have 1 or more modules, depending on the need of the application. The application can also expose
 a different interface to each module through the use of \ref asIScriptEngine::BeginConfigGroup "configuration groups". 

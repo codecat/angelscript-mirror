@@ -357,7 +357,7 @@ asCScriptEngine::~asCScriptEngine()
 	{
 		if( globalProps[n] )
 		{
-			asDELETE(globalProps[n],asCProperty);
+			asDELETE(globalProps[n],asCGlobalProperty);
 		}
 	}
 	globalProps.SetLength(0);
@@ -804,7 +804,7 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	if( dt.GetObjectType() == 0 )
 		return ConfigError(asINVALID_OBJECT);
 
-	asCProperty *prop = asNEW(asCProperty);
+	asCObjectProperty *prop = asNEW(asCObjectProperty);
 	prop->name       = name;
 	prop->type       = type;
 	prop->byteOffset = byteOffset;
@@ -1737,6 +1737,9 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	return func.id;
 }
 
+
+// TODO: RegisterGlobalBehaviour should be removed once all behaviours are registered to objects
+// interface
 int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
@@ -1905,7 +1908,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 		return ConfigError(asINVALID_TYPE);
 
 	// Store the property info
-	asCProperty *prop = asNEW(asCProperty);
+	asCGlobalProperty *prop = asNEW(asCGlobalProperty);
 	prop->name       = name;
 	prop->type       = type;
 	prop->index      = -1 - (int)globalPropAddresses.GetLength();
@@ -1915,6 +1918,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	globalPropAddresses.PushLast(pointer);
 
 	currentGroup->globalProps.PushLast(prop);
+
 	// If from another group add reference
 	if( type.GetObjectType() )
 	{
@@ -1924,34 +1928,9 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 
 	if( type.IsObject() && !type.IsReference() && !type.IsObjectHandle() )
 	{
-		// Create a pointer to a pointer
-		prop->index = -1 - (int)globalPropAddresses.GetLength();
-
-		void **pp = &globalPropAddresses[globalPropAddresses.GetLength()-1];
-		globalPropAddresses.PushLast(pp);
-	}
-
-	// Update all pointers to global objects,
-	// because they change when the array is resized
-	for( asUINT n = 0; n < globalProps.GetLength(); n++ )
-	{
-		if( globalProps[n] &&
-			globalProps[n]->type.IsObject() &&
-			!globalProps[n]->type.IsReference() &&
-			!globalProps[n]->type.IsObjectHandle() )
-		{
-			int idx = -globalProps[n]->index - 1;
-			void **pp = &globalPropAddresses[idx-1];
-
-			// Update the cached pointers in the modules
-			for( asUINT m = 0; m < scriptModules.GetLength(); m++ )
-			{
-				if( scriptModules[m] )
-					scriptModules[m]->UpdateGlobalVarPointer(globalPropAddresses[idx], (void*)pp);
-			}
-
-			globalPropAddresses[idx] = (void*)pp;
-		}
+		// Create a pointer to a pointer, by storing the object pointer in the global property structure
+		prop->memory = pointer;
+		globalPropAddresses[-prop->index -1] = &prop->memory;
 	}
 
 	return asSUCCESS;

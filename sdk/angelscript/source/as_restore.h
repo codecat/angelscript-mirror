@@ -61,7 +61,8 @@ protected:
 	void WriteString(asCString *str);
 	void WriteFunction(asCScriptFunction *func);
 	void WriteFunctionSignature(asCScriptFunction *func);
-	void WriteProperty(asCProperty *prop);
+	void WriteGlobalProperty(asCGlobalProperty *prop);
+	void WriteObjectProperty(asCObjectProperty *prop);
 	void WriteDataType(const asCDataType *dt);
 	void WriteObjectType(asCObjectType *ot);
 	void WriteObjectTypeDeclaration(asCObjectType *ot, bool writeProperties);
@@ -70,7 +71,8 @@ protected:
 	void ReadString(asCString *str);
 	void ReadFunction(asCScriptFunction *func);
 	void ReadFunctionSignature(asCScriptFunction *func);
-	void ReadProperty(asCProperty *prop);
+	void ReadGlobalProperty();
+	void ReadObjectProperty(asCObjectProperty *prop);
 	void ReadDataType(asCDataType *dt);
 	asCObjectType *ReadObjectType();
 	void ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties);

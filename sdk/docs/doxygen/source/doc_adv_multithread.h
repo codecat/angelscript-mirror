@@ -4,8 +4,8 @@
 
 AngelScript supports multithreading, though not yet on all platforms. You can determine if multithreading 
 is supported on your platform by calling the \ref asGetLibraryOptions function and checking the returned 
-string for <code>"AS_NO_THREADS"</code>. If the identifier is in the returned string, then the library
-doesn't support multithreading.
+string for <code>"AS_NO_THREADS"</code>. If the identifier is in the returned string then multithreading is 
+not supported.
 
 Even if you don't want or can't use multithreading, you can still write applications that execute 
 \ref doc_adv_concurrent "multiple scripts simultaneously". 
@@ -24,7 +24,7 @@ Even if you don't want or can't use multithreading, you can still write applicat
    changes the internal state of the engine and cannot safely be done in multiple threads simultaneously.
    
  - Do not execute the \ref doc_gc "garbage collector" while other script threads are executed, as the 
-   garbage collector may be traversing the reference graph while as the objects are modified by the 
+   garbage collector may be traversing the reference graph while the objects are modified by the 
    other threads.
 
  - Resources that are shared by script modules such as registered properties and objects must be protected 

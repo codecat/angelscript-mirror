@@ -84,12 +84,8 @@ int asCRestore::Save()
 	count = (asUINT)module->scriptGlobals.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i ) 
-		WriteProperty(module->scriptGlobals[i]);
+		WriteGlobalProperty(module->scriptGlobals[i]);
 
-	// globalMem size (can restore data using @init())
-	count = (asUINT)module->globalMem.GetLength();
-	WRITE_NUM(count);
-	
 	// globalVarPointers[]
 	WriteGlobalVarPointers();
 
@@ -150,7 +146,6 @@ int asCRestore::Restore()
 	unsigned long i, count;
 
 	asCScriptFunction* func;
-	asCProperty* prop;
 	asCString *cstr;
 
 	// structTypes[]
@@ -187,14 +182,8 @@ int asCRestore::Restore()
 	module->scriptGlobals.Allocate(count, 0);
 	for( i = 0; i < count; ++i ) 
 	{
-		prop = asNEW(asCProperty);
-		ReadProperty(prop);
-		module->scriptGlobals.PushLast(prop);
+		ReadGlobalProperty();
 	}
-
-	// globalMem size
-	READ_NUM(count);
-	module->globalMem.SetLength(count);
 
 	// globalVarPointers[]
 	ReadGlobalVarPointers();
@@ -330,14 +319,9 @@ void asCRestore::ReadUsedFunctions()
 		{
 			for( asUINT i = 0; i < module->scriptFunctions.GetLength(); i++ )
 			{
-				// TODO: Should have a compare signature method in asCScriptFunction for this
 				asCScriptFunction *f = module->scriptFunctions[i];
-				if( func.name           != f->name           ||
-					func.objectType     != f->objectType     || 
-					func.returnType     != f->returnType     ||
-					func.parameterTypes != f->parameterTypes ||
-					func.inOutFlags     != f->inOutFlags     ||
-					func.isReadOnly     != f->isReadOnly )
+				if( !func.IsSignatureEqual(f) ||
+					func.objectType != f->objectType )
 					continue;
 
 				usedFunctions[n] = f;
@@ -349,13 +333,9 @@ void asCRestore::ReadUsedFunctions()
 			for( asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++ )
 			{
 				asCScriptFunction *f = engine->scriptFunctions[i];
-				if( f                   == 0                 ||
-					func.name           != f->name           ||
-					func.objectType     != f->objectType     || 
-					func.returnType     != f->returnType     ||
-					func.parameterTypes != f->parameterTypes ||
-					func.inOutFlags     != f->inOutFlags     ||
-					func.isReadOnly     != f->isReadOnly )
+				if( f == 0 ||
+					!func.IsSignatureEqual(f) ||
+					func.objectType != f->objectType )
 					continue;
 
 				usedFunctions[n] = f;
@@ -447,12 +427,18 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	// TODO: Write variables
 }
 
-void asCRestore::WriteProperty(asCProperty* prop) 
+void asCRestore::WriteGlobalProperty(asCGlobalProperty* prop) 
 {
-	// TODO: When writing class properties, we need to write the offset as well
 	WriteString(&prop->name);
 	WriteDataType(&prop->type);
 	WRITE_NUM(prop->index);
+}
+
+void asCRestore::WriteObjectProperty(asCObjectProperty* prop) 
+{
+	WriteString(&prop->name);
+	WriteDataType(&prop->type);
+	WRITE_NUM(prop->byteOffset);
 }
 
 void asCRestore::WriteDataType(const asCDataType *dt) 
@@ -560,7 +546,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 		asUINT n;
 		for( n = 0; n < ot->properties.GetLength(); n++ )
 		{
-			WriteProperty(ot->properties[n]);
+			WriteObjectProperty(ot->properties[n]);
 		}
 
 		// behaviours
@@ -630,12 +616,24 @@ void asCRestore::ReadFunction(asCScriptFunction* func)
 		READ_NUM(func->lineNumbers[i]);
 }
 
-void asCRestore::ReadProperty(asCProperty* prop) 
+void asCRestore::ReadGlobalProperty() 
 {
-	// TODO: When reading class properties, we need to read the offset as well
+	asCString name;
+	asCDataType type;
+	int index;
+
+	ReadString(&name);
+	ReadDataType(&type);
+	READ_NUM(index);
+
+	module->AllocateGlobalProperty(name.AddressOf(), type);
+}
+
+void asCRestore::ReadObjectProperty(asCObjectProperty* prop) 
+{
 	ReadString(&prop->name);
 	ReadDataType(&prop->type);
-	READ_NUM(prop->index);
+	READ_NUM(prop->byteOffset);
 }
 
 void asCRestore::ReadDataType(asCDataType *dt) 
@@ -782,8 +780,8 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		int n;
 		for( n = 0; n < size; n++ )
 		{
-			asCProperty *prop = asNEW(asCProperty);
-			ReadProperty(prop);
+			asCObjectProperty *prop = asNEW(asCObjectProperty);
+			ReadObjectProperty(prop);
 			ot->properties.PushLast(prop);
 		}
 
@@ -1061,13 +1059,22 @@ void asCRestore::WriteGlobalVarPointers()
 	for( int n = 0; n < c; n++ )
 	{
 		size_t *p = (size_t*)module->globalVarPointers[n];
-		int idx = 0;
 		
-		// Is it a module global or engine global?
-		if( p >= module->globalMem.AddressOf() && p <= module->globalMem.AddressOf() + module->globalMem.GetLength() )
-			idx = int(size_t(p) - size_t(module->globalMem.AddressOf()))/sizeof(size_t);
-		else
+		// First search for the global in the module
+		int idx = -1;
+		for( int i = 0; i < (signed)module->scriptGlobals.GetLength(); i++ )
 		{
+			if( p == module->scriptGlobals[i]->GetAddressOfValue() )
+			{
+				idx = i;
+				break;
+			}
+		}
+
+		// If it is not in the module, it must be an application registered property
+		if( idx == -1 )
+		{
+			idx = 0;
 			for( int i = 0; i < (signed)engine->globalPropAddresses.GetLength(); i++ )
 			{
 				if( engine->globalPropAddresses[i] == p )
@@ -1098,7 +1105,7 @@ void asCRestore::ReadGlobalVarPointers()
 		if( idx < 0 ) 
 			module->globalVarPointers[n] = (void*)(engine->globalPropAddresses[-idx - 1]);
 		else
-			module->globalVarPointers[n] = (void*)(module->globalMem.AddressOf() + idx);
+			module->globalVarPointers[n] = (void*)(module->scriptGlobals[idx]->GetAddressOfValue());
 	}
 }
 

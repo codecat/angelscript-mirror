@@ -46,6 +46,7 @@
 
 BEGIN_AS_NAMESPACE
 
+// internal
 asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
 {
 	this->engine     = engine;
@@ -60,6 +61,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
 	scriptSectionIdx = -1;
 }
 
+// internal
 asCScriptFunction::~asCScriptFunction()
 {
 	ReleaseReferences();
@@ -75,6 +77,7 @@ asCScriptFunction::~asCScriptFunction()
 	}
 }
 
+// interface
 const char *asCScriptFunction::GetModuleName(int *length) const
 {
 	if( module )
@@ -86,11 +89,13 @@ const char *asCScriptFunction::GetModuleName(int *length) const
 	return 0;
 }
 
+// interface
 asIObjectType *asCScriptFunction::GetObjectType() const
 {
 	return objectType;
 }
 
+// interface
 const char *asCScriptFunction::GetObjectName(int *length) const 
 {
 	if( objectType )
@@ -99,6 +104,7 @@ const char *asCScriptFunction::GetObjectName(int *length) const
 	return 0;
 }
 
+// interface
 const char *asCScriptFunction::GetName(int *length) const
 {
 	if( length )
@@ -106,16 +112,19 @@ const char *asCScriptFunction::GetName(int *length) const
 	return name.AddressOf();
 }
 
+// interface
 bool asCScriptFunction::IsClassMethod() const
 {
 	return objectType && objectType->IsInterface() == false;
 }
 
+// interface
 bool asCScriptFunction::IsInterfaceMethod() const
 {
 	return objectType && objectType->IsInterface();
 }
 
+// internal
 int asCScriptFunction::GetSpaceNeededForArguments()
 {
 	// We need to check the size for each type
@@ -126,11 +135,13 @@ int asCScriptFunction::GetSpaceNeededForArguments()
 	return s;
 }
 
+// internal
 int asCScriptFunction::GetSpaceNeededForReturnValue()
 {
 	return returnType.GetSizeOnStackDWords();
 }
 
+// internal
 asCString asCScriptFunction::GetDeclarationStr() const
 {
 	asCString str;
@@ -181,6 +192,7 @@ asCString asCScriptFunction::GetDeclarationStr() const
 	return str;
 }
 
+// internal
 int asCScriptFunction::GetLineNumber(int programPosition)
 {
 	if( lineNumbers.GetLength() == 0 ) return 0;
@@ -217,15 +229,17 @@ int asCScriptFunction::GetLineNumber(int programPosition)
 	}
 }
 
+// internal
 void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stackOffset)
 {
 	asSScriptVariable *var = asNEW(asSScriptVariable);
-	var->name = name;
-	var->type = type;
+	var->name        = name;
+	var->type        = type;
 	var->stackOffset = stackOffset;
 	variables.PushLast(var);
 }
 
+// internal
 void asCScriptFunction::ComputeSignatureId()
 {
 	// This function will compute the signatureId based on the 
@@ -234,13 +248,7 @@ void asCScriptFunction::ComputeSignatureId()
 	// interface methods match each other.
 	for( asUINT n = 0; n < engine->signatureIds.GetLength(); n++ )
 	{
-		if( name              != engine->signatureIds[n]->name              ) continue;
-		if( returnType        != engine->signatureIds[n]->returnType        ) continue;
-		if( isReadOnly        != engine->signatureIds[n]->isReadOnly        ) continue;
-		if( inOutFlags        != engine->signatureIds[n]->inOutFlags        ) continue;
-		if( parameterTypes    != engine->signatureIds[n]->parameterTypes    ) continue;
-		if( isReadOnly        != engine->signatureIds[n]->isReadOnly        ) continue;
-		if( (objectType != 0) != (engine->signatureIds[n]->objectType != 0) ) continue;
+		if( !IsSignatureEqual(engine->signatureIds[n]) ) continue;
 
 		signatureId = engine->signatureIds[n]->signatureId;
 		return;
@@ -250,11 +258,25 @@ void asCScriptFunction::ComputeSignatureId()
 	engine->signatureIds.PushLast(this);
 }
 
+// internal
+bool asCScriptFunction::IsSignatureEqual(const asCScriptFunction *func) const
+{
+	if( name              != func->name              ) return false;
+	if( returnType        != func->returnType        ) return false;
+	if( isReadOnly        != func->isReadOnly        ) return false;
+	if( inOutFlags        != func->inOutFlags        ) return false;
+	if( parameterTypes    != func->parameterTypes    ) return false;
+	if( (objectType != 0) != (func->objectType != 0) ) return false;
+
+	return true;
+}
+
 #define INTARG(x)    (int(*(x+1)))
 #define PTRARG(x)    (asPTRWORD(*(x+1)))
 #define WORDARG0(x)   (*(((asWORD*)x)+1))
 #define WORDARG1(x)   (*(((asWORD*)x)+2))
 
+// internal
 void asCScriptFunction::AddReferences()
 {
 	// Only count references if there is any bytecode
@@ -281,8 +303,8 @@ void asCScriptFunction::AddReferences()
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
 				objType->AddRef();
-				break;
 			}
+			break;
 
 		// Global variables
 		case BC_LDG:
@@ -290,76 +312,38 @@ void asCScriptFunction::AddReferences()
 		case BC_PshG4:
 		case BC_SetG4:
 		case BC_CpyVtoG4:
+			if( module )
 			{
-				if( module )
-				{
-					int gvarId = WORDARG0(&byteCode[n]);
-					void *gvarPtr = module->globalVarPointers[gvarId];
-
-					gvarId = 0;
-					for( asUINT g = 0; g < module->engine->globalPropAddresses.GetLength(); g++ )
-					{
-						if( module->engine->globalPropAddresses[g] == gvarPtr )
-						{
-							gvarId = -int(g) - 1;
-							break;
-						}
-					}
-
-					if( gvarId < 0 )
-					{
-						// Find the config group from the property id
-						asCConfigGroup *group = module->engine->FindConfigGroupForGlobalVar(gvarId);
-						if( group != 0 ) group->AddRef();
-					}
-				}
-				break;
+				int gvarId = WORDARG0(&byteCode[n]);
+				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
+				if( group != 0 ) group->AddRef();
 			}
+			break;
 
 		case BC_LdGRdR4:
 		case BC_CpyGtoV4:
+			if( module )
 			{
-				if( module )
-				{
-					int gvarId = WORDARG1(&byteCode[n]);
-					void *gvarPtr = module->globalVarPointers[gvarId];
-
-					gvarId = 0;
-					for( asUINT g = 0; g < module->engine->globalPropAddresses.GetLength(); g++ )
-					{
-						if( module->engine->globalPropAddresses[g] == gvarPtr )
-						{
-							gvarId = -int(g) - 1;
-							break;
-						}
-					}
-
-					if( gvarId < 0 )
-					{
-						// Find the config group from the property id
-						asCConfigGroup *group = module->engine->FindConfigGroupForGlobalVar(gvarId);
-						if( group != 0 ) group->AddRef();
-					}
-				}
-
-				break;
+				int gvarId = WORDARG1(&byteCode[n]);
+				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
+				if( group != 0 ) group->AddRef();
 			}
+			break;
 
 		// System functions
 		case BC_CALLSYS:
+			if( module )
 			{
-				if( module )
-				{
-					int funcId = INTARG(&byteCode[n]);
-					asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
-					if( group != 0 ) group->AddRef();
-				}
-				break;
+				int funcId = INTARG(&byteCode[n]);
+				asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
+				if( group != 0 ) group->AddRef();
 			}
+			break;
 		}
 	}
 }
 
+// internal
 void asCScriptFunction::ReleaseReferences()
 {
 	// Only count references if there is any bytecode
@@ -386,8 +370,8 @@ void asCScriptFunction::ReleaseReferences()
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
 				objType->Release();
-				break;
 			}
+			break;
 
 		// Global variables
 		case BC_LDG:
@@ -395,85 +379,50 @@ void asCScriptFunction::ReleaseReferences()
 		case BC_PshG4:
 		case BC_SetG4:
 		case BC_CpyVtoG4:
+			if( module )
 			{
-				if( module )
-				{
-					int gvarId = WORDARG0(&byteCode[n]);
-					void *gvarPtr = module->globalVarPointers[gvarId];
-
-					gvarId = 0;
-					for( asUINT g = 0; g < module->engine->globalPropAddresses.GetLength(); g++ )
-					{
-						if( module->engine->globalPropAddresses[g] == gvarPtr )
-						{
-							gvarId = -int(g) - 1;
-							break;
-						}
-					}
-
-					if( gvarId < 0 )
-					{
-						// Find the config group from the property id
-						asCConfigGroup *group = module->engine->FindConfigGroupForGlobalVar(gvarId);
-						if( group != 0 ) group->Release();
-					}
-				}
-				break;
+				int gvarId = WORDARG0(&byteCode[n]);
+				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
+				if( group != 0 ) group->Release();
 			}
+			break;
 
 		case BC_LdGRdR4:
 		case BC_CpyGtoV4:
+			if( module )
 			{
-				if( module )
-				{
-					int gvarId = WORDARG1(&byteCode[n]);
-					void *gvarPtr = module->globalVarPointers[gvarId];
-
-					gvarId = 0;
-					for( asUINT g = 0; g < module->engine->globalPropAddresses.GetLength(); g++ )
-					{
-						if( module->engine->globalPropAddresses[g] == gvarPtr )
-						{
-							gvarId = -int(g) - 1;
-							break;
-						}
-					}
-
-					if( gvarId < 0 )
-					{
-						// Find the config group from the property id
-						asCConfigGroup *group = module->engine->FindConfigGroupForGlobalVar(gvarId);
-						if( group != 0 ) group->Release();
-					}
-				}
-				break;
+				int gvarId = WORDARG1(&byteCode[n]);
+				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
+				if( group != 0 ) group->Release();
 			}
+			break;
 
 		// System functions
 		case BC_CALLSYS:
+			if( module )
 			{
-				if( module )
-				{
-					int funcId = INTARG(&byteCode[n]);
-					asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
-					if( group != 0 ) group->Release();
-				}
-				break;
+				int funcId = INTARG(&byteCode[n]);
+				asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
+				if( group != 0 ) group->Release();
 			}
+			break;
 		}
 	}
 }
 
+// interface
 int asCScriptFunction::GetReturnTypeId() const
 {
 	return engine->GetTypeIdFromDataType(returnType);
 }
 
+// interface
 int asCScriptFunction::GetParamCount() const
 {
 	return (int)parameterTypes.GetLength();
 }
 
+// interface
 int asCScriptFunction::GetParamTypeId(int index) const
 {
 	if( index < 0 || (unsigned)index >= parameterTypes.GetLength() )

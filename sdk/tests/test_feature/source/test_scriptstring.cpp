@@ -146,6 +146,7 @@ void PrintRef(asIScriptGeneric *gen)
 {
 	std::string *ref = *(std::string**)gen->GetAddressOfArg(0);
 	assert( ref != 0 );
+	assert( *ref == "Some String" );
 }
 
 bool Test()
@@ -153,6 +154,7 @@ bool Test()
 	bool fail = false;
 	COutStream out;
 	asIScriptEngine *engine = 0;
+	asIScriptModule *mod = 0;
 	int r;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -189,7 +191,7 @@ bool Test()
 
 
 	printOutput = "";
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	mod->Build();
 
@@ -412,6 +414,9 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script, strlen(script));
 		mod->Build();
+
+		CScriptString *str = (CScriptString*)mod->GetAddressOfGlobalVar(0);
+		
 
 		r = engine->ExecuteString(0, "Update()");
 		if( r != asEXECUTION_FINISHED )

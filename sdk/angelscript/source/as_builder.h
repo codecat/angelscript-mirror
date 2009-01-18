@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -64,7 +64,7 @@ struct sGlobalVariableDescription
 	asCScriptCode *script;
 	asCScriptNode *node;
 	asCString name;
-	asCProperty *property;
+	asCGlobalProperty *property;
 	asCDataType datatype;
 	int index;
 	bool isCompiled;
@@ -95,7 +95,7 @@ public:
 	int ParseDataType(const char *datatype, asCDataType *result);
 
 	int ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0);
-	int ParseVariableDeclaration(const char *decl, asCProperty *var);
+	int ParseVariableDeclaration(const char *decl, asCObjectProperty *var);
 
 	int AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy);
 	int Build();
@@ -116,8 +116,8 @@ protected:
 
 	const asCString &GetConstantString(int strID);
 
-	asCProperty *GetObjectProperty(asCDataType &obj, const char *prop);
-	asCProperty *GetGlobalProperty(const char *prop, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue);
+	asCObjectProperty *GetObjectProperty(asCDataType &obj, const char *prop);
+	asCGlobalProperty *GetGlobalProperty(const char *prop, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue);
 
 	asCScriptFunction *GetFunctionDescription(int funcID);
 	void GetFunctionDescriptions(const char *name, asCArray<int> &funcs);

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -176,15 +176,11 @@ public:
 	int  AddConstantString(const char *str, size_t length);
 	const asCString &GetConstantString(int id);
 
-	int  AllocGlobalMemory(int size);
-
 	int  GetNextFunctionId();
 	int  AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType = 0, bool isConstMethod = false);
 	int  AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, int moduleNameStringID);
 
 	bool CanDeleteAllReferences(asCArray<asCModule*> &modules);
-
-	void UpdateGlobalVarPointer(void *pold, void *pnew);
 
 	int  GetNextImportedFunctionId();
 
@@ -197,10 +193,12 @@ public:
 	asCScriptFunction *GetSpecialFunction(int funcId);
 
 	asCObjectType *GetObjectType(const char *type);
+	asCConfigGroup *GetConfigGroupByGlobalVarId(int gvarId);
 
 	int  GetScriptSectionIndex(const char *name);
 	bool CanDelete();
 
+	asCGlobalProperty *AllocateGlobalProperty(const char *name, const asCDataType &dt);
 	int GetGlobalVarIndex(int propIdx);
 
 	asCString name;
@@ -218,16 +216,11 @@ public:
 	asCArray<asCScriptFunction *>  importedFunctions;
 	asCArray<sBindInfo>            bindInformations;
 
-	// TODO: global: the memory for the global variables must be allocated individually, 
-	// so that they can be managed individually. It must be possible to add/remove 
-	// globals to an already compiled module. Functions that reference a global
-	// variable should protect the global so that it isn't removed too early 
-	// (or possibly it should be through weak pointers, which would cause script 
-	//  exception if a removed variable is accessed)
-	// Later on, all globals should be managed by the engine so that a module
-	// can be discarded without having to remove the global attribute itself.
-	asCArray<asCProperty *>        scriptGlobals;
-	asCArray<size_t>               globalMem;
+	// This array holds the global variables declared in the script
+	asCArray<asCGlobalProperty *>  scriptGlobals;
+
+	// This array holds pointers to all global variables that the functions in the module access.
+	// The byte code holds an index into this table to refer to a global variable.
 	asCArray<void*>                globalVarPointers;
 
 	asCArray<asCString*>           stringConstants;

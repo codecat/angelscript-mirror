@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -196,7 +196,14 @@ void asCModule::CallInit()
 {
 	if( isGlobalVarInitialized ) return;
 
-	memset(globalMem.AddressOf(), 0, globalMem.GetLength()*sizeof(asDWORD));
+	// Each global variable needs to be cleared individually
+	for( asUINT n = 0; n < scriptGlobals.GetLength(); n++ )
+	{
+		if( scriptGlobals[n] )
+		{
+			memset(scriptGlobals[n]->GetAddressOfValue(), 0, sizeof(asDWORD)*scriptGlobals[n]->type.GetSizeOnStackDWords());
+		}
+	}
 
 	if( initFunction && initFunction->byteCode.GetLength() == 0 ) return;
 
@@ -223,7 +230,7 @@ void asCModule::CallExit()
 	{
 		if( scriptGlobals[n]->type.IsObject() )
 		{
-			void *obj = *(void**)(globalMem.AddressOf() + scriptGlobals[n]->index);
+			void *obj = *(void**)scriptGlobals[n]->GetAddressOfValue();
 			if( obj )
 			{
 				asCObjectType *ot = scriptGlobals[n]->type.GetObjectType();
@@ -299,7 +306,6 @@ void asCModule::InternalReset()
 	importedFunctions.SetLength(0);
 
 	// Free global variables
-	globalMem.SetLength(0);
 	globalVarPointers.SetLength(0);
 
 	isBuildWithoutErrors = true;
@@ -313,7 +319,7 @@ void asCModule::InternalReset()
 
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
-		asDELETE(scriptGlobals[n],asCProperty);
+		asDELETE(scriptGlobals[n],asCGlobalProperty);
 	}
 	scriptGlobals.SetLength(0);
 
@@ -519,7 +525,7 @@ int asCModule::GetGlobalVarIndexByDecl(const char *decl)
 
 	asCBuilder bld(engine, this);
 
-	asCProperty gvar;
+	asCObjectProperty gvar;
 	bld.ParseVariableDeclaration(decl, &gvar);
 
 	// TODO: optimize: Improve linear search
@@ -546,11 +552,12 @@ void *asCModule::GetAddressOfGlobalVar(int index)
 	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
 		return 0;
 
+	// TODO: value types shouldn't need dereferencing
 	// For object variables it's necessary to dereference the pointer to get the address of the value
 	if( scriptGlobals[index]->type.IsObject() && !scriptGlobals[index]->type.IsObjectHandle() )
-		return *(void**)(globalMem.AddressOf() + scriptGlobals[index]->index);
+		return *(void**)(scriptGlobals[index]->GetAddressOfValue());
 
-	return (void*)(globalMem.AddressOf() + scriptGlobals[index]->index);
+	return (void*)(scriptGlobals[index]->GetAddressOfValue());
 }
 
 // interface
@@ -559,7 +566,7 @@ const char *asCModule::GetGlobalVarDeclaration(int index, int *length)
 	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
 		return 0;
 
-	asCProperty *prop = scriptGlobals[index];
+	asCGlobalProperty *prop = scriptGlobals[index];
 
 	asASSERT(threadManager);
 	asCString *tempString = &threadManager->GetLocalData()->string;
@@ -993,25 +1000,22 @@ asCObjectType *asCModule::GetObjectType(const char *type)
 }
 
 // internal
-int asCModule::AllocGlobalMemory(int size)
+asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asCDataType &dt)
 {
-	// TODO: global: the memory for each global variable should be independent, 
-	// so that we can add/remove variables freely without having to update the 
-	// pointers to the other variables.
-	int index = (int)globalMem.GetLength();
+	asCGlobalProperty *prop = asNEW(asCGlobalProperty);
+	prop->index      = (int)scriptGlobals.GetLength();
+	prop->name       = name;
+	prop->type       = dt;
+	scriptGlobals.PushLast(prop);
 
-	size_t *start = globalMem.AddressOf();
-
-	globalMem.SetLength(index + size);
-
-	// Update the addresses in the globalVarPointers
-	for( size_t n = 0; n < globalVarPointers.GetLength(); n++ )
+	// Allocate the memory for this property
+	if( dt.GetSizeOnStackDWords() > 2 )
 	{
-		if( globalVarPointers[n] >= start && globalVarPointers[n] < (start+index) )
-			globalVarPointers[n] = &globalMem[0] + (size_t(globalVarPointers[n]) - size_t(start))/sizeof(void*);
+		prop->SetAddressOfValue(asNEWARRAY(asDWORD, dt.GetSizeOnStackDWords()));
+		prop->memoryAllocated = true;
 	}
 
-	return index;
+	return prop;
 }
 
 // internal
@@ -1021,7 +1025,8 @@ int asCModule::GetGlobalVarIndex(int propIdx)
 	if( propIdx < 0 )
 		ptr = engine->globalPropAddresses[-int(propIdx) - 1];
 	else
-		ptr = globalMem.AddressOf() + (propIdx & 0xFFFF);
+		// TODO: We can probably remove the 0xFFFF
+		ptr = scriptGlobals[propIdx & 0xFFFF]->GetAddressOfValue();
 
 	for( int n = 0; n < (signed)globalVarPointers.GetLength(); n++ )
 		if( globalVarPointers[n] == ptr )
@@ -1029,22 +1034,6 @@ int asCModule::GetGlobalVarIndex(int propIdx)
 
 	globalVarPointers.PushLast(ptr);
 	return (int)globalVarPointers.GetLength()-1;
-}
-
-// internal
-// This method allows the engine to update the pointer that the module 
-// holds in case the memory used by the engine is reallocated.
-void asCModule::UpdateGlobalVarPointer(void *pold, void *pnew)
-{
-	// TODO: global: the memory for each global variable should be independent,
-	// so that we can add/remove variales freely without having to update the
-	// pointers to the other variables.
-	for( asUINT n = 0; n < globalVarPointers.GetLength(); n++ )
-		if( globalVarPointers[n] == pold )
-		{
-			globalVarPointers[n] = pnew;
-			return;
-		}
 }
 
 // internal
@@ -1362,6 +1351,30 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 	engine->BuildCompleted();
 
 	return r;
+}
+
+// internal
+asCConfigGroup *asCModule::GetConfigGroupByGlobalVarId(int gvarId)
+{
+	void *gvarPtr = globalVarPointers[gvarId];
+
+	gvarId = 0;
+	for( asUINT g = 0; g < engine->globalPropAddresses.GetLength(); g++ )
+	{
+		if( engine->globalPropAddresses[g] == gvarPtr )
+		{
+			gvarId = -int(g) - 1;
+			break;
+		}
+	}
+
+	if( gvarId < 0 )
+	{
+		// Find the config group from the property id
+		return engine->FindConfigGroupForGlobalVar(gvarId);
+	}
+
+	return 0;
 }
 
 

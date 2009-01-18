@@ -118,11 +118,9 @@ bool Test()
 
 	CBufferedOutStream bout;
 
-	// TODO:
-	// A member array of a const object is also const
+	// TODO: A member array of a const object is also const
 
-	// TODO:
-	// Parameters registered as &in and not const must make a copy of the object (even for operators)
+	// TODO: Parameters registered as &in and not const must make a copy of the object (even for operators)
 
 	// A member object of a const object is also const
 	bout.buffer = "";

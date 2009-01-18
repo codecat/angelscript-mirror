@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -52,25 +52,23 @@ class asCScriptFunction;
 class asCScriptEngine;
 class asCModule;
 
+
+// TODO: asIScriptContext should have a method int ExecuteString(const char *string, asIScriptModule *module = 0);
+//       That method should replace the ExecuteString in the engine interface.
+
 class asCContext : public asIScriptContext
 {
 public:
-	asCContext(asCScriptEngine *engine, bool holdRef);
-	virtual ~asCContext();
-
-	// Memory management
+	// From asIScriptContext
 	int  AddRef();
 	int  Release();
 
 	asIScriptEngine *GetEngine();
 
-	int  Prepare(int functionID);
-	int  PrepareSpecial(int functionID, asCModule *mod);
-	int  Unprepare();
+	asEContextState GetState();
 
-	int  Execute();
-	int  Abort();
-	int  Suspend();
+	int  Prepare(int functionID);
+	int  Unprepare();
 
 	int SetArgByte(asUINT arg, asBYTE value);
 	int SetArgWord(asUINT arg, asWORD value);
@@ -97,11 +95,14 @@ public:
 #endif
 	void   *GetAddressOfReturnValue();
 
-	asEContextState GetState();
+	int  Execute();
+	int  Abort();
+	int  Suspend();
 
 	int  GetCurrentLineNumber(int *column);
 	int  GetCurrentFunction();
 
+	int  SetException(const char *descr);
 	int  GetExceptionLineNumber(int *column);
 	int  GetExceptionFunction();
 	const char *GetExceptionString(int *length);
@@ -126,12 +127,16 @@ public:
 	int         GetThisTypeId(int stackLevel);
     void       *GetThisPointer(int stackLevel);
 
-	int  SetException(const char *descr);
-
-	int  SetExecuteStringFunction(asCScriptFunction *func);
-
 	void *SetUserData(void *data);
 	void *GetUserData();
+
+public:
+	// Internal public functions
+	asCContext(asCScriptEngine *engine, bool holdRef);
+	virtual ~asCContext();
+
+	int  PrepareSpecial(int functionID, asCModule *mod);
+	int  SetExecuteStringFunction(asCScriptFunction *func);
 
 //protected:
 	friend class asCScriptEngine;

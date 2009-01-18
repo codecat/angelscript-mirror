@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -482,6 +482,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	return popSize;
 }
 
+// TODO: On GCC we may need to declare these functions as __attribute ((__noinline__)) to avoid 
+//       compilation error with maximum optimization (-O3) where the loop labels get duplicated.
 
 void CallCDeclFunction(const asDWORD *args, int paramSize, size_t func)
 {

@@ -479,13 +479,13 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	return asSUCCESS;
 }
 
-asCProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *prop)
+asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *prop)
 {
 	asASSERT(obj.GetObjectType() != 0);
 
 	// TODO: Only search in config groups to which the module has access
 	// TODO: optimize: Improve linear search
-	asCArray<asCProperty *> &props = obj.GetObjectType()->properties;
+	asCArray<asCObjectProperty *> &props = obj.GetObjectType()->properties;
 	for( asUINT n = 0; n < props.GetLength(); n++ )
 		if( props[n]->name == prop )
 			return props[n];
@@ -493,7 +493,7 @@ asCProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *prop)
 	return 0;
 }
 
-asCProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue)
+asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue)
 {
 	asUINT n;
 
@@ -502,7 +502,7 @@ asCProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, b
 
 	// TODO: optimize: Improve linear search
 	// Check application registered properties
-	asCArray<asCProperty *> *props = &(engine->globalProps);
+	asCArray<asCGlobalProperty *> *props = &(engine->globalProps);
 	for( n = 0; n < props->GetLength(); ++n )
 		if( (*props)[n] && (*props)[n]->name == prop )
 		{
@@ -655,7 +655,7 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 	return 0;
 }
 
-int asCBuilder::ParseVariableDeclaration(const char *decl, asCProperty *var)
+int asCBuilder::ParseVariableDeclaration(const char *decl, asCObjectProperty *var)
 {
 	numErrors = 0;
 	numWarnings = 0;
@@ -693,7 +693,7 @@ int asCBuilder::CheckNameConflictMember(asCDataType &dt, const char *name, asCSc
 	asCObjectType *t = dt.GetObjectType();
 
 	// TODO: optimize: Improve linear search
-	asCArray<asCProperty *> &props = t->properties;
+	asCArray<asCObjectProperty *> &props = t->properties;
 	for( asUINT n = 0; n < props.GetLength(); n++ )
 	{
 		if( props[n]->name == name )
@@ -738,7 +738,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 
 	// TODO: Must verify global properties in all config groups, whether the module has access or not
 	// Check against global properties
-	asCProperty *prop = GetGlobalProperty(name, 0, 0, 0);
+	asCGlobalProperty *prop = GetGlobalProperty(name, 0, 0, 0);
 	if( prop )
 	{
 		if( code )
@@ -842,8 +842,6 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		// TODO: Give error message if wrong
 		asASSERT(!gvar->datatype.IsReference());
 
-		// Allocate space on the global memory stack
-		gvar->index = module->AllocGlobalMemory(gvar->datatype.GetSizeOnStackDWords());
 		gvar->node = 0;
 		if( n->next && 
 			(n->next->nodeType == snAssignment ||
@@ -854,14 +852,8 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 			n->next->DisconnectParent();
 		}
 
-		// Add script variable to engine
-		asCProperty *prop = asNEW(asCProperty);
-		prop->index      = gvar->index;
-		prop->name       = name;
-		prop->type       = gvar->datatype;
-		module->scriptGlobals.PushLast(prop);
-
-		gvar->property = prop;
+		gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype);
+		gvar->index    = gvar->property->index;
 
 		n = n->next;
 	}
@@ -1163,7 +1155,7 @@ void asCBuilder::CompileGlobalVariables()
 		if( gvar->node )
 			gvar->node->Destroy(engine);
 		if( gvar->property )
-			asDELETE(gvar->property, asCProperty);
+			asDELETE(gvar->property, asCGlobalProperty);
 
 		asDELETE(gvar, sGlobalVariableDescription);
 		globVariables[n] = 0;
@@ -1213,7 +1205,7 @@ void asCBuilder::CompileClasses()
 				CheckNameConflictMember(st, name.AddressOf(), node->lastChild, file);
 
 				// Store the properties in the object type descriptor
-				asCProperty *prop = asNEW(asCProperty);
+				asCObjectProperty *prop = asNEW(asCObjectProperty);
 				prop->name = name;
 				prop->type = dt;
 
@@ -1283,7 +1275,7 @@ void asCBuilder::CompileClasses()
 			for( asUINT n = 0; n < decl->objType->properties.GetLength(); n++ )
 			{
 				// A valid structure is one that uses only primitives or other valid objects
-				asCProperty *prop = decl->objType->properties[n];
+				asCObjectProperty *prop = decl->objType->properties[n];
 				asCDataType dt = prop->type;
 
 				if( dt.IsTemplate() )
@@ -1620,7 +1612,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			gvar->script		  = file;
 			gvar->node			  = tmp;
 			gvar->name			  = name;
-			gvar->property        = asNEW(asCProperty);
+			gvar->property        = asNEW(asCGlobalProperty);
 			gvar->datatype		  = type;
 			// No need to allocate space on the global memory stack since the values are stored in the asCObjectType
 			gvar->index			  = 0;

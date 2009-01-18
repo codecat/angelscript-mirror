@@ -50,16 +50,15 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 
 \page doc_using Using AngelScript
 
- - \subpage doc_register_func
- - \subpage doc_register_type
- - \subpage doc_register_prop
+ - \subpage doc_register_api
  - \subpage doc_obj_handle
  - \subpage doc_call_script_func
  - \subpage doc_generic
  - \subpage doc_gc
 
- 
- 
+
+
+
  
  
  

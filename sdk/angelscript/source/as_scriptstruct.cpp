@@ -189,7 +189,7 @@ asCScriptStruct::asCScriptStruct(asCObjectType *ot)
 	asCScriptEngine *engine = objType->engine;
 	for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
 	{
-		asCProperty *prop = objType->properties[n];
+		asCObjectProperty *prop = objType->properties[n];
 		if( prop->type.IsObject() )
 		{
 			size_t *ptr = (size_t*)(((char*)this) + prop->byteOffset);
@@ -224,7 +224,7 @@ asCScriptStruct::~asCScriptStruct()
 	// Destroy all properties
 	for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
 	{
-		asCProperty *prop = objType->properties[n];
+		asCObjectProperty *prop = objType->properties[n];
 		if( prop->type.IsObject() )
 		{
 			// Destroy the object
@@ -359,7 +359,7 @@ void asCScriptStruct::EnumReferences(asIScriptEngine *engine)
 	// We'll notify the GC of all object handles that we're holding
 	for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
 	{
-		asCProperty *prop = objType->properties[n];
+		asCObjectProperty *prop = objType->properties[n];
 		if( prop->type.IsObject() )
 		{
 			void *ptr = *(void**)(((char*)this) + prop->byteOffset);
@@ -373,7 +373,7 @@ void asCScriptStruct::ReleaseAllHandles(asIScriptEngine *engine)
 {
 	for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
 	{
-		asCProperty *prop = objType->properties[n];
+		asCObjectProperty *prop = objType->properties[n];
 		if( prop->type.IsObject() && prop->type.IsObjectHandle() )
 		{
 			void **ptr = (void**)(((char*)this) + prop->byteOffset);
@@ -410,7 +410,7 @@ asCScriptStruct &asCScriptStruct::operator=(const asCScriptStruct &other)
 	// Copy all properties
 	for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
 	{
-		asCProperty *prop = objType->properties[n];
+		asCObjectProperty *prop = objType->properties[n];
 		if( prop->type.IsObject() )
 		{
 			void **dst = (void**)(((char*)this) + prop->byteOffset);
