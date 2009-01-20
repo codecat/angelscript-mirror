@@ -71,7 +71,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\..\..\angelscript\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="4"
+				RuntimeLibrary="0"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
