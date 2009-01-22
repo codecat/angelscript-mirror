@@ -9,9 +9,11 @@ void DummyFunc(asIScriptGeneric *) {}
 
 bool TestRefScoped();
 
+bool TestHelper();
+
 bool Test()
 {
-	bool fail = false;
+	bool fail = TestHelper();
 	int r = 0;
 	CBufferedOutStream bout;
  	asIScriptEngine *engine;
@@ -418,6 +420,181 @@ bool TestRefScoped()
 
 	return fail;
 }
+
+///////////////////////////////
+//
+
+// TODO: This code should eventually be moved to an standard add-on, e.g. ScriptRegistrator
+
+// AngelScript is pretty good at validating what is registered by the application, however,
+// there are somethings that AngelScript just can't be aware of. This is an attempt to remedy
+// that by adding extra validations through the use of templates.
+
+// Template for getting information on types
+template<typename T>
+struct CTypeInfo
+{
+	static const char *GetTypeName() { /* Unknown type, forcing error by not returning anything */ };
+	static bool IsReference() { return false; }
+};
+
+// Mapping the C++ type 'int' to the AngelScript type 'int'
+template<>
+struct CTypeInfo<int>
+{
+	static const char *GetTypeName() { return "int"; }
+	static bool IsReference() { return false; }
+};
+
+template<>
+struct CTypeInfo<int&>
+{
+	static const char *GetTypeName() { return "int"; }
+	static bool IsReference() { return true; }
+};
+
+template<>
+struct CTypeInfo<int*>
+{
+	static const char *GetTypeName() { return "int"; }
+	static bool IsReference() { return true; }
+};
+
+// Mapping the C++ type 'std::string' to the AngelScript type 'string'
+template<>
+struct CTypeInfo<std::string>
+{
+	static const char *GetTypeName() { return "string"; }
+	static bool IsReference() { return false; }
+};
+
+template<>
+struct CTypeInfo<std::string&>
+{
+	static const char *GetTypeName() { return "string"; }
+	static bool IsReference() { return true; }
+};
+
+template<>
+struct CTypeInfo<std::string*>
+{
+	static const char *GetTypeName() { return "string@"; }
+	static bool IsReference() { return false; }
+};
+
+template<>
+struct CTypeInfo<std::string**>
+{
+	static const char *GetTypeName() { return "string@"; }
+	static bool IsReference() { return true; }
+};
+
+template<>
+struct CTypeInfo<std::string*&>
+{
+	static const char *GetTypeName() { return "string@"; }
+	static bool IsReference() { return true; }
+};
+
+// Template for verifying a parameter
+template<typename A1>
+struct CParamValidator
+{
+	static int Validate(asIScriptFunction *descr, int arg)
+	{
+		int t1 = descr->GetParamTypeId(arg);
+		int t2 = descr->GetEngine()->GetTypeIdByDecl(CTypeInfo<A1>::GetTypeName());
+		if( t1 != t2 )
+			return -1;
+
+		// Verify if the type is properly declared as reference / non-reference
+		// TODO: Need a method in asIScriptFunction to get the reference modifier
+		//       0 = by value
+		//       1 = &in
+		//       2 = &out
+		//       3 = &inout
+
+		return 0;
+	}
+};
+
+// Template for registering a function
+template<typename A1>
+int RegisterGlobalFunction(asIScriptEngine *e, const char *decl, void (*f)(A1), asDWORD callConv) 
+{
+	int r = e->RegisterGlobalFunction(decl, asFUNCTION(f), callConv); 
+	assert( r >= 0 );
+
+	if( r >= 0 )
+	{
+		// TODO: Can write messages to the message callback in the engine instead of testing through asserts
+
+		asIScriptFunction *descr = e->GetFunctionDescriptorById(r);
+
+		// Verify the parameter count
+		assert( descr->GetParamCount() == 1 );
+
+		// Verify the parameter types
+		assert( CParamValidator<A1>::Validate(descr, 0) >= 0 );
+	}
+
+	return r;
+}
+
+template<typename A1, typename A2>
+int RegisterGlobalFunction(asIScriptEngine *e, const char *decl, void (*f)(A1, A2), asDWORD callConv) 
+{
+	int r = e->RegisterGlobalFunction(decl, asFUNCTION(f), callConv); 
+	assert( r >= 0 );
+
+	if( r >= 0 )
+	{
+		asIScriptFunction *descr = e->GetFunctionDescriptorById(r);
+
+		// Verify the parameter count
+		assert( descr->GetParamCount() == 2 );
+
+		// Verify the parameter types
+		assert( CParamValidator<A1>::Validate(descr, 0) >= 0 );
+		assert( CParamValidator<A2>::Validate(descr, 1) >= 0 );
+	}
+
+	return r;
+}
+
+void func1(int) {}
+void func2(std::string &) {}
+void func3(std::string *) {}
+void func4(int *) {}
+void func5(int &) {}
+void func6(std::string **) {}
+void func7(std::string *&) {}
+void func8(int, std::string &) {}
+void func9(std::string &, int) {}
+
+bool TestHelper()
+{
+	bool fail = false;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	RegisterScriptString(engine);
+
+	RegisterGlobalFunction(engine, "void func1(int)", func1, asCALL_CDECL);
+	RegisterGlobalFunction(engine, "void func2(string &in)", func2, asCALL_CDECL);
+	RegisterGlobalFunction(engine, "void func3(string @)", func3, asCALL_CDECL);
+	RegisterGlobalFunction(engine, "void func4(int &in)", func4, asCALL_CDECL);
+	RegisterGlobalFunction(engine, "void func5(int &out)", func5, asCALL_CDECL);
+	RegisterGlobalFunction(engine, "void func6(string @&out)", func6, asCALL_CDECL);
+	RegisterGlobalFunction(engine, "void func7(string @&out)", func7, asCALL_CDECL);
+	RegisterGlobalFunction(engine, "void func8(int, string &)", func8, asCALL_CDECL);
+	RegisterGlobalFunction(engine, "void func9(string &, int)", func9, asCALL_CDECL);
+
+	engine->Release();
+
+	return fail;
+}
+
 
 } // namespace
 

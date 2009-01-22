@@ -52,6 +52,7 @@ class asCScriptFunction;
 class asCScriptEngine;
 class asCModule;
 
+// TODO: The context should be renamed to something that better describes it, e.g. asIVirtualMachine, asIExecuter, asIProcessor, asIScriptThread, or something like that
 
 // TODO: asIScriptContext should have a method int ExecuteString(const char *string, asIScriptModule *module = 0);
 //       That method should replace the ExecuteString in the engine interface.

@@ -64,6 +64,8 @@ const int asFUNC_IMPORTED  = 3;
 
 struct asSSystemFunctionInterface;
 
+// TODO: Need a method for obtaining the reference modifier for parameters and return type
+
 class asCScriptFunction : public asIScriptFunction
 {
 public:

@@ -5,11 +5,11 @@
 AngelScript requires the application developer to register the interface
 that the scripts should use to interact with anything outside the script itself.
 
-It's possible to register \subpage doc_register_func "global functions" and
-\subpage doc_register_prop "global properties" that can be used directly by the 
+It's possible to register \ref doc_register_func "global functions" and
+\ref doc_register_prop "global properties" that can be used directly by the 
 scripts.
 
-For more complex scripts it may be useful to register new \subpage doc_register_type "object types" 
+For more complex scripts it may be useful to register new \ref doc_register_type "object types" 
 to complement the built-in data types. 
 
 AngelScript doesn't have a built-in string type as there is no de-facto standard for string types 
@@ -25,5 +25,13 @@ without the interfaces.
 
 \ref asIScriptEngine::RegisterEnum "enumeration types" and 
 \ref asIScriptEngine::RegisterTypedef "typedefs" can also be registered to improve readability of the scripts.
+
+\section doc_register_api_1 Topics
+
+ - \subpage doc_register_func
+ - \subpage doc_register_prop
+ - \subpage doc_register_type
+ - \subpage doc_generic
+
 
 */

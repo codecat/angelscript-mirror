@@ -60,6 +60,8 @@ handles. This is done by adding a + sign to the \@ type modifier. When doing
 this an object handle can be safely passed to a C++ function that expects a
 normal pointer, but don't release it afterwards.
 
+\see \ref doc_obj_handle for more details
+
 \section doc_as_vs_cpp_types_4 Parameter references
 
 Because AngelScript needs to guarantee validity of pointers at all times,
