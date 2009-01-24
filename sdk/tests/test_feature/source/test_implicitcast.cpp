@@ -226,137 +226,145 @@ bool Test()
 
 	// Test5
 	// Exclicit value cast
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-
-	r = engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
-
-	r = engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Type_construct0), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Type_construct1), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "int f()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const type &in, const type &in)", asFUNCTION(Type_equal), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("type", "int v", 0);
-
-	// explicit cast to int is allowed
-	r = engine->ExecuteString(0, "type t; t.v = 5; int a = int(t); assert(a == 5);"); 
-	if( r < 0 )
-		fail = true;
-
-	// as cast to int is allowed, AngelScript also allows cast to float (using cast to int then implicit cast to int)
-	r = engine->ExecuteString(0, "type t; t.v = 5; float a = float(t); assert(a == 5.0f);");
-	if( r < 0 )
-		fail = true;
-
-	// implicit cast to int is not allowed
-	bout.buffer = "";
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "type t; int a = t;");
-	if( r >= 0 )
-		fail = true;
-	if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'type&' to 'int'.\n" )
+	// TODO: This should work for MAX_PORTABILITY as well
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
-		printf(bout.buffer.c_str());
-		fail = true;
-	}
-/*
-	// Having an implicit constructor with an int param makes it possible to compare the type with int
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "type t(5); assert( t == 5 );");
-	if( r < 0 )
-		fail = true;
-*/
-	engine->Release();
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
+		r = engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+		r = engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Type_construct0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Type_construct1), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "int f()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const type &in, const type &in)", asFUNCTION(Type_equal), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectProperty("type", "int v", 0);
+
+		// explicit cast to int is allowed
+		r = engine->ExecuteString(0, "type t; t.v = 5; int a = int(t); assert(a == 5);"); 
+		if( r < 0 )
+			fail = true;
+
+		// as cast to int is allowed, AngelScript also allows cast to float (using cast to int then implicit cast to int)
+		r = engine->ExecuteString(0, "type t; t.v = 5; float a = float(t); assert(a == 5.0f);");
+		if( r < 0 )
+			fail = true;
+
+		// implicit cast to int is not allowed
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		r = engine->ExecuteString(0, "type t; int a = t;");
+		if( r >= 0 )
+			fail = true;
+		if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'type&' to 'int'.\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+/*
+		// Having an implicit constructor with an int param makes it possible to compare the type with int
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		r = engine->ExecuteString(0, "type t(5); assert( t == 5 );");
+		if( r < 0 )
+			fail = true;
+*/
+		engine->Release();
+	}
 
 	//-----------------------------------------------------------------
 	// REFERENCE_CAST
 
-	// It must be possible to cast an object handle to another object handle, without 
-	// losing the reference to the original object. This is what will allow applications
-	// to register inheritance for registered types. This should be a special 
-	// behaviour, i.e. REF_CAST. 
-	
-	// How to provide a cast from a base class to a derived class?
-	// The base class may not know about the derived class, so it must
-	// be the derived class that registers the behaviour. 
-	
-	// How to provide interface functionalities to registered types? I.e. a class implements 
-	// various interfaces, and a handle to one of the interfaces may be converted to a handle
-	// of another interface that is implemented by the class.
+	// TODO: This should work for MAX_PORTABILITY as well
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
 
-	// TODO: Can't register casts from primitive to primitive
+		// It must be possible to cast an object handle to another object handle, without 
+		// losing the reference to the original object. This is what will allow applications
+		// to register inheritance for registered types. This should be a special 
+		// behaviour, i.e. REF_CAST. 
+		
+		// How to provide a cast from a base class to a derived class?
+		// The base class may not know about the derived class, so it must
+		// be the derived class that registers the behaviour. 
+		
+		// How to provide interface functionalities to registered types? I.e. a class implements 
+		// various interfaces, and a handle to one of the interfaces may be converted to a handle
+		// of another interface that is implemented by the class.
 
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		// TODO: Can't register casts from primitive to primitive
 
-	// Class A is the base class
-	engine->RegisterObjectType("A", 0, asOBJ_REF);
-	engine->RegisterObjectBehaviour("A", asBEHAVE_FACTORY, "A@f()", asFUNCTION(A::factory), asCALL_CDECL); 
-	engine->RegisterObjectBehaviour("A", asBEHAVE_RELEASE, "void f()", asMETHOD(A, release), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("A", asBEHAVE_ADDREF, "void f()", asMETHOD(A, addref), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("A", asBEHAVE_ASSIGNMENT, "A& f(const A &in)", asMETHOD(A, assign), asCALL_THISCALL);
-	engine->RegisterObjectMethod("A", "int test()", asMETHOD(A, test), asCALL_THISCALL);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	// Class B inherits from class A
-	engine->RegisterObjectType("B", 0, asOBJ_REF);
-	engine->RegisterObjectBehaviour("B", asBEHAVE_FACTORY, "B@f()", asFUNCTION(B::factory), asCALL_CDECL); 
-	engine->RegisterObjectBehaviour("B", asBEHAVE_RELEASE, "void f()", asMETHOD(B, release), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("B", asBEHAVE_ADDREF, "void f()", asMETHOD(B, addref), asCALL_THISCALL);
-	engine->RegisterObjectMethod("B", "int test()", asMETHOD(B, test), asCALL_THISCALL);
-	
-	// Test the classes to make sure they work
-	r = engine->ExecuteString(0, "A a; assert(a.test() == 1); B b; assert(b.test() == 2);");
-	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		// Class A is the base class
+		engine->RegisterObjectType("A", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("A", asBEHAVE_FACTORY, "A@f()", asFUNCTION(A::factory), asCALL_CDECL); 
+		engine->RegisterObjectBehaviour("A", asBEHAVE_RELEASE, "void f()", asMETHOD(A, release), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("A", asBEHAVE_ADDREF, "void f()", asMETHOD(A, addref), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("A", asBEHAVE_ASSIGNMENT, "A& f(const A &in)", asMETHOD(A, assign), asCALL_THISCALL);
+		engine->RegisterObjectMethod("A", "int test()", asMETHOD(A, test), asCALL_THISCALL);
 
-	// It should be possible to register a REF_CAST to allow implicit cast
-	// Test IMPLICIT_REF_CAST from subclass to baseclass
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST, "A@ f(B@)", asFUNCTION(B::castToA), asCALL_CDECL); assert( r >= 0 );
-	r = engine->ExecuteString(0, "B b; A@ a = b; assert(a.test() == 2);");
-	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		// Class B inherits from class A
+		engine->RegisterObjectType("B", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("B", asBEHAVE_FACTORY, "B@f()", asFUNCTION(B::factory), asCALL_CDECL); 
+		engine->RegisterObjectBehaviour("B", asBEHAVE_RELEASE, "void f()", asMETHOD(B, release), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("B", asBEHAVE_ADDREF, "void f()", asMETHOD(B, addref), asCALL_THISCALL);
+		engine->RegisterObjectMethod("B", "int test()", asMETHOD(B, test), asCALL_THISCALL);
+		
+		// Test the classes to make sure they work
+		r = engine->ExecuteString(0, "A a; assert(a.test() == 1); B b; assert(b.test() == 2);");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
 
-	// Test explicit cast with registered IMPLICIT_REF_CAST
-	r = engine->ExecuteString(0, "B b; A@ a = cast<A>(b); assert(a.test() == 2);");
-	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		// It should be possible to register a REF_CAST to allow implicit cast
+		// Test IMPLICIT_REF_CAST from subclass to baseclass
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST, "A@ f(B@)", asFUNCTION(B::castToA), asCALL_CDECL); assert( r >= 0 );
+		r = engine->ExecuteString(0, "B b; A@ a = b; assert(a.test() == 2);");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
 
-	// It should be possible to assign a value of type B 
-	// to and variable of type A due to the implicit ref cast
-	r = engine->ExecuteString(0, "A a; B b; a = b;");
-	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		// Test explicit cast with registered IMPLICIT_REF_CAST
+		r = engine->ExecuteString(0, "B b; A@ a = cast<A>(b); assert(a.test() == 2);");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
 
-	// Test REF_CAST from baseclass to subclass
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "B@ f(A@)", asFUNCTION(B::AcastToB), asCALL_CDECL); assert( r >= 0 );
-	r = engine->ExecuteString(0, "B b; A@ a = cast<A>(b); B@ _b = cast<B>(a); assert(_b.test() == 2);");
-	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		// It should be possible to assign a value of type B 
+		// to and variable of type A due to the implicit ref cast
+		r = engine->ExecuteString(0, "A a; B b; a = b;");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
 
-	// Test REF_CAST from baseclass to subclass, where the cast is invalid
-	r = engine->ExecuteString(0, "A a; B@ b = cast<B>(a); assert(@b == null);");
-	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		// Test REF_CAST from baseclass to subclass
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "B@ f(A@)", asFUNCTION(B::AcastToB), asCALL_CDECL); assert( r >= 0 );
+		r = engine->ExecuteString(0, "B b; A@ a = cast<A>(b); B@ _b = cast<B>(a); assert(_b.test() == 2);");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
 
-	// TODO: This requires implicit value cast
-	// Test passing a value of B to a function expecting its base class
-	// the compiler will automatically create a copy
-/*	const char *script = 
-		"void func(A a) {assert(a.test() == 1);}\n";
-	r = mod->AddScriptSection(0, "script", script, strlen(script));
-	r = mod->Build(0);
-	if( r < 0 )
-		fail = true;
-	r = engine->ExecuteString(0, "B b; func(b)");
-	if( r < 0 )
-		fail = true;
+		// Test REF_CAST from baseclass to subclass, where the cast is invalid
+		r = engine->ExecuteString(0, "A a; B@ b = cast<B>(a); assert(@b == null);");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		// TODO: This requires implicit value cast
+		// Test passing a value of B to a function expecting its base class
+		// the compiler will automatically create a copy
+/*		const char *script = 
+			"void func(A a) {assert(a.test() == 1);}\n";
+		r = mod->AddScriptSection(0, "script", script, strlen(script));
+		r = mod->Build(0);
+		if( r < 0 )
+			fail = true;
+		r = engine->ExecuteString(0, "B b; func(b)");
+		if( r < 0 )
+			fail = true;
 */
-	// TODO: A handle to A can not be implicitly cast to a handle to B since it was registered as explicit REF_CAST
-	// TODO: It shouldn't be possible to cast away constness
+		// TODO: A handle to A can not be implicitly cast to a handle to B since it was registered as explicit REF_CAST
+		// TODO: It shouldn't be possible to cast away constness
 
-	engine->Release();
+		engine->Release();
+	}
 
 	// Success
  	return fail;

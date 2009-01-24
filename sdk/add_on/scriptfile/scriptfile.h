@@ -1,10 +1,10 @@
 //
-// asCScriptFile
+// CScriptFile
 //
 // This class encapsulates a FILE pointer in a reference counted class for
 // use within AngelScript.
 //
-// It requires the asCScriptString add-on to work.
+// It requires the CScriptString add-on to work.
 //
 
 #ifndef SCRIPTFILE_H

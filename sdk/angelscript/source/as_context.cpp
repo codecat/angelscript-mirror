@@ -270,7 +270,7 @@ int asCContext::Prepare(int funcID)
 			module->AddContextRef();
 
 		// Determine the minimum stack size needed
-		// TODO: GetSpaceNeededForArguments() should be precomputed
+		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
 		int stackSize = currentFunction->GetSpaceNeededForArguments() + currentFunction->stackNeeded + RESERVE_STACK;
 
 		stackSize = stackSize > engine->initialContextStackSize ? stackSize : engine->initialContextStackSize;
@@ -293,7 +293,7 @@ int asCContext::Prepare(int funcID)
 		// Reserve space for the arguments and return value
 		returnValueSize = currentFunction->GetSpaceNeededForReturnValue();
 
-		// TODO: GetSpaceNeededForArguments() should be precomputed
+		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
 		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? PTR_SIZE : 0);
 	}
 
@@ -1275,6 +1275,11 @@ void asCContext::CallInterfaceMethod(asCModule *mod, asCScriptFunction *func)
 	}
 
 	asCObjectType *objType = obj->objType;
+
+	// TODO: optimize: The object type should have a list of only those methods that 
+	//                 implement interface methods. This list should be ordered by
+	//                 the signatureId so that a binary search can be made, instead
+	//                 of a linear search.
 
 	// Search the object type for a function that matches the interface function
 	asCScriptFunction *realFunc = 0;

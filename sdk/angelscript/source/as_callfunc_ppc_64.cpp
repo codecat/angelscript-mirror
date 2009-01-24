@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -70,7 +70,7 @@ BEGIN_AS_NAMESPACE
 // Extra +1 when returning in memory
 // Extra +1 in ppcArgsType to ensure zero end-of-args marker
 
-// TODO: The global variables must be removed to make the code thread safe
+// TODO: multithread: The global variables must be removed to make the code thread safe
 
 extern "C"
 {

@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.15.1 WIP - 2009/01/16</h2>
+<h2>Version 2.15.1 WIP - 2009/01/23</h2>
 
 <ul>
 <li>Bug fixes
@@ -129,6 +129,7 @@ A:hover
 <li>Saved pre-compiled bytecode didn't store the read-only flag for class methods
 <li>Fixed bug where class method calls that returned a reference to a member of the class would release the class before the reference was used
 <li>Fixed bug that allowed object handles for value types (Thanks Wavesonics)
+<li>Modified as_atomic.h to avoid use of kernel specific atomic.h on Linux (Thanks namtabmai)
 </ul>
 <li>Library
 <ul>
@@ -136,6 +137,10 @@ A:hover
 <li>Updated as_config to properly identify operating system, thus improving multithreading performance
 <li>Created script factory stub functions for instanciating template types, thus simplifying script compiler
 <li>The memory for global variables declared in scripts is now allocated individually, which will allow more flexibility
+</ul>
+<li>Add-ons
+<ul>
+<li>Added the generic interface to the CScriptFile object
 </ul>
 </ul>
 

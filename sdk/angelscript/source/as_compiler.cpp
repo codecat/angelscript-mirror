@@ -2018,8 +2018,8 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 	expr.bc.InstrDWORD(BC_JP, defaultLabel);
 	ReleaseTemporaryVariable(tmpOffset, &expr.bc);
 
-	// TODO: We could possibly optimize this even more by doing a
-	// binary search instead of a linear search through the ranges
+	// TODO: optimize: We could possibly optimize this even more by doing a
+	//                 binary search instead of a linear search through the ranges
 
 	// For each range
 	int range;
@@ -8390,7 +8390,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		if( rctx->type.isVariable )
 			rctx->bc.Pop(PTR_SIZE);
 
-		// TODO: Treat the object handles as two integers, i.e. don't do REFCPY
+		// TODO: optimize: Treat the object handles as two integers, i.e. don't do REFCPY
 		ConvertToVariableNotIn(lctx, rctx);
 		ConvertToVariable(rctx);
 

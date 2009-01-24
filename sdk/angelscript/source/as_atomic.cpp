@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -87,18 +87,22 @@ asDWORD asCAtomic::atomicDec()
 
 #elif defined(AS_LINUX)
 
-END_AS_NAMESPACE
-#include <asm/atomic.h>
-BEGIN_AS_NAMESPACE
+//
+// atomic_inc_and_test() and atomic_dec_and_test() from asm/atomic.h is not meant 
+// to be used outside the Linux kernel. Instead we should use the GNUC provided 
+// __sync_fetch_and_add() and __sync_fetch_and_sub() functions.
+//
+// Reference: http://golubenco.org/blog/atomic-operations/
+// 
 
 asDWORD asCAtomic::atomicInc()
 {
-	return atomic_inc_and_test(value);
+	return __sync_fetch_and_add(&value, 1);
 }
 
 asDWORD asCAtomic::atomicDec()
 {
-	return atomic_dec_and_test(value);
+	return __sync_fetch_and_sub(&value, 1);
 }
 
 #elif defined(AS_MAC)
@@ -106,6 +110,8 @@ asDWORD asCAtomic::atomicDec()
 END_AS_NAMESPACE
 #include <libkern/OSAtomic.h>
 BEGIN_AS_NAMESPACE
+
+// TODO: Should we do the same as for Linux?
 
 asDWORD asCAtomic::atomicInc()
 {

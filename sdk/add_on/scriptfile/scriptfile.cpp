@@ -15,7 +15,56 @@ CScriptFile *ScriptFile_Factory()
     return new CScriptFile();
 }
 
-void RegisterScriptFile(asIScriptEngine *engine)
+void ScriptFile_Factory_Generic(asIScriptGeneric *gen)
+{
+	*(CScriptFile**)gen->GetReturnPointer()	= ScriptFile_Factory();
+}
+
+void ScriptFile_AddRef_Generic(asIScriptGeneric *gen)
+{
+	CScriptFile *file = (CScriptFile*)gen->GetObject();
+	file->AddRef();
+}
+
+void ScriptFile_Release_Generic(asIScriptGeneric *gen)
+{
+	CScriptFile *file = (CScriptFile*)gen->GetObject();
+	file->Release();
+}
+
+void ScriptFile_Open_Generic(asIScriptGeneric *gen)
+{
+	CScriptFile *file = (CScriptFile*)gen->GetObject();
+	std::string *f = (std::string*)gen->GetArgAddress(0);
+	std::string *m = (std::string*)gen->GetArgAddress(1);
+	int r = file->Open(*f, *m);
+	gen->SetReturnDWord(r);
+}
+
+void ScriptFile_Close_Generic(asIScriptGeneric *gen)
+{
+	CScriptFile *file = (CScriptFile*)gen->GetObject();
+	int r = file->Close();
+	gen->SetReturnDWord(r);
+}
+
+void ScriptFile_GetSize_Generic(asIScriptGeneric *gen)
+{
+	CScriptFile *file = (CScriptFile*)gen->GetObject();
+	int r = file->GetSize();
+	gen->SetReturnDWord(r);
+}
+
+void ScriptFile_ReadString_Generic(asIScriptGeneric *gen)
+{
+	CScriptFile *file = (CScriptFile*)gen->GetObject();
+	int len = gen->GetArgDWord(0);
+	CScriptString *str = file->ReadString(len);
+	gen->SetReturnObject(str);
+	str->Release();
+}
+
+void RegisterScriptFile_Native(asIScriptEngine *engine)
 {
     int r;
 
@@ -28,6 +77,29 @@ void RegisterScriptFile(asIScriptEngine *engine)
     r = engine->RegisterObjectMethod("file", "int close()", asMETHOD(CScriptFile,Close), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int getSize()", asMETHOD(CScriptFile,GetSize), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "string @readString(uint)", asMETHOD(CScriptFile,ReadString), asCALL_THISCALL); assert( r >= 0 );
+}
+
+void RegisterScriptFile_Generic(asIScriptEngine *engine)
+{
+	int r;
+
+	r = engine->RegisterObjectType("file", 0, asOBJ_REF); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("file", asBEHAVE_FACTORY, "file @f()", asFUNCTION(ScriptFile_Factory_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("file", asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptFile_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("file", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptFile_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+    r = engine->RegisterObjectMethod("file", "int open(const string &in, const string &in)", asFUNCTION(ScriptFile_Open_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("file", "int close()", asFUNCTION(ScriptFile_Close_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "int getSize()", asFUNCTION(ScriptFile_GetSize_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "string @readString(uint)", asFUNCTION(ScriptFile_ReadString_Generic), asCALL_GENERIC); assert( r >= 0 );
+}
+
+void RegisterScriptFile(asIScriptEngine *engine)
+{
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		RegisterScriptFile_Generic(engine);
+	else
+		RegisterScriptFile_Native(engine);
 }
 
 CScriptFile::CScriptFile()

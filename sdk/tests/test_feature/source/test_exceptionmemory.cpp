@@ -186,6 +186,13 @@ void ExceptionHandle_gen(asIScriptGeneric *gen)
 
 bool Test()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		// Skipping this due to not supporting native calling conventions
+		printf("Skipped due to AS_MAX_PORTABILITY\n");
+		return false;
+	}
+
 	bool fail = false;
 	int r;
 

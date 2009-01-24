@@ -545,7 +545,7 @@ int asCScriptEngine::DiscardModule(const char *module)
 
 	mod->Discard();
 
-	// TODO: Must protect this for multiple accesses
+	// TODO: multithread: Must protect this for multiple accesses
 	// Verify if there are any modules that can be deleted
 	bool hasDeletedModules = false;
 	for( asUINT n = 0; n < scriptModules.GetLength(); n++ )
@@ -710,7 +710,7 @@ int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
-	// TODO: Improve linear search
+	// TODO: optimize: Improve linear search
 	// Search script functions for matching interface
 	int id = -1;
 	for( size_t n = 0; n < ot->methods.GetLength(); ++n )
@@ -1014,7 +1014,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		{
 			// The application type was not informed
 			// TODO: This should be ok, as long as the application doesn't register any functions 
-			// that take the type by value or return it by value using native calling convention
+			//       that take the type by value or return it by value using native calling convention
 			return ConfigError(asINVALID_ARG);
 		}
 	}
@@ -2629,18 +2629,18 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	ot->beh.gcReleaseAllReferences = defaultArrayObjectType->beh.gcReleaseAllReferences;
 
 	// TODO: Template: As the new array type is instanciated, the engine should 
-	// generate new functions to substitute the ones with the template subtype.
+	//       generate new functions to substitute the ones with the template subtype.
 	
 	// The object type needs to store the sub type as well
 	ot->subType = type.GetObjectType();
 	if( ot->subType ) ot->subType->AddRef();
 
 	// TODO: The indexing behaviour and assignment
-	// behaviour should use the correct datatype
+	//       behaviour should use the correct datatype
 
 	// Verify if the subtype contains an any object, in which case this array is a potential circular reference
 	// TODO: We may be a bit smarter here. If we can guarantee that the array type cannot be part of the 
-	// potential circular reference then we don't need to set the flag 
+	//       potential circular reference then we don't need to set the flag 
 	if( ot->subType && (ot->subType->flags & asOBJ_GC) )
 		ot->flags |= asOBJ_GC;
 

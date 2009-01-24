@@ -353,6 +353,13 @@ int *Scoped_Add(int &a, int b)
 
 bool TestRefScoped()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		// Skipping this due to not supporting native calling conventions
+		printf("Skipped due to AS_MAX_PORTABILITY\n");
+		return false;
+	}
+
 	bool fail = false;
 	int r = 0;
 	CBufferedOutStream bout;
@@ -574,6 +581,13 @@ void func9(std::string &, int) {}
 
 bool TestHelper()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		// Skipping this due to not supporting native calling conventions
+		printf("Skipped due to AS_MAX_PORTABILITY\n");
+		return false;
+	}
+
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

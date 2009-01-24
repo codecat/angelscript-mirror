@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <string.h> // strstr
-#include <new.h> // new()
+#include <new> // new()
 #include <math.h>
 #include "scriptmath3d.h"
 

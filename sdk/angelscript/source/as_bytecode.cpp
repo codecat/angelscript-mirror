@@ -574,12 +574,12 @@ bool asCByteCode::IsTemporary(short offset)
 
 int asCByteCode::Optimize()
 {
-	// TODO: The optimizer should be able to inline function calls.
-	//       If the called function has only a few instructions, the function call should be inlined.
-	//       This is especially useful with the factory stubs used for template types and script classes.
+	// TODO: optimize: The optimizer should be able to inline function calls.
+	//                 If the called function has only a few instructions, the function call should be inlined.
+	//                 This is especially useful with the factory stubs used for template types and script classes.
 
-	// TODO: Optimize the release of script objects. Most of the time the instructions PSV and FREE are used for this.
-	//       We could optimize this to one instruction that frees the object in a variable directly.
+	// TODO: optimize: Optimize the release of script objects. Most of the time the instructions PSV and FREE are used for this.
+	//                 We could optimize this to one instruction that frees the object in a variable directly.
 	
 
 	cByteInstruction *instr = first;
@@ -1318,7 +1318,8 @@ cByteInstruction *asCByteCode::DeleteInstruction(cByteInstruction *instr)
 void asCByteCode::Output(asDWORD *array)
 {
 	// TODO: Receive a script function pointer
-	// TODO: When arguments are too large put them in the constant memory instead
+
+	// TODO: When arguments in a byte instruction are too large put them in the constant memory instead
 	//       4 byte arguments may remain in the instruction code for now. But move 
 	//       the 8 byte arguments to the constant memory
 	//       Pointers will also be moved to the pointer array

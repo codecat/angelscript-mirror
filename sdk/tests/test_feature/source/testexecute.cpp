@@ -14,6 +14,10 @@ static void cfunction() {
 	called = true;
 }
 
+static void cfunction_generic(asIScriptGeneric *) {
+	cfunction();
+}
+
 bool TestExecute()
 {
 	bool ret = false;
@@ -21,11 +25,11 @@ bool TestExecute()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if( strstr(asGetLibraryOptions(),"AS_MAX_PORTABILITY") )
 	{
-		engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_GENERIC);
+		int r = engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction_generic), asCALL_GENERIC); assert( r >= 0 );
 	}
 	else
 	{
-		engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
+		int r = engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_CDECL); assert( r >= 0 );
 	}
 	engine->ExecuteString(0, "cfunction()");
 

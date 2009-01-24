@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -66,7 +66,7 @@ BEGIN_AS_NAMESPACE
 // Extra +1 when returning in memory
 // Extra +1 in ppcArgsType to ensure zero end-of-args marker
 
-// TODO: We need to remove these global variables for thread-safety
+// TODO: multithread: We need to remove these global variables for thread-safety
 
 enum argTypes { ppcENDARG, ppcINTARG, ppcFLOATARG, ppcDOUBLEARG };
 static asDWORD ppcArgs[2*AS_PPC_MAX_ARGS + 1 + 1];

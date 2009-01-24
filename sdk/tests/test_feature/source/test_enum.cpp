@@ -54,6 +54,13 @@ static void scriptOutput(int val1)
 
 static bool TestEnum()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		// Skipping this due to not supporting native calling conventions
+		printf("Skipped due to AS_MAX_PORTABILITY\n");
+		return false;
+	}
+
 	asIScriptEngine   *engine;
 	COutStream		   out;
 	CBufferedOutStream bout;

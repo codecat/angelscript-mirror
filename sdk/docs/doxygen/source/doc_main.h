@@ -51,12 +51,13 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 \page doc_using Using AngelScript
 
  - \subpage doc_register_api
- - \subpage doc_obj_handle
  - \subpage doc_call_script_func
  - \subpage doc_gc
+ - \subpage doc_obj_handle
  - \subpage doc_as_vs_cpp_types
 
 \todo Add page about compiling scripts, execute string, and function binding
+\todo Add more comparison with C++
 
 
 
@@ -96,7 +97,6 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_operator_precedence
  - \subpage doc_reserved_keywords
 
-\todo Add more comparison with C++
 
 
 
