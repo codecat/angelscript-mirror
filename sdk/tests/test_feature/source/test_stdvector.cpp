@@ -216,8 +216,8 @@ bool Test()
 	if( ctx ) ctx->Release();
 
 #ifdef __GNUC__
-	mod->AddScriptSection(0, TESTNAME, script3, strlen(script3), 0);
-	r = mod->Build(0);
+	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
@@ -225,7 +225,7 @@ bool Test()
 	}
 
 	ctx = engine->CreateContext();
-	r = ctx->Prepare(engine->GetFunctionIDByDecl(0, "void Test(string[] v)"));
+	r = ctx->Prepare(mod->GetFunctionIdByDecl("void Test(string[] v)"));
 	if( r < 0 ) fail = true;
 	vector<string> local;
 	local.push_back(string("test"));

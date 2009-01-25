@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		751882990EB93F4400190D34 /* scriptmath3d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751882970EB93F4400190D34 /* scriptmath3d.cpp */; };
+		7518829A0EB93F4400190D34 /* scriptmath3d.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 751882980EB93F4400190D34 /* scriptmath3d.h */; };
+		751882A00EB93FA900190D34 /* scriptfile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7518829E0EB93FA900190D34 /* scriptfile.cpp */; };
+		751882A10EB93FA900190D34 /* scriptfile.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7518829F0EB93FA900190D34 /* scriptfile.h */; };
+		751882A60EB93FD700190D34 /* test_file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751882A30EB93FD700190D34 /* test_file.cpp */; };
+		751882A70EB93FD700190D34 /* test_implicithandle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751882A40EB93FD700190D34 /* test_implicithandle.cpp */; };
+		751882A80EB93FD700190D34 /* test_refcast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751882A50EB93FD700190D34 /* test_refcast.cpp */; };
 		751CD9D40C258B3F00DF4D72 /* scriptstring_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751CD9D30C258B3F00DF4D72 /* scriptstring_utils.cpp */; };
 		7526F5340BEE457800BAE32D /* bstr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F4C00BEE457800BAE32D /* bstr.cpp */; };
 		7526F5350BEE457800BAE32D /* bstr.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7526F4C10BEE457800BAE32D /* bstr.h */; };
@@ -128,6 +135,9 @@
 		7526F5AB0BEE459600BAE32D /* scriptstring.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7526F5A90BEE459500BAE32D /* scriptstring.h */; };
 		7526F5AD0BEE45A300BAE32D /* angelscript.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7526F5AC0BEE45A300BAE32D /* angelscript.h */; };
 		7526F5B50BEE462100BAE32D /* libas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7526F5B40BEE462100BAE32D /* libas.a */; };
+		756F4D1D0F2BF0770046B291 /* scriptbuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 756F4D1B0F2BF0770046B291 /* scriptbuilder.cpp */; };
+		756F4D1E0F2BF0770046B291 /* scriptbuilder.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 756F4D1C0F2BF0770046B291 /* scriptbuilder.h */; };
+		756F4D210F2BF0D40046B291 /* test_metadata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 756F4D200F2BF0D40046B291 /* test_metadata.cpp */; };
 		75A792F50C92DFFC00F96481 /* test_destructor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75A792F40C92DFFC00F96481 /* test_destructor.cpp */; };
 		75B81B640DCC0E1400FD2C4F /* test_assign.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B5E0DCC0E1400FD2C4F /* test_assign.cpp */; };
 		75B81B650DCC0E1400FD2C4F /* test_enum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B5F0DCC0E1400FD2C4F /* test_enum.cpp */; };
@@ -167,12 +177,22 @@
 				75C5F4E50C6E1BA400CAEC26 /* scriptdictionary.h in CopyFiles */,
 				75C5F4F50C6E1C0F00CAEC26 /* scriptmath.h in CopyFiles */,
 				75D5B4610CA6ED2D000F5015 /* scriptany.h in CopyFiles */,
+				7518829A0EB93F4400190D34 /* scriptmath3d.h in CopyFiles */,
+				751882A10EB93FA900190D34 /* scriptfile.h in CopyFiles */,
+				756F4D1E0F2BF0770046B291 /* scriptbuilder.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		751882970EB93F4400190D34 /* scriptmath3d.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = scriptmath3d.cpp; path = ../../../../add_on/scriptmath3d/scriptmath3d.cpp; sourceTree = SOURCE_ROOT; };
+		751882980EB93F4400190D34 /* scriptmath3d.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = scriptmath3d.h; path = ../../../../add_on/scriptmath3d/scriptmath3d.h; sourceTree = SOURCE_ROOT; };
+		7518829E0EB93FA900190D34 /* scriptfile.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = scriptfile.cpp; path = ../../../../add_on/scriptfile/scriptfile.cpp; sourceTree = SOURCE_ROOT; };
+		7518829F0EB93FA900190D34 /* scriptfile.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = scriptfile.h; path = ../../../../add_on/scriptfile/scriptfile.h; sourceTree = SOURCE_ROOT; };
+		751882A30EB93FD700190D34 /* test_file.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_file.cpp; path = ../../source/test_file.cpp; sourceTree = SOURCE_ROOT; };
+		751882A40EB93FD700190D34 /* test_implicithandle.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_implicithandle.cpp; path = ../../source/test_implicithandle.cpp; sourceTree = SOURCE_ROOT; };
+		751882A50EB93FD700190D34 /* test_refcast.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_refcast.cpp; path = ../../source/test_refcast.cpp; sourceTree = SOURCE_ROOT; };
 		751CD9D30C258B3F00DF4D72 /* scriptstring_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = scriptstring_utils.cpp; path = ../../../../add_on/scriptstring/scriptstring_utils.cpp; sourceTree = SOURCE_ROOT; };
 		7526F4C00BEE457800BAE32D /* bstr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = bstr.cpp; path = ../../source/bstr.cpp; sourceTree = SOURCE_ROOT; };
 		7526F4C10BEE457800BAE32D /* bstr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = bstr.h; path = ../../source/bstr.h; sourceTree = SOURCE_ROOT; };
@@ -294,6 +314,9 @@
 		7526F5A90BEE459500BAE32D /* scriptstring.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = scriptstring.h; path = ../../../../add_on/scriptstring/scriptstring.h; sourceTree = SOURCE_ROOT; };
 		7526F5AC0BEE45A300BAE32D /* angelscript.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = angelscript.h; path = ../../../../angelscript/include/angelscript.h; sourceTree = SOURCE_ROOT; };
 		7526F5B40BEE462100BAE32D /* libas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libas.a; path = ../../../../angelscript/lib/build/Debug/libas.a; sourceTree = SOURCE_ROOT; };
+		756F4D1B0F2BF0770046B291 /* scriptbuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = scriptbuilder.cpp; path = ../../../../add_on/scriptbuilder/scriptbuilder.cpp; sourceTree = SOURCE_ROOT; };
+		756F4D1C0F2BF0770046B291 /* scriptbuilder.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = scriptbuilder.h; path = ../../../../add_on/scriptbuilder/scriptbuilder.h; sourceTree = SOURCE_ROOT; };
+		756F4D200F2BF0D40046B291 /* test_metadata.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_metadata.cpp; path = ../../source/test_metadata.cpp; sourceTree = SOURCE_ROOT; };
 		75A792F40C92DFFC00F96481 /* test_destructor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_destructor.cpp; path = ../../source/test_destructor.cpp; sourceTree = SOURCE_ROOT; };
 		75B81B5E0DCC0E1400FD2C4F /* test_assign.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_assign.cpp; path = ../../source/test_assign.cpp; sourceTree = SOURCE_ROOT; };
 		75B81B5F0DCC0E1400FD2C4F /* test_enum.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_enum.cpp; path = ../../source/test_enum.cpp; sourceTree = SOURCE_ROOT; };
@@ -342,6 +365,16 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				756F4D200F2BF0D40046B291 /* test_metadata.cpp */,
+				756F4D1B0F2BF0770046B291 /* scriptbuilder.cpp */,
+				756F4D1C0F2BF0770046B291 /* scriptbuilder.h */,
+				751882A30EB93FD700190D34 /* test_file.cpp */,
+				751882A40EB93FD700190D34 /* test_implicithandle.cpp */,
+				751882A50EB93FD700190D34 /* test_refcast.cpp */,
+				7518829E0EB93FA900190D34 /* scriptfile.cpp */,
+				7518829F0EB93FA900190D34 /* scriptfile.h */,
+				751882970EB93F4400190D34 /* scriptmath3d.cpp */,
+				751882980EB93F4400190D34 /* scriptmath3d.h */,
 				75B81B5E0DCC0E1400FD2C4F /* test_assign.cpp */,
 				75B81B5F0DCC0E1400FD2C4F /* test_enum.cpp */,
 				75B81B600DCC0E1400FD2C4F /* test_factory.cpp */,
@@ -669,6 +702,13 @@
 				75B81B670DCC0E1400FD2C4F /* test_implicitcast.cpp in Sources */,
 				75B81B680DCC0E1400FD2C4F /* test_rz.cpp in Sources */,
 				75B81B690DCC0E1400FD2C4F /* test_typedef.cpp in Sources */,
+				751882990EB93F4400190D34 /* scriptmath3d.cpp in Sources */,
+				751882A00EB93FA900190D34 /* scriptfile.cpp in Sources */,
+				751882A60EB93FD700190D34 /* test_file.cpp in Sources */,
+				751882A70EB93FD700190D34 /* test_implicithandle.cpp in Sources */,
+				751882A80EB93FD700190D34 /* test_refcast.cpp in Sources */,
+				756F4D1D0F2BF0770046B291 /* scriptbuilder.cpp in Sources */,
+				756F4D210F2BF0D40046B291 /* test_metadata.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -717,6 +757,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DEPLOYMENT_LOCATION = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
@@ -728,6 +769,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DEPLOYMENT_LOCATION = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;

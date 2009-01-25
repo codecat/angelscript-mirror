@@ -111,8 +111,6 @@ END_AS_NAMESPACE
 #include <libkern/OSAtomic.h>
 BEGIN_AS_NAMESPACE
 
-// TODO: Should we do the same as for Linux?
-
 asDWORD asCAtomic::atomicInc()
 {
 	return OSAtomicIncrement32((int32_t*)&value);

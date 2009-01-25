@@ -20,11 +20,12 @@ bool Test()
 
 	const char *script =
 		"file f;                                          \n"
-		"f.open(\"scripts/TestExecuteScript.as\", \"r\"); \n"
+		"int r = f.open(\"scripts/TestExecuteScript.as\", \"r\"); \n"
+		"if( r >= 0 ) { \n" 
 		"assert( f.getSize() > 0 );                       \n"
 		"string @s = f.readString(10000);                 \n"
 		"assert( s.length() == uint(f.getSize()) );       \n"
-		"f.close();                                       \n";
+		"f.close(); }                                    \n";
 
 	r = engine->ExecuteString(0, script);
 	if( r != asEXECUTION_FINISHED )

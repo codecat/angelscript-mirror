@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7518827E0EB93E5000190D34 /* as_atomic.h in Headers */ = {isa = PBXBuildFile; fileRef = 7518827C0EB93E5000190D34 /* as_atomic.h */; };
+		7518827F0EB93E5000190D34 /* as_gc.h in Headers */ = {isa = PBXBuildFile; fileRef = 7518827D0EB93E5000190D34 /* as_gc.h */; };
+		751882840EB93E8F00190D34 /* as_atomic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751882800EB93E8F00190D34 /* as_atomic.cpp */; };
+		751882850EB93E8F00190D34 /* as_callfunc_x64_gcc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751882810EB93E8F00190D34 /* as_callfunc_x64_gcc.cpp */; };
+		751882860EB93E8F00190D34 /* as_callfunc_xenon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751882820EB93E8F00190D34 /* as_callfunc_xenon.cpp */; };
+		751882870EB93E8F00190D34 /* as_gc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751882830EB93E8F00190D34 /* as_gc.cpp */; };
 		7526F5C20BEE46B100BAE32D /* as_memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7526F5C00BEE46B100BAE32D /* as_memory.cpp */; };
 		7526F5C30BEE46B100BAE32D /* as_memory.h in Headers */ = {isa = PBXBuildFile; fileRef = 7526F5C10BEE46B100BAE32D /* as_memory.h */; };
 		75D1515C0C0FAFFC00EBF441 /* as_callfunc_ppc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358570A2DC0A1008FE303 /* as_callfunc_ppc.cpp */; };
@@ -48,7 +54,6 @@
 		9B2358F60A2DC696008FE303 /* as_arrayobject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358520A2DC0A1008FE303 /* as_arrayobject.cpp */; };
 		9B2358F70A2DC696008FE303 /* as_builder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358530A2DC0A1008FE303 /* as_builder.cpp */; };
 		9B2358F80A2DC696008FE303 /* as_bytecode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358540A2DC0A1008FE303 /* as_bytecode.cpp */; };
-		9B2358F90A2DC696008FE303 /* as_c.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358550A2DC0A1008FE303 /* as_c.cpp */; };
 		9B2358FA0A2DC696008FE303 /* as_callfunc_mips.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358560A2DC0A1008FE303 /* as_callfunc_mips.cpp */; };
 		9B2358FC0A2DC696008FE303 /* as_callfunc_sh4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358580A2DC0A1008FE303 /* as_callfunc_sh4.cpp */; };
 		9B2358FD0A2DC696008FE303 /* as_callfunc_x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358590A2DC0A1008FE303 /* as_callfunc_x86.cpp */; };
@@ -77,6 +82,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7518827C0EB93E5000190D34 /* as_atomic.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_atomic.h; sourceTree = "<group>"; };
+		7518827D0EB93E5000190D34 /* as_gc.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_gc.h; sourceTree = "<group>"; };
+		751882800EB93E8F00190D34 /* as_atomic.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_atomic.cpp; path = ../../source/as_atomic.cpp; sourceTree = SOURCE_ROOT; };
+		751882810EB93E8F00190D34 /* as_callfunc_x64_gcc.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_x64_gcc.cpp; path = ../../source/as_callfunc_x64_gcc.cpp; sourceTree = SOURCE_ROOT; };
+		751882820EB93E8F00190D34 /* as_callfunc_xenon.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_xenon.cpp; path = ../../source/as_callfunc_xenon.cpp; sourceTree = SOURCE_ROOT; };
+		751882830EB93E8F00190D34 /* as_gc.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_gc.cpp; path = ../../source/as_gc.cpp; sourceTree = SOURCE_ROOT; };
 		7526F5C00BEE46B100BAE32D /* as_memory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_memory.cpp; path = ../../source/as_memory.cpp; sourceTree = SOURCE_ROOT; };
 		7526F5C10BEE46B100BAE32D /* as_memory.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_memory.h; sourceTree = "<group>"; };
 		75DA881F0C1C30CF00A15034 /* as_callfunc_ppc_64.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_ppc_64.cpp; path = ../../source/as_callfunc_ppc_64.cpp; sourceTree = SOURCE_ROOT; };
@@ -116,7 +127,6 @@
 		9B2358520A2DC0A1008FE303 /* as_arrayobject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_arrayobject.cpp; path = ../../source/as_arrayobject.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358530A2DC0A1008FE303 /* as_builder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_builder.cpp; path = ../../source/as_builder.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358540A2DC0A1008FE303 /* as_bytecode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_bytecode.cpp; path = ../../source/as_bytecode.cpp; sourceTree = SOURCE_ROOT; };
-		9B2358550A2DC0A1008FE303 /* as_c.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_c.cpp; path = ../../source/as_c.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358560A2DC0A1008FE303 /* as_callfunc_mips.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_mips.cpp; path = ../../source/as_callfunc_mips.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358570A2DC0A1008FE303 /* as_callfunc_ppc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_ppc.cpp; path = ../../source/as_callfunc_ppc.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358580A2DC0A1008FE303 /* as_callfunc_sh4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_sh4.cpp; path = ../../source/as_callfunc_sh4.cpp; sourceTree = SOURCE_ROOT; };
@@ -186,12 +196,15 @@
 		08FB77ACFE841707C02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				751882800EB93E8F00190D34 /* as_atomic.cpp */,
+				751882810EB93E8F00190D34 /* as_callfunc_x64_gcc.cpp */,
+				751882820EB93E8F00190D34 /* as_callfunc_xenon.cpp */,
+				751882830EB93E8F00190D34 /* as_gc.cpp */,
 				9B5AC0F10A2C6F990089909E /* include */,
 				7526F5C00BEE46B100BAE32D /* as_memory.cpp */,
 				9B2358520A2DC0A1008FE303 /* as_arrayobject.cpp */,
 				9B2358530A2DC0A1008FE303 /* as_builder.cpp */,
 				9B2358540A2DC0A1008FE303 /* as_bytecode.cpp */,
-				9B2358550A2DC0A1008FE303 /* as_c.cpp */,
 				9B2358560A2DC0A1008FE303 /* as_callfunc_mips.cpp */,
 				9B2358570A2DC0A1008FE303 /* as_callfunc_ppc.cpp */,
 				75DA881F0C1C30CF00A15034 /* as_callfunc_ppc_64.cpp */,
@@ -226,6 +239,8 @@
 		9B5AC0F10A2C6F990089909E /* include */ = {
 			isa = PBXGroup;
 			children = (
+				7518827C0EB93E5000190D34 /* as_atomic.h */,
+				7518827D0EB93E5000190D34 /* as_gc.h */,
 				7526F5C10BEE46B100BAE32D /* as_memory.h */,
 				9B2358910A2DC0B4008FE303 /* angelscript.h */,
 				9B2358060A2DC076008FE303 /* as_array.h */,
@@ -308,6 +323,8 @@
 				9B2358F10A2DC68D008FE303 /* as_typeinfo.h in Headers */,
 				9B2358F20A2DC68D008FE303 /* as_variablescope.h in Headers */,
 				7526F5C30BEE46B100BAE32D /* as_memory.h in Headers */,
+				7518827E0EB93E5000190D34 /* as_atomic.h in Headers */,
+				7518827F0EB93E5000190D34 /* as_gc.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -355,7 +372,6 @@
 				9B2358F60A2DC696008FE303 /* as_arrayobject.cpp in Sources */,
 				9B2358F70A2DC696008FE303 /* as_builder.cpp in Sources */,
 				9B2358F80A2DC696008FE303 /* as_bytecode.cpp in Sources */,
-				9B2358F90A2DC696008FE303 /* as_c.cpp in Sources */,
 				9B2358FA0A2DC696008FE303 /* as_callfunc_mips.cpp in Sources */,
 				9B2358FC0A2DC696008FE303 /* as_callfunc_sh4.cpp in Sources */,
 				9B2358FD0A2DC696008FE303 /* as_callfunc_x86.cpp in Sources */,
@@ -384,6 +400,10 @@
 				7526F5C20BEE46B100BAE32D /* as_memory.cpp in Sources */,
 				75D1515C0C0FAFFC00EBF441 /* as_callfunc_ppc.cpp in Sources */,
 				75DA88200C1C30CF00A15034 /* as_callfunc_ppc_64.cpp in Sources */,
+				751882840EB93E8F00190D34 /* as_atomic.cpp in Sources */,
+				751882850EB93E8F00190D34 /* as_callfunc_x64_gcc.cpp in Sources */,
+				751882860EB93E8F00190D34 /* as_callfunc_xenon.cpp in Sources */,
+				751882870EB93E8F00190D34 /* as_gc.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -398,6 +418,7 @@
 					i386,
 				);
 				GCC_DEBUGGING_SYMBOLS = full;
+				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = YES;
