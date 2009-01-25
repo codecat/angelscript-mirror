@@ -22,42 +22,11 @@ static void DestructString(string *thisPointer)
 	thisPointer->~string();
 }
 
-static string &AssignBitsToString(unsigned int i, string &dest)
-{
-	ostringstream stream;
-	stream << hex << i;
-	dest = stream.str(); 
-	return dest;
-}
-
-static string &AddAssignBitsToString(unsigned int i, string &dest)
-{
-	ostringstream stream;
-	stream << hex << i;
-	dest += stream.str(); 
-	return dest;
-}
-
-static string AddStringBits(string &str, unsigned int i)
-{
-	ostringstream stream;
-	stream << hex << i;
-	str += stream.str(); 
-	return str;
-}
-
-static string AddBitsString(unsigned int i, string &str)
-{
-	ostringstream stream;
-	stream << hex << i;
-	return stream.str() + str;
-}
-
 static string &AssignUIntToString(unsigned int i, string &dest)
 {
 	ostringstream stream;
 	stream << i;
-	dest = stream.str(); 
+	dest = stream.str();
 	return dest;
 }
 
@@ -65,7 +34,7 @@ static string &AddAssignUIntToString(unsigned int i, string &dest)
 {
 	ostringstream stream;
 	stream << i;
-	dest += stream.str(); 
+	dest += stream.str();
 	return dest;
 }
 
@@ -73,7 +42,7 @@ static string AddStringUInt(string &str, unsigned int i)
 {
 	ostringstream stream;
 	stream << i;
-	str += stream.str(); 
+	str += stream.str();
 	return str;
 }
 
@@ -88,7 +57,7 @@ static string &AssignIntToString(int i, string &dest)
 {
 	ostringstream stream;
 	stream << i;
-	dest = stream.str(); 
+	dest = stream.str();
 	return dest;
 }
 
@@ -96,7 +65,7 @@ static string &AddAssignIntToString(int i, string &dest)
 {
 	ostringstream stream;
 	stream << i;
-	dest += stream.str(); 
+	dest += stream.str();
 	return dest;
 }
 
@@ -104,7 +73,7 @@ static string AddStringInt(string &str, int i)
 {
 	ostringstream stream;
 	stream << i;
-	str += stream.str(); 
+	str += stream.str();
 	return str;
 }
 
@@ -119,7 +88,7 @@ static string &AssignDoubleToString(double f, string &dest)
 {
 	ostringstream stream;
 	stream << f;
-	dest = stream.str(); 
+	dest = stream.str();
 	return dest;
 }
 
@@ -127,7 +96,7 @@ static string &AddAssignDoubleToString(double f, string &dest)
 {
 	ostringstream stream;
 	stream << f;
-	dest += stream.str(); 
+	dest += stream.str();
 	return dest;
 }
 
@@ -135,7 +104,7 @@ static string AddStringDouble(string &str, double f)
 {
 	ostringstream stream;
 	stream << f;
-	str += stream.str(); 
+	str += stream.str();
 	return str;
 }
 

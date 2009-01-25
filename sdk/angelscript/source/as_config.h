@@ -424,8 +424,28 @@
 		#endif
 		#define AS_POSIX_THREADS
 
-	// Windows and Linux
-	#elif defined(WIN32) || defined(__linux__)
+	// Windows
+	#elif defined(WIN32)
+		// On Windows the simple classes are returned in the EAX:EDX registers
+		//#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+		//#define CDECL_RETURN_SIMPLE_IN_MEMORY
+		//#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+		
+		#if defined(i386) && !defined(__LP64__)
+			// Support native calling conventions on Intel 32bit CPU
+			#define AS_X86
+		#else
+			// No support for native calling conventions yet
+			#define AS_MAX_PORTABILITY
+			// STDCALL is not available on 64bit Linux
+			#undef STDCALL
+			#define STDCALL
+		#endif
+        #define AS_WIN
+        #define AS_WINDOWS_THREADS
+
+	// Linux
+	#elif defined(__linux__)
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
@@ -439,13 +459,8 @@
 			#undef STDCALL
 			#define STDCALL
 		#endif
-		#if defined(WIN32)
-			#define AS_WIN
-			#define AS_WINDOWS_THREADS
-		#else
-			#define AS_LINUX
-			#define AS_POSIX_THREADS
-		#endif
+        #define AS_LINUX
+        #define AS_POSIX_THREADS
 
 	// Free BSD
 	#elif __FreeBSD__

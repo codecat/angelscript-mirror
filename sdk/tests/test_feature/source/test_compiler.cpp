@@ -24,7 +24,7 @@ const char *script3 = "void CompilerAssert(uint8[]@ &in b) { b[0] == 1; }";
 
 const char *script4 = "class C : I {}";
 
-const char *script5 = 
+const char *script5 =
 "void t() {} \n"
 "void crash() { bool b = t(); } \n";
 
@@ -40,11 +40,11 @@ const char *script7 =
 	}								  \n\
 }";
 
-const char *script8 = 
+const char *script8 =
 "float calc(float x, float y) { Print(\"GOT THESE NUMBERS: \" + x + \", \" + y + \"\n\"); return x*y; }";
 
 
-const char *script9 = 
+const char *script9 =
 "void noop() {}\n"
 "int fuzzy() {\n"
 "  return noop();\n"
@@ -163,7 +163,7 @@ bool Test()
 		fail = true;
 
 	// test 6
-	// Verify that script class methods can have the same signature as 
+	// Verify that script class methods can have the same signature as
 	// globally registered functions since they are in different scope
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("bool Test(bool, float)", asFUNCTION(0), asCALL_GENERIC);
@@ -186,7 +186,7 @@ bool Test()
 		printf("failed on 7\n");
 		fail = true;
 	}
-	
+
 	// test 8
 	// Don't assert on implicit conversion to object when a compile error has occurred
 	bout.buffer = "";
@@ -238,7 +238,7 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	
+
 	// test 11
 	// Properly handle error when assigning a void expression to a variable
 	bout.buffer = "";
@@ -404,7 +404,7 @@ bool Test2()
 	int r;
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType( "Test", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C );
+	engine->RegisterObjectType( "Test", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_FLOAT );
 	engine->RegisterGlobalBehaviour( asBEHAVE_ADD, "Test f(Test &in, Test &in)", asFUNCTION(add), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void doStuff(Test, Test)", asFUNCTION(doStuff), asCALL_CDECL);
 
@@ -432,11 +432,11 @@ bool Test3()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	const char *script = 
+	const char *script =
 	"uint8 search_no(uint8[]@ cmd, uint16 len, uint8[] @rcv)    \n" //mbno is nx5 array, static
 	"{														    \n"
 	"	if (@rcv == null) assert(false);						\n"
-	"		return(255);										\n" 
+	"		return(255);										\n"
 	"}															\n"
 	"void main()												\n"
 	"{															\n"
@@ -447,7 +447,7 @@ bool Test3()
 	"	search_no(cmd, GET_LEN2(cmd), rcv);						\n" //This is OK!
 	"	len = GET_LEN(cmd);										\n"
 	"	search_no(cmd, len, rcv);								\n" //This is OK!
-	"															\n"//but 
+	"															\n"//but
 	"	search_no(cmd, GET_LEN(cmd), rcv);						\n" //@rcv is null
 	"}															\n"
 	"uint16 GET_LEN(uint8[]@ cmd)								\n"
@@ -496,7 +496,7 @@ bool Test4()
 	engine->RegisterObjectBehaviour("Struct", asBEHAVE_FACTORY, "Struct@ f()", asFUNCTION(0), asCALL_GENERIC);
 	engine->RegisterObjectBehaviour("Struct", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	engine->RegisterObjectBehaviour("Struct", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
-	engine->RegisterObjectProperty("Struct", "_Save Save", 0); 
+	engine->RegisterObjectProperty("Struct", "_Save Save", 0);
 
 	engine->RegisterObjectType("ScriptObject", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectMethod("ScriptObject", "Struct @f()", asFUNCTION(0), asCALL_GENERIC);
@@ -505,7 +505,7 @@ bool Test4()
 
 	engine->RegisterGlobalFunction("void print(Chars&)", asFUNCTION(0), asCALL_GENERIC);
 
-	const char *script1 = "void main() { print(current.f().Save.FieldName); }"; 
+	const char *script1 = "void main() { print(current.f().Save.FieldName); }";
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test", script1, strlen(script1));
 	r = mod->Build();
@@ -528,7 +528,7 @@ bool Test4()
 bool Test5()
 {
 	// This script caused an assert failure during compilation
-	const char *script = 
+	const char *script =
 		"class cFlagBase {} \n"
 		"void CTF_getBaseForOwner( )   \n"
 		"{  \n"
@@ -584,7 +584,7 @@ bool Test6()
 	}
 
 	// This should also work
-	const char *script2 = 
+	const char *script2 =
 		"interface IFoo { \n"
 		"	const int foo(int a); \n"
 		"} \n";
@@ -601,7 +601,7 @@ bool Test6()
 		fail = true;
 	}
 
-	// This would cause an assert failure 
+	// This would cause an assert failure
 	const char *script3 =
 		"class MyClass { \n"
 		"    MyClass(int a) {} \n"
@@ -623,7 +623,7 @@ bool Test6()
 	}
 
 	// This would also cause an assert failure
-	const char *script4 = 
+	const char *script4 =
 		"void main() { \n"
 		"  for (;i < 10;); \n"
 		"} \n";

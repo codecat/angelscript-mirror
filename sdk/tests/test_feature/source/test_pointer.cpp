@@ -5,7 +5,7 @@ namespace TestPointer
 
 #define TESTNAME "TestPointer"
 
-class ObjectInstance 
+class ObjectInstance
 {
 public:
 	int val;
@@ -43,7 +43,7 @@ static void FunctionOnObject(ObjectInstance *obj)
 {
 }
 
-static const char *script = 
+static const char *script =
 "void Test()                                        \n"
 "{                                                  \n"
 "  ObjectInstance*[] c(5);                          \n"
@@ -78,7 +78,7 @@ bool Test()
 
 	r = engine->RegisterGlobalFunction("ObjectType *CreateObjectType(string &in)", asFUNCTION(CreateObjectType), asCALL_CDECL); assert(r>=0);
 	r = engine->RegisterGlobalFunction("ObjectInstance *CreateObjectInstance(ObjectType *type)", asFUNCTION(CreateObjectInstance), asCALL_CDECL); assert(r>=0);
-	
+
 	r = engine->RegisterGlobalFunction("void FunctionOnObject(ObjectInstance *)", asFUNCTION(FunctionOnObject), asCALL_CDECL); assert(r>=0);
 
 	// Register an object.
@@ -101,7 +101,7 @@ bool Test()
 	}
 	if( obj.val != 23 )
 	{
-		printf("%s: failed\n", TESTNAME, r);
+		printf("%s: failed\n", TESTNAME);
 		fail = true;
 	}
 
@@ -113,7 +113,7 @@ bool Test()
 	}
 	if( obj.val != 13 )
 	{
-		printf("%s: failed\n", TESTNAME, r);
+		printf("%s: failed\n", TESTNAME);
 		fail = true;
 	}
 
@@ -122,14 +122,14 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		printf("%s: failed\n", TESTNAME, r);
+		printf("%s: failed\n", TESTNAME);
 		fail = true;
 	}
 
 	r = engine->ExecuteString(0, "Test()");
 	if( r < 0 )
 	{
-		printf("%s: failed\n", TESTNAME, r);
+		printf("%s: failed\n", TESTNAME);
 		fail = true;
 	}
 

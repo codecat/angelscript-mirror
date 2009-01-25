@@ -249,7 +249,7 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 asCScriptEngine::asCScriptEngine()
 {
 	// Instanciate the thread manager
-	if( threadManager == 0 ) 
+	if( threadManager == 0 )
 		threadManager = asNEW(asCThreadManager);
 	else
 		threadManager->AddRef();
@@ -277,7 +277,7 @@ asCScriptEngine::asCScriptEngine()
 	userData = 0;
 
 	initialContextStackSize = 1024;      // 1 KB
-	
+
 
 	typeIdSeqNbr = 0;
 	currentGroup = &defaultGroup;
@@ -313,7 +313,7 @@ asCScriptEngine::~asCScriptEngine()
 			}
 			arrayTypes[n]->beh.factories.Allocate(0, false);
 		}
-	}	
+	}
 
 	// The modules must be deleted first, as they may use
 	// object types from the config groups
@@ -482,7 +482,7 @@ int asCScriptEngine::WriteMessage(const char *section, int row, int col, asEMsgT
 		return asINVALID_ARG;
 
 	// If there is no callback then there's nothing to do
-	if( !msgCallback ) 
+	if( !msgCallback )
 		return 0;
 
 	asSMessageInfo msg;
@@ -511,7 +511,7 @@ asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLengt
 	asETokenClass tc;
 	t.GetToken(string, stringLength, &len, &tc);
 
-	if( tokenLength ) 
+	if( tokenLength )
 		*tokenLength = (int)len;
 
 	return tc;
@@ -631,7 +631,7 @@ void asCScriptEngine::ClearUnusedTypes()
 		{
 			// Template types will have two references for each factory stub
 			int refCount = (types[n]->flags & asOBJ_TEMPLATE) ? 2*(int)types[n]->beh.factories.GetLength() : 0;
-					
+
 			if( types[n]->GetRefCount() == refCount )
 			{
 				if( types[n]->arrayType )
@@ -1010,10 +1010,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 						 asOBJ_APP_PRIMITIVE) )
 				return ConfigError(asINVALID_ARG);
 		}
-		else 
+		else
 		{
 			// The application type was not informed
-			// TODO: This should be ok, as long as the application doesn't register any functions 
+			// TODO: This should be ok, as long as the application doesn't register any functions
 			//       that take the type by value or return it by value using native calling convention
 			return ConfigError(asINVALID_ARG);
 		}
@@ -1024,8 +1024,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	// Don't allow anything else than the defined flags
 	if( flags - (flags & asOBJ_MASK_VALID_FLAGS) )
 		return ConfigError(asINVALID_ARG);
-	
-	// Value types must have a defined size 
+
+	// Value types must have a defined size
 	if( (flags & asOBJ_VALUE) && byteSize == 0 )
 	{
 		WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_VALUE_TYPE_MUST_HAVE_SIZE);
@@ -1185,11 +1185,11 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	// TODO: Template: When parsing methods for the template type, the builder needs to know about the
 	// template subtype so that it will recognize it as a legal datatype.
 
-	// TODO: Template: How do we make the code handle the template subtype? The engine needs to have a 
+	// TODO: Template: How do we make the code handle the template subtype? The engine needs to have a
 	// special object type, so that asCDataType can represent the generic template subtype. Need to tell
 	// the builder/parser that the type T is a template subtype.
 
-	// The default array object is actually being registered 
+	// The default array object is actually being registered
 	// with incorrect declarations, but that's a concious decision
 	bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
 
@@ -1319,11 +1319,11 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		if( behaviour == asBEHAVE_GETREFCOUNT &&
 			func.returnType != asCDataType::CreatePrimitive(ttInt, false) )
 			return ConfigError(asINVALID_DECLARATION);
-		
+
 		if( behaviour == asBEHAVE_GETGCFLAG &&
 			func.returnType != asCDataType::CreatePrimitive(ttBool, false) )
 			return ConfigError(asINVALID_DECLARATION);
-		
+
 		if( (behaviour == asBEHAVE_SETGCFLAG ||
 			 behaviour == asBEHAVE_ENUMREFS  ||
 			 behaviour == asBEHAVE_RELEASEREFS) &&
@@ -1522,8 +1522,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	else if( behaviour == asBEHAVE_ADDREF )
 	{
 		// Must be a ref type and must not have asOBJ_NOHANDLE, nor asOBJ_SCOPED
-		if( !(func.objectType->flags & asOBJ_REF) || 
-			(func.objectType->flags & asOBJ_NOHANDLE) || 
+		if( !(func.objectType->flags & asOBJ_REF) ||
+			(func.objectType->flags & asOBJ_NOHANDLE) ||
 			(func.objectType->flags & asOBJ_SCOPED) )
 		{
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
@@ -1532,7 +1532,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		if( beh->addref )
 			return ConfigError(asALREADY_REGISTERED);
-											 
+
 		// Verify that the return type is void
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION);
@@ -1677,11 +1677,11 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		if( behaviour == asBEHAVE_GETREFCOUNT &&
 			func.returnType != asCDataType::CreatePrimitive(ttInt, false) )
 			return ConfigError(asINVALID_DECLARATION);
-		
+
 		if( behaviour == asBEHAVE_GETGCFLAG &&
 			func.returnType != asCDataType::CreatePrimitive(ttBool, false) )
 			return ConfigError(asINVALID_DECLARATION);
-		
+
 		if( (behaviour == asBEHAVE_SETGCFLAG ||
 			 behaviour == asBEHAVE_ENUMREFS  ||
 			 behaviour == asBEHAVE_RELEASEREFS) &&
@@ -2212,7 +2212,7 @@ void asCScriptEngine::PrepareEngine()
 				}
 			}
 			// Verify that ref types have add ref and release behaviours
-			else if( (objectTypes[n]->flags & asOBJ_REF) && 
+			else if( (objectTypes[n]->flags & asOBJ_REF) &&
 				     !(objectTypes[n]->flags & asOBJ_NOHANDLE) )
 			{
 				if( objectTypes[n]->beh.addref  == 0 ||
@@ -2628,9 +2628,9 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	ot->beh.gcEnumReferences       = defaultArrayObjectType->beh.gcEnumReferences;
 	ot->beh.gcReleaseAllReferences = defaultArrayObjectType->beh.gcReleaseAllReferences;
 
-	// TODO: Template: As the new array type is instanciated, the engine should 
+	// TODO: Template: As the new array type is instanciated, the engine should
 	//       generate new functions to substitute the ones with the template subtype.
-	
+
 	// The object type needs to store the sub type as well
 	ot->subType = type.GetObjectType();
 	if( ot->subType ) ot->subType->AddRef();
@@ -2639,8 +2639,8 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	//       behaviour should use the correct datatype
 
 	// Verify if the subtype contains an any object, in which case this array is a potential circular reference
-	// TODO: We may be a bit smarter here. If we can guarantee that the array type cannot be part of the 
-	//       potential circular reference then we don't need to set the flag 
+	// TODO: We may be a bit smarter here. If we can guarantee that the array type cannot be part of the
+	//       potential circular reference then we don't need to set the flag
 	if( ot->subType && (ot->subType->flags & asOBJ_GC) )
 		ot->flags |= asOBJ_GC;
 
@@ -2980,10 +2980,12 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 
 void *asCScriptEngine::CallAlloc(asCObjectType *type)
 {
+    // Allocate 4 bytes as the smallest size. Otherwise CallSystemFunction may try to
+    // copy a DWORD onto a smaller memory block, in case the object type is return in registers.
 #if defined(AS_DEBUG) && !defined(AS_NO_USER_ALLOC)
-	return ((asALLOCFUNCDEBUG_t)(userAlloc))(type->size, __FILE__, __LINE__);
+	return ((asALLOCFUNCDEBUG_t)(userAlloc))(type->size < 4 ? 4 : type->size, __FILE__, __LINE__);
 #else
-	return userAlloc(type->size);
+	return userAlloc(type->size < 4 ? 4 : type->size);
 #endif
 }
 
@@ -3577,7 +3579,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 
 	//	Create the data type
 	token = t.GetToken(decl, strlen(decl), &tokenLen);
-	switch(token) 
+	switch(token)
 	{
 	case ttBool:
 	case ttInt:
@@ -3590,7 +3592,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	case ttUInt64:
 	case ttFloat:
 	case ttDouble:
-		if( strlen(decl) != tokenLen ) 
+		if( strlen(decl) != tokenLen )
 		{
 			return ConfigError(asINVALID_TYPE);
 		}
@@ -3633,13 +3635,13 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 int asCScriptEngine::RegisterEnum(const char *name)
 {
 	//	Check the name
-	if( NULL == name ) 
+	if( NULL == name )
 		return ConfigError(asINVALID_NAME);
 
 	// Verify if the name has been registered as a type already
 	asUINT n;
-	for( n = 0; n < objectTypes.GetLength(); n++ ) 
-		if( objectTypes[n] && objectTypes[n]->name == name ) 
+	for( n = 0; n < objectTypes.GetLength(); n++ )
+		if( objectTypes[n] && objectTypes[n]->name == name )
 			return asALREADY_REGISTERED;
 
 	// Use builder to parse the datatype
@@ -3648,18 +3650,18 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	bool oldMsgCallback = msgCallback; msgCallback = false;
 	int r = bld.ParseDataType(name, &dt);
 	msgCallback = oldMsgCallback;
-	if( r >= 0 ) 
+	if( r >= 0 )
 		return ConfigError(asERROR);
 
 	// Make sure the name is not a reserved keyword
 	asCTokenizer t;
 	size_t tokenLen;
 	int token = t.GetToken(name, strlen(name), &tokenLen);
-	if( token != ttIdentifier || strlen(name) != tokenLen ) 
+	if( token != ttIdentifier || strlen(name) != tokenLen )
 		return ConfigError(asINVALID_NAME);
 
 	r = bld.CheckNameConflict(name, 0, 0);
-	if( r < 0 ) 
+	if( r < 0 )
 		return ConfigError(asNAME_TAKEN);
 
 	asCObjectType *st = asNEW(asCObjectType)(this);
@@ -3698,7 +3700,7 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 	if( ot == 0 || !(ot->flags & asOBJ_NAMED_ENUM) )
 		return ConfigError(asINVALID_TYPE);
 
-	if( NULL == valueName ) 
+	if( NULL == valueName )
 		return ConfigError(asINVALID_NAME);
 
 	for( unsigned int n = 0; n < ot->enumValues.GetLength(); n++ )
@@ -3725,13 +3727,13 @@ int asCScriptEngine::GetObjectTypeCount()
 
 // interface
 asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index)
-{	
+{
 	if( index+1 >= objectTypes.GetLength() + classTypes.GetLength() )
 		return 0;
 
 	if( index+1 < objectTypes.GetLength() )
 		return objectTypes[index+1];
-	
+
 	return classTypes[index-objectTypes.GetLength()+1];
 }
 

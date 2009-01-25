@@ -67,12 +67,12 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 
 int asCGarbageCollector::GarbageCollect(asEGCFlags flags)
 {
-	// The application is responsible for making sure  
-	// the gc is only executed by one thread at a time. 
+	// The application is responsible for making sure
+	// the gc is only executed by one thread at a time.
 
 	bool doDetect  = (flags & asGC_DETECT_GARBAGE)  || !(flags & asGC_DESTROY_GARBAGE);
 	bool doDestroy = (flags & asGC_DESTROY_GARBAGE) || !(flags & asGC_DETECT_GARBAGE);
-	
+
 	if( flags & asGC_FULL_CYCLE )
 	{
 		// Reset the state
@@ -122,9 +122,9 @@ int asCGarbageCollector::GarbageCollect(asEGCFlags flags)
 
 void asCGarbageCollector::GetStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected)
 {
-	// It's not necessary to protect this access, as 
+	// It's not necessary to protect this access, as
 	// it doesn't matter if another thread is currently
-	// appending a new object. 
+	// appending a new object.
 	if( currentSize )
 		*currentSize = (asUINT)gcObjects.GetLength();
 
@@ -203,14 +203,14 @@ int asCGarbageCollector::DestroyGarbage()
 			// Destroy all objects that have refCount == 1. If any objects are
 			// destroyed, go over the list again, because it may have made more
 			// objects reach refCount == 1.
-			while( ++destroyIdx < (int)gcObjects.GetLength() )
+			while( ++destroyIdx < gcObjects.GetLength() )
 			{
 				asSObjTypePair gcObj = GetObjectAtIdx(destroyIdx);
 				if( engine->CallObjectMethodRetInt(gcObj.obj, gcObj.type->beh.gcGetRefCount) == 1 )
 				{
 					// Release the object immediately
 
-					// Make sure the refCount is really 0, because the 
+					// Make sure the refCount is really 0, because the
 					// destructor may have increased the refCount again.
 					bool addRef = false;
 					if( gcObj.type->flags & asOBJ_SCRIPT_STRUCT )
@@ -231,7 +231,7 @@ int asCGarbageCollector::DestroyGarbage()
 					}
 					else
 					{
-						// Since the object was resurrected in the 
+						// Since the object was resurrected in the
 						// destructor, we must add our reference again
 						engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.addref);
 					}
@@ -274,15 +274,15 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 		case clearCounters_loop:
 		{
 			// Build a map of objects that will be checked, the map will
-			// hold the object pointer as key, and the gcCount and the 
-			// object's type as value. As objects are added to the map the 
-			// gcFlag must be set in the objects, so we can be verify if 
+			// hold the object pointer as key, and the gcCount and the
+			// object's type as value. As objects are added to the map the
+			// gcFlag must be set in the objects, so we can be verify if
 			// the object is accessed during the GC cycle.
 
-			// If an object is removed from the gcObjects list during the 
-			// iteration of this step, it is possible that an object won't 
-			// be used during the analyzing for cyclic references. This 
-			// isn't a problem, as the next time the GC cycle starts the 
+			// If an object is removed from the gcObjects list during the
+			// iteration of this step, it is possible that an object won't
+			// be used during the analyzing for cyclic references. This
+			// isn't a problem, as the next time the GC cycle starts the
 			// object will be verified.
 			while( detectIdx < gcObjects.GetLength() )
 			{
@@ -326,14 +326,14 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 		{
 			// Call EnumReferences on all objects in the map to count the number
 			// of references reachable from between objects in the map. If all
-			// references for an object in the map is reachable from other objects 
-			// in the map, then we know that no outside references are held for 
+			// references for an object in the map is reachable from other objects
+			// in the map, then we know that no outside references are held for
 			// this object, thus it is a potential dead object in a circular reference.
 
-			// If the gcFlag is cleared for an object we consider the object alive 
+			// If the gcFlag is cleared for an object we consider the object alive
 			// and referenced from outside the GC, thus we don't enumerate its references.
 
-			// Any new objects created after this step in the GC cycle won't be 
+			// Any new objects created after this step in the GC cycle won't be
 			// in the map, and is thus automatically considered alive.
 			while( gcMapCursor )
 			{
@@ -366,10 +366,10 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 		case detectGarbage_loop1:
 		{
 			// All objects that are known not to be dead must be removed from the map,
-			// along with all objects they reference. What remains in the map after 
+			// along with all objects they reference. What remains in the map after
 			// this pass is sure to be dead objects in circular references.
 
-			// An object is considered alive if its gcFlag is cleared, or all the 
+			// An object is considered alive if its gcFlag is cleared, or all the
 			// references were not found in the map.
 
 			// Add all alive objects from the map to the liveObjects array

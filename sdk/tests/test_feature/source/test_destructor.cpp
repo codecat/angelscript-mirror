@@ -17,7 +17,7 @@ const char *script1 =
 "  T local;                     \n"
 "}                              \n";
 
-const char *script2 = 
+const char *script2 =
 "class T                        \n"
 "{                              \n"
 "   ~T() {Print(\"array\");}    \n"

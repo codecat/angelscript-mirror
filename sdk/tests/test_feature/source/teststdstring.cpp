@@ -56,7 +56,7 @@ static const char *script2 =
 "  printVal(str);                          \n"
 "}                                         \n";
 
-static const char *script3 = 
+static const char *script3 =
 "string str = 1;                \n"
 "const string str2 = \"test\";  \n"
 "obj a(\"test\");               \n"
@@ -87,13 +87,13 @@ static void StringByVal(string &str1, string str2)
 }
 
 //--> new: object method string argument test
-class StringConsumer 
+class StringConsumer
 {
 public:
 	void Consume(string str)
 	{
 		printOutput = str;
-	} 
+	}
 };
 static StringConsumer consumerObject;
 //<-- new: object method string argument test
@@ -185,7 +185,7 @@ bool TestStdString()
 	printOutput = "";
 	engine->ExecuteString(0, "string a; a = 1; print(a);");
 	if( printOutput != "1" ) fail = true;
-	
+
 	printOutput = "";
 	engine->ExecuteString(0, "string a; a += 1; print(a);");
 	if( printOutput != "1" ) fail = true;
@@ -238,7 +238,7 @@ bool TestStdString()
 //////////////////////////////
 // This test was reported by dxj19831029 on Sep 9th, 2008
 
-class _String 
+class _String
 {
 public:
 	_String() {}
@@ -297,7 +297,7 @@ bool TestTwoStringTypes()
 {
 	bool fail = false;
 	int r;
-	COutStream out;	
+	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -306,15 +306,15 @@ bool TestTwoStringTypes()
 	// Register the second string type
 	engine->RegisterObjectType("_String", sizeof(_String),   asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
 	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f()",                 asFUNCTION(stringDefaultCoonstructor), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f(const _String &in )",		asFUNCTION(stringCopyConstructor), asCALL_CDECL_OBJLAST); 
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f(const _String &in )",		asFUNCTION(stringCopyConstructor), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(stringStringConstructor), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("_String", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(stringDecontructor), asCALL_CDECL_OBJLAST);
-	// = 
-	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const string &in )", asMETHODPR(_String, operator=, (const string &), _String& ), asCALL_THISCALL); 
-	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const _String &in )", asMETHODPR(_String, operator=, (const _String &), _String& ), asCALL_THISCALL); 
+	// =
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const string &in )", asMETHODPR(_String, operator=, (const string &), _String& ), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const _String &in )", asMETHODPR(_String, operator=, (const _String &), _String& ), asCALL_THISCALL);
 	// +=
-	engine->RegisterObjectBehaviour("_String", asBEHAVE_ADD_ASSIGN , "_String &f(const string &in )", asMETHODPR(_String, operator+=, (const string &), _String& ), asCALL_THISCALL); 
-	engine->RegisterObjectBehaviour("_String", asBEHAVE_ADD_ASSIGN , "_String &f(const _String &in )", asMETHODPR(_String, operator+=, (const _String &), _String& ), asCALL_THISCALL); 
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_ADD_ASSIGN , "_String &f(const string &in )", asMETHODPR(_String, operator+=, (const string &), _String& ), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("_String", asBEHAVE_ADD_ASSIGN , "_String &f(const _String &in )", asMETHODPR(_String, operator+=, (const _String &), _String& ), asCALL_THISCALL);
 	// comparison
 /*	engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const _String &in, const _String &in)", asFUNCTION(compare_StringEqual), asCALL_CDECL);
 	engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const _String &in, const string &in)", asFUNCTION(compare_StringStringEqual), asCALL_CDECL);

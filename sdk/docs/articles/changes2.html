@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.15.1 WIP - 2009/01/23</h2>
+<h2>Version 2.15.1 WIP - 2009/01/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -130,6 +130,8 @@ A:hover
 <li>Fixed bug where class method calls that returned a reference to a member of the class would release the class before the reference was used
 <li>Fixed bug that allowed object handles for value types (Thanks Wavesonics)
 <li>Modified as_atomic.h to avoid use of kernel specific atomic.h on Linux (Thanks namtabmai)
+<li>Fixed compile error in as_callfunc_x86.cpp on GNUC when using -O3 option (Thanks bigjo)
+<li>Fixed the calling conventions for MinGW on Windows 
 </ul>
 <li>Library
 <ul>

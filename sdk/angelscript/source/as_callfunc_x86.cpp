@@ -296,7 +296,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				{
 					// Copy the object's memory to the buffer
 					memcpy(&paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
-					
+
 					// Delete the original memory
 					engine->CallFree(*(char**)(args+spos));
 					spos++;
@@ -482,10 +482,17 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	return popSize;
 }
 
-// TODO: On GCC we may need to declare these functions as __attribute ((__noinline__)) to avoid 
-//       compilation error with maximum optimization (-O3) where the loop labels get duplicated.
+// On GCC we need to prevent the compiler from inlining these assembler routines when
+// optimizing for speed (-O3), as the loop labels get duplicated which cause compile errors.
 
-void CallCDeclFunction(const asDWORD *args, int paramSize, size_t func)
+#ifdef __GNUC__
+    #define NOINLINE __attribute ((__noinline__))
+#else
+    #define NOINLINE
+#endif
+
+
+void NOINLINE CallCDeclFunction(const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -537,7 +544,7 @@ endcopy:
 		"movl  %esp, %eax     \n"
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
-		
+
 		"movl  12(%ebp), %ecx \n" // paramSize
 		"movl  8(%ebp), %eax  \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -551,16 +558,16 @@ endcopy:
 		"endcopy:             \n"
 		"call  *16(%ebp)      \n"
 		"addl  12(%ebp), %esp \n" // pop arguments
-		
+
 		// Pop the alignment bytes
-		"popl  %esp           \n" 
-		
+		"popl  %esp           \n"
+
 		"popl  %ecx           \n");
 
 #endif
 }
 
-void CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int paramSize, size_t func)
+void NOINLINE CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -604,7 +611,7 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
-	
+
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
@@ -617,7 +624,7 @@ endcopy:
 		"movl  %esp, %eax     \n"
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
-	
+
 		// TODO: 64 bit pointer, need to push all 8 bytes on the stack here
 		"pushl 8(%ebp)        \n"
 		"movl  16(%ebp), %ecx \n" // paramSize
@@ -634,16 +641,16 @@ endcopy:
 		"call  *20(%ebp)      \n"
 		"addl  16(%ebp), %esp \n" // pop arguments
 		"addl  $4, %esp       \n"
-		
+
 		// Pop the alignment bytes
-		"popl  %esp           \n" 
-		
+		"popl  %esp           \n"
+
 		"popl  %ecx           \n");
 
 #endif
 }
 
-void CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, int paramSize, size_t func)
+void NOINLINE CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -687,7 +694,7 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
-	
+
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
@@ -700,7 +707,7 @@ endcopy:
 		"movl  %esp, %eax     \n"
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
-	
+
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -717,16 +724,16 @@ endcopy:
 		"call  *20(%ebp)      \n"
 		"addl  16(%ebp), %esp \n" // pop arguments
         "addl  $4, %esp       \n"
-		
+
 		// Pop the alignment bytes
-		"popl  %esp           \n" 
-		
+		"popl  %esp           \n"
+
 		"popl  %ecx           \n");
 
 #endif
 }
 
-void CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr)
+void NOINLINE CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -778,7 +785,7 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
-	
+
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
@@ -790,7 +797,7 @@ endcopy:
 		"movl  %esp, %eax     \n"
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
-		
+
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -812,14 +819,14 @@ endcopy:
 		"addl  $4, %esp       \n" // Pop the object pointer
 #endif
 		// Pop the alignment bytes
-		"popl  %esp           \n" 
+		"popl  %esp           \n"
 
 		"popl  %ecx           \n");
 
 #endif
 }
 
-void CallCDeclFunctionRetByRef_impl(const asDWORD *args, int paramSize, size_t func, void *retPtr)
+void NOINLINE CallCDeclFunctionRetByRef_impl(const asDWORD *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -866,7 +873,7 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
-	
+
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
@@ -878,7 +885,7 @@ endcopy:
 		"movl  %esp, %eax     \n"
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
-		
+
 		"movl  12(%ebp), %ecx \n" // paramSize
 		"movl  8(%ebp), %eax  \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -897,14 +904,14 @@ endcopy:
 		"addl  $4, %esp       \n" // Pop the return pointer
 #endif
 		// Pop the alignment bytes
-		"popl  %esp           \n" 
+		"popl  %esp           \n"
 
 		"popl  %ecx           \n");
 
 #endif
 }
 
-void CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr)
+void NOINLINE CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -954,7 +961,7 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
-	
+
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
@@ -966,7 +973,7 @@ endcopy:
 		"movl  %esp, %eax     \n"
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
-	
+
 		"pushl 8(%ebp)        \n"
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
@@ -988,14 +995,14 @@ endcopy:
 		"addl  $4, %esp       \n" // Pop the return pointer
 #endif
 		// Pop the alignment bytes
-		"popl  %esp           \n" 
+		"popl  %esp           \n"
 
 		"popl  %ecx           \n");
 
 #endif
 }
 
-void CallSTDCallFunction(const asDWORD *args, int paramSize, size_t func)
+void NOINLINE CallSTDCallFunction(const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -1034,7 +1041,7 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
-	
+
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
@@ -1046,7 +1053,7 @@ endcopy:
 		"movl  %esp, %eax     \n"
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
-	
+
 		"movl  12(%ebp), %ecx \n" // paramSize
 		"movl  8(%ebp), %eax  \n" // args
 		"addl  %ecx, %eax     \n" // push arguments on the stack
@@ -1059,17 +1066,17 @@ endcopy:
 		"jne   copyloop2      \n"
 		"endcopy2:            \n"
 		"call  *16(%ebp)      \n" // callee pops the arguments
-		
+
 		// Pop the alignment bytes
-		"popl  %esp           \n" 
-		
+		"popl  %esp           \n"
+
 		"popl  %ecx           \n");
 
 #endif
 }
 
 
-void CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, size_t func)
+void NOINLINE CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, size_t func)
 {
 #if defined ASM_INTEL
 
@@ -1123,7 +1130,7 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
-	
+
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
@@ -1135,7 +1142,7 @@ endcopy:
 		"movl  %esp, %eax     \n"
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
-	
+
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
 		"addl  %ecx, %eax     \n" // push all arguments on the stack
@@ -1152,16 +1159,16 @@ endcopy:
 		"call  *20(%ebp)      \n"
 		"addl  16(%ebp), %esp \n" // pop arguments
 		"addl  $4, %esp       \n" // pop obj
-		
+
 		// Pop the alignment bytes
-		"popl  %esp           \n" 
-		
+		"popl  %esp           \n"
+
 		"popl  %ecx           \n");
 
 #endif
 }
 
-void CallThisCallFunctionRetByRef_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr)
+void NOINLINE CallThisCallFunctionRetByRef_impl(const void *obj, const asDWORD *args, int paramSize, size_t func, void *retPtr)
 {
 #if defined ASM_INTEL
 
@@ -1218,7 +1225,7 @@ endcopy:
 #elif defined ASM_AT_N_T
 
 	asm("pushl %ecx           \n"
-	
+
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
@@ -1230,7 +1237,7 @@ endcopy:
 		"movl  %esp, %eax     \n"
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
-	
+
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
 		"addl  %ecx, %eax     \n" // push all arguments to the stack
@@ -1250,8 +1257,8 @@ endcopy:
 		"addl  $4, %esp       \n" // pop the object pointer
 		                          // the return pointer was popped by the callee
 		// Pop the alignment bytes
-		"popl  %esp           \n" 
-		
+		"popl  %esp           \n"
+
 		"popl  %ecx           \n");
 
 #endif

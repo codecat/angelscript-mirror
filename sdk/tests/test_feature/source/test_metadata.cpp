@@ -1,12 +1,14 @@
 #include "utils.h"
 
+#ifdef _MSC_VER
 #pragma warning (disable:4786)
+#endif
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
 
 namespace TestMetaData
 {
 
-const char *script = 
+const char *script =
 // Global functions can have meta data
 "[ my meta data test ] void func1() {} \n"
 // meta data strings can contain any tokens, and can use nested []
@@ -31,13 +33,13 @@ bool Test()
 	COutStream out;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	
+
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	// Test the parse token method
 	asETokenClass t = engine->ParseToken("!is");
-	if( t != asTC_KEYWORD ) 
-		fail = true; 
+	if( t != asTC_KEYWORD )
+		fail = true;
 
 	// Compile a script with meta data strings
 	CScriptBuilder builder;

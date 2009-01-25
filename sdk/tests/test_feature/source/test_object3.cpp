@@ -6,6 +6,7 @@ namespace TestObject3
 #define TESTNAME "TestObject3"
 
 #ifdef __GNUC__
+#undef __cdecl
 #define __cdecl
 #endif
 struct cFloat
@@ -100,7 +101,7 @@ float  __cdecl OpPlusRR(cFloat *self,  cFloat* other)
 float  __cdecl OpPlusRF(cFloat *self,  float other)
 {
 	assert(self);
-	
+
 	return (float)(*self)+(float)(other);
 }
 float  __cdecl OpPlusFR(float self,  cFloat* other)
@@ -124,11 +125,11 @@ float  __cdecl OpMulFR(float self,  cFloat* other)
 bool Register(asIScriptEngine*  pSE)
 {
 	pSE->RegisterObjectType("Float", sizeof(cFloat), asOBJ_VALUE | asOBJ_APP_CLASS);
-	
+
 	if(pSE->RegisterObjectBehaviour("Float",asBEHAVE_ASSIGNMENT,"Float& f(float )",asFUNCTION(AssignFloat2Float),asCALL_CDECL_OBJLAST))
 		return false;
-	
-	
+
+
 	// asBEHAVE_ADD
 	if(pSE->RegisterGlobalBehaviour(asBEHAVE_ADD,"float  f(Float &in ,Float &in)",asFUNCTION(OpPlusRR),  asCALL_CDECL))
 		return false;
@@ -136,7 +137,7 @@ bool Register(asIScriptEngine*  pSE)
 		return false;
 	if(pSE->RegisterGlobalBehaviour(asBEHAVE_ADD,"float  f(float ,Float &in)",asFUNCTION(OpPlusFR),  asCALL_CDECL))
 		return false;
-	
+
 	// asBEHAVE_MULTIPLY
 	if(pSE->RegisterGlobalBehaviour(asBEHAVE_MULTIPLY, "float  f(Float &in ,Float &in)",asFUNCTION(OpMulRR),  asCALL_CDECL))
 		return false;
@@ -144,7 +145,7 @@ bool Register(asIScriptEngine*  pSE)
 		return false;
 	if(pSE->RegisterGlobalBehaviour(asBEHAVE_MULTIPLY, "float  f(float ,Float &in)",asFUNCTION(OpMulFR),  asCALL_CDECL))
 		return false;
-	
+
 	return true;
 }
 
@@ -166,7 +167,7 @@ bool Test()
 	Register(pSE);
 	pSE->RegisterGlobalFunction("Float& Get(int32)",asFUNCTION(Get),asCALL_CDECL);
 	pSE->RegisterGlobalFunction("void Print(float)",asFUNCTION(Print),asCALL_CDECL);
-	
+
 	const char script[]="\
 						   float ret=10;\n\
 						   Get(0)=10.0f;\n\
@@ -176,9 +177,9 @@ bool Test()
 						   Print(ret);\n\
 						   \n";
 	pSE->ExecuteString("",script);
-	
+
 	pSE->Release();
-	   
+
 	return false;
 }
 

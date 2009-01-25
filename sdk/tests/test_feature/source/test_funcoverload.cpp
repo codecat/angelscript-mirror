@@ -42,7 +42,7 @@ bool TestFuncOverload()
 	}
 	// TODO: Add Test2 again
 	bool fail = false; //Test2();
-	COutStream out;	
+	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -86,11 +86,11 @@ bool TestFuncOverload()
 	return fail;
 }
 
-// TODO: Implement this support 
-// (It currently doesn't work because the first argument gives an exact match for another function. 
+// TODO: Implement this support
+// (It currently doesn't work because the first argument gives an exact match for another function.
 // I need to weigh this limitation against the possibility of increasing multiple matches)
 //
-// This test verifies that it is possible to find a best match even if the first argument 
+// This test verifies that it is possible to find a best match even if the first argument
 // may give a better match for another function. Also the order of the function declarations
 // should not affect the result.
 bool Test2()
@@ -102,7 +102,7 @@ bool Test2()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-	const char *script1 = 
+	const char *script1 =
 		"class A{}  \n"
 		"class B{}  \n"
 		"void func(A&in, A&in) {} \n"
@@ -119,7 +119,7 @@ bool Test2()
 	if( r < 0 )
 		fail = true;
 
-	const char *script2 = 
+	const char *script2 =
 		"class A{}  \n"
 		"class B{}  \n"
 		"void func(const A&in, const B&in) {} \n"

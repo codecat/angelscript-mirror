@@ -89,7 +89,8 @@ bool TestReturnWithCDeclObjFirst()
 
 	c1.a = 0;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	int r = engine->ExecuteString(0, "c1 = f.notComplex1(int(0xDEADC0DE));");
+	int r = 0;
+	r = engine->ExecuteString(0, "c1 = f.notComplex1(int(0xDEADC0DE));");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -101,7 +102,6 @@ bool TestReturnWithCDeclObjFirst()
 		printf("%s: Failed to assign object returned from function. c1.a = %X\n", TESTNAME, c1.a);
 		fail = true;
 	}
-
 
 	c2.a = 0;
 	c2.b = 0;

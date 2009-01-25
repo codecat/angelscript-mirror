@@ -1,6 +1,8 @@
 #include "utils.h"
 
+#ifdef _MSC_VER
 #pragma warning (disable:4786)
+#endif
 #include <map>
 
 using namespace std;
@@ -191,15 +193,15 @@ void RemoveMemoryManager()
 
 	PrintAllocIndices();
 
-	assert( numAllocs == numFrees ); 
+	assert( numAllocs == numFrees );
 	assert( currentMemAlloc == 0 );
 
 	printf("---------\n");
 	printf("MEMORY STATISTICS\n");
 	printf("number of allocations                 : %d\n", numAllocs);                   // 125744
-	printf("max allocated memory at any one time  : %d\n", maxMemAlloc);                 // 121042
+	printf("max allocated memory at any one time  : %d\n", (int)maxMemAlloc);                 // 121042
 	printf("max number of simultaneous allocations: %d\n", maxNumAllocsSameTime);        // 2134
-	printf("total amount of allocated memory      : %d\n", sumAllocSize);                // 10106765
+	printf("total amount of allocated memory      : %d\n", (int)sumAllocSize);                // 10106765
 	printf("medium size of allocations            : %d\n", (int)sumAllocSize/numAllocs);
 
 #ifdef TRACK_SIZES

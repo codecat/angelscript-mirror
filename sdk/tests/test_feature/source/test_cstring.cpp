@@ -29,7 +29,7 @@ static const char *script2 =
 "  return \"hello \" + str;                \n"
 "}                                         \n";
 
-static const char *script3 = 
+static const char *script3 =
 "string str = 1;                \n"
 "const string str2 = \"test\";  \n"
 "void test()                    \n"
@@ -37,7 +37,7 @@ static const char *script3 =
 "   string s = str2;            \n"
 "}                              \n";
 
-static const char *script4 = 
+static const char *script4 =
 "void test()                    \n"
 "{                              \n"
 "   string s = \"\"\"           \n"
@@ -92,7 +92,7 @@ bool Test()
 	printOutput = "";
 	engine->ExecuteString(0, "string a; a = 1; print(a);");
 	if( printOutput != "1" ) fail = true;
-	
+
 	printOutput = "";
 	engine->ExecuteString(0, "string a; a += 1; print(a);");
 	if( printOutput != "1" ) fail = true;
@@ -119,7 +119,7 @@ bool Test()
 	CString *a = new CString("a");
 	engine->RegisterGlobalProperty("string a", a);
 	int r = engine->ExecuteString(0, "print(a == \"a\" ? \"t\" : \"f\")");
-	if( r != asEXECUTION_FINISHED ) 
+	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
@@ -137,7 +137,7 @@ bool Test()
 	engine->RegisterObjectType("Http", sizeof(int), asOBJ_PRIMITIVE);
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_CDECL_OBJFIRST);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-	
+
 	r = engine->ExecuteString(0, "Http h; string str; h.get(\"stringtest\", str); assert(str == \"output\");");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 

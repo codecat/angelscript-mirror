@@ -115,7 +115,7 @@ bool TestEnumGlobVar()
 		ret = true;
 	}
 
-	if( *f != 0xBAADF00D )
+	if( *f != (int)0xBAADF00D )
 	{
 		printf("%s: failed\n", TESTNAME);
 		ret = true;

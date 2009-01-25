@@ -6,11 +6,13 @@
 // Tests calling a script-function from c.
 // Based on the sample found on angelscripts
 // homepage.
-// 
+//
 
 #include "utils.h"
 
+#ifdef _MSC_VER
 #pragma warning (disable:4786)
+#endif
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
 
 #define TESTNAME "TestExecuteScript"
@@ -44,12 +46,12 @@ bool TestExecuteScript()
 
 static bool ExecuteScript()
 {
-	// Create a context in which the script will be executed. 
+	// Create a context in which the script will be executed.
 
-	// Several contexts may exist in parallel, holding the execution 
+	// Several contexts may exist in parallel, holding the execution
 	// of various scripts in the same engine. At the moment contexts are not
-	// thread safe though so you should make sure that only one executes 
-	// at a time. An execution can be suspended to allow another 
+	// thread safe though so you should make sure that only one executes
+	// at a time. An execution can be suspended to allow another
 	// context to execute.
 
 	asIScriptContext *ctx = engine->CreateContext();
@@ -72,7 +74,7 @@ static bool ExecuteScript()
 		return true;
 	}
 
-	// If the script function takes any parameters we need to  
+	// If the script function takes any parameters we need to
 	// copy them to the context's stack by using SetArguments()
 
 	// Execute script
@@ -86,7 +88,7 @@ static bool ExecuteScript()
 
 	if( r == asEXECUTION_FINISHED )
 	{
-		// If the script function is returning any  
+		// If the script function is returning any
 		// data we can get it with GetReturnValue()
 		float retVal = ctx->GetReturnFloat();
 
@@ -98,8 +100,8 @@ static bool ExecuteScript()
 	else if( r == asEXECUTION_SUSPENDED )
 	{
 		printf("%s: Execution was suspended.\n", TESTNAME);
-		
-		// In this case we can call Execute again to continue 
+
+		// In this case we can call Execute again to continue
 		// execution where it last stopped.
 
 		int funcID = ctx->GetCurrentFunction();

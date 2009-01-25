@@ -40,8 +40,9 @@
 				<Option createDefFile="1" />
 				<Option projectResourceIncludeDirsRelation="2" />
 				<Compiler>
-					<Add option="-O2" />
 					<Add option="-W" />
+					<Add option="-Wall" />
+					<Add option="-g" />
 					<Add option="-Di386" />
 					<Add option="-DANGELSCRIPT_EXPORT" />
 					<Add option="-DNDEBUG" />
