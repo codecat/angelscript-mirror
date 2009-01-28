@@ -192,19 +192,14 @@ int asCRestore::Restore()
 	READ_NUM(count);
 	for( i = 0; i < count; ++i ) 
 	{
-		func = asNEW(asCScriptFunction)(engine,module);
-		ReadFunction(func);
-		module->scriptFunctions.PushLast(func);
-		engine->SetScriptFunction(func);
+		func = ReadFunction();
 	}
 
 	// initFunction
 	READ_NUM(count);
 	if( count )
 	{
-		module->initFunction = asNEW(asCScriptFunction)(engine,module);
-		ReadFunction(module->initFunction);
-		engine->SetScriptFunction(module->initFunction);
+		module->initFunction = ReadFunction(false, true);
 	}
 
 	// stringConstants[]
@@ -223,8 +218,7 @@ int asCRestore::Restore()
 	module->bindInformations.SetLength(count);
 	for(i=0;i<count;++i)
 	{
-		func = asNEW(asCScriptFunction)(engine,module);
-		ReadFunction(func);
+		func = ReadFunction(false, false);
 		module->importedFunctions.PushLast(func);
 
 		READ_NUM(module->bindInformations[i].importFrom);
@@ -401,6 +395,26 @@ void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
 
 void asCRestore::WriteFunction(asCScriptFunction* func) 
 {
+	char c;
+
+	// First check if the function has been saved already
+	for( asUINT f = 0; f < savedFunctions.GetLength(); f++ )
+	{
+		if( savedFunctions[f] == func )
+		{
+			c = 'r';
+			WRITE_NUM(c);
+			WRITE_NUM(f);
+			return;
+		}
+	}
+
+	// Keep a reference to the function in the list
+	savedFunctions.PushLast(func);
+
+	c = 'f';
+	WRITE_NUM(c);
+
 	asUINT i, count;
 
 	WriteFunctionSignature(func);
@@ -424,7 +438,71 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	for( i = 0; i < length; ++i )
 		WRITE_NUM(func->lineNumbers[i]);
 
+	WRITE_NUM(func->vfTableIdx);
+
 	// TODO: Write variables
+}
+
+asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine) 
+{
+	char c;
+	READ_NUM(c);
+
+	if( c == 'r' )
+	{
+		// This is a reference to a previously saved function
+		int index;
+		READ_NUM(index);
+
+		return savedFunctions[index];
+	}
+
+	// Load the new function
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
+	savedFunctions.PushLast(func);
+
+	int i, count;
+	asCDataType dt;
+	int num;
+
+	ReadFunctionSignature(func);
+
+	func->id = engine->GetNextScriptFunctionId();
+	
+
+	READ_NUM(count);
+	func->byteCode.Allocate(count, 0);
+	ReadByteCode(func->byteCode.AddressOf(), count);
+	func->byteCode.SetLength(count);
+
+	READ_NUM(count);
+	func->objVariablePos.Allocate(count, 0);
+	func->objVariableTypes.Allocate(count, 0);
+	for( i = 0; i < count; ++i )
+	{
+		func->objVariableTypes.PushLast(ReadObjectType());
+		READ_NUM(num);
+		func->objVariablePos.PushLast(num);
+	}
+
+	READ_NUM(func->stackNeeded);
+
+	int length;
+	READ_NUM(length);
+	func->lineNumbers.SetLength(length);
+	for( i = 0; i < length; ++i )
+		READ_NUM(func->lineNumbers[i]);
+
+	READ_NUM(func->vfTableIdx);
+
+	if( addToModule )
+		module->scriptFunctions.PushLast(func);
+	if( addToEngine )
+		engine->SetScriptFunction(func);
+	if( func->objectType )
+		func->ComputeSignatureId();
+
+	return func;
 }
 
 void asCRestore::WriteGlobalProperty(asCGlobalProperty* prop) 
@@ -540,6 +618,8 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 	}
 	else
 	{	
+		WriteObjectType(ot->derivedFrom);
+
 		// properties[]
 		int size = (asUINT)ot->properties.GetLength();
 		WRITE_NUM(size);
@@ -563,12 +643,100 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 			}
 		}
 
+		// TODO: Classes may share functions, so we need to change this to avoid storing the same function multiple times
+
 		// methods[]
 		size = (int)ot->methods.GetLength();
 		WRITE_NUM(size);
 		for( n = 0; n < ot->methods.GetLength(); n++ )
 		{
 			WriteFunction(engine->scriptFunctions[ot->methods[n]]);
+		}
+
+		// virtualFunctionTable[]
+		size = (int)ot->virtualFunctionTable.GetLength();
+		WRITE_NUM(size);
+		for( n = 0; n < (asUINT)size; n++ )
+		{
+			WriteFunction(ot->virtualFunctionTable[n]);
+		}
+	}
+}
+
+void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties)
+{
+	if( !readProperties )
+	{
+		// name
+		ReadString(&ot->name);
+		// size
+		int size;
+		READ_NUM(size);
+		ot->size = size;
+		// flags
+		asDWORD flags;
+		READ_NUM(flags);
+		ot->flags = flags;
+
+		// Use the default script struct behaviours
+		ot->beh = engine->scriptTypeBehaviours.beh;
+
+		// Some implicit values
+		ot->tokenType = ttIdentifier;
+		ot->arrayType = 0;
+	}
+	else
+	{	
+		ot->derivedFrom = ReadObjectType();
+
+		// properties[]
+		int size;
+		READ_NUM(size);
+		ot->properties.Allocate(size,0);
+		int n;
+		for( n = 0; n < size; n++ )
+		{
+			asCObjectProperty *prop = asNEW(asCObjectProperty);
+			ReadObjectProperty(prop);
+			ot->properties.PushLast(prop);
+		}
+
+		// behaviours
+		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
+		{
+			asCScriptFunction *func = ReadFunction();
+			ot->beh.construct = func->id;
+			ot->beh.constructors.PushLast(func->id);
+
+			func = ReadFunction();
+			ot->beh.factory = func->id;
+			ot->beh.factories.PushLast(func->id);
+
+			READ_NUM(size);
+			for( n = 0; n < size; n++ )
+			{
+				asCScriptFunction *func = ReadFunction();
+				ot->beh.constructors.PushLast(func->id);
+
+				func = ReadFunction();
+				ot->beh.factories.PushLast(func->id);
+			}
+		}
+
+		// methods[]
+		READ_NUM(size);
+		for( n = 0; n < size; n++ ) 
+		{
+			asCScriptFunction *func = ReadFunction();
+			ot->methods.PushLast(func->id);
+		}
+
+		// virtualFunctionTable[]
+		READ_NUM(size);
+		for( n = 0; n < size; n++ )
+		{
+			asCScriptFunction *func = ReadFunction();
+			ot->virtualFunctionTable.PushLast(func);
 		}
 	}
 }
@@ -579,41 +747,6 @@ void asCRestore::ReadString(asCString* str)
 	READ_NUM(len);
 	str->SetLength(len);
 	stream->Read(str->AddressOf(), len);
-}
-
-void asCRestore::ReadFunction(asCScriptFunction* func) 
-{
-	int i, count;
-	asCDataType dt;
-	int num;
-
-	ReadFunctionSignature(func);
-
-	func->id = engine->GetNextScriptFunctionId();
-	
-
-	READ_NUM(count);
-	func->byteCode.Allocate(count, 0);
-	ReadByteCode(func->byteCode.AddressOf(), count);
-	func->byteCode.SetLength(count);
-
-	READ_NUM(count);
-	func->objVariablePos.Allocate(count, 0);
-	func->objVariableTypes.Allocate(count, 0);
-	for( i = 0; i < count; ++i )
-	{
-		func->objVariableTypes.PushLast(ReadObjectType());
-		READ_NUM(num);
-		func->objVariablePos.PushLast(num);
-	}
-
-	READ_NUM(func->stackNeeded);
-
-	int length;
-	READ_NUM(length);
-	func->lineNumbers.SetLength(length);
-	for( i = 0; i < length; ++i )
-		READ_NUM(func->lineNumbers[i]);
 }
 
 void asCRestore::ReadGlobalProperty() 
@@ -749,89 +882,6 @@ asCObjectType* asCRestore::ReadObjectType()
 	return ot;
 }
 
-void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties)
-{
-	if( !readProperties )
-	{
-		// name
-		ReadString(&ot->name);
-		// size
-		int size;
-		READ_NUM(size);
-		ot->size = size;
-		// flags
-		asDWORD flags;
-		READ_NUM(flags);
-		ot->flags = flags;
-
-		// Use the default script struct behaviours
-		ot->beh = engine->scriptTypeBehaviours.beh;
-
-		// Some implicit values
-		ot->tokenType = ttIdentifier;
-		ot->arrayType = 0;
-	}
-	else
-	{	
-		// properties[]
-		int size;
-		READ_NUM(size);
-		ot->properties.Allocate(size,0);
-		int n;
-		for( n = 0; n < size; n++ )
-		{
-			asCObjectProperty *prop = asNEW(asCObjectProperty);
-			ReadObjectProperty(prop);
-			ot->properties.PushLast(prop);
-		}
-
-		// behaviours
-		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
-		{
-			asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
-			ReadFunction(func);
-			ot->beh.construct = func->id;
-			ot->beh.constructors.PushLast(func->id);
-			module->scriptFunctions.PushLast(func);
-			engine->SetScriptFunction(func);
-
-			func = asNEW(asCScriptFunction)(engine,module);
-			ReadFunction(func);
-			ot->beh.factory = func->id;
-			ot->beh.factories.PushLast(func->id);
-			module->scriptFunctions.PushLast(func);
-			engine->SetScriptFunction(func);
-
-			READ_NUM(size);
-			for( n = 0; n < size; n++ )
-			{
-				asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
-				ReadFunction(func);
-				ot->beh.constructors.PushLast(func->id);
-				module->scriptFunctions.PushLast(func);
-				engine->SetScriptFunction(func);
-
-				func = asNEW(asCScriptFunction)(engine,module);
-				ReadFunction(func);
-				ot->beh.factories.PushLast(func->id);
-				module->scriptFunctions.PushLast(func);
-				engine->SetScriptFunction(func);
-			}
-		}
-
-		// methods[]
-		READ_NUM(size);
-		for( n = 0; n < size; n++ ) 
-		{
-			asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
-			ReadFunction(func);
-			ot->methods.PushLast(func->id);
-			module->scriptFunctions.PushLast(func);
-			engine->SetScriptFunction(func);
-			func->ComputeSignatureId();
-		}
-	}
-}
 
 void asCRestore::WriteByteCode(asDWORD *bc, int length)
 {

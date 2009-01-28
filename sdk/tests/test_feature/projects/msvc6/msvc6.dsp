@@ -271,6 +271,10 @@ SOURCE=..\..\source\test_import2.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_inheritance.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_int8.cpp
 # End Source File
 # Begin Source File

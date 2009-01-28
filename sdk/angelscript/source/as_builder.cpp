@@ -1172,10 +1172,203 @@ void asCBuilder::CompileClasses()
 	asUINT n;
 	asCArray<sClassDeclaration*> toValidate((int)classDeclarations.GetLength());
 
+	// Determine class inheritances and interfaces
+	for( n = 0; n < classDeclarations.GetLength(); n++ )
+	{
+		sClassDeclaration *decl = classDeclarations[n];
+		asCScriptCode *file = decl->script;
+
+		// Find the base class that this class inherits from
+		bool multipleInheritance = false;
+		asCScriptNode *node = decl->node->firstChild->next;
+		while( node && node->nodeType == snIdentifier )
+		{
+			// Get the interface name from the node
+			GETSTRING(name, &file->code[node->tokenPos], node->tokenLength);
+
+			// Find the object type for the interface
+			asCObjectType *objType = GetObjectType(name.AddressOf());
+
+			if( objType == 0 )
+			{
+				int r, c;
+				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+				asCString str;
+				str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
+				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+			}
+			else if( !(objType->flags & asOBJ_SCRIPT_STRUCT) )
+			{
+				int r, c;
+				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+				asCString str;
+				str.Format(TXT_CANNOT_INHERIT_FROM_s, objType->name.AddressOf());
+				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+			}
+			else if( objType->size != 0 )
+			{
+				// The class inherits from another script class
+				if( decl->objType->derivedFrom != 0 )
+				{
+					if( !multipleInheritance )
+					{
+						int r, c;
+						file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+						WriteError(file->name.AddressOf(), TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES, r, c);
+						multipleInheritance = true;
+					}
+				}
+				else
+				{
+					// Make sure none of the base classes inherit from this one
+					asCObjectType *base = objType->derivedFrom;
+					bool error = false;
+					while( base != 0 )
+					{
+						if( base == decl->objType )
+						{
+							int r, c;
+							file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+							WriteError(file->name.AddressOf(), TXT_CANNOT_INHERIT_FROM_SELF, r, c);
+							error = true;
+							break;
+						}
+
+						base = base->derivedFrom;
+					}
+
+					if( !error )
+					{
+						decl->objType->derivedFrom = objType;
+
+						// TODO: Should we increment the refCount for the base class?
+					}
+				}
+			}
+			else
+			{
+				// The class implements an interface
+				if( decl->objType->Implements(objType) )
+				{
+					int r, c;
+					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+					WriteWarning(file->name.AddressOf(), TXT_INTERFACE_ALREADY_IMPLEMENTED, r, c);
+				}
+				else
+				{
+					decl->objType->interfaces.PushLast(objType);
+
+					// Make sure all the methods of the interface are implemented
+					for( asUINT i = 0; i < objType->methods.GetLength(); i++ )
+					{
+						if( !DoesMethodExist(decl->objType, objType->methods[i]) )
+						{
+							int r, c;
+							file->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
+							asCString str;
+							str.Format(TXT_MISSING_IMPLEMENTATION_OF_s, 
+								engine->GetFunctionDeclaration(objType->methods[i]).AddressOf());
+							WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+						}
+					}
+				}
+			}
+
+			node = node->next;
+		}
+	}
+
+	// Order class declarations so that base classes are compiled before derived classes.
+	// This will allow the derived classes to copy properties and methods in the next step.
+	for( n = 0; n < classDeclarations.GetLength(); n++ )
+	{
+		sClassDeclaration *decl = classDeclarations[n];
+		asCObjectType *derived = decl->objType;
+		asCObjectType *base = derived->derivedFrom;
+		
+		if( base == 0 ) continue;
+
+		// If the base class is found after the derived class, then move the derived class to the end of the list
+		for( asUINT m = n+1; m < classDeclarations.GetLength(); m++ )
+		{
+			sClassDeclaration *declBase = classDeclarations[n];
+			if( base == declBase->objType )
+			{
+				classDeclarations.Remove(n);
+				classDeclarations.PushLast(decl);
+
+				// Decrease index so that we don't skip an entry
+				n--;
+				break;
+			}
+		}
+	}
+
 	// Go through each of the classes and register the object type descriptions
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
 		sClassDeclaration *decl = classDeclarations[n];
+
+		// Add all properties and methods from the base class
+		if( decl->objType->derivedFrom )
+		{
+			// TODO: Need to check for name conflict with new class methods
+
+			asCObjectType *baseType = decl->objType->derivedFrom;
+
+			// Copy properties from base class to derived class
+			for( asUINT p = 0; p < baseType->properties.GetLength(); p++ )
+			{
+				asCObjectProperty *prop = AddPropertyToClass(decl, baseType->properties[p]->name, baseType->properties[p]->type);
+
+				// The properties must maintain the same offset
+				asASSERT(prop->byteOffset == baseType->properties[p]->byteOffset);
+			}
+
+			// Copy methods from base class to derived class
+			for( asUINT m = 0; m < baseType->methods.GetLength(); m++ )
+			{
+				// If the derived class implements the same method, then don't add the base class' method
+				asCScriptFunction *baseFunc = GetFunctionDescription(baseType->methods[m]);
+				asCScriptFunction *derivedFunc = 0;
+				bool found = false;
+				for( asUINT d = 0; d < decl->objType->methods.GetLength(); d++ )
+				{
+					derivedFunc = GetFunctionDescription(decl->objType->methods[d]);
+					if( derivedFunc->IsSignatureEqual(baseFunc) )
+					{
+						decl->objType->methods.Remove(d);
+						found = true;
+						break;
+					}
+				}
+
+				if( !found )
+				{
+					// Push the base class function on the virtual function table
+					decl->objType->virtualFunctionTable.PushLast(baseType->virtualFunctionTable[m]);
+				}
+				else
+				{
+					// Push the derived class function on the virtual function table
+					decl->objType->virtualFunctionTable.PushLast(derivedFunc);
+				}
+				decl->objType->methods.PushLast(baseType->methods[m]);
+			}
+		}
+
+		// Move this class' methods into the virtual function table
+		for( asUINT m = 0; m < decl->objType->methods.GetLength(); m++ )
+		{
+			asCScriptFunction *func = GetFunctionDescription(decl->objType->methods[m]);
+			if( func->funcType != asFUNC_VIRTUAL )
+			{
+				decl->objType->virtualFunctionTable.PushLast(GetFunctionDescription(decl->objType->methods[m]));
+
+				// Substitute the function description in the method list for a virtual method
+				decl->objType->methods[m] = CreateVirtualFunction(func, (int)decl->objType->virtualFunctionTable.GetLength() - 1);
+			}
+		}
 
 		// Enumerate each of the declared properties
 		asCScriptNode *node = decl->node->firstChild->next;
@@ -1204,53 +1397,7 @@ void asCBuilder::CompileClasses()
 				st.SetObjectType(decl->objType);
 				CheckNameConflictMember(st, name.AddressOf(), node->lastChild, file);
 
-				// Store the properties in the object type descriptor
-				asCObjectProperty *prop = asNEW(asCObjectProperty);
-				prop->name = name;
-				prop->type = dt;
-
-				int propSize;
-				if( dt.IsObject() )
-				{
-					propSize = dt.GetSizeOnStackDWords()*4;
-					if( !dt.IsObjectHandle() )
-					{
-						if( dt.GetSizeInMemoryBytes() == 0 )
-						{
-							int r, c;
-							file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-							asCString str;
-							str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
-							WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
-						}
-						prop->type.MakeReference(true);
-					}
-				}
-				else
-				{
-					propSize = dt.GetSizeInMemoryBytes();
-					if( propSize == 0 )
-					{
-						int r, c;
-						file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-						asCString str;
-						str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
-						WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
-					}
-				}
-
-				// Add extra bytes so that the property will be properly aligned
-				if( propSize == 2 && (decl->objType->size & 1) ) decl->objType->size += 1;
-				if( propSize > 2 && (decl->objType->size & 3) ) decl->objType->size += 3 - (decl->objType->size & 3);
-
-				prop->byteOffset = decl->objType->size;
-				decl->objType->size += propSize;
-
-				decl->objType->properties.PushLast(prop);
-
-				// Make sure the struct holds a reference to the config group where the object is registered
-				asCConfigGroup *group = engine->FindConfigGroupForObjectType(prop->type.GetObjectType());
-				if( group != 0 ) group->AddRef();
+				AddPropertyToClass(decl, name, dt, file, node);
 			}
 			else
 				asASSERT(false);
@@ -1408,68 +1555,83 @@ void asCBuilder::CompileClasses()
 			}
 		}
 	}
+}
 
-	// Verify that the class implements all the methods from the interfaces it implements
-	for( n = 0; n < classDeclarations.GetLength(); n++ )
+int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
+{
+	asCScriptFunction *vf =  asNEW(asCScriptFunction)(engine, module);
+
+	vf->funcType = asFUNC_VIRTUAL;
+	vf->name = func->name;
+	vf->returnType = func->returnType;
+	vf->parameterTypes = func->parameterTypes;
+	vf->inOutFlags = func->inOutFlags;
+	vf->id = module->GetNextFunctionId();
+	vf->scriptSectionIdx = func->scriptSectionIdx;
+	vf->isReadOnly = func->isReadOnly;
+	vf->objectType = func->objectType;
+	vf->signatureId = func->signatureId;
+	vf->vfTableIdx = idx;
+
+	module->AddScriptFunction(vf);
+
+	// Add a dummy to the builder so that it doesn't mix up function ids
+	functions.PushLast(0);
+	
+	return vf->id;
+}
+
+asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const asCString &name, const asCDataType &dt, asCScriptCode *file, asCScriptNode *node)
+{
+	// Store the properties in the object type descriptor
+	asCObjectProperty *prop = asNEW(asCObjectProperty);
+	prop->name = name;
+	prop->type = dt;
+
+	int propSize;
+	if( dt.IsObject() )
 	{
-		sClassDeclaration *decl = classDeclarations[n];
-		asCScriptCode *file = decl->script;
-
-		// Enumerate each of the implemented interfaces
-		asCScriptNode *node = decl->node->firstChild->next;
-		while( node && node->nodeType == snIdentifier )
+		propSize = dt.GetSizeOnStackDWords()*4;
+		if( !dt.IsObjectHandle() )
 		{
-			// Get the interface name from the node
-			GETSTRING(name, &file->code[node->tokenPos], node->tokenLength);
-
-			// Find the object type for the interface
-			asCObjectType *objType = GetObjectType(name.AddressOf());
-
-			if( objType == 0 )
+			if( dt.GetSizeInMemoryBytes() == 0 && file && node )
 			{
 				int r, c;
 				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString str;
-				str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
+				str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
 				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
 			}
-			else if( !(objType->flags & asOBJ_SCRIPT_STRUCT) || objType->size != 0 )
-			{
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-				WriteError(file->name.AddressOf(), TXT_MUST_BE_AN_INTERFACE, r, c);
-			}
-			else
-			{
-				if( decl->objType->Implements(objType) )
-				{
-					int r, c;
-					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-					WriteWarning(file->name.AddressOf(), TXT_INTERFACE_ALREADY_IMPLEMENTED, r, c);
-				}
-				else
-				{
-					decl->objType->interfaces.PushLast(objType);
-
-					// Make sure all the methods of the interface are implemented
-					for( asUINT i = 0; i < objType->methods.GetLength(); i++ )
-					{
-						if( !DoesMethodExist(decl->objType, objType->methods[i]) )
-						{
-							int r, c;
-							file->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
-							asCString str;
-							str.Format(TXT_MISSING_IMPLEMENTATION_OF_s, 
-								engine->GetFunctionDeclaration(objType->methods[i]).AddressOf());
-							WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
-						}
-					}
-				}
-			}
-
-			node = node->next;
+			prop->type.MakeReference(true);
 		}
 	}
+	else
+	{
+		propSize = dt.GetSizeInMemoryBytes();
+		if( propSize == 0 && file && node )
+		{
+			int r, c;
+			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+			asCString str;
+			str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+			WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+		}
+	}
+
+	// Add extra bytes so that the property will be properly aligned
+	if( propSize == 2 && (decl->objType->size & 1) ) decl->objType->size += 1;
+	if( propSize > 2 && (decl->objType->size & 3) ) decl->objType->size += 3 - (decl->objType->size & 3);
+
+	prop->byteOffset = decl->objType->size;
+	decl->objType->size += propSize;
+
+	decl->objType->properties.PushLast(prop);
+
+	// Make sure the struct holds a reference to the config group where the object is registered
+	asCConfigGroup *group = engine->FindConfigGroupForObjectType(prop->type.GetObjectType());
+	if( group != 0 ) group->AddRef();
+
+	return prop;
 }
 
 bool asCBuilder::DoesMethodExist(asCObjectType *objType, int methodId)

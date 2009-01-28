@@ -46,9 +46,10 @@ BEGIN_AS_NAMESPACE
 
 asCObjectType::asCObjectType()
 {
-	engine   = 0; 
+	engine      = 0; 
 	refCount.set(0); 
-	subType  = 0;
+	subType     = 0;
+	derivedFrom = 0;
 }
 
 asCObjectType::asCObjectType(asCScriptEngine *engine) 
@@ -56,6 +57,7 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 	this->engine = engine; 
 	refCount.set(0); 
 	subType      = 0;
+	derivedFrom  = 0;
 }
 
 void asCObjectType::AddRef()
@@ -105,13 +107,30 @@ asCObjectType::~asCObjectType()
 	enumValues.SetLength(0);
 }
 
-bool asCObjectType::Implements(const asCObjectType *objType)
+bool asCObjectType::Implements(const asCObjectType *objType) const
 {
 	if( this == objType )
 		return true;
 
 	for( asUINT n = 0; n < interfaces.GetLength(); n++ )
 		if( interfaces[n] == objType ) return true;
+
+	return false;
+}
+
+bool asCObjectType::DerivesFrom(const asCObjectType *objType) const
+{
+	if( this == objType )
+		return true;
+
+	asCObjectType *base = derivedFrom;
+	while( base )
+	{
+		if( base == objType )
+			return true;
+
+		base = base->derivedFrom;
+	}
 
 	return false;
 }

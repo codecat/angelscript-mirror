@@ -61,10 +61,15 @@ const int asFUNC_SYSTEM    = 0;
 const int asFUNC_SCRIPT    = 1;
 const int asFUNC_INTERFACE = 2;
 const int asFUNC_IMPORTED  = 3;
+const int asFUNC_VIRTUAL   = 4;
 
 struct asSSystemFunctionInterface;
 
 // TODO: Need a method for obtaining the reference modifier for parameters and return type
+
+// TODO: Need a method for obtaining the function type, so that the application can differenciate between the types
+
+// TODO: Need a method for obtaining the read-only flag for class methods
 
 class asCScriptFunction : public asIScriptFunction
 {
@@ -101,25 +106,35 @@ public:
 	void      AddReferences();
 	void      ReleaseReferences();
 
-	int                          funcType;
 	asCScriptEngine             *engine;
 	asCModule                   *module;
+
+	// Function signature
 	asCString                    name;
 	asCDataType                  returnType;
 	asCArray<asCDataType>        parameterTypes;
 	asCArray<int>                inOutFlags;
+	bool                         isReadOnly;
+	asCObjectType               *objectType;
+	int                          signatureId;
+
 	int                          id;
-	int                          scriptSectionIdx;
+
+	int                          funcType;
+
+	// Used by asFUNC_SCRIPT
 	asCArray<asDWORD>            byteCode;
 	asCArray<asCObjectType*>     objVariableTypes;
 	asCArray<int>	             objVariablePos;
-	asCArray<int>                lineNumbers;
 	int                          stackNeeded;
-	bool                         isReadOnly;
-	asCObjectType               *objectType;
-	asCArray<asSScriptVariable*> variables;
-	int                          signatureId;
+	asCArray<int>                lineNumbers;      // debug info
+	asCArray<asSScriptVariable*> variables;        // debug info
+	int                          scriptSectionIdx; // debug info
 
+	// Used by asFUNC_VIRTUAL
+	int                          vfTableIdx;
+
+	// Used by asFUNC_SYSTEM
 	asSSystemFunctionInterface  *sysFuncIntf;
 };
 

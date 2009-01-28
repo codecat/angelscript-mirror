@@ -106,6 +106,29 @@ class asCScriptEngine;
 class asCObjectType : public asIObjectType
 {
 public:
+	// From asIObjectType
+	asIScriptEngine *GetEngine() const;
+	const char      *GetName(int *length = 0) const;
+	asIObjectType   *GetSubType() const;
+	int              GetInterfaceCount() const;
+	asIObjectType   *GetInterface(asUINT index) const;
+	bool             IsInterface() const;
+
+	// Methods
+	int                GetMethodCount() const;
+	int                GetMethodIdByIndex(int index) const;
+	int                GetMethodIdByName(const char *name) const;
+	int                GetMethodIdByDecl(const char *decl) const;
+	asIScriptFunction *GetMethodDescriptorByIndex(int index) const;
+
+	// TODO: These should be const
+	// Properties
+	int         GetPropertyCount();
+	int         GetPropertyTypeId(asUINT prop);
+	const char *GetPropertyName(asUINT prop, int *length = 0);
+
+
+public:
 	asCObjectType(); 
 	asCObjectType(asCScriptEngine *engine);
 	~asCObjectType();
@@ -114,25 +137,8 @@ public:
 	void Release();
 	int  GetRefCount();
 
-	asIScriptEngine *GetEngine() const;
-	const char *GetName(int *length = 0) const;
-	asIObjectType *GetSubType() const;
-	virtual int GetInterfaceCount() const;
-	asIObjectType *GetInterface(asUINT index) const;
-	bool IsInterface() const;
-	bool Implements(const asCObjectType *objType);
-
-	// Methods
-	int                      GetMethodCount() const;
-	int                      GetMethodIdByIndex(int index) const;
-	int                      GetMethodIdByName(const char *name) const;
-	int                      GetMethodIdByDecl(const char *decl) const;
-	asIScriptFunction       *GetMethodDescriptorByIndex(int index) const;
-
-	// Properties
-	int         GetPropertyCount();
-	int         GetPropertyTypeId(asUINT prop);
-	const char *GetPropertyName(asUINT prop, int *length = 0);
+	bool Implements(const asCObjectType *objType) const;
+	bool DerivesFrom(const asCObjectType *objType) const;
 
 	asCString   name;
 	eTokenType  tokenType;
@@ -142,6 +148,8 @@ public:
 	asCArray<int>                methods;
 	asCArray<asCObjectType*>     interfaces;
 	asCArray<asSEnumValue*>      enumValues;
+	asCObjectType *              derivedFrom;
+	asCArray<asCScriptFunction*> virtualFunctionTable;
 
 	asDWORD flags;
 

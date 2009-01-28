@@ -1003,10 +1003,11 @@ int asCContext::Execute()
 
 	if( byteCode == 0 )
 	{
-		if( currentFunction->funcType == asFUNC_INTERFACE )
+		if( currentFunction->funcType == asFUNC_VIRTUAL ||
+			currentFunction->funcType == asFUNC_INTERFACE )
 		{
-			// The currentFunction is an interface method
-	
+			// The currentFunction is a virtual method
+
 			// Determine the true function from the object
 			asCScriptStruct *obj = *(asCScriptStruct**)(size_t*)stackFramePointer;
 			if( obj == 0 )
@@ -1016,38 +1017,54 @@ int asCContext::Execute()
 			else
 			{
 				asCObjectType *objType = obj->objType;
-
-				// Search the object type for a function that matches the interface function
 				asCScriptFunction *realFunc = 0;
-				for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
-				{
-					asCScriptFunction *f2 = engine->scriptFunctions[objType->methods[n]];
-					if( f2->signatureId == currentFunction->signatureId )
-					{
-						realFunc = f2;
-						break;
-					}
-				}
 
-				if( realFunc == 0 )
+				if( currentFunction->funcType == asFUNC_VIRTUAL )
 				{
-					SetInternalException(TXT_NULL_POINTER_ACCESS);
+					if( objType->virtualFunctionTable.GetLength() > (asUINT)currentFunction->vfTableIdx )
+					{
+						realFunc = objType->virtualFunctionTable[currentFunction->vfTableIdx];
+					}
 				}
 				else
 				{
-					currentFunction = realFunc;
-					byteCode = currentFunction->byteCode.AddressOf();
-
-					if( module ) module->ReleaseContextRef();
-					module = currentFunction->module;
-					if( module )
-						module->AddContextRef();
-
-					// Set the local objects to 0
-					for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+					// Search the object type for a function that matches the interface function
+					for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
 					{
-						int pos = currentFunction->objVariablePos[n];
-						*(size_t*)&stackFramePointer[-pos] = 0;
+						asCScriptFunction *f2 = engine->scriptFunctions[objType->methods[n]];
+						if( f2->signatureId == currentFunction->signatureId )
+						{
+							if( f2->funcType == asFUNC_VIRTUAL )
+								realFunc = objType->virtualFunctionTable[f2->vfTableIdx];
+							else
+								realFunc = f2;
+							break;
+						}
+					}
+				}
+
+				if( realFunc )
+				{
+					if( realFunc->signatureId != currentFunction->signatureId )
+					{
+						SetInternalException(TXT_NULL_POINTER_ACCESS);
+					}
+					else
+					{
+						currentFunction = realFunc;
+						byteCode = currentFunction->byteCode.AddressOf();
+
+						if( module ) module->ReleaseContextRef();
+						module = currentFunction->module;
+						if( module )
+							module->AddContextRef();
+
+						// Set the local objects to 0
+						for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+						{
+							int pos = currentFunction->objVariablePos[n];
+							*(size_t*)&stackFramePointer[-pos] = 0;
+						}
 					}
 				}
 			}
@@ -1283,20 +1300,30 @@ void asCContext::CallInterfaceMethod(asCModule *mod, asCScriptFunction *func)
 
 	// Search the object type for a function that matches the interface function
 	asCScriptFunction *realFunc = 0;
-	for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
+	if( func->funcType == asFUNC_INTERFACE )
 	{
-		asCScriptFunction *f2 = engine->scriptFunctions[objType->methods[n]];
-		if( f2->signatureId == func->signatureId )
+		for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
 		{
-			realFunc = f2;
-			break;
+			asCScriptFunction *f2 = engine->scriptFunctions[objType->methods[n]];
+			if( f2->signatureId == func->signatureId )
+			{
+				if( f2->funcType == asFUNC_VIRTUAL )
+					realFunc = objType->virtualFunctionTable[f2->vfTableIdx];
+				else
+					realFunc = f2;
+				break;
+			}
+		}
+
+		if( realFunc == 0 )
+		{
+			SetInternalException(TXT_NULL_POINTER_ACCESS);
+			return;
 		}
 	}
-
-	if( realFunc == 0 )
+	else /* if( func->funcType == asFUNC_VIRTUAL ) */
 	{
-		SetInternalException(TXT_NULL_POINTER_ACCESS);
-		return;
+		realFunc = objType->virtualFunctionTable[func->vfTableIdx];
 	}
 
 	// Then call the true script function
@@ -2885,7 +2912,8 @@ void asCContext::ExecuteNext()
 
 				asCScriptStruct *obj = (asCScriptStruct *)* a;
 				asCObjectType *objType = obj->objType;
-				if( !objType->Implements(engine->GetObjectTypeFromTypeId(typeId)) )
+				asCObjectType *to = engine->GetObjectTypeFromTypeId(typeId);
+				if( !objType->Implements(to) && !objType->DerivesFrom(to) )
 				{
 					// The cast is not possible, set the reference on the stack to null
 					*(size_t*)l_sp = 0;

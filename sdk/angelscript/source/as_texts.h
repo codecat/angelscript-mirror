@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -48,6 +48,9 @@
 
 #define TXT_BOTH_MUST_BE_SAME             "Both expressions must have the same type"
 
+#define TXT_CANNOT_INHERIT_FROM_s         "Can't inherit from '%s'"
+#define TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES "Can't inherit from multiple classes"
+#define TXT_CANNOT_INHERIT_FROM_SELF      "Can't inherit from itself, or another class that inherits from this class"
 #define TXT_CANT_IMPLICITLY_CONVERT_s_TO_s "Can't implicitly convert from '%s' to '%s'."
 #define TXT_CANT_RETURN_VALUE             "Can't return value when return type is 'void'"
 #define TXT_CHANGE_SIGN                   "Implicit conversion changed sign of value"
@@ -105,7 +108,6 @@
 #define TXT_MORE_THAN_ONE_MATCHING_OP               "Found more than one matching operator"
 #define TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s       "Multiple matching signatures to '%s'"
 #define TXT_MULTILINE_STRINGS_NOT_ALLOWED           "Multiline strings are not allowed in this application"
-#define TXT_MUST_BE_AN_INTERFACE                    "The identifier must be an interface"
 #define TXT_MUST_BE_OBJECT                          "Only objects have constructors"
 #define TXT_s_MUST_BE_SENT_BY_REF                   "'%s' must be sent by reference"
 #define TXT_MUST_RETURN_VALUE                       "Must return a value"

@@ -69,7 +69,7 @@ protected:
 	void WriteGlobalVarPointers();
 
 	void ReadString(asCString *str);
-	void ReadFunction(asCScriptFunction *func);
+	asCScriptFunction *ReadFunction(bool addToModule = true, bool addToEngine = true);
 	void ReadFunctionSignature(asCScriptFunction *func);
 	void ReadGlobalProperty();
 	void ReadObjectProperty(asCObjectProperty *prop);
@@ -99,6 +99,8 @@ protected:
 	asCArray<int>                usedTypeIds;
 	asCArray<asCObjectType*>     usedTypes;
 	asCArray<asCScriptFunction*> usedFunctions;
+
+	asCArray<asCScriptFunction*> savedFunctions;
 };
 
 END_AS_NAMESPACE

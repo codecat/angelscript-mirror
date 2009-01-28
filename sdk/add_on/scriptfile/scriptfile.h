@@ -25,34 +25,24 @@ public:
     void AddRef();
     void Release();
 
+	// TODO: Implement the "w" and "a" modes
 	// mode = "r" -> open the file for reading
-    int Open(const std::string &filename, const std::string &mode);
-    int Close();
-    int GetSize();
+    int  Open(const std::string &filename, const std::string &mode);
+    int  Close();
+    int  GetSize();
+	bool IsEOF();
 
     // Reading
     CScriptString *ReadString(unsigned int length);
+	CScriptString *ReadLine();
 
 	// TODO: Add the following functions
-/*  bool             IsEOF();
-    asCScriptString *ReadStringUntilOneOf(const std::string &chars);
-    asINT8           ReadInt8();
-    asINT16          ReadInt16();
-    asINT32          ReadInt32();
-    asINT64          ReadInt64();
-    float            ReadFloat();
-    double           ReadDouble();*/
 
     // Writing
 /*  int WriteString(const std::string &str);
-    int WriteInt8(asINT8 i);
-    int WriteInt16(asINT16 i);
-    int WriteInt32(asINT32 i);
-    int WriteInt64(asINT64 i);
-    int WriteFloat(float f);
-    int WriteDouble(double d);
 
     // Cursor
+	int GetPos();
     int SetPos(int pos);
     int MovePos(int delta); */
 

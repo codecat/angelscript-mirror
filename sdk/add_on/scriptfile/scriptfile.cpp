@@ -64,6 +64,21 @@ void ScriptFile_ReadString_Generic(asIScriptGeneric *gen)
 	str->Release();
 }
 
+void ScriptFile_ReadLine_Generic(asIScriptGeneric *gen)
+{
+	CScriptFile *file = (CScriptFile*)gen->GetObject();
+	CScriptString *str = file->ReadLine();
+	gen->SetReturnObject(str);
+	str->Release();
+}
+
+void ScriptFile_IsEOF_Generic(asIScriptGeneric *gen)
+{
+	CScriptFile *file = (CScriptFile*)gen->GetObject();
+	bool r = file->IsEOF();
+	gen->SetReturnByte(r);
+}
+
 void RegisterScriptFile_Native(asIScriptEngine *engine)
 {
     int r;
@@ -76,7 +91,9 @@ void RegisterScriptFile_Native(asIScriptEngine *engine)
     r = engine->RegisterObjectMethod("file", "int open(const string &in, const string &in)", asMETHOD(CScriptFile,Open), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectMethod("file", "int close()", asMETHOD(CScriptFile,Close), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int getSize()", asMETHOD(CScriptFile,GetSize), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "bool isEndOfFile()", asMETHOD(CScriptFile,IsEOF), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "string @readString(uint)", asMETHOD(CScriptFile,ReadString), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "string @readLine()", asMETHOD(CScriptFile,ReadLine), asCALL_THISCALL); assert( r >= 0 );
 }
 
 void RegisterScriptFile_Generic(asIScriptEngine *engine)
@@ -91,7 +108,9 @@ void RegisterScriptFile_Generic(asIScriptEngine *engine)
     r = engine->RegisterObjectMethod("file", "int open(const string &in, const string &in)", asFUNCTION(ScriptFile_Open_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("file", "int close()", asFUNCTION(ScriptFile_Close_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int getSize()", asFUNCTION(ScriptFile_GetSize_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "bool isEndOfFile()", asFUNCTION(ScriptFile_IsEOF_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "string @readString(uint)", asFUNCTION(ScriptFile_ReadString_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "string @readLine()", asFUNCTION(ScriptFile_ReadLine_Generic), asCALL_GENERIC); assert( r >= 0 );
 }
 
 void RegisterScriptFile(asIScriptEngine *engine)
@@ -190,6 +209,49 @@ CScriptString *CScriptFile::ReadString(unsigned int length)
 	str->buffer.swap(buf);
 
 	return str;
+}
+
+CScriptString *CScriptFile::ReadLine()
+{
+	if( file == 0 )
+		return 0;
+
+	// Read until the first new-line character
+	string line;
+	char buf[256];
+
+	do
+	{
+		// Get the current position so we can determine how many characters were read
+		int start = ftell(file);
+
+		// Set the last byte to something different that 0, so that we can check if the buffer was filled up
+		buf[255] = 1;
+
+		// Read the line (or first 255 characters, which ever comes first)
+		fgets(buf, 256, file);
+		
+		// Get the position after the read
+		int end = ftell(file);
+
+		// Add the read characters to the output buffer
+		line.append(buf, end-start);
+	}
+	while( !feof(file) && buf[255] == 0 && buf[254] != '\n' );
+
+	// Create the string object that will be returned
+	CScriptString *str = new CScriptString();
+	str->buffer.swap(line);
+
+	return str;
+}
+
+bool CScriptFile::IsEOF()
+{
+	if( file == 0 )
+		return true;
+
+	return feof(file) ? true : false;
 }
 
 

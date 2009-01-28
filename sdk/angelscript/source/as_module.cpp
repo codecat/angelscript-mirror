@@ -660,6 +660,7 @@ int asCModule::GetNextImportedFunctionId()
 	return FUNC_IMPORTED | (asUINT)importedFunctions.GetLength();
 }
 
+// internal
 int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, int *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType, bool isConstMethod)
 {
 	asASSERT(id >= 0);
@@ -689,6 +690,14 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	return 0;
 }
 
+// internal 
+int asCModule::AddScriptFunction(asCScriptFunction *func)
+{
+	scriptFunctions.PushLast(func);
+	engine->SetScriptFunction(func);
+
+	return 0;
+}
 
 
 

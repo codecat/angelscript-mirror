@@ -351,9 +351,15 @@ public:
   
   // Returns the size of the file
   int GetSize();
+  
+  // Returns true if the end of the file has been reached
+  bool IsEOF();
 
   // Reads a specified number of bytes into the string
   CScriptString *ReadString(unsigned int length);
+  
+  // Reads to the next new-line character
+  CScriptString *ReadLine();
 };
 \endcode
 
@@ -362,10 +368,12 @@ public:
 <pre>
   class file
   {
-    int open(const string &in filename, const string &in mode);
-    int close();
-    int getSize();
+    int      open(const string &in filename, const string &in mode);
+    int      close();
+    int      getSize();
+    bool     isEndOfFile();
     string @ readString(uint length);
+    string @ readLine();
   }
 </pre>
 

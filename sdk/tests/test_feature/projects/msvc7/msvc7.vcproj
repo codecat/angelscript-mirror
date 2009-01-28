@@ -299,6 +299,9 @@
 				RelativePath="..\..\source\test_import2.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_inheritance.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_int8.cpp">
 			</File>
 			<File

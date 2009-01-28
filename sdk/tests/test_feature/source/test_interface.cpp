@@ -69,12 +69,6 @@ static const char *script2 =
 "   myclass@f = b;          \n"
 "}                          \n";
 
-// Test inheriting from another class. Should give an error since this hasn't been implemented yet
-static const char *script3 =
-"class A {}       \n"
-"class B : A {}   \n";
-
-
 // TODO: Test explicit conversion from interface to class. Should give null value if not the right class.
 
 bool Test2();
@@ -158,18 +152,6 @@ bool Test()
 					   "TestInterface (13, 6) : Error   : There is no copy operator for this type available.\n"
 					   "TestInterface (15, 16) : Error   : Can't implicitly convert from 'myclass@' to 'nointf@&'.\n"
 					   "TestInterface (16, 16) : Error   : Can't implicitly convert from 'intf@' to 'myclass@&'.\n" )
-	{
-		printf(bout.buffer.c_str());
-		fail = true;
-	}
-
-	// Test inheriting from another class
-	bout.buffer = "";
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
-	r = mod->Build();
-	if( r >= 0 ) fail = true;
-	if( bout.buffer != "TestInterface (2, 11) : Error   : The identifier must be an interface\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

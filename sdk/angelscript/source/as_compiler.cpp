@@ -3546,6 +3546,13 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					asASSERT(ctx->type.dataType.IsObjectHandle());
 					ctx->type.dataType.SetObjectType(to.GetObjectType());
 				}
+				// If the to type is a class and the from type derives from it, then we can convert it immediately
+				if( ctx->type.dataType.GetObjectType() &&
+					ctx->type.dataType.GetObjectType()->DerivesFrom(to.GetObjectType()) )
+				{
+					asASSERT(ctx->type.dataType.IsObjectHandle());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
+				}
 				else if( ctx->type.dataType.GetObjectType() )
 				{
 					// We may still be able to find an implicit ref cast behaviour
@@ -8467,7 +8474,8 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 	}
 	else if( descr->funcType == asFUNC_IMPORTED )
 		ctx->bc.Call(BC_CALLBND , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
-	else if( descr->funcType == asFUNC_INTERFACE )
+	// TODO: Maybe we need two different byte codes
+	else if( descr->funcType == asFUNC_INTERFACE || descr->funcType == asFUNC_VIRTUAL )
 		ctx->bc.Call(BC_CALLINTF, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
 	else if( descr->funcType == asFUNC_SCRIPT )
 		ctx->bc.Call(BC_CALL    , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));

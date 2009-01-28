@@ -6,32 +6,6 @@
 		<Option pch_mode="0" />
 		<Option compiler="msp430gcc" />
 		<Build>
-			<Target title="MSVC++ 6 DEBUG">
-				<Option output="..\..\lib\angelscriptd.lib" prefix_auto="0" extension_auto="0" />
-				<Option working_dir="" />
-				<Option type="2" />
-				<Option compiler="msp430gcc" />
-				<Option projectResourceIncludeDirsRelation="2" />
-				<Compiler>
-					<Add option="/MDd" />
-					<Add option="/Gm" />
-					<Add option="/Od" />
-					<Add option="/W3" />
-					<Add option="/ZI" />
-					<Add option="/YX" />
-					<Add option="/FD" />
-					<Add option="/GZ" />
-					<Add option="/opt:nowin98" />
-					<Add option="/c" />
-					<Add option="/DAS_C_INTERFACE" />
-					<Add option="/DAS_DEBUG" />
-					<Add option="/DWIN32" />
-					<Add option="/D_DEBUG" />
-					<Add option="/D_MBCS" />
-					<Add option="/D_LIB" />
-					<Add option="/DANGELSCRIPT_EXPORT" />
-				</Compiler>
-			</Target>
 			<Target title="MinGW RELEASE">
 				<Option output="..\..\lib\libangelscript.a" prefix_auto="0" extension_auto="0" />
 				<Option working_dir="" />
@@ -51,7 +25,7 @@
 			</Target>
 		</Build>
 		<VirtualTargets>
-			<Add alias="All" targets="MSVC++ 6 DEBUG;MinGW RELEASE;" />
+			<Add alias="All" targets="MinGW RELEASE;" />
 		</VirtualTargets>
 		<Unit filename="..\..\include\angelscript.h" />
 		<Unit filename="..\..\source\as_array.h" />

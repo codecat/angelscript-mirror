@@ -138,6 +138,7 @@ namespace TestFile              { bool Test(); }
 namespace TestRefCast           { bool Test(); }
 namespace TestImplicitHandle    { bool Test(); }
 namespace TestMetaData          { bool Test(); }
+namespace TestInheritance       { bool Test(); }
 
 #include "utils.h"
 
@@ -177,6 +178,12 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestInheritance::Test()       ) goto failed; else printf("-- TestInheritance passed\n");
+	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
+	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
+	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
+	if( Test2Modules()                ) goto failed; else printf("-- Test2Modules passed\n");
+	if( TestFile::Test()              ) goto failed; else printf("-- TestFile passed\n");
 	if( TestArrayObject::Test()       ) goto failed; else printf("-- TestArrayObject passed\n");
 	if( TestCompiler::Test()          ) goto failed; else printf("-- TestCompiler passed\n");
 	if( TestReturnWithCDeclObjFirst() ) goto failed; else printf("-- TestReturnWithCDeclObjFirst passed\n");
@@ -187,12 +194,10 @@ int main(int argc, char **argv)
 	if( TestCDecl_ClassC()            ) goto failed; else printf("-- TestCDecl_ClassC passed\n");
 	if( TestOptimize()                ) goto failed; else printf("-- TestOptimize passed\n");
 	if( TestConversion::Test()        ) goto failed; else printf("-- TestConversion passed\n");
-	if( TestFile::Test()              ) goto failed; else printf("-- TestFile passed\n");
 	if( TestRegisterType::Test()      ) goto failed; else printf("-- TestRegisterType passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestRefArgument::Test()       ) goto failed; else printf("-- TestRefArgument passed\n");
 	if( TestStream::Test()            ) goto failed; else printf("-- TestStream passed\n");
-	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestEnum::Test()              ) goto failed; else printf("-- TestEnum passed\n");
 	if( TestDynamicConfig::Test()     ) goto failed; else printf("-- TestDynamicConfig passed\n");
 	if( TestObjHandle::Test()         ) goto failed; else printf("-- TestObjHandle passed\n");
@@ -206,10 +211,8 @@ int main(int argc, char **argv)
 	if( TestDictionary::Test()        ) goto failed; else printf("-- TestDictionary passed\n");
 	if( TestVector3()                 ) goto failed; else printf("-- TestVector3 passed\n");
 	if( TestConstObject::Test()       ) goto failed; else printf("-- TestConstObject passed\n");
-	if( TestCastOp::Test()            ) goto failed; else printf("-- TestCastOp passed\n");
 	if( TestImplicitCast::Test()      ) goto failed; else printf("-- TestImplicitCast passed\n");
 	if( TestImplicitHandle::Test()    ) goto failed; else printf("-- TestImplicitHandle passed\n");
-	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
 	if( TestFor::Test()               ) goto failed; else printf("-- TestFor passed\n");
 	if( TestRefCast::Test()           ) goto failed; else printf("-- TestRefCast passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
@@ -224,7 +227,6 @@ int main(int argc, char **argv)
 	if( TestGeneric::Test()           ) goto failed; else printf("-- TestGeneric passed\n");
 	if( TestBStr()                    ) goto failed; else printf("-- TestBStr passed\n");
 	if( TestTypedef::Test()           ) goto failed; else printf("-- TestTypedef passed\n");
-	if( Test2Modules()                ) goto failed; else printf("-- Test2Modules passed\n");
 	if( TestImport::Test()            ) goto failed; else printf("-- TestImport passed\n");
 	if( TestAssign::Test()            ) goto failed; else printf("-- TestAssign passed\n");
 	if( TestSwitch()                  ) goto failed; else printf("-- TestSwitch passed\n");

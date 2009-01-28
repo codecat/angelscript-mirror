@@ -26,7 +26,7 @@ void RegisterBStr(asIScriptEngine *engine)
 	// Register the bstr factory
 	r = engine->RegisterStringFactory("bstr", asFUNCTION(asBStrFactory), asCALL_CDECL); assert( r >= 0 );
 
-	// Register the object methods 
+	// Register the object methods
 	r = engine->RegisterObjectMethod("bstr", "uint length() const", asFUNCTION(asBStrLengthMethod), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	// Register the object operator overloads
@@ -161,7 +161,7 @@ int asBStrCompare(asBSTR s1, asBSTR s2)
 
 	if( cmp == 0 )
 	{
-		if( l1 == l2 ) 
+		if( l1 == l2 )
 			return 0;
 		if( l1 < l2 )
 			return -1;
@@ -206,8 +206,8 @@ asBYTE *asBStrByteAt(int index, const asBSTR *s)
 {
 	if( index < 0 || index >= (signed)asBStrLength(*s) )
 	{
-		// The script is trying to access memory that isn't 
-		// allowed so we'll throw an exception. 
+		// The script is trying to access memory that isn't
+		// allowed so we'll throw an exception.
 		asIScriptContext *context = asGetActiveContext();
 
 		// Should this function be called by the host application directly
@@ -215,7 +215,7 @@ asBYTE *asBStrByteAt(int index, const asBSTR *s)
 		if( context )
 			context->SetException("Out of range");
 
-		// Don't return any objects to the script engine after 
+		// Don't return any objects to the script engine after
 		// setting an exception as they will not be released
 		return 0;
 	}
@@ -283,7 +283,7 @@ asBSTR asBStrFormat(double number)
 asBSTR asBStrFormatBits(asDWORD bits)
 {
 	char str[50];
-	sprintf(str, "%X", bits);
+	sprintf(str, "%X", (unsigned int)bits);
 	int len = (int)strlen(str);
 
 	// We must allocate a new bstr that the script engine will free afterwards

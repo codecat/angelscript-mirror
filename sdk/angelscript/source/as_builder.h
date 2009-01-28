@@ -135,6 +135,9 @@ protected:
 	bool DoesMethodExist(asCObjectType *objType, int methodId);
 
 	void AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file);
+	asCObjectProperty *AddPropertyToClass(sClassDeclaration *c, const asCString &name, const asCDataType &type, asCScriptCode *file = 0, asCScriptNode *node = 0);
+	
+	int CreateVirtualFunction(asCScriptFunction *func, int idx);
 
 	asCObjectType *GetObjectType(const char *type);
 

@@ -105,6 +105,7 @@
 		<Unit filename="..\..\source\test_implicithandle.cpp" />
 		<Unit filename="..\..\source\test_import.cpp" />
 		<Unit filename="..\..\source\test_import2.cpp" />
+		<Unit filename="..\..\source\test_inheritance.cpp" />
 		<Unit filename="..\..\source\test_int8.cpp" />
 		<Unit filename="..\..\source\test_interface.cpp" />
 		<Unit filename="..\..\source\test_metadata.cpp" />
