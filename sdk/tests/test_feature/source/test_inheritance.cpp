@@ -117,13 +117,12 @@ bool Test()
 	// Test that it is possible to pass a derived class to a function expecting a reference to the base class
 	// This actually creates an instance of the Base class and assigns the Derived instance to it.
 	// This is because the parameter is &in and not const &in
-	// TODO:
-/*	r = engine->ExecuteString(0, "Derived d; foo(d);");
+	r = engine->ExecuteString(0, "Derived d; foo(d);");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
-*/
+
 	// Test polymorphing
 	r = engine->ExecuteString(0, "Derived d; Base @b = @d; b.a = 3; b.f2(); assert( b.a == 2 );");
 	if( r != asEXECUTION_FINISHED )

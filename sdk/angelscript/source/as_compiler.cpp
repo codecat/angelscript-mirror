@@ -3095,57 +3095,108 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 	asUINT n;
 	int behaviour = isExplicit ? asBEHAVE_REF_CAST : asBEHAVE_IMPLICIT_REF_CAST;
 
-	// Find a suitable registered behaviour
-	for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n+= 2 )
+	if( ctx->type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT )
 	{
-		if( behaviour == engine->globalBehaviours.operators[n] )
+		// We need it to be a reference
+		if( !ctx->type.dataType.IsReference() )
 		{
-			int funcId = engine->globalBehaviours.operators[n+1];
-
-			// Is the operator for the input type?
-			asCScriptFunction *func = engine->scriptFunctions[funcId];
-			if( func->parameterTypes[0].GetObjectType() != ctx->type.dataType.GetObjectType() )
-				continue;
-
-			// Is the operator for the output type?
-			if( func->returnType.GetObjectType() != to.GetObjectType() )
-				continue;
-
-			// Find the config group for the global function
-			asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
-			if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
-				ops.PushLast(funcId);
+			asCDataType to = ctx->type.dataType;
+			to.MakeReference(true);
+			ImplicitConversion(ctx, to, 0, isExplicit, generateCode);
 		}
-	}
 
-	// Find the best match for the argument
-	asCArray<int> ops1;
-	MatchArgument(ops, ops1, &ctx->type, 0);
-
-	// Did we find a unique suitable operator?
-	if( ops1.GetLength() == 1 )
-	{
-		conversionDone = true;
-		asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
-
-		if( generateCode )
+		if( isExplicit )
 		{
-			// Add code for argument
-			asSExprContext expr(engine);
-			MergeExprContexts(&expr, ctx);
-			expr.type = ctx->type;
-			PrepareArgument2(ctx, &expr, &descr->parameterTypes[0], true, descr->inOutFlags[0]);
+			// Allow dynamic cast between object handles (only for script objects).
+			// At run time this may result in a null handle,   
+			// which when used will throw an exception
+			conversionDone = true;
+			if( generateCode )
+			{
+				ctx->bc.InstrDWORD(BC_Cast, engine->GetTypeIdFromDataType(to));
 
-			asCArray<asSExprContext*> args(1);
-			args.PushLast(&expr);
+				// Allocate a temporary variable for the returned object
+				int returnOffset = AllocateVariable(to, true);
 
-			MoveArgsToStack(descr->id, &ctx->bc, args, false);
+				// Move the pointer from the object register to the temporary variable
+				ctx->bc.InstrSHORT(BC_STOREOBJ, (short)returnOffset);
 
-			PerformFunctionCall(descr->id, ctx, false, &args);
+				ctx->bc.InstrSHORT(BC_PSF, (short)returnOffset);
+
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+				ctx->type.SetVariable(to, returnOffset, true);
+				ctx->type.dataType.MakeReference(true);
+			}
+			else
+			{
+				ctx->type.dataType = to;
+				ctx->type.dataType.MakeReference(true);
+			}
 		}
 		else
 		{
-			ctx->type.Set(descr->returnType);
+			if( ctx->type.dataType.GetObjectType()->DerivesFrom(to.GetObjectType()) )
+			{
+				conversionDone = true;
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
+		}
+	}
+	else
+	{
+		// Find a suitable registered behaviour
+		for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n+= 2 )
+		{
+			if( behaviour == engine->globalBehaviours.operators[n] )
+			{
+				int funcId = engine->globalBehaviours.operators[n+1];
+
+				// Is the operator for the input type?
+				asCScriptFunction *func = engine->scriptFunctions[funcId];
+				if( func->parameterTypes[0].GetObjectType() != ctx->type.dataType.GetObjectType() )
+					continue;
+
+				// Is the operator for the output type?
+				if( func->returnType.GetObjectType() != to.GetObjectType() )
+					continue;
+
+				// Find the config group for the global function
+				asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
+				if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
+					ops.PushLast(funcId);
+			}
+		}
+
+		// Find the best match for the argument
+		asCArray<int> ops1;
+		MatchArgument(ops, ops1, &ctx->type, 0);
+
+		// Did we find a unique suitable operator?
+		if( ops1.GetLength() == 1 )
+		{
+			conversionDone = true;
+			asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
+
+			if( generateCode )
+			{
+				// Add code for argument
+				asSExprContext expr(engine);
+				MergeExprContexts(&expr, ctx);
+				expr.type = ctx->type;
+				PrepareArgument2(ctx, &expr, &descr->parameterTypes[0], true, descr->inOutFlags[0]);
+
+				asCArray<asSExprContext*> args(1);
+				args.PushLast(&expr);
+
+				MoveArgsToStack(descr->id, &ctx->bc, args, false);
+
+				PerformFunctionCall(descr->id, ctx, false, &args);
+			}
+			else
+			{
+				ctx->type.Set(descr->returnType);
+			}
 		}
 	}
 
@@ -5642,45 +5693,10 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			expr.type.dataType.IsObjectHandle() &&
 			!(!to.IsHandleToConst() && expr.type.dataType.IsHandleToConst()) )
 		{
-			if( expr.type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT )
-			{
-				// We need it to be a reference
-				if( !expr.type.dataType.IsReference() )
-				{
-					asCDataType to = expr.type.dataType;
-					to.MakeReference(true);
-					ImplicitConversion(&expr, to, node, true);
-				}
+			conversionOK = CompileRefCast(&expr, to, true); 
 
-				MergeExprContexts(ctx, &expr);
-				ctx->type = expr.type;
-
-				// Allow dynamic cast between object handles (only for script objects).
-				// At run time this may result in a null handle,   
-				// which when used will throw an exception
-				conversionOK = true;
-				ctx->bc.InstrDWORD(BC_Cast, engine->GetTypeIdFromDataType(to));
-
-				// Allocate a temporary variable for the returned object
-				int returnOffset = AllocateVariable(to, true);
-
-				// Move the pointer from the object register to the temporary variable
-				ctx->bc.InstrSHORT(BC_STOREOBJ, (short)returnOffset);
-
-				ctx->bc.InstrSHORT(BC_PSF, (short)returnOffset);
-
-				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-
-				ctx->type.SetVariable(to, returnOffset, true);
-				ctx->type.dataType.MakeReference(true);
-			}
-			else
-			{
-				conversionOK = CompileRefCast(&expr, to, true); 
-
-				MergeExprContexts(ctx, &expr);
-				ctx->type = expr.type;
-			}
+			MergeExprContexts(ctx, &expr);
+			ctx->type = expr.type;
 		}
 	}
 
