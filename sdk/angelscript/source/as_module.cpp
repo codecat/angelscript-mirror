@@ -420,6 +420,8 @@ int asCModule::GetFunctionCount()
 	if( isBuildWithoutErrors == false )
 		return asERROR;
 
+	// TODO: This should probably only return the number of global functions
+	//       Currently it is returning all implemented script functions, including factory stubs and virtual methods
 	return (int)scriptFunctions.GetLength();
 }
 

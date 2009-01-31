@@ -22,26 +22,34 @@ bool Test()
 	// Test that the inherited methods are available in the derived class
 	// Test that it is possible to override the inherited methods
 	const char *script =
-		"class Base                             \n"
-		"{                                      \n"
-		"  int a;                               \n"
-		"  void f1() { a = 1; }                 \n"
-		"  void f2() { a = 0; }                 \n"
-		"}                                      \n"
-		"class Derived : Base                   \n"
-		"{                                      \n"
+		"bool baseDestructorCalled = false;               \n"
+		"class Base                                       \n"
+		"{                                                \n"
+		"  int a;                                         \n"
+		"  void f1() { a = 1; }                           \n"
+		"  void f2() { a = 0; }                           \n"
+		"  ~Base() { baseDestructorCalled = true; }       \n"
+		"}                                                \n"
+		"bool derivedDestructorCalled = false;            \n"
+		"class Derived : Base                             \n"
+		"{                                                \n"
 		   // overload f2()
-		"  void f2() { a = 2; }                 \n"
-		"  void func()                          \n"
-		"  {                                    \n"
+		"  void f2() { a = 2; }                           \n"
+		"  void func()                                    \n"
+		"  {                                              \n"
 		     // call Base::f1()
-		"    f1();                              \n"
-		"    assert(a == 1);                    \n"
+		"    f1();                                        \n"
+		"    assert(a == 1);                              \n"
 		     // call Derived::f2()
-		"    f2();                              \n"
-		"    assert(a == 2);                    \n"
-		"  }                                    \n"
-		"}                                      \n";
+		"    f2();                                        \n"
+		"    assert(a == 2);                              \n"
+		"  }                                              \n"
+		"  ~Derived() { derivedDestructorCalled = true; } \n"
+		"}                                                \n"
+		"void foo( Base &in a )                           \n"
+		"{                                                \n"
+		"  assert( cast<Derived>(a) is null );            \n"
+		"}                                                \n";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
@@ -91,6 +99,32 @@ bool Test()
 		fail = true;
 	}
 
+	// Test the explicit cast behaviour for a non-handle script object
+	// TODO:
+/*	r = engine->ExecuteString(0, "Base b; assert( cast<Derived>(b) is null );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail= true;
+	}
+*/
+	// Test that it is possible to implicitly assign derived class to base class
+	// TODO:
+/*	r = engine->ExecuteString(0, "Derived d; Base b = d;");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+*/
+	// Test that it is possible to pass a derived class to a function expecting a reference to the base class
+	// This actually creates an instance of the Base class and assigns the Derived instance to it.
+	// This is because the parameter is &in and not const &in
+	// TODO:
+/*	r = engine->ExecuteString(0, "Derived d; foo(d);");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+*/
 	// Test polymorphing
 	r = engine->ExecuteString(0, "Derived d; Base @b = @d; b.a = 3; b.f2(); assert( b.a == 2 );");
 	if( r != asEXECUTION_FINISHED )
@@ -144,7 +178,14 @@ bool Test()
 		engine->DiscardModule("2");
 	}
 
-	// TODO: Base class' destructor must be called when object is destroyed
+	// Base class' destructor must be called when object is destroyed
+	r = engine->ExecuteString(0, "baseDestructorCalled = derivedDestructorCalled = false; { Derived d; }\n"
+								 "assert( derivedDestructorCalled ); \n"
+		                         "assert( baseDestructorCalled );\n");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
 
 	// TODO: Test that it is possible to call the base class' constructor
 	//       The constructor can be called with the keyword super(args);
@@ -154,14 +195,14 @@ bool Test()
 
 	// TODO: If the derived class doesn't declare a default constructor, should the base class' default constructor be called?
 
-	// TODO: Implement support for initialization list for the constructor, where the base class' constructor can be invoked from the initialization list
-
 	// TODO: If the base class is garbage collected, then the derived class must also be garbage collected
 
 	// TODO: Can a derived class introduce new reference cycles involving the base class? I.e. are there any 
 	//       situations where the base class wouldn't be garbage collected, unless the derived class is implemented?
 
 	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. We can follow D's design of using this(args) to call the constructor
+
+	// TODO: Test that the derived class inherits the interfaces that the base class implements
 
 	engine->Release();
 

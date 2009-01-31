@@ -1903,6 +1903,9 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 			file->ConvertPosToRowCol(n->tokenPos, &r, &c);
 			WriteError(file->name.AddressOf(), TXT_CONSTRUCTOR_NAME_ERROR, r, c);
 		}
+
+		if( isDestructor )
+			name = "~" + name;
 	}
 
 	if( !isInterface )
@@ -1912,10 +1915,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 
 		func->script  = file;
 		func->node    = node;
-		if( isDestructor )
-			func->name = "~" + name;
-		else
-			func->name = name;
+		func->name = name;
 		func->objType = objType;
 		func->funcId  = funcID;
 	}
@@ -1972,6 +1972,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 			n = n->next;
 	}
 
+	// TODO: Much of this can probably be reduced by using the IsSignatureEqual method
 	// Check that the same function hasn't been registered already
 	asCArray<int> funcs;
 	GetFunctionDescriptions(name.AddressOf(), funcs);

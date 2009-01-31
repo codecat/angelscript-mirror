@@ -183,7 +183,7 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	// Copy all arguments to the top of the stack
 	unsigned int argDwords = outFunc->GetSpaceNeededForArguments();
 	for( n = 0; n < argDwords; n++ )
-		byteCode.InstrSHORT(BC_PshV4, (short)n);
+		byteCode.InstrSHORT(BC_PshV4, -short(n));
 
 	byteCode.Alloc(BC_ALLOC, dt.GetObjectType(), constructor, argDwords + PTR_SIZE);
 

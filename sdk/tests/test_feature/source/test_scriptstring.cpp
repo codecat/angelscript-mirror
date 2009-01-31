@@ -149,6 +149,8 @@ void PrintRef(asIScriptGeneric *gen)
 	assert( *ref == "Some String" );
 }
 
+bool Test2();
+
 bool Test()
 {
 	bool fail = false;
@@ -156,6 +158,8 @@ bool Test()
 	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
 	int r;
+
+	fail = Test2() || fail;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString(engine);
@@ -445,6 +449,41 @@ bool Test()
 
 		engine->Release();
 	}
+
+	return fail;
+}
+
+bool Test2()
+{
+	bool fail = false;
+
+	int r;
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptString(engine);
+
+	const char *string =   
+		"class Jerome  \n"
+		"{  \n"
+		"  string a;  \n"
+		"  string b;  \n"
+		"  string c;  \n"
+		"  Jerome(string A,string B,string C)  \n"
+		"  {  \n"
+		"    a = A;  \n"
+		"    b = B;  \n"
+		"    c = C;  \n"
+		"  }  \n"
+		"} \n"
+		"Jerome cc('Hello','Hi','SS');  \n";
+	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", string);
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+	}
+
+	engine->Release();
 
 	return fail;
 }

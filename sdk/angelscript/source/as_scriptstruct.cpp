@@ -258,29 +258,7 @@ int asCScriptStruct::Release()
 	// Call the script destructor behaviour if the reference counter is 1.
 	if( refCount.get() == 1 && !isDestructCalled )
 	{
-		// Make sure the destructor is called once only, even if the  
-		// reference count is increased and then decreased again
-		isDestructCalled = true;
-
-		// Call the destructor
-		int funcIndex = objType->beh.destruct;
-		if( funcIndex )
-		{
-			// Setup a context for calling the default constructor
-			asIScriptContext *ctx;
-			asCScriptEngine *engine = objType->engine;
-			int r = engine->CreateContext(&ctx, true);
-			if( r >= 0 )
-				r = ctx->Prepare(funcIndex);
-			if( r >= 0 )
-			{
-				ctx->SetObject(this);
-				ctx->Execute();
-
-				// There's not much to do if the execution doesn't finish, so we just ignore the result
-			}
-			ctx->Release();	
-		}
+		CallDestructor();
 	}
 
 	// Now do the actual releasing (clearing the flag set by GC)
@@ -292,6 +270,49 @@ int asCScriptStruct::Release()
 	}
 
 	return r;
+}
+
+void asCScriptStruct::CallDestructor()
+{
+	// Make sure the destructor is called once only, even if the  
+	// reference count is increased and then decreased again
+	isDestructCalled = true;
+
+	asIScriptContext *ctx = 0;
+
+	// Call the destructor for this class and all the super classes
+	asCObjectType *ot = objType;
+	while( ot )
+	{
+		int funcIndex = ot->beh.destruct;
+		if( funcIndex )
+		{
+			if( ctx == 0 )
+			{
+				// Setup a context for calling the default constructor
+				asCScriptEngine *engine = objType->engine;
+				int r = engine->CreateContext(&ctx, true);
+				if( r < 0 ) return;
+			}
+
+			int r = ctx->Prepare(funcIndex);
+			if( r >= 0 )
+			{
+				ctx->SetObject(this);
+				ctx->Execute();
+
+				// There's not much to do if the execution doesn't 
+				// finish, so we just ignore the result
+			}
+		}
+
+		ot = ot->derivedFrom;
+	}
+
+	if( ctx )
+	{
+		ctx->Release();
+	}
 }
 
 asIObjectType *asCScriptStruct::GetObjectType()
@@ -403,7 +424,7 @@ asCScriptStruct &ScriptStruct_Assignment(asCScriptStruct *other, asCScriptStruct
 
 asCScriptStruct &asCScriptStruct::operator=(const asCScriptStruct &other)
 {
-	asASSERT( objType == other.objType );
+	asASSERT( other.objType->DerivesFrom(objType) );
 
 	asCScriptEngine *engine = objType->engine;
 

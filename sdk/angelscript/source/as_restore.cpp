@@ -397,6 +397,14 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 {
 	char c;
 
+	// If there is no function, then store a null char
+	if( func == 0 )
+	{
+		c = '\0';
+		WRITE_NUM(c);
+		return;
+	}
+
 	// First check if the function has been saved already
 	for( asUINT f = 0; f < savedFunctions.GetLength(); f++ )
 	{
@@ -447,6 +455,12 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 {
 	char c;
 	READ_NUM(c);
+
+	if( c == '\0' )
+	{
+		// There is no function, so return a null pointer
+		return 0;
+	}
 
 	if( c == 'r' )
 	{
@@ -633,6 +647,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
 		{
 			WriteFunction(engine->scriptFunctions[ot->beh.construct]);
+			WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
 			WriteFunction(engine->scriptFunctions[ot->beh.factory]);
 			size = (int)ot->beh.constructors.GetLength() - 1;
 			WRITE_NUM(size);
@@ -707,6 +722,10 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 			asCScriptFunction *func = ReadFunction();
 			ot->beh.construct = func->id;
 			ot->beh.constructors.PushLast(func->id);
+
+			func = ReadFunction();
+			if( func )
+				ot->beh.destruct = func->id;
 
 			func = ReadFunction();
 			ot->beh.factory = func->id;

@@ -88,6 +88,8 @@ public:
 	void CopyObject(void *src, void *dst, asCObjectType *objType, asCScriptEngine *engine);
 	void CopyHandle(asDWORD *src, asDWORD *dst, asCObjectType *objType, asCScriptEngine *engine);
 
+	void CallDestructor();
+
 	asCObjectType *objType;
 
 protected:
