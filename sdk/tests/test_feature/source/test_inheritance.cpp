@@ -100,13 +100,12 @@ bool Test()
 	}
 
 	// Test the explicit cast behaviour for a non-handle script object
-	// TODO:
-/*	r = engine->ExecuteString(0, "Base b; assert( cast<Derived>(b) is null );");
+	r = engine->ExecuteString(0, "Base b; assert( cast<Derived>(b) is null );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail= true;
 	}
-*/
+
 	// Test that it is possible to implicitly assign derived class to base class
 	// TODO:
 /*	r = engine->ExecuteString(0, "Derived d; Base b = d;");

@@ -2913,12 +2913,14 @@ void asCContext::ExecuteNext()
 				asCScriptStruct *obj = (asCScriptStruct *)* a;
 				asCObjectType *objType = obj->objType;
 				asCObjectType *to = engine->GetObjectTypeFromTypeId(typeId);
-				if( !objType->Implements(to) && !objType->DerivesFrom(to) )
+				if( objType->Implements(to) || objType->DerivesFrom(to) )
 				{
-					// The cast is not possible, set the reference on the stack to null
-					*(size_t*)l_sp = 0;
+					objectType = 0;
+					objectRegister = obj;
+					obj->AddRef();
 				}
 			}
+			l_sp += PTR_SIZE;
 		}
 		l_bc += 2;
 		break;

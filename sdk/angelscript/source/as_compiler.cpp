@@ -5653,16 +5653,26 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 				}
 
 				MergeExprContexts(ctx, &expr);
+				ctx->type = expr.type;
 
 				// Allow dynamic cast between object handles (only for script objects).
 				// At run time this may result in a null handle,   
 				// which when used will throw an exception
 				conversionOK = true;
-				to.MakeReference(true);
 				ctx->bc.InstrDWORD(BC_Cast, engine->GetTypeIdFromDataType(to));
 
-				ctx->type = expr.type;
-				ctx->type.dataType = to;
+				// Allocate a temporary variable for the returned object
+				int returnOffset = AllocateVariable(to, true);
+
+				// Move the pointer from the object register to the temporary variable
+				ctx->bc.InstrSHORT(BC_STOREOBJ, (short)returnOffset);
+
+				ctx->bc.InstrSHORT(BC_PSF, (short)returnOffset);
+
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+				ctx->type.SetVariable(to, returnOffset, true);
+				ctx->type.dataType.MakeReference(true);
 			}
 			else
 			{

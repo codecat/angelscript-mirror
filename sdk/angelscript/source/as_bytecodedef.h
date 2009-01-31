@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -848,7 +848,7 @@ const int bcStackInc[256] =
 	0,			// BC_iTOw
 	0,			// BC_SetV1
 	0,			// BC_SetV2
-	0,			// BC_Cast
+	-PTR_SIZE,	// BC_Cast
 	0,			// BC_i64TOi
 	0,			// BC_uTOi64
 	0,			// BC_iTOi64
