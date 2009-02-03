@@ -2964,8 +2964,22 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		asCDataType to = *lvalue;
 		to.MakeReference(false);
 
+		// TODO: ImplicitConversion should know to do this by itself
+		// First convert to a handle which will to a reference cast
+		if( !lvalue->IsObjectHandle() &&
+			(lvalue->GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) )
+			to.MakeHandle(true);
+
 		// Don't allow the implicit conversion to create an object
 		ImplicitConversion(rctx, to, node, false, true, 0, false);
+
+		if( !lvalue->IsObjectHandle() &&
+			(lvalue->GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) )
+		{
+			// Then convert to a reference, which will validate the handle 
+			to.MakeHandle(false);
+			ImplicitConversion(rctx, to, node, false, true, 0, false);
+		}
 
 		// Check data type
 		if( lvalue->IsObjectHandle() &&
@@ -3202,6 +3216,31 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 
 	return conversionDone;
 }
+
+
+// TODO: Re-think the implementation for implicit conversions
+//       It's currently inefficient and may at times generate unneeded copies of objects
+//       There are also too many different code paths to test, each working slightly differently
+//
+//       Reference and handle-of should be treated last
+//
+//       - The following conversion categories needs to be implemented in separate functions
+//         - primitive to primitive
+//         - primitive to value type
+//         - primitive to reference type
+//         - value type to value type
+//         - value type to primitive
+//         - value type to reference type
+//         - reference type to reference type
+//         - reference type to primitive
+//         - reference type to value type
+//
+//       Explicit conversion and implicit conversion should use the same functions, only with a flag to enable/disable conversions
+//
+//       If the conversion fails, the type in the asSExprContext must not be modified. This
+//       causes problems where the conversion is partially done and the compiler continues with
+//       another option.
+
 
 void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {

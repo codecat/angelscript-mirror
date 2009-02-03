@@ -98,7 +98,7 @@
 #define TXT_INVALID_BREAK                 "Invalid 'break'"
 #define TXT_INVALID_CONTINUE              "Invalid 'continue'"
 #define TXT_INVALID_TYPE                  "Invalid type"
-#define TXT_INTERFACE_ALREADY_IMPLEMENTED "The interface is already implemented"
+#define TXT_INTERFACE_s_ALREADY_IMPLEMENTED "The interface '%s' is already implemented"
 #define TXT_ILLEGAL_MEMBER_TYPE           "Illegal member type"
 #define TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST     "Illegal target type for reference cast"
 #define TXT_ILLEGAL_VARIABLE_NAME_s       "Illegal variable name '%s'."

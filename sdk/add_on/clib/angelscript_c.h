@@ -60,6 +60,7 @@
 
 BEGIN_AS_NAMESPACE
 
+typedef enum { asTRUE = 1, asFALSE = 0 } asBOOL;
 typedef unsigned char  asBYTE;
 typedef unsigned short asWORD;
 typedef unsigned int   asUINT;
@@ -380,7 +381,7 @@ extern "C"
 	AS_API int                asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName);
 	AS_API int                asEngine_EndConfigGroup(asIScriptEngine *e);
 	AS_API int                asEngine_RemoveConfigGroup(asIScriptEngine *e, const char *groupName);
-	AS_API int                asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const char *groupName, const char *module, bool hasAccess);
+	AS_API int                asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const char *groupName, const char *module, asBOOL hasAccess);
 	AS_API asIScriptModule *  asEngine_GetModule(asIScriptEngine *e, const char *module, asEGMFlags flag);
 	AS_API int                asEngine_DiscardModule(asIScriptEngine *e, const char *module);
 	AS_API asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId);
@@ -396,8 +397,8 @@ extern "C"
 	AS_API void               asEngine_CopyScriptObject(asIScriptEngine *e, void *dstObj, void *srcObj, int typeId);
 	AS_API void               asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId);
 	AS_API void               asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId);
-	AS_API bool               asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
-	AS_API int                asEngine_CompareScriptObjects(asIScriptEngine *e, bool &result, int behaviour, void *leftObj, void *rightObj, int typeId);
+	AS_API asBOOL             asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
+	AS_API int                asEngine_CompareScriptObjects(asIScriptEngine *e, asBOOL &result, int behaviour, void *leftObj, void *rightObj, int typeId);
 	AS_API int                asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx /* = 0 */, asDWORD flags /* = 0 */);
 	AS_API int                asEngine_GarbageCollect(asIScriptEngine *e, asEGCFlags flags /* = asGC_FULL_CYCLE */);
 	AS_API void               asEngine_GetGCStatistics(asIScriptEngine *e, asUINT *currentSize, asUINT *totalDestroyed /* = 0 */, asUINT *totalDetected /* = 0 */);
@@ -541,7 +542,7 @@ extern "C"
 	AS_API asIObjectType           *asObjectType_GetSubType(const asIObjectType *o);
 	AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o);
 	AS_API asIObjectType           *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
-	AS_API bool                     asObjectType_IsInterface(const asIObjectType *o);
+	AS_API asBOOL                   asObjectType_IsInterface(const asIObjectType *o);
 	AS_API int                      asObjectType_GetMethodCount(const asIObjectType *o);
 	AS_API int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index);
 	AS_API int                      asObjectType_GetMethodIdByName(const asIObjectType *o, const char *name);
@@ -553,8 +554,8 @@ extern "C"
 	AS_API asIObjectType       *asScriptFunction_GetObjectType(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetName(const asIScriptFunction *f);
-	AS_API bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f);
-	AS_API bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f);
+	AS_API asBOOL               asScriptFunction_IsClassMethod(const asIScriptFunction *f);
+	AS_API asBOOL               asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f);
 	AS_API int                  asScriptFunction_GetParamCount(const asIScriptFunction *f);
 	AS_API int                  asScriptFunction_GetParamTypeId(const asIScriptFunction *f, int index);
 	AS_API int                  asScriptFunction_GetReturnTypeId(const asIScriptFunction *f);

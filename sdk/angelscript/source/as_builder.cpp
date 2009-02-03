@@ -1240,8 +1240,25 @@ void asCBuilder::CompileClasses()
 					if( !error )
 					{
 						decl->objType->derivedFrom = objType;
+						objType->AddRef();
 
-						// TODO: Should we increment the refCount for the base class?
+						// The derived class inherits all interfaces from the base class
+						for( unsigned int n = 0; n < objType->interfaces.GetLength(); n++ )
+						{
+							if( !decl->objType->Implements(objType->interfaces[n]) )
+							{
+								decl->objType->interfaces.PushLast(objType->interfaces[n]);
+							}
+							else
+							{
+								// Warn if derived class already implements the interface
+								int r, c;
+								file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+								asCString msg;
+								msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, objType->interfaces[n]->GetName());
+								WriteWarning(file->name.AddressOf(), msg.AddressOf(), r, c);
+							}
+						}
 					}
 				}
 			}
@@ -1252,7 +1269,9 @@ void asCBuilder::CompileClasses()
 				{
 					int r, c;
 					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-					WriteWarning(file->name.AddressOf(), TXT_INTERFACE_ALREADY_IMPLEMENTED, r, c);
+					asCString msg;
+					msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, objType->GetName());
+					WriteWarning(file->name.AddressOf(), msg.AddressOf(), r, c);
 				}
 				else
 				{

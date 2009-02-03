@@ -145,7 +145,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "TestInterface (5, 7) : Error   : Missing implementation of 'void intf::test()'\n"
-					   "TestInterface (5, 23) : Warning : The interface is already implemented\n"
+					   "TestInterface (5, 23) : Warning : The interface 'intf' is already implemented\n"
 					   "TestInterface (9, 1) : Info    : Compiling void test(intf&inout)\n"
 					   "TestInterface (11, 9) : Error   : Data type can't be 'intf'\n"
 					   "TestInterface (13, 8) : Error   : There is no copy operator for this type available.\n"

@@ -634,10 +634,18 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 	{	
 		WriteObjectType(ot->derivedFrom);
 
-		// properties[]
-		int size = (asUINT)ot->properties.GetLength();
+		// interfaces[]
+		int size = (asUINT)ot->interfaces.GetLength();
 		WRITE_NUM(size);
 		asUINT n;
+		for( n = 0; n < ot->interfaces.GetLength(); n++ )
+		{
+			WriteObjectType(ot->interfaces[n]);
+		}
+
+		// properties[]
+		size = (asUINT)ot->properties.GetLength();
+		WRITE_NUM(size);
 		for( n = 0; n < ot->properties.GetLength(); n++ )
 		{
 			WriteObjectProperty(ot->properties[n]);
@@ -657,8 +665,6 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 				WriteFunction(engine->scriptFunctions[ot->beh.factories[n]]);
 			}
 		}
-
-		// TODO: Classes may share functions, so we need to change this to avoid storing the same function multiple times
 
 		// methods[]
 		size = (int)ot->methods.GetLength();
@@ -703,12 +709,23 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 	else
 	{	
 		ot->derivedFrom = ReadObjectType();
+		if( ot->derivedFrom )
+			ot->derivedFrom->AddRef();
 
-		// properties[]
+		// interfaces[]
 		int size;
 		READ_NUM(size);
-		ot->properties.Allocate(size,0);
+		ot->interfaces.Allocate(size,0);
 		int n;
+		for( n = 0; n < size; n++ )
+		{
+			asCObjectType *intf = ReadObjectType();
+			ot->interfaces.PushLast(intf);
+		}
+
+		// properties[]
+		READ_NUM(size);
+		ot->properties.Allocate(size,0);
 		for( n = 0; n < size; n++ )
 		{
 			asCObjectProperty *prop = asNEW(asCObjectProperty);

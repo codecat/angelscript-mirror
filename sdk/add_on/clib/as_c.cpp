@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -43,6 +43,8 @@ BEGIN_AS_NAMESPACE
 typedef void (*asBINARYREADFUNC_t)(void *ptr, asUINT size, void *param);
 typedef void (*asBINARYWRITEFUNC_t)(const void *ptr, asUINT size, void *param);
 
+typedef enum { asTRUE = 1, asFALSE = 0 } asBOOL;
+
 class asCBinaryStreamC : public asIBinaryStream
 {
 public:
@@ -83,7 +85,7 @@ AS_API int                asEngine_RegisterStringFactory(asIScriptEngine *e, con
 AS_API int                asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName)                                                                                                     { return e->BeginConfigGroup(groupName); }
 AS_API int                asEngine_EndConfigGroup(asIScriptEngine *e)                                                                                                                              { return e->EndConfigGroup(); }
 AS_API int                asEngine_RemoveConfigGroup(asIScriptEngine *e, const char *groupName)                                                                                                    { return e->RemoveConfigGroup(groupName); }
-AS_API int                asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const char *groupName, const char *module, bool haveAccess)                                                      { return e->SetConfigGroupModuleAccess(groupName, module, haveAccess); }
+AS_API int                asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const char *groupName, const char *module, asBOOL haveAccess)                                                      { return e->SetConfigGroupModuleAccess(groupName, module, haveAccess ? true : false); }
 AS_API asIScriptModule  * asEngine_GetModule(asIScriptEngine *e, const char *module, asEGMFlags flag) { return e->GetModule(module, flag); }
 AS_API int                asEngine_DiscardModule(asIScriptEngine *e, const char *module) { return e->DiscardModule(module); }
 AS_API asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId)                                                                                                      { return e->GetFunctionDescriptorById(funcId); }
@@ -99,8 +101,8 @@ AS_API void *             asEngine_CreateScriptObjectCopy(asIScriptEngine *e, vo
 AS_API void               asEngine_CopyScriptObject(asIScriptEngine *e, void *dstObj, void *srcObj, int typeId)                                                                                    { e->CopyScriptObject(dstObj, srcObj, typeId); }
 AS_API void               asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId)                                                                                                  { e->ReleaseScriptObject(obj, typeId); }
 AS_API void               asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId)                                                                                                   { e->AddRefScriptObject(obj, typeId); }
-AS_API bool               asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId)                                                                    { return e->IsHandleCompatibleWithObject(obj, objTypeId, handleTypeId); }
-AS_API int                asEngine_CompareScriptObjects(asIScriptEngine *e, bool &result, int behaviour, void *leftObj, void *rightObj, int typeId)                                                { return e->CompareScriptObjects(result, behaviour, leftObj, rightObj, typeId); }
+AS_API asBOOL             asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId)                                                                    { return e->IsHandleCompatibleWithObject(obj, objTypeId, handleTypeId) ? asTRUE : asFALSE; }
+AS_API int                asEngine_CompareScriptObjects(asIScriptEngine *e, asBOOL &result, int behaviour, void *leftObj, void *rightObj, int typeId)                                              { bool bResult; int r = e->CompareScriptObjects(bResult, behaviour, leftObj, rightObj, typeId); result = bResult ? asTRUE : asFALSE; return r; }
 AS_API int                asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)                                                { return e->ExecuteString(module, script, ctx, flags); }
 AS_API int                asEngine_GarbageCollect(asIScriptEngine *e, asEGCFlags flags)                                                                                                            { return e->GarbageCollect(flags); }
 AS_API void               asEngine_GetGCStatistics(asIScriptEngine *e, asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected)                                                         { e->GetGCStatistics(currentSize, totalDestroyed, totalDetected); }
@@ -244,7 +246,7 @@ AS_API const char              *asObjectType_GetName(const asIObjectType *o)    
 AS_API asIObjectType           *asObjectType_GetSubType(const asIObjectType *o)                            { return o->GetSubType(); }
 AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o)                     { return o->GetInterfaceCount(); }
 AS_API asIObjectType           *asObjectType_GetInterface(const asIObjectType *o, asUINT index)            { return o->GetInterface(index); }
-AS_API bool                     asObjectType_IsInterface(const asIObjectType *o)                           { return o->IsInterface(); }
+AS_API asBOOL                   asObjectType_IsInterface(const asIObjectType *o)                           { return o->IsInterface() ? asTRUE : asFALSE; }
 AS_API int                      asObjectType_GetMethodCount(const asIObjectType *o)                        { return o->GetMethodCount(); }
 AS_API int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index)         { return o->GetMethodIdByIndex(index); }
 AS_API int                      asObjectType_GetMethodIdByName(const asIObjectType *o, const char *name)   { return o->GetMethodIdByName(name); }

@@ -80,6 +80,9 @@ asCObjectType::~asCObjectType()
 	if( subType )
 		subType->Release();
 
+	if( derivedFrom )
+		derivedFrom->Release();
+
 	asUINT n;
 	for( n = 0; n < properties.GetLength(); n++ )
 		if( properties[n] ) 
