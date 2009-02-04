@@ -323,6 +323,27 @@ void StringJoin_Generic(asIScriptGeneric *gen)
 
 
 
+// TODO: Implement the following functions
+//
+//       int64    parseInt(const string &in str, int &out bytesParsed);
+//       double   parseDouble(const string &in str, int &out bytesParsed);
+//       string @ formatString(int64, const string &in format);  // should use sprintf to format the string
+//       string @ formatDouble(double, const string &in format); 
+//
+//       int16    byteStringToInt16(const string &in str, int start);
+//       int32    byteStringToInt32(const string &in str, int start);
+//       int64    byteStringtoInt64(const string &in str, int start);
+//       float    byteStringToFloat(const string &in str, int start);
+//       double   byteStringToDouble(const string &in str, int start);
+//       string @ int16ToByteString(int16);
+//       string @ int32ToByteString(int32);
+//       string @ int64ToByteString(int64);
+//       string @ floatToByteString(float);
+//       string @ doubleToByteString(double);
+
+
+
+
 // This is where the utility functions are registered.
 // The string type must have been registered first.
 void RegisterScriptStringUtils(asIScriptEngine *engine)

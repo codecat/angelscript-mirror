@@ -327,9 +327,13 @@ public:
 
 <b>Path:</b> /sdk/add_on/scriptfile/
 
-This is currently only a basic foundation for a file object that will allow scripts to read and write files.
+This object provides support for reading and writing files.
 
 Register with <code>RegisterScriptFile(asIScriptEngine*)</code>.
+
+If you do not want to provide write access for scripts then you can compile 
+the add on with the define asNO_WRITE_OPS, which will disable support for writing.
+
 
 \section doc_addon_file_1 Public C++ interface
 
@@ -346,20 +350,30 @@ public:
 
   // Opening and closing file handles
   // mode = "r" -> open the file for reading
+  // mode = "w" -> open the file for writing (overwrites existing files)
+  // mode = "a" -> open the file for appending
   int Open(const std::string &filename, const std::string &mode);
   int Close();
   
   // Returns the size of the file
-  int GetSize();
+  int GetSize() const;
   
   // Returns true if the end of the file has been reached
-  bool IsEOF();
+  bool IsEOF() const;
 
   // Reads a specified number of bytes into the string
   CScriptString *ReadString(unsigned int length);
   
   // Reads to the next new-line character
   CScriptString *ReadLine();
+  
+  // Writes a string to the file
+  int WriteString(const std::string &str);
+  
+  // File cursor manipulation
+  int GetPos() const;
+  int SetPos(int pos);
+  int MovePos(int delta);
 };
 \endcode
 
@@ -370,10 +384,14 @@ public:
   {
     int      open(const string &in filename, const string &in mode);
     int      close();
-    int      getSize();
-    bool     isEndOfFile();
+    int      getSize() const;
+    bool     isEndOfFile() const;
     string @ readString(uint length);
     string @ readLine();
+    int      writeString(const string &in string);
+    int      getPos() const;
+    int      setPos(int pos);
+    int      movePos(int delta);
   }
 </pre>
 

@@ -41,11 +41,11 @@ bool Test()
 		"    f1();                                        \n"
 		"    assert(a == 1);                              \n"
 		     // call Derived::f2()
-		"    f2();                                        \n"
-		"    assert(a == 2);                              \n"
-		"  }                                              \n"
-		"  Derived() { derivedConstructorCalled = true; } \n"
-		"  ~Derived() { derivedDestructorCalled = true; } \n"
+		"    f2();                                           \n"
+		"    assert(a == 2);                                 \n"
+		"  }                                                 \n"
+		"  Derived(int) { derivedConstructorCalled = true; } \n"
+		"  ~Derived() { derivedDestructorCalled = true; }    \n"
 		"}                                                \n"
 		"void foo( Base &in a )                           \n"
 		"{                                                \n"
@@ -233,25 +233,36 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 		fail = true;
 	}
 
-	// TODO: Test that it is possible to call the base class' constructor
-	//       The constructor can be called with the keyword super(args);
-	r = engine->ExecuteString(module, "baseConstructorCalled = derivedConstructorCalled = false; Derived d; \n"
-		                              "assert( derivedConstructorCalled ); \n"
-									  "assert( baseConstructorCalled ); \n");
+	// Test that an implemented constructor calls the base class' default constructor
+	r = engine->ExecuteString(module, "baseConstructorCalled = derivedConstructorCalled = false; Derived d(1); \n"
+		                              "assert( baseConstructorCalled ); \n"
+									  "assert( derivedConstructorCalled ); \n");
 	if( r != asEXECUTION_FINISHED )
 	{
-//		fail = true;
+		fail = true;
 	}
+
+	// Test that the default constructor calls the base class' default constructor
+	r = engine->ExecuteString(module, "baseConstructorCalled = false; Derived d; \n"
+		                              "assert( baseConstructorCalled ); \n");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	// TODO: Test that it is possible to manually call the base class' constructor
+	//       The constructor can be called with the keyword super(args);
 
 	// TODO: Test that it is possible to call base class methods from within overridden methods in derived class 
 	//       Requires scope operator
 
-	// TODO: If the derived class doesn't declare a default constructor, should the base class' default constructor be called?
-
 	// TODO: Can a derived class introduce new reference cycles involving the base class? I.e. are there any 
 	//       situations where the base class wouldn't be garbage collected, unless the derived class is implemented?
 
-	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. We can follow D's design of using this(args) to call the constructor
+	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. 
+	//       We can follow D's design of using this(args) to call the constructor
+
+	// TODO: Should it be allowed to have a member in a base class that is of the derived type?
 
 	return fail;
 }

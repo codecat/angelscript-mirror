@@ -2144,6 +2144,9 @@ void asCContext::ExecuteNext()
 				// Pre-allocate the memory
 				asDWORD *mem = (asDWORD*)engine->CallAlloc(objType);
 
+				// Pre-initialize the memory by calling the constructor for acCScriptStruct
+				ScriptStruct_Construct(objType, (asCScriptStruct*)mem);
+
 				// Call the constructor to initalize the memory
 				asCScriptFunction *f = engine->scriptFunctions[func];
 

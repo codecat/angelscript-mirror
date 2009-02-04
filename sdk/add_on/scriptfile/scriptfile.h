@@ -25,26 +25,26 @@ public:
     void AddRef();
     void Release();
 
-	// TODO: Implement the "w" and "a" modes
+	// TODO: Implement the "r+", "w+" and "a+" modes
 	// mode = "r" -> open the file for reading
+	//        "w" -> open the file for writing (overwrites existing file)
+	//        "a" -> open the file for appending
     int  Open(const std::string &filename, const std::string &mode);
     int  Close();
-    int  GetSize();
-	bool IsEOF();
+    int  GetSize() const;
+	bool IsEOF() const;
 
     // Reading
     CScriptString *ReadString(unsigned int length);
 	CScriptString *ReadLine();
 
-	// TODO: Add the following functions
-
     // Writing
-/*  int WriteString(const std::string &str);
+    int WriteString(const std::string &str);
 
     // Cursor
-	int GetPos();
+	int GetPos() const;
     int SetPos(int pos);
-    int MovePos(int delta); */
+    int MovePos(int delta);
 
 protected:
     ~CScriptFile();

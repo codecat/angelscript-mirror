@@ -128,12 +128,15 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 {
 	Reset(builder, script, outFunc);
 
-	// Initialize the asCScriptStruct object then return
-	byteCode.InstrPTR(BC_OBJTYPE, outFunc->objectType);
-	byteCode.InstrSHORT(BC_PSF, 0);
-	byteCode.Instr(BC_RDSPTR);
-	byteCode.Call(BC_CALLSYS, engine->scriptTypeBehaviours.beh.construct, 2*PTR_SIZE);
-	
+	// If the class is derived from another, then the base class' default constructor must be called
+	if( outFunc->objectType->derivedFrom )
+	{
+		// Call the base class' default constructor
+		byteCode.InstrSHORT(BC_PSF, 0);
+		byteCode.Instr(BC_RDSPTR);
+		byteCode.Call(BC_CALL, outFunc->objectType->derivedFrom->beh.construct, PTR_SIZE);
+	}
+
 	// Pop the object pointer from the stack
 	byteCode.Ret(2*PTR_SIZE);
 
@@ -380,15 +383,15 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	// Increase the reference for the object pointer, so that it is guaranteed to live during the entire call
 	if( outFunc->objectType )
 	{
-		// TODO: inheritance: Initialization of the asCScriptStruct must be done by the factory function,
-		//                    so that the constructor can call the base class constructors
-		if( isConstructor )
+		if( isConstructor && outFunc->objectType->derivedFrom )
 		{
-			// Initialize the asCScriptStruct object first
-			byteCode.InstrPTR(BC_OBJTYPE, outFunc->objectType);
+			// TODO: inheritance: Only do this if a call to the base class' constructor hasn't 
+			//                    been added within the constructor statement
+
+			// Call the base class' default constructor
 			byteCode.InstrSHORT(BC_PSF, 0);
 			byteCode.Instr(BC_RDSPTR);
-			byteCode.Call(BC_CALLSYS, engine->scriptTypeBehaviours.beh.construct, 2*PTR_SIZE);
+			byteCode.Call(BC_CALL, outFunc->objectType->derivedFrom->beh.construct, PTR_SIZE);
 		}
 
 		byteCode.InstrSHORT(BC_PSF, 0);

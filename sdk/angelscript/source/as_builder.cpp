@@ -392,17 +392,28 @@ void asCBuilder::CompileFunctions()
 		if( functions[n] == 0 ) continue;
 
 		asCCompiler compiler(engine);
-
-		int r, c;
-		functions[n]->script->ConvertPosToRowCol(functions[n]->node->tokenPos, &r, &c);
 		asCScriptFunction *func = engine->scriptFunctions[functions[n]->funcId];
-		asCString str = func->GetDeclarationStr();
-		str.Format(TXT_COMPILING_s, str.AddressOf());
-		WriteInfo(functions[n]->script->name.AddressOf(), str.AddressOf(), r, c, true);
 
-		compiler.CompileFunction(this, functions[n]->script, functions[n]->node, func);
+		if( functions[n]->node )
+		{
+			int r, c;
+			functions[n]->script->ConvertPosToRowCol(functions[n]->node->tokenPos, &r, &c);
+			
+			asCString str = func->GetDeclarationStr();
+			str.Format(TXT_COMPILING_s, str.AddressOf());
+			WriteInfo(functions[n]->script->name.AddressOf(), str.AddressOf(), r, c, true);
 
-		preMessage.isSet = false;
+			compiler.CompileFunction(this, functions[n]->script, functions[n]->node, func);
+
+			preMessage.isSet = false;
+		}
+		else
+		{
+			// This is the default constructor, that is generated 
+			// automatically if not implemented by the user.
+			asASSERT( functions[n]->name == functions[n]->objType->name );
+			compiler.CompileDefaultConstructor(this, functions[n]->script, func);
+		}
 	}
 }
 
@@ -875,10 +886,10 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 
 	sClassDeclaration *decl = asNEW(sClassDeclaration);
 	classDeclarations.PushLast(decl);
-	decl->name = name;
-	decl->script = file;
+	decl->name       = name;
+	decl->script     = file;
 	decl->validState = 0;
-	decl->node = node;
+	decl->node       = node;
 
 	asCObjectType *st = asNEW(asCObjectType)(engine);
 	st->arrayType = 0;
@@ -887,8 +898,8 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	if( node->tokenType == ttHandle )
 		st->flags |= asOBJ_IMPLICIT_HANDLE;
 
-	st->size = sizeof(asCScriptStruct);
-	st->name = name;
+	st->size      = sizeof(asCScriptStruct);
+	st->name      = name;
 	st->tokenType = ttIdentifier;
 	module->classTypes.PushLast(st);
 	engine->classTypes.PushLast(st);
@@ -896,20 +907,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	decl->objType = st;
 
 	// Use the default script class behaviours
-	st->beh.factory = engine->scriptTypeBehaviours.beh.factory;
-	st->beh.factories = engine->scriptTypeBehaviours.beh.factories;
-	st->beh.construct = engine->scriptTypeBehaviours.beh.construct;
-	st->beh.constructors = engine->scriptTypeBehaviours.beh.constructors;
-	st->beh.addref = engine->scriptTypeBehaviours.beh.addref;
-	st->beh.release = engine->scriptTypeBehaviours.beh.release;
-	st->beh.copy = engine->scriptTypeBehaviours.beh.copy;
-	st->beh.gcGetRefCount = engine->scriptTypeBehaviours.beh.gcGetRefCount;
-	st->beh.gcSetFlag = engine->scriptTypeBehaviours.beh.gcSetFlag;
-	st->beh.gcGetFlag = engine->scriptTypeBehaviours.beh.gcGetFlag;
-	st->beh.gcEnumReferences = engine->scriptTypeBehaviours.beh.gcEnumReferences;
-	st->beh.gcReleaseAllReferences = engine->scriptTypeBehaviours.beh.gcReleaseAllReferences;
-	st->beh.operators.PushLast(ttAssignment);
-	st->beh.operators.PushLast(st->beh.copy);
+	st->beh = engine->scriptTypeBehaviours.beh;
 
 	return 0;
 }
@@ -1688,12 +1686,16 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	objType->beh.construct = funcId;
 	objType->beh.constructors[0] = funcId;
 
-	// Compile the bytecode
-	asCCompiler compiler(engine);
-	compiler.CompileDefaultConstructor(this, file, engine->scriptFunctions[funcId]);
+	// The bytecode for the default constructor will be generated
+	// only after the potential inheritance has been established
+	sFunctionDescription *func = asNEW(sFunctionDescription);
+	functions.PushLast(func);
 
-	// Add a dummy function to the module so that it doesn't mix up the func Ids
-	functions.PushLast(0);
+	func->script  = file;
+	func->node    = 0;
+	func->name    = objType->name;
+	func->objType = objType;
+	func->funcId  = funcId;
 
 	// Add a default factory as well
 	funcId = module->GetNextFunctionId();
@@ -1702,6 +1704,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	returnType = asCDataType::CreateObjectHandle(objType, false);
 	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
 	functions.PushLast(0);
+	asCCompiler compiler(engine);
 	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
 }
 
@@ -1934,7 +1937,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 
 		func->script  = file;
 		func->node    = node;
-		func->name = name;
+		func->name    = name;
 		func->objType = objType;
 		func->funcId  = funcID;
 	}

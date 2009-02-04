@@ -738,7 +738,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		{
 			asCScriptFunction *func = ReadFunction();
 			ot->beh.construct = func->id;
-			ot->beh.constructors.PushLast(func->id);
+			ot->beh.constructors[0] = func->id;
 
 			func = ReadFunction();
 			if( func )
@@ -746,7 +746,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 
 			func = ReadFunction();
 			ot->beh.factory = func->id;
-			ot->beh.factories.PushLast(func->id);
+			ot->beh.factories[0] = func->id;
 
 			READ_NUM(size);
 			for( n = 0; n < size; n++ )
