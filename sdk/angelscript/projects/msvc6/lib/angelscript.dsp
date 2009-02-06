@@ -146,6 +146,10 @@ SOURCE=..\..\..\source\as_callfunc_sh4.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\source\as_callfunc_x64_gcc.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_callfunc_x86.cpp
 # End Source File
 # Begin Source File

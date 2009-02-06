@@ -458,23 +458,29 @@ bool Test2()
 	bool fail = false;
 
 	int r;
+	COutStream out;
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptString(engine);
+	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	const char *string =   
 		"class Jerome  \n"
 		"{  \n"
 		"  string a;  \n"
 		"  string b;  \n"
-		"  string c;  \n"
-		"  Jerome(string A,string B,string C)  \n"
+		"  double c;  \n"
+		"  Jerome(string A,string B,double C)  \n"
 		"  {  \n"
 		"    a = A;  \n"
 		"    b = B;  \n"
 		"    c = C;  \n"
+		"    assert( a == 'Hello' ); \n"
+		"    assert( b == 'Hi' ); \n"
+		"    assert( c == 1.23456 ); \n"
 		"  }  \n"
 		"} \n"
-		"Jerome cc('Hello','Hi','SS');  \n";
+		"Jerome cc('Hello','Hi',1.23456);  \n";
 	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test", string);
 	r = mod->Build();

@@ -113,6 +113,9 @@ void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFun
 
 	hasCompileErrors = false;
 
+	m_isConstructor = false;
+	m_isConstructorCalled = false;
+
 	nextLabel = 0;
 	breakLabels.SetLength(0);
 	continueLabels.SetLength(0);
@@ -150,12 +153,12 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	outFunc->lineNumbers = byteCode.lineNumbers;
 	outFunc->objVariablePos = objVariablePos;
 	outFunc->objVariableTypes = objVariableTypes;
-
+/*
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
 	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + ".txt").AddressOf(), builder->module, engine);
 #endif
-
+*/
 	return 0;
 }
 
@@ -184,9 +187,9 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	byteCode.InstrSHORT(BC_PSF, (short)varOffset);
 
 	// Copy all arguments to the top of the stack
-	unsigned int argDwords = outFunc->GetSpaceNeededForArguments();
-	for( n = 0; n < argDwords; n++ )
-		byteCode.InstrSHORT(BC_PshV4, -short(n));
+	int argDwords = (int)outFunc->GetSpaceNeededForArguments();
+	for( int a = argDwords-1; a >= 0; a-- )
+		byteCode.InstrSHORT(BC_PshV4, short(-a));
 
 	byteCode.Alloc(BC_ALLOC, dt.GetObjectType(), constructor, argDwords + PTR_SIZE);
 
@@ -206,14 +209,14 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	outFunc->lineNumbers = byteCode.lineNumbers;
 	outFunc->objVariablePos = objVariablePos;
 	outFunc->objVariableTypes = objVariableTypes;
-
+/*
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
 	asCString args;
 	args.Format("%d", outFunc->parameterTypes.GetLength());
 	byteCode.DebugOutput(("__" + outFunc->name + "__factory" + args + ".txt").AddressOf(), builder->module, engine);
 #endif
-
+*/
 	return 0;
 }
 
@@ -259,7 +262,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	//----------------------------------------------
 	// Examine return type
-	bool isConstructor = false;
 	bool isDestructor = false;
 	asCDataType returnType;
 	if( func->firstChild->nodeType == snDataType )
@@ -282,7 +284,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		if( func->firstChild->tokenType == ttBitNot )
 			isDestructor = true;
 		else
-			isConstructor = true;
+			m_isConstructor = true;
 	}
 
 	//----------------------------------------------
@@ -380,20 +382,18 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
 	byteCode.Push(varSize);
 
-	// Increase the reference for the object pointer, so that it is guaranteed to live during the entire call
 	if( outFunc->objectType )
 	{
-		if( isConstructor && outFunc->objectType->derivedFrom )
+		// Call the base class' default constructor unless called manually in the code
+		if( m_isConstructor && !m_isConstructorCalled && outFunc->objectType->derivedFrom )
 		{
-			// TODO: inheritance: Only do this if a call to the base class' constructor hasn't 
-			//                    been added within the constructor statement
-
-			// Call the base class' default constructor
 			byteCode.InstrSHORT(BC_PSF, 0);
 			byteCode.Instr(BC_RDSPTR);
 			byteCode.Call(BC_CALL, outFunc->objectType->derivedFrom->beh.construct, PTR_SIZE);
 		}
 
+		// Increase the reference for the object pointer, so that it is guaranteed to live during the entire call
+		// TODO: optimize: This is probably not necessary for constructors as no outside reference to the object is created yet
 		byteCode.InstrSHORT(BC_PSF, 0);
 		byteCode.Instr(BC_RDSPTR);
 		byteCode.Call(BC_CALLSYS, outFunc->objectType->beh.addref, PTR_SIZE);
@@ -452,11 +452,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	byteCode.Pop(varSize);
 
-	if( isConstructor )
-		// Pop the extra object pointer as well
-		byteCode.Ret(-stackPos + PTR_SIZE);
-	else
-		byteCode.Ret(-stackPos);
+	byteCode.Ret(-stackPos);
 
 	// Tell the bytecode which variables are temporary
 	for( n = 0; n < (signed)variableIsTemporary.GetLength(); n++ )
@@ -1874,6 +1870,8 @@ void asCCompiler::CompileStatement(asCScriptNode *statement, bool *hasReturn, as
 
 void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCode *bc)
 {
+	// TODO: inheritance: Must guarantee that all options in the switch case call a constructor, or that none call it.
+
 	// Reserve label for break statements
 	int breakLabel = nextLabel++;
 	breakLabels.PushLast(breakLabel);
@@ -2207,6 +2205,8 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	}
 
 	// Compile the if statement
+	bool origIsConstructorCalled = m_isConstructorCalled;
+
 	bool hasReturn1;
 	asCByteCode ifBC(engine);
 	CompileStatement(inode->firstChild->next, &hasReturn1, &ifBC);
@@ -2215,9 +2215,19 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	LineInstr(bc, inode->firstChild->next->tokenPos);
 	bc->AddCode(&ifBC);
 
+	// If one of the statements call the constructor, the other must as well
+	// otherwise it is possible the constructor is never called
+	bool constructorCall1 = false;
+	bool constructorCall2 = false;
+	if( !origIsConstructorCalled && m_isConstructorCalled )
+		constructorCall1 = true;
+
 	// Do we have an else statement?
 	if( inode->firstChild->next != inode->lastChild )
 	{
+		// Reset the constructor called flag so the else statement can call the constructor too
+		m_isConstructorCalled = origIsConstructorCalled;
+
 		int afterElse = 0;
 		if( !hasReturn1 )
 		{
@@ -2246,6 +2256,9 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 		// The if statement only has return if both alternatives have
 		*hasReturn = hasReturn1 && hasReturn2;
+
+		if( !origIsConstructorCalled && m_isConstructorCalled )
+			constructorCall2 = true;
 	}
 	else
 	{
@@ -2253,6 +2266,15 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		bc->Label((short)afterLabel);
 		*hasReturn = false;
 	}
+
+	// Make sure both or neither conditions call a constructor
+	if( constructorCall1 && !constructorCall2 ||
+		constructorCall2 && !constructorCall1 )
+	{
+		Error(TXT_BOTH_CONDITIONS_MUST_CALL_CONSTRUCTOR, inode);
+	}
+
+	m_isConstructorCalled = origIsConstructorCalled || constructorCall1 || constructorCall2;
 }
 
 void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
@@ -5467,9 +5489,40 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			asCScriptNode *nm = vnode->firstChild;
 			asCString name;
 			name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
+	
 			asCArray<int> funcs;
-			// TODO: Verify the constness
-			builder->GetObjectMethodDescriptions(name.AddressOf(), outFunc->objectType, funcs, false);
+
+			// If we're compiling a constructor and the name of the function called
+			// is 'super' then the base class' constructor is being called
+			if( m_isConstructor && name == "super" )
+			{
+				// Actually it is the base class' constructor that is being called,
+				// but as we won't use the actual function ids here we can take the
+				// object's own constructors and avoid the need to check if the 
+				// object actually derives from any other class
+				funcs = outFunc->objectType->beh.constructors;
+
+				// Must not allow calling constructors multiple times
+				if( continueLabels.GetLength() > 0 )
+				{
+					// If a continue label is set we are in a loop
+					Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS, vnode);
+				}
+				else if( breakLabels.GetLength() > 0 )
+				{
+					// TODO: inheritance: Should eventually allow constructors in switch statements
+					// If a break label is set we are either in a loop or a switch statements
+					Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH, vnode);
+				}
+				else if( m_isConstructorCalled )
+				{
+					Error(TXT_CANNOT_CALL_CONSTRUCTOR_TWICE, vnode);
+				}
+				m_isConstructorCalled = true;
+			}
+			else
+				builder->GetObjectMethodDescriptions(name.AddressOf(), outFunc->objectType, funcs, false);
+
 			if( funcs.GetLength() )
 			{
 				asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
@@ -5479,6 +5532,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				ctx->type.SetVariable(dt, 0, false);
 				ctx->type.dataType.MakeReference(true);
 
+				// TODO: optimize: This adds a CHKREF. Is that really necessary?
 				Dereference(ctx, true);
 
 				CompileFunctionCall(vnode, ctx, outFunc->objectType, false);
@@ -6030,8 +6084,20 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	asCArray<int> funcs;
 	asCScriptNode *nm = node->firstChild;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
+
 	if( objectType )
-		builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
+	{
+		// If we're compiling a constructor and the name of the function is super then
+		// the constructor of the base class is being called.
+		if( m_isConstructor && name == "super" )
+		{
+			// If the class is not derived from anyone else, calling super should give an error
+			if( objectType->derivedFrom )
+				funcs = objectType->derivedFrom->beh.constructors;
+		}
+		else
+			builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
+	}
 	else
 		builder->GetFunctionDescriptions(name.AddressOf(), funcs);
 

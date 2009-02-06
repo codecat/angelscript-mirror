@@ -202,7 +202,9 @@ int CScriptFile::Open(const std::string &filename, const std::string &mode)
 	if( mode != "r" )
 #endif
         return -1;
-	
+	else
+		m = mode;
+
 	// By default windows translates "\r\n" to "\n", but we want to read the file as-is.
 	m += "b";
 

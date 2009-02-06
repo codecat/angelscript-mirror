@@ -21,12 +21,14 @@ bool Test()
 	const char *script =
 		"bool baseDestructorCalled = false;               \n"
 		"bool baseConstructorCalled = false;              \n"
+		"bool baseFloatConstructorCalled = false;         \n"
 		"class Base : Intf                                \n"
 		"{                                                \n"
 		"  int a;                                         \n"
 		"  void f1() { a = 1; }                           \n"
 		"  void f2() { a = 0; }                           \n"
 		"  Base() { baseConstructorCalled = true; }       \n"
+		"  Base(float) { baseFloatConstructorCalled = true; } \n"
 		"  ~Base() { baseDestructorCalled = true; }       \n"
 		"}                                                \n"
 		"bool derivedDestructorCalled = false;            \n"
@@ -53,6 +55,17 @@ bool Test()
 		"}                                                \n"
 		"class BaseGC { BaseGC @b; }                      \n"
 		"class DerivedGC : BaseGC {}                      \n"
+		"class DerivedS : Base                            \n"
+		"{                                                \n"
+		"  DerivedS(float)                                \n"
+		"  {                                              \n"
+	  	     // Call Base::Base(float)
+		"    if( true )                                   \n"
+		"      super(1.4f);                               \n"
+		"    else                                         \n"
+		"      super();                                   \n"
+		"  }                                              \n"
+		"}                                                \n"
 		"interface Intf {}                                \n";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script);
@@ -250,8 +263,16 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 		fail = true;
 	}
 
-	// TODO: Test that it is possible to manually call the base class' constructor
-	//       The constructor can be called with the keyword super(args);
+	// Test that it is possible to manually call the base class' constructor
+	// Test that the default constructor for the base class isn't called 
+	//   when a manual call to another constructor is made
+	r = engine->ExecuteString(module, "baseConstructorCalled = baseFloatConstructorCalled = false; DerivedS d(1.4f); \n"
+		                              "assert( baseFloatConstructorCalled ); \n"
+									  "assert( !baseConstructorCalled ); \n");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
 
 	// TODO: Test that it is possible to call base class methods from within overridden methods in derived class 
 	//       Requires scope operator
@@ -263,6 +284,9 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	//       We can follow D's design of using this(args) to call the constructor
 
 	// TODO: Should it be allowed to have a member in a base class that is of the derived type?
+
+	// TODO: Test that calling the constructor from within the constructor 
+	//       using the class name will create a new object
 
 	return fail;
 }
@@ -334,6 +358,103 @@ bool Test2()
 		fail = true;
 	// TODO: The error should explain that the original property is from the base class
 	if( bout.buffer != "script (1, 41) : Error   : Name conflict. 'a' is an object property.\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	// Test that it is not possible to call super() when not deriving from any class
+	script = "class A { A() { super(); } }";
+
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	// TODO: The error message should explain that it is not possible to call super 
+	//       because the class doesn't derived from another class
+	if( bout.buffer != "script (1, 11) : Info    : Compiling void A::A()\n"
+					   "script (1, 17) : Error   : No matching signatures to 'A::super()'\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	// Test that it is not possible to call super() multiple times within the constructor
+	script = "class A {} class B : A { B() { super(); super(); } }";
+
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 ) 
+		fail = true;
+	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::B()\n"
+					   "script (1, 41) : Error   : Can't call a constructor multiple times\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	// Test that it is not possible to call super() in a loop
+	script = "class A {} class B : A { B() { while(true) { super(); } } }";
+
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build(); 
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::B()\n"
+					   "script (1, 46) : Error   : Can't call a constructor in loops\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	// Test that it is not possible to call super() in a switch
+	// TODO: Should allow call in switch, but all possibilities must call it once.
+	script = "class A {} class B : A { B() { switch(2) { case 2: super(); } } }";
+
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build(); 
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::B()\n"
+					   "script (1, 52) : Error   : Can't call a constructor in switch\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	// Test that all (or none) control paths must call super()
+	script = "class A {} class B : A { \n"
+		     "B(int) { if( true ) super(); } \n"
+			 "B(float) { if( true ) {} else super(); } }";
+
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build(); 
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (2, 1) : Info    : Compiling void B::B(int)\n"
+					   "script (2, 10) : Error   : Both conditions must call constructor\n"
+					   "script (3, 1) : Info    : Compiling void B::B(float)\n"
+				   	   "script (3, 12) : Error   : Both conditions must call constructor\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	// Test that it is not possible to call super() outside of the constructor
+	script = "class A {} class B : A { void mthd() { super(); } }";
+
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build(); 
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::mthd()\n"
+					   "script (1, 40) : Error   : No matching signatures to 'super()'\n" )
 	{
 		fail = true;
 		printf(bout.buffer.c_str());

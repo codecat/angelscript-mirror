@@ -194,6 +194,9 @@ protected:
 	asCScriptCode *script;
 	asCScriptFunction *outFunc;
 
+	bool m_isConstructor;
+	bool m_isConstructorCalled;
+
 	asCArray<int> breakLabels;
 	asCArray<int> continueLabels;
 

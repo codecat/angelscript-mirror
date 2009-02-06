@@ -47,7 +47,11 @@
 #define TXT_ASSIGN_IN_GLOBAL_EXPR         "Assignments are not allowed in global expressions"
 
 #define TXT_BOTH_MUST_BE_SAME             "Both expressions must have the same type"
+#define TXT_BOTH_CONDITIONS_MUST_CALL_CONSTRUCTOR "Both conditions must call constructor"
 
+#define TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS "Can't call a constructor in loops"
+#define TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH "Can't call a constructor in switch"
+#define TXT_CANNOT_CALL_CONSTRUCTOR_TWICE "Can't call a constructor multiple times"
 #define TXT_CANNOT_INHERIT_FROM_s         "Can't inherit from '%s'"
 #define TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES "Can't inherit from multiple classes"
 #define TXT_CANNOT_INHERIT_FROM_SELF      "Can't inherit from itself, or another class that inherits from this class"
