@@ -28,6 +28,7 @@ SRCNAMES = \
   as_callfunc_ppc_64.cpp \
   as_callfunc_sh4.cpp \
   as_callfunc_x86.cpp \
+  as_callfunc_x64_gcc.cpp \
   as_compiler.cpp \
   as_context.cpp \
   as_configgroup.cpp \

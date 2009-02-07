@@ -430,7 +430,7 @@
 		//#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		//#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		//#define STDCALL_RETURN_SIMPLE_IN_MEMORY
-		
+
 		#if defined(i386) && !defined(__LP64__)
 			// Support native calling conventions on Intel 32bit CPU
 			#define AS_X86
@@ -453,14 +453,13 @@
 			// Support native calling conventions on Intel 32bit CPU
 			#define AS_X86
 		#else
-			// No support for native calling conventions yet
-			#define AS_MAX_PORTABILITY
+			#define AS_X64_GCC
 			// STDCALL is not available on 64bit Linux
 			#undef STDCALL
 			#define STDCALL
 		#endif
-        #define AS_LINUX
-        #define AS_POSIX_THREADS
+       	#define AS_LINUX
+       	#define AS_POSIX_THREADS
 
 	// Free BSD
 	#elif __FreeBSD__
@@ -570,7 +569,7 @@
 
 // If there are no current support for native calling
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON))
+#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC))
 	#ifndef AS_MAX_PORTABILITY
 		#define AS_MAX_PORTABILITY
 	#endif
@@ -631,5 +630,3 @@ using namespace AngelScript;
 #endif
 
 #endif
-
-
