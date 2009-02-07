@@ -125,7 +125,7 @@ void msgCallback(const asSMessageInfo *msg, void *param)
 // Print the script string to the standard output stream
 void print(string &msg)
 {
-  printf(msg.c_str());
+  printf("%s", msg.c_str());
 }
 \endcode
 

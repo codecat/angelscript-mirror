@@ -118,17 +118,22 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.15.2 WIP - 2009/02/03</h2>
+<h2>Version 2.15.2 WIP - 2009/02/07</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>The pre-compiled bytecode didn't store the script class destructors, nor the implemented interfaces
 <li>Script class factories didn't work for constructors with more than 1 argument (Thanks BornToCode and scypior)
+<li>Changed as_atomic.cpp to use kernel functions again for older versions of GCC on Linux (Thanks _Vicious_)
 </ul>
 <li>Script language
 <ul>
 <li>Added support for single inheritance for script classes
+</ul>
+<li>Library
+<ul>
+<li>Added support for native calling conventions on 64bit Linux (Thanks Ionut "gargltk" Leonte)
 </ul>
 <li>Add-ons
 <ul>

@@ -93,7 +93,13 @@ asDWORD asCAtomic::atomicDec()
 // __sync_fetch_and_add() and __sync_fetch_and_sub() functions.
 //
 // Reference: http://golubenco.org/blog/atomic-operations/
+//
+// These are only available in GCC 4.1 and above, so for older versions we 
+// use the kernel instructions even though it is frowned upon. An alternative
+// would be to use critical sections, but it is a lot slower.
 // 
+
+#if ( ( (__GNUC__ == 4) && (__GNUC_MINOR__ >= 1) || __GNUC__ > 4) )
 
 asDWORD asCAtomic::atomicInc()
 {
@@ -104,6 +110,24 @@ asDWORD asCAtomic::atomicDec()
 {
 	return __sync_fetch_and_sub(&value, 1);
 }
+
+#else
+
+END_AS_NAMESPACE
+#include <asm/atomic.h>
+BEGIN_AS_NAMESPACE
+
+asDWORD asCAtomic::atomicInc()
+{
+	return atomic_inc_and_test((atomic_t *)&value);
+}
+
+asDWORD asCAtomic::atomicDec()
+{
+	return atomic_dec_and_test((atomic_t *)&value);
+}
+
+#endif
 
 #elif defined(AS_MAC)
 
