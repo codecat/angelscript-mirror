@@ -13,7 +13,7 @@ INCDIR = ../../include
 OBJDIR = obj
 
 CXX = gcc
-CXXFLAGS = -g -Wall
+CXXFLAGS = -g -Wall -fPIC
 DELETER = rm -f
 COPIER = cp
 
