@@ -428,11 +428,6 @@
 		#endif
 		#define AS_POSIX_THREADS
 		
-		#if !( ( (__GNUC__ == 4) && (__GNUC_MINOR__ >= 1) || __GNUC__ > 4) )
-			// Only with GCC 4.1 was the atomic instructions available
-			#define AS_NO_ATOMIC
-		#endif
-
 	// Windows
 	#elif defined(WIN32)
 		// On Windows the simple classes are returned in the EAX:EDX registers
@@ -469,6 +464,11 @@
 		#endif
        	#define AS_LINUX
        	#define AS_POSIX_THREADS
+
+		#if !( ( (__GNUC__ == 4) && (__GNUC_MINOR__ >= 1) || __GNUC__ > 4) )
+			// Only with GCC 4.1 was the atomic instructions available
+			#define AS_NO_ATOMIC
+		#endif
 
 	// Free BSD
 	#elif __FreeBSD__
