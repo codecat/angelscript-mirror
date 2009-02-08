@@ -95,6 +95,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_NO_THREADS
 		"AS_NO_THREADS "
 #endif
+#ifdef AS_NO_ATOMIC
+		"AS_NO_ATOMIC "
+#endif
 
 	// Target system
 #ifdef AS_WIN
@@ -2971,6 +2974,8 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 	}
 	else
 	{
+		// TODO: When simulating a 64bit environment by defining AS_64BIT_PTR on a 32bit platform this code
+		//       fails, because the stack given to asCGeneric is not prepared with two 64bit arguments.
 		asCGeneric gen(this, s, 0, (asDWORD*)&param1);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);

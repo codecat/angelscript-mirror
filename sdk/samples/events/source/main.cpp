@@ -62,6 +62,8 @@ void ConfigureEngine(asIScriptEngine *engine);
 int  CompileScript(asIScriptEngine *engine);
 void PrintString(string &str);
 void LineCallback(asIScriptContext *ctx, DWORD *timeOut);
+void PrintString_Generic(asIScriptGeneric *gen);
+void timeGetTime_Generic(asIScriptGeneric *gen);
 
 void MessageCallback(const asSMessageInfo *msg, void *param)
 {
@@ -221,8 +223,16 @@ void ConfigureEngine(asIScriptEngine *engine)
 	RegisterScriptString(engine);
 
 	// Register the functions that the scripts will be allowed to use
-	r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("uint GetSystemTime()", asFUNCTION(timeGetTime), asCALL_STDCALL); assert( r >= 0 );
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("uint GetSystemTime()", asFUNCTION(timeGetTime), asCALL_STDCALL); assert( r >= 0 );
+	}
+	else
+	{
+		r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("uint GetSystemTime()", asFUNCTION(timeGetTime_Generic), asCALL_GENERIC); assert( r >= 0 );
+	}
 }
 
 int CompileScript(asIScriptEngine *engine)
@@ -291,6 +301,17 @@ int CompileScript(asIScriptEngine *engine)
 void PrintString(string &str)
 {
 	cout << str;
+}
+
+void PrintString_Generic(asIScriptGeneric *gen)
+{
+	string *str = (string*)gen->GetArgAddress(0);
+	PrintString(*str);
+}
+
+void timeGetTime_Generic(asIScriptGeneric *gen)
+{
+	gen->SetReturnDWord(timeGetTime());
 }
 
 void LineCallback(asIScriptContext *ctx, DWORD *timeOut)

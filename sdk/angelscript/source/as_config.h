@@ -54,6 +54,10 @@
 // AS_POSIX_THREADS
 // If the library should be compiled using posix threads.
 
+// AS_NO_ATOMIC
+// If the compiler/platform doesn't support atomic instructions
+// then this should be defined to use critical sections instead.
+
 // BUILD_WITHOUT_LINE_CUES
 // This flag makes the script compiler remove some extra bytecodes that is used
 // to allow the VM to call the line callback after each statement. The performance
@@ -423,6 +427,11 @@
 			#define AS_MAX_PORTABILITY
 		#endif
 		#define AS_POSIX_THREADS
+		
+		#if !( ( (__GNUC__ == 4) && (__GNUC_MINOR__ >= 1) || __GNUC__ > 4) )
+			// Only with GCC 4.1 was the atomic instructions available
+			#define AS_NO_ATOMIC
+		#endif
 
 	// Windows
 	#elif defined(WIN32)

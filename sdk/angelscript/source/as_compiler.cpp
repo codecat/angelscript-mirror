@@ -529,7 +529,7 @@ void asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteC
 					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
 
 					// Store the returned handle in the global variable
-					ctx.bc.Instr(BC_RDS4);
+					ctx.bc.Instr(BC_RDSPTR);
 					ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(offset));
 					ctx.bc.InstrPTR(BC_REFCPY, type.GetObjectType());
 					ctx.bc.Pop(PTR_SIZE);
@@ -697,7 +697,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 						PerformFunctionCall(funcs[0], &ctx, false, &args);
 
 						// Store the returned handle in the global variable
-						ctx.bc.Instr(BC_RDS4);
+						ctx.bc.Instr(BC_RDSPTR);
 						ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 						ctx.bc.InstrPTR(BC_REFCPY, gvar->datatype.GetObjectType());
 						ctx.bc.Pop(PTR_SIZE);
@@ -1699,7 +1699,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 					PerformFunctionCall(funcs[0], &ctx, false, &args);
 
 					// Store the returned handle in the global variable
-					ctx.bc.Instr(BC_RDS4);
+					ctx.bc.Instr(BC_RDSPTR);
 					ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(var->stackOffset));
 					ctx.bc.InstrPTR(BC_REFCPY, var->dataType.GetObjectType());
 					ctx.bc.Pop(PTR_SIZE);
