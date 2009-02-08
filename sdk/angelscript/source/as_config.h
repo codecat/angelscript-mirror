@@ -389,7 +389,11 @@
 // GNU C (and MinGW on Windows)
 #if (defined(__GNUC__) && !defined(__SNC__)) || defined(EPPC) // JWC -- use this instead for Wii
 	#define GNU_STYLE_VIRTUAL_METHOD
+#if !defined( __amd64__ )
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
+#else
+	#define MULTI_BASE_OFFSET(x) (*((asQWORD*)(&x)+1))
+#endif
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
 	#define COMPLEX_OBJS_PASSED_BY_REF
 	#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR)

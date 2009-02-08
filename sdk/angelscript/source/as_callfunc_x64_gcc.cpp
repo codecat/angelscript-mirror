@@ -45,6 +45,7 @@
 #include "as_texts.h"
 
 enum argTypes { x64ENDARG = 0, x64INTARG = 1, x64FLOATARG = 2, x64DOUBLEARG = 3 };
+typedef asQWORD ( *funcptr_t )( void );
 
 #define X64_MAX_ARGS             32
 #define MAX_CALL_INT_REGISTERS    6
@@ -148,7 +149,7 @@ static asQWORD GetReturnedDouble()
 	return ret;
 }
 
-static asQWORD CallCDeclFunction( const asDWORD* pArgs, const asBYTE *pArgsType, asDWORD *func )
+static asQWORD X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func )
 {
 	asQWORD retval      = 0;
 	asQWORD ( *call )() = (asQWORD (*)())func;
@@ -295,7 +296,7 @@ static asQWORD CallCDeclFunction( const asDWORD* pArgs, const asBYTE *pArgsType,
 }
 
 // This function should prepare system functions so that it will be faster to call them
-int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine * /*engine*/)
+int PrepareSystemFunction( asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine * /*engine*/ )
 {
 	// References are always returned as primitive data
 	if ( func->returnType.IsReference() || func->returnType.IsObjectHandle() ) {
@@ -379,33 +380,34 @@ inline bool IsVariableArgument( asCDataType type )
 
 int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 {
-	asCScriptEngine            *engine   = context->engine;
-	asCScriptFunction          *descr    = engine->scriptFunctions[id];
-	asSSystemFunctionInterface *sysFunc  = engine->scriptFunctions[id]->sysFuncIntf;
-	int                         callConv = sysFunc->callConv;
+	asCScriptEngine            *engine             = context->engine;
+	asCScriptFunction          *descr              = engine->scriptFunctions[id];
+	asSSystemFunctionInterface *sysFunc            = engine->scriptFunctions[id]->sysFuncIntf;
+	int                         callConv           = sysFunc->callConv;
 
-	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-		return context->CallGeneric(id, objectPointer);
-
-	asQWORD  retQW              = 0;
-	asQWORD  retQW2             = 0;
-	void    *func               = (void*)sysFunc->func;
-	int      paramSize          = sysFunc->paramSize;
-	asDWORD *args               = context->stackPointer;
-	asDWORD *stack_pointer      = context->stackPointer;
-	void    *retPointer         = 0;
-	void    *obj                = 0;
-// 	asDWORD *vftable            = NULL;
-	int      popSize            = paramSize;
-	int      totalArgumentCount = 0;
-	int      n                  = 0;
-	int      base_n             = 0;
-	int      a                  = 0;
-	int      param_pre          = 0;
-	int      param_post         = 0;
+	asQWORD                     retQW              = 0;
+	asQWORD                     retQW2             = 0;
+	void                       *func               = ( void * )sysFunc->func;
+	int                         paramSize          = sysFunc->paramSize;
+	asDWORD                    *args               = context->stackPointer;
+	asDWORD                    *stack_pointer      = context->stackPointer;
+	void                       *retPointer         = 0;
+	void                       *obj                = 0;
+	funcptr_t                  *vftable            = NULL;
+	int                         popSize            = paramSize;
+	int                         totalArgumentCount = 0;
+	int                         n                  = 0;
+	int                         base_n             = 0;
+	int                         a                  = 0;
+	int                         param_pre          = 0;
+	int                         param_post         = 0;
 
 	asBYTE	 argsType[X64_MAX_ARGS + 3] = { 0 };
 	asBYTE   argsSet[X64_MAX_ARGS + 3]  = { 0 };
+	
+	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD ) {
+		return context->CallGeneric( id, objectPointer );
+	}
 
 	context->objectType = descr->returnType.GetObjectType();
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() ) {
@@ -475,8 +477,12 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		}
 
 		// Add the base offset for multiple inheritance
-// 		obj = ( void * )( *( int * )( obj ) + sysFunc->baseOffset );
-// 		printf( ">>>>> Got adjusted OBJ_PTR -> %p\n", obj );
+		obj = ( void * )( ( asQWORD )obj + sysFunc->baseOffset );
+	}
+	
+	if ( obj && ( callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ) ) {
+		vftable = *( ( funcptr_t ** )obj );
+		func    = ( void * )vftable[( asQWORD )func >> 3];
 	}
 
 	switch ( callConv ) {
@@ -501,7 +507,6 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 			memmove( paramBuffer + add_count * CALLSTACK_MULTIPLIER, paramBuffer, CALLSTACK_MULTIPLIER * totalArgumentCount * sizeof( asDWORD ) );
 			memmove( argsType + add_count, argsType, totalArgumentCount );
 			if ( retPointer && is_complex ) {
-
 				memcpy( paramBuffer, &retPointer, sizeof( retPointer ) );
 				memcpy( paramBuffer + CALLSTACK_MULTIPLIER, &obj, sizeof( &obj ) );
 				argsType[0] = x64INTARG;
@@ -586,7 +591,7 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	}
 
 	context->isCallingSystemFunction = true;
-	retQW = CallCDeclFunction( tempBuff, tempType, ( asDWORD * )func );
+	retQW = X64_CallFunction( tempBuff, tempType, ( asDWORD * )func );
 	ASM_GET_REG( "%rdx", retQW2 );
 	context->isCallingSystemFunction = false;
 
