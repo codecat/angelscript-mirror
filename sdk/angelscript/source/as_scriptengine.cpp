@@ -2672,18 +2672,19 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 	}
 	else if( i->callConv == ICC_VIRTUAL_THISCALL )
 	{
-		// For virtual thiscalls we must call the method as a true class method so that the compiler will lookup the function address in the vftable
+		// For virtual thiscalls we must call the method as a true class method
+		// so that the compiler will lookup the function address in the vftable
 		union
 		{
 			asSIMPLEMETHOD_t mthd;
 			struct
 			{
 				asFUNCTION_t func;
-				asDWORD baseOffset;
+				asPWORD baseOffset;  // Same size as the pointer
 			} f;
 		} p;
 		p.f.func = (void (*)())(i->func);
-		p.f.baseOffset = i->baseOffset;
+		p.f.baseOffset = asPWORD(i->baseOffset);
 		void (asCSimpleDummy::*f)() = p.mthd;
 		(((asCSimpleDummy*)obj)->*f)();
 	}

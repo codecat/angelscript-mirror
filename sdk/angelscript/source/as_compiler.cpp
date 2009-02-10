@@ -141,7 +141,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	}
 
 	// Pop the object pointer from the stack
-	byteCode.Ret(2*PTR_SIZE);
+	byteCode.Ret(PTR_SIZE);
 
 	byteCode.Finalize();
 
@@ -153,12 +153,12 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	outFunc->lineNumbers = byteCode.lineNumbers;
 	outFunc->objVariablePos = objVariablePos;
 	outFunc->objVariableTypes = objVariableTypes;
-/*
+
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
-	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + ".txt").AddressOf(), builder->module, engine);
+	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + "__dc.txt").AddressOf(), builder->module, engine);
 #endif
-*/
+
 	return 0;
 }
 

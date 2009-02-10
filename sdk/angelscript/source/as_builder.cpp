@@ -1219,7 +1219,7 @@ void asCBuilder::CompileClasses()
 				else
 				{
 					// Make sure none of the base classes inherit from this one
-					asCObjectType *base = objType->derivedFrom;
+					asCObjectType *base = objType;
 					bool error = false;
 					while( base != 0 )
 					{

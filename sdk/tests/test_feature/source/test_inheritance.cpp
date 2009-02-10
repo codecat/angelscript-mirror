@@ -54,7 +54,8 @@ bool Test()
 		"  assert( cast<Derived>(a) is null );            \n"
 		"}                                                \n"
 		"class BaseGC { BaseGC @b; }                      \n"
-		"class DerivedGC : BaseGC {}                      \n"
+		// Must be possible to call the default constructor, even if not declared
+		"class DerivedGC : BaseGC { DerivedGC() { super(); } }  \n"
 		"class DerivedS : Base                            \n"
 		"{                                                \n"
 		"  DerivedS(float)                                \n"
@@ -202,6 +203,8 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// Test that it is possible to pass a derived class to a function expecting a reference to the base class
 	// This actually creates an instance of the Base class and assigns the Derived instance to it.
 	// This is because the parameter is &in and not const &in
+	// TODO: May be able to avoid this by having a specific behaviour for 
+	//       duplicating objects, rather than using assignment
 	r = engine->ExecuteString(module, "Derived d; foo(d);");
 	if( r != asEXECUTION_FINISHED )
 	{
@@ -225,6 +228,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	}
 
 	// If the base class is garbage collected, then the derived class must also be garbage collected
+	// This also tests that it is possible to call the default constructor of the base class, even though it is not declared
 	engine->GarbageCollect();
 	r = engine->ExecuteString(module, "DerivedGC b; @b.b = @b;");
 	if( r != asEXECUTION_FINISHED ) 
@@ -347,6 +351,20 @@ bool Test2()
 		printf(bout.buffer.c_str());
 	}
 
+	// Test that it is not possible to inherit from self
+	script = "class A : A {}\n";
+
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (1, 11) : Error   : Can't inherit from itself, or another class that inherits from this class\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
 	// Test that derived classes can't overload properties
 	// TODO: In C++ it is possible to overload properties, in which case the base class property is hidden. Should we adopt this for AngelScript too?
 	script = "class A { int a; } class B : A { double a; }\n";
@@ -455,6 +473,20 @@ bool Test2()
 		fail = true;
 	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::mthd()\n"
 					   "script (1, 40) : Error   : No matching signatures to 'super()'\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	// Test that a base class can't have a derived class as member (except as handle)
+	script = "class A { B b; } class B : A {}";
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	// TODO: The message could be improved to mention which member
+	if( bout.buffer != "script (1, 24) : Error   : Illegal member type\n" )
 	{
 		fail = true;
 		printf(bout.buffer.c_str());

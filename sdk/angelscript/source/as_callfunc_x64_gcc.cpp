@@ -52,28 +52,6 @@ typedef asQWORD ( *funcptr_t )( void );
 #define MAX_CALL_SSE_REGISTERS    8
 #define CALLSTACK_MULTIPLIER      3
 
-#define ASM_SET_INT_M( reg_string, val )                 \
-	__asm__ __volatile__ (                           \
-		"lea %0, %%rax\r\n"                      \
-		"mov (%%rax), %" reg_string              \
-		:                                        \
-		: "m" ( val )                            \
-        )
-#define ASM_SET_FLOAT_M( reg_string, val )               \
-	__asm__ __volatile__ (                           \
-		"lea      %0, %%rax\t\n"                 \
-		"movss    (%%rax), %" reg_string "\r\n"  \
-		:                                        \
-		: "m" ( val )                            \
-	)
-#define ASM_SET_DOUBLE_M( reg_string, val )              \
-	__asm__ __volatile__ (                           \
-		"lea      %0, %%rax\t\n"                 \
-		"movlpd   (%%rax), %" reg_string "\r\n"  \
-		:                                        \
-		: "m" ( val )                            \
-	)
-
 #define PUSH_LONG( val )                                 \
 	__asm__ __volatile__ (                           \
 		"mov    %0, %%rax\r\n"                   \
@@ -82,30 +60,17 @@ typedef asQWORD ( *funcptr_t )( void );
 		: "m" ( val )                            \
 	)
 
+#define POP_LONG( reg )                                  \
+	__asm__ __volatile__ (                           \
+		"popq     %rax\r\n"                      \
+		"movq     %rax, " reg                    \
+	)
+
 
 #define ASM_GET_REG( name, dest )                        \
 	__asm__ __volatile__ (                           \
 		"mov  %" name ", %0"                     \
 		: "=r" ( dest )                          \
-	)
-
-#define __CALL( statement )                              \
-	__asm__ __volatile__ (                           \
-		"push  %rdi\r\n"                         \
-		"push  %rsi\r\n"                         \
-		"push  %rdx\r\n"                         \
-		"push  %rcx\r\n"                         \
-		"push  %r8\r\n"                          \
-		"push  %r9"                              \
-	);                                               \
-	statement;                                       \
-	__asm__ __volatile__ (                           \
-		"pop   %r9\r\n"                          \
-		"pop   %r8\r\n"                          \
-		"pop   %rcx\r\n"                         \
-		"pop   %rdx\r\n"                         \
-		"pop   %rsi\r\n"                         \
-		"pop   %rdi"                             \
 	)
 
 BEGIN_AS_NAMESPACE
@@ -153,142 +118,43 @@ static asQWORD X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, 
 {
 	asQWORD retval      = 0;
 	asQWORD ( *call )() = (asQWORD (*)())func;
-	int     iReg        = 0;
-	int     fReg        = 0;
 	int     i           = 0;        // track integer and float arguments separately
-	float   __f         = 0.0f;
-	double  __d         = 0.0f;
 
 	// the first 6 integer arguments go into rdi, rsi, rdx, rcx, r8, and r9
 	// the first 8 float arguments go into xmm0...7
 	// everything else is pushed right-to-left
-	for( i = 0, iReg = 0, fReg = 0; *pArgsType; pArgsType++, i += CALLSTACK_MULTIPLIER ) {
-		switch ( *pArgsType ) {
-			case x64ENDARG: {
-				break;
-			}
-			case x64INTARG: {
-				if ( iReg < MAX_CALL_INT_REGISTERS ) {
-					switch ( iReg ) {
-						case 0: {
-							ASM_SET_INT_M( "%rdi", pArgs[i] );
-							break;
-						}
-						case 1: {
-							ASM_SET_INT_M( "%rsi", pArgs[i] );
-							break;
-						}
-						case 2: {
-							ASM_SET_INT_M( "%rdx", pArgs[i] );
-							break;
-						}
-						case 3: {
-							ASM_SET_INT_M( "%rcx", pArgs[i] );
-							break;
-						}
-						case 4: {
-							ASM_SET_INT_M( "%r8", pArgs[i] );
-							break;
-						}
-						case 5: {
-							ASM_SET_INT_M( "%r9", pArgs[i] );
-							break;
-						}
-					}
-				} else {
-					PUSH_LONG( pArgs[i] );
-				}
-				iReg++;
-				break;
-			}
-			case x64FLOATARG: {
-				if ( fReg < MAX_CALL_SSE_REGISTERS )	{
-					__CALL( memcpy( &__f, pArgs + i, sizeof( __f ) ) );
-					switch ( fReg ) {
-						case 0: {
-							ASM_SET_FLOAT_M( "%xmm0", __f );
-							break;
-						}
-						case 1: {
-							ASM_SET_FLOAT_M( "%xmm1", __f );
-							break;
-						}
-						case 2: {
-							ASM_SET_FLOAT_M( "%xmm2", __f );
-							break;
-						}
-						case 3: {
-							ASM_SET_FLOAT_M( "%xmm3", __f );
-							break;
-						}
-						case 4: {
-							ASM_SET_FLOAT_M( "%xmm4", __f );
-							break;
-						}
-						case 5: {
-							ASM_SET_FLOAT_M( "%xmm5", __f );
-							break;
-						}
-						case 6: {
-							ASM_SET_FLOAT_M( "%xmm6", __f );
-							break;
-						}
-						case 7: {
-							ASM_SET_FLOAT_M( "%xmm7", __f );
-							break;
-						}
-					}
-				} else {
-					PUSH_LONG( pArgs[i] );
-				}
-				fReg++;
-				break;
-			}
-			case x64DOUBLEARG: {
-				if ( fReg < MAX_CALL_SSE_REGISTERS ) {
-					__CALL( memcpy( &__d, pArgs + i, sizeof( __d ) ) );
-					switch ( fReg ) {
-						case 0: {
-							ASM_SET_DOUBLE_M( "%xmm0", __d );
-							break;
-						}
-						case 1: {
-							ASM_SET_DOUBLE_M( "%xmm1", __d );
-							break;
-						}
-						case 2: {
-							ASM_SET_DOUBLE_M( "%xmm2", __d );
-							break;
-						}
-						case 3: {
-							ASM_SET_DOUBLE_M( "%xmm3", __d );
-							break;
-						}
-						case 4: {
-							ASM_SET_DOUBLE_M( "%xmm4", __d );
-							break;
-						}
-						case 5: {
-							ASM_SET_DOUBLE_M( "%xmm5", __d );
-							break;
-						}
-						case 6: {
-							ASM_SET_DOUBLE_M( "%xmm6", __d );
-							break;
-						}
-						case 7: {
-							ASM_SET_DOUBLE_M( "%xmm7", __d );
-							break;
-						}
-					}
-				} else {
-					PUSH_LONG( pArgs[i] );
-				}
-				fReg++;
-				break;
-			}
-		}
+
+	/* push the stack parameters */
+	for ( i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; pArgsType[i] != x64ENDARG && ( i < X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 ); i++ ) {
+		PUSH_LONG( pArgs[i * CALLSTACK_MULTIPLIER] );
 	}
+
+	/* push integer parameters */
+	for ( i = 0; i < MAX_CALL_INT_REGISTERS; i++ ) {
+		PUSH_LONG( pArgs[i * CALLSTACK_MULTIPLIER] );
+	}
+
+	/* push floating point parameters */
+	for ( i = MAX_CALL_INT_REGISTERS; i < MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; i++ ) {
+		PUSH_LONG( pArgs[i * CALLSTACK_MULTIPLIER] );
+	}
+
+	/* now pop the registers in reverse order and make the call */
+	POP_LONG( "%xmm7" );
+	POP_LONG( "%xmm6" );
+	POP_LONG( "%xmm5" );
+	POP_LONG( "%xmm4" );
+	POP_LONG( "%xmm3" );
+	POP_LONG( "%xmm2" );
+	POP_LONG( "%xmm1" );
+	POP_LONG( "%xmm0" );
+
+	POP_LONG( "%r9" );
+	POP_LONG( "%r8" );
+	POP_LONG( "%rcx" );
+	POP_LONG( "%rdx" );
+	POP_LONG( "%rsi" );
+	POP_LONG( "%rdi" );
 
 	// call the function with the arguments
 	retval = call();
@@ -404,7 +270,7 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 
 	asBYTE	 argsType[X64_MAX_ARGS + 3] = { 0 };
 	asBYTE   argsSet[X64_MAX_ARGS + 3]  = { 0 };
-	
+
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD ) {
 		return context->CallGeneric( id, objectPointer );
 	}
@@ -479,7 +345,7 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		// Add the base offset for multiple inheritance
 		obj = ( void * )( ( asQWORD )obj + sysFunc->baseOffset );
 	}
-	
+
 	if ( obj && ( callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ) ) {
 		vftable = *( ( funcptr_t ** )obj );
 		func    = ( void * )vftable[( asQWORD )func >> 3];
@@ -558,34 +424,59 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		}
 	}
 
-	asDWORD tempBuff[CALLSTACK_MULTIPLIER * ( X64_MAX_ARGS + 3 )] = { 0 };
-	asBYTE  tempType[X64_MAX_ARGS + 3] = { 0 };
+	/*
+	 * Q: WTF is going on here !?
+	 *
+	 * A: The idea is to pre-arange the parameters so that X64_CallFunction() can do
+	 * it's little magic which must work regardless of how the compiler decides to
+	 * allocate registers. Basically:
+	 * - the first MAX_CALL_INT_REGISTERS entries in tempBuff and tempType will
+	 *   contain the values/types of the x64INTARG parameters - that is the ones who
+	 *   go into the registers. If the function has less then MAX_CALL_INT_REGISTERS
+	 *   integer parameters then the last entries will be set to 0
+	 * - the next MAX_CALL_SSE_REGISTERS entries will contain the float/double arguments
+	 *   that go into the floating point registers. If the function has less than
+	 *   MAX_CALL_SSE_REGISTERS floating point parameters then the last entries will
+	 *   be set to 0
+	 * - index MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS marks the start of the
+	 *   parameters which will get passed on the stack. These are added to the array
+	 *   in reverse order so that X64_CallFunction() can simply push them to the stack
+	 *   without the need to perform further tests
+	 */
+	asDWORD tempBuff[CALLSTACK_MULTIPLIER * ( X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 )] = { 0 };
+	asBYTE  tempType[X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3] = { 0 };
 	int     used_int_regs = 0;
 	int     used_sse_regs = 0;
+	int     idx           = 0;
 	base_n = 0;
 	for ( n = 0; ( n < X64_MAX_ARGS + 3 ) && ( used_int_regs < MAX_CALL_INT_REGISTERS ); n++ ) {
 		if ( argsType[n] == x64INTARG ) {
+			idx = base_n;
 			argsSet[n] = 1;
-			tempType[base_n] = argsType[n];
-			memcpy( tempBuff + base_n * CALLSTACK_MULTIPLIER, paramBuffer + n * CALLSTACK_MULTIPLIER, CALLSTACK_MULTIPLIER * sizeof( asDWORD ) );
+			tempType[idx] = argsType[n];
+			memcpy( tempBuff + idx * CALLSTACK_MULTIPLIER, paramBuffer + n * CALLSTACK_MULTIPLIER, CALLSTACK_MULTIPLIER * sizeof( asDWORD ) );
 			base_n++;
 			used_int_regs++;
 		}
 	}
+	base_n = 0;
 	for ( n = 0; ( n < X64_MAX_ARGS + 3 ) && ( used_sse_regs < MAX_CALL_SSE_REGISTERS ); n++ ) {
 		if ( argsType[n] == x64FLOATARG || argsType[n] == x64DOUBLEARG ) {
+			idx = MAX_CALL_INT_REGISTERS + base_n;
 			argsSet[n] = 1;
-			tempType[base_n] = argsType[n];
-			memcpy( tempBuff + base_n * CALLSTACK_MULTIPLIER, paramBuffer + n * CALLSTACK_MULTIPLIER, CALLSTACK_MULTIPLIER * sizeof( asDWORD ) );
+			tempType[idx] = argsType[n];
+			memcpy( tempBuff + idx * CALLSTACK_MULTIPLIER, paramBuffer + n * CALLSTACK_MULTIPLIER, CALLSTACK_MULTIPLIER * sizeof( asDWORD ) );
 			base_n++;
 			used_sse_regs++;
 		}
 	}
+	base_n = 0;
 	for ( n = X64_MAX_ARGS + 2; n >= 0; n-- ) {
 		if ( argsType[n] != x64ENDARG && !argsSet[n] ) {
+			idx = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS + base_n;
 			argsSet[n] = 1;
-			tempType[base_n] = argsType[n];
-			memcpy( tempBuff + base_n * CALLSTACK_MULTIPLIER, paramBuffer + n * CALLSTACK_MULTIPLIER, CALLSTACK_MULTIPLIER * sizeof( asDWORD ) );
+			tempType[idx] = argsType[n];
+			memcpy( tempBuff + idx * CALLSTACK_MULTIPLIER, paramBuffer + n * CALLSTACK_MULTIPLIER, CALLSTACK_MULTIPLIER * sizeof( asDWORD ) );
 			base_n++;
 		}
 	}

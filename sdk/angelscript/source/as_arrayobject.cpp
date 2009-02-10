@@ -280,7 +280,7 @@ asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
 	// Determine element size
 	if( objType->subType )
 	{
-		elementSize = 4;
+		elementSize = sizeof(asPWORD);
 	}
 	else
 	{
