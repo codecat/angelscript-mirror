@@ -12,6 +12,10 @@ This list shows the available unary operators.
 
 <table cellspacing=0 cellpadding=0 border=0>
 <tr><td width=150 valign=top>
+<code>::</code>
+</td><td valign=top>
+scope resolution operator
+</td></tr><tr><td width=150 valign=top>
 <code>[]</code>
 </td><td valign=top>
 indexing operator

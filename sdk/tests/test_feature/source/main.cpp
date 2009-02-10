@@ -179,6 +179,7 @@ int main(int argc, char **argv)
 	InstallMemoryManager();
 
 	if( TestInheritance::Test()       ) goto failed; else printf("-- TestInheritance passed\n");
+	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");
 	if( TestSaveLoad::Test()          ) goto failed; else printf("-- TestSaveLoad passed\n");
 	if( TestInterface::Test()         ) goto failed; else printf("-- TestInterface passed\n");
@@ -229,7 +230,6 @@ int main(int argc, char **argv)
 	if( TestFactory::Test()           ) goto failed; else printf("-- TestFactory passed\n");
 	if( TestFuncOverload()            ) goto failed; else printf("-- TestFuncOverload passed\n");
 	if( TestObjZeroSize::Test()       ) goto failed; else printf("-- TestObjZeroSize passed\n");
-	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestSingleton::Test()         ) goto failed; else printf("-- TestSingleton passed\n");
 	if( TestCondition()               ) goto failed; else printf("-- TestCondition passed\n");
 	if( TestObject2::Test()           ) goto failed; else printf("-- TestObject2 passed\n");

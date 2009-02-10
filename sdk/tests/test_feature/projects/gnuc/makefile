@@ -37,6 +37,7 @@ SRCNAMES = \
   test_dictionary.cpp \
   test_discard.cpp \
   test_dynamicconfig.cpp \
+  test_enum.cpp \
   test_exception.cpp \
   test_exceptionmemory.cpp \
   test_float.cpp \
@@ -45,9 +46,12 @@ SRCNAMES = \
   test_generic.cpp \
   test_getargptr.cpp \
   test_implicitcast.cpp \
+  test_implicithandle.cpp \
   test_import.cpp \
   test_import2.cpp \
+  test_inheritance.cpp \
   test_interface.cpp \
+  test_metadata.cpp \
   test_multiassign.cpp \
   test_nested.cpp \
   test_nevervisited.cpp \
@@ -63,6 +67,7 @@ SRCNAMES = \
   test_pointer.cpp \
   test_postprocess.cpp \
   test_refargument.cpp \
+  test_refcast.cpp \
   test_returnstring.cpp \
   test_return_with_cdecl_objfirst.cpp \
   test_saveload.cpp \
@@ -77,6 +82,7 @@ SRCNAMES = \
   test_stdvector.cpp \
   test_stream.cpp \
   test_structintf.cpp \
+  test_typedef.cpp \
   test_unsaferef.cpp \
   test_vartype.cpp \
   test_vector3.cpp \

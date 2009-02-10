@@ -292,6 +292,12 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// TODO: Test that calling the constructor from within the constructor 
 	//       using the class name will create a new object
 
+	// TODO: Not related to inheritance. The scope operator should permit calling global functions if the class has a method of the same name
+
+	// TODO: Not related to inheritance. The scope operator should permit access to global variable if the class has a property of the same name
+
+	// TODO: Not related to inheritance. The scope operator should permit access to global variable if the function has a local variable of the same name
+
 	return fail;
 }
 
@@ -487,6 +493,21 @@ bool Test2()
 		fail = true;
 	// TODO: The message could be improved to mention which member
 	if( bout.buffer != "script (1, 24) : Error   : Illegal member type\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	// Test that it is not possible to call super with any scope prefix
+	script = "class A { } class B : A { B() { ::super(); } }";
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	// TODO: The error message should include scope resolution
+	if( bout.buffer != "script (1, 27) : Info    : Compiling void B::B()\n"
+					   "script (1, 33) : Error   : No matching signatures to 'super()'\n" )
 	{
 		fail = true;
 		printf(bout.buffer.c_str());

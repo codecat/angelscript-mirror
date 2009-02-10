@@ -110,7 +110,7 @@ asDWORD asCAtomic::atomicDec()
 //
 // atomic_inc_and_test() and atomic_dec_and_test() from asm/atomic.h is not meant 
 // to be used outside the Linux kernel. Instead we should use the GNUC provided 
-// __sync_fetch_and_add() and __sync_fetch_and_sub() functions.
+// __sync_add_and_fetch() and __sync_sub_and_fetch() functions.
 //
 // Reference: http://golubenco.org/blog/atomic-operations/
 //
@@ -120,12 +120,12 @@ asDWORD asCAtomic::atomicDec()
 
 asDWORD asCAtomic::atomicInc()
 {
-	return __sync_fetch_and_add(&value, 1);
+	return __sync_add_and_fetch(&value, 1);
 }
 
 asDWORD asCAtomic::atomicDec()
 {
-	return __sync_fetch_and_sub(&value, 1);
+	return __sync_sub_and_fetch(&value, 1);
 }
 
 #elif defined(AS_MAC)

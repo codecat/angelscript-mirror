@@ -5156,8 +5156,14 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	asASSERT(ctx->bc.GetLastInstr() == -1);
 
 	asCScriptNode *vnode = node->firstChild;
-	if( vnode->nodeType == snIdentifier )
+	if( vnode->nodeType == snVariableAccess )
 	{
+		// TODO: inheritance: Determine the scope resolution of the variable
+
+
+		vnode = vnode->lastChild;
+		asASSERT(vnode->nodeType == snIdentifier );
+
 		GETSTRING(name, &script->code[vnode->tokenPos], vnode->tokenLength);
 
 		sVariable *v = variables->GetVariable(name.AddressOf());
@@ -5485,16 +5491,19 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		bool found = false;
 		if( outFunc && outFunc->objectType )
 		{
+			// TODO: inheritance: Determine the scope resolution
+
 			// Check if a class method is being called
-			asCScriptNode *nm = vnode->firstChild;
+			asCScriptNode *nm = vnode->lastChild->prev;
 			asCString name;
 			name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
 	
 			asCArray<int> funcs;
 
 			// If we're compiling a constructor and the name of the function called
-			// is 'super' then the base class' constructor is being called
-			if( m_isConstructor && name == "super" )
+			// is 'super' then the base class' constructor is being called.
+			// super cannot be called from another scope, i.e. must not be prefixed
+			if( m_isConstructor && name == SUPER_TOKEN && nm->prev == 0 )
 			{
 				// Actually it is the base class' constructor that is being called,
 				// but as we won't use the actual function ids here we can take the
@@ -6082,14 +6091,18 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	asCString name;
 	asCTypeInfo tempObj;
 	asCArray<int> funcs;
-	asCScriptNode *nm = node->firstChild;
+
+	// TODO: inheritance: determine the scope resolution
+
+	asCScriptNode *nm = node->lastChild->prev;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
 
 	if( objectType )
 	{
 		// If we're compiling a constructor and the name of the function is super then
 		// the constructor of the base class is being called.
-		if( m_isConstructor && name == "super" )
+		// super cannot be prefixed with a scope operator
+		if( m_isConstructor && name == SUPER_TOKEN && nm->prev == 0 )
 		{
 			// If the class is not derived from anyone else, calling super should give an error
 			if( objectType->derivedFrom )

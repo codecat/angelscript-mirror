@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -156,6 +156,7 @@ protected:
 	asCScriptNode *ParseConstant();
 	asCScriptNode *ParseStringConstant();
 	asCScriptNode *ParseFunctionCall();
+	asCScriptNode *ParseVariableAccess();
 	asCScriptNode *ParseConstructCall();
 	asCScriptNode *ParseToken(int token);
 	asCScriptNode *ParseOneOf(int *tokens, int num);

@@ -1343,14 +1343,15 @@ asCScriptNode *asCParser::ParseExprValue()
 	GetToken(&t1);
 	RewindTo(&t1);
 
+	// TODO: namespace: Datatypes can be defined in namespaces, thus types too must allow scope prefix
 	if( IsDataType(t1) )
 		node->AddChildLast(ParseConstructCall());
-	else if( t1.type == ttIdentifier )
+	else if( t1.type == ttIdentifier || t1.type == ttScope )
 	{
 		if( IsFunctionCall() )
 			node->AddChildLast(ParseFunctionCall());
 		else
-			node->AddChildLast(ParseIdentifier());
+			node->AddChildLast(ParseVariableAccess());
 	}
 	else if( t1.type == ttCast )
 		node->AddChildLast(ParseCast());
@@ -1428,10 +1429,63 @@ asCScriptNode *asCParser::ParseFunctionCall()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunctionCall);
 
+	// Parse scope prefix
+	sToken t1, t2;
+	GetToken(&t1);
+	if( t1.type == ttScope )
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseToken(ttScope));
+		GetToken(&t1);
+	}
+	GetToken(&t2);
+	while( t1.type == ttIdentifier && t2.type == ttScope )
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseIdentifier());
+		node->AddChildLast(ParseToken(ttScope));
+		GetToken(&t1);
+		GetToken(&t2);
+	}
+
+	RewindTo(&t1);
+
+	// Parse the function name followed by the argument list
 	node->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return node;
 
 	node->AddChildLast(ParseArgList());
+
+	return node;
+}
+
+asCScriptNode *asCParser::ParseVariableAccess()
+{
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVariableAccess);
+
+	// Parse scope prefix
+	sToken t1, t2;
+	GetToken(&t1);
+	if( t1.type == ttScope )
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseToken(ttScope));
+		GetToken(&t1);
+	}
+	GetToken(&t2);
+	while( t1.type == ttIdentifier && t2.type == ttScope )
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseIdentifier());
+		node->AddChildLast(ParseToken(ttScope));
+		GetToken(&t1);
+		GetToken(&t2);
+	}
+
+	RewindTo(&t1);
+
+	// Parse the variable name
+	node->AddChildLast(ParseIdentifier());
 
 	return node;
 }
@@ -1715,23 +1769,37 @@ asCScriptNode *asCParser::ParseInitList()
 
 bool asCParser::IsFunctionCall()
 {
+	sToken s;
 	sToken t1, t2;
 
-	GetToken(&t1);
+	GetToken(&s);
+	t1 = s;
+
+	// A function call may be prefixed with scope resolution
+	if( t1.type == ttScope )
+		GetToken(&t1);
+	GetToken(&t2);
+
+	while( t1.type == ttIdentifier && t2.type == ttScope )
+	{
+		GetToken(&t1);
+		GetToken(&t2);
+	}
+
+	// A function call starts with an identifier followed by an argument list
 	if( t1.type != ttIdentifier || IsDataType(t1) )
 	{
-		RewindTo(&t1);
+		RewindTo(&s);
 		return false;
 	}
 
-	GetToken(&t2);
 	if( t2.type == ttOpenParanthesis )
 	{
-		RewindTo(&t1);
+		RewindTo(&s);
 		return true;
 	}
 
-	RewindTo(&t1);
+	RewindTo(&s);
 	return false;
 }
 

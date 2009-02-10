@@ -127,6 +127,7 @@ These are the non-alphabetical tokens that are also used in the language syntax.
 ^^<br>
 @ <br>
 !is<br>
+::<br>
 </code></td>
 </tr>
 </table>

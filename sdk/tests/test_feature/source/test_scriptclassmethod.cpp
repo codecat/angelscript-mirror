@@ -131,9 +131,9 @@ static const char *script6 =
 "   {                  \n"
 "      int a = 0;      \n"
        // Call class method
-"      this.Set(a);    \n"  // TODO: This should be just 'Set(a)'
+"      this.Set(a);    \n"  // TODO: This should be just 'Set(a)'. Requires change in the way the parser handles types
        // Call Set constructor
-"      Set(a);         \n"  // TODO: This should be '::Set(a)'
+"      Set(a);         \n"  // TODO: This should be '::Set(a)'. Requires change in the way the parser handles types
 "   }                  \n"
 "}                     \n";
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -91,6 +91,7 @@ enum eTokenType
 	ttDec,                 // --
 
 	ttDot,                 // .
+	ttScope,               // ::
 
 	// Statement tokens
 	ttAssignment,          // =
@@ -210,6 +211,7 @@ sTokenWord const tokenWords[] =
 	{"]"         , ttCloseBracket},
 	{"?"         , ttQuestion},
 	{":"         , ttColon},
+	{"::"        , ttScope},
 	{"=="        , ttEqual},
 	{"!="        , ttNotEqual},
 	{"<"         , ttLessThan},
@@ -281,6 +283,7 @@ const char * const whiteSpace = " \t\r\n";
 // Some keywords that are not considered tokens by the parser
 const char * const THIS_TOKEN = "this";
 const char * const FROM_TOKEN = "from";
+const char * const SUPER_TOKEN = "super";
 
 END_AS_NAMESPACE
 
