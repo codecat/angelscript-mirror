@@ -119,7 +119,7 @@ protected:
 	int  CompileExpressionPreOp(asCScriptNode *node, asSExprContext *out);
 	int  CompileExpressionPostOp(asCScriptNode *node, asSExprContext *out);
 	int  CompileExpressionValue(asCScriptNode *node, asSExprContext *out);
-	void CompileFunctionCall(asCScriptNode *node, asSExprContext *out, asCObjectType *objectType, bool objIsConst);
+	void CompileFunctionCall(asCScriptNode *node, asSExprContext *out, asCObjectType *objectType, bool objIsConst, const asCString &scope = "");
 	void CompileConstructCall(asCScriptNode *node, asSExprContext *out);
 	void CompileConversion(asCScriptNode *node, asSExprContext *out);
 	int  CompileOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
@@ -171,6 +171,7 @@ protected:
 	void ConvertToReference(asSExprContext *ctx);
 	void PushVariableOnStack(asSExprContext *ctx, bool asReference);
 	int  TokenToBehaviour(int token);
+	asCString GetScopeFromNode(asCScriptNode *node);
 
 	void LineInstr(asCByteCode *bc, size_t pos);
 

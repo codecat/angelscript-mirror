@@ -134,6 +134,8 @@ int asCRestore::Save()
 	// usedFunctions[]
 	WriteUsedFunctions();
 
+	// TODO: Store script section names
+
 	return asSUCCESS;
 }
 
@@ -315,7 +317,8 @@ void asCRestore::ReadUsedFunctions()
 			{
 				asCScriptFunction *f = module->scriptFunctions[i];
 				if( !func.IsSignatureEqual(f) ||
-					func.objectType != f->objectType )
+					func.objectType != f->objectType ||
+					func.funcType != f->funcType )
 					continue;
 
 				usedFunctions[n] = f;
@@ -449,6 +452,8 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	WRITE_NUM(func->vfTableIdx);
 
 	// TODO: Write variables
+
+	// TODO: Store script section index
 }
 
 asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine) 

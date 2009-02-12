@@ -27,6 +27,7 @@ bool Test()
 		"  int a;                                         \n"
 		"  void f1() { a = 1; }                           \n"
 		"  void f2() { a = 0; }                           \n"
+		"  void f3() { a = 3; }                           \n"
 		"  Base() { baseConstructorCalled = true; }       \n"
 		"  Base(float) { baseFloatConstructorCalled = true; } \n"
 		"  ~Base() { baseDestructorCalled = true; }       \n"
@@ -37,6 +38,8 @@ bool Test()
 		"{                                                \n"
 		   // overload f2()
 		"  void f2() { a = 2; }                           \n"
+		   // overload f3()
+		"  void f3() { a = 2; }                           \n"
 		"  void func()                                    \n"
 		"  {                                              \n"
 		     // call Base::f1()
@@ -45,6 +48,9 @@ bool Test()
 		     // call Derived::f2()
 		"    f2();                                           \n"
 		"    assert(a == 2);                                 \n"
+		     // call Base::f3() 
+		"    Base::f3();                                     \n"
+		"    assert(a == 3);                                 \n"
 		"  }                                                 \n"
 		"  Derived(int) { derivedConstructorCalled = true; } \n"
 		"  ~Derived() { derivedDestructorCalled = true; }    \n"
@@ -145,6 +151,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// Test that the inherited properties are available in the derived class
 	// Test that the inherited methods are available in the derived class
 	// Test that it is possible to override the inherited methods
+	// Test that it is possible to call base class methods from within overridden methods in derived class 
 	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(mod->GetTypeIdByDecl("Derived"));
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(obj->GetObjectType()->GetMethodIdByDecl("void func()"));
@@ -278,21 +285,14 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 		fail = true;
 	}
 
-	// TODO: Test that it is possible to call base class methods from within overridden methods in derived class 
-	//       Requires scope operator
-
 	// TODO: Can a derived class introduce new reference cycles involving the base class? I.e. are there any 
 	//       situations where the base class wouldn't be garbage collected, unless the derived class is implemented?
-
-	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. 
-	//       We can follow D's design of using this(args) to call the constructor
-
-	// TODO: Should it be allowed to have a member in a base class that is of the derived type?
 
 	// TODO: Test that calling the constructor from within the constructor 
 	//       using the class name will create a new object
 
-	// TODO: Not related to inheritance. The scope operator should permit calling global functions if the class has a method of the same name
+	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. 
+	//       We can follow D's design of using this(args) to call the constructor
 
 	// TODO: Not related to inheritance. The scope operator should permit access to global variable if the class has a property of the same name
 

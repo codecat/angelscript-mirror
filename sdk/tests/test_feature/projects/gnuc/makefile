@@ -140,6 +140,10 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptstringutil.o \
   obj/scriptmath.o \
   obj/scriptdictionary.o \
+  obj/scriptfile.o \
+  obj/scriptbuilder.o \
+  obj/scriptmath3d.o  \
+  
  
 BIN = ../../bin/testgnuc
 DELETER = rm -f
@@ -167,6 +171,15 @@ obj/scriptmath.o: ../../../../add_on/scriptmath/scriptmath.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptany.o: ../../../../add_on/scriptany/scriptany.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptfile.o: ../../../../add_on/scriptfile/scriptfile.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptmath3d.o: ../../../../add_on/scriptmath3d/scriptmath3d.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptbuilder.o: ../../../../add_on/scriptbuilder/scriptbuilder.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 

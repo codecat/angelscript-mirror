@@ -2234,8 +2234,19 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 	}
 }
 
-void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst)
+void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope)
 {
+	if( scope != "" )
+	{
+		// Find the base class with the specified scope
+		while( objectType && objectType->name != scope )
+			objectType = objectType->derivedFrom;
+
+		// If the scope is not any of the base classes, then return no methods
+		if( objectType == 0 )
+			return;
+	}
+
 	// TODO: optimize: Improve linear search
 	if( objIsConst )
 	{
@@ -2244,7 +2255,17 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		{
 			if( engine->scriptFunctions[objectType->methods[n]]->name == name &&
 				engine->scriptFunctions[objectType->methods[n]]->isReadOnly )
-				methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
+			{
+				// When the scope is defined the returned methods should be the true methods, not the virtual method stubs
+				if( scope == "" )
+					methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
+				else
+				{
+					asCScriptFunction *virtFunc = engine->scriptFunctions[objectType->methods[n]];
+					asCScriptFunction *realFunc = objectType->virtualFunctionTable[virtFunc->vfTableIdx];
+					methods.PushLast(realFunc->id);
+				}
+			}
 		}
 	}
 	else
@@ -2253,7 +2274,17 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
 		{
 			if( engine->scriptFunctions[objectType->methods[n]]->name == name )
-				methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
+			{
+				// When the scope is defined the returned methods should be the true methods, not the virtual method stubs
+				if( scope == "" )
+					methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
+				else
+				{
+					asCScriptFunction *virtFunc = engine->scriptFunctions[objectType->methods[n]];
+					asCScriptFunction *realFunc = objectType->virtualFunctionTable[virtFunc->vfTableIdx];
+					methods.PushLast(realFunc->id);
+				}
+			}
 		}
 	}
 }

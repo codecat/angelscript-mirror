@@ -450,7 +450,7 @@ const char *asCScriptFunction::GetDeclaration(int *length) const
 // interface
 const char *asCScriptFunction::GetScriptSectionName(int *length) const
 {
-	if( module )
+	if( module && scriptSectionIdx >= 0 )
 	{
 		if( length ) *length = (int)module->scriptSections[scriptSectionIdx]->GetLength();
 		return module->scriptSections[scriptSectionIdx]->AddressOf();

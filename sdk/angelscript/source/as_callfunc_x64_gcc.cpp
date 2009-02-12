@@ -44,13 +44,14 @@
 #include "as_scriptengine.h"
 #include "as_texts.h"
 
-enum argTypes { x64ENDARG = 0, x64INTARG = 1, x64FLOATARG = 2, x64DOUBLEARG = 3 };
+enum argTypes { x64ENDARG = 0, x64INTARG = 1, x64FLOATARG = 2, x64DOUBLEARG = 3, x64VARIABLE = 4 };
 typedef asQWORD ( *funcptr_t )( void );
 
 #define X64_MAX_ARGS             32
 #define MAX_CALL_INT_REGISTERS    6
 #define MAX_CALL_SSE_REGISTERS    8
-#define CALLSTACK_MULTIPLIER      3
+#define CALLSTACK_MULTIPLIER      2
+#define X64_CALLSTACK_SIZE        ( X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 )
 
 #define PUSH_LONG( val )                                 \
 	__asm__ __volatile__ (                           \
@@ -118,11 +119,7 @@ static asQWORD X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, 
 {
 	asQWORD retval      = 0;
 	asQWORD ( *call )() = (asQWORD (*)())func;
-	int     i           = 0;        // track integer and float arguments separately
-
-	// the first 6 integer arguments go into rdi, rsi, rdx, rcx, r8, and r9
-	// the first 8 float arguments go into xmm0...7
-	// everything else is pushed right-to-left
+	int     i           = 0;
 
 	/* push the stack parameters */
 	for ( i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; pArgsType[i] != x64ENDARG && ( i < X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 ); i++ ) {
@@ -267,9 +264,16 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	int                         a                  = 0;
 	int                         param_pre          = 0;
 	int                         param_post         = 0;
+	int                         argIndex           = 0;
+	int                         argumentCount      = 0;
 
-	asBYTE	 argsType[X64_MAX_ARGS + 3] = { 0 };
-	asBYTE   argsSet[X64_MAX_ARGS + 3]  = { 0 };
+	asDWORD  tempBuff[CALLSTACK_MULTIPLIER * X64_CALLSTACK_SIZE] = { 0 };
+	asBYTE   tempType[X64_CALLSTACK_SIZE] = { 0 };
+
+	asDWORD  paramBuffer[CALLSTACK_MULTIPLIER * X64_CALLSTACK_SIZE] = { 0 };
+	asBYTE	 argsType[X64_CALLSTACK_SIZE] = { 0 };
+
+	asBYTE   argsSet[X64_CALLSTACK_SIZE]  = { 0 };
 
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD ) {
 		return context->CallGeneric( id, objectPointer );
@@ -286,40 +290,52 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		}
 	}
 
-	// mark all float/double/int arguments
-	int argIndex = 0;
-	totalArgumentCount = (int)descr->parameterTypes.GetLength();
+	argumentCount = ( int )descr->parameterTypes.GetLength();
+	assert( argumentCount <= X64_MAX_ARGS );
 
-	if ( totalArgumentCount > X64_MAX_ARGS ) {
-		context->SetInternalException( TXT_INVALID_CALLING_CONVENTION );
-		return 0;
-	}
-
-	for( a = 0; a < (int)descr->parameterTypes.GetLength(); ++a, ++argIndex ) {
+	for( a = 0; a < argumentCount; ++a, ++argIndex ) {
 		// get the base type
 		argsType[argIndex] = x64INTARG;
-		if( descr->parameterTypes[a].IsFloatType() && !descr->parameterTypes[a].IsReference() ) {
+		if ( descr->parameterTypes[a].IsFloatType() && !descr->parameterTypes[a].IsReference() ) {
 			argsType[argIndex] = x64FLOATARG;
 		}
-		if( descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() ) {
+		if ( descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() ) {
 			argsType[argIndex] = x64DOUBLEARG;
 		}
-		if( descr->parameterTypes[a].GetSizeOnStackDWords() == 2 && !descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() ) {
+		if ( descr->parameterTypes[a].GetSizeOnStackDWords() == 2 && !descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() ) {
 			argsType[argIndex] = x64INTARG;
 		}
 
-		// if it is a variable argument, account for the typeID
-		if( IsVariableArgument( descr->parameterTypes[a] ) ) {
-			// implicitly add another parameter (AFTER the parameter above), for the TypeID
-			argsType[++argIndex] = x64INTARG;
+		if ( IsVariableArgument( descr->parameterTypes[a] ) ) {
+			argsType[argIndex] = x64VARIABLE;
 		}
 	}
-	assert( argIndex == totalArgumentCount );
+	assert( argIndex == argumentCount );
 
-	asASSERT( descr->parameterTypes.GetLength() <= X64_MAX_ARGS );
-
-	asDWORD paramBuffer[CALLSTACK_MULTIPLIER * ( X64_MAX_ARGS + 3 )];
-	memset( paramBuffer, 0, sizeof( paramBuffer ) );
+	for ( a = 0; a < argumentCount && totalArgumentCount <= X64_MAX_ARGS; a++ ) {
+		switch ( argsType[a] ) {
+			case x64ENDARG:
+			case x64INTARG:
+			case x64FLOATARG:
+			case x64DOUBLEARG: {
+				if ( totalArgumentCount < X64_MAX_ARGS )
+					tempType[totalArgumentCount++] = argsType[a];
+				break;
+			}
+			case x64VARIABLE: {
+				if ( totalArgumentCount < X64_MAX_ARGS )
+					tempType[totalArgumentCount++] = x64VARIABLE;
+				if ( totalArgumentCount < X64_MAX_ARGS )
+					tempType[totalArgumentCount++] = x64INTARG;
+				break;
+			}
+		}
+	}
+	assert( totalArgumentCount <= X64_MAX_ARGS );
+	if ( totalArgumentCount > argumentCount ) {
+		memcpy( argsType, tempType, totalArgumentCount );
+	}
+	memset( tempType, 0, sizeof( tempType ) );
 
 	if( sysFunc->takesObjByVal ) {
 		context->SetInternalException( TXT_INVALID_CALLING_CONVENTION );
@@ -409,18 +425,33 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		}
 	}
 
+	int adjust = 0;
 	for( n = 0; n < ( int )( param_pre + totalArgumentCount + param_post ); n++ ) {
 		int copy_count = 0;
 		if ( n >= param_pre && n < ( int )( param_pre + totalArgumentCount ) ) {
-			copy_count = descr->parameterTypes[n - param_pre].GetSizeOnStackDWords();
+			copy_count = descr->parameterTypes[n - param_pre - adjust].GetSizeOnStackDWords();
+
+			if ( argsType[n] == x64VARIABLE ) {
+				adjust += 1;
+				argsType[n] = x64INTARG;
+				n += 1;
+			}
 		}
 		if ( copy_count > CALLSTACK_MULTIPLIER ) {
-			context->SetInternalException( TXT_INVALID_CALLING_CONVENTION );
-			return 0;
-		}
-		if ( copy_count ) {
-			memcpy( paramBuffer + n * CALLSTACK_MULTIPLIER, stack_pointer, copy_count * sizeof( asDWORD ) );
-			stack_pointer += copy_count;
+			if ( copy_count > CALLSTACK_MULTIPLIER + 1 ) {
+				context->SetInternalException( TXT_INVALID_CALLING_CONVENTION );
+				return 0;
+			}
+
+			memcpy( paramBuffer + ( n - 1 ) * CALLSTACK_MULTIPLIER, stack_pointer, PTR_SIZE * sizeof( asDWORD ) );
+			stack_pointer += PTR_SIZE;
+			memcpy( paramBuffer + n * CALLSTACK_MULTIPLIER, stack_pointer, sizeof( asDWORD ) );
+			stack_pointer += 1;
+		} else {
+			if ( copy_count ) {
+				memcpy( paramBuffer + n * CALLSTACK_MULTIPLIER, stack_pointer, copy_count * sizeof( asDWORD ) );
+				stack_pointer += copy_count;
+			}
 		}
 	}
 
@@ -443,13 +474,11 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	 *   in reverse order so that X64_CallFunction() can simply push them to the stack
 	 *   without the need to perform further tests
 	 */
-	asDWORD tempBuff[CALLSTACK_MULTIPLIER * ( X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 )] = { 0 };
-	asBYTE  tempType[X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3] = { 0 };
 	int     used_int_regs = 0;
 	int     used_sse_regs = 0;
 	int     idx           = 0;
 	base_n = 0;
-	for ( n = 0; ( n < X64_MAX_ARGS + 3 ) && ( used_int_regs < MAX_CALL_INT_REGISTERS ); n++ ) {
+	for ( n = 0; ( n < X64_CALLSTACK_SIZE ) && ( used_int_regs < MAX_CALL_INT_REGISTERS ); n++ ) {
 		if ( argsType[n] == x64INTARG ) {
 			idx = base_n;
 			argsSet[n] = 1;
@@ -460,7 +489,7 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		}
 	}
 	base_n = 0;
-	for ( n = 0; ( n < X64_MAX_ARGS + 3 ) && ( used_sse_regs < MAX_CALL_SSE_REGISTERS ); n++ ) {
+	for ( n = 0; ( n < X64_CALLSTACK_SIZE ) && ( used_sse_regs < MAX_CALL_SSE_REGISTERS ); n++ ) {
 		if ( argsType[n] == x64FLOATARG || argsType[n] == x64DOUBLEARG ) {
 			idx = MAX_CALL_INT_REGISTERS + base_n;
 			argsSet[n] = 1;
@@ -471,7 +500,7 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		}
 	}
 	base_n = 0;
-	for ( n = X64_MAX_ARGS + 2; n >= 0; n-- ) {
+	for ( n = X64_CALLSTACK_SIZE - 1; n >= 0; n-- ) {
 		if ( argsType[n] != x64ENDARG && !argsSet[n] ) {
 			idx = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS + base_n;
 			argsSet[n] = 1;

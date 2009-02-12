@@ -5489,10 +5489,12 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	else if( vnode->nodeType == snFunctionCall )
 	{
 		bool found = false;
-		if( outFunc && outFunc->objectType )
-		{
-			// TODO: inheritance: Determine the scope resolution
 
+		// Determine the scope resolution
+		asCString scope = GetScopeFromNode(vnode);
+
+		if( outFunc && outFunc->objectType && scope != "::" )
+		{
 			// Check if a class method is being called
 			asCScriptNode *nm = vnode->lastChild->prev;
 			asCString name;
@@ -5544,13 +5546,13 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				// TODO: optimize: This adds a CHKREF. Is that really necessary?
 				Dereference(ctx, true);
 
-				CompileFunctionCall(vnode, ctx, outFunc->objectType, false);
+				CompileFunctionCall(vnode, ctx, outFunc->objectType, false, scope);
 				found = true;
 			}
 		}
 
 		if( !found )
-			CompileFunctionCall(vnode, ctx, 0, false);
+			CompileFunctionCall(vnode, ctx, 0, false, scope);
 	}
 	else if( vnode->nodeType == snConstructCall )
 	{
@@ -5572,6 +5574,34 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		asASSERT(false);
 
 	return 0;
+}
+
+asCString asCCompiler::GetScopeFromNode(asCScriptNode *node)
+{
+	asCString scope;
+	asCScriptNode *sn = node->firstChild;
+	if( sn->tokenType == ttScope )
+	{
+		// Global scope
+		scope = "::";
+		sn = sn->next;
+	}
+	else if( sn->next->tokenType == ttScope )
+	{
+		scope.Assign(&script->code[sn->tokenPos], sn->tokenLength);
+		sn = sn->next->next;
+	}
+
+	if( scope != "" )
+	{
+		// We don't support multiple levels of scope yet
+		if( sn->next->tokenType == ttScope )
+		{
+			Error(TXT_INVALID_SCOPE, sn->next);
+		}
+	}
+	
+	return scope;
 }
 
 void asCCompiler::ProcessStringConstant(asCString &cstr)
@@ -6086,13 +6116,11 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 }
 
 
-void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, asCObjectType *objectType, bool objIsConst)
+void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, asCObjectType *objectType, bool objIsConst, const asCString &scope)
 {
 	asCString name;
 	asCTypeInfo tempObj;
 	asCArray<int> funcs;
-
-	// TODO: inheritance: determine the scope resolution
 
 	asCScriptNode *nm = node->lastChild->prev;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
@@ -6109,7 +6137,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 				funcs = objectType->derivedFrom->beh.constructors;
 		}
 		else
-			builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst);
+			builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst, scope);
 	}
 	else
 		builder->GetFunctionDescriptions(name.AddressOf(), funcs);

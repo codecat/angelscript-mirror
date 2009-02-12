@@ -356,6 +356,38 @@ bool Test()
 
 	engine->Release();
 
+	//------------------------------
+	// The scope operator should permit calling global functions if the class has a method of the same name
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script = 
+		"class A { \n"
+		"  void func() { \n"
+		"    g = 0; \n"
+		"    testScope(); \n"
+		"    assert(g == 3); \n"
+        "    ::testScope(); \n"
+		"    assert(g == 2); \n"
+		"  } \n"
+        "  void testScope() { g = 3; } \n"
+		"} \n"
+		"void testScope() { g = 2; } \n"
+		"int g; \n";
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+	}
+	r = engine->ExecuteString(0, "A a; a.func(); assert( g == 2 );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+	engine->Release();
+
 	// Success
 	return fail;
 }

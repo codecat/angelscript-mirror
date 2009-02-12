@@ -212,7 +212,6 @@ int main(int argc, char **argv)
 	if( TestRefCast::Test()           ) goto failed; else printf("-- TestRefCast passed\n");
 	if( TestStdString()               ) goto failed; else printf("-- TestStdString passed\n");
 	if( TestStack2::Test()            ) goto failed; else printf("-- TestStack2 passed\n");
-	if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
 	if( TestStdVector::Test()         ) goto failed; else printf("-- TestStdVector passed\n");
 	if( TestArrayHandle::Test()       ) goto failed; else printf("-- TestArrayHandle passed\n");
 	if( TestDict::Test()              ) goto failed; else printf("-- TestDict passed\n");
@@ -298,6 +297,7 @@ int main(int argc, char **argv)
 
 		// cdecl_objlast
 		if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
+		if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
 
 		// cdecl_objfirst
 		if( TestReturnWithCDeclObjFirst() ) goto failed; else printf("-- TestReturnWithCDeclObjFirst passed\n");

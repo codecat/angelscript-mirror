@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -1339,12 +1339,13 @@ asCScriptNode *asCParser::ParseExprValue()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snExprValue);
 
-	sToken t1;
+	sToken t1, t2;
 	GetToken(&t1);
+	GetToken(&t2);
 	RewindTo(&t1);
 
 	// TODO: namespace: Datatypes can be defined in namespaces, thus types too must allow scope prefix
-	if( IsDataType(t1) )
+	if( IsDataType(t1) && t2.type != ttScope )
 		node->AddChildLast(ParseConstructCall());
 	else if( t1.type == ttIdentifier || t1.type == ttScope )
 	{
