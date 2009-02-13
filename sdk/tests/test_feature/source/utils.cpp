@@ -90,7 +90,7 @@ void *MyAllocWithStats(size_t size, const char *file, int line)
 	UNUSED_VAR(file);
 
 	// Allocate the memory
-	void *ptr = new asBYTE[size];
+	void *ptr = malloc(size);
 
 	// Count number of allocations made
 	numAllocs++;

@@ -5166,19 +5166,24 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	asCScriptNode *vnode = node->firstChild;
 	if( vnode->nodeType == snVariableAccess )
 	{
-		// TODO: inheritance: Determine the scope resolution of the variable
+		// Determine the scope resolution of the variable
+		asCString scope = GetScopeFromNode(vnode);
 
-
+		// Determine the name of the variable
 		vnode = vnode->lastChild;
 		asASSERT(vnode->nodeType == snIdentifier );
-
 		GETSTRING(name, &script->code[vnode->tokenPos], vnode->tokenLength);
 
-		sVariable *v = variables->GetVariable(name.AddressOf());
+		sVariable *v = 0;
+		if( scope == "" )
+			v = variables->GetVariable(name.AddressOf());
 		if( v == 0 )
 		{
+			// It is not a local variable or parameter
 			bool found = false;
-			if( outFunc && outFunc->objectType )
+
+			// Is it a class member? 
+			if( outFunc && outFunc->objectType && scope == "" )
 			{
 				if( name == THIS_TOKEN )
 				{
@@ -5238,9 +5243,9 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				}
 			}
 
-			if( !found )
+			// Is it a global property?
+			if( !found && (scope == "" || scope == "::") )
 			{
-				// Is it a global property?
 				bool isCompiled = true;
 				bool isPureConstant = false;
 				asQWORD constantValue;
@@ -5286,9 +5291,10 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				}
 			}
 
-			if( !found )
+			// Is it an enum value?
+			// TODO: scope: Should allow use of the enum type as scope name
+			if( !found && scope == "" )
 			{
-				// Is it an enum value?
 				asDWORD value;
 				asCDataType dt;
 				int e = builder->GetEnumValue(name.AddressOf(), dt, value);
@@ -5308,8 +5314,13 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 
 			if( !found )
 			{
+				// Prepend the scope to the name for the error message
+				if( scope != "" && scope != "::" )
+					scope += "::";
+				scope += name;
+
 				asCString str;
-				str.Format(TXT_s_NOT_DECLARED, name.AddressOf());
+				str.Format(TXT_s_NOT_DECLARED, scope.AddressOf());
 				Error(str.AddressOf(), vnode);
 
 				// Give dummy value
@@ -5328,11 +5339,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		}
 		else
 		{
-			if (ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE))
-			{
-				ctx->type.dataType.MakeHandle(true);
-				ctx->type.isExplicitHandle = true;
-			}
+			// It is a variable or parameter
 
 			if( v->isPureConstant )
 				ctx->type.SetConstantQW(v->type, v->constantValue);
@@ -5342,11 +5349,12 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				{
 					if( v->type.IsReference() )
 					{
-						#if PTR_SIZE == 1
+						// Copy the reference into the register
+#if PTR_SIZE == 1
 						ctx->bc.InstrSHORT(BC_CpyVtoR4, (short)v->stackOffset);
-						#else
+#else
 						ctx->bc.InstrSHORT(BC_CpyVtoR8, (short)v->stackOffset);
-						#endif
+#endif
 						ctx->type.Set(v->type);
 					}
 					else
@@ -5358,7 +5366,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 					ctx->type.SetVariable(v->type, v->stackOffset, false);
 					ctx->type.dataType.MakeReference(true);
 
-					// Implicitly dereference primitive parameters sent by reference
+					// Implicitly dereference handle parameters sent by reference
 					if( v->type.IsReference() && (!v->type.IsObject() || v->type.IsObjectHandle()) )
 						ctx->bc.Instr(BC_RDSPTR);
 				}
@@ -5598,7 +5606,7 @@ asCString asCCompiler::GetScopeFromNode(asCScriptNode *node)
 		scope = "::";
 		sn = sn->next;
 	}
-	else if( sn->next->tokenType == ttScope )
+	else if( sn->next && sn->next->tokenType == ttScope )
 	{
 		scope.Assign(&script->code[sn->tokenPos], sn->tokenLength);
 		sn = sn->next->next;
@@ -5607,7 +5615,7 @@ asCString asCCompiler::GetScopeFromNode(asCScriptNode *node)
 	if( scope != "" )
 	{
 		// We don't support multiple levels of scope yet
-		if( sn->next->tokenType == ttScope )
+		if( sn->next && sn->next->tokenType == ttScope )
 		{
 			Error(TXT_INVALID_SCOPE, sn->next);
 		}
@@ -8598,7 +8606,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		if( op == ttEqual || op == ttIs )
 		{
 #ifdef AS_64BIT_PTR
-			// TODO: Use a 64bit integer comparison instead of double
+			// TODO: Optimize: Use a 64bit integer comparison instead of double
 			ctx->bc.InstrW_W(BC_CMPd, b, c);
 #else
 			ctx->bc.InstrW_W(BC_CMPi, b, c);
@@ -8609,7 +8617,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		else if( op == ttNotEqual || op == ttNotIs )
 		{
 #ifdef AS_64BIT_PTR
-			// TODO: Use a 64bit integer comparison instead of double
+			// TODO: Optimize: Use a 64bit integer comparison instead of double
 			ctx->bc.InstrW_W(BC_CMPd, b, c);
 #else
 			ctx->bc.InstrW_W(BC_CMPi, b, c);

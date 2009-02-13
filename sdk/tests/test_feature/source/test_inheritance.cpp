@@ -288,10 +288,6 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. 
 	//       We can follow D's design of using this(args) to call the constructor
 
-	// TODO: Not related to inheritance. The scope operator should permit access to global variable if the class has a property of the same name
-
-	// TODO: Not related to inheritance. The scope operator should permit access to global variable if the function has a local variable of the same name
-
 	return fail;
 }
 

@@ -616,7 +616,6 @@ endcopy:
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
 		"movl  16(%ebp), %eax \n" // paramSize
-		// TODO: 64 bit pointer, need to add 4 more here
 		"addl  $8, %eax       \n" // counting esp that we will push on the stack
 		"movl  %esp, %ecx     \n"
 		"subl  %eax, %ecx     \n"
@@ -625,7 +624,6 @@ endcopy:
 		"subl  %ecx, %esp     \n"
 		"pushl %eax           \n" // Store the original stack pointer
 
-		// TODO: 64 bit pointer, need to push all 8 bytes on the stack here
 		"pushl 8(%ebp)        \n"
 		"movl  16(%ebp), %ecx \n" // paramSize
 		"movl  12(%ebp), %eax \n" // args
@@ -699,7 +697,6 @@ endcopy:
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
 		"movl  16(%ebp), %eax \n" // paramSize
-		// TODO: 64 bit pointer, need to add 4 more here
 		"addl  $8, %eax       \n" // counting esp that we will push on the stack
 		"movl  %esp, %ecx     \n"
 		"subl  %eax, %ecx     \n"
@@ -719,7 +716,6 @@ endcopy:
 		"subl  $4, %ecx       \n"
 		"jne   copyloop6      \n"
 		"endcopy6:            \n"
-		// TODO: 64 bit pointer, need to push the entire 8 byte pointer
 		"pushl 8(%ebp)        \n" // push obj
 		"call  *20(%ebp)      \n"
 		"addl  16(%ebp), %esp \n" // pop arguments

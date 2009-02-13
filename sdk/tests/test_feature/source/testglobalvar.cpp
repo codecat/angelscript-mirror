@@ -257,6 +257,26 @@ bool TestGlobalVar()
 		engine->Release();
 	}
 
+	//-------------
+	// It is possible to access global variables through scope operator if local variables have the same name
+	{
+		COutStream out;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); 
+		const char *script = 
+			"float g = 0; \n";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		mod->Build();
+		r = engine->ExecuteString(0, "float g = 0; g = 1; ::g = 2; assert( g == 1 ); assert( ::g == 2 );");
+		if( r != asEXECUTION_FINISHED )
+		{
+			ret = true;
+		}
+		engine->Release();
+	}
+
 	return ret;
 }
 

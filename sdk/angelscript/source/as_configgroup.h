@@ -67,6 +67,10 @@ public:
 	int SetModuleAccess(const char *module, bool hasAccess);
 	bool HasModuleAccess(const char *module);
 
+#ifdef AS_DEBUG
+	void ValidateNoUsage(asCScriptEngine *engine, asCObjectType *type);
+#endif
+
 	asCString groupName;
 	int refCount;
 

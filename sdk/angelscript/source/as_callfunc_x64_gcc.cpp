@@ -611,11 +611,19 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 					*( asDWORD * )retPointer = ( asDWORD )retQW;
 				} else if ( sysFunc->hostReturnSize == 2 ) {
 					*( asQWORD * )retPointer = retQW;
+				} else if ( sysFunc->hostReturnSize == 3 ) {
+					*( asQWORD * )retPointer             = retQW;
+					*( ( ( asDWORD * )retPointer ) + 2 ) = ( asDWORD )retQW2;
 				} else {
 					*( asQWORD * )retPointer             = retQW;
 					*( ( ( asQWORD * )retPointer ) + 1 ) = retQW2;
 				}
 			} else {
+				// TODO: This else statement should be removed. If the system function
+				//       returns the value in memory, then the memory pointed to by 
+				//       retPointer is already initialized, and retQW and retQW2 won't
+				//       be set.
+				asASSERT(false);
 				if ( sysFunc->hostReturnSize == 4 ) {
 					*( asQWORD * )retPointer             = retQW;
 					*( ( ( asQWORD * )retPointer ) + 1 ) = retQW2;
