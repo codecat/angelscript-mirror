@@ -5342,7 +5342,11 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				{
 					if( v->type.IsReference() )
 					{
+						#if PTR_SIZE == 1
 						ctx->bc.InstrSHORT(BC_CpyVtoR4, (short)v->stackOffset);
+						#else
+						ctx->bc.InstrSHORT(BC_CpyVtoR8, (short)v->stackOffset);
+						#endif
 						ctx->type.Set(v->type);
 					}
 					else

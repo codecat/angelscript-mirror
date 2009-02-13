@@ -11,22 +11,22 @@
 class Class1
 {
 public:
-	unsigned long a;
+	unsigned int a;
 };
 
 class Class2
 {
 public:
-	unsigned long a;
-	unsigned long b;
+	unsigned int a;
+	unsigned int b;
 };
 
 class Class3
 {
 public:
-	unsigned long a;
-	unsigned long b;
-	unsigned long c;
+	unsigned int a;
+	unsigned int b;
+	unsigned int c;
 };
 
 class ClassNotComplex {};

@@ -40,6 +40,7 @@ SRCNAMES = \
   test_enum.cpp \
   test_exception.cpp \
   test_exceptionmemory.cpp \
+  test_file.cpp \
   test_float.cpp \
   test_for.cpp \
   test_funcoverload.cpp \
