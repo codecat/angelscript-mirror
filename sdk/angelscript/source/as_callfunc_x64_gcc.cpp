@@ -70,8 +70,9 @@ typedef asQWORD ( *funcptr_t )( void );
 
 #define ASM_GET_REG( name, dest )                        \
 	__asm__ __volatile__ (                           \
-		"mov  %" name ", %0"                     \
-		: "=r" ( dest )                          \
+		"mov  %" name ", %0\r\n"                 \
+		:                                        \
+		: "m" ( dest )                           \
 	)
 
 BEGIN_AS_NAMESPACE
@@ -164,21 +165,21 @@ int PrepareSystemFunction( asCScriptFunction *func, asSSystemFunctionInterface *
 	// References are always returned as primitive data
 	if ( func->returnType.IsReference() || func->returnType.IsObjectHandle() ) {
 		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 1;
+		internal->hostReturnSize = 2;
 		internal->hostReturnFloat = false;
 	} else if ( func->returnType.IsObject() ) {
 		// Registered types have special flags that determine how they are returned
 		asDWORD objType = func->returnType.GetObjectType()->flags;
 		if ( ( objType & asOBJ_VALUE ) && ( objType & asOBJ_APP_CLASS ) ) {
-			if( objType & COMPLEX_MASK ) {
+			if ( objType & COMPLEX_MASK ) {
 				internal->hostReturnInMemory = true;
-				internal->hostReturnSize = 1;
+				internal->hostReturnSize = 2;
 				internal->hostReturnFloat = false;
 			} else {
 				internal->hostReturnFloat = false;
-				if( func->returnType.GetSizeInMemoryDWords() > 2 ) {
+				if( func->returnType.GetSizeInMemoryDWords() > 4 ) {
 					internal->hostReturnInMemory = true;
-					internal->hostReturnSize = 1;
+					internal->hostReturnSize = 2;
 				} else {
 					internal->hostReturnInMemory = false;
 					internal->hostReturnSize = func->returnType.GetSizeInMemoryDWords();
@@ -193,14 +194,18 @@ int PrepareSystemFunction( asCScriptFunction *func, asSSystemFunctionInterface *
 			internal->hostReturnSize = func->returnType.GetSizeInMemoryDWords();
 			internal->hostReturnFloat = true;
 		}
-	} else if ( func->returnType.GetSizeInMemoryDWords() > 2 ) {
+	} else if ( func->returnType.GetSizeInMemoryDWords() > 4 ) {
 		// Shouldn't be possible to get here
 		asASSERT(false);
+	} else if ( func->returnType.GetSizeInMemoryDWords() == 4 ) {
+		internal->hostReturnInMemory = false;
+		internal->hostReturnSize = 4;
+		internal->hostReturnFloat = false;
 	} else if ( func->returnType.GetSizeInMemoryDWords() == 2 ) {
 		internal->hostReturnInMemory = false;
 		internal->hostReturnSize = 2;
 		internal->hostReturnFloat = func->returnType.IsEqualExceptConst( asCDataType::CreatePrimitive( ttDouble, true ) );
-	} else if( func->returnType.GetSizeInMemoryDWords() == 1 ) {
+	} else if ( func->returnType.GetSizeInMemoryDWords() == 1 ) {
 		internal->hostReturnInMemory = false;
 		internal->hostReturnSize = 1;
 		internal->hostReturnFloat = func->returnType.IsEqualExceptConst( asCDataType::CreatePrimitive( ttFloat, true ) );
@@ -337,10 +342,52 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	}
 	memset( tempType, 0, sizeof( tempType ) );
 
+#ifndef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal ) {
+		/* I currently know of no way we can predict register usage for passing complex
+		   objects by value when the compiler does not pass them by reference instead. I
+		   will quote the example from the AMD64 ABI to demonstrate this:
+
+		   (http://www.x86-64.org/documentation/abi.pdf - page 22)
+
+		------------------------------ BEGIN EXAMPLE -------------------------------
+
+		Let us consider the following C code:
+
+		typedef struct {
+			int a, b;
+			double d;
+		} structparm;
+
+		structparm s;
+		int e, f, g, h, i, j, k;
+		long double ld;
+		double m, n;
+
+		extern void func (int e, int f,
+			structparm s, int g, int h,
+			long double ld, double m,
+			double n, int i, int j, int k);
+
+		func (e, f, s, g, h, ld, m, n, i, j, k);
+
+		Register allocation for the call:
+		--------------------------+--------------------------+-------------------
+		General Purpose Registers | Floating Point Registers | Stack Frame Offset
+		--------------------------+--------------------------+-------------------
+		 %rdi: e                  | %xmm0: s.d               | 0:  ld
+		 %rsi: f                  | %xmm1: m                 | 16: j
+		 %rdx: s.a,s.b            | %xmm2: n                 | 24: k
+		 %rcx: g                  |                          |
+		 %r8:  h                  |                          |
+		 %r9:  i                  |                          |
+		--------------------------+--------------------------+-------------------
+		*/
+
 		context->SetInternalException( TXT_INVALID_CALLING_CONVENTION );
 		return 0;
 	}
+#endif
 
 	obj = objectPointer;
 	if ( !obj && callConv >= ICC_THISCALL ) {
@@ -370,51 +417,63 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	switch ( callConv ) {
 		case ICC_CDECL_RETURNINMEM:
 		case ICC_STDCALL_RETURNINMEM: {
-			memmove( paramBuffer + CALLSTACK_MULTIPLIER, paramBuffer, CALLSTACK_MULTIPLIER * totalArgumentCount * sizeof( asDWORD ) );
+			if ( totalArgumentCount ) {
+				memmove( argsType + 1, argsType, totalArgumentCount );
+			}
 			memcpy( paramBuffer, &retPointer, sizeof( retPointer ) );
-			memmove( argsType + 1, argsType, totalArgumentCount );
 			argsType[0] = x64INTARG;
 			base_n = 1;
+
 			param_pre = 1;
+
 			break;
 		}
 		case ICC_THISCALL:
-		case ICC_THISCALL_RETURNINMEM:
 		case ICC_VIRTUAL_THISCALL:
-		case ICC_VIRTUAL_THISCALL_RETURNINMEM:
-		case ICC_CDECL_OBJFIRST:
-		case ICC_CDECL_OBJFIRST_RETURNINMEM: {
-			bool           is_complex = ( descr->returnType.GetObjectType() && descr->returnType.GetObjectType()->size > 16 );
-			unsigned short add_count  = ( retPointer && is_complex ? 2 : 1 );
-			memmove( paramBuffer + add_count * CALLSTACK_MULTIPLIER, paramBuffer, CALLSTACK_MULTIPLIER * totalArgumentCount * sizeof( asDWORD ) );
-			memmove( argsType + add_count, argsType, totalArgumentCount );
-			if ( retPointer && is_complex ) {
-				memcpy( paramBuffer, &retPointer, sizeof( retPointer ) );
-				memcpy( paramBuffer + CALLSTACK_MULTIPLIER, &obj, sizeof( &obj ) );
-				argsType[0] = x64INTARG;
-				argsType[1] = x64INTARG;
-			} else {
-				memcpy( paramBuffer, &obj, sizeof( obj ) );
-				argsType[0] = x64INTARG;
+		case ICC_CDECL_OBJFIRST: {
+			if ( totalArgumentCount ) {
+				memmove( argsType + 1, argsType, totalArgumentCount );
 			}
-			param_pre = add_count;
+			memcpy( paramBuffer, &obj, sizeof( obj ) );
+			argsType[0] = x64INTARG;
+
+			param_pre = 1;
+
 			break;
 		}
-		case ICC_CDECL_OBJLAST:
-		case ICC_CDECL_OBJLAST_RETURNINMEM: {
-			if ( retPointer ) {
-				memcpy( argsType + 1, argsType, totalArgumentCount );
-				memcpy( paramBuffer, &retPointer, sizeof( retPointer ) );
-				argsType[0] = x64INTARG;
-				memcpy( paramBuffer + ( totalArgumentCount + 1 ) * CALLSTACK_MULTIPLIER, &obj, sizeof( obj ) );
-				argsType[totalArgumentCount + 1] = x64INTARG;
-
-				param_pre = 1;
-			} else {
-				memcpy( paramBuffer + totalArgumentCount * CALLSTACK_MULTIPLIER, &obj, sizeof( obj ) );
-				argsType[totalArgumentCount] = x64INTARG;
+		case ICC_THISCALL_RETURNINMEM:
+		case ICC_VIRTUAL_THISCALL_RETURNINMEM:
+		case ICC_CDECL_OBJFIRST_RETURNINMEM: {
+			if ( totalArgumentCount ) {
+				memmove( argsType + 2, argsType, totalArgumentCount );
 			}
+			memcpy( paramBuffer, &retPointer, sizeof( retPointer ) );
+			memcpy( paramBuffer + CALLSTACK_MULTIPLIER, &obj, sizeof( &obj ) );
+			argsType[0] = x64INTARG;
+			argsType[1] = x64INTARG;
 
+			param_pre = 2;
+
+			break;
+		}
+		case ICC_CDECL_OBJLAST: {
+			memcpy( paramBuffer + totalArgumentCount * CALLSTACK_MULTIPLIER, &obj, sizeof( obj ) );
+			argsType[totalArgumentCount] = x64INTARG;
+
+			param_post = 1;
+
+			break;
+		}
+		case ICC_CDECL_OBJLAST_RETURNINMEM: {
+			if ( totalArgumentCount ) {
+				memmove( argsType + 1, argsType, totalArgumentCount );
+			}
+			memcpy( paramBuffer, &retPointer, sizeof( retPointer ) );
+			argsType[0] = x64INTARG;
+			memcpy( paramBuffer + ( totalArgumentCount + 1 ) * CALLSTACK_MULTIPLIER, &obj, sizeof( obj ) );
+			argsType[totalArgumentCount + 1] = x64INTARG;
+
+			param_pre = 1;
 			param_post = 1;
 
 			break;
@@ -515,6 +574,29 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	ASM_GET_REG( "%rdx", retQW2 );
 	context->isCallingSystemFunction = false;
 
+#ifdef COMPLEX_OBJS_PASSED_BY_REF
+	if( sysFunc->takesObjByVal ) {
+		// Need to free the complex objects passed by value
+		stack_pointer = context->stackPointer;
+		if ( !objectPointer && callConv >= ICC_THISCALL ) {
+			stack_pointer += PTR_SIZE;
+		}
+		for( n = 0; n < ( int )descr->parameterTypes.GetLength(); n++ ) {
+			if ( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsReference() && ( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK ) ) {
+				obj = ( void * )( *( asQWORD * )stack_pointer );
+				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
+				if( beh->destruct ) {
+					engine->CallObjectMethod(obj, beh->destruct);
+				}
+
+				engine->CallFree(obj);
+			}
+
+			stack_pointer += descr->parameterTypes[n].GetSizeInMemoryDWords();
+		}
+	}
+#endif
+
 	// Store the returned value in our stack
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() ) {
 		if( descr->returnType.IsObjectHandle() ) {
@@ -524,17 +606,17 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 				engine->CallObjectMethod( context->objectRegister, descr->returnType.GetObjectType()->beh.addref );
 			}
 		} else {
-			if( !sysFunc->hostReturnInMemory ) {
-				// Copy the returned value to the pointer sent by the script engine
-				if( sysFunc->hostReturnSize == 1 ) {
+			if ( !sysFunc->hostReturnInMemory ) {
+				if ( sysFunc->hostReturnSize == 1 ) {
 					*( asDWORD * )retPointer = ( asDWORD )retQW;
-				} else {
+				} else if ( sysFunc->hostReturnSize == 2 ) {
 					*( asQWORD * )retPointer = retQW;
+				} else {
+					*( asQWORD * )retPointer             = retQW;
+					*( ( ( asQWORD * )retPointer ) + 1 ) = retQW2;
 				}
 			} else {
-				if ( descr->returnType.GetObjectType()->size == 16 && ( descr->returnType.GetObjectType()->flags & asOBJ_APP_CLASS_D ) != asOBJ_APP_CLASS_D ) {
-					/* special case where the first eightbyte is returned in %rax and the second
-					   eightbyte in %rdx */
+				if ( sysFunc->hostReturnSize == 4 ) {
 					*( asQWORD * )retPointer             = retQW;
 					*( ( ( asQWORD * )retPointer ) + 1 ) = retQW2;
 				}

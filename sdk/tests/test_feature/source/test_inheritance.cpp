@@ -285,12 +285,6 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 		fail = true;
 	}
 
-	// TODO: Can a derived class introduce new reference cycles involving the base class? I.e. are there any 
-	//       situations where the base class wouldn't be garbage collected, unless the derived class is implemented?
-
-	// TODO: Test that calling the constructor from within the constructor 
-	//       using the class name will create a new object
-
 	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. 
 	//       We can follow D's design of using this(args) to call the constructor
 
@@ -313,6 +307,7 @@ bool Test2()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	RegisterScriptString(engine);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
 	// Test that it is not possible to inherit from application registered type
@@ -505,13 +500,50 @@ bool Test2()
 	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
-	// TODO: The error message should include scope resolution
 	if( bout.buffer != "script (1, 27) : Info    : Compiling void B::B()\n"
-					   "script (1, 33) : Error   : No matching signatures to 'super()'\n" )
+					   "script (1, 33) : Error   : No matching signatures to '::super()'\n" )
 	{
 		fail = true;
 		printf(bout.buffer.c_str());
 	}
+
+	// Test that the error message for calling missing method with scope is correct
+	script = "class A { void method() { B::test(); A::method(2); A::method(); method(3.15); B::A::a(); } }";
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (1, 11) : Info    : Compiling void A::method()\n"
+					   "script (1, 27) : Error   : No matching signatures to 'B::test()'\n"
+					   "script (1, 38) : Error   : No matching signatures to 'A::method(const uint)'\n"
+					   "script (1, 65) : Error   : No matching signatures to 'A::method(const double)'\n"
+					   "script (1, 83) : Error   : Invalid scope resolution\n"
+					   "script (1, 79) : Error   : No matching signatures to 'B::a()'\n" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+
+	// Test that calling the constructor from within the constructor 
+	// using the class name will create a new object. 
+	script = "A @a1, a2; class A { A() { @a1 = this; A(1); } A(int) { @a2 = this; } }";
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		fail = true;
+		printf(bout.buffer.c_str());
+	}
+	r = engine->ExecuteString(0, "A a; assert( a1 !is a2 ); assert( a1 !is null ); assert( a2 !is null );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
 
 	engine->Release();
 

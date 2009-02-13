@@ -21,7 +21,7 @@ void RegisterBStr(asIScriptEngine *engine)
 	int r;
 
 	// Register the bstr type
-	r = engine->RegisterObjectType("bstr", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
+	r = engine->RegisterObjectType("bstr", sizeof(asBSTR), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 
 	// Register the bstr factory
 	r = engine->RegisterStringFactory("bstr", asFUNCTION(asBStrFactory), asCALL_CDECL); assert( r >= 0 );

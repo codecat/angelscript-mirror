@@ -383,11 +383,24 @@ bool TestRefScoped()
 	// Don't permit handles to be taken
 	r = engine->ExecuteString(0, "scoped @s = null");
 	if( r >= 0 ) fail = true;
-	if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
-		               "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int@const' to 'scoped&'.\n" )
+	// TODO: The second message is a consequence of the first error, and should ideally not be shown
+	if( sizeof(void*) == 4 )
 	{
-		printf(bout.buffer.c_str());
-		fail = true;
+		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
+						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int@const' to 'scoped&'.\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+	}
+	else
+	{
+		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
+						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int64@const' to 'scoped&'.\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
 	}
 
 	// Test a legal actions

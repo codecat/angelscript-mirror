@@ -1281,7 +1281,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 	return anyErrors ? -1 : 0;
 }
 
-void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct)
+void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
 {
 	asUINT n;
 	if( funcs.GetLength() > 0 )
@@ -1342,7 +1342,15 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 	if( funcs.GetLength() != 1 && !silent )
 	{
 		// Build a readable string of the function with parameter types
-		asCString str = name;
+		asCString str;
+		if( scope != "" )
+		{
+			if( scope == "::" )
+				str = scope;
+			else
+				str = scope + "::";
+		}
+		str += name;
 		str += "(";
 		if( args.GetLength() )
 			str += args[0]->type.dataType.Format();
@@ -1353,7 +1361,7 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 		if( isConstMethod )
 			str += " const";
 
-		if( objectType )
+		if( objectType && scope == "" )
 			str = objectType->name + "::" + str;
 
 		if( funcs.GetLength() == 0 )
@@ -6166,7 +6174,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 			args.SetLength(0);
 		}
 
-		MatchFunctions(funcs, args, node, name.AddressOf(), objectType, objIsConst);
+		MatchFunctions(funcs, args, node, name.AddressOf(), objectType, objIsConst, false, true, scope);
 
 		if( funcs.GetLength() != 1 )
 		{
