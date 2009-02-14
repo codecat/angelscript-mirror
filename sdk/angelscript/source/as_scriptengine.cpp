@@ -2182,7 +2182,13 @@ void asCScriptEngine::PrepareEngine()
 	{
 		// Determine the host application interface
 		if( scriptFunctions[n] && scriptFunctions[n]->funcType == asFUNC_SYSTEM )
-			PrepareSystemFunction(scriptFunctions[n], scriptFunctions[n]->sysFuncIntf, this);
+		{
+			if( scriptFunctions[n]->sysFuncIntf->callConv == ICC_GENERIC_FUNC ||
+				scriptFunctions[n]->sysFuncIntf->callConv == ICC_GENERIC_METHOD )
+				PrepareSystemFunctionGeneric(scriptFunctions[n], scriptFunctions[n]->sysFuncIntf, this);
+			else
+				PrepareSystemFunction(scriptFunctions[n], scriptFunctions[n]->sysFuncIntf, this);
+		}
 	}
 
 	// Validate object type registrations

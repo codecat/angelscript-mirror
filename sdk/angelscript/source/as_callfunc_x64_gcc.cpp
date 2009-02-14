@@ -311,6 +311,7 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	argumentCount = ( int )descr->parameterTypes.GetLength();
 	assert( argumentCount <= X64_MAX_ARGS );
 
+	// TODO: optimize: argsType should be computed in PrepareSystemFunction
 	for( a = 0; a < argumentCount; ++a, ++argIndex ) {
 		// get the base type
 		argsType[argIndex] = x64INTARG;
@@ -355,6 +356,7 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	}
 	memset( tempType, 0, sizeof( tempType ) );
 
+	// TODO: This should be checked in PrepareSystemFunction
 #ifndef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal ) {
 		/* I currently know of no way we can predict register usage for passing complex
@@ -398,6 +400,9 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		*/
 
 		context->SetInternalException( TXT_INVALID_CALLING_CONVENTION );
+		if( retPointer ) {
+			engine->CallFree( retPointer );
+		}
 		return 0;
 	}
 #endif

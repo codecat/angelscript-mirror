@@ -39,6 +39,7 @@
 
 #include "as_config.h"
 #include "as_callfunc.h"
+#include "as_scriptengine.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -104,121 +105,33 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 	return 0;
 }
 
+// This function should prepare system functions so that it will be faster to call them
+int PrepareSystemFunctionGeneric(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine * /*engine*/)
+{
+	asASSERT(internal->callConv == ICC_GENERIC_METHOD || internal->callConv == ICC_GENERIC_FUNC);
+
+	// Calculate the size needed for the parameters
+	internal->paramSize = func->GetSpaceNeededForArguments();
+
+	return 0;
+}
+
 END_AS_NAMESPACE
 
 
 #ifdef AS_MAX_PORTABILITY
 
-#include "as_scriptengine.h"
 #include "as_texts.h"
 
 BEGIN_AS_NAMESPACE
 
 
 // This function should prepare system functions so that it will be faster to call them
-int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine * /*engine*/)
+int PrepareSystemFunction(asCScriptFunction * /*func*/, asSSystemFunctionInterface * /*internal*/, asCScriptEngine * /*engine*/)
 {
-	// References are always returned as primitive data
-	if( func->returnType.IsReference() || func->returnType.IsObjectHandle() )
-	{
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 1;
-		internal->hostReturnFloat = false;
-	}
-	// Registered types have special flags that determine how they are returned
-	else if( func->returnType.IsObject() )
-	{
-		asDWORD objType = func->returnType.GetObjectType()->flags;
-		if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_CLASS) )
-		{
-			if( objType & COMPLEX_MASK )
-			{
-				internal->hostReturnInMemory = true;
-				internal->hostReturnSize = 1;
-				internal->hostReturnFloat = false;
-			}
-			else
-			{
-				internal->hostReturnFloat = false;
-				if( func->returnType.GetSizeInMemoryDWords() > 2 )
-				{
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize = 1;
-				}
-				else
-				{
-					internal->hostReturnInMemory = false;
-					internal->hostReturnSize = func->returnType.GetSizeInMemoryDWords();
-				}
-			}
-		}
-		else if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_PRIMITIVE) )
-		{
-			internal->hostReturnInMemory = false;
-			internal->hostReturnSize = func->returnType.GetSizeInMemoryDWords();
-			internal->hostReturnFloat = false;
-		}
-		else if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_FLOAT) )
-		{
-			internal->hostReturnInMemory = false;
-			internal->hostReturnSize = func->returnType.GetSizeInMemoryDWords();
-			internal->hostReturnFloat = true;
-		}
-	}
-	// Primitive types can easily be determined
-	else if( func->returnType.GetSizeInMemoryDWords() > 2 )
-	{
-		// Shouldn't be possible to get here
-		asASSERT(false);
-
-		internal->hostReturnInMemory = true;
-		internal->hostReturnSize = 1;
-		internal->hostReturnFloat = false;
-	}
-	else if( func->returnType.GetSizeInMemoryDWords() == 2 )
-	{
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 2;
-		internal->hostReturnFloat = func->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttDouble, true));
-	}
-	else if( func->returnType.GetSizeInMemoryDWords() == 1 )
-	{
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 1;
-		internal->hostReturnFloat = func->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttFloat, true));
-	}
-	else
-	{
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 0;
-		internal->hostReturnFloat = false;
-	}
-
-	// Calculate the size needed for the parameters
-	internal->paramSize = func->GetSpaceNeededForArguments();
-
-	// Verify if the function takes any objects by value
-	asUINT n;
-	internal->takesObjByVal = false;
-	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
-	{
-		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsObjectHandle() && !func->parameterTypes[n].IsReference() )
-		{
-			internal->takesObjByVal = true;
-			break;
-		}
-	}
-
-	// Verify if the function has any registered autohandles
-	internal->hasAutoHandles = false;
-	for( n = 0; n < internal->paramAutoHandles.GetLength(); n++ )
-	{
-		if( internal->paramAutoHandles[n] )
-		{
-			internal->hasAutoHandles = true;
-			break;
-		}
-	}
+	// This should never happen, as when AS_MAX_PORTABILITY is on, all functions 
+	// are asCALL_GENERIC, which are prepared by PrepareSystemFunctionGeneric
+	asASSERT(false);
 
 	return 0;
 }
