@@ -160,7 +160,7 @@ static asQWORD X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, 
 }
 
 // This function should prepare system functions so that it will be faster to call them
-int PrepareSystemFunction( asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine * /*engine*/ )
+int PrepareSystemFunction( asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine )
 {
 	// References are always returned as primitive data
 	if ( func->returnType.IsReference() || func->returnType.IsObjectHandle() ) {
@@ -224,6 +224,19 @@ int PrepareSystemFunction( asCScriptFunction *func, asSSystemFunctionInterface *
 	for( n = 0; n < func->parameterTypes.GetLength(); n++ ) {
 		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsObjectHandle() && !func->parameterTypes[n].IsReference() ) {
 			internal->takesObjByVal = true;
+
+			// It's not safe to pass objects by value because different registers 
+			// will be used depending on the memory layout of the object
+#ifdef COMPLEX_OBJS_PASSED_BY_REF
+			if( !(func->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )	
+#endif
+			{
+				asCString str;
+				// TODO: Move to as_texts.h
+				str.Format("Don't support passing type '%s' by value to application", func->parameterTypes[n].GetObjectType()->name.AddressOf());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+				engine->ConfigError(asINVALID_CONFIGURATION);
+			}
 			break;
 		}
 	}
@@ -615,16 +628,6 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 					*( asQWORD * )retPointer             = retQW;
 					*( ( ( asDWORD * )retPointer ) + 2 ) = ( asDWORD )retQW2;
 				} else {
-					*( asQWORD * )retPointer             = retQW;
-					*( ( ( asQWORD * )retPointer ) + 1 ) = retQW2;
-				}
-			} else {
-				// TODO: This else statement should be removed. If the system function
-				//       returns the value in memory, then the memory pointed to by 
-				//       retPointer is already initialized, and retQW and retQW2 won't
-				//       be set.
-				asASSERT(false);
-				if ( sysFunc->hostReturnSize == 4 ) {
 					*( asQWORD * )retPointer             = retQW;
 					*( ( ( asQWORD * )retPointer ) + 1 ) = retQW2;
 				}

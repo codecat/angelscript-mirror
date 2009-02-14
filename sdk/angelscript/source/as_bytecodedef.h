@@ -750,7 +750,7 @@ const int bcStackInc[256] =
 	0,			// BC_BSLL
 	0,			// BC_BSRL
 	0,			// BC_BSRA
-	-1,			// BC_COPY
+	-PTR_SIZE,		// BC_COPY
 	2,			// BC_SET8
 	2-PTR_SIZE,	// BC_RDS8
 	0,			// BC_SWAP8
@@ -901,7 +901,7 @@ const int bcStackInc[256] =
 
 struct sByteCodeName
 {
-	char *name;
+	const char *name;
 };
 
 #ifdef AS_DEBUG

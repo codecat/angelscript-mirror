@@ -400,9 +400,18 @@ bool Test2()
 	if( strstr(asGetLibraryOptions(), " AS_MAX_PORTABILITY ") )
 		return false;
 
+#if defined(__GNUC__) && defined(__amd64__)
+	// TODO: Add this support
+	// Passing non-complex objects by value is not yet supported, because 
+	// it means moving each property of the object into different registers
+	return false;
+#endif
+
 	bool fail = false;
 	int r;
+	COutStream out;
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 	engine->RegisterObjectType( "Test", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_FLOAT );
 	engine->RegisterGlobalBehaviour( asBEHAVE_ADD, "Test f(Test &in, Test &in)", asFUNCTION(add), asCALL_CDECL);

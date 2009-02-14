@@ -13,7 +13,7 @@ INCDIR = ../../include
 OBJDIR = obj
 
 CXX = gcc
-CXXFLAGS = -g -Wall -fPIC
+CXXFLAGS = -g -Wall -fPIC -DAS_DEBUG
 DELETER = rm -f
 COPIER = cp
 

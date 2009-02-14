@@ -1676,14 +1676,22 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			{
 				asCObjectType *ot = *(asCObjectType**)ARG_QW(instr->arg);
 #ifdef __GNUC__
+#ifdef AS_64BIT_PTR
+				fprintf(file, "   %-8s 0x%lx, %d             (type:%s)\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
+#else
 				fprintf(file, "   %-8s 0x%llx, %d             (type:%s)\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
+#endif
 #else
 				fprintf(file, "   %-8s 0x%I64x, %d             (type:%s)\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
 #endif
 			}
 			else
 #ifdef __GNUC__
+#ifdef AS_64BIT_PTR
+				fprintf(file, "   %-8s %lu, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+#else
 				fprintf(file, "   %-8s %llu, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+#endif
 #else
 				fprintf(file, "   %-8s %I64u, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 #endif
