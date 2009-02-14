@@ -173,6 +173,7 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	exceptionCallback = false;
 
 	doProcessSuspend = false;
+	doSuspend = false;
 
 	userData = 0;
 }
@@ -3524,9 +3525,12 @@ int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)
 			return asINVALID_ARG;
 		}
 	}
+
 	int r = DetectCallingConvention(isObj, callback, callConv, &lineCallbackFunc);
 	if( r < 0 ) lineCallback = false;
+
 	doProcessSuspend = doSuspend || lineCallback;
+
 	return r;
 }
 

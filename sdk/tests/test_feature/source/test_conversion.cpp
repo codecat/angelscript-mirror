@@ -611,7 +611,7 @@ bool Test()
 
 	d = 0; i8 = -22; engine->ExecuteString(0, "d = d + i8"); if( d != -22 ) fail = true;
 
-	engine->ExecuteString(0, "int[] a(1); a[0] == 1");
+	engine->ExecuteString(0, "int[] a(1); a[0] = 0; a[0] == 1");
 	engine->ExecuteString(0, "ui + i");
 	engine->ExecuteString(0, "int a = 0, ui = 0; (a+ui)&1;");
 
