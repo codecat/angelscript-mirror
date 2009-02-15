@@ -659,19 +659,19 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	if( sysFunc->hasAutoHandles ) {
 		args = context->stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer ) {
-			args++;
+			args += PTR_SIZE;
 		}
 
 		int spos = 0;
 		for( n = 0; n < ( int )descr->parameterTypes.GetLength(); n++ ) {
-			if( sysFunc->paramAutoHandles[n] && args[spos] ) {
+			if( sysFunc->paramAutoHandles[n] && (*(size_t*)&args[spos] != 0) ) {
 				// Call the release method on the type
 				engine->CallObjectMethod( ( void * )*( size_t * )&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release );
 				args[spos] = 0;
 			}
 
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() ) {
-				spos++;
+				spos += PTR_SIZE;
 			} else {
 				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
 			}
