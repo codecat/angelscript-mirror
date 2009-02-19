@@ -15,7 +15,7 @@ asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 // It's recommended to do this right after the creation of the engine, because if
 // some registration fails the engine may send valuable information to the message
 // stream.
-r = engine->SetMessageCallback(asFUNCTION(msgCallback), 0, asCALL_CDECL); assert( r >= 0 );
+r = engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL); assert( r >= 0 );
 
 // AngelScript doesn't have a built-in string type, as there is no definite standard 
 // string type for C++ applications. Every developer is free to register it's own string type.
@@ -42,22 +42,15 @@ standard output stream. Let's say it's stored in the file <tt>test.as</tt>.
 Here's the code for loading the script file and compiling it.
 
 \code
-// Load the entire script file into the buffer
-string script;
-LoadScriptFile("test.as", &script);
-
-// Add the script to the module as a section. If desired, multiple script
-// sections can be added to the same module. They will then be compiled
-// together as if it was one large script. 
-asIScriptModule *mod = engine->GetModule("MyModule", asGM_ALWAYS_CREATE);
-mod->AddScriptSection("test.as", script.c_str(), script.length());
-
-// Build the module
-r = mod->Build();
+// The CScriptBuilder helper is an add-on that loads the file,
+// performs a pre-processing pass if necessary, and then tells
+// the engine to build a script module.
+CScriptBuilder builder;
+r = builder.BuildScriptFromFile(engine, "MyModule", "test.as");
 if( r < 0 )
 {
-  // An error occurred. Instruct the script writer to fix the compilation errors
-  // that were listed in the output stream.
+  // An error occurred. Instruct the script writer to fix the 
+  // compilation errors that were listed in the output stream.
   printf("Please correct the errors in the script and try again.\n");
   return;
 }
@@ -68,11 +61,12 @@ for executing it.
 
 \code
 // Find the function that is to be called. 
+asIScriptModule *mod = engine->GetModule("MyModule");
 int funcId = mod->GetFunctionIdByDecl("void main()");
 if( funcId < 0 )
 {
-  // The function couldn't be found. Instruct the script writer to include the
-  // expected function in the script.
+  // The function couldn't be found. Instruct the script writer
+  // to include the expected function in the script.
   printf("The script must have the function 'void main()'. Please add it and try again.\n");
   return;
 }
@@ -105,21 +99,7 @@ engine->Release();
 
 \section doc_hello_world_1 Helper functions
 
-The following are the implementation of the helper functions used in the example above.
-
-\code
-// Forward the compiler message to the standard output stream
-void msgCallback(const asSMessageInfo *msg, void *param)
-{
-  const char *type = "Error";
-  if( msg->type == asMSGTYPE_INFORMATION )
-    type = "Info";
-  else if( msg->type == asMSGTYPE_WARNING )
-    type = "Warning";
-
-  printf("%s (%d, %d): %s = %s\n", msg->section, msg->row, msg->col, type, msg->message);
-}
-\endcode
+The print function is implemented as a very simple wrapper on the printf function.
 
 \code
 // Print the script string to the standard output stream
@@ -129,23 +109,7 @@ void print(string &msg)
 }
 \endcode
 
-\code
-// Load the entire script file into a string buffer
-void LoadScriptFile(const char *fileName, string &script)
-{
-  FILE *f = fopen("test.as", "rb");
-  
-  // Determine the size of the file
-  fseek(f, 0, SEEK_END);
-  int len = ftell(f);
-  fseek(f, 0, SEEK_SET);
-  
-  // Load the entire file in one call
-  script.resize(len);
-  fread(&script[0], len, 1, f);
-  
-  fclose(f);
-} 
-\endcode
+\see \ref doc_compile_script_msg, \ref doc_addon_build, and \ref doc_addon_string
+
 
 */

@@ -33,6 +33,9 @@ public:
 							  const char      *script, 
 							  const char      *sectionname = "");
 
+	// Add a pre-processor define for conditional compilation
+	void DefineWord(const char *word);
+
 	// Get metadata declared for class types and interfaces
 	const char *GetMetadataStringForType(int typeId);
 
@@ -51,6 +54,7 @@ protected:
 	int  SkipStatementBlock(int pos);
 	int  ExtractMetadataString(int pos, std::string &outMetadata);
 	int  ExtractDeclaration(int pos, std::string &outDeclaration, int &outType);
+	int  ExcludeCode(int start);
 
 	asIScriptEngine           *engine;
 	asIScriptModule           *module;
@@ -62,6 +66,8 @@ protected:
 	std::map<int, std::string> varMetadataMap;
 
 	std::set<std::string>      includedScripts;
+
+	std::set<std::string>      definedWords;
 };
 
 // Temporary structure for storing metadata and declaration

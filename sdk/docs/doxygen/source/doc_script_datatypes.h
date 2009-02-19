@@ -134,6 +134,8 @@ Not all types allow a handle to be taken. Neither of the primitive types can hav
 
 Object handle and array type modifiers can be combined to form handles to arrays, or arrays of handles, etc.
 
+\see \ref doc_script_handle
+
 \section strings Strings
 
 Strings are a special type of data that can be used only if the application

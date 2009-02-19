@@ -41,6 +41,15 @@ int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *m
 	return Build();
 }
 
+void CScriptBuilder::DefineWord(const char *word)
+{
+	string sword = word;
+	if( definedWords.find(sword) == definedWords.end() )
+	{
+		definedWords.insert(sword);
+	}
+}
+
 void CScriptBuilder::ClearAll()
 {
 	foundDeclarations.clear();
@@ -116,7 +125,72 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 	metadata.reserve(500);
 	declaration.reserve(100);
 
+	// First perform the checks for #if directives to exclude code that shouldn't be compiled
 	int pos = 0;
+	int nested = 0;
+	while( pos < (int)modifiedScript.size() )
+	{
+		int len;
+		asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+		if( t == asTC_UNKNOWN && modifiedScript[pos] == '#' )
+		{
+			int start = pos++;
+
+			// Is this an #if directive?
+			asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+
+			string token;
+			token.assign(&modifiedScript[pos], len);
+
+			pos += len;
+
+			if( token == "if" )
+			{
+				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+				if( t == asTC_WHITESPACE )
+				{
+					pos += len;
+					t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+				}
+
+				if( t == asTC_IDENTIFIER )
+				{
+					string word;
+					word.assign(&modifiedScript[pos], len);
+
+					// Overwrite the #if directive with space characters to avoid compiler error
+					pos += len;
+					memset(&modifiedScript[start], ' ', pos-start);
+
+					// Has this identifier been defined by the application or not?
+					if( definedWords.find(word) == definedWords.end() )
+					{
+						// Exclude all the code until and including the #endif
+						pos = ExcludeCode(pos);
+					}
+					else
+					{
+						nested++;
+					}
+				}
+			}
+			else if( token == "endif" )
+			{
+				// Only remove the #endif if there was a matching #if
+				if( nested > 0 )
+				{
+					memset(&modifiedScript[start], ' ', pos-start);
+					nested--;
+				}
+			}			
+		}
+		else
+			pos += len;
+	}
+
+
+	// Then check for meta data and #include directives
+	pos = 0;
 	while( pos < (int)modifiedScript.size() )
 	{
 		int len;
@@ -140,7 +214,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 					foundDeclarations.push_back(decl);
 				}
 			}
-			// Is this an include directive?
+			// Is this a preprocessor directive?
 			else if( modifiedScript[pos] == '#' )
 			{
 				int start = pos++;
@@ -382,6 +456,52 @@ int CScriptBuilder::SkipStatementBlock(int pos)
 		}
 
 		pos += len;
+	}
+
+	return pos;
+}
+
+int CScriptBuilder::ExcludeCode(int pos)
+{
+	int len;
+	int nested = 0;
+	while( pos < (int)modifiedScript.size() )
+	{
+		int n = (int)modifiedScript.find_first_of("\n#", pos);
+		if( n != string::npos )
+		{
+			memset(&modifiedScript[pos], ' ', n - pos);
+			pos = n;
+
+			if( modifiedScript[pos] == '#' )
+			{
+				modifiedScript[pos++] = ' ';
+				if( modifiedScript[pos] != '\n' )
+				{
+					// Is it an #if or #endif directive?
+					asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+					string token;
+					token.assign(&modifiedScript[pos], len);
+					memset(&modifiedScript[pos], ' ', len);
+					pos += len;
+
+					if( token == "if" )
+					{
+						nested++;
+					}
+					else if( token == "endif" )
+					{
+						if( nested-- == 0 )
+						{
+							// End the loop
+							break;
+						}
+					}
+				}
+			}
+			else
+				pos++;
+		}
 	}
 
 	return pos;

@@ -33,27 +33,9 @@ The return code from the register functions, \ref asIScriptEngine::Build "Build"
 not what it was. To help identify the exact problem the message callback should be used. The script 
 library will then send messages explaining the error or warning in clear text.
 
-
-For your convenience the library has been designed so that when there are no 
-errors or warnings, nothing will be output to the stream.
+See \ref doc_compile_script_msg for more information on the message callback.
 
 
-\code
-// Implement a simple message callback function
-void MessageCallback(const asSMessageInfo *msg, void *param)
-{
-  const char *type = "ERR ";
-  if( msg->type == asMSGTYPE_WARNING ) 
-    type = "WARN";
-  else if( msg->type == asMSGTYPE_INFORMATION ) 
-    type = "INFO";
-  printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
-}
-
-// Set the message callback when creating the engine
-asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
-\endcode
 
 
 

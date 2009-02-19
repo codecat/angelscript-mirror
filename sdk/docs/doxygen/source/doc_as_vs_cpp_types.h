@@ -33,10 +33,10 @@ Primitives in AngelScript have direct matches in C++.
 \section doc_as_vs_cpp_types_2 Arrays
 
 The AngelScript arrays are not directly matched by C++ arrays. The arrays
-are stored in an special object. Thus you can normally not directly exchange
-a script with a C++ function expecting a C++ array, or vice versa. Nor can
-the application register C++ arrays as properties and expect AngelScript to
-be able to understand them.
+are stored in an special object, accessed through the \ref asIScriptArray interface. 
+Thus you can normally not directly exchange a script with a C++ function expecting 
+a C++ array, or vice versa. Nor can the application register C++ arrays as properties 
+and expect AngelScript to be able to understand them.
 
 It is however possible to override AngelScript's built-in array objects
 with application specified objects, on a per array type basis.
@@ -60,7 +60,7 @@ handles. This is done by adding a + sign to the \@ type modifier. When doing
 this an object handle can be safely passed to a C++ function that expects a
 normal pointer, but don't release it afterwards.
 
-\see \ref doc_obj_handle for more details
+\see \ref doc_obj_handle
 
 \section doc_as_vs_cpp_types_4 Parameter references
 

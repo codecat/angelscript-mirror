@@ -146,7 +146,7 @@ reference counting add a reference to it. If this is not done the pointer obtain
 with GetReturnObject() will be invalidated as the context is released, or reused for 
 another script function call.
 
-
-
+\todo Show how to call an object method
+\todo Show how to obtain information on exceptions
 
 */

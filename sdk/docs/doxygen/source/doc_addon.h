@@ -4,14 +4,22 @@
 
 This page gives a brief description of the add-ons that you'll find in the /sdk/add_on/ folder.
 
+ - \subpage doc_addon_application
+ - \subpage doc_addon_script
+
+\page doc_addon_application Application modules
+
+ - \subpage doc_addon_build
+ - \subpage doc_addon_clib
+
+\page doc_addon_script Script extensions
+
  - \subpage doc_addon_any
  - \subpage doc_addon_string
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
  - \subpage doc_addon_math3d
- - \subpage doc_addon_build
- - \subpage doc_addon_clib
 
 
 
@@ -471,7 +479,7 @@ this add-on as-is.
 <b>Path:</b> /sdk/add_on/scriptbuilder/
 
 This class is a helper class for loading and building scripts, with a basic pre-processor 
-that supports include directives and metadata declarations.
+that supports conditional compilation, include directives, and metadata declarations.
 
 \section doc_addon_build_1 Public C++ interface
 
@@ -489,6 +497,9 @@ public:
                             const char      *module, 
                             const char      *script, 
                             const char      *sectionname = "");
+
+  // Add a pre-processor define for conditional compilation
+  void DefineWord(const char *word);
 
   // Get metadata declared for class types and interfaces
   const char *GetMetadataStringForType(int typeId);
@@ -514,6 +525,39 @@ Example script with include directive:
     CommonFunc();
   }
 </pre>
+
+
+\section doc_addon_build_condition Conditional programming
+
+The builder supports conditional programming through the \#if/\#endif preprocessor directives.
+The application may define a word with a call to DefineWord(), then the scripts may check
+for this definition in the code in order to include/exclude parts of the code.
+
+This is especially useful when scripts are shared between different binaries, for example, in a 
+client/server application.
+
+Example script with conditional compilation:
+
+<pre>
+  class CObject
+  {
+    void Process()
+    {
+  \#if SERVER
+      // Do some server specific processing
+  \#endif
+
+  \#if CLIENT
+      // Do some client specific processing
+  \#endif 
+
+      // Do some common processing
+    }
+  }
+</pre>
+
+
+
 
 
 \section doc_addon_build_metadata Metadata in scripts

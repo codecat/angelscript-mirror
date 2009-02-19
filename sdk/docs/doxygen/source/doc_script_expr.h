@@ -18,6 +18,7 @@
  - \ref member
  - \ref handle
  - \ref parenthesis
+ - \ref scope
 
 
 \section assignment Assignments
@@ -321,4 +322,19 @@ accessed directly through the object variable, i.e. with <code>.</code> operator
 Parenthesis are used to group expressions when the \ref doc_operator_precedence "operator precedence" does
 not give the desired order of evaluation.
 
+
+\section scope Scope resolution
+
+<pre>
+  int value;
+  void function()
+  {
+    int value;        // local variable overloads the global variable
+    :: value = value; // use scope resolution operator to refer to the global variable 
+  } 
+</pre>
+
+The scope resolution operator <code>::</code> can be used to access variables or functions from another scope when 
+the name is overloaded by a local variable or function. Write the scope name on the left (or blank for the global scope)
+and the name of the variable/function on the right.
 */

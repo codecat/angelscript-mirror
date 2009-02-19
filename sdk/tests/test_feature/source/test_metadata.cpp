@@ -15,10 +15,23 @@ const char *script =
 "[ test['hello'] ] void func2() {} \n"
 // global variables can have meta data
 "[ init ] int g_var = 0; \n"
+// Parts of the code can be excluded through conditional compilation
+"#if DONTCOMPILE                                      \n"
+"  This code should be excluded by the CScriptBuilder \n"
+"  #if NESTED                                         \n"
+"    Nested blocks are also possible                  \n"
+"  #endif                                             \n"
+"  Nested block ended                                 \n"
+"#endif                                               \n"
 // global object variable
 "[ var of type myclass ] MyClass g_obj(); \n"
 // class declarations can have meta data
+"#if COMPILE \n"
 "[ myclass ] class MyClass {} \n"
+" #if NESTED \n"
+"   don't compile this nested block \n"
+" #endif \n"
+"#endif \n"
 // interface declarations can have meta data
 "[ myintf ] interface MyIntf {} \n";
 
@@ -32,6 +45,16 @@ bool Test()
 	int r = 0;
 	COutStream out;
 
+	// TODO: Test scripts where the preprocessor directives have been commented
+
+	// TODO: Preprocessor directives should be alone on the line
+
+	// TODO: Test metadata strins with line breaks (the preprocessor shouldn't overwrite the line break)
+
+	// TODO: Test preprocessor directives within strings
+
+	// TODO: Test multiline strings (the preprocessor must not overwrite the line breaks)
+
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -43,6 +66,7 @@ bool Test()
 
 	// Compile a script with meta data strings
 	CScriptBuilder builder;
+	builder.DefineWord("COMPILE");
 	r = builder.BuildScriptFromMemory(engine, 0, script);
 	if( r < 0 )
 		fail = true;
