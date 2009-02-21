@@ -68,7 +68,6 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_memory
  - \subpage doc_gc_object
  - \subpage doc_debug
- - \subpage doc_adv_c_dll
  - \subpage doc_adv_timeout
  - \subpage doc_adv_multithread
  - \subpage doc_adv_concurrent

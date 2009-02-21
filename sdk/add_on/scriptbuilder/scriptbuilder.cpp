@@ -160,7 +160,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 
 					// Overwrite the #if directive with space characters to avoid compiler error
 					pos += len;
-					memset(&modifiedScript[start], ' ', pos-start);
+					OverwriteCode(start, pos-start);
 
 					// Has this identifier been defined by the application or not?
 					if( definedWords.find(word) == definedWords.end() )
@@ -179,7 +179,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 				// Only remove the #endif if there was a matching #if
 				if( nested > 0 )
 				{
-					memset(&modifiedScript[start], ' ', pos-start);
+					OverwriteCode(start, pos-start);
 					nested--;
 				}
 			}			
@@ -245,7 +245,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 							includes.push_back(includefile);
 
 							// Overwrite the include directive with space characters to avoid compiler error
-							memset(&modifiedScript[start], ' ', pos-start);
+							OverwriteCode(start, pos-start);
 						}
 					}
 				}
@@ -341,7 +341,7 @@ int CScriptBuilder::ExtractMetadataString(int pos, string &metadata)
 
 		// Overwrite the metadata with space characters to allow compilation
 		if( t != asTC_WHITESPACE )
-			memset(&modifiedScript[pos], ' ', len);
+			OverwriteCode(pos, len);
 
 		pos += len;
 	}
@@ -461,50 +461,58 @@ int CScriptBuilder::SkipStatementBlock(int pos)
 	return pos;
 }
 
+// Overwrite all code with blanks until the matching #endif
 int CScriptBuilder::ExcludeCode(int pos)
 {
 	int len;
 	int nested = 0;
 	while( pos < (int)modifiedScript.size() )
 	{
-		int n = (int)modifiedScript.find_first_of("\n#", pos);
-		if( n != string::npos )
+		asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+		if( modifiedScript[pos] == '#' )
 		{
-			memset(&modifiedScript[pos], ' ', n - pos);
-			pos = n;
+			modifiedScript[pos] = ' ';
+			pos++;
 
-			if( modifiedScript[pos] == '#' )
+			// Is it an #if or #endif directive?
+			t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+			string token;
+			token.assign(&modifiedScript[pos], len);
+			OverwriteCode(pos, len);
+
+			if( token == "if" )
 			{
-				modifiedScript[pos++] = ' ';
-				if( modifiedScript[pos] != '\n' )
+				nested++;
+			}
+			else if( token == "endif" )
+			{
+				if( nested-- == 0 )
 				{
-					// Is it an #if or #endif directive?
-					asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-					string token;
-					token.assign(&modifiedScript[pos], len);
-					memset(&modifiedScript[pos], ' ', len);
 					pos += len;
-
-					if( token == "if" )
-					{
-						nested++;
-					}
-					else if( token == "endif" )
-					{
-						if( nested-- == 0 )
-						{
-							// End the loop
-							break;
-						}
-					}
+					break;
 				}
 			}
-			else
-				pos++;
 		}
+		else if( modifiedScript[pos] != '\n' )
+		{
+			OverwriteCode(pos, len);
+		}
+		pos += len;
 	}
 
 	return pos;
+}
+
+// Overwrite all characters except line breaks with blanks 
+void CScriptBuilder::OverwriteCode(int start, int len)
+{
+	char *code = &modifiedScript[start];
+	for( int n = 0; n < len; n++ )
+	{
+		if( *code != '\n' )
+			*code = ' ';
+		code++;
+	}
 }
 
 const char *CScriptBuilder::GetMetadataStringForType(int typeId)

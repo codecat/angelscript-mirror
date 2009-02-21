@@ -617,20 +617,17 @@ if( r >= 0 )
 
 
 
-\page doc_addon_clib C library
+\page doc_addon_clib ANSI C library interface
 
 <b>Path:</b> /sdk/add_on/clib/
 
 This add-on defines a pure C interface, that can be used in those applications that do not
-understand C++ code but do understand C. 
+understand C++ code but do understand C, e.g. Delphi, Java, and D.
 
-To compile the AngelScript C library, you first need to compile the ordinary AngelScript library 
-with the pre-processor word <code>AS_C_LIBRARY</code> defined. Then you compile the AngelScript C library, 
-linking with the ordinary AngelScript library.
-
-In the application that will use the AngelScript C library, you'll include the <code>angelscript_c.h</code>
-header file, instead of the ordinary <code>%angelscript.h</code> header file. After that you can use the library
-much the same way that it's used in C++. 
+To compile the AngelScript C library, you need to compile the library source files in sdk/angelscript/source together 
+with the source files in sdk/add-on/clib, and link them as a shared dynamic library. In the application that will use 
+the AngelScript C library, you'll include the <code>angelscript_c.h</code> header file, instead of the ordinary 
+<code>%angelscript.h</code> header file. After that you can use the library much the same way that it's used in C++. 
 
 To find the name of the C functions to call, you normally take the corresponding interface method
 and give a prefix according to the following table:

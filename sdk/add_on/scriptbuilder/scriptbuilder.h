@@ -55,6 +55,7 @@ protected:
 	int  ExtractMetadataString(int pos, std::string &outMetadata);
 	int  ExtractDeclaration(int pos, std::string &outDeclaration, int &outType);
 	int  ExcludeCode(int start);
+	void OverwriteCode(int start, int len);
 
 	asIScriptEngine           *engine;
 	asIScriptModule           *module;

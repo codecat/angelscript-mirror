@@ -29,7 +29,7 @@ const char *script =
 "#if COMPILE \n"
 "[ myclass ] class MyClass {} \n"
 " #if NESTED \n"
-"   don't compile this nested block \n"
+"   dont compile this nested block \n"
 " #endif \n"
 "#endif \n"
 // interface declarations can have meta data
@@ -45,17 +45,9 @@ bool Test()
 	int r = 0;
 	COutStream out;
 
-	// TODO: Test scripts where the preprocessor directives have been commented
-
 	// TODO: Preprocessor directives should be alone on the line
 
-	// TODO: Test metadata strins with line breaks (the preprocessor shouldn't overwrite the line break)
-
-	// TODO: Test preprocessor directives within strings
-
-	// TODO: Test multiline strings (the preprocessor must not overwrite the line breaks)
-
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
