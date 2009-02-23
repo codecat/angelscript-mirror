@@ -4621,6 +4621,15 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		{
 			// Compute the operator before the assignment
 			asCTypeInfo lvalue = lctx->type;
+
+			if( lctx->type.isTemporary && !lctx->type.isVariable )
+			{
+				// The temporary variable must not be freed until the
+				// assignment has been performed. lvalue still holds
+				// the information about the temporary variable
+				lctx->type.isTemporary = false;
+			}
+
 			asSExprContext o(engine);
 			CompileOperator(opNode, lctx, rctx, &o);
 			MergeExprContexts(rctx, &o);

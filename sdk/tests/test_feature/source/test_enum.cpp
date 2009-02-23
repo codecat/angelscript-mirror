@@ -17,7 +17,10 @@ static const char *const script =
 "	TEST1200 = 300 * 4,								\n"
 "	TEST1201 = TEST1200 + 1,						\n"
 "	TEST1202,										\n"
-"	TEST1203										\n"
+"	TEST1203,										\n"
+"	TEST1205 = TEST1201 + 4,						\n"
+"	TEST1_0 = TEST_1 + 1, 							\n"
+"	TEST1_1 = TEST_1 + 2 							\n"
 "}													\n"
 "													\n"
 "TEST2_ENUM Test1()									\n"
@@ -29,6 +32,9 @@ static const char *const script =
 "   output(TEST1201);                               \n"
 "   output(TEST1202);                               \n"
 "   output(TEST1203);                               \n"
+"   output(TEST1205);                               \n"
+"   output(TEST1_0);                                \n"
+"   output(TEST1_1);                                \n"
 "	return TEST2;									\n"
 "}													\n";
 
@@ -104,7 +110,7 @@ static bool TestEnum()
 	r = engine->ExecuteString(NULL, "Test1()");
 	if( r != asEXECUTION_FINISHED ) 
 		fail = true;
-	if( buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n" )
+	if( buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n1205\n0\n1\n" )
 	{
 		fail = true;
 		printf(buffer.c_str());

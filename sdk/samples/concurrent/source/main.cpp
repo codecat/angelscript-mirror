@@ -9,6 +9,8 @@
 	#include <stdio.h>
 	#include <termios.h>
 	#include <unistd.h>
+	#include <fcntl.h>
+	#include <string.h>
 #elif defined(__APPLE__)
 	#include <curses.h>
 #else
@@ -38,17 +40,27 @@ int kbhit()
 {
 	struct termios oldt, newt;
 	int ch;
+	int oldf;
 
 	tcgetattr(STDIN_FILENO, &oldt);
 	newt = oldt;
-	newt.c_lflag &= ~( ICANON | ECHO );
-	tcsetattr( STDIN_FILENO, TCSANOW, &newt );
+	newt.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
 
-	while(!(ch = getchar()));
+	ch = getchar();
 
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	fcntl(STDIN_FILENO, F_SETFL, oldf);
 
-	tcsetattr( STDIN_FILENO, TCSANOW, &oldt );
-	return ch;
+	if(ch != EOF) 
+	{
+		ungetc(ch, stdin);
+		return 1;
+	}
+
+	return 0;
 }
 
 #elif defined(__APPLE__)
@@ -103,8 +115,6 @@ public:
 	vector<SContextInfo> contexts;
 } contextManager;
 
-
-
 void MessageCallback(const asSMessageInfo *msg, void *param)
 {
 	const char *type = "ERR ";
@@ -116,8 +126,8 @@ void MessageCallback(const asSMessageInfo *msg, void *param)
 	printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
 }
 
-
 asIScriptEngine *engine = 0;
+
 int main(int argc, char **argv)
 {
 	int r;
@@ -347,3 +357,6 @@ void CContextManager::SetSleeping(asIScriptContext *ctx, UINT milliSeconds)
 		}
 	}
 }
+
+
+

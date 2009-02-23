@@ -76,6 +76,7 @@ bool Test3();
 bool Test4();
 bool Test5();
 bool Test6();
+bool Test7();
 
 bool Test()
 {
@@ -87,6 +88,7 @@ bool Test()
 	fail = Test4() || fail;
 	fail = Test5() || fail;
 	fail = Test6() || fail;
+	fail = Test7() || fail;
 
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
@@ -647,6 +649,56 @@ bool Test6()
 					   "script (2, 9) : Error   : 'i' is not declared\n" )
 	{
 		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	engine->Release();
+
+	return fail;
+}
+
+//---------------------------------------
+// Test7 reported by Vicious
+// http://www.gamedev.net/community/forums/topic.asp?topic_id=525467
+bool Test7()
+{
+	bool fail = false;
+
+	const char *script = 
+	"void GENERIC_CommandDropItem( cClient @client )	\n"
+	"{													\n"
+	"	client.getEnt().health -= 1;					\n"
+	"}													\n";
+
+	// 1. tmp1 = client.getEnt()
+	// 2. tmp2 = tmp1.health
+	// 3. tmp3 = tmp2 - 1
+	// 4. free tmp2
+	// 5. tmp1.health = tmp3
+	// 6. free tmp3
+	// 7. free tmp1
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+	RegisterScriptString(engine);
+
+	engine->RegisterObjectType("cEntity", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("cEntity", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("cEntity", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("cEntity", "cEntity @getEnt()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectProperty("cEntity", "int health", 0);
+	engine->RegisterObjectType("cClient", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("cClient", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("cClient", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("cClient", "cEntity @getEnt()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	int r = mod->Build();
+	if( r < 0 )
+	{
 		fail = true;
 	}
 
