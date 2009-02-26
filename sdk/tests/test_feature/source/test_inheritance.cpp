@@ -152,7 +152,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// Test that the inherited methods are available in the derived class
 	// Test that it is possible to override the inherited methods
 	// Test that it is possible to call base class methods from within overridden methods in derived class 
-	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(mod->GetTypeIdByDecl("Derived"));
+	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("Derived"));
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(obj->GetObjectType()->GetMethodIdByDecl("void func()"));
 	ctx->SetObject(obj);

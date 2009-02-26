@@ -33,7 +33,7 @@ bool Test1()
  	asIScriptEngine *engine;
 	int refCount;
 
-	asIScriptStruct *myGame = 0;
+	asIScriptObject *myGame = 0;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -205,7 +205,7 @@ bool Test2()
  	asIScriptEngine *engine;
 	int refCount;
 
-	asIScriptStruct *myGame = 0;
+	asIScriptObject *myGame = 0;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

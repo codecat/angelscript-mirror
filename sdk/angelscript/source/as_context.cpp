@@ -573,7 +573,7 @@ void *asCContext::GetReturnObject()
 }
 
 #ifdef AS_DEPRECATED
-// deprecated since 2008-11-11
+// deprecated since 2008-11-11, 2.15.0
 void *asCContext::GetReturnPointer()
 {
 	if( status != tsProgramFinished ) return 0;
@@ -1010,7 +1010,7 @@ int asCContext::Execute()
 			// The currentFunction is a virtual method
 
 			// Determine the true function from the object
-			asCScriptStruct *obj = *(asCScriptStruct**)(size_t*)stackFramePointer;
+			asCScriptObject *obj = *(asCScriptObject**)(size_t*)stackFramePointer;
 			if( obj == 0 )
 			{
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -1285,7 +1285,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 void asCContext::CallInterfaceMethod(asCModule *mod, asCScriptFunction *func)
 {
 	// Resolve the interface method using the current script type
-	asCScriptStruct *obj = *(asCScriptStruct**)(size_t*)stackPointer;
+	asCScriptObject *obj = *(asCScriptObject**)(size_t*)stackPointer;
 	if( obj == 0 )
 	{
 		SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -2140,13 +2140,13 @@ void asCContext::ExecuteNext()
 			asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(l_bc);
 			int func = INTARG(l_bc+PTR_SIZE);
 
-			if( objType->flags & asOBJ_SCRIPT_STRUCT )
+			if( objType->flags & asOBJ_SCRIPT_OBJECT )
 			{
 				// Pre-allocate the memory
 				asDWORD *mem = (asDWORD*)engine->CallAlloc(objType);
 
-				// Pre-initialize the memory by calling the constructor for acCScriptStruct
-				ScriptStruct_Construct(objType, (asCScriptStruct*)mem);
+				// Pre-initialize the memory by calling the constructor for asCScriptObject
+				ScriptObject_Construct(objType, (asCScriptObject*)mem);
 
 				// Call the constructor to initalize the memory
 				asCScriptFunction *f = engine->scriptFunctions[func];
@@ -2914,7 +2914,7 @@ void asCContext::ExecuteNext()
 			{
 				asDWORD typeId = DWORDARG(l_bc);
 
-				asCScriptStruct *obj = (asCScriptStruct *)* a;
+				asCScriptObject *obj = (asCScriptObject *)* a;
 				asCObjectType *objType = obj->objType;
 				asCObjectType *to = engine->GetObjectTypeFromTypeId(typeId);
 				if( objType->Implements(to) || objType->DerivesFrom(to) )
@@ -3757,7 +3757,7 @@ int asCContext::GetVarTypeId(int varIndex, int stackLevel)
 }
 
 #ifdef AS_DEPRECATED
-// deprecated since 2008-11-11
+// deprecated since 2008-11-11, 2.15.0
 void *asCContext::GetVarPointer(int varIndex, int stackLevel)
 {
 	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;

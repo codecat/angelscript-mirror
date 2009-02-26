@@ -157,12 +157,7 @@ public:
 	virtual const char        *GetGlobalVarDeclaration(const char *module, int index, int *length = 0);
 	virtual const char        *GetGlobalVarName(const char *module, int index, int *length = 0);
 	virtual void              *GetAddressOfGlobalVar(const char *module, int index);
-	virtual int                GetGlobalVarIDByIndex(const char *module, int index);
-	virtual int                GetGlobalVarIDByName(const char *module, const char *name);
-	virtual int                GetGlobalVarIDByDecl(const char *module, const char *decl);
-	virtual const char        *GetGlobalVarDeclaration(int gvarID, int *length);
-	virtual const char        *GetGlobalVarName(int gvarID, int *length);
-	virtual void              *GetGlobalVarPointer(int gvarID);
+	virtual int                GetTypeIdByDecl(const char *module, const char *decl);
 	virtual int                GetImportedFunctionCount(const char *module);
 	virtual int                GetImportedFunctionIndexByDecl(const char *module, const char *decl);
 	virtual const char        *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length);
@@ -171,7 +166,6 @@ public:
 	virtual int                UnbindImportedFunction(const char *module, int importIndex);
 	virtual int                BindAllImportedFunctions(const char *module);
 	virtual int                UnbindAllImportedFunctions(const char *module);
-	virtual int                GetTypeIdByDecl(const char *module, const char *decl);
 	virtual int                GetObjectsInGarbageCollectorCount();
 	virtual int                SaveByteCode(const char *module, asIBinaryStream *out);
 	virtual int                LoadByteCode(const char *module, asIBinaryStream *in);
@@ -336,6 +330,7 @@ public:
 		bool useCharacterLiterals;
 		bool allowMultilineStrings;
 		bool allowImplicitHandleTypes;
+		bool buildWithoutLineCues;
 	} ep;
 };
 

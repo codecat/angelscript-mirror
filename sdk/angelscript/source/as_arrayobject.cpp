@@ -441,15 +441,15 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 		// Call the constructor on all objects
 		asCScriptEngine *engine = objType->engine;
 		asCObjectType *subType = objType->subType;
-		if( subType->flags & (asOBJ_SCRIPT_STRUCT | asOBJ_TEMPLATE) )
+		if( subType->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_TEMPLATE) )
 		{
 			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
 			asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
 
-			if( subType->flags & asOBJ_SCRIPT_STRUCT ) 
+			if( subType->flags & asOBJ_SCRIPT_OBJECT ) 
 			{
 				for( ; d < max; d++ )
-					*d = (asDWORD*)ScriptStructFactory(subType, engine);
+					*d = (asDWORD*)ScriptObjectFactory(subType, engine);
 			}
 			else if( subType->flags & asOBJ_TEMPLATE )
 			{

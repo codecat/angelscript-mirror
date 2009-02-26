@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -53,37 +53,24 @@ extern asFREEFUNC_t  userFree;
 
 // We don't overload the new operator as that would affect the application as well
 
-// TODO: This macro is only temporary and should be removed once it
-// has been established that the macros are cross platform compatible
-#ifdef AS_NO_USER_ALLOC
+#ifndef AS_DEBUG
 
-	#define asNEW(x)        new x
-	#define asDELETE(ptr,x) delete ptr
+	#define asNEW(x)        new(userAlloc(sizeof(x))) x
+	#define asDELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
 
-	#define asNEWARRAY(x,cnt)  new x[cnt]
-	#define asDELETEARRAY(ptr) delete[] ptr
+	#define asNEWARRAY(x,cnt)  (x*)userAlloc(sizeof(x)*cnt)
+	#define asDELETEARRAY(ptr) userFree(ptr)
 
 #else
 
-	#ifndef AS_DEBUG
+	typedef void *(*asALLOCFUNCDEBUG_t)(size_t, const char *, unsigned int);
 
-		#define asNEW(x)        new(userAlloc(sizeof(x))) x
-		#define asDELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
+	#define asNEW(x)        new(((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x), __FILE__, __LINE__)) x
+	#define asDELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
 
-		#define asNEWARRAY(x,cnt)  (x*)userAlloc(sizeof(x)*cnt)
-		#define asDELETEARRAY(ptr) userFree(ptr)
+	#define asNEWARRAY(x,cnt)  (x*)((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt, __FILE__, __LINE__)
+	#define asDELETEARRAY(ptr) userFree(ptr)
 
-	#else
-
-		typedef void *(*asALLOCFUNCDEBUG_t)(size_t, const char *, unsigned int);
-
-		#define asNEW(x)        new(((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x), __FILE__, __LINE__)) x
-		#define asDELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); userFree(tmp);}
-
-		#define asNEWARRAY(x,cnt)  (x*)((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(x)*cnt, __FILE__, __LINE__)
-		#define asDELETEARRAY(ptr) userFree(ptr)
-
-	#endif
 #endif
 
 END_AS_NAMESPACE

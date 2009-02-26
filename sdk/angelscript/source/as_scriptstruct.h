@@ -31,15 +31,15 @@
 
 
 //
-// as_scriptstruct.h
+// as_scriptobject.h
 //
 // A generic class for handling script declared structures
 //
 
 
 
-#ifndef AS_SCRIPTSTRUCT_H
-#define AS_SCRIPTSTRUCT_H
+#ifndef AS_SCRIPTOBJECT_H
+#define AS_SCRIPTOBJECT_H
 
 #include "as_config.h"
 #include "as_atomic.h"
@@ -48,30 +48,34 @@ BEGIN_AS_NAMESPACE
 
 class asCObjectType;
 
-// TODO: The script struct should be renamed to asIScriptObject
-
-class asCScriptStruct : public asIScriptStruct
+class asCScriptObject : public asIScriptObject
 {
 public:
-	asCScriptStruct(asCObjectType *objType);
-	virtual ~asCScriptStruct();
+	asCScriptObject(asCObjectType *objType);
+	virtual ~asCScriptObject();
 
 	asIScriptEngine *GetEngine() const;
 
 	int AddRef();
 	int Release();
 
+#ifdef AS_DEPRECATED
+	// deprecated since 2009-02-25, 2.16.0
 	int GetStructTypeId();
+#endif
+	int GetTypeId();
 	asIObjectType *GetObjectType();
 
 	int GetPropertyCount();
 	int GetPropertyTypeId(asUINT prop);
 	const char *GetPropertyName(asUINT prop);
+
+	// TODO: Should be GetAddressOfProperty
 	void *GetPropertyPointer(asUINT prop);
 
-	asCScriptStruct &operator=(const asCScriptStruct &other);
+	asCScriptObject &operator=(const asCScriptObject &other);
 
-	int CopyFrom(asIScriptStruct *other);
+	int CopyFrom(asIScriptObject *other);
 
 	// GC methods
 	void Destruct();
@@ -98,15 +102,15 @@ protected:
 	bool isDestructCalled;
 };
 
-void ScriptStruct_Construct(asCObjectType *objType, asCScriptStruct *self);
-asCScriptStruct &ScriptStruct_Assignment(asCScriptStruct *other, asCScriptStruct *self);
+void ScriptObject_Construct(asCObjectType *objType, asCScriptObject *self);
+asCScriptObject &ScriptObject_Assignment(asCScriptObject *other, asCScriptObject *self);
 
-void ScriptStruct_Construct_Generic(asIScriptGeneric *gen);
-void ScriptStruct_Assignment_Generic(asIScriptGeneric *gen);
+void ScriptObject_Construct_Generic(asIScriptGeneric *gen);
+void ScriptObject_Assignment_Generic(asIScriptGeneric *gen);
 
-void RegisterScriptStruct(asCScriptEngine *engine);
+void RegisterScriptObject(asCScriptEngine *engine);
 
-asIScriptStruct *ScriptStructFactory(asCObjectType *objType, asCScriptEngine *engine);
+asIScriptObject *ScriptObjectFactory(asCObjectType *objType, asCScriptEngine *engine);
 
 END_AS_NAMESPACE
 

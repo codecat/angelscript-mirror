@@ -73,8 +73,8 @@ bool Test2Modules()
 	mod->Build();
 	if( r < 0 ) ret = true;
 
-	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(engine->GetModule("b")->GetTypeIdByDecl("CTest"));
-	*((asIScriptStruct**)engine->GetModule("a")->GetAddressOfGlobalVar(0)) = obj;
+	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(engine->GetModule("b")->GetTypeIdByDecl("CTest"));
+	*((asIScriptObject**)engine->GetModule("a")->GetAddressOfGlobalVar(0)) = obj;
 	r = engine->ExecuteString("a", "obj.test()");
 	if( r != asEXECUTION_FINISHED ) ret = true;
 	int val = *(int*)engine->GetModule("b")->GetAddressOfGlobalVar(engine->GetModule("b")->GetGlobalVarIndexByName("glob"));

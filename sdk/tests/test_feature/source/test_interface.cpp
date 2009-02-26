@@ -106,7 +106,7 @@ bool Test()
 
 	// Test calling the interface method from the application
 	int typeId = engine->GetModule(0)->GetTypeIdByDecl("myclass");
-	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(typeId);
+	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(typeId);
 
 	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("myintf");
 	asIObjectType *type = engine->GetObjectTypeById(intfTypeId);

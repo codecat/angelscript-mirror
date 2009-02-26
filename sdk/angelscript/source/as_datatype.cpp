@@ -330,9 +330,9 @@ bool asCDataType::IsTemplate() const
 	return false;
 }
 
-bool asCDataType::IsScriptStruct() const
+bool asCDataType::IsScriptObject() const
 {
-	if( objectType && (objectType->flags & asOBJ_SCRIPT_STRUCT) )
+	if( objectType && (objectType->flags & asOBJ_SCRIPT_OBJECT) )
 		return true;
 
 	return false;

@@ -188,7 +188,7 @@ void TestScripts(asIScriptEngine *engine)
 
 	// Call an interface method on a class that implements the interface
 	int typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass");
-	asIScriptStruct *obj = (asIScriptStruct*)engine->CreateScriptObject(typeId);
+	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(typeId);
 
 	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
 	asIObjectType *type = engine->GetObjectTypeById(intfTypeId);

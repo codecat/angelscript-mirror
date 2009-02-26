@@ -50,7 +50,7 @@
 BEGIN_AS_NAMESPACE
 
 // Additional flag to the class object type
-const asDWORD asOBJ_SCRIPT_STRUCT    = 0x10000;
+const asDWORD asOBJ_SCRIPT_OBJECT    = 0x10000;
 const asDWORD asOBJ_TEMPLATE         = 0x20000;
 const asDWORD asOBJ_IMPLICIT_HANDLE  = 0x40000;
 const asDWORD asOBJ_NAMED_TYPE       = 0x80000000;

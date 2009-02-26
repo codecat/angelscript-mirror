@@ -157,7 +157,7 @@ bool Test()
 	r = mod->Build();
 
 	int objType = engine->GetModule("test")->GetTypeIdByDecl("CTest");
-	asIScriptStruct* testClassObj = (asIScriptStruct*)engine->CreateScriptObject(objType);
+	asIScriptObject* testClassObj = (asIScriptObject*)engine->CreateScriptObject(objType);
 
 	typeA* a = new typeB();
 

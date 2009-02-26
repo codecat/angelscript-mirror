@@ -87,9 +87,9 @@ asCObjectType::~asCObjectType()
 	for( n = 0; n < properties.GetLength(); n++ )
 		if( properties[n] ) 
 		{
-			if( flags & asOBJ_SCRIPT_STRUCT )
+			if( flags & asOBJ_SCRIPT_OBJECT )
 			{
-				// Release the config group for script structures that are being destroyed
+				// Release the config group for script classes that are being destroyed
 				asCConfigGroup *group = engine->FindConfigGroupForObjectType(properties[n]->type.GetObjectType());
 				if( group != 0 ) group->Release();
 			}
@@ -168,7 +168,7 @@ asIScriptEngine *asCObjectType::GetEngine() const
 
 bool asCObjectType::IsInterface() const
 {
-	if( (flags & asOBJ_SCRIPT_STRUCT) && size == 0 )
+	if( (flags & asOBJ_SCRIPT_OBJECT) && size == 0 )
 		return true;
 
 	return false;

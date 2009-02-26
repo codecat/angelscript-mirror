@@ -60,17 +60,17 @@ bool Test()
 		fail = true;
 	else
 	{		
-		asIScriptStruct *s = 0;
+		asIScriptObject *s = 0;
 		typeId = any->GetTypeId();
 		any->Retrieve(&s, typeId);
 
-		if( (typeId & asTYPEID_MASK_OBJECT) != asTYPEID_SCRIPTSTRUCT )
+		if( (typeId & asTYPEID_MASK_OBJECT) != asTYPEID_SCRIPTOBJECT )
 			fail = true;
 
 		if( strcmp(engine->GetTypeDeclaration(typeId), "MyStruct@") )
 			fail = true;
 
-		typeId = s->GetStructTypeId();
+		typeId = s->GetTypeId();
 		if( strcmp(engine->GetTypeDeclaration(typeId), "MyStruct") )
 			fail = true;
 

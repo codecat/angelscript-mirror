@@ -220,16 +220,16 @@ AS_API int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj
 AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g)             { return g->GetReturnPointer(); }
 AS_API int              asGeneric_GetReturnTypeId(asIScriptGeneric *g)              { return g->GetReturnTypeId(); }
 
-AS_API asIScriptEngine *asStruct_GetEngine(asIScriptStruct *s)                        { return s->GetEngine(); }
-AS_API int              asStruct_AddRef(asIScriptStruct *s)                           { return s->AddRef(); }
-AS_API int              asStruct_Release(asIScriptStruct *s)                          { return s->Release(); }
-AS_API int              asStruct_GetStructTypeId(asIScriptStruct *s)                  { return s->GetStructTypeId(); }
-AS_API asIObjectType *  asStruct_GetObjectType(asIScriptStruct *s)                    { return s->GetObjectType(); }
-AS_API int              asStruct_GetPropertyCount(asIScriptStruct *s)                 { return s->GetPropertyCount(); }
-AS_API int              asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop)   { return s->GetPropertyTypeId(prop); }
-AS_API const char *     asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop)     { return s->GetPropertyName(prop); }
-AS_API void *           asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop)  { return s->GetPropertyPointer(prop); }
-AS_API int              asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other) { return s->CopyFrom(other); }
+AS_API asIScriptEngine *asObject_GetEngine(asIScriptObject *s)                        { return s->GetEngine(); }
+AS_API int              asObject_AddRef(asIScriptObject *s)                           { return s->AddRef(); }
+AS_API int              asObject_Release(asIScriptObject *s)                          { return s->Release(); }
+AS_API int              asObject_GetTypeId(asIScriptObject *s)                        { return s->GetTypeId(); }
+AS_API asIObjectType *  asObject_GetObjectType(asIScriptObject *s)                    { return s->GetObjectType(); }
+AS_API int              asObject_GetPropertyCount(asIScriptObject *s)                 { return s->GetPropertyCount(); }
+AS_API int              asObject_GetPropertyTypeId(asIScriptObject *s, asUINT prop)   { return s->GetPropertyTypeId(prop); }
+AS_API const char *     asObject_GetPropertyName(asIScriptObject *s, asUINT prop)     { return s->GetPropertyName(prop); }
+AS_API void *           asObject_GetPropertyPointer(asIScriptObject *s, asUINT prop)  { return s->GetPropertyPointer(prop); }
+AS_API int              asObject_CopyFrom(asIScriptObject *s, asIScriptObject *other) { return s->CopyFrom(other); }
 
 AS_API asIScriptEngine *asArray_GetEngine(asIScriptArray *a)                       { return a->GetEngine(); }                
 AS_API int              asArray_AddRef(asIScriptArray *a)                          { return a->AddRef(); }

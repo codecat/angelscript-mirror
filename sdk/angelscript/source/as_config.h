@@ -58,12 +58,6 @@
 // If the compiler/platform doesn't support atomic instructions
 // then this should be defined to use critical sections instead.
 
-// BUILD_WITHOUT_LINE_CUES
-// This flag makes the script compiler remove some extra bytecodes that is used
-// to allow the VM to call the line callback after each statement. The performance
-// is improved slightly but the scripts are only guaranteed to allow one suspension
-// per loop iteration, not one per statement.
-
 // AS_DEBUG
 // This flag can be defined to make the library write some extra output when
 // compiling and executing scripts.
@@ -80,13 +74,6 @@
 // AS_MAX_PORTABILITY
 // Disables all platform specific code. Only the asCALL_GENERIC calling
 // convention will be available in with this flag set.
-
-// AS_NO_USER_ALLOC
-// With this macro defined, the library will not use the overrideable memory
-// allocation functions. Some compilers may not be compatible with this yet,
-// so defining this macro may allow usage of the library on those. The macro
-// will however criple the asSetGlobalMemoryFunctions so you won't get the same
-// result.
 
 
 

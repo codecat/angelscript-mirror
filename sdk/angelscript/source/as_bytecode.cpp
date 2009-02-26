@@ -1065,15 +1065,18 @@ void asCByteCode::ExtractLineNumbers()
 			lineNumbers.PushLast(pos);
 			lineNumbers.PushLast(*(int*)ARG_DW(curr->arg));
 
-#ifndef BUILD_WITHOUT_LINE_CUES
-			// Transform BC_LINE into BC_SUSPEND
-			curr->op = BC_SUSPEND;
-			curr->size = SizeOfType(BCT_SUSPEND);
-			pos += curr->size;
-#else
-			// Delete the instruction
-			DeleteInstruction(curr);
-#endif
+			if( !engine->ep.buildWithoutLineCues )
+			{
+				// Transform BC_LINE into BC_SUSPEND
+				curr->op = BC_SUSPEND;
+				curr->size = SizeOfType(BCT_SUSPEND);
+				pos += curr->size;
+			}
+			else
+			{
+				// Delete the instruction
+				DeleteInstruction(curr);
+			}
 		}
 		else
 			pos += curr->size;
@@ -1221,7 +1224,10 @@ void asCByteCode::Line(int line, int column)
 		return;
 
 	last->op       = BC_LINE;
-	last->size     = SizeOfType(BCT_LINE);
+	if( engine->ep.buildWithoutLineCues )
+		last->size = 0;
+	else
+		last->size = SizeOfType(BCT_SUSPEND);
 	last->stackInc = 0;
 	*((int*)ARG_DW(last->arg)) = (line & 0xFFFFF)|((column & 0xFFF)<<20);
 }

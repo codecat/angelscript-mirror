@@ -44,11 +44,11 @@
 #ifndef ANGELSCRIPT_C_H
 #define ANGELSCRIPT_C_H
 
-#define ANGELSCRIPT_VERSION        21502
+#define ANGELSCRIPT_VERSION        21600
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  15
-#define ANGELSCRIPT_VERSION_BUILD  2
-#define ANGELSCRIPT_VERSION_STRING "2.15.2"
+#define ANGELSCRIPT_VERSION_MINOR  16
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.16.0"
 
 #ifdef AS_USE_NAMESPACE
  #define BEGIN_AS_NAMESPACE namespace AngelScript {
@@ -85,12 +85,14 @@ typedef size_t         asPWORD;
 // Engine properties
 typedef enum 
 {
-	asEP_ALLOW_UNSAFE_REFERENCES = 1,
-	asEP_OPTIMIZE_BYTECODE       = 2,
-	asEP_COPY_SCRIPT_SECTIONS    = 3,
-	asEP_MAX_STACK_SIZE          = 4,
-	asEP_USE_CHARACTER_LITERALS  = 5,
-	asEP_ALLOW_MULTILINE_STRINGS = 6
+	asEP_ALLOW_UNSAFE_REFERENCES     = 1,
+	asEP_OPTIMIZE_BYTECODE           = 2,
+	asEP_COPY_SCRIPT_SECTIONS        = 3,
+	asEP_MAX_STACK_SIZE              = 4,
+	asEP_USE_CHARACTER_LITERALS      = 5,
+	asEP_ALLOW_MULTILINE_STRINGS     = 6,
+	asEP_ALLOW_IMPLICIT_HANDLE_TYPES = 7,
+	asEP_BUILD_WITHOUT_LINE_CUES     = 8
 } asEEngineProp;
 
 // Calling conventions
@@ -276,11 +278,23 @@ const char * const asALL_MODULES = (const char * const)-1;
 // Type id flags
 typedef enum 
 {
+	asTYPEID_VOID           = 0,
+	asTYPEID_BOOL           = 1,
+	asTYPEID_INT8           = 2,
+	asTYPEID_INT16          = 3,
+	asTYPEID_INT32          = 4,
+	asTYPEID_INT64          = 5,
+	asTYPEID_UINT8          = 6,
+	asTYPEID_UINT16         = 7,
+	asTYPEID_UINT32         = 8,
+	asTYPEID_UINT64         = 9,
+	asTYPEID_FLOAT          = 10,
+	asTYPEID_DOUBLE         = 11,
 	asTYPEID_OBJHANDLE      = 0x40000000,
 	asTYPEID_HANDLETOCONST  = 0x20000000,
 	asTYPEID_MASK_OBJECT    = 0x1C000000,
 	asTYPEID_APPOBJECT      = 0x04000000,
-	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
+	asTYPEID_SCRIPTOBJECT   = 0x0C000000,
 	asTYPEID_SCRIPTARRAY    = 0x10000000,
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 } asETypeIdFlags;
@@ -306,7 +320,7 @@ typedef struct asIScriptEngine asIScriptEngine;
 typedef struct asIScriptModule asIScriptModule;
 typedef struct asIScriptContext asIScriptContext;
 typedef struct asIScriptGeneric asIScriptGeneric;
-typedef struct asIScriptStruct asIScriptStruct;
+typedef struct asIScriptObject asIScriptObject;
 typedef struct asIScriptArray asIScriptArray;
 typedef struct asIObjectType asIObjectType;
 typedef struct asIScriptFunction asIScriptFunction;
@@ -516,16 +530,16 @@ extern "C"
 	AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g);
 	AS_API int              asGeneric_GetReturnTypeId(asIScriptGeneric *g);
 
-	AS_API asIScriptEngine *asStruct_GetEngine(asIScriptStruct *s);
-	AS_API int              asStruct_AddRef(asIScriptStruct *s);
-	AS_API int              asStruct_Release(asIScriptStruct *s);
-	AS_API int              asStruct_GetStructTypeId(asIScriptStruct *s);
-	AS_API asIObjectType *  asStruct_GetObjectType(asIScriptStruct *s);
-	AS_API int              asStruct_GetPropertyCount(asIScriptStruct *s);
-	AS_API int              asStruct_GetPropertyTypeId(asIScriptStruct *s, asUINT prop);
-	AS_API const char *     asStruct_GetPropertyName(asIScriptStruct *s, asUINT prop);
-	AS_API void *           asStruct_GetPropertyPointer(asIScriptStruct *s, asUINT prop);
-	AS_API int              asStruct_CopyFrom(asIScriptStruct *s, asIScriptStruct *other);
+	AS_API asIScriptEngine *asObject_GetEngine(asIScriptObject *s);
+	AS_API int              asObject_AddRef(asIScriptObject *s);
+	AS_API int              asObject_Release(asIScriptObject *s);
+	AS_API int              asObject_GetTypeId(asIScriptObject *s);
+	AS_API asIObjectType *  asObject_GetObjectType(asIScriptObject *s);
+	AS_API int              asObject_GetPropertyCount(asIScriptObject *s);
+	AS_API int              asObject_GetPropertyTypeId(asIScriptObject *s, asUINT prop);
+	AS_API const char *     asObject_GetPropertyName(asIScriptObject *s, asUINT prop);
+	AS_API void *           asObject_GetPropertyPointer(asIScriptObject *s, asUINT prop);
+	AS_API int              asObject_CopyFrom(asIScriptObject *s, asIScriptObject *other);
 
 	AS_API asIScriptEngine *asArray_GetEngine(asIScriptArray *a);
 	AS_API int              asArray_AddRef(asIScriptArray *a);

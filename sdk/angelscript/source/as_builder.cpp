@@ -893,12 +893,12 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 
 	asCObjectType *st = asNEW(asCObjectType)(engine);
 	st->arrayType = 0;
-	st->flags = asOBJ_REF | asOBJ_SCRIPT_STRUCT;
+	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT;
 
 	if( node->tokenType == ttHandle )
 		st->flags |= asOBJ_IMPLICIT_HANDLE;
 
-	st->size      = sizeof(asCScriptStruct);
+	st->size      = sizeof(asCScriptObject);
 	st->name      = name;
 	st->tokenType = ttIdentifier;
 	module->classTypes.PushLast(st);
@@ -932,7 +932,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	// Register the object type for the interface
 	asCObjectType *st = asNEW(asCObjectType)(engine);
 	st->arrayType = 0;
-	st->flags = asOBJ_REF | asOBJ_SCRIPT_STRUCT;
+	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT;
 	st->size = 0; // Cannot be instanciated
 	st->name = name;
 	st->tokenType = ttIdentifier;
@@ -1195,7 +1195,7 @@ void asCBuilder::CompileClasses()
 				str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
 				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
 			}
-			else if( !(objType->flags & asOBJ_SCRIPT_STRUCT) )
+			else if( !(objType->flags & asOBJ_SCRIPT_OBJECT) )
 			{
 				int r, c;
 				file->ConvertPosToRowCol(node->tokenPos, &r, &c);

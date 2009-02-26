@@ -3000,14 +3000,14 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		// TODO: ImplicitConversion should know to do this by itself
 		// First convert to a handle which will to a reference cast
 		if( !lvalue->IsObjectHandle() &&
-			(lvalue->GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) )
+			(lvalue->GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
 			to.MakeHandle(true);
 
 		// Don't allow the implicit conversion to create an object
 		ImplicitConversion(rctx, to, node, false, true, 0, false);
 
 		if( !lvalue->IsObjectHandle() &&
-			(lvalue->GetObjectType()->flags & asOBJ_SCRIPT_STRUCT) )
+			(lvalue->GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
 		{
 			// Then convert to a reference, which will validate the handle 
 			to.MakeHandle(false);
@@ -3142,7 +3142,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 	asUINT n;
 	int behaviour = isExplicit ? asBEHAVE_REF_CAST : asBEHAVE_IMPLICIT_REF_CAST;
 
-	if( ctx->type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_STRUCT )
+	if( ctx->type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT )
 	{
 		// We need it to be a reference
 		if( !ctx->type.dataType.IsReference() )

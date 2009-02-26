@@ -149,7 +149,7 @@ void Analyze(asIScriptGeneric *gen)
 {
 	CScriptAny *a = (CScriptAny*)gen->GetArgAddress(0);
 	int myclassId = a->GetTypeId();
-	asIScriptStruct *s = 0;
+	asIScriptObject *s = 0;
 	a->Retrieve(&s, myclassId);
 	s->Release();
 }
@@ -209,7 +209,7 @@ bool Test()
 	}
 
 	int typeId = engine->GetModule("test")->GetTypeIdByDecl("myclass");
-	asIScriptStruct *s = (asIScriptStruct*)engine->CreateScriptObject(typeId);
+	asIScriptObject *s = (asIScriptObject*)engine->CreateScriptObject(typeId);
 	if( s == 0 ) 
 		fail = true;
 	else
@@ -267,7 +267,7 @@ bool Test()
 	typeId = engine->GetModule(0)->GetTypeIdByDecl("myclass");
 	asIObjectType *type = engine->GetObjectTypeById(typeId);
 	int mtdId = type->GetMethodIdByDecl("void func()");
-	asIScriptStruct *obj = (asIScriptStruct *)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("c"));
+	asIScriptObject *obj = (asIScriptObject *)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("c"));
 
 	if( mtdId < 0 || obj == 0 ) fail = true;
 	else

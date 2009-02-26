@@ -71,7 +71,7 @@ public:
 	int MakeHandleToConst(bool b);
 
 	bool IsTemplate()       const;
-	bool IsScriptStruct()   const;
+	bool IsScriptObject()   const;
 	bool IsPrimitive()      const;
 	bool IsObject()         const;
 	bool IsReference()      const {return isReference;}

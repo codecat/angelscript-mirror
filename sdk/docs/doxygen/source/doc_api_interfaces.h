@@ -11,7 +11,7 @@
 \section doc_api_intf_2 Secondary interfaces
  
  - \ref asIScriptGeneric
- - \ref asIScriptStruct
+ - \ref asIScriptObject
  - \ref asIScriptArray
  - \ref asIObjectType
  - \ref asIScriptFunction

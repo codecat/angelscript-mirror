@@ -59,11 +59,11 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! The library version.
-#define ANGELSCRIPT_VERSION        21502
+#define ANGELSCRIPT_VERSION        21600
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  15
-#define ANGELSCRIPT_VERSION_BUILD  2
-#define ANGELSCRIPT_VERSION_STRING "2.15.2"
+#define ANGELSCRIPT_VERSION_MINOR  16
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.16.0"
 
 // Data types
 
@@ -71,11 +71,16 @@ class asIScriptEngine;
 class asIScriptModule;
 class asIScriptContext;
 class asIScriptGeneric;
-class asIScriptStruct;
+class asIScriptObject;
 class asIScriptArray;
 class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
+
+#ifdef AS_DEPRECATED
+// deprecated since 2009-02-25, 2.16.0
+typedef asIScriptObject asIScriptStruct;
+#endif
 
 // Enumerations and constants
 
@@ -96,7 +101,9 @@ enum asEEngineProp
 	//! Allow linebreaks in string constants. Default: false.
 	asEP_ALLOW_MULTILINE_STRINGS     = 6,
 	//! Allow script to declare implicit handle types. Default: false.
-	asEP_ALLOW_IMPLICIT_HANDLE_TYPES = 7
+	asEP_ALLOW_IMPLICIT_HANDLE_TYPES = 7,
+	//! Remove SUSPEND instructions between each statement. Default: false.
+	asEP_BUILD_WITHOUT_LINE_CUES     = 8
 };
 
 // Calling conventions
@@ -415,14 +422,50 @@ const int asPREPARE_PREVIOUS = -1;
 const char * const asALL_MODULES = (const char * const)-1;
 
 // Type id flags
+//! \brief Type id flags
 enum asETypeIdFlags
 {
+	//! The type id for void
+	asTYPEID_VOID           = 0,
+	//! The type id for bool
+	asTYPEID_BOOL           = 1,
+	//! The type id for int8
+	asTYPEID_INT8           = 2,
+	//! The type id for int16
+	asTYPEID_INT16          = 3,
+	//! The type id for int
+	asTYPEID_INT32          = 4,
+	//! The type id for int64
+	asTYPEID_INT64          = 5,
+	//! The type id for uint8
+	asTYPEID_UINT8          = 6,
+	//! The type id for uint16
+	asTYPEID_UINT16         = 7,
+	//! The type id for uint
+	asTYPEID_UINT32         = 8,
+	//! The type id for uint64
+	asTYPEID_UINT64         = 9,
+	//! The type id for float
+	asTYPEID_FLOAT          = 10,
+	//! The type id for double
+	asTYPEID_DOUBLE         = 11,
+	//! The bit that shows if the type is a handle
 	asTYPEID_OBJHANDLE      = 0x40000000,
+	//! The bit that shows if the type is a handle to a const
 	asTYPEID_HANDLETOCONST  = 0x20000000,
+	//! If any of these bits are set, then the type is an object
 	asTYPEID_MASK_OBJECT    = 0x1C000000,
+	//! The bit that shows if the type is an application registered type
 	asTYPEID_APPOBJECT      = 0x04000000,
+#ifdef AS_DEPRECATED
+	// deprecated since 2009-02-25, 2.16.0
 	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
+#endif
+	//! The bit that shows if the type is a script class
+	asTYPEID_SCRIPTOBJECT   = 0x0C000000,
+	//! The bit that shows if the type is a script array
 	asTYPEID_SCRIPTARRAY    = 0x10000000,
+	//! The mask for the type id sequence number
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
 
@@ -903,8 +946,8 @@ public:
     //! \retval asNAME_TAKEN The \a name is already used elsewhere.
     //!
     //! This registers an interface that script classes can implement. By doing this the application 
-    //! can register functions and methods that receives an asIScriptStruct and still be sure that the 
-    //! structure implements certain methods needed by the application. 
+    //! can register functions and methods that receives an \ref asIScriptObject and still be sure that the 
+    //! class implements certain methods needed by the application. 
 	virtual int RegisterInterface(const char *name) = 0;
 	//! \brief Registers an interface method.
     //!
@@ -1087,18 +1130,19 @@ public:
 	//! Translates a type declaration into a type id. The returned type id is valid for as long as
 	//! the type is valid, so you can safely store it for later use to avoid potential overhead by 
 	//! calling this function each time. Just remember to update the type id, any time the type is 
-	//! changed within the engine, e.g. when recompiling script declared structures, or changing the 
+	//! changed within the engine, e.g. when recompiling script declared classes, or changing the 
 	//! engine configuration.
 	//! 
-	//! The type id is based on a sequence number and depends on the order in which the type ids are 
+	//! The type id is based on a sequence number and depends on the order in which the type ids are
 	//! queried, thus is not guaranteed to always be the same for each execution of the application.
+	//! The \ref asETypeIdFlags can be used to obtain some information about the type directly from the id.
 	//! 
-	//! A base type yields the same type id whether the declaration is const or not, however if the 
-	//! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
-	//! string@ but string is the same as const string. 
+	//! A base type yields the same type id whether the declaration is const or not, however if the
+	//! const is for the subtype then the type id is different, e.g. string@ isn't the same as const
+	//! string@ but string is the same as const string.
 	//! 
 	//! This method is only able to return the type id that are not specific for a script module, i.e.
-	//! built-in types, and application registered types. Type ids for script declared types should
+	//! built-in types and application registered types. Type ids for script declared types should
 	//! be obtained through the script module's \ref asIScriptModule::GetTypeIdByDecl "GetTypeIdByDecl".
 	virtual int            GetTypeIdByDecl(const char *decl) = 0;
 	//! \brief Returns a type declaration.
@@ -1286,71 +1330,59 @@ public:
 	virtual void *GetUserData() = 0;
 
 #ifdef AS_DEPRECATED
-	//! \deprecated Use \ref asIScriptModule::AddScriptSection instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::AddScriptSection instead.
 	virtual int                AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
-	//! \deprecated Use \ref asIScriptModule::Build instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::Build instead.
 	virtual int                Build(const char *module) = 0;
-	//! \deprecated Use \ref asIScriptEngine::DiscardModule "DiscardModule" instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptEngine::DiscardModule "DiscardModule" instead.
     virtual int                Discard(const char *module) = 0;
-	//! \deprecated Use \ref asIScriptModule::ResetGlobalVars instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::ResetGlobalVars instead.
 	virtual int                ResetModule(const char *module) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetFunctionCount instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionCount instead.
 	virtual int                GetFunctionCount(const char *module) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetFunctionIdByIndex instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionIdByIndex instead.
 	virtual int                GetFunctionIDByIndex(const char *module, int index) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetFunctionIdByName instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionIdByName instead.
 	virtual int                GetFunctionIDByName(const char *module, const char *name) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetFunctionIdByDecl instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionIdByDecl instead.
 	virtual int                GetFunctionIDByDecl(const char *module, const char *decl) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetFunctionDescriptorByIndex instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionDescriptorByIndex instead.
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetGlobalVarCount instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarCount instead.
 	virtual int                GetGlobalVarCount(const char *module) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetGlobalVarIndexByName instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarIndexByName instead.
 	virtual int                GetGlobalVarIndexByName(const char *module, const char *name) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetGlobalVarIndexByDecl instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarIndexByDecl instead.
 	virtual int                GetGlobalVarIndexByDecl(const char *module, const char *decl) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetGlobalVarDeclaration instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarDeclaration instead.
 	virtual const char        *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetGlobalVarName instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarName instead.
 	virtual const char        *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetAddressOfGlobalVar instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetAddressOfGlobalVar instead.
 	virtual void              *GetAddressOfGlobalVar(const char *module, int index) = 0;
-    //! \deprecated Global variables are uniquely identified by module name and index.
-	virtual int                GetGlobalVarIDByIndex(const char *module, int index) = 0;
-    //! \deprecated Use \ref asIScriptModule::GetGlobalVarIndexByName instead
-	virtual int                GetGlobalVarIDByName(const char *module, const char *name) = 0;
-    //! \deprecated Use \ref asIScriptModule::GetGlobalVarIndexByDecl instead
-	virtual int                GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
-    //! \deprecated Use \ref asIScriptModule::GetGlobalVarDeclaration instead
-	virtual const char        *GetGlobalVarDeclaration(int gvarID, int *length = 0) = 0;
-    //! \deprecated Use \ref asIScriptModule::GetGlobalVarName instead
-	virtual const char        *GetGlobalVarName(int gvarID, int *length = 0) = 0;
-    //! \deprecated Use \ref asIScriptModule::GetAddressOfGlobalVar instead
-	virtual void              *GetGlobalVarPointer(int gvarID) = 0;
-	//! \deprecated Use \ref asIScriptEngine::GetTypeIdByDecl(const char *) "GetTypeIdByDecl" or asIScriptModule::GetTypeIdByDecl instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptEngine::GetTypeIdByDecl(const char *) "GetTypeIdByDecl" or asIScriptModule::GetTypeIdByDecl instead.
 	virtual int                GetTypeIdByDecl(const char *module, const char *decl) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetImportedFunctionCount instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetImportedFunctionCount instead.
 	virtual int                GetImportedFunctionCount(const char *module) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetImportedFunctionIndexByDecl instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetImportedFunctionIndexByDecl instead.
 	virtual int                GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetImportedFunctionDeclaration instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetImportedFunctionDeclaration instead.
 	virtual const char        *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length = 0) = 0;
-	//! \deprecated Use \ref asIScriptModule::GetImportedFunctionSourceModule instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetImportedFunctionSourceModule instead.
 	virtual const char        *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length = 0) = 0;
-	//! \deprecated Use \ref asIScriptModule::BindImportedFunction instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::BindImportedFunction instead.
 	virtual int                BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
-	//! \deprecated Use \ref asIScriptModule::UnbindImportedFunction instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::UnbindImportedFunction instead.
 	virtual int                UnbindImportedFunction(const char *module, int importIndex) = 0;
-	//! \deprecated Use \ref asIScriptModule::BindAllImportedFunctions instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::BindAllImportedFunctions instead.
 	virtual int                BindAllImportedFunctions(const char *module) = 0;
-	//! \deprecated Use \ref asIScriptModule::UnbindAllImportedFunctions instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::UnbindAllImportedFunctions instead.
 	virtual int                UnbindAllImportedFunctions(const char *module) = 0;
-	//! \deprecated Use \ref asIScriptEngine::GetGCStatistics "GetGCStatistics" instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptEngine::GetGCStatistics "GetGCStatistics" instead.
 	virtual int                GetObjectsInGarbageCollectorCount() = 0;
-	//! \deprecated Use \ref asIScriptModule::SaveByteCode instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::SaveByteCode instead.
 	virtual int                SaveByteCode(const char *module, asIBinaryStream *out) = 0;
-	//! \deprecated Use \ref asIScriptModule::LoadByteCode instead.
+	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::LoadByteCode instead.
 	virtual int                LoadByteCode(const char *module, asIBinaryStream *in) = 0;
 #endif
 
@@ -1527,11 +1559,12 @@ public:
     //! Translates a type declaration into a type id. The returned type id is valid for as long as
     //! the type is valid, so you can safely store it for later use to avoid potential overhead by 
     //! calling this function each time. Just remember to update the type id, any time the type is 
-    //! changed within the engine, e.g. when recompiling script declared structures, or changing the 
+    //! changed within the engine, e.g. when recompiling script declared classes, or changing the 
     //! engine configuration.
     //! 
     //! The type id is based on a sequence number and depends on the order in which the type ids are 
     //! queried, thus is not guaranteed to always be the same for each execution of the application.
+    //! The \ref asETypeIdFlags can be used to obtain some information about the type directly from the id.
     //! 
     //! A base type yields the same type id whether the declaration is const or not, however if the 
     //! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
@@ -1811,10 +1844,6 @@ public:
 	//! \brief Return a pointer to the returned object.
     //! \return A pointer to the object returned from the script function, or 0 on error.
 	virtual void   *GetReturnObject() = 0;
-#ifdef AS_DEPRECATED
-	//! \deprecated Use \ref asIScriptContext::GetAddressOfReturnValue "GetAddressOfReturnValue" instead.
-	virtual void   *GetReturnPointer() = 0;
-#endif
 	//! \brief Returns the address of the returned value
 	//! \return A pointer to the return value returned from the script function, or 0 on error.
 	virtual void   *GetAddressOfReturnValue() = 0;
@@ -1981,10 +2010,6 @@ public:
     //! \return The type id of the variable, or a negative value on error.
 	//! \retval asINVALID_ARG The index or stack level is invalid.
 	virtual int         GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
-#ifdef AS_DEPRECATED
-	//! \deprecated Use \ref asIScriptContext::GetAddressOfVar "GetAddressOfVar" instead.
-	virtual void       *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
-#endif
 	//! \brief Returns a pointer to a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
@@ -2014,6 +2039,13 @@ public:
 	//! \brief Returns the address of the previously registered user data.
     //! \return The pointer to the user data.
 	virtual void *GetUserData() = 0;
+
+#ifdef AS_DEPRECATED
+	//! \deprecated Since 2.15.0. Use \ref asIScriptContext::GetAddressOfReturnValue "GetAddressOfReturnValue" instead.
+	virtual void *GetReturnPointer() = 0;
+	//! \deprecated Since 2.15.0. Use \ref asIScriptContext::GetAddressOfVar "GetAddressOfVar" instead.
+	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
+#endif
 
 protected:
 	virtual ~asIScriptContext() {}
@@ -2079,10 +2111,6 @@ public:
     //! Don't release the pointer if this is an object handle, the asIScriptGeneric object will 
     //! do that for you.
 	virtual void   *GetArgObject(asUINT arg) = 0;
-#ifdef AS_DEPRECATED
-	//! \deprecated Use \ref asIScriptGeneric::GetAddressOfArg "GetAddressOfArg" instead.
-	virtual void   *GetArgPointer(asUINT arg) = 0;
-#endif
     //! \brief Returns a pointer to the argument value.
     //! \param[in] arg The argument index.
     //! \return A pointer to the argument value.
@@ -2161,12 +2189,17 @@ public:
     //! \return The type id of the return value.
 	virtual int     GetReturnTypeId() = 0;
 
+#ifdef AS_DEPRECATED
+	//! \deprecated Since 2.15.0. Use \ref asIScriptGeneric::GetAddressOfArg "GetAddressOfArg" instead.
+	virtual void   *GetArgPointer(asUINT arg) = 0;
+#endif
+
 protected:
 	virtual ~asIScriptGeneric() {}
 };
 
-//! \brief The interface for a script class or interface
-class asIScriptStruct
+//! \brief The interface for an instance of a script object
+class asIScriptObject
 {
 public:
 	//! \brief Return the script engine.
@@ -2187,16 +2220,16 @@ public:
     //! Call this method when you will no longer use the references that you own.
 	virtual int Release() = 0;
 
-	// Struct type
+	// Type info
 	//! \brief Returns the type id of the object.
     //! \return The type id of the script object.
-	virtual int            GetStructTypeId() = 0;
+	virtual int            GetTypeId() = 0;
 
     //! \brief Returns the object type interface for the object.
     //! \return The object type interface of the script object.
 	virtual asIObjectType *GetObjectType() = 0;
 
-	// Struct properties
+	// Class properties
 	//! \brief Returns the number of properties that the object contains.
     //! \return The number of member properties of the script object.
 	virtual int         GetPropertyCount() = 0;
@@ -2227,11 +2260,17 @@ public:
     //! \retval asINVALID_TYPE The other object is of different type.
     //!
     //! This method copies the contents of the other object to this one.
-	virtual int         CopyFrom(asIScriptStruct *other) = 0;
+	virtual int         CopyFrom(asIScriptObject *other) = 0;
+
+#ifdef AS_DEPRECATED
+	//! \deprecated Since 2.16.0. Use \ref asIScriptObject::GetTypeId instead.
+	virtual int            GetStructTypeId() = 0;
+#endif
 
 protected:
-	virtual ~asIScriptStruct() {}
+	virtual ~asIScriptObject() {}
 };
+
 
 //! \brief The interface for a script array object
 class asIScriptArray

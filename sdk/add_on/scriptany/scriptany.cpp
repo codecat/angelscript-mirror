@@ -290,14 +290,12 @@ void CScriptAny::Store(void *ref, int refTypeId)
 
 void CScriptAny::Store(double &ref)
 {
-	int typeId = engine->GetTypeIdByDecl("double");
-	Store(&ref, typeId);
+	Store(&ref, asTYPEID_DOUBLE);
 }
 
 void CScriptAny::Store(asINT64 &ref)
 {
-	int typeId = engine->GetTypeIdByDecl("int64");
-	Store(&ref, typeId);
+	Store(&ref, asTYPEID_INT64);
 }
 
 
@@ -342,14 +340,12 @@ bool CScriptAny::Retrieve(void *ref, int refTypeId) const
 		}
 
 		// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
-		int intTypeId = engine->GetTypeIdByDecl("int64");
-		int fltTypeId = engine->GetTypeIdByDecl("double");
-		if( value.typeId == intTypeId && refTypeId == fltTypeId )
+		if( value.typeId == asTYPEID_INT64 && refTypeId == asTYPEID_DOUBLE )
 		{
 			*(double*)ref = double(value.valueInt);
 			return true;
 		}
-		else if( value.typeId == fltTypeId && refTypeId == intTypeId )
+		else if( value.typeId == asTYPEID_DOUBLE && refTypeId == asTYPEID_INT64 )
 		{
 			*(asINT64*)ref = asINT64(value.valueFlt);
 			return true;
@@ -361,14 +357,12 @@ bool CScriptAny::Retrieve(void *ref, int refTypeId) const
 
 bool CScriptAny::Retrieve(asINT64 &value) const
 {
-	int typeId = engine->GetTypeIdByDecl("int64");
-	return Retrieve(&value, typeId);
+	return Retrieve(&value, asTYPEID_INT64);
 }
 
 bool CScriptAny::Retrieve(double &value) const
 {
-	int typeId = engine->GetTypeIdByDecl("double");
-	return Retrieve(&value, typeId);
+	return Retrieve(&value, asTYPEID_DOUBLE);
 }
 
 int CScriptAny::GetTypeId() const

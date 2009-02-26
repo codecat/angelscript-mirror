@@ -639,7 +639,7 @@ and give a prefix according to the following table:
 <tr><td>asIScriptContext  &nbsp;</td>    <td>asContext_</td></tr>
 <tr><td>asIScriptGeneric  &nbsp;</td>    <td>asGeneric_</td></tr>
 <tr><td>asIScriptArray    &nbsp;</td>    <td>asArray_</td></tr>
-<tr><td>asIScriptStruct   &nbsp;</td>    <td>asStruct_</td></tr>
+<tr><td>asIScriptObject   &nbsp;</td>    <td>asObject_</td></tr>
 <tr><td>asIObjectType     &nbsp;</td>    <td>asObjectType_</td></tr>
 <tr><td>asIScriptFunction &nbsp;</td>    <td>asScriptFunction_</td></tr>
 </table>

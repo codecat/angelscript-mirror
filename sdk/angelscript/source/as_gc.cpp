@@ -213,10 +213,10 @@ int asCGarbageCollector::DestroyGarbage()
 					// Make sure the refCount is really 0, because the
 					// destructor may have increased the refCount again.
 					bool addRef = false;
-					if( gcObj.type->flags & asOBJ_SCRIPT_STRUCT )
+					if( gcObj.type->flags & asOBJ_SCRIPT_OBJECT )
 					{
-						// Script structs may actually be resurrected in the destructor
-						int refCount = ((asCScriptStruct*)gcObj.obj)->Release();
+						// Script objects may actually be resurrected in the destructor
+						int refCount = ((asCScriptObject*)gcObj.obj)->Release();
 						if( refCount > 0 ) addRef = true;
 					}
 					else

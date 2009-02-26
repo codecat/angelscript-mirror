@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -256,7 +256,7 @@ void *asCGeneric::GetArgObject(asUINT arg)
 }
 
 #ifdef AS_DEPRECATED
-// deprecated since 2008-11-13
+// deprecated since 2008-11-13, 2.15.0
 void *asCGeneric::GetArgPointer(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )

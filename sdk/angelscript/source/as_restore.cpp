@@ -704,7 +704,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		READ_NUM(flags);
 		ot->flags = flags;
 
-		// Use the default script struct behaviours
+		// Use the default script class behaviours
 		ot->beh = engine->scriptTypeBehaviours.beh;
 
 		// Some implicit values
@@ -943,7 +943,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			*(int*)tmp = FindObjectTypeIdx(ot);
 
 			// Translate the constructor func id, if it is a script class
-			if( ot->flags & asOBJ_SCRIPT_STRUCT )
+			if( ot->flags & asOBJ_SCRIPT_OBJECT )
 				*(int*)&tmp[PTR_SIZE] = FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[PTR_SIZE]]);
 
 			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
@@ -1077,7 +1077,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 
 			// If the object type is a script class then the constructor id must be translated
 			asCObjectType *ot = *(asCObjectType**)arg;
-			if( ot->flags & asOBJ_SCRIPT_STRUCT )
+			if( ot->flags & asOBJ_SCRIPT_OBJECT )
 			{
 				int *fid = (int*)&bc[n+1+PTR_SIZE];
 				*fid = FindFunction(*fid)->id;

@@ -53,11 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        21502
+#define ANGELSCRIPT_VERSION        21600
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  15
-#define ANGELSCRIPT_VERSION_BUILD  2
-#define ANGELSCRIPT_VERSION_STRING "2.15.2"
+#define ANGELSCRIPT_VERSION_MINOR  16
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.16.0 WIP"
 
 // Data types
 
@@ -65,11 +65,16 @@ class asIScriptEngine;
 class asIScriptModule;
 class asIScriptContext;
 class asIScriptGeneric;
-class asIScriptStruct;
+class asIScriptObject;
 class asIScriptArray;
 class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
+
+#ifdef AS_DEPRECATED
+// deprecated since 2009-02-25, 2.16.0
+typedef asIScriptObject asIScriptStruct;
+#endif
 
 // Enumerations and constants
 
@@ -82,7 +87,8 @@ enum asEEngineProp
 	asEP_MAX_STACK_SIZE              = 4,
 	asEP_USE_CHARACTER_LITERALS      = 5,
 	asEP_ALLOW_MULTILINE_STRINGS     = 6,
-	asEP_ALLOW_IMPLICIT_HANDLE_TYPES = 7
+	asEP_ALLOW_IMPLICIT_HANDLE_TYPES = 7,
+	asEP_BUILD_WITHOUT_LINE_CUES     = 8
 };
 
 // Calling conventions
@@ -277,11 +283,27 @@ const char * const asALL_MODULES = (const char * const)-1;
 // Type id flags
 enum asETypeIdFlags
 {
+	asTYPEID_VOID           = 0,
+	asTYPEID_BOOL           = 1,
+	asTYPEID_INT8           = 2,
+	asTYPEID_INT16          = 3,
+	asTYPEID_INT32          = 4,
+	asTYPEID_INT64          = 5,
+	asTYPEID_UINT8          = 6,
+	asTYPEID_UINT16         = 7,
+	asTYPEID_UINT32         = 8,
+	asTYPEID_UINT64         = 9,
+	asTYPEID_FLOAT          = 10,
+	asTYPEID_DOUBLE         = 11,
 	asTYPEID_OBJHANDLE      = 0x40000000,
 	asTYPEID_HANDLETOCONST  = 0x20000000,
 	asTYPEID_MASK_OBJECT    = 0x1C000000,
 	asTYPEID_APPOBJECT      = 0x04000000,
+#ifdef AS_DEPRECATED
+	// deprecated since 2009-02-25, 2.16.0
 	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
+#endif
+	asTYPEID_SCRIPTOBJECT   = 0x0C000000,
 	asTYPEID_SCRIPTARRAY    = 0x10000000,
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
@@ -507,12 +529,6 @@ public:
 	virtual const char        *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
 	virtual const char        *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
 	virtual void              *GetAddressOfGlobalVar(const char *module, int index) = 0;
-	virtual int                GetGlobalVarIDByIndex(const char *module, int index) = 0;
-	virtual int                GetGlobalVarIDByName(const char *module, const char *name) = 0;
-	virtual int                GetGlobalVarIDByDecl(const char *module, const char *decl) = 0;
-	virtual const char        *GetGlobalVarDeclaration(int gvarID, int *length = 0) = 0;
-	virtual const char        *GetGlobalVarName(int gvarID, int *length = 0) = 0;
-	virtual void              *GetGlobalVarPointer(int gvarID) = 0;
 	virtual int                GetTypeIdByDecl(const char *module, const char *decl) = 0;
 	virtual int                GetImportedFunctionCount(const char *module) = 0;
 	virtual int                GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
@@ -619,9 +635,6 @@ public:
 	virtual double  GetReturnDouble() = 0;
 	virtual void   *GetReturnAddress() = 0;
 	virtual void   *GetReturnObject() = 0;
-#ifdef AS_DEPRECATED
-	virtual void   *GetReturnPointer() = 0;
-#endif
 	virtual void   *GetAddressOfReturnValue() = 0;
 
 	virtual int Execute() = 0;
@@ -650,15 +663,17 @@ public:
 	virtual const char *GetVarName(int varIndex, int *length = 0, int stackLevel = -1) = 0;
 	virtual const char *GetVarDeclaration(int varIndex, int *length = 0, int stackLevel = -1) = 0;
 	virtual int         GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
-#ifdef AS_DEPRECATED
-	virtual void       *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
-#endif
 	virtual void       *GetAddressOfVar(int varIndex, int stackLevel = -1) = 0;
 	virtual int         GetThisTypeId(int stackLevel = -1) = 0;
 	virtual void       *GetThisPointer(int stackLevel = -1) = 0;
 
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() = 0;
+
+#ifdef AS_DEPRECATED
+	virtual void *GetReturnPointer() = 0;
+	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
+#endif
 
 protected:
 	virtual ~asIScriptContext() {}
@@ -683,9 +698,6 @@ public:
 	virtual double  GetArgDouble(asUINT arg) = 0;
 	virtual void   *GetArgAddress(asUINT arg) = 0;
 	virtual void   *GetArgObject(asUINT arg) = 0;
-#ifdef AS_DEPRECATED
-	virtual void   *GetArgPointer(asUINT arg) = 0;
-#endif
 	virtual void   *GetAddressOfArg(asUINT arg) = 0;
 	virtual int     GetArgTypeId(asUINT arg) = 0;
 
@@ -700,11 +712,15 @@ public:
 	virtual void   *GetReturnPointer() = 0;
 	virtual int     GetReturnTypeId() = 0;
 
+#ifdef AS_DEPRECATED
+	virtual void   *GetArgPointer(asUINT arg) = 0;
+#endif
+
 protected:
 	virtual ~asIScriptGeneric() {}
 };
 
-class asIScriptStruct
+class asIScriptObject
 {
 public:
 	virtual asIScriptEngine *GetEngine() const = 0;
@@ -713,19 +729,24 @@ public:
 	virtual int AddRef() = 0;
 	virtual int Release() = 0;
 
-	// Struct type
-	virtual int            GetStructTypeId() = 0;
+	// Type info
+	virtual int            GetTypeId() = 0;
 	virtual asIObjectType *GetObjectType() = 0;
 
-	// Struct properties
+	// Class properties
 	virtual int         GetPropertyCount() = 0;
 	virtual int         GetPropertyTypeId(asUINT prop) = 0;
 	virtual const char *GetPropertyName(asUINT prop) = 0;
 	virtual void       *GetPropertyPointer(asUINT prop) = 0;
-	virtual int         CopyFrom(asIScriptStruct *other) = 0;
+
+	virtual int         CopyFrom(asIScriptObject *other) = 0;
+
+#ifdef AS_DEPRECATED
+	virtual int            GetStructTypeId() = 0;
+#endif
 
 protected:
-	virtual ~asIScriptStruct() {}
+	virtual ~asIScriptObject() {}
 };
 
 class asIScriptArray

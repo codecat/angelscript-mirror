@@ -499,11 +499,7 @@ const int BCT_ClrHi     = BCTYPE_NO_ARG;
 
 // Temporary
 const int BCT_PSP       = BCTYPE_W_ARG;
-#ifndef BUILD_WITHOUT_LINE_CUES
-	const int BCT_LINE  = BCTYPE_NO_ARG;
-#else
-	const int BCT_LINE  = BCTYPE_INFO;
-#endif
+const int BCT_LINE      = BCTYPE_NO_ARG; // Same as suspend
 
 const int bcTypes[256] =
 {

@@ -131,8 +131,7 @@ void CScriptDictionary::Set(const string &key, void *value, int typeId)
 // different type.
 void CScriptDictionary::Set(const string &key, asINT64 &value)
 {
-	int typeId = engine->GetTypeIdByDecl("int64");
-	Set(key, &value, typeId);
+	Set(key, &value, asTYPEID_INT64);
 }
 
 // This overloaded method is implemented so that all floating point types 
@@ -141,8 +140,7 @@ void CScriptDictionary::Set(const string &key, asINT64 &value)
 // retrieves the stored value using a different type.
 void CScriptDictionary::Set(const string &key, double &value)
 {
-	int typeId = engine->GetTypeIdByDecl("double");
-	Set(key, &value, typeId);
+	Set(key, &value, asTYPEID_DOUBLE);
 }
 
 // Returns true if the value was successfully retrieved
@@ -191,14 +189,12 @@ bool CScriptDictionary::Get(const string &key, void *value, int typeId) const
 			}
 
 			// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
-			int intTypeId = engine->GetTypeIdByDecl("int64");
-			int fltTypeId = engine->GetTypeIdByDecl("double");
-			if( it->second.typeId == intTypeId && typeId == fltTypeId )
+			if( it->second.typeId == asTYPEID_INT64 && typeId == asTYPEID_DOUBLE )
 			{
 				*(double*)value = double(it->second.valueInt);
 				return true;
 			}
-			else if( it->second.typeId == fltTypeId && typeId == intTypeId )
+			else if( it->second.typeId == asTYPEID_DOUBLE && typeId == asTYPEID_INT64 )
 			{
 				*(asINT64*)value = asINT64(it->second.valueFlt);
 				return true;
@@ -215,14 +211,12 @@ bool CScriptDictionary::Get(const string &key, void *value, int typeId) const
 
 bool CScriptDictionary::Get(const string &key, asINT64 &value) const
 {
-	int typeId = engine->GetTypeIdByDecl("int64");
-	return Get(key, &value, typeId);
+	return Get(key, &value, asTYPEID_INT64);
 }
 
 bool CScriptDictionary::Get(const string &key, double &value) const
 {
-	int typeId = engine->GetTypeIdByDecl("double");
-	return Get(key, &value, typeId);
+	return Get(key, &value, asTYPEID_DOUBLE);
 }
 
 bool CScriptDictionary::Exists(const string &key) const

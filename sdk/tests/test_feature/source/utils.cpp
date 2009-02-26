@@ -170,8 +170,7 @@ void InstallMemoryManager()
 	assert( strstr(asGetLibraryOptions(), " AS_DEBUG ") );
 #endif
 
-	if( !strstr(asGetLibraryOptions(), " AS_NO_USER_ALLOC ") )
-		asSetGlobalMemoryFunctions((asALLOCFUNC_t)MyAllocWithStats, MyFreeWithStats);
+	asSetGlobalMemoryFunctions((asALLOCFUNC_t)MyAllocWithStats, MyFreeWithStats);
 }
 
 void PrintAllocIndices()
@@ -186,9 +185,6 @@ void PrintAllocIndices()
 
 void RemoveMemoryManager()
 {
-	if( strstr(asGetLibraryOptions(), " AS_NO_USER_ALLOC ") )
-		return;
-
 	asThreadCleanup();
 
 	PrintAllocIndices();

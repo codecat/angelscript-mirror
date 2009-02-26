@@ -116,7 +116,7 @@ void *asCMemoryMgr::AllocScriptNode()
 
 	LEAVECRITICALSECTION(cs);
 
-#if defined(AS_DEBUG) && !defined(AS_NO_USER_ALLOC)
+#if defined(AS_DEBUG) 
 	return ((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(asCScriptNode), __FILE__, __LINE__);
 #else
 	return userAlloc(sizeof(asCScriptNode));
@@ -141,7 +141,7 @@ void *asCMemoryMgr::AllocByteInstruction()
 	if( byteInstructionPool.GetLength() )
 		return byteInstructionPool.PopLast();
 
-#if defined(AS_DEBUG) && !defined(AS_NO_USER_ALLOC)
+#if defined(AS_DEBUG) 
 	return ((asALLOCFUNCDEBUG_t)(userAlloc))(sizeof(cByteInstruction), __FILE__, __LINE__);
 #else
 	return userAlloc(sizeof(cByteInstruction));
