@@ -48,34 +48,45 @@ BEGIN_AS_NAMESPACE
 
 class asCObjectType;
 
+
+// TODO: GetPropertyPointer should be GetAddressOfProperty
+
 class asCScriptObject : public asIScriptObject
 {
 public:
-	asCScriptObject(asCObjectType *objType);
-	virtual ~asCScriptObject();
-
+//===================================
+// From asIScriptObject
+//===================================
 	asIScriptEngine *GetEngine() const;
 
+	// Memory management
 	int AddRef();
 	int Release();
 
+	// Type info
+	int            GetTypeId() const;
+	asIObjectType *GetObjectType() const;
+
+	// Class properties
+	int         GetPropertyCount() const;
+	int         GetPropertyTypeId(asUINT prop) const;
+	const char *GetPropertyName(asUINT prop) const;
+	void       *GetPropertyPointer(asUINT prop);
+
+	int         CopyFrom(asIScriptObject *other);
+
 #ifdef AS_DEPRECATED
 	// deprecated since 2009-02-25, 2.16.0
-	int GetStructTypeId();
+	int GetStructTypeId() const;
 #endif
-	int GetTypeId();
-	asIObjectType *GetObjectType();
 
-	int GetPropertyCount();
-	int GetPropertyTypeId(asUINT prop);
-	const char *GetPropertyName(asUINT prop);
-
-	// TODO: Should be GetAddressOfProperty
-	void *GetPropertyPointer(asUINT prop);
+//====================================
+// Internal
+//====================================
+	asCScriptObject(asCObjectType *objType);
+	virtual ~asCScriptObject();
 
 	asCScriptObject &operator=(const asCScriptObject &other);
-
-	int CopyFrom(asIScriptObject *other);
 
 	// GC methods
 	void Destruct();
@@ -85,7 +96,6 @@ public:
 	void EnumReferences(asIScriptEngine *engine);
 	void ReleaseAllHandles(asIScriptEngine *engine);
 
-//protected:
 	// Used for properties
 	void *AllocateObject(asCObjectType *objType, asCScriptEngine *engine);
 	void FreeObject(void *ptr, asCObjectType *objType, asCScriptEngine *engine);

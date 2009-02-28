@@ -103,16 +103,36 @@ struct asSEnumValue
 class asCScriptEngine;
 
 // TODO: memory: Need to minimize used memory here, because not all types use all properties of the class
+
+// TODO: Need method to determine object type flags, i.e. ref or value type, app or script class, interface, etc.
+
+// TODO: Need GetTypeId, that should return the type id for this object type.
+// TODO: The type id should have flags for diferenciating between value types and reference types. It should also have a flag for differenciating interface types.
+
+// TODO: Need GetTypeFlags that should return asOBJ_ flags. 
+
+// TODO: Need GetModule, that should return asIScriptModule where this type is declared. Interfaces that use any type that 
+//       is specific to the module will also return the module name. Otherwise the module name will not be returned.
+
 class asCObjectType : public asIObjectType
 {
 public:
-	// From asIObjectType
+//=====================================
+// From asIObjectType
+//=====================================
 	asIScriptEngine *GetEngine() const;
 	const char      *GetName(int *length = 0) const;
-	asIObjectType   *GetSubType() const;
+	asIObjectType   *GetBaseType() const;
+	bool             IsInterface() const;
+
+	// Implemented interfaces
 	int              GetInterfaceCount() const;
 	asIObjectType   *GetInterface(asUINT index) const;
-	bool             IsInterface() const;
+
+	// Factories
+	int                GetFactoryCount() const;
+	int                GetFactoryIdByIndex(int index) const;
+	int                GetFactoryIdByDecl(const char *decl) const;
 
 	// Methods
 	int                GetMethodCount() const;
@@ -121,13 +141,19 @@ public:
 	int                GetMethodIdByDecl(const char *decl) const;
 	asIScriptFunction *GetMethodDescriptorByIndex(int index) const;
 
-	// TODO: These should be const
 	// Properties
-	int         GetPropertyCount();
-	int         GetPropertyTypeId(asUINT prop);
-	const char *GetPropertyName(asUINT prop, int *length = 0);
+	int         GetPropertyCount() const;
+	int         GetPropertyTypeId(asUINT prop) const;
+	const char *GetPropertyName(asUINT prop, int *length = 0) const;
 
+#ifdef AS_DEPRECATED
+	// deprecated since 2009-02-26, 2.16.0
+	asIObjectType   *GetSubType() const;
+#endif
 
+//===========================================
+// Internal
+//===========================================
 public:
 	asCObjectType(); 
 	asCObjectType(asCScriptEngine *engine);

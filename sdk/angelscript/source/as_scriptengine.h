@@ -60,6 +60,8 @@ BEGIN_AS_NAMESPACE
 class asCBuilder;
 class asCContext;
 
+// TODO: Remove CreateScriptObject. Objects should be created by calling the factory function instead.
+
 class asCScriptEngine : public asIScriptEngine
 {
 //=============================================================
@@ -240,7 +242,8 @@ public:
 	asCModule *GetModule(int id);
 	asCModule *GetModuleFromFuncId(int funcId);
 
-	int  GetMethodIDByDecl(const asCObjectType *ot, const char *decl, asCModule *mod);
+	int  GetMethodIdByDecl(const asCObjectType *ot, const char *decl, asCModule *mod);
+	int  GetFactoryIdByDecl(const asCObjectType *ot, const char *decl);
 
 	int  GetNextScriptFunctionId();
 	void SetScriptFunction(asCScriptFunction *func);

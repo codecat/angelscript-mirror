@@ -78,7 +78,6 @@ class asIScriptFunction;
 class asIBinaryStream;
 
 #ifdef AS_DEPRECATED
-// deprecated since 2009-02-25, 2.16.0
 typedef asIScriptObject asIScriptStruct;
 #endif
 
@@ -458,7 +457,6 @@ enum asETypeIdFlags
 	//! The bit that shows if the type is an application registered type
 	asTYPEID_APPOBJECT      = 0x04000000,
 #ifdef AS_DEPRECATED
-	// deprecated since 2009-02-25, 2.16.0
 	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
 #endif
 	//! The bit that shows if the type is a script class
@@ -2223,27 +2221,27 @@ public:
 	// Type info
 	//! \brief Returns the type id of the object.
     //! \return The type id of the script object.
-	virtual int            GetTypeId() = 0;
+	virtual int            GetTypeId() const = 0;
 
     //! \brief Returns the object type interface for the object.
     //! \return The object type interface of the script object.
-	virtual asIObjectType *GetObjectType() = 0;
+	virtual asIObjectType *GetObjectType() const = 0;
 
 	// Class properties
 	//! \brief Returns the number of properties that the object contains.
     //! \return The number of member properties of the script object.
-	virtual int         GetPropertyCount() = 0;
+	virtual int         GetPropertyCount() const = 0;
 
     //! \brief Returns the type id of the property referenced by prop.
     //! \param[in] prop The property index.
     //! \return The type id of the member property, or a negative value on error.
     //! \retval asINVALID_ARG \a prop is too large
-	virtual int         GetPropertyTypeId(asUINT prop) = 0;
+	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
 
     //! \brief Returns the name of the property referenced by prop.
     //! \param[in] prop The property index.
     //! \return A null terminated string with the property name.
-	virtual const char *GetPropertyName(asUINT prop) = 0;
+	virtual const char *GetPropertyName(asUINT prop) const = 0;
 
     //! \brief Returns a pointer to the property referenced by prop.
     //! \param[in] prop The property index.
@@ -2264,7 +2262,7 @@ public:
 
 #ifdef AS_DEPRECATED
 	//! \deprecated Since 2.16.0. Use \ref asIScriptObject::GetTypeId instead.
-	virtual int            GetStructTypeId() = 0;
+	virtual int            GetStructTypeId() const = 0;
 #endif
 
 protected:
@@ -2347,23 +2345,47 @@ public:
 	//! \param[out] length The length of the string
 	//! \return A null terminated string with the name of the object type.
 	virtual const char      *GetName(int *length = 0) const = 0;
+	//! \brief Returns the object type that this type derives from.
+	//! \return A pointer to the object type that this type derives from.
+	//!
+	//! This method will only return a pointer in case of script classes that derives from another script class.
+	virtual asIObjectType   *GetBaseType() const = 0;
+    //! \brief Returns true if the type is an interface.
+    //! \return True if the type is an interface.
+	virtual bool             IsInterface() const = 0;
 
-	//! \brief Returns a temporary pointer to the type associated with this descriptor.
-    //! \return A pointer to the sub type.
-	virtual asIObjectType   *GetSubType() const = 0;
-
+	// Implemented interfaces
 	//! \brief Returns the number of interfaces implemented.
     //! \return The number of interfaces implemented by this type.
 	virtual int              GetInterfaceCount() const = 0;
-
 	//! \brief Returns a temporary pointer to the specified interface or null if none are found.
     //! \param[in] index The interface index.
     //! \return A pointer to the interface type.
 	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
 
-    //! \brief Returns true if the type is an interface.
-    //! \return True if the type is an interface.
-	virtual bool             IsInterface() const = 0;
+	// Factories
+	//! \brief Returns the number of factory functions for the object type.
+	//! \return A negative value on error, or the number of factory functions for this object.
+	virtual int                GetFactoryCount() const = 0;
+	//! \brief Returns the factory id by index.
+	//! \param[in] index The index of the factory function.
+	//! \return A negative value on error, or the factory id.
+	//! \retval asINVALID_ARG \a index is out of bounds.
+	virtual int                GetFactoryIdByIndex(int index) const = 0;
+	//! \brief Returns the factory id by declaration.
+	//! \param[in] decl The factory signature.
+	//! \return A negative value on error, or the factory id.
+	//! \retval asNO_FUNCTION Didn't find any matching functions.
+	//! \retval asINVALID_DECLARATION \a decl is not a valid declaration.
+	//! \retval asERROR The module for the type was not built successfully.
+	//!
+	//! The factory function is named after the object type and 
+	//! returns a handle to the object. Example:
+	//! 
+	//! \code
+	//! id = type->GetFactoryIdByDecl("object@ object(int arg1, int arg2)");
+	//! \endcode
+	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
 
 	// Methods
 	//! \brief Returns the number of methods for the object type.
@@ -2407,17 +2429,22 @@ public:
 	// Properties
 	//! \brief Returns the number of properties that the object contains.
     //! \return The number of member properties of the script object.
-	virtual int         GetPropertyCount() = 0;
+	virtual int         GetPropertyCount() const = 0;
     //! \brief Returns the type id of the property referenced by \a prop.
     //! \param[in] prop The property index.
     //! \return The type id of the member property, or a negative value on error.
     //! \retval asINVALID_ARG \a prop is too large
-	virtual int         GetPropertyTypeId(asUINT prop) = 0;
+	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
     //! \brief Returns the name of the property referenced by \a prop.
     //! \param[in] prop The property index.
     //! \param[out] length The length of the string
     //! \return A null terminated string with the property name.
-	virtual const char *GetPropertyName(asUINT prop, int *length = 0) = 0;
+	virtual const char *GetPropertyName(asUINT prop, int *length = 0) const = 0;
+
+#ifdef AS_DEPRECATED
+	//! \deprecated Since 2.16.0.
+	virtual asIObjectType   *GetSubType() const = 0;
+#endif
 
 protected:
 	virtual ~asIObjectType() {}

@@ -499,7 +499,6 @@ const int BCT_ClrHi     = BCTYPE_NO_ARG;
 
 // Temporary
 const int BCT_PSP       = BCTYPE_W_ARG;
-const int BCT_LINE      = BCTYPE_NO_ARG; // Same as suspend
 
 const int bcTypes[256] =
 {
@@ -688,14 +687,14 @@ const int bcTypes[256] =
 	0,0,0,0,0,0,       // 240-245
 	BCT_PSP, 
 	0,  
-	BCT_LINE,  
+	0,  // BC_LINE
 	0, 
 	0,  // 250
 	0,  // 251
 	0,  // 252
 	0,  // 253
 	0,  // 254
-	0,	// BC_LABEL     
+	0,	// BC_LABEL
 };
 
 const int bcStackInc[256] =

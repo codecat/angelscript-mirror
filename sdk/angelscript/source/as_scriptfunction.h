@@ -68,8 +68,11 @@ struct asSSystemFunctionInterface;
 // TODO: Need a method for obtaining the reference modifier for parameters and return type
 
 // TODO: Need a method for obtaining the function type, so that the application can differenciate between the types
+//       This should replace the IsClassMethod and IsInterfaceMethod
 
 // TODO: Need a method for obtaining the read-only flag for class methods
+
+// TODO: GetModuleName should be exchanged for GetModule and should return asIScriptModule pointer
 
 class asCScriptFunction : public asIScriptFunction
 {

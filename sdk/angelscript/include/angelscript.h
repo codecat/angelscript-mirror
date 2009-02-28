@@ -72,7 +72,6 @@ class asIScriptFunction;
 class asIBinaryStream;
 
 #ifdef AS_DEPRECATED
-// deprecated since 2009-02-25, 2.16.0
 typedef asIScriptObject asIScriptStruct;
 #endif
 
@@ -300,7 +299,6 @@ enum asETypeIdFlags
 	asTYPEID_MASK_OBJECT    = 0x1C000000,
 	asTYPEID_APPOBJECT      = 0x04000000,
 #ifdef AS_DEPRECATED
-	// deprecated since 2009-02-25, 2.16.0
 	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
 #endif
 	asTYPEID_SCRIPTOBJECT   = 0x0C000000,
@@ -730,19 +728,19 @@ public:
 	virtual int Release() = 0;
 
 	// Type info
-	virtual int            GetTypeId() = 0;
-	virtual asIObjectType *GetObjectType() = 0;
+	virtual int            GetTypeId() const = 0;
+	virtual asIObjectType *GetObjectType() const = 0;
 
 	// Class properties
-	virtual int         GetPropertyCount() = 0;
-	virtual int         GetPropertyTypeId(asUINT prop) = 0;
-	virtual const char *GetPropertyName(asUINT prop) = 0;
+	virtual int         GetPropertyCount() const = 0;
+	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
+	virtual const char *GetPropertyName(asUINT prop) const = 0;
 	virtual void       *GetPropertyPointer(asUINT prop) = 0;
 
 	virtual int         CopyFrom(asIScriptObject *other) = 0;
 
 #ifdef AS_DEPRECATED
-	virtual int            GetStructTypeId() = 0;
+	virtual int            GetStructTypeId() const = 0;
 #endif
 
 protected:
@@ -777,10 +775,17 @@ class asIObjectType
 public:
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual const char      *GetName(int *length = 0) const = 0;
-	virtual asIObjectType   *GetSubType() const = 0;
+	virtual asIObjectType   *GetBaseType() const = 0;
+	virtual bool             IsInterface() const = 0;
+
+	// Implemented interfaces
 	virtual int              GetInterfaceCount() const = 0;
 	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
-	virtual bool             IsInterface() const = 0;
+
+	// Factories
+	virtual int                GetFactoryCount() const = 0;
+	virtual int                GetFactoryIdByIndex(int index) const = 0;
+	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
 
 	// Methods
 	virtual int                GetMethodCount() const = 0;
@@ -790,9 +795,13 @@ public:
 	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
 
 	// Properties
-	virtual int         GetPropertyCount() = 0;
-	virtual int         GetPropertyTypeId(asUINT prop) = 0;
-	virtual const char *GetPropertyName(asUINT prop, int *length = 0) = 0;
+	virtual int         GetPropertyCount() const = 0;
+	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
+	virtual const char *GetPropertyName(asUINT prop, int *length = 0) const = 0;
+
+#ifdef AS_DEPRECATED
+	virtual asIObjectType   *GetSubType() const = 0;
+#endif
 
 protected:
 	virtual ~asIObjectType() {}

@@ -215,6 +215,19 @@ const t_CallThisCallRetByRef CallThisCallFunctionRetByRef = (t_CallThisCallRetBy
 asDWORD GetReturnedFloat();
 asQWORD GetReturnedDouble();
 
+// TODO: CallSystemFunction should be split in two layers. The top layer
+//       implements the parts that are common to all system functions, 
+//       e.g. the check for generic calling convention, the extraction of the
+//       object pointer, the processing of auto handles, and the pop size.
+//       Remember that the proper handling of auto handles is implemented in 
+//       as_callfunc_x64_gcc.cpp as that code can handle both 32bit and 64bit pointers.
+//
+//       The lower layer implemented in CallNativeSystemFunction will then 
+//       be responsible for just transforming the parameters to the native 
+//       calling convention.
+//       
+//       This should be done for all supported platforms.
+
 int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 {
 	asCScriptEngine *engine = context->engine;

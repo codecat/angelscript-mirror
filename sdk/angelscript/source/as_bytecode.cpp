@@ -1224,6 +1224,8 @@ void asCByteCode::Line(int line, int column)
 		return;
 
 	last->op       = BC_LINE;
+	// If the build is without line cues these instructions will be removed
+	// otherwise they will be transformed into SUSPEND instructions.
 	if( engine->ep.buildWithoutLineCues )
 		last->size = 0;
 	else
@@ -1851,7 +1853,7 @@ int asCByteCode::InstrW_W_W(bcInstr bc, int a, int b, int c)
 int asCByteCode::InstrW_W(bcInstr bc, int a, int b)
 {
 	asASSERT(bcTypes[bc] == BCTYPE_wW_rW_ARG ||
-		   bcTypes[bc] == BCTYPE_rW_rW_ARG);
+	         bcTypes[bc] == BCTYPE_rW_rW_ARG);
 	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
@@ -1869,7 +1871,7 @@ int asCByteCode::InstrW_W(bcInstr bc, int a, int b)
 int asCByteCode::InstrW_DW(bcInstr bc, asWORD a, asDWORD b)
 {
 	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG ||
-           bcTypes[bc] == BCTYPE_rW_DW_ARG);
+             bcTypes[bc] == BCTYPE_rW_DW_ARG);
 	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
@@ -1887,7 +1889,7 @@ int asCByteCode::InstrW_DW(bcInstr bc, asWORD a, asDWORD b)
 int asCByteCode::InstrSHORT_B(bcInstr bc, short a, asBYTE b)
 {
 	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
-	       bcTypes[bc] == BCTYPE_rW_DW_ARG);
+	         bcTypes[bc] == BCTYPE_rW_DW_ARG);
 	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
@@ -1914,7 +1916,7 @@ int asCByteCode::InstrSHORT_B(bcInstr bc, short a, asBYTE b)
 int asCByteCode::InstrSHORT_W(bcInstr bc, short a, asWORD b)
 {
 	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
-	       bcTypes[bc] == BCTYPE_rW_DW_ARG);
+	         bcTypes[bc] == BCTYPE_rW_DW_ARG);
 	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
@@ -1939,7 +1941,7 @@ int asCByteCode::InstrSHORT_W(bcInstr bc, short a, asWORD b)
 int asCByteCode::InstrSHORT_DW(bcInstr bc, short a, asDWORD b)
 {
 	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
-	       bcTypes[bc] == BCTYPE_rW_DW_ARG);
+	         bcTypes[bc] == BCTYPE_rW_DW_ARG);
 	asASSERT(bcStackInc[bc] == 0);
 
 	if( AddInstruction() < 0 )
@@ -2008,8 +2010,8 @@ int asCByteCode::InstrW_FLOAT(bcInstr bc, asWORD a, float b)
 int asCByteCode::InstrSHORT(bcInstr bc, short param)
 {
 	asASSERT(bcTypes[bc] == BCTYPE_rW_ARG || 
-		   bcTypes[bc] == BCTYPE_wW_ARG || 
-		   bcTypes[bc] == BCTYPE_W_ARG);
+	         bcTypes[bc] == BCTYPE_wW_ARG || 
+	         bcTypes[bc] == BCTYPE_W_ARG);
 	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )
@@ -2090,8 +2092,8 @@ int asCByteCode::InstrQWORD(bcInstr bc, asQWORD param)
 int asCByteCode::InstrWORD(bcInstr bc, asWORD param)
 {
 	asASSERT(bcTypes[bc] == BCTYPE_W_ARG  || 
-		   bcTypes[bc] == BCTYPE_rW_ARG || 
-		   bcTypes[bc] == BCTYPE_wW_ARG);
+	         bcTypes[bc] == BCTYPE_rW_ARG || 
+	         bcTypes[bc] == BCTYPE_wW_ARG);
 	asASSERT(bcStackInc[bc] != 0xFFFF);
 
 	if( AddInstruction() < 0 )

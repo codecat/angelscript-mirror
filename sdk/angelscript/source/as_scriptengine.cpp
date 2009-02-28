@@ -710,9 +710,46 @@ void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &typ
 }
 
 
+// internal
+int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *decl)
+{
+	asCModule *mod = 0;
+	
+	// Is this a script class?
+	if( ot->flags & asOBJ_SCRIPT_OBJECT && ot->size > 0 )
+	{
+		mod = scriptFunctions[ot->beh.factory]->module;
+		if( mod && !mod->isBuildWithoutErrors )
+			return asERROR;
+	}
+	
+	asCBuilder bld(this, mod);
+
+	asCScriptFunction func(this, mod);
+	int r = bld.ParseFunctionDeclaration(decl, &func, false);
+	if( r < 0 )
+		return asINVALID_DECLARATION;
+
+	// Search for matching factory function
+	int id = -1;
+	for( size_t n = 0; n < ot->beh.factories.GetLength(); n++ )
+	{
+		asCScriptFunction *f = scriptFunctions[ot->beh.factories[n]];
+		if( f->IsSignatureEqual(&func) )
+		{
+			id = ot->beh.factories[n];
+			break;
+		}
+	}
+	
+	if( id == -1 ) return asNO_FUNCTION;
+
+	return id;
+}
+
 
 // internal
-int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl, asCModule *mod)
+int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl, asCModule *mod)
 {
 	if( mod && !mod->isBuildWithoutErrors )
 		return asERROR;
@@ -724,32 +761,20 @@ int asCScriptEngine::GetMethodIDByDecl(const asCObjectType *ot, const char *decl
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
-	// TODO: optimize: Improve linear search
+	// Set the object type so that the signature can be properly compared
+	// This cast is OK, it will only be used for comparison
+	func.objectType = const_cast<asCObjectType*>(ot);
+
 	// Search script functions for matching interface
 	int id = -1;
 	for( size_t n = 0; n < ot->methods.GetLength(); ++n )
 	{
-		if( func.name == scriptFunctions[ot->methods[n]]->name &&
-			func.returnType == scriptFunctions[ot->methods[n]]->returnType &&
-			func.parameterTypes.GetLength() == scriptFunctions[ot->methods[n]]->parameterTypes.GetLength() )
+		if( func.IsSignatureEqual(scriptFunctions[ot->methods[n]]) )
 		{
-			bool match = true;
-			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
-			{
-				if( func.parameterTypes[p] != scriptFunctions[ot->methods[n]]->parameterTypes[p] )
-				{
-					match = false;
-					break;
-				}
-			}
-
-			if( match )
-			{
-				if( id == -1 )
-					id = ot->methods[n];
-				else
-					return asMULTIPLE_FUNCTIONS;
-			}
+			if( id == -1 )
+				id = ot->methods[n];
+			else
+				return asMULTIPLE_FUNCTIONS;
 		}
 	}
 

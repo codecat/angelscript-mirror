@@ -144,10 +144,13 @@ const char *asCObjectType::GetName(int *length) const
 	return name.AddressOf();
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2009-02-26, 2.16.0
 asIObjectType *asCObjectType::GetSubType() const
 {
 	return subType;
 }
+#endif
 
 int asCObjectType::GetInterfaceCount() const
 {
@@ -172,6 +175,28 @@ bool asCObjectType::IsInterface() const
 		return true;
 
 	return false;
+}
+
+int asCObjectType::GetFactoryCount() const
+{
+	return (int)beh.factories.GetLength();
+}
+
+int asCObjectType::GetFactoryIdByIndex(int index) const
+{
+	if( index < 0 || (unsigned)index >= beh.factories.GetLength() )
+		return asINVALID_ARG;
+
+	return beh.factories[index];
+}
+
+int asCObjectType::GetFactoryIdByDecl(const char *decl) const
+{
+	if( beh.factories.GetLength() == 0 )
+		return asNO_FUNCTION;
+
+	// Let the engine parse the string and find the appropriate factory function
+	return engine->GetFactoryIdByDecl(this, decl);
 }
 
 int asCObjectType::GetMethodCount() const
@@ -216,12 +241,12 @@ int asCObjectType::GetMethodIdByDecl(const char *decl) const
 	if( mod == 0 )
 	{
 		if( engine->scriptFunctions[methods[0]]->funcType == asFUNC_INTERFACE )
-			return engine->GetMethodIDByDecl(this, decl, 0);
+			return engine->GetMethodIdByDecl(this, decl, 0);
 
 		return asNO_MODULE;
 	}
 
-	return engine->GetMethodIDByDecl(this, decl, mod);
+	return engine->GetMethodIdByDecl(this, decl, mod);
 }
 
 asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(int index) const
@@ -232,12 +257,12 @@ asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(int index) const
 	return engine->scriptFunctions[methods[index]];
 }
 
-int asCObjectType::GetPropertyCount()
+int asCObjectType::GetPropertyCount() const
 {
 	return (int)properties.GetLength();
 }
 
-int asCObjectType::GetPropertyTypeId(asUINT prop)
+int asCObjectType::GetPropertyTypeId(asUINT prop) const
 {
 	if( prop >= properties.GetLength() )
 		return asINVALID_ARG;
@@ -245,13 +270,18 @@ int asCObjectType::GetPropertyTypeId(asUINT prop)
 	return engine->GetTypeIdFromDataType(properties[prop]->type);
 }
 
-const char *asCObjectType::GetPropertyName(asUINT prop, int *length)
+const char *asCObjectType::GetPropertyName(asUINT prop, int *length) const
 {
 	if( prop >= properties.GetLength() )
 		return 0;
 
 	if( length ) *length = (int)properties[prop]->name.GetLength();
 	return properties[prop]->name.AddressOf();
+}
+
+asIObjectType *asCObjectType::GetBaseType() const
+{
+	return derivedFrom; 
 }
 
 END_AS_NAMESPACE

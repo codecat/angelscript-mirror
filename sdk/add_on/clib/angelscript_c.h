@@ -553,15 +553,21 @@ extern "C"
 
 	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
 	AS_API const char              *asObjectType_GetName(const asIObjectType *o);
-	AS_API asIObjectType           *asObjectType_GetSubType(const asIObjectType *o);
 	AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o);
 	AS_API asIObjectType           *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
 	AS_API asBOOL                   asObjectType_IsInterface(const asIObjectType *o);
+	AS_API asIObjectType           *asObjectType_GetBaseType(const asIObjectType *o);
+	AS_API int                      asObjectType_GetFactoryCount(const asIObjectType *o);
+	AS_API int                      asObjectType_GetFactoryIdByIndex(const asIObjectType *o, int index);
+	AS_API int                      asObjectType_GetFactoryIdByDecl(const asIObjectType *o, const char *decl);
 	AS_API int                      asObjectType_GetMethodCount(const asIObjectType *o);
 	AS_API int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index);
 	AS_API int                      asObjectType_GetMethodIdByName(const asIObjectType *o, const char *name);
 	AS_API int                      asObjectType_GetMethodIdByDecl(const asIObjectType *o, const char *decl);
 	AS_API asIScriptFunction       *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index);
+	AS_API int                      asObjectType_GetPropertyCount(const asIObjectType *o);
+	AS_API int                      asObjectType_GetPropertyTypeId(const asIObjectType *o, asUINT prop);
+	AS_API const char              *asObjectType_GetPropertyName(const asIObjectType *o, asUINT prop, int *length);
 
 	AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);

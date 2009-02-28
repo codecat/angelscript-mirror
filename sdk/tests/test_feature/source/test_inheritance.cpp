@@ -285,6 +285,24 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 		fail = true;
 	}
 
+	// Test that it is possible to determine base class from object type interface
+	asIObjectType *d = engine->GetObjectTypeById(mod->GetTypeIdByDecl("Derived"));
+	if( d == 0 )
+		fail = true;
+	else if( d->GetBaseType() == 0 )
+		fail = true;
+	else if( strcmp(d->GetBaseType()->GetName(), "Base") != 0 )
+		fail = true;
+
+	// Test factory id
+	if( d->GetFactoryCount() != 2 )
+		fail = true;
+	int fid = d->GetFactoryIdByDecl("Derived@ Derived(int)");
+	if( fid < 0 )
+		fail = true;
+	if( fid != d->GetFactoryIdByIndex(1) )
+		fail = true;
+
 	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. 
 	//       We can follow D's design of using this(args) to call the constructor
 

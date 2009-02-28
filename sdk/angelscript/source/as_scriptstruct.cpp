@@ -315,7 +315,7 @@ void asCScriptObject::CallDestructor()
 	}
 }
 
-asIObjectType *asCScriptObject::GetObjectType()
+asIObjectType *asCScriptObject::GetObjectType() const
 {
 	return objType;
 }
@@ -343,18 +343,18 @@ int asCScriptObject::GetStructTypeId()
 }
 #endif
 
-int asCScriptObject::GetTypeId()
+int asCScriptObject::GetTypeId() const
 {
 	asCDataType dt = asCDataType::CreateObject(objType, false);
 	return objType->engine->GetTypeIdFromDataType(dt);
 }
 
-int asCScriptObject::GetPropertyCount()
+int asCScriptObject::GetPropertyCount() const
 {
 	return (int)objType->properties.GetLength();
 }
 
-int asCScriptObject::GetPropertyTypeId(asUINT prop)
+int asCScriptObject::GetPropertyTypeId(asUINT prop) const
 {
 	if( prop >= objType->properties.GetLength() )
 		return asINVALID_ARG;
@@ -362,7 +362,7 @@ int asCScriptObject::GetPropertyTypeId(asUINT prop)
 	return objType->engine->GetTypeIdFromDataType(objType->properties[prop]->type);
 }
 
-const char *asCScriptObject::GetPropertyName(asUINT prop)
+const char *asCScriptObject::GetPropertyName(asUINT prop) const
 {
 	if( prop >= objType->properties.GetLength() )
 		return 0;

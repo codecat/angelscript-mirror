@@ -48,21 +48,21 @@ in which order the script sections are added to the module, as the compiler
 is able to resolve all names regardless of where they are declared in the script.
 
 \code
-  // Create a new script module
-  asIScriptModule *mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
-  
-  // Load and add the script sections to the module
-  string script;
-  LoadScriptFile("script.as", script);
-  mod->AddScriptSection("script.as", script.c_str());
-  
-  // Build the module
-  int r = mod->Build();
-  if( r < 0 )
-  {
-    // The build failed. The message stream will have received  
-    // compiler errors that shows what needs to be fixed
-  }
+// Create a new script module
+asIScriptModule *mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+
+// Load and add the script sections to the module
+string script;
+LoadScriptFile("script.as", script);
+mod->AddScriptSection("script.as", script.c_str());
+
+// Build the module
+int r = mod->Build();
+if( r < 0 )
+{
+  // The build failed. The message stream will have received  
+  // compiler errors that shows what needs to be fixed
+}
 \endcode
 
 AngelScript doesn't provide built-in functions for loading script files as most
@@ -96,13 +96,13 @@ this support and more. It is a helper class for loading files, perform a pre-pro
 and then building the module. With it the code for building a module looks like this:
 
 \code
-  CScriptBuilder builder;
-  int r = builder.BuildScriptFromFile(engine, "module", "script.as");
-  if( r < 0 )
-  {
-    // The build failed. The message stream will have received  
-    // compiler errors that shows what needs to be fixed
-  }
+CScriptBuilder builder;
+int r = builder.BuildScriptFromFile(engine, "module", "script.as");
+if( r < 0 )
+{
+  // The build failed. The message stream will have received  
+  // compiler errors that shows what needs to be fixed
+}
 \endcode
 
 \todo Link to the page about pre-compiled bytecode

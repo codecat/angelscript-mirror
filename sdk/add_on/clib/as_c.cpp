@@ -243,15 +243,21 @@ AS_API int              asArray_CopyFrom(asIScriptArray *a, asIScriptArray *othe
 
 AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o)                             { return o->GetEngine(); }
 AS_API const char              *asObjectType_GetName(const asIObjectType *o)                               { return o->GetName(); }
-AS_API asIObjectType           *asObjectType_GetSubType(const asIObjectType *o)                            { return o->GetSubType(); }
 AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o)                     { return o->GetInterfaceCount(); }
 AS_API asIObjectType           *asObjectType_GetInterface(const asIObjectType *o, asUINT index)            { return o->GetInterface(index); }
 AS_API asBOOL                   asObjectType_IsInterface(const asIObjectType *o)                           { return o->IsInterface() ? asTRUE : asFALSE; }
+AS_API asIObjectType           *asObjectType_GetBaseType(const asIObjectType *o)                           { return o->GetBaseType(); }
+AS_API int                      asObjectType_GetFactoryCount(const asIObjectType *o)                       { return o->GetFactoryCount(); }
+AS_API int                      asObjectType_GetFactoryIdByIndex(const asIObjectType *o, int index)        { return o->GetFactoryIdByIndex(); }
+AS_API int                      asObjectType_GetFactoryIdByDecl(const asIObjectType *o, const char *decl)  { return o->GetFactoryIdByDecl(decl); }
 AS_API int                      asObjectType_GetMethodCount(const asIObjectType *o)                        { return o->GetMethodCount(); }
 AS_API int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index)         { return o->GetMethodIdByIndex(index); }
 AS_API int                      asObjectType_GetMethodIdByName(const asIObjectType *o, const char *name)   { return o->GetMethodIdByName(name); }
 AS_API int                      asObjectType_GetMethodIdByDecl(const asIObjectType *o, const char *decl)   { return o->GetMethodIdByDecl(decl); }
 AS_API asIScriptFunction       *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index) { return o->GetMethodDescriptorByIndex(index); }
+AS_API int                      asObjectType_GetPropertyCount(const asIObjectType *o)                          { return o->GetPropertyCount(); }
+AS_API int                      asObjectType_GetPropertyTypeId(const asIObjectType *o, asUINT prop)            { return o->GetPropertyTypeId(prop); }
+AS_API const char              *asObjectType_GetPropertyName(const asIObjectType *o, asUINT prop, int *length) { return o->GetPropertyName(prop, length); }
 
 AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f)                 { return f->GetEngine(); }
 AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f)             { return f->GetModuleName(); }
