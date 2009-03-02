@@ -155,13 +155,13 @@
 				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp">
-			</File>
-			<File
-				RelativePath="..\..\source\stdstring.cpp">
 			</File>
 			<File
 				RelativePath="..\..\source\test2modules.cpp">
@@ -559,10 +559,10 @@
 				RelativePath="..\..\..\..\add_on\scriptfile\scriptfile.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h">
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.h">
 			</File>
 			<File
-				RelativePath="..\..\source\stdstring.h">
+				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h">
 			</File>
 			<File
 				RelativePath="..\..\source\stdvector.h">

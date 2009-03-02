@@ -144,6 +144,16 @@ const char *asCObjectType::GetName(int *length) const
 	return name.AddressOf();
 }
 
+asDWORD asCObjectType::GetFlags() const
+{
+	return flags;
+}
+
+asUINT asCObjectType::GetSize() const
+{
+	return size;
+}
+
 #ifdef AS_DEPRECATED
 // deprecated since 2009-02-26, 2.16.0
 asIObjectType *asCObjectType::GetSubType() const
@@ -164,17 +174,18 @@ asIObjectType *asCObjectType::GetInterface(asUINT index) const
 	return interfaces[index];
 }
 
-asIScriptEngine *asCObjectType::GetEngine() const
-{
-	return engine;
-}
-
+// internal
 bool asCObjectType::IsInterface() const
 {
 	if( (flags & asOBJ_SCRIPT_OBJECT) && size == 0 )
 		return true;
 
 	return false;
+}
+
+asIScriptEngine *asCObjectType::GetEngine() const
+{
+	return engine;
 }
 
 int asCObjectType::GetFactoryCount() const
@@ -283,6 +294,107 @@ asIObjectType *asCObjectType::GetBaseType() const
 {
 	return derivedFrom; 
 }
+
+int asCObjectType::GetPropertyOffset(asUINT prop) const
+{
+	if( prop >= properties.GetLength() )
+		return 0;
+
+	return properties[prop]->byteOffset;
+}
+
+int asCObjectType::GetBehaviourCount() const
+{
+	// Count the number of behaviours (except factory functions)
+	int count = 0;
+	
+	if( beh.destruct )               count++;
+	if( beh.addref )                 count++;
+	if( beh.release )                count++;
+	if( beh.gcGetRefCount )          count++;
+	if( beh.gcSetFlag )              count++;
+	if( beh.gcGetFlag )              count++;
+	if( beh.gcEnumReferences )       count++;
+	if( beh.gcReleaseAllReferences ) count++; 
+
+	count += beh.constructors.GetLength();
+	count += beh.operators.GetLength() / 2;
+
+	return count;
+}
+
+int asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const
+{
+	// Find the correct behaviour
+	int count = 0;
+
+	if( beh.destruct && count++ == index ) // only increase count if the behaviour is registered
+	{ 
+		if( outBehaviour ) *outBehaviour = asBEHAVE_DESTRUCT;
+		return beh.destruct;
+	}
+
+	if( beh.addref && count++ == index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_ADDREF;
+		return beh.addref;
+	}
+
+	if( beh.release && count++ == index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_RELEASE;
+		return beh.release;
+	}
+
+	if( beh.gcGetRefCount && count++ == index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_GETREFCOUNT;
+		return beh.gcGetRefCount;
+	}
+
+	if( beh.gcSetFlag && count++ == index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_SETGCFLAG;
+		return beh.gcSetFlag;
+	}
+
+	if( beh.gcGetFlag && count++ == index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_GETGCFLAG;
+		return beh.gcGetFlag;
+	}
+
+	if( beh.gcEnumReferences && count++ == index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_ENUMREFS;
+		return beh.gcEnumReferences;
+	}
+
+	if( beh.gcReleaseAllReferences && count++ == index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_RELEASEREFS;
+		return beh.gcReleaseAllReferences;
+	}
+
+	if( index - count < beh.constructors.GetLength() )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_CONSTRUCT;
+		return beh.constructors[index - count];
+	}
+	else 
+		count += beh.constructors.GetLength();
+
+	if( index - count < beh.operators.GetLength() / 2 )
+	{
+		index = 2*(index - count);
+
+		if( outBehaviour ) *outBehaviour = static_cast<asEBehaviours>(beh.operators[index]);
+		return beh.operators[index + 1];
+	}
+
+	return asINVALID_ARG;
+}
+
 
 END_AS_NAMESPACE
 

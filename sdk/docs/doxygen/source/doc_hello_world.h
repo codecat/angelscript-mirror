@@ -20,8 +20,8 @@ r = engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL); as
 // AngelScript doesn't have a built-in string type, as there is no definite standard 
 // string type for C++ applications. Every developer is free to register it's own string type.
 // The SDK do however provide a standard add-on for registering a string type, so it's not
-// necessary to register your own string type if you don't want to.
-RegisterScriptString(engine);
+// necessary to implement the registration yourself if you don't want to.
+RegisterStdString(engine);
 
 // Register the function that we want the scripts to call 
 r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL); assert( r >= 0 );
@@ -109,7 +109,7 @@ void print(string &msg)
 }
 \endcode
 
-\see \ref doc_compile_script_msg, \ref doc_addon_build, and \ref doc_addon_string
+\see \ref doc_compile_script_msg, \ref doc_addon_build, and \ref doc_addon_std_string
 
 
 */

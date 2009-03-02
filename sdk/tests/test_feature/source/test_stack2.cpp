@@ -1,7 +1,6 @@
 
 #include <stdarg.h>
 #include "utils.h"
-#include "stdstring.h"
 
 using std::string;
 

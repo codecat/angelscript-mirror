@@ -380,6 +380,18 @@ bool TestRefScoped()
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_ASSIGNMENT, "scoped &f(const scoped &in)", asFUNCTION(Scoped_Assignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "scoped @f(const scoped &in, int)", asFUNCTION(Scoped_Add), asCALL_CDECL); assert( r >= 0 );
 
+	// Enumerate the objects behaviours
+	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("scoped"));
+	if( ot->GetBehaviourCount() != 3 )
+		fail = true;
+	asEBehaviours beh;
+	ot->GetBehaviourByIndex(0, &beh);
+	if( beh != asBEHAVE_RELEASE )
+		fail = true;
+	ot->GetBehaviourByIndex(2, &beh);
+	if( beh != asBEHAVE_ASSIGNMENT )
+		fail = true;
+
 	// Don't permit handles to be taken
 	r = engine->ExecuteString(0, "scoped @s = null");
 	if( r >= 0 ) fail = true;

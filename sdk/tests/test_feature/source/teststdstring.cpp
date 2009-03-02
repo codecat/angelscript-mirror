@@ -6,7 +6,6 @@
 //
 
 #include "utils.h"
-#include "stdstring.h"
 using namespace std;
 
 #define TESTNAME "TestStdString"

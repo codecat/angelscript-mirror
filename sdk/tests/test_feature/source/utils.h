@@ -12,6 +12,7 @@
 #include <angelscript.h>
 
 #include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/scriptstdstring/scriptstdstring.h"
 
 #ifdef AS_USE_NAMESPACE
 using namespace AngelScript;

@@ -128,7 +128,8 @@ typedef enum
 	asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
 	asOBJ_APP_PRIMITIVE         = 0x1000,
 	asOBJ_APP_FLOAT             = 0x2000,
-	asOBJ_MASK_VALID_FLAGS      = 0x3F3F
+	asOBJ_MASK_VALID_FLAGS      = 0x3F3F,
+	asOBJ_SCRIPT_OBJECT         = 0x10000
 } asEObjTypeFlags;
 
 // Behaviours
@@ -553,10 +554,13 @@ extern "C"
 
 	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
 	AS_API const char              *asObjectType_GetName(const asIObjectType *o);
+	AS_API asIObjectType           *asObjectType_GetBaseType(const asIObjectType *o);
+	AS_API asDWORD                  asObjectType_GetFlags(const asIObjectType *o);
+	AS_API asUINT                   asObjectType_GetSize(const asIObjectType *o);
+	AS_API int                      asObjectType_GetBehaviourCount(const asIObjectType *o);
+	AS_API int                      asObjectType_GetBehaviourByIndex(const asIObjectType *o, asUINT index, asEBehaviours *outBehaviour);
 	AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o);
 	AS_API asIObjectType           *asObjectType_GetInterface(const asIObjectType *o, asUINT index);
-	AS_API asBOOL                   asObjectType_IsInterface(const asIObjectType *o);
-	AS_API asIObjectType           *asObjectType_GetBaseType(const asIObjectType *o);
 	AS_API int                      asObjectType_GetFactoryCount(const asIObjectType *o);
 	AS_API int                      asObjectType_GetFactoryIdByIndex(const asIObjectType *o, int index);
 	AS_API int                      asObjectType_GetFactoryIdByDecl(const asIObjectType *o, const char *decl);
@@ -568,6 +572,7 @@ extern "C"
 	AS_API int                      asObjectType_GetPropertyCount(const asIObjectType *o);
 	AS_API int                      asObjectType_GetPropertyTypeId(const asIObjectType *o, asUINT prop);
 	AS_API const char              *asObjectType_GetPropertyName(const asIObjectType *o, asUINT prop, int *length);
+	AS_API int                      asObjectType_GetPropertyOffset(const asIObjectType *o, asUINT prop);
 
 	AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f);
 	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);

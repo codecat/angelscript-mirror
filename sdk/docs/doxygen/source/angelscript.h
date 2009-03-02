@@ -158,7 +158,9 @@ enum asEObjTypeFlags
 	asOBJ_APP_PRIMITIVE         = 0x1000,
 	//! The C++ type is a float or double. Only valid with asOBJ_VALUE.
 	asOBJ_APP_FLOAT             = 0x2000,
-	asOBJ_MASK_VALID_FLAGS      = 0x3F3F
+	asOBJ_MASK_VALID_FLAGS      = 0x3F3F,
+	//! The object is a script class or an interface
+	asOBJ_SCRIPT_OBJECT         = 0x10000
 };
 
 // Behaviours
@@ -2341,6 +2343,7 @@ public:
     //! \return A pointer to the engine.
 	virtual asIScriptEngine *GetEngine() const = 0;
 
+	// Type info
 	//! \brief Returns a temporary pointer to the name of the datatype.
 	//! \param[out] length The length of the string
 	//! \return A null terminated string with the name of the object type.
@@ -2350,11 +2353,28 @@ public:
 	//!
 	//! This method will only return a pointer in case of script classes that derives from another script class.
 	virtual asIObjectType   *GetBaseType() const = 0;
-    //! \brief Returns true if the type is an interface.
-    //! \return True if the type is an interface.
-	virtual bool             IsInterface() const = 0;
+	//! \brief Returns the object type flags.
+	//! \return A bit mask with the flags from \ref asEObjTypeFlags.
+	virtual asDWORD          GetFlags() const = 0;
+	//! \brief Returns the size of the object type.
+	//! \return The number of bytes necessary to store instances of this type.
+	//!
+	//! Application registered reference types doesn't store this information, 
+	//! as the script engine doesn't allocate memory for these itself.
+	virtual asUINT           GetSize() const = 0;
 
-	// Implemented interfaces
+	// Behaviours
+	//! \brief Returns the number of behaviours.
+	//! \return The number of behaviours for this type.
+	virtual int GetBehaviourCount() const = 0;
+	//! \brief Returns the function id and type of the behaviour.
+	//! \param[in] index The index of the behaviour.
+	//! \param[out] outBehaviour Receives the type of the behaviour.
+	//! \return The function id of the behaviour.
+	//! \retval asINVALID_ARG The \a index is too large.
+	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+
+	// Interfaces
 	//! \brief Returns the number of interfaces implemented.
     //! \return The number of interfaces implemented by this type.
 	virtual int              GetInterfaceCount() const = 0;
@@ -2440,10 +2460,16 @@ public:
     //! \param[out] length The length of the string
     //! \return A null terminated string with the property name.
 	virtual const char *GetPropertyName(asUINT prop, int *length = 0) const = 0;
+	//! \brief Returns the offset of the property in the memory layout.
+	//! \param[in] prop The property index.
+	//! \return The offset of the property in the memory layout.
+	virtual int         GetPropertyOffset(asUINT prop) const = 0;
 
 #ifdef AS_DEPRECATED
 	//! \deprecated Since 2.16.0.
 	virtual asIObjectType   *GetSubType() const = 0;
+	//! \deprecated Since 2.16.0. Use (GetFlags() & asOBJ_SCRIPT_OBJECT) && (GetSize() == 0) instead.
+	virtual bool             IsInterface() const = 0;
 #endif
 
 protected:

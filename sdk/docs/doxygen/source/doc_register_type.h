@@ -242,7 +242,7 @@ r = engine->RegisterObjectType("pod", sizeof(pod), asOBJ_VALUE | asOBJ_POD | asO
 r = engine->RegisterObjectType("val", sizeof(val), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 \endcode
 
-\see The \ref doc_addon_math3d "vector3" add-on for an example of a value type
+\see The \ref doc_addon_std_string or \ref doc_addon_math3d "vector3" add-on for examples of value types
 
 
 \section doc_reg_val_1 Constructor and destructor

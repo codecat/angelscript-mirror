@@ -14,8 +14,9 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
 
 \page doc_addon_script Script extensions
 
- - \subpage doc_addon_any
+ - \subpage doc_addon_std_string
  - \subpage doc_addon_string
+ - \subpage doc_addon_any
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
@@ -112,20 +113,91 @@ myAny->Retrieve((void*)&str, typeId);
 
 
 
+\page doc_addon_std_string string object (STL)
 
-\page doc_addon_string string object 
+<b>Path:</b> /sdk/add_on/scriptstdstring/
+
+This add-on registers the <code>std::string</code> type as-is with AngelScript. This gives
+perfect compatibility with C++ functions that use <code>std::string</code> in parameters or
+as return type.
+
+A potential drawback is that the <code>std::string</code> type is a value type, thus may 
+increase the number of copies taken when string values are being passed around
+in the script code. However, this is most likely only a problem for scripts 
+that perform a lot of string operations.
+
+Register the type with <code>RegisterStdString(asIScriptEngine*)</code>.
+
+\see \ref doc_addon_string
+
+\section doc_addon_std_string_1 Public C++ interface
+
+Refer to the <code>std::string</code> implementation for your compiler.
+
+\section doc_addon_std_string_2 Public script interface
+
+<pre>
+  class string
+  {
+    // Constructors
+    string();
+    
+    // Returns the length of the string
+    uint length() const;
+    
+    // The string class has several operators that are not expressable in the script syntax yet
+
+    // Assignment and concatenation
+    // string & operator =  (const string &in other)
+    // string & operator += (const string &in other)
+    // string   operator +  (const string &in a, const string &in b)
+    
+    // Access individual characters
+    // uint8 & operator [] (uint)
+    // const uint8 & operator [] (uint) const
+    
+    // Comparison operators
+    // bool operator == (const string &in a, const string &in b)
+    // bool operator != (const string &in a, const string &in b)
+    // bool operator <  (const string &in a, const string &in b)
+    // bool operator <= (const string &in a, const string &in b)
+    // bool operator >  (const string &in a, const string &in b)
+    // bool operator >= (const string &in a, const string &in b)
+    
+    // Automatic conversion from number types to string type
+    // string & operator =  (double val)
+    // string & operator += (double val)
+    // string @ operator +  (double val, const string &in str)
+    // string @ operator +  (const string &in str, double val)
+    // string & operator =  (int val)
+    // string & operator += (int val)
+    // string @ operator +  (int val, const string &in str)
+    // string @ operator +  (const string &in str, int val)
+    // string & operator =  (uint val)
+    // string & operator += (uint val)
+    // string @ operator +  (uint val, const string &in str)
+    // string @ operator +  (const string &in str, uint val)
+  }
+</pre>
+
+
+
+
+\page doc_addon_string string object (reference counted)
 
 <b>Path:</b> /sdk/add_on/scriptstring/
 
 This add-on registers a string type that is in most situations compatible with the 
-std::string, except that it uses reference counting. This means that if you have an
-application function that takes a std::string by reference, you can register it 
+<code>std::string</code>, except that it uses reference counting. This means that if you have an
+application function that takes a <code>std::string</code> by reference, you can register it 
 with AngelScript to take a script string by reference. This works because the CScriptString
-wraps the std::string type, with the std::string type at the first byte of the CScriptString
+wraps the <code>std::string</code> type, with the std::string type at the first byte of the CScriptString
 object.
 
 Register the type with <code>RegisterScriptString(asIScriptEngine*)</code>. Register the 
 utility functions with <code>RegisterScriptStringUtils(asIScriptEngine*)</code>.
+
+\see \ref doc_addon_std_string
 
 \section doc_addon_string_1 Public C++ interface
 
@@ -170,9 +242,9 @@ public:
     // The string class has several operators that are not expressable in the script syntax yet
 
     // Assignment and concatenation
-    // string & operator = (const string &in other)
+    // string & operator =  (const string &in other)
     // string & operator += (const string &in other)
-    // string @ operator + (const string &in a, const string &in b)
+    // string @ operator +  (const string &in a, const string &in b)
     
     // Access individual characters
     // uint8 & operator [] (uint)

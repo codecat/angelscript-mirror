@@ -123,7 +123,8 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
 	asOBJ_APP_PRIMITIVE         = 0x1000,
 	asOBJ_APP_FLOAT             = 0x2000,
-	asOBJ_MASK_VALID_FLAGS      = 0x3F3F
+	asOBJ_MASK_VALID_FLAGS      = 0x3F3F,
+	asOBJ_SCRIPT_OBJECT         = 0x10000
 };
 
 // Behaviours
@@ -774,11 +775,18 @@ class asIObjectType
 {
 public:
 	virtual asIScriptEngine *GetEngine() const = 0;
+
+	// Type info
 	virtual const char      *GetName(int *length = 0) const = 0;
 	virtual asIObjectType   *GetBaseType() const = 0;
-	virtual bool             IsInterface() const = 0;
+	virtual asDWORD          GetFlags() const = 0;
+	virtual asUINT           GetSize() const = 0;
 
-	// Implemented interfaces
+	// Behaviours
+	virtual int GetBehaviourCount() const = 0;
+	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+
+	// Interfaces
 	virtual int              GetInterfaceCount() const = 0;
 	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
 
@@ -798,9 +806,11 @@ public:
 	virtual int         GetPropertyCount() const = 0;
 	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
 	virtual const char *GetPropertyName(asUINT prop, int *length = 0) const = 0;
+	virtual int         GetPropertyOffset(asUINT prop) const = 0;
 
 #ifdef AS_DEPRECATED
 	virtual asIObjectType   *GetSubType() const = 0;
+	virtual bool             IsInterface() const = 0;
 #endif
 
 protected:

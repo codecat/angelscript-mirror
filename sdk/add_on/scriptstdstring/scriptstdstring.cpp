@@ -1,11 +1,9 @@
 #include <assert.h>
 #include <sstream>
-#include "stdstring.h"
+#include "scriptstdstring.h"
 using namespace std;
 
-#ifdef AS_USE_NAMESPACE
-namespace AngelScript {
-#endif
+BEGIN_AS_NAMESPACE
 
 static string StringFactory(asUINT length, const char *s)
 {
@@ -115,6 +113,21 @@ static string AddDoubleString(double f, string &str)
 	return stream.str() + str;
 }
 
+static char *StringCharAt(unsigned int i, string &str)
+{
+	if( i >= str.size() )
+	{
+		// Set a script exception
+		asIScriptContext *ctx = asGetActiveContext();
+		ctx->SetException("Out of range");
+
+		// Return a null pointer
+		return 0;
+	}
+
+	return &str[i];
+}
+
 void RegisterStdString(asIScriptEngine *engine)
 {
 	int r;
@@ -143,6 +156,11 @@ void RegisterStdString(asIScriptEngine *engine)
 	// Register the object methods
 	r = engine->RegisterObjectMethod("string", "uint length() const", asMETHOD(string,size), asCALL_THISCALL); assert( r >= 0 );
 
+	// Register the index operator, both as a mutator and as an inspector
+	// Note that we don't register the operator[] directory, as it doesn't do bounds checking
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_INDEX, "uint8 &f(uint)", asFUNCTION(StringCharAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_INDEX, "const uint8 &f(uint) const", asFUNCTION(StringCharAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
 	// Automatic conversion from values
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(double)", asFUNCTION(AssignDoubleToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(double)", asFUNCTION(AddAssignDoubleToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -160,9 +178,7 @@ void RegisterStdString(asIScriptEngine *engine)
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(uint, const string &in)", asFUNCTION(AddUIntString), asCALL_CDECL); assert( r >= 0 );
 }
 
-#ifdef AS_USE_NAMESPACE
-}
-#endif
+END_AS_NAMESPACE
 
 
 

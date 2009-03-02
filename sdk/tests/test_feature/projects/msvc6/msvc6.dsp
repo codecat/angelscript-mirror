@@ -663,6 +663,14 @@ SOURCE=..\..\..\..\add_on\scriptmath3d\scriptmath3d.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.cpp
 # End Source File
 # Begin Source File
@@ -672,14 +680,6 @@ SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.h
 # Begin Source File
 
 SOURCE=..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\source\stdstring.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\source\stdstring.h
 # End Source File
 # Begin Source File
 

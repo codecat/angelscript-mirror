@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.0 WIP - 2009/02/27</h2>
+<h2>Version 2.16.0 WIP - 2009/03/02</h2>
 
 <ul>
 <li>Bug fixes
@@ -136,9 +136,13 @@ A:hover
 <li>Renamed asIScriptStruct to asIScriptObject.
 <li>Renamed GetStructTypeId to GetTypeId in asIScriptObject.
 <li>Added engine property asEP_BUILD_WITHOUT_LINE_CUES (replaces the config option).
-<li>Added enumeration of factory functions to asIObjectType.
-<li>Added GetBaseType to asIObjectType.
-<li>Deprecated GetSubType in asIObjectType.
+<li>Added enumeration of factory functions and behaviours to asIObjectType.
+<li>Added GetBaseType, GetFlags, GetSize, and GetPropertyOffset to asIObjectType.
+<li>Deprecated GetSubType and IsInterface in asIObjectType.
+</ul>
+<li>Add-ons
+<ul>
+<li>Added registration of std::string as a standard add-on, complementing the CScriptString
 </ul>
 </ul>
 

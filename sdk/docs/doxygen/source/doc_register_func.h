@@ -109,9 +109,10 @@ time tell AngelScript to handle the reference counting for you by using the auto
 
 Strings are a bit complicated as C++ doesn't have one standard way of dealing with them. Because of that AngelScript also doesn't
 impose a specific string type on the applications. Instead the application needs to register the string type it wants to use, and
-then the string parameters needs to be registered accordingly. AngelScript comes with a standard add-on for a string type, which 
+then the string parameters needs to be registered accordingly. AngelScript comes with two standard add-ons for registering string 
+types, one for std::string, and another for a light wrapper on std::string, which 
 for the most part is compatible with std::string, except that it is reference counted.
 
-\see \ref doc_obj_handle, \ref doc_datatypes, \ref doc_addon_string
+\see \ref doc_obj_handle, \ref doc_as_vs_cpp_types, \ref doc_addon_std_string, \ref doc_addon_string
 
 */
