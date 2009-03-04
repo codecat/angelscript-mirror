@@ -139,6 +139,7 @@ namespace TestRefCast           { bool Test(); }
 namespace TestImplicitHandle    { bool Test(); }
 namespace TestMetaData          { bool Test(); }
 namespace TestInheritance       { bool Test(); }
+namespace TestDump              { bool Test(); }
 
 #include "utils.h"
 
@@ -178,6 +179,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestDump::Test()              ) goto failed; else printf("-- TestDump passed\n");
 	if( TestInheritance::Test()       ) goto failed; else printf("-- TestInheritance passed\n");
 	if( TestScriptClassMethod::Test() ) goto failed; else printf("-- TestScriptClassMethod passed\n");
 	if( TestScriptString::Test()      ) goto failed; else printf("-- TestScriptString passed\n");

@@ -567,15 +567,6 @@ asSTypeBehaviour *asCDataType::GetBehaviour() const
 	return objectType ? &objectType->beh : 0; 
 }
 
-//	Named and special data types
-bool asCDataType::IsNamedType() const
-{
-	if( objectType && (objectType->flags & asOBJ_NAMED_TYPE) )
-		return true;
-
-	return false;
-}
-
 bool asCDataType::IsPseudoType() const
 {
 	if( objectType && (objectType->flags & asOBJ_NAMED_PSEUDO) )

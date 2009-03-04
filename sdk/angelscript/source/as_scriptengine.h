@@ -62,6 +62,8 @@ class asCContext;
 
 // TODO: Remove CreateScriptObject. Objects should be created by calling the factory function instead.
 
+
+
 class asCScriptEngine : public asIScriptEngine
 {
 //=============================================================

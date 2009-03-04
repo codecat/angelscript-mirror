@@ -269,6 +269,10 @@ bool Test()
 	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
 	mod->Build();
 
+	// Validate the number of global functions
+	if( mod->GetFunctionCount() != 5 )
+		fail = true;
+
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
 	mod->Build();
@@ -283,6 +287,9 @@ bool Test()
 	// Test loading without releasing the engine first
 	mod->LoadByteCode(&stream);
 
+	if( mod->GetFunctionCount() != 5 )
+		fail = true;
+
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
 	mod->Build();
@@ -296,6 +303,9 @@ bool Test()
 	stream.rpointer = 0;
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->LoadByteCode(&stream);
+
+	if( mod->GetFunctionCount() != 5 )
+		fail = true;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);

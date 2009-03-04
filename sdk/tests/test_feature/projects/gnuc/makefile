@@ -36,6 +36,7 @@ SRCNAMES = \
   test_dict.cpp \
   test_dictionary.cpp \
   test_discard.cpp \
+  test_dump.cpp \
   test_dynamicconfig.cpp \
   test_enum.cpp \
   test_exception.cpp \

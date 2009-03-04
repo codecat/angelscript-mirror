@@ -49,6 +49,8 @@
 		<Unit filename="..\..\..\..\add_on\scriptmath3d\scriptmath3d.h" />
 		<Unit filename="..\..\..\..\add_on\scriptmath\scriptmath.cpp" />
 		<Unit filename="..\..\..\..\add_on\scriptmath\scriptmath.h" />
+		<Unit filename="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp" />
+		<Unit filename="..\..\..\..\add_on\scriptstdstring\scriptstdstring.h" />
 		<Unit filename="..\..\..\..\add_on\scriptstring\scriptstring.cpp" />
 		<Unit filename="..\..\..\..\add_on\scriptstring\scriptstring.h" />
 		<Unit filename="..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp" />
@@ -57,8 +59,6 @@
 		<Unit filename="..\..\source\bstr.h" />
 		<Unit filename="..\..\source\cstring.h" />
 		<Unit filename="..\..\source\main.cpp" />
-		<Unit filename="..\..\source\stdstring.cpp" />
-		<Unit filename="..\..\source\stdstring.h" />
 		<Unit filename="..\..\source\stdvector.h" />
 		<Unit filename="..\..\source\test2modules.cpp" />
 		<Unit filename="..\..\source\test_2func.cpp" />
@@ -90,6 +90,7 @@
 		<Unit filename="..\..\source\test_dict.cpp" />
 		<Unit filename="..\..\source\test_dictionary.cpp" />
 		<Unit filename="..\..\source\test_discard.cpp" />
+		<Unit filename="..\..\source\test_dump.cpp" />
 		<Unit filename="..\..\source\test_dynamicconfig.cpp" />
 		<Unit filename="..\..\source\test_enum.cpp" />
 		<Unit filename="..\..\source\test_exception.cpp" />

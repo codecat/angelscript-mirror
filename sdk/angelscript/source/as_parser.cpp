@@ -2740,82 +2740,41 @@ asCString asCParser::ExpectedOneOf(int *tokens, int count)
 	return str;
 }
 
+// TODO: typedef: Typedefs should accept complex types as well
 asCScriptNode *asCParser::ParseTypedef()
 {
-	sToken	token;
-	asCScriptNode *tmp;
+	// Create the typedef node
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snTypedef);
 
+	sToken	token;
 
 	GetToken(&token);
-
-	//	Create the typedef node
-	asCScriptNode *node;
-	node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snTypedef);
-	node->SetToken(&token);
-	node->UpdateSourcePos(token.pos, token.length);
 	if( token.type != ttTypedef)
 	{
 		Error(ExpectedToken(asGetTokenDefinition(token.type)).AddressOf(), &token);
 		return node;
 	}
+	
+	node->SetToken(&token);
+	node->UpdateSourcePos(token.pos, token.length);
 
-	//	Process the base type
+	// Parse the base type
 	GetToken(&token);
-	if(ttConst == token.type) 
+	RewindTo(&token);
+
+	// Make sure it is a primitive type (except ttVoid)
+	if( !IsRealType(token.type) || token.type == ttVoid )
 	{
-		tmp = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snConstant);
-		tmp->SetToken(&token);
-		tmp->UpdateSourcePos(token.pos, token.length);
-		node->AddChildLast(tmp);
-
-		//	Get the next token
-		GetToken(&token);
-	}
-
-	switch(token.type) 
-	{
-	case ttBool:
-	case ttInt:
-	case ttInt8:
-	case ttInt16:
-	case ttInt64:
-	case ttUInt:
-	case ttUInt8:
-	case ttUInt16:
-	case ttUInt64:
-		break;
-
-	default:
-		{
-			asCString str;
-			str.Format(TXT_UNEXPECTED_TOKEN_s, token);
-			Error(str.AddressOf(), &token);
-			RewindTo(&token);
-			return node;
-		}
-		break;
-	}
-
-	tmp = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDataType);
-	tmp->SetToken(&token);
-	tmp->UpdateSourcePos(token.pos, token.length);
-	node->AddChildLast(tmp);
-
-
-	//	Get the identifier
-	GetToken(&token);
-	if(ttIdentifier != token.type) 
-	{
-		Error(TXT_EXPECTED_IDENTIFIER, &token);
+		asCString str;
+		str.Format(TXT_UNEXPECTED_TOKEN_s, asGetTokenDefinition(token.type));
+		Error(str.AddressOf(), &token);
 		return node;
 	}
 
-	tmp = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snIdentifier);
-	tmp->SetToken(&token);
-	tmp->UpdateSourcePos(token.pos, token.length);
-	node->AddChildLast(tmp);
+	node->AddChildLast(ParseRealType());
+	node->AddChildLast(ParseIdentifier());
 
-	//	check for the start of the declaration block
+	// Check for the end of the typedef
 	GetToken(&token);
 	if( token.type != ttEndStatement ) 
 	{
@@ -2823,8 +2782,6 @@ asCScriptNode *asCParser::ParseTypedef()
 		Error(ExpectedToken(asGetTokenDefinition(token.type)).AddressOf(), &token);
 	}
 
-
-	//	Parse the declarations
 	return node;
 }
 

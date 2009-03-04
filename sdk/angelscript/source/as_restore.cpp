@@ -80,6 +80,24 @@ int asCRestore::Save()
 			WriteObjectTypeDeclaration(module->classTypes[i], true);
 	}
 
+	// Store enums
+	count = (asUINT)module->enumTypes.GetLength();
+	WRITE_NUM(count);
+	for( i = 0; i < count; i++ )
+	{
+		WriteObjectTypeDeclaration(module->enumTypes[i], false);
+		WriteObjectTypeDeclaration(module->enumTypes[i], true);
+	}
+
+	// Store typedefs
+	count = (asUINT)module->typeDefs.GetLength();
+	WRITE_NUM(count);
+	for( i = 0; i < count; i++ )
+	{
+		WriteObjectTypeDeclaration(module->typeDefs[i], false);
+		WriteObjectTypeDeclaration(module->typeDefs[i], true);
+	}
+
 	// scriptGlobals[]
 	count = (asUINT)module->scriptGlobals.GetLength();
 	WRITE_NUM(count);
@@ -98,6 +116,14 @@ int asCRestore::Save()
 	for( i = 0; i < module->scriptFunctions.GetLength(); ++i )
 		if( module->scriptFunctions[i]->objectType == 0 )
 			WriteFunction(module->scriptFunctions[i]);
+
+	// globalFunctions[]
+	count = (int)module->globalFunctions.GetLength();
+	WRITE_NUM(count);
+	for( i = 0; i < count; i++ )
+	{
+		WriteFunction(module->globalFunctions[i]);
+	}
 
 	// initFunction
 	count = module->initFunction ? 1 : 0;
@@ -179,6 +205,32 @@ int asCRestore::Restore()
 			ReadObjectTypeDeclaration(module->classTypes[i], true);
 	}
 
+	// Read enums
+	READ_NUM(count);
+	module->enumTypes.Allocate(count, 0);
+	for( i = 0; i < count; i++ )
+	{
+		asCObjectType *ot = asNEW(asCObjectType)(engine);
+		ReadObjectTypeDeclaration(ot, false);
+		engine->classTypes.PushLast(ot);
+		module->enumTypes.PushLast(ot);
+		ot->AddRef();
+		ReadObjectTypeDeclaration(ot, true);
+	}
+
+	// Read typedefs
+	READ_NUM(count);
+	module->typeDefs.Allocate(count, 0);
+	for( i = 0; i < count; i++ )
+	{
+		asCObjectType *ot = asNEW(asCObjectType)(engine);
+		ReadObjectTypeDeclaration(ot, false);
+		engine->classTypes.PushLast(ot);
+		module->typeDefs.PushLast(ot);
+		ot->AddRef();
+		ReadObjectTypeDeclaration(ot, true);
+	}
+
 	// scriptGlobals[]
 	READ_NUM(count);
 	module->scriptGlobals.Allocate(count, 0);
@@ -195,6 +247,14 @@ int asCRestore::Restore()
 	for( i = 0; i < count; ++i ) 
 	{
 		func = ReadFunction();
+	}
+
+	// globalFunctions[]
+	READ_NUM(count);
+	for( i = 0; i < count; ++i )
+	{
+		func = ReadFunction(false, false);
+		module->globalFunctions.PushLast(func);
 	}
 
 	// initFunction
@@ -637,54 +697,73 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 	}
 	else
 	{	
-		WriteObjectType(ot->derivedFrom);
-
-		// interfaces[]
-		int size = (asUINT)ot->interfaces.GetLength();
-		WRITE_NUM(size);
-		asUINT n;
-		for( n = 0; n < ot->interfaces.GetLength(); n++ )
+		if( ot->flags & asOBJ_NAMED_ENUM )
 		{
-			WriteObjectType(ot->interfaces[n]);
-		}
-
-		// properties[]
-		size = (asUINT)ot->properties.GetLength();
-		WRITE_NUM(size);
-		for( n = 0; n < ot->properties.GetLength(); n++ )
-		{
-			WriteObjectProperty(ot->properties[n]);
-		}
-
-		// behaviours
-		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
-		{
-			WriteFunction(engine->scriptFunctions[ot->beh.construct]);
-			WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
-			WriteFunction(engine->scriptFunctions[ot->beh.factory]);
-			size = (int)ot->beh.constructors.GetLength() - 1;
+			// enumValues[]
+			int size = (int)ot->enumValues.GetLength();
 			WRITE_NUM(size);
-			for( n = 1; n < ot->beh.constructors.GetLength(); n++ )
+
+			for( int n = 0; n < size; n++ )
 			{
-				WriteFunction(engine->scriptFunctions[ot->beh.constructors[n]]);
-				WriteFunction(engine->scriptFunctions[ot->beh.factories[n]]);
+				WriteString(&ot->enumValues[n]->name);
+				WRITE_NUM(ot->enumValues[n]->value);
 			}
 		}
-
-		// methods[]
-		size = (int)ot->methods.GetLength();
-		WRITE_NUM(size);
-		for( n = 0; n < ot->methods.GetLength(); n++ )
+		else if( ot->flags & asOBJ_NAMED_PSEUDO )
 		{
-			WriteFunction(engine->scriptFunctions[ot->methods[n]]);
+			WRITE_NUM(ot->tokenType);
 		}
-
-		// virtualFunctionTable[]
-		size = (int)ot->virtualFunctionTable.GetLength();
-		WRITE_NUM(size);
-		for( n = 0; n < (asUINT)size; n++ )
+		else
 		{
-			WriteFunction(ot->virtualFunctionTable[n]);
+			WriteObjectType(ot->derivedFrom);
+
+			// interfaces[]
+			int size = (asUINT)ot->interfaces.GetLength();
+			WRITE_NUM(size);
+			asUINT n;
+			for( n = 0; n < ot->interfaces.GetLength(); n++ )
+			{
+				WriteObjectType(ot->interfaces[n]);
+			}
+
+			// properties[]
+			size = (asUINT)ot->properties.GetLength();
+			WRITE_NUM(size);
+			for( n = 0; n < ot->properties.GetLength(); n++ )
+			{
+				WriteObjectProperty(ot->properties[n]);
+			}
+
+			// behaviours
+			if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
+			{
+				WriteFunction(engine->scriptFunctions[ot->beh.construct]);
+				WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
+				WriteFunction(engine->scriptFunctions[ot->beh.factory]);
+				size = (int)ot->beh.constructors.GetLength() - 1;
+				WRITE_NUM(size);
+				for( n = 1; n < ot->beh.constructors.GetLength(); n++ )
+				{
+					WriteFunction(engine->scriptFunctions[ot->beh.constructors[n]]);
+					WriteFunction(engine->scriptFunctions[ot->beh.factories[n]]);
+				}
+			}
+
+			// methods[]
+			size = (int)ot->methods.GetLength();
+			WRITE_NUM(size);
+			for( n = 0; n < ot->methods.GetLength(); n++ )
+			{
+				WriteFunction(engine->scriptFunctions[ot->methods[n]]);
+			}
+
+			// virtualFunctionTable[]
+			size = (int)ot->virtualFunctionTable.GetLength();
+			WRITE_NUM(size);
+			for( n = 0; n < (asUINT)size; n++ )
+			{
+				WriteFunction(ot->virtualFunctionTable[n]);
+			}
 		}
 	}
 }
@@ -713,71 +792,91 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 	}
 	else
 	{	
-		ot->derivedFrom = ReadObjectType();
-		if( ot->derivedFrom )
-			ot->derivedFrom->AddRef();
-
-		// interfaces[]
-		int size;
-		READ_NUM(size);
-		ot->interfaces.Allocate(size,0);
-		int n;
-		for( n = 0; n < size; n++ )
+		if( ot->flags & asOBJ_NAMED_ENUM )
 		{
-			asCObjectType *intf = ReadObjectType();
-			ot->interfaces.PushLast(intf);
+			int count;
+			READ_NUM(count);
+			ot->enumValues.Allocate(count, 0);
+			for( int n = 0; n < count; n++ )
+			{
+				asSEnumValue *e = asNEW(asSEnumValue);
+				ReadString(&e->name);
+				READ_NUM(e->value);
+				ot->enumValues.PushLast(e);
+			}
 		}
-
-		// properties[]
-		READ_NUM(size);
-		ot->properties.Allocate(size,0);
-		for( n = 0; n < size; n++ )
+		else if( ot->flags & asOBJ_NAMED_PSEUDO )
 		{
-			asCObjectProperty *prop = asNEW(asCObjectProperty);
-			ReadObjectProperty(prop);
-			ot->properties.PushLast(prop);
+			READ_NUM(ot->tokenType);
 		}
-
-		// behaviours
-		if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
+		else
 		{
-			asCScriptFunction *func = ReadFunction();
-			ot->beh.construct = func->id;
-			ot->beh.constructors[0] = func->id;
+			ot->derivedFrom = ReadObjectType();
+			if( ot->derivedFrom )
+				ot->derivedFrom->AddRef();
 
-			func = ReadFunction();
-			if( func )
-				ot->beh.destruct = func->id;
+			// interfaces[]
+			int size;
+			READ_NUM(size);
+			ot->interfaces.Allocate(size,0);
+			int n;
+			for( n = 0; n < size; n++ )
+			{
+				asCObjectType *intf = ReadObjectType();
+				ot->interfaces.PushLast(intf);
+			}
 
-			func = ReadFunction();
-			ot->beh.factory = func->id;
-			ot->beh.factories[0] = func->id;
+			// properties[]
+			READ_NUM(size);
+			ot->properties.Allocate(size,0);
+			for( n = 0; n < size; n++ )
+			{
+				asCObjectProperty *prop = asNEW(asCObjectProperty);
+				ReadObjectProperty(prop);
+				ot->properties.PushLast(prop);
+			}
 
+			// behaviours
+			if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
+			{
+				asCScriptFunction *func = ReadFunction();
+				ot->beh.construct = func->id;
+				ot->beh.constructors[0] = func->id;
+
+				func = ReadFunction();
+				if( func )
+					ot->beh.destruct = func->id;
+
+				func = ReadFunction();
+				ot->beh.factory = func->id;
+				ot->beh.factories[0] = func->id;
+
+				READ_NUM(size);
+				for( n = 0; n < size; n++ )
+				{
+					asCScriptFunction *func = ReadFunction();
+					ot->beh.constructors.PushLast(func->id);
+
+					func = ReadFunction();
+					ot->beh.factories.PushLast(func->id);
+				}
+			}
+
+			// methods[]
+			READ_NUM(size);
+			for( n = 0; n < size; n++ ) 
+			{
+				asCScriptFunction *func = ReadFunction();
+				ot->methods.PushLast(func->id);
+			}
+
+			// virtualFunctionTable[]
 			READ_NUM(size);
 			for( n = 0; n < size; n++ )
 			{
 				asCScriptFunction *func = ReadFunction();
-				ot->beh.constructors.PushLast(func->id);
-
-				func = ReadFunction();
-				ot->beh.factories.PushLast(func->id);
+				ot->virtualFunctionTable.PushLast(func);
 			}
-		}
-
-		// methods[]
-		READ_NUM(size);
-		for( n = 0; n < size; n++ ) 
-		{
-			asCScriptFunction *func = ReadFunction();
-			ot->methods.PushLast(func->id);
-		}
-
-		// virtualFunctionTable[]
-		READ_NUM(size);
-		for( n = 0; n < size; n++ )
-		{
-			asCScriptFunction *func = ReadFunction();
-			ot->virtualFunctionTable.PushLast(func);
 		}
 	}
 }

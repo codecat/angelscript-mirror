@@ -211,6 +211,10 @@ SOURCE=..\..\source\test_discard.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_dump.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_dynamicconfig.cpp
 # End Source File
 # Begin Source File

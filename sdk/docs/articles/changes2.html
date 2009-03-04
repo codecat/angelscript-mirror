@@ -118,12 +118,14 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.0 WIP - 2009/03/02</h2>
+<h2>Version 2.16.0 WIP - 2009/03/04</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed bug in compiler where temporary variable was freed twice during compound assignments with some complex lvalue expressions (Thanks _Vicious_)
+<li>Fixed crash when parsing invalid typedefs.
+<li>Typedefs declared in scripts now accept float and double as well.
 </ul>
 <li>Library
 <ul>
@@ -139,6 +141,9 @@ A:hover
 <li>Added enumeration of factory functions and behaviours to asIObjectType.
 <li>Added GetBaseType, GetFlags, GetSize, and GetPropertyOffset to asIObjectType.
 <li>Deprecated GetSubType and IsInterface in asIObjectType.
+<li>Enumeration of functions in the modules now only return global functions.
+<li>Enumeration of object types in modules now only return classes and interfaces.
+<li>Added enumeration of enums and typedefs to modules.
 </ul>
 <li>Add-ons
 <ul>

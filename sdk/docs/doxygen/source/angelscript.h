@@ -58,7 +58,7 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! The library version.
+//! \details Version 2.16.0
 #define ANGELSCRIPT_VERSION        21600
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  16
@@ -1570,6 +1570,39 @@ public:
     //! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
     //! string@ but string is the same as const string. 
 	virtual int            GetTypeIdByDecl(const char *decl) = 0;
+
+	// Enums
+	//! \brief Returns the number of enum types declared in the module.
+	//! \return The number of enum types in the module.
+	virtual int         GetEnumCount() = 0;
+	//! \brief Returns the type id for the enum type.
+	//! \param[in] index The index of the enum type.
+	//! \return The type id of the enum or a negative value on error.
+	//! \retval asINVALID_ARG \a index is too large.
+	virtual int         GetEnumTypeIdByIndex(asUINT index) = 0;
+	//! \brief Returns the number of values defined for the enum type.
+	//! \param[in] enumTypeId The type id of the enum type.
+	//! \return The number of enum values or a negative value on error.
+	//! \retval asINVALID_ARG \a enumTypeId is not an enum type.
+	virtual int         GetEnumValueCount(int enumTypeId) = 0;
+	//! \brief Returns the name and value of the enum value.
+	//! \param[in] enumTypeId The type id of the enum type.
+	//! \param[in] index The index of the enum value.
+	//! \param[out] outValue Receives the numeric value.
+	//! \param[out] length Receives the length of the value name.
+	//! \return The name of the enum value.
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length = 0) = 0;
+
+	// Typedefs
+	//! \brief Returns the number of typedefs in the module.
+	//! \return The number of typedefs in the module.
+	virtual int         GetTypedefCount() = 0;
+	//! \brief Returns the typedef.
+	//! \param[in] index The index of the typedef.
+	//! \param[out] typeId The type that the typedef aliases.
+	//! \param[out] length The length of the typedef name.
+	//! \return The name of the typedef.
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, int *length = 0) = 0;
 
 	// Dynamic binding between modules
 	//! \brief Returns the number of functions declared for import.

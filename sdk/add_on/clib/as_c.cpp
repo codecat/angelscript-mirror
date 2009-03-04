@@ -133,6 +133,12 @@ AS_API void              *asModule_GetAddressOfGlobalVar(asIScriptModule *m, int
 AS_API int                asModule_GetObjectTypeCount(asIScriptModule *m)                                                                      { return m->GetObjectTypeCount(); }
 AS_API asIObjectType     *asModule_GetObjectTypeByIndex(asIScriptModule *m, asUINT index)                                                      { return m->GetObjectTypeByIndex(index); }
 AS_API int                asModule_GetTypeIdByDecl(asIScriptModule *m, const char *decl)                                                       { return m->GetTypeIdByDecl(decl); }
+AS_API int                asModule_GetEnumCount(asIScriptModule *m)                                                                            { return m->GetEmumCount(); }
+AS_API int                asModule_GetEnumTypeIdByIndex(asIScriptModule *m, asUINT index)                                                      { return m->GetEnumTypeIdByIndex(index); }
+AS_API int                asModule_GetEnumValueCount(asIScriptModule *m, int enumTypeId)                                                       { return m->GetEnumValueCount(enumTypeId); }
+AS_API const char *       asModule_GetEnumValueByIndex(asIScriptModule *m, int enumTypeId, asUINT index, int *outValue, int *length /* = 0 */) { return m->GetEnumValueByIndex(enumTypeId, index, outValue, length); }
+AS_API int                asModule_GetTypedefCount(asIScriptModule *m)                                                                         { return m->GetTypedefCount(); }
+AS_API const char *       asModule_GetTypedefByIndex(asIScriptModule *m, asUINT index, int *typeId, int *length /* = 0 */)                     { return m->GetTypedefByIndex(index, typeId, length); }
 AS_API int                asModule_GetImportedFunctionCount(asIScriptModule *m)                                                                { return m->GetImportedFunctionCount(); }
 AS_API int                asModule_GetImportedFunctionIndexByDecl(asIScriptModule *m, const char *decl)                                        { return m->GetImportedFunctionIndexByDecl(decl); }
 AS_API const char        *asModule_GetImportedFunctionDeclaration(asIScriptModule *m, int importIndex, int *length /* = 0 */)                  { return m->GetImportedFunctionDeclaration(importIndex, length); }

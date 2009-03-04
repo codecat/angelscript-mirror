@@ -551,7 +551,7 @@ class asIScriptModule
 public:
 	virtual asIScriptEngine *GetEngine() = 0;
 	virtual void             SetName(const char *name) = 0;
-	virtual const char      *GetName(int *length = 0) = 0; 
+	virtual const char      *GetName(int *length = 0) = 0;
 
 	// Compilation
     virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
@@ -579,6 +579,16 @@ public:
 	virtual int            GetObjectTypeCount() = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) = 0;
+
+	// Enums
+	virtual int         GetEnumCount() = 0;
+	virtual int         GetEnumTypeIdByIndex(asUINT index) = 0;
+	virtual int         GetEnumValueCount(int enumTypeId) = 0;
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length = 0) = 0;
+
+	// Typedefs
+	virtual int         GetTypedefCount() = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, int *length = 0) = 0;
 
 	// Dynamic binding between modules
 	virtual int         GetImportedFunctionCount() = 0;
@@ -917,7 +927,10 @@ struct asSMethodPtr
 	{
 		// This version of the function should never be executed, nor compiled,
 		// as it would mean that the size of the method pointer cannot be determined.
-		// int ERROR_UnsupportedMethodPtr[-1];
+#ifdef _MSC_VER
+        // GNUC won't let us compile at all if this is here
+		int ERROR_UnsupportedMethodPtr[-1];
+#endif
 		return 0;
 	}
 };

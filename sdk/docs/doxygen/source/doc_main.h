@@ -4,6 +4,8 @@
 
 \image html aslogo.png 
 
+<center>\copydetails ANGELSCRIPT_VERSION</center>
+
 \ref doc_overview "AngelScript" is a \ref doc_license "free, open source", flexible, and cross-platform scripting library meant to be
 embedded in applications. The purpose is to provide an easy to use library that is powerful, but that isn't weighed 
 down by a large amount of rarely used features.
@@ -56,6 +58,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_call_script_func
  - \subpage doc_gc
 
+\todo Add page on instanciating a script class
 
 
  

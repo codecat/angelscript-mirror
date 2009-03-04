@@ -600,9 +600,13 @@ void asCScriptEngine::ClearUnusedTypes()
 					RemoveTypeAndRelatedFromList(types, mod->scriptGlobals[m]->type.GetObjectType());
 			}
 
-			// Go through all script class declarations
+			// Go through all type declarations
 			for( m = 0; m < mod->classTypes.GetLength() && types.GetLength(); m++ )
 				RemoveTypeAndRelatedFromList(types, mod->classTypes[m]);
+			for( m = 0; m < mod->enumTypes.GetLength() && types.GetLength(); m++ )
+				RemoveTypeAndRelatedFromList(types, mod->enumTypes[m]);
+			for( m = 0; m < mod->typeDefs.GetLength() && types.GetLength(); m++ )
+				RemoveTypeAndRelatedFromList(types, mod->typeDefs[m]);
 		}
 	}
 
@@ -3090,6 +3094,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 	{
 		if( dt.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT ) typeId |= asTYPEID_SCRIPTOBJECT;
 		else if( dt.GetObjectType()->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_SCRIPTARRAY;
+		else if( dt.GetObjectType()->flags & asOBJ_NAMED_ENUM ); // TODO: Should we have a specific bit for this?
 		else typeId |= asTYPEID_APPOBJECT;
 	}
 
@@ -3121,6 +3126,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 		mapTypeIdToDataType.Insert(typeId | asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST, newDt);
 	}
 
+	// Call the method recursively to get the correct type id
 	return GetTypeIdFromDataType(dt);
 }
 
@@ -3607,6 +3613,7 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 	}
 }
 
+// TODO: typedef: Accept complex types for the typedefs
 int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 {
 	if( type == 0 ) return ConfigError(asINVALID_NAME);
@@ -3792,6 +3799,10 @@ asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId)
 
 	// Is the type id valid?
 	if( !dt ) return 0;
+
+	// Enum types are not objects, so we shouldn't return an object type for them
+	if( dt->GetObjectType() && dt->GetObjectType()->GetFlags() & asOBJ_NAMED_ENUM )
+		return 0;
 
 	return dt->GetObjectType();
 }

@@ -13,6 +13,7 @@ static const char *const script =
 "typedef int16 TestType2;								\n"
 "typedef int32 TestType3;								\n"
 "typedef int64 TestType4;								\n"
+"typedef float real;                                    \n"
 "TestType1 TEST1 = 1;									\n"
 "TestType2 TEST2 = 2;									\n"
 "TestType3 TEST3 = 4;									\n"

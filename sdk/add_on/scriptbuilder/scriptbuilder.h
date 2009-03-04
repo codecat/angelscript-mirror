@@ -17,6 +17,14 @@ BEGIN_AS_NAMESPACE
 
 struct SMetadataDecl;
 
+// TODO: Need a callback routine for resolving include directives
+//       When the builder encounters an include directive, it should call the callback with the current section name and the include directive.
+//       The application should respond by calling AddScriptFromFile or AddScriptFromMemory (or give an error if the include is invalid).
+//       The AddScriptFromFile/Memory should put the scripts on the queue to be built
+
+// TODO: Allow disabling parts of preprocessing by setting a preprocessor flag. This flag should be set in the header
+//       asPROCESS_METADATA = 0 turns off the metadata processing and removes the related functions
+
 // Helper class for loading and pre-processing script files to 
 // support include directives and metadata declarations
 class CScriptBuilder

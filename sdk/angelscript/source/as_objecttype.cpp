@@ -317,8 +317,8 @@ int asCObjectType::GetBehaviourCount() const
 	if( beh.gcEnumReferences )       count++;
 	if( beh.gcReleaseAllReferences ) count++; 
 
-	count += beh.constructors.GetLength();
-	count += beh.operators.GetLength() / 2;
+	count += (int)beh.constructors.GetLength();
+	count += (int)beh.operators.GetLength() / 2;
 
 	return count;
 }
@@ -328,49 +328,49 @@ int asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour
 	// Find the correct behaviour
 	int count = 0;
 
-	if( beh.destruct && count++ == index ) // only increase count if the behaviour is registered
+	if( beh.destruct && count++ == (int)index ) // only increase count if the behaviour is registered
 	{ 
 		if( outBehaviour ) *outBehaviour = asBEHAVE_DESTRUCT;
 		return beh.destruct;
 	}
 
-	if( beh.addref && count++ == index )
+	if( beh.addref && count++ == (int)index )
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_ADDREF;
 		return beh.addref;
 	}
 
-	if( beh.release && count++ == index )
+	if( beh.release && count++ == (int)index )
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_RELEASE;
 		return beh.release;
 	}
 
-	if( beh.gcGetRefCount && count++ == index )
+	if( beh.gcGetRefCount && count++ == (int)index )
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_GETREFCOUNT;
 		return beh.gcGetRefCount;
 	}
 
-	if( beh.gcSetFlag && count++ == index )
+	if( beh.gcSetFlag && count++ == (int)index )
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_SETGCFLAG;
 		return beh.gcSetFlag;
 	}
 
-	if( beh.gcGetFlag && count++ == index )
+	if( beh.gcGetFlag && count++ == (int)index )
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_GETGCFLAG;
 		return beh.gcGetFlag;
 	}
 
-	if( beh.gcEnumReferences && count++ == index )
+	if( beh.gcEnumReferences && count++ == (int)index )
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_ENUMREFS;
 		return beh.gcEnumReferences;
 	}
 
-	if( beh.gcReleaseAllReferences && count++ == index )
+	if( beh.gcReleaseAllReferences && count++ == (int)index )
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_RELEASEREFS;
 		return beh.gcReleaseAllReferences;
@@ -382,7 +382,7 @@ int asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour
 		return beh.constructors[index - count];
 	}
 	else 
-		count += beh.constructors.GetLength();
+		count += (int)beh.constructors.GetLength();
 
 	if( index - count < beh.operators.GetLength() / 2 )
 	{

@@ -96,7 +96,7 @@ bool Test()
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 ); 
+	r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_FACTORY, "ref@ f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
@@ -135,7 +135,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
 		fail = true;
-	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); 
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
 		fail = true;
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_FACTORY, "ref @f()", asFUNCTION(0), asCALL_GENERIC);
@@ -270,7 +270,7 @@ bool Test()
 		fail = true;
 	}
 	engine->Release();
-	
+
 	// It must not be possible to register functions that take handles of types with asOBJ_HANDLE
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -304,7 +304,7 @@ bool Test()
 	// REF+SCOPED
 	if( !fail ) fail = TestRefScoped();
 
-	// TODO: It should be allowed to register the type without specifying the application type, 
+	// TODO: It should be allowed to register the type without specifying the application type,
 	// if the engine won't use it (i.e. no native functions take or return the type by value)
 
 	// TODO:
@@ -335,7 +335,7 @@ void Scoped_Release(int *p)
 
 int *Scoped_Negate(int *p)
 {
-	if( p ) 
+	if( p )
 		return new int(-*p);
 	return 0;
 }
@@ -466,7 +466,15 @@ bool TestRefScoped()
 template<typename T>
 struct CTypeInfo
 {
-	static const char *GetTypeName() { /* Unknown type, forcing error by not returning anything */ };
+	static const char *GetTypeName()
+	{
+	    // Unknown type
+#ifdef _MSC_VER
+        // GNUC won't let us compile at all if this is here
+	    int ERROR_UnknownType[-1];
+#endif
+	    return 0;
+    };
 	static bool IsReference() { return false; }
 };
 
@@ -552,9 +560,9 @@ struct CParamValidator
 
 // Template for registering a function
 template<typename A1>
-int RegisterGlobalFunction(asIScriptEngine *e, const char *decl, void (*f)(A1), asDWORD callConv) 
+int RegisterGlobalFunction(asIScriptEngine *e, const char *decl, void (*f)(A1), asDWORD callConv)
 {
-	int r = e->RegisterGlobalFunction(decl, asFUNCTION(f), callConv); 
+	int r = e->RegisterGlobalFunction(decl, asFUNCTION(f), callConv);
 	assert( r >= 0 );
 
 	if( r >= 0 )
@@ -574,9 +582,9 @@ int RegisterGlobalFunction(asIScriptEngine *e, const char *decl, void (*f)(A1), 
 }
 
 template<typename A1, typename A2>
-int RegisterGlobalFunction(asIScriptEngine *e, const char *decl, void (*f)(A1, A2), asDWORD callConv) 
+int RegisterGlobalFunction(asIScriptEngine *e, const char *decl, void (*f)(A1, A2), asDWORD callConv)
 {
-	int r = e->RegisterGlobalFunction(decl, asFUNCTION(f), callConv); 
+	int r = e->RegisterGlobalFunction(decl, asFUNCTION(f), callConv);
 	assert( r >= 0 );
 
 	if( r >= 0 )

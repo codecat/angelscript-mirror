@@ -84,7 +84,6 @@ public:
 	bool IsObjectHandle()   const {return isObjectHandle;}
 	bool IsHandleToConst()  const;
 	bool IsArrayType()      const;
-	bool IsNamedType()      const;
 	bool IsEnumType()       const;
 	bool IsPseudoType()     const;
 

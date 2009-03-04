@@ -254,6 +254,9 @@
 				RelativePath="..\..\source\test_discard.cpp">
 			</File>
 			<File
+				RelativePath="..\..\source\test_dump.cpp">
+			</File>
+			<File
 				RelativePath="..\..\source\test_dynamicconfig.cpp">
 			</File>
 			<File

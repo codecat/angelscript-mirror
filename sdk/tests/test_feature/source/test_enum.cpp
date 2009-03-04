@@ -280,6 +280,14 @@ static bool TestEnum()
 	if( r < 0 )
 		fail = true;
 
+	// Enums are not object types
+	int eid = mod->GetEnumTypeIdByIndex(0);
+	if( eid < 0 )
+		fail = true;
+	asIObjectType *eot = engine->GetObjectTypeById(eid);
+	if( eot )
+		fail = true;
+
 	engine->Release();
 
 	// Success

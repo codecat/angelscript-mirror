@@ -444,6 +444,12 @@ extern "C"
 	AS_API int                asModule_GetObjectTypeCount(asIScriptModule *m);
 	AS_API asIObjectType     *asModule_GetObjectTypeByIndex(asIScriptModule *m, asUINT index);
 	AS_API int                asModule_GetTypeIdByDecl(asIScriptModule *m, const char *decl);
+	AS_API int                asModule_GetEnumCount(asIScriptModule *m);
+	AS_API int                asModule_GetEnumTypeIdByIndex(asIScriptModule *m, asUINT index);
+	AS_API int                asModule_GetEnumValueCount(asIScriptModule *m, int enumTypeId);
+	AS_API const char *       asModule_GetEnumValueByIndex(asIScriptModule *m, int enumTypeId, asUINT index, int *outValue, int *length /* = 0 */);
+	AS_API int                asModule_GetTypedefCount(asIScriptModule *m);
+	AS_API const char *       asModule_GetTypedefByIndex(asIScriptModule *m, asUINT index, int *typeId, int *length /* = 0 */);
 	AS_API int                asModule_GetImportedFunctionCount(asIScriptModule *m);
 	AS_API int                asModule_GetImportedFunctionIndexByDecl(asIScriptModule *m, const char *decl);
 	AS_API const char        *asModule_GetImportedFunctionDeclaration(asIScriptModule *m, int importIndex, int *length /* = 0 */);

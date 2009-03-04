@@ -352,7 +352,7 @@ void asCBuilder::ParseScripts()
 
 				if( node->nodeType == snFunction )
 				{
-					RegisterScriptFunction(module->GetNextFunctionId(), node, scripts[n]);
+					RegisterScriptFunction(module->GetNextFunctionId(), node, scripts[n], 0, false, true);
 				}
 				else if( node->nodeType == snGlobalVar )
 				{
@@ -1710,65 +1710,53 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 
 int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 {
-	int r, c;
-	asCString		name;
-	asCScriptNode	*tmp;
-
-	//	Grab the name of the enumeration
-	tmp = node->firstChild;
+	// Grab the name of the enumeration
+	asCScriptNode *tmp = node->firstChild;
 	asASSERT(snDataType == tmp->nodeType);
-	tmp->DisconnectParent();
 
-	//	Get the name of the enumeration
+	asCString name;
 	asASSERT(snIdentifier == tmp->firstChild->nodeType);
 	name.Assign(&file->code[tmp->firstChild->tokenPos], tmp->firstChild->tokenLength);
-	file->ConvertPosToRowCol(tmp->firstChild->tokenPos, &r, &c);
 
-	//	Check the name and add the enum
-	r = CheckNameConflict(name.AddressOf(), tmp->firstChild, file);
-	if(asSUCCESS == r) 
+	// Check the name and add the enum
+	int r = CheckNameConflict(name.AddressOf(), tmp->firstChild, file);
+	if( asSUCCESS == r ) 
 	{
-		sClassDeclaration *decl;
 		asCObjectType *st;
 		asCDataType dataType;
 
-		decl = asNEW(sClassDeclaration);
 		st = asNEW(asCObjectType)(engine);
 		dataType.CreatePrimitive(ttInt, false);
 
 		st->arrayType = 0;
-		st->flags = asOBJ_NAMED_ENUM;
-		st->size = dataType.GetSizeInMemoryBytes();
-		st->name = name;
+		st->flags     = asOBJ_NAMED_ENUM;
+		st->size      = dataType.GetSizeInMemoryBytes();
+		st->name      = name;
 		st->tokenType = ttIdentifier;
 
-		decl->name = name;
-		decl->script = file;
-		decl->validState = 0;
-		decl->node = NULL;
-		decl->objType = st;
-
-		module->classTypes.PushLast(st);
+		module->enumTypes.PushLast(st);
 		st->AddRef();
 		engine->classTypes.PushLast(st);
+
+		// Store the location of this declaration for reference in name collisions
+		sClassDeclaration *decl = asNEW(sClassDeclaration);
+		decl->name       = name;
+		decl->script     = file;
+		decl->validState = 0;
+		decl->node       = NULL;
+		decl->objType    = st;
 		namedTypeDeclarations.PushLast(decl);
 
 		asCDataType type = CreateDataTypeFromNode(tmp, file);
-		// TODO: Give error message if wrong
 		asASSERT(!type.IsReference());
 
-		tmp->Destroy(engine);
+		tmp = tmp->next;
 
-		while(NULL != node->firstChild) 
+		while( tmp ) 
 		{
-			asCScriptNode	*tmp;
-
-			tmp = node->firstChild;
 			asASSERT(snIdentifier == tmp->nodeType);
 
 			GETSTRING(name, &file->code[tmp->tokenPos], tmp->tokenLength);
-			tmp->DisconnectParent();
-			tmp->Destroy(engine);
 
 			// TODO: Should only have to check for conflicts within the enum type
 			// Check for name conflict errors
@@ -1779,22 +1767,18 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			}
 
 			//	check for assignment
-			tmp = node->firstChild;
-			if(tmp && snAssignment == tmp->nodeType) 
-			{
-				tmp->DisconnectParent();
-			}
-			else 
-			{
-				tmp = NULL;
-			}
+			asCScriptNode *asnNode = tmp->next;
+			if( asnNode && snAssignment == asnNode->nodeType ) 
+				asnNode->DisconnectParent();
+			else
+				asnNode = 0;
 
 			// Create the global variable description so the enum value can be evaluated
 			sGlobalVariableDescription *gvar = asNEW(sGlobalVariableDescription);
 			globVariables.PushLast(gvar);
 
 			gvar->script		  = file;
-			gvar->node			  = tmp;
+			gvar->node			  = asnNode;
 			gvar->name			  = name;
 			gvar->property        = asNEW(asCGlobalProperty);
 			gvar->datatype		  = type;
@@ -1809,6 +1793,8 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			gvar->property->name  = name;
 			gvar->property->type  = gvar->datatype;
 			gvar->property->index = gvar->index;
+
+			tmp = tmp->next;
 		}
 	}
 
@@ -1817,73 +1803,60 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 	return r;
 }
 
-// TODO: Analyze this properly
-int asCBuilder::RegisterTypedef(asCScriptNode *const node, asCScriptCode *file)
+int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file)
 {
-	int r, c;
-	asCString		name;
-	asCScriptNode	*tmp;
-	bool			isConst;
-
-	isConst = false;
-
-	// Grab the name of the enumeration
-	tmp = node->firstChild;
-	asASSERT(NULL != tmp);
-	if(snConstant == tmp->nodeType) 
-	{
-		isConst = true;
-		tmp = node->next;
-	}
-
 	// Get the native data type
+	asCScriptNode *tmp = node->firstChild;
 	asASSERT(NULL != tmp && snDataType == tmp->nodeType);
 	asCDataType dataType;
 	dataType.CreatePrimitive(tmp->tokenType, false);
 	dataType.SetTokenType(tmp->tokenType);
 	tmp = tmp->next;
 
-	// Grab the identifier
+	// Grab the name of the typedef
 	asASSERT(NULL != tmp && NULL == tmp->next);
+	asCString name;
 	name.Assign(&file->code[tmp->tokenPos], tmp->tokenLength);
-	file->ConvertPosToRowCol(tmp->tokenPos, &r, &c);
 
-	// If the name is not already in use add it!
- 	r = CheckNameConflict(name.AddressOf(), tmp, file);
-	if(asSUCCESS == r) 
+	// If the name is not already in use add it
+ 	int r = CheckNameConflict(name.AddressOf(), tmp, file);
+	if( asSUCCESS == r ) 
 	{
 		// Create the new type
-		sClassDeclaration *decl = asNEW(sClassDeclaration);
 		asCObjectType *st = asNEW(asCObjectType)(engine);
 
 		st->arrayType = 0;
-		st->flags = asOBJ_NAMED_PSEUDO;
-		st->size = dataType.GetSizeInMemoryBytes();
-		st->name = name;
+		st->flags     = asOBJ_NAMED_PSEUDO;
+		st->size      = dataType.GetSizeInMemoryBytes();
+		st->name      = name;
 		st->tokenType = dataType.GetTokenType();
 
-		decl->name = name;
-		decl->script = file;
-		decl->validState = 0;
-		decl->node = NULL;
-		decl->objType = st;
-
 		st->AddRef();
-		module->classTypes.PushLast(st);
+
+		module->typeDefs.PushLast(st);
 		engine->classTypes.PushLast(st);
+
+		// Store the location of this declaration for reference in name collisions
+		sClassDeclaration *decl = asNEW(sClassDeclaration);
+		decl->name       = name;
+		decl->script     = file;
+		decl->validState = 0;
+		decl->node       = NULL;
+		decl->objType    = st;
 		namedTypeDeclarations.PushLast(decl);
 	}
 
 	node->Destroy(engine);
 
-	if(r < 0) 
+	if( r < 0 ) 
 	{
 		engine->ConfigError(r);
 	}
+
 	return 0;
 }
 
-int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface)
+int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
 {
 	// Find name 
 	bool isConstructor = false;
@@ -2035,7 +2008,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	}
 
 	// Register the function
-	module->AddScriptFunction(file->idx, funcID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod);
+	module->AddScriptFunction(file->idx, funcID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction);
 
 	if( objType )
 	{
@@ -2374,6 +2347,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			{
 				if(asOBJ_NAMED_PSEUDO == (ot->flags & asOBJ_NAMED_PSEUDO))
 				{
+					// TODO: typedef: A typedef should be considered different from the original type (though with implicit conversions between the two)
 					// Create primitive data type based on object flags
 					dt = asCDataType::CreatePrimitive(ot->tokenType, isConst);
 				}
@@ -2564,9 +2538,9 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 		}
 	}
 
-	for( t = 0; t < module->classTypes.GetLength(); t++ )
+	for( t = 0; t < module->enumTypes.GetLength(); t++ )
 	{
-		asCObjectType *ot = module->classTypes[t];
+		asCObjectType *ot = module->enumTypes[t];
 		if( ot && (ot->flags & asOBJ_NAMED_ENUM) )
 		{
 			for( asUINT n = 0; n < ot->enumValues.GetLength(); n++ )
