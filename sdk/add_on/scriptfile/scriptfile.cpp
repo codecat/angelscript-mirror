@@ -1,5 +1,4 @@
 #include "scriptfile.h"
-#include "../scriptstring/scriptstring.h"
 #include <new>
 #include <assert.h>
 #include <string>
@@ -7,12 +6,6 @@
 #include <stdio.h>
 
 using namespace std;
-
-// 
-// Compile the code with the define asNO_WRITE_OPS to prevent the registered object to allow write access
-//
-// #define asNO_WRITE_OPS
-//
 
 BEGIN_AS_NAMESPACE
 
@@ -65,17 +58,17 @@ void ScriptFile_ReadString_Generic(asIScriptGeneric *gen)
 {
 	CScriptFile *file = (CScriptFile*)gen->GetObject();
 	int len = gen->GetArgDWord(0);
-	CScriptString *str = file->ReadString(len);
-	gen->SetReturnObject(str);
-	str->Release();
+	std::string *str = (std::string*)gen->GetArgAddress(1);
+	len = file->ReadString(len, *str);
+	gen->SetReturnDWord(len);
 }
 
 void ScriptFile_ReadLine_Generic(asIScriptGeneric *gen)
 {
 	CScriptFile *file = (CScriptFile*)gen->GetObject();
-	CScriptString *str = file->ReadLine();
-	gen->SetReturnObject(str);
-	str->Release();
+	std::string *str = (std::string*)gen->GetArgAddress(0);
+	int len = file->ReadLine(*str);
+	gen->SetReturnDWord(len);
 }
 
 void ScriptFile_WriteString_Generic(asIScriptGeneric *gen)
@@ -125,9 +118,9 @@ void RegisterScriptFile_Native(asIScriptEngine *engine)
     r = engine->RegisterObjectMethod("file", "int close()", asMETHOD(CScriptFile,Close), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int getSize() const", asMETHOD(CScriptFile,GetSize), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "bool isEndOfFile() const", asMETHOD(CScriptFile,IsEOF), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("file", "string @readString(uint)", asMETHOD(CScriptFile,ReadString), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("file", "string @readLine()", asMETHOD(CScriptFile,ReadLine), asCALL_THISCALL); assert( r >= 0 );
-#ifndef asNO_WRITE_OPS
+	r = engine->RegisterObjectMethod("file", "int readString(uint, string &out)", asMETHOD(CScriptFile,ReadString), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "int readLine(string &out)", asMETHOD(CScriptFile,ReadLine), asCALL_THISCALL); assert( r >= 0 );
+#if AS_WRITE_OPS == 1
 	r = engine->RegisterObjectMethod("file", "int writeString(const string &in)", asMETHOD(CScriptFile,WriteString), asCALL_THISCALL); assert( r >= 0 );
 #endif
 	r = engine->RegisterObjectMethod("file", "int getPos() const", asMETHOD(CScriptFile,GetPos), asCALL_THISCALL); assert( r >= 0 );
@@ -148,9 +141,9 @@ void RegisterScriptFile_Generic(asIScriptEngine *engine)
     r = engine->RegisterObjectMethod("file", "int close()", asFUNCTION(ScriptFile_Close_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int getSize() const", asFUNCTION(ScriptFile_GetSize_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "bool isEndOfFile() const", asFUNCTION(ScriptFile_IsEOF_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("file", "string @readString(uint)", asFUNCTION(ScriptFile_ReadString_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("file", "string @readLine()", asFUNCTION(ScriptFile_ReadLine_Generic), asCALL_GENERIC); assert( r >= 0 );
-#ifndef asNO_WRITE_OPS
+	r = engine->RegisterObjectMethod("file", "int readString(uint, string &out)", asFUNCTION(ScriptFile_ReadString_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "int readLine(string &out)", asFUNCTION(ScriptFile_ReadLine_Generic), asCALL_GENERIC); assert( r >= 0 );
+#if AS_WRITE_OPS == 1
 	r = engine->RegisterObjectMethod("file", "int writeString(const string &in)", asFUNCTION(ScriptFile_WriteString_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
 	r = engine->RegisterObjectMethod("file", "int getPos() const", asFUNCTION(ScriptFile_GetPos_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -196,7 +189,7 @@ int CScriptFile::Open(const std::string &filename, const std::string &mode)
 
     // Validate the mode
 	string m;
-#ifndef asNO_WRITE_OPS
+#if AS_WRITE_OPS == 1
     if( mode != "r" && mode != "w" && mode != "a" )
 #else
 	if( mode != "r" )
@@ -270,31 +263,26 @@ int CScriptFile::MovePos(int delta)
 	return r ? -1 : 0;
 }
 
-CScriptString *CScriptFile::ReadString(unsigned int length)
+int CScriptFile::ReadString(unsigned int length, std::string &str)
 {
 	if( file == 0 )
 		return 0;
 
 	// Read the string
-	string buf;
-	buf.resize(length);
-	int size = (int)fread(&buf[0], 1, length, file); 
-	buf.resize(size);
+	str.resize(length);
+	int size = (int)fread(&str[0], 1, length, file); 
+	str.resize(size);
 
-	// Create the string object that will be returned
-	CScriptString *str = new CScriptString();
-	str->buffer.swap(buf);
-
-	return str;
+	return size;
 }
 
-CScriptString *CScriptFile::ReadLine()
+int CScriptFile::ReadLine(std::string &str)
 {
 	if( file == 0 )
 		return 0;
 
 	// Read until the first new-line character
-	string line;
+	str = "";
 	char buf[256];
 
 	do
@@ -312,20 +300,16 @@ CScriptString *CScriptFile::ReadLine()
 		int end = ftell(file);
 
 		// Add the read characters to the output buffer
-		line.append(buf, end-start);
+		str.append(buf, end-start);
 	}
 	while( !feof(file) && buf[255] == 0 && buf[254] != '\n' );
 
-	// Create the string object that will be returned
-	CScriptString *str = new CScriptString();
-	str->buffer.swap(line);
-
-	return str;
+	return int(str.size());
 }
 
+#if AS_WRITE_OPS == 1
 int CScriptFile::WriteString(const std::string &str)
 {
-#ifndef asNO_WRITE_OPS
 	if( file == 0 )
 		return -1;
 
@@ -333,10 +317,8 @@ int CScriptFile::WriteString(const std::string &str)
 	size_t r = fwrite(&str[0], 1, str.length(), file);
 
 	return int(r);
-#else
-	return -1;
-#endif
 }
+#endif
 
 bool CScriptFile::IsEOF() const
 {

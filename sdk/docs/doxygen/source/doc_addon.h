@@ -412,7 +412,8 @@ This object provides support for reading and writing files.
 Register with <code>RegisterScriptFile(asIScriptEngine*)</code>.
 
 If you do not want to provide write access for scripts then you can compile 
-the add on with the define asNO_WRITE_OPS, which will disable support for writing.
+the add on with the define AS_WRITE_OPS 0, which will disable support for writing. 
+This define can be made in the project settings or directly in the header.
 
 
 \section doc_addon_file_1 Public C++ interface
@@ -442,10 +443,10 @@ public:
   bool IsEOF() const;
 
   // Reads a specified number of bytes into the string
-  CScriptString *ReadString(unsigned int length);
+  int ReadString(unsigned int length, std::string &str);
   
   // Reads to the next new-line character
-  CScriptString *ReadLine();
+  int ReadLine(std::string &str);
   
   // Writes a string to the file
   int WriteString(const std::string &str);
@@ -466,8 +467,8 @@ public:
     int      close();
     int      getSize() const;
     bool     isEndOfFile() const;
-    string @ readString(uint length);
-    string @ readLine();
+    int      readString(uint length, string &out str);
+    int      readLine(string &out str);
     int      writeString(const string &in string);
     int      getPos() const;
     int      setPos(int pos);
@@ -483,7 +484,8 @@ public:
   if( f.open("file.txt", "r") >= 0 ) 
   {
       // Read the whole file into the string buffer
-      string \@str = \@f.readString(f.getSize()); 
+      string str;
+      f.readString(f.getSize(), str); 
       f.close();
   }
 </pre>
@@ -552,6 +554,11 @@ this add-on as-is.
 
 This class is a helper class for loading and building scripts, with a basic pre-processor 
 that supports conditional compilation, include directives, and metadata declarations.
+
+If you do not want process metadata then you can compile the add-on with the define 
+AS_PROCESS_METADATA 0, which will exclude the code for processing this. This define
+can be made in the project settings or directly in the header.
+
 
 \section doc_addon_build_1 Public C++ interface
 

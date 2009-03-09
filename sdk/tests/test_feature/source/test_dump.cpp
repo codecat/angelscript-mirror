@@ -31,6 +31,9 @@ bool Test()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
+	float f;
+	engine->RegisterGlobalProperty("float f", &f);
+
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
 	mod->AddScriptSection("script", script);
@@ -154,6 +157,20 @@ void DumpModule(asIScriptModule *mod)
 		s << "import: " << mod->GetImportedFunctionDeclaration(n) << " from \"" << mod->GetImportedFunctionSourceModule(n) << "\"" << endl;
 	}
 
+	s << "-------" << endl;
+
+	// Enumerate registered global properties
+	c = engine->GetRegisteredGlobalPropertyCount();
+	for( n = 0; n < c; n++ )
+	{
+		const char *name;
+		int typeId;
+		engine->GetRegisteredGlobalProperty(n, &name, &typeId);
+		s << "reg prop: " << engine->GetTypeDeclaration(typeId) << " " << name << endl;
+	}
+
+
+	// Validate the dump
 	if( s.str() != "func: void Test()\n"
 	               "type: class A : I\n"
 	               " A@ A()\n"
@@ -176,7 +193,9 @@ void DumpModule(asIScriptModule *mod)
 	               " eval = 0\n"
 	               " eval2 = 2\n"
 	               "typedef: real => float\n"
-	               "import: void ImpFunc() from \"mod\"\n" )
+	               "import: void ImpFunc() from \"mod\"\n"
+				   "-------\n"
+				   "reg prop: float f\n" )
 	{
 		cout << s.str() << endl;
 		cout << "Failed to get the expected result when dumping the module" << endl << endl;

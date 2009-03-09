@@ -85,14 +85,15 @@ typedef size_t         asPWORD;
 // Engine properties
 typedef enum 
 {
-	asEP_ALLOW_UNSAFE_REFERENCES     = 1,
-	asEP_OPTIMIZE_BYTECODE           = 2,
-	asEP_COPY_SCRIPT_SECTIONS        = 3,
-	asEP_MAX_STACK_SIZE              = 4,
-	asEP_USE_CHARACTER_LITERALS      = 5,
-	asEP_ALLOW_MULTILINE_STRINGS     = 6,
-	asEP_ALLOW_IMPLICIT_HANDLE_TYPES = 7,
-	asEP_BUILD_WITHOUT_LINE_CUES     = 8
+	asEP_ALLOW_UNSAFE_REFERENCES      = 1,
+	asEP_OPTIMIZE_BYTECODE            = 2,
+	asEP_COPY_SCRIPT_SECTIONS         = 3,
+	asEP_MAX_STACK_SIZE               = 4,
+	asEP_USE_CHARACTER_LITERALS       = 5,
+	asEP_ALLOW_MULTILINE_STRINGS      = 6,
+	asEP_ALLOW_IMPLICIT_HANDLE_TYPES  = 7,
+	asEP_BUILD_WITHOUT_LINE_CUES      = 8,
+	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9
 } asEEngineProp;
 
 // Calling conventions
@@ -385,6 +386,8 @@ extern "C"
 	AS_API int                asEngine_RegisterObjectMethod(asIScriptEngine *e, const char *obj, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int                asEngine_RegisterObjectBehaviour(asIScriptEngine *e, const char *datatype, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int                asEngine_RegisterGlobalProperty(asIScriptEngine *e, const char *declaration, void *pointer);
+	AS_API int                asEngine_GetRegisteredGlobalPropertyCount(asIScriptEngine *e);
+	AS_API int                asEngine_GetRegisteredGlobalProperty(asIScriptEngine *e, asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0);
 	AS_API int                asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int                asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int                asEngine_RegisterInterface(asIScriptEngine *e, const char *name);

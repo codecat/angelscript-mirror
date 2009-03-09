@@ -10,6 +10,25 @@
 #ifndef SCRIPTFILE_H
 #define SCRIPTFILE_H
 
+//---------------------------
+// Compilation settings
+//
+
+// Set this flag to turn on/off write support
+//  0 = off
+//  1 = on
+
+#ifndef AS_WRITE_OPS
+#define AS_WRITE_OPS 1
+#endif
+
+
+
+
+//---------------------------
+// Declaration
+//
+
 #include <angelscript.h>
 #include <string>
 
@@ -35,8 +54,8 @@ public:
 	bool IsEOF() const;
 
     // Reading
-    CScriptString *ReadString(unsigned int length);
-	CScriptString *ReadLine();
+    int ReadString(unsigned int length, std::string &str);
+	int ReadLine(std::string &str);
 
     // Writing
     int WriteString(const std::string &str);

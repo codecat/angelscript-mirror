@@ -62,6 +62,13 @@ class asCContext;
 
 // TODO: Remove CreateScriptObject. Objects should be created by calling the factory function instead.
 
+// TODO: DiscardModule should take an optional pointer to asIScriptModule instead of module name. If null, nothing is done.
+
+// TODO: ExecuteString should take an optional pointer to asIScriptModule instead of module name. If null, the function is only able to access application registered functions/types/variables.
+
+// TODO: Should have a CreateModule/GetModule instead of just GetModule with parameters.
+
+// TODO: Should allow enumerating modules, in case they have not been named.
 
 
 class asCScriptEngine : public asIScriptEngine
@@ -74,33 +81,37 @@ public:
 	virtual int AddRef();
 	virtual int Release();
 
-	// Engine configuration
+	// Engine properties
 	virtual int     SetEngineProperty(asEEngineProp property, asPWORD value);
 	virtual asPWORD GetEngineProperty(asEEngineProp property);
 
+	// Compiler messages
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv);
 	virtual int ClearMessageCallback();
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message);
 
+	// Global functions
+	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+
+	// Global properties
+	virtual int RegisterGlobalProperty(const char *declaration, void *pointer);
+	virtual int GetRegisteredGlobalPropertyCount();
+	virtual int GetRegisteredGlobalProperty(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0);
+	
+	// Type registration
 	virtual int RegisterObjectType(const char *obj, int byteSize, asDWORD flags);
 	virtual int RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset);
 	virtual int RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
 	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-
-	virtual int RegisterGlobalProperty(const char *declaration, void *pointer);
-	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
 	virtual int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-
 	virtual int RegisterInterface(const char *name);
 	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration);
-
 	virtual int RegisterEnum(const char *type);
 	virtual int RegisterEnumValue(const char *type, const char *name, int value);
-
 	virtual int RegisterTypedef(const char *type, const char *decl);
-
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv);
 
+	// Configuration groups
 	virtual int BeginConfigGroup(const char *groupName);
 	virtual int EndConfigGroup();
 	virtual int RemoveConfigGroup(const char *groupName);
@@ -336,6 +347,7 @@ public:
 		bool allowMultilineStrings;
 		bool allowImplicitHandleTypes;
 		bool buildWithoutLineCues;
+		bool initGlobalVarsAfterBuild;
 	} ep;
 };
 

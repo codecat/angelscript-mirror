@@ -60,6 +60,7 @@ bool Test()
 	CScriptBuilder builder;
 	builder.DefineWord("COMPILE");
 	r = builder.BuildScriptFromMemory(engine, 0, script);
+#if AS_PROCESS_METADATA == 1
 	if( r < 0 )
 		fail = true;
 
@@ -92,6 +93,7 @@ bool Test()
 	metadata = builder.GetMetadataStringForVar(varIdx);
 	if( metadata != " var of type myclass " )
 		fail = true;
+#endif
 
 	engine->Release();
 

@@ -80,14 +80,15 @@ typedef asIScriptObject asIScriptStruct;
 // Engine properties
 enum asEEngineProp
 {
-	asEP_ALLOW_UNSAFE_REFERENCES     = 1,
-	asEP_OPTIMIZE_BYTECODE           = 2,
-	asEP_COPY_SCRIPT_SECTIONS        = 3,
-	asEP_MAX_STACK_SIZE              = 4,
-	asEP_USE_CHARACTER_LITERALS      = 5,
-	asEP_ALLOW_MULTILINE_STRINGS     = 6,
-	asEP_ALLOW_IMPLICIT_HANDLE_TYPES = 7,
-	asEP_BUILD_WITHOUT_LINE_CUES     = 8
+	asEP_ALLOW_UNSAFE_REFERENCES      = 1,
+	asEP_OPTIMIZE_BYTECODE            = 2,
+	asEP_COPY_SCRIPT_SECTIONS         = 3,
+	asEP_MAX_STACK_SIZE               = 4,
+	asEP_USE_CHARACTER_LITERALS       = 5,
+	asEP_ALLOW_MULTILINE_STRINGS      = 6,
+	asEP_ALLOW_IMPLICIT_HANDLE_TYPES  = 7,
+	asEP_BUILD_WITHOUT_LINE_CUES      = 8,
+	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9
 };
 
 // Calling conventions
@@ -441,33 +442,37 @@ public:
 	virtual int AddRef() = 0;
 	virtual int Release() = 0;
 
-	// Engine configuration
+	// Engine properties
 	virtual int     SetEngineProperty(asEEngineProp property, asPWORD value) = 0;
 	virtual asPWORD GetEngineProperty(asEEngineProp property) = 0;
 
+	// Compiler messages
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv) = 0;
 	virtual int ClearMessageCallback() = 0;
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
 
+	// Global functions
+	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+
+	// Global properties
+	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
+	virtual int GetRegisteredGlobalPropertyCount() = 0;
+	virtual int GetRegisteredGlobalProperty(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0) = 0;
+
+	// Type registration
 	virtual int RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
 	virtual int RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
 	virtual int RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-
-	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
-	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	virtual int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-
 	virtual int RegisterInterface(const char *name) = 0;
 	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
-
 	virtual int RegisterEnum(const char *type) = 0;
 	virtual int RegisterEnumValue(const char *type, const char *name, int value) = 0;
-
 	virtual int RegisterTypedef(const char *type, const char *decl) = 0;
-
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv) = 0;
 
+	// Configuration groups
 	virtual int BeginConfigGroup(const char *groupName) = 0;
 	virtual int EndConfigGroup() = 0;
 	virtual int RemoveConfigGroup(const char *groupName) = 0;
@@ -928,7 +933,7 @@ struct asSMethodPtr
 		// This version of the function should never be executed, nor compiled,
 		// as it would mean that the size of the method pointer cannot be determined.
 #ifdef _MSC_VER
-        // GNUC won't let us compile at all if this is here
+		// GNUC won't let us compile at all if this is here
 		int ERROR_UnsupportedMethodPtr[-1];
 #endif
 		return 0;

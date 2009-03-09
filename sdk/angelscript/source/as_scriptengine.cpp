@@ -192,51 +192,85 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 
 int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 {
-	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
-		ep.allowUnsafeReferences = value ? true : false;
-	else if( property == asEP_OPTIMIZE_BYTECODE )
-		ep.optimizeByteCode = value ? true : false;
-	else if( property == asEP_COPY_SCRIPT_SECTIONS )
-		ep.copyScriptSections = value ? true : false;
-	else if( property == asEP_MAX_STACK_SIZE )
+	switch( property )
 	{
+	case asEP_ALLOW_UNSAFE_REFERENCES:
+		ep.allowUnsafeReferences = value ? true : false;
+		break;
+
+	case asEP_OPTIMIZE_BYTECODE:
+		ep.optimizeByteCode = value ? true : false;
+		break;
+
+	case asEP_COPY_SCRIPT_SECTIONS:
+		ep.copyScriptSections = value ? true : false;
+		break;
+
+	case asEP_MAX_STACK_SIZE:
 		// The size is given in bytes, but we only store dwords
 		ep.maximumContextStackSize = (int)value/4;
 		if( initialContextStackSize > ep.maximumContextStackSize )
 			initialContextStackSize = ep.maximumContextStackSize;
-	}
-	else if( property == asEP_USE_CHARACTER_LITERALS )
+		break;
+
+	case asEP_USE_CHARACTER_LITERALS:
 		ep.useCharacterLiterals = value ? true : false;
-	else if( property == asEP_ALLOW_MULTILINE_STRINGS )
+		break;
+
+	case asEP_ALLOW_MULTILINE_STRINGS:
 		ep.allowMultilineStrings = value ? true : false;
-	else if( property == asEP_ALLOW_IMPLICIT_HANDLE_TYPES )
+		break;
+
+	case asEP_ALLOW_IMPLICIT_HANDLE_TYPES:
 		ep.allowImplicitHandleTypes = value ? true : false;
-	else if( property == asEP_BUILD_WITHOUT_LINE_CUES )
+		break;
+
+	case asEP_BUILD_WITHOUT_LINE_CUES:
 		ep.buildWithoutLineCues = value ? true : false;
-	else
+		break;
+
+	case asEP_INIT_GLOBAL_VARS_AFTER_BUILD:
+		ep.initGlobalVarsAfterBuild = value ? true : false;
+		break;
+
+	default:
 		return asINVALID_ARG;
+	}
 
 	return asSUCCESS;
 }
 
 asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 {
-	if( property == asEP_ALLOW_UNSAFE_REFERENCES )
+	switch( property )
+	{
+	case asEP_ALLOW_UNSAFE_REFERENCES:
 		return ep.allowUnsafeReferences;
-	else if( property == asEP_OPTIMIZE_BYTECODE )
+
+	case asEP_OPTIMIZE_BYTECODE:
 		return ep.optimizeByteCode;
-	else if( property == asEP_COPY_SCRIPT_SECTIONS )
+
+	case asEP_COPY_SCRIPT_SECTIONS:
 		return ep.copyScriptSections;
-	else if( property == asEP_MAX_STACK_SIZE )
+
+	case asEP_MAX_STACK_SIZE:
 		return ep.maximumContextStackSize*4;
-	else if( property == asEP_USE_CHARACTER_LITERALS )
+
+	case asEP_USE_CHARACTER_LITERALS:
 		return ep.useCharacterLiterals;
-	else if( property == asEP_ALLOW_MULTILINE_STRINGS )
+
+	case asEP_ALLOW_MULTILINE_STRINGS:
 		return ep.allowMultilineStrings;
-	else if( property == asEP_ALLOW_IMPLICIT_HANDLE_TYPES )
+
+	case asEP_ALLOW_IMPLICIT_HANDLE_TYPES:
 		return ep.allowImplicitHandleTypes;
-	else if( property == asEP_BUILD_WITHOUT_LINE_CUES )
+
+	case asEP_BUILD_WITHOUT_LINE_CUES:
 		return ep.buildWithoutLineCues;
+
+	case asEP_INIT_GLOBAL_VARS_AFTER_BUILD:
+		return ep.initGlobalVarsAfterBuild;
+	}
 
 	return 0;
 }
@@ -264,6 +298,7 @@ asCScriptEngine::asCScriptEngine()
 	ep.allowMultilineStrings    = false;
 	ep.allowImplicitHandleTypes = false;
 	ep.buildWithoutLineCues     = false;
+	ep.initGlobalVarsAfterBuild = true;
 
 	gc.engine = this;
 
@@ -1975,6 +2010,31 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 		prop->memory = pointer;
 		globalPropAddresses[-prop->index -1] = &prop->memory;
 	}
+
+	return asSUCCESS;
+}
+
+int asCScriptEngine::GetRegisteredGlobalPropertyCount()
+{
+	return (int)globalProps.GetLength();
+}
+
+int asCScriptEngine::GetRegisteredGlobalProperty(asUINT index, const char **name, int *typeId, void **pointer, int *length)
+{
+	if( index >= globalProps.GetLength() )
+		return asINVALID_ARG;
+
+	if( name )
+		*name = globalProps[index]->name.AddressOf();
+
+	if( length )
+		*length = (int)globalProps[index]->name.GetLength();
+
+	if( typeId )
+		*typeId = GetTypeIdFromDataType(globalProps[index]->type);
+
+	if( pointer )
+		*pointer = globalPropAddresses[-1 - globalProps[index]->index];
 
 	return asSUCCESS;
 }

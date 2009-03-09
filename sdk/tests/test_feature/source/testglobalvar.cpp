@@ -277,6 +277,27 @@ bool TestGlobalVar()
 		engine->Release();
 	}
 
+	//-----------------
+	// It is possible to turn off initialization of global variables
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->RegisterObjectType("object", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+		engine->RegisterObjectBehaviour("object", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+
+		// Without this, the application would crash as the engine tries
+		// to initialize the variable with the invalid function pointer
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+
+		const char *script = "object o;";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("", script);
+		r = mod->Build();
+		if( r < 0 )
+			ret = true;
+
+		engine->Release();
+	}
+
 	return ret;
 }
 

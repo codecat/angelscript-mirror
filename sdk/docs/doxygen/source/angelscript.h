@@ -88,21 +88,23 @@ typedef asIScriptObject asIScriptStruct;
 enum asEEngineProp
 {
 	//! Allow unsafe references. Default: false.
-	asEP_ALLOW_UNSAFE_REFERENCES     = 1,
+	asEP_ALLOW_UNSAFE_REFERENCES      = 1,
 	//! Optimize byte code. Default: true.
-	asEP_OPTIMIZE_BYTECODE           = 2,
+	asEP_OPTIMIZE_BYTECODE            = 2,
 	//! Copy script section memory. Default: true.
-	asEP_COPY_SCRIPT_SECTIONS        = 3,
+	asEP_COPY_SCRIPT_SECTIONS         = 3,
 	//! Maximum stack size for script contexts. Default: 0 (no limit).
-	asEP_MAX_STACK_SIZE              = 4,
+	asEP_MAX_STACK_SIZE               = 4,
 	//! Interpret single quoted strings as character literals. Default: false.
-	asEP_USE_CHARACTER_LITERALS      = 5,
+	asEP_USE_CHARACTER_LITERALS       = 5,
 	//! Allow linebreaks in string constants. Default: false.
-	asEP_ALLOW_MULTILINE_STRINGS     = 6,
+	asEP_ALLOW_MULTILINE_STRINGS      = 6,
 	//! Allow script to declare implicit handle types. Default: false.
-	asEP_ALLOW_IMPLICIT_HANDLE_TYPES = 7,
+	asEP_ALLOW_IMPLICIT_HANDLE_TYPES  = 7,
 	//! Remove SUSPEND instructions between each statement. Default: false.
-	asEP_BUILD_WITHOUT_LINE_CUES     = 8
+	asEP_BUILD_WITHOUT_LINE_CUES      = 8,
+	//! Initialize global variables after a build. Default: true.
+	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9
 };
 
 // Calling conventions
@@ -723,7 +725,7 @@ public:
 	//! Call this method when you will no longer use the references that you own.
 	virtual int Release() = 0;
 
-	// Engine configuration
+	// Engine properties
 	//! \brief Dynamically change some engine properties.
 	//!
 	//! \param[in] property One of the \ref asEEngineProp values.
@@ -741,6 +743,7 @@ public:
 	//! Calling this method lets you determine the current value of the engine properties.
 	virtual asPWORD GetEngineProperty(asEEngineProp property) = 0;
 
+	// Compiler messages
 	//! \brief Sets a message callback that will receive compiler messages.
 	//!
 	//! \param[in] callback A function or class method pointer.
@@ -764,14 +767,12 @@ public:
 	//! It is recommended to register the message callback routine right after creating the engine,
 	//! as some of the registration functions can provide useful information to better explain errors.
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv) = 0;
-
 	//! \brief Clears the registered message callback routine.
 	//!
 	//! \return A negative value on error.
 	//!
 	//! Call this method to remove the message callback.
 	virtual int ClearMessageCallback() = 0;
-
 	//! \brief Writes a message to the message callback.
 	//!
 	//! \param[in] section The name of the script section.
@@ -787,6 +788,56 @@ public:
 	//! is useful for example if a preprocessor is used.
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
 
+	// Global functions
+	//! \brief Registers a global function.
+    //!
+    //! \param[in] declaration The declaration of the global function in script syntax.
+    //! \param[in] funcPointer The function pointer.
+    //! \param[in] callConv The calling convention for the function.
+    //! \return A negative value on error, or the function id if successful.
+    //! \retval asNOT_SUPPORTED The calling convention is not supported.
+    //! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
+    //! \retval asINVALID_DECLARATION The function declaration is invalid.
+    //! \retval asNAME_TAKEN The function name is already used elsewhere.
+    //!
+    //! This method registers system functions that the scripts may use to communicate with the host application.
+    //! 
+    //! \see \ref doc_register_func
+	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+
+	// Global properties
+	//! \brief Registers a global property.
+    //!
+    //! \param[in] declaration The declaration of the global property in script syntax.
+    //! \param[in] pointer The address of the property that will be used to access the property value.
+    //! \return A negative value on error.
+    //! \retval asINVALID_DECLARATION The declaration has invalid syntax.
+    //! \retval asINVALID_TYPE The declaration is a reference.
+    //! \retval asNAME_TAKEN The name is already taken.
+    //!
+    //! Use this method to register a global property that the scripts will be
+    //! able to access as global variables. The property may optionally be registered
+    //! as const, if the scripts shouldn't be allowed to modify it.
+    //!
+    //! When registering the property, the application must pass the address to
+    //! the actual value. The application must also make sure that this address
+    //! remains valid throughout the life time of this registration, i.e. until
+    //! the engine is released or the dynamic configuration group is removed.
+	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
+	//! \brief Returns the number of registered global properties.
+	//! \return The number of registered global properties.
+	virtual int GetRegisteredGlobalPropertyCount() = 0;
+	//! \brief Returns the detail on the registered global property.
+	//! \param[in] index The index of the global variable.
+	//! \param[out] name Receives the name of the property.
+	//! \param[out] typeId Receives the typeId of the property.
+	//! \param[out] pointer Receives the pointer of the property.
+	//! \param[out] length Receives the length of the property name.
+	//! \return A negative value on error.
+	//! \retval asINVALID_ARG \a index is too large.
+	virtual int GetRegisteredGlobalProperty(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0) = 0;
+
+	// Type registration
 	//! \brief Registers a new object type.
     //!
     //! \param[in] obj The name of the type.
@@ -873,40 +924,6 @@ public:
     //!
     //! \see \ref doc_register_func, \ref doc_api_behaviours
 	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-
-	//! \brief Registers a global property.
-    //!
-    //! \param[in] declaration The declaration of the global property in script syntax.
-    //! \param[in] pointer The address of the property that will be used to access the property value.
-    //! \return A negative value on error.
-    //! \retval asINVALID_DECLARATION The declaration has invalid syntax.
-    //! \retval asINVALID_TYPE The declaration is a reference.
-    //! \retval asNAME_TAKEN The name is already taken.
-    //!
-    //! Use this method to register a global property that the scripts will be
-    //! able to access as global variables. The property may optionally be registered
-    //! as const, if the scripts shouldn't be allowed to modify it.
-    //!
-    //! When registering the property, the application must pass the address to
-    //! the actual value. The application must also make sure that this address
-    //! remains valid throughout the life time of this registration, i.e. until
-    //! the engine is released or the dynamic configuration group is removed.
-	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
-	//! \brief Registers a global function.
-    //!
-    //! \param[in] declaration The declaration of the global function in script syntax.
-    //! \param[in] funcPointer The function pointer.
-    //! \param[in] callConv The calling convention for the function.
-    //! \return A negative value on error, or the function id if successful.
-    //! \retval asNOT_SUPPORTED The calling convention is not supported.
-    //! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
-    //! \retval asINVALID_DECLARATION The function declaration is invalid.
-    //! \retval asNAME_TAKEN The function name is already used elsewhere.
-    //!
-    //! This method registers system functions that the scripts may use to communicate with the host application.
-    //! 
-    //! \see \ref doc_register_func
-	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Registers a global behaviour, e.g. operators.
     //!
     //! \param[in] behaviour The global behaviour.
@@ -935,7 +952,6 @@ public:
     //!
     //! \see \ref doc_register_func, \ref doc_api_behaviours
 	virtual int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-
 	//! \brief Registers an interface.
     //!
     //! \param[in] name The name of the interface.
@@ -961,7 +977,6 @@ public:
     //!
     //! This registers a method that the class that implements the interface must have.
 	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
-
 	//! \brief Registers an enum type.
     //!
     //! \param[in] type The name of the enum type.
@@ -987,7 +1002,6 @@ public:
     //!
     //! This method registers an enum value for a previously registered enum type.
 	virtual int RegisterEnumValue(const char *type, const char *name, int value) = 0;
-
 	//! \brief Registers a typedef.
     //!
     //! \param[in] type The name of the new typedef
@@ -1003,7 +1017,6 @@ public:
     //!
     //! Currently typedefs can only be registered for built-in primitive types.
 	virtual int RegisterTypedef(const char *type, const char *decl) = 0;
-
 	//! \brief Registers the string factory.
     //!
     //! \param[in] datatype The datatype that the string factory returns
@@ -1034,6 +1047,7 @@ public:
     //! The example assumes that the std::string type has been registered as the string type, with \ref RegisterObjectType.
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv) = 0;
 
+	// Configuration groups
 	//! \brief Starts a new dynamic configuration group.
     //!
     //! \param[in] groupName The name of the configuration group
@@ -1405,7 +1419,7 @@ public:
 	//! \brief Gets the name of the module.
 	//! \param[out] length The length of the name.
 	//! \return The name of the module.
-	virtual const char      *GetName(int *length = 0) = 0; 
+	virtual const char      *GetName(int *length = 0) = 0;
 
 	// Compilation
     //! \brief Add a script section for the next build.
@@ -2658,7 +2672,10 @@ struct asSMethodPtr
 	{
 		// This version of the function should never be executed, nor compiled,
 		// as it would mean that the size of the method pointer cannot be determined.
-		// int ERROR_UnsupportedMethodPtr[-1];
+#ifdef _MSC_VER
+		// GNUC won't let us compile at all if this is here
+		int ERROR_UnsupportedMethodPtr[-1];
+#endif
 		return 0;
 	}
 };

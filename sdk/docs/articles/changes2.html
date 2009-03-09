@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.0 WIP - 2009/03/04</h2>
+<h2>Version 2.16.0 WIP - 2009/03/06</h2>
 
 <ul>
 <li>Bug fixes
@@ -144,10 +144,14 @@ A:hover
 <li>Enumeration of functions in the modules now only return global functions.
 <li>Enumeration of object types in modules now only return classes and interfaces.
 <li>Added enumeration of enums and typedefs to modules.
+<li>Added engine property asEP_INIT_GLOBAL_VARS_AFTER_BUILD, which will allow compiling scripts without having the implementation of the application functions.
+<li>Added enumeration of registered global properties.
 </ul>
 <li>Add-ons
 <ul>
 <li>Added registration of std::string as a standard add-on, complementing the CScriptString
+<li>Changed CScriptFile to be compatible with both std::string and CScriptString
+<li>Modified CScriptBuilder to permit enabling/disabling metadata processing through preprocessor define
 </ul>
 </ul>
 

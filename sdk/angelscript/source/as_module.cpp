@@ -167,18 +167,19 @@ int asCModule::Build()
 
 	engine->PrepareEngine();
 
-	CallInit();
+	if( engine->ep.initGlobalVarsAfterBuild )
+		CallInit();
 
 	engine->BuildCompleted();
+
 	return r;
 }
 
 // interface
 int asCModule::ResetGlobalVars()
 {
-	if( !isGlobalVarInitialized ) return asERROR;
-
-	CallExit();
+	if( isGlobalVarInitialized ) 
+		CallExit();
 
 	CallInit();
 
