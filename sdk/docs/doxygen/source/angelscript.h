@@ -710,6 +710,9 @@ class asIScriptEngine
 {
 public:
 	// Memory management
+    //! \name Memory management
+    //! \{
+
 	//! \brief Increase reference counter.
 	//!
 	//! \return The number of references to this object.
@@ -724,8 +727,12 @@ public:
 	//!
 	//! Call this method when you will no longer use the references that you own.
 	virtual int Release() = 0;
+	//! \}
 
 	// Engine properties
+    //! \name Engine properties
+    //! \{
+
 	//! \brief Dynamically change some engine properties.
 	//!
 	//! \param[in] property One of the \ref asEEngineProp values.
@@ -742,8 +749,12 @@ public:
 	//!
 	//! Calling this method lets you determine the current value of the engine properties.
 	virtual asPWORD GetEngineProperty(asEEngineProp property) = 0;
+	//! \}
 
 	// Compiler messages
+    //! \name Compiler messages
+    //! \{
+
 	//! \brief Sets a message callback that will receive compiler messages.
 	//!
 	//! \param[in] callback A function or class method pointer.
@@ -787,8 +798,12 @@ public:
 	//! to the same message callback that the script compiler uses. This
 	//! is useful for example if a preprocessor is used.
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
+	//! \}
 
 	// Global functions
+    //! \name Global functions
+    //! \{
+
 	//! \brief Registers a global function.
     //!
     //! \param[in] declaration The declaration of the global function in script syntax.
@@ -804,8 +819,20 @@ public:
     //! 
     //! \see \ref doc_register_func
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	//! \brief Returns the number of registered functions.
+	//! \return The number of registered functions.
+	virtual int GetGlobalFunctionCount() = 0;
+	//! \brief Returns the function id of the registered function.
+	//! \param[in] index The index of the registered global function.
+	//! \return The id of the function, or a negative value on error.
+	//! \retval asINVALID_ARG \a index is too large.
+	virtual int GetGlobalFunctionIdByIndex(asUINT index) = 0;
+	//! \}
 
 	// Global properties
+    //! \name Global properties
+    //! \{
+
 	//! \brief Registers a global property.
     //!
     //! \param[in] declaration The declaration of the global property in script syntax.
@@ -826,7 +853,7 @@ public:
 	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
 	//! \brief Returns the number of registered global properties.
 	//! \return The number of registered global properties.
-	virtual int GetRegisteredGlobalPropertyCount() = 0;
+	virtual int GetGlobalPropertyCount() = 0;
 	//! \brief Returns the detail on the registered global property.
 	//! \param[in] index The index of the global variable.
 	//! \param[out] name Receives the name of the property.
@@ -835,9 +862,13 @@ public:
 	//! \param[out] length Receives the length of the property name.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG \a index is too large.
-	virtual int GetRegisteredGlobalProperty(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0) = 0;
+	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0) = 0;
+	//! \}
 
-	// Type registration
+	// Object types
+    //! \name Object types
+    //! \{
+
 	//! \brief Registers a new object type.
     //!
     //! \param[in] obj The name of the type.
@@ -857,7 +888,7 @@ public:
     //! Value types, which have their memory managed by the engine, should be registered with \ref asOBJ_VALUE.
     //!
     //! \see \ref doc_register_type
-	virtual int RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
+	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
 	//! \brief Registers a property for the object type.
     //!
     //! \param[in] obj The name of the type.
@@ -879,7 +910,7 @@ public:
     //! struct MyType {float prop;};
     //! r = engine->RegisterObjectProperty("MyType", "float prop", offsetof(MyType, prop)));
     //! \endcode
-	virtual int RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
+	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
 	//! \brief Registers a method for the object type.
     //!
     //! \param[in] obj The name of the type.
@@ -900,7 +931,7 @@ public:
     //! it may be a global function implemented with the generic calling convention.
     //!
     //! \see \ref doc_register_func
-	virtual int RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Registers a behaviour for the object type.
     //!
     //! \param[in] obj The name of the type.
@@ -923,7 +954,7 @@ public:
     //! math operations, comparisons, etc.
     //!
     //! \see \ref doc_register_func, \ref doc_api_behaviours
-	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Registers a global behaviour, e.g. operators.
     //!
     //! \param[in] behaviour The global behaviour.
@@ -951,7 +982,7 @@ public:
     //! optimize the code to execute faster.
     //!
     //! \see \ref doc_register_func, \ref doc_api_behaviours
-	virtual int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Registers an interface.
     //!
     //! \param[in] name The name of the interface.
@@ -964,7 +995,7 @@ public:
     //! This registers an interface that script classes can implement. By doing this the application 
     //! can register functions and methods that receives an \ref asIScriptObject and still be sure that the 
     //! class implements certain methods needed by the application. 
-	virtual int RegisterInterface(const char *name) = 0;
+	virtual int            RegisterInterface(const char *name) = 0;
 	//! \brief Registers an interface method.
     //!
     //! \param[in] intf The name of the interface.
@@ -976,48 +1007,21 @@ public:
     //! \retval asNAME_TAKEN The method name is already taken.
     //!
     //! This registers a method that the class that implements the interface must have.
-	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
-	//! \brief Registers an enum type.
-    //!
-    //! \param[in] type The name of the enum type.
-    //! \return A negative value on error.
-    //! \retval asINVALID_NAME \a type is null.
-    //! \retval asALREADY_REGISTERED Another type with this name already exists.
-    //! \retval asERROR The \a type couldn't be parsed.
-    //! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
-    //! \retval asNAME_TAKEN The type name is already taken.
-    //!
-    //! This method registers an enum type in the engine. The enum values should then be registered 
-    //! with \ref RegisterEnumValue.
-	virtual int RegisterEnum(const char *type) = 0;
-	//! \brief Registers an enum value.
-    //!
-    //! \param[in] type The name of the enum type.
-    //! \param[in] name The name of the enum value.
-    //! \param[in] value The integer value of the enum value.
-    //! \return A negative value on error.
-    //! \retval asWRONG_CONFIG_GROUP The enum \a type was registered in a different configuration group.
-    //! \retval asINVALID_TYPE The \a type is invalid.
-    //! \retval asALREADY_REGISTERED The \a name is already registered for this enum.
-    //!
-    //! This method registers an enum value for a previously registered enum type.
-	virtual int RegisterEnumValue(const char *type, const char *name, int value) = 0;
-	//! \brief Registers a typedef.
-    //!
-    //! \param[in] type The name of the new typedef
-    //! \param[in] decl The datatype that the typedef represents
-    //! \return A negative value on error.
-    //! \retval asINVALID_NAME The \a type is null.
-    //! \retval asALREADY_REGISTERED A type with the same name already exists.
-    //! \retval asINVALID_TYPE The \a decl is not a primitive type.
-    //! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
-    //! \retval asNAME_TAKEN The name is already used elsewhere.
-    //!
-    //! This method registers an alias for a data type.
-    //!
-    //! Currently typedefs can only be registered for built-in primitive types.
-	virtual int RegisterTypedef(const char *type, const char *decl) = 0;
-	//! \brief Registers the string factory.
+	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
+	//! \brief Returns the number of registered object types.
+    //! \return The number of object types registered by the application.
+	virtual int            GetObjectTypeCount() = 0;
+	//! \brief Returns the object type interface by index.
+    //! \param[in] index The index of the type.
+    //! \return The registered object type interface for the type, or null if not found.
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+	//! \}
+
+	// String factory
+    //! \name String factory
+    //! \{
+
+    //! \brief Registers the string factory.
     //!
     //! \param[in] datatype The datatype that the string factory returns
     //! \param[in] factoryFunc The pointer to the factory function
@@ -1046,8 +1050,96 @@ public:
     //!
     //! The example assumes that the std::string type has been registered as the string type, with \ref RegisterObjectType.
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv) = 0;
+    //! \brief Returns the type id of the type that the string factory returns.
+    //! \return The type id of the type that the string type returns, or a negative value on error.
+    //! \retval asNO_FUNCTION The string factory has not been registered.
+	virtual int GetStringFactoryReturnTypeId() = 0;
+	//! \}
+
+	// Enums
+    //! \name Enums
+    //! \{
+
+	//! \brief Registers an enum type.
+    //!
+    //! \param[in] type The name of the enum type.
+    //! \return A negative value on error.
+    //! \retval asINVALID_NAME \a type is null.
+    //! \retval asALREADY_REGISTERED Another type with this name already exists.
+    //! \retval asERROR The \a type couldn't be parsed.
+    //! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
+    //! \retval asNAME_TAKEN The type name is already taken.
+    //!
+    //! This method registers an enum type in the engine. The enum values should then be registered 
+    //! with \ref RegisterEnumValue.
+	virtual int         RegisterEnum(const char *type) = 0;
+	//! \brief Registers an enum value.
+    //!
+    //! \param[in] type The name of the enum type.
+    //! \param[in] name The name of the enum value.
+    //! \param[in] value The integer value of the enum value.
+    //! \return A negative value on error.
+    //! \retval asWRONG_CONFIG_GROUP The enum \a type was registered in a different configuration group.
+    //! \retval asINVALID_TYPE The \a type is invalid.
+    //! \retval asALREADY_REGISTERED The \a name is already registered for this enum.
+    //!
+    //! This method registers an enum value for a previously registered enum type.
+	virtual int         RegisterEnumValue(const char *type, const char *name, int value) = 0;
+	//! \brief Returns the number of registered enum types.
+	//! \return The number of registered enum types.
+	virtual int         GetEnumCount() = 0;
+	//! \brief Returns the type id of the registered enum type.
+	//! \param[in] index The index of the enum type.
+	//! \return The type id of the registered enum type, or a negative value on error.
+	//! \retval asINVALID_ARG \a index is too large.
+	virtual int         GetEnumTypeIdByIndex(asUINT index) = 0;
+	//! \brief Returns the number of enum values for the enum type.
+	//! \param[in] enumTypeId The type id of the enum type.
+	//! \return The number of enum values for the enum type.
+	virtual int         GetEnumValueCount(int enumTypeId) = 0;
+	//! \brief Returns the name and value of the enum value for the enum type.
+	//! \param[in] enumTypeId The type id of the enum type.
+	//! \param[in] index The index of the enum value.
+	//! \param[out] outValue Receives the value of the enum value.
+	//! \param[out] length Receives the length of the name of the enum value.
+	//! \return The name of the enum value.
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length = 0) = 0;
+	//! \}
+
+	// Typedefs
+    //! \name Typedefs
+    //! \{
+
+	//! \brief Registers a typedef.
+    //!
+    //! \param[in] type The name of the new typedef
+    //! \param[in] decl The datatype that the typedef represents
+    //! \return A negative value on error.
+    //! \retval asINVALID_NAME The \a type is null.
+    //! \retval asALREADY_REGISTERED A type with the same name already exists.
+    //! \retval asINVALID_TYPE The \a decl is not a primitive type.
+    //! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
+    //! \retval asNAME_TAKEN The name is already used elsewhere.
+    //!
+    //! This method registers an alias for a data type.
+    //!
+    //! Currently typedefs can only be registered for built-in primitive types.
+	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
+	//! \brief Returns the number of registered typedefs.
+	//! \return The number of registered typedefs.
+	virtual int         GetTypedefCount() = 0;
+	//! \brief Returns a registered typedef.
+	//! \param[in] index The index of the typedef.
+	//! \param[out] typeId The type that the typedef aliases.
+	//! \param[out] length The length of the typedef name.
+	//! \return The name of the typedef.
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, int *length = 0) = 0;
+	//! \}
 
 	// Configuration groups
+    //! \name Configuration groups
+    //! \{
+
 	//! \brief Starts a new dynamic configuration group.
     //!
     //! \param[in] groupName The name of the configuration group
@@ -1092,8 +1184,12 @@ public:
     //! The default module access is granted. The default for a group can be changed by specifying 
     //! the modulename asALL_MODULES. 
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
+	//! \}
 
 	// Script modules
+    //! \name Script modules
+    //! \{
+
 	//! \brief Return an interface pointer to the module.
 	//!
 	//! \param[in] module The name of the module
@@ -1117,21 +1213,22 @@ public:
     //! Discards a module and frees its memory. Any pointers that the application holds 
 	//! to this module will be invalid after this call.
 	virtual int              DiscardModule(const char *module) = 0;
+	//! \}
 
 	// Script functions
+    //! \name Script functions
+    //! \{
+
 	//! \brief Returns the function descriptor for the script function
     //! \param[in] funcId The id of the function or method.
     //! \return A pointer to the function description interface, or null if not found.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+	//! \}
 
 	// Type identification
-	//! \brief Returns the number of object types.
-    //! \return The number of object types known to the engine.
-	virtual int            GetObjectTypeCount() = 0;
-	//! \brief Returns the object type interface by index.
-    //! \param[in] index The index of the type.
-    //! \return The object type interface for the type, or null if not found.
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+    //! \name Type identification
+    //! \{
+
 	//! \brief Returns the object type interface for type.
     //! \param[in] typeId The type id of the type.
     //! \return The object type interface for the type, or null if not found.
@@ -1168,9 +1265,11 @@ public:
     //! \param[in] typeId The type id of the type.
     //! \return The size of the type in bytes.
 	virtual int            GetSizeOfPrimitiveType(int typeId) = 0;
-
+	//! \}
 
 	// Script execution
+    //! \name Script execution
+    //! \{
 
 	//! \brief Creates a new script context.
     //! \return A pointer to the new script context.
@@ -1252,8 +1351,12 @@ public:
     //! objects, and then only on those objects that permit comparisons, i.e. registered types 
     //! that have the comparison behaviours registered.
 	virtual int               CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
+	//! \}
 
 	// String interpretation
+    //! \name String interpretation
+    //! \{
+
 	//! \brief Returns the class and length of the first token in the string.
 	//! \param[in] string The string to parse.
 	//! \param[in] stringLength The length of the string. Can be 0 if the string is null terminated.
@@ -1283,8 +1386,12 @@ public:
     //!
     //! This method allow an application to interpret script statements using the currently compiled code.
 	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
+	//! \}
 
 	// Garbage collection
+    //! \name Garbage collection
+    //! \{
+
 	//! \brief Perform garbage collection.
     //! \param[in] flags Set to a combination of the asEGCFlags.
     //! \return 1 if the cycle wasn't completed, 0 if it was.
@@ -1331,8 +1438,12 @@ public:
     //!
     //! \see \ref doc_gc_object
 	virtual void GCEnumCallback(void *reference) = 0;
+	//! \}
 
 	// User data
+    //! \name User data
+    //! \{
+
 	//! \brief Register the memory address of some user data.
 	//! \param[in] data A pointer to the user data.
 	//! \return The previous pointer stored in the engine.
@@ -1342,8 +1453,12 @@ public:
 	//! \brief Returns the address of the previously registered user data.
 	//! \return The pointer to the user data.
 	virtual void *GetUserData() = 0;
+	//! \}
 
 #ifdef AS_DEPRECATED
+    //! \name Deprecated functions
+    //! \{
+
 	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::AddScriptSection instead.
 	virtual int                AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::Build instead.
@@ -1398,6 +1513,7 @@ public:
 	virtual int                SaveByteCode(const char *module, asIBinaryStream *out) = 0;
 	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::LoadByteCode instead.
 	virtual int                LoadByteCode(const char *module, asIBinaryStream *in) = 0;
+	//! \}
 #endif
 
 protected:

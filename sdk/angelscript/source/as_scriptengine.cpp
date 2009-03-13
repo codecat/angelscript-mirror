@@ -402,14 +402,14 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 
-	for( n = 0; n < globalProps.GetLength(); n++ )
+	for( n = 0; n < registeredGlobalProps.GetLength(); n++ )
 	{
-		if( globalProps[n] )
+		if( registeredGlobalProps[n] )
 		{
-			asDELETE(globalProps[n],asCGlobalProperty);
+			asDELETE(registeredGlobalProps[n],asCGlobalProperty);
 		}
 	}
-	globalProps.SetLength(0);
+	registeredGlobalProps.SetLength(0);
 	globalPropAddresses.SetLength(0);
 
 
@@ -432,6 +432,9 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 	objectTypes.SetLength(0);
+	registeredTypeDefs.SetLength(0);
+	registeredEnums.SetLength(0);
+	registeredObjTypes.SetLength(0);
 
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
 		if( scriptFunctions[n] )
@@ -439,6 +442,7 @@ asCScriptEngine::~asCScriptEngine()
 			asDELETE(scriptFunctions[n],asCScriptFunction);
 		}
 	scriptFunctions.SetLength(0);
+	registeredGlobalFuncs.SetLength(0);
 
 	// Release the thread manager
 	threadManager->Release();
@@ -669,10 +673,10 @@ void asCScriptEngine::ClearUnusedTypes()
 	}
 
 	// Go through all global properties
-	for( n = 0; n < globalProps.GetLength() && types.GetLength(); n++ )
+	for( n = 0; n < registeredGlobalProps.GetLength() && types.GetLength(); n++ )
 	{
-		if( globalProps[n] && globalProps[n]->type.GetObjectType() )
-			RemoveTypeAndRelatedFromList(types, globalProps[n]->type.GetObjectType());
+		if( registeredGlobalProps[n] && registeredGlobalProps[n]->type.GetObjectType() )
+			RemoveTypeAndRelatedFromList(types, registeredGlobalProps[n]->type.GetObjectType());
 	}
 
 	// All that remains in the list after this can be discarded, since they are no longer used
@@ -971,6 +975,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	st->beh.copy = 0;
 
 	objectTypes.PushLast(st);
+	registeredObjTypes.PushLast(st);
 
 	currentGroup->objTypes.PushLast(st);
 
@@ -1167,6 +1172,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		type->flags     = flags;
 
 		objectTypes.PushLast(type);
+		registeredObjTypes.PushLast(type);
 
 		currentGroup->objTypes.PushLast(type);
 	}
@@ -1992,7 +1998,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	prop->index      = -1 - (int)globalPropAddresses.GetLength();
 
 	// TODO: Reuse slots emptied when removing configuration groups
-	globalProps.PushLast(prop);
+	registeredGlobalProps.PushLast(prop);
 	globalPropAddresses.PushLast(pointer);
 
 	currentGroup->globalProps.PushLast(prop);
@@ -2014,27 +2020,27 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	return asSUCCESS;
 }
 
-int asCScriptEngine::GetRegisteredGlobalPropertyCount()
+int asCScriptEngine::GetGlobalPropertyCount()
 {
-	return (int)globalProps.GetLength();
+	return (int)registeredGlobalProps.GetLength();
 }
 
-int asCScriptEngine::GetRegisteredGlobalProperty(asUINT index, const char **name, int *typeId, void **pointer, int *length)
+int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId, void **pointer, int *length)
 {
-	if( index >= globalProps.GetLength() )
+	if( index >= registeredGlobalProps.GetLength() )
 		return asINVALID_ARG;
 
 	if( name )
-		*name = globalProps[index]->name.AddressOf();
+		*name = registeredGlobalProps[index]->name.AddressOf();
 
 	if( length )
-		*length = (int)globalProps[index]->name.GetLength();
+		*length = (int)registeredGlobalProps[index]->name.GetLength();
 
 	if( typeId )
-		*typeId = GetTypeIdFromDataType(globalProps[index]->type);
+		*typeId = GetTypeIdFromDataType(registeredGlobalProps[index]->type);
 
 	if( pointer )
-		*pointer = globalPropAddresses[-1 - globalProps[index]->index];
+		*pointer = globalPropAddresses[-1 - registeredGlobalProps[index]->index];
 
 	return asSUCCESS;
 }
@@ -2171,6 +2177,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	return func->id;
 }
 
+// interface
 int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
@@ -2217,6 +2224,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	SetScriptFunction(func);
 
 	currentGroup->scriptFunctions.PushLast(func);
+	registeredGlobalFuncs.PushLast(func);
 
 	// If parameter type from other groups are used, add references
 	if( func->returnType.GetObjectType() )
@@ -2237,6 +2245,20 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	return func->id;
 }
 
+// interface
+int asCScriptEngine::GetGlobalFunctionCount()
+{
+	return (int)registeredGlobalFuncs.GetLength();
+}
+
+// interface
+int asCScriptEngine::GetGlobalFunctionIdByIndex(asUINT index)
+{
+	if( index >= registeredGlobalFuncs.GetLength() )
+		return asINVALID_ARG;
+
+	return registeredGlobalFuncs[index]->id;
+}
 
 
 
@@ -2361,6 +2383,7 @@ int asCScriptEngine::ConfigError(int err)
 }
 
 
+// interface
 int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
@@ -2416,6 +2439,16 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 	return func->id;
 }
 
+// interface
+int asCScriptEngine::GetStringFactoryReturnTypeId()
+{
+	if( stringFactory == 0 )
+		return asNO_FUNCTION;
+
+	return GetTypeIdFromDataType(stringFactory->returnType);
+}
+
+// interface
 asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
 {
 	// Accept null as well as zero-length string
@@ -3154,7 +3187,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 	{
 		if( dt.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT ) typeId |= asTYPEID_SCRIPTOBJECT;
 		else if( dt.GetObjectType()->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_SCRIPTARRAY;
-		else if( dt.GetObjectType()->flags & asOBJ_NAMED_ENUM ); // TODO: Should we have a specific bit for this?
+		else if( dt.GetObjectType()->flags & asOBJ_ENUM ); // TODO: Should we have a specific bit for this?
 		else typeId |= asTYPEID_APPOBJECT;
 	}
 
@@ -3641,19 +3674,11 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 		if( func->signatureId == id )
 		{
 			// Remove the signature id
-			asUINT n;
-			for( n = 0; n < signatureIds.GetLength(); n++ )
-			{
-				if( signatureIds[n] == func )
-				{
-					signatureIds[n] = signatureIds[signatureIds.GetLength()-1];
-					signatureIds.PopLast();
-				}
-			}
+			signatureIds.RemoveValue(func);
 
 			// Update all functions using the signature id
 			int newSigId = 0;
-			for( n = 0; n < scriptFunctions.GetLength(); n++ )
+			for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
 			{
 				if( scriptFunctions[n] && scriptFunctions[n]->signatureId == id )
 				{
@@ -3668,11 +3693,18 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 			}
 		}
 
+		// Is the function a registered global function?
+		if( func->funcType == asFUNC_SYSTEM && func->objectType == 0 )
+		{
+			registeredGlobalFuncs.RemoveValue(func);
+		}
+
 		// Delete the script function
 		asDELETE(func,asCScriptFunction);
 	}
 }
 
+// interface
 // TODO: typedef: Accept complex types for the typedefs
 int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 {
@@ -3735,18 +3767,41 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	// Put the data type in the list
 	asCObjectType *object= asNEW(asCObjectType)(this);
 	object->arrayType = 0;
-	object->flags = asOBJ_NAMED_PSEUDO;
+	object->flags = asOBJ_TYPEDEF;
 	object->size = dataType.GetSizeInMemoryBytes();
 	object->name = type;
 	object->tokenType = dataType.GetTokenType();
 
 	objectTypes.PushLast(object);
+	registeredTypeDefs.PushLast(object);
 
 	currentGroup->objTypes.PushLast(object);
 
 	return asSUCCESS;
 }
 
+// interface
+int asCScriptEngine::GetTypedefCount()
+{
+	return (int)registeredTypeDefs.GetLength();
+}
+
+// interface
+const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, int *length)
+{
+	if( index >= registeredTypeDefs.GetLength() )
+		return 0;
+
+	if( typeId )
+		*typeId = GetTypeIdByDecl(registeredTypeDefs[index]->name.AddressOf());
+
+	if( length )
+		*length = (int)registeredTypeDefs[index]->name.GetLength();
+
+	return registeredTypeDefs[index]->name.AddressOf();
+}
+
+// interface
 int asCScriptEngine::RegisterEnum(const char *name)
 {
 	//	Check the name
@@ -3785,18 +3840,20 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	dataType.CreatePrimitive(ttInt, false);
 
 	st->arrayType = 0;
-	st->flags = asOBJ_NAMED_ENUM;
+	st->flags = asOBJ_ENUM;
 	st->size = dataType.GetSizeInMemoryBytes();
 	st->name = name;
 	st->tokenType = ttIdentifier;
 
 	objectTypes.PushLast(st);
+	registeredEnums.PushLast(st);
 
 	currentGroup->objTypes.PushLast(st);
 
 	return asSUCCESS;
 }
 
+// interface
 int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueName, int value)
 {
 	// Verify that the correct config group is used
@@ -3812,7 +3869,7 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 
 	// Store the enum value
 	asCObjectType *ot = dt.GetObjectType();
-	if( ot == 0 || !(ot->flags & asOBJ_NAMED_ENUM) )
+	if( ot == 0 || !(ot->flags & asOBJ_ENUM) )
 		return ConfigError(asINVALID_TYPE);
 
 	if( NULL == valueName )
@@ -3834,22 +3891,65 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 }
 
 // interface
+int asCScriptEngine::GetEnumCount()
+{
+	return (int)registeredEnums.GetLength();
+}
+
+// interface
+int asCScriptEngine::GetEnumTypeIdByIndex(asUINT index)
+{
+	if( index >= registeredEnums.GetLength() )
+		return 0;
+
+	return GetTypeIdByDecl(registeredEnums[index]->name.AddressOf());
+}
+
+// interface
+int asCScriptEngine::GetEnumValueCount(int enumTypeId)
+{
+	const asCDataType *dt = GetDataTypeFromTypeId(enumTypeId);
+	asCObjectType *t = dt->GetObjectType();
+	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) ) 
+		return asINVALID_TYPE;
+
+	return (int)t->enumValues.GetLength();
+}
+
+// interface
+const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length)
+{
+	// TODO: This same function is implemented in as_module.cpp as well. Perhaps it should be moved to asCObjectType?
+	const asCDataType *dt = GetDataTypeFromTypeId(enumTypeId);
+	asCObjectType *t = dt->GetObjectType();
+	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) ) 
+		return 0;
+
+	if( index >= t->enumValues.GetLength() )
+		return 0;
+
+	if( outValue )
+		*outValue = t->enumValues[index]->value;
+
+	if( length )
+		*length = (int)t->enumValues[index]->name.GetLength();
+
+	return t->enumValues[index]->name.AddressOf();
+}
+
+// interface
 int asCScriptEngine::GetObjectTypeCount()
 {
-	// Don't count the first object type, which is the built-in array object type
-	return (int)objectTypes.GetLength() - 1 + (int)classTypes.GetLength();
+	return (int)registeredObjTypes.GetLength();
 }
 
 // interface
 asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index)
 {
-	if( index+1 >= objectTypes.GetLength() + classTypes.GetLength() )
+	if( index >= registeredObjTypes.GetLength() )
 		return 0;
 
-	if( index+1 < objectTypes.GetLength() )
-		return objectTypes[index+1];
-
-	return classTypes[index-objectTypes.GetLength()+1];
+	return registeredObjTypes[index];
 }
 
 // interface
@@ -3861,7 +3961,7 @@ asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId)
 	if( !dt ) return 0;
 
 	// Enum types are not objects, so we shouldn't return an object type for them
-	if( dt->GetObjectType() && dt->GetObjectType()->GetFlags() & asOBJ_NAMED_ENUM )
+	if( dt->GetObjectType() && dt->GetObjectType()->GetFlags() & asOBJ_ENUM )
 		return 0;
 
 	return dt->GetObjectType();

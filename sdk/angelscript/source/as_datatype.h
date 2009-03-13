@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -85,7 +85,6 @@ public:
 	bool IsHandleToConst()  const;
 	bool IsArrayType()      const;
 	bool IsEnumType()       const;
-	bool IsPseudoType()     const;
 
 	bool IsSamePrimitiveBaseType(const asCDataType &dt)    const;
 	bool IsEqualExceptRef(const asCDataType &)             const;

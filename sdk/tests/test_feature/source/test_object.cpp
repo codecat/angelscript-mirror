@@ -244,7 +244,7 @@ bool Test()
 	mod->Build();
 
 	count = engine->GetObjectTypeCount();
-	if( count != 4 )
+	if( count != 3 )
 		fail = true;
 
 	count = engine->GetModule(0)->GetObjectTypeCount();

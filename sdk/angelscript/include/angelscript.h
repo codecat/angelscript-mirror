@@ -453,24 +453,41 @@ public:
 
 	// Global functions
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int GetGlobalFunctionCount() = 0;
+	virtual int GetGlobalFunctionIdByIndex(asUINT index) = 0;
 
 	// Global properties
 	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
-	virtual int GetRegisteredGlobalPropertyCount() = 0;
-	virtual int GetRegisteredGlobalProperty(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0) = 0;
+	virtual int GetGlobalPropertyCount() = 0;
+	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0) = 0;
 
-	// Type registration
-	virtual int RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
-	virtual int RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
-	virtual int RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-	virtual int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-	virtual int RegisterInterface(const char *name) = 0;
-	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
-	virtual int RegisterEnum(const char *type) = 0;
-	virtual int RegisterEnumValue(const char *type, const char *name, int value) = 0;
-	virtual int RegisterTypedef(const char *type, const char *decl) = 0;
+	// Object types
+	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
+	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
+	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int            RegisterInterface(const char *name) = 0;
+	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
+	virtual int            GetObjectTypeCount() = 0;
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+
+	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv) = 0;
+	virtual int GetStringFactoryReturnTypeId() = 0;
+
+	// Enums
+	virtual int         RegisterEnum(const char *type) = 0;
+	virtual int         RegisterEnumValue(const char *type, const char *name, int value) = 0;
+	virtual int         GetEnumCount() = 0;
+	virtual int         GetEnumTypeIdByIndex(asUINT index) = 0;
+	virtual int         GetEnumValueCount(int enumTypeId) = 0;
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length = 0) = 0;
+
+	// Typedefs
+	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
+	virtual int         GetTypedefCount() = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, int *length = 0) = 0;
 
 	// Configuration groups
 	virtual int BeginConfigGroup(const char *groupName) = 0;
@@ -486,8 +503,6 @@ public:
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
 
 	// Type identification
-	virtual int            GetObjectTypeCount() = 0;
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
 	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) = 0;
 	virtual const char    *GetTypeDeclaration(int typeId, int *length = 0) = 0;

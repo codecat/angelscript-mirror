@@ -70,7 +70,8 @@ public:
 
 	bool Exists(const T &element);
 	int  IndexOf(const T &element);
-	void Remove(size_t index);
+	void RemoveIndex(size_t index);
+	void RemoveValue(const T &element);
 
 	bool operator==(const asCArray<T> &) const;
 	bool operator!=(const asCArray<T> &) const;
@@ -327,7 +328,7 @@ int asCArray<T>::IndexOf(const T &e)
 }
 
 template <class T>
-void asCArray<T>::Remove(size_t index)
+void asCArray<T>::RemoveIndex(size_t index)
 {
 	if( index < length )
 	{
@@ -335,6 +336,19 @@ void asCArray<T>::Remove(size_t index)
 			array[n] = array[n+1];
 
 		PopLast();
+	}
+}
+
+template <class T>
+void asCArray<T>::RemoveValue(const T &e)
+{
+	for( size_t n = 0; n < length; n++ )
+	{
+		if( array[n] == e )
+		{
+			RemoveIndex(n);
+			break;
+		}
 	}
 }
 

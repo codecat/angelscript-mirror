@@ -106,13 +106,11 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 	// Remove global variables
 	for( n = 0; n < globalProps.GetLength(); n++ )
 	{
-		for( asUINT m = 0; m < engine->globalProps.GetLength(); m++ )
+		int index = engine->registeredGlobalProps.IndexOf(globalProps[n]);
+		if( index >= 0 )
 		{
-			if( engine->globalProps[m] == globalProps[n] )
-			{
-				asDELETE(engine->globalProps[m],asCGlobalProperty);
-				engine->globalProps[m] = 0;
-			}
+			asDELETE(engine->registeredGlobalProps[index],asCGlobalProperty);
+			engine->registeredGlobalProps[index] = 0;
 		}
 	}
 
@@ -173,19 +171,24 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 	// Remove object types
 	for( n = 0; n < objTypes.GetLength(); n++ )
 	{
-		for( asUINT m = 0; m < engine->objectTypes.GetLength(); m++ )
+		asCObjectType *t = objTypes[n];
+		int idx = engine->objectTypes.IndexOf(t);
+		if( idx >= 0 )
 		{
-			if( engine->objectTypes[m] == objTypes[n] )
-			{
 #ifdef AS_DEBUG
-				ValidateNoUsage(engine, objTypes[n]);
+			ValidateNoUsage(engine, t);
 #endif
 
-				asDELETE(engine->objectTypes[m],asCObjectType);
-				engine->objectTypes[m] = engine->objectTypes[engine->objectTypes.GetLength()-1];
-				engine->objectTypes.PopLast();
-				m--;
-			}
+			engine->objectTypes.RemoveIndex(idx);
+
+			if( t->flags & asOBJ_TYPEDEF )
+				engine->registeredTypeDefs.RemoveValue(t);
+			else if( t->flags & asOBJ_ENUM )
+				engine->registeredEnums.RemoveValue(t);
+			else
+				engine->registeredObjTypes.RemoveValue(t);
+
+			asDELETE(t, asCObjectType);
 		}
 	}
 

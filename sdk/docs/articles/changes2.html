@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.0 WIP - 2009/03/06</h2>
+<h2>Version 2.16.0 WIP - 2009/03/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -131,21 +131,22 @@ A:hover
 <ul>
 <li>All primitive types now have fixed type ids, so it is no longer necessary to call the GetTypeIdByDecl method to obtain their ids.
 <li>Removed the AS_NO_USER_ALLOC config option.
+<li>Enumeration of functions in the modules now only return global functions.
+<li>Enumeration of object types in modules now only return classes and interfaces.
+<li>Added engine property asEP_BUILD_WITHOUT_LINE_CUES (replaces the config option).
+<li>Added engine property asEP_INIT_GLOBAL_VARS_AFTER_BUILD, which will allow compiling scripts without having the implementation of the application functions.
+<li>Enumeration of object types in the engine now only return registered object types.
 </ul>
 <li>Library interface
 <ul>
 <li>Removed some functions that had been deprecated in version 2.14.0.
 <li>Renamed asIScriptStruct to asIScriptObject.
 <li>Renamed GetStructTypeId to GetTypeId in asIScriptObject.
-<li>Added engine property asEP_BUILD_WITHOUT_LINE_CUES (replaces the config option).
 <li>Added enumeration of factory functions and behaviours to asIObjectType.
 <li>Added GetBaseType, GetFlags, GetSize, and GetPropertyOffset to asIObjectType.
 <li>Deprecated GetSubType and IsInterface in asIObjectType.
-<li>Enumeration of functions in the modules now only return global functions.
-<li>Enumeration of object types in modules now only return classes and interfaces.
-<li>Added enumeration of enums and typedefs to modules.
-<li>Added engine property asEP_INIT_GLOBAL_VARS_AFTER_BUILD, which will allow compiling scripts without having the implementation of the application functions.
-<li>Added enumeration of registered global properties.
+<li>Added enumeration of enums and typedefs to asIScriptModule.
+<li>Added enumeration of registered functions, properties, enums, and typedefs to asIScriptEngine.
 </ul>
 <li>Add-ons
 <ul>

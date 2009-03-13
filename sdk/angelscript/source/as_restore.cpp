@@ -697,7 +697,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 	}
 	else
 	{	
-		if( ot->flags & asOBJ_NAMED_ENUM )
+		if( ot->flags & asOBJ_ENUM )
 		{
 			// enumValues[]
 			int size = (int)ot->enumValues.GetLength();
@@ -709,7 +709,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 				WRITE_NUM(ot->enumValues[n]->value);
 			}
 		}
-		else if( ot->flags & asOBJ_NAMED_PSEUDO )
+		else if( ot->flags & asOBJ_TYPEDEF )
 		{
 			WRITE_NUM(ot->tokenType);
 		}
@@ -735,7 +735,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 			}
 
 			// behaviours
-			if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
+			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
 				WriteFunction(engine->scriptFunctions[ot->beh.construct]);
 				WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
@@ -792,7 +792,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 	}
 	else
 	{	
-		if( ot->flags & asOBJ_NAMED_ENUM )
+		if( ot->flags & asOBJ_ENUM )
 		{
 			int count;
 			READ_NUM(count);
@@ -805,7 +805,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 				ot->enumValues.PushLast(e);
 			}
 		}
-		else if( ot->flags & asOBJ_NAMED_PSEUDO )
+		else if( ot->flags & asOBJ_TYPEDEF )
 		{
 			READ_NUM(ot->tokenType);
 		}
@@ -837,7 +837,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 			}
 
 			// behaviours
-			if( !ot->IsInterface() && ot->flags != asOBJ_NAMED_PSEUDO && ot->flags != asOBJ_NAMED_ENUM )
+			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
 				asCScriptFunction *func = ReadFunction();
 				ot->beh.construct = func->id;

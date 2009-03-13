@@ -62,8 +62,8 @@ BEGIN_AS_NAMESPACE
 // Additional flag to the class object type
 const asDWORD asOBJ_TEMPLATE         = 0x20000;
 const asDWORD asOBJ_IMPLICIT_HANDLE  = 0x40000;
-const asDWORD asOBJ_NAMED_PSEUDO     = 0x40000000;
-const asDWORD asOBJ_NAMED_ENUM       = 0x10000000;
+const asDWORD asOBJ_TYPEDEF          = 0x40000000;
+const asDWORD asOBJ_ENUM             = 0x10000000;
 
 
 

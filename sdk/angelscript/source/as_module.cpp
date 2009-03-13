@@ -657,7 +657,7 @@ int asCModule::GetEnumValueCount(int enumTypeId)
 {
 	const asCDataType *dt = engine->GetDataTypeFromTypeId(enumTypeId);
 	asCObjectType *t = dt->GetObjectType();
-	if( t == 0 || !(t->GetFlags() & asOBJ_NAMED_ENUM) ) 
+	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) ) 
 		return asINVALID_TYPE;
 
 	return (int)t->enumValues.GetLength();
@@ -668,7 +668,7 @@ const char *asCModule::GetEnumValueByIndex(int enumTypeId, asUINT index, int *ou
 {
 	const asCDataType *dt = engine->GetDataTypeFromTypeId(enumTypeId);
 	asCObjectType *t = dt->GetObjectType();
-	if( t == 0 || !(t->GetFlags() & asOBJ_NAMED_ENUM) ) 
+	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) ) 
 		return 0;
 
 	if( index >= t->enumValues.GetLength() )

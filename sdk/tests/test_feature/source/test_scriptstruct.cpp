@@ -246,9 +246,9 @@ bool Test()
 	if( r < 0 ) fail = true;
 
 	// Verify that GetObjectTypeByIndex recognizes the script class
-	if( engine->GetObjectTypeCount() != 2 )
+	if( mod->GetObjectTypeCount() != 1 )
 		fail = true;
-	asIObjectType *type = engine->GetObjectTypeByIndex(1);
+	asIObjectType *type = mod->GetObjectTypeByIndex(0);
 	if( strcmp(type->GetName(), "Test") != 0 )
 		fail = true;
 

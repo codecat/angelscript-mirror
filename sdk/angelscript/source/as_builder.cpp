@@ -513,7 +513,7 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompi
 
 	// TODO: optimize: Improve linear search
 	// Check application registered properties
-	asCArray<asCGlobalProperty *> *props = &(engine->globalProps);
+	asCArray<asCGlobalProperty *> *props = &(engine->registeredGlobalProps);
 	for( n = 0; n < props->GetLength(); ++n )
 		if( (*props)[n] && (*props)[n]->name == prop )
 		{
@@ -1311,7 +1311,7 @@ void asCBuilder::CompileClasses()
 			sClassDeclaration *declBase = classDeclarations[n];
 			if( base == declBase->objType )
 			{
-				classDeclarations.Remove(n);
+				classDeclarations.RemoveIndex(n);
 				classDeclarations.PushLast(decl);
 
 				// Decrease index so that we don't skip an entry
@@ -1354,7 +1354,7 @@ void asCBuilder::CompileClasses()
 					derivedFunc = GetFunctionDescription(decl->objType->methods[d]);
 					if( derivedFunc->IsSignatureEqual(baseFunc) )
 					{
-						decl->objType->methods.Remove(d);
+						decl->objType->methods.RemoveIndex(d);
 						found = true;
 						break;
 					}
@@ -1729,7 +1729,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 		dataType.CreatePrimitive(ttInt, false);
 
 		st->arrayType = 0;
-		st->flags     = asOBJ_NAMED_ENUM;
+		st->flags     = asOBJ_ENUM;
 		st->size      = dataType.GetSizeInMemoryBytes();
 		st->name      = name;
 		st->tokenType = ttIdentifier;
@@ -1826,7 +1826,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file)
 		asCObjectType *st = asNEW(asCObjectType)(engine);
 
 		st->arrayType = 0;
-		st->flags     = asOBJ_NAMED_PSEUDO;
+		st->flags     = asOBJ_TYPEDEF;
 		st->size      = dataType.GetSizeInMemoryBytes();
 		st->name      = name;
 		st->tokenType = dataType.GetTokenType();
@@ -2345,7 +2345,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			asCConfigGroup *group = engine->FindConfigGroupForObjectType(ot);
 			if( !module || !group || group->HasModuleAccess(module->name.AddressOf()) )
 			{
-				if(asOBJ_NAMED_PSEUDO == (ot->flags & asOBJ_NAMED_PSEUDO))
+				if(asOBJ_TYPEDEF == (ot->flags & asOBJ_TYPEDEF))
 				{
 					// TODO: typedef: A typedef should be considered different from the original type (though with implicit conversions between the two)
 					// Create primitive data type based on object flags
@@ -2515,7 +2515,7 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 	for( t = 0; t < engine->objectTypes.GetLength(); t++ )
 	{
 		asCObjectType *ot = engine->objectTypes[t];
-		if( ot && (ot->flags & asOBJ_NAMED_ENUM) )
+		if( ot && (ot->flags & asOBJ_ENUM) )
 		{
 			for( asUINT n = 0; n < ot->enumValues.GetLength(); n++ )
 			{
@@ -2541,7 +2541,7 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 	for( t = 0; t < module->enumTypes.GetLength(); t++ )
 	{
 		asCObjectType *ot = module->enumTypes[t];
-		if( ot && (ot->flags & asOBJ_NAMED_ENUM) )
+		if( ot && (ot->flags & asOBJ_ENUM) )
 		{
 			for( asUINT n = 0; n < ot->enumValues.GetLength(); n++ )
 			{

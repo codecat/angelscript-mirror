@@ -60,7 +60,11 @@ BEGIN_AS_NAMESPACE
 class asCBuilder;
 class asCContext;
 
-// TODO: Remove CreateScriptObject. Objects should be created by calling the factory function instead.
+// TODO: Deprecate CreateScriptObject. Objects should be created by calling the factory function instead.
+// TODO: Deprecate GetSizeOfPrimitiveType. This function is not necessary now that all primitive types have fixed typeIds
+
+
+
 
 // TODO: DiscardModule should take an optional pointer to asIScriptModule instead of module name. If null, nothing is done.
 
@@ -92,24 +96,41 @@ public:
 
 	// Global functions
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	virtual int GetGlobalFunctionCount();
+	virtual int GetGlobalFunctionIdByIndex(asUINT index);
 
 	// Global properties
 	virtual int RegisterGlobalProperty(const char *declaration, void *pointer);
-	virtual int GetRegisteredGlobalPropertyCount();
-	virtual int GetRegisteredGlobalProperty(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0);
+	virtual int GetGlobalPropertyCount();
+	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0);
 	
 	// Type registration
-	virtual int RegisterObjectType(const char *obj, int byteSize, asDWORD flags);
-	virtual int RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset);
-	virtual int RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-	virtual int RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-	virtual int RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-	virtual int RegisterInterface(const char *name);
-	virtual int RegisterInterfaceMethod(const char *intf, const char *declaration);
-	virtual int RegisterEnum(const char *type);
-	virtual int RegisterEnumValue(const char *type, const char *name, int value);
-	virtual int RegisterTypedef(const char *type, const char *decl);
+	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags);
+	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset);
+	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	virtual int            RegisterInterface(const char *name);
+	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration);
+	virtual int            GetObjectTypeCount();
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index);
+	
+	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv);
+	virtual int GetStringFactoryReturnTypeId();
+
+	// Enums
+	virtual int         RegisterEnum(const char *type);
+	virtual int         RegisterEnumValue(const char *type, const char *name, int value);
+	virtual int         GetEnumCount();
+	virtual int         GetEnumTypeIdByIndex(asUINT index);
+	virtual int         GetEnumValueCount(int enumTypeId);
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length = 0);
+
+	// Typedefs
+	virtual int         RegisterTypedef(const char *type, const char *decl);
+	virtual int         GetTypedefCount();
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, int *length = 0);
 
 	// Configuration groups
 	virtual int BeginConfigGroup(const char *groupName);
@@ -125,8 +146,6 @@ public:
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId);
 
 	// Type identification
-	virtual int            GetObjectTypeCount();
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index);
 	virtual asIObjectType *GetObjectTypeById(int typeId);
 	virtual int            GetTypeIdByDecl(const char *decl);
 	virtual const char    *GetTypeDeclaration(int typeId, int *length = 0);
@@ -276,10 +295,18 @@ public:
 
 	int initialContextStackSize;
 
-	// Information registered by host
-	asSTypeBehaviour globalBehaviours;
 	asCObjectType   *defaultArrayObjectType;
 	asCObjectType    scriptTypeBehaviours;
+
+	// Registered interface
+	asCArray<asCObjectType *>      registeredObjTypes;
+	asCArray<asCObjectType *>      registeredTypeDefs;
+	asCArray<asCObjectType *>      registeredEnums;
+	asCArray<asCGlobalProperty *>  registeredGlobalProps;
+	asCArray<asCScriptFunction *>  registeredGlobalFuncs;
+	asCScriptFunction             *stringFactory;
+	asSTypeBehaviour               globalBehaviours;
+	bool configFailed;
 
 	// Stores all known object types, both application registered, and script declared
 	asCArray<asCObjectType *>      objectTypes;
@@ -287,18 +314,11 @@ public:
 	// Store information about registered array types
 	asCArray<asCObjectType *>      arrayTypes;
 
-	// This array stores the type and names of the registered global properties
-	asCArray<asCGlobalProperty *>  globalProps;
-
 	// This array stores pointers to each registered global property. It allows the virtual 
 	// machine to directly find the value of the global property using an index into this array.
 	asCArray<void *>               globalPropAddresses;
 
-	asCScriptFunction             *stringFactory;
-
-	bool configFailed;
-
-	// Script modules
+	// Stores all functions, i.e. registered functions, script functions, class methods, behaviours, etc.
 	asCArray<asCScriptFunction *> scriptFunctions;
 	asCArray<int>                 freeScriptFunctionIds;
 	asCArray<asCScriptFunction *> signatureIds;
