@@ -6347,16 +6347,16 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 
 		// TODO: The case -2147483648 gives an unecessary warning of changed sign for implicit conversion
 
-		if( ctx->type.dataType.IsUnsignedType() )
+		if( ctx->type.dataType.IsUnsignedType() || ctx->type.dataType.IsEnumType() )
 		{
 			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
-				to.SetTokenType(ttInt8);
+				to = asCDataType::CreatePrimitive(ttInt8, false);
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
-				to.SetTokenType(ttInt16);
+				to = asCDataType::CreatePrimitive(ttInt16, false);
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 4 )
-				to.SetTokenType(ttInt);
+				to = asCDataType::CreatePrimitive(ttInt, false);
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 8 )
-				to.SetTokenType(ttInt64);
+				to = asCDataType::CreatePrimitive(ttInt64, false);
 			else
 			{
 				Error(TXT_INVALID_TYPE, node);
@@ -6447,16 +6447,16 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	{
 		asCDataType to = ctx->type.dataType;
 
-		if( ctx->type.dataType.IsIntegerType() )
+		if( ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType() )
 		{
 			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
-				to.SetTokenType(ttUInt8);
+				to = asCDataType::CreatePrimitive(ttUInt8, false);
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
-				to.SetTokenType(ttUInt16);
+				to = asCDataType::CreatePrimitive(ttUInt16, false);
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 4 )
-				to.SetTokenType(ttUInt);
+				to = asCDataType::CreatePrimitive(ttUInt, false);
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 8 )
-				to.SetTokenType(ttUInt64);
+				to = asCDataType::CreatePrimitive(ttUInt64, false);
 			else
 			{
 				Error(TXT_INVALID_TYPE, node);
@@ -8541,8 +8541,8 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 {
 	// Warn if not both operands are explicit handles
 	if( (node->tokenType == ttEqual || node->tokenType == ttNotEqual) &&
-		((!lctx->type.isExplicitHandle && !(lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE)) ||
-		 (!rctx->type.isExplicitHandle && !(rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE))) )
+		((!lctx->type.isExplicitHandle && !(lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE))) ||
+		 (!rctx->type.isExplicitHandle && !(rctx->type.dataType.GetObjectType() && (rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE)))) )
 	{
 		Warning(TXT_HANDLE_COMPARISON, node);
 	}

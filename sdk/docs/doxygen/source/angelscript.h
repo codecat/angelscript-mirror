@@ -858,11 +858,12 @@ public:
 	//! \param[in] index The index of the global variable.
 	//! \param[out] name Receives the name of the property.
 	//! \param[out] typeId Receives the typeId of the property.
+	//! \param[out] isConst Receives the constness indicator of the property.
+	//! \param[out] configGroup Receives the config group in which the property was registered.
 	//! \param[out] pointer Receives the pointer of the property.
-	//! \param[out] length Receives the length of the property name.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG \a index is too large.
-	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0) = 0;
+	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) = 0;
 	//! \}
 
 	// Object types
@@ -1015,6 +1016,15 @@ public:
     //! \param[in] index The index of the type.
     //! \return The registered object type interface for the type, or null if not found.
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+	//! \brief Returns the number of registered global behaviours.
+	//! \return The number of registered global behaviours.
+	virtual int            GetGlobalBehaviourCount() = 0;
+	//! \brief Returns the registered global behaviour.
+	//! \param[in] index The index of the global behaviour.
+	//! \param[out] outBehaviour Receives the behaviour type.
+	//! \return The fuction id for the registered global behaviour, or a negative value on error.
+	//! \retval asINVALID_ARG \a index is too large.
+	virtual int            GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) = 0;
 	//! \}
 
 	// String factory
@@ -1088,11 +1098,12 @@ public:
 	//! \brief Returns the number of registered enum types.
 	//! \return The number of registered enum types.
 	virtual int         GetEnumCount() = 0;
-	//! \brief Returns the type id of the registered enum type.
+	//! \brief Returns the registered enum type.
 	//! \param[in] index The index of the enum type.
-	//! \return The type id of the registered enum type, or a negative value on error.
-	//! \retval asINVALID_ARG \a index is too large.
-	virtual int         GetEnumTypeIdByIndex(asUINT index) = 0;
+	//! \param[out] enumTypeId Receives the type if of the enum type.
+	//! \param[out] configGroup Receives the config group in which the enum was registered.
+	//! \return The name of the registered enum type, or null on error.
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0) = 0;
 	//! \brief Returns the number of enum values for the enum type.
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \return The number of enum values for the enum type.
@@ -1101,9 +1112,8 @@ public:
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \param[in] index The index of the enum value.
 	//! \param[out] outValue Receives the value of the enum value.
-	//! \param[out] length Receives the length of the name of the enum value.
 	//! \return The name of the enum value.
-	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length = 0) = 0;
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) = 0;
 	//! \}
 
 	// Typedefs
@@ -1131,9 +1141,9 @@ public:
 	//! \brief Returns a registered typedef.
 	//! \param[in] index The index of the typedef.
 	//! \param[out] typeId The type that the typedef aliases.
-	//! \param[out] length The length of the typedef name.
+	//! \param[out] configGroup Receives the config group in which the type def was registered.
 	//! \return The name of the typedef.
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, int *length = 0) = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0) = 0;
 	//! \}
 
 	// Configuration groups
@@ -1258,9 +1268,8 @@ public:
 	virtual int            GetTypeIdByDecl(const char *decl) = 0;
 	//! \brief Returns a type declaration.
     //! \param[in] typeId The type id of the type.
-    //! \param[out] length The length of the returned string.
     //! \return A null terminated string with the type declaration, or null if not found.
-	virtual const char    *GetTypeDeclaration(int typeId, int *length = 0) = 0;
+	virtual const char    *GetTypeDeclaration(int typeId) = 0;
 	//! \brief Returns the size of a primitive type.
     //! \param[in] typeId The type id of the type.
     //! \return The size of the type in bytes.
@@ -1524,6 +1533,9 @@ protected:
 class asIScriptModule
 {
 public:
+    //! \name Miscellaneous
+    //! \{
+
 	//! \brief Returns a pointer to the engine.
     //! \return A pointer to the engine.
 	virtual asIScriptEngine *GetEngine() = 0;
@@ -1533,11 +1545,14 @@ public:
 	//! Sets the name of the script module.
 	virtual void             SetName(const char *name) = 0;
 	//! \brief Gets the name of the module.
-	//! \param[out] length The length of the name.
 	//! \return The name of the module.
-	virtual const char      *GetName(int *length = 0) = 0;
+	virtual const char      *GetName() = 0;
+	//! \}
 
 	// Compilation
+    //! \name Compilation
+    //! \{
+
     //! \brief Add a script section for the next build.
     //!
     //! \param[in] name The name of the script section
@@ -1568,8 +1583,12 @@ public:
     //! Compiler messages are sent to the message callback function set with \ref asIScriptEngine::SetMessageCallback. 
     //! If there are no errors or warnings, no messages will be sent to the callback function.
 	virtual int  Build() = 0;
+	//! \}
 
-	// Script functions
+	// Functions
+    //! \name Functions
+    //! \{
+	
 	//! \brief Returns the number of global functions in the module.
     //! \return A negative value on error, or the number of global functions in this module.
     //! \retval asERROR The module was not compiled successfully.
@@ -1615,8 +1634,12 @@ public:
     //! \param[in] funcId The id of the function or method.
     //! \return A pointer to the function description interface, or null if not found.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+	//! \}
 
-	// Script global variables
+	// Global variables
+    //! \name Global variables
+    //! \{
+	
 	//! \brief Reset the global variables of the module.
     //!
     //! \return A negative value on error.
@@ -1648,32 +1671,35 @@ public:
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) = 0;
 	//! \brief Returns the global variable declaration.
     //! \param[in] index The index of the global variable.
-    //! \param[out] length The length of the returned string.
     //! \return A null terminated string with the variable declaration, or null if not found.
     //!
     //! This method can be used to retrieve the variable declaration of the script variables 
     //! that the host application will access. Verifying the declaration is important because, 
     //! even though the script may compile correctly the user may not have used the variable 
     //! types as intended.
-	virtual const char *GetGlobalVarDeclaration(int index, int *length = 0) = 0;
+	virtual const char *GetGlobalVarDeclaration(int index) = 0;
 	//! \brief Returns the global variable name.
     //! \param[in] index The index of the global variable.
-    //! \param[out] length The length of the returned string.
     //! \return A null terminated string with the variable name, or null if not found.
-	virtual const char *GetGlobalVarName(int index, int *length = 0) = 0;
+	virtual const char *GetGlobalVarName(int index) = 0;
 	//! \brief Returns the type id for the global variable.
 	//! \param[in] index The index of the global variable.
+	//! \param[out] isConst Receives the constness indicator of the variable.
 	//! \return The type id of the global variable, or a negative value on error.
 	//! \retval asINVALID_ARG The index is out of range.
-	virtual int         GetGlobalVarTypeId(int index) = 0;
+	virtual int         GetGlobalVarTypeId(int index, bool *isConst = 0) = 0;
 	//! \brief Returns the pointer to the global variable.
     //! \param[in] index The index of the global variable.
     //! \return A pointer to the global variable, or null if not found.
     //!
     //! This method should be used to retrieve the pointer of a variable that you wish to access.
 	virtual void       *GetAddressOfGlobalVar(int index) = 0;
+	//! \}
 
 	// Type identification
+    //! \name Type identification
+    //! \{
+
 	//! \brief Returns the number of object types.
     //! \return The number of object types declared in the module.
 	virtual int            GetObjectTypeCount() = 0;
@@ -1700,16 +1726,20 @@ public:
     //! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
     //! string@ but string is the same as const string. 
 	virtual int            GetTypeIdByDecl(const char *decl) = 0;
+	//! \}
 
 	// Enums
+    //! \name Enums
+    //! \{
+
 	//! \brief Returns the number of enum types declared in the module.
 	//! \return The number of enum types in the module.
 	virtual int         GetEnumCount() = 0;
-	//! \brief Returns the type id for the enum type.
+	//! \brief Returns the enum type.
 	//! \param[in] index The index of the enum type.
-	//! \return The type id of the enum or a negative value on error.
-	//! \retval asINVALID_ARG \a index is too large.
-	virtual int         GetEnumTypeIdByIndex(asUINT index) = 0;
+	//! \param[out] enumTypeId Receives the type id of the enum type.
+	//! \return The name of the enum type, or null on error.
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId) = 0;
 	//! \brief Returns the number of values defined for the enum type.
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \return The number of enum values or a negative value on error.
@@ -1719,22 +1749,28 @@ public:
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \param[in] index The index of the enum value.
 	//! \param[out] outValue Receives the numeric value.
-	//! \param[out] length Receives the length of the value name.
 	//! \return The name of the enum value.
-	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length = 0) = 0;
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) = 0;
+	//! \}
 
 	// Typedefs
+    //! \name Typedefs
+    //! \{
+
 	//! \brief Returns the number of typedefs in the module.
 	//! \return The number of typedefs in the module.
 	virtual int         GetTypedefCount() = 0;
 	//! \brief Returns the typedef.
 	//! \param[in] index The index of the typedef.
 	//! \param[out] typeId The type that the typedef aliases.
-	//! \param[out] length The length of the typedef name.
 	//! \return The name of the typedef.
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, int *length = 0) = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId) = 0;
+	//! \}
 
 	// Dynamic binding between modules
+    //! \name Dynamic binding between modules
+    //! \{
+
 	//! \brief Returns the number of functions declared for import.
     //! \return A negative value on error, or the number of imported functions.
     //! \retval asERROR The module was not built successfully.
@@ -1753,20 +1789,18 @@ public:
 	virtual int         GetImportedFunctionIndexByDecl(const char *decl) = 0;
 	//! \brief Returns the imported function declaration.
     //! \param[in] importIndex The index of the imported function.
-    //! \param[out] length The length of the returned string.
     //! \return A null terminated string with the function declaration, or null if not found.
     //!
     //! Use this function to get the declaration of the imported function. The returned 
     //! declaration can be used to find a matching function in another module that can be bound 
     //! to the imported function. 
-	virtual const char *GetImportedFunctionDeclaration(int importIndex, int *length = 0) = 0;
+	virtual const char *GetImportedFunctionDeclaration(int importIndex) = 0;
 	//! \brief Returns the declared imported function source module.
     //! \param[in] importIndex The index of the imported function.
-    //! \param[out] length The length of the returned string.
     //! \return A null terminated string with the name of the source module, or null if not found.
     //!
     //! Use this function to get the name of the suggested module to import the function from.
-	virtual const char *GetImportedFunctionSourceModule(int importIndex, int *length = 0) = 0;
+	virtual const char *GetImportedFunctionSourceModule(int importIndex) = 0;
 	//! \brief Binds an imported function to the function from another module.
     //! \param[in] importIndex The index of the imported function.
     //! \param[in] funcId The function id of the function that will be bound to the imported function.
@@ -1799,8 +1833,12 @@ public:
     //!
     //! Unbinds all imported functions in the module.
 	virtual int         UnbindAllImportedFunctions() = 0;
+	//! \}
 
-	// Bytecode Saving/Loading
+	// Bytecode saving and loading
+    //! \name Bytecode saving and loading
+    //! \{
+
 	//! \brief Save compiled bytecode to a binary stream.
     //! \param[in] out The output stream.
     //! \return A negative value on error.
@@ -1828,6 +1866,7 @@ public:
     //! pre-compiled byte code is compatible with the current engine configuration, i.e. that the
     //! engine has been configured in the same way as when the byte code was first compiled.
 	virtual int LoadByteCode(asIBinaryStream *in) = 0;
+	//! \}
 
 protected:
 	virtual ~asIScriptModule() {}
@@ -1838,6 +1877,9 @@ class asIScriptContext
 {
 public:
 	// Memory management
+	//! \name Memory management
+	//! \{
+
 	//! \brief Increase reference counter.
     //!
     //! \return The number of references to this object.
@@ -1852,16 +1894,20 @@ public:
     //!
     //! Call this method when you will no longer use the references that you own.
 	virtual int Release() = 0;
+	//! \}
 
-	// Engine
+	// Miscellaneous
+	//! \name Miscellaneous
+	//! \{
+
 	//! \brief Returns a pointer to the engine.
     //! \return A pointer to the engine.
 	virtual asIScriptEngine *GetEngine() = 0;
+	//! \}
 
-	// Script context
-	//! \brief Returns the state of the context.
-    //! \return The current state of the context.
-	virtual asEContextState GetState() = 0;
+	// Execution
+	//! \name Execution
+	//! \{
 
     //! \brief Prepares the context for execution of the function identified by funcId.
     //! \param[in] funcId The id of the function/method that will be executed.
@@ -1874,7 +1920,7 @@ public:
     //! default value for parameters and return value is 0.
     //!
     //! \see \ref doc_call_script_func
-	virtual int Prepare(int funcId) = 0;
+	virtual int             Prepare(int funcId) = 0;
 	//! \brief Frees resources held by the context.
     //! \return A negative value on error.
     //! \retval asCONTEXT_ACTIVE The context is still active or suspended.
@@ -1882,7 +1928,53 @@ public:
     //! This function frees resources held by the context. It's usually not necessary 
     //! to call this function as the resources are automatically freed when the context
     //! is released, or reused when \ref Prepare is called again.
-	virtual int Unprepare() = 0;
+	virtual int             Unprepare() = 0;
+	//! \brief Sets the object for a class method call.
+    //! \param[in] obj A pointer to the object.
+    //! \return A negative value on error.
+    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+    //! \retval asERROR The prepared function is not a class method.
+    //!
+    //! This method sets object pointer when calling class methods.
+	virtual int             SetObject(void *obj) = 0;
+    //! \brief Executes the prepared function.
+    //! \return A negative value on error, or one of \ref asEContextState.
+    //! \retval asERROR Invalid context object, the context is not prepared, or it is not in suspended state.
+    //! \retval asEXECUTION_ABORTED The execution was aborted with a call to \ref Abort.
+    //! \retval asEXECUTION_SUSPENDED The execution was suspended with a call to \ref Suspend.
+    //! \retval asEXECUTION_FINISHED The execution finished successfully.
+    //! \retval asEXECUTION_EXCEPTION The execution ended with an exception.
+    //!
+    //! Executes the prepared function until the script returns. If the execution was previously 
+    //! suspended the function resumes where it left of.
+    //! 
+    //! Note that if the script freezes, e.g. if trapped in a never ending loop, you may call 
+    //! \ref Abort from another thread to stop execution.
+    //! 
+    //! \see \ref doc_call_script_func
+	virtual int             Execute() = 0;
+	//! \brief Aborts the execution.
+    //! \return A negative value on error.
+    //! \retval asERROR Invalid context object.
+    //!
+    //! Aborts the current execution of a script.
+	virtual int             Abort() = 0;
+	//! \brief Suspends the execution, which can then be resumed by calling Execute again.
+    //! \return A negative value on error.
+    //! \retval asERROR Invalid context object.
+    //!
+    //! Suspends the current execution of a script. The execution can then be resumed by calling \ref Execute again.
+    //!
+    //! \see \ref doc_call_script_func
+	virtual int             Suspend() = 0;
+	//! \brief Returns the state of the context.
+    //! \return The current state of the context.
+	virtual asEContextState GetState() = 0;
+	//! \}
+
+	// Arguments
+	//! \name Arguments
+	//! \{
 
 	//! \brief Sets an 8-bit argument value.
     //! \param[in] arg The argument index.
@@ -1893,7 +1985,7 @@ public:
     //! \retval asINVALID_TYPE The argument is not an 8-bit value.
     //!
     //! Sets a 1 byte argument.
-	virtual int SetArgByte(asUINT arg, asBYTE value) = 0;
+	virtual int   SetArgByte(asUINT arg, asBYTE value) = 0;
 	//! \brief Sets a 16-bit argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
@@ -1903,7 +1995,7 @@ public:
     //! \retval asINVALID_TYPE The argument is not a 16-bit value.
     //!
     //! Sets a 2 byte argument.
-	virtual int SetArgWord(asUINT arg, asWORD value) = 0;
+	virtual int   SetArgWord(asUINT arg, asWORD value) = 0;
 	//! \brief Sets a 32-bit integer argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
@@ -1913,7 +2005,7 @@ public:
     //! \retval asINVALID_TYPE The argument is not a 32-bit value.
     //!
     //! Sets a 4 byte argument.
-	virtual int SetArgDWord(asUINT arg, asDWORD value) = 0;
+	virtual int   SetArgDWord(asUINT arg, asDWORD value) = 0;
 	//! \brief Sets a 64-bit integer argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
@@ -1923,7 +2015,7 @@ public:
     //! \retval asINVALID_TYPE The argument is not a 64-bit value.
     //!
     //! Sets an 8 byte argument.
-	virtual int SetArgQWord(asUINT arg, asQWORD value) = 0;
+	virtual int   SetArgQWord(asUINT arg, asQWORD value) = 0;
 	//! \brief Sets a float argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
@@ -1933,7 +2025,7 @@ public:
     //! \retval asINVALID_TYPE The argument is not a 32-bit value.
     //!
     //! Sets a float argument.
-	virtual int SetArgFloat(asUINT arg, float value) = 0;
+	virtual int   SetArgFloat(asUINT arg, float value) = 0;
 	//! \brief Sets a double argument value.
     //! \param[in] arg The argument index.
     //! \param[in] value The value of the argument.
@@ -1943,7 +2035,7 @@ public:
     //! \retval asINVALID_TYPE The argument is not a 64-bit value.
     //!
     //! Sets a double argument.
-	virtual int SetArgDouble(asUINT arg, double value) = 0;
+	virtual int   SetArgDouble(asUINT arg, double value) = 0;
 	//! \brief Sets the address of a reference or handle argument.
     //! \param[in] arg The argument index.
     //! \param[in] addr The address that should be passed in the argument.
@@ -1953,7 +2045,7 @@ public:
     //! \retval asINVALID_TYPE The argument is not a reference or an object handle.
     //!
     //! Sets an address argument, e.g. an object handle or a reference.
-	virtual int SetArgAddress(asUINT arg, void *addr) = 0;
+	virtual int   SetArgAddress(asUINT arg, void *addr) = 0;
 	//! \brief Sets the object argument value.
     //! \param[in] arg The argument index.
     //! \param[in] obj A pointer to the object.
@@ -1964,7 +2056,7 @@ public:
     //!
     //! Sets an object argument. If the argument is an object handle AngelScript will increment the reference
     //! for the object. If the argument is an object value AngelScript will make a copy of the object.
-	virtual int SetArgObject(asUINT arg, void *obj) = 0;
+	virtual int   SetArgObject(asUINT arg, void *obj) = 0;
 	//! \brief Returns a pointer to the argument for assignment.
     //! \param[in] arg The argument index.
     //! \return A pointer to the argument on the stack.
@@ -1973,15 +2065,11 @@ public:
     //! should increment the reference counter. For object values, you should pass a pointer to a copy of the
     //! object.
 	virtual void *GetArgPointer(asUINT arg) = 0;
+	//! \}	
 
-	//! \brief Sets the object for a class method call.
-    //! \param[in] obj A pointer to the object.
-    //! \return A negative value on error.
-    //! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
-    //! \retval asERROR The prepared function is not a class method.
-    //!
-    //! This method sets object pointer when calling class methods.
-	virtual int SetObject(void *obj) = 0;
+	// Return value
+	//! \name Return value
+	//! \{
 
 	//! \brief Returns the 8-bit return value.
     //! \return The 1 byte value returned from the script function, or 0 on error.
@@ -2010,50 +2098,12 @@ public:
 	//! \brief Returns the address of the returned value
 	//! \return A pointer to the return value returned from the script function, or 0 on error.
 	virtual void   *GetAddressOfReturnValue() = 0;
-
-    //! \brief Executes the prepared function.
-    //! \return A negative value on error, or one of \ref asEContextState.
-    //! \retval asERROR Invalid context object, the context is not prepared, or it is not in suspended state.
-    //! \retval asEXECUTION_ABORTED The execution was aborted with a call to \ref Abort.
-    //! \retval asEXECUTION_SUSPENDED The execution was suspended with a call to \ref Suspend.
-    //! \retval asEXECUTION_FINISHED The execution finished successfully.
-    //! \retval asEXECUTION_EXCEPTION The execution ended with an exception.
-    //!
-    //! Executes the prepared function until the script returns. If the execution was previously 
-    //! suspended the function resumes where it left of.
-    //! 
-    //! Note that if the script freezes, e.g. if trapped in a never ending loop, you may call 
-    //! \ref Abort from another thread to stop execution.
-    //! 
-    //! \see \ref doc_call_script_func
-	virtual int Execute() = 0;
-	//! \brief Aborts the execution.
-    //! \return A negative value on error.
-    //! \retval asERROR Invalid context object.
-    //!
-    //! Aborts the current execution of a script.
-	virtual int Abort() = 0;
-	//! \brief Suspends the execution, which can then be resumed by calling Execute again.
-    //! \return A negative value on error.
-    //! \retval asERROR Invalid context object.
-    //!
-    //! Suspends the current execution of a script. The execution can then be resumed by calling \ref Execute again.
-    //!
-    //! \see \ref doc_call_script_func
-	virtual int Suspend() = 0;
-
-	//! \brief Get the current line number that is being executed.
-    //! \param[out] column The variable will receive the column number.
-    //! \return The current line number.
-    //!
-    //! This method returns the line number where the context is currently located. 
-    //! The line number is relative to the script section where the function was implemented.
-	virtual int GetCurrentLineNumber(int *column = 0) = 0;
-	//! \brief Get the current function that is being executed.
-    //! \return The function id of the current function.
-	virtual int GetCurrentFunction() = 0;
+	//! \}
 
 	// Exception handling
+	//! \name Exception handling
+	//! \{
+
  	//! \brief Sets an exception, which aborts the execution.
     //! \param[in] string A string that describes the exception that occurred.
     //! \return A negative value on error.
@@ -2065,21 +2115,43 @@ public:
     //!
     //! Note that if your system function sets an exception, it should not return any 
     //! object references because the engine will not release the returned reference.
-	virtual int SetException(const char *string) = 0;
+	virtual int         SetException(const char *string) = 0;
 	//! \brief Returns the line number where the exception occurred.
     //! \param[out] column The variable will receive the column number.
     //! \return The line number where the exception occurred.
     //!
     //! This method returns the line number where the exception ocurred. The line number 
     //! is relative to the script section where the function was implemented.
-	virtual int GetExceptionLineNumber(int *column = 0) = 0;
+	virtual int         GetExceptionLineNumber(int *column = 0) = 0;
 	//! \brief Returns the function id of the function where the exception occurred.
     //! \return The function id where the exception occurred.
-	virtual int GetExceptionFunction() = 0;
+	virtual int         GetExceptionFunction() = 0;
 	//! \brief Returns the exception string text.
-    //! \param[out] length The length of the returned string.
     //! \return A null terminated string describing the exception that occurred.
-	virtual const char *GetExceptionString(int *length = 0) = 0;
+	virtual const char *GetExceptionString() = 0;
+	//! \brief Sets an exception callback function. The function will be called if a script exception occurs.
+    //! \param[in] callback The callback function/method that should be called upon an exception.
+    //! \param[in] obj The object pointer on which the callback is called.
+    //! \param[in] callConv The calling convention of the callback function/method.
+    //! \return A negative value on error.
+    //! \retval asNOT_SUPPORTED Calling convention must not be asCALL_GENERIC, or the routine's calling convention is not supported.
+    //! \retval asINVALID_ARG   \a obj must not be null for class methods.
+    //! \retval asWRONG_CALLING_CONV \a callConv isn't compatible with the routines' calling convention.
+    //!
+    //! This callback function will be called by the VM when a script exception is raised, which 
+    //! allow the application to examine the callstack and generate a detailed report before the 
+    //! callstack is cleaned up.
+    //!
+    //! See \ref SetLineCallback for details on the calling convention.
+	virtual int         SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	//! \brief Removes a previously registered callback.
+    //! Removes a previously registered callback.
+	virtual void        ClearExceptionCallback() = 0;
+	//! \}
+
+	// Debugging
+	//! \name Debugging
+	//! \{
 
 	//! \brief Sets a line callback function. The function will be called for each executed script statement.
     //! \param[in] callback The callback function/method that should be called for each script line executed.
@@ -2109,46 +2181,36 @@ public:
     //! \ref asCALL_THISCALL, \ref asCALL_CDECL_OBJLAST, or \ref asCALL_CDECL_OBJFIRST.
     //!
     //! \see \ref doc_debug
-	virtual int  SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	virtual int         SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes a previously registered callback.
     //! Removes a previously registered callback.
-	virtual void ClearLineCallback() = 0;
-	//! \brief Sets an exception callback function. The function will be called if a script exception occurs.
-    //! \param[in] callback The callback function/method that should be called upon an exception.
-    //! \param[in] obj The object pointer on which the callback is called.
-    //! \param[in] callConv The calling convention of the callback function/method.
-    //! \return A negative value on error.
-    //! \retval asNOT_SUPPORTED Calling convention must not be asCALL_GENERIC, or the routine's calling convention is not supported.
-    //! \retval asINVALID_ARG   \a obj must not be null for class methods.
-    //! \retval asWRONG_CALLING_CONV \a callConv isn't compatible with the routines' calling convention.
+	virtual void        ClearLineCallback() = 0;
+	//! \brief Get the current line number that is being executed.
+    //! \param[out] column The variable will receive the column number.
+    //! \return The current line number.
     //!
-    //! This callback function will be called by the VM when a script exception is raised, which 
-    //! allow the application to examine the callstack and generate a detailed report before the 
-    //! callstack is cleaned up.
-    //!
-    //! See \ref SetLineCallback for details on the calling convention.
-	virtual int  SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
-	//! \brief Removes a previously registered callback.
-    //! Removes a previously registered callback.
-	virtual void ClearExceptionCallback() = 0;
-
+    //! This method returns the line number where the context is currently located. 
+    //! The line number is relative to the script section where the function was implemented.
+	virtual int         GetCurrentLineNumber(int *column = 0) = 0;
+	//! \brief Get the current function that is being executed.
+    //! \return The function id of the current function.
+	virtual int         GetCurrentFunction() = 0;
 	//! \brief Returns the size of the callstack, i.e. the number of functions that have yet to complete.
     //! \return The number of functions on the call stack.
     //!
     //! This methods returns the size of the callstack, i.e. how many parent functions there are 
     //! above the current functions being called. It can be used to enumerate the callstack in order 
     //! to generate a detailed report when an exception occurs, or for debugging running scripts.
-	virtual int GetCallstackSize() = 0;
+	virtual int         GetCallstackSize() = 0;
 	//! \brief Returns the function id at the specified callstack level.
     //! \param[in] index The index on the call stack.
     //! \return The function id on the call stack referred to by the index.
-	virtual int GetCallstackFunction(int index) = 0;
+	virtual int         GetCallstackFunction(int index) = 0;
 	//! \brief Returns the line number at the specified callstack level.
     //! \param[in] index The index on the call stack.
     //! \param[out] column The variable will receive the column number.
     //! \return The line number for the call stack level referred to by the index.
-	virtual int GetCallstackLineNumber(int index, int *column = 0) = 0;
-
+	virtual int         GetCallstackLineNumber(int index, int *column = 0) = 0;
 	//! \brief Returns the number of local variables at the specified callstack level.
     //! \param[in] stackLevel The index on the call stack.
     //! \return The number of variables in the function on the call stack level.
@@ -2157,16 +2219,14 @@ public:
 	virtual int         GetVarCount(int stackLevel = -1) = 0;
 	//! \brief Returns the name of local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
-    //! \param[out] length The length of the returned string.
     //! \param[in] stackLevel The index on the call stack.
     //! \return A null terminated string with the name of the variable.
-	virtual const char *GetVarName(int varIndex, int *length = 0, int stackLevel = -1) = 0;
+	virtual const char *GetVarName(int varIndex, int stackLevel = -1) = 0;
 	//! \brief Returns the declaration of a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
-    //! \param[out] length The length of the returned string.
     //! \param[in] stackLevel The index on the call stack.
     //! \return A null terminated string with the declaration of the variable.
-	virtual const char *GetVarDeclaration(int varIndex, int *length = 0, int stackLevel = -1) = 0;
+	virtual const char *GetVarDeclaration(int varIndex, int stackLevel = -1) = 0;
 	//! \brief Returns the type id of a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
@@ -2192,6 +2252,11 @@ public:
     //! \param[in] stackLevel The index on the call stack.
     //! \return Returns a pointer to the object if it is a class method.
 	virtual void       *GetThisPointer(int stackLevel = -1) = 0;
+	//! \}
+
+	// User data
+	//! \name User data
+	//! \{
 
 	//! \brief Register the memory address of some user data.
     //! \param[in] data A pointer to the user data.
@@ -2202,12 +2267,17 @@ public:
 	//! \brief Returns the address of the previously registered user data.
     //! \return The pointer to the user data.
 	virtual void *GetUserData() = 0;
+	//! \}
 
 #ifdef AS_DEPRECATED
+	//! \name Deprecated
+	//! \{
+
 	//! \deprecated Since 2.15.0. Use \ref asIScriptContext::GetAddressOfReturnValue "GetAddressOfReturnValue" instead.
 	virtual void *GetReturnPointer() = 0;
 	//! \deprecated Since 2.15.0. Use \ref asIScriptContext::GetAddressOfVar "GetAddressOfVar" instead.
 	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
+	//! \}
 #endif
 
 protected:
@@ -2218,13 +2288,21 @@ protected:
 class asIScriptGeneric
 {
 public:
+	// Miscellaneous
+	//! \name Miscellaneous
+	//! \{
+
     //! \brief Returns a pointer to the script engine.
     //! \return A pointer to the engine.
 	virtual asIScriptEngine *GetEngine() = 0;
-
     //! \brief Returns the function id of the called function.
     //! \return The function id of the function being called.
-	virtual int     GetFunctionId() = 0;
+	virtual int              GetFunctionId() = 0;
+	//! \}
+
+	// Object
+	//! \name Object
+	//! \{
 
     //! \brief Returns the object pointer if this is a class method, or null if it not.
     //! \return A pointer to the object, if this is a method.
@@ -2232,10 +2310,19 @@ public:
     //! \brief Returns the type id of the object if this is a class method.
     //! \return The type id of the object if this is a method.
 	virtual int     GetObjectTypeId() = 0;
+	//! \}
+
+	// Arguments
+	//! \name Arguments
+	//! \{
 
     //! \brief Returns the number of arguments.
     //! \return The number of arguments to the function.
 	virtual int     GetArgCount() = 0;
+    //! \brief Returns the type id of the argument.
+    //! \param[in] arg The argument index.
+    //! \return The type id of the argument.
+	virtual int     GetArgTypeId(asUINT arg) = 0;
     //! \brief Returns the value of an 8-bit argument.
     //! \param[in] arg The argument index.
     //! \return The 1 byte argument value.
@@ -2278,11 +2365,15 @@ public:
     //! \param[in] arg The argument index.
     //! \return A pointer to the argument value.
 	virtual void   *GetAddressOfArg(asUINT arg) = 0;
-    //! \brief Returns the type id of the argument.
-    //! \param[in] arg The argument index.
-    //! \return The type id of the argument.
-	virtual int     GetArgTypeId(asUINT arg) = 0;
+	//! \}
 
+	// Return value
+	//! \name Return value
+	//! \{
+
+    //! \brief Gets the type id of the return value.
+    //! \return The type id of the return value.
+	virtual int     GetReturnTypeId() = 0;
     //! \brief Sets the 8-bit return value.
     //! \param[in] val The return value.
     //! \return A negative value on error.
@@ -2348,13 +2439,15 @@ public:
     //! increase the reference counter. For objects, you must make a copy of the 
     //! object, and then pass the pointer to the new object. 
 	virtual void   *GetReturnPointer() = 0;
-    //! \brief Gets the type id of the return value.
-    //! \return The type id of the return value.
-	virtual int     GetReturnTypeId() = 0;
+	//! \}
 
 #ifdef AS_DEPRECATED
+	//! \name Deprecated
+	//! \{
+
 	//! \deprecated Since 2.15.0. Use \ref asIScriptGeneric::GetAddressOfArg "GetAddressOfArg" instead.
 	virtual void   *GetArgPointer(asUINT arg) = 0;
+	//! \}
 #endif
 
 protected:
@@ -2365,11 +2458,10 @@ protected:
 class asIScriptObject
 {
 public:
-	//! \brief Return the script engine.
-	//! \return The script engine.
-	virtual asIScriptEngine *GetEngine() const = 0;
-
 	// Memory management
+	//! \name Memory management
+	//! \{
+
 	//! \brief Increase reference counter.
     //!
     //! \return The number of references to this object.
@@ -2382,32 +2474,36 @@ public:
     //!
     //! Call this method when you will no longer use the references that you own.
 	virtual int Release() = 0;
+	//! \}
 
 	// Type info
+	//! \name Type info
+	//! \{
+
 	//! \brief Returns the type id of the object.
     //! \return The type id of the script object.
 	virtual int            GetTypeId() const = 0;
-
     //! \brief Returns the object type interface for the object.
     //! \return The object type interface of the script object.
 	virtual asIObjectType *GetObjectType() const = 0;
+	//! \}
 
 	// Class properties
+	//! \name Properties
+	//! \{
+
 	//! \brief Returns the number of properties that the object contains.
     //! \return The number of member properties of the script object.
 	virtual int         GetPropertyCount() const = 0;
-
     //! \brief Returns the type id of the property referenced by prop.
     //! \param[in] prop The property index.
     //! \return The type id of the member property, or a negative value on error.
     //! \retval asINVALID_ARG \a prop is too large
 	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
-
     //! \brief Returns the name of the property referenced by prop.
     //! \param[in] prop The property index.
     //! \return A null terminated string with the property name.
 	virtual const char *GetPropertyName(asUINT prop) const = 0;
-
     //! \brief Returns a pointer to the property referenced by prop.
     //! \param[in] prop The property index.
     //! \return A pointer to the property value.
@@ -2415,7 +2511,14 @@ public:
     //! The method returns a pointer to the memory location for the property. Use the type 
     //! id for the property to determine the content of the pointer, and how to handle it.
 	virtual void       *GetPropertyPointer(asUINT prop) = 0;
+	//! \}
 
+	//! \name Miscellaneous
+	//! \{
+
+	//! \brief Return the script engine.
+	//! \return The script engine.
+	virtual asIScriptEngine *GetEngine() const = 0;
     //! \brief Copies the content from another object of the same type.
     //! \param[in] other A pointer to the source object.
     //! \return A negative value on error.
@@ -2423,11 +2526,16 @@ public:
     //! \retval asINVALID_TYPE The other object is of different type.
     //!
     //! This method copies the contents of the other object to this one.
-	virtual int         CopyFrom(asIScriptObject *other) = 0;
+	virtual int              CopyFrom(asIScriptObject *other) = 0;
+	//! \}
 
 #ifdef AS_DEPRECATED
+	//! \name Deprecated
+	//! \{
+
 	//! \deprecated Since 2.16.0. Use \ref asIScriptObject::GetTypeId instead.
 	virtual int            GetStructTypeId() const = 0;
+	//! \}
 #endif
 
 protected:
@@ -2502,15 +2610,24 @@ protected:
 class asIObjectType
 {
 public:
+	//! \name Miscellaneous
+	//! \{
+
 	//! \brief Returns a pointer to the script engine.
     //! \return A pointer to the engine.
 	virtual asIScriptEngine *GetEngine() const = 0;
+	//! \brief Returns the config group in which the type was registered.
+	//! \return The name of the config group, or null if not set.
+	virtual const char      *GetConfigGroup() const = 0;
+	//! \}
 
 	// Type info
+	//! \name Type info
+	//! \{
+
 	//! \brief Returns a temporary pointer to the name of the datatype.
-	//! \param[out] length The length of the string
 	//! \return A null terminated string with the name of the object type.
-	virtual const char      *GetName(int *length = 0) const = 0;
+	virtual const char      *GetName() const = 0;
 	//! \brief Returns the object type that this type derives from.
 	//! \return A pointer to the object type that this type derives from.
 	//!
@@ -2518,6 +2635,11 @@ public:
 	virtual asIObjectType   *GetBaseType() const = 0;
 	//! \brief Returns the object type flags.
 	//! \return A bit mask with the flags from \ref asEObjTypeFlags.
+	//!
+	//! Script classes are identified by having the asOBJ_SCRIPT_OBJECT flag set. 
+	//! Interfaces are identified as a script class with a size of zero.
+	//!
+	//! \see GetSize
 	virtual asDWORD          GetFlags() const = 0;
 	//! \brief Returns the size of the object type.
 	//! \return The number of bytes necessary to store instances of this type.
@@ -2525,19 +2647,12 @@ public:
 	//! Application registered reference types doesn't store this information, 
 	//! as the script engine doesn't allocate memory for these itself.
 	virtual asUINT           GetSize() const = 0;
-
-	// Behaviours
-	//! \brief Returns the number of behaviours.
-	//! \return The number of behaviours for this type.
-	virtual int GetBehaviourCount() const = 0;
-	//! \brief Returns the function id and type of the behaviour.
-	//! \param[in] index The index of the behaviour.
-	//! \param[out] outBehaviour Receives the type of the behaviour.
-	//! \return The function id of the behaviour.
-	//! \retval asINVALID_ARG The \a index is too large.
-	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+	//! \}
 
 	// Interfaces
+	//! \name Interfaces
+	//! \{
+
 	//! \brief Returns the number of interfaces implemented.
     //! \return The number of interfaces implemented by this type.
 	virtual int              GetInterfaceCount() const = 0;
@@ -2545,8 +2660,12 @@ public:
     //! \param[in] index The interface index.
     //! \return A pointer to the interface type.
 	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
+	//! \}
 
 	// Factories
+	//! \name Factories
+	//! \{
+
 	//! \brief Returns the number of factory functions for the object type.
 	//! \return A negative value on error, or the number of factory functions for this object.
 	virtual int                GetFactoryCount() const = 0;
@@ -2569,8 +2688,12 @@ public:
 	//! id = type->GetFactoryIdByDecl("object@ object(int arg1, int arg2)");
 	//! \endcode
 	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
+	//! \}
 
 	// Methods
+	//! \name Methods
+	//! \{
+
 	//! \brief Returns the number of methods for the object type.
     //! \return A negative value on error, or the number of methods for this object.
 	virtual int                GetMethodCount() const = 0;
@@ -2608,8 +2731,12 @@ public:
     //! \param[in] index The index of the method.
     //! \return A pointer to the method description interface, or null if not found.
 	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
+	//! \}
 
 	// Properties
+	//! \name Properties
+	//! \{
+
 	//! \brief Returns the number of properties that the object contains.
     //! \return The number of member properties of the script object.
 	virtual int         GetPropertyCount() const = 0;
@@ -2620,19 +2747,38 @@ public:
 	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
     //! \brief Returns the name of the property referenced by \a prop.
     //! \param[in] prop The property index.
-    //! \param[out] length The length of the string
     //! \return A null terminated string with the property name.
-	virtual const char *GetPropertyName(asUINT prop, int *length = 0) const = 0;
+	virtual const char *GetPropertyName(asUINT prop) const = 0;
 	//! \brief Returns the offset of the property in the memory layout.
 	//! \param[in] prop The property index.
 	//! \return The offset of the property in the memory layout.
 	virtual int         GetPropertyOffset(asUINT prop) const = 0;
+	//! \}
+
+	// Behaviours
+	//! \name Behaviours
+	//! \{
+
+	//! \brief Returns the number of behaviours.
+	//! \return The number of behaviours for this type.
+	virtual int GetBehaviourCount() const = 0;
+	//! \brief Returns the function id and type of the behaviour.
+	//! \param[in] index The index of the behaviour.
+	//! \param[out] outBehaviour Receives the type of the behaviour.
+	//! \return The function id of the behaviour.
+	//! \retval asINVALID_ARG The \a index is too large.
+	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+	//! \}
 
 #ifdef AS_DEPRECATED
+	//! \name Deprecated
+	//! \{
+
 	//! \deprecated Since 2.16.0.
 	virtual asIObjectType   *GetSubType() const = 0;
 	//! \deprecated Since 2.16.0. Use (GetFlags() & asOBJ_SCRIPT_OBJECT) && (GetSize() == 0) instead.
 	virtual bool             IsInterface() const = 0;
+	//! \}
 #endif
 
 protected:
@@ -2643,39 +2789,49 @@ protected:
 class asIScriptFunction
 {
 public:
+	//! \name Miscellaneous
+	//! \{
+
 	//! \brief Returns a pointer to the script engine.
     //! \return A pointer to the engine.
 	virtual asIScriptEngine *GetEngine() const = 0;
 	//! \brief Returns the name of the module where the function was implemented
-	//! \param[out] length The length of the string
     //! \return A null terminated string with the module name.
-	virtual const char      *GetModuleName(int *length = 0) const = 0;
+	virtual const char      *GetModuleName() const = 0;
+	//! \brief Returns the name of the script section where the function was implemented.
+    //! \return A null terminated string with the script section name where the function was implemented.
+	virtual const char      *GetScriptSectionName() const = 0;
+	//! \brief Returns the name of the config group in which the function was registered.
+	//! \return The name of the config group, or null if not in any group.
+	virtual const char      *GetConfigGroup() const = 0;
+	//! \}
+
+	//! \name Function info
+	//! \{
+
 	//! \brief Returns the object type for class or interface method
     //! \return A pointer to the object type interface if this is a method.
 	virtual asIObjectType   *GetObjectType() const = 0;
 	//! \brief Returns the name of the object for class or interface methods
-	//! \param[out] length The length of the string
     //! \return A null terminated string with the name of the object type if this a method.
-	virtual const char      *GetObjectName(int *length = 0) const = 0;
+	virtual const char      *GetObjectName() const = 0;
 	//! \brief Returns the name of the function or method
-	//! \param[out] length The length of the string
     //! \return A null terminated string with the name of the function.
-	virtual const char      *GetName(int *length = 0) const = 0;
+	virtual const char      *GetName() const = 0;
 	//! \brief Returns the function declaration
-	//! \param[out] length The length of the string
+	//! \param[in] includeObjectName Indicate whether the object name should be prepended to the function name
     //! \return A null terminated string with the function declaration.
-	virtual const char      *GetDeclaration(int *length = 0) const = 0;
-	//! \brief Returns the name of the script section where the function was implemented
-	//! \param[out] length The length of the string
-    //! \return A null terminated string with the script section name where the function was implemented.
-	virtual const char      *GetScriptSectionName(int *length = 0) const = 0;
-
+	virtual const char      *GetDeclaration(bool includeObjectName = true) const = 0;
 	//! \brief Returns true if it is a class method
     //! \return True if this a class method.
 	virtual bool             IsClassMethod() const = 0;
 	//! \brief Returns true if it is an interface method
     //! \return True if this is an interface method.
 	virtual bool             IsInterfaceMethod() const = 0;
+	//! \}
+
+	//! \name Parameter and return types
+	//! \{
 
     //! \brief Returns the number of parameters for this function.
     //! \return The number of parameters.
@@ -2688,6 +2844,7 @@ public:
     //! \brief Returns the type id of the return type.
     //! \return The type id of the return type.
 	virtual int              GetReturnTypeId() const = 0;
+	//! \}
 
 protected:
 	virtual ~asIScriptFunction() {};

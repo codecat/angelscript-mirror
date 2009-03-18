@@ -64,8 +64,6 @@ class asCContext;
 // TODO: Deprecate GetSizeOfPrimitiveType. This function is not necessary now that all primitive types have fixed typeIds
 
 
-
-
 // TODO: DiscardModule should take an optional pointer to asIScriptModule instead of module name. If null, nothing is done.
 
 // TODO: ExecuteString should take an optional pointer to asIScriptModule instead of module name. If null, the function is only able to access application registered functions/types/variables.
@@ -102,7 +100,7 @@ public:
 	// Global properties
 	virtual int RegisterGlobalProperty(const char *declaration, void *pointer);
 	virtual int GetGlobalPropertyCount();
-	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0);
+	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0);
 	
 	// Type registration
 	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags);
@@ -114,6 +112,8 @@ public:
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration);
 	virtual int            GetObjectTypeCount();
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index);
+	virtual int            GetGlobalBehaviourCount();
+	virtual int            GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour);
 	
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv);
@@ -123,14 +123,14 @@ public:
 	virtual int         RegisterEnum(const char *type);
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value);
 	virtual int         GetEnumCount();
-	virtual int         GetEnumTypeIdByIndex(asUINT index);
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0);
 	virtual int         GetEnumValueCount(int enumTypeId);
-	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length = 0);
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue);
 
 	// Typedefs
 	virtual int         RegisterTypedef(const char *type, const char *decl);
 	virtual int         GetTypedefCount();
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, int *length = 0);
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0);
 
 	// Configuration groups
 	virtual int BeginConfigGroup(const char *groupName);
@@ -148,7 +148,7 @@ public:
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId);
 	virtual int            GetTypeIdByDecl(const char *decl);
-	virtual const char    *GetTypeDeclaration(int typeId, int *length = 0);
+	virtual const char    *GetTypeDeclaration(int typeId);
 	virtual int            GetSizeOfPrimitiveType(int typeId);
 
 	// Script execution
@@ -250,7 +250,7 @@ public:
 	asCConfigGroup *FindConfigGroup(asCObjectType *ot);
 	asCConfigGroup *FindConfigGroupForFunction(int funcId);
 	asCConfigGroup *FindConfigGroupForGlobalVar(int gvarId);
-	asCConfigGroup *FindConfigGroupForObjectType(asCObjectType *type);
+	asCConfigGroup *FindConfigGroupForObjectType(const asCObjectType *type);
 
 	int  RequestBuild();
 	void BuildCompleted();

@@ -21,6 +21,7 @@ bool Test()
 		"class B : A { B(int) {} } \n"
 		"interface I { void i(float); } \n"
 		"float a; \n"
+		"const float aConst = 3.141592f; \n"
 		"I@ i; \n"
 		"enum E { eval = 0, eval2 = 2 } \n"
 		"E e; \n"
@@ -36,7 +37,12 @@ bool Test()
 	float f;
 	engine->RegisterTypedef("myFloat", "float");
 	engine->RegisterGlobalProperty("myFloat f", &f);
+	engine->RegisterGlobalProperty("const float myConst", &f);
 	engine->RegisterGlobalFunction("void func(int &in)", asFUNCTION(0), asCALL_GENERIC);
+
+	engine->BeginConfigGroup("test");
+	engine->RegisterGlobalFunction("void func2()", asFUNCTION(0), asCALL_GENERIC);
+	engine->EndConfigGroup();
 
 	engine->RegisterEnum("myEnum");
 	engine->RegisterEnumValue("myEnum", "value1", 1);
@@ -99,7 +105,10 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 		else
 			s << "val ";
 
-		s << objType->GetName() << endl;
+		s << objType->GetName();
+
+		const char *group = objType->GetConfigGroup();
+		s << " group: " << (group ? group : "<null>") << endl;
 	}
 
 	// Show factory functions
@@ -115,14 +124,14 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 		{
 			asEBehaviours beh;
 			int bid = objType->GetBehaviourByIndex(b, &beh);
-			s << " beh(" << beh << ") " << engine->GetFunctionDescriptorById(bid)->GetDeclaration() << endl;
+			s << " beh(" << beh << ") " << engine->GetFunctionDescriptorById(bid)->GetDeclaration(false) << endl;
 		}
 	}
 
 	// Show methods
 	for( int m = 0; m < objType->GetMethodCount(); m++ )
 	{
-		s << " " << objType->GetMethodDescriptorByIndex(m)->GetDeclaration() << endl;
+		s << " " << objType->GetMethodDescriptorByIndex(m)->GetDeclaration(false) << endl;
 	}
 
 	// Show properties
@@ -164,9 +173,10 @@ void DumpModule(asIScriptModule *mod)
 	c = mod->GetEnumCount();
 	for( n = 0; n < c; n++ )
 	{
-		int eid = mod->GetEnumTypeIdByIndex(n);
+		int eid;
+		const char *ename = mod->GetEnumByIndex(n, &eid);
 
-		s << "enum: " << engine->GetTypeDeclaration(eid) << endl;
+		s << "enum: " << ename << endl;
 
 		// List enum values
 		for( int e = 0; e < mod->GetEnumValueCount(eid); e++ )
@@ -202,8 +212,14 @@ void DumpModule(asIScriptModule *mod)
 	{
 		const char *name;
 		int typeId;
-		engine->GetGlobalPropertyByIndex(n, &name, &typeId);
-		s << "reg prop: " << engine->GetTypeDeclaration(typeId) << " " << name << endl;
+		bool isConst;
+		const char *group;
+		engine->GetGlobalPropertyByIndex(n, &name, &typeId, &isConst, &group);
+		s << "reg prop: ";
+		if( isConst ) 
+			s << "const ";
+		s << engine->GetTypeDeclaration(typeId) << " " << name;
+		s << " group: " << (group ? group : "<null>") << endl;
 	}
 
 	// Enumerate registered typedefs
@@ -220,16 +236,19 @@ void DumpModule(asIScriptModule *mod)
 	for( n = 0; n < c; n++ )
 	{
 		int funcId = engine->GetGlobalFunctionIdByIndex(n);
-		s << "reg func: " << engine->GetFunctionDescriptorById(funcId)->GetDeclaration() << endl;
+		const char *group = engine->GetFunctionDescriptorById(funcId)->GetConfigGroup();
+		s << "reg func: " << engine->GetFunctionDescriptorById(funcId)->GetDeclaration() << 
+			" group: " << (group ? group : "<null>") << endl;
 	}
 
 	// Enumerate registered enums
 	c = engine->GetEnumCount();
 	for( n = 0; n < c; n++ )
 	{
-		int eid = engine->GetEnumTypeIdByIndex(n);
+		int eid;
+		const char *ename = engine->GetEnumByIndex(n, &eid);
 
-		s << "reg enum: " << engine->GetTypeDeclaration(eid) << endl;
+		s << "reg enum: " << ename << endl;
 
 		// List enum values
 		for( int e = 0; e < engine->GetEnumValueCount(eid); e++ )
@@ -251,53 +270,79 @@ void DumpModule(asIScriptModule *mod)
 		DumpObjectType(s, engine->GetObjectTypeByIndex(n));
 	}
 
+	// Enumerate global behaviours
+	c = engine->GetGlobalBehaviourCount();
+	for( n = 0; n < c; n++ )
+	{
+		asEBehaviours beh;
+		int funcId = engine->GetGlobalBehaviourByIndex(n, &beh);
+		s << "reg beh(" << beh << "): " << engine->GetFunctionDescriptorById(funcId)->GetDeclaration() << endl;
+	}
+
 	//--------------------------------
 	// Validate the dump
-	if( s.str() != "func: void Test()\n"
-	               "type: class A : I\n"
-	               " A@ A()\n"
-	               " void A::i(float)\n"
-	               " void A::a(int)\n"
-	               " float f\n"
-	               "type: class B : A, I\n"
-	               " B@ B()\n"
-	               " B@ B(int)\n"
-	               " void A::i(float)\n"
-	               " void A::a(int)\n"
-	               " float f\n"
-	               "type: interface I\n"
-	               " void I::i(float)\n"
-	               "global: float a\n"
-	               "global: I@ i\n"
-	               "global: E e\n"
-	               "global: float pi\n"
-	               "enum: E\n"
-	               " eval = 0\n"
-	               " eval2 = 2\n"
-	               "typedef: real => float\n"
-	               "import: void ImpFunc() from \"mod\"\n"
-	               "-------\n"
-	               "reg prop: float f\n" 
-	               "reg typedef: myFloat => float\n" 
-				   "reg func: void func(int&in)\n" 
-				   "reg enum: myEnum\n"
-				   " value1 = 1\n"
-				   " value2 = 2\n"
-				   "string factory: string\n"
-				   "reg type: val string\n"
-				   " beh(1) void string::?()\n"
-				   " beh(0) void string::?()\n"
-				   " beh(9) string& string::?(const string&in)\n"
-				   " beh(10) string& string::?(const string&in)\n"
-				   " beh(7) uint8& string::?(uint)\n"
-				   " beh(7) const uint8& string::?(uint) const\n"
-				   " beh(9) string& string::?(double)\n"
-				   " beh(10) string& string::?(double)\n"
-				   " beh(9) string& string::?(int)\n"
-				   " beh(10) string& string::?(int)\n"
-				   " beh(9) string& string::?(uint)\n"
-				   " beh(10) string& string::?(uint)\n"
-				   " uint string::length() const\n" )
+	if( s.str() != 
+		"func: void Test()\n"
+		"type: class A : I\n"
+		" A@ A()\n"
+		" void i(float)\n"
+		" void a(int)\n"
+		" float f\n"
+		"type: class B : A, I\n"
+		" B@ B()\n"
+		" B@ B(int)\n"
+		" void i(float)\n"
+		" void a(int)\n"
+		" float f\n"
+		"type: interface I\n"
+		" void i(float)\n"
+		"global: float a\n"
+		"global: const float aConst\n"
+		"global: I@ i\n"
+		"global: E e\n"
+		"global: float pi\n"
+		"enum: E\n"
+		" eval = 0\n"
+		" eval2 = 2\n"
+		"typedef: real => float\n"
+		"import: void ImpFunc() from \"mod\"\n"
+		"-------\n"
+		"reg prop: float f group: <null>\n"
+		"reg prop: const float myConst group: <null>\n"
+		"reg typedef: myFloat => float\n"
+		"reg func: void func(int&in) group: <null>\n"
+		"reg func: void func2() group: test\n"
+		"reg enum: myEnum\n"
+		" value1 = 1\n"
+		" value2 = 2\n"
+		"string factory: string\n"
+		"reg type: val string group: <null>\n"
+		" beh(1) void _unnamed_function_()\n"
+		" beh(0) void _unnamed_function_()\n"
+		" beh(9) string& _unnamed_function_(const string&in)\n"
+		" beh(10) string& _unnamed_function_(const string&in)\n"
+		" beh(7) uint8& _unnamed_function_(uint)\n"
+		" beh(7) const uint8& _unnamed_function_(uint) const\n"
+		" beh(9) string& _unnamed_function_(double)\n"
+		" beh(10) string& _unnamed_function_(double)\n"
+		" beh(9) string& _unnamed_function_(int)\n"
+		" beh(10) string& _unnamed_function_(int)\n"
+		" beh(9) string& _unnamed_function_(uint)\n"
+		" beh(10) string& _unnamed_function_(uint)\n"
+		" uint length() const\n"
+		"reg beh(26): bool _unnamed_function_(const string&in, const string&in)\n"
+		"reg beh(27): bool _unnamed_function_(const string&in, const string&in)\n"
+		"reg beh(30): bool _unnamed_function_(const string&in, const string&in)\n"
+		"reg beh(31): bool _unnamed_function_(const string&in, const string&in)\n"
+		"reg beh(28): bool _unnamed_function_(const string&in, const string&in)\n"
+		"reg beh(29): bool _unnamed_function_(const string&in, const string&in)\n"
+		"reg beh(21): string _unnamed_function_(const string&in, const string&in)\n"
+		"reg beh(21): string _unnamed_function_(const string&in, double)\n"
+		"reg beh(21): string _unnamed_function_(double, const string&in)\n"
+		"reg beh(21): string _unnamed_function_(const string&in, int)\n"
+		"reg beh(21): string _unnamed_function_(int, const string&in)\n"
+		"reg beh(21): string _unnamed_function_(const string&in, uint)\n"
+		"reg beh(21): string _unnamed_function_(uint, const string&in)\n" )
 	{
 		cout << s.str() << endl;
 		cout << "Failed to get the expected result when dumping the module" << endl << endl;

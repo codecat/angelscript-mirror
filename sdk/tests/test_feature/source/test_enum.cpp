@@ -281,12 +281,25 @@ static bool TestEnum()
 		fail = true;
 
 	// Enums are not object types
-	int eid = mod->GetEnumTypeIdByIndex(0);
-	if( eid < 0 )
+	int eid; 
+	const char *ename = mod->GetEnumByIndex(0, &eid);
+	if( eid < 0 || ename == 0 )
 		fail = true;
 	asIObjectType *eot = engine->GetObjectTypeById(eid);
 	if( eot )
 		fail = true;
+
+	// enum must allow negate and binary complement operators
+	bout.buffer = "";
+	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	r = engine->ExecuteString(0, "int a = -ENUM1; int b = ~ENUM1;");
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
 	engine->Release();
 

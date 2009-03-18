@@ -79,12 +79,13 @@ class asCScriptFunction : public asIScriptFunction
 public:
 	// From asIScriptFunction
 	asIScriptEngine     *GetEngine() const;
-	const char          *GetModuleName(int *length = 0) const;
+	const char          *GetModuleName() const;
 	asIObjectType       *GetObjectType() const;
-	const char          *GetObjectName(int *length = 0) const;
-	const char          *GetName(int *length = 0) const;
-	const char          *GetDeclaration(int *length = 0) const;
-	const char          *GetScriptSectionName(int *length = 0) const;
+	const char          *GetObjectName() const;
+	const char          *GetName() const;
+	const char          *GetDeclaration(bool includeObjectName = true) const;
+	const char          *GetScriptSectionName() const;
+	const char          *GetConfigGroup() const;
 
 	bool                 IsClassMethod() const;
 	bool                 IsInterfaceMethod() const;
@@ -101,7 +102,7 @@ public:
 
 	int       GetSpaceNeededForArguments();
 	int       GetSpaceNeededForReturnValue();
-	asCString GetDeclarationStr() const;
+	asCString GetDeclarationStr(bool includeObjectName = true) const;
 	int       GetLineNumber(int programPosition);
 	void      ComputeSignatureId();
 	bool      IsSignatureEqual(const asCScriptFunction *func) const;

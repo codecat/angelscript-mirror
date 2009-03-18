@@ -75,7 +75,7 @@ AS_API int                asEngine_RegisterObjectMethod(asIScriptEngine *e, cons
 AS_API int                asEngine_RegisterObjectBehaviour(asIScriptEngine *e, const char *datatype, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv) { return e->RegisterObjectBehaviour(datatype, behaviour, declaration, asFUNCTION(funcPointer), callConv); }
 AS_API int                asEngine_RegisterGlobalProperty(asIScriptEngine *e, const char *declaration, void *pointer)                                                                              { return e->RegisterGlobalProperty(declaration, pointer); }
 AS_API int                asEngine_GetGlobalPropertyCount(asIScriptEngine *e)                                                                                                                      { return e->GetGlobalPropertyCount(); }
-AS_API int                asEngine_GetGlobalPropertyByIndex(asIScriptEngine *e, asUINT index, const char **name, int *typeId = 0, void **pointer = 0, int *length = 0)                             { return e->GetGlobalPropertyByIndex(index, name, typeId, pointer, length); }
+AS_API int                asEngine_GetGlobalPropertyByIndex(asIScriptEngine *e, asUINT index, const char **name, int *typeId, asBOOL *isConst, const char **configGroup, void **pointer)           { bool _isConst; int r = e->GetGlobalPropertyByIndex(index, name, typeId, &_isConst, configGroup, pointer); if( isConst ) *isConst = (_isConst ? asTRUE : asFALSE); return r; }
 AS_API int                asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv)                                                 { return e->RegisterGlobalFunction(declaration, asFUNCTION(funcPointer), callConv); }
 AS_API int                asEngine_GetGlobalFunctionCount(asIScriptEngine *e)                                                                                                                      { return e->GetGlobalFunctionCount(); }
 AS_API int                asEngine_GetGlobalFunctionIdByIndex(asIScriptEngine *e, asUINT index)                                                                                                    { return e->GetGlobalFunctionIdByIndex(index); }
@@ -85,14 +85,14 @@ AS_API int                asEngine_RegisterInterfaceMethod(asIScriptEngine *e, c
 AS_API int                asEngine_RegisterEnum(asIScriptEngine *e, const char *type)                                                                                                              { return e->RegisterEnum(type); }
 AS_API int                asEngine_RegisterEnumValue(asIScriptEngine *e, const char *type, const char *name, int value)                                                                            { return e->RegisterEnumValue(type,name,value); }
 AS_API int                asEngine_GetEnumCount(asIScriptEngine *e)                                                                                                                                { return e->GetEnumCount(); }
-AS_API int                asEngine_GetEnumTypeIdByIndex(asIScriptEngine *e, asUINT index)                                                                                                          { return e->GetEnumTypeIdByIndex(index); }
+AS_API const char *       asEngine_GetEnumByIndex(asIScriptEngine *e, asUINT index, int *enumTypeId, const char **configGroup)                                                                     { return e->GetEnumByIndex(index, enumTypeId, configGroup); }
 AS_API int                asEngine_GetEnumValueCount(asIScriptEngine *e, int enumTypeId)                                                                                                           { return e->GetEnumValueCount(enumTypeId); }
-AS_API const char *       asEngine_GetEnumValueByIndex(asIScriptEngine *e, int enumTypeId, asUINT index, int *outValue, int *length /* = 0 */)                                                     { return e->GetEnumValueByIndex(enumTypeId, index, outValue, length); }
+AS_API const char *       asEngine_GetEnumValueByIndex(asIScriptEngine *e, int enumTypeId, asUINT index, int *outValue)                                                                            { return e->GetEnumValueByIndex(enumTypeId, index, outValue); }
 AS_API int                asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv)                                                     { return e->RegisterStringFactory(datatype, asFUNCTION(factoryFunc), callConv); }
 AS_API int                asEngine_GetStringFactoryReturnTypeId(asIScriptEngine *e)                                                                                                                { return e->GetStringFactoryReturnTypeId(); }
 AS_API int                asEngine_RegisterTypedef(asIScriptEngine *e, const char *type, const char *decl)                                                                                         { return e->RegisterTypedef(type,decl); }
 AS_API int                asEngine_GetTypedefCount(asIScriptEngine *e)                                                                                                                             { return e->GetTypedefCount(); }
-AS_API const char *       asEngine_GetTypedefByIndex(asIScriptEngine *e, asUINT index, int *typeId, int *length /* = 0 */)                                                                         { return e->GetTypedef(index, typeId, length); }
+AS_API const char *       asEngine_GetTypedefByIndex(asIScriptEngine *e, asUINT index, int *typeId, const char **configGroup)                                                                      { return e->GetTypedefByIndex(index, typeId, configGroup); }
 AS_API int                asEngine_BeginConfigGroup(asIScriptEngine *e, const char *groupName)                                                                                                     { return e->BeginConfigGroup(groupName); }
 AS_API int                asEngine_EndConfigGroup(asIScriptEngine *e)                                                                                                                              { return e->EndConfigGroup(); }
 AS_API int                asEngine_RemoveConfigGroup(asIScriptEngine *e, const char *groupName)                                                                                                    { return e->RemoveConfigGroup(groupName); }
@@ -101,7 +101,7 @@ AS_API asIScriptModule  * asEngine_GetModule(asIScriptEngine *e, const char *mod
 AS_API int                asEngine_DiscardModule(asIScriptEngine *e, const char *module)                                                                                                           { return e->DiscardModule(module); }
 AS_API asIScriptFunction *asEngine_GetFunctionDescriptorById(asIScriptEngine *e, int funcId)                                                                                                       { return e->GetFunctionDescriptorById(funcId); }
 AS_API int                asEngine_GetTypeIdByDecl(asIScriptEngine *e, const char *decl)                                                                                                           { return e->GetTypeIdByDecl(decl); }
-AS_API const char *       asEngine_GetTypeDeclaration(asIScriptEngine *e, int typeId, int *length)                                                                                                 { return e->GetTypeDeclaration(typeId, length); }
+AS_API const char *       asEngine_GetTypeDeclaration(asIScriptEngine *e, int typeId)                                                                                                              { return e->GetTypeDeclaration(typeId); }
 AS_API int                asEngine_GetSizeOfPrimitiveType(asIScriptEngine *e, int typeId)                                                                                                          { return e->GetSizeOfPrimitiveType(typeId); }
 AS_API asIObjectType *    asEngine_GetObjectTypeById(asIScriptEngine *e, int typeId)                                                                                                               { return e->GetObjectTypeById(typeId); }
 AS_API asIObjectType *    asEngine_GetObjectTypeByIndex(asIScriptEngine *e, asUINT index)                                                                                                          { return e->GetObjectTypeByIndex(index); }
@@ -124,7 +124,7 @@ AS_API void *             asEngine_GetUserData(asIScriptEngine *e)              
 
 AS_API asIScriptEngine   *asModule_GetEngine(asIScriptModule *m)                                                                               { return m->GetEngine(); }
 AS_API void               asModule_SetName(asIScriptModule *m, const char *name)                                                               { m->SetName(name); }
-AS_API const char        *asModule_GetName(asIScriptModule *m, int *length /*= 0*/)                                                            { return m->GetName(length); }
+AS_API const char        *asModule_GetName(asIScriptModule *m)                                                                                 { return m->GetName(); }
 AS_API int                asModule_AddScriptSection(asIScriptModule *m, const char *name, const char *code, size_t codeLength, int lineOffset) { return m->AddScriptSection(name, code, codeLength, lineOffset); }
 AS_API int                asModule_Build(asIScriptModule *m)                                                                                   { return m->Build(); }
 AS_API int                asModule_GetFunctionCount(asIScriptModule *m)                                                                        { return m->GetFunctionCount(); }
@@ -137,23 +137,23 @@ AS_API int                asModule_ResetGlobalVars(asIScriptModule *m)          
 AS_API int                asModule_GetGlobalVarCount(asIScriptModule *m)                                                                       { return m->GetGlobalVarCount(); }
 AS_API int                asModule_GetGlobalVarIndexByName(asIScriptModule *m, const char *name)                                               { return m->GetGlobalVarIndexByName(name); }
 AS_API int                asModule_GetGlobalVarIndexByDecl(asIScriptModule *m, const char *decl)                                               { return m->GetGlobalVarIndexByDecl(decl); }
-AS_API const char        *asModule_GetGlobalVarDeclaration(asIScriptModule *m, int index, int *length)                                         { return m->GetGlobalVarDeclaration(index, length); }
-AS_API const char        *asModule_GetGlobalVarName(asIScriptModule *m, int index, int *length)                                                { return m->GetGlobalVarName(index, length); }
-AS_API int                asModule_GetGlobalVarTypeId(asIScriptModule *m, int index)                                                           { return m->GetGlobalVarTypeId(index); }
+AS_API const char        *asModule_GetGlobalVarDeclaration(asIScriptModule *m, int index)                                                      { return m->GetGlobalVarDeclaration(index); }
+AS_API const char        *asModule_GetGlobalVarName(asIScriptModule *m, int index)                                                             { return m->GetGlobalVarName(index); }
+AS_API int                asModule_GetGlobalVarTypeId(asIScriptModule *m, int index, asBOOL *isConst)                                          { bool _isConst; int r = m->GetGlobalVarTypeId(index, &_isConst); if( isConst ) *isConst = (_isConst ? asTRUE : asFALSE); return r; }
 AS_API void              *asModule_GetAddressOfGlobalVar(asIScriptModule *m, int index)                                                        { return m->GetAddressOfGlobalVar(index); }
 AS_API int                asModule_GetObjectTypeCount(asIScriptModule *m)                                                                      { return m->GetObjectTypeCount(); }
 AS_API asIObjectType     *asModule_GetObjectTypeByIndex(asIScriptModule *m, asUINT index)                                                      { return m->GetObjectTypeByIndex(index); }
 AS_API int                asModule_GetTypeIdByDecl(asIScriptModule *m, const char *decl)                                                       { return m->GetTypeIdByDecl(decl); }
-AS_API int                asModule_GetEnumCount(asIScriptModule *m)                                                                            { return m->GetEmumCount(); }
-AS_API int                asModule_GetEnumTypeIdByIndex(asIScriptModule *m, asUINT index)                                                      { return m->GetEnumTypeIdByIndex(index); }
+AS_API int                asModule_GetEnumCount(asIScriptModule *m)                                                                            { return m->GetEnumCount(); }
+AS_API const char *       asModule_GetEnumByIndex(asIScriptModule *m, asUINT index, int *enumTypeId)                                           { return m->GetEnumByIndex(index, enumTypeId); }
 AS_API int                asModule_GetEnumValueCount(asIScriptModule *m, int enumTypeId)                                                       { return m->GetEnumValueCount(enumTypeId); }
-AS_API const char *       asModule_GetEnumValueByIndex(asIScriptModule *m, int enumTypeId, asUINT index, int *outValue, int *length /* = 0 */) { return m->GetEnumValueByIndex(enumTypeId, index, outValue, length); }
+AS_API const char *       asModule_GetEnumValueByIndex(asIScriptModule *m, int enumTypeId, asUINT index, int *outValue)                        { return m->GetEnumValueByIndex(enumTypeId, index, outValue); }
 AS_API int                asModule_GetTypedefCount(asIScriptModule *m)                                                                         { return m->GetTypedefCount(); }
-AS_API const char *       asModule_GetTypedefByIndex(asIScriptModule *m, asUINT index, int *typeId, int *length /* = 0 */)                     { return m->GetTypedefByIndex(index, typeId, length); }
+AS_API const char *       asModule_GetTypedefByIndex(asIScriptModule *m, asUINT index, int *typeId)                                            { return m->GetTypedefByIndex(index, typeId); }
 AS_API int                asModule_GetImportedFunctionCount(asIScriptModule *m)                                                                { return m->GetImportedFunctionCount(); }
 AS_API int                asModule_GetImportedFunctionIndexByDecl(asIScriptModule *m, const char *decl)                                        { return m->GetImportedFunctionIndexByDecl(decl); }
-AS_API const char        *asModule_GetImportedFunctionDeclaration(asIScriptModule *m, int importIndex, int *length /* = 0 */)                  { return m->GetImportedFunctionDeclaration(importIndex, length); }
-AS_API const char        *asModule_GetImportedFunctionSourceModule(asIScriptModule *m, int importIndex, int *length /* = 0 */)                 { return m->GetImportedFunctionSourceModule(importIndex, length); }
+AS_API const char        *asModule_GetImportedFunctionDeclaration(asIScriptModule *m, int importIndex)                                         { return m->GetImportedFunctionDeclaration(importIndex); }
+AS_API const char        *asModule_GetImportedFunctionSourceModule(asIScriptModule *m, int importIndex)                                        { return m->GetImportedFunctionSourceModule(importIndex); }
 AS_API int                asModule_BindImportedFunction(asIScriptModule *m, int importIndex, int funcId)                                       { return m->BindImportedFunction(importIndex, funcId); }
 AS_API int                asModule_UnbindImportedFunction(asIScriptModule *m, int importIndex)                                                 { return m->UnbindImportedFunction(importIndex); }
 AS_API int                asModule_BindAllImportedFunctions(asIScriptModule *m)                                                                { return m->BindAllImportedFunctions(); }
@@ -193,7 +193,7 @@ AS_API int              asContext_GetCurrentFunction(asIScriptContext *c)       
 AS_API int              asContext_SetException(asIScriptContext *c, const char *string)                                     { return c->SetException(string); }
 AS_API int              asContext_GetExceptionLineNumber(asIScriptContext *c, int *column)                                  { return c->GetExceptionLineNumber(column); }
 AS_API int              asContext_GetExceptionFunction(asIScriptContext *c)                                                 { return c->GetExceptionFunction(); }
-AS_API const char *     asContext_GetExceptionString(asIScriptContext *c, int *length)                                      { return c->GetExceptionString(length); }
+AS_API const char *     asContext_GetExceptionString(asIScriptContext *c)                                                   { return c->GetExceptionString(); }
 AS_API int              asContext_SetLineCallback(asIScriptContext *c, asFUNCTION_t callback, void *obj, int callConv)      { return c->SetLineCallback(asFUNCTION(callback), obj, callConv); }
 AS_API void             asContext_ClearLineCallback(asIScriptContext *c)                                                    { c->ClearLineCallback(); }
 AS_API int              asContext_SetExceptionCallback(asIScriptContext *c, asFUNCTION_t callback, void *obj, int callConv) { return c->SetExceptionCallback(asFUNCTION(callback), obj, callConv); }
@@ -202,8 +202,8 @@ AS_API int              asContext_GetCallstackSize(asIScriptContext *c)         
 AS_API int              asContext_GetCallstackFunction(asIScriptContext *c, int index)                                      { return c->GetCallstackFunction(index); }
 AS_API int              asContext_GetCallstackLineNumber(asIScriptContext *c, int index, int *column)                       { return c->GetCallstackLineNumber(index, column); }
 AS_API int              asContext_GetVarCount(asIScriptContext *c, int stackLevel)                                          { return c->GetVarCount(stackLevel); }
-AS_API const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int *length, int stackLevel)                { return c->GetVarName(varIndex, length, stackLevel); }
-AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length, int stackLevel)         { return c->GetVarDeclaration(varIndex, length, stackLevel); }
+AS_API const char *     asContext_GetVarName(asIScriptContext *c, int varIndex, int stackLevel)                             { return c->GetVarName(varIndex, stackLevel); }
+AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int stackLevel)                      { return c->GetVarDeclaration(varIndex, stackLevel); }
 AS_API int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel)                           { return c->GetVarTypeId(varIndex, stackLevel); }
 AS_API void *           asContext_GetAddressOfVar(asIScriptContext *c, int varIndex, int stackLevel)                        { return c->GetAddressOfVar(varIndex, stackLevel); }
 AS_API int              asContext_GetThisTypeId(asIScriptContext *c, int stackLevel)                                        { return c->GetThisTypeId(stackLevel); }
@@ -268,7 +268,7 @@ AS_API int                      asObjectType_GetBehaviourByIndex(const asIObject
 AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o)                                              { return o->GetInterfaceCount(); }
 AS_API asIObjectType           *asObjectType_GetInterface(const asIObjectType *o, asUINT index)                                     { return o->GetInterface(index); }
 AS_API int                      asObjectType_GetFactoryCount(const asIObjectType *o)                                                { return o->GetFactoryCount(); }
-AS_API int                      asObjectType_GetFactoryIdByIndex(const asIObjectType *o, int index)                                 { return o->GetFactoryIdByIndex(); }
+AS_API int                      asObjectType_GetFactoryIdByIndex(const asIObjectType *o, int index)                                 { return o->GetFactoryIdByIndex(index); }
 AS_API int                      asObjectType_GetFactoryIdByDecl(const asIObjectType *o, const char *decl)                           { return o->GetFactoryIdByDecl(decl); }
 AS_API int                      asObjectType_GetMethodCount(const asIObjectType *o)                                                 { return o->GetMethodCount(); }
 AS_API int                      asObjectType_GetMethodIdByIndex(const asIObjectType *o, int index)                                  { return o->GetMethodIdByIndex(index); }
@@ -277,20 +277,21 @@ AS_API int                      asObjectType_GetMethodIdByDecl(const asIObjectTy
 AS_API asIScriptFunction       *asObjectType_GetMethodDescriptorByIndex(const asIObjectType *o, int index)                          { return o->GetMethodDescriptorByIndex(index); }
 AS_API int                      asObjectType_GetPropertyCount(const asIObjectType *o)                                               { return o->GetPropertyCount(); }
 AS_API int                      asObjectType_GetPropertyTypeId(const asIObjectType *o, asUINT prop)                                 { return o->GetPropertyTypeId(prop); }
-AS_API const char              *asObjectType_GetPropertyName(const asIObjectType *o, asUINT prop, int *length)                      { return o->GetPropertyName(prop, length); }
+AS_API const char              *asObjectType_GetPropertyName(const asIObjectType *o, asUINT prop)                                   { return o->GetPropertyName(prop); }
 AS_API int                      asObjectType_GetPropertyOffset(const asIObjectType *o, asUINT prop)                                 { return o->GetPropertyOffset(prop); }
                                                                                                                
-AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f)                 { return f->GetEngine(); }
-AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f)             { return f->GetModuleName(); }
-AS_API asIObjectType       *asScriptFunction_GetObjectType(const asIScriptFunction *f)             { return f->GetObjectType(); }
-AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f)             { return f->GetObjectName(); }
-AS_API const char          *asScriptFunction_GetName(const asIScriptFunction *f)                   { return f->GetName(); }
-AS_API bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f)             { return f->IsClassMethod(); }
-AS_API bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f)         { return f->IsInterfaceMethod(); }
-AS_API int                  asScriptFunction_GetParamCount(const asIScriptFunction *f)             { return f->GetParamCount(); }
-AS_API int                  asScriptFunction_GetParamTypeId(const asIScriptFunction *f, int index) { return f->GetParamTypeId(index); }
-AS_API int                  asScriptFunction_GetReturnTypeId(const asIScriptFunction *f)           { return f->GetReturnTypeId(); }
-
+AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f)                                           { return f->GetEngine(); }
+AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f)                                       { return f->GetModuleName(); }
+AS_API asIObjectType       *asScriptFunction_GetObjectType(const asIScriptFunction *f)                                       { return f->GetObjectType(); }
+AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f)                                       { return f->GetObjectName(); }
+AS_API const char          *asScriptFunction_GetName(const asIScriptFunction *f)                                             { return f->GetName(); }
+AS_API const char          *asScriptFunction_GetDeclaration(const asIScriptFunction *f, bool includeObjectName)              { return f->GetDeclaration(includeObjectName); }
+AS_API bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f)                                       { return f->IsClassMethod(); }
+AS_API bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f)                                   { return f->IsInterfaceMethod(); }
+AS_API int                  asScriptFunction_GetParamCount(const asIScriptFunction *f)                                       { return f->GetParamCount(); }
+AS_API int                  asScriptFunction_GetParamTypeId(const asIScriptFunction *f, int index)                           { return f->GetParamTypeId(index); }
+AS_API int                  asScriptFunction_GetReturnTypeId(const asIScriptFunction *f)                                     { return f->GetReturnTypeId(); }
+                                                                                                  
 }
 
 END_AS_NAMESPACE

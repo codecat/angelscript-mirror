@@ -379,6 +379,26 @@ bool Test()
 		fail = true;
 	}
 
+	// Test 20
+	// Don't crash on invalid script code
+	bout.buffer = "";
+	const char *script20 = 
+		"class A { A @b; } \n"
+		"void test()       \n"
+		"{ A a; if( @a.b == a.GetClient() ) {} } \n";
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script20", script20, strlen(script20));
+	r = mod->Build();
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "script20 (2, 1) : Info    : Compiling void test()\n"
+	                   "script20 (3, 22) : Error   : No matching signatures to 'A::GetClient()'\n"
+	                   "script20 (3, 17) : Warning : The operand is implicitly converted to handle in order to compare them\n"
+	                   "script20 (3, 17) : Error   : No conversion from 'const int' to 'A@' available.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success

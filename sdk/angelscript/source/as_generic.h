@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -49,18 +49,20 @@ class asCScriptFunction;
 class asCGeneric : public asIScriptGeneric
 {
 public:
-	asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, asDWORD *stackPointer);
-	virtual ~asCGeneric();
-
-// interface - begin
+//------------------------------
+// asIScriptGeneric
+//------------------------------
+	// Miscellaneous
 	asIScriptEngine *GetEngine();
+	int              GetFunctionId();
 
-	int     GetFunctionId();
-
+	// Object
 	void   *GetObject();
 	int     GetObjectTypeId();
 
+	// Arguments
 	int     GetArgCount();
+	int     GetArgTypeId(asUINT arg);
 	asBYTE  GetArgByte(asUINT arg);
 	asWORD  GetArgWord(asUINT arg);
 	asDWORD GetArgDWord(asUINT arg);
@@ -69,12 +71,10 @@ public:
 	double  GetArgDouble(asUINT arg);
 	void   *GetArgAddress(asUINT arg);
 	void   *GetArgObject(asUINT arg);
-#ifdef AS_DEPRECATED
-	void   *GetArgPointer(asUINT arg);
-#endif
 	void   *GetAddressOfArg(asUINT arg);
-	int     GetArgTypeId(asUINT arg);
 
+	// Return value
+	int     GetReturnTypeId();
 	int     SetReturnByte(asBYTE val);
 	int     SetReturnWord(asWORD val);
 	int     SetReturnDWord(asDWORD val);
@@ -84,8 +84,17 @@ public:
 	int     SetReturnAddress(void *addr);
 	int     SetReturnObject(void *obj);
 	void   *GetReturnPointer();
-	int     GetReturnTypeId();
-// interface - end
+
+#ifdef AS_DEPRECATED
+	void   *GetArgPointer(asUINT arg);
+#endif
+
+//------------------------
+// internal
+//-------------------------
+	asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, asDWORD *stackPointer);
+	virtual ~asCGeneric();
+
 
 	asCScriptEngine *engine;
 	asCScriptFunction *sysFunction;

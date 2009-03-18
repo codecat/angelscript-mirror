@@ -145,15 +145,15 @@ void PrintVariables(asIScriptContext *ctx, int stackLevel)
 		void *varPointer = ctx->GetAddressOfVar(n, stackLevel);
 		if( typeId == engine->GetTypeIdByDecl("int") )
 		{
-			print(" %s = %d\n", ctx->GetVarDeclaration(n, 0, stackLevel), *(int*)varPointer);
+			print(" %s = %d\n", ctx->GetVarDeclaration(n, stackLevel), *(int*)varPointer);
 		}
 		else if( typeId == engine->GetTypeIdByDecl("string") )
 		{
 			CScriptString *str = (CScriptString*)varPointer;
 			if( str )
-				print(" %s = '%s'\n", ctx->GetVarDeclaration(n, 0, stackLevel), str->buffer.c_str());
+				print(" %s = '%s'\n", ctx->GetVarDeclaration(n, stackLevel), str->buffer.c_str());
 			else
-				print(" %s = <null>\n", ctx->GetVarDeclaration(n, 0, stackLevel));
+				print(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
 		}
 	}
 }

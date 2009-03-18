@@ -550,6 +550,9 @@
 				RelativePath="..\..\..\..\angelscript\include\angelscript.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\autowrapper\aswrappedcall.h">
+			</File>
+			<File
 				RelativePath="..\..\source\bstr.h">
 			</File>
 			<File

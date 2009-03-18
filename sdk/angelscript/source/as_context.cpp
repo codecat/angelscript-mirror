@@ -3468,11 +3468,9 @@ int asCContext::GetCurrentLineNumber(int *column)
 	return -1;
 }
 
-const char *asCContext::GetExceptionString(int *length)
+const char *asCContext::GetExceptionString()
 {
 	if( GetState() != asEXECUTION_EXCEPTION ) return 0;
-
-	if( length ) *length = (int)exceptionString.GetLength();
 
 	return exceptionString.AddressOf();
 }
@@ -3681,7 +3679,7 @@ int asCContext::GetVarCount(int stackLevel)
 	return (int)func->variables.GetLength();
 }
 
-const char *asCContext::GetVarName(int varIndex, int *length, int stackLevel)
+const char *asCContext::GetVarName(int varIndex, int stackLevel)
 {
 	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
 
@@ -3700,12 +3698,10 @@ const char *asCContext::GetVarName(int varIndex, int *length, int stackLevel)
 	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
 		return 0;
 
-	if( length ) *length = (int)func->variables[varIndex]->name.GetLength();
-
 	return func->variables[varIndex]->name.AddressOf();
 }
 
-const char *asCContext::GetVarDeclaration(int varIndex, int *length, int stackLevel)
+const char *asCContext::GetVarDeclaration(int varIndex, int stackLevel)
 {
 	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
 
@@ -3728,8 +3724,6 @@ const char *asCContext::GetVarDeclaration(int varIndex, int *length, int stackLe
 	asCString *tempString = &threadManager->GetLocalData()->string;
 	*tempString = func->variables[varIndex]->type.Format();
 	*tempString += " " + func->variables[varIndex]->name;
-
-	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
 }

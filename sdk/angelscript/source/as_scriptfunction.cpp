@@ -78,11 +78,10 @@ asCScriptFunction::~asCScriptFunction()
 }
 
 // interface
-const char *asCScriptFunction::GetModuleName(int *length) const
+const char *asCScriptFunction::GetModuleName() const
 {
 	if( module )
 	{
-		if( length ) *length = (int)module->name.GetLength();
 		return module->name.AddressOf();
 	}
 
@@ -96,19 +95,17 @@ asIObjectType *asCScriptFunction::GetObjectType() const
 }
 
 // interface
-const char *asCScriptFunction::GetObjectName(int *length) const 
+const char *asCScriptFunction::GetObjectName() const 
 {
 	if( objectType )
-		return objectType->GetName(length);
+		return objectType->GetName();
 
 	return 0;
 }
 
 // interface
-const char *asCScriptFunction::GetName(int *length) const
+const char *asCScriptFunction::GetName() const
 {
-	if( length )
-		*length = (int)name.GetLength();
 	return name.AddressOf();
 }
 
@@ -142,21 +139,21 @@ int asCScriptFunction::GetSpaceNeededForReturnValue()
 }
 
 // internal
-asCString asCScriptFunction::GetDeclarationStr() const
+asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 {
 	asCString str;
 
 	str = returnType.Format();
 	str += " ";
-	if( objectType )
+	if( objectType && includeObjectName )
 	{
 		if( objectType->name != "" )
 			str += objectType->name + "::";
 		else
-			str += "?::";
+			str += "_unnamed_type_::";
 	}
 	if( name == "" )
-		str += "?(";
+		str += "_unnamed_function_(";
 	else
 		str += name + "(";
 
@@ -438,25 +435,33 @@ asIScriptEngine *asCScriptFunction::GetEngine() const
 }
 
 // interface
-const char *asCScriptFunction::GetDeclaration(int *length) const
+const char *asCScriptFunction::GetDeclaration(bool includeObjectName) const
 {
 	asASSERT(threadManager);
 	asCString *tempString = &threadManager->GetLocalData()->string;
-	*tempString = GetDeclarationStr();
-	if( length ) *length = (int)tempString->GetLength();
+	*tempString = GetDeclarationStr(includeObjectName);
 	return tempString->AddressOf();
 }
 
 // interface
-const char *asCScriptFunction::GetScriptSectionName(int *length) const
+const char *asCScriptFunction::GetScriptSectionName() const
 {
 	if( module && scriptSectionIdx >= 0 )
 	{
-		if( length ) *length = (int)module->scriptSections[scriptSectionIdx]->GetLength();
 		return module->scriptSections[scriptSectionIdx]->AddressOf();
 	}
 	
 	return 0;
+}
+
+// interface
+const char *asCScriptFunction::GetConfigGroup() const
+{
+	asCConfigGroup *group = engine->FindConfigGroupForFunction(id);
+	if( group == 0 )
+		return 0;
+
+	return group->groupName.AddressOf();
 }
 
 END_AS_NAMESPACE

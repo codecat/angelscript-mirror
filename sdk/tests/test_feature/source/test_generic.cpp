@@ -115,9 +115,11 @@ void nullPtr(asIScriptGeneric *gen)
 	assert(gen->GetReturnTypeId() == gen->GetEngine()->GetTypeIdByDecl("intf@"));
 }
 
+bool Test2();
+
 bool Test()
 {
-	bool fail = false;
+	bool fail = Test2();
 
 	int r;
 
@@ -158,6 +160,161 @@ bool Test()
 	// Success
 	return fail;
 }
+
+//--------------------------------------------------------
+// This part is going to test the auto-generated wrappers
+//--------------------------------------------------------
+
+// This doesn't work on MSVC6. The template implementation isn't good enough.
+#if !defined(_MSC_VER) || _MSC_VER > 1200
+
+#include "../../../add_on/autowrapper/aswrappedcall.h"
+
+void TestWrapNoArg() {}
+asDECLARE_WRAPPER(TestNoArg_Generic, TestWrapNoArg);
+
+
+void TestWrapStringByVal(std::string val) { 
+	assert(val == "test");
+}
+asDECLARE_WRAPPER(TestStringByVal_Generic, TestWrapStringByVal);
+
+
+void TestWrapStringByRef(std::string &ref) {
+	assert(ref == "test");
+}
+asDECLARE_WRAPPER(TestStringByRef_Generic, TestWrapStringByRef);
+
+
+void TestWrapIntByVal(int val) {
+	assert(val == 42);
+}
+asDECLARE_WRAPPER(TestIntByVal_Generic, TestWrapIntByVal);
+
+
+void TestWrapIntByRef(int &ref) {
+	assert(ref == 42);
+}
+asDECLARE_WRAPPER(TestIntByRef_Generic, TestWrapIntByRef);
+
+
+int TestWrapRetIntByVal() {
+	return 42;
+}
+asDECLARE_WRAPPER(TestRetIntByVal_Generic, TestWrapRetIntByVal);
+
+
+int &TestWrapRetIntByRef() {
+	static int val = 42;
+	return val;
+}
+asDECLARE_WRAPPER(TestRetIntByRef_Generic, TestWrapRetIntByRef);
+
+
+// TODO: Doesn't work because asIScriptGeneric::GetReturnPointer doesn't allocate the space. Fix this.
+std::string TestWrapRetStringByVal() {
+	return "test";
+}
+asDECLARE_WRAPPER(TestRetStringByVal_Generic, TestWrapRetStringByVal);
+
+
+std::string &TestWrapRetStringByRef() {
+	static std::string val = "test";
+	return val;
+}
+asDECLARE_WRAPPER(TestRetStringByRef_Generic, TestWrapRetStringByRef);
+
+
+// TODO: Test class methods
+// TODO: Test virtual class methods
+// TODO: Test virtual class methods for classes with multiple inheritance
+
+bool Test2()
+{
+	bool fail = false;
+
+	int r;
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+	RegisterStdString(engine);
+
+	r = engine->RegisterGlobalFunction("void TestNoArg()", asFUNCTION(TestNoArg_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "TestNoArg()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+	
+	r = engine->RegisterGlobalFunction("void TestStringByVal(string val)", asFUNCTION(TestStringByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "TestStringByVal('test')");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->RegisterGlobalFunction("void TestStringByRef(const string &in ref)", asFUNCTION(TestStringByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "TestStringByRef('test')");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->RegisterGlobalFunction("void TestIntByVal(int val)", asFUNCTION(TestIntByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "TestIntByVal(42)");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->RegisterGlobalFunction("void TestIntByRef(int &in ref)", asFUNCTION(TestIntByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "TestIntByRef(42)");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->RegisterGlobalFunction("int TestRetIntByVal()", asFUNCTION(TestRetIntByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "assert(TestRetIntByVal() == 42)");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->RegisterGlobalFunction("int &TestRetIntByRef()", asFUNCTION(TestRetIntByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "assert(TestRetIntByRef() == 42)");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+/*
+	r = engine->RegisterGlobalFunction("string TestRetStringByVal()", asFUNCTION(TestRetStringByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "assert(TestRetStringByVal() == 'test')");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+*/
+
+	r = engine->RegisterGlobalFunction("string &TestRetStringByRef()", asFUNCTION(TestRetStringByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->ExecuteString(0, "assert(TestRetStringByRef() == 'test')");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+
+	engine->Release();
+
+	return fail;
+}
+#else
+bool Test2()
+{
+	printf("The test of the autowrapper was skipped due to lack of proper template support\n");
+	return false;
+}
+#endif
 
 } // namespace
 

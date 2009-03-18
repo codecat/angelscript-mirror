@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.0 WIP - 2009/03/12</h2>
+<h2>Version 2.16.0 WIP - 2009/03/18</h2>
 
 <ul>
 <li>Bug fixes
@@ -126,6 +126,9 @@ A:hover
 <li>Fixed bug in compiler where temporary variable was freed twice during compound assignments with some complex lvalue expressions (Thanks _Vicious_)
 <li>Fixed crash when parsing invalid typedefs.
 <li>Typedefs declared in scripts now accept float and double as well.
+<li>Fixed crash when compiling handle comparison with invalid types (Thanks _Vicious_)
+<li>It's now possible to determine type id for handle to scoped reference types (Thanks Jeff Slutter)
+<li>Unary operators weren't supported for enum types (Thanks jal_)
 </ul>
 <li>Library
 <ul>
@@ -147,12 +150,15 @@ A:hover
 <li>Deprecated GetSubType and IsInterface in asIObjectType.
 <li>Added enumeration of enums and typedefs to asIScriptModule.
 <li>Added enumeration of registered functions, properties, enums, and typedefs to asIScriptEngine.
+<li>Added parameter to asIScriptFunction::GetDeclaration to include or not the object name in the returned string.
+<li>Removed all output length parameters for functions that returned strings, all strings are null terminated anyway.
 </ul>
 <li>Add-ons
 <ul>
 <li>Added registration of std::string as a standard add-on, complementing the CScriptString
 <li>Changed CScriptFile to be compatible with both std::string and CScriptString
 <li>Modified CScriptBuilder to permit enabling/disabling metadata processing through preprocessor define
+<li>Added autowrapper add-on that automatically generates wrappers for the generic calling convention for functions and class methods (Thanks George Yohng)
 </ul>
 </ul>
 

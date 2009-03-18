@@ -106,7 +106,7 @@ public:
 	int  SetException(const char *descr);
 	int  GetExceptionLineNumber(int *column);
 	int  GetExceptionFunction();
-	const char *GetExceptionString(int *length);
+	const char *GetExceptionString();
 
 	int  SetLineCallback(asSFuncPtr callback, void *obj, int callConv);
 	void ClearLineCallback();
@@ -118,8 +118,8 @@ public:
 	int GetCallstackLineNumber(int index, int *column);
 
 	int         GetVarCount(int stackLevel);
-	const char *GetVarName(int varIndex, int *length, int stackLevel);
-	const char *GetVarDeclaration(int varIndex, int *length, int stackLevel);
+	const char *GetVarName(int varIndex, int stackLevel);
+	const char *GetVarDeclaration(int varIndex, int stackLevel);
 	int         GetVarTypeId(int varIndex, int stackLevel);
 #ifdef AS_DEPRECATED
 	void       *GetVarPointer(int varIndex, int stackLevel);

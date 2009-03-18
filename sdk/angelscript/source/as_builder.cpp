@@ -434,7 +434,7 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 	// Get data type and property name
 	asCScriptNode *dataType = parser.GetScriptNode()->firstChild;
 
-	*result = CreateDataTypeFromNode(dataType, &source);
+	*result = CreateDataTypeFromNode(dataType, &source, true);
 
 	if( numErrors > 0 )
 		return asINVALID_TYPE;

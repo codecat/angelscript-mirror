@@ -120,10 +120,11 @@ public:
 	asIScriptEngine *GetEngine() const;
 
 	// Type info
-	const char      *GetName(int *length = 0) const;
+	const char      *GetName() const;
 	asIObjectType   *GetBaseType() const;
 	asDWORD          GetFlags() const;
 	asUINT           GetSize() const;
+	const char      *GetConfigGroup() const;
 
 	// Behaviours
 	int GetBehaviourCount() const;
@@ -148,7 +149,7 @@ public:
 	// Properties
 	int         GetPropertyCount() const;
 	int         GetPropertyTypeId(asUINT prop) const;
-	const char *GetPropertyName(asUINT prop, int *length = 0) const;
+	const char *GetPropertyName(asUINT prop) const;
 	int         GetPropertyOffset(asUINT prop) const;
 
 #ifdef AS_DEPRECATED

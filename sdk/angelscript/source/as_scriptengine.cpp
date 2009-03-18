@@ -1911,6 +1911,24 @@ int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char
 	return func.id;
 }
 
+// interface
+int asCScriptEngine::GetGlobalBehaviourCount()
+{
+	return (int)globalBehaviours.operators.GetLength()/2;
+}
+
+// interface
+int asCScriptEngine::GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour)
+{
+	if( index*2 >= globalBehaviours.operators.GetLength() )
+		return asINVALID_ARG;
+
+	if( outBehaviour )
+		*outBehaviour = static_cast<asEBehaviours>(globalBehaviours.operators[index*2]);
+
+	return globalBehaviours.operators[index*2+1];
+}
+
 int asCScriptEngine::VerifyVarTypeNotInFunction(asCScriptFunction *func)
 {
 	// Don't allow var type in this function
@@ -1977,6 +1995,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	return id;
 }
 
+// interface
 int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *pointer)
 {
 	asCDataType type;
@@ -2020,12 +2039,15 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	return asSUCCESS;
 }
 
+// interface
 int asCScriptEngine::GetGlobalPropertyCount()
 {
 	return (int)registeredGlobalProps.GetLength();
 }
 
-int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId, void **pointer, int *length)
+// interface
+// TODO: If the typeId ever encodes the const flag, then the isConst parameter should be removed
+int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId, bool *isConst, const char **configGroup, void **pointer)
 {
 	if( index >= registeredGlobalProps.GetLength() )
 		return asINVALID_ARG;
@@ -2033,11 +2055,20 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, i
 	if( name )
 		*name = registeredGlobalProps[index]->name.AddressOf();
 
-	if( length )
-		*length = (int)registeredGlobalProps[index]->name.GetLength();
+	if( configGroup )
+	{
+		asCConfigGroup *group = FindConfigGroupForGlobalVar(index);
+		if( group )
+			*configGroup = group->groupName.AddressOf();
+		else
+			*configGroup = 0;
+	}
 
 	if( typeId )
 		*typeId = GetTypeIdFromDataType(registeredGlobalProps[index]->type);
+
+	if( isConst )
+		*isConst = registeredGlobalProps[index]->type.IsReadOnly();
 
 	if( pointer )
 		*pointer = globalPropAddresses[-1 - registeredGlobalProps[index]->index];
@@ -3200,7 +3231,8 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 	mapTypeIdToDataType.Insert(typeId, newDt);
 
 	// If the object type supports object handles then register those types as well
-	if( dt.IsObject() && dt.GetObjectType()->beh.addref && dt.GetObjectType()->beh.release )
+	// Note: Don't check for addref, as asOBJ_SCOPED don't have this
+	if( dt.IsObject() && dt.GetObjectType()->beh.release ) 
 	{
 		newDt = asNEW(asCDataType)(dt);
 		newDt->MakeReference(false);
@@ -3272,7 +3304,7 @@ int asCScriptEngine::GetTypeIdByDecl(const char *decl)
 
 
 
-const char *asCScriptEngine::GetTypeDeclaration(int typeId, int *length)
+const char *asCScriptEngine::GetTypeDeclaration(int typeId)
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
 	if( dt == 0 ) return 0;
@@ -3280,8 +3312,6 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, int *length)
 	asASSERT(threadManager);
 	asCString *tempString = &threadManager->GetLocalData()->string;
 	*tempString = dt->Format();
-
-	if( length ) *length = (int)tempString->GetLength();
 
 	return tempString->AddressOf();
 }
@@ -3600,7 +3630,7 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForGlobalVar(int gvarId)
 	return 0;
 }
 
-asCConfigGroup *asCScriptEngine::FindConfigGroupForObjectType(asCObjectType *objType)
+asCConfigGroup *asCScriptEngine::FindConfigGroupForObjectType(const asCObjectType *objType)
 {
 	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
 	{
@@ -3787,7 +3817,7 @@ int asCScriptEngine::GetTypedefCount()
 }
 
 // interface
-const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, int *length)
+const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup)
 {
 	if( index >= registeredTypeDefs.GetLength() )
 		return 0;
@@ -3795,8 +3825,14 @@ const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, int *l
 	if( typeId )
 		*typeId = GetTypeIdByDecl(registeredTypeDefs[index]->name.AddressOf());
 
-	if( length )
-		*length = (int)registeredTypeDefs[index]->name.GetLength();
+	if( configGroup )
+	{
+		asCConfigGroup *group = FindConfigGroupForObjectType(registeredTypeDefs[index]);
+		if( group )
+			*configGroup = group->groupName.AddressOf();
+		else
+			*configGroup = 0;
+	}
 
 	return registeredTypeDefs[index]->name.AddressOf();
 }
@@ -3897,12 +3933,24 @@ int asCScriptEngine::GetEnumCount()
 }
 
 // interface
-int asCScriptEngine::GetEnumTypeIdByIndex(asUINT index)
+const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup)
 {
 	if( index >= registeredEnums.GetLength() )
 		return 0;
 
-	return GetTypeIdByDecl(registeredEnums[index]->name.AddressOf());
+	if( configGroup )
+	{
+		asCConfigGroup *group = FindConfigGroupForObjectType(registeredEnums[index]);
+		if( group )
+			*configGroup = group->groupName.AddressOf();
+		else
+			*configGroup = 0;
+	}
+
+	if( enumTypeId )
+		*enumTypeId = GetTypeIdByDecl(registeredEnums[index]->name.AddressOf());
+
+	return registeredEnums[index]->name.AddressOf();
 }
 
 // interface
@@ -3917,7 +3965,7 @@ int asCScriptEngine::GetEnumValueCount(int enumTypeId)
 }
 
 // interface
-const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length)
+const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue)
 {
 	// TODO: This same function is implemented in as_module.cpp as well. Perhaps it should be moved to asCObjectType?
 	const asCDataType *dt = GetDataTypeFromTypeId(enumTypeId);
@@ -3930,9 +3978,6 @@ const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, i
 
 	if( outValue )
 		*outValue = t->enumValues[index]->value;
-
-	if( length )
-		*length = (int)t->enumValues[index]->name.GetLength();
 
 	return t->enumValues[index]->name.AddressOf();
 }

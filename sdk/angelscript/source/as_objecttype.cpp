@@ -138,9 +138,8 @@ bool asCObjectType::DerivesFrom(const asCObjectType *objType) const
 	return false;
 }
 
-const char *asCObjectType::GetName(int *length) const
+const char *asCObjectType::GetName() const
 {
-	if( length ) *length = (int)name.GetLength();
 	return name.AddressOf();
 }
 
@@ -281,12 +280,11 @@ int asCObjectType::GetPropertyTypeId(asUINT prop) const
 	return engine->GetTypeIdFromDataType(properties[prop]->type);
 }
 
-const char *asCObjectType::GetPropertyName(asUINT prop, int *length) const
+const char *asCObjectType::GetPropertyName(asUINT prop) const
 {
 	if( prop >= properties.GetLength() )
 		return 0;
 
-	if( length ) *length = (int)properties[prop]->name.GetLength();
 	return properties[prop]->name.AddressOf();
 }
 
@@ -393,6 +391,16 @@ int asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour
 	}
 
 	return asINVALID_ARG;
+}
+
+// interface
+const char *asCObjectType::GetConfigGroup() const
+{
+	asCConfigGroup *group = engine->FindConfigGroupForObjectType(this);
+	if( group == 0 )
+		return 0;
+
+	return group->groupName.AddressOf();
 }
 
 

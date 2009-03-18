@@ -392,6 +392,12 @@ bool TestRefScoped()
 	if( beh != asBEHAVE_ASSIGNMENT )
 		fail = true;
 
+	// Must be possible to determine type id for scoped types with handle
+	asIScriptFunction *func = engine->GetFunctionDescriptorById(ot->GetFactoryIdByIndex(0));
+	int typeId = func->GetReturnTypeId();
+	if( typeId != engine->GetTypeIdByDecl("scoped@") )
+		fail = true;
+
 	// Don't permit handles to be taken
 	r = engine->ExecuteString(0, "scoped @s = null");
 	if( r >= 0 ) fail = true;
@@ -445,7 +451,6 @@ bool TestRefScoped()
 	// Permit &in
 	r = engine->RegisterGlobalFunction("void f(scoped&in)", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r < 0 ) fail = true;
-
 
 
 	engine->Release();

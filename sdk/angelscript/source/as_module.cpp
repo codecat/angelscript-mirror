@@ -95,9 +95,8 @@ void asCModule::SetName(const char *name)
 }
 
 // interface
-const char *asCModule::GetName(int *length)
+const char *asCModule::GetName()
 {
-	if( length ) *length = (int)name.GetLength();
 	return name.AddressOf();
 }
 
@@ -575,7 +574,7 @@ void *asCModule::GetAddressOfGlobalVar(int index)
 }
 
 // interface
-const char *asCModule::GetGlobalVarDeclaration(int index, int *length)
+const char *asCModule::GetGlobalVarDeclaration(int index)
 {
 	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
 		return 0;
@@ -587,25 +586,27 @@ const char *asCModule::GetGlobalVarDeclaration(int index, int *length)
 	*tempString = prop->type.Format();
 	*tempString += " " + prop->name;
 
-	if( length ) *length = (int)tempString->GetLength();
 	return tempString->AddressOf();
 }
 
 // interface
-const char *asCModule::GetGlobalVarName(int index, int *length)
+const char *asCModule::GetGlobalVarName(int index)
 {
 	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
 		return 0;
 
-	if( length ) *length = (int)scriptGlobals[index]->name.GetLength();
 	return scriptGlobals[index]->name.AddressOf();
 }
 
 // interface
-int asCModule::GetGlobalVarTypeId(int index)
+// TODO: If the typeId ever encodes the const flag, then the isConst parameter should be removed
+int asCModule::GetGlobalVarTypeId(int index, bool *isConst)
 {
 	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
 		return asINVALID_ARG;
+
+	if( isConst )
+		*isConst = scriptGlobals[index]->type.IsReadOnly();
 
 	return engine->GetTypeIdFromDataType(scriptGlobals[index]->type);
 }
@@ -644,12 +645,15 @@ int asCModule::GetEnumCount()
 }
 
 // interface
-int asCModule::GetEnumTypeIdByIndex(asUINT index)
+const char *asCModule::GetEnumByIndex(asUINT index, int *enumTypeId)
 {
 	if( index >= enumTypes.GetLength() )
-		return asINVALID_ARG;
+		return 0;
 
-	return GetTypeIdByDecl(enumTypes[index]->name.AddressOf());
+	if( enumTypeId )
+		*enumTypeId = GetTypeIdByDecl(enumTypes[index]->name.AddressOf());
+
+	return enumTypes[index]->name.AddressOf();
 }
 
 // interface
@@ -664,7 +668,7 @@ int asCModule::GetEnumValueCount(int enumTypeId)
 }
 
 // interface
-const char *asCModule::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue, int *length)
+const char *asCModule::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue)
 {
 	const asCDataType *dt = engine->GetDataTypeFromTypeId(enumTypeId);
 	asCObjectType *t = dt->GetObjectType();
@@ -677,9 +681,6 @@ const char *asCModule::GetEnumValueByIndex(int enumTypeId, asUINT index, int *ou
 	if( outValue )
 		*outValue = t->enumValues[index]->value;
 
-	if( length )
-		*length = (int)t->enumValues[index]->name.GetLength();
-
 	return t->enumValues[index]->name.AddressOf();
 }
 
@@ -690,16 +691,13 @@ int asCModule::GetTypedefCount()
 }
 
 // interface
-const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId, int *length)
+const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId)
 {
 	if( index >= typeDefs.GetLength() )
 		return 0;
 
 	if( typeId )
 		*typeId = GetTypeIdByDecl(typeDefs[index]->name.AddressOf());
-
-	if( length )
-		*length = (int)typeDefs[index]->name.GetLength();
 
 	return typeDefs[index]->name.AddressOf();
 }
@@ -1013,7 +1011,7 @@ int asCModule::UnbindImportedFunction(int index)
 }
 
 // interface
-const char *asCModule::GetImportedFunctionDeclaration(int index, int *length)
+const char *asCModule::GetImportedFunctionDeclaration(int index)
 {
 	asCScriptFunction *func = GetImportedFunction(index);
 	if( func == 0 ) return 0;
@@ -1022,24 +1020,18 @@ const char *asCModule::GetImportedFunctionDeclaration(int index, int *length)
 	asCString *tempString = &threadManager->GetLocalData()->string;
 	*tempString = func->GetDeclarationStr();
 
-	if( length ) *length = (int)tempString->GetLength();
-
 	return tempString->AddressOf();
 }
 
 // interface
-const char *asCModule::GetImportedFunctionSourceModule(int index, int *length)
+const char *asCModule::GetImportedFunctionSourceModule(int index)
 {
 	if( index >= (int)bindInformations.GetLength() )
 		return 0;
 
 	index = bindInformations[index].importFrom;
 
-	const char *str = stringConstants[index]->AddressOf();
-	if( length )
-		*length = (int)stringConstants[index]->GetLength();
-
-	return str;
+	return stringConstants[index]->AddressOf();
 }
 
 // inteface

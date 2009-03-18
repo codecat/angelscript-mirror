@@ -611,6 +611,10 @@ SOURCE=..\..\source\cstring.h
 # PROP Default_Filter ""
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\autowrapper\aswrappedcall.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\bstr.cpp
 # End Source File
 # Begin Source File
