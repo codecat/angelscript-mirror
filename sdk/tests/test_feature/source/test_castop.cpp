@@ -75,7 +75,7 @@ const char *script3 =
 void TypeToString(asIScriptGeneric *gen)
 {
 //	int *i = (int*)gen->GetArgPointer(0);
-	*(CScriptString**)gen->GetReturnPointer() = new CScriptString("type");
+	*(CScriptString**)gen->GetAddressOfReturnLocation() = new CScriptString("type");
 }
 
 class A

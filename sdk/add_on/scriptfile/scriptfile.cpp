@@ -16,7 +16,7 @@ CScriptFile *ScriptFile_Factory()
 
 void ScriptFile_Factory_Generic(asIScriptGeneric *gen)
 {
-	*(CScriptFile**)gen->GetReturnPointer()	= ScriptFile_Factory();
+	*(CScriptFile**)gen->GetAddressOfReturnLocation()	= ScriptFile_Factory();
 }
 
 void ScriptFile_AddRef_Generic(asIScriptGeneric *gen)

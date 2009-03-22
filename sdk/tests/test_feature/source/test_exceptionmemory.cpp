@@ -97,7 +97,7 @@ CRefObject *RefObjFactory()
 
 void RefObjFactory_gen(asIScriptGeneric *gen)
 {
-	*(CRefObject**)gen->GetReturnPointer() = new CRefObject();
+	*(CRefObject**)gen->GetAddressOfReturnLocation() = new CRefObject();
 }
 
 void Construct(CObject *o)

@@ -42,6 +42,10 @@
 
 BEGIN_AS_NAMESPACE
 
+// TODO: optimize: The access to the arguments should be optimized so that code 
+//                 doesn't have to count the position of the argument with every call
+
+// internal
 asCGeneric::asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, asDWORD *stackPointer)
 {
 	this->engine = engine;
@@ -53,36 +57,43 @@ asCGeneric::asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, 
 	returnVal = 0;
 }
 
+// internal
 asCGeneric::~asCGeneric()
 {
 }
 
+// interface
 asIScriptEngine *asCGeneric::GetEngine()
 {
 	return (asIScriptEngine*)engine;
 }
 
+// interface
 int asCGeneric::GetFunctionId()
 {
 	return sysFunction->id;
 }
 
+// interface
 void *asCGeneric::GetObject()
 {
 	return currentObject;
 }
 
+// interface
 int asCGeneric::GetObjectTypeId()
 {
 	asCDataType dt = asCDataType::CreateObject(sysFunction->objectType, false);
 	return engine->GetTypeIdFromDataType(dt);
 }
 
+// interface
 int asCGeneric::GetArgCount()
 {
 	return (int)sysFunction->parameterTypes.GetLength();
 }
 
+// interface
 asBYTE asCGeneric::GetArgByte(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -105,7 +116,7 @@ asBYTE asCGeneric::GetArgByte(asUINT arg)
 	return *(asBYTE*)&stackPointer[offset];
 }
 
-
+// interface
 asWORD asCGeneric::GetArgWord(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -128,7 +139,7 @@ asWORD asCGeneric::GetArgWord(asUINT arg)
 	return *(asWORD*)&stackPointer[offset];
 }
 
-
+// interface
 asDWORD asCGeneric::GetArgDWord(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -151,6 +162,7 @@ asDWORD asCGeneric::GetArgDWord(asUINT arg)
 	return *(asDWORD*)&stackPointer[offset];
 }
 
+// interface
 asQWORD asCGeneric::GetArgQWord(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -173,6 +185,7 @@ asQWORD asCGeneric::GetArgQWord(asUINT arg)
 	return *(asQWORD*)(&stackPointer[offset]);
 }
 
+// interface
 float asCGeneric::GetArgFloat(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -195,6 +208,7 @@ float asCGeneric::GetArgFloat(asUINT arg)
 	return *(float*)(&stackPointer[offset]);
 }
 
+// interface
 double asCGeneric::GetArgDouble(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -217,6 +231,7 @@ double asCGeneric::GetArgDouble(asUINT arg)
 	return *(double*)(&stackPointer[offset]);
 }
 
+// interface
 void *asCGeneric::GetArgAddress(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -236,6 +251,7 @@ void *asCGeneric::GetArgAddress(asUINT arg)
 	return (void*)*(size_t*)(&stackPointer[offset]);
 }
 
+// interface
 void *asCGeneric::GetArgObject(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -272,6 +288,7 @@ void *asCGeneric::GetArgPointer(asUINT arg)
 }
 #endif
 
+// interface
 void *asCGeneric::GetAddressOfArg(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -290,9 +307,9 @@ void *asCGeneric::GetAddressOfArg(asUINT arg)
 
 	// Get the address of the value
 	return &stackPointer[offset];
-
 }
 
+// interface
 int asCGeneric::GetArgTypeId(asUINT arg)
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
@@ -315,6 +332,7 @@ int asCGeneric::GetArgTypeId(asUINT arg)
 	}
 }
 
+// interface
 int asCGeneric::SetReturnByte(asBYTE val)
 {
 	// Verify the type of the return value
@@ -330,6 +348,7 @@ int asCGeneric::SetReturnByte(asBYTE val)
 	return 0;
 }
 
+// interface
 int asCGeneric::SetReturnWord(asWORD val)
 {
 	// Verify the type of the return value
@@ -345,6 +364,7 @@ int asCGeneric::SetReturnWord(asWORD val)
 	return 0;
 }
 
+// interface
 int asCGeneric::SetReturnDWord(asDWORD val)
 {
 	// Verify the type of the return value
@@ -360,6 +380,7 @@ int asCGeneric::SetReturnDWord(asDWORD val)
 	return 0;
 }
 
+// interface
 int asCGeneric::SetReturnQWord(asQWORD val)
 {
 	// Verify the type of the return value
@@ -375,6 +396,7 @@ int asCGeneric::SetReturnQWord(asQWORD val)
 	return 0;
 }
 
+// interface
 int asCGeneric::SetReturnFloat(float val)
 {
 	// Verify the type of the return value
@@ -390,6 +412,7 @@ int asCGeneric::SetReturnFloat(float val)
 	return 0;
 }
 
+// interface
 int asCGeneric::SetReturnDouble(double val)
 {
 	// Verify the type of the return value
@@ -405,6 +428,7 @@ int asCGeneric::SetReturnDouble(double val)
 	return 0;
 }
 
+// interface
 int asCGeneric::SetReturnAddress(void *val)
 {
 	// Verify the type of the return value
@@ -424,6 +448,7 @@ int asCGeneric::SetReturnAddress(void *val)
 	return asINVALID_TYPE;
 }
 
+// interface
 int asCGeneric::SetReturnObject(void *obj)
 {
 	asCDataType *dt = &sysFunction->returnType;
@@ -453,17 +478,44 @@ int asCGeneric::SetReturnObject(void *obj)
 	return 0;
 }
 
-// TODO: This should be deprecated and substituted with SetReturnValue(void *val, bool takeOwnership)
+// internal
 void *asCGeneric::GetReturnPointer()
 {
-	asCDataType *dt = &sysFunction->returnType;
+	asCDataType &dt = sysFunction->returnType;
 
-	if( dt->IsObject() && !dt->IsReference() )
+	if( dt.IsObject() && !dt.IsReference() )
 		return &objectRegister;
 
 	return &returnVal;
 }
 
+// interface
+void *asCGeneric::GetAddressOfReturnLocation()
+{
+	asCDataType &dt = sysFunction->returnType;
+
+	if( dt.IsObject() && !dt.IsReference() )
+	{
+		if( dt.GetObjectType()->flags & asOBJ_VALUE )
+		{
+			// Allocate the necessary memory for this object, 
+			// but do not initialize it, as the caller will do that.
+			objectRegister = engine->CallAlloc(dt.GetObjectType());
+
+			// TODO: How will we know if the initialization was succesful?
+
+			return objectRegister;
+		}
+
+		// Reference types store the handle in the objectReference
+		return &objectRegister;
+	}
+
+	// Primitive types and references are stored in the returnVal property
+	return &returnVal;
+}
+
+// interface
 int asCGeneric::GetReturnTypeId()
 {
 	return sysFunction->GetReturnTypeId();

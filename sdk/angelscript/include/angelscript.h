@@ -742,9 +742,10 @@ public:
 	virtual int     SetReturnDouble(double val) = 0;
 	virtual int     SetReturnAddress(void *addr) = 0;
 	virtual int     SetReturnObject(void *obj) = 0;
-	virtual void   *GetReturnPointer() = 0;
+	virtual void   *GetAddressOfReturnLocation() = 0;
 
 #ifdef AS_DEPRECATED
+	virtual void   *GetReturnPointer() = 0;
 	virtual void   *GetArgPointer(asUINT arg) = 0;
 #endif
 

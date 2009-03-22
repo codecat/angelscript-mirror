@@ -10,6 +10,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
 \page doc_addon_application Application modules
 
  - \subpage doc_addon_build
+ - \subpage doc_addon_autowrap
  - \subpage doc_addon_clib
 
 \page doc_addon_script Script extensions
@@ -501,6 +502,9 @@ public:
 This add-on registers the math functions from the standard C runtime library with the script 
 engine. Use <code>RegisterScriptMath(asIScriptEngine*)</code> to perform the registration.
 
+By defining the preprocessor word AS_USE_FLOAT=0, the functions will be registered to take 
+and return doubles instead of floats.
+
 \section doc_addon_math_1 Public script interface
 
 <pre>
@@ -690,6 +694,51 @@ if( r >= 0 )
 }
 \endcode
 
+
+
+
+\page doc_addon_autowrap Automatic wrapper functions
+
+<b>Path:</b> /sdk/add_on/autowrapper/aswrappedcall.h
+
+This header file declares some macros and template functions that will let the application developer
+automatically generate wrapper functions using the \ref doc_generic "generic calling convention" with 
+a simple call to a preprocessor macro. This is useful for those platforms where the native calling 
+conventions are not yet supported.
+
+The macro is defined as
+
+\code
+#define asDECLARE_WRAPPER(wrapper_name,func)
+\endcode
+
+where wrapper_name is the name of the function that you want to generate, and func is a function pointer 
+to the function you want to wrap. The macro works for both global functions and class methods without 
+any problem.
+
+Unfortunately the template functions needed to perform this generation are quite complex and older
+compilers may not be able to handle them. One such example is Microsoft Visual C++ 6, though luckily 
+it has no need for them as AngelScript already supports native calling conventions for it.
+
+\section doc_addon_autowrap_1 Example usage
+
+\code
+#include "aswrappedcall.h"
+
+// The application function that we want to register
+void DoSomething(std::string param1, int param2);
+
+// Generate the wrapper for the function
+asDECLARE_WRAPPER(DoSomething_Generic, DoSomething);
+
+// Registering the wrapper with AngelScript
+void RegisterWrapper(asIScriptEngine *engine)
+{
+  int r;
+
+  r = engine->RegisterGlobalFunction("void DoSomething(string, int)", asFUNCTION(DoSomething_Generic), asCALL_GENERIC); assert( r >= 0 );
+}
+\endcode
 
 
 

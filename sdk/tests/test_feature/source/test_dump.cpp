@@ -330,6 +330,7 @@ void DumpModule(asIScriptModule *mod)
 		" beh(9) string& _unnamed_function_(uint)\n"
 		" beh(10) string& _unnamed_function_(uint)\n"
 		" uint length() const\n"
+		" void resize(uint)\n"
 		"reg beh(26): bool _unnamed_function_(const string&in, const string&in)\n"
 		"reg beh(27): bool _unnamed_function_(const string&in, const string&in)\n"
 		"reg beh(30): bool _unnamed_function_(const string&in, const string&in)\n"

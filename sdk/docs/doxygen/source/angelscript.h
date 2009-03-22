@@ -2429,22 +2429,28 @@ public:
     //! If it was registered to return an object by value, then the library will make 
     //! a copy of the object.
 	virtual int     SetReturnObject(void *obj) = 0;
-    //! \brief Gets the pointer to the return value so it can be assigned a value.
-    //! \return A pointer to the return value.
-    //!
-    //! Gets the address to the location where the return value is to be placed.
-    //!
-    //! You should copy the value to the location pointed to by the address. For 
-    //! primitives simply dereference and assign. For object handles, you must first 
-    //! increase the reference counter. For objects, you must make a copy of the 
-    //! object, and then pass the pointer to the new object. 
-	virtual void   *GetReturnPointer() = 0;
+	//! \brief Gets the address to the memory where the return value should be placed.
+	//! \return A pointer to the memory where the return values is to be placed.
+	//!
+	//! The memory is not initialized, so if you're going to return a complex type by value,
+	//! you shouldn't use the assignment operator to initialize it. Instead use the placement new
+	//! operator to call the type's copy constructor to perform the initialization.
+	//!
+	//! \code
+	//! new(gen->GetAddressOfReturnLocation()) std::string(myRetValue);
+	//! \endcode
+	//!
+	//! The placement new operator works for primitive types too, so this method is ideal
+	//! for writing automatically generated functions that works the same way for all types.
+	virtual void   *GetAddressOfReturnLocation() = 0;
 	//! \}
 
 #ifdef AS_DEPRECATED
 	//! \name Deprecated
 	//! \{
 
+	//! \deprecated Since 2.16.0. Use \ref asIScriptGeneric::GetAddressOfReturnLocation "GetAddressOfReturnLocation" instead.
+	virtual void   *GetReturnPointer() = 0;
 	//! \deprecated Since 2.15.0. Use \ref asIScriptGeneric::GetAddressOfArg "GetAddressOfArg" instead.
 	virtual void   *GetArgPointer(asUINT arg) = 0;
 	//! \}

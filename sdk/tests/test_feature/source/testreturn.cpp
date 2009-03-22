@@ -16,7 +16,7 @@ static bool cfunction()
 
 static void cfunction_gen(asIScriptGeneric *gen) 
 {
-	*(bool*)gen->GetReturnPointer() = true;
+	*(bool*)gen->GetAddressOfReturnLocation() = true;
 }
 
 static bool retfalse()
@@ -35,7 +35,7 @@ static int retfalse_fake()
 
 static void retfalse_fake_gen(asIScriptGeneric *gen)
 {
-	*(asDWORD*)gen->GetReturnPointer() = retfalse_fake();
+	*(asDWORD*)gen->GetAddressOfReturnLocation() = retfalse_fake();
 }
 
 static void retfalse_gen(asIScriptGeneric *gen) 

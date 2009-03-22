@@ -228,12 +228,12 @@ void DestructFloatArray(vector<float> *p)
 
 void IsoMapFactory(asIScriptGeneric *gen)
 {
-	*(int**)gen->GetReturnPointer() = new int(1);
+	*(int**)gen->GetAddressOfReturnLocation() = new int(1);
 }
 
 void IsoSpriteFactory(asIScriptGeneric *gen)
 {
-	*(int**)gen->GetReturnPointer() = new int(1);
+	*(int**)gen->GetAddressOfReturnLocation() = new int(1);
 }
 
 void DummyAddref(asIScriptGeneric *gen)

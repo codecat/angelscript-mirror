@@ -10,7 +10,7 @@ static void ScriptAnyFactory_Generic(asIScriptGeneric *gen)
 {
 	asIScriptEngine *engine = gen->GetEngine();
 
-	*(CScriptAny**)gen->GetReturnPointer() = new CScriptAny(engine);
+	*(CScriptAny**)gen->GetAddressOfReturnLocation() = new CScriptAny(engine);
 }
 
 static void ScriptAnyFactory2_Generic(asIScriptGeneric *gen)
@@ -19,7 +19,7 @@ static void ScriptAnyFactory2_Generic(asIScriptGeneric *gen)
 	void *ref = (void*)gen->GetArgAddress(0);
 	int refType = gen->GetArgTypeId(0);
 
-	*(CScriptAny**)gen->GetReturnPointer() = new CScriptAny(ref,refType,engine);
+	*(CScriptAny**)gen->GetAddressOfReturnLocation() = new CScriptAny(ref,refType,engine);
 }
 
 static CScriptAny &ScriptAnyAssignment(CScriptAny *other, CScriptAny *self)
@@ -68,7 +68,7 @@ static void ScriptAny_Retrieve_Generic(asIScriptGeneric *gen)
 	int refTypeId = gen->GetArgTypeId(0);
 	CScriptAny *self = (CScriptAny*)gen->GetObject();
 
-	*(bool*)gen->GetReturnPointer() = self->Retrieve(ref, refTypeId);
+	*(bool*)gen->GetAddressOfReturnLocation() = self->Retrieve(ref, refTypeId);
 }
 
 static void ScriptAny_RetrieveInt_Generic(asIScriptGeneric *gen)
@@ -76,7 +76,7 @@ static void ScriptAny_RetrieveInt_Generic(asIScriptGeneric *gen)
 	asINT64 *ref = (asINT64*)gen->GetArgAddress(0);
 	CScriptAny *self = (CScriptAny*)gen->GetObject();
 
-	*(bool*)gen->GetReturnPointer() = self->Retrieve(*ref);
+	*(bool*)gen->GetAddressOfReturnLocation() = self->Retrieve(*ref);
 }
 
 static void ScriptAny_RetrieveFlt_Generic(asIScriptGeneric *gen)
@@ -84,7 +84,7 @@ static void ScriptAny_RetrieveFlt_Generic(asIScriptGeneric *gen)
 	double *ref = (double*)gen->GetArgAddress(0);
 	CScriptAny *self = (CScriptAny*)gen->GetObject();
 
-	*(bool*)gen->GetReturnPointer() = self->Retrieve(*ref);
+	*(bool*)gen->GetAddressOfReturnLocation() = self->Retrieve(*ref);
 }
 
 static void ScriptAny_AddRef_Generic(asIScriptGeneric *gen)
@@ -102,7 +102,7 @@ static void ScriptAny_Release_Generic(asIScriptGeneric *gen)
 static void ScriptAny_GetRefCount_Generic(asIScriptGeneric *gen)
 {
 	CScriptAny *self = (CScriptAny*)gen->GetObject();
-	*(int*)gen->GetReturnPointer() = self->GetRefCount();
+	*(int*)gen->GetAddressOfReturnLocation() = self->GetRefCount();
 }
 
 static void ScriptAny_SetFlag_Generic(asIScriptGeneric *gen)
@@ -114,7 +114,7 @@ static void ScriptAny_SetFlag_Generic(asIScriptGeneric *gen)
 static void ScriptAny_GetFlag_Generic(asIScriptGeneric *gen)
 {
 	CScriptAny *self = (CScriptAny*)gen->GetObject();
-	*(bool*)gen->GetReturnPointer() = self->GetFlag();
+	*(bool*)gen->GetAddressOfReturnLocation() = self->GetFlag();
 }
 
 static void ScriptAny_EnumReferences_Generic(asIScriptGeneric *gen)

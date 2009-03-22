@@ -118,7 +118,7 @@ A:hover
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.0 WIP - 2009/03/18</h2>
+<h2>Version 2.16.0 WIP - 2009/03/20</h2>
 
 <ul>
 <li>Bug fixes
@@ -152,13 +152,16 @@ A:hover
 <li>Added enumeration of registered functions, properties, enums, and typedefs to asIScriptEngine.
 <li>Added parameter to asIScriptFunction::GetDeclaration to include or not the object name in the returned string.
 <li>Removed all output length parameters for functions that returned strings, all strings are null terminated anyway.
+<li>Deprecated GetReturnPointer in asIScriptGeneric, replaced by GetAddressOfReturnLocation.
 </ul>
 <li>Add-ons
 <ul>
 <li>Added registration of std::string as a standard add-on, complementing the CScriptString
+<li>Added resize method to the string add-ons
 <li>Changed CScriptFile to be compatible with both std::string and CScriptString
 <li>Modified CScriptBuilder to permit enabling/disabling metadata processing through preprocessor define
 <li>Added autowrapper add-on that automatically generates wrappers for the generic calling convention for functions and class methods (Thanks George Yohng)
+<li>Added registration of the double counter parts to the math functions
 </ul>
 </ul>
 

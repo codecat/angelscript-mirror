@@ -546,7 +546,7 @@ extern "C"
 	AS_API int              asGeneric_SetReturnDouble(asIScriptGeneric *g, double val);
 	AS_API int              asGeneric_SetReturnAddress(asIScriptGeneric *g, void *addr);
 	AS_API int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj);
-	AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g);
+	AS_API void *           asGeneric_GetAddressOfReturnLocation(asIScriptGeneric *g);
 	AS_API int              asGeneric_GetReturnTypeId(asIScriptGeneric *g);
 
 	AS_API asIScriptEngine *asObject_GetEngine(asIScriptObject *s);

@@ -422,7 +422,7 @@ void ScriptObject_Assignment_Generic(asIScriptGeneric *gen)
 
 	*self = *other;
 
-	*(asCScriptObject**)gen->GetReturnPointer() = self;
+	*(asCScriptObject**)gen->GetAddressOfReturnLocation() = self;
 }
 
 asCScriptObject &ScriptObject_Assignment(asCScriptObject *other, asCScriptObject *self)

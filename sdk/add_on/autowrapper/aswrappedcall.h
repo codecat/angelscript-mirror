@@ -72,7 +72,7 @@ static void asWrapNative_p0(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)();
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ) );
 }
 
 template<typename R>
@@ -100,7 +100,7 @@ static void asWrapNative_p0_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)();
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ) );
 }
 
 template<typename C,typename R>
@@ -130,7 +130,7 @@ static void asWrapNative_p1(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d ) );
 }
 
 template<typename R,typename T1>
@@ -158,7 +158,7 @@ static void asWrapNative_p1_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d ) );
 }
 
 template<typename C,typename R,typename T1>
@@ -188,7 +188,7 @@ static void asWrapNative_p2(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1,T2);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d ) );
 }
 
 template<typename R,typename T1,typename T2>
@@ -216,7 +216,7 @@ static void asWrapNative_p2_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1,T2);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d ) );
 }
 
 template<typename C,typename R,typename T1,typename T2>
@@ -246,7 +246,7 @@ static void asWrapNative_p3(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1,T2,T3);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d ) );
 }
 
 template<typename R,typename T1,typename T2,typename T3>
@@ -274,7 +274,7 @@ static void asWrapNative_p3_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1,T2,T3);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d ) );
 }
 
 template<typename C,typename R,typename T1,typename T2,typename T3>
@@ -304,7 +304,7 @@ static void asWrapNative_p4(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1,T2,T3,T4);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d ) );
 }
 
 template<typename R,typename T1,typename T2,typename T3,typename T4>
@@ -332,7 +332,7 @@ static void asWrapNative_p4_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1,T2,T3,T4);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d ) );
 }
 
 template<typename C,typename R,typename T1,typename T2,typename T3,typename T4>
@@ -362,7 +362,7 @@ static void asWrapNative_p5(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1,T2,T3,T4,T5);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d ) );
 }
 
 template<typename R,typename T1,typename T2,typename T3,typename T4,typename T5>
@@ -390,7 +390,7 @@ static void asWrapNative_p5_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1,T2,T3,T4,T5);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d ) );
 }
 
 template<typename C,typename R,typename T1,typename T2,typename T3,typename T4,typename T5>
@@ -420,7 +420,7 @@ static void asWrapNative_p6(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1,T2,T3,T4,T5,T6);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d ) );
 }
 
 template<typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6>
@@ -448,7 +448,7 @@ static void asWrapNative_p6_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1,T2,T3,T4,T5,T6);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d ) );
 }
 
 template<typename C,typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6>
@@ -478,7 +478,7 @@ static void asWrapNative_p7(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1,T2,T3,T4,T5,T6,T7);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d ) );
 }
 
 template<typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7>
@@ -506,7 +506,7 @@ static void asWrapNative_p7_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1,T2,T3,T4,T5,T6,T7);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d ) );
 }
 
 template<typename C,typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7>
@@ -536,7 +536,7 @@ static void asWrapNative_p8(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1,T2,T3,T4,T5,T6,T7,T8);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d ) );
 }
 
 template<typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7,typename T8>
@@ -564,7 +564,7 @@ static void asWrapNative_p8_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1,T2,T3,T4,T5,T6,T7,T8);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d ) );
 }
 
 template<typename C,typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7,typename T8>
@@ -594,7 +594,7 @@ static void asWrapNative_p9(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1,T2,T3,T4,T5,T6,T7,T8,T9);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d ) );
 }
 
 template<typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7,typename T8,typename T9>
@@ -622,7 +622,7 @@ static void asWrapNative_p9_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1,T2,T3,T4,T5,T6,T7,T8,T9);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d ) );
 }
 
 template<typename C,typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7,typename T8,typename T9>
@@ -652,7 +652,7 @@ static void asWrapNative_p10(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (*FuncType)(T1,T2,T3,T4,T5,T6,T7,T8,T9,T10);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d, ((as_wrapNative_helper<T10> *)gen->GetAddressOfArg(9))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((FuncType)(func.func))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d, ((as_wrapNative_helper<T10> *)gen->GetAddressOfArg(9))->d ) );
 }
 
 template<typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7,typename T8,typename T9,typename T10>
@@ -680,7 +680,7 @@ static void asWrapNative_p10_this(asNativeFuncPtr func,asIScriptGeneric *gen)
 {
     typedef R (C::*FuncType)(T1,T2,T3,T4,T5,T6,T7,T8,T9,T10);
 
-     new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d, ((as_wrapNative_helper<T10> *)gen->GetAddressOfArg(9))->d ) );
+     new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ((*((C*)gen->GetObject())).*((FuncType)(func.method)))( ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d, ((as_wrapNative_helper<T10> *)gen->GetAddressOfArg(9))->d ) );
 }
 
 template<typename C,typename R,typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7,typename T8,typename T9,typename T10>

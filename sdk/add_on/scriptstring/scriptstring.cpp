@@ -446,13 +446,13 @@ static CScriptString *StringCopyFactory(const CScriptString &other)
 
 static void StringDefaultFactory_Generic(asIScriptGeneric *gen)
 {
-	*(CScriptString**)gen->GetReturnPointer() = StringDefaultFactory();
+	*(CScriptString**)gen->GetAddressOfReturnLocation() = StringDefaultFactory();
 }
 
 static void StringCopyFactory_Generic(asIScriptGeneric *gen)
 {
 	CScriptString *other = (CScriptString *)gen->GetArgObject(0);
-	*(CScriptString**)gen->GetReturnPointer() = StringCopyFactory(*other);
+	*(CScriptString**)gen->GetAddressOfReturnLocation() = StringCopyFactory(*other);
 }
 
 static void StringEqual_Generic(asIScriptGeneric *gen)
@@ -460,7 +460,7 @@ static void StringEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a == *b;
-    *(bool*)gen->GetReturnPointer() = r;
+    *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
 static void StringNotEqual_Generic(asIScriptGeneric *gen)
@@ -468,7 +468,7 @@ static void StringNotEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a != *b;
-    *(bool*)gen->GetReturnPointer() = r;
+    *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
 static void StringLesserOrEqual_Generic(asIScriptGeneric *gen)
@@ -476,7 +476,7 @@ static void StringLesserOrEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a <= *b;
-    *(bool*)gen->GetReturnPointer() = r;
+    *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
 static void StringGreaterOrEqual_Generic(asIScriptGeneric *gen)
@@ -484,7 +484,7 @@ static void StringGreaterOrEqual_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a >= *b;
-    *(bool*)gen->GetReturnPointer() = r;
+    *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
 static void StringLesser_Generic(asIScriptGeneric *gen)
@@ -492,7 +492,7 @@ static void StringLesser_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a < *b;
-    *(bool*)gen->GetReturnPointer() = r;
+    *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
 static void StringGreater_Generic(asIScriptGeneric *gen)
@@ -500,7 +500,7 @@ static void StringGreater_Generic(asIScriptGeneric *gen)
 	string *a = (string*)gen->GetArgAddress(0);
 	string *b = (string*)gen->GetArgAddress(1);
 	bool r = *a > *b;
-    *(bool*)gen->GetReturnPointer() = r;
+    *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
 static void StringLength_Generic(asIScriptGeneric *gen)
@@ -508,6 +508,13 @@ static void StringLength_Generic(asIScriptGeneric *gen)
 	string *s = (string*)gen->GetObject();
 	size_t l = s->size();
 	gen->SetReturnDWord((asUINT)l);
+}
+
+static void StringResize_Generic(asIScriptGeneric *gen)
+{
+	string *s = (string*)gen->GetObject();
+	size_t v = *(size_t*)gen->GetAddressOfArg(0);
+	s->resize(v);
 }
 
 // This is where we register the string type
@@ -548,7 +555,16 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_INDEX, "const uint8 &f(uint) const", asFUNCTION(StringCharAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	// Register the object methods
-	r = engine->RegisterObjectMethod("string", "uint length() const", asMETHOD(string,size), asCALL_THISCALL); assert( r >= 0 );
+	if( sizeof(size_t) == 4 )
+	{
+		r = engine->RegisterObjectMethod("string", "uint length() const", asMETHOD(string,size), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "void resize(uint)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); assert( r >= 0 );
+	}
+	else
+	{
+		r = engine->RegisterObjectMethod("string", "uint64 length() const", asMETHOD(string,size), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "void resize(uint64)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); assert( r >= 0 );
+	}
 
     // TODO: Add factory  string(const string &in str, int repeatCount)
 
@@ -615,7 +631,16 @@ void RegisterScriptString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_INDEX, "const uint8 &f(uint) const", asFUNCTION(StringCharAt_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	// Register the object methods
-	r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(StringLength_Generic), asCALL_GENERIC); assert( r >= 0 );
+	if( sizeof(size_t) == 4 )
+	{
+		r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(StringLength_Generic), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "void resize(uint)", asFUNCTION(StringResize_Generic), asCALL_GENERIC); assert( r >= 0 );
+	}
+	else
+	{
+		r = engine->RegisterObjectMethod("string", "uint64 length() const", asFUNCTION(StringLength_Generic), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "void resize(uint64)", asFUNCTION(StringResize_Generic), asCALL_GENERIC); assert( r >= 0 );
+	}
 
 	// Automatic conversion from values
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(double)", asFUNCTION(AssignDoubleToString_Generic), asCALL_GENERIC); assert( r >= 0 );

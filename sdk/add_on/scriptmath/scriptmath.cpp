@@ -5,18 +5,32 @@
 
 BEGIN_AS_NAMESPACE
 
+// Determine whether the float version should be registered, or the double version
+#ifndef AS_USE_FLOAT
+#define AS_USE_FLOAT 1
+#endif
+
 // The modf function doesn't seem very intuitive, so I'm writing this 
 // function that simply returns the fractional part of the float value
-float fraction(float v)
+#if AS_USE_FLOAT
+float fractionf(float v)
 {
 	float intPart;
 	return modff(v, &intPart);
 }
+#else
+double fraction(double v)
+{
+	double intPart;
+	return modf(v, &intPart);
+}
+#endif
 
 void RegisterScriptMath_Native(asIScriptEngine *engine)
 {
 	int r;
 
+#if AS_USE_FLOAT
 	// Trigonometric functions
 	r = engine->RegisterGlobalFunction("float cos(float)", asFUNCTION(cosf), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float sin(float)", asFUNCTION(sinf), asCALL_CDECL); assert( r >= 0 );
@@ -43,17 +57,38 @@ void RegisterScriptMath_Native(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("float ceil(float)", asFUNCTION(ceilf), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float abs(float)", asFUNCTION(fabsf), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float floor(float)", asFUNCTION(floorf), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("float fraction(float)", asFUNCTION(fraction), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("float fraction(float)", asFUNCTIONPR(fractionf, (float), float), asCALL_CDECL); assert( r >= 0 );
 
 	// Don't register modf because AngelScript already supports the % operator
+#else
+	// double versions of the same
+	r = engine->RegisterGlobalFunction("double cos(double)", asFUNCTION(cos), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double sin(double)", asFUNCTION(sin), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double tan(double)", asFUNCTION(tan), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double acos(double)", asFUNCTION(acos), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double asin(double)", asFUNCTION(asin), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double atan(double)", asFUNCTION(atan), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double cosh(double)", asFUNCTION(cosh), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double sinh(double)", asFUNCTION(sinh), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double tanh(double)", asFUNCTION(tanh), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double log(double)", asFUNCTION(log), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double log10(double)", asFUNCTION(log10), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double pow(double, double)", asFUNCTION(pow), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double sqrt(double)", asFUNCTION(sqrt), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double ceil(double)", asFUNCTION(ceil), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double abs(double)", asFUNCTION(fabs), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double floor(double)", asFUNCTION(floor), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double fraction(double)", asFUNCTIONPR(fraction, (double), double), asCALL_CDECL); assert( r >= 0 );
+#endif
 }
 
+#if AS_USE_FLOAT
 // This macro creates simple generic wrappers for functions of type 'float func(float)'
 #define GENERICff(x) \
 void x##_generic(asIScriptGeneric *gen) \
 { \
 	float f = *(float*)gen->GetAddressOfArg(0); \
-	*(float*)gen->GetReturnPointer() = x(f); \
+	*(float*)gen->GetAddressOfReturnLocation() = x(f); \
 }
 
 GENERICff(cosf)
@@ -71,19 +106,52 @@ GENERICff(sqrtf)
 GENERICff(ceilf)
 GENERICff(fabsf)
 GENERICff(floorf)
-GENERICff(fraction)
+GENERICff(fractionf)
 
 void powf_generic(asIScriptGeneric *gen)
 {
 	float f1 = *(float*)gen->GetAddressOfArg(0);
 	float f2 = *(float*)gen->GetAddressOfArg(1);
-	*(float*)gen->GetReturnPointer() = powf(f1, f2);
+	*(float*)gen->GetAddressOfReturnLocation() = powf(f1, f2);
+}
+#else
+// This macro creates simple generic wrappers for functions of type 'double func(double)'
+#define GENERICdd(x) \
+void x##_generic(asIScriptGeneric *gen) \
+{ \
+	double f = *(double*)gen->GetAddressOfArg(0); \
+	*(double*)gen->GetAddressOfReturnLocation() = x(f); \
 }
 
+GENERICdd(cos)
+GENERICdd(sin)
+GENERICdd(tan)
+GENERICdd(acos)
+GENERICdd(asin)
+GENERICdd(atan)
+GENERICdd(cosh)
+GENERICdd(sinh)
+GENERICdd(tanh)
+GENERICdd(log)
+GENERICdd(log10)
+GENERICdd(sqrt)
+GENERICdd(ceil)
+GENERICdd(fabs)
+GENERICdd(floor)
+GENERICdd(fraction)
+
+void pow_generic(asIScriptGeneric *gen)
+{
+	double f1 = *(double*)gen->GetAddressOfArg(0);
+	double f2 = *(double*)gen->GetAddressOfArg(1);
+	*(double*)gen->GetAddressOfReturnLocation() = pow(f1, f2);
+}
+#endif
 void RegisterScriptMath_Generic(asIScriptEngine *engine)
 {
 	int r;
 
+#if AS_USE_FLOAT
 	// Trigonometric functions
 	r = engine->RegisterGlobalFunction("float cos(float)", asFUNCTION(cosf_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float sin(float)", asFUNCTION(sinf_generic), asCALL_GENERIC); assert( r >= 0 );
@@ -110,9 +178,29 @@ void RegisterScriptMath_Generic(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("float ceil(float)", asFUNCTION(ceilf_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float abs(float)", asFUNCTION(fabsf_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float floor(float)", asFUNCTION(floorf_generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("float fraction(float)", asFUNCTION(fraction_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("float fraction(float)", asFUNCTION(fractionf_generic), asCALL_GENERIC); assert( r >= 0 );
 
 	// Don't register modf because AngelScript already supports the % operator
+#else
+	// double versions of the same
+	r = engine->RegisterGlobalFunction("double cos(double)", asFUNCTION(cos_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double sin(double)", asFUNCTION(sin_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double tan(double)", asFUNCTION(tan_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double acos(double)", asFUNCTION(acos_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double asin(double)", asFUNCTION(asin_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double atan(double)", asFUNCTION(atan_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double cosh(double)", asFUNCTION(cosh_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double sinh(double)", asFUNCTION(sinh_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double tanh(double)", asFUNCTION(tanh_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double log(double)", asFUNCTION(log_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double log10(double)", asFUNCTION(log10_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double pow(double, double)", asFUNCTION(pow_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double sqrt(double)", asFUNCTION(sqrt_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double ceil(double)", asFUNCTION(ceil_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double abs(double)", asFUNCTION(fabs_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double floor(double)", asFUNCTION(floor_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double fraction(double)", asFUNCTION(fraction_generic), asCALL_GENERIC); assert( r >= 0 );
+#endif
 }
 
 void RegisterScriptMath(asIScriptEngine *engine)

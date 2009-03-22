@@ -20,7 +20,7 @@ void StringSubString_Generic(asIScriptGeneric *gen)
     sub->buffer = str->buffer.substr(start,count);
 
     // Return the substring
-    *(CScriptString**)gen->GetReturnPointer() = sub;
+    *(CScriptString**)gen->GetAddressOfReturnLocation() = sub;
 }
 
 
@@ -42,7 +42,7 @@ void StringFindFirst_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find(sub->buffer, start);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 // TODO: Angelscript should permit default parameters
 void StringFindFirst0_Generic(asIScriptGeneric *gen)
@@ -55,7 +55,7 @@ void StringFindFirst0_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find(sub->buffer);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 
 
@@ -77,7 +77,7 @@ void StringFindLast_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.rfind(sub->buffer, start);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 void StringFindLast0_Generic(asIScriptGeneric *gen)
 {
@@ -89,7 +89,7 @@ void StringFindLast0_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.rfind(sub->buffer);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 
 
@@ -111,7 +111,7 @@ void StringFindFirstOf_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find_first_of(chars->buffer, start);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 void StringFindFirstOf0_Generic(asIScriptGeneric *gen)
 {
@@ -123,7 +123,7 @@ void StringFindFirstOf0_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find_first_of(chars->buffer);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 
 
@@ -144,7 +144,7 @@ void StringFindFirstNotOf_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find_first_not_of(chars->buffer, start);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 void StringFindFirstNotOf0_Generic(asIScriptGeneric *gen)
 {
@@ -156,7 +156,7 @@ void StringFindFirstNotOf0_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find_first_not_of(chars->buffer);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 
 
@@ -178,7 +178,7 @@ void StringFindLastOf_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find_last_of(chars->buffer, start);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 void StringFindLastOf0_Generic(asIScriptGeneric *gen)
 {
@@ -190,7 +190,7 @@ void StringFindLastOf0_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find_last_of(chars->buffer);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 
 
@@ -212,7 +212,7 @@ void StringFindLastNotOf_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find_last_not_of(chars->buffer, start);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 void StringFindLastNotOf0_Generic(asIScriptGeneric *gen)
 {
@@ -224,7 +224,7 @@ void StringFindLastNotOf0_Generic(asIScriptGeneric *gen)
     int loc = (int)str->buffer.find_last_not_of(chars->buffer);
 
     // Return the result
-    *(int*)gen->GetReturnPointer() = loc;
+    *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
 
 
@@ -279,7 +279,7 @@ void StringSplit_Generic(asIScriptGeneric *gen)
     *(CScriptString**)array->GetElementPointer(count) = part;
 
     // Return the array by handle
-    *(asIScriptArray**)gen->GetReturnPointer() = array;
+    *(asIScriptArray**)gen->GetAddressOfReturnLocation() = array;
 }
 
 
@@ -318,7 +318,7 @@ void StringJoin_Generic(asIScriptGeneric *gen)
     str->buffer += part->buffer;
 
     // Return the string
-    *(CScriptString**)gen->GetReturnPointer() = str;
+    *(CScriptString**)gen->GetAddressOfReturnLocation() = str;
 }
 
 

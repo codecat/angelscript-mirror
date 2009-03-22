@@ -110,7 +110,7 @@ void nullPtr(asIScriptGeneric *gen)
 
 	assert(gen->GetArgCount() == 1);
 
-	*(asIScriptObject **)gen->GetReturnPointer() = *intf;
+	*(asIScriptObject **)gen->GetAddressOfReturnLocation() = *intf;
 
 	assert(gen->GetReturnTypeId() == gen->GetEngine()->GetTypeIdByDecl("intf@"));
 }
@@ -123,13 +123,13 @@ bool Test()
 
 	int r;
 
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(GenericString_Construct), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(GenericString_Destruct), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(string &in)", asFUNCTION(GenericString_Assignment), asCALL_GENERIC); assert( r >= 0 );
-    r = engine->RegisterStringFactory("string", asFUNCTION(GenericString_Factory), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterStringFactory("string", asFUNCTION(GenericString_Factory), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterGlobalFunction("void test(double)", asFUNCTION(TestDouble), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void test(string)", asFUNCTION(TestString), asCALL_GENERIC); assert( r >= 0 );
@@ -138,7 +138,7 @@ bool Test()
 
 	r = engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("obj", "string mthd1(int, double)", asFUNCTION(GenMethod1), asCALL_GENERIC); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ASSIGNMENT, "obj &f(obj &in)", asFUNCTION(GenAssign), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ASSIGNMENT, "obj &f(obj &in)", asFUNCTION(GenAssign), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterGlobalProperty("obj o", &obj);
 
@@ -211,7 +211,6 @@ int &TestWrapRetIntByRef() {
 asDECLARE_WRAPPER(TestRetIntByRef_Generic, TestWrapRetIntByRef);
 
 
-// TODO: Doesn't work because asIScriptGeneric::GetReturnPointer doesn't allocate the space. Fix this.
 std::string TestWrapRetStringByVal() {
 	return "test";
 }
@@ -287,14 +286,12 @@ bool Test2()
 		fail = true;
 	}
 
-/*
 	r = engine->RegisterGlobalFunction("string TestRetStringByVal()", asFUNCTION(TestRetStringByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->ExecuteString(0, "assert(TestRetStringByVal() == 'test')");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
-*/
 
 	r = engine->RegisterGlobalFunction("string &TestRetStringByRef()", asFUNCTION(TestRetStringByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->ExecuteString(0, "assert(TestRetStringByRef() == 'test')");
@@ -302,7 +299,6 @@ bool Test2()
 	{
 		fail = true;
 	}
-
 
 	engine->Release();
 

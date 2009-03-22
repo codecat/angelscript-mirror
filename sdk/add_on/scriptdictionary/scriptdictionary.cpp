@@ -273,7 +273,7 @@ void CScriptDictionary::FreeValue(valueStruct &value)
 
 void ScriptDictionaryFactory_Generic(asIScriptGeneric *gen)
 {
-    *(CScriptDictionary**)gen->GetReturnPointer() = new CScriptDictionary(gen->GetEngine());
+    *(CScriptDictionary**)gen->GetAddressOfReturnLocation() = new CScriptDictionary(gen->GetEngine());
 }
 
 void ScriptDictionaryAddRef_Generic(asIScriptGeneric *gen)
@@ -319,7 +319,7 @@ void ScriptDictionaryGet_Generic(asIScriptGeneric *gen)
     string *key = *(string**)gen->GetAddressOfArg(0);
     void *ref = *(void**)gen->GetAddressOfArg(1);
     int typeId = gen->GetArgTypeId(1);
-    *(bool*)gen->GetReturnPointer() = dict->Get(*key, ref, typeId);
+    *(bool*)gen->GetAddressOfReturnLocation() = dict->Get(*key, ref, typeId);
 }
 
 void ScriptDictionaryGetInt_Generic(asIScriptGeneric *gen)
@@ -327,7 +327,7 @@ void ScriptDictionaryGetInt_Generic(asIScriptGeneric *gen)
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
     string *key = *(string**)gen->GetAddressOfArg(0);
     void *ref = *(void**)gen->GetAddressOfArg(1);
-    *(bool*)gen->GetReturnPointer() = dict->Get(*key, *(asINT64*)ref);
+    *(bool*)gen->GetAddressOfReturnLocation() = dict->Get(*key, *(asINT64*)ref);
 }
 
 void ScriptDictionaryGetFlt_Generic(asIScriptGeneric *gen)
@@ -335,7 +335,7 @@ void ScriptDictionaryGetFlt_Generic(asIScriptGeneric *gen)
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
     string *key = *(string**)gen->GetAddressOfArg(0);
     void *ref = *(void**)gen->GetAddressOfArg(1);
-    *(bool*)gen->GetReturnPointer() = dict->Get(*key, *(double*)ref);
+    *(bool*)gen->GetAddressOfReturnLocation() = dict->Get(*key, *(double*)ref);
 }
 
 void ScriptDictionaryExists_Generic(asIScriptGeneric *gen)
@@ -343,7 +343,7 @@ void ScriptDictionaryExists_Generic(asIScriptGeneric *gen)
     CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
     string *key = *(string**)gen->GetAddressOfArg(0);
     bool ret = dict->Exists(*key);
-    *(bool*)gen->GetReturnPointer() = ret;
+    *(bool*)gen->GetAddressOfReturnLocation() = ret;
 }
 
 void ScriptDictionaryDelete_Generic(asIScriptGeneric *gen)
@@ -362,7 +362,7 @@ void ScriptDictionaryDeleteAll_Generic(asIScriptGeneric *gen)
 static void ScriptDictionaryGetRefCount_Generic(asIScriptGeneric *gen)
 {
 	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
-	*(int*)gen->GetReturnPointer() = self->GetRefCount();
+	*(int*)gen->GetAddressOfReturnLocation() = self->GetRefCount();
 }
 
 static void ScriptDictionarySetGCFlag_Generic(asIScriptGeneric *gen)
@@ -374,7 +374,7 @@ static void ScriptDictionarySetGCFlag_Generic(asIScriptGeneric *gen)
 static void ScriptDictionaryGetGCFlag_Generic(asIScriptGeneric *gen)
 {
 	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
-	*(bool*)gen->GetReturnPointer() = self->GetGCFlag();
+	*(bool*)gen->GetAddressOfReturnLocation() = self->GetGCFlag();
 }
 
 static void ScriptDictionaryEnumReferences_Generic(asIScriptGeneric *gen)

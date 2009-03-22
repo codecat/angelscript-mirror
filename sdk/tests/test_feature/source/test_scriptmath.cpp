@@ -26,19 +26,21 @@ const char *script =
 "   log10(0);                       \n"
 "   pow(1,1);                       \n"
 "   sqrt(1);                        \n"
-"   ceil(1.1);                      \n"
-"   floor(1.1);                     \n"
+"   ceil(1.1f);                      \n"
+"   floor(1.1f);                     \n"
 "}                                  \n";
 
 
 bool Test()
 {
 	bool fail = false;
+	COutStream out;
 	int r;
 
 	//----------------------
 	// Make sure the native interface works (where supported)
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptMath(engine);
 
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);

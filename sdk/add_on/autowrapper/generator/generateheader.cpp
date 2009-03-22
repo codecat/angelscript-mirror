@@ -131,7 +131,7 @@ int main()
 
             printf(");\n\n");
 
-            printf("     %s%s(",(d&1)?"new(gen->GetReturnPointer()) as_wrapNative_helper<R>( ":"",
+            printf("     %s%s(",(d&1)?"new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ":"",
 
                    (d&2)?"((*((C*)gen->GetObject())).*((FuncType)(func.method)))":"((FuncType)(func.func))");
 

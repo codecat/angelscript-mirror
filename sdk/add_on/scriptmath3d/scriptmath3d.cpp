@@ -167,7 +167,7 @@ static void Vector3Equal_Generic(asIScriptGeneric *gen)
 	Vector3 *a = (Vector3*)gen->GetArgAddress(0);
 	Vector3 *b = (Vector3*)gen->GetArgAddress(1);
 	bool r = *a == *b;
-    *(bool*)gen->GetReturnPointer() = r;
+    *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
 static void Vector3NotEqual_Generic(asIScriptGeneric *gen)
@@ -175,7 +175,7 @@ static void Vector3NotEqual_Generic(asIScriptGeneric *gen)
 	Vector3 *a = (Vector3*)gen->GetArgAddress(0);
 	Vector3 *b = (Vector3*)gen->GetArgAddress(1);
 	bool r = *a != *b;
-    *(bool*)gen->GetReturnPointer() = r;
+    *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
 static void Vector3Length_Generic(asIScriptGeneric *gen)

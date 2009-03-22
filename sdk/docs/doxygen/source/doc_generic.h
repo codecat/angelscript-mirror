@@ -23,6 +23,10 @@ void MyGenericFunction(asIScriptGeneric *gen)
 Functions using the generic calling convention can be registered anywhere the script engine is expecting 
 global functions or class methods (except where explicitly written otherwise). 
 
+Writing the functions for the generic calling convention requires extracting each argument from the AngelScript
+stack, and then manually giving the return value back. For that reason it may be a desired to use the 
+\ref doc_addon_autowrap "automatic wrapper functions" rather than writing the functions yourself.
+
 \section doc_generic_1 Extracting function arguments
 
 To extract functions arguments from the generic interface you should call one of the GetArg methods that

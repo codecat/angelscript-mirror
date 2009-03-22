@@ -22,7 +22,7 @@ void Type_construct1(asIScriptGeneric *gen)
 void Type_castInt(asIScriptGeneric *gen)
 {
 	int *a = (int*)gen->GetObject();
-	*(int*)gen->GetReturnPointer() = *a;
+	*(int*)gen->GetAddressOfReturnLocation() = *a;
 }
 
 bool Type_equal(int &a, int &b)

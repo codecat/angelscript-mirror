@@ -83,7 +83,7 @@ public:
 	int     SetReturnDouble(double val);
 	int     SetReturnAddress(void *addr);
 	int     SetReturnObject(void *obj);
-	void   *GetReturnPointer();
+	void   *GetAddressOfReturnLocation();
 
 #ifdef AS_DEPRECATED
 	void   *GetArgPointer(asUINT arg);
@@ -95,6 +95,7 @@ public:
 	asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, void *currentObject, asDWORD *stackPointer);
 	virtual ~asCGeneric();
 
+	void *GetReturnPointer();
 
 	asCScriptEngine *engine;
 	asCScriptFunction *sysFunction;

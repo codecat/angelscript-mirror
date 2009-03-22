@@ -40,14 +40,14 @@ void ReturnByte(asIScriptGeneric *gen)
 	// Return a full dword, even though AngelScript should only use a byte
 #ifdef __BIG_ENDIAN__
 	if( b )
-		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | (int(b)<<24);
+		*(asDWORD*)gen->GetAddressOfReturnLocation() = 0x00000000 | (int(b)<<24);
 	else
-		*(asDWORD*)gen->GetReturnPointer() = 0x00FFFFFF | (int(b)<<24);
+		*(asDWORD*)gen->GetAddressOfReturnLocation() = 0x00FFFFFF | (int(b)<<24);
 #else
 	if( b )
-		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | b;
+		*(asDWORD*)gen->GetAddressOfReturnLocation() = 0x00000000 | b;
 	else
-		*(asDWORD*)gen->GetReturnPointer() = 0xFFFFFF00 | b;
+		*(asDWORD*)gen->GetAddressOfReturnLocation() = 0xFFFFFF00 | b;
 #endif
 }
 
@@ -58,14 +58,14 @@ void ReturnWord(asIScriptGeneric *gen)
 	// Return a full dword, even though AngelScript should only use a word
 #ifdef __BIG_ENDIAN__
 	if( w )
-		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | (int(w)<<16);
+		*(asDWORD*)gen->GetAddressOfReturnLocation() = 0x00000000 | (int(w)<<16);
 	else
-		*(asDWORD*)gen->GetReturnPointer() = 0X0000FFFF | (int(w)<<16);
+		*(asDWORD*)gen->GetAddressOfReturnLocation() = 0X0000FFFF | (int(w)<<16);
 #else
 	if( w )
-		*(asDWORD*)gen->GetReturnPointer() = 0x00000000 | w;
+		*(asDWORD*)gen->GetAddressOfReturnLocation() = 0x00000000 | w;
 	else
-		*(asDWORD*)gen->GetReturnPointer() = 0XFFFF0000 | w;
+		*(asDWORD*)gen->GetAddressOfReturnLocation() = 0XFFFF0000 | w;
 #endif
 }
 
