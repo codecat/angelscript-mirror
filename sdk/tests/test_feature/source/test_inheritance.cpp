@@ -59,9 +59,9 @@ bool Test()
 		"{                                                \n"
 		"  assert( cast<Derived>(a) is null );            \n"
 		"}                                                \n"
-		"class BaseGC { BaseGC @b; }                      \n"
 		// Must be possible to call the default constructor, even if not declared
 		"class DerivedGC : BaseGC { DerivedGC() { super(); } }  \n"
+		"class BaseGC { BaseGC @b; }                      \n"
 		"class DerivedS : Base                            \n"
 		"{                                                \n"
 		"  DerivedS(float)                                \n"

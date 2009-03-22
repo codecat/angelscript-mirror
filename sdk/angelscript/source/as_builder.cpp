@@ -1308,7 +1308,7 @@ void asCBuilder::CompileClasses()
 		// If the base class is found after the derived class, then move the derived class to the end of the list
 		for( asUINT m = n+1; m < classDeclarations.GetLength(); m++ )
 		{
-			sClassDeclaration *declBase = classDeclarations[n];
+			sClassDeclaration *declBase = classDeclarations[m];
 			if( base == declBase->objType )
 			{
 				classDeclarations.RemoveIndex(n);
