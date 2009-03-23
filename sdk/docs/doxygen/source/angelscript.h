@@ -471,6 +471,20 @@ enum asETypeIdFlags
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
 
+// Type modifiers
+//! \brief Type modifiers
+enum asETypeModifiers
+{
+	//! No modification
+	asTM_NONE     = 0,
+	//! Input reference
+	asTM_INREF    = 1,
+	//! Output reference
+	asTM_OUTREF   = 2,
+	//! In/out reference
+	asTM_INOUTREF = 3
+};
+
 // GetModule flags
 //! \brief Flags for GetModule.
 enum asEGMFlags
@@ -2844,9 +2858,10 @@ public:
 	virtual int              GetParamCount() const = 0;
     //! \brief Returns the type id of the specified parameter.
     //! \param[in] index The zero based parameter index.
+    //! \param[out] flags A combination of \ref asETypeModifiers.
     //! \return A negative value on error, or the type id of the specified parameter.
     //! \retval asINVALID_ARG The index is out of bounds.
-	virtual int              GetParamTypeId(int index) const = 0;
+	virtual int              GetParamTypeId(int index, asDWORD *flags = 0) const = 0;
     //! \brief Returns the type id of the return type.
     //! \return The type id of the return type.
 	virtual int              GetReturnTypeId() const = 0;

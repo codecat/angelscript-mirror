@@ -303,11 +303,11 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		// Get the parameter type
 		asCDataType type = builder->CreateDataTypeFromNode(node, script);
 
-		int inoutFlag = 0;
+		asETypeModifiers inoutFlag = asTM_NONE;
 		type = builder->ModifyDataTypeFromNode(type, node->next, script, &inoutFlag, 0);
 
 		// Is the data type allowed?
-		if( (type.IsReference() && inoutFlag != 3 && !type.CanBeInstanciated()) ||
+		if( (type.IsReference() && inoutFlag != asTM_INOUTREF && !type.CanBeInstanciated()) ||
 			(!type.IsReference() && !type.CanBeInstanciated()) )
 		{
 			asCString str;
@@ -1060,7 +1060,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			// After the function returns the temporary variable will
 			// be assigned to the expression, if it is a valid lvalue
 		}
-		else if( refType == 3 ) // &inout
+		else if( refType == asTM_INOUTREF )
 		{
 			// Only objects that support object handles 
 			// can be guaranteed to be safe. Local variables are
@@ -1218,12 +1218,12 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 		{
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() )
 			{
-				if( descr->inOutFlags[n] != 3 )
+				if( descr->inOutFlags[n] != asTM_INOUTREF )
 					bc->InstrWORD(BC_GETOBJREF, (asWORD)offset);
 				if( args[n]->type.dataType.IsObjectHandle() )
 					bc->InstrWORD(BC_ChkNullS, (asWORD)offset);
 			}
-			else if( descr->inOutFlags[n] != 3 )
+			else if( descr->inOutFlags[n] != asTM_INOUTREF )
 				bc->InstrWORD(BC_GETREF, (asWORD)offset);
 		}
 		else if( descr->parameterTypes[n].IsObject() )
@@ -5892,14 +5892,14 @@ void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args,
 	int n = (int)descr->parameterTypes.GetLength() - 1;
 	for( ; n >= 0; n-- )
 	{
-		if( (descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] & 2)) ||
+		if( (descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] & asTM_OUTREF)) ||
 		    (descr->parameterTypes[n].IsObject() && deferAll) )
 		{
-			asASSERT( !(descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] == 2)) || args[n]->origExpr );
+			asASSERT( !(descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] == asTM_OUTREF)) || args[n]->origExpr );
 
 			// For &inout, only store the argument if it is for a temporary variable
 			if( engine->ep.allowUnsafeReferences || 
-				descr->inOutFlags[n] != 3 || args[n]->type.isTemporary )
+				descr->inOutFlags[n] != asTM_INOUTREF || args[n]->type.isTemporary )
 			{
 				// Store the argument for later processing
 				asSDeferredParam outParam;
@@ -5928,12 +5928,12 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 	for( asUINT n = 0; n < ctx->deferredParams.GetLength(); n++ )
 	{
 		asSDeferredParam outParam = ctx->deferredParams[n];
-		if( outParam.argInOutFlags < 2 ) // &in, or not reference
+		if( outParam.argInOutFlags < asTM_OUTREF ) // &in, or not reference
 		{
 			// Just release the variable
 			ReleaseTemporaryVariable(outParam.argType, &ctx->bc);
 		}
-		else if( outParam.argInOutFlags == 2 ) // &out
+		else if( outParam.argInOutFlags == asTM_OUTREF ) 
 		{
 			asSExprContext *expr = outParam.origExpr;
 

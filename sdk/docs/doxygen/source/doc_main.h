@@ -56,9 +56,9 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_register_api
  - \subpage doc_compile_script
  - \subpage doc_call_script_func
+ - \subpage doc_use_script_class
  - \subpage doc_gc
 
-\todo Add page on instanciating a script class
 
 
  

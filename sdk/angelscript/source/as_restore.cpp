@@ -446,7 +446,7 @@ void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
 	for( i = 0; i < count; ++i )
 	{
 		READ_NUM(num);
-		func->inOutFlags.PushLast(num);
+		func->inOutFlags.PushLast(static_cast<asETypeModifiers>(num));
 	}
 
 	READ_NUM(func->funcType);

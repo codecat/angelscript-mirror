@@ -618,7 +618,7 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 	n = node->firstChild->next->next->next->firstChild;
 	while( n )
 	{
-		int inOutFlags;
+		asETypeModifiers inOutFlags;
 		asCDataType type = CreateDataTypeFromNode(n, &source);
 		type = ModifyDataTypeFromNode(type, n->next, &source, &inOutFlags, &autoHandle);
 		
@@ -1677,7 +1677,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 
 	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
 	asCArray<asCDataType> parameterTypes;
-	asCArray<int> inOutFlags;
+	asCArray<asETypeModifiers> inOutFlags;
 
 	// Add the script function
 	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false, objType);
@@ -1949,11 +1949,11 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	}
 
 	asCArray<asCDataType> parameterTypes(count);
-	asCArray<int> inOutFlags(count);
+	asCArray<asETypeModifiers> inOutFlags(count);
 	n = n->next->firstChild;
 	while( n )
 	{
-		int inOutFlag;
+		asETypeModifiers inOutFlag;
 		asCDataType type = CreateDataTypeFromNode(n, file);
 		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
 
@@ -2096,11 +2096,11 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	}
 
 	asCArray<asCDataType> parameterTypes(count);
-	asCArray<int> inOutFlags(count);
+	asCArray<asETypeModifiers> inOutFlags(count);
 	n = n->next->firstChild;
 	while( n )
 	{
-		int inOutFlag;
+		asETypeModifiers inOutFlag;
 		asCDataType type = CreateDataTypeFromNode(n, file);
 		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
 
@@ -2433,11 +2433,11 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	return dt;
 }
 
-asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, int *inOutFlags, bool *autoHandle)
+asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, asETypeModifiers *inOutFlags, bool *autoHandle)
 {
 	asCDataType dt = type;
 
-	if( inOutFlags ) *inOutFlags = 0;
+	if( inOutFlags ) *inOutFlags = asTM_NONE;
 
 	// Is the argument sent by reference?
 	asCScriptNode *n = node->firstChild;
@@ -2451,11 +2451,11 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 			if( inOutFlags )
 			{
 				if( n->tokenType == ttIn ) 
-					*inOutFlags = 1;
+					*inOutFlags = asTM_INREF;
 				else if( n->tokenType == ttOut )
-					*inOutFlags = 2;
+					*inOutFlags = asTM_OUTREF;
 				else if( n->tokenType == ttInOut )
-					*inOutFlags = 3;
+					*inOutFlags = asTM_INOUTREF;
 				else
 					asASSERT(false);
 			}
@@ -2465,11 +2465,11 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 		else
 		{
 			if( inOutFlags )
-				*inOutFlags = 3; // ttInOut
+				*inOutFlags = asTM_INOUTREF; // ttInOut
 		}
 
 		if( !engine->ep.allowUnsafeReferences &&
-			inOutFlags && *inOutFlags == 3 )
+			inOutFlags && *inOutFlags == asTM_INOUTREF )
 		{				
 			// Verify that the base type support &inout parameter types
 			if( !dt.IsObject() || dt.IsObjectHandle() || !dt.GetObjectType()->beh.addref || !dt.GetObjectType()->beh.release )

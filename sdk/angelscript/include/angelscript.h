@@ -308,6 +308,15 @@ enum asETypeIdFlags
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
 
+// Type modifiers
+enum asETypeModifiers
+{
+	asTM_NONE     = 0,
+	asTM_INREF    = 1,
+	asTM_OUTREF   = 2,
+	asTM_INOUTREF = 3
+};
+
 // GetModule flags
 enum asEGMFlags
 {
@@ -866,7 +875,7 @@ public:
 	virtual bool             IsInterfaceMethod() const = 0;
 
 	virtual int              GetParamCount() const = 0;
-	virtual int              GetParamTypeId(int index) const = 0;
+	virtual int              GetParamTypeId(int index, asDWORD *flags = 0) const = 0;
 	virtual int              GetReturnTypeId() const = 0;
 
 protected:

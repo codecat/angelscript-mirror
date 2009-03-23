@@ -165,9 +165,9 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 			str += parameterTypes[n].Format();
 			if( parameterTypes[n].IsReference() && inOutFlags.GetLength() > n )
 			{
-				if( inOutFlags[n] == 1 ) str += "in";
-				else if( inOutFlags[n] == 2 ) str += "out";
-				else if( inOutFlags[n] == 3 ) str += "inout";
+				if( inOutFlags[n] == asTM_INREF ) str += "in";
+				else if( inOutFlags[n] == asTM_OUTREF ) str += "out";
+				else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
 			}
 			str += ", ";
 		}
@@ -175,9 +175,9 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 		str += parameterTypes[n].Format();
 		if( parameterTypes[n].IsReference() && inOutFlags.GetLength() > n )
 		{
-			if( inOutFlags[n] == 1 ) str += "in";
-			else if( inOutFlags[n] == 2 ) str += "out";
-			else if( inOutFlags[n] == 3 ) str += "inout";
+			if( inOutFlags[n] == asTM_INREF ) str += "in";
+			else if( inOutFlags[n] == asTM_OUTREF ) str += "out";
+			else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
 		}
 	}
 
@@ -420,10 +420,13 @@ int asCScriptFunction::GetParamCount() const
 }
 
 // interface
-int asCScriptFunction::GetParamTypeId(int index) const
+int asCScriptFunction::GetParamTypeId(int index, asDWORD *flags) const
 {
 	if( index < 0 || (unsigned)index >= parameterTypes.GetLength() )
 		return asINVALID_ARG;
+
+	if( flags )
+		*flags = inOutFlags[index];
 
 	return engine->GetTypeIdFromDataType(parameterTypes[index]);
 }

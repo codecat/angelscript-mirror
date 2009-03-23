@@ -547,17 +547,15 @@ struct CParamValidator
 {
 	static int Validate(asIScriptFunction *descr, int arg)
 	{
-		int t1 = descr->GetParamTypeId(arg);
+		asDWORD flags;
+		int t1 = descr->GetParamTypeId(arg, &flags);
 		int t2 = descr->GetEngine()->GetTypeIdByDecl(CTypeInfo<A1>::GetTypeName());
 		if( t1 != t2 )
 			return -1;
 
 		// Verify if the type is properly declared as reference / non-reference
-		// TODO: Need a method in asIScriptFunction to get the reference modifier
-		//       0 = by value
-		//       1 = &in
-		//       2 = &out
-		//       3 = &inout
+		if( flags == asTM_NONE && CTypeInfo<A1>::IsReference() )
+			return -1;
 
 		return 0;
 	}
@@ -631,6 +629,8 @@ bool TestHelper()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString(engine);
+
+	// TODO: Add validation of return type
 
 	RegisterGlobalFunction(engine, "void func1(int)", func1, asCALL_CDECL);
 	RegisterGlobalFunction(engine, "void func2(string &in)", func2, asCALL_CDECL);

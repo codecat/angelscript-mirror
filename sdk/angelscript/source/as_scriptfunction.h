@@ -91,7 +91,7 @@ public:
 	bool                 IsInterfaceMethod() const;
 
 	int                  GetParamCount() const;
-	int                  GetParamTypeId(int index) const;
+	int                  GetParamTypeId(int index, asDWORD *flags = 0) const;
 	int                  GetReturnTypeId() const;
 
 public:
@@ -114,13 +114,13 @@ public:
 	asCModule                   *module;
 
 	// Function signature
-	asCString                    name;
-	asCDataType                  returnType;
-	asCArray<asCDataType>        parameterTypes;
-	asCArray<int>                inOutFlags;
-	bool                         isReadOnly;
-	asCObjectType               *objectType;
-	int                          signatureId;
+	asCString                        name;
+	asCDataType                      returnType;
+	asCArray<asCDataType>            parameterTypes;
+	asCArray<asETypeModifiers>       inOutFlags;
+	bool                             isReadOnly;
+	asCObjectType                   *objectType;
+	int                              signatureId;
 
 	int                          id;
 

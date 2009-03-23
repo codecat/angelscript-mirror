@@ -14,26 +14,33 @@ Normally a script function is executed in a few steps:
 <li>Retrieve the return value
 </ol>
 
-This is assuming a script context is already available. The code for this 
-might look something like this:
+The code for this might look something like this:
 
 \code
+// Get a script context instance. Usually you'll want to reuse a previously
+// created instance to avoid the overhead of allocating the instance with
+// each call.
+asIScriptContext *ctx = engine->CreateContext();
+
 // Obtain the function id from the module. This value should preferrably  
 // be cached if the same function is called multiple times.
 int funcId = engine->GetModule(module_name)->GetFunctionIdByDecl(function_declaration);
 
 // Prepare() must be called to allow the context to prepare the stack
-context->Prepare(funcId);
+ctx->Prepare(funcId);
 
 // Set the function arguments
-context->SetArgDWord(...);
+ctx->SetArgDWord(...);
 
-int r = context->Execute();
+int r = ctx->Execute();
 if( r == asEXECUTION_FINISHED )
 {
   // The return value is only valid if the execution finished successfully
-  asDWORD ret = context->GetReturnDWord();
+  asDWORD ret = ctx->GetReturnDWord();
 }
+
+// Release the context when you're done with it
+ctx->Release();
 \endcode
 
 If your application allow the execution to be suspended, either by using
@@ -146,7 +153,42 @@ reference counting add a reference to it. If this is not done the pointer obtain
 with GetReturnObject() will be invalidated as the context is released, or reused for 
 another script function call.
 
-\todo Show how to call an object method
-\todo Show how to obtain information on exceptions
+\section doc_call_script_4 Exception handling
+
+If the script performs an illegal action, e.g. calling a method on a null handle, then
+the script engine will throw a script exception. The virtual machine will then abort
+the execution and clean up the call stack to free the allocated memory. The 
+\ref asIScriptContext::Execute "Execute" method will finally return with the value
+\ref asEXECUTION_EXCEPTION.
+
+At this time it is possible to obtain information about the exception through the 
+\ref asIScriptContext's methods. Example:
+
+\code
+void PrintExceptionInfo(asIScriptContext *ctx)
+{
+  asIScriptEngine *engine = ctx->GetEngine();
+
+  // Determine the exception that occurred
+  printf("desc: %s\n", ctx->GetExceptionString());
+
+  // Determine the function where the exception occurred
+  int funcId = ctx->GetExceptionFunction();
+  const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
+  printf("func: %s\n", function->GetDeclaration());
+  printf("modl: %s\n", function->GetModuleName());
+  printf("sect: %s\n", function->GetScriptSectionName());
+  
+  // Determine the line number where the exception occurred
+  printf("line: %d\n", ctx->GetExceptionLineNumber());
+}
+\endcode
+
+If desired, it is also possible to \ref asIScriptContext::SetExceptionCallback "register a callback function" 
+that will be called before the call stack has been cleaned up. This will allow the application to examine
+the value of variables and parameters for more detailed information.
+
+\see \ref doc_debug for information on examining the callstack
+
 
 */
