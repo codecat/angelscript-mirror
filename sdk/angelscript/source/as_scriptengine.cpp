@@ -997,8 +997,6 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
 	func->objectType = dt.GetObjectType();
 
-	func->objectType->methods.PushLast((int)scriptFunctions.GetLength());
-
 	r = bld.ParseFunctionDeclaration(declaration, func, false);
 	if( r < 0 )
 	{
@@ -1017,6 +1015,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	func->id = GetNextScriptFunctionId();
 	func->funcType = asFUNC_INTERFACE;
 	SetScriptFunction(func);
+	func->objectType->methods.PushLast(func->id);
 
 	func->ComputeSignatureId();
 

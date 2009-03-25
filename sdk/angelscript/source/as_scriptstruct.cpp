@@ -90,7 +90,7 @@ static void ScriptObject_Release_Generic(asIScriptGeneric *gen)
 static void ScriptObject_GetRefCount_Generic(asIScriptGeneric *gen)
 {
 	asCScriptObject *self = (asCScriptObject*)gen->GetObject();
-	*(int*)gen->GetReturnPointer() = self->GetRefCount();
+	*(int*)gen->GetAddressOfReturnLocation() = self->GetRefCount();
 }
 
 static void ScriptObject_SetFlag_Generic(asIScriptGeneric *gen)
@@ -102,7 +102,7 @@ static void ScriptObject_SetFlag_Generic(asIScriptGeneric *gen)
 static void ScriptObject_GetFlag_Generic(asIScriptGeneric *gen)
 {
 	asCScriptObject *self = (asCScriptObject*)gen->GetObject();
-	*(bool*)gen->GetReturnPointer() = self->GetFlag();
+	*(bool*)gen->GetAddressOfReturnLocation() = self->GetFlag();
 }
 
 static void ScriptObject_EnumReferences_Generic(asIScriptGeneric *gen)

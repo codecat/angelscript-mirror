@@ -73,7 +73,15 @@ bool Test()
 		"      super();                                   \n"
 		"  }                                              \n"
 		"}                                                \n"
-		"interface Intf {}                                \n";
+		// Must handle inheritance where the classes have been declared out of order
+		"void func()                                      \n"
+		"{                                                \n"
+		"   Intf@ a = C();                                \n"
+		"}                                                \n"
+		"class C : B {}                                   \n"
+		"interface Intf {}                                \n"
+		"class B : Intf {}                                \n";
+
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script);
 	r = mod->Build();

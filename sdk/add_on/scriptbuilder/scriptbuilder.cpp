@@ -199,72 +199,71 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 	{
 		int len;
 		asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-		if( t == asTC_KEYWORD || t == asTC_UNKNOWN )
+		if( t == asTC_COMMENT || t == asTC_WHITESPACE )
 		{
+			pos += len;
+			continue;
+		}
+
 #if AS_PROCESS_METADATA == 1
-			// Is this the start of metadata?
-			if( modifiedScript[pos] == '[' )
-			{
-				// Get the metadata string
-				pos = ExtractMetadataString(pos, metadata);
+		// Is this the start of metadata?
+		if( modifiedScript[pos] == '[' )
+		{
+			// Get the metadata string
+			pos = ExtractMetadataString(pos, metadata);
 
-				// Determine what this metadata is for
-				int type;
-				pos = ExtractDeclaration(pos, declaration, type);
-				
-				// Store away the declaration in a map for lookup after the build has completed
-				if( type > 0 )
-				{
-					SMetadataDecl decl(metadata, declaration, type);
-					foundDeclarations.push_back(decl);
-				}
+			// Determine what this metadata is for
+			int type;
+			pos = ExtractDeclaration(pos, declaration, type);
+			
+			// Store away the declaration in a map for lookup after the build has completed
+			if( type > 0 )
+			{
+				SMetadataDecl decl(metadata, declaration, type);
+				foundDeclarations.push_back(decl);
 			}
-			else 
+		}
+		else 
 #endif
-			// Is this a preprocessor directive?
-			if( modifiedScript[pos] == '#' )
-			{
-				int start = pos++;
+		// Is this a preprocessor directive?
+		if( modifiedScript[pos] == '#' )
+		{
+			int start = pos++;
 
-				asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-				if( t == asTC_IDENTIFIER )
+			asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+			if( t == asTC_IDENTIFIER )
+			{
+				string token;
+				token.assign(&modifiedScript[pos], len);
+				if( token == "include" )
 				{
-					string token;
-					token.assign(&modifiedScript[pos], len);
-					if( token == "include" )
+					pos += len;
+					t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+					if( t == asTC_WHITESPACE )
 					{
 						pos += len;
 						t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-						if( t == asTC_WHITESPACE )
-						{
-							pos += len;
-							t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-						}
+					}
 
-						if( t == asTC_VALUE && len > 2 && modifiedScript[pos] == '"' )
-						{
-							// Get the include file
-							string includefile;
-							includefile.assign(&modifiedScript[pos+1], len-2);
-							pos += len;
+					if( t == asTC_VALUE && len > 2 && modifiedScript[pos] == '"' )
+					{
+						// Get the include file
+						string includefile;
+						includefile.assign(&modifiedScript[pos+1], len-2);
+						pos += len;
 
-							// Store it for later processing
-							includes.push_back(includefile);
+						// Store it for later processing
+						includes.push_back(includefile);
 
-							// Overwrite the include directive with space characters to avoid compiler error
-							OverwriteCode(start, pos-start);
-						}
+						// Overwrite the include directive with space characters to avoid compiler error
+						OverwriteCode(start, pos-start);
 					}
 				}
 			}
-			// Don't search for metadata/includes within statement blocks
-			else if( modifiedScript[pos] == '{' )
-				pos = SkipStatementBlock(pos);
-			else
-				pos += len;
 		}
-		else
-			pos += len;
+		// Don't search for metadata/includes within statement blocks or between tokens in statements
+		else 
+			pos = SkipStatement(pos);
 	}
 
 	// Build the actual script
@@ -321,27 +320,40 @@ int CScriptBuilder::Build()
 	return 0;
 }
 
-int CScriptBuilder::SkipStatementBlock(int pos)
+int CScriptBuilder::SkipStatement(int pos)
 {
-	// Skip opening brackets
-	pos += 1;
-
-	// Find the end of the statement block
-	int level = 1;
 	int len;
-	while( level > 0 && pos < (int)modifiedScript.size() )
-	{
-		asETokenClass t = engine->ParseToken(&modifiedScript[pos], 0, &len);
-		if( t == asTC_KEYWORD )
-		{
-			if( modifiedScript[pos] == '{' )
-				level++;
-			else if( modifiedScript[pos] == '}' )
-				level--;
-		}
 
+	// Skip until ; or { whichever comes first
+	while( modifiedScript[pos] != ';' && modifiedScript[pos] != '{' )
+	{
+		engine->ParseToken(&modifiedScript[pos], 0, &len);
 		pos += len;
 	}
+
+	// Skip entire statement block
+	if( modifiedScript[pos] == '{' )
+	{
+		pos += 1;
+
+		// Find the end of the statement block
+		int level = 1;
+		while( level > 0 && pos < (int)modifiedScript.size() )
+		{
+			asETokenClass t = engine->ParseToken(&modifiedScript[pos], 0, &len);
+			if( t == asTC_KEYWORD )
+			{
+				if( modifiedScript[pos] == '{' )
+					level++;
+				else if( modifiedScript[pos] == '}' )
+					level--;
+			}
+
+			pos += len;
+		}
+	}
+	else
+		pos += 1;
 
 	return pos;
 }

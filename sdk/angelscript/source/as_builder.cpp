@@ -1239,24 +1239,6 @@ void asCBuilder::CompileClasses()
 					{
 						decl->objType->derivedFrom = objType;
 						objType->AddRef();
-
-						// The derived class inherits all interfaces from the base class
-						for( unsigned int n = 0; n < objType->interfaces.GetLength(); n++ )
-						{
-							if( !decl->objType->Implements(objType->interfaces[n]) )
-							{
-								decl->objType->interfaces.PushLast(objType->interfaces[n]);
-							}
-							else
-							{
-								// Warn if derived class already implements the interface
-								int r, c;
-								file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-								asCString msg;
-								msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, objType->interfaces[n]->GetName());
-								WriteWarning(file->name.AddressOf(), msg.AddressOf(), r, c);
-							}
-						}
 					}
 				}
 			}
@@ -1329,9 +1311,27 @@ void asCBuilder::CompileClasses()
 		// Add all properties and methods from the base class
 		if( decl->objType->derivedFrom )
 		{
-			// TODO: Need to check for name conflict with new class methods
-
 			asCObjectType *baseType = decl->objType->derivedFrom;
+
+			// The derived class inherits all interfaces from the base class
+			for( unsigned int n = 0; n < baseType->interfaces.GetLength(); n++ )
+			{
+				if( !decl->objType->Implements(baseType->interfaces[n]) )
+				{
+					decl->objType->interfaces.PushLast(baseType->interfaces[n]);
+				}
+				else
+				{
+					// Warn if derived class already implements the interface
+					int r, c;
+					decl->script->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
+					asCString msg;
+					msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, baseType->interfaces[n]->GetName());
+					WriteWarning(decl->script->name.AddressOf(), msg.AddressOf(), r, c);
+				}
+			}
+
+			// TODO: Need to check for name conflict with new class methods
 
 			// Copy properties from base class to derived class
 			for( asUINT p = 0; p < baseType->properties.GetLength(); p++ )

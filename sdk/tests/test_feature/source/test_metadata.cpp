@@ -33,7 +33,10 @@ const char *script =
 " #endif \n"
 "#endif \n"
 // interface declarations can have meta data
-"[ myintf ] interface MyIntf {} \n";
+"[ myintf ] interface MyIntf {} \n"
+// arrays must still work
+"int[] array = {1, 2, 3}; \n"
+"int[] arrayfunc(int[] a) { a.resize(1); return a; } \n";
 
 using namespace std;
 

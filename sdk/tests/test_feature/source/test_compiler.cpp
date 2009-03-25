@@ -682,6 +682,9 @@ bool Test6()
 // http://www.gamedev.net/community/forums/topic.asp?topic_id=525467
 bool Test7()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		return false;
+
 	bool fail = false;
 
 	const char *script = 

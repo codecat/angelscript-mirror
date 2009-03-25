@@ -39,6 +39,10 @@ BEGIN_AS_NAMESPACE
 //       The application should respond by calling AddScriptFromFile or AddScriptFromMemory (or give an error if the include is invalid).
 //       The AddScriptFromFile/Memory should put the scripts on the queue to be built
 
+// TODO: Should process metadata for class/interface members as well
+
+
+
 // Helper class for loading and pre-processing script files to 
 // support include directives and metadata declarations
 class CScriptBuilder
@@ -75,7 +79,7 @@ protected:
 	int  ProcessScriptSection(const char *script, const char *sectionname);
 	int  LoadScriptSection(const char *filename);
 
-	int  SkipStatementBlock(int pos);
+	int  SkipStatement(int pos);
 
 	int  ExcludeCode(int start);
 	void OverwriteCode(int start, int len);

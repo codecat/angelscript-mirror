@@ -92,9 +92,11 @@ static void Release(asIScriptGeneric *gen)
 	if( *o == 0 ) delete o;
 }
 
+bool Test2();
+
 bool Test()
 {
-	bool fail = false;
+	bool fail = Test2();
 	int r;
 	CScriptAny *any = 0;
 
@@ -581,6 +583,58 @@ bool Test()
 	engine->Release();
 
 	// Success
+	return fail;
+}
+
+// This test was reported by Zeu5 on 2009-03-24
+// It used to crash on the second call to Build()
+bool Test2()
+{
+	bool fail = false;
+	int r;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->BeginConfigGroup("MyGroup");
+	engine->RegisterInterface("MyHostDefinedInterface");
+	engine->RegisterInterfaceMethod("MyHostDefinedInterface", "void doSomething()");
+	engine->EndConfigGroup();
+
+	const char *script = "class MyScriptedClass : MyHostDefinedInterface\n"
+						 "{\n"
+						 "   void doSomething() { /* nothing */ }\n"
+						 "};\n";
+
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+	}
+
+	engine->DiscardModule(0);
+	r = engine->RemoveConfigGroup("MyGroup");
+	if( r < 0 )
+	{
+		fail = true;
+	}
+
+	// Now do everything again
+	engine->BeginConfigGroup("MyGroup");
+	engine->RegisterInterface("MyHostDefinedInterface");
+	engine->RegisterInterfaceMethod("MyHostDefinedInterface", "void doSomething()");
+	engine->EndConfigGroup();
+
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+	}
+
+	engine->Release();
+
 	return fail;
 }
 
