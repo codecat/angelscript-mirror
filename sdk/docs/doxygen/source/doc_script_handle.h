@@ -12,6 +12,8 @@ data types, bool, int, float, etc, can have object handles. Object types
 registered by the application may or may not allow object handles, depending 
 on how they have been registered.
 
+\section doc_script_handle_1 General usage
+
 An object handle is declared by appending the @ symbol to the data type.
 
 <pre>
@@ -64,6 +66,8 @@ represents an empty handle. This is done using the identity operator, <code>is</
   if( obj_a !is null ) {}
 </pre>
 
+\section doc_script_handle_2 Object life times
+
 An object's life time is normally for the duration of the scope the
 variable was declared in. But if a handle outside the scope is set to
 reference the object, the object will live on until all object handles are
@@ -87,6 +91,41 @@ released.
   \@obj_h = null;
 </pre>
 
-\todo Show how handles can be cast to other types with ref cast
+\section doc_script_handle_3 Object relations and polymorphing
+
+Object handles can be used to write common code for related types, by means of 
+inheritance or interfaces. This allows a handle to an interface to store references
+to all object types that implement that interface, similarly a handle to a base
+class can store references to all object types that derive from that class.
+
+<pre>
+  interface I {}
+  class A {}
+  class B {}
+
+  // Store reference in handle to interface 
+  I \@i1 = A();  
+  I \@i2 = B();  
+  
+  void function(I \@i)
+  { 
+    // Functions implemented by the interface can be  
+    // called directly on the interface handle. But if
+    // special treatment is need for a specific type, a 
+    // cast can be used to get a handle to the true type.
+    A \@a = cast<A>(i);
+    if( a !is null )
+    {
+      // Access A's members directly
+      ...
+    }
+    else
+    { 
+      // The object referenced by i is not of type A
+      ...
+    }
+  }
+</pre>
+
 
 */
