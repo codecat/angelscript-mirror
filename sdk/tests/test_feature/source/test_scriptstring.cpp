@@ -17,7 +17,7 @@ static void PrintString(asIScriptGeneric *gen)
 	printOutput = str->buffer;
 }
 
-// This function shows how to receive an 
+// This function shows how to receive an
 // object handle from the script engine
 static void SetString(asIScriptGeneric *gen)
 {
@@ -31,7 +31,7 @@ static void SetString(asIScriptGeneric *gen)
 	}
 }
 
-// This function shows how to receive a reference 
+// This function shows how to receive a reference
 // to an object handle from the script engine
 static void SetString2(asIScriptGeneric *gen)
 {
@@ -56,7 +56,7 @@ static const char *script2 =
 "  return \"hello \" + str;                \n"
 "}                                         \n";
 
-static const char *script3 = 
+static const char *script3 =
 "string str = 1;                \n"
 "const string str2 = \"test\";  \n"
 "void test()                    \n"
@@ -64,7 +64,7 @@ static const char *script3 =
 "   string s = str2;            \n"
 "}                              \n";
 
-static const char *script4 = 
+static const char *script4 =
 "void test()                    \n"
 "{                              \n"
 "   string s = \"\"\"           \n"
@@ -83,7 +83,7 @@ static const char *script5 =
 "   test(\"this is a test\");    \n"
 "}                               \n";
 
-static const char *script6 = 
+static const char *script6 =
 "void Main()                     \n"
 "{                               \n"
 "   test(\"this is a test\");    \n"
@@ -137,7 +137,7 @@ void TestFunc(asIScriptGeneric *gen)
 {
 	int arg0              = *(int*)gen->GetAddressOfArg(0);
 	CScriptString *arg1 = *(CScriptString**)gen->GetAddressOfArg(1);
-	
+
 	assert( arg0 == 0 );
 	assert( arg1->buffer == "test" );
 }
@@ -213,7 +213,7 @@ bool Test()
 	printOutput = "";
 	engine->ExecuteString(0, "string a; a = 1; print(a);");
 	if( printOutput != "1" ) fail = true;
-	
+
 	printOutput = "";
 	engine->ExecuteString(0, "string a; a += 1; print(a);");
 	if( printOutput != "1" ) fail = true;
@@ -244,12 +244,12 @@ bool Test()
 	if( printOutput != "Handle to a string" ) fail = true;
 
 	// Implicit conversion to handle
-	printOutput = ""; 
+	printOutput = "";
 	engine->ExecuteString(0, "string a; set(a); print(a);");
 	if( printOutput != "Handle to a string" ) fail = true;
 
 	// Passing a reference to a handle to the function
-	printOutput = ""; 
+	printOutput = "";
 	engine->ExecuteString(0, "string a; set2(@a); print(a);");
 	if( printOutput != "Handle to a string" ) fail = true;
 
@@ -278,7 +278,7 @@ bool Test()
 	CScriptString *a = new CScriptString("a");
 	engine->RegisterGlobalProperty("string a", a);
 	r = engine->ExecuteString(0, "print(a == 'a' ? 't' : 'f')");
-	if( r != asEXECUTION_FINISHED ) 
+	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
@@ -328,7 +328,7 @@ bool Test()
 
 	engine->RegisterObjectType("Http", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_GENERIC);
-	
+
 	r = engine->ExecuteString(0, "Http h; string str; h.get('stringtest', str); assert(str == 'output');");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
@@ -349,7 +349,7 @@ bool Test()
 	RegisterScriptString(engine);
 
 	engine->RegisterGlobalFunction("void TestFunc(int, string&)", asFUNCTION(TestFunc), asCALL_GENERIC);
-	
+
 	// CHKREF was placed incorrectly
 	r = engine->ExecuteString(0, "TestFunc(0, 'test');");
 	if( r != asEXECUTION_FINISHED )
@@ -420,7 +420,7 @@ bool Test()
 		mod->Build();
 
 		CScriptString *str = (CScriptString*)mod->GetAddressOfGlobalVar(0);
-		
+		UNUSED_VAR(str);
 
 		r = engine->ExecuteString(0, "Update()");
 		if( r != asEXECUTION_FINISHED )
@@ -464,7 +464,7 @@ bool Test2()
 	RegisterScriptString(engine);
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
-	const char *string =   
+	const char *string =
 		"class Jerome  \n"
 		"{  \n"
 		"  string a;  \n"

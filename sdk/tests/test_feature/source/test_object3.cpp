@@ -38,54 +38,63 @@ struct cFloat
 float cFloat::operator = (float f)
 {
 	float old = m_Float;
+	UNUSED_VAR(old);
 	m_Float = f;
 	return m_Float;
 }
 float cFloat::operator += (cFloat v )
 {
 	float old = m_Float;
+	UNUSED_VAR(old);
 	m_Float += v;
 	return m_Float;
 }
 float cFloat::operator += (float v )
 {
 	float old = m_Float;
+	UNUSED_VAR(old);
 	m_Float += v;
 	return m_Float;
 }
 float cFloat::operator -= (cFloat v )
 {
 	float old = m_Float;
+	UNUSED_VAR(old);
 	m_Float -= v;
 	return m_Float;
 }
 float cFloat::operator -= (float v )
 {
 	float old = m_Float;
+	UNUSED_VAR(old);
 	m_Float -= v;
 	return m_Float;
 }
 float cFloat::operator /= (cFloat v )
 {
 	float old = m_Float;
+	UNUSED_VAR(old);
 	m_Float /= v;
 	return m_Float;
 }
 float cFloat::operator /= (float v )
 {
 	float old = m_Float;
+	UNUSED_VAR(old);
 	m_Float /= v;
 	return m_Float;
 }
 float cFloat::operator *= (cFloat v )
 {
 	float old = m_Float;
+	UNUSED_VAR(old);
 	m_Float *= v;
 	return m_Float;
 }
 float cFloat::operator *= (float v )
 {
 	float old = m_Float;
+	UNUSED_VAR(old);
 	m_Float *= v;
 	return m_Float;
 }

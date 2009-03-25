@@ -48,6 +48,7 @@ enum TEST_ENUM
 void func(asIScriptGeneric *g)
 {
 	TEST_ENUM e = (TEST_ENUM)g->GetArgDWord(0);
+	UNUSED_VAR(e);
 }
 
 std::string buffer;
@@ -92,7 +93,7 @@ static bool TestEnum()
 
 	// Test using the registered enum values
 	r = engine->ExecuteString(0, "output(ENUM1); output(ENUM2)");
-	if( r != asEXECUTION_FINISHED ) 
+	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( buffer != "1\n10\n" )
 		fail = true;
@@ -104,11 +105,11 @@ static bool TestEnum()
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	r = mod->AddScriptSection(NULL, script, strlen(script), 0);
 	r = mod->Build();
-	if( r < 0 ) 
+	if( r < 0 )
 		fail = true;
 
 	r = engine->ExecuteString(NULL, "Test1()");
-	if( r != asEXECUTION_FINISHED ) 
+	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n1205\n0\n1\n" )
 	{
@@ -188,7 +189,7 @@ static bool TestEnum()
 	}
 	r = engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	// constant number can be explicitly cast to enum type 
+	// constant number can be explicitly cast to enum type
 	r = engine->ExecuteString(0, "TEST_ENUM val = TEST_ENUM(1)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
@@ -222,9 +223,9 @@ static bool TestEnum()
 	if( buffer != "20\n" )
 		fail = true;
 
-	// circular reference between enum and global variable are 
+	// circular reference between enum and global variable are
 	// allowed if they can be resolved
-	const char *script3 = 
+	const char *script3 =
 	"enum TEST_EN                \n"
 	"{                           \n"
 	"  EN1,                      \n"
@@ -243,9 +244,9 @@ static bool TestEnum()
 		fail = true;
 	if( buffer != "10\n11\n" )
 		fail = true;
-	
+
 	// functions can be overloaded for parameters with enum type
-	const char *script4 = 
+	const char *script4 =
 	"void func(TEST_ENUM) { output(1); } \n"
 	"void func(int) { output(2); } \n";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -281,7 +282,7 @@ static bool TestEnum()
 		fail = true;
 
 	// Enums are not object types
-	int eid; 
+	int eid;
 	const char *ename = mod->GetEnumByIndex(0, &eid);
 	if( eid < 0 || ename == 0 )
 		fail = true;

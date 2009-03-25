@@ -22,6 +22,7 @@ static const char *script1 =
 void print_generic(asIScriptGeneric *gen)
 {
 	int a = *(int*)gen->GetAddressOfArg(0);
+	UNUSED_VAR(a);
 //	printf("%d\n", a);
 }
 
@@ -33,7 +34,7 @@ bool Test()
 	asIScriptContext *ctx;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	
+
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString(engine);

@@ -98,7 +98,6 @@ bool Test()
 {
 	bool fail = Test2();
 	int r;
-	CScriptAny *any = 0;
 
 	//------------
 	// Test global function
@@ -258,7 +257,8 @@ bool Test()
 
 	// TODO: The application needs a way to tell the engine that the type is in use so that it won't be removed
 
-/*	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+/*	CScriptAny *any = 0;
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptAny(engine);
 
 	engine->BeginConfigGroup("group1");

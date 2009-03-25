@@ -21,7 +21,7 @@ static const char *script1 =
 "}                                     \n"
 "void SetAttrib(string str) {}         \n";
 /*
-static const char *script2 = 
+static const char *script2 =
 "void Test()                     \n"
 "{                               \n"
 "  int a = 0;                    \n"
@@ -57,6 +57,7 @@ static void formatUI(asIScriptGeneric *gen)
 static void print(asIScriptGeneric *gen)
 {
 	CScriptString *str = (CScriptString*)gen->GetArgObject(0);
+	UNUSED_VAR(str);
 //	printf((str + "\n").c_str());
 }
 
@@ -76,10 +77,10 @@ bool TestCondition()
 	engine->RegisterGlobalFunction("string@ format(uint)", asFUNCTION(formatUI), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
 
-	COutStream out;	
+	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "print(a == \"a\" ? \"t\" : \"f\")");
-	if( r < 0 ) 
+	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: ExecuteString() failed\n", TESTNAME);

@@ -49,13 +49,14 @@ void GenAssign(asIScriptGeneric *gen)
 //	assert(gen->GetObject() == &obj);
 
 	int *obj2 = (int*)gen->GetArgObject(0);
+	UNUSED_VAR(obj2);
 
 //	assert(obj2 == &obj);
 
 	gen->SetReturnObject(&obj);
 }
 
-void TestDouble(asIScriptGeneric *gen) 
+void TestDouble(asIScriptGeneric *gen)
 {
 	double d = gen->GetArgDouble(0);
 
@@ -96,6 +97,7 @@ void GenericString_Assignment(asIScriptGeneric *gen)
 void GenericString_Factory(asIScriptGeneric *gen)
 {
 	asUINT length = gen->GetArgDWord(0);
+	UNUSED_VAR(length);
 	const char *s = (const char *)gen->GetArgAddress(1);
 
 	string str(s);
@@ -174,7 +176,7 @@ void TestWrapNoArg() {}
 asDECLARE_WRAPPER(TestNoArg_Generic, TestWrapNoArg);
 
 
-void TestWrapStringByVal(std::string val) { 
+void TestWrapStringByVal(std::string val) {
 	assert(val == "test");
 }
 asDECLARE_WRAPPER(TestStringByVal_Generic, TestWrapStringByVal);
@@ -243,7 +245,7 @@ bool Test2()
 	{
 		fail = true;
 	}
-	
+
 	r = engine->RegisterGlobalFunction("void TestStringByVal(string val)", asFUNCTION(TestStringByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->ExecuteString(0, "TestStringByVal('test')");
 	if( r != asEXECUTION_FINISHED )

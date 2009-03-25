@@ -61,6 +61,7 @@ static const char *script2 =
 void print_gen(asIScriptGeneric *gen)
 {
 	float val = *(float*)gen->GetAddressOfArg(0);
+	UNUSED_VAR(val);
 }
 
 
@@ -74,7 +75,7 @@ bool Test()
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script, strlen(script));
  	int r = mod->Build();
-	if( r < 0 ) fail = true; 
+	if( r < 0 ) fail = true;
 
 
 	engine->RegisterGlobalFunction("void print(float)", asFUNCTION(print_gen), asCALL_GENERIC);
