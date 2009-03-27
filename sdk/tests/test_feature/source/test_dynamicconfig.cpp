@@ -587,7 +587,7 @@ bool Test()
 }
 
 // This test was reported by Zeu5 on 2009-03-24
-// It used to crash on the second call to Build()
+// It used to crash on the second call to Build(), and also on ExecuteString()
 bool Test2()
 {
 	bool fail = false;
@@ -602,12 +602,22 @@ bool Test2()
 	const char *script = "class MyScriptedClass : MyHostDefinedInterface\n"
 						 "{\n"
 						 "   void doSomething() { /* nothing */ }\n"
-						 "};\n";
+						 "} \n"
+						 "void Test()  \n"
+						 "{ \n"
+						 "  MyScriptedClass @b = MyScriptedClass(); \n"
+						 "} \n";
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r < 0 )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "Test()");
+	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
@@ -629,6 +639,12 @@ bool Test2()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r < 0 )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "Test()");
+	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}

@@ -134,32 +134,36 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 	// Remove behaviours and members of object types
 	for( n = 0; n < objTypes.GetLength(); n++ )
 	{
+		asUINT m;
 		asCObjectType *obj = objTypes[n];
 
-		asUINT m;
-		for( m = 0; m < obj->beh.factories.GetLength(); m++ )
+		// Don't remove behaviours for interface types as they are built-in
+		if( !(obj->flags & asOBJ_SCRIPT_OBJECT) )
 		{
-			engine->DeleteScriptFunction(obj->beh.factories[m]);
-		}
+			for( m = 0; m < obj->beh.factories.GetLength(); m++ )
+			{
+				engine->DeleteScriptFunction(obj->beh.factories[m]);
+			}
 
-		for( m = 0; m < obj->beh.constructors.GetLength(); m++ )
-		{
-			engine->DeleteScriptFunction(obj->beh.constructors[m]);
-		}
+			for( m = 0; m < obj->beh.constructors.GetLength(); m++ )
+			{
+				engine->DeleteScriptFunction(obj->beh.constructors[m]);
+			}
 
-		for( m = 1; m < obj->beh.operators.GetLength(); m += 2 )
-		{
-			engine->DeleteScriptFunction(obj->beh.operators[m]);
-		}
+			for( m = 1; m < obj->beh.operators.GetLength(); m += 2 )
+			{
+				engine->DeleteScriptFunction(obj->beh.operators[m]);
+			}
 
-		engine->DeleteScriptFunction(obj->beh.addref);
-		engine->DeleteScriptFunction(obj->beh.release);
-		engine->DeleteScriptFunction(obj->beh.addref);
-		engine->DeleteScriptFunction(obj->beh.gcGetRefCount);
-		engine->DeleteScriptFunction(obj->beh.gcSetFlag);
-		engine->DeleteScriptFunction(obj->beh.gcGetFlag);
-		engine->DeleteScriptFunction(obj->beh.gcEnumReferences);
-		engine->DeleteScriptFunction(obj->beh.gcReleaseAllReferences);
+			engine->DeleteScriptFunction(obj->beh.addref);
+			engine->DeleteScriptFunction(obj->beh.release);
+			engine->DeleteScriptFunction(obj->beh.addref);
+			engine->DeleteScriptFunction(obj->beh.gcGetRefCount);
+			engine->DeleteScriptFunction(obj->beh.gcSetFlag);
+			engine->DeleteScriptFunction(obj->beh.gcGetFlag);
+			engine->DeleteScriptFunction(obj->beh.gcEnumReferences);
+			engine->DeleteScriptFunction(obj->beh.gcReleaseAllReferences);
+		}
 
 		for( m = 0; m < obj->methods.GetLength(); m++ )
 		{
