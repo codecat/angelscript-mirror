@@ -399,6 +399,29 @@ bool Test()
 		fail = true;
 	}
 
+	// Test 21
+	// Don't crash on undefined variable
+	bout.buffer = "";
+	const char *script21 =
+		"bool MyCFunction() {return true;} \n"
+		"void main() \n"
+		"{ \n"
+		"	if (true and MyCFunction( SomethingUndefined )) \n"
+		"	{ \n"
+		"	} \n"
+		"} \n";
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script21", script21, strlen(script21));
+	r = mod->Build();
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "script21 (2, 1) : Info    : Compiling void main()\n"
+					   "script21 (4, 28) : Error   : 'SomethingUndefined' is not declared\n"
+					   "script21 (4, 11) : Error   : No conversion from '<unrecognized token>' to 'bool' available.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success

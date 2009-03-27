@@ -8399,6 +8399,8 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), "bool");
 		Error(str.AddressOf(), node);
+		// Force the conversion to allow compilation to proceed
+		lctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
 	}
 
 	if( !rctx->type.dataType.IsBooleanType() )
@@ -8406,6 +8408,8 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), "bool");
 		Error(str.AddressOf(), node);
+		// Force the conversion to allow compilation to proceed
+		rctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
 	}
 
 	bool isConstant = lctx->type.isConstant && rctx->type.isConstant;
