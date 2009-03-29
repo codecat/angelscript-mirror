@@ -173,69 +173,109 @@ bool Test()
 #include "../../../add_on/autowrapper/aswrappedcall.h"
 
 void TestWrapNoArg() {}
-asDECLARE_WRAPPER(TestNoArg_Generic, TestWrapNoArg);
+asDECLARE_FUNCTION_WRAPPER(TestNoArg_Generic, TestWrapNoArg);
 
 
 void TestWrapStringByVal(std::string val) {
 	assert(val == "test");
 }
-asDECLARE_WRAPPER(TestStringByVal_Generic, TestWrapStringByVal);
+asDECLARE_FUNCTION_WRAPPER(TestStringByVal_Generic, TestWrapStringByVal);
 
 
 void TestWrapStringByRef(std::string &ref) {
 	assert(ref == "test");
 }
-asDECLARE_WRAPPER(TestStringByRef_Generic, TestWrapStringByRef);
+asDECLARE_FUNCTION_WRAPPER(TestStringByRef_Generic, TestWrapStringByRef);
 
 
 void TestWrapIntByVal(int val) {
 	assert(val == 42);
 }
-asDECLARE_WRAPPER(TestIntByVal_Generic, TestWrapIntByVal);
+asDECLARE_FUNCTION_WRAPPER(TestIntByVal_Generic, TestWrapIntByVal);
 
 
 void TestWrapIntByRef(int &ref) {
 	assert(ref == 42);
 }
-asDECLARE_WRAPPER(TestIntByRef_Generic, TestWrapIntByRef);
+asDECLARE_FUNCTION_WRAPPER(TestIntByRef_Generic, TestWrapIntByRef);
 
 
 int TestWrapRetIntByVal() {
 	return 42;
 }
-asDECLARE_WRAPPER(TestRetIntByVal_Generic, TestWrapRetIntByVal);
+asDECLARE_FUNCTION_WRAPPER(TestRetIntByVal_Generic, TestWrapRetIntByVal);
 
 
 int &TestWrapRetIntByRef() {
 	static int val = 42;
 	return val;
 }
-asDECLARE_WRAPPER(TestRetIntByRef_Generic, TestWrapRetIntByRef);
+asDECLARE_FUNCTION_WRAPPER(TestRetIntByRef_Generic, TestWrapRetIntByRef);
 
 
 std::string TestWrapRetStringByVal() {
 	return "test";
 }
-asDECLARE_WRAPPER(TestRetStringByVal_Generic, TestWrapRetStringByVal);
+asDECLARE_FUNCTION_WRAPPER(TestRetStringByVal_Generic, TestWrapRetStringByVal);
 
 
 std::string &TestWrapRetStringByRef() {
 	static std::string val = "test";
 	return val;
 }
-asDECLARE_WRAPPER(TestRetStringByRef_Generic, TestWrapRetStringByRef);
+asDECLARE_FUNCTION_WRAPPER(TestRetStringByRef_Generic, TestWrapRetStringByRef);
 
+void TestWrapOverload(int) {}
+asDECLARE_FUNCTION_WRAPPERPR(TestWrapOverload_Generic, TestWrapOverload, (int), void);
 
-// TODO: Test class methods
-// TODO: Test virtual class methods
-// TODO: Test virtual class methods for classes with multiple inheritance
+void TestWrapOverload(float) {}
+asDECLARE_FUNCTION_WRAPPERPR(TestWrapOverload2_Generic, TestWrapOverload, (float), void);
+
+class A
+{
+public:
+	A() {id = 0;}
+	virtual void a() const {assert(id == 2);}
+	int id;
+};
+
+class B
+{
+public:
+	B() {}
+	virtual void b() {}
+};
+
+class C : public A, B
+{
+public:
+	C() {id = 2;}
+	virtual void c(int) {assert(id == 2);}
+	virtual void c(float) const {assert(id == 2);}
+};
+
+asDECLARE_METHOD_WRAPPER(A_a_generic, A, a);
+asDECLARE_METHOD_WRAPPER(B_b_generic, B, b);
+asDECLARE_METHOD_WRAPPERPR(C_c_generic, C, c, (int), void);
+asDECLARE_METHOD_WRAPPERPR(C_c2_generic, C, c, (float) const, void);
+
+void Construct_C(C *mem)
+{
+	new(mem) C();
+}
+// TODO: The wrapper doesn't work for the constructor behaviour, as the 
+//       generic interface passes the memory pointer as the object pointer, 
+//       but the wrapper tries to access it as a parameter
+//asDECLARE_FUNCTION_WRAPPER(Construct_C_Generic, Construct_C);
 
 bool Test2()
 {
 	bool fail = false;
+	COutStream out;
 
 	int r;
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	RegisterStdString(engine);
 
@@ -297,6 +337,19 @@ bool Test2()
 
 	r = engine->RegisterGlobalFunction("string &TestRetStringByRef()", asFUNCTION(TestRetStringByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->ExecuteString(0, "assert(TestRetStringByRef() == 'test')");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->RegisterObjectType("C", sizeof(C), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("C", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct_C), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("C", "void a() const", asFUNCTION(A_a_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("C", "void b()", asFUNCTION(B_b_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("C", "void c(int)", asFUNCTION(C_c_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("C", "void c(float) const", asFUNCTION(C_c2_generic), asCALL_GENERIC); assert( r >= 0 );
+
+	r = engine->ExecuteString(0, "C c; c.a(); c.b(); c.c(1); c.c(1.1f);");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

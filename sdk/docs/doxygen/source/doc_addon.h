@@ -706,15 +706,17 @@ automatically generate wrapper functions using the \ref doc_generic "generic cal
 a simple call to a preprocessor macro. This is useful for those platforms where the native calling 
 conventions are not yet supported.
 
-The macro is defined as
+The macros are defined as
 
 \code
-#define asDECLARE_WRAPPER(wrapper_name,func)
+#define asDECLARE_FUNCTION_WRAPPER(wrapper_name,func)
+#define asDECLARE_FUNCTION_WRAPPERPR(wrapper_name,func,params,rettype)
+#define asDECLARE_METHOD_WRAPPER(wrapper_name,cl,func)
+#define asDECLARE_METHOD_WRAPPERPR(wrapper_name,cl,func,params,rettype)
 \endcode
 
 where wrapper_name is the name of the function that you want to generate, and func is a function pointer 
-to the function you want to wrap. The macro works for both global functions and class methods without 
-any problem.
+to the function you want to wrap, cl is the class name, params is the parameter list, and rettype is the return type. 
 
 Unfortunately the template functions needed to perform this generation are quite complex and older
 compilers may not be able to handle them. One such example is Microsoft Visual C++ 6, though luckily 
@@ -729,7 +731,7 @@ it has no need for them as AngelScript already supports native calling conventio
 void DoSomething(std::string param1, int param2);
 
 // Generate the wrapper for the function
-asDECLARE_WRAPPER(DoSomething_Generic, DoSomething);
+asDECLARE_FUNCTION_WRAPPER(DoSomething_Generic, DoSomething);
 
 // Registering the wrapper with AngelScript
 void RegisterWrapper(asIScriptEngine *engine)

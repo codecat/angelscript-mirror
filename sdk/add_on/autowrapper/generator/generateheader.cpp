@@ -17,14 +17,16 @@ int main()
            "#define ASWRAPPEDCALL_H\n\n");
 
 	// Add some instructions on how to use this 
-	printf("// Generate the wrappers by calling the macro asDECLARE_WRAPPER in global scope. \n");
+	printf("// Generate the wrappers by calling the macros in global scope. \n");
 	printf("// Then register the wrapper function with the script engine using the asCALL_GENERIC \n");
 	printf("// calling convention. The wrapper can handle both global functions and class methods.\n");
 	printf("//\n");
 	printf("// Example:\n");
 	printf("//\n");
-	printf("// asDECLARE_WRAPPER(MyGenericWrapper, MyRealFunction);\n");
-	printf("// asDECLARE_WRAPPER(MyGenericClassWrapper, MyClass::Method);\n");
+	printf("// asDECLARE_FUNCTION_WRAPPER(MyGenericWrapper, MyRealFunction);\n");
+	printf("// asDECLARE_FUNCTION_WRAPPERPR(MyGenericOverloadedWrapper, MyOverloadedFunction, (int), void);\n");
+	printf("// asDECLARE_METHOD_WRAPPER(MyGenericMethodWrapper, MyClass, Method);\n");
+	printf("// asDECLARE_METHOD_WRAPPERPR(MyGenericOverloadedMethodWrapper, MyClass, Method, (int) const, void);\n");
 	printf("//\n");
     printf("// This file was generated to accept functions with a maximum of %d parameters.\n\n", MAXPARAM);
 
@@ -32,30 +34,29 @@ int main()
 	printf("#include <new> // placement new\n");
     printf("#include <angelscript.h>\n\n");
 
-    printf("union asNativeFuncPtr { void (*func)(); void (asNativeFuncPtr::*method)(); };\n\n");
-
 	// This is the macro that should be used to implement the wrappers
-    printf("#define asDECLARE_WRAPPER(wrapper_name,func) \\\n"
+    printf("#define asDECLARE_FUNCTION_WRAPPER(wrapper_name,func) \\\n"
            "    static void wrapper_name(asIScriptGeneric *gen)\\\n"
            "    { \\\n"
            "        asCallWrappedFunc(&func,gen);\\\n"
-           "    }\n\n"
-           );
+           "    }\n\n" );
+    printf("#define asDECLARE_FUNCTION_WRAPPERPR(wrapper_name,func,params,rettype) \\\n"
+           "    static void wrapper_name(asIScriptGeneric *gen)\\\n"
+           "    { \\\n"
+		   "        asCallWrappedFunc((rettype (*)params)(&func),gen);\\\n"
+           "    }\n\n" );
+    printf("#define asDECLARE_METHOD_WRAPPER(wrapper_name,cl,func) \\\n"
+           "    static void wrapper_name(asIScriptGeneric *gen)\\\n"
+           "    { \\\n"
+		   "        asCallWrappedFunc(&cl::func,gen);\\\n"
+           "    }\n\n" );
+    printf("#define asDECLARE_METHOD_WRAPPERPR(wrapper_name,cl,func,params,rettype) \\\n"
+           "    static void wrapper_name(asIScriptGeneric *gen)\\\n"
+           "    { \\\n"
+		   "        asCallWrappedFunc((rettype (cl::*)params)(&cl::func),gen);\\\n"
+           "    }\n\n" );
 
-    printf("typedef void (*asNativeCallFunc)(asNativeFuncPtr,asIScriptGeneric *gen);\n\n");
-
-    printf("// Cast a function pointer\n"
-           "template<typename F>\n"
-           "inline asNativeFuncPtr as_funcptr_cast(F x)\n"
-           "{\n"
-           "    asNativeFuncPtr ptr;\n"
-           "    ptr.method=0;\n"
-           "    *((F*)&ptr)=x;\n"
-           "    return ptr;\n"
-           "}\n\n");
-
-    printf("// A helper class to accept reference parameters\n");
-
+	printf("// A helper class to accept reference parameters\n");
     printf("template<typename X>\n"
            "class as_wrapNative_helper\n"
            "{\n"
@@ -64,22 +65,13 @@ int main()
            "    as_wrapNative_helper(X d_) : d(d_) {}\n"
            "};\n\n");
 
-    printf("// Workaround to keep GCC happy\n"
-           "template<typename F>\n"
-           "asNativeCallFunc as_wrapNative_cast(F f)\n"
-           "{\n"
-           "    asNativeCallFunc d;\n"
-           "    *((F*)&d) = f;\n"
-           "    return d;\n"
-           "}\n\n");
-
 	// Iterate over the number of parameters 
     for(int t = 0; t <= MAXPARAM; t++)
     {
 		printf("// %d parameter(s)\n\n", t);
 
 		// Iterate over the different function forms
-        for(int d = 0; d < 4; d++)
+        for(int d = 0; d < 6; d++)
         {
 			int k;
 
@@ -88,12 +80,16 @@ int main()
             {"template<",                      // global function with no return type
              "template<typename R",            // global function with return type
              "template<typename C",            // class method with no return type
-             "template<typename C,typename R"  // class method with return type
+             "template<typename C,typename R", // class method with return type
+             "template<typename C",            // const class method with no return type
+             "template<typename C,typename R"  // const class method with return type
             };
 
             static const char *start2[]=
             {"<",
              "<R",
+             "<C",
+             "<C,R",
              "<C",
              "<C,R"
             };
@@ -102,8 +98,19 @@ int main()
             {"_void",
              "",
              "_void_this",
-             "_this"
+             "_this",
+             "_void_this_const",
+             "_this_const"
             };
+
+			static const char *constness[] =
+			{"",
+			 "",
+			 "",
+			 "",
+			 " const",
+			 " const"
+			};
 
 			//----------
 			// Generate the function that extracts the parameters from 
@@ -120,25 +127,21 @@ int main()
                 printf(">\n");
             }           
 
-            printf("static void asWrapNative_p%d%s(asNativeFuncPtr func,asIScriptGeneric *%s)\n",
-                   t,signature[d],((t>0)||(d>0))?"gen":"");
-
-            printf("{\n"
-                   "    typedef %s (%s*FuncType)(" ,(d&1)?"R":"void", (d&2)?"C::":"");
-
+            printf("static void asWrapNative_p%d%s(",t,signature[d]);
+			printf("%s (%s*func)(" ,(d&1)?"R":"void", (d>1)?"C::":"");
             for(k=0;k<t;k++)
                 printf("%sT%d",k?",":"",k+1);
+            printf(")%s", constness[d]);
+			printf(",asIScriptGeneric *%s)\n",((t>0)||(d>0))?"gen":"");
+            printf("{\n");
+            printf("    %s%s(",(d&1)?"new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ":"",
 
-            printf(");\n\n");
-
-            printf("     %s%s(",(d&1)?"new(gen->GetAddressOfReturnLocation()) as_wrapNative_helper<R>( ":"",
-
-                   (d&2)?"((*((C*)gen->GetObject())).*((FuncType)(func.method)))":"((FuncType)(func.func))");
+                   (d>1)?"((*((C*)gen->GetObject())).*func)":"func");
 
             for( k = 0; k < t; k++ )
                 printf("%s ((as_wrapNative_helper<T%d> *)gen->GetAddressOfArg(%d))->d",k?",":"",k+1,k);
 
-            printf(" ) %s;\n"
+            printf(" )%s;\n"
                    "}\n\n",(d&1)?")":"");
 
 			//----------
@@ -156,14 +159,14 @@ int main()
                 printf(">\n");
             }
 
-            printf("inline void asCallWrappedFunc(%s (%s*func)(", (d&1)?"R":"void", (d&2)?"C::":"");
+            printf("inline void asCallWrappedFunc(%s (%s*func)(", (d&1)?"R":"void", (d>1)?"C::":"");
 
             for( k =0; k < t; k++ )
                 printf("%sT%d",k?",":"",k+1);
 
-            printf("),asIScriptGeneric *gen)\n"
+            printf(")%s,asIScriptGeneric *gen)\n"
                    "{\n"
-                   "    asWrapNative_p%d%s",t,signature[d]);
+                   "    asWrapNative_p%d%s",constness[d],t,signature[d]);
 
             if( (t>0) || (d>0) )
             {
@@ -174,7 +177,7 @@ int main()
 
                 printf(">");
             }
-            printf("(as_funcptr_cast(func),gen);\n"
+            printf("(func,gen);\n"
                    "}\n\n");
         }
 

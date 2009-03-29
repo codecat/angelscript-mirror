@@ -233,6 +233,8 @@ a parameter or return value. There are a few different flags for this:
 <tr><td>asOBJ_APP_FLOAT             &nbsp; </td><td>The C++ type is a float or double</td></tr>
 </table>
 
+\todo The use of asOBJ_APP_CLASS and related flags is not clear to newcomers. It must be explained better.
+
 
 \code
 // Register a primitive type, that doesn't need any special management of the content
