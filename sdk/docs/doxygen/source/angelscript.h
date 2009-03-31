@@ -367,7 +367,7 @@ enum asEContextState
 enum asEExecStrFlags
 {
 	//! Only prepare the context
-	asEXECSTRING_ONLY_PREPARE	= 1,
+	asEXECSTRING_ONLY_PREPARE   = 1,
 	//! Use the pre-allocated context
 	asEXECSTRING_USE_MY_CONTEXT = 2
 };
