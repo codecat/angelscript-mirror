@@ -350,17 +350,29 @@ asCScriptEngine::~asCScriptEngine()
 
 	Reset();
 
-	// Delete the factory stubs for the array types
+	// Delete the functions for array types that may references object types
 	for( n = 0; n < arrayTypes.GetLength(); n++ )
 	{
 		if( arrayTypes[n] )
 		{
+			asUINT f;
+
 			// Delete the factory stubs first
-			for( asUINT f = 0; f < arrayTypes[n]->beh.factories.GetLength(); f++ )
+			for( f = 0; f < arrayTypes[n]->beh.factories.GetLength(); f++ )
 			{
 				DeleteScriptFunction(arrayTypes[n]->beh.factories[f]);
 			}
 			arrayTypes[n]->beh.factories.Allocate(0, false);
+
+			// Delete the specialized functions
+			for( f = 1; f < arrayTypes[n]->beh.operators.GetLength(); f += 2 )
+			{
+				if( scriptFunctions[arrayTypes[n]->beh.operators[f]]->objectType == arrayTypes[n] )
+				{
+					DeleteScriptFunction(arrayTypes[n]->beh.operators[f]);
+					arrayTypes[n]->beh.operators[f] = 0;
+				}
+			}
 		}
 	}
 
@@ -432,6 +444,14 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 	objectTypes.SetLength(0);
+	for( n = 0; n < templateSubTypes.GetLength(); n++ )
+	{
+		if( templateSubTypes[n] )
+		{
+			asDELETE(templateSubTypes[n], asCObjectType);
+		}
+	}
+	templateSubTypes.SetLength(0);
 	registeredTypeDefs.SetLength(0);
 	registeredEnums.SetLength(0);
 	registeredObjTypes.SetLength(0);
@@ -769,7 +789,7 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 	asCBuilder bld(this, mod);
 
 	asCScriptFunction func(this, mod);
-	int r = bld.ParseFunctionDeclaration(decl, &func, false);
+	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
@@ -800,7 +820,7 @@ int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl
 	asCBuilder bld(this, mod);
 
 	asCScriptFunction func(this, mod);
-	int r = bld.ParseFunctionDeclaration(decl, &func, false);
+	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
@@ -898,30 +918,47 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	return asSUCCESS;
 }
 
-int asCScriptEngine::RegisterSpecialObjectType(const char *name, int byteSize, asDWORD flags)
+int asCScriptEngine::RegisterSpecialObjectType(const char *decl, int byteSize, asDWORD flags)
 {
 	// Put the data type in the list
-	asCObjectType *type;
-	if( strcmp(name, "array<T>") == 0 )
+	if( flags & asOBJ_TEMPLATE )
 	{
-		type = asNEW(asCObjectType)(this);
+		asCString templateName;
+		asCString subtypeName;
+		asCBuilder builder(this, 0);
+		int r = builder.ParseTemplateDecl(decl, &templateName, &subtypeName);
+		if( r < 0 ) return r;
+
+		asCObjectType *type = asNEW(asCObjectType)(this);
 		defaultArrayObjectType = type;
 		type->AddRef();
+		type->tokenType = ttIdentifier;
+		type->name      = templateName;
+		type->arrayType = 0;
+		type->size      = byteSize;
+		type->flags     = flags;
+
+		// Store it in the object types
+		objectTypes.PushLast(type);
+
+		// Add these types to the default config group
+		defaultGroup.objTypes.PushLast(type);
+
+		// Define a template subtype
+		asCObjectType *subtype = asNEW(asCObjectType)(this);
+		subtype->name      = subtypeName;
+		subtype->tokenType = ttIdentifier;
+		subtype->arrayType = 0;
+		subtype->size      = 0;
+		subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
+		type->subType = subtype;
+		subtype->AddRef();
+		// TODO: template: Should reuse existing type if already configured
+		templateSubTypes.PushLast(subtype);
+		subtype->AddRef();
 	}
 	else
 		return asERROR;
-
-	type->tokenType = ttIdentifier;
-	type->name      = name;
-	type->arrayType = 0;
-	type->size      = byteSize;
-	type->flags     = flags;
-
-	// Store it in the object types
-	objectTypes.PushLast(type);
-
-	// Add these types to the default config group
-	defaultGroup.objTypes.PushLast(type);
 
 	return asSUCCESS;
 }
@@ -997,7 +1034,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
 	func->objectType = dt.GetObjectType();
 
-	r = bld.ParseFunctionDeclaration(declaration, func, false);
+	r = bld.ParseFunctionDeclaration(func->objectType, declaration, func, false);
 	if( r < 0 )
 	{
 		asDELETE(func,asCScriptFunction);
@@ -1218,23 +1255,16 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	return asSUCCESS;
 }
 
+// internal
+// Used to register the default behaviours for the script classes
 int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv)
 {
-	asASSERT( objType );
+	asASSERT( objType == &scriptTypeBehaviours );
 
 	asSSystemFunctionInterface internal;
-	if( behaviour == asBEHAVE_FACTORY )
-	{
-		int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
-		if( r < 0 )
-			return ConfigError(r);
-	}
-	else
-	{
-		int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
-		if( r < 0 )
-			return ConfigError(r);
-	}
+	int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
+	if( r < 0 )
+		return ConfigError(r);
 
 	isPrepared = false;
 
@@ -1242,20 +1272,11 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 
 	asSTypeBehaviour *beh;
 	asCDataType type;
-
-	// TODO: Template: When the template feature is completed, this function should only be used for script classes
-	bool isDefaultArray = (objType->flags & asOBJ_TEMPLATE) ? true : false;
-
-	if( isDefaultArray )
-		type = asCDataType::CreateDefaultArray(this);
-	else if( objType->flags & asOBJ_SCRIPT_OBJECT )
-	{
-		type.MakeHandle(false);
-		type.MakeReadOnly(false);
-		type.MakeReference(false);
-		type.SetObjectType(objType);
-		type.SetTokenType(ttIdentifier);
-	}
+	type.MakeHandle(false);
+	type.MakeReadOnly(false);
+	type.MakeReference(false);
+	type.SetObjectType(objType);
+	type.SetTokenType(ttIdentifier);
 
 	beh = type.GetBehaviour();
 
@@ -1265,21 +1286,13 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	// Verify function declaration
 	asCScriptFunction func(this, 0);
 
-	// TODO: Template: When parsing methods for the template type, the builder needs to know about the
-	// template subtype so that it will recognize it as a legal datatype.
-
-	// TODO: Template: How do we make the code handle the template subtype? The engine needs to have a
-	// special object type, so that asCDataType can represent the generic template subtype. Need to tell
-	// the builder/parser that the type T is a template subtype.
-
 	// The default array object is actually being registered
 	// with incorrect declarations, but that's a concious decision
-	bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
-
-	if( isDefaultArray )
-		func.objectType = defaultArrayObjectType;
-	else
-		func.objectType = objType;
+	r = bld.ParseFunctionDeclaration(type.GetObjectType(), decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
+	if( r < 0 )
+		return ConfigError(asINVALID_DECLARATION);
+	func.name.Format("_beh_%d_", behaviour);
+	func.objectType = type.GetObjectType();
 
 	if( behaviour == asBEHAVE_CONSTRUCT )
 	{
@@ -1287,36 +1300,18 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION);
 
-		if( objType->flags & asOBJ_SCRIPT_OBJECT )
+		if( func.parameterTypes.GetLength() == 1 )
 		{
-			if( func.parameterTypes.GetLength() == 1 )
-			{
-				beh->construct = AddBehaviourFunction(func, internal);
-				beh->factory   = beh->construct;
-				beh->constructors.PushLast(beh->construct);
-				beh->factories.PushLast(beh->factory);
-			}
-			else
-			{
-				int id = AddBehaviourFunction(func, internal);
-				beh->constructors.PushLast(id);
-				beh->factories.PushLast(id);
-			}
+			beh->construct = AddBehaviourFunction(func, internal);
+			beh->factory   = beh->construct;
+			beh->constructors.PushLast(beh->construct);
+			beh->factories.PushLast(beh->factory);
 		}
-	}
-	else if( behaviour == asBEHAVE_FACTORY )
-	{
-		if( objType->flags & asOBJ_TEMPLATE )
+		else
 		{
-			if( func.parameterTypes.GetLength() == 1 )
-			{
-				beh->factory = AddBehaviourFunction(func, internal);
-				beh->factories.PushLast(beh->factory);
-			}
-			else
-			{
-				beh->factories.PushLast(AddBehaviourFunction(func, internal));
-			}
+			int id = AddBehaviourFunction(func, internal);
+			beh->constructors.PushLast(id);
+			beh->factories.PushLast(id);
 		}
 	}
 	else if( behaviour == asBEHAVE_ADDREF )
@@ -1355,31 +1350,13 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		if( func.parameterTypes.GetLength() != 1 )
 			return ConfigError(asINVALID_DECLARATION);
 
-		if( objType->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_TEMPLATE) )
-		{
-			if( beh->copy )
-				return ConfigError(asALREADY_REGISTERED);
+		if( beh->copy )
+			return ConfigError(asALREADY_REGISTERED);
 
-			beh->copy = AddBehaviourFunction(func, internal);
+		beh->copy = AddBehaviourFunction(func, internal);
 
-			beh->operators.PushLast(ttAssignment);
-			beh->operators.PushLast(beh->copy);
-		}
-	}
-	else if( behaviour == asBEHAVE_INDEX )
-	{
-		// Verify that there is only one parameter
-		if( func.parameterTypes.GetLength() != 1 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that the return type is not void
-		if( func.returnType.GetTokenType() == ttVoid )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// TODO: Verify that the operator hasn't been registered already
-
-		beh->operators.PushLast(behaviour);
-		beh->operators.PushLast(AddBehaviourFunction(func, internal));
+		beh->operators.PushLast(ttAssignment);
+		beh->operators.PushLast(beh->copy);
 	}
 	else if( behaviour >= asBEHAVE_FIRST_GC &&
 		     behaviour <= asBEHAVE_LAST_GC )
@@ -1436,10 +1413,6 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 
 int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
-	// Verify that the correct config group is used
-	if( currentGroup->FindType(datatype) == 0 )
-		return ConfigError(asWRONG_CONFIG_GROUP);
-
 	if( datatype == 0 ) return ConfigError(asINVALID_ARG);
 
 	asSSystemFunctionInterface internal;
@@ -1478,11 +1451,13 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	if( r < 0 )
 		return ConfigError(r);
 
-	if( type.IsReadOnly() || type.IsReference() )
-		return ConfigError(asINVALID_TYPE);
-
-	// Verify that the type is allowed
+	// Verify that the correct config group is used
 	if( type.GetObjectType() == 0 )
+		return ConfigError(asINVALID_TYPE);
+	if( currentGroup->FindType(type.GetObjectType()->name.AddressOf()) == 0 )
+		return ConfigError(asWRONG_CONFIG_GROUP);
+
+	if( type.IsReadOnly() || type.IsReference() )
 		return ConfigError(asINVALID_TYPE);
 
 	beh = type.GetBehaviour();
@@ -1493,9 +1468,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	// Verify function declaration
 	asCScriptFunction func(this, 0);
 
-	r = bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(type.GetObjectType(), decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION);
+	func.name.Format("_beh_%d_", behaviour);
 
 	if( behaviour != asBEHAVE_FACTORY )
 		func.objectType = type.GetObjectType();
@@ -1583,6 +1559,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 			return ConfigError(asINVALID_DECLARATION);
 */
 		// TODO: Verify that the same factory function hasn't been registered already
+
+		// TODO: template: The templates take a hidden parameter with the object type
 
 		// Store all factory functions in a list
 		if( func.parameterTypes.GetLength() == 0 )
@@ -1850,9 +1828,10 @@ int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char
 	// Verify function declaration
 	asCScriptFunction func(this, 0);
 
-	r = bld.ParseFunctionDeclaration(decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(0, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION);
+	func.name.Format("_beh_%d_", behaviour);
 
 	if( behaviour >= asBEHAVE_FIRST_DUAL && behaviour <= asBEHAVE_LAST_DUAL )
 	{
@@ -1962,6 +1941,8 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	newInterface->hasAutoHandles     = internal.hasAutoHandles;
 
 	asCScriptFunction *f = asNEW(asCScriptFunction)(this, 0);
+	asASSERT(func.name != "" && func.name != "f");
+	f->name        = func.name;
 	f->funcType    = asFUNC_SYSTEM;
 	f->sysFuncIntf = newInterface;
 	f->returnType  = func.returnType;
@@ -2075,67 +2056,8 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, i
 	return asSUCCESS;
 }
 
-int asCScriptEngine::RegisterSpecialObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, int callConv)
-{
-	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(obj != 0, funcPointer, callConv, &internal);
-	if( r < 0 )
-		return ConfigError(r);
-
-	// We only support these calling conventions for object methods
-	if( (unsigned)callConv != asCALL_THISCALL &&
-		(unsigned)callConv != asCALL_CDECL_OBJLAST &&
-		(unsigned)callConv != asCALL_CDECL_OBJFIRST &&
-		(unsigned)callConv != asCALL_GENERIC )
-		return ConfigError(asNOT_SUPPORTED);
-
-	asCObjectType *objType = GetObjectType(obj);
-	if( objType == 0 )
-		return ConfigError(asINVALID_OBJECT);
-
-	isPrepared = false;
-
-	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = asNEW(asSSystemFunctionInterface)(internal);
-
-	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
-	func->funcType    = asFUNC_SYSTEM;
-	func->sysFuncIntf = newInterface;
-	func->objectType  = objType;
-
-	objType->methods.PushLast((int)scriptFunctions.GetLength());
-
-	asCBuilder bld(this, 0);
-	r = bld.ParseFunctionDeclaration(declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
-	if( r < 0 )
-	{
-		asDELETE(func,asCScriptFunction);
-		return ConfigError(asINVALID_DECLARATION);
-	}
-
-	// Check name conflicts
-	asCDataType dt;
-	dt = asCDataType::CreateDefaultArray(this);
-	r = bld.CheckNameConflictMember(dt, func->name.AddressOf(), 0, 0);
-	if( r < 0 )
-	{
-		asDELETE(func,asCScriptFunction);
-		return ConfigError(asNAME_TAKEN);
-	}
-
-	func->id = GetNextScriptFunctionId();
-	SetScriptFunction(func);
-
-	return 0;
-}
-
-
 int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
-	// Verify that the correct config group is set.
-	if( currentGroup->FindType(obj) == 0 )
-		return ConfigError(asWRONG_CONFIG_GROUP);
-
 	asSSystemFunctionInterface internal;
 	int r = DetectCallingConvention(obj != 0, funcPointer, callConv, &internal);
 	if( r < 0 )
@@ -2159,6 +2081,10 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	if( r < 0 )
 		return ConfigError(r);
 
+	// Verify that the correct config group is set.
+	if( currentGroup->FindType(dt.GetObjectType()->name.AddressOf()) == 0 )
+		return ConfigError(asWRONG_CONFIG_GROUP);
+
 	isPrepared = false;
 
 	// Put the system function in the list of system functions
@@ -2169,7 +2095,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	func->sysFuncIntf = newInterface;
 	func->objectType  = dt.GetObjectType();
 
-	r = bld.ParseFunctionDeclaration(declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(func->objectType, declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 )
 	{
 		asDELETE(func,asCScriptFunction);
@@ -2235,7 +2161,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
-	r = bld.ParseFunctionDeclaration(declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(0, declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 )
 	{
 		asDELETE(func,asCScriptFunction);
@@ -2435,6 +2361,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 	asSSystemFunctionInterface *newInterface = asNEW(asSSystemFunctionInterface)(internal);
 
 	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
+	func->name        = "_string_factory_";
 	func->funcType    = asFUNC_SYSTEM;
 	func->sysFuncIntf = newInterface;
 
@@ -2683,6 +2610,13 @@ void asCScriptEngine::RemoveArrayType(asCObjectType *t)
 		DeleteScriptFunction(t->beh.factories[n]);
 	}
 
+	// Destroy the specialized functions
+	for( n = 1; n < (int)t->beh.operators.GetLength(); n += 2 )
+	{
+		if( t->beh.operators[n] && scriptFunctions[t->beh.operators[n]]->objectType == t )
+			DeleteScriptFunction(t->beh.operators[n]);
+	}
+
 	// Start searching from the end of the list, as most of
 	// the time it will be the last two types
 	for( n = (int)arrayTypes.GetLength()-1; n >= 0; n-- )
@@ -2712,6 +2646,8 @@ void asCScriptEngine::RemoveArrayType(asCObjectType *t)
 
 asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 {
+	asUINT n;
+
 	int arrayType = type.GetArrayType();
 	if( type.IsObjectHandle() )
 		arrayType = (arrayType<<2) | 3;
@@ -2757,7 +2693,7 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	ot->beh.construct = defaultArrayObjectType->beh.factory;
 	ot->beh.constructors = defaultArrayObjectType->beh.factories;
 	// Generate factory stubs for each of the factories
-	for( asUINT n = 0; n < defaultArrayObjectType->beh.factories.GetLength(); n++ )
+	for( n = 0; n < defaultArrayObjectType->beh.factories.GetLength(); n++ )
 	{
 		int factoryId = defaultArrayObjectType->beh.factories[n];
 		asCScriptFunction *factory = scriptFunctions[factoryId];
@@ -2800,15 +2736,85 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	ot->beh.gcEnumReferences       = defaultArrayObjectType->beh.gcEnumReferences;
 	ot->beh.gcReleaseAllReferences = defaultArrayObjectType->beh.gcReleaseAllReferences;
 
-	// TODO: Template: As the new array type is instanciated, the engine should
-	//       generate new functions to substitute the ones with the template subtype.
+	// As the new array type is instanciated, the engine should
+	// generate new functions to substitute the ones with the template subtype.
+	for( n = 1; n < ot->beh.operators.GetLength(); n += 2 )
+	{
+		int funcId = ot->beh.operators[n];
+		asCScriptFunction *func = scriptFunctions[funcId];
+
+		bool needNewFunc = false;
+		if( func->returnType.GetObjectType() == defaultArrayObjectType->subType )
+			needNewFunc = true;
+		else
+		{
+			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
+			{
+				if( func->parameterTypes[p].GetObjectType() == defaultArrayObjectType->subType )
+				{
+					needNewFunc = true;
+					break;
+				}
+			}
+		}
+
+		if( needNewFunc )
+		{
+			asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0);
+			func2->funcType = func->funcType;
+			func2->name     = func->name;
+			func2->id       = GetNextScriptFunctionId();
+
+			// TODO: template: need to check for the template type itself as well
+			if( func->returnType.GetObjectType() == defaultArrayObjectType->subType )
+			{
+				func2->returnType = type;
+				// TODO: template: need to make other modifications as well (handle, etc)
+				func2->returnType.MakeReference(func->returnType.IsReference());
+				func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
+			}
+			else
+				func2->returnType = func->returnType;
+
+			func2->parameterTypes.SetLength(func->parameterTypes.GetLength());
+			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
+			{
+				if( func->parameterTypes[p].GetObjectType() == defaultArrayObjectType->subType )
+				{
+					func2->parameterTypes[p] = type;
+					func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
+					func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReference());
+				}
+				else
+					func2->parameterTypes[p] = func->parameterTypes[p];
+			}
+
+			// TODO: template: If the template type is invalid, an error should be emitted
+			//                 stating that the template cannot be instanciated for this type.
+			//                 For example, if the template has been declared to return a handle
+			//                 of the subtype, then the template cannot be instanciated for primitive
+			//                 or value types. 
+
+			// TODO: template: Must be careful when instanciating templates for garbage collected types
+			//                 If the template hasn't been registered with the behaviours, it shouldn't
+			//                 permit instanciation of garbage collected types that in turn may refer to
+			//                 this instance.
+
+			func2->inOutFlags = func->inOutFlags;
+			func2->isReadOnly = func->isReadOnly;
+			func2->objectType = ot;
+			func2->stackNeeded = func->stackNeeded;
+			func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
+			
+			SetScriptFunction(func2);
+
+			ot->beh.operators[n] = func2->id;
+		}
+	}
 
 	// The object type needs to store the sub type as well
 	ot->subType = type.GetObjectType();
 	if( ot->subType ) ot->subType->AddRef();
-
-	// TODO: The indexing behaviour and assignment
-	//       behaviour should use the correct datatype
 
 	// Verify if the subtype contains an any object, in which case this array is a potential circular reference
 	// TODO: We may be a bit smarter here. If we can guarantee that the array type cannot be part of the

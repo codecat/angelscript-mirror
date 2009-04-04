@@ -285,6 +285,11 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	// Make sure it is possible to do multiple assignments with the array type
+	r = engine->ExecuteString(0, "int[] a, b, c; a = b = c;");
+	if( r < 0 )
+		fail = true;
+
 	engine->Release();
 
 	// Success

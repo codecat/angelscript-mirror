@@ -49,8 +49,6 @@
 
 BEGIN_AS_NAMESPACE
 
-// TODO: template: Need a flag to define a template subtype. asOBJ_TEMPLATE_SUB1
-
 // TODO: memory: Need to minimize used memory here, because not all types use all properties of the class
 
 // TODO: Need GetTypeId that should return the type id for this object type.
@@ -64,6 +62,7 @@ const asDWORD asOBJ_TEMPLATE         = 0x20000;
 const asDWORD asOBJ_IMPLICIT_HANDLE  = 0x40000;
 const asDWORD asOBJ_TYPEDEF          = 0x40000000;
 const asDWORD asOBJ_ENUM             = 0x10000000;
+const asDWORD asOBJ_TEMPLATE_SUBTYPE = 0x20000000;
 
 
 

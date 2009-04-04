@@ -47,6 +47,9 @@
 
 BEGIN_AS_NAMESPACE
 
+// TODO: Implement operator overloads the same way the D language does: 
+//       http://www.digitalmars.com/d/2.0/operatoroverloading.html
+
 // map token to behaviour
 const int behave_dual_token[] =
 {
@@ -1734,18 +1737,9 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 		// Find the indexing operator that is not read-only that will be used for all elements
 		asCDataType retType;
-		if( var->dataType.IsTemplate() )
-		{
-			// TODO: Template: The return type should be the template subtype
-			retType = asCDataType::CreatePrimitive(ttInt, false);
-			retType.MakeReference(true);
-		}
-		else
-		{
-			retType = var->dataType.GetSubType();
-			retType.MakeReference(true);
-			retType.MakeReadOnly(false);
-		}
+		retType = var->dataType.GetSubType();
+		retType.MakeReference(true);
+		retType.MakeReadOnly(false);
 		int funcId = 0;
 		asSTypeBehaviour *beh = var->dataType.GetBehaviour();
 		for( asUINT n = 0; n < beh->operators.GetLength(); n += 2 )
@@ -3712,27 +3706,44 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 					ctx->type.dataType.MakeReadOnly(true);
 				else if( ctx->type.dataType.IsReadOnly() )
 				{
-					// A reference to a const can be converted to a reference to a non-const by putting the object in a temporary variable
+					// A reference to a const can be converted to a reference to a  
+					// non-const by copying the object to a temporary variable
 					ctx->type.dataType.MakeReadOnly(false);
 
 					if( generateCode )
 					{
-						asASSERT(!ctx->type.isTemporary);
-
 						// Allocate a temporary variable
-						int offset = AllocateVariableNotIn(ctx->type.dataType, true, reservedVars);
-						ctx->type.isTemporary = true;
-						ctx->type.stackOffset = (short)offset;
+						asSExprContext lctx(engine);
+						asCDataType dt = ctx->type.dataType;
+						dt.MakeReference(false);
+						int offset = AllocateVariableNotIn(dt, true, reservedVars);
+						lctx.type = ctx->type;
+						lctx.type.isTemporary = true;
+						lctx.type.stackOffset = (short)offset;
 
-						CallDefaultConstructor(ctx->type.dataType, offset, &ctx->bc);
+						CallDefaultConstructor(lctx.type.dataType, offset, &lctx.bc);
 
+						// Build the right hand expression
 						asSExprContext rctx(engine);
 						rctx.type = ctx->type;
+						rctx.bc.AddCode(&lctx.bc);
 						rctx.bc.AddCode(&ctx->bc);
-						asSExprContext lctx(engine);
-						lctx.type = ctx->type;
+
+						// Build the left hand expression
 						lctx.bc.InstrSHORT(BC_PSF, (short)offset);
+
+						// DoAssignment doesn't allow assignment to temporary variable, 
+						// so we temporarily set the type as non-temporary.
+						lctx.type.isTemporary = false;
+
 						DoAssignment(ctx, &lctx, &rctx, node, node, ttAssignment, node);
+
+						// If the original const object was a temporary variable, then
+						// that needs to be released now
+						ProcessDeferredParams(ctx);
+
+						ctx->type = lctx.type;
+						ctx->type.isTemporary = true;
 					}
 				}
 
@@ -6888,22 +6899,6 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				asCArray<asSExprContext*> args;
 				args.PushLast(&expr);
 				PerformFunctionCall(descr->id, ctx, false, &args);
-
-				// TODO: Template: Remove this. PerformFunctionCall should set the correct return type based on the template type
-				// The default array returns a reference to the subtype
-				if( objType.dataType.IsTemplate() )
-				{
-					ctx->type.dataType = objType.dataType.GetSubType();
-					if( !ctx->type.dataType.IsPrimitive() )
-					{
-						// The reference is currently stored in the register
-						ctx->bc.Instr(BC_PshRPtr);
-					}
-					if( !ctx->type.dataType.IsObject() || ctx->type.dataType.IsObjectHandle() )
-						ctx->type.dataType.MakeReference(true);
-					if( isConst )
-						ctx->type.dataType.MakeReadOnly(true);
-				}
 			}
 			else if( ops.GetLength() > 1 )
 			{
@@ -8658,7 +8653,6 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 	int argSize = descr->GetSpaceNeededForArguments();
 
-	// TODO: template: The compiler should determine the correct return type from the template type defined for the object
 	ctx->type.Set(descr->returnType);
 
 	if( isConstructor )
@@ -8696,7 +8690,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 		
 		if( useVariable )
 		{
-			// Use the give variable
+			// Use the given variable
 			returnOffset = varOffset;
 			ctx->type.SetVariable(descr->returnType, returnOffset, false);
 		}
@@ -8739,7 +8733,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 		else
 		{
 			ctx->bc.Instr(BC_PshRPtr);
-			if( descr->returnType.IsObject() )
+			if( descr->returnType.IsObject() && !descr->returnType.IsObjectHandle() )
 			{
 				// We are getting the pointer to the object
 				// not a pointer to a object variable

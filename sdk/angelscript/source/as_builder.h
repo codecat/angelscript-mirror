@@ -93,8 +93,9 @@ public:
 	int VerifyProperty(asCDataType *dt, const char *decl, asCString &outName, asCDataType &outType);
 
 	int ParseDataType(const char *datatype, asCDataType *result);
+	int ParseTemplateDecl(const char *decl, asCString *name, asCString *subtypeName);
 
-	int ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0);
+	int ParseFunctionDeclaration(asCObjectType *type, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0);
 	int ParseVariableDeclaration(const char *decl, asCObjectProperty *var);
 
 	int AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy);
@@ -168,7 +169,7 @@ protected:
 	asCScriptEngine *engine;
 	asCModule *module;
 
-	asCDataType CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope = false);
+	asCDataType CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope = false, asCObjectType *templateType = 0);
 	asCDataType ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, asETypeModifiers *inOutFlag, bool *autoHandle);
 };
 

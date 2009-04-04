@@ -126,6 +126,7 @@ void RegisterScriptObject(asCScriptEngine *engine)
 	// Register the default script class behaviours
 	int r;
 	engine->scriptTypeBehaviours.flags = asOBJ_SCRIPT_OBJECT;
+	engine->scriptTypeBehaviours.name = "_builtin_object_";
 #ifndef AS_MAX_PORTABILITY
 #ifndef AS_64BIT_PTR
 	r = engine->RegisterSpecialObjectBehaviour(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ScriptObject_Construct), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );

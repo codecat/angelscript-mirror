@@ -442,6 +442,35 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 	return asSUCCESS;
 }
 
+int asCBuilder::ParseTemplateDecl(const char *decl, asCString *name, asCString *subtypeName)
+{
+	numErrors = 0;
+	numWarnings = 0;
+	preMessage.isSet = false;
+
+	asCScriptCode source;
+	source.SetCode("", decl, true);
+
+	asCParser parser(this);
+	int r = parser.ParseTemplateDecl(&source);
+	if( r < 0 )
+		return asINVALID_TYPE;
+
+	// Get the template name and subtype name
+	asCScriptNode *node = parser.GetScriptNode()->firstChild;
+
+	name->Assign(&decl[node->tokenPos], node->tokenLength);
+	node = node->next;
+	subtypeName->Assign(&decl[node->tokenPos], node->tokenLength);
+
+	// TODO: template: check for name conflicts
+
+	if( numErrors > 0 )
+		return asINVALID_DECLARATION;
+
+	return asSUCCESS;
+}
+
 int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &name, asCDataType &type)
 {
 	numErrors = 0;
@@ -560,7 +589,7 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompi
 	return 0;
 }
 
-int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle)
+int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle)
 {
 	numErrors = 0;
 	numWarnings = 0;
@@ -570,7 +599,6 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 	source.SetCode(TXT_SYSTEM_FUNCTION, decl, true);
 
 	asCParser parser(this);
-
 	int r = parser.ParseFunctionDefinition(&source);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
@@ -585,7 +613,7 @@ int asCBuilder::ParseFunctionDeclaration(const char *decl, asCScriptFunction *fu
 	bool autoHandle;
 
 	// Scoped reference types are allowed to use handle when returned from application functions
-	func->returnType = CreateDataTypeFromNode(node->firstChild, &source, true);
+	func->returnType = CreateDataTypeFromNode(node->firstChild, &source, true, objType);
 	func->returnType = ModifyDataTypeFromNode(func->returnType, node->firstChild->next, &source, 0, &autoHandle);
 	if( autoHandle && (!func->returnType.IsObjectHandle() || func->returnType.IsReference()) )
 			return asINVALID_DECLARATION;
@@ -2302,7 +2330,7 @@ void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r
 }
 
 
-asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope)
+asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope, asCObjectType *templateType)
 {
 	asASSERT(node->nodeType == snDataType);
 
@@ -2323,7 +2351,17 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		asCString str;
 		str.Assign(&file->code[n->tokenPos], n->tokenLength);
 
-		asCObjectType *ot = GetObjectType(str.AddressOf());
+		asCObjectType *ot = 0;
+
+		// If this is for a template type, then we must first determine if the 
+		// identifier matches any of the template subtypes
+		// TODO: template: it should be possible to have more than one subtypes
+		if( templateType && templateType->subType && str == templateType->subType->name )
+			ot = templateType->subType;
+
+		if( ot == 0 )
+			ot = GetObjectType(str.AddressOf());
+
 		if( ot == 0 )
 		{
 			asCString msg;
@@ -2353,6 +2391,15 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				}
 				else
 				{
+					if( ot->flags & asOBJ_TEMPLATE )
+					{
+						n = n->next;
+						
+						// TODO: template: check if the subtype is a type or the template's subtype
+						//       if it is the template's subtype then this is the actual template type,
+						//       orderwise it is a template instance.
+					}
+
 					// Create object data type
 					dt = asCDataType::CreateObject(ot, isConst);
 				}

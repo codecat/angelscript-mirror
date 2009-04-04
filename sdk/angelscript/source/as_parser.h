@@ -103,6 +103,7 @@ public:
 	int ParseFunctionDefinition(asCScriptCode *script);
 	int ParsePropertyDeclaration(asCScriptCode *script);
 	int ParseDataType(asCScriptCode *script);
+	int ParseTemplateDecl(asCScriptCode *script);
 
 	int ParseStatementBlock(asCScriptCode *script, asCScriptNode *block);
 	int ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init);

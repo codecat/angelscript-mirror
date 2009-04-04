@@ -225,7 +225,6 @@ public:
 	friend int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 
 	int RegisterSpecialObjectType(const char *objname, int byteSize, asDWORD flags);
-	int RegisterSpecialObjectMethod(const char *objname, const char *declaration, const asSFuncPtr &funcPointer, int callConv);
 	int RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv);
 
 	int VerifyVarTypeNotInFunction(asCScriptFunction *func);
@@ -310,6 +309,7 @@ public:
 
 	// Stores all known object types, both application registered, and script declared
 	asCArray<asCObjectType *>      objectTypes;
+	asCArray<asCObjectType *>      templateSubTypes;
 
 	// Store information about registered array types
 	asCArray<asCObjectType *>      arrayTypes;

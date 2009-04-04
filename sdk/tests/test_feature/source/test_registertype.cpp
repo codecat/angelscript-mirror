@@ -351,6 +351,10 @@ int *Scoped_Add(int &a, int b)
 	return new int(a + b);
 }
 
+void Scoped_InRef(int &)
+{
+}
+
 bool TestRefScoped()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -372,13 +376,17 @@ bool TestRefScoped()
 	// object handles (except when returning a new value from registered functions).
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterStdString(engine);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	r = engine->RegisterObjectType("scoped", 0, asOBJ_REF | asOBJ_SCOPED); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_FACTORY, "scoped @f()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_RELEASE, "void f()", asFUNCTION(Scoped_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_NEGATE, "scoped @f()", asFUNCTION(Scoped_Negate), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_ASSIGNMENT, "scoped &f(const scoped &in)", asFUNCTION(Scoped_Assignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "scoped @f(const scoped &in, int)", asFUNCTION(Scoped_Add), asCALL_CDECL); assert( r >= 0 );
+	// TODO: Improve argument matching for overloaded functions and operators
+	//       Registering this operator with int instead of uint, causes the compiler not to find the operator,
+	//       because there already exist a better match for the second argument for the string type (const string &in, uint)
+	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "scoped @f(const scoped &in, uint)", asFUNCTION(Scoped_Add), asCALL_CDECL); assert( r >= 0 );
 
 	// Enumerate the objects behaviours
 	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("scoped"));
@@ -425,8 +433,32 @@ bool TestRefScoped()
 	r = engine->ExecuteString(0, "scoped a");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
+	bout.buffer = "";
 	r = engine->ExecuteString(0, "scoped s; scoped t = s + 10;");
 	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test a compiler assert failure reported by Jeff Slutter on 2009-04-02
+	bout.buffer = "";
+	const char *script =
+		"SetObjectPosition( GetWorldPositionByName() ); \n";
+
+	r = engine->RegisterGlobalFunction("const scoped @GetWorldPositionByName()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void SetObjectPosition(scoped &in)", asFUNCTION(Scoped_InRef), asCALL_CDECL); assert( r >= 0 );
+	
+	r = engine->ExecuteString(0, script);
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+
 
 	// Don't permit functions to be registered with handle for parameters
 	bout.buffer = "";

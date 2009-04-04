@@ -175,67 +175,54 @@ static void ArrayObject_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 
 void RegisterArrayObject(asCScriptEngine *engine)
 {
-	// TODO: Template: The registration of the default array should define a template type, e.g. "T". 
-	// The other functions should use this template type "T" to show the compiler where the subtype is
-	// used. This will make the compiler code for the array type be more generic, and prepare the library
-	// to convert the dynamic array type from a built-in type to an add-on.
-
 	int r;
-	r = engine->RegisterSpecialObjectType("array<T>", sizeof(asCArrayObject), asOBJ_REF | asOBJ_TEMPLATE); asASSERT( r >= 0 );
+
+	// TODO: template: Do away with the RegisterSpecialObjectType method
+	r = engine->RegisterSpecialObjectType("_builtin_array_<class T>", sizeof(asCArrayObject), asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); asASSERT( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
 #ifndef AS_64BIT_PTR
-	// TODO: Template: The return type should be "array<T>@" 
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_FACTORY, "void[]@ f(int)", asFUNCTIONPR(ArrayObjectFactory, (asCObjectType*), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_FACTORY, "void[]@ f(int, uint)", asFUNCTIONPR(ArrayObjectFactory2, (asCObjectType*, asUINT), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int)", asFUNCTIONPR(ArrayObjectFactory, (asCObjectType*), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int, uint)", asFUNCTIONPR(ArrayObjectFactory2, (asCObjectType*, asUINT), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
 #else
-	// TODO: Template: The return type should be "array<T>@" 
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_FACTORY, "void[]@ f(int64)", asFUNCTIONPR(ArrayObjectFactory, (asCObjectType*), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_FACTORY, "void[]@ f(int64, uint)", asFUNCTIONPR(ArrayObjectFactory2, (asCObjectType*, asUINT), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int64)", asFUNCTIONPR(ArrayObjectFactory, (asCObjectType*), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int64, uint)", asFUNCTIONPR(ArrayObjectFactory2, (asCObjectType*, asUINT), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
 #endif
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asMETHOD(asCArrayObject,AddRef), asCALL_THISCALL); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asMETHOD(asCArrayObject,Release), asCALL_THISCALL); asASSERT( r >= 0 );
-	// TODO: Template: The signature should be "array<T>& f(const array<T>& in)"
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ASSIGNMENT, "void[] &f(void[]&in)", asFUNCTION(ArrayObjectAssignment), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
-	// TODO: Template: The signature should be "T& f(uint)"
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int &f(uint)", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
-	// TODO: Template: The signature should be "const T& f(uint) const"
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int &f(uint) const", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectMethod("array<T>", "uint length() const", asFUNCTION(ArrayObjectLength), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectMethod("array<T>", "void resize(uint)", asFUNCTION(ArrayObjectResize), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(asCArrayObject,AddRef), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(asCArrayObject,Release), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ASSIGNMENT, "_builtin_array_<T> &f(const _builtin_array_<T>&in)", asFUNCTION(ArrayObjectAssignment), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_INDEX, "T &f(uint)", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_INDEX, "const T &f(uint) const", asFUNCTION(ArrayObjectAt), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("_builtin_array_<T>", "uint length() const", asFUNCTION(ArrayObjectLength), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("_builtin_array_<T>", "void resize(uint)", asFUNCTION(ArrayObjectResize), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
 
 	// Register GC behaviours
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(asCArrayObject,GetRefCount), asCALL_THISCALL); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_SETGCFLAG, "void f()", asMETHOD(asCArrayObject,SetFlag), asCALL_THISCALL); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCArrayObject,GetFlag), asCALL_THISCALL); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCArrayObject,EnumReferences), asCALL_THISCALL); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCArrayObject,ReleaseAllHandles), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(asCArrayObject,GetRefCount), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_SETGCFLAG, "void f()", asMETHOD(asCArrayObject,SetFlag), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCArrayObject,GetFlag), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCArrayObject,EnumReferences), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCArrayObject,ReleaseAllHandles), asCALL_THISCALL); asASSERT( r >= 0 );
 #else
 #ifndef AS_64BIT_PTR
-	// TODO: Template: The return type should be "array<T>@" 
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_FACTORY, "void[]@ f(int)", asFUNCTION(ArrayObjectFactory_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_FACTORY, "void[]@ f(int, uint)", asFUNCTION(ArrayObjectFactory2_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int)", asFUNCTION(ArrayObjectFactory_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int, uint)", asFUNCTION(ArrayObjectFactory2_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #else
-	// TODO: Template: The return type should be "array<T>@" 
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_FACTORY, "void[]@ f(int64)", asFUNCTION(ArrayObjectFactory_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_FACTORY, "void[]@ f(int64, uint)", asFUNCTION(ArrayObjectFactory2_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int64)", asFUNCTION(ArrayObjectFactory_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int64, uint)", asFUNCTION(ArrayObjectFactory2_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #endif
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ADDREF, "void f()", asFUNCTION(ArrayObject_AddRef_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASE, "void f()", asFUNCTION(ArrayObject_Release_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	// TODO: Template: The signature should be "array<T>& f(const array<T>& in)"
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ASSIGNMENT, "void[] &f(void[]&in)", asFUNCTION(ArrayObjectAssignment_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	// TODO: Template: The signature should be "T& f(uint)"
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int &f(uint)", asFUNCTION(ArrayObjectAt_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	// TODO: Template: The signature should be "const T& f(uint) const"
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_INDEX, "int &f(uint) const", asFUNCTION(ArrayObjectAt_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectMethod("array<T>", "uint length() const", asFUNCTION(ArrayObjectLength_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectMethod("array<T>", "void resize(uint)", asFUNCTION(ArrayObjectResize_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ADDREF, "void f()", asFUNCTION(ArrayObject_AddRef_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_RELEASE, "void f()", asFUNCTION(ArrayObject_Release_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ASSIGNMENT, "_builtin_array_<T> &f(const _builtin_array_<T>&in)", asFUNCTION(ArrayObjectAssignment_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_INDEX, "T &f(uint)", asFUNCTION(ArrayObjectAt_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_INDEX, "const T &f(uint) const", asFUNCTION(ArrayObjectAt_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("_builtin_array_<T>", "uint length() const", asFUNCTION(ArrayObjectLength_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("_builtin_array_<T>", "void resize(uint)", asFUNCTION(ArrayObjectResize_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 
 	// Register GC behaviours
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ArrayObject_GetRefCount_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ArrayObject_SetFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ArrayObject_GetFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ArrayObject_EnumReferences_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	r = engine->RegisterSpecialObjectBehaviour(engine->defaultArrayObjectType, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ArrayObject_ReleaseAllHandles_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ArrayObject_GetRefCount_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ArrayObject_SetFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ArrayObject_GetFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ArrayObject_EnumReferences_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ArrayObject_ReleaseAllHandles_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #endif 
 }
 

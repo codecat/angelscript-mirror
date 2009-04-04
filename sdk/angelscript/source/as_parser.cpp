@@ -157,6 +157,56 @@ int asCParser::ParseDataType(asCScriptCode *script)
 	return 0;
 }
 
+
+// Parse a template declaration: IDENTIFIER < class IDENTIFIER >
+int asCParser::ParseTemplateDecl(asCScriptCode *script)
+{
+	Reset();
+
+	this->script = script;
+	scriptNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snUndefined);
+
+	scriptNode->AddChildLast(ParseIdentifier());
+	if( isSyntaxError ) return -1;
+
+	sToken t;
+	GetToken(&t);
+	if( t.type != ttLessThan )
+	{
+		Error(ExpectedToken(asGetTokenDefinition(ttLessThan)).AddressOf(), &t);
+		return -1;
+	}
+
+	GetToken(&t);
+	if( t.type != ttClass )
+	{
+		Error(ExpectedToken(asGetTokenDefinition(ttClass)).AddressOf(), &t);
+		return -1;
+	}
+
+	scriptNode->AddChildLast(ParseIdentifier());
+	if( isSyntaxError ) return -1;
+
+	GetToken(&t);
+	if( t.type != ttGreaterThan )
+	{
+		Error(ExpectedToken(asGetTokenDefinition(ttGreaterThan)).AddressOf(), &t);
+		return -1;
+	}
+
+	GetToken(&t);
+	if( t.type != ttEnd )
+	{
+		Error(ExpectedToken(asGetTokenDefinition(ttEnd)).AddressOf(), &t);
+		return -1;
+	}
+
+	if( errorWhileParsing )
+		return -1;
+
+	return 0;
+}
+
 int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 {
 	Reset();
@@ -1079,6 +1129,33 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
 	}
 
 	node->AddChildLast(ParseDataType(allowVariableType));
+
+	// If the datatype is a template type, then parse the subtype within the < >
+	asCScriptNode *type = node->lastChild;
+	asCString typeName;
+	typeName.Assign(&script->code[type->tokenPos], type->tokenLength);
+	// TODO: template: Compare name against all registered template types
+	if( typeName == engine->defaultArrayObjectType->name )
+	{
+		GetToken(&t);
+		if( t.type != ttLessThan )
+		{
+			Error(ExpectedToken(asGetTokenDefinition(ttLessThan)).AddressOf(), &t);
+			return node;
+		}
+
+		node->AddChildLast(ParseType(true, false));
+		if( isSyntaxError ) return node;
+
+		// TODO: template: accept >> and >>> tokens too. But then force the tokenizer to move 
+		//                 only 1 character ahead (thus splitting the token in two).
+		GetToken(&t);
+		if( t.type != ttGreaterThan )
+		{
+			Error(ExpectedToken(asGetTokenDefinition(ttGreaterThan)).AddressOf(), &t);
+			return node;
+		}
+	}
 
 	// Parse [] and @
 	GetToken(&t);

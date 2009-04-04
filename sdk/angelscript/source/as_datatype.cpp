@@ -106,9 +106,9 @@ asCDataType asCDataType::CreateDefaultArray(asCScriptEngine *engine)
 {
 	asCDataType dt;
 
-	// void[] represents the default array
+	// _builtin_array_<T> represents the default array
 	dt.objectType       = engine->defaultArrayObjectType;
-	dt.tokenType        = ttVoid;
+	dt.tokenType        = ttIdentifier;
 
 	return dt;
 }
