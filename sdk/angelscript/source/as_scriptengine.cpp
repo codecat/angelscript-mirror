@@ -3204,6 +3204,8 @@ void asCScriptEngine::GCEnumCallback(void *reference)
 // TODO: multithread: The mapTypeIdToDataType must be protected with critical sections in all functions that access it
 int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 {
+	if( dt.IsNullHandle() ) return 0;
+
 	// Find the existing type id
 	asSMapNode<int,asCDataType*> *cursor = 0;
 	mapTypeIdToDataType.MoveFirst(&cursor);

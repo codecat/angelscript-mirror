@@ -117,11 +117,7 @@ asCDataType asCDataType::CreateNullHandle()
 {
 	asCDataType dt;
 
-#ifndef AS_64BIT_PTR
-	dt.tokenType = ttInt;
-#else
-	dt.tokenType = ttInt64;
-#endif
+	dt.tokenType = ttUnrecognizedToken;
 	dt.isReadOnly = true;
 	dt.isObjectHandle = true;
 	dt.isConstHandle = true;
@@ -129,8 +125,21 @@ asCDataType asCDataType::CreateNullHandle()
 	return dt;
 }
 
+bool asCDataType::IsNullHandle() const
+{
+	if( tokenType == ttUnrecognizedToken &&
+		objectType == 0 &&
+		isObjectHandle  )
+		return true;
+
+	return false;
+}
+
 asCString asCDataType::Format() const
 {
+	if( IsNullHandle() )
+		return "<null handle>";
+
 	asCString str;
 
 	if( isReadOnly )
@@ -534,6 +543,10 @@ int asCDataType::GetSizeInMemoryBytes() const
 
 	if( tokenType == ttBool )
 		return AS_SIZEOF_BOOL;
+
+	// null handle
+	if( tokenType == ttUnrecognizedToken )
+		return 4*PTR_SIZE;
 
 	return 4;
 }

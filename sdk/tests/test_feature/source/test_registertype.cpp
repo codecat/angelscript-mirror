@@ -413,7 +413,7 @@ bool TestRefScoped()
 	if( sizeof(void*) == 4 )
 	{
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
-						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int@const' to 'scoped&'.\n" )
+						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
 		{
 			printf(bout.buffer.c_str());
 			fail = true;
@@ -422,7 +422,7 @@ bool TestRefScoped()
 	else
 	{
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
-						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int64@const' to 'scoped&'.\n" )
+						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
 		{
 			printf(bout.buffer.c_str());
 			fail = true;

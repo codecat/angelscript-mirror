@@ -422,6 +422,29 @@ bool Test()
 		fail = true;
 	}
 
+	// Test 22
+	bout.buffer = "";
+	const char *script22 = 
+		"class Some{} \n"
+		"void Func(Some@ some) \n"
+		"{ \n"
+		"if( some is null) return; \n"
+		"Func_(null); \n"
+		"} \n"
+		"void Func_(uint i) \n"
+		"{ \n"
+		"} \n";
+
+	r = mod->AddScriptSection("22", script22);
+	r = mod->Build();
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "22 (2, 1) : Info    : Compiling void Func(Some@)\n"
+	                   "22 (5, 1) : Error   : No matching signatures to 'Func_(<null handle>)'\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success
