@@ -168,7 +168,9 @@ bool Test()
 //--------------------------------------------------------
 
 // This doesn't work on MSVC6. The template implementation isn't good enough.
-#if !defined(_MSC_VER) || _MSC_VER > 1200
+// It also doesn't work on MSVC2005, it gets confused on const methods that return void. Reported by Jeff Slutter.
+// TODO: Need to fix implementation for MSVC2005.
+#if !defined(_MSC_VER) || (_MSC_VER > 1200 && _MSC_VER != 1400) 
 
 #include "../../../add_on/autowrapper/aswrappedcall.h"
 

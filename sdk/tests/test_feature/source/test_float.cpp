@@ -87,6 +87,20 @@ bool Test()
 
 	engine->ExecuteString(0, "start()");
 
+	// The locale affects the way the compiler reads float values
+	setlocale(LC_NUMERIC, "");
+
+	float f;
+	engine->RegisterGlobalProperty("float f", &f);
+	r = engine->ExecuteString(0, "f = 3.14f;");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	if( f < 3.139999f || f > 3.140001f )
+		fail = true;
+
+	setlocale(LC_NUMERIC, "C");
+
 	engine->Release();
 
 	if( fail )

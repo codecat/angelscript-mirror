@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -33,6 +33,7 @@
 #include <stdlib.h>     // strtod(), strtol()
 #include <stdio.h>      // _vsnprintf()
 #include <string.h>     // some compilers declare memcpy() here
+#include <locale.h>     // setlocale()
 
 #include "as_config.h"
 
@@ -40,6 +41,7 @@
 #include <memory.h>
 #endif
 
+#include "as_string.h"
 #include "as_string_util.h"
 
 // Returns the number of characters written or -1 if the buffer was too small
@@ -59,7 +61,14 @@ double asStringScanDouble(const char *string, size_t *numScanned)
 {
 	char *end;
 
+	// Set the locale to C so that we are guaranteed to parse the float value correctly
+	asCString orig = setlocale(LC_NUMERIC, 0);
+	setlocale(LC_NUMERIC, "C");
+
 	double res = strtod(string, &end);
+
+	// Restore the locale
+	setlocale(LC_NUMERIC, orig.AddressOf());
 
 	if( numScanned )
 		*numScanned = end - string;

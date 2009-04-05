@@ -5425,16 +5425,22 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			GETSTRING(value, &script->code[vnode->tokenPos], vnode->tokenLength);
 
 			// TODO: Check for overflow
-			float v = float(asStringScanDouble(value.AddressOf(), 0));
+
+			size_t numScanned;
+			float v = float(asStringScanDouble(value.AddressOf(), &numScanned));
 			ctx->type.SetConstantF(asCDataType::CreatePrimitive(ttFloat, true), v);
+			asASSERT(numScanned == vnode->tokenLength - 1);
 		}
 		else if( vnode->tokenType == ttDoubleConstant )
 		{
 			GETSTRING(value, &script->code[vnode->tokenPos], vnode->tokenLength);
 
 			// TODO: Check for overflow
-			double v = asStringScanDouble(value.AddressOf(), 0);
+
+			size_t numScanned;
+			double v = asStringScanDouble(value.AddressOf(), &numScanned);
 			ctx->type.SetConstantD(asCDataType::CreatePrimitive(ttDouble, true), v);
+			asASSERT(numScanned == vnode->tokenLength);
 		}
 		else if( vnode->tokenType == ttTrue ||
 			     vnode->tokenType == ttFalse )
