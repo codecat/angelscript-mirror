@@ -433,28 +433,31 @@ asCScriptObject &ScriptObject_Assignment(asCScriptObject *other, asCScriptObject
 
 asCScriptObject &asCScriptObject::operator=(const asCScriptObject &other)
 {
-	asASSERT( other.objType->DerivesFrom(objType) );
-
-	asCScriptEngine *engine = objType->engine;
-
-	// Copy all properties
-	for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
+	if( &other != this )
 	{
-		asCObjectProperty *prop = objType->properties[n];
-		if( prop->type.IsObject() )
+		asASSERT( other.objType->DerivesFrom(objType) );
+
+		asCScriptEngine *engine = objType->engine;
+
+		// Copy all properties
+		for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
 		{
-			void **dst = (void**)(((char*)this) + prop->byteOffset);
-			void **src = (void**)(((char*)&other) + prop->byteOffset);
-			if( !prop->type.IsObjectHandle() )
-				CopyObject(*src, *dst, prop->type.GetObjectType(), engine);
+			asCObjectProperty *prop = objType->properties[n];
+			if( prop->type.IsObject() )
+			{
+				void **dst = (void**)(((char*)this) + prop->byteOffset);
+				void **src = (void**)(((char*)&other) + prop->byteOffset);
+				if( !prop->type.IsObjectHandle() )
+					CopyObject(*src, *dst, prop->type.GetObjectType(), engine);
+				else
+					CopyHandle((asDWORD*)src, (asDWORD*)dst, prop->type.GetObjectType(), engine);
+			}
 			else
-				CopyHandle((asDWORD*)src, (asDWORD*)dst, prop->type.GetObjectType(), engine);
-		}
-		else
-		{
-			void *dst = ((char*)this) + prop->byteOffset;
-			void *src = ((char*)&other) + prop->byteOffset;
-			memcpy(dst, src, prop->type.GetSizeInMemoryBytes());
+			{
+				void *dst = ((char*)this) + prop->byteOffset;
+				void *src = ((char*)&other) + prop->byteOffset;
+				memcpy(dst, src, prop->type.GetSizeInMemoryBytes());
+			}
 		}
 	}
 

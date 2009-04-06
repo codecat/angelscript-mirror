@@ -3,6 +3,10 @@ using namespace std;
 
 #define TESTNAME "TestOptimize"
 
+// TODO: asIScriptFunction should have a method for querying the size of the bytecode. I can 
+//       use that to automate some of the regressions tests for bytecode optimization. With it
+//       I won't accidentally increase the size of the produced bytecode with compiler changes.
+
 static const char *script1 =
 "void TestOptimizeAdd()        \n"
 "{                             \n"

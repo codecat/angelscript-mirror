@@ -228,15 +228,18 @@ void RegisterArrayObject(asCScriptEngine *engine)
 
 asCArrayObject &asCArrayObject::operator=(asCArrayObject &other)
 {
-	if( buffer )
+	if( &other != this )
 	{
-		DeleteBuffer(buffer);
-		buffer = 0;
-	}
+		if( buffer )
+		{
+			DeleteBuffer(buffer);
+			buffer = 0;
+		}
 
-	// Copy all elements from the other array
-	CreateBuffer(&buffer, other.buffer->numElements);
-	CopyBuffer(buffer, other.buffer);	
+		// Copy all elements from the other array
+		CreateBuffer(&buffer, other.buffer->numElements);
+		CopyBuffer(buffer, other.buffer);	
+	}
 
 	return *this;
 }

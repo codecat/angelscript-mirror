@@ -354,6 +354,29 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	// Make sure it is possible to copy a script class that contains an array
+	const char *script15 = 
+		"class Some \n"
+        "{ \n"
+        "    int[] i; // need be array \n"
+        "} \n"
+        "void main() \n"
+        "{ \n"
+        "    Some e; \n"
+        "    e=some(e); // crash \n"
+        "} \n"
+        "Some@ some(Some@ e) \n"
+        "{ \n"
+        "    return e; \n"
+        "} \n";
+
+	mod->AddScriptSection(TESTNAME, script15);
+	r = mod->Build();
+	if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "main()");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
 	engine->Release();
 
 	// Success
