@@ -75,6 +75,17 @@
 // Disables all platform specific code. Only the asCALL_GENERIC calling
 // convention will be available in with this flag set.
 
+// AS_DOUBLEBYTE_CHARSET
+// When this flag is defined, the parser will treat all characters in strings
+// that are greater than 127 as lead characters and automatically include the
+// next character in the script without checking its value. This should be 
+// compatible with common encoding schemes, e.g. Big5. Shift-JIS is not compatible 
+// though as it encodes some single byte characters above 127. 
+//
+// If support for international text is desired, it is recommended that UTF-8
+// is used as this is supported natively by the compiler without the use for this
+// preprocessor flag.
+
 
 
 

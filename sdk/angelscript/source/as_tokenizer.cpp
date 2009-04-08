@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -114,6 +114,18 @@ asETokenClass asCTokenizer::ParseToken()
 
 bool asCTokenizer::IsWhiteSpace()
 {
+	// Treat UTF8 byte-order-mark (EF BB BF) as whitespace
+	if( sourceLength >= 3 && 
+		asBYTE(source[0]) == 0xEFu &&
+		asBYTE(source[1]) == 0xBBu &&
+		asBYTE(source[2]) == 0xBFu )
+	{
+		tokenType = ttWhiteSpace;
+		tokenLength = 3;
+		return true;
+	}
+
+	// Group all other white space characters into one
 	size_t n;
 	int numWsChars = (int)strlen(whiteSpace);
 	for( n = 0; n < sourceLength; n++ )
@@ -288,6 +300,16 @@ bool asCTokenizer::IsConstant()
 			size_t n;
 			for( n = 1; n < sourceLength; n++ )
 			{
+#ifdef AS_DOUBLEBYTE_CHARSET
+				if( source[n] & 0x80 )
+				{
+					// This is a leading character in a double byte character, 
+					// include both in the string and continue processing.
+					n++;
+					continue;
+				}
+#endif
+
 				if( source[n] == '\n' ) 
 					tokenType = ttMultilineStringConstant;
 				if( source[n] == quote && evenSlashes )

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.1 WIP - 2009/04/06</h2>
+<h2>Version 2.16.1 WIP - 2009/04/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library
 <ul>
 <li>The built-in array type is now implemented using a template type.
+<li>The tokenizer now recognizes the UTF8 byte-order-mark as whitespace permitting the compilation of UTF8 encoded scripts.
+<li>Added support for multibyte character sets through the preprocessor flag AS_DOUBLEBYTE_CHARSET, it's recommended to use UTF8 instead though. (Thanks loverlin)
 </ul>
 </ul>
 

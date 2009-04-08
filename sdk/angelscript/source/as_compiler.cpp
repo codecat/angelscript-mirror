@@ -5657,6 +5657,18 @@ void asCCompiler::ProcessStringConstant(asCString &cstr)
 
 	for( asUINT n = 0; n < cstr.GetLength(); n++ )
 	{
+#ifdef AS_DOUBLEBYTE_CHARSET
+		if( cstr[n] & 0x80 )
+		{
+			// This is the lead character of a double byte character
+			// include the trail character without checking it's value.
+			str.PushLast(cstr[n]);
+			n++;
+			str.PushLast(cstr[n]);
+			continue;
+		}
+#endif
+
 		if( cstr[n] == '\\' )
 		{
 			++n;

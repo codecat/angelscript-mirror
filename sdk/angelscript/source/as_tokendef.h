@@ -50,7 +50,7 @@ enum eTokenType
 	ttEnd,				   // End of file
 
 	// White space and comments
-	ttWhiteSpace,          // ' ', '\t', '\r', '\n'
+	ttWhiteSpace,          // ' ', '\t', '\r', '\n', UTF8 byte-order-mark
 	ttOnelineComment,      // // \n
 	ttMultilineComment,    // /* */
 
