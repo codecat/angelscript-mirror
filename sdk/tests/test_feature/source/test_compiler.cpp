@@ -445,6 +445,31 @@ bool Test()
 		fail = true;
 	}
 
+	// Test 23 - don't assert on invalid condition expression
+	bout.buffer = "";
+	const char *script23 = "openHandle.IsValid() ? 1 : 0\n";
+
+	r = engine->ExecuteString(0, script23);
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'openHandle' is not declared\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test 24 - don't assert on invalid return statement
+	bout.buffer = "";
+	const char *script24 = "string SomeFunc() { return null; }";
+	r = mod->AddScriptSection("24", script24);
+	r = mod->Build();
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "24 (1, 1) : Info    : Compiling string SomeFunc()\n"
+		               "24 (1, 28) : Error   : Can't implicitly convert from '<null handle>' to 'string'.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success

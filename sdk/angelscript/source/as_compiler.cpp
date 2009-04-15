@@ -1144,6 +1144,16 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			// Implicitly convert primitives to the parameter type
 			ImplicitConversion(ctx, dt, node, false, true, reservedVars);
 
+			// Was the conversion successful?
+			if( !ctx->type.dataType.IsEqualExceptRef(dt) )
+			{
+				asCString str;
+				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), dt.Format().AddressOf());
+				Error(str.AddressOf(), node);
+				
+				ctx->type.Set(dt);
+			}
+
 			if( dt.IsObjectHandle() )
 				ctx->type.isExplicitHandle = true;
 
@@ -4892,10 +4902,15 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 		// Compile the condition
 		asSExprContext e(engine);
 		int r = CompileExpression(cexpr, &e); 
-		ctype = e.type;
-		if( r >= 0 && !ctype.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
+		if( r < 0 )
+			e.type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
+		if( r >= 0 && !e.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
+		{
 			Error(TXT_EXPR_MUST_BE_BOOL, cexpr);
-
+			e.type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
+		}
+		ctype = e.type;
+		
 		if( e.type.dataType.IsReference() ) ConvertToVariable(&e);
 		ProcessDeferredParams(&e);
 

@@ -242,7 +242,9 @@ bool Test()
 		               "script (1, 1) : Error   : Data type can't be 'ref'\n"
 					   "script (1, 10) : Error   : Parameter type can't be 'ref'\n"
 					   "script (1, 23) : Error   : Data type can't be 'ref'\n"
-					   "script (1, 34) : Error   : No matching signatures to 'ref()'\n" )
+					   "script (1, 34) : Error   : No matching signatures to 'ref()'\n"
+					   "script (1, 34) : Error   : Can't implicitly convert from 'const int' to 'ref'.\n"
+					   "script (1, 34) : Error   : There is no copy operator for this type available.\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

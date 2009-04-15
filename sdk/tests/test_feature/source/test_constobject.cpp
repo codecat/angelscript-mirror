@@ -193,8 +193,11 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "obj @a; const obj @b; @a = @b;");
 	if( r >= 0 ) fail = true;
-	if(bout.buffer != "ExecuteString (1, 28) : Error   : Can't implicitly convert from 'const obj@&' to 'obj@&'.\n" )
+	if(bout.buffer != "ExecuteString (1, 28) : Error   : Can't implicitly convert from 'const obj@' to 'obj@'.\n" )
+	{
+		printf(bout.buffer.c_str());
 		fail = true;
+	}
 
 	// Allow a non-const handle to be assigned to a const handle
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
