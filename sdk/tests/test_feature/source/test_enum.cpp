@@ -55,7 +55,11 @@ std::string buffer;
 static void scriptOutput(int val1)
 {
 	char buf[256];
+#if _MSC_VER >= 1500
+	sprintf_s(buf, 255, "%d\n", val1);
+#else
 	sprintf(buf, "%d\n", val1);
+#endif
 	buffer += buf;
 }
 

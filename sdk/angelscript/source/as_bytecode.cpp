@@ -1348,6 +1348,7 @@ void asCByteCode::Output(asDWORD *array)
 			switch( bcTypes[instr->op] ) 
 			{
 			case BCTYPE_NO_ARG:
+				*(((asWORD*)ap)+1) = 0; // Clear upper bytes
 				break;
 			case BCTYPE_wW_rW_rW_ARG:
 				*(((asWORD*)ap)+1) = instr->wArg[0];
@@ -1385,6 +1386,7 @@ void asCByteCode::Output(asDWORD *array)
 			case BCTYPE_DW_DW_ARG:
 			case BCTYPE_QW_ARG:
 			case BCTYPE_DW_ARG:
+				*(((asWORD*)ap)+1) = 0; // Clear upper bytes
 				memcpy(ap+1, &instr->arg, instr->GetSize()*4-4);
 				break;
 			default:
@@ -1523,7 +1525,12 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 	asCString str = "AS_DEBUG/";
 	str += name;
 
+#if _MSC_VER >= 1500 
+	FILE *file;
+	fopen_s(&file, str.AddressOf(), "w");
+#else
 	FILE *file = fopen(str.AddressOf(), "w");
+#endif
 
 	fprintf(file, "Temps: ");
 	for( asUINT n = 0; n < temporaryVariables.GetLength(); n++ )
@@ -2184,13 +2191,19 @@ void asCByteCode::DefineTemporaryVariable(int varOffset)
 
 cByteInstruction::cByteInstruction()
 {
-	next = 0;
-	prev = 0;
+	next      = 0;
+	prev      = 0;
 
-	op = BC_LABEL;
+	op        = BC_LABEL;
 
-	size = 0;
-	stackInc = 0;
+	arg       = 0;
+	wArg[0]   = 0;
+	wArg[1]   = 0;
+	wArg[2]   = 0;
+	size      = 0;
+	stackInc  = 0;
+	marked    = false;
+	stackSize = 0;
 }
 
 void cByteInstruction::AddAfter(cByteInstruction *nextCode)

@@ -49,16 +49,18 @@ BEGIN_AS_NAMESPACE
 // internal
 asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
 {
-	this->engine     = engine;
-	funcType         = -1;
-	module           = mod; 
-	objectType       = 0; 
-	name             = ""; 
-	isReadOnly       = false;
-	stackNeeded      = 0;
-	sysFuncIntf      = 0;
-	signatureId      = 0;
-	scriptSectionIdx = -1;
+	this->engine           = engine;
+	funcType               = -1;
+	module                 = mod; 
+	objectType             = 0; 
+	name                   = ""; 
+	isReadOnly             = false;
+	stackNeeded            = 0;
+	sysFuncIntf            = 0;
+	signatureId            = 0;
+	scriptSectionIdx       = -1;
+	dontCleanUpOnException = false;
+	vfTableIdx             = -1;
 }
 
 // internal

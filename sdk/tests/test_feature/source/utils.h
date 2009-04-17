@@ -51,11 +51,15 @@ public:
 		if( msg->type == 2 ) msgType = "Info   ";
 
 		char buf[256];
-		#ifdef _MSC_VER
+#ifdef _MSC_VER
+#if _MSC_VER >= 1500
+		_snprintf_s(buf, 255, 255, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+#else
 		_snprintf(buf, 255, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
-		#else
+#endif
+#else
 		snprintf(buf, 255, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
-		#endif
+#endif
 		buf[255] = '\0';
 
 		buffer += buf;
@@ -64,18 +68,60 @@ public:
 	std::string buffer;
 };
 
+#ifdef STREAM_TO_FILE
 class CBytecodeStream : public asIBinaryStream
 {
 public:
-	CBytecodeStream() {wpointer = 0;rpointer = 0;}
+	CBytecodeStream(const char *name) {this->name = name; this->name += ".stream"; f = 0; isReading = false;}
+	~CBytecodeStream() { if( f ) fclose(f); }
+
+	void Write(const void *ptr, asUINT size) 
+	{
+		if( size == 0 ) return; 
+		if( f == 0 || isReading ) 
+		{ 
+			if( f ) 
+				fclose(f); 
+			f = fopen(name.c_str(), "wb"); 
+			isReading = false;
+		} 
+		fwrite(ptr, size, 1, f); 
+	}
+	void Read(void *ptr, asUINT size) 
+	{ 
+		if( size == 0 ) return; 
+		if( f == 0 || !isReading ) 
+		{ 
+			if( f ) 
+				fclose(f); 
+			f = fopen(name.c_str(), "rb");
+			isReading = true;
+		} 
+		fread(ptr, size, 1, f); 
+	}
+	void Restart() {if( f ) fseek(f, 0, SEEK_SET);}
+
+protected:
+	std::string name;
+	FILE *f;
+	bool isReading;
+};
+#else
+class CBytecodeStream : public asIBinaryStream
+{
+public:
+	CBytecodeStream(const char *name) {wpointer = 0;rpointer = 0;}
 
 	void Write(const void *ptr, asUINT size) {if( size == 0 ) return; buffer.resize(buffer.size() + size); memcpy(&buffer[wpointer], ptr, size); wpointer += size;}
 	void Read(void *ptr, asUINT size) {memcpy(ptr, &buffer[rpointer], size); rpointer += size;}
+	void Restart() {rpointer = 0;}
 
+protected:
 	int rpointer;
 	int wpointer;
 	std::vector<asBYTE> buffer;
 };
+#endif
 
 void PrintException(asIScriptContext *ctx);
 void Assert(asIScriptGeneric *gen);

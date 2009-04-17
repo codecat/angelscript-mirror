@@ -262,7 +262,7 @@ int asCScriptObject::Release()
 		CallDestructor();
 	}
 
-	// Now do the actual releasing (clearing the flag set by GC)
+	// Now do the actual releasing
 	int r = refCount.atomicDec();
 	if( r == 0 )
 	{

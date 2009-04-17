@@ -134,6 +134,7 @@ public:
 	asCArray<int>                lineNumbers;      // debug info
 	asCArray<asSScriptVariable*> variables;        // debug info
 	int                          scriptSectionIdx; // debug info
+	bool                         dontCleanUpOnException;   // Stub functions don't own the object and parameters
 
 	// Used by asFUNC_VIRTUAL
 	int                          vfTableIdx;

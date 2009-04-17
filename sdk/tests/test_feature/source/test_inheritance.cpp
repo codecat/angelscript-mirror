@@ -96,8 +96,8 @@ bool Test()
 	}
 
 	// Must make sure that the inheritance path is stored/restored with the saved byte code
-	{
-		CBytecodeStream stream;
+	{ 
+		CBytecodeStream stream(__FILE__"1");
 		r = mod->SaveByteCode(&stream);
 		if( r < 0 )
 		{

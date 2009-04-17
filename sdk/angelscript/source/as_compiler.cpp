@@ -204,6 +204,10 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 
 	byteCode.Finalize();
 
+	// Store the instantiated object as variable so it will be cleaned up on exception
+	objVariableTypes.PushLast(variableAllocations[0].GetObjectType());
+	objVariablePos.PushLast(GetVariableOffset(0));
+
 	// Copy byte code to the function
 	outFunc->byteCode.SetLength(byteCode.GetSize());
 	byteCode.Output(outFunc->byteCode.AddressOf());
@@ -212,6 +216,10 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	outFunc->lineNumbers = byteCode.lineNumbers;
 	outFunc->objVariablePos = objVariablePos;
 	outFunc->objVariableTypes = objVariableTypes;
+
+	// Tell the virtual machine not to clean up parameters on exception
+	outFunc->dontCleanUpOnException = true;
+
 /*
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
@@ -243,6 +251,9 @@ int asCCompiler::CompileTemplateFactoryStub(asCBuilder *builder, int trueFactory
 	outFunc->lineNumbers = byteCode.lineNumbers;
 	outFunc->objVariablePos = objVariablePos;
 	outFunc->objVariableTypes = objVariableTypes;
+
+	// Tell the virtual machine not to clean up the object on exception
+	outFunc->dontCleanUpOnException = true;
 
 	return 0;
 }
@@ -279,6 +290,13 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 			asCString str;
 			str.Format(TXT_DATA_TYPE_CANT_BE_s, returnType.Format().AddressOf());
 			Error(str.AddressOf(), func->firstChild);
+		}
+
+		// TODO: Add support for returning references
+		// The script language doesn't support returning references yet
+		if( returnType.IsReference() )
+		{
+			Error(TXT_SCRIPT_FUNCTIONS_DOESNT_SUPPORT_RETURN_REF, func->firstChild);
 		}
 	}
 	else

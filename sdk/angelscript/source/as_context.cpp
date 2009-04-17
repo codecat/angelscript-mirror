@@ -3387,7 +3387,11 @@ void asCContext::CleanStackFrame()
 	else
 		isStackMemoryNotAllocated = false;
 
-	// Clean object parameters sent by reference
+	// Functions that do not own the object and parameters shouldn't do any clean up
+	if( currentFunction->dontCleanUpOnException )
+		return;
+
+	// Clean object and parameters
 	int offset = 0;
 	if( currentFunction->objectType )
 	{

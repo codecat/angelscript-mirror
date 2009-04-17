@@ -58,7 +58,7 @@ bool Test()
 	DumpModule(mod);
 
 	// Save/Restore the bytecode and then test again for the loaded bytecode
-	CBytecodeStream stream;
+	CBytecodeStream stream(__FILE__"1");
 	mod->SaveByteCode(&stream);
 
 	mod = engine->GetModule("2", asGM_ALWAYS_CREATE);

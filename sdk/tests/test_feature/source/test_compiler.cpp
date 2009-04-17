@@ -360,8 +360,8 @@ bool Test()
 		fail = true;
 	}
 
-	// Test 19
-	// TODO: Give proper error upon returning a reference from script function
+	// Test 19 - Give proper error upon returning a reference from script function
+	// TODO: This should be allowed when proper support has been added
 	bout.buffer = "";
 	const char *script19 =
 		"class Object {}\n"
@@ -372,8 +372,9 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script19", script19, strlen(script19));
 	r = mod->Build();
-	if( r < 0 ) fail = true;
-	if( bout.buffer != "" )
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "script19 (2, 1) : Info    : Compiling Object& Test(Object&in)\n"
+		               "script19 (2, 1) : Error   : Script functions must not return references\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
@@ -465,6 +466,20 @@ bool Test()
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "24 (1, 1) : Info    : Compiling string SomeFunc()\n"
 		               "24 (1, 28) : Error   : Can't implicitly convert from '<null handle>' to 'string'.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test 25 - don't permit returning references from script functions
+	// TODO: This should fail to compile because the reference is to a temporary variable
+	bout.buffer = "";
+	const char *script25 = "string &SomeFunc() { return ''; }";
+	r = mod->AddScriptSection("25", script25);
+	r = mod->Build();
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "25 (1, 1) : Info    : Compiling string& SomeFunc()\n"
+		               "25 (1, 1) : Error   : Script functions must not return references\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

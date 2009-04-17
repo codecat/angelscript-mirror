@@ -14,18 +14,27 @@ const char *script1 =
 "  }                   \n"
 "}                     \n";
 
+static void print(asIScriptGeneric *gen)
+{
+	std::string *s = (std::string*)gen->GetArgAddress(0);
+}
+
 bool TestException()
 {
 	bool fail = false;
+	int r;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptString(engine);
-
 
 	COutStream out;	
-	asIScriptContext *ctx;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	int r = engine->ExecuteString(0, "int a = 0;\na = 10/a;", &ctx); // Throws an exception
+
+	RegisterScriptString(engine);
+	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
+
+
+	asIScriptContext *ctx;
+	r = engine->ExecuteString(0, "int a = 0;\na = 10/a;", &ctx); // Throws an exception
 	if( r == asEXECUTION_EXCEPTION )
 	{
 		int func = ctx->GetExceptionFunction();
@@ -79,6 +88,40 @@ bool TestException()
 	{
 		fail = true;
 	}
+
+	// A test to verify behaviour when exception occurs in script class constructor
+	const char *script2 = "class SomeClassA \n"
+	"{ \n"
+	"	int A; \n"
+	" \n"
+	"	~SomeClassA() \n"
+	"	{ \n"
+	"		print('destruct'); \n"
+	"	} \n"
+	"} \n"
+	"class SomeClassB \n"
+	"{ \n"
+	"	SomeClassA@ nullptr; \n"
+	"	SomeClassB(SomeClassA@ aPtr) \n"
+	"	{ \n"
+	"		this.nullptr.A=100; // Null pointer access. After this class a is destroyed. \n"
+	"	} \n"
+	"} \n"
+	"void test() \n"
+	"{ \n"
+	"	SomeClassA a; \n"
+	"	SomeClassB(a); \n"
+	"} \n";
+	mod->AddScriptSection("script2", script2);
+	r = mod->Build();
+	if( r < 0 ) fail = true;
+	r = engine->ExecuteString(0, "test()");
+	if( r != asEXECUTION_EXCEPTION )
+	{
+		fail = true;
+	}
+
+	engine->GarbageCollect();
 
 	engine->Release();
 

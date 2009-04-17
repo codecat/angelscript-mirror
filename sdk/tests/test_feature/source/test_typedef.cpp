@@ -99,7 +99,7 @@ static int testTypedef(CBytecodeStream &codeStream, bool save)
 bool Test()
 {
 	int r;
-	CBytecodeStream	stream;
+	CBytecodeStream	stream(__FILE__"1");
 
 	r = testTypedef(stream, true);
 	if(r >= 0) 

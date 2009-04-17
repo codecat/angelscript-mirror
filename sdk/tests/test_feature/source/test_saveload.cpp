@@ -280,7 +280,7 @@ bool Test()
 	TestScripts(engine);
 
 	// Save the compiled byte code
-	CBytecodeStream stream;
+	CBytecodeStream stream(__FILE__"1");
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
@@ -300,7 +300,7 @@ bool Test()
 	engine->Release();
 	engine = ConfigureEngine();
 
-	stream.rpointer = 0;
+	stream.Restart();
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->LoadByteCode(&stream);
 
@@ -321,7 +321,7 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script3", script3, strlen(script3));
 	mod->Build();
-	CBytecodeStream stream2;
+	CBytecodeStream stream2(__FILE__"2");
 	mod->SaveByteCode(&stream2);
 
 	engine->Release();
@@ -350,7 +350,7 @@ bool Test()
 		mod->AddScriptSection("script3", script3, strlen(script3));
 		mod->Build();
 		
-		CBytecodeStream stream3;
+		CBytecodeStream stream3(__FILE__"3");
 		mod->SaveByteCode(&stream3);
 		
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -384,7 +384,7 @@ bool Test()
 		if( ctx ) ctx->Release();
 
 		// Save the bytecode
-		CBytecodeStream stream4;
+		CBytecodeStream stream4(__FILE__"4");
 		mod = engine->GetModule(0);
 		mod->SaveByteCode(&stream4);
 		engine->Release();
@@ -439,7 +439,7 @@ bool Test()
 		if( ctx ) ctx->Release();
 
 		// Save the bytecode
-		CBytecodeStream stream;
+		CBytecodeStream stream(__FILE__"5");
 		mod = engine->GetModule(0);
 		mod->SaveByteCode(&stream);
 		engine->Release();
@@ -497,7 +497,7 @@ bool Test2()
 	if( r < 0 )
 		fail = true;
 
-	CBytecodeStream stream;
+	CBytecodeStream stream(__FILE__"6");
 	mod = engine->GetModule(0);
 	r = mod->SaveByteCode(&stream);
 	if( r < 0 )

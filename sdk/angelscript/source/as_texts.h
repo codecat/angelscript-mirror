@@ -160,6 +160,7 @@
 #define TXT_REF_IS_TEMP                   "Reference is temporary"
 #define TXT_RETURN_CANT_BE_s              "Return type can't be '%s'"
 
+#define TXT_SCRIPT_FUNCTIONS_DOESNT_SUPPORT_RETURN_REF "Script functions must not return references"
 #define TXT_SIGNED_UNSIGNED_MISMATCH      "Signed/Unsigned mismatch"
 #define TXT_STRINGS_NOT_RECOGNIZED        "Strings are not recognized by the application"
 #define TXT_SWITCH_CASE_MUST_BE_CONSTANT  "Case expressions must be constants"

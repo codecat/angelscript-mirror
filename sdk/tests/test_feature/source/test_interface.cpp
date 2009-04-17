@@ -310,7 +310,7 @@ bool Test2()
 	if( r < 0 )
 		fail = true;
 
-	CBytecodeStream stream;
+	CBytecodeStream stream(__FILE__"1");
 	asIScriptModule *module = engine->GetModule("a");
 	module->SaveByteCode(&stream);
 	module = engine->GetModule("b", asGM_CREATE_IF_NOT_EXISTS);
