@@ -34,6 +34,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The built-in array type is now implemented using a template type.
 <li>The tokenizer now recognizes the UTF8 byte-order-mark as whitespace permitting the compilation of UTF8 encoded scripts.
 <li>Added support for multibyte character sets through the preprocessor flag AS_DOUBLEBYTE_CHARSET, it's recommended to use UTF8 instead though. (Thanks loverlin)
+<li>Added asEP_REQUIRE_ENUM_SCOPE to force the use of enum scope when accessing enum values. (Thanks Jeff Slutter)
+</ul>
+<li>Script language
+<ul>
+<li>Enum values can now be prefixed with the enum type to give the exact enum value when multiple enums declare the same name. (Thanks Jeff Slutter)
 </ul>
 </ul>
 

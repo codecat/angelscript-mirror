@@ -5344,24 +5344,41 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				}
 			}
 
-			// Is it an enum value?
-			// TODO: scope: Should allow use of the enum type as scope name
-			if( !found && scope == "" )
+			if( !found )
 			{
+				asCObjectType *scopeType = 0;
+				if( scope != "" )
+				{
+					// resolve the type before the scope
+					scopeType = builder->GetObjectType( scope.AddressOf() );
+				}
+
+				// Is it an enum value?
 				asDWORD value;
 				asCDataType dt;
-				int e = builder->GetEnumValue(name.AddressOf(), dt, value);
-				if( e == 1 )
+				if( scopeType && builder->GetEnumValueFromObjectType(scopeType, name.AddressOf(), dt, value) )
 				{
+					// scoped enum value found
 					found = true;
-					ctx->type.SetConstantDW(dt, value);
 				}
-				else if( e == 2 )
+				else if( scope == "" && !engine->ep.requireEnumScope )
 				{
-					// Found multiple values
-					found = true;
+					// look for the enum value with no namespace
+					int e = builder->GetEnumValue(name.AddressOf(), dt, value);
+					if( e )
+					{
+						found = true;
+						if( e == 2 )
+						{
+							Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, vnode);
+						}
+					}
+				}
+
+				if( found )
+				{
+					// an enum value was resolved
 					ctx->type.SetConstantDW(dt, value);
-					Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, vnode);
 				}
 			}
 

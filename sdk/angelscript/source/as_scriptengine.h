@@ -368,6 +368,7 @@ public:
 		bool allowImplicitHandleTypes;
 		bool buildWithoutLineCues;
 		bool initGlobalVarsAfterBuild;
+		bool requireEnumScope;
 	} ep;
 };
 

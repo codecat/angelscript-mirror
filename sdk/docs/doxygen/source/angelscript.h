@@ -104,7 +104,9 @@ enum asEEngineProp
 	//! Remove SUSPEND instructions between each statement. Default: false.
 	asEP_BUILD_WITHOUT_LINE_CUES      = 8,
 	//! Initialize global variables after a build. Default: true.
-	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9
+	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9,
+	//! When set the enum values must be prefixed with the enum type. Default: false.
+	asEP_REQUIRE_ENUM_SCOPE           = 10
 };
 
 // Calling conventions

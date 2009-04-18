@@ -35,6 +35,7 @@ static const char *const script =
 "   output(TEST1205);                               \n"
 "   output(TEST1_0);                                \n"
 "   output(TEST1_1);                                \n"
+"   output(TEST2_ENUM::TEST2);                      \n"
 "	return TEST2;									\n"
 "}													\n";
 
@@ -73,13 +74,14 @@ static bool TestEnum()
 	}
 
 	asIScriptEngine   *engine;
-	COutStream		   out;
 	CBufferedOutStream bout;
 	int		 		   r;
 	bool               fail = false;
 
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	r = engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+	bout.buffer = "";
+	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 	// Register the enum value
 	r = engine->RegisterEnum("TEST_ENUM"); assert(r >= 0);
@@ -92,6 +94,9 @@ static bool TestEnum()
 
 	// Test calling generic function with enum value
 	r = engine->ExecuteString(0, "funce(ENUM1);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	r = engine->ExecuteString(0, "funce(TEST_ENUM::ENUM3);");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -115,7 +120,7 @@ static bool TestEnum()
 	r = engine->ExecuteString(NULL, "Test1()");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
-	if( buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n1205\n0\n1\n" )
+	if( buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n1205\n0\n1\n2\n" )
 	{
 		fail = true;
 		printf(buffer.c_str());
@@ -166,7 +171,7 @@ static bool TestEnum()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 	// enum value name can be overloaded with variable name in another scope
 	buffer = "";
@@ -191,7 +196,7 @@ static bool TestEnum()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 	// constant number can be explicitly cast to enum type
 	r = engine->ExecuteString(0, "TEST_ENUM val = TEST_ENUM(1)");
@@ -305,6 +310,70 @@ static bool TestEnum()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
+
+	// Test specifying an unknown enum type name
+	bout.buffer = "";
+	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	const char *script7 = "void f() { funce(UNKNOWN_ENUM::ENUM1); }";
+	mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("error", script7, strlen(script7));
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
+                       "error (1, 32) : Error   : 'UNKNOWN_ENUM::ENUM1' is not declared\n")
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test specifying a non enum type name before the scope
+	bout.buffer = "";
+	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	const char *script8 =
+	"class SomeClass\n"
+	"{\n"
+	"  int SOMEVALUE;\n"
+	"}\n"
+	"void f() { funce(SomeClass::SOMEVALUE); }";
+	mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("error", script8, strlen(script8));
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "error (5, 1) : Info    : Compiling void f()\n"
+		               "error (5, 29) : Error   : 'SomeClass::SOMEVALUE' is not declared\n")
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test engine property
+	r = engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 1);
+	if( r != 0 )
+		fail = true;
+
+	bout.buffer = "";
+	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	const char *script9 = "void f() { funce(ENUM1); }";
+	mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("error", script9, strlen(script9));
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
+		               "error (1, 18) : Error   : 'ENUM1' is not declared\n")
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	buffer = "";
+	r = engine->ExecuteString(0, "output(TEST_ENUM::ENUM1);");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( buffer != "1\n" )
+		fail = true;
 
 	engine->Release();
 

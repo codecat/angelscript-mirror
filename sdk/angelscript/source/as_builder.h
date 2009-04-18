@@ -142,6 +142,7 @@ protected:
 
 	asCObjectType *GetObjectType(const char *type);
 
+	int GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue);
 	int GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue);
 
 	void ParseScripts();

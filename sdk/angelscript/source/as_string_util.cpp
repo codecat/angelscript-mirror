@@ -50,7 +50,11 @@ int asStringFormat(char *string, size_t maxLength, const char *format, ...)
 	va_list args;
 	va_start(args, format);
 
+#if defined(_MSC_VER) && _MSC_VER >= 1500
+	int r = vsnprintf_s(string, maxLength, maxLength, format, args);
+#else
 	int r = vsnprintf(string, maxLength, format, args);
+#endif
 
 	va_end(args);
 

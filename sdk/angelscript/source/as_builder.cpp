@@ -2553,6 +2553,24 @@ asCObjectType *asCBuilder::GetObjectType(const char *type)
 	return ot;
 }
 
+int asCBuilder::GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue)
+{
+	if( !objType || !(objType->flags & asOBJ_ENUM) )
+		return 0;
+
+	for( asUINT n = 0; n < objType->enumValues.GetLength(); ++n )
+	{
+		if( objType->enumValues[n]->name == name )
+		{
+			outDt = asCDataType::CreateObject(objType, true);
+			outValue = objType->enumValues[n]->value;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue)
 {
 	bool found = false;
@@ -2562,25 +2580,16 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 	for( t = 0; t < engine->objectTypes.GetLength(); t++ )
 	{
 		asCObjectType *ot = engine->objectTypes[t];
-		if( ot && (ot->flags & asOBJ_ENUM) )
+		if( GetEnumValueFromObjectType( ot, name, outDt, outValue ) )
 		{
-			for( asUINT n = 0; n < ot->enumValues.GetLength(); n++ )
+			if( !found )
 			{
-				if( ot->enumValues[n]->name == name )
-				{
-					if( !found )
-					{
-						found = true;
-						outDt = asCDataType::CreateObject(ot, true);
-						outValue = ot->enumValues[n]->value;
-						break;
-					}
-					else
-					{
-						// Found more than one value in different enum types
-						return 2;
-					}
-				}
+				found = true;
+			}
+			else
+			{
+				// Found more than one value in different enum types
+				return 2;
 			}
 		}
 	}
@@ -2588,25 +2597,16 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 	for( t = 0; t < module->enumTypes.GetLength(); t++ )
 	{
 		asCObjectType *ot = module->enumTypes[t];
-		if( ot && (ot->flags & asOBJ_ENUM) )
+		if( GetEnumValueFromObjectType( ot, name, outDt, outValue ) )
 		{
-			for( asUINT n = 0; n < ot->enumValues.GetLength(); n++ )
+			if( !found )
 			{
-				if( ot->enumValues[n]->name == name )
-				{
-					if( !found )
-					{
-						found = true;
-						outDt = asCDataType::CreateObject(ot, true);
-						outValue = ot->enumValues[n]->value;
-						break;
-					}
-					else
-					{
-						// Found more than one value in different enum types
-						return 2;
-					}
-				}
+				found = true;
+			}
+			else
+			{
+				// Found more than one value in different enum types
+				return 2;
 			}
 		}
 	}

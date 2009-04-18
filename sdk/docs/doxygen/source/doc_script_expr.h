@@ -330,7 +330,7 @@ not give the desired order of evaluation.
   void function()
   {
     int value;        // local variable overloads the global variable
-    :: value = value; // use scope resolution operator to refer to the global variable 
+    ::&empty;value = value; // use scope resolution operator to refer to the global variable 
   } 
 </pre>
 
