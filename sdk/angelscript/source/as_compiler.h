@@ -145,16 +145,12 @@ protected:
 	void PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asCByteCode *bc, asCScriptNode *node);
 	bool IsVariableInitialized(asCTypeInfo *type, asCScriptNode *node);
 	void Dereference(asSExprContext *ctx, bool generateCode);
-	void ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
-	void ImplicitConversionConstant(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit);
 	bool CompileRefCast(asSExprContext *ctx, const asCDataType &to, bool isExplicit, bool generateCode = true);
-	void ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
-	void ImplicitConversionFromObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0);
 	int  MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum, bool allowObjectConstruct = true);
-	void PerformFunctionCall(int funcID, asSExprContext *out, bool isConstructor = false, asCArray<asSExprContext*> *args = 0, asCObjectType *objType = 0, bool useVariable = false, int varOffset = 0);
-	void MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprContext *> &args, bool addOneToOffset);
-	void PrepareFunctionCall(int funcID, asCByteCode *bc, asCArray<asSExprContext *> &args);
-	void AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args, asSExprContext *ctx, bool deferAll);
+	void PerformFunctionCall(int funcId, asSExprContext *out, bool isConstructor = false, asCArray<asSExprContext*> *args = 0, asCObjectType *objTypeForConstruct = 0, bool useVariable = false, int varOffset = 0);
+	void MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprContext *> &args, bool addOneToOffset);
+	void PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asSExprContext *> &args);
+	void AfterFunctionCall(int funcId, asCArray<asSExprContext*> &args, asSExprContext *ctx, bool deferAll);
 	void ProcessDeferredParams(asSExprContext *ctx);
 	void PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction = false, int refType = 0, asCArray<int> *reservedVars = 0);
 	void PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction = false, int refType = 0, asCArray<int> *reservedVars = 0);
@@ -172,6 +168,13 @@ protected:
 	void PushVariableOnStack(asSExprContext *ctx, bool asReference);
 	int  TokenToBehaviour(int token);
 	asCString GetScopeFromNode(asCScriptNode *node);
+
+	void ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
+	void ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0);
+	void ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0);
+	void ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
+	void ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
+	void ImplicitConversionConstant(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit);
 
 	void LineInstr(asCByteCode *bc, size_t pos);
 

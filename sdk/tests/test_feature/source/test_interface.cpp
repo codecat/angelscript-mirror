@@ -150,8 +150,8 @@ bool Test()
 					   "TestInterface (11, 9) : Error   : Data type can't be 'intf'\n"
 					   "TestInterface (13, 8) : Error   : There is no copy operator for this type available.\n"
 					   "TestInterface (13, 6) : Error   : There is no copy operator for this type available.\n"
-					   "TestInterface (15, 16) : Error   : Can't implicitly convert from 'myclass@' to 'nointf@&'.\n"
-					   "TestInterface (16, 16) : Error   : Can't implicitly convert from 'intf@' to 'myclass@&'.\n" )
+					   "TestInterface (15, 16) : Error   : Can't implicitly convert from 'myclass&' to 'nointf@&'.\n"
+					   "TestInterface (16, 16) : Error   : Can't implicitly convert from 'intf@&' to 'myclass@&'.\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

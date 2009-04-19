@@ -111,10 +111,9 @@
 // Compiler differences
 //-----------------------------------------
 
-// vsnprintf()
-// Some compilers use different names for this function. If your compiler
-// doesn't use the name vsnprintf() then you need to write a macro to translate
-// the function into its real name.
+// asVSNPRINTF(a,b,c,d)
+// Some compilers use different names for this function. You must 
+// define this macro to map to the proper function.
 
 // ASM_AT_N_T or ASM_INTEL
 // You should choose what inline assembly syntax to use when compiling.
@@ -288,7 +287,9 @@
 	#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 	#define THISCALL_PASS_OBJECT_POINTER_IN_ECX
 	#if _MSC_VER < 1500 // MSVC++ 9 (aka MSVC++ .NET 2008)
-		#define vsnprintf(a, b, c, d) _vsnprintf(a, b, c, d)
+		#define asVSNPRINTF(a, b, c, d) _vsnprintf(a, b, c, d)
+	#else
+		#define asVSNPRINTF(a, b, c, d) vsnprintf_s(a, b, _TRUNCATE, c, d)
 	#endif
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
@@ -330,7 +331,7 @@
 	#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+3))
 	#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 	#define THISCALL_PASS_OBJECT_POINTER_IN_ECX
-	#define vsnprintf(a, b, c, d) _vsnprintf(a, b, c, d)
+	#define asVSNPRINTF(a, b, c, d) _vsnprintf(a, b, c, d)
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
 	#define AS_SIZEOF_BOOL 1
@@ -361,6 +362,7 @@
 	#define ASM_AT_N_T  // AT&T style inline assembly
 	#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR)
 	#define AS_SIZEOF_BOOL 1
+	#define asVSNPRINTF(a, b, c, d) vsnprintf(a, b, c, d)
 
 	// SN doesnt seem to like STDCALL.
 	// Maybe it can work with some fiddling, but I can't imagine linking to
@@ -392,6 +394,7 @@
 #else
 	#define MULTI_BASE_OFFSET(x) (*((asQWORD*)(&x)+1))
 #endif
+	#define asVSNPRINTF(a, b, c, d) vsnprintf(a, b, c, d)
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
 	#define COMPLEX_OBJS_PASSED_BY_REF
 	#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR)

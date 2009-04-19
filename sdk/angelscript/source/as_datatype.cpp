@@ -445,6 +445,10 @@ bool asCDataType::IsPrimitive() const
 	if( objectType )
 		return false;
 
+	// Null handle doesn't have an objectType, but it is not a primitive
+	if( tokenType == ttUnrecognizedToken )
+		return false;
+
 	return true;
 }
 

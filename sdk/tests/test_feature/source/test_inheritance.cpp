@@ -187,7 +187,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	{
 		fail = true;
 	}
-	if( bout.buffer != "ExecuteString (1, 22) : Error   : Can't implicitly convert from 'Base@' to 'Derived@&'.\n" )
+	if( bout.buffer != "ExecuteString (1, 22) : Error   : Can't implicitly convert from 'Base@const&' to 'Derived@&'.\n" )
 	{
 		fail = true;
 		printf(bout.buffer.c_str());

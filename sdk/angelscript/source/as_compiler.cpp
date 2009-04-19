@@ -971,7 +971,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		{
 			// If the reference is const, then it is not necessary to make a copy if the value already is a variable
 			// Even if the same variable is passed in another argument as non-const then there is no problem
-			if( dt.IsPrimitive() )
+			if( dt.IsPrimitive() || dt.IsNullHandle() )
 			{
 				IsVariableInitialized(&ctx->type, node);
 
@@ -989,6 +989,15 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				IsVariableInitialized(&ctx->type, node);
 
 				ImplicitConversion(ctx, param, node, false, true, reservedVars);
+
+				if( !ctx->type.dataType.IsEqualExceptRef(param) )
+				{
+					asCString str;
+					str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), param.Format().AddressOf());
+					Error(str.AddressOf(), node);
+					
+					ctx->type.Set(param);
+				}
 
 				// If the argument already is a temporary
 				// variable we don't need to allocate another
@@ -3037,12 +3046,7 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		}
 
 		// Check data type
-		if( lvalue->IsObjectHandle() &&
-			!rctx->type.dataType.IsObjectHandle() )
-		{
-			Error(TXT_NEED_TO_BE_A_HANDLE, node);
-		}
-		else if( !lvalue->IsEqualExceptRefAndConst(rctx->type.dataType) )
+		if( !lvalue->IsEqualExceptRefAndConst(rctx->type.dataType) )
 		{
 			asCString str;
 			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lvalue->Format().AddressOf());
@@ -3162,7 +3166,6 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 
 	asCArray<int> ops;
 	asUINT n;
-	int behaviour = isExplicit ? asBEHAVE_REF_CAST : asBEHAVE_IMPLICIT_REF_CAST;
 
 	if( ctx->type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT )
 	{
@@ -3217,7 +3220,8 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 		// Find a suitable registered behaviour
 		for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n+= 2 )
 		{
-			if( behaviour == engine->globalBehaviours.operators[n] )
+			if( isExplicit && asBEHAVE_REF_CAST == engine->globalBehaviours.operators[n] ||
+				asBEHAVE_IMPLICIT_REF_CAST == engine->globalBehaviours.operators[n] )
 			{
 				int funcId = engine->globalBehaviours.operators[n+1];
 
@@ -3296,11 +3300,322 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 //       causes problems where the conversion is partially done and the compiler continues with
 //       another option.
 
+void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars)
+{
+	// Start by implicitly converting constant values
+	if( ctx->type.isConstant )
+		ImplicitConversionConstant(ctx, to, node, isExplicit);
+
+	if( to == ctx->type.dataType )
+		return;
+
+	// After the constant value has been converted we have the following possibilities
+
+	// Allow implicit conversion between numbers
+	if( generateCode )
+	{
+		// Convert smaller types to 32bit first
+		int s = ctx->type.dataType.GetSizeInMemoryBytes();
+		if( s < 4 )
+		{
+			ConvertToTempVariableNotIn(ctx, reservedVars);
+			if( ctx->type.dataType.IsIntegerType() )
+			{
+				if( s == 1 )
+					ctx->bc.InstrSHORT(BC_sbTOi, ctx->type.stackOffset);
+				else if( s == 2 )
+					ctx->bc.InstrSHORT(BC_swTOi, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(ttInt);
+			}
+			else if( ctx->type.dataType.IsUnsignedType() )
+			{
+				if( s == 1 )
+					ctx->bc.InstrSHORT(BC_ubTOi, ctx->type.stackOffset);
+				else if( s == 2 )
+					ctx->bc.InstrSHORT(BC_uwTOi, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(ttUInt);
+			}
+		}
+
+		if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1) ||
+			(to.IsEnumType() && isExplicit) )
+		{
+			if( ctx->type.dataType.IsIntegerType() || 
+				ctx->type.dataType.IsUnsignedType() ||
+				ctx->type.dataType.IsEnumType() )
+			{
+				if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+				{
+					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
+				}
+				else
+				{
+					ConvertToTempVariableNotIn(ctx, reservedVars);
+					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+					int offset = AllocateVariableNotIn(to, true, reservedVars);
+					ctx->bc.InstrW_W(BC_i64TOi, offset, ctx->type.stackOffset);
+					ctx->type.SetVariable(to, offset, true);
+				}
+			}
+			else if( ctx->type.dataType.IsFloatType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ctx->bc.InstrSHORT(BC_fTOi, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
+			else if( ctx->type.dataType.IsDoubleType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_dTOi, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+
+			// Convert to smaller integer if necessary
+			int s = to.GetSizeInMemoryBytes();
+			if( s < 4 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				if( s == 1 )
+					ctx->bc.InstrSHORT(BC_iTOb, ctx->type.stackOffset);
+				else if( s == 2 )
+					ctx->bc.InstrSHORT(BC_iTOw, ctx->type.stackOffset);
+			}
+		}
+		if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 )
+		{
+			if( ctx->type.dataType.IsIntegerType() || 
+				ctx->type.dataType.IsUnsignedType() ||
+				ctx->type.dataType.IsEnumType() )
+			{
+				if( ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
+				{
+					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
+				}
+				else
+				{
+					ConvertToTempVariableNotIn(ctx, reservedVars);
+					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+					int offset = AllocateVariableNotIn(to, true, reservedVars);
+					if( ctx->type.dataType.IsUnsignedType() )
+						ctx->bc.InstrW_W(BC_uTOi64, offset, ctx->type.stackOffset);
+					else
+						ctx->bc.InstrW_W(BC_iTOi64, offset, ctx->type.stackOffset);
+					ctx->type.SetVariable(to, offset, true);
+				}
+			}
+			else if( ctx->type.dataType.IsFloatType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_fTOi64, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+			else if( ctx->type.dataType.IsDoubleType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ctx->bc.InstrSHORT(BC_dTOi64, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
+		}
+		else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1  )
+		{
+			if( ctx->type.dataType.IsIntegerType() || 
+				ctx->type.dataType.IsUnsignedType() ||
+				ctx->type.dataType.IsEnumType() )
+			{
+				if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+				{
+					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
+				}
+				else
+				{
+					ConvertToTempVariableNotIn(ctx, reservedVars);
+					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+					int offset = AllocateVariableNotIn(to, true, reservedVars);
+					ctx->bc.InstrW_W(BC_i64TOi, offset, ctx->type.stackOffset);
+					ctx->type.SetVariable(to, offset, true);
+				}
+			}
+			else if( ctx->type.dataType.IsFloatType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ctx->bc.InstrSHORT(BC_fTOu, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
+			else if( ctx->type.dataType.IsDoubleType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_dTOu, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+
+			// Convert to smaller integer if necessary
+			int s = to.GetSizeInMemoryBytes();
+			if( s < 4 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				if( s == 1 )
+					ctx->bc.InstrSHORT(BC_iTOb, ctx->type.stackOffset);
+				else if( s == 2 )
+					ctx->bc.InstrSHORT(BC_iTOw, ctx->type.stackOffset);
+			}
+		}
+		if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 )
+		{
+			if( ctx->type.dataType.IsIntegerType() || 
+				ctx->type.dataType.IsUnsignedType() || 
+				ctx->type.dataType.IsEnumType() )
+			{
+				if( ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
+				{
+					ctx->type.dataType.SetTokenType(to.GetTokenType());
+					ctx->type.dataType.SetObjectType(to.GetObjectType());
+				}
+				else
+				{
+					ConvertToTempVariableNotIn(ctx, reservedVars);
+					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+					int offset = AllocateVariableNotIn(to, true, reservedVars);
+					if( ctx->type.dataType.IsUnsignedType() )
+						ctx->bc.InstrW_W(BC_uTOi64, offset, ctx->type.stackOffset);
+					else
+						ctx->bc.InstrW_W(BC_iTOi64, offset, ctx->type.stackOffset);
+					ctx->type.SetVariable(to, offset, true);
+				}
+			}
+			else if( ctx->type.dataType.IsFloatType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_fTOu64, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+			else if( ctx->type.dataType.IsDoubleType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ctx->bc.InstrSHORT(BC_dTOu64, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
+		}
+		else if( to.IsFloatType() )
+		{
+			if( (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType()) && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ctx->bc.InstrSHORT(BC_iTOf, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
+			else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_i64TOf, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+			else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ctx->bc.InstrSHORT(BC_uTOf, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
+			else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_u64TOf, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+			else if( ctx->type.dataType.IsDoubleType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_dTOf, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+		}
+		else if( to.IsDoubleType() )
+		{
+			if( (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType()) && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_iTOd, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+			else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ctx->bc.InstrSHORT(BC_i64TOd, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
+			else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_uTOd, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+			else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ctx->bc.InstrSHORT(BC_u64TOd, ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetObjectType(to.GetObjectType());
+			}
+			else if( ctx->type.dataType.IsFloatType() )
+			{
+				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				ctx->bc.InstrW_W(BC_fTOd, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+			}
+		}
+	}
+	else
+	{
+		if( (to.IsIntegerType() || to.IsUnsignedType() ||
+			 to.IsFloatType()   || to.IsDoubleType() ||
+			 (to.IsEnumType() && isExplicit)) &&
+			(ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() ||
+			 ctx->type.dataType.IsFloatType()   || ctx->type.dataType.IsDoubleType() ||
+			 ctx->type.dataType.IsEnumType()) )
+		{
+			ctx->type.dataType.SetTokenType(to.GetTokenType());
+			ctx->type.dataType.SetObjectType(to.GetObjectType());
+		}
+	}
+
+	// Primitive types on the stack, can be const or non-const
+	ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+}
 
 void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {
 	// No conversion from void to any other type
-	if( ctx->type.dataType.GetTokenType() == ttVoid ) return;
+	if( ctx->type.dataType.GetTokenType() == ttVoid ) 
+		return;
 	
 	// Do we want a var type?
 	if( to.GetTokenType() == ttQuestion )
@@ -3315,528 +3630,21 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 	// Do we want a primitive?
 	else if( to.IsPrimitive() )
 	{
-		// Can only convert to enum type with explicit cast
-		if( to.IsEnumType() && !isExplicit )
-		{
-			ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
-			return;
-		}
-
-		// Conversion from objects requires value cast behaviours
 		if( !ctx->type.dataType.IsPrimitive() ) 
-		{
-			ImplicitConversionFromObject(ctx, to, node, isExplicit, generateCode, reservedVars);
-			return;
-		}
-
-		// Start by implicitly converting constant values
-		if( ctx->type.isConstant )
-			ImplicitConversionConstant(ctx, to, node, isExplicit);
-
-		if( to == ctx->type.dataType )
-			return;
-
-		// After the constant value has been converted we have the following possibilities
-
-		// Allow implicit conversion between numbers
-		if( generateCode )
-		{
-			// Convert smaller types to 32bit first
-			int s = ctx->type.dataType.GetSizeInMemoryBytes();
-			if( s < 4 )
-			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
-				if( ctx->type.dataType.IsIntegerType() )
-				{
-					if( s == 1 )
-						ctx->bc.InstrSHORT(BC_sbTOi, ctx->type.stackOffset);
-					else if( s == 2 )
-						ctx->bc.InstrSHORT(BC_swTOi, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(ttInt);
-				}
-				else if( ctx->type.dataType.IsUnsignedType() )
-				{
-					if( s == 1 )
-						ctx->bc.InstrSHORT(BC_ubTOi, ctx->type.stackOffset);
-					else if( s == 2 )
-						ctx->bc.InstrSHORT(BC_uwTOi, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(ttUInt);
-				}
-			}
-
-			if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1) ||
-				(to.IsEnumType() && isExplicit) )
-			{
-				if( ctx->type.dataType.IsIntegerType() || 
-					ctx->type.dataType.IsUnsignedType() ||
-					ctx->type.dataType.IsEnumType() )
-				{
-					if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-					{
-						ctx->type.dataType.SetTokenType(to.GetTokenType());
-						ctx->type.dataType.SetObjectType(to.GetObjectType());
-					}
-					else
-					{
-						ConvertToTempVariableNotIn(ctx, reservedVars);
-						ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-						int offset = AllocateVariableNotIn(to, true, reservedVars);
-						ctx->bc.InstrW_W(BC_i64TOi, offset, ctx->type.stackOffset);
-						ctx->type.SetVariable(to, offset, true);
-					}
-				}
-				else if( ctx->type.dataType.IsFloatType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ctx->bc.InstrSHORT(BC_fTOi, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(to.GetTokenType());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-				else if( ctx->type.dataType.IsDoubleType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_dTOi, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-
-				// Convert to smaller integer if necessary
-				int s = to.GetSizeInMemoryBytes();
-				if( s < 4 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					if( s == 1 )
-						ctx->bc.InstrSHORT(BC_iTOb, ctx->type.stackOffset);
-					else if( s == 2 )
-						ctx->bc.InstrSHORT(BC_iTOw, ctx->type.stackOffset);
-				}
-			}
-			if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 )
-			{
-				if( ctx->type.dataType.IsIntegerType() || 
-					ctx->type.dataType.IsUnsignedType() ||
-					ctx->type.dataType.IsEnumType() )
-				{
-					if( ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-					{
-						ctx->type.dataType.SetTokenType(to.GetTokenType());
-						ctx->type.dataType.SetObjectType(to.GetObjectType());
-					}
-					else
-					{
-						ConvertToTempVariableNotIn(ctx, reservedVars);
-						ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-						int offset = AllocateVariableNotIn(to, true, reservedVars);
-						if( ctx->type.dataType.IsUnsignedType() )
-							ctx->bc.InstrW_W(BC_uTOi64, offset, ctx->type.stackOffset);
-						else
-							ctx->bc.InstrW_W(BC_iTOi64, offset, ctx->type.stackOffset);
-						ctx->type.SetVariable(to, offset, true);
-					}
-				}
-				else if( ctx->type.dataType.IsFloatType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_fTOi64, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-				else if( ctx->type.dataType.IsDoubleType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ctx->bc.InstrSHORT(BC_dTOi64, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(to.GetTokenType());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-			}
-			else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1  )
-			{
-				if( ctx->type.dataType.IsIntegerType() || 
-					ctx->type.dataType.IsUnsignedType() ||
-					ctx->type.dataType.IsEnumType() )
-				{
-					if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-					{
-						ctx->type.dataType.SetTokenType(to.GetTokenType());
-						ctx->type.dataType.SetObjectType(to.GetObjectType());
-					}
-					else
-					{
-						ConvertToTempVariableNotIn(ctx, reservedVars);
-						ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-						int offset = AllocateVariableNotIn(to, true, reservedVars);
-						ctx->bc.InstrW_W(BC_i64TOi, offset, ctx->type.stackOffset);
-						ctx->type.SetVariable(to, offset, true);
-					}
-				}
-				else if( ctx->type.dataType.IsFloatType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ctx->bc.InstrSHORT(BC_fTOu, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(to.GetTokenType());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-				else if( ctx->type.dataType.IsDoubleType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_dTOu, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-
-				// Convert to smaller integer if necessary
-				int s = to.GetSizeInMemoryBytes();
-				if( s < 4 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					if( s == 1 )
-						ctx->bc.InstrSHORT(BC_iTOb, ctx->type.stackOffset);
-					else if( s == 2 )
-						ctx->bc.InstrSHORT(BC_iTOw, ctx->type.stackOffset);
-				}
-			}
-			if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 )
-			{
-				if( ctx->type.dataType.IsIntegerType() || 
-					ctx->type.dataType.IsUnsignedType() || 
-					ctx->type.dataType.IsEnumType() )
-				{
-					if( ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-					{
-						ctx->type.dataType.SetTokenType(to.GetTokenType());
-						ctx->type.dataType.SetObjectType(to.GetObjectType());
-					}
-					else
-					{
-						ConvertToTempVariableNotIn(ctx, reservedVars);
-						ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-						int offset = AllocateVariableNotIn(to, true, reservedVars);
-						if( ctx->type.dataType.IsUnsignedType() )
-							ctx->bc.InstrW_W(BC_uTOi64, offset, ctx->type.stackOffset);
-						else
-							ctx->bc.InstrW_W(BC_iTOi64, offset, ctx->type.stackOffset);
-						ctx->type.SetVariable(to, offset, true);
-					}
-				}
-				else if( ctx->type.dataType.IsFloatType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_fTOu64, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-				else if( ctx->type.dataType.IsDoubleType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ctx->bc.InstrSHORT(BC_dTOu64, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(to.GetTokenType());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-			}
-			else if( to.IsFloatType() )
-			{
-				if( (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType()) && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ctx->bc.InstrSHORT(BC_iTOf, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(to.GetTokenType());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-				else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_i64TOf, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-				else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ctx->bc.InstrSHORT(BC_uTOf, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(to.GetTokenType());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-				else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_u64TOf, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-				else if( ctx->type.dataType.IsDoubleType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_dTOf, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-			}
-			else if( to.IsDoubleType() )
-			{
-				if( (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType()) && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_iTOd, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-				else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ctx->bc.InstrSHORT(BC_i64TOd, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(to.GetTokenType());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-				else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_uTOd, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-				else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ctx->bc.InstrSHORT(BC_u64TOd, ctx->type.stackOffset);
-					ctx->type.dataType.SetTokenType(to.GetTokenType());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-				else if( ctx->type.dataType.IsFloatType() )
-				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
-					ctx->bc.InstrW_W(BC_fTOd, offset, ctx->type.stackOffset);
-					ctx->type.SetVariable(to, offset, true);
-				}
-			}
-		}
+			ImplicitConvObjectToPrimitive(ctx, to, node, isExplicit, generateCode, reservedVars);
 		else
-		{
-			if( (to.IsIntegerType() || to.IsUnsignedType() ||
-				 to.IsFloatType()   || to.IsDoubleType() ||
-				 (to.IsEnumType() && isExplicit)) &&
-				(ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() ||
-				 ctx->type.dataType.IsFloatType()   || ctx->type.dataType.IsDoubleType() ||
-				 ctx->type.dataType.IsEnumType()) )
-			{
-				ctx->type.dataType.SetTokenType(to.GetTokenType());
-				ctx->type.dataType.SetObjectType(to.GetObjectType());
-			}
-		}
-
-		// Primitive types on the stack, can be const or non-const
-		ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+			ImplicitConvPrimitiveToPrimitive(ctx, to, node, isExplicit, generateCode, reservedVars);
 	}
 	else // The target is a complex type
 	{
-		// Convert null to any object type handle
-		if( ctx->type.IsNullConstant() && to.IsObjectHandle() )
-			ctx->type.dataType = to;
-
-		if( to.IsObjectHandle() )
-		{
-			// An object type can be directly converted to a handle of the same type
-			if( ctx->type.dataType.SupportHandles() )
-			{
-				ctx->type.dataType.MakeHandle(true);
-			}
-
-			if( ctx->type.dataType.IsObjectHandle() )
-				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
-
-			if( to.IsHandleToConst() && ctx->type.dataType.IsObjectHandle() )
-				ctx->type.dataType.MakeHandleToConst(true);
-		}
-
-		if( !to.IsReference() )
-		{
-			if( to.IsObjectHandle() )
-			{
-				if( ctx->type.dataType.IsReference() )
-				{
-					Dereference(ctx, generateCode);
-
-					// TODO: Can't this leave unhandled deferred output params?
-				}
-
-				// TODO: If the type is handle, then we can't use IsReadOnly to determine the constness of the basetype
-
-				// If the rvalue is a handle to a const object, then
-				// the lvalue must also be a handle to a const object
-				if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() )
-				{
-					if( isExplicit )
-					{
-						asASSERT(node);
-						asCString str;
-						str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-						Error(str.AddressOf(), node);
-					}
-				}
-
-				// If the to type is an interface and the from type implements it, then we can convert it immediately
-				if( ctx->type.dataType.GetObjectType() && 
-					ctx->type.dataType.GetObjectType()->Implements(to.GetObjectType()) )
-				{
-					asASSERT(ctx->type.dataType.IsObjectHandle());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-				// If the to type is a class and the from type derives from it, then we can convert it immediately
-				if( ctx->type.dataType.GetObjectType() &&
-					ctx->type.dataType.GetObjectType()->DerivesFrom(to.GetObjectType()) )
-				{
-					asASSERT(ctx->type.dataType.IsObjectHandle());
-					ctx->type.dataType.SetObjectType(to.GetObjectType());
-				}
-				else if( ctx->type.dataType.GetObjectType() )
-				{
-					// We may still be able to find an implicit ref cast behaviour
-					CompileRefCast(ctx, to, false, generateCode);
-
-					if( ctx->type.dataType.IsReference() )
-					{
-						Dereference(ctx, generateCode);
-
-						// TODO: Can't this leave unhandled deferred output params?
-					}
-				}
-			}
-			else
-			{
-				ImplicitConversionToObject(ctx, to, node, isExplicit, generateCode, reservedVars, allowObjectConstruct);
-			}
-		}
-		else // to.IsReference()
-		{
-			if( ctx->type.dataType.IsReference() )
-			{
-				// A reference to a handle can be converted to a reference to an object
-				// by first reading the address, then verifying that it is not null, then putting the address back on the stack
-				if( !to.IsObjectHandle() && ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
-				{
-					ctx->type.dataType.MakeHandle(false);
-					if( generateCode )
-						ctx->bc.Instr(BC_ChkRefS);
-				}
-
-				// A reference to a non-const can be converted to a reference to a const
-				if( to.IsReadOnly() )
-					ctx->type.dataType.MakeReadOnly(true);
-				else if( ctx->type.dataType.IsReadOnly() )
-				{
-					// A reference to a const can be converted to a reference to a  
-					// non-const by copying the object to a temporary variable
-					ctx->type.dataType.MakeReadOnly(false);
-
-					if( generateCode )
-					{
-						// Allocate a temporary variable
-						asSExprContext lctx(engine);
-						asCDataType dt = ctx->type.dataType;
-						dt.MakeReference(false);
-						int offset = AllocateVariableNotIn(dt, true, reservedVars);
-						lctx.type = ctx->type;
-						lctx.type.isTemporary = true;
-						lctx.type.stackOffset = (short)offset;
-
-						CallDefaultConstructor(lctx.type.dataType, offset, &lctx.bc);
-
-						// Build the right hand expression
-						asSExprContext rctx(engine);
-						rctx.type = ctx->type;
-						rctx.bc.AddCode(&lctx.bc);
-						rctx.bc.AddCode(&ctx->bc);
-
-						// Build the left hand expression
-						lctx.bc.InstrSHORT(BC_PSF, (short)offset);
-
-						// DoAssignment doesn't allow assignment to temporary variable, 
-						// so we temporarily set the type as non-temporary.
-						lctx.type.isTemporary = false;
-
-						DoAssignment(ctx, &lctx, &rctx, node, node, ttAssignment, node);
-
-						// If the original const object was a temporary variable, then
-						// that needs to be released now
-						ProcessDeferredParams(ctx);
-
-						ctx->type = lctx.type;
-						ctx->type.isTemporary = true;
-					}
-				}
-
-				// We can convert from a reference to A to a reference to B if there is an implicit ref cast behaviour available
-				if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
-				{
-					CompileRefCast(ctx, to, false, generateCode);
-
-					if( !to.IsObjectHandle() && ctx->type.dataType.IsObjectHandle() )
-					{
-						ctx->type.dataType.MakeHandle(false);
-						if( generateCode )
-							ctx->bc.Instr(BC_ChkRefS);
-					}
-				}
-			}
-			else
-			{
-				if( generateCode )
-				{
-					asCTypeInfo type;
-					type.Set(ctx->type.dataType);
-
-					// Allocate a temporary variable
-					int offset = AllocateVariableNotIn(type.dataType, true, reservedVars);
-					type.isTemporary = true;
-					type.stackOffset = (short)offset;
-					if( type.dataType.IsObjectHandle() )
-						type.isExplicitHandle = true;
-
-					CallDefaultConstructor(type.dataType, offset, &ctx->bc);
-					type.dataType.MakeReference(true);
-
-					PrepareForAssignment(&type.dataType, ctx, node);
-
-					ctx->bc.InstrSHORT(BC_PSF, type.stackOffset);
-
-					// If the input type is read-only we'll need to temporarily 
-					// remove this constness, otherwise the assignment will fail
-					bool typeIsReadOnly = type.dataType.IsReadOnly();
-					type.dataType.MakeReadOnly(false);
-					PerformAssignment(&type, &ctx->type, &ctx->bc, node);
-					type.dataType.MakeReadOnly(typeIsReadOnly);
-
-					ctx->bc.Pop(ctx->type.dataType.GetSizeOnStackDWords());
-
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-
-					ctx->bc.InstrSHORT(BC_PSF, type.stackOffset);
-
-					ctx->type = type;
-				}
-
-				// A non-reference can be converted to a reference,
-				// by putting the value in a temporary variable
-				ctx->type.dataType.MakeReference(true);
-
-				// Since it is a new temporary variable it doesn't have to be const
-				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
-			}
-		}
+		if( ctx->type.dataType.IsPrimitive() )
+			ImplicitConvPrimitiveToObject(ctx, to, node, isExplicit, generateCode, reservedVars, allowObjectConstruct);
+		else
+			ImplicitConvObjectToObject(ctx, to, node, isExplicit, generateCode, reservedVars, allowObjectConstruct);
 	}
 }
 
-void asCCompiler::ImplicitConversionFromObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars)
+void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars)
 {
 	if( ctx->type.isExplicitHandle )
 	{
@@ -3961,52 +3769,389 @@ void asCCompiler::ImplicitConversionFromObject(asSExprContext *ctx, const asCDat
 	}
 }
 
-void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool /*isExplicit*/, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
+void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool isExplicit, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {
-	if( ctx->type.dataType.IsReference() && !ctx->type.dataType.IsPrimitive() )
+	// Convert null to any object type handle, but not to a non-handle type
+	if( ctx->type.IsNullConstant() )
 	{
-		Dereference(ctx, generateCode);
+		if( to.IsObjectHandle() )
+			ctx->type.dataType = to;
 
-		// TODO: Can't this leave unhandled deferred output params?
+		return;
 	}
 
-	if( ctx->type.dataType.IsObject() && ctx->type.dataType.GetObjectType() == to.GetObjectType() )
+	// First attempt to convert the base type without instanciating another instance
+	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
 	{
-		if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
+		// If the to type is an interface and the from type implements it, then we can convert it immediately
+		if( ctx->type.dataType.GetObjectType()->Implements(to.GetObjectType()) )
+		{
+			ctx->type.dataType.SetObjectType(to.GetObjectType());
+		}
+		
+		// If the to type is a class and the from type derives from it, then we can convert it immediately
+		if( ctx->type.dataType.GetObjectType()->DerivesFrom(to.GetObjectType()) )
+		{
+			ctx->type.dataType.SetObjectType(to.GetObjectType());
+		}
+
+		// If the types are not equal yet, then we may still be able to find a reference cast
+		if( ctx->type.dataType.GetObjectType() != to.GetObjectType() )
+		{
+			// A ref cast must not remove the constness
+			bool isConst = false;
+			if( ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst() ||
+				!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly() )
+				isConst = true;
+
+			// We may still be able to find an implicit ref cast behaviour
+			CompileRefCast(ctx, to, isExplicit, generateCode);
+
+			ctx->type.dataType.MakeHandleToConst(isConst);
+		}
+	}
+
+	// If the base type is still different, and we are allowed to instance
+	// another object then we can try an implicit value cast
+	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() && allowObjectConstruct )
+	{
+		// TODO: Implement support for implicit constructor/factory
+
+		asCArray<int> funcs;
+		asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
+		if( beh )
+		{
+			if( isExplicit )
+			{
+				for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
+				{
+					// accept both implicit and explicit cast
+					if( (beh->operators[n] == asBEHAVE_VALUE_CAST ||
+						 beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST) && 
+						builder->GetFunctionDescription(beh->operators[n+1])->returnType.GetObjectType() == to.GetObjectType() )
+						funcs.PushLast(beh->operators[n+1]);
+				}
+			}
+			else
+			{
+				for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
+				{
+					// accept only implicit cast
+					if( beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST &&
+						builder->GetFunctionDescription(beh->operators[n+1])->returnType.GetObjectType() == to.GetObjectType() )
+						funcs.PushLast(beh->operators[n+1]);
+				}
+			}
+		}
+
+		// TODO: If there are multiple valid value casts, then we must choose the most appropriate one
+		asASSERT( funcs.GetLength() <= 1 );
+
+		if( funcs.GetLength() == 1 )
+		{
+			asCScriptFunction *f = builder->GetFunctionDescription(funcs[0]);
+			if( generateCode )
+			{
+				asCTypeInfo objType = ctx->type;
+				Dereference(ctx, true);
+				PerformFunctionCall(funcs[0], ctx);
+				ReleaseTemporaryVariable(objType, &ctx->bc);
+			}
+			else
+				ctx->type.Set(f->returnType);
+		}
+	}
+
+	// If we still haven't converted the base type to the correct type, then there is no need to continue
+	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
+		return;
+
+	if( to.IsObjectHandle() )
+	{
+		// An object type can be directly converted to a handle of the same type
+		if( ctx->type.dataType.SupportHandles() )
+		{
+			ctx->type.dataType.MakeHandle(true);
+		}
+
+		if( ctx->type.dataType.IsObjectHandle() )
+			ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+
+		if( to.IsHandleToConst() && ctx->type.dataType.IsObjectHandle() )
+			ctx->type.dataType.MakeHandleToConst(true);
+	}
+
+	if( !to.IsReference() )
+	{
+		if( to.IsObjectHandle() )
 		{
 			if( ctx->type.dataType.IsReference() )
 			{
-				if( generateCode ) ctx->bc.Instr(BC_RDSPTR);
-				ctx->type.dataType.MakeReference(false);
+				Dereference(ctx, generateCode);
+
+				// TODO: Can't this leave unhandled deferred output params?
 			}
 
-			if( generateCode )
-				ctx->bc.Instr(BC_CHKREF);
+			// TODO: If the type is handle, then we can't use IsReadOnly to determine the constness of the basetype
 
-			ctx->type.dataType.MakeHandle(false);
-		}
-
-		// A const object can be converted to a non-const object through a copy
-		if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() &&
-			allowObjectConstruct )
-		{
-			// Does the object type allow a copy to be made?
-			if( ctx->type.dataType.CanBeCopied() )
+			// If the rvalue is a handle to a const object, then
+			// the lvalue must also be a handle to a const object
+			if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() )
 			{
-				if( generateCode )
+				if( isExplicit )
 				{
-					// Make a temporary object with the copy
-					PrepareTemporaryObject(node, ctx, reservedVars);
+					asASSERT(node);
+					asCString str;
+					str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
+					Error(str.AddressOf(), node);
 				}
-				else 
-					ctx->type.dataType.MakeReadOnly(false);
+			}
+		}
+		else
+		{
+			if( ctx->type.dataType.IsReference() && !ctx->type.dataType.IsPrimitive() )
+			{
+				Dereference(ctx, generateCode);
+
+				// TODO: Can't this leave unhandled deferred output params?
+			}
+
+			if( ctx->type.dataType.IsObject() && ctx->type.dataType.GetObjectType() == to.GetObjectType() )
+			{
+				if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
+				{
+					if( ctx->type.dataType.IsReference() )
+					{
+						if( generateCode ) ctx->bc.Instr(BC_RDSPTR);
+						ctx->type.dataType.MakeReference(false);
+					}
+
+					if( generateCode )
+						ctx->bc.Instr(BC_CHKREF);
+
+					ctx->type.dataType.MakeHandle(false);
+				}
+
+				// A const object can be converted to a non-const object through a copy
+				if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() &&
+					allowObjectConstruct )
+				{
+					// Does the object type allow a copy to be made?
+					if( ctx->type.dataType.CanBeCopied() )
+					{
+						if( generateCode )
+						{
+							// Make a temporary object with the copy
+							PrepareTemporaryObject(node, ctx, reservedVars);
+						}
+						else 
+							ctx->type.dataType.MakeReadOnly(false);
+					}
+				}
+			}
+			else if( allowObjectConstruct )
+			{
+				// Since the expression is not of the same object type we need to check if there
+				// is any constructor that can be used to create an object of the correct type.
+/*
+				asCArray<int> funcs;
+				asSTypeBehaviour *beh = to.GetBehaviour();
+				if( beh )
+				{
+					// TODO: Add implicit conversion to object types via contructor/factory
+
+					// Find the implicit constructor calls
+					for( int n = 0; n < beh->operators.GetLength(); n += 2 )
+						if( beh->operators[n] == asBEHAVE_IMPLICIT_CONSTRUCT ||
+							beh->operators[n] == asBEHAVE_IMPLICIT_FACTORY )
+							funcs.PushLast(beh->operators[n+1]);
+				}
+
+				// Compile the arguments
+				asCArray<asSExprContext *> args;
+				asCArray<asCTypeInfo> temporaryVariables;
+
+				args.PushLast(ctx);
+
+				MatchFunctions(funcs, args, node, to.GetObjectType()->name.AddressOf(), NULL, false, true, false);
+
+				// Verify that we found 1 matching function
+				if( funcs.GetLength() == 1 )
+				{
+					asCTypeInfo tempObj;
+					tempObj.dataType = to;
+					tempObj.dataType.MakeReference(true);
+					tempObj.isTemporary = true;
+					tempObj.isVariable = true;
+
+					if( generateCode )
+					{
+						tempObj.stackOffset = (short)AllocateVariable(to, true);
+
+						asSExprContext tmp(engine);
+
+						if( tempObj.dataType.GetObjectType()->flags & asOBJ_REF )
+						{
+							PrepareFunctionCall(funcs[0], &tmp.bc, args);
+							MoveArgsToStack(funcs[0], &tmp.bc, args, false);
+
+							// Call factory and store handle in the variable
+							PerformFunctionCall(funcs[0], &tmp, false, &args, 0, true, tempObj.stackOffset);
+
+							tmp.type = tempObj;
+						}
+						else
+						{
+							// Push the address of the object on the stack
+							tmp.bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
+
+							PrepareFunctionCall(funcs[0], &tmp.bc, args);
+							MoveArgsToStack(funcs[0], &tmp.bc, args, false);
+
+							int offset = 0;
+							for( asUINT n = 0; n < args.GetLength(); n++ )
+								offset += args[n]->type.dataType.GetSizeOnStackDWords();
+
+							tmp.bc.InstrWORD(BC_GETREF, (asWORD)offset);
+
+							PerformFunctionCall(funcs[0], &tmp, true, &args, tempObj.dataType.GetObjectType());
+
+							// The constructor doesn't return anything,
+							// so we have to manually inform the type of
+							// the return value
+							tmp.type = tempObj;
+
+							// Push the address of the object on the stack again
+							tmp.bc.InstrSHORT(BC_PSF, tempObj.stackOffset);
+						}
+
+						// Copy the newly generated code to the input context
+						// ctx is already empty, since it was merged as part of argument expression
+						asASSERT(ctx->bc.GetLastInstr() == -1);
+						MergeExprContexts(ctx, &tmp);
+					}
+
+					ctx->type = tempObj;
+				}
+*/
 			}
 		}
 	}
-	else if( allowObjectConstruct )
+	else // to.IsReference()
 	{
-		// Since the expression is not of the same object type we need to check if there
-		// is any constructor that can be used to create an object of the correct type.
+		if( ctx->type.dataType.IsReference() )
+		{
+			// A reference to a handle can be converted to a reference to an object
+			// by first reading the address, then verifying that it is not null, then putting the address back on the stack
+			if( !to.IsObjectHandle() && ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
+			{
+				ctx->type.dataType.MakeHandle(false);
+				if( generateCode )
+					ctx->bc.Instr(BC_ChkRefS);
+			}
+
+			// A reference to a non-const can be converted to a reference to a const
+			if( to.IsReadOnly() )
+				ctx->type.dataType.MakeReadOnly(true);
+			else if( ctx->type.dataType.IsReadOnly() )
+			{
+				// A reference to a const can be converted to a reference to a  
+				// non-const by copying the object to a temporary variable
+				ctx->type.dataType.MakeReadOnly(false);
+
+				if( generateCode )
+				{
+					// Allocate a temporary variable
+					asSExprContext lctx(engine);
+					asCDataType dt = ctx->type.dataType;
+					dt.MakeReference(false);
+					int offset = AllocateVariableNotIn(dt, true, reservedVars);
+					lctx.type = ctx->type;
+					lctx.type.isTemporary = true;
+					lctx.type.stackOffset = (short)offset;
+
+					CallDefaultConstructor(lctx.type.dataType, offset, &lctx.bc);
+
+					// Build the right hand expression
+					asSExprContext rctx(engine);
+					rctx.type = ctx->type;
+					rctx.bc.AddCode(&lctx.bc);
+					rctx.bc.AddCode(&ctx->bc);
+
+					// Build the left hand expression
+					lctx.bc.InstrSHORT(BC_PSF, (short)offset);
+
+					// DoAssignment doesn't allow assignment to temporary variable, 
+					// so we temporarily set the type as non-temporary.
+					lctx.type.isTemporary = false;
+
+					DoAssignment(ctx, &lctx, &rctx, node, node, ttAssignment, node);
+
+					// If the original const object was a temporary variable, then
+					// that needs to be released now
+					ProcessDeferredParams(ctx);
+
+					ctx->type = lctx.type;
+					ctx->type.isTemporary = true;
+				}
+			}
+		}
+		else
+		{
+			if( generateCode )
+			{
+				asCTypeInfo type;
+				type.Set(ctx->type.dataType);
+
+				// Allocate a temporary variable
+				int offset = AllocateVariableNotIn(type.dataType, true, reservedVars);
+				type.isTemporary = true;
+				type.stackOffset = (short)offset;
+				if( type.dataType.IsObjectHandle() )
+					type.isExplicitHandle = true;
+
+				CallDefaultConstructor(type.dataType, offset, &ctx->bc);
+				type.dataType.MakeReference(true);
+
+				PrepareForAssignment(&type.dataType, ctx, node);
+
+				ctx->bc.InstrSHORT(BC_PSF, type.stackOffset);
+
+				// If the input type is read-only we'll need to temporarily 
+				// remove this constness, otherwise the assignment will fail
+				bool typeIsReadOnly = type.dataType.IsReadOnly();
+				type.dataType.MakeReadOnly(false);
+				PerformAssignment(&type, &ctx->type, &ctx->bc, node);
+				type.dataType.MakeReadOnly(typeIsReadOnly);
+
+				ctx->bc.Pop(ctx->type.dataType.GetSizeOnStackDWords());
+
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+				ctx->bc.InstrSHORT(BC_PSF, type.stackOffset);
+
+				ctx->type = type;
+			}
+
+			// A non-reference can be converted to a reference,
+			// by putting the value in a temporary variable
+			ctx->type.dataType.MakeReference(true);
+
+			// Since it is a new temporary variable it doesn't have to be const
+			ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+		}
+	}
+}
+
+void asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, bool /*isExplicit*/, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
+{
+	if( allowObjectConstruct )
+	{
+		// Check for the existance of any implicit constructor/factory  
+		// behaviours to construct the desired object from the primitive
+
+		// TODO: Implement implicit constructor/factory
+/*
 
 		asCArray<int> funcs;
 		asSTypeBehaviour *beh = to.GetBehaviour();
@@ -4015,11 +4160,10 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 			// TODO: Add implicit conversion to object types via contructor/factory
 
 			// Find the implicit constructor calls
-/*			for( int n = 0; n < beh->operators.GetLength(); n += 2 )
+			for( int n = 0; n < beh->operators.GetLength(); n += 2 )
 				if( beh->operators[n] == asBEHAVE_IMPLICIT_CONSTRUCT ||
 					beh->operators[n] == asBEHAVE_IMPLICIT_FACTORY )
 					funcs.PushLast(beh->operators[n+1]);
-*/
 		}
 
 		// Compile the arguments
@@ -4088,6 +4232,7 @@ void asCCompiler::ImplicitConversionToObject(asSExprContext *ctx, const asCDataT
 
 			ctx->type = tempObj;
 		}
+*/
 	}
 }
 
@@ -6100,31 +6245,6 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		CompileConversion(node, ctx);
 		return;
 	}
-	else
-	{
-		name = dt.Format();
-
-		asSTypeBehaviour *beh = dt.GetBehaviour();
-
-		if( !(dt.GetObjectType()->flags & asOBJ_REF) )
-		{
-			funcs = beh->constructors;
-
-			// Value types and script types are allocated through the constructor
-			tempObj.dataType = dt;
-			tempObj.stackOffset = (short)AllocateVariable(dt, true);
-			tempObj.dataType.MakeReference(true);
-			tempObj.isTemporary = true;
-			tempObj.isVariable = true;
-
-			// Push the address of the object on the stack
-			ctx->bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
-		}
-		else
-		{
-			funcs = beh->factories;
-		}
-	}
 
 	if( globalExpression )
 	{
@@ -6133,6 +6253,30 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		// Output dummy code
 		ctx->type.SetDummy();
 		return;
+	}
+
+	// Check for possible constructor/factory
+	name = dt.Format();
+
+	asSTypeBehaviour *beh = dt.GetBehaviour();
+
+	if( !(dt.GetObjectType()->flags & asOBJ_REF) )
+	{
+		funcs = beh->constructors;
+
+		// Value types and script types are allocated through the constructor
+		tempObj.dataType = dt;
+		tempObj.stackOffset = (short)AllocateVariable(dt, true);
+		tempObj.dataType.MakeReference(true);
+		tempObj.isTemporary = true;
+		tempObj.isVariable = true;
+
+		// Push the address of the object on the stack
+		ctx->bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
+	}
+	else
+	{
+		funcs = beh->factories;
 	}
 
 	// Compile the arguments

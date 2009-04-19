@@ -222,7 +222,7 @@ size_t asCString::Format(const char *format, ...)
 	va_start(args, format);
 
 	char tmp[256];
-	int r = vsnprintf(tmp, 255, format, args);
+	int r = asVSNPRINTF(tmp, 255, format, args);
 
 	if( r > 0 )
 	{
@@ -234,7 +234,7 @@ size_t asCString::Format(const char *format, ...)
 		asCString str; // Use temporary string in case the current buffer is a parameter
 		str.Allocate(n, false);
 
-		while( (r = vsnprintf(str.AddressOf(), n, format, args)) < 0 )
+		while( (r = asVSNPRINTF(str.AddressOf(), n, format, args)) < 0 )
 		{
 			n *= 2;
 			str.Allocate(n, false);

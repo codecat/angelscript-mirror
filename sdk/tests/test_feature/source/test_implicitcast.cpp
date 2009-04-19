@@ -101,9 +101,11 @@ protected:
 	~B() {}
 };
 
+bool Test2();
+
 bool Test()
 {
-	bool fail = false;
+	bool fail = Test2();
 	int r;
 	asIScriptEngine *engine;
 
@@ -175,7 +177,7 @@ bool Test()
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "type t(5); t << 1; ");
-	if( r == 0 ) fail = true;
+	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : Illegal operation on 'type&'\n" )
 	{
 		printf(bout.buffer.c_str());
@@ -184,7 +186,7 @@ bool Test()
 
 	bout.buffer = "";
 	r = engine->ExecuteString(0, "type t(5); t + t; ");
-	if( r == 0 ) fail = true;
+	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
 	{
 		printf(bout.buffer.c_str());
@@ -193,7 +195,7 @@ bool Test()
 
 	bout.buffer = "";
 	r = engine->ExecuteString(0, "type t(5); t < t; ");
-	if( r == 0 ) fail = true;
+	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
 	{
 		printf(bout.buffer.c_str());
@@ -206,7 +208,7 @@ bool Test()
 	// int8 is requested, so the cast to int is used
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "type t(2); assert( (1.0 / t) == (1.0 / 2.0) );");
-	if( r != 0 ) fail = true;
+	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	engine->Release();
 
@@ -369,6 +371,68 @@ bool Test()
 	// Success
  	return fail;
 }
+
+struct Simple {
+};
+
+struct Complex {
+};
+
+void implicit(asIScriptGeneric * gen) {
+}
+
+bool Test2()
+{
+	bool fail = false;
+	COutStream out;
+	int r;
+
+	asIScriptEngine * engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	r = engine->RegisterObjectType("simple", sizeof(Simple), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert(r >= 0);
+	r = engine->RegisterObjectType("complex", sizeof(Complex), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("complex", asBEHAVE_IMPLICIT_VALUE_CAST, "int f()", asFUNCTION(implicit), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("complex", asBEHAVE_IMPLICIT_VALUE_CAST, "double f()", asFUNCTION(implicit), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("complex", asBEHAVE_IMPLICIT_VALUE_CAST, "simple f()", asFUNCTION(implicit), asCALL_GENERIC);
+
+	const char script[] =
+	"void main() {\n"
+	"  int i;\n"
+	"  double d;\n"
+	"  simple s;\n"
+	"  complex c;\n"
+	"  i = c;\n"
+	"  d = c;\n"
+	"  s = c;\n"
+	"}";
+	asIScriptModule * mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("script", script, sizeof(script) - 1); assert(r >= 0);
+	r = mod->Build(); 
+	if( r < 0 )
+		fail = true;
+	else
+	{
+		int func_id = mod->GetFunctionIdByDecl("void main()"); assert(func_id >= 0);
+		asIScriptContext * ctx = engine->CreateContext();
+
+		r = ctx->Prepare(func_id); assert(r >= 0);
+		r = ctx->Execute(); assert(r >= 0);
+
+		ctx->Release();
+	}
+
+	// TODO: It must be possible to cast using an explicit construct cast
+/*	r = engine->ExecuteString(0, "complex c; simple s = simple(c);");
+	if( r < 0 )
+	{
+		fail = true;
+	}
+*/
+	engine->Release();
+
+	return fail;
+}
+
 
 } // namespace
 
