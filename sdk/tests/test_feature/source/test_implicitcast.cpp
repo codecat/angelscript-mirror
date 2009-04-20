@@ -421,13 +421,13 @@ bool Test2()
 		ctx->Release();
 	}
 
-	// TODO: It must be possible to cast using an explicit construct cast
-/*	r = engine->ExecuteString(0, "complex c; simple s = simple(c);");
+	// It must be possible to cast using an explicit construct cast
+	r = engine->ExecuteString(0, "complex c; simple s = simple(c);");
 	if( r < 0 )
 	{
 		fail = true;
 	}
-*/
+
 	engine->Release();
 
 	return fail;
