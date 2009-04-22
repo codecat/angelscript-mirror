@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.1 WIP - 2009/04/20</h2>
+<h2>Version 2.16.1 WIP - 2009/04/22</h2>
 
 <ul>
 <li>Bug fixes
@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler is now giving a proper error when script function returns reference (Thanks marvi)
 <li>Fixed crash when a script constructor that receives object handle throws an exception (Thanks cvet)
 <li>Fixed implicit value cast to another object type (Thanks SiCrane)
+<li>Fixed multithread support on FreeBSD (Thanks droz)
 </ul>
 <li>Library
 <ul>
@@ -41,6 +42,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Script language
 <ul>
 <li>Enum values can now be prefixed with the enum type to give the exact enum value when multiple enums declare the same name. (Thanks Jeff Slutter)
+</ul>
+<li>Add-ons
+<ul>
+<li>CScriptBuilder is now better at handling relative include paths (Stuart Golodetz)
 </ul>
 </ul>
 

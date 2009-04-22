@@ -105,7 +105,7 @@ asDWORD asCAtomic::atomicDec()
 	return InterlockedDecrement((LONG*)&value);
 }
 
-#elif defined(AS_LINUX)
+#elif defined(AS_LINUX) || defined(AS_BSD)
 
 //
 // atomic_inc_and_test() and atomic_dec_and_test() from asm/atomic.h is not meant 

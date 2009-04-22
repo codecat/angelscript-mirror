@@ -8,8 +8,12 @@
  * A comment in UTF8: ♥♣♠♦
  *
  */
+#include "include.as"
+
 float main()
 {
+	MyIncludedFunction();
+
 	float ret = 1;
 	float ret2 = 0;
 	float ret3 = 1;

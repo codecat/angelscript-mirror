@@ -270,12 +270,31 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 	engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
 	module->AddScriptSection(sectionname, modifiedScript.c_str(), modifiedScript.size());
 
-	// Load the included scripts
-	for( int n = 0; n < (int)includes.size(); n++ )
+	if( includes.size() > 0 )
 	{
-		int r = LoadScriptSection(includes[n].c_str());
-		if( r < 0 )
-			return r;
+		// Determine the path of the current script so that we can resolve relative paths for includes
+		string path = sectionname;
+		size_t posOfSlash = path.find_last_of("/\\");
+		if( posOfSlash != string::npos )
+			path.resize(posOfSlash+1);
+		else
+			path = "";
+
+		// Load the included scripts
+		for( int n = 0; n < (int)includes.size(); n++ )
+		{
+			// If the include is a relative path, then prepend the path of the originating script
+			if( includes[n].find_first_of("/\\") != 0 &&
+				includes[n].find_first_of(":") == string::npos )
+			{
+				includes[n] = path + includes[n];
+			}
+
+			// Include the script section
+			int r = LoadScriptSection(includes[n].c_str());
+			if( r < 0 )
+				return r;
+		}
 	}
 
 	return 0;

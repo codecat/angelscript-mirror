@@ -484,6 +484,10 @@
 			#define AS_MAX_PORTABILITY
 		#endif
 		#define AS_POSIX_THREADS
+		#if !( ( (__GNUC__ == 4) && (__GNUC_MINOR__ >= 1) || __GNUC__ > 4) )
+			// Only with GCC 4.1 was the atomic instructions available
+			#define AS_NO_ATOMIC
+		#endif
 
 	// PSP and PS2
 	#elif defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
