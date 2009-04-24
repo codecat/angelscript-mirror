@@ -77,6 +77,7 @@ bool Test4();
 bool Test5();
 bool Test6();
 bool Test7();
+bool Test8();
 
 bool Test()
 {
@@ -89,6 +90,7 @@ bool Test()
 	fail = Test5() || fail;
 	fail = Test6() || fail;
 	fail = Test7() || fail;
+	fail = Test8() || fail;
 
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
@@ -810,6 +812,40 @@ bool Test7()
 	{
 		fail = true;
 	}
+
+	engine->Release();
+
+	return fail;
+}
+
+bool Test8()
+{
+	bool fail = false;
+
+	CBufferedOutStream bout;
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	RegisterScriptString(engine);
+
+	// Must allow returning a const string
+	const char *script = "const string func() { return ''; }";
+
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	int r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "string str = func(); assert( str == '' );");
+	if( r != asEXECUTION_FINISHED ) 
+		fail = true;
 
 	engine->Release();
 

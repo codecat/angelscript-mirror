@@ -3866,6 +3866,10 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
 		return;
 
+
+	// TODO: The below code can probably be improved even further. It should first convert the type to
+	//       object handle or non-object handle, and only after that convert to reference or non-reference
+
 	if( to.IsObjectHandle() )
 	{
 		// An object type can be directly converted to a handle of the same type
@@ -3883,15 +3887,15 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 	if( !to.IsReference() )
 	{
+		if( ctx->type.dataType.IsReference() )
+		{
+			Dereference(ctx, generateCode);
+
+			// TODO: Can't this leave unhandled deferred output params?
+		}
+
 		if( to.IsObjectHandle() )
 		{
-			if( ctx->type.dataType.IsReference() )
-			{
-				Dereference(ctx, generateCode);
-
-				// TODO: Can't this leave unhandled deferred output params?
-			}
-
 			// TODO: If the type is handle, then we can't use IsReadOnly to determine the constness of the basetype
 
 			// If the rvalue is a handle to a const object, then
@@ -3909,131 +3913,35 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 		}
 		else
 		{
-			if( ctx->type.dataType.IsReference() && !ctx->type.dataType.IsPrimitive() )
+			if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
 			{
-				Dereference(ctx, generateCode);
+				if( generateCode )
+					ctx->bc.Instr(BC_CHKREF);
 
-				// TODO: Can't this leave unhandled deferred output params?
+				ctx->type.dataType.MakeHandle(false);
 			}
 
-			if( ctx->type.dataType.IsObject() && ctx->type.dataType.GetObjectType() == to.GetObjectType() )
+			// A const object can be converted to a non-const object through a copy
+			if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() &&
+				allowObjectConstruct )
 			{
-				if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
+				// Does the object type allow a copy to be made?
+				if( ctx->type.dataType.CanBeCopied() )
 				{
-					if( ctx->type.dataType.IsReference() )
-					{
-						if( generateCode ) ctx->bc.Instr(BC_RDSPTR);
-						ctx->type.dataType.MakeReference(false);
-					}
-
 					if( generateCode )
-						ctx->bc.Instr(BC_CHKREF);
-
-					ctx->type.dataType.MakeHandle(false);
-				}
-
-				// A const object can be converted to a non-const object through a copy
-				if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() &&
-					allowObjectConstruct )
-				{
-					// Does the object type allow a copy to be made?
-					if( ctx->type.dataType.CanBeCopied() )
 					{
-						if( generateCode )
-						{
-							// Make a temporary object with the copy
-							PrepareTemporaryObject(node, ctx, reservedVars);
-						}
-						else 
-							ctx->type.dataType.MakeReadOnly(false);
+						// Make a temporary object with the copy
+						PrepareTemporaryObject(node, ctx, reservedVars);
 					}
+					else 
+						ctx->type.dataType.MakeReadOnly(false);
 				}
 			}
-			else if( allowObjectConstruct )
+
+			// A non-const object can be converted to a const object directly
+			if( !ctx->type.dataType.IsReadOnly() && to.IsReadOnly() )
 			{
-				// Since the expression is not of the same object type we need to check if there
-				// is any constructor that can be used to create an object of the correct type.
-/*
-				asCArray<int> funcs;
-				asSTypeBehaviour *beh = to.GetBehaviour();
-				if( beh )
-				{
-					// TODO: Add implicit conversion to object types via contructor/factory
-
-					// Find the implicit constructor calls
-					for( int n = 0; n < beh->operators.GetLength(); n += 2 )
-						if( beh->operators[n] == asBEHAVE_IMPLICIT_CONSTRUCT ||
-							beh->operators[n] == asBEHAVE_IMPLICIT_FACTORY )
-							funcs.PushLast(beh->operators[n+1]);
-				}
-
-				// Compile the arguments
-				asCArray<asSExprContext *> args;
-				asCArray<asCTypeInfo> temporaryVariables;
-
-				args.PushLast(ctx);
-
-				MatchFunctions(funcs, args, node, to.GetObjectType()->name.AddressOf(), NULL, false, true, false);
-
-				// Verify that we found 1 matching function
-				if( funcs.GetLength() == 1 )
-				{
-					asCTypeInfo tempObj;
-					tempObj.dataType = to;
-					tempObj.dataType.MakeReference(true);
-					tempObj.isTemporary = true;
-					tempObj.isVariable = true;
-
-					if( generateCode )
-					{
-						tempObj.stackOffset = (short)AllocateVariable(to, true);
-
-						asSExprContext tmp(engine);
-
-						if( tempObj.dataType.GetObjectType()->flags & asOBJ_REF )
-						{
-							PrepareFunctionCall(funcs[0], &tmp.bc, args);
-							MoveArgsToStack(funcs[0], &tmp.bc, args, false);
-
-							// Call factory and store handle in the variable
-							PerformFunctionCall(funcs[0], &tmp, false, &args, 0, true, tempObj.stackOffset);
-
-							tmp.type = tempObj;
-						}
-						else
-						{
-							// Push the address of the object on the stack
-							tmp.bc.InstrSHORT(BC_VAR, tempObj.stackOffset);
-
-							PrepareFunctionCall(funcs[0], &tmp.bc, args);
-							MoveArgsToStack(funcs[0], &tmp.bc, args, false);
-
-							int offset = 0;
-							for( asUINT n = 0; n < args.GetLength(); n++ )
-								offset += args[n]->type.dataType.GetSizeOnStackDWords();
-
-							tmp.bc.InstrWORD(BC_GETREF, (asWORD)offset);
-
-							PerformFunctionCall(funcs[0], &tmp, true, &args, tempObj.dataType.GetObjectType());
-
-							// The constructor doesn't return anything,
-							// so we have to manually inform the type of
-							// the return value
-							tmp.type = tempObj;
-
-							// Push the address of the object on the stack again
-							tmp.bc.InstrSHORT(BC_PSF, tempObj.stackOffset);
-						}
-
-						// Copy the newly generated code to the input context
-						// ctx is already empty, since it was merged as part of argument expression
-						asASSERT(ctx->bc.GetLastInstr() == -1);
-						MergeExprContexts(ctx, &tmp);
-					}
-
-					ctx->type = tempObj;
-				}
-*/
+				ctx->type.dataType.MakeReadOnly(true);
 			}
 		}
 	}
