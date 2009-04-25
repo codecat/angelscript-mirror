@@ -177,8 +177,7 @@ void RegisterArrayObject(asCScriptEngine *engine)
 {
 	int r;
 
-	// TODO: template: Do away with the RegisterSpecialObjectType method
-	r = engine->RegisterSpecialObjectType("_builtin_array_<class T>", sizeof(asCArrayObject), asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); asASSERT( r >= 0 );
+	r = engine->RegisterObjectType("_builtin_array_<class T>", sizeof(asCArrayObject), asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); asASSERT( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
 #ifndef AS_64BIT_PTR
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int)", asFUNCTIONPR(ArrayObjectFactory, (asCObjectType*), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );

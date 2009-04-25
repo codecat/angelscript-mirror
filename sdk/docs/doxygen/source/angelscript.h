@@ -58,12 +58,12 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.16.0
-#define ANGELSCRIPT_VERSION        21600
+//! \details Version 2.16.1
+#define ANGELSCRIPT_VERSION        21601
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  16
-#define ANGELSCRIPT_VERSION_BUILD  0
-#define ANGELSCRIPT_VERSION_STRING "2.16.0"
+#define ANGELSCRIPT_VERSION_BUILD  1
+#define ANGELSCRIPT_VERSION_STRING "2.16.1"
 
 // Data types
 
@@ -135,21 +135,23 @@ enum asEObjTypeFlags
 	asOBJ_REF                   = 0x01,
 	//! A value type.
 	asOBJ_VALUE                 = 0x02,
-	//! A garbage collected type. Only valid with asOBJ_REF.
+	//! A garbage collected type. Only valid for reference types.
 	asOBJ_GC                    = 0x04,
-	//! A plain-old-data type. Only valid with asOBJ_VALUE.
+	//! A plain-old-data type. Only valid for value types.
 	asOBJ_POD                   = 0x08,
-	//! This reference type doesn't allow handles to be held. Only value with asOBJ_REF.
+	//! This reference type doesn't allow handles to be held. Only valid for reference types.
 	asOBJ_NOHANDLE              = 0x10,
-	//! The life time of objects of this type are controlled by the scope of the variable. Only valid with asOBJ_REF.
+	//! The life time of objects of this type are controlled by the scope of the variable. Only valid for reference types.
 	asOBJ_SCOPED                = 0x20,
-	//! The C++ type is a class type. Only valid with asOBJ_VALUE.
+	//! A template type.
+	asOBJ_TEMPLATE              = 0x40,
+	//! The C++ type is a class type. Only valid for value types.
 	asOBJ_APP_CLASS             = 0x100,
-	//! The C++ class has an explicit constructor. Only valid with asOBJ_VALUE.
+	//! The C++ class has an explicit constructor. Only valid for value types.
 	asOBJ_APP_CLASS_CONSTRUCTOR = 0x200,
-	//! The C++ class has an explicit destructor. Only valid with asOBJ_VALUE.
+	//! The C++ class has an explicit destructor. Only valid for value types.
 	asOBJ_APP_CLASS_DESTRUCTOR  = 0x400,
-	//! The C++ class has an explicit assignment operator. Only valid with asOBJ_VALUE.
+	//! The C++ class has an explicit assignment operator. Only valid for value types.
 	asOBJ_APP_CLASS_ASSIGNMENT  = 0x800,
 	asOBJ_APP_CLASS_C           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
 	asOBJ_APP_CLASS_CD          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
@@ -158,12 +160,12 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_D           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
 	asOBJ_APP_CLASS_A           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
 	asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
-	//! The C++ type is a primitive type. Only valid with asOBJ_VALUE.
+	//! The C++ type is a primitive type. Only valid for value types.
 	asOBJ_APP_PRIMITIVE         = 0x1000,
-	//! The C++ type is a float or double. Only valid with asOBJ_VALUE.
+	//! The C++ type is a float or double. Only valid for value types.
 	asOBJ_APP_FLOAT             = 0x2000,
-	asOBJ_MASK_VALID_FLAGS      = 0x3F3F,
-	//! The object is a script class or an interface
+	asOBJ_MASK_VALID_FLAGS      = 0x3F7F,
+	//! The object is a script class or an interface.
 	asOBJ_SCRIPT_OBJECT         = 0x10000
 };
 

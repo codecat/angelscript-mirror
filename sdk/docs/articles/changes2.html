@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.1 WIP - 2009/04/23</h2>
+<h2>Version 2.16.1 WIP - 2009/04/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -38,6 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added support for multibyte character sets through the preprocessor flag AS_DOUBLEBYTE_CHARSET, it's recommended to use UTF8 instead though. (Thanks loverlin)
 <li>Added asEP_REQUIRE_ENUM_SCOPE to force the use of enum scope when accessing enum values. (Thanks Jeff Slutter)
 <li>The value cast behaviour can now be used to instanciate an object type if the type doesn't have the appropriate constructor. (Thanks SiCrane)
+<li>The callstack is no longer cleaned up immediately on an exception, thus allowing the examination of it even after Execute returns.
 </ul>
 <li>Script language
 <ul>

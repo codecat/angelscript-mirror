@@ -112,6 +112,7 @@ enum asEObjTypeFlags
 	asOBJ_POD                   = 0x08,
 	asOBJ_NOHANDLE              = 0x10,
 	asOBJ_SCOPED                = 0x20,
+	asOBJ_TEMPLATE              = 0x40,
 	asOBJ_APP_CLASS             = 0x100,
 	asOBJ_APP_CLASS_CONSTRUCTOR = 0x200,
 	asOBJ_APP_CLASS_DESTRUCTOR  = 0x400,
@@ -125,7 +126,7 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
 	asOBJ_APP_PRIMITIVE         = 0x1000,
 	asOBJ_APP_FLOAT             = 0x2000,
-	asOBJ_MASK_VALID_FLAGS      = 0x3F3F,
+	asOBJ_MASK_VALID_FLAGS      = 0x3F7F,
 	asOBJ_SCRIPT_OBJECT         = 0x10000
 };
 

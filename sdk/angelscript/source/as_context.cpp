@@ -239,6 +239,10 @@ int asCContext::Prepare(int funcID)
 	if( status == tsActive || status == tsSuspended )
 		return asCONTEXT_ACTIVE;
 
+	// Clean the stack if not done before
+	if( status != tsUninitialized )
+		CleanStack();
+
 	// Release the returned object (if any)
 	CleanReturnObject();
 
@@ -344,7 +348,7 @@ int asCContext::Unprepare()
 		return asCONTEXT_ACTIVE;
 
 	// Only clean the stack if the context was prepared but not executed
-	if( status == tsPrepared )
+	if( status != tsUninitialized )
 		CleanStack();
 
 	// Release the returned object (if any)
@@ -960,14 +964,8 @@ int asCContext::Abort()
 
 	if( engine == 0 ) return asERROR;
 
-	// TODO: Can't clean the stack here
 	if( status == tsSuspended )
-	{
 		status = tsProgramAborted;
-		CleanStack();
-	}
-
-	CleanReturnObject();
 
 	doSuspend = true;
 	doProcessSuspend = true;
@@ -1143,9 +1141,6 @@ int asCContext::Execute()
 	{
 		doAbort = false;
 
-		// TODO: Cleaning the stack is also an execution thus the context is active
-		// We shouldn't decrease the numActiveContexts until after this is complete
-		CleanStack();
 		status = tsProgramAborted;
 		return asEXECUTION_ABORTED;
 	}
@@ -3305,9 +3300,6 @@ void asCContext::SetInternalException(const char *descr)
 
 	if( exceptionCallback )
 		CallExceptionCallback();
-
-	// Clean up stack
-	CleanStack();
 }
 
 void asCContext::CleanReturnObject()

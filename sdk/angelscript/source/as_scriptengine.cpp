@@ -347,6 +347,8 @@ asCScriptEngine::asCScriptEngine()
 	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttFloat,  false)); asASSERT( id == asTYPEID_FLOAT  );
 	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttDouble, false)); asASSERT( id == asTYPEID_DOUBLE );
 
+	defaultArrayObjectType = 0;
+
 	RegisterArrayObject(this);
 	RegisterScriptObject(this);
 }
@@ -926,51 +928,6 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	return asSUCCESS;
 }
 
-int asCScriptEngine::RegisterSpecialObjectType(const char *decl, int byteSize, asDWORD flags)
-{
-	// Put the data type in the list
-	if( flags & asOBJ_TEMPLATE )
-	{
-		asCString templateName;
-		asCString subtypeName;
-		asCBuilder builder(this, 0);
-		int r = builder.ParseTemplateDecl(decl, &templateName, &subtypeName);
-		if( r < 0 ) return r;
-
-		asCObjectType *type = asNEW(asCObjectType)(this);
-		defaultArrayObjectType = type;
-		type->AddRef();
-		type->tokenType = ttIdentifier;
-		type->name      = templateName;
-		type->arrayType = 0;
-		type->size      = byteSize;
-		type->flags     = flags;
-
-		// Store it in the object types
-		objectTypes.PushLast(type);
-
-		// Add these types to the default config group
-		defaultGroup.objTypes.PushLast(type);
-
-		// Define a template subtype
-		asCObjectType *subtype = asNEW(asCObjectType)(this);
-		subtype->name      = subtypeName;
-		subtype->tokenType = ttIdentifier;
-		subtype->arrayType = 0;
-		subtype->size      = 0;
-		subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
-		type->subType = subtype;
-		subtype->AddRef();
-		// TODO: template: Should reuse existing type if already configured
-		templateSubTypes.PushLast(subtype);
-		subtype->AddRef();
-	}
-	else
-		return asERROR;
-
-	return asSUCCESS;
-}
-
 int asCScriptEngine::RegisterInterface(const char *name)
 {
 	if( name == 0 ) return ConfigError(asINVALID_NAME);
@@ -1085,14 +1042,16 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 
 int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD flags)
 {
+	int r;
+
 	isPrepared = false;
 
 	// Verify flags
 	//   Must have either asOBJ_REF or asOBJ_VALUE
 	if( flags & asOBJ_REF )
 	{
-		// Can optionally have the asOBJ_GC, asOBJ_NOHANDLE, or asOBJ_SCOPED flag set, but nothing else
-		if( flags & ~(asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE | asOBJ_SCOPED) )
+		// Can optionally have the asOBJ_GC, asOBJ_NOHANDLE, asOBJ_SCOPED, or asOBJ_TEMPLATE flag set, but nothing else
+		if( flags & ~(asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE | asOBJ_SCOPED | asOBJ_TEMPLATE) )
 			return ConfigError(asINVALID_ARG);
 
 		// flags are exclusive
@@ -1106,6 +1065,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	else if( flags & asOBJ_VALUE )
 	{
 		// Cannot use reference flags
+		// TODO: template: Should be possible to register a value type as reference type
 		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_SCOPED) )
 			return ConfigError(asINVALID_ARG);
 
@@ -1163,101 +1123,164 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	if( name == 0 )
 		return ConfigError(asINVALID_NAME);
 
-	// Verify if the name has been registered as a type already
-	asUINT n;
-	for( n = 0; n < objectTypes.GetLength(); n++ )
-	{
-		if( objectTypes[n] && objectTypes[n]->name == name )
-			return asALREADY_REGISTERED;
-	}
-
-	for( n = 0; n < arrayTypes.GetLength(); n++ )
-	{
-		if( arrayTypes[n] && arrayTypes[n]->name == name )
-			return asALREADY_REGISTERED;
-	}
-
-	// Verify the most recently created script array type
-	asCObjectType *mostRecentScriptArrayType = 0;
-	if( scriptArrayTypes.GetLength() )
-		mostRecentScriptArrayType = scriptArrayTypes[scriptArrayTypes.GetLength()-1];
-
-	// Use builder to parse the datatype
-	asCDataType dt;
+	asCString typeName;
 	asCBuilder bld(this, 0);
-	bool oldMsgCallback = msgCallback; msgCallback = false;
-	int r = bld.ParseDataType(name, &dt);
-	msgCallback = oldMsgCallback;
-
-	// If the builder fails, then the type name
-	// is new and it should be registered
-	if( r < 0 )
+	if( flags & asOBJ_TEMPLATE )
 	{
-		// Make sure the name is not a reserved keyword
-		asCTokenizer t;
-		size_t tokenLen;
-		int token = t.GetToken(name, strlen(name), &tokenLen);
-		if( token != ttIdentifier || strlen(name) != tokenLen )
-			return ConfigError(asINVALID_NAME);
-
-		int r = bld.CheckNameConflict(name, 0, 0);
+		asCString subtypeName;
+		r = bld.ParseTemplateDecl(name, &typeName, &subtypeName);
 		if( r < 0 )
-			return ConfigError(asNAME_TAKEN);
+			return r;
 
-		// Don't have to check against members of object
-		// types as they are allowed to use the names
+		// Verify that the template name hasn't been registered as a type already
+		asUINT n;
+		for( n = 0; n < objectTypes.GetLength(); n++ )
+		{
+			if( objectTypes[n] && objectTypes[n]->name == typeName )
+				return asALREADY_REGISTERED;
+		}
 
-		// Put the data type in the list
 		asCObjectType *type = asNEW(asCObjectType)(this);
-		type->name      = name;
 		type->tokenType = ttIdentifier;
+		type->name      = typeName;
 		type->arrayType = 0;
 		type->size      = byteSize;
 		type->flags     = flags;
 
+		// Store it in the object types
 		objectTypes.PushLast(type);
-		registeredObjTypes.PushLast(type);
+
+		// Define a template subtype
+		asCObjectType *subtype = asNEW(asCObjectType)(this);
+		subtype->name      = subtypeName;
+		subtype->tokenType = ttIdentifier;
+		subtype->arrayType = 0;
+		subtype->size      = 0;
+		subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
+		type->subType = subtype;
+		subtype->AddRef();
+		// TODO: template: Should reuse existing type if already configured
+		templateSubTypes.PushLast(subtype);
+		subtype->AddRef();
 
 		currentGroup->objTypes.PushLast(type);
+
+		if( defaultArrayObjectType == 0 )
+		{
+			// TODO: The default array object type should be defined by the application
+			// The default array object type is registered by the engine itself
+			defaultArrayObjectType = type;
+			type->AddRef();
+		}
+		else
+		{
+			registeredObjTypes.PushLast(type);
+
+			// TODO: template: We don't yet support application defined template types
+			return ConfigError(asNOT_SUPPORTED);
+		}
 	}
 	else
 	{
-		// TODO: Template: This ought to be covered automatically by the new template code
-		// int[][] must not be allowed to be registered
-		// if int[] hasn't been registered first
-		if( dt.GetSubType().IsTemplate() )
-			return ConfigError(asLOWER_ARRAY_DIMENSION_NOT_REGISTERED);
+		typeName = name;
 
-		if( dt.IsReadOnly() ||
-			dt.IsReference() )
-			return ConfigError(asINVALID_TYPE);
+		// TODO: template: If the name contains a < character then this must be a template specialization
 
-		// Was the script array type created before?
-		if( scriptArrayTypes[scriptArrayTypes.GetLength()-1] == mostRecentScriptArrayType ||
-			mostRecentScriptArrayType == dt.GetObjectType() )
-			return ConfigError(asNOT_SUPPORTED);
+		// Verify if the name has been registered as a type already
+		asUINT n;
+		for( n = 0; n < objectTypes.GetLength(); n++ )
+		{
+			if( objectTypes[n] && objectTypes[n]->name == typeName )
+				return asALREADY_REGISTERED;
+		}
 
-		// TODO: Add this again. The type is used by the factory stubs so we need to discount that
-		// Is the script array type already being used?
-//		if( dt.GetObjectType()->GetRefCount() > 1 )
-//			return ConfigError(asNOT_SUPPORTED);
+		for( n = 0; n < arrayTypes.GetLength(); n++ )
+		{
+			if( arrayTypes[n] && arrayTypes[n]->name == typeName )
+				return asALREADY_REGISTERED;
+		}
 
-		// Put the data type in the list
-		asCObjectType *type = asNEW(asCObjectType)(this);
-		type->name      = name;
-		type->subType   = dt.GetSubType().GetObjectType();
-		if( type->subType ) type->subType->AddRef();
-		type->tokenType = dt.GetSubType().GetTokenType();
-		type->arrayType = dt.GetArrayType();
-		type->size      = byteSize;
-		type->flags     = flags;
+		// Verify the most recently created script array type
+		asCObjectType *mostRecentScriptArrayType = 0;
+		if( scriptArrayTypes.GetLength() )
+			mostRecentScriptArrayType = scriptArrayTypes[scriptArrayTypes.GetLength()-1];
 
-		arrayTypes.PushLast(type);
+		// Use builder to parse the datatype
+		asCDataType dt;
+		bool oldMsgCallback = msgCallback; msgCallback = false;
+		r = bld.ParseDataType(name, &dt);
+		msgCallback = oldMsgCallback;
 
-		currentGroup->objTypes.PushLast(type);
+		// If the builder fails, then the type name
+		// is new and it should be registered
+		if( r < 0 )
+		{
+			// Make sure the name is not a reserved keyword
+			asCTokenizer t;
+			size_t tokenLen;
+			int token = t.GetToken(name, typeName.GetLength(), &tokenLen);
+			if( token != ttIdentifier || typeName.GetLength() != tokenLen )
+				return ConfigError(asINVALID_NAME);
 
-		// Remove the built-in array type, which will no longer be used.
-		RemoveArrayType(dt.GetObjectType());
+			int r = bld.CheckNameConflict(name, 0, 0);
+			if( r < 0 )
+				return ConfigError(asNAME_TAKEN);
+
+			// Don't have to check against members of object
+			// types as they are allowed to use the names
+
+			// Put the data type in the list
+			asCObjectType *type = asNEW(asCObjectType)(this);
+			type->name      = typeName;
+			type->tokenType = ttIdentifier;
+			type->arrayType = 0;
+			type->size      = byteSize;
+			type->flags     = flags;
+
+			objectTypes.PushLast(type);
+			registeredObjTypes.PushLast(type);
+
+			currentGroup->objTypes.PushLast(type);
+		}
+		else
+		{
+			// TODO: Template: This ought to be covered automatically by the new template code
+			// int[][] must not be allowed to be registered
+			// if int[] hasn't been registered first
+			if( dt.GetSubType().IsTemplate() )
+				return ConfigError(asLOWER_ARRAY_DIMENSION_NOT_REGISTERED);
+
+			if( dt.IsReadOnly() ||
+				dt.IsReference() )
+				return ConfigError(asINVALID_TYPE);
+
+			// Was the script array type created before?
+			if( scriptArrayTypes[scriptArrayTypes.GetLength()-1] == mostRecentScriptArrayType ||
+				mostRecentScriptArrayType == dt.GetObjectType() )
+				return ConfigError(asNOT_SUPPORTED);
+
+			// TODO: Add this again. The type is used by the factory stubs so we need to discount that
+			// Is the script array type already being used?
+//			if( dt.GetObjectType()->GetRefCount() > 1 )
+//				return ConfigError(asNOT_SUPPORTED);
+
+			// Put the data type in the list
+			asCObjectType *type = asNEW(asCObjectType)(this);
+			type->name      = typeName;
+			type->subType   = dt.GetSubType().GetObjectType();
+			if( type->subType ) type->subType->AddRef();
+			type->tokenType = dt.GetSubType().GetTokenType();
+			type->arrayType = dt.GetArrayType();
+			type->size      = byteSize;
+			type->flags     = flags;
+
+			arrayTypes.PushLast(type);
+
+			currentGroup->objTypes.PushLast(type);
+
+			// Remove the built-in array type, which will no longer be used.
+			RemoveArrayType(dt.GetObjectType());
+		}
 	}
 
 	return asSUCCESS;

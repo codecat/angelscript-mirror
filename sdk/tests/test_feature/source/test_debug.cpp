@@ -83,19 +83,20 @@ static const char *correct =
 " int a = 1\n"
 " string s = 'text'\n"
 "Module2:void Test2():5,2\n"
-" int b = 2\n";
-
-static const char *correctWithoutLineCues =
+" int b = 2\n"
 "--- exception ---\n"
 "desc: Out of range\n"
 "func: void Test3()\n"
 "modl: Module2\n"
 "sect: TestDebug:2\n"
-"line: 8,3\n"
+"line: 10,3\n"
+" int c = 3\n"
 "--- call stack ---\n"
-"Module1:void main():6,2\n"
-"Module2:void Test2():4,2\n";
-
+"Module1:void main():8,2\n"
+" int a = 1\n"
+" string s = 'text'\n"
+"Module2:void Test2():5,2\n"
+" int b = 2\n";
 
 void print(const char *format, ...)
 {
@@ -228,12 +229,16 @@ bool Test()
 	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_CDECL);
 	ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
 	ctx->Prepare(mod->GetFunctionIdByDecl("void main()"));
-	ctx->Execute();
+	int r = ctx->Execute();
+	if( r == asEXECUTION_EXCEPTION )
+	{
+		// It is possible to examine the callstack even after the Execute() method has returned
+		ExceptionCallback(ctx, 0);
+	}
 	ctx->Release();
 	engine->Release();
 
-	if( printBuffer != correct &&
-		printBuffer != correctWithoutLineCues )
+	if( printBuffer != correct )
 	{
 		fail = true;
 		printf(printBuffer.c_str());

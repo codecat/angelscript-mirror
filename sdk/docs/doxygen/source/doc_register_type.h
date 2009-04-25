@@ -222,18 +222,30 @@ built-in primitives.
 
 If the type will be passed to and from the application by value using native calling conventions, it is important to inform
 AngelScript of its real type in C++, otherwise AngelScript won't be able to determine exactly how C++ is treating the type in
-a parameter or return value. There are a few different flags for this:
+a parameter or return value. 
+
+There are a few different flags for this:
 
 <table border=0 cellspacing=0 cellpadding=0>
-<tr><td>asOBJ_APP_CLASS             &nbsp; </td><td>The C++ type is a class, struct, or union</td></tr>
-<tr><td>asOBJ_APP_CLASS_CONSTRUCTOR &nbsp; </td><td>The C++ type has a defined constructor</td></tr>
-<tr><td>asOBJ_APP_CLASS_DESTRUCTOR  &nbsp; </td><td>The C++ type has a defined destructor</td></tr>
-<tr><td>asOBJ_APP_CLASS_ASSIGNMENT  &nbsp; </td><td>The C++ type has a defined assignment operator</td></tr>
-<tr><td>asOBJ_APP_PRIMITIVE         &nbsp; </td><td>The C++ type is a C++ primitive, but not a float or double</td></tr>
-<tr><td>asOBJ_APP_FLOAT             &nbsp; </td><td>The C++ type is a float or double</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS             &nbsp; </td><td>The C++ type is a class, struct, or union</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_CONSTRUCTOR &nbsp; </td><td>The C++ type has a defined constructor</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_DESTRUCTOR  &nbsp; </td><td>The C++ type has a defined destructor</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ASSIGNMENT  &nbsp; </td><td>The C++ type has a defined assignment operator</td></tr>
+<tr><td>\ref asOBJ_APP_PRIMITIVE         &nbsp; </td><td>The C++ type is a C++ primitive, but not a float or double</td></tr>
+<tr><td>\ref asOBJ_APP_FLOAT             &nbsp; </td><td>The C++ type is a float or double</td></tr>
 </table>
 
-\todo The use of asOBJ_APP_CLASS and related flags is not clear to newcomers. It must be explained better.
+Note that these don't represent how the type will behave in the script language, only what the real type is in the host 
+application. So if you want to register a C++ class that you want to behave as a primitive type in the script language
+you should still use the flag asOBJ_APP_CLASS. The same thing for the flags to identify that the class has a constructor, 
+destructor, or assignment. These flags tell AngelScript that the class has the respective function, but not that the type
+in the script language should have these behaviours.
+
+For class types there are also a shorter form of the flags for each combination of the 4 flags. They are of the form asOBJ_APP_CLASS_CDA, 
+where the existance of the last letters determine if the constructor, destructor, and/or assignment behaviour are available. For example
+asOBJ_APP_CLASS_CDA is defined as asOBJ_APP_CLASS | asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT.
+
+
 
 
 \code

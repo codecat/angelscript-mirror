@@ -157,8 +157,7 @@ another script function call.
 
 If the script performs an illegal action, e.g. calling a method on a null handle, then
 the script engine will throw a script exception. The virtual machine will then abort
-the execution and clean up the call stack to free the allocated memory. The 
-\ref asIScriptContext::Execute "Execute" method will finally return with the value
+the execution and the \ref asIScriptContext::Execute "Execute" method will return with the value
 \ref asEXECUTION_EXCEPTION.
 
 At this time it is possible to obtain information about the exception through the 
@@ -185,8 +184,7 @@ void PrintExceptionInfo(asIScriptContext *ctx)
 \endcode
 
 If desired, it is also possible to \ref asIScriptContext::SetExceptionCallback "register a callback function" 
-that will be called before the call stack has been cleaned up. This will allow the application to examine
-the value of variables and parameters for more detailed information.
+that will be called at the moment the exception occurred, before the \ref asIScriptContext::Execute "Execute" method returns. 
 
 \see \ref doc_debug for information on examining the callstack
 

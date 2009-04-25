@@ -224,7 +224,6 @@ public:
 	friend class asCByteCode;
 	friend int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 
-	int RegisterSpecialObjectType(const char *objname, int byteSize, asDWORD flags);
 	int RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv);
 
 	int VerifyVarTypeNotInFunction(asCScriptFunction *func);

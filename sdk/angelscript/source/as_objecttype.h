@@ -58,7 +58,6 @@ BEGIN_AS_NAMESPACE
 //       is specific to the module will also return the module name. Otherwise the module name will not be returned.
 
 // Additional flag to the class object type
-const asDWORD asOBJ_TEMPLATE         = 0x20000;
 const asDWORD asOBJ_IMPLICIT_HANDLE  = 0x40000;
 const asDWORD asOBJ_TYPEDEF          = 0x40000000;
 const asDWORD asOBJ_ENUM             = 0x10000000;
