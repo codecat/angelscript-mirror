@@ -105,7 +105,7 @@ if( r < 0 )
 }
 \endcode
 
-\todo Link to the page about pre-compiled bytecode
+\see \ref doc_adv_precompile
 
 
 

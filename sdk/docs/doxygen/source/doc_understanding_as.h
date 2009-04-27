@@ -14,8 +14,6 @@ when passing objects between AngelScript and C++.
  - \subpage doc_as_vs_cpp_types
  - \subpage doc_obj_handle
 
-\todo Explain parameter references in detail
-
 
 
 
