@@ -26,7 +26,7 @@ functions.
  - \ref doc_reg_single
  - \ref doc_reg_scoped
 
-\see \ref doc_gc_object
+\see \ref doc_gc_object, \ref doc_adv_class_hierarchy
 
 \section doc_reg_basicref Registering a basic reference type
 

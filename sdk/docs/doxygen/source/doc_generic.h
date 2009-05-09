@@ -34,7 +34,7 @@ will return the value of the argument, or the \ref asIScriptGeneric::GetAddressO
 The GetAddressOfArg method returns a pointer to the actual value. The application should then cast this pointer 
 to a pointer of the correct type so that the value can be read from the address.
 
-If the function you're implement represents a class method, the pointer to the object instance should be obtained 
+If the function you're implementing represents a class method, the pointer to the object instance should be obtained 
 with a call to \ref asIScriptGeneric::GetObject "GetObject".
 
 Note that the asIScriptGeneric interface is the owner of any references it returns with these calls, so you
@@ -49,6 +49,11 @@ either by value, reference, or as object handle. Depending on the type and the f
 increment the reference count, or even make a copy of the object first. Carefully read the instructions for 
 \ref asIScriptGeneric::SetReturnAddress "SetReturnAddress" and \ref asIScriptGeneric::SetReturnObject "SetReturnObject" 
 to determine what needs to be done to get the expected result.
+
+It is also possible to use the \ref asIScriptGeneric::GetAddressOfReturnLocation "GetAddressOfReturnLocation" method to
+obtain the address of the memory where the return value will be stored. The memory is not initialized, so you should
+use the placement new operator to initialize this memory with a call to the constructor. This also works for primitive
+types, which makes this ideal for template implementations, such as that in the \ref doc_addon_autowrap "automatic wrapper functions".
 
 
 

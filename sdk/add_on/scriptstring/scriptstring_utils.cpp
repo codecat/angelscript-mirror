@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "scriptstring.h"
+#include <string.h> // strstr
 
 
 

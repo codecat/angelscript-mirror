@@ -516,6 +516,9 @@ void NOINLINE CallCDeclFunction(const asDWORD *args, int paramSize, size_t func)
 		// We must save registers that are used
 	    push ecx
 
+		// Clear the FPU stack, in case the called function doesn't do it by itself
+		fninit
+
 		// Copy arguments from script
 		// stack to application stack
         mov  ecx, paramSize
@@ -594,6 +597,9 @@ void NOINLINE CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int
 	{
 		// We must save registers that are used
 	    push ecx
+
+		// Clear the FPU stack, in case the called function doesn't do it by itself
+		fninit
 
 		// Push the object pointer as the last argument to the function
 		push obj
@@ -681,6 +687,9 @@ void NOINLINE CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, in
 		// We must save registers that are used
 	    push ecx
 
+		// Clear the FPU stack, in case the called function doesn't do it by itself
+		fninit
+
 		// Copy arguments from script
 		// stack to application stack
         mov  ecx, paramSize
@@ -766,6 +775,9 @@ void NOINLINE CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const asDW
 	{
 		// We must save registers that are used
 	    push ecx
+
+		// Clear the FPU stack, in case the called function doesn't do it by itself
+		fninit
 
 		// Copy arguments from script
 		// stack to application stack
@@ -866,6 +878,9 @@ void NOINLINE CallCDeclFunctionRetByRef_impl(const asDWORD *args, int paramSize,
 		// We must save registers that are used
 	    push ecx
 
+		// Clear the FPU stack, in case the called function doesn't do it by itself
+		fninit
+
 		// Copy arguments from script
 		// stack to application stack
         mov  ecx, paramSize
@@ -955,6 +970,9 @@ void NOINLINE CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const asDWO
 	{
 		// We must save registers that are used
 	    push ecx
+
+		// Clear the FPU stack, in case the called function doesn't do it by itself
+		fninit
 
 		push obj
 
@@ -1053,6 +1071,9 @@ void NOINLINE CallSTDCallFunction(const asDWORD *args, int paramSize, size_t fun
 		// We must save registers that are used
 	    push ecx
 
+		// Clear the FPU stack, in case the called function doesn't do it by itself
+		fninit
+
 		// Copy arguments from script
 		// stack to application stack
         mov  ecx, paramSize
@@ -1130,6 +1151,9 @@ void NOINLINE CallThisCallFunction(const void *obj, const asDWORD *args, int par
 	{
 		// We must save registers that are used
 	    push ecx
+
+		// Clear the FPU stack, in case the called function doesn't do it by itself
+		fninit
 
 		// Copy arguments from script
 		// stack to application stack
@@ -1227,6 +1251,9 @@ void NOINLINE CallThisCallFunctionRetByRef_impl(const void *obj, const asDWORD *
 	{
 		// We must save registers that are used
 	    push ecx
+
+		// Clear the FPU stack, in case the called function doesn't do it by itself
+		fninit
 
 		// Copy arguments from script
 		// stack to application stack

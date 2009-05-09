@@ -5569,7 +5569,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				if( str.GetLength() == 0 )
 					Error(TXT_EMPTY_CHAR_LITERAL, vnode);
 				else
-					val = (unsigned)str[0];
+					val = (unsigned char)str[0];
 
 				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), val);
 			}

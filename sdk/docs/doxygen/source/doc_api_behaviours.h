@@ -122,7 +122,10 @@ This behaviour should be registered with one parameter using \ref asIScriptEngin
 
 asBEHAVE_VALUE_CAST and asBEHAVE_IMPLICIT_VALUE_CAST must be registered without parameters using \ref asIScriptEngine::RegisterObjectBehaviour.
 The return type can be any type, except bool and void. The value cast allows explicit casts through construct calls, whereas the implicit value
-cast also allow the compiler to implicitly use the behaviour to convert expressions as necessary.
+cast also allow the compiler to implicitly use the behaviour to convert expressions as necessary. The value cast behaviours are meant to create
+a new value so the function must not return a reference or handle to the original value.
+
+\see asBEHAVE_CONSTRUCT and asBEHAVE_FACTORY in \ref memmgmt as well for an alternative value cast operator.
 
 asBEHAVE_REF_CAST and asBEHAVE_IMPLICIT_REF_CAST must be registered with one parameter using \ref asIScriptEngine::RegisterGlobalBehaviour. 
 The parameter must be an object handle, as must the return type. The only difference between the two is that the script compiler may use 
@@ -130,28 +133,9 @@ the later for implicit casts, while the former can only be used by explicitly ca
 when registering class hierarchies, where cast to a base class usually is registered with an implicit cast, whereas a cast to a derived 
 class usually is registered with an explicit cast.
 
-\code
-// Example REF_CAST behaviour
-B* castAtoB(A* a)
-{
-    // If the handle already is a null handle, then just return the null handle
-    if( !a ) return 0;
+\see \ref doc_adv_class_hierarchy
 
-    // Now try to dynamically cast the pointer to the wanted type
-    B* b = dynamic_cast<B*>(a);
-    if( b == 0 )
-    {
-        // Since the cast couldn't be made, we need to release the handle we received
-        a->release();
-    }
-    return b;
-}
 
-// Example registration of the behaviour
-r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "B@ f(A@)", asFUNCTION(castAToB), asCALL_CDECL); assert( r >= 0 );
-\endcode
-
-\see asBEHAVE_CONSTRUCT and asBEHAVE_FACTORY in \ref memmgmt as well for an alternative value cast operator.
 
 
 

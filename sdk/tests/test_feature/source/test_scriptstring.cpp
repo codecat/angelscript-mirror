@@ -311,6 +311,11 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( printOutput != "39" ) fail = true;
 
+	printOutput = "";
+	r = engine->ExecuteString(0, "print(\"\" + '\xFF')");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( printOutput != "255" ) fail = true;
+ 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->ExecuteString(0, "print(\"\" + '')");

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.1 WIP - 2009/04/24</h2>
+<h2>Version 2.16.1 WIP - 2009/05/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when a script constructor that receives object handle throws an exception (Thanks cvet)
 <li>Fixed implicit value cast to another object type (Thanks SiCrane)
 <li>Fixed multithread support on FreeBSD (Thanks droz)
+<li>Character literals for characters above ASCII 127 are now compiled correctly (Thanks cvet)
+<li>Fixed rare bug when script called application function with float args and the application uses full optimization (Thanks Jeff Slutter and DaBono)
 </ul>
 <li>Library
 <ul>
