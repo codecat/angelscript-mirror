@@ -360,27 +360,27 @@ asCScriptEngine::~asCScriptEngine()
 
 	Reset();
 
-	// Delete the functions for array types that may references object types
-	for( n = 0; n < arrayTypes.GetLength(); n++ )
+	// Delete the functions for template types that may references object types
+	for( n = 0; n < templateTypes.GetLength(); n++ )
 	{
-		if( arrayTypes[n] )
+		if( templateTypes[n] )
 		{
 			asUINT f;
 
 			// Delete the factory stubs first
-			for( f = 0; f < arrayTypes[n]->beh.factories.GetLength(); f++ )
+			for( f = 0; f < templateTypes[n]->beh.factories.GetLength(); f++ )
 			{
-				DeleteScriptFunction(arrayTypes[n]->beh.factories[f]);
+				DeleteScriptFunction(templateTypes[n]->beh.factories[f]);
 			}
-			arrayTypes[n]->beh.factories.Allocate(0, false);
+			templateTypes[n]->beh.factories.Allocate(0, false);
 
 			// Delete the specialized functions
-			for( f = 1; f < arrayTypes[n]->beh.operators.GetLength(); f += 2 )
+			for( f = 1; f < templateTypes[n]->beh.operators.GetLength(); f += 2 )
 			{
-				if( scriptFunctions[arrayTypes[n]->beh.operators[f]]->objectType == arrayTypes[n] )
+				if( scriptFunctions[templateTypes[n]->beh.operators[f]]->objectType == templateTypes[n] )
 				{
-					DeleteScriptFunction(arrayTypes[n]->beh.operators[f]);
-					arrayTypes[n]->beh.operators[f] = 0;
+					DeleteScriptFunction(templateTypes[n]->beh.operators[f]);
+					templateTypes[n]->beh.operators[f] = 0;
 				}
 			}
 		}
@@ -435,21 +435,23 @@ asCScriptEngine::~asCScriptEngine()
 	globalPropAddresses.SetLength(0);
 
 
-	for( n = 0; n < arrayTypes.GetLength(); n++ )
+	for( n = 0; n < templateTypes.GetLength(); n++ )
 	{
-		if( arrayTypes[n] )
+		if( templateTypes[n] )
 		{
-			arrayTypes[n]->subType = 0;
-			asDELETE(arrayTypes[n],asCObjectType);
+			// Clear the sub type before deleting the template type so that the sub type isn't freed to soon
+			templateTypes[n]->templateSubType = asCDataType::CreateNullHandle();
+			asDELETE(templateTypes[n],asCObjectType);
 		}
 	}
-	arrayTypes.SetLength(0);
+	templateTypes.SetLength(0);
 
 	for( n = 0; n < objectTypes.GetLength(); n++ )
 	{
 		if( objectTypes[n] )
 		{
-			objectTypes[n]->subType = 0;
+			// Clear the sub type before deleting the template type so that the sub type isn't freed to soon
+			objectTypes[n]->templateSubType = asCDataType::CreateNullHandle();
 			asDELETE(objectTypes[n],asCObjectType);
 		}
 	}
@@ -712,7 +714,7 @@ void asCScriptEngine::ClearUnusedTypes()
 	// All that remains in the list after this can be discarded, since they are no longer used
 	for(;;)
 	{
-		bool didClearArrayType = false;
+		bool didClearTemplateInstanceType = false;
 
 		for( n = 0; n < types.GetLength(); n++ )
 		{
@@ -721,9 +723,9 @@ void asCScriptEngine::ClearUnusedTypes()
 
 			if( types[n]->GetRefCount() == refCount )
 			{
-				if( types[n]->arrayType )
+				if( types[n]->flags & asOBJ_TEMPLATE )
 				{
-					didClearArrayType = true;
+					didClearTemplateInstanceType = true;
 					RemoveArrayType(types[n]);
 				}
 				else
@@ -747,7 +749,7 @@ void asCScriptEngine::ClearUnusedTypes()
 			}
 		}
 
-		if( didClearArrayType == false )
+		if( didClearTemplateInstanceType == false )
 			break;
 	}
 }
@@ -764,11 +766,11 @@ void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &typ
 		types[i] = types.PopLast();
 
 	// If the type is an array, then remove all sub types as well
-	if( ot->subType )
+	if( ot->templateSubType.GetObjectType() )
 	{
-		while( ot->subType )
+		while( ot->templateSubType.GetObjectType() )
 		{
-			ot = ot->subType;
+			ot = ot->templateSubType.GetObjectType();
 			RemoveTypeAndRelatedFromList(types, ot);
 		}
 		return;
@@ -964,11 +966,9 @@ int asCScriptEngine::RegisterInterface(const char *name)
 
 	// Register the object type for the interface
 	asCObjectType *st = asNEW(asCObjectType)(this);
-	st->arrayType = 0;
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT;
 	st->size = 0; // Cannot be instanciated
 	st->name = name;
-	st->tokenType = ttIdentifier;
 
 	// Use the default script class behaviours
 	st->beh.factory = 0;
@@ -1141,9 +1141,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		}
 
 		asCObjectType *type = asNEW(asCObjectType)(this);
-		type->tokenType = ttIdentifier;
 		type->name      = typeName;
-		type->arrayType = 0;
 		type->size      = byteSize;
 		type->flags     = flags;
 
@@ -1151,16 +1149,26 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		objectTypes.PushLast(type);
 
 		// Define a template subtype
-		asCObjectType *subtype = asNEW(asCObjectType)(this);
-		subtype->name      = subtypeName;
-		subtype->tokenType = ttIdentifier;
-		subtype->arrayType = 0;
-		subtype->size      = 0;
-		subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
-		type->subType = subtype;
-		subtype->AddRef();
-		// TODO: template: Should reuse existing type if already configured
-		templateSubTypes.PushLast(subtype);
+		asCObjectType *subtype = 0;
+		for( n = 0; n < templateSubTypes.GetLength(); n++ )
+		{
+			if( templateSubTypes[n]->name == subtypeName )
+			{
+				subtype = templateSubTypes[n];
+				break;
+			}
+		}
+		if( subtype == 0 )
+		{
+			// Create the new subtype if not already existing
+			subtype = asNEW(asCObjectType)(this);
+			subtype->name      = subtypeName;
+			subtype->size      = 0;
+			subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
+			templateSubTypes.PushLast(subtype);
+			subtype->AddRef();
+		}
+		type->templateSubType = asCDataType::CreateObject(subtype, false);
 		subtype->AddRef();
 
 		currentGroup->objTypes.PushLast(type);
@@ -1194,9 +1202,9 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				return asALREADY_REGISTERED;
 		}
 
-		for( n = 0; n < arrayTypes.GetLength(); n++ )
+		for( n = 0; n < templateTypes.GetLength(); n++ )
 		{
-			if( arrayTypes[n] && arrayTypes[n]->name == typeName )
+			if( templateTypes[n] && templateTypes[n]->name == typeName )
 				return asALREADY_REGISTERED;
 		}
 
@@ -1232,8 +1240,6 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			// Put the data type in the list
 			asCObjectType *type = asNEW(asCObjectType)(this);
 			type->name      = typeName;
-			type->tokenType = ttIdentifier;
-			type->arrayType = 0;
 			type->size      = byteSize;
 			type->flags     = flags;
 
@@ -1266,15 +1272,13 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 			// Put the data type in the list
 			asCObjectType *type = asNEW(asCObjectType)(this);
-			type->name      = typeName;
-			type->subType   = dt.GetSubType().GetObjectType();
-			if( type->subType ) type->subType->AddRef();
-			type->tokenType = dt.GetSubType().GetTokenType();
-			type->arrayType = dt.GetArrayType();
+			type->name      = defaultArrayObjectType->name;
+			type->templateSubType = dt.GetSubType();
+			if( type->templateSubType.GetObjectType() ) type->templateSubType.GetObjectType()->AddRef();
 			type->size      = byteSize;
 			type->flags     = flags;
 
-			arrayTypes.PushLast(type);
+			templateTypes.PushLast(type);
 
 			currentGroup->objTypes.PushLast(type);
 
@@ -2256,14 +2260,14 @@ asCObjectType *asCScriptEngine::GetObjectType(const char *type)
 	// TODO: optimize: Improve linear search
 	for( asUINT n = 0; n < objectTypes.GetLength(); n++ )
 		if( objectTypes[n] &&
-			objectTypes[n]->name == type &&
-			objectTypes[n]->arrayType == 0 )
+			objectTypes[n]->name == type ) // TODO: template: Should we check the subtype in case of template instances?
 			return objectTypes[n];
 
 	return 0;
 }
 
 
+// TODO: Rename this to GetTemplateSpecialization
 // This method will only return registered array types, since only they have the name stored
 asCObjectType *asCScriptEngine::GetArrayType(const char *type)
 {
@@ -2271,10 +2275,10 @@ asCObjectType *asCScriptEngine::GetArrayType(const char *type)
 		return 0;
 
 	// TODO: optimize: Improve linear search
-	for( asUINT n = 0; n < arrayTypes.GetLength(); n++ )
-		if( arrayTypes[n] &&
-			arrayTypes[n]->name == type )
-			return arrayTypes[n];
+	for( asUINT n = 0; n < templateTypes.GetLength(); n++ )
+		if( templateTypes[n] &&
+			templateTypes[n]->name == type )
+			return templateTypes[n];
 
 	return 0;
 }
@@ -2650,14 +2654,14 @@ void asCScriptEngine::RemoveArrayType(asCObjectType *t)
 
 	// Start searching from the end of the list, as most of
 	// the time it will be the last two types
-	for( n = (int)arrayTypes.GetLength()-1; n >= 0; n-- )
+	for( n = (int)templateTypes.GetLength()-1; n >= 0; n-- )
 	{
-		if( arrayTypes[n] == t )
+		if( templateTypes[n] == t )
 		{
-			if( n == (signed)arrayTypes.GetLength()-1 )
-				arrayTypes.PopLast();
+			if( n == (signed)templateTypes.GetLength()-1 )
+				templateTypes.PopLast();
 			else
-				arrayTypes[n] = arrayTypes.PopLast();
+				templateTypes[n] = templateTypes.PopLast();
 		}
 	}
 
@@ -2675,58 +2679,35 @@ void asCScriptEngine::RemoveArrayType(asCObjectType *t)
 	asDELETE(t,asCObjectType);
 }
 
-asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
+asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateType, asCDataType &subType)
 {
 	asUINT n;
 
-	int arrayType = type.GetArrayType();
-	if( type.IsObjectHandle() )
-		arrayType = (arrayType<<2) | 3;
-	else
-		arrayType = (arrayType<<2) | 2;
-
 	// Is there any array type already with this subtype?
-	if( type.IsObject() )
+	for( n = 0; n < templateTypes.GetLength(); n++ )
 	{
-		// TODO: optimize: Improve linear search
-		for( asUINT n = 0; n < arrayTypes.GetLength(); n++ )
-		{
-			if( arrayTypes[n] &&
-				arrayTypes[n]->tokenType == ttIdentifier &&
-				arrayTypes[n]->subType == type.GetObjectType() &&
-				arrayTypes[n]->arrayType == arrayType )
-				return arrayTypes[n];
-		}
-	}
-	else
-	{
-		// TODO: optimize: Improve linear search
-		for( asUINT n = 0; n < arrayTypes.GetLength(); n++ )
-		{
-			if( arrayTypes[n] &&
-				arrayTypes[n]->tokenType == type.GetTokenType() &&
-				arrayTypes[n]->arrayType == arrayType )
-				return arrayTypes[n];
-		}
+		if( templateTypes[n] &&
+			templateTypes[n]->name == templateType->name &&
+			templateTypes[n]->templateSubType == subType )
+			return templateTypes[n];
 	}
 
-	// No previous array type has been registered
+	// No previous template instance exists
 
-	// Create a new array type based on the defaultArrayObjectType
+	// Create a new template instance type based on the templateType
 	asCObjectType *ot = asNEW(asCObjectType)(this);
-	ot->arrayType = arrayType;
-	ot->flags = asOBJ_REF | asOBJ_TEMPLATE;
-	ot->size = sizeof(asCArrayObject);
-	ot->name = ""; // Built-in script arrays are registered without name
-	ot->tokenType = type.GetTokenType();
-	ot->methods = defaultArrayObjectType->methods;
+	ot->templateSubType = subType;
+	ot->flags     = templateType->flags;
+	ot->size      = templateType->size;
+	ot->name      = templateType->name;
+	ot->methods   = templateType->methods;
 	// Store the real factory in the constructor
-	ot->beh.construct = defaultArrayObjectType->beh.factory;
-	ot->beh.constructors = defaultArrayObjectType->beh.factories;
+	ot->beh.construct = templateType->beh.factory;
+	ot->beh.constructors = templateType->beh.factories;
 	// Generate factory stubs for each of the factories
-	for( n = 0; n < defaultArrayObjectType->beh.factories.GetLength(); n++ )
+	for( n = 0; n < templateType->beh.factories.GetLength(); n++ )
 	{
-		int factoryId = defaultArrayObjectType->beh.factories[n];
+		int factoryId = templateType->beh.factories[n];
 		asCScriptFunction *factory = scriptFunctions[factoryId];
 
 		asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
@@ -2753,21 +2734,21 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 	if( ot->beh.factories.GetLength() )
 		ot->beh.factory = ot->beh.factories[0];
 	else
-		ot->beh.factory = defaultArrayObjectType->beh.factory;
+		ot->beh.factory = templateType->beh.factory;
 
 
 
-	ot->beh.addref                 = defaultArrayObjectType->beh.addref;
-	ot->beh.release                = defaultArrayObjectType->beh.release;
-	ot->beh.copy                   = defaultArrayObjectType->beh.copy;
-	ot->beh.operators              = defaultArrayObjectType->beh.operators;
-	ot->beh.gcGetRefCount          = defaultArrayObjectType->beh.gcGetRefCount;
-	ot->beh.gcSetFlag              = defaultArrayObjectType->beh.gcSetFlag;
-	ot->beh.gcGetFlag              = defaultArrayObjectType->beh.gcGetFlag;
-	ot->beh.gcEnumReferences       = defaultArrayObjectType->beh.gcEnumReferences;
-	ot->beh.gcReleaseAllReferences = defaultArrayObjectType->beh.gcReleaseAllReferences;
+	ot->beh.addref                 = templateType->beh.addref;
+	ot->beh.release                = templateType->beh.release;
+	ot->beh.copy                   = templateType->beh.copy;
+	ot->beh.operators              = templateType->beh.operators;
+	ot->beh.gcGetRefCount          = templateType->beh.gcGetRefCount;
+	ot->beh.gcSetFlag              = templateType->beh.gcSetFlag;
+	ot->beh.gcGetFlag              = templateType->beh.gcGetFlag;
+	ot->beh.gcEnumReferences       = templateType->beh.gcEnumReferences;
+	ot->beh.gcReleaseAllReferences = templateType->beh.gcReleaseAllReferences;
 
-	// As the new array type is instanciated, the engine should
+	// As the new template type is instanciated, the engine should
 	// generate new functions to substitute the ones with the template subtype.
 	for( n = 1; n < ot->beh.operators.GetLength(); n += 2 )
 	{
@@ -2775,13 +2756,13 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 		asCScriptFunction *func = scriptFunctions[funcId];
 
 		bool needNewFunc = false;
-		if( func->returnType.GetObjectType() == defaultArrayObjectType->subType )
+		if( func->returnType.GetObjectType() == templateType->templateSubType.GetObjectType() )
 			needNewFunc = true;
 		else
 		{
 			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
 			{
-				if( func->parameterTypes[p].GetObjectType() == defaultArrayObjectType->subType )
+				if( func->parameterTypes[p].GetObjectType() == templateType->templateSubType.GetObjectType() )
 				{
 					needNewFunc = true;
 					break;
@@ -2797,9 +2778,9 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 			func2->id       = GetNextScriptFunctionId();
 
 			// TODO: template: need to check for the template type itself as well
-			if( func->returnType.GetObjectType() == defaultArrayObjectType->subType )
+			if( func->returnType.GetObjectType() == templateType->templateSubType.GetObjectType() )
 			{
-				func2->returnType = type;
+				func2->returnType = subType;
 				// TODO: template: need to make other modifications as well (handle, etc)
 				func2->returnType.MakeReference(func->returnType.IsReference());
 				func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
@@ -2810,9 +2791,9 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 			func2->parameterTypes.SetLength(func->parameterTypes.GetLength());
 			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
 			{
-				if( func->parameterTypes[p].GetObjectType() == defaultArrayObjectType->subType )
+				if( func->parameterTypes[p].GetObjectType() == templateType->templateSubType.GetObjectType() )
 				{
-					func2->parameterTypes[p] = type;
+					func2->parameterTypes[p] = subType;
 					func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
 					func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReference());
 				}
@@ -2843,19 +2824,22 @@ asCObjectType *asCScriptEngine::GetArrayTypeFromSubType(asCDataType &type)
 		}
 	}
 
-	// The object type needs to store the sub type as well
-	ot->subType = type.GetObjectType();
-	if( ot->subType ) ot->subType->AddRef();
+	// Increase ref counter for sub type if it is an object type
+	if( ot->templateSubType.GetObjectType() ) ot->templateSubType.GetObjectType()->AddRef();
 
-	// Verify if the subtype contains an any object, in which case this array is a potential circular reference
+	// Verify if the subtype contains a garbage collected object, in which case this template is a potential circular reference
 	// TODO: We may be a bit smarter here. If we can guarantee that the array type cannot be part of the
 	//       potential circular reference then we don't need to set the flag
-	if( ot->subType && (ot->subType->flags & asOBJ_GC) )
-		ot->flags |= asOBJ_GC;
 
-	arrayTypes.PushLast(ot);
+	if( ot->templateSubType.GetObjectType() && (ot->templateSubType.GetObjectType()->flags & asOBJ_GC) )
+		ot->flags |= asOBJ_GC;
+	else if( ot->name == defaultArrayObjectType->name )
+		ot->flags &= ~asOBJ_GC;
+
+	templateTypes.PushLast(ot);
 
 	// We need to store the object type somewhere for clean-up later
+	// TODO: Why do we need both arrayTypes and scriptArrayTypes? It is possible to differ between template instance and template specialization by checking for the asOBJ_TEMPLATE flag
 	scriptArrayTypes.PushLast(ot);
 
 	return ot;
@@ -3834,11 +3818,10 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 
 	// Put the data type in the list
 	asCObjectType *object= asNEW(asCObjectType)(this);
-	object->arrayType = 0;
 	object->flags = asOBJ_TYPEDEF;
 	object->size = dataType.GetSizeInMemoryBytes();
 	object->name = type;
-	object->tokenType = dataType.GetTokenType();
+	object->templateSubType = dataType;
 
 	objectTypes.PushLast(object);
 	registeredTypeDefs.PushLast(object);
@@ -3913,11 +3896,9 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	asCDataType dataType;
 	dataType.CreatePrimitive(ttInt, false);
 
-	st->arrayType = 0;
 	st->flags = asOBJ_ENUM;
 	st->size = dataType.GetSizeInMemoryBytes();
 	st->name = name;
-	st->tokenType = ttIdentifier;
 
 	objectTypes.PushLast(st);
 	registeredEnums.PushLast(st);
@@ -4056,6 +4037,21 @@ asIScriptFunction *asCScriptEngine::GetFunctionDescriptorById(int funcId)
 	return GetScriptFunction(funcId);
 }
 
+
+// internal
+bool asCScriptEngine::IsTemplateType(const char *name)
+{
+	// TODO: optimize: Improve linear search
+	for( unsigned int n = 0; n < objectTypes.GetLength(); n++ )
+	{
+		if( objectTypes[n] && objectTypes[n]->name == name )
+		{
+			return objectTypes[n]->flags & asOBJ_TEMPLATE ? true : false;
+		}
+	}
+
+	return false;
+}
 
 #ifdef AS_DEPRECATED
 

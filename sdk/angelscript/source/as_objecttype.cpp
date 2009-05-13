@@ -48,7 +48,6 @@ asCObjectType::asCObjectType()
 {
 	engine      = 0; 
 	refCount.set(0); 
-	subType     = 0;
 	derivedFrom = 0;
 }
 
@@ -56,7 +55,6 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 {
 	this->engine = engine; 
 	refCount.set(0); 
-	subType      = 0;
 	derivedFrom  = 0;
 }
 
@@ -77,8 +75,9 @@ int asCObjectType::GetRefCount()
 
 asCObjectType::~asCObjectType()
 {
-	if( subType )
-		subType->Release();
+	// Release the object type held by the templateSubType
+	if( templateSubType.GetObjectType() )
+		templateSubType.GetObjectType()->Release();
 
 	if( derivedFrom )
 		derivedFrom->Release();

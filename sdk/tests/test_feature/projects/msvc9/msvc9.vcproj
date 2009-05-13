@@ -551,6 +551,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_template.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_typedef.cpp"
 				>
 			</File>

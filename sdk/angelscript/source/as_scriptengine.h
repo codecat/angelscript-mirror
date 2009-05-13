@@ -212,8 +212,6 @@ public:
 	asCScriptEngine();
 	virtual ~asCScriptEngine();
 
-	asCObjectType *GetArrayTypeFromSubType(asCDataType &subType);
-
 //protected:
 	friend class asCBuilder;
 	friend class asCCompiler;
@@ -286,6 +284,9 @@ public:
 	asCObjectType     *GetObjectTypeFromTypeId(int typeId);
 	void               RemoveFromTypeIdMap(asCObjectType *type);
 
+	bool IsTemplateType(const char *name);
+	asCObjectType *GetTemplateInstanceType(asCObjectType *templateType, asCDataType &subType);
+
 //===========================================================
 // internal properties
 //===========================================================
@@ -310,8 +311,8 @@ public:
 	asCArray<asCObjectType *>      objectTypes;
 	asCArray<asCObjectType *>      templateSubTypes;
 
-	// Store information about registered array types
-	asCArray<asCObjectType *>      arrayTypes;
+	// Store information about template types
+	asCArray<asCObjectType *>      templateTypes;
 
 	// This array stores pointers to each registered global property. It allows the virtual 
 	// machine to directly find the value of the global property using an index into this array.

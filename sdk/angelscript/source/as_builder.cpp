@@ -920,7 +920,6 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	decl->node       = node;
 
 	asCObjectType *st = asNEW(asCObjectType)(engine);
-	st->arrayType = 0;
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT;
 
 	if( node->tokenType == ttHandle )
@@ -928,7 +927,6 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 
 	st->size      = sizeof(asCScriptObject);
 	st->name      = name;
-	st->tokenType = ttIdentifier;
 	module->classTypes.PushLast(st);
 	engine->classTypes.PushLast(st);
 	st->AddRef();
@@ -959,11 +957,9 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 
 	// Register the object type for the interface
 	asCObjectType *st = asNEW(asCObjectType)(engine);
-	st->arrayType = 0;
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT;
 	st->size = 0; // Cannot be instanciated
 	st->name = name;
-	st->tokenType = ttIdentifier;
 	module->classTypes.PushLast(st);
 	engine->classTypes.PushLast(st);
 	st->AddRef();
@@ -1756,11 +1752,9 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 		st = asNEW(asCObjectType)(engine);
 		dataType.CreatePrimitive(ttInt, false);
 
-		st->arrayType = 0;
 		st->flags     = asOBJ_ENUM;
 		st->size      = dataType.GetSizeInMemoryBytes();
 		st->name      = name;
-		st->tokenType = ttIdentifier;
 
 		module->enumTypes.PushLast(st);
 		st->AddRef();
@@ -1853,11 +1847,10 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file)
 		// Create the new type
 		asCObjectType *st = asNEW(asCObjectType)(engine);
 
-		st->arrayType = 0;
-		st->flags     = asOBJ_TYPEDEF;
-		st->size      = dataType.GetSizeInMemoryBytes();
-		st->name      = name;
-		st->tokenType = dataType.GetTokenType();
+		st->flags           = asOBJ_TYPEDEF;
+		st->size            = dataType.GetSizeInMemoryBytes();
+		st->name            = name;
+		st->templateSubType = dataType;
 
 		st->AddRef();
 
@@ -2356,8 +2349,8 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		// If this is for a template type, then we must first determine if the 
 		// identifier matches any of the template subtypes
 		// TODO: template: it should be possible to have more than one subtypes
-		if( templateType && templateType->subType && str == templateType->subType->name )
-			ot = templateType->subType;
+		if( templateType && (templateType->flags & asOBJ_TEMPLATE) && str == templateType->templateSubType.GetObjectType()->name )
+			ot = templateType->templateSubType.GetObjectType();
 
 		if( ot == 0 )
 			ot = GetObjectType(str.AddressOf());
@@ -2387,7 +2380,8 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				{
 					// TODO: typedef: A typedef should be considered different from the original type (though with implicit conversions between the two)
 					// Create primitive data type based on object flags
-					dt = asCDataType::CreatePrimitive(ot->tokenType, isConst);
+					dt = ot->templateSubType;
+					dt.MakeReadOnly(isConst);
 				}
 				else
 				{
@@ -2395,9 +2389,16 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 					{
 						n = n->next;
 						
-						// TODO: template: check if the subtype is a type or the template's subtype
-						//       if it is the template's subtype then this is the actual template type,
-						//       orderwise it is a template instance.
+						// Check if the subtype is a type or the template's subtype
+						// if it is the template's subtype then this is the actual template type,
+						// orderwise it is a template instance.
+						asCDataType subType = CreateDataTypeFromNode(n, file, false, ot);
+						if( subType.GetObjectType() != ot->templateSubType.GetObjectType() )
+						{
+							// This is a template instance
+							// Need to find the correct object type
+							ot = engine->GetTemplateInstanceType(ot, subType);
+						}
 					}
 
 					// Create object data type

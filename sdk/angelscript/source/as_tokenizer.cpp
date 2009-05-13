@@ -301,6 +301,7 @@ bool asCTokenizer::IsConstant()
 			for( n = 1; n < sourceLength; n++ )
 			{
 #ifdef AS_DOUBLEBYTE_CHARSET
+				// TODO: Double-byte characters are only allowed for ASCII
 				if( source[n] & 0x80 )
 				{
 					// This is a leading character in a double byte character, 

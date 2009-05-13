@@ -5562,6 +5562,9 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			asCScriptNode *snode = vnode->firstChild;
 			if( script->code[snode->tokenPos] == '\'' && engine->ep.useCharacterLiterals )
 			{
+				// TODO: unicode: If the character code is an escape sequence \u or \U then the full unicode point must be given
+				// TODO: unicode: If the charset is UTF8 then the unicode character must be decoded into an uint
+
 				// Treat the single quoted string as a single character literal
 				str.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
 				ProcessStringConstant(str);
@@ -5761,6 +5764,7 @@ void asCCompiler::ProcessStringConstant(asCString &cstr)
 	for( asUINT n = 0; n < cstr.GetLength(); n++ )
 	{
 #ifdef AS_DOUBLEBYTE_CHARSET
+		// TODO: Double-byte charset is only allowed for ASCII 
 		if( cstr[n] & 0x80 )
 		{
 			// This is the lead character of a double byte character
@@ -5776,6 +5780,8 @@ void asCCompiler::ProcessStringConstant(asCString &cstr)
 		{
 			++n;
 			if( n == cstr.GetLength() ) return;
+
+			// TODO: unicode: Add \uHHHH and \UHHHHHHHH for unicode code points
 
 			if( cstr[n] == '"' )
 				str.PushLast('"');

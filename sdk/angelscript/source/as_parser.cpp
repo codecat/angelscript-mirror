@@ -414,7 +414,6 @@ int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 	return 0;
 }
 
-// TODO: Analyze this properly
 asCScriptNode *asCParser::ParseEnumeration()
 {
 	asCScriptNode *ident;
@@ -534,6 +533,38 @@ bool asCParser::IsVarDecl()
 	{
 		RewindTo(&t);
 		return false;
+	}
+
+	// Is this a template type?
+	asCString typeName;
+	typeName.Assign(&script->code[t1.pos], t1.length);
+	if( engine->IsTemplateType(typeName.AddressOf()) )
+	{
+		// Expect the sub type within < >
+		GetToken(&t1);
+		if( t1.type != ttLessThan )
+		{
+			RewindTo(&t);
+			return false;
+		}
+
+		// Now there must be a data type
+		// TODO: template: The subtype may in turn be a template type
+		GetToken(&t1);
+		if( !IsDataType(t1) )
+		{
+			RewindTo(&t);
+			return false;
+		}
+
+		// TODO: template: accept >> and >>> tokens too. But then force the tokenizer to move 
+		//                 only 1 character ahead (thus splitting the token in two).
+		GetToken(&t1);
+		if( t1.type != ttGreaterThan )
+		{
+			RewindTo(&t);
+			return false;
+		}
 	}
 
 	// Object handles can be interleaved with the array brackets
@@ -1134,8 +1165,7 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
 	asCScriptNode *type = node->lastChild;
 	asCString typeName;
 	typeName.Assign(&script->code[type->tokenPos], type->tokenLength);
-	// TODO: template: Compare name against all registered template types
-	if( typeName == engine->defaultArrayObjectType->name )
+	if( engine->IsTemplateType(typeName.AddressOf()) )
 	{
 		GetToken(&t);
 		if( t.type != ttLessThan )

@@ -101,7 +101,6 @@ public:
 	bool operator !=(const asCDataType &) const;
 
 	asCDataType    GetSubType()    const;
-	int            GetArrayType()  const;
 	eTokenType     GetTokenType()  const {return tokenType;}
 	asCObjectType *GetObjectType() const {return objectType;}
 

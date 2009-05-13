@@ -643,26 +643,31 @@ void asCRestore::WriteObjectType(asCObjectType* ot)
 	// Only write the object type name
 	if( ot )
 	{
-		// TODO: Template: Check for template instances, rather than the template itself
-		if( ot->flags & asOBJ_TEMPLATE && ot != engine->defaultArrayObjectType )
+		// Check for template instances/specializations
+		if( ot->templateSubType.GetTokenType() != ttUnrecognizedToken &&
+			ot != engine->defaultArrayObjectType )
 		{
 			ch = 'a';
 			WRITE_NUM(ch);
 
-			if( ot->subType )
+			if( ot->templateSubType.IsObject() )
 			{
 				ch = 's';
 				WRITE_NUM(ch);
-				WriteObjectType(ot->subType);
+				WriteObjectType(ot->templateSubType.GetObjectType());
 
-				ch = ot->arrayType & 1 ? 'h' : 'o';
+				if( ot->templateSubType.IsObjectHandle() )
+					ch = 'h';
+				else
+					ch = 'o';
 				WRITE_NUM(ch);
 			}
 			else
 			{
 				ch = 't';
 				WRITE_NUM(ch);
-				WRITE_NUM(ot->tokenType);
+				eTokenType t = ot->templateSubType.GetTokenType();
+				WRITE_NUM(t);
 			}
 		}
 		else
@@ -711,7 +716,8 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 		}
 		else if( ot->flags & asOBJ_TYPEDEF )
 		{
-			WRITE_NUM(ot->tokenType);
+			eTokenType t = ot->templateSubType.GetTokenType();
+			WRITE_NUM(t);
 		}
 		else
 		{
@@ -785,10 +791,6 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 
 		// Use the default script class behaviours
 		ot->beh = engine->scriptTypeBehaviours.beh;
-
-		// Some implicit values
-		ot->tokenType = ttIdentifier;
-		ot->arrayType = 0;
 	}
 	else
 	{	
@@ -807,7 +809,9 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		}
 		else if( ot->flags & asOBJ_TYPEDEF )
 		{
-			READ_NUM(ot->tokenType);
+			eTokenType t;
+			READ_NUM(t);
+			ot->templateSubType = asCDataType::CreatePrimitive(t, false);
 		}
 		else
 		{

@@ -146,37 +146,28 @@ asCString asCDataType::Format() const
 		str = "const ";
 
 	if( tokenType != ttIdentifier )
-		str += asGetTokenDefinition(tokenType);
-	else
 	{
-		// find the baseType by following the objectType
-		asCObjectType *baseType = objectType;
-		if( baseType ) 
-			while( baseType->subType ) 
-				baseType = baseType->subType;
-		if( baseType == 0 )
-			str += "<unknown>";
-		else
+		str += asGetTokenDefinition(tokenType);
+	}
+	else if( IsArrayType() )
+	{
+		str += objectType->templateSubType.Format();
+		str += "[]";
+	}
+	else if( objectType )
+	{
+		str += objectType->name;
+		if( objectType->flags & asOBJ_TEMPLATE )
 		{
-			if( baseType->tokenType == ttIdentifier )
-				str += baseType->name;
-			else
-				str += asGetTokenDefinition(baseType->tokenType);
+			str += "<";
+			str += objectType->templateSubType.Format();
+			str += ">";
 		}
 	}
-
-
-	asCString append;
-	int at = objectType ? objectType->arrayType : 0;
-	while( at )
+	else
 	{
-		if( (at & 3) == 3 ) 
-			append = "@[]" + append;
-		else 
-			append = "[]" + append;
-		at >>= 2;
+		str = "<unknown>";
 	}
-	str += append;
 
 	if( isObjectHandle )
 	{
@@ -230,7 +221,10 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 
 int asCDataType::MakeArray(asCScriptEngine *engine)
 {
-	asCObjectType *at = engine->GetArrayTypeFromSubType(*this);
+	bool tmpIsReadOnly = isReadOnly;
+	isReadOnly = false;
+	asCObjectType *at = engine->GetTemplateInstanceType(engine->defaultArrayObjectType, *this);
+	isReadOnly = tmpIsReadOnly;
 
 	isObjectHandle = false;
 	isConstHandle = false;
@@ -328,7 +322,7 @@ bool asCDataType::IsHandleToConst() const
 
 bool asCDataType::IsArrayType() const
 {
-	return objectType ? (objectType->arrayType != 0) : false;
+	return objectType ? (objectType->name == objectType->engine->defaultArrayObjectType->name) : false;
 }
 
 bool asCDataType::IsTemplate() const
@@ -349,28 +343,8 @@ bool asCDataType::IsScriptObject() const
 
 asCDataType asCDataType::GetSubType() const
 {
-	asCDataType dt(*this);
-
-	int arrayType = GetArrayType();
-
-	dt.isReadOnly = false;
-	dt.isConstHandle = false;
-	dt.isReference = false;
-	if( objectType )
-	{
-		dt.objectType = objectType->subType;
-		if( dt.objectType == 0 )
-			dt.tokenType = objectType->tokenType;
-	}
-	else
-		dt.objectType = 0;
-
-	dt.MakeHandle((arrayType & 1) ? true : false);
-	
-	if( IsReadOnly() )
-		dt.MakeReadOnly(false);
-
-	return dt;
+	asASSERT(objectType);
+	return objectType->templateSubType;
 }
 
 
@@ -572,11 +546,6 @@ int asCDataType::GetSizeOnStackDWords() const
 	if( objectType ) return PTR_SIZE + size;
 
 	return GetSizeInMemoryDWords() + size;
-}
-
-int asCDataType::GetArrayType() const
-{
-	return objectType ? objectType->arrayType : 0;
 }
 
 asSTypeBehaviour *asCDataType::GetBehaviour() const
