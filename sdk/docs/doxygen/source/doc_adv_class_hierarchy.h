@@ -107,11 +107,11 @@ void RegisterTypes(asIScriptEngine *engine)
 
   // Register the base type
   r = engine->RegisterObjectType("base", 0, asOBJ_REF); assert( r >= 0 );
-  RegisterFathersMethods<base>(engine, "base");
+  RegisterBaseMembers<base>(engine, "base");
 
   // Register the derived type
   r = engine->RegisterObjectType("derived", 0, asOBJ_REF); assert( r >= 0 );
-  RegisterSonsMethods<derived>(engine, "derived");
+  RegisterDerivedMembers<derived>(engine, "derived");
 }
 \endcode
    

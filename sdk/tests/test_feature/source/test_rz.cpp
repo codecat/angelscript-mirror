@@ -343,11 +343,165 @@ bool Test2()
  	return fail;
 }
 
+void Print()
+{
+	printf("destructor\n");
+}
+
+void GetClassInstance(asIScriptEngine *engine, int funcId, asIScriptObject* &retObj, int& retTypeId)
+{
+	int r;
+	asIScriptContext* ctxt = engine->CreateContext();	
+	r = ctxt->Prepare( funcId );
+	r = ctxt->Execute();
+	
+	CScriptAny *anyResult = *(CScriptAny **)ctxt->GetAddressOfReturnValue();
+	retTypeId = anyResult->GetTypeId();		
+
+	retObj = NULL;
+	r = anyResult->Retrieve( (void*)&retObj, retTypeId );
+
+	// replace it in the any to clear it out
+	asINT64 dummy = 0;
+	anyResult->Store( dummy );
+	
+	// and clean out the return object (just as a precaution)
+	ctxt->Abort();
+	ctxt->Release();
+}
+
+bool Test3()
+{
+	bool fail = false;
+	int r;
+	COutStream out;
+
+	const char *script =
+		"interface IMyInterface { void SomeFunc(); } \n"
+		"class MyBaseClass : IMyInterface { ~MyBaseClass(){ Print(); } void SomeFunc(){} } \n"
+		"class MyDerivedClass : MyBaseClass \n"
+		"{ \n"
+		"   IMyInterface@ m_obj; \n"
+		"	MyDerivedClass(){} \n"
+		"	void SetObj( IMyInterface@ obj ) { @m_obj = obj; } \n"
+		"	void ClearObj(){ @m_obj = null; } \n"
+		"} \n"
+		"void SomeOtherFunction(){}\n"
+		"any@ GetClass(){ \n"
+		"  MyDerivedClass x; \n"
+		"  any a( @x ); \n"
+		"  return a;\n"
+		"} \n";
+
+	const char *script2 = 
+		"class AClass { void Blah(){} void Blah2(){} void Blah3(){} void Blah4(){} void Blah5(){} }\n"
+		"void SomeBlahFunc(){ }\n";
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+	RegisterStdString(engine);
+	RegisterScriptAny(engine);
+
+	engine->RegisterGlobalFunction( "void Print()", asFUNCTION(Print), asCALL_CDECL );
+
+	asIScriptModule *mod = engine->GetModule( "test", asGM_ALWAYS_CREATE );
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+
+	// create two instances of our classes
+	int funcId = mod->GetFunctionIdByDecl( "any@ GetClass()" );
+	
+	asIScriptObject* objA;
+	int objATypeId;
+	GetClassInstance( engine, funcId, objA, objATypeId );
+
+	asIScriptObject* objB;
+	int objBTypeId;
+	GetClassInstance( engine, funcId, objB, objBTypeId );
+
+	// resolve method functions we want to call
+	asIObjectType* typeA = engine->GetObjectTypeById( objATypeId );
+	int setFuncId = typeA->GetMethodIdByDecl( "void SetObj( IMyInterface@ obj )" );
+	int clearFuncId = typeA->GetMethodIdByDecl( "void ClearObj()" );
+
+	// set our objB into objA
+	{
+		asIScriptContext* ctxt = engine->CreateContext();
+		r = ctxt->Prepare( setFuncId );
+		r = ctxt->SetObject( objA );
+		r = ctxt->SetArgObject( 0, objB );
+		r = ctxt->Execute();
+		ctxt->Release();
+	}
+
+	// release objB...
+	objB->Release();
+	objB = NULL;
+	objBTypeId = 0;
+
+	// clear objB from objA
+	{
+		asIScriptContext* ctxt = engine->CreateContext();
+		r = ctxt->Prepare( clearFuncId );
+		r = ctxt->SetObject( objA );
+		r = ctxt->Execute();
+		ctxt->Release();
+	}
+
+	// release objA
+	objA->Release();
+	objA = NULL;
+	objATypeId = 0;
+
+	// There are still objects held alive in the GC
+	unsigned int gcCount;
+	engine->GetGCStatistics(&gcCount);
+	assert( gcCount == 4 );
+
+	// discard the module - no longer in use
+	// DiscardModule doesn't see the live objects in the GC so it destroys the scripts functions
+	r = engine->DiscardModule("test");	
+
+	// Do a couple of more builds, so that the memory freed by DiscardModule is reused otherwise 
+	// the problem may not occur, as the memory is still there, even though it was freed
+
+	// create a module
+	mod = engine->GetModule( "test2", asGM_ALWAYS_CREATE );
+	mod->AddScriptSection( "script", script2 );
+	r = mod->Build();
+
+	// recreate the module
+	mod = engine->GetModule( "test", asGM_ALWAYS_CREATE );
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+
+	// run the garbage collector to 'clean things up'
+	// This is where crash occured, as the script class destructor was
+	// called, even though the function is no longer valid
+	r = engine->GarbageCollect(asGC_FULL_CYCLE);
+
+	// TODO: The correct solution would have been for the engine to keep the
+	//       script function implementation until the objects were freed. This
+	//       however requires the implementation of full garbage collection for
+	//       script functions to resolve circular references.
+
+	// we're done
+	engine->Release();
+		
+
+	return fail;
+}
+
 bool Test()
 {
 	if( Test1() ) return true;
 
 	if( Test2() ) return true;
+
+	// This problem was reported by Jeff Slutter. Apparently the garbage collector is trying  
+	// to execute the destructor of an object whose module has already been discarded.
+	if( Test3() ) return true;
 
 	return false;
 }

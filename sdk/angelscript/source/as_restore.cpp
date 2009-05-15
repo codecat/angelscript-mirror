@@ -1014,8 +1014,6 @@ asCObjectType* asCRestore::ReadObjectType()
 			ot = module->GetObjectType(typeName.AddressOf());
 			if( !ot )
 				ot = engine->GetObjectType(typeName.AddressOf());
-			if( !ot )
-				ot = engine->GetArrayType(typeName.AddressOf());
 			
 			asASSERT(ot);
 		}

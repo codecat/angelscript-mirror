@@ -240,7 +240,7 @@ public:
 	bool  CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 
 	void ClearUnusedTypes();
-	void RemoveArrayType(asCObjectType *t);
+	void RemoveTemplateInstanceType(asCObjectType *t);
 	void RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot);
 
 	asCConfigGroup *FindConfigGroup(asCObjectType *ot);
@@ -258,7 +258,6 @@ public:
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
 	asCObjectType *GetObjectType(const char *type);
-	asCObjectType *GetArrayType(const char *type);
 
 	int AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal);
 
@@ -331,7 +330,8 @@ public:
 
 	// Stores script declared object types
 	asCArray<asCObjectType *> classTypes;
-	asCArray<asCObjectType *> scriptArrayTypes;
+	// This array stores the template instances types, that have been generated from template types
+	asCArray<asCObjectType *> templateInstanceTypes;
 
 	// Type identifiers
 	int                       typeIdSeqNbr;

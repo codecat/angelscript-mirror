@@ -654,7 +654,7 @@ void asCScriptEngine::ClearUnusedTypes()
 	// Build a list of all types to check for
 	asCArray<asCObjectType*> types;
 	types = classTypes;
-	types.Concatenate(scriptArrayTypes);
+	types.Concatenate(templateInstanceTypes);
 
 	// Go through all modules
 	asUINT n;
@@ -726,7 +726,7 @@ void asCScriptEngine::ClearUnusedTypes()
 				if( types[n]->flags & asOBJ_TEMPLATE )
 				{
 					didClearTemplateInstanceType = true;
-					RemoveArrayType(types[n]);
+					RemoveTemplateInstanceType(types[n]);
 				}
 				else
 				{
@@ -765,7 +765,7 @@ void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &typ
 	else
 		types[i] = types.PopLast();
 
-	// If the type is an array, then remove all sub types as well
+	// If the type is an template type, then remove all sub types as well
 	if( ot->templateSubType.GetObjectType() )
 	{
 		while( ot->templateSubType.GetObjectType() )
@@ -1208,10 +1208,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				return asALREADY_REGISTERED;
 		}
 
-		// Verify the most recently created script array type
-		asCObjectType *mostRecentScriptArrayType = 0;
-		if( scriptArrayTypes.GetLength() )
-			mostRecentScriptArrayType = scriptArrayTypes[scriptArrayTypes.GetLength()-1];
+		// Verify the most recently created template instance type
+		asCObjectType *mostRecentTemplateInstanceType = 0;
+		if( templateInstanceTypes.GetLength() )
+			mostRecentTemplateInstanceType = templateInstanceTypes[templateInstanceTypes.GetLength()-1];
 
 		// Use builder to parse the datatype
 		asCDataType dt;
@@ -1250,7 +1250,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		}
 		else
 		{
-			// TODO: Template: This ought to be covered automatically by the new template code
+			// The application is registering a template specialization so we 
+			// need to replace the template instance type with the new type.
+
+			// TODO: Template: We don't require the lower dimensions to be registered first for registered template types
 			// int[][] must not be allowed to be registered
 			// if int[] hasn't been registered first
 			if( dt.GetSubType().IsTemplate() )
@@ -1260,19 +1263,20 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				dt.IsReference() )
 				return ConfigError(asINVALID_TYPE);
 
-			// Was the script array type created before?
-			if( scriptArrayTypes[scriptArrayTypes.GetLength()-1] == mostRecentScriptArrayType ||
-				mostRecentScriptArrayType == dt.GetObjectType() )
+			// Was the template instance type created before?
+			if( templateInstanceTypes[templateInstanceTypes.GetLength()-1] == mostRecentTemplateInstanceType ||
+				mostRecentTemplateInstanceType == dt.GetObjectType() )
+				// TODO: Should have a better error message
 				return ConfigError(asNOT_SUPPORTED);
 
 			// TODO: Add this again. The type is used by the factory stubs so we need to discount that
-			// Is the script array type already being used?
+			// Is the template instance type already being used?
 //			if( dt.GetObjectType()->GetRefCount() > 1 )
 //				return ConfigError(asNOT_SUPPORTED);
 
 			// Put the data type in the list
 			asCObjectType *type = asNEW(asCObjectType)(this);
-			type->name      = defaultArrayObjectType->name;
+			type->name      = dt.GetObjectType()->name;
 			type->templateSubType = dt.GetSubType();
 			if( type->templateSubType.GetObjectType() ) type->templateSubType.GetObjectType()->AddRef();
 			type->size      = byteSize;
@@ -1282,8 +1286,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 			currentGroup->objTypes.PushLast(type);
 
-			// Remove the built-in array type, which will no longer be used.
-			RemoveArrayType(dt.GetObjectType());
+			// Remove the template instance type, which will no longer be used.
+			RemoveTemplateInstanceType(dt.GetObjectType());
 		}
 	}
 
@@ -2267,22 +2271,6 @@ asCObjectType *asCScriptEngine::GetObjectType(const char *type)
 }
 
 
-// TODO: Rename this to GetTemplateSpecialization
-// This method will only return registered array types, since only they have the name stored
-asCObjectType *asCScriptEngine::GetArrayType(const char *type)
-{
-	if( type[0] == 0 )
-		return 0;
-
-	// TODO: optimize: Improve linear search
-	for( asUINT n = 0; n < templateTypes.GetLength(); n++ )
-		if( templateTypes[n] &&
-			templateTypes[n]->name == type )
-			return templateTypes[n];
-
-	return 0;
-}
-
 
 
 void asCScriptEngine::PrepareEngine()
@@ -2635,7 +2623,7 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 	return r;
 }
 
-void asCScriptEngine::RemoveArrayType(asCObjectType *t)
+void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 {
 	int n;
 
@@ -2665,14 +2653,14 @@ void asCScriptEngine::RemoveArrayType(asCObjectType *t)
 		}
 	}
 
-	for( n = (int)scriptArrayTypes.GetLength()-1; n >= 0; n-- )
+	for( n = (int)templateInstanceTypes.GetLength()-1; n >= 0; n-- )
 	{
-		if( scriptArrayTypes[n] == t )
+		if( templateInstanceTypes[n] == t )
 		{
-			if( n == (signed)scriptArrayTypes.GetLength()-1 )
-				scriptArrayTypes.PopLast();
+			if( n == (signed)templateInstanceTypes.GetLength()-1 )
+				templateInstanceTypes.PopLast();
 			else
-				scriptArrayTypes[n] = scriptArrayTypes.PopLast();
+				templateInstanceTypes[n] = templateInstanceTypes.PopLast();
 		}
 	}
 
@@ -2683,7 +2671,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 {
 	asUINT n;
 
-	// Is there any array type already with this subtype?
+	// Is there any template instance type or template specialization already with this subtype?
 	for( n = 0; n < templateTypes.GetLength(); n++ )
 	{
 		if( templateTypes[n] &&
@@ -2839,8 +2827,8 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	templateTypes.PushLast(ot);
 
 	// We need to store the object type somewhere for clean-up later
-	// TODO: Why do we need both arrayTypes and scriptArrayTypes? It is possible to differ between template instance and template specialization by checking for the asOBJ_TEMPLATE flag
-	scriptArrayTypes.PushLast(ot);
+	// TODO: Why do we need both templateTypes and templateInstanceTypes? It is possible to differ between template instance and template specialization by checking for the asOBJ_TEMPLATE flag
+	templateInstanceTypes.PushLast(ot);
 
 	return ot;
 }
