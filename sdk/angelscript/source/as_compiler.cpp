@@ -6409,6 +6409,11 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 			PerformFunctionCall(funcs[0], ctx, false, &args, 0);
 		}
 	}
+	else
+	{
+		// Failed to compile the argument list, set the dummy type and continue compilation
+		ctx->type.SetDummy();
+	}
 
 	// Cleanup
 	for( asUINT n = 0; n < args.GetLength(); n++ )

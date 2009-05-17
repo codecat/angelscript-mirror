@@ -419,7 +419,7 @@ bool Test()
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "script21 (2, 1) : Info    : Compiling void main()\n"
 					   "script21 (4, 28) : Error   : 'SomethingUndefined' is not declared\n"
-					   "script21 (4, 11) : Error   : No conversion from '<unrecognized token>' to 'bool' available.\n" )
+					   "script21 (4, 11) : Error   : No conversion from 'int' to 'bool' available.\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
@@ -482,6 +482,20 @@ bool Test()
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "25 (1, 1) : Info    : Compiling string& SomeFunc()\n"
 		               "25 (1, 1) : Error   : Script functions must not return references\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test 26 - don't crash on invalid script
+	bout.buffer = "";
+	const char *script26 = "void main() { main(anyWord)+main(anyWord); }";
+	r = mod->AddScriptSection("26", script26);
+	r = mod->Build();
+	if( r >= 0 ) fail = true;
+	if( bout.buffer != "26 (1, 1) : Info    : Compiling void main()\n"
+	                   "26 (1, 20) : Error   : 'anyWord' is not declared\n"
+	                   "26 (1, 29) : Error   : No matching signatures to 'main(int)'\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
