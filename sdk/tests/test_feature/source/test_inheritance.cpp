@@ -3,6 +3,12 @@
 namespace TestInheritance
 {
 
+std::string printResult;
+void print(const std::string &s)
+{
+	printResult += s;
+}
+
 bool Test2();
 
 bool TestModule(const char *module, asIScriptEngine *engine);
@@ -16,7 +22,9 @@ bool Test()
 	COutStream out;
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterStdString(engine);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
 
 	const char *script =
 		"bool baseDestructorCalled = false;               \n"
@@ -80,7 +88,25 @@ bool Test()
 		"}                                                \n"
 		"class C : B {}                                   \n"
 		"interface Intf {}                                \n"
-		"class B : Intf {}                                \n";
+		"class B : Intf {}                                \n"
+		// Several levels of inheritance
+		"class C0                                         \n"
+		"{                                                \n"
+		"  void Dummy() {}                                \n"
+		"}                                                \n"
+		"class C1 : C0                                    \n"
+		"{                                                \n"
+		"  void Fun() { print('C1:Fun'); }                \n"
+		"}                                                \n"
+		"class C2 : C1                                    \n"
+		"{                                                \n"
+		"  void Fun() { print('C2:Fun'); }                \n"
+		"}                                                \n"
+		"class C3 : C2                                    \n"
+		"{                                                \n"
+		"  void Call() { Fun(); }                         \n"
+		"}                                                \n";
+
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script);
@@ -310,6 +336,19 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 		fail = true;
 	if( fid != d->GetFactoryIdByIndex(1) )
 		fail = true;
+
+	// Test various levels of inheritance
+	printResult = "";
+	r = engine->ExecuteString(mod->GetName(), "C3 c; c.Call();");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+	if( printResult != "C2:Fun" )
+	{
+		printf("%s\n", printResult.c_str());
+		fail = true;
+	}
 
 	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. 
 	//       We can follow D's design of using this(args) to call the constructor

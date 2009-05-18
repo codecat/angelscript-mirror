@@ -1407,7 +1407,10 @@ void asCBuilder::CompileClasses()
 				decl->objType->virtualFunctionTable.PushLast(GetFunctionDescription(decl->objType->methods[m]));
 
 				// Substitute the function description in the method list for a virtual method
-				decl->objType->methods[m] = CreateVirtualFunction(func, (int)decl->objType->virtualFunctionTable.GetLength() - 1);
+				// Make sure the methods are in the same order as the virtual function table
+				decl->objType->methods.RemoveIndex(m);
+				decl->objType->methods.PushLast(CreateVirtualFunction(func, (int)decl->objType->virtualFunctionTable.GetLength() - 1));
+				m--;
 			}
 		}
 
