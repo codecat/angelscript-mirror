@@ -5,7 +5,7 @@
 namespace TestRZ
 {
 
-#define TESTNAME "TestRZ"
+static const char * const TESTNAME = "TestRZ";
 
 const char *script1 = "\n"
 "MyGame @global;       \n"
@@ -372,6 +372,12 @@ void GetClassInstance(asIScriptEngine *engine, int funcId, asIScriptObject* &ret
 
 bool Test3()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
+		return false;
+	}
+
 	bool fail = false;
 	int r;
 	COutStream out;

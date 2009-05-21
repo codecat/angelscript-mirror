@@ -261,8 +261,9 @@ asDECLARE_METHOD_WRAPPER(B_b_generic, B, b);
 asDECLARE_METHOD_WRAPPERPR(C_c_generic, C, c, (int), void);
 asDECLARE_METHOD_WRAPPERPR(C_c2_generic, C, c, (float) const, void);
 
-void Construct_C(C *mem)
+void Construct_C(asIScriptGeneric *gen)
 {
+	void *mem = gen->GetObject();
 	new(mem) C();
 }
 // TODO: The wrapper doesn't work for the constructor behaviour, as the 
@@ -345,7 +346,7 @@ bool Test2()
 	}
 
 	r = engine->RegisterObjectType("C", sizeof(C), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("C", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct_C), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("C", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct_C), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("C", "void a() const", asFUNCTION(A_a_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("C", "void b()", asFUNCTION(B_b_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("C", "void c(int)", asFUNCTION(C_c_generic), asCALL_GENERIC); assert( r >= 0 );

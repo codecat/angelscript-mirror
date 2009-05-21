@@ -329,8 +329,13 @@ void DumpModule(asIScriptModule *mod)
 		" beh(10) string& _beh_10_(int)\n"
 		" beh(9) string& _beh_9_(uint)\n"
 		" beh(10) string& _beh_10_(uint)\n"
+#if defined(__LP64__) || defined(_WIN64)
+		" uint64 length() const\n"
+		" void resize(uint64)\n"
+#else
 		" uint length() const\n"
 		" void resize(uint)\n"
+#endif
 		"reg beh(26): bool _beh_26_(const string&in, const string&in)\n"
 		"reg beh(27): bool _beh_27_(const string&in, const string&in)\n"
 		"reg beh(30): bool _beh_30_(const string&in, const string&in)\n"

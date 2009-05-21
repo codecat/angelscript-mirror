@@ -370,9 +370,12 @@ struct asSFuncPtr
 {
 	union
 	{
-		char dummy[24]; // largest known class method pointer
-		struct {asMETHOD_t   mthd; char dummy[24-sizeof(asMETHOD_t)];} m;
-		struct {asFUNCTION_t func; char dummy[24-sizeof(asFUNCTION_t)];} f;
+		// The largest known method point is 20 bytes (MSVC 64bit),
+		// but with 8byte alignment this becomes 24 bytes. So we need
+		// to be able to store at least that much.
+		char dummy[25]; 
+		struct {asMETHOD_t   mthd; char dummy[25-sizeof(asMETHOD_t)];} m;
+		struct {asFUNCTION_t func; char dummy[25-sizeof(asFUNCTION_t)];} f;
 	} ptr;
 	asBYTE flag; // 1 = generic, 2 = global func, 3 = method
 };
@@ -386,8 +389,8 @@ struct asSFuncPtr
 {
 	union
 	{
-		char dummy[24]; // largest known class method pointer
-		struct {asFUNCTION_t func; char dummy[24-sizeof(asFUNCTION_t)];} f;
+		char dummy[25]; // largest known class method pointer
+		struct {asFUNCTION_t func; char dummy[25-sizeof(asFUNCTION_t)];} f;
 	} ptr;
 	asBYTE flag; // 1 = generic, 2 = global func
 };
@@ -962,10 +965,8 @@ struct asSMethodPtr
 	{
 		// This version of the function should never be executed, nor compiled,
 		// as it would mean that the size of the method pointer cannot be determined.
-#ifdef _MSC_VER
-		// GNUC won't let us compile at all if this is here
-		int ERROR_UnsupportedMethodPtr[-1];
-#endif
+
+		int ERROR_UnsupportedMethodPtr[N-100];
 		return 0;
 	}
 };
@@ -1016,25 +1017,21 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 	template <class M>
 	static asSFuncPtr Convert(M Mthd)
 	{
-		// This is where a class with virtual inheritance falls
+		// This is where a class with virtual inheritance falls, or
+		// on 64bit platforms with 8byte data alignments.
 
-		// Since method pointers of this type doesn't have all the
-		// information we need we force a compile failure for this case.
-		int ERROR_VirtualInheritanceIsNotAllowedForMSVC[-1];
-
-		// The missing information is the location of the vbase table,
-		// which is only known at compile time.
-
-		// You can get around this by forward declaring the class and
-		// storing the sizeof its method pointer in a constant. Example:
-
-		// class ClassWithVirtualInheritance;
-		// const int ClassWithVirtualInheritance_workaround = sizeof(void ClassWithVirtualInheritance::*());
-
-		// This will force the compiler to use the unknown type
-		// for the class, which falls under the next case
+		// TODO: We need to try to identify if this is really a method pointer
+		//       with virtual inheritance, or just a method pointer for multiple 
+		//       inheritance with pad bytes to produce a 16byte structure.
 
 		asSFuncPtr p;
+		asMemClear(&p, sizeof(p));
+
+		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+2*sizeof(int));
+
+		// Mark this as a class method
+		p.flag = 3;
+
 		return p;
 	}
 };
@@ -1049,6 +1046,27 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+3*sizeof(int)>
 		asMemClear(&p, sizeof(p));
 
 		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+3*sizeof(int));
+
+		// Mark this as a class method
+		p.flag = 3;
+
+		return p;
+	}
+};
+
+template <>
+struct asSMethodPtr<SINGLE_PTR_SIZE+4*sizeof(int)>
+{
+	template <class M>
+	static asSFuncPtr Convert(M Mthd)
+	{
+		// On 64bit platforms with 8byte data alignment
+		// the unknown class method pointers will come here.
+
+		asSFuncPtr p;
+		asMemClear(&p, sizeof(p));
+
+		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+4*sizeof(int));
 
 		// Mark this as a class method
 		p.flag = 3;
