@@ -226,7 +226,8 @@ enum asERetCodes
 	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
 	asWRONG_CALLING_CONV                   = -24,
 	asMODULE_IS_IN_USE                     = -25,
-	asBUILD_IN_PROGRESS                    = -26
+	asBUILD_IN_PROGRESS                    = -26,
+	asINIT_GLOBAL_VARS_FAILED              = -27
 };
 
 // Context states
@@ -1019,6 +1020,20 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 	{
 		// This is where a class with virtual inheritance falls, or
 		// on 64bit platforms with 8byte data alignments.
+
+		// Method pointers for virtual inheritance is not supported,
+		// as it requires the location of the vbase table, which is 
+		// only available to the C++ compiler, but not in the method
+		// pointer. 
+
+		// You can get around this by forward declaring the class and
+		// storing the sizeof its method pointer in a constant. Example:
+
+		// class ClassWithVirtualInheritance;
+		// const int ClassWithVirtualInheritance_workaround = sizeof(void ClassWithVirtualInheritance::*());
+
+		// This will force the compiler to use the unknown type
+		// for the class, which falls under the next case
 
 		// TODO: We need to try to identify if this is really a method pointer
 		//       with virtual inheritance, or just a method pointer for multiple 

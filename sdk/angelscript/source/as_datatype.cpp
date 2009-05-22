@@ -297,8 +297,9 @@ bool asCDataType::CanBeCopied() const
 	// It must be possible to instanciate the type
 	if( !CanBeInstanciated() ) return false;
 
-	// It must have a default constructor
-	if( objectType->beh.construct == 0 ) return false;
+	// It must have a default constructor or factory
+	if( objectType->beh.construct == 0 &&
+		objectType->beh.factory   == 0 ) return false;
 
 	// It must be possible to copy the type
 	if( objectType->beh.copy == 0 ) return false;

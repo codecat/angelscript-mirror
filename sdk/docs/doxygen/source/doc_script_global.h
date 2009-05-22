@@ -3,9 +3,9 @@
 \page doc_global Globals
 
 All global declarations share the same namespace so their names may not
-conflict. This includes extended data types and built in functions registered
+conflict. This includes extended data types and built-in functions registered
 by the host application. Also, all declarations are visible to all, e.g. a
-function to be called do not have to be declared above the function that calls
+function to be called does not have to be declared above the function that calls
 it.
 
     <ul>
@@ -70,6 +70,13 @@ a string, its memory is released when the module is discarded or the script engi
   int MyValue = 0;
   const uint Flag1 = 0x01;
 </pre>
+
+Variables of primitive types are initialized before variables of non-primitive types.
+This allows class constructors to access other global variables already with their
+correct initial value. The exception is if the other global variable also is of a 
+non-primitive type, in which case there is no guarantee which variable is initialized 
+first, which may lead to null-pointer exceptions being thrown during initialization.
+
 
 
 

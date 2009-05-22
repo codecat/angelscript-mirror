@@ -274,6 +274,48 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test6
+	// Must be possible to return a const string variable from a function returning a non-const string
+	// string registered as reference type
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptString(engine);
+
+		const char *script = "string test() { const string s = 'hello'; return s; }";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		int r = mod->Build();
+		if( r < 0 )
+		{
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
+	// Test7
+	// Must be possible to return a const string variable from a function returning a non-const string
+	// string registered as value type
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+
+		const char *script = "string test() { const string s = 'hello'; return s; }";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		int r = mod->Build();
+		if( r < 0 )
+		{
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	//-----------------------------------------------------------------
 	// REFERENCE_CAST
 

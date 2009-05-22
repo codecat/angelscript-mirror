@@ -2690,6 +2690,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					// Load the object pointer into the object register
 					expr.bc.InstrSHORT(BC_LOADOBJ, expr.type.stackOffset);
 
+					// TODO: This comment doesn't match what the code does, investigate which is correct
 					// The temporary variable must not be freed as it will no longer hold an object
 					ReleaseTemporaryVariable(expr.type, &expr.bc);
 					expr.type.isTemporary = false;

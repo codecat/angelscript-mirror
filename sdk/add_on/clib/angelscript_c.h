@@ -44,11 +44,11 @@
 #ifndef ANGELSCRIPT_C_H
 #define ANGELSCRIPT_C_H
 
-#define ANGELSCRIPT_VERSION        21600
+#define ANGELSCRIPT_VERSION        21602
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  16
-#define ANGELSCRIPT_VERSION_BUILD  0
-#define ANGELSCRIPT_VERSION_STRING "2.16.0"
+#define ANGELSCRIPT_VERSION_BUILD  2
+#define ANGELSCRIPT_VERSION_STRING "2.16.2"
 
 #ifdef AS_USE_NAMESPACE
  #define BEGIN_AS_NAMESPACE namespace AngelScript {
@@ -93,7 +93,8 @@ typedef enum
 	asEP_ALLOW_MULTILINE_STRINGS      = 6,
 	asEP_ALLOW_IMPLICIT_HANDLE_TYPES  = 7,
 	asEP_BUILD_WITHOUT_LINE_CUES      = 8,
-	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9
+	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9,
+	asEP_REQUIRE_ENUM_SCOPE           = 10
 } asEEngineProp;
 
 // Calling conventions
@@ -231,7 +232,9 @@ typedef enum
 	asCONFIG_GROUP_IS_IN_USE               = -22,
 	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
 	asWRONG_CALLING_CONV                   = -24,
-	asMODULE_IS_IN_USE                     = -25
+	asMODULE_IS_IN_USE                     = -25,
+	asBUILD_IN_PROGRESS                    = -26,
+	asINIT_GLOBAL_VARS_FAILED              = -27
 } asERetCodes;
 
 // Context states

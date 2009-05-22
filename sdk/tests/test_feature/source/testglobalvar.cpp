@@ -298,6 +298,56 @@ bool TestGlobalVar()
 		engine->Release();
 	}
 
+	//-----------------------
+	// variables of primitive type should be initialized before variables of complex type
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = "class MyObj { MyObj() { a = g_a; b = g_b; } int a; int b; } \n"
+			                 "int g_a = 314 + g_b; \n" // This forces g_a to be compiled after g_b
+							 "MyObj obj(); \n"         // obj should be compiled last
+							 "int g_b = 42; \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("", script);
+		r = mod->Build();
+		if( r < 0 )
+			ret = true;
+
+		r = engine->ExecuteString(0, "assert( obj.a == 314+42 ); \n"
+			                         "assert( obj.b == 42 ); \n");
+		if( r != asEXECUTION_FINISHED )
+		{
+			ret = true;
+		}
+
+		engine->Release();
+	}
+
+	//-----------------------
+	// variables of object type that access other global objects in constructor will throw null-pointer exception
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = "class A { void Access() {} } \n"
+			                 "class B { B() { g_a.Access(); g_c.Access(); } } \n"
+			                 "A g_a; \n"
+							 "B g_b; \n" // g_b accesses both g_a and g_c
+							 "A g_c; \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("", script);
+		r = mod->Build();
+		if( r >= 0 )
+			ret = true;
+
+		engine->Release();
+	}
+
 	return ret;
 }
 

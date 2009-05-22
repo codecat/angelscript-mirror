@@ -58,12 +58,12 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.16.1
-#define ANGELSCRIPT_VERSION        21601
+//! \details Version 2.16.2
+#define ANGELSCRIPT_VERSION        21602
 #define ANGELSCRIPT_VERSION_MAJOR  2
 #define ANGELSCRIPT_VERSION_MINOR  16
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "2.16.1"
+#define ANGELSCRIPT_VERSION_BUILD  2
+#define ANGELSCRIPT_VERSION_STRING "2.16.2"
 
 // Data types
 
@@ -339,7 +339,9 @@ enum asERetCodes
 	//! The module is currently in use
 	asMODULE_IS_IN_USE                     = -25,
 	//! A build is currently in progress
-	asBUILD_IN_PROGRESS                    = -26
+	asBUILD_IN_PROGRESS                    = -26,
+	//! The initialization of global variables failed
+	asINIT_GLOBAL_VARS_FAILED              = -27
 };
 
 // Context states
@@ -575,9 +577,12 @@ struct asSFuncPtr
 {
 	union
 	{
-		char dummy[24]; // largest known class method pointer
-		struct {asMETHOD_t   mthd; char dummy[24-sizeof(asMETHOD_t)];} m;
-		struct {asFUNCTION_t func; char dummy[24-sizeof(asFUNCTION_t)];} f;
+		// The largest known method point is 20 bytes (MSVC 64bit),
+		// but with 8byte alignment this becomes 24 bytes. So we need
+		// to be able to store at least that much.
+		char dummy[25]; 
+		struct {asMETHOD_t   mthd; char dummy[25-sizeof(asMETHOD_t)];} m;
+		struct {asFUNCTION_t func; char dummy[25-sizeof(asFUNCTION_t)];} f;
 	} ptr;
 	asBYTE flag; // 1 = generic, 2 = global func, 3 = method
 };
@@ -595,8 +600,8 @@ struct asSFuncPtr
 {
 	union
 	{
-		char dummy[24]; // largest known class method pointer
-		struct {asFUNCTION_t func; char dummy[24-sizeof(asFUNCTION_t)];} f;
+		char dummy[25]; // largest known class method pointer
+		struct {asFUNCTION_t func; char dummy[25-sizeof(asFUNCTION_t)];} f;
 	} ptr;
 	asBYTE flag; // 1 = generic, 2 = global func
 };
@@ -1668,6 +1673,7 @@ public:
 	//! \brief Returns the number of global variables in the module.
     //! \return A negative value on error, or the number of global variables in the module.
 	//! \retval asERROR The module was not compiled successfully.
+	//! \retval asINIT_GLOBAL_VARS_FAILED The initialization of the global variables failed.
 	virtual int         GetGlobalVarCount() = 0;
 	//! \brief Returns the global variable index by name.
     //! \param[in] name The name of the global variable.
@@ -2970,10 +2976,8 @@ struct asSMethodPtr
 	{
 		// This version of the function should never be executed, nor compiled,
 		// as it would mean that the size of the method pointer cannot be determined.
-#ifdef _MSC_VER
-		// GNUC won't let us compile at all if this is here
-		int ERROR_UnsupportedMethodPtr[-1];
-#endif
+
+		int ERROR_UnsupportedMethodPtr[N-100];
 		return 0;
 	}
 };
@@ -3024,14 +3028,13 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 	template <class M>
 	static asSFuncPtr Convert(M Mthd)
 	{
-		// This is where a class with virtual inheritance falls
+		// This is where a class with virtual inheritance falls, or
+		// on 64bit platforms with 8byte data alignments.
 
-		// Since method pointers of this type doesn't have all the
-		// information we need we force a compile failure for this case.
-		int ERROR_VirtualInheritanceIsNotAllowedForMSVC[-1];
-
-		// The missing information is the location of the vbase table,
-		// which is only known at compile time.
+		// Method pointers for virtual inheritance is not supported,
+		// as it requires the location of the vbase table, which is 
+		// only available to the C++ compiler, but not in the method
+		// pointer. 
 
 		// You can get around this by forward declaring the class and
 		// storing the sizeof its method pointer in a constant. Example:
@@ -3042,7 +3045,18 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 		// This will force the compiler to use the unknown type
 		// for the class, which falls under the next case
 
+		// TODO: We need to try to identify if this is really a method pointer
+		//       with virtual inheritance, or just a method pointer for multiple 
+		//       inheritance with pad bytes to produce a 16byte structure.
+
 		asSFuncPtr p;
+		asMemClear(&p, sizeof(p));
+
+		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+2*sizeof(int));
+
+		// Mark this as a class method
+		p.flag = 3;
+
 		return p;
 	}
 };
@@ -3057,6 +3071,27 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+3*sizeof(int)>
 		asMemClear(&p, sizeof(p));
 
 		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+3*sizeof(int));
+
+		// Mark this as a class method
+		p.flag = 3;
+
+		return p;
+	}
+};
+
+template <>
+struct asSMethodPtr<SINGLE_PTR_SIZE+4*sizeof(int)>
+{
+	template <class M>
+	static asSFuncPtr Convert(M Mthd)
+	{
+		// On 64bit platforms with 8byte data alignment
+		// the unknown class method pointers will come here.
+
+		asSFuncPtr p;
+		asMemClear(&p, sizeof(p));
+
+		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+4*sizeof(int));
 
 		// Mark this as a class method
 		p.flag = 3;

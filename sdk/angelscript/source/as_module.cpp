@@ -165,11 +165,11 @@ int asCModule::Build()
 	isBuildWithoutErrors = true;
 
 	engine->PrepareEngine();
-
-	if( engine->ep.initGlobalVarsAfterBuild )
-		CallInit();
-
 	engine->BuildCompleted();
+
+	// Initialize global variables
+	if( r >= 0 && engine->ep.initGlobalVarsAfterBuild )
+		r = ResetGlobalVars();
 
 	return r;
 }
@@ -180,9 +180,13 @@ int asCModule::ResetGlobalVars()
 	if( isGlobalVarInitialized ) 
 		CallExit();
 
-	CallInit();
+	if( !isBuildWithoutErrors )
+		return asERROR;
 
-	return 0;
+	// TODO: The application really should do this manually through a context
+	//       otherwise it cannot properly handle script exceptions that may be
+	//       thrown by object initializations.
+	return CallInit();
 }
 
 // interface
@@ -195,9 +199,10 @@ int asCModule::GetFunctionIdByIndex(int index)
 }
 
 // internal
-void asCModule::CallInit()
+int asCModule::CallInit()
 {
-	if( isGlobalVarInitialized ) return;
+	if( isGlobalVarInitialized ) 
+		return asERROR;
 
 	// Each global variable needs to be cleared individually
 	for( asUINT n = 0; n < scriptGlobals.GetLength(); n++ )
@@ -208,21 +213,31 @@ void asCModule::CallInit()
 		}
 	}
 
-	if( initFunction && initFunction->byteCode.GetLength() == 0 ) return;
+	if( initFunction && initFunction->byteCode.GetLength() == 0 ) 
+		return asERROR;
 
 	int id = asFUNC_INIT;
 	asIScriptContext *ctx = 0;
 	int r = engine->CreateContext(&ctx, true);
 	if( r >= 0 && ctx )
 	{
-		// TODO: Add error handling
-		((asCContext*)ctx)->PrepareSpecial(id, this);
-		ctx->Execute();
+		r = ((asCContext*)ctx)->PrepareSpecial(id, this);
+		if( r >= 0 )
+			r = ctx->Execute();
 		ctx->Release();
 		ctx = 0;
 	}
 
+	// Even if the initialization failed we need to set the 
+	// flag that the variables have been initialized, otherwise
+	// the module won't free those variables that really were 
+	// initialized.
 	isGlobalVarInitialized = true;
+
+	if( r != asEXECUTION_FINISHED )
+		return asINIT_GLOBAL_VARS_FAILED;
+
+	return asSUCCESS;
 }
 
 // internal

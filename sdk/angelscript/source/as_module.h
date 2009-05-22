@@ -181,7 +181,7 @@ public:
 	int  ReleaseModuleRef();
 	asCAtomic moduleCount;
 
-	void CallInit();
+	int CallInit();
 	void CallExit();
 	bool isGlobalVarInitialized;
 

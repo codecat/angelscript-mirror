@@ -70,7 +70,7 @@ public:
 
 	bool Exists(const T &element);
 	int  IndexOf(const T &element);
-	void RemoveIndex(size_t index);
+	void RemoveIndex(size_t index);     // Removes the entry without reordering the array
 	void RemoveValue(const T &element);
 
 	bool operator==(const asCArray<T> &) const;

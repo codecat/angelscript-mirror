@@ -976,6 +976,8 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 
 void asCBuilder::CompileGlobalVariables()
 {
+	asUINT n;
+
 	bool compileSucceeded = true;
 
 	asCByteCode finalInit(engine);
@@ -995,6 +997,15 @@ void asCBuilder::CompileGlobalVariables()
 
 	asCOutputBuffer finalOutput;
 
+	// We first try to compile all the primitive global variables, and only after that
+	// compile the non-primitive global variables. This permits the constructors 
+	// for the complex types to use the already initialized variables of primitive 
+	// type. Note, we currently don't know which global variables are used in the 
+	// constructors, so we cannot guarantee that variables of complex types are 
+	// initialized in the correct order, so we won't reorder those.
+	bool compilingPrimitives = true;
+
+	// Compile each global variable
 	while( compileSucceeded )
 	{
 		compileSucceeded = false;
@@ -1013,6 +1024,10 @@ void asCBuilder::CompileGlobalVariables()
 
 			sGlobalVariableDescription *gvar = globVariables[n];
 			if( gvar->isCompiled )
+				continue;
+
+			// Skip this for now if we're not compiling complex types yet
+			if( compilingPrimitives && !gvar->datatype.IsPrimitive() )
 				continue;
 
 			if( gvar->node )
@@ -1123,11 +1138,22 @@ void asCBuilder::CompileGlobalVariables()
 
 		if( !compileSucceeded )
 		{
-			// Add errors and warnings to total build
-			currNumWarnings += accumWarnings;
-			currNumErrors += accumErrors;
-			if( msgCallback )
-				finalOutput.SendToCallback(engine, &msgCallbackFunc, msgCallbackObj);
+			if( compilingPrimitives )
+			{
+				// No more primitives could be compiled, so 
+				// switch to compiling the complex variables
+				compilingPrimitives = false;
+				compileSucceeded    = true;
+			}
+			else
+			{
+				// No more variables can be compiled
+				// Add errors and warnings to total build
+				currNumWarnings += accumWarnings;
+				currNumErrors   += accumErrors;
+				if( msgCallback )
+					finalOutput.SendToCallback(engine, &msgCallbackFunc, msgCallbackObj);
+			}
 		}
 	}
 
@@ -1157,7 +1183,7 @@ void asCBuilder::CompileGlobalVariables()
 	init->stackNeeded = finalInit.largestStackUsed;
 
 	// Convert all variables compiled for the enums to true enum values
-	for( asUINT n = 0; n < globVariables.GetLength(); n++ )
+	for( n = 0; n < globVariables.GetLength(); n++ )
 	{
 		asCObjectType *objectType;
 		sGlobalVariableDescription *gvar = globVariables[n];
