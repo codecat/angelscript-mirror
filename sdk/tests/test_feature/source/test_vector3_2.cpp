@@ -57,7 +57,7 @@ inline csVector3 operator* (float f, const csVector3& v)
 { return csVector3(v.x*f, v.y*f, v.z*f); }
 
 /// Divide a vector by a scalar int.
-inline csVector3 operator/ (const csVector3& v, int f)
+inline csVector3 operator/ (const csVector3& v, float f)
 { return v * (1/(float)f); }
 
 void ConstructVector3(csVector3*o)

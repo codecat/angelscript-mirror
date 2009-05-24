@@ -108,18 +108,38 @@ private:
 	int somestuffOfMine;
 protected:
 	int duh;
+	int h;
 public:
-	Creep() {}
+	Creep() { h = 0; }
 	virtual ~Creep() {}
 
+	virtual short health() const
+	{
+//		printf("Creep::health()\n");
+		return h;
+	}
+	virtual void health(short h)
+	{
+//		printf("Creep::health(%d)\n", h);
+	}
 };
 
 class CreepClient : public Creep, public Drawable {
 private:
 protected:
 public:
-    CreepClient( ) {}
+	CreepClient( ) : Creep(), Drawable() { h = 1; }
     virtual ~CreepClient() {}
+
+	short health() const
+	{
+//		printf("CreepClient::health()\n");
+		return h;
+	}
+	void health(short h)
+	{
+//		printf("CreepClient::health(%d)\n", h);
+	}
 };
 
 void Dummy() {}
@@ -155,15 +175,28 @@ bool TestMultipleInheritance2()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
+    r = engine->RegisterObjectType("Creep", sizeof(Creep), asOBJ_REF ); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("Creep", asBEHAVE_ADDREF, "void f()", asFUNCTION(Dummy), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("Creep", asBEHAVE_RELEASE, "void f()", asFUNCTION(Dummy), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod("Creep", "int16 health() const", asMETHODPR(Creep, health, () const, short), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("Creep", "void health(int16)", asMETHODPR(Creep, health, (short), void), asCALL_THISCALL); assert( r >= 0 );
+
     r = engine->RegisterObjectType("CreepClient", sizeof(CreepClient), asOBJ_REF ); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour("CreepClient", asBEHAVE_ADDREF, "void f()", asFUNCTION(Dummy), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour("CreepClient", asBEHAVE_RELEASE, "void f()", asFUNCTION(Dummy), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod("CreepClient", "int16 health() const", asMETHODPR(CreepClient, health, () const, short), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("CreepClient", "void health(int16)", asMETHODPR(CreepClient, health, (short), void), asCALL_THISCALL); assert( r >= 0 );
 
     r = engine->RegisterObjectMethod("CreepClient", "void addOverlay(  )", asMETHOD(CreepClient, addOverlay), asCALL_THISCALL); assert( r >= 0 );
 
 	const char *script =
 		"void fireEffects( CreepClient@ c ) { \n"
+		"  if( c.health() != 0 ) \n"
+		"  { \n"
 		"		c.addOverlay(  ); // This one doesn't ever fire off  \n"
+		"  } \n"
 		"} \n";
 
 	asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
