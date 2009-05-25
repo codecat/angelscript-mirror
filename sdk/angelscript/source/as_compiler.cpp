@@ -885,7 +885,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					// Add byte code for storing value of expression in variable
 					ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 
-					PerformAssignment(&ltype, &expr.type, &ctx.bc, node->prev);
+					PerformAssignment(&ltype, &expr.type, &ctx.bc, node);
 
 					// Release temporary variables used by expression
 					ReleaseTemporaryVariable(expr.type, &ctx.bc);

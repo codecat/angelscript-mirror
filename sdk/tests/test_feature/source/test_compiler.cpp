@@ -503,6 +503,34 @@ bool Test()
 
 	engine->Release();
 
+	// Test 27 - don't crash on missing behaviours
+	{
+		bout.buffer = "";
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		// We don't register the assignment behaviour
+		r = engine->RegisterObjectType("derp", 0, asOBJ_REF); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("derp", asBEHAVE_FACTORY,    "derp@ f()",                 asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("derp", asBEHAVE_FACTORY,    "derp@ f(int &in)",          asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("derp", asBEHAVE_FACTORY,    "derp@ f(const derp &in)",   asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("derp", asBEHAVE_ADDREF,     "void f()",                  asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("derp", asBEHAVE_RELEASE,    "void f()",                  asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "derp wtf = 32;");
+		r = mod->Build();
+		if( r >= 0 || bout.buffer != "test (1, 10) : Info    : Compiling derp wtf\n"
+		                             "test (1, 12) : Error   : Can't implicitly convert from 'const uint' to 'derp&'.\n"
+		                             "test (1, 12) : Error   : There is no copy operator for this type available.\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
