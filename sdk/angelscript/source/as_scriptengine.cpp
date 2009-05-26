@@ -2742,73 +2742,23 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	{
 		int funcId = ot->beh.operators[n];
 		asCScriptFunction *func = scriptFunctions[funcId];
-
-		bool needNewFunc = false;
-		if( func->returnType.GetObjectType() == templateType->templateSubType.GetObjectType() )
-			needNewFunc = true;
-		else
+		
+		if( GenerateNewTemplateFunction(templateType, ot, subType, func, &func) )
 		{
-			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
-			{
-				if( func->parameterTypes[p].GetObjectType() == templateType->templateSubType.GetObjectType() )
-				{
-					needNewFunc = true;
-					break;
-				}
-			}
+			ot->beh.operators[n] = func->id;
 		}
+	}
 
-		if( needNewFunc )
+	// As the new template type is instanciated, the engine should
+	// generate new functions to substitute the ones with the template subtype.
+	for( n = 0; n < ot->methods.GetLength(); n++ )
+	{
+		int funcId = ot->methods[n];
+		asCScriptFunction *func = scriptFunctions[funcId];
+
+		if( GenerateNewTemplateFunction(templateType, ot, subType, func, &func) )
 		{
-			asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0);
-			func2->funcType = func->funcType;
-			func2->name     = func->name;
-			func2->id       = GetNextScriptFunctionId();
-
-			// TODO: template: need to check for the template type itself as well
-			if( func->returnType.GetObjectType() == templateType->templateSubType.GetObjectType() )
-			{
-				func2->returnType = subType;
-				// TODO: template: need to make other modifications as well (handle, etc)
-				func2->returnType.MakeReference(func->returnType.IsReference());
-				func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
-			}
-			else
-				func2->returnType = func->returnType;
-
-			func2->parameterTypes.SetLength(func->parameterTypes.GetLength());
-			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
-			{
-				if( func->parameterTypes[p].GetObjectType() == templateType->templateSubType.GetObjectType() )
-				{
-					func2->parameterTypes[p] = subType;
-					func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
-					func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReference());
-				}
-				else
-					func2->parameterTypes[p] = func->parameterTypes[p];
-			}
-
-			// TODO: template: If the template type is invalid, an error should be emitted
-			//                 stating that the template cannot be instanciated for this type.
-			//                 For example, if the template has been declared to return a handle
-			//                 of the subtype, then the template cannot be instanciated for primitive
-			//                 or value types. 
-
-			// TODO: template: Must be careful when instanciating templates for garbage collected types
-			//                 If the template hasn't been registered with the behaviours, it shouldn't
-			//                 permit instanciation of garbage collected types that in turn may refer to
-			//                 this instance.
-
-			func2->inOutFlags = func->inOutFlags;
-			func2->isReadOnly = func->isReadOnly;
-			func2->objectType = ot;
-			func2->stackNeeded = func->stackNeeded;
-			func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
-			
-			SetScriptFunction(func2);
-
-			ot->beh.operators[n] = func2->id;
+			ot->methods[n] = func->id;
 		}
 	}
 
@@ -2831,6 +2781,102 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	templateInstanceTypes.PushLast(ot);
 
 	return ot;
+}
+
+bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *ot, asCDataType &subType, asCScriptFunction *func, asCScriptFunction **newFunc)
+{
+	bool needNewFunc = false;
+	if( func->returnType.GetObjectType() == templateType->templateSubType.GetObjectType() ||
+		func->returnType.GetObjectType() == templateType )
+		needNewFunc = true;
+	else
+	{
+		for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
+		{
+			if( func->parameterTypes[p].GetObjectType() == templateType->templateSubType.GetObjectType() ||
+				func->parameterTypes[p].GetObjectType() == templateType )
+			{
+				needNewFunc = true;
+				break;
+			}
+		}
+	}
+
+	if( needNewFunc )
+	{
+		asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0);
+		func2->funcType = func->funcType;
+		func2->name     = func->name;
+		func2->id       = GetNextScriptFunctionId();
+
+		// TODO: template: need to check for the template type itself as well
+		if( func->returnType.GetObjectType() == templateType->templateSubType.GetObjectType() )
+		{
+			func2->returnType = subType;
+			// TODO: template: need to make other modifications as well (handle, etc)
+			func2->returnType.MakeReference(func->returnType.IsReference());
+			func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
+		}
+		else if( func->returnType.GetObjectType() == templateType )
+		{
+			if( func2->returnType.IsObjectHandle() )
+				func2->returnType = asCDataType::CreateObjectHandle(ot, false);
+			else
+				func2->returnType = asCDataType::CreateObject(ot, false);
+
+			func2->returnType.MakeReference(func->returnType.IsReference());
+			func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
+		}
+		else
+			func2->returnType = func->returnType;
+
+		func2->parameterTypes.SetLength(func->parameterTypes.GetLength());
+		for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
+		{
+			if( func->parameterTypes[p].GetObjectType() == templateType->templateSubType.GetObjectType() )
+			{
+				func2->parameterTypes[p] = subType;
+				func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
+				func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReference());
+			}
+			else if( func->parameterTypes[p].GetObjectType() == templateType )
+			{
+				if( func2->parameterTypes[p].IsObjectHandle() )
+					func2->parameterTypes[p] = asCDataType::CreateObjectHandle(ot, false);
+				else
+					func2->parameterTypes[p] = asCDataType::CreateObject(ot, false);
+
+				func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
+				func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReadOnly());
+			}
+			else
+				func2->parameterTypes[p] = func->parameterTypes[p];
+		}
+
+		// TODO: template: If the template type is invalid, an error should be emitted
+		//                 stating that the template cannot be instanciated for this type.
+		//                 For example, if the template has been declared to return a handle
+		//                 of the subtype, then the template cannot be instanciated for primitive
+		//                 or value types. 
+
+		// TODO: template: Must be careful when instanciating templates for garbage collected types
+		//                 If the template hasn't been registered with the behaviours, it shouldn't
+		//                 permit instanciation of garbage collected types that in turn may refer to
+		//                 this instance.
+
+		func2->inOutFlags = func->inOutFlags;
+		func2->isReadOnly = func->isReadOnly;
+		func2->objectType = ot;
+		func2->stackNeeded = func->stackNeeded;
+		func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
+		
+		SetScriptFunction(func2);
+
+		// Return the new function
+		*newFunc = func2;
+	}
+
+	return needNewFunc;
 }
 
 void asCScriptEngine::CallObjectMethod(void *obj, int func)

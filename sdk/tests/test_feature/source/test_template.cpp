@@ -42,6 +42,11 @@ public:
 		return type->GetName();
 	}
 
+	MyTmpl &Assign(const MyTmpl &other)
+	{
+		return *this;
+	}
+
 	asIObjectType *type;
 	int refCount;
 };
@@ -75,6 +80,12 @@ public:
 	{
 		return "MyTmpl<float>";
 	}
+
+	MyTmpl_float &Assign(const MyTmpl_float &other)
+	{
+		return *this;
+	}
+
 	int refCount;
 };
 
@@ -111,10 +122,22 @@ bool Test()
 	// Add method to return the type of the template instance as a string
 	r = engine->RegisterObjectMethod("MyTmpl<T>", "string GetNameOfType()", asMETHOD(MyTmpl, GetNameOfType), asCALL_THISCALL); assert( r >= 0 );
 
+	// Add method that take and return the template type
+	r = engine->RegisterObjectMethod("MyTmpl<T>", "MyTmpl<T> &Assign(const MyTmpl<T> &in)", asMETHOD(MyTmpl, Assign), asCALL_THISCALL); assert( r >= 0 );
+
 	// Test that it is possible to instanciate the template type for different sub types
+	// TODO: The name of the template instance should include the sub type, e.g. MyTmpl<int>
 	r = engine->ExecuteString(0, "MyTmpl<int> i;    \n"
 								 "MyTmpl<string> s; \n"
 								 "assert( i.GetNameOfType() == 'MyTmpl' ); \n");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	// Test that the assignment works
+	r = engine->ExecuteString(0, "MyTmpl<int> i1, i2; \n"
+		                         "i1.Assign(i2);      \n");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -127,9 +150,17 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("MyTmpl<float>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl_float, AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MyTmpl<float>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl_float, Release), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("MyTmpl<float>", "string GetNameOfType()", asMETHOD(MyTmpl_float, GetNameOfType), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("MyTmpl<float>", "MyTmpl<float> &Assign(const MyTmpl<float> &in)", asMETHOD(MyTmpl_float, Assign), asCALL_THISCALL); assert( r >= 0 );
 
 	r = engine->ExecuteString(0, "MyTmpl<float> f; \n"
 		                         "assert( f.GetNameOfType() == 'MyTmpl<float>' ); \n");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "MyTmpl<float> f1, f2; \n"
+		                         "f1.Assign(f2);        \n");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -146,7 +177,7 @@ bool Test()
 
 	// TODO: It must be possible to determine the sub type. Need a new method in the asIObjectType for that
 
-	// TODO: Test that the factory must have a hidden reference as first parameter (which receives the asIObjectType 
+	// TODO: Test that the factory must have a hidden reference as first parameter (which receives the asIObjectType)
 
 	// TODO: Must not be possible to register specialization before the template type
 	// TODO: Must not allow registering properties with the template subtype (at least not without getters/setters)
@@ -154,6 +185,8 @@ bool Test()
 	// TODO: Test that a proper error occurs if the instance of a template causes invalid data types, e.g. int@
 
 	// TODO: Test bytecode serialization with template instances and template specializations
+
+	// TODO: Must be possible to allow use of initialization lists
 
 	engine->Release();
 

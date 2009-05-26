@@ -1829,6 +1829,9 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 					// Put the object on the stack
 					rctx.bc.InstrSHORT(BC_PSF, rctx.type.stackOffset);
+
+					// It is a reference that we place on the stack
+					rctx.type.dataType.MakeReference(true);
 				}
 
 				// Compile the lvalue
@@ -4834,14 +4837,6 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 		if( match.GetLength() == 1 )
 		{
-			// If it is an array, both sides must have the same subtype
-			if( lctx->type.dataType.IsArrayType() )
-				if( !lctx->type.dataType.IsEqualExceptRefAndConst(rctx->type.dataType) )
-				{
-					Error(TXT_BOTH_MUST_BE_SAME, opNode);
-					return -1;
-				}
-
 			// We must verify that the lvalue isn't const
 			if( lctx->type.dataType.IsReadOnly() )
 			{

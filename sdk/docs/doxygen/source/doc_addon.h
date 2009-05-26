@@ -681,7 +681,8 @@ int r = builder.BuildScriptFromMemory(engine, "my module", script);
 if( r >= 0 )
 {
   // Find global variables that have been marked as editable by user
-  int count = engine->GetGlobalVarCount("my module");
+  asIScriptModule *mod = engine->GetModule("my module");
+  int count = mod->GetGlobalVarCount();
   for( int n = 0; n < count; n++ )
   {
     string metadata = builder.GetMetadataStringForVar(n);

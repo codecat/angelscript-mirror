@@ -285,6 +285,7 @@ public:
 
 	bool IsTemplateType(const char *name);
 	asCObjectType *GetTemplateInstanceType(asCObjectType *templateType, asCDataType &subType);
+	bool GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCDataType &subType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
 
 //===========================================================
 // internal properties

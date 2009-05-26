@@ -360,7 +360,14 @@ typedef void *(*asALLOCFUNC_t)(size_t);
 typedef void (*asFREEFUNC_t)(void *);
 
 #define asFUNCTION(f) asFunctionPtr(f)
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+// MSVC 6 has a bug that prevents it from properly compiling using the correct asFUNCTIONPR with operator >
+// so we need to use ordinary C style cast instead of static_cast. The drawback is that the compiler can't 
+// check that the cast is really valid.
+#define asFUNCTIONPR(f,p,r) asFunctionPtr((void (*)())((r (*)p)(f)))
+#else
 #define asFUNCTIONPR(f,p,r) asFunctionPtr((void (*)())(static_cast<r (*)p>(f)))
+#endif
 
 #ifndef AS_NO_CLASS_METHODS
 
