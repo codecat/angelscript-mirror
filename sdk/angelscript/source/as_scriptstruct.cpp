@@ -336,6 +336,7 @@ int asCScriptObject::GetStructTypeId()
 }
 #endif
 
+// TODO: Should probably be moved to asIObjectType (or replicated in the asIObjectType)
 int asCScriptObject::GetTypeId() const
 {
 	asCDataType dt = asCDataType::CreateObject(objType, false);

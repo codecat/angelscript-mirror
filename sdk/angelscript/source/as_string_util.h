@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -34,15 +34,7 @@
 
 #include "as_config.h"
 
-int     asStringFormat(char *string, size_t maxLength, const char *format, ...);
 double  asStringScanDouble(const char *string, size_t *numScanned);
-int     asStringScanInt(const char *string, int base, size_t *numScanned);
-asUINT  asStringScanUInt(const char *string, int base, size_t *numScanned);
 asQWORD asStringScanUInt64(const char *string, int base, size_t *numScanned);
-void    asStringCopy(const char *source, size_t srcLength, char *dest, size_t destLength);
-
-#define GETSTRING(name,src,len) \
-  asCString name; \
-  name.Assign((src), (len));
 
 #endif

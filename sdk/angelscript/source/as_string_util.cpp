@@ -44,18 +44,6 @@
 #include "as_string.h"
 #include "as_string_util.h"
 
-// Returns the number of characters written or -1 if the buffer was too small
-int asStringFormat(char *string, size_t maxLength, const char *format, ...)
-{
-	va_list args;
-	va_start(args, format);
-
-	int r = asVSNPRINTF(string, maxLength, format, args);
-
-	va_end(args);
-
-	return r;
-}
 
 double asStringScanDouble(const char *string, size_t *numScanned)
 {
@@ -69,34 +57,6 @@ double asStringScanDouble(const char *string, size_t *numScanned)
 
 	// Restore the locale
 	setlocale(LC_NUMERIC, orig.AddressOf());
-
-	if( numScanned )
-		*numScanned = end - string;
-
-	return res;
-}
-
-int asStringScanInt(const char *string, int base, size_t *numScanned)
-{
-	asASSERT(base > 0);
-
-	char *end;
-
-	int res = strtol(string, &end, base);
-
-	if( numScanned )
-		*numScanned = end - string;
-
-	return res;
-}
-
-asUINT asStringScanUInt(const char *string, int base, size_t *numScanned)
-{
-	asASSERT(base > 0);
-
-	char *end;
-
-	asUINT res = strtoul(string, &end, base);
 
 	if( numScanned )
 		*numScanned = end - string;
@@ -139,13 +99,5 @@ asQWORD asStringScanUInt64(const char *string, int base, size_t *numScanned)
 		*numScanned = end - string;
 
 	return res;
-}
-
-void asStringCopy(const char *source, size_t srcLength, char *dest, size_t destLength)
-{
-	size_t min = srcLength < destLength ? srcLength : destLength;
-
-	memcpy(dest, source, min);
-	dest[min] = 0;
 }
 

@@ -184,6 +184,10 @@
 #define TXT_VALUE_TYPE_MUST_HAVE_SIZE     "A value type must be registered with a non-zero size"
 #define TXT_TYPE_s_IS_MISSING_BEHAVIOURS  "Type '%s' is missing behaviours"
 #define TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE    "The behaviour is not compatible with the type"
+#define TXT_GC_REQUIRE_ADD_REL_GC_BEHAVIOUR  "A garbage collected type must have the addref, release, and all gc behaviours"
+#define TXT_SCOPE_REQUIRE_REL_BEHAVIOUR      "A scoped reference type must have the release behaviour"
+#define TXT_REF_REQUIRE_ADD_REL_BEHAVIOUR    "A reference type must have the addref and release behaviours"
+#define TXT_NON_POD_REQUIRE_CONSTR_DESTR_BEHAVIOUR "A non-pod value type must have the constructor and destructor behaviours"
 
 // Internal names
 

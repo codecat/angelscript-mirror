@@ -35,6 +35,9 @@
 // A class for storing object type information
 //
 
+// TODO: Need a public GetTypeId() for the asIObjectType interface
+
+
 #include <stdio.h>
 
 #include "as_config.h"

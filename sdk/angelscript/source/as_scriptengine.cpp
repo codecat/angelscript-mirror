@@ -2295,9 +2295,10 @@ void asCScriptEngine::PrepareEngine()
 	// Validate object type registrations
 	for( n = 0; n < objectTypes.GetLength(); n++ )
 	{
-		if( objectTypes[n] && !(objectTypes[n]->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_TEMPLATE)) )
+		if( objectTypes[n] && !(objectTypes[n]->flags & asOBJ_SCRIPT_OBJECT) )
 		{
 			bool missingBehaviour = false;
+			const char *infoMsg = 0;
 
 			// Verify that GC types have all behaviours
 			if( objectTypes[n]->flags & asOBJ_GC )
@@ -2310,6 +2311,7 @@ void asCScriptEngine::PrepareEngine()
 					objectTypes[n]->beh.gcEnumReferences       == 0 ||
 					objectTypes[n]->beh.gcReleaseAllReferences == 0 )
 				{
+					infoMsg = TXT_GC_REQUIRE_ADD_REL_GC_BEHAVIOUR;
 					missingBehaviour = true;
 				}
 			}
@@ -2318,6 +2320,7 @@ void asCScriptEngine::PrepareEngine()
 			{
 				if( objectTypes[n]->beh.release == 0 )
 				{
+					infoMsg = TXT_SCOPE_REQUIRE_REL_BEHAVIOUR;
 					missingBehaviour = true;
 				}
 			}
@@ -2328,6 +2331,7 @@ void asCScriptEngine::PrepareEngine()
 				if( objectTypes[n]->beh.addref  == 0 ||
 					objectTypes[n]->beh.release == 0 )
 				{
+					infoMsg = TXT_REF_REQUIRE_ADD_REL_BEHAVIOUR;
 					missingBehaviour = true;
 				}
 			}
@@ -2338,6 +2342,7 @@ void asCScriptEngine::PrepareEngine()
 				if( objectTypes[n]->beh.construct == 0 ||
 					objectTypes[n]->beh.destruct  == 0 )
 				{
+					infoMsg = TXT_NON_POD_REQUIRE_CONSTR_DESTR_BEHAVIOUR;
 					missingBehaviour = true;
 				}
 			}
@@ -2347,6 +2352,7 @@ void asCScriptEngine::PrepareEngine()
 				asCString str;
 				str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, objectTypes[n]->name.AddressOf());
 				WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+				WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, infoMsg);
 				ConfigError(asINVALID_CONFIGURATION);
 			}
 		}
@@ -3232,7 +3238,7 @@ void asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, int typeId)
 }
 
 // interface
-int asCScriptEngine::GarbageCollect(asEGCFlags flags)
+int asCScriptEngine::GarbageCollect(asDWORD flags)
 {
 	return gc.GarbageCollect(flags);
 }

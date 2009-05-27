@@ -470,7 +470,7 @@ enum asETypeIdFlags
 	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
 #endif
 	//! The bit that shows if the type is a script class
-	asTYPEID_SCRIPTOBJECT   = 0x0C000000,
+	asTYPEID_SCRIPTOBJECT   = 0x08000000,
 	//! The bit that shows if the type is a script array
 	asTYPEID_SCRIPTARRAY    = 0x10000000,
 	//! The mask for the type id sequence number
@@ -565,7 +565,14 @@ typedef void (*asFREEFUNC_t)(void *);
 #define asFUNCTION(f) asFunctionPtr(f)
 //! \ingroup funcs
 //! \brief Returns an asSFuncPtr representing the function specified by the name, parameter list, and return type
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+// MSVC 6 has a bug that prevents it from properly compiling using the correct asFUNCTIONPR with operator >
+// so we need to use ordinary C style cast instead of static_cast. The drawback is that the compiler can't 
+// check that the cast is really valid.
 #define asFUNCTIONPR(f,p,r) asFunctionPtr((void (*)())((r (*)p)(f)))
+#else
+#define asFUNCTIONPR(f,p,r) asFunctionPtr((void (*)())(static_cast<r (*)p>(f)))
+#endif
 
 #ifndef AS_NO_CLASS_METHODS
 
@@ -592,7 +599,7 @@ struct asSFuncPtr
 #define asMETHOD(c,m) asSMethodPtr<sizeof(void (c::*)())>::Convert((void (c::*)())(&c::m))
 //! \ingroup funcs
 //! \brief Returns an asSFuncPtr representing the class method specified by class, method name, parameter list, return type.
-#define asMETHODPR(c,m,p,r) asSMethodPtr<sizeof(void (c::*)())>::Convert((r (c::*)p)(&c::m))
+#define asMETHODPR(c,m,p,r) asSMethodPtr<sizeof(void (c::*)())>::Convert(static_cast<r (c::*)p>(&c::m))
 
 #else // Class methods are disabled
 
@@ -1425,7 +1432,7 @@ public:
     //! \{
 
 	//! \brief Perform garbage collection.
-    //! \param[in] flags Set to a combination of the asEGCFlags.
+    //! \param[in] flags Set to a combination of the \ref asEGCFlags.
     //! \return 1 if the cycle wasn't completed, 0 if it was.
     //!
     //! This method will free script objects that can no longer be reached. When the engine 
@@ -1440,7 +1447,7 @@ public:
     //! of the application.
 	//!
 	//! \see \ref doc_gc
-	virtual int  GarbageCollect(asEGCFlags flags = asGC_FULL_CYCLE) = 0;
+	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE) = 0;
 	//! \brief Obtain statistics from the garbage collector.
 	//! \param[out] currentSize The current number of objects known to the garbage collector.
 	//! \param[out] totalDestroyed The total number of objects destroyed by the garbage collector.

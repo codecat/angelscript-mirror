@@ -4,8 +4,6 @@
 namespace TestAny
 {
 
-#define TESTNAME "TestAny"
-
 // Normal functionality
 static const char *script1 =
 "string g_str = \"test\";               \n"
@@ -114,13 +112,13 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_GENERIC); assert( r >= 0 );
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+	mod->AddScriptSection("TestAny", script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		printf("%s: Failed to compile the script\n", "TestAny");
 	}
 	r = engine->ExecuteString(0, "TestAny()", &ctx);
 	if( r != asEXECUTION_FINISHED )
@@ -129,7 +127,7 @@ bool Test()
 			PrintException(ctx);
 
 		fail = true;
-		printf("%s: Execution failed\n", TESTNAME);
+		printf("%s: Execution failed\n", "TestAny");
 	}
 	if( ctx ) ctx->Release();
 	engine->Release();
@@ -143,13 +141,13 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_GENERIC); assert( r >= 0 );
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	mod->AddScriptSection("TestAny", script2, strlen(script2), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		printf("%s: Failed to compile the script\n", "TestAny");
 	}
 	r = engine->ExecuteString(0, "TestAny()", &ctx);
 	if( r != asEXECUTION_FINISHED )
@@ -158,7 +156,7 @@ bool Test()
 			PrintException(ctx);
 
 		fail = true;
-		printf("%s: Execution failed\n", TESTNAME);
+		printf("%s: Execution failed\n", "TestAny");
 	}
 	if( ctx ) ctx->Release();
 	
@@ -181,13 +179,13 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_GENERIC); assert( r >= 0 );
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+	mod->AddScriptSection("TestAny", script3, strlen(script3), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
-		printf("%s: Failed to Build()\n", TESTNAME);
+		printf("%s: Failed to Build()\n", "TestAny");
 	}
 	if( bout.buffer != "TestAny (5, 1) : Info    : Compiling void TestAny()\n"
 	                   "TestAny (9, 14) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
@@ -206,20 +204,20 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void SetMyAny(any@)", asFUNCTION(SetMyAny), asCALL_GENERIC); assert( r >= 0 );
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
+	mod->AddScriptSection("TestAny", script4, strlen(script4), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 )
 	{
 		fail = true;
-		printf("%s: Failed to compile\n", TESTNAME);
+		printf("%s: Failed to compile\n", "TestAny");
 	}
 	
 	r = engine->ExecuteString(0, "TestAny()");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
-		printf("%s: Failed to execute\n", TESTNAME);
+		printf("%s: Failed to execute\n", "TestAny");
 	}
 
 	if( myAny )
@@ -235,14 +233,14 @@ bool Test()
 		if( (decl == 0) || (strcmp(decl, "string@") != 0) )
 		{
 			fail = true;
-			printf("%s: Failed to return the correct type\n", TESTNAME);
+			printf("%s: Failed to return the correct type\n", "TestAny");
 		}
 
 		int typeId2 = engine->GetTypeIdByDecl("string@");
 		if( typeId != typeId2 )
 		{
 			fail = true;
-			printf("%s: Failed to return the correct type\n", TESTNAME);
+			printf("%s: Failed to return the correct type\n", "TestAny");
 		}
 
 		CScriptString *str = 0;
@@ -251,7 +249,7 @@ bool Test()
 		if( str->buffer != "test" )
 		{
 			fail = true;
-			printf("%s: Failed to set the string correctly\n", TESTNAME);
+			printf("%s: Failed to set the string correctly\n", "TestAny");
 		}
 
 		if( str ) str->Release();

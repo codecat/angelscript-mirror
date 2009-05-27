@@ -3,8 +3,6 @@
 namespace TestInheritance
 {
 
-static const char * const TESTNAME = "TestInheritance";
-
 std::string printResult;
 void print(const std::string &s)
 {
@@ -19,7 +17,7 @@ bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
-		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
+		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", "TestInheritance");
 		return false;
 	}
 

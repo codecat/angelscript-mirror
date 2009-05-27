@@ -157,7 +157,7 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 		engine->AddRef();
 	this->engine = engine;
 
-	status = tsUninitialized;
+	status = asEXECUTION_UNINITIALIZED;
 	stackBlockSize = 0;
 	refCount.set(1);
 	module = 0;
@@ -236,11 +236,11 @@ void *asCContext::GetUserData()
 
 int asCContext::Prepare(int funcID)
 {
-	if( status == tsActive || status == tsSuspended )
+	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
 		return asCONTEXT_ACTIVE;
 
 	// Clean the stack if not done before
-	if( status != tsUninitialized )
+	if( status != asEXECUTION_UNINITIALIZED )
 		CleanStack();
 
 	// Release the returned object (if any)
@@ -315,7 +315,7 @@ int asCContext::Prepare(int funcID)
 	doSuspend = false;
 	doProcessSuspend = lineCallback;
 	externalSuspendRequest = false;
-	status = tsPrepared;
+	status = asEXECUTION_PREPARED;
 
 	asASSERT(objectRegister == 0);
 	objectRegister = 0;
@@ -344,11 +344,11 @@ int asCContext::Prepare(int funcID)
 // Free all resources
 int asCContext::Unprepare()
 {
-	if( status == tsActive || status == tsSuspended )
+	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
 		return asCONTEXT_ACTIVE;
 
 	// Only clean the stack if the context was prepared but not executed
-	if( status != tsUninitialized )
+	if( status != asEXECUTION_UNINITIALIZED )
 		CleanStack();
 
 	// Release the returned object (if any)
@@ -365,7 +365,7 @@ int asCContext::Unprepare()
 	module = 0;
 
 	// Reset status
-	status = tsUninitialized;
+	status = asEXECUTION_UNINITIALIZED;
 
 	// Deallocate the stack blocks
 	for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
@@ -411,7 +411,7 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 	// Check engine pointer
 	if( engine == 0 ) return asERROR;
 
-	if( status == tsActive || status == tsSuspended )
+	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
 		return asCONTEXT_ACTIVE;
 
 	exceptionLine = -1;
@@ -439,7 +439,7 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 	doSuspend = false;
 	doProcessSuspend = lineCallback;
 	externalSuspendRequest = false;
-	status = tsPrepared;
+	status = asEXECUTION_PREPARED;
 
 	// Determine the minimum stack size needed
 	int stackSize = currentFunction->stackNeeded + RESERVE_STACK;
@@ -484,7 +484,7 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 
 asBYTE asCContext::GetReturnByte()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -495,7 +495,7 @@ asBYTE asCContext::GetReturnByte()
 
 asWORD asCContext::GetReturnWord()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -506,7 +506,7 @@ asWORD asCContext::GetReturnWord()
 
 asDWORD asCContext::GetReturnDWord()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -517,7 +517,7 @@ asDWORD asCContext::GetReturnDWord()
 
 asQWORD asCContext::GetReturnQWord()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -528,7 +528,7 @@ asQWORD asCContext::GetReturnQWord()
 
 float asCContext::GetReturnFloat()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -539,7 +539,7 @@ float asCContext::GetReturnFloat()
 
 double asCContext::GetReturnDouble()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -550,7 +550,7 @@ double asCContext::GetReturnDouble()
 
 void *asCContext::GetReturnAddress()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -564,7 +564,7 @@ void *asCContext::GetReturnAddress()
 
 void *asCContext::GetReturnObject()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -580,7 +580,7 @@ void *asCContext::GetReturnObject()
 // deprecated since 2008-11-11, 2.15.0
 void *asCContext::GetReturnPointer()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -595,7 +595,7 @@ void *asCContext::GetReturnPointer()
 
 void *asCContext::GetAddressOfReturnValue()
 {
-	if( status != tsProgramFinished ) return 0;
+	if( status != asEXECUTION_FINISHED ) return 0;
 
 	asCDataType *dt = &initialFunction->returnType;
 
@@ -614,12 +614,12 @@ void *asCContext::GetAddressOfReturnValue()
 
 int asCContext::SetObject(void *obj)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return asCONTEXT_NOT_PREPARED;
 
 	if( !initialFunction->objectType )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asERROR;
 	}
 
@@ -630,12 +630,12 @@ int asCContext::SetObject(void *obj)
 
 int asCContext::SetArgByte(asUINT arg, asBYTE value)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return asCONTEXT_NOT_PREPARED;
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_ARG;
 	}
 
@@ -643,13 +643,13 @@ int asCContext::SetArgByte(asUINT arg, asBYTE value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeInMemoryBytes() != 1 )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
@@ -668,12 +668,12 @@ int asCContext::SetArgByte(asUINT arg, asBYTE value)
 
 int asCContext::SetArgWord(asUINT arg, asWORD value)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return asCONTEXT_NOT_PREPARED;
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_ARG;
 	}
 
@@ -681,13 +681,13 @@ int asCContext::SetArgWord(asUINT arg, asWORD value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeInMemoryBytes() != 2 )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
@@ -706,12 +706,12 @@ int asCContext::SetArgWord(asUINT arg, asWORD value)
 
 int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return asCONTEXT_NOT_PREPARED;
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_ARG;
 	}
 
@@ -719,13 +719,13 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeInMemoryBytes() != 4 )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
@@ -744,12 +744,12 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 
 int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return asCONTEXT_NOT_PREPARED;
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_ARG;
 	}
 
@@ -757,13 +757,13 @@ int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeOnStackDWords() != 2 )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
@@ -782,12 +782,12 @@ int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 
 int asCContext::SetArgFloat(asUINT arg, float value)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return asCONTEXT_NOT_PREPARED;
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_ARG;
 	}
 
@@ -795,13 +795,13 @@ int asCContext::SetArgFloat(asUINT arg, float value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeOnStackDWords() != 1 )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
@@ -820,12 +820,12 @@ int asCContext::SetArgFloat(asUINT arg, float value)
 
 int asCContext::SetArgDouble(asUINT arg, double value)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return asCONTEXT_NOT_PREPARED;
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_ARG;
 	}
 
@@ -833,13 +833,13 @@ int asCContext::SetArgDouble(asUINT arg, double value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( dt->IsObject() || dt->IsReference() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
 	if( dt->GetSizeOnStackDWords() != 2 )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
@@ -858,12 +858,12 @@ int asCContext::SetArgDouble(asUINT arg, double value)
 
 int asCContext::SetArgAddress(asUINT arg, void *value)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return asCONTEXT_NOT_PREPARED;
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_ARG;
 	}
 
@@ -871,7 +871,7 @@ int asCContext::SetArgAddress(asUINT arg, void *value)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( !dt->IsReference() && !dt->IsObjectHandle() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
@@ -891,12 +891,12 @@ int asCContext::SetArgAddress(asUINT arg, void *value)
 
 int asCContext::SetArgObject(asUINT arg, void *obj)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return asCONTEXT_NOT_PREPARED;
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_ARG;
 	}
 
@@ -904,7 +904,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	asCDataType *dt = &initialFunction->parameterTypes[arg];
 	if( !dt->IsObject() )
 	{
-		status = tsError;
+		status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
 	}
 
@@ -941,7 +941,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 // TODO: We should deprecate this, and implement the SetArgValue(int arg, void *value, bool takeOwnership) instead.
 void *asCContext::GetArgPointer(asUINT arg)
 {
-	if( status != tsPrepared )
+	if( status != asEXECUTION_PREPARED )
 		return 0;
 
 	if( arg >= (unsigned)initialFunction->parameterTypes.GetLength() )
@@ -964,8 +964,8 @@ int asCContext::Abort()
 
 	if( engine == 0 ) return asERROR;
 
-	if( status == tsSuspended )
-		status = tsProgramAborted;
+	if( status == asEXECUTION_SUSPENDED )
+		status = asEXECUTION_ABORTED;
 
 	doSuspend = true;
 	doProcessSuspend = true;
@@ -993,10 +993,10 @@ int asCContext::Execute()
 	// Check engine pointer
 	if( engine == 0 ) return asERROR;
 
-	if( status != tsSuspended && status != tsPrepared )
+	if( status != asEXECUTION_SUSPENDED && status != asEXECUTION_PREPARED )
 		return asERROR;
 
-	status = tsSuspended;
+	status = asEXECUTION_SUSPENDED;
 
 	asPushActiveContext((asIScriptContext *)this);
 
@@ -1076,9 +1076,9 @@ int asCContext::Execute()
 			CallSystemFunction(currentFunction->id, this, 0);
 			
 			// Was the call successful?
-			if( status == tsSuspended )
+			if( status == asEXECUTION_SUSPENDED )
 			{
-				status = tsProgramFinished;
+				status = asEXECUTION_FINISHED;
 			}
 		}
 		else
@@ -1088,10 +1088,10 @@ int asCContext::Execute()
 		}
 	}
 
-	while( !doSuspend && status == tsSuspended )
+	while( !doSuspend && status == asEXECUTION_SUSPENDED )
 	{
-		status = tsActive;
-		while( status == tsActive )
+		status = asEXECUTION_ACTIVE;
+		while( status == asEXECUTION_ACTIVE )
 			ExecuteNext();
 	}
 
@@ -1141,20 +1141,20 @@ int asCContext::Execute()
 	{
 		doAbort = false;
 
-		status = tsProgramAborted;
+		status = asEXECUTION_ABORTED;
 		return asEXECUTION_ABORTED;
 	}
 
-	if( status == tsSuspended )
+	if( status == asEXECUTION_SUSPENDED )
 		return asEXECUTION_SUSPENDED;
 
-	if( status == tsProgramFinished )
+	if( status == asEXECUTION_FINISHED )
 	{
 		objectType = initialFunction->returnType.GetObjectType();
 		return asEXECUTION_FINISHED;
 	}
 
-	if( status == tsUnhandledException )
+	if( status == asEXECUTION_EXCEPTION )
 		return asEXECUTION_EXCEPTION;
 
 	return asERROR;
@@ -1477,7 +1477,7 @@ void asCContext::ExecuteNext()
 			l_fp = stackFramePointer;
 
 			// If status isn't active anymore then we must stop
-			if( status != tsActive )
+			if( status != asEXECUTION_ACTIVE )
 				return;
 		}
 		break;
@@ -1487,7 +1487,7 @@ void asCContext::ExecuteNext()
 		{
 			if( callStack.GetLength() == 0 )
 			{
-				status = tsProgramFinished;
+				status = asEXECUTION_FINISHED;
 				return;
 			}
 
@@ -2049,11 +2049,11 @@ void asCContext::ExecuteNext()
 				stackPointer = l_sp;
 				stackFramePointer = l_fp;
 
-				status = tsSuspended;
+				status = asEXECUTION_SUSPENDED;
 				return;
 			}
 			// An exception might have been raised
-			if( status != tsActive )
+			if( status != asEXECUTION_ACTIVE )
 			{
 				byteCode = l_bc;
 				stackPointer = l_sp;
@@ -2098,7 +2098,7 @@ void asCContext::ExecuteNext()
 			l_fp = stackFramePointer;
 
 			// If status isn't active anymore then we must stop
-			if( status != tsActive )
+			if( status != asEXECUTION_ACTIVE )
 				return;
 		}
 		break;
@@ -2122,7 +2122,7 @@ void asCContext::ExecuteNext()
 				stackPointer = l_sp;
 				stackFramePointer = l_fp;
 
-				status = tsSuspended;
+				status = asEXECUTION_SUSPENDED;
 				return;
 			}
 		}
@@ -2168,7 +2168,7 @@ void asCContext::ExecuteNext()
 				l_fp = stackFramePointer;
 
 				// If status isn't active anymore then we must stop
-				if( status != tsActive )
+				if( status != asEXECUTION_ACTIVE )
 					return;
 			}
 			else
@@ -2200,11 +2200,11 @@ void asCContext::ExecuteNext()
 					stackPointer = l_sp;
 					stackFramePointer = l_fp;
 
-					status = tsSuspended;
+					status = asEXECUTION_SUSPENDED;
 					return;
 				}
 				// An exception might have been raised
-				if( status != tsActive )
+				if( status != asEXECUTION_ACTIVE )
 				{
 					byteCode = l_bc;
 					stackPointer = l_sp;
@@ -2854,7 +2854,7 @@ void asCContext::ExecuteNext()
 			l_fp = stackFramePointer;
 
 			// If status isn't active anymore then we must stop
-			if( status != tsActive )
+			if( status != asEXECUTION_ACTIVE )
 				return;
 		}
 		break;
@@ -3290,7 +3290,7 @@ void asCContext::SetInternalException(const char *descr)
 		return; // but if it does, at least this will not crash the application
 	}
 
-	status = tsUnhandledException;
+	status = asEXECUTION_EXCEPTION;
 
 	exceptionString   = descr;
 	exceptionFunction = currentFunction->id;
@@ -3445,7 +3445,7 @@ int asCContext::GetExceptionFunction()
 
 int asCContext::GetCurrentFunction()
 {
-	if( status == tsSuspended || status == tsActive )
+	if( status == asEXECUTION_SUSPENDED || status == asEXECUTION_ACTIVE )
 		return currentFunction->id;
 
 	return -1;
@@ -3453,7 +3453,7 @@ int asCContext::GetCurrentFunction()
 
 int asCContext::GetCurrentLineNumber(int *column)
 {
-	if( status == tsSuspended || status == tsActive )
+	if( status == asEXECUTION_SUSPENDED || status == asEXECUTION_ACTIVE )
 	{
 		asDWORD line = currentFunction->GetLineNumber(int(byteCode - currentFunction->byteCode.AddressOf()));
 		if( column ) *column = line >> 20;
@@ -3473,28 +3473,7 @@ const char *asCContext::GetExceptionString()
 
 asEContextState asCContext::GetState()
 {
-	if( status == tsSuspended )
-		return asEXECUTION_SUSPENDED;
-
-	if( status == tsActive )
-		return asEXECUTION_ACTIVE;
-
-	if( status == tsUnhandledException )
-		return asEXECUTION_EXCEPTION;
-
-	if( status == tsProgramFinished )
-		return asEXECUTION_FINISHED;
-
-	if( status == tsPrepared )
-		return asEXECUTION_PREPARED;
-
-	if( status == tsUninitialized )
-		return asEXECUTION_UNINITIALIZED;
-
-	if( status == tsProgramAborted )
-		return asEXECUTION_ABORTED;
-
-	return asEXECUTION_ERROR;
+	return status;
 }
 
 int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)

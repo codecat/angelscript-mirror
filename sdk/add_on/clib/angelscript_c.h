@@ -430,7 +430,7 @@ extern "C"
 	AS_API asBOOL             asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
 	AS_API int                asEngine_CompareScriptObjects(asIScriptEngine *e, asBOOL &result, int behaviour, void *leftObj, void *rightObj, int typeId);
 	AS_API int                asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
-	AS_API int                asEngine_GarbageCollect(asIScriptEngine *e, asEGCFlags flags);
+	AS_API int                asEngine_GarbageCollect(asIScriptEngine *e, asDWORD flags);
 	AS_API void               asEngine_GetGCStatistics(asIScriptEngine *e, asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected);
 	AS_API void               asEngine_NotifyGarbageCollectorOfNewObject(asIScriptEngine *e, void *obj, int typeId);
 	AS_API void               asEngine_GCEnumCallback(asIScriptEngine *e, void *obj);

@@ -340,7 +340,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		node = node->next->next;
 		if( node && node->nodeType == snIdentifier )
 		{
-			GETSTRING(name, &script->code[node->tokenPos], node->tokenLength);
+			asCString name(&script->code[node->tokenPos], node->tokenLength);
 
 			if( vs.DeclareVariable(name.AddressOf(), type, stackPos) < 0 )
 				Error(TXT_PARAMETER_ALREADY_DECLARED, node);
@@ -1435,7 +1435,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		}
 
 		// Get the name of the identifier
-		GETSTRING(name, &script->code[node->tokenPos], node->tokenLength);
+		asCString name(&script->code[node->tokenPos], node->tokenLength);
 
 		// Verify that the name isn't used by a dynamic data type
 		if( engine->GetObjectType(name.AddressOf()) != 0 )
@@ -5274,7 +5274,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		// Determine the name of the variable
 		vnode = vnode->lastChild;
 		asASSERT(vnode->nodeType == snIdentifier );
-		GETSTRING(name, &script->code[vnode->tokenPos], vnode->tokenLength);
+		asCString name(&script->code[vnode->tokenPos], vnode->tokenLength);
 
 		sVariable *v = 0;
 		if( scope == "" )
@@ -5496,7 +5496,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	{
 		if( vnode->tokenType == ttIntConstant )
 		{
-			GETSTRING(value, &script->code[vnode->tokenPos], vnode->tokenLength);
+			asCString value(&script->code[vnode->tokenPos], vnode->tokenLength);
 
 			asQWORD val = asStringScanUInt64(value.AddressOf(), 10, 0);
 
@@ -5508,7 +5508,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		}
 		else if( vnode->tokenType == ttBitsConstant )
 		{
-			GETSTRING(value, &script->code[vnode->tokenPos+2], vnode->tokenLength-2);
+			asCString value(&script->code[vnode->tokenPos+2], vnode->tokenLength-2);
 
 			// TODO: Check for overflow
 			asQWORD val = asStringScanUInt64(value.AddressOf(), 16, 0);
@@ -5521,7 +5521,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		}
 		else if( vnode->tokenType == ttFloatConstant )
 		{
-			GETSTRING(value, &script->code[vnode->tokenPos], vnode->tokenLength);
+			asCString value(&script->code[vnode->tokenPos], vnode->tokenLength);
 
 			// TODO: Check for overflow
 
@@ -5532,7 +5532,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		}
 		else if( vnode->tokenType == ttDoubleConstant )
 		{
-			GETSTRING(value, &script->code[vnode->tokenPos], vnode->tokenLength);
+			asCString value(&script->code[vnode->tokenPos], vnode->tokenLength);
 
 			// TODO: Check for overflow
 
@@ -6835,7 +6835,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		if( node->firstChild->nodeType == snIdentifier )
 		{
 			// Get the property name
-			GETSTRING(name, &script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);
+			asCString name(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);
 
 			if( !ctx->type.dataType.IsPrimitive() )
 				Dereference(ctx, true);

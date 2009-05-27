@@ -47,6 +47,15 @@ public:
 		return *this;
 	}
 
+	void SetVal(void *val)
+	{
+	}
+
+	void *GetVal()
+	{
+		return 0;
+	}
+
 	asIObjectType *type;
 	int refCount;
 };
@@ -86,7 +95,17 @@ public:
 		return *this;
 	}
 
+	void SetVal(float &val)
+	{
+	}
+
+	float &GetVal()
+	{
+		return val;
+	}
+
 	int refCount;
+	float val;
 };
 
 MyTmpl_float *MyTmpl_float_factory()
@@ -125,8 +144,13 @@ bool Test()
 	// Add method that take and return the template type
 	r = engine->RegisterObjectMethod("MyTmpl<T>", "MyTmpl<T> &Assign(const MyTmpl<T> &in)", asMETHOD(MyTmpl, Assign), asCALL_THISCALL); assert( r >= 0 );
 
+	// Add methods that take and return the template sub type
+	r = engine->RegisterObjectMethod("MyTmpl<T>", "const T &GetVal() const", asMETHOD(MyTmpl, GetVal), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(const T& in)", asMETHOD(MyTmpl, SetVal), asCALL_THISCALL); assert( r >= 0 );
+
 	// Test that it is possible to instanciate the template type for different sub types
 	// TODO: The name of the template instance should include the sub type, e.g. MyTmpl<int>
+	// TODO: It must be possible to determine the sub type. Need a new method in the asIObjectType for that
 	r = engine->ExecuteString(0, "MyTmpl<int> i;    \n"
 								 "MyTmpl<string> s; \n"
 								 "assert( i.GetNameOfType() == 'MyTmpl' ); \n");
@@ -143,6 +167,15 @@ bool Test()
 		fail = true;
 	}
 
+	// Test that the template sub type works
+	r = engine->ExecuteString(0, "MyTmpl<int> i; \n"
+		                         "i.SetVal(0); \n"
+								 "i.GetVal(); \n");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
 	// It should be possible to register specializations of the template type
 	r = engine->RegisterObjectType("MyTmpl<float>", 0, asOBJ_REF); assert( r >= 0 );
 	// The specialization's factory doesn't take the hidden asIObjectType parameter
@@ -151,6 +184,8 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("MyTmpl<float>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl_float, Release), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("MyTmpl<float>", "string GetNameOfType()", asMETHOD(MyTmpl_float, GetNameOfType), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("MyTmpl<float>", "MyTmpl<float> &Assign(const MyTmpl<float> &in)", asMETHOD(MyTmpl_float, Assign), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("MyTmpl<float>", "const float &GetVal() const", asMETHOD(MyTmpl, GetVal), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("MyTmpl<float>", "void SetVal(const float& in)", asMETHOD(MyTmpl, SetVal), asCALL_THISCALL); assert( r >= 0 );
 
 	r = engine->ExecuteString(0, "MyTmpl<float> f; \n"
 		                         "assert( f.GetNameOfType() == 'MyTmpl<float>' ); \n");
@@ -166,16 +201,18 @@ bool Test()
 		fail = true;
 	}
 
-	// TODO: Test methods that take and return the template sub type
-	// TODO: Test methods that take and return the proper template instance type
+	r = engine->ExecuteString(0, "MyTmpl<float> f; \n"
+		                         "f.SetVal(0); \n"
+								 "f.GetVal(); \n");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+
 	// TODO: Test behaviours that take and return the template sub type
 	// TODO: Test behaviours that take and return the proper template instance type
 
-	// TODO: Must not be possible to register a new method for a template instance
-
-	// TODO: The specialization must implement all the methods/behaviours of the template type
-
-	// TODO: It must be possible to determine the sub type. Need a new method in the asIObjectType for that
 
 	// TODO: Test that the factory must have a hidden reference as first parameter (which receives the asIObjectType)
 

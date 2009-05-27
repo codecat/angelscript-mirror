@@ -5,9 +5,6 @@
 namespace TestDictionary
 {
 
-#define TESTNAME "TestDictionary"
-
-
 const char *script =
 "void Test()                       \n"
 "{                                 \n"

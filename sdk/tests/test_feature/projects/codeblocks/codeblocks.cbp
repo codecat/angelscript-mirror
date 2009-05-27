@@ -142,6 +142,7 @@
 		<Unit filename="..\..\source\test_stream.cpp" />
 		<Unit filename="..\..\source\test_structintf.cpp" />
 		<Unit filename="..\..\source\test_suspend.cpp" />
+		<Unit filename="..\..\source\test_template.cpp" />
 		<Unit filename="..\..\source\test_typedef.cpp" />
 		<Unit filename="..\..\source\test_unsaferef.cpp" />
 		<Unit filename="..\..\source\test_vartype.cpp" />

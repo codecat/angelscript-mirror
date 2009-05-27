@@ -166,7 +166,7 @@ public:
 	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 
 	// Garbage collection
-	virtual int  GarbageCollect(asEGCFlags flags = asGC_FULL_CYCLE);
+	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE);
 	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected);
 	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId);
 	virtual void GCEnumCallback(void *reference);

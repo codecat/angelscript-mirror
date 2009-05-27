@@ -168,7 +168,7 @@ public:
 	asCScriptEngine *engine;
 	asCModule *module;
 
-	int status;
+	asEContextState status;
 	bool doSuspend;
 	bool doAbort;
 	bool externalSuspendRequest;
@@ -216,19 +216,6 @@ public:
 	void *exceptionCallbackObj;
 
 	void *userData;
-};
-
-// TODO: Use the asEContextState instead
-enum eContextState
-{
-	tsUninitialized,
-	tsPrepared,
-	tsSuspended,
-	tsActive,
-	tsProgramFinished,
-	tsProgramAborted,
-	tsUnhandledException,
-	tsError,
 };
 
 END_AS_NAMESPACE

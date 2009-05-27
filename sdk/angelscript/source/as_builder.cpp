@@ -647,7 +647,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	while( n )
 	{
 		asETypeModifiers inOutFlags;
-		asCDataType type = CreateDataTypeFromNode(n, &source);
+		asCDataType type = CreateDataTypeFromNode(n, &source, false, objType);
 		type = ModifyDataTypeFromNode(type, n->next, &source, &inOutFlags, &autoHandle);
 
 		// Reference types cannot be passed by value to system functions
@@ -865,7 +865,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 	while( n )
 	{
 		// Verify that the name isn't taken
-		GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
+		asCString name(&file->code[n->tokenPos], n->tokenLength);
 		CheckNameConflict(name.AddressOf(), n, file);
 
 		// Register the global variable
@@ -905,7 +905,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 {
 	asCScriptNode *n = node->firstChild;
-	GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
+	asCString name(&file->code[n->tokenPos], n->tokenLength);
 
 	int r, c;
 	file->ConvertPosToRowCol(n->tokenPos, &r, &c);
@@ -941,7 +941,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 {
 	asCScriptNode *n = node->firstChild;
-	GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
+	asCString name(&file->code[n->tokenPos], n->tokenLength);
 
 	int r, c;
 	file->ConvertPosToRowCol(n->tokenPos, &r, &c);
@@ -1232,7 +1232,7 @@ void asCBuilder::CompileClasses()
 		while( node && node->nodeType == snIdentifier )
 		{
 			// Get the interface name from the node
-			GETSTRING(name, &file->code[node->tokenPos], node->tokenLength);
+			asCString name(&file->code[node->tokenPos], node->tokenLength);
 
 			// Find the object type for the interface
 			asCObjectType *objType = GetObjectType(name.AddressOf());
@@ -1453,7 +1453,7 @@ void asCBuilder::CompileClasses()
 			{
 				asCScriptCode *file = decl->script;
 				asCDataType dt = CreateDataTypeFromNode(node->firstChild, file);
-				GETSTRING(name, &file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
+				asCString name(&file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
 
 				if( dt.IsReadOnly() )
 				{
@@ -1807,7 +1807,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 		{
 			asASSERT(snIdentifier == tmp->nodeType);
 
-			GETSTRING(name, &file->code[tmp->tokenPos], tmp->tokenLength);
+			asCString name(&file->code[tmp->tokenPos], tmp->tokenLength);
 
 			// TODO: Should only have to check for conflicts within the enum type
 			// Check for name conflict errors
@@ -1930,7 +1930,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	}
 
 	// Check for name conflicts
-	GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
+	asCString name(&file->code[n->tokenPos], n->tokenLength);
 	if( !isConstructor && !isDestructor )
 	{
 		asCDataType dt = asCDataType::CreateObject(objType, false);
@@ -2126,7 +2126,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	asCScriptNode *n = f->firstChild->next->next;
 
 	// Check for name conflicts
-	GETSTRING(name, &file->code[n->tokenPos], n->tokenLength);
+	asCString name(&file->code[n->tokenPos], n->tokenLength);
 	CheckNameConflict(name.AddressOf(), n, file);
 
 	// Initialize a script function object for registration

@@ -4,8 +4,6 @@ using namespace std;
 namespace TestDestructor
 {
 
-#define TESTNAME "TestDestructor"
-
 const char *script1 =
 "class T                        \n"
 "{                              \n"

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -65,7 +65,7 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 	LEAVECRITICALSECTION(gcCritical);
 }
 
-int asCGarbageCollector::GarbageCollect(asEGCFlags flags)
+int asCGarbageCollector::GarbageCollect(asDWORD flags)
 {
 	// The application is responsible for making sure
 	// the gc is only executed by one thread at a time.

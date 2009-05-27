@@ -5,8 +5,6 @@
 namespace TestRZ
 {
 
-static const char * const TESTNAME = "TestRZ";
-
 const char *script1 = "\n"
 "MyGame @global;       \n"
 "class MyGame          \n"
@@ -374,7 +372,7 @@ bool Test3()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
-		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
+		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", "TestRZ");
 		return false;
 	}
 

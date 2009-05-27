@@ -3,8 +3,6 @@
 namespace TestRegisterType
 {
 
-#define TESTNAME "TestRegisterType"
-
 void DummyFunc(asIScriptGeneric *) {}
 
 bool TestRefScoped();
@@ -43,6 +41,7 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : Type 'gc' is missing behaviours\n"
+		               " (0, 0) : Info    : A garbage collected type must have the addref, release, and all gc behaviours\n"
 		               " (0, 0) : Error   : Invalid configuration\n" )
 	{
 		printf(bout.buffer.c_str());
@@ -120,6 +119,7 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : Type 'ref' is missing behaviours\n"
+		               " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 		               " (0, 0) : Error   : Invalid configuration\n" )
 	{
 		printf(bout.buffer.c_str());
@@ -194,8 +194,11 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : Type 'val' is missing behaviours\n"
+		               " (0, 0) : Info    : A non-pod value type must have the constructor and destructor behaviours\n"
 		               " (0, 0) : Error   : Type 'val1' is missing behaviours\n"
+					   " (0, 0) : Info    : A non-pod value type must have the constructor and destructor behaviours\n"
 					   " (0, 0) : Error   : Type 'val2' is missing behaviours\n"
+					   " (0, 0) : Info    : A non-pod value type must have the constructor and destructor behaviours\n"
 					   " (0, 0) : Error   : Invalid configuration\n" )
 	{
 		printf(bout.buffer.c_str());
@@ -216,8 +219,11 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : Type 'ref' is missing behaviours\n"
+		               " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 		               " (0, 0) : Error   : Type 'ref1' is missing behaviours\n"
+					   " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 					   " (0, 0) : Error   : Type 'ref2' is missing behaviours\n"
+					   " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 					   " (0, 0) : Error   : Invalid configuration\n" )
 	{
 		printf(bout.buffer.c_str());
