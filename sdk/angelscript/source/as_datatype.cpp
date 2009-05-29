@@ -207,7 +207,7 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 		// Only reference types are allowed to be handles, 
 		// but not nohandle reference types, and not scoped references (except when returned from registered function)
 		if( !objectType || 
-			!(objectType->flags & asOBJ_REF) || 
+			!((objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_TEMPLATE_SUBTYPE)) || 
 			(objectType->flags & asOBJ_NOHANDLE) || 
 			((objectType->flags & asOBJ_SCOPED) && !acceptHandleForScope) )
 			return -1;

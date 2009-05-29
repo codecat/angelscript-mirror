@@ -898,18 +898,19 @@ int asCScriptEngine::CreateContext(asIScriptContext **context, bool isInternal)
 
 int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset)
 {
-	// Verify that the correct config group is used
-	if( currentGroup->FindType(obj) == 0 )
-		return asWRONG_CONFIG_GROUP;
-
-	asCDataType dt, type;
-	asCString name;
-
 	int r;
+	asCDataType dt;
 	asCBuilder bld(this, 0);
 	r = bld.ParseDataType(obj, &dt);
 	if( r < 0 )
 		return ConfigError(r);
+
+	// Verify that the correct config group is used
+	if( currentGroup->FindType(dt.GetObjectType()->name.AddressOf()) == 0 )
+		return ConfigError(asWRONG_CONFIG_GROUP);
+
+	asCDataType type;
+	asCString name;
 
 	if( (r = bld.VerifyProperty(&dt, declaration, name, type)) < 0 )
 		return ConfigError(r);
@@ -1599,7 +1600,13 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 */
 		// TODO: Verify that the same factory function hasn't been registered already
 
-		// TODO: template: The templates take a hidden parameter with the object type
+		// The templates take a hidden parameter with the object type
+		if( type.GetObjectType()->flags & asOBJ_TEMPLATE &&
+			(func.parameterTypes.GetLength() == 0 ||
+			 !func.parameterTypes[0].IsReference()) )
+		{
+			return ConfigError(asINVALID_DECLARATION);
+		}
 
 		// Store all factory functions in a list
 		if( func.parameterTypes.GetLength() == 0 )
@@ -2819,7 +2826,8 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 		if( func->returnType.GetObjectType() == templateType->templateSubType.GetObjectType() )
 		{
 			func2->returnType = subType;
-			// TODO: template: need to make other modifications as well (handle, etc)
+			if( func->returnType.IsObjectHandle() )
+				func2->returnType.MakeHandle(true, true);
 			func2->returnType.MakeReference(func->returnType.IsReference());
 			func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
 		}
@@ -2842,6 +2850,8 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 			if( func->parameterTypes[p].GetObjectType() == templateType->templateSubType.GetObjectType() )
 			{
 				func2->parameterTypes[p] = subType;
+				if( func->parameterTypes[p].IsObjectHandle() )
+					func2->parameterTypes[p].MakeHandle(true);
 				func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
 				func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReference());
 			}

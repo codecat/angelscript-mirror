@@ -58,6 +58,8 @@ public:
 
 	asIObjectType *type;
 	int refCount;
+
+	int length;
 };
 
 MyTmpl *MyTmpl_factory(asIObjectType *type)
@@ -138,6 +140,9 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL); assert( r >= 0 );
 
+	// Must be possible to register properties for templates, but not of the template subtype
+	r = engine->RegisterObjectProperty("MyTmpl<T>", "int length", offsetof(MyTmpl,length)); assert( r >= 0 );
+
 	// Add method to return the type of the template instance as a string
 	r = engine->RegisterObjectMethod("MyTmpl<T>", "string GetNameOfType()", asMETHOD(MyTmpl, GetNameOfType), asCALL_THISCALL); assert( r >= 0 );
 
@@ -214,18 +219,100 @@ bool Test()
 	// TODO: Test behaviours that take and return the proper template instance type
 
 
-	// TODO: Test that the factory must have a hidden reference as first parameter (which receives the asIObjectType)
 
-	// TODO: Must not be possible to register specialization before the template type
-	// TODO: Must not allow registering properties with the template subtype (at least not without getters/setters)
-
-	// TODO: Test that a proper error occurs if the instance of a template causes invalid data types, e.g. int@
 
 	// TODO: Test bytecode serialization with template instances and template specializations
 
 	// TODO: Must be possible to allow use of initialization lists
 
+	// TODO: Must allow the subtype to be another template type, e.g. array<array<int>>
+
+
+
 	engine->Release();
+
+	// Test that a proper error occurs if the instance of a template causes invalid data types, e.g. int@
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int &in)", asFUNCTION(MyTmpl_factory), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL); assert( r >= 0 );
+
+		// This method makes it impossible to instanciate the template for primitive types
+		r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(T@)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		
+		r = engine->ExecuteString(0, "MyTmpl<int> t;");
+		if( r >= 0 )
+		{
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
+	// Test that a template registered to take subtype by value cannot be instanciated for reference types
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+
+		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int &in)", asFUNCTION(MyTmpl_factory), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL); assert( r >= 0 );
+
+		// This method makes it impossible to instanciate the template for reference types
+		r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(T)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		
+		r = engine->ExecuteString(0, "MyTmpl<string> t;");
+		if( r >= 0 )
+		{
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
+
+	// The factory behaviour for a template class must have a hidden reference as first parameter (which receives the asIObjectType)
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f()", asFUNCTION(0), asCALL_GENERIC);
+		if( r >= 0 )
+			fail = true;
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int)", asFUNCTION(0), asCALL_GENERIC);
+		if( r >= 0 )
+			fail = true;
+		engine->Release();
+	}
+
+	// Must not allow registering properties with the template subtype 
+	// TODO: Must be possible to use getters/setters to register properties of the template subtype
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
+		r = engine->RegisterObjectProperty("MyTmpl<T>", "T a", 0); 
+		if( r != asINVALID_DECLARATION )
+		{
+			fail = true;
+		}
+		engine->Release();
+	}
+
+	// Must not be possible to register specialization before the template type
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		r = engine->RegisterObjectType("MyTmpl<float>", 0, asOBJ_REF);
+		if( r != asINVALID_NAME )
+		{
+			fail = true;
+		}
+		engine->Release();
+	}
 
  	return fail;
 }
