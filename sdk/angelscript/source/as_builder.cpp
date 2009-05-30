@@ -2426,12 +2426,26 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 						{
 							// This is a template instance
 							// Need to find the correct object type
-							ot = engine->GetTemplateInstanceType(ot, subType);
+							asCObjectType *otInstance = engine->GetTemplateInstanceType(ot, subType);
+
+							if( !otInstance )
+							{
+								asCString msg;
+								msg.Format(TXT_CANNOT_INSTANCIATE_TEMPLATE_s_WITH_s, ot->name.AddressOf(), subType.Format().AddressOf());
+								int r, c;
+								file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+								WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+							}
+
+							ot = otInstance;
 						}
 					}
 
 					// Create object data type
-					dt = asCDataType::CreateObject(ot, isConst);
+					if( ot )
+						dt = asCDataType::CreateObject(ot, isConst);
+					else
+						dt = asCDataType::CreatePrimitive(ttInt, isConst);
 				}
 			}
 			else

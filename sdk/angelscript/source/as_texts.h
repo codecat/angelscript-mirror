@@ -55,6 +55,7 @@
 #define TXT_CANNOT_INHERIT_FROM_s         "Can't inherit from '%s'"
 #define TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES "Can't inherit from multiple classes"
 #define TXT_CANNOT_INHERIT_FROM_SELF      "Can't inherit from itself, or another class that inherits from this class"
+#define TXT_CANNOT_INSTANCIATE_TEMPLATE_s_WITH_s "Can't instanciate template '%s' with subtype '%s'"
 #define TXT_CANT_IMPLICITLY_CONVERT_s_TO_s "Can't implicitly convert from '%s' to '%s'."
 #define TXT_CANT_RETURN_VALUE             "Can't return value when return type is 'void'"
 #define TXT_CHANGE_SIGN                   "Implicit conversion changed sign of value"

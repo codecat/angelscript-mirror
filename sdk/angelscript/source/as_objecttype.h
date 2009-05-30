@@ -171,8 +171,6 @@ public:
 	bool DerivesFrom(const asCObjectType *objType) const;
 	bool IsInterface() const;
 
-	bool IsTemplateInstance() const;
-
 	asCString   name;
 	int         size;
 	asCArray<asCObjectProperty*> properties;
@@ -186,7 +184,10 @@ public:
 
 	asSTypeBehaviour beh;
 
+	// Used for template types
 	asCDataType    templateSubType;
+	bool           acceptValueSubType;
+	bool           acceptRefSubType;
 
 	asCScriptEngine *engine;
 

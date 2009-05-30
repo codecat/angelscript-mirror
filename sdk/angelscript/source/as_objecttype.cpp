@@ -52,6 +52,9 @@ asCObjectType::asCObjectType()
 	engine      = 0; 
 	refCount.set(0); 
 	derivedFrom = 0;
+
+	acceptValueSubType = true;
+	acceptRefSubType = true;
 }
 
 asCObjectType::asCObjectType(asCScriptEngine *engine) 
@@ -59,6 +62,9 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 	this->engine = engine; 
 	refCount.set(0); 
 	derivedFrom  = 0;
+
+	acceptValueSubType = true;
+	acceptRefSubType = true;
 }
 
 void asCObjectType::AddRef()

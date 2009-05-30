@@ -1066,7 +1066,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	else if( flags & asOBJ_VALUE )
 	{
 		// Cannot use reference flags
-		// TODO: template: Should be possible to register a value type as reference type
+		// TODO: template: Should be possible to register a value type as template type
 		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_SCOPED) )
 			return ConfigError(asINVALID_ARG);
 
@@ -1184,16 +1184,11 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		else
 		{
 			registeredObjTypes.PushLast(type);
-
-			// TODO: template: We don't yet support application defined template types
-			return ConfigError(asNOT_SUPPORTED);
 		}
 	}
 	else
 	{
 		typeName = name;
-
-		// TODO: template: If the name contains a < character then this must be a template specialization
 
 		// Verify if the name has been registered as a type already
 		asUINT n;
@@ -1515,6 +1510,30 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 	if( behaviour != asBEHAVE_FACTORY )
 		func.objectType = type.GetObjectType();
+
+	// Check if the method restricts that use of the template to value types or reference types
+	if( type.GetObjectType()->flags & asOBJ_TEMPLATE )
+	{
+		if( func.returnType.GetObjectType() == type.GetObjectType()->templateSubType.GetObjectType() )
+		{
+			if( func.returnType.IsObjectHandle() )
+				type.GetObjectType()->acceptValueSubType = false;
+			else if( !func.returnType.IsReference() )
+				type.GetObjectType()->acceptRefSubType = false;
+		}
+
+		for( asUINT n = 0; n < func.parameterTypes.GetLength(); n++ )
+		{
+			if( func.parameterTypes[n].GetObjectType() == type.GetObjectType()->templateSubType.GetObjectType() )
+			{
+				// TODO: If unsafe references are allowed, then inout references allow value types
+				if( func.parameterTypes[n].IsObjectHandle() || func.parameterTypes[n].IsReference() && func.inOutFlags[n] == asTM_INOUTREF )
+					type.GetObjectType()->acceptValueSubType = false;
+				else if( !func.parameterTypes[n].IsReference() )
+					type.GetObjectType()->acceptRefSubType = false;
+			}
+		}
+	}
 
 	if( behaviour == asBEHAVE_CONSTRUCT )
 	{
@@ -2175,6 +2194,30 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		}
 	}
 
+	// Check if the method restricts that use of the template to value types or reference types
+	if( func->objectType->flags & asOBJ_TEMPLATE )
+	{
+		if( func->returnType.GetObjectType() == func->objectType->templateSubType.GetObjectType() )
+		{
+			if( func->returnType.IsObjectHandle() )
+				func->objectType->acceptValueSubType = false;
+			else if( !func->returnType.IsReference() )
+				func->objectType->acceptRefSubType = false;
+		}
+
+		for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
+		{
+			if( func->parameterTypes[n].GetObjectType() == func->objectType->templateSubType.GetObjectType() )
+			{
+				// TODO: If unsafe references are allowed, then inout references allow value types
+				if( func->parameterTypes[n].IsObjectHandle() || func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF )
+					func->objectType->acceptValueSubType = false;
+				else if( !func->parameterTypes[n].IsReference() )
+					func->objectType->acceptRefSubType = false;
+			}
+		}
+	}
+
 	// Return the function id as success
 	return func->id;
 }
@@ -2695,6 +2738,13 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	// No previous template instance exists
 
+	// Make sure this template supports the subtype
+	if( !templateType->acceptValueSubType && (subType.IsPrimitive() || (subType.GetObjectType()->flags & asOBJ_VALUE)) )
+		return 0;
+
+	if( !templateType->acceptRefSubType && (subType.IsObject() && (subType.GetObjectType()->flags & asOBJ_REF)) )
+		return 0;
+
 	// Create a new template instance type based on the templateType
 	asCObjectType *ot = asNEW(asCObjectType)(this);
 	ot->templateSubType = subType;
@@ -2822,7 +2872,6 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 		func2->name     = func->name;
 		func2->id       = GetNextScriptFunctionId();
 
-		// TODO: template: need to check for the template type itself as well
 		if( func->returnType.GetObjectType() == templateType->templateSubType.GetObjectType() )
 		{
 			func2->returnType = subType;
@@ -2868,12 +2917,6 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 			else
 				func2->parameterTypes[p] = func->parameterTypes[p];
 		}
-
-		// TODO: template: If the template type is invalid, an error should be emitted
-		//                 stating that the template cannot be instanciated for this type.
-		//                 For example, if the template has been declared to return a handle
-		//                 of the subtype, then the template cannot be instanciated for primitive
-		//                 or value types. 
 
 		// TODO: template: Must be careful when instanciating templates for garbage collected types
 		//                 If the template hasn't been registered with the behaviours, it shouldn't

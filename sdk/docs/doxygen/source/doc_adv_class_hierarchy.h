@@ -39,9 +39,12 @@ B* refCast(A* a)
 }
 
 // Example registration of the behaviour
-r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "derived@ f(base@)", asFUNCTION(refCast<base,derived>), asCALL_CDECL); assert( r >= 0 );
-r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST, "base@ f(derived@)", asFUNCTION(refCast<derived,base>), asCALL_CDECL); assert( r >= 0 );
+r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "derived@ f(base@)", asFUNCTION((refCast<base,derived>)), asCALL_CDECL); assert( r >= 0 );
+r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST, "base@ f(derived@)", asFUNCTION((refCast<derived,base>)), asCALL_CDECL); assert( r >= 0 );
 \endcode
+
+Note that it may be necessary to add extra parenthesis to the <tt>asFUNCTION</tt> macro so that the preprocessor 
+doesn't interpret the <tt>,</tt> in the template declaration as the argument separator in the macro.
 
 \section doc_adv_class_hierarchy_2 Inherited methods and properties
 

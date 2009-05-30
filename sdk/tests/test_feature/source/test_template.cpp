@@ -120,6 +120,7 @@ bool Test()
 	bool fail = false;
 	int r;
 	COutStream out;
+	CBufferedOutStream bout;
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterStdString(engine);
@@ -214,18 +215,17 @@ bool Test()
 		fail = true;
 	}
 
-
+	
 	// TODO: Test behaviours that take and return the template sub type
 	// TODO: Test behaviours that take and return the proper template instance type
 
-
-
-
-	// TODO: Test bytecode serialization with template instances and template specializations
+	// TODO: Even though the template doesn't accept a value subtype, it must still be possible to register a template specialization for the subtype
 
 	// TODO: Must be possible to allow use of initialization lists
 
 	// TODO: Must allow the subtype to be another template type, e.g. array<array<int>>
+
+	// TODO: Must allow multiple subtypes, e.g. map<string,int>
 
 
 
@@ -233,8 +233,9 @@ bool Test()
 
 	// Test that a proper error occurs if the instance of a template causes invalid data types, e.g. int@
 	{
+		bout.buffer = "";
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int &in)", asFUNCTION(MyTmpl_factory), asCALL_CDECL); assert( r >= 0 );
@@ -250,13 +251,20 @@ bool Test()
 			fail = true;
 		}
 
+		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'int'\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
 		engine->Release();
 	}
 
 	// Test that a template registered to take subtype by value cannot be instanciated for reference types
 	{
+		bout.buffer = "";
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		RegisterScriptString(engine);
 
 		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
@@ -270,6 +278,12 @@ bool Test()
 		r = engine->ExecuteString(0, "MyTmpl<string> t;");
 		if( r >= 0 )
 		{
+			fail = true;
+		}
+
+		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'string'\n" )
+		{
+			printf(bout.buffer.c_str());
 			fail = true;
 		}
 
