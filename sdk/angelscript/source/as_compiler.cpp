@@ -5558,17 +5558,23 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			asCScriptNode *snode = vnode->firstChild;
 			if( script->code[snode->tokenPos] == '\'' && engine->ep.useCharacterLiterals )
 			{
-				// TODO: unicode: If the character code is an escape sequence \u or \U then the full unicode point must be given
-				// TODO: unicode: If the charset is UTF8 then the unicode character must be decoded into an uint
-
 				// Treat the single quoted string as a single character literal
 				str.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
-				ProcessStringConstant(str);
+
 				asDWORD val = 0;
-				if( str.GetLength() == 0 )
-					Error(TXT_EMPTY_CHAR_LITERAL, vnode);
+				if( str.GetLength() && (unsigned char)str[0] > 127 && engine->ep.scanner == 1 )
+				{
+					// This is the start of a UTF8 encoded character. We need to decode it
+					val = asStringDecodeUTF8(str.AddressOf(), 0);
+					if( val == (asDWORD)-1 )
+						Error(TXT_INVALID_CHAR_LITERAL, vnode);
+				}
 				else
-					val = (unsigned char)str[0];
+				{
+					val = ProcessStringConstant(str, snode);
+					if( val == (asDWORD)-1 )
+						Error(TXT_INVALID_CHAR_LITERAL, vnode);
+				}
 
 				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), val);
 			}
@@ -5581,7 +5587,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 					if( snode->tokenType == ttStringConstant )
 					{
 						cat.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
-						ProcessStringConstant(cat);
+						ProcessStringConstant(cat, snode);
 					}
 					else if( snode->tokenType == ttMultilineStringConstant )
 					{
@@ -5589,7 +5595,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 							Error(TXT_MULTILINE_STRINGS_NOT_ALLOWED, snode);
 
 						cat.Assign(&script->code[snode->tokenPos+1], snode->tokenLength-2);
-						ProcessStringConstant(cat);
+						ProcessStringConstant(cat, snode);
 					}
 					else if( snode->tokenType == ttHeredocStringConstant )
 					{
@@ -5752,16 +5758,18 @@ asCString asCCompiler::GetScopeFromNode(asCScriptNode *node)
 	return scope;
 }
 
-void asCCompiler::ProcessStringConstant(asCString &cstr)
+asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node)
 {
+	int charLiteral = -1;
+
 	// Process escape sequences
 	asCArray<char> str((int)cstr.GetLength());
 
 	for( asUINT n = 0; n < cstr.GetLength(); n++ )
 	{
 #ifdef AS_DOUBLEBYTE_CHARSET
-		// TODO: Double-byte charset is only allowed for ASCII 
-		if( cstr[n] & 0x80 )
+		// Double-byte charset is only allowed for ASCII 
+		if( (cstr[n] & 0x80) && engine->ep.scanner == 0 )
 		{
 			// This is the lead character of a double byte character
 			// include the trail character without checking it's value.
@@ -5775,25 +5783,13 @@ void asCCompiler::ProcessStringConstant(asCString &cstr)
 		if( cstr[n] == '\\' )
 		{
 			++n;
-			if( n == cstr.GetLength() ) return;
+			if( n == cstr.GetLength() ) 
+			{
+				if( charLiteral == -1 ) charLiteral = 0;
+				return charLiteral;
+			}
 
-			// TODO: unicode: Add \uHHHH and \UHHHHHHHH for unicode code points
-
-			if( cstr[n] == '"' )
-				str.PushLast('"');
-			else if( cstr[n] == '\'' )
-				str.PushLast('\'');
-			else if( cstr[n] == 'n' )
-				str.PushLast('\n');
-			else if( cstr[n] == 'r' )
-				str.PushLast('\r');
-			else if( cstr[n] == 't' )
-				str.PushLast('\t');
-			else if( cstr[n] == '0' )
-				str.PushLast('\0');
-			else if( cstr[n] == '\\' )
-				str.PushLast('\\');
-			else if( cstr[n] == 'x' || cstr[n] == 'X' )
+			if( cstr[n] == 'x' || cstr[n] == 'X' )
 			{
 				++n;
 				if( n == cstr.GetLength() ) break;
@@ -5812,6 +5808,7 @@ void asCCompiler::ProcessStringConstant(asCString &cstr)
 				if( n == cstr.GetLength() )
 				{
 					str.PushLast((char)val);
+					if( charLiteral == -1 ) charLiteral = (unsigned char)val;
 					break;
 				}
 
@@ -5824,19 +5821,98 @@ void asCCompiler::ProcessStringConstant(asCString &cstr)
 				else
 				{
 					str.PushLast((char)val);
+					if( charLiteral == -1 ) charLiteral = (unsigned char)val;
 					continue;
 				}
 
 				str.PushLast((char)val);
+				if( charLiteral == -1 ) charLiteral = (unsigned char)val;
+			}
+			else if( cstr[n] == 'u' || cstr[n] == 'U' )
+			{
+				// \u expects 4 hex digits
+				// \U expects 8 hex digits
+				bool expect2 = cstr[n] == 'u';
+				int c = expect2 ? 4 : 8;
+
+				asUINT val = 0;
+
+				for( ; c > 0; c-- )
+				{
+					++n;
+					if( n == cstr.GetLength() ) break;
+						
+					if( cstr[n] >= '0' && cstr[n] <= '9' )
+						val = val*16 + cstr[n] - '0';
+					else if( cstr[n] >= 'a' && cstr[n] <= 'f' )
+						val = val*16 + cstr[n] - 'a' + 10;
+					else if( cstr[n] >= 'A' && cstr[n] <= 'F' )
+						val = val*16 + cstr[n] - 'A' + 10;
+					else
+						break;
+				}
+
+				if( c != 0 )
+				{
+					// Give warning about invalid code point
+					// TODO: Need code position for warning
+					asCString msg;
+					msg.Format(TXT_INVALID_UNICODE_FORMAT_EXPECTED_d, expect2 ? 4 : 8);
+					Warning(msg.AddressOf(), node);
+				}
+				else
+				{
+					char encodedValue[5];
+					int len = asStringEncodeUTF8(val, encodedValue);
+					if( len < 0 )
+					{
+						// Give warning about invalid code point 
+						// TODO: Need code position for warning
+						Warning(TXT_INVALID_UNICODE_VALUE, node);
+					}
+					else
+					{
+						// Add the encoded value to the final string
+						str.Concatenate(encodedValue, len);
+						if( charLiteral == -1 ) charLiteral = val;
+					}
+				}
 			}
 			else
-				continue;
+			{
+				if( cstr[n] == '"' )
+					str.PushLast('"');
+				else if( cstr[n] == '\'' )
+					str.PushLast('\'');
+				else if( cstr[n] == 'n' )
+					str.PushLast('\n');
+				else if( cstr[n] == 'r' )
+					str.PushLast('\r');
+				else if( cstr[n] == 't' )
+					str.PushLast('\t');
+				else if( cstr[n] == '0' )
+					str.PushLast('\0');
+				else if( cstr[n] == '\\' )
+					str.PushLast('\\');
+				else
+				{
+					// Invalid escape sequence
+					Warning(TXT_INVALID_ESCAPE_SEQUENCE, node);
+					continue;
+				}
+
+				if( charLiteral == -1 ) charLiteral = (unsigned char)str[0];
+			}
 		}
 		else
+		{
 			str.PushLast(cstr[n]);
+			if( charLiteral == -1 ) charLiteral = (unsigned char)cstr[n];
+		}
 	}
 
 	cstr.Assign(str.AddressOf(), str.GetLength());
+	return charLiteral;
 }
 
 void asCCompiler::ProcessHeredocStringConstant(asCString &str)

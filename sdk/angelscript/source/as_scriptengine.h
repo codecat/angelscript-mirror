@@ -370,6 +370,7 @@ public:
 		bool buildWithoutLineCues;
 		bool initGlobalVarsAfterBuild;
 		bool requireEnumScope;
+		int  scanner;
 	} ep;
 };
 

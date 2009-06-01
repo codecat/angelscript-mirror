@@ -274,7 +274,7 @@ void RegisterStdString_Generic(asIScriptEngine *engine) {
 
 static string StringFactory(asUINT length, const char *s)
 {
-	return string(s);
+	return string(s, length);
 }
 
 static void ConstructString(string *thisPointer)

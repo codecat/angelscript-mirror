@@ -237,6 +237,13 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.requireEnumScope = value ? true : false;
 		break;
 
+	case asEP_SCRIPT_SCANNER:
+		if( value >= 0 && value <= 1 )
+			ep.scanner = (int)value;
+		else
+			return asINVALID_ARG;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -277,6 +284,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 
 	case asEP_REQUIRE_ENUM_SCOPE:
 		return ep.requireEnumScope;
+
+	case asEP_SCRIPT_SCANNER:
+		return ep.scanner;
 	}
 
 	return 0;
@@ -307,6 +317,7 @@ asCScriptEngine::asCScriptEngine()
 	ep.buildWithoutLineCues     = false;
 	ep.initGlobalVarsAfterBuild = true;
 	ep.requireEnumScope         = false;
+	ep.scanner                  = 1;         // utf8
 
 	gc.engine = this;
 

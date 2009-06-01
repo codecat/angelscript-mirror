@@ -153,8 +153,8 @@ byte values that might not be possible to write in your normal editor.
 
 
 <table cellspacing=0 cellpadding=0 border=0>
-<tr><td width=80 valign=top><b>sequence</b></td>
-<td valign=top width=50><b>value</b></td>
+<tr><td width=100 valign=top><b>sequence</b></td>
+<td valign=top width=100><b>value</b></td>
 <td valign=top><b>description</b></td></tr>
 
 <tr><td width=80 valign=top><code>\\0</code>&nbsp;  </td>
@@ -181,6 +181,12 @@ byte values that might not be possible to write in your normal editor.
 <tr><td width=80 valign=top><code>\\xFF</code>&nbsp;</td>
 <td valign=top width=50>0xFF</td>
 <td valign=top>FF should be exchanged for the hexadecimal number representing the byte value wanted</td></tr>
+<tr><td width=80 valign=top><code>\\uFFFF</code>&nbsp;</td>
+<td valign=top width=50>0xFFFF</td>
+<td valign=top>FFFF should be exchanged for the hexadecimal number representing the unicode code point</td></tr>
+<tr><td width=80 valign=top><code>\\UFFFFFFFF</code>&nbsp;</td>
+<td valign=top width=50>0xFFFFFFFF</td>
+<td valign=top>FFFFFFFF should be exchanged for the hexadecimal number representing the unicode code point</td></tr>
 </table>
 
 
@@ -218,6 +224,10 @@ comments between them the compiler will concatenate them into one constant.
                "Second line.\n"
                "Third line.\n";
 </pre>
+
+The escape sequences \\u and \\U will add the specified unicode code point as a
+UTF8 encoded sequence. Only valid unicode 5.1 code points are accepted, i.e. code points
+between U+D800 and U+DFFF (reserved for surrogate pairs) or above U+10FFFF are not accepted.
 
 <sup>1) The application can change the interpretation of single quoted strings by setting an engine property. If this is done the first character in the single quoted string will be interpreted as a single uint8 value instead of a string literal.</sup>
 

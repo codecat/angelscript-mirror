@@ -106,7 +106,9 @@ enum asEEngineProp
 	//! Initialize global variables after a build. Default: true.
 	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9,
 	//! When set the enum values must be prefixed with the enum type. Default: false.
-	asEP_REQUIRE_ENUM_SCOPE           = 10
+	asEP_REQUIRE_ENUM_SCOPE           = 10,
+	//! Select scanning method: 0 - ASCII, 1 - UTF8. Default: 1 (UTF8).
+	asEP_SCRIPT_SCANNER               = 11
 };
 
 // Calling conventions

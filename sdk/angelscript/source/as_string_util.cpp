@@ -101,3 +101,111 @@ asQWORD asStringScanUInt64(const char *string, int base, size_t *numScanned)
 	return res;
 }
 
+//
+// The function will encode the unicode code point into the outEncodedBuffer, and then
+// return the length of the encoded value. If the input value is not a valid unicode code 
+// point, then the function will return -1.
+//
+// This function is taken from the AngelCode ToolBox.
+//
+int asStringEncodeUTF8(unsigned int value, char *outEncodedBuffer)
+{
+	unsigned char *buf = (unsigned char*)outEncodedBuffer;
+
+	int length = -1;
+
+	if( value <= 0x7F )
+	{
+		buf[0] = value;
+		return 1;
+	}
+	else if( value >= 0x80 && value <= 0x7FF )
+	{
+		// Encode it with 2 characters
+		buf[0] = 0xC0 + (value >> 6);
+		length = 2;
+	}
+	else if( value >= 0x800 && value <= 0xD7FF || value >= 0xE000 && value <= 0xFFFF )
+	{
+		// Note: Values 0xD800 to 0xDFFF are not valid unicode characters
+		buf[0] = 0xE0 + (value >> 12);
+		length = 3;
+	}
+	else if( value >= 0x10000 && value <= 0x10FFFF )
+	{
+		buf[0] = 0xF0 + (value >> 18);
+		length = 4;
+	}
+
+	int n = length-1;
+	for( ; n > 0; n-- )
+	{
+		buf[n] = 0x80 + (value & 0x3F);
+		value >>= 6;
+	}
+
+	return length;
+}
+
+//
+// The function will decode an UTF8 character and return the unicode code point.
+// outLength will receive the number of bytes that were decoded.
+//
+// This function is taken from the AngelCode ToolBox.
+//
+int asStringDecodeUTF8(const char *encodedBuffer, unsigned int *outLength)
+{
+	const unsigned char *buf = (const unsigned char*)encodedBuffer;
+	
+	int value = 0;
+	int length = -1;
+	unsigned char byte = buf[0];
+	if( (byte & 0x80) == 0 )
+	{
+		// This is the only byte
+		if( outLength ) *outLength = 1;
+		return byte;
+	}
+	else if( (byte & 0xE0) == 0xC0 )
+	{
+		// There is one more byte
+		value = int(byte & 0x1F);
+		length = 2;
+
+		// The value at this moment must not be less than 2, because 
+		// that should have been encoded with one byte only.
+		if( value < 2 )
+			length = -1;
+	}
+	else if( (byte & 0xF0) == 0xE0 )
+	{
+		// There are two more bytes
+		value = int(byte & 0x0F);
+		length = 3;
+	}
+	else if( (byte & 0xF8) == 0xF0 )
+	{
+		// There are three more bytes
+		value = int(byte & 0x07);
+		length = 4;
+	}
+
+	int n = 1;
+	for( ; n < length; n++ )
+	{
+		byte = buf[n];
+		if( (byte & 0xC0) == 0x80 )
+			value = (value << 6) + int(byte & 0x3F);
+		else 
+			break;
+	}
+
+	if( n == length )
+	{
+		if( outLength ) *outLength = (unsigned)length;
+		return value;
+	}
+
+	// The byte sequence isn't a valid UTF-8 byte sequence.
+	return -1;
+}

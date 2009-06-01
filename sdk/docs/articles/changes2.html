@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.16.2 WIP - 2009/05/29</h2>
+<h2>Version 2.16.2 WIP - 2009/06/01</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The asFUNCTIONPR and asMETHODPR no longer accepts pointers to functions that are not exactly like the specified one (Thanks Wavesonics)
 <li>Fixed crash on compiling global variable of registered type with missing copy behaviour (Thanks 39ster)
 <li>Fixed value of asTYPEID_SCRIPTOBJECT to be just 1 bit (Thanks SiCrane)
+<li>Fixed bug in string add-ons where the full string wouldn't be created by the factory if it contained null characters.
 </ul>
 <li>Library
 <ul>
@@ -35,6 +36,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Changed initialization of global variables so that variables of primitive types are initialized first. (Thanks Friggle)
 <li>Added informational message to better explain the error 'missing behaviours' on invalid registration.
 <li>It is now possible for the application to register template types, though the feature is still not considered complete.
+<li>Added asEP_SCRIPT_SCANNER property for choosing between ASCII and UTF8 script encoding. Default is UTF8.
+</ul>
+<li>Script language
+<ul>
+<li>Added support for string escape sequences \uFFFF and \UFFFFFFFF for inserting unicode characters in string constants.
 </ul>
 </ul>
 

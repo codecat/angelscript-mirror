@@ -15,10 +15,10 @@ CScriptString::CScriptString()
 	refCount = 1;
 }
 
-CScriptString::CScriptString(const char *s)
+CScriptString::CScriptString(const char *s, unsigned int len)
 {
 	refCount = 1;
-	buffer = s;
+	buffer.assign(s, len);
 }
 
 CScriptString::CScriptString(const string &s)
@@ -418,9 +418,9 @@ static void StringCharAt_Generic(asIScriptGeneric *gen)
 //-----------------------
 
 // This is the string factory that creates new strings for the script based on string literals
-static CScriptString *StringFactory(asUINT /*length*/, const char *s)
+static CScriptString *StringFactory(asUINT length, const char *s)
 {
-	return new CScriptString(s);
+	return new CScriptString(s, length);
 }
 
 static void StringFactory_Generic(asIScriptGeneric *gen)

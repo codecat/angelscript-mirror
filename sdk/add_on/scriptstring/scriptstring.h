@@ -27,7 +27,7 @@ class CScriptString
 public:
 	CScriptString();
 	CScriptString(const CScriptString &other);
-	CScriptString(const char *s);
+	CScriptString(const char *s, unsigned int len);
 	CScriptString(const std::string &s);
 
 	void AddRef();

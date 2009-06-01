@@ -89,7 +89,8 @@ enum asEEngineProp
 	asEP_ALLOW_IMPLICIT_HANDLE_TYPES  = 7,
 	asEP_BUILD_WITHOUT_LINE_CUES      = 8,
 	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9,
-	asEP_REQUIRE_ENUM_SCOPE           = 10
+	asEP_REQUIRE_ENUM_SCOPE           = 10,
+	asEP_SCRIPT_SCANNER               = 11
 };
 
 // Calling conventions

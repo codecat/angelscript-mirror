@@ -5,8 +5,6 @@ using std::string;
 namespace TestScriptString
 {
 
-#define TESTNAME "TestScriptString"
-
 static string printOutput;
 
 // This function receives the string by reference
@@ -196,7 +194,7 @@ bool Test()
 
 	printOutput = "";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+	mod->AddScriptSection("TestScriptString", script2, strlen(script2), 0);
 	mod->Build();
 
 	engine->ExecuteString(0, "testString()");
@@ -204,7 +202,7 @@ bool Test()
 	if( printOutput != "hello Ida" )
 	{
 		fail = true;
-		printf("%s: Failed to print the correct string\n", TESTNAME);
+		printf("%s: Failed to print the correct string\n", "TestScriptString");
 	}
 
 	engine->ExecuteString(0, "string s = \"test\\\\test\\\\\"");
@@ -263,13 +261,13 @@ bool Test()
     if( printOutput != "A" ) fail = true;
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+	mod->AddScriptSection("TestScriptString", script3, strlen(script3), 0);
 	if( mod->Build() < 0 )
 		fail = true;
 
 	printOutput = "";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
+	mod->AddScriptSection("TestScriptString", script4, strlen(script4), 0);
 	if( mod->Build() < 0 )
 		fail = true;
 	engine->ExecuteString(0, "test()");
@@ -281,19 +279,19 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
-		printf("%s: ExecuteString() failed\n", TESTNAME);
+		printf("%s: ExecuteString() failed\n", "TestScriptString");
 	}
 	a->Release();
 
 	// test new
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
+	mod->AddScriptSection("TestScriptString", script5, strlen(script5), 0);
 	if( mod->Build() < 0 ) fail = true;
 	r = engine->ExecuteString(0, "Main()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
+	mod->AddScriptSection("TestScriptString", script6, strlen(script6), 0);
 	if( mod->Build() < 0 ) fail = true;
 	r = engine->ExecuteString(0, "Main()");
 	if( r != asEXECUTION_FINISHED ) fail = true;
@@ -312,9 +310,10 @@ bool Test()
 	if( printOutput != "39" ) fail = true;
 
 	printOutput = "";
+	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
 	r = engine->ExecuteString(0, "print(\"\" + '\xFF')");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	if( printOutput != "255" ) fail = true;
+	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
  
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -452,6 +451,112 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
+		engine->Release();
+	}
+
+	//--------------
+	// Unicode strings
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = engine->ExecuteString(0, "assert( '\\u0000'.length() == 1 )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		r = engine->ExecuteString(0, "assert( '\\U00000000'.length() == 1 )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		r = engine->ExecuteString(0, "assert( '\\uFFFF'.length() == 3 )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		r = engine->ExecuteString(0, "assert( '\\U0010FFFF'.length() == 4 )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		// Test compiler warnings
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		// Invalid value
+		bout.buffer = "";
+		r = engine->ExecuteString(0, "assert( '\\uD800'.length() == 0 )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode code point\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		// Invalid value
+		bout.buffer = "";
+		r = engine->ExecuteString(0, "assert( '\\U00FFFFFF'.length() == 0 )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode code point\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		// Invalid format
+		bout.buffer = "";
+		r = engine->ExecuteString(0, "assert( '\\u001'.length() == 0 )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode escape sequence, expected 4 hex digits\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		// Invalid format
+		bout.buffer = "";
+		r = engine->ExecuteString(0, "assert( '\\U00001'.length() == 0 )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode escape sequence, expected 8 hex digits\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		// We don't expect any messages
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		// unicode escape sequence in character literals can generate unsigned integers larger than 255
+		r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); assert( r >= 0 );
+		r = engine->ExecuteString(0, "assert( '\\uFFFF' == 65535 )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		r = engine->ExecuteString(0, "assert( '\\U0010FFFF' == 0x10FFFF )");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		// A unicode character in a character literal should be properly decoded by the compiler
+		char scriptUnicode[] = "assert( '   ' == 0xFFFF )";
+		scriptUnicode[ 9] = (char)0xEF;
+		scriptUnicode[10] = (char)0xBF;
+		scriptUnicode[11] = (char)0xBF;
+		r = engine->ExecuteString(0, scriptUnicode);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		// When scanning script as ASCII, only the first byte will count
+		engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
+		char scriptUnicode2[] = "assert( '   ' == 0xEF )";
+		scriptUnicode2[ 9] = (char)0xEF;
+		scriptUnicode2[10] = (char)0xBF;
+		scriptUnicode2[11] = (char)0xBF;
+		r = engine->ExecuteString(0, scriptUnicode2);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+			
 		engine->Release();
 	}
 
