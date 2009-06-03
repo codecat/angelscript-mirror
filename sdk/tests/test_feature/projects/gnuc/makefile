@@ -1,7 +1,7 @@
 # Test Framework GNUC makefile
 
 CXX = g++
-CXXFLAGS = -ggdb -I../../../../angelscript/include -Wno-missing-field-initializers
+CXXFLAGS = -v -ggdb -I../../../../angelscript/include -Wno-missing-field-initializers
 SRCDIR = ../../source
 OBJDIR = obj
 
@@ -84,6 +84,7 @@ SRCNAMES = \
   test_stdvector.cpp \
   test_stream.cpp \
   test_structintf.cpp \
+  test_template.cpp \
   test_typedef.cpp \
   test_unsaferef.cpp \
   test_vartype.cpp \
@@ -166,7 +167,7 @@ obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp
 obj/scriptstringutil.o: ../../../../add_on/scriptstring/scriptstring_utils.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-obj/scriptstring.o: ../../../../add_on/scriptstdstring/scriptstdstring.cpp
+obj/scriptstdstring.o: ../../../../add_on/scriptstdstring/scriptstdstring.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptdictionary.o: ../../../../add_on/scriptdictionary/scriptdictionary.cpp
