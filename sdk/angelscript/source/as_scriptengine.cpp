@@ -238,7 +238,7 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		break;
 
 	case asEP_SCRIPT_SCANNER:
-		if( value >= 0 && value <= 1 )
+		if( value <= 1 )
 			ep.scanner = (int)value;
 		else
 			return asINVALID_ARG;
@@ -800,7 +800,7 @@ void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &typ
 int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *decl)
 {
 	asCModule *mod = 0;
-	
+
 	// Is this a script class?
 	if( ot->flags & asOBJ_SCRIPT_OBJECT && ot->size > 0 )
 	{
@@ -808,7 +808,7 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 		if( mod && !mod->isBuildWithoutErrors )
 			return asERROR;
 	}
-	
+
 	asCBuilder bld(this, mod);
 
 	asCScriptFunction func(this, mod);
@@ -827,7 +827,7 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 			break;
 		}
 	}
-	
+
 	if( id == -1 ) return asNO_FUNCTION;
 
 	return id;
@@ -1257,7 +1257,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		}
 		else
 		{
-			// The application is registering a template specialization so we 
+			// The application is registering a template specialization so we
 			// need to replace the template instance type with the new type.
 
 			// TODO: Template: We don't require the lower dimensions to be registered first for registered template types
@@ -2816,7 +2816,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	{
 		int funcId = ot->beh.operators[n];
 		asCScriptFunction *func = scriptFunctions[funcId];
-		
+
 		if( GenerateNewTemplateFunction(templateType, ot, subType, func, &func) )
 		{
 			ot->beh.operators[n] = func->id;
@@ -2939,7 +2939,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 		func2->objectType = ot;
 		func2->stackNeeded = func->stackNeeded;
 		func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
-		
+
 		SetScriptFunction(func2);
 
 		// Return the new function
@@ -3282,7 +3282,7 @@ void *asCScriptEngine::CallAlloc(asCObjectType *type)
 {
     // Allocate 4 bytes as the smallest size. Otherwise CallSystemFunction may try to
     // copy a DWORD onto a smaller memory block, in case the object type is return in registers.
-#if defined(AS_DEBUG) 
+#if defined(AS_DEBUG)
 	return ((asALLOCFUNCDEBUG_t)(userAlloc))(type->size < 4 ? 4 : type->size, __FILE__, __LINE__);
 #else
 	return userAlloc(type->size < 4 ? 4 : type->size);
@@ -3358,7 +3358,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt)
 
 	// If the object type supports object handles then register those types as well
 	// Note: Don't check for addref, as asOBJ_SCOPED don't have this
-	if( dt.IsObject() && dt.GetObjectType()->beh.release ) 
+	if( dt.IsObject() && dt.GetObjectType()->beh.release )
 	{
 		newDt = asNEW(asCDataType)(dt);
 		newDt->MakeReference(false);
@@ -4081,7 +4081,7 @@ int asCScriptEngine::GetEnumValueCount(int enumTypeId)
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(enumTypeId);
 	asCObjectType *t = dt->GetObjectType();
-	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) ) 
+	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) )
 		return asINVALID_TYPE;
 
 	return (int)t->enumValues.GetLength();
@@ -4093,7 +4093,7 @@ const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, i
 	// TODO: This same function is implemented in as_module.cpp as well. Perhaps it should be moved to asCObjectType?
 	const asCDataType *dt = GetDataTypeFromTypeId(enumTypeId);
 	asCObjectType *t = dt->GetObjectType();
-	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) ) 
+	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) )
 		return 0;
 
 	if( index >= t->enumValues.GetLength() )

@@ -22,7 +22,7 @@ void MyFree(void *mem)
 	objectsAllocated--;
 
 //	printf("MyFree(%X)\n", mem);
-	delete[] mem;
+	delete[] (asBYTE*)mem;
 }
 
 int ReturnObj()

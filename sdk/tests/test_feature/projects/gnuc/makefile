@@ -1,7 +1,7 @@
 # Test Framework GNUC makefile
 
 CXX = g++
-CXXFLAGS = -v -ggdb -I../../../../angelscript/include -Wno-missing-field-initializers
+CXXFLAGS = -ggdb -I../../../../angelscript/include -Wno-missing-field-initializers
 SRCDIR = ../../source
 OBJDIR = obj
 

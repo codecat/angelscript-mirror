@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash on compiling global variable of registered type with missing copy behaviour (Thanks 39ster)
 <li>Fixed value of asTYPEID_SCRIPTOBJECT to be just 1 bit (Thanks SiCrane)
 <li>Fixed bug in string add-ons where the full string wouldn't be created by the factory if it contained null characters.
+<li>Fixed rare bug when script called application function with float args and the application uses full optimization (this time on GNUC/x86) (Thanks kunitoki)
 </ul>
 <li>Library
 <ul>

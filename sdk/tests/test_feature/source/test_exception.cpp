@@ -17,6 +17,7 @@ const char *script1 =
 static void print(asIScriptGeneric *gen)
 {
 	std::string *s = (std::string*)gen->GetArgAddress(0);
+	UNUSED_VAR(s);
 }
 
 bool TestException()
@@ -26,7 +27,7 @@ bool TestException()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	COutStream out;	
+	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString(engine);

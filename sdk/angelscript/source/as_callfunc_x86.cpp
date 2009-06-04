@@ -552,6 +552,7 @@ endcopy:
     UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
+	    "fninit               \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -639,6 +640,7 @@ endcopy:
     UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
+	    "fninit               \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -728,6 +730,7 @@ endcopy:
     UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
+	    "fninit               \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -826,6 +829,7 @@ endcopy:
     UNUSED_VAR(retPtr);
 
 	asm("pushl %ecx           \n"
+	    "fninit               \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -922,6 +926,7 @@ endcopy:
     UNUSED_VAR(retPtr);
 
 	asm("pushl %ecx           \n"
+	    "fninit               \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -1019,6 +1024,7 @@ endcopy:
     UNUSED_VAR(retPtr);
 
 	asm("pushl %ecx           \n"
+	    "fninit               \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -1106,6 +1112,7 @@ endcopy:
     UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
+	    "fninit               \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -1203,6 +1210,7 @@ endcopy:
     UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
+	    "fninit               \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -1307,6 +1315,7 @@ endcopy:
     UNUSED_VAR(retPtr);
 
 	asm("pushl %ecx           \n"
+	    "fninit               \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
