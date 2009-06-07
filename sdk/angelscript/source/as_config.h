@@ -187,6 +187,9 @@
 // AS_XENON
 // Use assembler code for the Xenon (XBOX360) CPU family
 
+// AS_ARM
+// Use assembler code for the ARM CPU family
+
 // AS_64BIT_PTR
 // Define this to make the engine store all pointers in 64bit words.
 
@@ -292,7 +295,6 @@
 		#define asVSNPRINTF(a, b, c, d) vsnprintf_s(a, b, _TRUNCATE, c, d)
 	#endif
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
-	#define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
 	#define STDCALL __stdcall
 	#define AS_SIZEOF_BOOL 1
 	#define AS_WINDOWS_THREADS
@@ -320,6 +322,17 @@
 	#else
 		#define I64(x) x##ll
 	#endif
+
+    #ifdef _ARM_
+        #define AS_ALIGN
+        #define AS_ARM
+        #define CDECL_RETURN_SIMPLE_IN_MEMORY
+        #define STDCALL_RETURN_SIMPLE_IN_MEMORY
+        #define COMPLEX_OBJS_PASSED_BY_REF
+        #define COMPLEX_MASK asOBJ_APP_CLASS_ASSIGNMENT
+    #else
+        #define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
+    #endif
 
 	#define UNREACHABLE_RETURN
 #endif
@@ -587,7 +600,7 @@
 
 // If there are no current support for native calling
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC))
+#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC) && !defined(AS_ARM))
 	#ifndef AS_MAX_PORTABILITY
 		#define AS_MAX_PORTABILITY
 	#endif
@@ -599,7 +612,6 @@
 #if !defined(AS_POSIX_THREADS) && !defined(AS_WINDOWS_THREADS)
 	#define AS_NO_THREADS
 #endif
-
 
 
 // The assert macro
@@ -638,7 +650,6 @@
 // This macro is used to avoid warnings about unused variables.
 // Usually where the variables are only used in debug mode.
 #define UNUSED_VAR(x) (x)=(x)
-
 
 #include "../include/angelscript.h"
 #include "as_memory.h"

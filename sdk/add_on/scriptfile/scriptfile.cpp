@@ -5,6 +5,13 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef _WIN32_WCE
+#include <windows.h> // For GetModuleFileName
+#ifdef GetObject
+#undef GetObject
+#endif
+#endif
+
 using namespace std;
 
 BEGIN_AS_NAMESPACE
@@ -187,6 +194,8 @@ int CScriptFile::Open(const std::string &filename, const std::string &mode)
     if( file )
         Close();
 
+    std::string myFilename = filename;
+
     // Validate the mode
 	string m;
 #if AS_WRITE_OPS == 1
@@ -198,11 +207,39 @@ int CScriptFile::Open(const std::string &filename, const std::string &mode)
 	else
 		m = mode;
 
+#ifdef _WIN32_WCE
+    // no relative pathing on CE
+    char buf[MAX_PATH];
+    static TCHAR apppath[MAX_PATH] = TEXT("");
+    if (!apppath[0])
+    {
+        GetModuleFileName(NULL, apppath, MAX_PATH);
+        
+        int appLen = _tcslen(apppath);
+        while (appLen > 1)
+        {
+            if (apppath[appLen-1] == TEXT('\\'))
+                break;
+            appLen--;
+        }
+
+        // Terminate the string after the trailing backslash
+        apppath[appLen] = TEXT('\0');
+    }
+#ifdef _UNICODE
+    wcstombs(buf, apppath, wcslen(apppath)+1);
+#else
+    memcpy(buf, apppath, strlen(apppath));
+#endif
+    myFilename = buf + myFilename;
+#endif
+
+
 	// By default windows translates "\r\n" to "\n", but we want to read the file as-is.
 	m += "b";
 
     // Open the file
-    file = fopen(filename.c_str(), m.c_str());
+    file = fopen(myFilename.c_str(), m.c_str());
     if( file == 0 )
         return -1;
 

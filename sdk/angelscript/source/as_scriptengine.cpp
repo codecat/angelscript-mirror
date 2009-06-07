@@ -150,6 +150,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_XENON
 		"AS_XENON "
 #endif
+#ifdef AS_ARM
+		"AS_ARM "
+#endif
 	;
 
 	return string;

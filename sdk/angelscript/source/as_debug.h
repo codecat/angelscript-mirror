@@ -39,6 +39,10 @@
 #ifndef AS_WII
 // The Wii SDK doesn't have these, we'll survive without AS_DEBUG
 
+#ifndef _WIN32_WCE
+// Neither does WinCE
+
+
 #if defined(__GNUC__) 
 // Define mkdir for GNUC
 #include <sys/stat.h>
@@ -46,6 +50,7 @@
 #define _mkdir(dirname) mkdir(dirname, S_IRWXU)
 #else
 #include <direct.h>
+#endif
 #endif
 #endif
 

@@ -49,14 +49,21 @@ double asStringScanDouble(const char *string, size_t *numScanned)
 {
 	char *end;
 
+    // WinCE doesn't have setlocale. Some quick testing on my current platform
+    // still manages to parse the numbers such as "3.14" even if the decimal for the
+    // locale is ",".
+#if !defined(_WIN32_WCE)
 	// Set the locale to C so that we are guaranteed to parse the float value correctly
 	asCString orig = setlocale(LC_NUMERIC, 0);
 	setlocale(LC_NUMERIC, "C");
+#endif
 
 	double res = strtod(string, &end);
 
+#if !defined(_WIN32_WCE)
 	// Restore the locale
 	setlocale(LC_NUMERIC, orig.AddressOf());
+#endif
 
 	if( numScanned )
 		*numScanned = end - string;

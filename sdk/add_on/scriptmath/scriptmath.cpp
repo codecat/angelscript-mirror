@@ -7,7 +7,9 @@ BEGIN_AS_NAMESPACE
 
 // Determine whether the float version should be registered, or the double version
 #ifndef AS_USE_FLOAT
+#if !defined(_WIN32_WCE) // WinCE doesn't have the float versions of the math functions
 #define AS_USE_FLOAT 1
+#endif
 #endif
 
 // The modf function doesn't seem very intuitive, so I'm writing this 
