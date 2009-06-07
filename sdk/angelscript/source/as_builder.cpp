@@ -1690,7 +1690,7 @@ asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const
 
 	// Add extra bytes so that the property will be properly aligned
 	if( propSize == 2 && (decl->objType->size & 1) ) decl->objType->size += 1;
-	if( propSize > 2 && (decl->objType->size & 3) ) decl->objType->size += 3 - (decl->objType->size & 3);
+	if( propSize > 2 && (decl->objType->size & 3) ) decl->objType->size += 4 - (decl->objType->size & 3);
 
 	prop->byteOffset = decl->objType->size;
 	decl->objType->size += propSize;
