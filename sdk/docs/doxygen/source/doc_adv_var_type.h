@@ -44,7 +44,7 @@ other behaviours and operators.
 The variable type is not available within scripts, so it can only be used
 to register application functions.
 
-
+\see \ref doc_addon_any and \ref doc_addon_dict for examples
 
 
 */

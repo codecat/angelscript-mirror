@@ -1,6 +1,6 @@
 /**
 
-\page doc_gc_object Implementing a garbage collected object
+\page doc_gc_object Garbage collected objects
 
 Reference counting as memory management has a drawback in that it is
 difficult to detect circular references when determining dead objects.

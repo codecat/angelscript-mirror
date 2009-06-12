@@ -6,7 +6,7 @@ AngelScript cannot automatically determine relationships between registered clas
 order to establish the hierarchies for use within the script language it is necessary
 to do a bit more registration beyond the normal \ref doc_register_type "object registration".
 
-Hierarchies can currently only be registered for \ref doc_register_ref_type "reference types", 
+Hierarchies can currently only be registered for \ref doc_reg_basicref "reference types", 
 not for \ref doc_register_val_type "value types".
 
 \section doc_adv_class_hierarchy_1 Establishing the relationship
@@ -99,7 +99,7 @@ void RegisterDerivedMembers(asIScriptEngine *engine, const char *type)
   RegisterBaseMembers<T>(engine, type);
 
   // Now register the new members
-  r = engine->RegisterObjectMethod(typem "void aNewMethod()", asMETHOD(T, aNewMethod), asCALL_THISCALL); assert( r >= 0 );
+  r = engine->RegisterObjectMethod(type, "void aNewMethod()", asMETHOD(T, aNewMethod), asCALL_THISCALL); assert( r >= 0 );
 
   r = engine->RegisterObjectProperty(type, "int aProperty", offsetof(T, aProperty)); assert( r >= 0 );
 }

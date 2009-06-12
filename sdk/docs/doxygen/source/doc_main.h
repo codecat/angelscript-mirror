@@ -67,16 +67,14 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  
 \page doc_advanced Advanced topics
 
- - \subpage doc_adv_var_type
+ - \subpage doc_advanced_api
  - \subpage doc_memory
- - \subpage doc_gc_object
  - \subpage doc_debug
  - \subpage doc_adv_timeout
  - \subpage doc_adv_multithread
  - \subpage doc_adv_concurrent
  - \subpage doc_adv_coroutine
  - \subpage doc_adv_precompile
- - \subpage doc_adv_class_hierarchy
  
 \todo Add page about dynamic config groups
 \todo Add page about custom memory management
@@ -84,6 +82,14 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 \todo Add page about imports and function binding
  
  
+\page doc_advanced_api Advanced application interface
+
+ - \subpage doc_gc_object
+ - \subpage doc_adv_scoped_type
+ - \subpage doc_adv_single_ref_type
+ - \subpage doc_adv_class_hierarchy
+ - \subpage doc_adv_var_type
+
  
  
 \page doc_script The script language

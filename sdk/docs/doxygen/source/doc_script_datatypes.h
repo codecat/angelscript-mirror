@@ -7,10 +7,9 @@ Note that the host application may add types specific to that application, refer
  - \ref void
  - \ref bool
  - \ref int
- - \ref uint
- - \ref float
- - \ref double
+ - \ref real
  - \ref arrays
+ - \ref objects
  - \ref handles
  - \ref strings
 
@@ -30,52 +29,41 @@ possible values: <code>true</code> or
 <code>bool</code> that can be used as such in expressions.
 
 
-\section int int, int8, int16, int64
+\section int Integer numbers
 
-<code>int64</code> holds integer values in the range -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807.
-
-<code>int</code> holds integer values in the range -2,147,483,648 to 2,147,483,647.
-
-<code>int16</code> holds integer values in the range -32,768 to 32,767.
-
-<code>int8</code> holds integer values in the range -128 to 128.
-
-As the scripting engine has been optimized for 32 bit datatypes, using the smaller variants is only recommended for accessing application specified variables. For local variables it is better to use the 32 bit variant.
-
-<code>int32</code> is an alias for <code>int</code>.
-
-
-\section uint uint, uint8, uint16, uint64
-
-<code>uint64</code> holds integer values in the range 0 to 18,446,744,073,709,551,615.
-
-<code>uint</code> holds integer values in the range 0 to 4,294,967,295.
-
-<code>uint16</code> holds integer values in the range 0 to 65,535.
-
-<code>uint8</code> holds integer values in the range 0 to 255.
+<table border=0 cellspacing=0 cellpadding=0>
+<tr><td width=100><b>type</b></td><td width=200><b>min value</b></td><td><b>max value</b></td></tr>
+<tr><td><code>int8  </code></td><td>                      -128</td><td>                       127</td></tr>
+<tr><td><code>int16 </code></td><td>                   -32,768</td><td>                    32,767</td></tr>
+<tr><td><code>int   </code></td><td>            -2,147,483,648</td><td>             2,147,483,647</td></tr>
+<tr><td><code>int64 </code></td><td>-9,223,372,036,854,775,808</td><td> 9,223,372,036,854,775,807</td></tr>
+<tr><td><code>uint8 </code></td><td>                         0</td><td>                       255</td></tr>
+<tr><td><code>uint16</code></td><td>                         0</td><td>                    65,535</td></tr>
+<tr><td><code>uint  </code></td><td>                         0</td><td>             4,294,967,295</td></tr>
+<tr><td><code>uint64</code></td><td>                         0</td><td>18,446,744,073,709,551,615</td></tr>
+</table>
 
 As the scripting engine has been optimized for 32 bit datatypes, using the smaller variants is only recommended for accessing application specified variables. For local variables it is better to use the 32 bit variant.
 
-<code>uint32</code> is an alias for <code>uint</code>.
+<code>int32</code> is an alias for <code>int</code>, and <code>uint32</code> is an alias for <code>uint</code>.
 
 
-\section float float
-
-<code>float</code> holds real (or floating point) values in the range -/+3.402823466e38.
-
-The smallest possible positive number that a float can destinguish is: 1.175494351e-38. The maximum number of decimal digits that can be safely used is 6, i.e. if more digits are used they are prone to rounding errors during operations.
-
-<b>Curiousity</b>: Floats may also have the additional values of positive and negative 0 or infinite, and NaN (Not-a-Number). NaN is represented by the 32 bit data word 0x7fc00000.
 
 
-\section double double
+\section real Real numbers
 
-<code>double</code> holds real (or floating point) values in the range -/+1.7976931348623158e+308.
+<table border=0 cellspacing=0 cellpadding=0>
+<tr><td width=100><b>type</b></td><td width=230><b>range of values</b></td><td width=230><b>smallest positive value</b></td> <td><b>maximum digits</b></td></tr>
+<tr><td><code>float </code></td> <td>+/- 3.402823466e+38        </td> <td>1.175494351e-38        </td> <td>6 </td></tr>
+<tr><td><code>double</code></td> <td>+/- 1.7976931348623158e+308</td> <td>2.2250738585072014e-308</td> <td>15</td></tr>
+</table>
 
-The smallest possible positive number that a double can destinguish is: 2.2250738585072014e-308. The maximum number of decimal digits that can be safely used is 15, i.e. if more digits are used they are prone to rounding errors during operations.
+Rounding errors will occur if more digits than the maximum number of digits are used.
 
-<b>Curiousity</b>: Doubles may also have the additional values of positive and negative 0 or infinite, and NaN (Not-a-Number).
+<b>Curiousity</b>: Real numbers may also have the additional values of positive and negative 0 or 
+infinite, and NaN (Not-a-Number). For <code>float</code> NaN is represented by the 32 bit data word 0x7fc00000.
+
+
 
 
 
@@ -113,9 +101,33 @@ Each element in the array is accessed with the indexing operator. The indices ar
 An array also have two methods. length() allow you to determine how many elements are in the array, and resize() lets you resize the array.
 
 
+\section objects Objects
+
+There are two forms of objects, reference types and value types. 
+
+Value types behave much like the primitive types, in that they are allocated on the stack and deallocated 
+when the variable goes out of scope. Only the application can register these types, so you need to check
+with the application's documentation for more information about the registered types.
+
+Reference types are allocated on the memory heap, and may outlive the initial variable that allocates
+them if another reference to the instance is kept. All \ref doc_global_class "script declared classes" are reference types. 
+\ref doc_global_interface "Interfaces" are a special form of reference types, that cannot be instanciated, but can be used to access
+the objects that implement the interfaces without knowing exactly what type of object it is.
+
+<pre>
+  obj o;      // An object is instanciated
+  o = obj();  // A temporary instance is created whose 
+              // value is assigned to the variable
+</pre>
+
+
+
 \section handles Object handles
 
-Object handles are a special type that can be used to hold references to other objects. When calling methods or accessing properties on a variable that is an object handle you will be accessing the actual object that the handle references, just as if it was an alias. Note that unless initialized with the handle of an object, the handle is <code>null</code>.
+Object handles are a special type that can be used to hold references to other objects. When calling methods or 
+accessing properties on a variable that is an object handle you will be accessing the actual object that the 
+handle references, just as if it was an alias. Note that unless initialized with the handle of an object, the 
+handle is <code>null</code>.
 
 <pre>
   obj o;
@@ -229,7 +241,9 @@ The escape sequences \\u and \\U will add the specified unicode code point as a
 UTF8 encoded sequence. Only valid unicode 5.1 code points are accepted, i.e. code points
 between U+D800 and U+DFFF (reserved for surrogate pairs) or above U+10FFFF are not accepted.
 
-<sup>1) The application can change the interpretation of single quoted strings by setting an engine property. If this is done the first character in the single quoted string will be interpreted as a single uint8 value instead of a string literal.</sup>
+<sup>1) The application can change the interpretation of single quoted strings by setting an engine 
+property. If this is done the first character in the single quoted string will be interpreted as 
+a single uint value instead of a string literal.</sup>
 
 
 */

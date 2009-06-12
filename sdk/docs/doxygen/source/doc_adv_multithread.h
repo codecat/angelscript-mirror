@@ -29,5 +29,19 @@ Even if you don't want or can't use multithreading, you can still write applicat
 
  - Resources that are shared by script modules such as registered properties and objects must be protected 
    by the application for simultaneous access, as the script engine doesn't do this automatically.
-   
+
+\section doc_adv_fibers Fibers
+
+AngelScript can be used with fibers as well. However, as fibers are not real threads you need to be careful
+if multiple fibers need to execute scripts. AngelScript keeps track of active contexts by pushing and popping
+the context pointers on a stack. With fibers you can easily corrupt this stack if you do not pay attention 
+to where and when script executions are performed.
+
+Try to avoid switching fibers when a script is executing, instead you should \ref asIScriptContext::Suspend "suspend" the current script 
+execution and only switch to the other fiber when the context's \ref asIScriptContext::Execute "Execute()" method returns. If you really 
+must switch fibers while executing a script, then make sure the second fiber initiates and concludes its own
+script execution before switching back to the original fiber.
+
+
+
 */
