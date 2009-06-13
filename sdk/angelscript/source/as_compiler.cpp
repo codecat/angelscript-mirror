@@ -6186,7 +6186,8 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 			{
 				// We must still evaluate the expression
 				MergeExprContexts(ctx, expr);
-				ctx->bc.Pop(expr->type.dataType.GetSizeOnStackDWords());
+				if( !expr->type.isConstant )
+					ctx->bc.Pop(expr->type.dataType.GetSizeOnStackDWords());
 
 				// Give a warning
 				Warning(TXT_ARG_NOT_LVALUE, outParam.argNode);

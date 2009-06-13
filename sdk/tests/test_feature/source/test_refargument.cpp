@@ -215,7 +215,30 @@ bool Test()
 
 		engine->Release();
 	}
-	
+
+	//---------------------
+	// Test passing 0 to out ref
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script = 
+			"void f(float &out d) {}";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		r = engine->ExecuteString(0, "f(0);");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}	
 
 	// Success
 	return fail;
