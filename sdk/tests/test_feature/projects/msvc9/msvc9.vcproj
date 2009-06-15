@@ -463,6 +463,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_operator.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_optimize.cpp"
 				>
 			</File>

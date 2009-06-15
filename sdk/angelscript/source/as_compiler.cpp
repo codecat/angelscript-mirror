@@ -6476,10 +6476,6 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 
 			MoveArgsToStack(funcs[0], &ctx->bc, args, objectType ? true : false);
 
-			int offset = 0;
-			for( n = 0; n < args.GetLength(); n++ )
-				offset += args[n]->type.dataType.GetSizeOnStackDWords();
-
 			PerformFunctionCall(funcs[0], ctx, false, &args, 0);
 		}
 	}
@@ -7467,6 +7463,94 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 
 		// Don't continue
 		return true;
+	}
+
+	// Dual operators can also be implemented as class methods
+	if( token == ttEqual )
+	{
+		// Find the matching opEquals method 
+		if( lctx->type.dataType.IsObject() && !lctx->type.isExplicitHandle )
+		{
+			asCArray<int> funcs;
+			asCObjectType *ot = lctx->type.dataType.GetObjectType();
+			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+			{
+				asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
+				if( func->name == "opEquals" &&
+					func->returnType == asCDataType::CreatePrimitive(ttBool, false) &&
+					func->parameterTypes.GetLength() == 1 )
+				{
+					funcs.PushLast(func->id);
+				}
+			}
+
+			// Which is the best matching function?
+			asCArray<int> ops;
+			MatchArgument(funcs, ops, &rctx->type, 0);
+
+			// Did we find an operator?
+			if( ops.GetLength() == 1 )
+			{
+				// Merge the bytecode so that it forms lvalue.opEquals(rvalue)
+				// TODO: make sure const correctness is maintained
+				
+				// TODO: This part is very similar to CompileFunctionCall. Perhaps we can make a common routine of it
+
+				Dereference(lctx, true);
+				asCTypeInfo objType = lctx->type;
+
+				asCArray<asSExprContext *> args;
+				args.PushLast(rctx);
+
+				asCByteCode objBC(engine);
+				objBC.AddCode(&lctx->bc);
+
+				PrepareFunctionCall(ops[0], &lctx->bc, args);
+				
+				// Verify if any of the args variable offsets are used in the other code.
+				// If they are exchange the offset for a new one
+				if( args[0]->type.isTemporary && objBC.IsVarUsed(args[0]->type.stackOffset) )
+				{
+					// Release the current temporary variable
+					ReleaseTemporaryVariable(args[0]->type, 0);
+
+					asCArray<int> usedVars;
+					objBC.GetVarsUsed(usedVars);
+					lctx->bc.GetVarsUsed(usedVars);
+
+					asCDataType dt = args[0]->type.dataType;
+					dt.MakeReference(false);
+					int newOffset = AllocateVariableNotIn(dt, true, &usedVars);
+
+					lctx->bc.ExchangeVar(args[0]->type.stackOffset, newOffset);
+					args[0]->type.stackOffset = (short)newOffset;
+					args[0]->type.isTemporary = true;
+					args[0]->type.isVariable = true;
+				}
+
+				lctx->bc.AddCode(&objBC);
+
+				MoveArgsToStack(ops[0], &lctx->bc, args, true);
+
+				MergeExprContexts(ctx, lctx);
+
+				PerformFunctionCall(funcs[0], ctx, false, &args, 0);
+
+				ReleaseTemporaryVariable(objType, &ctx->bc);
+
+				// Don't continue
+				return true;
+			}
+			else if( ops.GetLength() > 1 )
+			{
+				Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+
+				// Don't continue
+				return true;
+			}
+		}
+
+		// TODO: Check for matching opEquals in the right operand
 	}
 
 	// No suitable operator was found

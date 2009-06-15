@@ -293,6 +293,10 @@ asUINT asCArrayObject::GetElementCount()
 
 void asCArrayObject::Resize(asUINT numElements)
 {
+	// Don't do anything if the size is already correct
+	if( numElements == buffer->numElements )
+		return;
+
 	sArrayBuffer *newBuffer;
 	if( !objType->templateSubType.IsPrimitive() )
 	{

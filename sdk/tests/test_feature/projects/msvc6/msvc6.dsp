@@ -331,6 +331,10 @@ SOURCE=..\..\source\test_objzerosize.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_operator.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_optimize.cpp
 # End Source File
 # Begin Source File

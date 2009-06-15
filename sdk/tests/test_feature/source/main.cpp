@@ -141,6 +141,7 @@ namespace TestMetaData          { bool Test(); }
 namespace TestInheritance       { bool Test(); }
 namespace TestDump              { bool Test(); }
 namespace TestTemplate          { bool Test(); }
+namespace TestOperator          { bool Test(); }
 
 #include "utils.h"
 
@@ -181,6 +182,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestOperator::Test()          ) goto failed; else printf("-- TestOperator passed\n");
 	if( TestTemplate::Test()          ) goto failed; else printf("-- TestTemplate passed\n");
 	if( TestDump::Test()              ) goto failed; else printf("-- TestDump passed\n");
 	if( TestInheritance::Test()       ) goto failed; else printf("-- TestInheritance passed\n");
