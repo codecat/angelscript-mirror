@@ -7466,11 +7466,19 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 	}
 
 	// Dual operators can also be implemented as class methods
-	if( token == ttEqual )
+	if( token == ttEqual ||
+		token == ttNotEqual )
 	{
 		// Find the matching opEquals method 
 		if( lctx->type.dataType.IsObject() && !lctx->type.isExplicitHandle )
 		{
+			// Is the left handle a const?
+			bool isConst = false;
+			if( lctx->type.dataType.IsObjectHandle() )
+				isConst = lctx->type.dataType.IsHandleToConst();
+			else
+				isConst = lctx->type.dataType.IsReadOnly();
+
 			asCArray<int> funcs;
 			asCObjectType *ot = lctx->type.dataType.GetObjectType();
 			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
@@ -7478,7 +7486,8 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 				asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
 				if( func->name == "opEquals" &&
 					func->returnType == asCDataType::CreatePrimitive(ttBool, false) &&
-					func->parameterTypes.GetLength() == 1 )
+					func->parameterTypes.GetLength() == 1 &&
+					(!isConst || func->isReadOnly) )
 				{
 					funcs.PushLast(func->id);
 				}
@@ -7534,7 +7543,12 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 
 				MergeExprContexts(ctx, lctx);
 
-				PerformFunctionCall(funcs[0], ctx, false, &args, 0);
+				PerformFunctionCall(ops[0], ctx, false, &args, 0);
+
+				if( token == ttNotEqual )
+				{
+					ctx->bc.InstrSHORT(BC_NOT, ctx->type.stackOffset);
+				}
 
 				ReleaseTemporaryVariable(objType, &ctx->bc);
 
@@ -7551,6 +7565,10 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		}
 
 		// TODO: Check for matching opEquals in the right operand
+		//       Should we really do this? Wouldn't an implicit cast be more appropriate?
+		//       For example, if the comparison '42 == obj' can be made, then it would 
+		//       also mean that 'obj = 42' or 'int a = obj' should be allowed. 
+
 	}
 
 	// No suitable operator was found
