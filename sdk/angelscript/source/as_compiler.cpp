@@ -712,10 +712,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				{
 					if( gvar->datatype.GetObjectType()->flags & asOBJ_REF )
 					{
-						PrepareFunctionCall(funcs[0], &ctx.bc, args);
-						MoveArgsToStack(funcs[0], &ctx.bc, args, false);
-
-						PerformFunctionCall(funcs[0], &ctx, false, &args);
+						MakeFunctionCall(&ctx, funcs[0], 0, args);
 
 						// Store the returned handle in the global variable
 						ctx.bc.Instr(BC_RDSPTR);
@@ -1490,11 +1487,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						asSExprContext ctx(engine);
 						if( v->type.GetObjectType()->flags & asOBJ_REF )
 						{
-							PrepareFunctionCall(funcs[0], &ctx.bc, args);
-							MoveArgsToStack(funcs[0], &ctx.bc, args, false);
-
-							// Call the factory and store the handle in the variable
-							PerformFunctionCall(funcs[0], &ctx, false, &args, 0, true, v->stackOffset);
+							MakeFunctionCall(&ctx, funcs[0], 0, args, true, v->stackOffset);
 
 							// Pop the reference left by the function call
 							ctx.bc.Pop(PTR_SIZE);
@@ -2257,6 +2250,12 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	LineInstr(bc, inode->firstChild->next->tokenPos);
 	bc->AddCode(&ifBC);
 
+	if( inode->firstChild->next->nodeType == snExpressionStatement && inode->firstChild->next->firstChild == 0 )
+	{
+		// Don't allow  if( expr );
+		Error(TXT_IF_WITH_EMPTY_STATEMENT, inode->firstChild->next);
+	}
+
 	// If one of the statements call the constructor, the other must as well
 	// otherwise it is possible the constructor is never called
 	bool constructorCall1 = false;
@@ -2289,6 +2288,12 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		// Add byte code for the else statement
 		LineInstr(bc, inode->lastChild->tokenPos);
 		bc->AddCode(&elseBC);
+
+		if( inode->lastChild->nodeType == snExpressionStatement && inode->lastChild->firstChild == 0 )
+		{
+			// Don't allow  if( expr ) {} else;
+			Error(TXT_ELSE_WITH_EMPTY_STATEMENT, inode->lastChild);
+		}
 
 		if( !hasReturn1 )
 		{
@@ -6441,42 +6446,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		}
 		else
 		{
-			asCByteCode objBC(engine);
-
-			objBC.AddCode(&ctx->bc);
-
-			PrepareFunctionCall(funcs[0], &ctx->bc, args);
-
-			// Verify if any of the args variable offsets are used in the other code.
-			// If they are exchange the offset for a new one
-			asUINT n;
-			for( n = 0; n < args.GetLength(); n++ )
-			{
-				if( args[n]->type.isTemporary && objBC.IsVarUsed(args[n]->type.stackOffset) )
-				{
-					// Release the current temporary variable
-					ReleaseTemporaryVariable(args[n]->type, 0);
-
-					asCArray<int> usedVars;
-					objBC.GetVarsUsed(usedVars);
-					ctx->bc.GetVarsUsed(usedVars);
-
-					asCDataType dt = args[n]->type.dataType;
-					dt.MakeReference(false);
-					int newOffset = AllocateVariableNotIn(dt, true, &usedVars);
-
-					ctx->bc.ExchangeVar(args[n]->type.stackOffset, newOffset);
-					args[n]->type.stackOffset = (short)newOffset;
-					args[n]->type.isTemporary = true;
-					args[n]->type.isVariable = true;
-				}
-			}
-
-			ctx->bc.AddCode(&objBC);
-
-			MoveArgsToStack(funcs[0], &ctx->bc, args, objectType ? true : false);
-
-			PerformFunctionCall(funcs[0], ctx, false, &args, 0);
+			MakeFunctionCall(ctx, funcs[0], objectType, args);
 		}
 	}
 	else
@@ -6990,9 +6960,6 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				return -1;
 			}
 
-			// We need the object pointer
-			Dereference(ctx, true);
-
 			bool isConst = false;
 			if( ctx->type.dataType.IsObjectHandle() )
 				isConst = ctx->type.dataType.IsHandleToConst();
@@ -7472,7 +7439,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		// Find the matching opEquals method 
 		if( lctx->type.dataType.IsObject() && !lctx->type.isExplicitHandle )
 		{
-			// Is the left handle a const?
+			// Is the left value a const?
 			bool isConst = false;
 			if( lctx->type.dataType.IsObjectHandle() )
 				isConst = lctx->type.dataType.IsHandleToConst();
@@ -7501,49 +7468,12 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 			if( ops.GetLength() == 1 )
 			{
 				// Merge the bytecode so that it forms lvalue.opEquals(rvalue)
-				// TODO: make sure const correctness is maintained
-				
-				// TODO: This part is very similar to CompileFunctionCall. Perhaps we can make a common routine of it
-
-				Dereference(lctx, true);
 				asCTypeInfo objType = lctx->type;
-
 				asCArray<asSExprContext *> args;
 				args.PushLast(rctx);
-
-				asCByteCode objBC(engine);
-				objBC.AddCode(&lctx->bc);
-
-				PrepareFunctionCall(ops[0], &lctx->bc, args);
-				
-				// Verify if any of the args variable offsets are used in the other code.
-				// If they are exchange the offset for a new one
-				if( args[0]->type.isTemporary && objBC.IsVarUsed(args[0]->type.stackOffset) )
-				{
-					// Release the current temporary variable
-					ReleaseTemporaryVariable(args[0]->type, 0);
-
-					asCArray<int> usedVars;
-					objBC.GetVarsUsed(usedVars);
-					lctx->bc.GetVarsUsed(usedVars);
-
-					asCDataType dt = args[0]->type.dataType;
-					dt.MakeReference(false);
-					int newOffset = AllocateVariableNotIn(dt, true, &usedVars);
-
-					lctx->bc.ExchangeVar(args[0]->type.stackOffset, newOffset);
-					args[0]->type.stackOffset = (short)newOffset;
-					args[0]->type.isTemporary = true;
-					args[0]->type.isVariable = true;
-				}
-
-				lctx->bc.AddCode(&objBC);
-
-				MoveArgsToStack(ops[0], &lctx->bc, args, true);
-
 				MergeExprContexts(ctx, lctx);
-
-				PerformFunctionCall(ops[0], ctx, false, &args, 0);
+				ctx->type = lctx->type;
+				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args);
 
 				if( token == ttNotEqual )
 				{
@@ -7564,15 +7494,112 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 			}
 		}
 
-		// TODO: Check for matching opEquals in the right operand
-		//       Should we really do this? Wouldn't an implicit cast be more appropriate?
-		//       For example, if the comparison '42 == obj' can be made, then it would 
-		//       also mean that 'obj = 42' or 'int a = obj' should be allowed. 
+		// Try again, by switching the order of the operands
+		// Find the matching opEquals method 
+		if( rctx->type.dataType.IsObject() && !rctx->type.isExplicitHandle )
+		{
+			// Is the right value a const?
+			bool isConst = false;
+			if( rctx->type.dataType.IsObjectHandle() )
+				isConst = rctx->type.dataType.IsHandleToConst();
+			else
+				isConst = rctx->type.dataType.IsReadOnly();
 
+			asCArray<int> funcs;
+			asCObjectType *ot = rctx->type.dataType.GetObjectType();
+			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+			{
+				asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
+				if( func->name == "opEquals" &&
+					func->returnType == asCDataType::CreatePrimitive(ttBool, false) &&
+					func->parameterTypes.GetLength() == 1 &&
+					(!isConst || func->isReadOnly) )
+				{
+					funcs.PushLast(func->id);
+				}
+			}
+
+			// Which is the best matching function?
+			asCArray<int> ops;
+			MatchArgument(funcs, ops, &lctx->type, 0);
+
+			// Did we find an operator?
+			if( ops.GetLength() == 1 )
+			{
+				// Merge the bytecode so that it forms rvalue.opEquals(lvalue)
+				asCTypeInfo objType = rctx->type;
+				asCArray<asSExprContext *> args;
+				args.PushLast(lctx);
+				MergeExprContexts(ctx, rctx);
+				ctx->type = rctx->type;
+				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args);
+
+				if( token == ttNotEqual )
+				{
+					ctx->bc.InstrSHORT(BC_NOT, ctx->type.stackOffset);
+				}
+
+				ReleaseTemporaryVariable(objType, &ctx->bc);
+
+				// Don't continue
+				return true;
+			}
+			else if( ops.GetLength() > 1 )
+			{
+				Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+
+				// Don't continue
+				return true;
+			}
+		}
 	}
 
 	// No suitable operator was found
 	return false;
+}
+
+void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, bool useVariable, int stackOffset)
+{
+	if( objectType )
+	{
+		Dereference(ctx, true);
+	}
+
+	asCByteCode objBC(engine);
+	objBC.AddCode(&ctx->bc);
+
+	PrepareFunctionCall(funcId, &ctx->bc, args);
+
+	// Verify if any of the args variable offsets are used in the other code.
+	// If they are exchange the offset for a new one
+	asUINT n;
+	for( n = 0; n < args.GetLength(); n++ )
+	{
+		if( args[n]->type.isTemporary && objBC.IsVarUsed(args[n]->type.stackOffset) )
+		{
+			// Release the current temporary variable
+			ReleaseTemporaryVariable(args[n]->type, 0);
+
+			asCArray<int> usedVars;
+			objBC.GetVarsUsed(usedVars);
+			ctx->bc.GetVarsUsed(usedVars);
+
+			asCDataType dt = args[n]->type.dataType;
+			dt.MakeReference(false);
+			int newOffset = AllocateVariableNotIn(dt, true, &usedVars);
+
+			ctx->bc.ExchangeVar(args[n]->type.stackOffset, newOffset);
+			args[n]->type.stackOffset = (short)newOffset;
+			args[n]->type.isTemporary = true;
+			args[n]->type.isVariable = true;
+		}
+	}
+
+	ctx->bc.AddCode(&objBC);
+
+	MoveArgsToStack(funcId, &ctx->bc, args, objectType ? true : false);
+
+	PerformFunctionCall(funcId, ctx, false, &args, 0, useVariable, stackOffset);
 }
 
 int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
@@ -8978,9 +9005,9 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 }
 
 
-void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isConstructor, asCArray<asSExprContext*> *args, asCObjectType *objType, bool useVariable, int varOffset)
+void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isConstructor, asCArray<asSExprContext*> *args, asCObjectType *objType, bool useVariable, int varOffset)
 {
-	asCScriptFunction *descr = builder->GetFunctionDescription(funcID);
+	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
 
 	int argSize = descr->GetSpaceNeededForArguments();
 
@@ -8999,7 +9026,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 		// Clean up arguments
 		if( args )
-			AfterFunctionCall(funcID, *args, ctx, false);
+			AfterFunctionCall(funcId, *args, ctx, false);
 
 		ProcessDeferredParams(ctx);
 
@@ -9039,7 +9066,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 		// Clean up arguments
 		if( args )
-			AfterFunctionCall(funcID, *args, ctx, false);
+			AfterFunctionCall(funcId, *args, ctx, false);
 
 		ProcessDeferredParams(ctx);
 
@@ -9054,7 +9081,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 		// Clean up arguments
 		if( args )
-			AfterFunctionCall(funcID, *args, ctx, true);
+			AfterFunctionCall(funcId, *args, ctx, true);
 
 		// Do not process the output parameters yet, because it
 		// might invalidate the returned reference
@@ -9093,7 +9120,7 @@ void asCCompiler::PerformFunctionCall(int funcID, asSExprContext *ctx, bool isCo
 
 		// Clean up arguments
 		if( args )
-			AfterFunctionCall(funcID, *args, ctx, false);
+			AfterFunctionCall(funcId, *args, ctx, false);
 
 		ProcessDeferredParams(ctx);
 	}

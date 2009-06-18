@@ -67,6 +67,7 @@
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
 #define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM  "The destructor must not have any parameters"
 
+#define TXT_ELSE_WITH_EMPTY_STATEMENT     "Else with empty statement"
 #define TXT_EMPTY_SWITCH                  "Empty switch statement"
 #define TXT_EXPECTED_s                    "Expected '%s'"
 #define TXT_EXPECTED_CONSTANT             "Expected constant"
@@ -93,6 +94,7 @@
 #define TXT_HANDLE_COMPARISON             "The operand is implicitly converted to handle in order to compare them"
 
 #define TXT_IDENTIFIER_s_NOT_DATA_TYPE    "Identifier '%s' is not a data type"
+#define TXT_IF_WITH_EMPTY_STATEMENT       "If with empty statement"
 #define TXT_ILLEGAL_CALL                  "Illegal call"
 #define TXT_ILLEGAL_MEMBER_TYPE           "Illegal member type"
 // TODO: Should be TXT_ILLEGAL_OPERATION_ON_s

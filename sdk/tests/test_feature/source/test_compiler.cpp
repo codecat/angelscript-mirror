@@ -531,6 +531,28 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test 28 - if with empty statement should give error
+	{
+		bout.buffer = "";
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		r = engine->ExecuteString(0, "if(true); if(true) {} else;");
+		if( r >= 0 )
+		{
+			fail = true;
+		}
+
+		if( bout.buffer != "ExecuteString (1, 9) : Error   : If with empty statement\n"
+			               "ExecuteString (1, 27) : Error   : Else with empty statement\n")
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

@@ -806,7 +806,7 @@ bool TestOptimize()
 
 
 	int r;
-	r = engine->ExecuteString(0, "bool b = false; if( !b );");
+	r = engine->ExecuteString(0, "bool b = false; if( !b ) {}");
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: !b failed\n", TESTNAME);

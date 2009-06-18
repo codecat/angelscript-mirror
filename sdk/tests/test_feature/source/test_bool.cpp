@@ -345,7 +345,7 @@ bool Test()
 		"class CTest                        \n"
 		"{                                  \n"
 		"  bool isTrue() { return true; }   \n"
-		"  void func() { if( !isTrue() ); } \n"
+		"  void func() { if( !isTrue() ) {} } \n"
 		"}                                  \n";
 
 	mod->AddScriptSection("script", script5, strlen(script5));

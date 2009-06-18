@@ -51,15 +51,15 @@ static const char *script4 =
 "}                      \n";
 
 static const char *script5 = 
-"void testoutparm()        \n"
-"{                         \n"
-"  string a, b;            \n"
-"  complex3(complex(a));   \n"
-"  complex(a) = b;         \n"
-"  complex2() = b;         \n"
-"  if( complex(a) == b );  \n"
-"  if( complex3(a) == 2 ); \n"
-"}                         \n";
+"void testoutparm()          \n"
+"{                           \n"
+"  string a, b;              \n"
+"  complex3(complex(a));     \n"
+"  complex(a) = b;           \n"
+"  complex2() = b;           \n"
+"  if( complex(a) == b ) {}  \n"
+"  if( complex3(a) == 2 ) {} \n"
+"}                           \n";
 
 string output;
 int a_int()

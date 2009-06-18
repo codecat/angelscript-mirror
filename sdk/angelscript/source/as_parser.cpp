@@ -559,6 +559,7 @@ bool asCParser::IsVarDecl()
 
 		// TODO: template: accept >> and >>> tokens too. But then force the tokenizer to move 
 		//                 only 1 character ahead (thus splitting the token in two).
+		//                 How will this work when asIScriptEngine::ParseToken is used?
 		GetToken(&t1);
 		if( t1.type != ttGreaterThan )
 		{

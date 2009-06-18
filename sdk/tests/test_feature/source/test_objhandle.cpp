@@ -27,11 +27,11 @@ static const char *script1 =
 // Now an assignment to g is possible
 "   g = b;                              \n"
 // Compare with null
-"   if( @g != null );                   \n"
-"   if( null != @g );                   \n"
+"   if( @g != null ) {}                  \n"
+"   if( null != @g ) {}                   \n"
 // Compare with another object
-"   if( @g == @b );                       \n"
-"   if( @b == @g );                     \n"
+"   if( @g == @b ) {}                       \n"
+"   if( @b == @g ) {}                     \n"
 // Value comparison
 //"   if( g == b );                       \n"
 //"   if( b == g );                       \n"
