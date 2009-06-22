@@ -85,14 +85,14 @@ float Vector3::length() const
 Vector3 operator+(const Vector3 &a, const Vector3 &b)
 {
 	// Return a new object as a script handle
-	Vector3 res(a.x + b.x, a.y + b.y, a.z + b.y);
+	Vector3 res(a.x + b.x, a.y + b.y, a.z + b.z);
 	return res;
 }
 
 Vector3 operator-(const Vector3 &a, const Vector3 &b)
 {
 	// Return a new object as a script handle
-	Vector3 res(a.x - b.x, a.y - b.y, a.z - b.y);
+	Vector3 res(a.x - b.x, a.y - b.y, a.z - b.z);
 	return res;
 }
 
