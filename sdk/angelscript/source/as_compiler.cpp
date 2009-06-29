@@ -7437,125 +7437,153 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		token == ttNotEqual )
 	{
 		// Find the matching opEquals method 
-		if( lctx->type.dataType.IsObject() && !lctx->type.isExplicitHandle )
+		int r = CompileOverloadedDualOperator2(node, "opEquals", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
+		if( r == 0 )
 		{
-			// Is the left value a const?
-			bool isConst = false;
-			if( lctx->type.dataType.IsObjectHandle() )
-				isConst = lctx->type.dataType.IsHandleToConst();
-			else
-				isConst = lctx->type.dataType.IsReadOnly();
-
-			asCArray<int> funcs;
-			asCObjectType *ot = lctx->type.dataType.GetObjectType();
-			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
-			{
-				asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
-				if( func->name == "opEquals" &&
-					func->returnType == asCDataType::CreatePrimitive(ttBool, false) &&
-					func->parameterTypes.GetLength() == 1 &&
-					(!isConst || func->isReadOnly) )
-				{
-					funcs.PushLast(func->id);
-				}
-			}
-
-			// Which is the best matching function?
-			asCArray<int> ops;
-			MatchArgument(funcs, ops, &rctx->type, 0);
-
-			// Did we find an operator?
-			if( ops.GetLength() == 1 )
-			{
-				// Merge the bytecode so that it forms lvalue.opEquals(rvalue)
-				asCTypeInfo objType = lctx->type;
-				asCArray<asSExprContext *> args;
-				args.PushLast(rctx);
-				MergeExprContexts(ctx, lctx);
-				ctx->type = lctx->type;
-				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args);
-
-				if( token == ttNotEqual )
-				{
-					ctx->bc.InstrSHORT(BC_NOT, ctx->type.stackOffset);
-				}
-
-				ReleaseTemporaryVariable(objType, &ctx->bc);
-
-				// Don't continue
-				return true;
-			}
-			else if( ops.GetLength() > 1 )
-			{
-				Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
-
-				// Don't continue
-				return true;
-			}
+			// Try again by switching the order of the operands
+			r = CompileOverloadedDualOperator2(node, "opEquals", rctx, lctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
 		}
 
-		// Try again, by switching the order of the operands
-		// Find the matching opEquals method 
-		if( rctx->type.dataType.IsObject() && !rctx->type.isExplicitHandle )
+		if( r == 1 )
 		{
-			// Is the right value a const?
-			bool isConst = false;
-			if( rctx->type.dataType.IsObjectHandle() )
-				isConst = rctx->type.dataType.IsHandleToConst();
-			else
-				isConst = rctx->type.dataType.IsReadOnly();
+			if( token == ttNotEqual )
+				ctx->bc.InstrSHORT(BC_NOT, ctx->type.stackOffset);
 
-			asCArray<int> funcs;
-			asCObjectType *ot = rctx->type.dataType.GetObjectType();
-			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
-			{
-				asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
-				if( func->name == "opEquals" &&
-					func->returnType == asCDataType::CreatePrimitive(ttBool, false) &&
-					func->parameterTypes.GetLength() == 1 &&
-					(!isConst || func->isReadOnly) )
-				{
-					funcs.PushLast(func->id);
-				}
-			}
+			// Success, don't continue
+			return true;
+		}
+		else if( r < 0 )
+		{
+			// Compiler error, don't continue
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), true);
+			return true;
+		}
+	}
 
-			// Which is the best matching function?
-			asCArray<int> ops;
-			MatchArgument(funcs, ops, &lctx->type, 0);
+	if( token == ttEqual ||
+		token == ttNotEqual ||
+		token == ttLessThan ||
+		token == ttLessThanOrEqual ||
+		token == ttGreaterThan ||
+		token == ttGreaterThanOrEqual )
+	{
+		bool swappedOrder = false;
 
-			// Did we find an operator?
-			if( ops.GetLength() == 1 )
-			{
-				// Merge the bytecode so that it forms rvalue.opEquals(lvalue)
-				asCTypeInfo objType = rctx->type;
-				asCArray<asSExprContext *> args;
-				args.PushLast(lctx);
-				MergeExprContexts(ctx, rctx);
-				ctx->type = rctx->type;
-				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args);
+		// Find the matching opCmp method
+		int r = CompileOverloadedDualOperator2(node, "opCmp", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttInt, false));
+		if( r == 0 )
+		{
+			// Try again by switching the order of the operands
+			swappedOrder = true;
+			r = CompileOverloadedDualOperator2(node, "opCmp", rctx, lctx, ctx, true, asCDataType::CreatePrimitive(ttInt, false));
+		}
 
-				if( token == ttNotEqual )
-				{
-					ctx->bc.InstrSHORT(BC_NOT, ctx->type.stackOffset);
-				}
+		if( r == 1 )
+		{
+			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 
-				ReleaseTemporaryVariable(objType, &ctx->bc);
+			int a = AllocateVariable(asCDataType::CreatePrimitive(ttBool, false), true);
 
-				// Don't continue
-				return true;
-			}
-			else if( ops.GetLength() > 1 )
-			{
-				Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+			ctx->bc.InstrW_DW(BC_CMPIi, ctx->type.stackOffset, 0);
 
-				// Don't continue
-				return true;
-			}
+			if( token == ttEqual )
+				ctx->bc.Instr(BC_TZ);
+			else if( token == ttNotEqual )
+				ctx->bc.Instr(BC_TNZ);
+			else if( token == ttLessThan && !swappedOrder ||
+				     token == ttGreaterThan && swappedOrder )
+				ctx->bc.Instr(BC_TS);
+			else if( token == ttLessThanOrEqual && !swappedOrder ||
+				     token == ttGreaterThanOrEqual && swappedOrder )
+				ctx->bc.Instr(BC_TNP);
+			else if( token == ttGreaterThan && !swappedOrder ||
+				     token == ttLessThan && swappedOrder )
+				ctx->bc.Instr(BC_TP);
+			else if( token == ttGreaterThanOrEqual && !swappedOrder ||
+				     token == ttLessThanOrEqual && swappedOrder )
+				ctx->bc.Instr(BC_TNS);
+
+			ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)a);
+
+			ctx->type.SetVariable(asCDataType::CreatePrimitive(ttBool, false), a, true);
+
+			// Success, don't continue
+			return true;
+		}
+		else if( r < 0 )
+		{
+			// Compiler error, don't continue
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), true);
+			return true;
 		}
 	}
 
 	// No suitable operator was found
 	return false;
+}
+
+// Returns negative on compile error
+//         zero on no matching operator
+//         one on matching operator
+int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char *methodName, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, bool specificReturn, const asCDataType &returnType)
+{
+	// Find the matching method 
+	if( lctx->type.dataType.IsObject() && !lctx->type.isExplicitHandle )
+	{
+		// Is the left value a const?
+		bool isConst = false;
+		if( lctx->type.dataType.IsObjectHandle() )
+			isConst = lctx->type.dataType.IsHandleToConst();
+		else
+			isConst = lctx->type.dataType.IsReadOnly();
+
+		asCArray<int> funcs;
+		asCObjectType *ot = lctx->type.dataType.GetObjectType();
+		for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+		{
+			asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
+			if( func->name == methodName &&
+				(!specificReturn || func->returnType == returnType) &&
+				func->parameterTypes.GetLength() == 1 &&
+				(!isConst || func->isReadOnly) )
+			{
+				funcs.PushLast(func->id);
+			}
+		}
+
+		// Which is the best matching function?
+		asCArray<int> ops;
+		MatchArgument(funcs, ops, &rctx->type, 0);
+
+		// Did we find an operator?
+		if( ops.GetLength() == 1 )
+		{
+			// Merge the bytecode so that it forms lvalue.methodName(rvalue)
+			asCTypeInfo objType = lctx->type;
+			asCArray<asSExprContext *> args;
+			args.PushLast(rctx);
+			MergeExprContexts(ctx, lctx);
+			ctx->type = lctx->type;
+			MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args);
+
+			// TODO: Can we do this here? 
+			ReleaseTemporaryVariable(objType, &ctx->bc);
+
+			// Found matching operator
+			return 1;
+		}
+		else if( ops.GetLength() > 1 )
+		{
+			Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+			ctx->type.SetDummy();
+
+			// Compiler error
+			return -1;
+		}
+	}
+
+	// No matching operator
+	return 0;
 }
 
 void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, bool useVariable, int stackOffset)
