@@ -280,7 +280,132 @@ bool Test()
 		engine->Release();
 	}
 
+	//----------------------------------------------
+	// Other dual operators for script classes
+	//
+	{
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char *script = 
+			"class Test                         \n"
+			"{                                  \n"
+			"  int value;                       \n"
+			// Define the operators 
+			"  Test opAdd(const Test &in o) const \n" // ordinary operator
+			"  {                                  \n"
+			"    Test t;                          \n"
+			"    t.value = value + o.value;       \n"
+			"    return t;                        \n"
+			"  }                                  \n"
+			"  Test opMul_r(int o) const          \n" // reversed order arguments
+			"  {                                  \n"
+			"    Test t;                          \n"
+			"    t.value = o * value;             \n"
+			"    return t;                        \n"
+			"  }                                  \n"
+			"  Test @opShl(int o)                 \n" // Implementing a stream operator << 
+			"  {                                  \n"
+			"    value += o;                      \n"
+			"    return this;                     \n"
+			"  }                                  \n"
+			"}                                  \n"
+			"void main()                        \n"
+			"{                                  \n"
+			"  Test c;                          \n"
+			"  c.value = 1;                     \n"
+			"  assert( (c + c).value == 2 );      \n"  // c.opAdd(c).value == 2
+			"  assert( c.opAdd(c).value == 2 );   \n"
+			"  assert( (3 * c).value == 3 );      \n"  // c.opMul_r(3).value == 3
+			"  assert( c.opMul_r(3).value == 3 ); \n"
+			"  c << 1 << 2 << 3;                \n"
+			"  assert( c.value == 7 );          \n"
+			"}                                  \n";
+
+		bout.buffer = "";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+		{
+			fail = true;
+		}
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+		
+		r = engine->ExecuteString(0, "main()");
+		if( r != asEXECUTION_FINISHED )
+		{
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
+	//----------------------------------------------
+	// Assignment operators for script classes
+	//
+	{
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char *script = 
+			"class Test                         \n"
+			"{                                  \n"
+			"  int value;                       \n"
+			// Define the operators 
+			"  Test@ opAssign(const Test &in o)   \n" 
+			"  {                                  \n"
+			"    value = o.value;                 \n"
+			"    return this;                     \n"
+			"  }                                  \n"
+			"  Test@ opMulAssign(int o)           \n" 
+			"  {                                  \n"
+			"    value *= o;                      \n"
+			"    return this;                     \n"
+			"  }                                  \n"
+			"}                                  \n"
+			"void main()                        \n"
+			"{                                  \n"
+			"  Test a,c;                        \n"
+			"  a.value = 0;                     \n"
+			"  c.value = 1;                     \n"
+			"  a = c;                           \n"
+			"  assert( a.value == 1 );          \n"
+			"  a.value = 2;                     \n"
+			"  a *= 2;                          \n"
+			"  assert( a.value == 4 );          \n"
+			"}                                  \n";
+
+		bout.buffer = "";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+		{
+			fail = true;
+		}
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+		
+		r = engine->ExecuteString(0, "main()");
+		if( r != asEXECUTION_FINISHED )
+		{
+			fail = true;
+		}
+
+		engine->Release();
+	}
 
 
 	// Success

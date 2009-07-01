@@ -47,9 +47,7 @@
 
 BEGIN_AS_NAMESPACE
 
-// TODO: Implement operator overloads the same way the D language does:
-//       http://www.digitalmars.com/d/2.0/operatoroverloading.html
-
+// TODO: Deprecate this -->
 // map token to behaviour
 const int behave_dual_token[] =
 {
@@ -85,6 +83,7 @@ const int behave_dual_token[] =
 };
 
 const int num_dual_tokens = sizeof(behave_dual_token)/sizeof(int)/2;
+// TODO: <-- Deprecate this
 
 asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
 {
@@ -4819,6 +4818,15 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			ImplicitConversion(lctx, to, lexpr, asIC_IMPLICIT_CONV);
 		}
 
+		// Check for overloaded assignment operator
+		if( CompileOverloadedDualOperator(opNode, lctx, rctx, ctx) )
+		{
+			// An overloaded assignment operator was found (or a compilation error occured)
+			return 0;
+		}
+
+
+// TODO: Deprecate this -->
 		// If left expression resolves into a registered type
 		// check if the assignment operator is overloaded, and check
 		// the type of the right hand expression. If none is found
@@ -4896,6 +4904,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 			return -1;
 		}
+// TODO: <-- Deprecate this 
 
 		// No registered operator was found. In case the operation is a direct
 		// assignment and the rvalue is the same type as the lvalue, then we can
@@ -7319,6 +7328,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	ctx->bc.AddCode(&e.bc);
 }
 
+// TODO: Deprecate this -->
 int asCCompiler::TokenToBehaviour(int token)
 {
 	// Find the correct behaviour for the token
@@ -7337,13 +7347,19 @@ int asCCompiler::TokenToBehaviour(int token)
 
 	return behaviour;
 }
+// TODO: <-- Deprecate this
 
 bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
-	// TODO: An operator can be overloaded for an object or can be global
-
 	// What type of operator is it?
 	int token = node->tokenType;
+	if( token == ttUnrecognizedToken )
+	{
+		// This happens when the compiler is inferring an assignment 
+		// operation from another action, for example in preparing a value 
+		// as a function argument
+		token = ttAssignment;
+	}
 
 	// boolean operators are not overloadable
 	if( token == ttAnd ||
@@ -7351,6 +7367,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		token == ttXor )
 		return false;
 
+// TODO: Deprecate this -->
 	// Find the correct behaviour for the token
 	int behaviour = TokenToBehaviour(token);
 
@@ -7431,11 +7448,13 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		// Don't continue
 		return true;
 	}
+// TODO: <-- Deprecate this
 
 	// Dual operators can also be implemented as class methods
 	if( token == ttEqual ||
 		token == ttNotEqual )
 	{
+		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
 		// Find the matching opEquals method 
 		int r = CompileOverloadedDualOperator2(node, "opEquals", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
 		if( r == 0 )
@@ -7469,6 +7488,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 	{
 		bool swappedOrder = false;
 
+		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
 		// Find the matching opCmp method
 		int r = CompileOverloadedDualOperator2(node, "opCmp", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttInt, false));
 		if( r == 0 )
@@ -7514,6 +7534,84 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		{
 			// Compiler error, don't continue
 			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), true);
+			return true;
+		}
+	}
+
+	// The rest of the operators are not commutative, and doesn't require specific return type
+	const char *op = 0, *op_r = 0;
+	switch( token )
+	{
+	case ttPlus:               op = "opAdd";  op_r = "opAdd_r";  break;
+	case ttMinus:              op = "opSub";  op_r = "opSub_r";  break;
+	case ttStar:               op = "opMul";  op_r = "opMul_r";  break;
+	case ttSlash:              op = "opDiv";  op_r = "opDiv_r";  break;
+	case ttPercent:            op = "opMod";  op_r = "opMod_r";  break;
+	case ttBitOr:              op = "opOr";   op_r = "opOr_r";   break;
+	case ttAmp:                op = "opAnd";  op_r = "opAnd_r";  break;
+	case ttBitXor:             op = "opXor";  op_r = "opXor_r";  break;
+	case ttBitShiftLeft:       op = "opShl";  op_r = "opShl_r";  break;
+	case ttBitShiftRight:      op = "opShr";  op_r = "opShr_r";  break;
+	case ttBitShiftRightArith: op = "opUShr"; op_r = "opUShr_r"; break;
+	}
+
+	// TODO: Might be interesting to support a concatenation operator, e.g. ~
+
+	if( op && op_r )
+	{
+		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
+		// Find the matching operator method
+		int r = CompileOverloadedDualOperator2(node, op, lctx, rctx, ctx);
+		if( r == 0 )
+		{
+			// Try again by switching the order of the operands, and using the reversed operator
+			r = CompileOverloadedDualOperator2(node, op_r, rctx, lctx, ctx);
+		}
+
+		if( r == 1 )
+		{
+			// Success, don't continue
+			return true;
+		}
+		else if( r < 0 )
+		{
+			// Compiler error, don't continue
+			ctx->type.SetDummy();
+			return true;
+		}
+	}
+
+	// Assignment operators
+	op = 0;
+	switch( token )
+	{
+	case ttAssignment:        op = "opAssign";     break;
+	case ttAddAssign:         op = "opAddAssign";  break;
+	case ttSubAssign:         op = "opSubAssign";  break;
+	case ttMulAssign:         op = "opMulAssign";  break;
+	case ttDivAssign:         op = "opDivAssign";  break;
+	case ttModAssign:         op = "opModAssign";  break;
+	case ttOrAssign:          op = "opOrAssign";   break;
+	case ttAndAssign:         op = "opAndAssign";  break;
+	case ttXorAssign:         op = "opXorAssign";  break;
+	case ttShiftLeftAssign:   op = "opShlAssign";  break;
+	case ttShiftRightLAssign: op = "opShrAssign";  break;
+	case ttShiftRightAAssign: op = "opUShrAssign"; break;
+	}
+
+	if( op )
+	{
+		// Find the matching operator method
+		int r = CompileOverloadedDualOperator2(node, op, lctx, rctx, ctx);
+		if( r == 1 )
+		{
+			// Success, don't continue
+			return true;
+		}
+		else if( r < 0 )
+		{
+			// Compiler error, don't continue
+			ctx->type.SetDummy();
 			return true;
 		}
 	}
