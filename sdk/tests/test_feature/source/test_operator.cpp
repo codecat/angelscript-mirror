@@ -407,6 +407,71 @@ bool Test()
 		engine->Release();
 	}
 
+	//----------------------------------------------
+	// Unary operators for script classes
+	//
+	{
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char *script = 
+			"class Test                         \n"
+			"{                                  \n"
+			"  int value;                       \n"
+			// Define the operators 
+			"  Test opNeg() const               \n"
+			"  {                                \n"
+			"    Test t;                        \n"
+			"    t.value = -value;              \n"
+			"    return t;                      \n"
+			"  }                                \n"
+			"  Test opCom()                     \n"
+			"  {                                \n"
+			"    Test t;                        \n"
+			"    t.value = ~value;              \n"
+			"    return t;                      \n"
+			"  }                                \n"
+			"}                                  \n"
+			"void main()                        \n"
+			"{                                  \n"
+			"  Test a;                          \n"
+			"  a.value = 1;                     \n"
+			"  assert( (-a).value == -1 );      \n"
+			"  assert( (~a).value == ~1 );      \n"
+			"}                                  \n";
+
+		bout.buffer = "";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+		{
+			fail = true;
+		}
+		
+		r = engine->ExecuteString(0, "main()");
+		if( r != asEXECUTION_FINISHED )
+		{
+			fail = true;
+		}
+
+		// Test const correctness. opCom() isn't const so it must not be allowed
+		bout.buffer = "";
+		r = engine->ExecuteString(0, "Test a; const Test @h = a; assert( (~h).value == ~1 );");
+		if( r >= 0 )
+		{
+			fail = true;
+		}
+		if( bout.buffer != "ExecuteString (1, 37) : Error   : Function 'opCom() const' not found\n"
+		                   "ExecuteString (1, 40) : Error   : 'value' is not a member of '<unrecognized token>'\n" )
+		{
+			printf(bout.buffer.c_str());
+		}
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;

@@ -101,8 +101,15 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_expressions
  - \subpage doc_datatypes
  - \subpage doc_script_handle
+ - \subpage doc_script_class_main
  - \subpage doc_operator_precedence
  - \subpage doc_reserved_keywords
+
+
+\page doc_script_class_main Script classes
+
+ - \subpage doc_script_class
+ - \subpage doc_script_class_ops
 
 
 

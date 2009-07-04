@@ -89,6 +89,7 @@
 #define TXT_FOUND_MULTIPLE_ENUM_VALUES    "Found multiple matching enum values"
 #define TXT_FUNCTION_IN_GLOBAL_EXPR       "Function calls are not allowed in global expressions"
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"
+#define TXT_FUNCTION_s_NOT_FOUND          "Function '%s' not found"
 
 #define TXT_HANDLE_ASSIGNMENT             "The rvalue is implicitly converted to handle in order to perform handle assignment"
 #define TXT_HANDLE_COMPARISON             "The operand is implicitly converted to handle in order to compare them"
@@ -144,7 +145,6 @@
 #define TXT_s_NOT_AVAILABLE_FOR_s           "'%s' is not available for '%s'"
 #define TXT_s_NOT_DECLARED                  "'%s' is not declared"
 #define TXT_NOT_EXACT                       "Implicit conversion of value is not exact"
-#define TXT_s_NOT_FUNCTION                  "Function '%s' not found"
 #define TXT_s_NOT_INITIALIZED               "'%s' is not initialized."
 #define TXT_s_NOT_MEMBER_OF_s               "'%s' is not a member of '%s'"
 #define TXT_NOT_SUPPORTED_YET               "Not supported yet"
@@ -152,7 +152,6 @@
 #define TXT_NOT_VALID_LVALUE                "Not a valid lvalue"
 
 #define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP "Type '%s' doesn't support the indexing operator"
-#define TXT_OBJECT_DOESNT_SUPPORT_NEGATE_OP "Object doesn't have the negate operator"
 #define TXT_OBJECT_HANDLE_NOT_SUPPORTED   "Object handle is not supported for this type"
 #define TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT "Only object types that support object handles can use &inout. Use &in or &out instead"
 #define TXT_ONLY_ONE_ARGUMENT_IN_CAST     "A cast operator has one argument"

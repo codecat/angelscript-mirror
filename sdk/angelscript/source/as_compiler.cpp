@@ -6503,58 +6503,108 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		if( makeConst )
 			ctx->type.dataType.MakeReadOnly(true);
 	}
-	else if( op == ttMinus && ctx->type.dataType.IsObject() )
+	else if( (op == ttMinus || op == ttBitNot) && ctx->type.dataType.IsObject() )
 	{
-		asCTypeInfo objType = ctx->type;
-
-		Dereference(ctx, true);
-
-		// Check if the variable is initialized (if it indeed is a variable)
-		IsVariableInitialized(&ctx->type, node);
-
-		// Now find a matching function for the object type
-		asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
-		if( beh == 0 )
+// TODO: Deprecate this -->
+		if( op == ttMinus )
 		{
-			asCString str;
-			str.Format(TXT_OBJECT_DOESNT_SUPPORT_NEGATE_OP);
-			Error(str.AddressOf(), node);
-			return -1;
-		}
-		else
-		{
-			// Find the negate operator
-			int opNegate = 0;
-			bool found = false;
-			asUINT n;
-			for( n = 0; n < beh->operators.GetLength(); n+= 2 )
+			asCTypeInfo objType = ctx->type;
+
+			// Now find a matching function for the object type
+			asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
+			if( beh )
 			{
-				// Only accept the negate operator
-				if( asBEHAVE_NEGATE == beh->operators[n] &&
-					engine->scriptFunctions[beh->operators[n+1]]->parameterTypes.GetLength() == 0 )
+				// Find the negate operator
+				int opNegate = 0;
+				bool found = false;
+				asUINT n;
+				for( n = 0; n < beh->operators.GetLength(); n+= 2 )
 				{
-					found = true;
-					opNegate = beh->operators[n+1];
-					break;
+					// Only accept the negate operator
+					if( asBEHAVE_NEGATE == beh->operators[n] &&
+						engine->scriptFunctions[beh->operators[n+1]]->parameterTypes.GetLength() == 0 )
+					{
+						found = true;
+						opNegate = beh->operators[n+1];
+						break;
+					}
+				}
+
+				// Did we find a suitable function?
+				if( found )
+				{
+					Dereference(ctx, true);
+
+					PerformFunctionCall(opNegate, ctx);
+
+					// Release the potentially temporary object
+					ReleaseTemporaryVariable(objType, &ctx->bc);
+					return 0;
+				}
+			}
+		}
+// TODO: <-- Deprecate this
+
+		// Look for the opNeg or opCom methods
+		const char *opName = 0;
+		switch( op )
+		{
+		case ttMinus:  opName = "opNeg"; break;
+		case ttBitNot: opName = "opCom"; break;
+		}
+
+		if( opName )
+		{
+			// Is it a const value?
+			bool isConst = false;
+			if( ctx->type.dataType.IsObjectHandle() )
+				isConst = ctx->type.dataType.IsHandleToConst();
+			else
+				isConst = ctx->type.dataType.IsReadOnly();
+
+			// TODO: If the value isn't const, then first try to find the non const method, and if not found try to find the const method
+
+			// Find the correct method
+			asCArray<int> funcs;
+			asCObjectType *ot = ctx->type.dataType.GetObjectType();
+			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+			{
+				asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
+				if( func->name == opName &&
+					func->parameterTypes.GetLength() == 0 &&
+					(!isConst || func->isReadOnly) )
+				{
+					funcs.PushLast(func->id);
 				}
 			}
 
-			// Did we find a suitable function?
-			if( found )
+			// Did we find the method?
+			if( funcs.GetLength() == 1 )
 			{
-				PerformFunctionCall(opNegate, ctx);
+				asCTypeInfo objType = ctx->type;
+				asCArray<asSExprContext *> args;
+				MakeFunctionCall(ctx, funcs[0], objType.dataType.GetObjectType(), args);
+				ReleaseTemporaryVariable(objType, &ctx->bc);
+				return 0;
 			}
-			else
+			else if( funcs.GetLength() == 0 )
 			{
 				asCString str;
-				str.Format(TXT_OBJECT_DOESNT_SUPPORT_NEGATE_OP);
+				str = asCString(opName) + "()";
+				if( isConst )
+					str += " const";
+				str.Format(TXT_FUNCTION_s_NOT_FOUND, str.AddressOf());
 				Error(str.AddressOf(), node);
+				ctx->type.SetDummy();
+				return -1;
+			}
+			else if( funcs.GetLength() > 1 )
+			{
+				Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+				ctx->type.SetDummy();
 				return -1;
 			}
 		}
-
-		// Release the potentially temporary object
-		ReleaseTemporaryVariable(objType, &ctx->bc);
 	}
 	else if( op == ttPlus || op == ttMinus )
 	{
@@ -7601,6 +7651,8 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 
 	if( op )
 	{
+		// TODO: Shouldn't accept const lvalue with the assignment operators
+
 		// Find the matching operator method
 		int r = CompileOverloadedDualOperator2(node, op, lctx, rctx, ctx);
 		if( r == 1 )

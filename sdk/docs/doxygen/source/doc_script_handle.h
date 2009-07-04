@@ -100,8 +100,8 @@ class can store references to all object types that derive from that class.
 
 <pre>
   interface I {}
-  class A {}
-  class B {}
+  class A : I {}
+  class B : I {}
 
   // Store reference in handle to interface 
   I \@i1 = A();  
