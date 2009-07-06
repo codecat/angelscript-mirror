@@ -13,8 +13,8 @@ All error codes are negative so a simple <code>assert( r >= 0 )</code> where r i
 to pinpoint where the configuration failed.
 
 
-If a function failed during the configuration, the \ref asIScriptEngine::Build "Build" method will always fail with a return code 
-of \ref asINVALID_CONFIGURATION. And unless you already verified the error codes for all the configuration 
+If a function failed during the configuration, the \ref asIScriptModule::Build "Build" method will always fail with a return code 
+of \ref asINVALID_CONFIGURATION. Unless you already verified the error codes for all the configuration 
 calls, it will not be possible to determine what the error was.
 
 \code
@@ -28,7 +28,7 @@ a script is built.
 
 \section doc_usemsgcallbck Use the message callback to receive detailed error messages
 
-The return code from the register functions, \ref asIScriptEngine::Build "Build", and 
+The return code from the register functions, \ref asIScriptModule::Build "Build", and 
 \ref asIScriptEngine::ExecuteString "ExecuteString", can only tell you that something was wrong, 
 not what it was. To help identify the exact problem the message callback should be used. The script 
 library will then send messages explaining the error or warning in clear text.

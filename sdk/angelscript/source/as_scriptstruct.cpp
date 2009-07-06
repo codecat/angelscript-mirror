@@ -328,14 +328,6 @@ bool asCScriptObject::GetFlag()
 	return gcFlag;
 }
 
-#ifdef AS_DEPRECATED
-// deprecated 2009-02-25, 2.16.0
-int asCScriptObject::GetStructTypeId()
-{
-	return GetTypeId();
-}
-#endif
-
 // TODO: Should probably be moved to asIObjectType (or replicated in the asIObjectType)
 int asCScriptObject::GetTypeId() const
 {

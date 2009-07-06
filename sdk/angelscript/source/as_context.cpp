@@ -576,23 +576,6 @@ void *asCContext::GetReturnObject()
 		return objectRegister;
 }
 
-#ifdef AS_DEPRECATED
-// deprecated since 2008-11-11, 2.15.0
-void *asCContext::GetReturnPointer()
-{
-	if( status != asEXECUTION_FINISHED ) return 0;
-
-	asCDataType *dt = &initialFunction->returnType;
-
-	// An object is stored in the objectRegister
-	if( !dt->IsReference() && dt->IsObject() )
-		return &objectRegister;
-
-	// Primitives and references are stored in register1
-	return &register1;
-}
-#endif
-
 void *asCContext::GetAddressOfReturnValue()
 {
 	if( status != asEXECUTION_FINISHED ) return 0;
@@ -3724,36 +3707,6 @@ int asCContext::GetVarTypeId(int varIndex, int stackLevel)
 
 	return engine->GetTypeIdFromDataType(func->variables[varIndex]->type);
 }
-
-#ifdef AS_DEPRECATED
-// deprecated since 2008-11-11, 2.15.0
-void *asCContext::GetVarPointer(int varIndex, int stackLevel)
-{
-	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
-
-	asCScriptFunction *func;
-	asDWORD *sf;
-	if( stackLevel == -1 )
-	{
-		func = currentFunction;
-		sf = stackFramePointer;
-	}
-	else
-	{
-		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
-		func = (asCScriptFunction*)s[1];
-		sf = (asDWORD*)s[0];
-	}
-
-	if( func == 0 )
-		return 0;
-
-	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
-		return 0;
-
-	return sf - func->variables[varIndex]->stackOffset;
-}
-#endif
 
 void *asCContext::GetAddressOfVar(int varIndex, int stackLevel)
 {

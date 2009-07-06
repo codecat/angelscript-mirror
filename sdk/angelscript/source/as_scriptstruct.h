@@ -75,11 +75,6 @@ public:
 
 	int         CopyFrom(asIScriptObject *other);
 
-#ifdef AS_DEPRECATED
-	// deprecated since 2009-02-25, 2.16.0
-	int GetStructTypeId() const;
-#endif
-
 //====================================
 // Internal
 //====================================

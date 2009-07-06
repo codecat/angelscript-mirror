@@ -71,10 +71,6 @@ class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
 
-#ifdef AS_DEPRECATED
-typedef asIScriptObject asIScriptStruct;
-#endif
-
 // Enumerations and constants
 
 // Engine properties
@@ -304,9 +300,6 @@ enum asETypeIdFlags
 	asTYPEID_HANDLETOCONST  = 0x20000000,
 	asTYPEID_MASK_OBJECT    = 0x1C000000,
 	asTYPEID_APPOBJECT      = 0x04000000,
-#ifdef AS_DEPRECATED
-	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
-#endif
 	asTYPEID_SCRIPTOBJECT   = 0x08000000,
 	asTYPEID_SCRIPTARRAY    = 0x10000000,
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
@@ -557,36 +550,6 @@ public:
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() = 0;
 
-#ifdef AS_DEPRECATED
-	virtual int                AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
-	virtual int                Build(const char *module) = 0;
-    virtual int                Discard(const char *module) = 0;
-	virtual int                ResetModule(const char *module) = 0;
-	virtual int                GetFunctionCount(const char *module) = 0;
-	virtual int                GetFunctionIDByIndex(const char *module, int index) = 0;
-	virtual int                GetFunctionIDByName(const char *module, const char *name) = 0;
-	virtual int                GetFunctionIDByDecl(const char *module, const char *decl) = 0;
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
-	virtual int                GetGlobalVarCount(const char *module) = 0;
-	virtual int                GetGlobalVarIndexByName(const char *module, const char *name) = 0;
-	virtual int                GetGlobalVarIndexByDecl(const char *module, const char *decl) = 0;
-	virtual const char        *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
-	virtual const char        *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
-	virtual void              *GetAddressOfGlobalVar(const char *module, int index) = 0;
-	virtual int                GetTypeIdByDecl(const char *module, const char *decl) = 0;
-	virtual int                GetImportedFunctionCount(const char *module) = 0;
-	virtual int                GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
-	virtual const char        *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length = 0) = 0;
-	virtual const char        *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length = 0) = 0;
-	virtual int                BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
-	virtual int                UnbindImportedFunction(const char *module, int importIndex) = 0;
-	virtual int                BindAllImportedFunctions(const char *module) = 0;
-	virtual int                UnbindAllImportedFunctions(const char *module) = 0;
-	virtual int                GetObjectsInGarbageCollectorCount() = 0;
-	virtual int                SaveByteCode(const char *module, asIBinaryStream *out) = 0;
-	virtual int                LoadByteCode(const char *module, asIBinaryStream *in) = 0;
-#endif
-
 protected:
 	virtual ~asIScriptEngine() {}
 };
@@ -722,11 +685,6 @@ public:
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() = 0;
 
-#ifdef AS_DEPRECATED
-	virtual void *GetReturnPointer() = 0;
-	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
-#endif
-
 protected:
 	virtual ~asIScriptContext() {}
 };
@@ -767,11 +725,6 @@ public:
 	virtual int     SetReturnObject(void *obj) = 0;
 	virtual void   *GetAddressOfReturnLocation() = 0;
 
-#ifdef AS_DEPRECATED
-	virtual void   *GetReturnPointer() = 0;
-	virtual void   *GetArgPointer(asUINT arg) = 0;
-#endif
-
 protected:
 	virtual ~asIScriptGeneric() {}
 };
@@ -795,10 +748,6 @@ public:
 
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual int              CopyFrom(asIScriptObject *other) = 0;
-
-#ifdef AS_DEPRECATED
-	virtual int            GetStructTypeId() const = 0;
-#endif
 
 protected:
 	virtual ~asIScriptObject() {}
@@ -864,11 +813,6 @@ public:
 	// Behaviours
 	virtual int GetBehaviourCount() const = 0;
 	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
-
-#ifdef AS_DEPRECATED
-	virtual asIObjectType   *GetSubType() const = 0;
-	virtual bool             IsInterface() const = 0;
-#endif
 
 protected:
 	virtual ~asIObjectType() {}

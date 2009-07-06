@@ -271,23 +271,6 @@ void *asCGeneric::GetArgObject(asUINT arg)
 	return *(void**)(&stackPointer[offset]);
 }
 
-#ifdef AS_DEPRECATED
-// deprecated since 2008-11-13, 2.15.0
-void *asCGeneric::GetArgPointer(asUINT arg)
-{
-	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
-		return 0;
-
-	// Determine the position of the argument
-	int offset = 0;
-	for( asUINT n = 0; n < arg; n++ )
-		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
-
-	// Get the address of the value
-	return &stackPointer[offset];
-}
-#endif
-
 // interface
 void *asCGeneric::GetAddressOfArg(asUINT arg)
 {

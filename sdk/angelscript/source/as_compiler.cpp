@@ -5418,7 +5418,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				}
 
 				// Is it an enum value?
-				asDWORD value;
+				asDWORD value = 0;
 				asCDataType dt;
 				if( scopeType && builder->GetEnumValueFromObjectType(scopeType, name.AddressOf(), dt, value) )
 				{

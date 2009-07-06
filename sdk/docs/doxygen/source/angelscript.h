@@ -77,10 +77,6 @@ class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
 
-#ifdef AS_DEPRECATED
-typedef asIScriptObject asIScriptStruct;
-#endif
-
 // Enumerations and constants
 
 // Engine properties
@@ -468,9 +464,6 @@ enum asETypeIdFlags
 	asTYPEID_MASK_OBJECT    = 0x1C000000,
 	//! The bit that shows if the type is an application registered type
 	asTYPEID_APPOBJECT      = 0x04000000,
-#ifdef AS_DEPRECATED
-	asTYPEID_SCRIPTSTRUCT   = 0x0C000000,
-#endif
 	//! The bit that shows if the type is a script class
 	asTYPEID_SCRIPTOBJECT   = 0x08000000,
 	//! The bit that shows if the type is a script array
@@ -1496,67 +1489,6 @@ public:
 	virtual void *GetUserData() = 0;
 	//! \}
 
-#ifdef AS_DEPRECATED
-    //! \name Deprecated functions
-    //! \{
-
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::AddScriptSection instead.
-	virtual int                AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::Build instead.
-	virtual int                Build(const char *module) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptEngine::DiscardModule "DiscardModule" instead.
-    virtual int                Discard(const char *module) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::ResetGlobalVars instead.
-	virtual int                ResetModule(const char *module) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionCount instead.
-	virtual int                GetFunctionCount(const char *module) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionIdByIndex instead.
-	virtual int                GetFunctionIDByIndex(const char *module, int index) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionIdByName instead.
-	virtual int                GetFunctionIDByName(const char *module, const char *name) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionIdByDecl instead.
-	virtual int                GetFunctionIDByDecl(const char *module, const char *decl) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetFunctionDescriptorByIndex instead.
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(const char *module, int index) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarCount instead.
-	virtual int                GetGlobalVarCount(const char *module) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarIndexByName instead.
-	virtual int                GetGlobalVarIndexByName(const char *module, const char *name) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarIndexByDecl instead.
-	virtual int                GetGlobalVarIndexByDecl(const char *module, const char *decl) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarDeclaration instead.
-	virtual const char        *GetGlobalVarDeclaration(const char *module, int index, int *length = 0) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetGlobalVarName instead.
-	virtual const char        *GetGlobalVarName(const char *module, int index, int *length = 0) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetAddressOfGlobalVar instead.
-	virtual void              *GetAddressOfGlobalVar(const char *module, int index) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptEngine::GetTypeIdByDecl(const char *) "GetTypeIdByDecl" or asIScriptModule::GetTypeIdByDecl instead.
-	virtual int                GetTypeIdByDecl(const char *module, const char *decl) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetImportedFunctionCount instead.
-	virtual int                GetImportedFunctionCount(const char *module) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetImportedFunctionIndexByDecl instead.
-	virtual int                GetImportedFunctionIndexByDecl(const char *module, const char *decl) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetImportedFunctionDeclaration instead.
-	virtual const char        *GetImportedFunctionDeclaration(const char *module, int importIndex, int *length = 0) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::GetImportedFunctionSourceModule instead.
-	virtual const char        *GetImportedFunctionSourceModule(const char *module, int importIndex, int *length = 0) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::BindImportedFunction instead.
-	virtual int                BindImportedFunction(const char *module, int importIndex, int funcId) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::UnbindImportedFunction instead.
-	virtual int                UnbindImportedFunction(const char *module, int importIndex) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::BindAllImportedFunctions instead.
-	virtual int                BindAllImportedFunctions(const char *module) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::UnbindAllImportedFunctions instead.
-	virtual int                UnbindAllImportedFunctions(const char *module) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptEngine::GetGCStatistics "GetGCStatistics" instead.
-	virtual int                GetObjectsInGarbageCollectorCount() = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::SaveByteCode instead.
-	virtual int                SaveByteCode(const char *module, asIBinaryStream *out) = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptModule::LoadByteCode instead.
-	virtual int                LoadByteCode(const char *module, asIBinaryStream *in) = 0;
-	//! \}
-#endif
-
 protected:
 	virtual ~asIScriptEngine() {}
 };
@@ -2302,17 +2234,6 @@ public:
 	virtual void *GetUserData() = 0;
 	//! \}
 
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-
-	//! \deprecated Since 2.15.0. Use \ref asIScriptContext::GetAddressOfReturnValue "GetAddressOfReturnValue" instead.
-	virtual void *GetReturnPointer() = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptContext::GetAddressOfVar "GetAddressOfVar" instead.
-	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
-	//! \}
-#endif
-
 protected:
 	virtual ~asIScriptContext() {}
 };
@@ -2478,17 +2399,6 @@ public:
 	virtual void   *GetAddressOfReturnLocation() = 0;
 	//! \}
 
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-
-	//! \deprecated Since 2.16.0. Use \ref asIScriptGeneric::GetAddressOfReturnLocation "GetAddressOfReturnLocation" instead.
-	virtual void   *GetReturnPointer() = 0;
-	//! \deprecated Since 2.15.0. Use \ref asIScriptGeneric::GetAddressOfArg "GetAddressOfArg" instead.
-	virtual void   *GetArgPointer(asUINT arg) = 0;
-	//! \}
-#endif
-
 protected:
 	virtual ~asIScriptGeneric() {}
 };
@@ -2567,15 +2477,6 @@ public:
     //! This method copies the contents of the other object to this one.
 	virtual int              CopyFrom(asIScriptObject *other) = 0;
 	//! \}
-
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-
-	//! \deprecated Since 2.16.0. Use \ref asIScriptObject::GetTypeId instead.
-	virtual int            GetStructTypeId() const = 0;
-	//! \}
-#endif
 
 protected:
 	virtual ~asIScriptObject() {}
@@ -2808,17 +2709,6 @@ public:
 	//! \retval asINVALID_ARG The \a index is too large.
 	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
 	//! \}
-
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-
-	//! \deprecated Since 2.16.0.
-	virtual asIObjectType   *GetSubType() const = 0;
-	//! \deprecated Since 2.16.0. Use (GetFlags() & asOBJ_SCRIPT_OBJECT) && (GetSize() == 0) instead.
-	virtual bool             IsInterface() const = 0;
-	//! \}
-#endif
 
 protected:
 	virtual ~asIObjectType() {}

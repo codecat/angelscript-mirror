@@ -161,14 +161,6 @@ asUINT asCObjectType::GetSize() const
 	return size;
 }
 
-#ifdef AS_DEPRECATED
-// deprecated since 2009-02-26, 2.16.0
-asIObjectType *asCObjectType::GetSubType() const
-{
-	return subType;
-}
-#endif
-
 int asCObjectType::GetInterfaceCount() const
 {
 	return (int)interfaces.GetLength();

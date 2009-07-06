@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -519,7 +519,7 @@ int PrepareSystemFunction(asCScriptFunction* pFunc, asSSystemFunctionInterface* 
 	else if ( pFunc->returnType.IsObject() )
 	{
 		asDWORD objType = pFunc->returnType.GetObjectType()->flags;
-		if( objType & asOBJ_CLASS )
+		if( objType & asOBJ_APP_CLASS )
 		{
 			if( objType & COMPLEX_MASK )
 			{
@@ -567,13 +567,13 @@ int PrepareSystemFunction(asCScriptFunction* pFunc, asSSystemFunctionInterface* 
 #endif
 			}
 		}
-		else if ( objType == asOBJ_PRIMITIVE )
+		else if ( objType == asOBJ_APP_PRIMITIVE )
 		{
 			pInternal->hostReturnInMemory = false;
 			pInternal->hostReturnSize = pFunc->returnType.GetSizeInMemoryDWords();
 			pInternal->hostReturnFloat = false;
 		}
-		else if ( objType == asOBJ_FLOAT )
+		else if ( objType == asOBJ_APP_FLOAT )
 		{
 			pInternal->hostReturnInMemory = false;
 			pInternal->hostReturnSize = pFunc->returnType.GetSizeInMemoryDWords();

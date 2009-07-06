@@ -150,11 +150,6 @@ public:
 	const char *GetPropertyName(asUINT prop) const;
 	int         GetPropertyOffset(asUINT prop) const;
 
-#ifdef AS_DEPRECATED
-	// deprecated since 2009-02-26, 2.16.0
-	asIObjectType   *GetSubType() const;
-#endif
-
 //===========================================
 // Internal
 //===========================================

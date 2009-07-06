@@ -562,7 +562,7 @@
 #endif
 
 // PowerPC, e.g. Mac, GameCube, PS3, XBox 360, Wii
-#if defined(__PPC__) || defined(__ppc__) || defined(EPPC)
+#if defined(__PPC__) || defined(__ppc__) || defined(_PPC_) || defined(EPPC)
 	#define AS_BIG_ENDIAN
 
 	// Gamecube
@@ -573,7 +573,6 @@
 	// XBox 360
 	#if (_XBOX_VER >= 200 )
 		#define AS_ALIGN
-		#define AS_USE_DOUBLE_AS_FLOAT
 	#endif
 	// PS3
 	#if defined(__PPU__)

@@ -85,10 +85,6 @@ public:
 	int     SetReturnObject(void *obj);
 	void   *GetAddressOfReturnLocation();
 
-#ifdef AS_DEPRECATED
-	void   *GetArgPointer(asUINT arg);
-#endif
-
 //------------------------
 // internal
 //-------------------------

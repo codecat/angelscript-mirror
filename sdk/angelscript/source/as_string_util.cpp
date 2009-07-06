@@ -123,31 +123,31 @@ int asStringEncodeUTF8(unsigned int value, char *outEncodedBuffer)
 
 	if( value <= 0x7F )
 	{
-		buf[0] = value;
+		buf[0] = static_cast<unsigned char>(value);
 		return 1;
 	}
 	else if( value >= 0x80 && value <= 0x7FF )
 	{
 		// Encode it with 2 characters
-		buf[0] = 0xC0 + (value >> 6);
+		buf[0] = static_cast<unsigned char>(0xC0 + (value >> 6));
 		length = 2;
 	}
 	else if( value >= 0x800 && value <= 0xD7FF || value >= 0xE000 && value <= 0xFFFF )
 	{
 		// Note: Values 0xD800 to 0xDFFF are not valid unicode characters
-		buf[0] = 0xE0 + (value >> 12);
+		buf[0] = static_cast<unsigned char>(0xE0 + (value >> 12));
 		length = 3;
 	}
 	else if( value >= 0x10000 && value <= 0x10FFFF )
 	{
-		buf[0] = 0xF0 + (value >> 18);
+		buf[0] = static_cast<unsigned char>(0xF0 + (value >> 18));
 		length = 4;
 	}
 
 	int n = length-1;
 	for( ; n > 0; n-- )
 	{
-		buf[n] = 0x80 + (value & 0x3F);
+		buf[n] = static_cast<unsigned char>(0x80 + (value & 0x3F));
 		value >>= 6;
 	}
 
