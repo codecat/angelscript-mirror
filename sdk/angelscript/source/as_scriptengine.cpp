@@ -1541,7 +1541,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 			if( func.parameterTypes[n].GetObjectType() == type.GetObjectType()->templateSubType.GetObjectType() )
 			{
 				// TODO: If unsafe references are allowed, then inout references allow value types
-				if( func.parameterTypes[n].IsObjectHandle() || func.parameterTypes[n].IsReference() && func.inOutFlags[n] == asTM_INOUTREF )
+				if( func.parameterTypes[n].IsObjectHandle() || (func.parameterTypes[n].IsReference() && func.inOutFlags[n] == asTM_INOUTREF) )
 					type.GetObjectType()->acceptValueSubType = false;
 				else if( !func.parameterTypes[n].IsReference() )
 					type.GetObjectType()->acceptRefSubType = false;
@@ -2224,7 +2224,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 			if( func->parameterTypes[n].GetObjectType() == func->objectType->templateSubType.GetObjectType() )
 			{
 				// TODO: If unsafe references are allowed, then inout references allow value types
-				if( func->parameterTypes[n].IsObjectHandle() || func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF )
+				if( func->parameterTypes[n].IsObjectHandle() || (func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF) )
 					func->objectType->acceptValueSubType = false;
 				else if( !func->parameterTypes[n].IsReference() )
 					func->objectType->acceptRefSubType = false;

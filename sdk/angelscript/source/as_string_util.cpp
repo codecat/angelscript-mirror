@@ -132,7 +132,7 @@ int asStringEncodeUTF8(unsigned int value, char *outEncodedBuffer)
 		buf[0] = static_cast<unsigned char>(0xC0 + (value >> 6));
 		length = 2;
 	}
-	else if( value >= 0x800 && value <= 0xD7FF || value >= 0xE000 && value <= 0xFFFF )
+	else if( (value >= 0x800 && value <= 0xD7FF) || (value >= 0xE000 && value <= 0xFFFF) )
 	{
 		// Note: Values 0xD800 to 0xDFFF are not valid unicode characters
 		buf[0] = static_cast<unsigned char>(0xE0 + (value >> 12));

@@ -2314,8 +2314,8 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	}
 
 	// Make sure both or neither conditions call a constructor
-	if( constructorCall1 && !constructorCall2 ||
-		constructorCall2 && !constructorCall1 )
+	if( (constructorCall1 && !constructorCall2) ||
+		(constructorCall2 && !constructorCall1) )
 	{
 		Error(TXT_BOTH_CONDITIONS_MUST_CALL_CONSTRUCTOR, inode);
 	}
@@ -3228,7 +3228,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 		// Find a suitable registered behaviour
 		for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n+= 2 )
 		{
-			if( isExplicit && asBEHAVE_REF_CAST == engine->globalBehaviours.operators[n] ||
+			if( (isExplicit && asBEHAVE_REF_CAST == engine->globalBehaviours.operators[n]) ||
 				asBEHAVE_IMPLICIT_REF_CAST == engine->globalBehaviours.operators[n] )
 			{
 				int funcId = engine->globalBehaviours.operators[n+1];
@@ -3808,8 +3808,8 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 		{
 			// A ref cast must not remove the constness
 			bool isConst = false;
-			if( ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst() ||
-				!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly() )
+			if( (ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst()) ||
+				(!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly()) )
 				isConst = true;
 
 			// We may still be able to find an implicit ref cast behaviour
@@ -7560,17 +7560,17 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 				ctx->bc.Instr(BC_TZ);
 			else if( token == ttNotEqual )
 				ctx->bc.Instr(BC_TNZ);
-			else if( token == ttLessThan && !swappedOrder ||
-				     token == ttGreaterThan && swappedOrder )
+			else if( (token == ttLessThan && !swappedOrder) ||
+				     (token == ttGreaterThan && swappedOrder) )
 				ctx->bc.Instr(BC_TS);
-			else if( token == ttLessThanOrEqual && !swappedOrder ||
-				     token == ttGreaterThanOrEqual && swappedOrder )
+			else if( (token == ttLessThanOrEqual && !swappedOrder) ||
+				     (token == ttGreaterThanOrEqual && swappedOrder) )
 				ctx->bc.Instr(BC_TNP);
-			else if( token == ttGreaterThan && !swappedOrder ||
-				     token == ttLessThan && swappedOrder )
+			else if( (token == ttGreaterThan && !swappedOrder) ||
+				     (token == ttLessThan && swappedOrder) )
 				ctx->bc.Instr(BC_TP);
-			else if( token == ttGreaterThanOrEqual && !swappedOrder ||
-				     token == ttLessThanOrEqual && swappedOrder )
+			else if( (token == ttGreaterThanOrEqual && !swappedOrder) ||
+				     (token == ttLessThanOrEqual && swappedOrder) )
 				ctx->bc.Instr(BC_TNS);
 
 			ctx->bc.InstrSHORT(BC_CpyRtoV4, (short)a);

@@ -396,12 +396,12 @@ bool asCTokenizer::IsKeyWord()
 				// identifier require an extra verification to guarantee that 
 				// we don't split an identifier token, e.g. the "!is" token 
 				// and the "!isTrue" expression.
-				if( (tokenWords[words[i]].word[n-1] >= 'a' && tokenWords[words[i]].word[n-1] <= 'z' ||
-					 tokenWords[words[i]].word[n-1] >= 'A' && tokenWords[words[i]].word[n-1] <= 'Z') &&
-					(source[n] >= 'a' && source[n] <= 'z' ||
-					 source[n] >= 'A' && source[n] <= 'Z' ||
-					 source[n] >= '0' && source[n] <= '9' ||
-					 source[n] == '_') )
+				if( ((tokenWords[words[i]].word[n-1] >= 'a' && tokenWords[words[i]].word[n-1] <= 'z') ||
+					 (tokenWords[words[i]].word[n-1] >= 'A' && tokenWords[words[i]].word[n-1] <= 'Z')) &&
+					((source[n] >= 'a' && source[n] <= 'z') ||
+					 (source[n] >= 'A' && source[n] <= 'Z') ||
+					 (source[n] >= '0' && source[n] <= '9') ||
+					 (source[n] == '_')) )
 				{
 					// The token doesn't really match, even though 
 					// the start of the source matches the token
