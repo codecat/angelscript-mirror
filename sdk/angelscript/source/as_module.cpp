@@ -780,13 +780,6 @@ const asCString &asCModule::GetConstantString(int id)
 }
 
 // internal
-// TODO: this can probably be removed
-int asCModule::GetNextFunctionId()
-{
-	return engine->GetNextScriptFunctionId();
-}
-
-// internal
 int asCModule::GetNextImportedFunctionId()
 {
 	return FUNC_IMPORTED | (asUINT)importedFunctions.GetLength();

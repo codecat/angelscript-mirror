@@ -391,10 +391,7 @@ bool TestRefScoped()
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_RELEASE, "void f()", asFUNCTION(Scoped_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_NEGATE, "scoped @f()", asFUNCTION(Scoped_Negate), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_ASSIGNMENT, "scoped &f(const scoped &in)", asFUNCTION(Scoped_Assignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	// TODO: Improve argument matching for overloaded functions and operators
-	//       Registering this operator with int instead of uint, causes the compiler not to find the operator,
-	//       because there already exist a better match for the second argument for the string type (const string &in, uint)
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "scoped @f(const scoped &in, uint)", asFUNCTION(Scoped_Add), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("scoped", "scoped @opAdd(int)", asFUNCTION(Scoped_Add), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 
 	// Enumerate the objects behaviours
 	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("scoped"));

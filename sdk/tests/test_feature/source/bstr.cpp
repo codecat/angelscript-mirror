@@ -30,21 +30,16 @@ void RegisterBStr(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("bstr", "uint length() const", asFUNCTION(asBStrLengthMethod), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	// Register the object operator overloads
-	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_CONSTRUCT,  "void f()",                  asFUNCTION(asBStrConstruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_DESTRUCT,   "void f()",                  asFUNCTION(asBStrDestruct),  asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_ASSIGNMENT, "bstr &f(const bstr &in)",   asFUNCTION(asBStrCopy),      asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_ADD_ASSIGN, "bstr &f(const bstr &in)",   asFUNCTION(asBStrAppend),    asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_INDEX,      "uint8 &f(int)",             asFUNCTION(asBStrByteAt),    asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_INDEX,      "const uint8 &f(int) const", asFUNCTION(asBStrByteAt),    asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_CONSTRUCT,  "void f()",                  asFUNCTION(asBStrConstruct),   asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_DESTRUCT,   "void f()",                  asFUNCTION(asBStrDestruct),    asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_ASSIGNMENT, "bstr &f(const bstr &in)",   asFUNCTION(asBStrCopy),        asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_ADD_ASSIGN, "bstr &f(const bstr &in)",   asFUNCTION(asBStrAppend),      asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_INDEX,      "uint8 &f(int)",             asFUNCTION(asBStrByteAt),      asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_INDEX,      "const uint8 &f(int) const", asFUNCTION(asBStrByteAt),      asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("bstr",                         "bstr f(bstr &in)",          asFUNCTION(asBStrConcatenate), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	// Register the global operator overloads
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "bstr f(bstr &in, bstr &in)", asFUNCTION(asBStrConcatenate),        asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(bstr &in, bstr &in)", asFUNCTION(asBStrEqual),              asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(bstr &in, bstr &in)", asFUNCTION(asBStrNotEqual),           asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_LESSTHAN,    "bool f(bstr &in, bstr &in)", asFUNCTION(asBStrLessThan),           asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_LEQUAL,      "bool f(bstr &in, bstr &in)", asFUNCTION(asBStrLessThanOrEqual),    asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_GREATERTHAN, "bool f(bstr &in, bstr &in)", asFUNCTION(asBStrGreaterThan),        asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_GEQUAL,      "bool f(bstr &in, bstr &in)", asFUNCTION(asBStrGreaterThanOrEqual), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("bstr",       "int opCmp(const bstr &in) const", asFUNCTION(asBStrCompare), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 
 	// Register useful functions
 	r = engine->RegisterGlobalFunction("bstr bstrSubstr(bstr &in, uint, uint)", asFUNCTION(asBStrSubstr),                           asCALL_CDECL); assert( r >= 0 );
@@ -146,18 +141,18 @@ asBSTR asBStrConcatenate(const asBSTR *left, const asBSTR *right)
 	return str;
 }
 
-int asBStrCompare(asBSTR s1, asBSTR s2)
+int asBStrCompare(const asBSTR *s1, const asBSTR *s2)
 {
-	if( s1 == 0 && s2 == 0 ) return 0;
-	if( s1 == 0 ) return -1;
-	if( s2 == 0 ) return 1;
+	if( *s1 == 0 && *s2 == 0 ) return 0;
+	if( *s1 == 0 ) return -1;
+	if( *s2 == 0 ) return 1;
 
-	asUINT l1 = asBStrLength(s1);
-	asUINT l2 = asBStrLength(s2);
+	asUINT l1 = asBStrLength(*s1);
+	asUINT l2 = asBStrLength(*s2);
 
 	asUINT len = l1 < l2 ? l1 : l2;
 
-	int cmp = memcmp(s1, s2, len);
+	int cmp = memcmp(*s1, *s2, len);
 
 	if( cmp == 0 )
 	{
@@ -170,36 +165,6 @@ int asBStrCompare(asBSTR s1, asBSTR s2)
 	}
 
 	return cmp;
-}
-
-bool asBStrEqual(const asBSTR *left, const asBSTR *right)
-{
-	return asBStrCompare(*left, *right) == 0;
-}
-
-bool asBStrNotEqual(const asBSTR *left, const asBSTR *right)
-{
-	return asBStrCompare(*left, *right) != 0;
-}
-
-bool asBStrLessThan(const asBSTR *left, const asBSTR *right)
-{
-	return asBStrCompare(*left, *right) < 0;
-}
-
-bool asBStrLessThanOrEqual(const asBSTR *left, const asBSTR *right)
-{
-	return asBStrCompare(*left, *right) <= 0;
-}
-
-bool asBStrGreaterThan(const asBSTR *left, const asBSTR *right)
-{
-	return asBStrCompare(*left, *right) > 0;
-}
-
-bool asBStrGreaterThanOrEqual(const asBSTR *left, const asBSTR *right)
-{
-	return asBStrCompare(*left, *right) >= 0;
 }
 
 asBYTE *asBStrByteAt(int index, const asBSTR *s)

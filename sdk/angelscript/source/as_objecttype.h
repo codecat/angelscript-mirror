@@ -51,11 +51,7 @@ BEGIN_AS_NAMESPACE
 
 // TODO: memory: Need to minimize used memory here, because not all types use all properties of the class
 
-// TODO: Need GetTypeId that should return the type id for this object type.
 // TODO: The type id should have flags for diferenciating between value types and reference types. It should also have a flag for differenciating interface types.
-
-// TODO: Need GetModule that should return asIScriptModule where this type is declared. Interfaces that use any type that 
-//       is specific to the module will also return the module name. Otherwise the module name will not be returned.
 
 // Additional flag to the class object type
 const asDWORD asOBJ_IMPLICIT_HANDLE  = 0x40000;
@@ -116,13 +112,19 @@ public:
 // From asIObjectType
 //=====================================
 	asIScriptEngine *GetEngine() const;
+	const char      *GetConfigGroup() const;
+
+	// Memory management
+	int AddRef();
+	int Release();
 
 	// Type info
 	const char      *GetName() const;
 	asIObjectType   *GetBaseType() const;
 	asDWORD          GetFlags() const;
 	asUINT           GetSize() const;
-	const char      *GetConfigGroup() const;
+	int              GetTypeId() const;
+	int              GetSubTypeId() const;
 
 	// Behaviours
 	int GetBehaviourCount() const;
@@ -158,8 +160,6 @@ public:
 	asCObjectType(asCScriptEngine *engine);
 	~asCObjectType();
 
-	void AddRef();
-	void Release();
 	int  GetRefCount();
 
 	bool Implements(const asCObjectType *objType) const;

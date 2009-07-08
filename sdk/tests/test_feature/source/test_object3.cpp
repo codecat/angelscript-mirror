@@ -140,19 +140,19 @@ bool Register(asIScriptEngine*  pSE)
 
 
 	// asBEHAVE_ADD
-	if(pSE->RegisterGlobalBehaviour(asBEHAVE_ADD,"float  f(Float &in ,Float &in)",asFUNCTION(OpPlusRR),  asCALL_CDECL))
+	if(pSE->RegisterObjectMethod("Float","float  opAdd(Float &in)",asFUNCTION(OpPlusRR),  asCALL_CDECL_OBJFIRST))
 		return false;
-	if(pSE->RegisterGlobalBehaviour(asBEHAVE_ADD,"float  f(Float &in ,float)",asFUNCTION(OpPlusRF),  asCALL_CDECL))
+	if(pSE->RegisterObjectMethod("Float","float  opAdd(float)",asFUNCTION(OpPlusRF),  asCALL_CDECL_OBJFIRST))
 		return false;
-	if(pSE->RegisterGlobalBehaviour(asBEHAVE_ADD,"float  f(float ,Float &in)",asFUNCTION(OpPlusFR),  asCALL_CDECL))
+	if(pSE->RegisterObjectMethod("Float","float  opAdd_r(float)",asFUNCTION(OpPlusFR),  asCALL_CDECL_OBJLAST))
 		return false;
 
 	// asBEHAVE_MULTIPLY
-	if(pSE->RegisterGlobalBehaviour(asBEHAVE_MULTIPLY, "float  f(Float &in ,Float &in)",asFUNCTION(OpMulRR),  asCALL_CDECL))
+	if(pSE->RegisterObjectMethod("Float", "float  opMul(Float &in)",asFUNCTION(OpMulRR),  asCALL_CDECL_OBJFIRST))
 		return false;
-	if(pSE->RegisterGlobalBehaviour(asBEHAVE_MULTIPLY, "float  f(Float &in ,float)",asFUNCTION(OpMulRF),  asCALL_CDECL))
+	if(pSE->RegisterObjectMethod("Float", "float  opMul(float)",asFUNCTION(OpMulRF),  asCALL_CDECL_OBJFIRST))
 		return false;
-	if(pSE->RegisterGlobalBehaviour(asBEHAVE_MULTIPLY, "float  f(float ,Float &in)",asFUNCTION(OpMulFR),  asCALL_CDECL))
+	if(pSE->RegisterObjectMethod("Float", "float  opMul_r(float)",asFUNCTION(OpMulFR),  asCALL_CDECL_OBJLAST))
 		return false;
 
 	return true;

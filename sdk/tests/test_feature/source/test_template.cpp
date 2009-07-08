@@ -13,15 +13,13 @@ public:
 		refCount = 1;
 		type = t;
 
-		// TODO: Must be possible to secure the reference to the asIObjectType
-		// type->AddRef();
+		type->AddRef();
 	}
 
 	~MyTmpl()
 	{
-		// TODO: Must be possible to secure the reference to the asIObjectType
-		// if( type ) 
-		//	type->Release();
+		if( type ) 
+			type->Release();
 	}
 
 	void AddRef()
@@ -39,7 +37,12 @@ public:
 	{
 		if( !type ) return "";
 
-		return type->GetName();
+		string name = type->GetName();
+		name += "<";
+		name += type->GetEngine()->GetTypeDeclaration(type->GetSubTypeId());
+		name += ">";
+
+		return name;
 	}
 
 	MyTmpl &Assign(const MyTmpl &other)
@@ -155,11 +158,10 @@ bool Test()
 	r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(const T& in)", asMETHOD(MyTmpl, SetVal), asCALL_THISCALL); assert( r >= 0 );
 
 	// Test that it is possible to instanciate the template type for different sub types
-	// TODO: The name of the template instance should include the sub type, e.g. MyTmpl<int>
-	// TODO: It must be possible to determine the sub type. Need a new method in the asIObjectType for that
 	r = engine->ExecuteString(0, "MyTmpl<int> i;    \n"
 								 "MyTmpl<string> s; \n"
-								 "assert( i.GetNameOfType() == 'MyTmpl' ); \n");
+								 "assert( i.GetNameOfType() == 'MyTmpl<int>' ); \n"
+								 "assert( s.GetNameOfType() == 'MyTmpl<string>' ); \n");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

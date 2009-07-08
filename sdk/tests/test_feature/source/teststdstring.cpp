@@ -323,9 +323,9 @@ bool TestTwoStringTypes()
 	engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL , "bool f(const _String &in, const string &in)", asFUNCTION(compare_StringStringNotEqual), asCALL_CDECL);
 	engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL , "bool f(const string &in, const _String &in)", asFUNCTION(compareString_StringNotEqual), asCALL_CDECL);
 */	// +
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD , "_String f(const _String &in, const _String &in)", asFUNCTION(operation_StringAdd), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD , "_String f(const _String &in, const string &in)", asFUNCTION(operation_StringStringAdd), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD , "_String f(const string &in, const _String &in)", asFUNCTION(operationString_StringAdd), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("_String" , "_String opAdd(const _String &in)", asFUNCTION(operation_StringAdd), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("_String" , "_String opAdd(const string &in)", asFUNCTION(operation_StringStringAdd), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("_String" , "_String opAdd_r(const string &in)", asFUNCTION(operationString_StringAdd), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	r = engine->ExecuteString(0, "_String('ab') + 'a'");
 	if( r < 0 )

@@ -45,7 +45,7 @@ void RegisterScriptMath3D_Native(asIScriptEngine *engine);
 
 // Use this one instead if native calling conventions
 // are not supported on the target platform
-void RegisterScriptMath3D_Native(asIScriptEngine *engine);
+void RegisterScriptMath3D_Generic(asIScriptEngine *engine);
 
 END_AS_NAMESPACE
 

@@ -35,8 +35,6 @@
 // A class for storing object type information
 //
 
-// TODO: Need a public GetTypeId() for the asIObjectType interface
-
 
 #include <stdio.h>
 
@@ -67,14 +65,14 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 	acceptRefSubType = true;
 }
 
-void asCObjectType::AddRef()
+int asCObjectType::AddRef()
 {
-	refCount.atomicInc();
+	return refCount.atomicInc();
 }
 
-void asCObjectType::Release()
+int asCObjectType::Release()
 {
-	refCount.atomicDec();
+	return refCount.atomicDec();
 }
 
 int asCObjectType::GetRefCount()
@@ -146,19 +144,47 @@ bool asCObjectType::DerivesFrom(const asCObjectType *objType) const
 	return false;
 }
 
+// interface
 const char *asCObjectType::GetName() const
 {
 	return name.AddressOf();
 }
 
+// interface
 asDWORD asCObjectType::GetFlags() const
 {
 	return flags;
 }
 
+// interface
 asUINT asCObjectType::GetSize() const
 {
 	return size;
+}
+
+// interface
+int asCObjectType::GetTypeId() const
+{
+	// We need a non const pointer to create the asCDataType object.
+	// We're not breaking anything here because this function is not
+	// modifying the object, so this const cast is safe.
+	asCObjectType *ot = const_cast<asCObjectType*>(this);
+
+	return engine->GetTypeIdFromDataType(asCDataType::CreateObject(ot, false));
+}
+
+// interface
+int asCObjectType::GetSubTypeId() const
+{
+	// TODO: template: This method should allow indexing multiple template subtypes
+
+	if( flags & asOBJ_TEMPLATE )
+	{
+		return engine->GetTypeIdFromDataType(templateSubType);
+	}
+
+	// Only template types have sub types
+	return asERROR;
 }
 
 int asCObjectType::GetInterfaceCount() const

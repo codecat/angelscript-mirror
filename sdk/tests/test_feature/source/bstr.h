@@ -18,7 +18,7 @@ asUINT  asBStrLength(asBSTR str);
 
 asBSTR  asBStrConcatenate(const asBSTR *left, const asBSTR *right);
 
-int     asBStrCompare(asBSTR s1, asBSTR s2);
+int     asBStrCompare(const asBSTR *s1, const asBSTR *s2);
 
 bool    asBStrEqual(const asBSTR *left, const asBSTR *right);
 bool    asBStrNotEqual(const asBSTR *left, const asBSTR *right);

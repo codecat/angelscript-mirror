@@ -161,13 +161,13 @@ AS_API const char * asGetLibraryOptions()
 AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 {
 	// Verify the version that the application expects
-	if( (version/10000) != ANGELSCRIPT_VERSION_MAJOR )
+	if( (version/10000) != (ANGELSCRIPT_VERSION/10000) )
 		return 0;
 
-	if( (version/100)%100 != ANGELSCRIPT_VERSION_MINOR )
+	if( (version/100)%100 != (ANGELSCRIPT_VERSION/100)%100 )
 		return 0;
 
-	if( (version%100) > ANGELSCRIPT_VERSION_BUILD )
+	if( (version%100) > (ANGELSCRIPT_VERSION%100) )
 		return 0;
 
 	// Verify the size of the types

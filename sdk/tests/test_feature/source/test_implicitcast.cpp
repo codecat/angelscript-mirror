@@ -240,7 +240,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Type_construct0), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Type_construct1), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "int f()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const type &in, const type &in)", asFUNCTION(Type_equal), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("type", "bool opEquals(const type &in) const", asFUNCTION(Type_equal), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 		r = engine->RegisterObjectProperty("type", "int v", 0);
 
 		// explicit cast to int is allowed

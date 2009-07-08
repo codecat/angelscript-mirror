@@ -387,8 +387,9 @@ bool Test()
 		std::string a = "a";
 		std::string b = "b";
 
+		// TODO: 2.17: Need two new methods CompareEquality and CompareRelation. The first will give a bool result, the second an int.
 		int type = engine->GetTypeIdByDecl("string");
-		bool c;
+/*		bool c;
 		r = engine->CompareScriptObjects(c, asBEHAVE_EQUAL, &a, &b, type); assert( r >= 0 );
 		if( c ) fail = true;
 		r = engine->CompareScriptObjects(c, asBEHAVE_NOTEQUAL, &a, &b, type); assert( r >= 0 );
@@ -401,7 +402,7 @@ bool Test()
 		if( !c ) fail = true;
 		r = engine->CompareScriptObjects(c, asBEHAVE_GEQUAL, &a, &b, type); assert( r >= 0 );
 		if( c ) fail = true;
-
+*/
 		engine->Release();
 	}
 

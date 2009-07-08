@@ -328,7 +328,7 @@ bool asCScriptObject::GetFlag()
 	return gcFlag;
 }
 
-// TODO: Should probably be moved to asIObjectType (or replicated in the asIObjectType)
+// interface
 int asCScriptObject::GetTypeId() const
 {
 	asCDataType dt = asCDataType::CreateObject(objType, false);

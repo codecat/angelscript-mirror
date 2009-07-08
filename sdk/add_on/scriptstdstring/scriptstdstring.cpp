@@ -43,6 +43,23 @@ static void StringEqualGeneric(asIScriptGeneric * gen) {
   *(bool*)gen->GetAddressOfReturnLocation() = (*a == *b);
 }
 
+static void StringEqualsGeneric(asIScriptGeneric * gen) {
+  string * a = static_cast<string *>(gen->GetObject());
+  string * b = static_cast<string *>(gen->GetArgAddress(0));
+  *(bool*)gen->GetAddressOfReturnLocation() = (*a == *b);
+}
+
+static void StringCmpGeneric(asIScriptGeneric * gen) {
+  string * a = static_cast<string *>(gen->GetObject());
+  string * b = static_cast<string *>(gen->GetArgAddress(0));
+
+  int cmp = 0;
+  if( *a < *b ) cmp = -1;
+  else if( *a > *b ) cmp = 1;
+
+  *(int*)gen->GetAddressOfReturnLocation() = cmp;
+}
+
 static void StringNotEqualGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetArgAddress(0));
   string * b = static_cast<string *>(gen->GetArgAddress(1));
@@ -74,8 +91,8 @@ static void StringGreaterThanGeneric(asIScriptGeneric * gen) {
 }
 
 static void StringAddGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
+  string * a = static_cast<string *>(gen->GetObject());
+  string * b = static_cast<string *>(gen->GetArgAddress(0));
   string ret_val = *a + *b;
   gen->SetReturnObject(&ret_val);
 }
@@ -163,8 +180,8 @@ void AddAssignUInt2StringGeneric(asIScriptGeneric * gen) {
 }
 
 void AddString2DoubleGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  double * b = static_cast<double *>(gen->GetAddressOfArg(1));
+  string * a = static_cast<string *>(gen->GetObject());
+  double * b = static_cast<double *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
   sstr << *a << *b;
   std::string ret_val = sstr.str();
@@ -172,8 +189,8 @@ void AddString2DoubleGeneric(asIScriptGeneric * gen) {
 }
 
 void AddString2IntGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  int * b = static_cast<int *>(gen->GetAddressOfArg(1));
+  string * a = static_cast<string *>(gen->GetObject());
+  int * b = static_cast<int *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
   sstr << *a << *b;
   std::string ret_val = sstr.str();
@@ -181,8 +198,8 @@ void AddString2IntGeneric(asIScriptGeneric * gen) {
 }
 
 void AddString2UIntGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  unsigned int * b = static_cast<unsigned int *>(gen->GetAddressOfArg(1));
+  string * a = static_cast<string *>(gen->GetObject());
+  unsigned int * b = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
   sstr << *a << *b;
   std::string ret_val = sstr.str();
@@ -191,7 +208,7 @@ void AddString2UIntGeneric(asIScriptGeneric * gen) {
 
 void AddDouble2StringGeneric(asIScriptGeneric * gen) {
   double* a = static_cast<double *>(gen->GetAddressOfArg(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
+  string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
   sstr << *a << *b;
   std::string ret_val = sstr.str();
@@ -200,7 +217,7 @@ void AddDouble2StringGeneric(asIScriptGeneric * gen) {
 
 void AddInt2StringGeneric(asIScriptGeneric * gen) {
   int* a = static_cast<int *>(gen->GetAddressOfArg(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
+  string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
   sstr << *a << *b;
   std::string ret_val = sstr.str();
@@ -209,7 +226,7 @@ void AddInt2StringGeneric(asIScriptGeneric * gen) {
 
 void AddUInt2StringGeneric(asIScriptGeneric * gen) {
   unsigned int* a = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
+  string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
   sstr << *a << *b;
   std::string ret_val = sstr.str();
@@ -232,15 +249,9 @@ void RegisterStdString_Generic(asIScriptEngine *engine) {
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(const string &in)", asFUNCTION(AssignStringGeneric),    asCALL_GENERIC); assert( r >= 0 );
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(const string &in)", asFUNCTION(AddAssignStringGeneric), asCALL_GENERIC); assert( r >= 0 );
 
-  // Register the global operator overloads
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const string &in, const string &in)",   asFUNCTION(StringEqualGeneric),       asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const string &in, const string &in)",   asFUNCTION(StringNotEqualGeneric),    asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_LEQUAL,      "bool f(const string &in, const string &in)",   asFUNCTION(StringLEqualGeneric),      asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_GEQUAL,      "bool f(const string &in, const string &in)",   asFUNCTION(StringGEqualGeneric),      asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_LESSTHAN,    "bool f(const string &in, const string &in)",   asFUNCTION(StringLessThanGeneric),    asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_GREATERTHAN, "bool f(const string &in, const string &in)",   asFUNCTION(StringGreaterThanGeneric), asCALL_GENERIC); assert( r >= 0 );
-
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(const string &in, const string &in)", asFUNCTION(StringAddGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTION(StringEqualsGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectMethod("string", "int opCmp(const string &in) const", asFUNCTION(StringCmpGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTION(StringAddGeneric), asCALL_GENERIC); assert( r >= 0 );
 
   // Register the object methods
   if (sizeof(size_t) == 4) {
@@ -258,18 +269,18 @@ void RegisterStdString_Generic(asIScriptEngine *engine) {
   // Automatic conversion from values
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(double)", asFUNCTION(AssignDouble2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(double)", asFUNCTION(AddAssignDouble2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string f(const string & in, double)", asFUNCTION(AddString2DoubleGeneric), asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string f(double, const string & in)", asFUNCTION(AddDouble2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectMethod("string", "string opAdd(double) const", asFUNCTION(AddString2DoubleGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectMethod("string", "string opAdd_r(double) const", asFUNCTION(AddDouble2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(int)", asFUNCTION(AssignInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(int)", asFUNCTION(AddAssignInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string f(const string & in, int)", asFUNCTION(AddString2IntGeneric), asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string f(int, const string & in)", asFUNCTION(AddInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectMethod("string", "string opAdd(int) const", asFUNCTION(AddString2IntGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectMethod("string", "string opAdd_r(int) const", asFUNCTION(AddInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(uint)", asFUNCTION(AssignUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(uint)", asFUNCTION(AddAssignUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string f(const string & in, uint)", asFUNCTION(AddString2UIntGeneric), asCALL_GENERIC); assert( r >= 0 );
-  r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string f(uint, const string & in)", asFUNCTION(AddUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectMethod("string", "string opAdd(uint) const", asFUNCTION(AddString2UIntGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectMethod("string", "string opAdd_r(uint) const", asFUNCTION(AddUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 }
 
 static string StringFactory(asUINT length, const char *s)
@@ -395,6 +406,14 @@ static char *StringCharAt(unsigned int i, string &str)
 	return &str[i];
 }
 
+static int StringCmp(const string &a, const string &b)
+{
+	int cmp = 0;
+	if( a < b ) cmp = -1;
+	else if( a > b ) cmp = 1;
+	return cmp;
+}
+
 void RegisterStdString_Native(asIScriptEngine *engine)
 {
 	int r;
@@ -411,14 +430,9 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(const string &in)", asMETHODPR(string, operator =, (const string&), string&), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(const string &in)", asMETHODPR(string, operator+=, (const string&), string&), asCALL_THISCALL); assert( r >= 0 );
 
-	// Register the global operator overloads
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const string &in, const string &in)",   asFUNCTIONPR(operator==, (const string &, const string &), bool), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const string &in, const string &in)",   asFUNCTIONPR(operator!=, (const string &, const string &), bool), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_LEQUAL,      "bool f(const string &in, const string &in)",   asFUNCTIONPR(operator<=, (const string &, const string &), bool), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_GEQUAL,      "bool f(const string &in, const string &in)",   asFUNCTIONPR(operator>=, (const string &, const string &), bool), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_LESSTHAN,    "bool f(const string &in, const string &in)",   asFUNCTIONPR(operator <, (const string &, const string &), bool), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_GREATERTHAN, "bool f(const string &in, const string &in)",   asFUNCTIONPR(operator >, (const string &, const string &), bool), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(const string &in, const string &in)", asFUNCTIONPR(operator +, (const string &, const string &), string), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTIONPR(operator ==, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "int opCmp(const string &in) const", asFUNCTION(StringCmp), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTIONPR(operator +, (const string &, const string &), string), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 
 	// Register the object methods
 	if( sizeof(size_t) == 4 )
@@ -440,18 +454,18 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	// Automatic conversion from values
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(double)", asFUNCTION(AssignDoubleToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(double)", asFUNCTION(AddAssignDoubleToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(const string &in, double)", asFUNCTION(AddStringDouble), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(double, const string &in)", asFUNCTION(AddDoubleString), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string",         "string opAdd(double) const", asFUNCTION(AddStringDouble), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string",         "string opAdd_r(double) const", asFUNCTION(AddDoubleString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(int)", asFUNCTION(AssignIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(int)", asFUNCTION(AddAssignIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(const string &in, int)", asFUNCTION(AddStringInt), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(int, const string &in)", asFUNCTION(AddIntString), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string",         "string opAdd(int) const", asFUNCTION(AddStringInt), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string",         "string opAdd_r(int) const", asFUNCTION(AddIntString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(uint)", asFUNCTION(AssignUIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(uint)", asFUNCTION(AddAssignUIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(const string &in, uint)", asFUNCTION(AddStringUInt), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string f(uint, const string &in)", asFUNCTION(AddUIntString), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string",         "string opAdd(uint) const", asFUNCTION(AddStringUInt), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string",         "string opAdd_r(uint) const", asFUNCTION(AddUIntString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 }
 
 void RegisterStdString(asIScriptEngine * engine)

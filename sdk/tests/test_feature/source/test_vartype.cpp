@@ -282,9 +282,12 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("type", asBEHAVE_ASSIGNMENT, "type &f(const ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
 	if( r >= 0 )
 		fail = true;
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "type f(const ?& in, const ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
+	// TODO: This is a valid class method, but should perhaps not be allowed to be used as operator
+	/*
+	r = engine->RegisterObjectMethod("type", "type opAdd(const ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
 	if( r >= 0 )
 		fail = true;
+	*/
 	
 	// Don't allow use of ? without being reference
 	r = engine->RegisterGlobalFunction("void testFunc_err(const ?)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);

@@ -164,17 +164,9 @@ static void Vector3InitConstructor_Generic(asIScriptGeneric *gen)
 
 static void Vector3Equal_Generic(asIScriptGeneric *gen)
 {
-	Vector3 *a = (Vector3*)gen->GetArgAddress(0);
-	Vector3 *b = (Vector3*)gen->GetArgAddress(1);
+	Vector3 *a = (Vector3*)gen->GetObject();
+	Vector3 *b = (Vector3*)gen->GetArgAddress(0);
 	bool r = *a == *b;
-    *(bool*)gen->GetAddressOfReturnLocation() = r;
-}
-
-static void Vector3NotEqual_Generic(asIScriptGeneric *gen)
-{
-	Vector3 *a = (Vector3*)gen->GetArgAddress(0);
-	Vector3 *b = (Vector3*)gen->GetArgAddress(1);
-	bool r = *a != *b;
     *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
@@ -218,16 +210,16 @@ static void Vector3DivAssign_Generic(asIScriptGeneric *gen)
 
 static void Vector3Add_Generic(asIScriptGeneric *gen)
 {
-	Vector3 *a = (Vector3*)gen->GetArgAddress(0);
-	Vector3 *b = (Vector3*)gen->GetArgAddress(1);
+	Vector3 *a = (Vector3*)gen->GetObject();
+	Vector3 *b = (Vector3*)gen->GetArgAddress(0);
 	Vector3 res = *a + *b;
 	gen->SetReturnObject(&res);
 }
 
 static void Vector3Sub_Generic(asIScriptGeneric *gen)
 {
-	Vector3 *a = (Vector3*)gen->GetArgAddress(0);
-	Vector3 *b = (Vector3*)gen->GetArgAddress(1);
+	Vector3 *a = (Vector3*)gen->GetObject();
+	Vector3 *b = (Vector3*)gen->GetArgAddress(0);
 	Vector3 res = *a - *b;
 	gen->SetReturnObject(&res);
 }
@@ -235,23 +227,23 @@ static void Vector3Sub_Generic(asIScriptGeneric *gen)
 static void Vector3FloatMulVector3_Generic(asIScriptGeneric *gen)
 {
 	float s = gen->GetArgFloat(0);
-	Vector3 *v = (Vector3*)gen->GetArgAddress(1);
+	Vector3 *v = (Vector3*)gen->GetObject();
 	Vector3 res = s * *v;
 	gen->SetReturnObject(&res);
 }
 
 static void Vector3Vector3MulFloat_Generic(asIScriptGeneric *gen)
 {
-	Vector3 *v = (Vector3*)gen->GetArgAddress(0);
-	float s = gen->GetArgFloat(1);
+	Vector3 *v = (Vector3*)gen->GetObject();
+	float s = gen->GetArgFloat(0);
 	Vector3 res = *v * s;
 	gen->SetReturnObject(&res);
 }
 
 static void Vector3Vector3DivFloat_Generic(asIScriptGeneric *gen)
 {
-	Vector3 *v = (Vector3*)gen->GetArgAddress(0);
-	float s = gen->GetArgFloat(1);
+	Vector3 *v = (Vector3*)gen->GetObject();
+	float s = gen->GetArgFloat(0);
 	Vector3 res = *v / s;
 	gen->SetReturnObject(&res);
 }
@@ -272,23 +264,22 @@ void RegisterScriptMath3D_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectProperty("vector3", "float y", offsetof(Vector3, y)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("vector3", "float z", offsetof(Vector3, z)); assert( r >= 0 );
 
-	// Register the object operator overloads
+	// Register the constructors
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,  "void f()",                     asFUNCTION(Vector3DefaultConstructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,  "void f(const vector3 &in)",       asFUNCTION(Vector3CopyConstructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,  "void f(float, float, float)",  asFUNCTION(Vector3InitConstructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_ADD_ASSIGN, "vector3 &f(const vector3 &in)",      asMETHODPR(Vector3,operator+=,(const Vector3 &),Vector3&), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_SUB_ASSIGN, "vector3 &f(const vector3 &in)",      asMETHODPR(Vector3,operator-=,(const Vector3 &),Vector3&), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_MUL_ASSIGN, "vector3 &f(float)",               asMETHODPR(Vector3,operator*=,(float),Vector3&), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_DIV_ASSIGN, "vector3 &f(float)",               asMETHODPR(Vector3,operator/=,(float),Vector3&), asCALL_THISCALL); assert( r >= 0 );
 
-	// Register the global operator overloads
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const vector3 &in, const vector3 &in)", asFUNCTIONPR(operator==, (const Vector3&, const Vector3&), bool), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const vector3 &in, const vector3 &in)", asFUNCTIONPR(operator!=, (const Vector3&, const Vector3&), bool), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "vector3 f(const vector3 &in, const vector3 &in)", asFUNCTIONPR(operator +, (const Vector3&, const Vector3&), Vector3), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_SUBTRACT,    "vector3 f(const vector3 &in, const vector3 &in)", asFUNCTIONPR(operator -, (const Vector3&, const Vector3&), Vector3), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_MULTIPLY,    "vector3 f(float, const vector3 &in)",          asFUNCTIONPR(operator *, (float, const Vector3 &), Vector3), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_MULTIPLY,    "vector3 f(const vector3 &in, float)",          asFUNCTIONPR(operator *, (const Vector3 &, float), Vector3), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_DIVIDE,      "vector3 f(const vector3 &in, float)",          asFUNCTIONPR(operator /, (const Vector3 &, float), Vector3), asCALL_CDECL); assert( r >= 0 );
+	// Register the operator overloads
+	r = engine->RegisterObjectMethod("vector3", "vector3 &opAddAssign(const vector3 &in)", asMETHODPR(Vector3, operator+=, (const Vector3 &), Vector3&), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 &opSubAssign(const vector3 &in)", asMETHODPR(Vector3, operator-=, (const Vector3 &), Vector3&), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 &opMulAssign(float)", asMETHODPR(Vector3, operator*=, (float), Vector3&), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 &opDivAssign(float)", asMETHODPR(Vector3, operator/=, (float), Vector3&), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "bool opEquals(const vector3 &in) const", asFUNCTIONPR(operator==, (const Vector3&, const Vector3&), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opAdd(const vector3 &in) const", asFUNCTIONPR(operator+, (const Vector3&, const Vector3&), Vector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opSub(const vector3 &in) const", asFUNCTIONPR(operator-, (const Vector3&, const Vector3&), Vector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opMul(float) const", asFUNCTIONPR(operator*, (const Vector3&, float), Vector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opMul_r(float) const", asFUNCTIONPR(operator*, (float, const Vector3&), Vector3), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opDiv(float) const", asFUNCTIONPR(operator/, (const Vector3&, float), Vector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 
 	// Register the object methods
 	r = engine->RegisterObjectMethod("vector3", "float length() const", asMETHOD(Vector3,length), asCALL_THISCALL); assert( r >= 0 );
@@ -306,23 +297,22 @@ void RegisterScriptMath3D_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectProperty("vector3", "float y", offsetof(Vector3, y)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("vector3", "float z", offsetof(Vector3, z)); assert( r >= 0 );
 
-	// Register the object operator overloads
+	// Register the constructors
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,    "void f()",                     asFUNCTION(Vector3DefaultConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,    "void f(const vector3 &in)",       asFUNCTION(Vector3CopyConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,    "void f(float, float, float)", asFUNCTION(Vector3InitConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_ADD_ASSIGN,   "vector3 &f(const vector3 &in)",      asFUNCTION(Vector3AddAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_SUB_ASSIGN,   "vector3 &f(const vector3 &in)",      asFUNCTION(Vector3SubAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_MUL_ASSIGN,   "vector3 &f(float)",               asFUNCTION(Vector3MulAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_DIV_ASSIGN,   "vector3 &f(float)",               asFUNCTION(Vector3DivAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
 
-	// Register the global operator overloads
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const vector3 &in, const vector3 &in)", asFUNCTION(Vector3Equal_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const vector3 &in, const vector3 &in)", asFUNCTION(Vector3NotEqual_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "vector3 f(const vector3 &in, const vector3 &in)", asFUNCTION(Vector3Add_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_SUBTRACT,    "vector3 f(const vector3 &in, const vector3 &in)", asFUNCTION(Vector3Sub_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_MULTIPLY,    "vector3 f(float, const vector3 &in)",          asFUNCTION(Vector3FloatMulVector3_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_MULTIPLY,    "vector3 f(const vector3 &in, float)",          asFUNCTION(Vector3Vector3MulFloat_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_DIVIDE,      "vector3 f(const vector3 &in, float)",          asFUNCTION(Vector3Vector3DivFloat_Generic), asCALL_GENERIC); assert( r >= 0 );
+	// Register the operator overloads
+	r = engine->RegisterObjectMethod("vector3", "vector3 &opAddAssign(const vector3 &in)", asFUNCTION(Vector3AddAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 &opSubAssign(const vector3 &in)", asFUNCTION(Vector3SubAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 &opMulAssign(float)", asFUNCTION(Vector3MulAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 &opDivAssign(float)", asFUNCTION(Vector3DivAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "bool opEquals(const vector3 &in) const", asFUNCTION(Vector3Equal_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opAdd(const vector3 &in) const", asFUNCTION(Vector3Add_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opSub(const vector3 &in) const", asFUNCTION(Vector3Sub_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opMul_r(float) const", asFUNCTION(Vector3FloatMulVector3_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opMul(float) const", asFUNCTION(Vector3Vector3MulFloat_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 opDiv(float) const", asFUNCTION(Vector3Vector3DivFloat_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	// Register the object methods
 	r = engine->RegisterObjectMethod("vector3", "float length() const", asFUNCTION(Vector3Length_Generic), asCALL_GENERIC); assert( r >= 0 );

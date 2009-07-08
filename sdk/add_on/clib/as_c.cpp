@@ -259,10 +259,14 @@ AS_API void             asArray_Resize(asIScriptArray *a, asUINT size)          
 AS_API int              asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other) { return a->CopyFrom(other); }
 
 AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o)                                                      { return o->GetEngine(); }
+AS_API int                      asObjectType_AddRef(const asIObjectType *o)                                                         { return o->AddRef(); }
+AS_API int                      asObjectType_Release(const asIObjectType *o)                                                        { return o->Release(); }
 AS_API const char              *asObjectType_GetName(const asIObjectType *o)                                                        { return o->GetName(); }
 AS_API asIObjectType           *asObjectType_GetBaseType(const asIObjectType *o)                                                    { return o->GetBaseType(); }
 AS_API asDWORD                  asObjectType_GetFlags(const asIObjectType *o)                                                       { return o->GetFlags(); }
 AS_API asUINT                   asObjectType_GetSize(const asIObjectType *o)                                                        { return o->GetSize(); }
+AS_API int                      asObjectType_GetTypeId(const asIObjectType *o)                                                      { return o->GetTypeId(); }
+AS_API int                      asObjectType_GetSubTypeId(const asIObjectType *o)                                                   { return o->GetSubTypeId(); }
 AS_API int                      asObjectType_GetBehaviourCount(const asIObjectType *o)                                              { return o->GetBehaviourCount(); }
 AS_API int                      asObjectType_GetBehaviourByIndex(const asIObjectType *o, asUINT index, asEBehaviours *outBehaviour) { return o->GetBehaviourByIndex(index, outBehaviour); }
 AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o)                                              { return o->GetInterfaceCount(); }

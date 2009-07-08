@@ -33,8 +33,8 @@ static void negate_gen(asIScriptGeneric *gen)
 
 static void minus_gen(asIScriptGeneric *gen)
 {
-	int *f1 = (int*)gen->GetArgAddress(0);
-	int *f2 = (int*)gen->GetArgAddress(1);
+	int *f1 = (int*)gen->GetObject();
+	int *f2 = (int*)gen->GetArgAddress(0);
 	called = true;
 	int ret = *f1 - *f2;
 	gen->SetReturnObject(&ret);
@@ -49,12 +49,12 @@ bool TestNegateOperator()
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
 		engine->RegisterObjectBehaviour("obj", asBEHAVE_NEGATE, "obj f()", asFUNCTION(negate_gen), asCALL_GENERIC);
-		engine->RegisterGlobalBehaviour(asBEHAVE_SUBTRACT, "obj f(obj &in, obj &in)", asFUNCTION(minus_gen), asCALL_GENERIC);
+		engine->RegisterObjectMethod("obj", "obj opSub(obj &in)", asFUNCTION(minus_gen), asCALL_GENERIC);
 	}
 	else
 	{
 		engine->RegisterObjectBehaviour("obj", asBEHAVE_NEGATE, "obj f()", asFUNCTION(negate), asCALL_CDECL_OBJLAST);
-		engine->RegisterGlobalBehaviour(asBEHAVE_SUBTRACT, "obj f(obj &in, obj &in)", asFUNCTION(minus), asCALL_CDECL);
+		engine->RegisterObjectMethod("obj", "obj opSub(obj &in)", asFUNCTION(minus), asCALL_CDECL_OBJFIRST);
 	}
 	engine->RegisterGlobalProperty("obj testVal", &testVal);
 

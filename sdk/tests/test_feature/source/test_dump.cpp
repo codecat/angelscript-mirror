@@ -329,6 +329,9 @@ void DumpModule(asIScriptModule *mod)
 		" beh(10) string& _beh_10_(int)\n"
 		" beh(9) string& _beh_9_(uint)\n"
 		" beh(10) string& _beh_10_(uint)\n"
+		" bool opEquals(const string&in) const\n"
+		" int opCmp(const string&in) const\n"
+		" string opAdd(const string&in) const\n"
 #if defined(__LP64__) || defined(_WIN64)
 		" uint64 length() const\n"
 		" void resize(uint64)\n"
@@ -336,19 +339,12 @@ void DumpModule(asIScriptModule *mod)
 		" uint length() const\n"
 		" void resize(uint)\n"
 #endif
-		"reg beh(26): bool _beh_26_(const string&in, const string&in)\n"
-		"reg beh(27): bool _beh_27_(const string&in, const string&in)\n"
-		"reg beh(30): bool _beh_30_(const string&in, const string&in)\n"
-		"reg beh(31): bool _beh_31_(const string&in, const string&in)\n"
-		"reg beh(28): bool _beh_28_(const string&in, const string&in)\n"
-		"reg beh(29): bool _beh_29_(const string&in, const string&in)\n"
-		"reg beh(21): string _beh_21_(const string&in, const string&in)\n"
-		"reg beh(21): string _beh_21_(const string&in, double)\n"
-		"reg beh(21): string _beh_21_(double, const string&in)\n"
-		"reg beh(21): string _beh_21_(const string&in, int)\n"
-		"reg beh(21): string _beh_21_(int, const string&in)\n"
-		"reg beh(21): string _beh_21_(const string&in, uint)\n"
-		"reg beh(21): string _beh_21_(uint, const string&in)\n" )
+		" string opAdd(double) const\n"
+		" string opAdd_r(double) const\n"
+		" string opAdd(int) const\n"
+		" string opAdd_r(int) const\n"
+		" string opAdd(uint) const\n"
+		" string opAdd_r(uint) const\n" )
 	{
 		cout << s.str() << endl;
 		cout << "Failed to get the expected result when dumping the module" << endl << endl;

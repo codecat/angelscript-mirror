@@ -190,7 +190,6 @@ public:
 	int  AddConstantString(const char *str, size_t length);
 	const asCString &GetConstantString(int id);
 
-	int  GetNextFunctionId();
 	int  AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType = 0, bool isConstMethod = false, bool isGlobalFunction = false);
 	int  AddScriptFunction(asCScriptFunction *func);
 	int  AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, int moduleNameStringID);

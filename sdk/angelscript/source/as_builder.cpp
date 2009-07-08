@@ -298,7 +298,7 @@ void asCBuilder::ParseScripts()
 				if( node->nodeType == snFunction )
 				{
 					node->DisconnectParent();
-					RegisterScriptFunction(module->GetNextFunctionId(), node, decl->script, decl->objType, true);
+					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType, true);
 				}
 
 				node = next;
@@ -326,7 +326,7 @@ void asCBuilder::ParseScripts()
 				if( node->nodeType == snFunction )
 				{
 					node->DisconnectParent();
-					RegisterScriptFunction(module->GetNextFunctionId(), node, decl->script, decl->objType);
+					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType);
 				}
 
 				node = next;
@@ -352,7 +352,7 @@ void asCBuilder::ParseScripts()
 
 				if( node->nodeType == snFunction )
 				{
-					RegisterScriptFunction(module->GetNextFunctionId(), node, scripts[n], 0, false, true);
+					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, scripts[n], 0, false, true);
 				}
 				else if( node->nodeType == snGlobalVar )
 				{
@@ -1636,7 +1636,7 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 	vf->returnType = func->returnType;
 	vf->parameterTypes = func->parameterTypes;
 	vf->inOutFlags = func->inOutFlags;
-	vf->id = module->GetNextFunctionId();
+	vf->id = engine->GetNextScriptFunctionId();
 	vf->scriptSectionIdx = func->scriptSectionIdx;
 	vf->isReadOnly = func->isReadOnly;
 	vf->objectType = func->objectType;
@@ -1726,7 +1726,7 @@ bool asCBuilder::DoesMethodExist(asCObjectType *objType, int methodId)
 
 void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file)
 {
-	int funcId = module->GetNextFunctionId();
+	int funcId = engine->GetNextScriptFunctionId();
 
 	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
 	asCArray<asCDataType> parameterTypes;
@@ -1751,7 +1751,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	func->funcId  = funcId;
 
 	// Add a default factory as well
-	funcId = module->GetNextFunctionId();
+	funcId = engine->GetNextScriptFunctionId();
 	objType->beh.factory = funcId;
 	objType->beh.factories[0] = funcId;
 	returnType = asCDataType::CreateObjectHandle(objType, false);
@@ -2071,7 +2071,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 				objType->beh.constructors[0] = funcID;
 
 				// Register the default factory as well
-				objType->beh.factory = module->GetNextFunctionId();
+				objType->beh.factory = engine->GetNextScriptFunctionId();
 				objType->beh.factories[0] = objType->beh.factory;
 
 				asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
@@ -2090,7 +2090,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 
 				// TODO: This is almost identical to above if block. Should be reduced to common code.
 				// Register the factory as well
-				int factoryId = module->GetNextFunctionId();
+				int factoryId = engine->GetNextScriptFunctionId();
 				objType->beh.factories.PushLast(factoryId);
 
 				asCDataType dt = asCDataType::CreateObjectHandle(objType, false);

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.17.0 WIP - 2009/07/06</h2>
+<h2>Version 2.17.0 WIP - 2009/07/07</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library
 <ul>
 <li>Removed all old deprecated functionality
+<li>The built-in array type is now completely unaware of the library internals and uses only the public interface
+</ul>
+<li>Library interface
+<ul>
+<li>Added GetTypeId, GetSubTypeId, AddRef, and Release to asIObjectType
 </ul>
 </ul>
 

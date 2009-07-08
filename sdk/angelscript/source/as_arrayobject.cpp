@@ -34,9 +34,7 @@
 
 #include "as_config.h"
 #include "as_arrayobject.h"
-#include "as_scriptengine.h"
 #include "as_texts.h"
-#include "as_scriptstruct.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -46,12 +44,12 @@ struct sArrayBuffer
 	asBYTE  data[1];
 };
 
-asCArrayObject* ArrayObjectFactory(asCObjectType *ot)
+asCArrayObject* ArrayObjectFactory(asIObjectType *ot)
 {
 	return asNEW(asCArrayObject)(0, ot);
 }
 
-static asCArrayObject* ArrayObjectFactory2(asCObjectType *ot, asUINT length)
+static asCArrayObject* ArrayObjectFactory2(asIObjectType *ot, asUINT length)
 {
 	return asNEW(asCArrayObject)(length, ot);
 }
@@ -173,14 +171,14 @@ static void ArrayObject_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 
 #endif
 
-void RegisterArrayObject(asCScriptEngine *engine)
+void RegisterArrayObject(asIScriptEngine *engine)
 {
 	int r;
 
 	r = engine->RegisterObjectType("_builtin_array_<class T>", sizeof(asCArrayObject), asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); asASSERT( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
-	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int&in)", asFUNCTIONPR(ArrayObjectFactory, (asCObjectType*), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
-	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int&in, uint)", asFUNCTIONPR(ArrayObjectFactory2, (asCObjectType*, asUINT), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int&in)", asFUNCTIONPR(ArrayObjectFactory, (asIObjectType*), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int&in, uint)", asFUNCTIONPR(ArrayObjectFactory2, (asIObjectType*, asUINT), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(asCArrayObject,AddRef), asCALL_THISCALL); asASSERT( r >= 0 );
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(asCArrayObject,Release), asCALL_THISCALL); asASSERT( r >= 0 );
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ASSIGNMENT, "_builtin_array_<T> &f(const _builtin_array_<T>&in)", asFUNCTION(ArrayObjectAssignment), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
@@ -246,27 +244,29 @@ int asCArrayObject::CopyFrom(asIScriptArray *other)
 	return 0;
 }
 
-asCArrayObject::asCArrayObject(asUINT length, asCObjectType *ot)
+asCArrayObject::asCArrayObject(asUINT length, asIObjectType *ot)
 {
 	refCount.set(1);
 	gcFlag = false;
 	objType = ot;
 	objType->AddRef();
 
-	if( objType->flags & asOBJ_GC )
-		objType->engine->gc.AddScriptObjectToGC(this, objType);		
+	if( objType->GetFlags() & asOBJ_GC )
+		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType->GetTypeId());
 
 	// Determine element size
-	if( !objType->templateSubType.IsPrimitive() )
+	// TODO: Should probably store the template sub type id as well
+	int typeId = objType->GetSubTypeId();
+	if( typeId & asTYPEID_MASK_OBJECT )
 	{
 		elementSize = sizeof(asPWORD);
 	}
 	else
 	{
-		elementSize = objType->templateSubType.GetSizeInMemoryBytes();
+		elementSize = objType->GetEngine()->GetSizeOfPrimitiveType(typeId);
 	}
 
-	isArrayOfHandles = objType->templateSubType.IsObjectHandle() ? true : false;
+	isArrayOfHandles = typeId & asTYPEID_OBJHANDLE ? true : false;
 
 	CreateBuffer(&buffer, length);
 }
@@ -283,7 +283,7 @@ asCArrayObject::~asCArrayObject()
 
 asIScriptEngine *asCArrayObject::GetEngine() const
 {
-	return objType->engine;
+	return objType->GetEngine();
 }
 
 asUINT asCArrayObject::GetElementCount()
@@ -298,7 +298,8 @@ void asCArrayObject::Resize(asUINT numElements)
 		return;
 
 	sArrayBuffer *newBuffer;
-	if( !objType->templateSubType.IsPrimitive() )
+	int typeId = objType->GetSubTypeId();
+	if( typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Allocate memory for the buffer
 		newBuffer = (sArrayBuffer*)asNEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
@@ -338,22 +339,20 @@ void asCArrayObject::Resize(asUINT numElements)
 
 int asCArrayObject::GetArrayTypeId()
 {
-	asCDataType dt = asCDataType::CreateObject(objType, false);
-	return objType->engine->GetTypeIdFromDataType(dt);
+	return objType->GetTypeId();
 }
 
 int asCArrayObject::GetElementTypeId()
 {
-	asCDataType dt = asCDataType::CreateObject(objType, false);
-	dt = dt.GetSubType();
-	return objType->engine->GetTypeIdFromDataType(dt);
+	return objType->GetSubTypeId();
 }
 
 void *asCArrayObject::GetElementPointer(asUINT index)
 {
 	if( index >= buffer->numElements ) return 0;
 
-	if( !objType->templateSubType.IsPrimitive() && !isArrayOfHandles )
+	int typeId = objType->GetSubTypeId();
+	if( (typeId & asTYPEID_MASK_OBJECT) && !isArrayOfHandles )
 		return (void*)((size_t*)buffer->data)[index];
 	else
 		return buffer->data + elementSize*index;
@@ -370,7 +369,8 @@ void *asCArrayObject::at(asUINT index)
 	}
 	else
 	{
-		if( !objType->templateSubType.IsPrimitive() && !isArrayOfHandles )
+		int typeId = objType->GetSubTypeId();
+		if( (typeId & asTYPEID_MASK_OBJECT) && !isArrayOfHandles )
 			return (void*)((size_t*)buffer->data)[index];
 		else
 			return buffer->data + elementSize*index;
@@ -379,7 +379,8 @@ void *asCArrayObject::at(asUINT index)
 
 void asCArrayObject::CreateBuffer(sArrayBuffer **buf, asUINT numElements)
 {
-	if( !objType->templateSubType.IsPrimitive() )
+	int typeId = objType->GetSubTypeId();
+	if( typeId & asTYPEID_MASK_OBJECT )
 	{
 		*buf = (sArrayBuffer*)asNEWARRAY(asBYTE, sizeof(sArrayBuffer)-1+sizeof(void*)*numElements);
 		(*buf)->numElements = numElements;
@@ -403,115 +404,40 @@ void asCArrayObject::DeleteBuffer(sArrayBuffer *buf)
 
 void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 {
+	int typeId = objType->GetSubTypeId();
 	if( isArrayOfHandles )
 	{
 		// Set all object handles to null
 		asDWORD *d = (asDWORD*)(buf->data + start * sizeof(void*));
 		memset(d, 0, (end-start)*sizeof(void*));
 	}
-	else if( !objType->templateSubType.IsPrimitive() )
+	else if( typeId & asTYPEID_MASK_OBJECT )
 	{
-		// Call the constructor on all objects
-		asCScriptEngine *engine = objType->engine;
-		asCObjectType *subType = objType->templateSubType.GetObjectType();
-		if( subType->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_TEMPLATE) )
-		{
-			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
-			asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
+		asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
+		asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
 
-			if( subType->flags & asOBJ_SCRIPT_OBJECT ) 
-			{
-				for( ; d < max; d++ )
-					*d = (asDWORD*)ScriptObjectFactory(subType, engine);
-			}
-			else if( subType->flags & asOBJ_TEMPLATE )
-			{
-				for( ; d < max; d++ )
-					*d = (asDWORD*)ArrayObjectFactory(subType);
-			}
-		}
-		else if( subType->flags & asOBJ_REF )
-		{
-			int funcIndex = subType->beh.factory;
-			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
-			asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
+		asIScriptEngine *engine = objType->GetEngine();
 
-			// Call the default factory function for each entry
-			for( ; d < max; d++ )
-				*d = (asDWORD*)engine->CallGlobalFunctionRetPtr(funcIndex);
-		}
-		else
-		{
-			int funcIndex = subType->beh.construct;
-			asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
-			asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
-
-			// Allocate memory and call the default constructor for each entry
-			if( funcIndex )
-			{
-				for( ; d < max; d++ )
-				{
-					*d = (asDWORD*)engine->CallAlloc(subType);
-					engine->CallObjectMethod(*d, funcIndex);
-				}
-			}
-			else
-			{
-				for( ; d < max; d++ )
-					*d = (asDWORD*)engine->CallAlloc(subType);
-			}
-		}
+		for( ; d < max; d++ )
+			*d = (asDWORD*)engine->CreateScriptObject(typeId);
 	}
 }
 
 void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 {
 	bool doDelete = true;
-	if( !objType->templateSubType.IsPrimitive() )
+	int typeId = objType->GetSubTypeId();
+	if( typeId & asTYPEID_MASK_OBJECT )
 	{
-		asCScriptEngine *engine = objType->engine;
-		int funcIndex;
-		if( objType->templateSubType.GetObjectType()->beh.release )
-		{
-			funcIndex = objType->templateSubType.GetObjectType()->beh.release;
-			doDelete = false;
-		}
-		else
-			funcIndex = objType->templateSubType.GetObjectType()->beh.destruct;
+		asIScriptEngine *engine = objType->GetEngine();
 
-		// Call the destructor on all of the objects
 		asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
 		asDWORD **d   = (asDWORD**)(buf->data + start * sizeof(void*));
 
-		if( doDelete )
+		for( ; d < max; d++ )
 		{
-			if( funcIndex )
-			{
-				for( ; d < max; d++ )
-				{
-					if( *d )
-					{
-						engine->CallObjectMethod(*d, funcIndex);
-						engine->CallFree(*d);
-					}
-				}
-			}
-			else
-			{
-				for( ; d < max; d++ )
-				{
-					if( *d )
-						engine->CallFree(*d);
-				}
-			}
-		}
-		else
-		{
-			for( ; d < max; d++ )
-			{
-				if( *d )
-					engine->CallObjectMethod(*d, funcIndex);
-			}
+			if( *d )
+				engine->ReleaseScriptObject(*d, typeId);
 		}
 	}
 }
@@ -519,15 +445,13 @@ void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 
 void asCArrayObject::CopyBuffer(sArrayBuffer *dst, sArrayBuffer *src)
 {
-	asUINT esize;
-	asCScriptEngine *engine = objType->engine;
+	asIScriptEngine *engine = objType->GetEngine();
 	if( isArrayOfHandles )
 	{
 		// Copy the references and increase the reference counters
-		int funcIndex = objType->templateSubType.GetObjectType()->beh.addref;
-
 		if( dst->numElements > 0 && src->numElements > 0 )
 		{
+			int typeId = objType->GetSubTypeId();
 			int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
 
 			asDWORD **max = (asDWORD**)(dst->data + count * sizeof(void*));
@@ -538,45 +462,31 @@ void asCArrayObject::CopyBuffer(sArrayBuffer *dst, sArrayBuffer *src)
 			{
 				*d = *s;
 				if( *d )
-					engine->CallObjectMethod(*d, funcIndex);
+					engine->AddRefScriptObject(*d, typeId);
 			}
 		}
 	}
 	else
 	{
-		esize = elementSize;
-		int funcIndex = 0;
-		if( !objType->templateSubType.IsPrimitive() )
-		{
-			funcIndex = objType->templateSubType.GetObjectType()->beh.copy;
-			esize = objType->templateSubType.GetObjectType()->size;
-		}
+		int typeId = objType->GetSubTypeId();
 
 		if( dst->numElements > 0 && src->numElements > 0 )
 		{
 			int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
-			if( !objType->templateSubType.IsPrimitive() )
+			if( typeId & asTYPEID_MASK_OBJECT )
 			{
 				// Call the assignment operator on all of the objects
 				asDWORD **max = (asDWORD**)(dst->data + count * sizeof(void*));
 				asDWORD **d   = (asDWORD**)dst->data;
 				asDWORD **s   = (asDWORD**)src->data;
 
-				if( funcIndex )
-				{
-					for( ; d < max; d++, s++ )
-						engine->CallObjectMethod(*d, *s, funcIndex);
-				}
-				else
-				{
-					for( ; d < max; d++, s++ )
-						memcpy(*d, *s, esize);
-				}
+				for( ; d < max; d++, s++ )
+					engine->CopyScriptObject(*d, *s, typeId);
 			}
 			else
 			{
 				// Primitives are copied byte for byte
-				memcpy(dst->data, src->data, count*esize);
+				memcpy(dst->data, src->data, count*elementSize);
 			}
 		}
 	}
@@ -591,28 +501,30 @@ void asCArrayObject::Destruct()
 void asCArrayObject::EnumReferences(asIScriptEngine *engine)
 {
 	// If the array is holding handles, then we need to notify the GC of them
-	if( !objType->templateSubType.IsPrimitive() )
+	int typeId = objType->GetSubTypeId();
+	if( typeId & asTYPEID_MASK_OBJECT )
 	{
 		void **d = (void**)buffer->data;
 		for( asUINT n = 0; n < buffer->numElements; n++ )
 		{
 			if( d[n] )
-				((asCScriptEngine*)engine)->GCEnumCallback(d[n]);
+				engine->GCEnumCallback(d[n]);
 		}
 	}
 }
 
 void asCArrayObject::ReleaseAllHandles(asIScriptEngine *engine)
 {
-	asCObjectType *subType = objType->templateSubType.GetObjectType();
-	if( subType && subType->flags & asOBJ_GC )
+	int subTypeId = objType->GetSubTypeId();
+	asIObjectType *subType = engine->GetObjectTypeById(subTypeId);
+	if( subType && subType->GetFlags() & asOBJ_GC )
 	{
 		void **d = (void**)buffer->data;
 		for( asUINT n = 0; n < buffer->numElements; n++ )
 		{
 			if( d[n] )
 			{
-				((asCScriptEngine*)engine)->CallObjectMethod(d[n], subType->beh.release);
+				engine->ReleaseScriptObject(d[n], subTypeId);
 				d[n] = 0;
 			}
 		}

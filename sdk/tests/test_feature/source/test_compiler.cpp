@@ -588,7 +588,7 @@ bool Test2()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 	engine->RegisterObjectType( "Test", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_FLOAT );
-	engine->RegisterGlobalBehaviour( asBEHAVE_ADD, "Test f(Test &in, Test &in)", asFUNCTION(add), asCALL_CDECL);
+	engine->RegisterObjectMethod( "Test", "Test opAdd(Test &in) const", asFUNCTION(add), asCALL_CDECL_OBJFIRST);
 	engine->RegisterGlobalFunction("void doStuff(Test, Test)", asFUNCTION(doStuff), asCALL_CDECL);
 
 	const char *script =

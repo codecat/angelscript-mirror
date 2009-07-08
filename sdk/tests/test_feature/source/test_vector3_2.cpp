@@ -105,11 +105,11 @@ bool Test()
     r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTIONPR(ConstructVector3, (float, float, float, csVector3*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 //    r = engine->RegisterObjectMethod ("Vector3", "float Length()", asMETHODPR(csVector3, Norm, (void) const, float), asCALL_THISCALL); assert( r >= 0 );
 //    r = engine->RegisterObjectMethod ("Vector3", "void Normalize()", asMETHOD(csVector3, Normalize), asCALL_THISCALL); assert( r >= 0 );
-    r = engine->RegisterGlobalBehaviour (asBEHAVE_ADD, "Vector3 f(Vector3 &in, Vector3 &in)", asFUNCTIONPR(operator+, (const csVector3&, const csVector3&), csVector3), asCALL_CDECL); assert( r >= 0 );
-    r = engine->RegisterGlobalBehaviour (asBEHAVE_SUBTRACT, "Vector3 f(Vector3 &in, Vector3 &in)", asFUNCTIONPR(operator-, (const csVector3&, const csVector3&), csVector3), asCALL_CDECL); assert( r >= 0 );
-    r = engine->RegisterGlobalBehaviour (asBEHAVE_MULTIPLY, "Vector3 f(Vector3 &in, float)", asFUNCTIONPR(operator*, (const csVector3&, float), csVector3), asCALL_CDECL); assert( r >= 0 );
-    r = engine->RegisterGlobalBehaviour (asBEHAVE_MULTIPLY, "Vector3 f(float, Vector3 &in)", asFUNCTIONPR(operator*, (float, const csVector3&), csVector3), asCALL_CDECL); assert( r >= 0 );
-    r = engine->RegisterGlobalBehaviour (asBEHAVE_DIVIDE, "Vector3 f(Vector3 &in, float)", asFUNCTIONPR(operator/, (const csVector3&, float), csVector3), asCALL_CDECL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod ("Vector3", "Vector3 opAdd(const Vector3 &in) const", asFUNCTIONPR(operator+, (const csVector3&, const csVector3&), csVector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+    r = engine->RegisterObjectMethod ("Vector3", "Vector3 opSub(const Vector3 &in) const", asFUNCTIONPR(operator-, (const csVector3&, const csVector3&), csVector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+    r = engine->RegisterObjectMethod ("Vector3", "Vector3 opMul(float) const", asFUNCTIONPR(operator*, (const csVector3&, float), csVector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+    r = engine->RegisterObjectMethod ("Vector3", "Vector3 opMul_r(float) const", asFUNCTIONPR(operator*, (float, const csVector3&), csVector3), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+    r = engine->RegisterObjectMethod ("Vector3", "Vector3 opDiv(float) const", asFUNCTIONPR(operator/, (const csVector3&, float), csVector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_ADD_ASSIGN, "Vector3 &f(Vector3 &in)", asMETHODPR(csVector3, operator+=, (const csVector3&), csVector3&), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_SUB_ASSIGN, "Vector3 &f(Vector3 &in)", asMETHODPR(csVector3, operator+=, (const csVector3&), csVector3&), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_MUL_ASSIGN, "Vector3 &f(float)", asMETHODPR(csVector3, operator*=, (float), csVector3&), asCALL_THISCALL); assert( r >= 0 );

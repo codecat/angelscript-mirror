@@ -35,7 +35,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_CONSTRUCT, "void f(othertype)", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 ) fail = true;
 
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "type f(type &, int)", asFUNCTION(0), asCALL_GENERIC);
+	r = engine->RegisterObjectMethod("mytype", "type opAdd(int) const", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 ) fail = true;
 
 	r = engine->RegisterGlobalProperty("type a", 0);
@@ -64,13 +64,14 @@ bool Test()
 						   "System function (1, 15) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
 						   "System function (1, 8) : Error   : Identifier 'othertype' is not a data type\n"
 						   "System function (1, 1) : Error   : Identifier 'type' is not a data type\n"
-						   "System function (1, 8) : Error   : Identifier 'type' is not a data type\n"
-						   "System function (1, 13) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
 						   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
 						   "System function (1, 17) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
 						   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
 						   " (1, 1) : Error   : Identifier 'type' is not a data type\n" )
+		{
 			fail = true;
+			printf(bout.buffer.c_str());
+		}
 	}
 	else
 	{

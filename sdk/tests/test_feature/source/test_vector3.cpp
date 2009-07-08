@@ -105,6 +105,37 @@ bool TestVector3()
 		fail = true;
 	}
 
+	// Test some operator overloads
+	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( (v*2).length() == 2 );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( (2*v).length() == 2 );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( (v+v).length() == 2 );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( v == vector3(1,0,0) );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( (v *= 2).length() == 2 );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
 	// Test error message when constructor is not found
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);

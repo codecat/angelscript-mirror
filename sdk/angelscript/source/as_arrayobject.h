@@ -46,14 +46,12 @@
 
 BEGIN_AS_NAMESPACE
 
-class asCScriptEngine;
 struct sArrayBuffer;
-class asCObjectType;
 
 class asCArrayObject : public asIScriptArray
 {
 public:
-	asCArrayObject(asUINT length, asCObjectType *ot);
+	asCArrayObject(asUINT length, asIObjectType *ot);
 	virtual ~asCArrayObject();
 
 	asIScriptEngine *GetEngine() const;
@@ -83,7 +81,7 @@ public:
 protected:
 	asCAtomic refCount;
 	bool gcFlag;
-	asCObjectType *objType;
+	asIObjectType *objType;
 	sArrayBuffer *buffer;
 	bool isArrayOfHandles;
 	int elementSize;
@@ -96,8 +94,8 @@ protected:
 	void Destruct(sArrayBuffer *buf, asUINT start, asUINT end);
 };
 
-void RegisterArrayObject(asCScriptEngine *engine);
-asCArrayObject *ArrayObjectFactory(asCObjectType *ot);
+void RegisterArrayObject(asIScriptEngine *engine);
+asCArrayObject *ArrayObjectFactory(asIObjectType *ot);
 
 END_AS_NAMESPACE
 

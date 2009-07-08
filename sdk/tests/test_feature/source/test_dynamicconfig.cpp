@@ -218,10 +218,10 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString_Generic(engine);
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "string@ f(const string &in, const mytype &in)", asFUNCTION(MyFunc), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+	r = engine->RegisterObjectMethod("mytype", "string@ opAdd_r(const string &in)", asFUNCTION(MyFunc), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -238,6 +238,11 @@ bool Test()
 	engine->DiscardModule(0);
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
+
+	// Register the type again, but without the operator overload
+	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	bout.buffer = "";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);

@@ -44,11 +44,8 @@
 #ifndef ANGELSCRIPT_C_H
 #define ANGELSCRIPT_C_H
 
-#define ANGELSCRIPT_VERSION        21603
-#define ANGELSCRIPT_VERSION_MAJOR  3
-#define ANGELSCRIPT_VERSION_MINOR  16
-#define ANGELSCRIPT_VERSION_BUILD  3
-#define ANGELSCRIPT_VERSION_STRING "2.16.3"
+#define ANGELSCRIPT_VERSION        21700
+#define ANGELSCRIPT_VERSION_STRING "2.17.0"
 
 #ifdef AS_USE_NAMESPACE
  #define BEGIN_AS_NAMESPACE namespace AngelScript {
@@ -575,10 +572,14 @@ extern "C"
 	AS_API int              asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other);
 
 	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
+	AS_API int                      asObjectType_AddRef(const asIObjectType *o);
+	AS_API int                      asObjectType_Release(const asIObjectType *o);
 	AS_API const char              *asObjectType_GetName(const asIObjectType *o);
 	AS_API asIObjectType           *asObjectType_GetBaseType(const asIObjectType *o);
 	AS_API asDWORD                  asObjectType_GetFlags(const asIObjectType *o);
 	AS_API asUINT                   asObjectType_GetSize(const asIObjectType *o);
+	AS_API int                      asObjectType_GetTypeId(const asIObjectType *o);
+	AS_API int                      asObjectType_GetSubTypeId(const asIObjectType *o);
 	AS_API int                      asObjectType_GetBehaviourCount(const asIObjectType *o);
 	AS_API int                      asObjectType_GetBehaviourByIndex(const asIObjectType *o, asUINT index, asEBehaviours *outBehaviour);
 	AS_API int                      asObjectType_GetInterfaceCount(const asIObjectType *o);

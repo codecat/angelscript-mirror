@@ -186,7 +186,7 @@ bool Test()
 	// Verify order of calculations
  	output = "";
 	engine->ExecuteString(0, "a_str() + b_str()");
-	if( output != "ab" ) fail = true;
+	if( output != "ba" ) fail = true;
 
 	output = "";
 	engine->ExecuteString(0, "b_strref() = a_str()");

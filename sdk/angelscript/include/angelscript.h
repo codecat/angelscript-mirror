@@ -53,11 +53,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        21603
-#define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  16
-#define ANGELSCRIPT_VERSION_BUILD  3
-#define ANGELSCRIPT_VERSION_STRING "2.16.3"
+#define ANGELSCRIPT_VERSION        21700
+#define ANGELSCRIPT_VERSION_STRING "2.17.0 WIP"
 
 // Data types
 
@@ -161,6 +158,7 @@ enum asEBehaviours
 	 asBEHAVE_SRA_ASSIGN,
 	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
 
+	// TODO: 2.17: Deprecate all global operators
 	// Global operators
 	asBEHAVE_FIRST_DUAL,
 	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
@@ -534,6 +532,7 @@ public:
 	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
 	virtual void              AddRefScriptObject(void *obj, int typeId) = 0;
 	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
+	// TODO: 2.17: Deprecate this, and add CompareEquality and CompareRelation instead
 	virtual int               CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
@@ -782,11 +781,17 @@ public:
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;
 
+	// Memory management
+	virtual int AddRef() = 0;
+	virtual int Release() = 0;
+
 	// Type info
 	virtual const char      *GetName() const = 0;
 	virtual asIObjectType   *GetBaseType() const = 0;
 	virtual asDWORD          GetFlags() const = 0;
 	virtual asUINT           GetSize() const = 0;
+	virtual int              GetTypeId() const = 0;
+	virtual int              GetSubTypeId() const = 0;
 
 	// Interfaces
 	virtual int              GetInterfaceCount() const = 0;

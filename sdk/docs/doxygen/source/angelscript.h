@@ -58,12 +58,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.16.3
-#define ANGELSCRIPT_VERSION        21603
-#define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  16
-#define ANGELSCRIPT_VERSION_BUILD  3
-#define ANGELSCRIPT_VERSION_STRING "2.16.3"
+//! \details Version 2.17.0
+#define ANGELSCRIPT_VERSION        21700
+#define ANGELSCRIPT_VERSION_STRING "2.17.0"
 
 // Data types
 
@@ -2561,6 +2558,24 @@ public:
 	virtual const char      *GetConfigGroup() const = 0;
 	//! \}
 
+	// Memory management
+	//! \name Memory management
+	//! \{
+
+	//! \brief Increases the reference counter.
+    //!
+    //! \return The number of references to this object.
+    //!
+    //! Call this method when storing an additional reference to the object.
+	virtual int AddRef() = 0;
+	//! \brief Decrease reference counter.
+    //!
+    //! \return The number of references to this object.
+    //!
+    //! Call this method when you will no longer use the references that you own.
+	virtual int Release() = 0;
+	//! \}
+
 	// Type info
 	//! \name Type info
 	//! \{
@@ -2587,6 +2602,13 @@ public:
 	//! Application registered reference types doesn't store this information, 
 	//! as the script engine doesn't allocate memory for these itself.
 	virtual asUINT           GetSize() const = 0;
+	//! \brief Returns the type id for the object type.
+	//! \return The type id for the object type.
+	virtual int              GetTypeId() const = 0;
+	//! \brief Returns the type id of the template sub type.
+	//! \return The type id of the template sub type, or a negative value on error.
+	//! \retval asERROR The type is not a template type.
+	virtual int              GetSubTypeId() const = 0;
 	//! \}
 
 	// Interfaces
