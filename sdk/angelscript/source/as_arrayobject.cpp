@@ -79,14 +79,14 @@ static void ArrayObjectResize(asUINT size, asCArrayObject *self)
 
 static void ArrayObjectFactory_Generic(asIScriptGeneric *gen)
 {
-	asCObjectType *ot = *(asCObjectType**)gen->GetAddressOfArg(0);
+	asIObjectType *ot = *(asIObjectType**)gen->GetAddressOfArg(0);
 
 	*(asCArrayObject**)gen->GetAddressOfReturnLocation() = ArrayObjectFactory(ot);
 }
 
 static void ArrayObjectFactory2_Generic(asIScriptGeneric *gen)
 {
-	asCObjectType *ot = *(asCObjectType**)gen->GetAddressOfArg(0);
+	asIObjectType *ot = *(asIObjectType**)gen->GetAddressOfArg(0);
 	asUINT length = gen->GetArgDWord(1);
 
 	*(asCArrayObject**)gen->GetAddressOfReturnLocation() = ArrayObjectFactory2(ot, length);

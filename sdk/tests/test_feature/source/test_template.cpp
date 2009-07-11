@@ -120,6 +120,12 @@ MyTmpl_float *MyTmpl_float_factory()
 
 bool Test()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("Skipped due to max portability\n");
+		return false;
+	}
+
 	bool fail = false;
 	int r;
 	COutStream out;

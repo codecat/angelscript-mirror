@@ -130,6 +130,7 @@ bool Test()
 	//--------------------------------------------
 	// opEquals for application classes
 	//
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0 )
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
