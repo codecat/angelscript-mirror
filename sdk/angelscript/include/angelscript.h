@@ -67,6 +67,7 @@ class asIScriptArray;
 class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
+class asIJITCompiler;
 
 // Enumerations and constants
 
@@ -464,6 +465,10 @@ public:
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv) = 0;
 	virtual int ClearMessageCallback() = 0;
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
+
+    // JIT Compiler
+    virtual int SetJITCompiler(asIJITCompiler *compiler) = 0;
+    virtual asIJITCompiler *GetJITCompiler() = 0;
 
 	// Global functions
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
@@ -1050,6 +1055,34 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+4*sizeof(int)>
 #endif
 
 #endif // AS_NO_CLASS_METHODS
+
+//----------------------------------------------------------------
+// JIT compiler
+
+struct asSVMRegisters
+{
+  asDWORD          *programPointer;     // points to current bytecode instruction
+  asDWORD          *stackFramePointer;  // function stack frame
+  asDWORD          *stackPointer;       // top of stack (grows downward)
+  void            **globalVarPointers;  // global variable pointers
+  asQWORD           valueRegister;      // temp register for primitives
+  void             *objectRegister;     // temp register for objects and handles
+  asIObjectType    *objectType;         // type of object held in object register
+  bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
+};
+
+typedef void (*asJITFunction)(asSVMRegisters*, asDWORD suspendId);
+
+class asIJITCompiler
+{
+public:
+    virtual int StartCompile(const asDWORD *bytecode, int bytecodeLen, asJITFunction *output) = 0;
+    virtual int ResolveSuspendOffset(int bytecodeOffset) = 0;
+    virtual void EndCompile() = 0;
+    virtual void ReleaseJITFunction(asJITFunction func) = 0;
+public:
+    virtual ~asIJITCompiler() {}
+};
 
 END_AS_NAMESPACE
 

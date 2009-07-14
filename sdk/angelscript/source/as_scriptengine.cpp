@@ -342,6 +342,7 @@ asCScriptEngine::asCScriptEngine()
 	currentGroup = &defaultGroup;
 
 	msgCallback = 0;
+    jitCompiler = 0;
 
 	// Reserve function id 0 for no function
 	scriptFunctions.PushLast(0);
@@ -597,6 +598,17 @@ int asCScriptEngine::WriteMessage(const char *section, int row, int col, asEMsgT
 		CallObjectMethod(msgCallbackObj, &msg, &msgCallbackFunc, 0);
 
 	return 0;
+}
+
+int asCScriptEngine::SetJITCompiler(asIJITCompiler *compiler)
+{
+    jitCompiler = compiler;
+    return asSUCCESS;
+}
+
+asIJITCompiler *asCScriptEngine::GetJITCompiler()
+{
+    return jitCompiler;
 }
 
 // interface

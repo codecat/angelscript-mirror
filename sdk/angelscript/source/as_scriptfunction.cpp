@@ -43,6 +43,7 @@
 #include "as_scriptengine.h"
 #include "as_callfunc.h"
 #include "as_bytecode.h"
+#include "as_texts.h"
 
 BEGIN_AS_NAMESPACE
 

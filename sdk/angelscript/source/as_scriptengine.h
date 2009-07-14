@@ -92,6 +92,10 @@ public:
 	virtual int ClearMessageCallback();
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message);
 
+    // JIT Compiler
+    virtual int SetJITCompiler(asIJITCompiler *compiler);
+    virtual asIJITCompiler *GetJITCompiler();
+
 	// Global functions
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
 	virtual int GetGlobalFunctionCount();
@@ -320,6 +324,8 @@ public:
 	bool                        msgCallback;
 	asSSystemFunctionInterface  msgCallbackFunc;
 	void                       *msgCallbackObj;
+
+    asIJITCompiler              *jitCompiler;
 
 	// User data
 	void *userData;
