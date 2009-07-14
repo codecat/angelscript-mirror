@@ -502,7 +502,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	void    *func            = (void*)sysFunc->func;
 	int      paramSize       = sysFunc->paramSize;
 	int      popSize         = paramSize;
-	asDWORD *args            = context->stackPointer;	
+	asDWORD *args            = context->regs.stackPointer;	
 	void    *obj             = NULL;
 	asDWORD *vftable         = NULL;
 	void    *retObjPointer   = NULL; // for system functions that return AngelScript objects
@@ -559,7 +559,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	// Objects returned to AngelScript must be via an object pointer.  This goes for
 	// ALL objects, including those of simple, complex, primitive or float.  Whether
 	// the host system (PPC in this case) returns the 'object' as a pointer depends on the type of object.
-	context->objectType = descr->returnType.GetObjectType();
+	context->regs.objectType = descr->returnType.GetObjectType();
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
 	{
 		// Allocate the memory for the object
@@ -717,7 +717,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	if( sysFunc->takesObjByVal )
 	{
 		// Need to free the complex objects passed by value
-		args = context->stackPointer;
+		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer )
 		    args++;
 
@@ -755,11 +755,11 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			retQW >>= 32;
 		
 			// returning an object handle
-			context->objectRegister = (void*)(asDWORD)retQW;
+			context->regs.objectRegister = (void*)(asDWORD)retQW;
 
-			if( sysFunc->returnAutoHandle && context->objectRegister )
+			if( sysFunc->returnAutoHandle && context->regs.objectRegister )
 			{
-				engine->CallObjectMethod(context->objectRegister, descr->returnType.GetObjectType()->beh.addref);
+				engine->CallObjectMethod(context->regs.objectRegister, descr->returnType.GetObjectType()->beh.addref);
 			}
 		}
 		else
@@ -799,24 +799,24 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			}
 
 			// store the return results into the object register
-			context->objectRegister = retObjPointer;
+			context->regs.objectRegister = retObjPointer;
 		}
 	}
 	else
 	{
-		// Store value in returnVal register
+		// Store value in valueRegister
 		if( sysFunc->hostReturnFloat )
 		{
 			// floating pointer primitives
 			if( sysFunc->hostReturnSize == 1 )
 			{
 				// single float
-				*(asDWORD*)&context->register1 = GetReturnedFloat();
+				*(asDWORD*)&context->regs.valueRegister = GetReturnedFloat();
 			}
 			else
 			{
 				// double float
-				context->register1 = GetReturnedDouble();
+				context->regs.valueRegister = GetReturnedDouble();
 			}
 		}
 		else if( sysFunc->hostReturnSize == 1 )
@@ -836,7 +836,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			case 1:
 				{
 					// 8 bits
-					asBYTE *val = (asBYTE*)ARG_DW(context->register1);
+					asBYTE *val = (asBYTE*)ARG_DW(context->regs.valueRegister);
 					val[0] = (asBYTE)retQW;
 					val[1] = 0;
 					val[2] = 0;
@@ -850,7 +850,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			case 2:
 				{
 					// 16 bits
-					asWORD *val = (asWORD*)ARG_DW(context->register1);
+					asWORD *val = (asWORD*)ARG_DW(context->regs.valueRegister);
 					val[0] = (asWORD)retQW;
 					val[1] = 0;
 					val[2] = 0;
@@ -860,7 +860,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			default:
 				{
 					// 32 bits
-					asDWORD *val = (asDWORD*)ARG_DW(context->register1);
+					asDWORD *val = (asDWORD*)ARG_DW(context->regs.valueRegister);
 					val[0] = (asDWORD)retQW;
 					val[1] = 0;
 				}
@@ -870,13 +870,13 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		else
 		{
 			// 64 bit primitive
-			context->register1 = retQW;
+			context->regs.valueRegister = retQW;
 		}
 	}
 
 	if( sysFunc->hasAutoHandles )
 	{
-		args = context->stackPointer;
+		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer )
 		{
 			args++;
@@ -904,141 +904,6 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 
 	return popSize;
-}
-
-// This function should prepare system functions so that it will be faster to call them
-int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine)
-{
-	UNUSED_VAR(engine); 
-
-	// References are always returned as primitive data
-	if( func->returnType.IsReference() || func->returnType.IsObjectHandle() )
-	{
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize     = 1;
-		internal->hostReturnFloat    = false;
-	}
-	// Registered types have special flags that determine how they are returned
-	else if( func->returnType.IsObject() )
-	{
-		asDWORD objType = func->returnType.GetObjectType()->flags;
-		if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_CLASS) )
-		{
-			internal->hostReturnFloat    = false;
-			
-			if( objType & COMPLEX_MASK )
-			{
-				internal->hostReturnInMemory = true;
-				internal->hostReturnSize     = 1;
-			}
-			else
-			{
-				if( func->returnType.GetSizeInMemoryDWords() > 2 )
-				{
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize     = 1;
-				}
-				else
-				{
-					internal->hostReturnInMemory = false;
-					internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
-				}
-
-#ifdef THISCALL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_THISCALL ||
-					internal->callConv == ICC_VIRTUAL_THISCALL )
-				{
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize     = 1;
-				}
-#endif
-#ifdef CDECL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_CDECL         ||
-					internal->callConv == ICC_CDECL_OBJLAST ||
-					internal->callConv == ICC_CDECL_OBJFIRST )
-				{
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize     = 1;
-				}
-#endif
-#ifdef STDCALL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_STDCALL )
-				{
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize     = 1;
-				}
-#endif
-			}
-		}
-		else if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_PRIMITIVE) )
-		{
-			internal->hostReturnInMemory = false;
-			internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
-			internal->hostReturnFloat    = false;
-		}
-		else if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_FLOAT) )
-		{
-			internal->hostReturnInMemory = false;
-			internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
-			internal->hostReturnFloat    = true;
-		}
-	}
-	// Primitive types can easily be determined
-	else if( func->returnType.GetSizeInMemoryDWords() > 2 )
-	{
-		// Shouldn't be possible to get here
-		asASSERT(false);
-
-		internal->hostReturnInMemory = true;
-		internal->hostReturnSize     = 1;
-		internal->hostReturnFloat    = false;
-	}
-	else if( func->returnType.GetSizeInMemoryDWords() == 2 )
-	{
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize     = 2;
-		internal->hostReturnFloat    = func->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttDouble, true));
-	}
-	else if( func->returnType.GetSizeInMemoryDWords() == 1 )
-	{
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize     = 1;
-		internal->hostReturnFloat    = func->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttFloat, true));
-	}
-	else
-	{
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize     = 0;
-		internal->hostReturnFloat    = false;
-	}
-
-	// Calculate the size needed for the parameters
-	internal->paramSize = func->GetSpaceNeededForArguments();
-
-	// Verify if the function takes any objects by value
-	asUINT n;
-	internal->takesObjByVal = false;
-	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
-	{
-		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsObjectHandle() && !func->parameterTypes[n].IsReference() )
-		{
-			internal->takesObjByVal = true;
-			break;
-		}
-	}
-
-	// Verify if the function has any registered autohandles
-	internal->hasAutoHandles = false;
-	for( n = 0; n < internal->paramAutoHandles.GetLength(); n++ )
-	{
-		if( internal->paramAutoHandles[n] )
-		{
-			internal->hasAutoHandles = true;
-			break;
-		}
-	}
-
-	return 0;
 }
 
 END_AS_NAMESPACE

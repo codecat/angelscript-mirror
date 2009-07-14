@@ -503,141 +503,6 @@ asQWORD CallThisCallFunction_objLast(const void* pObj, const asDWORD* pArgs, int
 	return ppcFunc( ppcArgs, iArgSize + sizeof(pObj), dwFunc );
 }
 
-// This function should prepare system functions so that it will be faster to call them
-//--------------------------------------------------------------------
-int PrepareSystemFunction(asCScriptFunction* pFunc, asSSystemFunctionInterface* pInternal, asCScriptEngine* pEngine)
-{
-	// References are always returned as primitive data
-	if ( pFunc->returnType.IsReference()
-		|| pFunc->returnType.IsObjectHandle() )
-	{
-		pInternal->hostReturnInMemory = false;
-		pInternal->hostReturnSize = 1;
-		pInternal->hostReturnFloat = false;
-	}
-	// Registered types have special flags that determine how they are returned
-	else if ( pFunc->returnType.IsObject() )
-	{
-		asDWORD objType = pFunc->returnType.GetObjectType()->flags;
-		if( objType & asOBJ_APP_CLASS )
-		{
-			if( objType & COMPLEX_MASK )
-			{
-				pInternal->hostReturnInMemory = true;
-				pInternal->hostReturnSize = 1;
-				pInternal->hostReturnFloat = false;
-			}
-			else
-			{
-				pInternal->hostReturnFloat = false;
-				if( pFunc->returnType.GetSizeInMemoryDWords() > 2 )
-				{
-					pInternal->hostReturnInMemory = true;
-					pInternal->hostReturnSize = 1;
-				}
-				else
-				{
-					pInternal->hostReturnInMemory = false;
-					pInternal->hostReturnSize = pFunc->returnType.GetSizeInMemoryDWords();
-				}
-
-#ifdef THISCALL_RETURN_SIMPLE_IN_MEMORY
-				if ( pInternal->callConv == ICC_THISCALL
-					|| pInternal->callConv == ICC_VIRTUAL_THISCALL )
-				{
-					pInternal->hostReturnInMemory = true;
-					pInternal->hostReturnSize = 1;
-				}
-#endif
-#ifdef CDECL_RETURN_SIMPLE_IN_MEMORY
-				if ( pInternal->callConv == ICC_CDECL
-					|| pInternal->callConv == ICC_CDECL_OBJLAST
-					|| pInternal->callConv == ICC_CDECL_OBJFIRST )
-				{
-					pInternal->hostReturnInMemory = true;
-					pInternal->hostReturnSize = 1;
-				}
-#endif
-#ifdef STDCALL_RETURN_SIMPLE_IN_MEMORY
-				if ( pInternal->callConv == ICC_STDCALL )
-				{
-					pInternal->hostReturnInMemory = true;
-					pInternal->hostReturnSize = 1;
-				}
-#endif
-			}
-		}
-		else if ( objType == asOBJ_APP_PRIMITIVE )
-		{
-			pInternal->hostReturnInMemory = false;
-			pInternal->hostReturnSize = pFunc->returnType.GetSizeInMemoryDWords();
-			pInternal->hostReturnFloat = false;
-		}
-		else if ( objType == asOBJ_APP_FLOAT )
-		{
-			pInternal->hostReturnInMemory = false;
-			pInternal->hostReturnSize = pFunc->returnType.GetSizeInMemoryDWords();
-			pInternal->hostReturnFloat = true;
-		}
-	}
-	// Primitive types can easily be determined
-	else if ( pFunc->returnType.GetSizeInMemoryDWords() > 2 )
-	{
-		// Shouldn't be possible to get here
-		asASSERT(false);
-
-		pInternal->hostReturnInMemory = true;
-		pInternal->hostReturnSize = 1;
-		pInternal->hostReturnFloat = false;
-	}
-	else if ( pFunc->returnType.GetSizeInMemoryDWords() == 2 )
-	{
-		pInternal->hostReturnInMemory = false;
-		pInternal->hostReturnSize = 2;
-		pInternal->hostReturnFloat = pFunc->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttDouble, true));
-	}
-	else if ( pFunc->returnType.GetSizeInMemoryDWords() == 1 )
-	{
-		pInternal->hostReturnInMemory = false;
-		pInternal->hostReturnSize = 1;
-		pInternal->hostReturnFloat = pFunc->returnType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttFloat, true));
-	}
-	else
-	{
-		pInternal->hostReturnInMemory = false;
-		pInternal->hostReturnSize = 0;
-		pInternal->hostReturnFloat = false;
-	}
-
-	// Calculate the size needed for the parameters
-	pInternal->paramSize = pFunc->GetSpaceNeededForArguments();
-
-	// Verify if the function takes any objects by value
-	asUINT n;
-	pInternal->takesObjByVal = false;
-	for ( n = 0; n < pFunc->parameterTypes.GetLength(); n++ )
-	{
-		if ( pFunc->parameterTypes[n].IsObject() && !pFunc->parameterTypes[n].IsObjectHandle() && !pFunc->parameterTypes[n].IsReference() )
-		{
-			pInternal->takesObjByVal = true;
-			break;
-		}
-	}
-
-	// Verify if the function has any registered autohandles
-	pInternal->hasAutoHandles = false;
-	for ( n = 0; n < pInternal->paramAutoHandles.GetLength(); n++ )
-	{
-		if ( pInternal->paramAutoHandles[n] )
-		{
-			pInternal->hasAutoHandles = true;
-			break;
-		}
-	}
-
-	return 0;
-}
-
 //--------------------------------------------------------------------
 asDWORD GetReturnedFloat()
 {
@@ -683,7 +548,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 
 	void*    pFunc       = (void*)pSysFunc->func;
 	int      iParamSize  = pSysFunc->paramSize;
-	asDWORD* pArgs       = pContext->stackPointer;
+	asDWORD* pArgs       = pContext->regs.stackPointer;
 	void*    pRetPointer = 0;
 	void*    pObj        = 0;
 	int      iPopSize    = iParamSize;
@@ -694,7 +559,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 	memset(fixedArgs, 0, sizeof(fixedArgs));
 	int iArgsPtr = 0;
 
-	pContext->objectType = pDescr->returnType.GetObjectType();
+	pContext->regs.objectType = pDescr->returnType.GetObjectType();
 
 	// If the function returns an object in memory, we allocate the memory and put the ptr to the front (will go to r3)
 	if ( pDescr->returnType.IsObject() && !pDescr->returnType.IsReference() && !pDescr->returnType.IsObjectHandle() )
@@ -848,7 +713,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 	if( pSysFunc->takesObjByVal )
 	{
 		// Need to free the complex objects passed by value
-		pArgs = pContext->stackPointer;
+		pArgs = pContext->regs.stackPointer;
 		if ( iCallConv >= ICC_THISCALL
 			&& !pObjectPointer )
 				pArgs++;
@@ -879,11 +744,11 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 	{
 		if ( pDescr->returnType.IsObjectHandle() )
 		{
-			pContext->objectRegister = (void*)(asDWORD)dwRetQW;
+			pContext->regs.objectRegister = (void*)(asDWORD)dwRetQW;
 
 			if ( pSysFunc->returnAutoHandle
-				&& pContext->objectRegister )
-				pEngine->CallObjectMethod( pContext->objectRegister, pDescr->returnType.GetObjectType()->beh.addref );
+				&& pContext->regs.objectRegister )
+				pEngine->CallObjectMethod( pContext->regs.objectRegister, pDescr->returnType.GetObjectType()->beh.addref );
 		}
 		else
 		{
@@ -897,7 +762,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 			}
 
 			// Store the object in the register
-			pContext->objectRegister = pRetPointer;
+			pContext->regs.objectRegister = pRetPointer;
 		}
 	}
 	else
@@ -913,19 +778,19 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 		if ( pSysFunc->hostReturnFloat )
 		{
 			if ( pSysFunc->hostReturnSize == 1 )
-				*(asDWORD*)&pContext->register1 = GetReturnedFloat();
+				*(asDWORD*)&pContext->regs.valueRegister = GetReturnedFloat();
 			else
-				pContext->register1 = GetReturnedDouble();
+				pContext->regs.valueRegister = GetReturnedDouble();
 		}
 		else if ( pSysFunc->hostReturnSize == 1 )
-			*(asDWORD*)&pContext->register1 = (asDWORD)dwRetQW;
+			*(asDWORD*)&pContext->regs.valueRegister = (asDWORD)dwRetQW;
 		else
-			pContext->register1 = dwRetQW;
+			pContext->regs.valueRegister = dwRetQW;
 	}
 
 	if( pSysFunc->hasAutoHandles )
 	{
-		pArgs = pContext->stackPointer;
+		pArgs = pContext->regs.stackPointer;
 		if ( iCallConv >= ICC_THISCALL
 			&& !pObjectPointer )
 			pArgs++;

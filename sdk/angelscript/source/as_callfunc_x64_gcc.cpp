@@ -44,6 +44,8 @@
 #include "as_scriptengine.h"
 #include "as_texts.h"
 
+BEGIN_AS_NAMESPACE
+
 enum argTypes { x64ENDARG = 0, x64INTARG = 1, x64FLOATARG = 2, x64DOUBLEARG = 3, x64VARIABLE = 4 };
 typedef asQWORD ( *funcptr_t )( void );
 
@@ -74,8 +76,6 @@ typedef asQWORD ( *funcptr_t )( void );
 		:                                        \
 		: "m" ( dest )                           \
 	)
-
-BEGIN_AS_NAMESPACE
 
 static asDWORD GetReturnedFloat()
 {
@@ -159,100 +159,6 @@ static asQWORD X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, 
 	return retval;
 }
 
-// This function should prepare system functions so that it will be faster to call them
-int PrepareSystemFunction( asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine )
-{
-	// References are always returned as primitive data
-	if ( func->returnType.IsReference() || func->returnType.IsObjectHandle() ) {
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 2;
-		internal->hostReturnFloat = false;
-	} else if ( func->returnType.IsObject() ) {
-		// Registered types have special flags that determine how they are returned
-		asDWORD objType = func->returnType.GetObjectType()->flags;
-		if ( ( objType & asOBJ_VALUE ) && ( objType & asOBJ_APP_CLASS ) ) {
-			if ( objType & COMPLEX_MASK ) {
-				internal->hostReturnInMemory = true;
-				internal->hostReturnSize = 2;
-				internal->hostReturnFloat = false;
-			} else {
-				internal->hostReturnFloat = false;
-				if( func->returnType.GetSizeInMemoryDWords() > 4 ) {
-					internal->hostReturnInMemory = true;
-					internal->hostReturnSize = 2;
-				} else {
-					internal->hostReturnInMemory = false;
-					internal->hostReturnSize = func->returnType.GetSizeInMemoryDWords();
-				}
-			}
-		} else if ( ( objType & asOBJ_VALUE ) && ( objType & asOBJ_APP_PRIMITIVE ) ) {
-			internal->hostReturnInMemory = false;
-			internal->hostReturnSize = func->returnType.GetSizeInMemoryDWords();
-			internal->hostReturnFloat = false;
-		} else if ( ( objType & asOBJ_VALUE ) && ( objType & asOBJ_APP_FLOAT ) ) {
-			internal->hostReturnInMemory = false;
-			internal->hostReturnSize = func->returnType.GetSizeInMemoryDWords();
-			internal->hostReturnFloat = true;
-		}
-	} else if ( func->returnType.GetSizeInMemoryDWords() > 4 ) {
-		// Shouldn't be possible to get here
-		asASSERT(false);
-	} else if ( func->returnType.GetSizeInMemoryDWords() == 4 ) {
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 4;
-		internal->hostReturnFloat = false;
-	} else if ( func->returnType.GetSizeInMemoryDWords() == 2 ) {
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 2;
-		internal->hostReturnFloat = func->returnType.IsEqualExceptConst( asCDataType::CreatePrimitive( ttDouble, true ) );
-	} else if ( func->returnType.GetSizeInMemoryDWords() == 1 ) {
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 1;
-		internal->hostReturnFloat = func->returnType.IsEqualExceptConst( asCDataType::CreatePrimitive( ttFloat, true ) );
-	} else {
-		internal->hostReturnInMemory = false;
-		internal->hostReturnSize = 0;
-		internal->hostReturnFloat = false;
-	}
-
-	// Calculate the size needed for the parameters
-	internal->paramSize = func->GetSpaceNeededForArguments();
-
-	// Verify if the function takes any objects by value
-	asUINT n;
-	internal->takesObjByVal = false;
-	for( n = 0; n < func->parameterTypes.GetLength(); n++ ) {
-		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsObjectHandle() && !func->parameterTypes[n].IsReference() ) {
-			internal->takesObjByVal = true;
-
-			// It's not safe to pass objects by value because different registers 
-			// will be used depending on the memory layout of the object
-#ifdef COMPLEX_OBJS_PASSED_BY_REF
-			if( !(func->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )	
-#endif
-			{
-				asCString str;
-				// TODO: Move to as_texts.h
-				str.Format("Don't support passing type '%s' by value to application", func->parameterTypes[n].GetObjectType()->name.AddressOf());
-				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-				engine->ConfigError(asINVALID_CONFIGURATION);
-			}
-			break;
-		}
-	}
-
-	// Verify if the function has any registered autohandles
-	internal->hasAutoHandles = false;
-	for( n = 0; n < internal->paramAutoHandles.GetLength(); n++ ) {
-		if( internal->paramAutoHandles[n] ) {
-			internal->hasAutoHandles = true;
-			break;
-		}
-	}
-
-	return 0;
-}
-
 // returns true if the given parameter is a 'variable argument'
 inline bool IsVariableArgument( asCDataType type )
 {
@@ -270,8 +176,8 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	asQWORD                     retQW2             = 0;
 	void                       *func               = ( void * )sysFunc->func;
 	int                         paramSize          = sysFunc->paramSize;
-	asDWORD                    *args               = context->stackPointer;
-	asDWORD                    *stack_pointer      = context->stackPointer;
+	asDWORD                    *args               = context->regs.stackPointer;
+	asDWORD                    *stack_pointer      = context->regs.stackPointer;
 	void                       *retPointer         = 0;
 	void                       *obj                = 0;
 	funcptr_t                  *vftable            = NULL;
@@ -297,7 +203,7 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		return context->CallGeneric( id, objectPointer );
 	}
 
-	context->objectType = descr->returnType.GetObjectType();
+	context->regs.objectType = descr->returnType.GetObjectType();
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() ) {
 		// Allocate the memory for the object
 		retPointer = engine->CallAlloc( descr->returnType.GetObjectType() );
@@ -410,11 +316,11 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	obj = objectPointer;
 	if ( !obj && callConv >= ICC_THISCALL ) {
 		// The object pointer should be popped from the context stack
-		popSize += PTR_SIZE;
+		popSize += AS_PTR_SIZE;
 
 		// Check for null pointer
 		obj = ( void * )( *( ( asQWORD * )( args ) ) );
-		stack_pointer += PTR_SIZE;
+		stack_pointer += AS_PTR_SIZE;
 		if( !obj ) {
 			context->SetInternalException( TXT_NULL_POINTER_ACCESS );
 			if( retPointer ) {
@@ -520,8 +426,8 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 				return 0;
 			}
 
-			memcpy( paramBuffer + ( n - 1 ) * CALLSTACK_MULTIPLIER, stack_pointer, PTR_SIZE * sizeof( asDWORD ) );
-			stack_pointer += PTR_SIZE;
+			memcpy( paramBuffer + ( n - 1 ) * CALLSTACK_MULTIPLIER, stack_pointer, AS_PTR_SIZE * sizeof( asDWORD ) );
+			stack_pointer += AS_PTR_SIZE;
 			memcpy( paramBuffer + n * CALLSTACK_MULTIPLIER, stack_pointer, sizeof( asDWORD ) );
 			stack_pointer += 1;
 		} else {
@@ -595,9 +501,9 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal ) {
 		// Need to free the complex objects passed by value
-		stack_pointer = context->stackPointer;
+		stack_pointer = context->regs.stackPointer;
 		if ( !objectPointer && callConv >= ICC_THISCALL ) {
-			stack_pointer += PTR_SIZE;
+			stack_pointer += AS_PTR_SIZE;
 		}
 		for( n = 0; n < ( int )descr->parameterTypes.GetLength(); n++ ) {
 			if ( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsReference() && ( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK ) ) {
@@ -618,10 +524,10 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	// Store the returned value in our stack
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() ) {
 		if( descr->returnType.IsObjectHandle() ) {
-			context->objectRegister = ( void * )( size_t )retQW;
+			context->regs.objectRegister = ( void * )( size_t )retQW;
 
-			if( sysFunc->returnAutoHandle && context->objectRegister ) {
-				engine->CallObjectMethod( context->objectRegister, descr->returnType.GetObjectType()->beh.addref );
+			if( sysFunc->returnAutoHandle && context->regs.objectRegister ) {
+				engine->CallObjectMethod( context->regs.objectRegister, descr->returnType.GetObjectType()->beh.addref );
 			}
 		} else {
 			if ( !sysFunc->hostReturnInMemory ) {
@@ -639,27 +545,27 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 			}
 
 			// Store the object in the register
-			context->objectRegister = retPointer;
+			context->regs.objectRegister = retPointer;
 		}
 	} else {
-		// Store value in register1 register
+		// Store value in valueRegister
 		if( sysFunc->hostReturnFloat ) {
 			if( sysFunc->hostReturnSize == 1 ) {
-				*(asDWORD*)&context->register1 = GetReturnedFloat();
+				*(asDWORD*)&context->regs.valueRegister = GetReturnedFloat();
 			} else {
-				context->register1 = GetReturnedDouble();
+				context->regs.valueRegister = GetReturnedDouble();
 			}
 		} else if ( sysFunc->hostReturnSize == 1 ) {
-			*( asDWORD * )&context->register1 = ( asDWORD )retQW;
+			*( asDWORD * )&context->regs.valueRegister = ( asDWORD )retQW;
 		} else {
-			context->register1 = retQW;
+			context->regs.valueRegister = retQW;
 		}
 	}
 
 	if( sysFunc->hasAutoHandles ) {
-		args = context->stackPointer;
+		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer ) {
-			args += PTR_SIZE;
+			args += AS_PTR_SIZE;
 		}
 
 		int spos = 0;
@@ -671,7 +577,7 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 			}
 
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() ) {
-				spos += PTR_SIZE;
+				spos += AS_PTR_SIZE;
 			} else {
 				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
 			}

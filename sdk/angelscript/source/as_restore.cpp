@@ -1040,7 +1040,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 		{
 			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				tmp[n] = *bc++;
 
 			// Translate the object type 
@@ -1049,9 +1049,9 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 
 			// Translate the constructor func id, if it is a script class
 			if( ot->flags & asOBJ_SCRIPT_OBJECT )
-				*(int*)&tmp[PTR_SIZE] = FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[PTR_SIZE]]);
+				*(int*)&tmp[AS_PTR_SIZE] = FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[AS_PTR_SIZE]]);
 
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
 		else if( c == BC_FREE   ||
@@ -1061,12 +1061,12 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			// Translate object type pointers into indices
 			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				tmp[n] = *bc++;
 
 			*(int*)tmp = FindObjectTypeIdx(*(asCObjectType**)tmp);
 
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
 		else if( c == BC_TYPEID )
@@ -1074,12 +1074,12 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			// Translate type ids into indices
 			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				tmp[n] = *bc++;
 
 			*(int*)tmp = FindTypeIdIdx(*(int*)tmp);
 
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
 		else if( c == BC_CALL ||
@@ -1089,22 +1089,22 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			// Translate the function id
 			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				tmp[n] = *bc++;
 
 			*(int*)tmp = FindFunctionIndex(engine->scriptFunctions[*(int*)tmp]);
 
-			for( n = 0; n < asCByteCode::SizeOfType(bcTypes[c])-1; n++ )
+			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
 		else
 		{
 			// Store the bc as is
-			for( int n = 1; n < asCByteCode::SizeOfType(bcTypes[c]); n++ )
+			for( int n = 1; n < asCByteCode::SizeOfType(asBCInfo[c].type); n++ )
 				WRITE_NUM(*bc++);
 		}
 
-		length -= asCByteCode::SizeOfType(bcTypes[c]);
+		length -= asCByteCode::SizeOfType(asBCInfo[c].type);
 	}
 }
 
@@ -1186,12 +1186,12 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			asCObjectType *ot = *(asCObjectType**)arg;
 			if( ot->flags & asOBJ_SCRIPT_OBJECT )
 			{
-				int *fid = (int*)&bc[n+1+PTR_SIZE];
+				int *fid = (int*)&bc[n+1+AS_PTR_SIZE];
 				*fid = FindFunction(*fid)->id;
 			}
 		}
 
-		n += asCByteCode::SizeOfType(bcTypes[c]);
+		n += asCByteCode::SizeOfType(asBCInfo[c].type);
 	}
 }
 
@@ -1242,10 +1242,10 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 		c = *(asBYTE*)&c;
 
 		// Read the bc as is
-		for( int n = 1; n < asCByteCode::SizeOfType(bcTypes[c]); n++ )
+		for( int n = 1; n < asCByteCode::SizeOfType(asBCInfo[c].type); n++ )
 			READ_NUM(*bc++);
 
-		length -= asCByteCode::SizeOfType(bcTypes[c]);
+		length -= asCByteCode::SizeOfType(asBCInfo[c].type);
 	}
 }
 

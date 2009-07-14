@@ -109,29 +109,29 @@ void asCByteCode::GetVarsUsed(asCArray<int> &vars)
 	cByteInstruction *curr = first;
 	while( curr )
 	{
-		if( bcTypes[curr->op] == BCTYPE_wW_rW_rW_ARG )
+		if( asBCInfo[curr->op].type == BCTYPE_wW_rW_rW_ARG )
 		{
 			InsertIfNotExists(vars, curr->wArg[0]);
 			InsertIfNotExists(vars, curr->wArg[1]);
 			InsertIfNotExists(vars, curr->wArg[2]);
 		}
-		else if( bcTypes[curr->op] == BCTYPE_rW_ARG    ||
-			     bcTypes[curr->op] == BCTYPE_wW_ARG    ||
-				 bcTypes[curr->op] == BCTYPE_wW_W_ARG  ||
-			     bcTypes[curr->op] == BCTYPE_rW_DW_ARG ||
-			     bcTypes[curr->op] == BCTYPE_wW_DW_ARG ||
-			     bcTypes[curr->op] == BCTYPE_wW_QW_ARG )
+		else if( asBCInfo[curr->op].type == BCTYPE_rW_ARG    ||
+			     asBCInfo[curr->op].type == BCTYPE_wW_ARG    ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_W_ARG  ||
+			     asBCInfo[curr->op].type == BCTYPE_rW_DW_ARG ||
+			     asBCInfo[curr->op].type == BCTYPE_wW_DW_ARG ||
+			     asBCInfo[curr->op].type == BCTYPE_wW_QW_ARG )
 		{
 			InsertIfNotExists(vars, curr->wArg[0]);
 		}
-		else if( bcTypes[curr->op] == BCTYPE_wW_rW_ARG ||
-				 bcTypes[curr->op] == BCTYPE_rW_rW_ARG ||
-				 bcTypes[curr->op] == BCTYPE_wW_rW_DW_ARG )
+		else if( asBCInfo[curr->op].type == BCTYPE_wW_rW_ARG ||
+				 asBCInfo[curr->op].type == BCTYPE_rW_rW_ARG ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_rW_DW_ARG )
 		{
 			InsertIfNotExists(vars, curr->wArg[0]);
 			InsertIfNotExists(vars, curr->wArg[1]);
 		}
-		else if( bcTypes[curr->op] == BCTYPE_W_rW_ARG )
+		else if( asBCInfo[curr->op].type == BCTYPE_W_rW_ARG )
 		{
 			InsertIfNotExists(vars, curr->wArg[1]);
 		}
@@ -146,29 +146,29 @@ bool asCByteCode::IsVarUsed(int offset)
 	while( curr )
 	{
 		// Verify all ops that use variables
-		if( bcTypes[curr->op] == BCTYPE_wW_rW_rW_ARG )
+		if( asBCInfo[curr->op].type == BCTYPE_wW_rW_rW_ARG )
 		{
 			if( curr->wArg[0] == offset || curr->wArg[1] == offset || curr->wArg[2] == offset )
 				return true;
 		}
-		else if( bcTypes[curr->op] == BCTYPE_rW_ARG    ||
-				 bcTypes[curr->op] == BCTYPE_wW_ARG    ||
-				 bcTypes[curr->op] == BCTYPE_wW_W_ARG  ||
-				 bcTypes[curr->op] == BCTYPE_rW_DW_ARG ||
-				 bcTypes[curr->op] == BCTYPE_wW_DW_ARG ||
-				 bcTypes[curr->op] == BCTYPE_wW_QW_ARG )
+		else if( asBCInfo[curr->op].type == BCTYPE_rW_ARG    ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_ARG    ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_W_ARG  ||
+				 asBCInfo[curr->op].type == BCTYPE_rW_DW_ARG ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_DW_ARG ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_QW_ARG )
 		{
 			if( curr->wArg[0] == offset )
 				return true;
 		}
-		else if( bcTypes[curr->op] == BCTYPE_wW_rW_ARG ||
-				 bcTypes[curr->op] == BCTYPE_rW_rW_ARG ||
-				 bcTypes[curr->op] == BCTYPE_wW_rW_DW_ARG )
+		else if( asBCInfo[curr->op].type == BCTYPE_wW_rW_ARG ||
+				 asBCInfo[curr->op].type == BCTYPE_rW_rW_ARG ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_rW_DW_ARG )
 		{
 			if( curr->wArg[0] == offset || curr->wArg[1] == offset )
 				return true;
 		}
-		else if( bcTypes[curr->op] == BCTYPE_W_rW_ARG )
+		else if( asBCInfo[curr->op].type == BCTYPE_W_rW_ARG )
 		{
 			if( curr->wArg[1] == offset )
 				return true;
@@ -186,7 +186,7 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 	while( curr )
 	{
 		// Verify all ops that use variables
-		if( bcTypes[curr->op] == BCTYPE_wW_rW_rW_ARG )
+		if( asBCInfo[curr->op].type == BCTYPE_wW_rW_rW_ARG )
 		{
 			if( curr->wArg[0] == oldOffset )
 				curr->wArg[0] = (short)newOffset;
@@ -195,25 +195,25 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 			if( curr->wArg[2] == oldOffset )
 				curr->wArg[2] = (short)newOffset;
 		}
-		else if( bcTypes[curr->op] == BCTYPE_rW_ARG    ||
-				 bcTypes[curr->op] == BCTYPE_wW_ARG    ||
-				 bcTypes[curr->op] == BCTYPE_wW_W_ARG  ||
-				 bcTypes[curr->op] == BCTYPE_rW_DW_ARG ||
-				 bcTypes[curr->op] == BCTYPE_wW_DW_ARG ||
-				 bcTypes[curr->op] == BCTYPE_wW_QW_ARG )
+		else if( asBCInfo[curr->op].type == BCTYPE_rW_ARG    ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_ARG    ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_W_ARG  ||
+				 asBCInfo[curr->op].type == BCTYPE_rW_DW_ARG ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_DW_ARG ||
+				 asBCInfo[curr->op].type == BCTYPE_wW_QW_ARG )
 		{
 			if( curr->wArg[0] == oldOffset )
 				curr->wArg[0] = (short)newOffset;
 		}
-		else if( bcTypes[curr->op] == BCTYPE_wW_rW_ARG ||
-				 bcTypes[curr->op] == BCTYPE_rW_rW_ARG )
+		else if( asBCInfo[curr->op].type == BCTYPE_wW_rW_ARG ||
+				 asBCInfo[curr->op].type == BCTYPE_rW_rW_ARG )
 		{
 			if( curr->wArg[0] == oldOffset )
 				curr->wArg[0] = (short)newOffset;
 			if( curr->wArg[1] == oldOffset )
 				curr->wArg[1] = (short)newOffset;
 		}
-		else if( bcTypes[curr->op] == BCTYPE_W_rW_ARG )
+		else if( asBCInfo[curr->op].type == BCTYPE_W_rW_ARG )
 		{
 			if( curr->wArg[1] == oldOffset )
 				curr->wArg[1] = (short)newOffset;
@@ -239,7 +239,7 @@ void asCByteCode::AddPath(asCArray<cByteInstruction *> &paths, cByteInstruction 
 	}
 }
 
-bool asCByteCode::IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2)
+bool asCByteCode::IsCombination(cByteInstruction *curr, asEBCInstr bc1, asEBCInstr bc2)
 {
 	if( curr->op == bc1 && curr->next && curr->next->op == bc2 )
 		return true;
@@ -247,7 +247,7 @@ bool asCByteCode::IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2
 	return false;
 }
 
-bool asCByteCode::IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2, bcInstr bc3)
+bool asCByteCode::IsCombination(cByteInstruction *curr, asEBCInstr bc1, asEBCInstr bc2, asEBCInstr bc3)
 {
 	if( curr->op == bc1 && 
 		curr->next && curr->next->op == bc2 &&
@@ -257,7 +257,7 @@ bool asCByteCode::IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2
 	return false;
 }
 
-cByteInstruction *asCByteCode::ChangeFirstDeleteNext(cByteInstruction *curr, bcInstr bc)
+cByteInstruction *asCByteCode::ChangeFirstDeleteNext(cByteInstruction *curr, asEBCInstr bc)
 {
 	curr->op = bc;
 	
@@ -270,7 +270,7 @@ cByteInstruction *asCByteCode::ChangeFirstDeleteNext(cByteInstruction *curr, bcI
 		return curr;
 }
 
-cByteInstruction *asCByteCode::DeleteFirstChangeNext(cByteInstruction *curr, bcInstr bc)
+cByteInstruction *asCByteCode::DeleteFirstChangeNext(cByteInstruction *curr, asEBCInstr bc)
 {
 	asASSERT( curr->next );
 	
@@ -388,12 +388,12 @@ bool asCByteCode::PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **
 bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **next)
 {
 	// The value isn't used for anything
-	if( (bcTypes[curr->op] == BCTYPE_wW_rW_rW_ARG ||
-		 bcTypes[curr->op] == BCTYPE_wW_rW_ARG    ||
-		 bcTypes[curr->op] == BCTYPE_wW_rW_DW_ARG ||
-		 bcTypes[curr->op] == BCTYPE_wW_ARG       ||
-		 bcTypes[curr->op] == BCTYPE_wW_DW_ARG    ||
-		 bcTypes[curr->op] == BCTYPE_wW_QW_ARG) &&
+	if( (asBCInfo[curr->op].type == BCTYPE_wW_rW_rW_ARG ||
+		 asBCInfo[curr->op].type == BCTYPE_wW_rW_ARG    ||
+		 asBCInfo[curr->op].type == BCTYPE_wW_rW_DW_ARG ||
+		 asBCInfo[curr->op].type == BCTYPE_wW_ARG       ||
+		 asBCInfo[curr->op].type == BCTYPE_wW_DW_ARG    ||
+		 asBCInfo[curr->op].type == BCTYPE_wW_QW_ARG) &&
 		IsTemporary(curr->wArg[0]) &&
 		!IsTempVarRead(curr, curr->wArg[0]) )
 	{
@@ -423,7 +423,7 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		if(      curr->next->op == BC_CMPi ) curr->next->op = BC_CMPIi;
 		else if( curr->next->op == BC_CMPf ) curr->next->op = BC_CMPIf;
 		else if( curr->next->op == BC_CMPu ) curr->next->op = BC_CMPIu;
-		curr->next->size = SizeOfType(BCT_CMPIi);
+		curr->next->size = SizeOfType(asBCInfo[BC_CMPIi].type);
 		curr->next->arg = curr->arg;
 		*next = GoBack(DeleteInstruction(curr));
 		return true;
@@ -449,7 +449,7 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		else if( curr->next->op == BC_ADDf ) curr->next->op = BC_ADDIf;
 		else if( curr->next->op == BC_SUBf ) curr->next->op = BC_SUBIf;
 		else if( curr->next->op == BC_MULf ) curr->next->op = BC_MULIf;
-		curr->next->size = SizeOfType(BCT_ADDIi);
+		curr->next->size = SizeOfType(asBCInfo[BC_ADDIi].type);
 		curr->next->arg = curr->arg;
 		*next = GoBack(DeleteInstruction(curr));
 		return true;
@@ -470,7 +470,7 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		else if( curr->next->op == BC_MULi ) curr->next->op = BC_MULIi;
 		else if( curr->next->op == BC_ADDf ) curr->next->op = BC_ADDIf;
 		else if( curr->next->op == BC_MULf ) curr->next->op = BC_MULIf;
-		curr->next->size = SizeOfType(BCT_ADDIi);
+		curr->next->size = SizeOfType(asBCInfo[BC_ADDIi].type);
 		curr->next->arg = curr->arg;
 
 		// The order of the operands are changed
@@ -481,8 +481,8 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 	}
 
 	// The values is immediately moved to another variable and then not used again
-	if( (bcTypes[curr->op] == BCTYPE_wW_rW_rW_ARG || 
-		 bcTypes[curr->op] == BCTYPE_wW_rW_DW_ARG) && 
+	if( (asBCInfo[curr->op].type == BCTYPE_wW_rW_rW_ARG || 
+		 asBCInfo[curr->op].type == BCTYPE_wW_rW_DW_ARG) && 
 		curr->next && curr->next->op == BC_CpyVtoV4 &&
 		curr->wArg[0] == curr->next->wArg[1] && 
 		IsTemporary(curr->wArg[0]) &&
@@ -525,8 +525,8 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		!IsTempVarRead(curr->next, curr->wArg[0]) )
 	{
 		curr->op = BC_PshG4;
-		curr->size = SizeOfType(BCT_PshG4);
-		curr->stackInc = bcStackInc[BC_PshG4];
+		curr->size = SizeOfType(asBCInfo[BC_PshG4].type);
+		curr->stackInc = asBCInfo[BC_PshG4].stackInc;
 		curr->wArg[0] = curr->wArg[1];
 		DeleteInstruction(curr->next);
 		*next = GoBack(curr);
@@ -540,7 +540,7 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		!IsTempVarRead(curr->next, curr->wArg[0]) )
 	{
 		curr->op = BC_PshC4;
-		curr->stackInc = bcStackInc[BC_PshC4];
+		curr->stackInc = asBCInfo[BC_PshC4].stackInc;
 		DeleteInstruction(curr->next);
 		*next = GoBack(curr);
 		return true;
@@ -553,7 +553,7 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		!IsTempVarRead(curr->next, curr->wArg[0]) )
 	{
 		curr->op = BC_SetG4;
-		curr->size = SizeOfType(BCT_SetG4);
+		curr->size = SizeOfType(asBCInfo[BC_SetG4].type);
 		curr->wArg[0] = curr->next->wArg[0];
 		DeleteInstruction(curr->next);
 		*next = GoBack(curr);
@@ -626,7 +626,7 @@ int asCByteCode::Optimize()
 		else if( IsCombination(curr, BC_LDG, BC_WRTV4) && !IsTempRegUsed(instr) )
 		{
 			curr->op = BC_CpyVtoG4;
-			curr->size = SizeOfType(BCT_CpyVtoG4);
+			curr->size = SizeOfType(asBCInfo[BC_CpyVtoG4].type);
 			curr->wArg[1] = instr->wArg[0];
 
 			DeleteInstruction(instr);
@@ -639,7 +639,7 @@ int asCByteCode::Optimize()
 				curr->op = BC_CpyGtoV4;
 			else 
 				curr->op = BC_LdGRdR4;
-			curr->size = SizeOfType(BCT_CpyGtoV4);
+			curr->size = SizeOfType(asBCInfo[BC_CpyGtoV4].type);
 			curr->wArg[1] = curr->wArg[0];
 			curr->wArg[0] = instr->wArg[0];
 
@@ -694,7 +694,7 @@ int asCByteCode::Optimize()
 		{
 			// Convert PshC4 a, to PSF a
 			curr->wArg[0] = (short)*ARG_DW(curr->arg);
-			curr->size = SizeOfType(BCT_PSF);
+			curr->size = SizeOfType(asBCInfo[BC_PSF].type);
 			curr->op = BC_PSF;
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
@@ -711,17 +711,17 @@ int asCByteCode::Optimize()
 		else if( (IsCombination(curr, BC_PshRPtr, BC_POP) ||
 			      IsCombination(curr, BC_PSF    , BC_POP) ||
 				  IsCombination(curr, BC_VAR    , BC_POP)) 
-				  && instr->wArg[0] > (PTR_SIZE-1) )
+				  && instr->wArg[0] > (AS_PTR_SIZE-1) )
 		{
 			DeleteInstruction(curr);
-			instr->wArg[0] -= PTR_SIZE;
+			instr->wArg[0] -= AS_PTR_SIZE;
 			instr = GoBack(instr);
 		}
 		// RDS8, POP 2 -> POP x-1
 		else if( IsCombination(curr, BC_RDS8, BC_POP) && instr->wArg[0] > 1 )
 		{
 			DeleteInstruction(curr);
-			instr->wArg[0] -= 2-PTR_SIZE; // Transform the pop to remove the address instead of the 8 byte word
+			instr->wArg[0] -= 2-AS_PTR_SIZE; // Transform the pop to remove the address instead of the 8 byte word
 			instr = GoBack(instr);
 		}
 		// YYY y, POP x -> POP x-2
@@ -774,7 +774,7 @@ int asCByteCode::Optimize()
 		else if( IsCombination(curr, BC_PSF, BC_ChkRefS) &&
 		         IsCombination(instr, BC_ChkRefS, BC_RDS4) )
 		{
-			asASSERT( PTR_SIZE == 1 );
+			asASSERT( AS_PTR_SIZE == 1 );
 
 			// TODO: Pointer size
 			curr->op = BC_PshV4;
@@ -785,12 +785,12 @@ int asCByteCode::Optimize()
 		// PSF, ChkRefS, POP -> ChkNullV
 		else if( (IsCombination(curr, BC_PSF, BC_ChkRefS) &&
 		          IsCombination(instr, BC_ChkRefS, BC_POP) &&
-		          instr->next->wArg[0] >= PTR_SIZE) )
+		          instr->next->wArg[0] >= AS_PTR_SIZE) )
 		{
 			curr->op = BC_ChkNullV;
 			curr->stackInc = 0;
 			// Decrease the number of DWORDs popped
-			instr->next->wArg[0] -= PTR_SIZE;
+			instr->next->wArg[0] -= AS_PTR_SIZE;
 			// Delete the ChkRefS instruction
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
@@ -800,7 +800,7 @@ int asCByteCode::Optimize()
 		          IsCombination(instr, BC_CHKREF, BC_POP) &&
 		          instr->next->wArg[0] > 0) )
 		{
-			asASSERT( PTR_SIZE == 1 );
+			asASSERT( AS_PTR_SIZE == 1 );
 
 			// TODO: Pointer size
 			curr->op = BC_ChkNullV;
@@ -851,19 +851,19 @@ int asCByteCode::SizeOfType(int type)
 bool asCByteCode::IsTempVarReadByInstr(cByteInstruction *curr, int offset)
 {
 	// Which instructions read from variables?
-	if( bcTypes[curr->op] == BCTYPE_wW_rW_rW_ARG && 
+	if( asBCInfo[curr->op].type == BCTYPE_wW_rW_rW_ARG && 
 		(curr->wArg[1] == offset || curr->wArg[2] == offset) )
 		return true;
-	else if( (bcTypes[curr->op] == BCTYPE_rW_ARG    ||
-			  bcTypes[curr->op] == BCTYPE_rW_DW_ARG) &&
+	else if( (asBCInfo[curr->op].type == BCTYPE_rW_ARG    ||
+			  asBCInfo[curr->op].type == BCTYPE_rW_DW_ARG) &&
 			  curr->wArg[0] == offset )
 		return true;
-	else if( (bcTypes[curr->op] == BCTYPE_wW_rW_ARG ||
-			  bcTypes[curr->op] == BCTYPE_wW_rW_DW_ARG ||
-			  bcTypes[curr->op] == BCTYPE_W_rW_ARG) &&
+	else if( (asBCInfo[curr->op].type == BCTYPE_wW_rW_ARG ||
+			  asBCInfo[curr->op].type == BCTYPE_wW_rW_DW_ARG ||
+			  asBCInfo[curr->op].type == BCTYPE_W_rW_ARG) &&
 			 curr->wArg[1] == offset )
 		return true;
-	else if( bcTypes[curr->op] == BCTYPE_rW_rW_ARG &&
+	else if( asBCInfo[curr->op].type == BCTYPE_rW_rW_ARG &&
 			 ((signed)curr->wArg[0] == offset || (signed)curr->wArg[1] == offset) )
 		return true;
 
@@ -892,13 +892,13 @@ bool asCByteCode::IsTempVarOverwrittenByInstr(cByteInstruction *curr, int offset
 	if( curr->op == BC_RET     ||
 		curr->op == BC_SUSPEND )
 		return true;
-	else if( (bcTypes[curr->op] == BCTYPE_wW_rW_rW_ARG || 
-			  bcTypes[curr->op] == BCTYPE_wW_rW_ARG    ||
-			  bcTypes[curr->op] == BCTYPE_wW_rW_DW_ARG ||
-			  bcTypes[curr->op] == BCTYPE_wW_ARG       ||
-			  bcTypes[curr->op] == BCTYPE_wW_W_ARG     ||
-			  bcTypes[curr->op] == BCTYPE_wW_DW_ARG    ||
-			  bcTypes[curr->op] == BCTYPE_wW_QW_ARG) &&
+	else if( (asBCInfo[curr->op].type == BCTYPE_wW_rW_rW_ARG || 
+			  asBCInfo[curr->op].type == BCTYPE_wW_rW_ARG    ||
+			  asBCInfo[curr->op].type == BCTYPE_wW_rW_DW_ARG ||
+			  asBCInfo[curr->op].type == BCTYPE_wW_ARG       ||
+			  asBCInfo[curr->op].type == BCTYPE_wW_W_ARG     ||
+			  asBCInfo[curr->op].type == BCTYPE_wW_DW_ARG    ||
+			  asBCInfo[curr->op].type == BCTYPE_wW_QW_ARG) &&
 			 curr->wArg[0] == offset )
 		return true;
 
@@ -1069,7 +1069,7 @@ void asCByteCode::ExtractLineNumbers()
 			{
 				// Transform BC_LINE into BC_SUSPEND
 				curr->op = BC_SUSPEND;
-				curr->size = SizeOfType(BCT_SUSPEND);
+				curr->size = SizeOfType(asBCInfo[BC_SUSPEND].type);
 				pos += curr->size;
 			}
 			else
@@ -1151,31 +1151,31 @@ int asCByteCode::AddInstructionFirst()
 	return 0;
 }
 
-void asCByteCode::Call(bcInstr instr, int funcID, int pop)
+void asCByteCode::Call(asEBCInstr instr, int funcID, int pop)
 {
 	if( AddInstruction() < 0 )
 		return;
 
-	asASSERT(bcTypes[instr] == BCTYPE_DW_ARG);
+	asASSERT(asBCInfo[instr].type == BCTYPE_DW_ARG);
 
 	last->op = instr;
-	last->size = SizeOfType(bcTypes[instr]);
+	last->size = SizeOfType(asBCInfo[instr].type);
 	last->stackInc = -pop; // BC_CALL and BC_CALLBND doesn't pop the argument but when the callee returns the arguments are already popped
 	*((int*)ARG_DW(last->arg)) = funcID;
 }
 
-void asCByteCode::Alloc(bcInstr instr, void *objID, int funcID, int pop)
+void asCByteCode::Alloc(asEBCInstr instr, void *objID, int funcID, int pop)
 {
 	if( AddInstruction() < 0 )
 		return;
 
 	last->op = instr;
-	last->size = SizeOfType(bcTypes[instr]);
+	last->size = SizeOfType(asBCInfo[instr].type);
 	last->stackInc = -pop; // BC_ALLOC
 
-	asASSERT(bcTypes[instr] == BCTYPE_PTR_DW_ARG);
+	asASSERT(asBCInfo[instr].type == BCTYPE_PTR_DW_ARG);
 	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)objID;
-	*((int*)(ARG_DW(last->arg)+PTR_SIZE)) = funcID;
+	*((int*)(ARG_DW(last->arg)+AS_PTR_SIZE)) = funcID;
 }
 
 void asCByteCode::Ret(int pop)
@@ -1183,10 +1183,10 @@ void asCByteCode::Ret(int pop)
 	if( AddInstruction() < 0 )
 		return;
 
-	asASSERT(BCT_RET == BCTYPE_W_ARG);
+	asASSERT(asBCInfo[BC_RET].type == BCTYPE_W_ARG);
 
 	last->op = BC_RET;
-	last->size = SizeOfType(BCT_RET);
+	last->size = SizeOfType(asBCInfo[BC_RET].type);
 	last->stackInc = 0; // The instruction pops the argument, but it doesn't affect current function
 	last->wArg[0] = (short)pop;
 }
@@ -1196,11 +1196,11 @@ void asCByteCode::JmpP(int var, asDWORD max)
 	if( AddInstruction() < 0 )
 		return;
 	
-	asASSERT(bcTypes[BC_JMPP] == BCTYPE_rW_ARG);
+	asASSERT(asBCInfo[BC_JMPP].type == BCTYPE_rW_ARG);
 
 	last->op       = BC_JMPP;
-	last->size     = SizeOfType(BCT_JMPP);
-	last->stackInc = bcStackInc[BC_JMPP];
+	last->size     = SizeOfType(asBCInfo[BC_JMPP].type);
+	last->stackInc = asBCInfo[BC_JMPP].stackInc;
 	last->wArg[0]  = (short)var;
 
 	// Store the largest jump that is made for PostProcess()
@@ -1229,7 +1229,7 @@ void asCByteCode::Line(int line, int column)
 	if( engine->ep.buildWithoutLineCues )
 		last->size = 0;
 	else
-		last->size = SizeOfType(BCT_SUSPEND);
+		last->size = SizeOfType(asBCInfo[BC_SUSPEND].type);
 	last->stackInc = 0;
 	*((int*)ARG_DW(last->arg)) = (line & 0xFFFFF)|((column & 0xFFF)<<20);
 }
@@ -1345,7 +1345,7 @@ void asCByteCode::Output(asDWORD *array)
 		{
 			*(asBYTE*)ap = asBYTE(instr->op);
 			*(((asBYTE*)ap)+1) = 0; // Second byte is always zero
-			switch( bcTypes[instr->op] ) 
+			switch( asBCInfo[instr->op].type ) 
 			{
 			case BCTYPE_NO_ARG:
 				*(((asWORD*)ap)+1) = 0; // Clear upper bytes
@@ -1558,35 +1558,35 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 
 		fprintf(file, "%3d %c ", instr->stackSize, instr->marked ? '*' : ' ');
 
-		switch( bcTypes[instr->op] )
+		switch( asBCInfo[instr->op].type )
 		{
 		case BCTYPE_W_ARG:
 			if( instr->op == BC_STR )
 			{
 				int id = instr->wArg[0];
 				const asCString &str = module->GetConstantString(id);
-				fprintf(file, "   %-8s %d         (l:%ld s:\"%.10s\")\n", bcName[instr->op].name, instr->wArg[0], (long int)str.GetLength(), str.AddressOf());
+				fprintf(file, "   %-8s %d         (l:%ld s:\"%.10s\")\n", asBCInfo[instr->op].name, instr->wArg[0], (long int)str.GetLength(), str.AddressOf());
 			}
 			else
-				fprintf(file, "   %-8s %d\n", bcName[instr->op].name, instr->wArg[0]);
+				fprintf(file, "   %-8s %d\n", asBCInfo[instr->op].name, instr->wArg[0]);
 			break;
 
 		case BCTYPE_wW_ARG:
 		case BCTYPE_rW_ARG:
-			fprintf(file, "   %-8s v%d\n", bcName[instr->op].name, instr->wArg[0]);
+			fprintf(file, "   %-8s v%d\n", asBCInfo[instr->op].name, instr->wArg[0]);
 			break;
 
 		case BCTYPE_wW_rW_ARG:
 		case BCTYPE_rW_rW_ARG:
-			fprintf(file, "   %-8s v%d, v%d\n", bcName[instr->op].name, instr->wArg[0], instr->wArg[1]);
+			fprintf(file, "   %-8s v%d, v%d\n", asBCInfo[instr->op].name, instr->wArg[0], instr->wArg[1]);
 			break;
 
 		case BCTYPE_W_rW_ARG:
-			fprintf(file, "   %-8s %d, v%d\n", bcName[instr->op].name, instr->wArg[0], instr->wArg[1]);
+			fprintf(file, "   %-8s %d, v%d\n", asBCInfo[instr->op].name, instr->wArg[0], instr->wArg[1]);
 			break;
 
 		case BCTYPE_wW_W_ARG:
-			fprintf(file, "   %-8s v%d, %d\n", bcName[instr->op].name, instr->wArg[0], instr->wArg[1]);
+			fprintf(file, "   %-8s v%d, %d\n", asBCInfo[instr->op].name, instr->wArg[0], instr->wArg[1]);
 			break;
 
 		case BCTYPE_wW_rW_DW_ARG:
@@ -1595,10 +1595,10 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			case BC_ADDIf:
 			case BC_SUBIf:
 			case BC_MULIf:
-				fprintf(file, "   %-8s v%d, v%d, %f\n", bcName[instr->op].name, instr->wArg[0], instr->wArg[1], *((float*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s v%d, v%d, %f\n", asBCInfo[instr->op].name, instr->wArg[0], instr->wArg[1], *((float*) ARG_DW(instr->arg)));
 				break;
 			default:
-				fprintf(file, "   %-8s v%d, v%d, %d\n", bcName[instr->op].name, instr->wArg[0], instr->wArg[1], *((int*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s v%d, v%d, %d\n", asBCInfo[instr->op].name, instr->wArg[0], instr->wArg[1], *((int*) ARG_DW(instr->arg)));
 				break;
 			}
 			break;
@@ -1607,16 +1607,16 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			switch( instr->op )
 			{
 			case BC_OBJTYPE:
-				fprintf(file, "   %-8s 0x%x\n", bcName[instr->op].name, (asUINT)*ARG_DW(instr->arg));
+				fprintf(file, "   %-8s 0x%x\n", asBCInfo[instr->op].name, (asUINT)*ARG_DW(instr->arg));
 				break;
 
 			case BC_PshC4:
 			case BC_Cast:
-				fprintf(file, "   %-8s 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s 0x%x          (i:%d, f:%g)\n", asBCInfo[instr->op].name, (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 				break;
 
 			case BC_TYPEID:
-				fprintf(file, "   %-8s 0x%x          '%s'\n", bcName[instr->op].name, (asUINT)*ARG_DW(instr->arg), engine->GetTypeDeclaration((int)*ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s 0x%x          '%s'\n", asBCInfo[instr->op].name, (asUINT)*ARG_DW(instr->arg), engine->GetTypeDeclaration((int)*ARG_DW(instr->arg)));
 				break;
 
 			case BC_CALL:
@@ -1627,13 +1627,13 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 					int funcID = *(int*)ARG_DW(instr->arg);
 					asCString decl = engine->GetFunctionDeclaration(funcID);
 
-					fprintf(file, "   %-8s %d           (%s)\n", bcName[instr->op].name, *((int*) ARG_DW(instr->arg)), decl.AddressOf());
+					fprintf(file, "   %-8s %d           (%s)\n", asBCInfo[instr->op].name, *((int*) ARG_DW(instr->arg)), decl.AddressOf());
 				}
 				break;	
 
 			case BC_FREE:
 			case BC_REFCPY:
-				fprintf(file, "   %-8s 0x%x\n", bcName[instr->op].name, *((int*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s 0x%x\n", asBCInfo[instr->op].name, *((int*) ARG_DW(instr->arg)));
 				break;
 
 			case BC_JMP:
@@ -1643,11 +1643,11 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			case BC_JNZ:
 			case BC_JNS:
 			case BC_JNP:
-				fprintf(file, "   %-8s %+d              (d:%d)\n", bcName[instr->op].name, *((int*) ARG_DW(instr->arg)), pos+*((int*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s %+d              (d:%d)\n", asBCInfo[instr->op].name, *((int*) ARG_DW(instr->arg)), pos+*((int*) ARG_DW(instr->arg)));
 				break;
 
 			default:
-				fprintf(file, "   %-8s %d\n", bcName[instr->op].name, *((int*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s %d\n", asBCInfo[instr->op].name, *((int*) ARG_DW(instr->arg)));
 				break;
 			}
 			break;
@@ -1655,24 +1655,24 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 		case BCTYPE_QW_ARG:
 #ifdef __GNUC__
 #ifdef _LP64
-			fprintf(file, "   %-8s 0x%lx           (i:%ld, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s 0x%lx           (i:%ld, f:%g)\n", asBCInfo[instr->op].name, *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #else
-			fprintf(file, "   %-8s 0x%llx           (i:%lld, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s 0x%llx           (i:%lld, f:%g)\n", asBCInfo[instr->op].name, *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #endif
 #else
-			fprintf(file, "   %-8s 0x%I64x          (i:%I64d, f:%g)\n", bcName[instr->op].name, *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s 0x%I64x          (i:%I64d, f:%g)\n", asBCInfo[instr->op].name, *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #endif
 			break;
 
 		case BCTYPE_wW_QW_ARG:
 #ifdef __GNUC__
 #ifdef _LP64
-			fprintf(file, "   %-8s v%d, 0x%lx           (i:%ld, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s v%d, 0x%lx           (i:%ld, f:%g)\n", asBCInfo[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #else
-			fprintf(file, "   %-8s v%d, 0x%llx           (i:%lld, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s v%d, 0x%llx           (i:%lld, f:%g)\n", asBCInfo[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #endif
 #else
-			fprintf(file, "   %-8s v%d, 0x%I64x          (i:%I64d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
+			fprintf(file, "   %-8s v%d, 0x%I64x          (i:%I64d, f:%g)\n", asBCInfo[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
 #endif
 			break;
 
@@ -1680,10 +1680,10 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			if( instr->op == BC_ALLOC )
 			{
 				asCObjectType *ot = *(asCObjectType**)ARG_DW(instr->arg);
-				fprintf(file, "   %-8s 0x%x, %d             (type:%s)\n", bcName[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1), ot->GetName());
+				fprintf(file, "   %-8s 0x%x, %d             (type:%s)\n", asBCInfo[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1), ot->GetName());
 			}
 			else
-				fprintf(file, "   %-8s %u, %d\n", bcName[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1));
+				fprintf(file, "   %-8s %u, %d\n", asBCInfo[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1));
 			break;
 
 		case BCTYPE_QW_DW_ARG:
@@ -1692,23 +1692,23 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 				asCObjectType *ot = *(asCObjectType**)ARG_QW(instr->arg);
 #ifdef __GNUC__
 #ifdef AS_64BIT_PTR
-				fprintf(file, "   %-8s 0x%lx, %d             (type:%s)\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
+				fprintf(file, "   %-8s 0x%lx, %d             (type:%s)\n", asBCInfo[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
 #else
-				fprintf(file, "   %-8s 0x%llx, %d             (type:%s)\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
+				fprintf(file, "   %-8s 0x%llx, %d             (type:%s)\n", asBCInfo[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
 #endif
 #else
-				fprintf(file, "   %-8s 0x%I64x, %d             (type:%s)\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
+				fprintf(file, "   %-8s 0x%I64x, %d             (type:%s)\n", asBCInfo[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName());
 #endif
 			}
 			else
 #ifdef __GNUC__
 #ifdef AS_64BIT_PTR
-				fprintf(file, "   %-8s %lu, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+				fprintf(file, "   %-8s %lu, %d\n", asBCInfo[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 #else
-				fprintf(file, "   %-8s %llu, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+				fprintf(file, "   %-8s %llu, %d\n", asBCInfo[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 #endif
 #else
-				fprintf(file, "   %-8s %I64u, %d\n", bcName[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
+				fprintf(file, "   %-8s %I64u, %d\n", asBCInfo[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 #endif
 			break;
 
@@ -1716,34 +1716,34 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			if( instr->op == BC_LABEL )
 				fprintf(file, "%d:\n", instr->wArg[0]);
 			else
-				fprintf(file, "   %s\n", bcName[instr->op].name);
+				fprintf(file, "   %s\n", asBCInfo[instr->op].name);
 			break;
 
 		case BCTYPE_rW_DW_ARG:
 		case BCTYPE_wW_DW_ARG:
 			if( instr->op == BC_SetV1 )
-				fprintf(file, "   %-8s v%d, 0x%x\n", bcName[instr->op].name, instr->wArg[0], *(asBYTE*)ARG_DW(instr->arg));
+				fprintf(file, "   %-8s v%d, 0x%x\n", asBCInfo[instr->op].name, instr->wArg[0], *(asBYTE*)ARG_DW(instr->arg));
 			else if( instr->op == BC_SetV2 )
-				fprintf(file, "   %-8s v%d, 0x%x\n", bcName[instr->op].name, instr->wArg[0], *(asWORD*)ARG_DW(instr->arg));
+				fprintf(file, "   %-8s v%d, 0x%x\n", asBCInfo[instr->op].name, instr->wArg[0], *(asWORD*)ARG_DW(instr->arg));
 			else if( instr->op == BC_SetV4 )
-				fprintf(file, "   %-8s v%d, 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s v%d, 0x%x          (i:%d, f:%g)\n", asBCInfo[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 			else if( instr->op == BC_CMPIf )
-				fprintf(file, "   %-8s v%d, %f\n", bcName[instr->op].name, instr->wArg[0], *(float*)ARG_DW(instr->arg));
+				fprintf(file, "   %-8s v%d, %f\n", asBCInfo[instr->op].name, instr->wArg[0], *(float*)ARG_DW(instr->arg));
 			else
-				fprintf(file, "   %-8s v%d, %d\n", bcName[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg));
+				fprintf(file, "   %-8s v%d, %d\n", asBCInfo[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg));
 			break;
 
 		case BCTYPE_W_DW_ARG:
 			if( instr->op == BC_SetG4 )
-				fprintf(file, "   %-8s %d, 0x%x          (i:%d, f:%g)\n", bcName[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
+				fprintf(file, "   %-8s %d, 0x%x          (i:%d, f:%g)\n", asBCInfo[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 			break;
 
 		case BCTYPE_wW_rW_rW_ARG:
-			fprintf(file, "   %-8s v%d, v%d, v%d\n", bcName[instr->op].name, instr->wArg[0], instr->wArg[1], instr->wArg[2]);
+			fprintf(file, "   %-8s v%d, v%d, v%d\n", asBCInfo[instr->op].name, instr->wArg[0], instr->wArg[1], instr->wArg[2]);
 			break;
 
 		case BCTYPE_NO_ARG:
-			fprintf(file, "   %s\n", bcName[instr->op].name);
+			fprintf(file, "   %s\n", asBCInfo[instr->op].name);
 			break;
 
 		default:
@@ -1762,14 +1762,14 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 // Decrease stack with "numDwords"
 int asCByteCode::Pop(int numDwords)
 {
-	asASSERT(BCT_POP == BCTYPE_W_ARG);
+	asASSERT(asBCInfo[BC_POP].type == BCTYPE_W_ARG);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op = BC_POP;
 	last->wArg[0] = (short)numDwords;
-	last->size = SizeOfType(BCT_POP);
+	last->size = SizeOfType(asBCInfo[BC_POP].type);
 	last->stackInc = -numDwords;
 
 	return last->stackInc;
@@ -1778,71 +1778,71 @@ int asCByteCode::Pop(int numDwords)
 // Increase stack with "numDwords"
 int asCByteCode::Push(int numDwords)
 {
-	asASSERT(BCT_PUSH == BCTYPE_W_ARG);
+	asASSERT(asBCInfo[BC_PUSH].type == BCTYPE_W_ARG);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op = BC_PUSH;
 	last->wArg[0] = (short)numDwords;
-	last->size = SizeOfType(BCT_PUSH);
+	last->size = SizeOfType(asBCInfo[BC_PUSH].type);
 	last->stackInc = numDwords;
 
 	return last->stackInc;
 }
 
 
-int asCByteCode::InsertFirstInstrDWORD(bcInstr bc, asDWORD param)
+int asCByteCode::InsertFirstInstrDWORD(asEBCInstr bc, asDWORD param)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_DW_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstructionFirst() < 0 )
 		return 0;
 
 	first->op = bc;
 	*ARG_DW(first->arg) = param;
-	first->size = SizeOfType(bcTypes[bc]);
-	first->stackInc = bcStackInc[bc];
+	first->size = SizeOfType(asBCInfo[bc].type);
+	first->stackInc = asBCInfo[bc].stackInc;
 
 	return first->stackInc;
 }
 
-int asCByteCode::InsertFirstInstrQWORD(bcInstr bc, asQWORD param)
+int asCByteCode::InsertFirstInstrQWORD(asEBCInstr bc, asQWORD param)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_QW_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_QW_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstructionFirst() < 0 )
 		return 0;
 
 	first->op = bc;
 	*ARG_QW(first->arg) = param;
-	first->size = SizeOfType(bcTypes[bc]);
-	first->stackInc = bcStackInc[bc];
+	first->size = SizeOfType(asBCInfo[bc].type);
+	first->stackInc = asBCInfo[bc].stackInc;
 
 	return first->stackInc;
 }
 
-int asCByteCode::Instr(bcInstr bc)
+int asCByteCode::Instr(asEBCInstr bc)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_NO_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_NO_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op       = bc;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrW_W_W(bcInstr bc, int a, int b, int c)
+int asCByteCode::InstrW_W_W(asEBCInstr bc, int a, int b, int c)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_wW_rW_rW_ARG);
-	asASSERT(bcStackInc[bc] == 0);
+	asASSERT(asBCInfo[bc].type == BCTYPE_wW_rW_rW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1851,17 +1851,17 @@ int asCByteCode::InstrW_W_W(bcInstr bc, int a, int b, int c)
 	last->wArg[0]  = (short)a;
 	last->wArg[1]  = (short)b;
 	last->wArg[2]  = (short)c;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrW_W(bcInstr bc, int a, int b)
+int asCByteCode::InstrW_W(asEBCInstr bc, int a, int b)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_wW_rW_ARG ||
-	         bcTypes[bc] == BCTYPE_rW_rW_ARG);
-	asASSERT(bcStackInc[bc] == 0);
+	asASSERT(asBCInfo[bc].type == BCTYPE_wW_rW_ARG ||
+	         asBCInfo[bc].type == BCTYPE_rW_rW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1869,17 +1869,17 @@ int asCByteCode::InstrW_W(bcInstr bc, int a, int b)
 	last->op       = bc;
 	last->wArg[0]  = (short)a;
 	last->wArg[1]  = (short)b;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrW_DW(bcInstr bc, asWORD a, asDWORD b)
+int asCByteCode::InstrW_DW(asEBCInstr bc, asWORD a, asDWORD b)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG ||
-             bcTypes[bc] == BCTYPE_rW_DW_ARG);
-	asASSERT(bcStackInc[bc] == 0);
+	asASSERT(asBCInfo[bc].type == BCTYPE_wW_DW_ARG ||
+             asBCInfo[bc].type == BCTYPE_rW_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1887,17 +1887,17 @@ int asCByteCode::InstrW_DW(bcInstr bc, asWORD a, asDWORD b)
 	last->op       = bc;
 	last->wArg[0]  = a;
 	*((int*) ARG_DW(last->arg)) = b;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrSHORT_B(bcInstr bc, short a, asBYTE b)
+int asCByteCode::InstrSHORT_B(asEBCInstr bc, short a, asBYTE b)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
-	         bcTypes[bc] == BCTYPE_rW_DW_ARG);
-	asASSERT(bcStackInc[bc] == 0);
+	asASSERT(asBCInfo[bc].type == BCTYPE_wW_DW_ARG || 
+	         asBCInfo[bc].type == BCTYPE_rW_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1914,17 +1914,17 @@ int asCByteCode::InstrSHORT_B(bcInstr bc, short a, asBYTE b)
 	argPtr[2] = 0;
 	argPtr[3] = 0;
 
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrSHORT_W(bcInstr bc, short a, asWORD b)
+int asCByteCode::InstrSHORT_W(asEBCInstr bc, short a, asWORD b)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
-	         bcTypes[bc] == BCTYPE_rW_DW_ARG);
-	asASSERT(bcStackInc[bc] == 0);
+	asASSERT(asBCInfo[bc].type == BCTYPE_wW_DW_ARG || 
+	         asBCInfo[bc].type == BCTYPE_rW_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1939,17 +1939,17 @@ int asCByteCode::InstrSHORT_W(bcInstr bc, short a, asWORD b)
 	argPtr[0] = b; // The value is always stored in the lower word
 	argPtr[1] = 0; // and clear the rest of the DWORD
 
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrSHORT_DW(bcInstr bc, short a, asDWORD b)
+int asCByteCode::InstrSHORT_DW(asEBCInstr bc, short a, asDWORD b)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG || 
-	         bcTypes[bc] == BCTYPE_rW_DW_ARG);
-	asASSERT(bcStackInc[bc] == 0);
+	asASSERT(asBCInfo[bc].type == BCTYPE_wW_DW_ARG || 
+	         asBCInfo[bc].type == BCTYPE_rW_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1957,16 +1957,16 @@ int asCByteCode::InstrSHORT_DW(bcInstr bc, short a, asDWORD b)
 	last->op       = bc;
 	last->wArg[0]  = a;
 	*((int*) ARG_DW(last->arg)) = b;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrW_QW(bcInstr bc, asWORD a, asQWORD b)
+int asCByteCode::InstrW_QW(asEBCInstr bc, asWORD a, asQWORD b)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_wW_QW_ARG);
-	asASSERT(bcStackInc[bc] == 0);
+	asASSERT(asBCInfo[bc].type == BCTYPE_wW_QW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1974,16 +1974,16 @@ int asCByteCode::InstrW_QW(bcInstr bc, asWORD a, asQWORD b)
 	last->op       = bc;
 	last->wArg[0]  = a;
 	*ARG_QW(last->arg) = b;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrSHORT_QW(bcInstr bc, short a, asQWORD b)
+int asCByteCode::InstrSHORT_QW(asEBCInstr bc, short a, asQWORD b)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_wW_QW_ARG);
-	asASSERT(bcStackInc[bc] == 0);
+	asASSERT(asBCInfo[bc].type == BCTYPE_wW_QW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -1991,16 +1991,16 @@ int asCByteCode::InstrSHORT_QW(bcInstr bc, short a, asQWORD b)
 	last->op       = bc;
 	last->wArg[0]  = a;
 	*ARG_QW(last->arg) = b;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrW_FLOAT(bcInstr bc, asWORD a, float b)
+int asCByteCode::InstrW_FLOAT(asEBCInstr bc, asWORD a, float b)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_wW_DW_ARG);
-	asASSERT(bcStackInc[bc] == 0);
+	asASSERT(asBCInfo[bc].type == BCTYPE_wW_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
@@ -2008,140 +2008,140 @@ int asCByteCode::InstrW_FLOAT(bcInstr bc, asWORD a, float b)
 	last->op       = bc;
 	last->wArg[0]  = a;
 	*((float*) ARG_DW(last->arg)) = b;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrSHORT(bcInstr bc, short param)
+int asCByteCode::InstrSHORT(asEBCInstr bc, short param)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_rW_ARG || 
-	         bcTypes[bc] == BCTYPE_wW_ARG || 
-	         bcTypes[bc] == BCTYPE_W_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_rW_ARG || 
+	         asBCInfo[bc].type == BCTYPE_wW_ARG || 
+	         asBCInfo[bc].type == BCTYPE_W_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op       = bc;
 	last->wArg[0]  = param;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrINT(bcInstr bc, int param)
+int asCByteCode::InstrINT(asEBCInstr bc, int param)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_DW_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op = bc;
 	*((int*) ARG_DW(last->arg)) = param;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrDWORD(bcInstr bc, asDWORD param)
+int asCByteCode::InstrDWORD(asEBCInstr bc, asDWORD param)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_DW_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op = bc;
 	*ARG_DW(last->arg) = param;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrPTR(bcInstr bc, void *param)
+int asCByteCode::InstrPTR(asEBCInstr bc, void *param)
 {
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op = bc;
-	asASSERT(bcTypes[bc] == BCTYPE_PTR_ARG);
+	asASSERT(asBCInfo[bc].type == BCTYPE_PTR_ARG);
 	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)param;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrQWORD(bcInstr bc, asQWORD param)
+int asCByteCode::InstrQWORD(asEBCInstr bc, asQWORD param)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_QW_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_QW_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op = bc;
 	*ARG_QW(last->arg) = param;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrWORD(bcInstr bc, asWORD param)
+int asCByteCode::InstrWORD(asEBCInstr bc, asWORD param)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_W_ARG  || 
-	         bcTypes[bc] == BCTYPE_rW_ARG || 
-	         bcTypes[bc] == BCTYPE_wW_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_W_ARG  || 
+	         asBCInfo[bc].type == BCTYPE_rW_ARG || 
+	         asBCInfo[bc].type == BCTYPE_wW_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op       = bc;
 	last->wArg[0]  = param;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrFLOAT(bcInstr bc, float param)
+int asCByteCode::InstrFLOAT(asEBCInstr bc, float param)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_DW_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op = bc;
 	*((float*) ARG_DW(last->arg)) = param;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }
 
-int asCByteCode::InstrDOUBLE(bcInstr bc, double param)
+int asCByteCode::InstrDOUBLE(asEBCInstr bc, double param)
 {
-	asASSERT(bcTypes[bc] == BCTYPE_QW_ARG);
-	asASSERT(bcStackInc[bc] != 0xFFFF);
+	asASSERT(asBCInfo[bc].type == BCTYPE_QW_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
 
 	if( AddInstruction() < 0 )
 		return 0;
 
 	last->op = bc;
 	*((double*) ARG_QW(last->arg)) = param;
-	last->size     = SizeOfType(bcTypes[bc]);
-	last->stackInc = bcStackInc[bc];
+	last->size     = SizeOfType(asBCInfo[bc].type);
+	last->stackInc = asBCInfo[bc].stackInc;
 
 	return last->stackInc;
 }

@@ -90,31 +90,31 @@ public:
 
 	void Label(short label);
 	void Line(int line, int column);
-	void Call(bcInstr bc, int funcID, int pop);
-	void Alloc(bcInstr bc, void *objID, int funcID, int pop);
+	void Call(asEBCInstr bc, int funcID, int pop);
+	void Alloc(asEBCInstr bc, void *objID, int funcID, int pop);
 	void Ret(int pop);
 	void JmpP(int var, asDWORD max);
 
-	int InsertFirstInstrDWORD(bcInstr bc, asDWORD param);
-	int InsertFirstInstrQWORD(bcInstr bc, asQWORD param);
-	int Instr(bcInstr bc);
-	int InstrQWORD(bcInstr bc, asQWORD param);
-	int InstrDOUBLE(bcInstr bc, double param);
-	int InstrPTR(bcInstr bc, void *param);
-	int InstrDWORD(bcInstr bc, asDWORD param);
-	int InstrWORD(bcInstr bc, asWORD param);
-	int InstrSHORT(bcInstr bc, short param);
-	int InstrFLOAT(bcInstr bc, float param);
-	int InstrINT(bcInstr bc, int param);
-	int InstrW_W_W(bcInstr bc, int a, int b, int c);
-	int InstrSHORT_B(bcInstr bc, short a, asBYTE b);
-	int InstrSHORT_W(bcInstr bc, short a, asWORD b);
-	int InstrSHORT_DW(bcInstr bc, short a, asDWORD b);
-	int InstrSHORT_QW(bcInstr bc, short a, asQWORD b);
-	int InstrW_DW(bcInstr bc, asWORD a, asDWORD b);
-	int InstrW_QW(bcInstr bc, asWORD a, asQWORD b);
-	int InstrW_FLOAT(bcInstr bc, asWORD a, float b);
-	int InstrW_W(bcInstr bc, int w, int b);
+	int InsertFirstInstrDWORD(asEBCInstr bc, asDWORD param);
+	int InsertFirstInstrQWORD(asEBCInstr bc, asQWORD param);
+	int Instr(asEBCInstr bc);
+	int InstrQWORD(asEBCInstr bc, asQWORD param);
+	int InstrDOUBLE(asEBCInstr bc, double param);
+	int InstrPTR(asEBCInstr bc, void *param);
+	int InstrDWORD(asEBCInstr bc, asDWORD param);
+	int InstrWORD(asEBCInstr bc, asWORD param);
+	int InstrSHORT(asEBCInstr bc, short param);
+	int InstrFLOAT(asEBCInstr bc, float param);
+	int InstrINT(asEBCInstr bc, int param);
+	int InstrW_W_W(asEBCInstr bc, int a, int b, int c);
+	int InstrSHORT_B(asEBCInstr bc, short a, asBYTE b);
+	int InstrSHORT_W(asEBCInstr bc, short a, asWORD b);
+	int InstrSHORT_DW(asEBCInstr bc, short a, asDWORD b);
+	int InstrSHORT_QW(asEBCInstr bc, short a, asQWORD b);
+	int InstrW_DW(asEBCInstr bc, asWORD a, asDWORD b);
+	int InstrW_QW(asEBCInstr bc, asWORD a, asQWORD b);
+	int InstrW_FLOAT(asEBCInstr bc, asWORD a, float b);
+	int InstrW_W(asEBCInstr bc, int w, int b);
 
 	int Pop (int numDwords);
 	int Push(int numDwords);
@@ -129,10 +129,10 @@ public:
 protected:
 	// Helpers for Optimize
 	bool CanBeSwapped(cByteInstruction *curr);
-	bool IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2);
-	bool IsCombination(cByteInstruction *curr, bcInstr bc1, bcInstr bc2, bcInstr bc3);
-	cByteInstruction *ChangeFirstDeleteNext(cByteInstruction *curr, bcInstr bc);
-	cByteInstruction *DeleteFirstChangeNext(cByteInstruction *curr, bcInstr bc);
+	bool IsCombination(cByteInstruction *curr, asEBCInstr bc1, asEBCInstr bc2);
+	bool IsCombination(cByteInstruction *curr, asEBCInstr bc1, asEBCInstr bc2, asEBCInstr bc3);
+	cByteInstruction *ChangeFirstDeleteNext(cByteInstruction *curr, asEBCInstr bc);
+	cByteInstruction *DeleteFirstChangeNext(cByteInstruction *curr, asEBCInstr bc);
 	cByteInstruction *DeleteInstruction(cByteInstruction *instr);
 	void RemoveInstruction(cByteInstruction *instr);
 	cByteInstruction *GoBack(cByteInstruction *curr);
@@ -172,7 +172,7 @@ public:
 	cByteInstruction *next;
 	cByteInstruction *prev;
 
-	bcInstr op;
+	asEBCInstr op;
 	asQWORD arg;
 	short wArg[3];
 	int size;

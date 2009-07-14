@@ -193,6 +193,7 @@
 #define TXT_SCOPE_REQUIRE_REL_BEHAVIOUR      "A scoped reference type must have the release behaviour"
 #define TXT_REF_REQUIRE_ADD_REL_BEHAVIOUR    "A reference type must have the addref and release behaviours"
 #define TXT_NON_POD_REQUIRE_CONSTR_DESTR_BEHAVIOUR "A non-pod value type must have the constructor and destructor behaviours"
+#define TXT_DONT_SUPPORT_TYPE_s_BY_VAL    "Don't support passing type '%s' by value to application"
 
 // Internal names
 

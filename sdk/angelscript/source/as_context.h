@@ -57,6 +57,19 @@ class asCModule;
 // TODO: asIScriptContext should have a method int ExecuteString(const char *string, asIScriptModule *module = 0);
 //       That method should replace the ExecuteString in the engine interface.
 
+// TODO: Move this to angelscript.h so that external JIT compilers can access it
+struct asSVMRegisters
+{
+  asDWORD          *programPointer;     // points to current bytecode instruction
+  asDWORD          *stackFramePointer;  // function stack frame
+  asDWORD          *stackPointer;       // top of stack (grows downward)
+  void            **globalVarPointers;  // global variable pointers
+  asQWORD           valueRegister;      // temp register for primitives
+  void             *objectRegister;     // temp register for objects and handles
+  asIObjectType    *objectType;         // type of object held in object register
+  bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
+};
+
 class asCContext : public asIScriptContext
 {
 public:
@@ -167,19 +180,12 @@ public:
 	bool doAbort;
 	bool externalSuspendRequest;
 	bool isCallingSystemFunction;
-	bool doProcessSuspend;
-
-	asDWORD *byteCode;
 
 	asCScriptFunction *currentFunction;
-	asDWORD *stackFramePointer;
 	bool isStackMemoryNotAllocated;
-
-	asQWORD register1;
 
 	asCArray<size_t> callStack;
 	asCArray<asDWORD *> stackBlocks;
-	asDWORD *stackPointer;
 	int stackBlockSize;
 	int stackIndex;
 
@@ -191,9 +197,6 @@ public:
 
 	int returnValueSize;
 	int argumentsSize;
-
-	void          *objectRegister;
-	asCObjectType *objectType;
 
 	// String function
 	asCScriptFunction *stringFunction;
@@ -210,6 +213,9 @@ public:
 	void *exceptionCallbackObj;
 
 	void *userData;
+
+	// Registers available to JIT compiler functions
+	asSVMRegisters regs;
 };
 
 END_AS_NAMESPACE

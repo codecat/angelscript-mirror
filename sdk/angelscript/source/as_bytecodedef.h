@@ -45,8 +45,7 @@ BEGIN_AS_NAMESPACE
 
 //---------------------------------------------
 // Byte code instructions
-
-enum bcInstr
+enum asEBCInstr
 {
 	// Unsorted
 	BC_POP			= 0,	// Decrease stack size
@@ -258,11 +257,12 @@ enum bcInstr
 	BC_MAXBYTECODE  = 175,
 
 	// Temporary tokens, can't be output to the final program
-	BC_PSP			= 246,
-	BC_LINE			= 248,
+	BC_PSP			= 253,
+	BC_LINE			= 254,
 	BC_LABEL		= 255
 };
 
+// TODO: This is internal, and shouldn't be moved to public header
 #ifdef AS_64BIT_PTR
 	#define BC_RDSPTR BC_RDS8
 #else
@@ -271,31 +271,31 @@ enum bcInstr
 
 
 //------------------------------------------------------------
-// Relocation Table
-extern asDWORD relocTable[BC_MAXBYTECODE];
+// Instruction types
+enum asEBCType
+{
+	BCTYPE_INFO         = 0,
+	BCTYPE_NO_ARG       = 1,
+	BCTYPE_W_ARG        = 2,
+	BCTYPE_wW_ARG       = 3,
+	BCTYPE_DW_ARG       = 4,
+	BCTYPE_rW_DW_ARG    = 5,
+	BCTYPE_QW_ARG       = 6,
+	BCTYPE_DW_DW_ARG    = 7,
+	BCTYPE_wW_rW_rW_ARG = 8,
+	BCTYPE_wW_QW_ARG    = 9,
+	BCTYPE_wW_rW_ARG    = 10,
+	BCTYPE_rW_ARG       = 11,
+	BCTYPE_wW_DW_ARG    = 12,
+	BCTYPE_wW_rW_DW_ARG = 13,
+	BCTYPE_rW_rW_ARG    = 14,
+	BCTYPE_W_rW_ARG     = 15,
+	BCTYPE_wW_W_ARG     = 16,
+	BCTYPE_W_DW_ARG     = 17,
+	BCTYPE_QW_DW_ARG    = 18
+};
 
-//------------------------------------------------------------
-// Instruction sizes
-const int BCTYPE_INFO         = 0;
-const int BCTYPE_NO_ARG       = 1;
-const int BCTYPE_W_ARG        = 2;
-const int BCTYPE_wW_ARG       = 3;
-const int BCTYPE_DW_ARG       = 4;
-const int BCTYPE_rW_DW_ARG    = 5;
-const int BCTYPE_QW_ARG       = 6;
-const int BCTYPE_DW_DW_ARG    = 7;
-const int BCTYPE_wW_rW_rW_ARG = 8;
-const int BCTYPE_wW_QW_ARG    = 9;
-const int BCTYPE_wW_rW_ARG    = 10;
-const int BCTYPE_rW_ARG       = 11;
-const int BCTYPE_wW_DW_ARG    = 12;
-const int BCTYPE_wW_rW_DW_ARG = 13;
-const int BCTYPE_rW_rW_ARG    = 14;
-const int BCTYPE_W_rW_ARG     = 15;
-const int BCTYPE_wW_W_ARG     = 16;
-const int BCTYPE_W_DW_ARG     = 17;
-const int BCTYPE_QW_DW_ARG    = 18;
-
+// TODO: This is internal, and shouldn't be moved to public header
 #ifndef AS_64BIT_PTR
 	#define BCTYPE_PTR_ARG    BCTYPE_DW_ARG
 	#define BCTYPE_PTR_DW_ARG BCTYPE_DW_DW_ARG
@@ -304,799 +304,289 @@ const int BCTYPE_QW_DW_ARG    = 18;
 	#define BCTYPE_PTR_DW_ARG BCTYPE_QW_DW_ARG
 #endif
 
-const int BCT_POP       = BCTYPE_W_ARG;       
-const int BCT_PUSH      = BCTYPE_W_ARG;
-const int BCT_PshC4     = BCTYPE_DW_ARG;
-const int BCT_PshV4     = BCTYPE_rW_ARG;
-const int BCT_PSF       = BCTYPE_rW_ARG;
-const int BCT_SWAP4     = BCTYPE_NO_ARG;
-const int BCT_NOT       = BCTYPE_rW_ARG;
-const int BCT_PshG4     = BCTYPE_W_ARG;
-const int BCT_LdGRdR4   = BCTYPE_wW_W_ARG;
-const int BCT_CALL      = BCTYPE_DW_ARG;
-const int BCT_RET       = BCTYPE_W_ARG;
-const int BCT_JMP       = BCTYPE_DW_ARG;
-
-const int BCT_JZ        = BCTYPE_DW_ARG;
-const int BCT_JNZ       = BCTYPE_DW_ARG;
-const int BCT_JS        = BCTYPE_DW_ARG;
-const int BCT_JNS       = BCTYPE_DW_ARG;
-const int BCT_JP        = BCTYPE_DW_ARG;
-const int BCT_JNP       = BCTYPE_DW_ARG;
-
-const int BCT_TZ        = BCTYPE_NO_ARG;
-const int BCT_TNZ       = BCTYPE_NO_ARG;
-const int BCT_TS        = BCTYPE_NO_ARG;
-const int BCT_TNS       = BCTYPE_NO_ARG;
-const int BCT_TP        = BCTYPE_NO_ARG;
-const int BCT_TNP       = BCTYPE_NO_ARG;
-
-const int BCT_NEGi      = BCTYPE_rW_ARG;
-const int BCT_NEGf      = BCTYPE_rW_ARG;
-const int BCT_NEGd      = BCTYPE_rW_ARG;
-
-const int BCT_INCi16    = BCTYPE_NO_ARG;
-const int BCT_INCi8     = BCTYPE_NO_ARG;
-const int BCT_DECi16    = BCTYPE_NO_ARG;
-const int BCT_DECi8     = BCTYPE_NO_ARG;
-const int BCT_INCi      = BCTYPE_NO_ARG;
-const int BCT_DECi      = BCTYPE_NO_ARG;
-const int BCT_INCf      = BCTYPE_NO_ARG;
-const int BCT_DECf      = BCTYPE_NO_ARG;
-const int BCT_INCd      = BCTYPE_NO_ARG;
-const int BCT_DECd      = BCTYPE_NO_ARG;
-
-const int BCT_IncVi     = BCTYPE_rW_ARG;
-const int BCT_DecVi     = BCTYPE_rW_ARG;
-
-const int BCT_BNOT      = BCTYPE_rW_ARG;
-const int BCT_BAND      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BOR       = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BXOR      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BSLL      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BSRL      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BSRA      = BCTYPE_wW_rW_rW_ARG;
-
-const int BCT_COPY      = BCTYPE_W_ARG;
-const int BCT_SET8      = BCTYPE_QW_ARG;
-const int BCT_RDS8      = BCTYPE_NO_ARG;
-const int BCT_SWAP8     = BCTYPE_NO_ARG;
-
-const int BCT_CMPd      = BCTYPE_rW_rW_ARG;
-const int BCT_CMPu      = BCTYPE_rW_rW_ARG;
-const int BCT_CMPf      = BCTYPE_rW_rW_ARG;
-const int BCT_CMPi      = BCTYPE_rW_rW_ARG;
-const int BCT_CMPIi     = BCTYPE_rW_DW_ARG;
-const int BCT_CMPIf     = BCTYPE_rW_DW_ARG;
-const int BCT_CMPIu     = BCTYPE_rW_DW_ARG;
-
-const int BCT_JMPP      = BCTYPE_rW_ARG;
-const int BCT_PopRPtr   = BCTYPE_NO_ARG;
-const int BCT_PshRPtr   = BCTYPE_NO_ARG;
-const int BCT_STR       = BCTYPE_W_ARG;
-const int BCT_CALLSYS   = BCTYPE_DW_ARG;
-const int BCT_CALLBND   = BCTYPE_DW_ARG;
-const int BCT_SUSPEND   = BCTYPE_NO_ARG;
-const int BCT_ALLOC     = BCTYPE_PTR_DW_ARG;
-const int BCT_FREE      = BCTYPE_PTR_ARG;
-const int BCT_LOADOBJ   = BCTYPE_rW_ARG;
-const int BCT_STOREOBJ  = BCTYPE_wW_ARG;
-const int BCT_GETOBJ    = BCTYPE_W_ARG;
-const int BCT_REFCPY    = BCTYPE_PTR_ARG;
-const int BCT_CHKREF    = BCTYPE_NO_ARG;
-const int BCT_GETOBJREF = BCTYPE_W_ARG;
-const int BCT_GETREF    = BCTYPE_W_ARG;
-const int BCT_SWAP48    = BCTYPE_NO_ARG;
-const int BCT_SWAP84    = BCTYPE_NO_ARG;
-const int BCT_OBJTYPE   = BCTYPE_PTR_ARG;
-const int BCT_TYPEID    = BCTYPE_DW_ARG;
-const int BCT_SetV4     = BCTYPE_wW_DW_ARG;
-const int BCT_SetV8     = BCTYPE_wW_QW_ARG;
-const int BCT_ADDSi     = BCTYPE_DW_ARG;
-const int BCT_CpyVtoV4  = BCTYPE_wW_rW_ARG;
-const int BCT_CpyVtoV8  = BCTYPE_wW_rW_ARG;
-const int BCT_CpyVtoR4  = BCTYPE_rW_ARG;
-const int BCT_CpyVtoR8  = BCTYPE_rW_ARG;
-const int BCT_CpyVtoG4  = BCTYPE_W_rW_ARG;
-const int BCT_CpyRtoV4  = BCTYPE_wW_ARG;
-const int BCT_CpyRtoV8  = BCTYPE_wW_ARG;
-const int BCT_CpyGtoV4  = BCTYPE_wW_W_ARG;
-const int BCT_WRTV1     = BCTYPE_rW_ARG;
-const int BCT_WRTV2     = BCTYPE_rW_ARG;
-const int BCT_WRTV4     = BCTYPE_rW_ARG;
-const int BCT_WRTV8     = BCTYPE_rW_ARG;
-const int BCT_RDR1      = BCTYPE_wW_ARG;
-const int BCT_RDR2      = BCTYPE_wW_ARG;
-const int BCT_RDR4      = BCTYPE_wW_ARG;
-const int BCT_RDR8      = BCTYPE_wW_ARG;
-const int BCT_LDG       = BCTYPE_W_ARG;
-const int BCT_LDV       = BCTYPE_rW_ARG;
-const int BCT_PGA       = BCTYPE_W_ARG;
-const int BCT_RDS4      = BCTYPE_NO_ARG;
-const int BCT_VAR       = BCTYPE_rW_ARG;
-
-const int BCT_iTOf      = BCTYPE_rW_ARG;
-const int BCT_fTOi      = BCTYPE_rW_ARG;
-const int BCT_uTOf      = BCTYPE_rW_ARG;
-const int BCT_fTOu      = BCTYPE_rW_ARG;
-const int BCT_sbTOi     = BCTYPE_rW_ARG;
-const int BCT_swTOi     = BCTYPE_rW_ARG;
-const int BCT_ubTOi     = BCTYPE_rW_ARG;
-const int BCT_uwTOi     = BCTYPE_rW_ARG;
-const int BCT_dTOi      = BCTYPE_wW_rW_ARG;
-const int BCT_dTOu      = BCTYPE_wW_rW_ARG;
-const int BCT_dTOf      = BCTYPE_wW_rW_ARG;
-const int BCT_iTOd      = BCTYPE_wW_rW_ARG;
-const int BCT_uTOd      = BCTYPE_wW_rW_ARG;
-const int BCT_fTOd      = BCTYPE_wW_rW_ARG;
-
-const int BCT_ADDi      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_SUBi      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_MULi      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_DIVi      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_MODi      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_ADDf      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_SUBf      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_MULf      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_DIVf      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_MODf      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_ADDd      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_SUBd      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_MULd      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_DIVd      = BCTYPE_wW_rW_rW_ARG;
-const int BCT_MODd      = BCTYPE_wW_rW_rW_ARG;
-
-const int BCT_ADDIi     = BCTYPE_wW_rW_DW_ARG;
-const int BCT_SUBIi     = BCTYPE_wW_rW_DW_ARG;
-const int BCT_MULIi     = BCTYPE_wW_rW_DW_ARG;
-const int BCT_ADDIf     = BCTYPE_wW_rW_DW_ARG;
-const int BCT_SUBIf     = BCTYPE_wW_rW_DW_ARG;
-const int BCT_MULIf     = BCTYPE_wW_rW_DW_ARG;
-
-const int BCT_SetG4     = BCTYPE_W_DW_ARG;
-const int BCT_ChkRefS   = BCTYPE_NO_ARG;
-const int BCT_ChkNullV  = BCTYPE_rW_ARG;
-const int BCT_CALLINTF  = BCTYPE_DW_ARG;
-
-const int BCT_iTOb      = BCTYPE_rW_ARG;
-const int BCT_iTOw      = BCTYPE_rW_ARG;
-const int BCT_SetV1     = BCTYPE_wW_DW_ARG;
-const int BCT_SetV2     = BCTYPE_wW_DW_ARG;
-const int BCT_Cast      = BCTYPE_DW_ARG;
-
-const int BCT_i64TOi    = BCTYPE_wW_rW_ARG;
-const int BCT_uTOi64    = BCTYPE_wW_rW_ARG;
-const int BCT_iTOi64    = BCTYPE_wW_rW_ARG;
-const int BCT_fTOi64    = BCTYPE_wW_rW_ARG;
-const int BCT_dTOi64    = BCTYPE_rW_ARG;
-const int BCT_fTOu64    = BCTYPE_wW_rW_ARG;
-const int BCT_dTOu64    = BCTYPE_rW_ARG;
-const int BCT_i64TOf    = BCTYPE_wW_rW_ARG;
-const int BCT_u64TOf    = BCTYPE_wW_rW_ARG;
-const int BCT_i64TOd    = BCTYPE_rW_ARG;
-const int BCT_u64TOd    = BCTYPE_rW_ARG;
-const int BCT_NEGi64    = BCTYPE_rW_ARG;
-const int BCT_INCi64    = BCTYPE_NO_ARG;
-const int BCT_DECi64    = BCTYPE_NO_ARG;
-const int BCT_BNOT64    = BCTYPE_rW_ARG;
-
-const int BCT_ADDi64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_SUBi64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_MULi64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_DIVi64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_MODi64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BAND64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BOR64     = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BXOR64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BSLL64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BSRL64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_BSRA64    = BCTYPE_wW_rW_rW_ARG;
-const int BCT_CMPi64    = BCTYPE_rW_rW_ARG;
-const int BCT_CMPu64    = BCTYPE_rW_rW_ARG;
-const int BCT_ChkNullS  = BCTYPE_W_ARG;
-const int BCT_ClrHi     = BCTYPE_NO_ARG;
-
-
-// Temporary
-const int BCT_PSP       = BCTYPE_W_ARG;
-
-const int bcTypes[256] =
+//--------------------------------------------
+// Instruction info
+struct asSBCInfo
 {
-	BCT_POP,
-	BCT_PUSH,
-	BCT_PshC4,
-	BCT_PshV4,
-	BCT_PSF,
-	BCT_SWAP4,
-	BCT_NOT,
-	BCT_PshG4,
-	BCT_LdGRdR4,
-	BCT_CALL,
-	BCT_RET,
-	BCT_JMP,
-	BCT_JZ,
-	BCT_JNZ,
-	BCT_JS,
-	BCT_JNS,
-	BCT_JP,
-	BCT_JNP,
-	BCT_TZ,
-	BCT_TNZ,
-	BCT_TS,
-	BCT_TNS,
-	BCT_TP,
-	BCT_TNP,
-	BCT_NEGi,
-	BCT_NEGf,
-	BCT_NEGd,
-	BCT_INCi16,
-	BCT_INCi8,
-	BCT_DECi16,
-	BCT_DECi8,
-	BCT_INCi,
-	BCT_DECi,
-	BCT_INCf,
-	BCT_DECf,
-	BCT_INCd,
-	BCT_DECd,
-	BCT_IncVi,
-	BCT_DecVi,
-	BCT_BNOT,
-	BCT_BAND,
-	BCT_BOR,
-	BCT_BXOR,
-	BCT_BSLL,
-	BCT_BSRL,
-	BCT_BSRA,
-	BCT_COPY,
-	BCT_SET8,
-	BCT_RDS8,
-	BCT_SWAP8,
-	BCT_CMPd,
-	BCT_CMPu,
-	BCT_CMPf,
-	BCT_CMPi,
-	BCT_CMPIi,
-	BCT_CMPIf,
-	BCT_CMPIu,
-	BCT_JMPP,
-	BCT_PopRPtr,
-	BCT_PshRPtr,
-	BCT_STR,
-	BCT_CALLSYS,
-	BCT_CALLBND,
-	BCT_SUSPEND,
-	BCT_ALLOC,
-	BCT_FREE,
-	BCT_LOADOBJ,
-	BCT_STOREOBJ,
-	BCT_GETOBJ,
-	BCT_REFCPY,
-	BCT_CHKREF,
-	BCT_GETOBJREF,
-	BCT_GETREF, 
-	BCT_SWAP48,
-	BCT_SWAP84,
-	BCT_OBJTYPE,
-	BCT_TYPEID,
-	BCT_SetV4,
-	BCT_SetV8,
-	BCT_ADDSi,
-	BCT_CpyVtoV4,
-	BCT_CpyVtoV8,
-	BCT_CpyVtoR4,
-	BCT_CpyVtoR8,
-	BCT_CpyVtoG4,
-	BCT_CpyRtoV4,
-	BCT_CpyRtoV8,
-	BCT_CpyGtoV4, 
-	BCT_WRTV1,
-	BCT_WRTV2,
-	BCT_WRTV4,
-	BCT_WRTV8,
-	BCT_RDR1,
-	BCT_RDR2,
-	BCT_RDR4,
-	BCT_RDR8,
-	BCT_LDG,
-	BCT_LDV,
-	BCT_PGA,
-	BCT_RDS4,
-	BCT_VAR,
-	BCT_iTOf,
-	BCT_fTOi,
-	BCT_uTOf,
-	BCT_fTOu,
-	BCT_sbTOi,
-	BCT_swTOi,
-	BCT_ubTOi,
-	BCT_uwTOi,
-	BCT_dTOi,
-	BCT_dTOu,
-	BCT_dTOf,
-	BCT_iTOd,
-	BCT_uTOd,
-	BCT_fTOd,
-	BCT_ADDi,
-	BCT_SUBi,
-	BCT_MULi,
-	BCT_DIVi,
-	BCT_MODi,
-	BCT_ADDf,
-	BCT_SUBf,
-	BCT_MULf,
-	BCT_DIVf,
-	BCT_MODf,
-	BCT_ADDd,
-	BCT_SUBd,
-	BCT_MULd,
-	BCT_DIVd,
-	BCT_MODd,
-	BCT_ADDIi,
-	BCT_SUBIi,
-	BCT_MULIi,
-	BCT_ADDIf,
-	BCT_SUBIf,
-	BCT_MULIf,
-	BCT_SetG4,
-	BCT_ChkRefS,
-	BCT_ChkNullV,
-	BCT_CALLINTF,
-	BCT_iTOb,
-	BCT_iTOw,
-	BCT_SetV1,
-	BCT_SetV2,
-	BCT_Cast,
-	BCT_i64TOi,
-	BCT_uTOi64,
-	BCT_iTOi64,
-	BCT_fTOi64,
-	BCT_dTOi64,
-	BCT_fTOu64,
-	BCT_dTOu64,
-	BCT_i64TOf,
-	BCT_u64TOf,
-	BCT_i64TOd,
-	BCT_u64TOd,
-	BCT_NEGi64,
-	BCT_INCi64,
-	BCT_DECi64,
-	BCT_BNOT64,
-	BCT_ADDi64,
-	BCT_SUBi64,
-	BCT_MULi64,
-	BCT_DIVi64,
-	BCT_MODi64,
-	BCT_BAND64,
-	BCT_BOR64,
-	BCT_BXOR64,
-	BCT_BSLL64,
-	BCT_BSRL64,
-	BCT_BSRA64,
-	BCT_CMPi64,
-	BCT_CMPu64,
-	BCT_ChkNullS,
-	BCT_ClrHi,
-	0,0,0,0, // 175-179
-	0,0,0,0,0,0,0,0,0,0, // 180-189
-	0,0,0,0,0,0,0,0,0,0, // 190-199
-	0,0,0,0,0,0,0,0,0,0, // 200-209
-	0,0,0,0,0,0,0,0,0,0, // 210-219
-	0,0,0,0,0,0,0,0,0,0, // 220-229
-	0,0,0,0,0,0,0,0,0,0, // 230-239
-	0,0,0,0,0,0,       // 240-245
-	BCT_PSP, 
-	0,  
-	0,  // BC_LINE
-	0, 
-	0,  // 250
-	0,  // 251
-	0,  // 252
-	0,  // 253
-	0,  // 254
-	0,	// BC_LABEL
-};
-
-const int bcStackInc[256] =
-{
-	0xFFFF,		// BC_POP
-	0xFFFF,		// BC_PUSH
-	1,			// BC_PshC4
-	1,			// BC_PshV4
-	PTR_SIZE,	// BC_PSF
-	0,			// BC_SWAP4
-	0,			// BC_NOT
-	1,			// BC_PshG4
-	0,			// BC_LdGRdR4
-	0xFFFF,		// BC_CALL
-	0xFFFF,		// BC_RET
-	0,			// BC_JMP
-	0,			// BC_JZ
-	0,			// BC_JNZ
-	0,			// BC_JS
-	0,			// BC_JNS
-	0,			// BC_JP
-	0,			// BC_JNP
-	0,			// BC_TZ
-	0,			// BC_TNZ
-	0,			// BC_TS
-	0,			// BC_TNS
-	0,			// BC_TP
-	0,			// BC_TNP
-	0,			// BC_NEGi
-	0,			// BC_NEGf
-	0,			// BC_NEGd
-	0,			// BC_INCi16
-	0,			// BC_INCi8
-	0,			// BC_DECi16
-	0,			// BC_DECi8
-	0,			// BC_INCi
-	0,			// BC_DECi
-	0,			// BC_INCf
-	0,			// BC_DECf
-	0,			// BC_INCd
-	0,			// BC_DECd
-	0,			// BC_IncVi
-	0,			// BC_DecVi
-	0,			// BC_BNOT
-	0,			// BC_BAND
-	0,			// BC_BOR
-	0,			// BC_BXOR
-	0,			// BC_BSLL
-	0,			// BC_BSRL
-	0,			// BC_BSRA
-	-PTR_SIZE,	// BC_COPY
-	2,			// BC_SET8
-	2-PTR_SIZE,	// BC_RDS8
-	0,			// BC_SWAP8
-	0,			// BC_CMPd
-	0,			// BC_CMPu
-	0,			// BC_CMPf
-	0,			// BC_CMPi
-	0,			// BC_CMPIi
-	0,			// BC_CMPIf
-	0,			// BC_CMPIu
-	0,			// BC_JMPP
-	-PTR_SIZE,	// BC_PopRPtr
-	PTR_SIZE,	// BC_PshRPtr
-	1+PTR_SIZE,	// BC_STR
-	0xFFFF,		// BC_CALLSYS
-	0xFFFF,		// BC_CALLBND
-	0,			// BC_SUSPEND
-	0xFFFF,		// BC_ALLOC
-	-PTR_SIZE,	// BC_FREE
-	0,			// BC_LOADOBJ
-	0,			// BC_STOREOBJ
-	0,			// BC_GETOBJ
-	-PTR_SIZE,	// BC_REFCPY
-	0,			// BC_CHKREF
-	0,			// BC_GETOBJREF
-	0,			// BC_GETREF
-	0,			// BC_SWAP48
-	0,			// BC_SWAP84
-	PTR_SIZE,	// BC_OBJTYPE
-	1,			// BC_TYPEID
-	0,			// BC_SetV4
-	0,			// BC_SetV8
-	0,			// BC_ADDSi
-	0,			// BC_CpyVtoV4
-	0,			// BC_CpyVtoV8
-	0,			// BC_CpyVtoR4
-	0,			// BC_CpyVtoR8
-	0,			// BC_CpyVtoG4
-	0,			// BC_CpyRtoV4
-	0,			// BC_CpyRtoV8
-	0,			// BC_CpyGtoV4
-	0,			// BC_WRTV1
-	0,			// BC_WRTV2
-	0,			// BC_WRTV4
-	0,			// BC_WRTV8
-	0,			// BC_RDR1
-	0,			// BC_RDR2
-	0,			// BC_RDR4
-	0,			// BC_RDR8
-	0,			// BC_LDG
-	0,			// BC_LDV
-	PTR_SIZE,	// BC_PGA
-	1-PTR_SIZE,	// BC_RDS4
-	PTR_SIZE,	// BC_VAR
-	0,			// BC_iTOf	
-	0,			// BC_fTOi	
-	0,			// BC_uTOf	
-	0,			// BC_fTOu	
-	0,			// BC_sbTOi	
-	0,			// BC_swTOi	
-	0,			// BC_ubTOi	
-	0,			// BC_uwTOi	
-	0,			// BC_dTOi 
-	0,			// BC_dTOu 
-	0,			// BC_dTOf 
-	0,			// BC_iTOd 
-	0,			// BC_iTOd
-	0,			// BC_fTOd 
-	0,			// BC_ADDi
-	0,			// BC_SUBi
-	0,			// BC_MULi
-	0,			// BC_DIVi
-	0,			// BC_MODi
-	0,			// BC_ADDf
-	0,			// BC_SUBf
-	0,			// BC_MULf
-	0,			// BC_DIVf
-	0,			// BC_MODf
-	0,			// BC_ADDd
-	0,			// BC_SUBd
-	0,			// BC_MULd
-	0,			// BC_DIVd
-	0,			// BC_MODd
-	0,			// BC_ADDIi
-	0,			// BC_SUBIi
-	0,			// BC_MULIi
-	0,			// BC_ADDIf
-	0,			// BC_SUBIf
-	0,			// BC_MULIf
-	0,			// BC_SetG4
-	0,			// BC_ChkRefS
-	0,			// BC_ChkNullV
-	0xFFFF,		// BC_CALLINTF
-	0,			// BC_iTOb
-	0,			// BC_iTOw
-	0,			// BC_SetV1
-	0,			// BC_SetV2
-	-PTR_SIZE,	// BC_Cast
-	0,			// BC_i64TOi
-	0,			// BC_uTOi64
-	0,			// BC_iTOi64
-	0,			// BC_fTOi64
-	0,			// BC_dTOi64
-	0,			// BC_fTOu64
-	0,			// BC_dTOu64
-	0,			// BC_i64TOf
-	0,			// BC_u64TOf
-	0,			// BC_i64TOd
-	0,			// BC_u64TOd
-	0,          // BC_NEGi64
-	0,          // BC_INCi64
-	0,          // BC_DECi64
-	0,          // BC_BNOT64
-	0,			// BC_ADDi64
-	0,			// BC_SUBi64
-	0,			// BC_MULi64
-	0,			// BC_DIVi64
-	0,			// BC_MODi64
-	0,			// BC_BAND64
-	0,			// BC_BOR64
-	0,			// BC_BXOR64
-	0,			// BC_BSLL64
-	0,			// BC_BSRL64
-	0,			// BC_BSRA64
-	0,			// BC_CMPi64
-	0,			// BC_CMPu64
-	0,			// BC_ChkNullS
-	0,			// BC_ClrHi
-	0,0,0,0,0, // 175-179
-	0,0,0,0,0,0,0,0,0,0, // 180-189
-	0,0,0,0,0,0,0,0,0,0, // 190-199
-	0,0,0,0,0,0,0,0,0,0, // 200-209
-	0,0,0,0,0,0,0,0,0,0, // 210-219
-	0,0,0,0,0,0,0,0,0,0, // 220-229
-	0,0,0,0,0,0,0,0,0,0, // 230-239
-	0,0,0,0,0,0,       // 240-245
-	1,		// BC_PSP
-	0,		
-	0xFFFF, // BC_LINE
-	0,		// 249
-	0, // 250
-	0, // 251
-	0, // 252
-	0, // 253
-	0, // 254
-	0xFFFF,	// BC_LABEL
-};
-
-struct sByteCodeName
-{
+	asEBCInstr  bc;
+	asEBCType   type;
+	int         stackInc;
 	const char *name;
 };
 
-#ifdef AS_DEBUG
-const sByteCodeName bcName[256] =
-{
-	{"POP"},
-	{"PUSH"},
-	{"PshC4"},
-	{"PshV4"},
-	{"PSF"},
-	{"SWAP4"},
-	{"NOT"},
-	{"PshG4"},
-	{"LdGRdR4"},
-	{"CALL"},
-	{"RET"},
-	{"JMP"},
-	{"JZ"},
-	{"JNZ"},
-	{"JS"},
-	{"JNS"},
-	{"JP"},
-	{"JNP"},
-	{"TZ"},
-	{"TNZ"},
-	{"TS"},
-	{"TNS"},
-	{"TP"},
-	{"TNP"},
-	{"NEGi"},
-	{"NEGf"},
-	{"NEGd"},
-	{"INCi16"},
-	{"INCi8"},
-	{"DECi16"},
-	{"DECi8"},
-	{"INCi"},
-	{"DECi"},
-	{"INCf"},
-	{"DECf"},
-	{"INCd"},
-	{"DECd"},
-	{"IncVi"},
-	{"DecVi"},
-	{"BNOT"},
-	{"BAND"},
-	{"BOR"},
-	{"BXOR"},
-	{"BSLL"},
-	{"BSRL"},
-	{"BSRA"},
-	{"COPY"},
-	{"SET8"},
-	{"RDS8"},
-	{"SWAP8"},
-	{"CMPd"},
-	{"CMPu"},
-	{"CMPf"},
-	{"CMPi"},
-	{"CMPIi"},
-	{"CMPIf"},
-	{"CMPIu"},
-	{"JMPP"},
-	{"PopRPtr"},
-	{"PshRPtr"},
-	{"STR"},
-	{"CALLSYS"},
-	{"CALLBND"},
-	{"SUSPEND"},
-	{"ALLOC"},
-	{"FREE"},
-	{"LOADOBJ"},
-	{"STOREOBJ"},
-	{"GETOBJ"},
-	{"REFCPY"},
-	{"CHKREF"},
-	{"GETOBJREF"},
-	{"GETREF"}, 
-	{"SWAP48"},
-	{"SWAP84"},
-	{"OBJTYPE"},
-	{"TYPEID"},
-	{"SetV4"},
-	{"SetV8"},
-	{"ADDSi"},
-	{"CpyVtoV4"},
-	{"CpyVtoV8"},
-	{"CpyVtoR4"},
-	{"CpyVtoR8"},
-	{"CpyVtoG4"},
-	{"CpyRtoV4"},
-	{"CpyRtoV8"},
-	{"CpyGtoV4"},
-	{"WRTV1"},
-	{"WRTV2"},
-	{"WRTV4"},
-	{"WRTV8"},
-	{"RDR1"},
-	{"RDR2"},
-	{"RDR4"},
-	{"RDR8"},
-	{"LDG"},
-	{"LDV"},
-	{"PGA"},
-	{"RDS4"},
-	{"VAR"},
-	{"iTOf"},
-	{"fTOi"},
-	{"uTOf"},
-	{"fTOu"},
-	{"sbTOi"},
-	{"swTOi"},
-	{"ubTOi"},
-	{"uwTOi"},
-	{"dTOi"},
-	{"dTOu"}, 
-	{"dTOf"},
-	{"iTOd"},
-	{"uTOd"},
-	{"fTOd"},
-	{"ADDi"},
-	{"SUBi"},
-	{"MULi"},
-	{"DIVi"},
-	{"MODi"},
-	{"ADDf"},
-	{"SUBf"},
-	{"MULf"},
-	{"DIVf"},
-	{"MODf"},
-	{"ADDd"},
-	{"SUBd"},
-	{"MULd"},
-	{"DIVd"},
-	{"MODd"},
-	{"ADDIi"},
-	{"SUBIi"},
-	{"MULIi"},
-	{"ADDIf"},
-	{"SUBIf"},
-	{"MULIf"},
-	{"SetG4"},
-	{"ChkRefS"},
-	{"ChkNullV"},
-	{"CALLINTF"},
-	{"iTOb"},
-	{"iTOw"},
-	{"SetV1"},
-	{"SetV2"},
-	{"Cast"},
-	{"i64TOi"},
-	{"uTOi64"},
-	{"iTOi64"},
-	{"fTOi64"},
-	{"dTOi64"},
-	{"fTOu64"},
-	{"dTOu64"},
-	{"i64TOf"},
-	{"u64TOf"},
-	{"i64TOd"},
-	{"u64TOd"},
-	{"NEGi64"},
-	{"INCi64"},
-	{"DECi64"},
-	{"BNOT64"},
-	{"ADDi64"},
-	{"SUBi64"},
-	{"MULi64"},
-	{"DIVi64"},
-	{"MODi64"},
-	{"BAND64"},
-	{"BOR64"},
-	{"BXOR64"},
-	{"BSLL64"},
-	{"BSRL64"},
-	{"BSRA64"},
-	{"CMPi64"},
-	{"CMPu64"},
-	{"ChkNullS"},
-	{"ClrHi"},
-	{0},{0},{0},{0},{0}, // 175-179
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 180-189
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 190-199
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 200-209
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 210-219
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 220-229
-	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 230-239
-	{0},{0},{0},{0},{0},{0},	     // 240-245
-	{"PSP"},
-	{0},
-	{"LINE"},
-	{0}, 
-	{0},
-	{0},
-	{0},
-	{0},
-	{0},
-	{"LABEL"}
-};
+#define asBCINFO(b,t,s) {BC_##b, BCTYPE_##t, s, "##b##"}
+#define asBCINFO_DUMMY(b) {asEBCInstr(b), BCTYPE_INFO, 0, "BC_##b##"}
+
+#ifndef AS_PTR_SIZE
+	#ifdef AS_64BIT_PTR
+		#define AS_PTR_SIZE 2
+	#else
+		#define AS_PTR_SIZE (sizeof(void*)/4)
+	#endif
 #endif
+
+const asSBCInfo asBCInfo[256] =
+{
+	asBCINFO(POP,		W_ARG,			0xFFFF),
+	asBCINFO(PUSH,		W_ARG,			0xFFFF),
+	asBCINFO(PshC4,		DW_ARG,			1),
+	asBCINFO(PshV4,		rW_ARG,			1),
+	asBCINFO(PSF,		rW_ARG,			AS_PTR_SIZE),
+	asBCINFO(SWAP4,		NO_ARG,			0),
+	asBCINFO(NOT,		rW_ARG,			0),
+	asBCINFO(PshG4,		W_ARG,			1),
+	asBCINFO(LdGRdR4,	wW_W_ARG,		0),
+	asBCINFO(CALL,		DW_ARG,			0xFFFF),
+	asBCINFO(RET,		W_ARG,			0xFFFF),
+	asBCINFO(JMP,		DW_ARG,			0),
+	asBCINFO(JZ,		DW_ARG,			0),
+	asBCINFO(JNZ,		DW_ARG,			0),
+	asBCINFO(JS,		DW_ARG,			0),
+	asBCINFO(JNS,		DW_ARG,			0),
+	asBCINFO(JP,		DW_ARG,			0),
+	asBCINFO(JNP,		DW_ARG,			0),
+	asBCINFO(TZ,		NO_ARG,			0),
+	asBCINFO(TNZ,		NO_ARG,			0),
+	asBCINFO(TS,		NO_ARG,			0),
+	asBCINFO(TNS,		NO_ARG,			0),
+	asBCINFO(TP,		NO_ARG,			0),
+	asBCINFO(TNP,		NO_ARG,			0),
+	asBCINFO(NEGi,		rW_ARG,			0),
+	asBCINFO(NEGf,		rW_ARG,			0),
+	asBCINFO(NEGd,		rW_ARG,			0),
+	asBCINFO(INCi16,	NO_ARG,			0),
+	asBCINFO(INCi8,		NO_ARG,			0),
+	asBCINFO(DECi16,	NO_ARG,			0),
+	asBCINFO(DECi8,		NO_ARG,			0),
+	asBCINFO(INCi,		NO_ARG,			0),
+	asBCINFO(DECi,		NO_ARG,			0),
+	asBCINFO(INCf,		NO_ARG,			0),
+	asBCINFO(DECf,		NO_ARG,			0),
+	asBCINFO(INCd,		NO_ARG,			0),
+	asBCINFO(DECd,		NO_ARG,			0),
+	asBCINFO(IncVi,		rW_ARG,			0),
+	asBCINFO(DecVi,		rW_ARG,			0),
+	asBCINFO(BNOT,		rW_ARG,			0),
+	asBCINFO(BAND,		wW_rW_rW_ARG,	0),
+	asBCINFO(BOR,		wW_rW_rW_ARG,	0),
+	asBCINFO(BXOR,		wW_rW_rW_ARG,	0),
+	asBCINFO(BSLL,		wW_rW_rW_ARG,	0),
+	asBCINFO(BSRL,		wW_rW_rW_ARG,	0),
+	asBCINFO(BSRA,		wW_rW_rW_ARG,	0),
+	asBCINFO(COPY,		W_ARG,			-AS_PTR_SIZE),
+	asBCINFO(SET8,		QW_ARG,			2),
+	asBCINFO(RDS8,		NO_ARG,			2-AS_PTR_SIZE),
+	asBCINFO(SWAP8,		NO_ARG,			0),
+	asBCINFO(CMPd,		rW_rW_ARG,		0),
+	asBCINFO(CMPu,		rW_rW_ARG,		0),
+	asBCINFO(CMPf,		rW_rW_ARG,		0),
+	asBCINFO(CMPi,		rW_rW_ARG,		0),
+	asBCINFO(CMPIi,		rW_DW_ARG,		0),
+	asBCINFO(CMPIf,		rW_DW_ARG,		0),
+	asBCINFO(CMPIu,		rW_DW_ARG,		0),
+	asBCINFO(JMPP,		rW_ARG,			0),
+	asBCINFO(PopRPtr,	NO_ARG,			-AS_PTR_SIZE),
+	asBCINFO(PshRPtr,	NO_ARG,			AS_PTR_SIZE),
+	asBCINFO(STR,		W_ARG,			1+AS_PTR_SIZE),
+	asBCINFO(CALLSYS,	DW_ARG,			0xFFFF),
+	asBCINFO(CALLBND,	DW_ARG,			0xFFFF),
+	asBCINFO(SUSPEND,	NO_ARG,			0),
+	asBCINFO(ALLOC,		PTR_DW_ARG,		0xFFFF),
+	asBCINFO(FREE,		PTR_ARG,		-AS_PTR_SIZE),
+	asBCINFO(LOADOBJ,	rW_ARG,			0),
+	asBCINFO(STOREOBJ,	wW_ARG,			0),
+	asBCINFO(GETOBJ,	W_ARG,			0),
+	asBCINFO(REFCPY,	PTR_ARG,		-AS_PTR_SIZE),
+	asBCINFO(CHKREF,	NO_ARG,			0),
+	asBCINFO(GETOBJREF,	W_ARG,			0),
+	asBCINFO(GETREF,	W_ARG,			0),
+	asBCINFO(SWAP48,	NO_ARG,			0),
+	asBCINFO(SWAP84,	NO_ARG,			0),
+	asBCINFO(OBJTYPE,	PTR_ARG,		AS_PTR_SIZE),
+	asBCINFO(TYPEID,	DW_ARG,			1),
+	asBCINFO(SetV4,		wW_DW_ARG,		0),
+	asBCINFO(SetV8,		wW_QW_ARG,		0),
+	asBCINFO(ADDSi,		DW_ARG,			0),
+	asBCINFO(CpyVtoV4,	wW_rW_ARG,		0),
+	asBCINFO(CpyVtoV8,	wW_rW_ARG,		0),
+	asBCINFO(CpyVtoR4,	rW_ARG,			0),
+	asBCINFO(CpyVtoR8,	rW_ARG,			0),
+	asBCINFO(CpyVtoG4,	W_rW_ARG,		0),
+	asBCINFO(CpyRtoV4,	wW_ARG,			0),
+	asBCINFO(CpyRtoV8,	wW_ARG,			0),
+	asBCINFO(CpyGtoV4,	wW_W_ARG,		0),
+	asBCINFO(WRTV1,		rW_ARG,			0),
+	asBCINFO(WRTV2,		rW_ARG,			0),
+	asBCINFO(WRTV4,		rW_ARG,			0),
+	asBCINFO(WRTV8,		rW_ARG,			0),
+	asBCINFO(RDR1,		wW_ARG,			0),
+	asBCINFO(RDR2,		wW_ARG,			0),
+	asBCINFO(RDR4,		wW_ARG,			0),
+	asBCINFO(RDR8,		wW_ARG,			0),
+	asBCINFO(LDG,		W_ARG,			0),
+	asBCINFO(LDV,		rW_ARG,			0),
+	asBCINFO(PGA,		W_ARG,			AS_PTR_SIZE),
+	asBCINFO(RDS4,		NO_ARG,			1-AS_PTR_SIZE),
+	asBCINFO(VAR,		rW_ARG,			AS_PTR_SIZE),
+	asBCINFO(iTOf,		rW_ARG,			0),
+	asBCINFO(fTOi,		rW_ARG,			0),
+	asBCINFO(uTOf,		rW_ARG,			0),
+	asBCINFO(fTOu,		rW_ARG,			0),
+	asBCINFO(sbTOi,		rW_ARG,			0),
+	asBCINFO(swTOi,		rW_ARG,			0),
+	asBCINFO(ubTOi,		rW_ARG,			0),
+	asBCINFO(uwTOi,		rW_ARG,			0),
+	asBCINFO(dTOi,		wW_rW_ARG,		0),
+	asBCINFO(dTOu,		wW_rW_ARG,		0),
+	asBCINFO(dTOf,		wW_rW_ARG,		0),
+	asBCINFO(iTOd,		wW_rW_ARG,		0),
+	asBCINFO(uTOd,		wW_rW_ARG,		0),
+	asBCINFO(fTOd,		wW_rW_ARG,		0),
+	asBCINFO(ADDi,		wW_rW_rW_ARG,	0),
+	asBCINFO(SUBi,		wW_rW_rW_ARG,	0),
+	asBCINFO(MULi,		wW_rW_rW_ARG,	0),
+	asBCINFO(DIVi,		wW_rW_rW_ARG,	0),
+	asBCINFO(MODi,		wW_rW_rW_ARG,	0),
+	asBCINFO(ADDf,		wW_rW_rW_ARG,	0),
+	asBCINFO(SUBf,		wW_rW_rW_ARG,	0),
+	asBCINFO(MULf,		wW_rW_rW_ARG,	0),
+	asBCINFO(DIVf,		wW_rW_rW_ARG,	0),
+	asBCINFO(MODf,		wW_rW_rW_ARG,	0),
+	asBCINFO(ADDd,		wW_rW_rW_ARG,	0),
+	asBCINFO(SUBd,		wW_rW_rW_ARG,	0),
+	asBCINFO(MULd,		wW_rW_rW_ARG,	0),
+	asBCINFO(DIVd,		wW_rW_rW_ARG,	0),
+	asBCINFO(MODd,		wW_rW_rW_ARG,	0),
+	asBCINFO(ADDIi,		wW_rW_DW_ARG,	0),
+	asBCINFO(SUBIi,		wW_rW_DW_ARG,	0),
+	asBCINFO(MULIi,		wW_rW_DW_ARG,	0),
+	asBCINFO(ADDIf,		wW_rW_DW_ARG,	0),
+	asBCINFO(SUBIf,		wW_rW_DW_ARG,	0),
+	asBCINFO(MULIf,		wW_rW_DW_ARG,	0),
+	asBCINFO(SetG4,		W_DW_ARG,		0),
+	asBCINFO(ChkRefS,	NO_ARG,			0),
+	asBCINFO(ChkNullV,	rW_ARG,			0),
+	asBCINFO(CALLINTF,	DW_ARG,			0xFFFF),
+	asBCINFO(iTOb,		rW_ARG,			0),
+	asBCINFO(iTOw,		rW_ARG,			0),
+	asBCINFO(SetV1,		wW_DW_ARG,		0),
+	asBCINFO(SetV2,		wW_DW_ARG,		0),
+	asBCINFO(Cast,		DW_ARG,			-AS_PTR_SIZE),
+	asBCINFO(i64TOi,	wW_rW_ARG,		0),
+	asBCINFO(uTOi64,	wW_rW_ARG,		0),
+	asBCINFO(iTOi64,	wW_rW_ARG,		0),
+	asBCINFO(fTOi64,	wW_rW_ARG,		0),
+	asBCINFO(dTOi64,	rW_ARG,			0),
+	asBCINFO(fTOu64,	wW_rW_ARG,		0),
+	asBCINFO(dTOu64,	rW_ARG,			0),
+	asBCINFO(i64TOf,	wW_rW_ARG,		0),
+	asBCINFO(u64TOf,	wW_rW_ARG,		0),
+	asBCINFO(i64TOd,	rW_ARG,			0),
+	asBCINFO(u64TOd,	rW_ARG,			0),
+	asBCINFO(NEGi64,	rW_ARG,			0),
+	asBCINFO(INCi64,	NO_ARG,			0),
+	asBCINFO(DECi64,	NO_ARG,			0),
+	asBCINFO(BNOT64,	rW_ARG,			0),
+	asBCINFO(ADDi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(SUBi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(MULi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(DIVi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(MODi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BAND64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BOR64,		wW_rW_rW_ARG,	0),
+	asBCINFO(BXOR64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BSLL64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BSRL64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BSRA64,	wW_rW_rW_ARG,	0),
+	asBCINFO(CMPi64,	rW_rW_ARG,		0),
+	asBCINFO(CMPu64,	rW_rW_ARG,		0),
+	asBCINFO(ChkNullS,	W_ARG,			0),
+	asBCINFO(ClrHi,		NO_ARG,			0),
+
+	asBCINFO_DUMMY(175),
+	asBCINFO_DUMMY(176),
+	asBCINFO_DUMMY(177),
+	asBCINFO_DUMMY(178),
+	asBCINFO_DUMMY(179),
+	asBCINFO_DUMMY(180),
+	asBCINFO_DUMMY(181),
+	asBCINFO_DUMMY(182),
+	asBCINFO_DUMMY(183),
+	asBCINFO_DUMMY(184),
+	asBCINFO_DUMMY(185),
+	asBCINFO_DUMMY(186),
+	asBCINFO_DUMMY(187),
+	asBCINFO_DUMMY(188),
+	asBCINFO_DUMMY(189),
+	asBCINFO_DUMMY(190),
+	asBCINFO_DUMMY(191),
+	asBCINFO_DUMMY(192),
+	asBCINFO_DUMMY(193),
+	asBCINFO_DUMMY(194),
+	asBCINFO_DUMMY(195),
+	asBCINFO_DUMMY(196),
+	asBCINFO_DUMMY(197),
+	asBCINFO_DUMMY(198),
+	asBCINFO_DUMMY(199),
+	asBCINFO_DUMMY(200),
+	asBCINFO_DUMMY(201),
+	asBCINFO_DUMMY(202),
+	asBCINFO_DUMMY(203),
+	asBCINFO_DUMMY(204),
+	asBCINFO_DUMMY(205),
+	asBCINFO_DUMMY(206),
+	asBCINFO_DUMMY(207),
+	asBCINFO_DUMMY(208),
+	asBCINFO_DUMMY(209),
+	asBCINFO_DUMMY(210),
+	asBCINFO_DUMMY(211),
+	asBCINFO_DUMMY(212),
+	asBCINFO_DUMMY(213),
+	asBCINFO_DUMMY(214),
+	asBCINFO_DUMMY(215),
+	asBCINFO_DUMMY(216),
+	asBCINFO_DUMMY(217),
+	asBCINFO_DUMMY(218),
+	asBCINFO_DUMMY(219),
+	asBCINFO_DUMMY(220),
+	asBCINFO_DUMMY(221),
+	asBCINFO_DUMMY(222),
+	asBCINFO_DUMMY(223),
+	asBCINFO_DUMMY(224),
+	asBCINFO_DUMMY(225),
+	asBCINFO_DUMMY(226),
+	asBCINFO_DUMMY(227),
+	asBCINFO_DUMMY(228),
+	asBCINFO_DUMMY(229),
+	asBCINFO_DUMMY(230),
+	asBCINFO_DUMMY(231),
+	asBCINFO_DUMMY(232),
+	asBCINFO_DUMMY(233),
+	asBCINFO_DUMMY(234),
+	asBCINFO_DUMMY(235),
+	asBCINFO_DUMMY(236),
+	asBCINFO_DUMMY(237),
+	asBCINFO_DUMMY(238),
+	asBCINFO_DUMMY(239),
+	asBCINFO_DUMMY(240),
+	asBCINFO_DUMMY(241),
+	asBCINFO_DUMMY(242),
+	asBCINFO_DUMMY(243),
+	asBCINFO_DUMMY(244),
+	asBCINFO_DUMMY(245),
+	asBCINFO_DUMMY(246),
+	asBCINFO_DUMMY(247),
+	asBCINFO_DUMMY(248),
+	asBCINFO_DUMMY(249),
+	asBCINFO_DUMMY(250),
+	asBCINFO_DUMMY(251),
+	asBCINFO_DUMMY(252),
+
+	asBCINFO(PSP,		W_ARG,			AS_PTR_SIZE),
+	asBCINFO(LINE,		INFO,			0xFFFF),
+	asBCINFO(LABEL,		INFO,			0xFFFF)
+};
+
 
 END_AS_NAMESPACE
 

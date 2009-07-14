@@ -525,7 +525,7 @@ int asCDataType::GetSizeInMemoryBytes() const
 
 	// null handle
 	if( tokenType == ttUnrecognizedToken )
-		return 4*PTR_SIZE;
+		return 4*AS_PTR_SIZE;
 
 	return 4;
 }
@@ -543,8 +543,8 @@ int asCDataType::GetSizeOnStackDWords() const
 {
 	int size = tokenType == ttQuestion ? 1 : 0;
 
-	if( isReference ) return PTR_SIZE + size;
-	if( objectType ) return PTR_SIZE + size;
+	if( isReference ) return AS_PTR_SIZE + size;
+	if( objectType ) return AS_PTR_SIZE + size;
 
 	return GetSizeInMemoryDWords() + size;
 }

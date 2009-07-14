@@ -291,7 +291,7 @@ void asCScriptFunction::AddReferences()
 	}
 
 	// Go through the byte code and add references to all resources used by the function
-	for( asUINT n = 0; n < byteCode.GetLength(); n += asCByteCode::SizeOfType(bcTypes[*(asBYTE*)&byteCode[n]]) )
+	for( asUINT n = 0; n < byteCode.GetLength(); n += asCByteCode::SizeOfType(asBCInfo[*(asBYTE*)&byteCode[n]].type) )
 	{
 		switch( *(asBYTE*)&byteCode[n] )
 		{
@@ -358,7 +358,7 @@ void asCScriptFunction::ReleaseReferences()
 	}
 
 	// Go through the byte code and release references to all resources used by the function
-	for( asUINT n = 0; n < byteCode.GetLength(); n += asCByteCode::SizeOfType(bcTypes[*(asBYTE*)&byteCode[n]]) )
+	for( asUINT n = 0; n < byteCode.GetLength(); n += asCByteCode::SizeOfType(asBCInfo[*(asBYTE*)&byteCode[n]].type) )
 	{
 		switch( *(asBYTE*)&byteCode[n] )
 		{

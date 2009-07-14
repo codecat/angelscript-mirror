@@ -308,7 +308,7 @@ int asCGeneric::GetArgTypeId(asUINT arg)
 			offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
 
 		// Skip the actual value to get to the type id
-		offset += PTR_SIZE;
+		offset += AS_PTR_SIZE;
 
 		// Get the value
 		return stackPointer[offset];

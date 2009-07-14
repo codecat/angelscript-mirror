@@ -191,7 +191,7 @@
 // Use assembler code for the ARM CPU family
 
 // AS_64BIT_PTR
-// Define this to make the engine store all pointers in 64bit words.
+// Define this to make the engine store all pointers in 64bit words. 
 
 // AS_BIG_ENDIAN
 // Define this for CPUs that use big endian memory layout, e.g. PPC
@@ -270,7 +270,13 @@
 // Some compilers always pass certain objects by reference. GNUC for example does
 // this if the the class has a defined destructor.
 
+// HAS_128_BIT_PRIMITIVES
+// 64bit processors often support 128bit primitives. These may require special
+// treatment when passed in function arguments or returned by functions.
 
+// SPLIT_OBJS_BY_MEMBER_TYPES
+// On some platforms objects with primitive members are split over different
+// register types when passed by value to functions. 
 
 
 
@@ -468,14 +474,17 @@
 
 	// Linux
 	#elif defined(__linux__)
-		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
-		#define CDECL_RETURN_SIMPLE_IN_MEMORY
-		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 		#if defined(i386) && !defined(__LP64__)
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+
 			// Support native calling conventions on Intel 32bit CPU
 			#define AS_X86
 		#else
 			#define AS_X64_GCC
+			#define HAS_128_BIT_PRIMITIVES
+			#define SPLIT_OBJS_BY_MEMBER_TYPES
 			// STDCALL is not available on 64bit Linux
 			#undef STDCALL
 			#define STDCALL
@@ -516,6 +525,7 @@
 		// Support native calling conventions on PS3
 		#define AS_PS3
 		#define AS_PPC_64
+		#define SPLIT_OBJS_BY_MEMBER_TYPES
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
@@ -637,10 +647,10 @@
 #define	BCARG_QW(b) ((asQWORD*)&(b)[1])
 
 #ifdef AS_64BIT_PTR
-	#define PTR_SIZE     2
+	#define AS_PTR_SIZE  2
 	#define asPTRWORD    asQWORD
 #else
-	#define PTR_SIZE     1
+	#define AS_PTR_SIZE  1
 	#define asPTRWORD    asDWORD
 #endif
 #define ARG_PTR(b)   ((asPTRWORD*)&b)

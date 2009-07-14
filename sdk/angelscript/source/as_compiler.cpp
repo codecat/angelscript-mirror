@@ -139,11 +139,11 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 		// Call the base class' default constructor
 		byteCode.InstrSHORT(BC_PSF, 0);
 		byteCode.Instr(BC_RDSPTR);
-		byteCode.Call(BC_CALL, outFunc->objectType->derivedFrom->beh.construct, PTR_SIZE);
+		byteCode.Call(BC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
 	}
 
 	// Pop the object pointer from the stack
-	byteCode.Ret(PTR_SIZE);
+	byteCode.Ret(AS_PTR_SIZE);
 
 	byteCode.Finalize();
 
@@ -185,7 +185,7 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	// Allocate the class and instanciate it with the constructor
 	int varOffset = AllocateVariable(dt, true);
 
-	byteCode.Push(PTR_SIZE);
+	byteCode.Push(AS_PTR_SIZE);
 	byteCode.InstrSHORT(BC_PSF, (short)varOffset);
 
 	// Copy all arguments to the top of the stack
@@ -193,12 +193,12 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	for( int a = argDwords-1; a >= 0; a-- )
 		byteCode.InstrSHORT(BC_PshV4, short(-a));
 
-	byteCode.Alloc(BC_ALLOC, dt.GetObjectType(), constructor, argDwords + PTR_SIZE);
+	byteCode.Alloc(BC_ALLOC, dt.GetObjectType(), constructor, argDwords + AS_PTR_SIZE);
 
 	// Return a handle to the newly created object
 	byteCode.InstrSHORT(BC_LOADOBJ, (short)varOffset);
 
-	byteCode.Pop(PTR_SIZE);
+	byteCode.Pop(AS_PTR_SIZE);
 	byteCode.Ret(argDwords);
 
 	byteCode.Finalize();
@@ -263,7 +263,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	int stackPos = 0;
 	if( outFunc->objectType )
-		stackPos = -PTR_SIZE; // The first parameter is the pointer to the object
+		stackPos = -AS_PTR_SIZE; // The first parameter is the pointer to the object
 
 	// Reserve a label for the cleanup code
 	nextLabel++;
@@ -409,14 +409,14 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		{
 			byteCode.InstrSHORT(BC_PSF, 0);
 			byteCode.Instr(BC_RDSPTR);
-			byteCode.Call(BC_CALL, outFunc->objectType->derivedFrom->beh.construct, PTR_SIZE);
+			byteCode.Call(BC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
 		}
 
 		// Increase the reference for the object pointer, so that it is guaranteed to live during the entire call
 		// TODO: optimize: This is probably not necessary for constructors as no outside reference to the object is created yet
 		byteCode.InstrSHORT(BC_PSF, 0);
 		byteCode.Instr(BC_RDSPTR);
-		byteCode.Call(BC_CALLSYS, outFunc->objectType->beh.addref, PTR_SIZE);
+		byteCode.Call(BC_CALLSYS, outFunc->objectType->beh.addref, AS_PTR_SIZE);
 	}
 
 	// Add the code for the statement block
@@ -541,7 +541,7 @@ void asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteC
 					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType(), true, offset);
 
 					// Pop the reference left by the function call
-					ctx.bc.Pop(PTR_SIZE);
+					ctx.bc.Pop(AS_PTR_SIZE);
 				}
 				else
 				{
@@ -552,7 +552,7 @@ void asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteC
 					ctx.bc.Instr(BC_RDSPTR);
 					ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(offset));
 					ctx.bc.InstrPTR(BC_REFCPY, type.GetObjectType());
-					ctx.bc.Pop(PTR_SIZE);
+					ctx.bc.Pop(AS_PTR_SIZE);
 					ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 				}
 
@@ -571,7 +571,7 @@ void asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteC
 			int func = 0;
 			if( beh ) func = beh->construct;
 
-			bc->Alloc(BC_ALLOC, type.GetObjectType(), func, PTR_SIZE);
+			bc->Alloc(BC_ALLOC, type.GetObjectType(), func, AS_PTR_SIZE);
 		}
 	}
 }
@@ -717,7 +717,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 						ctx.bc.Instr(BC_RDSPTR);
 						ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 						ctx.bc.InstrPTR(BC_REFCPY, gvar->datatype.GetObjectType());
-						ctx.bc.Pop(PTR_SIZE);
+						ctx.bc.Pop(AS_PTR_SIZE);
 						ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 					}
 					else
@@ -1115,7 +1115,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					ctx->bc.Instr(BC_RDSPTR);
 				ctx->bc.InstrWORD(BC_PSF, (asWORD)offset);
 				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
-				ctx->bc.Pop(PTR_SIZE);
+				ctx->bc.Pop(AS_PTR_SIZE);
 				ctx->bc.InstrWORD(BC_PSF, (asWORD)offset);
 
 				dt.MakeHandle(false);
@@ -1209,7 +1209,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		// &inout parameter may leave the reference on the stack already
 		if( refType != 3 )
 		{
-			ctx->bc.Pop(PTR_SIZE);
+			ctx->bc.Pop(AS_PTR_SIZE);
 			ctx->bc.InstrSHORT(BC_VAR, ctx->type.stackOffset);
 		}
 
@@ -1245,7 +1245,7 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 
 	int offset = 0;
 	if( addOneToOffset )
-		offset += PTR_SIZE;
+		offset += AS_PTR_SIZE;
 
 	// Move the objects that are sent by value to the stack just before the call
 	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
@@ -1489,7 +1489,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 							MakeFunctionCall(&ctx, funcs[0], 0, args, true, v->stackOffset);
 
 							// Pop the reference left by the function call
-							ctx.bc.Pop(PTR_SIZE);
+							ctx.bc.Pop(AS_PTR_SIZE);
 						}
 						else
 						{
@@ -1732,7 +1732,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				{
 					// Call factory and store the handle in the given variable
 					PerformFunctionCall(funcs[0], &ctx, false, &args, 0, true, var->stackOffset);
-					ctx.bc.Pop(PTR_SIZE);
+					ctx.bc.Pop(AS_PTR_SIZE);
 				}
 				else
 				{
@@ -1742,7 +1742,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 					ctx.bc.Instr(BC_RDSPTR);
 					ctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(var->stackOffset));
 					ctx.bc.InstrPTR(BC_REFCPY, var->dataType.GetObjectType());
-					ctx.bc.Pop(PTR_SIZE);
+					ctx.bc.Pop(AS_PTR_SIZE);
 					ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 				}
 			}
@@ -1833,7 +1833,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				else
 					lctx.bc.InstrWORD(BC_PGA, (asWORD)builder->module->GetGlobalVarIndex(var->stackOffset));
 				lctx.bc.Instr(BC_RDSPTR);
-				lctx.bc.Call(BC_CALLSYS, funcId, 1+PTR_SIZE);
+				lctx.bc.Call(BC_CALLSYS, funcId, 1+AS_PTR_SIZE);
 
 				if( !var->dataType.GetSubType().IsPrimitive() )
 					lctx.bc.Instr(BC_PshRPtr);
@@ -1851,7 +1851,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				DoAssignment(&ctx, &lctx, &rctx, el, el, ttAssignment, el);
 
 				if( !lctx.type.dataType.IsPrimitive() )
-					ctx.bc.Pop(PTR_SIZE);
+					ctx.bc.Pop(AS_PTR_SIZE);
 
 				// Release temporary variables used by expression
 				ReleaseTemporaryVariable(ctx.type, &ctx.bc);
@@ -2634,7 +2634,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	PerformAssignment(&lvalue, &ctx->type, &ctx->bc, node);
 
 	// Pop the original reference
-	ctx->bc.Pop(PTR_SIZE);
+	ctx->bc.Pop(AS_PTR_SIZE);
 
 	// Push the reference to the temporary variable on the stack
 	ctx->bc.InstrSHORT(BC_PSF, (short)offset);
@@ -2692,7 +2692,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					PrepareArgument(&v->type, &expr, rnode->firstChild);
 
 					// Pop the reference to the temporary variable again
-					expr.bc.Pop(PTR_SIZE);
+					expr.bc.Pop(AS_PTR_SIZE);
 
 					// Load the object pointer into the object register
 					expr.bc.InstrSHORT(BC_LOADOBJ, expr.type.stackOffset);
@@ -3131,7 +3131,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 		if( beh->copy )
 		{
 			// Call the copy operator
-			bc->Call(BC_CALLSYS, (asDWORD)beh->copy, 2*PTR_SIZE);
+			bc->Call(BC_CALLSYS, (asDWORD)beh->copy, 2*AS_PTR_SIZE);
 			bc->Instr(BC_PshRPtr);
 		}
 		else
@@ -4792,7 +4792,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		MergeExprContexts(ctx, rctx);
 		MergeExprContexts(ctx, lctx);
 
-		ctx->bc.InstrWORD(BC_GETOBJREF, PTR_SIZE);
+		ctx->bc.InstrWORD(BC_GETOBJREF, AS_PTR_SIZE);
 
 		PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
 
@@ -4932,7 +4932,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		MergeExprContexts(ctx, rctx);
 		MergeExprContexts(ctx, lctx);
 
-		ctx->bc.InstrWORD(BC_GETOBJREF, PTR_SIZE);
+		ctx->bc.InstrWORD(BC_GETOBJREF, AS_PTR_SIZE);
 
 		PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
 
@@ -5484,7 +5484,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 					if( v->type.IsReference() )
 					{
 						// Copy the reference into the register
-#if PTR_SIZE == 1
+#if AS_PTR_SIZE == 1
 						ctx->bc.InstrSHORT(BC_CpyVtoR4, (short)v->stackOffset);
 #else
 						ctx->bc.InstrSHORT(BC_CpyVtoR8, (short)v->stackOffset);
@@ -6192,7 +6192,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 				asSExprContext o(engine);
 				DoAssignment(&o, expr, &rctx, outParam.argNode, outParam.argNode, ttAssignment, outParam.argNode);
 
-				if( !o.type.dataType.IsPrimitive() ) o.bc.Pop(PTR_SIZE);
+				if( !o.type.dataType.IsPrimitive() ) o.bc.Pop(AS_PTR_SIZE);
 
 				MergeExprContexts(ctx, &o);
 			}
@@ -6893,7 +6893,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		ConvertToTempVariable(ctx);
 
 		// Increment the value pointed to by the reference still in the register
-		bcInstr iInc = BC_INCi, iDec = BC_DECi;
+		asEBCInstr iInc = BC_INCi, iDec = BC_DECi;
 		if( ctx->type.dataType.IsDoubleType() )
 		{
 			iInc = BC_INCd;
@@ -7992,7 +7992,7 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 				// Copy the object handle to a variable
 				ctx->bc.InstrSHORT(BC_PSF, (short)offset);
 				ctx->bc.InstrPTR(BC_REFCPY, ctx->type.dataType.GetObjectType());
-				ctx->bc.Pop(PTR_SIZE);
+				ctx->bc.Pop(AS_PTR_SIZE);
 			}
 
 			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
@@ -8145,7 +8145,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 			MergeExprContexts(ctx, rctx);
 		}
 
-		bcInstr instruction = BC_ADDi;
+		asEBCInstr instruction = BC_ADDi;
 		if( lctx->type.dataType.IsIntegerType() ||
 			lctx->type.dataType.IsUnsignedType() )
 		{
@@ -8406,7 +8406,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 				MergeExprContexts(ctx, rctx);
 			}
 
-			bcInstr instruction = BC_BAND;
+			asEBCInstr instruction = BC_BAND;
 			if( lctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
 				if( op == ttAmp || op == ttAndAssign )
@@ -8542,7 +8542,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 				MergeExprContexts(ctx, rctx);
 			}
 
-			bcInstr instruction = BC_BSLL;
+			asEBCInstr instruction = BC_BSLL;
 			if( lctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
 				if( op == ttBitShiftLeft || op == ttShiftLeftAssign )
@@ -8763,7 +8763,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 			MergeExprContexts(ctx, lctx);
 			MergeExprContexts(ctx, rctx);
 
-			bcInstr iCmp = BC_CMPi, iT = BC_TZ;
+			asEBCInstr iCmp = BC_CMPi, iT = BC_TZ;
 
 			if( lctx->type.dataType.IsIntegerType() && lctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 				iCmp = BC_CMPi;
@@ -9096,9 +9096,9 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 
 	// Need to pop the value if it is a null constant
 	if( lctx->type.IsNullConstant() )
-		lctx->bc.Pop(PTR_SIZE);
+		lctx->bc.Pop(AS_PTR_SIZE);
 	if( rctx->type.IsNullConstant() )
-		rctx->bc.Pop(PTR_SIZE);
+		rctx->bc.Pop(AS_PTR_SIZE);
 
 	// Convert both sides to explicit handles
 	to.MakeHandle(true);
@@ -9132,9 +9132,9 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	{
 		// If the object handle already is in a variable we must manually pop it from the stack
 		if( lctx->type.isVariable )
-			lctx->bc.Pop(PTR_SIZE);
+			lctx->bc.Pop(AS_PTR_SIZE);
 		if( rctx->type.isVariable )
-			rctx->bc.Pop(PTR_SIZE);
+			rctx->bc.Pop(AS_PTR_SIZE);
 
 		// TODO: optimize: Treat the object handles as two integers, i.e. don't do REFCPY
 		ConvertToVariableNotIn(lctx, rctx);
@@ -9197,7 +9197,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		//       as the constructor will be called just like any other function
 		asASSERT(useVariable == false);
 
-		ctx->bc.Alloc(BC_ALLOC, objType, descr->id, argSize+PTR_SIZE);
+		ctx->bc.Alloc(BC_ALLOC, objType, descr->id, argSize+AS_PTR_SIZE);
 
 		// The instruction has already moved the returned object to the variable
 		ctx->type.Set(asCDataType::CreatePrimitive(ttVoid, false));
@@ -9211,14 +9211,14 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		return;
 	}
 	else if( descr->funcType == asFUNC_IMPORTED )
-		ctx->bc.Call(BC_CALLBND , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+		ctx->bc.Call(BC_CALLBND , descr->id, argSize + (descr->objectType ? AS_PTR_SIZE : 0));
 	// TODO: Maybe we need two different byte codes
 	else if( descr->funcType == asFUNC_INTERFACE || descr->funcType == asFUNC_VIRTUAL )
-		ctx->bc.Call(BC_CALLINTF, descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+		ctx->bc.Call(BC_CALLINTF, descr->id, argSize + (descr->objectType ? AS_PTR_SIZE : 0));
 	else if( descr->funcType == asFUNC_SCRIPT )
-		ctx->bc.Call(BC_CALL    , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+		ctx->bc.Call(BC_CALL    , descr->id, argSize + (descr->objectType ? AS_PTR_SIZE : 0));
 	else // if( descr->funcType == asFUNC_SYSTEM )
-		ctx->bc.Call(BC_CALLSYS , descr->id, argSize + (descr->objectType ? PTR_SIZE : 0));
+		ctx->bc.Call(BC_CALLSYS , descr->id, argSize + (descr->objectType ? AS_PTR_SIZE : 0));
 
 	if( ctx->type.dataType.IsObject() && !descr->returnType.IsReference() )
 	{
