@@ -62,6 +62,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
 	scriptSectionIdx       = -1;
 	dontCleanUpOnException = false;
 	vfTableIdx             = -1;
+    jitFunction            = 0;
 }
 
 // internal
@@ -409,6 +410,9 @@ void asCScriptFunction::ReleaseReferences()
 			break;
 		}
 	}
+    if (jitFunction)
+        engine->jitCompiler->ReleaseJITFunction(jitFunction);
+    jitFunction = NULL;
 }
 
 // interface
@@ -469,6 +473,53 @@ const char *asCScriptFunction::GetConfigGroup() const
 		return 0;
 
 	return group->groupName.AddressOf();
+}
+
+// internal
+void asCScriptFunction::JITCompile()
+{
+    asIJITCompiler *jit = engine->GetJITCompiler();
+    if (!jit)
+        return;
+
+    asDWORD* bytecode = byteCode.AddressOf();
+    asUINT bytecodeLength = (asUINT)byteCode.GetLength();
+     
+    if (jitFunction)
+    {
+        engine->jitCompiler->ReleaseJITFunction(jitFunction);
+        jitFunction = NULL;
+    }
+    int r = jit->StartCompile(bytecode, bytecodeLength, &jitFunction);
+    if (r == asSUCCESS)
+    {
+        asUINT j = 0;
+        while (j < bytecodeLength)
+        {
+            int op = *((unsigned char*) bytecode);
+            if (op == BC_SUSPEND)
+            {
+                int off = jit->ResolveSuspendOffset(j);
+                if (off < 0)
+                    off = 0;
+                else
+                    off++; // We need 0 indicate "no jit buffer"
+                if (off > 65535)
+                {
+                    asCString str;
+                    str.Format(TXT_OFFSET_OUT_OF_BOUNDS, GetName());
+                    engine->WriteMessage(GetName(), 0, 0, asMSGTYPE_WARNING, str.AddressOf());
+                    off = 0;
+                }
+                // Update bytecode argument with the offset
+                asBC_SWORDARG0(bytecode) = off;
+            }
+            int size = asCByteCode::SizeOfType(asBCInfo[op].type);
+            j += size;
+            bytecode += size;
+        }
+    }
+    jit->EndCompile();
 }
 
 END_AS_NAMESPACE

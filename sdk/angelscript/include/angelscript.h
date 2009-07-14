@@ -1076,8 +1076,8 @@ typedef void (*asJITFunction)(asSVMRegisters*, asDWORD suspendId);
 class asIJITCompiler
 {
 public:
-    virtual int StartCompile(const asDWORD *bytecode, int bytecodeLen, asJITFunction *output) = 0;
-    virtual int ResolveSuspendOffset(int bytecodeOffset) = 0;
+    virtual int StartCompile(const asDWORD *bytecode, asUINT bytecodeLen, asJITFunction *output) = 0;
+    virtual int ResolveSuspendOffset(asUINT bytecodeOffset) = 0;
     virtual void EndCompile() = 0;
     virtual void ReleaseJITFunction(asJITFunction func) = 0;
 public:

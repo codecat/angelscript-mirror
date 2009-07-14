@@ -105,6 +105,8 @@ public:
 	void      ComputeSignatureId();
 	bool      IsSignatureEqual(const asCScriptFunction *func) const;
 
+    void      JITCompile();
+
 	void      AddReferences();
 	void      ReleaseReferences();
 
@@ -139,6 +141,9 @@ public:
 
 	// Used by asFUNC_SYSTEM
 	asSSystemFunctionInterface  *sysFuncIntf;
+
+    // JIT compiled code of this function
+    asJITFunction                jitFunction;
 };
 
 END_AS_NAMESPACE

@@ -272,7 +272,10 @@ int asCContext::Prepare(int funcID)
 		if( module ) module->ReleaseContextRef();
 		module = initialFunction->module;
 		if( module )
+        {
 			module->AddContextRef();
+            regs.globalVarPointers = module->globalVarPointers.AddressOf();
+        }
 
 		// Determine the minimum stack size needed
 		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
@@ -422,6 +425,7 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 	if( module ) module->ReleaseContextRef();
 
 	module = mod;
+    regs.globalVarPointers = module->globalVarPointers.AddressOf();
 	module->AddContextRef();
 
 	if( (funcID & 0xFFFF) == asFUNC_STRING )
@@ -1039,7 +1043,10 @@ int asCContext::Execute()
 						if( module ) module->ReleaseContextRef();
 						module = currentFunction->module;
 						if( module )
+                        {
 							module->AddContextRef();
+                            regs.globalVarPointers = module->globalVarPointers.AddressOf();
+                        }
 
 						// Set the local objects to 0
 						for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
@@ -1207,6 +1214,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 
 	currentFunction = func;
 	module = func->module ? func->module : mod;
+    regs.globalVarPointers = module->globalVarPointers.AddressOf();
 	regs.programPointer = currentFunction->byteCode.AddressOf();
 
 	// Verify if there is enough room in the stack block. Allocate new block if not
@@ -1309,20 +1317,6 @@ void asCContext::CallInterfaceMethod(asCModule *mod, asCScriptFunction *func)
 	CallScriptFunction(mod, realFunc);
 }
 
-#define DWORDARG(x)  (asDWORD(*(x+1)))
-#define INTARG(x)    (int(*(x+1)))
-#define QWORDARG(x)  (*(asQWORD*)(x+1))
-#define FLOATARG(x)  (*(float*)(x+1))
-#define PTRARG(x)    (asPTRWORD(*(x+1)))
-
-#define WORDARG0(x)   (*(((asWORD*)x)+1))
-#define WORDARG1(x)   (*(((asWORD*)x)+2))
-
-#define SWORDARG0(x) (*(((short*)x)+1))
-#define SWORDARG1(x) (*(((short*)x)+2))
-#define SWORDARG2(x) (*(((short*)x)+3))
-
-
 void asCContext::ExecuteNext()
 {
 	asDWORD *l_bc = regs.programPointer;
@@ -1357,34 +1351,34 @@ void asCContext::ExecuteNext()
 
 	// Decrease the stack pointer with n dwords (stack grows downward)
 	case BC_POP:
-		l_sp += WORDARG0(l_bc);
+		l_sp += asBC_WORDARG0(l_bc);
 		l_bc++;
 		break;
 
 	// Increase the stack pointer with n dwords
 	case BC_PUSH:
-		l_sp -= WORDARG0(l_bc);
+		l_sp -= asBC_WORDARG0(l_bc);
 		l_bc++;
 		break;
 
 	// Push a dword value on the stack
 	case BC_PshC4:
 		--l_sp;
-		*l_sp = DWORDARG(l_bc);
+		*l_sp = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
 	// Push the dword value of a variable on the stack
 	case BC_PshV4:
 		--l_sp;
-		*l_sp = *(l_fp - SWORDARG0(l_bc));
+		*l_sp = *(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	// Push the address of a variable on the stack
 	case BC_PSF:
 		l_sp -= AS_PTR_SIZE;
-		*(asPTRWORD*)l_sp = (asPTRWORD)size_t(l_fp - SWORDARG0(l_bc));
+		*(asPTRWORD*)l_sp = (asPTRWORD)size_t(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
@@ -1407,7 +1401,7 @@ void asCContext::ExecuteNext()
 			// We need to use volatile here to tell the compiler it cannot
 			// change the order of read and write operations on the pointer.
 
-			volatile asBYTE *ptr = (asBYTE*)(l_fp - SWORDARG0(l_bc));
+			volatile asBYTE *ptr = (asBYTE*)(l_fp - asBC_SWORDARG0(l_bc));
 			asBYTE val = (ptr[0] == 0) ? VALUE_OF_BOOLEAN_TRUE : 0;
 			ptr[0] = val; // The result is stored in the lower byte
 			ptr[1] = 0;   // Make sure the rest of the DWORD is 0
@@ -1423,15 +1417,15 @@ void asCContext::ExecuteNext()
 	// Push the dword value of a global variable on the stack
 	case BC_PshG4:
 		--l_sp;
-		*l_sp = *(asDWORD*)module->globalVarPointers[WORDARG0(l_bc)];
+        *l_sp = *(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
 		l_bc++;
 		break;
 
 	// Load the address of a globar variable in the register, then  
 	// copy the value of the global variable into a local variable
 	case BC_LdGRdR4:
-		*(void**)&regs.valueRegister = module->globalVarPointers[WORDARG1(l_bc)];
-		*(l_fp - SWORDARG0(l_bc)) = **(asDWORD**)&regs.valueRegister;
+		*(void**)&regs.valueRegister = regs.globalVarPointers[asBC_WORDARG1(l_bc)];
+		*(l_fp - asBC_SWORDARG0(l_bc)) = **(asDWORD**)&regs.valueRegister;
 		l_bc += 2;
 		break;
 
@@ -1441,7 +1435,7 @@ void asCContext::ExecuteNext()
 	// Begin execution of a script function
 	case BC_CALL:
 		{
-			int i = INTARG(l_bc);
+			int i = asBC_INTARG(l_bc);
 			l_bc += 2;
 
 			asASSERT( i >= 0 );
@@ -1474,7 +1468,7 @@ void asCContext::ExecuteNext()
 				return;
 			}
 
-			asWORD w = WORDARG0(l_bc);
+			asWORD w = asBC_WORDARG0(l_bc);
 
 			// Need to move the values back to the context
 			regs.programPointer = l_bc;
@@ -1496,7 +1490,7 @@ void asCContext::ExecuteNext()
 
 	// Jump to a relative position
 	case BC_JMP:
-		l_bc += 2 + INTARG(l_bc);
+		l_bc += 2 + asBC_INTARG(l_bc);
 		break;
 
 //----------------
@@ -1505,7 +1499,7 @@ void asCContext::ExecuteNext()
 	// Jump to a relative position if the value in the register is 0
 	case BC_JZ:
 		if( *(int*)&regs.valueRegister == 0 )
-			l_bc += INTARG(l_bc) + 2;
+			l_bc += asBC_INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
@@ -1513,7 +1507,7 @@ void asCContext::ExecuteNext()
 	// Jump to a relative position if the value in the register is not 0
 	case BC_JNZ:
 		if( *(int*)&regs.valueRegister != 0 )
-			l_bc += INTARG(l_bc) + 2;
+			l_bc += asBC_INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
@@ -1521,7 +1515,7 @@ void asCContext::ExecuteNext()
 	// Jump to a relative position if the value in the register is negative
 	case BC_JS:
 		if( *(int*)&regs.valueRegister < 0 )
-			l_bc += INTARG(l_bc) + 2;
+			l_bc += asBC_INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
@@ -1529,7 +1523,7 @@ void asCContext::ExecuteNext()
 	// Jump to a relative position if the value in the register it not negative
 	case BC_JNS:
 		if( *(int*)&regs.valueRegister >= 0 )
-			l_bc += INTARG(l_bc) + 2;
+			l_bc += asBC_INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
@@ -1537,7 +1531,7 @@ void asCContext::ExecuteNext()
 	// Jump to a relative position if the value in the register is greater than 0
 	case BC_JP:
 		if( *(int*)&regs.valueRegister > 0 )
-			l_bc += INTARG(l_bc) + 2;
+			l_bc += asBC_INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
@@ -1545,7 +1539,7 @@ void asCContext::ExecuteNext()
 	// Jump to a relative position if the value in the register is not greater than 0
 	case BC_JNP:
 		if( *(int*)&regs.valueRegister <= 0 )
-			l_bc += INTARG(l_bc) + 2;
+			l_bc += asBC_INTARG(l_bc) + 2;
 		else
 			l_bc += 2;
 		break;
@@ -1719,19 +1713,19 @@ void asCContext::ExecuteNext()
 
 	// Negate the integer value in the variable
 	case BC_NEGi:
-		*(l_fp - SWORDARG0(l_bc)) = asDWORD(-int(*(l_fp - SWORDARG0(l_bc))));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = asDWORD(-int(*(l_fp - asBC_SWORDARG0(l_bc))));
 		l_bc++;
 		break;
 
 	// Negate the float value in the variable
 	case BC_NEGf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = -*(float*)(l_fp - SWORDARG0(l_bc));
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = -*(float*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	// Negate the double value in the variable
 	case BC_NEGd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = -*(double*)(l_fp - SWORDARG0(l_bc));
+		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = -*(double*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
@@ -1800,13 +1794,13 @@ void asCContext::ExecuteNext()
 
 	// Increment the local integer variable
 	case BC_IncVi:
-		(*(int*)(l_fp - SWORDARG0(l_bc)))++;
+		(*(int*)(l_fp - asBC_SWORDARG0(l_bc)))++;
 		l_bc++;
 		break;
 
 	// Decrement the local integer variable
 	case BC_DecVi:
-		(*(int*)(l_fp - SWORDARG0(l_bc)))--;
+		(*(int*)(l_fp - asBC_SWORDARG0(l_bc)))--;
 		l_bc++;
 		break;
 
@@ -1815,43 +1809,43 @@ void asCContext::ExecuteNext()
 
 	// Do a bitwise not on the value in the variable
 	case BC_BNOT:
-		*(l_fp - SWORDARG0(l_bc)) = ~*(l_fp - SWORDARG0(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = ~*(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	// Do a bitwise and of two variables and store the result in a third variable
 	case BC_BAND:
-		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) & *(l_fp - SWORDARG2(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) & *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do a bitwise or of two variables and store the result in a third variable
 	case BC_BOR:
-		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) | *(l_fp - SWORDARG2(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) | *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do a bitwise xor of two variables and store the result in a third variable
 	case BC_BXOR:
-		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) ^ *(l_fp - SWORDARG2(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) ^ *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do a logical shift left of two variables and store the result in a third variable
 	case BC_BSLL:
-		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) << *(l_fp - SWORDARG2(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) << *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do a logical shift right of two variables and store the result in a third variable
 	case BC_BSRL:
-		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc)) >> *(l_fp - SWORDARG2(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) >> *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do an arithmetic shift right of two variables and store the result in a third variable
 	case BC_BSRA:
-		*(l_fp - SWORDARG0(l_bc)) = int(*(l_fp - SWORDARG1(l_bc))) >> *(l_fp - SWORDARG2(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = int(*(l_fp - asBC_SWORDARG1(l_bc))) >> *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
@@ -1870,7 +1864,7 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
 				return;
 			}
-			memcpy(d, s, WORDARG0(l_bc)*4);
+			memcpy(d, s, asBC_WORDARG0(l_bc)*4);
 
 			// replace the pointer on the stack with the lvalue
 			*(size_t**)l_sp = (size_t*)d;
@@ -1880,7 +1874,7 @@ void asCContext::ExecuteNext()
 
 	case BC_SET8:
 		l_sp -= 2;
-		*(asQWORD*)l_sp = QWORDARG(l_bc);
+		*(asQWORD*)l_sp = asBC_QWORDARG(l_bc);
 		l_bc += 3;
 		break;
 
@@ -1907,7 +1901,7 @@ void asCContext::ExecuteNext()
 	// Comparisons
 	case BC_CMPd:
 		{
-			double dbl = *(double*)(l_fp - SWORDARG0(l_bc)) - *(double*)(l_fp - SWORDARG1(l_bc));
+			double dbl = *(double*)(l_fp - asBC_SWORDARG0(l_bc)) - *(double*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( dbl == 0 )     *(int*)&regs.valueRegister =  0;
 			else if( dbl < 0 ) *(int*)&regs.valueRegister = -1;
 			else               *(int*)&regs.valueRegister =  1;
@@ -1917,8 +1911,8 @@ void asCContext::ExecuteNext()
 
 	case BC_CMPu:
 		{
-			asDWORD d = *(asDWORD*)(l_fp - SWORDARG0(l_bc));
-			asDWORD d2 = *(asDWORD*)(l_fp - SWORDARG1(l_bc));
+			asDWORD d = *(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc));
+			asDWORD d2 = *(asDWORD*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( d == d2 )     *(int*)&regs.valueRegister =  0;
 			else if( d < d2 ) *(int*)&regs.valueRegister = -1;
 			else              *(int*)&regs.valueRegister =  1;
@@ -1928,7 +1922,7 @@ void asCContext::ExecuteNext()
 
 	case BC_CMPf:
 		{
-			float f = *(float*)(l_fp - SWORDARG0(l_bc)) - *(float*)(l_fp - SWORDARG1(l_bc));
+			float f = *(float*)(l_fp - asBC_SWORDARG0(l_bc)) - *(float*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( f == 0 )     *(int*)&regs.valueRegister =  0;
 			else if( f < 0 ) *(int*)&regs.valueRegister = -1;
 			else             *(int*)&regs.valueRegister =  1;
@@ -1938,7 +1932,7 @@ void asCContext::ExecuteNext()
 
 	case BC_CMPi:
 		{
-			int i = *(int*)(l_fp - SWORDARG0(l_bc)) - *(int*)(l_fp - SWORDARG1(l_bc));
+			int i = *(int*)(l_fp - asBC_SWORDARG0(l_bc)) - *(int*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( i == 0 )     *(int*)&regs.valueRegister =  0;
 			else if( i < 0 ) *(int*)&regs.valueRegister = -1;
 			else             *(int*)&regs.valueRegister =  1;
@@ -1950,7 +1944,7 @@ void asCContext::ExecuteNext()
 	// Comparisons with constant value
 	case BC_CMPIi:
 		{
-			int i = *(int*)(l_fp - SWORDARG0(l_bc)) - INTARG(l_bc);
+			int i = *(int*)(l_fp - asBC_SWORDARG0(l_bc)) - asBC_INTARG(l_bc);
 			if( i == 0 )     *(int*)&regs.valueRegister =  0;
 			else if( i < 0 ) *(int*)&regs.valueRegister = -1;
 			else             *(int*)&regs.valueRegister =  1;
@@ -1960,7 +1954,7 @@ void asCContext::ExecuteNext()
 
 	case BC_CMPIf:
 		{
-			float f = *(float*)(l_fp - SWORDARG0(l_bc)) - FLOATARG(l_bc);
+			float f = *(float*)(l_fp - asBC_SWORDARG0(l_bc)) - asBC_FLOATARG(l_bc);
 			if( f == 0 )     *(int*)&regs.valueRegister =  0;
 			else if( f < 0 ) *(int*)&regs.valueRegister = -1;
 			else             *(int*)&regs.valueRegister =  1;
@@ -1970,8 +1964,8 @@ void asCContext::ExecuteNext()
 
 	case BC_CMPIu:
 		{
-			asDWORD d1 = *(asDWORD*)(l_fp - SWORDARG0(l_bc));
-			asDWORD d2 = DWORDARG(l_bc);
+			asDWORD d1 = *(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc));
+			asDWORD d2 = asBC_DWORDARG(l_bc);
 			if( d1 == d2 )     *(int*)&regs.valueRegister =  0;
 			else if( d1 < d2 ) *(int*)&regs.valueRegister = -1;
 			else               *(int*)&regs.valueRegister =  1;
@@ -1980,7 +1974,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_JMPP:
-		l_bc += 1 + (*(int*)(l_fp - SWORDARG0(l_bc)))*2;
+		l_bc += 1 + (*(int*)(l_fp - asBC_SWORDARG0(l_bc)))*2;
 		break;
 
 	case BC_PopRPtr:
@@ -1998,7 +1992,7 @@ void asCContext::ExecuteNext()
 	case BC_STR:
 		{
 			// Get the string id from the argument
-			asWORD w = WORDARG0(l_bc);
+			asWORD w = asBC_WORDARG0(l_bc);
 			// Push the string pointer on the stack
 			const asCString &b = module->GetConstantString(w);
 			l_sp -= AS_PTR_SIZE;
@@ -2013,7 +2007,7 @@ void asCContext::ExecuteNext()
 	case BC_CALLSYS:
 		{
 			// Get function ID from the argument
-			int i = INTARG(l_bc);
+			int i = asBC_INTARG(l_bc);
 
 			// Need to move the values back to the context
 			regs.programPointer = l_bc;
@@ -2050,7 +2044,7 @@ void asCContext::ExecuteNext()
 	case BC_CALLBND:
 		{
 			// Get the function ID from the stack
-			int i = INTARG(l_bc);
+			int i = asBC_INTARG(l_bc);
 			l_bc += 2;
 
 			asASSERT( i >= 0 );
@@ -2087,36 +2081,62 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_SUSPEND:
-		if( regs.doProcessSuspend )
-		{
-			if( lineCallback )
-			{
-				regs.programPointer = l_bc;
-				regs.stackPointer = l_sp;
-				regs.stackFramePointer = l_fp;
+        {
+            unsigned int jitOffset = asBC_WORDARG0(l_bc);
+		    if( regs.doProcessSuspend )
+		    {
+			    if( lineCallback )
+			    {
+				    regs.programPointer = l_bc;
+				    regs.stackPointer = l_sp;
+				    regs.stackFramePointer = l_fp;
 
-				CallLineCallback();
-			}
-			l_bc++;
-			if( doSuspend )
-			{
-				// Need to move the values back to the context
-				regs.programPointer = l_bc;
-				regs.stackPointer = l_sp;
-				regs.stackFramePointer = l_fp;
+				    CallLineCallback();
+			    }
+			    if( doSuspend )
+			    {
+                    if( !jitOffset )
+					{
+                        // If this is actually a JIT resume point, we want to come back here
+                        // once the script execution is resumed. Otherwise we want to continue
+                        // at the next bytecode.
+			            l_bc++;
+					}
 
-				status = asEXECUTION_SUSPENDED;
-				return;
-			}
-		}
-		else
-			l_bc++;
-		break;
+				    // Need to move the values back to the context
+				    regs.programPointer = l_bc;
+				    regs.stackPointer = l_sp;
+				    regs.stackFramePointer = l_fp;
+
+				    status = asEXECUTION_SUSPENDED;
+				    return;
+			    }
+		    }
+            if (jitOffset && currentFunction->jitFunction)
+            {
+                // Resume JIT operation
+			    regs.programPointer = l_bc;
+			    regs.stackPointer = l_sp;
+			    regs.stackFramePointer = l_fp;
+
+                (currentFunction->jitFunction)(&regs, jitOffset-1);
+
+			    l_bc = regs.programPointer;
+			    l_sp = regs.stackPointer;
+			    l_fp = regs.stackFramePointer;
+            }
+            else
+            {
+                // Not a JIT resume point, treat as nop
+			    l_bc++;
+            }
+        }
+        break;
 
 	case BC_ALLOC:
 		{
-			asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(l_bc);
-			int func = INTARG(l_bc+AS_PTR_SIZE);
+			asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(l_bc);
+			int func = asBC_INTARG(l_bc+AS_PTR_SIZE);
 
 			if( objType->flags & asOBJ_SCRIPT_OBJECT )
 			{
@@ -2208,7 +2228,7 @@ void asCContext::ExecuteNext()
 			l_sp += AS_PTR_SIZE;
 			if( a && *a )
 			{
-				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(l_bc);
+				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(l_bc);
 				asSTypeBehaviour *beh = &objType->beh;
 
 				// Need to move the values back to the context
@@ -2241,7 +2261,7 @@ void asCContext::ExecuteNext()
 	case BC_LOADOBJ:
 		{
 			// Move the object pointer from the object variable into the object register
-			void **a = (void**)(l_fp - SWORDARG0(l_bc));
+			void **a = (void**)(l_fp - asBC_SWORDARG0(l_bc));
 			regs.objectType = 0;
 			regs.objectRegister = *a;
 			*a = 0;
@@ -2251,14 +2271,14 @@ void asCContext::ExecuteNext()
 
 	case BC_STOREOBJ:
 		// Move the object pointer from the object register to the object variable
-		*(size_t*)(l_fp - SWORDARG0(l_bc)) = size_t(regs.objectRegister);
+		*(size_t*)(l_fp - asBC_SWORDARG0(l_bc)) = size_t(regs.objectRegister);
 		regs.objectRegister = 0;
 		l_bc++;
 		break;
 
 	case BC_GETOBJ:
 		{
-			size_t *a = (size_t*)(l_sp + WORDARG0(l_bc));
+			size_t *a = (size_t*)(l_sp + asBC_WORDARG0(l_bc));
 			asDWORD offset = *(asDWORD*)a;
 			size_t *v = (size_t*)(l_fp - offset);
 			*a = *v;
@@ -2269,7 +2289,7 @@ void asCContext::ExecuteNext()
 
 	case BC_REFCPY:
 		{
-			asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(l_bc);
+			asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(l_bc);
 			asSTypeBehaviour *beh = &objType->beh;
 			void **d = (void**)*(size_t*)l_sp;
 			l_sp += AS_PTR_SIZE;
@@ -2309,7 +2329,7 @@ void asCContext::ExecuteNext()
 
 	case BC_GETOBJREF:
 		{
-			size_t *a = (size_t*)(l_sp + WORDARG0(l_bc));
+			size_t *a = (size_t*)(l_sp + asBC_WORDARG0(l_bc));
 			*(size_t**)a = *(size_t**)(l_fp - *a);
 		}
 		l_bc++;
@@ -2317,7 +2337,7 @@ void asCContext::ExecuteNext()
 
 	case BC_GETREF:
 		{
-			size_t *a = (size_t*)(l_sp + WORDARG0(l_bc));
+			size_t *a = (size_t*)(l_sp + asBC_WORDARG0(l_bc));
 			*(size_t**)a = (size_t*)(l_fp - (int)*a);
 		}
 		l_bc++;
@@ -2345,100 +2365,100 @@ void asCContext::ExecuteNext()
 
 	case BC_OBJTYPE:
 		l_sp -= AS_PTR_SIZE;
-		*(asPTRWORD*)l_sp = PTRARG(l_bc);
+		*(asPTRWORD*)l_sp = asBC_PTRARG(l_bc);
 		l_bc += 1+AS_PTR_SIZE;
 		break;
 
 	case BC_TYPEID:
 		{
 			--l_sp;
-			asDWORD typeId = DWORDARG(l_bc);
+			asDWORD typeId = asBC_DWORDARG(l_bc);
 			*l_sp = typeId;
 			l_bc += 2;
 		}
 		break;
 
 	case BC_SetV4:
-		*(l_fp - SWORDARG0(l_bc)) = DWORDARG(l_bc);
+		*(l_fp - asBC_SWORDARG0(l_bc)) = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
 	case BC_SetV8:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = QWORDARG(l_bc);
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = asBC_QWORDARG(l_bc);
 		l_bc += 3;
 		break;
 
 	case BC_ADDSi:
-		*(size_t*)l_sp = size_t(asPTRWORD(*(size_t*)l_sp) + INTARG(l_bc));
+		*(size_t*)l_sp = size_t(asPTRWORD(*(size_t*)l_sp) + asBC_INTARG(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_CpyVtoV4:
-		*(l_fp - SWORDARG0(l_bc)) = *(l_fp - SWORDARG1(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_CpyVtoV8:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_CpyVtoR4:
-		*(asDWORD*)&regs.valueRegister = *(asDWORD*)(l_fp - SWORDARG0(l_bc));
+		*(asDWORD*)&regs.valueRegister = *(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_CpyVtoR8:
-		*(asQWORD*)&regs.valueRegister = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
+		*(asQWORD*)&regs.valueRegister = *(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_CpyVtoG4:
-		*(asDWORD*)module->globalVarPointers[WORDARG0(l_bc)] = *(asDWORD*)(l_fp - SWORDARG1(l_bc));
+		*(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)] = *(asDWORD*)(l_fp - asBC_SWORDARG1(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_CpyRtoV4:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)&regs.valueRegister;
+		*(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asDWORD*)&regs.valueRegister;
 		l_bc++;
 		break;
 
 	case BC_CpyRtoV8:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = regs.valueRegister;
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = regs.valueRegister;
 		l_bc++;
 		break;
 
 	case BC_CpyGtoV4:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = *(asDWORD*)module->globalVarPointers[WORDARG1(l_bc)];
+		*(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asDWORD*)regs.globalVarPointers[asBC_WORDARG1(l_bc)];
 		l_bc += 2;
 		break;
 
 	case BC_WRTV1:
 		// The pointer in the register points to a byte, and *(l_fp - offset) too
-		**(asBYTE**)&regs.valueRegister = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
+		**(asBYTE**)&regs.valueRegister = *(asBYTE*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_WRTV2:
 		// The pointer in the register points to a word, and *(l_fp - offset) too
-		**(asWORD**)&regs.valueRegister = *(asWORD*)(l_fp - SWORDARG0(l_bc));
+		**(asWORD**)&regs.valueRegister = *(asWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_WRTV4:
-		**(asDWORD**)&regs.valueRegister = *(l_fp - SWORDARG0(l_bc));
+		**(asDWORD**)&regs.valueRegister = *(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_WRTV8:
-		**(asQWORD**)&regs.valueRegister = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
+		**(asQWORD**)&regs.valueRegister = *(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_RDR1:
 		{
 			// The pointer in the register points to a byte, and *(l_fp - offset) will also point to a byte
-			asBYTE *bPtr = (asBYTE*)(l_fp - SWORDARG0(l_bc));
+			asBYTE *bPtr = (asBYTE*)(l_fp - asBC_SWORDARG0(l_bc));
 			bPtr[0] = **(asBYTE**)&regs.valueRegister; // read the byte
 			bPtr[1] = 0;                      // 0 the rest of the DWORD
 			bPtr[2] = 0;
@@ -2450,7 +2470,7 @@ void asCContext::ExecuteNext()
 	case BC_RDR2:
 		{
 			// The pointer in the register points to a word, and *(l_fp - offset) will also point to a word
-			asWORD *wPtr = (asWORD*)(l_fp - SWORDARG0(l_bc));
+			asWORD *wPtr = (asWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 			wPtr[0] = **(asWORD**)&regs.valueRegister; // read the word
 			wPtr[1] = 0;                      // 0 the rest of the DWORD
 		}
@@ -2458,28 +2478,28 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_RDR4:
-		*(asDWORD*)(l_fp - SWORDARG0(l_bc)) = **(asDWORD**)&regs.valueRegister;
+		*(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = **(asDWORD**)&regs.valueRegister;
 		l_bc++;
 		break;
 
 	case BC_RDR8:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = **(asQWORD**)&regs.valueRegister;
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = **(asQWORD**)&regs.valueRegister;
 		l_bc++;
 		break;
 
 	case BC_LDG:
-		*(asDWORD**)&regs.valueRegister = (asDWORD*)module->globalVarPointers[WORDARG0(l_bc)];
+		*(asDWORD**)&regs.valueRegister = (asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
 		l_bc++;
 		break;
 
 	case BC_LDV:
-		*(asDWORD**)&regs.valueRegister = (l_fp - SWORDARG0(l_bc));
+		*(asDWORD**)&regs.valueRegister = (l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_PGA:
 		l_sp -= AS_PTR_SIZE;
-		*(asPTRWORD*)l_sp = (asPTRWORD)(size_t)module->globalVarPointers[WORDARG0(l_bc)];
+		*(asPTRWORD*)l_sp = (asPTRWORD)(size_t)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
 		l_bc++;
 		break;
 
@@ -2498,108 +2518,108 @@ void asCContext::ExecuteNext()
 
 	case BC_VAR:
 		l_sp -= AS_PTR_SIZE;
-		*(size_t*)l_sp = (size_t)SWORDARG0(l_bc);
+		*(size_t*)l_sp = (size_t)asBC_SWORDARG0(l_bc);
 		l_bc++;
 		break;
 
 	//----------------------------
 	// Type conversions
 	case BC_iTOf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(int*)(l_fp - SWORDARG0(l_bc)));
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(*(int*)(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
 	case BC_fTOi:
-		*(l_fp - SWORDARG0(l_bc)) = int(*(float*)(l_fp - SWORDARG0(l_bc)));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = int(*(float*)(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
 	case BC_uTOf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(l_fp - SWORDARG0(l_bc)));
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(*(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
 	case BC_fTOu:
 		// We must cast to int first, because on some compilers the cast of a negative float value to uint result in 0
-		*(l_fp - SWORDARG0(l_bc)) = asUINT(int(*(float*)(l_fp - SWORDARG0(l_bc))));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = asUINT(int(*(float*)(l_fp - asBC_SWORDARG0(l_bc))));
 		l_bc++;
 		break;
 
 	case BC_sbTOi:
 		// *(l_fp - offset) points to a char, and will point to an int afterwards
-		*(l_fp - SWORDARG0(l_bc)) = *(signed char*)(l_fp - SWORDARG0(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(signed char*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_swTOi:
 		// *(l_fp - offset) points to a short, and will point to an int afterwards
-		*(l_fp - SWORDARG0(l_bc)) = *(short*)(l_fp - SWORDARG0(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(short*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_ubTOi:
 		// (l_fp - offset) points to a byte, and will point to an int afterwards
-		*(l_fp - SWORDARG0(l_bc)) = *(asBYTE*)(l_fp - SWORDARG0(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(asBYTE*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_uwTOi:
 		// *(l_fp - offset) points to a word, and will point to an int afterwards
-		*(l_fp - SWORDARG0(l_bc)) = *(asWORD*)(l_fp - SWORDARG0(l_bc));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = *(asWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_dTOi:
-		*(l_fp - SWORDARG0(l_bc)) = int(*(double*)(l_fp - SWORDARG1(l_bc)));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = int(*(double*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_dTOu:
 		// We must cast to int first, because on some compilers the cast of a negative float value to uint result in 0
-		*(l_fp - SWORDARG0(l_bc)) = asUINT(int(*(double*)(l_fp - SWORDARG1(l_bc))));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = asUINT(int(*(double*)(l_fp - asBC_SWORDARG1(l_bc))));
 		l_bc += 2;
 		break;
 
 	case BC_dTOf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(double*)(l_fp - SWORDARG1(l_bc)));
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(*(double*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_iTOd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(int*)(l_fp - SWORDARG1(l_bc)));
+		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(*(int*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_uTOd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(asUINT*)(l_fp - SWORDARG1(l_bc)));
+		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(*(asUINT*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_fTOd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(float*)(l_fp - SWORDARG1(l_bc)));
+		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(*(float*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	//------------------------------
 	// Math operations
 	case BC_ADDi:
-		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) + *(int*)(l_fp - SWORDARG2(l_bc));
+		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) + *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_SUBi:
-		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) - *(int*)(l_fp - SWORDARG2(l_bc));
+		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) - *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_MULi:
-		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) * *(int*)(l_fp - SWORDARG2(l_bc));
+		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) * *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_DIVi:
 		{
-			int divider = *(int*)(l_fp - SWORDARG2(l_bc));
+			int divider = *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -2611,14 +2631,14 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) / divider;
+			*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
 		}
 		l_bc += 2;
 		break;
 
 	case BC_MODi:
 		{
-			int divider = *(int*)(l_fp - SWORDARG2(l_bc));
+			int divider = *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -2630,29 +2650,29 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) % divider;
+			*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) % divider;
 		}
 		l_bc += 2;
 		break;
 
 	case BC_ADDf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) + *(float*)(l_fp - SWORDARG2(l_bc));
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) + *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_SUBf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) - *(float*)(l_fp - SWORDARG2(l_bc));
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) - *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_MULf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) * *(float*)(l_fp - SWORDARG2(l_bc));
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) * *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_DIVf:
 		{
-			float divider = *(float*)(l_fp - SWORDARG2(l_bc));
+			float divider = *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -2664,14 +2684,14 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) / divider;
+			*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
 		}
 		l_bc += 2;
 		break;
 
 	case BC_MODf:
 		{
-			float divider = *(float*)(l_fp - SWORDARG2(l_bc));
+			float divider = *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -2683,29 +2703,29 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			*(float*)(l_fp - SWORDARG0(l_bc)) = fmodf(*(float*)(l_fp - SWORDARG1(l_bc)), divider);
+			*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = fmodf(*(float*)(l_fp - asBC_SWORDARG1(l_bc)), divider);
 		}
 		l_bc += 2;
 		break;
 
 	case BC_ADDd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) + *(double*)(l_fp - SWORDARG2(l_bc));
+		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = *(double*)(l_fp - asBC_SWORDARG1(l_bc)) + *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_SUBd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) - *(double*)(l_fp - SWORDARG2(l_bc));
+		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = *(double*)(l_fp - asBC_SWORDARG1(l_bc)) - *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_MULd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) * *(double*)(l_fp - SWORDARG2(l_bc));
+		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = *(double*)(l_fp - asBC_SWORDARG1(l_bc)) * *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_DIVd:
 		{
-			double divider = *(double*)(l_fp - SWORDARG2(l_bc));
+			double divider = *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -2718,14 +2738,14 @@ void asCContext::ExecuteNext()
 				return;
 			}
 
-			*(double*)(l_fp - SWORDARG0(l_bc)) = *(double*)(l_fp - SWORDARG1(l_bc)) / divider;
+			*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = *(double*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
 			l_bc += 2;
 		}
 		break;
 
 	case BC_MODd:
 		{
-			double divider = *(double*)(l_fp - SWORDARG2(l_bc));
+			double divider = *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -2738,7 +2758,7 @@ void asCContext::ExecuteNext()
 				return;
 			}
 
-			*(double*)(l_fp - SWORDARG0(l_bc)) = fmod(*(double*)(l_fp - SWORDARG1(l_bc)), divider);
+			*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = fmod(*(double*)(l_fp - asBC_SWORDARG1(l_bc)), divider);
 			l_bc += 2;
 		}
 		break;
@@ -2746,38 +2766,38 @@ void asCContext::ExecuteNext()
 	//------------------------------
 	// Math operations with constant value
 	case BC_ADDIi:
-		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) + INTARG(l_bc+1);
+		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) + asBC_INTARG(l_bc+1);
 		l_bc += 3;
 		break;
 
 	case BC_SUBIi:
-		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) - INTARG(l_bc+1);
+		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) - asBC_INTARG(l_bc+1);
 		l_bc += 3;
 		break;
 
 	case BC_MULIi:
-		*(int*)(l_fp - SWORDARG0(l_bc)) = *(int*)(l_fp - SWORDARG1(l_bc)) * INTARG(l_bc+1);
+		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) * asBC_INTARG(l_bc+1);
 		l_bc += 3;
 		break;
 
 	case BC_ADDIf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) + FLOATARG(l_bc+1);
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) + asBC_FLOATARG(l_bc+1);
 		l_bc += 3;
 		break;
 
 	case BC_SUBIf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) - FLOATARG(l_bc+1);
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) - asBC_FLOATARG(l_bc+1);
 		l_bc += 3;
 		break;
 
 	case BC_MULIf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = *(float*)(l_fp - SWORDARG1(l_bc)) * FLOATARG(l_bc+1);
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) * asBC_FLOATARG(l_bc+1);
 		l_bc += 3;
 		break;
 
 	//-----------------------------------
 	case BC_SetG4:
-		*(asDWORD*)module->globalVarPointers[WORDARG0(l_bc)] = DWORDARG(l_bc);
+		*(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)] = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
@@ -2802,7 +2822,7 @@ void asCContext::ExecuteNext()
 	case BC_ChkNullV:
 		{
 			// Verify if variable (on the stack) is not null
-			asDWORD *a = *(asDWORD**)(l_fp - SWORDARG0(l_bc));
+			asDWORD *a = *(asDWORD**)(l_fp - asBC_SWORDARG0(l_bc));
 			if( a == 0 )
 			{
 				regs.programPointer = l_bc;
@@ -2818,7 +2838,7 @@ void asCContext::ExecuteNext()
 
 	case BC_CALLINTF:
 		{
-			int i = INTARG(l_bc);
+			int i = asBC_INTARG(l_bc);
 			l_bc += 2;
 
 			asASSERT( i >= 0 );
@@ -2848,8 +2868,8 @@ void asCContext::ExecuteNext()
 
 			// We need to use volatile here to tell the compiler not to rearrange
 			// read and write operations during optimizations.
-			volatile asDWORD val  = *(l_fp - SWORDARG0(l_bc));
-			volatile asBYTE *bPtr = (asBYTE*)(l_fp - SWORDARG0(l_bc));
+			volatile asDWORD val  = *(l_fp - asBC_SWORDARG0(l_bc));
+			volatile asBYTE *bPtr = (asBYTE*)(l_fp - asBC_SWORDARG0(l_bc));
 			bPtr[0] = (asBYTE)val; // write the byte
 			bPtr[1] = 0;           // 0 the rest of the DWORD
 			bPtr[2] = 0;
@@ -2864,8 +2884,8 @@ void asCContext::ExecuteNext()
 
 			// We need to use volatile here to tell the compiler not to rearrange
 			// read and write operations during optimizations.
-			volatile asDWORD val  = *(l_fp - SWORDARG0(l_bc));
-			volatile asWORD *wPtr = (asWORD*)(l_fp - SWORDARG0(l_bc));
+			volatile asDWORD val  = *(l_fp - asBC_SWORDARG0(l_bc));
+			volatile asWORD *wPtr = (asWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 			wPtr[0] = (asWORD)val; // write the word
 			wPtr[1] = 0;           // 0 the rest of the DWORD
 		}
@@ -2874,13 +2894,13 @@ void asCContext::ExecuteNext()
 
 	case BC_SetV1:
 		// The byte is already stored correctly in the argument
-		*(l_fp - SWORDARG0(l_bc)) = DWORDARG(l_bc);
+		*(l_fp - asBC_SWORDARG0(l_bc)) = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
 	case BC_SetV2:
 		// The word is already stored correctly in the argument
-		*(l_fp - SWORDARG0(l_bc)) = DWORDARG(l_bc);
+		*(l_fp - asBC_SWORDARG0(l_bc)) = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
@@ -2890,7 +2910,7 @@ void asCContext::ExecuteNext()
 			asDWORD **a = (asDWORD**)*(size_t*)l_sp;
 			if( a && *a )
 			{
-				asDWORD typeId = DWORDARG(l_bc);
+				asDWORD typeId = asBC_DWORDARG(l_bc);
 
 				asCScriptObject *obj = (asCScriptObject *)* a;
 				asCObjectType *objType = obj->objType;
@@ -2908,42 +2928,42 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_i64TOi:
-		*(l_fp - SWORDARG0(l_bc)) = int(*(asINT64*)(l_fp - SWORDARG1(l_bc)));
+		*(l_fp - asBC_SWORDARG0(l_bc)) = int(*(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_uTOi64:
-		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = asINT64(*(asUINT*)(l_fp - SWORDARG1(l_bc)));
+		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = asINT64(*(asUINT*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_iTOi64:
-		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = asINT64(*(int*)(l_fp - SWORDARG1(l_bc)));
+		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = asINT64(*(int*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_fTOi64:
-		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = asINT64(*(float*)(l_fp - SWORDARG1(l_bc)));
+		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = asINT64(*(float*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	case BC_dTOi64:
-		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = asINT64(*(double*)(l_fp - SWORDARG0(l_bc)));
+		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = asINT64(*(double*)(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
 	case BC_fTOu64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = asQWORD(asINT64(*(float*)(l_fp - SWORDARG1(l_bc))));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = asQWORD(asINT64(*(float*)(l_fp - asBC_SWORDARG1(l_bc))));
 		l_bc += 2;
 		break;
 
 	case BC_dTOu64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = asQWORD(asINT64(*(double*)(l_fp - SWORDARG0(l_bc))));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = asQWORD(asINT64(*(double*)(l_fp - asBC_SWORDARG0(l_bc))));
 		l_bc++;
 		break;
 
 	case BC_i64TOf:
-		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(asINT64*)(l_fp - SWORDARG1(l_bc)));
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(*(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
@@ -2951,20 +2971,20 @@ void asCContext::ExecuteNext()
 #if _MSC_VER <= 1200 // MSVC6 
 		{
 			// MSVC6 doesn't permit UINT64 to double
-			asINT64 v = *(asINT64*)(l_fp - SWORDARG1(l_bc));
+			asINT64 v = *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( v < 0 )
-				*(float*)(l_fp - SWORDARG0(l_bc)) = 18446744073709551615.0f+float(v);
+				*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = 18446744073709551615.0f+float(v);
 			else
-				*(float*)(l_fp - SWORDARG0(l_bc)) = float(v);
+				*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(v);
 		}
 #else
-		*(float*)(l_fp - SWORDARG0(l_bc)) = float(*(asQWORD*)(l_fp - SWORDARG1(l_bc)));
+		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(*(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)));
 #endif
 		l_bc += 2;
 		break;
 
 	case BC_i64TOd:
-		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(asINT64*)(l_fp - SWORDARG0(l_bc)));
+		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
@@ -2972,20 +2992,20 @@ void asCContext::ExecuteNext()
 #if _MSC_VER <= 1200 // MSVC6 
 		{
 			// MSVC6 doesn't permit UINT64 to double
-			asINT64 v = *(asINT64*)(l_fp - SWORDARG0(l_bc));
+			asINT64 v = *(asINT64*)(l_fp - asBC_SWORDARG0(l_bc));
 			if( v < 0 )
-				*(double*)(l_fp - SWORDARG0(l_bc)) = 18446744073709551615.0+double(v);
+				*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = 18446744073709551615.0+double(v);
 			else
-				*(double*)(l_fp - SWORDARG0(l_bc)) = double(v);
+				*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(v);
 		}
 #else
-		*(double*)(l_fp - SWORDARG0(l_bc)) = double(*(asQWORD*)(l_fp - SWORDARG0(l_bc)));
+		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)));
 #endif
 		l_bc++;
 		break;
 
 	case BC_NEGi64:
-		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = -*(asINT64*)(l_fp - SWORDARG0(l_bc));
+		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = -*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
@@ -3000,28 +3020,28 @@ void asCContext::ExecuteNext()
 		break;
 
 	case BC_BNOT64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = ~*(asQWORD*)(l_fp - SWORDARG0(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = ~*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	case BC_ADDi64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) + *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) + *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_SUBi64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) - *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) - *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_MULi64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) * *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) * *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_DIVi64:
 		{
-			asQWORD divider = *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+			asQWORD divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -3033,14 +3053,14 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) / divider;
+			*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
 		}
 		l_bc += 2;
 		break;
 
 	case BC_MODi64:
 		{
-			asQWORD divider = *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+			asQWORD divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -3052,44 +3072,44 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) % divider;
+			*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) % divider;
 		}
 		l_bc += 2;
 		break;
 
 	case BC_BAND64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) & *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) & *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_BOR64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) | *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) | *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_BXOR64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) ^ *(asQWORD*)(l_fp - SWORDARG2(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) ^ *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_BSLL64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) << *(l_fp - SWORDARG2(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) << *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_BSRL64:
-		*(asQWORD*)(l_fp - SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - SWORDARG1(l_bc)) >> *(l_fp - SWORDARG2(l_bc));
+		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) >> *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_BSRA64:
-		*(asINT64*)(l_fp - SWORDARG0(l_bc)) = *(asINT64*)(l_fp - SWORDARG1(l_bc)) >> *(l_fp - SWORDARG2(l_bc));
+		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) >> *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	case BC_CMPi64:
 		{
-			asINT64 i = *(asINT64*)(l_fp - SWORDARG0(l_bc)) - *(asINT64*)(l_fp - SWORDARG1(l_bc));
+			asINT64 i = *(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) - *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( i == 0 )     *(int*)&regs.valueRegister =  0;
 			else if( i < 0 ) *(int*)&regs.valueRegister = -1;
 			else             *(int*)&regs.valueRegister =  1;
@@ -3099,8 +3119,8 @@ void asCContext::ExecuteNext()
 
 	case BC_CMPu64:
 		{
-			asQWORD d = *(asQWORD*)(l_fp - SWORDARG0(l_bc));
-			asQWORD d2 = *(asQWORD*)(l_fp - SWORDARG1(l_bc));
+			asQWORD d = *(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
+			asQWORD d2 = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( d == d2 )     *(int*)&regs.valueRegister =  0;
 			else if( d < d2 ) *(int*)&regs.valueRegister = -1;
 			else              *(int*)&regs.valueRegister =  1;
@@ -3112,7 +3132,7 @@ void asCContext::ExecuteNext()
 		{
 			// Verify if the pointer on the stack is null
 			// This is used for example when validating handles passed as function arguments
-			size_t a = *(size_t*)(l_sp + WORDARG0(l_bc));
+			size_t a = *(size_t*)(l_sp + asBC_WORDARG0(l_bc));
 			if( a == 0 )
 			{
 				regs.programPointer = l_bc;

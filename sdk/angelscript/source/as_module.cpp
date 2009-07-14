@@ -114,6 +114,15 @@ int asCModule::AddScriptSection(const char *name, const char *code, size_t codeL
 	return asSUCCESS;
 }
 
+// internal
+void asCModule::JITCompile()
+{
+    for (unsigned int i = 0; i < scriptFunctions.GetLength(); i++)
+    {
+        scriptFunctions[i]->JITCompile();
+    }
+}
+
 // interface
 int asCModule::Build()
 {
@@ -164,7 +173,9 @@ int asCModule::Build()
 
 	isBuildWithoutErrors = true;
 
-	engine->PrepareEngine();
+    JITCompile();
+
+ 	engine->PrepareEngine();
 	engine->BuildCompleted();
 
 	// Initialize global variables
@@ -1501,6 +1512,8 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 
 	asCRestore rest(this, in, engine);
 	r = rest.Restore();
+
+    JITCompile();
 
 	engine->BuildCompleted();
 

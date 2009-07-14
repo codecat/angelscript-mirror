@@ -187,6 +187,8 @@ public:
 
 	bool IsUsed();
 
+    void JITCompile();
+
 	int  AddConstantString(const char *str, size_t length);
 	const asCString &GetConstantString(int id);
 

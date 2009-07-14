@@ -587,6 +587,21 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(LABEL,		INFO,			0xFFFF)
 };
 
+//-----------------------------------------------------
+// Macros to access bytecode instruction arguments
+
+#define asBC_DWORDARG(x)  (asDWORD(*(x+1)))
+#define asBC_INTARG(x)    (int(*(x+1)))
+#define asBC_QWORDARG(x)  (*(asQWORD*)(x+1))
+#define asBC_FLOATARG(x)  (*(float*)(x+1))
+#define asBC_PTRARG(x)    (asPTRWORD(*(x+1)))
+
+#define asBC_WORDARG0(x)  (*(((asWORD*)x)+1))
+#define asBC_WORDARG1(x)  (*(((asWORD*)x)+2))
+
+#define asBC_SWORDARG0(x) (*(((short*)x)+1))
+#define asBC_SWORDARG1(x) (*(((short*)x)+2))
+#define asBC_SWORDARG2(x) (*(((short*)x)+3))
 
 END_AS_NAMESPACE
 
