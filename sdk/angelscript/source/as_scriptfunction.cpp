@@ -62,7 +62,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
 	scriptSectionIdx       = -1;
 	dontCleanUpOnException = false;
 	vfTableIdx             = -1;
-    jitFunction            = 0;
+	jitFunction            = 0;
 }
 
 // internal
@@ -298,10 +298,10 @@ void asCScriptFunction::AddReferences()
 		switch( *(asBYTE*)&byteCode[n] )
 		{
 		// Object types
-		case BC_OBJTYPE:
-		case BC_FREE:
-		case BC_ALLOC:
-		case BC_REFCPY:
+		case asBC_OBJTYPE:
+		case asBC_FREE:
+		case asBC_ALLOC:
+		case asBC_REFCPY:
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
 				objType->AddRef();
@@ -309,11 +309,11 @@ void asCScriptFunction::AddReferences()
 			break;
 
 		// Global variables
-		case BC_LDG:
-		case BC_PGA:
-		case BC_PshG4:
-		case BC_SetG4:
-		case BC_CpyVtoG4:
+		case asBC_LDG:
+		case asBC_PGA:
+		case asBC_PshG4:
+		case asBC_SetG4:
+		case asBC_CpyVtoG4:
 			if( module )
 			{
 				int gvarId = WORDARG0(&byteCode[n]);
@@ -322,8 +322,8 @@ void asCScriptFunction::AddReferences()
 			}
 			break;
 
-		case BC_LdGRdR4:
-		case BC_CpyGtoV4:
+		case asBC_LdGRdR4:
+		case asBC_CpyGtoV4:
 			if( module )
 			{
 				int gvarId = WORDARG1(&byteCode[n]);
@@ -333,7 +333,7 @@ void asCScriptFunction::AddReferences()
 			break;
 
 		// System functions
-		case BC_CALLSYS:
+		case asBC_CALLSYS:
 			if( module )
 			{
 				int funcId = INTARG(&byteCode[n]);
@@ -365,10 +365,10 @@ void asCScriptFunction::ReleaseReferences()
 		switch( *(asBYTE*)&byteCode[n] )
 		{
 		// Object types
-		case BC_OBJTYPE:
-		case BC_FREE:
-		case BC_ALLOC:
-		case BC_REFCPY:
+		case asBC_OBJTYPE:
+		case asBC_FREE:
+		case asBC_ALLOC:
+		case asBC_REFCPY:
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
 				objType->Release();
@@ -376,11 +376,11 @@ void asCScriptFunction::ReleaseReferences()
 			break;
 
 		// Global variables
-		case BC_LDG:
-		case BC_PGA:
-		case BC_PshG4:
-		case BC_SetG4:
-		case BC_CpyVtoG4:
+		case asBC_LDG:
+		case asBC_PGA:
+		case asBC_PshG4:
+		case asBC_SetG4:
+		case asBC_CpyVtoG4:
 			if( module )
 			{
 				int gvarId = WORDARG0(&byteCode[n]);
@@ -389,8 +389,8 @@ void asCScriptFunction::ReleaseReferences()
 			}
 			break;
 
-		case BC_LdGRdR4:
-		case BC_CpyGtoV4:
+		case asBC_LdGRdR4:
+		case asBC_CpyGtoV4:
 			if( module )
 			{
 				int gvarId = WORDARG1(&byteCode[n]);
@@ -400,7 +400,7 @@ void asCScriptFunction::ReleaseReferences()
 			break;
 
 		// System functions
-		case BC_CALLSYS:
+		case asBC_CALLSYS:
 			if( module )
 			{
 				int funcId = INTARG(&byteCode[n]);
@@ -410,9 +410,11 @@ void asCScriptFunction::ReleaseReferences()
 			break;
 		}
 	}
-    if (jitFunction)
-        engine->jitCompiler->ReleaseJITFunction(jitFunction);
-    jitFunction = NULL;
+
+	// Release the jit compiled function
+	if( jitFunction )
+		engine->jitCompiler->ReleaseJITFunction(jitFunction);
+	jitFunction = 0;
 }
 
 // interface
@@ -485,26 +487,26 @@ void asCScriptFunction::JITCompile()
     asDWORD* bytecode = byteCode.AddressOf();
     asUINT bytecodeLength = (asUINT)byteCode.GetLength();
      
-    if (jitFunction)
+    if( jitFunction )
     {
         engine->jitCompiler->ReleaseJITFunction(jitFunction);
-        jitFunction = NULL;
+        jitFunction = 0;
     }
     int r = jit->StartCompile(bytecode, bytecodeLength, &jitFunction);
-    if (r == asSUCCESS)
+    if( r == asSUCCESS )
     {
         asUINT j = 0;
-        while (j < bytecodeLength)
+        while( j < bytecodeLength )
         {
             int op = *((unsigned char*) bytecode);
-            if (op == BC_SUSPEND)
+            if( op == asBC_JitEntry )
             {
                 int off = jit->ResolveSuspendOffset(j);
-                if (off < 0)
+                if( off < 0 )
                     off = 0;
                 else
                     off++; // We need 0 indicate "no jit buffer"
-                if (off > 65535)
+                if( off > 65535 )
                 {
                     asCString str;
                     str.Format(TXT_OFFSET_OUT_OF_BOUNDS, GetName());

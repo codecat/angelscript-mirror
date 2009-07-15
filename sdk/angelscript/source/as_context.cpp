@@ -272,10 +272,10 @@ int asCContext::Prepare(int funcID)
 		if( module ) module->ReleaseContextRef();
 		module = initialFunction->module;
 		if( module )
-        {
+		{
 			module->AddContextRef();
-            regs.globalVarPointers = module->globalVarPointers.AddressOf();
-        }
+			regs.globalVarPointers = module->globalVarPointers.AddressOf();
+		}
 
 		// Determine the minimum stack size needed
 		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
@@ -425,7 +425,7 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 	if( module ) module->ReleaseContextRef();
 
 	module = mod;
-    regs.globalVarPointers = module->globalVarPointers.AddressOf();
+	regs.globalVarPointers = module->globalVarPointers.AddressOf();
 	module->AddContextRef();
 
 	if( (funcID & 0xFFFF) == asFUNC_STRING )
@@ -1043,10 +1043,10 @@ int asCContext::Execute()
 						if( module ) module->ReleaseContextRef();
 						module = currentFunction->module;
 						if( module )
-                        {
+						{
 							module->AddContextRef();
-                            regs.globalVarPointers = module->globalVarPointers.AddressOf();
-                        }
+							regs.globalVarPointers = module->globalVarPointers.AddressOf();
+						}
 
 						// Set the local objects to 0
 						for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
@@ -1154,26 +1154,52 @@ void asCContext::PushCallState()
 {
 	callStack.SetLength(callStack.GetLength() + CALLSTACK_FRAME_SIZE);
 
-	size_t *s = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
+    // Separating the loads and stores limits data cache trash, and with a smart compiler
+    // could turn into SIMD style loading/storing if available.
+    // The compiler can't do this itself due to potential pointer aliasing between the pointers,
+    // ie writing to tmp could overwrite the data contained in registers.stackFramePointer for example
+    // for all the compiler knows. So introducing the local variable s, which is never referred to by
+    // its address we avoid this issue.
 
+	size_t s[6];
 	s[0] = (size_t)regs.stackFramePointer;
 	s[1] = (size_t)currentFunction;
 	s[2] = (size_t)regs.programPointer;
 	s[3] = (size_t)regs.stackPointer;
 	s[4] = stackIndex;
 	s[5] = (size_t)module;
+
+	size_t *tmp = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
+	tmp[0] = s[0];
+	tmp[1] = s[1];
+	tmp[2] = s[2];
+	tmp[3] = s[3];
+	tmp[4] = s[4];
+	tmp[5] = s[5];
 }
 
 void asCContext::PopCallState()
 {
-	size_t *s = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
+	// See comments in PushCallState about pointer aliasing and data cache trashing
+	size_t *tmp = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
+	size_t s[6];
+	s[0] = tmp[0];
+	s[1] = tmp[1];
+	s[2] = tmp[2];
+	s[3] = tmp[3];
+	s[4] = tmp[4];
+	s[5] = tmp[5];
 
 	regs.stackFramePointer = (asDWORD*)s[0];
 	currentFunction        = (asCScriptFunction*)s[1];
 	regs.programPointer    = (asDWORD*)s[2];
 	regs.stackPointer      = (asDWORD*)s[3];
 	stackIndex             = (int)s[4];
+
+	// TODO: The context shouldn't keep track of module or global var pointers
+	//       the byte code instructions should keep pointers directly to the vars
 	module                 = (asCModule*)s[5];
+	regs.globalVarPointers = module->globalVarPointers.AddressOf();
 
 	callStack.SetLength(callStack.GetLength() - CALLSTACK_FRAME_SIZE);
 }
@@ -1214,7 +1240,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 
 	currentFunction = func;
 	module = func->module ? func->module : mod;
-    regs.globalVarPointers = module->globalVarPointers.AddressOf();
+	regs.globalVarPointers = module->globalVarPointers.AddressOf();
 	regs.programPointer = currentFunction->byteCode.AddressOf();
 
 	// Verify if there is enough room in the stack block. Allocate new block if not
@@ -1350,40 +1376,40 @@ void asCContext::ExecuteNext()
 // memory access functions
 
 	// Decrease the stack pointer with n dwords (stack grows downward)
-	case BC_POP:
+	case asBC_POP:
 		l_sp += asBC_WORDARG0(l_bc);
 		l_bc++;
 		break;
 
 	// Increase the stack pointer with n dwords
-	case BC_PUSH:
+	case asBC_PUSH:
 		l_sp -= asBC_WORDARG0(l_bc);
 		l_bc++;
 		break;
 
 	// Push a dword value on the stack
-	case BC_PshC4:
+	case asBC_PshC4:
 		--l_sp;
 		*l_sp = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
 	// Push the dword value of a variable on the stack
-	case BC_PshV4:
+	case asBC_PshV4:
 		--l_sp;
 		*l_sp = *(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	// Push the address of a variable on the stack
-	case BC_PSF:
+	case asBC_PSF:
 		l_sp -= AS_PTR_SIZE;
 		*(asPTRWORD*)l_sp = (asPTRWORD)size_t(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	// Swap the top 2 dwords on the stack
-	case BC_SWAP4:
+	case asBC_SWAP4:
 		{
 			asDWORD d = (asDWORD)*l_sp;
 			*l_sp = *(l_sp+1);
@@ -1393,7 +1419,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// Do a boolean not operation, modifying the value of the variable
-	case BC_NOT:
+	case asBC_NOT:
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is equal to 0
@@ -1415,15 +1441,15 @@ void asCContext::ExecuteNext()
 		break;
 
 	// Push the dword value of a global variable on the stack
-	case BC_PshG4:
+	case asBC_PshG4:
 		--l_sp;
-        *l_sp = *(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
+		*l_sp = *(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
 		l_bc++;
 		break;
 
 	// Load the address of a globar variable in the register, then  
 	// copy the value of the global variable into a local variable
-	case BC_LdGRdR4:
+	case asBC_LdGRdR4:
 		*(void**)&regs.valueRegister = regs.globalVarPointers[asBC_WORDARG1(l_bc)];
 		*(l_fp - asBC_SWORDARG0(l_bc)) = **(asDWORD**)&regs.valueRegister;
 		l_bc += 2;
@@ -1433,7 +1459,7 @@ void asCContext::ExecuteNext()
 // path control instructions
 
 	// Begin execution of a script function
-	case BC_CALL:
+	case asBC_CALL:
 		{
 			int i = asBC_INTARG(l_bc);
 			l_bc += 2;
@@ -1460,7 +1486,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// Return to the caller, and remove the arguments from the stack
-	case BC_RET:
+	case asBC_RET:
 		{
 			if( callStack.GetLength() == 0 )
 			{
@@ -1489,7 +1515,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// Jump to a relative position
-	case BC_JMP:
+	case asBC_JMP:
 		l_bc += 2 + asBC_INTARG(l_bc);
 		break;
 
@@ -1497,7 +1523,7 @@ void asCContext::ExecuteNext()
 // Conditional jumps
 
 	// Jump to a relative position if the value in the register is 0
-	case BC_JZ:
+	case asBC_JZ:
 		if( *(int*)&regs.valueRegister == 0 )
 			l_bc += asBC_INTARG(l_bc) + 2;
 		else
@@ -1505,7 +1531,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// Jump to a relative position if the value in the register is not 0
-	case BC_JNZ:
+	case asBC_JNZ:
 		if( *(int*)&regs.valueRegister != 0 )
 			l_bc += asBC_INTARG(l_bc) + 2;
 		else
@@ -1513,7 +1539,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// Jump to a relative position if the value in the register is negative
-	case BC_JS:
+	case asBC_JS:
 		if( *(int*)&regs.valueRegister < 0 )
 			l_bc += asBC_INTARG(l_bc) + 2;
 		else
@@ -1521,7 +1547,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// Jump to a relative position if the value in the register it not negative
-	case BC_JNS:
+	case asBC_JNS:
 		if( *(int*)&regs.valueRegister >= 0 )
 			l_bc += asBC_INTARG(l_bc) + 2;
 		else
@@ -1529,7 +1555,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// Jump to a relative position if the value in the register is greater than 0
-	case BC_JP:
+	case asBC_JP:
 		if( *(int*)&regs.valueRegister > 0 )
 			l_bc += asBC_INTARG(l_bc) + 2;
 		else
@@ -1537,7 +1563,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// Jump to a relative position if the value in the register is not greater than 0
-	case BC_JNP:
+	case asBC_JNP:
 		if( *(int*)&regs.valueRegister <= 0 )
 			l_bc += asBC_INTARG(l_bc) + 2;
 		else
@@ -1547,7 +1573,7 @@ void asCContext::ExecuteNext()
 // test instructions
 
 	// If the value in the register is 0, then set the register to 1, else to 0
-	case BC_TZ:
+	case asBC_TZ:
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is equal to 0
@@ -1574,7 +1600,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// If the value in the register is not 0, then set the register to 1, else to 0
-	case BC_TNZ:
+	case asBC_TNZ:
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is not equal to 0
@@ -1601,7 +1627,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// If the value in the register is negative, then set the register to 1, else to 0
-	case BC_TS:
+	case asBC_TS:
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is less than 0
@@ -1628,7 +1654,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// If the value in the register is not negative, then set the register to 1, else to 0
-	case BC_TNS:
+	case asBC_TNS:
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is not less than 0
@@ -1655,7 +1681,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// If the value in the register is greater than 0, then set the register to 1, else to 0
-	case BC_TP:
+	case asBC_TP:
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is greater than 0
@@ -1682,7 +1708,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	// If the value in the register is not greater than 0, then set the register to 1, else to 0
-	case BC_TNP:
+	case asBC_TNP:
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Set the value to true if it is not greater than 0
@@ -1712,19 +1738,19 @@ void asCContext::ExecuteNext()
 // negate value
 
 	// Negate the integer value in the variable
-	case BC_NEGi:
+	case asBC_NEGi:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = asDWORD(-int(*(l_fp - asBC_SWORDARG0(l_bc))));
 		l_bc++;
 		break;
 
 	// Negate the float value in the variable
-	case BC_NEGf:
+	case asBC_NEGf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = -*(float*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	// Negate the double value in the variable
-	case BC_NEGd:
+	case asBC_NEGd:
 		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = -*(double*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
@@ -1733,73 +1759,73 @@ void asCContext::ExecuteNext()
 // Increment value pointed to by address in register
 
 	// Increment the short value pointed to by the register
-	case BC_INCi16:
+	case asBC_INCi16:
 		(**(short**)&regs.valueRegister)++;
 		l_bc++;
 		break;
 
 	// Increment the byte value pointed to by the register
-	case BC_INCi8:
+	case asBC_INCi8:
 		(**(char**)&regs.valueRegister)++;
 		l_bc++;
 		break;
 
 	// Decrement the short value pointed to by the register
-	case BC_DECi16:
+	case asBC_DECi16:
 		(**(short**)&regs.valueRegister)--;
 		l_bc++;
 		break;
 
 	// Decrement the byte value pointed to by the register
-	case BC_DECi8:
+	case asBC_DECi8:
 		(**(char**)&regs.valueRegister)--;
 		l_bc++;
 		break;
 
 	// Increment the integer value pointed to by the register
-	case BC_INCi:
+	case asBC_INCi:
 		++(**(int**)&regs.valueRegister);
 		l_bc++;
 		break;
 
 	// Decrement the integer value pointed to by the register
-	case BC_DECi:
+	case asBC_DECi:
 		--(**(int**)&regs.valueRegister);
 		l_bc++;
 		break;
 
 	// Increment the float value pointed to by the register
-	case BC_INCf:
+	case asBC_INCf:
 		++(**(float**)&regs.valueRegister);
 		l_bc++;
 		break;
 
 	// Decrement the float value pointed to by the register
-	case BC_DECf:
+	case asBC_DECf:
 		--(**(float**)&regs.valueRegister);
 		l_bc++;
 		break;
 
 	// Increment the double value pointed to by the register
-	case BC_INCd:
+	case asBC_INCd:
 		++(**(double**)&regs.valueRegister);
 		l_bc++;
 		break;
 
 	// Decrement the double value pointed to by the register
-	case BC_DECd:
+	case asBC_DECd:
 		--(**(double**)&regs.valueRegister);
 		l_bc++;
 		break;
 
 	// Increment the local integer variable
-	case BC_IncVi:
+	case asBC_IncVi:
 		(*(int*)(l_fp - asBC_SWORDARG0(l_bc)))++;
 		l_bc++;
 		break;
 
 	// Decrement the local integer variable
-	case BC_DecVi:
+	case asBC_DecVi:
 		(*(int*)(l_fp - asBC_SWORDARG0(l_bc)))--;
 		l_bc++;
 		break;
@@ -1808,48 +1834,48 @@ void asCContext::ExecuteNext()
 // bits instructions
 
 	// Do a bitwise not on the value in the variable
-	case BC_BNOT:
+	case asBC_BNOT:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = ~*(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
 	// Do a bitwise and of two variables and store the result in a third variable
-	case BC_BAND:
+	case asBC_BAND:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) & *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do a bitwise or of two variables and store the result in a third variable
-	case BC_BOR:
+	case asBC_BOR:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) | *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do a bitwise xor of two variables and store the result in a third variable
-	case BC_BXOR:
+	case asBC_BXOR:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) ^ *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do a logical shift left of two variables and store the result in a third variable
-	case BC_BSLL:
+	case asBC_BSLL:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) << *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do a logical shift right of two variables and store the result in a third variable
-	case BC_BSRL:
+	case asBC_BSRL:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc)) >> *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
 	// Do an arithmetic shift right of two variables and store the result in a third variable
-	case BC_BSRA:
+	case asBC_BSRA:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = int(*(l_fp - asBC_SWORDARG1(l_bc))) >> *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_COPY:
+	case asBC_COPY:
 		{
 			void *d = (void*)*(size_t*)l_sp; l_sp += AS_PTR_SIZE;
 			void *s = (void*)*(size_t*)l_sp;
@@ -1872,13 +1898,13 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_SET8:
+	case asBC_SET8:
 		l_sp -= 2;
 		*(asQWORD*)l_sp = asBC_QWORDARG(l_bc);
 		l_bc += 3;
 		break;
 
-	case BC_RDS8:
+	case asBC_RDS8:
 #ifndef AS_64BIT_PTR
 		*(asQWORD*)(l_sp-1) = *(asQWORD*)*(size_t*)l_sp;
 		--l_sp;
@@ -1888,7 +1914,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_SWAP8:
+	case asBC_SWAP8:
 		{
 			asQWORD q = *(asQWORD*)l_sp;
 			*(asQWORD*)l_sp = *(asQWORD*)(l_sp+2);
@@ -1899,7 +1925,7 @@ void asCContext::ExecuteNext()
 
 	//----------------------------
 	// Comparisons
-	case BC_CMPd:
+	case asBC_CMPd:
 		{
 			double dbl = *(double*)(l_fp - asBC_SWORDARG0(l_bc)) - *(double*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( dbl == 0 )     *(int*)&regs.valueRegister =  0;
@@ -1909,7 +1935,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_CMPu:
+	case asBC_CMPu:
 		{
 			asDWORD d = *(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 			asDWORD d2 = *(asDWORD*)(l_fp - asBC_SWORDARG1(l_bc));
@@ -1920,7 +1946,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_CMPf:
+	case asBC_CMPf:
 		{
 			float f = *(float*)(l_fp - asBC_SWORDARG0(l_bc)) - *(float*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( f == 0 )     *(int*)&regs.valueRegister =  0;
@@ -1930,7 +1956,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_CMPi:
+	case asBC_CMPi:
 		{
 			int i = *(int*)(l_fp - asBC_SWORDARG0(l_bc)) - *(int*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( i == 0 )     *(int*)&regs.valueRegister =  0;
@@ -1942,7 +1968,7 @@ void asCContext::ExecuteNext()
 
 	//----------------------------
 	// Comparisons with constant value
-	case BC_CMPIi:
+	case asBC_CMPIi:
 		{
 			int i = *(int*)(l_fp - asBC_SWORDARG0(l_bc)) - asBC_INTARG(l_bc);
 			if( i == 0 )     *(int*)&regs.valueRegister =  0;
@@ -1952,7 +1978,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_CMPIf:
+	case asBC_CMPIf:
 		{
 			float f = *(float*)(l_fp - asBC_SWORDARG0(l_bc)) - asBC_FLOATARG(l_bc);
 			if( f == 0 )     *(int*)&regs.valueRegister =  0;
@@ -1962,7 +1988,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_CMPIu:
+	case asBC_CMPIu:
 		{
 			asDWORD d1 = *(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 			asDWORD d2 = asBC_DWORDARG(l_bc);
@@ -1973,23 +1999,23 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_JMPP:
+	case asBC_JMPP:
 		l_bc += 1 + (*(int*)(l_fp - asBC_SWORDARG0(l_bc)))*2;
 		break;
 
-	case BC_PopRPtr:
+	case asBC_PopRPtr:
 		*(asPTRWORD*)&regs.valueRegister = *(asPTRWORD*)l_sp;
 		l_sp += AS_PTR_SIZE;
 		l_bc++;
 		break;
 
-	case BC_PshRPtr:
+	case asBC_PshRPtr:
 		l_sp -= AS_PTR_SIZE;
 		*(asPTRWORD*)l_sp = *(asPTRWORD*)&regs.valueRegister;
 		l_bc++;
 		break;
 
-	case BC_STR:
+	case asBC_STR:
 		{
 			// Get the string id from the argument
 			asWORD w = asBC_WORDARG0(l_bc);
@@ -2004,7 +2030,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_CALLSYS:
+	case asBC_CALLSYS:
 		{
 			// Get function ID from the argument
 			int i = asBC_INTARG(l_bc);
@@ -2041,7 +2067,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_CALLBND:
+	case asBC_CALLBND:
 		{
 			// Get the function ID from the stack
 			int i = asBC_INTARG(l_bc);
@@ -2080,60 +2106,35 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_SUSPEND:
-        {
-            unsigned int jitOffset = asBC_WORDARG0(l_bc);
-		    if( regs.doProcessSuspend )
-		    {
-			    if( lineCallback )
-			    {
-				    regs.programPointer = l_bc;
-				    regs.stackPointer = l_sp;
-				    regs.stackFramePointer = l_fp;
+	case asBC_SUSPEND:
+		if( regs.doProcessSuspend )
+		{
+			if( lineCallback )
+			{
+				regs.programPointer = l_bc;
+				regs.stackPointer = l_sp;
+				regs.stackFramePointer = l_fp;
 
-				    CallLineCallback();
-			    }
-			    if( doSuspend )
-			    {
-                    if( !jitOffset )
-					{
-                        // If this is actually a JIT resume point, we want to come back here
-                        // once the script execution is resumed. Otherwise we want to continue
-                        // at the next bytecode.
-			            l_bc++;
-					}
+				CallLineCallback();
+			}
+			if( doSuspend )
+			{
+				l_bc++;
 
-				    // Need to move the values back to the context
-				    regs.programPointer = l_bc;
-				    regs.stackPointer = l_sp;
-				    regs.stackFramePointer = l_fp;
+				// Need to move the values back to the context
+				regs.programPointer = l_bc;
+				regs.stackPointer = l_sp;
+				regs.stackFramePointer = l_fp;
 
-				    status = asEXECUTION_SUSPENDED;
-				    return;
-			    }
-		    }
-            if (jitOffset && currentFunction->jitFunction)
-            {
-                // Resume JIT operation
-			    regs.programPointer = l_bc;
-			    regs.stackPointer = l_sp;
-			    regs.stackFramePointer = l_fp;
+				status = asEXECUTION_SUSPENDED;
+				return;
+			}
+		}
 
-                (currentFunction->jitFunction)(&regs, jitOffset-1);
+		l_bc++;
+		break;
 
-			    l_bc = regs.programPointer;
-			    l_sp = regs.stackPointer;
-			    l_fp = regs.stackFramePointer;
-            }
-            else
-            {
-                // Not a JIT resume point, treat as nop
-			    l_bc++;
-            }
-        }
-        break;
-
-	case BC_ALLOC:
+	case asBC_ALLOC:
 		{
 			asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(l_bc);
 			int func = asBC_INTARG(l_bc+AS_PTR_SIZE);
@@ -2222,7 +2223,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_FREE:
+	case asBC_FREE:
 		{
 			asDWORD **a = (asDWORD**)*(size_t*)l_sp;
 			l_sp += AS_PTR_SIZE;
@@ -2258,7 +2259,7 @@ void asCContext::ExecuteNext()
 		l_bc += 1+AS_PTR_SIZE;
 		break;
 
-	case BC_LOADOBJ:
+	case asBC_LOADOBJ:
 		{
 			// Move the object pointer from the object variable into the object register
 			void **a = (void**)(l_fp - asBC_SWORDARG0(l_bc));
@@ -2269,14 +2270,14 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_STOREOBJ:
+	case asBC_STOREOBJ:
 		// Move the object pointer from the object register to the object variable
 		*(size_t*)(l_fp - asBC_SWORDARG0(l_bc)) = size_t(regs.objectRegister);
 		regs.objectRegister = 0;
 		l_bc++;
 		break;
 
-	case BC_GETOBJ:
+	case asBC_GETOBJ:
 		{
 			size_t *a = (size_t*)(l_sp + asBC_WORDARG0(l_bc));
 			asDWORD offset = *(asDWORD*)a;
@@ -2287,7 +2288,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_REFCPY:
+	case asBC_REFCPY:
 		{
 			asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(l_bc);
 			asSTypeBehaviour *beh = &objType->beh;
@@ -2309,7 +2310,7 @@ void asCContext::ExecuteNext()
 		l_bc += 1+AS_PTR_SIZE;
 		break;
 
-	case BC_CHKREF:
+	case asBC_CHKREF:
 		{
 			// Verify if the pointer on the stack is null
 			// This is used when validating a pointer that an operator will work on
@@ -2327,7 +2328,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_GETOBJREF:
+	case asBC_GETOBJREF:
 		{
 			size_t *a = (size_t*)(l_sp + asBC_WORDARG0(l_bc));
 			*(size_t**)a = *(size_t**)(l_fp - *a);
@@ -2335,7 +2336,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_GETREF:
+	case asBC_GETREF:
 		{
 			size_t *a = (size_t*)(l_sp + asBC_WORDARG0(l_bc));
 			*(size_t**)a = (size_t*)(l_fp - (int)*a);
@@ -2343,7 +2344,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_SWAP48:
+	case asBC_SWAP48:
 		{
 			asDWORD d = *(asDWORD*)l_sp;
 			asQWORD q = *(asQWORD*)(l_sp+1);
@@ -2353,7 +2354,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_SWAP84:
+	case asBC_SWAP84:
 		{
 			asQWORD q = *(asQWORD*)l_sp;
 			asDWORD d = *(asDWORD*)(l_sp+2);
@@ -2363,13 +2364,13 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_OBJTYPE:
+	case asBC_OBJTYPE:
 		l_sp -= AS_PTR_SIZE;
 		*(asPTRWORD*)l_sp = asBC_PTRARG(l_bc);
 		l_bc += 1+AS_PTR_SIZE;
 		break;
 
-	case BC_TYPEID:
+	case asBC_TYPEID:
 		{
 			--l_sp;
 			asDWORD typeId = asBC_DWORDARG(l_bc);
@@ -2378,84 +2379,84 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_SetV4:
+	case asBC_SetV4:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
-	case BC_SetV8:
+	case asBC_SetV8:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = asBC_QWORDARG(l_bc);
 		l_bc += 3;
 		break;
 
-	case BC_ADDSi:
+	case asBC_ADDSi:
 		*(size_t*)l_sp = size_t(asPTRWORD(*(size_t*)l_sp) + asBC_INTARG(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_CpyVtoV4:
+	case asBC_CpyVtoV4:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(l_fp - asBC_SWORDARG1(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_CpyVtoV8:
+	case asBC_CpyVtoV8:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_CpyVtoR4:
+	case asBC_CpyVtoR4:
 		*(asDWORD*)&regs.valueRegister = *(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_CpyVtoR8:
+	case asBC_CpyVtoR8:
 		*(asQWORD*)&regs.valueRegister = *(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_CpyVtoG4:
+	case asBC_CpyVtoG4:
 		*(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)] = *(asDWORD*)(l_fp - asBC_SWORDARG1(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_CpyRtoV4:
+	case asBC_CpyRtoV4:
 		*(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asDWORD*)&regs.valueRegister;
 		l_bc++;
 		break;
 
-	case BC_CpyRtoV8:
+	case asBC_CpyRtoV8:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = regs.valueRegister;
 		l_bc++;
 		break;
 
-	case BC_CpyGtoV4:
+	case asBC_CpyGtoV4:
 		*(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asDWORD*)regs.globalVarPointers[asBC_WORDARG1(l_bc)];
 		l_bc += 2;
 		break;
 
-	case BC_WRTV1:
+	case asBC_WRTV1:
 		// The pointer in the register points to a byte, and *(l_fp - offset) too
 		**(asBYTE**)&regs.valueRegister = *(asBYTE*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_WRTV2:
+	case asBC_WRTV2:
 		// The pointer in the register points to a word, and *(l_fp - offset) too
 		**(asWORD**)&regs.valueRegister = *(asWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_WRTV4:
+	case asBC_WRTV4:
 		**(asDWORD**)&regs.valueRegister = *(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_WRTV8:
+	case asBC_WRTV8:
 		**(asQWORD**)&regs.valueRegister = *(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_RDR1:
+	case asBC_RDR1:
 		{
 			// The pointer in the register points to a byte, and *(l_fp - offset) will also point to a byte
 			asBYTE *bPtr = (asBYTE*)(l_fp - asBC_SWORDARG0(l_bc));
@@ -2467,7 +2468,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_RDR2:
+	case asBC_RDR2:
 		{
 			// The pointer in the register points to a word, and *(l_fp - offset) will also point to a word
 			asWORD *wPtr = (asWORD*)(l_fp - asBC_SWORDARG0(l_bc));
@@ -2477,33 +2478,33 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_RDR4:
+	case asBC_RDR4:
 		*(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = **(asDWORD**)&regs.valueRegister;
 		l_bc++;
 		break;
 
-	case BC_RDR8:
+	case asBC_RDR8:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = **(asQWORD**)&regs.valueRegister;
 		l_bc++;
 		break;
 
-	case BC_LDG:
+	case asBC_LDG:
 		*(asDWORD**)&regs.valueRegister = (asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
 		l_bc++;
 		break;
 
-	case BC_LDV:
+	case asBC_LDV:
 		*(asDWORD**)&regs.valueRegister = (l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_PGA:
+	case asBC_PGA:
 		l_sp -= AS_PTR_SIZE;
 		*(asPTRWORD*)l_sp = (asPTRWORD)(size_t)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
 		l_bc++;
 		break;
 
-	case BC_RDS4:
+	case asBC_RDS4:
 #ifndef AS_64BIT_PTR
 		*l_sp = *(asDWORD*)*(size_t*)l_sp;
 #else
@@ -2516,7 +2517,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_VAR:
+	case asBC_VAR:
 		l_sp -= AS_PTR_SIZE;
 		*(size_t*)l_sp = (size_t)asBC_SWORDARG0(l_bc);
 		l_bc++;
@@ -2524,100 +2525,100 @@ void asCContext::ExecuteNext()
 
 	//----------------------------
 	// Type conversions
-	case BC_iTOf:
+	case asBC_iTOf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(*(int*)(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
-	case BC_fTOi:
+	case asBC_fTOi:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = int(*(float*)(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
-	case BC_uTOf:
+	case asBC_uTOf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(*(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
-	case BC_fTOu:
+	case asBC_fTOu:
 		// We must cast to int first, because on some compilers the cast of a negative float value to uint result in 0
 		*(l_fp - asBC_SWORDARG0(l_bc)) = asUINT(int(*(float*)(l_fp - asBC_SWORDARG0(l_bc))));
 		l_bc++;
 		break;
 
-	case BC_sbTOi:
+	case asBC_sbTOi:
 		// *(l_fp - offset) points to a char, and will point to an int afterwards
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(signed char*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_swTOi:
+	case asBC_swTOi:
 		// *(l_fp - offset) points to a short, and will point to an int afterwards
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(short*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_ubTOi:
+	case asBC_ubTOi:
 		// (l_fp - offset) points to a byte, and will point to an int afterwards
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(asBYTE*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_uwTOi:
+	case asBC_uwTOi:
 		// *(l_fp - offset) points to a word, and will point to an int afterwards
 		*(l_fp - asBC_SWORDARG0(l_bc)) = *(asWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_dTOi:
+	case asBC_dTOi:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = int(*(double*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
-	case BC_dTOu:
+	case asBC_dTOu:
 		// We must cast to int first, because on some compilers the cast of a negative float value to uint result in 0
 		*(l_fp - asBC_SWORDARG0(l_bc)) = asUINT(int(*(double*)(l_fp - asBC_SWORDARG1(l_bc))));
 		l_bc += 2;
 		break;
 
-	case BC_dTOf:
+	case asBC_dTOf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(*(double*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
-	case BC_iTOd:
+	case asBC_iTOd:
 		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(*(int*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
-	case BC_uTOd:
+	case asBC_uTOd:
 		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(*(asUINT*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
-	case BC_fTOd:
+	case asBC_fTOd:
 		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(*(float*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
 	//------------------------------
 	// Math operations
-	case BC_ADDi:
+	case asBC_ADDi:
 		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) + *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_SUBi:
+	case asBC_SUBi:
 		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) - *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_MULi:
+	case asBC_MULi:
 		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) * *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_DIVi:
+	case asBC_DIVi:
 		{
 			int divider = *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
@@ -2636,7 +2637,7 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
-	case BC_MODi:
+	case asBC_MODi:
 		{
 			int divider = *(int*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
@@ -2655,22 +2656,22 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
-	case BC_ADDf:
+	case asBC_ADDf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) + *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_SUBf:
+	case asBC_SUBf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) - *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_MULf:
+	case asBC_MULf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) * *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_DIVf:
+	case asBC_DIVf:
 		{
 			float divider = *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
@@ -2689,7 +2690,7 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
-	case BC_MODf:
+	case asBC_MODf:
 		{
 			float divider = *(float*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
@@ -2708,22 +2709,22 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
-	case BC_ADDd:
+	case asBC_ADDd:
 		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = *(double*)(l_fp - asBC_SWORDARG1(l_bc)) + *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_SUBd:
+	case asBC_SUBd:
 		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = *(double*)(l_fp - asBC_SWORDARG1(l_bc)) - *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_MULd:
+	case asBC_MULd:
 		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = *(double*)(l_fp - asBC_SWORDARG1(l_bc)) * *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_DIVd:
+	case asBC_DIVd:
 		{
 			double divider = *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
@@ -2743,7 +2744,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_MODd:
+	case asBC_MODd:
 		{
 			double divider = *(double*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
@@ -2765,43 +2766,43 @@ void asCContext::ExecuteNext()
 
 	//------------------------------
 	// Math operations with constant value
-	case BC_ADDIi:
+	case asBC_ADDIi:
 		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) + asBC_INTARG(l_bc+1);
 		l_bc += 3;
 		break;
 
-	case BC_SUBIi:
+	case asBC_SUBIi:
 		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) - asBC_INTARG(l_bc+1);
 		l_bc += 3;
 		break;
 
-	case BC_MULIi:
+	case asBC_MULIi:
 		*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) * asBC_INTARG(l_bc+1);
 		l_bc += 3;
 		break;
 
-	case BC_ADDIf:
+	case asBC_ADDIf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) + asBC_FLOATARG(l_bc+1);
 		l_bc += 3;
 		break;
 
-	case BC_SUBIf:
+	case asBC_SUBIf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) - asBC_FLOATARG(l_bc+1);
 		l_bc += 3;
 		break;
 
-	case BC_MULIf:
+	case asBC_MULIf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = *(float*)(l_fp - asBC_SWORDARG1(l_bc)) * asBC_FLOATARG(l_bc+1);
 		l_bc += 3;
 		break;
 
 	//-----------------------------------
-	case BC_SetG4:
+	case asBC_SetG4:
 		*(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)] = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
-	case BC_ChkRefS:
+	case asBC_ChkRefS:
 		{
 			// Verify if the pointer on the stack refers to a non-null value
 			// This is used to validate a reference to a handle
@@ -2819,7 +2820,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_ChkNullV:
+	case asBC_ChkNullV:
 		{
 			// Verify if variable (on the stack) is not null
 			asDWORD *a = *(asDWORD**)(l_fp - asBC_SWORDARG0(l_bc));
@@ -2836,7 +2837,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_CALLINTF:
+	case asBC_CALLINTF:
 		{
 			int i = asBC_INTARG(l_bc);
 			l_bc += 2;
@@ -2862,7 +2863,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_iTOb:
+	case asBC_iTOb:
 		{
 			// *(l_fp - offset) points to an int, and will point to a byte afterwards
 
@@ -2878,7 +2879,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_iTOw:
+	case asBC_iTOw:
 		{
 			// *(l_fp - offset) points to an int, and will point to word afterwards
 
@@ -2892,19 +2893,19 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_SetV1:
+	case asBC_SetV1:
 		// The byte is already stored correctly in the argument
 		*(l_fp - asBC_SWORDARG0(l_bc)) = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
-	case BC_SetV2:
+	case asBC_SetV2:
 		// The word is already stored correctly in the argument
 		*(l_fp - asBC_SWORDARG0(l_bc)) = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
-	case BC_Cast:
+	case asBC_Cast:
 		// Cast the handle at the top of the stack to the type in the argument
 		{
 			asDWORD **a = (asDWORD**)*(size_t*)l_sp;
@@ -2927,47 +2928,47 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
-	case BC_i64TOi:
+	case asBC_i64TOi:
 		*(l_fp - asBC_SWORDARG0(l_bc)) = int(*(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
-	case BC_uTOi64:
+	case asBC_uTOi64:
 		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = asINT64(*(asUINT*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
-	case BC_iTOi64:
+	case asBC_iTOi64:
 		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = asINT64(*(int*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
-	case BC_fTOi64:
+	case asBC_fTOi64:
 		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = asINT64(*(float*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
-	case BC_dTOi64:
+	case asBC_dTOi64:
 		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = asINT64(*(double*)(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
-	case BC_fTOu64:
+	case asBC_fTOu64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = asQWORD(asINT64(*(float*)(l_fp - asBC_SWORDARG1(l_bc))));
 		l_bc += 2;
 		break;
 
-	case BC_dTOu64:
+	case asBC_dTOu64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = asQWORD(asINT64(*(double*)(l_fp - asBC_SWORDARG0(l_bc))));
 		l_bc++;
 		break;
 
-	case BC_i64TOf:
+	case asBC_i64TOf:
 		*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = float(*(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)));
 		l_bc += 2;
 		break;
 
-	case BC_u64TOf:
+	case asBC_u64TOf:
 #if _MSC_VER <= 1200 // MSVC6 
 		{
 			// MSVC6 doesn't permit UINT64 to double
@@ -2983,12 +2984,12 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
-	case BC_i64TOd:
+	case asBC_i64TOd:
 		*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = double(*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)));
 		l_bc++;
 		break;
 
-	case BC_u64TOd:
+	case asBC_u64TOd:
 #if _MSC_VER <= 1200 // MSVC6 
 		{
 			// MSVC6 doesn't permit UINT64 to double
@@ -3004,42 +3005,42 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_NEGi64:
+	case asBC_NEGi64:
 		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = -*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_INCi64:
+	case asBC_INCi64:
 		++(**(asQWORD**)&regs.valueRegister);
 		l_bc++;
 		break;
 
-	case BC_DECi64:
+	case asBC_DECi64:
 		--(**(asQWORD**)&regs.valueRegister);
 		l_bc++;
 		break;
 
-	case BC_BNOT64:
+	case asBC_BNOT64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = ~*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 		l_bc++;
 		break;
 
-	case BC_ADDi64:
+	case asBC_ADDi64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) + *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_SUBi64:
+	case asBC_SUBi64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) - *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_MULi64:
+	case asBC_MULi64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) * *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_DIVi64:
+	case asBC_DIVi64:
 		{
 			asQWORD divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
@@ -3058,7 +3059,7 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
-	case BC_MODi64:
+	case asBC_MODi64:
 		{
 			asQWORD divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
@@ -3077,37 +3078,37 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
-	case BC_BAND64:
+	case asBC_BAND64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) & *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_BOR64:
+	case asBC_BOR64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) | *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_BXOR64:
+	case asBC_BXOR64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) ^ *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_BSLL64:
+	case asBC_BSLL64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) << *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_BSRL64:
+	case asBC_BSRL64:
 		*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) >> *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_BSRA64:
+	case asBC_BSRA64:
 		*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) >> *(l_fp - asBC_SWORDARG2(l_bc));
 		l_bc += 2;
 		break;
 
-	case BC_CMPi64:
+	case asBC_CMPi64:
 		{
 			asINT64 i = *(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) - *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( i == 0 )     *(int*)&regs.valueRegister =  0;
@@ -3117,7 +3118,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_CMPu64:
+	case asBC_CMPu64:
 		{
 			asQWORD d = *(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 			asQWORD d2 = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc));
@@ -3128,7 +3129,7 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
-	case BC_ChkNullS:
+	case asBC_ChkNullS:
 		{
 			// Verify if the pointer on the stack is null
 			// This is used for example when validating handles passed as function arguments
@@ -3146,7 +3147,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case BC_ClrHi:
+	case asBC_ClrHi:
 #if AS_SIZEOF_BOOL == 1
 		{
 			// Clear the upper bytes, so that trash data don't interfere with boolean operations
@@ -3165,9 +3166,36 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
+	case asBC_JitEntry:
+		{
+			if( currentFunction->jitFunction )
+			{
+				unsigned int jitOffset = asBC_WORDARG0(l_bc);
+
+				if( jitOffset )
+				{
+					// Resume JIT operation
+					regs.programPointer = l_bc;
+					regs.stackPointer = l_sp;
+					regs.stackFramePointer = l_fp;
+
+					// TODO: JIT: We should return from this function if the jitFunction tells us to
+					(currentFunction->jitFunction)(&regs, jitOffset-1);
+				
+					l_bc = regs.programPointer;
+					l_sp = regs.stackPointer;
+					l_fp = regs.stackFramePointer;
+					break;
+				}
+			}
+
+			// Not a JIT resume point, treat as nop
+			l_bc++;
+		}
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 175: l_bc = (asDWORD*)175; break;
 	case 176: l_bc = (asDWORD*)176; break;
 	case 177: l_bc = (asDWORD*)177; break;
 	case 178: l_bc = (asDWORD*)178; break;
@@ -3264,8 +3292,8 @@ void asCContext::ExecuteNext()
 
 #ifdef AS_DEBUG
 		asDWORD instr = *(asBYTE*)old;
-		if( instr != BC_JMP && instr != BC_JMPP && (instr < BC_JZ || instr > BC_JNP) &&
-			instr != BC_CALL && instr != BC_CALLBND && instr != BC_CALLINTF && instr != BC_RET && instr != BC_ALLOC )
+		if( instr != asBC_JMP && instr != asBC_JMPP && (instr < asBC_JZ || instr > asBC_JNP) &&
+			instr != asBC_CALL && instr != asBC_CALLBND && instr != asBC_CALLINTF && instr != asBC_RET && instr != asBC_ALLOC )
 		{
 			asASSERT( (l_bc - old) == asCByteCode::SizeOfType(asBCInfo[instr].type) );
 		}

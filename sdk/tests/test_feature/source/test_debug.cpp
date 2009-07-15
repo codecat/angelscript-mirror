@@ -15,14 +15,14 @@ static const char *script1 =
 "void main()                            \n"
 "{                                      \n"
 "  int a = 1;                           \n"
-"  string s = \"text\";                 \n"
-"  c _c; _c.Test1();                    \n" // 5
-"  Test2();                             \n" // 6
+"  string s = \"text\";                 \n" // 5
+"  c _c; _c.Test1();                    \n" // 6
+"  Test2();                             \n"
 "}                                      \n"
-"class c                                \n"
-"{                                      \n" 
-"  void Test1()                         \n"
-"  {                                    \n" // 11
+"class c                                \n" 
+"{                                      \n"
+"  void Test1()                         \n" // 11
+"  {                                    \n"
 "    int d = 4;                         \n"
 "  }                                    \n"
 "}                                      \n";

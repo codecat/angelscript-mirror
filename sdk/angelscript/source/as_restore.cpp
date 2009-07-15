@@ -1036,7 +1036,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 		asDWORD c = *(asBYTE*)bc;
 		WRITE_NUM(*bc);
 		bc += 1;
-		if( c == BC_ALLOC )
+		if( c == asBC_ALLOC )
 		{
 			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
@@ -1054,9 +1054,9 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
-		else if( c == BC_FREE   ||
-			     c == BC_REFCPY || 
-				 c == BC_OBJTYPE )
+		else if( c == asBC_FREE   ||
+			     c == asBC_REFCPY || 
+				 c == asBC_OBJTYPE )
 		{
 			// Translate object type pointers into indices
 			asDWORD tmp[MAX_DATA_SIZE];
@@ -1069,7 +1069,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
-		else if( c == BC_TYPEID )
+		else if( c == asBC_TYPEID )
 		{
 			// Translate type ids into indices
 			asDWORD tmp[MAX_DATA_SIZE];
@@ -1082,9 +1082,9 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			for( n = 0; n < asCByteCode::SizeOfType(asBCInfo[c].type)-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
-		else if( c == BC_CALL ||
-			     c == BC_CALLINTF || 
-				 c == BC_CALLSYS )
+		else if( c == asBC_CALL ||
+				 c == asBC_CALLINTF || 
+				 c == asBC_CALLSYS )
 		{
 			// Translate the function id
 			asDWORD tmp[MAX_DATA_SIZE];
@@ -1155,28 +1155,28 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 	for( asUINT n = 0; n < func->byteCode.GetLength(); )
 	{
 		int c = *(asBYTE*)&bc[n];
-		if( c == BC_FREE ||
-			c == BC_REFCPY || c == BC_OBJTYPE )
+		if( c == asBC_FREE ||
+			c == asBC_REFCPY || c == asBC_OBJTYPE )
 		{
 			// Translate the index to the true object type
 			asPTRWORD *ot = (asPTRWORD*)&bc[n+1];
 			*(asCObjectType**)ot = FindObjectType(*(int*)ot);
 		}
-		else  if( c == BC_TYPEID )
+		else  if( c == asBC_TYPEID )
 		{
 			// Translate the index to the type id
 			int *tid = (int*)&bc[n+1];
 			*tid = FindTypeId(*tid);
 		}
-		else if( c == BC_CALL ||
-			     c == BC_CALLINTF ||
-				 c == BC_CALLSYS )
+		else if( c == asBC_CALL ||
+				 c == asBC_CALLINTF ||
+				 c == asBC_CALLSYS )
 		{
 			// Translate the index to the func id
 			int *fid = (int*)&bc[n+1];
 			*fid = FindFunction(*fid)->id;
 		}
-		else if( c == BC_ALLOC )
+		else if( c == asBC_ALLOC )
 		{
 			// Translate the index to the true object type
 			asPTRWORD *arg = (asPTRWORD*)&bc[n+1];

@@ -180,7 +180,7 @@ bool Test()
 	if( r < 0 ) 
 		fail = true;
 	r = engine->ExecuteString(0, "Test()");
-	if( r != asEXECUTION_FINISHED ) 
+	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
 	//-------------------
