@@ -309,10 +309,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\as_bytecodedef.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\as_callfunc.h"
 				>
 			</File>

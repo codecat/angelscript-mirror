@@ -41,7 +41,6 @@
 #include "as_context.h"
 #include "as_scriptengine.h"
 #include "as_tokendef.h"
-#include "as_bytecodedef.h"
 #include "as_texts.h"
 #include "as_callfunc.h"
 #include "as_module.h"
@@ -3295,7 +3294,7 @@ void asCContext::ExecuteNext()
 		if( instr != asBC_JMP && instr != asBC_JMPP && (instr < asBC_JZ || instr > asBC_JNP) &&
 			instr != asBC_CALL && instr != asBC_CALLBND && instr != asBC_CALLINTF && instr != asBC_RET && instr != asBC_ALLOC )
 		{
-			asASSERT( (l_bc - old) == asCByteCode::SizeOfType(asBCInfo[instr].type) );
+			asASSERT( (l_bc - old) == asBCTypeSize[asBCInfo[instr].type] );
 		}
 #endif
 	}

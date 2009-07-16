@@ -273,11 +273,6 @@ bool asCScriptFunction::IsSignatureEqual(const asCScriptFunction *func) const
 	return true;
 }
 
-#define INTARG(x)    (int(*(x+1)))
-#define PTRARG(x)    (asPTRWORD(*(x+1)))
-#define WORDARG0(x)   (*(((asWORD*)x)+1))
-#define WORDARG1(x)   (*(((asWORD*)x)+2))
-
 // internal
 void asCScriptFunction::AddReferences()
 {
@@ -293,7 +288,7 @@ void asCScriptFunction::AddReferences()
 	}
 
 	// Go through the byte code and add references to all resources used by the function
-	for( asUINT n = 0; n < byteCode.GetLength(); n += asCByteCode::SizeOfType(asBCInfo[*(asBYTE*)&byteCode[n]].type) )
+	for( asUINT n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{
 		switch( *(asBYTE*)&byteCode[n] )
 		{
@@ -303,7 +298,7 @@ void asCScriptFunction::AddReferences()
 		case asBC_ALLOC:
 		case asBC_REFCPY:
 			{
-				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
+                asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
 				objType->AddRef();
 			}
 			break;
@@ -316,7 +311,7 @@ void asCScriptFunction::AddReferences()
 		case asBC_CpyVtoG4:
 			if( module )
 			{
-				int gvarId = WORDARG0(&byteCode[n]);
+				int gvarId = asBC_WORDARG0(&byteCode[n]);
 				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
 				if( group != 0 ) group->AddRef();
 			}
@@ -326,7 +321,7 @@ void asCScriptFunction::AddReferences()
 		case asBC_CpyGtoV4:
 			if( module )
 			{
-				int gvarId = WORDARG1(&byteCode[n]);
+				int gvarId = asBC_WORDARG1(&byteCode[n]);
 				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
 				if( group != 0 ) group->AddRef();
 			}
@@ -336,7 +331,7 @@ void asCScriptFunction::AddReferences()
 		case asBC_CALLSYS:
 			if( module )
 			{
-				int funcId = INTARG(&byteCode[n]);
+				int funcId = asBC_INTARG(&byteCode[n]);
 				asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
 				if( group != 0 ) group->AddRef();
 			}
@@ -360,7 +355,7 @@ void asCScriptFunction::ReleaseReferences()
 	}
 
 	// Go through the byte code and release references to all resources used by the function
-	for( asUINT n = 0; n < byteCode.GetLength(); n += asCByteCode::SizeOfType(asBCInfo[*(asBYTE*)&byteCode[n]].type) )
+	for( asUINT n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{
 		switch( *(asBYTE*)&byteCode[n] )
 		{
@@ -370,7 +365,7 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_ALLOC:
 		case asBC_REFCPY:
 			{
-				asCObjectType *objType = (asCObjectType*)(size_t)PTRARG(&byteCode[n]);
+				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
 				objType->Release();
 			}
 			break;
@@ -383,7 +378,7 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_CpyVtoG4:
 			if( module )
 			{
-				int gvarId = WORDARG0(&byteCode[n]);
+				int gvarId = asBC_WORDARG0(&byteCode[n]);
 				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
 				if( group != 0 ) group->Release();
 			}
@@ -393,7 +388,7 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_CpyGtoV4:
 			if( module )
 			{
-				int gvarId = WORDARG1(&byteCode[n]);
+				int gvarId = asBC_WORDARG1(&byteCode[n]);
 				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
 				if( group != 0 ) group->Release();
 			}
@@ -403,7 +398,7 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_CALLSYS:
 			if( module )
 			{
-				int funcId = INTARG(&byteCode[n]);
+				int funcId = asBC_INTARG(&byteCode[n]);
 				asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
 				if( group != 0 ) group->Release();
 			}
@@ -481,31 +476,33 @@ const char *asCScriptFunction::GetConfigGroup() const
 void asCScriptFunction::JITCompile()
 {
     asIJITCompiler *jit = engine->GetJITCompiler();
-    if (!jit)
+    if( !jit )
         return;
 
-    asDWORD* bytecode = byteCode.AddressOf();
-    asUINT bytecodeLength = (asUINT)byteCode.GetLength();
-     
     if( jitFunction )
     {
         engine->jitCompiler->ReleaseJITFunction(jitFunction);
         jitFunction = 0;
     }
+
+    asDWORD* bytecode = byteCode.AddressOf();
+    asUINT bytecodeLength = (asUINT)byteCode.GetLength();
+
     int r = jit->StartCompile(bytecode, bytecodeLength, &jitFunction);
     if( r == asSUCCESS )
     {
         asUINT j = 0;
         while( j < bytecodeLength )
         {
-            int op = *((unsigned char*) bytecode);
+            int op = *((unsigned char*)bytecode);
             if( op == asBC_JitEntry )
             {
-                int off = jit->ResolveSuspendOffset(j);
+                int off = jit->ResolveJitEntry(j);
                 if( off < 0 )
                     off = 0;
                 else
                     off++; // We need 0 indicate "no jit buffer"
+
                 if( off > 65535 )
                 {
                     asCString str;
@@ -513,14 +510,16 @@ void asCScriptFunction::JITCompile()
                     engine->WriteMessage(GetName(), 0, 0, asMSGTYPE_WARNING, str.AddressOf());
                     off = 0;
                 }
+
                 // Update bytecode argument with the offset
                 asBC_SWORDARG0(bytecode) = off;
             }
-            int size = asCByteCode::SizeOfType(asBCInfo[op].type);
+            int size = asBCTypeSize[asBCInfo[op].type];
             j += size;
             bytecode += size;
         }
     }
+
     jit->EndCompile();
 }
 

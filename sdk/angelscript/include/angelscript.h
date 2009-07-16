@@ -1076,8 +1076,8 @@ typedef void (*asJITFunction)(asSVMRegisters*, asDWORD suspendId);
 class asIJITCompiler
 {
 public:
-    virtual int StartCompile(const asDWORD *bytecode, asUINT bytecodeLen, asJITFunction *output) = 0;
-    virtual int ResolveSuspendOffset(asUINT bytecodeOffset) = 0;
+    virtual int  StartCompile(const asDWORD *bytecode, asUINT bytecodeLen, asJITFunction *output) = 0;
+    virtual int  ResolveJitEntry(asUINT bytecodeOffset) = 0;
     virtual void EndCompile() = 0;
     virtual void ReleaseJITFunction(asJITFunction func) = 0;
 public:
@@ -1325,6 +1325,30 @@ enum asEBCType
 	asBCTYPE_wW_W_ARG     = 16,
 	asBCTYPE_W_DW_ARG     = 17,
 	asBCTYPE_QW_DW_ARG    = 18
+};
+
+// Instruction type sizes
+const int asBCTypeSize[19] =
+{
+    0, // asBCTYPE_INFO        
+    1, // asBCTYPE_NO_ARG      
+    1, // asBCTYPE_W_ARG       
+    1, // asBCTYPE_wW_ARG      
+    2, // asBCTYPE_DW_ARG      
+    2, // asBCTYPE_rW_DW_ARG   
+    3, // asBCTYPE_QW_ARG      
+    3, // asBCTYPE_DW_DW_ARG   
+    2, // asBCTYPE_wW_rW_rW_ARG
+    3, // asBCTYPE_wW_QW_ARG   
+    2, // asBCTYPE_wW_rW_ARG   
+    1, // asBCTYPE_rW_ARG      
+    2, // asBCTYPE_wW_DW_ARG   
+    3, // asBCTYPE_wW_rW_DW_ARG
+    2, // asBCTYPE_rW_rW_ARG   
+    2, // asBCTYPE_W_rW_ARG    
+    2, // asBCTYPE_wW_W_ARG    
+    2, // asBCTYPE_W_DW_ARG    
+    4  // asBCTYPE_QW_DW_ARG    
 };
 
 // Instruction info

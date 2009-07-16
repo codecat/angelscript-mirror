@@ -41,7 +41,6 @@
 #define AS_BYTECODE_H
 
 #include "as_config.h"
-#include "as_bytecodedef.h"
 #include "as_array.h"
 
 BEGIN_AS_NAMESPACE
@@ -121,8 +120,6 @@ public:
 
 	asCArray<int> lineNumbers;
 	int largestStackUsed;
-
-	static int SizeOfType(int type);
 
 	void DefineTemporaryVariable(int varOffset);
 
