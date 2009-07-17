@@ -1096,7 +1096,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_SCOPED) )
 			return ConfigError(asINVALID_ARG);
 
-		// Must have either asOBJ_APP_CLASS, asOBJ_APP_PRIMITIVE, or asOBJ_APP_FLOAT
+		// If the app type is given, we must validate the flags
 		if( flags & asOBJ_APP_CLASS )
 		{
 			// Must not set the primitive or float flag
@@ -1124,11 +1124,11 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 						 asOBJ_APP_PRIMITIVE) )
 				return ConfigError(asINVALID_ARG);
 		}
-		else
+		else if( flags & (asOBJ_APP_CLASS_CONSTRUCTOR |
+		                  asOBJ_APP_CLASS_DESTRUCTOR  |
+		                  asOBJ_APP_CLASS_ASSIGNMENT) )
 		{
-			// The application type was not informed
-			// TODO: This should be ok, as long as the application doesn't register any functions
-			//       that take the type by value or return it by value using native calling convention
+			// Must not set the class properties, without the class flag
 			return ConfigError(asINVALID_ARG);
 		}
 	}

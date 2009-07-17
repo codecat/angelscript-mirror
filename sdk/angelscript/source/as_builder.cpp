@@ -1664,7 +1664,7 @@ asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const
 		propSize = dt.GetSizeOnStackDWords()*4;
 		if( !dt.IsObjectHandle() )
 		{
-			if( dt.GetSizeInMemoryBytes() == 0 && file && node )
+			if( dt.GetSizeInMemoryBytes() == 0 && !(dt.GetObjectType()->flags & asOBJ_SCOPED) && file && node )
 			{
 				int r, c;
 				file->ConvertPosToRowCol(node->tokenPos, &r, &c);

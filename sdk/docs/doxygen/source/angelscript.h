@@ -148,12 +148,19 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_DESTRUCTOR  = 0x400,
 	//! The C++ class has an explicit assignment operator. Only valid for value types.
 	asOBJ_APP_CLASS_ASSIGNMENT  = 0x800,
+	//! The C++ type is a class with a constructor, but no destructor or assignment operator.
 	asOBJ_APP_CLASS_C           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
+	//! The C++ type is a class with a constructor and destructor, but no assignment operator.
 	asOBJ_APP_CLASS_CD          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
+	//! The C++ type is a class with a constructor and assignment operator, but no destructor.
 	asOBJ_APP_CLASS_CA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	//! The C++ type is a class with a constructor, destructor, and assignment operator.
 	asOBJ_APP_CLASS_CDA         = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	//! The C++ type is a class with a destructor, but no constructor or assignment operator.
 	asOBJ_APP_CLASS_D           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
+	//! The C++ type is a class with an assignment operator, but no constructor or destructor.
 	asOBJ_APP_CLASS_A           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
+	//! The C++ type is a class with a destructor and assignment operator, but no constructor.
 	asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
 	//! The C++ type is a primitive type. Only valid for value types.
 	asOBJ_APP_PRIMITIVE         = 0x1000,

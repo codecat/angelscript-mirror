@@ -301,9 +301,34 @@ bool Test()
 	// Must be possible to register float types
 	r = engine->RegisterObjectType("real", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_FLOAT); assert( r >= 0 );
 
+	// It should be allowed to register the type without specifying the application type,
+	// if the engine won't use it (i.e. no native functions take or return the type by value)
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		r = engine->RegisterObjectType("test1", 4, asOBJ_VALUE | asOBJ_POD);
+		if( r < 0 ) fail = true;
+		r = engine->RegisterGlobalFunction("test1 f()", asFUNCTION(0), asCALL_CDECL); 
+		if( r < 0 ) fail = true;
+		r = engine->RegisterGlobalFunction("void f(test1)", asFUNCTION(0), asCALL_CDECL);
+		if( r < 0 ) fail = true;
+		r = engine->ExecuteString(0, "test1 t");
+		if( r >= 0 ) fail = true;
+		// TODO: These errors should really be returned immediately when registering the function
+		if( bout.buffer != " (0, 0) : Info    : test1 f()\n"
+			               " (0, 0) : Error   : Can't return type 'test1' by value unless the application type is informed in the registration\n"
+                           " (0, 0) : Info    : void f(test1)\n"
+		                   " (0, 0) : Error   : Can't pass type 'test1' by value unless the application type is informed in the registration\n"
+						   " (0, 0) : Error   : Invalid configuration\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+		engine->Release();
+	}
+
 	// It must not be possible to register a value type without defining the application type
-	r = engine->RegisterObjectType("test1", 4, asOBJ_VALUE);
-	if( r >= 0 ) fail = true;
 	r = engine->RegisterObjectType("test2", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CONSTRUCTOR);
 	if( r >= 0 ) fail = true;
 
@@ -312,8 +337,6 @@ bool Test()
 	// REF+SCOPED
 	if( !fail ) fail = TestRefScoped();
 
-	// TODO: It should be allowed to register the type without specifying the application type,
-	// if the engine won't use it (i.e. no native functions take or return the type by value)
 
 	// TODO:
 	// Types that registers constructors/factories, must also register the default constructor/factory (unless asOBJ_POD is used)
@@ -376,6 +399,7 @@ bool TestRefScoped()
 	int r = 0;
 	CBufferedOutStream bout;
  	asIScriptEngine *engine;
+	asIScriptModule *mod;
 
 	// REF+SCOPED
 	// This type requires a factory and a release behaviour. It cannot have the addref behaviour.
@@ -463,6 +487,23 @@ bool TestRefScoped()
 		fail = true;
 	}
 
+	// It must be possible to include the scoped type as member in script class
+	bout.buffer = "";
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", "class A { scoped s; }");
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = engine->ExecuteString(0, "A a; scoped s; a.s = s;");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
 
 
 	// Don't permit functions to be registered with handle for parameters

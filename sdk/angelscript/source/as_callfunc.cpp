@@ -118,7 +118,7 @@ int PrepareSystemFunctionGeneric(asCScriptFunction *func, asSSystemFunctionInter
 }
 
 // This function should prepare system functions so that it will be faster to call them
-int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *)
+int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine)
 {
 #ifdef AS_MAX_PORTABILITY
 	// This should never happen, as when AS_MAX_PORTABILITY is on, all functions 
@@ -137,7 +137,21 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	else if( func->returnType.IsObject() )
 	{
 		asDWORD objType = func->returnType.GetObjectType()->flags;
-		if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_CLASS) )
+	
+		// Only value types can be returned by value
+		asASSERT( objType & asOBJ_VALUE );
+
+		if( !(objType & (asOBJ_APP_CLASS | asOBJ_APP_PRIMITIVE | asOBJ_APP_FLOAT)) )
+		{
+			// If the return is by value then we need to know the true type
+			engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, func->GetDeclarationStr().AddressOf());
+
+			asCString str;
+			str.Format(TXT_CANNOT_RET_TYPE_s_BY_VAL, func->returnType.GetObjectType()->name.AddressOf());
+			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+			engine->ConfigError(asINVALID_CONFIGURATION);
+		}
+		else if( objType & asOBJ_APP_CLASS )
 		{
 			internal->hostReturnFloat = false;
 			if( objType & COMPLEX_MASK )
@@ -188,13 +202,13 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 #endif
 			}
 		}
-		else if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_PRIMITIVE) )
+		else if( objType & asOBJ_APP_PRIMITIVE )
 		{
 			internal->hostReturnInMemory = false;
 			internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
 			internal->hostReturnFloat    = false;
 		}
-		else if( (objType & asOBJ_VALUE) && (objType & asOBJ_APP_FLOAT) )
+		else if( objType & asOBJ_APP_FLOAT )
 		{
 			internal->hostReturnInMemory = false;
 			internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
@@ -252,6 +266,18 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 		{
 			internal->takesObjByVal = true;
 
+			// Can't pass objects by value unless the application type is informed
+			if( !(func->parameterTypes[n].GetObjectType()->flags & (asOBJ_APP_CLASS | asOBJ_APP_PRIMITIVE | asOBJ_APP_FLOAT)) )
+			{
+				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, func->GetDeclarationStr().AddressOf());
+	
+				asCString str;
+				str.Format(TXT_CANNOT_PASS_TYPE_s_BY_VAL, func->parameterTypes[n].GetObjectType()->name.AddressOf());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+				engine->ConfigError(asINVALID_CONFIGURATION);
+			}
+
+
 #ifdef SPLIT_OBJS_BY_MEMBER_TYPES
 			// It's not safe to pass objects by value because different registers
 			// will be used depending on the memory layout of the object
@@ -259,6 +285,8 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 			if( !(func->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )	
 #endif
 			{
+				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, func->GetDeclarationStr().AddressOf());
+
 				asCString str;
 				str.Format(TXT_DONT_SUPPORT_TYPE_s_BY_VAL, func->parameterTypes[n].GetObjectType()->name.AddressOf());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());

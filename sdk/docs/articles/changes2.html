@@ -15,18 +15,20 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.17.0 WIP - 2009/07/15</h2>
+<h2>Version 2.17.0 WIP - 2009/07/16</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed compiler error in the XBox 360 specific code. (Thanks Marc Hanson)
+<li>Scoped reference types can now be members of script classes. (Thanks Jeff Slutter)
 </ul>
 <li>Library
 <ul>
 <li>Removed all old deprecated functionality
 <li>The built-in array type is now completely unaware of the library internals and uses only the public interface
 <li>Unified parts of the code for native calling conventions to improve maintainability
+<li>Informing the application type when registering a value type is now only required if the type is returned by value or passed by value to a function with native calling convention
 </ul>
 <li>Library interface
 <ul>
