@@ -539,7 +539,10 @@ static void StringLength_Generic(asIScriptGeneric *gen)
 {
 	string *s = (string*)gen->GetObject();
 	size_t l = s->size();
-	gen->SetReturnDWord((asUINT)l);
+	if( sizeof(size_t) == 4 )
+		gen->SetReturnDWord((asUINT)l);
+	else
+		gen->SetReturnQWord((asQWORD)l);
 }
 
 static void StringResize_Generic(asIScriptGeneric *gen)

@@ -303,6 +303,7 @@ bool Test()
 
 	// It should be allowed to register the type without specifying the application type,
 	// if the engine won't use it (i.e. no native functions take or return the type by value)
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

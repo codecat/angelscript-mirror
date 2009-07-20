@@ -1375,7 +1375,7 @@ struct asSBCInfo
 #endif
 
 #define asBCINFO(b,t,s) {asBC_##b, asBCTYPE_##t, s, #b}
-#define asBCINFO_DUMMY(b) {asEBCInstr(b), asBCTYPE_INFO, 0, "BC_" ## #b}
+#define asBCINFO_DUMMY(b) {asEBCInstr(b), asBCTYPE_INFO, 0, "BC_" #b}
 
 const asSBCInfo asBCInfo[256] =
 {
