@@ -36,12 +36,16 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Created the interface for an external JIT compiler plug-in (Thanks Fredrik Ehnbom)
 <li>Deprecated RegisterGlobalBehaviour. These behaviours should use the new class methods instead.
 <li>Deprecated GetGlobalBehaviourCount, GetGlobalBehaviourByIndex, and CompareScriptObjects.
-<li>Deprecated all assignment behaviours and the negate behaviour. Thse behaviours should use the new class methods instead.
+<li>Deprecated all assignment behaviours and the negate behaviour. These behaviours should use the new class methods instead.
 <li>Changed asBEHAVE_REF_CAST and asBEHAVE_IMPLICIT_REF_CAST to be registered as object behaviours. Verify the documentation for implementation changes.
 </ul>
 <li>Virtual machine
 <ul>
 <li>Added bytecode instruction JitEntry that transfers control to the JIT compiled function
+</ul>
+<li>Add-ons
+<ul>
+<li>Added the atan2 function to the math add-on
 </ul>
 <li>Project
 <ul>

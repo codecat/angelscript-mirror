@@ -41,6 +41,7 @@ void RegisterScriptMath_Native(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("float acos(float)", asFUNCTION(acosf), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float asin(float)", asFUNCTION(asinf), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float atan(float)", asFUNCTION(atanf), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("float atan2(float,float)", asFUNCTION(atan2f), asCALL_CDECL); assert( r >= 0 );
 
 	// Hyberbolic functions
 	r = engine->RegisterGlobalFunction("float cosh(float)", asFUNCTION(coshf), asCALL_CDECL); assert( r >= 0 );
@@ -70,6 +71,7 @@ void RegisterScriptMath_Native(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("double acos(double)", asFUNCTION(acos), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double asin(double)", asFUNCTION(asin), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double atan(double)", asFUNCTION(atan), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double atan2(double,double)", asFUNCTION(atan2), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double cosh(double)", asFUNCTION(cosh), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double sinh(double)", asFUNCTION(sinh), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double tanh(double)", asFUNCTION(tanh), asCALL_CDECL); assert( r >= 0 );
@@ -116,6 +118,13 @@ void powf_generic(asIScriptGeneric *gen)
 	float f2 = *(float*)gen->GetAddressOfArg(1);
 	*(float*)gen->GetAddressOfReturnLocation() = powf(f1, f2);
 }
+void atan2f_generic(asIScriptGeneric *gen)
+{
+	float f1 = *(float*)gen->GetAddressOfArg(0);
+	float f2 = *(float*)gen->GetAddressOfArg(1);
+	*(float*)gen->GetAddressOfReturnLocation() = atan2f(f1, f2);
+}
+
 #else
 // This macro creates simple generic wrappers for functions of type 'double func(double)'
 #define GENERICdd(x) \
@@ -148,6 +157,12 @@ void pow_generic(asIScriptGeneric *gen)
 	double f2 = *(double*)gen->GetAddressOfArg(1);
 	*(double*)gen->GetAddressOfReturnLocation() = pow(f1, f2);
 }
+void atan2_generic(asIScriptGeneric *gen)
+{
+	double f1 = *(double*)gen->GetAddressOfArg(0);
+	double f2 = *(double*)gen->GetAddressOfArg(1);
+	*(double*)gen->GetAddressOfReturnLocation() = atan2(f1, f2);
+}
 #endif
 void RegisterScriptMath_Generic(asIScriptEngine *engine)
 {
@@ -162,6 +177,7 @@ void RegisterScriptMath_Generic(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("float acos(float)", asFUNCTION(acosf_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float asin(float)", asFUNCTION(asinf_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float atan(float)", asFUNCTION(atanf_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("float atan2(float,float)", asFUNCTION(atan2f_generic), asCALL_GENERIC); assert( r >= 0 );
 
 	// Hyberbolic functions
 	r = engine->RegisterGlobalFunction("float cosh(float)", asFUNCTION(coshf_generic), asCALL_GENERIC); assert( r >= 0 );
@@ -191,6 +207,7 @@ void RegisterScriptMath_Generic(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("double acos(double)", asFUNCTION(acos_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double asin(double)", asFUNCTION(asin_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double atan(double)", asFUNCTION(atan_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("double atan2(double,double)", asFUNCTION(atan2_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double cosh(double)", asFUNCTION(cosh_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double sinh(double)", asFUNCTION(sinh_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double tanh(double)", asFUNCTION(tanh_generic), asCALL_GENERIC); assert( r >= 0 );

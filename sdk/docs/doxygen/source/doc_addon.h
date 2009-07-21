@@ -116,6 +116,8 @@ myAny->Retrieve((void*)&str, typeId);
 
 \page doc_addon_std_string string object (STL)
 
+\todo Update this with changes
+
 <b>Path:</b> /sdk/add_on/scriptstdstring/
 
 This add-on registers the <code>std::string</code> type as-is with AngelScript. This gives
@@ -185,6 +187,8 @@ Refer to the <code>std::string</code> implementation for your compiler.
 
 
 \page doc_addon_string string object (reference counted)
+
+\todo Update this with changes
 
 <b>Path:</b> /sdk/add_on/scriptstring/
 
@@ -514,6 +518,7 @@ and return doubles instead of floats.
   float acos(float val);
   float asin(float val);
   float atan(float val);
+  float atan2(float y, float x);
   float cosh(float rad);
   float sinh(float rad);
   float tanh(float rad);
