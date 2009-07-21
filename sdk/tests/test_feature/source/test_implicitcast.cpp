@@ -337,7 +337,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("A", asBEHAVE_FACTORY, "A@f()", asFUNCTION(A::factory), asCALL_CDECL); 
 		engine->RegisterObjectBehaviour("A", asBEHAVE_RELEASE, "void f()", asMETHOD(A, release), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("A", asBEHAVE_ADDREF, "void f()", asMETHOD(A, addref), asCALL_THISCALL);
-		engine->RegisterObjectBehaviour("A", asBEHAVE_ASSIGNMENT, "A& f(const A &in)", asMETHOD(A, assign), asCALL_THISCALL);
+		engine->RegisterObjectMethod("A", "A& opAssign(const A &in)", asMETHOD(A, assign), asCALL_THISCALL);
 		engine->RegisterObjectMethod("A", "int test()", asMETHOD(A, test), asCALL_THISCALL);
 
 		// Class B inherits from class A

@@ -76,9 +76,8 @@ bool Test()
 		asFUNCTION(DestroyFoo),
 		asCALL_CDECL_OBJLAST);	assert( r >=0 );
 
-	r = engine->RegisterObjectBehaviour("Foo",
-		asBEHAVE_ASSIGNMENT,
-		"Foo& op_assign(const Foo&)",
+	r = engine->RegisterObjectMethod("Foo",
+		"Foo& opAssign(const Foo&)",
 		asFUNCTION(AssignFoo),
 		asCALL_CDECL_OBJLAST);	assert( r >=0 );
 
@@ -102,9 +101,8 @@ bool Test()
 		asFUNCTION(DestroyString),
 		asCALL_CDECL_OBJLAST);	assert( r >=0 );
 
-	r = engine->RegisterObjectBehaviour("string",
-		asBEHAVE_ASSIGNMENT,
-		"string& op_assign(const string&)",
+	r = engine->RegisterObjectMethod("string",
+		"string& opAssign(const string&)",
 		asFUNCTION(AssignString),
 		asCALL_CDECL_OBJLAST);	assert( r >=0 );
 

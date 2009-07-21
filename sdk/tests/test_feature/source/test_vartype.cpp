@@ -277,10 +277,11 @@ bool Test()
 	if( bout.buffer != "ExecuteString (1, 22) : Warning : Argument cannot be assigned. Output will be discarded.\n" ) fail = true;
 	bout.buffer = "";
 
-	// Don't allow ?& with operators yet
+	// ?& with opAssign is allowed, but won't be used with the assignment operator
+	// TODO: Support ?& with the operators as well
 	engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_APP_PRIMITIVE);
-	r = engine->RegisterObjectBehaviour("type", asBEHAVE_ASSIGNMENT, "type &f(const ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
-	if( r >= 0 )
+	r = engine->RegisterObjectMethod("type", "type &opAssign(const ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
+	if( r < 0 )
 		fail = true;
 	// TODO: This is a valid class method, but should perhaps not be allowed to be used as operator
 	/*

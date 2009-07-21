@@ -117,7 +117,7 @@ bool Test()
 
 	r = engine->RegisterObjectType("refclass", sizeof(CRefClass), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CDA); assert(r >= 0);
 	r = engine->RegisterObjectProperty("refclass", "int id", offsetof(CRefClass, id)); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ASSIGNMENT, "refclass &f(refclass &in)", asFUNCTION(Assign), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("refclass", "refclass &opAssign(refclass &in)", asFUNCTION(Assign), asCALL_GENERIC); assert( r >= 0 );
 
 
 	if( testNative )

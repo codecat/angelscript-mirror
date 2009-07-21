@@ -47,12 +47,11 @@
 
 BEGIN_AS_NAMESPACE
 
-//#ifdef AS_DEPRECATED
+#ifdef AS_DEPRECATED
 // deprecated since 2009-07-20, 2.17.0
 // map token to behaviour
 const int behave_dual_token[] =
 {
-#ifdef AS_DEPRECATED
 	ttPlus,               asBEHAVE_ADD,
 	ttMinus,              asBEHAVE_SUBTRACT,
 	ttStar,               asBEHAVE_MULTIPLY,
@@ -70,9 +69,7 @@ const int behave_dual_token[] =
 	ttBitShiftLeft,       asBEHAVE_BIT_SLL,
 	ttBitShiftRight,      asBEHAVE_BIT_SRL,
 	ttBitShiftRightArith, asBEHAVE_BIT_SRA,
-#endif
 	ttAssignment,         asBEHAVE_ASSIGNMENT,
-#ifdef AS_DEPRECATED
 	ttAddAssign,          asBEHAVE_ADD_ASSIGN,
 	ttSubAssign,          asBEHAVE_SUB_ASSIGN,
 	ttMulAssign,          asBEHAVE_MUL_ASSIGN,
@@ -84,11 +81,10 @@ const int behave_dual_token[] =
 	ttShiftLeftAssign,    asBEHAVE_SLL_ASSIGN,
 	ttShiftRightLAssign,  asBEHAVE_SRL_ASSIGN,
 	ttShiftRightAAssign,  asBEHAVE_SRA_ASSIGN
-#endif
 };
 
 const int num_dual_tokens = sizeof(behave_dual_token)/sizeof(int)/2;
-//#endif
+#endif
 
 asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
 {
@@ -799,81 +795,100 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			}
 			else
 			{
-				asCTypeInfo ltype;
-				ltype.Set(gvar->datatype);
-				ltype.dataType.MakeReference(true);
-				ltype.dataType.MakeReadOnly(false);
-				ltype.stackOffset = -1;
+				asSExprContext lexpr(engine);
+				lexpr.type.Set(gvar->datatype);
+				lexpr.type.dataType.MakeReference(true);
+				lexpr.type.dataType.MakeReadOnly(false);
+				lexpr.type.stackOffset = -1;
 
 				if( gvar->datatype.IsObjectHandle() )
-					ltype.isExplicitHandle = true;
+					lexpr.type.isExplicitHandle = true;
+
+				lexpr.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 
 				// If left expression resolves into a registered type
 				// check if the assignment operator is overloaded, and check
 				// the type of the right hand expression. If none is found
 				// the default action is a direct copy if it is the same type
 				// and a simple assignment.
-				asSTypeBehaviour *beh = 0;
-				if( !ltype.isExplicitHandle )
-					beh = ltype.dataType.GetBehaviour();
 				bool assigned = false;
-				if( beh )
+				if( lexpr.type.dataType.IsObject() && !lexpr.type.isExplicitHandle )
 				{
-					// Find the matching overloaded operators
-					int op = asBEHAVE_ASSIGNMENT;
-					asCArray<int> ops;
-					asUINT n;
-					for( n = 0; n < beh->operators.GetLength(); n += 2 )
+					assigned = CompileOverloadedDualOperator(node, &lexpr, &expr, &ctx);
+					if( assigned )
 					{
-						if( op == beh->operators[n] )
-							ops.PushLast(beh->operators[n+1]);
-					}
-
-					asCArray<int> match;
-					MatchArgument(ops, match, &expr.type, 0);
-
-					if( match.GetLength() > 0 )
-						assigned = true;
-
-					if( match.GetLength() == 1 )
-					{
-						// If it is an array, both sides must have the same subtype
-						if( ltype.dataType.IsArrayType() )
-							if( !ltype.dataType.IsEqualExceptRefAndConst(expr.type.dataType) )
-								Error(TXT_BOTH_MUST_BE_SAME, node);
-
-						asCScriptFunction *descr = engine->scriptFunctions[match[0]];
-
-						// Add code for arguments
-						MergeExprContexts(&ctx, &expr);
-
-						PrepareArgument(&descr->parameterTypes[0], &expr, node, true, descr->inOutFlags[0]);
-						MergeExprContexts(&ctx, &expr);
-
-
-						asCArray<asSExprContext*> args;
-						args.PushLast(&expr);
-						MoveArgsToStack(match[0], &ctx.bc, args, false);
-
-						// Add the code for the object
-						ctx.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
-						ctx.bc.Instr(asBC_RDSPTR);
-
-						PerformFunctionCall(match[0], &ctx, false, &args);
-
+						// Pop the resulting value
 						ctx.bc.Pop(ctx.type.dataType.GetSizeOnStackDWords());
 
+						// Release the argument
 						ProcessDeferredParams(&ctx);
-					}
-					else if( match.GetLength() > 1 )
-					{
-						Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
 					}
 				}
 
+#ifdef AS_DEPRECATED
 				if( !assigned )
 				{
-					PrepareForAssignment(&ltype.dataType, &expr, node);
+					asSTypeBehaviour *beh = 0;
+					if( !lexpr.type.isExplicitHandle )
+						beh = lexpr.type.dataType.GetBehaviour();
+					if( beh )
+					{
+						// Find the matching overloaded operators
+						int op = asBEHAVE_ASSIGNMENT;
+						asCArray<int> ops;
+						asUINT n;
+						for( n = 0; n < beh->operators.GetLength(); n += 2 )
+						{
+							if( op == beh->operators[n] )
+								ops.PushLast(beh->operators[n+1]);
+						}
+
+						asCArray<int> match;
+						MatchArgument(ops, match, &expr.type, 0);
+
+						if( match.GetLength() > 0 )
+							assigned = true;
+
+						if( match.GetLength() == 1 )
+						{
+							// If it is an array, both sides must have the same subtype
+							if( lexpr.type.dataType.IsArrayType() )
+								if( !lexpr.type.dataType.IsEqualExceptRefAndConst(expr.type.dataType) )
+									Error(TXT_BOTH_MUST_BE_SAME, node);
+
+							asCScriptFunction *descr = engine->scriptFunctions[match[0]];
+
+							// Add code for arguments
+							MergeExprContexts(&ctx, &expr);
+
+							PrepareArgument(&descr->parameterTypes[0], &expr, node, true, descr->inOutFlags[0]);
+							MergeExprContexts(&ctx, &expr);
+
+
+							asCArray<asSExprContext*> args;
+							args.PushLast(&expr);
+							MoveArgsToStack(match[0], &ctx.bc, args, false);
+
+							// Add the code for the object
+							ctx.bc.AddCode(&lexpr.bc);
+							ctx.bc.Instr(asBC_RDSPTR);
+
+							PerformFunctionCall(match[0], &ctx, false, &args);
+
+							ctx.bc.Pop(ctx.type.dataType.GetSizeOnStackDWords());
+
+							ProcessDeferredParams(&ctx);
+						}
+						else if( match.GetLength() > 1 )
+						{
+							Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+						}
+					}
+				}
+#endif
+				if( !assigned )
+				{
+					PrepareForAssignment(&lexpr.type.dataType, &expr, node);
 
 					// If the expression is constant and the variable also is constant
 					// then mark the variable as pure constant. This will allow the compiler
@@ -890,7 +905,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					// Add byte code for storing value of expression in variable
 					ctx.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarIndex(gvar->index));
 
-					PerformAssignment(&ltype, &expr.type, &ctx.bc, node);
+					PerformAssignment(&lexpr.type, &expr.type, &ctx.bc, node);
 
 					// Release temporary variables used by expression
 					ReleaseTemporaryVariable(expr.type, &ctx.bc);
@@ -1580,14 +1595,18 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					{
 						// TODO: We can use a copy constructor here
 
-						asCTypeInfo ltype;
-						ltype.Set(type);
-						ltype.dataType.MakeReference(true);
+						asSExprContext lexpr(engine);
+						lexpr.type.Set(type);
+						lexpr.type.dataType.MakeReference(true);
 						// Allow initialization of constant variables
-						ltype.dataType.MakeReadOnly(false);
+						lexpr.type.dataType.MakeReadOnly(false);
 
 						if( type.IsObjectHandle() )
-							ltype.isExplicitHandle = true;
+							lexpr.type.isExplicitHandle = true;
+
+						sVariable *v = variables->GetVariable(name.AddressOf());
+						lexpr.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
+						lexpr.type.stackOffset = (short)v->stackOffset;
 
 
 						// If left expression resolves into a registered type
@@ -1595,73 +1614,87 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						// the type of the right hand expression. If none is found
 						// the default action is a direct copy if it is the same type
 						// and a simple assignment.
-						asSTypeBehaviour *beh = 0;
-						if( !ltype.isExplicitHandle )
-							beh = ltype.dataType.GetBehaviour();
 						bool assigned = false;
-						if( beh )
+						if( lexpr.type.dataType.IsObject() && !lexpr.type.isExplicitHandle )
 						{
-							// Find the matching overloaded operators
-							int op = asBEHAVE_ASSIGNMENT;
-							asCArray<int> ops;
-							asUINT n;
-							for( n = 0; n < beh->operators.GetLength(); n += 2 )
+							assigned = CompileOverloadedDualOperator(node, &lexpr, &expr, &ctx);
+							if( assigned )
 							{
-								if( op == beh->operators[n] )
-									ops.PushLast(beh->operators[n+1]);
-							}
-
-							asCArray<int> match;
-							MatchArgument(ops, match, &expr.type, 0);
-
-							if( match.GetLength() > 0 )
-								assigned = true;
-
-							if( match.GetLength() == 1 )
-							{
-								// If it is an array, both sides must have the same subtype
-								if( ltype.dataType.IsArrayType() )
-									if( !ltype.dataType.IsEqualExceptRefAndConst(expr.type.dataType) )
-										Error(TXT_BOTH_MUST_BE_SAME, node);
-
-								asCScriptFunction *descr = engine->scriptFunctions[match[0]];
-
-								// Add code for arguments
-								MergeExprContexts(&ctx, &expr);
-
-								PrepareArgument(&descr->parameterTypes[0], &expr, node, true, descr->inOutFlags[0]);
-								MergeExprContexts(&ctx, &expr);
-
-								asCArray<asSExprContext*> args;
-								args.PushLast(&expr);
-								MoveArgsToStack(match[0], &ctx.bc, args, false);
-
-								// Add the code for the object
-								sVariable *v = variables->GetVariable(name.AddressOf());
-								ltype.stackOffset = (short)v->stackOffset;
-								ctx.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
-								ctx.bc.Instr(asBC_RDSPTR);
-
-								PerformFunctionCall(match[0], &ctx, false, &args);
-
+								// Pop the resulting value
 								ctx.bc.Pop(ctx.type.dataType.GetSizeOnStackDWords());
 
+								// Release the argument
 								ProcessDeferredParams(&ctx);
 							}
-							else if( match.GetLength() > 1 )
-							{
-								Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
-							}
 						}
-
+#ifdef AS_DEPRECATED
 						if( !assigned )
 						{
-							PrepareForAssignment(&ltype.dataType, &expr, node);
+							asSTypeBehaviour *beh = 0;
+							if( !lexpr.type.isExplicitHandle )
+								beh = lexpr.type.dataType.GetBehaviour();
+							bool assigned = false;
+							if( beh )
+							{
+								// Find the matching overloaded operators
+								int op = asBEHAVE_ASSIGNMENT;
+								asCArray<int> ops;
+								asUINT n;
+								for( n = 0; n < beh->operators.GetLength(); n += 2 )
+								{
+									if( op == beh->operators[n] )
+										ops.PushLast(beh->operators[n+1]);
+								}
+
+								asCArray<int> match;
+								MatchArgument(ops, match, &expr.type, 0);
+
+								if( match.GetLength() > 0 )
+									assigned = true;
+
+								if( match.GetLength() == 1 )
+								{
+									// If it is an array, both sides must have the same subtype
+									if( lexpr.type.dataType.IsArrayType() )
+										if( !lexpr.type.dataType.IsEqualExceptRefAndConst(expr.type.dataType) )
+											Error(TXT_BOTH_MUST_BE_SAME, node);
+
+									asCScriptFunction *descr = engine->scriptFunctions[match[0]];
+
+									// Add code for arguments
+									MergeExprContexts(&ctx, &expr);
+
+									PrepareArgument(&descr->parameterTypes[0], &expr, node, true, descr->inOutFlags[0]);
+									MergeExprContexts(&ctx, &expr);
+
+									asCArray<asSExprContext*> args;
+									args.PushLast(&expr);
+									MoveArgsToStack(match[0], &ctx.bc, args, false);
+
+									// Add the code for the object
+									ctx.bc.AddCode(&lexpr.bc);
+									ctx.bc.Instr(asBC_RDSPTR);
+
+									PerformFunctionCall(match[0], &ctx, false, &args);
+
+									ctx.bc.Pop(ctx.type.dataType.GetSizeOnStackDWords());
+
+									ProcessDeferredParams(&ctx);
+								}
+								else if( match.GetLength() > 1 )
+								{
+									Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+								}
+							}
+						}
+#endif
+						if( !assigned )
+						{
+							PrepareForAssignment(&lexpr.type.dataType, &expr, node);
 
 							// If the expression is constant and the variable also is constant
 							// then mark the variable as pure constant. This will allow the compiler
 							// to optimize expressions with this variable.
-							sVariable *v = variables->GetVariable(name.AddressOf());
 							if( v->type.IsReadOnly() && expr.type.isConstant )
 							{
 								v->isPureConstant = true;
@@ -1672,10 +1705,10 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 							MergeExprContexts(&ctx, &expr);
 
 							// Add byte code for storing value of expression in variable
-							ctx.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
-							ltype.stackOffset = (short)v->stackOffset;
+							ctx.bc.AddCode(&lexpr.bc);
+							lexpr.type.stackOffset = (short)v->stackOffset;
 
-							PerformAssignment(&ltype, &expr.type, &ctx.bc, node->prev);
+							PerformAssignment(&lexpr.type, &expr.type, &ctx.bc, node->prev);
 
 							// Release temporary variables used by expression
 							ReleaseTemporaryVariable(expr.type, &ctx.bc);
@@ -4886,7 +4919,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return 0;
 		}
 
-//#ifdef AS_DEPRECATED
+#ifdef AS_DEPRECATED
 // deprecated since 2009-07-20, 2.17.0
 		// If left expression resolves into a registered type
 		// check if the assignment operator is overloaded, and check
@@ -4965,7 +4998,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 			return -1;
 		}
-//#endif
+#endif
 
 		// No registered operator was found. In case the operation is a direct
 		// assignment and the rvalue is the same type as the lvalue, then we can
@@ -7440,7 +7473,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	ctx->bc.AddCode(&e.bc);
 }
 
-//#ifdef AS_DEPRECATED
+#ifdef AS_DEPRECATED
 // deprecated since 2009-07-20, 2.17.0
 int asCCompiler::TokenToBehaviour(int token)
 {
@@ -7460,7 +7493,7 @@ int asCCompiler::TokenToBehaviour(int token)
 
 	return behaviour;
 }
-//#endif
+#endif
 
 bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {

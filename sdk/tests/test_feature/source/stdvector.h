@@ -180,9 +180,8 @@ void RegisterVector(const std::string V_AS,  //The typename of the vector inside
 		asCALL_CDECL_OBJLAST);
 	assert(error_code >= 0 && "Failed to register operator[]");
 	
-	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
-		asBEHAVE_ASSIGNMENT,
-		(V_AS+"& f(const "+V_AS+"&in)").c_str(),
+	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		(V_AS+"& opAssign(const "+V_AS+"&in)").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::Assign),
 		asCALL_CDECL_OBJLAST);
 	assert(error_code >= 0 && "Failed to register operator=");

@@ -144,13 +144,6 @@ enum asEBehaviours
 	asBEHAVE_IMPLICIT_REF_CAST,
 	asBEHAVE_INDEX,
 
-#ifndef AS_DEPRECATED
-	// The assignment behaviour is not yet deprecated
-	asBEHAVE_FIRST_ASSIGN,
-	asBEHAVE_ASSIGNMENT,
-	asBEHAVE_LAST_ASSIGN = asBEHAVE_ASSIGNMENT,
-#endif
-
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,
 	 asBEHAVE_GETREFCOUNT = asBEHAVE_FIRST_GC,
@@ -158,10 +151,9 @@ enum asEBehaviours
 	 asBEHAVE_GETGCFLAG,
 	 asBEHAVE_ENUMREFS,
 	 asBEHAVE_RELEASEREFS,
-	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS
+	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
 
 #ifdef AS_DEPRECATED
-	,
 	// deprecated since 2009-07-20, 2.17.0
 	asBEHAVE_NEGATE,
 	asBEHAVE_FIRST_ASSIGN,
@@ -196,8 +188,10 @@ enum asEBehaviours
 	 asBEHAVE_BIT_SLL,
 	 asBEHAVE_BIT_SRL,
 	 asBEHAVE_BIT_SRA,
-	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA
+	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
 #endif
+
+	asBEHAVE_MAX
 };
 
 // Return codes

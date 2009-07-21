@@ -670,7 +670,7 @@ bool Test4()
 	engine->RegisterObjectBehaviour("Chars", asBEHAVE_FACTORY, "Chars@ f()", asFUNCTION(0), asCALL_GENERIC);
 	engine->RegisterObjectBehaviour("Chars", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	engine->RegisterObjectBehaviour("Chars", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
-	engine->RegisterObjectBehaviour("Chars", asBEHAVE_ASSIGNMENT, "Chars &f(const Chars &in)", asFUNCTION(0), asCALL_GENERIC);
+	engine->RegisterObjectMethod("Chars", "Chars &opAssign(const Chars &in)", asFUNCTION(0), asCALL_GENERIC);
 
 	engine->RegisterObjectType("_Save", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectProperty("_Save", "Chars FieldName", 0);

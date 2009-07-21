@@ -135,7 +135,7 @@ bool Register(asIScriptEngine*  pSE)
 {
 	pSE->RegisterObjectType("Float", sizeof(cFloat), asOBJ_VALUE | asOBJ_APP_CLASS);
 
-	if(pSE->RegisterObjectBehaviour("Float",asBEHAVE_ASSIGNMENT,"Float& f(float )",asFUNCTION(AssignFloat2Float),asCALL_CDECL_OBJLAST))
+	if(pSE->RegisterObjectMethod("Float","Float& opAssign(float )",asFUNCTION(AssignFloat2Float),asCALL_CDECL_OBJLAST))
 		return false;
 
 

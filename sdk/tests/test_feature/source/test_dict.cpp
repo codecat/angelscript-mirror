@@ -62,7 +62,7 @@ bool Test()
 	engine->RegisterObjectType("Dict", sizeof(CDict), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);	
 	engine->RegisterObjectBehaviour("Dict", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Dict", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectBehaviour("Dict", asBEHAVE_ASSIGNMENT, "Dict &f(const Dict &in)", asMETHOD(CDict,operator=), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Dict", "Dict &opAssign(const Dict &in)", asMETHOD(CDict,operator=), asCALL_THISCALL);
 
 	engine->RegisterObjectBehaviour("Dict", asBEHAVE_INDEX, "Dict &f(string)", asMETHOD(CDict, operator[]), asCALL_THISCALL);
 

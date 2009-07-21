@@ -309,8 +309,8 @@ bool TestTwoStringTypes()
 	engine->RegisterObjectBehaviour("_String", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(stringStringConstructor), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("_String", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(stringDecontructor), asCALL_CDECL_OBJLAST);
 	// =
-	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const string &in )", asMETHODPR(_String, operator=, (const string &), _String& ), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const _String &in )", asMETHODPR(_String, operator=, (const _String &), _String& ), asCALL_THISCALL);
+	engine->RegisterObjectMethod("_String", "_String &opAssign(const string &in )", asMETHODPR(_String, operator=, (const string &), _String& ), asCALL_THISCALL);
+	engine->RegisterObjectMethod("_String", "_String &opAssign(const _String &in )", asMETHODPR(_String, operator=, (const _String &), _String& ), asCALL_THISCALL);
 	// +=
 	engine->RegisterObjectMethod("_String", "_String &opAddAssign(const string &in )", asMETHODPR(_String, operator+=, (const string &), _String& ), asCALL_THISCALL);
 	engine->RegisterObjectMethod("_String", "_String &opAddAssign(const _String &in )", asMETHODPR(_String, operator+=, (const _String &), _String& ), asCALL_THISCALL);

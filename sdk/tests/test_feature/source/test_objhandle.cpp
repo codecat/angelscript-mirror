@@ -170,7 +170,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_FACTORY, "refclass@ f()", asFUNCTION(Factory), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefClass, Release), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ASSIGNMENT, "refclass &f(refclass &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("refclass", "refclass &opAssign(refclass &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("refclass", "refclass &Do()", asMETHOD(CRefClass,Do), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("refclass", "refclass &opAdd(refclass &in)", asFUNCTION(CRefClass::Add), asCALL_CDECL_OBJFIRST); assert(r >= 0);
 
@@ -269,7 +269,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("A", asBEHAVE_FACTORY, "A@ f()", asFUNCTION(Factory), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("A", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("A", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefClass, Release), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("A", asBEHAVE_ASSIGNMENT, "A &f(const A &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("A", "A &opAssign(const A &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert(r >= 0);
 
 	bout.buffer = "";
 	r = engine->ExecuteString(0, "A a; a == null;");    // Should give warning

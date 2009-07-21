@@ -1405,8 +1405,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 
 		beh->release = AddBehaviourFunction(func, internal);
 	}
-// TODO: Deprecate this -->
-	else if( behaviour >= asBEHAVE_FIRST_ASSIGN && behaviour <= asBEHAVE_LAST_ASSIGN )
+	else if( behaviour == asBEHAVE_MAX /*assignment*/ )
 	{
 		// Verify that there is exactly one parameter
 		if( func.parameterTypes.GetLength() != 1 )
@@ -1420,7 +1419,6 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		beh->operators.PushLast(ttAssignment);
 		beh->operators.PushLast(beh->copy);
 	}
-// TODO: <-- Deprecate this
 	else if( behaviour >= asBEHAVE_FIRST_GC &&
 		     behaviour <= asBEHAVE_LAST_GC )
 	{
@@ -1719,7 +1717,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		func.id = beh->release = AddBehaviourFunction(func, internal);
 	}
-// TODO: Deprecate this -->
+#ifdef AS_DEPRECATED
 	else if( behaviour >= asBEHAVE_FIRST_ASSIGN && behaviour <= asBEHAVE_LAST_ASSIGN )
 	{
 		// Verify that the var type is not used
@@ -1760,7 +1758,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 			beh->operators.PushLast(func.id);
 		}
 	}
-// TODO: <-- Deprecate this
+#endif
 	else if( behaviour == asBEHAVE_INDEX )
 	{
 		// Verify that the var type is not used
@@ -2272,6 +2270,15 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 					func->objectType->acceptRefSubType = false;
 			}
 		}
+	}
+
+	// Is this the default copy behaviour
+	if( func->name == "opAssign" &&
+		func->parameterTypes.GetLength() == 1 &&
+		func->parameterTypes[0].IsEqualExceptRefAndConst(asCDataType::CreateObject(func->objectType, false)) &&
+		func->isReadOnly == false )
+	{
+		func->objectType->beh.copy = func->id;
 	}
 
 	// Return the function id as success

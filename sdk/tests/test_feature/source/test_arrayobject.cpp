@@ -227,7 +227,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("int[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArray, (CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArray, (int, CIntArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructIntArray), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("int[]", asBEHAVE_ASSIGNMENT, "int[] &f(int[]&in)", asMETHOD(CIntArray, operator=), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("int[]", "int[] &opAssign(int[]&in)", asMETHOD(CIntArray, operator=), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[]", asBEHAVE_INDEX, "int &f(int)", asMETHOD(CIntArray, operator[]), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("int[]", "int size()", asMETHOD(CIntArray, size), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("int[]", "void push_back(int &in)", asMETHOD(CIntArray, push_back), asCALL_THISCALL); assert( r >= 0 );
@@ -239,7 +239,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("int[][]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructIntArrayArray, (CIntArrayArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[][]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructIntArrayArray, (int, CIntArrayArray *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[][]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructIntArrayArray), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("int[][]", asBEHAVE_ASSIGNMENT, "int[][] &f(int[][]&in)", asMETHOD(CIntArrayArray, operator=), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("int[][]", "int[][] &opAssign(int[][]&in)", asMETHOD(CIntArrayArray, operator=), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("int[][]", asBEHAVE_INDEX, "int[] &f(int)", asMETHOD(CIntArrayArray, operator[]), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("int[][]", "int size()", asMETHOD(CIntArrayArray, size), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("int[][]", "void push_back(int[] &in)", asMETHOD(CIntArrayArray, push_back), asCALL_THISCALL); assert( r >= 0 );
