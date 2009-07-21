@@ -414,19 +414,19 @@ bool TestRefScoped()
 	r = engine->RegisterObjectType("scoped", 0, asOBJ_REF | asOBJ_SCOPED); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_FACTORY, "scoped @f()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_RELEASE, "void f()", asFUNCTION(Scoped_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_NEGATE, "scoped @f()", asFUNCTION(Scoped_Negate), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("scoped", "scoped @opNeg()", asFUNCTION(Scoped_Negate), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_ASSIGNMENT, "scoped &f(const scoped &in)", asFUNCTION(Scoped_Assignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("scoped", "scoped @opAdd(int)", asFUNCTION(Scoped_Add), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 
 	// Enumerate the objects behaviours
 	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("scoped"));
-	if( ot->GetBehaviourCount() != 3 )
+	if( ot->GetBehaviourCount() != 2 )
 		fail = true;
 	asEBehaviours beh;
 	ot->GetBehaviourByIndex(0, &beh);
 	if( beh != asBEHAVE_RELEASE )
 		fail = true;
-	ot->GetBehaviourByIndex(2, &beh);
+	ot->GetBehaviourByIndex(1, &beh);
 	if( beh != asBEHAVE_ASSIGNMENT )
 		fail = true;
 

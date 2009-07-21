@@ -110,10 +110,10 @@ bool Test()
     r = engine->RegisterObjectMethod ("Vector3", "Vector3 opMul(float) const", asFUNCTIONPR(operator*, (const csVector3&, float), csVector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
     r = engine->RegisterObjectMethod ("Vector3", "Vector3 opMul_r(float) const", asFUNCTIONPR(operator*, (float, const csVector3&), csVector3), asCALL_CDECL_OBJLAST); assert( r >= 0 );
     r = engine->RegisterObjectMethod ("Vector3", "Vector3 opDiv(float) const", asFUNCTIONPR(operator/, (const csVector3&, float), csVector3), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_ADD_ASSIGN, "Vector3 &f(Vector3 &in)", asMETHODPR(csVector3, operator+=, (const csVector3&), csVector3&), asCALL_THISCALL); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_SUB_ASSIGN, "Vector3 &f(Vector3 &in)", asMETHODPR(csVector3, operator+=, (const csVector3&), csVector3&), asCALL_THISCALL); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_MUL_ASSIGN, "Vector3 &f(float)", asMETHODPR(csVector3, operator*=, (float), csVector3&), asCALL_THISCALL); assert( r >= 0 );
-    r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_DIV_ASSIGN, "Vector3 &f(float)", asMETHODPR(csVector3, operator/=, (float), csVector3&), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod ("Vector3", "Vector3 &opAddAssign(Vector3 &in)", asMETHODPR(csVector3, operator+=, (const csVector3&), csVector3&), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod ("Vector3", "Vector3 &opSubAssign(Vector3 &in)", asMETHODPR(csVector3, operator+=, (const csVector3&), csVector3&), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod ("Vector3", "Vector3 &opMulAssign(float)", asMETHODPR(csVector3, operator*=, (float), csVector3&), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod ("Vector3", "Vector3 &opDivAssign(float)", asMETHODPR(csVector3, operator/=, (float), csVector3&), asCALL_THISCALL); assert( r >= 0 );
 
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);

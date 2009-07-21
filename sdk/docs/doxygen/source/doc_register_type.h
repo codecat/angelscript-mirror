@@ -231,6 +231,8 @@ may be difficult to detect, e.g. the function is not returning the expected valu
 
 \page doc_reg_opbeh Registering operator behaviours
 
+\todo Update this with change
+
 You can register operator behaviours for your types as well. By doing this
 you'll allow the script to work with the types in expressions, just like the
 built-in types.

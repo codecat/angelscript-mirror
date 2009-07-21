@@ -2,6 +2,7 @@
 
 \page doc_api_behaviours Type behaviours
 
+\todo Update this with changes
 
 
 
@@ -127,8 +128,8 @@ a new value so the function must not return a reference or handle to the origina
 
 \see asBEHAVE_CONSTRUCT and asBEHAVE_FACTORY in \ref memmgmt as well for an alternative value cast operator.
 
-asBEHAVE_REF_CAST and asBEHAVE_IMPLICIT_REF_CAST must be registered with one parameter using \ref asIScriptEngine::RegisterGlobalBehaviour. 
-The parameter must be an object handle, as must the return type. The only difference between the two is that the script compiler may use 
+asBEHAVE_REF_CAST and asBEHAVE_IMPLICIT_REF_CAST must also be registered without parameters using \ref asIScriptEngine::RegisterObjectBehaviour. 
+The return type must be a handle to the target type. The only difference between the two is that the script compiler may use 
 the later for implicit casts, while the former can only be used by explicitly calling the cast operator. This distinction is very useful 
 when registering class hierarchies, where cast to a base class usually is registered with an implicit cast, whereas a cast to a derived 
 class usually is registered with an explicit cast.

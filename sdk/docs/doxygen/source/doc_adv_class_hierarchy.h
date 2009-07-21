@@ -30,21 +30,25 @@ B* refCast(A* a)
 
     // Now try to dynamically cast the pointer to the wanted type
     B* b = dynamic_cast<B*>(a);
-    if( b == 0 )
+    if( b != 0 )
     {
-        // Since the cast couldn't be made, we need to release the handle we received
-        a->release();
+        // Since the cast was made, we need to increase the ref counter for the returned handle
+        b->addref();
     }
     return b;
 }
 
 // Example registration of the behaviour
-r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "derived@ f(base@)", asFUNCTION((refCast<base,derived>)), asCALL_CDECL); assert( r >= 0 );
-r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST, "base@ f(derived@)", asFUNCTION((refCast<derived,base>)), asCALL_CDECL); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("base", asBEHAVE_REF_CAST, "derived@ f()", asFUNCTION((refCast<base,derived>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("derived", asBEHAVE_IMPLICIT_REF_CAST, "base@ f()", asFUNCTION((refCast<derived,base>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
 Note that it may be necessary to add extra parenthesis to the <tt>asFUNCTION</tt> macro so that the preprocessor 
 doesn't interpret the <tt>,</tt> in the template declaration as the argument separator in the macro.
+
+Remember that it is legal for the script to attempt a cast on a null pointer, in which case the result is 
+also a null pointer. This means that the reference cast behaviour must not be implemented as a virtual class
+method, because then the call will crash if the object pointer is null.
 
 \section doc_adv_class_hierarchy_2 Inherited methods and properties
 

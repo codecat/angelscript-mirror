@@ -270,15 +270,6 @@ void DumpModule(asIScriptModule *mod)
 		DumpObjectType(s, engine->GetObjectTypeByIndex(n));
 	}
 
-	// Enumerate global behaviours
-	c = engine->GetGlobalBehaviourCount();
-	for( n = 0; n < c; n++ )
-	{
-		asEBehaviours beh;
-		int funcId = engine->GetGlobalBehaviourByIndex(n, &beh);
-		s << "reg beh(" << beh << "): " << engine->GetFunctionDescriptorById(funcId)->GetDeclaration() << endl;
-	}
-
 	//--------------------------------
 	// Validate the dump
 	if( s.str() != 
@@ -319,16 +310,13 @@ void DumpModule(asIScriptModule *mod)
 		"reg type: val string group: <null>\n"
 		" beh(1) void _beh_1_()\n"
 		" beh(0) void _beh_0_()\n"
-		" beh(9) string& _beh_9_(const string&in)\n"
-		" beh(10) string& _beh_10_(const string&in)\n"
-		" beh(7) uint8& _beh_7_(uint)\n"
-		" beh(7) const uint8& _beh_7_(uint) const\n"
-		" beh(9) string& _beh_9_(double)\n"
-		" beh(10) string& _beh_10_(double)\n"
-		" beh(9) string& _beh_9_(int)\n"
-		" beh(10) string& _beh_10_(int)\n"
-		" beh(9) string& _beh_9_(uint)\n"
-		" beh(10) string& _beh_10_(uint)\n"
+		" beh(11) string& _beh_11_(const string&in)\n"
+		" beh(9) uint8& _beh_9_(uint)\n"
+		" beh(9) const uint8& _beh_9_(uint) const\n"
+		" beh(11) string& _beh_11_(double)\n"
+		" beh(11) string& _beh_11_(int)\n"
+		" beh(11) string& _beh_11_(uint)\n"
+		" string& opAddAssign(const string&in)\n"
 		" bool opEquals(const string&in) const\n"
 		" int opCmp(const string&in) const\n"
 		" string opAdd(const string&in) const\n"
@@ -339,10 +327,13 @@ void DumpModule(asIScriptModule *mod)
 		" uint length() const\n"
 		" void resize(uint)\n"
 #endif
+		" string& opAddAssign(double)\n"
 		" string opAdd(double) const\n"
 		" string opAdd_r(double) const\n"
+		" string& opAddAssign(int)\n"
 		" string opAdd(int) const\n"
 		" string opAdd_r(int) const\n"
+		" string& opAddAssign(uint)\n"
 		" string opAdd(uint) const\n"
 		" string opAdd_r(uint) const\n" )
 	{

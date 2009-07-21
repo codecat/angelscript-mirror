@@ -77,7 +77,10 @@ public:
 	asCArray<asCObjectType*>     objTypes;
 	asCArray<asCScriptFunction*> scriptFunctions;
 	asCArray<asCGlobalProperty*> globalProps;
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 	asCArray<int>                globalBehaviours;
+#endif
 	asCArray<asCConfigGroup*>    referencedConfigGroups;
 
 	// Module access

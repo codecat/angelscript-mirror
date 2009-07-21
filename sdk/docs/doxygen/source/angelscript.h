@@ -198,6 +198,10 @@ enum asEBehaviours
 	asBEHAVE_INDEX,
 	//! \brief (Object) operator - (Unary negate)
 	asBEHAVE_NEGATE,
+	//! \brief (Object) Explicit reference cast operator
+	asBEHAVE_REF_CAST,
+	//! \brief (Object) Implicit reference cast operator
+	asBEHAVE_IMPLICIT_REF_CAST,
 
 	// Assignment operators
 	asBEHAVE_FIRST_ASSIGN,
@@ -264,10 +268,6 @@ enum asEBehaviours
 	 //! \brief (Global) operator >>> (Arithmetic right shift)
 	 asBEHAVE_BIT_SRA,
 	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
-	//! \brief (Global) Explicit reference cast operator
-	asBEHAVE_REF_CAST,
-	//! \brief (Global) Implicit reference cast operator
-	asBEHAVE_IMPLICIT_REF_CAST,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,

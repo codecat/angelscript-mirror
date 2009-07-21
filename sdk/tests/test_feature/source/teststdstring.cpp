@@ -312,8 +312,8 @@ bool TestTwoStringTypes()
 	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const string &in )", asMETHODPR(_String, operator=, (const string &), _String& ), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("_String", asBEHAVE_ASSIGNMENT,	"_String &f(const _String &in )", asMETHODPR(_String, operator=, (const _String &), _String& ), asCALL_THISCALL);
 	// +=
-	engine->RegisterObjectBehaviour("_String", asBEHAVE_ADD_ASSIGN , "_String &f(const string &in )", asMETHODPR(_String, operator+=, (const string &), _String& ), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("_String", asBEHAVE_ADD_ASSIGN , "_String &f(const _String &in )", asMETHODPR(_String, operator+=, (const _String &), _String& ), asCALL_THISCALL);
+	engine->RegisterObjectMethod("_String", "_String &opAddAssign(const string &in )", asMETHODPR(_String, operator+=, (const string &), _String& ), asCALL_THISCALL);
+	engine->RegisterObjectMethod("_String", "_String &opAddAssign(const _String &in )", asMETHODPR(_String, operator+=, (const _String &), _String& ), asCALL_THISCALL);
 	// comparison
 /*	engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const _String &in, const _String &in)", asFUNCTION(compare_StringEqual), asCALL_CDECL);
 	engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL, "bool f(const _String &in, const string &in)", asFUNCTION(compare_StringStringEqual), asCALL_CDECL);

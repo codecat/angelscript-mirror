@@ -3,7 +3,7 @@
 namespace TestObject
 {
 
-#define TESTNAME "TestObject"
+const char * const TESTNAME = "TestObject";
 
 
 
@@ -267,13 +267,6 @@ bool Test()
 	}
 
 	// TODO: Make the same test with the index operator
-
-	// Mustn't allow registration of assignment behaviour as global behaviour
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_ASSIGNMENT, "Object &f(const Object &in, const Object &in)", asFUNCTION(0), asCALL_GENERIC);
-	if( r >= 0 )
-	{
-		fail = true;
-	}
 
 	engine->Release();
 

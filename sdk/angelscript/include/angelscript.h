@@ -140,10 +140,30 @@ enum asEBehaviours
 	// Object operators
 	asBEHAVE_VALUE_CAST,
 	asBEHAVE_IMPLICIT_VALUE_CAST,
+	asBEHAVE_REF_CAST,
+	asBEHAVE_IMPLICIT_REF_CAST,
 	asBEHAVE_INDEX,
-	asBEHAVE_NEGATE,
 
-	// Assignment operators
+#ifndef AS_DEPRECATED
+	// The assignment behaviour is not yet deprecated
+	asBEHAVE_FIRST_ASSIGN,
+	asBEHAVE_ASSIGNMENT,
+	asBEHAVE_LAST_ASSIGN = asBEHAVE_ASSIGNMENT,
+#endif
+
+	// Garbage collection behaviours
+	asBEHAVE_FIRST_GC,
+	 asBEHAVE_GETREFCOUNT = asBEHAVE_FIRST_GC,
+	 asBEHAVE_SETGCFLAG,
+	 asBEHAVE_GETGCFLAG,
+	 asBEHAVE_ENUMREFS,
+	 asBEHAVE_RELEASEREFS,
+	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS
+
+#ifdef AS_DEPRECATED
+	,
+	// deprecated since 2009-07-20, 2.17.0
+	asBEHAVE_NEGATE,
 	asBEHAVE_FIRST_ASSIGN,
 	 asBEHAVE_ASSIGNMENT = asBEHAVE_FIRST_ASSIGN,
 	 asBEHAVE_ADD_ASSIGN,
@@ -158,9 +178,6 @@ enum asEBehaviours
 	 asBEHAVE_SRL_ASSIGN,
 	 asBEHAVE_SRA_ASSIGN,
 	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
-
-	// TODO: 2.17: Deprecate all global operators
-	// Global operators
 	asBEHAVE_FIRST_DUAL,
 	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
 	 asBEHAVE_SUBTRACT,
@@ -179,18 +196,8 @@ enum asEBehaviours
 	 asBEHAVE_BIT_SLL,
 	 asBEHAVE_BIT_SRL,
 	 asBEHAVE_BIT_SRA,
-	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
-	asBEHAVE_REF_CAST,
-	asBEHAVE_IMPLICIT_REF_CAST,
-
-	// Garbage collection behaviours
-	asBEHAVE_FIRST_GC,
-	 asBEHAVE_GETREFCOUNT = asBEHAVE_FIRST_GC,
-	 asBEHAVE_SETGCFLAG,
-	 asBEHAVE_GETGCFLAG,
-	 asBEHAVE_ENUMREFS,
-	 asBEHAVE_RELEASEREFS,
-	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS
+	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA
+#endif
 };
 
 // Return codes
@@ -485,13 +492,10 @@ public:
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
 	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	virtual int            RegisterInterface(const char *name) = 0;
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 	virtual int            GetObjectTypeCount() = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
-	virtual int            GetGlobalBehaviourCount() = 0;
-	virtual int            GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) = 0;
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv) = 0;
@@ -537,8 +541,6 @@ public:
 	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
 	virtual void              AddRefScriptObject(void *obj, int typeId) = 0;
 	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
-	// TODO: 2.17: Deprecate this, and add CompareEquality and CompareRelation instead
-	virtual int               CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
@@ -553,6 +555,14 @@ public:
 	// User data
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() = 0;
+
+#ifdef AS_DEPRECATED
+	// deprecated since 2009-07-20, 2.17.0
+	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int            GetGlobalBehaviourCount() = 0;
+	virtual int            GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) = 0;
+	virtual int            CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
+#endif
 
 protected:
 	virtual ~asIScriptEngine() {}

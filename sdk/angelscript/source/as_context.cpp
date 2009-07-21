@@ -1434,7 +1434,7 @@ void asCContext::ExecuteNext()
 			ptr[3] = 0;
 		}
 #else
-		*(l_fp - SWORDARG0(l_bc)) = (*(l_fp - SWORDARG0(l_bc)) == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+		*(l_fp - asBC_SWORDARG0(l_bc)) = (*(l_fp - asBC_SWORDARG0(l_bc)) == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
 #endif
 		l_bc++;
 		break;

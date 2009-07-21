@@ -62,10 +62,6 @@ typeA* B_to_A(typeB* obj)
 {
 	if( !obj ) return 0;
 	typeA* o = dynamic_cast<typeA*>(obj);
-	if (!o)
-	{
-		obj->Release();
-	}
 
 	return o;
 }
@@ -75,10 +71,6 @@ typeB* A_to_B(typeA* obj)
 {
 	if( !obj ) return 0;
 	typeB* o = dynamic_cast<typeB*>(obj);
-	if (!o)
-	{
-		obj->Release();
-	}
 
 	return o;
 }
@@ -105,8 +97,8 @@ void RegisterB(asIScriptEngine* engine)
 	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_ADDREF, "void f()", asMETHOD(typeB, AddRef), asCALL_THISCALL);
 	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_RELEASE, "void f()", asMETHOD(typeB, Release), asCALL_THISCALL);
 
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "typeA@ f(typeB@)", asFUNCTION(B_to_A), asCALL_CDECL);
-	r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "typeB@ f(typeA@)", asFUNCTION(A_to_B), asCALL_CDECL);
+	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_REF_CAST, "typeA@+ f()", asFUNCTION(B_to_A), asCALL_CDECL_OBJLAST);
+	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_REF_CAST, "typeB@+ f()", asFUNCTION(A_to_B), asCALL_CDECL_OBJLAST);
 }
 
 

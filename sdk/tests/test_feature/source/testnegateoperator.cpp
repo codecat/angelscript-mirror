@@ -48,12 +48,12 @@ bool TestNegateOperator()
 	engine->RegisterObjectType("obj", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
-		engine->RegisterObjectBehaviour("obj", asBEHAVE_NEGATE, "obj f()", asFUNCTION(negate_gen), asCALL_GENERIC);
+		engine->RegisterObjectMethod("obj", "obj opNeg()", asFUNCTION(negate_gen), asCALL_GENERIC);
 		engine->RegisterObjectMethod("obj", "obj opSub(obj &in)", asFUNCTION(minus_gen), asCALL_GENERIC);
 	}
 	else
 	{
-		engine->RegisterObjectBehaviour("obj", asBEHAVE_NEGATE, "obj f()", asFUNCTION(negate), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("obj", "obj opNeg()", asFUNCTION(negate), asCALL_CDECL_OBJLAST);
 		engine->RegisterObjectMethod("obj", "obj opSub(obj &in)", asFUNCTION(minus), asCALL_CDECL_OBJFIRST);
 	}
 	engine->RegisterGlobalProperty("obj testVal", &testVal);

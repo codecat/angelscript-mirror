@@ -47,10 +47,12 @@
 
 BEGIN_AS_NAMESPACE
 
-// TODO: Deprecate this -->
+//#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 // map token to behaviour
 const int behave_dual_token[] =
 {
+#ifdef AS_DEPRECATED
 	ttPlus,               asBEHAVE_ADD,
 	ttMinus,              asBEHAVE_SUBTRACT,
 	ttStar,               asBEHAVE_MULTIPLY,
@@ -68,7 +70,9 @@ const int behave_dual_token[] =
 	ttBitShiftLeft,       asBEHAVE_BIT_SLL,
 	ttBitShiftRight,      asBEHAVE_BIT_SRL,
 	ttBitShiftRightArith, asBEHAVE_BIT_SRA,
+#endif
 	ttAssignment,         asBEHAVE_ASSIGNMENT,
+#ifdef AS_DEPRECATED
 	ttAddAssign,          asBEHAVE_ADD_ASSIGN,
 	ttSubAssign,          asBEHAVE_SUB_ASSIGN,
 	ttMulAssign,          asBEHAVE_MUL_ASSIGN,
@@ -80,10 +84,11 @@ const int behave_dual_token[] =
 	ttShiftLeftAssign,    asBEHAVE_SLL_ASSIGN,
 	ttShiftRightLAssign,  asBEHAVE_SRL_ASSIGN,
 	ttShiftRightAAssign,  asBEHAVE_SRA_ASSIGN
+#endif
 };
 
 const int num_dual_tokens = sizeof(behave_dual_token)/sizeof(int)/2;
-// TODO: <-- Deprecate this
+//#endif
 
 asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
 {
@@ -3234,59 +3239,107 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 	else
 	{
 		// Find a suitable registered behaviour
-		for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n+= 2 )
+		asSTypeBehaviour *beh = &ctx->type.dataType.GetObjectType()->beh;
+		for( n = 0; n < beh->operators.GetLength(); n+= 2 )
 		{
-			if( (isExplicit && asBEHAVE_REF_CAST == engine->globalBehaviours.operators[n]) ||
-				asBEHAVE_IMPLICIT_REF_CAST == engine->globalBehaviours.operators[n] )
+			if( (isExplicit && asBEHAVE_REF_CAST == beh->operators[n]) ||
+				asBEHAVE_IMPLICIT_REF_CAST == beh->operators[n] )
 			{
-				int funcId = engine->globalBehaviours.operators[n+1];
-
-				// Is the operator for the input type?
-				asCScriptFunction *func = engine->scriptFunctions[funcId];
-				if( func->parameterTypes[0].GetObjectType() != ctx->type.dataType.GetObjectType() )
-					continue;
+				int funcId = beh->operators[n+1];
 
 				// Is the operator for the output type?
+				asCScriptFunction *func = engine->scriptFunctions[funcId];
 				if( func->returnType.GetObjectType() != to.GetObjectType() )
 					continue;
 
-				// Find the config group for the global function
-				asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
-				if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
-					ops.PushLast(funcId);
+				ops.PushLast(funcId);
 			}
 		}
 
-		// Find the best match for the argument
-		asCArray<int> ops1;
-		MatchArgument(ops, ops1, &ctx->type, 0);
-
-		// Did we find a unique suitable operator?
-		if( ops1.GetLength() == 1 )
+		// Should only have one behaviour for each output type
+		if( ops.GetLength() == 1 )
 		{
-			conversionDone = true;
-			asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
-
 			if( generateCode )
 			{
-				// Add code for argument
-				asSExprContext expr(engine);
-				MergeExprContexts(&expr, ctx);
-				expr.type = ctx->type;
-				PrepareArgument2(ctx, &expr, &descr->parameterTypes[0], true, descr->inOutFlags[0]);
+				// Merge the bytecode so that it forms obj.castBehave()
+				asCTypeInfo objType = ctx->type;
+				asCArray<asSExprContext *> args;
+				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args);
 
-				asCArray<asSExprContext*> args(1);
-				args.PushLast(&expr);
-
-				MoveArgsToStack(descr->id, &ctx->bc, args, false);
-
-				PerformFunctionCall(descr->id, ctx, false, &args);
+				// Since we're receiving a handle, we can release the original variable
+				ReleaseTemporaryVariable(objType, &ctx->bc);
 			}
 			else
 			{
-				ctx->type.Set(descr->returnType);
+				asCScriptFunction *func = engine->scriptFunctions[ops[0]];
+				ctx->type.Set(func->returnType);
 			}
 		}
+		else if( ops.GetLength() > 1 )
+		{
+			// It shouldn't be possible to have more than one, should it?
+			asASSERT( false );
+		}
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
+		else
+		{
+			// Find a suitable registered behaviour
+			for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n+= 2 )
+			{
+				if( (isExplicit && asBEHAVE_REF_CAST == engine->globalBehaviours.operators[n]) ||
+					asBEHAVE_IMPLICIT_REF_CAST == engine->globalBehaviours.operators[n] )
+				{
+					int funcId = engine->globalBehaviours.operators[n+1];
+
+					// Is the operator for the input type?
+					asCScriptFunction *func = engine->scriptFunctions[funcId];
+					if( func->parameterTypes[0].GetObjectType() != ctx->type.dataType.GetObjectType() )
+						continue;
+
+					// Is the operator for the output type?
+					if( func->returnType.GetObjectType() != to.GetObjectType() )
+						continue;
+
+					// Find the config group for the global function
+					asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
+					if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
+						ops.PushLast(funcId);
+				}
+			}
+
+			// Find the best match for the argument
+			asCArray<int> ops1;
+			MatchArgument(ops, ops1, &ctx->type, 0);
+
+			// Did we find a unique suitable operator?
+			if( ops1.GetLength() == 1 )
+			{
+				conversionDone = true;
+				asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
+
+				if( generateCode )
+				{
+					// Add code for argument
+					asSExprContext expr(engine);
+					MergeExprContexts(&expr, ctx);
+					expr.type = ctx->type;
+					PrepareArgument2(ctx, &expr, &descr->parameterTypes[0], true, descr->inOutFlags[0]);
+
+					asCArray<asSExprContext*> args(1);
+					args.PushLast(&expr);
+
+					MoveArgsToStack(descr->id, &ctx->bc, args, false);
+
+					PerformFunctionCall(descr->id, ctx, false, &args);
+				}
+				else
+				{
+					ctx->type.Set(descr->returnType);
+				}
+			}
+		}
+#endif
 	}
 
 	return conversionDone;
@@ -4833,8 +4886,8 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return 0;
 		}
 
-
-// TODO: Deprecate this -->
+//#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 		// If left expression resolves into a registered type
 		// check if the assignment operator is overloaded, and check
 		// the type of the right hand expression. If none is found
@@ -4912,7 +4965,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 			return -1;
 		}
-// TODO: <-- Deprecate this 
+//#endif
 
 		// No registered operator was found. In case the operation is a direct
 		// assignment and the rvalue is the same type as the lvalue, then we can
@@ -6513,7 +6566,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	}
 	else if( (op == ttMinus || op == ttBitNot) && ctx->type.dataType.IsObject() )
 	{
-// TODO: Deprecate this -->
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 		if( op == ttMinus )
 		{
 			asCTypeInfo objType = ctx->type;
@@ -6551,7 +6605,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 				}
 			}
 		}
-// TODO: <-- Deprecate this
+#endif
 
 		// Look for the opNeg or opCom methods
 		const char *opName = 0;
@@ -7386,7 +7440,8 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	ctx->bc.AddCode(&e.bc);
 }
 
-// TODO: Deprecate this -->
+//#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 int asCCompiler::TokenToBehaviour(int token)
 {
 	// Find the correct behaviour for the token
@@ -7405,7 +7460,7 @@ int asCCompiler::TokenToBehaviour(int token)
 
 	return behaviour;
 }
-// TODO: <-- Deprecate this
+//#endif
 
 bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
@@ -7425,7 +7480,9 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		token == ttXor )
 		return false;
 
-// TODO: Deprecate this -->
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
+
 	// Find the correct behaviour for the token
 	int behaviour = TokenToBehaviour(token);
 
@@ -7506,7 +7563,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		// Don't continue
 		return true;
 	}
-// TODO: <-- Deprecate this
+#endif
 
 	// Dual operators can also be implemented as class methods
 	if( token == ttEqual ||

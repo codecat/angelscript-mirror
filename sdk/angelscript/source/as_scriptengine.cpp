@@ -1405,6 +1405,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 
 		beh->release = AddBehaviourFunction(func, internal);
 	}
+// TODO: Deprecate this -->
 	else if( behaviour >= asBEHAVE_FIRST_ASSIGN && behaviour <= asBEHAVE_LAST_ASSIGN )
 	{
 		// Verify that there is exactly one parameter
@@ -1419,6 +1420,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		beh->operators.PushLast(ttAssignment);
 		beh->operators.PushLast(beh->copy);
 	}
+// TODO: <-- Deprecate this
 	else if( behaviour >= asBEHAVE_FIRST_GC &&
 		     behaviour <= asBEHAVE_LAST_GC )
 	{
@@ -1717,6 +1719,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		func.id = beh->release = AddBehaviourFunction(func, internal);
 	}
+// TODO: Deprecate this -->
 	else if( behaviour >= asBEHAVE_FIRST_ASSIGN && behaviour <= asBEHAVE_LAST_ASSIGN )
 	{
 		// Verify that the var type is not used
@@ -1757,6 +1760,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 			beh->operators.PushLast(func.id);
 		}
 	}
+// TODO: <-- Deprecate this
 	else if( behaviour == asBEHAVE_INDEX )
 	{
 		// Verify that the var type is not used
@@ -1777,7 +1781,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
-	// TODO: We also need asBEHAVE_BIT_NOT
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 	else if( behaviour == asBEHAVE_NEGATE )
 	{
 		// Verify that there are no parameters
@@ -1803,6 +1808,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
+#endif
 	else if( behaviour >= asBEHAVE_FIRST_GC &&
 		     behaviour <= asBEHAVE_LAST_GC )
 	{
@@ -1871,16 +1877,35 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
+	else if( behaviour == asBEHAVE_REF_CAST ||
+	         behaviour == asBEHAVE_IMPLICIT_REF_CAST )
+	{
+		// Verify parameter count
+		if( func.parameterTypes.GetLength() != 0 )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// Verify return type
+		if( !func.returnType.IsObjectHandle() )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// TODO: verify that the same cast is not registered already (cosnt or non-const is treated the same for the return type)
+
+		beh->operators.PushLast(behaviour);
+		func.id = AddBehaviourFunction(func, internal);
+		beh->operators.PushLast(func.id);
+	}
 	else
 	{
-		if( (behaviour >= asBEHAVE_FIRST_DUAL &&
-			 behaviour <= asBEHAVE_LAST_DUAL) ||
-			behaviour == asBEHAVE_REF_CAST )
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
+		if( behaviour >= asBEHAVE_FIRST_DUAL &&
+			behaviour <= asBEHAVE_LAST_DUAL )
 		{
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_MUST_BE_GLOBAL_BEHAVIOUR);
 		}
 		else
-			asASSERT(false);
+#endif
+		asASSERT(false);
 
 		return ConfigError(asINVALID_ARG);
 	}
@@ -1890,8 +1915,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 }
 
 
-// TODO: RegisterGlobalBehaviour should be removed once all behaviours are registered to objects
-// interface
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
@@ -1979,14 +2004,18 @@ int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char
 	// Return the function id as success
 	return func.id;
 }
+#endif
 
-// interface
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 int asCScriptEngine::GetGlobalBehaviourCount()
 {
 	return (int)globalBehaviours.operators.GetLength()/2;
 }
+#endif
 
-// interface
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 int asCScriptEngine::GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour)
 {
 	if( index*2 >= globalBehaviours.operators.GetLength() )
@@ -1997,6 +2026,7 @@ int asCScriptEngine::GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outB
 
 	return globalBehaviours.operators[index*2+1];
 }
+#endif
 
 int asCScriptEngine::VerifyVarTypeNotInFunction(asCScriptFunction *func)
 {
@@ -3532,6 +3562,8 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 	}
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
 int asCScriptEngine::CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId)
 {
 	// Make sure the type id is for an object type, and not a primitive or a handle
@@ -3570,6 +3602,7 @@ int asCScriptEngine::CompareScriptObjects(bool &result, int behaviour, void *lef
 	result = false;
 	return asNOT_SUPPORTED;
 }
+#endif
 
 void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 {
@@ -3744,6 +3777,9 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForFunction(int funcId)
 				return configGroups[n];
 		}
 
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-20, 2.17.0
+
 		// Check global behaviours
 		for( m = 0; m < configGroups[n]->globalBehaviours.GetLength(); m++ )
 		{
@@ -3751,6 +3787,7 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForFunction(int funcId)
 			if( funcId == globalBehaviours.operators[id] )
 				return configGroups[n];
 		}
+#endif
 	}
 
 	return 0;

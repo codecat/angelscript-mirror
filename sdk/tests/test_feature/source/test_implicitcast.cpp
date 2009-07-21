@@ -79,21 +79,11 @@ public:
 	static A* castToA(B*b) 
 	{
 		A *a = dynamic_cast<A*>(b);
-		if( a == 0 )
-		{
-			// Since the cast failed, we need to release the handle we received
-			a->release();
-		}
 		return a;
 	}
 	static B* AcastToB(A*a) 
 	{
 		B *b = dynamic_cast<B*>(a);
-		if( b == 0 )
-		{
-			// Since the cast failed, we need to release the handle we received
-			a->release();
-		}
 		return b;
 	}
 protected:
@@ -364,7 +354,7 @@ bool Test()
 
 		// It should be possible to register a REF_CAST to allow implicit cast
 		// Test IMPLICIT_REF_CAST from subclass to baseclass
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST, "A@ f(B@)", asFUNCTION(B::castToA), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "A@+ f()", asFUNCTION(B::castToA), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = engine->ExecuteString(0, "B b; A@ a = b; assert(a.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
@@ -381,7 +371,7 @@ bool Test()
 			fail = true;
 
 		// Test REF_CAST from baseclass to subclass
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST, "B@ f(A@)", asFUNCTION(B::AcastToB), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("A", asBEHAVE_REF_CAST, "B@+ f()", asFUNCTION(B::AcastToB), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = engine->ExecuteString(0, "B b; A@ a = cast<A>(b); B@ _b = cast<B>(a); assert(_b.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;

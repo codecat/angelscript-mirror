@@ -33,7 +33,7 @@ void RegisterBStr(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_CONSTRUCT,  "void f()",                  asFUNCTION(asBStrConstruct),   asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_DESTRUCT,   "void f()",                  asFUNCTION(asBStrDestruct),    asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_ASSIGNMENT, "bstr &f(const bstr &in)",   asFUNCTION(asBStrCopy),        asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_ADD_ASSIGN, "bstr &f(const bstr &in)",   asFUNCTION(asBStrAppend),      asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("bstr",                         "bstr &opAddAssign(const bstr &in)",   asFUNCTION(asBStrAppend),      asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_INDEX,      "uint8 &f(int)",             asFUNCTION(asBStrByteAt),      asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("bstr", asBEHAVE_INDEX,      "const uint8 &f(int) const", asFUNCTION(asBStrByteAt),      asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("bstr",                         "bstr f(bstr &in)",          asFUNCTION(asBStrConcatenate), asCALL_CDECL_OBJLAST); assert( r >= 0 );
