@@ -3173,6 +3173,8 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 
 		// TODO: Can't this leave deferred output params unhandled?
 
+		// TODO: Should find the opAssign method that implements the default copy behaviour.
+		//       The beh->copy member will be removed.
 		asSTypeBehaviour *beh = lvalue->dataType.GetBehaviour();
 		if( beh->copy )
 		{

@@ -1,6 +1,7 @@
 #include "utils.h"
 using std::string;
 #include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/scripthelper/scripthelper.h"
 
 namespace TestScriptString
 {
@@ -382,27 +383,19 @@ bool Test()
 	// Test the comparison method
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		RegisterScriptString(engine);
+		RegisterStdString(engine);
 
 		std::string a = "a";
 		std::string b = "b";
 
-		// TODO: 2.17: Need two new methods CompareEquality and CompareRelation. The first will give a bool result, the second an int.
 		int type = engine->GetTypeIdByDecl("string");
-/*		bool c;
-		r = engine->CompareScriptObjects(c, asBEHAVE_EQUAL, &a, &b, type); assert( r >= 0 );
-		if( c ) fail = true;
-		r = engine->CompareScriptObjects(c, asBEHAVE_NOTEQUAL, &a, &b, type); assert( r >= 0 );
-		if( !c ) fail = true;
-		r = engine->CompareScriptObjects(c, asBEHAVE_LESSTHAN, &a, &b, type); assert( r >= 0 );
-		if( !c ) fail = true;
-		r = engine->CompareScriptObjects(c, asBEHAVE_GREATERTHAN, &a, &b, type); assert( r >= 0 );
-		if( c ) fail = true;
-		r = engine->CompareScriptObjects(c, asBEHAVE_LEQUAL, &a, &b, type); assert( r >= 0 );
-		if( !c ) fail = true;
-		r = engine->CompareScriptObjects(c, asBEHAVE_GEQUAL, &a, &b, type); assert( r >= 0 );
-		if( c ) fail = true;
-*/
+		int c;
+		r = CompareRelation(engine, &a, &b, type, c); assert( r >= 0 );
+		if( c >= 0 ) fail = true;
+		bool br;
+		r = CompareEquality(engine, &a, &b, type, br); assert( r >= 0 );
+		if( br ) fail = true;
+
 		engine->Release();
 	}
 

@@ -467,9 +467,9 @@ public:
 	virtual int ClearMessageCallback() = 0;
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
 
-    // JIT Compiler
-    virtual int SetJITCompiler(asIJITCompiler *compiler) = 0;
-    virtual asIJITCompiler *GetJITCompiler() = 0;
+	// JIT Compiler
+	virtual int SetJITCompiler(asIJITCompiler *compiler) = 0;
+	virtual asIJITCompiler *GetJITCompiler() = 0;
 
 	// Global functions
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;

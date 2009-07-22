@@ -73,6 +73,7 @@ class asIScriptArray;
 class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
+class asIJITCompiler;
 
 // Enumerations and constants
 
@@ -194,80 +195,12 @@ enum asEBehaviours
 	asBEHAVE_VALUE_CAST,
 	//! \brief (Object) Implicit value cast operator
 	asBEHAVE_IMPLICIT_VALUE_CAST,
-	//! \brief (Object) operator []
-	asBEHAVE_INDEX,
-	//! \brief (Object) operator - (Unary negate)
-	asBEHAVE_NEGATE,
 	//! \brief (Object) Explicit reference cast operator
 	asBEHAVE_REF_CAST,
 	//! \brief (Object) Implicit reference cast operator
 	asBEHAVE_IMPLICIT_REF_CAST,
-
-	// Assignment operators
-	asBEHAVE_FIRST_ASSIGN,
-	 //! \brief (Object) operator =
-	 asBEHAVE_ASSIGNMENT = asBEHAVE_FIRST_ASSIGN,
-	 //! \brief (Object) operator +=
-	 asBEHAVE_ADD_ASSIGN,
-	 //! \brief (Object) operator -=
-	 asBEHAVE_SUB_ASSIGN,
-	 //! \brief (Object) operator *=
-	 asBEHAVE_MUL_ASSIGN,
-	 //! \brief (Object) operator /=
-	 asBEHAVE_DIV_ASSIGN,
-	 //! \brief (Object) operator %=
-	 asBEHAVE_MOD_ASSIGN,
-	 //! \brief (Object) operator |=
-	 asBEHAVE_OR_ASSIGN,
-	 //! \brief (Object) operator &=
-	 asBEHAVE_AND_ASSIGN,
-	 //! \brief (Object) operator ^=
-	 asBEHAVE_XOR_ASSIGN,
-	 //! \brief (Object) operator <<=
-	 asBEHAVE_SLL_ASSIGN,
-	 //! \brief (Object) operator >>= (Logical right shift)
-	 asBEHAVE_SRL_ASSIGN,
-	 //! \brief (Object) operator >>>= (Arithmetic right shift)
-	 asBEHAVE_SRA_ASSIGN,
-	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
-
-	// Global operators
-	asBEHAVE_FIRST_DUAL,
-	 //! \brief (Global) operator +
-	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
-	 //! \brief (Global) operator -
-	 asBEHAVE_SUBTRACT,
-	 //! \brief (Global) operator *
-	 asBEHAVE_MULTIPLY,
-	 //! \brief (Global) operator /
-	 asBEHAVE_DIVIDE,
-	 //! \brief (Global) operator %
-	 asBEHAVE_MODULO,
-	 //! \brief (Global) operator ==
-	 asBEHAVE_EQUAL,
-	 //! \brief (Global) operator !=
-	 asBEHAVE_NOTEQUAL,
-	 //! \brief (Global) operator <
-	 asBEHAVE_LESSTHAN,
-	 //! \brief (Global) operator >
-	 asBEHAVE_GREATERTHAN,
-	 //! \brief (Global) operator <=
-	 asBEHAVE_LEQUAL,
-	 //! \brief (Global) operator >=
-	 asBEHAVE_GEQUAL,
-	 //! \brief (Global) operator |
-	 asBEHAVE_BIT_OR,
-	 //! \brief (Global) operator &
-	 asBEHAVE_BIT_AND,
-	 //! \brief (Global) operator ^
-	 asBEHAVE_BIT_XOR,
-	 //! \brief (Global) operator <<
-	 asBEHAVE_BIT_SLL,
-	 //! \brief (Global) operator >> (Logical right shift)
-	 asBEHAVE_BIT_SRL,
-	 //! \brief (Global) operator >>> (Arithmetic right shift)
-	 asBEHAVE_BIT_SRA,
-	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
+	//! \brief (Object) operator []
+	asBEHAVE_INDEX,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,
@@ -281,7 +214,79 @@ enum asEBehaviours
 	 asBEHAVE_ENUMREFS,
 	 //! \brief (Object, GC) Release all references
 	 asBEHAVE_RELEASEREFS,
-	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS
+	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
+
+#ifdef AS_DEPRECATED
+	// deprecated since 2009-07-20, 2.17.0
+	//! \deprecated Since 2.17.0. Use opNeg instead.
+	asBEHAVE_NEGATE,
+	asBEHAVE_FIRST_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opAssign instead.
+	 asBEHAVE_ASSIGNMENT = asBEHAVE_FIRST_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opAddAssign instead.
+	 asBEHAVE_ADD_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opSubAssign instead.
+	 asBEHAVE_SUB_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opMulAssign instead.
+	 asBEHAVE_MUL_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opDivAssign instead.
+	 asBEHAVE_DIV_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opModAssign instead.
+	 asBEHAVE_MOD_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opOrAssign instead.
+	 asBEHAVE_OR_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opAndAssign instead.
+	 asBEHAVE_AND_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opXorAssign instead.
+	 asBEHAVE_XOR_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opShlAssign instead.
+	 asBEHAVE_SLL_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opShrAssign instead.
+	 asBEHAVE_SRL_ASSIGN,
+	 //! \deprecated Since 2.17.0. Use opUShrAssign instead.
+	 asBEHAVE_SRA_ASSIGN,
+	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
+
+	// Global operators
+	asBEHAVE_FIRST_DUAL,
+	 //! \deprecated Since 2.17.0. Use opAdd instead.
+	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
+	 //! \deprecated Since 2.17.0. Use opSub instead.
+	 asBEHAVE_SUBTRACT,
+	 //! \deprecated Since 2.17.0. Use opMul instead.
+	 asBEHAVE_MULTIPLY,
+	 //! \deprecated Since 2.17.0. Use opDiv instead.
+	 asBEHAVE_DIVIDE,
+	 //! \deprecated Since 2.17.0. Use opMod instead.
+	 asBEHAVE_MODULO,
+	 //! \deprecated Since 2.17.0. Use opEquals instead.
+	 asBEHAVE_EQUAL,
+	 //! \deprecated Since 2.17.0. Use opEquals instead.
+	 asBEHAVE_NOTEQUAL,
+	 //! \deprecated Since 2.17.0. Use opCmp instead.
+	 asBEHAVE_LESSTHAN,
+	 //! \deprecated Since 2.17.0. Use opCmp instead.
+	 asBEHAVE_GREATERTHAN,
+	 //! \deprecated Since 2.17.0. Use opCmp instead.
+	 asBEHAVE_LEQUAL,
+	 //! \deprecated Since 2.17.0. Use opCmp instead.
+	 asBEHAVE_GEQUAL,
+	 //! \deprecated Since 2.17.0. Use opOr instead.
+	 asBEHAVE_BIT_OR,
+	 //! \deprecated Since 2.17.0. Use opAnd instead.
+	 asBEHAVE_BIT_AND,
+	 //! \deprecated Since 2.17.0. Use opXor instead.
+	 asBEHAVE_BIT_XOR,
+	 //! \deprecated Since 2.17.0. Use opShl instead.
+	 asBEHAVE_BIT_SLL,
+	 //! \deprecated Since 2.17.0. Use opShr instead.
+	 asBEHAVE_BIT_SRL,
+	 //! \deprecated Since 2.17.0. Use opUShr instead.
+	 asBEHAVE_BIT_SRA,
+	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
+#endif
+
+	asBEHAVE_MAX
 };
 
 // Return codes
@@ -829,6 +834,16 @@ public:
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
 	//! \}
 
+	// JIT Compiler
+	//! \name JIT compiler
+	//! \{
+
+	//! \brief Sets the JIT compiler
+	virtual int SetJITCompiler(asIJITCompiler *compiler) = 0;
+	//! \brief Returns the JIT compiler
+	virtual asIJITCompiler *GetJITCompiler() = 0;
+	//! \}
+
 	// Global functions
     //! \name Global functions
     //! \{
@@ -985,34 +1000,6 @@ public:
     //!
     //! \see \ref doc_register_func, \ref doc_api_behaviours
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-	//! \brief Registers a global behaviour, e.g. operators.
-    //!
-    //! \param[in] behaviour The global behaviour.
-    //! \param[in] declaration The declaration of the behaviour function in script syntax.
-    //! \param[in] funcPointer The function pointer.
-    //! \param[in] callConv The calling convention for the function.
-    //! \return A negative value on error, or the function id if successful.
-    //! \retval asNOT_SUPPORTED The calling convention is not supported.
-    //! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
-    //! \retval asINVALID_DECLARATION The function declaration is invalid.
-    //! \retval asINVALID_ARG The behaviour is not a global behaviour.
-    //!
-    //! By registering behaviour functions for a data type AngelScript is able to improve object handling. 
-    //! You can for example easily control how references are counted, or create objects that can be 
-    //! manipulated in expressions through operators.
-    //!
-    //! Behaviours may only be registered for object types registered by the application.
-    //! 
-    //! Behaviours shouldn't be registered to take handles as their parameters, use references instead. 
-    //! Unlike functions, methods, and constructors, overloaded operators may receive a reference to the 
-    //! true object instead of a dummy object, but it also may not so don't rely on it. Output references 
-    //! are not supported by behaviours.
-    //!
-    //! If the parameter is sent by reference, then declare it as const, as it may allow the compiler to 
-    //! optimize the code to execute faster.
-    //!
-    //! \see \ref doc_register_func, \ref doc_api_behaviours
-	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Registers an interface.
     //!
     //! \param[in] name The name of the interface.
@@ -1045,15 +1032,6 @@ public:
     //! \param[in] index The index of the type.
     //! \return The registered object type interface for the type, or null if not found.
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
-	//! \brief Returns the number of registered global behaviours.
-	//! \return The number of registered global behaviours.
-	virtual int            GetGlobalBehaviourCount() = 0;
-	//! \brief Returns the registered global behaviour.
-	//! \param[in] index The index of the global behaviour.
-	//! \param[out] outBehaviour Receives the behaviour type.
-	//! \return The fuction id for the registered global behaviour, or a negative value on error.
-	//! \retval asINVALID_ARG \a index is too large.
-	virtual int            GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) = 0;
 	//! \}
 
 	// String factory
@@ -1373,22 +1351,6 @@ public:
     //! to a object, but only knows that it implements a certain interface and now you 
     //! want to determine if it implements another interface.
 	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
-	//! \brief Performs a comparison of two objects using the specified operator behaviour.
-    //! \param[out] result The result of the comparison
-    //! \param[in] behaviour One of the comparison behaviours from \ref asEBehaviours.
-    //! \param[in] leftObj A pointer to the left object.
-    //! \param[in] rightObj A pointer to the right object.
-    //! \param[in] typeId The type id of the objects.
-    //! \return A negative value on error.
-    //! \retval asINVALID_TYPE The \a typeId must be an object type.
-    //! \retval asINVALID_ARG The \a behaviour must be one of the comparison behaviours.
-    //! \retval asNOT_SUPPORTED The comparison operator is not supported by this type.
-    //!
-    //! This method will allow the application compare two object types without having to 
-    //! know the exact type of the objects being compared. The function will only work on 
-    //! objects, and then only on those objects that permit comparisons, i.e. registered types 
-    //! that have the comparison behaviours registered.
-	virtual int               CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 	//! \}
 
 	// String interpretation
@@ -1492,6 +1454,22 @@ public:
 	//! \return The pointer to the user data.
 	virtual void *GetUserData() = 0;
 	//! \}
+
+#ifdef AS_DEPRECATED
+	// deprecated since 2009-07-20, 2.17.0
+	//! \name Deprecated
+	//! \{
+
+    //! \deprecated Since 2.17.0. Implement the proper \ref doc_reg_opbeh "class methods" instead.
+	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+    //! \deprecated Since 2.17.0. Implement the proper \ref doc_reg_opbeh "class methods" instead.
+	virtual int            GetGlobalBehaviourCount() = 0;
+    //! \deprecated Since 2.17.0. Implement the proper \ref doc_reg_opbeh "class methods" instead.
+	virtual int            GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) = 0;
+    //! \deprecated Since 2.17.0. Use \ref doc_addon_helpers "CompareRelation" and \ref doc_addon_helpers "CompareEquality" helper functions instead.
+	virtual int            CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
+	//! \}
+#endif
 
 protected:
 	virtual ~asIScriptEngine() {}
@@ -3031,6 +3009,622 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+4*sizeof(int)>
 #endif
 
 #endif // AS_NO_CLASS_METHODS
+
+//----------------------------------------------------------------
+// JIT compiler
+
+//! \todo detail this
+struct asSVMRegisters
+{
+  asDWORD          *programPointer;     // points to current bytecode instruction
+  asDWORD          *stackFramePointer;  // function stack frame
+  asDWORD          *stackPointer;       // top of stack (grows downward)
+  void            **globalVarPointers;  // global variable pointers
+  asQWORD           valueRegister;      // temp register for primitives
+  void             *objectRegister;     // temp register for objects and handles
+  asIObjectType    *objectType;         // type of object held in object register
+  bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
+};
+
+//! \todo detail this
+typedef void (*asJITFunction)(asSVMRegisters*, asDWORD suspendId);
+
+//! \todo detail this
+class asIJITCompiler
+{
+public:
+    virtual int  StartCompile(const asDWORD *bytecode, asUINT bytecodeLen, asJITFunction *output) = 0;
+    virtual int  ResolveJitEntry(asUINT bytecodeOffset) = 0;
+    virtual void EndCompile() = 0;
+    virtual void ReleaseJITFunction(asJITFunction func) = 0;
+public:
+    virtual ~asIJITCompiler() {}
+};
+
+// Byte code instructions
+//! \todo detail this
+enum asEBCInstr
+{
+	// Unsorted
+	asBC_POP			= 0,	// Decrease stack size
+	asBC_PUSH			= 1,	// Increase stack size
+	asBC_PshC4			= 2,	// Push constant on stack
+	asBC_PshV4			= 3,	// Push value in variable on stack
+	asBC_PSF			= 4,	// Push stack frame
+	asBC_SWAP4			= 5,	// Swap top two dwords
+	asBC_NOT			= 6,    // Boolean not operator for a variable
+	asBC_PshG4			= 7,	// Push value in global variable on stack
+	asBC_LdGRdR4		= 8,    // Same as LDG, RDR4
+	asBC_CALL			= 9,	// Call function
+	asBC_RET			= 10,	// Return from function
+	asBC_JMP			= 11,
+
+	// Conditional jumps
+	asBC_JZ				= 12,
+	asBC_JNZ			= 13,
+	asBC_JS				= 14,	// Same as TS+JNZ or TNS+JZ
+	asBC_JNS			= 15,	// Same as TNS+JNZ or TS+JZ
+	asBC_JP				= 16,	// Same as TP+JNZ or TNP+JZ
+	asBC_JNP			= 17,	// Same as TNP+JNZ or TP+JZ
+
+	// Test value
+	asBC_TZ				= 18,	// Test if zero
+	asBC_TNZ			= 19,	// Test if not zero
+	asBC_TS				= 20,	// Test if signaled (less than zero)
+	asBC_TNS			= 21,	// Test if not signaled (zero or greater)
+	asBC_TP				= 22,	// Test if positive (greater than zero)
+	asBC_TNP			= 23,	// Test if not positive (zero or less)
+
+	// Negate value
+	asBC_NEGi			= 24,
+	asBC_NEGf			= 25,
+	asBC_NEGd			= 26,
+
+	// Increment value pointed to by address in register
+	asBC_INCi16			= 27,
+	asBC_INCi8			= 28,
+	asBC_DECi16			= 29,
+	asBC_DECi8			= 30, 
+	asBC_INCi			= 31,
+	asBC_DECi			= 32,
+	asBC_INCf			= 33,
+	asBC_DECf			= 34,
+	asBC_INCd			= 35,
+	asBC_DECd			= 36,
+
+	// Increment variable
+	asBC_IncVi			= 37,
+	asBC_DecVi			= 38,
+
+	// Bitwise operations
+	asBC_BNOT			= 39,
+	asBC_BAND			= 40,
+	asBC_BOR			= 41,
+	asBC_BXOR			= 42,
+	asBC_BSLL			= 43,
+	asBC_BSRL			= 44,
+	asBC_BSRA			= 45,
+
+	// Unsorted
+	asBC_COPY			= 46,	// Do byte-for-byte copy of object
+	asBC_SET8			= 47,	// Push QWORD on stack
+	asBC_RDS8			= 48,	// Read value from address on stack onto the top of the stack
+	asBC_SWAP8			= 49,
+
+	// Comparisons
+	asBC_CMPd			= 50,
+	asBC_CMPu			= 51,
+	asBC_CMPf			= 52,
+	asBC_CMPi			= 53,
+
+	// Comparisons with constant value
+	asBC_CMPIi			= 54,
+	asBC_CMPIf			= 55,
+	asBC_CMPIu			= 56,
+
+	asBC_JMPP			= 57,	// Jump with offset in variable
+	asBC_PopRPtr		= 58,	// Pop address from stack into register
+	asBC_PshRPtr		= 59,	// Push address from register on stack
+	asBC_STR			= 60,	// Push string address and length on stack
+	asBC_CALLSYS		= 61,
+	asBC_CALLBND		= 62,
+	asBC_SUSPEND		= 63,
+	asBC_ALLOC			= 64,
+	asBC_FREE			= 65,
+	asBC_LOADOBJ		= 66,
+	asBC_STOREOBJ		= 67,
+	asBC_GETOBJ			= 68,
+	asBC_REFCPY			= 69,
+	asBC_CHKREF			= 70,
+	asBC_GETOBJREF		= 71,
+	asBC_GETREF			= 72,
+	asBC_SWAP48			= 73,
+	asBC_SWAP84			= 74,
+	asBC_OBJTYPE		= 75,
+	asBC_TYPEID			= 76,
+	asBC_SetV4			= 77,	// Initialize the variable with a DWORD
+	asBC_SetV8			= 78,	// Initialize the variable with a QWORD
+	asBC_ADDSi			= 79,	// Add arg to value on stack
+	asBC_CpyVtoV4		= 80,	// Copy value from one variable to another
+	asBC_CpyVtoV8		= 81,	
+	asBC_CpyVtoR4		= 82,	// Copy value from variable into register
+	asBC_CpyVtoR8		= 83,	// Copy value from variable into register
+	asBC_CpyVtoG4		= 84,   // Write the value of a variable to a global variable (LDG, WRTV4)
+	asBC_CpyRtoV4		= 85,   // Copy the value from the register to the variable
+	asBC_CpyRtoV8		= 86,
+	asBC_CpyGtoV4		= 87,   // Copy the value of the global variable to a local variable (LDG, RDR4)
+	asBC_WRTV1			= 88,	// Copy value from variable to address held in register
+	asBC_WRTV2			= 89,
+	asBC_WRTV4			= 90,
+	asBC_WRTV8			= 91,
+	asBC_RDR1			= 92,	// Read value from address in register and store in variable
+	asBC_RDR2			= 93,
+	asBC_RDR4			= 94,	
+	asBC_RDR8			= 95,
+	asBC_LDG			= 96,	// Load the register with the address of the global attribute
+	asBC_LDV			= 97,	// Load the register with the address of the variable
+	asBC_PGA			= 98,
+	asBC_RDS4			= 99,	// Read value from address on stack onto the top of the stack
+	asBC_VAR			= 100,	// Push the variable offset on the stack
+
+	// Type conversions
+	asBC_iTOf			= 101,
+	asBC_fTOi			= 102,
+	asBC_uTOf			= 103,
+	asBC_fTOu			= 104,
+	asBC_sbTOi			= 105,	// Signed byte
+	asBC_swTOi			= 106,	// Signed word
+	asBC_ubTOi			= 107,	// Unsigned byte
+	asBC_uwTOi			= 108,	// Unsigned word
+	asBC_dTOi			= 109,
+	asBC_dTOu			= 110,
+	asBC_dTOf			= 111,
+	asBC_iTOd			= 112,
+	asBC_uTOd			= 113,
+	asBC_fTOd			= 114,
+
+	// Math operations
+	asBC_ADDi			= 115,
+	asBC_SUBi			= 116,
+	asBC_MULi			= 117,
+	asBC_DIVi			= 118,
+	asBC_MODi			= 119,
+	asBC_ADDf			= 120,
+	asBC_SUBf			= 121,
+	asBC_MULf			= 122,
+	asBC_DIVf			= 123,
+	asBC_MODf			= 124,
+	asBC_ADDd			= 125,
+	asBC_SUBd			= 126,
+	asBC_MULd			= 127,
+	asBC_DIVd			= 128,
+	asBC_MODd			= 129,
+
+	// Math operations with constant value
+	asBC_ADDIi			= 130,
+	asBC_SUBIi			= 131,
+	asBC_MULIi			= 132,
+	asBC_ADDIf			= 133,
+	asBC_SUBIf			= 134,
+	asBC_MULIf			= 135,
+
+	asBC_SetG4			= 136,	// Initialize the global variable with a DWORD
+	asBC_ChkRefS		= 137,  // Verify that the reference to the handle on the stack is not null
+	asBC_ChkNullV		= 138,  // Verify that the variable is not a null handle
+	asBC_CALLINTF		= 139,	// Call interface method 
+
+	asBC_iTOb			= 140,
+	asBC_iTOw			= 141,
+	asBC_SetV1			= 142,
+	asBC_SetV2			= 143,
+	asBC_Cast			= 144,	// Cast handle type to another handle type
+
+	asBC_i64TOi			= 145,
+	asBC_uTOi64			= 146,
+	asBC_iTOi64			= 147,
+	asBC_fTOi64			= 148,
+	asBC_dTOi64			= 149,
+	asBC_fTOu64			= 150,
+	asBC_dTOu64			= 151,
+	asBC_i64TOf			= 152,
+	asBC_u64TOf			= 153,
+	asBC_i64TOd			= 154,
+	asBC_u64TOd			= 155,
+	asBC_NEGi64			= 156,
+	asBC_INCi64			= 157,
+	asBC_DECi64			= 158,
+	asBC_BNOT64			= 159,
+
+	asBC_ADDi64			= 160,
+	asBC_SUBi64			= 161,
+	asBC_MULi64			= 162,
+	asBC_DIVi64			= 163,
+	asBC_MODi64			= 164,
+	asBC_BAND64			= 165,
+	asBC_BOR64			= 166,
+	asBC_BXOR64			= 167,
+	asBC_BSLL64			= 168,
+	asBC_BSRL64			= 169,
+	asBC_BSRA64			= 170,
+	asBC_CMPi64			= 171,
+	asBC_CMPu64			= 172,
+	
+	asBC_ChkNullS		= 173,
+	asBC_ClrHi			= 174,
+	asBC_JitEntry		= 175,
+
+	asBC_MAXBYTECODE	= 176,
+
+	// Temporary tokens, can't be output to the final program
+	asBC_PSP			= 253,
+	asBC_LINE			= 254,
+	asBC_LABEL			= 255
+};
+
+// Instruction types
+//! \todo detail this
+enum asEBCType
+{
+	asBCTYPE_INFO         = 0,
+	asBCTYPE_NO_ARG       = 1,
+	asBCTYPE_W_ARG        = 2,
+	asBCTYPE_wW_ARG       = 3,
+	asBCTYPE_DW_ARG       = 4,
+	asBCTYPE_rW_DW_ARG    = 5,
+	asBCTYPE_QW_ARG       = 6,
+	asBCTYPE_DW_DW_ARG    = 7,
+	asBCTYPE_wW_rW_rW_ARG = 8,
+	asBCTYPE_wW_QW_ARG    = 9,
+	asBCTYPE_wW_rW_ARG    = 10,
+	asBCTYPE_rW_ARG       = 11,
+	asBCTYPE_wW_DW_ARG    = 12,
+	asBCTYPE_wW_rW_DW_ARG = 13,
+	asBCTYPE_rW_rW_ARG    = 14,
+	asBCTYPE_W_rW_ARG     = 15,
+	asBCTYPE_wW_W_ARG     = 16,
+	asBCTYPE_W_DW_ARG     = 17,
+	asBCTYPE_QW_DW_ARG    = 18
+};
+
+// Instruction type sizes
+//! \todo detail this
+const int asBCTypeSize[19] =
+{
+    0, // asBCTYPE_INFO        
+    1, // asBCTYPE_NO_ARG      
+    1, // asBCTYPE_W_ARG       
+    1, // asBCTYPE_wW_ARG      
+    2, // asBCTYPE_DW_ARG      
+    2, // asBCTYPE_rW_DW_ARG   
+    3, // asBCTYPE_QW_ARG      
+    3, // asBCTYPE_DW_DW_ARG   
+    2, // asBCTYPE_wW_rW_rW_ARG
+    3, // asBCTYPE_wW_QW_ARG   
+    2, // asBCTYPE_wW_rW_ARG   
+    1, // asBCTYPE_rW_ARG      
+    2, // asBCTYPE_wW_DW_ARG   
+    3, // asBCTYPE_wW_rW_DW_ARG
+    2, // asBCTYPE_rW_rW_ARG   
+    2, // asBCTYPE_W_rW_ARG    
+    2, // asBCTYPE_wW_W_ARG    
+    2, // asBCTYPE_W_DW_ARG    
+    4  // asBCTYPE_QW_DW_ARG    
+};
+
+// Instruction info
+//! \todo detail this
+struct asSBCInfo
+{
+	asEBCInstr  bc;
+	asEBCType   type;
+	int         stackInc;
+	const char *name;
+};
+
+#ifndef AS_64BIT_PTR
+	#define asBCTYPE_PTR_ARG    asBCTYPE_DW_ARG
+	#define asBCTYPE_PTR_DW_ARG asBCTYPE_DW_DW_ARG
+	#ifndef AS_PTR_SIZE
+		#define AS_PTR_SIZE 1
+	#endif
+#else
+	#define asBCTYPE_PTR_ARG    asBCTYPE_QW_ARG
+	#define asBCTYPE_PTR_DW_ARG asBCTYPE_QW_DW_ARG
+	#ifndef AS_PTR_SIZE
+		#define AS_PTR_SIZE 2
+	#endif
+#endif
+
+#define asBCINFO(b,t,s) {asBC_##b, asBCTYPE_##t, s, #b}
+#define asBCINFO_DUMMY(b) {asEBCInstr(b), asBCTYPE_INFO, 0, "BC_" #b}
+
+//! \todo detail this
+const asSBCInfo asBCInfo[256] =
+{
+	asBCINFO(POP,		W_ARG,			0xFFFF),
+	asBCINFO(PUSH,		W_ARG,			0xFFFF),
+	asBCINFO(PshC4,		DW_ARG,			1),
+	asBCINFO(PshV4,		rW_ARG,			1),
+	asBCINFO(PSF,		rW_ARG,			AS_PTR_SIZE),
+	asBCINFO(SWAP4,		NO_ARG,			0),
+	asBCINFO(NOT,		rW_ARG,			0),
+	asBCINFO(PshG4,		W_ARG,			1),
+	asBCINFO(LdGRdR4,	wW_W_ARG,		0),
+	asBCINFO(CALL,		DW_ARG,			0xFFFF),
+	asBCINFO(RET,		W_ARG,			0xFFFF),
+	asBCINFO(JMP,		DW_ARG,			0),
+	asBCINFO(JZ,		DW_ARG,			0),
+	asBCINFO(JNZ,		DW_ARG,			0),
+	asBCINFO(JS,		DW_ARG,			0),
+	asBCINFO(JNS,		DW_ARG,			0),
+	asBCINFO(JP,		DW_ARG,			0),
+	asBCINFO(JNP,		DW_ARG,			0),
+	asBCINFO(TZ,		NO_ARG,			0),
+	asBCINFO(TNZ,		NO_ARG,			0),
+	asBCINFO(TS,		NO_ARG,			0),
+	asBCINFO(TNS,		NO_ARG,			0),
+	asBCINFO(TP,		NO_ARG,			0),
+	asBCINFO(TNP,		NO_ARG,			0),
+	asBCINFO(NEGi,		rW_ARG,			0),
+	asBCINFO(NEGf,		rW_ARG,			0),
+	asBCINFO(NEGd,		rW_ARG,			0),
+	asBCINFO(INCi16,	NO_ARG,			0),
+	asBCINFO(INCi8,		NO_ARG,			0),
+	asBCINFO(DECi16,	NO_ARG,			0),
+	asBCINFO(DECi8,		NO_ARG,			0),
+	asBCINFO(INCi,		NO_ARG,			0),
+	asBCINFO(DECi,		NO_ARG,			0),
+	asBCINFO(INCf,		NO_ARG,			0),
+	asBCINFO(DECf,		NO_ARG,			0),
+	asBCINFO(INCd,		NO_ARG,			0),
+	asBCINFO(DECd,		NO_ARG,			0),
+	asBCINFO(IncVi,		rW_ARG,			0),
+	asBCINFO(DecVi,		rW_ARG,			0),
+	asBCINFO(BNOT,		rW_ARG,			0),
+	asBCINFO(BAND,		wW_rW_rW_ARG,	0),
+	asBCINFO(BOR,		wW_rW_rW_ARG,	0),
+	asBCINFO(BXOR,		wW_rW_rW_ARG,	0),
+	asBCINFO(BSLL,		wW_rW_rW_ARG,	0),
+	asBCINFO(BSRL,		wW_rW_rW_ARG,	0),
+	asBCINFO(BSRA,		wW_rW_rW_ARG,	0),
+	asBCINFO(COPY,		W_ARG,			-AS_PTR_SIZE),
+	asBCINFO(SET8,		QW_ARG,			2),
+	asBCINFO(RDS8,		NO_ARG,			2-AS_PTR_SIZE),
+	asBCINFO(SWAP8,		NO_ARG,			0),
+	asBCINFO(CMPd,		rW_rW_ARG,		0),
+	asBCINFO(CMPu,		rW_rW_ARG,		0),
+	asBCINFO(CMPf,		rW_rW_ARG,		0),
+	asBCINFO(CMPi,		rW_rW_ARG,		0),
+	asBCINFO(CMPIi,		rW_DW_ARG,		0),
+	asBCINFO(CMPIf,		rW_DW_ARG,		0),
+	asBCINFO(CMPIu,		rW_DW_ARG,		0),
+	asBCINFO(JMPP,		rW_ARG,			0),
+	asBCINFO(PopRPtr,	NO_ARG,			-AS_PTR_SIZE),
+	asBCINFO(PshRPtr,	NO_ARG,			AS_PTR_SIZE),
+	asBCINFO(STR,		W_ARG,			1+AS_PTR_SIZE),
+	asBCINFO(CALLSYS,	DW_ARG,			0xFFFF),
+	asBCINFO(CALLBND,	DW_ARG,			0xFFFF),
+	asBCINFO(SUSPEND,	NO_ARG,			0),
+	asBCINFO(ALLOC,		PTR_DW_ARG,		0xFFFF),
+	asBCINFO(FREE,		PTR_ARG,		-AS_PTR_SIZE),
+	asBCINFO(LOADOBJ,	rW_ARG,			0),
+	asBCINFO(STOREOBJ,	wW_ARG,			0),
+	asBCINFO(GETOBJ,	W_ARG,			0),
+	asBCINFO(REFCPY,	PTR_ARG,		-AS_PTR_SIZE),
+	asBCINFO(CHKREF,	NO_ARG,			0),
+	asBCINFO(GETOBJREF,	W_ARG,			0),
+	asBCINFO(GETREF,	W_ARG,			0),
+	asBCINFO(SWAP48,	NO_ARG,			0),
+	asBCINFO(SWAP84,	NO_ARG,			0),
+	asBCINFO(OBJTYPE,	PTR_ARG,		AS_PTR_SIZE),
+	asBCINFO(TYPEID,	DW_ARG,			1),
+	asBCINFO(SetV4,		wW_DW_ARG,		0),
+	asBCINFO(SetV8,		wW_QW_ARG,		0),
+	asBCINFO(ADDSi,		DW_ARG,			0),
+	asBCINFO(CpyVtoV4,	wW_rW_ARG,		0),
+	asBCINFO(CpyVtoV8,	wW_rW_ARG,		0),
+	asBCINFO(CpyVtoR4,	rW_ARG,			0),
+	asBCINFO(CpyVtoR8,	rW_ARG,			0),
+	asBCINFO(CpyVtoG4,	W_rW_ARG,		0),
+	asBCINFO(CpyRtoV4,	wW_ARG,			0),
+	asBCINFO(CpyRtoV8,	wW_ARG,			0),
+	asBCINFO(CpyGtoV4,	wW_W_ARG,		0),
+	asBCINFO(WRTV1,		rW_ARG,			0),
+	asBCINFO(WRTV2,		rW_ARG,			0),
+	asBCINFO(WRTV4,		rW_ARG,			0),
+	asBCINFO(WRTV8,		rW_ARG,			0),
+	asBCINFO(RDR1,		wW_ARG,			0),
+	asBCINFO(RDR2,		wW_ARG,			0),
+	asBCINFO(RDR4,		wW_ARG,			0),
+	asBCINFO(RDR8,		wW_ARG,			0),
+	asBCINFO(LDG,		W_ARG,			0),
+	asBCINFO(LDV,		rW_ARG,			0),
+	asBCINFO(PGA,		W_ARG,			AS_PTR_SIZE),
+	asBCINFO(RDS4,		NO_ARG,			1-AS_PTR_SIZE),
+	asBCINFO(VAR,		rW_ARG,			AS_PTR_SIZE),
+	asBCINFO(iTOf,		rW_ARG,			0),
+	asBCINFO(fTOi,		rW_ARG,			0),
+	asBCINFO(uTOf,		rW_ARG,			0),
+	asBCINFO(fTOu,		rW_ARG,			0),
+	asBCINFO(sbTOi,		rW_ARG,			0),
+	asBCINFO(swTOi,		rW_ARG,			0),
+	asBCINFO(ubTOi,		rW_ARG,			0),
+	asBCINFO(uwTOi,		rW_ARG,			0),
+	asBCINFO(dTOi,		wW_rW_ARG,		0),
+	asBCINFO(dTOu,		wW_rW_ARG,		0),
+	asBCINFO(dTOf,		wW_rW_ARG,		0),
+	asBCINFO(iTOd,		wW_rW_ARG,		0),
+	asBCINFO(uTOd,		wW_rW_ARG,		0),
+	asBCINFO(fTOd,		wW_rW_ARG,		0),
+	asBCINFO(ADDi,		wW_rW_rW_ARG,	0),
+	asBCINFO(SUBi,		wW_rW_rW_ARG,	0),
+	asBCINFO(MULi,		wW_rW_rW_ARG,	0),
+	asBCINFO(DIVi,		wW_rW_rW_ARG,	0),
+	asBCINFO(MODi,		wW_rW_rW_ARG,	0),
+	asBCINFO(ADDf,		wW_rW_rW_ARG,	0),
+	asBCINFO(SUBf,		wW_rW_rW_ARG,	0),
+	asBCINFO(MULf,		wW_rW_rW_ARG,	0),
+	asBCINFO(DIVf,		wW_rW_rW_ARG,	0),
+	asBCINFO(MODf,		wW_rW_rW_ARG,	0),
+	asBCINFO(ADDd,		wW_rW_rW_ARG,	0),
+	asBCINFO(SUBd,		wW_rW_rW_ARG,	0),
+	asBCINFO(MULd,		wW_rW_rW_ARG,	0),
+	asBCINFO(DIVd,		wW_rW_rW_ARG,	0),
+	asBCINFO(MODd,		wW_rW_rW_ARG,	0),
+	asBCINFO(ADDIi,		wW_rW_DW_ARG,	0),
+	asBCINFO(SUBIi,		wW_rW_DW_ARG,	0),
+	asBCINFO(MULIi,		wW_rW_DW_ARG,	0),
+	asBCINFO(ADDIf,		wW_rW_DW_ARG,	0),
+	asBCINFO(SUBIf,		wW_rW_DW_ARG,	0),
+	asBCINFO(MULIf,		wW_rW_DW_ARG,	0),
+	asBCINFO(SetG4,		W_DW_ARG,		0),
+	asBCINFO(ChkRefS,	NO_ARG,			0),
+	asBCINFO(ChkNullV,	rW_ARG,			0),
+	asBCINFO(CALLINTF,	DW_ARG,			0xFFFF),
+	asBCINFO(iTOb,		rW_ARG,			0),
+	asBCINFO(iTOw,		rW_ARG,			0),
+	asBCINFO(SetV1,		wW_DW_ARG,		0),
+	asBCINFO(SetV2,		wW_DW_ARG,		0),
+	asBCINFO(Cast,		DW_ARG,			-AS_PTR_SIZE),
+	asBCINFO(i64TOi,	wW_rW_ARG,		0),
+	asBCINFO(uTOi64,	wW_rW_ARG,		0),
+	asBCINFO(iTOi64,	wW_rW_ARG,		0),
+	asBCINFO(fTOi64,	wW_rW_ARG,		0),
+	asBCINFO(dTOi64,	rW_ARG,			0),
+	asBCINFO(fTOu64,	wW_rW_ARG,		0),
+	asBCINFO(dTOu64,	rW_ARG,			0),
+	asBCINFO(i64TOf,	wW_rW_ARG,		0),
+	asBCINFO(u64TOf,	wW_rW_ARG,		0),
+	asBCINFO(i64TOd,	rW_ARG,			0),
+	asBCINFO(u64TOd,	rW_ARG,			0),
+	asBCINFO(NEGi64,	rW_ARG,			0),
+	asBCINFO(INCi64,	NO_ARG,			0),
+	asBCINFO(DECi64,	NO_ARG,			0),
+	asBCINFO(BNOT64,	rW_ARG,			0),
+	asBCINFO(ADDi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(SUBi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(MULi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(DIVi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(MODi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BAND64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BOR64,		wW_rW_rW_ARG,	0),
+	asBCINFO(BXOR64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BSLL64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BSRL64,	wW_rW_rW_ARG,	0),
+	asBCINFO(BSRA64,	wW_rW_rW_ARG,	0),
+	asBCINFO(CMPi64,	rW_rW_ARG,		0),
+	asBCINFO(CMPu64,	rW_rW_ARG,		0),
+	asBCINFO(ChkNullS,	W_ARG,			0),
+	asBCINFO(ClrHi,		NO_ARG,			0),
+	asBCINFO(JitEntry,	W_ARG,			0),
+
+	asBCINFO_DUMMY(176),
+	asBCINFO_DUMMY(177),
+	asBCINFO_DUMMY(178),
+	asBCINFO_DUMMY(179),
+	asBCINFO_DUMMY(180),
+	asBCINFO_DUMMY(181),
+	asBCINFO_DUMMY(182),
+	asBCINFO_DUMMY(183),
+	asBCINFO_DUMMY(184),
+	asBCINFO_DUMMY(185),
+	asBCINFO_DUMMY(186),
+	asBCINFO_DUMMY(187),
+	asBCINFO_DUMMY(188),
+	asBCINFO_DUMMY(189),
+	asBCINFO_DUMMY(190),
+	asBCINFO_DUMMY(191),
+	asBCINFO_DUMMY(192),
+	asBCINFO_DUMMY(193),
+	asBCINFO_DUMMY(194),
+	asBCINFO_DUMMY(195),
+	asBCINFO_DUMMY(196),
+	asBCINFO_DUMMY(197),
+	asBCINFO_DUMMY(198),
+	asBCINFO_DUMMY(199),
+	asBCINFO_DUMMY(200),
+	asBCINFO_DUMMY(201),
+	asBCINFO_DUMMY(202),
+	asBCINFO_DUMMY(203),
+	asBCINFO_DUMMY(204),
+	asBCINFO_DUMMY(205),
+	asBCINFO_DUMMY(206),
+	asBCINFO_DUMMY(207),
+	asBCINFO_DUMMY(208),
+	asBCINFO_DUMMY(209),
+	asBCINFO_DUMMY(210),
+	asBCINFO_DUMMY(211),
+	asBCINFO_DUMMY(212),
+	asBCINFO_DUMMY(213),
+	asBCINFO_DUMMY(214),
+	asBCINFO_DUMMY(215),
+	asBCINFO_DUMMY(216),
+	asBCINFO_DUMMY(217),
+	asBCINFO_DUMMY(218),
+	asBCINFO_DUMMY(219),
+	asBCINFO_DUMMY(220),
+	asBCINFO_DUMMY(221),
+	asBCINFO_DUMMY(222),
+	asBCINFO_DUMMY(223),
+	asBCINFO_DUMMY(224),
+	asBCINFO_DUMMY(225),
+	asBCINFO_DUMMY(226),
+	asBCINFO_DUMMY(227),
+	asBCINFO_DUMMY(228),
+	asBCINFO_DUMMY(229),
+	asBCINFO_DUMMY(230),
+	asBCINFO_DUMMY(231),
+	asBCINFO_DUMMY(232),
+	asBCINFO_DUMMY(233),
+	asBCINFO_DUMMY(234),
+	asBCINFO_DUMMY(235),
+	asBCINFO_DUMMY(236),
+	asBCINFO_DUMMY(237),
+	asBCINFO_DUMMY(238),
+	asBCINFO_DUMMY(239),
+	asBCINFO_DUMMY(240),
+	asBCINFO_DUMMY(241),
+	asBCINFO_DUMMY(242),
+	asBCINFO_DUMMY(243),
+	asBCINFO_DUMMY(244),
+	asBCINFO_DUMMY(245),
+	asBCINFO_DUMMY(246),
+	asBCINFO_DUMMY(247),
+	asBCINFO_DUMMY(248),
+	asBCINFO_DUMMY(249),
+	asBCINFO_DUMMY(250),
+	asBCINFO_DUMMY(251),
+	asBCINFO_DUMMY(252),
+
+	asBCINFO(PSP,		W_ARG,			AS_PTR_SIZE),
+	asBCINFO(LINE,		INFO,			0xFFFF),
+	asBCINFO(LABEL,		INFO,			0xFFFF)
+};
+
+// Macros to access bytecode instruction arguments
+//! \todo detail this
+#define asBC_DWORDARG(x)  (asDWORD(*(x+1)))
+//! \todo detail this
+#define asBC_INTARG(x)    (int(*(x+1)))
+//! \todo detail this
+#define asBC_QWORDARG(x)  (*(asQWORD*)(x+1))
+//! \todo detail this
+#define asBC_FLOATARG(x)  (*(float*)(x+1))
+//! \todo detail this
+#define asBC_PTRARG(x)    (asPTRWORD(*(x+1)))
+
+//! \todo detail this
+#define asBC_WORDARG0(x)  (*(((asWORD*)x)+1))
+//! \todo detail this
+#define asBC_WORDARG1(x)  (*(((asWORD*)x)+2))
+
+//! \todo detail this
+#define asBC_SWORDARG0(x) (*(((short*)x)+1))
+//! \todo detail this
+#define asBC_SWORDARG1(x) (*(((short*)x)+2))
+//! \todo detail this
+#define asBC_SWORDARG2(x) (*(((short*)x)+3))
+
 
 END_AS_NAMESPACE
 

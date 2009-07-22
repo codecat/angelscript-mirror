@@ -11,6 +11,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
 
  - \subpage doc_addon_build
  - \subpage doc_addon_autowrap
+ - \subpage doc_addon_helpers
  - \subpage doc_addon_clib
 
 \page doc_addon_script Script extensions
@@ -833,6 +834,57 @@ void MessageCallback(asSMessageInfo *msg, void *)
 void PrintSomething()
 {
   printf("Called from the script\n");
+}
+\endcode
+
+
+
+\page doc_addon_helpers Helper functions
+
+<b>Path:</b> /sdk/add_on/scripthelper/
+
+These helper functions simplify the implemention of common tasks. They can be used as is
+or can serve as the starting point for your own framework.
+
+\section doc_addon_helpers_1 Public C++ interface
+
+\code
+// Compare relation between two objects of the same type.
+// Uses the object's opCmp method to perform the comparison.
+// Returns a negative value if the comparison couldn't be performed.
+int CompareRelation(asIScriptEngine *engine, void *leftObj, void *rightObj, int typeId, int &result);
+
+// Compare equality between two objects of the same type.
+// Uses the object's opEquals method to perform the comparison, or if that doesn't exist the opCmp method.
+// Returns a negative value if the comparison couldn't be performed.
+int CompareEquality(asIScriptEngine *engine, void *leftObj, void *rightObj, int typeId, bool &result);
+\endcode
+
+\section doc_addon_helpers_2 Example
+
+To compare two script objects the application can execute the following code:
+
+\code
+void Compare(asIScriptObject *a, asIScriptObject *b)
+{
+  asIScriptEngine *engine = a->GetEngine();
+  int typeId = a->GetTypeId();
+
+  int cmp;
+  int r = CompareRelation(engine, a, b, typeId, cmp);
+  if( r < 0 )
+  {
+    cout << "The relation between a and b cannot be established b" << endl;
+  }
+  else
+  {
+    if( cmp < 0 )
+      cout << "a is smaller than b" << endl;
+    else if( cmp == 0 )
+      cout << "a is equal to b" << endl;
+    else
+      cout << "a is greater than b" << endl;
+  }
 }
 \endcode
 

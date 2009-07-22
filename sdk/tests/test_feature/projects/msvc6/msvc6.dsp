@@ -605,10 +605,6 @@ SOURCE=..\..\source\testvirtualmethod.cpp
 
 SOURCE=..\..\..\..\angelscript\include\angelscript.h
 # End Source File
-# Begin Source File
-
-SOURCE=..\..\source\cstring.h
-# End Source File
 # End Group
 # Begin Group "Resource Files"
 
@@ -628,6 +624,10 @@ SOURCE=..\..\source\bstr.cpp
 # Begin Source File
 
 SOURCE=..\..\source\bstr.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\cstring.h
 # End Source File
 # Begin Source File
 
@@ -660,6 +660,14 @@ SOURCE=..\..\..\..\add_on\scriptfile\scriptfile.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\add_on\scriptfile\scriptfile.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scripthelper\scripthelper.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scripthelper\scripthelper.h
 # End Source File
 # Begin Source File
 

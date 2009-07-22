@@ -918,6 +918,10 @@ int asCScriptEngine::CreateContext(asIScriptContext **context, bool isInternal)
 {
 	*context = asNEW(asCContext)(this, !isInternal);
 
+	// We need to make sure the engine has been 
+	// prepared before any context is executed
+	PrepareEngine();
+
 	return 0;
 }
 
@@ -1414,6 +1418,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		if( beh->copy )
 			return ConfigError(asALREADY_REGISTERED);
 
+		// TODO: Store the function id elsewhere since the beh->copy member will be removed
 		beh->copy = AddBehaviourFunction(func, internal);
 
 		beh->operators.PushLast(ttAssignment);
@@ -2272,6 +2277,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		}
 	}
 
+	// TODO: beh.copy member will be removed, so this is not necessary
 	// Is this the default copy behaviour
 	if( func->name == "opAssign" &&
 		func->parameterTypes.GetLength() == 1 &&
@@ -3559,6 +3565,7 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 	if( !dt ) return;
 
 	asCObjectType *objType = dt->GetObjectType();
+	// TODO: beh.copy will be removed, so we need to find the default opAssign method instead
 	if( objType->beh.copy )
 	{
 		CallObjectMethod(dstObj, srcObj, objType->beh.copy);

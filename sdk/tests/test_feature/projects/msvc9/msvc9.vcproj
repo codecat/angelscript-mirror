@@ -207,6 +207,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scripthelper\scripthelper.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptmath\scriptmath.cpp"
 				>
 			</File>
@@ -762,6 +766,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\add_on\scriptfile\scriptfile.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scripthelper\scripthelper.h"
 				>
 			</File>
 			<File
