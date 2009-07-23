@@ -75,6 +75,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_adv_concurrent
  - \subpage doc_adv_coroutine
  - \subpage doc_adv_precompile
+ - \subpage doc_adv_jit
  
 \todo Add page about dynamic config groups
 \todo Add page about custom memory management

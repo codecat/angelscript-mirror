@@ -177,42 +177,42 @@ enum asEObjTypeFlags
 enum asEBehaviours
 {
 	// Value object memory management
-	//! \brief (Object) Constructor
+	//! \brief Constructor
 	asBEHAVE_CONSTRUCT,
-	//! \brief (Object) Destructor
+	//! \brief Destructor
 	asBEHAVE_DESTRUCT,
 
 	// Reference object memory management
-	//! \brief (Object) Factory
+	//! \brief Factory
 	asBEHAVE_FACTORY,
-	//! \brief (Object) AddRef
+	//! \brief AddRef
 	asBEHAVE_ADDREF,
-	//! \brief (Object) Release
+	//! \brief Release
 	asBEHAVE_RELEASE,
 
 	// Object operators
-	//! \brief (Object) Explicit value cast operator
+	//! \brief Explicit value cast operator
 	asBEHAVE_VALUE_CAST,
-	//! \brief (Object) Implicit value cast operator
+	//! \brief Implicit value cast operator
 	asBEHAVE_IMPLICIT_VALUE_CAST,
-	//! \brief (Object) Explicit reference cast operator
+	//! \brief Explicit reference cast operator
 	asBEHAVE_REF_CAST,
-	//! \brief (Object) Implicit reference cast operator
+	//! \brief Implicit reference cast operator
 	asBEHAVE_IMPLICIT_REF_CAST,
-	//! \brief (Object) operator []
+	//! \brief operator []
 	asBEHAVE_INDEX,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,
-	//! \brief (Object, GC) Get reference count
+	//! \brief (GC) Get reference count
 	 asBEHAVE_GETREFCOUNT = asBEHAVE_FIRST_GC,
-	 //! \brief (Object, GC) Set GC flag
+	 //! \brief (GC) Set GC flag
 	 asBEHAVE_SETGCFLAG,
-	 //! \brief (Object, GC) Get GC flag
+	 //! \brief (GC) Get GC flag
 	 asBEHAVE_GETGCFLAG,
-	 //! \brief (Object, GC) Enumerate held references
+	 //! \brief (GC) Enumerate held references
 	 asBEHAVE_ENUMREFS,
-	 //! \brief (Object, GC) Release all references
+	 //! \brief (GC) Release all references
 	 asBEHAVE_RELEASEREFS,
 	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
 
@@ -2791,7 +2791,7 @@ protected:
 //!
 //! This interface is used when storing compiled bytecode to disk or memory, and then loading it into the engine again.
 //!
-//! \see asIScriptEngine::SaveByteCode, asIScriptEngine::LoadByteCode
+//! \see \ref asIScriptModule::SaveByteCode, \ref asIScriptModule::LoadByteCode
 class asIBinaryStream
 {
 public:
@@ -3013,244 +3013,458 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+4*sizeof(int)>
 //----------------------------------------------------------------
 // JIT compiler
 
-//! \todo detail this
+//! \brief A struct with registers from the VM sent to a JIT compiled function
+//!
+//! The JIT compiled function will receive a pointer to this structure when called.
+//! It is the responsibility of the JIT compiled function to make sure these
+//! values are updated correctly before control is returned to the VM.
+//!
+//! \see \ref doc_adv_jit
 struct asSVMRegisters
 {
-  asDWORD          *programPointer;     // points to current bytecode instruction
-  asDWORD          *stackFramePointer;  // function stack frame
-  asDWORD          *stackPointer;       // top of stack (grows downward)
-  void            **globalVarPointers;  // global variable pointers
-  asQWORD           valueRegister;      // temp register for primitives
-  void             *objectRegister;     // temp register for objects and handles
-  asIObjectType    *objectType;         // type of object held in object register
-  bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
+	//! \brief Points to the current bytecode instruction
+	asDWORD          *programPointer;     // points to current bytecode instruction
+	//! \brief Function stack frame
+	asDWORD          *stackFramePointer;  // function stack frame
+	//! \brief Top of the stack (grows downward)
+	asDWORD          *stackPointer;       // top of stack (grows downward)
+	//! \brief Array of global variable pointers
+	void            **globalVarPointers;  // global variable pointers
+	//! \brief Temporary register for primitives and unmanaged references
+	asQWORD           valueRegister;      // temp register for primitives
+	//! \brief Temporary register for managed object references/handles
+	void             *objectRegister;     // temp register for objects and handles
+	//! \brief Type of the object held in the object register
+	asIObjectType    *objectType;         // type of object held in object register
+	//! \brief Set to true if the SUSPEND instruction should be processed. Do not update this value.
+	bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
 };
 
-//! \todo detail this
+//! \brief The function signature of a JIT compiled function
+//! \see \ref doc_adv_jit
 typedef void (*asJITFunction)(asSVMRegisters*, asDWORD suspendId);
 
-//! \todo detail this
+//! \brief The interface that AS use to interact with the JIT compiler
+//!
+//! This is the minimal interface that the JIT compiler must implement
+//! so that AngelScript can request the compilation of the script functions.
+//!
+//! \see \ref doc_adv_jit
 class asIJITCompiler
 {
 public:
+	//! \brief Called by AngelScript to begin the compilation
+	//!
+	//! \param [in] bytecode A pointer to the bytecode buffer
+	//! \param [in] bytecodeLen The length of the buffer in DWORDs
+	//! \param [out] output The JIT compiled function
+	//! \return A negative value on error.
+	//!
+	//! AngelScript will call this function to request the compilation of
+	//! a script function. This call will be followed by a to \ref ResolveJitEntry
+	//! for each JitEntry instruction in the script function. The compilation
+	//! is ended with a call to \ref EndCompile when all entry points have been
+	//! resolved.
     virtual int  StartCompile(const asDWORD *bytecode, asUINT bytecodeLen, asJITFunction *output) = 0;
+	//! \brief Called by AngelScript to determine the argument for the JIT function for this entry point
+	//! \param [in] bytecodeOffset The offset for the current JitEntry instruction
+	//! \return The value of the argument, or a negative value if the entry point cannot be resolved
     virtual int  ResolveJitEntry(asUINT bytecodeOffset) = 0;
+	//! \brief Called by AngelScript when all entry points have been resolved
     virtual void EndCompile() = 0;
+	//! \brief Called by AngelScript when the JIT function is released
+	//! \param [in] func Pointer to the JIT function
     virtual void ReleaseJITFunction(asJITFunction func) = 0;
 public:
     virtual ~asIJITCompiler() {}
 };
 
 // Byte code instructions
-//! \todo detail this
+//! \brief The bytecode instructions used by the VM
 enum asEBCInstr
 {
 	// Unsorted
+	//! \brief Decrease the stack with the amount in the argument
 	asBC_POP			= 0,	// Decrease stack size
+	//! \brief Increase the stack with the amount in the argument
 	asBC_PUSH			= 1,	// Increase stack size
+	//! \brief Push the value in the argument on the stack
 	asBC_PshC4			= 2,	// Push constant on stack
+	//! \brief Push the value from a variable, indexed by the argument, on the stack
 	asBC_PshV4			= 3,	// Push value in variable on stack
+	//! \brief Push the address of the stack frame on the stack
 	asBC_PSF			= 4,	// Push stack frame
+	//! \brief Swap the top two DWORDs on the stack
 	asBC_SWAP4			= 5,	// Swap top two dwords
+	//! \brief Perform a boolean not on the value in a variable, indexed by the argument
 	asBC_NOT			= 6,    // Boolean not operator for a variable
+	//! \brief Push the value from a global variable, referenced by the argument, on the stack
 	asBC_PshG4			= 7,	// Push value in global variable on stack
+	//! \brief Perform the actions of \ref asBC_LDG followed by \ref asBC_RDR4
 	asBC_LdGRdR4		= 8,    // Same as LDG, RDR4
+	//! \brief Jump to a script function, indexed by the argument
 	asBC_CALL			= 9,	// Call function
+	//! \brief Return to the instruction after the last executed call
 	asBC_RET			= 10,	// Return from function
+	//! \brief Unconditional jump to a relative position in this function
 	asBC_JMP			= 11,
 
 	// Conditional jumps
+	//! \brief \todo describe this
 	asBC_JZ				= 12,
+	//! \brief \todo describe this
 	asBC_JNZ			= 13,
+	//! \brief \todo describe this
 	asBC_JS				= 14,	// Same as TS+JNZ or TNS+JZ
+	//! \brief \todo describe this
 	asBC_JNS			= 15,	// Same as TNS+JNZ or TS+JZ
+	//! \brief \todo describe this
 	asBC_JP				= 16,	// Same as TP+JNZ or TNP+JZ
+	//! \brief \todo describe this
 	asBC_JNP			= 17,	// Same as TNP+JNZ or TP+JZ
 
 	// Test value
+	//! \brief \todo describe this
 	asBC_TZ				= 18,	// Test if zero
+	//! \brief \todo describe this
 	asBC_TNZ			= 19,	// Test if not zero
+	//! \brief \todo describe this
 	asBC_TS				= 20,	// Test if signaled (less than zero)
+	//! \brief \todo describe this
 	asBC_TNS			= 21,	// Test if not signaled (zero or greater)
+	//! \brief \todo describe this
 	asBC_TP				= 22,	// Test if positive (greater than zero)
+	//! \brief \todo describe this
 	asBC_TNP			= 23,	// Test if not positive (zero or less)
 
 	// Negate value
+	//! \brief \todo describe this
 	asBC_NEGi			= 24,
+	//! \brief \todo describe this
 	asBC_NEGf			= 25,
+	//! \brief \todo describe this
 	asBC_NEGd			= 26,
 
 	// Increment value pointed to by address in register
+	//! \brief \todo describe this
 	asBC_INCi16			= 27,
+	//! \brief \todo describe this
 	asBC_INCi8			= 28,
+	//! \brief \todo describe this
 	asBC_DECi16			= 29,
+	//! \brief \todo describe this
 	asBC_DECi8			= 30, 
+	//! \brief \todo describe this
 	asBC_INCi			= 31,
+	//! \brief \todo describe this
 	asBC_DECi			= 32,
+	//! \brief \todo describe this
 	asBC_INCf			= 33,
+	//! \brief \todo describe this
 	asBC_DECf			= 34,
+	//! \brief \todo describe this
 	asBC_INCd			= 35,
+	//! \brief \todo describe this
 	asBC_DECd			= 36,
 
 	// Increment variable
+	//! \brief \todo describe this
 	asBC_IncVi			= 37,
+	//! \brief \todo describe this
 	asBC_DecVi			= 38,
 
 	// Bitwise operations
+	//! \brief \todo describe this
 	asBC_BNOT			= 39,
+	//! \brief \todo describe this
 	asBC_BAND			= 40,
+	//! \brief \todo describe this
 	asBC_BOR			= 41,
+	//! \brief \todo describe this
 	asBC_BXOR			= 42,
+	//! \brief \todo describe this
 	asBC_BSLL			= 43,
+	//! \brief \todo describe this
 	asBC_BSRL			= 44,
+	//! \brief \todo describe this
 	asBC_BSRA			= 45,
 
 	// Unsorted
+	//! \brief \todo describe this
 	asBC_COPY			= 46,	// Do byte-for-byte copy of object
+	//! \brief \todo describe this
 	asBC_SET8			= 47,	// Push QWORD on stack
+	//! \brief \todo describe this
 	asBC_RDS8			= 48,	// Read value from address on stack onto the top of the stack
+	//! \brief \todo describe this
 	asBC_SWAP8			= 49,
 
 	// Comparisons
+	//! \brief \todo describe this
 	asBC_CMPd			= 50,
+	//! \brief \todo describe this
 	asBC_CMPu			= 51,
+	//! \brief \todo describe this
 	asBC_CMPf			= 52,
+	//! \brief \todo describe this
 	asBC_CMPi			= 53,
 
 	// Comparisons with constant value
+	//! \brief \todo describe this
 	asBC_CMPIi			= 54,
+	//! \brief \todo describe this
 	asBC_CMPIf			= 55,
+	//! \brief \todo describe this
 	asBC_CMPIu			= 56,
 
+	//! \brief \todo describe this
 	asBC_JMPP			= 57,	// Jump with offset in variable
+	//! \brief \todo describe this
 	asBC_PopRPtr		= 58,	// Pop address from stack into register
+	//! \brief \todo describe this
 	asBC_PshRPtr		= 59,	// Push address from register on stack
+	//! \brief \todo describe this
 	asBC_STR			= 60,	// Push string address and length on stack
+	//! \brief \todo describe this
 	asBC_CALLSYS		= 61,
+	//! \brief \todo describe this
 	asBC_CALLBND		= 62,
+	//! \brief \todo describe this
 	asBC_SUSPEND		= 63,
+	//! \brief \todo describe this
 	asBC_ALLOC			= 64,
+	//! \brief \todo describe this
 	asBC_FREE			= 65,
+	//! \brief \todo describe this
 	asBC_LOADOBJ		= 66,
+	//! \brief \todo describe this
 	asBC_STOREOBJ		= 67,
+	//! \brief \todo describe this
 	asBC_GETOBJ			= 68,
+	//! \brief \todo describe this
 	asBC_REFCPY			= 69,
+	//! \brief \todo describe this
 	asBC_CHKREF			= 70,
+	//! \brief \todo describe this
 	asBC_GETOBJREF		= 71,
+	//! \brief \todo describe this
 	asBC_GETREF			= 72,
+	//! \brief \todo describe this
 	asBC_SWAP48			= 73,
+	//! \brief \todo describe this
 	asBC_SWAP84			= 74,
+	//! \brief \todo describe this
 	asBC_OBJTYPE		= 75,
+	//! \brief \todo describe this
 	asBC_TYPEID			= 76,
+	//! \brief \todo describe this
 	asBC_SetV4			= 77,	// Initialize the variable with a DWORD
+	//! \brief \todo describe this
 	asBC_SetV8			= 78,	// Initialize the variable with a QWORD
+	//! \brief \todo describe this
 	asBC_ADDSi			= 79,	// Add arg to value on stack
+	//! \brief \todo describe this
 	asBC_CpyVtoV4		= 80,	// Copy value from one variable to another
+	//! \brief \todo describe this
 	asBC_CpyVtoV8		= 81,	
+	//! \brief \todo describe this
 	asBC_CpyVtoR4		= 82,	// Copy value from variable into register
+	//! \brief \todo describe this
 	asBC_CpyVtoR8		= 83,	// Copy value from variable into register
+	//! \brief \todo describe this
 	asBC_CpyVtoG4		= 84,   // Write the value of a variable to a global variable (LDG, WRTV4)
+	//! \brief \todo describe this
 	asBC_CpyRtoV4		= 85,   // Copy the value from the register to the variable
+	//! \brief \todo describe this
 	asBC_CpyRtoV8		= 86,
+	//! \brief \todo describe this
 	asBC_CpyGtoV4		= 87,   // Copy the value of the global variable to a local variable (LDG, RDR4)
+	//! \brief \todo describe this
 	asBC_WRTV1			= 88,	// Copy value from variable to address held in register
+	//! \brief \todo describe this
 	asBC_WRTV2			= 89,
+	//! \brief \todo describe this
 	asBC_WRTV4			= 90,
+	//! \brief \todo describe this
 	asBC_WRTV8			= 91,
+	//! \brief \todo describe this
 	asBC_RDR1			= 92,	// Read value from address in register and store in variable
+	//! \brief \todo describe this
 	asBC_RDR2			= 93,
+	//! \brief \todo describe this
 	asBC_RDR4			= 94,	
+	//! \brief \todo describe this
 	asBC_RDR8			= 95,
+	//! \brief \todo describe this
 	asBC_LDG			= 96,	// Load the register with the address of the global attribute
+	//! \brief \todo describe this
 	asBC_LDV			= 97,	// Load the register with the address of the variable
+	//! \brief \todo describe this
 	asBC_PGA			= 98,
+	//! \brief \todo describe this
 	asBC_RDS4			= 99,	// Read value from address on stack onto the top of the stack
+	//! \brief \todo describe this
 	asBC_VAR			= 100,	// Push the variable offset on the stack
 
 	// Type conversions
+	//! \brief \todo describe this
 	asBC_iTOf			= 101,
+	//! \brief \todo describe this
 	asBC_fTOi			= 102,
+	//! \brief \todo describe this
 	asBC_uTOf			= 103,
+	//! \brief \todo describe this
 	asBC_fTOu			= 104,
+	//! \brief \todo describe this
 	asBC_sbTOi			= 105,	// Signed byte
+	//! \brief \todo describe this
 	asBC_swTOi			= 106,	// Signed word
+	//! \brief \todo describe this
 	asBC_ubTOi			= 107,	// Unsigned byte
+	//! \brief \todo describe this
 	asBC_uwTOi			= 108,	// Unsigned word
+	//! \brief \todo describe this
 	asBC_dTOi			= 109,
+	//! \brief \todo describe this
 	asBC_dTOu			= 110,
+	//! \brief \todo describe this
 	asBC_dTOf			= 111,
+	//! \brief \todo describe this
 	asBC_iTOd			= 112,
+	//! \brief \todo describe this
 	asBC_uTOd			= 113,
+	//! \brief \todo describe this
 	asBC_fTOd			= 114,
 
 	// Math operations
+	//! \brief \todo describe this
 	asBC_ADDi			= 115,
+	//! \brief \todo describe this
 	asBC_SUBi			= 116,
+	//! \brief \todo describe this
 	asBC_MULi			= 117,
+	//! \brief \todo describe this
 	asBC_DIVi			= 118,
+	//! \brief \todo describe this
 	asBC_MODi			= 119,
+	//! \brief \todo describe this
 	asBC_ADDf			= 120,
+	//! \brief \todo describe this
 	asBC_SUBf			= 121,
+	//! \brief \todo describe this
 	asBC_MULf			= 122,
+	//! \brief \todo describe this
 	asBC_DIVf			= 123,
+	//! \brief \todo describe this
 	asBC_MODf			= 124,
+	//! \brief \todo describe this
 	asBC_ADDd			= 125,
+	//! \brief \todo describe this
 	asBC_SUBd			= 126,
+	//! \brief \todo describe this
 	asBC_MULd			= 127,
+	//! \brief \todo describe this
 	asBC_DIVd			= 128,
+	//! \brief \todo describe this
 	asBC_MODd			= 129,
 
 	// Math operations with constant value
+	//! \brief \todo describe this
 	asBC_ADDIi			= 130,
+	//! \brief \todo describe this
 	asBC_SUBIi			= 131,
+	//! \brief \todo describe this
 	asBC_MULIi			= 132,
+	//! \brief \todo describe this
 	asBC_ADDIf			= 133,
+	//! \brief \todo describe this
 	asBC_SUBIf			= 134,
+	//! \brief \todo describe this
 	asBC_MULIf			= 135,
 
+	//! \brief \todo describe this
 	asBC_SetG4			= 136,	// Initialize the global variable with a DWORD
+	//! \brief \todo describe this
 	asBC_ChkRefS		= 137,  // Verify that the reference to the handle on the stack is not null
+	//! \brief \todo describe this
 	asBC_ChkNullV		= 138,  // Verify that the variable is not a null handle
+	//! \brief \todo describe this
 	asBC_CALLINTF		= 139,	// Call interface method 
 
+	//! \brief \todo describe this
 	asBC_iTOb			= 140,
+	//! \brief \todo describe this
 	asBC_iTOw			= 141,
+	//! \brief \todo describe this
 	asBC_SetV1			= 142,
+	//! \brief \todo describe this
 	asBC_SetV2			= 143,
+	//! \brief \todo describe this
 	asBC_Cast			= 144,	// Cast handle type to another handle type
 
+	//! \brief \todo describe this
 	asBC_i64TOi			= 145,
+	//! \brief \todo describe this
 	asBC_uTOi64			= 146,
+	//! \brief \todo describe this
 	asBC_iTOi64			= 147,
+	//! \brief \todo describe this
 	asBC_fTOi64			= 148,
+	//! \brief \todo describe this
 	asBC_dTOi64			= 149,
+	//! \brief \todo describe this
 	asBC_fTOu64			= 150,
+	//! \brief \todo describe this
 	asBC_dTOu64			= 151,
+	//! \brief \todo describe this
 	asBC_i64TOf			= 152,
+	//! \brief \todo describe this
 	asBC_u64TOf			= 153,
+	//! \brief \todo describe this
 	asBC_i64TOd			= 154,
+	//! \brief \todo describe this
 	asBC_u64TOd			= 155,
+	//! \brief \todo describe this
 	asBC_NEGi64			= 156,
+	//! \brief \todo describe this
 	asBC_INCi64			= 157,
+	//! \brief \todo describe this
 	asBC_DECi64			= 158,
+	//! \brief \todo describe this
 	asBC_BNOT64			= 159,
 
+	//! \brief \todo describe this
 	asBC_ADDi64			= 160,
+	//! \brief \todo describe this
 	asBC_SUBi64			= 161,
+	//! \brief \todo describe this
 	asBC_MULi64			= 162,
+	//! \brief \todo describe this
 	asBC_DIVi64			= 163,
+	//! \brief \todo describe this
 	asBC_MODi64			= 164,
+	//! \brief \todo describe this
 	asBC_BAND64			= 165,
+	//! \brief \todo describe this
 	asBC_BOR64			= 166,
+	//! \brief \todo describe this
 	asBC_BXOR64			= 167,
+	//! \brief \todo describe this
 	asBC_BSLL64			= 168,
+	//! \brief \todo describe this
 	asBC_BSRL64			= 169,
+	//! \brief \todo describe this
 	asBC_BSRA64			= 170,
+	//! \brief \todo describe this
 	asBC_CMPi64			= 171,
+	//! \brief \todo describe this
 	asBC_CMPu64			= 172,
 	
+	//! \brief \todo describe this
 	asBC_ChkNullS		= 173,
+	//! \brief \todo describe this
 	asBC_ClrHi			= 174,
+	//! \brief \todo describe this
 	asBC_JitEntry		= 175,
 
 	asBC_MAXBYTECODE	= 176,
@@ -3262,32 +3476,50 @@ enum asEBCInstr
 };
 
 // Instruction types
-//! \todo detail this
+//! \brief Describes the structure of a bytecode instruction
 enum asEBCType
 {
 	asBCTYPE_INFO         = 0,
+	//! \brief Instruction + no args
 	asBCTYPE_NO_ARG       = 1,
+	//! \brief Instruction + WORD arg
 	asBCTYPE_W_ARG        = 2,
+	//! \brief Instruction + WORD arg (dest var)
 	asBCTYPE_wW_ARG       = 3,
+	//! \brief Instruction + DWORD arg
 	asBCTYPE_DW_ARG       = 4,
+	//! \brief Instruction + WORD arg (source var) + DWORD arg
 	asBCTYPE_rW_DW_ARG    = 5,
+	//! \brief Instruction + QWORD arg
 	asBCTYPE_QW_ARG       = 6,
+	//! \brief Instruction + DWORD arg + DWORD arg
 	asBCTYPE_DW_DW_ARG    = 7,
+	//! \brief Instruction + WORD arg (dest var) + WORD arg (source var) + WORD arg (source var)
 	asBCTYPE_wW_rW_rW_ARG = 8,
+	//! \brief Instruction + WORD arg (dest var) + QWORD arg
 	asBCTYPE_wW_QW_ARG    = 9,
+	//! \brief Instruction + WORD arg (dest var) + WORD arg (source var)
 	asBCTYPE_wW_rW_ARG    = 10,
+	//! \brief Instruction + WORD arg (source var)
 	asBCTYPE_rW_ARG       = 11,
+	//! \brief Instruction + WORD arg (dest var) + DWORD arg
 	asBCTYPE_wW_DW_ARG    = 12,
+	//! \brief Instruction + WORD arg (dest var) + WORD arg (source var) + DWORD arg
 	asBCTYPE_wW_rW_DW_ARG = 13,
+	//! \brief Instruction + WORD arg (source var) + WORD arg (source var)
 	asBCTYPE_rW_rW_ARG    = 14,
+	//! \brief Instruction + WORD arg + WORD arg (source var)
 	asBCTYPE_W_rW_ARG     = 15,
+	//! \brief Instruction + WORD arg (dest var) + WORD arg
 	asBCTYPE_wW_W_ARG     = 16,
+	//! \brief Instruction + WORD arg + DWORD arg
 	asBCTYPE_W_DW_ARG     = 17,
+	//! \brief Instruction + QWORD arg + DWORD arg
 	asBCTYPE_QW_DW_ARG    = 18
 };
 
 // Instruction type sizes
-//! \todo detail this
+//! \brief Lookup table for determining the size of each \ref asEBCType "type" of bytecode instruction.
 const int asBCTypeSize[19] =
 {
     0, // asBCTYPE_INFO        
@@ -3312,12 +3544,24 @@ const int asBCTypeSize[19] =
 };
 
 // Instruction info
-//! \todo detail this
+//! \brief Information on a bytecode instruction
+//!
+//! This structure can be obtained for each bytecode instruction
+//! by looking it up in the \ref asBCInfo array.
+//!
+//! The size of the instruction can be obtained by looking up the 
+//! type in the \ref asBCTypeSize array.
+//!
+//! \see \ref doc_adv_jit
 struct asSBCInfo
 {
+	//! \brief Bytecode instruction id
 	asEBCInstr  bc;
+	//! \brief Instruction argument layout
 	asEBCType   type;
+	//! \brief How much this argument increments the stack pointer. 0xFFFF if it depends on the arguments.
 	int         stackInc;
+	//! \brief Name of the instruction for debugging
 	const char *name;
 };
 
@@ -3338,7 +3582,7 @@ struct asSBCInfo
 #define asBCINFO(b,t,s) {asBC_##b, asBCTYPE_##t, s, #b}
 #define asBCINFO_DUMMY(b) {asEBCInstr(b), asBCTYPE_INFO, 0, "BC_" #b}
 
-//! \todo detail this
+//! \brief Information on each bytecode instruction
 const asSBCInfo asBCInfo[256] =
 {
 	asBCINFO(POP,		W_ARG,			0xFFFF),
@@ -3602,27 +3846,25 @@ const asSBCInfo asBCInfo[256] =
 };
 
 // Macros to access bytecode instruction arguments
-//! \todo detail this
+//! \brief Macro to access the first DWORD argument in the bytecode instruction
 #define asBC_DWORDARG(x)  (asDWORD(*(x+1)))
-//! \todo detail this
+//! \brief Macro to access the first 32bit integer argument in the bytecode instruction
 #define asBC_INTARG(x)    (int(*(x+1)))
-//! \todo detail this
+//! \brief Macro to access the first QWORD argument in the bytecode instruction
 #define asBC_QWORDARG(x)  (*(asQWORD*)(x+1))
-//! \todo detail this
+//! \brief Macro to access the first float argument in the bytecode instruction
 #define asBC_FLOATARG(x)  (*(float*)(x+1))
-//! \todo detail this
+//! \brief Macro to access the first pointer argument in the bytecode instruction
 #define asBC_PTRARG(x)    (asPTRWORD(*(x+1)))
-
-//! \todo detail this
+//! \brief Macro to access the first WORD argument in the bytecode instruction
 #define asBC_WORDARG0(x)  (*(((asWORD*)x)+1))
-//! \todo detail this
+//! \brief Macro to access the second WORD argument in the bytecode instruction
 #define asBC_WORDARG1(x)  (*(((asWORD*)x)+2))
-
-//! \todo detail this
+//! \brief Macro to access the first signed WORD argument in the bytecode instruction
 #define asBC_SWORDARG0(x) (*(((short*)x)+1))
-//! \todo detail this
+//! \brief Macro to access the second signed WORD argument in the bytecode instruction
 #define asBC_SWORDARG1(x) (*(((short*)x)+2))
-//! \todo detail this
+//! \brief Macro to access the third signed WORD argument in the bytecode instruction
 #define asBC_SWORDARG2(x) (*(((short*)x)+3))
 
 

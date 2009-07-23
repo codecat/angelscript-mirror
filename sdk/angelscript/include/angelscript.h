@@ -1065,14 +1065,14 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+4*sizeof(int)>
 
 struct asSVMRegisters
 {
-  asDWORD          *programPointer;     // points to current bytecode instruction
-  asDWORD          *stackFramePointer;  // function stack frame
-  asDWORD          *stackPointer;       // top of stack (grows downward)
-  void            **globalVarPointers;  // global variable pointers
-  asQWORD           valueRegister;      // temp register for primitives
-  void             *objectRegister;     // temp register for objects and handles
-  asIObjectType    *objectType;         // type of object held in object register
-  bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
+	asDWORD          *programPointer;     // points to current bytecode instruction
+	asDWORD          *stackFramePointer;  // function stack frame
+	asDWORD          *stackPointer;       // top of stack (grows downward)
+	void            **globalVarPointers;  // global variable pointers
+	asQWORD           valueRegister;      // temp register for primitives
+	void             *objectRegister;     // temp register for objects and handles
+	asIObjectType    *objectType;         // type of object held in object register
+	bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
 };
 
 typedef void (*asJITFunction)(asSVMRegisters*, asDWORD suspendId);
@@ -1649,10 +1649,8 @@ const asSBCInfo asBCInfo[256] =
 #define asBC_QWORDARG(x)  (*(asQWORD*)(x+1))
 #define asBC_FLOATARG(x)  (*(float*)(x+1))
 #define asBC_PTRARG(x)    (asPTRWORD(*(x+1)))
-
 #define asBC_WORDARG0(x)  (*(((asWORD*)x)+1))
 #define asBC_WORDARG1(x)  (*(((asWORD*)x)+2))
-
 #define asBC_SWORDARG0(x) (*(((short*)x)+1))
 #define asBC_SWORDARG1(x) (*(((short*)x)+2))
 #define asBC_SWORDARG2(x) (*(((short*)x)+3))

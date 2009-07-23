@@ -42,6 +42,13 @@
 #include "as_context.h"
 #include "as_texts.h"
 
+// TODO: Need a separate interface for compiling scripts. The asIScriptCompiler
+//       will have a target module, and will allow the compilation of an entire
+//       script or just individual functions within the scope of the module
+// 
+//       With this separation it will be possible to compile the library without
+//       the compiler, thus giving a much smaller binary executable.
+
 BEGIN_AS_NAMESPACE
 
 // internal
