@@ -102,7 +102,9 @@ enum asEEngineProp
 	//! When set the enum values must be prefixed with the enum type. Default: false.
 	asEP_REQUIRE_ENUM_SCOPE           = 10,
 	//! Select scanning method: 0 - ASCII, 1 - UTF8. Default: 1 (UTF8).
-	asEP_SCRIPT_SCANNER               = 11
+	asEP_SCRIPT_SCANNER               = 11,
+	//! When set extra bytecode instructions needed for JIT compiled funcions will be included. Default: false.
+	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12
 };
 
 // Calling conventions
@@ -3083,393 +3085,362 @@ public:
 //! \brief The bytecode instructions used by the VM
 enum asEBCInstr
 {
-	// Unsorted
 	//! \brief Decrease the stack with the amount in the argument
-	asBC_POP			= 0,	// Decrease stack size
+	asBC_POP			= 0,
 	//! \brief Increase the stack with the amount in the argument
-	asBC_PUSH			= 1,	// Increase stack size
-	//! \brief Push the value in the argument on the stack
-	asBC_PshC4			= 2,	// Push constant on stack
-	//! \brief Push the value from a variable, indexed by the argument, on the stack
-	asBC_PshV4			= 3,	// Push value in variable on stack
-	//! \brief Push the address of the stack frame on the stack
-	asBC_PSF			= 4,	// Push stack frame
+	asBC_PUSH			= 1,
+	//! \brief Push the 32bit value in the argument onto the stack
+	asBC_PshC4			= 2,
+	//! \brief Push the 32bit value from a variable onto the stack
+	asBC_PshV4			= 3,
+	//! \brief Push the address of the stack frame onto the stack
+	asBC_PSF			= 4,
 	//! \brief Swap the top two DWORDs on the stack
-	asBC_SWAP4			= 5,	// Swap top two dwords
-	//! \brief Perform a boolean not on the value in a variable, indexed by the argument
-	asBC_NOT			= 6,    // Boolean not operator for a variable
-	//! \brief Push the value from a global variable, referenced by the argument, on the stack
-	asBC_PshG4			= 7,	// Push value in global variable on stack
+	asBC_SWAP4			= 5,
+	//! \brief Perform a boolean not on the value in a variable
+	asBC_NOT			= 6,
+	//! \brief Push the 32bit value from a global variable onto the stack
+	asBC_PshG4			= 7,
 	//! \brief Perform the actions of \ref asBC_LDG followed by \ref asBC_RDR4
-	asBC_LdGRdR4		= 8,    // Same as LDG, RDR4
+	asBC_LdGRdR4		= 8,
 	//! \brief Jump to a script function, indexed by the argument
-	asBC_CALL			= 9,	// Call function
+	asBC_CALL			= 9,
 	//! \brief Return to the instruction after the last executed call
-	asBC_RET			= 10,	// Return from function
+	asBC_RET			= 10,
 	//! \brief Unconditional jump to a relative position in this function
 	asBC_JMP			= 11,
-
-	// Conditional jumps
-	//! \brief \todo describe this
+	//! \brief If the value register is 0 jump to a relative position in this function
 	asBC_JZ				= 12,
-	//! \brief \todo describe this
+	//! \brief If the value register is not 0 jump to a relative position in this function
 	asBC_JNZ			= 13,
-	//! \brief \todo describe this
-	asBC_JS				= 14,	// Same as TS+JNZ or TNS+JZ
-	//! \brief \todo describe this
-	asBC_JNS			= 15,	// Same as TNS+JNZ or TS+JZ
-	//! \brief \todo describe this
-	asBC_JP				= 16,	// Same as TP+JNZ or TNP+JZ
-	//! \brief \todo describe this
-	asBC_JNP			= 17,	// Same as TNP+JNZ or TP+JZ
-
-	// Test value
-	//! \brief \todo describe this
-	asBC_TZ				= 18,	// Test if zero
-	//! \brief \todo describe this
-	asBC_TNZ			= 19,	// Test if not zero
-	//! \brief \todo describe this
-	asBC_TS				= 20,	// Test if signaled (less than zero)
-	//! \brief \todo describe this
-	asBC_TNS			= 21,	// Test if not signaled (zero or greater)
-	//! \brief \todo describe this
-	asBC_TP				= 22,	// Test if positive (greater than zero)
-	//! \brief \todo describe this
-	asBC_TNP			= 23,	// Test if not positive (zero or less)
-
-	// Negate value
-	//! \brief \todo describe this
+	//! \brief If the value register is less than 0 jump to a relative position in this function
+	asBC_JS				= 14,
+	//! \brief If the value register is greater than or equal to 0 jump to a relative position in this function
+	asBC_JNS			= 15,
+	//! \brief If the value register is greater than 0 jump to a relative position in this function
+	asBC_JP				= 16,
+	//! \brief If the value register is less than or equal to 0 jump to a relative position in this function
+	asBC_JNP			= 17,
+	//! \brief If the value register is 0 set it to 1
+	asBC_TZ				= 18,
+	//! \brief If the value register is not 0 set it to 1
+	asBC_TNZ			= 19,
+	//! \brief If the value register is less than 0 set it to 1
+	asBC_TS				= 20,
+	//! \brief If the value register is greater than or equal to 0 set it to 1
+	asBC_TNS			= 21,
+	//! \brief If the value register is greater than 0 set it to 1
+	asBC_TP				= 22,
+	//! \brief If the value register is less than or equal to 0 set it to 1
+	asBC_TNP			= 23,
+	//! \brief Negate the 32bit integer value in the variable
 	asBC_NEGi			= 24,
-	//! \brief \todo describe this
+	//! \brief Negate the float value in the variable
 	asBC_NEGf			= 25,
-	//! \brief \todo describe this
+	//! \brief Negate the double value in the variable
 	asBC_NEGd			= 26,
-
-	// Increment value pointed to by address in register
-	//! \brief \todo describe this
+	//! \brief Increment the 16bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_INCi16			= 27,
-	//! \brief \todo describe this
+	//! \brief Increment the 8bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_INCi8			= 28,
-	//! \brief \todo describe this
+	//! \brief Decrement the 16bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_DECi16			= 29,
-	//! \brief \todo describe this
+	//! \brief Increment the 8bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_DECi8			= 30, 
-	//! \brief \todo describe this
+	//! \brief Increment the 32bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_INCi			= 31,
-	//! \brief \todo describe this
+	//! \brief Decrement the 32bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_DECi			= 32,
-	//! \brief \todo describe this
+	//! \brief Increment the float value that is stored at the address pointed to by the reference in the value register
 	asBC_INCf			= 33,
-	//! \brief \todo describe this
+	//! \brief Decrement the float value that is stored at the address pointed to by the reference in the value register
 	asBC_DECf			= 34,
-	//! \brief \todo describe this
+	//! \brief Increment the double value that is stored at the address pointed to by the reference in the value register
 	asBC_INCd			= 35,
-	//! \brief \todo describe this
+	//! \brief Decrement the double value that is stored at the address pointed to by the reference in the value register
 	asBC_DECd			= 36,
-
-	// Increment variable
-	//! \brief \todo describe this
+	//! \brief Increment the 32bit integer value in the variable
 	asBC_IncVi			= 37,
-	//! \brief \todo describe this
+	//! \brief Decrement the 32bit integer value in the variable
 	asBC_DecVi			= 38,
-
-	// Bitwise operations
-	//! \brief \todo describe this
+	//! \brief Perform a bitwise complement on the 32bit value in the variable
 	asBC_BNOT			= 39,
-	//! \brief \todo describe this
+	//! \brief Perform a bitwise and of two 32bit values and store the result in a third variable
 	asBC_BAND			= 40,
-	//! \brief \todo describe this
+	//! \brief Perform a bitwise or of two 32bit values and store the result in a third variable
 	asBC_BOR			= 41,
-	//! \brief \todo describe this
+	//! \brief Perform a bitwise exclusive or of two 32bit values and store the result in a third variable
 	asBC_BXOR			= 42,
-	//! \brief \todo describe this
+	//! \brief Perform a logical left shift of a 32bit value and store the result in a third variable
 	asBC_BSLL			= 43,
-	//! \brief \todo describe this
+	//! \brief Perform a logical right shift of a 32bit value and store the result in a third variable
 	asBC_BSRL			= 44,
-	//! \brief \todo describe this
+	//! \brief Perform a arithmetical right shift of a 32bit value and store the result in a third variable
 	asBC_BSRA			= 45,
-
-	// Unsorted
-	//! \brief \todo describe this
-	asBC_COPY			= 46,	// Do byte-for-byte copy of object
-	//! \brief \todo describe this
-	asBC_SET8			= 47,	// Push QWORD on stack
-	//! \brief \todo describe this
-	asBC_RDS8			= 48,	// Read value from address on stack onto the top of the stack
-	//! \brief \todo describe this
+	//! \brief Pop the destination and source addresses from the stack. Perform a bitwise copy of the referred object. Push the destination address on the stack.
+	asBC_COPY			= 46,
+	//! \brief Push a 64bit value on the stack
+	asBC_SET8			= 47,
+	//! \brief Pop an address from the stack, then read a 64bit value from that address and push it on the stack
+	asBC_RDS8			= 48,
+	//! \brief Swap the top two QWORDs on the stack
 	asBC_SWAP8			= 49,
-
-	// Comparisons
-	//! \brief \todo describe this
+	//! \brief Compare two double variables and store the result in the value register
 	asBC_CMPd			= 50,
-	//! \brief \todo describe this
+	//! \brief Compare two unsigned 32bit integer variables and store the result in the value register
 	asBC_CMPu			= 51,
-	//! \brief \todo describe this
+	//! \brief Compare two float variables and store the result in the value register
 	asBC_CMPf			= 52,
-	//! \brief \todo describe this
+	//! \brief Compare two 32bit integer variables and store the result in the value register
 	asBC_CMPi			= 53,
-
-	// Comparisons with constant value
-	//! \brief \todo describe this
+	//! \brief Compare 32bit integer variable with constant and store the result in value register
 	asBC_CMPIi			= 54,
-	//! \brief \todo describe this
+	//! \brief Compare float variable with constant and store the result in value register
 	asBC_CMPIf			= 55,
-	//! \brief \todo describe this
+	//! \brief Compare unsigned 32bit integer variable with constant and store the result in value register
 	asBC_CMPIu			= 56,
-
-	//! \brief \todo describe this
-	asBC_JMPP			= 57,	// Jump with offset in variable
-	//! \brief \todo describe this
-	asBC_PopRPtr		= 58,	// Pop address from stack into register
-	//! \brief \todo describe this
-	asBC_PshRPtr		= 59,	// Push address from register on stack
-	//! \brief \todo describe this
-	asBC_STR			= 60,	// Push string address and length on stack
-	//! \brief \todo describe this
+	//! \brief Jump to relative position in the function where the offset is stored in a variable
+	asBC_JMPP			= 57,
+	//! \brief Pop a pointer from the stack and store it in the value register
+	asBC_PopRPtr		= 58,
+	//! \brief Push a pointer from the value register onto the stack
+	asBC_PshRPtr		= 59,
+	//! \brief Push string address and length on the stack
+	asBC_STR			= 60,
+	//! \brief Call registered function. Suspend further execution if requested.
 	asBC_CALLSYS		= 61,
-	//! \brief \todo describe this
+	//! \brief Jump to an imported script function, indexed by the argument
 	asBC_CALLBND		= 62,
-	//! \brief \todo describe this
+	//! \brief Call line callback function if set. Suspend execution if requested.
 	asBC_SUSPEND		= 63,
-	//! \brief \todo describe this
+	//! \brief Allocate the memory for the object. If the type is a script object then jump to the constructor, else call the registered constructor behaviour. Suspend further execution if requested.
 	asBC_ALLOC			= 64,
-	//! \brief \todo describe this
+	//! \brief Pop the address of the object variable from the stack. If ref type, call the release method, else call the destructor then free the memory. Clear the pointer in the variable.
 	asBC_FREE			= 65,
-	//! \brief \todo describe this
+	//! \brief Copy the object pointer from a variable to the object register. Clear the variable.
 	asBC_LOADOBJ		= 66,
-	//! \brief \todo describe this
+	//! \brief Copy the object pointer from the object register to the variable. Clear the object register.
 	asBC_STOREOBJ		= 67,
-	//! \brief \todo describe this
+	//! \brief Move object pointer from variable onto stack location.
 	asBC_GETOBJ			= 68,
-	//! \brief \todo describe this
+	//! \brief Pop destination handle reference. Perform a handle assignment, while updating the reference count for both previous and new objects.
 	asBC_REFCPY			= 69,
-	//! \brief \todo describe this
+	//! \brief Throw an exception if the pointer on the top of the stack is null.
 	asBC_CHKREF			= 70,
-	//! \brief \todo describe this
+	//! \brief Replace a variable index on the stack with the object handle stored in that variable.
 	asBC_GETOBJREF		= 71,
-	//! \brief \todo describe this
+	//! \brief Replace a variable index on the stack with the address of the variable.
 	asBC_GETREF			= 72,
-	//! \brief \todo describe this
+	//! \brief Swap the top DWORD with the QWORD below it
 	asBC_SWAP48			= 73,
-	//! \brief \todo describe this
+	//! \brief Swap the top QWORD with the DWORD below it
 	asBC_SWAP84			= 74,
-	//! \brief \todo describe this
+	//! \brief Push the pointer argument onto the stack. The pointer is a pointer to an object type structure
 	asBC_OBJTYPE		= 75,
-	//! \brief \todo describe this
+	//! \brief Push the type id onto the stack. Equivalent to \ref asBC_PshC4 "PshC4".
 	asBC_TYPEID			= 76,
-	//! \brief \todo describe this
-	asBC_SetV4			= 77,	// Initialize the variable with a DWORD
-	//! \brief \todo describe this
-	asBC_SetV8			= 78,	// Initialize the variable with a QWORD
-	//! \brief \todo describe this
-	asBC_ADDSi			= 79,	// Add arg to value on stack
-	//! \brief \todo describe this
-	asBC_CpyVtoV4		= 80,	// Copy value from one variable to another
-	//! \brief \todo describe this
-	asBC_CpyVtoV8		= 81,	
-	//! \brief \todo describe this
-	asBC_CpyVtoR4		= 82,	// Copy value from variable into register
-	//! \brief \todo describe this
-	asBC_CpyVtoR8		= 83,	// Copy value from variable into register
-	//! \brief \todo describe this
-	asBC_CpyVtoG4		= 84,   // Write the value of a variable to a global variable (LDG, WRTV4)
-	//! \brief \todo describe this
-	asBC_CpyRtoV4		= 85,   // Copy the value from the register to the variable
-	//! \brief \todo describe this
+	//! \brief Initialize the variable with a DWORD.
+	asBC_SetV4			= 77,
+	//! \brief Initialize the variable with a QWORD.
+	asBC_SetV8			= 78,
+	//! \brief Add a value to the top pointer on the stack, thus updating the address itself.
+	asBC_ADDSi			= 79,
+	//! \brief Copy a DWORD from one variable to another
+	asBC_CpyVtoV4		= 80,
+	//! \brief Copy a QWORD from one variable to another
+	asBC_CpyVtoV8		= 81,
+	//! \brief Copy a DWORD from a variable into the value register
+	asBC_CpyVtoR4		= 82,
+	//! \brief Copy a QWORD from a variable into the value register
+	asBC_CpyVtoR8		= 83,
+	//! \brief Copy a DWORD from a local variable to a global variable
+	asBC_CpyVtoG4		= 84,
+	//! \brief Copy a DWORD from the value register into a variable
+	asBC_CpyRtoV4		= 85,
+	//! \brief Copy a QWORD from the value register into a variable
 	asBC_CpyRtoV8		= 86,
-	//! \brief \todo describe this
-	asBC_CpyGtoV4		= 87,   // Copy the value of the global variable to a local variable (LDG, RDR4)
-	//! \brief \todo describe this
-	asBC_WRTV1			= 88,	// Copy value from variable to address held in register
-	//! \brief \todo describe this
+	//! \brief Copy a DWORD from a global variable to a local variable
+	asBC_CpyGtoV4		= 87,
+	//! \brief Copy a BYTE from a variable to the address held in the value register
+	asBC_WRTV1			= 88,
+	//! \brief Copy a WORD from a variable to the address held in the value register
 	asBC_WRTV2			= 89,
-	//! \brief \todo describe this
+	//! \brief Copy a DWORD from a variable to the address held in the value register
 	asBC_WRTV4			= 90,
-	//! \brief \todo describe this
+	//! \brief Copy a QWORD from a variable to the address held in the value register
 	asBC_WRTV8			= 91,
-	//! \brief \todo describe this
-	asBC_RDR1			= 92,	// Read value from address in register and store in variable
-	//! \brief \todo describe this
+	//! \brief Copy a BYTE from address held in the value register to a variable. Clear the top bytes in the variable
+	asBC_RDR1			= 92,
+	//! \brief Copy a WORD from address held in the value register to a variable. Clear the top word in the variable
 	asBC_RDR2			= 93,
-	//! \brief \todo describe this
+	//! \brief Copy a DWORD from address held in the value register to a variable.
 	asBC_RDR4			= 94,	
-	//! \brief \todo describe this
+	//! \brief Copy a QWORD from address held in the value register to a variable.
 	asBC_RDR8			= 95,
-	//! \brief \todo describe this
-	asBC_LDG			= 96,	// Load the register with the address of the global attribute
-	//! \brief \todo describe this
-	asBC_LDV			= 97,	// Load the register with the address of the variable
-	//! \brief \todo describe this
+	//! \brief Load the address of a global variable into the value register
+	asBC_LDG			= 96,
+	//! \brief Load the address of a local variable into the value register
+	asBC_LDV			= 97,
+	//! \brief Push the address of a global variable on the stack
 	asBC_PGA			= 98,
-	//! \brief \todo describe this
-	asBC_RDS4			= 99,	// Read value from address on stack onto the top of the stack
-	//! \brief \todo describe this
-	asBC_VAR			= 100,	// Push the variable offset on the stack
-
-	// Type conversions
-	//! \brief \todo describe this
+	//! \brief Pop an address from the stack. Read a DWORD from the address, and push it on the stack.
+	asBC_RDS4			= 99,
+	//! \brief Push the index of the variable on the stack, with the size of a pointer.
+	asBC_VAR			= 100,
+	//! \brief Convert the 32bit integer value to a float in the variable
 	asBC_iTOf			= 101,
-	//! \brief \todo describe this
+	//! \brief Convert the float value to a 32bit integer in the variable
 	asBC_fTOi			= 102,
-	//! \brief \todo describe this
+	//! \brief Convert the unsigned 32bit integer value to a float in the variable
 	asBC_uTOf			= 103,
-	//! \brief \todo describe this
+	//! \brief Convert the float value to an unsigned 32bit integer in the variable
 	asBC_fTOu			= 104,
-	//! \brief \todo describe this
-	asBC_sbTOi			= 105,	// Signed byte
-	//! \brief \todo describe this
-	asBC_swTOi			= 106,	// Signed word
-	//! \brief \todo describe this
-	asBC_ubTOi			= 107,	// Unsigned byte
-	//! \brief \todo describe this
-	asBC_uwTOi			= 108,	// Unsigned word
-	//! \brief \todo describe this
+	//! \brief Expand the low byte as a signed value to a full 32bit integer in the variable
+	asBC_sbTOi			= 105,
+	//! \brief Expand the low word as a signed value to a full 32bit integer in the variable
+	asBC_swTOi			= 106,
+	//! \brief Expand the low byte as an unsigned value to a full 32bit integer in the variable
+	asBC_ubTOi			= 107,
+	//! \brief Expand the low word as an unsigned value to a full 32bit integer in the variable
+	asBC_uwTOi			= 108,
+	//! \brief Convert the double value in one variable to a 32bit integer in another variable
 	asBC_dTOi			= 109,
-	//! \brief \todo describe this
+	//! \brief Convert the double value in one variable to a 32bit unsigned integer in another variable
 	asBC_dTOu			= 110,
-	//! \brief \todo describe this
+	//! \brief Convert the double value in one variable to a float in another variable
 	asBC_dTOf			= 111,
-	//! \brief \todo describe this
+	//! \brief Convert the 32bit integer value in one variable to a double in another variable
 	asBC_iTOd			= 112,
-	//! \brief \todo describe this
+	//! \brief Convert the 32bit unsigned integer value in one variable to a double in another variable
 	asBC_uTOd			= 113,
-	//! \brief \todo describe this
+	//! \brief Convert the float value in one variable to a double in another variable
 	asBC_fTOd			= 114,
-
-	// Math operations
-	//! \brief \todo describe this
+	//! \brief Add the values of two 32bit integer variables and store in a third variable
 	asBC_ADDi			= 115,
-	//! \brief \todo describe this
+	//! \brief Subtract the values of two 32bit integer variables and store in a third variable
 	asBC_SUBi			= 116,
-	//! \brief \todo describe this
+	//! \brief Multiply the values of two 32bit integer variables and store in a third variable
 	asBC_MULi			= 117,
-	//! \brief \todo describe this
+	//! \brief Divide the values of two 32bit integer variables and store in a third variable
 	asBC_DIVi			= 118,
-	//! \brief \todo describe this
+	//! \brief Calculate the modulo of values of two 32bit integer variables and store in a third variable
 	asBC_MODi			= 119,
-	//! \brief \todo describe this
+	//! \brief Add the values of two float variables and store in a third variable
 	asBC_ADDf			= 120,
-	//! \brief \todo describe this
+	//! \brief Subtract the values of two float variables and store in a third variable
 	asBC_SUBf			= 121,
-	//! \brief \todo describe this
+	//! \brief Multiply the values of two float variables and store in a third variable
 	asBC_MULf			= 122,
-	//! \brief \todo describe this
+	//! \brief Divide the values of two float variables and store in a third variable
 	asBC_DIVf			= 123,
-	//! \brief \todo describe this
+	//! \brief Calculate the modulo of values of two float variables and store in a third variable
 	asBC_MODf			= 124,
-	//! \brief \todo describe this
+	//! \brief Add the values of two double variables and store in a third variable
 	asBC_ADDd			= 125,
-	//! \brief \todo describe this
+	//! \brief Subtract the values of two double variables and store in a third variable
 	asBC_SUBd			= 126,
-	//! \brief \todo describe this
+	//! \brief Multiply the values of two double variables and store in a third variable
 	asBC_MULd			= 127,
-	//! \brief \todo describe this
+	//! \brief Divide the values of two double variables and store in a third variable
 	asBC_DIVd			= 128,
-	//! \brief \todo describe this
+	//! \brief Calculate the modulo of values of two double variables and store in a third variable
 	asBC_MODd			= 129,
-
-	// Math operations with constant value
-	//! \brief \todo describe this
+	//! \brief Add a 32bit integer variable with a constant value and store the result in another variable
 	asBC_ADDIi			= 130,
-	//! \brief \todo describe this
+	//! \brief Subtract a 32bit integer variable with a constant value and store the result in another variable
 	asBC_SUBIi			= 131,
-	//! \brief \todo describe this
+	//! \brief Multiply a 32bit integer variable with a constant value and store the result in another variable
 	asBC_MULIi			= 132,
-	//! \brief \todo describe this
+	//! \brief Add a float variable with a constant value and store the result in another variable
 	asBC_ADDIf			= 133,
-	//! \brief \todo describe this
+	//! \brief Subtract a float variable with a constant value and store the result in another variable
 	asBC_SUBIf			= 134,
-	//! \brief \todo describe this
+	//! \brief Multiply a float variable with a constant value and store the result in another variable
 	asBC_MULIf			= 135,
-
-	//! \brief \todo describe this
-	asBC_SetG4			= 136,	// Initialize the global variable with a DWORD
-	//! \brief \todo describe this
-	asBC_ChkRefS		= 137,  // Verify that the reference to the handle on the stack is not null
-	//! \brief \todo describe this
-	asBC_ChkNullV		= 138,  // Verify that the variable is not a null handle
-	//! \brief \todo describe this
-	asBC_CALLINTF		= 139,	// Call interface method 
-
-	//! \brief \todo describe this
+	//! \brief Set the value of global variable to a 32bit word
+	asBC_SetG4			= 136,
+	//! \brief Throw an exception if the address stored on the stack points to a null pointer
+	asBC_ChkRefS		= 137,
+	//! \brief Throw an exception if the variable is null
+	asBC_ChkNullV		= 138,
+	//! \brief Jump to an interface method, indexed by the argument
+	asBC_CALLINTF		= 139,
+	//! \brief Convert a 32bit integer in a variable to a byte, clearing the top bytes
 	asBC_iTOb			= 140,
-	//! \brief \todo describe this
+	//! \brief Convert a 32bit integer in a variable to a word, clearing the top word
 	asBC_iTOw			= 141,
-	//! \brief \todo describe this
+	//! \brief Same as \ref asBC_SetV4 "SetV4"
 	asBC_SetV1			= 142,
-	//! \brief \todo describe this
+	//! \brief Same as \ref asBC_SetV4 "SetV4"
 	asBC_SetV2			= 143,
-	//! \brief \todo describe this
-	asBC_Cast			= 144,	// Cast handle type to another handle type
-
-	//! \brief \todo describe this
+	//! \brief Pop an object handle to a script class from the stack. Perform a dynamic cast on it and store the result in the object register.
+	asBC_Cast			= 144,
+	//! \brief Convert the 64bit integer value in one variable to a 32bit integer in another variable
 	asBC_i64TOi			= 145,
-	//! \brief \todo describe this
+	//! \brief Convert the 32bit unsigned integer value in one variable to a 64bit integer in another variable
 	asBC_uTOi64			= 146,
-	//! \brief \todo describe this
+	//! \brief Convert the 32bit integer value in one variable to a 64bit integer in another variable
 	asBC_iTOi64			= 147,
-	//! \brief \todo describe this
+	//! \brief Convert the float value in one variable to a 64bit integer in another variable
 	asBC_fTOi64			= 148,
-	//! \brief \todo describe this
+	//! \brief Convert the double value in the variable to a 64bit integer
 	asBC_dTOi64			= 149,
-	//! \brief \todo describe this
+	//! \brief Convert the float value in one variable to a 64bit unsigned integer in another variable
 	asBC_fTOu64			= 150,
-	//! \brief \todo describe this
+	//! \brief Convert the double value in the variable to a 64bit unsigned integer
 	asBC_dTOu64			= 151,
-	//! \brief \todo describe this
+	//! \brief Convert the 64bit integer value in one variable to a float in another variable
 	asBC_i64TOf			= 152,
-	//! \brief \todo describe this
+	//! \brief Convert the 64bit unsigned integer value in one variable to a float in another variable
 	asBC_u64TOf			= 153,
-	//! \brief \todo describe this
+	//! \brief Convert the 32bit integer value in the variable to a double
 	asBC_i64TOd			= 154,
-	//! \brief \todo describe this
+	//! \brief Convert the 32bit unsigned integer value in the variable to a double
 	asBC_u64TOd			= 155,
-	//! \brief \todo describe this
+	//! \brief Negate the 64bit integer value in the variable
 	asBC_NEGi64			= 156,
-	//! \brief \todo describe this
+	//! \brief Increment the 64bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_INCi64			= 157,
-	//! \brief \todo describe this
+	//! \brief Decrement the 64bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_DECi64			= 158,
-	//! \brief \todo describe this
+	//! \brief Perform a bitwise complement on the 64bit value in the variable
 	asBC_BNOT64			= 159,
-
-	//! \brief \todo describe this
+	//! \brief Perform an addition with two 64bit integer variables and store the result in a third variable
 	asBC_ADDi64			= 160,
-	//! \brief \todo describe this
+	//! \brief Perform a subtraction with two 64bit integer variables and store the result in a third variable
 	asBC_SUBi64			= 161,
-	//! \brief \todo describe this
+	//! \brief Perform a multiplication with two 64bit integer variables and store the result in a third variable
 	asBC_MULi64			= 162,
-	//! \brief \todo describe this
+	//! \brief Perform a division with two 64bit integer variables and store the result in a third variable
 	asBC_DIVi64			= 163,
-	//! \brief \todo describe this
+	//! \brief Perform the modulo operation with two 64bit integer variables and store the result in a third variable
 	asBC_MODi64			= 164,
-	//! \brief \todo describe this
+	//! \brief Perform a bitwise and of two 64bit values and store the result in a third variable
 	asBC_BAND64			= 165,
-	//! \brief \todo describe this
+	//! \brief Perform a bitwise or of two 64bit values and store the result in a third variable
 	asBC_BOR64			= 166,
-	//! \brief \todo describe this
+	//! \brief Perform a bitwise exclusive or of two 64bit values and store the result in a third variable
 	asBC_BXOR64			= 167,
-	//! \brief \todo describe this
+	//! \brief Perform a logical left shift of a 64bit value and store the result in a third variable
 	asBC_BSLL64			= 168,
-	//! \brief \todo describe this
+	//! \brief Perform a logical right shift of a 64bit value and store the result in a third variable
 	asBC_BSRL64			= 169,
-	//! \brief \todo describe this
+	//! \brief Perform a arithmetical right shift of a 64bit value and store the result in a third variable
 	asBC_BSRA64			= 170,
-	//! \brief \todo describe this
+	//! \brief Compare two 64bit integer variables and store the result in the value register
 	asBC_CMPi64			= 171,
-	//! \brief \todo describe this
+	//! \brief Compare two unsigned 64bit integer variables and store the result in the value register
 	asBC_CMPu64			= 172,
-	
-	//! \brief \todo describe this
+	//! \brief Check if a pointer on the stack is null, and if it is throw an exception. The argument is relative to the top of the stack
 	asBC_ChkNullS		= 173,
-	//! \brief \todo describe this
+	//! \brief Clear the upper bytes of the value register so that only the value in the lowest byte is kept
 	asBC_ClrHi			= 174,
-	//! \brief \todo describe this
+	//! \brief If a JIT function is available and the argument is not 0 then call the JIT function
 	asBC_JitEntry		= 175,
 
 	asBC_MAXBYTECODE	= 176,
 
-	// Temporary tokens, can't be output to the final program
+	// Temporary tokens. Can't be output to the final program
 	asBC_PSP			= 253,
 	asBC_LINE			= 254,
 	asBC_LABEL			= 255

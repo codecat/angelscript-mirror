@@ -354,6 +354,7 @@ public:
 		bool initGlobalVarsAfterBuild;
 		bool requireEnumScope;
 		int  scanner;
+		bool includeJitInstructions;
 	} ep;
 };
 

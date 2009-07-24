@@ -5,8 +5,6 @@ using std::string;
 namespace TestScriptMath
 {
 
-#define TESTNAME "TestScriptMath"
-
 const char *script =
 "void test()                        \n"
 "{                                  \n"

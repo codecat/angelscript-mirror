@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.17.0 WIP - 2009/07/21</h2>
+<h2>Version 2.17.0 WIP - 2009/07/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The built-in array type is now completely unaware of the library internals and uses only the public interface
 <li>Unified parts of the code for native calling conventions to improve maintainability
 <li>Informing the application type when registering a value type is now only required if the type is returned by value or passed by value to a function with native calling convention
+<li>Added engine property asEP_INCLUDE_JIT_INSTRUCTIONS to indicate if the JIT bytecode instructions should be included or not. Defaults to off.
 </ul>
 <li>Library interface
 <ul>

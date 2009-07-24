@@ -670,9 +670,8 @@ int asCByteCode::Optimize()
 			// Delete POP
 			instr = GoBack(DeleteInstruction(curr));
 		}
-		// TODO: JIT: This should be based on an engine property, instead of existence of JitCompiler
-		// Delete JitEntry if there is no JitCompiler
-		else if( curr->op == asBC_JitEntry && engine->jitCompiler == 0 )
+		// Delete JitEntry if the JIT instructions are not supposed to be included
+		else if( curr->op == asBC_JitEntry && !engine->ep.includeJitInstructions )
 		{
 			instr = GoBack(DeleteInstruction(curr));
 		}
@@ -1160,6 +1159,10 @@ void asCByteCode::Alloc(asEBCInstr instr, void *objID, int funcID, int pop)
 	asASSERT(asBCInfo[instr].type == asBCTYPE_PTR_DW_ARG);
 	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)objID;
 	*((int*)(ARG_DW(last->arg)+AS_PTR_SIZE)) = funcID;
+
+    // Add in a JitEntry instruction after function calls so that JIT's can resume execution
+    // TODO: Should this be done by the compiler?
+    InstrWORD(asBC_JitEntry, 0);
 }
 
 void asCByteCode::Ret(int pop)

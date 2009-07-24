@@ -2231,27 +2231,21 @@ void asCContext::ExecuteNext()
 				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(l_bc);
 				asSTypeBehaviour *beh = &objType->beh;
 
-				// Need to move the values back to the context
-				regs.programPointer = l_bc;
-				regs.stackPointer = l_sp;
-				regs.stackFramePointer = l_fp;
-
 				if( beh->release )
 				{
 					engine->CallObjectMethod(*a, beh->release);
-
-					// The release method will free the memory
 				}
 				else
 				{
 					if( beh->destruct )
 					{
-						// Call the destructor
 						engine->CallObjectMethod(*a, beh->destruct);
 					}
 
 					engine->CallFree(*a);
 				}
+
+				// Clear the variable
 				*a = 0;
 			}
 		}
@@ -2278,10 +2272,13 @@ void asCContext::ExecuteNext()
 
 	case asBC_GETOBJ:
 		{
+			// Read variable index from location on stack
 			size_t *a = (size_t*)(l_sp + asBC_WORDARG0(l_bc));
 			asDWORD offset = *(asDWORD*)a;
+			// Move pointer from variable to the same location on the stack
 			size_t *v = (size_t*)(l_fp - offset);
 			*a = *v;
+			// Clear variable
 			*v = 0;
 		}
 		l_bc++;
@@ -2291,8 +2288,12 @@ void asCContext::ExecuteNext()
 		{
 			asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(l_bc);
 			asSTypeBehaviour *beh = &objType->beh;
+
+			// Pop address of destination pointer from the stack
 			void **d = (void**)*(size_t*)l_sp;
 			l_sp += AS_PTR_SIZE;
+			
+			// Read wanted pointer from the stack
 			void *s = (void*)*(size_t*)l_sp;
 
 			// Need to move the values back to the context
@@ -2300,10 +2301,14 @@ void asCContext::ExecuteNext()
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
 
+			// Release previous object held by destination pointer
 			if( *d != 0 )
 				engine->CallObjectMethod(*d, beh->release);
+			// Increase ref counter of wanted object
 			if( s != 0 )
 				engine->CallObjectMethod(s, beh->addref);
+
+			// Set the new object in the destination
 			*d = s;
 		}
 		l_bc += 1+AS_PTR_SIZE;
@@ -2329,7 +2334,10 @@ void asCContext::ExecuteNext()
 
 	case asBC_GETOBJREF:
 		{
+			// Get the location on the stack where the reference will be placed
 			size_t *a = (size_t*)(l_sp + asBC_WORDARG0(l_bc));
+
+			// Replace the variable index with the object handle held in the variable
 			*(size_t**)a = *(size_t**)(l_fp - *a);
 		}
 		l_bc++;
@@ -2337,7 +2345,10 @@ void asCContext::ExecuteNext()
 
 	case asBC_GETREF:
 		{
+			// Get the location on the stack where the reference will be placed
 			size_t *a = (size_t*)(l_sp + asBC_WORDARG0(l_bc));
+
+			// Replace the variable index with the address of the variable
 			*(size_t**)a = (size_t*)(l_fp - (int)*a);
 		}
 		l_bc++;
@@ -2370,12 +2381,10 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_TYPEID:
-		{
-			--l_sp;
-			asDWORD typeId = asBC_DWORDARG(l_bc);
-			*l_sp = typeId;
-			l_bc += 2;
-		}
+		// Equivalent to PshC4, but kept as separate instruction for bytecode serialization
+		--l_sp;
+		*l_sp = asBC_DWORDARG(l_bc);
+		l_bc += 2;
 		break;
 
 	case asBC_SetV4:
@@ -2893,12 +2902,22 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_SetV1:
+		// TODO: This is exactly the same as SetV4. This is a left over from the time
+		//       when the bytecode instructions were more tightly packed. It can now
+		//       be removed. When removing it, make sure the value is correctly converted
+		//       on big-endian CPUs.
+
 		// The byte is already stored correctly in the argument
 		*(l_fp - asBC_SWORDARG0(l_bc)) = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;
 
 	case asBC_SetV2:
+		// TODO: This is exactly the same as SetV4. This is a left over from the time
+		//       when the bytecode instructions were more tightly packed. It can now
+		//       be removed. When removing it, make sure the value is correctly converted
+		//       on big-endian CPUs.
+
 		// The word is already stored correctly in the argument
 		*(l_fp - asBC_SWORDARG0(l_bc)) = asBC_DWORDARG(l_bc);
 		l_bc += 2;
@@ -2915,11 +2934,22 @@ void asCContext::ExecuteNext()
 				asCScriptObject *obj = (asCScriptObject *)* a;
 				asCObjectType *objType = obj->objType;
 				asCObjectType *to = engine->GetObjectTypeFromTypeId(typeId);
+
+				// This instruction can only be used with script classes and interfaces
+				asASSERT( objType->flags & asOBJ_SCRIPT_OBJECT );
+				asASSERT( to->flags & asOBJ_SCRIPT_OBJECT );
+
 				if( objType->Implements(to) || objType->DerivesFrom(to) )
 				{
 					regs.objectType = 0;
 					regs.objectRegister = obj;
 					obj->AddRef();
+				}
+				else
+				{
+					// The object register should already be null, so there  
+					// is no need to clear it if the cast is unsuccessful
+					asASSERT( regs.objectRegister == 0 );
 				}
 			}
 			l_sp += AS_PTR_SIZE;

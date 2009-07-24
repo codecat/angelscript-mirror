@@ -247,6 +247,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 			return asINVALID_ARG;
 		break;
 
+	case asEP_INCLUDE_JIT_INSTRUCTIONS:
+		ep.includeJitInstructions = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -290,6 +294,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 
 	case asEP_SCRIPT_SCANNER:
 		return ep.scanner;
+
+	case asEP_INCLUDE_JIT_INSTRUCTIONS:
+		return ep.includeJitInstructions;
 	}
 
 	return 0;
@@ -321,6 +328,7 @@ asCScriptEngine::asCScriptEngine()
 	ep.initGlobalVarsAfterBuild = true;
 	ep.requireEnumScope         = false;
 	ep.scanner                  = 1;         // utf8
+	ep.includeJitInstructions   = false;
 
 	gc.engine = this;
 

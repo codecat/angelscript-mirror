@@ -84,7 +84,8 @@ enum asEEngineProp
 	asEP_BUILD_WITHOUT_LINE_CUES      = 8,
 	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9,
 	asEP_REQUIRE_ENUM_SCOPE           = 10,
-	asEP_SCRIPT_SCANNER               = 11
+	asEP_SCRIPT_SCANNER               = 11,
+	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12
 };
 
 // Calling conventions
@@ -1091,42 +1092,33 @@ public:
 // Byte code instructions
 enum asEBCInstr
 {
-	// Unsorted
-	asBC_POP			= 0,	// Decrease stack size
-	asBC_PUSH			= 1,	// Increase stack size
-	asBC_PshC4			= 2,	// Push constant on stack
-	asBC_PshV4			= 3,	// Push value in variable on stack
-	asBC_PSF			= 4,	// Push stack frame
-	asBC_SWAP4			= 5,	// Swap top two dwords
-	asBC_NOT			= 6,    // Boolean not operator for a variable
-	asBC_PshG4			= 7,	// Push value in global variable on stack
-	asBC_LdGRdR4		= 8,    // Same as LDG, RDR4
-	asBC_CALL			= 9,	// Call function
-	asBC_RET			= 10,	// Return from function
+	asBC_POP			= 0,
+	asBC_PUSH			= 1,
+	asBC_PshC4			= 2,
+	asBC_PshV4			= 3,
+	asBC_PSF			= 4,
+	asBC_SWAP4			= 5,
+	asBC_NOT			= 6,
+	asBC_PshG4			= 7,
+	asBC_LdGRdR4		= 8,
+	asBC_CALL			= 9,
+	asBC_RET			= 10,
 	asBC_JMP			= 11,
-
-	// Conditional jumps
 	asBC_JZ				= 12,
 	asBC_JNZ			= 13,
-	asBC_JS				= 14,	// Same as TS+JNZ or TNS+JZ
-	asBC_JNS			= 15,	// Same as TNS+JNZ or TS+JZ
-	asBC_JP				= 16,	// Same as TP+JNZ or TNP+JZ
-	asBC_JNP			= 17,	// Same as TNP+JNZ or TP+JZ
-
-	// Test value
-	asBC_TZ				= 18,	// Test if zero
-	asBC_TNZ			= 19,	// Test if not zero
-	asBC_TS				= 20,	// Test if signaled (less than zero)
-	asBC_TNS			= 21,	// Test if not signaled (zero or greater)
-	asBC_TP				= 22,	// Test if positive (greater than zero)
-	asBC_TNP			= 23,	// Test if not positive (zero or less)
-
-	// Negate value
+	asBC_JS				= 14,
+	asBC_JNS			= 15,
+	asBC_JP				= 16,
+	asBC_JNP			= 17,
+	asBC_TZ				= 18,
+	asBC_TNZ			= 19,
+	asBC_TS				= 20,
+	asBC_TNS			= 21,
+	asBC_TP				= 22,
+	asBC_TNP			= 23,
 	asBC_NEGi			= 24,
 	asBC_NEGf			= 25,
 	asBC_NEGd			= 26,
-
-	// Increment value pointed to by address in register
 	asBC_INCi16			= 27,
 	asBC_INCi8			= 28,
 	asBC_DECi16			= 29,
@@ -1137,12 +1129,8 @@ enum asEBCInstr
 	asBC_DECf			= 34,
 	asBC_INCd			= 35,
 	asBC_DECd			= 36,
-
-	// Increment variable
 	asBC_IncVi			= 37,
 	asBC_DecVi			= 38,
-
-	// Bitwise operations
 	asBC_BNOT			= 39,
 	asBC_BAND			= 40,
 	asBC_BOR			= 41,
@@ -1150,28 +1138,21 @@ enum asEBCInstr
 	asBC_BSLL			= 43,
 	asBC_BSRL			= 44,
 	asBC_BSRA			= 45,
-
-	// Unsorted
-	asBC_COPY			= 46,	// Do byte-for-byte copy of object
-	asBC_SET8			= 47,	// Push QWORD on stack
-	asBC_RDS8			= 48,	// Read value from address on stack onto the top of the stack
+	asBC_COPY			= 46,
+	asBC_SET8			= 47,
+	asBC_RDS8			= 48,
 	asBC_SWAP8			= 49,
-
-	// Comparisons
 	asBC_CMPd			= 50,
 	asBC_CMPu			= 51,
 	asBC_CMPf			= 52,
 	asBC_CMPi			= 53,
-
-	// Comparisons with constant value
 	asBC_CMPIi			= 54,
 	asBC_CMPIf			= 55,
 	asBC_CMPIu			= 56,
-
-	asBC_JMPP			= 57,	// Jump with offset in variable
-	asBC_PopRPtr		= 58,	// Pop address from stack into register
-	asBC_PshRPtr		= 59,	// Push address from register on stack
-	asBC_STR			= 60,	// Push string address and length on stack
+	asBC_JMPP			= 57,
+	asBC_PopRPtr		= 58,
+	asBC_PshRPtr		= 59,
+	asBC_STR			= 60,
 	asBC_CALLSYS		= 61,
 	asBC_CALLBND		= 62,
 	asBC_SUSPEND		= 63,
@@ -1188,48 +1169,44 @@ enum asEBCInstr
 	asBC_SWAP84			= 74,
 	asBC_OBJTYPE		= 75,
 	asBC_TYPEID			= 76,
-	asBC_SetV4			= 77,	// Initialize the variable with a DWORD
-	asBC_SetV8			= 78,	// Initialize the variable with a QWORD
-	asBC_ADDSi			= 79,	// Add arg to value on stack
-	asBC_CpyVtoV4		= 80,	// Copy value from one variable to another
-	asBC_CpyVtoV8		= 81,	
-	asBC_CpyVtoR4		= 82,	// Copy value from variable into register
-	asBC_CpyVtoR8		= 83,	// Copy value from variable into register
-	asBC_CpyVtoG4		= 84,   // Write the value of a variable to a global variable (LDG, WRTV4)
-	asBC_CpyRtoV4		= 85,   // Copy the value from the register to the variable
+	asBC_SetV4			= 77,
+	asBC_SetV8			= 78,
+	asBC_ADDSi			= 79,
+	asBC_CpyVtoV4		= 80,
+	asBC_CpyVtoV8		= 81,
+	asBC_CpyVtoR4		= 82,
+	asBC_CpyVtoR8		= 83,
+	asBC_CpyVtoG4		= 84,
+	asBC_CpyRtoV4		= 85,
 	asBC_CpyRtoV8		= 86,
-	asBC_CpyGtoV4		= 87,   // Copy the value of the global variable to a local variable (LDG, RDR4)
-	asBC_WRTV1			= 88,	// Copy value from variable to address held in register
+	asBC_CpyGtoV4		= 87,
+	asBC_WRTV1			= 88,
 	asBC_WRTV2			= 89,
 	asBC_WRTV4			= 90,
 	asBC_WRTV8			= 91,
-	asBC_RDR1			= 92,	// Read value from address in register and store in variable
+	asBC_RDR1			= 92,
 	asBC_RDR2			= 93,
 	asBC_RDR4			= 94,	
 	asBC_RDR8			= 95,
-	asBC_LDG			= 96,	// Load the register with the address of the global attribute
-	asBC_LDV			= 97,	// Load the register with the address of the variable
+	asBC_LDG			= 96,
+	asBC_LDV			= 97,
 	asBC_PGA			= 98,
-	asBC_RDS4			= 99,	// Read value from address on stack onto the top of the stack
-	asBC_VAR			= 100,	// Push the variable offset on the stack
-
-	// Type conversions
+	asBC_RDS4			= 99,
+	asBC_VAR			= 100,
 	asBC_iTOf			= 101,
 	asBC_fTOi			= 102,
 	asBC_uTOf			= 103,
 	asBC_fTOu			= 104,
-	asBC_sbTOi			= 105,	// Signed byte
-	asBC_swTOi			= 106,	// Signed word
-	asBC_ubTOi			= 107,	// Unsigned byte
-	asBC_uwTOi			= 108,	// Unsigned word
+	asBC_sbTOi			= 105,
+	asBC_swTOi			= 106,
+	asBC_ubTOi			= 107,
+	asBC_uwTOi			= 108,
 	asBC_dTOi			= 109,
 	asBC_dTOu			= 110,
 	asBC_dTOf			= 111,
 	asBC_iTOd			= 112,
 	asBC_uTOd			= 113,
 	asBC_fTOd			= 114,
-
-	// Math operations
 	asBC_ADDi			= 115,
 	asBC_SUBi			= 116,
 	asBC_MULi			= 117,
@@ -1245,26 +1222,21 @@ enum asEBCInstr
 	asBC_MULd			= 127,
 	asBC_DIVd			= 128,
 	asBC_MODd			= 129,
-
-	// Math operations with constant value
 	asBC_ADDIi			= 130,
 	asBC_SUBIi			= 131,
 	asBC_MULIi			= 132,
 	asBC_ADDIf			= 133,
 	asBC_SUBIf			= 134,
 	asBC_MULIf			= 135,
-
-	asBC_SetG4			= 136,	// Initialize the global variable with a DWORD
-	asBC_ChkRefS		= 137,  // Verify that the reference to the handle on the stack is not null
-	asBC_ChkNullV		= 138,  // Verify that the variable is not a null handle
-	asBC_CALLINTF		= 139,	// Call interface method 
-
+	asBC_SetG4			= 136,
+	asBC_ChkRefS		= 137,
+	asBC_ChkNullV		= 138,
+	asBC_CALLINTF		= 139,
 	asBC_iTOb			= 140,
 	asBC_iTOw			= 141,
 	asBC_SetV1			= 142,
 	asBC_SetV2			= 143,
-	asBC_Cast			= 144,	// Cast handle type to another handle type
-
+	asBC_Cast			= 144,
 	asBC_i64TOi			= 145,
 	asBC_uTOi64			= 146,
 	asBC_iTOi64			= 147,
@@ -1280,7 +1252,6 @@ enum asEBCInstr
 	asBC_INCi64			= 157,
 	asBC_DECi64			= 158,
 	asBC_BNOT64			= 159,
-
 	asBC_ADDi64			= 160,
 	asBC_SUBi64			= 161,
 	asBC_MULi64			= 162,
@@ -1294,14 +1265,13 @@ enum asEBCInstr
 	asBC_BSRA64			= 170,
 	asBC_CMPi64			= 171,
 	asBC_CMPu64			= 172,
-	
 	asBC_ChkNullS		= 173,
 	asBC_ClrHi			= 174,
 	asBC_JitEntry		= 175,
 
 	asBC_MAXBYTECODE	= 176,
 
-	// Temporary tokens, can't be output to the final program
+	// Temporary tokens. Can't be output to the final program
 	asBC_PSP			= 253,
 	asBC_LINE			= 254,
 	asBC_LABEL			= 255
