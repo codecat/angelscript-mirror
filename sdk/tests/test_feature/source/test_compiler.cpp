@@ -78,6 +78,7 @@ bool Test5();
 bool Test6();
 bool Test7();
 bool Test8();
+bool Test9();
 
 bool Test()
 {
@@ -91,6 +92,7 @@ bool Test()
 	fail = Test6() || fail;
 	fail = Test7() || fail;
 	fail = Test8() || fail;
+	fail = Test9() || fail;
 
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
@@ -910,6 +912,37 @@ bool Test8()
 	r = engine->ExecuteString(0, "string str = func(); assert( str == '' );");
 	if( r != asEXECUTION_FINISHED ) 
 		fail = true;
+
+	engine->Release();
+
+	return fail;
+}
+
+bool Test9()
+{
+	bool fail = false;
+	CBufferedOutStream bout;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+	const char *script = "void Func() \n"
+						 "{ \n"
+						 "	(aaa.AnyName())==0?1:0; \n"
+						 "} \n";
+
+	mod->AddScriptSection("sc", script);
+	int r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+
+	if( bout.buffer != "sc (1, 1) : Info    : Compiling void Func()\n"
+					   "sc (3, 3) : Error   : 'aaa' is not declared\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
 	engine->Release();
 

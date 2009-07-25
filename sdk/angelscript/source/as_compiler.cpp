@@ -5339,6 +5339,9 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	// Shouldn't send any byte code
 	asASSERT(ctx->bc.GetLastInstr() == -1);
 
+	// Set the type as a dummy by default, in case of any compiler errors
+	ctx->type.SetDummy();
+
 	// Compile the value node
 	asCScriptNode *vnode = node->firstChild;
 	while( vnode->nodeType != snExprValue )
