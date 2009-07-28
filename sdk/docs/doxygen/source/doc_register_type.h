@@ -231,36 +231,77 @@ may be difficult to detect, e.g. the function is not returning the expected valu
 
 \page doc_reg_opbeh Registering operator behaviours
 
-\todo Update this with change
+In order for AngelScript to know how to work with the application registered types, it is 
+necessary to register some behaviours, for example for memory management.
 
-You can register operator behaviours for your types as well. By doing this
-you'll allow the script to work with the types in expressions, just like the
-built-in types.
+The memory management behaviours are described with the registeration of registering 
+\ref doc_reg_basicref "reference types" and \ref doc_register_val_type "value types".
 
-There two forms of operator behaviours, either object behaviours or global
-behaviours. An object behaviour is implemented as a class method, and a global
-behaviour is implemented as a global function.
+Other advanced behaviours are described with the \ref doc_advanced_api "advanced types".
+
+Only a few operators have special behaviours for them, the other operators are registered as 
+ordinary \ref doc_script_class_ops "class methods with predefined names".
+
+\section doc_reg_opbeh_1 Index operator
+
+The index operator is usually used to access an element by index, e.g. the elements of an array.
 
 \code
-// Registering an object behaviour
+// Simple implementation of the index operator
 int &MyClass::operator[] (int index)
 {
   return internal_array[index];
 }
 
-r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_INDEX, "int &f(int)", asMETHOD(MyClass,operator[]), asCALL_THISCALL); assert( r >= 0 );
-
-// Registering a global behaviour
-MyClass operator+(const MyClass &a, const MyClass &b)
+// Non-mutable variant that works on const references to the object
+const int &MyClass::operator[] (int index) const
 {
-  MyClass res = a + b;
-  return res;
+  return internal_array[index];
 }
 
-r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD, "mytype f(const mytype &in, const mytype &in)", asFUNCTIONPR(operator+, (const MyClass &, const MyClass &), MyClass), asCALL_CDECL); assert( r >= 0 );
+// Register both the const and non-const alternative for const correctness
+r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_INDEX, "int &f(int)", asMETHODPR(MyClass, operator[], (int), int&), asCALL_THISCALL); assert( r >= 0 );
+r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_INDEX, "const int &f(int) const", asMETHODPR(MyClass, operator[], (int) const, const int&), asCALL_THISCALL); assert( r >= 0 );
 \endcode
 
-You can find a complete list of behaviours \ref doc_api_behaviours "here".
+\section doc_reg_opbeh_2 Value cast operators
+
+The value cast operators are used to allow the scripts to convert an object type to another 
+type by constructing a new value. This is different from a \ref doc_adv_class_hierarchy "reference cast",
+that do not construct new values, but rather changes the way it is perceived.
+
+By registering the behaviour either as \ref asBEHAVE_VALUE_CAST or \ref asBEHAVE_IMPLICIT_VALUE_CAST you
+let AngelScript know whether the behaviour may be used to implicitly cast the type or not.
+
+\code
+// Convert a string to an int
+int ConvStringToInt(const std::string &s)
+{
+  return atoi(s.c_str());
+}
+
+// Register the behaviour
+r = engine->RegisterObjectBehaviour("string", asBEHAVE_VALUE_CAST, "int f() const", asFUNCTION(ConvStringToInt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+\endcode
+
+The return type for the cast behaviour can be any type except bool and void. The value cast is meant to create a new value, so if the function
+returns a reference or an object handle make sure it points to a new value and not the original one.
+
+The object constructors and factories also serve as alternative explicit value cast operators, so if a constructor or factory is already available
+then there is no need to register the explicit value cast operator. 
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \page doc_reg_objmeth Registering object methods
 

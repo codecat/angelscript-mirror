@@ -90,6 +90,8 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_adv_single_ref_type
  - \subpage doc_adv_class_hierarchy
  - \subpage doc_adv_var_type
+ 
+\todo Add page on template types
 
  
  
@@ -121,8 +123,5 @@ This is the reference documentation for the AngelScript application programming 
 
  - \subpage doc_api_functions
  - \subpage doc_api_interfaces
- - \subpage doc_api_behaviours
-
-
 
 */

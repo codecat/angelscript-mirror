@@ -5747,7 +5747,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 #ifndef AS_64BIT_PTR
 			ctx->bc.InstrDWORD(asBC_PshC4, 0);
 #else
-			ctx->bc.InstrQWORD(asBC_SET8, 0);
+			ctx->bc.InstrQWORD(asBC_PshC8, 0);
 #endif
 			ctx->type.SetNullConstant();
 		}

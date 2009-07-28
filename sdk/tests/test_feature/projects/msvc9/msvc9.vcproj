@@ -195,6 +195,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptarray\scriptarray.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp"
 				>
 			</File>
@@ -236,6 +240,10 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_2func.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\test_addon_scriptarray.cpp"
 				>
 			</File>
 			<File
@@ -754,6 +762,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\add_on\scriptany\scriptany.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptarray\scriptarray.h"
 				>
 			</File>
 			<File

@@ -1446,7 +1446,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	// Load the address of a globar variable in the register, then  
+	// Load the address of a global variable in the register, then  
 	// copy the value of the global variable into a local variable
 	case asBC_LdGRdR4:
 		*(void**)&regs.valueRegister = regs.globalVarPointers[asBC_WORDARG1(l_bc)];
@@ -1897,7 +1897,7 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
-	case asBC_SET8:
+	case asBC_PshC8:
 		l_sp -= 2;
 		*(asQWORD*)l_sp = asBC_QWORDARG(l_bc);
 		l_bc += 3;
@@ -2034,7 +2034,8 @@ void asCContext::ExecuteNext()
 			// Get function ID from the argument
 			int i = asBC_INTARG(l_bc);
 
-			// Need to move the values back to the context
+			// Need to move the values back to the context as the called functions
+			// may use the debug interface to inspect the registers
 			regs.programPointer = l_bc;
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
@@ -2181,7 +2182,8 @@ void asCContext::ExecuteNext()
 
 				if( func )
 				{
-					// Need to move the values back to the context
+					// Need to move the values back to the context as the called functions
+					// may use the debug interface to inspect the registers
 					regs.programPointer = l_bc;
 					regs.stackPointer = l_sp;
 					regs.stackFramePointer = l_fp;
@@ -2230,6 +2232,12 @@ void asCContext::ExecuteNext()
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(l_bc);
 				asSTypeBehaviour *beh = &objType->beh;
+
+				// Need to move the values back to the context as the called functions
+				// may use the debug interface to inspect the registers
+				regs.programPointer = l_bc;
+				regs.stackPointer = l_sp;
+				regs.stackFramePointer = l_fp;
 
 				if( beh->release )
 				{
@@ -2296,7 +2304,8 @@ void asCContext::ExecuteNext()
 			// Read wanted pointer from the stack
 			void *s = (void*)*(size_t*)l_sp;
 
-			// Need to move the values back to the context
+			// Need to move the values back to the context as the called functions
+			// may use the debug interface to inspect the registers
 			regs.programPointer = l_bc;
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;

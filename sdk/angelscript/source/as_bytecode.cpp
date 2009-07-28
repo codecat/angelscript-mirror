@@ -737,22 +737,11 @@ int asCByteCode::Optimize()
 			instr->wArg[0] -= 2-AS_PTR_SIZE; // Transform the pop to remove the address instead of the 8 byte word
 			instr = GoBack(instr);
 		}
-		// YYY y, POP x -> POP x-2
-		else if( IsCombination(curr, asBC_SET8, asBC_POP) && instr->wArg[0] > 1 )
+		// PshC8 y, POP x -> POP x-2
+		else if( IsCombination(curr, asBC_PshC8, asBC_POP) && instr->wArg[0] > 1 )
 		{
 			DeleteInstruction(curr);
 			instr->wArg[0] -= 2;
-			instr = GoBack(instr);
-		}
-		// YYY y, POP x -> POP x+1
-		else if( (IsCombination(curr, asBC_ADDi, asBC_POP) ||
-		          IsCombination(curr, asBC_SUBi, asBC_POP)) && instr->wArg[0] > 0 )
-		{
-			// Delete current
-			DeleteInstruction(curr);
-			// Increase the POP
-			instr->wArg[0]++;
-			// Continue with the instruction before the one removed
 			instr = GoBack(instr);
 		}
 		// POP 0 -> remove

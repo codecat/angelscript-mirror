@@ -18,11 +18,102 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
 
  - \subpage doc_addon_std_string
  - \subpage doc_addon_string
+ - \subpage doc_addon_array
  - \subpage doc_addon_any
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
  - \subpage doc_addon_math3d
+
+
+
+
+\page doc_addon_array array template object
+
+<b>Path:</b> /sdk/add_on/scriptarray/
+
+The <code>array</code> type is a template array object that allow the scripts to declare arrays of any type.
+Since it is a generic class it is not the most performatic due to the need to determine characteristics at 
+runtime. For that reason it is recommended that the application registers a template specialization for the
+array types that are most commonly used.
+
+The type is registered with <code>RegisterScriptArray(asIScriptEngine*);</code>.
+
+\section doc_addon_array_1 Public C++ interface
+
+\code
+class CScriptArray
+{
+public:
+  // Constructor
+  CScriptArray(asUINT length, asIObjectType *ot);
+  virtual ~CScriptArray();
+
+  // Memory management
+  void AddRef();
+  void Release();
+
+  // Type information
+  asIObjectType *GetArrayObjectType() const;
+  int            GetArrayTypeId() const;
+  int            GetElementTypeId() const;
+
+  // Get the current size
+  asUINT GetSize();
+
+  // Resize the array
+  void   Resize(asUINT numElements);
+  
+  // Get a pointer to an element. Returns 0 if out of bounds
+  void  *At(asUINT index);
+
+  // Copy the contents of one array to another (only if the types are the same)
+  CScriptArray &operator=(const CScriptArray&);
+};
+\endcode
+
+\section doc_addon_array_2 Public script interface
+
+<pre>
+  class array<class T>
+  {
+    array();
+    array(uint length);
+    
+    // Access elements
+    // T & operator [] (uint)
+    // const T & operator [] (uint) const
+
+    array<T> opAssign(const array<T> & in);
+    
+    uint length();
+    void resize(uint);
+  }
+</pre>
+
+\section doc_addon_array_3 Script example
+
+<pre>
+  int main()
+  {
+    array<int> arr(3);
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+    
+    int sum = 0;
+    for( uint n = 0; n < arr.length(); n++ )
+      sum += arr[n];
+      
+    return sum;
+  }
+</pre>
+
+
+
+
+
+
 
 
 
@@ -70,19 +161,19 @@ public:
 \section doc_addon_any_2 Public script interface
 
 <pre>
-class any
-{
-  any();
-  any(? &in value);
+  class any
+  {
+    any();
+    any(? &in value);
   
-  void store(? &in value);
-  void store(int64 &in value);
-  void store(double &in value);
+    void store(? &in value);
+    void store(int64 &in value);
+    void store(double &in value);
   
-  bool retrieve(? &out value) const;
-  bool retrieve(int64 &out value) const;
-  bool retrieve(double &out value) const;
-}
+    bool retrieve(? &out value) const;
+    bool retrieve(int64 &out value) const;
+    bool retrieve(double &out value) const;
+  }
 </pre>
 
 \section doc_addon_any_3 Example usage
@@ -117,8 +208,6 @@ myAny->Retrieve((void*)&str, typeId);
 
 \page doc_addon_std_string string object (STL)
 
-\todo Update this with changes
-
 <b>Path:</b> /sdk/add_on/scriptstdstring/
 
 This add-on registers the <code>std::string</code> type as-is with AngelScript. This gives
@@ -149,38 +238,34 @@ Refer to the <code>std::string</code> implementation for your compiler.
     // Returns the length of the string
     uint length() const;
     
-    // The string class has several operators that are not expressable in the script syntax yet
-
     // Assignment and concatenation
-    // string & operator =  (const string &in other)
-    // string & operator += (const string &in other)
-    // string   operator +  (const string &in a, const string &in b)
+    string &opAssign(const string &in other);
+    string &opAddAssign(const string &in other);
+    string  opAdd(const string &in right) const;
     
     // Access individual characters
-    // uint8 & operator [] (uint)
-    // const uint8 & operator [] (uint) const
+    // uint8 &operator [] (uint)
+    // const uint8 &operator [] (uint) const
     
     // Comparison operators
-    // bool operator == (const string &in a, const string &in b)
-    // bool operator != (const string &in a, const string &in b)
-    // bool operator <  (const string &in a, const string &in b)
-    // bool operator <= (const string &in a, const string &in b)
-    // bool operator >  (const string &in a, const string &in b)
-    // bool operator >= (const string &in a, const string &in b)
+    bool opEquals(const string &in right) const;
+    int  opCmp(const string &in right) const;
     
     // Automatic conversion from number types to string type
-    // string & operator =  (double val)
-    // string & operator += (double val)
-    // string @ operator +  (double val, const string &in str)
-    // string @ operator +  (const string &in str, double val)
-    // string & operator =  (int val)
-    // string & operator += (int val)
-    // string @ operator +  (int val, const string &in str)
-    // string @ operator +  (const string &in str, int val)
-    // string & operator =  (uint val)
-    // string & operator += (uint val)
-    // string @ operator +  (uint val, const string &in str)
-    // string @ operator +  (const string &in str, uint val)
+    string &opAssign(double val);
+    string &opAddAssign(double val);
+    string  opAdd(double val) const;
+    string  opAdd_r(double val) const;
+    
+    string &opAssign(int val);
+    string &opAddAssign(int val);
+    string  opAdd(int val) const;
+    string  opAdd_r(int val) const;
+    
+    string &opAssign(uint val);
+    string &opAddAssign(uint val);
+    string  opAdd(uint val) const;
+    string  opAdd_r(uint val) const;
   }
 </pre>
 
@@ -188,8 +273,6 @@ Refer to the <code>std::string</code> implementation for your compiler.
 
 
 \page doc_addon_string string object (reference counted)
-
-\todo Update this with changes
 
 <b>Path:</b> /sdk/add_on/scriptstring/
 
@@ -245,42 +328,39 @@ public:
     // Returns the length of the string
     uint length() const;
     
-    // The string class has several operators that are not expressable in the script syntax yet
-
     // Assignment and concatenation
-    // string & operator =  (const string &in other)
-    // string & operator += (const string &in other)
-    // string @ operator +  (const string &in a, const string &in b)
+    string &opAssign(const string &in other);
+    string &opAddAssign(const string &in other);
+    string \@opAdd(const string &in right) const;
     
     // Access individual characters
-    // uint8 & operator [] (uint)
-    // const uint8 & operator [] (uint) const
+    // uint8 &operator [] (uint)
+    // const uint8 &operator [] (uint) const
     
     // Comparison operators
-    // bool operator == (const string &in a, const string &in b)
-    // bool operator != (const string &in a, const string &in b)
-    // bool operator <  (const string &in a, const string &in b)
-    // bool operator <= (const string &in a, const string &in b)
-    // bool operator >  (const string &in a, const string &in b)
-    // bool operator >= (const string &in a, const string &in b)
+    bool opEquals(const string &in right) const;
+    int  opCmp(const string &in right) const;
     
     // Automatic conversion from number types to string type
-    // string & operator =  (double val)
-    // string & operator += (double val)
-    // string @ operator +  (double val, const string &in str)
-    // string @ operator +  (const string &in str, double val)
-    // string & operator =  (float val)
-    // string & operator += (float val)
-    // string @ operator +  (float val, const string &in str)
-    // string @ operator +  (const string &in str, float val)
-    // string & operator =  (int val)
-    // string & operator += (int val)
-    // string @ operator +  (int val, const string &in str)
-    // string @ operator +  (const string &in str, int val)
-    // string & operator =  (uint val)
-    // string & operator += (uint val)
-    // string @ operator +  (uint val, const string &in str)
-    // string @ operator +  (const string &in str, uint val)
+    string &opAssign(double val);
+    string &opAddAssign(double val);
+    string \@opAdd(double val) const;
+    string \@opAdd_r(double val) const;
+ 
+    string &opAssign(float val);
+    string &opAddAssign(float val);
+    string \@opAdd(float val) const;
+    string \@opAdd_r(float val) const;
+ 
+    string &opAssign(int val);
+    string &opAddAssign(int val);
+    string \@opAdd(int val) const;
+    string \@opAdd_r(int val) const;
+    
+    string &opAssign(uint val);
+    string &opAddAssign(uint val);
+    string \@opAdd(uint val) const;
+    string \@opAdd_r(uint val) const;
   }
 
   // Get a substring of a string

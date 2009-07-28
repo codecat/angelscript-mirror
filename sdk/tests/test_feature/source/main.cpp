@@ -143,6 +143,8 @@ namespace TestDump              { bool Test(); }
 namespace TestTemplate          { bool Test(); }
 namespace TestOperator          { bool Test(); }
 
+namespace Test_Addon_ScriptArray { bool Test(); }
+
 #include "utils.h"
 
 void DetectMemoryLeaks()
@@ -182,6 +184,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( Test_Addon_ScriptArray::Test() ) goto failed; else printf("-- Test_Addon_ScriptArray passed\n");
 	if( TestOperator::Test()          ) goto failed; else printf("-- TestOperator passed\n");
 	if( TestTemplate::Test()          ) goto failed; else printf("-- TestTemplate passed\n");
 	if( TestDump::Test()              ) goto failed; else printf("-- TestDump passed\n");

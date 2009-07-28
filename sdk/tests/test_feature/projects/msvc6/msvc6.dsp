@@ -99,6 +99,10 @@ SOURCE=..\..\source\test_2func.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_addon_scriptarray.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_any.cpp
 # End Source File
 # Begin Source File
@@ -636,6 +640,14 @@ SOURCE=..\..\..\..\add_on\scriptany\scriptany.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\add_on\scriptany\scriptany.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptarray\scriptarray.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptarray\scriptarray.h
 # End Source File
 # Begin Source File
 

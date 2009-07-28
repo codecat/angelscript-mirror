@@ -1000,7 +1000,7 @@ public:
     //! the virtual machine to perform certain operations, such as memory management,
     //! math operations, comparisons, etc.
     //!
-    //! \see \ref doc_register_func, \ref doc_api_behaviours
+    //! \see \ref doc_register_func, \ref doc_reg_opbeh
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Registers an interface.
     //!
@@ -3083,6 +3083,7 @@ public:
 
 // Byte code instructions
 //! \brief The bytecode instructions used by the VM
+//! \see \ref doc_adv_jit_1
 enum asEBCInstr
 {
 	//! \brief Decrease the stack with the amount in the argument
@@ -3180,7 +3181,7 @@ enum asEBCInstr
 	//! \brief Pop the destination and source addresses from the stack. Perform a bitwise copy of the referred object. Push the destination address on the stack.
 	asBC_COPY			= 46,
 	//! \brief Push a 64bit value on the stack
-	asBC_SET8			= 47,
+	asBC_PshC8			= 47,
 	//! \brief Pop an address from the stack, then read a 64bit value from that address and push it on the stack
 	asBC_RDS8			= 48,
 	//! \brief Swap the top two QWORDs on the stack
@@ -3603,7 +3604,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(BSRL,		wW_rW_rW_ARG,	0),
 	asBCINFO(BSRA,		wW_rW_rW_ARG,	0),
 	asBCINFO(COPY,		W_ARG,			-AS_PTR_SIZE),
-	asBCINFO(SET8,		QW_ARG,			2),
+	asBCINFO(PshC8,		QW_ARG,			2),
 	asBCINFO(RDS8,		NO_ARG,			2-AS_PTR_SIZE),
 	asBCINFO(SWAP8,		NO_ARG,			0),
 	asBCINFO(CMPd,		rW_rW_ARG,		0),
