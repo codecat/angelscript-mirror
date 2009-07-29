@@ -98,8 +98,7 @@ void CScriptDictionary::Set(const string &key, void *value, int typeId)
 	else if( typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Create a copy of the object
-		// We need to dereference the reference, as we receive a pointer to a pointer to the object
-		valStruct.valueObj = engine->CreateScriptObjectCopy(*(void**)value, typeId);
+		valStruct.valueObj = engine->CreateScriptObjectCopy(value, typeId);
 	}
 	else
 	{
@@ -174,7 +173,7 @@ bool CScriptDictionary::Get(const string &key, void *value, int typeId) const
 			// Copy the object into the given reference
 			if( isCompatible )
 			{
-				engine->CopyScriptObject(*(void**)value, it->second.valueObj, typeId);
+				engine->CopyScriptObject(value, it->second.valueObj, typeId);
 
 				return true;
 			}

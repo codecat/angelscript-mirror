@@ -364,7 +364,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	// Is the return type allowed?
 	if( (returnType.GetSizeOnStackDWords() == 0 && returnType != asCDataType::CreatePrimitive(ttVoid, false)) ||
-		(returnType.IsReference() && returnType.GetSizeInMemoryBytes() == 0) )
+		(returnType.IsReference() && !returnType.CanBeInstanciated()) )
 	{
 		asCString str;
 		str.Format(TXT_RETURN_CANT_BE_s, returnType.Format().AddressOf());
@@ -1284,7 +1284,17 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 					bc->InstrWORD(asBC_ChkNullS, (asWORD)offset);
 			}
 			else if( descr->inOutFlags[n] != asTM_INOUTREF )
-				bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+			{
+				if( descr->parameterTypes[n].GetTokenType() == ttQuestion &&
+					args[n]->type.dataType.IsObject() && !args[n]->type.dataType.IsObjectHandle() )
+				{
+					// Send the object as a reference to the object, 
+					// and not to the variable holding the object
+					bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+				}
+				else
+					bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+			}
 		}
 		else if( descr->parameterTypes[n].IsObject() )
 		{

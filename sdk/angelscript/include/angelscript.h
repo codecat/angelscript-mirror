@@ -846,6 +846,7 @@ public:
 	virtual const char      *GetDeclaration(bool includeObjectName = true) const = 0;
 	virtual bool             IsClassMethod() const = 0;
 	virtual bool             IsInterfaceMethod() const = 0;
+	virtual bool             IsReadOnly() const = 0;
 
 	virtual int              GetParamCount() const = 0;
 	virtual int              GetParamTypeId(int index, asDWORD *flags = 0) const = 0;

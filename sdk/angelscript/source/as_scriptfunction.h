@@ -68,9 +68,9 @@ struct asSSystemFunctionInterface;
 // TODO: Need a method for obtaining the function type, so that the application can differenciate between the types
 //       This should replace the IsClassMethod and IsInterfaceMethod
 
-// TODO: Need a method for obtaining the read-only flag for class methods
-
-// TODO: GetModuleName should be exchanged for GetModule and should return asIScriptModule pointer
+// TODO: GetModuleName should be removed. A function won't belong to a specific module anymore
+//       as the function can be removed from the module, but still remain alive. For example
+//       for dynamically generated functions held by a function pointer.
 
 class asCScriptFunction : public asIScriptFunction
 {
@@ -87,6 +87,7 @@ public:
 
 	bool                 IsClassMethod() const;
 	bool                 IsInterfaceMethod() const;
+	bool                 IsReadOnly() const;
 
 	int                  GetParamCount() const;
 	int                  GetParamTypeId(int index, asDWORD *flags = 0) const;

@@ -3,7 +3,7 @@
 namespace TestScriptStruct
 {
 
-#define TESTNAME "TestScriptStruct"
+static const char * const TESTNAME = "TestScriptStruct";
 
 // Normal structure
 static const char *script1 =
@@ -378,6 +378,39 @@ bool Test()
 		fail = true;
 
 	engine->Release();
+
+	// A script class must be able to have a registered ref type as a local member
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		RegisterScriptString(engine);
+
+		const char *script = "class C { string s; }";
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("s", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 ) 
+			fail = true;
+
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		if( !fail )
+		{
+			r = engine->ExecuteString(0, "C c; c.s = 'test';");
+			if( r != asEXECUTION_FINISHED )
+			{
+				fail = true;
+			}
+		}
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;

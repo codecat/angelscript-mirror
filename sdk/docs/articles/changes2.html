@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.17.0 WIP - 2009/07/27</h2>
+<h2>Version 2.17.0 WIP - 2009/07/28</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed compiler error in the XBox 360 specific code. (Thanks Marc Hanson)
 <li>Scoped reference types can now be members of script classes. (Thanks Jeff Slutter)
 <li>Fixed crash in compiler on invalid script (Thanks cvet)
+<li>Reference types that had been registered with zero size wasn't allowed as members of script classes. (Thanks Friggle)
 </ul>
 <li>Library
 <ul>
@@ -31,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Unified parts of the code for native calling conventions to improve maintainability
 <li>Informing the application type when registering a value type is now only required if the type is returned by value or passed by value to a function with native calling convention
 <li>Added engine property asEP_INCLUDE_JIT_INSTRUCTIONS to indicate if the JIT bytecode instructions should be included or not. Defaults to off.
+<li>The variant parameter, ?, now receive a reference to the actual object if the argument is not a handle (Thanks IndependentHat)
 </ul>
 <li>Library interface
 <ul>
@@ -40,6 +42,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Deprecated CompareScriptObjects. Use the helper functions CompareRelation or CompareEquality from the add-ons instead.
 <li>Deprecated all assignment behaviours and the negate behaviour. These behaviours should use the new class methods instead.
 <li>Changed asBEHAVE_REF_CAST and asBEHAVE_IMPLICIT_REF_CAST to be registered as object behaviours. Verify the documentation for implementation changes.
+<li>Added IsReadOnly method to asIScriptFunction
 </ul>
 <li>Virtual machine
 <ul>

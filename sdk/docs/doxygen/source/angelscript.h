@@ -2766,6 +2766,9 @@ public:
 	//! \brief Returns true if it is an interface method
     //! \return True if this is an interface method.
 	virtual bool             IsInterfaceMethod() const = 0;
+	//! \brief Returns true if the class method is read-only
+	//! \return True if the class method is read-only
+	virtual bool             IsReadOnly() const = 0;
 	//! \}
 
 	//! \name Parameter and return types

@@ -125,6 +125,12 @@ bool asCScriptFunction::IsInterfaceMethod() const
 	return objectType && objectType->IsInterface();
 }
 
+// interface
+bool asCScriptFunction::IsReadOnly() const
+{
+	return isReadOnly;
+}
+
 // internal
 int asCScriptFunction::GetSpaceNeededForArguments()
 {
@@ -501,7 +507,7 @@ void asCScriptFunction::JITCompile()
                 if( off < 0 )
                     off = 0;
                 else
-                    off++; // We need 0 indicate "no jit buffer"
+                    off++; // We need 0 to indicate "no jit buffer"
 
                 if( off > 65535 )
                 {

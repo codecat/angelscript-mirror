@@ -16,14 +16,22 @@ void testFuncI(asIScriptGeneric *gen)
 	if( typeId == gen->GetEngine()->GetTypeIdByDecl("int") )
 		assert(*(int*)ref == 42);
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string") )
-		assert((*(CScriptString**)ref)->buffer == "test");
+		assert(((CScriptString*)ref)->buffer == "test");
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string@") )
 		assert((*(CScriptString**)ref)->buffer == "test");
 	else
 		assert(false);
 }
 
-// AngelScript syntax: void testFuncO(?& in)
+// AngelScript syntax: void testFuncS(string &in)
+// C++ syntax: void testFuncS(string &)
+void testFuncS(asIScriptGeneric *gen)
+{
+	CScriptString *str = (CScriptString*)gen->GetArgAddress(0);
+	assert( str->buffer == "test" );
+}
+
+// AngelScript syntax: void testFuncO(?& out)
 // C++ syntax: void testFuncO(void *ref, int typeId)
 // void testFuncO(void *ref, int typeId)
 void testFuncO(asIScriptGeneric *gen)
@@ -33,7 +41,7 @@ void testFuncO(asIScriptGeneric *gen)
 	if( typeId == gen->GetEngine()->GetTypeIdByDecl("int") )
 		*(int*)ref = 42;
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string") )
-		(*(CScriptString**)ref)->buffer = "test";
+		((CScriptString*)ref)->buffer = "test";
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string@") )
 		*(CScriptString**)ref = new CScriptString("test");
 	else
@@ -48,8 +56,13 @@ void testFuncIS(void *ref, int typeId, CScriptString &str)
 
 	// Primitives are received as a pointer to the value
 	// Handles are received as a pointer to the handle
-	// Objects are received as a pointer to a pointer to the object 
-	assert(*(int*)ref == 42 || **(std::string**)ref == "t");
+	// Objects are received as a pointer to the object 
+	if( typeId & asTYPEID_OBJHANDLE )
+		assert( **(std::string**)ref == "t" );
+	else if( typeId & asTYPEID_MASK_OBJECT )
+		assert( *(std::string*)ref == "t" );
+	else
+		assert( *(int*)ref == 42 );
 }
 
 void testFuncIS_generic(asIScriptGeneric *gen)
@@ -210,12 +223,17 @@ bool Test()
 	if( r < 0 ) fail = true;
 	r = engine->RegisterGlobalFunction("void testFuncCI(const?&in)", asFUNCTION(testFuncI), asCALL_GENERIC);
 	if( r < 0 ) fail = true;
+	r = engine->RegisterGlobalFunction("void testFuncS(string &in)", asFUNCTION(testFuncS), asCALL_GENERIC);
 
 	r = engine->ExecuteString(0, "int a = 42; testFuncI(a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	r = engine->ExecuteString(0, "string a = \"test\"; testFuncI(a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	r = engine->ExecuteString(0, "string @a = @\"test\"; testFuncI(@a);");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+
+	// Both functions should receive the string by reference
+	r = engine->ExecuteString(0, "string a = 'test'; testFuncI(a); testFuncS(a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// It must be possible to register with 'out' references

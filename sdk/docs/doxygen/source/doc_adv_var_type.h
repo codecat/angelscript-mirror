@@ -11,7 +11,9 @@ any type. This is useful when making generic containers.
 
 When a function is registered with this special parameter type, the
 function will receive both the reference and an extra argument with the type
-id of the variable type.
+id of the variable type. The reference refers to the actual value that the
+caller sent, i.e. if the expression is an object handle then the reference
+will refer to the handle, not the actual object. 
 
 \code
 // An example usage with a native function

@@ -273,8 +273,7 @@ void CScriptAny::Store(void *ref, int refTypeId)
 	else if( value.typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Create a copy of the object
-		// We need to dereference the reference, as we receive a pointer to a pointer to the object
-		value.valueObj = engine->CreateScriptObjectCopy(*(void**)ref, value.typeId);
+		value.valueObj = engine->CreateScriptObjectCopy(ref, value.typeId);
 	}
 	else
 	{
@@ -323,7 +322,7 @@ bool CScriptAny::Retrieve(void *ref, int refTypeId) const
 		// Copy the object into the given reference
 		if( value.typeId == refTypeId )
 		{
-			engine->CopyScriptObject(*(void**)ref, value.valueObj, value.typeId);
+			engine->CopyScriptObject(ref, value.valueObj, value.typeId);
 
 			return true;
 		}
