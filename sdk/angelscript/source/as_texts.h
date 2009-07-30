@@ -66,6 +66,7 @@
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
 #define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM  "The destructor must not have any parameters"
+#define TXT_DUPLICATE_SWITCH_CASE         "Duplicate switch case"
 
 #define TXT_ELSE_WITH_EMPTY_STATEMENT     "Else with empty statement"
 #define TXT_EMPTY_SWITCH                  "Empty switch statement"

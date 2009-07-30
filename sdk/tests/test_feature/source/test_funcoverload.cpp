@@ -1,6 +1,6 @@
 #include "utils.h"
 
-#define TESTNAME "TestFuncOverload"
+static const char * const TESTNAME = "TestFuncOverload";
 
 static const char *script1 =
 "void Test()                               \n"

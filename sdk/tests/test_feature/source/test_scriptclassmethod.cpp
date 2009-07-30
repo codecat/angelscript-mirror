@@ -4,7 +4,7 @@
 namespace TestScriptClassMethod
 {
 
-#define TESTNAME "TestScriptClassMethod"
+static const char * const TESTNAME = "TestScriptClassMethod";
 
 // Normal structure
 static const char *script1 =
@@ -222,7 +222,7 @@ bool Test()
 			std::string str = "value";
 			if( str == s->GetPropertyName(c) )
 			{	
-				v = (int*)s->GetPropertyPointer(c);
+				v = (int*)s->GetAddressOfProperty(c);
 				if( *v != 1 ) fail = true;
 			}
 		}

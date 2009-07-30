@@ -5,7 +5,7 @@
 namespace TestArrayObject
 {
 
-#define TESTNAME "TestArrayObject"
+static const char * const TESTNAME = "TestArrayObject";
 
 class CIntArray
 {

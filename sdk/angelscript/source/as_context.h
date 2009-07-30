@@ -79,7 +79,7 @@ public:
 	int SetArgDouble(asUINT arg, double value);
 	int SetArgAddress(asUINT arg, void *addr);
 	int SetArgObject(asUINT arg, void *obj);
-	void *GetArgPointer(asUINT arg);
+	void *GetAddressOfArg(asUINT arg);
 
 	int SetObject(void *obj);
 
@@ -124,6 +124,11 @@ public:
 
 	void *SetUserData(void *data);
 	void *GetUserData();
+
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-29, 2.17.0
+	void *GetArgPointer(asUINT arg);
+#endif
 
 public:
 	// Internal public functions

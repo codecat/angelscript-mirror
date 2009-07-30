@@ -653,7 +653,7 @@ public:
 	virtual int   SetArgDouble(asUINT arg, double value) = 0;
 	virtual int   SetArgAddress(asUINT arg, void *addr) = 0;
 	virtual int   SetArgObject(asUINT arg, void *obj) = 0;
-	virtual void *GetArgPointer(asUINT arg) = 0;
+	virtual void *GetAddressOfArg(asUINT arg) = 0;
 
 	// Return value
 	virtual asBYTE  GetReturnByte() = 0;
@@ -693,6 +693,11 @@ public:
 	// User data
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() = 0;
+
+#ifdef AS_DEPRECATED
+	// deprecated since 2009-07-29, 2.17.0
+	virtual void *GetArgPointer(asUINT arg) = 0;
+#endif
 
 protected:
 	virtual ~asIScriptContext() {}
@@ -753,10 +758,15 @@ public:
 	virtual int         GetPropertyCount() const = 0;
 	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
 	virtual const char *GetPropertyName(asUINT prop) const = 0;
-	virtual void       *GetPropertyPointer(asUINT prop) = 0;
+	virtual void       *GetAddressOfProperty(asUINT prop) = 0;
 
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual int              CopyFrom(asIScriptObject *other) = 0;
+
+#ifdef AS_DEPRECATED
+	// deprecated since 2009-07-29, 2.17.0
+	virtual void       *GetPropertyPointer(asUINT prop) = 0;
+#endif
 
 protected:
 	virtual ~asIScriptObject() {}
@@ -837,6 +847,11 @@ class asIScriptFunction
 {
 public:
 	virtual asIScriptEngine *GetEngine() const = 0;
+
+	// Memory management
+	virtual int AddRef() = 0;
+	virtual int Release() = 0;
+
 	virtual const char      *GetModuleName() const = 0;
 	virtual const char      *GetScriptSectionName() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;

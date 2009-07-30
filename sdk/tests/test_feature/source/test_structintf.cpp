@@ -4,7 +4,7 @@
 namespace TestStructIntf
 {
 
-#define TESTNAME "TestStructIntf"
+static const char * const TESTNAME = "TestStructIntf";
 
 // Normal structure
 static const char *script1 =
@@ -83,7 +83,7 @@ bool Test()
 		if( s->GetPropertyTypeId(0) != engine->GetTypeIdByDecl("float") )
 			fail = true;
 
-		if( *(float*)s->GetPropertyPointer(0) != 3.141592f )
+		if( *(float*)s->GetAddressOfProperty(0) != 3.141592f )
 			fail = true;
 
 		if( strcmp(s->GetPropertyName(1), "b") )
@@ -92,7 +92,7 @@ bool Test()
 		if( s->GetPropertyTypeId(1) != engine->GetTypeIdByDecl("string") )
 			fail = true;
 
-		if( ((CScriptString*)s->GetPropertyPointer(1))->buffer != "test" )
+		if( ((CScriptString*)s->GetAddressOfProperty(1))->buffer != "test" )
 			fail = true;
 
 		if( strcmp(s->GetPropertyName(2), "c") )
@@ -101,7 +101,7 @@ bool Test()
 		if( s->GetPropertyTypeId(2) != engine->GetTypeIdByDecl("string@") )
 			fail = true;
 
-		if( (*(CScriptString**)s->GetPropertyPointer(2))->buffer != "test2" )
+		if( (*(CScriptString**)s->GetAddressOfProperty(2))->buffer != "test2" )
 			fail = true;
 
 		if( s )

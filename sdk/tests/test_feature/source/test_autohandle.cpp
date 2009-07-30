@@ -4,7 +4,7 @@ namespace TestAutoHandle
 {
 using std::string;
 
-#define TESTNAME "TestAutoHandle"
+static const char * const TESTNAME = "TestAutoHandle";
 
 void TestConstructor(string &arg1, CScriptString *arg2, double d, string &arg3, void *obj)
 {

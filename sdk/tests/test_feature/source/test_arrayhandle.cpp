@@ -3,7 +3,7 @@
 namespace TestArrayHandle
 {
 
-#define TESTNAME "TestArrayHandle"
+static const char * const TESTNAME = "TestArrayHandle";
 
 static const char *script1 =
 "void TestArrayHandle()                          \n"

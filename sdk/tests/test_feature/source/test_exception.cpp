@@ -1,7 +1,7 @@
 #include "utils.h"
 using namespace std;
 
-#define TESTNAME "TestException"
+static const char * const TESTNAME = "TestException";
 
 // This script will cause an exception inside a class method
 const char *script1 =

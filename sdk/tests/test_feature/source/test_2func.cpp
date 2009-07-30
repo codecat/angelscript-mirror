@@ -9,7 +9,7 @@
 namespace Test2Func
 {
 
-#define TESTNAME "Test2Func"
+static const char * const TESTNAME = "Test2Func";
 
 
 static const char *script1 =

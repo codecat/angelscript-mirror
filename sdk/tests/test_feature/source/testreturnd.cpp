@@ -7,7 +7,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestReturn (double)"
+static const char * const TESTNAME = "TestReturn (double)";
 
 static double returnValue = 0.0f;
 

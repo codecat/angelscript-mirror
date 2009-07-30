@@ -4,7 +4,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestLongToken"
+static const char * const TESTNAME = "TestLongToken";
 
 
 bool TestLongToken()

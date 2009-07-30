@@ -5,7 +5,7 @@ using namespace std;
 namespace TestDict
 {
 
-#define TESTNAME "TestDict"
+static const char * const TESTNAME = "TestDict";
 
 
 

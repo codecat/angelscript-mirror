@@ -3,7 +3,7 @@
 namespace TestFloat
 {
 
-#define TESTNAME "TestFloat"
+static const char * const TESTNAME = "TestFloat";
 
 
 

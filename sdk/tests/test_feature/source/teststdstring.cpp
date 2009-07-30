@@ -8,7 +8,7 @@
 #include "utils.h"
 using namespace std;
 
-#define TESTNAME "TestStdString"
+static const char * const TESTNAME = "TestStdString";
 
 static string printOutput;
 

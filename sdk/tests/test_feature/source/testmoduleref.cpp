@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestModuleRef"
+static const char * const TESTNAME = "TestModuleRef";
 static const char *script = "int global; void Test() {global = 0;}";
 
 bool TestModuleRef()

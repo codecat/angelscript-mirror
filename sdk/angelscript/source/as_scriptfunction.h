@@ -44,6 +44,7 @@
 #include "as_string.h"
 #include "as_array.h"
 #include "as_datatype.h"
+#include "as_atomic.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -77,6 +78,11 @@ class asCScriptFunction : public asIScriptFunction
 public:
 	// From asIScriptFunction
 	asIScriptEngine     *GetEngine() const;
+
+	// Memory management
+	int AddRef();
+	int Release();
+
 	const char          *GetModuleName() const;
 	asIObjectType       *GetObjectType() const;
 	const char          *GetObjectName() const;
@@ -94,6 +100,9 @@ public:
 	int                  GetReturnTypeId() const;
 
 public:
+	//-----------------------------------
+	// Internal methods
+
 	asCScriptFunction(asCScriptEngine *engine, asCModule *mod);
 	~asCScriptFunction();
 
@@ -111,17 +120,22 @@ public:
 	void      AddReferences();
 	void      ReleaseReferences();
 
+public:
+	//-----------------------------------
+	// Properties
+
+	asCAtomic                    refCount;
 	asCScriptEngine             *engine;
 	asCModule                   *module;
 
 	// Function signature
-	asCString                        name;
-	asCDataType                      returnType;
-	asCArray<asCDataType>            parameterTypes;
-	asCArray<asETypeModifiers>       inOutFlags;
-	bool                             isReadOnly;
-	asCObjectType                   *objectType;
-	int                              signatureId;
+	asCString                    name;
+	asCDataType                  returnType;
+	asCArray<asCDataType>        parameterTypes;
+	asCArray<asETypeModifiers>   inOutFlags;
+	bool                         isReadOnly;
+	asCObjectType               *objectType;
+	int                          signatureId;
 
 	int                          id;
 

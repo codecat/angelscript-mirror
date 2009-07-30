@@ -1,7 +1,7 @@
 #include "utils.h"
 using std::string;
 
-#define TESTNAME "TestGlobalVar"
+static const char * const TESTNAME = "TestGlobalVar";
 static const char *script1 = "float global = func() * g_f * 2.0f;";
 static const char *script2 = "float global = 1.0f;";
 

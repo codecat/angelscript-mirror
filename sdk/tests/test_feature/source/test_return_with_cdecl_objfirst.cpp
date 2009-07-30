@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestReturnWithCDeclObjFirst"
+static const char * const TESTNAME = "TestReturnWithCDeclObjFirst";
 
 class Class1
 {

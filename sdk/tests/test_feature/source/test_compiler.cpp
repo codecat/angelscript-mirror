@@ -3,7 +3,7 @@
 namespace TestCompiler
 {
 
-#define TESTNAME "TestCompiler"
+static const char * const TESTNAME = "TestCompiler";
 
 // Unregistered types and functions
 const char *script1 =

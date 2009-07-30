@@ -3,7 +3,7 @@
 namespace TestExceptionMemory
 {
 
-#define TESTNAME "TestExceptionMemory"
+static const char * const TESTNAME = "TestExceptionMemory";
 
 static const char *script1 =
 "void Test1()                   \n"

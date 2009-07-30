@@ -8,7 +8,7 @@
 
 namespace TestOutput
 {
-#define TESTNAME "TestOutput"
+static const char * const TESTNAME = "TestOutput";
 
 
 static const char *script1 =

@@ -3,7 +3,7 @@
 namespace TestArrayIntf
 {
 
-#define TESTNAME "TestArrayIntf"
+static const char * const TESTNAME = "TestArrayIntf";
 
 // Normal structure
 static const char *script1 =

@@ -255,7 +255,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\as_scriptstruct.cpp"
+				RelativePath="..\..\source\as_scriptobject.cpp"
 				>
 			</File>
 			<File
@@ -385,7 +385,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\as_scriptstruct.h"
+				RelativePath="..\..\source\as_scriptobject.h"
 				>
 			</File>
 			<File

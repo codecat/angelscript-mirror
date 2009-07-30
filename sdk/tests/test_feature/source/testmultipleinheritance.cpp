@@ -7,7 +7,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestMultipleInheritance"
+static const char * const TESTNAME = "TestMultipleInheritance";
 
 static std::string output2;
 

@@ -7,7 +7,8 @@
 #include "utils.h"
 using namespace std;
 
-#define TESTNAME "TestSwitch"
+
+static const char * const TESTNAME = "TestSwitch";
 
 
 static const char *script =
@@ -158,6 +159,21 @@ bool TestSwitch()
 	engine->ExecuteString(0, "switch(1) {}"); 
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : Empty switch statement\n" )
 		fail = true;
+
+	// A switch case must not have duplicate cases
+	{
+		bout.buffer = "";
+		const char *script = "switch( 1 ) { case 1: case 1: }";
+		r = engine->ExecuteString(0, script);
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != "ExecuteString (1, 28) : Error   : Duplicate switch case\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+	}
 
 	engine->Release();
 

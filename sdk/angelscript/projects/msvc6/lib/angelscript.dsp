@@ -226,7 +226,7 @@ SOURCE=..\..\..\source\as_scriptnode.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_scriptstruct.cpp
+SOURCE=..\..\..\source\as_scriptobject.cpp
 # End Source File
 # Begin Source File
 
@@ -370,7 +370,7 @@ SOURCE=..\..\..\source\as_scriptnode.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_scriptstruct.h
+SOURCE=..\..\..\source\as_scriptobject.h
 # End Source File
 # Begin Source File
 

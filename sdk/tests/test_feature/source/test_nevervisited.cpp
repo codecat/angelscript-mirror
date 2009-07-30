@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestNeverVisited"
+static const char * const TESTNAME = "TestNeverVisited";
 
 static const char *script1 =
 "void TestNeverVisited1()              \n"
@@ -47,13 +47,13 @@ bool TestNeverVisited()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME"1", script1, strlen(script1), 0);
+	mod->AddScriptSection("1", script1, strlen(script1), 0);
 	mod->Build();
 
-	mod->AddScriptSection(TESTNAME"2", script2, strlen(script2), 0);
+	mod->AddScriptSection("2", script2, strlen(script2), 0);
 	mod->Build();
 
-	mod->AddScriptSection(TESTNAME"3", script3, strlen(script3), 0);
+	mod->AddScriptSection("3", script3, strlen(script3), 0);
 	mod->Build();
 
 	engine->Release();

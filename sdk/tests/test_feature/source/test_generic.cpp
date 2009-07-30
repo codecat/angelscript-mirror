@@ -7,7 +7,6 @@ using std::string;
 namespace TestGeneric
 {
 
-#define TESTNAME "TestGeneric"
 
 int obj;
 

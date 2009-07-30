@@ -50,6 +50,7 @@ BEGIN_AS_NAMESPACE
 // internal
 asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
 {
+	refCount.set(1);
 	this->engine           = engine;
 	funcType               = -1;
 	module                 = mod; 
@@ -79,6 +80,17 @@ asCScriptFunction::~asCScriptFunction()
 	{
 		asDELETE(sysFuncIntf,asSSystemFunctionInterface);
 	}
+}
+
+// interface
+int asCScriptFunction::AddRef()
+{
+	return refCount.atomicInc();
+}
+
+int asCScriptFunction::Release()
+{
+	return refCount.atomicDec();
 }
 
 // interface

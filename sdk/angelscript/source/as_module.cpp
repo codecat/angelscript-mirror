@@ -968,6 +968,13 @@ bool asCModule::CanDelete()
 		return false;
 	}
 
+	// Check if the application is holding on to any references to the function
+	for( size_t n = 0; n < scriptFunctions.GetLength(); n++ )
+	{
+		if( scriptFunctions[n]->refCount.get() > 1 )
+			return false;
+	}
+
 	return true;
 }
 

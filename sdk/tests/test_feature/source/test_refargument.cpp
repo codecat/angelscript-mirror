@@ -3,7 +3,7 @@
 namespace TestRefArgument
 {
 
-#define TESTNAME "TestRefArgument"
+static const char * const TESTNAME = "TestRefArgument";
 
 static const char *script1 =
 "void TestObjHandle(refclass &in ref)   \n"

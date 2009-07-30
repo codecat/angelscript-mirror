@@ -3,7 +3,7 @@
 namespace TestObject3
 {
 
-#define TESTNAME "TestObject3"
+static const char * const TESTNAME = "TestObject3";
 
 #ifdef __GNUC__
 #undef __cdecl

@@ -3,7 +3,7 @@
 namespace TestVector3_2
 {
 
-#define TESTNAME "TestVector3_2"
+static const char * const TESTNAME = "TestVector3_2";
 
 class csVector3
 {

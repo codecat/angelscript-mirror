@@ -47,7 +47,7 @@
 #include "as_generic.h"
 #include "as_debug.h" // mkdir()
 #include "as_bytecode.h"
-#include "as_scriptstruct.h"
+#include "as_scriptobject.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4702) // unreachable code
@@ -924,8 +924,18 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 }
 
 
-// TODO: We should deprecate this, and implement the SetArgValue(int arg, void *value, bool takeOwnership) instead.
+#ifdef AS_DEPRECATED
+// deprecated since 2009-07-29, 2.17.0
 void *asCContext::GetArgPointer(asUINT arg)
+{
+	return GetAddressOfArg(arg);
+}
+#endif
+
+// TODO: Instead of GetAddressOfArg, maybe we need a SetArgValue(int arg, void *value, bool takeOwnership) instead.
+
+// interface
+void *asCContext::GetAddressOfArg(asUINT arg)
 {
 	if( status != asEXECUTION_PREPARED )
 		return 0;
@@ -940,6 +950,10 @@ void *asCContext::GetArgPointer(asUINT arg)
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
+	// We should return the address of the location where the argument value will be placed
+
+	// All registered types are always sent by reference, even if  
+	// the function is declared to receive the argument by value.	
 	return &regs.stackFramePointer[offset];
 }
 

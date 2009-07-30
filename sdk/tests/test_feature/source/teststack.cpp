@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestStack"
+static const char * const TESTNAME = "TestStack";
 
 
 static const char *script =

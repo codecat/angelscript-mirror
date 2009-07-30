@@ -49,8 +49,6 @@ BEGIN_AS_NAMESPACE
 class asCObjectType;
 
 
-// TODO: GetPropertyPointer should be GetAddressOfProperty
-
 class asCScriptObject : public asIScriptObject
 {
 public:
@@ -71,9 +69,14 @@ public:
 	int         GetPropertyCount() const;
 	int         GetPropertyTypeId(asUINT prop) const;
 	const char *GetPropertyName(asUINT prop) const;
-	void       *GetPropertyPointer(asUINT prop);
+	void       *GetAddressOfProperty(asUINT prop);
 
 	int         CopyFrom(asIScriptObject *other);
+
+#ifdef AS_DEPRECATED
+// deprecated since 2.17.0, 2009-07-29
+	void       *GetPropertyPointer(asUINT prop);
+#endif
 
 //====================================
 // Internal

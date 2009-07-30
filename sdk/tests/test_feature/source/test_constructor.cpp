@@ -1,7 +1,7 @@
 #include "utils.h"
 using namespace std;
 
-#define TESTNAME "TestConstructor"
+static const char * const TESTNAME = "TestConstructor";
 
 static const char *script1 =
 "obj g_obj1 = g_obj2;                      \n"

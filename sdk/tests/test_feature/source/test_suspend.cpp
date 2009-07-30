@@ -9,7 +9,7 @@
 namespace TestSuspend
 {
 
-#define TESTNAME "TestSuspend"
+static const char * const TESTNAME = "TestSuspend";
 
 static int loopCount = 0;
 
@@ -66,7 +66,7 @@ bool Test()
 
 	COutStream out;
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":1", script1);
+	mod->AddScriptSection(":1", script1);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	mod->Build();
@@ -92,7 +92,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterGlobalProperty("int loopCount", &loopCount);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":2", script2);
+	mod->AddScriptSection(":2", script2);
 	mod->Build();
 
 	ctx = engine->CreateContext();

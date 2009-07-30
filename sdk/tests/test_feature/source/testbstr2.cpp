@@ -7,7 +7,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestBStr2"
+static const char * const TESTNAME = "TestBStr2";
 
 
 bool TestBStr2()

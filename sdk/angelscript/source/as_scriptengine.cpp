@@ -49,7 +49,7 @@
 #include "as_callfunc.h"
 #include "as_arrayobject.h"
 #include "as_generic.h"
-#include "as_scriptstruct.h"
+#include "as_scriptobject.h"
 #include "as_compiler.h"
 
 BEGIN_AS_NAMESPACE

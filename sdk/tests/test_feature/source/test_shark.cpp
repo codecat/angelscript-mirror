@@ -3,7 +3,7 @@
 namespace TestShark
 {
 
-#define TESTNAME "TestShark"
+static const char * const TESTNAME = "TestShark";
 
 class Point
 {

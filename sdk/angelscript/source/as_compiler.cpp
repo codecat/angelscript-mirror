@@ -2026,6 +2026,14 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 
 			ImplicitConversion(&c, to, cnode->firstChild, asIC_IMPLICIT_CONV, true);
 
+			// Has this case been declared already?
+			if( caseValues.IndexOf(c.type.intValue) >= 0 )
+			{
+				Error(TXT_DUPLICATE_SWITCH_CASE, cnode->firstChild);
+			}
+
+			// TODO: Optimize: We can insert the numbers sorted already
+
 			// Store constant for later use
 			caseValues.PushLast(c.type.intValue);
 

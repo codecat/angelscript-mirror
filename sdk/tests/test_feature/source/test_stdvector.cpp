@@ -5,7 +5,7 @@
 namespace TestStdVector
 {
 
-#define TESTNAME "TestStdVector"
+static const char * const TESTNAME = "TestStdVector";
 
 
 static void print(std::string &str)

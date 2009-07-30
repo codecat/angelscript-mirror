@@ -3,7 +3,7 @@
 namespace TestConversion
 {
 
-#define TESTNAME "TestConversion"
+static const char * const TESTNAME = "TestConversion";
 
 
 void TestI8(asIScriptGeneric*) {}

@@ -40,7 +40,7 @@
 
 #include "as_gc.h"
 #include "as_scriptengine.h"
-#include "as_scriptstruct.h"
+#include "as_scriptobject.h"
 
 BEGIN_AS_NAMESPACE
 

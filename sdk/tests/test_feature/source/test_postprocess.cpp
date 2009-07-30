@@ -3,7 +3,7 @@
 namespace TestPostProcess
 {
 
-#define TESTNAME "TestPostProcess"
+static const char * const TESTNAME = "TestPostProcess";
 
 
 static const char *script = 

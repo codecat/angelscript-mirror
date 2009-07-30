@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestExecuteString"
+static const char * const TESTNAME = "TestExecuteString";
 
 struct Obj
 {

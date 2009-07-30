@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestCDecl_Class"
+static const char * const TESTNAME = "TestCDecl_Class";
 
 class Class1
 {

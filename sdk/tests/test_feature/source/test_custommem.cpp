@@ -5,7 +5,7 @@
 namespace TestCustomMem
 {
 
-#define TESTNAME "TestCustomMem"
+static const char * const TESTNAME = "TestCustomMem";
 
 int objectsAllocated = 0;
 void *MyAlloc(size_t size)

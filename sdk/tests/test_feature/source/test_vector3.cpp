@@ -1,7 +1,7 @@
 #include "utils.h"
 #include "../../../add_on/scriptmath3d/scriptmath3d.h"
 
-#define TESTNAME "TestVector3"
+static const char * const TESTNAME = "TestVector3";
 
 static char *script =
 "vector3 TestVector3()  \n"

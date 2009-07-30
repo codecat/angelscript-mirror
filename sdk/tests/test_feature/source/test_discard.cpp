@@ -9,7 +9,7 @@
 namespace TestDiscard
 {
 
-#define TESTNAME "TestDiscard"
+static const char * const TESTNAME = "TestDiscard";
 
 
 

@@ -3,7 +3,7 @@
 namespace TestFor
 {
 
-#define TESTNAME "TestFor"
+static const char * const TESTNAME = "TestFor";
 
 static const char *script1 = "\
 float[] myArray(70);                       \n\

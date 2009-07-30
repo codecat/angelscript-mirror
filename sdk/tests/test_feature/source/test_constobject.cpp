@@ -3,7 +3,7 @@
 namespace TestConstObject
 {
 
-#define TESTNAME "TestConstObject"
+static const char * const TESTNAME = "TestConstObject";
 
 static const char *script2 = 
 "const string URL_SITE = \"http://www.sharkbaitgames.com\";                    \n"

@@ -3,7 +3,7 @@
 namespace TestInt8
 {
 
-#define TESTNAME "TestInt8"
+static const char * const TESTNAME = "TestInt8";
 
 char RetInt8(char in)
 {

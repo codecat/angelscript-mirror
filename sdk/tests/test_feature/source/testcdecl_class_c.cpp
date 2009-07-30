@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestCDecl_ClassC"
+static const char * const TESTNAME = "TestCDecl_ClassC";
 
 // A complex class is a class that has a defined constructor or 
 // destructor, or an overridden assignment operator. Compilers

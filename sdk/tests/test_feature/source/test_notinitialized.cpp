@@ -1,7 +1,7 @@
 #include "utils.h"
 using namespace std;
 
-#define TESTNAME "TestNotInitialized"
+static const char * const TESTNAME = "TestNotInitialized";
 
 static void cfunction(asIScriptGeneric *gen)
 {

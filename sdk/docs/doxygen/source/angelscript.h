@@ -2013,7 +2013,7 @@ public:
     //! This method returns a pointer to the argument on the stack for assignment. For object handles, you
     //! should increment the reference counter. For object values, you should pass a pointer to a copy of the
     //! object.
-	virtual void *GetArgPointer(asUINT arg) = 0;
+	virtual void *GetAddressOfArg(asUINT arg) = 0;
 	//! \}	
 
 	// Return value
@@ -2217,6 +2217,17 @@ public:
     //! \return The pointer to the user data.
 	virtual void *GetUserData() = 0;
 	//! \}
+
+#ifdef AS_DEPRECATED
+	//! \name Deprecated
+	//! \{
+
+	// deprecated since 2009-07-29, 2.17.0
+	//! \deprecated Since 2.17.0. Use \ref asIScriptContext::GetAddressOfArg instead.
+	virtual void *GetArgPointer(asUINT arg) = 0;
+
+	//! \}
+#endif
 
 protected:
 	virtual ~asIScriptContext() {}
@@ -2443,7 +2454,7 @@ public:
     //!
     //! The method returns a pointer to the memory location for the property. Use the type 
     //! id for the property to determine the content of the pointer, and how to handle it.
-	virtual void       *GetPropertyPointer(asUINT prop) = 0;
+	virtual void       *GetAddressOfProperty(asUINT prop) = 0;
 	//! \}
 
 	//! \name Miscellaneous
@@ -2461,6 +2472,15 @@ public:
     //! This method copies the contents of the other object to this one.
 	virtual int              CopyFrom(asIScriptObject *other) = 0;
 	//! \}
+
+#ifdef AS_DEPRECATED
+	//! \name Deprecated
+	//! \{
+	// deprecated since 2009-07-29, 2.17.0
+	//! \deprecated Since 2.17.0. Use \ref asIScriptObject::GetAddressOfProperty instead.
+	virtual void       *GetPropertyPointer(asUINT prop) = 0;
+	//! \}
+#endif
 
 protected:
 	virtual ~asIScriptObject() {}
@@ -2733,6 +2753,21 @@ public:
 	//! \brief Returns a pointer to the script engine.
     //! \return A pointer to the engine.
 	virtual asIScriptEngine *GetEngine() const = 0;
+
+	// Memory management
+	//! \brief Increases the reference counter.
+    //!
+    //! \return The number of references to this object.
+    //!
+    //! Call this method when storing an additional reference to the object.
+	virtual int AddRef() = 0;
+	//! \brief Decrease reference counter.
+    //!
+    //! \return The number of references to this object.
+    //!
+    //! Call this method when you will no longer use the references that you own.
+	virtual int Release() = 0;
+
 	//! \brief Returns the name of the module where the function was implemented
     //! \return A null terminated string with the module name.
 	virtual const char      *GetModuleName() const = 0;

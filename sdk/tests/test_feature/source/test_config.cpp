@@ -3,8 +3,6 @@
 namespace TestConfig
 {
 
-#define TESTNAME "TestConfig"
-
 bool Test()
 {
 	bool fail = false;

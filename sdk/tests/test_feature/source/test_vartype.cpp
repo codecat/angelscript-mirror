@@ -3,7 +3,7 @@
 namespace TestVarType
 {
 
-#define TESTNAME "TestVarType"
+static const char * const TESTNAME = "TestVarType";
 
 
 // AngelScript syntax: void testFuncI(?& in)

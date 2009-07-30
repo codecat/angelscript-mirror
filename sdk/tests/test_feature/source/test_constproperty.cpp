@@ -9,7 +9,7 @@
 namespace TestConstProperty
 {
 
-#define TESTNAME "TestConstProperty"
+static const char * const TESTNAME = "TestConstProperty";
 
 class CVec3
 {

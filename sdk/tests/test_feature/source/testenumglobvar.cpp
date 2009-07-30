@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestEnumGlobVar"
+static const char * const TESTNAME = "TestEnumGlobVar";
 
 static const char script[] = "int a; float b; double c; uint d = 0xC0DE; string e = \"test\"; obj @f = @o;";
 

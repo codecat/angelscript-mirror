@@ -6,7 +6,7 @@ using std::string;
 namespace TestCString
 {
 
-#define TESTNAME "TestCString"
+static const char * const TESTNAME = "TestCString";
 
 static string printOutput;
 

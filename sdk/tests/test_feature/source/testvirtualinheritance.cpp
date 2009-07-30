@@ -7,7 +7,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestVirtualInheritance"
+static const char * const TESTNAME = "TestVirtualInheritance";
 
 static std::string output2;
 

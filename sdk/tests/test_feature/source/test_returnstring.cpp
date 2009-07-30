@@ -5,7 +5,7 @@
 namespace TestReturnString
 {
 
-#define TESTNAME "TestReturnString"
+static const char * const TESTNAME = "TestReturnString";
 
 
 struct Foo 

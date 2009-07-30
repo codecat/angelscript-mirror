@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestNotComplexStdcall"
+static const char * const TESTNAME = "TestNotComplexStdcall";
 
 class Class1
 {

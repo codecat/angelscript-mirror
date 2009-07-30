@@ -3,7 +3,7 @@
 
 namespace TestFactory
 {
-#define TESTNAME "TestFactory"
+static const char * const TESTNAME = "TestFactory";
 
 
 class MyFactory

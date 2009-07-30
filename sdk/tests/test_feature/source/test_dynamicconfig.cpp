@@ -4,7 +4,7 @@
 namespace TestDynamicConfig
 {
 
-#define TESTNAME "TestDynamicConfig"
+static const char * const TESTNAME = "TestDynamicConfig";
 
 static const char *script1 =
 "void Test()           \n"

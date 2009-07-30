@@ -3,8 +3,6 @@
 namespace TestCastOp
 {
 
-#define TESTNAME "TestCastOp"
-
 const char *script = "\
 interface intf1            \n\
 {                          \n\

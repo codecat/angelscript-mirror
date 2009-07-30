@@ -3,7 +3,7 @@
 namespace TestUnsafeRef
 {
 
-#define TESTNAME "TestUnsafeRef"
+static const char * const TESTNAME = "TestUnsafeRef";
 
 static const char *script1 =
 "void Test()                            \n"

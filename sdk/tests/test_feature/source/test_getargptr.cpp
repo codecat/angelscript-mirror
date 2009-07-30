@@ -3,7 +3,7 @@
 namespace TestGetArgPtr
 {
 
-#define TESTNAME "TestGetArgPtr"
+static const char * const TESTNAME = "TestGetArgPtr";
 
 static const char *script1 = 
 "int test(int a, string b, string @c, float &in d)     \n"
@@ -41,11 +41,11 @@ bool Test()
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(func);
 
-	*(int*)ctx->GetArgPointer(0) = 3;
-	*(CScriptString**)ctx->GetArgPointer(1) = new CScriptString("tst");
-	*(CScriptString**)ctx->GetArgPointer(2) = new CScriptString("42"); // We don't have to add a reference, because we don't want to keep a copy
+	*(int*)ctx->GetAddressOfArg(0) = 3;
+	*(CScriptString**)ctx->GetAddressOfArg(1) = new CScriptString("tst");
+	*(CScriptString**)ctx->GetAddressOfArg(2) = new CScriptString("42"); // We don't have to add a reference, because we don't want to keep a copy
 	float pi = 3.14f;
-	*(float**)ctx->GetArgPointer(3) = &pi;
+	*(float**)ctx->GetAddressOfArg(3) = &pi;
 
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED ) fail = true;

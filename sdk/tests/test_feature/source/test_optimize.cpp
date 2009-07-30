@@ -1,7 +1,7 @@
 #include "utils.h"
 using namespace std;
 
-#define TESTNAME "TestOptimize"
+static const char * const TESTNAME = "TestOptimize";
 
 // TODO: asIScriptFunction should have a method for querying the size of the bytecode. I can 
 //       use that to automate some of the regressions tests for bytecode optimization. With it

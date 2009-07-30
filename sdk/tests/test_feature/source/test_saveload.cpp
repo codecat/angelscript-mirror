@@ -12,7 +12,7 @@ namespace TestSaveLoad
 
 using namespace std;
 
-#define TESTNAME "TestSaveLoad"
+static const char * const TESTNAME = "TestSaveLoad";
 
 
 
@@ -266,7 +266,7 @@ bool Test()
  	asIScriptEngine *engine = ConfigureEngine();
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
+	mod->AddScriptSection(":1", script1, strlen(script1), 0);
 	mod->Build();
 
 	// Validate the number of global functions
@@ -274,7 +274,7 @@ bool Test()
 		fail = true;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->AddScriptSection(":2", script2, strlen(script2), 0);
 	mod->Build();
 
 	TestScripts(engine);
@@ -291,7 +291,7 @@ bool Test()
 		fail = true;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->AddScriptSection(":2", script2, strlen(script2), 0);
 	mod->Build();
 
 	TestScripts(engine);
@@ -308,7 +308,7 @@ bool Test()
 		fail = true;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->AddScriptSection(":2", script2, strlen(script2), 0);
 	mod->Build();
 
 	TestScripts(engine);

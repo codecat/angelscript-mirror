@@ -6,7 +6,7 @@ using namespace std;
 namespace TestConstructor2
 {
 
-#define TESTNAME "TestConstructor2"
+static const char * const TESTNAME = "TestConstructor2";
 
 class CMyObj {
 public :

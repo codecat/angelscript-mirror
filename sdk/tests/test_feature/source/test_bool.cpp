@@ -3,7 +3,7 @@
 namespace TestBool
 {
 
-#define TESTNAME "TestBool"
+static const char * const TESTNAME = "TestBool";
 
 static const char *declarations = "  \n\
 bool south = false;              \n\

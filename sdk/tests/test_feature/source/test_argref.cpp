@@ -3,7 +3,7 @@
 namespace TestArgRef
 {
 
-#define TESTNAME "TestArgRef"
+static const char * const TESTNAME = "TestArgRef";
 
 
 

@@ -7,7 +7,7 @@
 #include "utils.h"
 #include "bstr.h"
 
-#define TESTNAME "TestBStr"
+static const char * const TESTNAME = "TestBStr";
 
 static asBSTR NewString(int length)
 {
@@ -69,7 +69,7 @@ bool TestBStr()
 	asBSTR *a = (asBSTR*)engine->CreateScriptObject(engine->GetTypeIdByDecl("bstr"));
 	*a = asBStrAlloc(1);
 	strcpy((char*)*a, "a");
-	*(asBSTR**)ctx->GetArgPointer(0) = a;
+	*(asBSTR**)ctx->GetAddressOfArg(0) = a;
 
 	// Create a local instance and have the script engine copy it.
 	// The application must free its copy of the object.

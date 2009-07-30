@@ -3,7 +3,7 @@
 namespace TestArray
 {
 
-#define TESTNAME "TestArray"
+static const char * const TESTNAME = "TestArray";
 
 static const char *script1 =
 "string[] b;                                     \n"

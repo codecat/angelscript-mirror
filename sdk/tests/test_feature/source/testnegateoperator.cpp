@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestNegateOperator"
+static const char * const TESTNAME = "TestNegateOperator";
 
 static int testVal = 0;
 static bool called = false;

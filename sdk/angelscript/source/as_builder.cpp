@@ -44,7 +44,7 @@
 #include "as_string_util.h"
 #include "as_outputbuffer.h"
 #include "as_texts.h"
-#include "as_scriptstruct.h"
+#include "as_scriptobject.h"
 
 BEGIN_AS_NAMESPACE
 

@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestExecute4Argsf"
+static const char * const TESTNAME = "TestExecute4Argsf";
 
 static bool testVal = false;
 static bool called  = false;

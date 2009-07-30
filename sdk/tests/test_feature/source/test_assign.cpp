@@ -3,7 +3,7 @@
 namespace TestAssign
 {
 
-#define TESTNAME "TestAssign"
+static const char * const TESTNAME = "TestAssign";
 
 static const char *script1 =
 "void main()                      \n"

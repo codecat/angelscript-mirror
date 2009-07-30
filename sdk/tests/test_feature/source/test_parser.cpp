@@ -3,7 +3,7 @@
 namespace TestParser
 {
 
-#define TESTNAME "TestParser"
+static const char * const TESTNAME = "TestParser";
 
 // Unfinished class
 const char *script1 =

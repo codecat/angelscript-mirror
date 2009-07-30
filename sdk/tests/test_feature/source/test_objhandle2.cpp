@@ -3,7 +3,7 @@
 namespace TestObjHandle2
 {
 
-#define TESTNAME "TestObjHandle2"
+static const char * const TESTNAME = "TestObjHandle2";
 
 static const char *script1 =
 "void TestObjHandle()                   \n"

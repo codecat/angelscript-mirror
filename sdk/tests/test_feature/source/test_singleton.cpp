@@ -5,7 +5,7 @@ using namespace std;
 namespace TestSingleton
 {
 
-#define TESTNAME "TestSingleton"
+static const char * const TESTNAME = "TestSingleton";
 
 int GameMgr;
 int SoundMgr;

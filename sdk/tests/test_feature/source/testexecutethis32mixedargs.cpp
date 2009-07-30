@@ -7,7 +7,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "this->TestExecute32Args (mixed arguments)"
+static const char * const TESTNAME = "this->TestExecute32Args (mixed arguments)";
 
 
 class TestClass {

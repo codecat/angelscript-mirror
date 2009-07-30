@@ -1,7 +1,7 @@
 #include "utils.h"
 using namespace std;
 
-#define TESTNAME "TestNested"
+static const char * const TESTNAME = "TestNested";
 
 static const char *script1 =
 "void TestNested()                         \n"

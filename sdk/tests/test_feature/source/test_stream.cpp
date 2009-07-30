@@ -5,7 +5,7 @@ using namespace std;
 namespace TestStream
 {
 
-#define TESTNAME "TestStream"
+static const char * const TESTNAME = "TestStream";
 
 stringstream stream;
 

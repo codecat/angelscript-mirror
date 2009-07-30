@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.17.0 WIP - 2009/07/28</h2>
+<h2>Version 2.17.0 WIP - 2009/07/29</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Scoped reference types can now be members of script classes. (Thanks Jeff Slutter)
 <li>Fixed crash in compiler on invalid script (Thanks cvet)
 <li>Reference types that had been registered with zero size wasn't allowed as members of script classes. (Thanks Friggle)
+<li>Added validation for duplicate switch cases in script compiler (Thanks loboWu)
 </ul>
 <li>Library
 <ul>
@@ -42,7 +43,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Deprecated CompareScriptObjects. Use the helper functions CompareRelation or CompareEquality from the add-ons instead.
 <li>Deprecated all assignment behaviours and the negate behaviour. These behaviours should use the new class methods instead.
 <li>Changed asBEHAVE_REF_CAST and asBEHAVE_IMPLICIT_REF_CAST to be registered as object behaviours. Verify the documentation for implementation changes.
-<li>Added IsReadOnly method to asIScriptFunction
+<li>Added AddRef, Release, and IsReadOnly methods to asIScriptFunction.
+<li>Deprecated asIScriptObject's GetPropertyPointer, which has been replaced with GetAddressOfProperty.
+<li>Deprecated asIScriptContext's GetArgPointer, which has been replaced with GetAddressOfArg.
 </ul>
 <li>Virtual machine
 <ul>
@@ -58,6 +61,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Project
 <ul>
 <li>Removed as_bytecodedef.h as its content has been moved to angelscript.h
+<li>Renamed as_scriptstruct files to as_scriptobject
 </ul>
 </ul>
 

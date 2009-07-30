@@ -35,7 +35,7 @@
 
 #include "as_scriptengine.h"
 
-#include "as_scriptstruct.h"
+#include "as_scriptobject.h"
 #include "as_arrayobject.h"
 
 BEGIN_AS_NAMESPACE
@@ -356,7 +356,7 @@ const char *asCScriptObject::GetPropertyName(asUINT prop) const
 	return objType->properties[prop]->name.AddressOf();
 }
 
-void *asCScriptObject::GetPropertyPointer(asUINT prop)
+void *asCScriptObject::GetAddressOfProperty(asUINT prop)
 {
 	if( prop >= objType->properties.GetLength() )
 		return 0;
@@ -521,6 +521,14 @@ void asCScriptObject::CopyHandle(asDWORD *src, asDWORD *dst, asCObjectType *objT
 	if( *dst )
 		engine->CallObjectMethod(*(void**)dst, objType->beh.addref);
 }
+
+#ifdef AS_DEPRECATED
+// deprecated since 2.17.0, 2009-07-29
+void *asCScriptObject::GetPropertyPointer(asUINT prop)
+{
+	return GetAddressOfProperty(prop);
+}
+#endif
 
 END_AS_NAMESPACE
 

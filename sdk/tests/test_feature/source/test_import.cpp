@@ -9,7 +9,7 @@
 namespace TestImport
 {
 
-#define TESTNAME "TestImport"
+static const char * const TESTNAME = "TestImport";
 
 
 
@@ -65,11 +65,11 @@ bool Test()
 	engine->RegisterGlobalProperty("int number", &number);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
+	mod->AddScriptSection(":1", script1, strlen(script1), 0);
 	mod->Build();
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->AddScriptSection(":2", script2, strlen(script2), 0);
 	mod->Build();
 
 	// Bind all functions that the module imports
@@ -92,11 +92,11 @@ bool Test()
 	RegisterScriptString_Generic(engine);
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":3", script3, strlen(script3), 0);
+	mod->AddScriptSection(":3", script3, strlen(script3), 0);
 	r = mod->Build(); assert( r >= 0 );
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":4", script4, strlen(script4), 0);
+	mod->AddScriptSection(":4", script4, strlen(script4), 0);
 	r = mod->Build(); assert( r >= 0 );
 
 	// Bind all functions that the module imports

@@ -3,7 +3,6 @@
 namespace TestEnum
 {
 
-#define TESTNAME		"TestEnum"
 #define TESTMODULE		"TestEnum"
 
 

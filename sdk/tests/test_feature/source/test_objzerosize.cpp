@@ -3,7 +3,7 @@
 namespace TestObjZeroSize
 {
 
-#define TESTNAME "TestObjZeroSize"
+static const char * const TESTNAME = "TestObjZeroSize";
 
 class CObject
 {

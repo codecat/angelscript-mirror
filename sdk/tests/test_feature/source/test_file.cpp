@@ -4,8 +4,6 @@
 namespace TestFile
 {
 
-#define TESTNAME "TestFile"
-
 bool Test()
 {
 	bool fail = false;

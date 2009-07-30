@@ -3,8 +3,6 @@
 namespace TestBits
 {
 
-#define TESTNAME "TestBits"
-
 static const char *script = "\n\
 const uint8	mask0=1;         \n\
 const uint8	mask1=1<<1;      \n\

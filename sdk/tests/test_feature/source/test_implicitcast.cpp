@@ -3,10 +3,6 @@
 namespace TestImplicitCast
 {
 
-#define TESTNAME "TestImplicitCast"
-
-
-
 void Type_construct0(asIScriptGeneric *gen)
 {
 	int *a = (int*)gen->GetObject();

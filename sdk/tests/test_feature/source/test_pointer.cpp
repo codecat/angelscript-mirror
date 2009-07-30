@@ -3,7 +3,7 @@
 namespace TestPointer
 {
 
-#define TESTNAME "TestPointer"
+static const char * const TESTNAME = "TestPointer";
 
 class ObjectInstance
 {

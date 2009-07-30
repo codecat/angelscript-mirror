@@ -7,7 +7,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestTempVar"
+static const char * const TESTNAME = "TestTempVar";
 
 struct Object1
 {

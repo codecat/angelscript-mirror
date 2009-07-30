@@ -3,7 +3,7 @@
 namespace TestInterface
 {
 
-#define TESTNAME "TestInterface"
+static const char * const TESTNAME = "TestInterface";
 
 // Test implementing multiple interfaces
 // Test implicit conversion from class to interface

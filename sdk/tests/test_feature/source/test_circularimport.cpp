@@ -9,7 +9,7 @@
 namespace TestCircularImport
 {
 
-#define TESTNAME "TestCircularImport"
+static const char * const TESTNAME = "TestCircularImport";
 
 
 static const char *script1 =
@@ -31,11 +31,11 @@ bool Test()
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	asIScriptModule *mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
+	mod->AddScriptSection(":1", script1, strlen(script1), 0);
 	mod->Build();
 
 	mod = engine->GetModule("Module2", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->AddScriptSection(":2", script2, strlen(script2), 0);
 	mod->Build();
 
 	BindImportedFunctions(engine, "Module1");

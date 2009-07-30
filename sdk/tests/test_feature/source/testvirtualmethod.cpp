@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestVirtualMethod"
+static const char * const TESTNAME = "TestVirtualMethod";
 
 static std::string output1;
 

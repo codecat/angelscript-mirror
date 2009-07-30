@@ -7,7 +7,7 @@ using std::string;
 namespace TestStack2
 {
 
-#define TESTNAME "TestStack2"
+static const char * const TESTNAME = "TestStack2";
 
 static const char *script1 =
 "void testargs()                   \n"

@@ -3,7 +3,7 @@
 namespace TestObjHandle
 {
 
-#define TESTNAME "TestObjHandle"
+static const char * const TESTNAME = "TestObjHandle";
 
 
 

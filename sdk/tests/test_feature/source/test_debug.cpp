@@ -5,7 +5,7 @@
 namespace TestDebug
 {
 
-#define TESTNAME "TestDebug"
+static const char * const TESTNAME = "TestDebug";
 
 
 
@@ -75,7 +75,7 @@ static const char *correct =
 "desc: Out of range\n"
 "func: void Test3()\n"
 "modl: Module2\n"
-"sect: TestDebug:2\n"
+"sect: :2\n"
 "line: 10,3\n"
 " int c = 3\n"
 "--- call stack ---\n"
@@ -88,7 +88,7 @@ static const char *correct =
 "desc: Out of range\n"
 "func: void Test3()\n"
 "modl: Module2\n"
-"sect: TestDebug:2\n"
+"sect: :2\n"
 "line: 10,3\n"
 " int c = 3\n"
 "--- call stack ---\n"
@@ -214,11 +214,11 @@ bool Test()
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	asIScriptModule *mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
+	mod->AddScriptSection(":1", script1, strlen(script1), 0);
 	mod->Build();
 
 	mod = engine->GetModule("Module2", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->AddScriptSection(":2", script2, strlen(script2), 0);
 	mod->Build();
 
 	// Bind all functions that the module imports

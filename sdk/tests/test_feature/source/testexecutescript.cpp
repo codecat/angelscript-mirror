@@ -15,7 +15,7 @@
 #endif
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
 
-#define TESTNAME "TestExecuteScript"
+static const char * const TESTNAME = "TestExecuteScript";
 
 static bool ExecuteScript();
 

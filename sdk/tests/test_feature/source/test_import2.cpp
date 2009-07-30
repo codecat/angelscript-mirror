@@ -9,7 +9,7 @@
 namespace TestImport2
 {
 
-#define TESTNAME "TestImport2"
+static const char * const TESTNAME = "TestImport2";
 
 
 
@@ -60,12 +60,12 @@ bool Test()
 
 	COutStream out;
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":1", script1, strlen(script1), 0);
+	mod->AddScriptSection(":1", script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	mod->Build();
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME ":2", script2, strlen(script2), 0);
+	mod->AddScriptSection(":2", script2, strlen(script2), 0);
 	mod->Build();
 
 	// Bind all functions that the module imports

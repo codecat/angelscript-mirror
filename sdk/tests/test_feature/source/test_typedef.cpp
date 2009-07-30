@@ -3,7 +3,7 @@
 namespace TestTypedef
 {
 
-#define TESTNAME		"TestTypedef"
+static const char * const TESTNAME = "TestTypedef";
 #define TESTMODULE		"TestTypedef"
 #define TESTTYPE		"TestType1"
 

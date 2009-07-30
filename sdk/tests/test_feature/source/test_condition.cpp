@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-#define TESTNAME "TestCondition"
+static const char * const TESTNAME = "TestCondition";
 
 using std::string;
 static string a;

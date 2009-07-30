@@ -9,7 +9,7 @@
 namespace TestMultiAssign
 {
 
-#define TESTNAME "TestMultiAssign"
+static const char * const TESTNAME = "TestMultiAssign";
 
 
 

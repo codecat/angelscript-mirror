@@ -55,7 +55,10 @@ public:
 	asDWORD get() const;
 	void    set(asDWORD val);
 
+	// Increase and return new value
 	asDWORD atomicInc();
+
+	// Decrease and return new value
 	asDWORD atomicDec();
 
 protected:
