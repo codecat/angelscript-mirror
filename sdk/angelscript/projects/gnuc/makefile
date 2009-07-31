@@ -45,7 +45,7 @@ SRCNAMES = \
   as_scriptengine.cpp \
   as_scriptfunction.cpp \
   as_scriptnode.cpp \
-  as_scriptstruct.cpp \
+  as_scriptobject.cpp \
   as_string.cpp \
   as_string_util.cpp \
   as_thread.cpp \

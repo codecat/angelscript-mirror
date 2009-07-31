@@ -4,11 +4,18 @@
 
 \todo Complete this page
 
-AngelScript doesn't provide a built-in JIT compiler, instead it permits an external JIT compiler to be implemented. 
+AngelScript doesn't provide a built-in JIT compiler, instead it permits an external JIT compiler to be implemented 
+through a public interface.
 
 To use JIT compilation, the scripts must be compiled with a few extra instructions that provide hints to the JIT compiler
 and also entry points so that the VM will know when to pass control to the JIT compiled function. By default this is 
 turned off, and must thus be turned on by setting the engine property \ref asEP_INCLUDE_JIT_INSTRUCTIONS.
+
+If the application sets the \ref asIJITCompiler "JIT compiler" with \ref asIScriptEngine::SetJITCompiler "SetJITCompiler" 
+AngelScript will automatically invoke it to provide the \ref asJITFunction "JIT functions" with each compilation or 
+\ref doc_adv_precompile "loading of pre-compiled bytecode".
+
+
 
  - \ref asIJITCompiler
  - \ref asJITFunction

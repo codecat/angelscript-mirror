@@ -84,8 +84,8 @@
 		<Unit filename="..\..\source\as_scriptfunction.h" />
 		<Unit filename="..\..\source\as_scriptnode.cpp" />
 		<Unit filename="..\..\source\as_scriptnode.h" />
-		<Unit filename="..\..\source\as_scriptstruct.cpp" />
-		<Unit filename="..\..\source\as_scriptstruct.h" />
+		<Unit filename="..\..\source\as_scriptobject.cpp" />
+		<Unit filename="..\..\source\as_scriptobject.h" />
 		<Unit filename="..\..\source\as_string.cpp" />
 		<Unit filename="..\..\source\as_string.h" />
 		<Unit filename="..\..\source\as_string_util.cpp" />

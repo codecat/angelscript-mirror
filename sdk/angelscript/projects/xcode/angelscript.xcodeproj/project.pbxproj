@@ -42,7 +42,7 @@
 		9B2358E70A2DC68D008FE303 /* as_scriptengine.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B23581C0A2DC076008FE303 /* as_scriptengine.h */; };
 		9B2358E80A2DC68D008FE303 /* as_scriptfunction.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B23581D0A2DC076008FE303 /* as_scriptfunction.h */; };
 		9B2358E90A2DC68D008FE303 /* as_scriptnode.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B23581E0A2DC076008FE303 /* as_scriptnode.h */; };
-		9B2358EA0A2DC68D008FE303 /* as_scriptstruct.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B23581F0A2DC076008FE303 /* as_scriptstruct.h */; };
+		9B2358EA0A2DC68D008FE303 /* as_scriptobject.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B23581F0A2DC076008FE303 /* as_scriptobject.h */; };
 		9B2358EB0A2DC68D008FE303 /* as_string_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358200A2DC076008FE303 /* as_string_util.h */; };
 		9B2358EC0A2DC68D008FE303 /* as_string.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358210A2DC076008FE303 /* as_string.h */; };
 		9B2358ED0A2DC68D008FE303 /* as_texts.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2358220A2DC076008FE303 /* as_texts.h */; };
@@ -72,7 +72,7 @@
 		9B23590B0A2DC696008FE303 /* as_scriptengine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358670A2DC0A1008FE303 /* as_scriptengine.cpp */; };
 		9B23590C0A2DC696008FE303 /* as_scriptfunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358680A2DC0A1008FE303 /* as_scriptfunction.cpp */; };
 		9B23590D0A2DC696008FE303 /* as_scriptnode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358690A2DC0A1008FE303 /* as_scriptnode.cpp */; };
-		9B23590E0A2DC696008FE303 /* as_scriptstruct.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23586A0A2DC0A1008FE303 /* as_scriptstruct.cpp */; };
+		9B23590E0A2DC696008FE303 /* as_scriptobject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23586A0A2DC0A1008FE303 /* as_scriptobject.cpp */; };
 		9B23590F0A2DC696008FE303 /* as_variablescope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B2358700A2DC0A1008FE303 /* as_variablescope.cpp */; };
 		9B2359100A2DC696008FE303 /* as_string_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23586B0A2DC0A1008FE303 /* as_string_util.cpp */; };
 		9B2359110A2DC696008FE303 /* as_string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23586C0A2DC0A1008FE303 /* as_string.cpp */; };
@@ -115,7 +115,7 @@
 		9B23581C0A2DC076008FE303 /* as_scriptengine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_scriptengine.h; path = ../../source/as_scriptengine.h; sourceTree = SOURCE_ROOT; };
 		9B23581D0A2DC076008FE303 /* as_scriptfunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_scriptfunction.h; path = ../../source/as_scriptfunction.h; sourceTree = SOURCE_ROOT; };
 		9B23581E0A2DC076008FE303 /* as_scriptnode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_scriptnode.h; path = ../../source/as_scriptnode.h; sourceTree = SOURCE_ROOT; };
-		9B23581F0A2DC076008FE303 /* as_scriptstruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_scriptstruct.h; path = ../../source/as_scriptstruct.h; sourceTree = SOURCE_ROOT; };
+		9B23581F0A2DC076008FE303 /* as_scriptobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_scriptobject.h; path = ../../source/as_scriptobject.h; sourceTree = SOURCE_ROOT; };
 		9B2358200A2DC076008FE303 /* as_string_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_string_util.h; path = ../../source/as_string_util.h; sourceTree = SOURCE_ROOT; };
 		9B2358210A2DC076008FE303 /* as_string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_string.h; path = ../../source/as_string.h; sourceTree = SOURCE_ROOT; };
 		9B2358220A2DC076008FE303 /* as_texts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_texts.h; path = ../../source/as_texts.h; sourceTree = SOURCE_ROOT; };
@@ -146,7 +146,7 @@
 		9B2358670A2DC0A1008FE303 /* as_scriptengine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_scriptengine.cpp; path = ../../source/as_scriptengine.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358680A2DC0A1008FE303 /* as_scriptfunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_scriptfunction.cpp; path = ../../source/as_scriptfunction.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358690A2DC0A1008FE303 /* as_scriptnode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_scriptnode.cpp; path = ../../source/as_scriptnode.cpp; sourceTree = SOURCE_ROOT; };
-		9B23586A0A2DC0A1008FE303 /* as_scriptstruct.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_scriptstruct.cpp; path = ../../source/as_scriptstruct.cpp; sourceTree = SOURCE_ROOT; };
+		9B23586A0A2DC0A1008FE303 /* as_scriptobject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_scriptobject.cpp; path = ../../source/as_scriptobject.cpp; sourceTree = SOURCE_ROOT; };
 		9B23586B0A2DC0A1008FE303 /* as_string_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_string_util.cpp; path = ../../source/as_string_util.cpp; sourceTree = SOURCE_ROOT; };
 		9B23586C0A2DC0A1008FE303 /* as_string.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_string.cpp; path = ../../source/as_string.cpp; sourceTree = SOURCE_ROOT; };
 		9B23586D0A2DC0A1008FE303 /* as_thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_thread.cpp; path = ../../source/as_thread.cpp; sourceTree = SOURCE_ROOT; };
@@ -225,7 +225,7 @@
 				9B2358670A2DC0A1008FE303 /* as_scriptengine.cpp */,
 				9B2358680A2DC0A1008FE303 /* as_scriptfunction.cpp */,
 				9B2358690A2DC0A1008FE303 /* as_scriptnode.cpp */,
-				9B23586A0A2DC0A1008FE303 /* as_scriptstruct.cpp */,
+				9B23586A0A2DC0A1008FE303 /* as_scriptobject.cpp */,
 				9B2358700A2DC0A1008FE303 /* as_variablescope.cpp */,
 				9B23586B0A2DC0A1008FE303 /* as_string_util.cpp */,
 				9B23586C0A2DC0A1008FE303 /* as_string.cpp */,
@@ -267,7 +267,7 @@
 				9B23581C0A2DC076008FE303 /* as_scriptengine.h */,
 				9B23581D0A2DC076008FE303 /* as_scriptfunction.h */,
 				9B23581E0A2DC076008FE303 /* as_scriptnode.h */,
-				9B23581F0A2DC076008FE303 /* as_scriptstruct.h */,
+				9B23581F0A2DC076008FE303 /* as_scriptobject.h */,
 				9B2358200A2DC076008FE303 /* as_string_util.h */,
 				9B2358210A2DC076008FE303 /* as_string.h */,
 				9B2358220A2DC076008FE303 /* as_texts.h */,
@@ -313,7 +313,7 @@
 				9B2358E70A2DC68D008FE303 /* as_scriptengine.h in Headers */,
 				9B2358E80A2DC68D008FE303 /* as_scriptfunction.h in Headers */,
 				9B2358E90A2DC68D008FE303 /* as_scriptnode.h in Headers */,
-				9B2358EA0A2DC68D008FE303 /* as_scriptstruct.h in Headers */,
+				9B2358EA0A2DC68D008FE303 /* as_scriptobject.h in Headers */,
 				9B2358EB0A2DC68D008FE303 /* as_string_util.h in Headers */,
 				9B2358EC0A2DC68D008FE303 /* as_string.h in Headers */,
 				9B2358ED0A2DC68D008FE303 /* as_texts.h in Headers */,
@@ -390,7 +390,7 @@
 				9B23590B0A2DC696008FE303 /* as_scriptengine.cpp in Sources */,
 				9B23590C0A2DC696008FE303 /* as_scriptfunction.cpp in Sources */,
 				9B23590D0A2DC696008FE303 /* as_scriptnode.cpp in Sources */,
-				9B23590E0A2DC696008FE303 /* as_scriptstruct.cpp in Sources */,
+				9B23590E0A2DC696008FE303 /* as_scriptobject.cpp in Sources */,
 				9B23590F0A2DC696008FE303 /* as_variablescope.cpp in Sources */,
 				9B2359100A2DC696008FE303 /* as_string_util.cpp in Sources */,
 				9B2359110A2DC696008FE303 /* as_string.cpp in Sources */,

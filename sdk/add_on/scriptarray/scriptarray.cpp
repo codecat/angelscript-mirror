@@ -37,7 +37,7 @@ void RegisterScriptArray_Native(asIScriptEngine *engine)
 	int r;
 	
 	// Register the array type as a template
-	r = engine->RegisterObjectType("array<class T>", sizeof(CScriptArray), asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
+	r = engine->RegisterObjectType("array<class T>", 0, asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
 
 	// Templates receive the object type as the first parameter. To the script writer this is hidden
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in)", asFUNCTIONPR(ScriptArrayFactory, (asIObjectType*), CScriptArray*), asCALL_CDECL); assert( r >= 0 );
@@ -498,7 +498,7 @@ void RegisterScriptArray_Generic(asIScriptEngine *engine)
 {
 	int r;
 	
-	r = engine->RegisterObjectType("array<class T>", sizeof(CScriptArray), asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
+	r = engine->RegisterObjectType("array<class T>", 0, asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
 
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in)", asFUNCTION(ScriptArrayFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in, uint)", asFUNCTION(ScriptArrayFactory2_Generic), asCALL_GENERIC); assert( r >= 0 );

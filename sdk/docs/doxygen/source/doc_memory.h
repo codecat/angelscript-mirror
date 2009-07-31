@@ -28,7 +28,7 @@ objects that have a member variable as a handle to the same type as itself.
 Whenever such an object is created, the garbage collector is informed so that
 it can keep track of the object.
 
-The garbage collector is executed manually, because the application
+The garbage collector is executed manually because the application
 will want to control when that extra processing should be done, usually at
 idle moments of the application execution. The garbage collector in
 AngelScript is also incremental, so that it can be executed in tiny steps

@@ -648,7 +648,7 @@ ProductVersion=
 AutoIncBuildNr=0
 
 [Unit61]
-FileName=..\..\source\as_scriptstruct.cpp
+FileName=..\..\source\as_scriptobject.cpp
 CompileCpp=1
 Folder=AngelScript
 Compile=1
@@ -658,7 +658,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit62]
-FileName=..\..\source\as_scriptstruct.h
+FileName=..\..\source\as_scriptobject.h
 CompileCpp=1
 Folder=AngelScript
 Compile=1

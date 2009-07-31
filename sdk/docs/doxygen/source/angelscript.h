@@ -3064,11 +3064,11 @@ struct asSVMRegisters
 {
 	//! \brief Points to the current bytecode instruction
 	asDWORD          *programPointer;     // points to current bytecode instruction
-	//! \brief Function stack frame
+	//! \brief Function stack frame. This doesn't change during the function execution.
 	asDWORD          *stackFramePointer;  // function stack frame
 	//! \brief Top of the stack (grows downward)
 	asDWORD          *stackPointer;       // top of stack (grows downward)
-	//! \brief Array of global variable pointers
+	//! \brief Array of global variable pointers. This doesn't change during the function execution.
 	void            **globalVarPointers;  // global variable pointers
 	//! \brief Temporary register for primitives and unmanaged references
 	asQWORD           valueRegister;      // temp register for primitives
@@ -3081,8 +3081,16 @@ struct asSVMRegisters
 };
 
 //! \brief The function signature of a JIT compiled function
+//! \param [in] registers  A pointer to the virtual machine's registers.
+//! \param [in] entryId    The value defined by the JIT compiler for the current entry point in the JIT function.
+//!
+//! A JIT function receives a pointer to the virtual machine's registers when called and 
+//! an argument telling it where in the script function to continue the execution. The JIT
+//! function must make sure to update the VM's registers according to the actions performed
+//! before returning control to the VM.
+//!
 //! \see \ref doc_adv_jit
-typedef void (*asJITFunction)(asSVMRegisters*, asDWORD suspendId);
+typedef void (*asJITFunction)(asSVMRegisters* registers, asDWORD entryId);
 
 //! \brief The interface that AS use to interact with the JIT compiler
 //!

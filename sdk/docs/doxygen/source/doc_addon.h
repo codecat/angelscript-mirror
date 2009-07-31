@@ -32,12 +32,12 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
 
 <b>Path:</b> /sdk/add_on/scriptarray/
 
-The <code>array</code> type is a template array object that allow the scripts to declare arrays of any type.
+The <code>array</code> type is a \ref doc_adv_template "template object" that allow the scripts to declare arrays of any type.
 Since it is a generic class it is not the most performatic due to the need to determine characteristics at 
-runtime. For that reason it is recommended that the application registers a template specialization for the
+runtime. For that reason it is recommended that the application registers a \ref doc_adv_template_2 "template specialization" for the
 array types that are most commonly used.
 
-The type is registered with <code>RegisterScriptArray(asIScriptEngine*);</code>.
+The type is registered with <code>RegisterScriptArray(asIScriptEngine*)</code>.
 
 \section doc_addon_array_1 Public C++ interface
 
@@ -123,7 +123,7 @@ public:
 
 The <code>any</code> type is a generic container that can hold any value. It is a reference type.
 
-The type is registered with <code>RegisterScriptAny(asIScriptEngine*);</code>.
+The type is registered with <code>RegisterScriptAny(asIScriptEngine*)</code>.
 
 \section doc_addon_any_1 Public C++ interface
 

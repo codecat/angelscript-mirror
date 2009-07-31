@@ -39,7 +39,7 @@ HEADERS += ../../include/angelscript.h \
            ../../source/as_scriptengine.h \
            ../../source/as_scriptfunction.h \
            ../../source/as_scriptnode.h \
-           ../../source/as_scriptstruct.h \
+           ../../source/as_scriptobject.h \
            ../../source/as_string.h \
            ../../source/as_string_util.h \
            ../../source/as_texts.h \
@@ -73,7 +73,7 @@ SOURCES += ../../source/as_arrayobject.cpp \
            ../../source/as_scriptengine.cpp \
            ../../source/as_scriptfunction.cpp \
            ../../source/as_scriptnode.cpp \
-           ../../source/as_scriptstruct.cpp \
+           ../../source/as_scriptobject.cpp \
            ../../source/as_string.cpp \
            ../../source/as_string_util.cpp \
            ../../source/as_thread.cpp \

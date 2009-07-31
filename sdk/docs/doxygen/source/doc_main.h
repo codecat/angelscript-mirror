@@ -21,7 +21,6 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 
  - \subpage doc_start
  - \subpage doc_using
- - \subpage doc_advanced
  - \subpage doc_script
  - \subpage doc_api 
  - \subpage doc_samples
@@ -58,17 +57,15 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_call_script_func
  - \subpage doc_use_script_class
  - \subpage doc_gc
+ - \subpage doc_advanced
 
 
 
- 
- 
- 
- 
+
+
+
 \page doc_advanced Advanced topics
 
- - \subpage doc_advanced_api
- - \subpage doc_memory
  - \subpage doc_debug
  - \subpage doc_adv_timeout
  - \subpage doc_adv_multithread
@@ -76,22 +73,14 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_adv_coroutine
  - \subpage doc_adv_precompile
  - \subpage doc_adv_jit
- 
+
 \todo Add page about dynamic config groups
 \todo Add page about custom memory management
 \todo Add page about customizations/optimizations
 \todo Add page about imports and function binding
- 
- 
-\page doc_advanced_api Advanced application interface
 
- - \subpage doc_gc_object
- - \subpage doc_adv_scoped_type
- - \subpage doc_adv_single_ref_type
- - \subpage doc_adv_class_hierarchy
- - \subpage doc_adv_var_type
- 
-\todo Add page on template types
+
+
 
  
  
