@@ -37,8 +37,6 @@
 // This version is Xenon specific
 // Modified from as_callfunc_ppc.cpp by Laszlo Perneky Februar 2007
 
-#include <stdio.h>
-
 #include "as_config.h"
 
 #ifndef AS_MAX_PORTABILITY
@@ -49,6 +47,7 @@
 #include "as_texts.h"
 #include "as_tokendef.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 BEGIN_AS_NAMESPACE

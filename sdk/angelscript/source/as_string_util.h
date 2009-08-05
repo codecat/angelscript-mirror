@@ -34,10 +34,14 @@
 
 #include "as_config.h"
 
+BEGIN_AS_NAMESPACE
+
 double  asStringScanDouble(const char *string, size_t *numScanned);
 asQWORD asStringScanUInt64(const char *string, int base, size_t *numScanned);
 
 int     asStringEncodeUTF8(unsigned int value, char *outEncodedBuffer);
 int     asStringDecodeUTF8(const char *encodedBuffer, unsigned int *outLength);
+
+END_AS_NAMESPACE
 
 #endif

@@ -867,6 +867,9 @@ public:
 	virtual int              GetParamTypeId(int index, asDWORD *flags = 0) const = 0;
 	virtual int              GetReturnTypeId() const = 0;
 
+	// For JIT compilation
+	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;
+
 protected:
 	virtual ~asIScriptFunction() {};
 };
@@ -1092,14 +1095,12 @@ struct asSVMRegisters
 	bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
 };
 
-typedef void (*asJITFunction)(asSVMRegisters*, asDWORD suspendId);
+typedef void (*asJITFunction)(asSVMRegisters *registers, asDWORD entryId);
 
 class asIJITCompiler
 {
 public:
-    virtual int  StartCompile(const asDWORD *bytecode, asUINT bytecodeLen, asJITFunction *output) = 0;
-    virtual int  ResolveJitEntry(asUINT bytecodeOffset) = 0;
-    virtual void EndCompile() = 0;
+	virtual int  CompileFunction(asIScriptFunction *function, asJITFunction *output) = 0;
     virtual void ReleaseJITFunction(asJITFunction func) = 0;
 public:
     virtual ~asIJITCompiler() {}

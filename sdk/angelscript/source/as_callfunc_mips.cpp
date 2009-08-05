@@ -38,7 +38,6 @@
 // by Manu Evans in April, 2006
 //
 
-#include <stdio.h>
 
 #include "as_config.h"
 
@@ -50,6 +49,7 @@
 #include "as_texts.h"
 #include "as_tokendef.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <regdef.h>
 

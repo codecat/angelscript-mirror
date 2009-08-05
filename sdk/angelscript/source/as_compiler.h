@@ -196,6 +196,8 @@ protected:
 
 	void Error(const char *msg, asCScriptNode *node);
 	void Warning(const char *msg, asCScriptNode *node);
+	void PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node);
+
 
 	void AddVariableScope(bool isBreakScope = false, bool isContinueScope = false);
 	void RemoveVariableScope();

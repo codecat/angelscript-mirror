@@ -99,6 +99,9 @@ public:
 	int                  GetParamTypeId(int index, asDWORD *flags = 0) const;
 	int                  GetReturnTypeId() const;
 
+	// For JIT compilation
+	asDWORD             *GetByteCode(asUINT *length = 0);
+
 public:
 	//-----------------------------------
 	// Internal methods

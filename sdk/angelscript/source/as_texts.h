@@ -216,7 +216,4 @@
 #define TXT_UNBOUND_FUNCTION              "Unbound function called"
 #define TXT_OUT_OF_BOUNDS                 "Out of range"
 
-// JIT compilation issues
-#define TXT_OFFSET_OUT_OF_BOUNDS          "The native code section offset is too large. Try splitting the function \'%s\' into smaller functions."
-
 #endif

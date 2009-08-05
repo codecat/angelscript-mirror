@@ -1435,11 +1435,17 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 			str = objectType->name + "::" + str;
 
 		if( funcs.GetLength() == 0 )
+		{
 			str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
+			Error(str.AddressOf(), node);
+		}
 		else
+		{
 			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, str.AddressOf());
-
-		Error(str.AddressOf(), node);
+			Error(str.AddressOf(), node);
+	
+			PrintMatchingFuncs(funcs, node);
+		}
 	}
 }
 
@@ -2832,6 +2838,19 @@ void asCCompiler::Warning(const char *msg, asCScriptNode *node)
 	script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
 	builder->WriteWarning(script->name.AddressOf(), msg, r, c);
+}
+
+void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
+{
+	int r, c;
+	script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+	for( int n = 0; n < funcs.GetLength(); n++ )
+	{
+		asIScriptFunction *func = engine->scriptFunctions[funcs[n]];
+
+		builder->WriteInfo(script->name.AddressOf(), func->GetDeclaration(true), r, c, false);
+	}
 }
 
 int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary)
@@ -6719,6 +6738,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			else if( funcs.GetLength() > 1 )
 			{
 				Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+				PrintMatchingFuncs(funcs, node);
+
 				ctx->type.SetDummy();
 				return -1;
 			}
@@ -7272,6 +7293,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			else if( ops.GetLength() > 1 )
 			{
 				Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+				PrintMatchingFuncs(ops, node);
+
 				return -1;
 			}
 			else
@@ -7846,6 +7869,8 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 		else if( ops.GetLength() > 1 )
 		{
 			Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+			PrintMatchingFuncs(ops, node);
+
 			ctx->type.SetDummy();
 
 			// Compiler error

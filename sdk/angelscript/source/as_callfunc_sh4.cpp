@@ -43,8 +43,6 @@
 // * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wcechp40/html/_callsh4_SH_4_Calling_Standard.asp
 
 
-#include <stdio.h>
-
 #include "as_config.h"
 
 #ifndef MAX_PORTABILITY
@@ -55,6 +53,7 @@
 #include "as_texts.h"
 #include "as_tokendef.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 BEGIN_AS_NAMESPACE

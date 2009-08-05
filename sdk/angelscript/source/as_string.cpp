@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2008 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -28,11 +28,11 @@
    andreas@angelcode.com
 */
 
+#include "as_config.h"
+
 #include <stdarg.h>		// va_list, va_start(), etc
 #include <stdlib.h>     // strtod(), strtol()
 #include <string.h> // some compilers declare memcpy() here
-
-#include "as_config.h"
 
 #if !defined(AS_NO_MEMORY_H)
 #include <memory.h>

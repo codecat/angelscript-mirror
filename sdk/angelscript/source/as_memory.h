@@ -41,10 +41,7 @@
 #ifndef AS_MEMORY_H
 #define AS_MEMORY_H
 
-#include <new>
-
 #include "as_config.h"
-#include "as_criticalsection.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -75,6 +72,8 @@ extern asFREEFUNC_t  userFree;
 
 END_AS_NAMESPACE
 
+#include <new>
+#include "as_criticalsection.h"
 #include "as_array.h"
 
 BEGIN_AS_NAMESPACE

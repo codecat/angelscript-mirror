@@ -497,48 +497,33 @@ void asCScriptFunction::JITCompile()
     if( !jit )
         return;
 
+	// Release the previous function, if any
     if( jitFunction )
     {
         engine->jitCompiler->ReleaseJITFunction(jitFunction);
         jitFunction = 0;
     }
 
-    asDWORD* bytecode = byteCode.AddressOf();
-    asUINT bytecodeLength = (asUINT)byteCode.GetLength();
+	// Compile for native system
+	int r = jit->CompileFunction(this, &jitFunction);
+	if( r < 0 )
+	{
+		asASSERT( jitFunction == 0 );
+	}
+}
 
-    int r = jit->StartCompile(bytecode, bytecodeLength, &jitFunction);
-    if( r == asSUCCESS )
-    {
-        asUINT j = 0;
-        while( j < bytecodeLength )
-        {
-            int op = *((unsigned char*)bytecode);
-            if( op == asBC_JitEntry )
-            {
-                int off = jit->ResolveJitEntry(j);
-                if( off < 0 )
-                    off = 0;
-                else
-                    off++; // We need 0 to indicate "no jit buffer"
+// interface
+asDWORD *asCScriptFunction::GetByteCode(asUINT *length)
+{
+	if( length )
+		*length = (asUINT)byteCode.GetLength();
 
-                if( off > 65535 )
-                {
-                    asCString str;
-                    str.Format(TXT_OFFSET_OUT_OF_BOUNDS, GetName());
-                    engine->WriteMessage(GetName(), 0, 0, asMSGTYPE_WARNING, str.AddressOf());
-                    off = 0;
-                }
+	if( byteCode.GetLength() )
+	{
+		return byteCode.AddressOf();
+	}
 
-                // Update bytecode argument with the offset
-                asBC_SWORDARG0(bytecode) = off;
-            }
-            int size = asBCTypeSize[asBCInfo[op].type];
-            j += size;
-            bytecode += size;
-        }
-    }
-
-    jit->EndCompile();
+	return 0;
 }
 
 END_AS_NAMESPACE

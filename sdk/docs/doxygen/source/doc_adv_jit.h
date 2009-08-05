@@ -2,8 +2,6 @@
 
 \page doc_adv_jit JIT compilation
 
-\todo Complete this page
-
 AngelScript doesn't provide a built-in JIT compiler, instead it permits an external JIT compiler to be implemented 
 through a public interface.
 
@@ -17,12 +15,105 @@ AngelScript will automatically invoke it to provide the \ref asJITFunction "JIT 
 
 
 
- - \ref asIJITCompiler
- - \ref asJITFunction
- - \ref asSVMRegisters
- - \ref asSBCInfo
 
- - \subpage doc_adv_jit_1
+\section doc_adv_jit_3 The structure of the JIT function
+
+The \ref asJITFunction "JIT compiled function" must follow certain rules in order to behave well with the virtual machine. The intention
+is that the VM will pass the control to the JIT function, and when the execution is to be suspended the JIT function
+returns the control to the VM, updating the internal state of the VM so that the VM can resume the execution when
+requested. Each time the JIT function returns control to the VM it must make sure that the \ref asSVMRegisters "VM registers" and stack values
+have been updated according to the code that was executed.
+
+The byte code will have a special instruction, \ref asBC_JitEntry "JitEntry", which defines the positions where the VM
+can pass the control to the JIT function. These are usually placed for every script statement, and after each instruction
+that calls another function. This implies that the JIT compiled function needs to be able to start the execution at 
+different points based on the argument in the JitEntry instruction. The value of the argument is defined by the JIT compiler
+and how it is interpreted is also up to the JIT compiler, with the exception of 0 that means that the control should not be 
+passed to the JIT function.
+
+Some byte code instructions are not meant to be converted into native code. These are usually the ones that have a more 
+global effect on the VM, e.g. the instructions that setup a call to a new script function, or that return from a previous 
+instruction. When these functions are encountered, the JIT function should return the control to the VM, and then the VM
+will execute the instruction. 
+
+Other byte code instructions may be partially implemented by the JIT function, for example those that can throw an exception
+based on specific conditions. One such example is the instructions for divisions, if the divider is 0 the VM will set
+an exception and abort the execution. For these instructions the JIT compiler should preferrably implement the condition
+that doesn't throw an exception, and if an exception is to be thrown the JIT function will instead break out to the VM.
+
+The following shows a possible structure of a JIT compiled function:
+
+<pre>
+  void jitCompiledFunc(asSVMRegisters *regs, asDWORD entry)
+  {
+    Read desired VM registers into CPU registers
+    Jump to the current position of the function based on the 'entry' argument
+  1:
+    Execute code in block 1
+    Jump to exit if an illegal operation is done, e.g. divide by zero. 
+    Jump to exit if block ends with an instruction that should not be executed by JIT function. 
+  2:
+    ...
+  3:
+    ...
+  exit:
+    Update the VM registers before returning control to VM
+  }
+</pre>
+
+
+
+\section doc_adv_jit_2 Traversing the byte code
+
+
+\code
+int CJITCompiler::CompileFunction(asIScriptFunction *func, asJITFunction *output)
+{
+  bool success = StartNewCompilation();
+
+  // Get the script byte code
+  asUINT   length;
+  asDWORD *byteCode = func->GetByteCode(&length);
+  asDWORD *end = byteCode + length;
+  
+  while( byteCode < end )
+  {
+    // Determine the instruction
+    asEBCInstr op = asEBCInstr(*(asBYTE*)byteCode);
+    switch( op )
+    {
+    // Translate each byte code instruction into native code.
+    // The codes that cannot be translated should return the control
+    // to the VM, so that it can continue the processing. When 
+    // the VM encounters the next JitEntry instruction it will
+    // transfer the control back to the JIT function.
+    ...
+    
+    case asBC_JitEntry:
+      // Update the argument for the JitEntry instruction with  
+      // the argument that should be sent to the jit function.
+      // Remember that 0 means that the VM should not pass
+      // control to the JIT function.
+      asBC_SWORDARG0(byteCode) = DetermineJitEntryArg();
+      break;
+    }
+    
+    // Move to next instruction
+    byteCode += asBCTypeSize[asBCInfo[op].type];
+  }
+  
+  if( success )
+  {
+    *output = GetCompiledFunction();
+    return 0;
+  }
+  
+  return -1;
+}
+\endcode
+
+The following macros should be used to read the arguments from the bytecode instruction. 
+The layout of the arguments is determined from the \ref asBCInfo array.
 
  - \ref asBC_DWORDARG
  - \ref asBC_INTARG
@@ -34,6 +125,15 @@ AngelScript will automatically invoke it to provide the \ref asJITFunction "JIT 
  - \ref asBC_SWORDARG0
  - \ref asBC_SWORDARG1
  - \ref asBC_SWORDARG2
+
+What each \ref asEBCInstr "byte code" instruction does is described in \subpage doc_adv_jit_1, but the exact 
+implementation of each byte code instruction is best determined from the implementation
+in the VM, i.e. the asCScriptContext::ExecuteNext method.
+
+
+
+
+
 
 
 \page doc_adv_jit_1 Byte code instructions

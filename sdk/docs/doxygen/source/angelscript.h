@@ -2823,6 +2823,19 @@ public:
 	virtual int              GetReturnTypeId() const = 0;
 	//! \}
 
+	//! \name JIT compilation
+	//! \{
+
+	// For JIT compilation
+	//! \brief Returns the byte code buffer and length.
+	//! \param[out] length The length of the byte code buffer in DWORDs
+	//! \return A pointer to the byte code buffer, or 0 if this is not a script function.
+	//! 
+	//! This function is used by the \ref asIJITCompiler to obtain the byte
+	//!  code buffer for building the native machine code representation.
+	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;
+	//! \}
+
 protected:
 	virtual ~asIScriptFunction() {};
 };
@@ -3090,7 +3103,7 @@ struct asSVMRegisters
 //! before returning control to the VM.
 //!
 //! \see \ref doc_adv_jit
-typedef void (*asJITFunction)(asSVMRegisters* registers, asDWORD entryId);
+typedef void (*asJITFunction)(asSVMRegisters *registers, asDWORD entryId);
 
 //! \brief The interface that AS use to interact with the JIT compiler
 //!
@@ -3103,23 +3116,16 @@ class asIJITCompiler
 public:
 	//! \brief Called by AngelScript to begin the compilation
 	//!
-	//! \param [in] bytecode A pointer to the bytecode buffer
-	//! \param [in] bytecodeLen The length of the buffer in DWORDs
+	//! \param [in] function A pointer to the script function
 	//! \param [out] output The JIT compiled function
 	//! \return A negative value on error.
 	//!
 	//! AngelScript will call this function to request the compilation of
-	//! a script function. This call will be followed by a to \ref ResolveJitEntry
-	//! for each JitEntry instruction in the script function. The compilation
-	//! is ended with a call to \ref EndCompile when all entry points have been
-	//! resolved.
-    virtual int  StartCompile(const asDWORD *bytecode, asUINT bytecodeLen, asJITFunction *output) = 0;
-	//! \brief Called by AngelScript to determine the argument for the JIT function for this entry point
-	//! \param [in] bytecodeOffset The offset for the current JitEntry instruction
-	//! \return The value of the argument, or a negative value if the entry point cannot be resolved
-    virtual int  ResolveJitEntry(asUINT bytecodeOffset) = 0;
-	//! \brief Called by AngelScript when all entry points have been resolved
-    virtual void EndCompile() = 0;
+	//! a script function. The JIT compiler should produce the native machine
+	//! code representation of the function and update the JitEntry instructions
+	//! in the byte code to allow the VM to transfer the control to the JIT compiled
+	//! function.
+	virtual int  CompileFunction(asIScriptFunction *function, asJITFunction *output) = 0;
 	//! \brief Called by AngelScript when the JIT function is released
 	//! \param [in] func Pointer to the JIT function
     virtual void ReleaseJITFunction(asJITFunction func) = 0;

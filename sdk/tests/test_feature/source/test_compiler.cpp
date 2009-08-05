@@ -555,6 +555,34 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test 29 - function overloads with multiple matches must display matches
+	{
+		bout.buffer = "";
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script = "int func() { return 0; }\n"
+			                 "float func() { return 0; }\n"
+							 "void main() { func(); }\n";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("s", script);
+		int r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != "s (2, 1) : Error   : A function with the same name and parameters already exist\n"
+		                   "s (3, 1) : Info    : Compiling void main()\n"
+		                   "s (3, 15) : Error   : Multiple matching signatures to 'func()'\n"
+		                   "s (3, 15) : Info    : int func()\n"
+		                   "s (3, 15) : Info    : float func()\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

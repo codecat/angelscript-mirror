@@ -57,7 +57,9 @@ BEGIN_AS_NAMESPACE
 
 #ifdef AS_POSIX_THREADS
 
+END_AS_NAMESPACE
 #include <pthread.h>
+BEGIN_AS_NAMESPACE
 
 class asCThreadCriticalSection
 {
@@ -74,8 +76,10 @@ protected:
 
 #elif defined(AS_WINDOWS_THREADS)
 
+END_AS_NAMESPACE
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+BEGIN_AS_NAMESPACE
 
 // Undefine macros that cause problems in our code
 #undef GetObject

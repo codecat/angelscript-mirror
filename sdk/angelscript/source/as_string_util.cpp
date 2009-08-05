@@ -29,13 +29,13 @@
 
 */
 
+#include "as_config.h"
+
 #include <stdarg.h>     // va_list, va_start(), etc
 #include <stdlib.h>     // strtod(), strtol()
 #include <stdio.h>      // _vsnprintf()
 #include <string.h>     // some compilers declare memcpy() here
 #include <locale.h>     // setlocale()
-
-#include "as_config.h"
 
 #if !defined(AS_NO_MEMORY_H)
 #include <memory.h>
@@ -44,6 +44,7 @@
 #include "as_string.h"
 #include "as_string_util.h"
 
+BEGIN_AS_NAMESPACE
 
 double asStringScanDouble(const char *string, size_t *numScanned)
 {
@@ -216,3 +217,5 @@ int asStringDecodeUTF8(const char *encodedBuffer, unsigned int *outLength)
 	// The byte sequence isn't a valid UTF-8 byte sequence.
 	return -1;
 }
+
+END_AS_NAMESPACE
