@@ -109,15 +109,15 @@ bool Test()
 
 		if( testInt8.m_fail ) fail = true;
 	}
-	
+
 	// Shift operations with int8 should result in int32
 	r = engine->ExecuteString(0, "uint8[] buf={1,2,3,4,5,6}; "
-                                 "uint32 version; "
-                                 "version = buf[0]<<24; "
-                                 "version |= buf[1]<<16; "
-                                 "version |= buf[2]<<8; "
-                                 "version |= buf[3]; "
-								 "Assert(version == 0x01020304);");
+                                 "uint32 ver; "
+                                 "ver = buf[0]; "
+                                 "ver |= buf[1]<<8; "
+                                 "ver |= buf[2]<<16; "
+                                 "ver |= buf[3]<<24; "
+								 "Assert(ver == 0x04030201);"); // If this is changed to 0x01020304 Avira accuses the compiled obj file as virus
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

@@ -79,7 +79,6 @@ AS_API int                asEngine_GetGlobalPropertyByIndex(asIScriptEngine *e, 
 AS_API int                asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv)                                                 { return e->RegisterGlobalFunction(declaration, asFUNCTION(funcPointer), callConv); }
 AS_API int                asEngine_GetGlobalFunctionCount(asIScriptEngine *e)                                                                                                                      { return e->GetGlobalFunctionCount(); }
 AS_API int                asEngine_GetGlobalFunctionIdByIndex(asIScriptEngine *e, asUINT index)                                                                                                    { return e->GetGlobalFunctionIdByIndex(index); }
-AS_API int                asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv)                       { return e->RegisterGlobalBehaviour(behaviour, declaration, asFUNCTION(funcPointer), callConv); }
 AS_API int                asEngine_RegisterInterface(asIScriptEngine *e, const char *name)                                                                                                         { return e->RegisterInterface(name); }
 AS_API int                asEngine_RegisterInterfaceMethod(asIScriptEngine *e, const char *intf, const char *declaration)                                                                          { return e->RegisterInterfaceMethod(intf, declaration); }
 AS_API int                asEngine_RegisterEnum(asIScriptEngine *e, const char *type)                                                                                                              { return e->RegisterEnum(type); }
@@ -113,7 +112,6 @@ AS_API void               asEngine_CopyScriptObject(asIScriptEngine *e, void *ds
 AS_API void               asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId)                                                                                                  { e->ReleaseScriptObject(obj, typeId); }
 AS_API void               asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId)                                                                                                   { e->AddRefScriptObject(obj, typeId); }
 AS_API asBOOL             asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId)                                                                    { return e->IsHandleCompatibleWithObject(obj, objTypeId, handleTypeId) ? asTRUE : asFALSE; }
-AS_API int                asEngine_CompareScriptObjects(asIScriptEngine *e, asBOOL &result, int behaviour, void *leftObj, void *rightObj, int typeId)                                              { bool bResult; int r = e->CompareScriptObjects(bResult, behaviour, leftObj, rightObj, typeId); result = bResult ? asTRUE : asFALSE; return r; }
 AS_API int                asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)                                                { return e->ExecuteString(module, script, ctx, flags); }
 AS_API int                asEngine_GarbageCollect(asIScriptEngine *e, asDWORD flags)                                                                                                               { return e->GarbageCollect(flags); }
 AS_API void               asEngine_GetGCStatistics(asIScriptEngine *e, asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected)                                                         { e->GetGCStatistics(currentSize, totalDestroyed, totalDetected); }
@@ -174,7 +172,7 @@ AS_API int              asContext_SetArgFloat(asIScriptContext *c, asUINT arg, f
 AS_API int              asContext_SetArgDouble(asIScriptContext *c, asUINT arg, double value)                               { return c->SetArgDouble(arg, value); }
 AS_API int              asContext_SetArgAddress(asIScriptContext *c, asUINT arg, void *addr)                                { return c->SetArgAddress(arg, addr); }
 AS_API int              asContext_SetArgObject(asIScriptContext *c, asUINT arg, void *obj)                                  { return c->SetArgObject(arg, obj); }
-AS_API void *           asContext_GetArgPointer(asIScriptContext *c, asUINT arg)                                            { return c->GetArgPointer(arg); }
+AS_API void *           asContext_GetAddressOfArg(asIScriptContext *c, asUINT arg)                                          { return c->GetAddressOfArg(arg); }
 AS_API int              asContext_SetObject(asIScriptContext *c, void *obj)                                                 { return c->SetObject(obj); }
 AS_API asBYTE           asContext_GetReturnByte(asIScriptContext *c)                                                        { return c->GetReturnByte(); }
 AS_API asWORD           asContext_GetReturnWord(asIScriptContext *c)                                                        { return c->GetReturnWord(); }
@@ -245,7 +243,7 @@ AS_API asIObjectType *  asObject_GetObjectType(asIScriptObject *s)              
 AS_API int              asObject_GetPropertyCount(asIScriptObject *s)                 { return s->GetPropertyCount(); }
 AS_API int              asObject_GetPropertyTypeId(asIScriptObject *s, asUINT prop)   { return s->GetPropertyTypeId(prop); }
 AS_API const char *     asObject_GetPropertyName(asIScriptObject *s, asUINT prop)     { return s->GetPropertyName(prop); }
-AS_API void *           asObject_GetPropertyPointer(asIScriptObject *s, asUINT prop)  { return s->GetPropertyPointer(prop); }
+AS_API void *           asObject_GetAddressOfProperty(asIScriptObject *s, asUINT prop)  { return s->GetAddressOfProperty(prop); }
 AS_API int              asObject_CopyFrom(asIScriptObject *s, asIScriptObject *other) { return s->CopyFrom(other); }
 
 AS_API asIScriptEngine *asArray_GetEngine(asIScriptArray *a)                       { return a->GetEngine(); }                
@@ -259,8 +257,8 @@ AS_API void             asArray_Resize(asIScriptArray *a, asUINT size)          
 AS_API int              asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other) { return a->CopyFrom(other); }
 
 AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o)                                                      { return o->GetEngine(); }
-AS_API int                      asObjectType_AddRef(const asIObjectType *o)                                                         { return o->AddRef(); }
-AS_API int                      asObjectType_Release(const asIObjectType *o)                                                        { return o->Release(); }
+AS_API int                      asObjectType_AddRef(asIObjectType *o)                                                         { return o->AddRef(); }
+AS_API int                      asObjectType_Release(asIObjectType *o)                                                        { return o->Release(); }
 AS_API const char              *asObjectType_GetName(const asIObjectType *o)                                                        { return o->GetName(); }
 AS_API asIObjectType           *asObjectType_GetBaseType(const asIObjectType *o)                                                    { return o->GetBaseType(); }
 AS_API asDWORD                  asObjectType_GetFlags(const asIObjectType *o)                                                       { return o->GetFlags(); }

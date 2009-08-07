@@ -1,8 +1,12 @@
 #include <iostream>  // cout
 #include <assert.h>  // assert()
-#include <vector>
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/contextmgr/contextmgr.h"
+
+#if defined(_MSC_VER)
+#include <crtdbg.h>
+#endif
 
 #ifdef _LINUX_ 
 	#include <sys/time.h>
@@ -93,27 +97,6 @@ void ConfigureEngine(asIScriptEngine *engine);
 int  CompileScript(asIScriptEngine *engine);
 void PrintString(string &str);
 void PrintNumber(int num);
-void ScriptSleep(UINT milliSeconds);
-
-
-struct SContextInfo
-{
-	UINT sleepUntil;
-	asIScriptContext *ctx;
-};
-
-// This simple manager will let us manage the contexts, 
-// in a simple scheme for apparent multithreading
-class CContextManager
-{
-public:
-	void AddContext(int funcID);
-	void ExecuteScripts();
-	void SetSleeping(asIScriptContext *ctx, UINT milliSeconds);
-	void AbortAll();
-
-	vector<SContextInfo> contexts;
-} contextManager;
 
 void MessageCallback(const asSMessageInfo *msg, void *param)
 {
@@ -126,11 +109,24 @@ void MessageCallback(const asSMessageInfo *msg, void *param)
 	printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
 }
 
+CContextMgr contextManager;
 asIScriptEngine *engine = 0;
 
 int main(int argc, char **argv)
 {
+#if defined(_MSC_VER)
+	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF|_CRTDBG_ALLOC_MEM_DF);
+	_CrtSetReportMode(_CRT_ASSERT,_CRTDBG_MODE_FILE);
+	_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
+
+	// Use _CrtSetBreakAlloc(n) to find a specific memory leak
+	//_CrtSetBreakAlloc(924);
+#endif
+
 	int r;
+
+	// Setup the context manager
+	contextManager.SetGetTimeCallback((TIMEFUNC_t)&timeGetTime);
 
 	// Create the script engine
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -152,12 +148,12 @@ int main(int argc, char **argv)
 	r = CompileScript(engine);
 	if( r < 0 ) return -1;
 
-	contextManager.AddContext(engine->GetModule("script1")->GetFunctionIdByDecl("void main()"));
-	contextManager.AddContext(engine->GetModule("script2")->GetFunctionIdByDecl("void main()"));
+	contextManager.AddContext(engine, engine->GetModule("script1")->GetFunctionIdByDecl("void main()"));
+	contextManager.AddContext(engine, engine->GetModule("script2")->GetFunctionIdByDecl("void main()"));
 	
 	// Print some useful information and start the input loop
 	cout << "This sample shows how two scripts can be executed concurrently." << endl; 
-	cout << "Both scripts voluntarily give up the control by calling Sleep()." << endl;
+	cout << "Both scripts voluntarily give up the control by calling sleep()." << endl;
 	cout << "Press any key to terminate the application." << endl;
 
 	for(;;)
@@ -192,7 +188,9 @@ void ConfigureEngine(asIScriptEngine *engine)
 	// Register the functions that the scripts will be allowed to use
 	r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void Print(int)", asFUNCTION(PrintNumber), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void Sleep(uint)", asFUNCTION(ScriptSleep), asCALL_CDECL); assert( r >= 0 );
+
+	// Register the functions for controlling the script threads, e.g. sleep
+	contextManager.RegisterThreadSupport(engine);
 }
 
 int CompileScript(asIScriptEngine *engine)
@@ -209,7 +207,7 @@ int CompileScript(asIScriptEngine *engine)
 	"    Print(\"A :\");                "
 	"    Print(count++);                "
 	"    Print(\"\\n\");                "
-	"    Sleep(333);                    "
+	"    sleep(333);                    "
 	"  }                                "
 	"}                                  ";
 	
@@ -223,7 +221,7 @@ int CompileScript(asIScriptEngine *engine)
 	"    Print(\" B:\");                "
 	"    Print(count++);                "
 	"    Print(\"\\n\");                "
-	"    Sleep(1000);                   "
+	"    sleep(1000);                   "
 	"  }                                "
 	"}                                  ";
 
@@ -273,90 +271,7 @@ void PrintNumber(int num)
 	cout << num;
 }
 
-void ScriptSleep(UINT milliSeconds)
-{
-	// Get a pointer to the context that is currently being executed
-	asIScriptContext *ctx = asGetActiveContext();
-	if( ctx )
-	{
-		// Suspend it's execution. The VM will continue until the current 
-		// statement is finished and then return from the Execute() method
-		ctx->Suspend();
 
-		// Tell the context manager when the context is to continue execution
-		contextManager.SetSleeping(ctx, milliSeconds);
-	}
-}
-
-void CContextManager::ExecuteScripts()
-{
-	// Check if the system time is higher than the time set for the contexts
-	UINT time = timeGetTime();
-	for( int n = 0; n < (signed)contexts.size(); n++ )
-	{
-		if( contexts[n].ctx && contexts[n].sleepUntil < time )
-		{
-			int r = contexts[n].ctx->Execute();
-			if( r != asEXECUTION_SUSPENDED )
-			{
-				// The context has terminated execution (for one reason or other)
-				contexts[n].ctx->Release();
-				contexts[n].ctx = 0;
-			}
-		}
-	}
-}
-
-void CContextManager::AbortAll()
-{
-	// Abort all contexts and release them. The script engine will make 
-	// sure that all resources held by the scripts are properly released.
-	for( int n = 0; n < (signed)contexts.size(); n++ )
-	{
-		if( contexts[n].ctx )
-		{
-			contexts[n].ctx->Abort();
-			contexts[n].ctx->Release();
-			contexts[n].ctx = 0;
-		}
-	}
-}
-
-void CContextManager::AddContext(int funcID)
-{
-	// Create the new context
-	asIScriptContext *ctx = engine->CreateContext();
-	if( ctx == 0 )
-	{
-		cout << "Failed to create context" << endl;
-		return;
-	}
-
-	// Prepare it to execute the function
-	int r = ctx->Prepare(funcID);
-	if( r < 0 )
-	{
-		cout << "Failed to prepare the context" << endl;
-		return;
-	}
-
-	// Add the context to the list for execution
-	SContextInfo info = {0, ctx};
-	contexts.push_back(info);
-}
-
-void CContextManager::SetSleeping(asIScriptContext *ctx, UINT milliSeconds)
-{
-	// Find the context and update the timeStamp  
-	// for when the context is to be continued
-	for( int n = 0; n < (signed)contexts.size(); n++ )
-	{
-		if( contexts[n].ctx == ctx )
-		{
-			contexts[n].sleepUntil = timeGetTime() + milliSeconds;
-		}
-	}
-}
 
 
 

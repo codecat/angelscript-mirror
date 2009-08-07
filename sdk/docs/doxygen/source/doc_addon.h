@@ -10,6 +10,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
 \page doc_addon_application Application modules
 
  - \subpage doc_addon_build
+ - \subpage doc_addon_ctxmgr
  - \subpage doc_addon_autowrap
  - \subpage doc_addon_helpers
  - \subpage doc_addon_clib
@@ -24,6 +25,86 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_file
  - \subpage doc_addon_math
  - \subpage doc_addon_math3d
+
+
+
+\page doc_addon_ctxmgr Context manager
+
+<b>Path:</b> /sdk/add_on/contextmgr/
+
+The <code>CContextMgr</code> is a class designed to aid the management of multiple simultaneous 
+scripts executing in parallel. It supports both \ref doc_adv_concurrent "concurrent script threads" and \ref doc_adv_coroutine "co-routines". 
+
+If the application doesn't need multiple contexts, i.e. all scripts that are executed 
+always complete before the next script is executed, then this class is not necessary.
+
+Multiple context managers can be used, for example when you have a group of scripts controlling 
+ingame objects, and another group of scripts controlling GUI elements, then each of these groups
+may be managed by different context managers.
+
+Observe, that the context manager class hasn't been designed for multithreading, so you need to
+be careful if your application needs to execute scripts from multiple threads.
+
+\see The samples \ref doc_samples_concurrent and \ref doc_samples_corout for uses
+
+\section doc_addon_ctxmgr_1 Public C++ interface
+
+\code
+class CContextMgr
+{
+public:
+  CContextMgr();
+  ~CContextMgr();
+
+  // Set the function that the manager will use to obtain the time in milliseconds.
+  void SetGetTimeCallback(TIMEFUNC_t func);
+
+  // Registers the script function
+  //
+  //  void sleep(uint milliseconds)
+  //
+  // The application must set the get time callback for this to work
+  void RegisterThreadSupport(asIScriptEngine *engine);
+
+  // Registers the script functions
+  //
+  //  void createCoRoutine(const string &in functionName, any @arg)
+  //  void yield()
+  void RegisterCoRoutineSupport(asIScriptEngine *engine);
+
+  // Create a new context, prepare it with the function id, then return 
+  // it so that the application can pass the argument values. The context
+  // will be released by the manager after the execution has completed.
+  asIScriptContext *AddContext(asIScriptEngine *engine, int funcId);
+
+  // Create a new context, prepare it with the function id, then return
+  // it so that the application can pass the argument values. The context
+  // will be added as a co-routine in the same thread as the currCtx.
+  asIScriptContext *AddContextForCoRoutine(asIScriptContext *currCtx, int funcId);
+
+  // Execute each script that is not currently sleeping. The function returns after 
+  // each script has been executed once. The application should call this function
+  // for each iteration of the message pump, or game loop, or whatever.
+  void ExecuteScripts();
+
+  // Put a script to sleep for a while
+  void SetSleeping(asIScriptContext *ctx, asUINT milliSeconds);
+
+  // Switch the execution to the next co-routine in the group.
+  // Returns true if the switch was successful.
+  void NextCoRoutine();
+
+  // Abort all scripts
+  void AbortAll();
+};
+\endcode
+
+
+
+
+
+
+
 
 
 

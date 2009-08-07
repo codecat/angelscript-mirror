@@ -39,13 +39,14 @@ and finally execute a script function with parameters and return value.
 
 <b>Path:</b> /sdk/samples/concurrent/
 
-This sample shows how to execute two or more long running scripts in 
-parallel. The scripts voluntarily hand over the control to the next script in 
-the queue by calling the function Sleep().
+This sample shows how to execute two or more long running scripts
+\ref doc_adv_concurrent "concurrently". The scripts voluntarily hand over the control to the next script in 
+the queue by calling the function sleep().
 
 
+ - \ref doc_addon_ctxmgr
  - Multiple scripts running in parallel
- - Sleep()
+ - sleep()
  - Strings
  - Registered global functions
 
@@ -71,10 +72,11 @@ commands and also evaluate simple script statements.
 
 <b>Path:</b> /sdk/samples/coroutine/
 
-This sample shows how co-routines can be implemented with AngelScript. Co-routines are
+This sample shows how \ref doc_adv_coroutine "co-routines" can be implemented with AngelScript. Co-routines are
 threads that can be created from the scripts, and that work together by voluntarily passing control
-to each other by calling Yield().
+to each other by calling yield().
 
+ - \ref doc_addon_ctxmgr
  - Co-routines created from the scripts with variable parameter structure.
  - Strings
  - Registered global functions
@@ -109,6 +111,7 @@ declarations independently of their order. The preprocessor also makes sure that
 included once, so the script writer doesn't have to take extra care to avoid multiple includes or even 
 complicated circular includes.
 
+ - \ref doc_addon_build
  - LineCallback() functions which aborts execution when the time is up
  - Processing the \#include directive
  - Circular \#includes are resolved automatically

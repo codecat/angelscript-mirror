@@ -21,6 +21,7 @@
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
 #include "../../../add_on/scriptany/scriptany.h"
+#include "../../../add_on/contextmgr/contextmgr.h"
 
 using namespace std;
 
@@ -64,25 +65,6 @@ int kbhit()
 void ConfigureEngine(asIScriptEngine *engine);
 int  CompileScript(asIScriptEngine *engine);
 void PrintString(string &str);
-void ScriptCreateCoRoutine(string &func, CScriptAny *arg);
-void ScriptYield();
-
-// This simple manager will let us manage the contexts, 
-// in a simple scheme for apparent multithreading
-class CContextManager
-{
-public:
-	CContextManager();
-
-	void SetRunningContext(int funcID);
-	void AddCoRoutine(asIScriptContext *ctx);
-	void NextCoRoutine();
-	void ExecuteScripts();
-	void AbortAll();
-
-	list<asIScriptContext*> coRoutines;
-	list<asIScriptContext*>::iterator currentCtx;
-} contextManager;
 
 
 
@@ -97,7 +79,7 @@ void MessageCallback(const asSMessageInfo *msg, void *param)
 	printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
 }
 
-
+CContextMgr contextMgr;
 asIScriptEngine *engine = 0;
 int main(int argc, char **argv)
 {
@@ -129,7 +111,7 @@ int main(int argc, char **argv)
 	r = CompileScript(engine);
 	if( r < 0 ) return -1;
 
-	contextManager.SetRunningContext(engine->GetModule("script")->GetFunctionIdByDecl("void main()"));
+	contextMgr.AddContext(engine, engine->GetModule("script")->GetFunctionIdByDecl("void main()"));
 	
 	// Print some useful information and start the input loop
 	cout << "This sample shows how to use co-routines with AngelScript. Co-routines" << endl; 
@@ -143,12 +125,12 @@ int main(int argc, char **argv)
 		// Check if any key was pressed
 		if( kbhit() )
 		{
-			contextManager.AbortAll();
+			contextMgr.AbortAll();
 			break;
 		}
 
 		// Allow the contextManager to determine which script to execute next
-		contextManager.ExecuteScripts();
+		contextMgr.ExecuteScripts();
 
 		// Slow it down a little so that we can see what is happening
 		Sleep(100);
@@ -178,8 +160,9 @@ void ConfigureEngine(asIScriptEngine *engine)
 
 	// Register the functions that the scripts will be allowed to use
 	r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void CreateCoRoutine(string &in, any &in)", asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void Yield()", asFUNCTION(ScriptYield), asCALL_CDECL); assert( r >= 0 );
+
+	// Add the support for co-routines
+	contextMgr.RegisterCoRoutineSupport(engine);
 }
 
 int CompileScript(asIScriptEngine *engine)
@@ -199,16 +182,16 @@ int CompileScript(asIScriptEngine *engine)
 	"    int count = 10;                        \n"
 	"    ThreadArg a;                           \n"
 	"    a.count = 3;                           \n"
-	"    a.str = \" B\";                        \n"
-	"    CreateCoRoutine(\"thread2\", any(@a)); \n"
+	"    a.str = ' B';                          \n"
+	"    createCoRoutine('thread2', any(@a));   \n"
 	"    while( count-- > 0 )                   \n"
 	"    {                                      \n"
-	"      Print(\"A :\" + count + \"\\n\");    \n"
-	"      Yield();                             \n"
+	"      Print('A :' + count + '\\n');        \n"
+	"      yield();                             \n"
 	"    }                                      \n"
 	"  }                                        \n"
 	"}                                          \n"
-	"void thread2(any &in arg)                  \n"
+	"void thread2(any @arg)                     \n"
 	"{                                          \n"
 	"  ThreadArg @a;                            \n"
 	"  arg.retrieve(@a);                        \n"
@@ -216,8 +199,8 @@ int CompileScript(asIScriptEngine *engine)
 	"  string str = a.str;                      \n"
 	"  while( count-- > 0 )                     \n"
 	"  {                                        \n"
-	"    Print(str + \":\" + count + \"\\n\"); \n"
-	"    Yield();                               \n"
+	"    Print(str + ':' + count + '\\n');      \n"
+	"    yield();                               \n"
 	"  }                                        \n"
 	"}                                          \n";
 	
@@ -247,140 +230,4 @@ void PrintString(string &str)
 	cout << str;
 }
 
-void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
-{
-	asIScriptContext *ctx = asGetActiveContext();
-	if( ctx )
-	{
-		asIScriptEngine *engine = ctx->GetEngine();
-		string mod = engine->GetFunctionDescriptorById(ctx->GetCurrentFunction())->GetModuleName();
-
-		// We need to find the function that will be created as the co-routine
-		string decl = "void " + func + "(any &in)"; 
-		int funcId = engine->GetModule(mod.c_str())->GetFunctionIdByDecl(decl.c_str());
-		if( funcId < 0 )
-		{
-			// No function could be found, raise an exception
-			ctx->SetException(("Function '" + decl + "' doesn't exist").c_str());
-			return;
-		}
-
-		// Create a new context for the co-routine
-		asIScriptContext *coctx = engine->CreateContext();
-		if( ctx == 0 )
-		{
-			// No context created, raise an exception
-			ctx->SetException("Failed to create context for co-routine");
-			return;
-		}
-
-		// Prepare the context
-		int r = coctx->Prepare(funcId);
-		if( r < 0 )
-		{
-			// Couldn't prepare the context
-			ctx->SetException("Failed to prepare the context for co-routine");
-			coctx->Release();
-			return;
-		}
-
-		// Pass the argument to the context
-		coctx->SetArgObject(0, arg);
-
-		// Join the current context with the new one, so that they can work together
-		contextManager.AddCoRoutine(coctx);
-	}
-}
-
-void ScriptYield()
-{
-	asIScriptContext *ctx = asGetActiveContext();
-	if( ctx )
-	{
-		// Suspend this context
-		ctx->Suspend();
-
-		// Let the context manager know that it should run the next co-routine
-		contextManager.NextCoRoutine();
-	}
-}
-
-void CContextManager::ExecuteScripts()
-{
-	if( currentCtx != coRoutines.end() && *currentCtx != 0 )
-	{
-		int r = (*currentCtx)->Execute();
-		if( r != asEXECUTION_SUSPENDED )
-		{
-			// The context has terminated execution (for one reason or other)
-
-			// Set the next co-routine as the active one
-			list<asIScriptContext*>::iterator it = currentCtx;
-			NextCoRoutine();
-			if( currentCtx == it )
-				currentCtx = coRoutines.end();
-
-			// Release the context that finished
-			(*it)->Release();
-			coRoutines.erase(it);
-		}
-	}
-}
-
-void CContextManager::AbortAll()
-{
-	// Abort all contexts and release them. The script engine will make 
-	// sure that all resources held by the scripts are properly released.
-	list<asIScriptContext*>::iterator it;
-	for( it = coRoutines.begin(); it != coRoutines.end(); it = coRoutines.begin() )
-	{
-		if( *it )
-		{
-			(*it)->Abort();
-			(*it)->Release();
-			coRoutines.erase(it);
-		}
-	}
-}
-
-void CContextManager::SetRunningContext(int funcID)
-{
-	// Create the new context
-	asIScriptContext *ctx = engine->CreateContext();
-	if( ctx == 0 )
-	{
-		cout << "Failed to create context" << endl;
-		return;
-	}
-
-	// Prepare it to execute the function
-	int r = ctx->Prepare(funcID);
-	if( r < 0 )
-	{
-		cout << "Failed to prepare the context" << endl;
-		return;
-	}
-
-	// Add the context to the list for execution
-	coRoutines.push_front(ctx);
-	currentCtx = coRoutines.begin();
-}
-
-void CContextManager::AddCoRoutine(asIScriptContext *ctx)
-{
-	// Put the context for the co-routine in the queue together with the ctx
-	coRoutines.insert(currentCtx, ctx);
-}
-
-void CContextManager::NextCoRoutine()
-{
-	currentCtx++;
-	if( currentCtx == coRoutines.end() )
-		currentCtx = coRoutines.begin();
-}
-
-CContextManager::CContextManager()
-{
-	currentCtx = coRoutines.end();
-}
 

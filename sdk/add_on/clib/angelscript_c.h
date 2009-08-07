@@ -146,51 +146,10 @@ typedef enum
 
 	// Object operators
 	asBEHAVE_VALUE_CAST,
-	asBEHAVE_INDEX,
-	asBEHAVE_NEGATE,
-
-	// Assignment operators
-	asBEHAVE_FIRST_ASSIGN,
-	 asBEHAVE_ASSIGNMENT = asBEHAVE_FIRST_ASSIGN,
-	 asBEHAVE_ADD_ASSIGN,
-	 asBEHAVE_SUB_ASSIGN,
-	 asBEHAVE_MUL_ASSIGN,
-	 asBEHAVE_DIV_ASSIGN,
-	 asBEHAVE_MOD_ASSIGN,
-	 asBEHAVE_OR_ASSIGN,
-	 asBEHAVE_AND_ASSIGN,
-	 asBEHAVE_XOR_ASSIGN,
-	 asBEHAVE_SLL_ASSIGN,
-	 asBEHAVE_SRL_ASSIGN,
-	 asBEHAVE_SRA_ASSIGN,
-	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
-
-	// Global operators
-	asBEHAVE_FIRST_DUAL,
-	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
-	 asBEHAVE_SUBTRACT,
-	 asBEHAVE_MULTIPLY,
-	 asBEHAVE_DIVIDE,
-	 asBEHAVE_MODULO,
-	 asBEHAVE_EQUAL,
-	 asBEHAVE_NOTEQUAL,
-	 asBEHAVE_LESSTHAN,
-	 asBEHAVE_GREATERTHAN,
-	 asBEHAVE_LEQUAL,
-	 asBEHAVE_GEQUAL,
-#ifdef AS_DEPRECATED
-	 asBEHAVE_LOGIC_OR,
-	 asBEHAVE_LOGIC_AND,
-#endif
-	 asBEHAVE_BIT_OR,
-	 asBEHAVE_BIT_AND,
-	 asBEHAVE_BIT_XOR,
-	 asBEHAVE_BIT_SLL,
-	 asBEHAVE_BIT_SRL,
-	 asBEHAVE_BIT_SRA,
-	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
+	asBEHAVE_IMPLICIT_VALUE_CAST,
 	asBEHAVE_REF_CAST,
 	asBEHAVE_IMPLICIT_REF_CAST,
+	asBEHAVE_INDEX,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,
@@ -392,7 +351,6 @@ extern "C"
 	AS_API int                asEngine_RegisterGlobalFunction(asIScriptEngine *e, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int                asEngine_GetGlobalFunctionCount(asIScriptEngine *e);
 	AS_API int                asEngine_GetGlobalFunctionIdByIndex(asIScriptEngine *e, asUINT index);
-	AS_API int                asEngine_RegisterGlobalBehaviour(asIScriptEngine *e, asEBehaviours behaviour, const char *declaration, asFUNCTION_t funcPointer, asDWORD callConv);
 	AS_API int                asEngine_RegisterInterface(asIScriptEngine *e, const char *name);
 	AS_API int                asEngine_RegisterInterfaceMethod(asIScriptEngine *e, const char *intf, const char *declaration);
 	AS_API int                asEngine_RegisterStringFactory(asIScriptEngine *e, const char *datatype, asFUNCTION_t factoryFunc, asDWORD callConv);
@@ -426,7 +384,6 @@ extern "C"
 	AS_API void               asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId);
 	AS_API void               asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId);
 	AS_API asBOOL             asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
-	AS_API int                asEngine_CompareScriptObjects(asIScriptEngine *e, asBOOL &result, int behaviour, void *leftObj, void *rightObj, int typeId);
 	AS_API int                asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 	AS_API int                asEngine_GarbageCollect(asIScriptEngine *e, asDWORD flags);
 	AS_API void               asEngine_GetGCStatistics(asIScriptEngine *e, asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected);
@@ -487,7 +444,7 @@ extern "C"
 	AS_API int              asContext_SetArgDouble(asIScriptContext *c, asUINT arg, double value);
 	AS_API int              asContext_SetArgAddress(asIScriptContext *c, asUINT arg, void *addr);
 	AS_API int              asContext_SetArgObject(asIScriptContext *c, asUINT arg, void *obj);
-	AS_API void *           asContext_GetArgPointer(asIScriptContext *c, asUINT arg);
+	AS_API void *           asContext_GetAddressOfArg(asIScriptContext *c, asUINT arg);
 	AS_API int              asContext_SetObject(asIScriptContext *c, void *obj);
 	AS_API asBYTE           asContext_GetReturnByte(asIScriptContext *c);
 	AS_API asWORD           asContext_GetReturnWord(asIScriptContext *c);
@@ -572,8 +529,8 @@ extern "C"
 	AS_API int              asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other);
 
 	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
-	AS_API int                      asObjectType_AddRef(const asIObjectType *o);
-	AS_API int                      asObjectType_Release(const asIObjectType *o);
+	AS_API int                      asObjectType_AddRef(asIObjectType *o);
+	AS_API int                      asObjectType_Release(asIObjectType *o);
 	AS_API const char              *asObjectType_GetName(const asIObjectType *o);
 	AS_API asIObjectType           *asObjectType_GetBaseType(const asIObjectType *o);
 	AS_API asDWORD                  asObjectType_GetFlags(const asIObjectType *o);

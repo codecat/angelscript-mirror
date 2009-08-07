@@ -187,6 +187,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\contextmgr\contextmgr.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\main.cpp"
 				>
 			</File>
@@ -758,6 +762,10 @@
 			</File>
 			<File
 				RelativePath="..\..\source\bstr.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\contextmgr\contextmgr.h"
 				>
 			</File>
 			<File
