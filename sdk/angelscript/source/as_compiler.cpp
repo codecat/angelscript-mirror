@@ -2845,7 +2845,7 @@ void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 	int r, c;
 	script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-	for( int n = 0; n < funcs.GetLength(); n++ )
+	for( unsigned int n = 0; n < funcs.GetLength(); n++ )
 	{
 		asIScriptFunction *func = engine->scriptFunctions[funcs[n]];
 

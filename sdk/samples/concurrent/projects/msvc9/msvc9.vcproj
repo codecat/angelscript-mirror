@@ -48,7 +48,7 @@
 				AdditionalIncludeDirectories="../../../../angelscript/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\Release/msvc6.pch"
@@ -203,6 +203,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath="..\..\..\..\add_on\contextmgr\contextmgr.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\main.cpp"
 				>
 				<FileConfiguration
@@ -259,6 +263,10 @@
 			>
 			<File
 				RelativePath="..\..\..\..\angelscript\include\angelscript.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\contextmgr\contextmgr.h"
 				>
 			</File>
 			<File
