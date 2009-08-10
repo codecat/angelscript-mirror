@@ -207,7 +207,9 @@ public:
 	void *CallAlloc(asCObjectType *objType);
 	void  CallFree(void *obj);
 	void *CallGlobalFunctionRetPtr(int func);
+	void *CallGlobalFunctionRetPtr(int func, void *param1);
 	void *CallGlobalFunctionRetPtr(asSSystemFunctionInterface *func, asCScriptFunction *desc);
+	void *CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s, void *param1);
 	void  CallObjectMethod(void *obj, int func);
 	void  CallObjectMethod(void *obj, void *param, int func);
 	void  CallObjectMethod(void *obj, asSSystemFunctionInterface *func, asCScriptFunction *desc);

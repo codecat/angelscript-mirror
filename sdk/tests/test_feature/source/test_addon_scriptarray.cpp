@@ -64,7 +64,7 @@ static const char *script2 =
 "   a[0] == \"Hello\";                           \n"
 "}                                               \n";
 
-// TODO: Must be possible to declare array of arrays
+// Must be possible to declare array of arrays
 static const char *script3 = 
 "void TestArrayMulti()                           \n"
 "{                                               \n"
@@ -197,8 +197,7 @@ bool Test()
 		fail = true;
 	}
 
-	// TODO: Must be possible to declare array of arrays
-/*
+	// Must be possible to declare array of arrays
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
 	r = mod->Build();
@@ -220,7 +219,7 @@ bool Test()
 	}
 	if( ctx ) ctx->Release();
 	ctx = 0;
-*/
+
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
@@ -304,6 +303,9 @@ bool Test()
 		fail = true;
 
 	engine->Release();
+
+	// TODO: Must support syntax as: array<array<int>>, i.e. without white space between the closing angled brackets.
+
 
 	// Success
 	return fail;

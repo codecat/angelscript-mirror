@@ -631,6 +631,14 @@ SOURCE=..\..\source\bstr.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\contextmgr\contextmgr.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\contextmgr\contextmgr.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\cstring.h
 # End Source File
 # Begin Source File

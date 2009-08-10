@@ -1659,7 +1659,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		// TODO: Verify that the same factory function hasn't been registered already
 
 		// The templates take a hidden parameter with the object type
-		if( type.GetObjectType()->flags & asOBJ_TEMPLATE &&
+		if( (type.GetObjectType()->flags & asOBJ_TEMPLATE) &&
 			(func.parameterTypes.GetLength() == 0 ||
 			 !func.parameterTypes[0].IsReference()) )
 		{
@@ -1667,7 +1667,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		}
 
 		// Store all factory functions in a list
-		if( func.parameterTypes.GetLength() == 0 )
+		if( (func.parameterTypes.GetLength() == 0) ||
+			(func.parameterTypes.GetLength() == 1 && (type.GetObjectType()->flags & asOBJ_TEMPLATE)) )
 		{
 			func.id = beh->factory = AddBehaviourFunction(func, internal);
 			beh->factories.PushLast(beh->factory);
@@ -3221,6 +3222,12 @@ void *asCScriptEngine::CallGlobalFunctionRetPtr(int func)
 	return CallGlobalFunctionRetPtr(s->sysFuncIntf, s);
 }
 
+void *asCScriptEngine::CallGlobalFunctionRetPtr(int func, void *param1)
+{
+	asCScriptFunction *s = scriptFunctions[func];
+	return CallGlobalFunctionRetPtr(s->sysFuncIntf, s, param1);
+}
+
 void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s)
 {
 	if( i->callConv == ICC_CDECL )
@@ -3236,6 +3243,27 @@ void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, a
 	else
 	{
 		asCGeneric gen(this, s, 0, 0);
+		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
+		f(&gen);
+		return *(void**)gen.GetReturnPointer();
+	}
+}
+
+void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s, void *param1)
+{
+	if( i->callConv == ICC_CDECL )
+	{
+		void *(*f)(void *) = (void *(*)(void *))(i->func);
+		return f(param1);
+	}
+	else if( i->callConv == ICC_STDCALL )
+	{
+		void *(STDCALL *f)(void *) = (void *(STDCALL *)(void *))(i->func);
+		return f(param1);
+	}
+	else
+	{
+		asCGeneric gen(this, s, 0, (asDWORD*)&param1);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(void**)gen.GetReturnPointer();
@@ -3536,7 +3564,8 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	if( objType->flags & asOBJ_SCRIPT_OBJECT )
 		ptr = ScriptObjectFactory(objType, this);
 	else if( objType->flags & asOBJ_TEMPLATE )
-		ptr = ArrayObjectFactory(objType);
+		// The registered factory is moved to the construct behaviour when the type is instanciated
+		ptr = CallGlobalFunctionRetPtr(objType->beh.construct, objType);
 	else if( objType->flags & asOBJ_REF )
 		ptr = CallGlobalFunctionRetPtr(objType->beh.factory);
 	else

@@ -180,6 +180,8 @@ protected:
 	bool IsAssignOperator(int tokenType);
 	bool IsFunctionCall();
 
+	bool CheckTemplateType(sToken &t);
+
 	asCString ExpectedToken(const char *token);
 	asCString ExpectedTokens(const char *token1, const char *token2);
 	asCString ExpectedOneOf(int *tokens, int count);

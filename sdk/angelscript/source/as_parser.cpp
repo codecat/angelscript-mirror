@@ -516,6 +516,43 @@ asCScriptNode *asCParser::ParseEnumeration()
 	return node;
 }
 
+bool asCParser::CheckTemplateType(sToken &t)
+{
+	// Is this a template type?
+	asCString typeName;
+	typeName.Assign(&script->code[t.pos], t.length);
+	if( engine->IsTemplateType(typeName.AddressOf()) )
+	{
+		// Expect the sub type within < >
+		GetToken(&t);
+		if( t.type != ttLessThan )
+			return false;
+
+		// Now there must be a data type
+		GetToken(&t);
+		if( !IsDataType(t) )
+			return false;
+
+		if( !CheckTemplateType(t) )
+			return false;
+
+		// Accept >> and >>> tokens too. But then force the tokenizer to move 
+		// only 1 character ahead (thus splitting the token in two).
+		GetToken(&t);
+		if( script->code[t.pos] != '>' )
+			return false;
+		else if( t.length != 1 )
+		{
+			// We need to break the token, so that only the first character is parsed
+			sToken t2 = t;
+			t2.pos = t.pos + 1;
+			RewindTo(&t2);
+		}
+	}
+
+	return true;
+}
+
 bool asCParser::IsVarDecl()
 {
 	// Set start point so that we can rewind
@@ -535,37 +572,10 @@ bool asCParser::IsVarDecl()
 		return false;
 	}
 
-	// Is this a template type?
-	asCString typeName;
-	typeName.Assign(&script->code[t1.pos], t1.length);
-	if( engine->IsTemplateType(typeName.AddressOf()) )
+	if( !CheckTemplateType(t1) )
 	{
-		// Expect the sub type within < >
-		GetToken(&t1);
-		if( t1.type != ttLessThan )
-		{
-			RewindTo(&t);
-			return false;
-		}
-
-		// Now there must be a data type
-		// TODO: template: The subtype may in turn be a template type
-		GetToken(&t1);
-		if( !IsDataType(t1) )
-		{
-			RewindTo(&t);
-			return false;
-		}
-
-		// TODO: template: accept >> and >>> tokens too. But then force the tokenizer to move 
-		//                 only 1 character ahead (thus splitting the token in two).
-		//                 How will this work when asIScriptEngine::ParseToken is used?
-		GetToken(&t1);
-		if( t1.type != ttGreaterThan )
-		{
-			RewindTo(&t);
-			return false;
-		}
+		RewindTo(&t);
+		return false;
 	}
 
 	// Object handles can be interleaved with the array brackets
@@ -1178,13 +1188,20 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
 		node->AddChildLast(ParseType(true, false));
 		if( isSyntaxError ) return node;
 
-		// TODO: template: accept >> and >>> tokens too. But then force the tokenizer to move 
-		//                 only 1 character ahead (thus splitting the token in two).
+		// Accept >> and >>> tokens too. But then force the tokenizer to move 
+		// only 1 character ahead (thus splitting the token in two).
 		GetToken(&t);
-		if( t.type != ttGreaterThan )
+		if( script->code[t.pos] != '>' )
 		{
 			Error(ExpectedToken(asGetTokenDefinition(ttGreaterThan)).AddressOf(), &t);
 			return node;
+		}
+		else
+		{
+			// Break the token so that only the first > is parsed
+			sToken t2 = t;
+			t2.pos = t.pos + 1;
+			RewindTo(&t2);
 		}
 	}
 
