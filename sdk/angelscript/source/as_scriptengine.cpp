@@ -455,8 +455,7 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 	registeredGlobalProps.SetLength(0);
-	globalPropAddresses.SetLength(0);
-
+	globalProperties.SetLength(0);
 
 	for( n = 0; n < templateTypes.GetLength(); n++ )
 	{
@@ -697,6 +696,7 @@ void asCScriptEngine::ClearUnusedTypes()
 		asCModule *mod = scriptModules[n];
 		if( mod )
 		{
+			// TODO: global: This no longer has to go into the modules as all globals are stored in a shared array
 			// Go through all globals
 			asUINT m;
 			for( m = 0; m < mod->scriptGlobals.GetLength() && types.GetLength(); m++ )
@@ -904,13 +904,12 @@ asCString asCScriptEngine::GetFunctionDeclaration(int funcID)
 	return str;
 }
 
-asCScriptFunction *asCScriptEngine::GetScriptFunction(int funcID)
+asCScriptFunction *asCScriptEngine::GetScriptFunction(int funcId)
 {
-	int f = funcID & 0xFFFF;
-	if( f >= (int)scriptFunctions.GetLength() )
+	if( funcId < 0 || funcId >= (int)scriptFunctions.GetLength() )
 		return 0;
 
-	return scriptFunctions[f];
+	return scriptFunctions[funcId];
 }
 
 
@@ -2125,13 +2124,15 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 
 	// Store the property info
 	asCGlobalProperty *prop = asNEW(asCGlobalProperty);
-	prop->name       = name;
-	prop->type       = type;
-	prop->index      = -1 - (int)globalPropAddresses.GetLength();
+	prop->name        = name;
+	prop->type        = type;
+	prop->realAddress = pointer;
+	prop->memory      = pointer;
 
-	// TODO: Reuse slots emptied when removing configuration groups
+	// TODO: global: Should first check the availability of a free slot
+	prop->id          = (int)globalProperties.GetLength();
 	registeredGlobalProps.PushLast(prop);
-	globalPropAddresses.PushLast(pointer);
+	globalProperties.PushLast(prop);
 
 	currentGroup->globalProps.PushLast(prop);
 
@@ -2144,9 +2145,8 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 
 	if( type.IsObject() && !type.IsReference() && !type.IsObjectHandle() )
 	{
-		// Create a pointer to a pointer, by storing the object pointer in the global property structure
-		prop->memory = pointer;
-		globalPropAddresses[-prop->index -1] = &prop->memory;
+		// The global property is a pointer to a pointer 
+		prop->memory = &prop->realAddress;
 	}
 
 	return asSUCCESS;
@@ -2184,7 +2184,7 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, i
 		*isConst = registeredGlobalProps[index]->type.IsReadOnly();
 
 	if( pointer )
-		*pointer = globalPropAddresses[-1 - registeredGlobalProps[index]->index];
+		*pointer = registeredGlobalProps[index]->realAddress;
 
 	return asSUCCESS;
 }
@@ -2626,7 +2626,6 @@ asCModule *asCScriptEngine::GetModule(int id)
 asCModule *asCScriptEngine::GetModuleFromFuncId(int id)
 {
 	if( id < 0 ) return 0;
-	id &= 0xFFFF;
 	if( id >= (int)scriptFunctions.GetLength() ) return 0;
 	asCScriptFunction *func = scriptFunctions[id];
 	if( func == 0 ) return 0;
@@ -3851,7 +3850,7 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForGlobalVar(int gvarId)
 	{
 		for( asUINT m = 0; m < configGroups[n]->globalProps.GetLength(); m++ )
 		{
-			if( configGroups[n]->globalProps[m]->index == gvarId )
+			if( configGroups[n]->globalProps[m]->id == gvarId )
 				return configGroups[n];
 		}
 	}

@@ -549,7 +549,7 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompi
 			if( module )
 			{
 				// Find the config group for the global property
-				asCConfigGroup *group = engine->FindConfigGroupForGlobalVar((*props)[n]->index);
+				asCConfigGroup *group = engine->FindConfigGroupForGlobalVar((*props)[n]->id);
 				if( !group || group->HasModuleAccess(module->name.AddressOf()) )
 					return (*props)[n];
 			}
@@ -892,7 +892,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		}
 
 		gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype);
-		gvar->index    = gvar->property->index;
+		gvar->index    = gvar->property->id;
 
 		n = n->next;
 	}
@@ -1833,7 +1833,6 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			gvar->script		  = file;
 			gvar->node			  = asnNode;
 			gvar->name			  = name;
-			gvar->property        = asNEW(asCGlobalProperty);
 			gvar->datatype		  = type;
 			// No need to allocate space on the global memory stack since the values are stored in the asCObjectType
 			gvar->index			  = 0;
@@ -1842,10 +1841,12 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			gvar->isEnumValue     = true;
 			gvar->constantValue   = 0xdeadbeef;
 
-			// Add script variable to engine
+			// Allocate dummy property so we can compile the value. 
+			// This will be removed later on so we don't add it to the engine.
+			gvar->property        = asNEW(asCGlobalProperty);
 			gvar->property->name  = name;
 			gvar->property->type  = gvar->datatype;
-			gvar->property->index = gvar->index;
+			gvar->property->id    = 0;
 
 			tmp = tmp->next;
 		}

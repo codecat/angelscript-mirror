@@ -329,8 +329,8 @@ void asCScriptFunction::AddReferences()
 		case asBC_CpyVtoG4:
 			if( module )
 			{
-				int gvarId = asBC_WORDARG0(&byteCode[n]);
-				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
+				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
+				asCConfigGroup *group = module->GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
 				if( group != 0 ) group->AddRef();
 			}
 			break;
@@ -339,8 +339,8 @@ void asCScriptFunction::AddReferences()
 		case asBC_CpyGtoV4:
 			if( module )
 			{
-				int gvarId = asBC_WORDARG1(&byteCode[n]);
-				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
+				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
+				asCConfigGroup *group = module->GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
 				if( group != 0 ) group->AddRef();
 			}
 			break;
@@ -396,8 +396,8 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_CpyVtoG4:
 			if( module )
 			{
-				int gvarId = asBC_WORDARG0(&byteCode[n]);
-				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
+				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
+				asCConfigGroup *group = module->GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
 				if( group != 0 ) group->Release();
 			}
 			break;
@@ -406,8 +406,8 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_CpyGtoV4:
 			if( module )
 			{
-				int gvarId = asBC_WORDARG1(&byteCode[n]);
-				asCConfigGroup *group = module->GetConfigGroupByGlobalVarId(gvarId);
+				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
+				asCConfigGroup *group = module->GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
 				if( group != 0 ) group->Release();
 			}
 			break;

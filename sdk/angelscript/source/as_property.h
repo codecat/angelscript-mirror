@@ -53,19 +53,38 @@ public:
 	int         byteOffset;
 };
 
+
+
+//
+// TODO: global:
+// The global property structure is reference counted, so that the
+// engine can keep track of how many references to the property there are.
+//
+// It is possible to unregister a property without updating all referrers.
+// When this happens the address pointing to the value is cleared. When 
+// the referrer tries to access the value it will throw an exception.
+//
+// The global property structure is responsible for allocating the storage
+// method for script declared variables. Each allocation is independent of
+// other global properties, so that variables can be added and removed at
+// any time.
+//
 class asCGlobalProperty
 {
 public:
-	asCGlobalProperty() { memory = 0; memoryAllocated = false; }
+	asCGlobalProperty() { memory = 0; memoryAllocated = false; realAddress = 0; }
 	~asCGlobalProperty() { if( memoryAllocated ) { asDELETEARRAY(memory); } }
 
 	asCString   name;
 	asCDataType type;
-	int         index;
+	int         id;
 	bool        memoryAllocated;
 
+	// This is only stored for registered properties, and keeps the pointer given by the application
+	void       *realAddress;
+
 	void SetAddressOfValue(void *p) { memory = p; }
-	void *GetAddressOfValue() { return memoryAllocated ? memory : &storage; }
+	void *GetAddressOfValue() { return (memoryAllocated || realAddress) ? memory : &storage; }
 
 	union
 	{

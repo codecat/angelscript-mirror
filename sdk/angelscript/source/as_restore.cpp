@@ -587,7 +587,7 @@ void asCRestore::WriteGlobalProperty(asCGlobalProperty* prop)
 {
 	WriteString(&prop->name);
 	WriteDataType(&prop->type);
-	WRITE_NUM(prop->index);
+	WRITE_NUM(prop->id);
 }
 
 void asCRestore::WriteObjectProperty(asCObjectProperty* prop) 
@@ -1269,12 +1269,14 @@ void asCRestore::WriteGlobalVarPointers()
 		}
 
 		// If it is not in the module, it must be an application registered property
+		// TODO: global: We must store a list of used global properties
+		//               so that the true index can be resolved on loading.
 		if( idx == -1 )
 		{
 			idx = 0;
-			for( int i = 0; i < (signed)engine->globalPropAddresses.GetLength(); i++ )
+			for( int i = 0; i < (signed)engine->registeredGlobalProps.GetLength(); i++ )
 			{
-				if( engine->globalPropAddresses[i] == p )
+				if( engine->registeredGlobalProps[i]->GetAddressOfValue() == p )
 				{
 					idx = -i - 1;
 					break;
@@ -1299,10 +1301,12 @@ void asCRestore::ReadGlobalVarPointers()
 		int idx;
 		READ_NUM(idx);
 
+		// TODO: global: The asCRestore class must store a table of property references 
+		//               so that the true index can be resolved upon restoral.
 		if( idx < 0 ) 
-			module->globalVarPointers[n] = (void*)(engine->globalPropAddresses[-idx - 1]);
+			module->globalVarPointers[n] = engine->registeredGlobalProps[-idx - 1]->GetAddressOfValue();
 		else
-			module->globalVarPointers[n] = (void*)(module->scriptGlobals[idx]->GetAddressOfValue());
+			module->globalVarPointers[n] = module->scriptGlobals[idx]->GetAddressOfValue();
 	}
 }
 

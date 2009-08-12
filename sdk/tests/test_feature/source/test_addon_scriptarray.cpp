@@ -68,7 +68,7 @@ static const char *script2 =
 static const char *script3 = 
 "void TestArrayMulti()                           \n"
 "{                                               \n"
-"   array< array<int> > a(2);                    \n"
+"   array<array<int>> a(2);                      \n"
 "   array<int> b(2);                             \n"
 "   a[0] = b;                                    \n"
 "   a[1] = b;                                    \n"
@@ -302,9 +302,12 @@ bool Test()
 	if( r < 0 )
 		fail = true;
 
-	engine->Release();
+	// Must support syntax as: array<array<int>>, i.e. without white space between the closing angled brackets.
+	r = engine->ExecuteString(0, "array<array<int>> a(2); Assert( a.length() == 2 );");
+	if( r < 0 )
+		fail = true;
 
-	// TODO: Must support syntax as: array<array<int>>, i.e. without white space between the closing angled brackets.
+	engine->Release();
 
 
 	// Success

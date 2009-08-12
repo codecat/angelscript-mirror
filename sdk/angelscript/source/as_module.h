@@ -205,17 +205,16 @@ public:
 	bool AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArray<sObjectTypePair> &equals);
 
 	asCScriptFunction *GetImportedFunction(int funcId);
-	asCScriptFunction *GetScriptFunction(int funcId);
 	asCScriptFunction *GetSpecialFunction(int funcId);
 
 	asCObjectType *GetObjectType(const char *type);
-	asCConfigGroup *GetConfigGroupByGlobalVarId(int gvarId);
+	asCConfigGroup *GetConfigGroupByGlobalVarPtrIndex(int index);
 
 	int  GetScriptSectionIndex(const char *name);
 	bool CanDelete();
 
 	asCGlobalProperty *AllocateGlobalProperty(const char *name, const asCDataType &dt);
-	int GetGlobalVarIndex(int propIdx);
+	int GetGlobalVarPtrIndex(int gvarId);
 
 	asCString name;
 

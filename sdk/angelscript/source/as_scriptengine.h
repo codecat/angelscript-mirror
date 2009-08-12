@@ -297,9 +297,9 @@ public:
 	// Store information about template types
 	asCArray<asCObjectType *>      templateTypes;
 
-	// This array stores pointers to each registered global property. It allows the virtual 
-	// machine to directly find the value of the global property using an index into this array.
-	asCArray<void *>               globalPropAddresses;
+	// Stores all global properties, both those registered by application, and those declared by scripts.
+	// The id of a global property is the index in this array.
+	asCArray<asCGlobalProperty *> globalProperties;
 
 	// Stores all functions, i.e. registered functions, script functions, class methods, behaviours, etc.
 	asCArray<asCScriptFunction *> scriptFunctions;

@@ -1485,7 +1485,7 @@ void asCContext::ExecuteNext()
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
 
-			CallScriptFunction(module, module->GetScriptFunction(i));
+			CallScriptFunction(module, engine->scriptFunctions[i]);
 
 			// Extract the values from the context again
 			l_bc = regs.programPointer;
@@ -2881,7 +2881,7 @@ void asCContext::ExecuteNext()
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
 
-			CallInterfaceMethod(module, module->GetScriptFunction(i));
+			CallInterfaceMethod(module, engine->GetScriptFunction(i));
 
 			// Extract the values from the context again
 			l_bc = regs.programPointer;

@@ -391,6 +391,8 @@ void asCModule::InternalReset()
 
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
+		// TODO: global: Should store a free slot for new allocations
+		engine->globalProperties[scriptGlobals[n]->id] = 0;
 		asDELETE(scriptGlobals[n],asCGlobalProperty);
 	}
 	scriptGlobals.SetLength(0);
@@ -877,13 +879,6 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 }
 
 // internal
-// TODO: This can probably be removed
-asCScriptFunction *asCModule::GetScriptFunction(int funcID)
-{
-	return engine->scriptFunctions[funcID & 0xFFFF];
-}
-
-// internal
 asCScriptFunction *asCModule::GetImportedFunction(int funcID)
 {
 	return importedFunctions[funcID & 0xFFFF];
@@ -1016,21 +1011,22 @@ bool asCModule::CanDeleteAllReferences(asCArray<asCModule*> &modules)
 }
 
 // interface
-int asCModule::BindImportedFunction(int index, int sourceID)
+int asCModule::BindImportedFunction(int index, int sourceId)
 {
 	// First unbind the old function
 	int r = UnbindImportedFunction(index);
 	if( r < 0 ) return r;
 
 	// Must verify that the interfaces are equal
-	asCModule *srcModule = engine->GetModuleFromFuncId(sourceID);
+	asCModule *srcModule = engine->GetModuleFromFuncId(sourceId);
 	if( srcModule == 0 ) return asNO_MODULE;
 
 	asCScriptFunction *dst = GetImportedFunction(index);
 	if( dst == 0 ) return asNO_FUNCTION;
 
-	asCScriptFunction *src = srcModule->GetScriptFunction(sourceID);
-	if( src == 0 ) return asNO_FUNCTION;
+	asCScriptFunction *src = engine->GetScriptFunction(sourceId);
+	if( src == 0 ) 
+		return asNO_FUNCTION;
 
 	// Verify return type
 	if( dst->returnType != src->returnType )
@@ -1048,7 +1044,7 @@ int asCModule::BindImportedFunction(int index, int sourceID)
 	// Add reference to new module
 	srcModule->AddModuleRef();
 
-	bindInformations[index].importedFunction = sourceID;
+	bindInformations[index].importedFunction = sourceId;
 
 	return asSUCCESS;
 }
@@ -1181,10 +1177,12 @@ asCObjectType *asCModule::GetObjectType(const char *type)
 asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asCDataType &dt)
 {
 	asCGlobalProperty *prop = asNEW(asCGlobalProperty);
-	prop->index      = (int)scriptGlobals.GetLength();
-	prop->name       = name;
-	prop->type       = dt;
+	// TODO: global: should check for free slots
+	prop->id   = (int)engine->globalProperties.GetLength();
+	prop->name = name;
+	prop->type = dt;
 	scriptGlobals.PushLast(prop);
+	engine->globalProperties.PushLast(prop);
 
 	// Allocate the memory for this property
 	if( dt.GetSizeOnStackDWords() > 2 )
@@ -1197,19 +1195,16 @@ asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asC
 }
 
 // internal
-int asCModule::GetGlobalVarIndex(int propIdx)
+int asCModule::GetGlobalVarPtrIndex(int gvarId)
 {
-	void *ptr = 0;
-	if( propIdx < 0 )
-		ptr = engine->globalPropAddresses[-int(propIdx) - 1];
-	else
-		// TODO: We can probably remove the 0xFFFF
-		ptr = scriptGlobals[propIdx & 0xFFFF]->GetAddressOfValue();
+	void *ptr = engine->globalProperties[gvarId]->GetAddressOfValue();
 
+	// Check if this pointer has been stored already
 	for( int n = 0; n < (signed)globalVarPointers.GetLength(); n++ )
 		if( globalVarPointers[n] == ptr )
 			return n;
 
+	// Add the new variable to the array
 	globalVarPointers.PushLast(ptr);
 	return (int)globalVarPointers.GetLength()-1;
 }
@@ -1535,21 +1530,21 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 }
 
 // internal
-asCConfigGroup *asCModule::GetConfigGroupByGlobalVarId(int gvarId)
+asCConfigGroup *asCModule::GetConfigGroupByGlobalVarPtrIndex(int index)
 {
-	void *gvarPtr = globalVarPointers[gvarId];
+	void *gvarPtr = globalVarPointers[index];
 
-	gvarId = 0;
-	for( asUINT g = 0; g < engine->globalPropAddresses.GetLength(); g++ )
+	int gvarId = -1;
+	for( asUINT g = 0; g < engine->registeredGlobalProps.GetLength(); g++ )
 	{
-		if( engine->globalPropAddresses[g] == gvarPtr )
+		if( engine->registeredGlobalProps[g] && engine->registeredGlobalProps[g]->GetAddressOfValue() == gvarPtr )
 		{
-			gvarId = -int(g) - 1;
+			gvarId = engine->registeredGlobalProps[g]->id;
 			break;
 		}
 	}
 
-	if( gvarId < 0 )
+	if( gvarId >= 0 )
 	{
 		// Find the config group from the property id
 		return engine->FindConfigGroupForGlobalVar(gvarId);
