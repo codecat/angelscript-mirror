@@ -696,16 +696,10 @@ void asCScriptEngine::ClearUnusedTypes()
 		asCModule *mod = scriptModules[n];
 		if( mod )
 		{
-			// TODO: global: This no longer has to go into the modules as all globals are stored in a shared array
-			// Go through all globals
-			asUINT m;
-			for( m = 0; m < mod->scriptGlobals.GetLength() && types.GetLength(); m++ )
-			{
-				if( mod->scriptGlobals[m]->type.GetObjectType() )
-					RemoveTypeAndRelatedFromList(types, mod->scriptGlobals[m]->type.GetObjectType());
-			}
+			// Functions/Methods/Globals are handled after this
 
 			// Go through all type declarations
+			asUINT m;
 			for( m = 0; m < mod->classTypes.GetLength() && types.GetLength(); m++ )
 				RemoveTypeAndRelatedFromList(types, mod->classTypes[m]);
 			for( m = 0; m < mod->enumTypes.GetLength() && types.GetLength(); m++ )
@@ -739,10 +733,10 @@ void asCScriptEngine::ClearUnusedTypes()
 	}
 
 	// Go through all global properties
-	for( n = 0; n < registeredGlobalProps.GetLength() && types.GetLength(); n++ )
+	for( n = 0; n < globalProperties.GetLength() && types.GetLength(); n++ )
 	{
-		if( registeredGlobalProps[n] && registeredGlobalProps[n]->type.GetObjectType() )
-			RemoveTypeAndRelatedFromList(types, registeredGlobalProps[n]->type.GetObjectType());
+		if( globalProperties[n] && globalProperties[n]->type.GetObjectType() )
+			RemoveTypeAndRelatedFromList(types, globalProperties[n]->type.GetObjectType());
 	}
 
 	// All that remains in the list after this can be discarded, since they are no longer used
@@ -2123,17 +2117,13 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 		return ConfigError(asINVALID_TYPE);
 
 	// Store the property info
-	asCGlobalProperty *prop = asNEW(asCGlobalProperty);
+	asCGlobalProperty *prop = AllocateGlobalProperty();
 	prop->name        = name;
 	prop->type        = type;
-	prop->realAddress = pointer;
-	prop->memory      = pointer;
 
-	// TODO: global: Should first check the availability of a free slot
-	prop->id          = (int)globalProperties.GetLength();
+	prop->SetRegisteredAddress(pointer);
+	
 	registeredGlobalProps.PushLast(prop);
-	globalProperties.PushLast(prop);
-
 	currentGroup->globalProps.PushLast(prop);
 
 	// If from another group add reference
@@ -2143,13 +2133,37 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 		currentGroup->RefConfigGroup(group);
 	}
 
-	if( type.IsObject() && !type.IsReference() && !type.IsObjectHandle() )
-	{
-		// The global property is a pointer to a pointer 
-		prop->memory = &prop->realAddress;
-	}
-
 	return asSUCCESS;
+}
+
+// internal
+asCGlobalProperty *asCScriptEngine::AllocateGlobalProperty()
+{
+	asCGlobalProperty *prop = asNEW(asCGlobalProperty);
+	prop->refCount.set(1);
+
+	// TODO: global: Should first check the availability of a free slot
+	prop->id = (asUINT)globalProperties.GetLength();
+	globalProperties.PushLast(prop);
+
+	return prop;
+}
+
+// internal
+void asCScriptEngine::AddRefToGlobalProperty(asCGlobalProperty *prop)
+{
+	prop->refCount.atomicInc();
+}
+
+// internal
+void asCScriptEngine::ReleaseGlobalProperty(asCGlobalProperty *prop)
+{
+	if( prop->refCount.atomicDec() == 0 )
+	{
+		// TODO: global: Should keep track of free slots
+		globalProperties[prop->id] = 0;
+		asDELETE(prop, asCGlobalProperty);
+	}
 }
 
 // interface

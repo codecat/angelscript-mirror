@@ -36,6 +36,9 @@
 // asCRestore was originally written by Dennis Bollyn, dennis@gyrbo.be
 
 
+// TODO: This should be split in two, so that an application that doesn't compile any 
+//       code but only loads precompiled code can link with only the bytecode loader
+
 #ifndef AS_RESTORE_H
 #define AS_RESTORE_H
 
@@ -67,6 +70,7 @@ protected:
 	void WriteObjectType(asCObjectType *ot);
 	void WriteObjectTypeDeclaration(asCObjectType *ot, bool writeProperties);
 	void WriteGlobalVarPointers();
+	void WriteByteCode(asDWORD *bc, int length);
 
 	void ReadString(asCString *str);
 	asCScriptFunction *ReadFunction(bool addToModule = true, bool addToEngine = true);
@@ -77,28 +81,34 @@ protected:
 	asCObjectType *ReadObjectType();
 	void ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties);
 	void ReadGlobalVarPointers();
-
-	void WriteByteCode(asDWORD *bc, int length);
 	void ReadByteCode(asDWORD *bc, int length);
 
+	// Helper functions for storing variable data
 	int FindObjectTypeIdx(asCObjectType*);
 	asCObjectType *FindObjectType(int idx);
-
-	void WriteUsedTypeIds();
-	void ReadUsedTypeIds();
-	void TranslateFunction(asCScriptFunction *func);
-
 	int FindTypeIdIdx(int typeId);
 	int FindTypeId(int idx);
-
 	int FindFunctionIndex(asCScriptFunction *func);
 	asCScriptFunction *FindFunction(int idx);
-	void WriteUsedFunctions();
-	void ReadUsedFunctions();
+	int FindGlobalPropPtrIndex(void *);
 
+	// Intermediate data used for storing that which isn't constant, function id's, pointers, etc
+	void WriteUsedTypeIds();
+	void WriteUsedFunctions();
+	void WriteUsedGlobalProps();
+
+	void ReadUsedTypeIds();
+	void ReadUsedFunctions();
+	void ReadUsedGlobalProps();
+
+	// After loading, each function needs to be translated to update pointers, function ids, etc
+	void TranslateFunction(asCScriptFunction *func);
+
+	// Temporary storage for persisting variable data	
 	asCArray<int>                usedTypeIds;
 	asCArray<asCObjectType*>     usedTypes;
 	asCArray<asCScriptFunction*> usedFunctions;
+	asCArray<void*>              usedGlobalProperties;
 
 	asCArray<asCScriptFunction*> savedFunctions;
 };

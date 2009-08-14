@@ -267,6 +267,11 @@ public:
 	asCObjectType *GetTemplateInstanceType(asCObjectType *templateType, asCDataType &subType);
 	bool GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCDataType &subType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
 
+	// Global property management
+	asCGlobalProperty *AllocateGlobalProperty();
+	void AddRefToGlobalProperty(asCGlobalProperty *prop);
+	void ReleaseGlobalProperty(asCGlobalProperty *prop);
+
 //===========================================================
 // internal properties
 //===========================================================

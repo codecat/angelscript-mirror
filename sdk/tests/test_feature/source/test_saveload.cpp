@@ -150,13 +150,25 @@ static const char *script5 =
 
 bool fail = false;
 int number = 0;
+int number2 = 0;
 COutStream out;
-asIScriptEngine *ConfigureEngine()
+asIScriptEngine *ConfigureEngine(int version)
 {
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptString_Generic(engine);
-	engine->RegisterGlobalProperty("int number", &number);
+	if( version == 1 )
+	{
+		// The order of the properties shouldn't matter
+		engine->RegisterGlobalProperty("int number", &number);
+		engine->RegisterGlobalProperty("int number2", &number2);
+	}
+	else
+	{
+		// The order of the properties shouldn't matter
+		engine->RegisterGlobalProperty("int number2", &number2);
+		engine->RegisterGlobalProperty("int number", &number);
+	}
 	engine->RegisterObjectType("OBJ", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 
 	return engine;
@@ -263,7 +275,7 @@ bool Test()
 		
 	Test2();
 
- 	asIScriptEngine *engine = ConfigureEngine();
+ 	asIScriptEngine *engine = ConfigureEngine(0);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(":1", script1, strlen(script1), 0);
@@ -298,7 +310,7 @@ bool Test()
 
 	// Test loading for a new engine
 	engine->Release();
-	engine = ConfigureEngine();
+	engine = ConfigureEngine(1);
 
 	stream.Restart();
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);

@@ -109,7 +109,9 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 		int index = engine->registeredGlobalProps.IndexOf(globalProps[n]);
 		if( index >= 0 )
 		{
-			asDELETE(engine->registeredGlobalProps[index],asCGlobalProperty);
+			engine->ReleaseGlobalProperty(globalProps[n]);
+
+			// TODO: global: Should compact the registeredGlobalProps array
 			engine->registeredGlobalProps[index] = 0;
 		}
 	}

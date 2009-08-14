@@ -4,7 +4,13 @@
 # For 'make install' to work, set LOCAL according to your system configuration
 LOCAL = /usr/local
 
+# If you want to build a shared library, then run make with SHARED=1 and VERSION=version
+ifdef SHARED
+LIB = libangelscript-$(VERSION).so
+DEVLIB = libangelscript.so
+else
 LIB = libangelscript.a
+endif
 INC = angelscript.h
 
 SRCDIR = ../../source
@@ -15,7 +21,7 @@ OBJDIR = obj
 CXX = gcc
 CXXFLAGS = -g -Wall -fPIC
 DELETER = rm -f
-COPIER = cp
+COPIER = cp -a
 
 SRCNAMES = \
   as_arrayobject.cpp \
@@ -59,8 +65,13 @@ BIN = $(LIBDIR)/$(LIB)
 all: $(BIN)
 
 $(BIN): $(OBJ)
+ifdef SHARED
+	$(CXX) -shared -Wl,-soname,$(LIB) -o $(BIN) $(OBJ)
+	( cd $(LIBDIR); ln -s $(LIB) $(DEVLIB) )
+else
 	ar r $(BIN) $(OBJ)
 	ranlib $(BIN)
+endif
 	@echo -------------------------------------------------------------------
 	@echo Done. As root, type 'make install' to install the library.
 
@@ -69,18 +80,21 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 
 clean:
-	$(DELETER) $(OBJ) $(BIN)
+	$(DELETER) $(OBJ) $(BIN) $(LIBDIR)/$(DEVLIB)
 
 install: $(BIN)
 	@echo Installing to: $(LOCAL)/lib and $(LOCAL)/include...
 	@echo -------------------------------------------------------------------
+ifdef SHARED
+	$(COPIER) $(LIBDIR)/$(DEVLIB) $(LOCAL)/lib
+endif
 	$(COPIER) $(BIN) $(LOCAL)/lib
 	$(COPIER) $(INCDIR)/$(INC) $(LOCAL)/include
 	@echo -------------------------------------------------------------------
 	@echo Angelscript library installed. Enjoy!
 
 uninstall:
-	$(DELETER) $(LOCAL)/include/$(INC) $(LOCAL)/lib/$(LIB)
+	$(DELETER) $(LOCAL)/include/$(INC) $(LOCAL)/lib/$(LIB) $(LOCAL)/lib/$(DEVLIB)
 	@echo -------------------------------------------------------------------
 	@echo Angelscript library uninstalled.
 

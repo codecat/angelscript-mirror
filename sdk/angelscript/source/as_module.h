@@ -85,6 +85,10 @@ struct sObjectTypePair
 //               new function compilations. Only when no more functions are accessing the global variables is
 //               the variable removed.
 
+// TODO: dynamic functions: String constants must be stored in the engine and shared between modules.
+//                          Bound functions must be stored in the engine and shared between modules. 
+//                          This way a script function can be disconnected from a module without breaking.
+
 // TODO: dynamic functions: It must be possible to compile new functions dynamically within the 
 //                          scope of a module. The new functions can be added to the scope of the module, or it can be 
 //                          left outside, thus only accessible through the function id that is returned. This can be used

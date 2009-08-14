@@ -378,6 +378,7 @@ void asCModule::InternalReset()
 	importedFunctions.SetLength(0);
 
 	// Free global variables
+	// TODO: global: Release references
 	globalVarPointers.SetLength(0);
 
 	isBuildWithoutErrors = true;
@@ -389,11 +390,10 @@ void asCModule::InternalReset()
 	}
 	stringConstants.SetLength(0);
 
+	// Release the global properties declared in the module
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
-		// TODO: global: Should store a free slot for new allocations
-		engine->globalProperties[scriptGlobals[n]->id] = 0;
-		asDELETE(scriptGlobals[n],asCGlobalProperty);
+		engine->ReleaseGlobalProperty(scriptGlobals[n]);
 	}
 	scriptGlobals.SetLength(0);
 
@@ -1176,25 +1176,19 @@ asCObjectType *asCModule::GetObjectType(const char *type)
 // internal
 asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asCDataType &dt)
 {
-	asCGlobalProperty *prop = asNEW(asCGlobalProperty);
-	// TODO: global: should check for free slots
-	prop->id   = (int)engine->globalProperties.GetLength();
+	asCGlobalProperty *prop = engine->AllocateGlobalProperty();
 	prop->name = name;
 	prop->type = dt;
 	scriptGlobals.PushLast(prop);
-	engine->globalProperties.PushLast(prop);
 
-	// Allocate the memory for this property
-	if( dt.GetSizeOnStackDWords() > 2 )
-	{
-		prop->SetAddressOfValue(asNEWARRAY(asDWORD, dt.GetSizeOnStackDWords()));
-		prop->memoryAllocated = true;
-	}
+	// Allocate the memory for this property based on its type
+	prop->AllocateMemory();
 
 	return prop;
 }
 
 // internal
+// TODO: global: This should be local to the script functions
 int asCModule::GetGlobalVarPtrIndex(int gvarId)
 {
 	void *ptr = engine->globalProperties[gvarId]->GetAddressOfValue();
@@ -1204,6 +1198,7 @@ int asCModule::GetGlobalVarPtrIndex(int gvarId)
 		if( globalVarPointers[n] == ptr )
 			return n;
 
+	// TODO: global: add reference
 	// Add the new variable to the array
 	globalVarPointers.PushLast(ptr);
 	return (int)globalVarPointers.GetLength()-1;

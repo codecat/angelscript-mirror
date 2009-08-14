@@ -42,6 +42,7 @@
 
 #include "as_string.h"
 #include "as_datatype.h"
+#include "as_atomic.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -53,22 +54,14 @@ public:
 	int         byteOffset;
 };
 
+// TODO: global: It is possible to unregister a property without updating all referrers.
+//               When this happens the address pointing to the value is cleared. When 
+//               the referrer tries to access the value it will throw an exception.
 
+// TODO: dynamic functions: When function pointers are available, it will be possible to create a circular
+//                          reference between a function pointer in global variable and a function. To
+//                          resolve this I need to use a garbage collector.
 
-//
-// TODO: global:
-// The global property structure is reference counted, so that the
-// engine can keep track of how many references to the property there are.
-//
-// It is possible to unregister a property without updating all referrers.
-// When this happens the address pointing to the value is cleared. When 
-// the referrer tries to access the value it will throw an exception.
-//
-// The global property structure is responsible for allocating the storage
-// method for script declared variables. Each allocation is independent of
-// other global properties, so that variables can be added and removed at
-// any time.
-//
 class asCGlobalProperty
 {
 public:
@@ -77,20 +70,51 @@ public:
 
 	asCString   name;
 	asCDataType type;
-	int         id;
-	bool        memoryAllocated;
+	asUINT      id;
 
+	void *GetAddressOfValue() { return (memoryAllocated || realAddress) ? memory : &storage; }
+
+	// The global property structure is responsible for allocating the storage
+	// method for script declared variables. Each allocation is independent of
+	// other global properties, so that variables can be added and removed at
+	// any time.
+	void AllocateMemory() 
+	{ 
+		if( type.GetSizeOnStackDWords() > 2 ) 
+		{ 
+			memory = asNEWARRAY(asDWORD, type.GetSizeOnStackDWords()); 
+			memoryAllocated = true; 
+		} 
+	}
+
+	void SetRegisteredAddress(void *p) 
+	{ 
+		realAddress = p; 	
+		if( type.IsObject() && !type.IsReference() && !type.IsObjectHandle() )
+		{
+			// The global property is a pointer to a pointer 
+			memory = &realAddress;
+		} 
+		else
+			memory = p; 
+	}
+
+protected:
 	// This is only stored for registered properties, and keeps the pointer given by the application
 	void       *realAddress;
 
-	void SetAddressOfValue(void *p) { memory = p; }
-	void *GetAddressOfValue() { return (memoryAllocated || realAddress) ? memory : &storage; }
-
+	bool        memoryAllocated;
 	union
 	{
 		void       *memory;
 		asQWORD     storage;
 	};
+
+protected:
+	// The global property structure is reference counted, so that the
+	// engine can keep track of how many references to the property there are.
+	friend class asCScriptEngine;
+	asCAtomic refCount;
 };
 
 END_AS_NAMESPACE

@@ -1180,6 +1180,7 @@ void asCContext::PushCallState()
 	s[2] = (size_t)regs.programPointer;
 	s[3] = (size_t)regs.stackPointer;
 	s[4] = stackIndex;
+	// TODO: dynamic functions: shouldn't be necessary to keep track of the module
 	s[5] = (size_t)module;
 
 	size_t *tmp = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
@@ -1209,8 +1210,7 @@ void asCContext::PopCallState()
 	regs.stackPointer      = (asDWORD*)s[3];
 	stackIndex             = (int)s[4];
 
-	// TODO: The context shouldn't keep track of module or global var pointers
-	//       the byte code instructions should keep pointers directly to the vars
+	// TODO: dynamic functions: shouldn't be necessary to keep track of the module
 	module                 = (asCModule*)s[5];
 	regs.globalVarPointers = module->globalVarPointers.AddressOf();
 
@@ -1252,6 +1252,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	PushCallState();
 
 	currentFunction = func;
+	// TODO: dynamic functions: It will not be necessary to keep track of the module when the function holds the global var pointers
 	module = func->module ? func->module : mod;
 	regs.globalVarPointers = module->globalVarPointers.AddressOf();
 	regs.programPointer = currentFunction->byteCode.AddressOf();
@@ -1456,6 +1457,7 @@ void asCContext::ExecuteNext()
 	// Push the dword value of a global variable on the stack
 	case asBC_PshG4:
 		--l_sp;
+		// TODO: global: The global var address should be stored in the instruction directly
 		*l_sp = *(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
 		l_bc++;
 		break;
@@ -1463,6 +1465,7 @@ void asCContext::ExecuteNext()
 	// Load the address of a global variable in the register, then  
 	// copy the value of the global variable into a local variable
 	case asBC_LdGRdR4:
+		// TODO: global: The global var address should be stored in the instruction directly
 		*(void**)&regs.valueRegister = regs.globalVarPointers[asBC_WORDARG1(l_bc)];
 		*(l_fp - asBC_SWORDARG0(l_bc)) = **(asDWORD**)&regs.valueRegister;
 		l_bc += 2;
@@ -2033,6 +2036,7 @@ void asCContext::ExecuteNext()
 			// Get the string id from the argument
 			asWORD w = asBC_WORDARG0(l_bc);
 			// Push the string pointer on the stack
+			// TODO: dynamic functions: string constants should be stored in the engine and shared between modules
 			const asCString &b = module->GetConstantString(w);
 			l_sp -= AS_PTR_SIZE;
 			*(asPTRWORD*)l_sp = (asPTRWORD)(size_t)b.AddressOf();
@@ -2446,6 +2450,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_CpyVtoG4:
+		// TODO: global: The global var address should be stored in the instruction directly
 		*(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)] = *(asDWORD*)(l_fp - asBC_SWORDARG1(l_bc));
 		l_bc += 2;
 		break;
@@ -2461,6 +2466,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_CpyGtoV4:
+		// TODO: global: The global var address should be stored in the instruction directly
 		*(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asDWORD*)regs.globalVarPointers[asBC_WORDARG1(l_bc)];
 		l_bc += 2;
 		break;
@@ -2520,6 +2526,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_LDG:
+		// TODO: global: The global var address should be stored in the instruction directly
 		*(asDWORD**)&regs.valueRegister = (asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
 		l_bc++;
 		break;
@@ -2531,6 +2538,7 @@ void asCContext::ExecuteNext()
 
 	case asBC_PGA:
 		l_sp -= AS_PTR_SIZE;
+		// TODO: global: The global var address should be stored in the instruction directly
 		*(asPTRWORD*)l_sp = (asPTRWORD)(size_t)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
 		l_bc++;
 		break;
@@ -2829,6 +2837,7 @@ void asCContext::ExecuteNext()
 
 	//-----------------------------------
 	case asBC_SetG4:
+		// TODO: global: The global var address should be stored in the instruction directly
 		*(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)] = asBC_DWORDARG(l_bc);
 		l_bc += 2;
 		break;

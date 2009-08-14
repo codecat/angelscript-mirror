@@ -327,6 +327,7 @@ void asCScriptFunction::AddReferences()
 		case asBC_PshG4:
 		case asBC_SetG4:
 		case asBC_CpyVtoG4:
+			// TODO: global: Need to increase the reference for each global variable
 			if( module )
 			{
 				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
@@ -337,6 +338,7 @@ void asCScriptFunction::AddReferences()
 
 		case asBC_LdGRdR4:
 		case asBC_CpyGtoV4:
+			// TODO: global: Need to increase the reference for each global variable
 			if( module )
 			{
 				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
@@ -394,6 +396,7 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_PshG4:
 		case asBC_SetG4:
 		case asBC_CpyVtoG4:
+			// TODO: global: Need to decrease the reference for each global variable
 			if( module )
 			{
 				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
@@ -404,6 +407,7 @@ void asCScriptFunction::ReleaseReferences()
 
 		case asBC_LdGRdR4:
 		case asBC_CpyGtoV4:
+			// TODO: global: Need to decrease the reference for each global variable
 			if( module )
 			{
 				int gvarIdx = asBC_WORDARG1(&byteCode[n]);

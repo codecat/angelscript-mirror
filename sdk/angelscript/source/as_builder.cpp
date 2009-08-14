@@ -2200,7 +2200,6 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 				}
 			}
 		}
-
 	}
 
 	// Read the module name as well
