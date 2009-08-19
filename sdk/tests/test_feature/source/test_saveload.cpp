@@ -25,6 +25,8 @@ static const char *script1 =
 "  Test();                                    \n"
 "  TestStruct();                              \n"
 "  TestArray();                               \n"
+"  GlobalCharArray.resize(1);                 \n"
+"  string @s = ARRAYTOHEX(GlobalCharArray);   \n"
 "}                                            \n"
 "void TestObj(OBJ &out obj)                   \n"
 "{                                            \n"
@@ -152,11 +154,27 @@ bool fail = false;
 int number = 0;
 int number2 = 0;
 COutStream out;
+asIScriptArray* GlobalCharArray = 0;
+
+CScriptString* ArrayToHexStr(asIScriptArray *arr)
+{
+  return 0;
+}
+
 asIScriptEngine *ConfigureEngine(int version)
 {
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	RegisterScriptString_Generic(engine);
+	RegisterScriptString(engine);
+
+	// Register a property with the built-in array type
+	GlobalCharArray = (asIScriptArray*)engine->CreateScriptObject(engine->GetTypeIdByDecl("uint8[]"));
+	int r = engine->RegisterGlobalProperty("uint8[] GlobalCharArray", GlobalCharArray); assert( r >= 0 );
+
+	// Register function that use the built-in array type
+	r = engine->RegisterGlobalFunction("string@ ARRAYTOHEX(uint8[] &in)", asFUNCTION(ArrayToHexStr), asCALL_CDECL); assert( r >= 0 );
+
+
 	if( version == 1 )
 	{
 		// The order of the properties shouldn't matter
@@ -279,7 +297,9 @@ bool Test()
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(":1", script1, strlen(script1), 0);
-	mod->Build();
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
 
 	// Validate the number of global functions
 	if( mod->GetFunctionCount() != 5 )
@@ -309,6 +329,8 @@ bool Test()
 	TestScripts(engine);
 
 	// Test loading for a new engine
+	GlobalCharArray->Release();
+	GlobalCharArray = 0;
 	engine->Release();
 	engine = ConfigureEngine(1);
 
@@ -325,6 +347,8 @@ bool Test()
 
 	TestScripts(engine);
 
+	GlobalCharArray->Release();
+	GlobalCharArray = 0;
 	engine->Release();
 
 	//-----------------------------------------

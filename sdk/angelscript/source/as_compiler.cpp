@@ -5391,6 +5391,8 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	asCScriptNode *pnode = vnode->next;
 	while( pnode )
 	{
+		// TODO: getset: Previous value is accessed as get
+
 		r = CompileExpressionPostOp(pnode, &v); if( r < 0 ) return r;
 		pnode = pnode->next;
 	}
@@ -5399,6 +5401,8 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	pnode = vnode->prev;
 	while( pnode )
 	{
+		// TODO: getset: Previous value is accessed as get
+
 		r = CompileExpressionPreOp(pnode, &v); if( r < 0 ) return r;
 		pnode = pnode->prev;
 	}
@@ -7079,6 +7083,16 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			// Get the property name
 			asCString name(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);
 
+			// TODO: getset: We need to look for get/set property accessors.
+			//               When do we know if the get or set accessors should be used?
+			//               The context must store information on the get/set accessors
+			//               until it is known which is to be used.
+			//               If multiple set accessors are found, raise error on multiple functions
+			//               If multiple get accessors are found, raise error on multiple functions
+			//               If get accessor doesn't return same type as set accessor raise error
+			//               Prepare the bytecode for the member function call, and set the type to
+			//               the property. Store the get/set function id.
+
 			if( !ctx->type.dataType.IsPrimitive() )
 				Dereference(ctx, true);
 
@@ -7543,6 +7557,8 @@ int asCCompiler::TokenToBehaviour(int token)
 
 bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
+	// TODO: getset: Process the property accessor as get or set depending on the overloaded operator
+
 	// What type of operator is it?
 	int token = node->tokenType;
 	if( token == ttUnrecognizedToken )
@@ -8198,6 +8214,8 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
 
+	// TODO: getset: Process the property accessor as get
+
 	// Implicitly convert the operands to a number type
 	asCDataType to;
 	if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
@@ -8494,6 +8512,8 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
 
+	// TODO: getset: Process the property accessor as get
+
 	int op = node->tokenType;
 	if( op == ttAmp    || op == ttAndAssign ||
 		op == ttBitOr  || op == ttOrAssign  ||
@@ -8750,6 +8770,8 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
 	// Both operands must be of the same type
+
+	// TODO: getset: Process the property accessor as get
 
 	// Implicitly convert the operands to a number type
 	asCDataType to;
@@ -9059,6 +9081,8 @@ void asCCompiler::PushVariableOnStack(asSExprContext *ctx, bool asReference)
 
 void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
+	// TODO: getset: Process the property accessor as get
+
 	// Both operands must be booleans
 	asCDataType to;
 	to.SetTokenType(ttBool);
@@ -9220,6 +9244,8 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 
 void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
+	// TODO: getset: Process the property accessor as get
+
 	// Warn if not both operands are explicit handles
 	if( (node->tokenType == ttEqual || node->tokenType == ttNotEqual) &&
 		((!lctx->type.isExplicitHandle && !(lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE))) ||

@@ -838,96 +838,45 @@ void asCRestore::ReadObjectProperty(asCObjectProperty* prop)
 
 void asCRestore::WriteDataType(const asCDataType *dt) 
 {
-	if( dt->IsTemplate() )
-	{
-		bool b = true;
-		WRITE_NUM(b);
-
-		b = dt->IsObjectHandle();
-		WRITE_NUM(b);
-		b = dt->IsReadOnly();
-		WRITE_NUM(b);
-		b = dt->IsHandleToConst();
-		WRITE_NUM(b);
-		b = dt->IsReference();
-		WRITE_NUM(b);
-
-		asCDataType sub = dt->GetSubType();
-		WriteDataType(&sub);
-	}
-	else
-	{
-		bool b = false;
-		WRITE_NUM(b);
-
-		int t = dt->GetTokenType();
-		WRITE_NUM(t);
-		WriteObjectType(dt->GetObjectType());
-		b = dt->IsObjectHandle();
-		WRITE_NUM(b);
-		b = dt->IsReadOnly();
-		WRITE_NUM(b);
-		b = dt->IsHandleToConst();
-		WRITE_NUM(b);
-		b = dt->IsReference();
-		WRITE_NUM(b);
-	}
+	bool b;
+	int t = dt->GetTokenType();
+	WRITE_NUM(t);
+	WriteObjectType(dt->GetObjectType());
+	b = dt->IsObjectHandle();
+	WRITE_NUM(b);
+	b = dt->IsReadOnly();
+	WRITE_NUM(b);
+	b = dt->IsHandleToConst();
+	WRITE_NUM(b);
+	b = dt->IsReference();
+	WRITE_NUM(b);
 }
 
 void asCRestore::ReadDataType(asCDataType *dt) 
 {
-	bool b;
-	READ_NUM(b);
-	if( b ) 
-	{
-		bool isObjectHandle;
-		READ_NUM(isObjectHandle);
-		bool isReadOnly;
-		READ_NUM(isReadOnly);
-		bool isHandleToConst;
-		READ_NUM(isHandleToConst);
-		bool isReference;
-		READ_NUM(isReference);
+	eTokenType tokenType;
+	READ_NUM(tokenType);
+	asCObjectType *objType = ReadObjectType();
+	bool isObjectHandle;
+	READ_NUM(isObjectHandle);
+	bool isReadOnly;
+	READ_NUM(isReadOnly);
+	bool isHandleToConst;
+	READ_NUM(isHandleToConst);
+	bool isReference;
+	READ_NUM(isReference);
 
-		asCDataType sub;
-		ReadDataType(&sub);
-
-		*dt = sub;
-		dt->MakeArray(engine);
-		if( isObjectHandle )
-		{
-			dt->MakeReadOnly(isHandleToConst);
-			dt->MakeHandle(true);
-		}
-		dt->MakeReadOnly(isReadOnly);
-		dt->MakeReference(isReference);
-	}
+	if( tokenType == ttIdentifier )
+		*dt = asCDataType::CreateObject(objType, false);
 	else
+		*dt = asCDataType::CreatePrimitive(tokenType, false);
+	if( isObjectHandle )
 	{
-		eTokenType tokenType;
-		READ_NUM(tokenType);
-		asCObjectType *objType = ReadObjectType();
-		bool isObjectHandle;
-		READ_NUM(isObjectHandle);
-		bool isReadOnly;
-		READ_NUM(isReadOnly);
-		bool isHandleToConst;
-		READ_NUM(isHandleToConst);
-		bool isReference;
-		READ_NUM(isReference);
-
-		if( tokenType == ttIdentifier )
-			*dt = asCDataType::CreateObject(objType, false);
-		else
-			*dt = asCDataType::CreatePrimitive(tokenType, false);
-		if( isObjectHandle )
-		{
-			dt->MakeReadOnly(isHandleToConst);
-			dt->MakeHandle(true);
-		}
-		dt->MakeReadOnly(isReadOnly);
-		dt->MakeReference(isReference);
+		dt->MakeReadOnly(isHandleToConst);
+		dt->MakeHandle(true);
 	}
+	dt->MakeReadOnly(isReadOnly);
+	dt->MakeReference(isReference);
 }
 
 void asCRestore::WriteObjectType(asCObjectType* ot) 
@@ -963,6 +912,12 @@ void asCRestore::WriteObjectType(asCObjectType* ot)
 				eTokenType t = ot->templateSubType.GetTokenType();
 				WRITE_NUM(t);
 			}
+		}
+		else if( ot->flags & asOBJ_TEMPLATE_SUBTYPE )
+		{
+			ch = 's';
+			WRITE_NUM(ch);
+			WriteString(&ot->name);
 		}
 		else
 		{
@@ -1013,6 +968,25 @@ asCObjectType* asCRestore::ReadObjectType()
 			
 			asASSERT(ot);
 		}
+	}
+	else if( ch == 's' )
+	{
+		// Read the name of the template subtype
+		asCString typeName;
+		ReadString(&typeName);
+
+		// Find the template subtype
+		for( asUINT n = 0; n < engine->templateSubTypes.GetLength(); n++ )
+		{
+			if( engine->templateSubTypes[n] && engine->templateSubTypes[n]->name == typeName )
+			{
+				ot = engine->templateSubTypes[n];
+				break;
+			}
+		}
+
+		// TODO: Should give a friendly error in case the template type isn't found
+		asASSERT(ot);
 	}
 	else
 	{
