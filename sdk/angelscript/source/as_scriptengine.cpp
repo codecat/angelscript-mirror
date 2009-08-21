@@ -130,6 +130,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_WII
 		"AS_WII "
 #endif
+#ifdef AS_IPHONE
+		"AS_IPHONE "
+#endif
 
 	// CPU family
 #ifdef AS_PPC

@@ -218,6 +218,7 @@
 // AS_DC      - Sega Dreamcast
 // AS_GC      - Nintendo GameCube
 // AS_WII     - Nintendo Wii
+// AS_IPHONE  - Apple IPhone
 
 
 
@@ -422,10 +423,17 @@
 	#define STDCALL __attribute__((stdcall))
 	#define ASM_AT_N_T
 
-	// MacOSX
+	// MacOSX and IPhone
 	#ifdef __APPLE__
+
+		// Is this a Mac or an IPhone?
+		#ifdef TARGET_OS_IPHONE
+			#define AS_IPHONE
+		#else
+			#define AS_MAC
+		#endif
+
 		// The sizeof bool is different depending on the target CPU
-		#define AS_MAC
 		#undef AS_SIZEOF_BOOL
 		#if defined(__ppc__)
 			#define AS_SIZEOF_BOOL 4
@@ -435,6 +443,7 @@
 		#else
 			#define AS_SIZEOF_BOOL 1
 		#endif
+
 		#if defined(i386) && !defined(__LP64__)
 			// Support native calling conventions on Mac OS X + Intel 32bit CPU
 			#define AS_X86
@@ -446,12 +455,20 @@
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 		#elif (defined(__ppc__) || defined(__PPC__)) && defined(__LP64__)
 			#define AS_PPC_64
+		#elif (defined(_ARM_) || defined(__arm__))
+			// The IPhone use an ARM processor
+		    #define AS_ARM
+			#define AS_ALIGN
+
+			// TODO: Native calling convention on the IPhone is not available yet. Need to adapt
+            //       the code in as_callfunc_armasm.asm to allow GNU's assembler to compile it.
+			#define AS_MAX_PORTABILITY
 		#else
-			// No support for native calling conventions yet
+			// Unknown CPU type
 			#define AS_MAX_PORTABILITY
 		#endif
 		#define AS_POSIX_THREADS
-		
+ 
 	// Windows
 	#elif defined(WIN32)
 		// On Windows the simple classes are returned in the EAX:EDX registers

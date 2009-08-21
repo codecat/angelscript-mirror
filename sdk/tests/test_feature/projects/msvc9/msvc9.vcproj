@@ -407,6 +407,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_getset.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_implicitcast.cpp"
 				>
 			</File>

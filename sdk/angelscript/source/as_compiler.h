@@ -65,10 +65,12 @@ struct asSDeferredParam
 
 struct asSExprContext
 {
-	asSExprContext(asCScriptEngine *engine) : bc(engine) {exprNode = 0; origExpr = 0;}
+	asSExprContext(asCScriptEngine *engine) : bc(engine) {exprNode = 0; origExpr = 0; property_get = 0; property_set = 0;}
 
 	asCByteCode bc;
 	asCTypeInfo type;
+	int property_get;
+	int property_set;
 	asCArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;
 	asSExprContext *origExpr;
@@ -146,6 +148,9 @@ protected:
 	void MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType = NULL, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true, const asCString &scope = "");
 
 	// Helper functions
+	void ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode *node);
+	int  ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node);
+	int  FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node);
 	void SwapPostFixOperands(asCArray<asCScriptNode *> &postfix, asCArray<asCScriptNode *> &target);
 	void PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, asCArray<int> *reservedVars);
 	void PrepareOperand(asSExprContext *ctx, asCScriptNode *node);

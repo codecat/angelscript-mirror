@@ -60,6 +60,7 @@
 #define TXT_CANT_RETURN_VALUE             "Can't return value when return type is 'void'"
 #define TXT_CHANGE_SIGN                   "Implicit conversion changed sign of value"
 #define TXT_COMPILING_s                   "Compiling %s"
+#define TXT_COMPOUND_ASGN_WITH_PROP       "Compound assignments with property accessors are not allowed"
 #define TXT_CONST_NOT_PRIMITIVE           "Only primitives may be declared as const"
 #define TXT_CONSTRUCTOR_NAME_ERROR        "The constructor name must be the same as the class"
 
@@ -92,6 +93,8 @@
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"
 #define TXT_FUNCTION_s_NOT_FOUND          "Function '%s' not found"
 
+#define TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s "The property '%s' have mismatching types for the get and set accessors"
+
 #define TXT_HANDLE_ASSIGNMENT             "The rvalue is implicitly converted to handle in order to perform handle assignment"
 #define TXT_HANDLE_COMPARISON             "The operand is implicitly converted to handle in order to compare them"
 
@@ -120,6 +123,8 @@
 #define TXT_MISSING_IMPLEMENTATION_OF_s             "Missing implementation of '%s'"
 #define TXT_MORE_THAN_ONE_MATCHING_OP               "Found more than one matching operator"
 #define TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s       "Multiple matching signatures to '%s'"
+#define TXT_MULTIPLE_PROP_GET_ACCESSOR_FOR_s        "Found multiple get accessors for property '%s'"
+#define TXT_MULTIPLE_PROP_SET_ACCESSOR_FOR_s        "Found multiple set accessors for property '%s'"
 #define TXT_MULTILINE_STRINGS_NOT_ALLOWED           "Multiline strings are not allowed in this application"
 #define TXT_MUST_BE_OBJECT                          "Only objects have constructors"
 #define TXT_s_MUST_BE_SENT_BY_REF                   "'%s' must be sent by reference"

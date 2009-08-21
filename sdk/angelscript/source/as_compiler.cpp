@@ -2285,6 +2285,8 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 	if( !expr.type.isConstant )
 	{
+		ProcessPropertyGetAccessor(&expr, inode);
+
 		ConvertToVariable(&expr);
 
 		// Add byte code from the expression
@@ -4851,46 +4853,68 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 	if( lctx->type.dataType.IsPrimitive() )
 	{
-		if( op != ttAssignment )
+		if( lctx->property_get || lctx->property_set )
 		{
-			// Compute the operator before the assignment
-			asCTypeInfo lvalue = lctx->type;
-
-			if( lctx->type.isTemporary && !lctx->type.isVariable )
+			if( op != ttAssignment )
 			{
-				// The temporary variable must not be freed until the
-				// assignment has been performed. lvalue still holds
-				// the information about the temporary variable
-				lctx->type.isTemporary = false;
+				// TODO: getset: We may actually be able to support this, if we can 
+				//               guarantee that the object reference will stay valid 
+				//               between the calls to the get and set accessors.
+
+				// Compound assignments are not allowed for properties
+				Error(TXT_COMPOUND_ASGN_WITH_PROP, opNode);
+				return -1;
 			}
 
-			asSExprContext o(engine);
-			CompileOperator(opNode, lctx, rctx, &o);
-			MergeExprContexts(rctx, &o);
-			rctx->type = o.type;
+			MergeExprContexts(ctx, lctx);
+			ctx->property_get = lctx->property_get;
+			ctx->property_set = lctx->property_set;
 
-			// Convert the rvalue to the right type and validate it
-			PrepareForAssignment(&lvalue.dataType, rctx, rexpr);
-
-			MergeExprContexts(ctx, rctx);
-			lctx->type = lvalue;
-
-			// The lvalue continues the same, either it was a variable, or a reference in the register
+			return ProcessPropertySetAccessor(ctx, rctx, opNode);
 		}
 		else
 		{
-			// Convert the rvalue to the right type and validate it
-			PrepareForAssignment(&lctx->type.dataType, rctx, rexpr, lctx);
+			if( op != ttAssignment )
+			{
+				// Compute the operator before the assignment
+				asCTypeInfo lvalue = lctx->type;
 
-			MergeExprContexts(ctx, rctx);
-			MergeExprContexts(ctx, lctx);
+				if( lctx->type.isTemporary && !lctx->type.isVariable )
+				{
+					// The temporary variable must not be freed until the
+					// assignment has been performed. lvalue still holds
+					// the information about the temporary variable
+					lctx->type.isTemporary = false;
+				}
+
+				asSExprContext o(engine);
+				CompileOperator(opNode, lctx, rctx, &o);
+				MergeExprContexts(rctx, &o);
+				rctx->type = o.type;
+
+				// Convert the rvalue to the right type and validate it
+				PrepareForAssignment(&lvalue.dataType, rctx, rexpr);
+
+				MergeExprContexts(ctx, rctx);
+				lctx->type = lvalue;
+
+				// The lvalue continues the same, either it was a variable, or a reference in the register
+			}
+			else
+			{
+				// Convert the rvalue to the right type and validate it
+				PrepareForAssignment(&lctx->type.dataType, rctx, rexpr, lctx);
+
+				MergeExprContexts(ctx, rctx);
+				MergeExprContexts(ctx, lctx);
+			}
+
+			ReleaseTemporaryVariable(rctx->type, &ctx->bc);
+
+			PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
+
+			ctx->type = lctx->type;
 		}
-
-		ReleaseTemporaryVariable(rctx->type, &ctx->bc);
-
-		PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
-
-		ctx->type = lctx->type;
 	}
 	else if( lctx->type.isExplicitHandle )
 	{
@@ -5126,6 +5150,8 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 		}
 		ctype = e.type;
 
+		ProcessPropertyGetAccessor(&e, cexpr);
+
 		if( e.type.dataType.IsReference() ) ConvertToVariable(&e);
 		ProcessDeferredParams(&e);
 
@@ -5141,6 +5167,9 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 		if( lr >= 0 && rr >= 0 )
 		{
+			ProcessPropertyGetAccessor(&le, cexpr->next);
+			ProcessPropertyGetAccessor(&re, cexpr->next->next);
+
 			bool isExplicitHandle = le.type.isExplicitHandle || re.type.isExplicitHandle;
 
 			// Allow a 0 in the first case to be implicitly converted to the second type
@@ -5411,6 +5440,8 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	MergeExprContexts(ctx, &v);
 
     ctx->type = v.type;
+	ctx->property_get = v.property_get;
+	ctx->property_set = v.property_set;
 
 	return 0;
 }
@@ -6751,6 +6782,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	}
 	else if( op == ttPlus || op == ttMinus )
 	{
+		ProcessPropertyGetAccessor(ctx, node);
+
 		asCDataType to = ctx->type.dataType;
 
 		// TODO: The case -2147483648 gives an unecessary warning of changed sign for implicit conversion
@@ -6841,6 +6874,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 				return 0;
 			}
 
+			ProcessPropertyGetAccessor(ctx, node);
+
 			ConvertToTempVariable(ctx);
 
 			ctx->bc.InstrSHORT(asBC_NOT, ctx->type.stackOffset);
@@ -6853,6 +6888,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	}
 	else if( op == ttBitNot )
 	{
+		ProcessPropertyGetAccessor(ctx, node);
+
 		asCDataType to = ctx->type.dataType;
 
 		if( ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType() )
@@ -6997,6 +7034,197 @@ void asCCompiler::ConvertToReference(asSExprContext *ctx)
 	}
 }
 
+int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node)
+{
+	if( !ctx->type.dataType.IsObject() )
+		return 0;
+
+	// Check if the object as any methods with the property name prefixed by get_ or set_
+	int getId = 0, setId = 0;
+	asCString getName = "get_" + name;
+	asCString setName = "set_" + name;
+	asCArray<int> multipleGetFuncs, multipleSetFuncs;
+	asCObjectType *ot = ctx->type.dataType.GetObjectType();
+	for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+	{
+		asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
+		if( f->name == getName && f->parameterTypes.GetLength() == 0 )
+		{
+			if( getId == 0 )
+				getId = ot->methods[n];
+			else
+			{
+				if( multipleGetFuncs.GetLength() == 0 )
+					multipleGetFuncs.PushLast(getId);
+
+				multipleGetFuncs.PushLast(ot->methods[n]);
+			}
+		}
+		// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
+		if( f->name == setName && f->parameterTypes.GetLength() == 1 )
+		{
+			if( setId == 0 )
+				setId = ot->methods[n];
+			else
+			{
+				if( multipleSetFuncs.GetLength() == 0 )
+					multipleSetFuncs.PushLast(setId);
+
+				multipleSetFuncs.PushLast(ot->methods[n]);
+			}
+		}
+	}
+
+	// Check for multiple matches
+	if( multipleGetFuncs.GetLength() > 0 )
+	{
+		asCString str;
+		str.Format(TXT_MULTIPLE_PROP_GET_ACCESSOR_FOR_s, name.AddressOf());
+		Error(str.AddressOf(), node);
+
+		PrintMatchingFuncs(multipleGetFuncs, node);
+
+		return -1;
+	}
+
+	if( multipleSetFuncs.GetLength() > 0 )
+	{
+		asCString str;
+		str.Format(TXT_MULTIPLE_PROP_SET_ACCESSOR_FOR_s, name.AddressOf());
+		Error(str.AddressOf(), node);
+
+		PrintMatchingFuncs(multipleSetFuncs, node);
+
+		return -1;
+	}
+
+	// Check for type compatibility between get and set accessor
+	if( getId && setId )
+	{
+		asCScriptFunction *getFunc = engine->scriptFunctions[getId];
+		asCScriptFunction *setFunc = engine->scriptFunctions[setId];
+
+		if( !getFunc->returnType.IsEqualExceptRefAndConst(setFunc->parameterTypes[0]) )
+		{
+			asCString str;
+			str.Format(TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s, name.AddressOf());
+			Error(str.AddressOf(), node);
+
+			asCArray<int> funcs;
+			funcs.PushLast(getId);
+			funcs.PushLast(setId);
+
+			PrintMatchingFuncs(funcs, node);
+
+			return -1;
+		}
+	}
+
+	if( getId || setId )
+	{
+		// Property accessors were found, but we don't know which is to be used yet, so 
+		// we just prepare the bytecode for the method call, and then store the function ids
+		// so that the right one can be used when we get there.
+		ctx->property_get = getId;
+		ctx->property_set = setId;
+
+		asCDataType dt;
+		if( getId )
+			dt = engine->scriptFunctions[getId]->returnType;
+		else
+			dt = engine->scriptFunctions[setId]->parameterTypes[0];
+
+		// TODO: getset: What do we do about variable offsets, temporary variable, etc?
+		ctx->type.Set(dt);
+
+		return 1;
+	}
+
+	// No accessor was found
+	return 0;
+}
+
+int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node)
+{
+	if( !ctx->property_set )
+	{
+		// TODO: getset: Proper error
+		Error("No set accessor", node);
+		return -1;
+	}
+
+	// Setup the context with the original type so the method call gets built correctly
+	asCTypeInfo objType = ctx->type;
+	asCScriptFunction *func = engine->scriptFunctions[ctx->property_set];
+	ctx->type.dataType = asCDataType::CreateObject(func->objectType, true);
+	ctx->type.dataType.MakeReference(true);
+
+	// Call the accessor
+	asCArray<asSExprContext *> args;
+	args.PushLast(arg);
+	MakeFunctionCall(ctx, ctx->property_set, func->objectType, args);
+
+	// TODO: This is from CompileExpressionPostOp, can we unify the code?
+	if( objType.isTemporary &&
+		ctx->type.dataType.IsReference() &&
+		!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
+	{
+		// Remember the original object's variable, so that it can be released
+		// later on when the reference to its member goes out of scope
+		ctx->type.isTemporary = true;
+		ctx->type.stackOffset = objType.stackOffset;
+	}
+	else
+	{
+		// As the method didn't return a reference to a member
+		// we can safely release the original object now
+		ReleaseTemporaryVariable(objType, &ctx->bc);
+	}
+
+	return 0;
+}
+
+void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode *node)
+{
+	// If no property accessor has been prepared then don't do anything
+	if( !ctx->property_get && !ctx->property_set )
+		return;
+
+	if( !ctx->property_get )
+	{
+		// TODO: getset: Raise error on missing accessor
+		Error("Missing get accessor", node);
+		return;
+	}
+
+	// Setup the context with the original type so the method call gets built correctly
+	asCTypeInfo objType = ctx->type;
+	asCScriptFunction *func = engine->scriptFunctions[ctx->property_get];
+	ctx->type.dataType = asCDataType::CreateObject(func->objectType, true);
+	ctx->type.dataType.MakeReference(true);
+
+	// Call the accessor
+	asCArray<asSExprContext *> args;
+	MakeFunctionCall(ctx, ctx->property_get, func->objectType, args);
+
+	// TODO: This is from CompileExpressionPostOp, can we unify the code?
+	if( objType.isTemporary &&
+		ctx->type.dataType.IsReference() &&
+		!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
+	{
+		// Remember the original object's variable, so that it can be released
+		// later on when the reference to its member goes out of scope
+		ctx->type.isTemporary = true;
+		ctx->type.stackOffset = objType.stackOffset;
+	}
+	else
+	{
+		// As the method didn't return a reference to a member
+		// we can safely release the original object now
+		ReleaseTemporaryVariable(objType, &ctx->bc);
+	}
+}
+
 int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ctx)
 {
 	int op = node->tokenType;
@@ -7083,16 +7311,13 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			// Get the property name
 			asCString name(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);
 
-			// TODO: getset: We need to look for get/set property accessors.
-			//               When do we know if the get or set accessors should be used?
-			//               The context must store information on the get/set accessors
-			//               until it is known which is to be used.
-			//               If multiple set accessors are found, raise error on multiple functions
-			//               If multiple get accessors are found, raise error on multiple functions
-			//               If get accessor doesn't return same type as set accessor raise error
-			//               Prepare the bytecode for the member function call, and set the type to
-			//               the property. Store the get/set function id.
-
+			// We need to look for get/set property accessors.
+			// If found, the context stores information on the get/set accessors
+			// until it is known which is to be used.
+			int r = FindPropertyAccessor(name, ctx, node);
+			if( r != 0 )
+				return r;
+			
 			if( !ctx->type.dataType.IsPrimitive() )
 				Dereference(ctx, true);
 
@@ -8214,7 +8439,9 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
 
-	// TODO: getset: Process the property accessor as get
+	// Process the property accessor as get
+	ProcessPropertyGetAccessor(lctx, node);
+	ProcessPropertyGetAccessor(rctx, node);
 
 	// Implicitly convert the operands to a number type
 	asCDataType to;
@@ -8512,7 +8739,9 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
 
-	// TODO: getset: Process the property accessor as get
+	// Process the property accessor as get
+	ProcessPropertyGetAccessor(lctx, node);
+	ProcessPropertyGetAccessor(rctx, node);
 
 	int op = node->tokenType;
 	if( op == ttAmp    || op == ttAndAssign ||
@@ -8769,9 +8998,11 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 
 void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
-	// Both operands must be of the same type
+	// Process the property accessor as get
+	ProcessPropertyGetAccessor(lctx, node);
+	ProcessPropertyGetAccessor(rctx, node);
 
-	// TODO: getset: Process the property accessor as get
+	// Both operands must be of the same type
 
 	// Implicitly convert the operands to a number type
 	asCDataType to;
@@ -9081,7 +9312,9 @@ void asCCompiler::PushVariableOnStack(asSExprContext *ctx, bool asReference)
 
 void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
-	// TODO: getset: Process the property accessor as get
+	// Process the property accessor as get
+	ProcessPropertyGetAccessor(lctx, node);
+	ProcessPropertyGetAccessor(rctx, node);
 
 	// Both operands must be booleans
 	asCDataType to;
