@@ -182,12 +182,131 @@ bool Test()
 		fail = true;
 	}
 
-	// TODO: Test multiple get accessors for same property. Should give error
-	// TODO: Test multiple set accessors for same property. Should give error
-	// TODO: Test mismatching type between get accessor and set accessor. Should give error
-	// TODO: Test only set accessor for read expression
-	// TODO: Test only get accessor for write expression
-	// TODO: Test pre and post ++ (should probably fail, since the expression is not a variable)
+	// Test multiple get accessors for same property. Should give error
+	// Test multiple set accessors for same property. Should give error
+	const char *script6 = 
+		"class Test                  \n"
+		"{                           \n"
+		"  uint get_p() {return 0;}  \n"
+		"  float get_p() {return 0;} \n"
+		"  void set_s(float) {}      \n"
+		"  void set_s(uint) {}       \n"
+		"}                           \n"
+		"void main()                 \n"
+		"{                           \n"
+		"  Test t;                   \n"
+		"  t.p;                      \n"
+		"  t.s = 0;                  \n"
+		"}                           \n";
+	mod->AddScriptSection("script", script6);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "script (8, 1) : Info    : Compiling void main()\n"
+	                   "script (11, 4) : Error   : Found multiple get accessors for property 'p'\n"
+	                   "script (11, 4) : Info    : uint Test::get_p()\n"
+	                   "script (11, 4) : Info    : float Test::get_p()\n"
+	                   "script (12, 4) : Error   : Found multiple set accessors for property 's'\n"
+	                   "script (12, 4) : Info    : void Test::set_s(float)\n"
+	                   "script (12, 4) : Info    : void Test::set_s(uint)\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test mismatching type between get accessor and set accessor. Should give error
+	const char *script7 = 
+		"class Test                  \n"
+		"{                           \n"
+		"  uint get_p() {return 0;}  \n"
+		"  void set_p(float) {}      \n"
+		"}                           \n"
+		"void main()                 \n"
+		"{                           \n"
+		"  Test t;                   \n"
+		"  t.p;                      \n"
+		"}                           \n";
+	mod->AddScriptSection("script", script7);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
+                       "script (9, 4) : Error   : The property 'p' has mismatching types for the get and set accessors\n"
+                       "script (9, 4) : Info    : uint Test::get_p()\n"
+                       "script (9, 4) : Info    : void Test::set_p(float)\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test only set accessor for read expression
+	// Test only get accessor for write expression
+	const char *script8 = 
+		"class Test                  \n"
+		"{                           \n"
+		"  uint get_g() {return 0;}  \n"
+		"  void set_s(float) {}      \n"
+		"}                           \n"
+		"void main()                 \n"
+		"{                           \n"
+		"  Test t;                   \n"
+		"  t.g = 0;                  \n"
+        "  t.s + 1;                  \n"
+		"}                           \n";
+	mod->AddScriptSection("script", script8);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
+					   "script (9, 7) : Error   : The property has no set accessor\n"
+					   "script (10, 7) : Error   : The property has no get accessor\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// Test pre and post ++. Should fail, since the expression is not a variable
+	const char *script9 = 
+		"class Test                  \n"
+		"{                           \n"
+		"  uint get_p() {return 0;}  \n"
+		"  void set_p(uint) {}       \n"
+		"}                           \n"
+		"void main()                 \n"
+		"{                           \n"
+		"  Test t;                   \n"
+		"  t.p++;                    \n"
+        "  --t.p;                    \n"
+		"}                           \n";
+	mod->AddScriptSection("script", script9);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
+					   "script (9, 6) : Error   : Not a valid reference\n"
+				 	   "script (10, 3) : Error   : Not a valid reference\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+
 	// TODO: Test accessor where the object is a handle
 	// TODO: Test using property accessors from within class methods without 'this'
 	// TODO: Test accessors with function arguments (by value, in ref, out ref, inout ref)
@@ -195,6 +314,8 @@ bool Test()
 	// TODO: Test get accessor that returns a reference (only from application func to start with)
 	// TODO: Test set accessor with parameter declared as out ref (shouldn't be found)
 	// TODO: Test everything for properties as value type, reference type, handle, scoped type, etc.
+	// TODO: What should be done with expressions like t.prop; Should the get accessor be called even though the value is never used?
+	// TODO: Test @t.prop = @obj; Property is a handle, and the property is assigned a new handle. Should work
 
 	engine->Release();
 

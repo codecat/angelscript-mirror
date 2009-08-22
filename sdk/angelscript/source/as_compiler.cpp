@@ -7148,8 +7148,7 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 {
 	if( !ctx->property_set )
 	{
-		// TODO: getset: Proper error
-		Error("No set accessor", node);
+		Error(TXT_PROPERTY_HAS_NO_SET_ACCESSOR, node);
 		return -1;
 	}
 
@@ -7192,8 +7191,9 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 
 	if( !ctx->property_get )
 	{
-		// TODO: getset: Raise error on missing accessor
-		Error("Missing get accessor", node);
+		// Raise error on missing accessor
+		Error(TXT_PROPERTY_HAS_NO_GET_ACCESSOR, node);
+		ctx->type.SetDummy();
 		return;
 	}
 

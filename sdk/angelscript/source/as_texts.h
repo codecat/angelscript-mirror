@@ -93,7 +93,7 @@
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"
 #define TXT_FUNCTION_s_NOT_FOUND          "Function '%s' not found"
 
-#define TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s "The property '%s' have mismatching types for the get and set accessors"
+#define TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s "The property '%s' has mismatching types for the get and set accessors"
 
 #define TXT_HANDLE_ASSIGNMENT             "The rvalue is implicitly converted to handle in order to perform handle assignment"
 #define TXT_HANDLE_COMPARISON             "The operand is implicitly converted to handle in order to compare them"
@@ -166,6 +166,8 @@
 #define TXT_PARAMETER_CANT_BE_s           "Parameter type can't be '%s'"
 #define TXT_POSSIBLE_LOSS_OF_PRECISION    "Conversion from double to float, possible loss of precision"
 #define TXT_PROPERTY_CANT_BE_CONST        "Class properties cannot be declared as const"
+#define TXT_PROPERTY_HAS_NO_GET_ACCESSOR  "The property has no get accessor"
+#define TXT_PROPERTY_HAS_NO_SET_ACCESSOR  "The property has no set accessor"
 
 #define TXT_REF_IS_READ_ONLY              "Reference is read-only"
 #define TXT_REF_IS_TEMP                   "Reference is temporary"
