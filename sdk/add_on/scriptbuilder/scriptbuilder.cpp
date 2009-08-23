@@ -16,31 +16,59 @@ BEGIN_AS_NAMESPACE
 // Helper functions
 static const char *GetCurrentDir(char *buf, size_t size);
 
-int CScriptBuilder::BuildScriptFromFile(asIScriptEngine *engine, const char *module, const char *filename)
+CScriptBuilder::CScriptBuilder()
 {
-	this->engine = engine;
-	this->module = engine->GetModule(module, asGM_ALWAYS_CREATE);
+	engine = 0;
+	module = 0;
 
-	ClearAll();
-
-	int r = LoadScriptSection(filename);
-	if( r < 0 )
-		return r;
-
-	return Build();
+	includeCallback = 0;
+	callbackParam   = 0;
 }
 
-int CScriptBuilder::BuildScriptFromMemory(asIScriptEngine *engine, const char *module, const char *script, const char *sectionname)
+void CScriptBuilder::SetIncludeCallback(INCLUDECALLBACK_t callback, void *userParam)
+{
+	includeCallback = callback;
+	callbackParam   = userParam;
+}
+
+int CScriptBuilder::StartNewModule(asIScriptEngine *engine, const char *moduleName)
 {
 	this->engine = engine;
-	this->module = engine->GetModule(module, asGM_ALWAYS_CREATE);
+	module = engine->GetModule(moduleName, asGM_ALWAYS_CREATE);
+	if( module == 0 )
+		return -1;
 
 	ClearAll();
 
-	int r = ProcessScriptSection(script, sectionname);
-	if( r < 0 )
-		return r;
+	return 0;
+}
 
+int CScriptBuilder::AddSectionFromFile(const char *filename)
+{
+	if( IncludeIfNotAlreadyIncluded(filename) )
+	{
+		int r = LoadScriptSection(filename);
+		if( r < 0 )
+			return r;
+	}
+
+	return 0;
+}
+
+int CScriptBuilder::AddSectionFromMemory(const char *scriptCode, const char *sectionName)
+{
+	if( IncludeIfNotAlreadyIncluded(sectionName) )
+	{
+		int r = ProcessScriptSection(scriptCode, sectionName);
+		if( r < 0 )
+			return r;
+	}
+
+	return 0;
+}
+
+int CScriptBuilder::BuildModule()
+{
 	return Build();
 }
 
@@ -65,28 +93,34 @@ void CScriptBuilder::ClearAll()
 #endif
 }
 
+bool CScriptBuilder::IncludeIfNotAlreadyIncluded(const char *filename)
+{
+	string scriptFile = filename;
+	if( includedScripts.find(scriptFile) != includedScripts.end() )
+	{
+		// Already included
+		return false;
+	}
+
+	// Add the file to the set of included sections
+	includedScripts.insert(scriptFile);
+
+	return true;
+}
+
 int CScriptBuilder::LoadScriptSection(const char *filename)
 {
 	// TODO: The file name stored in the set should be the fully resolved name because
 	// it is possible to name the same file in multiple ways using relative paths.
 
-	// Skip loading this script file if it has been loaded already
-	string scriptFile = filename;
-	if( includedScripts.find(scriptFile) != includedScripts.end() )
-	{
-		// Already loaded 
-		return 0;
-	}
-#ifdef _WIN32_WCE
-    char path[256];
-    scriptFile = GetCurrentDir(path, 256) + scriptFile;
-#endif
-
-	// Add the file to the set of loaded script files
-	includedScripts.insert(scriptFile);
-
 	// Open the script file
+	string scriptFile = filename;
+#if _MSC_VER >= 1500
+	FILE *f = 0;
+	fopen_s(&f, scriptFile.c_str(), "rb");
+#else
 	FILE *f = fopen(scriptFile.c_str(), "rb");
+#endif
 	if( f == 0 )
 	{
 		// Write a message to the engine's message callback
@@ -279,28 +313,43 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 
 	if( includes.size() > 0 )
 	{
-		// Determine the path of the current script so that we can resolve relative paths for includes
-		string path = sectionname;
-		size_t posOfSlash = path.find_last_of("/\\");
-		if( posOfSlash != string::npos )
-			path.resize(posOfSlash+1);
-		else
-			path = "";
-
-		// Load the included scripts
-		for( int n = 0; n < (int)includes.size(); n++ )
+		// If the callback has been set, then call it for each included file
+		if( includeCallback )
 		{
-			// If the include is a relative path, then prepend the path of the originating script
-			if( includes[n].find_first_of("/\\") != 0 &&
-				includes[n].find_first_of(":") == string::npos )
+			for( int n = 0; n < (int)includes.size(); n++ )
 			{
-				includes[n] = path + includes[n];
+				int r = includeCallback(includes[n].c_str(), sectionname, this, callbackParam);
+				if( r < 0 )
+					return r;
 			}
+		}
+		else
+		{
+			// By default we try to load the included file from the relative directory of the current file
 
-			// Include the script section
-			int r = LoadScriptSection(includes[n].c_str());
-			if( r < 0 )
-				return r;
+			// Determine the path of the current script so that we can resolve relative paths for includes
+			string path = sectionname;
+			size_t posOfSlash = path.find_last_of("/\\");
+			if( posOfSlash != string::npos )
+				path.resize(posOfSlash+1);
+			else
+				path = "";
+
+			// Load the included scripts
+			for( int n = 0; n < (int)includes.size(); n++ )
+			{
+				// If the include is a relative path, then prepend the path of the originating script
+				if( includes[n].find_first_of("/\\") != 0 &&
+					includes[n].find_first_of(":") == string::npos )
+				{
+					includes[n] = path + includes[n];
+				}
+
+				// Include the script section
+				int r = LoadScriptSection(includes[n].c_str());
+				if( r < 0 )
+					return r;
+			}
 		}
 	}
 

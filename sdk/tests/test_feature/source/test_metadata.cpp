@@ -67,7 +67,9 @@ bool Test()
 	// Compile a script with meta data strings
 	CScriptBuilder builder;
 	builder.DefineWord("COMPILE");
-	r = builder.BuildScriptFromMemory(engine, 0, script);
+	r = builder.StartNewModule(engine, 0);
+	r = builder.AddSectionFromMemory(script);
+	r = builder.BuildModule();
 #if AS_PROCESS_METADATA == 1
 	if( r < 0 )
 		fail = true;

@@ -34,7 +34,11 @@ bool TestExecuteScript()
 
 	CScriptBuilder builder;
 
-	int r = builder.BuildScriptFromFile(engine, 0, "scripts/TestExecuteScript.as");
+	int r = builder.StartNewModule(engine, 0);
+	if( r >= 0 )
+		r = builder.AddSectionFromFile("scripts/TestExecuteScript.as");
+	if( r >= 0 )
+		r = builder.BuildModule();
 	if( r >= 0 )
 	{
 		ret = ExecuteScript();

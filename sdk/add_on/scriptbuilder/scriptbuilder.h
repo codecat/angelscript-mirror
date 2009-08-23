@@ -41,23 +41,36 @@ BEGIN_AS_NAMESPACE
 
 // TODO: Should process metadata for class/interface members as well
 
+class CScriptBuilder;
 
+// This callback will be called for each #include directive encountered by the
+// builder. The callback should call the AddSectionFromFile or AddSectionFromMemory
+// to add the included section to the script. If the include cannot be resolved
+// then the function should return a negative value to abort the compilation.
+typedef int (*INCLUDECALLBACK_t)(const char *include, const char *from, CScriptBuilder *builder, void *userParam);
 
 // Helper class for loading and pre-processing script files to 
 // support include directives and metadata declarations
 class CScriptBuilder
 {
 public:
-	// Load and build a script file from disk
-	int BuildScriptFromFile(asIScriptEngine *engine, 
-		                    const char      *module, 
-							const char      *filename);
+	CScriptBuilder();
 
-	// Build a script file from a memory buffer
-	int BuildScriptFromMemory(asIScriptEngine *engine, 
-		                      const char      *module, 
-							  const char      *script, 
-							  const char      *sectionname = "");
+	// Start a new module
+	int StartNewModule(asIScriptEngine *engine, const char *moduleName);
+
+	// Load a script section from a file on disk
+	int AddSectionFromFile(const char *filename);
+
+	// Load a script section from memory
+	int AddSectionFromMemory(const char *scriptCode, 
+							 const char *sectionName = "");
+
+	// Build the added script sections
+	int BuildModule();
+
+	// Register the callback for resolving include directive
+	void SetIncludeCallback(INCLUDECALLBACK_t callback, void *userParam);
 
 	// Add a pre-processor define for conditional compilation
 	void DefineWord(const char *word);
@@ -78,6 +91,7 @@ protected:
 	int  Build();
 	int  ProcessScriptSection(const char *script, const char *sectionname);
 	int  LoadScriptSection(const char *filename);
+	bool IncludeIfNotAlreadyIncluded(const char *filename);
 
 	int  SkipStatement(int pos);
 
@@ -87,6 +101,9 @@ protected:
 	asIScriptEngine           *engine;
 	asIScriptModule           *module;
 	std::string                modifiedScript;
+
+	INCLUDECALLBACK_t  includeCallback;
+	void              *callbackParam;
 
 #if AS_PROCESS_METADATA == 1
 	int  ExtractMetadataString(int pos, std::string &outMetadata);

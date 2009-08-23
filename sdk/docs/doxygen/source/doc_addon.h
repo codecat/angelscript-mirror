@@ -726,6 +726,13 @@ this add-on as-is.
 This class is a helper class for loading and building scripts, with a basic pre-processor 
 that supports conditional compilation, include directives, and metadata declarations.
 
+By default the script builder resolves include directives by loading the included file 
+from the relative directory of the file it is included from. If you want to do this in another
+way, then you should implement the \ref doc_addon_build_1_1 "include callback" which will
+let you process the include directive in a custom way, e.g. to load the included file from 
+memory, or to support multiple search paths. The include callback should call the AddSectionFromFile or
+AddSectionFromMemory to include the section in the current build.
+
 If you do not want process metadata then you can compile the add-on with the define 
 AS_PROCESS_METADATA 0, which will exclude the code for processing this. This define
 can be made in the project settings or directly in the header.
@@ -737,16 +744,21 @@ can be made in the project settings or directly in the header.
 class CScriptBuilder
 {
 public:
-  // Load and build a script file from disk
-  int BuildScriptFromFile(asIScriptEngine *engine, 
-                          const char      *module, 
-                          const char      *filename);
+  // Start a new module
+  int StartNewModule(asIScriptEngine *engine, const char *moduleName);
 
-  // Build a script file from a memory buffer
-  int BuildScriptFromMemory(asIScriptEngine *engine, 
-                            const char      *module, 
-                            const char      *script, 
-                            const char      *sectionname = "");
+  // Load a script section from a file on disk
+  int AddSectionFromFile(const char *filename);
+
+  // Load a script section from memory
+  int AddSectionFromMemory(const char *scriptCode, 
+                           const char *sectionName = "");
+
+  // Build the added script sections
+  int BuildModule();
+
+  // Register the callback for resolving include directive
+  void SetIncludeCallback(INCLUDECALLBACK_t callback, void *userParam);
 
   // Add a pre-processor define for conditional compilation
   void DefineWord(const char *word);
@@ -760,6 +772,16 @@ public:
   // Get metadata declared for global variables
   const char *GetMetadataStringForVar(int varIdx);
 };
+\endcode
+
+\subsection doc_addon_build_1_1 The include callback signature
+
+\code
+// This callback will be called for each #include directive encountered by the
+// builder. The callback should call the AddSectionFromFile or AddSectionFromMemory
+// to add the included section to the script. If the include cannot be resolved
+// then the function should return a negative value to abort the compilation.
+typedef int (*INCLUDECALLBACK_t)(const char *include, const char *from, CScriptBuilder *builder, void *userParam);
 \endcode
 
 \section doc_addon_build_2 Include directives
@@ -844,7 +866,11 @@ Example usage:
 
 \code
 CScriptBuilder builder;
-int r = builder.BuildScriptFromMemory(engine, "my module", script);
+int r = builder.StartNewModule(engine, "my module");
+if( r >= 0 )
+  r = builder.AddSectionFromMemory(script);
+if( r >= 0 )
+  r = builder.BuildModule();
 if( r >= 0 )
 {
   // Find global variables that have been marked as editable by user
