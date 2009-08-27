@@ -307,6 +307,11 @@ bool Test()
 	if( r < 0 )
 		fail = true;
 
+	// Must support arrays of handles
+	r = engine->ExecuteString(0, "array<array<int>@> a(1); @a[0] = @array<int>(4);");
+	if( r < 0 )
+		fail = true;
+
 	engine->Release();
 
 

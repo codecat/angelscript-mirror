@@ -536,9 +536,23 @@ bool asCParser::CheckTemplateType(sToken &t)
 		if( !CheckTemplateType(t) )
 			return false;
 
+		GetToken(&t);
+
+		// Is it a handle or array?
+		while( t.type == ttHandle || t.type == ttOpenBracket )
+		{
+			if( t.type == ttOpenBracket )
+			{
+				GetToken(&t);
+				if( t.type != ttCloseBracket )
+					return false;
+			}
+
+			GetToken(&t);
+		}
+
 		// Accept >> and >>> tokens too. But then force the tokenizer to move 
 		// only 1 character ahead (thus splitting the token in two).
-		GetToken(&t);
 		if( script->code[t.pos] != '>' )
 			return false;
 		else if( t.length != 1 )
