@@ -1112,6 +1112,12 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		}
 		else if( refType == asTM_INOUTREF )
 		{
+			// Literal constants cannot be passed to inout ref arguments
+			if( !ctx->type.isVariable && ctx->type.isConstant )
+			{
+				Error(TXT_NOT_VALID_REFERENCE, node);
+			}
+
 			// Only objects that support object handles
 			// can be guaranteed to be safe. Local variables are
 			// already safe, so there is no need to add an extra

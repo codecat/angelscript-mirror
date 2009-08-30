@@ -240,6 +240,36 @@ bool Test()
 		engine->Release();
 	}	
 
+	//------------------------
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script = 
+			"void f(uint & d) {d = 1;}";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		r = engine->ExecuteString(0, "f(0);");
+		if( r > 0 )
+			fail = true;
+
+		if( bout.buffer != "ExecuteString (1, 3) : Error   : Not a valid reference\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();	
+	}
+
 	// Success
 	return fail;
 }
