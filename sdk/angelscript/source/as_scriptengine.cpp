@@ -133,6 +133,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_IPHONE
 		"AS_IPHONE "
 #endif
+#ifdef AS_ANDROID
+		"AS_ANDROID "
+#endif
 
 	// CPU family
 #ifdef AS_PPC

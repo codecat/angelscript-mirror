@@ -219,6 +219,7 @@
 // AS_GC      - Nintendo GameCube
 // AS_WII     - Nintendo Wii
 // AS_IPHONE  - Apple IPhone
+// AS_ANDROID - Android
 
 
 
@@ -565,6 +566,15 @@
 		#undef STDCALL
 		#define STDCALL
 
+    // Android
+	#elif defined(ANDROID)
+		#define AS_ANDROID
+		#define AS_NO_ATOMIC
+        
+		#if (defined(_ARM_) || defined(__arm__))
+		    #define AS_ARM
+			#define AS_ALIGN
+		#endif
 	#endif
 
 	#define I64(x) x##ll

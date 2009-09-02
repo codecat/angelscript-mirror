@@ -19,9 +19,15 @@ INCDIR = ../../include
 OBJDIR = obj
 
 CXX = gcc
+
+# On i686 architecture you may need to add -march=i686 if you get 
+# an undefined symbol for __sync_sub_and_fetch_4 in as_atomic.cpp.
 CXXFLAGS = -g -Wall -fPIC
 DELETER = rm -f
 COPIER = cp -a
+
+# If you're targetting an ARM processor, you will need to 
+# include the as_callfunc_armasm.s file in the source files.
 
 SRCNAMES = \
   as_arrayobject.cpp \
