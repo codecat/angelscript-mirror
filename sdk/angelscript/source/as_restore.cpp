@@ -56,6 +56,15 @@ int asCRestore::Save()
 
 	// Store everything in the same order that the builder parses scripts
 	
+	// Store enums
+	count = (asUINT)module->enumTypes.GetLength();
+	WRITE_NUM(count);
+	for( i = 0; i < count; i++ )
+	{
+		WriteObjectTypeDeclaration(module->enumTypes[i], false);
+		WriteObjectTypeDeclaration(module->enumTypes[i], true);
+	}
+
 	// Store type declarations first
 	count = (asUINT)module->classTypes.GetLength();
 	WRITE_NUM(count);
@@ -77,15 +86,6 @@ int asCRestore::Save()
 	{
 		if( !module->classTypes[i]->IsInterface() )
 			WriteObjectTypeDeclaration(module->classTypes[i], true);
-	}
-
-	// Store enums
-	count = (asUINT)module->enumTypes.GetLength();
-	WRITE_NUM(count);
-	for( i = 0; i < count; i++ )
-	{
-		WriteObjectTypeDeclaration(module->enumTypes[i], false);
-		WriteObjectTypeDeclaration(module->enumTypes[i], true);
 	}
 
 	// Store typedefs
@@ -178,6 +178,19 @@ int asCRestore::Restore()
 	asCScriptFunction* func;
 	asCString *cstr;
 
+	// Read enums
+	READ_NUM(count);
+	module->enumTypes.Allocate(count, 0);
+	for( i = 0; i < count; i++ )
+	{
+		asCObjectType *ot = asNEW(asCObjectType)(engine);
+		ReadObjectTypeDeclaration(ot, false);
+		engine->classTypes.PushLast(ot);
+		module->enumTypes.PushLast(ot);
+		ot->AddRef();
+		ReadObjectTypeDeclaration(ot, true);
+	}
+
 	// structTypes[]
 	// First restore the structure names, then the properties
 	READ_NUM(count);
@@ -205,19 +218,6 @@ int asCRestore::Restore()
 	{
 		if( !module->classTypes[i]->IsInterface() )
 			ReadObjectTypeDeclaration(module->classTypes[i], true);
-	}
-
-	// Read enums
-	READ_NUM(count);
-	module->enumTypes.Allocate(count, 0);
-	for( i = 0; i < count; i++ )
-	{
-		asCObjectType *ot = asNEW(asCObjectType)(engine);
-		ReadObjectTypeDeclaration(ot, false);
-		engine->classTypes.PushLast(ot);
-		module->enumTypes.PushLast(ot);
-		ot->AddRef();
-		ReadObjectTypeDeclaration(ot, true);
 	}
 
 	// Read typedefs

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.17.1 WIP - 2009/08/30</h2>
+<h2>Version 2.17.1 WIP - 2009/09/02</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Loading pre-compiled bytecode for scripts that used registered functions that included the built-in array type in the signature crashed (Thanks loboWu)
 <li>Fixed the parsing of templates to accept handles as subtypes (Thanks dxj19831029)
 <li>Fixed bug with &inout and constants for invalid scripts (Thanks scypior)
+<li>Fixed crash when loading pre-compiled bytecode that had classes with enums as members (Thanks huangyous)
 </ul>
 <li>Library
 <ul>
@@ -32,6 +33,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Project
 <ul>
 <li>Added compile time option to GNUC makefile to build a shared library (Thanks Dan Hor&aacute;k)
+<li>Added as_callfunc_armasm.s, which is an adaption of the MSVC assembler code in as_callfunc_armasm.asm to GNUC assembler (Thanks darktemplar216)
+<li>Added configurations in as_config.h to detect the Android OS and enable support for native calling conventions on ARM for it.
 </ul>
 <li>Add-ons
 <ul>
