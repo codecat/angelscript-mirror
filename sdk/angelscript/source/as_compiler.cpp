@@ -3089,6 +3089,8 @@ void asCCompiler::PrepareOperand(asSExprContext *ctx, asCScriptNode *node)
 
 void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx, asCScriptNode *node, asSExprContext *lvalueExpr)
 {
+	ProcessPropertyGetAccessor(rctx, node);
+
 	// Make sure the rvalue is initialized if it is a variable
 	IsVariableInitialized(&rctx->type, node);
 
@@ -5489,6 +5491,26 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 					ctx->type.dataType.MakeReference(true);
 
 					found = true;
+				}
+
+				if( !found )
+				{
+					// See if there are any matching property accessors
+					asSExprContext access(engine);
+					access.type.Set(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly));
+					int r = FindPropertyAccessor(name, &access, node);
+					if( r < 0 ) return -1;
+					if( access.property_get || access.property_set )
+					{
+						// Prepare the bytecode for the member access
+						ctx->bc.InstrSHORT(asBC_PSF, 0);
+						ctx->type.SetVariable(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly), 0, false);
+						ctx->type = access.type;
+						ctx->property_get = access.property_get;
+						ctx->property_set = access.property_set;
+
+						found = true;
+					}
 				}
 
 				if( !found )

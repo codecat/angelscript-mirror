@@ -296,7 +296,7 @@ bool Test()
 	if( r >= 0 )
 	{
 		fail = true;
-		printf("Failed to compile the script\n");
+		printf("Didn't fail to compile the script\n");
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
 					   "script (9, 6) : Error   : Not a valid reference\n"
@@ -306,9 +306,33 @@ bool Test()
 		fail = true;
 	}
 
+	// Test using property accessors from within class methods without 'this'
+	const char *script10 = 
+		"class Test                 \n"
+		"{                          \n"
+		"  uint get_p() {return 0;} \n"
+		"  void set_p(uint) {}      \n"
+		"  void test()              \n"
+		"  {                        \n"
+		"    p = 0;                 \n"
+		"    int a = p;             \n"
+		"  }                        \n"
+		"}                          \n";
+	mod->AddScriptSection("script", script10);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
 	// TODO: Test accessor where the object is a handle
-	// TODO: Test using property accessors from within class methods without 'this'
 	// TODO: Test accessors with function arguments (by value, in ref, out ref, inout ref)
 	// TODO: Test const/non-const get accessor
 	// TODO: Test get accessor that returns a reference (only from application func to start with)
