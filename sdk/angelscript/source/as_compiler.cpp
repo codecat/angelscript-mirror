@@ -989,6 +989,8 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		int offset;
 		if( refType == 1 ) // &in
 		{
+			ProcessPropertyGetAccessor(ctx, node);
+
 			// If the reference is const, then it is not necessary to make a copy if the value already is a variable
 			// Even if the same variable is passed in another argument as non-const then there is no problem
 			if( dt.IsPrimitive() || dt.IsNullHandle() )
@@ -1171,6 +1173,8 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 	}
 	else
 	{
+		ProcessPropertyGetAccessor(ctx, node);
+
 		if( dt.IsPrimitive() )
 		{
 			IsVariableInitialized(&ctx->type, node);
@@ -1348,6 +1352,8 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		args[n] = asNEW(asSExprContext)(engine);
 		MergeExprContexts(args[n], &expr);
 		args[n]->type = expr.type;
+		args[n]->property_get = expr.property_get;
+		args[n]->property_set = expr.property_set;
 		args[n]->exprNode = arg;
 
 		n--;
@@ -6373,8 +6379,8 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 					expr->type.isExplicitHandle = true;
 			}
 
-			// Verify that the expression result in a lvalue
-			if( IsLValue(expr->type) )
+			// Verify that the expression result in a lvalue, or a property accessor
+			if( IsLValue(expr->type) || expr->property_get || expr->property_set )
 			{
 				asSExprContext rctx(engine);
 				rctx.type = outParam.argType;
@@ -7776,11 +7782,15 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 		MergeExprContexts(orig, arg);
 		orig->exprNode = arg->exprNode;
 		orig->type = arg->type;
+		orig->property_get = arg->property_get;
+		orig->property_set = arg->property_set;
 
 		arg->origExpr = orig;
 	}
 
 	e.type = arg->type;
+	e.property_get = arg->property_get;
+	e.property_set = arg->property_set;
 	PrepareArgument(paramType, &e, arg->exprNode, isFunction, refType, reservedVars);
 	arg->type = e.type;
 	ctx->bc.AddCode(&e.bc);

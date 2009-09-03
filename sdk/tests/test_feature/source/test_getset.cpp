@@ -307,6 +307,7 @@ bool Test()
 	}
 
 	// Test using property accessors from within class methods without 'this'
+	// Test accessor where the object is a handle
 	const char *script10 = 
 		"class Test                 \n"
 		"{                          \n"
@@ -317,6 +318,12 @@ bool Test()
 		"    p = 0;                 \n"
 		"    int a = p;             \n"
 		"  }                        \n"
+		"}                          \n"
+		"void func()                \n"
+		"{                          \n"
+		"  Test @a = Test();        \n"
+		"  a.p = 1;                 \n"
+		"  int b = a.p;             \n"
 		"}                          \n";
 	mod->AddScriptSection("script", script10);
 	bout.buffer = "";
@@ -331,9 +338,49 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
+	r = engine->ExecuteString(0, "func()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
 
-	// TODO: Test accessor where the object is a handle
-	// TODO: Test accessors with function arguments (by value, in ref, out ref, inout ref)
+	// Test accessors with function arguments (by value, in ref, out ref)
+	const char *script11 = 
+		"class Test                 \n"
+		"{                          \n"
+		"  uint get_p() {return 0;} \n"
+		"  void set_p(uint) {}      \n"
+		"}                          \n"
+		"void func()                \n"
+		"{                          \n"
+		"  Test a();                \n"
+		"  byVal(a.p);              \n"
+		"  inArg(a.p);              \n"
+		"  outArg(a.p);             \n"
+		"}                          \n"
+		"void byVal(int v) {}       \n"
+		"void inArg(int &in v) {}   \n"
+		"void outArg(int &out v) {} \n";
+	mod->AddScriptSection("script", script11);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = engine->ExecuteString(0, "func()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	// TODO: Test property accessor with inout references. Shouldn't be allowed as the value is not a valid reference
 	// TODO: Test const/non-const get accessor
 	// TODO: Test get accessor that returns a reference (only from application func to start with)
 	// TODO: Test set accessor with parameter declared as out ref (shouldn't be found)
