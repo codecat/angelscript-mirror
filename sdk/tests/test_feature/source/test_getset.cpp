@@ -380,11 +380,59 @@ bool Test()
 		fail = true;
 	}
 
+	// When the property is an object type, then the set accessor should be 
+	// used instead of the overloaded assignment operator to set the value. 
+	// Properties of object properties, must allow having different 
+	// types for get and set. IsEqualExceptConstAndRef should be used.
+	const char *script12 = 
+		"class Test                                   \n"
+		"{                                            \n"
+		"  string get_s() {return _s;}                \n"
+		"  void set_s(const string &in n) {_s = n;}   \n"
+		"  string _s;                                 \n"
+		"}                          \n"
+		"void func()                \n"
+		"{                          \n"
+		"  Test t;                  \n"
+		"  t.s = 'hello';           \n"
+		"  assert(t.s == 'hello');  \n"
+		"}                          \n";
+	mod->AddScriptSection("script", script12);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = engine->ExecuteString(0, "func()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	// Compound assignments for object properties will not be allowed
+	r = engine->ExecuteString(0, "Test t; t.s += 'hello';");
+	if( r >= 0 )
+	{
+		fail = true;
+	}
+	if( bout.buffer != "ExecuteString (1, 13) : Error   : Compound assignments with property accessors are not allowed\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	// TODO: Test property accessor with inout references. Shouldn't be allowed as the value is not a valid reference
 	// TODO: Test const/non-const get accessor
+	// TODO: Test non-const get accessor for object type with const overloaded dual operator
 	// TODO: Test get accessor that returns a reference (only from application func to start with)
 	// TODO: Test set accessor with parameter declared as out ref (shouldn't be found)
-	// TODO: Test everything for properties as value type, reference type, handle, scoped type, etc.
 	// TODO: What should be done with expressions like t.prop; Should the get accessor be called even though the value is never used?
 	// TODO: Test @t.prop = @obj; Property is a handle, and the property is assigned a new handle. Should work
 

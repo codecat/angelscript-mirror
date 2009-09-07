@@ -4865,70 +4865,68 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		lctx->type.isExplicitHandle = true;
 	}
 
+	if( lctx->property_get || lctx->property_set )
+	{
+		if( op != ttAssignment )
+		{
+			// TODO: getset: We may actually be able to support this, if we can 
+			//               guarantee that the object reference will stay valid 
+			//               between the calls to the get and set accessors.
+
+			// Compound assignments are not allowed for properties
+			Error(TXT_COMPOUND_ASGN_WITH_PROP, opNode);
+			return -1;
+		}
+
+		MergeExprContexts(ctx, lctx);
+		ctx->property_get = lctx->property_get;
+		ctx->property_set = lctx->property_set;
+
+		return ProcessPropertySetAccessor(ctx, rctx, opNode);
+	}
+
 	if( lctx->type.dataType.IsPrimitive() )
 	{
-		if( lctx->property_get || lctx->property_set )
+		if( op != ttAssignment )
 		{
-			if( op != ttAssignment )
-			{
-				// TODO: getset: We may actually be able to support this, if we can 
-				//               guarantee that the object reference will stay valid 
-				//               between the calls to the get and set accessors.
+			// Compute the operator before the assignment
+			asCTypeInfo lvalue = lctx->type;
 
-				// Compound assignments are not allowed for properties
-				Error(TXT_COMPOUND_ASGN_WITH_PROP, opNode);
-				return -1;
+			if( lctx->type.isTemporary && !lctx->type.isVariable )
+			{
+				// The temporary variable must not be freed until the
+				// assignment has been performed. lvalue still holds
+				// the information about the temporary variable
+				lctx->type.isTemporary = false;
 			}
 
-			MergeExprContexts(ctx, lctx);
-			ctx->property_get = lctx->property_get;
-			ctx->property_set = lctx->property_set;
+			asSExprContext o(engine);
+			CompileOperator(opNode, lctx, rctx, &o);
+			MergeExprContexts(rctx, &o);
+			rctx->type = o.type;
 
-			return ProcessPropertySetAccessor(ctx, rctx, opNode);
+			// Convert the rvalue to the right type and validate it
+			PrepareForAssignment(&lvalue.dataType, rctx, rexpr);
+
+			MergeExprContexts(ctx, rctx);
+			lctx->type = lvalue;
+
+			// The lvalue continues the same, either it was a variable, or a reference in the register
 		}
 		else
 		{
-			if( op != ttAssignment )
-			{
-				// Compute the operator before the assignment
-				asCTypeInfo lvalue = lctx->type;
+			// Convert the rvalue to the right type and validate it
+			PrepareForAssignment(&lctx->type.dataType, rctx, rexpr, lctx);
 
-				if( lctx->type.isTemporary && !lctx->type.isVariable )
-				{
-					// The temporary variable must not be freed until the
-					// assignment has been performed. lvalue still holds
-					// the information about the temporary variable
-					lctx->type.isTemporary = false;
-				}
-
-				asSExprContext o(engine);
-				CompileOperator(opNode, lctx, rctx, &o);
-				MergeExprContexts(rctx, &o);
-				rctx->type = o.type;
-
-				// Convert the rvalue to the right type and validate it
-				PrepareForAssignment(&lvalue.dataType, rctx, rexpr);
-
-				MergeExprContexts(ctx, rctx);
-				lctx->type = lvalue;
-
-				// The lvalue continues the same, either it was a variable, or a reference in the register
-			}
-			else
-			{
-				// Convert the rvalue to the right type and validate it
-				PrepareForAssignment(&lctx->type.dataType, rctx, rexpr, lctx);
-
-				MergeExprContexts(ctx, rctx);
-				MergeExprContexts(ctx, lctx);
-			}
-
-			ReleaseTemporaryVariable(rctx->type, &ctx->bc);
-
-			PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
-
-			ctx->type = lctx->type;
+			MergeExprContexts(ctx, rctx);
+			MergeExprContexts(ctx, lctx);
 		}
+
+		ReleaseTemporaryVariable(rctx->type, &ctx->bc);
+
+		PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
+
+		ctx->type = lctx->type;
 	}
 	else if( lctx->type.isExplicitHandle )
 	{
@@ -7820,8 +7818,6 @@ int asCCompiler::TokenToBehaviour(int token)
 
 bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
-	// TODO: getset: Process the property accessor as get or set depending on the overloaded operator
-
 	// What type of operator is it?
 	int token = node->tokenType;
 	if( token == ttUnrecognizedToken )
@@ -8131,6 +8127,9 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 		// Did we find an operator?
 		if( ops.GetLength() == 1 )
 		{
+			// Process the lctx expression as get accessor
+			ProcessPropertyGetAccessor(lctx, node);
+
 			// Merge the bytecode so that it forms lvalue.methodName(rvalue)
 			asCTypeInfo objType = lctx->type;
 			asCArray<asSExprContext *> args;
