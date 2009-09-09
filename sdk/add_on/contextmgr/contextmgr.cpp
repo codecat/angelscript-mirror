@@ -5,6 +5,15 @@
 
 using namespace std;
 
+// TODO: Should have a pool of free asIScriptContext so that new contexts
+//       won't be allocated every time. The application must not keep 
+//       its own references, instead it must tell the context manager
+//       that it is using the context. Otherwise the context manager may
+//       think it can reuse the context too early.
+
+// TODO: Need to have a callback for when scripts finishes, so that the 
+//       application can receive return values.
+
 BEGIN_AS_NAMESPACE
 
 struct SContextInfo
@@ -79,8 +88,10 @@ CContextMgr::CContextMgr()
 
 CContextMgr::~CContextMgr()
 {
+	asUINT n;
+
 	// Free the memory
-	for( asUINT n = 0; n < threads.size(); n++ )
+	for( n = 0; n < threads.size(); n++ )
 	{
 		if( threads[n] )
 		{
@@ -91,6 +102,16 @@ CContextMgr::~CContextMgr()
 			}
 
 			delete threads[n];
+		}
+	}
+
+	for( n = 0; n < freeThreads.size(); n++ )
+	{
+		if( freeThreads[n] )
+		{
+			assert( freeThreads[n]->coRoutines.size() == 0 );
+
+			delete freeThreads[n];
 		}
 	}
 }
@@ -121,10 +142,18 @@ void CContextMgr::ExecuteScripts()
 				// The context has terminated execution (for one reason or other)
 				threads[currentThread]->coRoutines[currentCoRoutine]->Release();
 				threads[currentThread]->coRoutines[currentCoRoutine] = 0;
-            
+
 				threads[currentThread]->coRoutines.erase(threads[currentThread]->coRoutines.begin() + threads[currentThread]->currentCoRoutine);
 				if( threads[currentThread]->currentCoRoutine >= threads[currentThread]->coRoutines.size() )
 					threads[currentThread]->currentCoRoutine = 0;
+
+				// If this was the last co-routine terminate the thread
+				if( threads[currentThread]->coRoutines.size() == 0 )
+				{
+					freeThreads.push_back(threads[currentThread]);
+					threads.erase(threads.begin() + currentThread);
+					currentThread--;
+				}
 			}
 		}
 	}
@@ -144,7 +173,6 @@ void CContextMgr::AbortAll()
 	// Abort all contexts and release them. The script engine will make 
 	// sure that all resources held by the scripts are properly released.
 
-	// TODO: Keep the context and context info structure in a pool for reuse
 	for( asUINT n = 0; n < threads.size(); n++ )
 	{
 		for( asUINT c = 0; c < threads[n]->coRoutines.size(); c++ )
@@ -157,7 +185,11 @@ void CContextMgr::AbortAll()
 			}
 		}
 		threads[n]->coRoutines.resize(0);
+
+		freeThreads.push_back(threads[n]);
 	}
+
+	threads.resize(0);
 
 	currentThread = 0;
 }
@@ -178,7 +210,17 @@ asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, int funcId)
 	}
 
 	// Add the context to the list for execution
-	SContextInfo *info = new SContextInfo;
+	SContextInfo *info = 0;
+	if( freeThreads.size() > 0 )
+	{
+		info = *freeThreads.rbegin();
+		freeThreads.pop_back();
+	}
+	else
+	{
+		info = new SContextInfo;
+	}
+
     info->coRoutines.push_back(ctx);
 	info->currentCoRoutine = 0;
     info->sleepUntil = 0;

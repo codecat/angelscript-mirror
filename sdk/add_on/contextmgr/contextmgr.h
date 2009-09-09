@@ -70,6 +70,7 @@ public:
 
 protected:
 	std::vector<SContextInfo*> threads;
+	std::vector<SContextInfo*> freeThreads;
 	asUINT                     currentThread;
     TIMEFUNC_t                 getTimeFunc;
 };

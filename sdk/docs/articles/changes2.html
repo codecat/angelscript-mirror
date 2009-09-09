@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.17.1 WIP - 2009/09/06</h2>
+<h2>Version 2.17.1 WIP - 2009/09/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed the parsing of templates to accept handles as subtypes (Thanks dxj19831029)
 <li>Fixed bug with &inout and constants for invalid scripts (Thanks scypior)
 <li>Fixed crash when loading pre-compiled bytecode that had classes with enums as members (Thanks huangyous)
+<li>Fixed memory access violation in CContextMgr add-on (Thanks Kim PoongHo)
 </ul>
 <li>Library
 <ul>
@@ -39,6 +40,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Add-ons
 <ul>
 <li>Improved the script builder to allow custom processing of include directives via a callback
+<li>Improved memory management in CContextMgr to reduce run-time allocations by pooling objects
 </ul>
 </ul>
 
