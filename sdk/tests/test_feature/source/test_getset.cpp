@@ -428,13 +428,51 @@ bool Test()
 		fail = true;
 	}
 
+	// Test @t.prop = @obj; Property is a handle, and the property is assigned a new handle. Should work
+	const char *script13 = 
+		"class Test                                   \n"
+		"{                                            \n"
+		"  string@ get_s() {return _s;}               \n"
+		"  void set_s(string @n) {@_s = @n;}          \n"
+		"  string@ _s;                                \n"
+		"}                          \n"
+		"void func()                \n"
+		"{                          \n"
+		"  Test t;                  \n"
+		"  string s = 'hello';      \n"
+		"  @t.s = @s;               \n" // handle assignment
+		"  assert(t.s is s);        \n"
+		"  t.s = 'other';           \n" // value assignment
+		"  assert(s == 'other');    \n"
+		"}                          \n";
+	mod->AddScriptSection("script", script13);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = engine->ExecuteString(0, "func()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
 	// TODO: Test property accessor with inout references. Shouldn't be allowed as the value is not a valid reference
 	// TODO: Test const/non-const get accessor
 	// TODO: Test non-const get accessor for object type with const overloaded dual operator
 	// TODO: Test get accessor that returns a reference (only from application func to start with)
 	// TODO: Test set accessor with parameter declared as out ref (shouldn't be found)
 	// TODO: What should be done with expressions like t.prop; Should the get accessor be called even though the value is never used?
-	// TODO: Test @t.prop = @obj; Property is a handle, and the property is assigned a new handle. Should work
+	// TODO: Accessing a class member from within the property accessor with the same name as the property 
+	//       shouldn't call the accessor again. Instead it should access the real member. FindPropertyAccessor() 
+	//       shouldn't find any if the function being compiler is the property accessor itself
 
 	engine->Release();
 

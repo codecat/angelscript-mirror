@@ -4865,7 +4865,12 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		lctx->type.isExplicitHandle = true;
 	}
 
-	if( lctx->property_get || lctx->property_set )
+	// If the left hand expression is a property accessor, then that should be used
+	// to do the assignment instead of the ordinary operator. The exception is when
+	// the property accessor is for a handle property, and the operation is a value
+	// assignment.
+	if( (lctx->property_get || lctx->property_set) &&
+		!(lctx->type.dataType.IsObjectHandle() && !lctx->type.isExplicitHandle) )
 	{
 		if( op != ttAssignment )
 		{
@@ -9514,7 +9519,9 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 
 void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
-	// TODO: getset: Process the property accessor as get
+	// Process the property accessor as get
+	ProcessPropertyGetAccessor(lctx, node);
+	ProcessPropertyGetAccessor(rctx, node);
 
 	// Warn if not both operands are explicit handles
 	if( (node->tokenType == ttEqual || node->tokenType == ttNotEqual) &&
