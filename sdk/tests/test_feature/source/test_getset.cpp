@@ -510,8 +510,97 @@ bool Test()
 		fail = true;
 	}
 
-	// TODO: Test opNeg for object through get accessor
-	// TODO: Test index operator for object through get accessor
+	// Test opNeg for object through get accessor
+	const char *script15 = 
+		"class Val { int opNeg() const { return -1; } } \n"
+		"class Test                          \n"
+		"{                                   \n"
+		"  Val get_s() const {return Val();} \n"
+		"}                                   \n"
+		"void func()                  \n"
+		"{                            \n"
+		"  Test t;                    \n"
+		"  assert( -t.s == -1 );      \n"
+		"}                            \n";
+	mod->AddScriptSection("script", script15);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = engine->ExecuteString(0, "func()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}	
+
+	// Test index operator for object through get accessor
+	const char *script16 = 
+		"class Test                          \n"
+		"{                                   \n"
+		"  int[] get_s() const { int[] a(1); a[0] = 42; return a; } \n"
+		"}                                   \n"
+		"void func()                  \n"
+		"{                            \n"
+		"  Test t;                    \n"
+		"  assert( t.s[0] == 42 );    \n"
+		"}                            \n";
+	mod->AddScriptSection("script", script16);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = engine->ExecuteString(0, "func()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}	
+
+	// Test accessing normal properties for object through get accessor
+	const char *script17 = 
+		"class Val { int val; } \n"
+		"class Test                          \n"
+		"{                                   \n"
+		"  Val get_s() const { Val v; v.val = 42; return v;} \n"
+		"}                                   \n"
+		"void func()                  \n"
+		"{                            \n"
+		"  Test t;                    \n"
+		"  assert( t.s.val == 42 );   \n"
+		"}                            \n";
+	mod->AddScriptSection("script", script17);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = engine->ExecuteString(0, "func()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}	
 
 	// TODO: Test const/non-const get accessor
 	
@@ -519,8 +608,6 @@ bool Test()
 	
 	// TODO: Test get accessor that returns a reference (only from application func to start with)
 		
-
-
 	// TODO: Test property accessor with inout references. Shouldn't be allowed as the value is not a valid reference
 
 	// TODO: Test set accessor with parameter declared as out ref (shouldn't be found)

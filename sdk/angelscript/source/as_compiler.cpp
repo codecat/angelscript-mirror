@@ -6764,6 +6764,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 
 		if( opName )
 		{
+			ProcessPropertyGetAccessor(ctx, node);
+
 			// Is it a const value?
 			bool isConst = false;
 			if( ctx->type.dataType.IsObjectHandle() )
@@ -7351,6 +7353,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	{
 		if( node->firstChild->nodeType == snIdentifier )
 		{
+			ProcessPropertyGetAccessor(ctx, node);
+
 			// Get the property name
 			asCString name(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);
 
@@ -7482,6 +7486,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			Error(str.AddressOf(), node);
 			return -1;
 		}
+
+		ProcessPropertyGetAccessor(ctx, node);
 
 		Dereference(ctx, true);
 		bool isConst = ctx->type.dataType.IsReadOnly();
