@@ -49,6 +49,7 @@
 #define TXT_BOTH_MUST_BE_SAME             "Both expressions must have the same type"
 #define TXT_BOTH_CONDITIONS_MUST_CALL_CONSTRUCTOR "Both conditions must call constructor"
 
+#define TXT_CALLING_NONCONST_METHOD_ON_TEMP "A non-const method is called on temporary object. Changes to the object may be lost."
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS "Can't call a constructor in loops"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH "Can't call a constructor in switch"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_TWICE "Can't call a constructor multiple times"

@@ -260,9 +260,16 @@ bool Test()
 		fail = true;
 	}
 
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	bout.buffer = "";
 	r = engine->ExecuteString(0, "Object().GetRef() = 10;");
 	if( r != asEXECUTION_FINISHED )
 	{
+		fail = true;
+	}
+	if( bout.buffer != "ExecuteString (1, 10) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n" )
+	{
+		printf(bout.buffer.c_str());
 		fail = true;
 	}
 

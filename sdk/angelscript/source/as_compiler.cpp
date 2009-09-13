@@ -716,7 +716,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				{
 					if( gvar->datatype.GetObjectType()->flags & asOBJ_REF )
 					{
-						MakeFunctionCall(&ctx, funcs[0], 0, args);
+						MakeFunctionCall(&ctx, funcs[0], 0, args, node);
 
 						// Store the returned handle in the global variable
 						ctx.bc.Instr(asBC_RDSPTR);
@@ -1538,7 +1538,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						asSExprContext ctx(engine);
 						if( v->type.GetObjectType()->flags & asOBJ_REF )
 						{
-							MakeFunctionCall(&ctx, funcs[0], 0, args, true, v->stackOffset);
+							MakeFunctionCall(&ctx, funcs[0], 0, args, node, true, v->stackOffset);
 
 							// Pop the reference left by the function call
 							ctx.bc.Pop(AS_PTR_SIZE);
@@ -3269,7 +3269,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 	}
 }
 
-bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, bool isExplicit, bool generateCode)
+bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, bool isExplicit, asCScriptNode *node, bool generateCode)
 {
 	bool conversionDone = false;
 
@@ -3352,7 +3352,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				// Merge the bytecode so that it forms obj.castBehave()
 				asCTypeInfo objType = ctx->type;
 				asCArray<asSExprContext *> args;
-				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args);
+				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args, node);
 
 				// Since we're receiving a handle, we can release the original variable
 				ReleaseTemporaryVariable(objType, &ctx->bc);
@@ -3962,7 +3962,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 				isConst = true;
 
 			// We may still be able to find an implicit ref cast behaviour
-			CompileRefCast(ctx, to, convType == asIC_EXPLICIT_REF_CAST, generateCode);
+			CompileRefCast(ctx, to, convType == asIC_EXPLICIT_REF_CAST, node, generateCode);
 
 			ctx->type.dataType.MakeHandleToConst(isConst);
 		}
@@ -6295,7 +6295,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			expr.type.dataType.IsObjectHandle() &&
 			!(!to.IsHandleToConst() && expr.type.dataType.IsHandleToConst()) )
 		{
-			conversionOK = CompileRefCast(&expr, to, true);
+			conversionOK = CompileRefCast(&expr, to, true, node);
 
 			MergeExprContexts(ctx, &expr);
 			ctx->type = expr.type;
@@ -6663,7 +6663,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		}
 		else
 		{
-			MakeFunctionCall(ctx, funcs[0], objectType, args);
+			MakeFunctionCall(ctx, funcs[0], objectType, args, node);
 		}
 	}
 	else
@@ -6792,7 +6792,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			{
 				asCTypeInfo objType = ctx->type;
 				asCArray<asSExprContext *> args;
-				MakeFunctionCall(ctx, funcs[0], objType.dataType.GetObjectType(), args);
+				MakeFunctionCall(ctx, funcs[0], objType.dataType.GetObjectType(), args, node);
 				ReleaseTemporaryVariable(objType, &ctx->bc);
 				return 0;
 			}
@@ -7198,7 +7198,7 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	// Call the accessor
 	asCArray<asSExprContext *> args;
 	args.PushLast(arg);
-	MakeFunctionCall(ctx, ctx->property_set, func->objectType, args);
+	MakeFunctionCall(ctx, ctx->property_set, func->objectType, args, node);
 
 	// TODO: This is from CompileExpressionPostOp, can we unify the code?
 	if( objType.isTemporary &&
@@ -7216,6 +7216,9 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 		// we can safely release the original object now
 		ReleaseTemporaryVariable(objType, &ctx->bc);
 	}
+
+	ctx->property_get = 0;
+	ctx->property_set = 0;
 
 	return 0;
 }
@@ -7242,7 +7245,7 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 
 	// Call the accessor
 	asCArray<asSExprContext *> args;
-	MakeFunctionCall(ctx, ctx->property_get, func->objectType, args);
+	MakeFunctionCall(ctx, ctx->property_get, func->objectType, args, node);
 
 	// TODO: This is from CompileExpressionPostOp, can we unify the code?
 	if( objType.isTemporary &&
@@ -7260,6 +7263,9 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 		// we can safely release the original object now
 		ReleaseTemporaryVariable(objType, &ctx->bc);
 	}
+
+	ctx->property_get = 0;
+	ctx->property_set = 0;
 }
 
 int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ctx)
@@ -7433,6 +7439,9 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				Error(str.AddressOf(), node);
 				return -1;
 			}
+	
+			// Process the get property accessor
+			ProcessPropertyGetAccessor(ctx, node);
 
 			bool isConst = false;
 			if( ctx->type.dataType.IsObjectHandle() )
@@ -8141,7 +8150,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			args.PushLast(rctx);
 			MergeExprContexts(ctx, lctx);
 			ctx->type = lctx->type;
-			MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args);
+			MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args, node);
 
 			// TODO: Can we do this here? 
 			ReleaseTemporaryVariable(objType, &ctx->bc);
@@ -8165,11 +8174,22 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 	return 0;
 }
 
-void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, bool useVariable, int stackOffset)
+void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, asCScriptNode *node, bool useVariable, int stackOffset)
 {
 	if( objectType )
 	{
 		Dereference(ctx, true);
+
+		// Warn if the method is non-const and the object is temporary 
+		// since the changes will be lost when the object is destroyed.
+		// If the object is accessed through a handle, then it is assumed
+		// the object is not temporary, even though the handle is.
+		if( ctx->type.isTemporary && 
+			!ctx->type.dataType.IsObjectHandle() && 
+			!engine->scriptFunctions[funcId]->isReadOnly )
+		{
+			Warning(TXT_CALLING_NONCONST_METHOD_ON_TEMP, node);
+		}
 	}
 
 	asCByteCode objBC(engine);

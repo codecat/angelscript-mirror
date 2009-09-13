@@ -271,21 +271,21 @@ void stringDecontructor(_String &s)
 	s.~_String();
 }
 
-_String operation_StringAdd(_String &a, _String &b)
+_String operation_StringAdd(const _String &a, const _String &b)
 {
 	_String r;
 	r.buffer = a.buffer + b.buffer;
 	return r;
 }
 
-_String operation_StringStringAdd(_String &a, std::string &b)
+_String operation_StringStringAdd(const _String &a, const std::string &b)
 {
 	_String r;
 	r.buffer = a.buffer + b;
 	return r;
 }
 
-_String operationString_StringAdd(std::string &a, _String &b)
+_String operationString_StringAdd(const std::string &a, const _String &b)
 {
 	_String r;
 	r.buffer = a + b.buffer;
@@ -323,9 +323,9 @@ bool TestTwoStringTypes()
 	engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL , "bool f(const _String &in, const string &in)", asFUNCTION(compare_StringStringNotEqual), asCALL_CDECL);
 	engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL , "bool f(const string &in, const _String &in)", asFUNCTION(compareString_StringNotEqual), asCALL_CDECL);
 */	// +
-	r = engine->RegisterObjectMethod("_String" , "_String opAdd(const _String &in)", asFUNCTION(operation_StringAdd), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("_String" , "_String opAdd(const string &in)", asFUNCTION(operation_StringStringAdd), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("_String" , "_String opAdd_r(const string &in)", asFUNCTION(operationString_StringAdd), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("_String" , "_String opAdd(const _String &in) const", asFUNCTION(operation_StringAdd), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("_String" , "_String opAdd(const string &in) const", asFUNCTION(operation_StringStringAdd), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("_String" , "_String opAdd_r(const string &in) const", asFUNCTION(operationString_StringAdd), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	r = engine->ExecuteString(0, "_String('ab') + 'a'");
 	if( r < 0 )

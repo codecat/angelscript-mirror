@@ -14,8 +14,9 @@ members upon construction, and releasing members upon destruction, even if not
 manually implemented.
 
 With classes the script writer can declare new data types that hold groups
-of variables and methods to manipulate them. It is even possible to 
-\ref doc_script_class_ops "overload operators" for the classes.
+of variables and methods to manipulate them. The class' properties can be
+accessed directly or through \ref doc_script_class_prop "property accessors". 
+It is also possible to \ref doc_script_class_ops "overload operators" for the classes.
 
 <pre>
   // The class declaration

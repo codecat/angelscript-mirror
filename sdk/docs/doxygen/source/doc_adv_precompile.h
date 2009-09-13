@@ -33,7 +33,11 @@ the \ref asIBinaryStream::Read "Read" method to reconstruct the script module.
    OS though, so a script compiled on Linux is equal to Windows, given that the engine configuration is
    the same for both.
 
-
+ - If the application that compiles the script code is separate from the application that will execute
+   them, then you may register the functions and methods with null pointers so you don't need to 
+   actually implement all of them. In this case you should also set the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD
+   to false with \ref asIScriptEngine::SetEngineProperty, so the script engine doesn't attempt to initialize the global variables after the script 
+   has been built.
 
 
 

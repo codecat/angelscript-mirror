@@ -2040,9 +2040,17 @@ public:
 	virtual double  GetReturnDouble() = 0;
 	//! \brief Returns the address for a reference or handle return type.
     //! \return The address value returned from the script function, or 0 on error.
+	//! 
+	//! The method doesn't increase the reference counter with this call, so if you store
+	//! the pointer of a reference counted object you need to increase the reference manually
+	//! otherwise the object will be released when the context is released or reused.
 	virtual void   *GetReturnAddress() = 0;
 	//! \brief Return a pointer to the returned object.
     //! \return A pointer to the object returned from the script function, or 0 on error.
+	//! 
+	//! The method doesn't increase the reference counter with this call, so if you store
+	//! the pointer of a reference counted object you need to increase the reference manually
+	//! otherwise the object will be released when the context is released or reused.
 	virtual void   *GetReturnObject() = 0;
 	//! \brief Returns the address of the returned value
 	//! \return A pointer to the return value returned from the script function, or 0 on error.

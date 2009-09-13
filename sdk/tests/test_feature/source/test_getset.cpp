@@ -464,12 +464,70 @@ bool Test()
 		fail = true;
 	}
 
-	// TODO: Test property accessor with inout references. Shouldn't be allowed as the value is not a valid reference
+	// Test accessing members of an object property
+	const char *script14 = 
+		"class Test                                   \n"
+		"{                                            \n"
+		"  string get_s() {return _s;}                \n"
+		"  void set_s(string n) {_s = n;}             \n"
+		"  string _s;                                 \n"
+		"}                            \n"
+		"void func()                  \n"
+		"{                            \n"
+		"  Test t;                    \n"
+		"  t.s = 'hello';             \n" // value assignment
+		"  assert(t.s == 'hello');    \n"
+		"  assert(t.s.length() == 5); \n" // this should work as length is const
+		"}                            \n";
+	mod->AddScriptSection("script", script14);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+	{
+		fail = true;
+		printf("Failed to compile the script\n");
+	}
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = engine->ExecuteString(0, "func()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
+
+	// Test accessing a non-const method on an object through a get accessor
+	// Should at least warn since the object is just a temporary one
+	bout.buffer.c_str();
+	r = engine->ExecuteString(0, "Test t; t.s.resize(4);");
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	// TODO: Test opNeg for object through get accessor
+	// TODO: Test index operator for object through get accessor
+
 	// TODO: Test const/non-const get accessor
+	
 	// TODO: Test non-const get accessor for object type with const overloaded dual operator
+	
 	// TODO: Test get accessor that returns a reference (only from application func to start with)
+		
+
+
+	// TODO: Test property accessor with inout references. Shouldn't be allowed as the value is not a valid reference
+
 	// TODO: Test set accessor with parameter declared as out ref (shouldn't be found)
-	// TODO: What should be done with expressions like t.prop; Should the get accessor be called even though the value is never used?
+
+	// TODO: What should be done with expressions like t.prop; Should the get accessor be called even though 
+	//       the value is never used?
+
 	// TODO: Accessing a class member from within the property accessor with the same name as the property 
 	//       shouldn't call the accessor again. Instead it should access the real member. FindPropertyAccessor() 
 	//       shouldn't find any if the function being compiler is the property accessor itself

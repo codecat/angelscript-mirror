@@ -349,6 +349,10 @@ r = engine->RegisterObjectProperty("mytype", "int a", offsetof(MyStruct,a)); ass
 
 offsetof() is a macro declared in stddef.h header file.
 
+It is also possible to expose properties through \ref doc_script_class_prop "property accessors", 
+which are a pair of class methods for getting and setting the property value. This is especially
+useful when the offset of the property cannot be determined, or if the type of the property is 
+not registered in the script and some translation must occur, i.e. from <tt>char*</tt> to <tt>string</tt>.
 
 
 
