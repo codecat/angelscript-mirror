@@ -69,8 +69,9 @@ struct asSExprContext
 
 	asCByteCode bc;
 	asCTypeInfo type;
-	int property_get;
-	int property_set;
+	int  property_get;
+	int  property_set;
+	bool property_const; // If the object that is being accessed through property accessor is read-only
 	asCArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;
 	asSExprContext *origExpr;

@@ -1354,6 +1354,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		args[n]->type = expr.type;
 		args[n]->property_get = expr.property_get;
 		args[n]->property_set = expr.property_set;
+		args[n]->property_const = expr.property_const;
 		args[n]->exprNode = arg;
 
 		n--;
@@ -4886,6 +4887,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		MergeExprContexts(ctx, lctx);
 		ctx->property_get = lctx->property_get;
 		ctx->property_set = lctx->property_set;
+		ctx->property_const = lctx->property_const;
 
 		return ProcessPropertySetAccessor(ctx, rctx, opNode);
 	}
@@ -5459,6 +5461,7 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
     ctx->type = v.type;
 	ctx->property_get = v.property_get;
 	ctx->property_set = v.property_set;
+	ctx->property_const = v.property_const;
 
 	return 0;
 }
@@ -5517,6 +5520,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 						ctx->type = access.type;
 						ctx->property_get = access.property_get;
 						ctx->property_set = access.property_set;
+						ctx->property_const = access.property_const;
 
 						found = true;
 					}
@@ -7167,6 +7171,13 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		ctx->property_get = getId;
 		ctx->property_set = setId;
 
+		// If the object is read-only then we need to remember 
+		if( (!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly()) ||
+			(ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst()) )
+			ctx->property_const = true;
+		else
+			ctx->property_const = false;
+
 		asCDataType dt;
 		if( getId )
 			dt = engine->scriptFunctions[getId]->returnType;
@@ -7185,6 +7196,8 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 
 int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node)
 {
+	// TODO: A lot of this code is similar to ProcessPropertyGetAccessor. Can we unify them?
+
 	if( !ctx->property_set )
 	{
 		Error(TXT_PROPERTY_HAS_NO_SET_ACCESSOR, node);
@@ -7194,8 +7207,18 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	// Setup the context with the original type so the method call gets built correctly
 	asCTypeInfo objType = ctx->type;
 	asCScriptFunction *func = engine->scriptFunctions[ctx->property_set];
-	ctx->type.dataType = asCDataType::CreateObject(func->objectType, true);
+	ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
 	ctx->type.dataType.MakeReference(true);
+
+	// Don't allow the call if the object is read-only and the property accessor is not const
+	// TODO: This can probably be moved into MakeFunctionCall
+	if( ctx->property_const && !func->isReadOnly )
+	{
+		Error(TXT_NON_CONST_METHOD_ON_CONST_OBJ, node);
+		asCArray<int> funcs;
+		funcs.PushLast(ctx->property_set);
+		PrintMatchingFuncs(funcs, node);
+	}
 
 	// Call the accessor
 	asCArray<asSExprContext *> args;
@@ -7242,8 +7265,17 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 	// Setup the context with the original type so the method call gets built correctly
 	asCTypeInfo objType = ctx->type;
 	asCScriptFunction *func = engine->scriptFunctions[ctx->property_get];
-	ctx->type.dataType = asCDataType::CreateObject(func->objectType, true);
+	ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
 	ctx->type.dataType.MakeReference(true);
+
+	// Don't allow the call if the object is read-only and the property accessor is not const
+	if( ctx->property_const && !func->isReadOnly )
+	{
+		Error(TXT_NON_CONST_METHOD_ON_CONST_OBJ, node);
+		asCArray<int> funcs;
+		funcs.PushLast(ctx->property_get);
+		PrintMatchingFuncs(funcs, node);
+	}
 
 	// Call the accessor
 	asCArray<asSExprContext *> args;
@@ -7802,6 +7834,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 		orig->type = arg->type;
 		orig->property_get = arg->property_get;
 		orig->property_set = arg->property_set;
+		orig->property_const = arg->property_const;
 
 		arg->origExpr = orig;
 	}
@@ -7809,6 +7842,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	e.type = arg->type;
 	e.property_get = arg->property_get;
 	e.property_set = arg->property_set;
+	e.property_const = arg->property_const;
 	PrepareArgument(paramType, &e, arg->exprNode, isFunction, refType, reservedVars);
 	arg->type = e.type;
 	ctx->bc.AddCode(&e.bc);

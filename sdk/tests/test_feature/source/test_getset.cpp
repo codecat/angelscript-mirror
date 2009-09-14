@@ -602,7 +602,31 @@ bool Test()
 		fail = true;
 	}	
 
-	// TODO: Test const/non-const get accessor
+	// Test const/non-const get accessor
+	const char *script18 = 
+		"class Test                          \n"
+		"{                                   \n"
+		"  int get_p() { return 42; }        \n"
+		"  int get_c() const { return 42; }  \n"
+		"}                                   \n"
+		"void func()                  \n"
+		"{                            \n"
+		"  const Test @t = @Test();   \n"
+		"  assert( t.p == 42 );       \n" // Fail
+		"  assert( t.c == 42 );       \n" // Success
+		"}                            \n";
+	mod->AddScriptSection("script", script18);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (6, 1) : Info    : Compiling void func()\n"
+	                   "script (9, 15) : Error   : Non-const method call on read-only object reference\n"
+	                   "script (9, 15) : Info    : int Test::get_p()\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 	
 	// TODO: Test non-const get accessor for object type with const overloaded dual operator
 	
