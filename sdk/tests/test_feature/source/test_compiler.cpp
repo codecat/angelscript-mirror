@@ -583,6 +583,34 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test 30 - proper handling of incorrect script
+	{
+		bout.buffer = "";
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptString(engine);
+
+		const char *script = "void main() \n"
+							 "{ \n"
+							 "  string t = string(ti); \n" //ti is undefined
+							 "} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("s", script);
+		int r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != "s (1, 1) : Info    : Compiling void main()\n"
+						   "s (3, 21) : Error   : 'ti' is not declared\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

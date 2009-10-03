@@ -6596,6 +6596,11 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 			}
 		}
 	}
+	else
+	{
+		// Failed to compile the argument list, set the result to the dummy type
+		ctx->type.SetDummy();
+	}
 
 	// Cleanup
 	for( asUINT n = 0; n < args.GetLength(); n++ )
