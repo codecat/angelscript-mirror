@@ -131,10 +131,12 @@ bool Test()
 		return false;
 	}
 
+	COutStream out;
 	bool fail = false;
 	int r;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterStdString(engine);
 	RegisterVector<char>("int8[]", "int8", engine);
@@ -158,6 +160,7 @@ bool Test()
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	r = engine->RegisterObjectType("MyStruct", sizeof(MyStruct), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("MyStruct", "int v", offsetof(MyStruct, v)); assert( r >= 0 );
 
 	RegisterVector<MyStruct>("MyStruct[]", "MyStruct", engine);
 
@@ -166,11 +169,31 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("MyClass", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(MyClass_Destruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("MyClass", "MyStruct[] myVec", offsetof(MyClass,myVec)); assert( r >= 0 );
  
+	{
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script = 
+		"MyStruct[] TestInt() \n"
+		"{ \n"
+		"  MyStruct[] a; \n"
+		"  MyStruct m; m.v=10; \n"
+		"  a.push_back(m); \n"
+		"  return a; \n"
+		"} \n";
+		mod->AddScriptSection("s", script);
+		int r = mod->Build();
+		if( r < 0 )
+			fail = true;
 
-	COutStream out;
+		// The object that was returned by value, must not be freed too early
+		r = engine->ExecuteString(0, "Assert(TestInt()[0].v == 10)");
+		if( r != asEXECUTION_FINISHED )
+		{
+			fail = true;
+		}
+	}
+
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 )
 	{

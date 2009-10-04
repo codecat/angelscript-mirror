@@ -2780,12 +2780,14 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					expr.bc.Pop(AS_PTR_SIZE);
 
 					// Load the object pointer into the object register
+					// LOADOBJ also clears the address in the variable
 					expr.bc.InstrSHORT(asBC_LOADOBJ, expr.type.stackOffset);
 
-					// TODO: This comment doesn't match what the code does, investigate which is correct
-					// The temporary variable must not be freed as it will no longer hold an object
-					ReleaseTemporaryVariable(expr.type, &expr.bc);
-					expr.type.isTemporary = false;
+					// LOADOBJ cleared the address in the variable so the object will not be freed
+					// here, but the temporary variable must still be freed
+
+					// TODO: optimize: Since there is nothing in the variable anymore, 
+					//                 there is no need to call asBC_FREE on it. 
 				}
 
 				// Release temporary variables used by expression
@@ -7497,8 +7499,10 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			// Compile function call
 			CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
 
+			// If the method returned a reference, then we can't release the original  
+			// object yet, because the reference may be to a member of it
 			if( objType.isTemporary &&
-				ctx->type.dataType.IsReference() &&
+				(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) &&
 				!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
 			{
 				// Remember the original object's variable, so that it can be released
@@ -7634,8 +7638,10 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			}
 		}
 
+		// If the method returned a reference, then we can't release the original  
+		// object yet, because the reference may be to a member of it
 		if( objType.isTemporary &&
-			ctx->type.dataType.IsReference() &&
+			(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) &&
 			!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not to a member
 		{
 			// Remember the object's variable, so that it can be released
