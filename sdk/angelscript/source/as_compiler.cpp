@@ -525,7 +525,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 
 
-void asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCode *bc, bool isGlobalVar)
+int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar)
 {
 	// Call constructor for the data type
 	if( type.IsObject() && !type.IsObjectHandle() )
@@ -563,6 +563,14 @@ void asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteC
 
 				bc->AddCode(&ctx.bc);
 			}
+			else
+			{
+				asCString str;
+				str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, type.GetObjectType()->GetName());
+				Error(str.AddressOf(), node);
+				//Class has no default constructor.
+				return -1;
+			}
 		}
 		else
 		{
@@ -576,9 +584,12 @@ void asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteC
 			int func = 0;
 			if( beh ) func = beh->construct;
 
+			// TODO: Should give error if the value type doesn't have a default constructor and isn't a POD type
+
 			bc->Alloc(asBC_ALLOC, type.GetObjectType(), func, AS_PTR_SIZE);
 		}
 	}
+	return 0;
 }
 
 void asCCompiler::CallDestructor(asCDataType &type, int offset, asCByteCode *bc)
@@ -763,7 +774,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		// Call constructor for all data types
 		if( gvar->datatype.IsObject() && !gvar->datatype.IsObjectHandle() )
 		{
-			CallDefaultConstructor(gvar->datatype, gvar->index, &ctx.bc, true);
+			CallDefaultConstructor(gvar->datatype, gvar->index, &ctx.bc, gvar->idNode, true);
 		}
 
 		if( node )
@@ -1036,7 +1047,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 					// Allocate and construct the temporary object
 					asCByteCode tmpBC(engine);
-					CallDefaultConstructor(dt, offset, &tmpBC);
+					CallDefaultConstructor(dt, offset, &tmpBC, node);
 
 					// Insert the code before the expression code
 					tmpBC.AddCode(&ctx->bc);
@@ -1090,7 +1101,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			{
 				// Allocate and construct the temporary object
 				asCByteCode tmpBC(engine);
-				CallDefaultConstructor(dt, offset, &tmpBC);
+				CallDefaultConstructor(dt, offset, &tmpBC, node);
 
 				// Insert the code before the expression code
 				tmpBC.AddCode(&ctx->bc);
@@ -1504,6 +1515,9 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 		outFunc->AddVariable(name, type, offset);
 
+		// Keep the node for the variable decl
+		asCScriptNode *varNode = node;
+
 		node = node->next;
 		if( node && node->nodeType == snArgList )
 		{
@@ -1593,7 +1607,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			asSExprContext ctx(engine);
 
 			// Call the default constructor here
-			CallDefaultConstructor(type, offset, &ctx.bc);
+			CallDefaultConstructor(type, offset, &ctx.bc, varNode);
 
 			// Is the variable initialized?
 			if( node && node->nodeType == snAssignment )
@@ -2702,7 +2716,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	int offset = AllocateVariableNotIn(dt, true, reservedVars);
 
 	// Allocate and construct the temporary object
-	CallDefaultConstructor(dt, offset, &ctx->bc);
+	CallDefaultConstructor(dt, offset, &ctx->bc, node);
 
 	// Assign the object to the temporary variable
 	asCTypeInfo lvalue;
@@ -4138,7 +4152,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 					lctx.type.isTemporary = true;
 					lctx.type.stackOffset = (short)offset;
 
-					CallDefaultConstructor(lctx.type.dataType, offset, &lctx.bc);
+					CallDefaultConstructor(lctx.type.dataType, offset, &lctx.bc, node);
 
 					// Build the right hand expression
 					asSExprContext rctx(engine);
@@ -4178,7 +4192,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 				if( type.dataType.IsObjectHandle() )
 					type.isExplicitHandle = true;
 
-				CallDefaultConstructor(type.dataType, offset, &ctx->bc);
+				CallDefaultConstructor(type.dataType, offset, &ctx->bc, node);
 				type.dataType.MakeReference(true);
 
 				PrepareForAssignment(&type.dataType, ctx, node);
@@ -5250,7 +5264,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				int offset = AllocateVariableNotIn(temp.dataType, true, &vars);
 				temp.SetVariable(temp.dataType, offset, true);
 
-				CallDefaultConstructor(temp.dataType, offset, &ctx->bc);
+				CallDefaultConstructor(temp.dataType, offset, &ctx->bc, expr);
 
 				// Put the code for the condition expression on the output
 				MergeExprContexts(ctx, &e);
@@ -6547,7 +6561,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 				asASSERT(ctx->bc.GetLastInstr() == asBC_VAR);
 				ctx->bc.RemoveLastInstr();
 
-				CallDefaultConstructor(tempObj.dataType, tempObj.stackOffset, &ctx->bc);
+				CallDefaultConstructor(tempObj.dataType, tempObj.stackOffset, &ctx->bc, node);
 
 				// Push the reference on the stack
 				ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
@@ -8394,7 +8408,7 @@ void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> 
 
 			// Allocate and construct the temporary object
 			asCByteCode tmpBC(engine);
-			CallDefaultConstructor(ctx->type.dataType, offset, &tmpBC);
+			CallDefaultConstructor(ctx->type.dataType, offset, &tmpBC, ctx->exprNode);
 
 			// Insert the code before the expression code
 			tmpBC.AddCode(&ctx->bc);
@@ -8444,7 +8458,7 @@ void asCCompiler::ConvertToTempVariable(asSExprContext *ctx)
 
 			// Allocate and construct the temporary object
 			asCByteCode tmpBC(engine);
-			CallDefaultConstructor(ctx->type.dataType, offset, &tmpBC);
+			CallDefaultConstructor(ctx->type.dataType, offset, &tmpBC, ctx->exprNode);
 
 			// Insert the code before the expression code
 			tmpBC.AddCode(&ctx->bc);

@@ -148,6 +148,7 @@ bool Test()
 					   "TestInterface (5, 23) : Warning : The interface 'intf' is already implemented\n"
 					   "TestInterface (9, 1) : Info    : Compiling void test(intf&inout)\n"
 					   "TestInterface (11, 9) : Error   : Data type can't be 'intf'\n"
+					   "TestInterface (13, 8) : Error   : No default constructor for object of type 'intf'.\n"
 					   "TestInterface (13, 8) : Error   : There is no copy operator for this type available.\n"
 					   "TestInterface (13, 6) : Error   : There is no copy operator for this type available.\n"
 					   "TestInterface (15, 16) : Error   : Can't implicitly convert from 'myclass&' to 'nointf@&'.\n"

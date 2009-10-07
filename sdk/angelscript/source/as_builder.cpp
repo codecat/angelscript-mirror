@@ -79,9 +79,9 @@ asCBuilder::~asCBuilder()
 	{
 		if( globVariables[n] )
 		{
-			if( globVariables[n]->node )
+			if( globVariables[n]->nextNode )
 			{
-				globVariables[n]->node->Destroy(engine);
+				globVariables[n]->nextNode->Destroy(engine);
 			}
 
 			asDELETE(globVariables[n],sGlobalVariableDescription);
@@ -881,13 +881,14 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 		// TODO: Give error message if wrong
 		asASSERT(!gvar->datatype.IsReference());
 
-		gvar->node = 0;
+		gvar->idNode = n;
+		gvar->nextNode = 0;
 		if( n->next &&
 			(n->next->nodeType == snAssignment ||
 			 n->next->nodeType == snArgList    ||
 			 n->next->nodeType == snInitList     ) )
 		{
-			gvar->node = n->next;
+			gvar->nextNode = n->next;
 			n->next->DisconnectParent();
 		}
 
@@ -1030,10 +1031,10 @@ void asCBuilder::CompileGlobalVariables()
 			if( compilingPrimitives && !gvar->datatype.IsPrimitive() )
 				continue;
 
-			if( gvar->node )
+			if( gvar->nextNode )
 			{
 				int r, c;
-				gvar->script->ConvertPosToRowCol(gvar->node->tokenPos, &r, &c);
+				gvar->script->ConvertPosToRowCol(gvar->nextNode->tokenPos, &r, &c);
 				asCString str = gvar->datatype.Format();
 				str += " " + gvar->name;
 				str.Format(TXT_COMPILING_s, str.AddressOf());
@@ -1043,7 +1044,7 @@ void asCBuilder::CompileGlobalVariables()
 			if( gvar->isEnumValue )
 			{
 				int r;
-				if( gvar->node )
+				if( gvar->nextNode )
 				{
 					asCCompiler comp(engine);
 
@@ -1051,7 +1052,7 @@ void asCBuilder::CompileGlobalVariables()
 					asCDataType saveType;
 					saveType = gvar->datatype;
 					gvar->datatype = asCDataType::CreatePrimitive(ttInt, true);
-					r = comp.CompileGlobalVariable(this, gvar->script, gvar->node, gvar);
+					r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar);
 					gvar->datatype = saveType;
 				}
 				else
@@ -1101,7 +1102,7 @@ void asCBuilder::CompileGlobalVariables()
 			{
 				// Compile the global variable
 				asCCompiler comp(engine);
-				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->node, gvar);
+				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar);
 				if( r >= 0 )
 				{
 					// Compilation succeeded
@@ -1200,8 +1201,8 @@ void asCBuilder::CompileGlobalVariables()
 		objectType->enumValues.PushLast(e);
 
 		// Destroy the gvar property
-		if( gvar->node )
-			gvar->node->Destroy(engine);
+		if( gvar->nextNode )
+			gvar->nextNode->Destroy(engine);
 		if( gvar->property )
 			asDELETE(gvar->property, asCGlobalProperty);
 
@@ -1831,7 +1832,8 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			globVariables.PushLast(gvar);
 
 			gvar->script		  = file;
-			gvar->node			  = asnNode;
+			gvar->idNode          = 0;
+			gvar->nextNode		  = asnNode;
 			gvar->name			  = name;
 			gvar->datatype		  = type;
 			// No need to allocate space on the global memory stack since the values are stored in the asCObjectType

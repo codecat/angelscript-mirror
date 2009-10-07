@@ -280,7 +280,7 @@ bool asCDataType::CanBeInstanciated() const
 		 (objectType->flags & asOBJ_REF) &&        // It's a ref type and
 		 ((objectType->flags & asOBJ_NOHANDLE) ||  // the ref type doesn't support handles or
 		  (!IsObjectHandle() &&                    // it's not a handle and
-		   objectType->beh.factory == 0))) )       // the ref type cannot be instanciated
+		   objectType->beh.factories.GetLength() == 0))) ) // the ref type cannot be instanciated
 		return false;
 
 	return true;

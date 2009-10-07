@@ -143,7 +143,7 @@ protected:
 
 	void CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByteCode *bc);
 
-	void CallDefaultConstructor(asCDataType &type, int offset, asCByteCode *bc, bool isGlobalVar = false);
+	int  CallDefaultConstructor(asCDataType &type, int offset, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar = false);
 	void CallDestructor(asCDataType &type, int offset, asCByteCode *bc);
 	int  CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args);
 	void MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType = NULL, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true, const asCString &scope = "");
