@@ -8195,7 +8195,10 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 				func->parameterTypes.GetLength() == 1 &&
 				(!isConst || func->isReadOnly) )
 			{
-				funcs.PushLast(func->id);
+				// Make sure the method is accessible by the module
+				asCConfigGroup *group = engine->FindConfigGroupForFunction(func->id);
+				if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
+					funcs.PushLast(func->id);
 			}
 		}
 

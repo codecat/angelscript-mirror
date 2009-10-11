@@ -341,9 +341,6 @@ bool Test()
 
 
 	// TODO:
-	// Types that registers constructors/factories, must also register the default constructor/factory (unless asOBJ_POD is used)
-
-	// TODO:
 	// What about asOBJ_NOHANDLE and asEP_ALLOW_UNSAFE_REFERENCES? Should it allow &inout?
 
 	// TODO:

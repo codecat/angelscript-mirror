@@ -115,10 +115,7 @@ bool Test()
 	engine->Release();
 
 	//------------
-	// Test global operators
-	// TODO: This doesn't work, as the engine currently doesn't allow registering object 
-	//       methods in a different config group than the object type itself
-/*
+	// Test class methods in different config groups
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
@@ -133,14 +130,16 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
 	r = engine->ExecuteString(0, "mytype a; a + a;");
-	if( r >= 0 )
-		fail = true;
 
-	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching operator that takes the types 'mytype&' and 'mytype&' found\n")
-		fail = true;
+	// TODO: It should be possible to disallow individual class methods
+//	if( r >= 0 )
+//		fail = true;
+
+//	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching operator that takes the types 'mytype&' and 'mytype&' found\n")
+//		fail = true;
 
 	engine->Release();
-*/
+
 	// Success
 	return fail;
 }

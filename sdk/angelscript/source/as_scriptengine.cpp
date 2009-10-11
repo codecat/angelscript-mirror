@@ -1524,11 +1524,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	if( r < 0 )
 		return ConfigError(r);
 
-	// Verify that the correct config group is used
 	if( type.GetObjectType() == 0 )
 		return ConfigError(asINVALID_TYPE);
-	if( currentGroup->FindType(type.GetObjectType()->name.AddressOf()) == 0 )
-		return ConfigError(asWRONG_CONFIG_GROUP);
 
 	if( type.IsReadOnly() || type.IsReference() )
 		return ConfigError(asINVALID_TYPE);
@@ -2233,10 +2230,6 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	r = bld.ParseDataType(obj, &dt);
 	if( r < 0 )
 		return ConfigError(r);
-
-	// Verify that the correct config group is set.
-	if( currentGroup->FindType(dt.GetObjectType()->name.AddressOf()) == 0 )
-		return ConfigError(asWRONG_CONFIG_GROUP);
 
 	isPrepared = false;
 
