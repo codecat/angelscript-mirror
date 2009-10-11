@@ -346,7 +346,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 				}
 
 				// Include the script section
-				int r = LoadScriptSection(includes[n].c_str());
+				int r = AddSectionFromFile(includes[n].c_str());
 				if( r < 0 )
 					return r;
 			}

@@ -256,10 +256,22 @@ int CompileScript(asIScriptEngine *engine)
 	// be written to the message stream that we set right after creating the 
 	// script engine. If there are no errors, and no warnings, nothing will
 	// be written to the stream.
-	r = builder.BuildScriptFromFile(engine, 0, "script.as");
+	r = builder.StartNewModule(engine, 0);
 	if( r < 0 )
 	{
-		cout << "Build failed" << endl;
+		cout << "Failed to start new module" << endl;
+		return r;
+	}
+	r = builder.AddSectionFromFile("script.as");
+	if( r < 0 )
+	{
+		cout << "Failed to add script file" << endl;
+		return r;
+	}
+	r = builder.BuildModule();
+	if( r < 0 )
+	{
+		cout << "Failed to build the module" << endl;
 		return r;
 	}
 	
