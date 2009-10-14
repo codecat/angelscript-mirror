@@ -1489,7 +1489,8 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	if( datatype == 0 ) return ConfigError(asINVALID_ARG);
 
 	asSSystemFunctionInterface internal;
-	if( behaviour == asBEHAVE_FACTORY )
+	if( behaviour == asBEHAVE_FACTORY ||
+		behaviour == asBEHAVE_TEMPLATE_CALLBACK )
 	{
 		int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
 		if( r < 0 )
@@ -1705,7 +1706,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		func.id = beh->addref = AddBehaviourFunction(func, internal);
 	}
-	else if( behaviour == asBEHAVE_RELEASE)
+	else if( behaviour == asBEHAVE_RELEASE )
 	{
 		// Must be a ref type and must not have asOBJ_NOHANDLE
 		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
@@ -1726,6 +1727,28 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 			return ConfigError(asINVALID_DECLARATION);
 
 		func.id = beh->release = AddBehaviourFunction(func, internal);
+	}
+	else if( behaviour == asBEHAVE_TEMPLATE_CALLBACK )
+	{
+		// Must be a template type 
+		if( !(func.objectType->flags & asOBJ_TEMPLATE) )
+		{
+			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
+		}
+
+		if( beh->templateCallback )
+			return ConfigError(asALREADY_REGISTERED);
+
+		// Verify that the return type is bool
+		if( func.returnType != asCDataType::CreatePrimitive(ttBool, false) )
+			return ConfigError(asINVALID_DECLARATION);
+
+		// Verify that there is one parameters
+		if( func.parameterTypes.GetLength() != 1 )
+			return ConfigError(asINVALID_DECLARATION);
+
+		func.id = beh->templateCallback = AddBehaviourFunction(func, internal);
 	}
 #ifdef AS_DEPRECATED
 	else if( behaviour >= asBEHAVE_FIRST_ASSIGN && behaviour <= asBEHAVE_LAST_ASSIGN )
@@ -2841,6 +2864,19 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	ot->flags     = templateType->flags;
 	ot->size      = templateType->size;
 	ot->name      = templateType->name;
+
+	// Before filling in the methods, call the template instance callback behaviour to validate the type
+	if( templateType->beh.templateCallback )
+	{
+		asCScriptFunction *callback = scriptFunctions[templateType->beh.templateCallback];
+		if( !CallGlobalFunctionRetBool(ot, 0, callback->sysFuncIntf, callback) )
+		{
+			// The type cannot be instanciated
+			asDELETE(ot, asCObjectType);
+			return 0;
+		}
+	}
+
 	ot->methods   = templateType->methods;
 	// Store the real factory in the constructor
 	ot->beh.construct = templateType->beh.factory;

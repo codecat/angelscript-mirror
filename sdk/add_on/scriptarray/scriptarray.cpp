@@ -23,6 +23,61 @@ static CScriptArray* ScriptArrayFactory2(asIObjectType *ot, asUINT length)
 	return new CScriptArray(length, ot);
 }
 
+// This optional callback is called when the template type is first used by the compiler.
+// It allows the application to validate if the template can be instanciated for the requested 
+// subtype at compile time, instead of at runtime.
+static bool ScriptArrayTemplateCallback(asIObjectType *ot)
+{
+	// Make sure the subtype can be instanciated with a default factory/constructor, 
+	// otherwise we won't be able to instanciate the elements
+	int typeId = ot->GetSubTypeId();
+	if( (typeId & asTYPEID_MASK_OBJECT) && !(typeId & asTYPEID_OBJHANDLE) )
+	{
+		asIObjectType *subtype = ot->GetEngine()->GetObjectTypeById(typeId);
+		asDWORD flags = subtype->GetFlags();
+		if( (flags & asOBJ_VALUE) && !(flags & asOBJ_POD) )
+		{
+			// Verify that there is a default constructor
+			for( int n = 0; n < subtype->GetBehaviourCount(); n++ )
+			{
+				asEBehaviours beh;
+				int funcId = subtype->GetBehaviourByIndex(n, &beh);
+				if( beh != asBEHAVE_CONSTRUCT ) continue;
+
+				asIScriptFunction *func = ot->GetEngine()->GetFunctionDescriptorById(funcId);
+				if( func->GetParamCount() == 0 )
+				{
+					// Found the default constructor
+					return true;
+				}
+			}
+
+			// There is no default constructor
+			return false;
+		}
+		else if( (flags & asOBJ_REF) )
+		{
+			// Verify that there is a default factory
+			for( int n = 0; n < subtype->GetFactoryCount(); n++ )
+			{
+				int funcId = subtype->GetFactoryIdByIndex(n);
+				asIScriptFunction *func = ot->GetEngine()->GetFunctionDescriptorById(funcId);
+				if( func->GetParamCount() == 0 )
+				{
+					// Found the default factory
+					return true;
+				}
+			}	
+
+			// No default factory
+			return false;
+		}
+	}
+
+	// The type is ok
+	return true;
+}
+
 // Registers the template array type
 void RegisterScriptArray(asIScriptEngine *engine)
 {
@@ -38,6 +93,9 @@ void RegisterScriptArray_Native(asIScriptEngine *engine)
 	
 	// Register the array type as a template
 	r = engine->RegisterObjectType("array<class T>", 0, asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
+
+	// Register a callback for validating the subtype before it is used
+	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in)", asFUNCTION(ScriptArrayTemplateCallback), asCALL_CDECL); assert( r >= 0 );
 
 	// Templates receive the object type as the first parameter. To the script writer this is hidden
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in)", asFUNCTIONPR(ScriptArrayFactory, (asIObjectType*), CScriptArray*), asCALL_CDECL); assert( r >= 0 );

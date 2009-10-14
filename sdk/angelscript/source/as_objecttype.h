@@ -76,7 +76,21 @@ const asDWORD asOBJ_TEMPLATE_SUBTYPE = 0x20000000;
 
 struct asSTypeBehaviour
 {
-	asSTypeBehaviour() {factory = 0; construct = 0; destruct = 0; copy = 0; addref = 0; release = 0; gcGetRefCount = 0; gcSetFlag = 0; gcGetFlag = 0; gcEnumReferences = 0; gcReleaseAllReferences = 0;}
+	asSTypeBehaviour() 
+	{
+		factory = 0; 
+		construct = 0; 
+		destruct = 0; 
+		copy = 0; 
+		addref = 0; 
+		release = 0; 
+		gcGetRefCount = 0; 
+		gcSetFlag = 0; 
+		gcGetFlag = 0; 
+		gcEnumReferences = 0; 
+		gcReleaseAllReferences = 0;
+		templateCallback = 0;
+	}
 
 	int factory;
 	int construct;
@@ -84,6 +98,7 @@ struct asSTypeBehaviour
 	int copy;
 	int addref;
 	int release;
+	int templateCallback;
 	
 	// GC behaviours
 	int gcGetRefCount;

@@ -149,6 +149,7 @@ bool Test()
 	bool fail = Test2();
 	int r;
 	COutStream out;
+	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -311,6 +312,19 @@ bool Test()
 	r = engine->ExecuteString(0, "array<array<int>@> a(1); @a[0] = @array<int>(4);");
 	if( r < 0 )
 		fail = true;
+
+	// Do not allow the instantiation of a template with a subtype that cannot be created
+	bout.buffer = "";
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	engine->RegisterObjectType("single", 0, asOBJ_REF | asOBJ_NOHANDLE);
+	r = engine->ExecuteString(0, "array<single> a;");
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'single'\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
 	engine->Release();
 
