@@ -400,14 +400,14 @@ int CScriptBuilder::SkipStatement(int pos)
 	int len;
 
 	// Skip until ; or { whichever comes first
-	while( modifiedScript[pos] != ';' && modifiedScript[pos] != '{' )
+	while( pos < (int)modifiedScript.length() && modifiedScript[pos] != ';' && modifiedScript[pos] != '{' )
 	{
 		engine->ParseToken(&modifiedScript[pos], 0, &len);
 		pos += len;
 	}
 
 	// Skip entire statement block
-	if( modifiedScript[pos] == '{' )
+	if( pos < (int)modifiedScript.length() && modifiedScript[pos] == '{' )
 	{
 		pos += 1;
 

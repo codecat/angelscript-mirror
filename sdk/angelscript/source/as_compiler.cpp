@@ -239,7 +239,7 @@ int asCCompiler::CompileTemplateFactoryStub(asCBuilder *builder, int trueFactory
 
 	byteCode.InstrPTR(asBC_OBJTYPE, objType);
 	byteCode.Call(asBC_CALLSYS, trueFactoryId, descr->GetSpaceNeededForArguments());
-	byteCode.Ret(0);
+	byteCode.Ret(outFunc->GetSpaceNeededForArguments());
 
 	byteCode.Finalize();
 
