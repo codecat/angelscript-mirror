@@ -2206,12 +2206,13 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 	// Read the module name as well
 	n = node->firstChild->next;
-	int moduleNameString = module->AddConstantString(&file->code[n->tokenPos+1], n->tokenLength-2);
+	asCString moduleName;
+	moduleName.Assign(&file->code[n->tokenPos+1], n->tokenLength-2);
 
 	node->Destroy(engine);
 
 	// Register the function
-	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), moduleNameString);
+	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), moduleName);
 
 	return 0;
 }

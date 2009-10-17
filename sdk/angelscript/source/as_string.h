@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2009 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -47,7 +47,7 @@ public:
 	asCString(const asCString &);
 	asCString(const char *);
 	asCString(const char *, size_t length);
-	asCString(char);
+	explicit asCString(char);
 
 	void   Allocate(size_t len, bool keepData);
 	void   SetLength(size_t len);

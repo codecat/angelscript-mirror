@@ -358,7 +358,7 @@ void asCModule::InternalReset()
 	// Release bound functions
 	for( n = 0; n < bindInformations.GetLength(); n++ )
 	{
-		int oldFuncID = bindInformations[n].importedFunction;
+		int oldFuncID = bindInformations[n]->importedFunction;
 		if( oldFuncID != -1 )
 		{
 			asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
@@ -368,6 +368,8 @@ void asCModule::InternalReset()
 				oldModule->ReleaseModuleRef();
 			}
 		}
+
+		asDELETE(bindInformations[n], sBindInfo);
 	}
 	bindInformations.SetLength(0);
 
@@ -773,21 +775,20 @@ const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId)
 // internal
 int asCModule::AddConstantString(const char *str, size_t len)
 {
-	//  The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
-	asCString *cstr = asNEW(asCString)(str, len);
+	// The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
 
 	// TODO: optimize: Improve linear search
 	// Has the string been registered before?
 	for( size_t n = 0; n < stringConstants.GetLength(); n++ )
 	{
-		if( *stringConstants[n] == *cstr )
+		if( stringConstants[n]->Compare(str, len) == 0 )
 		{
-			asDELETE(cstr,asCString);
 			return (int)n;
 		}
 	}
 
 	// No match was found, add the string
+	asCString *cstr = asNEW(asCString)(str, len);
 	stringConstants.PushLast(cstr);
 
 	return (int)stringConstants.GetLength() - 1;
@@ -851,7 +852,7 @@ int asCModule::AddScriptFunction(asCScriptFunction *func)
 
 
 // internal
-int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, int moduleNameStringID)
+int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, const asCString &moduleName)
 {
 	asASSERT(id >= 0);
 
@@ -870,9 +871,9 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 
 	importedFunctions.PushLast(func);
 
-	sBindInfo info;
-	info.importedFunction = -1;
-	info.importFrom = moduleNameStringID;
+	sBindInfo *info = asNEW(sBindInfo);
+	info->importedFunction = -1;
+	info->importFromModule = moduleName;
 	bindInformations.PushLast(info);
 
 	return 0;
@@ -945,7 +946,7 @@ bool asCModule::CanDelete()
 			// Unbind all functions. This will break any circular references
 			for( size_t n = 0; n < bindInformations.GetLength(); n++ )
 			{
-				int oldFuncID = bindInformations[n].importedFunction;
+				int oldFuncID = bindInformations[n]->importedFunction;
 				if( oldFuncID != -1 )
 				{
 					asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
@@ -985,7 +986,7 @@ bool asCModule::CanDeleteAllReferences(asCArray<asCModule*> &modules)
 	// Check all bound functions for referenced modules
 	for( size_t n = 0; n < bindInformations.GetLength(); n++ )
 	{
-		int funcID = bindInformations[n].importedFunction;
+		int funcID = bindInformations[n]->importedFunction;
 		asCModule *module = engine->GetModuleFromFuncId(funcID);
 
 		// If the module is already in the list don't check it again
@@ -1044,7 +1045,7 @@ int asCModule::BindImportedFunction(int index, int sourceId)
 	// Add reference to new module
 	srcModule->AddModuleRef();
 
-	bindInformations[index].importedFunction = sourceId;
+	bindInformations[index]->importedFunction = sourceId;
 
 	return asSUCCESS;
 }
@@ -1056,7 +1057,7 @@ int asCModule::UnbindImportedFunction(int index)
 		return asINVALID_ARG;
 
 	// Remove reference to old module
-	int oldFuncID = bindInformations[index].importedFunction;
+	int oldFuncID = bindInformations[index]->importedFunction;
 	if( oldFuncID != -1 )
 	{
 		asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
@@ -1067,7 +1068,7 @@ int asCModule::UnbindImportedFunction(int index)
 		}
 	}
 
-	bindInformations[index].importedFunction = -1;
+	bindInformations[index]->importedFunction = -1;
 	return asSUCCESS;
 }
 
@@ -1090,9 +1091,7 @@ const char *asCModule::GetImportedFunctionSourceModule(int index)
 	if( index >= (int)bindInformations.GetLength() )
 		return 0;
 
-	index = bindInformations[index].importFrom;
-
-	return stringConstants[index]->AddressOf();
+	return bindInformations[index]->importFromModule.AddressOf();
 }
 
 // inteface

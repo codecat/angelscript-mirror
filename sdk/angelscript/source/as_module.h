@@ -62,8 +62,8 @@ class asCConfigGroup;
 
 struct sBindInfo
 {
-	asDWORD importFrom;
-	int importedFunction;
+	asCString  importFromModule;
+	int        importedFunction;
 };
 
 struct sObjectTypePair
@@ -198,7 +198,7 @@ public:
 
 	int  AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType = 0, bool isConstMethod = false, bool isGlobalFunction = false);
 	int  AddScriptFunction(asCScriptFunction *func);
-	int  AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, int moduleNameStringID);
+	int  AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, const asCString &moduleName);
 
 	bool CanDeleteAllReferences(asCArray<asCModule*> &modules);
 
@@ -237,7 +237,7 @@ public:
 	asCArray<asCScriptFunction *>  globalFunctions;
 	// This array holds imported functions in the module
 	asCArray<asCScriptFunction *>  importedFunctions;
-	asCArray<sBindInfo>            bindInformations;
+	asCArray<sBindInfo *>          bindInformations;
 
 	// This array holds the global variables declared in the script
 	asCArray<asCGlobalProperty *>  scriptGlobals;

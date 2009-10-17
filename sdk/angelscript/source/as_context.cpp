@@ -2099,7 +2099,7 @@ void asCContext::ExecuteNext()
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
 
-			int funcID = module->bindInformations[i&0xFFFF].importedFunction;
+			int funcID = module->bindInformations[i&0xFFFF]->importedFunction;
 			if( funcID == -1 )
 			{
 				SetInternalException(TXT_UNBOUND_FUNCTION);

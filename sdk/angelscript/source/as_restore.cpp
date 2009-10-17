@@ -142,7 +142,7 @@ int asCRestore::Save()
 	for( i = 0; i < count; ++i )
 	{
 		WriteFunction(module->importedFunctions[i]);
-		WRITE_NUM(module->bindInformations[i].importFrom);
+		WriteString(&module->bindInformations[i]->importFromModule);
 	}
 
 	// usedTypes[]
@@ -285,8 +285,10 @@ int asCRestore::Restore()
 		func = ReadFunction(false, false);
 		module->importedFunctions.PushLast(func);
 
-		READ_NUM(module->bindInformations[i].importFrom);
-		module->bindInformations[i].importedFunction = -1;
+		sBindInfo *info = asNEW(sBindInfo);
+		ReadString(&info->importFromModule);
+		info->importedFunction = -1;
+		module->bindInformations[i] = info;
 	}
 	
 	// usedTypes[]

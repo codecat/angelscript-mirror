@@ -58,9 +58,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.17.1
-#define ANGELSCRIPT_VERSION        21701
-#define ANGELSCRIPT_VERSION_STRING "2.17.1"
+//! \details Version 2.17.2
+#define ANGELSCRIPT_VERSION        21702
+#define ANGELSCRIPT_VERSION_STRING "2.17.2"
 
 // Data types
 
@@ -203,6 +203,8 @@ enum asEBehaviours
 	asBEHAVE_IMPLICIT_REF_CAST,
 	//! \brief operator []
 	asBEHAVE_INDEX,
+	//! \brief Callback for validating template instances
+	asBEHAVE_TEMPLATE_CALLBACK,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,

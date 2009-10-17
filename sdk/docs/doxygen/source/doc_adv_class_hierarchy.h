@@ -1,6 +1,6 @@
 /**
 
-\page doc_adv_class_hierarchy Registering class hierarchies
+\page doc_adv_class_hierarchy Class hierarchies
 
 AngelScript cannot automatically determine relationships between registered classes, so in 
 order to establish the hierarchies for use within the script language it is necessary

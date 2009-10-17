@@ -1,13 +1,13 @@
 /**
 
-\page doc_adv_template Registering template types
+\page doc_adv_template Template types
 
 A template type in AngelScript works similarly to how templates work in C++. The scripts 
 will be able to instanciate different forms of the template type by specifying which subtype 
 that should be used. The methods for the instance will then be adapted to this subtype, so
 that the correct handling of parameters and return types will be applied.
 
-The implementation of the template type is however not a C++ template, instead it must 
+The implementation of the template type is not a C++ template though, instead it must 
 be implemented as a generic class that can determine what to do dynamically at runtime based
 on the subtype for which it was instanciated. This is obviously a lot less efficient than
 having specific implementations for each type, and for that reason AngelScript permits the
@@ -23,8 +23,8 @@ with a few differences. The name of the type is formed by the name of the templa
 the name of the subtype with angle brackets. The type flag asOBJ_TEMPLATE must also be used.
 
 \code
-  // Register the template type
-  r = engine->RegisterObjectType("myTemplate<class T>", 0, asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
+// Register the template type
+r = engine->RegisterObjectType("myTemplate<class T>", 0, asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
 \endcode
 
 The template type doesn't have to be \ref doc_gc_object "garbage collected", but since you may not know 
@@ -40,8 +40,8 @@ as a hidden first parameter. When registering the factory this hidden parameter 
 for example as <tt>int &amp;in</tt>.
 
 \code
-  // Register the factory behaviour
-  r = engine->RegisterObjectBehaviour("myTemplate<T>", asBEHAVE_FACTORY, "myTemplate<T>@ f(int&in)", asFUNCTIONPR(myTemplateFactory, (asIObjectType*), myTemplate*), asCALL_CDECL); assert( r >= 0 );
+// Register the factory behaviour
+r = engine->RegisterObjectBehaviour("myTemplate<T>", asBEHAVE_FACTORY, "myTemplate<T>@ f(int&in)", asFUNCTIONPR(myTemplateFactory, (asIObjectType*), myTemplate*), asCALL_CDECL); assert( r >= 0 );
 \endcode
 
 Remember that since the subtype must be determined dynamically at runtime, it is not possible to declare
@@ -49,10 +49,44 @@ functions to receive the subtype by value, nor to return it by value. Instead yo
 methods and behaviours to take the type by reference. It is possible to use object handles, but then
 the script engine won't be able to instanciate the template type for primitives and other values types.
 
-
-
-
 \see \ref doc_addon_array
+
+\section doc_adv_template_4 Validating template instantiations at compile time
+
+In order to avoid unnecessary runtime validations of invalid template instantiations, the application 
+should preferably register the \ref asBEHAVE_TEMPLATE_CALLBACK behaviour. This is a special behaviour function
+that the script engine will invoke everytime a new template instance type is generated. The callback
+function can then perform necessary validations to verify if the type can be handled, and if not tell
+the engine that the instance isn't supported. 
+
+The callback function must be a global function that receives an asIObjectType pointer, and should return 
+a boolean. If the template instance is valid the return value should be true.
+
+\code
+// Register the template callback
+r = engine->RegisterObjectBehaviour("myTemplate<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int &in)", asFUNCTION(myTemplateCallback), asCALL_CDECL); assert( r >= 0 );
+\endcode
+
+Here's an example callback function:
+
+\code
+bool myTemplateCallback(asIObjectType *ot)
+{
+  // This template will only support primitive types
+  int typeId = ot->GetSubTypeId();
+  if( typeId & asTYPEID_MASK_OBJECT )
+  {
+    // The script is attempting to instantiate the 
+    // template with an object type, this is not allowed.
+    return false;
+  }
+    
+  // Primitive types are allowed
+  return true;
+}
+\endcode
+
+
 
 \section doc_adv_template_2 Template specializations
 
@@ -65,11 +99,11 @@ having different method names or behaviours for the template type and template s
 With the exception of the type name, a template specialization is registered exactly like a \ref doc_register_type "normal type". 
 
 \code
-  // Register a template specialization for the float subtype
-  r = engine->RegisterObjectType("myTemplate<float>", 0, asOBJ_REF); assert( r >= 0 );
+// Register a template specialization for the float subtype
+r = engine->RegisterObjectType("myTemplate<float>", 0, asOBJ_REF); assert( r >= 0 );
   
-  // Register the factory (there are no hidden parameters for specializations)
-  r = engine->RegisterObjectBehaviour("myTemplate<float>", asBEHAVE_FACTORY, "myTemplate<float>@ f()", asFUNCTION(myTemplateFloatFactory, (), myTemplateFloat*), asCALL_CDECL); assert( r >= 0 );
+// Register the factory (there are no hidden parameters for specializations)
+r = engine->RegisterObjectBehaviour("myTemplate<float>", asBEHAVE_FACTORY, "myTemplate<float>@ f()", asFUNCTION(myTemplateFloatFactory, (), myTemplateFloat*), asCALL_CDECL); assert( r >= 0 );
 \endcode
 
 
@@ -83,9 +117,6 @@ With the exception of the type name, a template specialization is registered exa
    
  - Only one template subtype can be used at the moment.
  
- - The template subtype isn't validated at the moment the script is compiled, thus it necessary
-   to perform runtime checks, and possibly raise script exceptions if the subtype cannot be
-   handled by the type.
 
 
 */
