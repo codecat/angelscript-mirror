@@ -66,17 +66,49 @@ generic calling convention that can be used for example when native calling conv
 All functions and behaviours must be registered with the \ref asCALL_CDECL, \ref asCALL_STDCALL, \ref asCALL_THISCALL, or 
 \ref asCALL_GENERIC flags to tell AngelScript which calling convention the application function uses. The special conventions 
 \ref asCALL_CDECL_OBJLAST and \ref asCALL_CDECL_OBJFIRST can also be used wherever asCALL_THISCALL is accepted, in order to 
-simulate a class method through a global function. If the incorrect calling convention is given on the registration you'll very 
-likely see the application crash with a stack corruption whenever the script engine calls the function.
+simulate a class method through a global function. 
 
-cdecl is the default calling convention for all global functions in C++ programs, so if in doubt try with asCALL_CDECL first. 
-The calling convention only differs from cdecl if the function is explicitly declared to use a different convention, or if you've
-set the compiler options to default to another convention.
+If the incorrect calling convention is given on the registration you'll very likely see the application crash with 
+a stack corruption whenever the script engine calls the function. cdecl is the default calling convention for all global 
+functions in C++ programs, so if in doubt try with asCALL_CDECL first. The calling convention only differs from cdecl if the 
+function is explicitly declared to use a different convention, or if you've set the compiler options to default to another
+convention.
 
 For class methods there is only the thiscall convention, except when the method is static, as those methods are in truth global
-functions in the class namespace.
+functions in the class namespace. Normal methods, virtual methods, and methods for classes with multiple inheritance are all
+registered the same way, with asCALL_THISCALL. Classes with \ref doc_register_func_4 "virtual inheritance are not supported natively".
 
 \see \ref doc_generic
+
+
+
+\section doc_register_func_4 Virtual inheritance is not supported
+
+Registering class methods for classes with virtual inheritance is not supported due to the high complexity involved with them. 
+Each compiler implements the method pointers for these classes differently, and keeping the code portable would be very difficult.
+This is not a great loss though, as classes with virtual inheritance are relatively rare, and it is easy to write simple proxy 
+functions where the classes to exist. 
+
+\code
+class A { void SomeMethodA(); };
+class B : virtual A {};
+class C : virtual A {};
+class D : public B, public C {};
+
+// Need a proxy function for registering SomeMethodA for class D
+void D_SomeMethodA_proxy(D *d)
+{
+  // The C++ compiler will resolve the virtual method for us
+  d->SomeMethodA();
+}
+
+// Register the global function as if it was a class method, 
+// but with calling convention asCALL_CDECL_OBJLAST
+engine->RegisterObjectMethod("D", "void SomeMethodA()", asFUNCTION(D_SomeMethodA_proxy), asCALL_CDECL_OBJLAST);
+\endcode
+
+If you have a lot of classes with virtual inheritance, you should probably think about writing a template proxy function, so
+you don't have to manually write all the proxy functions. 
 
 
 
