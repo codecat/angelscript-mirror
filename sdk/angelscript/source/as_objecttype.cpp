@@ -340,6 +340,7 @@ int asCObjectType::GetBehaviourCount() const
 	if( beh.gcGetFlag )              count++;
 	if( beh.gcEnumReferences )       count++;
 	if( beh.gcReleaseAllReferences ) count++; 
+	if( beh.templateCallback )       count++;
 
 	count += (int)beh.constructors.GetLength();
 	count += (int)beh.operators.GetLength() / 2;
@@ -398,6 +399,12 @@ int asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_RELEASEREFS;
 		return beh.gcReleaseAllReferences;
+	}
+
+	if( beh.templateCallback && count++ == (int)index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_TEMPLATE_CALLBACK;
+		return beh.templateCallback;
 	}
 
 	if( index - count < beh.constructors.GetLength() )

@@ -44,8 +44,8 @@
 #ifndef ANGELSCRIPT_C_H
 #define ANGELSCRIPT_C_H
 
-#define ANGELSCRIPT_VERSION        21701
-#define ANGELSCRIPT_VERSION_STRING "2.17.1"
+#define ANGELSCRIPT_VERSION        21702
+#define ANGELSCRIPT_VERSION_STRING "2.17.2"
 
 #ifdef AS_USE_NAMESPACE
  #define BEGIN_AS_NAMESPACE namespace AngelScript {
@@ -92,7 +92,8 @@ typedef enum
 	asEP_BUILD_WITHOUT_LINE_CUES      = 8,
 	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9,
 	asEP_REQUIRE_ENUM_SCOPE           = 10,
-	asEP_SCRIPT_SCANNER               = 11
+	asEP_SCRIPT_SCANNER               = 11,
+	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12
 } asEEngineProp;
 
 // Calling conventions
@@ -150,6 +151,7 @@ typedef enum
 	asBEHAVE_REF_CAST,
 	asBEHAVE_IMPLICIT_REF_CAST,
 	asBEHAVE_INDEX,
+	asBEHAVE_TEMPLATE_CALLBACK,
 
 	// Garbage collection behaviours
 	asBEHAVE_FIRST_GC,
