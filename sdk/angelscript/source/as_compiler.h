@@ -65,13 +65,14 @@ struct asSDeferredParam
 
 struct asSExprContext
 {
-	asSExprContext(asCScriptEngine *engine) : bc(engine) {exprNode = 0; origExpr = 0; property_get = 0; property_set = 0;}
+	asSExprContext(asCScriptEngine *engine) : bc(engine) {exprNode = 0; origExpr = 0; property_get = 0; property_set = 0; }
 
 	asCByteCode bc;
 	asCTypeInfo type;
 	int  property_get;
 	int  property_set;
 	bool property_const; // If the object that is being accessed through property accessor is read-only
+	bool property_handle; // If the property accessor is called on an object stored in a handle
 	asCArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;
 	asSExprContext *origExpr;

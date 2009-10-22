@@ -9,6 +9,7 @@ bool Test()
 	bool fail = false;
 	int r;
 	CBufferedOutStream bout;
+	COutStream out;
 	asIScriptModule *mod;
  	asIScriptEngine *engine;
 	
@@ -644,6 +645,28 @@ bool Test()
 	//       shouldn't find any if the function being compiler is the property accessor itself
 
 	engine->Release();
+
+	// Test property accessor on temporary object handle
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		const char *script = "class Obj { void set_opacity(float v) {} }\n"
+			                 "Obj @GetObject() { return @Obj(); } \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		r = engine->ExecuteString(0, "GetObject().opacity = 1.0f;");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;

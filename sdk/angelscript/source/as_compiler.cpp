@@ -1366,6 +1366,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		args[n]->property_get = expr.property_get;
 		args[n]->property_set = expr.property_set;
 		args[n]->property_const = expr.property_const;
+		args[n]->property_handle = expr.property_handle;
 		args[n]->exprNode = arg;
 
 		n--;
@@ -4901,9 +4902,11 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		}
 
 		MergeExprContexts(ctx, lctx);
+		ctx->type = lctx->type;
 		ctx->property_get = lctx->property_get;
 		ctx->property_set = lctx->property_set;
 		ctx->property_const = lctx->property_const;
+		ctx->property_handle = lctx->property_handle;
 
 		return ProcessPropertySetAccessor(ctx, rctx, opNode);
 	}
@@ -5455,8 +5458,6 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	asCScriptNode *pnode = vnode->next;
 	while( pnode )
 	{
-		// TODO: getset: Previous value is accessed as get
-
 		r = CompileExpressionPostOp(pnode, &v); if( r < 0 ) return r;
 		pnode = pnode->next;
 	}
@@ -5465,8 +5466,6 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	pnode = vnode->prev;
 	while( pnode )
 	{
-		// TODO: getset: Previous value is accessed as get
-
 		r = CompileExpressionPreOp(pnode, &v); if( r < 0 ) return r;
 		pnode = pnode->prev;
 	}
@@ -5478,6 +5477,7 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	ctx->property_get = v.property_get;
 	ctx->property_set = v.property_set;
 	ctx->property_const = v.property_const;
+	ctx->property_handle = v.property_handle;
 
 	return 0;
 }
@@ -5537,6 +5537,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 						ctx->property_get = access.property_get;
 						ctx->property_set = access.property_set;
 						ctx->property_const = access.property_const;
+						ctx->property_handle = access.property_handle;
 
 						found = true;
 					}
@@ -7199,14 +7200,22 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		else
 			ctx->property_const = false;
 
+		// If the object is a handle then we need to remember that
+		ctx->property_handle = ctx->type.dataType.IsObjectHandle();
+
 		asCDataType dt;
 		if( getId )
 			dt = engine->scriptFunctions[getId]->returnType;
 		else
 			dt = engine->scriptFunctions[setId]->parameterTypes[0];
 
-		// TODO: getset: What do we do about variable offsets, temporary variable, etc?
+		// Just change the type, the context must still maintain information 
+		// about previous variable offset and the indicator of temporary variable.
+		int offset = ctx->type.stackOffset;
+		bool isTemp = ctx->type.isTemporary;
 		ctx->type.Set(dt);
+		ctx->type.stackOffset = offset;
+		ctx->type.isTemporary = isTemp;
 
 		return 1;
 	}
@@ -7229,6 +7238,8 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	asCTypeInfo objType = ctx->type;
 	asCScriptFunction *func = engine->scriptFunctions[ctx->property_set];
 	ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
+	if( ctx->property_handle )
+		ctx->type.dataType.MakeHandle(true);
 	ctx->type.dataType.MakeReference(true);
 
 	// Don't allow the call if the object is read-only and the property accessor is not const
@@ -7287,6 +7298,7 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 	asCTypeInfo objType = ctx->type;
 	asCScriptFunction *func = engine->scriptFunctions[ctx->property_get];
 	ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
+	if( ctx->property_handle ) ctx->type.dataType.MakeHandle(true);
 	ctx->type.dataType.MakeReference(true);
 
 	// Don't allow the call if the object is read-only and the property accessor is not const
@@ -7860,6 +7872,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 		orig->property_get = arg->property_get;
 		orig->property_set = arg->property_set;
 		orig->property_const = arg->property_const;
+		orig->property_handle = arg->property_handle;
 
 		arg->origExpr = orig;
 	}
@@ -7868,6 +7881,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	e.property_get = arg->property_get;
 	e.property_set = arg->property_set;
 	e.property_const = arg->property_const;
+	e.property_handle = arg->property_handle;
 	PrepareArgument(paramType, &e, arg->exprNode, isFunction, refType, reservedVars);
 	arg->type = e.type;
 	ctx->bc.AddCode(&e.bc);
