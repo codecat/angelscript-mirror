@@ -1,5 +1,6 @@
 #include <iostream>  // cout
 #include <assert.h>  // assert()
+#include <string.h>  // strstr()
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
 #include "../../../add_on/contextmgr/contextmgr.h"

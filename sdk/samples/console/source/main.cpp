@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <string.h> // strstr()
 #include <assert.h>
 #include <math.h>
 #include <angelscript.h>

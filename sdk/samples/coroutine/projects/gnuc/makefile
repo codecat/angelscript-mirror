@@ -5,10 +5,9 @@ CXXFLAGS = -ggdb -I../../../../angelscript/include -D_LINUX_
 SRCDIR = ../../source
 OBJDIR = obj
 
-SRCNAMES = \
-  main.cpp
+SRCNAMES =   main.cpp
 
-OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptstring.o
+OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptstring.o obj/contextmgr.o obj/scriptany.o
 BIN = ../../bin/coroutine
 DELETER = rm -f
 
@@ -23,6 +22,12 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/contextmgr.o: ../../../../add_on/contextmgr/contextmgr.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptany.o: ../../../../add_on/scriptany/scriptany.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:

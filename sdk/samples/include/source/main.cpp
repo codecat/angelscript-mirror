@@ -4,6 +4,7 @@
 
 #include <iostream>  // cout
 #include <assert.h>  // assert()
+#include <string.h>  // strstr()
 #ifdef _LINUX_
 	#include <sys/time.h>
 	#include <stdio.h>
