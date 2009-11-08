@@ -2745,6 +2745,9 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 		exec->AddRef();
 	}
 
+	// Make sure the context isn't holding a reference to the previous ExecuteString function()
+	exec->Unprepare();
+
 	// Get the module to compile the string in
 	asCModule *mod = GetModule(module, true);
 

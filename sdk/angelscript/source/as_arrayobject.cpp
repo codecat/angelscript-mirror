@@ -44,14 +44,25 @@ struct sArrayBuffer
 	asBYTE  data[1];
 };
 
-asCArrayObject* ArrayObjectFactory(asIObjectType *ot)
-{
-	return asNEW(asCArrayObject)(0, ot);
-}
-
 static asCArrayObject* ArrayObjectFactory2(asIObjectType *ot, asUINT length)
 {
-	return asNEW(asCArrayObject)(length, ot);
+	asCArrayObject *a = asNEW(asCArrayObject)(length, ot);
+
+	// It's possible the constructor raised a script exception, in which case we 
+	// need to free the memory and return null instead, else we get a memory leak.
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
+	{
+		asDELETE(a, asCArrayObject);
+		return 0;
+	}
+
+	return a;
+}
+
+asCArrayObject* ArrayObjectFactory(asIObjectType *ot)
+{
+	return ArrayObjectFactory2(ot, 0);
 }
 
 #ifndef AS_MAX_PORTABILITY
@@ -225,7 +236,7 @@ asCArrayObject &asCArrayObject::operator=(asCArrayObject &other)
 
 		// Copy all elements from the other array
 		CreateBuffer(&buffer, other.buffer->numElements);
-		CopyBuffer(buffer, other.buffer);	
+		CopyBuffer(buffer, other.buffer);
 	}
 
 	return *this;
@@ -250,9 +261,7 @@ asCArrayObject::asCArrayObject(asUINT length, asIObjectType *ot)
 	gcFlag = false;
 	objType = ot;
 	objType->AddRef();
-
-	if( objType->GetFlags() & asOBJ_GC )
-		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType->GetTypeId());
+	buffer = 0;
 
 	// Determine element size
 	// TODO: Should probably store the template sub type id as well
@@ -268,7 +277,18 @@ asCArrayObject::asCArrayObject(asUINT length, asIObjectType *ot)
 
 	isArrayOfHandles = typeId & asTYPEID_OBJHANDLE ? true : false;
 
+	// Make sure the array size isn't too large for us to handle
+	if( !CheckMaxSize(length) )
+	{
+		// Don't continue with the initialization
+		return;
+	}
+
 	CreateBuffer(&buffer, length);
+
+	// Notify the GC of the successful creation
+	if( objType->GetFlags() & asOBJ_GC )
+		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType->GetTypeId());
 }
 
 asCArrayObject::~asCArrayObject()
@@ -296,6 +316,13 @@ void asCArrayObject::Resize(asUINT numElements)
 	// Don't do anything if the size is already correct
 	if( numElements == buffer->numElements )
 		return;
+
+	// Make sure the array size isn't too large for us to handle
+	if( !CheckMaxSize(numElements) )
+	{
+		// Don't resize the array
+		return;
+	}
 
 	sArrayBuffer *newBuffer;
 	int typeId = objType->GetSubTypeId();
@@ -335,6 +362,38 @@ void asCArrayObject::Resize(asUINT numElements)
 	userFree(buffer);
 
 	buffer = newBuffer;
+}
+
+// internal
+bool asCArrayObject::CheckMaxSize(asUINT numElements)
+{
+	// This code makes sure the size of the buffer that is allocated 
+	// for the array doesn't overflow and becomes smaller than requested
+
+	asUINT maxSize = 0xFFFFFFFFul - sizeof(sArrayBuffer) + 1;
+	if( objType->GetSubTypeId() & asTYPEID_MASK_OBJECT )
+	{
+		maxSize /= sizeof(void*);
+	}
+	else
+	{
+		maxSize /= elementSize;
+	}
+
+	if( numElements > maxSize )
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx )
+		{
+			// Set a script exception
+			ctx->SetException("Too large array size");
+		}
+
+		return false;
+	}
+
+	// OK
+	return true;
 }
 
 int asCArrayObject::GetArrayTypeId()

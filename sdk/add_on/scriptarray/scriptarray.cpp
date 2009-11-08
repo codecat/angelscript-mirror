@@ -13,14 +13,25 @@ struct SArrayBuffer
 	asBYTE  data[1];
 };
 
-CScriptArray* ScriptArrayFactory(asIObjectType *ot)
-{
-	return new CScriptArray(0, ot);
-}
-
 static CScriptArray* ScriptArrayFactory2(asIObjectType *ot, asUINT length)
 {
-	return new CScriptArray(length, ot);
+	CScriptArray *a = new CScriptArray(length, ot);
+
+	// It's possible the constructor raised a script exception, in which case we 
+	// need to free the memory and return null instead, else we get a memory leak.
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
+	{
+		delete a;
+		return 0;
+	}
+
+	return a;
+}
+
+static CScriptArray* ScriptArrayFactory(asIObjectType *ot)
+{
+	return ScriptArrayFactory2(ot, 0);
 }
 
 // This optional callback is called when the template type is first used by the compiler.
@@ -150,9 +161,7 @@ CScriptArray::CScriptArray(asUINT length, asIObjectType *ot)
 	gcFlag = false;
 	objType = ot;
 	objType->AddRef();
-
-	if( objType->GetFlags() & asOBJ_GC )
-		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType->GetTypeId());
+	buffer = 0;
 
 	// Determine element size
 	// TODO: Should probably store the template sub type id as well
@@ -168,7 +177,18 @@ CScriptArray::CScriptArray(asUINT length, asIObjectType *ot)
 
 	isArrayOfHandles = typeId & asTYPEID_OBJHANDLE ? true : false;
 
+	// Make sure the array size isn't too large for us to handle
+	if( !CheckMaxSize(length) )
+	{
+		// Don't continue with the initialization
+		return;
+	}
+
 	CreateBuffer(&buffer, length);
+
+	// Notify the GC of the successful creation
+	if( objType->GetFlags() & asOBJ_GC )
+		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType->GetTypeId());
 }
 
 CScriptArray::~CScriptArray()
@@ -191,6 +211,13 @@ void CScriptArray::Resize(asUINT numElements)
 	// Don't do anything if the size is already correct
 	if( numElements == buffer->numElements )
 		return;
+
+	// Make sure the array size isn't too large for us to handle
+	if( !CheckMaxSize(numElements) )
+	{
+		// Don't resize the array
+		return;
+	}
 
 	SArrayBuffer *newBuffer;
 	int typeId = objType->GetSubTypeId();
@@ -230,6 +257,38 @@ void CScriptArray::Resize(asUINT numElements)
 	delete[] (asBYTE*)buffer;
 
 	buffer = newBuffer;
+}
+
+// internal
+bool CScriptArray::CheckMaxSize(asUINT numElements)
+{
+	// This code makes sure the size of the buffer that is allocated 
+	// for the array doesn't overflow and becomes smaller than requested
+
+	asUINT maxSize = 0xFFFFFFFFul - sizeof(SArrayBuffer) + 1;
+	if( objType->GetSubTypeId() & asTYPEID_MASK_OBJECT )
+	{
+		maxSize /= sizeof(void*);
+	}
+	else
+	{
+		maxSize /= elementSize;
+	}
+
+	if( numElements > maxSize )
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx )
+		{
+			// Set a script exception
+			ctx->SetException("Too large array size");
+		}
+
+		return false;
+	}
+
+	// OK
+	return true;
 }
 
 asIObjectType *CScriptArray::GetArrayObjectType() const

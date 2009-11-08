@@ -378,6 +378,7 @@ int asCContext::Unprepare()
 		}
 	}
 	stackBlocks.SetLength(0);
+	stackBlockSize = 0;
 	regs.stackFramePointer = 0;
 	regs.stackPointer = 0;
 	stackIndex = 0;
@@ -415,6 +416,10 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 
 	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
 		return asCONTEXT_ACTIVE;
+
+	// Clean the stack if not done before
+	if( status != asEXECUTION_UNINITIALIZED )
+		CleanStack();
 
 	exceptionLine = -1;
 	exceptionFunction = 0;

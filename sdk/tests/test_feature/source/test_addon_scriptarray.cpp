@@ -328,6 +328,36 @@ bool Test()
 
 	engine->Release();
 
+	// Test too large arrays
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine);
+
+		ctx = engine->CreateContext();
+		r = engine->ExecuteString(0, "array<int> a; a.resize(0xFFFFFFFF);", &ctx, asEXECSTRING_USE_MY_CONTEXT);
+		if( r != asEXECUTION_EXCEPTION )
+		{
+			fail = true;
+		}
+		else if( strcmp(ctx->GetExceptionString(), "Too large array size") != 0 )
+		{
+			fail = true;
+		}
+
+		r = engine->ExecuteString(0, "array<int> a(0xFFFFFFFF);", &ctx, asEXECSTRING_USE_MY_CONTEXT);
+		if( r != asEXECUTION_EXCEPTION )
+		{
+			fail = true;
+		}
+		else if( strcmp(ctx->GetExceptionString(), "Too large array size") != 0 )
+		{
+			fail = true;
+		}
+
+		ctx->Release();
+		engine->Release();
+	}
+
 
 	// Success
 	return fail;

@@ -46,6 +46,8 @@ protected:
 	bool           isArrayOfHandles;
 	int            elementSize;
 
+	bool CheckMaxSize(asUINT numElements);
+
 	void CreateBuffer(SArrayBuffer **buf, asUINT numElements);
 	void DeleteBuffer(SArrayBuffer *buf);
 	void CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src);
