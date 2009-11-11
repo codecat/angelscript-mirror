@@ -257,6 +257,13 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.includeJitInstructions = value ? true : false;
 		break;
 
+	case asEP_STRING_ENCODING:
+		if( value <= 1 )
+			ep.stringEncoding = (int)value;
+		else
+			return asINVALID_ARG;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -303,6 +310,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property)
 
 	case asEP_INCLUDE_JIT_INSTRUCTIONS:
 		return ep.includeJitInstructions;
+
+	case asEP_STRING_ENCODING:
+		return ep.stringEncoding;
 	}
 
 	return 0;
@@ -333,8 +343,9 @@ asCScriptEngine::asCScriptEngine()
 	ep.buildWithoutLineCues     = false;
 	ep.initGlobalVarsAfterBuild = true;
 	ep.requireEnumScope         = false;
-	ep.scanner                  = 1;         // utf8
+	ep.scanner                  = 1;         // utf8. 0 = ascii
 	ep.includeJitInstructions   = false;
+	ep.stringEncoding           = 0;         // utf8. 1 = utf16
 
 	gc.engine = this;
 

@@ -2,6 +2,7 @@
 using std::string;
 #include "../../../add_on/scriptstring/scriptstring.h"
 #include "../../../add_on/scripthelper/scripthelper.h"
+#include <vector>
 
 namespace TestScriptString
 {
@@ -148,6 +149,7 @@ void PrintRef(asIScriptGeneric *gen)
 	assert( *ref == "Some String" );
 }
 
+bool TestUTF16();
 bool Test2();
 
 bool Test()
@@ -159,6 +161,7 @@ bool Test()
 	int r;
 
 	fail = Test2() || fail;
+	fail = TestUTF16() || fail;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString(engine);
@@ -551,6 +554,12 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 			
+		// \xFF shall produce the actual value, even if it may not be a correctly encoded Unicode character
+		engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
+		engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false); 
+		r = engine->ExecuteString(0, "assert('\\xFF'[0] == 255)");
+		if( r != asEXECUTION_FINISHED ) fail = true;
+
 		engine->Release();
 	}
 
@@ -597,6 +606,128 @@ bool Test2()
 
 	return fail;
 }
+
+//========================================================================
+
+using namespace std;
+
+vector<asWORD> StringFactoryUTF16(unsigned int byteLength, const asWORD *data)
+{
+	return vector<asWORD>(data, data+byteLength/2);
+}
+
+void StringConstructUTF16(vector<asWORD> *o)
+{
+	new(o) vector<asWORD>();
+}
+
+void StringDestructUTF16(vector<asWORD> *o)
+{
+	o->~vector();
+}
+
+bool TestUTF16()
+{
+	bool fail = false;
+	CBufferedOutStream bout;
+	int r;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	// Set the string encoding to UTF16 (default is UTF8)
+	engine->SetEngineProperty(asEP_STRING_ENCODING, 1);
+
+	// Register our UTF16 string type
+	engine->RegisterObjectType("string", sizeof(std::vector<asWORD>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
+	engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(StringConstructUTF16), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(StringDestructUTF16), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asMETHODPR(vector<asWORD>, operator=, (const vector<asWORD> &), vector<asWORD> &), asCALL_THISCALL);
+
+	engine->RegisterStringFactory("string", asFUNCTION(StringFactoryUTF16), asCALL_CDECL);
+
+	vector<asWORD> str;
+	engine->RegisterGlobalProperty("string s", &str);
+
+	// Test a normal ASCII string
+	r = engine->ExecuteString(0, "s = 'hello'");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( str.size() != 5 || memcmp(&str[0], L"hello", 10) != 0 )
+		fail = true;
+
+	// Test a string with UTF8 scanning above 127 and below 256
+	r = engine->ExecuteString(0, "s = '\xC2\x80'");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( str.size() != 1 || str[0] != 128 )
+		fail = true;
+
+	// Test a string with escape sequence
+	r = engine->ExecuteString(0, "s = '\\n'");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( str.size() != 1 || str[0] != '\n' )
+		fail = true;
+
+	// Test a string with characters above 65535 (requires surrogate pairs)
+	r = engine->ExecuteString(0, "s = '\\U0010FFFFg'");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( str.size() != 3 || str[0] != 0xDBFF || str[1] != 0xDFFF || str[2] != 'g' )
+		fail = true;
+
+	// Test hexadecimal escape sequences
+	r = engine->ExecuteString(0, "s = '\\xFF'");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( str.size() != 1 || str[0] != 0xFF )
+		fail = true;
+
+	r = engine->ExecuteString(0, "s = '\\xFFFg'");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( str.size() != 2 || str[0] != 0xFFF || str[1] != 'g' )
+		fail = true;
+
+	// Test a string with ASCII scanning above 127
+	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
+	r = engine->ExecuteString(0, "s = '\xFF'");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( str.size() != 1 || str[0] != 0xFF )
+		fail = true;
+	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
+
+	// Test incomplete UTF8 encoded chars
+	r = engine->ExecuteString(0, "s = '\xFF'"); 
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( str.size() != 1 || str[0] != 0xFF )
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 5) : Warning : Invalid unicode sequence in source\n" )
+		printf(bout.buffer.c_str());
+
+	// Test heredoc strings
+	r = engine->ExecuteString(0, "s = \"\"\"\xC2\x80\"\"\"");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( str.size() != 1 || str[0] != 128 )
+		fail = true;
+
+	// Test character literals (they shouldn't be affected by the string encoding)
+	engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); 
+	r = engine->ExecuteString(0, "assert('\xC2\x80' == 0x80)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	engine->Release();
+
+	return fail;
+}
+
 
 } // namespace
 

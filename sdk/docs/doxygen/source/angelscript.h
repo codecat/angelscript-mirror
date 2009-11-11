@@ -58,9 +58,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.17.2
-#define ANGELSCRIPT_VERSION        21702
-#define ANGELSCRIPT_VERSION_STRING "2.17.2"
+//! \details Version 2.18.0
+#define ANGELSCRIPT_VERSION        21800
+#define ANGELSCRIPT_VERSION_STRING "2.18.0"
 
 // Data types
 
@@ -104,7 +104,9 @@ enum asEEngineProp
 	//! Select scanning method: 0 - ASCII, 1 - UTF8. Default: 1 (UTF8).
 	asEP_SCRIPT_SCANNER               = 11,
 	//! When set extra bytecode instructions needed for JIT compiled funcions will be included. Default: false.
-	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12
+	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12,
+	//! Select string encoding for literals: 0 - UTF8/ASCII, 1 - UTF16. Default: 1 (UTF8)
+	asEP_STRING_ENCODING              = 13
 };
 
 // Calling conventions
@@ -1054,15 +1056,15 @@ public:
     //!
     //! Use this function to register a string factory that will be called when the 
     //! virtual machine finds a string constant in an expression. The string factory 
-    //! function will receive two parameters, the length of the string constant and a 
+    //! function will receive two parameters, the length of the string constant in bytes and a 
     //! pointer to the character data. The factory should return a value to a previously 
     //! registered type that will represent the string. Example:
     //!
     //! \code
     //! // Our string factory implementation
-    //! std::string StringFactory(unsigned int length, const char *s)
+    //! std::string StringFactory(unsigned int byteLength, const char *s)
     //! {
-    //!     return std::string(s);
+    //!     return std::string(s, byteLength);
     //! }
     //!
     //! // Registering the string factory

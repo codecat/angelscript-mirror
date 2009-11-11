@@ -5844,7 +5844,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 					else if( snode->tokenType == ttHeredocStringConstant )
 					{
 						cat.Assign(&script->code[snode->tokenPos+3], snode->tokenLength-6);
-						ProcessHeredocStringConstant(cat);
+						ProcessHeredocStringConstant(cat, snode);
 					}
 
 					str += cat;
@@ -6012,8 +6012,8 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node)
 	for( asUINT n = 0; n < cstr.GetLength(); n++ )
 	{
 #ifdef AS_DOUBLEBYTE_CHARSET
-		// Double-byte charset is only allowed for ASCII
-		if( (cstr[n] & 0x80) && engine->ep.scanner == 0 )
+		// Double-byte charset is only allowed for ASCII and not UTF16 encoded strings
+		if( (cstr[n] & 0x80) && engine->ep.scanner == 0 && engine->ep.stringEncoding != 1 )
 		{
 			// This is the lead character of a double byte character
 			// include the trail character without checking it's value.
@@ -6024,6 +6024,8 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node)
 		}
 #endif
 
+		asUINT val;
+
 		if( cstr[n] == '\\' )
 		{
 			++n;
@@ -6033,44 +6035,47 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node)
 				return charLiteral;
 			}
 
+			// TODO: Consider deprecating use of hexadecimal escape sequences, 
+			//       as they do not guarantee proper unicode sequences
 			if( cstr[n] == 'x' || cstr[n] == 'X' )
 			{
 				++n;
 				if( n == cstr.GetLength() ) break;
 
-				int val = 0;
-				if( cstr[n] >= '0' && cstr[n] <= '9' )
-					val = cstr[n] - '0';
-				else if( cstr[n] >= 'a' && cstr[n] <= 'f' )
-					val = cstr[n] - 'a' + 10;
-				else if( cstr[n] >= 'A' && cstr[n] <= 'F' )
-					val = cstr[n] - 'A' + 10;
-				else
-					continue;
-
-				++n;
-				if( n == cstr.GetLength() )
+				val = 0;
+				int c = engine->ep.stringEncoding == 1 ? 4 : 2;
+				for( ; c > 0 && n < cstr.GetLength(); c--, n++ )
 				{
-					str.PushLast((char)val);
-					if( charLiteral == -1 ) charLiteral = (unsigned char)val;
-					break;
+					if( cstr[n] >= '0' && cstr[n] <= '9' )
+						val = val*16 +  cstr[n] - '0';
+					else if( cstr[n] >= 'a' && cstr[n] <= 'f' )
+						val = val*16 + cstr[n] - 'a' + 10;
+					else if( cstr[n] >= 'A' && cstr[n] <= 'F' )
+						val = val*16 + cstr[n] - 'A' + 10;
+					else
+						break;
 				}
 
-				if( cstr[n] >= '0' && cstr[n] <= '9' )
-					val = val*16 + cstr[n] - '0';
-				else if( cstr[n] >= 'a' && cstr[n] <= 'f' )
-					val = val*16 + cstr[n] - 'a' + 10;
-				else if( cstr[n] >= 'A' && cstr[n] <= 'F' )
-					val = val*16 + cstr[n] - 'A' + 10;
+				// Rewind one, since the loop will increment it again
+				n--;
+
+				// Hexadecimal escape sequences produce exact value, even if it is not proper unicode chars
+				if( engine->ep.stringEncoding == 0 )
+				{
+					str.PushLast(val);
+				}
 				else
 				{
-					str.PushLast((char)val);
-					if( charLiteral == -1 ) charLiteral = (unsigned char)val;
-					continue;
+#ifndef AS_BIG_ENDIAN
+					str.PushLast(val);
+					str.PushLast(val>>8);
+#else
+					str.PushLast(val>>8);
+					str.PushLast(val);
+#endif
 				}
-
-				str.PushLast((char)val);
-				if( charLiteral == -1 ) charLiteral = (unsigned char)val;
+				if( charLiteral == -1 ) charLiteral = val;
+				continue;
 			}
 			else if( cstr[n] == 'u' || cstr[n] == 'U' )
 			{
@@ -6079,7 +6084,7 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node)
 				bool expect2 = cstr[n] == 'u';
 				int c = expect2 ? 4 : 8;
 
-				asUINT val = 0;
+				val = 0;
 
 				for( ; c > 0; c-- )
 				{
@@ -6103,55 +6108,76 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node)
 					asCString msg;
 					msg.Format(TXT_INVALID_UNICODE_FORMAT_EXPECTED_d, expect2 ? 4 : 8);
 					Warning(msg.AddressOf(), node);
-				}
-				else
-				{
-					char encodedValue[5];
-					int len = asStringEncodeUTF8(val, encodedValue);
-					if( len < 0 )
-					{
-						// Give warning about invalid code point
-						// TODO: Need code position for warning
-						Warning(TXT_INVALID_UNICODE_VALUE, node);
-					}
-					else
-					{
-						// Add the encoded value to the final string
-						str.Concatenate(encodedValue, len);
-						if( charLiteral == -1 ) charLiteral = val;
-					}
+					continue;
 				}
 			}
 			else
 			{
 				if( cstr[n] == '"' )
-					str.PushLast('"');
+					val = '"';
 				else if( cstr[n] == '\'' )
-					str.PushLast('\'');
+					val = '\'';
 				else if( cstr[n] == 'n' )
-					str.PushLast('\n');
+					val = '\n';
 				else if( cstr[n] == 'r' )
-					str.PushLast('\r');
+					val = '\r';
 				else if( cstr[n] == 't' )
-					str.PushLast('\t');
+					val = '\t';
 				else if( cstr[n] == '0' )
-					str.PushLast('\0');
+					val = '\0';
 				else if( cstr[n] == '\\' )
-					str.PushLast('\\');
+					val = '\\';
 				else
 				{
 					// Invalid escape sequence
 					Warning(TXT_INVALID_ESCAPE_SEQUENCE, node);
 					continue;
 				}
-
-				if( charLiteral == -1 ) charLiteral = (unsigned char)str[0];
 			}
 		}
 		else
 		{
-			str.PushLast(cstr[n]);
-			if( charLiteral == -1 ) charLiteral = (unsigned char)cstr[n];
+			if( engine->ep.scanner == 1 && (cstr[n] & 0x80) )
+			{
+				unsigned int len;
+				val = asStringDecodeUTF8(&cstr[n], &len);
+				if( val == 0xFFFFFFFF || len < 0 )
+				{
+					// Incorrect UTF8 encoding. Use only the first byte
+					// TODO: Need code position for warning
+					Warning(TXT_INVALID_UNICODE_SEQUENCE_IN_SRC, node);
+					val = (unsigned char)cstr[n];
+				}
+				else
+					n += len-1;
+			}
+			else
+				val = (unsigned char)cstr[n];
+		}
+
+		// Add the character to the final string
+		char encodedValue[5];
+		int len;
+		if( engine->ep.stringEncoding == 0 )
+		{
+			len = asStringEncodeUTF8(val, encodedValue);
+		}
+		else
+		{
+			len = asStringEncodeUTF16(val, encodedValue);
+		}
+
+		if( len < 0 )
+		{
+			// Give warning about invalid code point
+			// TODO: Need code position for warning
+			Warning(TXT_INVALID_UNICODE_VALUE, node);
+		}
+		else
+		{
+			// Add the encoded value to the final string
+			str.Concatenate(encodedValue, len);
+			if( charLiteral == -1 ) charLiteral = val;
 		}
 	}
 
@@ -6159,7 +6185,7 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node)
 	return charLiteral;
 }
 
-void asCCompiler::ProcessHeredocStringConstant(asCString &str)
+void asCCompiler::ProcessHeredocStringConstant(asCString &str, asCScriptNode *node)
 {
 	// Remove first line if it only contains whitespace
 	asUINT start;
@@ -6204,7 +6230,75 @@ void asCCompiler::ProcessHeredocStringConstant(asCString &str)
 	asCString tmp;
 	tmp.Assign(&str[start], end-start);
 
-	str = tmp;
+	if( engine->ep.scanner == 1 )
+	{
+		str = "";
+
+		// Scan the string for invalid unicode sequences
+		for( unsigned int n = 0; n < tmp.GetLength(); )
+		{
+			asUINT val;
+			if( engine->ep.scanner == 1 && (tmp[n] & 0x80) )
+			{
+				unsigned int len;
+				val = asStringDecodeUTF8(&tmp[n], &len);
+				if( val == 0xFFFFFFFF || len < 0 )
+				{
+					// Incorrect UTF8 encoding. Use only the first byte
+					// TODO: Need code position for warning
+					Warning(TXT_INVALID_UNICODE_SEQUENCE_IN_SRC, node);
+					val = (unsigned char)tmp[n++];
+				}
+				else
+					n += len;
+			}
+			else
+				val = (unsigned char)tmp[n++];
+			
+			// Add the character to the final string
+			char encodedValue[5];
+			int len;
+			if( engine->ep.stringEncoding == 0 )
+			{
+				len = asStringEncodeUTF8(val, encodedValue);
+			}
+			else
+			{
+				len = asStringEncodeUTF16(val, encodedValue);
+			}
+
+			if( len < 0 )
+			{
+				// Give warning about invalid code point
+				// TODO: Need code position for warning
+				Warning(TXT_INVALID_UNICODE_VALUE, node);
+			}
+			else
+			{
+				// Add the encoded value to the final string
+				str.Concatenate(encodedValue, len);
+			}
+		}
+	}
+	else if( engine->ep.stringEncoding == 1 )
+	{
+		str = "";
+
+		// Convert each byte to a word
+		for( unsigned int n = 0; n < tmp.GetLength(); n++ )
+		{
+			unsigned char val = tmp[n];
+#ifndef AS_BIG_ENDIAN
+			str += (char)val;
+			str += (char)0;
+#else
+			str += (char)0;
+			str += (char)val;
+#endif
+		}
+	}
+	else
+		str = tmp;
 }
 
 void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)

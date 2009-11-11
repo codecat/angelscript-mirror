@@ -362,6 +362,7 @@ public:
 		bool requireEnumScope;
 		int  scanner;
 		bool includeJitInstructions;
+		int  stringEncoding;
 	} ep;
 };
 

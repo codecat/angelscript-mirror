@@ -198,7 +198,7 @@ protected:
 	void LineInstr(asCByteCode *bc, size_t pos);
 
 	asUINT ProcessStringConstant(asCString &str, asCScriptNode *node);
-	void ProcessHeredocStringConstant(asCString &str);
+	void ProcessHeredocStringConstant(asCString &str, asCScriptNode *node);
 	int  GetPrecedence(asCScriptNode *op);
 
 	void Error(const char *msg, asCScriptNode *node);

@@ -53,8 +53,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        21702
-#define ANGELSCRIPT_VERSION_STRING "2.17.2"
+#define ANGELSCRIPT_VERSION        21800
+#define ANGELSCRIPT_VERSION_STRING "2.18.0 WIP"
 
 // Data types
 
@@ -85,7 +85,8 @@ enum asEEngineProp
 	asEP_INIT_GLOBAL_VARS_AFTER_BUILD = 9,
 	asEP_REQUIRE_ENUM_SCOPE           = 10,
 	asEP_SCRIPT_SCANNER               = 11,
-	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12
+	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12,
+	asEP_STRING_ENCODING              = 13
 };
 
 // Calling conventions

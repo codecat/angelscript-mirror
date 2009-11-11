@@ -218,4 +218,47 @@ int asStringDecodeUTF8(const char *encodedBuffer, unsigned int *outLength)
 	return -1;
 }
 
+//
+// The function will encode the unicode code point into the outEncodedBuffer, and then
+// return the length of the encoded value. If the input value is not a valid unicode code 
+// point, then the function will return -1.
+//
+// This function is taken from the AngelCode ToolBox.
+//
+int asStringEncodeUTF16(unsigned int value, char *outEncodedBuffer)
+{
+	if( value < 0x10000 )
+	{
+#ifndef AS_BIG_ENDIAN
+		outEncodedBuffer[0] = (value & 0xFF);
+		outEncodedBuffer[1] = ((value >> 8) & 0xFF);
+#else
+		outEncodedBuffer[1] = (value & 0xFF);
+		outEncodedBuffer[2] = ((value >> 8) & 0xFF);
+#endif
+		return 2;
+	}
+	else
+	{
+		value -= 0x10000;
+		int surrogate1 = ((value >> 10) & 0x3FF) + 0xD800;
+		int surrogate2 = (value & 0x3FF) + 0xDC00;
+
+#ifndef AS_BIG_ENDIAN
+		outEncodedBuffer[0] = (surrogate1 & 0xFF);
+		outEncodedBuffer[1] = ((surrogate1 >> 8) & 0xFF);
+		outEncodedBuffer[2] = (surrogate2 & 0xFF);
+		outEncodedBuffer[3] = ((surrogate2 >> 8) & 0xFF);
+#else
+		outEncodedBuffer[1] = (surrogate1 & 0xFF);
+		outEncodedBuffer[0] = ((surrogate1 >> 8) & 0xFF);
+		outEncodedBuffer[3] = (surrogate2 & 0xFF);
+		outEncodedBuffer[2] = ((surrogate2 >> 8) & 0xFF);
+#endif
+
+		return 4;
+	}
+}
+
+
 END_AS_NAMESPACE
