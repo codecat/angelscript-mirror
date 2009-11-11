@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed assert in compiler when accessing property through temporary object (Thanks Scarabus2)
 <li>Fixed crash with too large array sizes, both for built-in array and array add-on (Thanks loboWu)
 <li>Fixed memory leak when an exception occurred in ExecuteString, and another ExecuteString was called afterwards
+<li>Fixed improper re-use of temporary variable by property get accessor when compiling binary operators (Thanks Scarabus2)
 </ul>
 <li>Library
 <ul>

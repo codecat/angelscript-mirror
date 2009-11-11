@@ -105,7 +105,7 @@ enum asEEngineProp
 	asEP_SCRIPT_SCANNER               = 11,
 	//! When set extra bytecode instructions needed for JIT compiled funcions will be included. Default: false.
 	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12,
-	//! Select string encoding for literals: 0 - UTF8/ASCII, 1 - UTF16. Default: 1 (UTF8)
+	//! Select string encoding for literals: 0 - UTF8/ASCII, 1 - UTF16. Default: 0 (UTF8)
 	asEP_STRING_ENCODING              = 13
 };
 

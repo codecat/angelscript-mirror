@@ -668,6 +668,38 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test bug reported by Scarabus2
+	// The bug was an incorrect reusage of temporary variable by the  
+	// property get accessor when compiling a binary operator
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"class Object { \n"
+			"  Object() {rot = 0;} \n"
+			"  void set_rotation(float r) {rot = r;} \n"
+			"  float get_rotation() const {return rot;} \n"
+			"  float rot; } \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		r = engine->ExecuteString(0, "Object obj; \n"
+								     "float elapsed = 1.0f; \n"
+									 "float temp = obj.rotation + elapsed * 1.0f; \n"
+									 "obj.rotation = obj.rotation + elapsed * 1.0f; \n"
+									 "assert( obj.rot == 1 ); \n");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

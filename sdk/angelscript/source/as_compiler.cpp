@@ -8681,6 +8681,16 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	ProcessPropertyGetAccessor(lctx, node);
 	ProcessPropertyGetAccessor(rctx, node);
 
+	// Make sure lctx doesn't end up with a variable used in rctx
+	if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
+	{
+		asCArray<int> vars;
+		rctx->bc.GetVarsUsed(vars);
+		int offset = AllocateVariable(lctx->type.dataType, true);
+		rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
+		ReleaseTemporaryVariable(offset, 0);
+	}
+
 	// Implicitly convert the operands to a number type
 	asCDataType to;
 	if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
@@ -8981,6 +8991,16 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 	ProcessPropertyGetAccessor(lctx, node);
 	ProcessPropertyGetAccessor(rctx, node);
 
+	// Make sure lctx doesn't end up with a variable used in rctx
+	if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
+	{
+		asCArray<int> vars;
+		rctx->bc.GetVarsUsed(vars);
+		int offset = AllocateVariable(lctx->type.dataType, true);
+		rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
+		ReleaseTemporaryVariable(offset, 0);
+	}
+
 	int op = node->tokenType;
 	if( op == ttAmp    || op == ttAndAssign ||
 		op == ttBitOr  || op == ttOrAssign  ||
@@ -9240,6 +9260,16 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	ProcessPropertyGetAccessor(lctx, node);
 	ProcessPropertyGetAccessor(rctx, node);
 
+	// Make sure lctx doesn't end up with a variable used in rctx
+	if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
+	{
+		asCArray<int> vars;
+		rctx->bc.GetVarsUsed(vars);
+		int offset = AllocateVariable(lctx->type.dataType, true);
+		rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
+		ReleaseTemporaryVariable(offset, 0);
+	}
+
 	// Both operands must be of the same type
 
 	// Implicitly convert the operands to a number type
@@ -9364,7 +9394,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 				MergeExprContexts(ctx, lctx);
 				MergeExprContexts(ctx, rctx);
 
-				int a = AllocateVariable(ctx->type.dataType, true);
+				int a = AllocateVariable(asCDataType::CreatePrimitive(ttBool, true), true);
 				int b = lctx->type.stackOffset;
 				int c = rctx->type.stackOffset;
 
@@ -9430,7 +9460,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 			else if( op == ttGreaterThanOrEqual )
 				iT = asBC_TNS;
 
-			int a = AllocateVariable(ctx->type.dataType, true);
+			int a = AllocateVariable(asCDataType::CreatePrimitive(ttBool, true), true);
 			int b = lctx->type.stackOffset;
 			int c = rctx->type.stackOffset;
 
@@ -9553,6 +9583,16 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	// Process the property accessor as get
 	ProcessPropertyGetAccessor(lctx, node);
 	ProcessPropertyGetAccessor(rctx, node);
+
+	// Make sure lctx doesn't end up with a variable used in rctx
+	if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
+	{
+		asCArray<int> vars;
+		rctx->bc.GetVarsUsed(vars);
+		int offset = AllocateVariable(lctx->type.dataType, true);
+		rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
+		ReleaseTemporaryVariable(offset, 0);
+	}
 
 	// Both operands must be booleans
 	asCDataType to;
@@ -9718,6 +9758,16 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	// Process the property accessor as get
 	ProcessPropertyGetAccessor(lctx, node);
 	ProcessPropertyGetAccessor(rctx, node);
+
+	// Make sure lctx doesn't end up with a variable used in rctx
+	if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
+	{
+		asCArray<int> vars;
+		rctx->bc.GetVarsUsed(vars);
+		int offset = AllocateVariable(lctx->type.dataType, true);
+		rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
+		ReleaseTemporaryVariable(offset, 0);
+	}
 
 	// Warn if not both operands are explicit handles
 	if( (node->tokenType == ttEqual || node->tokenType == ttNotEqual) &&
