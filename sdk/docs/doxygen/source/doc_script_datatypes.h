@@ -4,15 +4,12 @@
 
 Note that the host application may add types specific to that application, refer to the application's manual for more information.
 
- - \ref void
- - \ref bool
- - \ref int
- - \ref real
- - \ref arrays
- - \ref objects
- - \ref handles
- - \ref strings
+ - \subpage doc_datatypes_primitives 
+ - \subpage doc_datatypes_arrays
+ - \subpage doc_datatypes_obj
+ - \subpage doc_datatypes_strings
 
+\page doc_datatypes_primitives Primitives
 
 \section void void
 
@@ -70,9 +67,9 @@ infinite, and NaN (Not-a-Number). For <code>float</code> NaN is represented by t
 
 
 
-\section arrays Arrays
+\page doc_datatypes_arrays Arrays
 
-It is also possible to declare array variables by appending the [] brackets to the type.
+It is possible to declare array variables by appending the [] brackets to the type.
 
 When declaring a variable with a type modifier, the type modifier affects the type of all variables in the list.
 Example:
@@ -100,6 +97,10 @@ Each element in the array is accessed with the indexing operator. The indices ar
 
 An array also have two methods. length() allow you to determine how many elements are in the array, and resize() lets you resize the array.
 
+
+
+
+\page doc_datatypes_obj Objects and handles
 
 \section objects Objects
 
@@ -148,12 +149,12 @@ Object handle and array type modifiers can be combined to form handles to arrays
 
 \see \ref doc_script_handle
 
-\section strings Strings
+\page doc_datatypes_strings Strings
 
 Strings are a special type of data that can be used only if the application
 registers support for them. They hold an array of
-bytes. The only limit to how large this array can be is the memory available on
-the computer.
+bytes or 16bit words depending on the application settings. The only limit to how 
+large this array can be is the memory available on the computer.
 
 There are two types of string constants supported in the AngelScript
 language, the normal double quoted string, and the documentation strings,
@@ -190,9 +191,9 @@ byte values that might not be possible to write in your normal editor.
 <tr><td width=80 valign=top><code>\\t</code>&nbsp;  </td>
 <td valign=top width=50>9</td>
 <td valign=top>tab character</td></tr>
-<tr><td width=80 valign=top><code>\\xFF</code>&nbsp;</td>
-<td valign=top width=50>0xFF</td>
-<td valign=top>FF should be exchanged for the hexadecimal number representing the byte value wanted</td></tr>
+<tr><td width=80 valign=top><code>\\xFFFF</code>&nbsp;</td>
+<td valign=top width=50>0xFFFF</td>
+<td valign=top>FFFF should be exchanged for a 1 to 4 digit hexadecimal number representing the value wanted. If the application uses 8bit strings then only values up to 255 is accepted.</td></tr>
 <tr><td width=80 valign=top><code>\\uFFFF</code>&nbsp;</td>
 <td valign=top width=50>0xFFFF</td>
 <td valign=top>FFFF should be exchanged for the hexadecimal number representing the unicode code point</td></tr>
@@ -238,8 +239,9 @@ comments between them the compiler will concatenate them into one constant.
 </pre>
 
 The escape sequences \\u and \\U will add the specified unicode code point as a
-UTF8 encoded sequence. Only valid unicode 5.1 code points are accepted, i.e. code points
-between U+D800 and U+DFFF (reserved for surrogate pairs) or above U+10FFFF are not accepted.
+UTF-8 or UTF-16 encoded sequence depending on the application settings. Only valid unicode 5.1 
+code points are accepted, i.e. code points between U+D800 and U+DFFF (reserved for surrogate pairs) 
+or above U+10FFFF are not accepted.
 
 <sup>1) The application can change the interpretation of single quoted strings by setting an engine 
 property. If this is done the first character in the single quoted string will be interpreted as 

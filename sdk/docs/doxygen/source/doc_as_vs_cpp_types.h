@@ -30,6 +30,17 @@ Primitives in AngelScript have direct matches in C++.
 %**) On 32 bit PowerPC platforms the bool type commonly have the size of 32 bit,
    when compiled on such platforms AngelScript also uses 32 bits for the bool type
 
+\section doc_as_vs_cpp_types_5 Strings
+
+AngelScript expects the application to register its own \ref doc_strings "string type",
+so the string types should match perfectly. 
+
+The char* string type that is so convenient in C++ is however very difficult to use
+in a scripted environment where you do not have full control over how it is used. For that
+reason it is recommended that you wrap any functions that use the char* string type so
+that the string is properly converted to an object that can be safely handled by both
+the application and the script engine, e.g. std::string or another class of your preference.
+
 \section doc_as_vs_cpp_types_2 Arrays
 
 The AngelScript arrays are not directly matched by C++ arrays. The arrays

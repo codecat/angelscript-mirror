@@ -7,6 +7,7 @@ SRCDIR = ../../source
 OBJDIR = obj
 SRCNAMES = \
   as_arrayobject.cpp \
+  as_atomic.cpp \
   as_builder.cpp  \
   as_bytecode.cpp \
   as_callfunc.cpp \
@@ -20,6 +21,7 @@ SRCNAMES = \
   as_context.cpp \
   as_datatype.cpp \
   as_generic.cpp \
+  as_gc.cpp \
   as_memory.cpp \
   as_module.cpp \
   as_objecttype.cpp \

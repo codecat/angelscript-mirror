@@ -6002,7 +6002,7 @@ asCString asCCompiler::GetScopeFromNode(asCScriptNode *node)
 	return scope;
 }
 
-asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node)
+asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, bool processEscapeSequences)
 {
 	int charLiteral = -1;
 
@@ -6026,7 +6026,7 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node)
 
 		asUINT val;
 
-		if( cstr[n] == '\\' )
+		if( processEscapeSequences && cstr[n] == '\\' )
 		{
 			++n;
 			if( n == cstr.GetLength() )
@@ -6230,75 +6230,9 @@ void asCCompiler::ProcessHeredocStringConstant(asCString &str, asCScriptNode *no
 	asCString tmp;
 	tmp.Assign(&str[start], end-start);
 
-	if( engine->ep.scanner == 1 )
-	{
-		str = "";
+	ProcessStringConstant(tmp, node, false);
 
-		// Scan the string for invalid unicode sequences
-		for( unsigned int n = 0; n < tmp.GetLength(); )
-		{
-			asUINT val;
-			if( engine->ep.scanner == 1 && (tmp[n] & 0x80) )
-			{
-				unsigned int len;
-				val = asStringDecodeUTF8(&tmp[n], &len);
-				if( val == 0xFFFFFFFF || len < 0 )
-				{
-					// Incorrect UTF8 encoding. Use only the first byte
-					// TODO: Need code position for warning
-					Warning(TXT_INVALID_UNICODE_SEQUENCE_IN_SRC, node);
-					val = (unsigned char)tmp[n++];
-				}
-				else
-					n += len;
-			}
-			else
-				val = (unsigned char)tmp[n++];
-			
-			// Add the character to the final string
-			char encodedValue[5];
-			int len;
-			if( engine->ep.stringEncoding == 0 )
-			{
-				len = asStringEncodeUTF8(val, encodedValue);
-			}
-			else
-			{
-				len = asStringEncodeUTF16(val, encodedValue);
-			}
-
-			if( len < 0 )
-			{
-				// Give warning about invalid code point
-				// TODO: Need code position for warning
-				Warning(TXT_INVALID_UNICODE_VALUE, node);
-			}
-			else
-			{
-				// Add the encoded value to the final string
-				str.Concatenate(encodedValue, len);
-			}
-		}
-	}
-	else if( engine->ep.stringEncoding == 1 )
-	{
-		str = "";
-
-		// Convert each byte to a word
-		for( unsigned int n = 0; n < tmp.GetLength(); n++ )
-		{
-			unsigned char val = tmp[n];
-#ifndef AS_BIG_ENDIAN
-			str += (char)val;
-			str += (char)0;
-#else
-			str += (char)0;
-			str += (char)val;
-#endif
-		}
-	}
-	else
-		str = tmp;
+	str = tmp;
 }
 
 void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
@@ -8436,6 +8370,20 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 		if( lctx->type.dataType.IsReference() ) ConvertToVariableNotIn(lctx, rctx);
 		if( rctx->type.dataType.IsReference() ) ConvertToVariableNotIn(rctx, lctx);
 
+		// Process the property get accessors (if any)
+		ProcessPropertyGetAccessor(lctx, node);
+		ProcessPropertyGetAccessor(rctx, node);
+
+		// Make sure lctx doesn't end up with a variable used in rctx
+		if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
+		{
+			asCArray<int> vars;
+			rctx->bc.GetVarsUsed(vars);
+			int offset = AllocateVariable(lctx->type.dataType, true);
+			rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
+			ReleaseTemporaryVariable(offset, 0);
+		}
+
 		// Math operators
 		// + - * / % += -= *= /= %=
 		int op = node->tokenType;
@@ -8676,20 +8624,6 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *ex
 void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext  *rctx, asSExprContext *ctx)
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
-
-	// Process the property accessor as get
-	ProcessPropertyGetAccessor(lctx, node);
-	ProcessPropertyGetAccessor(rctx, node);
-
-	// Make sure lctx doesn't end up with a variable used in rctx
-	if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
-	{
-		asCArray<int> vars;
-		rctx->bc.GetVarsUsed(vars);
-		int offset = AllocateVariable(lctx->type.dataType, true);
-		rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
-		ReleaseTemporaryVariable(offset, 0);
-	}
 
 	// Implicitly convert the operands to a number type
 	asCDataType to;
@@ -8987,20 +8921,6 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
 
-	// Process the property accessor as get
-	ProcessPropertyGetAccessor(lctx, node);
-	ProcessPropertyGetAccessor(rctx, node);
-
-	// Make sure lctx doesn't end up with a variable used in rctx
-	if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
-	{
-		asCArray<int> vars;
-		rctx->bc.GetVarsUsed(vars);
-		int offset = AllocateVariable(lctx->type.dataType, true);
-		rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
-		ReleaseTemporaryVariable(offset, 0);
-	}
-
 	int op = node->tokenType;
 	if( op == ttAmp    || op == ttAndAssign ||
 		op == ttBitOr  || op == ttOrAssign  ||
@@ -9256,20 +9176,6 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 
 void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
-	// Process the property accessor as get
-	ProcessPropertyGetAccessor(lctx, node);
-	ProcessPropertyGetAccessor(rctx, node);
-
-	// Make sure lctx doesn't end up with a variable used in rctx
-	if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
-	{
-		asCArray<int> vars;
-		rctx->bc.GetVarsUsed(vars);
-		int offset = AllocateVariable(lctx->type.dataType, true);
-		rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
-		ReleaseTemporaryVariable(offset, 0);
-	}
-
 	// Both operands must be of the same type
 
 	// Implicitly convert the operands to a number type
@@ -9580,20 +9486,6 @@ void asCCompiler::PushVariableOnStack(asSExprContext *ctx, bool asReference)
 
 void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
-	// Process the property accessor as get
-	ProcessPropertyGetAccessor(lctx, node);
-	ProcessPropertyGetAccessor(rctx, node);
-
-	// Make sure lctx doesn't end up with a variable used in rctx
-	if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
-	{
-		asCArray<int> vars;
-		rctx->bc.GetVarsUsed(vars);
-		int offset = AllocateVariable(lctx->type.dataType, true);
-		rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
-		ReleaseTemporaryVariable(offset, 0);
-	}
-
 	// Both operands must be booleans
 	asCDataType to;
 	to.SetTokenType(ttBool);

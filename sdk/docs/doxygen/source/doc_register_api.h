@@ -12,7 +12,7 @@ scripts.
 For more complex scripts it may be useful to register new \ref doc_register_type "object types" 
 to complement the built-in data types. 
 
-AngelScript doesn't have a built-in string type as there is no de-facto standard for string types 
+AngelScript doesn't have a \ref doc_strings "built-in string type" as there is no de-facto standard for string types 
 in C++. Instead AngelScript permits the application to register its own preferred string type, and 
 a \ref asIScriptEngine::RegisterStringFactory "string factory" that the script engine will use
 to instanciate the strings.

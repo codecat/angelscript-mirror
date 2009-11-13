@@ -189,9 +189,11 @@ void ExceptionCallback(asIScriptContext *ctx, void *param)
 	}
 }
 
+bool Test2();
+
 bool Test()
 {
-	bool fail = false;
+	bool fail = Test2();
 
 	int number = 0;
 
@@ -246,6 +248,61 @@ bool Test()
 	}
 
 	// Success
+	return fail;
+}
+
+//----------------------------------------------
+
+// In this test we'll use the debug functions to update a script parameter directly on the stack
+
+void DebugCall()
+{
+	asIScriptContext *ctx = asGetActiveContext();
+
+	// Get the address of the output parameter
+	void *varPointer = ctx->GetAddressOfVar(0, -1);
+
+	// We got the address to the reference to the handle
+	CScriptString **str = *(CScriptString***)varPointer;
+
+	// Set the handle to point to a new string
+	*str = new CScriptString("test");
+}
+
+bool Test2()
+{
+	bool fail = false;
+	COutStream out;
+	int r;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+	RegisterScriptString(engine);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	engine->RegisterGlobalFunction("void debugCall()", asFUNCTION(DebugCall), asCALL_CDECL);
+
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+	const char *script = 
+		"void func(string@ &out output) \n"
+		"{ \n"
+		"  debugCall(); \n"
+		"  assert( output == 'test' ); \n"
+		"} \n";
+
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
+
+	r = engine->ExecuteString(0, "string @o; func(o); assert( o == 'test' );");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	engine->Release();
+
 	return fail;
 }
 
