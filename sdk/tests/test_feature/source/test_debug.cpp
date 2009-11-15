@@ -271,6 +271,9 @@ void DebugCall()
 
 bool Test2()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		return false;
+
 	bool fail = false;
 	COutStream out;
 	int r;

@@ -1503,6 +1503,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	if( behaviour == asBEHAVE_FACTORY ||
 		behaviour == asBEHAVE_TEMPLATE_CALLBACK )
 	{
+#ifdef AS_MAX_PORTABILITY
+		if( callConv != asCALL_GENERIC )
+			return ConfigError(asNOT_SUPPORTED);
+#endif
 		int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
 		if( r < 0 )
 			return ConfigError(r);

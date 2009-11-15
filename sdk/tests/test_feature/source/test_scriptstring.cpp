@@ -628,6 +628,9 @@ void StringDestructUTF16(vector<asWORD> *o)
 
 bool TestUTF16()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		return false;
+
 	bool fail = false;
 	CBufferedOutStream bout;
 	int r;

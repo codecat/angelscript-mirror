@@ -158,9 +158,8 @@ int number2 = 0;
 COutStream out;
 asIScriptArray* GlobalCharArray = 0;
 
-CScriptString* ArrayToHexStr(asIScriptArray *arr)
+void ArrayToHexStr(asIScriptGeneric *gen)
 {
-  return 0;
 }
 
 asIScriptEngine *ConfigureEngine(int version)
@@ -174,7 +173,7 @@ asIScriptEngine *ConfigureEngine(int version)
 	int r = engine->RegisterGlobalProperty("uint8[] GlobalCharArray", GlobalCharArray); assert( r >= 0 );
 
 	// Register function that use the built-in array type
-	r = engine->RegisterGlobalFunction("string@ ARRAYTOHEX(uint8[] &in)", asFUNCTION(ArrayToHexStr), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("string@ ARRAYTOHEX(uint8[] &in)", asFUNCTION(ArrayToHexStr), asCALL_GENERIC); assert( r >= 0 );
 
 
 	if( version == 1 )
