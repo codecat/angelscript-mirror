@@ -484,7 +484,6 @@ void asCArrayObject::Construct(sArrayBuffer *buf, asUINT start, asUINT end)
 
 void asCArrayObject::Destruct(sArrayBuffer *buf, asUINT start, asUINT end)
 {
-	bool doDelete = true;
 	int typeId = objType->GetSubTypeId();
 	if( typeId & asTYPEID_MASK_OBJECT )
 	{

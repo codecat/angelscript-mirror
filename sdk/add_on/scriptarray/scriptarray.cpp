@@ -379,7 +379,6 @@ void CScriptArray::Construct(SArrayBuffer *buf, asUINT start, asUINT end)
 // internal
 void CScriptArray::Destruct(SArrayBuffer *buf, asUINT start, asUINT end)
 {
-	bool doDelete = true;
 	int typeId = objType->GetSubTypeId();
 	if( typeId & asTYPEID_MASK_OBJECT )
 	{
