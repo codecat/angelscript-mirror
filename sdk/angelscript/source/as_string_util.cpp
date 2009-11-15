@@ -234,7 +234,7 @@ int asStringEncodeUTF16(unsigned int value, char *outEncodedBuffer)
 		outEncodedBuffer[1] = ((value >> 8) & 0xFF);
 #else
 		outEncodedBuffer[1] = (value & 0xFF);
-		outEncodedBuffer[2] = ((value >> 8) & 0xFF);
+		outEncodedBuffer[0] = ((value >> 8) & 0xFF);
 #endif
 		return 2;
 	}

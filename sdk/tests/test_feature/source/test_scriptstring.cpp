@@ -655,7 +655,8 @@ bool TestUTF16()
 	r = engine->ExecuteString(0, "s = 'hello'");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
-	if( str.size() != 5 || memcmp(&str[0], L"hello", 10) != 0 )
+	const unsigned short s[] = {'h','e','l','l','o'};
+	if( str.size() != 5 || memcmp(&str[0], s, 10) != 0 )
 		fail = true;
 
 	// Test a string with UTF8 scanning above 127 and below 256
