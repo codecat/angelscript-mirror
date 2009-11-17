@@ -134,10 +134,6 @@ SOURCE=..\..\..\source\as_callfunc_arm.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_callfunc_armasm.asm
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\source\as_callfunc_mips.cpp
 # End Source File
 # Begin Source File

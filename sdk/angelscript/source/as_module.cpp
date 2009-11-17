@@ -64,7 +64,6 @@ asCModule::asCModule(const char *name, int id, asCScriptEngine *engine)
 	contextCount.set(0);
 	moduleCount.set(0);
 	isGlobalVarInitialized = false;
-	initFunction = 0;
 }
 
 // internal
@@ -223,7 +222,8 @@ int asCModule::CallInit()
 		return asERROR;
 
 	// Each global variable needs to be cleared individually
-	for( asUINT n = 0; n < scriptGlobals.GetLength(); n++ )
+	asUINT n;
+	for( n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
 		if( scriptGlobals[n] )
 		{
@@ -231,17 +231,28 @@ int asCModule::CallInit()
 		}
 	}
 
-	if( initFunction && initFunction->byteCode.GetLength() == 0 ) 
-		return asERROR;
-
-	int id = asFUNC_INIT;
+	// Call the init function for each of the global variables
 	asIScriptContext *ctx = 0;
-	int r = engine->CreateContext(&ctx, true);
-	if( r >= 0 && ctx )
+	int r = 0;
+	for( n = 0; n < scriptGlobals.GetLength() && r == 0; n++ )
 	{
-		r = ((asCContext*)ctx)->PrepareSpecial(id, this);
-		if( r >= 0 )
-			r = ctx->Execute();
+		if( scriptGlobals[n]->initFuncId )
+		{
+			if( ctx == 0 )
+			{
+				r = engine->CreateContext(&ctx, true);
+				if( r < 0 )
+					break;
+			}
+
+			r = ctx->Prepare(scriptGlobals[n]->initFuncId);
+			if( r >= 0 )
+				r = ctx->Execute();
+		}
+	}
+
+	if( ctx )
+	{
 		ctx->Release();
 		ctx = 0;
 	}
@@ -349,11 +360,13 @@ void asCModule::InternalReset()
 	scriptFunctions.SetLength(0);
 	globalFunctions.SetLength(0);
 
-	if( initFunction )
+	// Release the global properties declared in the module
+	for( n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
-		engine->DeleteScriptFunction(initFunction->id);
-		initFunction = 0;
+		engine->ReleaseGlobalProperty(scriptGlobals[n]);
 	}
+	scriptGlobals.SetLength(0);
+
 
 	// Release bound functions
 	for( n = 0; n < bindInformations.GetLength(); n++ )
@@ -379,10 +392,6 @@ void asCModule::InternalReset()
 	}
 	importedFunctions.SetLength(0);
 
-	// Free global variables
-	// TODO: global: Release references
-	globalVarPointers.SetLength(0);
-
 	isBuildWithoutErrors = true;
 	isDiscarded = false;
 
@@ -392,12 +401,9 @@ void asCModule::InternalReset()
 	}
 	stringConstants.SetLength(0);
 
-	// Release the global properties declared in the module
-	for( n = 0; n < scriptGlobals.GetLength(); n++ )
-	{
-		engine->ReleaseGlobalProperty(scriptGlobals[n]);
-	}
-	scriptGlobals.SetLength(0);
+	// Free global variables
+	// TODO: global: Release references
+	globalVarPointers.SetLength(0);
 
 	for( n = 0; n < scriptSections.GetLength(); n++ )
 	{
@@ -892,9 +898,7 @@ asCScriptFunction *asCModule::GetSpecialFunction(int funcID)
 		return importedFunctions[funcID & 0xFFFF];
 	else
 	{
-		if( (funcID & 0xFFFF) == asFUNC_INIT )
-			return initFunction;
-		else if( (funcID & 0xFFFF) == asFUNC_STRING )
+		if( (funcID & 0xFFFF) == asFUNC_STRING )
 		{
 			asASSERT(false);
 		}

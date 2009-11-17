@@ -65,12 +65,13 @@ public:
 class asCGlobalProperty
 {
 public:
-	asCGlobalProperty() { memory = 0; memoryAllocated = false; realAddress = 0; }
+	asCGlobalProperty() { memory = 0; memoryAllocated = false; realAddress = 0; initFuncId = 0; }
 	~asCGlobalProperty() { if( memoryAllocated ) { asDELETEARRAY(memory); } }
 
 	asCString   name;
 	asCDataType type;
 	asUINT      id;
+	asUINT      initFuncId;
 
 	void *GetAddressOfValue() { return (memoryAllocated || realAddress) ? memory : &storage; }
 

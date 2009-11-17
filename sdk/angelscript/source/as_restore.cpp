@@ -124,12 +124,6 @@ int asCRestore::Save()
 		WriteFunction(module->globalFunctions[i]);
 	}
 
-	// initFunction
-	count = module->initFunction ? 1 : 0;
-	WRITE_NUM(count);
-	if( module->initFunction )
-		WriteFunction(module->initFunction);
-
 	// stringConstants[]
 	count = (asUINT)module->stringConstants.GetLength();
 	WRITE_NUM(count);
@@ -259,13 +253,6 @@ int asCRestore::Restore()
 		module->globalFunctions.PushLast(func);
 	}
 
-	// initFunction
-	READ_NUM(count);
-	if( count )
-	{
-		module->initFunction = ReadFunction(false, true);
-	}
-
 	// stringConstants[]
 	READ_NUM(count);
 	module->stringConstants.Allocate(count, 0);
@@ -317,10 +304,11 @@ int asCRestore::Restore()
 		module->globalVarPointers[i] = usedGlobalProperties[(int)(size_t)module->globalVarPointers[i]];
 	}
 
-	if( module->initFunction ) 
-		TranslateFunction(module->initFunction);
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		TranslateFunction(module->scriptFunctions[i]);
+	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
+		if( module->scriptGlobals[i]->initFuncId )
+			TranslateFunction(engine->scriptFunctions[module->scriptGlobals[i]->initFuncId]);
 
 	// Fake building
 	module->isBuildWithoutErrors = true;
@@ -329,12 +317,11 @@ int asCRestore::Restore()
 	engine->PrepareEngine();
 
 	// Add references for all functions
-	if( module->initFunction )
-		module->initFunction->AddReferences();
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
-	{
 		module->scriptFunctions[i]->AddReferences();
-	}
+	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
+		if( module->scriptGlobals[i]->initFuncId )
+			engine->scriptFunctions[module->scriptGlobals[i]->initFuncId]->AddReferences();
 
 	module->CallInit();
 
@@ -811,6 +798,20 @@ void asCRestore::WriteGlobalProperty(asCGlobalProperty* prop)
 	//       properties twice if we merge this with the WriteUsedGlobalProperties. 
 	WriteString(&prop->name);
 	WriteDataType(&prop->type);
+
+	// Store the initialization function
+	if( prop->initFuncId )
+	{
+		bool f = true;
+		WRITE_NUM(f);
+
+		WriteFunction(engine->scriptFunctions[prop->initFuncId]);
+	}
+	else
+	{
+		bool f = false;
+		WRITE_NUM(f);
+	}
 }
 
 void asCRestore::ReadGlobalProperty() 
@@ -821,7 +822,16 @@ void asCRestore::ReadGlobalProperty()
 	ReadString(&name);
 	ReadDataType(&type);
 
-	module->AllocateGlobalProperty(name.AddressOf(), type);
+	asCGlobalProperty *prop = module->AllocateGlobalProperty(name.AddressOf(), type);
+
+	// Read the initialization function
+	bool f;
+	READ_NUM(f);
+	if( f )
+	{
+		asCScriptFunction *func = ReadFunction(false, true);
+		prop->initFuncId = func->id;
+	}
 }
 
 void asCRestore::WriteObjectProperty(asCObjectProperty* prop) 

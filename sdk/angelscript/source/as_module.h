@@ -49,7 +49,7 @@
 
 BEGIN_AS_NAMESPACE
 
-const int asFUNC_INIT   = 0xFFFF;
+// TODO: Remove this when ExecuteString is removed
 const int asFUNC_STRING = 0xFFFE;
 
 const int FUNC_IMPORTED = 0x40000000;
@@ -229,7 +229,6 @@ public:
 	int  moduleId;
 	bool isDiscarded;
 
-	asCScriptFunction             *initFunction;
 	asCArray<asCString *>          scriptSections;
 	// This array holds all functions, class members, factories, etc that were compiled with the module
 	asCArray<asCScriptFunction *>  scriptFunctions;

@@ -975,13 +975,12 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	return 0;
 }
 
+
 void asCBuilder::CompileGlobalVariables()
 {
 	asUINT n;
 
 	bool compileSucceeded = true;
-
-	asCByteCode finalInit(engine);
 
 	// Store state of compilation (errors, warning, output)
 	int currNumErrors = numErrors;
@@ -997,6 +996,8 @@ void asCBuilder::CompileGlobalVariables()
 	engine->SetMessageCallback(asMETHOD(asCOutputBuffer, Callback), &outBuffer, asCALL_THISCALL);
 
 	asCOutputBuffer finalOutput;
+
+	asCArray<asCGlobalProperty*> initOrder;
 
 	// We first try to compile all the primitive global variables, and only after that
 	// compile the non-primitive global variables. This permits the constructors 
@@ -1123,8 +1124,28 @@ void asCBuilder::CompileGlobalVariables()
 						outBuffer.SendToCallback(engine, &msgCallbackFunc, msgCallbackObj);
 				}
 
-				// Add compiled byte code to the final init and exit functions
-				finalInit.AddCode(&init);
+				// Determine order of variable initializations
+				if( gvar->property && !gvar->isEnumValue )
+					initOrder.PushLast(gvar->property);
+
+				if( init.GetSize() > 0 )
+				{
+					// Create the init function for this variable
+					gvar->property->initFuncId = engine->GetNextScriptFunctionId();
+					asCScriptFunction *initFunc = asNEW(asCScriptFunction)(engine,module);
+					initFunc->id = gvar->property->initFuncId;
+					engine->SetScriptFunction(initFunc);
+
+					// Finalize the init function for this variable
+					init.Ret(0);
+					init.Finalize();
+					initFunc->byteCode.SetLength(init.GetSize());
+					init.Output(initFunc->byteCode.AddressOf());
+					initFunc->AddReferences();
+					initFunc->stackNeeded = init.largestStackUsed;
+					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
+					initFunc->funcType = asFUNC_SCRIPT;
+				}
 			}
 			else
 			{
@@ -1166,22 +1187,12 @@ void asCBuilder::CompileGlobalVariables()
 	numWarnings = currNumWarnings;
 	numErrors   = currNumErrors;
 
-	// Register init code and clean up code
-	finalInit.Ret(0);
-
-	finalInit.Finalize();
-
-	int id = engine->GetNextScriptFunctionId();
-	asCScriptFunction *init = asNEW(asCScriptFunction)(engine,module);
-
-	init->id = id;
-	module->initFunction = init;
-	engine->SetScriptFunction(init);
-
-	init->byteCode.SetLength(finalInit.GetSize());
-	finalInit.Output(init->byteCode.AddressOf());
-	init->AddReferences();
-	init->stackNeeded = finalInit.largestStackUsed;
+	// Set the correct order of initialization
+	if( numErrors == 0 )
+	{
+		asASSERT(module->scriptGlobals.GetLength() == initOrder.GetLength());
+		module->scriptGlobals = initOrder;
+	}
 
 	// Convert all variables compiled for the enums to true enum values
 	for( n = 0; n < globVariables.GetLength(); n++ )
@@ -1209,11 +1220,6 @@ void asCBuilder::CompileGlobalVariables()
 		asDELETE(gvar, sGlobalVariableDescription);
 		globVariables[n] = 0;
 	}
-
-#ifdef AS_DEBUG
-	// DEBUG: output byte code
-	finalInit.DebugOutput("__@init.txt", module, engine);
-#endif
 }
 
 void asCBuilder::CompileClasses()

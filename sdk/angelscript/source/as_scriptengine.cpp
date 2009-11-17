@@ -2203,6 +2203,14 @@ void asCScriptEngine::ReleaseGlobalProperty(asCGlobalProperty *prop)
 	{
 		// TODO: global: Should keep track of free slots
 		globalProperties[prop->id] = 0;
+
+		// Free the initialization function
+		if( prop->initFuncId )
+		{
+			DeleteScriptFunction(prop->initFuncId);
+			prop->initFuncId = 0;
+		}
+
 		asDELETE(prop, asCGlobalProperty);
 	}
 }
