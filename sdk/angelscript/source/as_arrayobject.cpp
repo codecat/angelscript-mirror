@@ -264,7 +264,6 @@ asCArrayObject::asCArrayObject(asUINT length, asIObjectType *ot)
 	buffer = 0;
 
 	// Determine element size
-	// TODO: Should probably store the template sub type id as well
 	int typeId = objType->GetSubTypeId();
 	if( typeId & asTYPEID_MASK_OBJECT )
 	{

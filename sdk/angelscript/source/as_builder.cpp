@@ -996,6 +996,7 @@ void asCBuilder::CompileGlobalVariables()
 	engine->SetMessageCallback(asMETHOD(asCOutputBuffer, Callback), &outBuffer, asCALL_THISCALL);
 
 	asCOutputBuffer finalOutput;
+	asCScriptFunction func(engine, module);
 
 	asCArray<asCGlobalProperty*> initOrder;
 
@@ -1023,6 +1024,7 @@ void asCBuilder::CompileGlobalVariables()
 			numWarnings = 0;
 			numErrors = 0;
 			outBuffer.Clear();
+			func.globalVarPointers.SetLength(0);
 
 			sGlobalVariableDescription *gvar = globVariables[n];
 			if( gvar->isCompiled )
@@ -1053,7 +1055,7 @@ void asCBuilder::CompileGlobalVariables()
 					asCDataType saveType;
 					saveType = gvar->datatype;
 					gvar->datatype = asCDataType::CreatePrimitive(ttInt, true);
-					r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar);
+					r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar, &func);
 					gvar->datatype = saveType;
 				}
 				else
@@ -1103,7 +1105,7 @@ void asCBuilder::CompileGlobalVariables()
 			{
 				// Compile the global variable
 				asCCompiler comp(engine);
-				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar);
+				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar, &func);
 				if( r >= 0 )
 				{
 					// Compilation succeeded
@@ -1141,10 +1143,11 @@ void asCBuilder::CompileGlobalVariables()
 					init.Finalize();
 					initFunc->byteCode.SetLength(init.GetSize());
 					init.Output(initFunc->byteCode.AddressOf());
-					initFunc->AddReferences();
 					initFunc->stackNeeded = init.largestStackUsed;
 					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
 					initFunc->funcType = asFUNC_SCRIPT;
+					initFunc->globalVarPointers = func.globalVarPointers;
+					initFunc->AddReferences();
 				}
 			}
 			else
@@ -2075,6 +2078,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	{
 		if( isConstructor )
 		{
+			int factoryId = engine->GetNextScriptFunctionId();
 			if( parameterTypes.GetLength() == 0 )
 			{
 				// Overload the default constructor
@@ -2082,38 +2086,26 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 				objType->beh.constructors[0] = funcID;
 
 				// Register the default factory as well
-				objType->beh.factory = engine->GetNextScriptFunctionId();
-				objType->beh.factories[0] = objType->beh.factory;
-
-				asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
-				module->AddScriptFunction(file->idx, objType->beh.factory, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
-
-				// Add a dummy function to the module so that it doesn't mix up the func Ids
-				functions.PushLast(0);
-
-				// Compile the factory immediately
-				asCCompiler	compiler(engine);
-				compiler.CompileFactory(this, file, engine->scriptFunctions[objType->beh.factory]);
+				objType->beh.factory = factoryId;
+				objType->beh.factories[0] = factoryId;
 			}
 			else
 			{
 				objType->beh.constructors.PushLast(funcID);
 
-				// TODO: This is almost identical to above if block. Should be reduced to common code.
 				// Register the factory as well
-				int factoryId = engine->GetNextScriptFunctionId();
 				objType->beh.factories.PushLast(factoryId);
-
-				asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
-				module->AddScriptFunction(file->idx, factoryId, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
-
-				// Add a dummy function to the module so that it doesn't mix up the fund Ids
-				functions.PushLast(0);
-
-				// Compile the factory immediately
-				asCCompiler compiler(engine);
-				compiler.CompileFactory(this, file, engine->scriptFunctions[factoryId]);
 			}
+
+			asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
+			module->AddScriptFunction(file->idx, factoryId, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
+
+			// Add a dummy function to the module so that it doesn't mix up the fund Ids
+			functions.PushLast(0);
+
+			// Compile the factory immediately
+			asCCompiler compiler(engine);
+			compiler.CompileFactory(this, file, engine->scriptFunctions[factoryId]);
 		}
 		else if( isDestructor )
 			objType->beh.destruct = funcID;

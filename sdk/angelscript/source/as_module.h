@@ -212,13 +212,11 @@ public:
 	asCScriptFunction *GetSpecialFunction(int funcId);
 
 	asCObjectType *GetObjectType(const char *type);
-	asCConfigGroup *GetConfigGroupByGlobalVarPtrIndex(int index);
 
 	int  GetScriptSectionIndex(const char *name);
 	bool CanDelete();
 
 	asCGlobalProperty *AllocateGlobalProperty(const char *name, const asCDataType &dt);
-	int GetGlobalVarPtrIndex(int gvarId);
 
 	asCString name;
 
@@ -240,10 +238,6 @@ public:
 
 	// This array holds the global variables declared in the script
 	asCArray<asCGlobalProperty *>  scriptGlobals;
-
-	// This array holds pointers to all global variables that the functions in the module access.
-	// The byte code holds an index into this table to refer to a global variable.
-	asCArray<void*>                globalVarPointers;
 
 	asCArray<asCString*>           stringConstants;
 

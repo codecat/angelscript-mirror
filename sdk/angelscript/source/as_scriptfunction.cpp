@@ -331,7 +331,7 @@ void asCScriptFunction::AddReferences()
 			if( module )
 			{
 				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
-				asCConfigGroup *group = module->GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
+				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
 				if( group != 0 ) group->AddRef();
 			}
 			break;
@@ -342,7 +342,7 @@ void asCScriptFunction::AddReferences()
 			if( module )
 			{
 				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
-				asCConfigGroup *group = module->GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
+				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
 				if( group != 0 ) group->AddRef();
 			}
 			break;
@@ -400,7 +400,7 @@ void asCScriptFunction::ReleaseReferences()
 			if( module )
 			{
 				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
-				asCConfigGroup *group = module->GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
+				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
 				if( group != 0 ) group->Release();
 			}
 			break;
@@ -411,7 +411,7 @@ void asCScriptFunction::ReleaseReferences()
 			if( module )
 			{
 				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
-				asCConfigGroup *group = module->GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
+				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
 				if( group != 0 ) group->Release();
 			}
 			break;
@@ -525,6 +525,46 @@ asDWORD *asCScriptFunction::GetByteCode(asUINT *length)
 	if( byteCode.GetLength() )
 	{
 		return byteCode.AddressOf();
+	}
+
+	return 0;
+}
+
+// internal
+int asCScriptFunction::GetGlobalVarPtrIndex(int gvarId)
+{
+	void *ptr = engine->globalProperties[gvarId]->GetAddressOfValue();
+
+	// Check if this pointer has been stored already
+	for( int n = 0; n < (signed)globalVarPointers.GetLength(); n++ )
+		if( globalVarPointers[n] == ptr )
+			return n;
+
+	// TODO: global: add reference
+	// Add the new variable to the array
+	globalVarPointers.PushLast(ptr);
+	return (int)globalVarPointers.GetLength()-1;
+}
+
+// internal
+asCConfigGroup *asCScriptFunction::GetConfigGroupByGlobalVarPtrIndex(int index)
+{
+	void *gvarPtr = globalVarPointers[index];
+
+	int gvarId = -1;
+	for( asUINT g = 0; g < engine->registeredGlobalProps.GetLength(); g++ )
+	{
+		if( engine->registeredGlobalProps[g] && engine->registeredGlobalProps[g]->GetAddressOfValue() == gvarPtr )
+		{
+			gvarId = engine->registeredGlobalProps[g]->id;
+			break;
+		}
+	}
+
+	if( gvarId >= 0 )
+	{
+		// Find the config group from the property id
+		return engine->FindConfigGroupForGlobalVar(gvarId);
 	}
 
 	return 0;

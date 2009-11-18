@@ -123,7 +123,7 @@ nomoreargsarmFuncObjLast:
 _armFuncR0ObjLast:
     stmdb   sp!, {r4-r8, lr}
     ldr     r7, [sp,#6*4]
-    str     r7, [sp], #-4
+    str     r7, [sp,#-4]!
 
     mov     r6, r0  // arg table
     movs    r7, r1  // arg size (also set the condition code flags so that we detect if there are no arguments)

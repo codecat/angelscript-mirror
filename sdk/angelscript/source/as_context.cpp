@@ -270,10 +270,10 @@ int asCContext::Prepare(int funcID)
 		// Remove reference to previous module. Add reference to new module
 		if( module ) module->ReleaseContextRef();
 		module = initialFunction->module;
+		regs.globalVarPointers = initialFunction->globalVarPointers.AddressOf();
 		if( module )
 		{
 			module->AddContextRef();
-			regs.globalVarPointers = module->globalVarPointers.AddressOf();
 		}
 
 		// Determine the minimum stack size needed
@@ -429,13 +429,13 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 	if( module ) module->ReleaseContextRef();
 
 	module = mod;
-	regs.globalVarPointers = module->globalVarPointers.AddressOf();
 	module->AddContextRef();
 
 	if( (funcID & 0xFFFF) == asFUNC_STRING )
 		initialFunction = stringFunction;
 	else
 		initialFunction = module->GetSpecialFunction(funcID & 0xFFFF);
+	regs.globalVarPointers = initialFunction->globalVarPointers.AddressOf();
 
 	currentFunction = initialFunction;
 	if( currentFunction == 0 )
@@ -1057,13 +1057,13 @@ int asCContext::Execute()
 					{
 						currentFunction = realFunc;
 						regs.programPointer = currentFunction->byteCode.AddressOf();
+						regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 
 						if( module ) module->ReleaseContextRef();
 						module = currentFunction->module;
 						if( module )
 						{
 							module->AddContextRef();
-							regs.globalVarPointers = module->globalVarPointers.AddressOf();
 						}
 
 						// Set the local objects to 0
@@ -1217,7 +1217,7 @@ void asCContext::PopCallState()
 
 	// TODO: dynamic functions: shouldn't be necessary to keep track of the module
 	module                 = (asCModule*)s[5];
-	regs.globalVarPointers = module->globalVarPointers.AddressOf();
+	regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 
 	callStack.SetLength(callStack.GetLength() - CALLSTACK_FRAME_SIZE);
 }
@@ -1259,7 +1259,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	currentFunction = func;
 	// TODO: dynamic functions: It will not be necessary to keep track of the module when the function holds the global var pointers
 	module = func->module ? func->module : mod;
-	regs.globalVarPointers = module->globalVarPointers.AddressOf();
+	regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 	regs.programPointer = currentFunction->byteCode.AddressOf();
 
 	// Verify if there is enough room in the stack block. Allocate new block if not

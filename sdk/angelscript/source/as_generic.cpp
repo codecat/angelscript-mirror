@@ -485,7 +485,7 @@ void *asCGeneric::GetAddressOfReturnLocation()
 			// but do not initialize it, as the caller will do that.
 			objectRegister = engine->CallAlloc(dt.GetObjectType());
 
-			// TODO: How will we know if the initialization was succesful?
+			// TODO: How will we know if the initialization was successful?
 
 			return objectRegister;
 		}

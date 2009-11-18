@@ -103,9 +103,6 @@ int asCRestore::Save()
 	for( i = 0; i < count; ++i ) 
 		WriteGlobalProperty(module->scriptGlobals[i]);
 
-	// globalVarPointers[]
-	WriteGlobalVarPointers();
-
 	// scriptFunctions[]
 	count = 0;
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
@@ -235,9 +232,6 @@ int asCRestore::Restore()
 		ReadGlobalProperty();
 	}
 
-	// globalVarPointers[]
-	ReadGlobalVarPointers();
-
 	// scriptFunctions[]
 	READ_NUM(count);
 	for( i = 0; i < count; ++i ) 
@@ -295,14 +289,6 @@ int asCRestore::Restore()
 
 	// usedGlobalProperties[]
 	ReadUsedGlobalProps();
-
-	// TODO: global: The module won't have a globalVarPointers anymore, instead each script 
-	//               function has its own array so this should be moved into TranslateFunction
-	// Translate the module->globalVarPointers
-	for( i = 0; i < module->globalVarPointers.GetLength(); i++ )
-	{
-		module->globalVarPointers[i] = usedGlobalProperties[(int)(size_t)module->globalVarPointers[i]];
-	}
 
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		TranslateFunction(module->scriptFunctions[i]);
@@ -506,6 +492,8 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 
 	WRITE_NUM(func->vfTableIdx);
 
+	WriteGlobalVarPointers(func);
+
 	// TODO: Write variables
 
 	// TODO: Store script section index
@@ -575,6 +563,8 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 		engine->SetScriptFunction(func);
 	if( func->objectType )
 		func->ComputeSignatureId();
+
+	ReadGlobalVarPointers(func);
 
 	return func;
 }
@@ -1252,26 +1242,26 @@ void asCRestore::ReadUsedGlobalProps()
 	}
 }
 
-void asCRestore::WriteGlobalVarPointers()
+void asCRestore::WriteGlobalVarPointers(asCScriptFunction *func)
 {
-	int c = (int)module->globalVarPointers.GetLength();
+	int c = (int)func->globalVarPointers.GetLength();
 	WRITE_NUM(c);
 
 	for( int n = 0; n < c; n++ )
 	{
-		void *p = (void*)module->globalVarPointers[n];
+		void *p = (void*)func->globalVarPointers[n];
 
 		int i = FindGlobalPropPtrIndex(p);
 		WRITE_NUM(i);
 	}
 }
 
-void asCRestore::ReadGlobalVarPointers()
+void asCRestore::ReadGlobalVarPointers(asCScriptFunction *func)
 {
 	int c;
 	READ_NUM(c);
 
-	module->globalVarPointers.SetLength(c);
+	func->globalVarPointers.SetLength(c);
 
 	for( int n = 0; n < c; n++ )
 	{
@@ -1279,7 +1269,7 @@ void asCRestore::ReadGlobalVarPointers()
 		READ_NUM(idx);
 
 		// This will later on be translated into the true pointer
-		module->globalVarPointers[n] = (void*)(size_t)idx;
+		func->globalVarPointers[n] = (void*)(size_t)idx;
 	}
 }
 
@@ -1307,8 +1297,9 @@ asCScriptFunction *asCRestore::FindFunction(int idx)
 
 void asCRestore::TranslateFunction(asCScriptFunction *func)
 {
+	asUINT n;
 	asDWORD *bc = func->byteCode.AddressOf();
-	for( asUINT n = 0; n < func->byteCode.GetLength(); )
+	for( n = 0; n < func->byteCode.GetLength(); )
 	{
 		int c = *(asBYTE*)&bc[n];
 		if( c == asBC_FREE ||
@@ -1348,6 +1339,12 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
+	}
+
+	// Translate the globalVarPointers
+	for( n = 0; n < func->globalVarPointers.GetLength(); n++ )
+	{
+		func->globalVarPointers[n] = usedGlobalProperties[(int)(size_t)func->globalVarPointers[n]];
 	}
 }
 

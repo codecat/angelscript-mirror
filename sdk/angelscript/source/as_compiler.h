@@ -95,7 +95,7 @@ public:
 	int CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *script, asCScriptFunction *outFunc);
 	int CompileFactory(asCBuilder *builder, asCScriptCode *script, asCScriptFunction *outFunc);
 	int CompileTemplateFactoryStub(asCBuilder *builder, int trueFactoryId, asCObjectType *objType, asCScriptFunction *outFunc);
-	int CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *expr, sGlobalVariableDescription *gvar);
+	int CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *expr, sGlobalVariableDescription *gvar, asCScriptFunction *outFunc);
 
 	asCByteCode byteCode;
 	asCArray<asCObjectType*> objVariableTypes;

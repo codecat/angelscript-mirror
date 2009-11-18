@@ -579,10 +579,8 @@ int asCByteCode::Optimize()
 	//                 This is especially useful with the factory stubs used for template types and script classes.
 
 	// TODO: optimize: Optimize the release of script objects. Most of the time the instructions PSV and FREE are used for this.
-	//                 We could optimize this to one instruction that frees the object in a variable directly.
+	//                 Need a bytecode BC_FreeV that can free the object stored in a variable directly
 	
-	// TODO: optimize: Need a bytecode BC_FreeV that can free the object stored in a variable directly
-
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
 	cByteInstruction *instr = first;

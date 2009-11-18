@@ -120,7 +120,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			}
 
 			// Add the base offset for multiple inheritance
+#ifdef __GNUC__
+			// On GNUC + ARM the lsb of the offset is used to indicate a virtual function
+			// and the whole offset is thus shifted one bit left to keep the original
+			// offset resolution
+			obj = (void*)(size_t(obj) + (sysFunc->baseOffset>>1));
+#else
 			obj = (void*)(size_t(obj) + sysFunc->baseOffset);
+#endif
 
 			// Skip the object pointer
 			args++;
@@ -170,6 +177,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 
 	context->isCallingSystemFunction = true;
+
 	switch( callConv )
 	{
 	case ICC_CDECL_RETURNINMEM:     // fall through
@@ -185,8 +193,10 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
         retQW = armFuncR0(args, paramSize<<2, (asDWORD)func, (asDWORD) obj);
         break;
     case ICC_THISCALL_RETURNINMEM:
+#ifndef __GNUC__
         retQW = armFuncR0R1(args, paramSize<<2, (asDWORD)func, (asDWORD) obj, (asDWORD) retPointer);
 		break;
+#endif
     case ICC_CDECL_OBJFIRST_RETURNINMEM:
         retQW = armFuncR0R1(args, paramSize<<2, (asDWORD)func, (asDWORD) retPointer, (asDWORD) obj);
 		break;
@@ -198,7 +208,11 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
     case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		// Get virtual function table from the object pointer
 		vftable = *(asDWORD**)obj;
+#ifndef __GNUC__
+        retQW = armFuncR0R1(args, (paramSize+1)<<2, vftable[asDWORD(func)>>2], (asDWORD) retPointer, (asDWORD) obj);
+#else
         retQW = armFuncR0R1(args, (paramSize+1)<<2, vftable[asDWORD(func)>>2], (asDWORD) obj, (asDWORD) retPointer);
+#endif
 		break;
 	case ICC_CDECL_OBJLAST:
 		retQW = armFuncObjLast(args, paramSize<<2, (asDWORD)func, (asDWORD) obj);

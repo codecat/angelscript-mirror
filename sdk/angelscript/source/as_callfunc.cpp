@@ -84,6 +84,13 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 				internal->callConv = ICC_VIRTUAL_THISCALL;
 #endif
 			internal->baseOffset = ( int )MULTI_BASE_OFFSET(ptr);
+#if defined(AS_ARM) && defined(__GNUC__)
+			// As the least significant bit in func is used to switch to THUMB mode
+			// on ARM processors, the LSB in the __delta variable is used instead of
+			// the one in __pfn on ARM processors.
+			if( (size_t(internal->baseOffset) & 1) )
+				internal->callConv = ICC_VIRTUAL_THISCALL;
+#endif
 
 #ifdef HAVE_VIRTUAL_BASE_OFFSET
 			// We don't support virtual inheritance
@@ -177,24 +184,27 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				}
 
 #ifdef THISCALL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_THISCALL ||
-					internal->callConv == ICC_VIRTUAL_THISCALL )
+				if((internal->callConv == ICC_THISCALL ||
+					internal->callConv == ICC_VIRTUAL_THISCALL) &&
+					func->returnType.GetSizeInMemoryDWords() >= THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE)
 				{
 					internal->hostReturnInMemory = true;
 					internal->hostReturnSize     = sizeof(void*)/4;
 				}
 #endif
 #ifdef CDECL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_CDECL         ||
+				if((internal->callConv == ICC_CDECL         ||
 					internal->callConv == ICC_CDECL_OBJLAST ||
-					internal->callConv == ICC_CDECL_OBJFIRST )
+					internal->callConv == ICC_CDECL_OBJFIRST) &&
+					func->returnType.GetSizeInMemoryDWords() >= CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE)
 				{
 					internal->hostReturnInMemory = true;
 					internal->hostReturnSize     = sizeof(void*)/4;
 				}
 #endif
 #ifdef STDCALL_RETURN_SIMPLE_IN_MEMORY
-				if( internal->callConv == ICC_STDCALL )
+				if( internal->callConv == ICC_STDCALL &&
+					func->returnType.GetSizeInMemoryDWords() >= STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE)
 				{
 					internal->hostReturnInMemory = true;
 					internal->hostReturnSize     = sizeof(void*)/4;

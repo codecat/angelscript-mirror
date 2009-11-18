@@ -258,6 +258,12 @@
 // When these constants are defined then the corresponding calling convention always
 // return classes/structs in memory regardless of size or complexity.
 
+// THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+// STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+// CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+// Specifies the minimum size in dwords a class/struct needs to be to be passed in memory
+
+
 // CALLEE_POPS_HIDDEN_RETURN_POINTER
 // This constant should be defined if the callee pops the hidden return pointer,
 // used when returning an object in memory.
@@ -289,6 +295,9 @@
 //------------------------------------------------
 
 #define VALUE_OF_BOOLEAN_TRUE  1
+#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
 
 // Microsoft Visual C++
 #if defined(_MSC_VER) && !defined(__MWERKS__)
@@ -458,12 +467,23 @@
 			#define AS_PPC_64
 		#elif (defined(_ARM_) || defined(__arm__))
 			// The IPhone use an ARM processor
-		    #define AS_ARM
+			#define AS_ARM
+			#define AS_IPHONE
 			#define AS_ALIGN
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 
-			// TODO: Native calling convention on the IPhone is not available yet. Need to adapt
-            //       the code in as_callfunc_armasm.asm to allow GNU's assembler to compile it.
-			#define AS_MAX_PORTABILITY
+			#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+			#define COMPLEX_OBJS_PASSED_BY_REF
+			#undef COMPLEX_MASK
+			#define COMPLEX_MASK asOBJ_APP_CLASS_DESTRUCTOR
 		#else
 			// Unknown CPU type
 			#define AS_MAX_PORTABILITY
@@ -570,7 +590,19 @@
 	#elif defined(ANDROID)
 		#define AS_ANDROID
 		#define AS_NO_ATOMIC
-        
+
+		#define CDECL_RETURN_SIMPLE_IN_MEMORY
+		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+
+		#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+		#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+		#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+
+		#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+		#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+		#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+
 		#if (defined(_ARM_) || defined(__arm__))
 		    #define AS_ARM
 			#define AS_ALIGN

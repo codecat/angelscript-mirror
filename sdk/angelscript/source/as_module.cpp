@@ -401,10 +401,6 @@ void asCModule::InternalReset()
 	}
 	stringConstants.SetLength(0);
 
-	// Free global variables
-	// TODO: global: Release references
-	globalVarPointers.SetLength(0);
-
 	for( n = 0; n < scriptSections.GetLength(); n++ )
 	{
 		asDELETE(scriptSections[n],asCString);
@@ -1191,23 +1187,6 @@ asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asC
 }
 
 // internal
-// TODO: global: This should be local to the script functions
-int asCModule::GetGlobalVarPtrIndex(int gvarId)
-{
-	void *ptr = engine->globalProperties[gvarId]->GetAddressOfValue();
-
-	// Check if this pointer has been stored already
-	for( int n = 0; n < (signed)globalVarPointers.GetLength(); n++ )
-		if( globalVarPointers[n] == ptr )
-			return n;
-
-	// TODO: global: add reference
-	// Add the new variable to the array
-	globalVarPointers.PushLast(ptr);
-	return (int)globalVarPointers.GetLength()-1;
-}
-
-// internal
 void asCModule::ResolveInterfaceIds()
 {
 	// For each of the interfaces declared in the script find identical interface in the engine.
@@ -1526,31 +1505,6 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 
 	return r;
 }
-
-// internal
-asCConfigGroup *asCModule::GetConfigGroupByGlobalVarPtrIndex(int index)
-{
-	void *gvarPtr = globalVarPointers[index];
-
-	int gvarId = -1;
-	for( asUINT g = 0; g < engine->registeredGlobalProps.GetLength(); g++ )
-	{
-		if( engine->registeredGlobalProps[g] && engine->registeredGlobalProps[g]->GetAddressOfValue() == gvarPtr )
-		{
-			gvarId = engine->registeredGlobalProps[g]->id;
-			break;
-		}
-	}
-
-	if( gvarId >= 0 )
-	{
-		// Find the config group from the property id
-		return engine->FindConfigGroupForGlobalVar(gvarId);
-	}
-
-	return 0;
-}
-
 
 END_AS_NAMESPACE
 

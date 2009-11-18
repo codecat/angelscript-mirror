@@ -555,7 +555,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCo
 
 					// Store the returned handle in the global variable
 					ctx.bc.Instr(asBC_RDSPTR);
-					ctx.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(offset));
+					ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(offset));
 					ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
 					ctx.bc.Pop(AS_PTR_SIZE);
 					ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
@@ -575,7 +575,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCo
 		else
 		{
 			if( isGlobalVar )
-				bc->InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(offset));
+				bc->InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(offset));
 			else
 				bc->InstrSHORT(asBC_PSF, (short)offset);
 
@@ -672,9 +672,9 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 	}
 }
 
-int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, sGlobalVariableDescription *gvar)
+int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, sGlobalVariableDescription *gvar, asCScriptFunction *outFunc)
 {
-	Reset(builder, script, 0);
+	Reset(builder, script, outFunc);
 	globalExpression = true;
 
 	// Add a variable scope (even though variables can't be declared)
@@ -731,7 +731,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 						// Store the returned handle in the global variable
 						ctx.bc.Instr(asBC_RDSPTR);
-						ctx.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(gvar->index));
+						ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 						ctx.bc.InstrPTR(asBC_REFCPY, gvar->datatype.GetObjectType());
 						ctx.bc.Pop(AS_PTR_SIZE);
 						ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
@@ -739,7 +739,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					else
 					{
 						// TODO: This reference is open while evaluating the arguments. We must fix this
-						ctx.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(gvar->index));
+						ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 
 						PrepareFunctionCall(funcs[0], &ctx.bc, args);
 						MoveArgsToStack(funcs[0], &ctx.bc, args, false);
@@ -800,7 +800,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				// If it is an enum value that is being compiled, then
 				// we skip this, as the bytecode won't be used anyway
 				if( !gvar->isEnumValue )
-					lctx.bc.InstrWORD(asBC_LDG, (asWORD)builder->module->GetGlobalVarPtrIndex(gvar->index));
+					lctx.bc.InstrWORD(asBC_LDG, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 
 				DoAssignment(&ctx, &lctx, &expr, node, node, ttAssignment, node);
 			}
@@ -815,7 +815,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				if( gvar->datatype.IsObjectHandle() )
 					lexpr.type.isExplicitHandle = true;
 
-				lexpr.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(gvar->index));
+				lexpr.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 
 				// If left expression resolves into a registered type
 				// check if the assignment operator is overloaded, and check
@@ -914,7 +914,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					MergeExprContexts(&ctx, &expr);
 
 					// Add byte code for storing value of expression in variable
-					ctx.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(gvar->index));
+					ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 
 					PerformAssignment(&lexpr.type, &expr.type, &ctx.bc, node);
 
@@ -1826,7 +1826,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 					// Store the returned handle in the global variable
 					ctx.bc.Instr(asBC_RDSPTR);
-					ctx.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(var->stackOffset));
+					ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(var->stackOffset));
 					ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
 					ctx.bc.Pop(AS_PTR_SIZE);
 					ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
@@ -1837,7 +1837,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				if( var->isVariable )
 					ctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
 				else
-					ctx.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(var->stackOffset));
+					ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(var->stackOffset));
 
 				PrepareFunctionCall(funcs[0], &ctx.bc, args);
 				MoveArgsToStack(funcs[0], &ctx.bc, args, false);
@@ -1917,7 +1917,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				if( var->isVariable )
 					lctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
 				else
-					lctx.bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(var->stackOffset));
+					lctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(var->stackOffset));
 				lctx.bc.Instr(asBC_RDSPTR);
 				lctx.bc.Call(asBC_CALLSYS, funcId, 1+AS_PTR_SIZE);
 
@@ -5622,9 +5622,9 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 
 							// Push the address of the variable on the stack
 							if( ctx->type.dataType.IsPrimitive() )
-								ctx->bc.InstrWORD(asBC_LDG, (asWORD)builder->module->GetGlobalVarPtrIndex(prop->id));
+								ctx->bc.InstrWORD(asBC_LDG, (asWORD)outFunc->GetGlobalVarPtrIndex(prop->id));
 							else
-								ctx->bc.InstrWORD(asBC_PGA, (asWORD)builder->module->GetGlobalVarPtrIndex(prop->id));
+								ctx->bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(prop->id));
 						}
 					}
 					else
