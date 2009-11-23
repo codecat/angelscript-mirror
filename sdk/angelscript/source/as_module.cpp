@@ -395,12 +395,6 @@ void asCModule::InternalReset()
 	isBuildWithoutErrors = true;
 	isDiscarded = false;
 
-	for( n = 0; n < stringConstants.GetLength(); n++ )
-	{
-		asDELETE(stringConstants[n],asCString);
-	}
-	stringConstants.SetLength(0);
-
 	for( n = 0; n < scriptSections.GetLength(); n++ )
 	{
 		asDELETE(scriptSections[n],asCString);
@@ -773,34 +767,6 @@ const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId)
 	return typeDefs[index]->name.AddressOf();
 }
 
-
-// internal
-int asCModule::AddConstantString(const char *str, size_t len)
-{
-	// The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
-
-	// TODO: optimize: Improve linear search
-	// Has the string been registered before?
-	for( size_t n = 0; n < stringConstants.GetLength(); n++ )
-	{
-		if( stringConstants[n]->Compare(str, len) == 0 )
-		{
-			return (int)n;
-		}
-	}
-
-	// No match was found, add the string
-	asCString *cstr = asNEW(asCString)(str, len);
-	stringConstants.PushLast(cstr);
-
-	return (int)stringConstants.GetLength() - 1;
-}
-
-// internal
-const asCString &asCModule::GetConstantString(int id)
-{
-	return *stringConstants[id];
-}
 
 // internal
 int asCModule::GetNextImportedFunctionId()

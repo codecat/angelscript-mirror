@@ -267,6 +267,11 @@ public:
 	asCObjectType *GetTemplateInstanceType(asCObjectType *templateType, asCDataType &subType);
 	bool GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCDataType &subType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
 
+	// String constants
+	// TODO: Must free unused string constants, thus the ref count for each must be tracked
+	int              AddConstantString(const char *str, size_t length);
+	const asCString &GetConstantString(int id);
+
 	// Global property management
 	asCGlobalProperty *AllocateGlobalProperty();
 	void AddRefToGlobalProperty(asCGlobalProperty *prop);
@@ -340,6 +345,9 @@ public:
 	void                       *msgCallbackObj;
 
     asIJITCompiler              *jitCompiler;
+
+	// String constants
+	asCArray<asCString*>        stringConstants;
 
 	// User data
 	void *userData;

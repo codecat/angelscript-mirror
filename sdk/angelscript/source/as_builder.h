@@ -116,8 +116,6 @@ protected:
 	friend class asCModule;
 	friend class asCParser;
 
-	const asCString &GetConstantString(int strID);
-
 	asCObjectProperty *GetObjectProperty(asCDataType &obj, const char *prop);
 	asCGlobalProperty *GetGlobalProperty(const char *prop, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue);
 

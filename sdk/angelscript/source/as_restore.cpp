@@ -121,12 +121,6 @@ int asCRestore::Save()
 		WriteFunction(module->globalFunctions[i]);
 	}
 
-	// stringConstants[]
-	count = (asUINT)module->stringConstants.GetLength();
-	WRITE_NUM(count);
-	for( i = 0; i < count; ++i ) 
-		WriteString(module->stringConstants[i]);
-
 	// importedFunctions[] and bindInformations[]
 	count = (asUINT)module->importedFunctions.GetLength();
 	WRITE_NUM(count);
@@ -153,6 +147,9 @@ int asCRestore::Save()
 	// usedGlobalProperties[]
 	WriteUsedGlobalProps();
 
+	// usedStringConstants[]
+	WriteUsedStringConstants();
+
 	// TODO: Store script section names
 
 	return asSUCCESS;
@@ -167,7 +164,6 @@ int asCRestore::Restore()
 	unsigned long i, count;
 
 	asCScriptFunction* func;
-	asCString *cstr;
 
 	// Read enums
 	READ_NUM(count);
@@ -247,16 +243,6 @@ int asCRestore::Restore()
 		module->globalFunctions.PushLast(func);
 	}
 
-	// stringConstants[]
-	READ_NUM(count);
-	module->stringConstants.Allocate(count, 0);
-	for( i = 0; i < count; ++i ) 
-	{
-		cstr = asNEW(asCString)();
-		ReadString(cstr);
-		module->stringConstants.PushLast(cstr);
-	}
-	
 	// importedFunctions[] and bindInformations[]
 	READ_NUM(count);
 	module->importedFunctions.Allocate(count, 0);
@@ -290,6 +276,9 @@ int asCRestore::Restore()
 	// usedGlobalProperties[]
 	ReadUsedGlobalProps();
 
+	// usedStringConstants[]
+	ReadUsedStringConstants();
+
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		TranslateFunction(module->scriptFunctions[i]);
 	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
@@ -312,6 +301,38 @@ int asCRestore::Restore()
 	module->CallInit();
 
 	return 0;
+}
+
+int asCRestore::FindStringConstantIndex(int id)
+{
+	for( asUINT i = 0; i < usedStringConstants.GetLength(); i++ )
+		if( usedStringConstants[i] == id )
+			return i;
+
+	usedStringConstants.PushLast(id);
+	return usedStringConstants.GetLength() - 1;
+}
+
+void asCRestore::WriteUsedStringConstants()
+{
+	asUINT count = (asUINT)usedStringConstants.GetLength();
+	WRITE_NUM(count);
+	for( asUINT i = 0; i < count; ++i )
+		WriteString(engine->stringConstants[i]);
+}
+
+void asCRestore::ReadUsedStringConstants()
+{
+	asCString str;
+
+	asUINT count;
+	READ_NUM(count);
+	usedStringConstants.SetLength(count);
+	for( asUINT i = 0; i < count; ++i ) 
+	{
+		ReadString(&str);
+		usedStringConstants[i] = engine->AddConstantString(str.AddressOf(), str.GetLength());
+	}
 }
 
 void asCRestore::WriteUsedFunctions()
@@ -1021,10 +1042,10 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 	while( length )
 	{
 		asDWORD c = *(asBYTE*)bc;
-		WRITE_NUM(*bc);
-		bc += 1;
+
 		if( c == asBC_ALLOC )
 		{
+			WRITE_NUM(*bc++);
 			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
 			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
@@ -1045,6 +1066,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			     c == asBC_REFCPY || 
 				 c == asBC_OBJTYPE )
 		{
+			WRITE_NUM(*bc++);
 			// Translate object type pointers into indices
 			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
@@ -1058,6 +1080,8 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 		}
 		else if( c == asBC_TYPEID )
 		{
+			WRITE_NUM(*bc++);
+
 			// Translate type ids into indices
 			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
@@ -1073,6 +1097,8 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				 c == asBC_CALLINTF || 
 				 c == asBC_CALLSYS )
 		{
+			WRITE_NUM(*bc++);
+
 			// Translate the function id
 			asDWORD tmp[MAX_DATA_SIZE];
 			int n;
@@ -1084,10 +1110,19 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
 				WRITE_NUM(tmp[n]);
 		}
+		else if( c == asBC_STR )
+		{
+			asDWORD tmp = *bc++;
+
+			// Translate the string constant id
+			asWORD *arg = ((asWORD*)&tmp)+1;
+			*arg = FindStringConstantIndex(*arg);
+			WRITE_NUM(tmp);
+		}
 		else
 		{
 			// Store the bc as is
-			for( int n = 1; n < asBCTypeSize[asBCInfo[c].type]; n++ )
+			for( int n = 0; n < asBCTypeSize[asBCInfo[c].type]; n++ )
 				WRITE_NUM(*bc++);
 		}
 
@@ -1336,6 +1371,13 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 				int *fid = (int*)&bc[n+1+AS_PTR_SIZE];
 				*fid = FindFunction(*fid)->id;
 			}
+		}
+		else if( c == asBC_STR )
+		{
+			// Translate the index to the true string id
+			asWORD *arg = ((asWORD*)&bc[n])+1;
+
+			*arg = usedStringConstants[*arg];
 		}
 
 		n += asBCTypeSize[asBCInfo[c].type];

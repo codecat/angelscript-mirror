@@ -515,6 +515,13 @@ asCScriptEngine::~asCScriptEngine()
 	scriptFunctions.SetLength(0);
 	registeredGlobalFuncs.SetLength(0);
 
+	// Free string constants
+	for( n = 0; n < stringConstants.GetLength(); n++ )
+	{
+		asDELETE(stringConstants[n],asCString);
+	}
+	stringConstants.SetLength(0);
+
 	// Release the thread manager
 	threadManager->Release();
 }
@@ -4333,6 +4340,38 @@ bool asCScriptEngine::IsTemplateType(const char *name)
 
 	return false;
 }
+
+// internal
+int asCScriptEngine::AddConstantString(const char *str, size_t len)
+{
+	// The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
+
+	// TODO: optimize: Improve linear search
+	// Has the string been registered before?
+	for( size_t n = 0; n < stringConstants.GetLength(); n++ )
+	{
+		if( stringConstants[n]->Compare(str, len) == 0 )
+		{
+			return (int)n;
+		}
+	}
+
+	// No match was found, add the string
+	asCString *cstr = asNEW(asCString)(str, len);
+	stringConstants.PushLast(cstr);
+
+	// The VM currently doesn't handle string ids larger than 65535
+	asASSERT(stringConstants.GetLength() <= 65536);
+
+	return (int)stringConstants.GetLength() - 1;
+}
+
+// internal
+const asCString &asCScriptEngine::GetConstantString(int id)
+{
+	return *stringConstants[id];
+}
+
 
 END_AS_NAMESPACE
 

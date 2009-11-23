@@ -1542,7 +1542,7 @@ void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngi
 			if( instr->op == asBC_STR )
 			{
 				int id = instr->wArg[0];
-				const asCString &str = module->GetConstantString(id);
+				const asCString &str = engine->GetConstantString(id);
 				fprintf(file, "   %-8s %d         (l:%ld s:\"%.10s\")\n", asBCInfo[instr->op].name, instr->wArg[0], (long int)str.GetLength(), str.AddressOf());
 			}
 			else

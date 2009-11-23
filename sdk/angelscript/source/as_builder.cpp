@@ -2585,11 +2585,6 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 	return dt;
 }
 
-const asCString &asCBuilder::GetConstantString(int strID)
-{
-	return module->GetConstantString(strID);
-}
-
 asCObjectType *asCBuilder::GetObjectType(const char *type)
 {
 	// TODO: Only search in config groups to which the module has access

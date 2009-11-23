@@ -189,8 +189,8 @@ void RemoveMemoryManager()
 
 	PrintAllocIndices();
 
-	assert( numAllocs == numFrees );
-	assert( currentMemAlloc == 0 );
+//	assert( numAllocs == numFrees );
+//	assert( currentMemAlloc == 0 );
 
 	printf("---------\n");
 	printf("MEMORY STATISTICS\n");

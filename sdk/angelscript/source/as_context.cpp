@@ -2041,8 +2041,7 @@ void asCContext::ExecuteNext()
 			// Get the string id from the argument
 			asWORD w = asBC_WORDARG0(l_bc);
 			// Push the string pointer on the stack
-			// TODO: dynamic functions: string constants should be stored in the engine and shared between modules
-			const asCString &b = module->GetConstantString(w);
+			const asCString &b = engine->GetConstantString(w);
 			l_sp -= AS_PTR_SIZE;
 			*(asPTRWORD*)l_sp = (asPTRWORD)(size_t)b.AddressOf();
 			// Push the string length on the stack

@@ -193,9 +193,6 @@ public:
 
     void JITCompile();
 
-	int  AddConstantString(const char *str, size_t length);
-	const asCString &GetConstantString(int id);
-
 	int  AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType = 0, bool isConstMethod = false, bool isGlobalFunction = false);
 	int  AddScriptFunction(asCScriptFunction *func);
 	int  AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, const asCString &moduleName);
@@ -238,8 +235,6 @@ public:
 
 	// This array holds the global variables declared in the script
 	asCArray<asCGlobalProperty *>  scriptGlobals;
-
-	asCArray<asCString*>           stringConstants;
 
 	// This array holds class and interface types
 	asCArray<asCObjectType*>       classTypes;

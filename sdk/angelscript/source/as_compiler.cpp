@@ -5866,7 +5866,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				else
 				{
 					// Register the constant string with the engine
-					int id = builder->module->AddConstantString(str.AddressOf(), str.GetLength());
+					int id = engine->AddConstantString(str.AddressOf(), str.GetLength());
 					ctx->bc.InstrWORD(asBC_STR, (asWORD)id);
 					PerformFunctionCall(descr->id, ctx);
 				}
