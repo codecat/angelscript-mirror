@@ -155,8 +155,8 @@ public:
 
 	void PushCallState();
 	void PopCallState();
-	void CallScriptFunction(asCModule *mod, asCScriptFunction *func);
-	void CallInterfaceMethod(asCModule *mod, asCScriptFunction *func);
+	void CallScriptFunction(asCScriptFunction *func);
+	void CallInterfaceMethod(asCScriptFunction *func);
 
 	void SetInternalException(const char *descr);
 
@@ -165,7 +165,6 @@ public:
 
 	bool holdEngineRef;
 	asCScriptEngine *engine;
-	asCModule *module;
 
 	asEContextState status;
 	bool doSuspend;

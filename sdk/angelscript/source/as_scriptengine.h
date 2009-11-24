@@ -60,6 +60,9 @@ BEGIN_AS_NAMESPACE
 class asCBuilder;
 class asCContext;
 
+// TODO: Remove this when import is removed
+struct sBindInfo;
+
 // TODO: Deprecate CreateScriptObject. Objects should be created by calling the factory function instead.
 // TODO: Deprecate GetSizeOfPrimitiveType. This function is not necessary now that all primitive types have fixed typeIds
 
@@ -315,6 +318,9 @@ public:
 	asCArray<asCScriptFunction *> scriptFunctions;
 	asCArray<int>                 freeScriptFunctionIds;
 	asCArray<asCScriptFunction *> signatureIds;
+
+	// An array with all module imported functions
+	asCArray<sBindInfo *>  importedFunctions;
 
 	// These resources must be protected for multiple accesses
 	asCAtomic              refCount;

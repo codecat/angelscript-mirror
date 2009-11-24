@@ -121,12 +121,12 @@ int asCRestore::Save()
 		WriteFunction(module->globalFunctions[i]);
 	}
 
-	// importedFunctions[] and bindInformations[]
-	count = (asUINT)module->importedFunctions.GetLength();
+	// bindInformations[]
+	count = (asUINT)module->bindInformations.GetLength();
 	WRITE_NUM(count);
 	for( i = 0; i < count; ++i )
 	{
-		WriteFunction(module->importedFunctions[i]);
+		WriteFunction(module->bindInformations[i]->importedFunctionSignature);
 		WriteString(&module->bindInformations[i]->importFromModule);
 	}
 
@@ -243,18 +243,17 @@ int asCRestore::Restore()
 		module->globalFunctions.PushLast(func);
 	}
 
-	// importedFunctions[] and bindInformations[]
+	// bindInformations[]
 	READ_NUM(count);
-	module->importedFunctions.Allocate(count, 0);
 	module->bindInformations.SetLength(count);
 	for(i=0;i<count;++i)
 	{
-		func = ReadFunction(false, false);
-		module->importedFunctions.PushLast(func);
-
 		sBindInfo *info = asNEW(sBindInfo);
+		info->importedFunctionSignature = ReadFunction(false, false);
+		info->importedFunctionSignature->id = int(FUNC_IMPORTED + engine->importedFunctions.GetLength());
+		engine->importedFunctions.PushLast(info);
 		ReadString(&info->importFromModule);
-		info->importedFunction = -1;
+		info->boundFunctionId = -1;
 		module->bindInformations[i] = info;
 	}
 	
@@ -310,7 +309,7 @@ int asCRestore::FindStringConstantIndex(int id)
 			return i;
 
 	usedStringConstants.PushLast(id);
-	return usedStringConstants.GetLength() - 1;
+	return int(usedStringConstants.GetLength() - 1);
 }
 
 void asCRestore::WriteUsedStringConstants()
@@ -552,7 +551,6 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 
 	func->id = engine->GetNextScriptFunctionId();
 	
-
 	READ_NUM(count);
 	func->byteCode.Allocate(count, 0);
 	ReadByteCode(func->byteCode.AddressOf(), count);
@@ -1119,6 +1117,21 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			*arg = FindStringConstantIndex(*arg);
 			WRITE_NUM(tmp);
 		}
+		else if( c == asBC_CALLBND )
+		{
+			WRITE_NUM(*bc++);
+
+			// Translate the function id
+			int funcId = *bc++;
+			for( asUINT n = 0; n < module->bindInformations.GetLength(); n++ )
+				if( module->bindInformations[n]->importedFunctionSignature->id == funcId )
+				{
+					funcId = n;
+					break;
+				}
+
+			WRITE_NUM(funcId);
+		}
 		else
 		{
 			// Store the bc as is
@@ -1378,6 +1391,12 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			asWORD *arg = ((asWORD*)&bc[n])+1;
 
 			*arg = usedStringConstants[*arg];
+		}
+		else if( c == asBC_CALLBND )
+		{
+			// Translate the function id
+			int *fid = (int*)&bc[n+1];
+			*fid = module->bindInformations[*fid]->importedFunctionSignature->id;
 		}
 
 		n += asBCTypeSize[asBCInfo[c].type];

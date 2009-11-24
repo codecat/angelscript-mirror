@@ -61,7 +61,6 @@ asCModule::asCModule(const char *name, int id, asCScriptEngine *engine)
 	builder = 0;
 	isDiscarded = false;
 	isBuildWithoutErrors = false;
-	contextCount.set(0);
 	moduleCount.set(0);
 	isGlobalVarInitialized = false;
 }
@@ -132,8 +131,6 @@ void asCModule::JITCompile()
 // interface
 int asCModule::Build()
 {
-	asASSERT( contextCount.get() == 0 );
-	
 	// Only one thread may build at one time
 	int r = engine->RequestBuild();
 	if( r < 0 )
@@ -371,7 +368,7 @@ void asCModule::InternalReset()
 	// Release bound functions
 	for( n = 0; n < bindInformations.GetLength(); n++ )
 	{
-		int oldFuncID = bindInformations[n]->importedFunction;
+		int oldFuncID = bindInformations[n]->boundFunctionId;
 		if( oldFuncID != -1 )
 		{
 			asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
@@ -382,15 +379,12 @@ void asCModule::InternalReset()
 			}
 		}
 
+		engine->importedFunctions[bindInformations[n]->importedFunctionSignature->id & 0xFFFF] = 0 ;
+
+		asDELETE(bindInformations[n]->importedFunctionSignature, asCScriptFunction);
 		asDELETE(bindInformations[n], sBindInfo);
 	}
 	bindInformations.SetLength(0);
-
-	for( n = 0; n < importedFunctions.GetLength(); n++ )
-	{
-		asDELETE(importedFunctions[n],asCScriptFunction);
-	}
-	importedFunctions.SetLength(0);
 
 	isBuildWithoutErrors = true;
 	isDiscarded = false;
@@ -444,7 +438,7 @@ int asCModule::GetImportedFunctionCount()
 	if( isBuildWithoutErrors == false )
 		return asERROR;
 
-	return (int)importedFunctions.GetLength();
+	return (int)bindInformations.GetLength();
 }
 
 // interface
@@ -461,16 +455,16 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 	// TODO: optimize: Improve linear search
 	// Search script functions for matching interface
 	int id = -1;
-	for( asUINT n = 0; n < importedFunctions.GetLength(); ++n )
+	for( asUINT n = 0; n < bindInformations.GetLength(); ++n )
 	{
-		if( func.name == importedFunctions[n]->name && 
-			func.returnType == importedFunctions[n]->returnType &&
-			func.parameterTypes.GetLength() == importedFunctions[n]->parameterTypes.GetLength() )
+		if( func.name == bindInformations[n]->importedFunctionSignature->name && 
+			func.returnType == bindInformations[n]->importedFunctionSignature->returnType &&
+			func.parameterTypes.GetLength() == bindInformations[n]->importedFunctionSignature->parameterTypes.GetLength() )
 		{
 			bool match = true;
 			for( asUINT p = 0; p < func.parameterTypes.GetLength(); ++p )
 			{
-				if( func.parameterTypes[p] != importedFunctions[n]->parameterTypes[p] )
+				if( func.parameterTypes[p] != bindInformations[n]->importedFunctionSignature->parameterTypes[p] )
 				{
 					match = false;
 					break;
@@ -771,7 +765,7 @@ const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId)
 // internal
 int asCModule::GetNextImportedFunctionId()
 {
-	return FUNC_IMPORTED | (asUINT)importedFunctions.GetLength();
+	return FUNC_IMPORTED | (asUINT)engine->importedFunctions.GetLength();
 }
 
 // internal
@@ -837,27 +831,29 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	}
 	func->objectType = 0;
 
-	importedFunctions.PushLast(func);
-
 	sBindInfo *info = asNEW(sBindInfo);
-	info->importedFunction = -1;
+	info->importedFunctionSignature = func;
+	info->boundFunctionId = -1;
 	info->importFromModule = moduleName;
 	bindInformations.PushLast(info);
+
+	// Add the info to the array in the engine
+	engine->importedFunctions.PushLast(info);
 
 	return 0;
 }
 
 // internal
-asCScriptFunction *asCModule::GetImportedFunction(int funcID)
+asCScriptFunction *asCModule::GetImportedFunction(int index)
 {
-	return importedFunctions[funcID & 0xFFFF];
+	return bindInformations[index]->importedFunctionSignature;
 }
 
 // internal
 asCScriptFunction *asCModule::GetSpecialFunction(int funcID)
 {
 	if( funcID & FUNC_IMPORTED )
-		return importedFunctions[funcID & 0xFFFF];
+		return engine->importedFunctions[funcID & 0xFFFF]->importedFunctionSignature;
 	else
 	{
 		if( (funcID & 0xFFFF) == asFUNC_STRING )
@@ -867,18 +863,6 @@ asCScriptFunction *asCModule::GetSpecialFunction(int funcID)
 
 		return engine->scriptFunctions[funcID & 0xFFFF];
 	}
-}
-
-// internal
-int asCModule::AddContextRef()
-{
-	return contextCount.atomicInc();
-}
-
-// internal
-int asCModule::ReleaseContextRef()
-{
-	return contextCount.atomicDec();
 }
 
 // internal
@@ -899,9 +883,6 @@ bool asCModule::CanDelete()
 	// Don't delete if not discarded
 	if( !isDiscarded ) return false;
 
-	// Are there any contexts still referencing the module?
-	if( contextCount.get() ) return false;
-
 	// If there are modules referencing this one we need to check for circular referencing
 	if( moduleCount.get() )
 	{
@@ -912,7 +893,7 @@ bool asCModule::CanDelete()
 			// Unbind all functions. This will break any circular references
 			for( size_t n = 0; n < bindInformations.GetLength(); n++ )
 			{
-				int oldFuncID = bindInformations[n]->importedFunction;
+				int oldFuncID = bindInformations[n]->boundFunctionId;
 				if( oldFuncID != -1 )
 				{
 					asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
@@ -945,14 +926,12 @@ bool asCModule::CanDeleteAllReferences(asCArray<asCModule*> &modules)
 {
 	if( !isDiscarded ) return false;
 
-	if( contextCount.get() ) return false;
-
 	modules.PushLast(this);
 
 	// Check all bound functions for referenced modules
 	for( size_t n = 0; n < bindInformations.GetLength(); n++ )
 	{
-		int funcID = bindInformations[n]->importedFunction;
+		int funcID = bindInformations[n]->boundFunctionId;
 		asCModule *module = engine->GetModuleFromFuncId(funcID);
 
 		// If the module is already in the list don't check it again
@@ -1011,7 +990,7 @@ int asCModule::BindImportedFunction(int index, int sourceId)
 	// Add reference to new module
 	srcModule->AddModuleRef();
 
-	bindInformations[index]->importedFunction = sourceId;
+	bindInformations[index]->boundFunctionId = sourceId;
 
 	return asSUCCESS;
 }
@@ -1023,7 +1002,7 @@ int asCModule::UnbindImportedFunction(int index)
 		return asINVALID_ARG;
 
 	// Remove reference to old module
-	int oldFuncID = bindInformations[index]->importedFunction;
+	int oldFuncID = bindInformations[index]->boundFunctionId;
 	if( oldFuncID != -1 )
 	{
 		asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
@@ -1034,7 +1013,7 @@ int asCModule::UnbindImportedFunction(int index)
 		}
 	}
 
-	bindInformations[index]->importedFunction = -1;
+	bindInformations[index]->boundFunctionId = -1;
 	return asSUCCESS;
 }
 
@@ -1111,7 +1090,6 @@ int asCModule::UnbindAllImportedFunctions()
 // internal
 bool asCModule::IsUsed()
 {
-	if( contextCount.get() ) return true;
 	if( moduleCount.get() ) return true;
 
 	return false;

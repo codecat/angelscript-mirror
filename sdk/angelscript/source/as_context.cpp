@@ -59,8 +59,8 @@ BEGIN_AS_NAMESPACE
 // We need at least 1 DWORD reserved for calling system functions
 const int RESERVE_STACK = 2*AS_PTR_SIZE;
 
-// For each script function call we push 6 DWORDs on the call stack
-const int CALLSTACK_FRAME_SIZE = 6;
+// For each script function call we push 5 DWORDs on the call stack
+const int CALLSTACK_FRAME_SIZE = 5;
 
 
 #ifdef AS_DEBUG
@@ -159,7 +159,6 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	status = asEXECUTION_UNINITIALIZED;
 	stackBlockSize = 0;
 	refCount.set(1);
-	module = 0;
 	inExceptionHandler = false;
 	isStackMemoryNotAllocated = false;
 
@@ -267,14 +266,7 @@ int asCContext::Prepare(int funcID)
 		if( currentFunction == 0 )
 			return asNO_FUNCTION;
 
-		// Remove reference to previous module. Add reference to new module
-		if( module ) module->ReleaseContextRef();
-		module = initialFunction->module;
 		regs.globalVarPointers = initialFunction->globalVarPointers.AddressOf();
-		if( module )
-		{
-			module->AddContextRef();
-		}
 
 		// Determine the minimum stack size needed
 		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
@@ -362,10 +354,6 @@ int asCContext::Unprepare()
 	exceptionFunction = 0;
 	regs.programPointer = 0;
 
-	// Release the module
-	if( module ) module->ReleaseContextRef();
-	module = 0;
-
 	// Reset status
 	status = asEXECUTION_UNINITIALIZED;
 
@@ -426,15 +414,10 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 
 	isCallingSystemFunction = false;
 
-	if( module ) module->ReleaseContextRef();
-
-	module = mod;
-	module->AddContextRef();
-
 	if( (funcID & 0xFFFF) == asFUNC_STRING )
 		initialFunction = stringFunction;
 	else
-		initialFunction = module->GetSpecialFunction(funcID & 0xFFFF);
+		initialFunction = mod->GetSpecialFunction(funcID & 0xFFFF);
 	regs.globalVarPointers = initialFunction->globalVarPointers.AddressOf();
 
 	currentFunction = initialFunction;
@@ -1059,13 +1042,6 @@ int asCContext::Execute()
 						regs.programPointer = currentFunction->byteCode.AddressOf();
 						regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 
-						if( module ) module->ReleaseContextRef();
-						module = currentFunction->module;
-						if( module )
-						{
-							module->AddContextRef();
-						}
-
 						// Set the local objects to 0
 						for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 						{
@@ -1179,14 +1155,12 @@ void asCContext::PushCallState()
     // for all the compiler knows. So introducing the local variable s, which is never referred to by
     // its address we avoid this issue.
 
-	size_t s[6];
+	size_t s[5];
 	s[0] = (size_t)regs.stackFramePointer;
 	s[1] = (size_t)currentFunction;
 	s[2] = (size_t)regs.programPointer;
 	s[3] = (size_t)regs.stackPointer;
 	s[4] = stackIndex;
-	// TODO: dynamic functions: shouldn't be necessary to keep track of the module
-	s[5] = (size_t)module;
 
 	size_t *tmp = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
 	tmp[0] = s[0];
@@ -1194,20 +1168,18 @@ void asCContext::PushCallState()
 	tmp[2] = s[2];
 	tmp[3] = s[3];
 	tmp[4] = s[4];
-	tmp[5] = s[5];
 }
 
 void asCContext::PopCallState()
 {
 	// See comments in PushCallState about pointer aliasing and data cache trashing
 	size_t *tmp = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
-	size_t s[6];
+	size_t s[5];
 	s[0] = tmp[0];
 	s[1] = tmp[1];
 	s[2] = tmp[2];
 	s[3] = tmp[3];
 	s[4] = tmp[4];
-	s[5] = tmp[5];
 
 	regs.stackFramePointer = (asDWORD*)s[0];
 	currentFunction        = (asCScriptFunction*)s[1];
@@ -1215,8 +1187,6 @@ void asCContext::PopCallState()
 	regs.stackPointer      = (asDWORD*)s[3];
 	stackIndex             = (int)s[4];
 
-	// TODO: dynamic functions: shouldn't be necessary to keep track of the module
-	module                 = (asCModule*)s[5];
 	regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 
 	callStack.SetLength(callStack.GetLength() - CALLSTACK_FRAME_SIZE);
@@ -1251,14 +1221,12 @@ int asCContext::GetCallstackLineNumber(int index, int *column)
 	return (line & 0xFFFFF);
 }
 
-void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
+void asCContext::CallScriptFunction(asCScriptFunction *func)
 {
 	// Push the framepointer, functionid and programCounter on the stack
 	PushCallState();
 
 	currentFunction = func;
-	// TODO: dynamic functions: It will not be necessary to keep track of the module when the function holds the global var pointers
-	module = func->module ? func->module : mod;
 	regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 	regs.programPointer = currentFunction->byteCode.AddressOf();
 
@@ -1313,7 +1281,7 @@ void asCContext::CallScriptFunction(asCModule *mod, asCScriptFunction *func)
 	}
 }
 
-void asCContext::CallInterfaceMethod(asCModule *mod, asCScriptFunction *func)
+void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 {
 	// Resolve the interface method using the current script type
 	asCScriptObject *obj = *(asCScriptObject**)(size_t*)regs.stackPointer;
@@ -1359,7 +1327,7 @@ void asCContext::CallInterfaceMethod(asCModule *mod, asCScriptFunction *func)
 	}
 
 	// Then call the true script function
-	CallScriptFunction(mod, realFunc);
+	CallScriptFunction(realFunc);
 }
 
 void asCContext::ExecuteNext()
@@ -1493,7 +1461,7 @@ void asCContext::ExecuteNext()
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
 
-			CallScriptFunction(module, engine->scriptFunctions[i]);
+			CallScriptFunction(engine->scriptFunctions[i]);
 
 			// Extract the values from the context again
 			l_bc = regs.programPointer;
@@ -2103,7 +2071,7 @@ void asCContext::ExecuteNext()
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
 
-			int funcID = module->bindInformations[i&0xFFFF]->importedFunction;
+			int funcID = engine->importedFunctions[i&0xFFFF]->boundFunctionId;
 			if( funcID == -1 )
 			{
 				SetInternalException(TXT_UNBOUND_FUNCTION);
@@ -2112,9 +2080,8 @@ void asCContext::ExecuteNext()
 			else
 			{
 				asCScriptFunction *func = engine->GetScriptFunction(funcID);
-				asCModule *callModule = func->module;
 
-				CallScriptFunction(callModule, func);
+				CallScriptFunction(func);
 			}
 
 			// Extract the values from the context again
@@ -2186,7 +2153,7 @@ void asCContext::ExecuteNext()
 				regs.stackPointer = l_sp;
 				regs.stackFramePointer = l_fp;
 
-				CallScriptFunction(module, f);
+				CallScriptFunction(f);
 
 				// Extract the values from the context again
 				l_bc = regs.programPointer;
@@ -2894,7 +2861,7 @@ void asCContext::ExecuteNext()
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
 
-			CallInterfaceMethod(module, engine->GetScriptFunction(i));
+			CallInterfaceMethod(engine->GetScriptFunction(i));
 
 			// Extract the values from the context again
 			l_bc = regs.programPointer;

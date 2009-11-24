@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.18.0 WIP - 2009/11/23</h2>
+<h2>Version 2.18.0 WIP - 2009/11/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Each script function now holds its own list of accessed global variables, so they do not have to go back to the module for that info
 <li>Added support for native calling conventions on iPhone (Thanks Fredrik Ehnbom)
 <li>String constants are now stored in the engine and shared between modules
+<li>The context no longer references the module, as script functions no longer depend on the module for anything
 </ul>
 <li>Project
 <ul>

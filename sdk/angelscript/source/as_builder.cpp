@@ -2223,7 +2223,7 @@ asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 	if( (id & 0xFFFF0000) == 0 )
 		return engine->scriptFunctions[id];
 	else
-		return module->importedFunctions[id & 0xFFFF];
+		return engine->importedFunctions[id & 0xFFFF]->importedFunctionSignature;
 }
 
 void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
@@ -2238,10 +2238,10 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 	}
 
 	// TODO: optimize: Improve linear search
-	for( n = 0; n < module->importedFunctions.GetLength(); n++ )
+	for( n = 0; n < module->bindInformations.GetLength(); n++ )
 	{
-		if( module->importedFunctions[n]->name == name )
-			funcs.PushLast(module->importedFunctions[n]->id);
+		if( module->bindInformations[n]->importedFunctionSignature->name == name )
+			funcs.PushLast(module->bindInformations[n]->importedFunctionSignature->id);
 	}
 
 	// TODO: optimize: Improve linear search

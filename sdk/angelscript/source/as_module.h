@@ -62,8 +62,9 @@ class asCConfigGroup;
 
 struct sBindInfo
 {
-	asCString  importFromModule;
-	int        importedFunction;
+	asCScriptFunction *importedFunctionSignature;
+	asCString		   importFromModule;
+	int                boundFunctionId;
 };
 
 struct sObjectTypePair
@@ -177,10 +178,6 @@ public:
 	void Discard();
 	void InternalReset();
 
-	int  AddContextRef();
-	int  ReleaseContextRef();
-	asCAtomic contextCount;
-
 	int  AddModuleRef();
 	int  ReleaseModuleRef();
 	asCAtomic moduleCount;
@@ -230,7 +227,6 @@ public:
 	// This array holds global functions declared in the module
 	asCArray<asCScriptFunction *>  globalFunctions;
 	// This array holds imported functions in the module
-	asCArray<asCScriptFunction *>  importedFunctions;
 	asCArray<sBindInfo *>          bindInformations;
 
 	// This array holds the global variables declared in the script
