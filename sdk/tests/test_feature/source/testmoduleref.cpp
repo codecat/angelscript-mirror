@@ -1,5 +1,5 @@
 //
-// Test to verify that modules are released correct after use
+// Test to verify that modules are released correctly after use
 //
 // Author: Andreas Jönsson
 //
@@ -11,10 +11,8 @@ static const char *script = "int global; void Test() {global = 0;}";
 
 bool TestModuleRef()
 {
-	// TODO: This should still work as the context should hold on to the function
-	printf("Skipping this test due to modules no longer being referenced by context\n");
+	printf("Skipping until the script functions properly hold on to global variables\n");
 	return false;
-
 
 	bool ret = false;
 
@@ -43,7 +41,7 @@ bool TestModuleRef()
 	{
 		printf("%s: Module was not discarded\n", TESTNAME);
 		ret = true;
-	}
+	} 
 
 	int r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )

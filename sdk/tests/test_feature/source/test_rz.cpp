@@ -341,9 +341,10 @@ bool Test2()
  	return fail;
 }
 
+static int g_printCount = 0;
 void Print()
 {
-	printf("destructor\n");
+	g_printCount++;
 }
 
 void GetClassInstance(asIScriptEngine *engine, int funcId, asIScriptObject* &retObj, int& retTypeId)
@@ -464,8 +465,10 @@ bool Test3()
 	assert( gcCount == 4 );
 
 	// discard the module - no longer in use
-	// DiscardModule doesn't see the live objects in the GC so it destroys the scripts functions
+	// The module will be discarded, but the functions that the live objects use will remain
 	r = engine->DiscardModule("test");	
+	if( r < 0 )
+		fail = true;
 
 	// Do a couple of more builds, so that the memory freed by DiscardModule is reused otherwise 
 	// the problem may not occur, as the memory is still there, even though it was freed
@@ -481,14 +484,11 @@ bool Test3()
 	r = mod->Build();
 
 	// run the garbage collector to 'clean things up'
-	// This is where crash occured, as the script class destructor was
-	// called, even though the function is no longer valid
 	r = engine->GarbageCollect(asGC_FULL_CYCLE);
 
-	// TODO: The correct solution would have been for the engine to keep the
-	//       script function implementation until the objects were freed. This
-	//       however requires the implementation of full garbage collection for
-	//       script functions to resolve circular references.
+	// Print is called by each script class' destructor, even though the module has already been discarded
+	if( g_printCount != 2 )
+		fail = true;
 
 	// we're done
 	engine->Release();

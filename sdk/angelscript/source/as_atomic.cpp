@@ -102,6 +102,7 @@ asDWORD asCAtomic::atomicInc()
 
 asDWORD asCAtomic::atomicDec()
 {
+	asASSERT(value > 0);
 	return InterlockedDecrement((LONG*)&value);
 }
 

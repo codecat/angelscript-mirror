@@ -936,6 +936,21 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	// Use the default script class behaviours
 	st->beh = engine->scriptTypeBehaviours.beh;
 
+	// TODO: Move this to asCObjectType so that the asCRestore can reuse it
+	engine->scriptFunctions[st->beh.addref]->AddRef();
+	engine->scriptFunctions[st->beh.release]->AddRef();
+	engine->scriptFunctions[st->beh.gcEnumReferences]->AddRef();
+	engine->scriptFunctions[st->beh.gcGetFlag]->AddRef();
+	engine->scriptFunctions[st->beh.gcGetRefCount]->AddRef();
+	engine->scriptFunctions[st->beh.gcReleaseAllReferences]->AddRef();
+	engine->scriptFunctions[st->beh.gcSetFlag]->AddRef();
+	engine->scriptFunctions[st->beh.copy]->AddRef();
+	engine->scriptFunctions[st->beh.factory]->AddRef();
+	engine->scriptFunctions[st->beh.construct]->AddRef();
+	for( asUINT i = 1; i < st->beh.operators.GetLength(); i += 2 )
+		engine->scriptFunctions[st->beh.operators[i]]->AddRef();
+
+
 	return 0;
 }
 
@@ -969,7 +984,9 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	// Use the default script class behaviours
 	st->beh.construct = 0;
 	st->beh.addref = engine->scriptTypeBehaviours.beh.addref;
+	engine->scriptFunctions[st->beh.addref]->AddRef();
 	st->beh.release = engine->scriptTypeBehaviours.beh.release;
+	engine->scriptFunctions[st->beh.release]->AddRef();
 	st->beh.copy = 0;
 
 	return 0;
@@ -1133,9 +1150,8 @@ void asCBuilder::CompileGlobalVariables()
 				if( init.GetSize() > 0 )
 				{
 					// Create the init function for this variable
-					gvar->property->initFuncId = engine->GetNextScriptFunctionId();
 					asCScriptFunction *initFunc = asNEW(asCScriptFunction)(engine,module);
-					initFunc->id = gvar->property->initFuncId;
+					initFunc->id = engine->GetNextScriptFunctionId();
 					engine->SetScriptFunction(initFunc);
 
 					// Finalize the init function for this variable
@@ -1148,6 +1164,9 @@ void asCBuilder::CompileGlobalVariables()
 					initFunc->funcType = asFUNC_SCRIPT;
 					initFunc->globalVarPointers = func.globalVarPointers;
 					initFunc->AddReferences();
+
+					// The function's refCount was already initialized to 1 
+					gvar->property->initFunc = initFunc;
 				}
 			}
 			else
@@ -1414,7 +1433,9 @@ void asCBuilder::CompileClasses()
 					derivedFunc = GetFunctionDescription(decl->objType->methods[d]);
 					if( derivedFunc->IsSignatureEqual(baseFunc) )
 					{
+						// Move the function from the methods array to the virtualFunctionTable
 						decl->objType->methods.RemoveIndex(d);
+						decl->objType->virtualFunctionTable.PushLast(derivedFunc);
 						found = true;
 						break;
 					}
@@ -1424,13 +1445,11 @@ void asCBuilder::CompileClasses()
 				{
 					// Push the base class function on the virtual function table
 					decl->objType->virtualFunctionTable.PushLast(baseType->virtualFunctionTable[m]);
+					baseType->virtualFunctionTable[m]->AddRef();
 				}
-				else
-				{
-					// Push the derived class function on the virtual function table
-					decl->objType->virtualFunctionTable.PushLast(derivedFunc);
-				}
+
 				decl->objType->methods.PushLast(baseType->methods[m]);
+				engine->scriptFunctions[baseType->methods[m]]->AddRef();
 			}
 		}
 
@@ -1440,11 +1459,12 @@ void asCBuilder::CompileClasses()
 			asCScriptFunction *func = GetFunctionDescription(decl->objType->methods[m]);
 			if( func->funcType != asFUNC_VIRTUAL )
 			{
-				decl->objType->virtualFunctionTable.PushLast(GetFunctionDescription(decl->objType->methods[m]));
+				// Move the reference from the method list to the virtual function list
+				decl->objType->methods.RemoveIndex(m);
+				decl->objType->virtualFunctionTable.PushLast(func);
 
 				// Substitute the function description in the method list for a virtual method
 				// Make sure the methods are in the same order as the virtual function table
-				decl->objType->methods.RemoveIndex(m);
 				decl->objType->methods.PushLast(CreateVirtualFunction(func, (int)decl->objType->virtualFunctionTable.GetLength() - 1));
 				m--;
 			}
@@ -1748,8 +1768,11 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false, objType);
 
 	// Set it as default constructor
+	if( objType->beh.construct )
+		engine->scriptFunctions[objType->beh.construct]->Release();
 	objType->beh.construct = funcId;
 	objType->beh.constructors[0] = funcId;
+	engine->scriptFunctions[funcId]->AddRef();
 
 	// The bytecode for the default constructor will be generated
 	// only after the potential inheritance has been established
@@ -1764,6 +1787,8 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 
 	// Add a default factory as well
 	funcId = engine->GetNextScriptFunctionId();
+	if( objType->beh.factory )
+		engine->scriptFunctions[objType->beh.factory]->Release();
 	objType->beh.factory = funcId;
 	objType->beh.factories[0] = funcId;
 	returnType = asCDataType::CreateObjectHandle(objType, false);
@@ -1771,6 +1796,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	functions.PushLast(0);
 	asCCompiler compiler(engine);
 	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
+	engine->scriptFunctions[funcId]->AddRef();
 }
 
 int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
@@ -2076,16 +2102,19 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 
 	if( objType )
 	{
+		engine->scriptFunctions[funcID]->AddRef();
 		if( isConstructor )
 		{
 			int factoryId = engine->GetNextScriptFunctionId();
 			if( parameterTypes.GetLength() == 0 )
 			{
 				// Overload the default constructor
+				engine->scriptFunctions[objType->beh.construct]->Release();
 				objType->beh.construct = funcID;
 				objType->beh.constructors[0] = funcID;
 
 				// Register the default factory as well
+				engine->scriptFunctions[objType->beh.factory]->Release();
 				objType->beh.factory = factoryId;
 				objType->beh.factories[0] = factoryId;
 			}
@@ -2106,6 +2135,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 			// Compile the factory immediately
 			asCCompiler compiler(engine);
 			compiler.CompileFactory(this, file, engine->scriptFunctions[factoryId]);
+			engine->scriptFunctions[factoryId]->AddRef();
 		}
 		else if( isDestructor )
 			objType->beh.destruct = funcID;

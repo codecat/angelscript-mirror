@@ -177,6 +177,8 @@ public:
 
 	int  GetRefCount();
 
+	void ReleaseAllFunctions();
+
 	bool Implements(const asCObjectType *objType) const;
 	bool DerivesFrom(const asCObjectType *objType) const;
 	bool IsInterface() const;

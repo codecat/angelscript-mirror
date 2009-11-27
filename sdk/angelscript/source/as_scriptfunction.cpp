@@ -69,7 +69,17 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
 // internal
 asCScriptFunction::~asCScriptFunction()
 {
+	// Imported functions are not reference counted, nor are dummy 
+	// functions that are allocated on the stack
+	asASSERT( funcType == -1              || 
+		      funcType == asFUNC_IMPORTED ||
+		      refCount.get() == 0         );
+
 	ReleaseReferences();
+
+	// Tell engine to free the function id
+	if( funcType != -1 && funcType != asFUNC_IMPORTED && id )
+		engine->FreeScriptFunctionId(id);
 
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
 	{
@@ -85,12 +95,18 @@ asCScriptFunction::~asCScriptFunction()
 // interface
 int asCScriptFunction::AddRef()
 {
+	asASSERT( funcType != asFUNC_IMPORTED );
 	return refCount.atomicInc();
 }
 
 int asCScriptFunction::Release()
 {
-	return refCount.atomicDec();
+	asASSERT( funcType != asFUNC_IMPORTED );
+	int r = refCount.atomicDec();
+	if( r == 0 && funcType != -1 ) // Dummy functions are allocated on the stack and cannot be deleted
+		asDELETE(this,asCScriptFunction);
+
+	return r;
 }
 
 // interface
@@ -262,6 +278,8 @@ void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stac
 // internal
 void asCScriptFunction::ComputeSignatureId()
 {
+	// TODO: functions: Do we need to keep a reference here?
+
 	// This function will compute the signatureId based on the 
 	// function name, return type, and parameter types. The object 
 	// type for methods is not used, so that class methods and  
@@ -294,6 +312,8 @@ bool asCScriptFunction::IsSignatureEqual(const asCScriptFunction *func) const
 // internal
 void asCScriptFunction::AddReferences()
 {
+	// TODO: functions: Need to increment references to functions
+
 	// Only count references if there is any bytecode
 	if( byteCode.GetLength() ) 
 	{
@@ -363,6 +383,8 @@ void asCScriptFunction::AddReferences()
 // internal
 void asCScriptFunction::ReleaseReferences()
 {
+	// TODO: functions: Need to release references to functions
+
 	// Only count references if there is any bytecode
 	if( byteCode.GetLength() )
 	{
@@ -421,7 +443,7 @@ void asCScriptFunction::ReleaseReferences()
 			if( module )
 			{
 				int funcId = asBC_INTARG(&byteCode[n]);
-				asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
+				asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
 				if( group != 0 ) group->Release();
 			}
 			break;

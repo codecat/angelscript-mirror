@@ -410,7 +410,7 @@ asCScriptEngine::~asCScriptEngine()
 			// Delete the factory stubs first
 			for( f = 0; f < templateTypes[n]->beh.factories.GetLength(); f++ )
 			{
-				DeleteScriptFunction(templateTypes[n]->beh.factories[f]);
+				scriptFunctions[templateTypes[n]->beh.factories[f]]->Release();
 			}
 			templateTypes[n]->beh.factories.Allocate(0, false);
 
@@ -419,7 +419,7 @@ asCScriptEngine::~asCScriptEngine()
 			{
 				if( scriptFunctions[templateTypes[n]->beh.operators[f]]->objectType == templateTypes[n] )
 				{
-					DeleteScriptFunction(templateTypes[n]->beh.operators[f]);
+					scriptFunctions[templateTypes[n]->beh.operators[f]]->Release();
 					templateTypes[n]->beh.operators[f] = 0;
 				}
 			}
@@ -447,6 +447,21 @@ asCScriptEngine::~asCScriptEngine()
 
 	ClearUnusedTypes();
 
+	// Break all relationship between remaining class types and functions
+	for( n = 0; n < classTypes.GetLength(); n++ )
+	{
+		if( classTypes[n] )
+			classTypes[n]->ReleaseAllFunctions();
+
+		if( classTypes[n]->derivedFrom )
+		{
+			classTypes[n]->derivedFrom->Release();
+			classTypes[n]->derivedFrom = 0;
+		}
+	}
+
+	ClearUnusedTypes();
+
 	asSMapNode<int,asCDataType*> *cursor = 0;
 	while( mapTypeIdToDataType.MoveFirst(&cursor) )
 	{
@@ -454,6 +469,7 @@ asCScriptEngine::~asCScriptEngine()
 		mapTypeIdToDataType.Erase(cursor);
 	}
 
+	defaultGroup.RemoveConfiguration(this);
 	while( configGroups.GetLength() )
 	{
 		// Delete config groups in the right order
@@ -507,13 +523,14 @@ asCScriptEngine::~asCScriptEngine()
 	registeredEnums.SetLength(0);
 	registeredObjTypes.SetLength(0);
 
-	for( n = 0; n < scriptFunctions.GetLength(); n++ )
-		if( scriptFunctions[n] )
-		{
-			asDELETE(scriptFunctions[n],asCScriptFunction);
-		}
-	scriptFunctions.SetLength(0);
+	for( n = 0; n < registeredGlobalFuncs.GetLength(); n++ )
+	{
+		if( registeredGlobalFuncs[n] )
+			registeredGlobalFuncs[n]->Release();
+	}
 	registeredGlobalFuncs.SetLength(0);
+
+	scriptTypeBehaviours.ReleaseAllFunctions();
 
 	// Free string constants
 	for( n = 0; n < stringConstants.GetLength(); n++ )
@@ -745,13 +762,15 @@ void asCScriptEngine::ClearUnusedTypes()
 
 			asCObjectType *ot = func->returnType.GetObjectType();
 			if( ot != 0 && ot != func->objectType )
-				RemoveTypeAndRelatedFromList(types, ot);
+				if( func->name != ot->name )
+					RemoveTypeAndRelatedFromList(types, ot);
 
 			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
 			{
 				ot = func->parameterTypes[p].GetObjectType();
 				if( ot != 0 && ot != func->objectType )
-					RemoveTypeAndRelatedFromList(types, ot);
+					if( func->name != ot->name )
+						RemoveTypeAndRelatedFromList(types, ot);
 			}
 		}
 	}
@@ -770,8 +789,8 @@ void asCScriptEngine::ClearUnusedTypes()
 
 		for( n = 0; n < types.GetLength(); n++ )
 		{
-			// Template types will have two references for each factory stub
-			int refCount = (types[n]->flags & asOBJ_TEMPLATE) ? 2*(int)types[n]->beh.factories.GetLength() : 0;
+			// Template types and script classes will have two references for each factory stub
+			int refCount = ((types[n]->flags & asOBJ_TEMPLATE) || (types[n]->flags & asOBJ_SCRIPT_OBJECT)) ? 2*(int)types[n]->beh.factories.GetLength() : 0;
 
 			if( types[n]->GetRefCount() == refCount )
 			{
@@ -1029,7 +1048,9 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	// Use the default script class behaviours
 	st->beh.factory = 0;
 	st->beh.addref = scriptTypeBehaviours.beh.addref;
+	scriptFunctions[st->beh.addref]->AddRef();
 	st->beh.release = scriptTypeBehaviours.beh.release;
+	scriptFunctions[st->beh.release]->AddRef();
 	st->beh.copy = 0;
 
 	objectTypes.PushLast(st);
@@ -1074,6 +1095,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	func->funcType = asFUNC_INTERFACE;
 	SetScriptFunction(func);
 	func->objectType->methods.PushLast(func->id);
+	// The refCount was already set to 1
 
 	func->ComputeSignatureId();
 
@@ -1394,6 +1416,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 		{
 			beh->construct = AddBehaviourFunction(func, internal);
 			beh->factory   = beh->construct;
+			scriptFunctions[beh->factory]->AddRef();
 			beh->constructors.PushLast(beh->construct);
 			beh->factories.PushLast(beh->factory);
 		}
@@ -1402,6 +1425,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 			int id = AddBehaviourFunction(func, internal);
 			beh->constructors.PushLast(id);
 			beh->factories.PushLast(id);
+			scriptFunctions[id]->AddRef();
 		}
 	}
 	else if( behaviour == asBEHAVE_ADDREF )
@@ -1445,6 +1469,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 
 		// TODO: Store the function id elsewhere since the beh->copy member will be removed
 		beh->copy = AddBehaviourFunction(func, internal);
+		scriptFunctions[beh->copy]->AddRef();
 
 		beh->operators.PushLast(ttAssignment);
 		beh->operators.PushLast(beh->copy);
@@ -1800,6 +1825,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 				return ConfigError(asALREADY_REGISTERED);
 
 			func.id = beh->copy = AddBehaviourFunction(func, internal);
+			scriptFunctions[beh->copy]->AddRef();
 
 			beh->operators.PushLast(behaviour);
 			beh->operators.PushLast(beh->copy);
@@ -2211,13 +2237,6 @@ void asCScriptEngine::ReleaseGlobalProperty(asCGlobalProperty *prop)
 		// TODO: global: Should keep track of free slots
 		globalProperties[prop->id] = 0;
 
-		// Free the initialization function
-		if( prop->initFuncId )
-		{
-			DeleteScriptFunction(prop->initFuncId);
-			prop->initFuncId = 0;
-		}
-
 		asDELETE(prop, asCGlobalProperty);
 	}
 }
@@ -2297,6 +2316,8 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	r = bld.ParseFunctionDeclaration(func->objectType, declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 )
 	{
+		// Set as dummy function before deleting
+		func->funcType = -1;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION);
 	}
@@ -2360,6 +2381,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		func->isReadOnly == false )
 	{
 		func->objectType->beh.copy = func->id;
+		func->AddRef();
 	}
 
 	// Return the function id as success
@@ -2397,6 +2419,8 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	r = bld.ParseFunctionDeclaration(0, declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 )
 	{
+		// Set as dummy function before deleting
+		func->funcType = -1;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION);
 	}
@@ -2594,6 +2618,8 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 	r = bld.ParseDataType(datatype, &dt);
 	if( r < 0 )
 	{
+		// Set as dummy before deleting
+		func->funcType = -1;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_TYPE);
 	}
@@ -2832,15 +2858,19 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 	// Destroy the factory stubs
 	for( n = 0; n < (int)t->beh.factories.GetLength(); n++ )
 	{
-		DeleteScriptFunction(t->beh.factories[n]);
+		scriptFunctions[t->beh.factories[n]]->Release();
 	}
+	t->beh.factories.SetLength(0);
 
 	// Destroy the specialized functions
 	for( n = 1; n < (int)t->beh.operators.GetLength(); n += 2 )
 	{
 		if( t->beh.operators[n] && scriptFunctions[t->beh.operators[n]]->objectType == t )
-			DeleteScriptFunction(t->beh.operators[n]);
+		{
+			scriptFunctions[t->beh.operators[n]]->Release();
+		}
 	}
+	t->beh.operators.SetLength(0);
 
 	// Start searching from the end of the list, as most of
 	// the time it will be the last two types
@@ -2905,15 +2935,21 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		if( !CallGlobalFunctionRetBool(ot, 0, callback->sysFuncIntf, callback) )
 		{
 			// The type cannot be instanciated
+			ot->templateSubType = asCDataType();
 			asDELETE(ot, asCObjectType);
 			return 0;
 		}
 	}
 
 	ot->methods   = templateType->methods;
+	for( n = 0; n < ot->methods.GetLength(); n++ )
+		scriptFunctions[ot->methods[n]]->AddRef();
 	// Store the real factory in the constructor
 	ot->beh.construct = templateType->beh.factory;
 	ot->beh.constructors = templateType->beh.factories;
+	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+		scriptFunctions[ot->beh.constructors[n]]->AddRef();
+
 	// Generate factory stubs for each of the factories
 	for( n = 0; n < templateType->beh.factories.GetLength(); n++ )
 	{
@@ -2939,24 +2975,40 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		asCCompiler compiler(this);
 		compiler.CompileTemplateFactoryStub(&builder, factoryId, ot, func);
 
+		// The function's refCount was already initialized to 1
 		ot->beh.factories.PushLast(func->id);
 	}
 	if( ot->beh.factories.GetLength() )
 		ot->beh.factory = ot->beh.factories[0];
 	else
+	{
+		asASSERT(false);
 		ot->beh.factory = templateType->beh.factory;
+	}
 
 
 
 	ot->beh.addref                 = templateType->beh.addref;
+	if( scriptFunctions[ot->beh.addref] ) scriptFunctions[ot->beh.addref]->AddRef();
 	ot->beh.release                = templateType->beh.release;
+	if( scriptFunctions[ot->beh.release] ) scriptFunctions[ot->beh.release]->AddRef();
 	ot->beh.copy                   = templateType->beh.copy;
+	if( scriptFunctions[ot->beh.copy] ) scriptFunctions[ot->beh.copy]->AddRef();
 	ot->beh.operators              = templateType->beh.operators;
+	for( n = 1; n < ot->beh.operators.GetLength(); n += 2 )
+	{
+		scriptFunctions[ot->beh.operators[n]]->AddRef();
+	}
 	ot->beh.gcGetRefCount          = templateType->beh.gcGetRefCount;
+	if( scriptFunctions[ot->beh.gcGetRefCount] ) scriptFunctions[ot->beh.gcGetRefCount]->AddRef();
 	ot->beh.gcSetFlag              = templateType->beh.gcSetFlag;
+	if( scriptFunctions[ot->beh.gcSetFlag] ) scriptFunctions[ot->beh.gcSetFlag]->AddRef();
 	ot->beh.gcGetFlag              = templateType->beh.gcGetFlag;
+	if( scriptFunctions[ot->beh.gcGetFlag] ) scriptFunctions[ot->beh.gcGetFlag]->AddRef();
 	ot->beh.gcEnumReferences       = templateType->beh.gcEnumReferences;
+	if( scriptFunctions[ot->beh.gcEnumReferences] ) scriptFunctions[ot->beh.gcEnumReferences]->AddRef();
 	ot->beh.gcReleaseAllReferences = templateType->beh.gcReleaseAllReferences;
+	if( scriptFunctions[ot->beh.gcReleaseAllReferences] ) scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRef();
 
 	// As the new template type is instanciated, the engine should
 	// generate new functions to substitute the ones with the template subtype.
@@ -2967,6 +3019,8 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 		if( GenerateNewTemplateFunction(templateType, ot, subType, func, &func) )
 		{
+			// Release the old function, the new one already has its ref count set to 1
+			scriptFunctions[ot->beh.operators[n]]->Release();
 			ot->beh.operators[n] = func->id;
 		}
 	}
@@ -2980,6 +3034,8 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 		if( GenerateNewTemplateFunction(templateType, ot, subType, func, &func) )
 		{
+			// Release the old function, the new one already has its ref count set to 1
+			scriptFunctions[ot->methods[n]]->Release();
 			ot->methods[n] = func->id;
 		}
 	}
@@ -3989,7 +4045,7 @@ void asCScriptEngine::SetScriptFunction(asCScriptFunction *func)
 	scriptFunctions[func->id] = func;
 }
 
-void asCScriptEngine::DeleteScriptFunction(int id)
+void asCScriptEngine::FreeScriptFunctionId(int id)
 {
 	if( id < 0 ) return;
 	id &= 0xFFFF;
@@ -4032,15 +4088,6 @@ void asCScriptEngine::DeleteScriptFunction(int id)
 				}
 			}
 		}
-
-		// Is the function a registered global function?
-		if( func->funcType == asFUNC_SYSTEM && func->objectType == 0 )
-		{
-			registeredGlobalFuncs.RemoveValue(func);
-		}
-
-		// Delete the script function
-		asDELETE(func,asCScriptFunction);
 	}
 }
 

@@ -257,7 +257,7 @@ public:
 
 	int  GetNextScriptFunctionId();
 	void SetScriptFunction(asCScriptFunction *func);
-	void DeleteScriptFunction(int id);
+	void FreeScriptFunctionId(int id);
 
 	int ConfigError(int err);
 

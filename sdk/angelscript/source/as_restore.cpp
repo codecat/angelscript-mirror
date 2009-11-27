@@ -240,7 +240,9 @@ int asCRestore::Restore()
 	for( i = 0; i < count; ++i )
 	{
 		func = ReadFunction(false, false);
+
 		module->globalFunctions.PushLast(func);
+		func->AddRef();
 	}
 
 	// bindInformations[]
@@ -281,8 +283,8 @@ int asCRestore::Restore()
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		TranslateFunction(module->scriptFunctions[i]);
 	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
-		if( module->scriptGlobals[i]->initFuncId )
-			TranslateFunction(engine->scriptFunctions[module->scriptGlobals[i]->initFuncId]);
+		if( module->scriptGlobals[i]->initFunc )
+			TranslateFunction(module->scriptGlobals[i]->initFunc);
 
 	// Fake building
 	module->isBuildWithoutErrors = true;
@@ -294,8 +296,8 @@ int asCRestore::Restore()
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		module->scriptFunctions[i]->AddReferences();
 	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
-		if( module->scriptGlobals[i]->initFuncId )
-			engine->scriptFunctions[module->scriptGlobals[i]->initFuncId]->AddReferences();
+		if( module->scriptGlobals[i]->initFunc )
+			module->scriptGlobals[i]->initFunc->AddReferences();
 
 	module->CallInit();
 
@@ -400,6 +402,9 @@ void asCRestore::ReadUsedFunctions()
 				break;
 			}
 		}
+
+		// Set the type to dummy so it won't try to release the id
+		func.funcType = -1;
 	}
 }
 
@@ -577,7 +582,10 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 	READ_NUM(func->vfTableIdx);
 
 	if( addToModule )
+	{
+		// The refCount is already 1
 		module->scriptFunctions.PushLast(func);
+	}
 	if( addToEngine )
 		engine->SetScriptFunction(func);
 	if( func->objectType )
@@ -692,6 +700,18 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 
 		// Use the default script class behaviours
 		ot->beh = engine->scriptTypeBehaviours.beh;
+		engine->scriptFunctions[ot->beh.addref]->AddRef();
+		engine->scriptFunctions[ot->beh.release]->AddRef();
+		engine->scriptFunctions[ot->beh.gcEnumReferences]->AddRef();
+		engine->scriptFunctions[ot->beh.gcGetFlag]->AddRef();
+		engine->scriptFunctions[ot->beh.gcGetRefCount]->AddRef();
+		engine->scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRef();
+		engine->scriptFunctions[ot->beh.gcSetFlag]->AddRef();
+		engine->scriptFunctions[ot->beh.copy]->AddRef();
+		engine->scriptFunctions[ot->beh.factory]->AddRef();
+		engine->scriptFunctions[ot->beh.construct]->AddRef();
+		for( asUINT i = 1; i < ot->beh.operators.GetLength(); i += 2 )
+			engine->scriptFunctions[ot->beh.operators[i]]->AddRef();
 	}
 	else
 	{	
@@ -745,25 +765,34 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
 				asCScriptFunction *func = ReadFunction();
+				engine->scriptFunctions[ot->beh.construct]->Release();
 				ot->beh.construct = func->id;
 				ot->beh.constructors[0] = func->id;
+				func->AddRef();
 
 				func = ReadFunction();
 				if( func )
+				{
 					ot->beh.destruct = func->id;
+					func->AddRef();
+				}
 
 				func = ReadFunction();
+				engine->scriptFunctions[ot->beh.factory]->Release();
 				ot->beh.factory = func->id;
 				ot->beh.factories[0] = func->id;
+				func->AddRef();
 
 				READ_NUM(size);
 				for( n = 0; n < size; n++ )
 				{
 					asCScriptFunction *func = ReadFunction();
 					ot->beh.constructors.PushLast(func->id);
+					func->AddRef();
 
 					func = ReadFunction();
 					ot->beh.factories.PushLast(func->id);
+					func->AddRef();
 				}
 			}
 
@@ -773,6 +802,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 			{
 				asCScriptFunction *func = ReadFunction();
 				ot->methods.PushLast(func->id);
+				func->AddRef();
 			}
 
 			// virtualFunctionTable[]
@@ -781,6 +811,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 			{
 				asCScriptFunction *func = ReadFunction();
 				ot->virtualFunctionTable.PushLast(func);
+				func->AddRef();
 			}
 		}
 	}
@@ -809,12 +840,12 @@ void asCRestore::WriteGlobalProperty(asCGlobalProperty* prop)
 	WriteDataType(&prop->type);
 
 	// Store the initialization function
-	if( prop->initFuncId )
+	if( prop->initFunc )
 	{
 		bool f = true;
 		WRITE_NUM(f);
 
-		WriteFunction(engine->scriptFunctions[prop->initFuncId]);
+		WriteFunction(prop->initFunc);
 	}
 	else
 	{
@@ -839,7 +870,9 @@ void asCRestore::ReadGlobalProperty()
 	if( f )
 	{
 		asCScriptFunction *func = ReadFunction(false, true);
-		prop->initFuncId = func->id;
+
+		// refCount was already set to 1
+		prop->initFunc = func;
 	}
 }
 

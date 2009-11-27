@@ -105,7 +105,7 @@ asCObjectType::~asCObjectType()
 
 	properties.SetLength(0);
 
-	methods.SetLength(0);
+	ReleaseAllFunctions();
 
 	for( n = 0; n < enumValues.GetLength(); n++ )
 	{
@@ -434,6 +434,87 @@ const char *asCObjectType::GetConfigGroup() const
 		return 0;
 
 	return group->groupName.AddressOf();
+}
+
+// internal
+void asCObjectType::ReleaseAllFunctions()
+{
+	beh.factory   = 0;
+	for( asUINT a = 0; a < beh.factories.GetLength(); a++ )
+	{
+		if( engine->scriptFunctions[beh.factories[a]] ) 
+			engine->scriptFunctions[beh.factories[a]]->Release();
+	}
+	beh.factories.SetLength(0);
+
+	beh.construct = 0;
+	for( asUINT b = 0; b < beh.constructors.GetLength(); b++ )
+	{
+		if( engine->scriptFunctions[beh.constructors[b]] ) 
+			engine->scriptFunctions[beh.constructors[b]]->Release();
+	}
+	beh.constructors.SetLength(0);
+
+	if( beh.templateCallback )
+		engine->scriptFunctions[beh.templateCallback]->Release();
+	beh.templateCallback = 0;
+
+	if( beh.destruct )
+		engine->scriptFunctions[beh.destruct]->Release();
+	beh.destruct  = 0;
+
+	if( beh.addref )
+		engine->scriptFunctions[beh.addref]->Release();
+	beh.addref = 0;
+
+	if( beh.release )
+		engine->scriptFunctions[beh.release]->Release();
+	beh.release = 0;
+
+	if( beh.copy )
+		engine->scriptFunctions[beh.copy]->Release();
+	beh.copy = 0;
+
+	if( beh.gcEnumReferences )
+		engine->scriptFunctions[beh.gcEnumReferences]->Release();
+	beh.gcEnumReferences = 0;
+
+	if( beh.gcGetFlag )
+		engine->scriptFunctions[beh.gcGetFlag]->Release();
+	beh.gcGetFlag = 0;
+
+	if( beh.gcGetRefCount )
+		engine->scriptFunctions[beh.gcGetRefCount]->Release();
+	beh.gcGetRefCount = 0;
+
+	if( beh.gcReleaseAllReferences )
+		engine->scriptFunctions[beh.gcReleaseAllReferences]->Release();
+	beh.gcReleaseAllReferences = 0;
+
+	if( beh.gcSetFlag )
+		engine->scriptFunctions[beh.gcSetFlag]->Release();
+	beh.gcSetFlag = 0;
+
+	for( asUINT e = 1; e < beh.operators.GetLength(); e += 2 )
+	{
+		if( engine->scriptFunctions[beh.operators[e]] )
+			engine->scriptFunctions[beh.operators[e]]->Release();
+	}
+	beh.operators.SetLength(0);
+
+	for( asUINT c = 0; c < methods.GetLength(); c++ )
+	{
+		if( engine->scriptFunctions[methods[c]] ) 
+			engine->scriptFunctions[methods[c]]->Release();
+	}
+	methods.SetLength(0);
+
+	for( asUINT d = 0; d < virtualFunctionTable.GetLength(); d++ )
+	{
+		if( virtualFunctionTable[d] )
+			virtualFunctionTable[d]->Release();
+	}
+	virtualFunctionTable.SetLength(0);
 }
 
 

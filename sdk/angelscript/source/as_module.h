@@ -178,6 +178,7 @@ public:
 	void Discard();
 	void InternalReset();
 
+	// TODO: functions: The module won't be needing a reference counter anymore
 	int  AddModuleRef();
 	int  ReleaseModuleRef();
 	asCAtomic moduleCount;

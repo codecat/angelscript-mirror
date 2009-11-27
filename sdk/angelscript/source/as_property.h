@@ -43,6 +43,7 @@
 #include "as_string.h"
 #include "as_datatype.h"
 #include "as_atomic.h"
+#include "as_scriptfunction.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -65,13 +66,18 @@ public:
 class asCGlobalProperty
 {
 public:
-	asCGlobalProperty() { memory = 0; memoryAllocated = false; realAddress = 0; initFuncId = 0; }
-	~asCGlobalProperty() { if( memoryAllocated ) { asDELETEARRAY(memory); } }
+	asCGlobalProperty() { memory = 0; memoryAllocated = false; realAddress = 0; initFunc = 0; }
+	~asCGlobalProperty() 
+	{ 
+		if( memoryAllocated ) { asDELETEARRAY(memory); } 
+		if( initFunc )
+			initFunc->Release();
+	}
 
-	asCString   name;
-	asCDataType type;
-	asUINT      id;
-	asUINT      initFuncId;
+	asCString          name;
+	asCDataType        type;
+	asUINT             id;
+	asCScriptFunction *initFunc;
 
 	void *GetAddressOfValue() { return (memoryAllocated || realAddress) ? memory : &storage; }
 

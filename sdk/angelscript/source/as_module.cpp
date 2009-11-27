@@ -233,7 +233,7 @@ int asCModule::CallInit()
 	int r = 0;
 	for( n = 0; n < scriptGlobals.GetLength() && r == 0; n++ )
 	{
-		if( scriptGlobals[n]->initFuncId )
+		if( scriptGlobals[n]->initFunc )
 		{
 			if( ctx == 0 )
 			{
@@ -242,7 +242,7 @@ int asCModule::CallInit()
 					break;
 			}
 
-			r = ctx->Prepare(scriptGlobals[n]->initFuncId);
+			r = ctx->Prepare(scriptGlobals[n]->initFunc->id);
 			if( r >= 0 )
 				r = ctx->Execute();
 		}
@@ -319,43 +319,21 @@ void asCModule::InternalReset()
 	//       of it's own class methods. To fix this, we need a full garbage collector that can resolve 
 	//       circular references. 
 
-	// Since we're going to delete the script functions, we must 
-	// not allow any straying objects call them afterwards. If this is not done
-	// the object types' function id will either point to non-existing functions,
-	// or possibly to new functions that re-use the old function id. Needless to
-	// say, it could be disastrous if the function is called like this.
-	for( n = 0; n < classTypes.GetLength(); n++ )
+	// Release all global functions
+	for( n = 0; n < globalFunctions.GetLength(); n++ )
 	{
-		if( classTypes[n] == 0 ) continue;
-
-		// Skip interfaces that the module doesn't own, as it's methods won't be deleted
-		if( classTypes[n]->IsInterface() && classTypes[n]->GetRefCount() > 1 )
-			continue;
-
-		// Just set the function id's to 0
-		classTypes[n]->beh.factory   = 0;
-		classTypes[n]->beh.construct = 0;
-		classTypes[n]->beh.destruct  = 0;
-		classTypes[n]->beh.factories.SetLength(0);
-		classTypes[n]->beh.constructors.SetLength(0);
-		classTypes[n]->beh.operators.SetLength(0);
-		classTypes[n]->methods.SetLength(0);
+		if( globalFunctions[n] )
+			globalFunctions[n]->Release();
 	}
+	globalFunctions.SetLength(0);
 
 	// First free the functions
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
 	{
-		if( scriptFunctions[n] == 0 )
-			continue;
-
-		// Don't delete interface methods, if the module isn't the only owner of the interface
-		if( scriptFunctions[n]->objectType && scriptFunctions[n]->objectType->IsInterface() && scriptFunctions[n]->objectType->GetRefCount() > 1 )
-			continue;
-
-		engine->DeleteScriptFunction(scriptFunctions[n]->id);
+		if( scriptFunctions[n] )
+			scriptFunctions[n]->Release();
 	}
 	scriptFunctions.SetLength(0);
-	globalFunctions.SetLength(0);
 
 	// Release the global properties declared in the module
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
@@ -368,6 +346,8 @@ void asCModule::InternalReset()
 	// Release bound functions
 	for( n = 0; n < bindInformations.GetLength(); n++ )
 	{
+		// TODO: functions: Release bound functions
+
 		int oldFuncID = bindInformations[n]->boundFunctionId;
 		if( oldFuncID != -1 )
 		{
@@ -788,6 +768,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	func->objectType = objType;
 	func->isReadOnly = isConstMethod;
 
+	// The script function's refCount was initialized to 1
 	scriptFunctions.PushLast(func);
 	engine->SetScriptFunction(func);
 
@@ -795,8 +776,12 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	if( objType )
 		func->ComputeSignatureId();
 
+	// Add reference
 	if( isGlobalFunction )
+	{
 		globalFunctions.PushLast(func);
+		func->AddRef();
+	}
 
 	return 0;
 }
@@ -805,6 +790,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 int asCModule::AddScriptFunction(asCScriptFunction *func)
 {
 	scriptFunctions.PushLast(func);
+	func->AddRef();
 	engine->SetScriptFunction(func);
 
 	return 0;
@@ -911,13 +897,6 @@ bool asCModule::CanDelete()
 		return false;
 	}
 
-	// Check if the application is holding on to any references to the function
-	for( size_t n = 0; n < scriptFunctions.GetLength(); n++ )
-	{
-		if( scriptFunctions[n]->refCount.get() > 1 )
-			return false;
-	}
-
 	return true;
 }
 
@@ -990,6 +969,7 @@ int asCModule::BindImportedFunction(int index, int sourceId)
 	// Add reference to new module
 	srcModule->AddModuleRef();
 
+	// TODO: functions: Add reference 
 	bindInformations[index]->boundFunctionId = sourceId;
 
 	return asSUCCESS;
@@ -1013,6 +993,7 @@ int asCModule::UnbindImportedFunction(int index)
 		}
 	}
 
+	// TODO: functions: Release reference
 	bindInformations[index]->boundFunctionId = -1;
 	return asSUCCESS;
 }
@@ -1257,8 +1238,10 @@ void asCModule::ResolveInterfaceIds()
 			{
 				if( scriptFunctions[c]->id == equals[i].a->methods[m] )
 				{
-					engine->DeleteScriptFunction(scriptFunctions[c]->id);
+					scriptFunctions[c]->Release();
+
 					scriptFunctions[c] = engine->GetScriptFunction(equals[i].b->methods[m]);
+					scriptFunctions[c]->AddRef();
 				}
 			}
 		}

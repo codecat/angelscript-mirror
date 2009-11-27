@@ -238,7 +238,7 @@ int asCContext::Prepare(int funcID)
 		return asCONTEXT_ACTIVE;
 
 	// Clean the stack if not done before
-	if( status != asEXECUTION_UNINITIALIZED )
+	if( status != asEXECUTION_FINISHED && status != asEXECUTION_UNINITIALIZED )
 		CleanStack();
 
 	// Release the returned object (if any)
@@ -261,7 +261,12 @@ int asCContext::Prepare(int funcID)
 		// Check engine pointer
 		asASSERT( engine );
 
+		if( initialFunction )
+			initialFunction->Release();
+
 		initialFunction = engine->GetScriptFunction(funcID);
+		initialFunction->AddRef();
+
 		currentFunction = initialFunction;
 		if( currentFunction == 0 )
 			return asNO_FUNCTION;
@@ -302,17 +307,18 @@ int asCContext::Prepare(int funcID)
 		regs.programPointer = 0;
 
 	// Reset state
-	exceptionLine = -1;
-	exceptionFunction = 0;
-	isCallingSystemFunction = false;
-	doAbort = false;
-	doSuspend = false;
-	regs.doProcessSuspend = lineCallback;
-	externalSuspendRequest = false;
+	// Most of the time the previous state will be asEXECUTION_FINISHED, in which case the values are already initialized
+	if( status != asEXECUTION_FINISHED )
+	{
+		exceptionLine           = -1;
+		exceptionFunction       = 0;
+		isCallingSystemFunction = false;
+		doAbort                 = false;
+		doSuspend               = false;
+		regs.doProcessSuspend   = lineCallback;
+		externalSuspendRequest  = false;
+	}
 	status = asEXECUTION_PREPARED;
-
-	asASSERT(regs.objectRegister == 0);
-	regs.objectRegister = 0;
 
 	// Reserve space for the arguments and return value
 	regs.stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize;
@@ -347,6 +353,10 @@ int asCContext::Unprepare()
 
 	// Release the returned object (if any)
 	CleanReturnObject();
+
+	// Release the initial function
+	if( initialFunction )
+		initialFunction->Release();
 
 	// Clear function pointers
 	initialFunction = 0;
@@ -387,6 +397,8 @@ int asCContext::SetExecuteStringFunction(asCScriptFunction *func)
 
 	// TODO: Verify that the context isn't running
 
+	// TODO: functions: Add reference (execute string doesn't use an id)
+
 	if( stringFunction )
 	{
 		asDELETE(stringFunction,asCScriptFunction);
@@ -414,10 +426,14 @@ int asCContext::PrepareSpecial(int funcID, asCModule *mod)
 
 	isCallingSystemFunction = false;
 
+	if( initialFunction )
+		initialFunction->Release();
+
 	if( (funcID & 0xFFFF) == asFUNC_STRING )
 		initialFunction = stringFunction;
 	else
 		initialFunction = mod->GetSpecialFunction(funcID & 0xFFFF);
+	initialFunction->AddRef();
 	regs.globalVarPointers = initialFunction->globalVarPointers.AddressOf();
 
 	currentFunction = initialFunction;
@@ -978,8 +994,7 @@ int asCContext::Suspend()
 
 int asCContext::Execute()
 {
-	// Check engine pointer
-	if( engine == 0 ) return asERROR;
+	asASSERT( engine != 0 );
 
 	if( status != asEXECUTION_SUSPENDED && status != asEXECUTION_PREPARED )
 		return asERROR;
@@ -1121,21 +1136,21 @@ int asCContext::Execute()
 */
 #endif
 
+	if( status == asEXECUTION_FINISHED )
+	{
+		regs.objectType = initialFunction->returnType.GetObjectType();
+		return asEXECUTION_FINISHED;
+	}
+
+	if( status == asEXECUTION_SUSPENDED )
+		return asEXECUTION_SUSPENDED;
+
 	if( doAbort )
 	{
 		doAbort = false;
 
 		status = asEXECUTION_ABORTED;
 		return asEXECUTION_ABORTED;
-	}
-
-	if( status == asEXECUTION_SUSPENDED )
-		return asEXECUTION_SUSPENDED;
-
-	if( status == asEXECUTION_FINISHED )
-	{
-		regs.objectType = initialFunction->returnType.GetObjectType();
-		return asEXECUTION_FINISHED;
 	}
 
 	if( status == asEXECUTION_EXCEPTION )
@@ -1223,49 +1238,51 @@ int asCContext::GetCallstackLineNumber(int index, int *column)
 
 void asCContext::CallScriptFunction(asCScriptFunction *func)
 {
-	// Push the framepointer, functionid and programCounter on the stack
+	// Push the framepointer, function id and programCounter on the stack
 	PushCallState();
 
 	currentFunction = func;
+
 	regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 	regs.programPointer = currentFunction->byteCode.AddressOf();
 
 	// Verify if there is enough room in the stack block. Allocate new block if not
-	asDWORD *oldStackPointer = regs.stackPointer;
-	while( regs.stackPointer - (func->stackNeeded + RESERVE_STACK) < stackBlocks[stackIndex] )
+	if( regs.stackPointer - (func->stackNeeded + RESERVE_STACK) < stackBlocks[stackIndex] )
 	{
+		asDWORD *oldStackPointer = regs.stackPointer;
+
 		// The size of each stack block is determined by the following formula:
 		// size = stackBlockSize << index
 
-		// Make sure we don't allocate more space than allowed
-		if( engine->ep.maximumContextStackSize )
+		while( regs.stackPointer - (func->stackNeeded + RESERVE_STACK) < stackBlocks[stackIndex] )
 		{
-			// This test will only stop growth once it has already crossed the limit
-			if( stackBlockSize * ((1 << (stackIndex+1)) - 1) > engine->ep.maximumContextStackSize )
+			// Make sure we don't allocate more space than allowed
+			if( engine->ep.maximumContextStackSize )
 			{
-				isStackMemoryNotAllocated = true;
+				// This test will only stop growth once it has already crossed the limit
+				if( stackBlockSize * ((1 << (stackIndex+1)) - 1) > engine->ep.maximumContextStackSize )
+				{
+					isStackMemoryNotAllocated = true;
 
-				// Set the stackFramePointer, even though the stackPointer wasn't updated
-				regs.stackFramePointer = regs.stackPointer;
+					// Set the stackFramePointer, even though the stackPointer wasn't updated
+					regs.stackFramePointer = regs.stackPointer;
 
-				// TODO: Make sure the exception handler doesn't try to free objects that have not been initialized
-				SetInternalException(TXT_STACK_OVERFLOW);
-				return;
+					// TODO: Make sure the exception handler doesn't try to free objects that have not been initialized
+					SetInternalException(TXT_STACK_OVERFLOW);
+					return;
+				}
 			}
-		}
 
-		stackIndex++;
-		if( (int)stackBlocks.GetLength() == stackIndex )
-		{
-			asDWORD *stack = asNEWARRAY(asDWORD,(stackBlockSize << stackIndex));
-			stackBlocks.PushLast(stack);
-		}
+			stackIndex++;
+			if( (int)stackBlocks.GetLength() == stackIndex )
+			{
+				asDWORD *stack = asNEWARRAY(asDWORD,(stackBlockSize << stackIndex));
+				stackBlocks.PushLast(stack);
+			}
 
-		regs.stackPointer = stackBlocks[stackIndex] + (stackBlockSize<<stackIndex) - func->GetSpaceNeededForArguments();
-	}
+			regs.stackPointer = stackBlocks[stackIndex] + (stackBlockSize<<stackIndex) - func->GetSpaceNeededForArguments();
+		} 
 
-	if( regs.stackPointer != oldStackPointer )
-	{
 		// Copy the function arguments to the new stack space
 		memcpy(regs.stackPointer, oldStackPointer, sizeof(asDWORD)*func->GetSpaceNeededForArguments());
 	}
