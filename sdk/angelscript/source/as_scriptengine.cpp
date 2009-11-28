@@ -398,7 +398,7 @@ asCScriptEngine::~asCScriptEngine()
 	asASSERT(refCount.get() == 0);
 	asUINT n;
 
-	Reset();
+	GarbageCollect(asGC_FULL_CYCLE);
 
 	// Delete the functions for template types that may references object types
 	for( n = 0; n < templateTypes.GetLength(); n++ )
@@ -428,16 +428,11 @@ asCScriptEngine::~asCScriptEngine()
 
 	// The modules must be deleted first, as they may use
 	// object types from the config groups
-	for( n = 0; n < scriptModules.GetLength(); n++ )
+	for( n = (asUINT)scriptModules.GetLength(); n-- > 0; )
 	{
 		if( scriptModules[n] )
 		{
-			if( scriptModules[n]->CanDelete() )
-			{
-				asDELETE(scriptModules[n],asCModule);
-			}
-			else
-				asASSERT(false);
+			asDELETE(scriptModules[n],asCModule);
 		}
 	}
 	scriptModules.SetLength(0);
@@ -539,6 +534,13 @@ asCScriptEngine::~asCScriptEngine()
 	}
 	stringConstants.SetLength(0);
 
+	// Free the script section names
+	for( n = 0; n < scriptSectionNames.GetLength(); n++ )
+	{
+		asDELETE(scriptSectionNames[n],asCString);
+	}
+	scriptSectionNames.SetLength(0);
+
 	// Release the thread manager
 	threadManager->Release();
 }
@@ -575,18 +577,6 @@ void *asCScriptEngine::SetUserData(void *data)
 void *asCScriptEngine::GetUserData()
 {
 	return userData;
-}
-
-void asCScriptEngine::Reset()
-{
-	GarbageCollect(asGC_FULL_CYCLE);
-
-	asUINT n;
-	for( n = 0; n < scriptModules.GetLength(); ++n )
-	{
-		if( scriptModules[n] )
-			scriptModules[n]->Discard();
-	}
 }
 
 // interface
@@ -684,7 +674,9 @@ asIScriptModule *asCScriptEngine::GetModule(const char *module, asEGMFlags flag)
 	if( flag == asGM_ALWAYS_CREATE )
 	{
 		if( mod != 0 )
-			mod->Discard();
+		{
+			asDELETE(mod, asCModule);
+		}
 		return GetModule(module, true);
 	}
 
@@ -702,23 +694,9 @@ int asCScriptEngine::DiscardModule(const char *module)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	mod->Discard();
+	asDELETE(mod, asCModule);
 
-	// TODO: multithread: Must protect this for multiple accesses
-	// Verify if there are any modules that can be deleted
-	bool hasDeletedModules = false;
-	for( asUINT n = 0; n < scriptModules.GetLength(); n++ )
-	{
-		if( scriptModules[n] && scriptModules[n]->CanDelete() )
-		{
-			hasDeletedModules = true;
-			asDELETE(scriptModules[n],asCModule);
-			scriptModules[n] = 0;
-		}
-	}
-
-	if( hasDeletedModules )
-		ClearUnusedTypes();
+	ClearUnusedTypes();
 
 	return 0;
 }
@@ -2662,42 +2640,21 @@ asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
 	if( _name != 0 ) name = _name;
 
 	if( lastModule && lastModule->name == name )
-	{
-		if( !lastModule->isDiscarded )
-			return lastModule;
-
-		lastModule = 0;
-	}
+		return lastModule;
 
 	// TODO: optimize: Improve linear search
 	for( asUINT n = 0; n < scriptModules.GetLength(); ++n )
 		if( scriptModules[n] && scriptModules[n]->name == name )
 		{
-			if( !scriptModules[n]->isDiscarded )
-			{
-				lastModule = scriptModules[n];
-				return lastModule;
-			}
+			lastModule = scriptModules[n];
+			return lastModule;
 		}
 
 	if( create )
 	{
-		// TODO: Store a list of free indices
-		// Should find a free spot, not just the last one
-		asUINT idx;
-		for( idx = 0; idx < scriptModules.GetLength(); ++idx )
-			if( scriptModules[idx] == 0 )
-				break;
+		asCModule *module = asNEW(asCModule)(name, this);
 
-		int moduleID = idx << 16;
-		asASSERT(moduleID <= 0x3FF0000);
-
-		asCModule *module = asNEW(asCModule)(name, moduleID, this);
-
-		if( idx == scriptModules.GetLength() )
-			scriptModules.PushLast(module);
-		else
-			scriptModules[idx] = module;
+		scriptModules.PushLast(module);
 
 		lastModule = module;
 
@@ -2705,14 +2662,6 @@ asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
 	}
 
 	return 0;
-}
-
-asCModule *asCScriptEngine::GetModule(int id)
-{
-	// TODO: This may not work any longer
-	id = (id >> 16) & 0x3FF;
-	if( id >= (int)scriptModules.GetLength() ) return 0;
-	return scriptModules[id];
 }
 
 asCModule *asCScriptEngine::GetModuleFromFuncId(int id)
@@ -2830,7 +2779,7 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 	isBuilding = false;
 
 	// Prepare and execute the context
-	r = ((asCContext*)exec)->PrepareSpecial(asFUNC_STRING, mod);
+	r = ((asCContext*)exec)->Prepare(((asCContext*)exec)->stringFunction->id);
 	if( r < 0 )
 	{
 		if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
@@ -4417,6 +4366,24 @@ int asCScriptEngine::AddConstantString(const char *str, size_t len)
 const asCString &asCScriptEngine::GetConstantString(int id)
 {
 	return *stringConstants[id];
+}
+
+// internal
+int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
+{
+	// TODO: These names are only released when the engine is freed. The assumption is that
+	//       the same script section names will be reused instead of there always being new
+	//       names. Is this assumption valid? Do we need to add reference counting?
+
+	// Store the script section names for future reference
+	for( asUINT n = 0; n < scriptSectionNames.GetLength(); n++ )
+	{
+		if( scriptSectionNames[n]->Compare(name) == 0 )
+			return n;
+	}
+
+	scriptSectionNames.PushLast(asNEW(asCString)(name));
+	return int(scriptSectionNames.GetLength()-1);
 }
 
 

@@ -136,7 +136,14 @@ static void StringCmp_Generic(asIScriptGeneric * gen)
 CScriptString *operator+(const CScriptString &a, const CScriptString &b)
 {
 	// Return a new object as a script handle
-	return new CScriptString(a.buffer + b.buffer);
+	CScriptString *str = new CScriptString();
+
+	// Avoid unnecessary memory copying by first reserving the full memory buffer, then concatenating
+	str->buffer.reserve(a.buffer.length() + b.buffer.length());
+	str->buffer += a.buffer;
+	str->buffer += b.buffer;
+
+	return str;
 }
 
 static void ConcatenateStrings_Generic(asIScriptGeneric *gen)

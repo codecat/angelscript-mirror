@@ -91,6 +91,10 @@ SOURCE=..\..\source\main.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.cpp
 # End Source File
 # Begin Source File
@@ -131,6 +135,10 @@ SOURCE=..\..\source\test_string2.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_string_pooled.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\utils.cpp
 # End Source File
 # End Group
@@ -140,6 +148,10 @@ SOURCE=..\..\source\utils.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\angelscript\include\angelscript.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring.h
 # End Source File
 # Begin Source File
 

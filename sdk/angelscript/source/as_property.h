@@ -59,9 +59,9 @@ public:
 //               When this happens the address pointing to the value is cleared. When 
 //               the referrer tries to access the value it will throw an exception.
 
-// TODO: dynamic functions: When function pointers are available, it will be possible to create a circular
-//                          reference between a function pointer in global variable and a function. To
-//                          resolve this I need to use a garbage collector.
+// TODO: functions: When function pointers are available, it will be possible to create a circular
+//                  reference between a function pointer in global variable and a function. To
+//                  resolve this I need to use a garbage collector.
 
 class asCGlobalProperty
 {

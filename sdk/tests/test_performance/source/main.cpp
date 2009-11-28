@@ -5,15 +5,16 @@
 #endif
 #include "angelscript.h"
 
-namespace TestBasic   { void Test(); }
-namespace TestBasic2  { void Test(); }
-namespace TestCall    { void Test(); }
-namespace TestCall2   { void Test(); }
-namespace TestInt     { void Test(); }
-namespace TestIntf    { void Test(); }
-namespace TestMthd    { void Test(); }
-namespace TestString  { void Test(); }
-namespace TestString2 { void Test(); }
+namespace TestBasic        { void Test(); }
+namespace TestBasic2       { void Test(); }
+namespace TestCall         { void Test(); }
+namespace TestCall2        { void Test(); }
+namespace TestInt          { void Test(); }
+namespace TestIntf         { void Test(); }
+namespace TestMthd         { void Test(); }
+namespace TestString       { void Test(); }
+namespace TestStringPooled { void Test(); }
+namespace TestString2      { void Test(); }
 
 void DetectMemoryLeaks()
 {
@@ -43,6 +44,7 @@ int main(int argc, char **argv)
 	TestIntf::Test();
 	TestMthd::Test();
 	TestString::Test();
+	TestStringPooled::Test();
 	TestString2::Test();
 	
 	printf("--------------------------------------------\n");

@@ -278,8 +278,6 @@ void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stac
 // internal
 void asCScriptFunction::ComputeSignatureId()
 {
-	// TODO: functions: Do we need to keep a reference here?
-
 	// This function will compute the signatureId based on the 
 	// function name, return type, and parameter types. The object 
 	// type for methods is not used, so that class methods and  
@@ -288,6 +286,9 @@ void asCScriptFunction::ComputeSignatureId()
 	{
 		if( !IsSignatureEqual(engine->signatureIds[n]) ) continue;
 
+		// We don't need to increment the reference counter here, because 
+		// asCScriptEngine::FreeScriptFunctionId will maintain the signature
+		// id as the function is freed.
 		signatureId = engine->signatureIds[n]->signatureId;
 		return;
 	}
@@ -348,7 +349,6 @@ void asCScriptFunction::AddReferences()
 		case asBC_SetG4:
 		case asBC_CpyVtoG4:
 			// TODO: global: Need to increase the reference for each global variable
-			if( module )
 			{
 				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
 				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
@@ -359,7 +359,6 @@ void asCScriptFunction::AddReferences()
 		case asBC_LdGRdR4:
 		case asBC_CpyGtoV4:
 			// TODO: global: Need to increase the reference for each global variable
-			if( module )
 			{
 				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
 				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
@@ -369,10 +368,9 @@ void asCScriptFunction::AddReferences()
 
 		// System functions
 		case asBC_CALLSYS:
-			if( module )
 			{
 				int funcId = asBC_INTARG(&byteCode[n]);
-				asCConfigGroup *group = module->engine->FindConfigGroupForFunction(funcId);
+				asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
 				if( group != 0 ) group->AddRef();
 			}
 			break;
@@ -419,7 +417,6 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_SetG4:
 		case asBC_CpyVtoG4:
 			// TODO: global: Need to decrease the reference for each global variable
-			if( module )
 			{
 				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
 				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
@@ -430,7 +427,6 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_LdGRdR4:
 		case asBC_CpyGtoV4:
 			// TODO: global: Need to decrease the reference for each global variable
-			if( module )
 			{
 				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
 				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
@@ -440,7 +436,6 @@ void asCScriptFunction::ReleaseReferences()
 
 		// System functions
 		case asBC_CALLSYS:
-			if( module )
 			{
 				int funcId = asBC_INTARG(&byteCode[n]);
 				asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
@@ -498,10 +493,8 @@ const char *asCScriptFunction::GetDeclaration(bool includeObjectName) const
 // interface
 const char *asCScriptFunction::GetScriptSectionName() const
 {
-	if( module && scriptSectionIdx >= 0 )
-	{
-		return module->scriptSections[scriptSectionIdx]->AddressOf();
-	}
+	if( scriptSectionIdx >= 0 )
+		return engine->scriptSectionNames[scriptSectionIdx]->AddressOf();
 	
 	return 0;
 }

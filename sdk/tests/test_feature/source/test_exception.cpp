@@ -42,26 +42,18 @@ bool TestException()
 		int line = ctx->GetExceptionLineNumber();
 		const char *desc = ctx->GetExceptionString();
 
-		if( func != 0xFFFE )
-		{
-			printf("%s: Exception function ID is wrong\n", TESTNAME);
-			fail = true;
-		}
-/*
-		// TODO: This is temporarily not working. Only when AddRef and Release is added
-		// to asIScriptFunction can we add this support again.
 		const asIScriptFunction *function = engine->GetFunctionDescriptorById(func);
-		if( strcmp(function->GetName(), "@ExecuteString") != 0 )
+		if( strcmp(function->GetName(), "ExecuteString") != 0 )
 		{
 			printf("%s: Exception function name is wrong\n", TESTNAME);
 			fail = true;
 		}
-		if( strcmp(function->GetDeclaration(), "void @ExecuteString()") != 0 )
+		if( strcmp(function->GetDeclaration(), "void ExecuteString()") != 0 )
 		{
 			printf("%s: Exception function declaration is wrong\n", TESTNAME);
 			fail = true;
 		}
-*/
+
 		if( line != 2 )
 		{
 			printf("%s: Exception line number is wrong\n", TESTNAME);

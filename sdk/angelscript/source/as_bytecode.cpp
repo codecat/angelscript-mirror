@@ -42,7 +42,6 @@
 #include "as_debug.h" // mkdir()
 #include "as_array.h"
 #include "as_string.h"
-#include "as_module.h"
 #include "as_scriptengine.h"
 
 BEGIN_AS_NAMESPACE
@@ -1491,12 +1490,8 @@ void asCByteCode::PostProcess()
 	}	
 }
 
-#ifndef AS_DEBUG
-void asCByteCode::DebugOutput(const char * /*name*/, asCModule * /*module*/, asCScriptEngine * /*engine*/)
-{
-}
-#else
-void asCByteCode::DebugOutput(const char *name, asCModule *module, asCScriptEngine *engine)
+#ifdef AS_DEBUG
+void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine)
 {
 	_mkdir("AS_DEBUG");
 

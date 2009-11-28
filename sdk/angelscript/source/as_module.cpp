@@ -42,26 +42,16 @@
 #include "as_context.h"
 #include "as_texts.h"
 
-// TODO: Need a separate interface for compiling scripts. The asIScriptCompiler
-//       will have a target module, and will allow the compilation of an entire
-//       script or just individual functions within the scope of the module
-// 
-//       With this separation it will be possible to compile the library without
-//       the compiler, thus giving a much smaller binary executable.
-
 BEGIN_AS_NAMESPACE
 
 // internal
-asCModule::asCModule(const char *name, int id, asCScriptEngine *engine)
+asCModule::asCModule(const char *name, asCScriptEngine *engine)
 {
 	this->name     = name;
 	this->engine   = engine;
-	this->moduleId = id;
 
 	builder = 0;
-	isDiscarded = false;
 	isBuildWithoutErrors = false;
-	moduleCount.set(0);
 	isGlobalVarInitialized = false;
 }
 
@@ -82,8 +72,7 @@ asCModule::~asCModule()
 		if( engine->lastModule == this )
 			engine->lastModule = 0;
 
-		int index = (moduleId >> 16);
-		engine->scriptModules[index] = 0;
+		engine->scriptModules.RemoveValue(this);
 	}
 }
 
@@ -108,13 +97,10 @@ const char *asCModule::GetName()
 // interface
 int asCModule::AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset)
 {
-	if( IsUsed() )
-		return asMODULE_IS_IN_USE;
-
 	if( !builder )
 		builder = asNEW(asCBuilder)(engine, this);
 
-	builder->AddCode(name, code, (int)codeLength, lineOffset, (int)builder->scripts.GetLength(), engine->ep.copyScriptSections);
+	builder->AddCode(name, code, (int)codeLength, lineOffset, (int)engine->GetScriptSectionNameIndex(name ? name : ""), engine->ep.copyScriptSections);
 
 	return asSUCCESS;
 }
@@ -150,13 +136,6 @@ int asCModule::Build()
 	{
 		engine->BuildCompleted();
 		return asSUCCESS;
-	}
-
-	// Store the section names
-	for( size_t n = 0; n < builder->scripts.GetLength(); n++ )
-	{
-		asCString *sectionName = asNEW(asCString)(builder->scripts[n]->name);
-		scriptSections.PushLast(sectionName);
 	}
 
 	// Compile the script
@@ -297,27 +276,14 @@ void asCModule::CallExit()
 }
 
 // internal
-void asCModule::Discard()
-{
-	isDiscarded = true;
-}
-
-// internal
 void asCModule::InternalReset()
 {
-	asASSERT( !IsUsed() );
-
 	CallExit();
 
 	size_t n;
 
-	// TODO: This is incorrect. If there are still live objects, the methods shouldn't be destroyed yet.
-	//       It should still be possible to discard the module, but the methods should only be destroyed
-	//       when all objects have been destroyed. However, we can't just check if there are live objects
-	//       when determining if functions can or cannot be destroyed, because then we could create situations
-	//       of memory that is never freed, e.g. a global variable in the module, being referenced by one
-	//       of it's own class methods. To fix this, we need a full garbage collector that can resolve 
-	//       circular references. 
+	// TODO: We need a full garbage collector that can resolve 
+	//       circular references, e.g. for recursive functions, etc.
 
 	// Release all global functions
 	for( n = 0; n < globalFunctions.GetLength(); n++ )
@@ -327,14 +293,19 @@ void asCModule::InternalReset()
 	}
 	globalFunctions.SetLength(0);
 
-	// First free the functions
+	// First release all compiled functions
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
 	{
 		if( scriptFunctions[n] )
+		{
+			// Remove the module reference in the functions
+			scriptFunctions[n]->module = 0;
 			scriptFunctions[n]->Release();
+		}
 	}
 	scriptFunctions.SetLength(0);
 
+	// TODO: functions: Global variables must be reference counted so that they are not released too early
 	// Release the global properties declared in the module
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
@@ -342,23 +313,11 @@ void asCModule::InternalReset()
 	}
 	scriptGlobals.SetLength(0);
 
+	UnbindAllImportedFunctions();
 
-	// Release bound functions
+	// Free bind information
 	for( n = 0; n < bindInformations.GetLength(); n++ )
 	{
-		// TODO: functions: Release bound functions
-
-		int oldFuncID = bindInformations[n]->boundFunctionId;
-		if( oldFuncID != -1 )
-		{
-			asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
-			if( oldModule != 0 ) 
-			{
-				// Release reference to the module
-				oldModule->ReleaseModuleRef();
-			}
-		}
-
 		engine->importedFunctions[bindInformations[n]->importedFunctionSignature->id & 0xFFFF] = 0 ;
 
 		asDELETE(bindInformations[n]->importedFunctionSignature, asCScriptFunction);
@@ -367,13 +326,6 @@ void asCModule::InternalReset()
 	bindInformations.SetLength(0);
 
 	isBuildWithoutErrors = true;
-	isDiscarded = false;
-
-	for( n = 0; n < scriptSections.GetLength(); n++ )
-	{
-		asDELETE(scriptSections[n],asCString);
-	}
-	scriptSections.SetLength(0);
 
 	// Free declared types, including classes, typedefs, and enums
 	for( n = 0; n < classTypes.GetLength(); n++ )
@@ -835,106 +787,6 @@ asCScriptFunction *asCModule::GetImportedFunction(int index)
 	return bindInformations[index]->importedFunctionSignature;
 }
 
-// internal
-asCScriptFunction *asCModule::GetSpecialFunction(int funcID)
-{
-	if( funcID & FUNC_IMPORTED )
-		return engine->importedFunctions[funcID & 0xFFFF]->importedFunctionSignature;
-	else
-	{
-		if( (funcID & 0xFFFF) == asFUNC_STRING )
-		{
-			asASSERT(false);
-		}
-
-		return engine->scriptFunctions[funcID & 0xFFFF];
-	}
-}
-
-// internal
-int asCModule::AddModuleRef()
-{
-	return moduleCount.atomicInc();
-}
-
-// internal
-int asCModule::ReleaseModuleRef()
-{
-	return moduleCount.atomicDec();
-}
-
-// internal
-bool asCModule::CanDelete()
-{
-	// Don't delete if not discarded
-	if( !isDiscarded ) return false;
-
-	// If there are modules referencing this one we need to check for circular referencing
-	if( moduleCount.get() )
-	{
-		// Check if all the modules are without external reference
-		asCArray<asCModule*> modules;
-		if( CanDeleteAllReferences(modules) )
-		{
-			// Unbind all functions. This will break any circular references
-			for( size_t n = 0; n < bindInformations.GetLength(); n++ )
-			{
-				int oldFuncID = bindInformations[n]->boundFunctionId;
-				if( oldFuncID != -1 )
-				{
-					asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
-					if( oldModule != 0 ) 
-					{
-						// Release reference to the module
-						oldModule->ReleaseModuleRef();
-					}
-				}
-			}
-		}
-
-		// Can't delete the module yet because the  
-		// other modules haven't released this one
-		return false;
-	}
-
-	return true;
-}
-
-// internal
-bool asCModule::CanDeleteAllReferences(asCArray<asCModule*> &modules)
-{
-	if( !isDiscarded ) return false;
-
-	modules.PushLast(this);
-
-	// Check all bound functions for referenced modules
-	for( size_t n = 0; n < bindInformations.GetLength(); n++ )
-	{
-		int funcID = bindInformations[n]->boundFunctionId;
-		asCModule *module = engine->GetModuleFromFuncId(funcID);
-
-		// If the module is already in the list don't check it again
-		bool inList = false;
-		for( size_t m = 0; m < modules.GetLength(); m++ )
-		{
-			if( modules[m] == module )
-			{
-				inList = true;
-				break;
-			}
-		}
-
-		if( !inList )
-		{
-			bool ret = module->CanDeleteAllReferences(modules);
-			if( ret == false ) return false;
-		}
-	}
-
-	// If no module has external references then all can be deleted
-	return true;
-}
-
 // interface
 int asCModule::BindImportedFunction(int index, int sourceId)
 {
@@ -943,9 +795,6 @@ int asCModule::BindImportedFunction(int index, int sourceId)
 	if( r < 0 ) return r;
 
 	// Must verify that the interfaces are equal
-	asCModule *srcModule = engine->GetModuleFromFuncId(sourceId);
-	if( srcModule == 0 ) return asNO_MODULE;
-
 	asCScriptFunction *dst = GetImportedFunction(index);
 	if( dst == 0 ) return asNO_FUNCTION;
 
@@ -966,11 +815,8 @@ int asCModule::BindImportedFunction(int index, int sourceId)
 			return asINVALID_INTERFACE;
 	}
 
-	// Add reference to new module
-	srcModule->AddModuleRef();
-
-	// TODO: functions: Add reference 
 	bindInformations[index]->boundFunctionId = sourceId;
+	engine->scriptFunctions[sourceId]->AddRef();
 
 	return asSUCCESS;
 }
@@ -985,16 +831,10 @@ int asCModule::UnbindImportedFunction(int index)
 	int oldFuncID = bindInformations[index]->boundFunctionId;
 	if( oldFuncID != -1 )
 	{
-		asCModule *oldModule = engine->GetModuleFromFuncId(oldFuncID);
-		if( oldModule != 0 ) 
-		{
-			// Release reference to the module
-			oldModule->ReleaseModuleRef();
-		}
+		bindInformations[index]->boundFunctionId = -1;
+		engine->scriptFunctions[oldFuncID]->Release();
 	}
 
-	// TODO: functions: Release reference
-	bindInformations[index]->boundFunctionId = -1;
 	return asSUCCESS;
 }
 
@@ -1066,14 +906,6 @@ int asCModule::UnbindAllImportedFunctions()
 		UnbindImportedFunction(n);
 
 	return asSUCCESS;
-}
-
-// internal
-bool asCModule::IsUsed()
-{
-	if( moduleCount.get() ) return true;
-
-	return false;
 }
 
 // internal
@@ -1413,10 +1245,6 @@ int asCModule::SaveByteCode(asIBinaryStream *out)
 int asCModule::LoadByteCode(asIBinaryStream *in)
 {
 	if( in == 0 ) return asINVALID_ARG;
-
-	// Is the module currently in use?
-	if( IsUsed() )
-		return asMODULE_IS_IN_USE;
 
 	// Only permit loading bytecode if no other thread is currently compiling
 	int r = engine->RequestBuild();

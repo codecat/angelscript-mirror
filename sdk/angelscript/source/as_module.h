@@ -49,9 +49,7 @@
 
 BEGIN_AS_NAMESPACE
 
-// TODO: Remove this when ExecuteString is removed
-const int asFUNC_STRING = 0xFFFE;
-
+// TODO: import: Remove this when the imported functions are removed
 const int FUNC_IMPORTED = 0x40000000;
 
 class asCScriptEngine;
@@ -73,12 +71,7 @@ struct sObjectTypePair
 	asCObjectType *b;
 };
 
-// TODO: addref/release for the module. The Module should have addref/release methods so that 
-//       the application can keep its own references. If DiscardModule is called on the module from
-//       the engine the module is not discarded immediately if the application holds it's own reference.
-//       Only when the application releases its references is the module discarded. Discard will however
-//       remove the reference from the engine's list of valid modules, so GetModule won't return it any
-//       more.
+// TODO: Remove the error code asMODULE_IS_IN_USE, it is no longer used anywhere
 
 // TODO: global: The module represents the current scope. Global variables may be added/removed
 //               from the scope through DeclareGlobalVar, UndeclareGlobalVar. Undeclaring a global variable
@@ -86,20 +79,24 @@ struct sObjectTypePair
 //               new function compilations. Only when no more functions are accessing the global variables is
 //               the variable removed.
 
-// TODO: dynamic functions: String constants must be stored in the engine and shared between modules.
-//                          Bound functions must be stored in the engine and shared between modules. 
-//                          This way a script function can be disconnected from a module without breaking.
+// TODO: functions: It must be possible to compile new functions dynamically within the 
+//                  scope of a module. The new functions can be added to the scope of the module, or it can be 
+//                  left outside, thus only accessible through the function id that is returned. This can be used
+//                  by scripts to dynamically compile new functions. It will also be possible to undeclare functions,
+//                  in which case the function is removed from the scope of the module. When no one else is accessing
+//                  the function anymore, will it be removed. In order to keep track of references between functions
+//                  I need to implement reference counting, which also needs a GC for resolving cyclic references.
 
-// TODO: dynamic functions: It must be possible to compile new functions dynamically within the 
-//                          scope of a module. The new functions can be added to the scope of the module, or it can be 
-//                          left outside, thus only accessible through the function id that is returned. This can be used
-//                          by scripts to dynamically compile new functions. It will also be possible to undeclare functions,
-//                          in which case the function is removed from the scope of the module. When no one else is accessing
-//                          the function anymore, will it be removed. In order to keep track of references between functions
-//                          I need to implement reference counting, which also needs a GC for resolving cyclic references.
+// TODO: import: Remove function imports. When I have implemented function 
+//               pointers the function imports should be deprecated.
 
-// TODO: Remove function imports. When I have implemented function 
-//       pointers the function imports should be deprecated.
+// TODO: Need a separate interface for compiling scripts. The asIScriptCompiler
+//       will have a target module, and will allow the compilation of an entire
+//       script or just individual functions within the scope of the module
+// 
+//       With this separation it will be possible to compile the library without
+//       the compiler, thus giving a much smaller binary executable.
+
 
 class asCModule : public asIScriptModule
 {
@@ -165,7 +162,7 @@ public:
 //-----------------------------------------------
 // Internal
 //-----------------------------------------------
-	asCModule(const char *name, int id, asCScriptEngine *engine);
+	asCModule(const char *name, asCScriptEngine *engine);
 	~asCModule();
 
 //protected:
@@ -175,27 +172,16 @@ public:
 	friend class asCContext;
 	friend class asCRestore;
 
-	void Discard();
 	void InternalReset();
 
-	// TODO: functions: The module won't be needing a reference counter anymore
-	int  AddModuleRef();
-	int  ReleaseModuleRef();
-	asCAtomic moduleCount;
-
-	int CallInit();
+	int  CallInit();
 	void CallExit();
-	bool isGlobalVarInitialized;
-
-	bool IsUsed();
 
     void JITCompile();
 
 	int  AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType = 0, bool isConstMethod = false, bool isGlobalFunction = false);
 	int  AddScriptFunction(asCScriptFunction *func);
 	int  AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, const asCString &moduleName);
-
-	bool CanDeleteAllReferences(asCArray<asCModule*> &modules);
 
 	int  GetNextImportedFunctionId();
 
@@ -204,14 +190,11 @@ public:
 	bool AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArray<sObjectTypePair> &equals);
 
 	asCScriptFunction *GetImportedFunction(int funcId);
-	asCScriptFunction *GetSpecialFunction(int funcId);
 
 	asCObjectType *GetObjectType(const char *type);
 
-	int  GetScriptSectionIndex(const char *name);
-	bool CanDelete();
-
 	asCGlobalProperty *AllocateGlobalProperty(const char *name, const asCDataType &dt);
+
 
 	asCString name;
 
@@ -219,10 +202,6 @@ public:
 	asCBuilder      *builder;
 	bool             isBuildWithoutErrors;
 
-	int  moduleId;
-	bool isDiscarded;
-
-	asCArray<asCString *>          scriptSections;
 	// This array holds all functions, class members, factories, etc that were compiled with the module
 	asCArray<asCScriptFunction *>  scriptFunctions;
 	// This array holds global functions declared in the module
@@ -232,6 +211,7 @@ public:
 
 	// This array holds the global variables declared in the script
 	asCArray<asCGlobalProperty *>  scriptGlobals;
+	bool                           isGlobalVarInitialized;
 
 	// This array holds class and interface types
 	asCArray<asCObjectType*>       classTypes;

@@ -43,7 +43,6 @@
 #include "as_tokendef.h"
 #include "as_texts.h"
 #include "as_callfunc.h"
-#include "as_module.h"
 #include "as_generic.h"
 #include "as_debug.h" // mkdir()
 #include "as_bytecode.h"
@@ -384,7 +383,7 @@ int asCContext::Unprepare()
 	// Deallocate string function
 	if( stringFunction )
 	{
-		asDELETE(stringFunction, asCScriptFunction);
+		stringFunction->Release();
 		stringFunction = 0;
 	}
 	
@@ -393,100 +392,15 @@ int asCContext::Unprepare()
 
 int asCContext::SetExecuteStringFunction(asCScriptFunction *func)
 {
-	// TODO: multithread: Make thread safe
-
 	// TODO: Verify that the context isn't running
 
-	// TODO: functions: Add reference (execute string doesn't use an id)
-
 	if( stringFunction )
-	{
-		asDELETE(stringFunction,asCScriptFunction);
-	}
+		stringFunction->Release();
 
+	// The new function already has the refCount set to 1
 	stringFunction = func;
 
 	return 0;
-}
-
-int asCContext::PrepareSpecial(int funcID, asCModule *mod)
-{
-	// Check engine pointer
-	if( engine == 0 ) return asERROR;
-
-	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
-		return asCONTEXT_ACTIVE;
-
-	// Clean the stack if not done before
-	if( status != asEXECUTION_UNINITIALIZED )
-		CleanStack();
-
-	exceptionLine = -1;
-	exceptionFunction = 0;
-
-	isCallingSystemFunction = false;
-
-	if( initialFunction )
-		initialFunction->Release();
-
-	if( (funcID & 0xFFFF) == asFUNC_STRING )
-		initialFunction = stringFunction;
-	else
-		initialFunction = mod->GetSpecialFunction(funcID & 0xFFFF);
-	initialFunction->AddRef();
-	regs.globalVarPointers = initialFunction->globalVarPointers.AddressOf();
-
-	currentFunction = initialFunction;
-	if( currentFunction == 0 )
-		return asERROR;
-
-	regs.programPointer = currentFunction->byteCode.AddressOf();
-
-	doAbort = false;
-	doSuspend = false;
-	regs.doProcessSuspend = lineCallback;
-	externalSuspendRequest = false;
-	status = asEXECUTION_PREPARED;
-
-	// Determine the minimum stack size needed
-	int stackSize = currentFunction->stackNeeded + RESERVE_STACK;
-
-	stackSize = stackSize > engine->initialContextStackSize ? stackSize : engine->initialContextStackSize;
-
-	if( stackSize != stackBlockSize )
-	{
-		for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
-			if( stackBlocks[n] )
-			{
-				asDELETEARRAY(stackBlocks[n]);
-			}
-		stackBlocks.SetLength(0);
-
-		stackBlockSize = stackSize;
-
-		asDWORD *stack = asNEWARRAY(asDWORD,stackBlockSize);
-		stackBlocks.PushLast(stack);
-	}
-
-	// Reserve space for the arguments and return value
-	returnValueSize = currentFunction->GetSpaceNeededForReturnValue();
-	argumentsSize = currentFunction->GetSpaceNeededForArguments();
-
-	regs.stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize;
-	regs.stackPointer = regs.stackFramePointer;
-	stackIndex = 0;
-
-	// Set arguments to 0
-	memset(regs.stackPointer, 0, 4*argumentsSize);
-
-	// Set all object variables to 0
-	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
-	{
-		int pos = currentFunction->objVariablePos[n];
-		*(size_t*)&regs.stackFramePointer[-pos] = 0;
-	}
-
-	return asSUCCESS;
 }
 
 asBYTE asCContext::GetReturnByte()
@@ -1314,6 +1228,10 @@ void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 	//                 implement interface methods. This list should be ordered by
 	//                 the signatureId so that a binary search can be made, instead
 	//                 of a linear search.
+	//
+	//                 When this is done, we must also make sure the signatureId of a 
+	//                 function never changes, e.g. when if the signature functions are
+	//                 released.
 
 	// Search the object type for a function that matches the interface function
 	asCScriptFunction *realFunc = 0;

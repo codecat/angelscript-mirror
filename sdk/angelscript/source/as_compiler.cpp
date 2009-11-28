@@ -159,7 +159,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
-	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + "__dc.txt").AddressOf(), builder->module, engine);
+	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + "__dc.txt").AddressOf(), engine);
 #endif
 
 	return 0;
@@ -225,7 +225,7 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	// DEBUG: output byte code
 	asCString args;
 	args.Format("%d", outFunc->parameterTypes.GetLength());
-	byteCode.DebugOutput(("__" + outFunc->name + "__factory" + args + ".txt").AddressOf(), builder->module, engine);
+	byteCode.DebugOutput(("__" + outFunc->name + "__factory" + args + ".txt").AddressOf(), engine);
 #endif
 */
 	return 0;
@@ -513,9 +513,9 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
 	if( outFunc->objectType )
-		byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + ".txt").AddressOf(), builder->module, engine);
+		byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + ".txt").AddressOf(), engine);
 	else
-		byteCode.DebugOutput(("__" + outFunc->name + ".txt").AddressOf(), builder->module, engine);
+		byteCode.DebugOutput(("__" + outFunc->name + ".txt").AddressOf(), engine);
 #endif
 
 	return 0;

@@ -216,12 +216,17 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		asCScriptFunction *execfunc = asNEW(asCScriptFunction)(engine,module);
 		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, execfunc) >= 0 )
 		{
-			execfunc->id = asFUNC_STRING;
+			execfunc->funcType = asFUNC_SCRIPT;
+			execfunc->id = engine->GetNextScriptFunctionId();
+			execfunc->name = "ExecuteString";
+			execfunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
+			engine->SetScriptFunction(execfunc);
 
 			ctx->SetExecuteStringFunction(execfunc);
 		}
 		else
 		{
+			// The function is only ref counted once it has a valid id
 			asDELETE(execfunc,asCScriptFunction);
 		}
 	}

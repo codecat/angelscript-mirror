@@ -278,10 +278,6 @@ SOURCE=..\..\..\source\as_bytecode.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\source\as_bytecodedef.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\source\as_callfunc.h
 # End Source File
 # Begin Source File

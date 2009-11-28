@@ -55,8 +55,6 @@
 
 BEGIN_AS_NAMESPACE
 
-#define EXECUTESTRINGID 0x7FFFFFFFul
-
 class asCBuilder;
 class asCContext;
 
@@ -234,7 +232,6 @@ public:
 	int  RequestBuild();
 	void BuildCompleted();
 
-	void Reset();
 	void PrepareEngine();
 	bool isPrepared;
 
@@ -249,7 +246,6 @@ public:
 	asCScriptFunction *GetScriptFunction(int funcID);
 
 	asCModule *GetModule(const char *name, bool create);
-	asCModule *GetModule(int id);
 	asCModule *GetModuleFromFuncId(int funcId);
 
 	int  GetMethodIdByDecl(const asCObjectType *ot, const char *decl, asCModule *mod);
@@ -279,6 +275,8 @@ public:
 	asCGlobalProperty *AllocateGlobalProperty();
 	void AddRefToGlobalProperty(asCGlobalProperty *prop);
 	void ReleaseGlobalProperty(asCGlobalProperty *prop);
+
+	int GetScriptSectionNameIndex(const char *name);
 
 //===========================================================
 // internal properties
@@ -332,6 +330,9 @@ public:
 	asCArray<asCObjectType *> classTypes;
 	// This array stores the template instances types, that have been generated from template types
 	asCArray<asCObjectType *> templateInstanceTypes;
+
+	// Stores the names of the script sections for debugging purposes
+	asCArray<asCString *> scriptSectionNames;
 
 	// Type identifiers
 	int                       typeIdSeqNbr;

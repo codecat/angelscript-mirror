@@ -49,7 +49,6 @@ BEGIN_AS_NAMESPACE
 #define MAX_DATA_SIZE  8
 #define MAX_INSTR_SIZE (BYTECODE_SIZE+MAX_DATA_SIZE)
 
-class asCModule;
 class asCScriptEngine;
 class cByteInstruction;
 
@@ -76,7 +75,10 @@ public:
 	void AddCode(asCByteCode *bc);
 
 	void PostProcess();
-	void DebugOutput(const char *name, asCModule *module, asCScriptEngine *engine);
+
+#ifdef AS_DEBUG
+	void DebugOutput(const char *name, asCScriptEngine *engine);
+#endif
 
 	int  GetLastInstr();
 	int  RemoveLastInstr();
