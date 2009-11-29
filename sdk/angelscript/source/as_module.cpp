@@ -305,12 +305,9 @@ void asCModule::InternalReset()
 	}
 	scriptFunctions.SetLength(0);
 
-	// TODO: functions: Global variables must be reference counted so that they are not released too early
 	// Release the global properties declared in the module
 	for( n = 0; n < scriptGlobals.GetLength(); n++ )
-	{
-		engine->ReleaseGlobalProperty(scriptGlobals[n]);
-	}
+		scriptGlobals[n]->Release();
 	scriptGlobals.SetLength(0);
 
 	UnbindAllImportedFunctions();
@@ -934,11 +931,13 @@ asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asC
 {
 	asCGlobalProperty *prop = engine->AllocateGlobalProperty();
 	prop->name = name;
-	prop->type = dt;
-	scriptGlobals.PushLast(prop);
 
 	// Allocate the memory for this property based on its type
+	prop->type = dt;
 	prop->AllocateMemory();
+
+	// Store the variable in the module scope (the reference count is already set to 1)
+	scriptGlobals.PushLast(prop);
 
 	return prop;
 }

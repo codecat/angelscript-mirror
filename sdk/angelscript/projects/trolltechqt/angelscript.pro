@@ -63,6 +63,7 @@ SOURCES += ../../source/as_arrayobject.cpp \
            ../../source/as_datatype.cpp \
            ../../source/as_gc.cpp \
            ../../source/as_generic.cpp \
+           ../../source/as_globalproperty.cpp \
            ../../source/as_memory.cpp \
            ../../source/as_module.cpp \
            ../../source/as_objecttype.cpp \

@@ -273,8 +273,7 @@ public:
 
 	// Global property management
 	asCGlobalProperty *AllocateGlobalProperty();
-	void AddRefToGlobalProperty(asCGlobalProperty *prop);
-	void ReleaseGlobalProperty(asCGlobalProperty *prop);
+	void FreeUnusedGlobalProperties();
 
 	int GetScriptSectionNameIndex(const char *name);
 
@@ -311,6 +310,7 @@ public:
 	// Stores all global properties, both those registered by application, and those declared by scripts.
 	// The id of a global property is the index in this array.
 	asCArray<asCGlobalProperty *> globalProperties;
+	asCArray<int>                 freeGlobalPropertyIds;
 
 	// Stores all functions, i.e. registered functions, script functions, class methods, behaviours, etc.
 	asCArray<asCScriptFunction *> scriptFunctions;

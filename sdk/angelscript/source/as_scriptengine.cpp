@@ -440,6 +440,7 @@ asCScriptEngine::~asCScriptEngine()
 	// Do one more garbage collect to free gc objects that were global variables
 	GarbageCollect(asGC_FULL_CYCLE);
 
+	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
 	// Break all relationship between remaining class types and functions
@@ -455,6 +456,7 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 
+	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
 	asSMapNode<int,asCDataType*> *cursor = 0;
@@ -483,7 +485,7 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 	registeredGlobalProps.SetLength(0);
-	globalProperties.SetLength(0);
+	FreeUnusedGlobalProperties();
 
 	for( n = 0; n < templateTypes.GetLength(); n++ )
 	{
@@ -696,6 +698,7 @@ int asCScriptEngine::DiscardModule(const char *module)
 
 	asDELETE(mod, asCModule);
 
+	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
 	return 0;
@@ -2192,30 +2195,31 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 asCGlobalProperty *asCScriptEngine::AllocateGlobalProperty()
 {
 	asCGlobalProperty *prop = asNEW(asCGlobalProperty);
-	prop->refCount.set(1);
 
-	// TODO: global: Should first check the availability of a free slot
+	// First check the availability of a free slot
+	if( freeGlobalPropertyIds.GetLength() )
+	{
+		prop->id = freeGlobalPropertyIds.PopLast();
+		globalProperties[prop->id] = prop;
+		return prop;
+	}
+
 	prop->id = (asUINT)globalProperties.GetLength();
 	globalProperties.PushLast(prop);
-
 	return prop;
 }
 
 // internal
-void asCScriptEngine::AddRefToGlobalProperty(asCGlobalProperty *prop)
+void asCScriptEngine::FreeUnusedGlobalProperties()
 {
-	prop->refCount.atomicInc();
-}
-
-// internal
-void asCScriptEngine::ReleaseGlobalProperty(asCGlobalProperty *prop)
-{
-	if( prop->refCount.atomicDec() == 0 )
+	for( asUINT n = 0; n < globalProperties.GetLength(); n++ )
 	{
-		// TODO: global: Should keep track of free slots
-		globalProperties[prop->id] = 0;
-
-		asDELETE(prop, asCGlobalProperty);
+		if( globalProperties[n] && globalProperties[n]->refCount.get() == 0 )
+		{
+			freeGlobalPropertyIds.PushLast(n);
+			asDELETE(globalProperties[n], asCGlobalProperty);
+			globalProperties[n] = 0;
+		}
 	}
 }
 

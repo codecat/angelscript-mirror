@@ -51,6 +51,7 @@ BEGIN_AS_NAMESPACE
 class asCScriptEngine;
 class asCModule;
 class asCConfigGroup;
+class asCGlobalProperty;
 
 struct asSScriptVariable
 {
@@ -124,8 +125,9 @@ public:
 	void      AddReferences();
 	void      ReleaseReferences();
 
-	int             GetGlobalVarPtrIndex(int gvarId);
-	asCConfigGroup *GetConfigGroupByGlobalVarPtrIndex(int index);
+	int                GetGlobalVarPtrIndex(int gvarId);
+	asCConfigGroup    *GetConfigGroupByGlobalVarPtrIndex(int index);
+	asCGlobalProperty *GetPropertyByGlobalVarPtrIndex(int index);
 
 public:
 	//-----------------------------------

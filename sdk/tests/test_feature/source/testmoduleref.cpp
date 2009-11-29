@@ -11,9 +11,6 @@ static const char *script = "int global; void Test() {global = 0;}";
 
 bool TestModuleRef()
 {
-	printf("Skipping until the script functions properly hold on to global variables\n");
-	return false;
-
 	bool ret = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -66,45 +66,20 @@ public:
 class asCGlobalProperty
 {
 public:
-	asCGlobalProperty() { memory = 0; memoryAllocated = false; realAddress = 0; initFunc = 0; }
-	~asCGlobalProperty() 
-	{ 
-		if( memoryAllocated ) { asDELETEARRAY(memory); } 
-		if( initFunc )
-			initFunc->Release();
-	}
+	asCGlobalProperty();
+	~asCGlobalProperty();
+
+	void AddRef();
+	void Release();
+
+	void *GetAddressOfValue();
+	void AllocateMemory();
+	void SetRegisteredAddress(void *p);
 
 	asCString          name;
 	asCDataType        type;
 	asUINT             id;
 	asCScriptFunction *initFunc;
-
-	void *GetAddressOfValue() { return (memoryAllocated || realAddress) ? memory : &storage; }
-
-	// The global property structure is responsible for allocating the storage
-	// method for script declared variables. Each allocation is independent of
-	// other global properties, so that variables can be added and removed at
-	// any time.
-	void AllocateMemory() 
-	{ 
-		if( type.GetSizeOnStackDWords() > 2 ) 
-		{ 
-			memory = asNEWARRAY(asDWORD, type.GetSizeOnStackDWords()); 
-			memoryAllocated = true; 
-		} 
-	}
-
-	void SetRegisteredAddress(void *p) 
-	{ 
-		realAddress = p; 	
-		if( type.IsObject() && !type.IsReference() && !type.IsObjectHandle() )
-		{
-			// The global property is a pointer to a pointer 
-			memory = &realAddress;
-		} 
-		else
-			memory = p; 
-	}
 
 protected:
 	// This is only stored for registered properties, and keeps the pointer given by the application

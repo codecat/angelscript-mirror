@@ -215,6 +215,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\as_globalproperty.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\as_memory.cpp"
 				>
 			</File>

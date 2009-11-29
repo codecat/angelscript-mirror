@@ -313,6 +313,8 @@ bool asCScriptFunction::IsSignatureEqual(const asCScriptFunction *func) const
 // internal
 void asCScriptFunction::AddReferences()
 {
+	asUINT n;
+
 	// TODO: functions: Need to increment references to functions
 
 	// Only count references if there is any bytecode
@@ -327,7 +329,7 @@ void asCScriptFunction::AddReferences()
 	}
 
 	// Go through the byte code and add references to all resources used by the function
-	for( asUINT n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
+	for( n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{
 		switch( *(asBYTE*)&byteCode[n] )
 		{
@@ -348,7 +350,7 @@ void asCScriptFunction::AddReferences()
 		case asBC_PshG4:
 		case asBC_SetG4:
 		case asBC_CpyVtoG4:
-			// TODO: global: Need to increase the reference for each global variable
+			// Need to increase the reference for each global variable
 			{
 				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
 				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
@@ -358,7 +360,7 @@ void asCScriptFunction::AddReferences()
 
 		case asBC_LdGRdR4:
 		case asBC_CpyGtoV4:
-			// TODO: global: Need to increase the reference for each global variable
+			// Need to increase the reference for each global variable
 			{
 				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
 				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
@@ -376,11 +378,20 @@ void asCScriptFunction::AddReferences()
 			break;
 		}
 	}
+
+	// Add reference to the global properties
+	for( n = 0; n < globalVarPointers.GetLength(); n++ )
+	{
+		asCGlobalProperty *prop = GetPropertyByGlobalVarPtrIndex(n);
+		prop->AddRef();
+	}
 }
 
 // internal
 void asCScriptFunction::ReleaseReferences()
 {
+	asUINT n;
+
 	// TODO: functions: Need to release references to functions
 
 	// Only count references if there is any bytecode
@@ -395,7 +406,7 @@ void asCScriptFunction::ReleaseReferences()
 	}
 
 	// Go through the byte code and release references to all resources used by the function
-	for( asUINT n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
+	for( n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{
 		switch( *(asBYTE*)&byteCode[n] )
 		{
@@ -416,7 +427,7 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_PshG4:
 		case asBC_SetG4:
 		case asBC_CpyVtoG4:
-			// TODO: global: Need to decrease the reference for each global variable
+			// Need to decrease the reference for each global variable
 			{
 				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
 				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
@@ -426,7 +437,7 @@ void asCScriptFunction::ReleaseReferences()
 
 		case asBC_LdGRdR4:
 		case asBC_CpyGtoV4:
-			// TODO: global: Need to decrease the reference for each global variable
+			// Need to decrease the reference for each global variable
 			{
 				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
 				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
@@ -443,6 +454,13 @@ void asCScriptFunction::ReleaseReferences()
 			}
 			break;
 		}
+	}
+
+	// Release the global properties
+	for( n = 0; n < globalVarPointers.GetLength(); n++ )
+	{
+		asCGlobalProperty *prop = GetPropertyByGlobalVarPtrIndex(n);
+		prop->Release();
 	}
 
 	// Release the jit compiled function
@@ -581,6 +599,18 @@ asCConfigGroup *asCScriptFunction::GetConfigGroupByGlobalVarPtrIndex(int index)
 		// Find the config group from the property id
 		return engine->FindConfigGroupForGlobalVar(gvarId);
 	}
+
+	return 0;
+}
+
+// internal
+asCGlobalProperty *asCScriptFunction::GetPropertyByGlobalVarPtrIndex(int index)
+{
+	void *gvarPtr = globalVarPointers[index];
+
+	for( asUINT g = 0; g < engine->globalProperties.GetLength(); g++ )
+		if( engine->globalProperties[g] && engine->globalProperties[g]->GetAddressOfValue() == gvarPtr )
+			return engine->globalProperties[g];
 
 	return 0;
 }

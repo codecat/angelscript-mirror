@@ -467,7 +467,12 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	}
 
 	// If there are compile errors, there is no reason to build the final code
-	if( hasCompileErrors ) return -1;
+	if( hasCompileErrors ) 
+	{
+		// Clear the accessed global properties, so they are not prematurely released
+		outFunc->globalVarPointers.SetLength(0);
+		return -1;
+	}
 
 	// At this point there should be no variables allocated
 	asASSERT(variableAllocations.GetLength() == freeVariables.GetLength());
@@ -499,7 +504,12 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		}
 	}
 
-	if( hasCompileErrors ) return -1;
+	if( hasCompileErrors )
+	{
+		// Clear the accessed global properties, so they are not prematurely released
+		outFunc->globalVarPointers.SetLength(0);
+		return -1;
+	}
 
 	// Copy byte code to the function
 	outFunc->byteCode.SetLength(byteCode.GetSize());

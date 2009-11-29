@@ -227,6 +227,10 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		else
 		{
 			// The function is only ref counted once it has a valid id
+
+			// Clear the global variables to avoid releasing them
+			// TODO: This shouldn't be necessary
+			execfunc->globalVarPointers.SetLength(0);
 			asDELETE(execfunc,asCScriptFunction);
 		}
 	}
@@ -1247,6 +1251,10 @@ void asCBuilder::CompileGlobalVariables()
 		asDELETE(gvar, sGlobalVariableDescription);
 		globVariables[n] = 0;
 	}
+
+	// Clear the local function's global var pointers. Otherwise it will try to release them
+	// TODO: This shouldn't be necessary. Find a better way to do it
+	func.globalVarPointers.SetLength(0);
 }
 
 void asCBuilder::CompileClasses()

@@ -22,6 +22,7 @@ SRCNAMES = \
   as_datatype.cpp \
   as_generic.cpp \
   as_gc.cpp \
+  as_globalproperty.cpp \
   as_memory.cpp \
   as_module.cpp \
   as_objecttype.cpp \
