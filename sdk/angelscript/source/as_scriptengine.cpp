@@ -2704,14 +2704,9 @@ void asCScriptEngine::BuildCompleted()
 // interface
 int asCScriptEngine::ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)
 {
-	ENTERCRITICALSECTION(engineCritical);
-	if( isBuilding )
-	{
-		LEAVECRITICALSECTION(engineCritical);
-		return asBUILD_IN_PROGRESS;
-	}
-	isBuilding = true;
-	LEAVECRITICALSECTION(engineCritical);
+	int r;
+	if( (r = RequestBuild()) < 0 )
+		return r;
 
 	PrepareEngine();
 
@@ -2765,8 +2760,10 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 	asCString str = script;
 	str = "void ExecuteString(){\n" + str + "\n;}";
 
-	int r = builder.BuildString(str.AddressOf(), (asCContext*)exec);
-	memoryMgr.FreeUnusedMemory();
+	r = builder.BuildString(str.AddressOf(), (asCContext*)exec);
+	
+	BuildCompleted();
+
 	if( r < 0 )
 	{
 		if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
@@ -2775,12 +2772,8 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 			*ctx = 0;
 		}
 		exec->Release();
-		isBuilding = false;
 		return asERROR;
 	}
-
-	// The build has ended
-	isBuilding = false;
 
 	// Prepare and execute the context
 	r = ((asCContext*)exec)->Prepare(((asCContext*)exec)->stringFunction->id);

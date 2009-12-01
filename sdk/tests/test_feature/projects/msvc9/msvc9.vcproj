@@ -443,6 +443,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_module.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_multiassign.cpp"
 				>
 			</File>

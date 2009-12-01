@@ -1260,5 +1260,47 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 	return r;
 }
 
+// interface
+int asCModule::CompileFunction(const char *sectionName, const char *code, asDWORD reserved, asIScriptFunction **outFunc)
+{
+	asASSERT(reserved == 0);
+	asASSERT(outFunc == 0 || *outFunc == 0);
+
+	// Only one thread may build at one time
+	int r = engine->RequestBuild();
+	if( r < 0 )
+		return r;
+
+	// Prepare the engine
+	engine->PrepareEngine();
+	if( engine->configFailed )
+	{
+		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_INVALID_CONFIGURATION);
+		engine->BuildCompleted();
+		return asINVALID_CONFIGURATION;
+	}
+
+	// Compile the single function
+	asCBuilder builder(engine, this);
+	asCString str = code;
+	asCScriptFunction *func = 0;
+	r = builder.CompileFunction(str.AddressOf(), &func);
+
+	engine->BuildCompleted();
+
+	if( r >= 0 && outFunc )
+	{
+		// Return the function to the caller
+		*outFunc = func;
+		func->AddRef();
+	}
+
+	// Release our reference to the function
+	if( func )
+		func->Release();
+
+	return r;
+}
+
 END_AS_NAMESPACE
 

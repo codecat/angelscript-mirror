@@ -186,6 +186,10 @@ SOURCE=..\..\..\source\as_generic.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\source\as_globalproperty.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\source\as_memory.cpp
 # End Source File
 # Begin Source File

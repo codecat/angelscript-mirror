@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.18.0 WIP - 2009/11/26</h2>
+<h2>Version 2.18.0 WIP - 2009/12/01</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed memory leak when an exception occurred in ExecuteString, and another ExecuteString was called afterwards
 <li>Fixed improper re-use of temporary variable by property get accessor when compiling binary operators (Thanks Scarabus2)
 <li>Fixed a bug in array template add-on with max portability mode (Thanks quarnster)
+</ul>
+<li>Library interface
+<ul>
+<li>Added asIScriptModule::CompileFunction() for dynamically compiling a single function that can be executed 
+<li>Added asIScriptFunction::GetId()
 </ul>
 <li>Library
 <ul>

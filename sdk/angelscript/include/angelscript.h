@@ -575,6 +575,7 @@ public:
 	// Compilation
     virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	virtual int  Build() = 0;
+	virtual int  CompileFunction(const char *sectionName, const char *code, asDWORD reserved, asIScriptFunction **outFunc) = 0;
 
 	// Functions
 	virtual int                GetFunctionCount() = 0;
@@ -854,6 +855,7 @@ public:
 	virtual int AddRef() = 0;
 	virtual int Release() = 0;
 
+	virtual int              GetId() const = 0;
 	virtual const char      *GetModuleName() const = 0;
 	virtual const char      *GetScriptSectionName() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;

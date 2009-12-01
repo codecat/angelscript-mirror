@@ -111,6 +111,7 @@ public:
 	// Compilation
 	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);
 	virtual int  Build();
+	virtual int  CompileFunction(const char *sectionName, const char *code, asDWORD reserved, asIScriptFunction **outFunc);
 
 	// Script functions
 	virtual int                GetFunctionCount();

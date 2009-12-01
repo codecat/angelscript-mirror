@@ -85,6 +85,7 @@ public:
 	int AddRef();
 	int Release();
 
+	int                  GetId() const;
 	const char          *GetModuleName() const;
 	asIObjectType       *GetObjectType() const;
 	const char          *GetObjectName() const;

@@ -261,6 +261,7 @@ int asCCompiler::CompileTemplateFactoryStub(asCBuilder *builder, int trueFactory
 int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asCScriptNode *func, asCScriptFunction *outFunc)
 {
 	Reset(builder, script, outFunc);
+	int buildErrors = builder->numErrors;
 
 	int stackPos = 0;
 	if( outFunc->objectType )
@@ -467,7 +468,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	}
 
 	// If there are compile errors, there is no reason to build the final code
-	if( hasCompileErrors ) 
+	if( hasCompileErrors || builder->numErrors != buildErrors ) 
 	{
 		// Clear the accessed global properties, so they are not prematurely released
 		outFunc->globalVarPointers.SetLength(0);
@@ -504,7 +505,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		}
 	}
 
-	if( hasCompileErrors )
+	if( hasCompileErrors || builder->numErrors != buildErrors )
 	{
 		// Clear the accessed global properties, so they are not prematurely released
 		outFunc->globalVarPointers.SetLength(0);

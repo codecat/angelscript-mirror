@@ -103,6 +103,7 @@ public:
 	int Build();
 
 	int BuildString(const char *string, asCContext *ctx);
+	int CompileFunction(const char *code, asCScriptFunction **outFunc);
 
 	void WriteInfo(const char *scriptname, const char *msg, int r, int c, bool preMessage);
 	void WriteError(const char *scriptname, const char *msg, int r, int c);
@@ -131,6 +132,8 @@ protected:
 	int RegisterEnum(asCScriptNode *node, asCScriptCode *file);
 	int RegisterTypedef(asCScriptNode *node, asCScriptCode *file);
 	void CompileClasses();
+
+	void GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, bool &isConstMethod, bool &isConstructor, bool &isDestructor);
 
 	bool DoesMethodExist(asCObjectType *objType, int methodId);
 

@@ -174,13 +174,29 @@ int asCBuilder::Build()
 
 int asCBuilder::BuildString(const char *string, asCContext *ctx)
 {
+	asCScriptFunction *execFunc = 0;
+	int r = CompileFunction(string, &execFunc);
+	if( r >= 0 )
+	{
+		ctx->SetExecuteStringFunction(execFunc);
+	}
+
+	return r;
+}
+
+int asCBuilder::CompileFunction(const char *string, asCScriptFunction **outFunc)
+{
+	asASSERT(outFunc != 0);
+
 	numErrors = 0;
 	numWarnings = 0;
 	preMessage.isSet = false;
 
 	// Add the string to the script code
 	asCScriptCode *script = asNEW(asCScriptCode);
+	// TODO: functions: Name of the section should be informed by the caller
 	script->SetCode(TXT_EXECUTESTRING, string, true);
+	// TODO: functions: This should be informed by caller
 	script->lineOffset = -1; // Compensate for "void ExecuteString() {\n"
 	scripts.PushLast(script);
 
@@ -191,6 +207,9 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 		// Find the function
 		asCScriptNode *node = parser.GetScriptNode();
 		node = node->firstChild;
+
+		// TODO: functions: Make sure there is nothing else than the function in the script code
+
 		if( node->nodeType == snFunction )
 		{
 			node->DisconnectParent();
@@ -213,16 +232,20 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	{
 		// Compile the function
 		asCCompiler compiler(engine);
-		asCScriptFunction *execfunc = asNEW(asCScriptFunction)(engine,module);
-		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, execfunc) >= 0 )
-		{
-			execfunc->funcType = asFUNC_SCRIPT;
-			execfunc->id = engine->GetNextScriptFunctionId();
-			execfunc->name = "ExecuteString";
-			execfunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
-			engine->SetScriptFunction(execfunc);
+		asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
 
-			ctx->SetExecuteStringFunction(execfunc);
+		bool isConstructor, isDestructor;
+		GetParsedFunctionDetails(functions[0]->node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->isReadOnly, isConstructor, isDestructor);
+
+		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, func) >= 0 )
+		{
+			func->funcType = asFUNC_SCRIPT;
+			func->id = engine->GetNextScriptFunctionId();
+
+			engine->SetScriptFunction(func);
+
+			// Return the function
+			*outFunc = func;
 		}
 		else
 		{
@@ -230,8 +253,8 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 
 			// Clear the global variables to avoid releasing them
 			// TODO: This shouldn't be necessary
-			execfunc->globalVarPointers.SetLength(0);
-			asDELETE(execfunc,asCScriptFunction);
+			func->globalVarPointers.SetLength(0);
+			asDELETE(func,asCScriptFunction);
 		}
 	}
 
@@ -1959,11 +1982,11 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file)
 	return 0;
 }
 
-int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
+void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, bool &isConstMethod, bool &isConstructor, bool &isDestructor)
 {
-	// Find name
-	bool isConstructor = false;
-	bool isDestructor = false;
+	// Find the name
+	isConstructor = false;
+	isDestructor = false;
 	asCScriptNode *n = 0;
 	if( node->firstChild->nodeType == snDataType )
 		n = node->firstChild->next->next;
@@ -1981,16 +2004,76 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 			isConstructor = true;
 		}
 	}
+	name.Assign(&file->code[n->tokenPos], n->tokenLength);
+
+	// Initialize a script function object for registration
+	if( !isConstructor && !isDestructor )
+	{
+		returnType = CreateDataTypeFromNode(node->firstChild, file);
+		returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next, file, 0, 0);
+	}
+	else
+		returnType = asCDataType::CreatePrimitive(ttVoid, false);
+
+	// Is this a const method?
+	if( objType && n->next->next && n->next->next->tokenType == ttConst )
+		isConstMethod = true;
+	else
+		isConstMethod = false;
+
+	// Count the number of parameters
+	int count = 0;
+	asCScriptNode *c = n->next->firstChild;
+	while( c )
+	{
+		count++;
+		c = c->next->next;
+		if( c && c->nodeType == snIdentifier )
+			c = c->next;
+	}
+
+	// Get the parameter types
+	parameterTypes.Allocate(count, false);
+	inOutFlags.Allocate(count, false);
+	n = n->next->firstChild;
+	while( n )
+	{
+		asETypeModifiers inOutFlag;
+		asCDataType type = CreateDataTypeFromNode(n, file);
+		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
+
+		// Store the parameter type
+		parameterTypes.PushLast(type);
+		inOutFlags.PushLast(inOutFlag);
+
+		// Move to next parameter
+		n = n->next->next;
+		if( n && n->nodeType == snIdentifier )
+			n = n->next;
+	}
+}
+
+
+int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
+{
+	asCString name;
+	asCDataType returnType;
+	asCArray<asCDataType> parameterTypes;
+	asCArray<asETypeModifiers> inOutFlags;
+	bool isConstMethod;
+	bool isConstructor;
+	bool isDestructor;
+
+	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor);
 
 	// Check for name conflicts
-	asCString name(&file->code[n->tokenPos], n->tokenLength);
 	if( !isConstructor && !isDestructor )
 	{
 		asCDataType dt = asCDataType::CreateObject(objType, false);
 		if( objType )
-			CheckNameConflictMember(dt, name.AddressOf(), n, file);
+			CheckNameConflictMember(dt, name.AddressOf(), node, file);
 		else
-			CheckNameConflict(name.AddressOf(), n, file);
+			CheckNameConflict(name.AddressOf(), node, file);
 	}
 	else
 	{
@@ -1998,7 +2081,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		if( name != objType->name )
 		{
 			int r, c;
-			file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 			WriteError(file->name.AddressOf(), TXT_CONSTRUCTOR_NAME_ERROR, r, c);
 		}
 
@@ -2018,56 +2101,13 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		func->funcId  = funcID;
 	}
 
-	// Initialize a script function object for registration
-	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
-	if( !isConstructor && !isDestructor )
-	{
-		returnType = CreateDataTypeFromNode(node->firstChild, file);
-		returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next, file, 0, 0);
-	}
-
-	// Is this a const method?
-	bool isConstMethod = false;
-	if( objType && n->next->next && n->next->next->tokenType == ttConst )
-		isConstMethod = true;
-
-	// Count the number of parameters
-	int count = 0;
-	asCScriptNode *c = n->next->firstChild;
-	while( c )
-	{
-		count++;
-		c = c->next->next;
-		if( c && c->nodeType == snIdentifier )
-			c = c->next;
-	}
-
 	// Destructors may not have any parameters
-	if( isDestructor && count > 0 )
+	if( isDestructor && parameterTypes.GetLength() > 0 )
 	{
 		int r, c;
 		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
 		WriteError(file->name.AddressOf(), TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM, r, c);
-	}
-
-	asCArray<asCDataType> parameterTypes(count);
-	asCArray<asETypeModifiers> inOutFlags(count);
-	n = n->next->firstChild;
-	while( n )
-	{
-		asETypeModifiers inOutFlag;
-		asCDataType type = CreateDataTypeFromNode(n, file);
-		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
-
-		// Store the parameter type
-		parameterTypes.PushLast(type);
-		inOutFlags.PushLast(inOutFlag);
-
-		// Move to next parameter
-		n = n->next->next;
-		if( n && n->nodeType == snIdentifier )
-			n = n->next;
 	}
 
 	// TODO: Much of this can probably be reduced by using the IsSignatureEqual method

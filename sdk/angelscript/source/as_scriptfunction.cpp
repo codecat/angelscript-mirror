@@ -93,6 +93,12 @@ asCScriptFunction::~asCScriptFunction()
 }
 
 // interface
+int asCScriptFunction::GetId() const
+{
+	return id;
+}
+
+// interface
 int asCScriptFunction::AddRef()
 {
 	asASSERT( funcType != asFUNC_IMPORTED );
