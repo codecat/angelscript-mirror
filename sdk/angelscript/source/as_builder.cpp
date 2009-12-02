@@ -172,10 +172,11 @@ int asCBuilder::Build()
 	return asSUCCESS;
 }
 
+// TODO: functions: Deprecate this as the application can now dynamically build functions
 int asCBuilder::BuildString(const char *string, asCContext *ctx)
 {
 	asCScriptFunction *execFunc = 0;
-	int r = CompileFunction(string, &execFunc);
+	int r = CompileFunction(TXT_EXECUTESTRING, string, &execFunc);
 	if( r >= 0 )
 	{
 		ctx->SetExecuteStringFunction(execFunc);
@@ -184,7 +185,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	return r;
 }
 
-int asCBuilder::CompileFunction(const char *string, asCScriptFunction **outFunc)
+int asCBuilder::CompileFunction(const char *sectionName, const char *string, asCScriptFunction **outFunc)
 {
 	asASSERT(outFunc != 0);
 
@@ -194,72 +195,69 @@ int asCBuilder::CompileFunction(const char *string, asCScriptFunction **outFunc)
 
 	// Add the string to the script code
 	asCScriptCode *script = asNEW(asCScriptCode);
-	// TODO: functions: Name of the section should be informed by the caller
-	script->SetCode(TXT_EXECUTESTRING, string, true);
+	script->SetCode(sectionName, string, true);
 	// TODO: functions: This should be informed by caller
 	script->lineOffset = -1; // Compensate for "void ExecuteString() {\n"
 	scripts.PushLast(script);
 
 	// Parse the string
 	asCParser parser(this);
-	if( parser.ParseScript(scripts[0]) >= 0 )
-	{
-		// Find the function
-		asCScriptNode *node = parser.GetScriptNode();
-		node = node->firstChild;
-
-		// TODO: functions: Make sure there is nothing else than the function in the script code
-
-		if( node->nodeType == snFunction )
-		{
-			node->DisconnectParent();
-
-			sFunctionDescription *func = asNEW(sFunctionDescription);
-			functions.PushLast(func);
-
-			func->script = scripts[0];
-			func->node = node;
-			func->name = "";
-		}
-		else
-		{
-			// An error occurred
-			asASSERT(false);
-		}
-	}
-
-	if( numErrors == 0 )
-	{
-		// Compile the function
-		asCCompiler compiler(engine);
-		asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
-
-		bool isConstructor, isDestructor;
-		GetParsedFunctionDetails(functions[0]->node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->isReadOnly, isConstructor, isDestructor);
-
-		if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, func) >= 0 )
-		{
-			func->funcType = asFUNC_SCRIPT;
-			func->id = engine->GetNextScriptFunctionId();
-
-			engine->SetScriptFunction(func);
-
-			// Return the function
-			*outFunc = func;
-		}
-		else
-		{
-			// The function is only ref counted once it has a valid id
-
-			// Clear the global variables to avoid releasing them
-			// TODO: This shouldn't be necessary
-			func->globalVarPointers.SetLength(0);
-			asDELETE(func,asCScriptFunction);
-		}
-	}
-
-	if( numErrors > 0 )
+	if( parser.ParseScript(scripts[0]) < 0 )
 		return asERROR;
+
+	asCScriptNode *node = parser.GetScriptNode();
+
+	// Make sure there is nothing else than the function in the script code
+	if( node == 0 || 
+		node->firstChild == 0 || 
+		node->firstChild != node->lastChild || 
+		node->firstChild->nodeType != snFunction )
+	{
+		WriteError(script->name.AddressOf(), TXT_ONLY_ONE_FUNCTION_ALLOWED, 0, 0);
+		return asERROR;
+	}
+
+	// Find the function node
+	node = node->firstChild;
+	node->DisconnectParent();
+
+	// Create the function
+	bool isConstructor, isDestructor;
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
+	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->isReadOnly, isConstructor, isDestructor);
+	func->funcType         = asFUNC_SCRIPT;
+	func->id               = engine->GetNextScriptFunctionId();
+	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
+
+	// Tell the engine that the function exists already so the compiler can access it
+	// TODO: functions: Add the function to the module if requested
+	engine->SetScriptFunction(func);
+
+	// Fill in the function info for the builder too
+	sFunctionDescription *funcDesc = asNEW(sFunctionDescription);
+	functions.PushLast(funcDesc);
+	funcDesc->script = scripts[0];
+	funcDesc->node   = node;
+	funcDesc->name   = func->name;
+	funcDesc->funcId = func->id;
+
+	asCCompiler compiler(engine);
+	if( compiler.CompileFunction(this, functions[0]->script, functions[0]->node, func) >= 0 )
+	{
+		// Return the function
+		*outFunc = func;
+	}
+	else
+	{
+		// TODO: functions: If the function was added to the module then remove it again
+
+		// Clear the global variables to avoid releasing them
+		// TODO: This shouldn't be necessary
+		func->globalVarPointers.SetLength(0);
+		func->Release();
+
+		return asERROR;
+	}
 
 	return asSUCCESS;
 }
@@ -2056,13 +2054,13 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 
 int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
 {
-	asCString name;
-	asCDataType returnType;
-	asCArray<asCDataType> parameterTypes;
+	asCString                  name;
+	asCDataType                returnType;
+	asCArray<asCDataType>      parameterTypes;
 	asCArray<asETypeModifiers> inOutFlags;
-	bool isConstMethod;
-	bool isConstructor;
-	bool isDestructor;
+	bool                       isConstMethod;
+	bool                       isConstructor;
+	bool                       isDestructor;
 
 	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor);
 
@@ -2328,6 +2326,7 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 	}
 
 	// TODO: optimize: Improve linear search
+	// TODO: optimize: Use the registeredGlobalFunctions array instead
 	for( n = 0; n < engine->scriptFunctions.GetLength(); n++ )
 	{
 		if( engine->scriptFunctions[n] &&

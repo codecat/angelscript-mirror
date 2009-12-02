@@ -1266,6 +1266,9 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, asDWOR
 	asASSERT(reserved == 0);
 	asASSERT(outFunc == 0 || *outFunc == 0);
 
+	if( code == 0 )
+		return asINVALID_ARG;
+
 	// Only one thread may build at one time
 	int r = engine->RequestBuild();
 	if( r < 0 )
@@ -1284,7 +1287,7 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, asDWOR
 	asCBuilder builder(engine, this);
 	asCString str = code;
 	asCScriptFunction *func = 0;
-	r = builder.CompileFunction(str.AddressOf(), &func);
+	r = builder.CompileFunction(sectionName, str.AddressOf(), &func);
 
 	engine->BuildCompleted();
 

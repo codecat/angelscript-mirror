@@ -162,9 +162,10 @@
 #define TXT_NOT_VALID_LVALUE                "Not a valid lvalue"
 
 #define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP "Type '%s' doesn't support the indexing operator"
-#define TXT_OBJECT_HANDLE_NOT_SUPPORTED   "Object handle is not supported for this type"
+#define TXT_OBJECT_HANDLE_NOT_SUPPORTED    "Object handle is not supported for this type"
 #define TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT "Only object types that support object handles can use &inout. Use &in or &out instead"
-#define TXT_ONLY_ONE_ARGUMENT_IN_CAST     "A cast operator has one argument"
+#define TXT_ONLY_ONE_ARGUMENT_IN_CAST      "A cast operator has one argument"
+#define TXT_ONLY_ONE_FUNCTION_ALLOWED      "The code must contain one and only one function"
 
 #define TXT_PARAMETER_ALREADY_DECLARED    "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s           "Parameter type can't be '%s'"

@@ -103,7 +103,7 @@ public:
 	int Build();
 
 	int BuildString(const char *string, asCContext *ctx);
-	int CompileFunction(const char *code, asCScriptFunction **outFunc);
+	int CompileFunction(const char *sectionName, const char *code, asCScriptFunction **outFunc);
 
 	void WriteInfo(const char *scriptname, const char *msg, int r, int c, bool preMessage);
 	void WriteError(const char *scriptname, const char *msg, int r, int c);
