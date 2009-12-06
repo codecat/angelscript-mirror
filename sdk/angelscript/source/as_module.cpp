@@ -51,7 +51,6 @@ asCModule::asCModule(const char *name, asCScriptEngine *engine)
 	this->engine   = engine;
 
 	builder = 0;
-	isBuildWithoutErrors = false;
 	isGlobalVarInitialized = false;
 }
 
@@ -148,12 +147,9 @@ int asCModule::Build()
 		// Reset module again
 		InternalReset();
 
-		isBuildWithoutErrors = false;
 		engine->BuildCompleted();
 		return r;
 	}
-
-	isBuildWithoutErrors = true;
 
     JITCompile();
 
@@ -172,9 +168,6 @@ int asCModule::ResetGlobalVars()
 {
 	if( isGlobalVarInitialized ) 
 		CallExit();
-
-	if( !isBuildWithoutErrors )
-		return asERROR;
 
 	// TODO: The application really should do this manually through a context
 	//       otherwise it cannot properly handle script exceptions that may be
@@ -322,8 +315,6 @@ void asCModule::InternalReset()
 	}
 	bindInformations.SetLength(0);
 
-	isBuildWithoutErrors = true;
-
 	// Free declared types, including classes, typedefs, and enums
 	for( n = 0; n < classTypes.GetLength(); n++ )
 		classTypes[n]->Release();
@@ -339,9 +330,6 @@ void asCModule::InternalReset()
 // interface
 int asCModule::GetFunctionIdByName(const char *name)
 {
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-	
 	// TODO: optimize: Improve linear search
 	// Find the function id
 	int id = -1;
@@ -364,21 +352,15 @@ int asCModule::GetFunctionIdByName(const char *name)
 // interface
 int asCModule::GetImportedFunctionCount()
 {
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
 	return (int)bindInformations.GetLength();
 }
 
 // interface
 int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 {
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
 	asCBuilder bld(engine, this);
 
-	asCScriptFunction func(engine, this);
+	asCScriptFunction func(engine, this, -1);
 	bld.ParseFunctionDeclaration(0, decl, &func, false);
 
 	// TODO: optimize: Improve linear search
@@ -418,21 +400,15 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl)
 // interface
 int asCModule::GetFunctionCount()
 {
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
 	return (int)globalFunctions.GetLength();
 }
 
 // interface
 int asCModule::GetFunctionIdByDecl(const char *decl)
 {
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
 	asCBuilder bld(engine, this);
 
-	asCScriptFunction func(engine, this);
+	asCScriptFunction func(engine, this, -1);
 	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
@@ -475,18 +451,12 @@ int asCModule::GetFunctionIdByDecl(const char *decl)
 // interface
 int asCModule::GetGlobalVarCount()
 {
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
 	return (int)scriptGlobals.GetLength();
 }
 
 // interface
 int asCModule::GetGlobalVarIndexByName(const char *name)
 {
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
 	// Find the global var id
 	int id = -1;
 	for( size_t n = 0; n < scriptGlobals.GetLength(); n++ )
@@ -521,9 +491,6 @@ asIScriptFunction *asCModule::GetFunctionDescriptorById(int funcId)
 // interface
 int asCModule::GetGlobalVarIndexByDecl(const char *decl)
 {
-	if( isBuildWithoutErrors == false )
-		return asERROR;
-
 	asCBuilder bld(engine, this);
 
 	asCObjectProperty gvar;
@@ -703,8 +670,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	asASSERT(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this);
-	func->funcType   = isInterface ? asFUNC_INTERFACE : asFUNC_SCRIPT;
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this, isInterface ? asFUNC_INTERFACE : asFUNC_SCRIPT);
 	func->name       = name;
 	func->id         = id;
 	func->returnType = returnType;
@@ -754,8 +720,7 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	asASSERT(id >= 0);
 
 	// Store the function information
-	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this);
-	func->funcType   = asFUNC_IMPORTED;
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this, asFUNC_IMPORTED);
 	func->name       = name;
 	func->id         = id;
 	func->returnType = returnType;
@@ -1261,12 +1226,13 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 }
 
 // interface
-int asCModule::CompileFunction(const char *sectionName, const char *code, asDWORD reserved, asIScriptFunction **outFunc)
+int asCModule::CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc)
 {
-	asASSERT(reserved == 0);
 	asASSERT(outFunc == 0 || *outFunc == 0);
 
-	if( code == 0 )
+	// Validate arguments
+	if( code == 0 || 
+		(compileFlags != 0 && compileFlags != asCOMP_ADD_TO_MODULE) )
 		return asINVALID_ARG;
 
 	// Only one thread may build at one time
@@ -1287,7 +1253,7 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, asDWOR
 	asCBuilder builder(engine, this);
 	asCString str = code;
 	asCScriptFunction *func = 0;
-	r = builder.CompileFunction(sectionName, str.AddressOf(), &func);
+	r = builder.CompileFunction(sectionName, str.AddressOf(), lineOffset, compileFlags, &func);
 
 	engine->BuildCompleted();
 
@@ -1303,6 +1269,28 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, asDWOR
 		func->Release();
 
 	return r;
+}
+
+// interface
+int asCModule::RemoveFunction(int funcId)
+{
+	// Find the global function
+	for( asUINT n = 0; n < globalFunctions.GetLength(); n++ )
+	{
+		if( globalFunctions[n] && globalFunctions[n]->id == funcId )
+		{
+			asCScriptFunction *func = globalFunctions[n];
+			globalFunctions.RemoveIndex(n);
+			func->Release();
+
+			scriptFunctions.RemoveValue(func);
+			func->Release();
+
+			return 0;
+		}
+	}
+
+	return asNO_FUNCTION;
 }
 
 END_AS_NAMESPACE

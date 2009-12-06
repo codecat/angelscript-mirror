@@ -286,9 +286,6 @@ int asCRestore::Restore()
 		if( module->scriptGlobals[i]->initFunc )
 			TranslateFunction(module->scriptGlobals[i]->initFunc);
 
-	// Fake building
-	module->isBuildWithoutErrors = true;
-
 	// Init system functions properly
 	engine->PrepareEngine();
 
@@ -370,7 +367,7 @@ void asCRestore::ReadUsedFunctions()
 		// Is the function from the module or the application?
 		READ_NUM(c);
 
-		asCScriptFunction func(engine, c == 'm' ? module : 0);
+		asCScriptFunction func(engine, c == 'm' ? module : 0, -1);
 		ReadFunctionSignature(&func);
 
 		// Find the correct function
@@ -545,7 +542,7 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 	}
 
 	// Load the new function
-	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,-1);
 	savedFunctions.PushLast(func);
 
 	int i, count;

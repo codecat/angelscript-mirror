@@ -325,6 +325,12 @@ enum asEGMFlags
 	asGM_ALWAYS_CREATE        = 2
 };
 
+// Compile flags
+enum asECompileFlags
+{
+	asCOMP_ADD_TO_MODULE = 1
+};
+
 //
 // asBYTE  =  8 bits
 // asWORD  = 16 bits
@@ -575,7 +581,7 @@ public:
 	// Compilation
     virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	virtual int  Build() = 0;
-	virtual int  CompileFunction(const char *sectionName, const char *code, asDWORD reserved, asIScriptFunction **outFunc) = 0;
+	virtual int  CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
 
 	// Functions
 	virtual int                GetFunctionCount() = 0;
@@ -584,6 +590,7 @@ public:
 	virtual int                GetFunctionIdByDecl(const char *decl) = 0;
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) = 0;
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+	virtual int                RemoveFunction(int funcId) = 0;
 
 	// Global variables
 	virtual int         ResetGlobalVars() = 0;

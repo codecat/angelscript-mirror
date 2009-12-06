@@ -286,6 +286,7 @@ public:
 
 	asCObjectType   *defaultArrayObjectType;
 	asCObjectType    scriptTypeBehaviours;
+	asCObjectType    functionBehaviours;
 
 	// Registered interface
 	asCArray<asCObjectType *>      registeredObjTypes;

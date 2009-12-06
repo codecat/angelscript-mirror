@@ -350,6 +350,8 @@ asCScriptEngine::asCScriptEngine()
 	gc.engine = this;
 
 	scriptTypeBehaviours.engine = this;
+	functionBehaviours.engine = this;
+
 	refCount.set(1);
 	stringFactory = 0;
 	configFailed = false;
@@ -391,6 +393,7 @@ asCScriptEngine::asCScriptEngine()
 
 	RegisterArrayObject(this);
 	RegisterScriptObject(this);
+	RegisterScriptFunction(this);
 }
 
 asCScriptEngine::~asCScriptEngine()
@@ -439,7 +442,6 @@ asCScriptEngine::~asCScriptEngine()
 
 	// Do one more garbage collect to free gc objects that were global variables
 	GarbageCollect(asGC_FULL_CYCLE);
-
 	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
@@ -456,6 +458,7 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 
+	GarbageCollect(asGC_FULL_CYCLE);
 	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
@@ -528,6 +531,7 @@ asCScriptEngine::~asCScriptEngine()
 	registeredGlobalFuncs.SetLength(0);
 
 	scriptTypeBehaviours.ReleaseAllFunctions();
+	functionBehaviours.ReleaseAllFunctions();
 
 	// Free string constants
 	for( n = 0; n < stringConstants.GetLength(); n++ )
@@ -844,15 +848,11 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 
 	// Is this a script class?
 	if( ot->flags & asOBJ_SCRIPT_OBJECT && ot->size > 0 )
-	{
 		mod = scriptFunctions[ot->beh.factory]->module;
-		if( mod && !mod->isBuildWithoutErrors )
-			return asERROR;
-	}
 
 	asCBuilder bld(this, mod);
 
-	asCScriptFunction func(this, mod);
+	asCScriptFunction func(this, mod,-1);
 	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
@@ -878,12 +878,9 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 // internal
 int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl, asCModule *mod)
 {
-	if( mod && !mod->isBuildWithoutErrors )
-		return asERROR;
-
 	asCBuilder bld(this, mod);
 
-	asCScriptFunction func(this, mod);
+	asCScriptFunction func(this, mod, -1);
 	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
@@ -1054,7 +1051,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	if( r < 0 )
 		return ConfigError(r);
 
-	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
+	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_INTERFACE);
 	func->objectType = dt.GetObjectType();
 
 	r = bld.ParseFunctionDeclaration(func->objectType, declaration, func, false);
@@ -1073,7 +1070,6 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	}
 
 	func->id = GetNextScriptFunctionId();
-	func->funcType = asFUNC_INTERFACE;
 	SetScriptFunction(func);
 	func->objectType->methods.PushLast(func->id);
 	// The refCount was already set to 1
@@ -1352,7 +1348,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 // Used to register the default behaviours for the script classes
 int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv)
 {
-	asASSERT( objType == &scriptTypeBehaviours );
+	asASSERT( objType == &scriptTypeBehaviours ||
+		      objType == &functionBehaviours );
 
 	asSSystemFunctionInterface internal;
 	int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
@@ -1377,7 +1374,7 @@ int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDW
 	type.MakeReference(true);
 
 	// Verify function declaration
-	asCScriptFunction func(this, 0);
+	asCScriptFunction func(this, 0, -1);
 
 	// The default array object is actually being registered
 	// with incorrect declarations, but that's a concious decision
@@ -1565,7 +1562,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	type.MakeReference(true);
 
 	// Verify function declaration
-	asCScriptFunction func(this, 0);
+	asCScriptFunction func(this, 0, -1);
 
 	r = bld.ParseFunctionDeclaration(type.GetObjectType(), decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
@@ -2121,10 +2118,9 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	newInterface->returnAutoHandle   = internal.returnAutoHandle;
 	newInterface->hasAutoHandles     = internal.hasAutoHandles;
 
-	asCScriptFunction *f = asNEW(asCScriptFunction)(this, 0);
+	asCScriptFunction *f = asNEW(asCScriptFunction)(this, 0, asFUNC_SYSTEM);
 	asASSERT(func.name != "" && func.name != "f");
 	f->name        = func.name;
-	f->funcType    = asFUNC_SYSTEM;
 	f->sysFuncIntf = newInterface;
 	f->returnType  = func.returnType;
 	f->objectType  = func.objectType;
@@ -2290,8 +2286,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	// Put the system function in the list of system functions
 	asSSystemFunctionInterface *newInterface = asNEW(asSSystemFunctionInterface)(internal);
 
-	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
-	func->funcType    = asFUNC_SYSTEM;
+	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SYSTEM);
 	func->sysFuncIntf = newInterface;
 	func->objectType  = dt.GetObjectType();
 
@@ -2393,8 +2388,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	// Put the system function in the list of system functions
 	asSSystemFunctionInterface *newInterface = asNEW(asSSystemFunctionInterface)(internal);
 
-	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
-	func->funcType    = asFUNC_SYSTEM;
+	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SYSTEM);
 	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
@@ -2589,9 +2583,8 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 	// Put the system function in the list of system functions
 	asSSystemFunctionInterface *newInterface = asNEW(asSSystemFunctionInterface)(internal);
 
-	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
+	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SYSTEM);
 	func->name        = "_string_factory_";
-	func->funcType    = asFUNC_SYSTEM;
 	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
@@ -2902,8 +2895,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		int factoryId = templateType->beh.factories[n];
 		asCScriptFunction *factory = scriptFunctions[factoryId];
 
-		asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0);
-		func->funcType         = asFUNC_SCRIPT;
+		asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SCRIPT);
 		func->name             = "factstub";
 		func->id               = GetNextScriptFunctionId();
 		func->returnType       = asCDataType::CreateObjectHandle(ot, false);
@@ -3028,8 +3020,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 
 	if( needNewFunc )
 	{
-		asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0);
-		func2->funcType = func->funcType;
+		asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0, func->funcType);
 		func2->name     = func->name;
 		func2->id       = GetNextScriptFunctionId();
 

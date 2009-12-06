@@ -176,7 +176,7 @@ int asCBuilder::Build()
 int asCBuilder::BuildString(const char *string, asCContext *ctx)
 {
 	asCScriptFunction *execFunc = 0;
-	int r = CompileFunction(TXT_EXECUTESTRING, string, &execFunc);
+	int r = CompileFunction(TXT_EXECUTESTRING, string, -1, 0, &execFunc);
 	if( r >= 0 )
 	{
 		ctx->SetExecuteStringFunction(execFunc);
@@ -185,7 +185,7 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	return r;
 }
 
-int asCBuilder::CompileFunction(const char *sectionName, const char *string, asCScriptFunction **outFunc)
+int asCBuilder::CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asCScriptFunction **outFunc)
 {
 	asASSERT(outFunc != 0);
 
@@ -195,9 +195,8 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *string, asC
 
 	// Add the string to the script code
 	asCScriptCode *script = asNEW(asCScriptCode);
-	script->SetCode(sectionName, string, true);
-	// TODO: functions: This should be informed by caller
-	script->lineOffset = -1; // Compensate for "void ExecuteString() {\n"
+	script->SetCode(sectionName, code, true);
+	script->lineOffset = lineOffset; 
 	scripts.PushLast(script);
 
 	// Parse the string
@@ -223,15 +222,20 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *string, asC
 
 	// Create the function
 	bool isConstructor, isDestructor;
-	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module);
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_SCRIPT);
 	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->isReadOnly, isConstructor, isDestructor);
-	func->funcType         = asFUNC_SCRIPT;
 	func->id               = engine->GetNextScriptFunctionId();
 	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
 
 	// Tell the engine that the function exists already so the compiler can access it
-	// TODO: functions: Add the function to the module if requested
-	engine->SetScriptFunction(func);
+	if( compileFlags & asCOMP_ADD_TO_MODULE )
+	{
+		module->globalFunctions.PushLast(func);
+		func->AddRef();
+		module->AddScriptFunction(func);
+	}
+	else
+		engine->SetScriptFunction(func);
 
 	// Fill in the function info for the builder too
 	sFunctionDescription *funcDesc = asNEW(sFunctionDescription);
@@ -249,7 +253,14 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *string, asC
 	}
 	else
 	{
-		// TODO: functions: If the function was added to the module then remove it again
+		// If the function was added to the module then remove it again
+		if( compileFlags & asCOMP_ADD_TO_MODULE )
+		{
+			module->globalFunctions.RemoveValue(func);
+			module->scriptFunctions.RemoveValue(func);
+			func->Release();
+			func->Release();
+		}
 
 		// Clear the global variables to avoid releasing them
 		// TODO: This shouldn't be necessary
@@ -1043,7 +1054,7 @@ void asCBuilder::CompileGlobalVariables()
 	engine->SetMessageCallback(asMETHOD(asCOutputBuffer, Callback), &outBuffer, asCALL_THISCALL);
 
 	asCOutputBuffer finalOutput;
-	asCScriptFunction func(engine, module);
+	asCScriptFunction func(engine, module, -1);
 
 	asCArray<asCGlobalProperty*> initOrder;
 
@@ -1180,7 +1191,7 @@ void asCBuilder::CompileGlobalVariables()
 				if( init.GetSize() > 0 )
 				{
 					// Create the init function for this variable
-					asCScriptFunction *initFunc = asNEW(asCScriptFunction)(engine,module);
+					asCScriptFunction *initFunc = asNEW(asCScriptFunction)(engine,module,asFUNC_SCRIPT);
 					initFunc->id = engine->GetNextScriptFunctionId();
 					engine->SetScriptFunction(initFunc);
 
@@ -1191,7 +1202,6 @@ void asCBuilder::CompileGlobalVariables()
 					init.Output(initFunc->byteCode.AddressOf());
 					initFunc->stackNeeded = init.largestStackUsed;
 					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
-					initFunc->funcType = asFUNC_SCRIPT;
 					initFunc->globalVarPointers = func.globalVarPointers;
 					initFunc->AddReferences();
 
@@ -1693,7 +1703,7 @@ void asCBuilder::CompileClasses()
 
 int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 {
-	asCScriptFunction *vf =  asNEW(asCScriptFunction)(engine, module);
+	asCScriptFunction *vf =  asNEW(asCScriptFunction)(engine, module, asFUNC_VIRTUAL);
 
 	vf->funcType = asFUNC_VIRTUAL;
 	vf->name = func->name;

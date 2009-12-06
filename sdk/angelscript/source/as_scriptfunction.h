@@ -75,6 +75,8 @@ struct asSSystemFunctionInterface;
 //       as the function can be removed from the module, but still remain alive. For example
 //       for dynamically generated functions held by a function pointer.
 
+void RegisterScriptFunction(asCScriptEngine *engine);
+
 class asCScriptFunction : public asIScriptFunction
 {
 public:
@@ -109,7 +111,7 @@ public:
 	//-----------------------------------
 	// Internal methods
 
-	asCScriptFunction(asCScriptEngine *engine, asCModule *mod);
+	asCScriptFunction(asCScriptEngine *engine, asCModule *mod, int funcType);
 	~asCScriptFunction();
 
 	void      AddVariable(asCString &name, asCDataType &type, int stackOffset);
@@ -130,11 +132,19 @@ public:
 	asCConfigGroup    *GetConfigGroupByGlobalVarPtrIndex(int index);
 	asCGlobalProperty *GetPropertyByGlobalVarPtrIndex(int index);
 
+	// GC methods
+	int  GetRefCount();
+	void SetFlag();
+	bool GetFlag();
+	void EnumReferences(asIScriptEngine *engine);
+	void ReleaseAllHandles(asIScriptEngine *engine);
+
 public:
 	//-----------------------------------
 	// Properties
 
 	asCAtomic                    refCount;
+	bool                         gcFlag;
 	asCScriptEngine             *engine;
 	asCModule                   *module;
 

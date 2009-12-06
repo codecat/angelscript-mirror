@@ -47,12 +47,86 @@
 
 BEGIN_AS_NAMESPACE
 
+#ifdef AS_MAX_PORTABILITY
+
+static void ScriptFunction_AddRef_Generic(asIScriptGeneric *gen)
+{
+	asCScriptFunction *self = (asCScriptFunction*)gen->GetObject();
+	self->AddRef();
+}
+
+static void ScriptFunction_Release_Generic(asIScriptGeneric *gen)
+{
+	asCScriptFunction *self = (asCScriptFunction*)gen->GetObject();
+	self->Release();
+}
+
+static void ScriptFunction_GetRefCount_Generic(asIScriptGeneric *gen)
+{
+	asCScriptFunction *self = (asCScriptFunction*)gen->GetObject();
+	*(int*)gen->GetAddressOfReturnLocation() = self->GetRefCount();
+}
+
+static void ScriptFunction_SetFlag_Generic(asIScriptGeneric *gen)
+{
+	asCScriptFunction *self = (asCScriptFunction*)gen->GetObject();
+	self->SetFlag();
+}
+
+static void ScriptFunction_GetFlag_Generic(asIScriptGeneric *gen)
+{
+	asCScriptFunction *self = (asCScriptFunction*)gen->GetObject();
+	*(bool*)gen->GetAddressOfReturnLocation() = self->GetFlag();
+}
+
+static void ScriptFunction_EnumReferences_Generic(asIScriptGeneric *gen)
+{
+	asCScriptFunction *self = (asCScriptFunction*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
+	self->EnumReferences(engine);
+}
+
+static void ScriptFunction_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
+{
+	asCScriptFunction *self = (asCScriptFunction*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
+	self->ReleaseAllHandles(engine);
+}
+
+#endif
+
+
+void RegisterScriptFunction(asCScriptEngine *engine)
+{
+	// Register the gc behaviours for the script functions
+	int r;
+	engine->functionBehaviours.flags = asOBJ_REF;
+	engine->functionBehaviours.name = "_builtin_function_";
+#ifndef AS_MAX_PORTABILITY
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_ADDREF, "void f()", asMETHOD(asCScriptFunction,AddRef), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_RELEASE, "void f()", asMETHOD(asCScriptFunction,Release), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(asCScriptFunction,GetRefCount), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_SETGCFLAG, "void f()", asMETHOD(asCScriptFunction,SetFlag), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCScriptFunction,GetFlag), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCScriptFunction,EnumReferences), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCScriptFunction,ReleaseAllHandles), asCALL_THISCALL); asASSERT( r >= 0 );
+#else
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptFunction_AddRef_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptFunction_Release_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ScriptFunction_GetRefCount_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ScriptFunction_SetFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptFunction_GetFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptFunction_EnumReferences_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->functionBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptFunction_ReleaseAllHandles_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+#endif
+}
+
 // internal
-asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
+asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, int _funcType)
 {
 	refCount.set(1);
 	this->engine           = engine;
-	funcType               = -1;
+	funcType               = _funcType;
 	module                 = mod; 
 	objectType             = 0; 
 	name                   = ""; 
@@ -64,6 +138,12 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod)
 	dontCleanUpOnException = false;
 	vfTableIdx             = -1;
 	jitFunction            = 0;
+	gcFlag                 = false;
+
+	// Notify the GC of script functions
+	// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
+//	if( funcType == asFUNC_SCRIPT )
+//		engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);
 }
 
 // internal
@@ -101,12 +181,14 @@ int asCScriptFunction::GetId() const
 // interface
 int asCScriptFunction::AddRef()
 {
+	gcFlag = false;
 	asASSERT( funcType != asFUNC_IMPORTED );
 	return refCount.atomicInc();
 }
 
 int asCScriptFunction::Release()
 {
+	gcFlag = false;
 	asASSERT( funcType != asFUNC_IMPORTED );
 	int r = refCount.atomicDec();
 	if( r == 0 && funcType != -1 ) // Dummy functions are allocated on the stack and cannot be deleted
@@ -321,8 +403,6 @@ void asCScriptFunction::AddReferences()
 {
 	asUINT n;
 
-	// TODO: functions: Need to increment references to functions
-
 	// Only count references if there is any bytecode
 	if( byteCode.GetLength() ) 
 	{
@@ -342,11 +422,23 @@ void asCScriptFunction::AddReferences()
 		// Object types
 		case asBC_OBJTYPE:
 		case asBC_FREE:
-		case asBC_ALLOC:
 		case asBC_REFCPY:
 			{
                 asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
 				objType->AddRef();
+			}
+			break;
+
+		// Object type and function
+		case asBC_ALLOC:
+			{
+				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				objType->AddRef();
+
+				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
+//				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
+//				if( func )
+//					engine->scriptFunctions[func]->AddRef();
 			}
 			break;
 
@@ -380,6 +472,19 @@ void asCScriptFunction::AddReferences()
 				int funcId = asBC_INTARG(&byteCode[n]);
 				asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
 				if( group != 0 ) group->AddRef();
+
+				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
+//				engine->scriptFunctions[funcId]->AddRef();
+			}
+			break;
+
+		// Functions
+		case asBC_CALL:
+		case asBC_CALLINTF:
+			{
+				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
+//				int func = asBC_INTARG(&byteCode[n]);
+//				engine->scriptFunctions[func]->AddRef();
 			}
 			break;
 		}
@@ -397,8 +502,6 @@ void asCScriptFunction::AddReferences()
 void asCScriptFunction::ReleaseReferences()
 {
 	asUINT n;
-
-	// TODO: functions: Need to release references to functions
 
 	// Only count references if there is any bytecode
 	if( byteCode.GetLength() )
@@ -419,11 +522,23 @@ void asCScriptFunction::ReleaseReferences()
 		// Object types
 		case asBC_OBJTYPE:
 		case asBC_FREE:
-		case asBC_ALLOC:
 		case asBC_REFCPY:
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
 				objType->Release();
+			}
+			break;
+
+		// Object type and function
+		case asBC_ALLOC:
+			{
+				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				objType->Release();
+
+				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
+//				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
+//				if( func )
+//					engine->scriptFunctions[func]->Release();
 			}
 			break;
 
@@ -457,6 +572,21 @@ void asCScriptFunction::ReleaseReferences()
 				int funcId = asBC_INTARG(&byteCode[n]);
 				asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
 				if( group != 0 ) group->Release();
+
+				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
+//				if( funcId )
+//					engine->scriptFunctions[funcId]->Release();
+			}
+			break;
+
+		// Functions
+		case asBC_CALL:
+		case asBC_CALLINTF:
+			{
+				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
+//				int func = asBC_INTARG(&byteCode[n]);
+//				if( func )
+//					engine->scriptFunctions[func]->Release();
 			}
 			break;
 		}
@@ -619,6 +749,86 @@ asCGlobalProperty *asCScriptFunction::GetPropertyByGlobalVarPtrIndex(int index)
 			return engine->globalProperties[g];
 
 	return 0;
+}
+
+// internal
+int asCScriptFunction::GetRefCount()
+{
+	return refCount.get();
+}
+
+// internal
+void asCScriptFunction::SetFlag()
+{
+	gcFlag = true;
+}
+
+// internal
+bool asCScriptFunction::GetFlag()
+{
+	return gcFlag;
+}
+
+// internal
+void asCScriptFunction::EnumReferences(asIScriptEngine *)
+{
+	// Notify the GC of all script functions that is accessed
+	for( asUINT n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
+	{
+		switch( *(asBYTE*)&byteCode[n] )
+		{
+		case asBC_ALLOC:
+			{
+				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
+				if( func )
+					engine->GCEnumCallback(engine->scriptFunctions[func]);
+			}
+			break;
+
+		case asBC_CALL:
+		case asBC_CALLINTF:
+			{
+				int func = asBC_INTARG(&byteCode[n]);
+				if( func )
+					engine->GCEnumCallback(engine->scriptFunctions[func]);
+			}
+			break;
+		}
+	}
+}
+
+// internal
+void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
+{
+	// Release all script functions
+	for( asUINT n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
+	{
+		switch( *(asBYTE*)&byteCode[n] )
+		{
+		case asBC_ALLOC:
+			{
+				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
+				if( func )
+				{
+					engine->scriptFunctions[func]->Release();
+					byteCode[n+AS_PTR_SIZE+1] = 0;
+				}
+			}
+			break;
+
+		case asBC_CALL:
+		case asBC_CALLINTF:
+			{
+				int func = asBC_INTARG(&byteCode[n]);
+				if( func )
+				{
+					engine->scriptFunctions[func]->Release();
+					byteCode[n+1] = 0;
+				}
+			}
+			break;
+		}
+	}
 }
 
 END_AS_NAMESPACE
