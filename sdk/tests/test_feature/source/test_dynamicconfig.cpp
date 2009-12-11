@@ -120,6 +120,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
 	engine->DiscardModule(0);
+	engine->GarbageCollect();
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
@@ -156,6 +157,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
 	engine->DiscardModule(0);
+	engine->GarbageCollect();
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
@@ -197,6 +199,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
 	engine->DiscardModule(0);
+	engine->GarbageCollect();
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
@@ -236,6 +239,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
 	engine->DiscardModule(0);
+	engine->GarbageCollect();
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
@@ -330,6 +334,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
 	engine->DiscardModule(0);
+	engine->GarbageCollect();
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
@@ -355,6 +360,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
 	engine->DiscardModule(0);
+	engine->GarbageCollect();
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
@@ -390,6 +396,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
 	engine->DiscardModule(0);
+	engine->GarbageCollect();
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
@@ -427,6 +434,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
 
 	engine->DiscardModule(0);
+	engine->GarbageCollect();
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 

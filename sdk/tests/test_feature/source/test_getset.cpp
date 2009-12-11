@@ -391,7 +391,7 @@ bool Test()
 		"  string get_s() {return _s;}                \n"
 		"  void set_s(const string &in n) {_s = n;}   \n"
 		"  string _s;                                 \n"
-		"}                          \n"
+		"}                                            \n"
 		"void func()                \n"
 		"{                          \n"
 		"  Test t;                  \n"
@@ -428,7 +428,7 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-
+	
 	// Test @t.prop = @obj; Property is a handle, and the property is assigned a new handle. Should work
 	const char *script13 = 
 		"class Test                                   \n"

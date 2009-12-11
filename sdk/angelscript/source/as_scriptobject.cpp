@@ -125,6 +125,7 @@ void RegisterScriptObject(asCScriptEngine *engine)
 {
 	// Register the default script class behaviours
 	int r;
+	engine->scriptTypeBehaviours.engine = engine;
 	engine->scriptTypeBehaviours.flags = asOBJ_SCRIPT_OBJECT;
 	engine->scriptTypeBehaviours.name = "_builtin_object_";
 #ifndef AS_MAX_PORTABILITY

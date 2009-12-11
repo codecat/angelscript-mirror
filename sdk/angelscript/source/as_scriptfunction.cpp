@@ -100,6 +100,7 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 {
 	// Register the gc behaviours for the script functions
 	int r;
+	engine->functionBehaviours.engine = engine;
 	engine->functionBehaviours.flags = asOBJ_REF;
 	engine->functionBehaviours.name = "_builtin_function_";
 #ifndef AS_MAX_PORTABILITY
@@ -141,9 +142,8 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, in
 	gcFlag                 = false;
 
 	// Notify the GC of script functions
-	// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
-//	if( funcType == asFUNC_SCRIPT )
-//		engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);
+	if( funcType == asFUNC_SCRIPT )
+		engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);
 }
 
 // internal
@@ -435,10 +435,9 @@ void asCScriptFunction::AddReferences()
 				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
 				objType->AddRef();
 
-				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
-//				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
-//				if( func )
-//					engine->scriptFunctions[func]->AddRef();
+				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
+				if( func )
+					engine->scriptFunctions[func]->AddRef();
 			}
 			break;
 
@@ -473,8 +472,7 @@ void asCScriptFunction::AddReferences()
 				asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
 				if( group != 0 ) group->AddRef();
 
-				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
-//				engine->scriptFunctions[funcId]->AddRef();
+				engine->scriptFunctions[funcId]->AddRef();
 			}
 			break;
 
@@ -482,9 +480,8 @@ void asCScriptFunction::AddReferences()
 		case asBC_CALL:
 		case asBC_CALLINTF:
 			{
-				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
-//				int func = asBC_INTARG(&byteCode[n]);
-//				engine->scriptFunctions[func]->AddRef();
+				int func = asBC_INTARG(&byteCode[n]);
+				engine->scriptFunctions[func]->AddRef();
 			}
 			break;
 		}
@@ -525,7 +522,8 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_REFCPY:
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
-				objType->Release();
+				if( objType ) 
+					objType->Release();
 			}
 			break;
 
@@ -533,12 +531,12 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_ALLOC:
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
-				objType->Release();
+				if( objType )
+					objType->Release();
 
-				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
-//				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
-//				if( func )
-//					engine->scriptFunctions[func]->Release();
+				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
+				if( func )
+					engine->scriptFunctions[func]->Release();
 			}
 			break;
 
@@ -573,9 +571,8 @@ void asCScriptFunction::ReleaseReferences()
 				asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
 				if( group != 0 ) group->Release();
 
-				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
-//				if( funcId )
-//					engine->scriptFunctions[funcId]->Release();
+				if( funcId )
+					engine->scriptFunctions[funcId]->Release();
 			}
 			break;
 
@@ -583,10 +580,9 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_CALL:
 		case asBC_CALLINTF:
 			{
-				// TODO: functions: Add again when the asCObjectType for script objects is also garbage collected
-//				int func = asBC_INTARG(&byteCode[n]);
-//				if( func )
-//					engine->scriptFunctions[func]->Release();
+				int func = asBC_INTARG(&byteCode[n]);
+				if( func )
+					engine->scriptFunctions[func]->Release();
 			}
 			break;
 		}
@@ -772,13 +768,33 @@ bool asCScriptFunction::GetFlag()
 // internal
 void asCScriptFunction::EnumReferences(asIScriptEngine *)
 {
+	// Notify the GC of all object types used
+	if( returnType.IsObject() )
+		engine->GCEnumCallback(returnType.GetObjectType());
+
+	for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
+		if( parameterTypes[p].IsObject() )
+			engine->GCEnumCallback(parameterTypes[p].GetObjectType());
+
 	// Notify the GC of all script functions that is accessed
 	for( asUINT n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{
 		switch( *(asBYTE*)&byteCode[n] )
 		{
+		case asBC_OBJTYPE:
+		case asBC_FREE:
+		case asBC_REFCPY:
+			{
+                asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				engine->GCEnumCallback(objType);
+			}
+			break;
+
 		case asBC_ALLOC:
 			{
+				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				engine->GCEnumCallback(objType);
+
 				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
 				if( func )
 					engine->GCEnumCallback(engine->scriptFunctions[func]);
@@ -800,13 +816,45 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 // internal
 void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 {
+	// Release paramaters
+	if( byteCode.GetLength() ) 
+	{
+		if( returnType.IsObject() )
+		{
+			returnType.GetObjectType()->Release();
+			returnType = asCDataType::CreatePrimitive(ttVoid, false);
+		}
+
+		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
+			if( parameterTypes[p].IsObject() )
+			{
+				parameterTypes[p].GetObjectType()->Release();
+				parameterTypes[p] = asCDataType::CreatePrimitive(ttInt, false);
+			}
+	}
+
 	// Release all script functions
 	for( asUINT n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{
 		switch( *(asBYTE*)&byteCode[n] )
 		{
+		// Object types
+		case asBC_OBJTYPE:
+		case asBC_FREE:
+		case asBC_REFCPY:
+			{
+                asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				objType->Release();
+				*(void**)&byteCode[n+1] = 0;
+			}
+			break;
+
 		case asBC_ALLOC:
 			{
+				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				objType->Release();
+				*(void**)&byteCode[n+1] = 0;
+
 				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
 				if( func )
 				{

@@ -974,6 +974,9 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	st->AddRef();
 	decl->objType = st;
 
+	// Add script classes to the GC
+	engine->gc.AddScriptObjectToGC(st, &engine->objectTypeBehaviours);
+
 	// Use the default script class behaviours
 	st->beh = engine->scriptTypeBehaviours.beh;
 

@@ -349,9 +349,6 @@ asCScriptEngine::asCScriptEngine()
 
 	gc.engine = this;
 
-	scriptTypeBehaviours.engine = this;
-	functionBehaviours.engine = this;
-
 	refCount.set(1);
 	stringFactory = 0;
 	configFailed = false;
@@ -394,12 +391,24 @@ asCScriptEngine::asCScriptEngine()
 	RegisterArrayObject(this);
 	RegisterScriptObject(this);
 	RegisterScriptFunction(this);
+	::RegisterObjectType(this);
 }
 
 asCScriptEngine::~asCScriptEngine()
 {
 	asASSERT(refCount.get() == 0);
 	asUINT n;
+
+	// The modules must be deleted first, as they may use
+	// object types from the config groups
+	for( n = (asUINT)scriptModules.GetLength(); n-- > 0; )
+	{
+		if( scriptModules[n] )
+		{
+			asDELETE(scriptModules[n],asCModule);
+		}
+	}
+	scriptModules.SetLength(0);
 
 	GarbageCollect(asGC_FULL_CYCLE);
 
@@ -428,17 +437,6 @@ asCScriptEngine::~asCScriptEngine()
 			}
 		}
 	}
-
-	// The modules must be deleted first, as they may use
-	// object types from the config groups
-	for( n = (asUINT)scriptModules.GetLength(); n-- > 0; )
-	{
-		if( scriptModules[n] )
-		{
-			asDELETE(scriptModules[n],asCModule);
-		}
-	}
-	scriptModules.SetLength(0);
 
 	// Do one more garbage collect to free gc objects that were global variables
 	GarbageCollect(asGC_FULL_CYCLE);
@@ -532,6 +530,7 @@ asCScriptEngine::~asCScriptEngine()
 
 	scriptTypeBehaviours.ReleaseAllFunctions();
 	functionBehaviours.ReleaseAllFunctions();
+	objectTypeBehaviours.ReleaseAllFunctions();
 
 	// Free string constants
 	for( n = 0; n < stringConstants.GetLength(); n++ )
@@ -1349,7 +1348,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv)
 {
 	asASSERT( objType == &scriptTypeBehaviours ||
-		      objType == &functionBehaviours );
+		      objType == &functionBehaviours || 
+			  objType == &objectTypeBehaviours );
 
 	asSSystemFunctionInterface internal;
 	int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
@@ -2797,6 +2797,8 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 	// Destroy the factory stubs
 	for( n = 0; n < (int)t->beh.factories.GetLength(); n++ )
 	{
+		// Make sure the factory stub isn't referencing this object anymore
+		scriptFunctions[t->beh.factories[n]]->ReleaseAllHandles(this);
 		scriptFunctions[t->beh.factories[n]]->Release();
 	}
 	t->beh.factories.SetLength(0);

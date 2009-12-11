@@ -513,6 +513,14 @@ enum asEGMFlags
 	asGM_ALWAYS_CREATE        = 2
 };
 
+// Compile flags
+//! \brief Flags for compilation
+enum asECompileFlags
+{
+	//! \brief The compiled function should be added to the scope of the module.
+	asCOMP_ADD_TO_MODULE = 1
+};
+
 
 
 //! \typedef asBYTE
@@ -1535,6 +1543,25 @@ public:
     //! Compiler messages are sent to the message callback function set with \ref asIScriptEngine::SetMessageCallback. 
     //! If there are no errors or warnings, no messages will be sent to the callback function.
 	virtual int  Build() = 0;
+	//! \brief Compile a single function.
+	//!
+	//! \param[in] sectionName The name of the script section
+	//! \param[in] code The script code buffer
+	//! \param[in] lineOffset An offset that will be added to compiler message line numbers
+	//! \param[in] compileFlags One of \ref asECompileFlags values
+	//! \param[out] outFunc Optional parameter to receive the compiled function descriptor 
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG One or more arguments have invalid values.
+	//! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
+	//! \retval asBUILD_IN_PROGRESS Another build is in progress.
+	//! \retval asERROR The compilation failed.
+	//! 
+	//! Use this to compile a single function. The function can be optionally added to the scope of the module, in which case
+	//! it will be available for subsequent compilations. If not added to the module, the function can still be returned in the
+	//! output parameter, which will allow the application to execute it, and then discard it when it is no longer needed.
+	//!
+	//! If the output function parameter is set, remember to release the function object when you're done with it.
+	virtual int  CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
 	//! \}
 
 	// Functions
@@ -1586,6 +1613,15 @@ public:
     //! \param[in] funcId The id of the function or method.
     //! \return A pointer to the function description interface, or null if not found.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+	//! \brief Remove a single function from the scope of the module
+	//! \param[in] funcId The id of the function to remove.
+	//! \return A negative value on error.
+	//! \retval asNO_FUNCTION The function is not part of the scope.
+	//!
+	//! This method allows the application to remove a single function from the
+	//! scope of the module. The function is not destroyed immediately though,
+	//! only when no more references point to it.
+	virtual int                RemoveFunction(int funcId) = 0;
 	//! \}
 
 	// Global variables
@@ -2780,6 +2816,9 @@ public:
     //! Call this method when you will no longer use the references that you own.
 	virtual int Release() = 0;
 
+	//! \brief Returns the id of the function
+	//! \return The id of the function
+	virtual int              GetId() const = 0;
 	//! \brief Returns the name of the module where the function was implemented
     //! \return A null terminated string with the module name.
 	virtual const char      *GetModuleName() const = 0;
@@ -3211,7 +3250,7 @@ enum asEBCInstr
 	//! \brief Decrement the 16bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_DECi16			= 29,
 	//! \brief Increment the 8bit integer value that is stored at the address pointed to by the reference in the value register
-	asBC_DECi8			= 30, 
+	asBC_DECi8			= 30,
 	//! \brief Increment the 32bit integer value that is stored at the address pointed to by the reference in the value register
 	asBC_INCi			= 31,
 	//! \brief Decrement the 32bit integer value that is stored at the address pointed to by the reference in the value register
@@ -3339,7 +3378,7 @@ enum asEBCInstr
 	//! \brief Copy a WORD from address held in the value register to a variable. Clear the top word in the variable
 	asBC_RDR2			= 93,
 	//! \brief Copy a DWORD from address held in the value register to a variable.
-	asBC_RDR4			= 94,	
+	asBC_RDR4			= 94,
 	//! \brief Copy a QWORD from address held in the value register to a variable.
 	asBC_RDR8			= 95,
 	//! \brief Load the address of a global variable into the value register

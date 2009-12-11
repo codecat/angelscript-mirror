@@ -226,7 +226,7 @@ bool Test()
 	r = engine->GarbageCollect();
 	asUINT gcCurrentSize;
 	engine->GetGCStatistics(&gcCurrentSize, 0, 0);
-	assert( gcCurrentSize == 0 );
+	assert( gcCurrentSize == 10 ); // The script class types and functions are also in the gc
 
 	r = engine->ExecuteString(0, "refclass ref; ref.Do()");
 	if( r != asEXECUTION_FINISHED )

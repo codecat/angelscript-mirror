@@ -45,6 +45,81 @@
 
 BEGIN_AS_NAMESPACE
 
+#ifdef AS_MAX_PORTABILITY
+
+static void ObjectType_AddRef_Generic(asIScriptGeneric *gen)
+{
+	asCObjectType *self = (asCObjectType*)gen->GetObject();
+	self->AddRef();
+}
+
+static void ObjectType_Release_Generic(asIScriptGeneric *gen)
+{
+	asCObjectType *self = (asCObjectType*)gen->GetObject();
+	self->Release();
+}
+
+static void ObjectType_GetRefCount_Generic(asIScriptGeneric *gen)
+{
+	asCObjectType *self = (asCObjectType*)gen->GetObject();
+	*(int*)gen->GetAddressOfReturnLocation() = self->GetRefCount();
+}
+
+static void ObjectType_SetGCFlag_Generic(asIScriptGeneric *gen)
+{
+	asCObjectType *self = (asCObjectType*)gen->GetObject();
+	self->SetGCFlag();
+}
+
+static void ObjectType_GetGCFlag_Generic(asIScriptGeneric *gen)
+{
+	asCObjectType *self = (asCObjectType*)gen->GetObject();
+	*(bool*)gen->GetAddressOfReturnLocation() = self->GetGCFlag();
+}
+
+static void ObjectType_EnumReferences_Generic(asIScriptGeneric *gen)
+{
+	asCObjectType *self = (asCObjectType*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
+	self->EnumReferences(engine);
+}
+
+static void ObjectType_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
+{
+	asCObjectType *self = (asCObjectType*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
+	self->ReleaseAllHandles(engine);
+}
+
+#endif
+
+
+void RegisterObjectType(asCScriptEngine *engine)
+{
+	// Register the gc behaviours for the script functions
+	int r;
+	engine->objectTypeBehaviours.engine = engine;
+	engine->objectTypeBehaviours.flags = asOBJ_REF;
+	engine->objectTypeBehaviours.name = "_builtin_objecttype_";
+#ifndef AS_MAX_PORTABILITY
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_ADDREF, "void f()", asMETHOD(asCObjectType,AddRef), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_RELEASE, "void f()", asMETHOD(asCObjectType,Release), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(asCObjectType,GetRefCount), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_SETGCFLAG, "void f()", asMETHOD(asCObjectType,SetGCFlag), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCObjectType,GetGCFlag), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCObjectType,EnumReferences), asCALL_THISCALL); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCObjectType,ReleaseAllHandles), asCALL_THISCALL); asASSERT( r >= 0 );
+#else
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(ObjectType_AddRef_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(ObjectType_Release_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ObjectType_GetRefCount_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ObjectType_SetGCFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ObjectType_GetGCFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ObjectType_EnumReferences_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterSpecialObjectBehaviour(&engine->objectTypeBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ObjectType_ReleaseAllHandles_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+#endif
+}
+
 asCObjectType::asCObjectType()
 {
 	engine      = 0; 
@@ -67,17 +142,29 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 
 int asCObjectType::AddRef()
 {
+	gcFlag = false;
 	return refCount.atomicInc();
 }
 
 int asCObjectType::Release()
 {
+	gcFlag = false;
 	return refCount.atomicDec();
 }
 
 int asCObjectType::GetRefCount()
 {
 	return refCount.get();
+}
+
+bool asCObjectType::GetGCFlag()
+{
+	return gcFlag;
+}
+
+void asCObjectType::SetGCFlag()
+{
+	gcFlag = true;
 }
 
 asCObjectType::~asCObjectType()
@@ -437,6 +524,12 @@ const char *asCObjectType::GetConfigGroup() const
 }
 
 // internal
+void asCObjectType::ReleaseAllHandles(asIScriptEngine *)
+{
+	ReleaseAllFunctions();
+}
+
+// internal
 void asCObjectType::ReleaseAllFunctions()
 {
 	beh.factory   = 0;
@@ -517,6 +610,59 @@ void asCObjectType::ReleaseAllFunctions()
 	virtualFunctionTable.SetLength(0);
 }
 
+// internal
+void asCObjectType::EnumReferences(asIScriptEngine *)
+{
+	for( asUINT a = 0; a < beh.factories.GetLength(); a++ )
+		if( engine->scriptFunctions[beh.factories[a]] ) 
+			engine->GCEnumCallback(engine->scriptFunctions[beh.factories[a]]);
+
+	for( asUINT b = 0; b < beh.constructors.GetLength(); b++ )
+		if( engine->scriptFunctions[beh.constructors[b]] ) 
+			engine->GCEnumCallback(engine->scriptFunctions[beh.constructors[b]]);
+
+	if( beh.templateCallback )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.templateCallback]);
+
+	if( beh.destruct )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.destruct]);
+
+	if( beh.addref )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.addref]);
+
+	if( beh.release )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.release]);
+
+	if( beh.copy )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.copy]);
+
+	if( beh.gcEnumReferences )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.gcEnumReferences]);
+
+	if( beh.gcGetFlag )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.gcGetFlag]);
+
+	if( beh.gcGetRefCount )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.gcGetRefCount]);
+
+	if( beh.gcReleaseAllReferences )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.gcReleaseAllReferences]);
+
+	if( beh.gcSetFlag )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.gcSetFlag]);
+
+	for( asUINT e = 1; e < beh.operators.GetLength(); e += 2 )
+		if( engine->scriptFunctions[beh.operators[e]] )
+			engine->GCEnumCallback(engine->scriptFunctions[beh.operators[e]]);
+
+	for( asUINT c = 0; c < methods.GetLength(); c++ )
+		if( engine->scriptFunctions[methods[c]] ) 
+			engine->GCEnumCallback(engine->scriptFunctions[methods[c]]);
+
+	for( asUINT d = 0; d < virtualFunctionTable.GetLength(); d++ )
+		if( virtualFunctionTable[d] )
+			engine->GCEnumCallback(virtualFunctionTable[d]);
+}
 
 END_AS_NAMESPACE
 

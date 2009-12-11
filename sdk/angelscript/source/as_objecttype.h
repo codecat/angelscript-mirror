@@ -74,6 +74,7 @@ const asDWORD asOBJ_TEMPLATE_SUBTYPE = 0x20000000;
 // automatically make garbage collected as well, because we cannot know what type
 // of references that object can contain, and must assume the worst.
 
+
 struct asSTypeBehaviour
 {
 	asSTypeBehaviour() 
@@ -119,6 +120,8 @@ struct asSEnumValue
 };
 
 class asCScriptEngine;
+
+void RegisterObjectType(asCScriptEngine *engine);
 
 class asCObjectType : public asIObjectType
 {
@@ -176,6 +179,10 @@ public:
 	~asCObjectType();
 
 	int  GetRefCount();
+	void SetGCFlag();
+	bool GetGCFlag();
+	void EnumReferences(asIScriptEngine *);
+	void ReleaseAllHandles(asIScriptEngine *);
 
 	void ReleaseAllFunctions();
 
@@ -205,6 +212,7 @@ public:
 
 protected:
 	asCAtomic refCount;
+	bool      gcFlag;
 };
 
 END_AS_NAMESPACE

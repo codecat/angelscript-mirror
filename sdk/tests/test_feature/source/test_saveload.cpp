@@ -311,12 +311,13 @@ bool Test()
 	mod->Build();
 
 	TestScripts(engine);
+	asUINT currentSize, totalDestroyed, totalDetected;
+	engine->GetGCStatistics(&currentSize, &totalDestroyed, &totalDetected);
 
 	// Save the compiled byte code
 	CBytecodeStream stream(__FILE__"1");
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
-
 	// Test loading without releasing the engine first
 	mod->LoadByteCode(&stream);
 
@@ -332,6 +333,7 @@ bool Test()
 	// Test loading for a new engine
 	GlobalCharArray->Release();
 	GlobalCharArray = 0;
+
 	engine->Release();
 	engine = ConfigureEngine(1);
 
@@ -347,6 +349,11 @@ bool Test()
 	mod->Build();
 
 	TestScripts(engine);
+	asUINT currentSize2, totalDestroyed2, totalDetected2;
+	engine->GetGCStatistics(&currentSize2, &totalDestroyed2, &totalDetected2);
+	assert( currentSize == currentSize2 &&
+		    totalDestroyed == totalDestroyed2 &&
+			totalDetected == totalDetected2 );
 
 	GlobalCharArray->Release();
 	GlobalCharArray = 0;

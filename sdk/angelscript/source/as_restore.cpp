@@ -189,6 +189,10 @@ int asCRestore::Restore()
 		engine->classTypes.PushLast(ot);
 		module->classTypes.PushLast(ot);
 		ot->AddRef();
+
+		// Add script classes to the GC
+		if( (ot->GetFlags() & asOBJ_SCRIPT_OBJECT) && ot->GetSize() > 0 )
+			engine->gc.AddScriptObjectToGC(ot, &engine->objectTypeBehaviours);
 	}
 
 	// Read interface methods
@@ -550,6 +554,9 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 	int num;
 
 	ReadFunctionSignature(func);
+
+	if( func->funcType == asFUNC_SCRIPT )
+		engine->gc.AddScriptObjectToGC(func, &engine->functionBehaviours);
 
 	func->id = engine->GetNextScriptFunctionId();
 	
