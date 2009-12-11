@@ -73,11 +73,6 @@ public:
 
 	int         CopyFrom(asIScriptObject *other);
 
-#ifdef AS_DEPRECATED
-// deprecated since 2.17.0, 2009-07-29
-	void       *GetPropertyPointer(asUINT prop);
-#endif
-
 //====================================
 // Internal
 //====================================

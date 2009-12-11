@@ -51,7 +51,7 @@ bool TestExecuteMixedArgs()
 	else
 		engine->RegisterGlobalFunction("void cfunction(int, float, double, int)", asFUNCTION(cfunction), asCALL_CDECL);
 
-	engine->ExecuteString(0, "cfunction(10, 1.92f, 3.88, 97)");
+	ExecuteString(engine, "cfunction(10, 1.92f, 3.88, 97)");
 	
 	if (!called) {
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);

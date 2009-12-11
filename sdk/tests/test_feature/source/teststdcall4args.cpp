@@ -42,7 +42,7 @@ bool TestStdcall4Args()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterGlobalFunction("void cfunction(int, float, double, int)", asFUNCTION(cfunction), asCALL_STDCALL);
 
-	engine->ExecuteString(0, "cfunction(10, 1.92f, 3.88, 97)");
+	ExecuteString(engine, "cfunction(10, 1.92f, 3.88, 97)");
 
 	if (!called) {
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);

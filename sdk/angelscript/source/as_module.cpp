@@ -275,9 +275,6 @@ void asCModule::InternalReset()
 
 	size_t n;
 
-	// TODO: We need a full garbage collector that can resolve 
-	//       circular references, e.g. for recursive functions, etc.
-
 	// Release all global functions
 	for( n = 0; n < globalFunctions.GetLength(); n++ )
 	{
@@ -471,6 +468,18 @@ int asCModule::GetGlobalVarIndexByName(const char *name)
 	if( id == -1 ) return asNO_GLOBAL_VAR;
 
 	return id;
+}
+
+// interface
+int asCModule::RemoveGlobalVar(int index)
+{
+	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
+		return asINVALID_ARG;
+
+	scriptGlobals[index]->Release();
+	scriptGlobals.RemoveIndex(index);
+
+	return 0;
 }
 
 // interface
@@ -1199,8 +1208,6 @@ int asCModule::SaveByteCode(asIBinaryStream *out)
 {
 	if( out == 0 ) return asINVALID_ARG;
 
-	// TODO: Shouldn't allow saving if the build wasn't successful
-
 	asCRestore rest(this, out, engine);
 	return rest.Save();
 }
@@ -1221,6 +1228,60 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
     JITCompile();
 
 	engine->BuildCompleted();
+
+	return r;
+}
+
+// interface
+int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int lineOffset)
+{
+	// Validate arguments
+	if( code == 0 )
+		return asINVALID_ARG;
+
+	// Only one thread may build at one time
+	int r = engine->RequestBuild();
+	if( r < 0 )
+		return r;
+
+	// Prepare the engine
+	engine->PrepareEngine();
+	if( engine->configFailed )
+	{
+		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_INVALID_CONFIGURATION);
+		engine->BuildCompleted();
+		return asINVALID_CONFIGURATION;
+	}
+
+	// Compile the global variable and add it to the module scope
+	asCBuilder builder(engine, this);
+	asCString str = code;
+	r = builder.CompileGlobalVar(sectionName, str.AddressOf(), lineOffset);
+
+	engine->BuildCompleted();
+
+	// Initialize the variable
+	if( r >= 0 && engine->ep.initGlobalVarsAfterBuild )
+	{
+		// Clear the memory 
+		asCGlobalProperty *prop = scriptGlobals[scriptGlobals.GetLength()-1];
+		memset(prop->GetAddressOfValue(), 0, sizeof(asDWORD)*prop->type.GetSizeOnStackDWords());
+
+		if( prop->initFunc )
+		{
+			// Call the init function for the global variable
+			asIScriptContext *ctx = 0;
+			int r = engine->CreateContext(&ctx, true);
+			if( r < 0 )
+				return r;
+
+			r = ctx->Prepare(prop->initFunc->id);
+			if( r >= 0 )
+				r = ctx->Execute();
+
+			ctx->Release();
+		}
+	}
 
 	return r;
 }

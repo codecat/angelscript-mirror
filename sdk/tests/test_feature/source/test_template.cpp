@@ -164,7 +164,7 @@ bool Test()
 	r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(const T& in)", asMETHOD(MyTmpl, SetVal), asCALL_THISCALL); assert( r >= 0 );
 
 	// Test that it is possible to instanciate the template type for different sub types
-	r = engine->ExecuteString(0, "MyTmpl<int> i;    \n"
+	r = ExecuteString(engine, "MyTmpl<int> i;    \n"
 								 "MyTmpl<string> s; \n"
 								 "assert( i.GetNameOfType() == 'MyTmpl<int>' ); \n"
 								 "assert( s.GetNameOfType() == 'MyTmpl<string>' ); \n");
@@ -174,7 +174,7 @@ bool Test()
 	}
 
 	// Test that the assignment works
-	r = engine->ExecuteString(0, "MyTmpl<int> i1, i2; \n"
+	r = ExecuteString(engine, "MyTmpl<int> i1, i2; \n"
 		                         "i1.Assign(i2);      \n");
 	if( r != asEXECUTION_FINISHED )
 	{
@@ -182,7 +182,7 @@ bool Test()
 	}
 
 	// Test that the template sub type works
-	r = engine->ExecuteString(0, "MyTmpl<int> i; \n"
+	r = ExecuteString(engine, "MyTmpl<int> i; \n"
 		                         "i.SetVal(0); \n"
 								 "i.GetVal(); \n");
 	if( r != asEXECUTION_FINISHED )
@@ -201,21 +201,21 @@ bool Test()
 	r = engine->RegisterObjectMethod("MyTmpl<float>", "const float &GetVal() const", asMETHOD(MyTmpl, GetVal), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("MyTmpl<float>", "void SetVal(const float& in)", asMETHOD(MyTmpl, SetVal), asCALL_THISCALL); assert( r >= 0 );
 
-	r = engine->ExecuteString(0, "MyTmpl<float> f; \n"
+	r = ExecuteString(engine, "MyTmpl<float> f; \n"
 		                         "assert( f.GetNameOfType() == 'MyTmpl<float>' ); \n");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "MyTmpl<float> f1, f2; \n"
+	r = ExecuteString(engine, "MyTmpl<float> f1, f2; \n"
 		                         "f1.Assign(f2);        \n");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "MyTmpl<float> f; \n"
+	r = ExecuteString(engine, "MyTmpl<float> f; \n"
 		                         "f.SetVal(0); \n"
 								 "f.GetVal(); \n");
 	if( r != asEXECUTION_FINISHED )
@@ -253,7 +253,7 @@ bool Test()
 		// This method makes it impossible to instanciate the template for primitive types
 		r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(T@)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 		
-		r = engine->ExecuteString(0, "MyTmpl<int> t;");
+		r = ExecuteString(engine, "MyTmpl<int> t;");
 		if( r >= 0 )
 		{
 			fail = true;
@@ -283,7 +283,7 @@ bool Test()
 		// This method makes it impossible to instanciate the template for reference types
 		r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(T)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 		
-		r = engine->ExecuteString(0, "MyTmpl<string> t;");
+		r = ExecuteString(engine, "MyTmpl<string> t;");
 		if( r >= 0 )
 		{
 			fail = true;

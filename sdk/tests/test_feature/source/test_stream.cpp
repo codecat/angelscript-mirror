@@ -131,8 +131,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "Test()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -157,7 +157,8 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "Test2()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "Test2()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )

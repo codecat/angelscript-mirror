@@ -70,7 +70,7 @@ bool TestMultipleInheritance()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->ExecuteString(0, "d.CallMe1(); d.CallMe2();");
+	ExecuteString(engine, "d.CallMe1(); d.CallMe2();");
 
 	if( output2 != "CBase1: CBase1::CallMe1()\nCBase2: CBase2::CallMe2()\n" )
 	{

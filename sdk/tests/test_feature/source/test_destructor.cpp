@@ -93,7 +93,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 		fail = true;
 	if( count != 1 )
@@ -109,7 +109,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 		fail = true;
 	if( count != 2 )
@@ -122,7 +122,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 		fail = true;
 	engine->GarbageCollect();
@@ -136,7 +136,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 		fail = true;
 	if( count != 1 )
@@ -152,7 +152,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 		fail = true;
 	if( count != 1 )

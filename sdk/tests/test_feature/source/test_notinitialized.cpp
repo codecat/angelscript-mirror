@@ -18,7 +18,7 @@ bool TestNotInitialized()
 
 	CBufferedOutStream out;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
-	int r = engine->ExecuteString(0, "int a; cfunction(a);");
+	int r = ExecuteString(engine, "int a; cfunction(a);");
 	if( r < 0 )
 	{
 	    fail = true;

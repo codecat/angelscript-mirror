@@ -116,7 +116,7 @@ bool TestConstructor()
 	}
 
 
-	engine->ExecuteString(0, "TestConstructor()");
+	ExecuteString(engine, "TestConstructor()", mod);
 
 	if( a != 8 || b != 11 )
 	{
@@ -146,7 +146,7 @@ bool TestConstructor()
 		printf("%s: Failed to compile constructor in expression\n", TESTNAME);
 	}
 
-	engine->ExecuteString(0, "TestConstructor2()");
+	ExecuteString(engine, "TestConstructor2()", mod);
 
 	if( a != 11 || b != 13 )
 	{

@@ -47,45 +47,6 @@
 
 BEGIN_AS_NAMESPACE
 
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-// map token to behaviour
-const int behave_dual_token[] =
-{
-	ttPlus,               asBEHAVE_ADD,
-	ttMinus,              asBEHAVE_SUBTRACT,
-	ttStar,               asBEHAVE_MULTIPLY,
-	ttSlash,              asBEHAVE_DIVIDE,
-	ttPercent,            asBEHAVE_MODULO,
-	ttEqual,              asBEHAVE_EQUAL,
-	ttNotEqual,           asBEHAVE_NOTEQUAL,
-	ttLessThan,           asBEHAVE_LESSTHAN,
-	ttGreaterThan,        asBEHAVE_GREATERTHAN,
-	ttLessThanOrEqual,    asBEHAVE_LEQUAL,
-	ttGreaterThanOrEqual, asBEHAVE_GEQUAL,
-	ttBitOr,              asBEHAVE_BIT_OR,
-	ttAmp,                asBEHAVE_BIT_AND,
-	ttBitXor,             asBEHAVE_BIT_XOR,
-	ttBitShiftLeft,       asBEHAVE_BIT_SLL,
-	ttBitShiftRight,      asBEHAVE_BIT_SRL,
-	ttBitShiftRightArith, asBEHAVE_BIT_SRA,
-	ttAssignment,         asBEHAVE_ASSIGNMENT,
-	ttAddAssign,          asBEHAVE_ADD_ASSIGN,
-	ttSubAssign,          asBEHAVE_SUB_ASSIGN,
-	ttMulAssign,          asBEHAVE_MUL_ASSIGN,
-	ttDivAssign,          asBEHAVE_DIV_ASSIGN,
-	ttModAssign,          asBEHAVE_MOD_ASSIGN,
-	ttOrAssign,           asBEHAVE_OR_ASSIGN,
-	ttAndAssign,          asBEHAVE_AND_ASSIGN,
-	ttXorAssign,          asBEHAVE_XOR_ASSIGN,
-	ttShiftLeftAssign,    asBEHAVE_SLL_ASSIGN,
-	ttShiftRightLAssign,  asBEHAVE_SRL_ASSIGN,
-	ttShiftRightAAssign,  asBEHAVE_SRA_ASSIGN
-};
-
-const int num_dual_tokens = sizeof(behave_dual_token)/sizeof(int)/2;
-#endif
-
 asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
 {
 	builder = 0;
@@ -847,67 +808,6 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					}
 				}
 
-#ifdef AS_DEPRECATED
-				if( !assigned )
-				{
-					asSTypeBehaviour *beh = 0;
-					if( !lexpr.type.isExplicitHandle )
-						beh = lexpr.type.dataType.GetBehaviour();
-					if( beh )
-					{
-						// Find the matching overloaded operators
-						int op = asBEHAVE_ASSIGNMENT;
-						asCArray<int> ops;
-						asUINT n;
-						for( n = 0; n < beh->operators.GetLength(); n += 2 )
-						{
-							if( op == beh->operators[n] )
-								ops.PushLast(beh->operators[n+1]);
-						}
-
-						asCArray<int> match;
-						MatchArgument(ops, match, &expr.type, 0);
-
-						if( match.GetLength() > 0 )
-							assigned = true;
-
-						if( match.GetLength() == 1 )
-						{
-							// If it is an array, both sides must have the same subtype
-							if( lexpr.type.dataType.IsArrayType() )
-								if( !lexpr.type.dataType.IsEqualExceptRefAndConst(expr.type.dataType) )
-									Error(TXT_BOTH_MUST_BE_SAME, node);
-
-							asCScriptFunction *descr = engine->scriptFunctions[match[0]];
-
-							// Add code for arguments
-							MergeExprContexts(&ctx, &expr);
-
-							PrepareArgument(&descr->parameterTypes[0], &expr, node, true, descr->inOutFlags[0]);
-							MergeExprContexts(&ctx, &expr);
-
-
-							asCArray<asSExprContext*> args;
-							args.PushLast(&expr);
-							MoveArgsToStack(match[0], &ctx.bc, args, false);
-
-							// Add the code for the object
-							ctx.bc.AddCode(&lexpr.bc);
-							ctx.bc.Instr(asBC_RDSPTR);
-
-							PerformFunctionCall(match[0], &ctx, false, &args);
-
-							ctx.bc.Pop(ctx.type.dataType.GetSizeOnStackDWords());
-
-							ProcessDeferredParams(&ctx);
-						}
-						else if( match.GetLength() > 1 )
-						{
-							Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
-						}
-					}
-				}
-#endif
 				if( !assigned )
 				{
 					PrepareForAssignment(&lexpr.type.dataType, &expr, node);
@@ -968,7 +868,8 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	// Remove the variable scope again
 	RemoveVariableScope();
 
-	byteCode.Pop(varSize);
+	if( varSize )
+		byteCode.Pop(varSize);
 
 	return 0;
 }
@@ -1389,6 +1290,8 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 
 void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
 {
+	asCArray<int> origFuncs = funcs; // Keep the original list for error message
+
 	asUINT n;
 	if( funcs.GetLength() > 0 )
 	{
@@ -1474,6 +1377,15 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 		{
 			str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
 			Error(str.AddressOf(), node);
+
+			// Print the list of candidates
+			if( origFuncs.GetLength() > 0 )
+			{
+				int r, c;
+				script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+				builder->WriteInfo(script->name.AddressOf(), TXT_CANDIDATES_ARE, r, c, false);
+				PrintMatchingFuncs(origFuncs, node);
+			}
 		}
 		else
 		{
@@ -1682,67 +1594,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 								ProcessDeferredParams(&ctx);
 							}
 						}
-#ifdef AS_DEPRECATED
-						if( !assigned )
-						{
-							asSTypeBehaviour *beh = 0;
-							if( !lexpr.type.isExplicitHandle )
-								beh = lexpr.type.dataType.GetBehaviour();
-							bool assigned = false;
-							if( beh )
-							{
-								// Find the matching overloaded operators
-								int op = asBEHAVE_ASSIGNMENT;
-								asCArray<int> ops;
-								asUINT n;
-								for( n = 0; n < beh->operators.GetLength(); n += 2 )
-								{
-									if( op == beh->operators[n] )
-										ops.PushLast(beh->operators[n+1]);
-								}
 
-								asCArray<int> match;
-								MatchArgument(ops, match, &expr.type, 0);
-
-								if( match.GetLength() > 0 )
-									assigned = true;
-
-								if( match.GetLength() == 1 )
-								{
-									// If it is an array, both sides must have the same subtype
-									if( lexpr.type.dataType.IsArrayType() )
-										if( !lexpr.type.dataType.IsEqualExceptRefAndConst(expr.type.dataType) )
-											Error(TXT_BOTH_MUST_BE_SAME, node);
-
-									asCScriptFunction *descr = engine->scriptFunctions[match[0]];
-
-									// Add code for arguments
-									MergeExprContexts(&ctx, &expr);
-
-									PrepareArgument(&descr->parameterTypes[0], &expr, node, true, descr->inOutFlags[0]);
-									MergeExprContexts(&ctx, &expr);
-
-									asCArray<asSExprContext*> args;
-									args.PushLast(&expr);
-									MoveArgsToStack(match[0], &ctx.bc, args, false);
-
-									// Add the code for the object
-									ctx.bc.AddCode(&lexpr.bc);
-									ctx.bc.Instr(asBC_RDSPTR);
-
-									PerformFunctionCall(match[0], &ctx, false, &args);
-
-									ctx.bc.Pop(ctx.type.dataType.GetSizeOnStackDWords());
-
-									ProcessDeferredParams(&ctx);
-								}
-								else if( match.GetLength() > 1 )
-								{
-									Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
-								}
-							}
-						}
-#endif
 						if( !assigned )
 						{
 							PrepareForAssignment(&lexpr.type.dataType, &expr, node);
@@ -3397,66 +3249,6 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 			// It shouldn't be possible to have more than one, should it?
 			asASSERT( false );
 		}
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-		else
-		{
-			// Find a suitable registered behaviour
-			for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n+= 2 )
-			{
-				if( (isExplicit && asBEHAVE_REF_CAST == engine->globalBehaviours.operators[n]) ||
-					asBEHAVE_IMPLICIT_REF_CAST == engine->globalBehaviours.operators[n] )
-				{
-					int funcId = engine->globalBehaviours.operators[n+1];
-
-					// Is the operator for the input type?
-					asCScriptFunction *func = engine->scriptFunctions[funcId];
-					if( func->parameterTypes[0].GetObjectType() != ctx->type.dataType.GetObjectType() )
-						continue;
-
-					// Is the operator for the output type?
-					if( func->returnType.GetObjectType() != to.GetObjectType() )
-						continue;
-
-					// Find the config group for the global function
-					asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
-					if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
-						ops.PushLast(funcId);
-				}
-			}
-
-			// Find the best match for the argument
-			asCArray<int> ops1;
-			MatchArgument(ops, ops1, &ctx->type, 0);
-
-			// Did we find a unique suitable operator?
-			if( ops1.GetLength() == 1 )
-			{
-				conversionDone = true;
-				asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
-
-				if( generateCode )
-				{
-					// Add code for argument
-					asSExprContext expr(engine);
-					MergeExprContexts(&expr, ctx);
-					expr.type = ctx->type;
-					PrepareArgument2(ctx, &expr, &descr->parameterTypes[0], true, descr->inOutFlags[0]);
-
-					asCArray<asSExprContext*> args(1);
-					args.PushLast(&expr);
-
-					MoveArgsToStack(descr->id, &ctx->bc, args, false);
-
-					PerformFunctionCall(descr->id, ctx, false, &args);
-				}
-				else
-				{
-					ctx->type.Set(descr->returnType);
-				}
-			}
-		}
-#endif
 	}
 
 	return conversionDone;
@@ -5030,87 +4822,6 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			// An overloaded assignment operator was found (or a compilation error occured)
 			return 0;
 		}
-
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-		// If left expression resolves into a registered type
-		// check if the assignment operator is overloaded, and check
-		// the type of the right hand expression. If none is found
-		// the default action is a direct copy if it is the same type
-		// and a simple assignment.
-		asSTypeBehaviour *beh = lctx->type.dataType.GetBehaviour();
-		asASSERT(beh);
-
-		int behaviour = TokenToBehaviour(op);
-
-		// Find the matching overloaded operators
-		asCArray<int> ops;
-		asUINT n;
-		for( n = 0; n < beh->operators.GetLength(); n += 2 )
-		{
-			if( behaviour == beh->operators[n] )
-				ops.PushLast(beh->operators[n+1]);
-		}
-
-		asCArray<int> match;
-		MatchArgument(ops, match, &rctx->type, 0);
-
-		if( match.GetLength() == 1 )
-		{
-			// We must verify that the lvalue isn't const
-			if( lctx->type.dataType.IsReadOnly() )
-			{
-				Error(TXT_REF_IS_READ_ONLY, lexpr);
-				return -1;
-			}
-
-			// Prepare the rvalue
-			asCScriptFunction *descr = engine->scriptFunctions[match[0]];
-			PrepareArgument(&descr->parameterTypes[0], rctx, rexpr, true, descr->inOutFlags[0]);
-
-			if( rctx->type.isTemporary && lctx->bc.IsVarUsed(rctx->type.stackOffset) )
-			{
-				// Release the current temporary variable
-				ReleaseTemporaryVariable(rctx->type, 0);
-
-				asCArray<int> usedVars;
-				lctx->bc.GetVarsUsed(usedVars);
-				rctx->bc.GetVarsUsed(usedVars);
-
-				asCDataType dt = rctx->type.dataType;
-				dt.MakeReference(false);
-				int newOffset = AllocateVariableNotIn(dt, true, &usedVars);
-
-				rctx->bc.ExchangeVar(rctx->type.stackOffset, newOffset);
-				rctx->type.stackOffset = (short)newOffset;
-				rctx->type.isTemporary = true;
-				rctx->type.isVariable = true;
-			}
-
-			// Add code for arguments
-			MergeExprContexts(ctx, rctx);
-
-			// Add the code for the object
-			Dereference(lctx, true);
-			MergeExprContexts(ctx, lctx);
-
-			asCArray<asSExprContext*> args;
-			args.PushLast(rctx);
-			MoveArgsToStack(match[0], &ctx->bc, args, true);
-
-			PerformFunctionCall(match[0], ctx, false, &args);
-
-			return 0;
-		}
-		else if( match.GetLength() > 1 )
-		{
-			Error(TXT_MORE_THAN_ONE_MATCHING_OP, opNode);
-
-			ctx->type.Set(lctx->type.dataType);
-
-			return -1;
-		}
-#endif
 
 		// No registered operator was found. In case the operation is a direct
 		// assignment and the rvalue is the same type as the lvalue, then we can
@@ -6778,47 +6489,6 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	}
 	else if( (op == ttMinus || op == ttBitNot) && ctx->type.dataType.IsObject() )
 	{
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-		if( op == ttMinus )
-		{
-			asCTypeInfo objType = ctx->type;
-
-			// Now find a matching function for the object type
-			asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
-			if( beh )
-			{
-				// Find the negate operator
-				int opNegate = 0;
-				bool found = false;
-				asUINT n;
-				for( n = 0; n < beh->operators.GetLength(); n+= 2 )
-				{
-					// Only accept the negate operator
-					if( asBEHAVE_NEGATE == beh->operators[n] &&
-						engine->scriptFunctions[beh->operators[n+1]]->parameterTypes.GetLength() == 0 )
-					{
-						found = true;
-						opNegate = beh->operators[n+1];
-						break;
-					}
-				}
-
-				// Did we find a suitable function?
-				if( found )
-				{
-					Dereference(ctx, true);
-
-					PerformFunctionCall(opNegate, ctx);
-
-					// Release the potentially temporary object
-					ReleaseTemporaryVariable(objType, &ctx->bc);
-					return 0;
-				}
-			}
-		}
-#endif
-
 		// Look for the opNeg or opCom methods
 		const char *opName = 0;
 		switch( op )
@@ -7926,28 +7596,6 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	ctx->bc.AddCode(&e.bc);
 }
 
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-int asCCompiler::TokenToBehaviour(int token)
-{
-	// Find the correct behaviour for the token
-	asUINT n;
-	int behaviour = -1;
-	for( n = 0; n < num_dual_tokens*2; n += 2 )
-	{
-		if( behave_dual_token[n] == token )
-		{
-			behaviour = behave_dual_token[n+1];
-			break;
-		}
-	}
-
-	assert( behaviour != -1 );
-
-	return behaviour;
-}
-#endif
-
 bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
 	// What type of operator is it?
@@ -7965,91 +7613,6 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		token == ttOr ||
 		token == ttXor )
 		return false;
-
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-
-	// Find the correct behaviour for the token
-	int behaviour = TokenToBehaviour(token);
-
-	// TODO: Only search in config groups to which the module has access
-	// What overloaded operators of this type do we have?
-	asUINT n;
-	asCArray<int> ops;
-	for( n = 0; n < engine->globalBehaviours.operators.GetLength(); n += 2 )
-	{
-		if( behaviour == engine->globalBehaviours.operators[n] )
-		{
-			int funcId = engine->globalBehaviours.operators[n+1];
-
-			// Find the config group for the global function
-			asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
-			if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
-				ops.PushLast(funcId);
-		}
-	}
-
-	// Find the best matches for each argument
-	asCArray<int> ops1;
-	asCArray<int> ops2;
-	MatchArgument(ops, ops1, &lctx->type, 0);
-	MatchArgument(ops, ops2, &rctx->type, 1);
-
-	// Find intersection of the two sets of matching operators
-	ops.SetLength(0);
-	for( n = 0; n < ops1.GetLength(); n++ )
-	{
-		for( asUINT m = 0; m < ops2.GetLength(); m++ )
-		{
-			if( ops1[n] == ops2[m] )
-			{
-				ops.PushLast(ops1[n]);
-				break;
-			}
-		}
-	}
-
-	// Did we find an operator?
-	if( ops.GetLength() == 1 )
-	{
-		asCScriptFunction *descr = engine->scriptFunctions[ops[0]];
-
-		// Add code for arguments
-		asCArray<int> reserved;
-		rctx->bc.GetVarsUsed(reserved);
-
-		PrepareArgument2(ctx, lctx, &descr->parameterTypes[0], true, descr->inOutFlags[0], &reserved);
-		PrepareArgument2(ctx, rctx, &descr->parameterTypes[1], true, descr->inOutFlags[1]);
-
-		// Swap the order of the arguments
-		if( lctx->type.dataType.GetSizeOnStackDWords() == 2 && rctx->type.dataType.GetSizeOnStackDWords() == 2 )
-			ctx->bc.Instr(asBC_SWAP8);
-		else if( lctx->type.dataType.GetSizeOnStackDWords() == 2 )
-			ctx->bc.Instr(asBC_SWAP48);
-		else if( rctx->type.dataType.GetSizeOnStackDWords() == 2 )
-			ctx->bc.Instr(asBC_SWAP84);
-		else
-			ctx->bc.Instr(asBC_SWAP4);
-
-		asCArray<asSExprContext*> args(2);
-		args.PushLast(lctx);
-		args.PushLast(rctx);
-
-		MoveArgsToStack(descr->id, &ctx->bc, args, false);
-
-		PerformFunctionCall(descr->id, ctx, false, &args);
-
-		// Don't continue
-		return true;
-	}
-	else if( ops.GetLength() > 1 )
-	{
-		Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
-
-		// Don't continue
-		return true;
-	}
-#endif
 
 	// Dual operators can also be implemented as class methods
 	if( token == ttEqual ||

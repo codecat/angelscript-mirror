@@ -149,8 +149,8 @@ bool Test()
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
-	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "TestObjHandle()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestObjHandle()", mod, ctx);
 
 	if( r != asEXECUTION_FINISHED )
 	{
@@ -171,7 +171,7 @@ bool Test()
 	// Verify that the compiler doesn't implicitly convert the lvalue in an assignment to a handle
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "refclass @a; a = @a;");
+	r = ExecuteString(engine, "refclass @a; a = @a;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 18) : Error   : Can't implicitly convert from 'refclass@&' to 'refclass&'.\n"
 							     // TODO: This second error message doesn't make sense. Why is the compiler trying to instanciate a new refclass?
 		                         "ExecuteString (1, 18) : Error   : No default constructor for object of type 'refclass'.\n" ) 
@@ -181,7 +181,8 @@ bool Test()
 		printf("%s: failure\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "refclass@ a; a.Method();", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "refclass@ a; a.Method();", 0, ctx);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		fail = true;
@@ -410,8 +411,8 @@ bool TestHandleMemberCalling(void)
 		return false;
 	}
 
-	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "TestScript()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestScript()", mod, ctx);
 
 	if( r != asEXECUTION_FINISHED )
 	{

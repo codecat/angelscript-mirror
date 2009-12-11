@@ -73,10 +73,9 @@ static void MyFunc(asIScriptGeneric *)
 {
 }
 
-static void Construct(asIScriptGeneric *gen)
+static void Factory(asIScriptGeneric *gen)
 {
-	int *o = (int*)gen->GetObject();
-	*o = 1;
+	*(int**)gen->GetAddressOfReturnLocation() = new int(1); // set ref count to 1
 }
 
 static void AddRef(asIScriptGeneric *gen)
@@ -264,40 +263,39 @@ bool Test()
 	//------------------
 	// Test object types held by external variable, i.e. any
 
-	// TODO: The application needs a way to tell the engine that the type is in use so that it won't be removed
-
-/*	CScriptAny *any = 0;
+	CScriptAny *any = 0;
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptAny(engine);
 
 	engine->BeginConfigGroup("group1");
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
-	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_GENERIC);
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_REF);
+	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_FACTORY, "mytype @f()", asFUNCTION(Factory), asCALL_GENERIC);
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef), asCALL_GENERIC);
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_RELEASE, "void f()", asFUNCTION(Release), asCALL_GENERIC);
 
-	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
+	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl("any"));
 
 	r = engine->RegisterGlobalProperty("any g_any", any);
 	engine->EndConfigGroup();
 
-	mod->AddScriptSection(0, TESTNAME, script5, strlen(script5), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(0, script5);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = mod->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 	engine->GarbageCollect();
 
 	int *o = 0;
-	any->Retrieve(&o, engine->GetTypeIdByDecl(0, "mytype@"));
+	any->Retrieve(&o, engine->GetTypeIdByDecl("mytype@"));
 	if( o == 0 )
 		fail = true;
 	if( --(*o) != 1 )
@@ -313,7 +311,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	engine->Release();
-*/
+
 	//-------------
 	// Test array types
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -454,34 +452,35 @@ bool Test()
 
 	//------------------
 	// Test object types held by external variable, i.e. any
-/*	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptAny(engine);
 
 	engine->BeginConfigGroup("group1");
-	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_PRIMITIVE);
+	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD);
 
-	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl(0, "any"));
+	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl("any"));
 
 	r = engine->RegisterGlobalProperty("any g_any", any);
 	engine->EndConfigGroup();
 
-	mod->AddScriptSection(0, TESTNAME, script10, strlen(script10), 0);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, script10);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = mod->Build(0);
+	r = mod->Build();
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	engine->Discard(0);
+	engine->DiscardModule(0);
 	engine->GarbageCollect();
 
 	asIScriptArray *array = 0;
-	any->Retrieve(&array, engine->GetTypeIdByDecl(0, "mytype[]@"));
+	any->Retrieve(&array, engine->GetTypeIdByDecl("mytype[]@"));
 	if( array == 0 )
 		fail = true;
 	else
@@ -499,7 +498,7 @@ bool Test()
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
 	engine->Release();
-*/
+
 	//-------------------
 	// Test references between config groups
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -543,9 +542,8 @@ bool Test()
 	RegisterScriptString_Generic(engine);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
+	r = ExecuteString(engine, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
 
-	r = engine->DiscardModule(0);  assert( r >= 0 );
 	r = engine->GarbageCollect(); assert( r >= 0 );
 
 	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );
@@ -555,9 +553,8 @@ bool Test()
 	RegisterScriptString_Generic(engine);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
+	r = ExecuteString(engine, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
 
-	r = engine->DiscardModule(0);  assert( r >= 0 );
 	r = engine->GarbageCollect(); assert( r >= 0 );
 
 	r = engine->RemoveConfigGroup("g1"); assert( r >= 0 );
@@ -587,7 +584,7 @@ bool Test()
 	RegisterScriptString_Generic(engine);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	r = engine->ExecuteString(0, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
+	r = ExecuteString(engine, "string a = \"test\""); assert( r == asEXECUTION_FINISHED );
 
 	// Garbage collect and remove config group before discarding module
 	r = engine->GarbageCollect(); assert( r >= 0 );
@@ -629,7 +626,7 @@ bool Test2()
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -656,7 +653,7 @@ bool Test2()
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

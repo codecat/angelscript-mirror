@@ -225,15 +225,15 @@ bool Test()
 	if( r < 0 ) fail = true;
 	r = engine->RegisterGlobalFunction("void testFuncS(string &in)", asFUNCTION(testFuncS), asCALL_GENERIC);
 
-	r = engine->ExecuteString(0, "int a = 42; testFuncI(a);");
+	r = ExecuteString(engine, "int a = 42; testFuncI(a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "string a = \"test\"; testFuncI(a);");
+	r = ExecuteString(engine, "string a = \"test\"; testFuncI(a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "string @a = @\"test\"; testFuncI(@a);");
+	r = ExecuteString(engine, "string @a = @\"test\"; testFuncI(@a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// Both functions should receive the string by reference
-	r = engine->ExecuteString(0, "string a = 'test'; testFuncI(a); testFuncS(a);");
+	r = ExecuteString(engine, "string a = 'test'; testFuncI(a); testFuncS(a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// It must be possible to register with 'out' references
@@ -241,11 +241,11 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void testFuncO(?&out)", asFUNCTION(testFuncO), asCALL_GENERIC);
 	if( r < 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "int a; testFuncO(a); assert(a == 42);");
+	r = ExecuteString(engine, "int a; testFuncO(a); assert(a == 42);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "string a; testFuncO(a); assert(a == \"test\");");
+	r = ExecuteString(engine, "string a; testFuncO(a); assert(a == \"test\");");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "string @a; testFuncO(@a); assert(a == \"test\");");
+	r = ExecuteString(engine, "string @a; testFuncO(@a); assert(a == \"test\");");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// It must be possible to mix normal parameter types with the var type ?
@@ -255,13 +255,13 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void testFuncSI(const string &in, ?& in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC);
 	if( r < 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "int a = 42; testFuncIS(a, \"test\");");
+	r = ExecuteString(engine, "int a = 42; testFuncIS(a, \"test\");");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "int a = 42; testFuncSI(\"test\", a);");
+	r = ExecuteString(engine, "int a = 42; testFuncSI(\"test\", a);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "string a = \"t\"; testFuncIS(a, \"test\");");
+	r = ExecuteString(engine, "string a = \"t\"; testFuncIS(a, \"test\");");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "string a = \"t\"; testFuncIS(@a, \"test\");");
+	r = ExecuteString(engine, "string a = \"t\"; testFuncIS(@a, \"test\");");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 
@@ -273,13 +273,13 @@ bool Test()
 		r = engine->RegisterGlobalFunction("void _testFuncSI(const string &in, ?& in)", asFUNCTION(testFuncSI), asCALL_CDECL);
 		if( r < 0 ) fail = true;
 
-		r = engine->ExecuteString(0, "int a = 42; _testFuncIS(a, \"test\");");
+		r = ExecuteString(engine, "int a = 42; _testFuncIS(a, \"test\");");
 		if( r != asEXECUTION_FINISHED ) fail = true;
-		r = engine->ExecuteString(0, "int a = 42; _testFuncSI(\"test\", a);");
+		r = ExecuteString(engine, "int a = 42; _testFuncSI(\"test\", a);");
 		if( r != asEXECUTION_FINISHED ) fail = true;
-		r = engine->ExecuteString(0, "string a = \"t\"; _testFuncIS(a, \"test\");");
+		r = ExecuteString(engine, "string a = \"t\"; _testFuncIS(a, \"test\");");
 		if( r != asEXECUTION_FINISHED ) fail = true;
-		r = engine->ExecuteString(0, "string a = \"t\"; _testFuncIS(@a, \"test\");");
+		r = ExecuteString(engine, "string a = \"t\"; _testFuncIS(@a, \"test\");");
 		if( r != asEXECUTION_FINISHED ) fail = true;
 	}
 
@@ -290,7 +290,7 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script);
 	mod->Build();
-	r = engine->ExecuteString(0, "const C c; testFuncO(@c.a);");
+	r = ExecuteString(engine, "const C c; testFuncO(@c.a);", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 22) : Warning : Argument cannot be assigned. Output will be discarded.\n" ) fail = true;
 	bout.buffer = "";

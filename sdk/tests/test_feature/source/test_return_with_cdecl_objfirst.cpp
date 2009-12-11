@@ -90,7 +90,7 @@ bool TestReturnWithCDeclObjFirst()
 	c1.a = 0;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	int r = 0;
-	r = engine->ExecuteString(0, "c1 = f.notComplex1(int(0xDEADC0DE));");
+	r = ExecuteString(engine, "c1 = f.notComplex1(int(0xDEADC0DE));");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -106,7 +106,7 @@ bool TestReturnWithCDeclObjFirst()
 	c2.a = 0;
 	c2.b = 0;
 
-	r = engine->ExecuteString(0, "c2 = f.notComplex2(int(0xDEADC0DE), 0x01234567);");
+	r = ExecuteString(engine, "c2 = f.notComplex2(int(0xDEADC0DE), 0x01234567);");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -129,7 +129,7 @@ bool TestReturnWithCDeclObjFirst()
 	c3.b = 0;
 	c3.c = 0;
 
-	r = engine->ExecuteString(0, "c3 = f.notComplex3(int(0xDEADC0DE), 0x01234567, int(0x89ABCDEF));");
+	r = ExecuteString(engine, "c3 = f.notComplex3(int(0xDEADC0DE), 0x01234567, int(0x89ABCDEF));");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);

@@ -70,7 +70,7 @@ bool Test()
 		printf("Failed to compile the script\n");
 	}
 
-	r = engine->ExecuteString(0, "main()");
+	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

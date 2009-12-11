@@ -69,8 +69,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "TestArrayHandle()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArrayHandle()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -91,7 +91,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestArrayHandle2()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArrayHandle2()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )

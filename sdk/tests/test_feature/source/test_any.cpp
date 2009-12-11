@@ -120,7 +120,8 @@ bool Test()
 		fail = true;
 		printf("%s: Failed to compile the script\n", "TestAny");
 	}
-	r = engine->ExecuteString(0, "TestAny()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestAny()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -149,7 +150,8 @@ bool Test()
 		fail = true;
 		printf("%s: Failed to compile the script\n", "TestAny");
 	}
-	r = engine->ExecuteString(0, "TestAny()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestAny()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -213,7 +215,7 @@ bool Test()
 		printf("%s: Failed to compile\n", "TestAny");
 	}
 	
-	r = engine->ExecuteString(0, "TestAny()");
+	r = ExecuteString(engine, "TestAny()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -262,7 +264,7 @@ bool Test()
 
 	//--------------------------------------
 	// Make sure the any type can store primitives as well
-	r = engine->ExecuteString(0, "any a; a.store(1); int b; a.retrieve(b); Assert(b == 1);");
+	r = ExecuteString(engine, "any a; a.store(1); int b; a.retrieve(b); Assert(b == 1);");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 

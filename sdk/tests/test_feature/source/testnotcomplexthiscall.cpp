@@ -94,7 +94,7 @@ bool TestNotComplexThisCall()
 	c1.a = 0;
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	int r = engine->ExecuteString(0, "c1 = f.notComplex1();");
+	int r = ExecuteString(engine, "c1 = f.notComplex1();");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -111,7 +111,7 @@ bool TestNotComplexThisCall()
 	c2.a = 0;
 	c2.b = 0;
 
-	r = engine->ExecuteString(0, "c2 = f.notComplex2();");
+	r = ExecuteString(engine, "c2 = f.notComplex2();");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -134,7 +134,7 @@ bool TestNotComplexThisCall()
 	c3.b = 0;
 	c3.c = 0;
 
-	r = engine->ExecuteString(0, "c3 = f.notComplex3();");
+	r = ExecuteString(engine, "c3 = f.notComplex3();");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);

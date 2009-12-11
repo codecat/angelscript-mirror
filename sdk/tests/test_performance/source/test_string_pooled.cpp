@@ -180,6 +180,7 @@ void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
+	printf("AngelScript 2.18.0 WIP         : 2.583 secs\n");
 
 	printf("\nBuilding...\n");
 

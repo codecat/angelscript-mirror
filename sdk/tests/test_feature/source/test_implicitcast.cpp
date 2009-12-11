@@ -135,8 +135,8 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Type_construct1), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "int f()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
 
-	asIScriptContext *ctx = 0;
-	r = engine->ExecuteString(0, "type t(5); \n"
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "type t(5); \n"
 		                         "int a = t; \n"             // conversion to primitive in assignment
 								 "assert( a == 5 ); \n"
 								 "assert( a + t == 10 ); \n" // conversion to primitive with math operation
@@ -146,7 +146,7 @@ bool Test()
 								 "type b(t); \n"             // conversion to primitive with parameter
 								 "assert( 32 == (1 << t) ); \n"   // conversion to primitive with bitwise operation 
 	                             "assert( (int(5) & t) == 5 ); \n" // conversion to primitive with bitwise operation
-								 , &ctx);
+								 , 0, ctx);
 	if( r != 0 )
 	{
 		if( r == 3 )
@@ -162,7 +162,7 @@ bool Test()
 	// ex: t < t - It is not known what type t should be converted to
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "type t(5); t << 1; ");
+	r = ExecuteString(engine, "type t(5); t << 1; ");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : Illegal operation on 'type&'\n" )
 	{
@@ -171,7 +171,7 @@ bool Test()
 	}
 
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "type t(5); t + t; ");
+	r = ExecuteString(engine, "type t(5); t + t; ");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
 	{
@@ -180,7 +180,7 @@ bool Test()
 	}
 
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "type t(5); t < t; ");
+	r = ExecuteString(engine, "type t(5); t < t; ");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
 	{
@@ -193,7 +193,7 @@ bool Test()
 	// closest matching type will be used, i.e. Obj has cast to int and to float. A type of 
 	// int8 is requested, so the cast to int is used
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "type t(2); assert( (1.0 / t) == (1.0 / 2.0) );");
+	r = ExecuteString(engine, "type t(2); assert( (1.0 / t) == (1.0 / 2.0) );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	engine->Release();
@@ -230,19 +230,19 @@ bool Test()
 		r = engine->RegisterObjectProperty("type", "int v", 0);
 
 		// explicit cast to int is allowed
-		r = engine->ExecuteString(0, "type t; t.v = 5; int a = int(t); assert(a == 5);"); 
+		r = ExecuteString(engine, "type t; t.v = 5; int a = int(t); assert(a == 5);"); 
 		if( r < 0 )
 			fail = true;
 
 		// as cast to int is allowed, AngelScript also allows cast to float (using cast to int then implicit cast to int)
-		r = engine->ExecuteString(0, "type t; t.v = 5; float a = float(t); assert(a == 5.0f);");
+		r = ExecuteString(engine, "type t; t.v = 5; float a = float(t); assert(a == 5.0f);");
 		if( r < 0 )
 			fail = true;
 
 		// implicit cast to int is not allowed
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-		r = engine->ExecuteString(0, "type t; int a = t;");
+		r = ExecuteString(engine, "type t; int a = t;");
 		if( r >= 0 )
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'type&' to 'int'.\n" )
@@ -253,7 +253,7 @@ bool Test()
 /*
 		// Having an implicit constructor with an int param makes it possible to compare the type with int
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-		r = engine->ExecuteString(0, "type t(5); assert( t == 5 );");
+		r = ExecuteString(engine, "type t(5); assert( t == 5 );");
 		if( r < 0 )
 			fail = true;
 */
@@ -344,36 +344,36 @@ bool Test()
 		engine->RegisterObjectMethod("B", "int test()", asMETHOD(B, test), asCALL_THISCALL);
 		
 		// Test the classes to make sure they work
-		r = engine->ExecuteString(0, "A a; assert(a.test() == 1); B b; assert(b.test() == 2);");
+		r = ExecuteString(engine, "A a; assert(a.test() == 1); B b; assert(b.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
 		// It should be possible to register a REF_CAST to allow implicit cast
 		// Test IMPLICIT_REF_CAST from subclass to baseclass
 		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "A@+ f()", asFUNCTION(B::castToA), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		r = engine->ExecuteString(0, "B b; A@ a = b; assert(a.test() == 2);");
+		r = ExecuteString(engine, "B b; A@ a = b; assert(a.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
 		// Test explicit cast with registered IMPLICIT_REF_CAST
-		r = engine->ExecuteString(0, "B b; A@ a = cast<A>(b); assert(a.test() == 2);");
+		r = ExecuteString(engine, "B b; A@ a = cast<A>(b); assert(a.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
 		// It should be possible to assign a value of type B 
 		// to and variable of type A due to the implicit ref cast
-		r = engine->ExecuteString(0, "A a; B b; a = b;");
+		r = ExecuteString(engine, "A a; B b; a = b;");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
 		// Test REF_CAST from baseclass to subclass
 		r = engine->RegisterObjectBehaviour("A", asBEHAVE_REF_CAST, "B@+ f()", asFUNCTION(B::AcastToB), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		r = engine->ExecuteString(0, "B b; A@ a = cast<A>(b); B@ _b = cast<B>(a); assert(_b.test() == 2);");
+		r = ExecuteString(engine, "B b; A@ a = cast<A>(b); B@ _b = cast<B>(a); assert(_b.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
 		// Test REF_CAST from baseclass to subclass, where the cast is invalid
-		r = engine->ExecuteString(0, "A a; B@ b = cast<B>(a); assert(@b == null);");
+		r = ExecuteString(engine, "A a; B@ b = cast<B>(a); assert(@b == null);");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
@@ -386,7 +386,7 @@ bool Test()
 		r = mod->Build(0);
 		if( r < 0 )
 			fail = true;
-		r = engine->ExecuteString(0, "B b; func(b)");
+		r = ExecuteString(engine, "B b; func(b)");
 		if( r < 0 )
 			fail = true;
 */
@@ -450,7 +450,7 @@ bool Test2()
 	}
 
 	// It must be possible to cast using an explicit construct cast
-	r = engine->ExecuteString(0, "complex c; simple s = simple(c);");
+	r = ExecuteString(engine, "complex c; simple s = simple(c);");
 	if( r < 0 )
 	{
 		fail = true;

@@ -141,13 +141,13 @@ bool Test()
 	RegisterStdString(engine);
 	RegisterVector<char>("int8[]", "int8", engine);
 	RegisterVector<int>("int[]", "int", engine);
-#ifdef __GNUC__
+#if defined(__GNUC__) || _MSC_VER >= 1500
 	RegisterVector<string>("string[]", "string", engine);
 	RegisterVector< std::vector<int> >("int[][]", "int[]", engine);
 #else
 	// There is something going wrong when registering the following.
 	// It looks like it is a linker problem, but I can't be sure.
-	printf("%s: MSVC can't register vector< vector<int> >\n", TESTNAME);
+	printf("%s: MSVC6 can't register vector< vector<int> >\n", TESTNAME);
 
 	// It seems that MSVC isn't able to differ between the template instances,
 	// when registering the different array overloads, all function pointers 
@@ -185,7 +185,7 @@ bool Test()
 			fail = true;
 
 		// The object that was returned by value, must not be freed too early
-		r = engine->ExecuteString(0, "Assert(TestInt()[0].v == 10)");
+		r = ExecuteString(engine, "Assert(TestInt()[0].v == 10)", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			fail = true;
@@ -201,8 +201,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	asIScriptContext *ctx = 0;
-	r = engine->ExecuteString(0, "Test()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failed to execute script\n", TESTNAME);
@@ -224,7 +224,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "Test()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failed to execute script\n", TESTNAME);

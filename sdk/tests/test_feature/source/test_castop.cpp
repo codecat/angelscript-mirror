@@ -98,11 +98,11 @@ bool Test()
 	int res = 0;
 	engine->RegisterGlobalProperty("int res", &res);
 
-	engine->ExecuteString(0, "res = int(2342.4)");
+	ExecuteString(engine, "res = int(2342.4)");
 	if( res != 2342 ) 
 		fail = true;
 
-	engine->ExecuteString(0, "double tmp = 3452.4; res = int(tmp)");
+	ExecuteString(engine, "double tmp = 3452.4; res = int(tmp)");
 	if( res != 3452 ) 
 		fail = true;
 
@@ -110,23 +110,23 @@ bool Test()
 	mod->AddScriptSection("script", script, strlen(script));
 	mod->Build();
 
-	r = engine->ExecuteString(0, "clss c; cast<intf1>(c); cast<intf2>(c);");
+	r = ExecuteString(engine, "clss c; cast<intf1>(c); cast<intf2>(c);", mod);
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "intf1 @a = clss(); cast<clss>(a).Test2(); cast<intf2>(a).Test2();");
+	r = ExecuteString(engine, "intf1 @a = clss(); cast<clss>(a).Test2(); cast<intf2>(a).Test2();", mod);
 	if( r < 0 )
 		fail = true;
 
 	// Test use of handle after invalid cast (should throw a script exception)
-	r = engine->ExecuteString(0, "intf1 @a = clss(); cast<intf3>(a).Test3();");
+	r = ExecuteString(engine, "intf1 @a = clss(); cast<intf3>(a).Test3();", mod);
 	if( r != asEXECUTION_EXCEPTION )
 		fail = true;
 
 	// Don't permit cast operator to remove constness
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "const intf1 @a = clss(); cast<intf2>(a).Test2();");
+	r = ExecuteString(engine, "const intf1 @a = clss(); cast<intf2>(a).Test2();", mod);
 	if( r >= 0 )
 		fail = true;
 
@@ -145,7 +145,7 @@ bool Test()
 	r = mod->Build(0);
 	if( r < 0 )
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 */
@@ -163,14 +163,14 @@ bool Test()
 	r = engine->RegisterObjectType("type", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	RegisterScriptString(engine);
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY, "string@ f(const type &in)", asFUNCTION(TypeToString), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->ExecuteString(0, "type t; string a = \"a\" + string(t) + \"b\";"); 
+	r = ExecuteString(engine, "type t; string a = \"a\" + string(t) + \"b\";"); 
 	if( r < 0 )
 		fail = true;
 		
 	// Use of constructor is not permitted to implicitly cast to a reference type 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "type t; string a = \"a\" + t + \"b\";"); 
+	r = ExecuteString(engine, "type t; string a = \"a\" + t + \"b\";"); 
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 24) : Error   : No matching operator that takes the types 'string@&' and 'type&' found\n" )
@@ -189,7 +189,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
 
-	r = engine->ExecuteString(0, "uint8 a=0x80; int j=int();");
+	r = ExecuteString(engine, "uint8 a=0x80; int j=int();");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 24) : Error   : A cast operator has one argument\n" )

@@ -148,7 +148,7 @@ bool TestExecute32MixedArgs()
 			")", asFUNCTION(cfunction), asCALL_CDECL);
 	}
 
-	engine->ExecuteString(0, 
+	ExecuteString(engine, 
 		"cfunction("
 			" 1,  2,  3,  4,"
 			" 5.0f,  6.0f,  7.0f,  8.0f,"

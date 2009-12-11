@@ -172,7 +172,8 @@ int asCBuilder::Build()
 	return asSUCCESS;
 }
 
-// TODO: functions: Deprecate this as the application can now dynamically build functions
+#ifdef AS_DEPRECATED
+// Deprecated since 2009-12-08, 2.18.0
 int asCBuilder::BuildString(const char *string, asCContext *ctx)
 {
 	asCScriptFunction *execFunc = 0;
@@ -183,6 +184,56 @@ int asCBuilder::BuildString(const char *string, asCContext *ctx)
 	}
 
 	return r;
+}
+#endif
+
+int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int lineOffset)
+{
+	numErrors = 0;
+	numWarnings = 0;
+	preMessage.isSet = false;
+
+	// Add the string to the script code
+	asCScriptCode *script = asNEW(asCScriptCode);
+	script->SetCode(sectionName, code, true);
+	script->lineOffset = lineOffset;
+	scripts.PushLast(script);
+
+	// Parse the string
+	asCParser parser(this);
+	if( parser.ParseScript(scripts[0]) < 0 )
+		return asERROR;
+
+	asCScriptNode *node = parser.GetScriptNode();
+
+	// Make sure there is nothing else than the global variable in the script code
+	if( node == 0 ||
+		node->firstChild == 0 ||
+		node->firstChild != node->lastChild ||
+		node->firstChild->nodeType != snGlobalVar )
+	{
+		WriteError(script->name.AddressOf(), TXT_ONLY_ONE_VARIABLE_ALLOWED, 0, 0);
+		return asERROR;
+	}
+
+	node = node->firstChild;
+	node->DisconnectParent();
+	RegisterGlobalVar(node, script);
+
+	CompileGlobalVariables();
+
+	if( numErrors > 0 )
+	{
+		// Remove the variable from the module, if it was registered
+		if( globVariables.GetLength() > 0 )
+		{
+			module->RemoveGlobalVar(module->GetGlobalVarCount()-1);
+		}
+
+		return asERROR;
+	}
+
+	return 0;
 }
 
 int asCBuilder::CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asCScriptFunction **outFunc)
@@ -870,8 +921,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 
 				asCString str;
 
-				// TODO: Need a TXT constant
-				str.Format("Name conflict. '%s' is a named type (FIXME!).", name);
+				str.Format(TXT_NAME_CONFLICT_s_IS_NAMED_TYPE, name);
 
 				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
 			}
@@ -1255,8 +1305,11 @@ void asCBuilder::CompileGlobalVariables()
 	// Set the correct order of initialization
 	if( numErrors == 0 )
 	{
-		asASSERT(module->scriptGlobals.GetLength() == initOrder.GetLength());
-		module->scriptGlobals = initOrder;
+		// If the length of the arrays are not the same, then this is the compilation 
+		// of a single variable, in which case the initialization order of the previous 
+		// variables must be preserved.
+		if( module->scriptGlobals.GetLength() == initOrder.GetLength() )
+			module->scriptGlobals = initOrder;
 	}
 
 	// Convert all variables compiled for the enums to true enum values

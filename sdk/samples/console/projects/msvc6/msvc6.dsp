@@ -91,6 +91,10 @@ SOURCE=..\..\source\main.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\add_on\scripthelper\scripthelper.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.cpp
 # End Source File
 # End Group

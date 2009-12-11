@@ -61,7 +61,7 @@ public:
 	asCObjectType *FindType(const char *obj);
 	void RefConfigGroup(asCConfigGroup *group);
 
-	bool HasLiveObjects(asCScriptEngine *engine);
+	bool HasLiveObjects();
 	void RemoveConfiguration(asCScriptEngine *engine);
 
 	int SetModuleAccess(const char *module, bool hasAccess);
@@ -77,10 +77,6 @@ public:
 	asCArray<asCObjectType*>     objTypes;
 	asCArray<asCScriptFunction*> scriptFunctions;
 	asCArray<asCGlobalProperty*> globalProps;
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-	asCArray<int>                globalBehaviours;
-#endif
 	asCArray<asCConfigGroup*>    referencedConfigGroups;
 
 	// Module access

@@ -171,7 +171,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestArray()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArray()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -191,7 +192,7 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestArrayException()");
+	r = ExecuteString(engine, "TestArrayException()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: No exception\n", TESTNAME);
@@ -208,7 +209,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestArrayMulti()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArrayMulti()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failure\n", TESTNAME);
@@ -230,7 +232,8 @@ bool Test()
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
-	r = engine->ExecuteString(0, "TestArrayChar()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArrayChar()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failure\n", TESTNAME);
@@ -277,7 +280,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 		
@@ -294,22 +297,22 @@ bool Test()
 	"Assert(f[0] == true);      \n"
 	"Assert(f[1] == false);     \n";
 	
-	r = engine->ExecuteString(0, script8);
+	r = ExecuteString(engine, script8, mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
 	// Make sure it is possible to do multiple assignments with the array type
-	r = engine->ExecuteString(0, "array<int> a, b, c; a = b = c;");
+	r = ExecuteString(engine, "array<int> a, b, c; a = b = c;");
 	if( r < 0 )
 		fail = true;
 
 	// Must support syntax as: array<array<int>>, i.e. without white space between the closing angled brackets.
-	r = engine->ExecuteString(0, "array<array<int>> a(2); Assert( a.length() == 2 );");
+	r = ExecuteString(engine, "array<array<int>> a(2); Assert( a.length() == 2 );");
 	if( r < 0 )
 		fail = true;
 
 	// Must support arrays of handles
-	r = engine->ExecuteString(0, "array<array<int>@> a(1); @a[0] = @array<int>(4);");
+	r = ExecuteString(engine, "array<array<int>@> a(1); @a[0] = @array<int>(4);");
 	if( r < 0 )
 		fail = true;
 
@@ -317,7 +320,7 @@ bool Test()
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	engine->RegisterObjectType("single", 0, asOBJ_REF | asOBJ_NOHANDLE);
-	r = engine->ExecuteString(0, "array<single> a;");
+	r = ExecuteString(engine, "array<single> a;");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'single'\n" )
@@ -334,7 +337,7 @@ bool Test()
 		RegisterScriptArray(engine);
 
 		ctx = engine->CreateContext();
-		r = engine->ExecuteString(0, "array<int> a; a.resize(0xFFFFFFFF);", &ctx, asEXECSTRING_USE_MY_CONTEXT);
+		r = ExecuteString(engine, "array<int> a; a.resize(0xFFFFFFFF);", 0, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 		{
 			fail = true;
@@ -344,7 +347,7 @@ bool Test()
 			fail = true;
 		}
 
-		r = engine->ExecuteString(0, "array<int> a(0xFFFFFFFF);", &ctx, asEXECSTRING_USE_MY_CONTEXT);
+		r = ExecuteString(engine, "array<int> a(0xFFFFFFFF);", 0, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 		{
 			fail = true;
@@ -398,7 +401,7 @@ bool Test2()
 		fail = true;
 	}
 
-	r = engine->ExecuteString("module", exec);
+	r = ExecuteString(engine, exec, module);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

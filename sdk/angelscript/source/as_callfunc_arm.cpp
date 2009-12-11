@@ -243,9 +243,10 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
                 if (descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK)
                 {
 			        void *obj = (void*)args[spos++];
-                    // TODO: running the destructor here results in the destructor being run twice
-                    // as it has already been called in the native function.
-                    // Should this be an ifdef or removed completely?
+
+                    // Running the destructor here results in the destructor being 
+                    // run twice as it has already been called in the native function.
+                    // TODO: Should this be an ifdef or removed completely?
 //			        asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
 //			        if( beh->destruct )
 //				        engine->CallObjectMethod(obj, beh->destruct);

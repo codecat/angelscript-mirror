@@ -222,76 +222,6 @@ enum asEBehaviours
 	 asBEHAVE_RELEASEREFS,
 	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
 
-#ifdef AS_DEPRECATED
-	// deprecated since 2009-07-20, 2.17.0
-	//! \deprecated Since 2.17.0. Use opNeg instead.
-	asBEHAVE_NEGATE,
-	asBEHAVE_FIRST_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opAssign instead.
-	 asBEHAVE_ASSIGNMENT = asBEHAVE_FIRST_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opAddAssign instead.
-	 asBEHAVE_ADD_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opSubAssign instead.
-	 asBEHAVE_SUB_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opMulAssign instead.
-	 asBEHAVE_MUL_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opDivAssign instead.
-	 asBEHAVE_DIV_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opModAssign instead.
-	 asBEHAVE_MOD_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opOrAssign instead.
-	 asBEHAVE_OR_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opAndAssign instead.
-	 asBEHAVE_AND_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opXorAssign instead.
-	 asBEHAVE_XOR_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opShlAssign instead.
-	 asBEHAVE_SLL_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opShrAssign instead.
-	 asBEHAVE_SRL_ASSIGN,
-	 //! \deprecated Since 2.17.0. Use opUShrAssign instead.
-	 asBEHAVE_SRA_ASSIGN,
-	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
-
-	// Global operators
-	asBEHAVE_FIRST_DUAL,
-	 //! \deprecated Since 2.17.0. Use opAdd instead.
-	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
-	 //! \deprecated Since 2.17.0. Use opSub instead.
-	 asBEHAVE_SUBTRACT,
-	 //! \deprecated Since 2.17.0. Use opMul instead.
-	 asBEHAVE_MULTIPLY,
-	 //! \deprecated Since 2.17.0. Use opDiv instead.
-	 asBEHAVE_DIVIDE,
-	 //! \deprecated Since 2.17.0. Use opMod instead.
-	 asBEHAVE_MODULO,
-	 //! \deprecated Since 2.17.0. Use opEquals instead.
-	 asBEHAVE_EQUAL,
-	 //! \deprecated Since 2.17.0. Use opEquals instead.
-	 asBEHAVE_NOTEQUAL,
-	 //! \deprecated Since 2.17.0. Use opCmp instead.
-	 asBEHAVE_LESSTHAN,
-	 //! \deprecated Since 2.17.0. Use opCmp instead.
-	 asBEHAVE_GREATERTHAN,
-	 //! \deprecated Since 2.17.0. Use opCmp instead.
-	 asBEHAVE_LEQUAL,
-	 //! \deprecated Since 2.17.0. Use opCmp instead.
-	 asBEHAVE_GEQUAL,
-	 //! \deprecated Since 2.17.0. Use opOr instead.
-	 asBEHAVE_BIT_OR,
-	 //! \deprecated Since 2.17.0. Use opAnd instead.
-	 asBEHAVE_BIT_AND,
-	 //! \deprecated Since 2.17.0. Use opXor instead.
-	 asBEHAVE_BIT_XOR,
-	 //! \deprecated Since 2.17.0. Use opShl instead.
-	 asBEHAVE_BIT_SLL,
-	 //! \deprecated Since 2.17.0. Use opShr instead.
-	 asBEHAVE_BIT_SRL,
-	 //! \deprecated Since 2.17.0. Use opUShr instead.
-	 asBEHAVE_BIT_SRA,
-	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
-#endif
-
 	asBEHAVE_MAX
 };
 
@@ -349,12 +279,10 @@ enum asERetCodes
 	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
 	//! The specified calling convention doesn't match the function/method pointer
 	asWRONG_CALLING_CONV                   = -24,
-	//! The module is currently in use
-	asMODULE_IS_IN_USE                     = -25,
 	//! A build is currently in progress
-	asBUILD_IN_PROGRESS                    = -26,
+	asBUILD_IN_PROGRESS                    = -25,
 	//! The initialization of global variables failed
-	asINIT_GLOBAL_VARS_FAILED              = -27
+	asINIT_GLOBAL_VARS_FAILED              = -26
 };
 
 // Context states
@@ -380,9 +308,11 @@ enum asEContextState
     asEXECUTION_ERROR         = 7
 };
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.18.0, 2009-12-08
 // ExecuteString flags
-
 //! \brief ExecuteString flags.
+//! \deprecated since 2.18.0
 enum asEExecStrFlags
 {
 	//! Only prepare the context
@@ -390,6 +320,7 @@ enum asEExecStrFlags
 	//! Use the pre-allocated context
 	asEXECSTRING_USE_MY_CONTEXT = 2
 };
+#endif
 
 // Message types
 
@@ -1381,25 +1312,6 @@ public:
 	//! tokens that the script language uses, e.g. IDEs providing syntax highlighting, or intellisense.
 	//! It can also be used to parse the meta data strings that may be declared for script entities.
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
-	//! \brief Compiles and executes script statements within the context of a module.
-    //! \param[in] module The name of the module in which the string should be executed.
-    //! \param[in] script The script string that will be executed.
-    //! \param[in,out] ctx Either pass in your own context or receive the default context, depending on the flags parameter.
-    //! \param[in] flags A combination of the values from \ref asEExecStrFlags.
-    //! \return One of \ref asEContextState values, or a negative value on compiler error.
-    //! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
-    //! \retval asINVALID_ARG \a ctx is null and \a flags is asEXECSTRING_USE_MY_CONTEXT.
-    //! \retval asERROR The string failed to build.
-    //! \retval asCONTEXT_ACTIVE The context is already active or in suspended state.
-    //! \retval asBUILD_IN_PROGRESS Another thread is currently building.
-    //! \retval asEXECUTION_PREPARED The context has been prepared and is ready for execution.
-    //! \retval asEXECUTION_ABORTED The execution was aborted with a call to \ref asIScriptContext::Abort.
-    //! \retval asEXECUTION_SUSPENDED The execution was suspended with a call to \ref asIScriptContext::Suspend.
-    //! \retval asEXECUTION_FINISHED The execution finished successfully.
-    //! \retval asEXECUTION_EXCEPTION The execution ended with an exception.
-    //!
-    //! This method allow an application to interpret script statements using the currently compiled code.
-	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 	//! \}
 
 	// Garbage collection
@@ -1470,18 +1382,12 @@ public:
 	//! \}
 
 #ifdef AS_DEPRECATED
-	// deprecated since 2009-07-20, 2.17.0
 	//! \name Deprecated
 	//! \{
 
-    //! \deprecated Since 2.17.0. Implement the proper \ref doc_reg_opbeh "class methods" instead.
-	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-    //! \deprecated Since 2.17.0. Implement the proper \ref doc_reg_opbeh "class methods" instead.
-	virtual int            GetGlobalBehaviourCount() = 0;
-    //! \deprecated Since 2.17.0. Implement the proper \ref doc_reg_opbeh "class methods" instead.
-	virtual int            GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) = 0;
-    //! \deprecated Since 2.17.0. Use \ref doc_addon_helpers "CompareRelation" and \ref doc_addon_helpers "CompareEquality" helper functions instead.
-	virtual int            CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
+	// deprecated since 2009-12-08, 2.18.0
+	//! \deprecated Since 2.18.0. Use the \ref doc_addon_helpers "ExecuteString" helper function instead.
+	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 	//! \}
 #endif
 
@@ -1542,6 +1448,9 @@ public:
     //! 
     //! Compiler messages are sent to the message callback function set with \ref asIScriptEngine::SetMessageCallback. 
     //! If there are no errors or warnings, no messages will be sent to the callback function.
+    //!
+    //! Any global variables found in the script will be initialized by the
+    //! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set.
 	virtual int  Build() = 0;
 	//! \brief Compile a single function.
 	//!
@@ -1562,6 +1471,23 @@ public:
 	//!
 	//! If the output function parameter is set, remember to release the function object when you're done with it.
 	virtual int  CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
+	//! \brief Compile a single global variable and add it to the scope of the module
+	//!
+	//! \param[in] sectionName The name of the script section
+	//! \param[in] code The script code buffer
+	//! \param[in] lineOffset An offset that will be added to compiler message line numbers
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG One or more arguments have invalid values.
+	//! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
+	//! \retval asBUILD_IN_PROGRESS Another build is in progress.
+	//! \retval asERROR The compilation failed.
+	//!
+	//! Use this to add a single global variable to the scope of a module. The variable can then
+	//! be referred to by the application and subsequent compilations.
+	//!
+	//! The script code may contain an initialization expression, which will be executed by the
+	//! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set.
+	virtual int  CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
 	//! \}
 
 	// Functions
@@ -1683,6 +1609,14 @@ public:
     //!
     //! This method should be used to retrieve the pointer of a variable that you wish to access.
 	virtual void       *GetAddressOfGlobalVar(int index) = 0;
+	//! \brief Remove the global variable from the scope of the module.
+	//! \param[in] index The index of the global variable.
+	//! \return A negative value on error.
+	//! \retval asINVALID_ARG The index is out of range.
+	//!
+	//! The global variable is removed from the scope of the module, but 
+	//! it is not destroyed until all functions that access it are freed.
+	virtual int         RemoveGlobalVar(int index) = 0;
 	//! \}
 
 	// Type identification
@@ -2266,17 +2200,6 @@ public:
 	virtual void *GetUserData() = 0;
 	//! \}
 
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-
-	// deprecated since 2009-07-29, 2.17.0
-	//! \deprecated Since 2.17.0. Use \ref asIScriptContext::GetAddressOfArg instead.
-	virtual void *GetArgPointer(asUINT arg) = 0;
-
-	//! \}
-#endif
-
 protected:
 	virtual ~asIScriptContext() {}
 };
@@ -2520,15 +2443,6 @@ public:
     //! This method copies the contents of the other object to this one.
 	virtual int              CopyFrom(asIScriptObject *other) = 0;
 	//! \}
-
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-	// deprecated since 2009-07-29, 2.17.0
-	//! \deprecated Since 2.17.0. Use \ref asIScriptObject::GetAddressOfProperty instead.
-	virtual void       *GetPropertyPointer(asUINT prop) = 0;
-	//! \}
-#endif
 
 protected:
 	virtual ~asIScriptObject() {}

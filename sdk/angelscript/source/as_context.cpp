@@ -161,7 +161,10 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	inExceptionHandler = false;
 	isStackMemoryNotAllocated = false;
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2009-12-08, 2.18.0
 	stringFunction = 0;
+#endif
 	currentFunction = 0;
 	regs.objectRegister = 0;
 	initialFunction = 0;
@@ -264,13 +267,12 @@ int asCContext::Prepare(int funcID)
 			initialFunction->Release();
 
 		initialFunction = engine->GetScriptFunction(funcID);
-		initialFunction->AddRef();
-
-		currentFunction = initialFunction;
-		if( currentFunction == 0 )
+		if( initialFunction == 0 )
 			return asNO_FUNCTION;
 
-		regs.globalVarPointers = initialFunction->globalVarPointers.AddressOf();
+		initialFunction->AddRef();
+		currentFunction = initialFunction;
+		regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 
 		// Determine the minimum stack size needed
 		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
@@ -300,11 +302,6 @@ int asCContext::Prepare(int funcID)
 		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? AS_PTR_SIZE : 0);
 	}
 
-	if( currentFunction->funcType == asFUNC_SCRIPT )
-		regs.programPointer = currentFunction->byteCode.AddressOf();
-	else
-		regs.programPointer = 0;
-
 	// Reset state
 	// Most of the time the previous state will be asEXECUTION_FINISHED, in which case the values are already initialized
 	if( status != asEXECUTION_FINISHED )
@@ -316,26 +313,30 @@ int asCContext::Prepare(int funcID)
 		doSuspend               = false;
 		regs.doProcessSuspend   = lineCallback;
 		externalSuspendRequest  = false;
+		stackIndex              = 0;
 	}
 	status = asEXECUTION_PREPARED;
 
 	// Reserve space for the arguments and return value
 	regs.stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize;
-	regs.stackPointer = regs.stackFramePointer;
-	stackIndex = 0;
+	regs.stackPointer      = regs.stackFramePointer;
 
 	// Set arguments to 0
 	memset(regs.stackPointer, 0, 4*argumentsSize);
 
-	// Set all object variables to 0
 	if( currentFunction->funcType == asFUNC_SCRIPT )
 	{
+		regs.programPointer = currentFunction->byteCode.AddressOf();
+
+		// Set all object variables to 0
 		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
 			int pos = currentFunction->objVariablePos[n];
 			*(size_t*)&regs.stackFramePointer[-pos] = 0;
 		}
 	}
+	else
+		regs.programPointer = 0;
 
 	return asSUCCESS;
 }
@@ -380,20 +381,23 @@ int asCContext::Unprepare()
 	regs.stackPointer = 0;
 	stackIndex = 0;
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2009-12-08, 2.18.0
 	// Deallocate string function
 	if( stringFunction )
 	{
 		stringFunction->Release();
 		stringFunction = 0;
 	}
+#endif
 	
 	return 0;
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2009-12-08, 2.18.0
 int asCContext::SetExecuteStringFunction(asCScriptFunction *func)
 {
-	// TODO: Verify that the context isn't running
-
 	if( stringFunction )
 		stringFunction->Release();
 
@@ -402,6 +406,7 @@ int asCContext::SetExecuteStringFunction(asCScriptFunction *func)
 
 	return 0;
 }
+#endif
 
 asBYTE asCContext::GetReturnByte()
 {
@@ -842,14 +847,6 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 }
 
 
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-29, 2.17.0
-void *asCContext::GetArgPointer(asUINT arg)
-{
-	return GetAddressOfArg(arg);
-}
-#endif
-
 // TODO: Instead of GetAddressOfArg, maybe we need a SetArgValue(int arg, void *value, bool takeOwnership) instead.
 
 // interface
@@ -913,7 +910,7 @@ int asCContext::Execute()
 	if( status != asEXECUTION_SUSPENDED && status != asEXECUTION_PREPARED )
 		return asERROR;
 
-	status = asEXECUTION_SUSPENDED;
+	status = asEXECUTION_ACTIVE;
 
 	asPushActiveContext((asIScriptContext *)this);
 
@@ -989,7 +986,7 @@ int asCContext::Execute()
 			CallSystemFunction(currentFunction->id, this, 0);
 			
 			// Was the call successful?
-			if( status == asEXECUTION_SUSPENDED )
+			if( status == asEXECUTION_ACTIVE )
 			{
 				status = asEXECUTION_FINISHED;
 			}
@@ -1001,12 +998,8 @@ int asCContext::Execute()
 		}
 	}
 
-	while( !doSuspend && status == asEXECUTION_SUSPENDED )
-	{
-		status = asEXECUTION_ACTIVE;
-		while( status == asEXECUTION_ACTIVE )
-			ExecuteNext();
-	}
+	while(  status == asEXECUTION_ACTIVE )
+		ExecuteNext();
 
 	doSuspend = false;
 	regs.doProcessSuspend = lineCallback;
@@ -1420,12 +1413,7 @@ void asCContext::ExecuteNext()
 
 			asWORD w = asBC_WORDARG0(l_bc);
 
-			// Need to move the values back to the context
-			regs.programPointer = l_bc;
-			regs.stackPointer = l_sp;
-			regs.stackFramePointer = l_fp;
-
-			// Read the old framepointer, functionid, and programCounter from the stack
+			// Read the old framepointer, functionid, and programCounter from the call stack
 			PopCallState();
 
 			// Extract the values from the context again
@@ -1970,24 +1958,27 @@ void asCContext::ExecuteNext()
 			// Update the program position after the call so that line number is correct
 			l_bc += 2;
 
-			// Should the execution be suspended?
-			if( doSuspend )
+			if( regs.doProcessSuspend )
 			{
-				regs.programPointer = l_bc;
-				regs.stackPointer = l_sp;
-				regs.stackFramePointer = l_fp;
+				// Should the execution be suspended?
+				if( doSuspend )
+				{
+					regs.programPointer = l_bc;
+					regs.stackPointer = l_sp;
+					regs.stackFramePointer = l_fp;
 
-				status = asEXECUTION_SUSPENDED;
-				return;
-			}
-			// An exception might have been raised
-			if( status != asEXECUTION_ACTIVE )
-			{
-				regs.programPointer = l_bc;
-				regs.stackPointer = l_sp;
-				regs.stackFramePointer = l_fp;
+					status = asEXECUTION_SUSPENDED;
+					return;
+				}
+				// An exception might have been raised
+				if( status != asEXECUTION_ACTIVE )
+				{
+					regs.programPointer = l_bc;
+					regs.stackPointer = l_sp;
+					regs.stackFramePointer = l_fp;
 
-				return;
+					return;
+				}
 			}
 		}
 		break;
@@ -2122,27 +2113,30 @@ void asCContext::ExecuteNext()
 
 				l_bc += 2+AS_PTR_SIZE;
 
-				// Should the execution be suspended?
-				if( doSuspend )
+				if( regs.doProcessSuspend )
 				{
-					regs.programPointer = l_bc;
-					regs.stackPointer = l_sp;
-					regs.stackFramePointer = l_fp;
+					// Should the execution be suspended?
+					if( doSuspend )
+					{
+						regs.programPointer = l_bc;
+						regs.stackPointer = l_sp;
+						regs.stackFramePointer = l_fp;
 
-					status = asEXECUTION_SUSPENDED;
-					return;
-				}
-				// An exception might have been raised
-				if( status != asEXECUTION_ACTIVE )
-				{
-					regs.programPointer = l_bc;
-					regs.stackPointer = l_sp;
-					regs.stackFramePointer = l_fp;
+						status = asEXECUTION_SUSPENDED;
+						return;
+					}
+					// An exception might have been raised
+					if( status != asEXECUTION_ACTIVE )
+					{
+						regs.programPointer = l_bc;
+						regs.stackPointer = l_sp;
+						regs.stackFramePointer = l_fp;
 
-					engine->CallFree(mem);
-					*a = 0;
+						engine->CallFree(mem);
+						*a = 0;
 
-					return;
+						return;
+					}
 				}
 			}
 		}
@@ -3288,13 +3282,14 @@ void asCContext::SetInternalException(const char *descr)
 		return; // but if it does, at least this will not crash the application
 	}
 
-	status = asEXECUTION_EXCEPTION;
+	status                = asEXECUTION_EXCEPTION;
+	regs.doProcessSuspend = true;
 
-	exceptionString   = descr;
-	exceptionFunction = currentFunction->id;
-	exceptionLine     = currentFunction->GetLineNumber(int(regs.programPointer - currentFunction->byteCode.AddressOf()));
-	exceptionColumn   = exceptionLine >> 20;
-	exceptionLine    &= 0xFFFFF;
+	exceptionString       = descr;
+	exceptionFunction     = currentFunction->id;
+	exceptionLine         = currentFunction->GetLineNumber(int(regs.programPointer - currentFunction->byteCode.AddressOf()));
+	exceptionColumn       = exceptionLine >> 20;
+	exceptionLine        &= 0xFFFFF;
 
 	if( exceptionCallback )
 		CallExceptionCallback();

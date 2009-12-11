@@ -79,7 +79,7 @@ bool TestCondition()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "print(a == \"a\" ? \"t\" : \"f\")");
+	r = ExecuteString(engine, "print(a == \"a\" ? \"t\" : \"f\")");
 	if( r < 0 )
 	{
 		fail = true;
@@ -90,7 +90,7 @@ bool TestCondition()
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	mod->Build();
 
-	r = engine->ExecuteString(0, "Test(\"t\", \"f\")");
+	r = ExecuteString(engine, "Test(\"t\", \"f\")", mod);
 	if( r < 0 )
 	{
 		fail = true;
@@ -100,7 +100,7 @@ bool TestCondition()
 /*	mod->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 	mod->Build(0);
 
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()");
 	if( r < 0 )
 	{
 		fail = true;
@@ -110,28 +110,28 @@ bool TestCondition()
 	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
 	mod->Build();
 
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "bool b = true; print(\"Test: \" + format(float(b ? 15 : 0)));");
+	r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(float(b ? 15 : 0)));");
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "bool b = true; print(\"Test: \" + format(b ? 15 : 0));");
+	r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(b ? 15 : 0));");
 	if( r < 0 )
 	{
 		fail = true;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "(true) ? print(\"true\") : print(\"false\")");
+	r = ExecuteString(engine, "(true) ? print(\"true\") : print(\"false\")");
 	if( r < 0 )
 	{
 		fail = true;

@@ -165,7 +165,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestArray()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArray()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -185,7 +186,7 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestArrayException()");
+	r = ExecuteString(engine, "TestArrayException()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: No exception\n", TESTNAME);
@@ -201,7 +202,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestArrayMulti()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArrayMulti()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failure\n", TESTNAME);
@@ -222,7 +224,8 @@ bool Test()
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
-	r = engine->ExecuteString(0, "TestArrayChar()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArrayChar()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failure\n", TESTNAME);
@@ -239,7 +242,8 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestArrayInitList()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArrayInitList()", mod, ctx);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( r == asEXECUTION_EXCEPTION )
 		PrintException(ctx);
@@ -264,7 +268,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 		
@@ -281,12 +285,12 @@ bool Test()
 	"Assert(f[0] == true);      \n"
 	"Assert(f[1] == false);     \n";
 	
-	r = engine->ExecuteString(0, script8);
+	r = ExecuteString(engine, script8);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
 	// Make sure it is possible to do multiple assignments with the array type
-	r = engine->ExecuteString(0, "int[] a, b, c; a = b = c;");
+	r = ExecuteString(engine, "int[] a, b, c; a = b = c;");
 	if( r < 0 )
 		fail = true;
 
@@ -331,7 +335,7 @@ bool Test2()
 		fail = true;
 	}
 
-	r = engine->ExecuteString("module", exec);
+	r = ExecuteString(engine, exec, module);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

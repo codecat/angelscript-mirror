@@ -33,7 +33,7 @@ bool TestExecute2Args()
 	else
 		engine->RegisterGlobalFunction("void cfunction(int, int)", asFUNCTION(cfunction), asCALL_CDECL);
 
-	engine->ExecuteString(0, "cfunction(5, 9)");
+	ExecuteString(engine, "cfunction(5, 9)");
 
 	if( !called ) 
 	{

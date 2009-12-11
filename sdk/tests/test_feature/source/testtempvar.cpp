@@ -42,7 +42,7 @@ bool TestTempVar()
     engine->RegisterObjectMethod("Object2", "Object1 GetObject1()", asMETHOD(Object2,GetObject1), asCALL_THISCALL);
     engine->RegisterGlobalProperty("Object2 GlobalObject", &ScriptObject);
 
-	engine->ExecuteString(0, "GlobalObject.GetObject1().GetInt();");
+	ExecuteString(engine, "GlobalObject.GetObject1().GetInt();");
 
 	engine->Release();
 

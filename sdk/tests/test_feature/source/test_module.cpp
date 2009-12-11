@@ -112,12 +112,37 @@ bool Test()
 
 	// TODO: Make sure cyclic references between functions are resolved so we don't get memory leaks
 
-
 	// TODO: Maybe we can allow replacing an existing function
 	// TODO: It should be possible to serialize these dynamic functions
 	// TODO: The dynamic functions should also be JIT compiled
 	// TODO: What should happen if a function in the module scope references another function that has 
 	//       been removed from the scope but is still alive, and then the byte code for the module is saved?
+
+	// It should be possible to remove global variables from the scope of the module
+	mod->AddScriptSection(0, "int g_var; void func() { g_var = 1; }");
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	if( mod->GetGlobalVarCount() != 1 )
+		fail = true;
+	r = mod->RemoveGlobalVar(0);
+	if( r < 0 )
+		fail = true;
+	if( mod->GetGlobalVarCount() != 0 )
+		fail = true;
+	r = ExecuteString(engine, "func()", mod);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	// It should be possible to add new variables
+	r = mod->CompileGlobalVar(0, "int g_var;", 0);
+	if( r < 0 )
+		fail = true;
+	r = mod->CompileGlobalVar(0, "int g_var2 = g_var;", 0);
+	if( r < 0 )
+		fail = true;
+	if( mod->GetGlobalVarCount() != 2 )
+		fail = true;
 
 	if( ctx ) 
 		ctx->Release();

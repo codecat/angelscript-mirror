@@ -185,7 +185,7 @@ bool Test()
 						   ret=Get(0)+(Get(1)*2.0f);\n\
 						   Print(ret);\n\
 						   \n";
-	pSE->ExecuteString("",script);
+	ExecuteString(pSE, script);
 
 	pSE->Release();
 

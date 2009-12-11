@@ -177,8 +177,8 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	asIScriptContext *ctx = 0;
-	r = engine->ExecuteString(0, "Test()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED ) 
 	{
 		if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
@@ -202,7 +202,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	r = engine->ExecuteString("test", "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -323,7 +323,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "test()", 0, 0);
+	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -343,7 +343,7 @@ bool Test()
 	if( r < 0 ) fail = true;
 
 	outbuffer = "";
-	r = engine->ExecuteString(0, "Test t; t.Set(1); t.Test2();");
+	r = ExecuteString(engine, "Test t; t.Set(1); t.Test2();", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -381,7 +381,7 @@ bool Test()
 	{
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "A a; a.func(); assert( g == 2 );");
+	r = ExecuteString(engine, "A a; a.func(); assert( g == 2 );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

@@ -55,10 +55,6 @@ public:
 	int         byteOffset;
 };
 
-// TODO: global: It is possible to unregister a property without updating all referrers.
-//               When this happens the address pointing to the value is cleared. When 
-//               the referrer tries to access the value it will throw an exception.
-
 // TODO: functions: When function pointers are available, it will be possible to create a circular
 //                  reference between a function pointer in global variable and a function. To
 //                  resolve this I need to use a garbage collector.

@@ -238,7 +238,7 @@ bool TestExecute32Args()
 									   asFUNCTION(cfunctiond), asCALL_CDECL);
 	}
 
-	engine->ExecuteString(0, "cfunction( 1,  2,  3,  4,"
+	ExecuteString(engine, "cfunction( 1,  2,  3,  4,"
 	                                " 5,  6,  7,  8,"
 	                                " 9, 10, 11, 12,"
 	                                "13, 14, 15, 16,"
@@ -268,7 +268,7 @@ bool TestExecute32Args()
 		called = false;
 		testVal = false;
 		
-		engine->ExecuteString(0, "cfunctionf( 1,  2,  3,  4,"
+		ExecuteString(engine, "cfunctionf( 1,  2,  3,  4,"
 	                                " 5,  6,  7,  8,"
 	                                " 9, 10, 11, 12,"
 	                                "13, 14, 15, 16,"
@@ -296,7 +296,7 @@ bool TestExecute32Args()
 		called = false;
 		testVal = false;
 		
-		engine->ExecuteString(0, "cfunctiond( 1,  2,  3,  4,"
+		ExecuteString(engine, "cfunctiond( 1,  2,  3,  4,"
 	                                " 5,  6,  7,  8,"
 	                                " 9, 10, 11, 12,"
 	                                "13, 14, 15, 16,"

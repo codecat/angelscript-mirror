@@ -32,7 +32,7 @@ bool TestReturnD()
 	else
 		engine->RegisterGlobalFunction("double cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
 
-	engine->ExecuteString(0, "returnValue = cfunction()");
+	ExecuteString(engine, "returnValue = cfunction()");
 
 	if( returnValue != 88.32 ) 
 	{

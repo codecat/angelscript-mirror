@@ -63,7 +63,7 @@ bool TestExecute4Args()
 	else
 		engine->RegisterGlobalFunction("void cfunction(int, int16, int8, int)", asFUNCTION(cfunction), asCALL_CDECL);
 
-	engine->ExecuteString(0, "cfunction(5, 9, 1, 3)");
+	ExecuteString(engine, "cfunction(5, 9, 1, 3)");
 
 	if( !called ) 
 	{
@@ -87,7 +87,7 @@ bool TestExecute4Args()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void cfunction2(int64, float, int8, int)", asFUNCTION(cfunction2), asCALL_CDECL);
 		
-		engine->ExecuteString(0, "cfunction2(0x102030405, 3, 24, 128)");
+		ExecuteString(engine, "cfunction2(0x102030405, 3, 24, 128)");
 		
 		if( !called )
 		{

@@ -35,7 +35,7 @@ bool Test()
 		"  f.close();                                             \n"
 		"}                                                        \n";
 
-	r = engine->ExecuteString(0, script);
+	r = ExecuteString(engine, script);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

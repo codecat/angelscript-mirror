@@ -35,7 +35,6 @@ bool TestModuleRef();
 bool TestEnumGlobVar();
 bool TestGlobalVar();
 bool TestBStr();
-bool TestBStr2();
 bool TestSwitch();
 bool TestNegateOperator();
 bool TestException();
@@ -269,7 +268,6 @@ int main(int argc, char **argv)
 	if( TestPostProcess::Test()       ) goto failed; else printf("-- TestPostProcess passed\n");
 	if( TestArgRef::Test()            ) goto failed; else printf("-- TestArgRef passed\n");
 	if( TestNotInitialized()          ) goto failed; else printf("-- TestNotInitialized passed\n");
-	if( TestBStr2()                   ) goto failed; else printf("-- TestBStr2 passed\n");
 	if( TestConfig::Test()            ) goto failed; else printf("-- TestConfig passed\n");
 	if( TestInt64()                   ) goto failed; else printf("-- TestInt64 passed\n");
 	if( TestImport2::Test()           ) goto failed; else printf("-- TestImport2 passed\n");

@@ -179,7 +179,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -192,7 +192,7 @@ bool Test()
 		mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
 		r = mod->Build();
 		if( r < 0 ) fail = true;
-		r = engine->ExecuteString(0, "Test()");
+		r = ExecuteString(engine, "Test()", mod);
 		if( r != asEXECUTION_FINISHED ) fail = true;
 		if( NativeTestFail ) fail = true;
 	}
@@ -233,7 +233,7 @@ bool Test()
 		if( r < 0 )
 			fail = true;
 
-		r = engine->ExecuteString(0, "f(0);");
+		r = ExecuteString(engine, "f(0);", mod);
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
@@ -257,7 +257,7 @@ bool Test()
 		if( r < 0 )
 			fail = true;
 
-		r = engine->ExecuteString(0, "f(0);");
+		r = ExecuteString(engine, "f(0);", mod);
 		if( r > 0 )
 			fail = true;
 

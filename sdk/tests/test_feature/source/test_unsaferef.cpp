@@ -53,8 +53,8 @@ bool Test()
 		fail = true;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
-	asIScriptContext *ctx = 0;
-	r = engine->ExecuteString(0, "Test()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

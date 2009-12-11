@@ -185,38 +185,38 @@ bool Test()
 	
 	// Verify order of calculations
  	output = "";
-	engine->ExecuteString(0, "a_str() + b_str()");
+	ExecuteString(engine, "a_str() + b_str()", mod);
 	if( output != "ba" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "b_strref() = a_str()");
+	ExecuteString(engine, "b_strref() = a_str()", mod);
 	if( output != "ab" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "b_strref() += a_str()");
+	ExecuteString(engine, "b_strref() += a_str()", mod);
 	if( output != "ab" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "a_int() + b_int()");
+	ExecuteString(engine, "a_int() + b_int()", mod);
 	if( output != "ab" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "b_intref() = a_int()");
+	ExecuteString(engine, "b_intref() = a_int()", mod);
 	if( output != "ab" ) fail = true;
 
 	output = "";
-	engine->ExecuteString(0, "b_intref() += a_int()");
+	ExecuteString(engine, "b_intref() += a_int()", mod);
 	if( output != "ab" ) fail = true;
 
 	// Nested output parameters with a returned reference
 	ci = 0; cs = ""; str = "";
-	engine->ExecuteString(0, "complex3(complex(str)) = 1");
+	ExecuteString(engine, "complex3(complex(str)) = 1", mod);
 	if( ci != 1 ) fail = true;
 	if( cs != "outparm3" ) fail = true;
 	if( str != "outparm" ) fail = true;
 
 	str = "";
- 	engine->ExecuteString(0, "GetProp(\"test\").Get(str);");
+ 	ExecuteString(engine, "GetProp(\"test\").Get(str);", mod);
 	if( str != "PropOut" ) fail = true;
 
  	engine->Release();

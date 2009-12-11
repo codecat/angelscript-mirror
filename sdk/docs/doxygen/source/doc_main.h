@@ -79,6 +79,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 \todo Add page about custom memory management
 \todo Add page about customizations/optimizations
 \todo Add page about imports and function binding
+\todo Add page about execute string and dynamic compilations
 
 
 

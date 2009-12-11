@@ -177,21 +177,21 @@ bool Test()
 
 
 	// Test index operator for temp strings
-	r = engine->ExecuteString(0, "assert('abc'[0] == 97)");
+	r = ExecuteString(engine, "assert('abc'[0] == 97)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
-	r = engine->ExecuteString(0, "assert(string('abc')[0] == 97)");
+	r = ExecuteString(engine, "assert(string('abc')[0] == 97)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
-	r = engine->ExecuteString(0, "string a = 'abc'; assert(a[0] == 97)");
+	r = ExecuteString(engine, "string a = 'abc'; assert(a[0] == 97)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
 
 	// Test string copy constructor
-	r = engine->ExecuteString(0, "string tst(getconststringref()); print(tst);");
+	r = ExecuteString(engine, "string tst(getconststringref()); print(tst);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( printOutput != "test" ) fail = true;
 
@@ -201,7 +201,7 @@ bool Test()
 	mod->AddScriptSection("TestScriptString", script2, strlen(script2), 0);
 	mod->Build();
 
-	engine->ExecuteString(0, "testString()");
+	ExecuteString(engine, "testString()", mod);
 
 	if( printOutput != "hello Ida" )
 	{
@@ -209,59 +209,59 @@ bool Test()
 		printf("%s: Failed to print the correct string\n", "TestScriptString");
 	}
 
-	engine->ExecuteString(0, "string s = \"test\\\\test\\\\\"");
+	ExecuteString(engine, "string s = \"test\\\\test\\\\\"");
 
 	// Verify that it is possible to use the string in constructor parameters
 	printOutput = "";
-	engine->ExecuteString(0, "string a; a = 1; print(a);");
+	ExecuteString(engine, "string a; a = 1; print(a);");
 	if( printOutput != "1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a; a += 1; print(a);");
+	ExecuteString(engine, "string a; a += 1; print(a);");
 	if( printOutput != "1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a = \"a\" + 1; print(a);");
+	ExecuteString(engine, "string a = \"a\" + 1; print(a);");
 	if( printOutput != "a1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a = 1 + \"a\"; print(a);");
+	ExecuteString(engine, "string a = 1 + \"a\"; print(a);");
 	if( printOutput != "1a" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a = 1; print(a);");
+	ExecuteString(engine, "string a = 1; print(a);");
 	if( printOutput != "1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "print(\"a\" + 1.2)");
+	ExecuteString(engine, "print(\"a\" + 1.2)");
 	if( printOutput != "a1.2") fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "print(1.2 + \"a\")");
+	ExecuteString(engine, "print(1.2 + \"a\")");
 	if( printOutput != "1.2a") fail = true;
 
 	// Passing a handle to a function
 	printOutput = "";
-	engine->ExecuteString(0, "string a; set(@a); print(a);");
+	ExecuteString(engine, "string a; set(@a); print(a);");
 	if( printOutput != "Handle to a string" ) fail = true;
 
 	// Implicit conversion to handle
 	printOutput = "";
-	engine->ExecuteString(0, "string a; set(a); print(a);");
+	ExecuteString(engine, "string a; set(a); print(a);");
 	if( printOutput != "Handle to a string" ) fail = true;
 
 	// Passing a reference to a handle to the function
 	printOutput = "";
-	engine->ExecuteString(0, "string a; set2(@a); print(a);");
+	ExecuteString(engine, "string a; set2(@a); print(a);");
 	if( printOutput != "Handle to a string" ) fail = true;
 
 	// Implicit conversion to reference to a handle
 	printOutput = "";
-	engine->ExecuteString(0, "string a; set2(a); print(a);");
+	ExecuteString(engine, "string a; set2(a); print(a);");
 	if( printOutput != "Handle to a string" ) fail = true;
 
     printOutput = "";
-    engine->ExecuteString(0, "string a = \" \"; a[0] = 65; print(a);");
+    ExecuteString(engine, "string a = \" \"; a[0] = 65; print(a);");
     if( printOutput != "A" ) fail = true;
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -274,12 +274,12 @@ bool Test()
 	mod->AddScriptSection("TestScriptString", script4, strlen(script4), 0);
 	if( mod->Build() < 0 )
 		fail = true;
-	engine->ExecuteString(0, "test()");
+	ExecuteString(engine, "test()", mod);
 	if( printOutput != "Heredoc\\x20test!" ) fail = true;
 
 	CScriptString *a = new CScriptString("a");
 	engine->RegisterGlobalProperty("string a", a);
-	r = engine->ExecuteString(0, "print(a == 'a' ? 't' : 'f')");
+	r = ExecuteString(engine, "print(a == 'a' ? 't' : 'f')");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -291,37 +291,37 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("TestScriptString", script5, strlen(script5), 0);
 	if( mod->Build() < 0 ) fail = true;
-	r = engine->ExecuteString(0, "Main()");
+	r = ExecuteString(engine, "Main()", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("TestScriptString", script6, strlen(script6), 0);
 	if( mod->Build() < 0 ) fail = true;
-	r = engine->ExecuteString(0, "Main()");
+	r = ExecuteString(engine, "Main()", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 
 	// Test character literals
 	r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); assert( r >= 0 );
 	printOutput = "";
-	r = engine->ExecuteString(0, "print(\"\" + 'a')");
+	r = ExecuteString(engine, "print(\"\" + 'a')");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( printOutput != "97" ) fail = true;
 
 	printOutput = "";
-	r = engine->ExecuteString(0, "print(\"\" + '\\'')");
+	r = ExecuteString(engine, "print(\"\" + '\\'')");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( printOutput != "39" ) fail = true;
 
 	printOutput = "";
 	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
-	r = engine->ExecuteString(0, "print(\"\" + '\xFF')");
+	r = ExecuteString(engine, "print(\"\" + '\xFF')");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
  
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "print(\"\" + '')");
+	r = ExecuteString(engine, "print(\"\" + '')");
 	if( r != -1 ) fail = true;
 	r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false); assert( r >= 0 );
 
@@ -331,23 +331,23 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test", script7, strlen(script7), 0);
 	mod->Build();
-	r = engine->ExecuteString(0, "test()");
+	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	engine->RegisterObjectType("Http", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_GENERIC);
 
-	r = engine->ExecuteString(0, "Http h; string str; h.get('stringtest', str); assert(str == 'output');");
+	r = ExecuteString(engine, "Http h; string str; h.get('stringtest', str); assert(str == 'output');");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	r = engine->ExecuteString(0, "Http h; string a = 'test', b; h.get('string'+a, b); assert(b == 'output');");
+	r = ExecuteString(engine, "Http h; string a = 'test', b; h.get('string'+a, b); assert(b == 'output');");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// Test the string utils
-	engine->ExecuteString(0, "string str = 'abcdef'; assert(findFirst(str, 'def') == 3);");
-	engine->ExecuteString(0, "string str = 'abcdef'; assert(findFirstOf(str, 'feb') == 1);");
-	engine->ExecuteString(0, "string str = 'a|b||d'; string@[]@ array = split(str, '|'); assert(array.length() == 4); assert(array[1] == 'b');");
-	engine->ExecuteString(0, "string@[] array = {'a', 'b', '', 'd'}; assert(join(array, '|') == 'a|b||d');");
+	ExecuteString(engine, "string str = 'abcdef'; assert(findFirst(str, 'def') == 3);");
+	ExecuteString(engine, "string str = 'abcdef'; assert(findFirstOf(str, 'feb') == 1);");
+	ExecuteString(engine, "string str = 'a|b||d'; string@[]@ array = split(str, '|'); assert(array.length() == 4); assert(array[1] == 'b');");
+	ExecuteString(engine, "string@[] array = {'a', 'b', '', 'd'}; assert(join(array, '|') == 'a|b||d');");
 
 	engine->Release();
 
@@ -359,11 +359,11 @@ bool Test()
 	engine->RegisterGlobalFunction("void TestFunc(int, string&)", asFUNCTION(TestFunc), asCALL_GENERIC);
 
 	// CHKREF was placed incorrectly
-	r = engine->ExecuteString(0, "TestFunc(0, 'test');");
+	r = ExecuteString(engine, "TestFunc(0, 'test');");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
-	r = engine->ExecuteString(0, "string @s; TestFunc(0, s);");
+	r = ExecuteString(engine, "string @s; TestFunc(0, s);");
 	if( r != asEXECUTION_EXCEPTION )
 		fail = true;
 
@@ -377,7 +377,7 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test", script7, strlen(script7), 0);
 	mod->Build();
-	r = engine->ExecuteString(0, "test()");
+	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	engine->Release();
@@ -423,7 +423,7 @@ bool Test()
 		CScriptString *str = (CScriptString*)mod->GetAddressOfGlobalVar(0);
 		UNUSED_VAR(str);
 
-		r = engine->ExecuteString(0, "Update()");
+		r = ExecuteString(engine, "Update()", mod);
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
@@ -444,7 +444,7 @@ bool Test()
 			"string str2 = '1\n2';     \n"
 			"assert(str1 == str2);     \n";
 
-		r = engine->ExecuteString(0, script);
+		r = ExecuteString(engine, script);
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
@@ -459,19 +459,19 @@ bool Test()
 		RegisterScriptString(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		r = engine->ExecuteString(0, "assert( '\\u0000'.length() == 1 )");
+		r = ExecuteString(engine, "assert( '\\u0000'.length() == 1 )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
-		r = engine->ExecuteString(0, "assert( '\\U00000000'.length() == 1 )");
+		r = ExecuteString(engine, "assert( '\\U00000000'.length() == 1 )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
-		r = engine->ExecuteString(0, "assert( '\\uFFFF'.length() == 3 )");
+		r = ExecuteString(engine, "assert( '\\uFFFF'.length() == 3 )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
-		r = engine->ExecuteString(0, "assert( '\\U0010FFFF'.length() == 4 )");
+		r = ExecuteString(engine, "assert( '\\U0010FFFF'.length() == 4 )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
@@ -480,7 +480,7 @@ bool Test()
 
 		// Invalid value
 		bout.buffer = "";
-		r = engine->ExecuteString(0, "assert( '\\uD800'.length() == 0 )");
+		r = ExecuteString(engine, "assert( '\\uD800'.length() == 0 )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode code point\n" )
@@ -491,7 +491,7 @@ bool Test()
 
 		// Invalid value
 		bout.buffer = "";
-		r = engine->ExecuteString(0, "assert( '\\U00FFFFFF'.length() == 0 )");
+		r = ExecuteString(engine, "assert( '\\U00FFFFFF'.length() == 0 )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode code point\n" )
@@ -502,7 +502,7 @@ bool Test()
 
 		// Invalid format
 		bout.buffer = "";
-		r = engine->ExecuteString(0, "assert( '\\u001'.length() == 0 )");
+		r = ExecuteString(engine, "assert( '\\u001'.length() == 0 )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode escape sequence, expected 4 hex digits\n" )
@@ -513,7 +513,7 @@ bool Test()
 
 		// Invalid format
 		bout.buffer = "";
-		r = engine->ExecuteString(0, "assert( '\\U00001'.length() == 0 )");
+		r = ExecuteString(engine, "assert( '\\U00001'.length() == 0 )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode escape sequence, expected 8 hex digits\n" )
@@ -527,11 +527,11 @@ bool Test()
 
 		// unicode escape sequence in character literals can generate unsigned integers larger than 255
 		r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); assert( r >= 0 );
-		r = engine->ExecuteString(0, "assert( '\\uFFFF' == 65535 )");
+		r = ExecuteString(engine, "assert( '\\uFFFF' == 65535 )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
-		r = engine->ExecuteString(0, "assert( '\\U0010FFFF' == 0x10FFFF )");
+		r = ExecuteString(engine, "assert( '\\U0010FFFF' == 0x10FFFF )");
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
@@ -540,7 +540,7 @@ bool Test()
 		scriptUnicode[ 9] = (char)0xEF;
 		scriptUnicode[10] = (char)0xBF;
 		scriptUnicode[11] = (char)0xBF;
-		r = engine->ExecuteString(0, scriptUnicode);
+		r = ExecuteString(engine, scriptUnicode);
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
@@ -550,14 +550,14 @@ bool Test()
 		scriptUnicode2[ 9] = (char)0xEF;
 		scriptUnicode2[10] = (char)0xBF;
 		scriptUnicode2[11] = (char)0xBF;
-		r = engine->ExecuteString(0, scriptUnicode2);
+		r = ExecuteString(engine, scriptUnicode2);
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 			
 		// \xFF shall produce the actual value, even if it may not be a correctly encoded Unicode character
 		engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
 		engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false); 
-		r = engine->ExecuteString(0, "assert('\\xFF'[0] == 255)");
+		r = ExecuteString(engine, "assert('\\xFF'[0] == 255)");
 		if( r != asEXECUTION_FINISHED ) fail = true;
 
 		engine->Release();
@@ -655,7 +655,7 @@ bool TestUTF16()
 	engine->RegisterGlobalProperty("string s", &str);
 
 	// Test a normal ASCII string
-	r = engine->ExecuteString(0, "s = 'hello'");
+	r = ExecuteString(engine, "s = 'hello'");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	const unsigned short s[] = {'h','e','l','l','o'};
@@ -663,34 +663,34 @@ bool TestUTF16()
 		fail = true;
 
 	// Test a string with UTF8 scanning above 127 and below 256
-	r = engine->ExecuteString(0, "s = '\xC2\x80'");
+	r = ExecuteString(engine, "s = '\xC2\x80'");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( str.size() != 1 || str[0] != 128 )
 		fail = true;
 
 	// Test a string with escape sequence
-	r = engine->ExecuteString(0, "s = '\\n'");
+	r = ExecuteString(engine, "s = '\\n'");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( str.size() != 1 || str[0] != '\n' )
 		fail = true;
 
 	// Test a string with characters above 65535 (requires surrogate pairs)
-	r = engine->ExecuteString(0, "s = '\\U0010FFFFg'");
+	r = ExecuteString(engine, "s = '\\U0010FFFFg'");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( str.size() != 3 || str[0] != 0xDBFF || str[1] != 0xDFFF || str[2] != 'g' )
 		fail = true;
 
 	// Test hexadecimal escape sequences
-	r = engine->ExecuteString(0, "s = '\\xFF'");
+	r = ExecuteString(engine, "s = '\\xFF'");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( str.size() != 1 || str[0] != 0xFF )
 		fail = true;
 
-	r = engine->ExecuteString(0, "s = '\\xFFFg'");
+	r = ExecuteString(engine, "s = '\\xFFFg'");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( str.size() != 2 || str[0] != 0xFFF || str[1] != 'g' )
@@ -698,7 +698,7 @@ bool TestUTF16()
 
 	// Test a string with ASCII scanning above 127
 	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
-	r = engine->ExecuteString(0, "s = '\xFF'");
+	r = ExecuteString(engine, "s = '\xFF'");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( str.size() != 1 || str[0] != 0xFF )
@@ -706,7 +706,7 @@ bool TestUTF16()
 	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
 
 	// Test incomplete UTF8 encoded chars
-	r = engine->ExecuteString(0, "s = '\xFF'"); 
+	r = ExecuteString(engine, "s = '\xFF'"); 
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( str.size() != 1 || str[0] != 0xFF )
@@ -715,7 +715,7 @@ bool TestUTF16()
 		printf(bout.buffer.c_str());
 
 	// Test heredoc strings
-	r = engine->ExecuteString(0, "s = \"\"\"\xC2\x80\"\"\"");
+	r = ExecuteString(engine, "s = \"\"\"\xC2\x80\"\"\"");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( str.size() != 1 || str[0] != 128 )
@@ -723,7 +723,7 @@ bool TestUTF16()
 
 	// Test character literals (they shouldn't be affected by the string encoding)
 	engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); 
-	r = engine->ExecuteString(0, "assert('\xC2\x80' == 0x80)");
+	r = ExecuteString(engine, "assert('\xC2\x80' == 0x80)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 

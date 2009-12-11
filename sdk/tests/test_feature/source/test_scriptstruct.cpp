@@ -252,8 +252,8 @@ bool Test()
 	if( strcmp(type->GetName(), "Test") != 0 )
 		fail = true;
 
-	asIScriptContext *ctx = 0;
-	r = engine->ExecuteString(0, "TestStruct()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestStruct()", mod, ctx);
 	if( r != asEXECUTION_FINISHED ) 
 	{
 		if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
@@ -272,13 +272,13 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestArrayInStruct()");
+	r = ExecuteString(engine, "TestArrayInStruct()", mod);
 	if( r != 0 ) fail = true;
 
 	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != 0 ) fail = true;
 
 	bout.buffer = "";
@@ -300,7 +300,8 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestHandleInStruct()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestHandleInStruct()", mod, ctx);
 	if( r != 0 )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -314,13 +315,13 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script8, strlen(script8), 0);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestHandleInStruct2()");
+	r = ExecuteString(engine, "TestHandleInStruct2()", mod);
 	if( r != 0 ) fail = true;
 
 	mod->AddScriptSection(TESTNAME, script9, strlen(script9), 0);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != 0 ) fail = true;
 
 	bout.buffer = "";
@@ -350,7 +351,7 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script14, strlen(script14), 0);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "A a; B b; @a.b = @b; b.val = 1; A a2; a2 = a; Assert(a2.b.val == 1);");
+	r = ExecuteString(engine, "A a; B b; @a.b = @b; b.val = 1; A a2; a2 = a; Assert(a2.b.val == 1);", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -373,7 +374,7 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script15);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "main()");
+	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -402,7 +403,7 @@ bool Test()
 
 		if( !fail )
 		{
-			r = engine->ExecuteString(0, "C c; c.s = 'test';");
+			r = ExecuteString(engine, "C c; c.s = 'test';", mod);
 			if( r != asEXECUTION_FINISHED )
 			{
 				fail = true;
@@ -463,7 +464,7 @@ bool Test2()
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "main()");
+	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

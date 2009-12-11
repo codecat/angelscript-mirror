@@ -105,7 +105,7 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestObject2()");
+	r = ExecuteString(engine, "TestObject2()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 

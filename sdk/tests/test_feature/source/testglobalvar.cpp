@@ -122,7 +122,7 @@ bool TestGlobalVar()
 		ret = true;
 	}
 
-	engine->ExecuteString("a", "TestGlobalVar()");
+	ExecuteString(engine, "TestGlobalVar()", mod);
 
 	float *f = (float*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByDecl("float f"));
 	string *str = (string*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByDecl("string str"));
@@ -162,7 +162,7 @@ bool TestGlobalVar()
 	d = *(double*)engine->GetModule("b")->GetAddressOfGlobalVar(3); 
 	if( !CompareDouble(d, 4) ) ret = true;
 	
-	engine->ExecuteString("b", "test()");
+	ExecuteString(engine, "test()", engine->GetModule("b"));
 
 	engine->Release();
 
@@ -232,7 +232,7 @@ bool TestGlobalVar()
 			ret = true;
 		else
 		{
-			r = engine->ExecuteString(0, "assert(@a == @h); assert(v.length() == 2); assert(@v[0] == @v[1]);");
+			r = ExecuteString(engine, "assert(@a == @h); assert(v.length() == 2); assert(@v[0] == @v[1]);", mod);
 			if( r != asEXECUTION_FINISHED )
 				ret = true;
 		}		
@@ -269,7 +269,7 @@ bool TestGlobalVar()
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		mod->Build();
-		r = engine->ExecuteString(0, "float g = 0; g = 1; ::g = 2; assert( g == 1 ); assert( ::g == 2 );");
+		r = ExecuteString(engine, "float g = 0; g = 1; ::g = 2; assert( g == 1 ); assert( ::g == 2 );", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			ret = true;
@@ -316,8 +316,8 @@ bool TestGlobalVar()
 		if( r < 0 )
 			ret = true;
 
-		r = engine->ExecuteString(0, "assert( obj.a == 314+42 ); \n"
-			                         "assert( obj.b == 42 ); \n");
+		r = ExecuteString(engine, "assert( obj.a == 314+42 ); \n"
+			                      "assert( obj.b == 42 ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			ret = true;

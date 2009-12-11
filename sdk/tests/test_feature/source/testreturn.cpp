@@ -68,28 +68,28 @@ bool TestReturn()
 		engine->RegisterGlobalFunction("bool retfalse2()", asFUNCTION(retfalse_fake), asCALL_CDECL);
 		engine->RegisterGlobalFunction("int64 reti64()", asFUNCTION(reti64), asCALL_CDECL);
 		
-		engine->ExecuteString(0, "assert(reti64() == 0x102030405)");
+		ExecuteString(engine, "assert(reti64() == 0x102030405)");
 	}
 
-	engine->ExecuteString(0, "returned = cfunction()");
+	ExecuteString(engine, "returned = cfunction()");
 	if (!returned) 
 	{
 		printf("\nTestReturn: cfunction didn't return properly\n\n");
 		ret = true;
 	}
 
-	engine->ExecuteString(0, "Assert(!retfalse() == cfunction())");
-	engine->ExecuteString(0, "Assert(retfalse() == false)");
-	engine->ExecuteString(0, "returned = retfalse()");
+	ExecuteString(engine, "Assert(!retfalse() == cfunction())");
+	ExecuteString(engine, "Assert(retfalse() == false)");
+	ExecuteString(engine, "returned = retfalse()");
 	if( returned )
 	{
 		printf("\nTestReturn: retfalse didn't return properly\n\n");
 		ret = true;
 	}
 
-	engine->ExecuteString(0, "Assert(!retfalse2() == cfunction())");
-	engine->ExecuteString(0, "Assert(retfalse2() == false)");
-	engine->ExecuteString(0, "returned = retfalse2()");
+	ExecuteString(engine, "Assert(!retfalse2() == cfunction())");
+	ExecuteString(engine, "Assert(retfalse2() == false)");
+	ExecuteString(engine, "returned = retfalse2()");
 	if( returned )
 	{
 		printf("\nTestReturn: retfalse2 didn't return properly\n\n");

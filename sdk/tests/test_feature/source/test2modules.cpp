@@ -75,7 +75,7 @@ bool Test2Modules()
 
 	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(engine->GetModule("b")->GetTypeIdByDecl("CTest"));
 	*((asIScriptObject**)engine->GetModule("a")->GetAddressOfGlobalVar(0)) = obj;
-	r = engine->ExecuteString("a", "obj.test()");
+	r = ExecuteString(engine, "obj.test()", engine->GetModule("a"));
 	if( r != asEXECUTION_FINISHED ) ret = true;
 	int val = *(int*)engine->GetModule("b")->GetAddressOfGlobalVar(engine->GetModule("b")->GetGlobalVarIndexByName("glob"));
 	if( val != 42 ) ret = true;

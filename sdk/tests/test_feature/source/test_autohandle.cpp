@@ -61,13 +61,13 @@ bool Test()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "TestFunc(\"1\", \"2\", 1.0f, \"3\")");
+	r = ExecuteString(engine, "TestFunc(\"1\", \"2\", 1.0f, \"3\")");
 	if( r != 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "Assert(TestFunc2() == \"Test\")");
+	r = ExecuteString(engine, "Assert(TestFunc2() == \"Test\")");
 	if( r != 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "object obj(\"1\", \"2\", 1.0f, \"3\")");
+	r = ExecuteString(engine, "object obj(\"1\", \"2\", 1.0f, \"3\")");
 	if( r != 0 ) fail = true;
 
 	engine->Release();

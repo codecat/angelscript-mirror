@@ -51,7 +51,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "main()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "main()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )

@@ -127,7 +127,7 @@ bool Test()
 	else
 	{
 		// Internal return
-		r = engine->ExecuteString(0, "func()");
+		r = ExecuteString(engine, "func()", mod);
 		if( r < 0 )
 		{
 			printf("%s: ExecuteString() failed %d\n", TESTNAME, r);

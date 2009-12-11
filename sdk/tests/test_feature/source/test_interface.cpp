@@ -101,7 +101,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "test()");
+	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// Test calling the interface method from the application

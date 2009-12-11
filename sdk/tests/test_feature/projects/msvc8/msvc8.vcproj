@@ -451,10 +451,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\testbstr2.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\testcdecl_class.cpp"
 				>
 			</File>

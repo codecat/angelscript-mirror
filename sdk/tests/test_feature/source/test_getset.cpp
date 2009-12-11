@@ -57,13 +57,13 @@ bool Test()
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "main1()");
+	r = ExecuteString(engine, "main1()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "main2()");
+	r = ExecuteString(engine, "main2()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -339,7 +339,7 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "func()");
+	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -375,7 +375,7 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "func()");
+	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -411,14 +411,14 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "func()");
+	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
 	// Compound assignments for object properties will not be allowed
-	r = engine->ExecuteString(0, "Test t; t.s += 'hello';");
+	r = ExecuteString(engine, "Test t; t.s += 'hello';", mod);
 	if( r >= 0 )
 	{
 		fail = true;
@@ -459,7 +459,7 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "func()");
+	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -493,7 +493,7 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "func()");
+	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -502,7 +502,7 @@ bool Test()
 	// Test accessing a non-const method on an object through a get accessor
 	// Should at least warn since the object is just a temporary one
 	bout.buffer.c_str();
-	r = engine->ExecuteString(0, "Test t; t.s.resize(4);");
+	r = ExecuteString(engine, "Test t; t.s.resize(4);", mod);
 	if( r < 0 )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n" )
@@ -536,7 +536,7 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "func()");
+	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -566,7 +566,7 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "func()");
+	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -597,7 +597,7 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "func()");
+	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -661,7 +661,7 @@ bool Test()
 		if( r < 0 )
 			fail = true;
 
-		r = engine->ExecuteString(0, "GetObject().opacity = 1.0f;");
+		r = ExecuteString(engine, "GetObject().opacity = 1.0f;", mod);
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
@@ -689,11 +689,11 @@ bool Test()
 		if( r < 0 )
 			fail = true;
 
-		r = engine->ExecuteString(0, "Object obj; \n"
-								     "float elapsed = 1.0f; \n"
-									 "float temp = obj.rotation + elapsed * 1.0f; \n"
-									 "obj.rotation = obj.rotation + elapsed * 1.0f; \n"
-									 "assert( obj.rot == 1 ); \n");
+		r = ExecuteString(engine, "Object obj; \n"
+								  "float elapsed = 1.0f; \n"
+								  "float temp = obj.rotation + elapsed * 1.0f; \n"
+								  "obj.rotation = obj.rotation + elapsed * 1.0f; \n"
+								  "assert( obj.rot == 1 ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 

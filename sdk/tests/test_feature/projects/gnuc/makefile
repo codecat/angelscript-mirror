@@ -92,7 +92,6 @@ SRCNAMES = \
   test_vector3_2.cpp \
   test2modules.cpp \
   testbstr.cpp \
-  testbstr2.cpp  \
   testcdecl_class.cpp \
   testcdecl_class_a.cpp \
   testcdecl_class_c.cpp \

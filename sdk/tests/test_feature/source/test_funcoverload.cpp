@@ -65,7 +65,7 @@ bool TestFuncOverload()
 	if( r < 0 )
 		fail = true;
 
-	engine->ExecuteString(0, "func(func(3));");
+	ExecuteString(engine, "func(func(3));", mod);
 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);

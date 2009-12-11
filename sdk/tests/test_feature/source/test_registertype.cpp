@@ -37,7 +37,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->RegisterObjectType("gc", 4, asOBJ_REF | asOBJ_GC); assert( r >= 0 );
-	r = engine->ExecuteString(0, "");
+	r = ExecuteString(engine, "");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : Type 'gc' is missing behaviours\n"
@@ -99,7 +99,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_FACTORY, "ref@ f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->ExecuteString(0, "ref r1, r2; r1 = r2;");
+	r = ExecuteString(engine, "ref r1, r2; r1 = r2;");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 18) : Error   : There is no copy operator for this type available.\n"
@@ -115,7 +115,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 );
-	r = engine->ExecuteString(0, "ref r");
+	r = ExecuteString(engine, "ref r");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : Type 'ref' is missing behaviours\n"
@@ -153,7 +153,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
-	r = engine->ExecuteString(0, "val v1, v2; v1 = v2;");
+	r = ExecuteString(engine, "val v1, v2; v1 = v2;");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 	if( bout.buffer != "" )
@@ -170,7 +170,7 @@ bool Test()
 	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("val", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = engine->RegisterObjectBehaviour("val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	r = engine->ExecuteString(0, "val v1, v2; v1 = v2;");
+	r = ExecuteString(engine, "val v1, v2; v1 = v2;");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 18) : Error   : There is no copy operator for this type available.\n"
@@ -190,7 +190,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("val1", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = engine->RegisterObjectType("val2", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("val2", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	r = engine->ExecuteString(0, "val v1, v2; v1 = v2;");
+	r = ExecuteString(engine, "val v1, v2; v1 = v2;");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : Type 'val' is missing behaviours\n"
@@ -215,7 +215,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("ref1", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = engine->RegisterObjectType("ref2", 0, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref2", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	r = engine->ExecuteString(0, "ref @r;");
+	r = ExecuteString(engine, "ref @r;");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : Type 'ref' is missing behaviours\n"
@@ -285,7 +285,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	r = engine->RegisterObjectType("ref", 0, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
-	r = engine->ExecuteString(0, "ref @r");
+	r = ExecuteString(engine, "ref @r");
 	if( r >= 0 )
 		fail = true;
 	r = engine->RegisterGlobalFunction("ref@ func()", asFUNCTION(0), asCALL_GENERIC);
@@ -315,7 +315,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		r = engine->RegisterGlobalFunction("void f(test1)", asFUNCTION(0), asCALL_CDECL);
 		if( r < 0 ) fail = true;
-		r = engine->ExecuteString(0, "test1 t");
+		r = ExecuteString(engine, "test1 t");
 		if( r >= 0 ) fail = true;
 		// TODO: These errors should really be returned immediately when registering the function
 		if( bout.buffer != " (0, 0) : Info    : test1 f()\n"
@@ -432,7 +432,7 @@ bool TestRefScoped()
 		fail = true;
 
 	// Don't permit handles to be taken
-	r = engine->ExecuteString(0, "scoped @s = null");
+	r = ExecuteString(engine, "scoped @s = null");
 	if( r >= 0 ) fail = true;
 	// TODO: The second message is a consequence of the first error, and should ideally not be shown
 	if( sizeof(void*) == 4 )
@@ -455,11 +455,11 @@ bool TestRefScoped()
 	}
 
 	// Test a legal actions
-	r = engine->ExecuteString(0, "scoped a");
+	r = ExecuteString(engine, "scoped a");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "scoped s; scoped t = s + 10;");
+	r = ExecuteString(engine, "scoped s; scoped t = s + 10;");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( bout.buffer != "" )
 	{
@@ -475,7 +475,7 @@ bool TestRefScoped()
 	r = engine->RegisterGlobalFunction("const scoped @GetWorldPositionByName()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void SetObjectPosition(scoped &in)", asFUNCTION(Scoped_InRef), asCALL_CDECL); assert( r >= 0 );
 	
-	r = engine->ExecuteString(0, script);
+	r = ExecuteString(engine, script);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( bout.buffer != "" )
 	{
@@ -495,7 +495,7 @@ bool TestRefScoped()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-	r = engine->ExecuteString(0, "A a; scoped s; a.s = s;");
+	r = ExecuteString(engine, "A a; scoped s; a.s = s;", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

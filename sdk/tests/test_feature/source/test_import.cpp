@@ -75,7 +75,7 @@ bool Test()
 	// Bind all functions that the module imports
 	r = engine->GetModule(0)->BindAllImportedFunctions(); assert( r >= 0 );
 
-	engine->ExecuteString(0, "main()");
+	ExecuteString(engine, "main()", engine->GetModule(0));
 
 	engine->Release();
 

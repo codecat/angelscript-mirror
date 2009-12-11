@@ -172,7 +172,7 @@ bool TestExecuteThis32MixedArgs()
 	}
 	r = engine->RegisterGlobalProperty("TestClass test", &test);
 
-	engine->ExecuteString(0, 
+	ExecuteString(engine, 
 		"test.cfunction("
 			" 1,  2,  3,  4,"
 			" 5.0f,  6.0f,  7.0f,  8.0f,"

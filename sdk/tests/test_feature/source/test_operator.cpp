@@ -106,7 +106,7 @@ bool Test()
 			fail = true;
 		}
 		
-		r = engine->ExecuteString(0, "main()");
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			fail = true;
@@ -114,7 +114,7 @@ bool Test()
 
 		// Test const correctness. opEquals(int) isn't const so it must not be allowed
 		bout.buffer = "";
-		r = engine->ExecuteString(0, "Test a; const Test @h = a; assert( h == 0 );");
+		r = ExecuteString(engine, "Test a; const Test @h = a; assert( h == 0 );", mod);
 		if( r >= 0 )
 		{
 			fail = true;
@@ -177,7 +177,7 @@ bool Test()
 			printf(bout.buffer.c_str());
 		}
 
-		r = engine->ExecuteString(0, "main()");
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			fail = true;
@@ -260,7 +260,7 @@ bool Test()
 			fail = true;
 		}
 		
-		r = engine->ExecuteString(0, "main()");
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			fail = true;
@@ -268,7 +268,7 @@ bool Test()
 
 		// Test const correctness. opCmp(int) isn't const so it must not be allowed
 		bout.buffer = "";
-		r = engine->ExecuteString(0, "Test a; const Test @h = a; assert( h == 0 );");
+		r = ExecuteString(engine, "Test a; const Test @h = a; assert( h == 0 );", mod);
 		if( r >= 0 )
 		{
 			fail = true;
@@ -339,7 +339,7 @@ bool Test()
 			fail = true;
 		}
 		
-		r = engine->ExecuteString(0, "main()");
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			fail = true;
@@ -399,7 +399,7 @@ bool Test()
 			fail = true;
 		}
 		
-		r = engine->ExecuteString(0, "main()");
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			fail = true;
@@ -452,7 +452,7 @@ bool Test()
 			fail = true;
 		}
 		
-		r = engine->ExecuteString(0, "main()");
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			fail = true;
@@ -460,7 +460,7 @@ bool Test()
 
 		// Test const correctness. opCom() isn't const so it must not be allowed
 		bout.buffer = "";
-		r = engine->ExecuteString(0, "Test a; const Test @h = a; assert( (~h).value == ~1 );");
+		r = ExecuteString(engine, "Test a; const Test @h = a; assert( (~h).value == ~1 );", mod);
 		if( r >= 0 )
 		{
 			fail = true;

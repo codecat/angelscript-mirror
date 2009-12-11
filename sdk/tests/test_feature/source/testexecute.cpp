@@ -31,7 +31,7 @@ bool TestExecute()
 	{
 		int r = engine->RegisterGlobalFunction("void cfunction()", asFUNCTION(cfunction), asCALL_CDECL); assert( r >= 0 );
 	}
-	engine->ExecuteString(0, "cfunction()");
+	ExecuteString(engine, "cfunction()");
 
 	if (!called) {
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);

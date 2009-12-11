@@ -64,7 +64,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	mod->Build();
 
-	engine->ExecuteString(0, "Init();");
+	ExecuteString(engine, "Init();", mod);
 
 	if( a != 0x12345678 || b != 0x12345678 || c != 0x12345678 || d != 0x12345678 )
 	{

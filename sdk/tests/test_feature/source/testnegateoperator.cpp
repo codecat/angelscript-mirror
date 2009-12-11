@@ -62,7 +62,7 @@ bool TestNegateOperator()
 
 	COutStream obj;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &obj, asCALL_THISCALL);
-	engine->ExecuteString(0, "testVal = -testVal");
+	ExecuteString(engine, "testVal = -testVal");
 
 	if( !called ) 
 	{
@@ -78,7 +78,7 @@ bool TestNegateOperator()
 	}
 
 	called = false;
-	engine->ExecuteString(0, "testVal = testVal - testVal");
+	ExecuteString(engine, "testVal = testVal - testVal");
 
 	if( !called ) 
 	{

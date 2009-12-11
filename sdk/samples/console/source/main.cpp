@@ -5,6 +5,7 @@
 #include <math.h>
 #include <angelscript.h>
 #include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/scripthelper/scripthelper.h"
 
 using namespace std;
 
@@ -173,7 +174,7 @@ void ExecString(asIScriptEngine *engine, string &arg)
 
 	script = "_grab(" + arg + ")";
 
-	int r = engine->ExecuteString(0, script.c_str());
+	int r = ExecuteString(engine, script.c_str());
 	if( r < 0 )
 		cout << "Invalid script statement. " << endl;
 	else if( r == asEXECUTION_EXCEPTION )

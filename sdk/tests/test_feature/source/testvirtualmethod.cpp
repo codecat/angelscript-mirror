@@ -62,7 +62,7 @@ bool TestVirtualMethod()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->ExecuteString(0, "b.CallMe(); d.CallMe();");
+	ExecuteString(engine, "b.CallMe(); d.CallMe();");
 	
 	if( output1 != "CBase: CBase::CallMe()\nCDerived: CDerived::CallMe()\n" )
 	{

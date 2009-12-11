@@ -209,7 +209,7 @@ void TestScripts(asIScriptEngine *engine)
 		fail = true;
 	}
 
-	engine->ExecuteString(0, "main()");
+	ExecuteString(engine, "main()", mod);
 
 	if( number != 1234567890 )
 	{
@@ -373,7 +373,7 @@ bool Test()
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->LoadByteCode(&stream2);
-	engine->ExecuteString(0, "Test(3)");
+	ExecuteString(engine, "Test(3)", mod);
 
 	engine->Release();
 
@@ -399,7 +399,7 @@ bool Test()
 		
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->LoadByteCode(&stream3);
-		engine->ExecuteString(0, "Test(3)");
+		ExecuteString(engine, "Test(3)", mod);
 		
 		engine->Release();
 	}
@@ -418,8 +418,8 @@ bool Test()
 	else
 	{
 		// Test the script with compiled byte code
-		asIScriptContext *ctx = 0;
-		r = engine->ExecuteString(0, "g_inGame.Initialize(0);", &ctx);
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "g_inGame.Initialize(0);", mod, ctx);
 		if( r != asEXECUTION_FINISHED )
 		{
 			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
@@ -439,7 +439,7 @@ bool Test()
 		RegisterScriptString(engine);
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->LoadByteCode(&stream4);
-		r = engine->ExecuteString(0, "g_inGame.Initialize(0);");
+		r = ExecuteString(engine, "g_inGame.Initialize(0);", mod);
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 	}
@@ -473,8 +473,8 @@ bool Test()
 	else
 	{
 		// Test the script with compiled byte code
-		asIScriptContext *ctx = 0;
-		r = engine->ExecuteString(0, "Initialize();", &ctx);
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "Initialize();", mod, ctx);
 		if( r != asEXECUTION_FINISHED )
 		{
 			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
@@ -511,7 +511,7 @@ bool Test()
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->LoadByteCode(&stream);
-		r = engine->ExecuteString(0, "Initialize();");
+		r = ExecuteString(engine, "Initialize();", mod);
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 	}
@@ -554,7 +554,7 @@ bool Test2()
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "main()");
+	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 

@@ -121,7 +121,7 @@ struct asSEnumValue
 
 class asCScriptEngine;
 
-void RegisterObjectType(asCScriptEngine *engine);
+void RegisterObjectTypeGCBehaviours(asCScriptEngine *engine);
 
 class asCObjectType : public asIObjectType
 {

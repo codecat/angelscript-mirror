@@ -261,8 +261,8 @@ bool Test()
 	}
 
 
-	asIScriptContext *ctx = 0;
-	r = engine->ExecuteString(0, "Test()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failed to execute script\n", TESTNAME);
@@ -279,7 +279,7 @@ bool Test()
 	// Test a compile error, to make sure the error is reported as expected
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "char[] t; t[0][0] = 1;");
+	r = ExecuteString(engine, "char[] t; t[0][0] = 1;");
 	if( r >= 0 )
 	{
 		fail = true;
@@ -343,10 +343,10 @@ bool Test2()
 	nRet = engine->RegisterObjectType("A[][]", sizeof(AArrayArray),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
 	nRet = engine->RegisterObjectBehaviour("A[][]", asBEHAVE_INDEX , "A[] f(int)", asMETHODPR(AArrayArray, operator[], (int ), AArray), asCALL_THISCALL); 	assert( nRet >= 0 );
 
-	nRet = engine->ExecuteString(NULL, "A[][] f;", NULL);	assert( nRet >= 0 );
-	nRet = engine->ExecuteString(NULL, "A[][] f; f[0];", NULL);	assert( nRet >= 0 );
-	nRet = engine->ExecuteString(NULL, "A[][] f; f[0][0];", NULL);	assert( nRet >= 0 );
-	nRet = engine->ExecuteString(NULL, "A[][] f; f[0][0][0];", NULL);	assert( nRet >= 0 );
+	nRet = ExecuteString(engine, "A[][] f;");	assert( nRet >= 0 );
+	nRet = ExecuteString(engine, "A[][] f; f[0];");	assert( nRet >= 0 );
+	nRet = ExecuteString(engine, "A[][] f; f[0][0];");	assert( nRet >= 0 );
+	nRet = ExecuteString(engine, "A[][] f; f[0][0][0];");	assert( nRet >= 0 );
 
 	engine->Release();
 

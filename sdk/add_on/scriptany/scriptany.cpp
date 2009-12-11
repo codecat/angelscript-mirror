@@ -196,6 +196,14 @@ void RegisterScriptAny_Generic(asIScriptEngine *engine)
 
 CScriptAny &CScriptAny::operator=(const CScriptAny &other)
 {
+	// Hold on to the object type reference so it isn't destroyed too early
+	if( other.value.valueObj && (other.value.typeId & asTYPEID_MASK_OBJECT) )
+	{
+		asIObjectType *ot = engine->GetObjectTypeById(other.value.typeId);
+		if( ot )
+			ot->AddRef();
+	}
+
 	FreeObject();
 
 	value.typeId = other.value.typeId;
@@ -261,6 +269,14 @@ CScriptAny::~CScriptAny()
 
 void CScriptAny::Store(void *ref, int refTypeId)
 {
+	// Hold on to the object type reference so it isn't destroyed too early
+	if( *(void**)ref && (refTypeId & asTYPEID_MASK_OBJECT) )
+	{
+		asIObjectType *ot = engine->GetObjectTypeById(refTypeId);
+		if( ot )
+			ot->AddRef();
+	}
+
 	FreeObject();
 
 	value.typeId = refTypeId;
@@ -376,6 +392,12 @@ void CScriptAny::FreeObject()
 	{
 		// Let the engine release the object
 		engine->ReleaseScriptObject(value.valueObj, value.typeId);
+
+		// Release the object type info
+		asIObjectType *ot = engine->GetObjectTypeById(value.typeId);
+		if( ot )
+			ot->Release();
+
 		value.valueObj = 0;
 		value.typeId = 0;
 	}
@@ -388,7 +410,14 @@ void CScriptAny::EnumReferences(asIScriptEngine *engine)
 {
 	// If we're holding a reference, we'll notify the garbage collector of it
 	if( value.valueObj && (value.typeId & asTYPEID_MASK_OBJECT) )
+	{
 		engine->GCEnumCallback(value.valueObj);
+
+		// The object type itself is also garbage collected
+		asIObjectType *ot = engine->GetObjectTypeById(value.typeId);
+		if( ot )
+			engine->GCEnumCallback(ot);
+	}
 }
 
 void CScriptAny::ReleaseAllHandles(asIScriptEngine * /*engine*/)

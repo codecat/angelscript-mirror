@@ -49,7 +49,7 @@ bool TestVector3()
 	else
 	{
 		// Internal return
-		r = engine->ExecuteString(0, "v = TestVector3();");
+		r = ExecuteString(engine, "v = TestVector3();", mod);
 		if( r < 0 )
 		{
 			printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -99,38 +99,38 @@ bool TestVector3()
 	}
 
 	// Assignment of temporary object
-	r = engine->ExecuteString(0, "vector3 v; float x = (v = vector3(10.0f,7,8)).x; assert( x > 9.9999f && x < 10.0001f );");
+	r = ExecuteString(engine, "vector3 v; float x = (v = vector3(10.0f,7,8)).x; assert( x > 9.9999f && x < 10.0001f );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
 	// Test some operator overloads
-	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( (v*2).length() == 2 );");
+	r = ExecuteString(engine, "vector3 v(1,0,0); assert( (v*2).length() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( (2*v).length() == 2 );");
+	r = ExecuteString(engine, "vector3 v(1,0,0); assert( (2*v).length() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( (v+v).length() == 2 );");
+	r = ExecuteString(engine, "vector3 v(1,0,0); assert( (v+v).length() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( v == vector3(1,0,0) );");
+	r = ExecuteString(engine, "vector3 v(1,0,0); assert( v == vector3(1,0,0) );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "vector3 v(1,0,0); assert( (v *= 2).length() == 2 );");
+	r = ExecuteString(engine, "vector3 v(1,0,0); assert( (v *= 2).length() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -139,12 +139,17 @@ bool TestVector3()
 	// Test error message when constructor is not found
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "vector3 v = vector3(4,3);");
+	r = ExecuteString(engine, "vector3 v = vector3(4,3);");
 	if( r >= 0 )
 	{
 		fail = true;
 	}
+	// TODO: the function signature for the constructors/factories should carry the name of the object
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'vector3(const uint, const uint)'\n"
+					   "ExecuteString (1, 13) : Info    : Candidates are:\n"
+					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_()\n"
+				   	   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(const vector3&in)\n"
+					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float, float)\n"
 	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3&'.\n" )
 	{
 		printf(bout.buffer.c_str());

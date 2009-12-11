@@ -27,10 +27,7 @@ functions.
 \page doc_reg_basicref Registering a reference type
 
 The basic reference type should be registered with the following behaviours:
-\ref asBEHAVE_FACTORY, \ref asBEHAVE_ADDREF, and \ref asBEHAVE_RELEASE. If it is desired that
-assignments should be allowed for the type the \ref asBEHAVE_ASSIGNMENT behaviour
-must be registered as well. Other behaviours, such as math operators,
-comparisons, etc may be registered as needed.
+\ref asBEHAVE_FACTORY, \ref asBEHAVE_ADDREF, and \ref asBEHAVE_RELEASE. 
 
 \code
 // Registering the reference type
@@ -98,21 +95,7 @@ r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asMETHOD
 r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asMETHOD(CRef,Release), asCALL_THISCALL); assert( r >= 0 );
 \endcode
 
-\section doc_reg_basicref_3 Assignment behaviour
 
-\code
-CRef &CRef::operator =(const CRef &other)
-{
-    // Copy everything from the other class, except the reference counter
-}
-
-// Registering the assignment behaviour
-r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ASSIGNMENT, "ref &f(const &in)", asMETHOD(CRef,operator=), asCALL_THISCALL); assert( r >= 0 );
-\endcode
-
-The assignment behaviour can be overloaded with other types if that is
-desired, that way the script writer doesn't have to manually convert the
-expressions before assigning the values to the type.
 
 
 \section doc_reg_noinst Registering an uninstanciable reference type
@@ -186,7 +169,7 @@ r = engine->RegisterObjectBehaviour("val", asBEHAVE_CONSTRUCT, "void f()", asFUN
 r = engine->RegisterObjectBehaviour("val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
-The assignment behaviour is registered the same way as for reference types.
+
 
 
 \section doc_reg_val_2 Value types and native calling conventions

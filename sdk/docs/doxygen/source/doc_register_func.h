@@ -7,8 +7,7 @@ differences between C++ and AngelScript that the developer needs to be aware of 
 successful in registering the application interface that the scripts will use. The principles
 learned here are used in several locations, such as \ref asIScriptEngine::RegisterGlobalFunction 
 "RegisterGlobalFunction", \ref asIScriptEngine::RegisterObjectMethod "RegisterObjectMethod", \ref
-asIScriptEngine::RegisterObjectBehaviour "RegisterObjectBehaviour", \ref asIScriptEngine::RegisterGlobalBehaviour 
-"RegisterGlobalBehaviour", etc.
+asIScriptEngine::RegisterObjectBehaviour "RegisterObjectBehaviour", etc.
 
 \section doc_register_func_1 How to get the address of the application function or method
 
@@ -42,17 +41,17 @@ class Object
   // Class method
   void method();
   
-  // Overloaded assignment operator
-  Object &operator=(const Object &);
-  Object &operator=(int);
+  // Overloaded method
+  void method2(int input);
+  void method2(int input, int &output);
 };
 
 // Registering the class method
 r = engine->RegisterObjectMethod("object", "void method()", asMETHOD(Object,method), asCALL_THISCALL); assert( r >= 0 );
 
-// Registering the assignment behaviours
-r = engine->RegisterObjectBehaviour("object", asBEHAVE_ASSIGNMENT, "object &f(const object &in)", asMETHODPR(Object, operator=, (const Object&), Object&), asCALL_THISCALL); assert( r >= 0 );
-r = engine->RegisterObjectBehaviour("object", asBEHAVE_ASSIGNMENT, "object &f(int)", asMETHODPR(Object, operator=, (int), Object&), asCALL_THISCALL); assert( r >= 0 );
+// Registering the overloaded methods
+r = engine->RegisterObjectMethod("object", "void method2(int)", asMETHODPR(Object, method2, (int), void), asCALL_THISCALL); assert( r >= 0 );
+r = engine->RegisterObjectMethod("object", "void method2(int, int &out)", asMETHODPR(Object, method2, (int, int&), void), asCALL_THISCALL); assert( r >= 0 );
 \endcode
 
 

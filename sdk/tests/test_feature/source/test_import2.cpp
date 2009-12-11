@@ -71,8 +71,8 @@ bool Test()
 	// Bind all functions that the module imports
 	engine->GetModule(0)->BindAllImportedFunctions();
 
-	asIScriptContext *ctx;
-	int r = engine->ExecuteString(0, "Run()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	int r = ExecuteString(engine, "Run()", engine->GetModule(0), ctx);
 	if( r == asEXECUTION_EXCEPTION )
 	{
 		int funcID = ctx->GetExceptionFunction();

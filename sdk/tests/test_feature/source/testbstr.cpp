@@ -38,7 +38,7 @@ bool TestBStr()
 	engine->RegisterGlobalFunction("bstr NewString(int)", asFUNCTION(NewString), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	int r = engine->ExecuteString(0, "bstr s = NewString(10)");
+	int r = ExecuteString(engine, "bstr s = NewString(10)");
 	if( r < 0 ) 
 	{
 		printf("%s: ExecuteString() failed\n", TESTNAME);

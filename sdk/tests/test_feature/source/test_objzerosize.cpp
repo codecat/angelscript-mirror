@@ -64,7 +64,7 @@ bool Test()
 
 	// Must not allow it to be declared as local variable
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "Object obj;");
+	r = ExecuteString(engine, "Object obj;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 8) : Error   : Data type can't be 'Object'\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
@@ -87,7 +87,7 @@ bool Test()
 
 	// It must not be allowed as sub type of array
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "Object[] obj;");
+	r = ExecuteString(engine, "Object[] obj;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 7) : Error   : Data type can't be 'Object'\n" )
 	{
 		printf(bout.buffer.c_str());
@@ -95,28 +95,28 @@ bool Test()
 	}
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "Object @obj;");
+	r = ExecuteString(engine, "Object @obj;");
 	if( r < 0 )
 	{
 		printf("%s: Failed to compile\n", TESTNAME);
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "Object@ obj = @CreateObject();");
+	r = ExecuteString(engine, "Object@ obj = @CreateObject();");
 	if( r < 0 )
 	{
 		printf("%s: Failed to compile\n", TESTNAME);
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "CreateObject();");
+	r = ExecuteString(engine, "CreateObject();");
 	if( r < 0 )
 	{
 		printf("%s: Failed to compile\n", TESTNAME);
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "Object@ obj = @CreateObject(); @obj = @CreateObject();");
+	r = ExecuteString(engine, "Object@ obj = @CreateObject(); @obj = @CreateObject();");
 	if( r < 0 )
 	{
 		printf("%s: Failed to compile\n", TESTNAME);
@@ -125,7 +125,7 @@ bool Test()
 
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "Object@ obj = @CreateObject(); obj = CreateObject();");
+	r = ExecuteString(engine, "Object@ obj = @CreateObject(); obj = CreateObject();");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 36) : Error   : There is no copy operator for this type available.\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
@@ -133,7 +133,7 @@ bool Test()
 	}
 
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "@CreateObject() = @CreateObject();");
+	r = ExecuteString(engine, "@CreateObject() = @CreateObject();");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 1) : Error   : Reference is temporary\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
@@ -141,7 +141,7 @@ bool Test()
 	}
 
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "CreateObject() = CreateObject();");
+	r = ExecuteString(engine, "CreateObject() = CreateObject();");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 1) : Error   : Reference is temporary\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);

@@ -93,7 +93,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	// Function call executed fine when using an object.
-	r = engine->ExecuteString(0, "obj.function(); obj.val = 23;");
+	r = ExecuteString(engine, "obj.function(); obj.val = 23;");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -105,7 +105,7 @@ bool Test()
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "ptr->function(); ptr->val = 13;");
+	r = ExecuteString(engine, "ptr->function(); ptr->val = 13;");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
@@ -126,7 +126,7 @@ bool Test()
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 	{
 		printf("%s: failed\n", TESTNAME);

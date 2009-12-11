@@ -231,7 +231,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "MyTest()");
+	r = ExecuteString(engine, "MyTest()", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	
@@ -244,20 +244,20 @@ bool Test()
 	bool *flag = (bool*)engine->GetModule(0)->GetAddressOfGlobalVar(idx);
 	*(int*)flag = 0xCDCDCDCD;
 
-	engine->ExecuteString(0, "Set()");
+	ExecuteString(engine, "Set()", mod);
 	if( *flag != true )
 		fail = true;
-	engine->ExecuteString(0, "Assert(gFlag == true)");
+	ExecuteString(engine, "Assert(gFlag == true)", mod);
 
-	engine->ExecuteString(0, "gFlag = false; DoNothing()");
+	ExecuteString(engine, "gFlag = false; DoNothing()", mod);
 	if( *flag != false )
 		fail = false;
-	engine->ExecuteString(0, "Assert(gFlag == false)");
+	ExecuteString(engine, "Assert(gFlag == false)", mod);
 
-	engine->ExecuteString(0, "gFlag = true; DoNothing()");
+	ExecuteString(engine, "gFlag = true; DoNothing()", mod);
 	if( *flag != true )
 		fail = false;
-	engine->ExecuteString(0, "Assert(gFlag == true)");
+	ExecuteString(engine, "Assert(gFlag == true)", mod);
 
 	// TEST 3
 	// It was reported that if( t.test_f() ) would always be true, even though the method returns false
@@ -265,28 +265,28 @@ bool Test()
 	engine->RegisterObjectType("tst", sizeof(tst), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectMethod("tst", "bool test_f(uint)", asMETHOD(tst, test_f), asCALL_THISCALL);
 	
-	r = engine->ExecuteString(0, "tst t; if( t.test_f(2000) == true ) Assert(false);");
+	r = ExecuteString(engine, "tst t; if( t.test_f(2000) == true ) Assert(false);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	
-	r = engine->ExecuteString(0, "tst t; if( !(t.test_f(2000) == false) ) Assert(false);");
+	r = ExecuteString(engine, "tst t; if( !(t.test_f(2000) == false) ) Assert(false);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	
 //	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 0);
-	r = engine->ExecuteString(0, "tst t; if( t.test_f(2000) ) Assert(false);");
+	r = ExecuteString(engine, "tst t; if( t.test_f(2000) ) Assert(false);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 		
 	engine->RegisterGlobalFunction("bool test_t()", asFUNCTION(test_t), asCALL_CDECL);
-	r = engine->ExecuteString(0, "Assert( test_t() );");
+	r = ExecuteString(engine, "Assert( test_t() );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 		
 	// TEST 4
 	// Return a false value as out parameter. The value must be properly interpreted, even with trash in upper bytes
 	engine->RegisterGlobalFunction("void GiveFalse(bool &out)", asFUNCTION(GiveFalse), asCALL_CDECL);
-	r = engine->ExecuteString(0, "bool f; GiveFalse(f); Assert( !f );");
+	r = ExecuteString(engine, "bool f; GiveFalse(f); Assert( !f );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "bool f; GiveFalse(f); if( f ) Assert(false);");
+	r = ExecuteString(engine, "bool f; GiveFalse(f); if( f ) Assert(false);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "bool f, f2 = false; GiveFalse(f); Assert( !(f || f2) );");
+	r = ExecuteString(engine, "bool f, f2 = false; GiveFalse(f); Assert( !(f || f2) );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// TEST 5
@@ -295,11 +295,11 @@ bool Test()
 	if( sizeof(bool) == 1 )
 		falseValue = 0x00FFFF00;
 	engine->RegisterGlobalProperty("bool falseValue", &falseValue);
-	r = engine->ExecuteString(0, "Assert( !falseValue );");
+	r = ExecuteString(engine, "Assert( !falseValue );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "if( falseValue ) Assert(false);");
+	r = ExecuteString(engine, "if( falseValue ) Assert(false);");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	r = engine->ExecuteString(0, "bool f2 = false; Assert( !(falseValue || f2) );");
+	r = ExecuteString(engine, "bool f2 = false; Assert( !(falseValue || f2) );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 	// TEST 6
@@ -318,7 +318,7 @@ bool Test()
 	}
 	else
 	{
-		r = engine->ExecuteString(0, "TestBoolToMember();");
+		r = ExecuteString(engine, "TestBoolToMember();", mod);
 		if( r != asEXECUTION_FINISHED ) fail = true;
 
 		if( testBool.m_fail ) fail = true;
@@ -332,7 +332,7 @@ bool Test()
 		fail = true;
 	else
 	{
-		r = engine->ExecuteString(0, "test();");
+		r = ExecuteString(engine, "test();", mod);
 		if( r != asEXECUTION_FINISHED ) fail = true;
 
 		if( buf != "false\ntrue\nfalse\n" )

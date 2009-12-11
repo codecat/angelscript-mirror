@@ -75,6 +75,9 @@ struct asSSystemFunctionInterface;
 //       as the function can be removed from the module, but still remain alive. For example
 //       for dynamically generated functions held by a function pointer.
 
+// TODO: Might be interesting to allow enumeration of accessed global variables, and 
+//       also functions/methods that are being called.
+
 void RegisterScriptFunction(asCScriptEngine *engine);
 
 class asCScriptFunction : public asIScriptFunction

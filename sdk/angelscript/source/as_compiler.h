@@ -182,10 +182,6 @@ protected:
 	void ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars);
 	void ConvertToReference(asSExprContext *ctx);
 	void PushVariableOnStack(asSExprContext *ctx, bool asReference);
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-	int  TokenToBehaviour(int token);
-#endif
 	asCString GetScopeFromNode(asCScriptNode *node);
 
 	void ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);

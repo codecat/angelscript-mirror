@@ -186,7 +186,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "TestObjHandle()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestObjHandle()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -226,9 +227,9 @@ bool Test()
 	r = engine->GarbageCollect();
 	asUINT gcCurrentSize;
 	engine->GetGCStatistics(&gcCurrentSize, 0, 0);
-	assert( gcCurrentSize == 10 ); // The script class types and functions are also in the gc
+	assert( gcCurrentSize == 9 ); // The script class types and functions are also in the gc
 
-	r = engine->ExecuteString(0, "refclass ref; ref.Do()");
+	r = ExecuteString(engine, "refclass ref; ref.Do()");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -244,7 +245,7 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	engine->Release();
 
@@ -272,98 +273,98 @@ bool Test()
 	r = engine->RegisterObjectMethod("A", "A &opAssign(const A &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert(r >= 0);
 
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; a == null;");    // Should give warning
+	r = ExecuteString(engine, "A a; a == null;");    // Should give warning
 	if( r < 0 || bout.buffer == "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; null == a;");    // Should give warning
+	r = ExecuteString(engine, "A a; null == a;");    // Should give warning
 	if( r < 0 || bout.buffer == "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; @a == null;");   // OK
+	r = ExecuteString(engine, "A a; @a == null;");   // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; null == @a;");   // OK
+	r = ExecuteString(engine, "A a; null == @a;");   // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; @a == a;");      // Should give warning
+	r = ExecuteString(engine, "A a; @a == a;");      // Should give warning
 	if( r < 0 || bout.buffer == "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; a == @a;");      // Should give warning
+	r = ExecuteString(engine, "A a; a == @a;");      // Should give warning
 	if( r < 0 || bout.buffer == "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; @a == @a;");     // OK
+	r = ExecuteString(engine, "A a; @a == @a;");     // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A @a = null;");       // OK
+	r = ExecuteString(engine, "A @a = null;");       // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; A @b = a;");     // OK
+	r = ExecuteString(engine, "A a; A @b = a;");     // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; A @b = @a;");    // OK
+	r = ExecuteString(engine, "A a; A @b = @a;");    // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; A b = @b;");     // Should give error
+	r = ExecuteString(engine, "A a; A b = @b;");     // Should give error
 	if( r >= 0 || bout.buffer == "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A @a, b; @a = @b;");  // OK
+	r = ExecuteString(engine, "A @a, b; @a = @b;");  // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A @a, b; @a = b;");   // OK
+	r = ExecuteString(engine, "A @a, b; @a = b;");   // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A @a, b; a = @b;");   // Should give error
+	r = ExecuteString(engine, "A @a, b; a = @b;");   // Should give error
 	if( r >= 0 || bout.buffer == "" )
 	{
 		fail = true;
 	}
 
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; null is a;");    // OK
+	r = ExecuteString(engine, "A a; null is a;");    // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;
 	}
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "A a; a !is null;");    // OK
+	r = ExecuteString(engine, "A a; a !is null;");    // OK
 	if( r < 0 || bout.buffer != "" )
 	{
 		fail = true;

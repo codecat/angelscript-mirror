@@ -88,7 +88,7 @@ void asCConfigGroup::RefConfigGroup(asCConfigGroup *group)
 	group->AddRef();
 }
 
-bool asCConfigGroup::HasLiveObjects(asCScriptEngine * /*engine*/)
+bool asCConfigGroup::HasLiveObjects()
 {
 	for( asUINT n = 0; n < objTypes.GetLength(); n++ )
 		if( objTypes[n]->GetRefCount() != 0 )
@@ -115,21 +115,6 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 			engine->registeredGlobalProps[index] = 0;
 		}
 	}
-
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-
-	// Remove global behaviours
-	for( n = 0; n < globalBehaviours.GetLength(); n++ )
-	{
-		int id = engine->globalBehaviours.operators[globalBehaviours[n]+1];
-		engine->globalBehaviours.operators[globalBehaviours[n]] = 0;
-		engine->globalBehaviours.operators[globalBehaviours[n]+1] = 0;
-	
-		// Remove the system function as well
-		engine->DeleteScriptFunction(id);
-	}
-#endif
 
 	// Remove global functions
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )

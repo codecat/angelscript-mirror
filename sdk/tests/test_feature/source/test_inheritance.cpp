@@ -205,7 +205,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	obj->Release();
 
 	// Test that implicit cast from derived to base is working
-	r = engine->ExecuteString(module, "Derived d; Base @b = @d; assert( b !is null );");
+	r = ExecuteString(engine, "Derived d; Base @b = @d; assert( b !is null );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -214,7 +214,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// Test that cast from base to derived require explicit cast
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
-	r = engine->ExecuteString(module, "Base b; Derived @d = @b;");
+	r = ExecuteString(engine, "Base b; Derived @d = @b;", mod);
 	if( r >= 0 )
 	{
 		fail = true;
@@ -227,21 +227,21 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 
 	// Test that it is possible to explicitly cast to derived class
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	r = engine->ExecuteString(module, "Derived d; Base @b = @d; assert( cast<Derived>(b) !is null );");
+	r = ExecuteString(engine, "Derived d; Base @b = @d; assert( cast<Derived>(b) !is null );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
 	// Test the explicit cast behaviour for a non-handle script object
-	r = engine->ExecuteString(module, "Base b; assert( cast<Derived>(b) is null );");
+	r = ExecuteString(engine, "Base b; assert( cast<Derived>(b) is null );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail= true;
 	}
 
 	// Test that it is possible to implicitly assign derived class to base class
-	r = engine->ExecuteString(module, "Derived d; Base b = d;");
+	r = ExecuteString(engine, "Derived d; Base b = d;", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -252,23 +252,23 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// This is because the parameter is &in and not const &in
 	// TODO: May be able to avoid this by having a specific behaviour for 
 	//       duplicating objects, rather than using assignment
-	r = engine->ExecuteString(module, "Derived d; foo(d);");
+	r = ExecuteString(engine, "Derived d; foo(d);", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
 	// Test polymorphing
-	r = engine->ExecuteString(module, "Derived d; Base @b = @d; b.a = 3; b.f2(); assert( b.a == 2 );");
+	r = ExecuteString(engine, "Derived d; Base @b = @d; b.a = 3; b.f2(); assert( b.a == 2 );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
 	// Base class' destructor must be called when object is destroyed
-	r = engine->ExecuteString(module, "baseDestructorCalled = derivedDestructorCalled = false; { Derived d; }\n"
+	r = ExecuteString(engine, "baseDestructorCalled = derivedDestructorCalled = false; { Derived d; }\n"
 								      "assert( derivedDestructorCalled ); \n"
-		                              "assert( baseDestructorCalled );\n");
+		                              "assert( baseDestructorCalled );\n", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -277,7 +277,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// If the base class is garbage collected, then the derived class must also be garbage collected
 	// This also tests that it is possible to call the default constructor of the base class, even though it is not declared
 	engine->GarbageCollect();
-	r = engine->ExecuteString(module, "DerivedGC b; @b.b = @b;");
+	r = ExecuteString(engine, "DerivedGC b; @b.b = @b;", mod);
 	if( r != asEXECUTION_FINISHED ) 
 	{
 		fail = true;
@@ -291,24 +291,24 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	assert( gcSize == 116 || gcSize == 58 );
 
 	// Test that the derived class inherits the interfaces that the base class implements
-	r = engine->ExecuteString(module, "Intf @a; Derived b; @a = @b;");
+	r = ExecuteString(engine, "Intf @a; Derived b; @a = @b;", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
 	// Test that an implemented constructor calls the base class' default constructor
-	r = engine->ExecuteString(module, "baseConstructorCalled = derivedConstructorCalled = false; Derived d(1); \n"
+	r = ExecuteString(engine, "baseConstructorCalled = derivedConstructorCalled = false; Derived d(1); \n"
 		                              "assert( baseConstructorCalled ); \n"
-									  "assert( derivedConstructorCalled ); \n");
+									  "assert( derivedConstructorCalled ); \n", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
 	}
 
 	// Test that the default constructor calls the base class' default constructor
-	r = engine->ExecuteString(module, "baseConstructorCalled = false; Derived d; \n"
-		                              "assert( baseConstructorCalled ); \n");
+	r = ExecuteString(engine, "baseConstructorCalled = false; Derived d; \n"
+		                              "assert( baseConstructorCalled ); \n", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -317,9 +317,9 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// Test that it is possible to manually call the base class' constructor
 	// Test that the default constructor for the base class isn't called 
 	//   when a manual call to another constructor is made
-	r = engine->ExecuteString(module, "baseConstructorCalled = baseFloatConstructorCalled = false; DerivedS d(1.4f); \n"
+	r = ExecuteString(engine, "baseConstructorCalled = baseFloatConstructorCalled = false; DerivedS d(1.4f); \n"
 		                              "assert( baseFloatConstructorCalled ); \n"
-									  "assert( !baseConstructorCalled ); \n");
+									  "assert( !baseConstructorCalled ); \n", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -345,7 +345,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 
 	// Test various levels of inheritance
 	printResult = "";
-	r = engine->ExecuteString(mod->GetName(), "C3 c; c.Call();");
+	r = ExecuteString(engine, "C3 c; c.Call();", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -584,7 +584,11 @@ bool Test2()
 	if( bout.buffer != "script (1, 11) : Info    : Compiling void A::method()\n"
 					   "script (1, 27) : Error   : No matching signatures to 'B::test()'\n"
 					   "script (1, 38) : Error   : No matching signatures to 'A::method(const uint)'\n"
+					   "script (1, 38) : Info    : Candidates are:\n"
+					   "script (1, 38) : Info    : void A::method()\n"
 					   "script (1, 65) : Error   : No matching signatures to 'A::method(const double)'\n"
+					   "script (1, 65) : Info    : Candidates are:\n"
+					   "script (1, 65) : Info    : void A::method()\n"
 					   "script (1, 83) : Error   : Invalid scope resolution\n"
 					   "script (1, 79) : Error   : No matching signatures to 'B::a()'\n" )
 	{
@@ -605,7 +609,7 @@ bool Test2()
 		fail = true;
 		printf(bout.buffer.c_str());
 	}
-	r = engine->ExecuteString(0, "A a; assert( a1 !is a2 ); assert( a1 !is null ); assert( a2 !is null );");
+	r = ExecuteString(engine, "A a; assert( a1 !is a2 ); assert( a1 !is null ); assert( a2 !is null );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

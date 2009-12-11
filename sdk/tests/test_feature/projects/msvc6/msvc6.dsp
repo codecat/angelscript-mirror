@@ -463,10 +463,6 @@ SOURCE=..\..\source\testbstr.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\source\testbstr2.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\source\testcdecl_class.cpp
 # End Source File
 # Begin Source File

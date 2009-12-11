@@ -156,44 +156,6 @@ enum asEBehaviours
 	 asBEHAVE_RELEASEREFS,
 	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
 
-#ifdef AS_DEPRECATED
-	// deprecated since 2009-07-20, 2.17.0
-	asBEHAVE_NEGATE,
-	asBEHAVE_FIRST_ASSIGN,
-	 asBEHAVE_ASSIGNMENT = asBEHAVE_FIRST_ASSIGN,
-	 asBEHAVE_ADD_ASSIGN,
-	 asBEHAVE_SUB_ASSIGN,
-	 asBEHAVE_MUL_ASSIGN,
-	 asBEHAVE_DIV_ASSIGN,
-	 asBEHAVE_MOD_ASSIGN,
-	 asBEHAVE_OR_ASSIGN,
-	 asBEHAVE_AND_ASSIGN,
-	 asBEHAVE_XOR_ASSIGN,
-	 asBEHAVE_SLL_ASSIGN,
-	 asBEHAVE_SRL_ASSIGN,
-	 asBEHAVE_SRA_ASSIGN,
-	asBEHAVE_LAST_ASSIGN = asBEHAVE_SRA_ASSIGN,
-	asBEHAVE_FIRST_DUAL,
-	 asBEHAVE_ADD = asBEHAVE_FIRST_DUAL,
-	 asBEHAVE_SUBTRACT,
-	 asBEHAVE_MULTIPLY,
-	 asBEHAVE_DIVIDE,
-	 asBEHAVE_MODULO,
-	 asBEHAVE_EQUAL,
-	 asBEHAVE_NOTEQUAL,
-	 asBEHAVE_LESSTHAN,
-	 asBEHAVE_GREATERTHAN,
-	 asBEHAVE_LEQUAL,
-	 asBEHAVE_GEQUAL,
-	 asBEHAVE_BIT_OR,
-	 asBEHAVE_BIT_AND,
-	 asBEHAVE_BIT_XOR,
-	 asBEHAVE_BIT_SLL,
-	 asBEHAVE_BIT_SRL,
-	 asBEHAVE_BIT_SRA,
-	asBEHAVE_LAST_DUAL = asBEHAVE_BIT_SRA,
-#endif
-
 	asBEHAVE_MAX
 };
 
@@ -225,9 +187,8 @@ enum asERetCodes
 	asCONFIG_GROUP_IS_IN_USE               = -22,
 	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
 	asWRONG_CALLING_CONV                   = -24,
-	asMODULE_IS_IN_USE                     = -25,
-	asBUILD_IN_PROGRESS                    = -26,
-	asINIT_GLOBAL_VARS_FAILED              = -27
+	asBUILD_IN_PROGRESS                    = -25,
+	asINIT_GLOBAL_VARS_FAILED              = -26
 };
 
 // Context states
@@ -243,12 +204,15 @@ enum asEContextState
     asEXECUTION_ERROR         = 7
 };
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.18.0, 2009-12-08
 // ExecuteString flags
 enum asEExecStrFlags
 {
 	asEXECSTRING_ONLY_PREPARE   = 1,
 	asEXECSTRING_USE_MY_CONTEXT = 2
 };
+#endif
 
 // Message types
 enum asEMsgType
@@ -547,7 +511,6 @@ public:
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
-	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
 	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE) = 0;
@@ -560,11 +523,8 @@ public:
 	virtual void *GetUserData() = 0;
 
 #ifdef AS_DEPRECATED
-	// deprecated since 2009-07-20, 2.17.0
-	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-	virtual int            GetGlobalBehaviourCount() = 0;
-	virtual int            GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) = 0;
-	virtual int            CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
+	// deprecated since 2009-12-08, 2.18.0
+	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 #endif
 
 protected:
@@ -582,6 +542,7 @@ public:
     virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	virtual int  Build() = 0;
 	virtual int  CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
+	virtual int  CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
 
 	// Functions
 	virtual int                GetFunctionCount() = 0;
@@ -601,6 +562,7 @@ public:
 	virtual const char *GetGlobalVarName(int index) = 0;
 	virtual int         GetGlobalVarTypeId(int index, bool *isConst = 0) = 0;
 	virtual void       *GetAddressOfGlobalVar(int index) = 0;
+	virtual int         RemoveGlobalVar(int index) = 0;
 
 	// Type identification
 	virtual int            GetObjectTypeCount() = 0;
@@ -704,11 +666,6 @@ public:
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() = 0;
 
-#ifdef AS_DEPRECATED
-	// deprecated since 2009-07-29, 2.17.0
-	virtual void *GetArgPointer(asUINT arg) = 0;
-#endif
-
 protected:
 	virtual ~asIScriptContext() {}
 };
@@ -772,11 +729,6 @@ public:
 
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual int              CopyFrom(asIScriptObject *other) = 0;
-
-#ifdef AS_DEPRECATED
-	// deprecated since 2009-07-29, 2.17.0
-	virtual void       *GetPropertyPointer(asUINT prop) = 0;
-#endif
 
 protected:
 	virtual ~asIScriptObject() {}

@@ -36,7 +36,7 @@ bool Test()
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	// Make sure the default access is granted
-	r = engine->ExecuteString(0, "val = 1.3f"); 
+	r = ExecuteString(engine, "val = 1.3f"); 
 	if( r < 0 )
 		fail = true;
 
@@ -44,7 +44,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->SetConfigGroupModuleAccess("group", asALL_MODULES, false); assert( r >= 0 );
 
-	r = engine->ExecuteString(0, "val = 1.0f");
+	r = ExecuteString(engine, "val = 1.0f");
 	if( r >= 0 )
 		fail = true;
 
@@ -55,9 +55,9 @@ bool Test()
 
 	// Make sure the default access can be overridden
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->SetConfigGroupModuleAccess("group", 0, true); assert( r >= 0 );
+	r = engine->SetConfigGroupModuleAccess("group", "ExecuteString", true); assert( r >= 0 );
 
-	r = engine->ExecuteString(0, "val = 1.0f");
+	r = ExecuteString(engine, "val = 1.0f");
 	if( r < 0 )
 		fail = true;
 
@@ -72,21 +72,21 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void Func()", asFUNCTION(Func), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	r = engine->SetConfigGroupModuleAccess("group", "m", false); assert( r >= 0 );
+	r = engine->SetConfigGroupModuleAccess("group", "ExecuteString", false); assert( r >= 0 );
 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
-	r = engine->ExecuteString("m", "Func()");
+	r = ExecuteString(engine, "Func()");
 	if( r >= 0 )
 		fail = true;
 
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : No matching signatures to 'Func()'\n" )
 		fail = true;
 
-	r = engine->SetConfigGroupModuleAccess("group", "m", true); assert( r >= 0 );
+	r = engine->SetConfigGroupModuleAccess("group", "ExecuteString", true); assert( r >= 0 );
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = engine->ExecuteString("m", "Func()");
+	r = ExecuteString(engine, "Func()");
 	if( r < 0 )
 		fail = true;
 
@@ -101,11 +101,11 @@ bool Test()
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	r = engine->SetConfigGroupModuleAccess("group", 0, false); assert( r >= 0 );
+	r = engine->SetConfigGroupModuleAccess("group", "ExecuteString", false); assert( r >= 0 );
 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "mytype a");
+	r = ExecuteString(engine, "mytype a");
 	if( r >= 0 )
 		fail = true;
 
@@ -129,7 +129,7 @@ bool Test()
 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "mytype a; a + a;");
+	r = ExecuteString(engine, "mytype a; a + a;");
 
 	// TODO: It should be possible to disallow individual class methods
 //	if( r >= 0 )

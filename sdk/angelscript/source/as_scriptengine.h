@@ -67,8 +67,6 @@ struct sBindInfo;
 
 // TODO: DiscardModule should take an optional pointer to asIScriptModule instead of module name. If null, nothing is done.
 
-// TODO: ExecuteString should take an optional pointer to asIScriptModule instead of module name. If null, the function is only able to access application registered functions/types/variables.
-
 // TODO: Should have a CreateModule/GetModule instead of just GetModule with parameters.
 
 // TODO: Should allow enumerating modules, in case they have not been named.
@@ -164,7 +162,6 @@ public:
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0);
-	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 
 	// Garbage collection
 	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE);
@@ -177,11 +174,8 @@ public:
 	virtual void *GetUserData();
 
 #ifdef AS_DEPRECATED
-	// deprecated since 2009-07-20, 2.17.0
-	virtual int            RegisterGlobalBehaviour(asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-	virtual int            GetGlobalBehaviourCount();
-	virtual int            GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour);
-	virtual int            CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId);
+	// deprecated since 2009-12-08, 2.18.0
+	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 #endif
 
 //===========================================================
@@ -201,7 +195,8 @@ public:
 	friend class asCByteCode;
 	friend int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 
-	int RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv);
+	int RegisterMethodToObjectType(asCObjectType *objectType, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	int RegisterBehaviourToObjectType(asCObjectType *objectType, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv);
 
 	int VerifyVarTypeNotInFunction(asCScriptFunction *func);
 
@@ -224,7 +219,6 @@ public:
 	void RemoveTemplateInstanceType(asCObjectType *t);
 	void RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot);
 
-	asCConfigGroup *FindConfigGroup(asCObjectType *ot);
 	asCConfigGroup *FindConfigGroupForFunction(int funcId);
 	asCConfigGroup *FindConfigGroupForGlobalVar(int gvarId);
 	asCConfigGroup *FindConfigGroupForObjectType(const asCObjectType *type);
@@ -296,10 +290,6 @@ public:
 	asCArray<asCGlobalProperty *>  registeredGlobalProps;
 	asCArray<asCScriptFunction *>  registeredGlobalFuncs;
 	asCScriptFunction             *stringFactory;
-#ifdef AS_DEPRECATED
-	// deprecated since 2009-07-20, 2.17.0
-	asSTypeBehaviour               globalBehaviours;
-#endif
 	bool configFailed;
 
 	// Stores all known object types, both application registered, and script declared

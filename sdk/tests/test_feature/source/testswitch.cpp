@@ -142,7 +142,7 @@ bool TestSwitch()
 	mod->AddScriptSection("switch", script2);
 	mod->Build();
 
-	engine->ExecuteString(0, "_switch2()");
+	ExecuteString(engine, "_switch2()", mod);
 
 	if( _log != "d12345\n"
 		        "It is the value we expect\n"
@@ -156,7 +156,7 @@ bool TestSwitch()
  
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	engine->ExecuteString(0, "switch(1) {}"); 
+	ExecuteString(engine, "switch(1) {}", mod); 
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : Empty switch statement\n" )
 		fail = true;
 
@@ -164,7 +164,7 @@ bool TestSwitch()
 	{
 		bout.buffer = "";
 		const char *script = "switch( 1 ) { case 1: case 1: }";
-		r = engine->ExecuteString(0, script);
+		r = ExecuteString(engine, script, mod);
 		if( r >= 0 )
 			fail = true;
 

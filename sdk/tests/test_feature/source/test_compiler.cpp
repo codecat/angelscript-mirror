@@ -152,7 +152,7 @@ bool Test()
 	// test 5
 	RegisterScriptString(engine);
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "string &ref");
+	r = ExecuteString(engine, "string &ref");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 8) : Error   : Expected '('\n" )
@@ -186,7 +186,7 @@ bool Test()
 	// Verify that declaring a void variable in script causes a compiler error, not an assert failure
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
-	engine->ExecuteString(0, "void m;");
+	ExecuteString(engine, "void m;");
 	if( bout.buffer != "ExecuteString (1, 6) : Error   : Data type can't be 'void'\n" )
 	{
 		printf("failed on 7\n");
@@ -285,7 +285,7 @@ bool Test()
 	// Test 13
 	// Don't permit implicit conversion of integer to obj even though obj(int) is a possible constructor
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "uint32[] a = 0;");
+	r = ExecuteString(engine, "uint32[] a = 0;");
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : Can't implicitly convert from 'const uint' to 'uint[]&'.\n" )
@@ -312,7 +312,7 @@ bool Test()
 	// Test 15
 	// Declaring a class inside a function
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "class XXX { int a; }; XXX b;");
+	r = ExecuteString(engine, "class XXX { int a; }; XXX b;");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : Expected expression value\n"
 	                   "ExecuteString (1, 27) : Error   : Expected ';'\n" )
@@ -354,7 +354,7 @@ bool Test()
 	// Test 18
 	// Properly notify the error of comparing boolean operands
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "bool b1,b2; if( b1 <= b2 ) {}");
+	r = ExecuteString(engine, "bool b1,b2; if( b1 <= b2 ) {}");
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 20) : Warning : 'b1' is not initialized.\n"
                        "ExecuteString (1, 20) : Warning : 'b2' is not initialized.\n"
@@ -444,7 +444,9 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "22 (2, 1) : Info    : Compiling void Func(Some@)\n"
-	                   "22 (5, 1) : Error   : No matching signatures to 'Func_(<null handle>)'\n" )
+	                   "22 (5, 1) : Error   : No matching signatures to 'Func_(<null handle>)'\n"
+					   "22 (5, 1) : Info    : Candidates are:\n"
+					   "22 (5, 1) : Info    : void Func_(uint)\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
@@ -454,7 +456,7 @@ bool Test()
 	bout.buffer = "";
 	const char *script23 = "openHandle.IsValid() ? 1 : 0\n";
 
-	r = engine->ExecuteString(0, script23);
+	r = ExecuteString(engine, script23);
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'openHandle' is not declared\n" )
 	{
@@ -497,7 +499,9 @@ bool Test()
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "26 (1, 1) : Info    : Compiling void main()\n"
 	                   "26 (1, 20) : Error   : 'anyWord' is not declared\n"
-	                   "26 (1, 29) : Error   : No matching signatures to 'main(int)'\n" )
+	                   "26 (1, 29) : Error   : No matching signatures to 'main(int)'\n"
+					   "26 (1, 29) : Info    : Candidates are:\n"
+					   "26 (1, 29) : Info    : void main()\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
@@ -539,7 +543,7 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
-		r = engine->ExecuteString(0, "if(true); if(true) {} else;");
+		r = ExecuteString(engine, "if(true); if(true) {} else;");
 		if( r >= 0 )
 		{
 			fail = true;
@@ -611,6 +615,69 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test to make sure compilation error is properly handled
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptString_Generic(engine);
+
+		int r = ExecuteString(engine, "MissingFunction('test')");
+		if( r >= 0 )
+		{
+			fail = true;
+			printf("%s: ExecuteString() succeeded even though it shouldn't\n", TESTNAME);
+		}
+
+		engine->Release();
+	}
+
+	// Give useful error message when no matching function is found
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char *script = 
+			"void test(int a) { }        \n"
+			"void test(float a) { }      \n"
+			"void test(bool c) { }       \n"
+			"class Test {                \n"
+			"    void test(int a) { }    \n"
+			"    void test(float a) { }  \n"
+			"    void test(bool c) { }   \n"
+			"}                           \n"
+			"void main() {               \n"
+			"    test();                 \n"
+			"    Test test;              \n"
+			"    test.test();            \n"
+			"}                           \n";
+
+		mod->AddScriptSection(0, script);
+
+		bout.buffer = "";
+		int r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != " (9, 1) : Info    : Compiling void main()\n"
+						   " (10, 5) : Error   : No matching signatures to 'test()'\n"
+						   " (10, 5) : Info    : Candidates are:\n"
+						   " (10, 5) : Info    : void test(int)\n"
+						   " (10, 5) : Info    : void test(float)\n"
+					   	   " (10, 5) : Info    : void test(bool)\n"
+						   " (12, 10) : Error   : No matching signatures to 'Test::test()'\n"
+						   " (12, 10) : Info    : Candidates are:\n"
+						   " (12, 10) : Info    : void Test::test(int)\n"
+						   " (12, 10) : Info    : void Test::test(float)\n"
+						   " (12, 10) : Info    : void Test::test(bool)\n" )
+		{
+			fail = true;
+			printf(bout.buffer.c_str());
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
@@ -654,7 +721,7 @@ bool Test2()
 	"doStuff( test1, test1 + test2 );  \n"  // This one will work
 	"doStuff( test1 + test2, test1 );  \n"; // This one will blow
 
-	r = engine->ExecuteString(0, script);
+	r = ExecuteString(engine, script);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -706,7 +773,7 @@ bool Test3()
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "main()");
+	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -965,7 +1032,7 @@ bool Test8()
 		fail = true;
 	}
 
-	r = engine->ExecuteString(0, "string str = func(); assert( str == '' );");
+	r = ExecuteString(engine, "string str = func(); assert( str == '' );", mod);
 	if( r != asEXECUTION_FINISHED ) 
 		fail = true;
 

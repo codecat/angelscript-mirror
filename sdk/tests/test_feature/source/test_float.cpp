@@ -85,14 +85,14 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	engine->ExecuteString(0, "start()");
+	ExecuteString(engine, "start()", mod);
 
 	// The locale affects the way the compiler reads float values
 	setlocale(LC_NUMERIC, "");
 
 	float f;
 	engine->RegisterGlobalProperty("float f", &f);
-	r = engine->ExecuteString(0, "f = 3.14f;");
+	r = ExecuteString(engine, "f = 3.14f;");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 

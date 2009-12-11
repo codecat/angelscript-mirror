@@ -188,8 +188,8 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "TestObject()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestObject()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -200,7 +200,7 @@ bool Test()
 	}
 	if( ctx ) ctx->Release();
 
-	engine->ExecuteString(0, "ObjNoConstruct a; a = ObjNoConstruct();");
+	ExecuteString(engine, "ObjNoConstruct a; a = ObjNoConstruct();");
 	if( r != 0 )
 	{
 		fail = true;
@@ -209,7 +209,7 @@ bool Test()
 
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "Object obj; float r = 0; obj = r;");
+	r = ExecuteString(engine, "Object obj; float r = 0; obj = r;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 32) : Error   : Can't implicitly convert from 'float' to 'Object&'.\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
@@ -254,7 +254,7 @@ bool Test()
 
 	// Test assigning value to reference returned by class method where the reference points to a member of the class
 	// This test attempts to verify that the object isn't freed before the reference goes out of scope.
-	r = engine->ExecuteString(0, "Object o; o.GetRef() = 10;");
+	r = ExecuteString(engine, "Object o; o.GetRef() = 10;");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;
@@ -262,7 +262,7 @@ bool Test()
 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
-	r = engine->ExecuteString(0, "Object().GetRef() = 10;");
+	r = ExecuteString(engine, "Object().GetRef() = 10;");
 	if( r != asEXECUTION_FINISHED )
 	{
 		fail = true;

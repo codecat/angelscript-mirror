@@ -31,7 +31,7 @@ bool TestReturnF()
 	else
 		engine->RegisterGlobalFunction("float cfunction()", asFUNCTION(cfunction), asCALL_CDECL);
 
-	engine->ExecuteString(0, "returnValue = cfunction()");
+	ExecuteString(engine, "returnValue = cfunction()");
 
 	if( returnValue != 18.87f ) 
 	{

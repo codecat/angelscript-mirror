@@ -78,14 +78,14 @@ bool Test()
 	char var = 0;
 	engine->RegisterGlobalProperty("int8 gvar", &var);
 
-	engine->ExecuteString(0, "gvar = RetInt8(1)");
+	ExecuteString(engine, "gvar = RetInt8(1)");
 	if( var != 1 )
 	{
 		printf("failed to return value correctly\n");
 		fail = true;
 	}
 	
-	engine->ExecuteString(0, "Assert(RetInt8(1) == 1)");
+	ExecuteString(engine, "Assert(RetInt8(1) == 1)");
 
 	
 	// Test to make sure bools can be passed to member functions properly
@@ -104,14 +104,14 @@ bool Test()
 	}
 	else
 	{
-		r = engine->ExecuteString(0, "TestInt8ToMember();");
+		r = ExecuteString(engine, "TestInt8ToMember();", mod);
 		if( r != asEXECUTION_FINISHED ) fail = true;
 
 		if( testInt8.m_fail ) fail = true;
 	}
 
 	// Shift operations with int8 should result in int32
-	r = engine->ExecuteString(0, "uint8[] buf={1,2,3,4,5,6}; "
+	r = ExecuteString(engine, "uint8[] buf={1,2,3,4,5,6}; "
                                  "uint32 ver; "
                                  "ver = buf[0]; "
                                  "ver |= buf[1]<<8; "

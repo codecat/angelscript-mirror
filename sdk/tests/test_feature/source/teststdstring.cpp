@@ -147,7 +147,7 @@ bool TestStdString()
 	mod->AddScriptSection("string", script);
 	mod->Build();
 
-	int r = engine->ExecuteString(0, "blah1(); blah2();");
+	int r = ExecuteString(engine, "blah1(); blah2();", mod);
 	if( r < 0 )
 	{
 		fail = true;
@@ -158,7 +158,7 @@ bool TestStdString()
 	mod->AddScriptSection(TESTNAME, script2);
 	mod->Build();
 
-	engine->ExecuteString(0, "testString()");
+	ExecuteString(engine, "testString()", mod);
 
 	if( printOutput != "hello Ida" )
 	{
@@ -166,15 +166,15 @@ bool TestStdString()
 		printf("%s: Failed to print the correct string\n", TESTNAME);
 	}
 
-	engine->ExecuteString(0, "string s = \"test\\\\test\\\\\"");
+	ExecuteString(engine, "string s = \"test\\\\test\\\\\"", mod);
 
 	// Verify that it is possible to use the string in constructor parameters
-	engine->ExecuteString(0, "obj a; a = obj(\"test\")");
-	engine->ExecuteString(0, "obj a(\"test\")");
+	ExecuteString(engine, "obj a; a = obj(\"test\")");
+	ExecuteString(engine, "obj a(\"test\")");
 
 	// Verify that it is possible to pass strings by value
 	printOutput = "";
-	engine->ExecuteString(0, "testString2()");
+	ExecuteString(engine, "testString2()", mod);
 	if( printOutput != "Hello World!" )
 	{
 		fail = true;
@@ -182,34 +182,34 @@ bool TestStdString()
 	}
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a; a = 1; print(a);");
+	ExecuteString(engine, "string a; a = 1; print(a);");
 	if( printOutput != "1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a; a += 1; print(a);");
+	ExecuteString(engine, "string a; a += 1; print(a);");
 	if( printOutput != "1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a = \"a\" + 1; print(a);");
+	ExecuteString(engine, "string a = \"a\" + 1; print(a);");
 	if( printOutput != "a1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a = 1 + \"a\"; print(a);");
+	ExecuteString(engine, "string a = 1 + \"a\"; print(a);");
 	if( printOutput != "1a" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "string a = 1; print(a);");
+	ExecuteString(engine, "string a = 1; print(a);");
 	if( printOutput != "1" ) fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "print(\"a\" + 1.2)");
+	ExecuteString(engine, "print(\"a\" + 1.2)");
 	if( printOutput != "a1.2") fail = true;
 
 	printOutput = "";
-	engine->ExecuteString(0, "print(1.2 + \"a\")");
+	ExecuteString(engine, "print(1.2 + \"a\")");
 	if( printOutput != "1.2a") fail = true;
 
-	engine->ExecuteString(0, "StringByVal(\"test\", \"test\")");
+	ExecuteString(engine, "StringByVal(\"test\", \"test\")");
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script3);
@@ -220,14 +220,14 @@ bool TestStdString()
 
 	//--> new: object method string argument test
 	printOutput = "";
-	engine->ExecuteString(0, "consumerObject.Consume(\"This is my string\")");
+	ExecuteString(engine, "consumerObject.Consume(\"This is my string\")");
 	if( printOutput != "This is my string") fail = true;
 	//<-- new: object method string argument test
 
 	engine->RegisterObjectType("Http", sizeof(Http), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asMETHOD(Http,Get),asCALL_THISCALL);
-	engine->ExecuteString(0, "Http h; string str; h.get(\"string\", str);");
-	engine->ExecuteString(0, "Http h; string str; string a = \"a\"; h.get(\"string\"+a, str);");
+	ExecuteString(engine, "Http h; string str; h.get(\"string\", str);");
+	ExecuteString(engine, "Http h; string str; string a = \"a\"; h.get(\"string\"+a, str);");
 
 	engine->Release();
 
@@ -327,15 +327,15 @@ bool TestTwoStringTypes()
 	r = engine->RegisterObjectMethod("_String" , "_String opAdd(const string &in) const", asFUNCTION(operation_StringStringAdd), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("_String" , "_String opAdd_r(const string &in) const", asFUNCTION(operationString_StringAdd), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
-	r = engine->ExecuteString(0, "_String('ab') + 'a'");
+	r = ExecuteString(engine, "_String('ab') + 'a'");
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "_String a; a+= 'a' + 'b' ; _String b = 'c'; a += b + 'c';");
+	r = ExecuteString(engine, "_String a; a+= 'a' + 'b' ; _String b = 'c'; a += b + 'c';");
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "string a; a+= 'a' + 'b' ; string b = 'c'; a += b + 'c';");
+	r = ExecuteString(engine, "string a; a+= 'a' + 'b' ; string b = 'c'; a += b + 'c';");
 	if( r < 0 )
 		fail = true;
 

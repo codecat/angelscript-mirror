@@ -244,7 +244,7 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
-	r = engine->ExecuteString(0, "Test1()");
+	r = ExecuteString(engine, "Test1()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
@@ -253,7 +253,7 @@ bool Test()
 
 //	printf("---\n");
 
-	r = engine->ExecuteString(0, "Test2()");
+	r = ExecuteString(engine, "Test2()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
@@ -262,7 +262,7 @@ bool Test()
 
  //	printf("---\n");
 
-	r = engine->ExecuteString(0, "Test3()");
+	r = ExecuteString(engine, "Test3()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
@@ -272,7 +272,7 @@ bool Test()
 //	printf("---\n");
 
 	engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 4);
-	r = engine->ExecuteString(0, "Test3()");
+	r = ExecuteString(engine, "Test3()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
@@ -281,9 +281,9 @@ bool Test()
 
 //	printf("---\n");
 
-	asIScriptContext *ctx;
+	asIScriptContext *ctx = engine->CreateContext();
 	engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 0);
-	r = engine->ExecuteString(0, "Test4()", &ctx);
+	r = ExecuteString(engine, "Test4()", mod, ctx);
 	if( r != asEXECUTION_SUSPENDED )
 	{
 		printf("%s: Failed\n", TESTNAME);
@@ -294,7 +294,7 @@ bool Test()
 
 //	printf("---\n");
 
-	r = engine->ExecuteString(0, "Test5()");
+	r = ExecuteString(engine, "Test5()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
@@ -303,7 +303,7 @@ bool Test()
 
 //	printf("---\n");
 
-	r = engine->ExecuteString(0, "Test6()");
+	r = ExecuteString(engine, "Test6()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
@@ -315,7 +315,7 @@ bool Test()
 	mod->AddScriptSection("script", script3, strlen(script3));
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "calc()");
+	r = ExecuteString(engine, "calc()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);

@@ -87,16 +87,16 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) fail = true;
 
-	r = engine->ExecuteString(0, "uint8 newmask = 0xFF, mask = 0x15; Assert( (newmask & ~mask) == 0xEA );");
+	r = ExecuteString(engine, "uint8 newmask = 0xFF, mask = 0x15; Assert( (newmask & ~mask) == 0xEA );");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	r = engine->ExecuteString(0, "uint8 newmask = 0xFF; newmask = newmask & (~mask2) & (~mask3) & (~mask5); Assert( newmask == 0xD3 );");
+	r = ExecuteString(engine, "uint8 newmask = 0xFF; newmask = newmask & (~mask2) & (~mask3) & (~mask5); Assert( newmask == 0xD3 );", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	r = engine->ExecuteString(0, "uint8 newmask = 0XFE; Assert( (newmask & mask0) == 0 );");
+	r = ExecuteString(engine, "uint8 newmask = 0XFE; Assert( (newmask & mask0) == 0 );", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	r = engine->ExecuteString(0, "uint8 b = 0xFF; b &= ~mask4; BitsTest(b);");
+	r = ExecuteString(engine, "uint8 b = 0xFF; b &= ~mask4; BitsTest(b);", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
 
@@ -108,17 +108,17 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) 
 		fail = true;
-	r = engine->ExecuteString(0, "Test()");
+	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
 	// bitwise operators should maintain signed/unsigned type of left hand operand
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "int a = 0, b = 0; bool c = (a < (b>>1));");
+	r = ExecuteString(engine, "int a = 0, b = 0; bool c = (a < (b>>1));");
 	if( r < 0 )
 		fail = true;
-	r = engine->ExecuteString(0, "uint a = 0, b = 0; bool c = (a < (b>>1));");
+	r = ExecuteString(engine, "uint a = 0, b = 0; bool c = (a < (b>>1));");
 	if( r < 0 )
 		fail = true;
 	if( bout.buffer != "" )
@@ -160,7 +160,7 @@ bool Test2()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	int r = engine->ExecuteString(0, script);
+	int r = ExecuteString(engine, script);
 	if( r != asEXECUTION_FINISHED ) 
 	{
 		fail = true;

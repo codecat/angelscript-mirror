@@ -49,7 +49,7 @@ bool TestExecute4Argsf()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->ExecuteString(0, "cfunction(9.2f, 13.3f, 18.8, 3.1415f)");
+	ExecuteString(engine, "cfunction(9.2f, 13.3f, 18.8, 3.1415f)");
 
 	if( !called ) 
 	{

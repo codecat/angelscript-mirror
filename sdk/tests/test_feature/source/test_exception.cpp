@@ -34,8 +34,8 @@ bool TestException()
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
 
 
-	asIScriptContext *ctx;
-	r = engine->ExecuteString(0, "int a = 0;\na = 10/a;", &ctx); // Throws an exception
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "int a = 0;\na = 10/a;", 0, ctx); // Throws an exception
 	if( r == asEXECUTION_EXCEPTION )
 	{
 		int func = ctx->GetExceptionFunction();
@@ -76,7 +76,7 @@ bool TestException()
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script1, strlen(script1));
 	mod->Build();
-	r = engine->ExecuteString(0, "A a; a.Test(\"test\");");
+	r = ExecuteString(engine, "A a; a.Test(\"test\");", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		fail = true;
@@ -108,7 +108,7 @@ bool TestException()
 	mod->AddScriptSection("script2", script2);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "test()");
+	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		fail = true;

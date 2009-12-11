@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.18.0 WIP - 2009/12/03</h2>
+<h2>Version 2.18.0 WIP - 2009/12/11</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,9 +28,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 </ul>
 <li>Library interface
 <ul>
-<li>Added asIScriptModule::CompileFunction() for dynamically compiling a single function that can be executed 
+<li>Added asIScriptModule::CompileFunction() for dynamically compiling a single function that can be executed, and optionally added to the module
 <li>Added asIScriptFunction::GetId()
 <li>Added asIScriptModule::RemoveFunction() for dynamically removing a single function from the scope
+<li>Deprecated the asIScriptEngine::ExecuteString method. An add-on has been provided to replace it
+<li>Removed the error code asMODULE_IS_IN_USE as it is no longer used
+<li>Removed old deprecated methods
+<li>Added asIScriptModule::CompileGlobalVar() and RemoveGlobalVar() for dynamically adding and removing single global variables to and from the module
 </ul>
 <li>Library
 <ul>
@@ -40,7 +44,12 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added support for native calling conventions on iPhone (Thanks Fredrik Ehnbom)
 <li>String constants are now stored in the engine and shared between modules
 <li>The context no longer references the module, as script functions no longer depend on the module for anything
-<li>Changed the script functions to use reference counting 
+<li>Changed the script functions to use reference counting
+<li>Improved compiler messages when function arguments doesn't match available functions (Thanks droz)
+</ul>
+<li>Add-ons
+<ul>
+<li>Added the global helper function ExecuteString, which replaces the asIScriptEngine::ExecuteString method
 </ul>
 <li>Project
 <ul>

@@ -300,7 +300,7 @@ bool Test2()
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "string @o; func(o); assert( o == 'test' );");
+	r = ExecuteString(engine, "string @o; func(o); assert( o == 'test' );", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 

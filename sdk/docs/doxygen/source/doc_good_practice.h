@@ -29,7 +29,7 @@ a script is built.
 \section doc_usemsgcallbck Use the message callback to receive detailed error messages
 
 The return code from the register functions, \ref asIScriptModule::Build "Build", and 
-\ref asIScriptEngine::ExecuteString "ExecuteString", can only tell you that something was wrong, 
+\ref asIScriptModule::CompileFunction "CompileFunction", can only tell you that something was wrong, 
 not what it was. To help identify the exact problem the message callback should be used. The script 
 library will then send messages explaining the error or warning in clear text.
 

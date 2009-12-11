@@ -391,7 +391,7 @@ asCScriptEngine::asCScriptEngine()
 	RegisterArrayObject(this);
 	RegisterScriptObject(this);
 	RegisterScriptFunction(this);
-	::RegisterObjectType(this);
+	RegisterObjectTypeGCBehaviours(this);
 }
 
 asCScriptEngine::~asCScriptEngine()
@@ -1076,16 +1076,17 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	func->ComputeSignatureId();
 
 	// If parameter type from other groups are used, add references
+	// TODO: The code for adding references to config groups is repeated in a lot of places
 	if( func->returnType.GetObjectType() )
 	{
-		asCConfigGroup *group = FindConfigGroup(func->returnType.GetObjectType());
+		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
 		currentGroup->RefConfigGroup(group);
 	}
 	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
 		if( func->parameterTypes[n].GetObjectType() )
 		{
-			asCConfigGroup *group = FindConfigGroup(func->parameterTypes[n].GetObjectType());
+			asCConfigGroup *group = FindConfigGroupForObjectType(func->parameterTypes[n].GetObjectType());
 			currentGroup->RefConfigGroup(group);
 		}
 	}
@@ -1343,172 +1344,30 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	return asSUCCESS;
 }
 
-// internal
-// Used to register the default behaviours for the script classes
-int asCScriptEngine::RegisterSpecialObjectBehaviour(asCObjectType *objType, asDWORD behaviour, const char *decl, const asSFuncPtr &funcPointer, int callConv)
-{
-	asASSERT( objType == &scriptTypeBehaviours ||
-		      objType == &functionBehaviours || 
-			  objType == &objectTypeBehaviours );
-
-	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
-	if( r < 0 )
-		return ConfigError(r);
-
-	isPrepared = false;
-
-	asCBuilder bld(this, 0);
-
-	asSTypeBehaviour *beh;
-	asCDataType type;
-	type.MakeHandle(false);
-	type.MakeReadOnly(false);
-	type.MakeReference(false);
-	type.SetObjectType(objType);
-	type.SetTokenType(ttIdentifier);
-
-	beh = type.GetBehaviour();
-
-	// The object is sent by reference to the function
-	type.MakeReference(true);
-
-	// Verify function declaration
-	asCScriptFunction func(this, 0, -1);
-
-	// The default array object is actually being registered
-	// with incorrect declarations, but that's a concious decision
-	r = bld.ParseFunctionDeclaration(type.GetObjectType(), decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
-	if( r < 0 )
-		return ConfigError(asINVALID_DECLARATION);
-	func.name.Format("_beh_%d_", behaviour);
-	func.objectType = type.GetObjectType();
-
-	if( behaviour == asBEHAVE_CONSTRUCT )
-	{
-		// Verify that the return type is void
-		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( func.parameterTypes.GetLength() == 1 )
-		{
-			beh->construct = AddBehaviourFunction(func, internal);
-			beh->factory   = beh->construct;
-			scriptFunctions[beh->factory]->AddRef();
-			beh->constructors.PushLast(beh->construct);
-			beh->factories.PushLast(beh->factory);
-		}
-		else
-		{
-			int id = AddBehaviourFunction(func, internal);
-			beh->constructors.PushLast(id);
-			beh->factories.PushLast(id);
-			scriptFunctions[id]->AddRef();
-		}
-	}
-	else if( behaviour == asBEHAVE_ADDREF )
-	{
-		if( beh->addref )
-			return ConfigError(asALREADY_REGISTERED);
-
-		// Verify that the return type is void
-		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that there are no parameters
-		if( func.parameterTypes.GetLength() > 0 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		beh->addref = AddBehaviourFunction(func, internal);
-	}
-	else if( behaviour == asBEHAVE_RELEASE)
-	{
-		if( beh->release )
-			return ConfigError(asALREADY_REGISTERED);
-
-		// Verify that the return type is void
-		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that there are no parameters
-		if( func.parameterTypes.GetLength() > 0 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		beh->release = AddBehaviourFunction(func, internal);
-	}
-	else if( behaviour == asBEHAVE_MAX /*assignment*/ )
-	{
-		// Verify that there is exactly one parameter
-		if( func.parameterTypes.GetLength() != 1 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( beh->copy )
-			return ConfigError(asALREADY_REGISTERED);
-
-		// TODO: Store the function id elsewhere since the beh->copy member will be removed
-		beh->copy = AddBehaviourFunction(func, internal);
-		scriptFunctions[beh->copy]->AddRef();
-
-		beh->operators.PushLast(ttAssignment);
-		beh->operators.PushLast(beh->copy);
-	}
-	else if( behaviour >= asBEHAVE_FIRST_GC &&
-		     behaviour <= asBEHAVE_LAST_GC )
-	{
-		// Register the gc behaviours
-
-		// Verify parameter count
-		if( (behaviour == asBEHAVE_GETREFCOUNT ||
-			 behaviour == asBEHAVE_SETGCFLAG   ||
-			 behaviour == asBEHAVE_GETGCFLAG) &&
-			func.parameterTypes.GetLength() != 0 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( (behaviour == asBEHAVE_ENUMREFS ||
-			 behaviour == asBEHAVE_RELEASEREFS) &&
-			func.parameterTypes.GetLength() != 1 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify return type
-		if( behaviour == asBEHAVE_GETREFCOUNT &&
-			func.returnType != asCDataType::CreatePrimitive(ttInt, false) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( behaviour == asBEHAVE_GETGCFLAG &&
-			func.returnType != asCDataType::CreatePrimitive(ttBool, false) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( (behaviour == asBEHAVE_SETGCFLAG ||
-			 behaviour == asBEHAVE_ENUMREFS  ||
-			 behaviour == asBEHAVE_RELEASEREFS) &&
-			func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( behaviour == asBEHAVE_GETREFCOUNT )
-			beh->gcGetRefCount = AddBehaviourFunction(func, internal);
-		else if( behaviour == asBEHAVE_SETGCFLAG )
-			beh->gcSetFlag = AddBehaviourFunction(func, internal);
-		else if( behaviour == asBEHAVE_GETGCFLAG )
-			beh->gcGetFlag = AddBehaviourFunction(func, internal);
-		else if( behaviour == asBEHAVE_ENUMREFS )
-			beh->gcEnumReferences = AddBehaviourFunction(func, internal);
-		else if( behaviour == asBEHAVE_RELEASEREFS )
-			beh->gcReleaseAllReferences = AddBehaviourFunction(func, internal);
-	}
-	else
-	{
-		asASSERT(false);
-
-		return ConfigError(asINVALID_ARG);
-	}
-
-	return asSUCCESS;
-}
-
+// interface
 int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	if( datatype == 0 ) return ConfigError(asINVALID_ARG);
 
+	// Determine the object type
+	asCBuilder bld(this, 0);
+	asCDataType type;
+	int r = bld.ParseDataType(datatype, &type);
+	if( r < 0 )
+		return ConfigError(r);
+
+	if( type.GetObjectType() == 0 )
+		return ConfigError(asINVALID_TYPE);
+
+	if( type.IsReadOnly() || type.IsReference() )
+		return ConfigError(asINVALID_TYPE);
+
+	return RegisterBehaviourToObjectType(type.GetObjectType(), behaviour, decl, funcPointer, callConv);
+}
+
+// internal
+int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
+{
 	asSSystemFunctionInterface internal;
 	if( behaviour == asBEHAVE_FACTORY ||
 		behaviour == asBEHAVE_TEMPLATE_CALLBACK )
@@ -1534,64 +1393,47 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 			return ConfigError(asNOT_SUPPORTED);
 #endif
 
-		int r = DetectCallingConvention(datatype != 0, funcPointer, callConv, &internal);
+		int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
 		if( r < 0 )
 			return ConfigError(r);
 	}
 
 	isPrepared = false;
 
-	asCBuilder bld(this, 0);
-
-	asSTypeBehaviour *beh;
-	asCDataType type;
-
-	int r = bld.ParseDataType(datatype, &type);
-	if( r < 0 )
-		return ConfigError(r);
-
-	if( type.GetObjectType() == 0 )
-		return ConfigError(asINVALID_TYPE);
-
-	if( type.IsReadOnly() || type.IsReference() )
-		return ConfigError(asINVALID_TYPE);
-
-	beh = type.GetBehaviour();
-
-	// The object is sent by reference to the function
-	type.MakeReference(true);
+	asSTypeBehaviour *beh = &objectType->beh;
 
 	// Verify function declaration
 	asCScriptFunction func(this, 0, -1);
 
-	r = bld.ParseFunctionDeclaration(type.GetObjectType(), decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
+	asCBuilder bld(this, 0);
+	int r = bld.ParseFunctionDeclaration(objectType, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION);
 	func.name.Format("_beh_%d_", behaviour);
 
 	if( behaviour != asBEHAVE_FACTORY )
-		func.objectType = type.GetObjectType();
+		func.objectType = objectType;
 
 	// Check if the method restricts that use of the template to value types or reference types
-	if( type.GetObjectType()->flags & asOBJ_TEMPLATE )
+	if( objectType->flags & asOBJ_TEMPLATE )
 	{
-		if( func.returnType.GetObjectType() == type.GetObjectType()->templateSubType.GetObjectType() )
+		if( func.returnType.GetObjectType() == objectType->templateSubType.GetObjectType() )
 		{
 			if( func.returnType.IsObjectHandle() )
-				type.GetObjectType()->acceptValueSubType = false;
+				objectType->acceptValueSubType = false;
 			else if( !func.returnType.IsReference() )
-				type.GetObjectType()->acceptRefSubType = false;
+				objectType->acceptRefSubType = false;
 		}
 
 		for( asUINT n = 0; n < func.parameterTypes.GetLength(); n++ )
 		{
-			if( func.parameterTypes[n].GetObjectType() == type.GetObjectType()->templateSubType.GetObjectType() )
+			if( func.parameterTypes[n].GetObjectType() == objectType->templateSubType.GetObjectType() )
 			{
 				// TODO: If unsafe references are allowed, then inout references allow value types
 				if( func.parameterTypes[n].IsObjectHandle() || (func.parameterTypes[n].IsReference() && func.inOutFlags[n] == asTM_INOUTREF) )
-					type.GetObjectType()->acceptValueSubType = false;
+					objectType->acceptValueSubType = false;
 				else if( !func.parameterTypes[n].IsReference() )
-					type.GetObjectType()->acceptRefSubType = false;
+					objectType->acceptRefSubType = false;
 			}
 		}
 	}
@@ -1600,41 +1442,56 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	{
 		// TODO: Add asBEHAVE_IMPLICIT_CONSTRUCT
 
-		// Verify that it is a value type
-		if( !(func.objectType->flags & asOBJ_VALUE) )
-		{
-			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
-			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
-		}
-
 		// Verify that the return type is void
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION);
 
-		// Implicit constructors must take one and only one parameter
-/*		if( behaviour == asBEHAVE_IMPLICIT_CONSTRUCT &&
-			func.parameterTypes.GetLength() != 1 )
-			return ConfigError(asINVALID_DECLARATION);
-*/
-		// TODO: Verify that the same constructor hasn't been registered already
-
-		// Store all constructors in a list
-		if( func.parameterTypes.GetLength() == 0 )
+		if( objectType->flags & asOBJ_SCRIPT_OBJECT )
 		{
-			func.id = beh->construct = AddBehaviourFunction(func, internal);
+			// The script object is a special case
+			asASSERT(func.parameterTypes.GetLength() == 1);
+
+			beh->construct = AddBehaviourFunction(func, internal);
+			beh->factory   = beh->construct;
+			scriptFunctions[beh->factory]->AddRef();
 			beh->constructors.PushLast(beh->construct);
+			beh->factories.PushLast(beh->factory);
+			func.id = beh->construct;
 		}
 		else
 		{
-			func.id = AddBehaviourFunction(func, internal);
-			beh->constructors.PushLast(func.id);
-/*
-			if( behaviour == asBEHAVE_IMPLICIT_CONSTRUCT )
+			// Verify that it is a value type
+			if( !(func.objectType->flags & asOBJ_VALUE) )
 			{
-				beh->operators.PushLast(behaviour);
-				beh->operators.PushLast(func.id);
+				WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+				return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 			}
-*/		}
+
+			// Implicit constructors must take one and only one parameter
+	/*		if( behaviour == asBEHAVE_IMPLICIT_CONSTRUCT &&
+				func.parameterTypes.GetLength() != 1 )
+				return ConfigError(asINVALID_DECLARATION);
+	*/
+			// TODO: Verify that the same constructor hasn't been registered already
+
+			// Store all constructors in a list
+			if( func.parameterTypes.GetLength() == 0 )
+			{
+				func.id = beh->construct = AddBehaviourFunction(func, internal);
+				beh->constructors.PushLast(beh->construct);
+			}
+			else
+			{
+				func.id = AddBehaviourFunction(func, internal);
+				beh->constructors.PushLast(func.id);
+	/*
+				if( behaviour == asBEHAVE_IMPLICIT_CONSTRUCT )
+				{
+					beh->operators.PushLast(behaviour);
+					beh->operators.PushLast(func.id);
+				}
+	*/		}
+		}
 	}
 	else if( behaviour == asBEHAVE_DESTRUCT )
 	{
@@ -1663,14 +1520,14 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		// TODO: Add asBEHAVE_IMPLICIT_FACTORY
 
 		// Must be a ref type and must not have asOBJ_NOHANDLE
-		if( !(type.GetObjectType()->flags & asOBJ_REF) || (type.GetObjectType()->flags & asOBJ_NOHANDLE) )
+		if( !(objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_NOHANDLE) )
 		{
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 		}
 
 		// Verify that the return type is a handle to the type
-		if( func.returnType != asCDataType::CreateObjectHandle(type.GetObjectType(), false) )
+		if( func.returnType != asCDataType::CreateObjectHandle(objectType, false) )
 			return ConfigError(asINVALID_DECLARATION);
 
 		// Implicit factories must take one and only one parameter
@@ -1681,7 +1538,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		// TODO: Verify that the same factory function hasn't been registered already
 
 		// The templates take a hidden parameter with the object type
-		if( (type.GetObjectType()->flags & asOBJ_TEMPLATE) &&
+		if( (objectType->flags & asOBJ_TEMPLATE) &&
 			(func.parameterTypes.GetLength() == 0 ||
 			 !func.parameterTypes[0].IsReference()) )
 		{
@@ -1690,7 +1547,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		// Store all factory functions in a list
 		if( (func.parameterTypes.GetLength() == 0) ||
-			(func.parameterTypes.GetLength() == 1 && (type.GetObjectType()->flags & asOBJ_TEMPLATE)) )
+			(func.parameterTypes.GetLength() == 1 && (objectType->flags & asOBJ_TEMPLATE)) )
 		{
 			func.id = beh->factory = AddBehaviourFunction(func, internal);
 			beh->factories.PushLast(beh->factory);
@@ -1775,49 +1632,6 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 		func.id = beh->templateCallback = AddBehaviourFunction(func, internal);
 	}
-#ifdef AS_DEPRECATED
-	else if( behaviour >= asBEHAVE_FIRST_ASSIGN && behaviour <= asBEHAVE_LAST_ASSIGN )
-	{
-		// Verify that the var type is not used
-		if( VerifyVarTypeNotInFunction(&func) < 0 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that there is exactly one parameter
-		if( func.parameterTypes.GetLength() != 1 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that the return type is a reference to the object type
-		if( func.returnType != type )
-			return ConfigError(asINVALID_DECLARATION);
-
-		if( !ep.allowUnsafeReferences )
-		{
-			// Verify that the rvalue is marked as in if a reference
-			if( func.parameterTypes[0].IsReference() && func.inOutFlags[0] != 1 )
-				return ConfigError(asINVALID_DECLARATION);
-		}
-
-		if( behaviour == asBEHAVE_ASSIGNMENT && func.parameterTypes[0].IsEqualExceptConst(type) )
-		{
-			if( beh->copy )
-				return ConfigError(asALREADY_REGISTERED);
-
-			func.id = beh->copy = AddBehaviourFunction(func, internal);
-			scriptFunctions[beh->copy]->AddRef();
-
-			beh->operators.PushLast(behaviour);
-			beh->operators.PushLast(beh->copy);
-		}
-		else
-		{
-			// TODO: Verify that the operator hasn't been registered with the same parameter already
-
-			beh->operators.PushLast(behaviour);
-			func.id = AddBehaviourFunction(func, internal);
-			beh->operators.PushLast(func.id);
-		}
-	}
-#endif
 	else if( behaviour == asBEHAVE_INDEX )
 	{
 		// Verify that the var type is not used
@@ -1838,34 +1652,6 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-	else if( behaviour == asBEHAVE_NEGATE )
-	{
-		// Verify that there are no parameters
-		if( func.parameterTypes.GetLength() != 0 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that the return type is a the same as the type
-		type.MakeReference(false);
-		if( type.GetObjectType()->flags & asOBJ_SCOPED )
-		{
-			// Scoped types must be returned by handle
-			asCDataType t = type;
-			t.MakeHandle(true, true);
-			if( func.returnType != t )
-				return ConfigError(asINVALID_DECLARATION);
-		}
-		else if( func.returnType != type )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// TODO: Verify that the operator hasn't been registered already
-
-		beh->operators.PushLast(behaviour);
-		func.id = AddBehaviourFunction(func, internal);
-		beh->operators.PushLast(func.id);
-	}
-#endif
 	else if( behaviour >= asBEHAVE_FIRST_GC &&
 		     behaviour <= asBEHAVE_LAST_GC )
 	{
@@ -1953,15 +1739,6 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	}
 	else
 	{
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-		if( behaviour >= asBEHAVE_FIRST_DUAL &&
-			behaviour <= asBEHAVE_LAST_DUAL )
-		{
-			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_MUST_BE_GLOBAL_BEHAVIOUR);
-		}
-		else
-#endif
 		asASSERT(false);
 
 		return ConfigError(asINVALID_ARG);
@@ -1971,119 +1748,6 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	return func.id;
 }
 
-
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-int asCScriptEngine::RegisterGlobalBehaviour(asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv)
-{
-	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
-	if( r < 0 )
-		return ConfigError(r);
-
-	isPrepared = false;
-
-	asCBuilder bld(this, 0);
-
-#ifdef AS_MAX_PORTABILITY
-	if( callConv != asCALL_GENERIC )
-		return ConfigError(asNOT_SUPPORTED);
-#else
-	if( callConv != asCALL_CDECL &&
-		callConv != asCALL_STDCALL &&
-		callConv != asCALL_GENERIC )
-		return ConfigError(asNOT_SUPPORTED);
-#endif
-
-	// We need a global behaviour structure
-	asSTypeBehaviour *beh = &globalBehaviours;
-
-	// Verify function declaration
-	asCScriptFunction func(this, 0);
-
-	r = bld.ParseFunctionDeclaration(0, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
-	if( r < 0 )
-		return ConfigError(asINVALID_DECLARATION);
-	func.name.Format("_beh_%d_", behaviour);
-
-	if( behaviour >= asBEHAVE_FIRST_DUAL && behaviour <= asBEHAVE_LAST_DUAL )
-	{
-		// Verify that the var type is not used
-		if( VerifyVarTypeNotInFunction(&func) < 0 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that there are exactly two parameters
-		if( func.parameterTypes.GetLength() != 2 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that the return type is not void
-		if( func.returnType.GetTokenType() == ttVoid )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that at least one of the parameters is a registered type
-		if( !(func.parameterTypes[0].GetTokenType() == ttIdentifier) &&
-			!(func.parameterTypes[1].GetTokenType() == ttIdentifier) )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// TODO: Verify that the operator hasn't been registered with the same parameters already
-
-		beh->operators.PushLast(behaviour);
-		func.id = AddBehaviourFunction(func, internal);
-		beh->operators.PushLast(func.id);
-		currentGroup->globalBehaviours.PushLast((int)beh->operators.GetLength()-2);
-	}
-	else if( behaviour == asBEHAVE_REF_CAST ||
-		     behaviour == asBEHAVE_IMPLICIT_REF_CAST )
-	{
-		// Verify that the var type not used
-		if( VerifyVarTypeNotInFunction(&func) < 0 )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that the only parameter is a handle
-		if( func.parameterTypes.GetLength() != 1 ||
-			!func.parameterTypes[0].IsObjectHandle() )
-			return ConfigError(asINVALID_DECLARATION);
-
-		// Verify that the return type is a handle
-		if( !func.returnType.IsObjectHandle() )
-			return ConfigError(asINVALID_DECLARATION);
-
-		beh->operators.PushLast(behaviour);
-		func.id = AddBehaviourFunction(func, internal);
-		beh->operators.PushLast(func.id);
-		currentGroup->globalBehaviours.PushLast((int)beh->operators.GetLength()-2);
-	}
-	else
-	{
-		return ConfigError(asINVALID_ARG);
-	}
-
-	// Return the function id as success
-	return func.id;
-}
-#endif
-
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-int asCScriptEngine::GetGlobalBehaviourCount()
-{
-	return (int)globalBehaviours.operators.GetLength()/2;
-}
-#endif
-
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-int asCScriptEngine::GetGlobalBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour)
-{
-	if( index*2 >= globalBehaviours.operators.GetLength() )
-		return asINVALID_ARG;
-
-	if( outBehaviour )
-		*outBehaviour = static_cast<asEBehaviours>(globalBehaviours.operators[index*2]);
-
-	return globalBehaviours.operators[index*2+1];
-}
-#endif
 
 int asCScriptEngine::VerifyVarTypeNotInFunction(asCScriptFunction *func)
 {
@@ -2137,14 +1801,14 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	// If parameter type from other groups are used, add references
 	if( f->returnType.GetObjectType() )
 	{
-		asCConfigGroup *group = FindConfigGroup(f->returnType.GetObjectType());
+		asCConfigGroup *group = FindConfigGroupForObjectType(f->returnType.GetObjectType());
 		currentGroup->RefConfigGroup(group);
 	}
 	for( n = 0; n < f->parameterTypes.GetLength(); n++ )
 	{
 		if( f->parameterTypes[n].GetObjectType() )
 		{
-			asCConfigGroup *group = FindConfigGroup(f->parameterTypes[n].GetObjectType());
+			asCConfigGroup *group = FindConfigGroupForObjectType(f->parameterTypes[n].GetObjectType());
 			currentGroup->RefConfigGroup(group);
 		}
 	}
@@ -2180,7 +1844,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	// If from another group add reference
 	if( type.GetObjectType() )
 	{
-		asCConfigGroup *group = FindConfigGroup(type.GetObjectType());
+		asCConfigGroup *group = FindConfigGroupForObjectType(type.GetObjectType());
 		currentGroup->RefConfigGroup(group);
 	}
 
@@ -2256,10 +1920,30 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, i
 	return asSUCCESS;
 }
 
+// interface
 int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
+	if( obj == 0 )
+		return ConfigError(asINVALID_ARG);
+
+	// Determine the object type
+	asCDataType dt;
+	asCBuilder bld(this, 0);
+	int r = bld.ParseDataType(obj, &dt);
+	if( r < 0 )
+		return ConfigError(r);
+
+	if( dt.GetObjectType() == 0 )
+		return ConfigError(asINVALID_ARG);
+
+	return RegisterMethodToObjectType(dt.GetObjectType(), declaration, funcPointer, callConv);
+}
+
+// internal
+int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
+{
 	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(obj != 0, funcPointer, callConv, &internal);
+	int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
 	if( r < 0 )
 		return ConfigError(r);
 
@@ -2275,12 +1959,6 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		return ConfigError(asNOT_SUPPORTED);
 #endif
 
-	asCDataType dt;
-	asCBuilder bld(this, 0);
-	r = bld.ParseDataType(obj, &dt);
-	if( r < 0 )
-		return ConfigError(r);
-
 	isPrepared = false;
 
 	// Put the system function in the list of system functions
@@ -2288,8 +1966,9 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 
 	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SYSTEM);
 	func->sysFuncIntf = newInterface;
-	func->objectType  = dt.GetObjectType();
+	func->objectType  = objectType;
 
+	asCBuilder bld(this, 0);
 	r = bld.ParseFunctionDeclaration(func->objectType, declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
 	if( r < 0 )
 	{
@@ -2300,7 +1979,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	}
 
 	// Check name conflicts
-	r = bld.CheckNameConflictMember(dt, func->name.AddressOf(), 0, 0);
+	r = bld.CheckNameConflictMember(asCDataType::CreateObject(objectType, false), func->name.AddressOf(), 0, 0);
 	if( r < 0 )
 	{
 		asDELETE(func,asCScriptFunction);
@@ -2311,17 +1990,18 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	func->objectType->methods.PushLast(func->id);
 	SetScriptFunction(func);
 
+	// TODO: This code is repeated in many places
 	// If parameter type from other groups are used, add references
 	if( func->returnType.GetObjectType() )
 	{
-		asCConfigGroup *group = FindConfigGroup(func->returnType.GetObjectType());
+		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
 		currentGroup->RefConfigGroup(group);
 	}
 	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
 		if( func->parameterTypes[n].GetObjectType() )
 		{
-			asCConfigGroup *group = FindConfigGroup(func->parameterTypes[n].GetObjectType());
+			asCConfigGroup *group = FindConfigGroupForObjectType(func->parameterTypes[n].GetObjectType());
 			currentGroup->RefConfigGroup(group);
 		}
 	}
@@ -2351,11 +2031,9 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	}
 
 	// TODO: beh.copy member will be removed, so this is not necessary
-	// Is this the default copy behaviour
-	if( func->name == "opAssign" &&
-		func->parameterTypes.GetLength() == 1 &&
-		func->parameterTypes[0].IsEqualExceptRefAndConst(asCDataType::CreateObject(func->objectType, false)) &&
-		func->isReadOnly == false )
+	// Is this the default copy behaviour?
+	if( func->name == "opAssign" && func->parameterTypes.GetLength() == 1 && func->isReadOnly == false &&
+		(objectType->flags & asOBJ_SCRIPT_OBJECT || func->parameterTypes[0].IsEqualExceptRefAndConst(asCDataType::CreateObject(func->objectType, false))) )
 	{
 		func->objectType->beh.copy = func->id;
 		func->AddRef();
@@ -2418,14 +2096,14 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	// If parameter type from other groups are used, add references
 	if( func->returnType.GetObjectType() )
 	{
-		asCConfigGroup *group = FindConfigGroup(func->returnType.GetObjectType());
+		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
 		currentGroup->RefConfigGroup(group);
 	}
 	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
 		if( func->parameterTypes[n].GetObjectType() )
 		{
-			asCConfigGroup *group = FindConfigGroup(func->parameterTypes[n].GetObjectType());
+			asCConfigGroup *group = FindConfigGroupForObjectType(func->parameterTypes[n].GetObjectType());
 			currentGroup->RefConfigGroup(group);
 		}
 	}
@@ -2611,7 +2289,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 
 	if( func->returnType.GetObjectType() )
 	{
-		asCConfigGroup *group = FindConfigGroup(func->returnType.GetObjectType());
+		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
 		if( group == 0 ) group = &defaultGroup;
 		group->scriptFunctions.PushLast(func);
 	}
@@ -2694,6 +2372,8 @@ void asCScriptEngine::BuildCompleted()
 	isBuilding = false;
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2009-12-08, 2.18.0
 // interface
 int asCScriptEngine::ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)
 {
@@ -2789,6 +2469,7 @@ int asCScriptEngine::ExecuteString(const char *module, const char *script, asISc
 	exec->Release();
 	return r;
 }
+#endif
 
 void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 {
@@ -3689,48 +3370,6 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 	}
 }
 
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-int asCScriptEngine::CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId)
-{
-	// Make sure the type id is for an object type, and not a primitive or a handle
-	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return asINVALID_TYPE;
-	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return asINVALID_TYPE;
-
-	// Is the behaviour valid?
-	if( behaviour < (int)asBEHAVE_EQUAL || behaviour > (int)asBEHAVE_GEQUAL ) return asINVALID_ARG;
-
-	// Get the object type information so we can find the comparison behaviours
-	asCObjectType *ot = GetObjectTypeFromTypeId(typeId);
-	if( !ot ) return asINVALID_TYPE;
-	asCDataType dt = asCDataType::CreateObject(ot, true);
-	dt.MakeReference(true);
-
-	// Find the behaviour
-	unsigned int n;
-	for( n = 0; n < globalBehaviours.operators.GetLength(); n += 2 )
-	{
-		// Is it the right comparison operator?
-		if( globalBehaviours.operators[n] == behaviour )
-		{
-			// Is it the right datatype?
-			int func = globalBehaviours.operators[n+1];
-			if( scriptFunctions[func]->parameterTypes[0].IsEqualExceptConst(dt) &&
-				scriptFunctions[func]->parameterTypes[1].IsEqualExceptConst(dt) )
-			{
-				// Call the comparison function and return the result
-				result = CallGlobalFunctionRetBool(leftObj, rightObj, scriptFunctions[func]->sysFuncIntf, scriptFunctions[func]);
-				return 0;
-			}
-		}
-	}
-
-	// If the behaviour is not supported we return an error
-	result = false;
-	return asNOT_SUPPORTED;
-}
-#endif
-
 void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 {
 	// Make sure it is not a null pointer
@@ -3849,16 +3488,27 @@ int asCScriptEngine::EndConfigGroup()
 
 int asCScriptEngine::RemoveConfigGroup(const char *groupName)
 {
+	// It is not allowed to remove a group that is still in use. 
+
+	// It would be possible to change the code in such a way that
+	// the group could be removed even though it was still in use,
+	// but that would cause severe negative impact on runtime 
+	// performance, since the VM would then have to be able handle
+	// situations where the types, functions, and global variables
+	// can be removed at any time.
+
 	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
 	{
 		if( configGroups[n]->groupName == groupName )
 		{
 			asCConfigGroup *group = configGroups[n];
+
+			// Make sure the group isn't referenced by anyone
 			if( group->refCount > 0 )
 				return asCONFIG_GROUP_IS_IN_USE;
 
 			// Verify if any objects registered in this group is still alive
-			if( group->HasLiveObjects(this) )
+			if( group->HasLiveObjects() )
 				return asCONFIG_GROUP_IS_IN_USE;
 
 			// Remove the group from the list
@@ -3877,21 +3527,6 @@ int asCScriptEngine::RemoveConfigGroup(const char *groupName)
 	return 0;
 }
 
-asCConfigGroup *asCScriptEngine::FindConfigGroup(asCObjectType *ot)
-{
-	// Find the config group where this object type is registered
-	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
-	{
-		for( asUINT m = 0; m < configGroups[n]->objTypes.GetLength(); m++ )
-		{
-			if( configGroups[n]->objTypes[m] == ot )
-				return configGroups[n];
-		}
-	}
-
-	return 0;
-}
-
 asCConfigGroup *asCScriptEngine::FindConfigGroupForFunction(int funcId)
 {
 	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
@@ -3903,18 +3538,6 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForFunction(int funcId)
 			if( configGroups[n]->scriptFunctions[m]->id == funcId )
 				return configGroups[n];
 		}
-
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-20, 2.17.0
-
-		// Check global behaviours
-		for( m = 0; m < configGroups[n]->globalBehaviours.GetLength(); m++ )
-		{
-			int id = configGroups[n]->globalBehaviours[m]+1;
-			if( funcId == globalBehaviours.operators[id] )
-				return configGroups[n];
-		}
-#endif
 	}
 
 	return 0;

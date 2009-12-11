@@ -71,22 +71,6 @@ struct sObjectTypePair
 	asCObjectType *b;
 };
 
-// TODO: Remove the error code asMODULE_IS_IN_USE, it is no longer used anywhere
-
-// TODO: global: The module represents the current scope. Global variables may be added/removed
-//               from the scope through DeclareGlobalVar, UndeclareGlobalVar. Undeclaring a global variable
-//               doesn't destroy it, it just means the variable is no longer visible from the module, e.g. for
-//               new function compilations. Only when no more functions are accessing the global variables is
-//               the variable removed.
-
-// TODO: functions: It must be possible to compile new functions dynamically within the 
-//                  scope of a module. The new functions can be added to the scope of the module, or it can be 
-//                  left outside, thus only accessible through the function id that is returned. This can be used
-//                  by scripts to dynamically compile new functions. It will also be possible to undeclare functions,
-//                  in which case the function is removed from the scope of the module. When no one else is accessing
-//                  the function anymore, will it be removed. In order to keep track of references between functions
-//                  I need to implement reference counting, which also needs a GC for resolving cyclic references.
-
 // TODO: import: Remove function imports. When I have implemented function 
 //               pointers the function imports should be deprecated.
 
@@ -112,6 +96,7 @@ public:
 	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);
 	virtual int  Build();
 	virtual int  CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD reserved, asIScriptFunction **outFunc);
+	virtual int  CompileGlobalVar(const char *sectionName, const char *code, int lineOffset);
 
 	// Script functions
 	virtual int                GetFunctionCount();
@@ -131,6 +116,7 @@ public:
 	virtual const char *GetGlobalVarName(int index);
 	virtual int         GetGlobalVarTypeId(int index, bool *isConst);
 	virtual void       *GetAddressOfGlobalVar(int index);
+	virtual int         RemoveGlobalVar(int index);
 
 	// Type identification
 	virtual int            GetObjectTypeCount();

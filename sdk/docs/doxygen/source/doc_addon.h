@@ -1045,6 +1045,11 @@ int CompareRelation(asIScriptEngine *engine, void *leftObj, void *rightObj, int 
 // Uses the object's opEquals method to perform the comparison, or if that doesn't exist the opCmp method.
 // Returns a negative value if the comparison couldn't be performed.
 int CompareEquality(asIScriptEngine *engine, void *leftObj, void *rightObj, int typeId, bool &result);
+
+// Compile and execute simple statements.
+// The module is optional. If given the statements can access the entities compiled in the module.
+// The caller can optionally provide its own context, for example if a context should be reused.
+int ExecuteString(asIScriptEngine *engine, const char *code, asIScriptModule *mod = 0, asIScriptContext *ctx = 0);
 \endcode
 
 \section doc_addon_helpers_2 Example

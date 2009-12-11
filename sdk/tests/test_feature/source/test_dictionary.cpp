@@ -85,8 +85,8 @@ bool Test()
 	if( r < 0 )
 		fail = true;
 
-	asIScriptContext *ctx = 0;
-	r = engine->ExecuteString(0, "Test()", &ctx);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
@@ -109,7 +109,7 @@ bool Test()
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "f()");
+	r = ExecuteString(engine, "f()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
@@ -123,7 +123,7 @@ bool Test()
 	// Test invalid ref cast together with the variable argument
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-	r = engine->ExecuteString(0, "dictionary d; d.set('hello', cast<int>(4));");
+	r = ExecuteString(engine, "dictionary d; d.set('hello', cast<int>(4));");
 	if( r >= 0 ) 
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 35) : Error   : Illegal target type for reference cast\n" )
@@ -151,7 +151,8 @@ bool Test()
 	if( r < 0 )
 		fail = true;
 
-	r = engine->ExecuteString(0, "Test()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )

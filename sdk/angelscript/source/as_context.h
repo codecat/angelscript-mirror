@@ -121,17 +121,15 @@ public:
 	void *SetUserData(void *data);
 	void *GetUserData();
 
-#ifdef AS_DEPRECATED
-// deprecated since 2009-07-29, 2.17.0
-	void *GetArgPointer(asUINT arg);
-#endif
-
 public:
 	// Internal public functions
 	asCContext(asCScriptEngine *engine, bool holdRef);
 	virtual ~asCContext();
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2009-12-08, 2.18.0
 	int  SetExecuteStringFunction(asCScriptFunction *func);
+#endif
 
 //protected:
 	friend class asCScriptEngine;
@@ -184,8 +182,11 @@ public:
 	int returnValueSize;
 	int argumentsSize;
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2009-12-08, 2.18.0
 	// String function
 	asCScriptFunction *stringFunction;
+#endif
 
 	asCScriptFunction *initialFunction;
 

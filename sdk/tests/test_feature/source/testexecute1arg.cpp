@@ -35,7 +35,7 @@ bool TestExecute1Arg()
 	else
 		funcId = engine->RegisterGlobalFunction("void cfunction(int)", asFUNCTION(cfunction), asCALL_CDECL);
 
-	engine->ExecuteString(0, "cfunction(5)");
+	ExecuteString(engine, "cfunction(5)");
 
 	if( !called ) 
 	{
