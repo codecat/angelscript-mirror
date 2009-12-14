@@ -12,7 +12,14 @@ using namespace std;
 // Function prototypes
 void PrintHelp();
 void ExecString(asIScriptEngine *engine, string &arg);
+void AddVariable(asIScriptEngine *engine, string &arg);
+void DeleteVariable(asIScriptEngine *engine, string &arg);
+void AddFunction(asIScriptEngine *engine, string &arg);
+void DeleteFunction(asIScriptEngine *engine, string &arg);
+void ListVariables(asIScriptEngine *engine);
+void ListFunctions(asIScriptEngine *engine);
 void ConfigureEngine(asIScriptEngine *engine);
+void print(const string &s);
 void grab(int);
 void grab(asUINT);
 void grab(bool);
@@ -56,6 +63,8 @@ int main(int argc, char **argv)
 	cout << "Sample console using AngelScript " << asGetLibraryVersion() << " to perform scripted tasks." << endl;
 	cout << "Type 'help' for more information." << endl;
 
+	// TODO: Allow multiple lines per command by ending each line with a backslash.
+
 	for(;;)
 	{
 		string input;
@@ -83,8 +92,20 @@ int main(int argc, char **argv)
 		// Interpret the command
 		if( cmd == "exec" )
 			ExecString(engine, arg);
+		else if( cmd == "addfunc" )
+			AddFunction(engine, arg);
+		else if( cmd == "delfunc" )
+			DeleteFunction(engine, arg);
+		else if( cmd == "addvar" )
+			AddVariable(engine, arg);
+		else if( cmd == "delvar" )
+			DeleteVariable(engine, arg);
 		else if( cmd == "help" )
 			PrintHelp();
+		else if( cmd == "listfuncs" )
+			ListFunctions(engine);
+		else if( cmd == "listvars" )
+			ListVariables(engine); 
 		else if( cmd == "quit" )
 			break;
 		else
@@ -103,20 +124,20 @@ int main(int argc, char **argv)
 void PrintHelp()
 {
 	cout << "Commands:" << endl;
-	cout << "exec [script] - executes script statement and prints the result" << endl;
-	cout << "help          - this command" << endl;
-	cout << "quit          - end application" << endl;
-	cout << endl;
-	cout << "Functions:" << endl;
-	cout << "float sin(float) - sinus" << endl;
-	cout << "float cos(float) - cosinus" << endl;
-	cout << endl;
-	cout << "Variables:" << endl;
-	cout << "g_gravity (float)  - game gravity factor" << endl;
-	cout << "p_health  (uint)   - player health" << endl;
-	cout << "p_name    (string) - player name" << endl;
-	cout << "r_fov     (uint)   - field of view angle" << endl;
-	cout << "r_shadow  (bool)   - toggles shadows on/off" << endl;
+	cout << " addfunc [decl] - adds a user function" << endl;
+	cout << " addvar [decl]  - adds a user variable" << endl; 
+	cout << " delfunc [name] - removes a user function" << endl;
+	cout << " delvar [name]  - removes a user variable" << endl;
+	cout << " exec [script]  - executes script statement and prints the result" << endl;
+	cout << " help           - this command" << endl;
+	cout << " listfuncs      - list functions" << endl;
+	cout << " listvars       - list variables" << endl;
+	cout << " quit           - end application" << endl;
+}
+
+void print(const string &s)
+{
+	cout << s << endl;
 }
 
 void MessageCallback(const asSMessageInfo *msg, void *param)
@@ -153,6 +174,7 @@ void ConfigureEngine(asIScriptEngine *engine)
 	// Register some useful functions
 	r = engine->RegisterGlobalFunction("float sin(float)", asFUNCTION(sinf), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float cos(float)", asFUNCTION(cosf), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL); assert( r >= 0 );
 
 	// Register special function with overloads to catch any type.
 	// This is used by the exec command to output the resulting value from the statement.
@@ -172,13 +194,183 @@ void ExecString(asIScriptEngine *engine, string &arg)
 {
 	string script;
 
+	// Wrap the expression in with a call to _grab, which allow us to print the resulting value
 	script = "_grab(" + arg + ")";
 
-	int r = ExecuteString(engine, script.c_str());
+	// TODO: Add a time out to the script, so that never ending scripts doesn't freeze the application
+
+	int r = ExecuteString(engine, script.c_str(), engine->GetModule("console"));
 	if( r < 0 )
 		cout << "Invalid script statement. " << endl;
 	else if( r == asEXECUTION_EXCEPTION )
 		cout << "A script exception was raised." << endl;
+}
+
+void AddVariable(asIScriptEngine *engine, string &arg)
+{
+	asIScriptModule *mod = engine->GetModule("console", asGM_CREATE_IF_NOT_EXISTS);
+
+	// Add a semi-colon to end the statement (if not already there)
+	if( arg.length() > 0 && arg[arg.length()-1] != ';' )
+		arg += ";";
+
+	int r = mod->CompileGlobalVar("addvar", arg.c_str(), 0);
+	if( r < 0 )
+	{
+		// TODO: Add better description of error (invalid declaration, name conflict, etc)
+		cout << "Failed to add variable. " << endl;
+	}
+	else
+		cout << "Variable added. " << endl;
+}
+
+void DeleteVariable(asIScriptEngine *engine, string &arg)
+{
+	asIScriptModule *mod = engine->GetModule("console");
+	if( mod == 0 || mod->GetGlobalVarCount() == 0 ) 
+	{
+		cout << "No variables have been added. " << endl;
+		return;
+	}
+
+	// trim the string to find the variable name
+	int p1 = arg.find_first_not_of(" \n\r\t");
+	if( p1 != string::npos )
+		arg = arg.substr(p1, -1);
+	int p2 = arg.find_last_not_of(" \n\r\t");
+	if( p2 != string::npos )
+		arg = arg.substr(0, p2+1);
+
+	int index = mod->GetGlobalVarIndexByName(arg.c_str());
+	if( index >= 0 )
+	{
+		mod->RemoveGlobalVar(index);
+		cout << "Variable removed. " << endl;
+	}
+	else
+		cout << "No such variable. " << endl;
+}
+
+void AddFunction(asIScriptEngine *engine, string &arg)
+{
+	asIScriptModule *mod = engine->GetModule("console", asGM_CREATE_IF_NOT_EXISTS);
+
+	asIScriptFunction *func = 0;
+	int r = mod->CompileFunction("addfunc", arg.c_str(), 0, asCOMP_ADD_TO_MODULE, &func);
+	if( r < 0 )
+	{
+		// TODO: Add better description of error (invalid declaration, name conflict, etc)
+		cout << "Failed to add function. " << endl;
+	}
+	else
+	{
+		// The script engine supports function overloads, but to simplify the 
+		// console we'll disallow multiple functions with the same name
+		if( mod->GetFunctionIdByName(func->GetName()) == asMULTIPLE_FUNCTIONS )
+		{
+			mod->RemoveFunction(func->GetId());
+			cout << "Another function with that name already exists." << endl;
+		}
+		else
+			cout << "Function added. " << endl;
+	}
+
+	// We must release the function object
+	if( func )
+		func->Release();
+}
+
+void DeleteFunction(asIScriptEngine *engine, string &arg)
+{
+	asIScriptModule *mod = engine->GetModule("console");
+	if( mod == 0 || mod->GetFunctionCount() == 0 ) 
+	{
+		cout << "No functions have been added. " << endl;
+		return;
+	}
+
+	// trim the string to find the variable name
+	int p1 = arg.find_first_not_of(" \n\r\t");
+	if( p1 != string::npos )
+		arg = arg.substr(p1, -1);
+	int p2 = arg.find_last_not_of(" \n\r\t");
+	if( p2 != string::npos )
+		arg = arg.substr(0, p2+1);
+
+	int id = mod->GetFunctionIdByName(arg.c_str());
+	if( id > 0 )
+	{
+		mod->RemoveFunction(id);
+		cout << "Function removed. " << endl;
+	}
+	else
+		cout << "No such function. " << endl;
+
+	// Since functions can be recursive, we'll call the garbage
+	// collector to make sure the object is really freed
+	engine->GarbageCollect();
+}
+
+void ListVariables(asIScriptEngine *engine)
+{
+	asUINT n;
+
+	// List the application registered variables
+	cout << "Application variables:" << endl;
+	for( n = 0; n < engine->GetGlobalPropertyCount(); n++ )
+	{
+		const char *name;
+		int typeId;
+		bool isConst;
+		engine->GetGlobalPropertyByIndex(n, &name, &typeId, &isConst);
+		string decl = isConst ? " const " : " ";
+		decl += engine->GetTypeDeclaration(typeId);
+		decl += " ";
+		decl += name;
+		cout << decl << endl;
+	}
+
+	// List the user variables in the module
+	asIScriptModule *mod = engine->GetModule("console");
+	if( mod )
+	{
+		cout << endl;
+		cout << "User variables:" << endl;
+		for( n = 0; n < mod->GetGlobalVarCount(); n++ )
+		{
+			cout << " " << mod->GetGlobalVarDeclaration(n) << endl;
+		}
+	}
+}
+
+void ListFunctions(asIScriptEngine *engine)
+{
+	asUINT n;
+	
+	// List the application registered functions
+	cout << "Application functions:" << endl;
+	for( n = 0; n < engine->GetGlobalFunctionCount(); n++ )
+	{
+		int id = engine->GetGlobalFunctionIdByIndex(n);
+		asIScriptFunction *func = engine->GetFunctionDescriptorById(id);
+
+		// Skip the functions that start with _ as these are not meant to be called explicitly by the user
+		if( func->GetName()[0] != '_' )
+			cout << " " << func->GetDeclaration() << endl;
+	}
+
+	// List the user functions in the module
+	asIScriptModule *mod = engine->GetModule("console");
+	if( mod )
+	{
+		cout << endl;
+		cout << "User functions:" << endl;
+		for( n = 0; n < mod->GetFunctionCount(); n++ )
+		{
+			asIScriptFunction *func = mod->GetFunctionDescriptorByIndex(n);
+			cout << " " << func->GetDeclaration() << endl;
+		}
+	}
 }
 
 void grab(int v)

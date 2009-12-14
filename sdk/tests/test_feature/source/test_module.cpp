@@ -73,7 +73,8 @@ bool Test()
 		fail = true;
 
 	// Don't permit recursive calls, unless the function is added to the module scope
-	// TODO: It may be possible to compile a recursive function, if the application explicitly allows it
+	// TODO: It may be possible to compile a recursive function even without adding
+	//       it to the scope, but the application needs to explicitly allows it
 	bout.buffer = "";
 	r = mod->CompileFunction(0, "void func() {\n func(); \n}", -1, 0, 0);
 	if( r >= 0 )
@@ -105,19 +106,6 @@ bool Test()
 	if( r < 0 )
 		fail = true;
 
-	// TODO: Do not allow adding functions that already exist in the module
-
-	// TODO: Removing a function from the scope of the module shouldn't free it 
-	//       immediately if it is still used by another function
-
-	// TODO: Make sure cyclic references between functions are resolved so we don't get memory leaks
-
-	// TODO: Maybe we can allow replacing an existing function
-	// TODO: It should be possible to serialize these dynamic functions
-	// TODO: The dynamic functions should also be JIT compiled
-	// TODO: What should happen if a function in the module scope references another function that has 
-	//       been removed from the scope but is still alive, and then the byte code for the module is saved?
-
 	// It should be possible to remove global variables from the scope of the module
 	mod->AddScriptSection(0, "int g_var; void func() { g_var = 1; }");
 	r = mod->Build();
@@ -144,9 +132,38 @@ bool Test()
 	if( mod->GetGlobalVarCount() != 2 )
 		fail = true;
 
+	// Shouldn't be possible to add function with the same name as a global variable
+	bout.buffer = "";
+	r = mod->CompileFunction(0, "void g_var() {}", 0, asCOMP_ADD_TO_MODULE, 0);
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != " (1, 1) : Error   : Name conflict. 'g_var' is a global property.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	if( ctx ) 
 		ctx->Release();
 	engine->Release();
+
+	// TODO: Removing a function from the scope of the module shouldn't free it 
+	//       immediately if it is still used by another function. This is working.
+	//       I just need a formal test for regression testing.
+
+	// TODO: Make sure cyclic references between functions are resolved so we don't get memory leaks
+	//       This is working. I just need a formal test for regression testing.
+
+	// TODO: Do not allow adding functions that already exist in the module
+
+	// TODO: Maybe we can allow replacing an existing function
+
+	// TODO: It should be possible to serialize these dynamic functions
+
+	// TODO: The dynamic functions should also be JIT compiled
+
+	// TODO: What should happen if a function in the module scope references another function that has 
+	//       been removed from the scope but is still alive, and then the byte code for the module is saved?
 
 	// Success
 	return fail;

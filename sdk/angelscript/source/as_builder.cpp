@@ -269,7 +269,6 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 
 	// Find the function node
 	node = node->firstChild;
-	node->DisconnectParent();
 
 	// Create the function
 	bool isConstructor, isDestructor;
@@ -281,6 +280,13 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	// Tell the engine that the function exists already so the compiler can access it
 	if( compileFlags & asCOMP_ADD_TO_MODULE )
 	{
+		int r = CheckNameConflict(func->name.AddressOf(), node, scripts[0]);
+		if( r < 0 )
+		{
+			func->Release();
+			return asERROR;
+		}
+
 		module->globalFunctions.PushLast(func);
 		func->AddRef();
 		module->AddScriptFunction(func);
@@ -289,6 +295,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 		engine->SetScriptFunction(func);
 
 	// Fill in the function info for the builder too
+	node->DisconnectParent();
 	sFunctionDescription *funcDesc = asNEW(sFunctionDescription);
 	functions.PushLast(funcDesc);
 	funcDesc->script = scripts[0];
