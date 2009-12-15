@@ -506,13 +506,7 @@
 				RelativePath="..\..\source\testoutput.cpp">
 			</File>
 			<File
-				RelativePath="..\..\source\testreturn.cpp">
-			</File>
-			<File
-				RelativePath="..\..\source\testreturnd.cpp">
-			</File>
-			<File
-				RelativePath="..\..\source\testreturnf.cpp">
+				RelativePath="..\..\source\test_cdecl_return.cpp">
 			</File>
 			<File
 				RelativePath="..\..\source\teststack.cpp">

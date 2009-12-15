@@ -890,19 +890,23 @@ int asCContext::Abort()
 	return 0;
 }
 
+// interface
 int asCContext::Suspend()
 {
-	// TODO: multithread: Make thread safe
+	// This function just sets some internal flags and is safe 
+	// to call from a secondary thread, even if the library has
+	// been built without multi-thread support.
 
 	if( engine == 0 ) return asERROR;
 
 	doSuspend = true;
-	regs.doProcessSuspend = true;
 	externalSuspendRequest = true;
+	regs.doProcessSuspend = true;
 
 	return 0;
 }
 
+// interface
 int asCContext::Execute()
 {
 	asASSERT( engine != 0 );

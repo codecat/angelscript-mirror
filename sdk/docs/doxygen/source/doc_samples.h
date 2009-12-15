@@ -57,13 +57,17 @@ the queue by calling the function sleep().
 
 <b>Path:</b> /sdk/samples/console/
 
-This sample implements a simple console, which lets the user type in 
-commands and also evaluate simple script statements.
+This sample implements a simple interactive console, which lets the user type in 
+commands and also evaluate simple script statements to manipulate the application.
 
- - ExecuteString()
- - Strings
- - Registered global functions
- - Registered global properties
+The user is also able to define new variables and functions from the command line. 
+These functions can then be executed to perform automated tasks. 
+
+ - \ref doc_addon_helpers "ExecuteString"
+ - \ref asIScriptModule::CompileFunction "CompileFunction", \ref asIScriptModule::CompileGlobalVar "CompileGlobalVar", \ref asIScriptModule::RemoveFunction "RemoveFunction", \ref asIScriptModule::RemoveGlobalVar "RemoveGlobalVar"
+ - Enumerate global functions and variables
+ - \ref doc_addon_string "Strings"
+ - Registered global functions and properties
  - Special function _grab() with overloads to receive and print resulting value from script statements
 
 

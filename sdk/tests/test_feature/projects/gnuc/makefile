@@ -121,9 +121,7 @@ SRCNAMES = \
   testnotcomplexthiscall.cpp \
   testoutput.cpp \
   test_registertype.cpp \
-  testreturn.cpp \
-  testreturnd.cpp \
-  testreturnf.cpp \
+  test_cdecl_return.cpp \
   test_rz.cpp \
   teststdcall4args.cpp \
   teststdstring.cpp \

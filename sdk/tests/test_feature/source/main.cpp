@@ -23,9 +23,6 @@ bool TestExecute32Args();
 bool TestExecuteMixedArgs();
 bool TestExecute32MixedArgs();
 bool TestExecuteThis32MixedArgs();
-bool TestReturn();
-bool TestReturnF();
-bool TestReturnD();
 bool TestTempVar();
 bool TestExecuteScript();
 bool Test2Modules();
@@ -61,6 +58,7 @@ bool TestOptimize();
 bool TestNotInitialized();
 bool TestVector3();
 
+namespace TestCDeclReturn       { bool Test(); }
 namespace TestCustomMem         { bool Test(); }
 namespace TestGeneric           { bool Test(); }
 namespace TestDebug             { bool Test(); }
@@ -292,9 +290,7 @@ int main(int argc, char **argv)
 	{
 		// cdecl
 		if( TestExecute()                 ) goto failed; else printf("-- TestExecute passed\n");
-		if( TestReturn()                  ) goto failed; else printf("-- TestReturn passed\n");
-		if( TestReturnF()                 ) goto failed; else printf("-- TestReturnF passed\n");
-		if( TestReturnD()                 ) goto failed; else printf("-- TestReturnD passed\n");
+		if( TestCDeclReturn::Test()       ) goto failed; else printf("-- TestCDeclReturn passed\n");
 		if( TestExecute1Arg()             ) goto failed; else printf("-- TestExecute1Arg passed\n");
 		if( TestExecute2Args()            ) goto failed; else printf("-- TestExecute2Args passed\n");
 		if( TestExecute4Args()            ) goto failed; else printf("-- TestExecute4Args passed\n");

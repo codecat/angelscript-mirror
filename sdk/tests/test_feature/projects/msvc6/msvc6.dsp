@@ -147,6 +147,10 @@ SOURCE=..\..\source\test_castop.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_cdecl_return.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_circularimport.cpp
 # End Source File
 # Begin Source File
@@ -564,18 +568,6 @@ SOURCE=..\..\source\testnotcomplexthiscall.cpp
 # Begin Source File
 
 SOURCE=..\..\source\testoutput.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\source\testreturn.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\source\testreturnd.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\source\testreturnf.cpp
 # End Source File
 # Begin Source File
 

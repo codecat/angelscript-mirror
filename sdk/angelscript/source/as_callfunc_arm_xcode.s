@@ -35,6 +35,7 @@
 // Adapted to GNUC by darktemplar216 in September 2009
 // Small fixed to work under XCode GCC by Gilad Novik in October 2009
 
+#if defined(__arm__) || defined(__ARM__)
 
 .align 2
 .globl _armFunc
@@ -232,3 +233,5 @@ nomoreargsarmFuncR0R1:
     blx     r4
     add     sp, sp, r8
     ldmia   sp!, {r4-r8, pc}
+
+#endif

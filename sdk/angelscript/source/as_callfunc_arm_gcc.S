@@ -34,7 +34,7 @@
 
 // Adapted to GNUC by darktemplar216 in September 2009
 
-
+#if defined(__arm__) || defined(__ARM__)
 
 .global armFunc
 .global armFuncR0
@@ -232,3 +232,4 @@ nomoreargsarmFuncR0R1:
     add     sp, sp, r8
     ldmia   sp!, {r4-r8, pc}
 
+#endif
