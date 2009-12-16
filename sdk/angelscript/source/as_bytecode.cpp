@@ -386,6 +386,7 @@ bool asCByteCode::PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **
 
 bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **next)
 {
+	// TODO: global: The global var address should be stored in the instruction directly
 	// The value isn't used for anything
 	if( (asBCInfo[curr->op].type == asBCTYPE_wW_rW_rW_ARG ||
 		 asBCInfo[curr->op].type == asBCTYPE_wW_rW_ARG    ||
@@ -582,6 +583,8 @@ int asCByteCode::Optimize()
 	
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
+	// TODO: global: The global var address should be stored in the instruction directly
+
 	cByteInstruction *instr = first;
 	while( instr )
 	{
@@ -1707,6 +1710,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine)
 			break;
 
 		case asBCTYPE_W_DW_ARG:
+			// TODO: global: The global var address should be stored in the instruction directly
 			if( instr->op == asBC_SetG4 )
 				fprintf(file, "   %-8s %d, 0x%x          (i:%d, f:%g)\n", asBCInfo[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 			break;

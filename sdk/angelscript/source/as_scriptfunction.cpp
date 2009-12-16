@@ -186,6 +186,7 @@ int asCScriptFunction::AddRef()
 	return refCount.atomicInc();
 }
 
+// interface
 int asCScriptFunction::Release()
 {
 	gcFlag = false;
@@ -414,6 +415,7 @@ void asCScriptFunction::AddReferences()
 				parameterTypes[p].GetObjectType()->AddRef();
 	}
 
+	// TODO: global: The global var address should be stored in the instruction directly
 	// Go through the byte code and add references to all resources used by the function
 	for( n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{
@@ -511,6 +513,7 @@ void asCScriptFunction::ReleaseReferences()
 				parameterTypes[p].GetObjectType()->Release();
 	}
 
+	// TODO: global: The global var address should be stored in the instruction directly
 	// Go through the byte code and release references to all resources used by the function
 	for( n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{

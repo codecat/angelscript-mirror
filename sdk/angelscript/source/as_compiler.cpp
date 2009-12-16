@@ -527,6 +527,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCo
 
 					// Store the returned handle in the global variable
 					ctx.bc.Instr(asBC_RDSPTR);
+					// TODO: global: The global var address should be stored in the instruction directly
 					ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(offset));
 					ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
 					ctx.bc.Pop(AS_PTR_SIZE);
@@ -547,6 +548,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCo
 		else
 		{
 			if( isGlobalVar )
+				// TODO: global: The global var address should be stored in the instruction directly
 				bc->InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(offset));
 			else
 				bc->InstrSHORT(asBC_PSF, (short)offset);
@@ -703,6 +705,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 						// Store the returned handle in the global variable
 						ctx.bc.Instr(asBC_RDSPTR);
+						// TODO: global: The global var address should be stored in the instruction directly
 						ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 						ctx.bc.InstrPTR(asBC_REFCPY, gvar->datatype.GetObjectType());
 						ctx.bc.Pop(AS_PTR_SIZE);
@@ -711,6 +714,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					else
 					{
 						// TODO: This reference is open while evaluating the arguments. We must fix this
+						// TODO: global: The global var address should be stored in the instruction directly
 						ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 
 						PrepareFunctionCall(funcs[0], &ctx.bc, args);
@@ -771,6 +775,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 				// If it is an enum value that is being compiled, then
 				// we skip this, as the bytecode won't be used anyway
+				// TODO: global: The global var address should be stored in the instruction directly
 				if( !gvar->isEnumValue )
 					lctx.bc.InstrWORD(asBC_LDG, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 
@@ -787,6 +792,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				if( gvar->datatype.IsObjectHandle() )
 					lexpr.type.isExplicitHandle = true;
 
+				// TODO: global: The global var address should be stored in the instruction directly
 				lexpr.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 
 				// If left expression resolves into a registered type
@@ -825,6 +831,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 					MergeExprContexts(&ctx, &expr);
 
 					// Add byte code for storing value of expression in variable
+					// TODO: global: The global var address should be stored in the instruction directly
 					ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(gvar->index));
 
 					PerformAssignment(&lexpr.type, &expr.type, &ctx.bc, node);
@@ -1689,6 +1696,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 					// Store the returned handle in the global variable
 					ctx.bc.Instr(asBC_RDSPTR);
+					// TODO: global: The global var address should be stored in the instruction directly
 					ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(var->stackOffset));
 					ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
 					ctx.bc.Pop(AS_PTR_SIZE);
@@ -1700,6 +1708,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				if( var->isVariable )
 					ctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
 				else
+					// TODO: global: The global var address should be stored in the instruction directly
 					ctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(var->stackOffset));
 
 				PrepareFunctionCall(funcs[0], &ctx.bc, args);
@@ -1780,6 +1789,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				if( var->isVariable )
 					lctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
 				else
+					// TODO: global: The global var address should be stored in the instruction directly
 					lctx.bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(var->stackOffset));
 				lctx.bc.Instr(asBC_RDSPTR);
 				lctx.bc.Call(asBC_CALLSYS, funcId, 1+AS_PTR_SIZE);
@@ -5343,9 +5353,11 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 							ctx->type.dataType.MakeReference(true);
 
 							// Push the address of the variable on the stack
+							// TODO: global: The global var address should be stored in the instruction directly
 							if( ctx->type.dataType.IsPrimitive() )
 								ctx->bc.InstrWORD(asBC_LDG, (asWORD)outFunc->GetGlobalVarPtrIndex(prop->id));
 							else
+								// TODO: global: The global var address should be stored in the instruction directly
 								ctx->bc.InstrWORD(asBC_PGA, (asWORD)outFunc->GetGlobalVarPtrIndex(prop->id));
 						}
 					}
