@@ -321,8 +321,10 @@ bool asCDataType::IsHandleToConst() const
 	return isReadOnly;
 }
 
+// TODO: 3.0.0: This should be removed
 bool asCDataType::IsArrayType() const
 {
+	// TODO: array: The default array type should be defined by the application
 	return objectType ? (objectType->name == objectType->engine->defaultArrayObjectType->name) : false;
 }
 

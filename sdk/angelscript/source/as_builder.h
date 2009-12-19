@@ -114,7 +114,7 @@ public:
 	void WriteWarning(const char *scriptname, const char *msg, int r, int c);
 
 	int CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code);
-	int CheckNameConflictMember(asCDataType &dt, const char *name, asCScriptNode *node, asCScriptCode *code);
+	int CheckNameConflictMember(asCObjectType *type, const char *name, asCScriptNode *node, asCScriptCode *code);
 
 protected:
 	friend class asCCompiler;

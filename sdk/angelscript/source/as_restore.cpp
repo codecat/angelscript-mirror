@@ -518,8 +518,6 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 
 	WRITE_NUM(func->vfTableIdx);
 
-	WriteGlobalVarPointers(func);
-
 	// TODO: Write variables
 
 	// TODO: Store script section index
@@ -595,8 +593,6 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 	if( func->objectType )
 		func->ComputeSignatureId();
 
-	ReadGlobalVarPointers(func);
-
 	return func;
 }
 
@@ -614,7 +610,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 		WRITE_NUM(flags);
 	}
 	else
-	{	
+	{
 		if( ot->flags & asOBJ_ENUM )
 		{
 			// enumValues[]
@@ -1169,6 +1165,27 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 
 			WRITE_NUM(funcId);
 		}
+		else if( c == asBC_PGA ||
+			     c == asBC_LDG ||
+				 c == asBC_PshG4 ||
+				 c == asBC_LdGRdR4 ||
+				 c == asBC_CpyGtoV4 ||
+				 c == asBC_CpyVtoG4 ||
+				 c == asBC_SetG4 )
+		{
+			WRITE_NUM(*bc++);
+
+			// Translate global variable pointers into indices
+			asDWORD tmp[MAX_DATA_SIZE];
+			int n;
+			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
+				tmp[n] = *bc++;
+
+			*(int*)tmp = FindGlobalPropPtrIndex(*(void**)tmp);
+
+			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
+				WRITE_NUM(tmp[n]);
+		}
 		else
 		{
 			// Store the bc as is
@@ -1327,37 +1344,6 @@ void asCRestore::ReadUsedGlobalProps()
 	}
 }
 
-void asCRestore::WriteGlobalVarPointers(asCScriptFunction *func)
-{
-	int c = (int)func->globalVarPointers.GetLength();
-	WRITE_NUM(c);
-
-	for( int n = 0; n < c; n++ )
-	{
-		void *p = (void*)func->globalVarPointers[n];
-
-		int i = FindGlobalPropPtrIndex(p);
-		WRITE_NUM(i);
-	}
-}
-
-void asCRestore::ReadGlobalVarPointers(asCScriptFunction *func)
-{
-	int c;
-	READ_NUM(c);
-
-	func->globalVarPointers.SetLength(c);
-
-	for( int n = 0; n < c; n++ )
-	{
-		int idx;
-		READ_NUM(idx);
-
-		// This will later on be translated into the true pointer
-		func->globalVarPointers[n] = (void*)(size_t)idx;
-	}
-}
-
 //---------------------------------------------------------------------------------------------------
 // Miscellaneous
 //---------------------------------------------------------------------------------------------------
@@ -1435,14 +1421,20 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			int *fid = (int*)&bc[n+1];
 			*fid = module->bindInformations[*fid]->importedFunctionSignature->id;
 		}
+		else if( c == asBC_PGA ||
+			     c == asBC_LDG ||
+				 c == asBC_PshG4 ||
+				 c == asBC_LdGRdR4 ||
+				 c == asBC_CpyGtoV4 ||
+				 c == asBC_CpyVtoG4 ||
+				 c == asBC_SetG4 )
+		{
+			// Translate the global var index to pointer
+			asPTRWORD *index = (asPTRWORD*)&bc[n+1];
+			*(void**)index = usedGlobalProperties[*(int*)index];
+		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
-	}
-
-	// Translate the globalVarPointers
-	for( n = 0; n < func->globalVarPointers.GetLength(); n++ )
-	{
-		func->globalVarPointers[n] = usedGlobalProperties[(int)(size_t)func->globalVarPointers[n]];
 	}
 }
 

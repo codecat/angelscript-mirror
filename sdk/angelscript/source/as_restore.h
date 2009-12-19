@@ -69,7 +69,6 @@ protected:
 	void WriteDataType(const asCDataType *dt);
 	void WriteObjectType(asCObjectType *ot);
 	void WriteObjectTypeDeclaration(asCObjectType *ot, bool writeProperties);
-	void WriteGlobalVarPointers(asCScriptFunction *func);
 	void WriteByteCode(asDWORD *bc, int length);
 
 	void ReadString(asCString *str);
@@ -80,7 +79,6 @@ protected:
 	void ReadDataType(asCDataType *dt);
 	asCObjectType *ReadObjectType();
 	void ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties);
-	void ReadGlobalVarPointers(asCScriptFunction *func);
 	void ReadByteCode(asDWORD *bc, int length);
 
 	// Helper functions for storing variable data

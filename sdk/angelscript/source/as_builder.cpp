@@ -320,9 +320,6 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 			func->Release();
 		}
 
-		// Clear the global variables to avoid releasing them
-		// TODO: This shouldn't be necessary
-		func->globalVarPointers.SetLength(0);
 		func->Release();
 
 		return asERROR;
@@ -603,7 +600,7 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	// Verify property name
 	if( dt )
 	{
-		if( CheckNameConflictMember(*dt, name.AddressOf(), nameNode, &source) < 0 )
+		if( CheckNameConflictMember(dt->GetObjectType(), name.AddressOf(), nameNode, &source) < 0 )
 			return asNAME_TAKEN;
 	}
 	else
@@ -823,12 +820,9 @@ int asCBuilder::ParseVariableDeclaration(const char *decl, asCObjectProperty *va
 	return 0;
 }
 
-int asCBuilder::CheckNameConflictMember(asCDataType &dt, const char *name, asCScriptNode *node, asCScriptCode *code)
+int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCScriptNode *node, asCScriptCode *code)
 {
 	// It's not necessary to check against object types
-
-	// Check against other members
-	asCObjectType *t = dt.GetObjectType();
 
 	// TODO: optimize: Improve linear search
 	asCArray<asCObjectProperty *> &props = t->properties;
@@ -1142,7 +1136,6 @@ void asCBuilder::CompileGlobalVariables()
 			numWarnings = 0;
 			numErrors = 0;
 			outBuffer.Clear();
-			func.globalVarPointers.SetLength(0);
 
 			sGlobalVariableDescription *gvar = globVariables[n];
 			if( gvar->isCompiled )
@@ -1262,7 +1255,6 @@ void asCBuilder::CompileGlobalVariables()
 					init.Output(initFunc->byteCode.AddressOf());
 					initFunc->stackNeeded = init.largestStackUsed;
 					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
-					initFunc->globalVarPointers = func.globalVarPointers;
 					initFunc->AddReferences();
 
 					// The function's refCount was already initialized to 1 
@@ -1345,10 +1337,6 @@ void asCBuilder::CompileGlobalVariables()
 		asDELETE(gvar, sGlobalVariableDescription);
 		globVariables[n] = 0;
 	}
-
-	// Clear the local function's global var pointers. Otherwise it will try to release them
-	// TODO: This shouldn't be necessary. Find a better way to do it
-	func.globalVarPointers.SetLength(0);
 }
 
 void asCBuilder::CompileClasses()
@@ -1600,9 +1588,7 @@ void asCBuilder::CompileClasses()
 					WriteError(file->name.AddressOf(), TXT_PROPERTY_CANT_BE_CONST, r, c);
 				}
 
-				asCDataType st;
-				st.SetObjectType(decl->objType);
-				CheckNameConflictMember(st, name.AddressOf(), node->lastChild, file);
+				CheckNameConflictMember(decl->objType, name.AddressOf(), node->lastChild, file);
 
 				AddPropertyToClass(decl, name, dt, file, node);
 			}
@@ -1721,18 +1707,19 @@ void asCBuilder::CompileClasses()
 				if( dt.IsObjectHandle() )
 				{
 					// TODO: Can this handle really generate a circular reference?
-					// Only if the handle is of a type that can reference this type, either directly or indirectly
+					//       Only if the handle is of a type that can reference this type, either directly or indirectly
 
 					ot->flags |= asOBJ_GC;
 				}
 				else if( dt.GetObjectType()->flags & asOBJ_GC )
 				{
 					// TODO: Just because the member type is a potential circle doesn't mean that this one is
-					// Only if the object is of a type that can reference this type, either directly or indirectly
+					//       Only if the object is of a type that can reference this type, either directly or indirectly
 
 					ot->flags |= asOBJ_GC;
 				}
 
+				// TODO: array: The template type should define if the instanciation can form circles or not
 				if( dt.IsArrayType() )
 				{
 					asCDataType sub = dt.GetSubType();
@@ -2140,9 +2127,8 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	// Check for name conflicts
 	if( !isConstructor && !isDestructor )
 	{
-		asCDataType dt = asCDataType::CreateObject(objType, false);
 		if( objType )
-			CheckNameConflictMember(dt, name.AddressOf(), node, file);
+			CheckNameConflictMember(objType, name.AddressOf(), node, file);
 		else
 			CheckNameConflict(name.AddressOf(), node, file);
 	}

@@ -131,9 +131,7 @@ public:
 	void      AddReferences();
 	void      ReleaseReferences();
 
-	int                GetGlobalVarPtrIndex(int gvarId);
-	asCConfigGroup    *GetConfigGroupByGlobalVarPtrIndex(int index);
-	asCGlobalProperty *GetPropertyByGlobalVarPtrIndex(int index);
+	asCGlobalProperty *GetPropertyByGlobalVarPtr(void *gvarPtr);
 
 	// GC methods
 	int  GetRefCount();
@@ -173,10 +171,6 @@ public:
 	asCArray<asSScriptVariable*> variables;        // debug info
 	int                          scriptSectionIdx; // debug info
 	bool                         dontCleanUpOnException;   // Stub functions don't own the object and parameters
-
-	// This array holds pointers to all global variables that the function access.
-	// The byte code holds an index into this table to refer to a global variable.
-	asCArray<void*>              globalVarPointers;
 
 	// Used by asFUNC_VIRTUAL
 	int                          vfTableIdx;

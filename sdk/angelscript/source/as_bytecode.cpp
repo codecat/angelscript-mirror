@@ -386,7 +386,6 @@ bool asCByteCode::PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **
 
 bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **next)
 {
-	// TODO: global: The global var address should be stored in the instruction directly
 	// The value isn't used for anything
 	if( (asBCInfo[curr->op].type == asBCTYPE_wW_rW_rW_ARG ||
 		 asBCInfo[curr->op].type == asBCTYPE_wW_rW_ARG    ||
@@ -400,7 +399,6 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		if( curr->op == asBC_LdGRdR4 && IsTempRegUsed(curr) )
 		{
 			curr->op = asBC_LDG;
-			curr->wArg[0] = curr->wArg[1];
 			*next = GoBack(curr);
 			return true;
 		}
@@ -527,7 +525,6 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		curr->op = asBC_PshG4;
 		curr->size = asBCTypeSize[asBCInfo[asBC_PshG4].type];
 		curr->stackInc = asBCInfo[asBC_PshG4].stackInc;
-		curr->wArg[0] = curr->wArg[1];
 		DeleteInstruction(curr->next);
 		*next = GoBack(curr);
 		return true;
@@ -548,13 +545,14 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 
 	// The constant is copied to a global variable and then never used again
 	if( curr->op == asBC_SetV4 && curr->next && curr->next->op == asBC_CpyVtoG4 &&
-		curr->wArg[0] == curr->next->wArg[1] &&
+		curr->wArg[0] == curr->next->wArg[0] &&
 		IsTemporary(curr->wArg[0]) &&
 		!IsTempVarRead(curr->next, curr->wArg[0]) )
 	{
 		curr->op = asBC_SetG4;
 		curr->size = asBCTypeSize[asBCInfo[asBC_SetG4].type];
-		curr->wArg[0] = curr->next->wArg[0];
+		*(((asDWORD*)&curr->arg)+AS_PTR_SIZE) = (asDWORD)curr->arg;
+		*(asPTRWORD*)&curr->arg = (asDWORD)curr->next->arg;
 		DeleteInstruction(curr->next);
 		*next = GoBack(curr);
 		return true;
@@ -583,8 +581,6 @@ int asCByteCode::Optimize()
 	
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
-	// TODO: global: The global var address should be stored in the instruction directly
-
 	cByteInstruction *instr = first;
 	while( instr )
 	{
@@ -626,7 +622,7 @@ int asCByteCode::Optimize()
 		{
 			curr->op = asBC_CpyVtoG4;
 			curr->size = asBCTypeSize[asBCInfo[asBC_CpyVtoG4].type];
-			curr->wArg[1] = instr->wArg[0];
+			curr->wArg[0] = instr->wArg[0];
 
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
@@ -639,7 +635,6 @@ int asCByteCode::Optimize()
 			else 
 				curr->op = asBC_LdGRdR4;
 			curr->size = asBCTypeSize[asBCInfo[asBC_CpyGtoV4].type];
-			curr->wArg[1] = curr->wArg[0];
 			curr->wArg[0] = instr->wArg[0];
 
 			DeleteInstruction(instr);
@@ -823,7 +818,8 @@ bool asCByteCode::IsTempVarReadByInstr(cByteInstruction *curr, int offset)
 		(curr->wArg[1] == offset || curr->wArg[2] == offset) )
 		return true;
 	else if( (asBCInfo[curr->op].type == asBCTYPE_rW_ARG    ||
-			  asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG) &&
+			  asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG ||
+			  asBCInfo[curr->op].type == asBCTYPE_rW_QW_ARG) &&
 			  curr->wArg[0] == offset )
 		return true;
 	else if( (asBCInfo[curr->op].type == asBCTYPE_wW_rW_ARG ||
@@ -1337,7 +1333,6 @@ void asCByteCode::Output(asDWORD *array)
 				break;
 			case asBCTYPE_wW_DW_ARG:
 			case asBCTYPE_rW_DW_ARG:
-			case asBCTYPE_W_DW_ARG:
 				*(((asWORD*)ap)+1) = instr->wArg[0];
 				*(ap+1) = *(asDWORD*)&instr->arg;
 				break;
@@ -1347,6 +1342,7 @@ void asCByteCode::Output(asDWORD *array)
 				*(ap+2) = *(asDWORD*)&instr->arg;
 				break;
 			case asBCTYPE_wW_QW_ARG:
+			case asBCTYPE_rW_QW_ARG:
 				*(((asWORD*)ap)+1) = instr->wArg[0];
 				*(asQWORD*)(ap+1) = asQWORD(instr->arg);
 				break;
@@ -1641,6 +1637,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine)
 			break;
 
 		case asBCTYPE_wW_QW_ARG:
+		case asBCTYPE_rW_QW_ARG:
 #ifdef __GNUC__
 #ifdef _LP64
 			fprintf(file, "   %-8s v%d, 0x%lx           (i:%ld, f:%g)\n", asBCInfo[instr->op].name, instr->wArg[0], *ARG_QW(instr->arg), *((asINT64*) ARG_QW(instr->arg)), *((double*) ARG_QW(instr->arg)));
@@ -1707,12 +1704,6 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine)
 				fprintf(file, "   %-8s v%d, %f\n", asBCInfo[instr->op].name, instr->wArg[0], *(float*)ARG_DW(instr->arg));
 			else
 				fprintf(file, "   %-8s v%d, %d\n", asBCInfo[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg));
-			break;
-
-		case asBCTYPE_W_DW_ARG:
-			// TODO: global: The global var address should be stored in the instruction directly
-			if( instr->op == asBC_SetG4 )
-				fprintf(file, "   %-8s %d, 0x%x          (i:%d, f:%g)\n", asBCInfo[instr->op].name, instr->wArg[0], (asUINT)*ARG_DW(instr->arg), *((int*) ARG_DW(instr->arg)), *((float*) ARG_DW(instr->arg)));
 			break;
 
 		case asBCTYPE_wW_rW_rW_ARG:

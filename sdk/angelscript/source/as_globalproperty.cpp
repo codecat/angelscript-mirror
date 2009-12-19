@@ -64,7 +64,7 @@ void asCGlobalProperty::Release()
 	// engine will do that at a later time
 	if( refCount.atomicDec() == 1 && initFunc )
 	{
-		// Since the initFunc holds a reference to the property,
+		// Since the initFunc holds references to the property,
 		// we'll release it when we reach refCount 1. This will
 		// break the circle and allow the engine to free the property
 		// without the need for a GC run.

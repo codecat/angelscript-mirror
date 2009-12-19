@@ -44,8 +44,6 @@ asCString::asCString()
 {
 	length = 0;
 	local[0] = 0;
-
-//	Assign("", 0);
 }
 
 // Copy constructor
@@ -113,8 +111,16 @@ void asCString::SetLength(size_t len)
 
 void asCString::Allocate(size_t len, bool keepData)
 {
-	if( len > 11 )
+	// If we stored the capacity of the dynamically allocated buffer it would be possible
+	// to save some memory allocations if a string decreases in size then increases again,
+	// but this would require extra bytes in the string object itself, or a decrease of 
+	// the static buffer, which in turn would mean extra memory is needed. I've tested each
+	// of these options, and it turned out that the current choice is what best balanced
+	// the number of allocations against the size of the allocations.
+
+	if( len > 11 && len > length )
 	{
+		// Allocate a new dynamic buffer if the new one is larger than the old
 		char *buf = asNEWARRAY(char,len+1);
 
 		if( keepData )
@@ -130,16 +136,15 @@ void asCString::Allocate(size_t len, bool keepData)
 
 		dynamic = buf;
 	}
-	else
+	else if( len <= 11 && length > 11 )
 	{
-		if( length > 11 )
+		// Free the dynamic buffer, since it is no longer needed
+		char *buf = dynamic;
+		if( keepData )
 		{
-			if( keepData )
-			{
-				memcpy(&local, dynamic, len);
-			}
-			asDELETEARRAY(dynamic);
+			memcpy(&local, buf, len);
 		}
+		asDELETEARRAY(buf);
 	}
 
 	length = (int)len;

@@ -404,6 +404,13 @@ void asCScriptFunction::AddReferences()
 {
 	asUINT n;
 
+	// This array will be used to make sure we only add the reference to the same resource once
+	// This is especially important for global variables, as it expects the initialization function
+	// to hold only one reference to the variable. However, if the variable is initialized through
+	// the default constructor followed by the assignment operator we will have two references to
+	// the variable in the function.
+	asCArray<void*> ptrs;
+
 	// Only count references if there is any bytecode
 	if( byteCode.GetLength() ) 
 	{
@@ -415,7 +422,6 @@ void asCScriptFunction::AddReferences()
 				parameterTypes[p].GetObjectType()->AddRef();
 	}
 
-	// TODO: global: The global var address should be stored in the instruction directly
 	// Go through the byte code and add references to all resources used by the function
 	for( n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{
@@ -444,25 +450,26 @@ void asCScriptFunction::AddReferences()
 			break;
 
 		// Global variables
-		case asBC_LDG:
 		case asBC_PGA:
+		case asBC_LDG:
 		case asBC_PshG4:
-		case asBC_SetG4:
-		case asBC_CpyVtoG4:
-			// Need to increase the reference for each global variable
-			{
-				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
-				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
-				if( group != 0 ) group->AddRef();
-			}
-			break;
-
 		case asBC_LdGRdR4:
 		case asBC_CpyGtoV4:
+		case asBC_CpyVtoG4:
+		case asBC_SetG4:
 			// Need to increase the reference for each global variable
 			{
-				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
-				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
+				void *gvarPtr = (void*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
+
+				// Only addref the properties once
+				if( !ptrs.Exists(gvarPtr) )
+				{
+					prop->AddRef();
+					ptrs.PushLast(gvarPtr);
+				}
+
+				asCConfigGroup *group = engine->FindConfigGroupForGlobalVar(prop->id);
 				if( group != 0 ) group->AddRef();
 			}
 			break;
@@ -488,19 +495,14 @@ void asCScriptFunction::AddReferences()
 			break;
 		}
 	}
-
-	// Add reference to the global properties
-	for( n = 0; n < globalVarPointers.GetLength(); n++ )
-	{
-		asCGlobalProperty *prop = GetPropertyByGlobalVarPtrIndex(n);
-		prop->AddRef();
-	}
 }
 
 // internal
 void asCScriptFunction::ReleaseReferences()
 {
 	asUINT n;
+
+	asCArray<void*> ptrs;
 
 	// Only count references if there is any bytecode
 	if( byteCode.GetLength() )
@@ -513,7 +515,6 @@ void asCScriptFunction::ReleaseReferences()
 				parameterTypes[p].GetObjectType()->Release();
 	}
 
-	// TODO: global: The global var address should be stored in the instruction directly
 	// Go through the byte code and release references to all resources used by the function
 	for( n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )
 	{
@@ -544,25 +545,26 @@ void asCScriptFunction::ReleaseReferences()
 			break;
 
 		// Global variables
-		case asBC_LDG:
 		case asBC_PGA:
+		case asBC_LDG:
 		case asBC_PshG4:
-		case asBC_SetG4:
-		case asBC_CpyVtoG4:
-			// Need to decrease the reference for each global variable
-			{
-				int gvarIdx = asBC_WORDARG0(&byteCode[n]);
-				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
-				if( group != 0 ) group->Release();
-			}
-			break;
-
 		case asBC_LdGRdR4:
 		case asBC_CpyGtoV4:
-			// Need to decrease the reference for each global variable
+		case asBC_CpyVtoG4:
+		case asBC_SetG4:
+			// Need to increase the reference for each global variable
 			{
-				int gvarIdx = asBC_WORDARG1(&byteCode[n]);
-				asCConfigGroup *group = GetConfigGroupByGlobalVarPtrIndex(gvarIdx);
+				void *gvarPtr = (void*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
+				
+				// Only release the properties once
+				if( !ptrs.Exists(gvarPtr) )
+				{
+					prop->Release();
+					ptrs.PushLast(gvarPtr);
+				}
+
+				asCConfigGroup *group = engine->FindConfigGroupForGlobalVar(prop->id);
 				if( group != 0 ) group->Release();
 			}
 			break;
@@ -589,13 +591,6 @@ void asCScriptFunction::ReleaseReferences()
 			}
 			break;
 		}
-	}
-
-	// Release the global properties
-	for( n = 0; n < globalVarPointers.GetLength(); n++ )
-	{
-		asCGlobalProperty *prop = GetPropertyByGlobalVarPtrIndex(n);
-		prop->Release();
 	}
 
 	// Release the jit compiled function
@@ -699,49 +694,8 @@ asDWORD *asCScriptFunction::GetByteCode(asUINT *length)
 }
 
 // internal
-int asCScriptFunction::GetGlobalVarPtrIndex(int gvarId)
+asCGlobalProperty *asCScriptFunction::GetPropertyByGlobalVarPtr(void *gvarPtr)
 {
-	void *ptr = engine->globalProperties[gvarId]->GetAddressOfValue();
-
-	// Check if this pointer has been stored already
-	for( int n = 0; n < (signed)globalVarPointers.GetLength(); n++ )
-		if( globalVarPointers[n] == ptr )
-			return n;
-
-	// Add the new variable to the array
-	globalVarPointers.PushLast(ptr);
-	return (int)globalVarPointers.GetLength()-1;
-}
-
-// internal
-asCConfigGroup *asCScriptFunction::GetConfigGroupByGlobalVarPtrIndex(int index)
-{
-	void *gvarPtr = globalVarPointers[index];
-
-	int gvarId = -1;
-	for( asUINT g = 0; g < engine->registeredGlobalProps.GetLength(); g++ )
-	{
-		if( engine->registeredGlobalProps[g] && engine->registeredGlobalProps[g]->GetAddressOfValue() == gvarPtr )
-		{
-			gvarId = engine->registeredGlobalProps[g]->id;
-			break;
-		}
-	}
-
-	if( gvarId >= 0 )
-	{
-		// Find the config group from the property id
-		return engine->FindConfigGroupForGlobalVar(gvarId);
-	}
-
-	return 0;
-}
-
-// internal
-asCGlobalProperty *asCScriptFunction::GetPropertyByGlobalVarPtrIndex(int index)
-{
-	void *gvarPtr = globalVarPointers[index];
-
 	for( asUINT g = 0; g < engine->globalProperties.GetLength(); g++ )
 		if( engine->globalProperties[g] && engine->globalProperties[g]->GetAddressOfValue() == gvarPtr )
 			return engine->globalProperties[g];

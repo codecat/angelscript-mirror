@@ -58,9 +58,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.18.0
-#define ANGELSCRIPT_VERSION        21800
-#define ANGELSCRIPT_VERSION_STRING "2.18.0"
+//! \details Version 2.18.1
+#define ANGELSCRIPT_VERSION        21801
+#define ANGELSCRIPT_VERSION_STRING "2.18.1"
 
 // Data types
 
@@ -3046,8 +3046,6 @@ struct asSVMRegisters
 	asDWORD          *stackFramePointer;  // function stack frame
 	//! \brief Top of the stack (grows downward)
 	asDWORD          *stackPointer;       // top of stack (grows downward)
-	//! \brief Array of global variable pointers. This doesn't change during the function execution.
-	void            **globalVarPointers;  // global variable pointers
 	//! \brief Temporary register for primitives and unmanaged references
 	asQWORD           valueRegister;      // temp register for primitives
 	//! \brief Temporary register for managed object references/handles
@@ -3501,35 +3499,35 @@ enum asEBCType
 	asBCTYPE_W_rW_ARG     = 15,
 	//! \brief Instruction + WORD arg (dest var) + WORD arg
 	asBCTYPE_wW_W_ARG     = 16,
-	//! \brief Instruction + WORD arg + DWORD arg
-	asBCTYPE_W_DW_ARG     = 17,
 	//! \brief Instruction + QWORD arg + DWORD arg
-	asBCTYPE_QW_DW_ARG    = 18
+	asBCTYPE_QW_DW_ARG    = 17,
+	//! \brief Instruction + WORD arg (source var) + QWORD arg
+	asBCTYPE_rW_QW_ARG    = 18
 };
 
 // Instruction type sizes
 //! \brief Lookup table for determining the size of each \ref asEBCType "type" of bytecode instruction.
 const int asBCTypeSize[19] =
 {
-    0, // asBCTYPE_INFO        
-    1, // asBCTYPE_NO_ARG      
-    1, // asBCTYPE_W_ARG       
-    1, // asBCTYPE_wW_ARG      
-    2, // asBCTYPE_DW_ARG      
-    2, // asBCTYPE_rW_DW_ARG   
-    3, // asBCTYPE_QW_ARG      
-    3, // asBCTYPE_DW_DW_ARG   
+    0, // asBCTYPE_INFO
+    1, // asBCTYPE_NO_ARG
+    1, // asBCTYPE_W_ARG
+    1, // asBCTYPE_wW_ARG
+    2, // asBCTYPE_DW_ARG
+    2, // asBCTYPE_rW_DW_ARG
+    3, // asBCTYPE_QW_ARG
+    3, // asBCTYPE_DW_DW_ARG
     2, // asBCTYPE_wW_rW_rW_ARG
-    3, // asBCTYPE_wW_QW_ARG   
-    2, // asBCTYPE_wW_rW_ARG   
-    1, // asBCTYPE_rW_ARG      
-    2, // asBCTYPE_wW_DW_ARG   
+    3, // asBCTYPE_wW_QW_ARG
+    2, // asBCTYPE_wW_rW_ARG
+    1, // asBCTYPE_rW_ARG
+    2, // asBCTYPE_wW_DW_ARG
     3, // asBCTYPE_wW_rW_DW_ARG
-    2, // asBCTYPE_rW_rW_ARG   
-    2, // asBCTYPE_W_rW_ARG    
-    2, // asBCTYPE_wW_W_ARG    
-    2, // asBCTYPE_W_DW_ARG    
-    4  // asBCTYPE_QW_DW_ARG    
+    2, // asBCTYPE_rW_rW_ARG
+    2, // asBCTYPE_W_rW_ARG
+    2, // asBCTYPE_wW_W_ARG
+    4, // asBCTYPE_QW_DW_ARG
+    3  // asBCTYPE_rW_QW_ARG
 };
 
 // Instruction info
@@ -3557,12 +3555,16 @@ struct asSBCInfo
 #ifndef AS_64BIT_PTR
 	#define asBCTYPE_PTR_ARG    asBCTYPE_DW_ARG
 	#define asBCTYPE_PTR_DW_ARG asBCTYPE_DW_DW_ARG
+    #define asBCTYPE_wW_PTR_ARG asBCTYPE_wW_DW_ARG
+	#define asBCTYPE_rW_PTR_ARG asBCTYPE_rW_DW_ARG
 	#ifndef AS_PTR_SIZE
 		#define AS_PTR_SIZE 1
 	#endif
 #else
 	#define asBCTYPE_PTR_ARG    asBCTYPE_QW_ARG
 	#define asBCTYPE_PTR_DW_ARG asBCTYPE_QW_DW_ARG
+    #define asBCTYPE_wW_PTR_ARG asBCTYPE_wW_QW_ARG
+	#define asBCTYPE_rW_PTR_ARG asBCTYPE_rW_QW_ARG
 	#ifndef AS_PTR_SIZE
 		#define AS_PTR_SIZE 2
 	#endif
@@ -3581,8 +3583,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(PSF,		rW_ARG,			AS_PTR_SIZE),
 	asBCINFO(SWAP4,		NO_ARG,			0),
 	asBCINFO(NOT,		rW_ARG,			0),
-	asBCINFO(PshG4,		W_ARG,			1),
-	asBCINFO(LdGRdR4,	wW_W_ARG,		0),
+	asBCINFO(PshG4,		PTR_ARG,		1),
+	asBCINFO(LdGRdR4,	wW_PTR_ARG,		0),
 	asBCINFO(CALL,		DW_ARG,			0xFFFF),
 	asBCINFO(RET,		W_ARG,			0xFFFF),
 	asBCINFO(JMP,		DW_ARG,			0),
@@ -3658,10 +3660,10 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(CpyVtoV8,	wW_rW_ARG,		0),
 	asBCINFO(CpyVtoR4,	rW_ARG,			0),
 	asBCINFO(CpyVtoR8,	rW_ARG,			0),
-	asBCINFO(CpyVtoG4,	W_rW_ARG,		0),
+	asBCINFO(CpyVtoG4,	rW_PTR_ARG,		0),
 	asBCINFO(CpyRtoV4,	wW_ARG,			0),
 	asBCINFO(CpyRtoV8,	wW_ARG,			0),
-	asBCINFO(CpyGtoV4,	wW_W_ARG,		0),
+	asBCINFO(CpyGtoV4,	wW_PTR_ARG,		0),
 	asBCINFO(WRTV1,		rW_ARG,			0),
 	asBCINFO(WRTV2,		rW_ARG,			0),
 	asBCINFO(WRTV4,		rW_ARG,			0),
@@ -3670,9 +3672,9 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(RDR2,		wW_ARG,			0),
 	asBCINFO(RDR4,		wW_ARG,			0),
 	asBCINFO(RDR8,		wW_ARG,			0),
-	asBCINFO(LDG,		W_ARG,			0),
+	asBCINFO(LDG,		PTR_ARG,		0),
 	asBCINFO(LDV,		rW_ARG,			0),
-	asBCINFO(PGA,		W_ARG,			AS_PTR_SIZE),
+	asBCINFO(PGA,		PTR_ARG,		AS_PTR_SIZE),
 	asBCINFO(RDS4,		NO_ARG,			1-AS_PTR_SIZE),
 	asBCINFO(VAR,		rW_ARG,			AS_PTR_SIZE),
 	asBCINFO(iTOf,		rW_ARG,			0),
@@ -3710,7 +3712,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(ADDIf,		wW_rW_DW_ARG,	0),
 	asBCINFO(SUBIf,		wW_rW_DW_ARG,	0),
 	asBCINFO(MULIf,		wW_rW_DW_ARG,	0),
-	asBCINFO(SetG4,		W_DW_ARG,		0),
+	asBCINFO(SetG4,		PTR_DW_ARG,		0),
 	asBCINFO(ChkRefS,	NO_ARG,			0),
 	asBCINFO(ChkNullV,	rW_ARG,			0),
 	asBCINFO(CALLINTF,	DW_ARG,			0xFFFF),

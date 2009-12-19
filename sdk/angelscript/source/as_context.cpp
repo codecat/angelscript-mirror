@@ -272,7 +272,6 @@ int asCContext::Prepare(int funcID)
 
 		initialFunction->AddRef();
 		currentFunction = initialFunction;
-		regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 
 		// Determine the minimum stack size needed
 		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
@@ -970,7 +969,6 @@ int asCContext::Execute()
 					{
 						currentFunction = realFunc;
 						regs.programPointer = currentFunction->byteCode.AddressOf();
-						regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 
 						// Set the local objects to 0
 						for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
@@ -1113,8 +1111,6 @@ void asCContext::PopCallState()
 	regs.stackPointer      = (asDWORD*)s[3];
 	stackIndex             = (int)s[4];
 
-	regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
-
 	callStack.SetLength(callStack.GetLength() - CALLSTACK_FRAME_SIZE);
 }
 
@@ -1154,7 +1150,6 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 
 	currentFunction = func;
 
-	regs.globalVarPointers = currentFunction->globalVarPointers.AddressOf();
 	regs.programPointer = currentFunction->byteCode.AddressOf();
 
 	// Verify if there is enough room in the stack block. Allocate new block if not
@@ -1362,18 +1357,16 @@ void asCContext::ExecuteNext()
 	// Push the dword value of a global variable on the stack
 	case asBC_PshG4:
 		--l_sp;
-		// TODO: global: The global var address should be stored in the instruction directly
-		*l_sp = *(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
-		l_bc++;
+		*l_sp = *(asDWORD*)(size_t)asBC_PTRARG(l_bc);
+		l_bc += 1 + AS_PTR_SIZE;
 		break;
 
 	// Load the address of a global variable in the register, then  
 	// copy the value of the global variable into a local variable
 	case asBC_LdGRdR4:
-		// TODO: global: The global var address should be stored in the instruction directly
-		*(void**)&regs.valueRegister = regs.globalVarPointers[asBC_WORDARG1(l_bc)];
+		*(void**)&regs.valueRegister = (void*)(size_t)asBC_PTRARG(l_bc);
 		*(l_fp - asBC_SWORDARG0(l_bc)) = **(asDWORD**)&regs.valueRegister;
-		l_bc += 2;
+		l_bc += 1+AS_PTR_SIZE;
 		break;
 
 //----------------
@@ -2354,9 +2347,8 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_CpyVtoG4:
-		// TODO: global: The global var address should be stored in the instruction directly
-		*(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)] = *(asDWORD*)(l_fp - asBC_SWORDARG1(l_bc));
-		l_bc += 2;
+		*(asDWORD*)(size_t)asBC_PTRARG(l_bc) = *(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc));
+		l_bc += 1 + AS_PTR_SIZE;
 		break;
 
 	case asBC_CpyRtoV4:
@@ -2370,9 +2362,8 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_CpyGtoV4:
-		// TODO: global: The global var address should be stored in the instruction directly
-		*(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asDWORD*)regs.globalVarPointers[asBC_WORDARG1(l_bc)];
-		l_bc += 2;
+		*(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asDWORD*)(size_t)asBC_PTRARG(l_bc);
+		l_bc += 1 + AS_PTR_SIZE;
 		break;
 
 	case asBC_WRTV1:
@@ -2430,9 +2421,8 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_LDG:
-		// TODO: global: The global var address should be stored in the instruction directly
-		*(asDWORD**)&regs.valueRegister = (asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
-		l_bc++;
+		*(asPTRWORD*)&regs.valueRegister = asBC_PTRARG(l_bc);
+		l_bc += 1+AS_PTR_SIZE;
 		break;
 
 	case asBC_LDV:
@@ -2442,9 +2432,8 @@ void asCContext::ExecuteNext()
 
 	case asBC_PGA:
 		l_sp -= AS_PTR_SIZE;
-		// TODO: global: The global var address should be stored in the instruction directly
-		*(asPTRWORD*)l_sp = (asPTRWORD)(size_t)regs.globalVarPointers[asBC_WORDARG0(l_bc)];
-		l_bc++;
+		*(asPTRWORD*)l_sp = asBC_PTRARG(l_bc);
+		l_bc += 1+AS_PTR_SIZE;
 		break;
 
 	case asBC_RDS4:
@@ -2741,9 +2730,8 @@ void asCContext::ExecuteNext()
 
 	//-----------------------------------
 	case asBC_SetG4:
-		// TODO: global: The global var address should be stored in the instruction directly
-		*(asDWORD*)regs.globalVarPointers[asBC_WORDARG0(l_bc)] = asBC_DWORDARG(l_bc);
-		l_bc += 2;
+		*(asDWORD*)(size_t)asBC_PTRARG(l_bc) = asBC_DWORDARG(l_bc+AS_PTR_SIZE);
+		l_bc += 2 + AS_PTR_SIZE;
 		break;
 
 	case asBC_ChkRefS:

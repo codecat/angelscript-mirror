@@ -15,7 +15,7 @@ static std::string g_str = "test";
 
 static const char *script3 =
 "float f = 2;                 \n"
-"string str = \"test\";       \n"
+"string str = 'test';         \n"
 "void TestGlobalVar()         \n"
 "{                            \n"
 "  float a = f + g_f;         \n"
@@ -99,6 +99,7 @@ bool TestGlobalVar()
 	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
 
 	asIScriptModule *mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	// This should fail, since we are trying to call a function in the initialization
 	if( mod->Build() >= 0 )
@@ -235,7 +236,7 @@ bool TestGlobalVar()
 			r = ExecuteString(engine, "assert(@a == @h); assert(v.length() == 2); assert(@v[0] == @v[1]);", mod);
 			if( r != asEXECUTION_FINISHED )
 				ret = true;
-		}		
+		}
 
 		engine->Release();
 	}
