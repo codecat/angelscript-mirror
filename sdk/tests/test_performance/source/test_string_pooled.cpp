@@ -88,7 +88,7 @@ CScriptString2 *operator+(const CScriptString2 &a, const CScriptString2 &b)
 	{
 		CScriptString2 *str = pool[pool.size()-1];
 		pool.pop_back();
-		str->buffer.reserve(a.buffer.length() + b.buffer.length());
+		str->buffer.resize(a.buffer.length() + b.buffer.length());
 		str->buffer += a.buffer;
 		str->buffer += b.buffer;
 		str->AddRef();
@@ -181,6 +181,7 @@ void Test()
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.18.0             : 2.48 secs\n");
+	printf("AngelScript 2.18.1 WIP         : 2.36 secs\n");
 
 	printf("\nBuilding...\n");
 
@@ -192,35 +193,39 @@ void Test()
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
-	mod->Build();
-
-	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(mod->GetFunctionIdByDecl("void TestString()"));
-
-	printf("Executing AngelScript version...\n");
-
-	double time = GetSystemTimer();
-
-	int r = ctx->Execute();
-
-	time = GetSystemTimer() - time;
-
-	if( r != 0 )
+	int r = mod->Build();
+	if( r >= 0 )
 	{
-		printf("Execution didn't terminate with asEXECUTION_FINISHED\n", TESTNAME);
-		if( r == asEXECUTION_EXCEPTION )
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionIdByDecl("void TestString()"));
+
+		printf("Executing AngelScript version...\n");
+
+		double time = GetSystemTimer();
+
+		r = ctx->Execute();
+
+		time = GetSystemTimer() - time;
+
+		if( r != 0 )
 		{
-			printf("Script exception\n");
-			asIScriptFunction *func = engine->GetFunctionDescriptorById(ctx->GetExceptionFunction());
-			printf("Func: %s\n", func->GetName());
-			printf("Line: %d\n", ctx->GetExceptionLineNumber());
-			printf("Desc: %s\n", ctx->GetExceptionString());
+			printf("Execution didn't terminate with asEXECUTION_FINISHED\n", TESTNAME);
+			if( r == asEXECUTION_EXCEPTION )
+			{
+				printf("Script exception\n");
+				asIScriptFunction *func = engine->GetFunctionDescriptorById(ctx->GetExceptionFunction());
+				printf("Func: %s\n", func->GetName());
+				printf("Line: %d\n", ctx->GetExceptionLineNumber());
+				printf("Desc: %s\n", ctx->GetExceptionString());
+			}
 		}
+		else
+			printf("Time = %f secs\n", time);
+
+		ctx->Release();
 	}
 	else
-		printf("Time = %f secs\n", time);
-
-	ctx->Release();
+		printf("Build failed\n");
 	engine->Release();
 
 	// Clean up the string pool

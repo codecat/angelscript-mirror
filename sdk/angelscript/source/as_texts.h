@@ -135,6 +135,7 @@
 #define TXT_NO_CONVERSION_s_TO_MATH_TYPE           "No conversion from '%s' to math type available."
 #define TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s           "No default constructor for object of type '%s'."
 #define TXT_NO_DEFAULT_COPY_OP                     "There is no copy operator for this type available."
+#define TXT_NO_COPY_CONSTRUCTOR_FOR_s              "No copy constructor for object of type '%s'."
 #define TXT_NO_MATCHING_SIGNATURES_TO_s            "No matching signatures to '%s'"
 #define TXT_NO_MATCHING_OP_FOUND_FOR_TYPE_s        "No matching operator that takes the type '%s' found"
 #define TXT_NO_MATCHING_OP_FOUND_FOR_TYPES_s_AND_s "No matching operator that takes the types '%s' and '%s' found"

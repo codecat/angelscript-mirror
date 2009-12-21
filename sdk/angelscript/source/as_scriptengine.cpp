@@ -1467,30 +1467,27 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE);
 			}
 
-			// Implicit constructors must take one and only one parameter
-	/*		if( behaviour == asBEHAVE_IMPLICIT_CONSTRUCT &&
-				func.parameterTypes.GetLength() != 1 )
-				return ConfigError(asINVALID_DECLARATION);
-	*/
+			// TODO: Add support for implicit constructors
+
 			// TODO: Verify that the same constructor hasn't been registered already
 
 			// Store all constructors in a list
+			func.id = AddBehaviourFunction(func, internal);
+			beh->constructors.PushLast(func.id);
 			if( func.parameterTypes.GetLength() == 0 )
 			{
-				func.id = beh->construct = AddBehaviourFunction(func, internal);
-				beh->constructors.PushLast(beh->construct);
+				beh->construct = func.id;
 			}
-			else
+			else if( func.parameterTypes.GetLength() == 1 )
 			{
-				func.id = AddBehaviourFunction(func, internal);
-				beh->constructors.PushLast(func.id);
-	/*
-				if( behaviour == asBEHAVE_IMPLICIT_CONSTRUCT )
-				{
-					beh->operators.PushLast(behaviour);
-					beh->operators.PushLast(func.id);
-				}
-	*/		}
+				// Is this the copy constructor?
+				asCDataType paramType = func.parameterTypes[0];
+
+				// If the parameter is object, and const reference for input,
+				// and same type as this class, then this is a copy constructor.
+				if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() && func.inOutFlags[0] == asTM_INREF && paramType.GetObjectType() == objectType )
+					beh->copyconstruct = func.id;
+			}
 		}
 	}
 	else if( behaviour == asBEHAVE_DESTRUCT )
@@ -1530,11 +1527,8 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		if( func.returnType != asCDataType::CreateObjectHandle(objectType, false) )
 			return ConfigError(asINVALID_DECLARATION);
 
-		// Implicit factories must take one and only one parameter
-/*		if( behaviour == asBEHAVE_IMPLICIT_FACTORY &&
-			func.parameterTypes.GetLength() != 1 )
-			return ConfigError(asINVALID_DECLARATION);
-*/
+		// TODO: Add support for implicit factories
+
 		// TODO: Verify that the same factory function hasn't been registered already
 
 		// The templates take a hidden parameter with the object type
@@ -1546,23 +1540,25 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		}
 
 		// Store all factory functions in a list
+		func.id = AddBehaviourFunction(func, internal);
+		beh->factories.PushLast(func.id);
+
 		if( (func.parameterTypes.GetLength() == 0) ||
 			(func.parameterTypes.GetLength() == 1 && (objectType->flags & asOBJ_TEMPLATE)) )
 		{
-			func.id = beh->factory = AddBehaviourFunction(func, internal);
-			beh->factories.PushLast(beh->factory);
+			beh->factory = func.id;
 		}
-		else
+		else if( (func.parameterTypes.GetLength() == 1) ||
+				 (func.parameterTypes.GetLength() == 2 && (objectType->flags & asOBJ_TEMPLATE)) )
 		{
-			func.id = AddBehaviourFunction(func, internal);
-			beh->factories.PushLast(func.id);
-/*
-			if( behaviour == asBEHAVE_IMPLICIT_FACTORY )
-			{
-				beh->operators.PushLast(behaviour);
-				beh->operators.PushLast(func.id);
-			}
-*/		}
+			// Is this the copy factory?
+			asCDataType paramType = func.parameterTypes[func.parameterTypes.GetLength()-1];
+
+			// If the parameter is object, and const reference for input,
+			// and same type as this class, then this is a copy constructor.
+			if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() && func.inOutFlags[func.parameterTypes.GetLength()-1] == asTM_INREF && paramType.GetObjectType() == objectType )
+				beh->copyfactory = func.id;
+		}
 	}
 	else if( behaviour == asBEHAVE_ADDREF )
 	{

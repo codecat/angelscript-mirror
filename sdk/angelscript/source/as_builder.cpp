@@ -1108,7 +1108,7 @@ void asCBuilder::CompileGlobalVariables()
 	engine->SetMessageCallback(asMETHOD(asCOutputBuffer, Callback), &outBuffer, asCALL_THISCALL);
 
 	asCOutputBuffer finalOutput;
-	asCScriptFunction func(engine, module, -1);
+	asCScriptFunction *initFunc = 0;
 
 	asCArray<asCGlobalProperty*> initOrder;
 
@@ -1161,6 +1161,7 @@ void asCBuilder::CompileGlobalVariables()
 				if( gvar->nextNode )
 				{
 					asCCompiler comp(engine);
+					asCScriptFunction func(engine, module, -1);
 
 					// Temporarily switch the type of the variable to int so it can be compiled properly
 					asCDataType saveType;
@@ -1215,15 +1216,20 @@ void asCBuilder::CompileGlobalVariables()
 			else
 			{
 				// Compile the global variable
+				initFunc = asNEW(asCScriptFunction)(engine, module, -1);
 				asCCompiler comp(engine);
-				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar, &func);
+				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar, initFunc);
 				if( r >= 0 )
 				{
 					// Compilation succeeded
 					gvar->isCompiled = true;
 					compileSucceeded = true;
-
-					init.AddCode(&comp.byteCode);
+				}
+				else
+				{
+					// Compilation failed
+					asDELETE(initFunc, asCScriptFunction);
+					initFunc = 0;
 				}
 			}
 
@@ -1241,24 +1247,29 @@ void asCBuilder::CompileGlobalVariables()
 				if( gvar->property && !gvar->isEnumValue )
 					initOrder.PushLast(gvar->property);
 
-				if( init.GetSize() > 0 )
+				// Does the function contain more than just a RET instruction?
+				if( initFunc && initFunc->byteCode.GetLength() > 1 )
 				{
 					// Create the init function for this variable
-					asCScriptFunction *initFunc = asNEW(asCScriptFunction)(engine,module,asFUNC_SCRIPT);
 					initFunc->id = engine->GetNextScriptFunctionId();
 					engine->SetScriptFunction(initFunc);
 
 					// Finalize the init function for this variable
-					init.Ret(0);
-					init.Finalize();
-					initFunc->byteCode.SetLength(init.GetSize());
-					init.Output(initFunc->byteCode.AddressOf());
-					initFunc->stackNeeded = init.largestStackUsed;
+					initFunc->funcType = asFUNC_SCRIPT;
 					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
-					initFunc->AddReferences();
+
+					// Notify the GC of the new script function
+					engine->gc.AddScriptObjectToGC(initFunc, &engine->functionBehaviours);
 
 					// The function's refCount was already initialized to 1 
 					gvar->property->initFunc = initFunc;
+					initFunc = 0;
+				}
+				else if( initFunc )
+				{
+					// Destroy the function as it won't be used
+					asDELETE(initFunc, asCScriptFunction);
+					initFunc = 0;
 				}
 			}
 			else

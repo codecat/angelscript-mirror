@@ -429,6 +429,8 @@ int asCObjectType::GetBehaviourCount() const
 	if( beh.gcReleaseAllReferences ) count++; 
 	if( beh.templateCallback )       count++;
 
+	// For reference types, the factories are also stored in the constructor
+	// list, so it is sufficient to enumerate only those
 	count += (int)beh.constructors.GetLength();
 	count += (int)beh.operators.GetLength() / 2;
 
@@ -494,6 +496,8 @@ int asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour
 		return beh.templateCallback;
 	}
 
+	// For reference types, the factories are also stored in the constructor
+	// list, so it is sufficient to enumerate only those
 	if( index - count < beh.constructors.GetLength() )
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_CONSTRUCT;
@@ -532,7 +536,8 @@ void asCObjectType::ReleaseAllHandles(asIScriptEngine *)
 // internal
 void asCObjectType::ReleaseAllFunctions()
 {
-	beh.factory   = 0;
+	beh.factory     = 0;
+	beh.copyfactory = 0;
 	for( asUINT a = 0; a < beh.factories.GetLength(); a++ )
 	{
 		if( engine->scriptFunctions[beh.factories[a]] ) 
@@ -540,7 +545,8 @@ void asCObjectType::ReleaseAllFunctions()
 	}
 	beh.factories.SetLength(0);
 
-	beh.construct = 0;
+	beh.construct     = 0;
+	beh.copyconstruct = 0;
 	for( asUINT b = 0; b < beh.constructors.GetLength(); b++ )
 	{
 		if( engine->scriptFunctions[beh.constructors[b]] ) 

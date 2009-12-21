@@ -79,8 +79,10 @@ struct asSTypeBehaviour
 {
 	asSTypeBehaviour() 
 	{
-		factory = 0; 
+		factory = 0;
+		copyfactory = 0;
 		construct = 0; 
+		copyconstruct = 0;
 		destruct = 0; 
 		copy = 0; 
 		addref = 0; 
@@ -94,7 +96,9 @@ struct asSTypeBehaviour
 	}
 
 	int factory;
+	int copyfactory;
 	int construct;
+	int copyconstruct;
 	int destruct;
 	int copy;
 	int addref;

@@ -145,6 +145,7 @@ protected:
 	void CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByteCode *bc);
 
 	int  CallDefaultConstructor(asCDataType &type, int offset, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar = false);
+	int  CallCopyConstructor(asCDataType &type, int offset, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool isGlobalVar = false);
 	void CallDestructor(asCDataType &type, int offset, asCByteCode *bc);
 	int  CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args);
 	void MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType = NULL, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true, const asCString &scope = "");
@@ -204,6 +205,8 @@ protected:
 
 	void AddVariableScope(bool isBreakScope = false, bool isContinueScope = false);
 	void RemoveVariableScope();
+
+	void FinalizeFunction();
 
 	bool hasCompileErrors;
 
