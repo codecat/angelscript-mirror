@@ -426,6 +426,13 @@ asCScriptEngine::~asCScriptEngine()
 			}
 			templateTypes[n]->beh.factories.Allocate(0, false);
 
+			// The list factory is not stored in the list with the rest of the factories
+			if( templateTypes[n]->beh.listFactory )
+			{
+				scriptFunctions[templateTypes[n]->beh.listFactory]->Release();
+				templateTypes[n]->beh.listFactory = 0;
+			}
+
 			// Delete the specialized functions
 			for( f = 1; f < templateTypes[n]->beh.operators.GetLength(); f += 2 )
 			{
@@ -774,7 +781,13 @@ void asCScriptEngine::ClearUnusedTypes()
 		for( n = 0; n < types.GetLength(); n++ )
 		{
 			// Template types and script classes will have two references for each factory stub
-			int refCount = ((types[n]->flags & asOBJ_TEMPLATE) || (types[n]->flags & asOBJ_SCRIPT_OBJECT)) ? 2*(int)types[n]->beh.factories.GetLength() : 0;
+			int refCount = 0;
+			if( (types[n]->flags & asOBJ_TEMPLATE) || (types[n]->flags & asOBJ_SCRIPT_OBJECT) )
+			{
+				refCount = 2*(int)types[n]->beh.factories.GetLength();
+				if( types[n]->beh.listFactory )
+					refCount += 2;
+			}
 
 			if( types[n]->GetRefCount() == refCount )
 			{
@@ -1370,6 +1383,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 {
 	asSSystemFunctionInterface internal;
 	if( behaviour == asBEHAVE_FACTORY ||
+		behaviour == asBEHAVE_LIST_FACTORY ||
 		behaviour == asBEHAVE_TEMPLATE_CALLBACK )
 	{
 #ifdef AS_MAX_PORTABILITY
@@ -1411,7 +1425,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		return ConfigError(asINVALID_DECLARATION);
 	func.name.Format("_beh_%d_", behaviour);
 
-	if( behaviour != asBEHAVE_FACTORY )
+	if( behaviour != asBEHAVE_FACTORY && behaviour != asBEHAVE_LIST_FACTORY )
 		func.objectType = objectType;
 
 	// Check if the method restricts that use of the template to value types or reference types
@@ -1512,10 +1526,8 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 		func.id = beh->destruct = AddBehaviourFunction(func, internal);
 	}
-	else if( behaviour == asBEHAVE_FACTORY )
+	else if( behaviour == asBEHAVE_FACTORY || behaviour == asBEHAVE_LIST_FACTORY )
 	{
-		// TODO: Add asBEHAVE_IMPLICIT_FACTORY
-
 		// Must be a ref type and must not have asOBJ_NOHANDLE
 		if( !(objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_NOHANDLE) )
 		{
@@ -1541,7 +1553,10 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 		// Store all factory functions in a list
 		func.id = AddBehaviourFunction(func, internal);
-		beh->factories.PushLast(func.id);
+
+		// The list factory is a special factory and isn't stored together with the rest
+		if( behaviour != asBEHAVE_LIST_FACTORY )
+			beh->factories.PushLast(func.id);
 
 		if( (func.parameterTypes.GetLength() == 0) ||
 			(func.parameterTypes.GetLength() == 1 && (objectType->flags & asOBJ_TEMPLATE)) )
@@ -1551,13 +1566,18 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		else if( (func.parameterTypes.GetLength() == 1) ||
 				 (func.parameterTypes.GetLength() == 2 && (objectType->flags & asOBJ_TEMPLATE)) )
 		{
-			// Is this the copy factory?
-			asCDataType paramType = func.parameterTypes[func.parameterTypes.GetLength()-1];
+			if( behaviour == asBEHAVE_LIST_FACTORY )
+				beh->listFactory = func.id;
+			else
+			{
+				// Is this the copy factory?
+				asCDataType paramType = func.parameterTypes[func.parameterTypes.GetLength()-1];
 
-			// If the parameter is object, and const reference for input,
-			// and same type as this class, then this is a copy constructor.
-			if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() && func.inOutFlags[func.parameterTypes.GetLength()-1] == asTM_INREF && paramType.GetObjectType() == objectType )
-				beh->copyfactory = func.id;
+				// If the parameter is object, and const reference for input,
+				// and same type as this class, then this is a copy constructor.
+				if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() && func.inOutFlags[func.parameterTypes.GetLength()-1] == asTM_INREF && paramType.GetObjectType() == objectType )
+					beh->copyfactory = func.id;
+			}
 		}
 	}
 	else if( behaviour == asBEHAVE_ADDREF )
@@ -2480,6 +2500,14 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 	}
 	t->beh.factories.SetLength(0);
 
+	// Destroy the stub for the list factory too
+	if( t->beh.listFactory )
+	{
+		scriptFunctions[t->beh.listFactory]->ReleaseAllHandles(this);
+		scriptFunctions[t->beh.listFactory]->Release();
+		t->beh.listFactory = 0;
+	}
+
 	// Destroy the specialized functions
 	for( n = 1; n < (int)t->beh.operators.GetLength(); n += 2 )
 	{
@@ -2603,7 +2631,35 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		ot->beh.factory = templateType->beh.factory;
 	}
 
+	// TODO: initlist: Generate stub for the list factory as well. Do we really need to store the original factory id?
+	//                 The stub will keep a reference to it anyway.
+	if( templateType->beh.listFactory )
+	{
+		// TODO: cleanup: This is exactly the same as the code above. Should be in a function
+		int factoryId = templateType->beh.listFactory;
+		asCScriptFunction *factory = scriptFunctions[factoryId];
 
+		asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SCRIPT);
+		func->name       = "factstub";
+		func->id         = GetNextScriptFunctionId();
+		func->returnType = asCDataType::CreateObjectHandle(ot, false);
+
+		// Skip the first parameter as this is the object type pointer that the stub will add
+		for( asUINT p = 1; p < factory->parameterTypes.GetLength(); p++ )
+		{
+			func->parameterTypes.PushLast(factory->parameterTypes[p]);
+			func->inOutFlags.PushLast(factory->inOutFlags[p]);
+		}
+
+		SetScriptFunction(func);
+		
+		asCBuilder builder(this, 0);
+		asCCompiler compiler(this);
+		compiler.CompileTemplateFactoryStub(&builder, factoryId, ot, func);
+
+		// The function's refCount was already initialized to 1
+		ot->beh.listFactory = func->id;
+	}
 
 	ot->beh.addref                 = templateType->beh.addref;
 	if( scriptFunctions[ot->beh.addref] ) scriptFunctions[ot->beh.addref]->AddRef();

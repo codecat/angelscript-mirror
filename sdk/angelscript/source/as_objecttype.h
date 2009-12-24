@@ -80,6 +80,7 @@ struct asSTypeBehaviour
 	asSTypeBehaviour() 
 	{
 		factory = 0;
+		listFactory = 0;
 		copyfactory = 0;
 		construct = 0; 
 		copyconstruct = 0;
@@ -96,6 +97,7 @@ struct asSTypeBehaviour
 	}
 
 	int factory;
+	int listFactory; // Used for initialization lists only
 	int copyfactory;
 	int construct;
 	int copyconstruct;

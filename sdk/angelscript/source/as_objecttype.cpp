@@ -428,6 +428,7 @@ int asCObjectType::GetBehaviourCount() const
 	if( beh.gcEnumReferences )       count++;
 	if( beh.gcReleaseAllReferences ) count++; 
 	if( beh.templateCallback )       count++;
+	if( beh.listFactory )            count++;
 
 	// For reference types, the factories are also stored in the constructor
 	// list, so it is sufficient to enumerate only those
@@ -496,6 +497,12 @@ int asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour
 		return beh.templateCallback;
 	}
 
+	if( beh.listFactory && count++ == (int)index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_LIST_FACTORY;
+		return beh.listFactory;
+	}
+
 	// For reference types, the factories are also stored in the constructor
 	// list, so it is sufficient to enumerate only those
 	if( index - count < beh.constructors.GetLength() )
@@ -557,6 +564,10 @@ void asCObjectType::ReleaseAllFunctions()
 	if( beh.templateCallback )
 		engine->scriptFunctions[beh.templateCallback]->Release();
 	beh.templateCallback = 0;
+
+	if( beh.listFactory )
+		engine->scriptFunctions[beh.listFactory]->Release();
+	beh.listFactory = 0;
 
 	if( beh.destruct )
 		engine->scriptFunctions[beh.destruct]->Release();
@@ -630,6 +641,9 @@ void asCObjectType::EnumReferences(asIScriptEngine *)
 	if( beh.templateCallback )
 		engine->GCEnumCallback(engine->scriptFunctions[beh.templateCallback]);
 
+	if( beh.listFactory )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.listFactory]);
+		
 	if( beh.destruct )
 		engine->GCEnumCallback(engine->scriptFunctions[beh.destruct]);
 

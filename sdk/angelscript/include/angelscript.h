@@ -136,6 +136,7 @@ enum asEBehaviours
 
 	// Reference object memory management
 	asBEHAVE_FACTORY,
+	asBEHAVE_LIST_FACTORY,
 	asBEHAVE_ADDREF,
 	asBEHAVE_RELEASE,
 

@@ -189,8 +189,8 @@ void RegisterArrayObject(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("_builtin_array_<class T>", sizeof(asCArrayObject), asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); asASSERT( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int&in)", asFUNCTIONPR(ArrayObjectFactory, (asIObjectType*), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
-	// TODO: initlist: Need a special behaviour for this
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int&in, uint)", asFUNCTIONPR(ArrayObjectFactory2, (asIObjectType*, asUINT), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_LIST_FACTORY, "_builtin_array_<T>@ f(int&in, uint)", asFUNCTIONPR(ArrayObjectFactory2, (asIObjectType*, asUINT), asCArrayObject*), asCALL_CDECL); asASSERT( r >= 0 );
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(asCArrayObject,AddRef), asCALL_THISCALL); asASSERT( r >= 0 );
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(asCArrayObject,Release), asCALL_THISCALL); asASSERT( r >= 0 );
 	r = engine->RegisterObjectMethod("_builtin_array_<T>", "_builtin_array_<T> &opAssign(const _builtin_array_<T>&in)", asFUNCTION(ArrayObjectAssignment), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
@@ -207,8 +207,8 @@ void RegisterArrayObject(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCArrayObject,ReleaseAllHandles), asCALL_THISCALL); asASSERT( r >= 0 );
 #else
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int&in)", asFUNCTION(ArrayObjectFactory_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
-	// TODO: initlist: Need a special behaviour for this
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_FACTORY, "_builtin_array_<T>@ f(int&in, uint)", asFUNCTION(ArrayObjectFactory2_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_LIST_FACTORY, "_builtin_array_<T>@ f(int&in, uint)", asFUNCTION(ArrayObjectFactory2_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_ADDREF, "void f()", asFUNCTION(ArrayObject_AddRef_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 	r = engine->RegisterObjectBehaviour("_builtin_array_<T>", asBEHAVE_RELEASE, "void f()", asFUNCTION(ArrayObject_Release_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 	r = engine->RegisterObjectMethod("_builtin_array_<T>", "_builtin_array_<T> &opAssign(const _builtin_array_<T>&in)", asFUNCTION(ArrayObjectAssignment_Generic), asCALL_GENERIC); asASSERT( r >= 0 );

@@ -173,8 +173,8 @@ void asCConfigGroup::ValidateNoUsage(asCScriptEngine *engine, asCObjectType *typ
 		asCScriptFunction *func = engine->scriptFunctions[n];
 		if( func == 0 ) continue;
 
-		// Ignore factory and members
-		if( func->name == "_beh_2_" || func->objectType == type )
+		// Ignore factory, list factory, and members
+		if( func->name == "_beh_2_" || func->name == "_beh_3_" || func->objectType == type )
 			continue;
 
 		asASSERT( func->returnType.GetObjectType() != type );

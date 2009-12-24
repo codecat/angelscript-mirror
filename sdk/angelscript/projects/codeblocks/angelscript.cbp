@@ -62,6 +62,7 @@
 		<Unit filename="..\..\source\as_gc.h" />
 		<Unit filename="..\..\source\as_generic.cpp" />
 		<Unit filename="..\..\source\as_generic.h" />
+		<Unit filename="..\..\source\as_globalproperty.cpp" />
 		<Unit filename="..\..\source\as_map.h" />
 		<Unit filename="..\..\source\as_memory.cpp" />
 		<Unit filename="..\..\source\as_memory.h" />

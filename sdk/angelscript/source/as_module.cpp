@@ -117,6 +117,7 @@ void asCModule::JITCompile()
 int asCModule::Build()
 {
 	// Only one thread may build at one time
+	// TODO: It should be possible to have multiple threads perform compilations
 	int r = engine->RequestBuild();
 	if( r < 0 )
 		return r;
@@ -1218,6 +1219,7 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 	if( in == 0 ) return asINVALID_ARG;
 
 	// Only permit loading bytecode if no other thread is currently compiling
+	// TODO: It should be possible to have multiple threads perform compilations
 	int r = engine->RequestBuild();
 	if( r < 0 )
 		return r;
@@ -1240,6 +1242,7 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 		return asINVALID_ARG;
 
 	// Only one thread may build at one time
+	// TODO: It should be possible to have multiple threads perform compilations
 	int r = engine->RequestBuild();
 	if( r < 0 )
 		return r;
@@ -1297,6 +1300,7 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, int li
 		return asINVALID_ARG;
 
 	// Only one thread may build at one time
+	// TODO: It should be possible to have multiple threads perform compilations
 	int r = engine->RequestBuild();
 	if( r < 0 )
 		return r;
