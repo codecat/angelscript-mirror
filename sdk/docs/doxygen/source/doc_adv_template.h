@@ -44,6 +44,14 @@ for example as <tt>int &amp;in</tt>.
 r = engine->RegisterObjectBehaviour("myTemplate<T>", asBEHAVE_FACTORY, "myTemplate<T>@ f(int&in)", asFUNCTIONPR(myTemplateFactory, (asIObjectType*), myTemplate*), asCALL_CDECL); assert( r >= 0 );
 \endcode
 
+The list factory, used to instanciate objects with initialization lists, is registered in the same way, i.e.:
+
+\code
+// Register the list factory behaviour
+r = engine->RegisterObjectBehaviour("myTemplate<T>", asBEHAVE_LIST_FACTORY, "myTemplate<T>@ f(int&in, uint)", asFUNCTIONPR(myTemplateListFactory, (asIObjectType*, unsigned int), myTemplate*), asCALL_CDECL); assert( r >= 0 );
+\endcode
+
+
 Remember that since the subtype must be determined dynamically at runtime, it is not possible to declare
 functions to receive the subtype by value, nor to return it by value. Instead you'll have to design the
 methods and behaviours to take the type by reference. It is possible to use object handles, but then

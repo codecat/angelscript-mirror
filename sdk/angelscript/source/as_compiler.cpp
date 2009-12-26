@@ -1725,189 +1725,168 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByteCode *bc)
 {
-	// TODO: initlist: Must attempt to find the factory for initialization 
-	//                 lists, instead checking IsArrayType.
-	if( var->dataType.IsArrayType() && !var->dataType.IsObjectHandle() )
-	{
-		// Count the number of elements and initialize the array with the correct size
-		int countElements = 0;
-		asCScriptNode *el = node->firstChild;
-		while( el )
-		{
-			countElements++;
-			el = el->next;
-		}
-
-		// Construct the array with the size elements
-
-		// Find the constructor that takes an uint
-		asCArray<int> funcs;
-		if( var->dataType.GetObjectType()->flags & asOBJ_REF )
-			funcs = var->dataType.GetBehaviour()->factories;
-		else
-			funcs = var->dataType.GetBehaviour()->constructors;
-
-		asCArray<asSExprContext *> args;
-		asSExprContext arg1(engine);
-		arg1.bc.InstrDWORD(asBC_PshC4, countElements);
-		arg1.type.Set(asCDataType::CreatePrimitive(ttUInt, false));
-		args.PushLast(&arg1);
-
-		asCString str = var->dataType.Format();
-		MatchFunctions(funcs, args, node, str.AddressOf());
-
-		if( funcs.GetLength() == 1 )
-		{
-			asSExprContext ctx(engine);
-
-			if( var->dataType.GetObjectType()->flags & asOBJ_REF )
-			{
-				PrepareFunctionCall(funcs[0], &ctx.bc, args);
-				MoveArgsToStack(funcs[0], &ctx.bc, args, false);
-
-				if( var->isVariable )
-				{
-					// Call factory and store the handle in the given variable
-					PerformFunctionCall(funcs[0], &ctx, false, &args, 0, true, var->stackOffset);
-					ctx.bc.Pop(AS_PTR_SIZE);
-				}
-				else
-				{
-					PerformFunctionCall(funcs[0], &ctx, false, &args);
-
-					// Store the returned handle in the global variable
-					ctx.bc.Instr(asBC_RDSPTR);
-					ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
-					ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
-					ctx.bc.Pop(AS_PTR_SIZE);
-					ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
-				}
-			}
-			else
-			{
-				if( var->isVariable )
-					ctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
-				else
-					ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
-
-				PrepareFunctionCall(funcs[0], &ctx.bc, args);
-				MoveArgsToStack(funcs[0], &ctx.bc, args, false);
-
-				PerformFunctionCall(funcs[0], &ctx, true, &args, var->dataType.GetObjectType());
-			}
-
-			bc->AddCode(&ctx.bc);
-		}
-		else
-			return;
-
-		// TODO: initlist: Should we have a special indexing operator for this?
-		// Find the indexing operator that is not read-only that will be used for all elements
-		asCDataType retType;
-		retType = var->dataType.GetSubType();
-		retType.MakeReference(true);
-		retType.MakeReadOnly(false);
-		int funcId = 0;
-		asSTypeBehaviour *beh = var->dataType.GetBehaviour();
-		for( asUINT n = 0; n < beh->operators.GetLength(); n += 2 )
-		{
-			if( asBEHAVE_INDEX == beh->operators[n] )
-			{
-				asCScriptFunction *desc = builder->GetFunctionDescription(beh->operators[n+1]);
-				if( !desc->isReadOnly &&
-					 desc->parameterTypes.GetLength() == 1 &&
-					 (desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttUInt, false) ||
-					  desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttInt,  false)) &&
-					 desc->returnType == retType )
-				{
-					funcId = beh->operators[n+1];
-					break;
-				}
-			}
-		}
-
-		if( funcId == 0 )
-		{
-			Error(TXT_NO_APPROPRIATE_INDEX_OPERATOR, node);
-			return;
-		}
-
-		asUINT index = 0;
-		el = node->firstChild;
-		while( el )
-		{
-			if( el->nodeType == snAssignment || el->nodeType == snInitList )
-			{
-				asSExprContext lctx(engine);
-				asSExprContext rctx(engine);
-
-				if( el->nodeType == snAssignment )
-				{
-					// Compile the assignment expression
-					CompileAssignment(el, &rctx);
-				}
-				else if( el->nodeType == snInitList )
-				{
-					int offset = AllocateVariable(var->dataType.GetSubType(), true);
-
-					rctx.type.Set(var->dataType.GetSubType());
-					rctx.type.isVariable = true;
-					rctx.type.isTemporary = true;
-					rctx.type.stackOffset = (short)offset;
-
-					CompileInitList(&rctx.type, el, &rctx.bc);
-
-					// Put the object on the stack
-					rctx.bc.InstrSHORT(asBC_PSF, rctx.type.stackOffset);
-
-					// It is a reference that we place on the stack
-					rctx.type.dataType.MakeReference(true);
-				}
-
-				// Compile the lvalue
-				lctx.bc.InstrDWORD(asBC_PshC4, index);
-				if( var->isVariable )
-					lctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
-				else
-					lctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
-				lctx.bc.Instr(asBC_RDSPTR);
-				lctx.bc.Call(asBC_CALLSYS, funcId, 1+AS_PTR_SIZE);
-
-				if( !var->dataType.GetSubType().IsPrimitive() )
-					lctx.bc.Instr(asBC_PshRPtr);
-
-				lctx.type.Set(var->dataType.GetSubType());
-
-				if( !lctx.type.dataType.IsObject() || lctx.type.dataType.IsObjectHandle() )
-					lctx.type.dataType.MakeReference(true);
-
-				// If the element type is handles, then we're expected to do handle assignments
-				if( lctx.type.dataType.IsObjectHandle() )
-					lctx.type.isExplicitHandle = true;
-
-				asSExprContext ctx(engine);
-				DoAssignment(&ctx, &lctx, &rctx, el, el, ttAssignment, el);
-
-				if( !lctx.type.dataType.IsPrimitive() )
-					ctx.bc.Pop(AS_PTR_SIZE);
-
-				// Release temporary variables used by expression
-				ReleaseTemporaryVariable(ctx.type, &ctx.bc);
-
-				ProcessDeferredParams(&ctx);
-
-				bc->AddCode(&ctx.bc);
-			}
-
-			el = el->next;
-			index++;
-		}
-	}
-	else
+	// Check if the type supports initialization lists
+	if( var->dataType.GetObjectType() == 0 ||
+		var->dataType.GetBehaviour()->listFactory == 0 ||
+		var->dataType.IsObjectHandle() )
 	{
 		asCString str;
 		str.Format(TXT_INIT_LIST_CANNOT_BE_USED_WITH_s, var->dataType.Format().AddressOf());
 		Error(str.AddressOf(), node);
+		return;
+	}
+
+	// Count the number of elements and initialize the array with the correct size
+	int countElements = 0;
+	asCScriptNode *el = node->firstChild;
+	while( el )
+	{
+		countElements++;
+		el = el->next;
+	}
+
+	// Construct the array with the size elements
+
+	// Find the list factory
+	// TODO: initlist: Add support for value types as well
+	int funcId = var->dataType.GetBehaviour()->listFactory;
+
+	asCArray<asSExprContext *> args;
+	asSExprContext arg1(engine);
+	arg1.bc.InstrDWORD(asBC_PshC4, countElements);
+	arg1.type.Set(asCDataType::CreatePrimitive(ttUInt, false));
+	args.PushLast(&arg1);
+
+	asSExprContext ctx(engine);
+
+	PrepareFunctionCall(funcId, &ctx.bc, args);
+	MoveArgsToStack(funcId, &ctx.bc, args, false);
+
+	if( var->isVariable )
+	{
+		// Call factory and store the handle in the given variable
+		PerformFunctionCall(funcId, &ctx, false, &args, 0, true, var->stackOffset);
+		ctx.bc.Pop(AS_PTR_SIZE);
+	}
+	else
+	{
+		PerformFunctionCall(funcId, &ctx, false, &args);
+
+		// Store the returned handle in the global variable
+		ctx.bc.Instr(asBC_RDSPTR);
+		ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
+		ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
+		ctx.bc.Pop(AS_PTR_SIZE);
+		ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
+	}
+
+	bc->AddCode(&ctx.bc);
+
+	// TODO: initlist: Should we have a special indexing operator for this? How can we support
+	//                 initialization lists with different types for different elements? Maybe 
+	//                 by using the variable arguments the initialization can be done with one 
+	//                 call, passing all the elements as arguments. The registered function can
+	//                 then traverse them however it wants.
+
+	// Find the indexing operator that is not read-only that will be used for all elements
+	asCDataType retType;
+	retType = var->dataType.GetSubType();
+	retType.MakeReference(true);
+	retType.MakeReadOnly(false);
+	funcId = 0;
+	asSTypeBehaviour *beh = var->dataType.GetBehaviour();
+	for( asUINT n = 0; n < beh->operators.GetLength(); n += 2 )
+	{
+		if( asBEHAVE_INDEX == beh->operators[n] )
+		{
+			asCScriptFunction *desc = builder->GetFunctionDescription(beh->operators[n+1]);
+			if( !desc->isReadOnly &&
+				 desc->parameterTypes.GetLength() == 1 &&
+				 (desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttUInt, false) ||
+				  desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttInt,  false)) &&
+				 desc->returnType == retType )
+			{
+				funcId = beh->operators[n+1];
+				break;
+			}
+		}
+	}
+
+	if( funcId == 0 )
+	{
+		Error(TXT_NO_APPROPRIATE_INDEX_OPERATOR, node);
+		return;
+	}
+
+	asUINT index = 0;
+	el = node->firstChild;
+	while( el )
+	{
+		if( el->nodeType == snAssignment || el->nodeType == snInitList )
+		{
+			asSExprContext lctx(engine);
+			asSExprContext rctx(engine);
+
+			if( el->nodeType == snAssignment )
+			{
+				// Compile the assignment expression
+				CompileAssignment(el, &rctx);
+			}
+			else if( el->nodeType == snInitList )
+			{
+				int offset = AllocateVariable(var->dataType.GetSubType(), true);
+
+				rctx.type.Set(var->dataType.GetSubType());
+				rctx.type.isVariable = true;
+				rctx.type.isTemporary = true;
+				rctx.type.stackOffset = (short)offset;
+
+				CompileInitList(&rctx.type, el, &rctx.bc);
+
+				// Put the object on the stack
+				rctx.bc.InstrSHORT(asBC_PSF, rctx.type.stackOffset);
+
+				// It is a reference that we place on the stack
+				rctx.type.dataType.MakeReference(true);
+			}
+
+			// Compile the lvalue
+			lctx.bc.InstrDWORD(asBC_PshC4, index);
+			if( var->isVariable )
+				lctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
+			else
+				lctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
+			lctx.bc.Instr(asBC_RDSPTR);
+			lctx.bc.Call(asBC_CALLSYS, funcId, 1+AS_PTR_SIZE);
+
+			if( !var->dataType.GetSubType().IsPrimitive() )
+				lctx.bc.Instr(asBC_PshRPtr);
+
+			lctx.type.Set(var->dataType.GetSubType());
+
+			if( !lctx.type.dataType.IsObject() || lctx.type.dataType.IsObjectHandle() )
+				lctx.type.dataType.MakeReference(true);
+
+			// If the element type is handles, then we're expected to do handle assignments
+			if( lctx.type.dataType.IsObjectHandle() )
+				lctx.type.isExplicitHandle = true;
+
+			asSExprContext ctx(engine);
+			DoAssignment(&ctx, &lctx, &rctx, el, el, ttAssignment, el);
+
+			if( !lctx.type.dataType.IsPrimitive() )
+				ctx.bc.Pop(AS_PTR_SIZE);
+
+			// Release temporary variables used by expression
+			ReleaseTemporaryVariable(ctx.type, &ctx.bc);
+
+			ProcessDeferredParams(&ctx);
+
+			bc->AddCode(&ctx.bc);
+		}
+
+		el = el->next;
+		index++;
 	}
 }
 

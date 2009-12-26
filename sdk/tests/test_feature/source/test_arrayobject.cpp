@@ -170,8 +170,9 @@ static const char *script1 =
 "	Assert(A[1] == 20);              \n"
 "   char[] B(5);                     \n"
 "   Assert(B.size() == 5);           \n"
-"   int[] c = {2,3};                 \n"
-"   Assert(c.size() == 2);           \n"
+// TODO: Add support for initialization list for value types as well
+//"   int[] c = {2,3};                 \n"
+//"   Assert(c.size() == 2);           \n"
 "}                                   \n"
 "                                    \n"
 "void Test2D()                       \n"

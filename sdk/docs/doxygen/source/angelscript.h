@@ -189,6 +189,8 @@ enum asEBehaviours
 	// Reference object memory management
 	//! \brief Factory
 	asBEHAVE_FACTORY,
+	//! \brief Factory used exclusively for initialization lists
+	asBEHAVE_LIST_FACTORY,
 	//! \brief AddRef
 	asBEHAVE_ADDREF,
 	//! \brief Release

@@ -97,7 +97,6 @@ static const char *script4 =
 "   Assert(a[1] == 19);                          \n"
 "}                                               \n";
 
-// TODO: Initialization lists must work for template array
 static const char *script5 = 
 "array<int> g = {1,2,3};                         \n"
 "void TestArrayInitList()                        \n"
@@ -246,33 +245,32 @@ bool Test()
 
 	if( ctx ) ctx->Release();
 
-	// TODO: Initialization lists must work for array template
-/*
+	// Initialization lists must work for array template
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
-	r = engine->ExecuteString(0, "TestArrayInitList()", &ctx);
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "TestArrayInitList()", mod, ctx);
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( r == asEXECUTION_EXCEPTION )
 		PrintException(ctx);
 
 	if( ctx ) ctx->Release();
 
-	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
 	r = mod->Build();
 	if( r >= 0 ) fail = true;
-	if( bout.buffer != "TestArray (1, 1) : Info    : Compiling void Test()\n"
-	                   "TestArray (3, 15) : Error   : Initialization lists cannot be used with 'array<int>@'\n"
-	                   "TestArray (4, 16) : Error   : Initialization lists cannot be used with 'int'\n" )
+	if( bout.buffer != "Test_Addon_ScriptArray (1, 1) : Info    : Compiling void Test()\n"
+	                   "Test_Addon_ScriptArray (3, 20) : Error   : Initialization lists cannot be used with 'array<int>@'\n"
+	                   "Test_Addon_ScriptArray (4, 21) : Error   : Initialization lists cannot be used with 'int'\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
-*/
+
 	// Array object must call default constructor of the script classes
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);

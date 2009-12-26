@@ -44,8 +44,8 @@
 #ifndef ANGELSCRIPT_C_H
 #define ANGELSCRIPT_C_H
 
-#define ANGELSCRIPT_VERSION        21800
-#define ANGELSCRIPT_VERSION_STRING "2.18.0"
+#define ANGELSCRIPT_VERSION        21801
+#define ANGELSCRIPT_VERSION_STRING "2.18.1"
 
 #ifdef AS_USE_NAMESPACE
  #define BEGIN_AS_NAMESPACE namespace AngelScript {
@@ -143,6 +143,7 @@ typedef enum
 
 	// Reference object memory management
 	asBEHAVE_FACTORY,
+	asBEHAVE_LIST_FACTORY,
 	asBEHAVE_ADDREF,
 	asBEHAVE_RELEASE,
 

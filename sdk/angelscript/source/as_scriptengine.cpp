@@ -2545,6 +2545,7 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 	asDELETE(t,asCObjectType);
 }
 
+// internal
 asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateType, asCDataType &subType)
 {
 	asUINT n;
@@ -2590,7 +2591,9 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	ot->methods   = templateType->methods;
 	for( n = 0; n < ot->methods.GetLength(); n++ )
 		scriptFunctions[ot->methods[n]]->AddRef();
-	// Store the real factory in the constructor
+
+	// Store the real factory in the constructor. This is used by the CreateScriptObject function.
+	// Otherwise it wouldn't be necessary to store the real factory ids.
 	ot->beh.construct = templateType->beh.factory;
 	ot->beh.constructors = templateType->beh.factories;
 	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
@@ -2599,26 +2602,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Generate factory stubs for each of the factories
 	for( n = 0; n < templateType->beh.factories.GetLength(); n++ )
 	{
-		int factoryId = templateType->beh.factories[n];
-		asCScriptFunction *factory = scriptFunctions[factoryId];
-
-		asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SCRIPT);
-		func->name             = "factstub";
-		func->id               = GetNextScriptFunctionId();
-		func->returnType       = asCDataType::CreateObjectHandle(ot, false);
-
-		// Skip the first parameter as this is the object type pointer that the stub will add
-		for( asUINT p = 1; p < factory->parameterTypes.GetLength(); p++ )
-		{
-			func->parameterTypes.PushLast(factory->parameterTypes[p]);
-			func->inOutFlags.PushLast(factory->inOutFlags[p]);
-		}
-
-		SetScriptFunction(func);
-
-		asCBuilder builder(this, 0);
-		asCCompiler compiler(this);
-		compiler.CompileTemplateFactoryStub(&builder, factoryId, ot, func);
+		asCScriptFunction *func = GenerateTemplateFactoryStub(ot, templateType->beh.factories[n]);
 
 		// The function's refCount was already initialized to 1
 		ot->beh.factories.PushLast(func->id);
@@ -2631,31 +2615,10 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		ot->beh.factory = templateType->beh.factory;
 	}
 
-	// TODO: initlist: Generate stub for the list factory as well. Do we really need to store the original factory id?
-	//                 The stub will keep a reference to it anyway.
+	// Generate stub for the list factory as well
 	if( templateType->beh.listFactory )
 	{
-		// TODO: cleanup: This is exactly the same as the code above. Should be in a function
-		int factoryId = templateType->beh.listFactory;
-		asCScriptFunction *factory = scriptFunctions[factoryId];
-
-		asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SCRIPT);
-		func->name       = "factstub";
-		func->id         = GetNextScriptFunctionId();
-		func->returnType = asCDataType::CreateObjectHandle(ot, false);
-
-		// Skip the first parameter as this is the object type pointer that the stub will add
-		for( asUINT p = 1; p < factory->parameterTypes.GetLength(); p++ )
-		{
-			func->parameterTypes.PushLast(factory->parameterTypes[p]);
-			func->inOutFlags.PushLast(factory->inOutFlags[p]);
-		}
-
-		SetScriptFunction(func);
-		
-		asCBuilder builder(this, 0);
-		asCCompiler compiler(this);
-		compiler.CompileTemplateFactoryStub(&builder, factoryId, ot, func);
+		asCScriptFunction *func = GenerateTemplateFactoryStub(ot, templateType->beh.listFactory);
 
 		// The function's refCount was already initialized to 1
 		ot->beh.listFactory = func->id;
@@ -2732,6 +2695,32 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	templateInstanceTypes.PushLast(ot);
 
 	return ot;
+}
+
+// internal
+asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *ot, int factoryId)
+{
+	asCScriptFunction *factory = scriptFunctions[factoryId];
+
+	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SCRIPT);
+	func->name             = "factstub";
+	func->id               = GetNextScriptFunctionId();
+	func->returnType       = asCDataType::CreateObjectHandle(ot, false);
+
+	// Skip the first parameter as this is the object type pointer that the stub will add
+	for( asUINT p = 1; p < factory->parameterTypes.GetLength(); p++ )
+	{
+		func->parameterTypes.PushLast(factory->parameterTypes[p]);
+		func->inOutFlags.PushLast(factory->inOutFlags[p]);
+	}
+
+	SetScriptFunction(func);
+
+	asCBuilder builder(this, 0);
+	asCCompiler compiler(this);
+	compiler.CompileTemplateFactoryStub(&builder, factoryId, ot, func);
+
+	return func;
 }
 
 bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *ot, asCDataType &subType, asCScriptFunction *func, asCScriptFunction **newFunc)
