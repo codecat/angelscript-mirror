@@ -16,6 +16,9 @@
 		/>
 	</Platforms>
 	<ToolFiles>
+		<DefaultToolFile
+			FileName="masm.rules"
+		/>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
@@ -30,6 +33,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -99,6 +105,9 @@
 				Name="VCCustomBuildTool"
 			/>
 			<Tool
+				Name="MASM"
+			/>
+			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
@@ -166,6 +175,9 @@
 				Name="VCCustomBuildTool"
 			/>
 			<Tool
+				Name="MASM"
+			/>
+			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
@@ -227,6 +239,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -318,11 +333,69 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\as_callfunc_ppc.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\as_callfunc_ppc_64.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\as_callfunc_sh4.cpp"
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\as_callfunc_x64_gcc.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\as_callfunc_x64_msvc.asm"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="MASM"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="ml64.exe /c  /nologo /Fo&quot;x64\Debug\as_callfunc_x64_msvc_asm.obj&quot; /W3 /Zi /Ta $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
+						Outputs="$(OutDir)\as_callfunc_x64_msvc_asm.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="MASM"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="ml64.exe /c  /nologo /Fo&quot;x64\Debug\as_callfunc_x64_msvc.obj&quot; /W3 /Zi /Ta $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
+						Outputs="$(OutDir)\as_callfunc_x64_msvc.obj"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\source\as_callfunc_x64_msvc.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\as_callfunc_x86.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\as_callfunc_xenon.cpp"
 				>
 			</File>
 			<File

@@ -190,6 +190,12 @@
 // AS_ARM
 // Use assembler code for the ARM CPU family
 
+// AS_X64_GCC
+// Use GCC assembler code for the X64 AMD/Intel CPU family
+
+// AS_X64_MSVC
+// Use MSVC assembler code for the X64 AMD/Intel CPU family
+
 // AS_64BIT_PTR
 // Define this to make the engine store all pointers in 64bit words. 
 
@@ -331,6 +337,9 @@
 		// Support native calling conventions on x86, but not 64bit yet
 		#if defined(_XBOX) || (defined(_M_IX86) && !defined(__LP64__))
 			#define AS_X86
+		#elif defined(_M_X64)
+			// TODO: Not quite working yet
+			//#define AS_X64_MSVC
 		#endif
 	#endif
 
@@ -668,7 +677,7 @@
 
 // If there are no current support for native calling
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC) && !defined(AS_ARM))
+#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC) && !defined(AS_X64_MSVC) && !defined(AS_ARM))
 	#ifndef AS_MAX_PORTABILITY
 		#define AS_MAX_PORTABILITY
 	#endif
