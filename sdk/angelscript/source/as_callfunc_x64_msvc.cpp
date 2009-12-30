@@ -58,12 +58,12 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 	asQWORD  retQW             = 0;
 	void    *func              = (void*)sysFunc->func;
-	int      paramSize         = sysFunc->paramSize;
+	asUINT   paramSize         = 0; // QWords
 	asDWORD *args              = context->regs.stackPointer;
 	void    *retPointer        = 0;
 	void    *obj               = 0;
 	asDWORD *vftable;
-	int      popSize           = paramSize;
+	int      popSize           = sysFunc->paramSize; // DWords
 
 	asQWORD  allArgBuffer[64];
 	asQWORD  floatArgBuffer[4];
@@ -78,6 +78,10 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		{
 			// The return is made in memory
 			callConv++;
+
+			// Set the return pointer as the first argument
+			allArgBuffer[0] = (asQWORD)retPointer;
+			paramSize++;
 		}
 	}
 
@@ -90,7 +94,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		else
 		{
 			// The object pointer should be popped from the context stack
-			popSize++;
+			popSize += AS_PTR_SIZE;
 
 			// Check for null pointer
 			obj = (void*)*(size_t*)(args);
@@ -110,57 +114,73 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 
-	asDWORD paramBuffer[64];
-	if( sysFunc->takesObjByVal )
+	// Move the arguments to the buffer
+	asUINT dpos = paramSize;
+	asUINT spos = 0;
+	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 	{
-		paramSize = 0;
-		int spos = 0;
-		int dpos = 1;
-		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
 		{
-			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
-			{
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
-				if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
-				{
-					paramBuffer[dpos++] = args[spos++];
-					paramSize++;
-				}
-				else
+			if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
+			{
+				allArgBuffer[dpos++] = args[spos++];
+				paramSize++;
+			}
+			else
 #endif
-				{
-					// Copy the object's memory to the buffer
-					memcpy(&paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
+			{
+				// Copy the object's memory to the buffer
+				memcpy(&allArgBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
 
-					// Delete the original memory
-					engine->CallFree(*(char**)(args+spos));
-					spos++;
-					dpos += descr->parameterTypes[n].GetSizeInMemoryDWords();
-					paramSize += descr->parameterTypes[n].GetSizeInMemoryDWords();
-				}
+				// Delete the original memory
+				engine->CallFree(*(char**)(args+spos));
+				spos++;
+				asUINT dwords = descr->parameterTypes[n].GetSizeInMemoryDWords();
+				asUINT qwords = (dwords >> 1) + (dwords & 1);
+				dpos      += qwords;
+				paramSize += qwords;
+			}
+		}
+		else
+		{
+			// Copy the value directly
+			asUINT dwords = descr->parameterTypes[n].GetSizeOnStackDWords();
+			if( dwords > 1 )
+			{
+				allArgBuffer[dpos] = *(asQWORD*)&args[spos];
+
+				// Double arguments are moved to a separate buffer in order to be placed in the XMM registers,
+				// though this is only done for first 4 arguments, the rest are placed on the stack
+				if( paramSize < 4 && descr->parameterTypes[n].IsDoubleType() )
+					floatArgBuffer[dpos] = *(asQWORD*)&args[spos];
+
+				dpos++;
+				spos += 2;
 			}
 			else
 			{
-				// Copy the value directly
-				paramBuffer[dpos++] = args[spos++];
-				if( descr->parameterTypes[n].GetSizeOnStackDWords() > 1 )
-					paramBuffer[dpos++] = args[spos++];
-				paramSize += descr->parameterTypes[n].GetSizeOnStackDWords();
+				allArgBuffer[dpos] = args[spos];
+
+				// Float arguments are moved to a separate buffer in order to be placed in the XMM registers,
+				// though this is only done for first 4 arguments, the rest are placed on the stack
+				if( paramSize < 4 && descr->parameterTypes[n].IsFloatType() )
+					floatArgBuffer[dpos] = args[spos];
+				
+				dpos++;
+				spos++;
 			}
+
+			paramSize++;
 		}
-		// Keep a free location at the beginning
-		args = &paramBuffer[1];
 	}
 
 	context->isCallingSystemFunction = true;
 	switch( callConv )
 	{
 	case ICC_CDECL:
-		retQW = CallX64(allArgBuffer, floatArgBuffer, paramSize<<2, (size_t)func);
-		break;
-
 	case ICC_CDECL_RETURNINMEM:
-		retQW = CallX64(allArgBuffer, floatArgBuffer, paramSize<<2, (size_t)func);
+		retQW = CallX64(allArgBuffer, floatArgBuffer, paramSize*8, (size_t)func);
 		break;
 
 /*	case ICC_STDCALL:

@@ -42,6 +42,8 @@ CallX64 PROC FRAME
 
 	push rsi
 .pushreg rsi
+	push r11
+.pushreg r11
 	push rdi
 .pushreg rdi
 	push r12
@@ -54,12 +56,14 @@ CallX64 PROC FRAME
 .pushreg r15
 	push rbx
 .pushreg rbx
-	sub rsp, 32		; Leave space for first 4 params on stack (4 x 8bytes = 32bytes)
-.allocstack 32
 .endprolog
 
 	; Move function param to non-scratch register
 	mov r14, r9		; r14 = function
+
+	; Allocate space on the stack for the arguments
+	sub rsp, r8
+	mov rdi, r8     ; Store the paramSize so we can deallocate the stack after the call
 
 	; Jump straight to calling the function if no parameters
 	cmp r8d, 0		; Compare paramSize with 0
@@ -67,7 +71,7 @@ CallX64 PROC FRAME
 
 	; Move params to non-scratch registers
 	mov rsi, rcx	; rsi = pArgs
-	mov rdi, rdx	; rdi = pFloatArgs (can be NULL)
+	mov r11, rdx	; r11 = pFloatArgs (can be NULL)
 	mov r12d, r8d	; r12 = paramSize
 	
 	; Copy arguments from script stack to application stack
@@ -88,7 +92,7 @@ CallX64 PROC FRAME
 	
 	add rsi, 32		; Position input pointer 4 args ahead
 	mov r13, rsp	; Put the stack pointer into r13
-	add r13, 32		; Leave space for first 4 args on stack
+	add r13, 32 	; Leave space for first 4 args on stack
 
 copyoverflow:
 	mov r15, qword ptr [rsi]	; Read param from source stack into r15
@@ -100,27 +104,30 @@ copyoverflow:
 
 copyfloat:
 	; Any floating point params?
-	cmp rdi, 0
+	cmp r11, 0
 	je  callfunc
 	
-	movlpd xmm0, qword ptr [rdi]
-	movlpd xmm1, qword ptr [rdi + 8]
-	movlpd xmm2, qword ptr [rdi + 16]
-	movlpd xmm3, qword ptr [rdi + 24]
+	movlpd xmm0, qword ptr [r11]
+	movlpd xmm1, qword ptr [r11 + 8]
+	movlpd xmm2, qword ptr [r11 + 16]
+	movlpd xmm3, qword ptr [r11 + 24]
 	
 callfunc:
 	
 	; Call function
 	call r14
+	
+	; Restore the stack
+	add rsp, rdi
 		
 	; EPILOG: Restore stack & preserved registers
-	add rsp, 32
 	pop rbx
 	pop r15
 	pop r14
 	pop r13
 	pop r12
 	pop rdi
+	pop r11
 	pop rsi
 
 	; return value in RAX

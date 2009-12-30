@@ -26,23 +26,6 @@ static void cfunction(int f1, short f2, char f3, int f4)
 	testVal = (f1 == 5) && (f2 == 9) && (f3 == 1) && (f4 == 3);
 }
 
-static asINT64 g1 = 0;
-static float   g2 = 0;
-static char    g3 = 0;
-static int     g4 = 0;
-
-static void cfunction2(asINT64 i1, float f2, char i3, int i4)
-{
-	called = true;
-	
-	g1 = i1;
-	g2 = f2;
-	g3 = i3;
-	g4 = i4;
-	
-	testVal = ((i1 == I64(0x102030405)) && (f2 == 3) && (i3 == 24) && (i4 == 128));
-}
-
 static void cfunction_gen(asIScriptGeneric *gen)
 {
 	called = true;
@@ -78,29 +61,6 @@ bool TestExecute4Args()
 		ret = true;
 	}
 	
-	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		called = false;
-		testVal = false;
-		
-		COutStream out;
-		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		engine->RegisterGlobalFunction("void cfunction2(int64, float, int8, int)", asFUNCTION(cfunction2), asCALL_CDECL);
-		
-		ExecuteString(engine, "cfunction2(0x102030405, 3, 24, 128)");
-		
-		if( !called )
-		{
-			printf("%s: cfunction2 not called\n", TESTNAME);
-			ret = true;
-		}
-		else if( !testVal )
-		{
-			printf("%s: testVal not of expected value. Got(%lld, %g, %d, %d)\n", TESTNAME, g1, g2, g3, g4);
-			ret = true;
-		}
-	}
-
 	engine->Release();
 	
 	// Success

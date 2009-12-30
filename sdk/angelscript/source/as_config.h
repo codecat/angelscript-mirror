@@ -324,7 +324,7 @@
 
 	#define ASM_INTEL  // Intel style for inline assembly on microsoft compilers
 
-	#if defined(WIN32)
+	#if defined(WIN32) || defined(_WIN64)
 		#define AS_WIN
 	#endif
 
@@ -338,7 +338,6 @@
 		#if defined(_XBOX) || (defined(_M_IX86) && !defined(__LP64__))
 			#define AS_X86
 		#elif defined(_M_X64)
-			// TODO: Not quite working yet
 			//#define AS_X64_MSVC
 		#endif
 	#endif
@@ -500,7 +499,7 @@
 		#define AS_POSIX_THREADS
  
 	// Windows
-	#elif defined(WIN32)
+	#elif defined(WIN32) || defined(_WIN64)
 		// On Windows the simple classes are returned in the EAX:EDX registers
 		//#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		//#define CDECL_RETURN_SIMPLE_IN_MEMORY

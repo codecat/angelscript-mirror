@@ -122,7 +122,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		else
 		{
 			// The object pointer should be popped from the context stack
-			popSize++;
+			popSize += AS_PTR_SIZE;
 
 			// Check for null pointer
 			obj = (void*)*(size_t*)(args);
@@ -138,7 +138,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			obj = (void*)(size_t(obj) + sysFunc->baseOffset);
 
 			// Skip the object pointer
-			args++;
+			args += AS_PTR_SIZE;
 		}
 	}
 

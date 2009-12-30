@@ -41,6 +41,23 @@ static void cfunction_gen(asIScriptGeneric *gen)
 	testVal = (t1 == 10) && (t2 == 1.92f) && (t3 == 3.88) && (t4 == 97);
 }
 
+static asINT64 g1 = 0;
+static float   g2 = 0;
+static char    g3 = 0;
+static int     g4 = 0;
+
+static void cfunction2(asINT64 i1, float f2, char i3, int i4)
+{
+	called = true;
+	
+	g1 = i1;
+	g2 = f2;
+	g3 = i3;
+	g4 = i4;
+	
+	testVal = ((i1 == I64(0x102030405)) && (f2 == 3) && (i3 == 24) && (i4 == 128));
+}
+
 bool TestExecuteMixedArgs()
 {
 	bool ret = false;
@@ -59,6 +76,29 @@ bool TestExecuteMixedArgs()
 	} else if (!testVal) {
 		printf("\n%s: testVal is not of expected value. Got (%d, %f, %f, %c), expected (%d, %f, %f, %c)\n\n", TESTNAME, t1, t2, t3, t4, 10, 1.92f, 3.88, 97);
 		ret = true;
+	}
+
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		called = false;
+		testVal = false;
+		
+		COutStream out;
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void cfunction2(int64, float, int8, int)", asFUNCTION(cfunction2), asCALL_CDECL);
+		
+		ExecuteString(engine, "cfunction2(0x102030405, 3, 24, 128)");
+		
+		if( !called )
+		{
+			printf("%s: cfunction2 not called\n", TESTNAME);
+			ret = true;
+		}
+		else if( !testVal )
+		{
+			printf("%s: testVal not of expected value. Got(%lld, %g, %d, %d)\n", TESTNAME, g1, g2, g3, g4);
+			ret = true;
+		}
 	}
 
 	engine->Release();

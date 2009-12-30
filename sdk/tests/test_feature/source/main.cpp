@@ -1,5 +1,5 @@
 #include <stdio.h>
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN64)
 #include <conio.h>
 #endif
 #if defined(_MSC_VER)
@@ -332,7 +332,7 @@ int main(int argc, char **argv)
 //succeed:
 	printf("--------------------------------------------\n");
 	printf("All of the tests passed with success.\n\n");
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN64)
 	printf("Press any key to quit.\n");
 	while(!_getch());
 #endif
@@ -341,7 +341,7 @@ int main(int argc, char **argv)
 failed:
 	printf("--------------------------------------------\n");
 	printf("One of the tests failed, see details above.\n\n");
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN64)
 	printf("Press any key to quit.\n");
 	while(!_getch());
 #endif
