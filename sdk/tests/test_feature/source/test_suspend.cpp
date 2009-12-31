@@ -42,6 +42,14 @@ void Suspend(asIScriptGeneric * /*gen*/)
 	doSuspend = true;
 }
 
+bool doAbort = true;
+void Abort(asIScriptGeneric *)
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx ) ctx->Abort();
+	doAbort = true;
+}
+
 void STDCALL LineCallback(asIScriptContext *ctx, void * /*param*/)
 {
 	// Suspend immediately
@@ -62,6 +70,7 @@ bool Test()
 	RegisterScriptString_Generic(engine);
 	
 	engine->RegisterGlobalFunction("void Suspend()", asFUNCTION(Suspend), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void Abort()", asFUNCTION(Abort), asCALL_GENERIC);
 	engine->RegisterGlobalProperty("int loopCount", &loopCount);
 
 	COutStream out;
@@ -80,6 +89,13 @@ bool Test()
 	}
 	else
 		fail = true;
+
+	// Make sure the Execute method returns proper status on abort
+	int r = ExecuteString(engine, "Abort()", 0, 0);
+	if( r != asEXECUTION_ABORTED )
+	{
+		fail = true;
+	}
 
 	// Release the engine first
 	engine->Release();

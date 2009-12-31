@@ -1000,7 +1000,7 @@ int asCContext::Execute()
 		}
 	}
 
-	while(  status == asEXECUTION_ACTIVE )
+	while( status == asEXECUTION_ACTIVE )
 		ExecuteNext();
 
 	doSuspend = false;
@@ -1051,9 +1051,6 @@ int asCContext::Execute()
 		return asEXECUTION_FINISHED;
 	}
 
-	if( status == asEXECUTION_SUSPENDED )
-		return asEXECUTION_SUSPENDED;
-
 	if( doAbort )
 	{
 		doAbort = false;
@@ -1061,6 +1058,9 @@ int asCContext::Execute()
 		status = asEXECUTION_ABORTED;
 		return asEXECUTION_ABORTED;
 	}
+
+	if( status == asEXECUTION_SUSPENDED )
+		return asEXECUTION_SUSPENDED;
 
 	if( status == asEXECUTION_EXCEPTION )
 		return asEXECUTION_EXCEPTION;
