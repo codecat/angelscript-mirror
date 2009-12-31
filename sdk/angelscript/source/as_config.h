@@ -307,9 +307,14 @@
 
 // Microsoft Visual C++
 #if defined(_MSC_VER) && !defined(__MWERKS__)
-	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
+	#ifdef _M_X64
+		#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+2))
+		#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+4))
+	#else
+		#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
+		#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+3))
+	#endif
 	#define HAVE_VIRTUAL_BASE_OFFSET
-	#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+3))
 	#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 	#define THISCALL_PASS_OBJECT_POINTER_IN_ECX
 	#if _MSC_VER < 1500 // MSVC++ 9 (aka MSVC++ .NET 2008)

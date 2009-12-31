@@ -303,11 +303,9 @@ int main(int argc, char **argv)
 		if( TestCDecl_ClassC()            ) goto failed; else printf("-- TestCDecl_ClassC passed\n");
 		if( TestCDecl_ClassD()            ) goto failed; else printf("-- TestCDecl_ClassD passed\n");
 
-		// cdecl_objlast
+		// cdecl_objlast and cdecl_objfirst
 		if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
 		if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
-
-		// cdecl_objfirst
 		if( TestReturnWithCDeclObjFirst() ) goto failed; else printf("-- TestReturnWithCDeclObjFirst passed\n");
 
 		// thiscall

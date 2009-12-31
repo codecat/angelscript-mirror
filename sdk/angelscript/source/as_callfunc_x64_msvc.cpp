@@ -62,7 +62,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	asDWORD *args              = context->regs.stackPointer;
 	void    *retPointer        = 0;
 	void    *obj               = 0;
-	asDWORD *vftable;
+	void   **vftable;
 	int      popSize           = sysFunc->paramSize; // DWords
 
 	asQWORD  allArgBuffer[64];
@@ -73,16 +73,6 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		// Allocate the memory for the object
 		retPointer = engine->CallAlloc(descr->returnType.GetObjectType());
-
-		if( sysFunc->hostReturnInMemory )
-		{
-			// The return is made in memory
-			callConv++;
-
-			// Set the return pointer as the first argument
-			allArgBuffer[0] = (asQWORD)retPointer;
-			paramSize++;
-		}
 	}
 
 	if( callConv >= ICC_THISCALL )
@@ -110,8 +100,41 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			obj = (void*)(size_t(obj) + sysFunc->baseOffset);
 
 			// Skip the object pointer
-			args++;
+			args += AS_PTR_SIZE;
 		}
+	}
+
+	if( callConv == ICC_THISCALL ||
+		callConv == ICC_THISCALL_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL || 
+		callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM )
+	{
+		// Add the object pointer as the first parameter
+		allArgBuffer[paramSize++] = (asQWORD)obj;
+	}
+
+	if( sysFunc->hostReturnInMemory )
+	{
+		// The return is made in memory
+		callConv++;
+
+		// Set the return pointer as the first argument
+		allArgBuffer[paramSize++] = (asQWORD)retPointer;
+	}
+
+	if( callConv == ICC_CDECL_OBJFIRST ||
+		callConv == ICC_CDECL_OBJFIRST_RETURNINMEM )
+	{
+		// Add the object pointer as the first parameter
+		allArgBuffer[paramSize++] = (asQWORD)obj;
+	}
+
+	if( callConv == ICC_VIRTUAL_THISCALL ||
+		callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM )
+	{
+		// Get the true function pointer from the virtual function table
+		vftable = *(void***)obj;
+		func = vftable[size_t(func)>>2];
 	}
 
 	// Move the arguments to the buffer
@@ -175,68 +198,31 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 
+	if( callConv == ICC_CDECL_OBJLAST ||
+		callConv == ICC_CDECL_OBJLAST_RETURNINMEM )
+	{
+		// Add the object pointer as the last parameter
+		allArgBuffer[paramSize++] = (asQWORD)obj;
+	}
+
 	context->isCallingSystemFunction = true;
 	switch( callConv )
 	{
 	case ICC_CDECL:
 	case ICC_CDECL_RETURNINMEM:
+	case ICC_STDCALL:
+	case ICC_STDCALL_RETURNINMEM:
+	case ICC_CDECL_OBJLAST:
+	case ICC_CDECL_OBJLAST_RETURNINMEM:
+	case ICC_CDECL_OBJFIRST:
+	case ICC_CDECL_OBJFIRST_RETURNINMEM:
+	case ICC_THISCALL:
+	case ICC_THISCALL_RETURNINMEM:
+	case ICC_VIRTUAL_THISCALL:
+	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		retQW = CallX64(allArgBuffer, floatArgBuffer, paramSize*8, (size_t)func);
 		break;
 
-/*	case ICC_STDCALL:
-		retQW = CallX64(args, paramSize<<2, (size_t)func);
-		break;
-
-	case ICC_STDCALL_RETURNINMEM:
-		// Push the return pointer on the stack
-		paramSize++;
-		args--;
-		*(size_t*)args = (size_t)retPointer;
-
-		retQW = CallX64(args, paramSize<<2, (size_t)func);
-		break;
-
-	case ICC_THISCALL:
-		retQW = CallX64(obj, args, paramSize<<2, (size_t)func);
-		break;
-
-	case ICC_THISCALL_RETURNINMEM:
-		retQW = CallX64(obj, args, paramSize<<2, (size_t)func, retPointer);
-		break;
-
-	case ICC_VIRTUAL_THISCALL:
-		// Get virtual function table from the object pointer
-		vftable = *(asDWORD**)obj;
-
-		retQW = CallX64(obj, args, paramSize<<2, vftable[size_t(func)>>2]);
-		break;
-
-	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
-		// Get virtual function table from the object pointer
-		vftable = *(asDWORD**)obj;
-
-		retQW = CallX64(obj, args, paramSize<<2, vftable[size_t(func)>>2], retPointer);
-		break;
-
-	case ICC_CDECL_OBJLAST:
-		retQW = CallX64(obj, args, paramSize<<2, (size_t)func);
-		break;
-
-	case ICC_CDECL_OBJLAST_RETURNINMEM:
-		// Call the system object method as a cdecl with the obj ref as the last parameter
-		retQW = CallX64(obj, args, paramSize<<2, (size_t)func, retPointer);
-		break;
-
-	case ICC_CDECL_OBJFIRST:
-		// Call the system object method as a cdecl with the obj ref as the first parameter
-		retQW = CallX64(obj, args, paramSize<<2, (size_t)func);
-		break;
-
-	case ICC_CDECL_OBJFIRST_RETURNINMEM:
-		// Call the system object method as a cdecl with the obj ref as the first parameter
-		retQW = CallX64(obj, args, paramSize<<2, (size_t)func, retPointer);
-		break;
-*/
 	default:
 		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
 	}
