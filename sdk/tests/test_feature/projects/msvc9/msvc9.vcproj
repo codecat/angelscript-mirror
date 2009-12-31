@@ -125,7 +125,7 @@
 				PreprocessorDefinitions="_WIN64;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -454,6 +454,10 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_castop.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\test_cdecl_return.cpp"
 				>
 			</File>
 			<File
@@ -870,10 +874,6 @@
 			</File>
 			<File
 				RelativePath="..\..\source\testoutput.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\test_cdecl_return.cpp"
 				>
 			</File>
 			<File

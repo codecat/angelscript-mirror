@@ -165,6 +165,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				paramSize += qwords;
 			}
 		}
+		else if( descr->parameterTypes[n].GetTokenType() == ttQuestion )
+		{
+			// Copy the reference and the type id
+			allArgBuffer[dpos++] = *(asQWORD*)&args[spos];
+			spos += 2;
+			allArgBuffer[dpos++] = args[spos++];
+			paramSize += 2;
+		}
 		else
 		{
 			// Copy the value directly
@@ -301,20 +309,20 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer )
-			args++;
+			args += AS_PTR_SIZE;
 
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
-			if( sysFunc->paramAutoHandles[n] && args[spos] )
+			if( sysFunc->paramAutoHandles[n] && *(size_t*)&args[spos] )
 			{
 				// Call the release method on the type
 				engine->CallObjectMethod((void*)*(size_t*)&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
-				args[spos] = 0;
+				*(size_t*)&args[spos] = 0;
 			}
 
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
-				spos++;
+				spos += AS_PTR_SIZE;
 			else
 				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
 		}

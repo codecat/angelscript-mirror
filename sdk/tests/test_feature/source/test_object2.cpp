@@ -10,8 +10,8 @@ static const char * const TESTNAME = "TestObject2";
 static const char *script1 =
 "void TestObject2()                                                                          \n"
 "{                                                                                           \n"
-"  GuiButton@ btn = GUI.AddButton(\"Hello world 3!\", Vector2(200, 50), Vector2(100, 50));   \n"
-"  GUI.GetButton(\"Test\").SetName(\"Test2\");                                               \n"
+"  GuiButton@ btn = GUI.AddButton('Hello world 3!', Vector2(200, 50), Vector2(100, 50));     \n"
+"  GUI.GetButton('Test').SetName('Test2');                                                   \n"
 "}                                                                                           \n";
 
 class CGuiButton
