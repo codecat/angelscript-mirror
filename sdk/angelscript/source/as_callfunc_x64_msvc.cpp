@@ -147,7 +147,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 			if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
 			{
-				allArgBuffer[dpos++] = args[spos++];
+				allArgBuffer[dpos++] = *(asQWORD*)&args[spos];
+				spos += AS_PTR_SIZE;
 				paramSize++;
 			}
 			else
@@ -158,7 +159,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 				// Delete the original memory
 				engine->CallFree(*(char**)(args+spos));
-				spos++;
+				spos += AS_PTR_SIZE;
 				asUINT dwords = descr->parameterTypes[n].GetSizeInMemoryDWords();
 				asUINT qwords = (dwords >> 1) + (dwords & 1);
 				dpos      += qwords;
@@ -242,7 +243,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		// Need to free the complex objects passed by value
 		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer )
-		    args++;
+		    args += AS_PTR_SIZE;;
 
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
@@ -251,15 +252,18 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				!descr->parameterTypes[n].IsReference() &&
 				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )
 			{
-				void *obj = (void*)args[spos++];
-				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
-				if( beh->destruct )
-					engine->CallObjectMethod(obj, beh->destruct);
+				void *obj = (void*)*(size_t*)&args[spos];
+				spos += AS_PTR_SIZE;
+
+				// The destructor is called by the function before it returns
+//				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
+//				if( beh->destruct )
+//					engine->CallObjectMethod(obj, beh->destruct);
 
 				engine->CallFree(obj);
 			}
 			else
-				spos += descr->parameterTypes[n].GetSizeInMemoryDWords();
+				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
 		}
 	}
 #endif

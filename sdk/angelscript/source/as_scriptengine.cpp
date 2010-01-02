@@ -3835,7 +3835,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	dataType.CreatePrimitive(ttInt, false);
 
 	st->flags = asOBJ_ENUM;
-	st->size = dataType.GetSizeInMemoryBytes();
+	st->size = 4;
 	st->name = name;
 
 	objectTypes.PushLast(st);

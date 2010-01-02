@@ -344,6 +344,8 @@
 			#define AS_X86
 		#elif defined(_M_X64)
 			//#define AS_X64_MSVC
+
+			#define COMPLEX_OBJS_PASSED_BY_REF
 		#endif
 	#endif
 
@@ -360,9 +362,11 @@
         #define STDCALL_RETURN_SIMPLE_IN_MEMORY
         #define COMPLEX_OBJS_PASSED_BY_REF
         #define COMPLEX_MASK asOBJ_APP_CLASS_ASSIGNMENT
-    #else
-        #define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
     #endif
+
+	#ifndef COMPLEX_MASK
+		#define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
+	#endif
 
 	#define UNREACHABLE_RETURN
 #endif

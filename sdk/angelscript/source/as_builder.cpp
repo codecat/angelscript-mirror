@@ -1925,7 +1925,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 		dataType.CreatePrimitive(ttInt, false);
 
 		st->flags     = asOBJ_ENUM;
-		st->size      = dataType.GetSizeInMemoryBytes();
+		st->size      = 4;
 		st->name      = name;
 
 		module->enumTypes.PushLast(st);

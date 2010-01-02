@@ -2,7 +2,7 @@
 // This test shows how to register the std::string to be used in the scripts.
 // It also used to verify that objects are always constructed before destructed.
 //
-// Author: Andreas Jönsson
+// Author: Andreas Jonsson
 //
 
 #include "utils.h"
@@ -141,7 +141,6 @@ bool TestStdString()
 	engine->RegisterObjectMethod("StringConsumer", "void Consume(string str)", asMETHOD(StringConsumer,Consume), asCALL_THISCALL);
 	engine->RegisterGlobalProperty("StringConsumer consumerObject", &consumerObject);
 	//<-- new: object method string argument test
-
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("string", script);
