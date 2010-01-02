@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -5876,13 +5876,21 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, 
 		// Add the character to the final string
 		char encodedValue[5];
 		int len;
-		if( engine->ep.stringEncoding == 0 )
+		if( engine->ep.scanner == 1 && engine->ep.stringEncoding == 0 )
 		{
+			// Convert to UTF8 encoded 
 			len = asStringEncodeUTF8(val, encodedValue);
+		}
+		else if( engine->ep.stringEncoding == 1 )
+		{
+			// Convert to 16bit wide character string (even if the script is scanned as ASCII)
+			len = asStringEncodeUTF16(val, encodedValue);
 		}
 		else
 		{
-			len = asStringEncodeUTF16(val, encodedValue);
+			// Do not convert ASCII characters
+			encodedValue[0] = val;
+			len = 1;
 		}
 
 		if( len < 0 )

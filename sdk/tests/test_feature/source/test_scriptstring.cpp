@@ -317,13 +317,18 @@ bool Test()
 	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
 	r = ExecuteString(engine, "print(\"\" + '\xFF')");
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
- 
+
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "print(\"\" + '')");
 	if( r != -1 ) fail = true;
 	r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false); assert( r >= 0 );
+
+	// Test special characters (>127) in non unicode scripts
+	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
+	r = ExecuteString(engine, "string s = '\xC8'; \n assert(s.length() == 1); \n assert(s[0] == 200);");
+	if( r != asEXECUTION_FINISHED ) fail = true;
+	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
 
 	//-------------------------------------
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
