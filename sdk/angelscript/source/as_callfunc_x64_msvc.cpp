@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -144,15 +144,13 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
 		{
-#ifdef COMPLEX_OBJS_PASSED_BY_REF
-			if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
+			if( descr->parameterTypes[n].GetSizeInMemoryDWords() > 2 )
 			{
 				allArgBuffer[dpos++] = *(asQWORD*)&args[spos];
 				spos += AS_PTR_SIZE;
 				paramSize++;
 			}
 			else
-#endif
 			{
 				// Copy the object's memory to the buffer
 				memcpy(&allArgBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
@@ -215,29 +213,9 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 
 	context->isCallingSystemFunction = true;
-	switch( callConv )
-	{
-	case ICC_CDECL:
-	case ICC_CDECL_RETURNINMEM:
-	case ICC_STDCALL:
-	case ICC_STDCALL_RETURNINMEM:
-	case ICC_CDECL_OBJLAST:
-	case ICC_CDECL_OBJLAST_RETURNINMEM:
-	case ICC_CDECL_OBJFIRST:
-	case ICC_CDECL_OBJFIRST_RETURNINMEM:
-	case ICC_THISCALL:
-	case ICC_THISCALL_RETURNINMEM:
-	case ICC_VIRTUAL_THISCALL:
-	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
-		retQW = CallX64(allArgBuffer, floatArgBuffer, paramSize*8, (size_t)func);
-		break;
-
-	default:
-		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
-	}
+	retQW = CallX64(allArgBuffer, floatArgBuffer, paramSize*8, (size_t)func);
 	context->isCallingSystemFunction = false;
 
-#ifdef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal )
 	{
 		// Need to free the complex objects passed by value
@@ -250,23 +228,19 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		{
 			if( descr->parameterTypes[n].IsObject() &&
 				!descr->parameterTypes[n].IsReference() &&
-				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )
+				descr->parameterTypes[n].GetSizeInMemoryDWords() > 2 )
 			{
 				void *obj = (void*)*(size_t*)&args[spos];
 				spos += AS_PTR_SIZE;
 
-				// The destructor is called by the function before it returns
-//				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
-//				if( beh->destruct )
-//					engine->CallObjectMethod(obj, beh->destruct);
-
+				// The destructor is called by the function before  
+				// it returns so we should only free the memory
 				engine->CallFree(obj);
 			}
 			else
 				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
 		}
 	}
-#endif
 
 	// Store the returned value in our stack
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() )

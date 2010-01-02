@@ -51,6 +51,20 @@ static Class1 c1;
 static Class2 c2;
 static Class3 c3;
 
+static void class1ByVal(Class1 c)
+{
+	assert( c.a == 0xDEADC0DE );
+}
+
+static void class2ByVal(Class2 c)
+{
+	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 ); 
+}
+
+static void class3ByVal(Class3 c)
+{
+	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 && c.c == 0x89ABCDEF );
+}
 
 bool TestCDecl_Class()
 {
@@ -145,6 +159,23 @@ bool TestCDecl_Class()
 		printf("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, c3.c);
 		fail = true;
 	}
+
+	// Test passing the object types by value to a system function
+	r = engine->RegisterGlobalFunction("void class1ByVal(class1)", asFUNCTION(class1ByVal), asCALL_CDECL); assert( r >= 0 );
+	r = ExecuteString(engine, "class1 c = _class1(); class1ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	r = engine->RegisterGlobalFunction("void class2ByVal(class2)", asFUNCTION(class2ByVal), asCALL_CDECL); assert( r >= 0 );
+	r = ExecuteString(engine, "class2 c = _class2(); class2ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	Class3 c = class3(); class3ByVal(c);
+	r = engine->RegisterGlobalFunction("void class3ByVal(class3)", asFUNCTION(class3ByVal), asCALL_CDECL); assert( r >= 0 );
+	r = ExecuteString(engine, "class3 c = _class3(); class3ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
 
 	engine->Release();
 

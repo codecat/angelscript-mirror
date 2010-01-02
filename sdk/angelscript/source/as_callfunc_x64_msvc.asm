@@ -1,6 +1,6 @@
 ;
 ;  AngelCode Scripting Library
-;  Copyright (c) 2003-2009 Andreas Jonsson
+;  Copyright (c) 2003-2010 Andreas Jonsson
 ;
 ;  This software is provided 'as-is', without any express or implied 
 ;  warranty. In no event will the authors be held liable for any 
@@ -92,7 +92,7 @@ CallX64 PROC FRAME
 	
 	add rsi, 32		; Position input pointer 4 args ahead
 	mov r13, rsp	; Put the stack pointer into r13
-	add r13, 32 	; Leave space for first 4 args on stack
+	add r13, 32	 	; Leave space for first 4 args on stack
 
 copyoverflow:
 	mov r15, qword ptr [rsi]	; Read param from source stack into r15

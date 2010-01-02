@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -343,9 +343,7 @@
 		#if defined(_XBOX) || (defined(_M_IX86) && !defined(__LP64__))
 			#define AS_X86
 		#elif defined(_M_X64)
-			//#define AS_X64_MSVC
-
-			#define COMPLEX_OBJS_PASSED_BY_REF
+			#define AS_X64_MSVC
 		#endif
 	#endif
 
