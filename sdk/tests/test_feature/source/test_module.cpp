@@ -165,6 +165,23 @@ bool Test()
 	// TODO: What should happen if a function in the module scope references another function that has 
 	//       been removed from the scope but is still alive, and then the byte code for the module is saved?
 
+	// Make sure a circular reference between global variable, class, and class method is properly released
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	mod = engine->GetModule("script", asGM_ALWAYS_CREATE);
+	const char *script = "obj o; class obj { void d() { o.val = 1; } int val; }";
+	mod->AddScriptSection("script", script);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r != 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	engine->Release();
+
 	// Success
 	return fail;
 }

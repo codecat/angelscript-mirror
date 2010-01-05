@@ -700,6 +700,48 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test global property accessor
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"int _s = 0;  \n"
+			"int get_s() { return _s; } \n"
+			"void set_s(int v) { _s = v; } \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		r = ExecuteString(engine, "s = 10; assert( s == 10 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+
+		// The global property accessors are available to initialize global 
+		// variables, but can possibly throw an exception if used inappropriately
+/*		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		script =
+			"string _s = s; \n"
+			"string get_s() { return _s; } \n";
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r != asINIT_GLOBAL_VARS_FAILED )
+			fail = true;
+
+		engine->Release();
+*/	}
+
 	// Success
 	return fail;
 }

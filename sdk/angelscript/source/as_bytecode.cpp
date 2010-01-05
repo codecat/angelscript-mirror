@@ -581,6 +581,10 @@ int asCByteCode::Optimize()
 	
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
+	// TODO: optimize: PGA followed by CHKREF, should remove the CHKREF instruction, as PGA will always push a valid address on the stack
+
+	// TODO: optimize: PGA, ChkRefS, CHKREF -> should remove the CHKREF instruction
+
 	cByteInstruction *instr = first;
 	while( instr )
 	{

@@ -5305,52 +5305,80 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			// Is it a global property?
 			if( !found && (scope == "" || scope == "::") )
 			{
-				bool isCompiled = true;
-				bool isPureConstant = false;
-				asQWORD constantValue;
-				asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue);
-				if( prop )
+				// See if there are any matching global property accessors
+				asSExprContext access(engine);
+				int r = FindPropertyAccessor(name, &access, node);
+				if( r < 0 ) return -1;
+				if( access.property_get || access.property_set )
 				{
+					// Prepare the bytecode for the function call
+					ctx->type = access.type;
+					ctx->property_get = access.property_get;
+					ctx->property_set = access.property_set;
+					ctx->property_const = access.property_const;
+					ctx->property_handle = access.property_handle;
+
 					found = true;
-
-					// Verify that the global property has been compiled already
-					if( isCompiled )
+				}
+				
+				if( !found )
+				{
+					bool isCompiled = true;
+					bool isPureConstant = false;
+					asQWORD constantValue;
+					asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue);
+					if( prop )
 					{
-						if( ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
-						{
-							ctx->type.dataType.MakeHandle(true);
-							ctx->type.isExplicitHandle = true;
-						}
+						found = true;
 
-						// If the global property is a pure constant
-						// we can allow the compiler to optimize it. Pure
-						// constants are global constant variables that were
-						// initialized by literal constants.
-						if( isPureConstant )
-							ctx->type.SetConstantQW(prop->type, constantValue);
-						else
+						// Verify that the global property has been compiled already
+						if( isCompiled )
 						{
-							ctx->type.Set(prop->type);
-							ctx->type.dataType.MakeReference(true);
-
-							if( ctx->type.dataType.IsPrimitive() )
+							if( ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
 							{
-								// Load the address of the variable into the register
-								ctx->bc.InstrPTR(asBC_LDG, engine->globalProperties[prop->id]->GetAddressOfValue());
+								ctx->type.dataType.MakeHandle(true);
+								ctx->type.isExplicitHandle = true;
 							}
+
+							// If the global property is a pure constant
+							// we can allow the compiler to optimize it. Pure
+							// constants are global constant variables that were
+							// initialized by literal constants.
+							if( isPureConstant )
+								ctx->type.SetConstantQW(prop->type, constantValue);
 							else
 							{
-								// Push the address of the variable on the stack
-								ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[prop->id]->GetAddressOfValue());
+								ctx->type.Set(prop->type);
+								ctx->type.dataType.MakeReference(true);
+
+								if( ctx->type.dataType.IsPrimitive() )
+								{
+									// Load the address of the variable into the register
+									ctx->bc.InstrPTR(asBC_LDG, engine->globalProperties[prop->id]->GetAddressOfValue());
+								}
+								else
+								{
+									// Push the address of the variable on the stack
+									ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[prop->id]->GetAddressOfValue());
+
+									// If the object is a value type, then we must validate the existance,  
+									// as it could potentially be accessed before it is initialized.
+									if( ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE ||
+										!ctx->type.dataType.IsObjectHandle() )
+									{
+										// TODO: optimize: This is not necessary for application registered properties
+										ctx->bc.Instr(asBC_ChkRefS);
+									}
+								}
 							}
 						}
-					}
-					else
-					{
-						asCString str;
-						str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, prop->name.AddressOf());
-						Error(str.AddressOf(), vnode);
-						return -1;
+						else
+						{
+							asCString str;
+							str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, prop->name.AddressOf());
+							Error(str.AddressOf(), vnode);
+							return -1;
+						}
 					}
 				}
 			}
@@ -6814,41 +6842,85 @@ void asCCompiler::ConvertToReference(asSExprContext *ctx)
 
 int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node)
 {
-	if( !ctx->type.dataType.IsObject() )
-		return 0;
-
-	// Check if the object as any methods with the property name prefixed by get_ or set_
 	int getId = 0, setId = 0;
 	asCString getName = "get_" + name;
 	asCString setName = "set_" + name;
 	asCArray<int> multipleGetFuncs, multipleSetFuncs;
-	asCObjectType *ot = ctx->type.dataType.GetObjectType();
-	for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
-	{
-		asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
-		if( f->name == getName && f->parameterTypes.GetLength() == 0 )
-		{
-			if( getId == 0 )
-				getId = ot->methods[n];
-			else
-			{
-				if( multipleGetFuncs.GetLength() == 0 )
-					multipleGetFuncs.PushLast(getId);
 
-				multipleGetFuncs.PushLast(ot->methods[n]);
+	if( ctx->type.dataType.IsObject() )
+	{
+		// Check if the object has any methods with the property name prefixed by get_ or set_
+		asCObjectType *ot = ctx->type.dataType.GetObjectType();
+		for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+		{
+			asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
+			if( f->name == getName && f->parameterTypes.GetLength() == 0 )
+			{
+				if( getId == 0 )
+					getId = ot->methods[n];
+				else
+				{
+					if( multipleGetFuncs.GetLength() == 0 )
+						multipleGetFuncs.PushLast(getId);
+
+					multipleGetFuncs.PushLast(ot->methods[n]);
+				}
+			}
+			// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
+			if( f->name == setName && f->parameterTypes.GetLength() == 1 )
+			{
+				if( setId == 0 )
+					setId = ot->methods[n];
+				else
+				{
+					if( multipleSetFuncs.GetLength() == 0 )
+						multipleSetFuncs.PushLast(setId);
+
+					multipleSetFuncs.PushLast(ot->methods[n]);
+				}
 			}
 		}
-		// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
-		if( f->name == setName && f->parameterTypes.GetLength() == 1 )
+	}
+	else
+	{
+		// Look for appropriate global functions. 
+		asCArray<int> funcs;
+		asUINT n;
+		builder->GetFunctionDescriptions(getName.AddressOf(), funcs);
+		for( n = 0; n < funcs.GetLength(); n++ )
 		{
-			if( setId == 0 )
-				setId = ot->methods[n];
-			else
+			asCScriptFunction *f = engine->scriptFunctions[funcs[n]];
+			if( f->parameterTypes.GetLength() == 0 )
 			{
-				if( multipleSetFuncs.GetLength() == 0 )
-					multipleSetFuncs.PushLast(setId);
+				if( getId == 0 )
+					getId = funcs[n];
+				else
+				{
+					if( multipleGetFuncs.GetLength() == 0 )
+						multipleGetFuncs.PushLast(getId);
 
-				multipleSetFuncs.PushLast(ot->methods[n]);
+					multipleGetFuncs.PushLast(funcs[n]);
+				}
+			}
+		}
+
+		funcs.SetLength(0);
+		builder->GetFunctionDescriptions(setName.AddressOf(), funcs);
+		for( n = 0; n < funcs.GetLength(); n++ )
+		{
+			asCScriptFunction *f = engine->scriptFunctions[funcs[n]];
+			// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
+			if( f->parameterTypes.GetLength() == 1 )
+			{
+				if( setId == 0 )
+					setId = funcs[n];
+				else
+				{
+					if( multipleSetFuncs.GetLength() == 0 )
+						multipleSetFuncs.PushLast(getId);
+
+					multipleSetFuncs.PushLast(funcs[n]);
+				}
 			}
 		}
 	}
@@ -6906,15 +6978,18 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		ctx->property_get = getId;
 		ctx->property_set = setId;
 
-		// If the object is read-only then we need to remember 
-		if( (!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly()) ||
-			(ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst()) )
-			ctx->property_const = true;
-		else
-			ctx->property_const = false;
+		if( ctx->type.dataType.IsObject() )
+		{
+			// If the object is read-only then we need to remember 
+			if( (!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly()) ||
+				(ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst()) )
+				ctx->property_const = true;
+			else
+				ctx->property_const = false;
 
-		// If the object is a handle then we need to remember that
-		ctx->property_handle = ctx->type.dataType.IsObjectHandle();
+			// If the object is a handle then we need to remember that
+			ctx->property_handle = ctx->type.dataType.IsObjectHandle();
+		}
 
 		asCDataType dt;
 		if( getId )
@@ -6947,22 +7022,25 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 		return -1;
 	}
 
-	// Setup the context with the original type so the method call gets built correctly
 	asCTypeInfo objType = ctx->type;
 	asCScriptFunction *func = engine->scriptFunctions[ctx->property_set];
-	ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
-	if( ctx->property_handle )
-		ctx->type.dataType.MakeHandle(true);
-	ctx->type.dataType.MakeReference(true);
-
-	// Don't allow the call if the object is read-only and the property accessor is not const
-	// TODO: This can probably be moved into MakeFunctionCall
-	if( ctx->property_const && !func->isReadOnly )
+	if( func->objectType )
 	{
-		Error(TXT_NON_CONST_METHOD_ON_CONST_OBJ, node);
-		asCArray<int> funcs;
-		funcs.PushLast(ctx->property_set);
-		PrintMatchingFuncs(funcs, node);
+		// Setup the context with the original type so the method call gets built correctly
+		ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
+		if( ctx->property_handle )
+			ctx->type.dataType.MakeHandle(true);
+		ctx->type.dataType.MakeReference(true);
+
+		// Don't allow the call if the object is read-only and the property accessor is not const
+		// TODO: This can probably be moved into MakeFunctionCall
+		if( ctx->property_const && !func->isReadOnly )
+		{
+			Error(TXT_NON_CONST_METHOD_ON_CONST_OBJ, node);
+			asCArray<int> funcs;
+			funcs.PushLast(ctx->property_set);
+			PrintMatchingFuncs(funcs, node);
+		}
 	}
 
 	// Call the accessor
@@ -6970,21 +7048,24 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	args.PushLast(arg);
 	MakeFunctionCall(ctx, ctx->property_set, func->objectType, args, node);
 
-	// TODO: This is from CompileExpressionPostOp, can we unify the code?
-	if( objType.isTemporary &&
-		ctx->type.dataType.IsReference() &&
-		!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
+	if( func->objectType )
 	{
-		// Remember the original object's variable, so that it can be released
-		// later on when the reference to its member goes out of scope
-		ctx->type.isTemporary = true;
-		ctx->type.stackOffset = objType.stackOffset;
-	}
-	else
-	{
-		// As the method didn't return a reference to a member
-		// we can safely release the original object now
-		ReleaseTemporaryVariable(objType, &ctx->bc);
+		// TODO: This is from CompileExpressionPostOp, can we unify the code?
+		if( objType.isTemporary &&
+			ctx->type.dataType.IsReference() &&
+			!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
+		{
+			// Remember the original object's variable, so that it can be released
+			// later on when the reference to its member goes out of scope
+			ctx->type.isTemporary = true;
+			ctx->type.stackOffset = objType.stackOffset;
+		}
+		else
+		{
+			// As the method didn't return a reference to a member
+			// we can safely release the original object now
+			ReleaseTemporaryVariable(objType, &ctx->bc);
+		}
 	}
 
 	ctx->property_get = 0;
@@ -7007,41 +7088,47 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 		return;
 	}
 
-	// Setup the context with the original type so the method call gets built correctly
 	asCTypeInfo objType = ctx->type;
 	asCScriptFunction *func = engine->scriptFunctions[ctx->property_get];
-	ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
-	if( ctx->property_handle ) ctx->type.dataType.MakeHandle(true);
-	ctx->type.dataType.MakeReference(true);
-
-	// Don't allow the call if the object is read-only and the property accessor is not const
-	if( ctx->property_const && !func->isReadOnly )
+	if( func->objectType )
 	{
-		Error(TXT_NON_CONST_METHOD_ON_CONST_OBJ, node);
-		asCArray<int> funcs;
-		funcs.PushLast(ctx->property_get);
-		PrintMatchingFuncs(funcs, node);
+		// Setup the context with the original type so the method call gets built correctly
+		ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
+		if( ctx->property_handle ) ctx->type.dataType.MakeHandle(true);
+		ctx->type.dataType.MakeReference(true);
+
+		// Don't allow the call if the object is read-only and the property accessor is not const
+		if( ctx->property_const && !func->isReadOnly )
+		{
+			Error(TXT_NON_CONST_METHOD_ON_CONST_OBJ, node);
+			asCArray<int> funcs;
+			funcs.PushLast(ctx->property_get);
+			PrintMatchingFuncs(funcs, node);
+		}
 	}
 
 	// Call the accessor
 	asCArray<asSExprContext *> args;
 	MakeFunctionCall(ctx, ctx->property_get, func->objectType, args, node);
 
-	// TODO: This is from CompileExpressionPostOp, can we unify the code?
-	if( objType.isTemporary &&
-		ctx->type.dataType.IsReference() &&
-		!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
+	if( func->objectType )
 	{
-		// Remember the original object's variable, so that it can be released
-		// later on when the reference to its member goes out of scope
-		ctx->type.isTemporary = true;
-		ctx->type.stackOffset = objType.stackOffset;
-	}
-	else
-	{
-		// As the method didn't return a reference to a member
-		// we can safely release the original object now
-		ReleaseTemporaryVariable(objType, &ctx->bc);
+		// TODO: This is from CompileExpressionPostOp, can we unify the code?
+		if( objType.isTemporary &&
+			ctx->type.dataType.IsReference() &&
+			!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
+		{
+			// Remember the original object's variable, so that it can be released
+			// later on when the reference to its member goes out of scope
+			ctx->type.isTemporary = true;
+			ctx->type.stackOffset = objType.stackOffset;
+		}
+		else
+		{
+			// As the method didn't return a reference to a member
+			// we can safely release the original object now
+			ReleaseTemporaryVariable(objType, &ctx->bc);
+		}
 	}
 
 	ctx->property_get = 0;

@@ -2,12 +2,14 @@
 
 \page doc_script_class_prop Property accessors
 
-Many times when working with class properties it is necessary to make sure specific logic is followed when
+Many times when working with properties it is necessary to make sure specific logic is followed when
 accessing them. An example would be to always send a notification when a property is modified, or computing
 the value of the property from other properties. By implementing property accessor methods for the properties
 this can be implemented by the class itself, making it easier for the one who accesses the properties.
 
-In AngelScript property accessors are implemented as ordinary class methods with the prefixes <tt>get_</tt> and <tt>set_</tt>.
+In AngelScript property accessors are implemented as ordinary class methods with the prefixes <tt>get_</tt> 
+and <tt>set_</tt> when the property belongs to an object. Property accessors can also be implemented for global
+properties, which follows the same rules, except the functions are global.
 
 <pre>
   // The class declaration with property accessors
@@ -56,5 +58,17 @@ to use.
 
 You can also leave out either the get or set accessor. If you leave out the set accessor, then the 
 property will be read-only. If you leave out the get accessor, then the property will be write-only.
+
+Observe that as property accessors are actually a pair of methods rather than direct access to the value, 
+some restrictions apply as to how they can be used in expressions. Expressions that need to read and write
+the value at the same time is usually not possible, e.g. the increment operator ++, or compound assignments.
+In such cases the expression must be expanded so that the read and write operation are performed separately, 
+e.g. the increment operator must be rewritten as follows:
+
+<pre>
+  a = a + 1;
+</pre>
+
+
 
 */

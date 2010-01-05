@@ -96,6 +96,7 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_datatypes
  - \subpage doc_script_handle
  - \subpage doc_script_class_main
+ - \subpage doc_script_class_prop
  - \subpage doc_operator_precedence
  - \subpage doc_reserved_keywords
 
@@ -104,7 +105,7 @@ This is the reference documentation for the AngelScript scripting language.
 
  - \subpage doc_script_class
  - \subpage doc_script_class_ops
- - \subpage doc_script_class_prop
+
 
 \todo Add page on class methods
 \todo Add page on constructor and destructors
