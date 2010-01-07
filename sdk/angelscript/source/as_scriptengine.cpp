@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -392,6 +392,7 @@ asCScriptEngine::asCScriptEngine()
 	RegisterScriptObject(this);
 	RegisterScriptFunction(this);
 	RegisterObjectTypeGCBehaviours(this);
+	asCGlobalProperty::RegisterGCBehaviours(this);
 }
 
 asCScriptEngine::~asCScriptEngine()
@@ -538,6 +539,7 @@ asCScriptEngine::~asCScriptEngine()
 	scriptTypeBehaviours.ReleaseAllFunctions();
 	functionBehaviours.ReleaseAllFunctions();
 	objectTypeBehaviours.ReleaseAllFunctions();
+	globalPropertyBehaviours.ReleaseAllFunctions();
 
 	// Free string constants
 	for( n = 0; n < stringConstants.GetLength(); n++ )
@@ -1890,7 +1892,7 @@ void asCScriptEngine::FreeUnusedGlobalProperties()
 {
 	for( asUINT n = 0; n < globalProperties.GetLength(); n++ )
 	{
-		if( globalProperties[n] && globalProperties[n]->refCount.get() == 0 )
+		if( globalProperties[n] && globalProperties[n]->GetRefCount() == 0 )
 		{
 			freeGlobalPropertyIds.PushLast(n);
 			asDELETE(globalProperties[n], asCGlobalProperty);
@@ -1931,7 +1933,7 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, i
 		*isConst = registeredGlobalProps[index]->type.IsReadOnly();
 
 	if( pointer )
-		*pointer = registeredGlobalProps[index]->realAddress;
+		*pointer = registeredGlobalProps[index]->GetRegisteredAddress();
 
 	return asSUCCESS;
 }

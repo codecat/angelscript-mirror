@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -287,8 +287,8 @@ int asCRestore::Restore()
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		TranslateFunction(module->scriptFunctions[i]);
 	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
-		if( module->scriptGlobals[i]->initFunc )
-			TranslateFunction(module->scriptGlobals[i]->initFunc);
+		if( module->scriptGlobals[i]->GetInitFunc() )
+			TranslateFunction(module->scriptGlobals[i]->GetInitFunc());
 
 	// Init system functions properly
 	engine->PrepareEngine();
@@ -297,8 +297,8 @@ int asCRestore::Restore()
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		module->scriptFunctions[i]->AddReferences();
 	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
-		if( module->scriptGlobals[i]->initFunc )
-			module->scriptGlobals[i]->initFunc->AddReferences();
+		if( module->scriptGlobals[i]->GetInitFunc() )
+			module->scriptGlobals[i]->GetInitFunc()->AddReferences();
 
 	module->CallInit();
 
@@ -840,12 +840,12 @@ void asCRestore::WriteGlobalProperty(asCGlobalProperty* prop)
 	WriteDataType(&prop->type);
 
 	// Store the initialization function
-	if( prop->initFunc )
+	if( prop->GetInitFunc() )
 	{
 		bool f = true;
 		WRITE_NUM(f);
 
-		WriteFunction(prop->initFunc);
+		WriteFunction(prop->GetInitFunc());
 	}
 	else
 	{
@@ -871,8 +871,8 @@ void asCRestore::ReadGlobalProperty()
 	{
 		asCScriptFunction *func = ReadFunction(false, true);
 
-		// refCount was already set to 1
-		prop->initFunc = func;
+		prop->SetInitFunc(func);
+		func->Release();
 	}
 }
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -765,6 +765,24 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 					engine->GCEnumCallback(engine->scriptFunctions[func]);
 			}
 			break;
+
+		// Global variables
+		case asBC_PGA:
+		case asBC_LDG:
+		case asBC_PshG4:
+		case asBC_LdGRdR4:
+		case asBC_CpyGtoV4:
+		case asBC_CpyVtoG4:
+		case asBC_SetG4:
+			// Need to enumerate the reference for each global variable
+			{
+				// TODO: optimize: Keep an array of accessed global properties
+				void *gvarPtr = (void*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
+
+				engine->GCEnumCallback(prop);
+			}
+			break;
 		}
 	}
 }
@@ -831,6 +849,9 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 				}
 			}
 			break;
+
+		// The global variables are not released here. It is enough that the global 
+		// variable itself release the function to break the circle
 		}
 	}
 }

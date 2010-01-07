@@ -3,7 +3,6 @@
 //
 
 #include "utils.h"
-#include "../../add_on/scriptstring/scriptstring.h"
 
 namespace TestCall2
 {
@@ -26,15 +25,13 @@ void Test()
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.15.0             : 2.51 secs\n");
 	printf("AngelScript 2.18.0             : 2.01 secs\n");
-	printf("AngelScript 2.18.1 WIP         : 2.03 secs\n");
+	printf("AngelScript 2.18.1 WIP         : 1.92 secs\n");
 
 	printf("\nBuilding...\n");
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-
-	RegisterScriptString(engine);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);

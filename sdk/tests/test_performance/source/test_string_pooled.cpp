@@ -130,6 +130,21 @@ static CScriptString2 *StringDefaultFactory()
 	return new CScriptString2();
 }
 
+// Copy constructor
+static CScriptString2 *StringCopyFactory(const string &s)
+{
+	if( pool.size() > 0 )
+	{
+		CScriptString2 *str = pool[pool.size()-1];
+		pool.pop_back();
+		str->buffer.assign(s);
+		str->AddRef();
+		return str;
+	}
+
+	// Allocate and initialize with the default constructor
+	return new CScriptString2(s);
+}
 
 // This is where we register the string type
 void RegisterScriptString2(asIScriptEngine *engine)
@@ -142,6 +157,7 @@ void RegisterScriptString2(asIScriptEngine *engine)
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f()",                 asFUNCTION(StringDefaultFactory), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f(const string &in)", asFUNCTION(StringCopyFactory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(CScriptString2,AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(CScriptString2,Release), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asMETHODPR(CScriptString2, operator =, (const CScriptString2&), CScriptString2&), asCALL_THISCALL); assert( r >= 0 );
@@ -158,22 +174,22 @@ void RegisterScriptString2(asIScriptEngine *engine)
 #define TESTNAME "TestStringPooled"
 
 static const char *script =
-"string BuildString(string &in a, string &in b, string &in c)    \n"
-"{                                                               \n"
-"    return a + b + c;                                           \n"
-"}                                                               \n"
-"                                                                \n"
-"void TestString()                                               \n"
-"{                                                               \n"
-"    string a = \"Test\";                                        \n"
-"    string b = \"string\";                                      \n"
-"    int i = 0;                                                  \n"
-"                                                                \n"
-"    for ( i = 0; i < 1000000; i++ )                             \n"
-"    {                                                           \n"
-"        string res = BuildString(a, \" \", b);                  \n"
-"    }                                                           \n"
-"}                                                               \n";
+"string BuildStringP(string &in a, string &in b, string &in c)    \n"
+"{                                                                \n"
+"    return a + b + c;                                            \n"
+"}                                                                \n"
+"                                                                 \n"
+"void TestStringP()                                               \n"
+"{                                                                \n"
+"    string a = \"Test\";                                         \n"
+"    string b = \"string\";                                       \n"
+"    int i = 0;                                                   \n"
+"                                                                 \n"
+"    for ( i = 0; i < 1000000; i++ )                              \n"
+"    {                                                            \n"
+"        string res = BuildStringP(a, \" \", b);                  \n"
+"    }                                                            \n"
+"}                                                                \n";
 
                                          
 void Test()
@@ -181,7 +197,7 @@ void Test()
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.18.0             : 2.48 secs\n");
-	printf("AngelScript 2.18.1 WIP         : 2.36 secs\n");
+	printf("AngelScript 2.18.1 WIP         : 2.65 secs\n");
 
 	printf("\nBuilding...\n");
 
@@ -197,7 +213,7 @@ void Test()
 	if( r >= 0 )
 	{
 		asIScriptContext *ctx = engine->CreateContext();
-		ctx->Prepare(mod->GetFunctionIdByDecl("void TestString()"));
+		ctx->Prepare(mod->GetFunctionIdByDecl("void TestStringP()"));
 
 		printf("Executing AngelScript version...\n");
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -55,10 +55,6 @@ public:
 	int         byteOffset;
 };
 
-// TODO: functions: When function pointers are available, it will be possible to create a circular
-//                  reference between a function pointer in global variable and a function. To
-//                  resolve this I need to use a garbage collector.
-
 class asCGlobalProperty
 {
 public:
@@ -67,17 +63,28 @@ public:
 
 	void AddRef();
 	void Release();
+	int  GetRefCount();
 
 	void *GetAddressOfValue();
-	void AllocateMemory();
-	void SetRegisteredAddress(void *p);
+	void  AllocateMemory();
+	void  SetRegisteredAddress(void *p);
+	void *GetRegisteredAddress() const;
 
 	asCString          name;
 	asCDataType        type;
 	asUINT             id;
-	asCScriptFunction *initFunc;
+
+	void SetInitFunc(asCScriptFunction *initFunc);
+	asCScriptFunction *GetInitFunc();
+
+	static void RegisterGCBehaviours(asCScriptEngine *engine);
 
 protected:
+	void SetGCFlag();
+	bool GetGCFlag();
+	void EnumReferences(asIScriptEngine *);
+	void ReleaseAllHandles(asIScriptEngine *);
+
 	// This is only stored for registered properties, and keeps the pointer given by the application
 	void       *realAddress;
 
@@ -88,11 +95,12 @@ protected:
 		asQWORD     storage;
 	};
 
-protected:
+	asCScriptFunction *initFunc;
+
 	// The global property structure is reference counted, so that the
 	// engine can keep track of how many references to the property there are.
-	friend class asCScriptEngine;
 	asCAtomic refCount;
+	bool      gcFlag;
 };
 
 END_AS_NAMESPACE

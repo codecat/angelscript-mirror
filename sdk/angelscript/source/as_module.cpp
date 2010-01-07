@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -206,7 +206,7 @@ int asCModule::CallInit()
 	int r = 0;
 	for( n = 0; n < scriptGlobals.GetLength() && r == 0; n++ )
 	{
-		if( scriptGlobals[n]->initFunc )
+		if( scriptGlobals[n]->GetInitFunc() )
 		{
 			if( ctx == 0 )
 			{
@@ -215,7 +215,7 @@ int asCModule::CallInit()
 					break;
 			}
 
-			r = ctx->Prepare(scriptGlobals[n]->initFunc->id);
+			r = ctx->Prepare(scriptGlobals[n]->GetInitFunc()->id);
 			if( r >= 0 )
 				r = ctx->Execute();
 		}
@@ -1270,7 +1270,7 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 		asCGlobalProperty *prop = scriptGlobals[scriptGlobals.GetLength()-1];
 		memset(prop->GetAddressOfValue(), 0, sizeof(asDWORD)*prop->type.GetSizeOnStackDWords());
 
-		if( prop->initFunc )
+		if( prop->GetInitFunc() )
 		{
 			// Call the init function for the global variable
 			asIScriptContext *ctx = 0;
@@ -1278,7 +1278,7 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 			if( r < 0 )
 				return r;
 
-			r = ctx->Prepare(prop->initFunc->id);
+			r = ctx->Prepare(prop->GetInitFunc()->id);
 			if( r >= 0 )
 				r = ctx->Execute();
 

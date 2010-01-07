@@ -44,8 +44,8 @@ int main(int argc, char **argv)
 	TestIntf::Test();
 	TestMthd::Test();
 	TestString::Test();
-	TestStringPooled::Test();
 	TestString2::Test();
+	TestStringPooled::Test();
 	
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");

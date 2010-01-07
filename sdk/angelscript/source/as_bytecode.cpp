@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -581,10 +581,6 @@ int asCByteCode::Optimize()
 	
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
-	// TODO: optimize: PGA followed by CHKREF, should remove the CHKREF instruction, as PGA will always push a valid address on the stack
-
-	// TODO: optimize: PGA, ChkRefS, CHKREF -> should remove the CHKREF instruction
-
 	cByteInstruction *instr = first;
 	while( instr )
 	{
@@ -615,6 +611,18 @@ int asCByteCode::Optimize()
 				 IsCombination(curr, asBC_SWAP4, asBC_ADDf) ||
 				 IsCombination(curr, asBC_SWAP4, asBC_MULf) )
 			instr = GoBack(DeleteInstruction(curr));
+		// T??, ClrHi -> T??
+		else if( IsCombination(curr, asBC_TZ, asBC_ClrHi) ||
+				 IsCombination(curr, asBC_TNZ, asBC_ClrHi) ||
+				 IsCombination(curr, asBC_TS, asBC_ClrHi) ||
+				 IsCombination(curr, asBC_TNS, asBC_ClrHi) ||
+				 IsCombination(curr, asBC_TP, asBC_ClrHi) ||
+				 IsCombination(curr, asBC_TNP, asBC_ClrHi) )
+		{
+			// Remove the ClrHi instruction, since the test instructions always clear the top bytes anyway
+			DeleteInstruction(instr);
+			instr = GoBack(curr);
+		}
 		// PSF x, RDS4 -> PshV4 x
 		else if( IsCombination(curr, asBC_PSF, asBC_RDS4) )
 			instr = GoBack(ChangeFirstDeleteNext(curr, asBC_PshV4));
@@ -709,6 +717,23 @@ int asCByteCode::Optimize()
 			curr->size = asBCTypeSize[asBCInfo[asBC_PSF].type];
 			curr->op = asBC_PSF;
 			DeleteInstruction(instr);
+			instr = GoBack(curr);
+		}
+		// PGA, CHKREF -> PGA 
+		// PSF, CHKREF -> PSF
+		else if( IsCombination(curr, asBC_PGA, asBC_CHKREF) ||
+			     IsCombination(curr, asBC_PSF, asBC_CHKREF) )
+		{
+			// Delete CHKREF since PGA and PSF always pushes a valid address on the stack
+			DeleteInstruction(instr);
+			instr = GoBack(curr);
+		}
+		// PGA, ChkRefS, CHKREF -> PGA, ChkRefS
+		else if( IsCombination(curr, asBC_PGA, asBC_ChkRefS) &&
+			     IsCombination(instr, asBC_ChkRefS, asBC_CHKREF) )
+		{
+			// Delete CHKREF since PGA always pushes a valid address on the stack
+			DeleteInstruction(instr->next);
 			instr = GoBack(curr);
 		}
 		// YYY y, POP x -> POP x-1

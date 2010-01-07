@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1261,8 +1261,9 @@ void asCBuilder::CompileGlobalVariables()
 					// Notify the GC of the new script function
 					engine->gc.AddScriptObjectToGC(initFunc, &engine->functionBehaviours);
 
-					// The function's refCount was already initialized to 1 
-					gvar->property->initFunc = initFunc;
+					gvar->property->SetInitFunc(initFunc);
+
+					initFunc->Release();
 					initFunc = 0;
 				}
 				else if( initFunc )

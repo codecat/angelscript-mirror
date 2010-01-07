@@ -724,8 +724,10 @@ bool Test()
 		engine->Release();
 
 		// The global property accessors are available to initialize global 
-		// variables, but can possibly throw an exception if used inappropriately
-/*		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		// variables, but can possibly throw an exception if used inappropriately.
+		// This test also verifies that circular references between global 
+		// properties and functions is properly resolved by the GC.
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterStdString(engine);
 
@@ -740,7 +742,7 @@ bool Test()
 			fail = true;
 
 		engine->Release();
-*/	}
+	}
 
 	// Success
 	return fail;
