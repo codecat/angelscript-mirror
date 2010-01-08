@@ -285,6 +285,13 @@ void Dummy(asIScriptGeneric *gen)
 {
 }
 
+static string _out;
+void output(asIScriptGeneric *gen)
+{
+	string *str = (string*)gen->GetArgAddress(0);
+	_out += *str;
+}
+
 bool Test2();
 
 bool Test()
@@ -516,6 +523,48 @@ bool Test()
 			fail = true;
 	}
 	engine->Release();
+
+	//------------------------------
+	// Test to make sure the script constants are stored correctly
+	{
+		const char *script = "void main()                 \n"
+		"{                                                \n"
+		"	int i = 123;                                  \n"
+		"                                                 \n"
+		"   output( ' i = (' + i + ')' + 'aaa' + 'bbb' ); \n"
+		"}                                                \n";
+		
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		r = engine->RegisterGlobalFunction("void output(const string &in)", asFUNCTION(output), asCALL_GENERIC); assert( r >= 0 );
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		
+		ExecuteString(engine, "main()", mod);
+		if( _out != " i = (123)aaabbb" )
+			fail = true;
+
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		r = engine->RegisterGlobalFunction("void output(const string &in)", asFUNCTION(output), asCALL_GENERIC); assert( r >= 0 );
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		
+		mod->LoadByteCode(&stream);
+
+		_out = "";
+		ExecuteString(engine, "main()", mod);
+		if( _out != " i = (123)aaabbb" )
+			fail = true;
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;

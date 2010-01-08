@@ -320,7 +320,7 @@ void asCRestore::WriteUsedStringConstants()
 	asUINT count = (asUINT)usedStringConstants.GetLength();
 	WRITE_NUM(count);
 	for( asUINT i = 0; i < count; ++i )
-		WriteString(engine->stringConstants[i]);
+		WriteString(engine->stringConstants[usedStringConstants[i]]);
 }
 
 void asCRestore::ReadUsedStringConstants()

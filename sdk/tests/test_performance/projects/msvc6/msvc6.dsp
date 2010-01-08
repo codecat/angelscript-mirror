@@ -115,6 +115,10 @@ SOURCE=..\..\source\test_call2.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_fib.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_int.cpp
 # End Source File
 # Begin Source File

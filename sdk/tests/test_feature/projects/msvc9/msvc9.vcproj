@@ -565,6 +565,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_functionptr.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_generic.cpp"
 				>
 			</File>

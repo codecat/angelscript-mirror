@@ -9,6 +9,7 @@ namespace TestBasic        { void Test(); }
 namespace TestBasic2       { void Test(); }
 namespace TestCall         { void Test(); }
 namespace TestCall2        { void Test(); }
+namespace TestFib          { void Test(); }
 namespace TestInt          { void Test(); }
 namespace TestIntf         { void Test(); }
 namespace TestMthd         { void Test(); }
@@ -40,6 +41,7 @@ int main(int argc, char **argv)
 	TestBasic2::Test();
 	TestCall::Test();
 	TestCall2::Test();
+	TestFib::Test();
 	TestInt::Test();
 	TestIntf::Test();
 	TestMthd::Test();

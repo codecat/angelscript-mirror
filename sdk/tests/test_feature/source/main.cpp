@@ -141,6 +141,7 @@ namespace TestTemplate          { bool Test(); }
 namespace TestOperator          { bool Test(); }
 namespace TestGetSet            { bool Test(); }
 namespace TestModule            { bool Test(); }
+namespace TestFunctionPtr       { bool Test(); }
 
 namespace Test_Addon_ScriptArray { bool Test(); }
 
@@ -183,8 +184,9 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
-	if( TestModule::Test()            ) goto failed; else printf("-- TestModule passed\n");
-	if( TestGetSet::Test()            ) goto failed; else printf("-- TestGetSet passed\n");
+	if( TestFunctionPtr::Test()        ) goto failed; else printf("-- TestFunctionPtr passed\n");
+	if( TestModule::Test()             ) goto failed; else printf("-- TestModule passed\n");
+	if( TestGetSet::Test()             ) goto failed; else printf("-- TestGetSet passed\n");
 	if( Test_Addon_ScriptArray::Test() ) goto failed; else printf("-- Test_Addon_ScriptArray passed\n");
 	if( TestOperator::Test()          ) goto failed; else printf("-- TestOperator passed\n");
 	if( TestTemplate::Test()          ) goto failed; else printf("-- TestTemplate passed\n");
