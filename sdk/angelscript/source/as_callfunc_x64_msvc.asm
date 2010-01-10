@@ -62,9 +62,21 @@ CallX64 PROC FRAME
 	mov r14, r9		; r14 = function
 
 	; Allocate space on the stack for the arguments
-	sub rsp, r8
-	mov rdi, r8     ; Store the paramSize so we can deallocate the stack after the call
+	; Make room for at least 4 arguments even if there are less. When
+    ; the compiler does optimizations for speed it may use these for 
+	; temporary storage.
+	mov rdi, r8
+	add rdi, 32
 
+	; Make sure the stack pointer is 16byte aligned so the
+	; whole program optimizations will work properly
+	; TODO: optimize: Can this be optimized with fewer instructions?
+	mov rsi, rsp
+	sub rsi, rdi
+	and rsi, 8h
+	add rdi, rsi	
+	sub rsp, rdi
+		
 	; Jump straight to calling the function if no parameters
 	cmp r8d, 0		; Compare paramSize with 0
 	je	callfunc	; Jump to call funtion if (paramSize == 0)

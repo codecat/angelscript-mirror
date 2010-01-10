@@ -79,7 +79,7 @@ public:
 
 	static void RegisterGCBehaviours(asCScriptEngine *engine);
 
-protected:
+//protected:
 	void SetGCFlag();
 	bool GetGCFlag();
 	void EnumReferences(asIScriptEngine *);

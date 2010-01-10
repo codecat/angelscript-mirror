@@ -144,7 +144,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				LinkLibraryDependencies="true"
-				OutputFile="..\..\lib\angelscriptd.lib"
+				OutputFile="..\..\lib\angelscript64d.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -233,6 +233,7 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="4"
+			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -256,6 +257,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="true"
 				PreprocessorDefinitions="ANGELSCRIPT_EXPORT;NDEBUG;_LIB"
@@ -278,6 +281,8 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				LinkLibraryDependencies="true"
+				OutputFile="..\..\lib\angelscript64.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -364,7 +369,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="ml64.exe /c  /nologo /Fo&quot;x64\Debug\as_callfunc_x64_msvc_asm.obj&quot; /W3 /Zi /Ta $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
+						CommandLine="ml64.exe /c  /nologo /Fo$(OutDir)\as_callfunc_x64_msvc_asm.obj /W3 /Zi /Ta $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
 						Outputs="$(OutDir)\as_callfunc_x64_msvc_asm.obj"
 					/>
 				</FileConfiguration>
@@ -381,8 +386,8 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="ml64.exe /c  /nologo /Fo&quot;x64\Debug\as_callfunc_x64_msvc.obj&quot; /W3 /Zi /Ta $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\as_callfunc_x64_msvc.obj"
+						CommandLine="ml64.exe /c  /nologo /Fo$(OutDir)\as_callfunc_x64_msvc_asm.obj /W3 /Zi /Ta $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
+						Outputs="$(OutDir)\as_callfunc_x64_msvc_asm.obj"
 					/>
 				</FileConfiguration>
 			</File>
