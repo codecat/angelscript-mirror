@@ -576,7 +576,7 @@ int asCByteCode::Optimize()
 	//                 If the called function has only a few instructions, the function call should be inlined.
 	//                 This is especially useful with the factory stubs used for template types and script classes.
 
-	// TODO: optimize: Optimize the release of script objects. Most of the time the instructions PSV and FREE are used for this.
+	// TODO: optimize: Optimize the release of script objects. All the time the instructions PSV and FREE are used for this.
 	//                 Need a bytecode BC_FreeV that can free the object stored in a variable directly
 	
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call

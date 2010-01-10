@@ -2352,6 +2352,20 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 {
+	// TODO: optimize: We should be able to remove the static JMP to the beginning of the loop by rearranging the 
+	//                 byte code a bit. 
+	//
+	//                 init
+	//                 jump to before
+	//                 begin:
+	//                 statements
+	//                 continue:
+	//                 next
+	//                 before:
+	//                 condition
+	//                 if loop jump to begin
+	//                 break:
+
 	// Add a variable scope that will be used by CompileBreak/Continue to know where to stop deallocating variables
 	AddVariableScope(true, true);
 
