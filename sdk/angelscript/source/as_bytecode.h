@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -114,6 +114,7 @@ public:
 	int InstrSHORT_QW(asEBCInstr bc, short a, asQWORD b);
 	int InstrW_DW(asEBCInstr bc, asWORD a, asDWORD b);
 	int InstrW_QW(asEBCInstr bc, asWORD a, asQWORD b);
+	int InstrW_PTR(asEBCInstr bc, short a, void *param);
 	int InstrW_FLOAT(asEBCInstr bc, asWORD a, float b);
 	int InstrW_W(asEBCInstr bc, int w, int b);
 

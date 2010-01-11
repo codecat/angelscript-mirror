@@ -259,6 +259,10 @@ SOURCE=..\..\source\test_funcoverload.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_functionptr.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_generic.cpp
 # End Source File
 # Begin Source File

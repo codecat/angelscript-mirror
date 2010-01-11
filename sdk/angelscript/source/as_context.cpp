@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -2141,9 +2141,9 @@ void asCContext::ExecuteNext()
 
 	case asBC_FREE:
 		{
-			asDWORD **a = (asDWORD**)*(size_t*)l_sp;
-			l_sp += AS_PTR_SIZE;
-			if( a && *a )
+			// Get the variable that holds the object handle/reference
+			asPTRWORD *a = (asPTRWORD*)size_t(l_fp - asBC_SWORDARG0(l_bc));
+			if( *a )
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(l_bc);
 				asSTypeBehaviour *beh = &objType->beh;
@@ -2156,16 +2156,16 @@ void asCContext::ExecuteNext()
 
 				if( beh->release )
 				{
-					engine->CallObjectMethod(*a, beh->release);
+					engine->CallObjectMethod((void*)(size_t)*a, beh->release);
 				}
 				else
 				{
 					if( beh->destruct )
 					{
-						engine->CallObjectMethod(*a, beh->destruct);
+						engine->CallObjectMethod((void*)(size_t)*a, beh->destruct);
 					}
 
-					engine->CallFree(*a);
+					engine->CallFree((void*)(size_t)*a);
 				}
 
 				// Clear the variable

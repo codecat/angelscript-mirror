@@ -381,8 +381,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	// Release the object pointer again
 	if( outFunc->objectType )
 	{
-		byteCode.InstrSHORT(asBC_PSF, 0);
-		byteCode.InstrPTR(asBC_FREE, outFunc->objectType);
+		byteCode.InstrW_PTR(asBC_FREE, 0, outFunc->objectType);
 	}
 
 	// Call destructors for function parameters
@@ -594,8 +593,7 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, asCByteCode *bc)
 		if( type.IsObject() )
 		{
 			// Free the memory
-			bc->InstrSHORT(asBC_PSF, (short)offset);
-			bc->InstrPTR(asBC_FREE, type.GetObjectType());
+			bc->InstrW_PTR(asBC_FREE, (short)offset, type.GetObjectType());
 		}
 	}
 }
@@ -2752,10 +2750,9 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					expr.bc.InstrSHORT(asBC_LOADOBJ, expr.type.stackOffset);
 
 					// LOADOBJ cleared the address in the variable so the object will not be freed
-					// here, but the temporary variable must still be freed
-
-					// TODO: optimize: Since there is nothing in the variable anymore, 
-					//                 there is no need to call asBC_FREE on it. 
+					// here, but the temporary variable must still be freed so the slot can be reused
+					// By releasing without the bytecode we do just that.
+					ReleaseTemporaryVariable(expr.type, 0);
 				}
 
 				// Release temporary variables used by expression

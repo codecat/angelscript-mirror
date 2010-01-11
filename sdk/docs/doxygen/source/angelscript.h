@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -3643,7 +3643,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(CALLBND,	DW_ARG,			0xFFFF),
 	asBCINFO(SUSPEND,	NO_ARG,			0),
 	asBCINFO(ALLOC,		PTR_DW_ARG,		0xFFFF),
-	asBCINFO(FREE,		PTR_ARG,		-AS_PTR_SIZE),
+	asBCINFO(FREE,		wW_PTR_ARG,		0),
 	asBCINFO(LOADOBJ,	rW_ARG,			0),
 	asBCINFO(STOREOBJ,	wW_ARG,			0),
 	asBCINFO(GETOBJ,	W_ARG,			0),
@@ -3848,7 +3848,7 @@ const asSBCInfo asBCInfo[256] =
 //! \brief Macro to access the first float argument in the bytecode instruction
 #define asBC_FLOATARG(x)  (*(float*)(x+1))
 //! \brief Macro to access the first pointer argument in the bytecode instruction
-#define asBC_PTRARG(x)    (asPTRWORD(*(x+1)))
+#define asBC_PTRARG(x)    (*(asPTRWORD*)(x+1))
 //! \brief Macro to access the first WORD argument in the bytecode instruction
 #define asBC_WORDARG0(x)  (*(((asWORD*)x)+1))
 //! \brief Macro to access the second WORD argument in the bytecode instruction

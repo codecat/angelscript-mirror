@@ -394,7 +394,8 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		 asBCInfo[curr->op].type == asBCTYPE_wW_DW_ARG    ||
 		 asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG) &&
 		IsTemporary(curr->wArg[0]) &&
-		!IsTempVarRead(curr, curr->wArg[0]) )
+		!IsTempVarRead(curr, curr->wArg[0]) &&
+		curr->op != asBC_FREE ) // Can't remove the FREE instruction
 	{
 		if( curr->op == asBC_LdGRdR4 && IsTempRegUsed(curr) )
 		{
@@ -576,9 +577,6 @@ int asCByteCode::Optimize()
 	//                 If the called function has only a few instructions, the function call should be inlined.
 	//                 This is especially useful with the factory stubs used for template types and script classes.
 
-	// TODO: optimize: Optimize the release of script objects. All the time the instructions PSV and FREE are used for this.
-	//                 Need a bytecode BC_FreeV that can free the object stored in a variable directly
-	
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
 	cByteInstruction *instr = first;
@@ -848,7 +846,8 @@ bool asCByteCode::IsTempVarReadByInstr(cByteInstruction *curr, int offset)
 		return true;
 	else if( (asBCInfo[curr->op].type == asBCTYPE_rW_ARG    ||
 			  asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG ||
-			  asBCInfo[curr->op].type == asBCTYPE_rW_QW_ARG) &&
+			  asBCInfo[curr->op].type == asBCTYPE_rW_QW_ARG ||
+			  curr->op == asBC_FREE) &&  // FREE both read and write to the variable
 			  curr->wArg[0] == offset )
 		return true;
 	else if( (asBCInfo[curr->op].type == asBCTYPE_wW_rW_ARG ||
@@ -1003,7 +1002,6 @@ bool asCByteCode::IsTempRegUsed(cByteInstruction *curr)
 			curr->op == asBC_CALLBND   ||
 			curr->op == asBC_SUSPEND   ||
 			curr->op == asBC_ALLOC     ||
-			curr->op == asBC_FREE      ||
 			curr->op == asBC_CpyVtoR4  ||
 			curr->op == asBC_LdGRdR4   ||
 			curr->op == asBC_LDG       ||
@@ -1632,7 +1630,6 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine)
 				}
 				break;	
 
-			case asBC_FREE:
 			case asBC_REFCPY:
 				fprintf(file, "   %-8s 0x%x\n", asBCInfo[instr->op].name, *((int*) ARG_DW(instr->arg)));
 				break;
@@ -1866,6 +1863,23 @@ int asCByteCode::InstrW_W(asEBCInstr bc, int a, int b)
 	last->op       = bc;
 	last->wArg[0]  = (short)a;
 	last->wArg[1]  = (short)b;
+	last->size     = asBCTypeSize[asBCInfo[bc].type];
+	last->stackInc = asBCInfo[bc].stackInc;
+
+	return last->stackInc;
+}
+
+int asCByteCode::InstrW_PTR(asEBCInstr bc, short a, void *param)
+{
+	asASSERT(asBCInfo[bc].type == asBCTYPE_wW_PTR_ARG);
+	asASSERT(asBCInfo[bc].stackInc != 0xFFFF);
+
+	if( AddInstruction() < 0 )
+		return 0;
+
+	last->op       = bc;
+	last->wArg[0]  = a;
+	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)param;
 	last->size     = asBCTypeSize[asBCInfo[bc].type];
 	last->stackInc = asBCInfo[bc].stackInc;
 
