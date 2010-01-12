@@ -377,6 +377,15 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			fail = true;
 
+		// Doing a ref cast on a null pointer must not throw an exception
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "A@ a;\n B@ b;\n @b = cast<B>(a);\n @a = @b;\n", 0, ctx);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+		ctx->Release();
+
 		// TODO: This requires implicit value cast
 		// Test passing a value of B to a function expecting its base class
 		// the compiler will automatically create a copy

@@ -50,7 +50,7 @@ void Test()
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.15.0             : 2.42 secs\n");
 	printf("AngelScript 2.18.0             : 2.17 secs\n");
-	printf("AngelScript 2.18.1 WIP         : 2.01 secs\n");
+	printf("AngelScript 2.18.1 WIP         : 2.03 secs\n");
 
 	printf("\nBuilding...\n");
 

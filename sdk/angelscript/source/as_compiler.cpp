@@ -3317,10 +3317,64 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 		{
 			if( generateCode )
 			{
-				// Merge the bytecode so that it forms obj.castBehave()
+				// TODO: optimize: Instead of producing bytecode for checking if the handle is 
+				//                 null, we can create a special CALLSYS instruction that checks 
+				//                 if the object pointer is null and if so sets the object register
+				//                 to null directly without executing the function.
+				//
+				//                 Alternatively I could force the ref cast behaviours be global
+				//                 functions with 1 parameter, even though they should still be 
+				//                 registered with RegisterObjectBehaviour()
+
+				// If the handle is a null pointer, then don't call the method as it will throw a null exception
+				if( ctx->type.isVariable )
+					ctx->bc.Pop(AS_PTR_SIZE);
+				ConvertToVariable(ctx);
+
+#ifdef AS_64BIT_PTR
+				int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt64, false), true);
+				ctx->bc.InstrW_DW(asBC_SetV8, offset, 0);
+				ctx->bc.InstrW_W(asBC_CMPi64, ctx->type.stackOffset, offset);
+				DeallocateVariable(offset);
+#else
+				int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt, false), true);
+				ctx->bc.InstrW_DW(asBC_SetV4, offset, 0);
+				ctx->bc.InstrW_W(asBC_CMPi, ctx->type.stackOffset, offset);
+				DeallocateVariable(offset);
+#endif
+				int afterLabel = nextLabel++;
+				ctx->bc.InstrDWORD(asBC_JZ, afterLabel);
+
+				// Call the cast operator
+				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
+#ifdef AS_64BIT_PTR
+				ctx->bc.Instr(asBC_RDS8);
+#else
+				ctx->bc.Instr(asBC_RDS4);
+#endif
+				ctx->type.dataType.MakeReference(false);
+
 				asCTypeInfo objType = ctx->type;
 				asCArray<asSExprContext *> args;
 				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args, node);
+
+				ctx->bc.Pop(AS_PTR_SIZE);
+
+				int endLabel = nextLabel++;
+
+				ctx->bc.InstrINT(asBC_JMP, endLabel);
+				ctx->bc.Label((short)afterLabel);
+				
+				// Make a NULL pointer
+#ifdef AS_64BIT_PTR
+				ctx->bc.InstrW_QW(asBC_SetV8, ctx->type.stackOffset, 0);
+#else
+				ctx->bc.InstrW_DW(asBC_SetV4, ctx->type.stackOffset, 0);
+#endif
+				ctx->bc.Label((short)endLabel);
+	
+				// Push the refernce to the handle on the stack
+				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 
 				// Since we're receiving a handle, we can release the original variable
 				ReleaseTemporaryVariable(objType, &ctx->bc);
@@ -5290,7 +5344,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 						// Reference to primitive must be stored in the temp register
 						if( prop->type.IsPrimitive() )
 						{
-							// The ADD offset command should store the reference in the register directly
+							// TODO: optimize: The ADD offset command should store the reference in the register directly
 							ctx->bc.Instr(asBC_PopRPtr);
 						}
 
@@ -7270,7 +7324,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 					// Reference to primitive must be stored in the temp register
 					if( prop->type.IsPrimitive() )
 					{
-						// The ADD offset command should store the reference in the register directly
+						// TODO: optimize: The ADD offset command should store the reference in the register directly
 						ctx->bc.Instr(asBC_PopRPtr);
 					}
 
@@ -9341,28 +9395,21 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		int b = lctx->type.stackOffset;
 		int c = rctx->type.stackOffset;
 
+		// TODO: When saving the bytecode we must be able to determine that this is 
+		//       a comparison with a pointer, so that the instruction can be adapted 
+		//       to the pointer size on the platform that will execute it.
+#ifdef AS_64BIT_PTR
+		ctx->bc.InstrW_W(asBC_CMPi64, b, c);
+#else
+		ctx->bc.InstrW_W(asBC_CMPi, b, c);
+#endif
+
 		if( op == ttEqual || op == ttIs )
-		{
-#ifdef AS_64BIT_PTR
-			// TODO: Optimize: Use a 64bit integer comparison instead of double
-			ctx->bc.InstrW_W(asBC_CMPd, b, c);
-#else
-			ctx->bc.InstrW_W(asBC_CMPi, b, c);
-#endif
 			ctx->bc.Instr(asBC_TZ);
-			ctx->bc.InstrSHORT(asBC_CpyRtoV4, (short)a);
-		}
 		else if( op == ttNotEqual || op == ttNotIs )
-		{
-#ifdef AS_64BIT_PTR
-			// TODO: Optimize: Use a 64bit integer comparison instead of double
-			ctx->bc.InstrW_W(asBC_CMPd, b, c);
-#else
-			ctx->bc.InstrW_W(asBC_CMPi, b, c);
-#endif
 			ctx->bc.Instr(asBC_TNZ);
-			ctx->bc.InstrSHORT(asBC_CpyRtoV4, (short)a);
-		}
+
+		ctx->bc.InstrSHORT(asBC_CpyRtoV4, (short)a);
 
 		ctx->type.SetVariable(asCDataType::CreatePrimitive(ttBool, true), a, true);
 
