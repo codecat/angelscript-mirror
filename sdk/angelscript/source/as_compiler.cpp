@@ -3326,14 +3326,21 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				//                 functions with 1 parameter, even though they should still be 
 				//                 registered with RegisterObjectBehaviour()
 
-				// If the handle is a null pointer, then don't call the method as it will throw a null exception
+				// Add code to avoid calling the cast behaviour if the handle is already null,
+				// because that will raise a null pointer exception due to the cast behaviour
+				// being a class method, and the this pointer cannot be null.
+
 				if( ctx->type.isVariable )
 					ctx->bc.Pop(AS_PTR_SIZE);
-				ConvertToVariable(ctx);
+				else
+				{
+					Dereference(ctx, true);
+					ConvertToVariable(ctx);
+				}
 
 #ifdef AS_64BIT_PTR
 				int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt64, false), true);
-				ctx->bc.InstrW_DW(asBC_SetV8, offset, 0);
+				ctx->bc.InstrW_QW(asBC_SetV8, offset, 0);
 				ctx->bc.InstrW_W(asBC_CMPi64, ctx->type.stackOffset, offset);
 				DeallocateVariable(offset);
 #else

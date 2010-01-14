@@ -386,6 +386,36 @@ bool Test()
 			PrintException(ctx);
 		ctx->Release();
 
+		// Various situations with ref casts on null pointers
+		const char* script =
+			"A@ global_a; \n"
+			"B@ global_b; \n"
+			"B@ global_b_nulled = null; \n"
+			"B@ ret_null() { return null; } \n"
+			"class C { B@ b; } \n"
+			"void testFunc() { \n"
+			"	A@ local_a = A(); \n"
+			"	B@ local_b = B(); \n"
+			"	@local_a = @local_b; \n"
+			"	@global_a = @local_b; \n"
+			"	@local_a = cast<A>(global_b); \n"
+			"	@local_a = @global_b; \n"
+			"	@local_a = @global_b_nulled; \n"
+			"   @local_a = @ret_null(); \n"
+			"   C c; \n"
+			"   @local_a = @c.b; \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		r = ExecuteString(engine, "testFunc();", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
 		// TODO: This requires implicit value cast
 		// Test passing a value of B to a function expecting its base class
 		// the compiler will automatically create a copy
