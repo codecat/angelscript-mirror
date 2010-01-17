@@ -44,6 +44,9 @@ class Object
   // Overloaded method
   void method2(int input);
   void method2(int input, int &output);
+  
+  // Const method
+  int getAttr(int) const;
 };
 
 // Registering the class method
@@ -52,6 +55,9 @@ r = engine->RegisterObjectMethod("object", "void method()", asMETHOD(Object,meth
 // Registering the overloaded methods
 r = engine->RegisterObjectMethod("object", "void method2(int)", asMETHODPR(Object, method2, (int), void), asCALL_THISCALL); assert( r >= 0 );
 r = engine->RegisterObjectMethod("object", "void method2(int, int &out)", asMETHODPR(Object, method2, (int, int&), void), asCALL_THISCALL); assert( r >= 0 );
+
+// Registering a const method
+r = engine->RegisterObjectMethod("object", "int getAttr(int) const", asMETHODPR(Object, getAttr, (int) const, int), asCALL_THISCALL); assert( r >= 0 );
 \endcode
 
 

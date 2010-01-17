@@ -579,6 +579,17 @@ int asCByteCode::Optimize()
 
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
+	// TODO: optimize: A bytecode BC_RefCpyV that copies a handle from a local variable to another local variable
+	//                 can easily substitute the frequently appearing pattern BC_PshV4, BC_PSF, BC_REFCPY, BC_POP
+
+	// TODO: optimize: Script class methods are currently implemented to increase the ref count of the object upon
+	//                 entry, and then release it upon exit. When the method isn't doing anything at all, this is
+	//                 not necessary, as the function could simply do a RET immediately. This optimization is only
+	//                 possible if the code has been built without the line cues, as if the SUSPEND is within the 
+	//                 function, then we can't do this optimization. Of course, this optimization may not be all
+	//                 that useful, since in a real world app, it is probably not very common that empty class 
+	//                 methods are called.
+
 	cByteInstruction *instr = first;
 	while( instr )
 	{
@@ -734,6 +745,17 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr->next);
 			instr = GoBack(curr);
 		}
+		// PSF, FREE -> FREE, PSF
+		else if( IsCombination(curr, asBC_PSF, asBC_FREE) )
+		{
+			// This pattern usually happens when a function returns an object, or handle
+			// and then releases a temporary variable, possibly used in one of the arguments.
+			// By swapping the order of these instructions, the code can be further optimized
+			// to combine the PSF with the following instructions
+			RemoveInstruction(instr);
+			InsertBefore(curr, instr);
+			instr = GoBack(instr);
+		}
 		// YYY y, POP x -> POP x-1
 		else if( (IsCombination(curr, asBC_PshV4, asBC_POP) ||
 		          IsCombination(curr, asBC_PshC4, asBC_POP)) && instr->wArg[0] > 0 )
@@ -820,7 +842,7 @@ int asCByteCode::Optimize()
 			instr = GoBack(curr);
 		}
 		// PshV4, CHKREF, POP -> ChkNullV
-		else if( (IsCombination(curr, asBC_PshV4, asBC_ChkRefS) &&
+		else if( (IsCombination(curr, asBC_PshV4, asBC_CHKREF) &&
 		          IsCombination(instr, asBC_CHKREF, asBC_POP) &&
 		          instr->next->wArg[0] > 0) )
 		{

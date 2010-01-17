@@ -3379,12 +3379,12 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				ctx->bc.InstrW_DW(asBC_SetV4, ctx->type.stackOffset, 0);
 #endif
 				ctx->bc.Label((short)endLabel);
-	
-				// Push the refernce to the handle on the stack
-				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 
 				// Since we're receiving a handle, we can release the original variable
 				ReleaseTemporaryVariable(objType, &ctx->bc);
+				
+				// Push the reference to the handle on the stack
+				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 			}
 			else
 			{
