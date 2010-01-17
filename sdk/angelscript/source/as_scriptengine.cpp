@@ -340,6 +340,10 @@ asCScriptEngine::asCScriptEngine()
 	ep.useCharacterLiterals     = false;
 	ep.allowMultilineStrings    = false;
 	ep.allowImplicitHandleTypes = false;
+	// TODO: optimize: Maybe this should be turned off by default? If a debugger is not used
+	//                 then this is just slowing down the execution. The exception handler
+	//                 should still be able to determine the line number from the bytecode
+	//                 position.
 	ep.buildWithoutLineCues     = false;
 	ep.initGlobalVarsAfterBuild = true;
 	ep.requireEnumScope         = false;

@@ -5,7 +5,7 @@
 AngelScript offers a rich interface to support the debugging of scripts. It is easy to build an embedded debugger 
 that can set break points, inspect/manipulate variables in functions, visualize the call stack, etc. 
 
-Observe that the CDebugMgr class used in the examples below doesn't exist. It is only used an abstraction to
+Observe that the CDebugMgr class used in the examples below doesn't exist. It is only used as an abstraction to
 avoid having to write fictional debug routines.
 
 \section doc_debug_1 Setting line breaks
@@ -63,9 +63,30 @@ how you have implemented your application.
 
 \section doc_debug_2 Viewing the call stack
 
-\ref asIScriptContext::GetCallstackSize, \ref asIScriptContext::GetCallstackFunction, \ref asIScriptContext::GetCallstackLineNumber
+The asIScriptContext exposes the call stack for viewing purposes, so that you can easily track the origin of calls. It is also possible 
+to \ref doc_debug_3 "print the value of variables" at each level in the callstack.
 
-\todo Complete this page
+Here's an example of how the entire call stack can be printed:
+
+\code
+void PrintCallstack(asIScriptContext *ctx)
+{
+  // Show the call stack
+  for( int n = 0; n < ctx->GetCallstackSize(); n++ )
+  {
+    int funcId, line, column;
+    funcId = ctx->GetCallstackFunction(n);
+    line   = ctx->GetCallstackLineNumber(n, &column);
+    const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcId);
+    printf("%s:%s:%d,%d\n", func->GetScriptSectionName(),
+                            func->GetDeclaration(),
+                            line, column);
+  }
+}
+\endcode
+
+
+
 
 
 
@@ -81,9 +102,78 @@ how you have implemented your application.
 
 \section doc_debug_3 Inspecting variables
 
-\ref asIScriptContext::GetVarCount, \ref asIScriptContext::GetVarTypeId, \ref asIScriptContext::GetAddressOfVar, 
-\ref asIScriptContext::GetVarDeclaration, \ref asIScriptContext::GetThisPointer, \ref asIScriptContext::GetThisTypeId, 
-\ref asIScriptObject
+Through the context interface it is possible to inspect and even modify the value of the local variables on the 
+stack. This can be done for each level in the call stack, and not just the current function that is being executed.
+
+Here is an example for how the variables may be printed:
+
+\code
+void PrintVariables(asIScriptContext *ctx, int stackLevel)
+{
+  asIScriptEngine *engine = ctx->GetEngine();
+
+  // First print the this pointer if this is a class method
+  int typeId = ctx->GetThisTypeId(stackLevel);
+  void *varPointer = ctx->GetThisPointer(stackLevel);
+  if( typeId )
+  {
+    printf(" this = 0x%x\n", varPointer);
+  }
+
+  // Print the value of each variable, including parameters
+  int numVars = ctx->GetVarCount(stackLevel);
+  for( int n = 0; n < numVars; n++ )
+  {
+    int typeId = ctx->GetVarTypeId(n, stackLevel); 
+    void *varPointer = ctx->GetAddressOfVar(n, stackLevel);
+    if( typeId == asTYPEID_INT32 )
+    {
+      printf(" %s = %d\n", ctx->GetVarDeclaration(n, stackLevel), *(int*)varPointer);
+    }
+    else if( typeId == asTYPEID_FLOAT )
+    {
+      printf(" %s = %f\n", ctx->GetVarDeclaration(n, stackLevel), *(float*)varPointer);
+    }
+    else if( typeId & asTYPEID_SCRIPT_OBJECT )
+    {
+      asIScriptObject *obj = (asIScriptObject*)varPointer;
+      if( obj )
+        printf(" %s = {...}\n", ctx->GetVarDeclaration(n, stackLevel));
+      else
+        printf(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
+    }
+    else if( typeId == engine->GetTypeIdByDecl("string") )
+    {
+      string *str = (string*)varPointer;
+      if( str )
+        printf(" %s = '%s'\n", ctx->GetVarDeclaration(n, stackLevel), str->c_str());
+      else
+        printf(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
+    }
+    else
+    {
+      printf(" %s = {...}\n", ctx->GetVarDeclaration(n, stackLevel));
+    }
+  }
+}
+\endcode
+
+The above code is only an example to give an idea of how it can be done. It is not complete and only
+recognizes a few types. To make it useful it would have to be expanded to recognize all types, and
+perhaps add some generic way of converting an object to human readable string for printing.
+
+For script objects that conversion can be done by enumerating the members of an object through the 
+\ref asIScriptObject interface.
+
+The debugger may also need to be able to inspect the global variables that the functions access. As the
+global variables are stored in the module, that is the place to look for them. The \ref asIScriptModule 
+interface can be obtained by querying the module name from the function, and then getting the module 
+pointer from the engine. Once the module is determined the global variables are enumerated much the same
+way as in the example above, except that the appropriate methods on the asIScriptModule interface is used
+instead.
+
+
+
 
 
 
