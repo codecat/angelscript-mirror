@@ -14,15 +14,21 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
 	// Test the declaration of new function signatures
-	// TODO: Not sure if 'function' is the keyword I want to use for this
-	script = "function void functype();\n";
+	script = "funcdef void functype();\n";
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r != 0 )
+		fail = true;
 
 	// Test that it is possible to declare the function signatures out of order
 	// This also tests the circular reference between the function signatures
-	script = "function void f1(f2@) \n"
-	         "function void f2(f1@) \n";
+	script = "funcdef void f1(f2@) \n"
+	         "funcdef void f2(f1@) \n";
 
 	// Test that it is required to declare the variable as handle
 	script = "function void f()\n"
@@ -31,12 +37,12 @@ bool Test()
 
 	// Test that it is possible to take the address of a function
 	script = "f@ myFuncPtr = @func; \n"
-			 "function void f() \n"
+			 "funcdef void f() \n"
 	         "void func() {} \n";
 			 
 	// Test that is possible to call a function in a function pointer
 	script = "CALLBACK@ myFuncPtr = @func;              \n"
-	         "function bool CALLBACK(const string &in); \n"
+	         "funcdef bool CALLBACK(const string &in); \n"
 			 "bool func(const string &in s)             \n"
 			 "{                                         \n"
 			 "  return s == 'test';                     \n"
@@ -47,7 +53,7 @@ bool Test()
 	// Test that the function in a function pointer isn't released while the function 
 	// is being executed, even though the function pointer itself is cleared
 	script = "DYNFUNC@ funcPtr;        \n"
-		     "function void DYNFUNC(); \n"
+		     "funcdef void DYNFUNC(); \n"
 			 "@funcPtr = @CompileDynFunc('void func() { @funcPtr = null; }'); \n";
 
 	// It must be possible to register the function signature from the application
@@ -57,9 +63,14 @@ bool Test()
 
 	// It must be possible to identify a function handle type from the type id
 
+	// It must be possible to save the byte code with function handles
 
+	// It must be possible enumerate the function definitions in the module, 
+	// and to enumerate the parameters the function accepts
 
+	// Test that a funcdef can't have the same name as other global entities
 
+	engine->Release();
 
 	// Success
  	return fail;

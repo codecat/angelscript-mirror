@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -130,6 +130,7 @@ enum eTokenType
 	ttFor,				   // for
 	ttWhile,               // while
 	ttBool,                // bool
+	ttFuncDef,             // funcdef
 	ttImport,              // import
 	ttInt,                 // int
 	ttInt8,                // int8
@@ -242,6 +243,7 @@ sTokenWord const tokenWords[] =
 	{"false"     , ttFalse},
 	{"float"     , ttFloat},
 	{"for"       , ttFor},
+	{"funcdef"   , ttFuncDef},
 	{"if"        , ttIf},
 	{"in"        , ttIn},
 	{"inout"     , ttInOut},

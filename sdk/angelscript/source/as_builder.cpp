@@ -142,6 +142,18 @@ asCBuilder::~asCBuilder()
 			namedTypeDeclarations[n] = 0;
 		}
 	}
+
+	for( n = 0; n < funcDefs.GetLength(); n++ )
+	{
+		if( funcDefs[n] )
+		{
+			if( funcDefs[n]->node )
+				funcDefs[n]->node->Destroy(engine);
+
+			asDELETE(funcDefs[n],sFuncDef);
+			funcDefs[n] = 0;
+		}
+	}
 }
 
 int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy)
@@ -162,6 +174,9 @@ int asCBuilder::Build()
 	preMessage.isSet = false;
 
 	ParseScripts();
+
+	// TODO: funcdef: Complete the funcdefs
+
 	CompileClasses();
 	CompileGlobalVariables();
 	CompileFunctions();
@@ -376,6 +391,11 @@ void asCBuilder::ParseScripts()
 				{
 					node->DisconnectParent();
 					RegisterTypedef(node, scripts[n]);
+				}
+				else if( node->nodeType == snFuncDef )
+				{
+					node->DisconnectParent();
+					RegisterFuncDef(node, scripts[n]);
 				}
 
 				node = next;
@@ -931,9 +951,44 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		}
 	}
 
+	// TODO: funcdef: Must check for name conflicts with funcdefs
+
 	return 0;
 }
 
+
+int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
+{
+	// Find the name
+	asASSERT( node->firstChild->nodeType == snDataType );
+	asCScriptNode *n = node->firstChild->next->next;
+	
+	asCString name;
+	name.Assign(&file->code[n->tokenPos], n->tokenLength);
+
+	// Check for name conflict with other types
+	int r = CheckNameConflict(name.AddressOf(), node, file);
+	if( asSUCCESS != r )
+	{
+		node->Destroy(engine);
+		return r;
+	}
+
+	// The function definition should be stored as a asCScriptFunction so that the application
+	// can use the asIScriptFunction interface to enumerate the return type and parameters
+
+	// The return type and parameter types aren't determined in this function. A second pass is 
+	// necessary after all type declarations have been identified.
+
+	sFuncDef *fd = asNEW(sFuncDef);
+	fd->name   = name;
+	fd->node   = node;
+	fd->script = file;
+
+	funcDefs.PushLast(fd);
+
+	return 0;
+}
 
 int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 {
@@ -1044,7 +1099,6 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	engine->scriptFunctions[st->beh.construct]->AddRef();
 	for( asUINT i = 1; i < st->beh.operators.GetLength(); i += 2 )
 		engine->scriptFunctions[st->beh.operators[i]]->AddRef();
-
 
 	return 0;
 }

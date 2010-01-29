@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -343,6 +343,8 @@ asCScriptNode *asCParser::ParseScript()
 				node->AddChildLast(ParseClass());
 			else if( t1.type == ttInterface )
 				node->AddChildLast(ParseInterface());
+			else if( t1.type == ttFuncDef )
+				node->AddChildLast(ParseFuncDef());
 			else if( t1.type == ttConst || IsDataType(t1) )
 			{
 				if( IsVarDecl() )
@@ -735,6 +737,44 @@ bool asCParser::IsFuncDecl(bool isMethod)
 
 	RewindTo(&t);
 	return false;
+}
+
+asCScriptNode *asCParser::ParseFuncDef()
+{
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFuncDef);
+
+	sToken t1;
+	GetToken(&t1);
+	if( t1.type != ttFuncDef )
+	{
+		Error(asGetTokenDefinition(ttFuncDef), &t1);
+		return node;
+	}
+
+	node->SetToken(&t1);
+
+	node->AddChildLast(ParseType(true));
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseTypeMod(false));
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseIdentifier());
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseParameterList());
+	if( isSyntaxError ) return node;
+
+	GetToken(&t1);
+	if( t1.type != ttEndStatement )
+	{
+		Error(asGetTokenDefinition(ttEndStatement), &t1);
+		return node;
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	return node;
 }
 
 asCScriptNode *asCParser::ParseFunction(bool isMethod)

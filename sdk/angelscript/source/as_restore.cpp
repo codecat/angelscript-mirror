@@ -54,6 +54,14 @@ int asCRestore::Save()
 {
 	unsigned long i, count;
 
+	// TODO: The first thing the code needs to do is build a list of the 
+	//       types that are used, so that the function signatures, etc can
+	//       be encoded in a small way.
+	// 
+	//       If only a few types are used, then maybe one byte is enough.
+	//       By using a scheme similar to UTF8 I can support a high number
+	//       of types without sacrifizing space.
+
 	// Store everything in the same order that the builder parses scripts
 	
 	// Store enums

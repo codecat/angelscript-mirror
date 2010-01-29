@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -80,6 +80,12 @@ struct sObjectTypePair
 // 
 //       With this separation it will be possible to compile the library without
 //       the compiler, thus giving a much smaller binary executable.
+
+// TODO: There should be an special compile option that will let the application
+//       recompile an already compiled script. The compiler should check if no
+//       destructive changes have been made (changing function signatures, etc)
+//       then it should simply replace the bytecode within the functions without
+//       changing the values of existing global properties, etc.
 
 
 class asCModule : public asIScriptModule

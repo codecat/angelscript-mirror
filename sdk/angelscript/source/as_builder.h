@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -83,6 +83,13 @@ struct sClassDeclaration
 	asCObjectType *objType;
 };
 
+struct sFuncDef
+{
+	asCScriptCode *script;
+	asCScriptNode *node;
+	asCString name;
+};
+
 class asCCompiler;
 
 class asCBuilder
@@ -135,6 +142,7 @@ protected:
 	int RegisterInterface(asCScriptNode *node, asCScriptCode *file);
 	int RegisterEnum(asCScriptNode *node, asCScriptCode *file);
 	int RegisterTypedef(asCScriptNode *node, asCScriptCode *file);
+	int RegisterFuncDef(asCScriptNode *node, asCScriptCode *file);
 	void CompileClasses();
 
 	void GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, bool &isConstMethod, bool &isConstructor, bool &isDestructor);
@@ -172,6 +180,7 @@ protected:
 	asCArray<sClassDeclaration *>          classDeclarations;
 	asCArray<sClassDeclaration *>          interfaceDeclarations;
 	asCArray<sClassDeclaration *>          namedTypeDeclarations;
+	asCArray<sFuncDef *>                   funcDefs;
 
 	asCScriptEngine *engine;
 	asCModule *module;

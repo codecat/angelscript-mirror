@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -45,9 +45,11 @@ ENUMELEMENT   = IDENTIFIER ('=' EXPRESSION)
 SCRIPT        = (FUNCTION | GLOBVAR | IMPORT | STRUCT | INTERFACE | TYPEDEF | ENUM)*
 TYPE          = 'const'? DATATYPE
 TYPEMOD       = ('&' ('in' | 'out' | 'inout')?)?
-FUNCTION      = TYPE TYPEMOD IDENTIFIER PARAMLIST BLOCK
-IMPORT        = 'import' TYPE TYPEMOD IDENTIFIER PARAMLIST 'from' STRING ';'
-INTERFACE     = 'interface' IDENTIFIER '{' (TYPE TYPEMOD IDENTIFIER PARAMLIST ';')* '}' ';'
+FUNCDEF       = 'funcdef' FUNCSIG ';'
+FUNCSIG       = TYPE TYPEMOD IDENTIFIER PARAMLIST
+FUNCTION      = FUNCSIG BLOCK
+IMPORT        = 'import' FUNCSIG 'from' STRING ';'
+INTERFACE     = 'interface' IDENTIFIER '{' (FUNCSIG ';')* '}' ';'
 GLOBVAR       = TYPE IDENTIFIER ('=' (INITLIST | ASSIGNMENT))? (',' IDENTIFIER ('=' (INITLIST | ASSIGNMENT))?)* ';'
 DATATYPE      = REALTYPE | IDENTIFIER
 REALTYPE      = 'void' | 'bool' | 'float' | 'int' | 'uint' | 'bits'
@@ -124,6 +126,7 @@ protected:
 	asCScriptNode *ParseType(bool allowConst, bool allowVariableType = false);
 	asCScriptNode *ParseTypeMod(bool isParam);
 	asCScriptNode *ParseFunction(bool isMethod = false);
+	asCScriptNode *ParseFuncDef();
 	asCScriptNode *ParseGlobalVar();
 	asCScriptNode *ParseParameterList();
 	asCScriptNode *SuperficiallyParseStatementBlock();
