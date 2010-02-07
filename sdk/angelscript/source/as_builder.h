@@ -154,7 +154,8 @@ protected:
 	
 	int CreateVirtualFunction(asCScriptFunction *func, int idx);
 
-	asCObjectType *GetObjectType(const char *type);
+	asCObjectType     *GetObjectType(const char *type);
+	asCScriptFunction *GetFuncDef(const char *type);
 
 	int GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue);
 	int GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue);

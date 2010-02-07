@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -48,6 +48,7 @@ BEGIN_AS_NAMESPACE
 struct asSTypeBehaviour;
 class asCScriptEngine;
 class asCObjectType;
+class asCScriptFunction;
 
 class asCDataType
 {
@@ -61,6 +62,7 @@ public:
 	static asCDataType CreatePrimitive(eTokenType tt, bool isConst);
 	static asCDataType CreateObject(asCObjectType *ot, bool isConst);
 	static asCDataType CreateObjectHandle(asCObjectType *ot, bool isConst);
+	static asCDataType CreateFuncDef(asCScriptFunction *ot);
 	static asCDataType CreateDefaultArray(asCScriptEngine *engine);
 	static asCDataType CreateNullHandle();
 
@@ -121,6 +123,7 @@ protected:
 
 	// Behaviour type
 	asCObjectType *objectType;
+	asCScriptFunction *funcDef;
 
 	// Top level
 	bool isReference:1;

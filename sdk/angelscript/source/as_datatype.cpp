@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -53,6 +53,7 @@ asCDataType::asCDataType()
 	isReadOnly     = false;
 	isObjectHandle = false;
 	isConstHandle  = false;
+	funcDef        = 0;
 }
 
 asCDataType::asCDataType(const asCDataType &dt)
@@ -63,6 +64,7 @@ asCDataType::asCDataType(const asCDataType &dt)
 	isReadOnly     = dt.isReadOnly;
 	isObjectHandle = dt.isObjectHandle;
 	isConstHandle  = dt.isConstHandle;
+	funcDef        = dt.funcDef;
 }
 
 asCDataType::~asCDataType()
@@ -88,6 +90,16 @@ asCDataType asCDataType::CreateObjectHandle(asCObjectType *ot, bool isConst)
 	dt.objectType       = ot;
 	dt.isObjectHandle   = true;
 	dt.isConstHandle    = isConst;
+
+	return dt;
+}
+
+asCDataType asCDataType::CreateFuncDef(asCScriptFunction *func)
+{
+	asCDataType dt;
+	dt.tokenType        = ttIdentifier;
+	dt.funcDef          = func;
+	dt.objectType       = &func->engine->functionBehaviours;
 
 	return dt;
 }
@@ -154,6 +166,10 @@ asCString asCDataType::Format() const
 		str += objectType->templateSubType.Format();
 		str += "[]";
 	}
+	else if( funcDef )
+	{
+		str += funcDef->name;
+	}
 	else if( objectType )
 	{
 		str += objectType->name;
@@ -191,6 +207,7 @@ asCDataType &asCDataType::operator =(const asCDataType &dt)
 	isReadOnly       = dt.isReadOnly;
 	isObjectHandle   = dt.isObjectHandle;
 	isConstHandle    = dt.isConstHandle;
+	funcDef          = dt.funcDef;
 
 	return (asCDataType &)*this;
 }
@@ -206,10 +223,12 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 	{
 		// Only reference types are allowed to be handles, 
 		// but not nohandle reference types, and not scoped references (except when returned from registered function)
-		if( !objectType || 
+		// funcdefs are special reference types, and support handles
+		if( !funcDef && 
+			(!objectType || 
 			!((objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_TEMPLATE_SUBTYPE)) || 
 			(objectType->flags & asOBJ_NOHANDLE) || 
-			((objectType->flags & asOBJ_SCOPED) && !acceptHandleForScope) )
+			((objectType->flags & asOBJ_SCOPED) && !acceptHandleForScope)) )
 			return -1;
 
 		isObjectHandle = b;
@@ -383,6 +402,7 @@ bool asCDataType::IsEqualExceptRefAndConst(const asCDataType &dt) const
 	if( isObjectHandle != dt.isObjectHandle ) return false;
 	if( isObjectHandle )
 		if( isReadOnly != dt.isReadOnly ) return false;
+	if( funcDef != dt.funcDef ) return false;
 
 	return true;
 }
@@ -409,6 +429,8 @@ bool asCDataType::IsEqualExceptInterfaceType(const asCDataType &dt) const
 		if( !objectType->IsInterface() || !dt.objectType->IsInterface() ) return false;
 	}
 
+	if( funcDef != dt.funcDef ) return false;
+
 	return true;
 }
 
@@ -419,7 +441,7 @@ bool asCDataType::IsPrimitive() const
 		return true;
 
 	// A registered object is never a primitive neither is a pointer, nor an array
-	if( objectType )
+	if( objectType || funcDef )
 		return false;
 
 	// Null handle doesn't have an objectType, but it is not a primitive

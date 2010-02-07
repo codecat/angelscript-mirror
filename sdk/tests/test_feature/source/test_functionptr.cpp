@@ -19,11 +19,24 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
 	// Test the declaration of new function signatures
-	script = "funcdef void functype();\n";
+	script = "funcdef void functype();\n"
+	// It must be possible to declare variables of the funcdef type
+		     "functype @myFunc = null;\n"
+	// It must be possible to initialize the function pointer directly
+//			"functype @myFunc1 = @func;\n"
+			"void func() {}\n";
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r != 0 )
 		fail = true;
+
+	// It must not be possible to declare a non-handle variable of the funcdef type
+	script = "funcdef void functype();\n"
+		     "functype myFunc;\n";
+
+	// It must not be possible to invoke the funcdef
+	script = "funcdef void functype();\n"
+		     "void func() { functype(); } \n";
 
 	// Test that it is possible to declare the function signatures out of order
 	// This also tests the circular reference between the function signatures
@@ -69,6 +82,14 @@ bool Test()
 	// and to enumerate the parameters the function accepts
 
 	// Test that a funcdef can't have the same name as other global entities
+
+	// A funcdef defined in multiple modules must share the id and signature so that a function implemented 
+	// in one module can be called from another module by storing the handle in the funcdef variable
+
+	// An interface that takes a funcdef as parameter must still have its typeid shared if the funcdef can also be shared
+	// If the funcdef takes an interface as parameter, it must still be shared
+		
+	// Must not be possible to take the address of class methods
 
 	engine->Release();
 

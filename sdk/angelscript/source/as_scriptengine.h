@@ -324,6 +324,8 @@ public:
 	asCArray<asCObjectType *> classTypes;
 	// This array stores the template instances types, that have been generated from template types
 	asCArray<asCObjectType *> templateInstanceTypes;
+	// Stores the funcdefs
+	asCArray<asCScriptFunction *> funcDefs;
 
 	// Stores the names of the script sections for debugging purposes
 	asCArray<asCString *> scriptSectionNames;

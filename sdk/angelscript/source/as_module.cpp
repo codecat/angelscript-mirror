@@ -323,6 +323,15 @@ void asCModule::InternalReset()
 	for( n = 0; n < typeDefs.GetLength(); n++ )
 		typeDefs[n]->Release();
 	typeDefs.SetLength(0);
+
+	// Free funcdefs
+	for( n = 0; n < funcDefs.GetLength(); n++ )
+	{
+		// TODO: funcdefs: These may be shared between modules, so we can't just remove them
+		engine->funcDefs.RemoveValue(funcDefs[n]);
+		funcDefs[n]->Release();
+	}
+	funcDefs.SetLength(0);
 }
 
 // interface
@@ -1356,6 +1365,19 @@ int asCModule::RemoveFunction(int funcId)
 	}
 
 	return asNO_FUNCTION;
+}
+
+// internal
+int asCModule::AddFuncDef(const char *name)
+{
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, 0, asFUNC_FUNCDEF);
+	func->name = name;
+
+	funcDefs.PushLast(func);
+
+	engine->funcDefs.PushLast(func);
+
+	return 0;
 }
 
 END_AS_NAMESPACE

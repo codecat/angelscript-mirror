@@ -987,7 +987,7 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
 
 	funcDefs.PushLast(fd);
 
-	return 0;
+	return module->AddFuncDef(name.AddressOf());
 }
 
 int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
@@ -2593,20 +2593,8 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 
 		if( ot == 0 )
 			ot = GetObjectType(str.AddressOf());
-
-		if( ot == 0 )
-		{
-			asCString msg;
-			msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, (const char *)str.AddressOf());
-
-			int r, c;
-			file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-
-			WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
-
-			dt.SetTokenType(ttInt);
-		}
-		else
+	
+		if( ot )
 		{
 			if( ot->flags & asOBJ_IMPLICIT_HANDLE )
 				isImplicitHandle = true;
@@ -2669,6 +2657,29 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
 
 				dt.SetTokenType(ttInt);
+			}
+		}
+		else if( ot == 0 )
+		{
+			// It can still be a function definition
+			asCScriptFunction *funcdef = GetFuncDef(str.AddressOf());
+
+			if( funcdef )
+			{
+				dt = asCDataType::CreateFuncDef(funcdef);
+			}
+			else if( funcdef == 0 )
+			{
+				asCString msg;
+				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, (const char *)str.AddressOf());
+
+				int r, c;
+				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+
+				WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+
+				dt = asCDataType::CreatePrimitive(ttInt, isConst);
+				return dt;
 			}
 		}
 	}
@@ -2800,6 +2811,24 @@ asCObjectType *asCBuilder::GetObjectType(const char *type)
 		ot = module->GetObjectType(type);
 
 	return ot;
+}
+
+asCScriptFunction *asCBuilder::GetFuncDef(const char *type)
+{
+	// TODO: funcdef: Search in the engine too
+
+	if( module )
+	{
+		for( asUINT n = 0; n < module->funcDefs.GetLength(); n++ )
+		{
+			if( module->funcDefs[n]->name == type )
+			{
+				return module->funcDefs[n];
+			}
+		}
+	}
+
+	return 0;
 }
 
 int asCBuilder::GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue)

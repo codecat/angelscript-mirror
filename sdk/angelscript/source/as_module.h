@@ -176,6 +176,7 @@ public:
 	int  AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType = 0, bool isConstMethod = false, bool isGlobalFunction = false);
 	int  AddScriptFunction(asCScriptFunction *func);
 	int  AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, const asCString &moduleName);
+	int  AddFuncDef(const char *name);
 
 	int  GetNextImportedFunctionId();
 
@@ -212,6 +213,8 @@ public:
 	asCArray<asCObjectType*>       enumTypes;
 	// This array holds typedefs
 	asCArray<asCObjectType*>       typeDefs;
+	// This array holds the funcdefs declared in the module
+	asCArray<asCScriptFunction*>   funcDefs;
 };
 
 END_AS_NAMESPACE
