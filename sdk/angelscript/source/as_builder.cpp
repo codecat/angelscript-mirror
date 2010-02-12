@@ -987,7 +987,28 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
 
 	funcDefs.PushLast(fd);
 
-	return module->AddFuncDef(name.AddressOf());
+	// TODO: funcdef: The parameters and return type should only be defined after all global 
+	//                types have been identified
+	asCDataType                returnType;
+	asCArray<asCDataType>      parameterTypes;
+	asCArray<asETypeModifiers> inOutFlags;
+	bool                       isConstMethod;
+	bool                       isConstructor;
+	bool                       isDestructor;
+
+	GetParsedFunctionDetails(node, file, 0, name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor);
+
+	int i = module->AddFuncDef(name.AddressOf());
+
+	asCScriptFunction *func = module->funcDefs[i];
+	func->returnType = returnType;
+	for( asUINT n = 0; n < parameterTypes.GetLength(); n++ )
+	{
+		func->parameterTypes.PushLast(parameterTypes[n]);
+		func->inOutFlags.PushLast(inOutFlags[n]);
+	}
+
+	return 0;
 }
 
 int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)

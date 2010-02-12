@@ -3992,6 +3992,18 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
 		return;
 
+	// Convert matching function types
+	if( to.GetFuncDef() && ctx->type.dataType.GetFuncDef() &&
+		to.GetFuncDef() != ctx->type.dataType.GetFuncDef() )
+	{
+		asCScriptFunction *toFunc = to.GetFuncDef();
+		asCScriptFunction *fromFunc = ctx->type.dataType.GetFuncDef();
+		if( toFunc->IsSignatureExceptNameEqual(fromFunc) )
+		{
+			ctx->type.dataType.SetFuncDef(toFunc);
+		}
+	}
+
 
 	// TODO: The below code can probably be improved even further. It should first convert the type to
 	//       object handle or non-object handle, and only after that convert to reference or non-reference
@@ -5374,7 +5386,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				}
 			}
 
-			// Is it a global property?
+			// Is it a global property or the name of a global function?
 			if( !found && (scope == "" || scope == "::") )
 			{
 				// See if there are any matching global property accessors
@@ -5393,6 +5405,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 					found = true;
 				}
 				
+				// See if there is any matching global property
 				if( !found )
 				{
 					bool isCompiled = true;
@@ -5451,6 +5464,42 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 							Error(str.AddressOf(), vnode);
 							return -1;
 						}
+					}
+				}
+
+				// See if there is any matching global function
+				if( !found )
+				{
+					asCArray<int> funcs;
+					builder->GetFunctionDescriptions(name.AddressOf(), funcs);
+
+					if( funcs.GetLength() > 1 )
+					{
+						// TODO: funcdef: If multiple functions are found, then the compiler should defer the decision
+						//                to which one it should use until the value is actually used. 
+						//
+						//                - assigning the function pointer to a variable
+						//                - performing an explicit cast
+						//                - passing the function pointer to a function as parameter
+						asCString str;
+						str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, name.AddressOf());
+						Error(str.AddressOf(), vnode);
+						return -1;
+					}
+					else if( funcs.GetLength() == 1 )
+					{
+						found = true;
+
+						// TODO: funcdef: What kind of bytecode do we need? We need a specific instruction
+						//                to push the pointer on the stack, otherwise the bytecode serialization
+						//                won't be able to recognize the pointer.
+#ifdef AS_64BIT_PTR
+						ctx->bc.InstrQWORD(asBC_PshC8, (asQWORD)(size_t)engine->scriptFunctions[funcs[0]]);
+#else
+						ctx->bc.InstrDWORD(asBC_PshC4, (asDWORD)(size_t)engine->scriptFunctions[funcs[0]]);
+#endif
+
+						ctx->type.Set(asCDataType::CreateFuncDef(engine->scriptFunctions[funcs[0]]));
 					}
 				}
 			}

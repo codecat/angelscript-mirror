@@ -126,6 +126,7 @@ public:
 	int       GetLineNumber(int programPosition);
 	void      ComputeSignatureId();
 	bool      IsSignatureEqual(const asCScriptFunction *func) const;
+	bool      IsSignatureExceptNameEqual(const asCScriptFunction *func) const;
 
     void      JITCompile();
 

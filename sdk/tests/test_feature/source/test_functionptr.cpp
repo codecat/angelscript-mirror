@@ -23,7 +23,7 @@ bool Test()
 	// It must be possible to declare variables of the funcdef type
 		     "functype @myFunc = null;\n"
 	// It must be possible to initialize the function pointer directly
-//			"functype @myFunc1 = @func;\n"
+			"functype @myFunc1 = @func;\n"
 			"void func() {}\n";
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
@@ -90,6 +90,16 @@ bool Test()
 	// If the funcdef takes an interface as parameter, it must still be shared
 		
 	// Must not be possible to take the address of class methods
+
+	// If the function referred to when taking a function pointer is removed from the module,
+	// the code must not be invalidated. After removing func() from the module, it must still 
+	// be possible to execute func2()
+	script = "funcdef void FUNC(); \n"
+	         "void func() {} \n";
+	         "void func2() { FUNC@ f = @func; f(); } \n";
+
+
+
 
 	engine->Release();
 

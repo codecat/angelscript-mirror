@@ -389,7 +389,14 @@ void asCScriptFunction::ComputeSignatureId()
 // internal
 bool asCScriptFunction::IsSignatureEqual(const asCScriptFunction *func) const
 {
-	if( name              != func->name              ) return false;
+	if( !IsSignatureExceptNameEqual(func) || name != func->name ) return false;
+	
+	return true;
+}
+
+// internal
+bool asCScriptFunction::IsSignatureExceptNameEqual(const asCScriptFunction *func) const
+{
 	if( returnType        != func->returnType        ) return false;
 	if( isReadOnly        != func->isReadOnly        ) return false;
 	if( inOutFlags        != func->inOutFlags        ) return false;

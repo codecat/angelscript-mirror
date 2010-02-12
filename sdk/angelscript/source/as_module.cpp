@@ -1377,7 +1377,7 @@ int asCModule::AddFuncDef(const char *name)
 
 	engine->funcDefs.PushLast(func);
 
-	return 0;
+	return (int)funcDefs.GetLength()-1;
 }
 
 END_AS_NAMESPACE

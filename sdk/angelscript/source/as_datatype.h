@@ -102,16 +102,18 @@ public:
 	bool operator ==(const asCDataType &) const;
 	bool operator !=(const asCDataType &) const;
 
-	asCDataType    GetSubType()    const;
-	eTokenType     GetTokenType()  const {return tokenType;}
-	asCObjectType *GetObjectType() const {return objectType;}
+	asCDataType        GetSubType()    const;
+	eTokenType         GetTokenType()  const {return tokenType;}
+	asCObjectType     *GetObjectType() const {return objectType;}
+	asCScriptFunction *GetFuncDef()    const {return funcDef;}
 
 	int  GetSizeOnStackDWords()  const;
 	int  GetSizeInMemoryBytes()  const;
 	int  GetSizeInMemoryDWords() const;
 
-	void SetTokenType(eTokenType tt)                  {tokenType        = tt;}
-	void SetObjectType(asCObjectType *obj)            {objectType       = obj;}
+	void SetTokenType(eTokenType tt)         {tokenType = tt;}
+	void SetObjectType(asCObjectType *obj)   {objectType = obj;}
+	void SetFuncDef(asCScriptFunction *func) { asASSERT(funcDef); funcDef = func; }
 
 	asCDataType &operator =(const asCDataType &);
 
