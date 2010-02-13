@@ -381,6 +381,7 @@ Setup the VM to begin execution of the other script function
  - \ref asBC_CALL
  - \ref asBC_CALLINTF
  - \ref asBC_CALLBND
+ - \ref asBC_CallPtr
  
 Setup the VM to return to the calling function 
  

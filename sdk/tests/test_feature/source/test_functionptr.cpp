@@ -15,6 +15,7 @@ bool Test()
 	const char *script;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
@@ -23,11 +24,21 @@ bool Test()
 	// It must be possible to declare variables of the funcdef type
 		     "functype @myFunc = null;\n"
 	// It must be possible to initialize the function pointer directly
-			"functype @myFunc1 = @func;\n"
-			"void func() {}\n";
+			 "functype @myFunc1 = @func;\n"
+		 	 "void func() {}\n"
+	// It must be possible to compare the function pointer with another
+	         "void main() { \n"
+			 "  assert( myFunc1 !is null ); \n"
+			 "  assert( myFunc1 is func ); \n"
+	// It must be possible to call a function through the function pointer
+//			 "  myFunc(); \n"
+			 "} \n";
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r != 0 )
+		fail = true;
+	r = ExecuteString(engine, "main()", mod);
+	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
 	// It must not be possible to declare a non-handle variable of the funcdef type
@@ -48,11 +59,6 @@ bool Test()
 			 "f@ ptr2; \n"           // ok
 		     "f  ptr1; \n";           // fail
 
-	// Test that it is possible to take the address of a function
-	script = "f@ myFuncPtr = @func; \n"
-			 "funcdef void f() \n"
-	         "void func() {} \n";
-			 
 	// Test that is possible to call a function in a function pointer
 	script = "CALLBACK@ myFuncPtr = @func;              \n"
 	         "funcdef bool CALLBACK(const string &in); \n"

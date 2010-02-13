@@ -58,9 +58,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.18.1
-#define ANGELSCRIPT_VERSION        21801
-#define ANGELSCRIPT_VERSION_STRING "2.18.1"
+//! \details Version 2.18.2
+#define ANGELSCRIPT_VERSION        21802
+#define ANGELSCRIPT_VERSION_STRING "2.18.2"
 
 // Data types
 
@@ -3455,8 +3455,10 @@ enum asEBCInstr
 	asBC_ClrHi			= 174,
 	//! \brief If a JIT function is available and the argument is not 0 then call the JIT function
 	asBC_JitEntry		= 175,
+	//! \brief Call a function stored in a local function pointer
+	asBC_CallPtr        = 176,
 
-	asBC_MAXBYTECODE	= 176,
+	asBC_MAXBYTECODE	= 177,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_PSP			= 253,
@@ -3754,8 +3756,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(ChkNullS,	W_ARG,			0),
 	asBCINFO(ClrHi,		NO_ARG,			0),
 	asBCINFO(JitEntry,	W_ARG,			0),
+	asBCINFO(CallPtr,   rW_ARG,         0xFFFF),
 
-	asBCINFO_DUMMY(176),
 	asBCINFO_DUMMY(177),
 	asBCINFO_DUMMY(178),
 	asBCINFO_DUMMY(179),

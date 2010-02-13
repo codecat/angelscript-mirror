@@ -5760,6 +5760,8 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 
 		if( outFunc && outFunc->objectType && scope != "::" )
 		{
+			// TODO: funcdef: There may be a local variable of a function type with the same name
+
 			// Check if a class method is being called
 			asCScriptNode *nm = vnode->lastChild->prev;
 			asCString name;
@@ -6540,6 +6542,8 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	asCScriptNode *nm = node->lastChild->prev;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
 
+	// TODO: funcdef: First check for a local variable of a function type 
+
 	if( objectType )
 	{
 		// If we're compiling a constructor and the name of the function is super then
@@ -6553,9 +6557,15 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		}
 		else
 			builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst, scope);
+
+		// TODO: funcdef: It is still possible that there is a class member of a function type
 	}
 	else
+	{
 		builder->GetFunctionDescriptions(name.AddressOf(), funcs);
+
+		// TODO: funcdef: It is still possible that there is a global variable of a function type
+	}
 
 	if( globalExpression )
 	{
@@ -6592,7 +6602,13 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		}
 		else
 		{
+			// TODO: funcdef: For function pointer we must guarantee that the function is safe, i.e.
+			//                by first storing the function pointer in a local variable (if it isn't already in one)
+
 			MakeFunctionCall(ctx, funcs[0], objectType, args, node);
+
+			// TODO: funcdef: If the function pointer was copied to a local variable for the call, then
+			//                release it again (temporary local variable)
 		}
 	}
 	else
@@ -9514,8 +9530,11 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		ctx->bc.Call(asBC_CALLINTF, descr->id, argSize + (descr->objectType ? AS_PTR_SIZE : 0));
 	else if( descr->funcType == asFUNC_SCRIPT )
 		ctx->bc.Call(asBC_CALL    , descr->id, argSize + (descr->objectType ? AS_PTR_SIZE : 0));
-	else // if( descr->funcType == asFUNC_SYSTEM )
+	else if( descr->funcType == asFUNC_SYSTEM )
 		ctx->bc.Call(asBC_CALLSYS , descr->id, argSize + (descr->objectType ? AS_PTR_SIZE : 0));
+	// TODO: funcdef: The function pointer is stored in a local variable
+//	else if( descr->funcType == asFUNC_FUNCDEF )
+//		ctx->bc.Instr(asBC_CallPtr, varOffset, argSize);
 
 	if( ctx->type.dataType.IsObject() && !descr->returnType.IsReference() )
 	{

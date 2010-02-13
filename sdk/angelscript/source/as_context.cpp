@@ -3147,9 +3147,39 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
+	case asBC_CallPtr:
+		{
+			// Get the function pointer from the local variable
+			asCScriptFunction *func = *(asCScriptFunction**)(l_fp - asBC_SWORDARG0(l_bc));
+			l_bc++;
+
+			// Need to move the values back to the context
+			regs.programPointer = l_bc;
+			regs.stackPointer = l_sp;
+			regs.stackFramePointer = l_fp;
+
+			if( func == 0 )
+			{
+				// TODO: funcdef: Should we have a different exception string?
+				SetInternalException(TXT_UNBOUND_FUNCTION);
+				return;
+			}
+			else
+				CallScriptFunction(func);
+
+			// Extract the values from the context again
+			l_bc = regs.programPointer;
+			l_sp = regs.stackPointer;
+			l_fp = regs.stackFramePointer;
+
+			// If status isn't active anymore then we must stop
+			if( status != asEXECUTION_ACTIVE )
+				return;
+		}
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 176: l_bc = (asDWORD*)176; break;
 	case 177: l_bc = (asDWORD*)177; break;
 	case 178: l_bc = (asDWORD*)178; break;
 	case 179: l_bc = (asDWORD*)179; break;
