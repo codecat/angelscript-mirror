@@ -5279,6 +5279,322 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	return 0;
 }
 
+int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional, bool noFunction)
+{
+	bool found = false;
+
+	// It is a local variable or parameter?
+	sVariable *v = 0;
+	if( scope == "" )
+		v = variables->GetVariable(name.AddressOf());
+	if( v )
+	{
+		found = true;
+
+		if( v->isPureConstant )
+			ctx->type.SetConstantQW(v->type, v->constantValue);
+		else if( v->type.IsPrimitive() )
+		{
+			if( v->type.IsReference() )
+			{
+				// Copy the reference into the register
+#if AS_PTR_SIZE == 1
+				ctx->bc.InstrSHORT(asBC_CpyVtoR4, (short)v->stackOffset);
+#else
+				ctx->bc.InstrSHORT(asBC_CpyVtoR8, (short)v->stackOffset);
+#endif
+				ctx->type.Set(v->type);
+			}
+			else
+				ctx->type.SetVariable(v->type, v->stackOffset, false);
+		}
+		else
+		{
+			ctx->bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
+			ctx->type.SetVariable(v->type, v->stackOffset, false);
+			ctx->type.dataType.MakeReference(true);
+
+			// Implicitly dereference handle parameters sent by reference
+			if( v->type.IsReference() && (!v->type.IsObject() || v->type.IsObjectHandle()) )
+				ctx->bc.Instr(asBC_RDSPTR);
+		}
+	}
+
+	// Is it a class member?
+	if( !found && outFunc && outFunc->objectType && scope == "" )
+	{
+		if( name == THIS_TOKEN )
+		{
+			asCDataType dt = asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly);
+
+			// The object pointer is located at stack position 0
+			ctx->bc.InstrSHORT(asBC_PSF, 0);
+			ctx->type.SetVariable(dt, 0, false);
+			ctx->type.dataType.MakeReference(true);
+
+			found = true;
+		}
+
+		if( !found )
+		{
+			// See if there are any matching property accessors
+			asSExprContext access(engine);
+			access.type.Set(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly));
+			int r = FindPropertyAccessor(name, &access, errNode);
+			if( r < 0 ) return -1;
+			if( access.property_get || access.property_set )
+			{
+				// Prepare the bytecode for the member access
+				ctx->bc.InstrSHORT(asBC_PSF, 0);
+				ctx->type.SetVariable(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly), 0, false);
+				ctx->type = access.type;
+				ctx->property_get = access.property_get;
+				ctx->property_set = access.property_set;
+				ctx->property_const = access.property_const;
+				ctx->property_handle = access.property_handle;
+
+				found = true;
+			}
+		}
+
+		if( !found )
+		{
+			asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
+			asCObjectProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
+			if( prop )
+			{
+				// The object pointer is located at stack position 0
+				ctx->bc.InstrSHORT(asBC_PSF, 0);
+				ctx->type.SetVariable(dt, 0, false);
+				ctx->type.dataType.MakeReference(true);
+
+				Dereference(ctx, true);
+
+				// TODO: This is the same as what is in CompileExpressionPostOp
+				// Put the offset on the stack
+				ctx->bc.InstrINT(asBC_ADDSi, prop->byteOffset);
+
+				if( prop->type.IsReference() )
+					ctx->bc.Instr(asBC_RDSPTR);
+
+				// Reference to primitive must be stored in the temp register
+				if( prop->type.IsPrimitive() )
+				{
+					// TODO: optimize: The ADD offset command should store the reference in the register directly
+					ctx->bc.Instr(asBC_PopRPtr);
+				}
+
+				// Set the new type (keeping info about temp variable)
+				ctx->type.dataType = prop->type;
+				ctx->type.dataType.MakeReference(true);
+				ctx->type.isVariable = false;
+
+				if( ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle() )
+				{
+					// Objects that are members are not references
+					ctx->type.dataType.MakeReference(false);
+				}
+
+				// If the object reference is const, the property will also be const
+				ctx->type.dataType.MakeReadOnly(outFunc->isReadOnly);
+
+				found = true;
+			}
+		}
+	}
+
+	// Is it a global property?
+	if( !found && (scope == "" || scope == "::") )
+	{
+		// See if there are any matching global property accessors
+		asSExprContext access(engine);
+		int r = FindPropertyAccessor(name, &access, errNode);
+		if( r < 0 ) return -1;
+		if( access.property_get || access.property_set )
+		{
+			// Prepare the bytecode for the function call
+			ctx->type = access.type;
+			ctx->property_get = access.property_get;
+			ctx->property_set = access.property_set;
+			ctx->property_const = access.property_const;
+			ctx->property_handle = access.property_handle;
+
+			found = true;
+		}
+		
+		// See if there is any matching global property
+		if( !found )
+		{
+			bool isCompiled = true;
+			bool isPureConstant = false;
+			asQWORD constantValue;
+			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue);
+			if( prop )
+			{
+				found = true;
+
+				// Verify that the global property has been compiled already
+				if( isCompiled )
+				{
+					if( ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
+					{
+						ctx->type.dataType.MakeHandle(true);
+						ctx->type.isExplicitHandle = true;
+					}
+
+					// If the global property is a pure constant
+					// we can allow the compiler to optimize it. Pure
+					// constants are global constant variables that were
+					// initialized by literal constants.
+					if( isPureConstant )
+						ctx->type.SetConstantQW(prop->type, constantValue);
+					else
+					{
+						ctx->type.Set(prop->type);
+						ctx->type.dataType.MakeReference(true);
+
+						if( ctx->type.dataType.IsPrimitive() )
+						{
+							// Load the address of the variable into the register
+							ctx->bc.InstrPTR(asBC_LDG, engine->globalProperties[prop->id]->GetAddressOfValue());
+						}
+						else
+						{
+							// Push the address of the variable on the stack
+							ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[prop->id]->GetAddressOfValue());
+
+							// If the object is a value type, then we must validate the existance,  
+							// as it could potentially be accessed before it is initialized.
+							if( ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE ||
+								!ctx->type.dataType.IsObjectHandle() )
+							{
+								// TODO: optimize: This is not necessary for application registered properties
+								ctx->bc.Instr(asBC_ChkRefS);
+							}
+						}
+					}
+				}
+				else
+				{
+					asCString str;
+					str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, prop->name.AddressOf());
+					Error(str.AddressOf(), errNode);
+					return -1;
+				}
+			}
+		}
+	}
+
+	// Is it the name of a global function?
+	if( !noFunction && !found && (scope == "" || scope == "::") )
+	{
+		asCArray<int> funcs;
+		builder->GetFunctionDescriptions(name.AddressOf(), funcs);
+
+		if( funcs.GetLength() > 1 )
+		{
+			// TODO: funcdef: If multiple functions are found, then the compiler should defer the decision
+			//                to which one it should use until the value is actually used. 
+			//
+			//                - assigning the function pointer to a variable
+			//                - performing an explicit cast
+			//                - passing the function pointer to a function as parameter
+			asCString str;
+			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, name.AddressOf());
+			Error(str.AddressOf(), errNode);
+			return -1;
+		}
+		else if( funcs.GetLength() == 1 )
+		{
+			found = true;
+
+			// TODO: funcdef: What kind of bytecode do we need? We need a specific instruction
+			//                to push the pointer on the stack, otherwise the bytecode serialization
+			//                won't be able to recognize the pointer.
+#ifdef AS_64BIT_PTR
+			ctx->bc.InstrQWORD(asBC_PshC8, (asQWORD)(size_t)engine->scriptFunctions[funcs[0]]);
+#else
+			ctx->bc.InstrDWORD(asBC_PshC4, (asDWORD)(size_t)engine->scriptFunctions[funcs[0]]);
+#endif
+
+			ctx->type.Set(asCDataType::CreateFuncDef(engine->scriptFunctions[funcs[0]]));
+		}
+	}
+
+	// Is it an enum value?
+	if( !found )
+	{
+		asCObjectType *scopeType = 0;
+		if( scope != "" )
+		{
+			// resolve the type before the scope
+			scopeType = builder->GetObjectType( scope.AddressOf() );
+		}
+
+		asDWORD value = 0;
+		asCDataType dt;
+		if( scopeType && builder->GetEnumValueFromObjectType(scopeType, name.AddressOf(), dt, value) )
+		{
+			// scoped enum value found
+			found = true;
+		}
+		else if( scope == "" && !engine->ep.requireEnumScope )
+		{
+			// look for the enum value with no namespace
+			int e = builder->GetEnumValue(name.AddressOf(), dt, value);
+			if( e )
+			{
+				found = true;
+				if( e == 2 )
+				{
+					Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, errNode);
+				}
+			}
+		}
+
+		if( found )
+		{
+			// an enum value was resolved
+			ctx->type.SetConstantDW(dt, value);
+		}
+	}
+
+	// The name doesn't match any variable
+	if( !found )
+	{
+		// Give dummy value
+		ctx->type.SetDummy();
+
+		if( !isOptional )
+		{
+			// Prepend the scope to the name for the error message
+			asCString ename;
+			if( scope != "" && scope != "::" )
+				ename = scope + "::";
+			else
+				ename = scope;
+			ename += name;
+
+			asCString str;
+			str.Format(TXT_s_NOT_DECLARED, ename.AddressOf());
+			Error(str.AddressOf(), errNode);
+
+			// Declare the variable now so that it will not be reported again
+			variables->DeclareVariable(name.AddressOf(), asCDataType::CreatePrimitive(ttInt, false), 0x7FFF);
+
+			// Mark the variable as initialized so that the user will not be bother by it again
+			sVariable *v = variables->GetVariable(name.AddressOf());
+			asASSERT(v);
+			if( v ) v->isInitialized = true;
+		}
+
+		// Return -1 to signal that the variable wasn't found
+		return -1;
+	}
+
+	return 0;
+}
+
 int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx)
 {
 	// Shouldn't receive any byte code
@@ -5295,313 +5611,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		asASSERT(vnode->nodeType == snIdentifier );
 		asCString name(&script->code[vnode->tokenPos], vnode->tokenLength);
 
-		sVariable *v = 0;
-		if( scope == "" )
-			v = variables->GetVariable(name.AddressOf());
-		if( v == 0 )
-		{
-			// It is not a local variable or parameter
-			bool found = false;
-
-			// Is it a class member?
-			if( outFunc && outFunc->objectType && scope == "" )
-			{
-				if( name == THIS_TOKEN )
-				{
-					asCDataType dt = asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly);
-
-					// The object pointer is located at stack position 0
-					ctx->bc.InstrSHORT(asBC_PSF, 0);
-					ctx->type.SetVariable(dt, 0, false);
-					ctx->type.dataType.MakeReference(true);
-
-					found = true;
-				}
-
-				if( !found )
-				{
-					// See if there are any matching property accessors
-					asSExprContext access(engine);
-					access.type.Set(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly));
-					int r = FindPropertyAccessor(name, &access, node);
-					if( r < 0 ) return -1;
-					if( access.property_get || access.property_set )
-					{
-						// Prepare the bytecode for the member access
-						ctx->bc.InstrSHORT(asBC_PSF, 0);
-						ctx->type.SetVariable(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly), 0, false);
-						ctx->type = access.type;
-						ctx->property_get = access.property_get;
-						ctx->property_set = access.property_set;
-						ctx->property_const = access.property_const;
-						ctx->property_handle = access.property_handle;
-
-						found = true;
-					}
-				}
-
-				if( !found )
-				{
-					asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
-					asCObjectProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
-					if( prop )
-					{
-						// The object pointer is located at stack position 0
-						ctx->bc.InstrSHORT(asBC_PSF, 0);
-						ctx->type.SetVariable(dt, 0, false);
-						ctx->type.dataType.MakeReference(true);
-
-						Dereference(ctx, true);
-
-						// TODO: This is the same as what is in CompileExpressionPostOp
-						// Put the offset on the stack
-						ctx->bc.InstrINT(asBC_ADDSi, prop->byteOffset);
-
-						if( prop->type.IsReference() )
-							ctx->bc.Instr(asBC_RDSPTR);
-
-						// Reference to primitive must be stored in the temp register
-						if( prop->type.IsPrimitive() )
-						{
-							// TODO: optimize: The ADD offset command should store the reference in the register directly
-							ctx->bc.Instr(asBC_PopRPtr);
-						}
-
-						// Set the new type (keeping info about temp variable)
-						ctx->type.dataType = prop->type;
-						ctx->type.dataType.MakeReference(true);
-						ctx->type.isVariable = false;
-
-						if( ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle() )
-						{
-							// Objects that are members are not references
-							ctx->type.dataType.MakeReference(false);
-						}
-
-						// If the object reference is const, the property will also be const
-						ctx->type.dataType.MakeReadOnly(outFunc->isReadOnly);
-
-						found = true;
-					}
-				}
-			}
-
-			// Is it a global property or the name of a global function?
-			if( !found && (scope == "" || scope == "::") )
-			{
-				// See if there are any matching global property accessors
-				asSExprContext access(engine);
-				int r = FindPropertyAccessor(name, &access, node);
-				if( r < 0 ) return -1;
-				if( access.property_get || access.property_set )
-				{
-					// Prepare the bytecode for the function call
-					ctx->type = access.type;
-					ctx->property_get = access.property_get;
-					ctx->property_set = access.property_set;
-					ctx->property_const = access.property_const;
-					ctx->property_handle = access.property_handle;
-
-					found = true;
-				}
-				
-				// See if there is any matching global property
-				if( !found )
-				{
-					bool isCompiled = true;
-					bool isPureConstant = false;
-					asQWORD constantValue;
-					asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue);
-					if( prop )
-					{
-						found = true;
-
-						// Verify that the global property has been compiled already
-						if( isCompiled )
-						{
-							if( ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
-							{
-								ctx->type.dataType.MakeHandle(true);
-								ctx->type.isExplicitHandle = true;
-							}
-
-							// If the global property is a pure constant
-							// we can allow the compiler to optimize it. Pure
-							// constants are global constant variables that were
-							// initialized by literal constants.
-							if( isPureConstant )
-								ctx->type.SetConstantQW(prop->type, constantValue);
-							else
-							{
-								ctx->type.Set(prop->type);
-								ctx->type.dataType.MakeReference(true);
-
-								if( ctx->type.dataType.IsPrimitive() )
-								{
-									// Load the address of the variable into the register
-									ctx->bc.InstrPTR(asBC_LDG, engine->globalProperties[prop->id]->GetAddressOfValue());
-								}
-								else
-								{
-									// Push the address of the variable on the stack
-									ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[prop->id]->GetAddressOfValue());
-
-									// If the object is a value type, then we must validate the existance,  
-									// as it could potentially be accessed before it is initialized.
-									if( ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE ||
-										!ctx->type.dataType.IsObjectHandle() )
-									{
-										// TODO: optimize: This is not necessary for application registered properties
-										ctx->bc.Instr(asBC_ChkRefS);
-									}
-								}
-							}
-						}
-						else
-						{
-							asCString str;
-							str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, prop->name.AddressOf());
-							Error(str.AddressOf(), vnode);
-							return -1;
-						}
-					}
-				}
-
-				// See if there is any matching global function
-				if( !found )
-				{
-					asCArray<int> funcs;
-					builder->GetFunctionDescriptions(name.AddressOf(), funcs);
-
-					if( funcs.GetLength() > 1 )
-					{
-						// TODO: funcdef: If multiple functions are found, then the compiler should defer the decision
-						//                to which one it should use until the value is actually used. 
-						//
-						//                - assigning the function pointer to a variable
-						//                - performing an explicit cast
-						//                - passing the function pointer to a function as parameter
-						asCString str;
-						str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, name.AddressOf());
-						Error(str.AddressOf(), vnode);
-						return -1;
-					}
-					else if( funcs.GetLength() == 1 )
-					{
-						found = true;
-
-						// TODO: funcdef: What kind of bytecode do we need? We need a specific instruction
-						//                to push the pointer on the stack, otherwise the bytecode serialization
-						//                won't be able to recognize the pointer.
-#ifdef AS_64BIT_PTR
-						ctx->bc.InstrQWORD(asBC_PshC8, (asQWORD)(size_t)engine->scriptFunctions[funcs[0]]);
-#else
-						ctx->bc.InstrDWORD(asBC_PshC4, (asDWORD)(size_t)engine->scriptFunctions[funcs[0]]);
-#endif
-
-						ctx->type.Set(asCDataType::CreateFuncDef(engine->scriptFunctions[funcs[0]]));
-					}
-				}
-			}
-
-			if( !found )
-			{
-				asCObjectType *scopeType = 0;
-				if( scope != "" )
-				{
-					// resolve the type before the scope
-					scopeType = builder->GetObjectType( scope.AddressOf() );
-				}
-
-				// Is it an enum value?
-				asDWORD value = 0;
-				asCDataType dt;
-				if( scopeType && builder->GetEnumValueFromObjectType(scopeType, name.AddressOf(), dt, value) )
-				{
-					// scoped enum value found
-					found = true;
-				}
-				else if( scope == "" && !engine->ep.requireEnumScope )
-				{
-					// look for the enum value with no namespace
-					int e = builder->GetEnumValue(name.AddressOf(), dt, value);
-					if( e )
-					{
-						found = true;
-						if( e == 2 )
-						{
-							Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, vnode);
-						}
-					}
-				}
-
-				if( found )
-				{
-					// an enum value was resolved
-					ctx->type.SetConstantDW(dt, value);
-				}
-			}
-
-			if( !found )
-			{
-				// Prepend the scope to the name for the error message
-				if( scope != "" && scope != "::" )
-					scope += "::";
-				scope += name;
-
-				asCString str;
-				str.Format(TXT_s_NOT_DECLARED, scope.AddressOf());
-				Error(str.AddressOf(), vnode);
-
-				// Give dummy value
-				ctx->type.SetDummy();
-
-				// Declare the variable now so that it will not be reported again
-				variables->DeclareVariable(name.AddressOf(), asCDataType::CreatePrimitive(ttInt, false), 0x7FFF);
-
-				// Mark the variable as initialized so that the user will not be bother by it again
-				sVariable *v = variables->GetVariable(name.AddressOf());
-				asASSERT(v);
-				if( v ) v->isInitialized = true;
-
-				return -1;
-			}
-		}
-		else
-		{
-			// It is a variable or parameter
-
-			if( v->isPureConstant )
-				ctx->type.SetConstantQW(v->type, v->constantValue);
-			else
-			{
-				if( v->type.IsPrimitive() )
-				{
-					if( v->type.IsReference() )
-					{
-						// Copy the reference into the register
-#if AS_PTR_SIZE == 1
-						ctx->bc.InstrSHORT(asBC_CpyVtoR4, (short)v->stackOffset);
-#else
-						ctx->bc.InstrSHORT(asBC_CpyVtoR8, (short)v->stackOffset);
-#endif
-						ctx->type.Set(v->type);
-					}
-					else
-						ctx->type.SetVariable(v->type, v->stackOffset, false);
-				}
-				else
-				{
-					ctx->bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
-					ctx->type.SetVariable(v->type, v->stackOffset, false);
-					ctx->type.dataType.MakeReference(true);
-
-					// Implicitly dereference handle parameters sent by reference
-					if( v->type.IsReference() && (!v->type.IsObject() || v->type.IsObjectHandle()) )
-						ctx->bc.Instr(asBC_RDSPTR);
-				}
-			}
-		}
+		return CompileVariableAccess(name, scope, ctx, node);
 	}
 	else if( vnode->nodeType == snConstant )
 	{
@@ -6538,33 +6548,45 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	asCString name;
 	asCTypeInfo tempObj;
 	asCArray<int> funcs;
+	int r = -1;
 
 	asCScriptNode *nm = node->lastChild->prev;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
 
-	// TODO: funcdef: First check for a local variable of a function type 
-
-	if( objectType )
+	// TODO: funcdef: First check for a local variable of a function type
+	//                Must not allow function names, nor global variables to be returned in this instance
+	asSExprContext funcPtr(engine);
+	if( objectType == 0 )
+		r = CompileVariableAccess(name, scope, &funcPtr, node, true, true);
+	if( r < 0 )
 	{
-		// If we're compiling a constructor and the name of the function is super then
-		// the constructor of the base class is being called.
-		// super cannot be prefixed with a scope operator
-		if( m_isConstructor && name == SUPER_TOKEN && nm->prev == 0 )
+		if( objectType )
 		{
-			// If the class is not derived from anyone else, calling super should give an error
-			if( objectType->derivedFrom )
-				funcs = objectType->derivedFrom->beh.constructors;
+			// If we're compiling a constructor and the name of the function is super then
+			// the constructor of the base class is being called.
+			// super cannot be prefixed with a scope operator
+			if( m_isConstructor && name == SUPER_TOKEN && nm->prev == 0 )
+			{
+				// If the class is not derived from anyone else, calling super should give an error
+				if( objectType->derivedFrom )
+					funcs = objectType->derivedFrom->beh.constructors;
+			}
+			else
+				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst, scope);
+
+			// TODO: funcdef: It is still possible that there is a class member of a function type
 		}
 		else
-			builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst, scope);
+		{
+			builder->GetFunctionDescriptions(name.AddressOf(), funcs);
 
-		// TODO: funcdef: It is still possible that there is a class member of a function type
+			// TODO: funcdef: It is still possible that there is a global variable of a function type
+		}
 	}
-	else
-	{
-		builder->GetFunctionDescriptions(name.AddressOf(), funcs);
 
-		// TODO: funcdef: It is still possible that there is a global variable of a function type
+	if( funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() )
+	{
+		funcs.PushLast(funcPtr.type.dataType.GetFuncDef()->id);
 	}
 
 	if( globalExpression )
@@ -7460,6 +7482,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			asCTypeInfo objType = ctx->type;
 
 			// Compile function call
+			// TODO: funcdef: This call must not look for local/global function pointers, only class members
 			CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
 
 			// If the method returned a reference, then we can't release the original  

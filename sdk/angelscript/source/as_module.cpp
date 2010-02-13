@@ -1376,6 +1376,8 @@ int asCModule::AddFuncDef(const char *name)
 	funcDefs.PushLast(func);
 
 	engine->funcDefs.PushLast(func);
+	func->id = engine->GetNextScriptFunctionId();
+	engine->SetScriptFunction(func);
 
 	return (int)funcDefs.GetLength()-1;
 }

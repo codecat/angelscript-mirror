@@ -31,7 +31,7 @@ bool Test()
 			 "  assert( myFunc1 !is null ); \n"
 			 "  assert( myFunc1 is func ); \n"
 	// It must be possible to call a function through the function pointer
-//			 "  myFunc(); \n"
+	    	 "  myFunc(); \n"
 			 "} \n";
 	mod->AddScriptSection("script", script);
 	r = mod->Build();

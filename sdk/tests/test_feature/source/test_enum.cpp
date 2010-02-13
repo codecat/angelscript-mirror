@@ -320,7 +320,7 @@ static bool TestEnum()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
-                       "error (1, 32) : Error   : 'UNKNOWN_ENUM::ENUM1' is not declared\n")
+                       "error (1, 18) : Error   : 'UNKNOWN_ENUM::ENUM1' is not declared\n")
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
@@ -341,7 +341,7 @@ static bool TestEnum()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "error (5, 1) : Info    : Compiling void f()\n"
-		               "error (5, 29) : Error   : 'SomeClass::SOMEVALUE' is not declared\n")
+		               "error (5, 18) : Error   : 'SomeClass::SOMEVALUE' is not declared\n")
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
