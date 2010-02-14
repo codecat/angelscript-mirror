@@ -579,7 +579,11 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCo
 
 	// Class has no default factory/constructor.
 	asCString str;
-	str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, type.GetObjectType()->GetName());
+	// TODO: funcdef: asCDataType should have a GetTypeName()
+	if( type.GetFuncDef() )
+		str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, type.GetFuncDef()->GetName());
+	else
+		str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, type.GetObjectType()->GetName());
 	Error(str.AddressOf(), node);
 
 	return -1;

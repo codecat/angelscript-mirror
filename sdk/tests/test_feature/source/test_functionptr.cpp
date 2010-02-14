@@ -44,60 +44,65 @@ bool Test()
 		fail = true;
 
 	// It must not be possible to declare a non-handle variable of the funcdef type
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	bout.buffer = "";
 	script = "funcdef void functype();\n"
 		     "functype myFunc;\n";
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (2, 1) : Error   : Data type can't be 'functype'\n"
+					   "script (2, 10) : Error   : No default constructor for object of type 'functype'.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
 	// It must not be possible to invoke the funcdef
+	bout.buffer = "";
 	script = "funcdef void functype();\n"
 		     "void func() { functype(); } \n";
-
-	// Test that it is possible to declare the function signatures out of order
-	// This also tests the circular reference between the function signatures
-	script = "funcdef void f1(f2@) \n"
-	         "funcdef void f2(f1@) \n";
-
-	// Test that it is required to declare the variable as handle
-	script = "function void f()\n"
-			 "f@ ptr2; \n"           // ok
-		     "f  ptr1; \n";           // fail
-
-	// Test that is possible to call a function in a function pointer
-	script = "CALLBACK@ myFuncPtr = @func;              \n"
-	         "funcdef bool CALLBACK(const string &in); \n"
-			 "bool func(const string &in s)             \n"
-			 "{                                         \n"
-			 "  return s == 'test';                     \n"
-			 "}                                         \n";
-	
-	// ExecuteString(engine, "assert(myFuncPtr('test'))", mod);
-
-	// Test that the function in a function pointer isn't released while the function 
-	// is being executed, even though the function pointer itself is cleared
-	script = "DYNFUNC@ funcPtr;        \n"
-		     "funcdef void DYNFUNC(); \n"
-			 "@funcPtr = @CompileDynFunc('void func() { @funcPtr = null; }'); \n";
-
-	// It must be possible to register the function signature from the application
-	// engine->RegisterFunctionSignature("void CALLBACK()");
-
-	// It must also be possible to enumerate the registered callbacks
-
-	// It must be possible to identify a function handle type from the type id
-
-	// It must be possible to save the byte code with function handles
-
-	// It must be possible enumerate the function definitions in the module, 
-	// and to enumerate the parameters the function accepts
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (2, 1) : Info    : Compiling void func()\n"
+					   "script (2, 15) : Error   : No matching signatures to 'functype()'\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
 	// Test that a funcdef can't have the same name as other global entities
+	bout.buffer = "";
+	script = "funcdef void test();  \n"
+	         "int test; \n";
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (2, 5) : Error   : Name conflict. 'test' is a funcdef.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
-	// A funcdef defined in multiple modules must share the id and signature so that a function implemented 
-	// in one module can be called from another module by storing the handle in the funcdef variable
-
-	// An interface that takes a funcdef as parameter must still have its typeid shared if the funcdef can also be shared
-	// If the funcdef takes an interface as parameter, it must still be shared
-		
 	// Must not be possible to take the address of class methods
+	bout.buffer = "";
+	script = "class t { \n"
+		"  void func() { @func; } \n"
+		"} \n";
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (2, 3) : Info    : Compiling void t::func()\n"
+	                   "script (2, 18) : Error   : 'func' is not declared\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 
 	// If the function referred to when taking a function pointer is removed from the module,
 	// the code must not be invalidated. After removing func() from the module, it must still 
@@ -106,8 +111,50 @@ bool Test()
 	         "void func() {} \n";
 	         "void func2() { FUNC@ f = @func; f(); } \n";
 
+	// Test that the function in a function pointer isn't released while the function 
+	// is being executed, even though the function pointer itself is cleared
+	script = "DYNFUNC@ funcPtr;        \n"
+		     "funcdef void DYNFUNC(); \n"
+			 "@funcPtr = @CompileDynFunc('void func() { @funcPtr = null; }'); \n";
 
+	// It must be possible to save the byte code with function handles
 
+	// Test function pointers as members of classes. It should be possible to call the function
+	// from within a class method. It should also be possible to call it from outside through the . operator.
+
+	//----------------------------------------------------------
+	// TODO: Future improvements below
+
+	// The compiler should be able to determine the right function overload by the destination of the function pointer
+	script = "funcdef void f(); \n"
+		     "f @fp = @func();  \n"
+			 "void func() {}    \n"
+			 "void func(int) {} \n";
+
+	// Test that it is possible to declare the function signatures out of order
+	// This also tests the circular reference between the function signatures
+	script = "funcdef void f1(f2@) \n"
+	         "funcdef void f2(f1@) \n";
+
+	// It must be possible to register the function signature from the application
+	// engine->RegisterFunctionSignature("void CALLBACK()");
+
+	// It must also be possible to enumerate the registered callbacks
+
+	// It must be possible to identify a function handle type from the type id
+
+	// It must be possible enumerate the function definitions in the module, 
+	// and to enumerate the parameters the function accepts
+
+	// A funcdef defined in multiple modules must share the id and signature so that a function implemented 
+	// in one module can be called from another module by storing the handle in the funcdef variable
+
+	// An interface that takes a funcdef as parameter must still have its typeid shared if the funcdef can also be shared
+	// If the funcdef takes an interface as parameter, it must still be shared
+		
+	// Must have a generic function pointer that can store any signature. The function pointer
+	// can then be dynamically cast to the correct function signature so that the function it points
+	// to can be invoked.
 
 	engine->Release();
 

@@ -952,6 +952,25 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	}
 
 	// TODO: funcdef: Must check for name conflicts with funcdefs
+	for( n = 0; n < funcDefs.GetLength(); n++ )
+	{
+		if( funcDefs[n]->name == name )
+		{
+			if( code )
+			{
+				int r, c;
+				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+				asCString str;
+
+				str.Format(TXT_NAME_CONFLICT_s_IS_FUNCDEF, name);
+
+				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+			}
+
+			return -1;
+		}
+	}
 
 	return 0;
 }
