@@ -6626,11 +6626,21 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		{
 			// TODO: funcdef: For function pointer we must guarantee that the function is safe, i.e.
 			//                by first storing the function pointer in a local variable (if it isn't already in one)
+			if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
+			{
+				Dereference(&funcPtr, true);
+				ConvertToVariable(&funcPtr);
+				ctx->bc.AddCode(&funcPtr.bc);
+			}
 
-			MakeFunctionCall(ctx, funcs[0], objectType, args, node);
+			MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcPtr.type.stackOffset);
 
 			// TODO: funcdef: If the function pointer was copied to a local variable for the call, then
 			//                release it again (temporary local variable)
+			if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
+			{
+				ReleaseTemporaryVariable(funcPtr.type, &ctx->bc);
+			}
 		}
 	}
 	else
@@ -8109,7 +8119,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 	return 0;
 }
 
-void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, asCScriptNode *node, bool useVariable, int stackOffset)
+void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, asCScriptNode *node, bool useVariable, int stackOffset, int funcPtrVar)
 {
 	if( objectType )
 	{
@@ -8161,7 +8171,7 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 
 	MoveArgsToStack(funcId, &ctx->bc, args, objectType ? true : false);
 
-	PerformFunctionCall(funcId, ctx, false, &args, 0, useVariable, stackOffset);
+	PerformFunctionCall(funcId, ctx, false, &args, 0, useVariable, stackOffset, funcPtrVar);
 }
 
 int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
@@ -9519,7 +9529,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 }
 
 
-void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isConstructor, asCArray<asSExprContext*> *args, asCObjectType *objType, bool useVariable, int varOffset)
+void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isConstructor, asCArray<asSExprContext*> *args, asCObjectType *objType, bool useVariable, int varOffset, int funcPtrVar)
 {
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
 
@@ -9555,9 +9565,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		ctx->bc.Call(asBC_CALL    , descr->id, argSize + (descr->objectType ? AS_PTR_SIZE : 0));
 	else if( descr->funcType == asFUNC_SYSTEM )
 		ctx->bc.Call(asBC_CALLSYS , descr->id, argSize + (descr->objectType ? AS_PTR_SIZE : 0));
-	// TODO: funcdef: The function pointer is stored in a local variable
-//	else if( descr->funcType == asFUNC_FUNCDEF )
-//		ctx->bc.Instr(asBC_CallPtr, varOffset, argSize);
+	else if( descr->funcType == asFUNC_FUNCDEF )
+		ctx->bc.CallPtr(asBC_CallPtr, funcPtrVar, argSize);
 
 	if( ctx->type.dataType.IsObject() && !descr->returnType.IsReference() )
 	{

@@ -92,6 +92,7 @@ public:
 	void Label(short label);
 	void Line(int line, int column);
 	void Call(asEBCInstr bc, int funcID, int pop);
+	void CallPtr(asEBCInstr bc, int funcPtrVar, int pop);
 	void Alloc(asEBCInstr bc, void *objID, int funcID, int pop);
 	void Ret(int pop);
 	void JmpP(int var, asDWORD max);

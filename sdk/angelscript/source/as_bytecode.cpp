@@ -1181,6 +1181,23 @@ void asCByteCode::Call(asEBCInstr instr, int funcID, int pop)
     InstrWORD(asBC_JitEntry, 0);
 }
 
+void asCByteCode::CallPtr(asEBCInstr instr, int funcPtrVar, int pop)
+{
+	if( AddInstruction() < 0 )
+		return;
+
+	asASSERT(asBCInfo[instr].type == asBCTYPE_rW_ARG);
+
+	last->op = instr;
+	last->size = asBCTypeSize[asBCInfo[instr].type];
+	last->stackInc = -pop;
+	last->wArg[0] = funcPtrVar;
+
+    // Add in a JitEntry instruction after function calls so that JIT's can resume execution
+    // TODO: Should this be done by the compiler?
+    InstrWORD(asBC_JitEntry, 0);
+}
+
 void asCByteCode::Alloc(asEBCInstr instr, void *objID, int funcID, int pop)
 {
 	if( AddInstruction() < 0 )

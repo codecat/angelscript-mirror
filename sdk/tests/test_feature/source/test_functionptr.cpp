@@ -25,13 +25,15 @@ bool Test()
 		     "functype @myFunc = null;\n"
 	// It must be possible to initialize the function pointer directly
 			 "functype @myFunc1 = @func;\n"
-		 	 "void func() {}\n"
+		 	 "void func() { called = true; }\n"
+			 "bool called = false;\n"
 	// It must be possible to compare the function pointer with another
 	         "void main() { \n"
 			 "  assert( myFunc1 !is null ); \n"
 			 "  assert( myFunc1 is func ); \n"
 	// It must be possible to call a function through the function pointer
-	    	 "  myFunc(); \n"
+	    	 "  myFunc1(); \n"
+			 "  assert( called ); \n"
 			 "} \n";
 	mod->AddScriptSection("script", script);
 	r = mod->Build();

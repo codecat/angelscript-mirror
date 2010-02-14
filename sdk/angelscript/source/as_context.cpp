@@ -3276,7 +3276,7 @@ void asCContext::ExecuteNext()
 #ifdef AS_DEBUG
 		asDWORD instr = *(asBYTE*)old;
 		if( instr != asBC_JMP && instr != asBC_JMPP && (instr < asBC_JZ || instr > asBC_JNP) &&
-			instr != asBC_CALL && instr != asBC_CALLBND && instr != asBC_CALLINTF && instr != asBC_RET && instr != asBC_ALLOC )
+			instr != asBC_CALL && instr != asBC_CALLBND && instr != asBC_CALLINTF && instr != asBC_RET && instr != asBC_ALLOC && instr != asBC_CallPtr )
 		{
 			asASSERT( (l_bc - old) == asBCTypeSize[asBCInfo[instr].type] );
 		}
