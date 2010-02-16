@@ -76,6 +76,7 @@ bool TestCondition()
 	engine->RegisterGlobalFunction("string@ format(float)", asFUNCTION(formatf), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("string@ format(uint)", asFUNCTION(formatUI), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -137,6 +138,23 @@ bool TestCondition()
 		fail = true;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
+
+	const char *script = "double get_gameTime() { return 100; } \n"
+				         "void advance(bool full) { \n"
+                         "  nextThink = gameTime + ( 30.0 * (full ? 10.0 : 1.0) ); \n"
+						 "} \n"
+						 "double nextThink; \n";
+	mod->AddScriptSection("script", script);
+	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	r = ExecuteString(engine, "nextThink = 0; advance(true); assert( nextThink == 100 + 300 );", mod);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	r = ExecuteString(engine, "nextThink = 0; advance(false); assert( nextThink == 100 + 30 );", mod);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
 
 	engine->Release();
 

@@ -8218,7 +8218,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 		{
 			asCArray<int> vars;
 			rctx->bc.GetVarsUsed(vars);
-			int offset = AllocateVariable(lctx->type.dataType, true);
+			int offset = AllocateVariableNotIn(lctx->type.dataType, true, &vars);
 			rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
 			ReleaseTemporaryVariable(offset, 0);
 		}
