@@ -2403,6 +2403,8 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 				if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
 				ProcessDeferredParams(&expr);
 
+				ProcessPropertyGetAccessor(&expr, second);
+
 				// If expression is false exit the loop
 				ConvertToVariable(&expr);
 				expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
@@ -2487,6 +2489,8 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 	if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
 	ProcessDeferredParams(&expr);
+
+	ProcessPropertyGetAccessor(&expr, wnode);
 
 	// Add byte code for the expression
 	ConvertToVariable(&expr);

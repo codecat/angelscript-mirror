@@ -677,6 +677,36 @@ bool Test()
 		engine->Release();
 	}
 
+	// 
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+
+		RegisterScriptString(engine);
+
+		engine->RegisterObjectType("sound", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("sound", "bool get_playing()", asFUNCTION(0), asCALL_GENERIC);
+
+		const char *script = "void main() \n"
+							 "{ \n"
+							 "  sound s; \n"
+							 "  for(;s.playing;) {}\n"
+							 "  while(s.playing) {} \n"
+							 "}\n";
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+		
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
