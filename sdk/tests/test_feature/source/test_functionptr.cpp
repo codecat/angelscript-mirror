@@ -43,6 +43,32 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	// Test function pointers as members of classes. It should be possible to call the function
+	// from within a class method. It should also be possible to call it from outside through the . operator.
+	script = "funcdef void FUNC();       \n"
+		     "class CMyObj               \n"
+			 "{                          \n"
+			 "  CMyObj() { @f = @func; } \n"
+			 "  FUNC@ f;                 \n"
+			 "  void test()              \n"
+			 "  {                        \n"
+			 "    this.f();              \n"
+			 "    f();                   \n"
+			 "    CMyObj o;              \n"
+			 "    o.f();                 \n"
+			 "    assert( called == 3 ); \n"
+			 "  }                        \n"
+			 "}                          \n"
+			 "int called = 0;            \n"
+			 "void func() { called++; }  \n";
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	r = ExecuteString(engine, "CMyObj o; o.test();", mod);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
 	// It must not be possible to declare a non-handle variable of the funcdef type
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
@@ -117,10 +143,9 @@ bool Test()
 		     "funcdef void DYNFUNC(); \n"
 			 "@funcPtr = @CompileDynFunc('void func() { @funcPtr = null; }'); \n";
 
-	// It must be possible to save the byte code with function handles
 
-	// Test function pointers as members of classes. It should be possible to call the function
-	// from within a class method. It should also be possible to call it from outside through the . operator.
+
+	// It must be possible to save the byte code with function handles
 
 	//----------------------------------------------------------
 	// TODO: Future improvements below

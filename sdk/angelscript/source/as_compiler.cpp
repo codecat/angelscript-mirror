@@ -5290,13 +5290,13 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	return 0;
 }
 
-int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional, bool noFunction)
+int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional, bool noFunction, bool onlyClassMembers)
 {
 	bool found = false;
 
 	// It is a local variable or parameter?
 	sVariable *v = 0;
-	if( scope == "" )
+	if( scope == "" && !onlyClassMembers )
 		v = variables->GetVariable(name.AddressOf());
 	if( v )
 	{
@@ -5416,7 +5416,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it a global property?
-	if( !found && (scope == "" || scope == "::") )
+	if( !found && (scope == "" || scope == "::") && !onlyClassMembers )
 	{
 		// See if there are any matching global property accessors
 		asSExprContext access(engine);
@@ -5499,7 +5499,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it the name of a global function?
-	if( !noFunction && !found && (scope == "" || scope == "::") )
+	if( !noFunction && !found && (scope == "" || scope == "::") && !onlyClassMembers )
 	{
 		asCArray<int> funcs;
 		builder->GetFunctionDescriptions(name.AddressOf(), funcs);
@@ -5535,7 +5535,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it an enum value?
-	if( !found )
+	if( !found && !onlyClassMembers )
 	{
 		asCObjectType *scopeType = 0;
 		if( scope != "" )
@@ -6570,7 +6570,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	//                Must not allow function names, nor global variables to be returned in this instance
 	asSExprContext funcPtr(engine);
 	if( objectType == 0 )
-		r = CompileVariableAccess(name, scope, &funcPtr, node, true, true);
+		r = CompileVariableAccess(name, scope, &funcPtr, node, true, true, false);
 	if( r < 0 )
 	{
 		if( objectType )
@@ -6587,7 +6587,9 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 			else
 				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst, scope);
 
-			// TODO: funcdef: It is still possible that there is a class member of a function type
+			// It is still possible that there is a class member of a function type
+			if( funcs.GetLength() == 0 )
+				CompileVariableAccess(name, scope, &funcPtr, node, true, true, true);
 		}
 		else
 		{
