@@ -1362,6 +1362,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		args[n]->property_set = expr.property_set;
 		args[n]->property_const = expr.property_const;
 		args[n]->property_handle = expr.property_handle;
+		args[n]->property_ref = expr.property_ref;
 		args[n]->exprNode = arg;
 
 		n--;
@@ -4791,6 +4792,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		ctx->property_set = lctx->property_set;
 		ctx->property_const = lctx->property_const;
 		ctx->property_handle = lctx->property_handle;
+		ctx->property_ref = lctx->property_ref;
 
 		return ProcessPropertySetAccessor(ctx, rctx, opNode);
 	}
@@ -5283,6 +5285,7 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	ctx->property_set = v.property_set;
 	ctx->property_const = v.property_const;
 	ctx->property_handle = v.property_handle;
+	ctx->property_ref = v.property_ref;
 
 	return 0;
 }
@@ -5360,6 +5363,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				ctx->property_set = access.property_set;
 				ctx->property_const = access.property_const;
 				ctx->property_handle = access.property_handle;
+				ctx->property_ref = access.property_ref;
 
 				found = true;
 			}
@@ -5426,6 +5430,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			ctx->property_set = access.property_set;
 			ctx->property_const = access.property_const;
 			ctx->property_handle = access.property_handle;
+			ctx->property_ref = access.property_ref;
 
 			found = true;
 		}
@@ -7166,6 +7171,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 
 			// If the object is a handle then we need to remember that
 			ctx->property_handle = ctx->type.dataType.IsObjectHandle();
+			ctx->property_ref = ctx->type.dataType.IsReference();
 		}
 
 		asCDataType dt;
@@ -7205,9 +7211,8 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	{
 		// Setup the context with the original type so the method call gets built correctly
 		ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
-		if( ctx->property_handle )
-			ctx->type.dataType.MakeHandle(true);
-		ctx->type.dataType.MakeReference(true);
+		if( ctx->property_handle ) ctx->type.dataType.MakeHandle(true);
+		if( ctx->property_ref )	ctx->type.dataType.MakeReference(true);
 
 		// Don't allow the call if the object is read-only and the property accessor is not const
 		// TODO: This can probably be moved into MakeFunctionCall
@@ -7272,7 +7277,7 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 		// Setup the context with the original type so the method call gets built correctly
 		ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
 		if( ctx->property_handle ) ctx->type.dataType.MakeHandle(true);
-		ctx->type.dataType.MakeReference(true);
+		if( ctx->property_ref )	ctx->type.dataType.MakeReference(true);
 
 		// Don't allow the call if the object is read-only and the property accessor is not const
 		if( ctx->property_const && !func->isReadOnly )
@@ -7851,6 +7856,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 		orig->property_set = arg->property_set;
 		orig->property_const = arg->property_const;
 		orig->property_handle = arg->property_handle;
+		orig->property_ref = arg->property_ref;
 
 		arg->origExpr = orig;
 	}
@@ -7860,6 +7866,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	e.property_set = arg->property_set;
 	e.property_const = arg->property_const;
 	e.property_handle = arg->property_handle;
+	e.property_ref = arg->property_ref;
 	PrepareArgument(paramType, &e, arg->exprNode, isFunction, refType, reservedVars);
 	arg->type = e.type;
 	ctx->bc.AddCode(&e.bc);

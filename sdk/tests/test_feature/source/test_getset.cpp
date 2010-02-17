@@ -1,8 +1,11 @@
 #include "utils.h"
 
+using namespace std;
+
 namespace TestGetSet
 {
 
+bool Test2();
 
 bool Test()
 {
@@ -744,9 +747,91 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test property accessor for object in array
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"class MyObj { bool get_Active() { return true; } } \n";
+			
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		r = ExecuteString(engine, "MyObj[] a(1); if( a[0].Active == true ) { } if( a[0].get_Active() == true ) { }", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
+	fail = Test2() || fail;
+
 	// Success
 	return fail;
 }
+
+class CMyObj
+{
+public:
+	CMyObj() { refCount = 1; }
+	void set_Text(const string &s)
+	{
+		assert( s == "Hello world!" );
+	}
+
+	void AddRef() { refCount++; }
+	void Release() { if( --refCount == 0 ) delete this; }
+
+	int refCount;
+};
+
+CMyObj *MyObj_factory() 
+{
+	return new CMyObj;
+}
+
+bool Test2()
+{
+	bool fail = false;
+	COutStream out;
+	int r;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+	RegisterStdString(engine);
+
+	engine->RegisterObjectType("CMyObj", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("CMyObj", asBEHAVE_FACTORY, "CMyObj @f()", asFUNCTION(MyObj_factory), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("CMyObj", asBEHAVE_ADDREF, "void f()", asMETHOD(CMyObj, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("CMyObj", asBEHAVE_RELEASE, "void f()", asMETHOD(CMyObj, Release), asCALL_THISCALL);
+	engine->RegisterObjectMethod("CMyObj", "void set_Text(const string &in)", asMETHOD(CMyObj, set_Text), asCALL_THISCALL);
+
+	const char *string = 
+		"void main() { \n"
+		"  CMyObj @obj = @CMyObj(); \n"
+		"  obj.Text = 'Hello world!'; \n"
+		"} \n";
+	asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("string", string);
+	r = mod->Build();
+	if( r < 0 ) 
+		fail = true;
+
+	r = ExecuteString(engine, "main()", mod);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	engine->Release();
+
+	return fail;
+}
+
 
 } // namespace
 

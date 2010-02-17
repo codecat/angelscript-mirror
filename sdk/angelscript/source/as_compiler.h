@@ -73,6 +73,7 @@ struct asSExprContext
 	int  property_set;
 	bool property_const; // If the object that is being accessed through property accessor is read-only
 	bool property_handle; // If the property accessor is called on an object stored in a handle
+	bool property_ref; // If the property accessor is called on a reference
 	asCArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;
 	asSExprContext *origExpr;
