@@ -5521,15 +5521,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		{
 			found = true;
 
-			// TODO: funcdef: What kind of bytecode do we need? We need a specific instruction
-			//                to push the pointer on the stack, otherwise the bytecode serialization
-			//                won't be able to recognize the pointer.
-#ifdef AS_64BIT_PTR
-			ctx->bc.InstrQWORD(asBC_PshC8, (asQWORD)(size_t)engine->scriptFunctions[funcs[0]]);
-#else
-			ctx->bc.InstrDWORD(asBC_PshC4, (asDWORD)(size_t)engine->scriptFunctions[funcs[0]]);
-#endif
-
+			// Push the function pointer on the stack
+			ctx->bc.InstrPTR(asBC_FuncPtr, engine->scriptFunctions[funcs[0]]);
 			ctx->type.Set(asCDataType::CreateFuncDef(engine->scriptFunctions[funcs[0]]));
 		}
 	}
@@ -6639,8 +6632,11 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		}
 		else
 		{
-			// TODO: funcdef: For function pointer we must guarantee that the function is safe, i.e.
-			//                by first storing the function pointer in a local variable (if it isn't already in one)
+			// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
+			//                is it enough to make sure it is in a local variable? 
+
+			// For function pointer we must guarantee that the function is safe, i.e.
+			// by first storing the function pointer in a local variable (if it isn't already in one)
 			if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
 			{
 				Dereference(&funcPtr, true);
@@ -6650,8 +6646,8 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 
 			MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcPtr.type.stackOffset);
 
-			// TODO: funcdef: If the function pointer was copied to a local variable for the call, then
-			//                release it again (temporary local variable)
+			// If the function pointer was copied to a local variable for the call, then
+			// release it again (temporary local variable)
 			if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
 			{
 				ReleaseTemporaryVariable(funcPtr.type, &ctx->bc);
@@ -7507,7 +7503,6 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			asCTypeInfo objType = ctx->type;
 
 			// Compile function call
-			// TODO: funcdef: This call must not look for local/global function pointers, only class members
 			CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
 
 			// If the method returned a reference, then we can't release the original  

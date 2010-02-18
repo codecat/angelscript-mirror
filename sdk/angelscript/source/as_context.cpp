@@ -2299,6 +2299,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_OBJTYPE:
+		// Push the object type on the stack
 		l_sp -= AS_PTR_SIZE;
 		*(asPTRWORD*)l_sp = asBC_PTRARG(l_bc);
 		l_bc += 1+AS_PTR_SIZE;
@@ -3178,9 +3179,15 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
+	case asBC_FuncPtr:
+		// Push the function pointer on the stack. The pointer is in the argument
+		l_sp -= AS_PTR_SIZE;
+		*(asPTRWORD*)l_sp = asBC_PTRARG(l_bc);
+		l_bc += 1+AS_PTR_SIZE;
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 177: l_bc = (asDWORD*)177; break;
 	case 178: l_bc = (asDWORD*)178; break;
 	case 179: l_bc = (asDWORD*)179; break;
 	case 180: l_bc = (asDWORD*)180; break;

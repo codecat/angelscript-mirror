@@ -8,7 +8,6 @@ bool Test()
 	bool fail = false;
 	int r;
 	COutStream out;
-	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 	asIScriptModule *mod;
 	CBufferedOutStream bout;
@@ -130,6 +129,11 @@ bool Test()
 		fail = true;
 	}
 
+	// It must be possible to save the byte code with function handles
+
+	//----------------------------------------------------------
+	// TODO: Future improvements below
+
 	// If the function referred to when taking a function pointer is removed from the module,
 	// the code must not be invalidated. After removing func() from the module, it must still 
 	// be possible to execute func2()
@@ -142,13 +146,6 @@ bool Test()
 	script = "DYNFUNC@ funcPtr;        \n"
 		     "funcdef void DYNFUNC(); \n"
 			 "@funcPtr = @CompileDynFunc('void func() { @funcPtr = null; }'); \n";
-
-
-
-	// It must be possible to save the byte code with function handles
-
-	//----------------------------------------------------------
-	// TODO: Future improvements below
 
 	// The compiler should be able to determine the right function overload by the destination of the function pointer
 	script = "funcdef void f(); \n"

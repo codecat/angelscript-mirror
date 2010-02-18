@@ -196,6 +196,10 @@ Pop an address to a script object from the stack. If the desired cast can be mad
  
  - \ref asBC_Cast
 
+Push the function pointer on the stack
+
+ - \ref asBC_FuncPtr
+
 
 
 

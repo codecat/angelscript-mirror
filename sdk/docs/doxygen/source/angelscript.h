@@ -3457,8 +3457,10 @@ enum asEBCInstr
 	asBC_JitEntry		= 175,
 	//! \brief Call a function stored in a local function pointer
 	asBC_CallPtr        = 176,
+	//! \brief Push a function pointer on the stack
+	asBC_FuncPtr        = 177,
 
-	asBC_MAXBYTECODE	= 177,
+	asBC_MAXBYTECODE	= 178,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_PSP			= 253,
@@ -3757,8 +3759,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(ClrHi,		NO_ARG,			0),
 	asBCINFO(JitEntry,	W_ARG,			0),
 	asBCINFO(CallPtr,   rW_ARG,         0xFFFF),
+	asBCINFO(FuncPtr,   PTR_ARG,        AS_PTR_SIZE),
 
-	asBCINFO_DUMMY(177),
 	asBCINFO_DUMMY(178),
 	asBCINFO_DUMMY(179),
 	asBCINFO_DUMMY(180),
