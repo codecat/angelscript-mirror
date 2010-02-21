@@ -707,6 +707,31 @@ bool Test()
 		engine->Release();
 	}
 
+	//
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		RegisterScriptString(engine);
+		const char *scriptMain = 
+		"void error()"
+		"{"
+		"\"\" + (a.a() - b);"
+		"}";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("scriptMain", scriptMain, strlen(scriptMain));
+		r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+		if( bout.buffer != "scriptMain (1, 1) : Info    : Compiling void error()\n"
+						   "scriptMain (1, 20) : Error   : 'a' is not declared\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

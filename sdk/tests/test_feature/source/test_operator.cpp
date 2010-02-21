@@ -465,8 +465,7 @@ bool Test()
 		{
 			fail = true;
 		}
-		if( bout.buffer != "ExecuteString (1, 37) : Error   : Function 'opCom() const' not found\n"
-		                   "ExecuteString (1, 40) : Error   : 'value' is not a member of 'const int'\n" )
+		if( bout.buffer != "ExecuteString (1, 37) : Error   : Function 'opCom() const' not found\n" )
 		{
 			printf(bout.buffer.c_str());
 		}

@@ -3748,6 +3748,9 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 
 void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {
+	asASSERT( ctx->type.dataType.GetTokenType() != ttUnrecognizedToken ||
+		      ctx->type.dataType.IsNullHandle() );
+
 	// No conversion from void to any other type
 	if( ctx->type.dataType.GetTokenType() == ttVoid )
 		return;
@@ -5844,7 +5847,12 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	else if( vnode->nodeType == snAssignment )
 	{
 		asSExprContext e(engine);
-		CompileAssignment(vnode, &e);
+		int r = CompileAssignment(vnode, &e); 
+		if( r < 0 ) 
+		{
+			ctx->type.SetDummy();
+			return r;
+		}
 		MergeExprContexts(ctx, &e);
 		ctx->type = e.type;
 	}
