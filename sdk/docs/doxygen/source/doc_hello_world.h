@@ -46,7 +46,23 @@ Here's the code for loading the script file and compiling it.
 // performs a pre-processing pass if necessary, and then tells
 // the engine to build a script module.
 CScriptBuilder builder;
-r = builder.BuildScriptFromFile(engine, "MyModule", "test.as");
+r = builder.StartNewModule(engine, "MyModule"); 
+if( r < 0 ) 
+{
+  // If the code fails here it is usually because there
+  // is no more memory to allocate the module
+  return;
+}
+r = builder.AddSectionFromFile("test.as");
+if( r < 0 )
+{
+  // The builder wasn't able to load the file. Maybe the file
+  // has been removed, or the wrong name was given, or some
+  // preprocessing commands are incorrectly written.
+  printf("Please correct the errors in the script and try again.\n");
+  return;
+}
+r = builder.BuildModule();
 if( r < 0 )
 {
   // An error occurred. Instruct the script writer to fix the 

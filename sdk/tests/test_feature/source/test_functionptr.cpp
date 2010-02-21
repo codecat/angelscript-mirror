@@ -42,6 +42,17 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	// It must be possible to save the byte code with function handles
+	CBytecodeStream bytecode(__FILE__"1");
+	mod->SaveByteCode(&bytecode);
+	{
+		asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod2->LoadByteCode(&bytecode);
+		r = ExecuteString(engine, "main()", mod2);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+	}
+
 	// Test function pointers as members of classes. It should be possible to call the function
 	// from within a class method. It should also be possible to call it from outside through the . operator.
 	script = "funcdef void FUNC();       \n"
@@ -129,7 +140,6 @@ bool Test()
 		fail = true;
 	}
 
-	// It must be possible to save the byte code with function handles
 
 	//----------------------------------------------------------
 	// TODO: Future improvements below

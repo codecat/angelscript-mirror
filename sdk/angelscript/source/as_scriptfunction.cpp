@@ -500,6 +500,14 @@ void asCScriptFunction::AddReferences()
 				engine->scriptFunctions[func]->AddRef();
 			}
 			break;
+
+		// Function pointers
+		case asBC_FuncPtr:
+			{
+				asCScriptFunction *func = (asCScriptFunction*)(size_t)asBC_PTRARG(&byteCode[n]);
+				func->AddRef();
+			}
+			break;
 		}
 	}
 }
@@ -595,6 +603,14 @@ void asCScriptFunction::ReleaseReferences()
 				int func = asBC_INTARG(&byteCode[n]);
 				if( func )
 					engine->scriptFunctions[func]->Release();
+			}
+			break;
+
+		// Function pointers
+		case asBC_FuncPtr:
+			{
+				asCScriptFunction *func = (asCScriptFunction*)(size_t)asBC_PTRARG(&byteCode[n]);
+				func->Release();
 			}
 			break;
 		}

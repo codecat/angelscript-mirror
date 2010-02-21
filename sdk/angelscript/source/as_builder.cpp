@@ -951,7 +951,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		}
 	}
 
-	// TODO: funcdef: Must check for name conflicts with funcdefs
+	// Must check for name conflicts with funcdefs
 	for( n = 0; n < funcDefs.GetLength(); n++ )
 	{
 		if( funcDefs[n]->name == name )

@@ -28,11 +28,12 @@ false<br>
 float<br>
 for<br>
 from*<br>
+funcdef<br>
 if<br>
 import<br>
-in<br>
 </code></td>
 <td width=100 valign=top><code>
+in<br>
 inout<br>
 int<br>
 interface<br>
@@ -42,9 +43,9 @@ int32<br>
 int64<br>
 is<br>
 not<br>
-null<br>
 </code></td>
 <td width=100 valign=top><code>
+null<br>
 or<br>
 out<br>
 return<br>
@@ -54,9 +55,9 @@ this*<br>
 true<br>
 typedef<br>
 uint<br>
-uint8<br>
 </code></td>
 <td width=100 valign=top><code>
+uint8<br>
 uint16<br>
 uint32<br>
 uint64<br>

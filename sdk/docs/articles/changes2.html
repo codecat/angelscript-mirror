@@ -27,11 +27,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 </ul>
 <li>Script language
 <ul>
+<li>The language now supports function pointers to global functions.
 <li>Added the keyword 'funcdef' that is used to declare function signatures for function pointers.
 </ul>
 <li>Virtual machine
 <ul>
 <li>Added the instruction CallPtr that is used to call a function stored in a function pointer.
+<li>Added the instruction FuncPtr that is used to push the pointer of a function on the stack.
 </ul>
 </ul>
 

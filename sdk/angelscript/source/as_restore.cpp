@@ -82,7 +82,16 @@ int asCRestore::Save()
 		WriteObjectTypeDeclaration(module->classTypes[i], false);
 	}
 
+	// Store func defs
+	count = (asUINT)module->funcDefs.GetLength();
+	WRITE_NUM(count);
+	for( i = 0; i < count; i++ )
+	{
+		WriteFunction(module->funcDefs[i]);
+	}
+
 	// Now store all interface methods
+	count = (asUINT)module->classTypes.GetLength();
 	for( i = 0; i < count; i++ )
 	{
 		if( module->classTypes[i]->IsInterface() )
@@ -201,6 +210,15 @@ int asCRestore::Restore()
 		// Add script classes to the GC
 		if( (ot->GetFlags() & asOBJ_SCRIPT_OBJECT) && ot->GetSize() > 0 )
 			engine->gc.AddScriptObjectToGC(ot, &engine->objectTypeBehaviours);
+	}
+
+	// Read func defs
+	READ_NUM(count);
+	module->funcDefs.Allocate(count, 0);
+	for( i = 0; i < count; i++ )
+	{
+		asCScriptFunction *func = ReadFunction(false, true);
+		module->funcDefs.PushLast(func);
 	}
 
 	// Read interface methods
@@ -1056,7 +1074,7 @@ asCObjectType* asCRestore::ReadObjectType()
 		asCString typeName;
 		ReadString(&typeName);
 
-		if( typeName.GetLength() && typeName != "_builtin_object_" )
+		if( typeName.GetLength() && typeName != "_builtin_object_" && typeName != "_builtin_function_" )
 		{
 			// Find the object type
 			ot = module->GetObjectType(typeName.AddressOf());
@@ -1068,6 +1086,10 @@ asCObjectType* asCRestore::ReadObjectType()
 		else if( typeName == "_builtin_object_" )
 		{
 			ot = &engine->scriptTypeBehaviours;
+		}
+		else if( typeName == "_builtin_function_" )
+		{
+			ot = &engine->functionBehaviours;
 		}
 		else
 			ot = 0;
@@ -1145,6 +1167,21 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				tmp[n] = *bc++;
 
 			*(int*)tmp = FindFunctionIndex(engine->scriptFunctions[*(int*)tmp]);
+
+			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
+				WRITE_NUM(tmp[n]);
+		}
+		else if( c == asBC_FuncPtr )
+		{
+			WRITE_NUM(*bc++);
+
+			// Translate the function pointer
+			asDWORD tmp[MAX_DATA_SIZE];
+			int n;
+			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
+				tmp[n] = *bc++;
+
+			*(asPTRWORD*)tmp = FindFunctionIndex(*(asCScriptFunction**)tmp);
 
 			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
 				WRITE_NUM(tmp[n]);
@@ -1401,6 +1438,12 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			// Translate the index to the func id
 			int *fid = (int*)&bc[n+1];
 			*fid = FindFunction(*fid)->id;
+		}
+		else if( c == asBC_FuncPtr )
+		{
+			// Translate the index to the func pointer
+			asPTRWORD *fid = (asPTRWORD*)&bc[n+1];
+			*fid = (asPTRWORD)(size_t)FindFunction(*fid);
 		}
 		else if( c == asBC_ALLOC )
 		{

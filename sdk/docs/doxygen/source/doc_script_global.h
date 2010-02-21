@@ -16,6 +16,7 @@ it.
     <li>\ref doc_global_import
     <li>\ref doc_global_enums
     <li>\ref doc_global_typedef
+    <li>\ref doc_global_funcdef
     </ul>
 
 
@@ -215,5 +216,18 @@ more complete support for all kinds of types.
 </pre>
 
 
+
+\section doc_global_funcdef Funcdefs
+
+Funcdefs are used to define a function signature that will be used to store pointers to 
+functions with matching signatures. With this a function pointer can be created, which is 
+able to store dynamic pointers that can be invoked at a later time as a normal function call.
+
+<pre>
+  // Define a function signature for the function pointer
+  funcdef bool CALLBACK(int, int);
+</pre>
+
+\see \ref doc_datatypes_funcptr for more information on how to use this
 
 */

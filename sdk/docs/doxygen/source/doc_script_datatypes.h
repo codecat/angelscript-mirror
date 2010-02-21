@@ -8,6 +8,7 @@ Note that the host application may add types specific to that application, refer
  - \subpage doc_datatypes_arrays
  - \subpage doc_datatypes_obj
  - \subpage doc_datatypes_strings
+ - \subpage doc_datatypes_funcptr
 
 \page doc_datatypes_primitives Primitives
 
@@ -246,6 +247,61 @@ or above U+10FFFF are not accepted.
 <sup>1) The application can change the interpretation of single quoted strings by setting an engine 
 property. If this is done the first character in the single quoted string will be interpreted as 
 a single uint value instead of a string literal.</sup>
+
+
+
+
+
+
+
+\page doc_datatypes_funcptr Function pointers
+
+A function pointer is a data type that can be dynamically set to point to a global function that has
+a matching function signature as that defined by the variable declaration. Function pointers are commonly
+used for callbacks, i.e. where a piece of code must be able to call back to some code based on some 
+conditions, but the code that needs to be called is not known at compile time.
+
+To use function pointers it is first necessary to \ref doc_global_funcdef "define the function signature" 
+that will be used at the global scope. Once that is done the variables can be declared using that definition.
+
+Here's an example that shows the syntax for using function pointes:
+
+<pre>
+  // Define a function signature for the function pointer
+  funcdef bool CALLBACK(int, int);
+
+  // An example function that to use this
+  void main()
+  {
+    // Declare a function pointer, and set it 
+    // to point to the myCompare function.
+    CALLBACK \@func = \@myCompare;
+
+    // The function pointer can be compared with the 'is' operator
+    if( func is null )
+    {
+      print("The function pointer is null\n");
+      return;
+    }
+
+    // Call the function through the pointer, just as if it was a normal function
+    if( func(1, 2) )
+    {
+      print("The function returned true\n");
+    }
+    else
+    {
+      print("The function returned false\n");
+    }
+  }
+
+  // This function matches the CALLBACK definition, since it has 
+  // the same return type and parameter types.
+  bool myCompare(int a, int b)
+  {
+    return a > b;
+  }
+</pre>
 
 
 */
