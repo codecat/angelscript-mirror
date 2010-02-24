@@ -2786,7 +2786,7 @@ bool asCParser::IsDataType(const sToken &token)
 			// Check if this is a registered type
 			asCString str;
 			str.Assign(&script->code[token.pos], token.length);
-			if( !builder->GetObjectType(str.AddressOf()) )
+			if( !builder->GetObjectType(str.AddressOf()) && !builder->GetFuncDef(str.AddressOf()) )
 				return false;
 		}
 		return true;

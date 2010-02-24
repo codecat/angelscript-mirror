@@ -33,6 +33,8 @@ bool Test()
 	// It must be possible to call a function through the function pointer
 	    	 "  myFunc1(); \n"
 			 "  assert( called ); \n"
+	// Local function pointer variables are also possible
+			 "  functype @myFunc2 = @func;\n"
 			 "} \n";
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
