@@ -77,9 +77,15 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 		fail = true;
-	r = ExecuteString(engine, "CMyObj o; o.test();", mod);
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "CMyObj o; o.test();", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
+	{
 		fail = true;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+	}
+	ctx->Release();
 
 	// It must not be possible to declare a non-handle variable of the funcdef type
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -142,6 +148,37 @@ bool Test()
 		fail = true;
 	}
 
+	// A more complex sample
+	bout.buffer = "";
+	script = 
+		"funcdef bool CALLBACK(int, int); \n"
+		"funcdef bool CALLBACK2(CALLBACK @); \n"
+		"void main() \n"
+		"{ \n"
+		"	CALLBACK @func = @myCompare; \n"
+		"	CALLBACK2 @func2 = @test; \n"
+		"	func2(func); \n"
+		"} \n"
+		"bool test(CALLBACK @func) \n"
+		"{ \n"
+		"	return func(1, 2); \n"
+		"} \n"
+		"bool myCompare(int a, int b) \n"
+		"{ \n"
+		"	return a > b; \n"
+		"} \n";
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = ExecuteString(engine, "main()", mod);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
 
 	//----------------------------------------------------------
 	// TODO: Future improvements below

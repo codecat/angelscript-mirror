@@ -610,7 +610,8 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_FuncPtr:
 			{
 				asCScriptFunction *func = (asCScriptFunction*)(size_t)asBC_PTRARG(&byteCode[n]);
-				func->Release();
+				if( func )
+					func->Release();
 			}
 			break;
 		}
@@ -789,6 +790,15 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 			}
 			break;
 
+		// Function pointers
+		case asBC_FuncPtr:
+			{
+				asCScriptFunction *func = (asCScriptFunction*)(size_t)asBC_PTRARG(&byteCode[n]);
+				if( func )
+					engine->GCEnumCallback(func);
+			}
+			break;
+
 		// Global variables
 		case asBC_PGA:
 		case asBC_LDG:
@@ -869,6 +879,18 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 				{
 					engine->scriptFunctions[func]->Release();
 					byteCode[n+1] = 0;
+				}
+			}
+			break;
+
+		// Function pointers
+		case asBC_FuncPtr:
+			{
+				asCScriptFunction *func = (asCScriptFunction*)(size_t)asBC_PTRARG(&byteCode[n]);
+				if( func )
+				{
+					func->Release();
+					*(size_t*)&byteCode[n+1] = 0;
 				}
 			}
 			break;

@@ -6650,6 +6650,8 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 				Dereference(&funcPtr, true);
 				ConvertToVariable(&funcPtr);
 				ctx->bc.AddCode(&funcPtr.bc);
+				if( !funcPtr.type.isTemporary )
+					ctx->bc.Pop(AS_PTR_SIZE);
 			}
 
 			MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcPtr.type.stackOffset);
