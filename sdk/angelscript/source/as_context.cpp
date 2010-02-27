@@ -1190,7 +1190,8 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 		} 
 
 		// Copy the function arguments to the new stack space
-		memcpy(regs.stackPointer, oldStackPointer, sizeof(asDWORD)*func->GetSpaceNeededForArguments());
+		int numDwords = func->GetSpaceNeededForArguments() + (func->objectType ? AS_PTR_SIZE : 0);
+		memcpy(regs.stackPointer, oldStackPointer, sizeof(asDWORD)*numDwords);
 	}
 
 	// Update framepointer and programCounter
@@ -3397,6 +3398,18 @@ void asCContext::CleanStackFrame()
 				}
 			}
 		}
+
+		if( currentFunction->objectType )
+		{
+			// If the object is a script declared object, then we must release it
+			// as the compiler adds a reference at the entry of the function
+			asSTypeBehaviour *beh = &currentFunction->objectType->beh;
+			if( beh->release && *(size_t*)&regs.stackFramePointer[0] != 0 )
+			{
+				engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[0], beh->release);
+				*(size_t*)&regs.stackFramePointer[0] = 0;
+			}
+		}
 	}
 	else
 		isStackMemoryNotAllocated = false;
@@ -3410,15 +3423,6 @@ void asCContext::CleanStackFrame()
 	if( currentFunction->objectType )
 	{
 		offset += AS_PTR_SIZE;
-
-		// If the object is a script declared object, then we must release it
-		// as the compiler adds a reference at the entry of the function
-		asSTypeBehaviour *beh = &currentFunction->objectType->beh;
-		if( beh->release && *(size_t*)&regs.stackFramePointer[0] != 0 )
-		{
-			engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[0], beh->release);
-			*(size_t*)&regs.stackFramePointer[0] = 0;
-		}
 	}
 	for( asUINT n = 0; n < currentFunction->parameterTypes.GetLength(); n++ )
 	{
