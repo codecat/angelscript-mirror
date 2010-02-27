@@ -732,6 +732,44 @@ bool Test()
 		engine->Release();
 	}
 
+	//
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		const char *script = 
+			"class Hoge \n"
+			"{ \n"
+			"  int mValue; \n"
+			"  Hoge() \n"
+			"  { \n"
+			"    mValue = 0; \n"
+			"  } \n"
+			"  Hoge@ opAssign(const Hoge &in aObj) \n"
+			"  { \n"
+			"    mValue = aObj.mValue; \n"
+			"    return @this; \n"
+			"  } \n"
+			"}; \n"
+			"void main() \n"
+			"{ \n"
+			"  Hoge a = Hoge(); \n"
+			"} \n";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

@@ -1677,6 +1677,9 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 							// Release the argument
 							ProcessDeferredParams(&ctx);
+
+							// Release temporary variable that may be allocated by the overloaded operator
+							ReleaseTemporaryVariable(ctx.type, &ctx.bc);
 						}
 					}
 
