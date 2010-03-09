@@ -770,6 +770,46 @@ bool Test()
 		engine->Release();
 	}
 
+	//
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptString(engine);
+		bout.buffer = "";
+
+		const char *script = 
+			"class Test \n"
+			"{ \n"
+			"  const string @get_id() \n"
+			"  { \n"
+			"    return @'test'; \n"
+			"  } \n"
+			"} \n"
+			"void getClauseDesc(const string &in s) \n"
+			"{ \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  Test t; \n"
+			"  getClauseDesc(t.id); \n"
+			"} \n";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

@@ -4020,146 +4020,57 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 	}
 
 
-	// TODO: The below code can probably be improved even further. It should first convert the type to
-	//       object handle or non-object handle, and only after that convert to reference or non-reference
-
 	if( to.IsObjectHandle() )
 	{
-		// An object type can be directly converted to a handle of the same type
-		if( ctx->type.dataType.SupportHandles() )
+		// reference to handle -> handle
+		// reference           -> handle
+		// object              -> handle
+		// handle              -> reference to handle
+		// reference           -> reference to handle
+		// object              -> reference to handle
+
+		// TODO: If the type is handle, then we can't use IsReadOnly to determine the constness of the basetype
+
+		// If the rvalue is a handle to a const object, then
+		// the lvalue must also be a handle to a const object
+		if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() )
 		{
-			ctx->type.dataType.MakeHandle(true);
+			if( convType != asIC_IMPLICIT_CONV )
+			{
+				asASSERT(node);
+				asCString str;
+				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
+				Error(str.AddressOf(), node);
+			}
 		}
 
-		if( ctx->type.dataType.IsObjectHandle() )
+		if( !ctx->type.dataType.IsObjectHandle() )
+		{
+			// An object type can be directly converted to a handle of the same type
+			if( ctx->type.dataType.SupportHandles() )
+			{
+				ctx->type.dataType.MakeHandle(true);
+			}
+
+			if( ctx->type.dataType.IsObjectHandle() )
+				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+
+			if( to.IsHandleToConst() && ctx->type.dataType.IsObjectHandle() )
+				ctx->type.dataType.MakeHandleToConst(true);
+		}
+		else
+		{
+			// A handle to non-const can be converted to a  
+			// handle to const, but not the other way
+			if( to.IsHandleToConst() )
+				ctx->type.dataType.MakeHandleToConst(true);
+
+			// A const handle can be converted to a non-const 
+			// handle and vice versa as the handle is just a value
 			ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
-
-		if( to.IsHandleToConst() && ctx->type.dataType.IsObjectHandle() )
-			ctx->type.dataType.MakeHandleToConst(true);
-	}
-
-	if( !to.IsReference() )
-	{
-		if( ctx->type.dataType.IsReference() )
-		{
-			Dereference(ctx, generateCode);
-
-			// TODO: Can't this leave unhandled deferred output params?
 		}
 
-		if( to.IsObjectHandle() )
-		{
-			// TODO: If the type is handle, then we can't use IsReadOnly to determine the constness of the basetype
-
-			// If the rvalue is a handle to a const object, then
-			// the lvalue must also be a handle to a const object
-			if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() )
-			{
-				if( convType != asIC_IMPLICIT_CONV )
-				{
-					asASSERT(node);
-					asCString str;
-					str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-					Error(str.AddressOf(), node);
-				}
-			}
-		}
-		else
-		{
-			if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
-			{
-				if( generateCode )
-					ctx->bc.Instr(asBC_CHKREF);
-
-				ctx->type.dataType.MakeHandle(false);
-			}
-
-			// A const object can be converted to a non-const object through a copy
-			if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() &&
-				allowObjectConstruct )
-			{
-				// Does the object type allow a copy to be made?
-				if( ctx->type.dataType.CanBeCopied() )
-				{
-					if( generateCode )
-					{
-						// Make a temporary object with the copy
-						PrepareTemporaryObject(node, ctx, reservedVars);
-					}
-					else
-						ctx->type.dataType.MakeReadOnly(false);
-				}
-			}
-
-			// A non-const object can be converted to a const object directly
-			if( !ctx->type.dataType.IsReadOnly() && to.IsReadOnly() )
-			{
-				ctx->type.dataType.MakeReadOnly(true);
-			}
-		}
-	}
-	else // to.IsReference()
-	{
-		if( ctx->type.dataType.IsReference() )
-		{
-			// A reference to a handle can be converted to a reference to an object
-			// by first reading the address, then verifying that it is not null, then putting the address back on the stack
-			if( !to.IsObjectHandle() && ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
-			{
-				ctx->type.dataType.MakeHandle(false);
-				if( generateCode )
-					ctx->bc.Instr(asBC_ChkRefS);
-			}
-
-			// A reference to a non-const can be converted to a reference to a const
-			if( to.IsReadOnly() )
-				ctx->type.dataType.MakeReadOnly(true);
-			else if( ctx->type.dataType.IsReadOnly() )
-			{
-				// A reference to a const can be converted to a reference to a
-				// non-const by copying the object to a temporary variable
-				ctx->type.dataType.MakeReadOnly(false);
-
-				if( generateCode )
-				{
-					// Allocate a temporary variable
-					asSExprContext lctx(engine);
-					asCDataType dt = ctx->type.dataType;
-					dt.MakeReference(false);
-					int offset = AllocateVariableNotIn(dt, true, reservedVars);
-					lctx.type = ctx->type;
-					lctx.type.isTemporary = true;
-					lctx.type.stackOffset = (short)offset;
-
-					// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
-
-					CallDefaultConstructor(lctx.type.dataType, offset, &lctx.bc, node);
-
-					// Build the right hand expression
-					asSExprContext rctx(engine);
-					rctx.type = ctx->type;
-					rctx.bc.AddCode(&lctx.bc);
-					rctx.bc.AddCode(&ctx->bc);
-
-					// Build the left hand expression
-					lctx.bc.InstrSHORT(asBC_PSF, (short)offset);
-
-					// DoAssignment doesn't allow assignment to temporary variable,
-					// so we temporarily set the type as non-temporary.
-					lctx.type.isTemporary = false;
-
-					DoAssignment(ctx, &lctx, &rctx, node, node, ttAssignment, node);
-
-					// If the original const object was a temporary variable, then
-					// that needs to be released now
-					ProcessDeferredParams(ctx);
-
-					ctx->type = lctx.type;
-					ctx->type.isTemporary = true;
-				}
-			}
-		}
-		else
+		if( to.IsReference() && !ctx->type.dataType.IsReference() )
 		{
 			if( generateCode )
 			{
@@ -4204,6 +4115,180 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 			// Since it is a new temporary variable it doesn't have to be const
 			ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+		}
+		else if( !to.IsReference() && ctx->type.dataType.IsReference() )
+		{
+			Dereference(ctx, generateCode);
+		}
+	}
+	else
+	{
+		if( !to.IsReference() )
+		{
+			// reference to handle -> object
+			// handle              -> object
+			// reference           -> object
+
+			if( ctx->type.dataType.IsReference() )
+			{
+				Dereference(ctx, generateCode);
+
+				// TODO: Can't this leave unhandled deferred output params?
+			}
+
+			// An implicit handle can be converted to an object by adding a check for null pointer
+			if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
+			{
+				if( generateCode )
+					ctx->bc.Instr(asBC_CHKREF);
+
+				ctx->type.dataType.MakeHandle(false);
+			}
+
+			// A const object can be converted to a non-const object through a copy
+			if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() &&
+				allowObjectConstruct )
+			{
+				// Does the object type allow a copy to be made?
+				if( ctx->type.dataType.CanBeCopied() )
+				{
+					if( generateCode )
+					{
+						// Make a temporary object with the copy
+						PrepareTemporaryObject(node, ctx, reservedVars);
+					}
+					else
+						ctx->type.dataType.MakeReadOnly(false);
+				}
+			}
+
+			// A non-const object can be converted to a const object directly
+			if( !ctx->type.dataType.IsReadOnly() && to.IsReadOnly() )
+			{
+				ctx->type.dataType.MakeReadOnly(true);
+			}
+		}
+		else
+		{
+			// reference to handle -> reference
+			// handle              -> reference
+			// object              -> reference
+
+			if( ctx->type.dataType.IsReference() )
+			{
+				// A reference to a handle can be converted to a reference to an object
+				// by first reading the address, then verifying that it is not null, then putting the address back on the stack
+				if( !to.IsObjectHandle() && ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
+				{
+					ctx->type.dataType.MakeHandle(false);
+					if( generateCode )
+						ctx->bc.Instr(asBC_ChkRefS);
+				}
+
+				// A reference to a non-const can be converted to a reference to a const
+				if( to.IsReadOnly() )
+					ctx->type.dataType.MakeReadOnly(true);
+				else if( ctx->type.dataType.IsReadOnly() )
+				{
+					// A reference to a const can be converted to a reference to a
+					// non-const by copying the object to a temporary variable
+					ctx->type.dataType.MakeReadOnly(false);
+
+					if( generateCode )
+					{
+						// Allocate a temporary variable
+						asSExprContext lctx(engine);
+						asCDataType dt = ctx->type.dataType;
+						dt.MakeReference(false);
+						int offset = AllocateVariableNotIn(dt, true, reservedVars);
+						lctx.type = ctx->type;
+						lctx.type.isTemporary = true;
+						lctx.type.stackOffset = (short)offset;
+
+						// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
+
+						CallDefaultConstructor(lctx.type.dataType, offset, &lctx.bc, node);
+
+						// Build the right hand expression
+						asSExprContext rctx(engine);
+						rctx.type = ctx->type;
+						rctx.bc.AddCode(&lctx.bc);
+						rctx.bc.AddCode(&ctx->bc);
+
+						// Build the left hand expression
+						lctx.bc.InstrSHORT(asBC_PSF, (short)offset);
+
+						// DoAssignment doesn't allow assignment to temporary variable,
+						// so we temporarily set the type as non-temporary.
+						lctx.type.isTemporary = false;
+
+						DoAssignment(ctx, &lctx, &rctx, node, node, ttAssignment, node);
+
+						// If the original const object was a temporary variable, then
+						// that needs to be released now
+						ProcessDeferredParams(ctx);
+
+						ctx->type = lctx.type;
+						ctx->type.isTemporary = true;
+					}
+				}
+			}
+			else
+			{
+				// A non-reference can be converted to a reference,
+				// by putting the value in a temporary variable
+				if( generateCode )
+				{
+					asCTypeInfo type;
+					type.Set(ctx->type.dataType);
+
+					// Allocate a temporary variable
+					int offset = AllocateVariableNotIn(type.dataType, true, reservedVars);
+					type.isTemporary = true;
+					type.stackOffset = (short)offset;
+					if( type.dataType.IsObjectHandle() )
+						type.isExplicitHandle = true;
+
+					// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
+
+					CallDefaultConstructor(type.dataType, offset, &ctx->bc, node);
+					type.dataType.MakeReference(true);
+
+					PrepareForAssignment(&type.dataType, ctx, node);
+
+					ctx->bc.InstrSHORT(asBC_PSF, type.stackOffset);
+
+					// If the input type is read-only we'll need to temporarily
+					// remove this constness, otherwise the assignment will fail
+					bool typeIsReadOnly = type.dataType.IsReadOnly();
+					type.dataType.MakeReadOnly(false);
+					PerformAssignment(&type, &ctx->type, &ctx->bc, node);
+					type.dataType.MakeReadOnly(typeIsReadOnly);
+
+					ctx->bc.Pop(ctx->type.dataType.GetSizeOnStackDWords());
+
+					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+					ctx->bc.InstrSHORT(asBC_PSF, type.stackOffset);
+
+					ctx->type = type;
+				}
+
+				// A handle can be converted to a reference, by checking for a null pointer
+				if( ctx->type.dataType.IsObjectHandle() )
+				{
+					ctx->bc.InstrSHORT(asBC_ChkNullV, ctx->type.stackOffset);
+					ctx->type.dataType.MakeHandle(false);
+					ctx->type.dataType.MakeReference(true);
+
+					// TODO: Make sure a handle to const isn't converted to non-const reference
+				}
+
+				ctx->type.dataType.MakeReference(true);
+
+				// Since it is a new temporary variable it doesn't have to be const
+				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+			}
 		}
 	}
 }
