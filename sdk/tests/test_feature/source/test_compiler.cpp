@@ -810,6 +810,45 @@ bool Test()
 		engine->Release();
 	}
 
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("Entity", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("Entity", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Entity", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		
+		engine->RegisterObjectType("EntityArray", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_FACTORY, "EntityArray @f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_INDEX, "Entity@ &f(const uint)", asFUNCTION(0), asCALL_GENERIC);
+
+		engine->RegisterGlobalFunction("Entity @DeleteEntity(Entity @)", asFUNCTION(0), asCALL_GENERIC);
+
+		// The compiler was supposedly attempting to make a copy of the Entity with this script
+		const char *script = 
+			"void func() { \n"
+			"EntityArray array; \n"
+			"@array[0] = DeleteEntity(array[0]); \n"
+			"}; \n";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

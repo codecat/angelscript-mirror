@@ -3910,6 +3910,8 @@ void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDa
 	}
 }
 
+
+
 void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
 {
 	// Convert null to any object type handle, but not to a non-handle type
@@ -5442,6 +5444,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			// See if there are any matching property accessors
 			asSExprContext access(engine);
 			access.type.Set(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly));
+			access.type.dataType.MakeReference(true);
 			int r = FindPropertyAccessor(name, &access, errNode);
 			if( r < 0 ) return -1;
 			if( access.property_get || access.property_set )

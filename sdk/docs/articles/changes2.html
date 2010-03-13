@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.18.2 WIP - 2010/03/08</h2>
+<h2>Version 2.18.2 WIP - 2010/03/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Variable declaration of script class with opAssign and assignment initialization wasn't releasing a temporary variable (Thanks hoboaki)
 <li>When growing the stack the virtual machine wasn't copying the object pointer for class methods, leading to crashes (Thanks klusark)
 <li>Implicit conversion from handle to reference is no longer giving compiler error (Thanks Thy Reaper)
+<li>Fixed property accessors when used from within a class method (Thanks hoboaki)
 </ul>
 <li>Script language
 <ul>

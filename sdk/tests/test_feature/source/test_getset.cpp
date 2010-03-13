@@ -769,6 +769,46 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test property accessor from within class method
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		const char *script = 
+			"class Vector3 \n"
+			"{ \n"
+			"  float x; \n"
+			"  float y; \n"
+			"  float z; \n"
+			"}; \n"
+			"class Hoge \n"
+			"{ \n"
+			"    const Vector3 get_pos() { return mPos; } \n"
+			"    const Vector3 foo() { return pos;  } \n"
+			"    const Vector3 zoo() { return get_pos(); } \n"
+			"    Vector3 mPos; \n"
+			"}; \n"
+			"void main() \n"
+			"{ \n"
+			"    Hoge h; \n"
+			"    Vector3 vec; \n"
+			"    vec = h.zoo(); \n" // ok
+			"    vec = h.foo(); \n" // runtime exception
+			"} \n";
+			
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		r = ExecuteString(engine, "main", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	fail = Test2() || fail;
 
 	// Success
