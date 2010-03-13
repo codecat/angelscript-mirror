@@ -300,10 +300,29 @@
 // Detect compiler
 //------------------------------------------------
 
+
 #define VALUE_OF_BOOLEAN_TRUE  1
 #define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
 #define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
 #define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+
+
+// Borland C++ Builder can be treated as MSVC 6.0
+#if defined(__BORLANDC__) && !defined(__MWERKS__)
+	#define _MSC_VER 1200
+	#define WIN32 
+
+	#define fmodf fmod
+	#define sqrtf sqrt
+	#define sinf sin
+	#define cosf cos
+	#define ceilf ceil
+	#define floorf floor
+	#define powf pow
+	#define fmodf fmod
+	#define fabsf fabs
+#endif
+
 
 // Microsoft Visual C++
 #if defined(_MSC_VER) && !defined(__MWERKS__)
