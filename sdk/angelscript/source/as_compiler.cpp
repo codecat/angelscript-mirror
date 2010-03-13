@@ -2577,6 +2577,8 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
 	ProcessDeferredParams(&expr);
 
+	ProcessPropertyGetAccessor(&expr, wnode);
+
 	// Add byte code for the expression
 	ConvertToVariable(&expr);
 	bc->AddCode(&expr.bc);

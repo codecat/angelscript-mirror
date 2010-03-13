@@ -680,6 +680,7 @@ bool Test()
 	// 
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
 
@@ -696,6 +697,7 @@ bool Test()
 							 "  sound s; \n"
 							 "  for(;s.playing;) {}\n"
 							 "  while(s.playing) {} \n"
+							 "  do {} while (s.playing); \n"
 							 "}\n";
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
