@@ -9,6 +9,7 @@ SRCNAMES = \
   bstr.cpp \
   main.cpp \
   test_2func.cpp \
+  test_addon_scriptarray.cpp \
   test_any.cpp \
   test_argref.cpp \
   test_array.cpp \
@@ -45,8 +46,10 @@ SRCNAMES = \
   test_float.cpp \
   test_for.cpp \
   test_funcoverload.cpp \
+  test_functionptr.cpp \
   test_generic.cpp \
   test_getargptr.cpp \
+  test_getset.cpp \
   test_implicitcast.cpp \
   test_implicithandle.cpp \
   test_import.cpp \
@@ -54,6 +57,7 @@ SRCNAMES = \
   test_inheritance.cpp \
   test_interface.cpp \
   test_metadata.cpp \
+  test_module.cpp \
   test_multiassign.cpp \
   test_nested.cpp \
   test_nevervisited.cpp \
@@ -64,6 +68,7 @@ SRCNAMES = \
   test_objhandle.cpp \
   test_objhandle2.cpp \
   test_objzerosize.cpp \
+  test_operator.cpp \
   test_optimize.cpp \
   test_parser.cpp \
   test_pointer.cpp \
@@ -134,6 +139,8 @@ SRCNAMES = \
 
 
 OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
+  obj/scriptarray.o \
+  obj/scripthelper.o \
   obj/scriptstring.o \
   obj/scriptstdstring.o \
   obj/scriptany.o \
@@ -156,6 +163,12 @@ $(BIN): $(OBJ)
 	@echo Done.
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptarray.o: ../../../../add_on/scriptarray/scriptarray.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scripthelper.o: ../../../../add_on/scripthelper/scripthelper.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp

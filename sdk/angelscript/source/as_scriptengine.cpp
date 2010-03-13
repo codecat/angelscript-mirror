@@ -159,6 +159,12 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_ARM
 		"AS_ARM "
 #endif
+#ifdef AS_X64_GCC
+		"AS_X64_GCC "
+#endif
+#ifdef AS_X64_MSVC
+		"AS_X64_MSVC "
+#endif
 	;
 
 	return string;

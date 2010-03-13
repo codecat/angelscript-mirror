@@ -1,5 +1,7 @@
 #include <stdio.h>
+#if defined(WIN32)
 #include <conio.h>
+#endif
 #if defined(_MSC_VER)
 #include <crtdbg.h>
 #endif
@@ -51,6 +53,8 @@ int main(int argc, char **argv)
 	
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");
+#if defined(WIN32)
 	while(!getch());
+#endif
 	return 0;
 }

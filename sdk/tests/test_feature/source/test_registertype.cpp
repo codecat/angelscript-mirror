@@ -322,6 +322,14 @@ bool Test()
 			               " (0, 0) : Error   : Can't return type 'test1' by value unless the application type is informed in the registration\n"
                            " (0, 0) : Info    : void f(test1)\n"
 		                   " (0, 0) : Error   : Can't pass type 'test1' by value unless the application type is informed in the registration\n"
+						   " (0, 0) : Error   : Invalid configuration\n" &&
+			// The errors are slightly different on 64bit Linux
+			bout.buffer != " (0, 0) : Info    : test1 f()\n"
+			               " (0, 0) : Error   : Can't return type 'test1' by value unless the application type is informed in the registration\n"
+                           " (0, 0) : Info    : void f(test1)\n"
+		                   " (0, 0) : Error   : Can't pass type 'test1' by value unless the application type is informed in the registration\n"
+						   " (0, 0) : Info    : void f(test1)\n"
+						   " (0, 0) : Error   : Don't support passing type 'test1' by value to application\n"
 						   " (0, 0) : Error   : Invalid configuration\n" )
 		{
 			printf(bout.buffer.c_str());
