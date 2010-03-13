@@ -825,26 +825,32 @@ bool Test()
 		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_INDEX, "Entity@ &f(const uint)", asFUNCTION(0), asCALL_GENERIC);
 
-		engine->RegisterGlobalFunction("Entity @DeleteEntity(Entity @)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("Entity @DeleteEntity(Entity &in)", asFUNCTION(0), asCALL_GENERIC);
 
-		// The compiler was supposedly attempting to make a copy of the Entity with this script
+		// Because the DeleteEntity is taking &in, the object must be copied to a variable
+		// to make sure the original object is not modified by the function. Because the 
+		// Entity doesn't have a default factory, this is supposed to fail
 		const char *script = 
 			"void func() { \n"
 			"EntityArray array; \n"
-			"@array[0] = DeleteEntity(array[0]); \n"
+			"Entity @temp = @array[0]; \n"
+			"DeleteEntity(temp); \n"
+			"DeleteEntity(array[0]); \n"
 			"}; \n";
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 )
+		if( r >= 0 )
 			fail = true;
-		if( bout.buffer != "" )
+		if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
+						   "script (4, 14) : Error   : No default constructor for object of type 'Entity'.\n"
+						   "script (4, 14) : Error   : There is no copy operator for this type available.\n"
+						   "script (5, 14) : Error   : No default constructor for object of type 'Entity'.\n"
+						   "script (5, 14) : Error   : There is no copy operator for this type available.\n" )
 		{
 			printf(bout.buffer.c_str());
 			fail = true;
 		}
-		if( r != asEXECUTION_FINISHED )
-			fail = true;
 
 		engine->Release();
 	}
