@@ -66,10 +66,10 @@ protected:
 	asCAtomic refCount;
 
 #ifndef AS_NO_THREADS
-	asCThreadLocalData *GetLocalData(asDWORD threadId);
-	void SetLocalData(asDWORD threadId, asCThreadLocalData *tld);
+	asCThreadLocalData *GetLocalData(asPWORD threadId);
+	void SetLocalData(asPWORD threadId, asCThreadLocalData *tld);
 
-	asCMap<asDWORD,asCThreadLocalData*> tldMap;
+	asCMap<asPWORD,asCThreadLocalData*> tldMap;
 	DECLARECRITICALSECTION(criticalSection);
 #else
 	asCThreadLocalData *tld;
