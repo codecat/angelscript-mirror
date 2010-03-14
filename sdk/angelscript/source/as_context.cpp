@@ -1186,7 +1186,7 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 				stackBlocks.PushLast(stack);
 			}
 
-			regs.stackPointer = stackBlocks[stackIndex] + (stackBlockSize<<stackIndex) - func->GetSpaceNeededForArguments();
+			regs.stackPointer = stackBlocks[stackIndex] + (stackBlockSize<<stackIndex) - func->GetSpaceNeededForArguments() - (func->objectType ? AS_PTR_SIZE : 0);
 		} 
 
 		// Copy the function arguments to the new stack space

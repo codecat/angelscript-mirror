@@ -1443,7 +1443,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the index to the func pointer
 			asPTRWORD *fid = (asPTRWORD*)&bc[n+1];
-			*fid = (asPTRWORD)(size_t)FindFunction(*fid);
+			*fid = (asPTRWORD)(size_t)FindFunction((int)*fid);
 		}
 		else if( c == asBC_ALLOC )
 		{
