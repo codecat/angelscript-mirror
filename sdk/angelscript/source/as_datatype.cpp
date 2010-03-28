@@ -568,7 +568,7 @@ int asCDataType::GetSizeOnStackDWords() const
 	int size = tokenType == ttQuestion ? 1 : 0;
 
 	if( isReference ) return AS_PTR_SIZE + size;
-	if( objectType ) return AS_PTR_SIZE + size;
+	if( objectType && !IsEnumType() ) return AS_PTR_SIZE + size;
 
 	return GetSizeInMemoryDWords() + size;
 }

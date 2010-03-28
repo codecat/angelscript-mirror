@@ -1,4 +1,6 @@
 #include "utils.h"
+#include <sstream>
+#include <iostream>
 
 namespace TestEnum
 {
@@ -42,7 +44,8 @@ enum TEST_ENUM
 {
 	ENUM1 = 1,
 	ENUM2 = ENUM1*10,
-	ENUM3
+	ENUM3,
+	ENUM4 = -1
 };
 
 void func(asIScriptGeneric *g)
@@ -63,6 +66,14 @@ static void scriptOutput(int val1)
 	buffer += buf;
 }
 
+class CTestObject
+{
+public:
+	bool TestEnum(TEST_ENUM e) { val = e; if( e == ENUM2 ) return true; else return false; }
+
+	TEST_ENUM val;
+};
+
 static bool TestEnum()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -81,6 +92,8 @@ static bool TestEnum()
 
 	bout.buffer = "";
 	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	// Register the enum value
 	r = engine->RegisterEnum("TEST_ENUM"); assert(r >= 0);
@@ -374,16 +387,136 @@ static bool TestEnum()
 	if( buffer != "1\n" )
 		fail = true;
 
+	// Test enum in param to class method
+	assert( sizeof(TEST_ENUM) == 4 );
+	r = engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 0);
+	r = engine->RegisterObjectType("Obj", 0, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("Obj", "bool TestEnum(TEST_ENUM)", asMETHOD(CTestObject, TestEnum), asCALL_THISCALL); assert( r >= 0 );
+	
+	CTestObject obj;
+	obj.val = ENUM1;
+
+	r = engine->RegisterGlobalProperty("Obj obj", &obj); assert( r >= 0 );
+
+	bout.buffer = "";
+	r = ExecuteString(engine, "if( !obj.TestEnum(ENUM2) ) assert(false); ");
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	if( obj.val != ENUM2 )
+		fail = true;
+
 	engine->Release();
 
 	// Success
 	return fail;
 }
 
+namespace Nalin
+{
+// This test was provided by Nalin to reproduce a bug where the
+// compiler thought the enum type was 8 bytes on 64bit platforms.
+
+using namespace std;
+
+enum TEST_ENUM
+{
+	ENUM1 = 1,
+	ENUM2 = ENUM1*10,
+	ENUM3,
+	ENUM4 = -1
+};
+
+bool TestEnum(TEST_ENUM e)
+{
+	if (e == ENUM2)
+		return true;
+	return false;
+}
+
+bool TestEnum2(int e)
+{
+	if ((TEST_ENUM)e == ENUM2)
+		return true;
+	return false;
+}
+
+void print(const string& log)
+{
+//	cout << log << endl;
+}
+
+string script =
+"void Update()\n"
+"{\n"
+"	int test1 = 1;\n"
+"	int test2 = 2;\n"
+"	bool ret1 = TestEnum(ENUM1);\n"
+"	if (ret1 == true) print('True');\n"
+"	else print('False');\n"
+"\n"
+"	if (TestEnum(ENUM2))\n"
+"	{\n"
+"		string s = 'Enum success!';\n"
+"		print(s);\n"
+"		return;\n"
+"	}\n"
+"	print('Failure');\n"
+"}\n"
+;
+
+int TestNalin()
+{
+	asIScriptEngine   *engine;
+	int r;
+
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterStdString(engine);
+
+	// Register the enum value
+	r = engine->RegisterEnum("TEST_ENUM"); assert(r >= 0);
+	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM1", (int)ENUM1); assert(r >= 0);
+	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM2", (int)ENUM2); assert(r >= 0);
+	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM3", (int)ENUM3); assert(r >= 0);
+
+	// Register some functions.
+	r = engine->RegisterGlobalFunction("bool TestEnum(TEST_ENUM)", asFUNCTION(TestEnum), asCALL_CDECL); assert(r >= 0);
+	//r = engine->RegisterGlobalFunction("bool TestEnum(int)", asFUNCTION(TestEnum2), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL); assert(r >= 0);
+
+	// Build our module.
+	asIScriptModule* module = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+	module->AddScriptSection("Section1", script.c_str());
+	module->Build();
+
+	// Get our function.
+	int update = module->GetFunctionIdByDecl("void Update()");
+
+	// Prepare and execute the context.
+	asIScriptContext* context = engine->CreateContext();
+	context->Prepare(update);
+	context->Execute();
+
+	// Clean up.
+	context->Release();
+	engine->DiscardModule("Test");
+	engine->Release();
+
+	return 0;
+}
+}
+
 
 bool Test()
 {
-	return TestEnum();
+	bool fail = false;
+	fail = TestEnum()         || fail;
+	fail = Nalin::TestNalin() || fail;
+	return fail;
 }
 
 
