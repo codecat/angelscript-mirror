@@ -2722,6 +2722,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			int r = CompileAssignment(rnode->firstChild, &expr);
 			if( r >= 0 )
 			{
+				ProcessPropertyGetAccessor(&expr, rnode);
+
 				// Prepare the value for assignment
 				IsVariableInitialized(&expr.type, rnode->firstChild);
 

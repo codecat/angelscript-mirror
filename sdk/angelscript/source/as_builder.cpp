@@ -1619,7 +1619,7 @@ void asCBuilder::CompileClasses()
 				asCObjectProperty *prop = AddPropertyToClass(decl, baseType->properties[p]->name, baseType->properties[p]->type);
 
 				// The properties must maintain the same offset
-				asASSERT(prop->byteOffset == baseType->properties[p]->byteOffset); UNUSED_VAR(prop);
+				asASSERT(prop && prop->byteOffset == baseType->properties[p]->byteOffset); UNUSED_VAR(prop);
 			}
 
 			// Copy methods from base class to derived class
@@ -1903,6 +1903,8 @@ asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const
 				asCString str;
 				str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
 				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+				asDELETE(prop, asCObjectProperty);
+				return 0;
 			}
 			prop->type.MakeReference(true);
 		}
@@ -1917,6 +1919,8 @@ asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const
 			asCString str;
 			str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
 			WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+			asDELETE(prop, asCObjectProperty);
+			return 0;
 		}
 	}
 

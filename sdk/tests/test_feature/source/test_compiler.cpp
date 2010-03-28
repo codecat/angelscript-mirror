@@ -857,6 +857,40 @@ bool Test()
 		engine->Release();
 	}
 
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("test", "class C { int x; int get_x() {return x;} }\n");
+		r = mod->Build(); 
+		if( r < 0 )
+			fail = true;
+
+		engine->Release();
+	}
+
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+
+		bout.buffer = "";
+		mod->AddScriptSection("test", "interface ITest {}\n class Test {ITest t;}\n class Test2 : Test {}\n");
+		r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+		if( bout.buffer != "test (2, 14) : Error   : Data type can't be 'ITest'\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
