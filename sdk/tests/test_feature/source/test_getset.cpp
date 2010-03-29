@@ -140,6 +140,7 @@ bool Test()
 		"{                                       \n"
 		"  Test t;                               \n"
 		"  float f = t.prop * 1;                 \n"
+		"  f = (t.prop) + 1;                     \n"
 		"  10 / t.prop;                          \n"
 		"  -t.prop;                              \n"
 		"}                                       \n";

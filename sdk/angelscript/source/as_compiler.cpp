@@ -5950,6 +5950,11 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		}
 		MergeExprContexts(ctx, &e);
 		ctx->type = e.type;
+		ctx->property_get = e.property_get;
+		ctx->property_set = e.property_set;
+		ctx->property_const = e.property_const;
+		ctx->property_handle = e.property_handle;
+		ctx->property_ref = e.property_ref;
 	}
 	else if( vnode->nodeType == snCast )
 	{
