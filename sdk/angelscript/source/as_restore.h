@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -70,6 +70,7 @@ protected:
 	void WriteObjectType(asCObjectType *ot);
 	void WriteObjectTypeDeclaration(asCObjectType *ot, bool writeProperties);
 	void WriteByteCode(asDWORD *bc, int length);
+	void WriteEncodedUInt(asUINT i);
 
 	void ReadString(asCString *str);
 	asCScriptFunction *ReadFunction(bool addToModule = true, bool addToEngine = true);
@@ -80,6 +81,7 @@ protected:
 	asCObjectType *ReadObjectType();
 	void ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties);
 	void ReadByteCode(asDWORD *bc, int length);
+	asUINT ReadEncodedUInt();
 
 	// Helper functions for storing variable data
 	int FindObjectTypeIdx(asCObjectType*);

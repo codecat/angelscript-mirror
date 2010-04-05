@@ -325,6 +325,14 @@ bool Test()
 	CBytecodeStream stream(__FILE__"1");
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
+
+	if( stream.buffer.size() != 2145 )
+	{
+		// Originally this was 3213
+		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
+		fail = true;
+	}
+
 	// Test loading without releasing the engine first
 	mod->LoadByteCode(&stream);
 

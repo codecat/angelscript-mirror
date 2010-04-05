@@ -118,10 +118,11 @@ public:
 	void Read(void *ptr, asUINT size) {memcpy(ptr, &buffer[rpointer], size); rpointer += size;}
 	void Restart() {rpointer = 0;}
 
+	std::vector<asBYTE> buffer;
+
 protected:
 	int rpointer;
 	int wpointer;
-	std::vector<asBYTE> buffer;
 };
 #endif
 
