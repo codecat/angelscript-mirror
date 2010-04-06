@@ -326,11 +326,17 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 2145 )
+	if( stream.buffer.size() != 1931 ) 
 	{
 		// Originally this was 3213
 		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		fail = true;
+	}
+
+	asUINT zeroes = stream.CountZeroes();
+	if( zeroes != 817 )
+	{
+		printf("The saved byte code contains a different amount of zeroes than expected. Counted %d\n", zeroes);
 	}
 
 	// Test loading without releasing the engine first

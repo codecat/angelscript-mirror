@@ -441,11 +441,12 @@ void asCRestore::WriteFunctionSignature(asCScriptFunction *func)
 
 	WriteString(&func->name);
 	WriteDataType(&func->returnType);
+
 	count = (asUINT)func->parameterTypes.GetLength();
 	WriteEncodedUInt(count);
 	for( i = 0; i < count; ++i ) 
 		WriteDataType(&func->parameterTypes[i]);
-
+	
 	count = (asUINT)func->inOutFlags.GetLength();
 	WriteEncodedUInt(count);
 	for( i = 0; i < count; ++i )
@@ -455,7 +456,10 @@ void asCRestore::WriteFunctionSignature(asCScriptFunction *func)
 
 	WriteObjectType(func->objectType);
 
-	WRITE_NUM(func->isReadOnly);
+	if( func->objectType )
+	{
+		WRITE_NUM(func->isReadOnly);
+	}
 }
 
 void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
@@ -466,6 +470,7 @@ void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
 
 	ReadString(&func->name);
 	ReadDataType(&func->returnType);
+
 	count = ReadEncodedUInt();
 	func->parameterTypes.Allocate(count, 0);
 	for( i = 0; i < count; ++i ) 
@@ -485,8 +490,10 @@ void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
 	READ_NUM(func->funcType);
 
 	func->objectType = ReadObjectType();
-
-	READ_NUM(func->isReadOnly);
+	if( func->objectType )
+	{
+		READ_NUM(func->isReadOnly);
+	}
 }
 
 void asCRestore::WriteFunction(asCScriptFunction* func) 
@@ -523,28 +530,33 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 
 	WriteFunctionSignature(func);
 
-	count = (asUINT)func->byteCode.GetLength();
-	WriteEncodedUInt(count);
-	WriteByteCode(func->byteCode.AddressOf(), count);
-
-	count = (asUINT)func->objVariablePos.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; ++i )
+	if( func->funcType == asFUNC_SCRIPT )
 	{
-		WriteObjectType(func->objVariableTypes[i]);
-		WriteEncodedUInt(func->objVariablePos[i]);
+		count = (asUINT)func->byteCode.GetLength();
+		WriteEncodedUInt(count);
+		WriteByteCode(func->byteCode.AddressOf(), count);
+
+		count = (asUINT)func->objVariablePos.GetLength();
+		WriteEncodedUInt(count);
+		for( i = 0; i < count; ++i )
+		{
+			WriteObjectType(func->objVariableTypes[i]);
+			WriteEncodedUInt(func->objVariablePos[i]);
+		}
+
+		WriteEncodedUInt(func->stackNeeded);
+
+		asUINT length = (asUINT)func->lineNumbers.GetLength();
+		WriteEncodedUInt(length);
+		for( i = 0; i < length; ++i )
+			WriteEncodedUInt(func->lineNumbers[i]);
+
+		// TODO: Write variables
 	}
-
-	WriteEncodedUInt(func->stackNeeded);
-
-	asUINT length = (asUINT)func->lineNumbers.GetLength();
-	WriteEncodedUInt(length);
-	for( i = 0; i < length; ++i )
-		WriteEncodedUInt(func->lineNumbers[i]);
-
-	WriteEncodedUInt(func->vfTableIdx);
-
-	// TODO: Write variables
+	else if( func->funcType == asFUNC_VIRTUAL )
+	{
+		WriteEncodedUInt(func->vfTableIdx);
+	}
 
 	// TODO: Store script section index
 }
@@ -578,34 +590,38 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 
 	ReadFunctionSignature(func);
 
-	if( func->funcType == asFUNC_SCRIPT )
-		engine->gc.AddScriptObjectToGC(func, &engine->functionBehaviours);
-
 	func->id = engine->GetNextScriptFunctionId();
-	
-	count = ReadEncodedUInt();
-	func->byteCode.Allocate(count, 0);
-	ReadByteCode(func->byteCode.AddressOf(), count);
-	func->byteCode.SetLength(count);
 
-	count = ReadEncodedUInt();
-	func->objVariablePos.Allocate(count, 0);
-	func->objVariableTypes.Allocate(count, 0);
-	for( i = 0; i < count; ++i )
+	if( func->funcType == asFUNC_SCRIPT )
 	{
-		func->objVariableTypes.PushLast(ReadObjectType());
-		num = ReadEncodedUInt();
-		func->objVariablePos.PushLast(num);
+		engine->gc.AddScriptObjectToGC(func, &engine->functionBehaviours);
+		
+		count = ReadEncodedUInt();
+		func->byteCode.Allocate(count, 0);
+		ReadByteCode(func->byteCode.AddressOf(), count);
+		func->byteCode.SetLength(count);
+
+		count = ReadEncodedUInt();
+		func->objVariablePos.Allocate(count, 0);
+		func->objVariableTypes.Allocate(count, 0);
+		for( i = 0; i < count; ++i )
+		{
+			func->objVariableTypes.PushLast(ReadObjectType());
+			num = ReadEncodedUInt();
+			func->objVariablePos.PushLast(num);
+		}
+
+		func->stackNeeded = ReadEncodedUInt();
+
+		int length = ReadEncodedUInt();
+		func->lineNumbers.SetLength(length);
+		for( i = 0; i < length; ++i )
+			func->lineNumbers[i] = ReadEncodedUInt();
 	}
-
-	func->stackNeeded = ReadEncodedUInt();
-
-	int length = ReadEncodedUInt();
-	func->lineNumbers.SetLength(length);
-	for( i = 0; i < length; ++i )
-		func->lineNumbers[i] = ReadEncodedUInt();
-
-	func->vfTableIdx = ReadEncodedUInt();
+	else if( func->funcType == asFUNC_VIRTUAL )
+	{
+		func->vfTableIdx = ReadEncodedUInt();
+	}
 
 	if( addToModule )
 	{
@@ -1010,30 +1026,38 @@ void asCRestore::WriteDataType(const asCDataType *dt)
 	bool b;
 	int t = dt->GetTokenType();
 	WRITE_NUM(t);
-	WriteObjectType(dt->GetObjectType());
-	b = dt->IsObjectHandle();
+	if( t == ttIdentifier )
+	{
+		WriteObjectType(dt->GetObjectType());
+		b = dt->IsObjectHandle();
+		WRITE_NUM(b);
+		b = dt->IsHandleToConst();
+		WRITE_NUM(b);
+	}
+	b = dt->IsReference();
 	WRITE_NUM(b);
 	b = dt->IsReadOnly();
-	WRITE_NUM(b);
-	b = dt->IsHandleToConst();
-	WRITE_NUM(b);
-	b = dt->IsReference();
 	WRITE_NUM(b);
 }
 
 void asCRestore::ReadDataType(asCDataType *dt) 
 {
 	eTokenType tokenType;
+	asCObjectType *objType = 0;
+	bool isObjectHandle  = false;
+	bool isReadOnly      = false;
+	bool isHandleToConst = false;
+	bool isReference     = false;
+
 	READ_NUM(tokenType);
-	asCObjectType *objType = ReadObjectType();
-	bool isObjectHandle;
-	READ_NUM(isObjectHandle);
-	bool isReadOnly;
-	READ_NUM(isReadOnly);
-	bool isHandleToConst;
-	READ_NUM(isHandleToConst);
-	bool isReference;
+	if( tokenType == ttIdentifier )
+	{
+		objType = ReadObjectType();
+		READ_NUM(isObjectHandle);
+		READ_NUM(isHandleToConst);
+	}
 	READ_NUM(isReference);
+	READ_NUM(isReadOnly);
 
 	if( tokenType == ttIdentifier )
 		*dt = asCDataType::CreateObject(objType, false);
@@ -1099,9 +1123,6 @@ void asCRestore::WriteObjectType(asCObjectType* ot)
 	{
 		ch = '\0';
 		WRITE_NUM(ch);
-		// Write a null string
-		asCString tmp("");
-		WriteString(&tmp);
 	}
 }
 
@@ -1157,7 +1178,7 @@ asCObjectType* asCRestore::ReadObjectType()
 		// TODO: Should give a friendly error in case the template type isn't found
 		asASSERT(ot);
 	}
-	else
+	else if( ch == 'o' )
 	{
 		// Read the object type name
 		asCString typeName;
@@ -1181,7 +1202,13 @@ asCObjectType* asCRestore::ReadObjectType()
 			ot = &engine->functionBehaviours;
 		}
 		else
-			ot = 0;
+			assert( false );
+	}
+	else
+	{
+		// No object type
+		assert( ch == '\0' );
+		ot = 0;
 	}
 
 	return ot;
