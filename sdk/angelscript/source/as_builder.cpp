@@ -2056,6 +2056,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 			r = CheckNameConflict(name.AddressOf(), tmp, file);
 			if(asSUCCESS != r)
 			{
+				tmp = tmp->next;
 				continue;
 			}
 

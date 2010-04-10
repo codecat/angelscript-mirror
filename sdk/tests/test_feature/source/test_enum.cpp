@@ -410,6 +410,19 @@ static bool TestEnum()
 	if( obj.val != ENUM2 )
 		fail = true;
 
+	// Repeated enum values would enter an infinit loop
+	bout.buffer = "";
+	const char *script10 = "enum Infinite { inf, inf }";
+	mod->AddScriptSection("test", script10);
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "test (1, 22) : Error   : Name conflict. 'inf' is a global property.\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
 	engine->Release();
 
 	// Success
