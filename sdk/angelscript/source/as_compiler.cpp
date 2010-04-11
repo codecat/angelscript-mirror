@@ -7260,6 +7260,16 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		}
 	}
 
+	// Check if we are within one of the accessors
+	if( (getId && getId == outFunc->id) ||
+		(setId && setId == outFunc->id) )
+	{
+		// Avoid recursive call, by not treating this as a property accessor call.
+		// This will also allow having the real property with the same name as the accessors.
+		getId = 0;
+		setId = 0;
+	}
+
 	if( getId || setId )
 	{
 		// Property accessors were found, but we don't know which is to be used yet, so 

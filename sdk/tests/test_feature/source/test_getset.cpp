@@ -632,6 +632,30 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
+
+	// Test accessor with property of the same name
+	const char *script19 = 
+		"int direction; \n"
+		"void set_direction(int val) { direction = val; } \n"
+		"void test_set() \n"
+		"{ \n"
+		"  direction = 9; \n" // calls the set_direction property accessor
+		"} \n"
+		"void test_get() \n"
+		"{ \n"
+		"  assert( direction == 9 ); \n" // fails, since there is no get accessor
+		"} \n";
+	mod->AddScriptSection("script", script19);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "script (7, 1) : Info    : Compiling void test_get()\n"
+	                   "script (9, 21) : Error   : The property has no get accessor\n" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
 	
 	// TODO: Test non-const get accessor for object type with const overloaded dual operator
 	
