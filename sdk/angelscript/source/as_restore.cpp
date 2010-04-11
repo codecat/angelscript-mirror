@@ -1218,105 +1218,56 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 {
 	while( length )
 	{
+		asDWORD tmp[4]; // The biggest instructions take up 4 DWORDs
 		asDWORD c = *(asBYTE*)bc;
 
-		if( c == asBC_ALLOC )
-		{
-			WRITE_NUM(*bc++);
-			asDWORD tmp[MAX_DATA_SIZE];
-			int n;
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				tmp[n] = *bc++;
+		// Copy the instruction to a temp buffer so we can work on it before saving
+		memcpy(tmp, bc, asBCTypeSize[asBCInfo[c].type]*sizeof(asDWORD));
 
+		if( c == asBC_ALLOC ) // PTR_DW_ARG
+		{
 			// Translate the object type 
-			asCObjectType *ot = *(asCObjectType**)tmp;
-			*(int*)tmp = FindObjectTypeIdx(ot);
+			asCObjectType *ot = *(asCObjectType**)(tmp+1);
+			*(int*)(tmp+1) = FindObjectTypeIdx(ot);
 
 			// Translate the constructor func id, if it is a script class
 			if( ot->flags & asOBJ_SCRIPT_OBJECT )
-				*(int*)&tmp[AS_PTR_SIZE] = FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[AS_PTR_SIZE]]);
-
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				WRITE_NUM(tmp[n]);
+				*(int*)&tmp[1+AS_PTR_SIZE] = FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[1+AS_PTR_SIZE]]);
 		}
-		else if( c == asBC_FREE   ||
-			     c == asBC_REFCPY || 
-				 c == asBC_OBJTYPE )
+		else if( c == asBC_FREE   || // wW_PTR_ARG
+			     c == asBC_REFCPY || // PTR_ARG
+				 c == asBC_OBJTYPE ) // PTR_ARG
 		{
-			WRITE_NUM(*bc++);
 			// Translate object type pointers into indices
-			asDWORD tmp[MAX_DATA_SIZE];
-			int n;
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				tmp[n] = *bc++;
-
-			*(int*)tmp = FindObjectTypeIdx(*(asCObjectType**)tmp);
-
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				WRITE_NUM(tmp[n]);
+			*(int*)(tmp+1) = FindObjectTypeIdx(*(asCObjectType**)(tmp+1));
 		}
-		else if( c == asBC_TYPEID )
+		else if( c == asBC_TYPEID ) // DW_ARG
 		{
-			WRITE_NUM(*bc++);
-
 			// Translate type ids into indices
-			asDWORD tmp[MAX_DATA_SIZE];
-			int n;
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				tmp[n] = *bc++;
-
-			*(int*)tmp = FindTypeIdIdx(*(int*)tmp);
-
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				WRITE_NUM(tmp[n]);
+			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
 		}
-		else if( c == asBC_CALL ||
-				 c == asBC_CALLINTF || 
-				 c == asBC_CALLSYS )
+		else if( c == asBC_CALL ||     // DW_ARG
+				 c == asBC_CALLINTF || // DW_ARG
+				 c == asBC_CALLSYS )   // DW_ARG
 		{
-			WRITE_NUM(*bc++);
-
 			// Translate the function id
-			asDWORD tmp[MAX_DATA_SIZE];
-			int n;
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				tmp[n] = *bc++;
-
-			*(int*)tmp = FindFunctionIndex(engine->scriptFunctions[*(int*)tmp]);
-
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				WRITE_NUM(tmp[n]);
+			*(int*)(tmp+1) = FindFunctionIndex(engine->scriptFunctions[*(int*)(tmp+1)]);
 		}
-		else if( c == asBC_FuncPtr )
+		else if( c == asBC_FuncPtr ) // PTR_ARG
 		{
-			WRITE_NUM(*bc++);
-
 			// Translate the function pointer
-			asDWORD tmp[MAX_DATA_SIZE];
-			int n;
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				tmp[n] = *bc++;
-
-			*(asPTRWORD*)tmp = FindFunctionIndex(*(asCScriptFunction**)tmp);
-
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				WRITE_NUM(tmp[n]);
+			*(asPTRWORD*)(tmp+1) = FindFunctionIndex(*(asCScriptFunction**)(tmp+1));
 		}
-		else if( c == asBC_STR )
+		else if( c == asBC_STR ) // W_ARG
 		{
-			asDWORD tmp = *bc++;
-
 			// Translate the string constant id
-			asWORD *arg = ((asWORD*)&tmp)+1;
+			asWORD *arg = ((asWORD*)tmp)+1;
 			*arg = FindStringConstantIndex(*arg);
-			WRITE_NUM(tmp);
 		}
-		else if( c == asBC_CALLBND )
+		else if( c == asBC_CALLBND ) // DW_ARG
 		{
-			WRITE_NUM(*bc++);
-
 			// Translate the function id
-			int funcId = *bc++;
+			int funcId = tmp[1];
 			for( asUINT n = 0; n < module->bindInformations.GetLength(); n++ )
 				if( module->bindInformations[n]->importedFunctionSignature->id == funcId )
 				{
@@ -1324,65 +1275,123 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 					break;
 				}
 
-			WRITE_NUM(funcId);
+			tmp[1] = funcId;
 		}
-		else if( c == asBC_PGA ||
-			     c == asBC_LDG ||
-				 c == asBC_PshG4 ||
-				 c == asBC_LdGRdR4 ||
-				 c == asBC_CpyGtoV4 ||
-				 c == asBC_CpyVtoG4 ||
-				 c == asBC_SetG4 )
+		else if( c == asBC_PGA ||      // PTR_ARG
+			     c == asBC_LDG ||      // PTR_ARG
+				 c == asBC_PshG4 ||    // PTR_ARG
+				 c == asBC_LdGRdR4 ||  // wW_PTR_ARG
+				 c == asBC_CpyGtoV4 || // wW_PTR_ARG
+				 c == asBC_CpyVtoG4 || // rW_PTR_ARG
+				 c == asBC_SetG4 )     // PTR_DW_ARG
 		{
-			WRITE_NUM(*bc++);
-
 			// Translate global variable pointers into indices
-			asDWORD tmp[MAX_DATA_SIZE];
-			int n;
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				tmp[n] = *bc++;
-
-			*(int*)tmp = FindGlobalPropPtrIndex(*(void**)tmp);
-
-			for( n = 0; n < asBCTypeSize[asBCInfo[c].type]-1; n++ )
-				WRITE_NUM(tmp[n]);
+			*(int*)(tmp+1) = FindGlobalPropPtrIndex(*(void**)(tmp+1));
 		}
-		else
+
+		// Now store the instruction in the smallest possible way
+		switch( asBCInfo[c].type )
 		{
-			switch( asBCInfo[c].type )
+		case asBCTYPE_NO_ARG:
 			{
-			case asBCTYPE_NO_ARG:
-				{
-					// Just write 1 byte
-					asBYTE b = (asBYTE)c;
-					WRITE_NUM(b);
-					bc++;
-				}
-				break;
-			case asBCTYPE_W_ARG:
-			case asBCTYPE_wW_ARG:
-			case asBCTYPE_rW_ARG:
-				{
-					// Write the instruction code
-					asBYTE b = (asBYTE)c;
-					WRITE_NUM(b);
-					
-					// Write the argument
-					asWORD w = (asWORD)((*bc)>>16);
-					WRITE_NUM(w);
-					
-					bc++;
-				}
-				break;
-			default:
-				{
-					// Store the bc as is
-					for( int n = 0; n < asBCTypeSize[asBCInfo[c].type]; n++ )
-						WRITE_NUM(*bc++);
-				}
+				// Just write 1 byte
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+			}
+			break;
+		case asBCTYPE_W_ARG:
+		case asBCTYPE_wW_ARG:
+		case asBCTYPE_rW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+				
+				// Write the argument
+				asWORD w = (asWORD)(tmp[0]>>16);
+				WRITE_NUM(w);
+			}
+			break;
+		case asBCTYPE_rW_DW_ARG:
+		case asBCTYPE_wW_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the word argument
+				asWORD w = (asWORD)(tmp[0]>>16);
+				WRITE_NUM(w);
+
+				// Write the dword argument
+				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
+				WriteEncodedUInt(tmp[1]);
+			}
+			break;
+		case asBCTYPE_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the argument
+				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
+				WriteEncodedUInt(tmp[1]);
+			}
+			break;
+		case asBCTYPE_DW_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the dword argument
+				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
+				WriteEncodedUInt(tmp[1]);
+
+				// Write the dword argument
+				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
+				WriteEncodedUInt(tmp[2]);
+			}
+			break;
+		case asBCTYPE_wW_rW_rW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the first argument
+				asWORD w = (asWORD)(tmp[0]>>16);
+				WRITE_NUM(w);
+
+				// Write the second argument
+				w = *(((asWORD*)tmp)+2);
+				WRITE_NUM(w);
+
+				// Write the third argument
+				w = *(((asWORD*)tmp)+3);
+				WRITE_NUM(w);
+			}
+			break;
+		case asBCTYPE_wW_rW_ARG:
+		case asBCTYPE_rW_rW_ARG:
+		case asBCTYPE_W_rW_ARG:
+		case asBCTYPE_wW_W_ARG:
+		case asBCTYPE_wW_rW_DW_ARG:
+		case asBCTYPE_QW_ARG:
+		case asBCTYPE_QW_DW_ARG:
+		case asBCTYPE_rW_QW_ARG:
+		case asBCTYPE_wW_QW_ARG:
+		default:
+			{
+				// Store the bc as is
+				for( int n = 0; n < asBCTypeSize[asBCInfo[c].type]; n++ )
+					WRITE_NUM(tmp[n]);
 			}
 		}
 
+		// Move to the next instruction
+		bc += asBCTypeSize[asBCInfo[c].type];
 		length -= asBCTypeSize[asBCInfo[c].type];
 	}
 }
@@ -1393,59 +1402,111 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 	{
 		asBYTE b;
 		READ_NUM(b);
-		if( b != asBC_STR )
+
+		switch( asBCInfo[b].type )
 		{
-			switch( asBCInfo[b].type )
+		case asBCTYPE_NO_ARG:
 			{
-			case asBCTYPE_NO_ARG:
-				{
-					*bc = b;
-
-					bc++;
-					length -= 1;
-				}
-				continue;
-			case asBCTYPE_W_ARG:
-			case asBCTYPE_wW_ARG:
-			case asBCTYPE_rW_ARG:
-				{
-					*bc = b;
-
-					// Read the argument
-					asWORD w;
-					READ_NUM(w);
-					*bc += asDWORD(w)<<16;
-
-					bc++;
-					length -= 1;
-				}
-				continue;
+				*bc++ = b;
 			}
-		}
+			break;
+		case asBCTYPE_W_ARG:
+		case asBCTYPE_wW_ARG:
+		case asBCTYPE_rW_ARG:
+			{
+				*bc = b;
 
-		// Read the next 3 bytes
-		asDWORD c;
+				// Read the argument
+				asWORD w;
+				READ_NUM(w);
+				*bc += asDWORD(w)<<16;
+
+				bc++;
+			}
+			break;
+		case asBCTYPE_rW_DW_ARG:
+		case asBCTYPE_wW_DW_ARG:
+			{
+				*bc = b;
+
+				// Read the word argument
+				asWORD w;
+				READ_NUM(w);
+				*bc += asDWORD(w)<<16;
+				bc++;
+
+				// Read the dword argument
+				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
+				*bc++ = ReadEncodedUInt();
+			}
+			break;
+		case asBCTYPE_DW_ARG:
+			{
+				*bc++ = b;
+
+				// Read the argument
+				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
+				*bc++ = ReadEncodedUInt();
+			}
+			break;
+		case asBCTYPE_DW_DW_ARG:
+			{
+				*bc++ = b;
+
+				// Read the first argument
+				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
+				*bc++ = ReadEncodedUInt();
+
+				// Read the second argument
+				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
+				*bc++ = ReadEncodedUInt();
+			}
+			break;
+		case asBCTYPE_wW_rW_rW_ARG:
+			{
+				*bc = b;
+
+				// Read the first argument
+				asWORD w;
+				READ_NUM(w);
+				*bc += asDWORD(w)<<16;
+				bc++;
+
+				// Read the second argument
+				READ_NUM(w);
+				*(WORD*)bc = w;
+
+				// Read the third argument
+				READ_NUM(w);
+				*(((WORD*)bc)+1) = w;
+
+				bc++;
+			}
+			break;
+		default:
+			// Read the next 3 bytes
+			asDWORD c; asBYTE t;
 #if defined(AS_BIG_ENDIAN)
-		c = b << 24;
-		READ_NUM(b); c += b << 16;
-		READ_NUM(b); c += b << 8;
-		READ_NUM(b); c += b;
+			c = b << 24;
+			READ_NUM(t); c += t << 16;
+			READ_NUM(t); c += t << 8;
+			READ_NUM(t); c += t;
 #else
-		c = b;
-		READ_NUM(b); c += b << 8;
-		READ_NUM(b); c += b << 16;
-		READ_NUM(b); c += b << 24;
+			c = b;
+			READ_NUM(t); c += t << 8;
+			READ_NUM(t); c += t << 16;
+			READ_NUM(t); c += t << 24;
 #endif
 
-		*bc = c;
-		bc++;
-		c = *(asBYTE*)&c;
+			*bc++ = c;
+			c = *(asBYTE*)&c;
 
-		// Read the bc as is
-		for( int n = 1; n < asBCTypeSize[asBCInfo[c].type]; n++ )
-			READ_NUM(*bc++);
+			// Read the bc as is
+			for( int n = 1; n < asBCTypeSize[asBCInfo[c].type]; n++ )
+				READ_NUM(*bc++);
+		}
 
-		length -= asBCTypeSize[asBCInfo[c].type];
+		length -= asBCTypeSize[asBCInfo[b].type];
 	}
 }
 

@@ -128,7 +128,11 @@ public:
 				break;
 			}
 	}
-	void Read(void *ptr, asUINT size) {memcpy(ptr, &buffer[rpointer], size); rpointer += size;}
+	void Read(void *ptr, asUINT size) 
+	{
+		memcpy(ptr, &buffer[rpointer], size); 
+		rpointer += size;
+	}
 	void Restart() {rpointer = 0;}
 
 	asUINT CountZeroes() { asUINT z = 0; for( asUINT n = 0; n < buffer.size(); n++ ) if( buffer[n] == 0 ) z++; return z; }
