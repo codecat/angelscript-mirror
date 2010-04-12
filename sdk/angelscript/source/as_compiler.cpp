@@ -1952,6 +1952,8 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		return;
 	}
 
+	ProcessPropertyGetAccessor(&expr, snode);
+
 	// TODO: Need to support 64bit
 	// Convert the expression to a 32bit variable
 	asCDataType to;

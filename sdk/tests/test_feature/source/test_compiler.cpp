@@ -691,6 +691,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectMethod("sound", "bool get_playing()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("sound", "int get_count()", asFUNCTION(0), asCALL_GENERIC);
 
 		const char *script = "void main() \n"
 							 "{ \n"
@@ -698,6 +699,9 @@ bool Test()
 							 "  for(;s.playing;) {}\n"
 							 "  while(s.playing) {} \n"
 							 "  do {} while (s.playing); \n"
+							 "  if(s.playing) {} \n"
+							 "  s.playing ? 0 : 1; \n"
+							 "  switch(s.count) {case 0:} \n"
 							 "}\n";
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
