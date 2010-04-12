@@ -7261,8 +7261,25 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 	}
 
 	// Check if we are within one of the accessors
-	if( (getId && getId == outFunc->id) ||
-		(setId && setId == outFunc->id) )
+	int realGetId = getId;
+	int realSetId = setId;
+	if( outFunc->objectType )
+	{
+		// The property accessors would be virtual functions, so we need to find the real implementation
+		asCScriptFunction *getFunc = getId ? engine->scriptFunctions[getId] : 0;
+		if( getFunc &&
+			getFunc->funcType == asFUNC_VIRTUAL && 
+			outFunc->objectType->DerivesFrom(getFunc->objectType) )
+			realGetId = outFunc->objectType->virtualFunctionTable[getFunc->vfTableIdx]->id;
+		asCScriptFunction *setFunc = setId ? engine->scriptFunctions[setId] : 0;
+		if( setFunc &&
+			setFunc->funcType == asFUNC_VIRTUAL &&
+			outFunc->objectType->DerivesFrom(setFunc->objectType) )
+			realSetId = outFunc->objectType->virtualFunctionTable[setFunc->vfTableIdx]->id;
+	}
+
+	if( (realGetId && realGetId == outFunc->id) ||
+		(realSetId && realSetId == outFunc->id) )
 	{
 		// Avoid recursive call, by not treating this as a property accessor call.
 		// This will also allow having the real property with the same name as the accessors.

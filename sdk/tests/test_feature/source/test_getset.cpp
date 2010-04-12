@@ -656,6 +656,25 @@ bool Test()
 		printf(bout.buffer.c_str());
 		fail = true;
 	}
+
+	const char *script20 = 
+		"class Test { \n"
+		"  int direction; \n"
+		"  void set_direction(int val) { direction = val; } \n"
+		"} \n";
+	mod->AddScriptSection("script", script20);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+	r = ExecuteString(engine, "Test t; t.set_direction(3);", mod);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
 	
 	// TODO: Test non-const get accessor for object type with const overloaded dual operator
 	
