@@ -951,6 +951,7 @@ asUINT asCRestore::ReadEncodedUInt()
 
 void asCRestore::WriteString(asCString* str) 
 {
+	// TODO: Strings get repeated a lot. This needs to be avoided
 	asUINT len = (asUINT)str->GetLength();
 	WriteEncodedUInt(len);
 	stream->Write(str->AddressOf(), (asUINT)len);
@@ -1023,9 +1024,24 @@ void asCRestore::ReadObjectProperty(asCObjectProperty* prop)
 
 void asCRestore::WriteDataType(const asCDataType *dt) 
 {
+	// First check if the datatype has already been saved
+	for( asUINT n = 0; n < savedDataTypes.GetLength(); n++ )
+	{
+		if( *dt == savedDataTypes[n] )
+		{
+			asUINT c = 0;
+			WriteEncodedUInt(c);
+			WriteEncodedUInt(n);
+			return;
+		}
+	}
+
+	// Save the new datatype
+	savedDataTypes.PushLast(*dt);
+
 	bool b;
 	int t = dt->GetTokenType();
-	WRITE_NUM(t);
+	WriteEncodedUInt(t);
 	if( t == ttIdentifier )
 	{
 		WriteObjectType(dt->GetObjectType());
@@ -1043,13 +1059,23 @@ void asCRestore::WriteDataType(const asCDataType *dt)
 void asCRestore::ReadDataType(asCDataType *dt) 
 {
 	eTokenType tokenType;
+
+	tokenType = (eTokenType)ReadEncodedUInt();
+	if( tokenType == 0 )
+	{
+		// Get the datatype from the cache
+		asUINT n = ReadEncodedUInt();
+		*dt = savedDataTypes[n];
+		return;
+	}
+
+	// Read the datatype for the first time
 	asCObjectType *objType = 0;
 	bool isObjectHandle  = false;
 	bool isReadOnly      = false;
 	bool isHandleToConst = false;
 	bool isReference     = false;
 
-	READ_NUM(tokenType);
 	if( tokenType == ttIdentifier )
 	{
 		objType = ReadObjectType();
@@ -1070,6 +1096,8 @@ void asCRestore::ReadDataType(asCDataType *dt)
 	}
 	dt->MakeReadOnly(isReadOnly);
 	dt->MakeReference(isReference);
+
+	savedDataTypes.PushLast(*dt);
 }
 
 void asCRestore::WriteObjectType(asCObjectType* ot) 
@@ -1377,13 +1405,91 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 		case asBCTYPE_rW_rW_ARG:
 		case asBCTYPE_W_rW_ARG:
 		case asBCTYPE_wW_W_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the first argument
+				asWORD w = (asWORD)(tmp[0]>>16);
+				WRITE_NUM(w);
+
+				// Write the second argument
+				w = *(((asWORD*)tmp)+2);
+				WRITE_NUM(w);
+			}
+			break;
 		case asBCTYPE_wW_rW_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the first argument
+				asWORD w = (asWORD)(tmp[0]>>16);
+				WRITE_NUM(w);
+
+				// Write the second argument
+				w = *(((asWORD*)tmp)+2);
+				WRITE_NUM(w);
+
+				// Write the third argument
+				// TODO: This could be encoded as an int to decrease the size
+				asDWORD dw = tmp[2];
+				WRITE_NUM(w);
+			}
+			break;
 		case asBCTYPE_QW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the argument
+				// TODO: This could be encoded as an int to decrease the size
+				asQWORD qw = *(asQWORD*)&tmp[1];
+				WRITE_NUM(qw);
+			}
+			break;
 		case asBCTYPE_QW_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the argument
+				// TODO: This could be encoded as an int to decrease the size
+				asQWORD qw = *(asQWORD*)&tmp[1];
+				WRITE_NUM(qw);
+
+				// Write the second argument
+				// TODO: This could be encoded as an int to decrease the size
+				asDWORD dw = tmp[3];
+				WRITE_NUM(dw);
+			}
+			break;
 		case asBCTYPE_rW_QW_ARG:
 		case asBCTYPE_wW_QW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the first argument
+				asWORD w = (asWORD)(tmp[0]>>16);
+				WRITE_NUM(w);
+
+				// Write the argument
+				// TODO: This could be encoded as an int to decrease the size
+				asQWORD qw = *(asQWORD*)&tmp[1];
+				WRITE_NUM(qw);
+			}
+			break;
 		default:
 			{
+				// This should never happen
+				asASSERT(false);
+
 				// Store the bc as is
 				for( int n = 0; n < asBCTypeSize[asBCInfo[c].type]; n++ )
 					WRITE_NUM(tmp[n]);
@@ -1483,27 +1589,118 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 				bc++;
 			}
 			break;
+		case asBCTYPE_wW_rW_ARG:
+		case asBCTYPE_rW_rW_ARG:
+		case asBCTYPE_W_rW_ARG:
+		case asBCTYPE_wW_W_ARG:
+			{
+				*bc = b;
+
+				// Read the first argument
+				asWORD w;
+				READ_NUM(w);
+				*bc += asDWORD(w)<<16;
+				bc++;
+
+				// Read the second argument
+				READ_NUM(w);
+				*(WORD*)bc = w;
+
+				bc++;
+			}
+			break;
+		case asBCTYPE_wW_rW_DW_ARG:
+			{
+				*bc = b;
+
+				// Read the first argument
+				asWORD w;
+				READ_NUM(w);
+				*bc += asDWORD(w)<<16;
+				bc++;
+
+				// Read the second argument
+				READ_NUM(w);
+				*(WORD*)bc = w;
+				bc++;
+	
+				// Read the third argument
+				asDWORD dw;
+				READ_NUM(dw);
+				*bc++ = dw;
+			}
+			break;
+		case asBCTYPE_QW_ARG:
+			{
+				*bc++ = b;
+
+				// Read the argument
+				asQWORD qw;
+				READ_NUM(qw);
+				*(asQWORD*)bc = qw;
+				bc += 2;
+			}
+			break;
+		case asBCTYPE_QW_DW_ARG:
+			{
+				*bc++ = b;
+
+				// Read the first argument
+				asQWORD qw;
+				READ_NUM(qw);
+				*(asQWORD*)bc = qw;
+				bc += 2;
+
+				// Read the second argument
+				asDWORD dw;
+				READ_NUM(dw);
+				*bc++ = dw;
+			}
+			break;
+		case asBCTYPE_rW_QW_ARG:
+		case asBCTYPE_wW_QW_ARG:
+			{
+				*bc = b;
+
+				// Read the first argument
+				asWORD w;
+				READ_NUM(w);
+				*bc += asDWORD(w)<<16;
+				bc++;
+
+				// Read the argument
+				asQWORD qw;
+				READ_NUM(qw);
+				*(asQWORD*)bc = qw;
+				bc += 2;
+			}
+			break;
 		default:
-			// Read the next 3 bytes
-			asDWORD c; asBYTE t;
+			{
+				// This should never happen
+				asASSERT(false);
+
+				// Read the next 3 bytes
+				asDWORD c; asBYTE t;
 #if defined(AS_BIG_ENDIAN)
-			c = b << 24;
-			READ_NUM(t); c += t << 16;
-			READ_NUM(t); c += t << 8;
-			READ_NUM(t); c += t;
+				c = b << 24;
+				READ_NUM(t); c += t << 16;
+				READ_NUM(t); c += t << 8;
+				READ_NUM(t); c += t;
 #else
-			c = b;
-			READ_NUM(t); c += t << 8;
-			READ_NUM(t); c += t << 16;
-			READ_NUM(t); c += t << 24;
+				c = b;
+				READ_NUM(t); c += t << 8;
+				READ_NUM(t); c += t << 16;
+				READ_NUM(t); c += t << 24;
 #endif
 
-			*bc++ = c;
-			c = *(asBYTE*)&c;
+				*bc++ = c;
+				c = *(asBYTE*)&c;
 
-			// Read the bc as is
-			for( int n = 1; n < asBCTypeSize[asBCInfo[c].type]; n++ )
-				READ_NUM(*bc++);
+				// Read the bc as is
+				for( int n = 1; n < asBCTypeSize[asBCInfo[c].type]; n++ )
+					READ_NUM(*bc++);
+			}
 		}
 
 		length -= asBCTypeSize[asBCInfo[b].type];
