@@ -61,6 +61,9 @@ protected:
 	asIBinaryStream *stream;
 	asCScriptEngine *engine;
 
+	void WriteData(const void *data, asUINT size);
+	void ReadData(void *data, asUINT size);
+
 	void WriteString(asCString *str);
 	void WriteFunction(asCScriptFunction *func);
 	void WriteFunctionSignature(asCScriptFunction *func);

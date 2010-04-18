@@ -42,12 +42,36 @@
 
 BEGIN_AS_NAMESPACE
 
-#define WRITE_NUM(N) stream->Write(&(N), sizeof(N))
-#define READ_NUM(N) stream->Read(&(N), sizeof(N))
+#define WRITE_NUM(N) WriteData(&(N), sizeof(N))
+#define READ_NUM(N) ReadData(&(N), sizeof(N))
 
 asCRestore::asCRestore(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
  : module(_module), stream(_stream), engine(_engine)
 {
+}
+
+void asCRestore::WriteData(const void *data, asUINT size)
+{
+	asASSERT(size == 1 || size == 2 || size == 4 || size == 8);
+#if defined(AS_BIG_ENDIAN)
+	for( asUINT n = 0; n < size; n++ )
+		stream->Write(((asBYTE*)data)+n, 1);
+#else
+	for( int n = size-1; n >= 0; n-- )
+		stream->Write(((asBYTE*)data)+n, 1);
+#endif
+}
+
+void asCRestore::ReadData(void *data, asUINT size)
+{
+	asASSERT(size == 1 || size == 2 || size == 4 || size == 8);
+#if defined(AS_BIG_ENDIAN)
+	for( asUINT n = 0; n < size; n++ )
+		stream->Read(((asBYTE*)data)+n, 1);
+#else
+	for( int n = size-1; n >= 0; n-- )
+		stream->Read(((asBYTE*)data)+n, 1);
+#endif
 }
 
 int asCRestore::Save() 

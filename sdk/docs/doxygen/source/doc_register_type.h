@@ -169,7 +169,7 @@ r = engine->RegisterObjectBehaviour("val", asBEHAVE_CONSTRUCT, "void f()", asFUN
 r = engine->RegisterObjectBehaviour("val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
-Note that you may need to include the <new> header to declare the placement new operator that is used to initialize a preallocated memory block.
+Note that you may need to include the &lt;new&gt; header to declare the placement new operator that is used to initialize a preallocated memory block.
 
 
 
