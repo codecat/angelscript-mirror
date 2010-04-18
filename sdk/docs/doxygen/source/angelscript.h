@@ -58,9 +58,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.18.2
-#define ANGELSCRIPT_VERSION        21802
-#define ANGELSCRIPT_VERSION_STRING "2.18.2"
+//! \details Version 2.19.0
+#define ANGELSCRIPT_VERSION        21900
+#define ANGELSCRIPT_VERSION_STRING "2.19.0"
 
 // Data types
 
@@ -106,7 +106,9 @@ enum asEEngineProp
 	//! When set extra bytecode instructions needed for JIT compiled funcions will be included. Default: false.
 	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12,
 	//! Select string encoding for literals: 0 - UTF8/ASCII, 1 - UTF16. Default: 0 (UTF8)
-	asEP_STRING_ENCODING              = 13
+	asEP_STRING_ENCODING              = 13,
+	//! Enable or disable property accessors: 0 - no accessors, 1 - app registered accessors, 2 - app and script created accessors
+	asEP_PROPERTY_ACCESSOR_MODE       = 14
 };
 
 // Calling conventions

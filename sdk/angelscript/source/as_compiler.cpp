@@ -7134,6 +7134,12 @@ void asCCompiler::ConvertToReference(asSExprContext *ctx)
 
 int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node)
 {
+	if( engine->ep.propertyAccessorMode == 0 )
+	{
+		// Property accessors have been disabled by the application
+		return 0;
+	}
+
 	int getId = 0, setId = 0;
 	asCString getName = "get_" + name;
 	asCString setName = "set_" + name;
@@ -7287,6 +7293,15 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		// This will also allow having the real property with the same name as the accessors.
 		getId = 0;
 		setId = 0;
+	}
+
+	// Check if the application has disabled script written property accessors
+	if( engine->ep.propertyAccessorMode == 1 )
+	{
+		if( getId && engine->scriptFunctions[getId]->funcType != asFUNC_SYSTEM )
+		  getId = 0;
+		if( setId && engine->scriptFunctions[setId]->funcType != asFUNC_SYSTEM )
+		  setId = 0;
 	}
 
 	if( getId || setId )

@@ -86,7 +86,8 @@ enum asEEngineProp
 	asEP_REQUIRE_ENUM_SCOPE           = 10,
 	asEP_SCRIPT_SCANNER               = 11,
 	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12,
-	asEP_STRING_ENCODING              = 13
+	asEP_STRING_ENCODING              = 13,
+	asEP_PROPERTY_ACCESSOR_MODE       = 14
 };
 
 // Calling conventions

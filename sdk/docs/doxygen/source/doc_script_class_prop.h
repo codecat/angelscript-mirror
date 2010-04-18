@@ -69,6 +69,7 @@ e.g. the increment operator must be rewritten as follows:
   a = a + 1;
 </pre>
 
-
+The application can optionally turn off support for property accessors, so you need to verify your application's
+manual to determine if this is supported for your application or not.
 
 */

@@ -374,6 +374,7 @@ public:
 		int  scanner;
 		bool includeJitInstructions;
 		int  stringEncoding;
+		int  propertyAccessorMode;
 	} ep;
 };
 

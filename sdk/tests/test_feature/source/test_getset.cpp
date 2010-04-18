@@ -883,6 +883,7 @@ bool Test2()
 {
 	bool fail = false;
 	COutStream out;
+	CBufferedOutStream bout;
 	int r;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -910,6 +911,18 @@ bool Test2()
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
+
+	// Test disabling property accessors
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	engine->SetEngineProperty(asEP_PROPERTY_ACCESSOR_MODE, 0);
+	r = ExecuteString(engine, "CMyObj o; o.Text = 'hello';");
+	if( r >= 0 )
+		fail = true;
+	if( bout.buffer != "ExecuteString (1, 12) : Error   : 'Text' is not a member of 'CMyObj'\n" )
+	{
+		fail = true;
+		printf("%s", bout.buffer.c_str());
+	}
 
 	engine->Release();
 
