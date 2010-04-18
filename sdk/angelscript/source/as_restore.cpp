@@ -951,17 +951,52 @@ asUINT asCRestore::ReadEncodedUInt()
 
 void asCRestore::WriteString(asCString* str) 
 {
-	// TODO: Strings get repeated a lot. This needs to be avoided
+	// TODO: All strings should be stored in a separate section, and when
+	//       they are used an offset into that section should be stored.
+	//       This will make it unnecessary to store the extra byte to 
+	//       identify new versus old strings.
+
+	// First check if the string hasn't been saved already
+	for( asUINT n = 0; n < savedStrings.GetLength(); n++ )
+	{
+		if( *str == savedStrings[n] )
+		{
+			// Save a reference to the existing string
+			char b = 'r';
+			WRITE_NUM(b);
+			WriteEncodedUInt(n);
+			return;
+		}
+	}
+
+	// Save a new string
+	char b = 'n';
+	WRITE_NUM(b);
+
 	asUINT len = (asUINT)str->GetLength();
 	WriteEncodedUInt(len);
 	stream->Write(str->AddressOf(), (asUINT)len);
+
+	savedStrings.PushLast(*str);
 }
 
 void asCRestore::ReadString(asCString* str) 
 {
-	asUINT len = ReadEncodedUInt();
-	str->SetLength(len);
-	stream->Read(str->AddressOf(), len);
+	char b;
+	READ_NUM(b);
+	if( b == 'n' )
+	{
+		asUINT len = ReadEncodedUInt();
+		str->SetLength(len);
+		stream->Read(str->AddressOf(), len);
+
+		savedStrings.PushLast(*str);
+	}
+	else
+	{
+		asUINT n = ReadEncodedUInt();
+		*str = savedStrings[n];
+	}
 }
 
 void asCRestore::WriteGlobalProperty(asCGlobalProperty* prop) 

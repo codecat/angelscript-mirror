@@ -116,6 +116,7 @@ protected:
 
 	asCArray<asCScriptFunction*> savedFunctions;
 	asCArray<asCDataType>        savedDataTypes;
+	asCArray<asCString>          savedStrings;
 };
 
 END_AS_NAMESPACE

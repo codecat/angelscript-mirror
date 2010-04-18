@@ -47,6 +47,7 @@ SRCNAMES = \
   test_for.cpp \
   test_funcoverload.cpp \
   test_functionptr.cpp \
+  test_garbagecollect.cpp \
   test_generic.cpp \
   test_getargptr.cpp \
   test_getset.cpp \

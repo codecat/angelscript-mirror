@@ -569,6 +569,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_garbagecollect.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_generic.cpp"
 				>
 			</File>

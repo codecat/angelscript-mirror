@@ -243,11 +243,20 @@ int asCGarbageCollector::DestroyGarbage()
 				}
 			}
 
-			// Only move to the next step if no garbage was detected in this step
 			if( destroyState == destroyGarbage_haveMore )
+			{
+				// Restart the cycle
 				destroyState = destroyGarbage_init;
+			}
 			else
+			{
+				// Restart the cycle
+				destroyState = destroyGarbage_init;
+
+				// Return 0 to tell the application that there 
+				// is no more garbage to destroy at the moment
 				return 0;
+			}
 		}
 		break;
 		}
