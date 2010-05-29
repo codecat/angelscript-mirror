@@ -6304,6 +6304,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		return;
 	}
 
+	ProcessPropertyGetAccessor(&expr, node);
+
 	// We don't want a reference
 	if( expr.type.dataType.IsReference() )
 	{
