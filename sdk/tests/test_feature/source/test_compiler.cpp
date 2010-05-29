@@ -895,6 +895,37 @@ bool Test()
 		engine->Release();
 	}
 
+	// Avoid assert failure on undeclared variables
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script = 
+			"void my_method() \n"
+			"{ \n"
+			"    int[] array; \n"
+			"    if(array[unexisting_var-1]==1) \n"
+			"    { \n"
+			"    } \n"
+			"} \n";
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != "script (1, 1) : Info    : Compiling void my_method()\n"
+		                   "script (4, 14) : Error   : 'unexisting_var' is not declared\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

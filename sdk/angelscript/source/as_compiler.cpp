@@ -5325,6 +5325,10 @@ int asCCompiler::CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, as
 	// Shouldn't send any byte code
 	asASSERT(ctx->bc.GetLastInstr() == -1);
 
+	// Set the context to a dummy type to avoid further 
+	// errors in case the expression fails to compile
+	ctx->type.SetDummy();
+
 	// Pop the last node
 	asCScriptNode *node = postfix->PopLast();
 	ctx->exprNode = node;
