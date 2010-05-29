@@ -1172,6 +1172,7 @@ void asCRestore::WriteObjectType(asCObjectType* ot)
 		{
 			ch = 'a';
 			WRITE_NUM(ch);
+			WriteString(&ot->name);
 
 			if( ot->templateSubType.IsObject() )
 			{
@@ -1220,6 +1221,11 @@ asCObjectType* asCRestore::ReadObjectType()
 	READ_NUM(ch);
 	if( ch == 'a' )
 	{
+		// Read the name of the template type
+		asCString typeName;
+		ReadString(&typeName);
+		asCObjectType *tmpl = engine->GetObjectType(typeName.AddressOf());
+
 		READ_NUM(ch);
 		if( ch == 's' )
 		{
@@ -1230,8 +1236,10 @@ asCObjectType* asCRestore::ReadObjectType()
 			if( ch == 'h' )
 				dt.MakeHandle(true);
 
-			dt.MakeArray(engine);
-			ot = dt.GetObjectType();
+			if( tmpl->templateSubType.GetObjectType() == ot )
+				ot = tmpl;
+			else
+				ot = engine->GetTemplateInstanceType(tmpl, dt);
 			
 			asASSERT(ot);
 		}
@@ -1240,8 +1248,8 @@ asCObjectType* asCRestore::ReadObjectType()
 			eTokenType tokenType;
 			READ_NUM(tokenType);
 			asCDataType dt = asCDataType::CreatePrimitive(tokenType, false);
-			dt.MakeArray(engine);
-			ot = dt.GetObjectType();
+
+			ot = engine->GetTemplateInstanceType(tmpl, dt);
 			
 			asASSERT(ot);
 		}
@@ -1395,7 +1403,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				WRITE_NUM(b);
 				
 				// Write the argument
-				asWORD w = (asWORD)(tmp[0]>>16);
+				asWORD w = *(((asWORD*)tmp)+1);
 				WRITE_NUM(w);
 			}
 			break;
@@ -1407,7 +1415,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				WRITE_NUM(b);
 
 				// Write the word argument
-				asWORD w = (asWORD)(tmp[0]>>16);
+				asWORD w = *(((asWORD*)tmp)+1);
 				WRITE_NUM(w);
 
 				// Write the dword argument
@@ -1448,7 +1456,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				WRITE_NUM(b);
 
 				// Write the first argument
-				asWORD w = (asWORD)(tmp[0]>>16);
+				asWORD w = *(((asWORD*)tmp)+1);
 				WRITE_NUM(w);
 
 				// Write the second argument
@@ -1470,7 +1478,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				WRITE_NUM(b);
 
 				// Write the first argument
-				asWORD w = (asWORD)(tmp[0]>>16);
+				asWORD w = *(((asWORD*)tmp)+1);
 				WRITE_NUM(w);
 
 				// Write the second argument
@@ -1485,7 +1493,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				WRITE_NUM(b);
 
 				// Write the first argument
-				asWORD w = (asWORD)(tmp[0]>>16);
+				asWORD w = *(((asWORD*)tmp)+1);
 				WRITE_NUM(w);
 
 				// Write the second argument
@@ -1495,7 +1503,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				// Write the third argument
 				// TODO: This could be encoded as an int to decrease the size
 				asDWORD dw = tmp[2];
-				WRITE_NUM(w);
+				WRITE_NUM(dw);
 			}
 			break;
 		case asBCTYPE_QW_ARG:
@@ -1535,7 +1543,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 				WRITE_NUM(b);
 
 				// Write the first argument
-				asWORD w = (asWORD)(tmp[0]>>16);
+				asWORD w = *(((asWORD*)tmp)+1);
 				WRITE_NUM(w);
 
 				// Write the argument
@@ -1584,7 +1592,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 				// Read the argument
 				asWORD w;
 				READ_NUM(w);
-				*bc += asDWORD(w)<<16;
+				*(((asWORD*)bc)+1) = w;
 
 				bc++;
 			}
@@ -1597,7 +1605,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 				// Read the word argument
 				asWORD w;
 				READ_NUM(w);
-				*bc += asDWORD(w)<<16;
+				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the dword argument
@@ -1634,16 +1642,16 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 				// Read the first argument
 				asWORD w;
 				READ_NUM(w);
-				*bc += asDWORD(w)<<16;
+				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the second argument
 				READ_NUM(w);
-				*(WORD*)bc = w;
+				*(asWORD*)bc = w;
 
 				// Read the third argument
 				READ_NUM(w);
-				*(((WORD*)bc)+1) = w;
+				*(((asWORD*)bc)+1) = w;
 
 				bc++;
 			}
@@ -1658,12 +1666,12 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 				// Read the first argument
 				asWORD w;
 				READ_NUM(w);
-				*bc += asDWORD(w)<<16;
+				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the second argument
 				READ_NUM(w);
-				*(WORD*)bc = w;
+				*(asWORD*)bc = w;
 
 				bc++;
 			}
@@ -1675,12 +1683,12 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 				// Read the first argument
 				asWORD w;
 				READ_NUM(w);
-				*bc += asDWORD(w)<<16;
+				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the second argument
 				READ_NUM(w);
-				*(WORD*)bc = w;
+				*(asWORD*)bc = w;
 				bc++;
 	
 				// Read the third argument
@@ -1724,7 +1732,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 				// Read the first argument
 				asWORD w;
 				READ_NUM(w);
-				*bc += asDWORD(w)<<16;
+				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the argument

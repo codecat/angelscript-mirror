@@ -1021,10 +1021,10 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
 
 	asCScriptFunction *func = module->funcDefs[i];
 	func->returnType = returnType;
-	for( asUINT n = 0; n < parameterTypes.GetLength(); n++ )
+	for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
 	{
-		func->parameterTypes.PushLast(parameterTypes[n]);
-		func->inOutFlags.PushLast(inOutFlags[n]);
+		func->parameterTypes.PushLast(parameterTypes[p]);
+		func->inOutFlags.PushLast(inOutFlags[p]);
 	}
 
 	return 0;

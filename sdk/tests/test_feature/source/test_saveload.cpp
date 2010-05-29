@@ -6,6 +6,8 @@
 
 #include <vector>
 #include "utils.h"
+#include "../../../add_on/scriptarray/scriptarray.h"
+
 
 namespace TestSaveLoad
 {
@@ -326,7 +328,7 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1353 ) 
+	if( stream.buffer.size() != 1395 ) 
 	{
 		// Originally this was 3213
 		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
@@ -577,6 +579,43 @@ bool Test()
 		if( _out != " i = (123)aaabbb" )
 			fail = true;
 
+		engine->Release();
+	}
+
+	//-------------------------------
+	// Test that registered template classes are stored correctly
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"void main() \n"
+			"{ \n"
+			"	array< int > intArray = {0,1,2}; \n"
+			"	uint tmp = intArray.length(); \n"
+			"   assert( tmp == 3 ); \n"
+			"}; \n";
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->LoadByteCode(&stream);
+
+		if( ExecuteString(engine, "main()", mod) != asEXECUTION_FINISHED )
+			fail = true;
+		
 		engine->Release();
 	}
 
