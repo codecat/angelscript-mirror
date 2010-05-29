@@ -22,7 +22,7 @@ and asBEHAVE_REF_CAST for casts from a base type to a derived type.
 
 \code
 // Example REF_CAST behaviour
-template<class A, B>
+template<class A, class B>
 B* refCast(A* a)
 {
     // If the handle already is a null handle, then just return the null handle

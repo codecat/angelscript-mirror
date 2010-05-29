@@ -88,10 +88,12 @@ protected:
 };
 
 bool Test2();
+bool Test3();
 
 bool Test()
 {
 	bool fail = Test2();
+	fail = Test3() || fail;
 	int r;
 	asIScriptEngine *engine;
 
@@ -500,6 +502,87 @@ bool Test2()
 	return fail;
 }
 
+//========================================================================================
+
+class DisplayObject
+{
+public:
+	DisplayObject() {refCount=1;}
+	void AddRef() {refCount++;}
+	void Release() {if(--refCount==0)delete this;}
+	int refCount;
+};
+
+class MovieClip : public DisplayObject
+{
+public:
+	MovieClip() : DisplayObject() {}
+};
+
+template<class A, class B>
+B* refCast(A* a)
+{
+    // If the handle already is a null handle, then just return the null handle
+    if( !a ) return 0;
+
+    // Now try to dynamically cast the pointer to the wanted type
+    B* b = dynamic_cast<B*>(a);
+    if( b != 0 )
+    {
+        // Since the cast was made, we need to increase the ref counter for the returned handle
+        b->AddRef();
+    }
+    return b;
+}
+
+MovieClip *MovieClipFactory()
+{
+	return new MovieClip();
+}
+
+bool Test3()
+{
+	bool fail = false;
+	asIScriptEngine *engine;
+	COutStream out;
+
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->RegisterObjectType("DisplayObject", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("DisplayObject", asBEHAVE_ADDREF, "void f()", asMETHOD(DisplayObject, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("DisplayObject", asBEHAVE_RELEASE, "void f()", asMETHOD(DisplayObject, Release), asCALL_THISCALL);
+
+	engine->RegisterObjectType("MovieClip", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_FACTORY, "MovieClip @f()", asFUNCTION(MovieClipFactory), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_ADDREF, "void f()", asMETHOD(MovieClip, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_RELEASE, "void f()", asMETHOD(MovieClip, Release), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_IMPLICIT_REF_CAST, "DisplayObject @f()", asFUNCTION((refCast<MovieClip, DisplayObject>)), asCALL_CDECL_OBJLAST);
+
+	const char *script = 
+		"class TransitionManager { \n"
+		"  void MoveTo(DisplayObject @o) {} \n"
+		"} \n"
+		"TransitionManager mgr; \n"
+		"MovieClip movie; \n"
+		"void OnLoad() \n"
+		"{ \n"
+		"  mgr.MoveTo(movie); \n"
+		"  mgr.MoveTo(@movie); \n"
+		"} \n";
+
+	asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	int r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	r = ExecuteString(engine, "OnLoad()", mod);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	engine->Release();	
+
+	return fail;
+}
 
 } // namespace
 

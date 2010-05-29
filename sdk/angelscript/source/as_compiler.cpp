@@ -8490,7 +8490,8 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 		asCArray<int> excludeVars;
 		if( reservedVars ) excludeVars.Concatenate(*reservedVars);
 		int offset;
-		if( ctx->type.dataType.IsObjectHandle() )
+		if( ctx->type.dataType.IsObjectHandle() || 
+			(ctx->type.dataType.IsObject() && ctx->type.dataType.SupportHandles()) )
 		{
 			offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
 			if( ctx->type.IsNullConstant() )
@@ -8508,6 +8509,7 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 
 			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 			ctx->type.SetVariable(ctx->type.dataType, offset, true);
+			ctx->type.dataType.MakeHandle(true);
 		}
 		else if( ctx->type.dataType.IsPrimitive() )
 		{
