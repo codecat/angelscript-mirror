@@ -36,11 +36,17 @@
 //
 // This version is Xenon specific
 // Modified from as_callfunc_ppc.cpp by Laszlo Perneky Februar 2007
-
+//
+// Modified by Cyril Tissier March 2010:
+// various fixes in 'float' args passing / function return
+// properly handling 'double' type
+// various fixes in asm ppcFunc
+// fix for variable arguments
+//
 #include "as_config.h"
 
 #ifndef AS_MAX_PORTABILITY
-#ifdef AS_XENON
+#if defined(AS_XENON)
 
 #include "as_callfunc.h"
 #include "as_scriptengine.h"
@@ -49,6 +55,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <xtl.h>
 
 BEGIN_AS_NAMESPACE
 
@@ -74,6 +81,8 @@ extern "C" {
 	static asDWORD ppcArgs[AS_PPC_MAX_ARGS + AS_PPC_RETURNINMEM_REG + AS_PPC_THISCALL_REG];
 }
 
+#define PPC_LINKAGE_SIZE  (0x14)                                 // how big the PPC linkage area is in a stack frame
+
 // Loads all data into the correct places and calls the function.
 // ppcArgsType is an array containing a byte type (enum argTypes) for each argument.
 // iStackArgSize is the size in bytes for how much data to put on the stack frame
@@ -88,15 +97,29 @@ asQWORD __declspec( naked ) ppcFunc(const asDWORD* pArgs, int iStackArgSize, asD
 _ppcFunc:
 		// setup stack
 		// Read link register
-		mflr r12
+        mflr    r12
 		// Stack the link register
-		stw  r12,   -8(r1)
+        stw     r12,-8(r1)
+		// backup all registers we use in this fct
+		std     r31,-10h(r1)
+		std     r30,-18h(r1)
+		std     r29,-20h(r1)
+		std     r28,-28h(r1)
+		std     r27,-30h(r1)
+		std     r26,-38h(r1)
+		std     r25,-40h(r1)
+		std     r24,-48h(r1)
+		std     r23,-50h(r1)
+		std     r22,-58h(r1)        
+		std     r21,-60h(r1)        
 		// Move stack pointer
-		stwu r1,  -70h(r1)
+        stwu    r1,-0A0h(r1)
 
-		mr r29, r3 //pArgs
-		mr r30, r4 //iStackArgSize
-		mr r27, r5 //dwFunc
+		mr r29, r3			//pArgs
+		mr r30, r4			//iStackArgSize
+		mr r27, r5			//dwFunc
+
+		addi r31, r1, 14h	// stack args for next function call
 
 		// Clear some registers
 		sub r0, r0, r0
@@ -104,6 +127,8 @@ _ppcFunc:
 		mr  r23, r0
 		// Counting of used/assigned Float Registers
 		mr  r22, r0
+		// Counting extra stack size
+		mr  r21, r0
 
 		// Fetch argument types array address
 		lau r25, ppcArgsType
@@ -140,7 +165,7 @@ ppcNextArg:
 //////////////////////////////////////////////////////////////////////////
 ppcArgIsInteger:
 		// Get the arg from the stack
-		lwz r11, 0(r26)
+		lwz r12, 0(r26)
 
 		// r23 holds the integer arg count so far
 		cmplwi cr6, r23, 0
@@ -161,235 +186,216 @@ ppcArgIsInteger:
 		beq    cr6, ppcLoadIntReg7
 
 		// no more than 8 parameters
-		b      ppcLoadIntRegUpd
+		b		ppcLoadIntRegUpd
 
 		ppcLoadIntReg0:
-		mr r3, r11
+		mr r3, r12
 		b ppcLoadIntRegUpd
 		ppcLoadIntReg1:
-		mr r4, r11
+		mr r4, r12
 		b ppcLoadIntRegUpd
 		ppcLoadIntReg2:
-		mr r5, r11
+		mr r5, r12
 		b ppcLoadIntRegUpd
 		ppcLoadIntReg3:
-		mr r6, r11
+		mr r6, r12
 		b ppcLoadIntRegUpd
 		ppcLoadIntReg4:
-		mr r7, r11
+		mr r7, r12
 		b ppcLoadIntRegUpd
 		ppcLoadIntReg5:
-		mr r8, r11
+		mr r8, r12
 		b ppcLoadIntRegUpd
 		ppcLoadIntReg6:
-		mr r9, r11
+		mr r9, r12
 		b ppcLoadIntRegUpd
 		ppcLoadIntReg7:
-		mr r10, r11
+		mr r10, r12
 		b ppcLoadIntRegUpd
 
 		ppcLoadIntRegUpd:
-		// Increment used int register count
-		addi r23, r23, 1
-		// Increment rArgsPtr
-		addi r29, r29, 4
-		// Increment rStackPtr
-		addi r26, r26, 4
-		b ppcNextArg
+		stw	    r12, 0(r31)			// push on the statck
+		addi	r31, r31, 8			// inc stack by 1 reg
+
+		addi r23, r23, 1			// Increment used int register count
+		addi r29, r29, 4			// Increment rArgsPtr
+		addi r26, r26, 4			// Increment rStackPtr
+		b ppcNextArg				// Call next arg
 
 //////////////////////////////////////////////////////////////////////////
 // Load and stack float arguments
 //////////////////////////////////////////////////////////////////////////
 ppcArgIsFloat:
 		// Get the arg from the stack
-		lfs fr15, 0(r26)
+		lfs fr0, 0(r26)
 
 		// r22 holds the float arg count so far
-		cmplwi cr6, r23, 0
+		cmplwi cr6, r22, 0
 		beq    cr6, ppcLoadFloatReg0
-		cmplwi cr6, r23, 1
+		cmplwi cr6, r22, 1
 		beq    cr6, ppcLoadFloatReg1
-		cmplwi cr6, r23, 2
+		cmplwi cr6, r22, 2
 		beq    cr6, ppcLoadFloatReg2
-		cmplwi cr6, r23, 3
+		cmplwi cr6, r22, 3
 		beq    cr6, ppcLoadFloatReg3
-		cmplwi cr6, r23, 4
+		cmplwi cr6, r22, 4
 		beq    cr6, ppcLoadFloatReg4
-		cmplwi cr6, r23, 5
+		cmplwi cr6, r22, 5
 		beq    cr6, ppcLoadFloatReg5
-		cmplwi cr6, r23, 6
+		cmplwi cr6, r22, 6
 		beq    cr6, ppcLoadFloatReg6
-		cmplwi cr6, r23, 7
+		cmplwi cr6, r22, 7
 		beq    cr6, ppcLoadFloatReg7
-		cmplwi cr6, r23, 8
+		cmplwi cr6, r22, 8
 		beq    cr6, ppcLoadFloatReg8
-		cmplwi cr6, r23, 9
+		cmplwi cr6, r22, 9
 		beq    cr6, ppcLoadFloatReg9
-		cmplwi cr6, r23, 10
+		cmplwi cr6, r22, 10
 		beq    cr6, ppcLoadFloatReg10
-		cmplwi cr6, r23, 11
+		cmplwi cr6, r22, 11
 		beq    cr6, ppcLoadFloatReg11
-		cmplwi cr6, r23, 12
+		cmplwi cr6, r22, 12
 		beq    cr6, ppcLoadFloatReg12
-		cmplwi cr6, r23, 13
-		beq    cr6, ppcLoadFloatReg13
-		cmplwi cr6, r23, 14
-		beq    cr6, ppcLoadFloatReg14
 
-		// no more than 14 parameters
-		b      ppcLoadFloatRegUpd
+		// no more than 12 parameters
+		b		ppcLoadFloatRegUpd
 
 		ppcLoadFloatReg0:
-		fmr fr0, fr15
+		fmr fr1, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg1:
-		fmr fr1, fr15
+		fmr fr2, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg2:
-		fmr fr2, fr15
+		fmr fr3, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg3:
-		fmr fr3, fr15
+		fmr fr4, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg4:
-		fmr fr4, fr15
+		fmr fr5, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg5:
-		fmr fr5, fr15
+		fmr fr6, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg6:
-		fmr fr6, fr15
+		fmr fr7, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg7:
-		fmr fr7, fr15
+		fmr fr8, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg8:
-		fmr fr8, fr15
+		fmr fr9, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg9:
-		fmr fr9, fr15
+		fmr fr10, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg10:
-		fmr fr10, fr15
+		fmr fr11, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg11:
-		fmr fr11, fr15
+		fmr fr12, fr0
 		b ppcLoadFloatRegUpd
 		ppcLoadFloatReg12:
-		fmr fr12, fr15
-		b ppcLoadFloatRegUpd
-		ppcLoadFloatReg13:
-		fmr fr13, fr15
-		b ppcLoadFloatRegUpd
-		ppcLoadFloatReg14:
-		fmr fr14, fr15
+		fmr fr13, fr0
 		b ppcLoadFloatRegUpd
 
 		ppcLoadFloatRegUpd:
-		// Increment used float register count
-		addi r22, r22, 1
-		// Increment used int register count - a float reg eats up a GPR
-		addi r23, r23, 1
-		// Increment rArgsPtr
-		addi r29, r29, 4
-		// Increment rStackPtr
-		addi r26, r26, 4
-		b ppcNextArg
+		stfs	fr0, 0(r31)			// push on the statck
+		addi	r31, r31, 8			// inc stack by 1 reg
+		
+		addi r22, r22, 1			// Increment used float register count
+		addi r23, r23, 1			// Increment used int register count - a float reg eats up a GPR		
+		addi r29, r29, 4			// Increment rArgsPtr		
+		addi r26, r26, 4			// Increment rStackPtr
+		b ppcNextArg				// Call next arg
 
 //////////////////////////////////////////////////////////////////////////
 // Load and stack double float arguments
 //////////////////////////////////////////////////////////////////////////
 ppcArgIsDouble:
 		// Get the arg from the stack
-		lfs fr15, 0(r26)
+		lfd fr0, 0(r26)
 
 		// r22 holds the float arg count so far
-		cmplwi cr6, r23, 0
+		cmplwi cr6, r22, 0
 		beq    cr6, ppcLoadDoubleReg0
-		cmplwi cr6, r23, 1
+		cmplwi cr6, r22, 1
 		beq    cr6, ppcLoadDoubleReg1
-		cmplwi cr6, r23, 2
+		cmplwi cr6, r22, 2
 		beq    cr6, ppcLoadDoubleReg2
-		cmplwi cr6, r23, 3
+		cmplwi cr6, r22, 3
 		beq    cr6, ppcLoadDoubleReg3
-		cmplwi cr6, r23, 4
+		cmplwi cr6, r22, 4
 		beq    cr6, ppcLoadDoubleReg4
-		cmplwi cr6, r23, 5
+		cmplwi cr6, r22, 5
 		beq    cr6, ppcLoadDoubleReg5
-		cmplwi cr6, r23, 6
+		cmplwi cr6, r22, 6
 		beq    cr6, ppcLoadDoubleReg6
-		cmplwi cr6, r23, 7
+		cmplwi cr6, r22, 7
 		beq    cr6, ppcLoadDoubleReg7
-		cmplwi cr6, r23, 8
+		cmplwi cr6, r22, 8
 		beq    cr6, ppcLoadDoubleReg8
-		cmplwi cr6, r23, 9
+		cmplwi cr6, r22, 9
 		beq    cr6, ppcLoadDoubleReg9
-		cmplwi cr6, r23, 10
+		cmplwi cr6, r22, 10
 		beq    cr6, ppcLoadDoubleReg10
-		cmplwi cr6, r23, 11
+		cmplwi cr6, r22, 11
 		beq    cr6, ppcLoadDoubleReg11
-		cmplwi cr6, r23, 12
+		cmplwi cr6, r22, 12
 		beq    cr6, ppcLoadDoubleReg12
-		cmplwi cr6, r23, 13
-		beq    cr6, ppcLoadDoubleReg13
-		cmplwi cr6, r23, 14
-		beq    cr6, ppcLoadDoubleReg14
+
+		// no more than 12 parameters
+		b      ppcLoadDoubleRegUpd
 
 		ppcLoadDoubleReg0:
-		fmr fr0, fr15
+		fmr fr1, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg1:
-		fmr fr1, fr15
+		fmr fr2, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg2:
-		fmr fr2, fr15
+		fmr fr3, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg3:
-		fmr fr3, fr15
+		fmr fr4, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg4:
-		fmr fr4, fr15
+		fmr fr5, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg5:
-		fmr fr5, fr15
+		fmr fr6, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg6:
-		fmr fr6, fr15
+		fmr fr7, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg7:
-		fmr fr7, fr15
+		fmr fr8, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg8:
-		fmr fr8, fr15
+		fmr fr9, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg9:
-		fmr fr9, fr15
+		fmr fr10, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg10:
-		fmr fr10, fr15
+		fmr fr11, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg11:
-		fmr fr11, fr15
+		fmr fr12, fr0
 		b ppcLoadDoubleRegUpd
 		ppcLoadDoubleReg12:
-		fmr fr12, fr15
-		b ppcLoadDoubleRegUpd
-		ppcLoadDoubleReg13:
-		fmr fr13, fr15
-		b ppcLoadDoubleRegUpd
-		ppcLoadDoubleReg14:
-		fmr fr14, fr15
+		fmr fr13, fr0
 		b ppcLoadDoubleRegUpd
 
 		ppcLoadDoubleRegUpd:
-		// Increment used float register count
-		addi r22, r22, 1
-		// Increment used int register count
-		addi r23, r23, 1
-		// Increment rArgsPtr
-		addi r29, r29, 4
-		// Increment rStackPtr
-		addi r26, r26, 4
+		stfd	fr0, 0(r31)			// push on the statck
+		addi	r31, r31, 8			// inc stack by 1 reg
+		
+		addi r22, r22, 1			// Increment used float register count		
+		addi r23, r23, 1			// Increment used int register count
+		addi r29, r29, 8			// Increment rArgsPtr
+		addi r26, r26, 8			// Increment rStackPtr
 		b ppcNextArg
 
 //////////////////////////////////////////////////////////////////////////
@@ -401,49 +407,65 @@ ppcArgsEnd:
 		bctrl
 
 		// Function returned
-
 		// Restore callers stack
-		addi r1, r1, 70h
+		addi	r1, r1, 0A0h
 		// Fetch return link to caller
-		lwz  r12, -8(r1)
-		mtlr r12
-
+        lwz     r12,-8(r1)
+		mtlr	r12
+		// restore all registers we used in this fct
+		ld     r31,-10h(r1)
+		ld     r30,-18h(r1)
+		ld     r29,-20h(r1)
+		ld     r28,-28h(r1)
+		ld     r27,-30h(r1)
+		ld     r26,-38h(r1)
+		ld     r25,-40h(r1)
+		ld     r24,-48h(r1)
+		ld     r23,-50h(r1)
+		ld     r22,-58h(r1)        
+		ld     r21,-60h(r1) 
 		blr
 	}
 }
+
+
+
 
 // Puts the arguments in the correct place in the stack array.
 //-------------------------------------------------------------------
 void stackArgs(const asDWORD *pArgs, int& iNumIntArgs, int& iNumFloatArgs, int& iNumDoubleArgs)
 {
-	int iArgWordPos = iNumIntArgs + iNumFloatArgs + iNumDoubleArgs;
+	asBYTE * pSrcArgs	= (asBYTE *) pArgs;		// pSrcArgs += (4*iArgWordPos);
+	asBYTE * pDstArgs	= (asBYTE *) ppcArgs;	// pDstArgs += (4*iArgWordPos);
 
 	for(int iArg = 0; iArg < AS_PPC_MAX_ARGS; iArg++)
 	{
 		if ( ppcArgsType[iArg] == ppcENDARG )
 			break;
 
-		if( ppcArgsType[iArg] == ppcFLOATARG )
+		if ( ppcArgsType[iArg] == ppcFLOATARG )
 		{
-			// stow float
-			((float*)ppcArgs)[iArgWordPos] = ((float*)(pArgs))[iArg];
+			// stow float			
+			*((float*) pDstArgs) = *((float*) pSrcArgs);
+			pSrcArgs += 4;
+			pDstArgs += 4;
 			iNumFloatArgs++;
-			iArgWordPos++; //add one word
 		}
-		if ( ppcArgsType[iArg] == ppcDOUBLEARG )
+		else if ( ppcArgsType[iArg] == ppcDOUBLEARG )
 		{
 			// stow double
-			((double*)ppcArgs)[iArgWordPos] = ((double*)(pArgs))[iArg];
+			*((double*) pDstArgs) = *((double*) pSrcArgs);
+			pSrcArgs += 8;
+			pDstArgs += 8;
 			iNumDoubleArgs++;
-			iArgWordPos++; //add two words
 		}
-
-		if( ppcArgsType[iArg] == ppcINTARG )
+		else if ( ppcArgsType[iArg] == ppcINTARG )
 		{
 			// stow register
-			((int*)ppcArgs)[iArgWordPos] = ((int*)(pArgs))[iArg];
+			*((int*) pDstArgs) = *((int*) pSrcArgs);
+			pSrcArgs += 4;
+			pDstArgs += 4;
 			iNumIntArgs++;
-			iArgWordPos++;
 		}
 	}
 }
@@ -459,7 +481,7 @@ asQWORD CallCDeclFunction(const asDWORD* pArgs, int iArgSize, asDWORD dwFunc)
 	// Put the arguments in the correct places in the ppcArgs array
 	if ( iArgSize > 0 )
 		stackArgs( pArgs, iIntArgs, iFloatArgs, iDoubleArgs );
-
+	
 	return ppcFunc( ppcArgs, iArgSize, dwFunc);
 }
 
@@ -492,10 +514,11 @@ asQWORD CallThisCallFunction_objLast(const void* pObj, const asDWORD* pArgs, int
 	if ( iArgSize > 0 )
 		stackArgs( pArgs, iIntArgs, iFloatArgs, iDoubleArgs );
 
-	int iNumArgs = iIntArgs + iFloatArgs + iDoubleArgs;
-	if ( iNumArgs < AS_PPC_MAX_ARGS )
+	int iNumArgs	= iIntArgs + iFloatArgs + iDoubleArgs;
+	int iDWordCount = (iIntArgs + iFloatArgs + 2*iDoubleArgs);
+	if ( iDWordCount < AS_PPC_MAX_ARGS )
 	{
-		ppcArgs[iNumArgs]     = (asDWORD)pObj;
+		ppcArgs[iDWordCount]  = (asDWORD)pObj;
 		ppcArgsType[iNumArgs] = ppcINTARG;
 	}
 
@@ -509,7 +532,7 @@ asDWORD GetReturnedFloat()
 
 	__asm
 	{
-		stfs fr0, f
+		stfs fr1, f
 	}
 
 	return f;
@@ -523,10 +546,16 @@ asQWORD GetReturnedDouble()
 
 	__asm
 	{
-		stfd fr0, f
+		stfd fr1, f
 	}
 
 	return f;
+}
+
+// returns true if the given parameter is a 'variable argument'
+inline bool IsVariableArgument( asCDataType type )
+{
+	return (type.GetTokenType() == ttQuestion) ? true : false;
 }
 
 int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
@@ -536,7 +565,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 
 	asCScriptEngine*            pEngine  = pContext->engine;
 	asCScriptFunction*          pDescr   = pEngine->scriptFunctions[iId];
-	asSSystemFunctionInterface* pSysFunc = pDescr->sysFuncIntf;
+	asSSystemFunctionInterface* pSysFunc = pDescr->sysFuncIntf;	
 
 	int iCallConv = pSysFunc->callConv;
 	if ( iCallConv == ICC_GENERIC_FUNC
@@ -632,8 +661,8 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 				if( pDescr->parameterTypes[uParam].GetObjectType()->flags & COMPLEX_MASK )
 				{
-					paramBuffer[dpos++] = args[spos++];
-					paramSize++;
+					paramBuffer[iDpos++] = pArgs[iSpos++];
+					iParamSize++;
 				}
 				else
 #endif
@@ -656,25 +685,79 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 					paramBuffer[iDpos++] = pArgs[iSpos++];
 				iParamSize += pDescr->parameterTypes[uParam].GetSizeOnStackDWords();
 			}
+
+			// if this was a variable argument parameter, then account for the implicit typeID
+			if( IsVariableArgument( pDescr->parameterTypes[uParam] ) )
+			{
+				// the TypeID is just a DWORD
+				paramBuffer[iDpos++] = pArgs[iSpos++];
+				++iParamSize;
+			}
+		}
+
+		// Keep a free location at the beginning
+		pArgs = &paramBuffer[1];
+	}
+
+
+	int const paramCount = (int)pDescr->parameterTypes.GetLength();
+
+	asBYTE * pCurArgType		= (asBYTE*)&ppcArgsType[iArgsPtr];
+	asBYTE * pCurFixedArgValue	= (asBYTE*)&fixedArgs[iArgsPtr];
+	asBYTE * pCurStackArgValue	= (asBYTE*)pArgs;
+
+	for( int iParam = 0; iParam < paramCount ; iParam++ )
+	{		
+		iArgsPtr++;
+
+		if (pDescr->parameterTypes[iParam].IsFloatType() && !pDescr->parameterTypes[iParam].IsReference())
+		{
+			*pCurArgType++ = ppcFLOATARG;
+
+			*((float*) pCurFixedArgValue) = *((float*) pCurStackArgValue);
+
+			pCurFixedArgValue += 4;
+			pCurStackArgValue += 4;
+		}
+		else if (pDescr->parameterTypes[iParam].IsDoubleType() && !pDescr->parameterTypes[iParam].IsReference())
+		{
+			*pCurArgType++ = ppcDOUBLEARG;
+
+			*((double*) pCurFixedArgValue) = *((double*) pCurStackArgValue);
+
+			pCurFixedArgValue += 8;
+			pCurStackArgValue += 8;
+		}
+		else
+		{
+			*pCurArgType++ = ppcINTARG;
+
+			*((int*) pCurFixedArgValue) = *((int*) pCurStackArgValue);
+
+			// If the arg is bool, then endian swap it /it would not neccessary if the AS_BIG_ENDIAN would swap the bool from 0x01000000 to 0x00000010/
+			if ( pDescr->parameterTypes[iParam].GetTokenType() == ttBool )
+			{
+				pCurFixedArgValue[3] = pCurFixedArgValue[0];
+			}
+
+			pCurFixedArgValue += 4;
+			pCurStackArgValue += 4;
+		}
+
+		// if it is a variable argument, account for the typeID
+		// implicitly add another parameter (AFTER the parameter above), for the TypeID
+		if( IsVariableArgument(pDescr->parameterTypes[iParam]) )
+		{			
+			iArgsPtr++;
+
+			*pCurArgType++ = ppcINTARG;
+
+			*((int*) pCurFixedArgValue) = *((int*) pCurStackArgValue);
+
+			pCurFixedArgValue += 4;
+			pCurStackArgValue += 4;
 		}
 	}
-
-	// Copy the parameter types for the ppcFunc. Also copy the params for the fixed xenon args buffer /containing this and return ptr/
-	for( int iParam = 0; iParam < (int)pDescr->parameterTypes.GetLength(); iParam++, iArgsPtr++ )
-	{
-		ppcArgsType[iArgsPtr] = ppcINTARG;
-		if (pDescr->parameterTypes[iParam].IsFloatType())
-			ppcArgsType[iArgsPtr] = ppcFLOATARG;
-		else if (pDescr->parameterTypes[iParam].IsDoubleType())
-			ppcArgsType[iArgsPtr] = ppcDOUBLEARG;
-
-		fixedArgs[iArgsPtr] = pArgs[iParam];
-
-		// If the arg is bool, then endian swap it /it would not neccessary if the AS_BIG_ENDIAN would swap the bool from 0x01000000 to 0x00000010/
-		if ( pDescr->parameterTypes[iParam].GetTokenType() == ttBool )
-			((asBYTE*)(&fixedArgs[iArgsPtr]))[3] = ((asBYTE*)(&fixedArgs[iArgsPtr]))[0];
-	}
-
 
 	pContext->isCallingSystemFunction = true;
 	switch ( iCallConv )
@@ -733,6 +816,12 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 			}
 			else
 				iSpos += pDescr->parameterTypes[iParam].GetSizeInMemoryDWords();
+
+			if( IsVariableArgument(pDescr->parameterTypes[iParam]) )
+			{
+				// account for the implicit TypeID
+				++iSpos;
+			}
 		}
 	}
 #endif
@@ -797,8 +886,7 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 		int iSpos = 0;
 		for ( asUINT uParam = 0; uParam < pDescr->parameterTypes.GetLength(); uParam++ )
 		{
-			if ( pSysFunc->paramAutoHandles[uParam]
-				&& pArgs[iSpos] )
+			if ( pSysFunc->paramAutoHandles[uParam] && pArgs[iSpos] )
 			{
 				// Call the release method on the type
 				pEngine->CallObjectMethod( (void*)pArgs[iSpos], pDescr->parameterTypes[uParam].GetObjectType()->beh.release );
@@ -811,6 +899,12 @@ int CallSystemFunction(int iId, asCContext* pContext, void* pObjectPointer)
 				iSpos++;
 			else
 				iSpos += pDescr->parameterTypes[uParam].GetSizeOnStackDWords();
+
+			if( IsVariableArgument( pDescr->parameterTypes[uParam] ) )
+			{
+				// account for the implicit TypeID
+				++iSpos;
+			}
 		}
 	}
 

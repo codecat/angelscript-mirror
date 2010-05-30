@@ -1445,8 +1445,9 @@ public:
     //! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
     //! \retval asERROR The script failed to build.
     //! \retval asBUILD_IN_PROGRESS Another thread is currently building. 
-    //!
-    //! Builds the script based on the added sections, and registered types and functions. After the
+	//! \retval asINIT_GLOBAL_VARS_FAILED It was not possible to initialize at least one of the global variables.
+	//!
+	//! Builds the script based on the added sections, and registered types and functions. After the
     //! build is complete the script sections are removed to free memory. If the script module needs 
     //! to be rebuilt all of the script sections needs to be added again.
     //! 
@@ -1454,7 +1455,9 @@ public:
     //! If there are no errors or warnings, no messages will be sent to the callback function.
     //!
     //! Any global variables found in the script will be initialized by the
-    //! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set.
+    //! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set. If you get the error
+	//! asINIT_GLOBAL_VARS_FAILED, then it is probable that one of the global variables during the initialization 
+	//! is trying to access another global variable before it has been initialized. 
 	virtual int  Build() = 0;
 	//! \brief Compile a single function.
 	//!
@@ -1562,13 +1565,13 @@ public:
     //!
     //! \return A negative value on error.
     //! \retval asERROR The module was not compiled successfully.
+    //! \retval asINIT_GLOBAL_VARS_FAILED The initialization of the global variables failed.
     //!
     //! Resets the global variables declared in this module to their initial value.
 	virtual int         ResetGlobalVars() = 0;
 	//! \brief Returns the number of global variables in the module.
     //! \return A negative value on error, or the number of global variables in the module.
 	//! \retval asERROR The module was not compiled successfully.
-	//! \retval asINIT_GLOBAL_VARS_FAILED The initialization of the global variables failed.
 	virtual int         GetGlobalVarCount() = 0;
 	//! \brief Returns the global variable index by name.
     //! \param[in] name The name of the global variable.

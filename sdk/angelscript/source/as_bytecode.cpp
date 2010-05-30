@@ -1570,6 +1570,12 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine)
 	FILE *file = fopen(str.AddressOf(), "w");
 #endif
 
+#ifdef AS_XENON // XBox 360
+	// When running in DVD Emu, no write is allowed
+	if( file == 0 )
+		return;
+#endif
+
 	fprintf(file, "Temps: ");
 	for( asUINT n = 0; n < temporaryVariables.GetLength(); n++ )
 	{
