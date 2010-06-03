@@ -1580,14 +1580,15 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 		{
 		case asBCTYPE_NO_ARG:
 			{
-				*bc++ = b;
+				*(asBYTE*)(bc) = b;
+				bc++;
 			}
 			break;
 		case asBCTYPE_W_ARG:
 		case asBCTYPE_wW_ARG:
 		case asBCTYPE_rW_ARG:
 			{
-				*bc = b;
+				*(asBYTE*)(bc) = b;
 
 				// Read the argument
 				asWORD w;
@@ -1600,7 +1601,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 		case asBCTYPE_rW_DW_ARG:
 		case asBCTYPE_wW_DW_ARG:
 			{
-				*bc = b;
+				*(asBYTE*)(bc) = b;
 
 				// Read the word argument
 				asWORD w;
@@ -1615,7 +1616,8 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_DW_ARG:
 			{
-				*bc++ = b;
+				*(asBYTE*)(bc) = b;
+				bc++;
 
 				// Read the argument
 				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
@@ -1624,7 +1626,8 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_DW_DW_ARG:
 			{
-				*bc++ = b;
+				*(asBYTE*)(bc) = b;
+				bc++;
 
 				// Read the first argument
 				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
@@ -1637,7 +1640,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_wW_rW_rW_ARG:
 			{
-				*bc = b;
+				*(asBYTE*)(bc) = b;
 
 				// Read the first argument
 				asWORD w;
@@ -1661,7 +1664,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 		case asBCTYPE_W_rW_ARG:
 		case asBCTYPE_wW_W_ARG:
 			{
-				*bc = b;
+				*(asBYTE*)(bc) = b;
 
 				// Read the first argument
 				asWORD w;
@@ -1678,7 +1681,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_wW_rW_DW_ARG:
 			{
-				*bc = b;
+				*(asBYTE*)(bc) = b;
 
 				// Read the first argument
 				asWORD w;
@@ -1699,7 +1702,8 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_QW_ARG:
 			{
-				*bc++ = b;
+				*(asBYTE*)(bc) = b;
+				bc++;
 
 				// Read the argument
 				asQWORD qw;
@@ -1710,7 +1714,8 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_QW_DW_ARG:
 			{
-				*bc++ = b;
+				*(asBYTE*)(bc) = b;
+				bc++;
 
 				// Read the first argument
 				asQWORD qw;
@@ -1727,7 +1732,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 		case asBCTYPE_rW_QW_ARG:
 		case asBCTYPE_wW_QW_ARG:
 			{
-				*bc = b;
+				*(asBYTE*)(bc) = b;
 
 				// Read the first argument
 				asWORD w;

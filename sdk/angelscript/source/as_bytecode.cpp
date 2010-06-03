@@ -552,8 +552,8 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 	{
 		curr->op = asBC_SetG4;
 		curr->size = asBCTypeSize[asBCInfo[asBC_SetG4].type];
-		*(((asDWORD*)&curr->arg)+AS_PTR_SIZE) = (asDWORD)curr->arg;
-		*(asPTRWORD*)&curr->arg = (asPTRWORD)curr->next->arg;
+		*(((asDWORD*)&curr->arg)+AS_PTR_SIZE) = *ARG_DW(curr->arg);
+		*ARG_PTR(curr->arg) = *ARG_PTR(curr->next->arg);
 		DeleteInstruction(curr->next);
 		*next = GoBack(curr);
 		return true;

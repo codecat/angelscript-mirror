@@ -519,6 +519,8 @@ public:
 	MovieClip() : DisplayObject() {}
 };
 
+#if !defined(_MSC_VER) || _MSC_VER > 1200
+// This doesn't seem to link well on MSVC6
 template<class A, class B>
 B* refCast(A* a)
 {
@@ -534,6 +536,7 @@ B* refCast(A* a)
     }
     return b;
 }
+#endif
 
 MovieClip *MovieClipFactory()
 {
@@ -542,6 +545,11 @@ MovieClip *MovieClipFactory()
 
 bool Test3()
 {
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+	// This doesn't work on MSVC6
+	return false;
+#endif
+
 	bool fail = false;
 	asIScriptEngine *engine;
 	COutStream out;
@@ -556,7 +564,9 @@ bool Test3()
 	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_FACTORY, "MovieClip @f()", asFUNCTION(MovieClipFactory), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_ADDREF, "void f()", asMETHOD(MovieClip, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_RELEASE, "void f()", asMETHOD(MovieClip, Release), asCALL_THISCALL);
+#if !defined(_MSC_VER) || _MSC_VER > 1200
 	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_IMPLICIT_REF_CAST, "DisplayObject @f()", asFUNCTION((refCast<MovieClip, DisplayObject>)), asCALL_CDECL_OBJLAST);
+#endif
 
 	const char *script = 
 		"class TransitionManager { \n"
