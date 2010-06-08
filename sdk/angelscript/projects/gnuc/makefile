@@ -30,7 +30,7 @@ else ifeq ($(TARGETPLATFORM), android)
 	CXX = $(ANDROIDBIN)/arm-eabi-gcc
 	CXXFLAGS = -g -Wall -I$(SYSROOT)/usr/include \
 	-Wall \
-    -DANDROID \
+	-DANDROID \
 	-fno-exceptions \
 	-march=armv6 -mthumb-interwork \
 	-mfloat-abi=softfp -fno-rtti
@@ -40,7 +40,7 @@ else
 	CXX = gcc
 	# On i686 architecture you may need to add -march=i686 if you get 
 	# an undefined symbol for __sync_sub_and_fetch_4 in as_atomic.cpp.
-	CXXFLAGS = -g -Wall -fPIC
+	CXXFLAGS = -g -Wall -fPIC -fno-strict-aliasing
 endif
 
 DELETER = rm -f
