@@ -71,7 +71,7 @@ protected:
 	void WriteObjectProperty(asCObjectProperty *prop);
 	void WriteDataType(const asCDataType *dt);
 	void WriteObjectType(asCObjectType *ot);
-	void WriteObjectTypeDeclaration(asCObjectType *ot, bool writeProperties);
+	void WriteObjectTypeDeclaration(asCObjectType *ot, int phase);
 	void WriteByteCode(asDWORD *bc, int length);
 	void WriteEncodedUInt(asUINT i);
 
@@ -82,7 +82,7 @@ protected:
 	void ReadObjectProperty(asCObjectProperty *prop);
 	void ReadDataType(asCDataType *dt);
 	asCObjectType *ReadObjectType();
-	void ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties);
+	void ReadObjectTypeDeclaration(asCObjectType *ot, int phase);
 	void ReadByteCode(asDWORD *bc, int length);
 	asUINT ReadEncodedUInt();
 

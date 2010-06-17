@@ -93,8 +93,8 @@ int asCRestore::Save()
 	WriteEncodedUInt(count);
 	for( i = 0; i < count; i++ )
 	{
-		WriteObjectTypeDeclaration(module->enumTypes[i], false);
-		WriteObjectTypeDeclaration(module->enumTypes[i], true);
+		WriteObjectTypeDeclaration(module->enumTypes[i], 1);
+		WriteObjectTypeDeclaration(module->enumTypes[i], 2);
 	}
 
 	// Store type declarations first
@@ -103,7 +103,7 @@ int asCRestore::Save()
 	for( i = 0; i < count; i++ )
 	{
 		// Store only the name of the class/interface types
-		WriteObjectTypeDeclaration(module->classTypes[i], false);
+		WriteObjectTypeDeclaration(module->classTypes[i], 1);
 	}
 
 	// Store func defs
@@ -119,14 +119,21 @@ int asCRestore::Save()
 	for( i = 0; i < count; i++ )
 	{
 		if( module->classTypes[i]->IsInterface() )
-			WriteObjectTypeDeclaration(module->classTypes[i], true);
+			WriteObjectTypeDeclaration(module->classTypes[i], 2);
 	}
 
-	// Then store the class methods, properties, and behaviours
+	// Then store the class methods and behaviours
 	for( i = 0; i < count; ++i )
 	{
 		if( !module->classTypes[i]->IsInterface() )
-			WriteObjectTypeDeclaration(module->classTypes[i], true);
+			WriteObjectTypeDeclaration(module->classTypes[i], 2);
+	}
+
+	// Then store the class properties
+	for( i = 0; i < count; ++i )
+	{
+		if( !module->classTypes[i]->IsInterface() )
+			WriteObjectTypeDeclaration(module->classTypes[i], 3);
 	}
 
 	// Store typedefs
@@ -134,8 +141,8 @@ int asCRestore::Save()
 	WriteEncodedUInt(count);
 	for( i = 0; i < count; i++ )
 	{
-		WriteObjectTypeDeclaration(module->typeDefs[i], false);
-		WriteObjectTypeDeclaration(module->typeDefs[i], true);
+		WriteObjectTypeDeclaration(module->typeDefs[i], 1);
+		WriteObjectTypeDeclaration(module->typeDefs[i], 2);
 	}
 
 	// scriptGlobals[]
@@ -212,11 +219,11 @@ int asCRestore::Restore()
 	for( i = 0; i < count; i++ )
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
-		ReadObjectTypeDeclaration(ot, false);
+		ReadObjectTypeDeclaration(ot, 1);
 		engine->classTypes.PushLast(ot);
 		module->enumTypes.PushLast(ot);
 		ot->AddRef();
-		ReadObjectTypeDeclaration(ot, true);
+		ReadObjectTypeDeclaration(ot, 2);
 	}
 
 	// structTypes[]
@@ -226,7 +233,7 @@ int asCRestore::Restore()
 	for( i = 0; i < count; ++i )
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
-		ReadObjectTypeDeclaration(ot, false);
+		ReadObjectTypeDeclaration(ot, 1);
 		engine->classTypes.PushLast(ot);
 		module->classTypes.PushLast(ot);
 		ot->AddRef();
@@ -249,16 +256,23 @@ int asCRestore::Restore()
 	for( i = 0; i < module->classTypes.GetLength(); i++ )
 	{
 		if( module->classTypes[i]->IsInterface() )
-			ReadObjectTypeDeclaration(module->classTypes[i], true);
+			ReadObjectTypeDeclaration(module->classTypes[i], 2);
 	}
 
 	module->ResolveInterfaceIds();
 
-	// Read class methods, properties, and behaviours
+	// Read class methods and behaviours
 	for( i = 0; i < module->classTypes.GetLength(); ++i )
 	{
 		if( !module->classTypes[i]->IsInterface() )
-			ReadObjectTypeDeclaration(module->classTypes[i], true);
+			ReadObjectTypeDeclaration(module->classTypes[i], 2);
+	}
+
+	// Read class properties
+	for( i = 0; i < module->classTypes.GetLength(); ++i )
+	{
+		if( !module->classTypes[i]->IsInterface() )
+			ReadObjectTypeDeclaration(module->classTypes[i], 3);
 	}
 
 	// Read typedefs
@@ -267,11 +281,11 @@ int asCRestore::Restore()
 	for( i = 0; i < count; i++ )
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
-		ReadObjectTypeDeclaration(ot, false);
+		ReadObjectTypeDeclaration(ot, 1);
 		engine->classTypes.PushLast(ot);
 		module->typeDefs.PushLast(ot);
 		ot->AddRef();
-		ReadObjectTypeDeclaration(ot, true);
+		ReadObjectTypeDeclaration(ot, 2);
 	}
 
 	// scriptGlobals[]
@@ -660,9 +674,9 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 	return func;
 }
 
-void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writeProperties)
+void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 {
-	if( !writeProperties )
+	if( phase == 1 )
 	{
 		// name
 		WriteString(&ot->name);
@@ -672,7 +686,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 		asDWORD flags = ot->flags;
 		WRITE_NUM(flags);
 	}
-	else
+	else if( phase == 2 )
 	{
 		if( ot->flags & asOBJ_ENUM )
 		{
@@ -702,14 +716,6 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 			for( n = 0; n < ot->interfaces.GetLength(); n++ )
 			{
 				WriteObjectType(ot->interfaces[n]);
-			}
-
-			// properties[]
-			size = (asUINT)ot->properties.GetLength();
-			WriteEncodedUInt(size);
-			for( n = 0; n < ot->properties.GetLength(); n++ )
-			{
-				WriteObjectProperty(ot->properties[n]);
 			}
 
 			// behaviours
@@ -744,11 +750,21 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, bool writePropert
 			}
 		}
 	}
+	else if( phase == 3 )
+	{
+		// properties[]
+		asUINT size = (asUINT)ot->properties.GetLength();
+		WriteEncodedUInt(size);
+		for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
+		{
+			WriteObjectProperty(ot->properties[n]);
+		}
+	}
 }
 
-void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readProperties)
+void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 {
-	if( !readProperties )
+	if( phase == 1 )
 	{
 		// name
 		ReadString(&ot->name);
@@ -774,7 +790,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 		for( asUINT i = 1; i < ot->beh.operators.GetLength(); i += 2 )
 			engine->scriptFunctions[ot->beh.operators[i]]->AddRef();
 	}
-	else
+	else if( phase == 2 )
 	{	
 		if( ot->flags & asOBJ_ENUM )
 		{
@@ -808,16 +824,6 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 			{
 				asCObjectType *intf = ReadObjectType();
 				ot->interfaces.PushLast(intf);
-			}
-
-			// properties[]
-			size = ReadEncodedUInt();
-			ot->properties.Allocate(size,0);
-			for( n = 0; n < size; n++ )
-			{
-				asCObjectProperty *prop = asNEW(asCObjectProperty);
-				ReadObjectProperty(prop);
-				ot->properties.PushLast(prop);
 			}
 
 			// behaviours
@@ -872,6 +878,18 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, bool readPropertie
 				ot->virtualFunctionTable.PushLast(func);
 				func->AddRef();
 			}
+		}
+	}
+	else if( phase == 3 )
+	{
+		// properties[]
+		asUINT size = ReadEncodedUInt();
+		ot->properties.Allocate(size,0);
+		for( asUINT n = 0; n < size; n++ )
+		{
+			asCObjectProperty *prop = asNEW(asCObjectProperty);
+			ReadObjectProperty(prop);
+			ot->properties.PushLast(prop);
 		}
 	}
 }

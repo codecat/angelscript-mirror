@@ -328,7 +328,7 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1395 ) 
+	if( stream.buffer.size() != 1394 ) 
 	{
 		// Originally this was 3213
 		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
@@ -336,7 +336,7 @@ bool Test()
 	}
 
 	asUINT zeroes = stream.CountZeroes();
-	if( zeroes != 433 )
+	if( zeroes != 432 )
 	{
 		printf("The saved byte code contains a different amount of zeroes than expected. Counted %d\n", zeroes);
 	}
@@ -616,6 +616,38 @@ bool Test()
 		if( ExecuteString(engine, "main()", mod) != asEXECUTION_FINISHED )
 			fail = true;
 		
+		engine->Release();
+	}
+
+	// Test loading script with out of order template declarations 
+	{
+		const char *script = 
+			"class HogeManager \n"
+			"{ \n"
+			"  array< Hoge >@ hogeArray; \n"
+			"} \n"
+			"class Hoge {}; \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			fail = true;
+
 		engine->Release();
 	}
 
