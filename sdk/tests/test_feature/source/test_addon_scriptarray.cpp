@@ -359,6 +359,29 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test garbage collect with script class that holds array member
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine);
+
+		asIScriptModule *mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+
+		const char *script = 
+			"class MyTest \n"
+			"{ \n"
+			"	array<int> myList; \n"
+			"} \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("MyTest"));
+		obj->Release();
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;

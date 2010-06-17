@@ -472,7 +472,9 @@ void *asCScriptObject::AllocateObject(asCObjectType *objType, asCScriptEngine *e
 	}
 	else if( objType->flags & asOBJ_TEMPLATE )
 	{
-		ptr = ArrayObjectFactory(objType);
+		// Templates store the original factory that takes the object
+		// type as a hidden parameter in the construct behaviour
+		ptr = engine->CallGlobalFunctionRetPtr(objType->beh.construct, objType);
 	}
 	else if( objType->flags & asOBJ_REF )
 	{
