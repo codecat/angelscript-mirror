@@ -4,6 +4,12 @@
 #include <math.h>
 #include "scriptmath3d.h"
 
+#ifdef __BORLANDC__
+// C++Builder doesn't define a non-standard "sqrtf" function but rather an overload of "sqrt"
+// for float arguments.
+inline float sqrtf (float x) { return sqrt (x); }
+#endif
+
 BEGIN_AS_NAMESPACE
 
 Vector3::Vector3()

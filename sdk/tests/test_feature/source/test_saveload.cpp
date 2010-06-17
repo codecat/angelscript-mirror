@@ -4,6 +4,7 @@
 // Test author: Andreas Jonsson
 //
 
+#include <memory>
 #include <vector>
 #include "utils.h"
 #include "../../../add_on/scriptarray/scriptarray.h"

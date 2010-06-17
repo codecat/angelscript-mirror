@@ -44,6 +44,8 @@
 
 #include <angelscript.h>
 
+BEGIN_AS_NAMESPACE
+
 template <typename T>
 class vectorRegisterHelper
 {
@@ -223,6 +225,8 @@ void RegisterVector(const std::string V_AS,  //The typename of the vector inside
 	assert(error_code >= 0 && "Failed to register insert");
 */
 }
+
+END_AS_NAMESPACE
 
 #endif
 

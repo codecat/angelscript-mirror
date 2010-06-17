@@ -1,6 +1,9 @@
+#include <memory>
+
 #include "stdvector.h"
 #include "utils.h"
 
+using namespace std;
 
 namespace TestArrayObject
 {

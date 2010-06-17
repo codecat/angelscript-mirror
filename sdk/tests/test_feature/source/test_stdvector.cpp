@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "stdvector.h"
 #include "utils.h"
 
@@ -141,7 +143,7 @@ bool Test()
 	RegisterStdString(engine);
 	RegisterVector<char>("int8[]", "int8", engine);
 	RegisterVector<int>("int[]", "int", engine);
-#if defined(__GNUC__) || _MSC_VER >= 1500
+#if defined(__GNUC__) || _MSC_VER >= 1500 || defined(__BORLANDC__)
 	RegisterVector<string>("string[]", "string", engine);
 	RegisterVector< std::vector<int> >("int[][]", "int[]", engine);
 #else

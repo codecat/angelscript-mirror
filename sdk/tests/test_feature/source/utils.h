@@ -16,13 +16,24 @@
 #include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/scripthelper/scripthelper.h"
 
+#ifdef __BORLANDC__
+// C++Builder doesn't define most of the non-standard float-specific math functions with
+// "*f" suffix; instead it provides overloads for the standard math functions which take
+// "float" arguments.
+inline float fabsf (float arg) { return std::fabs (arg); }
+
+// C++Builder 2006 and earlier don't pull "memcpy" into the global namespace.
+using std::memcpy; 
+#endif
+
+
 #ifdef AS_USE_NAMESPACE
 using namespace AngelScript;
 #endif
 
 #if defined(__GNUC__) && !(defined(__ppc__) || defined(__PPC__))
 #define STDCALL __attribute__((stdcall))
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) || defined(__BORLANDC__)
 #define STDCALL __stdcall
 #else
 #define STDCALL
@@ -117,7 +128,7 @@ public:
 	void Write(const void *ptr, asUINT size) 
 	{
 		if( size == 0 ) return; 
-		buffer.resize(buffer.size() + size); 
+		buffer.resize(buffer.size() + size);
 		memcpy(&buffer[wpointer], ptr, size); 
 		wpointer += size;
 		// Are we writing zeroes?

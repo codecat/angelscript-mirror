@@ -1,3 +1,4 @@
+#ifdef _MSC_VER
 /*
     CString class registration for AngelScript.
     
@@ -411,3 +412,4 @@ public:
 		nResult = pEngine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(uint64)", asFUNCTION(AddAssignUInt64ToString), asCALL_CDECL_OBJLAST); ATLASSERT( nResult >= 0 );
 	}
 };
+#endif

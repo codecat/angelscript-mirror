@@ -41,7 +41,14 @@ Foo& AssignFoo(const Foo& rhs, Foo* ptr) { return (*ptr) = rhs; }
 
 void ConstructString(std::string* ptr) { new (ptr) std::string(); }
 void CopyConstructString(const std::string& rhs, std::string* ptr) { new (ptr) std::string(rhs); }
-void DestroyString(std::string* ptr) { ptr->~basic_string(); } 
+void DestroyString(std::string* ptr)
+{
+#if !defined(__BORLANDC__) || __BORLANDC__ >= 0x590
+	// Some weird BCC bug (which was fixed in C++Builder 2007) prevents us from calling a
+	// destructor explicitly on template functions.
+	ptr->~basic_string();
+#endif
+}
 std::string& AssignString(const std::string& rhs, std::string* ptr) { return (*ptr) = rhs; }
 
 std::string StringFactory(unsigned int length, const char *s)

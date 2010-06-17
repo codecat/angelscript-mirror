@@ -628,7 +628,11 @@ void StringConstructUTF16(vector<asWORD> *o)
 
 void StringDestructUTF16(vector<asWORD> *o)
 {
+#if !defined(__BORLANDC__) || __BORLANDC__ >= 0x590
+	// Some weird BCC bug (which was fixed in C++Builder 2007) prevents us from calling a
+	// destructor explicitly on template functions.
 	o->~vector();
+#endif
 }
 
 bool TestUTF16()

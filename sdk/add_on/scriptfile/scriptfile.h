@@ -31,6 +31,7 @@
 
 #include <angelscript.h>
 #include <string>
+#include <stdio.h>
 
 BEGIN_AS_NAMESPACE
 
