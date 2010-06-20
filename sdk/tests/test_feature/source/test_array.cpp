@@ -296,6 +296,30 @@ bool Test()
 
 	engine->Release();
 
+	// Test circular reference between types
+	{
+		// Create the script engine
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		// Compile
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", 
+			"class Hoge"
+			"{"
+			"    Hoge(){}"
+			"    Hoge(HogeManager&){}"
+			"};"
+			"class HogeManager"
+			"{"
+			"    Hoge[] hoges;"
+			"};"
+			, 0);
+		mod->Build();
+
+		// Release engine
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

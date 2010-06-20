@@ -491,6 +491,10 @@ asCScriptEngine::~asCScriptEngine()
 	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
+	// There may be instances where one more gc cycle must be run
+	GarbageCollect(asGC_FULL_CYCLE);
+	ClearUnusedTypes();
+
 	asSMapNode<int,asCDataType*> *cursor = 0;
 	while( mapTypeIdToDataType.MoveFirst(&cursor) )
 	{
