@@ -3724,6 +3724,58 @@ void asCScriptEngine::FreeScriptFunctionId(int id)
 }
 
 // interface
+int asCScriptEngine::RegisterFuncdef(const char *decl)
+{
+	if( decl == 0 ) return ConfigError(asINVALID_ARG);
+
+	// Parse the function declaration
+	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_FUNCDEF);
+
+	asCBuilder bld(this, 0);
+	int r = bld.ParseFunctionDeclaration(0, decl, func, false, 0, 0);
+	if( r < 0 )
+	{
+		// Set as dummy function before deleting
+		func->funcType = -1;
+		asDELETE(func,asCScriptFunction);
+		return ConfigError(asINVALID_DECLARATION);
+	}
+
+	// Check name conflicts
+	r = bld.CheckNameConflict(func->name.AddressOf(), 0, 0);
+	if( r < 0 )
+	{
+		asDELETE(func,asCScriptFunction);
+		return ConfigError(asNAME_TAKEN);
+	}
+
+	func->id = GetNextScriptFunctionId();
+	SetScriptFunction(func);
+
+	funcDefs.PushLast(func);
+	registeredFuncDefs.PushLast(func);
+	currentGroup->funcDefs.PushLast(func);
+
+	// If parameter type from other groups are used, add references
+	if( func->returnType.GetObjectType() )
+	{
+		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
+		currentGroup->RefConfigGroup(group);
+	}
+	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
+	{
+		if( func->parameterTypes[n].GetObjectType() )
+		{
+			asCConfigGroup *group = FindConfigGroupForObjectType(func->parameterTypes[n].GetObjectType());
+			currentGroup->RefConfigGroup(group);
+		}
+	}
+
+	// Return the function id as success
+	return func->id;
+}
+
+// interface
 // TODO: typedef: Accept complex types for the typedefs
 int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 {

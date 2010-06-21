@@ -500,6 +500,9 @@ public:
 	virtual int         GetEnumValueCount(int enumTypeId) = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) = 0;
 
+	// Funcdefs
+	virtual int         RegisterFuncdef(const char *decl) = 0;
+
 	// Typedefs
 	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
 	virtual int         GetTypedefCount() = 0;

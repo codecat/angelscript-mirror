@@ -3,6 +3,18 @@
 namespace TestFunctionPtr
 {
 
+bool receivedFuncPtrIsOK = false;
+
+void ReceiveFuncPtr(asIScriptFunction *funcPtr)
+{
+	if( funcPtr == 0 ) return;
+
+	if( strcmp(funcPtr->GetName(), "test") == 0 ) 
+		receivedFuncPtrIsOK = true;
+
+	funcPtr->Release();
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -180,6 +192,43 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	// It must be possible to register the function signature from the application
+	r = engine->RegisterFuncdef("void AppCallback()");
+	if( r < 0 )
+		fail = true;
+
+	r = engine->RegisterGlobalFunction("void ReceiveFuncPtr(AppCallback @)", asFUNCTION(ReceiveFuncPtr), asCALL_CDECL); assert( r >= 0 );
+
+	// It must be possible to use the registered funcdef
+	// It must be possible to receive a function pointer for a registered func def
+	bout.buffer = "";
+	script = 
+		"void main() \n"
+		"{ \n"
+		"	AppCallback @func = @test; \n"
+		"   func(); \n"
+		"   ReceiveFuncPtr(func); \n"
+		"} \n"
+		"void test() \n"
+		"{ \n"
+		"} \n";
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r < 0 )
+		fail = true;
+	if( bout.buffer != "" )
+	{
+		printf(bout.buffer.c_str());
+		fail = true;
+	}
+
+	r = ExecuteString(engine, "main()", mod);
+	if( r != asEXECUTION_FINISHED )
+		fail = true;
+
+	if( !receivedFuncPtrIsOK )
+		fail = true;
+
 	//----------------------------------------------------------
 	// TODO: Future improvements below
 
@@ -206,9 +255,6 @@ bool Test()
 	// This also tests the circular reference between the function signatures
 	script = "funcdef void f1(f2@) \n"
 	         "funcdef void f2(f1@) \n";
-
-	// It must be possible to register the function signature from the application
-	// engine->RegisterFunctionSignature("void CALLBACK()");
 
 	// It must also be possible to enumerate the registered callbacks
 

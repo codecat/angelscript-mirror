@@ -2860,7 +2860,14 @@ asCObjectType *asCBuilder::GetObjectType(const char *type)
 
 asCScriptFunction *asCBuilder::GetFuncDef(const char *type)
 {
-	// TODO: funcdef: Search in the engine too
+	for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
+	{
+		// TODO: Only return the definitions for the config groups that the module has access to
+		if( engine->registeredFuncDefs[n]->name == type )
+		{
+			return engine->registeredFuncDefs[n];
+		}
+	}
 
 	if( module )
 	{
