@@ -229,6 +229,19 @@ bool Test()
 	if( !receivedFuncPtrIsOK )
 		fail = true;
 
+	mod->SaveByteCode(&bytecode);
+	{
+		receivedFuncPtrIsOK = false;
+		asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod2->LoadByteCode(&bytecode);
+		r = ExecuteString(engine, "main()", mod2);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		if( !receivedFuncPtrIsOK )
+			fail = true;
+	}
+
 	//----------------------------------------------------------
 	// TODO: Future improvements below
 

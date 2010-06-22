@@ -177,10 +177,7 @@ public:
 <pre>
   int main()
   {
-    array<int> arr(3);
-    arr[0] = 1;
-    arr[1] = 2;
-    arr[2] = 3;
+    array<int> arr = {1,2,3};
     
     int sum = 0;
     for( uint n = 0; n < arr.length(); n++ )

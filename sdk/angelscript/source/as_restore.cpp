@@ -1131,6 +1131,11 @@ void asCRestore::WriteDataType(const asCDataType *dt)
 	WRITE_NUM(b);
 	b = dt->IsReadOnly();
 	WRITE_NUM(b);
+
+	if( t == ttIdentifier && dt->GetObjectType()->name == "_builtin_function_" )
+	{
+		WriteFunctionSignature(dt->GetFuncDef());
+	}
 }
 
 void asCRestore::ReadDataType(asCDataType *dt) 
@@ -1162,7 +1167,39 @@ void asCRestore::ReadDataType(asCDataType *dt)
 	READ_NUM(isReference);
 	READ_NUM(isReadOnly);
 
-	if( tokenType == ttIdentifier )
+	asCScriptFunction *funcDef = 0;
+	if( tokenType == ttIdentifier && objType->name == "_builtin_function_" )
+	{
+		asCScriptFunction func(engine, module, -1);
+		ReadFunctionSignature(&func);
+		for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
+		{
+			// TODO: Only return the definitions for the config groups that the module has access to
+			if( engine->registeredFuncDefs[n]->name == func.name )
+			{
+				funcDef = engine->registeredFuncDefs[n];
+				break;
+			}
+		}
+
+		if( !funcDef && module )
+		{
+			for( asUINT n = 0; n < module->funcDefs.GetLength(); n++ )
+			{
+				if( module->funcDefs[n]->name == func.name )
+				{
+					funcDef = module->funcDefs[n];
+					break;
+				}
+			}
+		}
+
+		func.funcType = -1;
+	}
+
+	if( funcDef )
+		*dt = asCDataType::CreateFuncDef(funcDef);
+	else if( tokenType == ttIdentifier )
 		*dt = asCDataType::CreateObject(objType, false);
 	else
 		*dt = asCDataType::CreatePrimitive(tokenType, false);
