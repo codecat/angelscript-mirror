@@ -3642,6 +3642,17 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForObjectType(const asCObjectTyp
 	return 0;
 }
 
+asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(asCScriptFunction *funcDef)
+{
+	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
+	{
+		if( configGroups[n]->funcDefs.Exists(funcDef) )
+			return configGroups[n];
+	}
+
+	return 0;
+}
+
 int asCScriptEngine::SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess)
 {
 	asCConfigGroup *group = 0;
@@ -3773,6 +3784,30 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 
 	// Return the function id as success
 	return func->id;
+}
+
+// interface
+int asCScriptEngine::GetFuncdefCount()
+{
+	return (int)registeredFuncDefs.GetLength();
+}
+
+// interface
+asIScriptFunction *asCScriptEngine::GetFuncdefByIndex(asUINT index, const char **configGroup)
+{
+	if( index >= registeredFuncDefs.GetLength() )
+		return 0;
+
+	if( configGroup )
+	{
+		asCConfigGroup *group = FindConfigGroupForFuncDef(registeredFuncDefs[index]);
+		if( group )
+			*configGroup = group->groupName.AddressOf();
+		else
+			*configGroup = 0;
+	}
+
+	return registeredFuncDefs[index];
 }
 
 // interface

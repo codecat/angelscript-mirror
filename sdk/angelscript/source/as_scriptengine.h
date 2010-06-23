@@ -128,7 +128,9 @@ public:
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue);
 
 	// Funcdefs
-	virtual int         RegisterFuncdef(const char *decl);
+	virtual int                RegisterFuncdef(const char *decl);
+	virtual int                GetFuncdefCount();
+	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0);
 
 	// Typedefs
 	virtual int         RegisterTypedef(const char *type, const char *decl);
@@ -225,6 +227,7 @@ public:
 	asCConfigGroup *FindConfigGroupForFunction(int funcId);
 	asCConfigGroup *FindConfigGroupForGlobalVar(int gvarId);
 	asCConfigGroup *FindConfigGroupForObjectType(const asCObjectType *type);
+	asCConfigGroup *FindConfigGroupForFuncDef(asCScriptFunction *funcDef);
 
 	int  RequestBuild();
 	void BuildCompleted();

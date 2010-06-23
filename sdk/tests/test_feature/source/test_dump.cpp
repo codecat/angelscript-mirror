@@ -48,6 +48,8 @@ bool Test()
 	engine->RegisterEnumValue("myEnum", "value1", 1);
 	engine->RegisterEnumValue("myEnum", "value2", 2);
 
+	engine->RegisterFuncdef("void Callback(int a, int b)");
+
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
 	mod->AddScriptSection("script", script);
@@ -259,6 +261,15 @@ void DumpModule(asIScriptModule *mod)
 		}
 	}
 
+	// Enumerate registered func defs
+	c = engine->GetFuncdefCount();
+	for( n = 0; n < c; n++ )
+	{
+		asIScriptFunction *funcdef = engine->GetFuncdefByIndex(n);
+
+		s << "reg funcdef: " << funcdef->GetDeclaration() << endl;
+	}
+
 	// Get the string factory return type
 	int typeId = engine->GetStringFactoryReturnTypeId();
 	s << "string factory: " << engine->GetTypeDeclaration(typeId) << endl;
@@ -306,6 +317,7 @@ void DumpModule(asIScriptModule *mod)
 		"reg enum: myEnum\n"
 		" value1 = 1\n"
 		" value2 = 2\n"
+		"reg funcdef: void Callback(int, int)\n"
 		"string factory: string\n"
 		"reg type: val string group: <null>\n"
 		" beh(1) void _beh_1_()\n"

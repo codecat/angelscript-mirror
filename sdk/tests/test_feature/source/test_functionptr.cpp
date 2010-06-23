@@ -269,8 +269,6 @@ bool Test()
 	script = "funcdef void f1(f2@) \n"
 	         "funcdef void f2(f1@) \n";
 
-	// It must also be possible to enumerate the registered callbacks
-
 	// It must be possible to identify a function handle type from the type id
 
 	// It must be possible enumerate the function definitions in the module, 

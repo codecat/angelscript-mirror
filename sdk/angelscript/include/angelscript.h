@@ -501,7 +501,9 @@ public:
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) = 0;
 
 	// Funcdefs
-	virtual int         RegisterFuncdef(const char *decl) = 0;
+	virtual int                RegisterFuncdef(const char *decl) = 0;
+	virtual int                GetFuncdefCount() = 0;
+	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0) = 0;
 
 	// Typedefs
 	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
@@ -1345,7 +1347,7 @@ struct asSBCInfo
 #ifndef AS_64BIT_PTR
 	#define asBCTYPE_PTR_ARG    asBCTYPE_DW_ARG
 	#define asBCTYPE_PTR_DW_ARG asBCTYPE_DW_DW_ARG
-    #define asBCTYPE_wW_PTR_ARG asBCTYPE_wW_DW_ARG
+	#define asBCTYPE_wW_PTR_ARG asBCTYPE_wW_DW_ARG
 	#define asBCTYPE_rW_PTR_ARG asBCTYPE_rW_DW_ARG
 	#ifndef AS_PTR_SIZE
 		#define AS_PTR_SIZE 1
@@ -1353,7 +1355,7 @@ struct asSBCInfo
 #else
 	#define asBCTYPE_PTR_ARG    asBCTYPE_QW_ARG
 	#define asBCTYPE_PTR_DW_ARG asBCTYPE_QW_DW_ARG
-    #define asBCTYPE_wW_PTR_ARG asBCTYPE_wW_QW_ARG
+	#define asBCTYPE_wW_PTR_ARG asBCTYPE_wW_QW_ARG
 	#define asBCTYPE_rW_PTR_ARG asBCTYPE_rW_QW_ARG
 	#ifndef AS_PTR_SIZE
 		#define AS_PTR_SIZE 2

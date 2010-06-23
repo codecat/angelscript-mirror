@@ -2492,21 +2492,23 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	CompileAssignment(wnode->firstChild, &expr);
 	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 		Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
+	else
+	{
+		if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
+		ProcessDeferredParams(&expr);
 
-	if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-	ProcessDeferredParams(&expr);
+		ProcessPropertyGetAccessor(&expr, wnode);
 
-	ProcessPropertyGetAccessor(&expr, wnode);
+		// Add byte code for the expression
+		ConvertToVariable(&expr);
+		bc->AddCode(&expr.bc);
 
-	// Add byte code for the expression
-	ConvertToVariable(&expr);
-	bc->AddCode(&expr.bc);
-
-	// Jump to end of statement if expression is false
-	bc->InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
-	bc->Instr(asBC_ClrHi);
-	bc->InstrDWORD(asBC_JZ, afterLabel);
-	ReleaseTemporaryVariable(expr.type, bc);
+		// Jump to end of statement if expression is false
+		bc->InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
+		bc->Instr(asBC_ClrHi);
+		bc->InstrDWORD(asBC_JZ, afterLabel);
+		ReleaseTemporaryVariable(expr.type, bc);
+	}
 
 	// Add a suspend bytecode inside the loop to guarantee
 	// that the application can suspend the execution
@@ -2575,21 +2577,23 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	CompileAssignment(wnode->lastChild, &expr);
 	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 		Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
+	else
+	{
+		if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
+		ProcessDeferredParams(&expr);
 
-	if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-	ProcessDeferredParams(&expr);
+		ProcessPropertyGetAccessor(&expr, wnode);
 
-	ProcessPropertyGetAccessor(&expr, wnode);
+		// Add byte code for the expression
+		ConvertToVariable(&expr);
+		bc->AddCode(&expr.bc);
 
-	// Add byte code for the expression
-	ConvertToVariable(&expr);
-	bc->AddCode(&expr.bc);
-
-	// Jump to next iteration if expression is true
-	bc->InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
-	bc->Instr(asBC_ClrHi);
-	bc->InstrDWORD(asBC_JNZ, beforeLabel);
-	ReleaseTemporaryVariable(expr.type, bc);
+		// Jump to next iteration if expression is true
+		bc->InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
+		bc->Instr(asBC_ClrHi);
+		bc->InstrDWORD(asBC_JNZ, beforeLabel);
+		ReleaseTemporaryVariable(expr.type, bc);
+	}
 
 	// Add label after the statement
 	bc->Label((short)afterLabel);

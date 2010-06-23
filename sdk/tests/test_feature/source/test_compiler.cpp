@@ -926,6 +926,40 @@ bool Test()
 		engine->Release();
 	}
 
+	/////////////////
+	{
+		const char *script = 
+			"void main()\n"
+			"{\n"
+			"  while(turn()) {}\n"
+			"}\n"
+
+			"void turn()\n"
+			"{\n"
+			"}\n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"
+		                   "script (3, 9) : Error   : Expression must be of boolean type\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
+
 	// Success
  	return fail;
 }
