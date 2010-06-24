@@ -29,6 +29,22 @@ static CScriptArray* ScriptArrayFactory2(asIObjectType *ot, asUINT length)
 	return a;
 }
 
+static CScriptArray* ScriptArrayFactoryDefVal(asIObjectType *ot, asUINT length, void *defVal)
+{
+	CScriptArray *a = new CScriptArray(length, defVal, ot);
+
+	// It's possible the constructor raised a script exception, in which case we 
+	// need to free the memory and return null instead, else we get a memory leak.
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
+	{
+		delete a;
+		return 0;
+	}
+
+	return a;	
+}
+
 static CScriptArray* ScriptArrayFactory(asIObjectType *ot)
 {
 	return ScriptArrayFactory2(ot, 0);
@@ -111,6 +127,7 @@ void RegisterScriptArray_Native(asIScriptEngine *engine)
 	// Templates receive the object type as the first parameter. To the script writer this is hidden
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in)", asFUNCTIONPR(ScriptArrayFactory, (asIObjectType*), CScriptArray*), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in, uint)", asFUNCTIONPR(ScriptArrayFactory2, (asIObjectType*, asUINT), CScriptArray*), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in, uint, const T &in)", asFUNCTIONPR(ScriptArrayFactoryDefVal, (asIObjectType*, asUINT, void *), CScriptArray*), asCALL_CDECL); assert( r >= 0 );
 
 	// Register the factory that will be used for initialization lists
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_LIST_FACTORY, "array<T>@ f(int&in, uint)", asFUNCTIONPR(ScriptArrayFactory2, (asIObjectType*, asUINT), CScriptArray*), asCALL_CDECL); assert( r >= 0 );
@@ -192,6 +209,69 @@ CScriptArray::CScriptArray(asUINT length, asIObjectType *ot)
 	// Notify the GC of the successful creation
 	if( objType->GetFlags() & asOBJ_GC )
 		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType->GetTypeId());
+}
+
+CScriptArray::CScriptArray(asUINT length, void *defVal, asIObjectType *ot)
+{
+	refCount = 1;
+	gcFlag = false;
+	objType = ot;
+	objType->AddRef();
+	buffer = 0;
+
+	// Determine element size
+	// TODO: Should probably store the template sub type id as well
+	int typeId = objType->GetSubTypeId();
+	if( typeId & asTYPEID_MASK_OBJECT )
+	{
+		elementSize = sizeof(asPWORD);
+	}
+	else
+	{
+		elementSize = objType->GetEngine()->GetSizeOfPrimitiveType(typeId);
+	}
+
+	isArrayOfHandles = typeId & asTYPEID_OBJHANDLE ? true : false;
+
+	// Make sure the array size isn't too large for us to handle
+	if( !CheckMaxSize(length) )
+	{
+		// Don't continue with the initialization
+		return;
+	}
+
+	CreateBuffer(&buffer, length);
+
+	// Notify the GC of the successful creation
+	if( objType->GetFlags() & asOBJ_GC )
+		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType->GetTypeId());
+
+	// Initialize the elements with the default value
+	for( asUINT n = 0; n < GetSize(); n++ )
+	{
+		if( (typeId & ~0x03FFFFFF) && !(typeId & asTYPEID_OBJHANDLE) )
+			objType->GetEngine()->CopyScriptObject(At(n), defVal, typeId);
+		else if( typeId & asTYPEID_OBJHANDLE )
+		{
+			*(void**)At(n) = *(void**)defVal;
+			objType->GetEngine()->AddRefScriptObject(*(void**)defVal, typeId);
+		}
+		else if( typeId == asTYPEID_BOOL ||
+				 typeId == asTYPEID_INT8 ||
+				 typeId == asTYPEID_UINT8 )
+			*(char*)At(n) = *(char*)defVal;
+		else if( typeId == asTYPEID_INT16 ||
+				 typeId == asTYPEID_UINT16 )
+			*(short*)At(n) = *(short*)defVal;
+		else if( typeId == asTYPEID_INT32 ||
+				 typeId == asTYPEID_UINT32 ||
+				 typeId == asTYPEID_FLOAT )
+			*(int*)At(n) = *(int*)defVal;
+		else if( typeId == asTYPEID_INT64 ||
+				 typeId == asTYPEID_UINT64 ||
+				 typeId == asTYPEID_DOUBLE )
+			*(double*)At(n) = *(double*)defVal;
+	}
 }
 
 CScriptArray::~CScriptArray()

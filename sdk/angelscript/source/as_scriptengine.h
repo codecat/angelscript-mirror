@@ -264,7 +264,7 @@ public:
 
 	bool               IsTemplateType(const char *name);
 	asCObjectType     *GetTemplateInstanceType(asCObjectType *templateType, asCDataType &subType);
-	asCScriptFunction *GenerateTemplateFactoryStub(asCObjectType *templateType, int origFactoryId);
+	asCScriptFunction *GenerateTemplateFactoryStub(asCObjectType *templateType, asCObjectType *templateInstanceType, int origFactoryId);
 	bool               GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCDataType &subType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
 
 	// String constants

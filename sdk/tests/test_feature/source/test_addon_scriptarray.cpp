@@ -383,6 +383,42 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test the default value constructor
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+
+		const char *script = 
+			"void main() \n"
+			"{ \n"
+			"	array<int> arr(2, 42); \n"
+			"   assert(arr[0] == 42); \n"
+			"   assert(arr[1] == 42); \n"
+			"   array<array<int>> arr2(2, array<int>(2)); \n"
+			"   assert(arr2[0].length() == 2); \n"
+			"	assert(arr2[1].length() == 2); \n"
+			"   array<array<int>@> arr3(2, arr); \n"
+			"   assert(arr3[0] is arr); \n"
+			"   assert(arr3[1] is arr); \n"
+			"} \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

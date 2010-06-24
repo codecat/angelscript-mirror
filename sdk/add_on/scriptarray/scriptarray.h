@@ -11,6 +11,7 @@ class CScriptArray
 {
 public:
 	CScriptArray(asUINT length, asIObjectType *ot);
+	CScriptArray(asUINT length, void *defVal, asIObjectType *ot);
 	virtual ~CScriptArray();
 
 	void AddRef();

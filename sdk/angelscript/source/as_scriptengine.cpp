@@ -2631,7 +2631,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Generate factory stubs for each of the factories
 	for( n = 0; n < templateType->beh.factories.GetLength(); n++ )
 	{
-		asCScriptFunction *func = GenerateTemplateFactoryStub(ot, templateType->beh.factories[n]);
+		asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, templateType->beh.factories[n]);
 
 		// The function's refCount was already initialized to 1
 		ot->beh.factories.PushLast(func->id);
@@ -2647,7 +2647,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Generate stub for the list factory as well
 	if( templateType->beh.listFactory )
 	{
-		asCScriptFunction *func = GenerateTemplateFactoryStub(ot, templateType->beh.listFactory);
+		asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, templateType->beh.listFactory);
 
 		// The function's refCount was already initialized to 1
 		ot->beh.listFactory = func->id;
@@ -2727,7 +2727,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 }
 
 // internal
-asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *ot, int factoryId)
+asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *templateType, asCObjectType *ot, int factoryId)
 {
 	asCScriptFunction *factory = scriptFunctions[factoryId];
 
@@ -2737,10 +2737,33 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *o
 	func->returnType       = asCDataType::CreateObjectHandle(ot, false);
 
 	// Skip the first parameter as this is the object type pointer that the stub will add
+	func->parameterTypes.SetLength(factory->parameterTypes.GetLength()-1);
+	func->inOutFlags.SetLength(factory->inOutFlags.GetLength()-1);
 	for( asUINT p = 1; p < factory->parameterTypes.GetLength(); p++ )
 	{
-		func->parameterTypes.PushLast(factory->parameterTypes[p]);
-		func->inOutFlags.PushLast(factory->inOutFlags[p]);
+		if( factory->parameterTypes[p].GetObjectType() == templateType->templateSubType.GetObjectType() )
+		{
+			func->parameterTypes[p-1] = ot->templateSubType;
+			if( factory->parameterTypes[p].IsObjectHandle() )
+				func->parameterTypes[p-1].MakeHandle(true);
+			func->parameterTypes[p-1].MakeReference(factory->parameterTypes[p].IsReference());
+			func->parameterTypes[p-1].MakeReadOnly(factory->parameterTypes[p].IsReference());
+		}
+		else if( factory->parameterTypes[p].GetObjectType() == templateType )
+		{
+			if( factory->parameterTypes[p].IsObjectHandle() )
+				func->parameterTypes[p-1] = asCDataType::CreateObjectHandle(ot, false);
+			else
+				func->parameterTypes[p-1] = asCDataType::CreateObject(ot, false);
+
+			func->parameterTypes[p-1].MakeReference(factory->parameterTypes[p].IsReference());
+			func->parameterTypes[p-1].MakeReadOnly(factory->parameterTypes[p].IsReadOnly());
+		}
+		else
+		{
+			func->parameterTypes[p-1] = factory->parameterTypes[p];
+		}
+		func->inOutFlags[p-1] = factory->inOutFlags[p];
 	}
 
 	SetScriptFunction(func);
@@ -2811,7 +2834,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 			}
 			else if( func->parameterTypes[p].GetObjectType() == templateType )
 			{
-				if( func2->parameterTypes[p].IsObjectHandle() )
+				if( func->parameterTypes[p].IsObjectHandle() )
 					func2->parameterTypes[p] = asCDataType::CreateObjectHandle(ot, false);
 				else
 					func2->parameterTypes[p] = asCDataType::CreateObject(ot, false);
