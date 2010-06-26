@@ -145,7 +145,8 @@ bool Test2();
 
 bool Test()
 {
-	bool fail = Test2();
+	bool fail = false;
+	fail = Test2() || fail;
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
@@ -418,6 +419,33 @@ bool Test()
 
 		engine->Release();
 	}
+
+	// Test potential memory leak situation with circular reference between types
+	{
+		// Create the script engine
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	 
+		// Register array class
+		RegisterScriptArray_Generic(engine);
+	 
+		// Compile
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", 
+			"class Hoge"
+			"{"
+			"    HogeManager@ hogeManager;"
+			"};"
+			"class HogeManager"
+			"{"
+			"    array< Hoge >@ hoges;"
+			"};"
+			, 0);
+		mod->Build();
+	 
+		// Release engine
+		engine->Release();
+	}
+
 
 	// Success
 	return fail;

@@ -466,6 +466,14 @@ asCScriptEngine::~asCScriptEngine()
 					templateTypes[n]->beh.operators[f] = 0;
 				}
 			}
+			for( f = 0; f < templateTypes[n]->methods.GetLength(); f++ )
+			{
+				if( scriptFunctions[templateTypes[n]->methods[f]]->objectType == templateTypes[n] )
+				{
+					scriptFunctions[templateTypes[n]->methods[f]]->Release();
+					templateTypes[n]->methods[f] = 0;
+				}
+			}
 		}
 	}
 
