@@ -652,6 +652,41 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test loading script with out of order template declarations 
+	{
+		const char *script = 
+			"class HogeManager \n"
+			"{ \n"
+			"  HogeManager() \n"
+			"  { \n"
+			"    array< Hoge >@ hogeArray; \n"
+			"  } \n"
+			"} \n"
+			"class Hoge {}; \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

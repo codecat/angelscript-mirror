@@ -56,9 +56,10 @@ static CScriptArray* ScriptArrayFactory(asIObjectType *ot)
 static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 {
 	// Make sure the subtype can be instanciated with a default factory/constructor, 
-	// otherwise we won't be able to instanciate the elements
+	// otherwise we won't be able to instanciate the elements. Script classes always
+	// have default factories, so we don't have to worry about those.
 	int typeId = ot->GetSubTypeId();
-	if( (typeId & asTYPEID_MASK_OBJECT) && !(typeId & asTYPEID_OBJHANDLE) )
+	if( (typeId & asTYPEID_MASK_OBJECT) && !(typeId & asTYPEID_OBJHANDLE) && !(typeId & asTYPEID_SCRIPTOBJECT) )
 	{
 		asIObjectType *subtype = ot->GetEngine()->GetObjectTypeById(typeId);
 		asDWORD flags = subtype->GetFlags();
@@ -616,6 +617,15 @@ static void ScriptArrayFactory2_Generic(asIScriptGeneric *gen)
 	*(CScriptArray**)gen->GetAddressOfReturnLocation() = ScriptArrayFactory2(ot, length);
 }
 
+static void ScriptArrayFactoryDefVal_Generic(asIScriptGeneric *gen)
+{
+	asIObjectType *ot = *(asIObjectType**)gen->GetAddressOfArg(0);
+	asUINT length = gen->GetArgDWord(1);
+	void *defVal = gen->GetArgAddress(2);
+
+	*(CScriptArray**)gen->GetAddressOfReturnLocation() = ScriptArrayFactoryDefVal(ot, length, defVal);
+}
+
 static void ScriptArrayTemplateCallback_Generic(asIScriptGeneric *gen)
 {
 	asIObjectType *ot = *(asIObjectType**)gen->GetAddressOfArg(0);
@@ -708,6 +718,7 @@ void RegisterScriptArray_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in)", asFUNCTION(ScriptArrayFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in)", asFUNCTION(ScriptArrayTemplateCallback_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in, uint)", asFUNCTION(ScriptArrayFactory2_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in, uint, const T &in)", asFUNCTION(ScriptArrayFactoryDefVal_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_LIST_FACTORY, "array<T>@ f(int&in, uint)", asFUNCTION(ScriptArrayFactory2_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptArrayAddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptArrayRelease_Generic), asCALL_GENERIC); assert( r >= 0 );
