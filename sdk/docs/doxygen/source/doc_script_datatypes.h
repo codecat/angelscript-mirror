@@ -86,8 +86,17 @@ When declaring arrays it is possible to define the initial size of the array by 
 <pre>
   int[] a;           // A zero-length array of integers
   int[] b(3);        // An array of integers with 3 elements
-  int[] c = {,3,4,}; // An array of integers with 4 elements, where
+  int[] c(3, 1);     // An array of integers with 3 elements, all set to 1 by default
+  int[] d = {,3,4,}; // An array of integers with 4 elements, where
                      // the second and third elements are initialized
+</pre>
+
+Multidimensional arrays are supported as arrays of arrays, for example:
+
+<pre>
+  int[][] a;                // An empty array of arrays of integers
+  int[][] b = {{1,2},{3,4}} // A 2 by 2 array with initialized values
+  int[][] c(10, int[](10)); // A 10 by 10 array of integers with uninitialized values
 </pre>
 
 Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the range of valid indices are from 0 to length - 1.
@@ -97,6 +106,10 @@ Each element in the array is accessed with the indexing operator. The indices ar
 </pre>
 
 An array also have two methods. length() allow you to determine how many elements are in the array, and resize() lets you resize the array.
+
+
+
+
 
 
 

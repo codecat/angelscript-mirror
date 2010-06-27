@@ -128,6 +128,7 @@ class CScriptArray
 public:
   // Constructor
   CScriptArray(asUINT length, asIObjectType *ot);
+  CscriptArray(asUINT length, void *defaultValue, asIObjectType *ot);
   virtual ~CScriptArray();
 
   // Memory management
@@ -160,6 +161,7 @@ public:
   {
     array();
     array(uint length);
+    array(uint length, const T &in defaultValue);
     
     // Access elements
     // T & operator [] (uint)

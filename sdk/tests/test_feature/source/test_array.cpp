@@ -320,6 +320,20 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test multidimensional array initialization
+	{
+		// Create the script engine
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "int[][] a(2, int[](2)); assert(a[1].length() == 2);\n");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		// Release engine
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

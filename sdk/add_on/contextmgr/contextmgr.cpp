@@ -54,6 +54,7 @@ static void ScriptYield()
 	}
 }
 
+// TODO: Use function pointers to receive the function that should be called
 void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
 {
 	asIScriptContext *ctx = asGetActiveContext();
