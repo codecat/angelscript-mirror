@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.19.0 WIP - 2010/06/23</h2>
+<h2>Version 2.19.0 WIP - 2010/06/27</h2>
 
 <ul>
 <li>Bug fixes
@@ -39,6 +39,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed problem with loading script that contained template types that refer to classes defined later in script (Thanks hoboaki)
 <li>Fixed memory leak when cyclic reference between script class types and templates existed (Thanks hoboaki)
 <li>Fixed assert failure when compiling script with void expression in while condition (Thanks Philip Bennefall)
+<li>Fixed bug in compiler where in a very specific case it would lose the value of a reference (Thanks Lars Peter)
 </ul>
 <li>Library
 <ul>

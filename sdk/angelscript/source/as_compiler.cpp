@@ -2670,7 +2670,9 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, asCArray<int> *reservedVars)
 {
 	// If the object already is stored in temporary variable then nothing needs to be done
-	if( ctx->type.isTemporary ) return;
+	// Note, a type can be temporary without being a variable, in which case it is holding off
+	// on releasing a previously used object.
+	if( ctx->type.isTemporary && ctx->type.isVariable ) return;
 
 	// Allocate temporary variable
 	asCDataType dt = ctx->type.dataType;
@@ -2706,6 +2708,11 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 		// Pop the original reference
 		ctx->bc.Pop(AS_PTR_SIZE);
 	}
+
+	// If the expression was holding off on releasing a 
+	// previously used object, we need to release it now
+	if( ctx->type.isTemporary )
+		ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 
 	// Push the reference to the temporary variable on the stack
 	ctx->bc.InstrSHORT(asBC_PSF, (short)offset);

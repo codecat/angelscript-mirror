@@ -105,6 +105,60 @@ bool Test()
 
 	engine->Release();
 
+	// 
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+
+		const char *script = 
+			"class Node \n"
+			"{ \n"
+			"  Node@[]@ GetSubnodes() { return subNodes; } \n"
+			"  Node@[] subNodes; \n"
+			"  int member; \n"
+			"} \n"
+			"void TestFunc(Node@ input) \n"
+			"{ \n"
+			"  Node@[]@ nodearray; \n"
+			"  Node@ subnode; \n"
+			"  // Case 1. Works as expected \n"
+			"  @nodearray = @input.GetSubnodes(); \n"
+			"  @subnode = @nodearray[0]; \n"
+			"  int value1 = subnode.member; // <- ok \n"
+			"  assert( value1 == 42 ); \n"
+			"  // Case 2. Wrong address sent to following operations on 'subnode' \n"
+			"  @subnode = @input.GetSubnodes()[0]; \n"
+			"  int value2 = subnode.member; // <- weird behavior \n"
+			"  assert( value2 == 42 ); \n"
+			"} \n";
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) 
+			fail = true;
+		else
+		{
+			asIScriptContext *ctx = engine->CreateContext();
+			r = ExecuteString(engine, "Node n; \n"
+				                      "n.subNodes.resize(1); \n"
+									  "@n.subNodes[0] = @Node(); \n"
+									  "n.subNodes[0].member = 42; \n"
+									  "TestFunc(n); \n", mod, ctx);
+			if( r != asEXECUTION_FINISHED )
+			{
+				fail = true;
+				if( r == asEXECUTION_EXCEPTION )
+					PrintException(ctx);
+			}
+			ctx->Release();
+		}
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
