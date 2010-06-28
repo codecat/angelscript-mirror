@@ -959,6 +959,45 @@ bool Test()
 		engine->Release();
 	}
 
+	//////////////
+	{
+		const char *script = 
+			"class irc_event\n"
+			"{\n"
+			"	irc_event() \n"
+			"	{\n"
+			"       // apparently the following code will make AngelScript segfault rather than throw an error\n"
+			"		command=params='NULL';\n"
+			"	}\n"
+			"	void set_command(string@[] i)   {command=i;}\n"
+			"	void set_params(string@ i)      {params=i;}\n"
+			"	string@[] get_command() {return command;    }\n"
+			"	string@ get_params()    {return params;     }\n"
+			"	string@[] command;\n"
+			"	string params;\n"
+			"}\n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptString(engine);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != "script (3, 2) : Info    : Compiling void irc_event::irc_event()\n"
+		                   "script (6, 17) : Error   : Can't implicitly convert from 'string' to 'string@[]'.\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 
 	// Success
  	return fail;

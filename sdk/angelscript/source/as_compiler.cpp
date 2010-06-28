@@ -1363,6 +1363,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		args[n]->property_const = expr.property_const;
 		args[n]->property_handle = expr.property_handle;
 		args[n]->property_ref = expr.property_ref;
+		args[n]->exprNode = expr.exprNode;
 		args[n]->exprNode = arg;
 
 		n--;
@@ -1465,8 +1466,9 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 			// Print the list of candidates
 			if( origFuncs.GetLength() > 0 )
 			{
-				int r, c;
-				script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+				int r = 0, c = 0;
+				asASSERT( node );
+				if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				builder->WriteInfo(script->name.AddressOf(), TXT_CANDIDATES_ARE, r, c, false);
 				PrintMatchingFuncs(origFuncs, node);
 			}
@@ -2833,8 +2835,9 @@ void asCCompiler::Error(const char *msg, asCScriptNode *node)
 {
 	asCString str;
 
-	int r, c;
-	script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+	int r = 0, c = 0;
+	asASSERT( node );
+	if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
 	builder->WriteError(script->name.AddressOf(), msg, r, c);
 
@@ -2845,16 +2848,18 @@ void asCCompiler::Warning(const char *msg, asCScriptNode *node)
 {
 	asCString str;
 
-	int r, c;
-	script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+	int r = 0, c = 0;
+	asASSERT( node );
+	if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
 	builder->WriteWarning(script->name.AddressOf(), msg, r, c);
 }
 
 void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 {
-	int r, c;
-	script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+	int r = 0, c = 0;
+	asASSERT( node );
+	if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
 	for( unsigned int n = 0; n < funcs.GetLength(); n++ )
 	{
@@ -4903,6 +4908,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		ctx->property_const = lctx->property_const;
 		ctx->property_handle = lctx->property_handle;
 		ctx->property_ref = lctx->property_ref;
+		ctx->exprNode = lctx->exprNode;
 
 		return ProcessPropertySetAccessor(ctx, rctx, opNode);
 	}
@@ -5400,6 +5406,7 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	ctx->property_const = v.property_const;
 	ctx->property_handle = v.property_handle;
 	ctx->property_ref = v.property_ref;
+	ctx->exprNode = v.exprNode;
 
 	return 0;
 }
@@ -5479,6 +5486,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				ctx->property_const = access.property_const;
 				ctx->property_handle = access.property_handle;
 				ctx->property_ref = access.property_ref;
+				ctx->exprNode = access.exprNode;
 
 				found = true;
 			}
@@ -5546,6 +5554,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			ctx->property_const = access.property_const;
 			ctx->property_handle = access.property_handle;
 			ctx->property_ref = access.property_ref;
+			ctx->exprNode = access.exprNode;
 
 			found = true;
 		}
@@ -5722,6 +5731,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	asASSERT(ctx->bc.GetLastInstr() == -1);
 
 	asCScriptNode *vnode = node->firstChild;
+	ctx->exprNode = vnode;
 	if( vnode->nodeType == snVariableAccess )
 	{
 		// Determine the scope resolution of the variable
@@ -5972,6 +5982,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		ctx->property_const = e.property_const;
 		ctx->property_handle = e.property_handle;
 		ctx->property_ref = e.property_ref;
+		ctx->exprNode = e.exprNode;
 	}
 	else if( vnode->nodeType == snCast )
 	{
@@ -7356,6 +7367,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		ctx->type.Set(dt);
 		ctx->type.stackOffset = offset;
 		ctx->type.isTemporary = isTemp;
+		ctx->exprNode = node;
 
 		return 1;
 	}
@@ -8025,6 +8037,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 		orig->property_const = arg->property_const;
 		orig->property_handle = arg->property_handle;
 		orig->property_ref = arg->property_ref;
+		orig->exprNode = arg->exprNode;
 
 		arg->origExpr = orig;
 	}
@@ -8035,6 +8048,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	e.property_const = arg->property_const;
 	e.property_handle = arg->property_handle;
 	e.property_ref = arg->property_ref;
+	e.exprNode = arg->exprNode;
 	PrepareArgument(paramType, &e, arg->exprNode, isFunction, refType, reservedVars);
 	arg->type = e.type;
 	ctx->bc.AddCode(&e.bc);
@@ -8042,6 +8056,8 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 
 bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
+	ctx->exprNode = node;
+
 	// What type of operator is it?
 	int token = node->tokenType;
 	if( token == ttUnrecognizedToken )
