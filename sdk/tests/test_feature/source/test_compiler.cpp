@@ -989,7 +989,9 @@ bool Test()
 			fail = true;
 
 		if( bout.buffer != "script (3, 2) : Info    : Compiling void irc_event::irc_event()\n"
-		                   "script (6, 17) : Error   : Can't implicitly convert from 'string' to 'string@[]'.\n" )
+		                   "script (6, 10) : Error   : No matching signatures to 'irc_event::set_command(string)'\n"
+		                   "script (6, 10) : Info    : Candidates are:\n"
+		                   "script (6, 10) : Info    : void irc_event::set_command(string@[])\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			fail = true;
@@ -998,6 +1000,47 @@ bool Test()
 		engine->Release();
 	}
 
+	//////////////
+	{
+		const char *script = 
+			"enum wf_type \n"
+			"{ \n"
+			"  sawtooth=1, \n"
+			"  square=2, \n"
+			"  sine=3 \n"
+			"} \n"
+			"class tone_synth \n"
+			"{ \n"
+			"  void set_waveform_type(wf_type i) {} \n"
+			"} \n"
+			"void main () \n"
+			"{ \n"
+			"  tone_synth t; \n"
+			"  t.waveform_type = sine; \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void sine()", asFUNCTION(0), asCALL_GENERIC);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != "script (11, 1) : Info    : Compiling void main()\n"
+		                   "script (14, 19) : Error   : No matching signatures to 'tone_synth::set_waveform_type(sine)'\n"
+		                   "script (14, 19) : Info    : Candidates are:\n"
+		                   "script (14, 19) : Info    : void tone_synth::set_waveform_type(wf_type)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
 
 	// Success
  	return fail;

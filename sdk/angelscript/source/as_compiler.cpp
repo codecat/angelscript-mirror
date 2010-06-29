@@ -7388,6 +7388,19 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 
 	asCTypeInfo objType = ctx->type;
 	asCScriptFunction *func = engine->scriptFunctions[ctx->property_set];
+
+	// Make sure the arg match the property
+	asCArray<int> funcs;
+	funcs.PushLast(ctx->property_set);
+	asCArray<asSExprContext *> args;
+	args.PushLast(arg);
+	MatchFunctions(funcs, args, node, func->GetName(), func->objectType, ctx->property_const);
+	if( funcs.GetLength() == 0 )
+	{
+		// MatchFunctions already reported the error
+		return -1;
+	}
+
 	if( func->objectType )
 	{
 		// Setup the context with the original type so the method call gets built correctly
@@ -7396,7 +7409,6 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 		if( ctx->property_ref )	ctx->type.dataType.MakeReference(true);
 
 		// Don't allow the call if the object is read-only and the property accessor is not const
-		// TODO: This can probably be moved into MakeFunctionCall
 		if( ctx->property_const && !func->isReadOnly )
 		{
 			Error(TXT_NON_CONST_METHOD_ON_CONST_OBJ, node);
@@ -7407,8 +7419,6 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	}
 
 	// Call the accessor
-	asCArray<asSExprContext *> args;
-	args.PushLast(arg);
 	MakeFunctionCall(ctx, ctx->property_set, func->objectType, args, node);
 
 	if( func->objectType )
