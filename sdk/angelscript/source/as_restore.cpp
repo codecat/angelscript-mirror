@@ -1229,7 +1229,7 @@ void asCRestore::WriteObjectType(asCObjectType* ot)
 			WRITE_NUM(ch);
 			WriteString(&ot->name);
 
-			if( ot->templateSubType.IsObject() )
+			if( ot->templateSubType.IsObject() || ot->templateSubType.IsEnumType() )
 			{
 				ch = 's';
 				WRITE_NUM(ch);

@@ -687,6 +687,35 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test loading byte code that uses the enum types
+	{
+		const char *script = 
+			"array< ColorKind > COLOR_KIND_TABLE = { ColorKind_Red }; \n"
+			"enum ColorKind { ColorKind_Red }; \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
