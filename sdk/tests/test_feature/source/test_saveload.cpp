@@ -716,6 +716,43 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test loading and executing bytecode
+	{
+		const char *script = 
+			"interface IObj {}; \n"
+		    "class Hoge : IObj {}; \n"
+		    "void main() \n"
+		    "{ \n"
+		    "    Hoge h; \n"
+		    "    IObj@ objHandle = h; \n"
+		    "    Hoge@ hogeHandle = cast< Hoge@ >( objHandle ); \n"
+		    "}; \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			fail = true;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

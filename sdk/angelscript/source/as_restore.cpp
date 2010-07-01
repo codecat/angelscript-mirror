@@ -1391,7 +1391,8 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			// Translate object type pointers into indices
 			*(int*)(tmp+1) = FindObjectTypeIdx(*(asCObjectType**)(tmp+1));
 		}
-		else if( c == asBC_TYPEID ) // DW_ARG
+		else if( c == asBC_TYPEID || // DW_ARG
+			     c == asBC_Cast )    // DW_ARG
 		{
 			// Translate type ids into indices
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
@@ -1996,7 +1997,8 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			asPTRWORD *ot = (asPTRWORD*)&bc[n+1];
 			*(asCObjectType**)ot = FindObjectType(*(int*)ot);
 		}
-		else  if( c == asBC_TYPEID )
+		else  if( c == asBC_TYPEID ||
+			      c == asBC_Cast )
 		{
 			// Translate the index to the type id
 			int *tid = (int*)&bc[n+1];
