@@ -856,7 +856,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				}
 
 				// Add expression code to bytecode
-				MergeExprContexts(&ctx, &expr);
+				MergeExprBytecode(&ctx, &expr);
 
 				// Add byte code for storing value of expression in variable
 				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[gvar->index]->GetAddressOfValue());
@@ -1356,15 +1356,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		if( r < 0 ) anyErrors = true;
 
 		args[n] = asNEW(asSExprContext)(engine);
-		MergeExprContexts(args[n], &expr);
-		args[n]->type = expr.type;
-		args[n]->property_get = expr.property_get;
-		args[n]->property_set = expr.property_set;
-		args[n]->property_const = expr.property_const;
-		args[n]->property_handle = expr.property_handle;
-		args[n]->property_ref = expr.property_ref;
-		args[n]->exprNode = expr.exprNode;
-		args[n]->exprNode = arg;
+		MergeExprBytecodeAndType(args[n], &expr);
 
 		n--;
 		arg = arg->prev;
@@ -1699,7 +1691,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						}
 
 						// Add expression code to bytecode
-						MergeExprContexts(&ctx, &expr);
+						MergeExprBytecode(&ctx, &expr);
 
 						// Add byte code for storing value of expression in variable
 						ctx.bc.AddCode(&lexpr.bc);
@@ -4901,14 +4893,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return -1;
 		}
 
-		MergeExprContexts(ctx, lctx);
-		ctx->type = lctx->type;
-		ctx->property_get = lctx->property_get;
-		ctx->property_set = lctx->property_set;
-		ctx->property_const = lctx->property_const;
-		ctx->property_handle = lctx->property_handle;
-		ctx->property_ref = lctx->property_ref;
-		ctx->exprNode = lctx->exprNode;
+		MergeExprBytecodeAndType(ctx, lctx);
 
 		return ProcessPropertySetAccessor(ctx, rctx, opNode);
 	}
@@ -4930,13 +4915,13 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 			asSExprContext o(engine);
 			CompileOperator(opNode, lctx, rctx, &o);
-			MergeExprContexts(rctx, &o);
+			MergeExprBytecode(rctx, &o);
 			rctx->type = o.type;
 
 			// Convert the rvalue to the right type and validate it
 			PrepareForAssignment(&lvalue.dataType, rctx, rexpr);
 
-			MergeExprContexts(ctx, rctx);
+			MergeExprBytecode(ctx, rctx);
 			lctx->type = lvalue;
 
 			// The lvalue continues the same, either it was a variable, or a reference in the register
@@ -4946,8 +4931,8 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			// Convert the rvalue to the right type and validate it
 			PrepareForAssignment(&lctx->type.dataType, rctx, rexpr, lctx);
 
-			MergeExprContexts(ctx, rctx);
-			MergeExprContexts(ctx, lctx);
+			MergeExprBytecode(ctx, rctx);
+			MergeExprBytecode(ctx, lctx);
 		}
 
 		ReleaseTemporaryVariable(rctx->type, &ctx->bc);
@@ -4986,8 +4971,8 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return -1;
 		}
 
-		MergeExprContexts(ctx, rctx);
-		MergeExprContexts(ctx, lctx);
+		MergeExprBytecode(ctx, rctx);
+		MergeExprBytecode(ctx, lctx);
 
 		ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
 
@@ -5045,8 +5030,8 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return -1;
 		}
 
-		MergeExprContexts(ctx, rctx);
-		MergeExprContexts(ctx, lctx);
+		MergeExprBytecode(ctx, rctx);
+		MergeExprBytecode(ctx, lctx);
 
 		ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
 
@@ -5149,7 +5134,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 			if( le.type.dataType.IsEqualExceptConst(asCDataType::CreatePrimitive(ttVoid, false)) )
 			{
 				// Put the code for the condition expression on the output
-				MergeExprContexts(ctx, &e);
+				MergeExprBytecode(ctx, &e);
 
 				// Added the branch decision
 				ctx->type = e.type;
@@ -5160,12 +5145,12 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 
 				// Add the left expression
-				MergeExprContexts(ctx, &le);
+				MergeExprBytecode(ctx, &le);
 				ctx->bc.InstrINT(asBC_JMP, afterLabel);
 
 				// Add the right expression
 				ctx->bc.Label((short)elseLabel);
-				MergeExprContexts(ctx, &re);
+				MergeExprBytecode(ctx, &re);
 				ctx->bc.Label((short)afterLabel);
 
 				// Make sure both expressions have the same type
@@ -5193,7 +5178,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				CallDefaultConstructor(temp.dataType, offset, &ctx->bc, expr);
 
 				// Put the code for the condition expression on the output
-				MergeExprContexts(ctx, &e);
+				MergeExprBytecode(ctx, &e);
 
 				// Added the branch decision
 				ctx->type = e.type;
@@ -5210,7 +5195,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 					rtemp.isExplicitHandle = true;
 
 				PrepareForAssignment(&rtemp.dataType, &le, cexpr->next);
-				MergeExprContexts(ctx, &le);
+				MergeExprBytecode(ctx, &le);
 
 				if( !rtemp.dataType.IsPrimitive() )
 				{
@@ -5231,7 +5216,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 				// Copy the result to the same temporary variable
 				PrepareForAssignment(&rtemp.dataType, &re, cexpr->next);
-				MergeExprContexts(ctx, &re);
+				MergeExprBytecode(ctx, &re);
 
 				if( !rtemp.dataType.IsPrimitive() )
 				{
@@ -5398,15 +5383,7 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	}
 
 	// Return the byte code and final type description
-	MergeExprContexts(ctx, &v);
-
-    ctx->type = v.type;
-	ctx->property_get = v.property_get;
-	ctx->property_set = v.property_set;
-	ctx->property_const = v.property_const;
-	ctx->property_handle = v.property_handle;
-	ctx->property_ref = v.property_ref;
-	ctx->exprNode = v.exprNode;
+	MergeExprBytecodeAndType(ctx, &v);
 
 	return 0;
 }
@@ -5479,14 +5456,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			{
 				// Prepare the bytecode for the member access
 				ctx->bc.InstrSHORT(asBC_PSF, 0);
-				ctx->type.SetVariable(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly), 0, false);
-				ctx->type = access.type;
-				ctx->property_get = access.property_get;
-				ctx->property_set = access.property_set;
-				ctx->property_const = access.property_const;
-				ctx->property_handle = access.property_handle;
-				ctx->property_ref = access.property_ref;
-				ctx->exprNode = access.exprNode;
+				MergeExprBytecodeAndType(ctx, &access);
 
 				found = true;
 			}
@@ -5548,13 +5518,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		if( access.property_get || access.property_set )
 		{
 			// Prepare the bytecode for the function call
-			ctx->type = access.type;
-			ctx->property_get = access.property_get;
-			ctx->property_set = access.property_set;
-			ctx->property_const = access.property_const;
-			ctx->property_handle = access.property_handle;
-			ctx->property_ref = access.property_ref;
-			ctx->exprNode = access.exprNode;
+			MergeExprBytecodeAndType(ctx, &access);
 
 			found = true;
 		}
@@ -5975,14 +5939,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			ctx->type.SetDummy();
 			return r;
 		}
-		MergeExprContexts(ctx, &e);
-		ctx->type = e.type;
-		ctx->property_get = e.property_get;
-		ctx->property_set = e.property_set;
-		ctx->property_const = e.property_const;
-		ctx->property_handle = e.property_handle;
-		ctx->property_ref = e.property_ref;
-		ctx->exprNode = e.exprNode;
+		MergeExprBytecodeAndType(ctx, &e);
 	}
 	else if( vnode->nodeType == snCast )
 	{
@@ -6349,14 +6306,14 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	if( to == expr.type.dataType )
 	{
 		// This will keep information about constant type
-		MergeExprContexts(ctx, &expr);
+		MergeExprBytecode(ctx, &expr);
 		ctx->type = expr.type;
 		return;
 	}
 
 	if( to.IsEqualExceptConst(expr.type.dataType) && to.IsPrimitive() )
 	{
-		MergeExprContexts(ctx, &expr);
+		MergeExprBytecode(ctx, &expr);
 		ctx->type = expr.type;
 		ctx->type.dataType.MakeReadOnly(true);
 		return;
@@ -6377,7 +6334,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		{
 			conversionOK = CompileRefCast(&expr, to, true, node);
 
-			MergeExprContexts(ctx, &expr);
+			MergeExprBytecode(ctx, &expr);
 			ctx->type = expr.type;
 		}
 	}
@@ -6482,12 +6439,12 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 
 				if( !o.type.dataType.IsPrimitive() ) o.bc.Pop(AS_PTR_SIZE);
 
-				MergeExprContexts(ctx, &o);
+				MergeExprBytecode(ctx, &o);
 			}
 			else
 			{
 				// We must still evaluate the expression
-				MergeExprContexts(ctx, expr);
+				MergeExprBytecode(ctx, expr);
 				if( !expr->type.isConstant )
 					ctx->bc.Pop(expr->type.dataType.GetSizeOnStackDWords());
 
@@ -6603,7 +6560,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) )
 		{
 			// Evaluate the expression before the function call
-			MergeExprContexts(ctx, args[0]);
+			MergeExprBytecode(ctx, args[0]);
 			asDELETE(args[0],asSExprContext);
 			args.SetLength(0);
 		}
@@ -6754,7 +6711,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) )
 		{
 			// Evaluate the expression before the function call
-			MergeExprContexts(ctx, args[0]);
+			MergeExprBytecode(ctx, args[0]);
 			asDELETE(args[0],asSExprContext);
 			args.SetLength(0);
 		}
@@ -7796,7 +7753,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				// Add code for arguments
 
 				PrepareArgument(&descr->parameterTypes[0], &expr, node->firstChild, true, descr->inOutFlags[0]);
-				MergeExprContexts(ctx, &expr);
+				MergeExprBytecode(ctx, &expr);
 
 				if( descr->parameterTypes[0].IsReference() )
 				{
@@ -8031,35 +7988,17 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	asSExprContext e(engine);
 
 	// Reference parameters whose value won't be used don't evaluate the expression
-	if( !paramType->IsReference() || (refType & 1) )
-	{
-		MergeExprContexts(&e, arg);
-	}
-	else
+	if( paramType->IsReference() && !(refType & asTM_INREF) )
 	{
 		// Store the original bytecode so that it can be reused when processing the deferred output parameter
 		asSExprContext *orig = asNEW(asSExprContext)(engine);
-		MergeExprContexts(orig, arg);
-		orig->exprNode = arg->exprNode;
-		orig->type = arg->type;
-		orig->property_get = arg->property_get;
-		orig->property_set = arg->property_set;
-		orig->property_const = arg->property_const;
-		orig->property_handle = arg->property_handle;
-		orig->property_ref = arg->property_ref;
-		orig->exprNode = arg->exprNode;
-
+		MergeExprBytecodeAndType(orig, arg);
 		arg->origExpr = orig;
 	}
 
-	e.type = arg->type;
-	e.property_get = arg->property_get;
-	e.property_set = arg->property_set;
-	e.property_const = arg->property_const;
-	e.property_handle = arg->property_handle;
-	e.property_ref = arg->property_ref;
-	e.exprNode = arg->exprNode;
+	MergeExprBytecodeAndType(&e, arg);
 	PrepareArgument(paramType, &e, arg->exprNode, isFunction, refType, reservedVars);
+	// arg still holds the original expression for output parameters
 	arg->type = e.type;
 	ctx->bc.AddCode(&e.bc);
 }
@@ -8302,7 +8241,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			asCTypeInfo objType = lctx->type;
 			asCArray<asSExprContext *> args;
 			args.PushLast(rctx);
-			MergeExprContexts(ctx, lctx);
+			MergeExprBytecode(ctx, lctx);
 			ctx->type = lctx->type;
 			MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args, node);
 
@@ -8686,13 +8625,13 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 			op == ttModAssign )
 		{
 			// Merge the operands in the different order so that they are evaluated correctly
-			MergeExprContexts(ctx, rctx);
-			MergeExprContexts(ctx, lctx);
+			MergeExprBytecode(ctx, rctx);
+			MergeExprBytecode(ctx, lctx);
 		}
 		else
 		{
-			MergeExprContexts(ctx, lctx);
-			MergeExprContexts(ctx, rctx);
+			MergeExprBytecode(ctx, lctx);
+			MergeExprBytecode(ctx, rctx);
 		}
 
 		asEBCInstr instruction = asBC_ADDi;
@@ -8947,13 +8886,13 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 			if( op == ttAndAssign || op == ttOrAssign || op == ttXorAssign )
 			{
 				// Compound assignments execute the right hand value first
-				MergeExprContexts(ctx, rctx);
-				MergeExprContexts(ctx, lctx);
+				MergeExprBytecode(ctx, rctx);
+				MergeExprBytecode(ctx, lctx);
 			}
 			else
 			{
-				MergeExprContexts(ctx, lctx);
-				MergeExprContexts(ctx, rctx);
+				MergeExprBytecode(ctx, lctx);
+				MergeExprBytecode(ctx, rctx);
 			}
 
 			asEBCInstr instruction = asBC_BAND;
@@ -9083,13 +9022,13 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 			if( op == ttShiftLeftAssign || op == ttShiftRightLAssign || op == ttShiftRightAAssign )
 			{
 				// Compound assignments execute the right hand value first
-				MergeExprContexts(ctx, rctx);
-				MergeExprContexts(ctx, lctx);
+				MergeExprBytecode(ctx, rctx);
+				MergeExprBytecode(ctx, lctx);
 			}
 			else
 			{
-				MergeExprContexts(ctx, lctx);
-				MergeExprContexts(ctx, rctx);
+				MergeExprBytecode(ctx, lctx);
+				MergeExprBytecode(ctx, rctx);
 			}
 
 			asEBCInstr instruction = asBC_BSLL;
@@ -9274,8 +9213,8 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 				lctx->bc.InstrWORD(asBC_NOT, lctx->type.stackOffset);
 				rctx->bc.InstrWORD(asBC_NOT, rctx->type.stackOffset);
 
-				MergeExprContexts(ctx, lctx);
-				MergeExprContexts(ctx, rctx);
+				MergeExprBytecode(ctx, lctx);
+				MergeExprBytecode(ctx, rctx);
 
 				int a = AllocateVariable(asCDataType::CreatePrimitive(ttBool, true), true);
 				int b = lctx->type.stackOffset;
@@ -9310,8 +9249,8 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 			ReleaseTemporaryVariable(lctx->type, &lctx->bc);
 			ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 
-			MergeExprContexts(ctx, lctx);
-			MergeExprContexts(ctx, rctx);
+			MergeExprBytecode(ctx, lctx);
+			MergeExprBytecode(ctx, rctx);
 
 			asEBCInstr iCmp = asBC_CMPi, iT = asBC_TZ;
 
@@ -9513,8 +9452,8 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			lctx->bc.InstrWORD(asBC_NOT, lctx->type.stackOffset);
 			rctx->bc.InstrWORD(asBC_NOT, rctx->type.stackOffset);
 
-			MergeExprContexts(ctx, lctx);
-			MergeExprContexts(ctx, rctx);
+			MergeExprBytecode(ctx, lctx);
+			MergeExprBytecode(ctx, rctx);
 
 			int a = AllocateVariable(ctx->type.dataType, true);
 			int b = lctx->type.stackOffset;
@@ -9559,7 +9498,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			// if and-operator and first value is 0 the second value shouldn't be calculated
 			ConvertToVariable(lctx);
 			ReleaseTemporaryVariable(lctx->type, &lctx->bc);
-			MergeExprContexts(ctx, lctx);
+			MergeExprBytecode(ctx, lctx);
 
 			int offset = AllocateVariable(asCDataType::CreatePrimitive(ttBool, false), true);
 
@@ -9590,7 +9529,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			ConvertToVariable(rctx);
 			ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 			rctx->bc.InstrW_W(asBC_CpyVtoV4, offset, rctx->type.stackOffset);
-			MergeExprContexts(ctx, rctx);
+			MergeExprBytecode(ctx, rctx);
 			ctx->bc.Label((short)label2);
 
 			ctx->type.SetVariable(asCDataType::CreatePrimitive(ttBool, false), offset, true);
@@ -9704,8 +9643,8 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		ConvertToVariableNotIn(lctx, rctx);
 		ConvertToVariable(rctx);
 
-		MergeExprContexts(ctx, lctx);
-		MergeExprContexts(ctx, rctx);
+		MergeExprBytecode(ctx, lctx);
+		MergeExprBytecode(ctx, rctx);
 
 		int a = AllocateVariable(ctx->type.dataType, true);
 		int b = lctx->type.stackOffset;
@@ -9863,8 +9802,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	}
 }
 
-
-void asCCompiler::MergeExprContexts(asSExprContext *before, asSExprContext *after)
+// This only merges the bytecode, but doesn't modify the type of the final context
+void asCCompiler::MergeExprBytecode(asSExprContext *before, asSExprContext *after)
 {
 	before->bc.AddCode(&after->bc);
 
@@ -9872,8 +9811,22 @@ void asCCompiler::MergeExprContexts(asSExprContext *before, asSExprContext *afte
 		before->deferredParams.PushLast(after->deferredParams[n]);
 
 	after->deferredParams.SetLength(0);
+}
 
-	asASSERT( after->origExpr == 0 );
+// This merges both bytecode and the type of the final context
+void asCCompiler::MergeExprBytecodeAndType(asSExprContext *before, asSExprContext *after)
+{
+	MergeExprBytecode(before, after);
+
+	before->type            = after->type;
+	before->property_get    = after->property_get;
+	before->property_set    = after->property_set;
+	before->property_const  = after->property_const;
+	before->property_handle = after->property_handle;
+	before->property_ref    = after->property_ref;
+	before->exprNode        = after->exprNode;
+
+	// Do not copy the origExpr member
 }
 
 void asCCompiler::FilterConst(asCArray<int> &funcs)

@@ -382,7 +382,7 @@ asCScriptEngine::asCScriptEngine()
 
 	userData = 0;
 
-	initialContextStackSize = 1024;      // 1 KB
+	initialContextStackSize = 1024;      // 4 KB (1024 * sizeof(asDWORD)
 
 
 	typeIdSeqNbr = 0;

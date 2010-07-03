@@ -190,8 +190,9 @@ bool Test()
 		printf("%s: Failed to Build()\n", "TestAny");
 	}
 	if( bout.buffer != "TestAny (5, 1) : Info    : Compiling void TestAny()\n"
-	                   "TestAny (9, 14) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
+	                   "TestAny (9, 15) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
 	{
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 

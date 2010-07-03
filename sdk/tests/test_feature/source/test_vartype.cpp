@@ -292,7 +292,7 @@ bool Test()
 	mod->Build();
 	r = ExecuteString(engine, "const C c; testFuncO(@c.a);", mod);
 	if( r != asEXECUTION_FINISHED ) fail = true;
-	if( bout.buffer != "ExecuteString (1, 22) : Warning : Argument cannot be assigned. Output will be discarded.\n" ) fail = true;
+	if( bout.buffer != "ExecuteString (1, 23) : Warning : Argument cannot be assigned. Output will be discarded.\n" ) fail = true;
 	bout.buffer = "";
 
 	// ?& with opAssign is allowed, but won't be used with the assignment operator
