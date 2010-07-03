@@ -411,6 +411,10 @@ SOURCE=..\..\source\test_scriptmath.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_scriptretref.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_scriptstring.cpp
 # End Source File
 # Begin Source File

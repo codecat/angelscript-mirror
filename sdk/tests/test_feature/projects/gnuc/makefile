@@ -81,6 +81,7 @@ SRCNAMES = \
   test_saveload.cpp \
   test_scriptclassmethod.cpp \
   test_scriptmath.cpp \
+  test_scriptretref.cpp \
   test_scriptstring.cpp \
   test_scriptstruct.cpp \
   test_shark.cpp \
