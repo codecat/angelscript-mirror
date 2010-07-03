@@ -224,13 +224,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 			str.Format(TXT_DATA_TYPE_CANT_BE_s, returnType.Format().AddressOf());
 			Error(str.AddressOf(), func->firstChild);
 		}
-
-		// TODO: Add support for returning references
-		// The script language doesn't support returning references yet
-		if( returnType.IsReference() )
-		{
-			Error(TXT_SCRIPT_FUNCTIONS_DOESNT_SUPPORT_RETURN_REF, func->firstChild);
-		}
 	}
 	else
 	{
@@ -2719,6 +2712,34 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 {
 	// Get return type and location
 	sVariable *v = variables->GetVariable("return");
+
+	// TODO: Add support for returning references
+	//
+	//       The expression that gives the reference must not use any of the 
+	//       variables that must be destroyed upon exit, because then it means
+	//       reference will stay alive while the clean-up is done, which could
+	//       potentially mean that there is a reference on the stack when the 
+	//       context is suspended.
+	//       
+	//       When the function is returning a reference, the clean-up of the 
+	//       variables must be done before the evaluation of the expression.
+	//
+	//       A reference to a global variable, or a class member for class methods
+	//       should be allowed to be returned.
+	//
+	//       No references to local variables, temporary variables, or parameters
+	//       are allowed to be returned, since they go out of scope when the function
+	//       returns.
+
+
+
+	// The script language doesn't support returning references yet
+	if( v->type.IsReference() )
+	{
+		Error(TXT_SCRIPT_FUNCTIONS_DOESNT_SUPPORT_RETURN_REF, rnode);
+		return;
+	}
+
 	if( v->type.GetSizeOnStackDWords() > 0 )
 	{
 		// Is there an expression?
@@ -2787,9 +2808,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 		else
 			Error(TXT_MUST_RETURN_VALUE, rnode);
 	}
-	else
-		if( rnode->firstChild )
-			Error(TXT_CANT_RETURN_VALUE, rnode);
+	else if( rnode->firstChild )
+		Error(TXT_CANT_RETURN_VALUE, rnode);
 
 	// Call destructor on all variables except for the function parameters
 	asCVariableScope *vs = variables;

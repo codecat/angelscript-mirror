@@ -143,6 +143,7 @@ namespace TestGetSet            { bool Test(); }
 namespace TestModule            { bool Test(); }
 namespace TestFunctionPtr       { bool Test(); }
 namespace TestGarbageCollect    { bool Test(); }
+namespace TestScriptRetRef      { bool Test(); }
 
 namespace Test_Addon_ScriptArray { bool Test(); }
 
@@ -185,6 +186,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( TestScriptRetRef::Test()       ) goto failed; else printf("-- TestScriptRetRef passed\n");
 	if( TestGarbageCollect::Test()     ) goto failed; else printf("-- TestGarbageCollect passed\n");
 	if( TestFunctionPtr::Test()        ) goto failed; else printf("-- TestFunctionPtr passed\n");
 	if( TestModule::Test()             ) goto failed; else printf("-- TestModule passed\n");
