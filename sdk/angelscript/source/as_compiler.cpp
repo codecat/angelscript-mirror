@@ -2713,103 +2713,156 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 	// Get return type and location
 	sVariable *v = variables->GetVariable("return");
 
-	// TODO: Add support for returning references
-	//
-	//       The expression that gives the reference must not use any of the 
-	//       variables that must be destroyed upon exit, because then it means
-	//       reference will stay alive while the clean-up is done, which could
-	//       potentially mean that there is a reference on the stack when the 
-	//       context is suspended.
-	//       
-	//       When the function is returning a reference, the clean-up of the 
-	//       variables must be done before the evaluation of the expression.
-	//
-	//       A reference to a global variable, or a class member for class methods
-	//       should be allowed to be returned.
-	//
-	//       No references to local variables, temporary variables, or parameters
-	//       are allowed to be returned, since they go out of scope when the function
-	//       returns.
-
-
-
-	// The script language doesn't support returning references yet
-	if( v->type.IsReference() )
+	// Basic validations
+	if( v->type.GetSizeOnStackDWords() > 0 && !rnode->firstChild )
 	{
-		Error(TXT_SCRIPT_FUNCTIONS_DOESNT_SUPPORT_RETURN_REF, rnode);
+		Error(TXT_MUST_RETURN_VALUE, rnode);
+		return;
+	}
+	else if( v->type.GetSizeOnStackDWords() == 0 && rnode->firstChild )
+	{
+		Error(TXT_CANT_RETURN_VALUE, rnode);
 		return;
 	}
 
-	if( v->type.GetSizeOnStackDWords() > 0 )
+	// Compile the expression
+	if( rnode->firstChild )
 	{
-		// Is there an expression?
-		if( rnode->firstChild )
+		// Compile the expression
+		asSExprContext expr(engine);
+		int r = CompileAssignment(rnode->firstChild, &expr);
+		if( r < 0 ) return;
+
+		if( v->type.IsReference() )
 		{
-			// Compile the expression
-			asSExprContext expr(engine);
-			int r = CompileAssignment(rnode->firstChild, &expr);
-			if( r >= 0 )
+			// TODO: Add support for returning references
+			//
+			//       The expression that gives the reference must not use any of the 
+			//       variables that must be destroyed upon exit, because then it means
+			//       reference will stay alive while the clean-up is done, which could
+			//       potentially mean that there is a reference on the stack when the 
+			//       context is suspended.
+			//       
+			//       When the function is returning a reference, the clean-up of the 
+			//       variables must be done before the evaluation of the expression.
+			//
+			//       A reference to a global variable, or a class member for class methods
+			//       should be allowed to be returned.
+			//
+
+			if( !(expr.type.dataType.IsReference() ||
+				  (expr.type.dataType.IsObject() && !expr.type.dataType.IsObjectHandle())) )
 			{
-				ProcessPropertyGetAccessor(&expr, rnode);
-
-				// Prepare the value for assignment
-				IsVariableInitialized(&expr.type, rnode->firstChild);
-
-				if( v->type.IsPrimitive() )
-				{
-					if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-
-					// Implicitly convert the value to the return type
-					ImplicitConversion(&expr, v->type, rnode->firstChild, asIC_IMPLICIT_CONV);
-
-					// Verify that the conversion was successful
-					if( expr.type.dataType != v->type )
-					{
-						asCString str;
-						str.Format(TXT_NO_CONVERSION_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
-						Error(str.AddressOf(), rnode);
-						r = -1;
-					}
-					else
-					{
-						ConvertToVariable(&expr);
-						ReleaseTemporaryVariable(expr.type, &expr.bc);
-
-						// Load the variable in the register
-						if( v->type.GetSizeOnStackDWords() == 1 )
-							expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
-						else
-							expr.bc.InstrSHORT(asBC_CpyVtoR8, expr.type.stackOffset);
-					}
-				}
-				else if( v->type.IsObject() )
-				{
-					PrepareArgument(&v->type, &expr, rnode->firstChild);
-
-					// Pop the reference to the temporary variable again
-					expr.bc.Pop(AS_PTR_SIZE);
-
-					// Load the object pointer into the object register
-					// LOADOBJ also clears the address in the variable
-					expr.bc.InstrSHORT(asBC_LOADOBJ, expr.type.stackOffset);
-
-					// LOADOBJ cleared the address in the variable so the object will not be freed
-					// here, but the temporary variable must still be freed so the slot can be reused
-					// By releasing without the bytecode we do just that.
-					ReleaseTemporaryVariable(expr.type, 0);
-				}
-
-				// Release temporary variables used by expression
-				ReleaseTemporaryVariable(expr.type, &expr.bc);
-
-				bc->AddCode(&expr.bc);
+				Error(TXT_NOT_VALID_REFERENCE, rnode);
+				return;
 			}
+
+			// No references to local variables, temporary variables, or parameters
+			// are allowed to be returned, since they go out of scope when the function
+			// returns. Even reference parameters are disallowed, since it is not possible
+			// to know the scope of them.
+			if( expr.type.isVariable || expr.type.isTemporary )
+			{
+				Error(TXT_CANNOT_RETURN_REF_TO_LOCAL, rnode);
+				return;
+			}
+
+			// The expression must not have any deferred expressions, because the evaluation 
+			// of these cannot be done without keeping the reference which is not safe
+			if( expr.deferredParams.GetLength() )
+			{
+				// TODO: Write proper error message
+				Error("deferred parameters. what should the error be?", rnode);
+				return;
+			}
+
+			// The type must match exactly as we cannot convert
+			// the reference without loosing the original value
+			if( !(v->type == expr.type.dataType ||
+				(expr.type.dataType.IsObject() && !expr.type.dataType.IsObjectHandle() && v->type.IsEqualExceptRef(expr.type.dataType))) )
+			{
+				asCString str;
+				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
+				Error(str.AddressOf(), rnode);
+				return;
+			}
+
+			// For primitives the reference is already in the register,
+			// but for non-primitives the reference is on the stack so we 
+			// need to load it into the register
+			if( !expr.type.dataType.IsPrimitive() )
+			{
+				if( !expr.type.dataType.IsObjectHandle() && expr.type.dataType.IsReference() )
+				{
+#ifndef AS_64BIT_PTR 
+					expr.bc.Instr(asBC_RDS4);
+#else
+					expr.bc.Instr(asBC_RDS8);
+#endif
+				}
+
+				expr.bc.Instr(asBC_PopRPtr);
+			}
+
+			// There are no temporaries to release so we're done
 		}
 		else
-			Error(TXT_MUST_RETURN_VALUE, rnode);
+		{
+			ProcessPropertyGetAccessor(&expr, rnode);
+
+			// Prepare the value for assignment
+			IsVariableInitialized(&expr.type, rnode->firstChild);
+
+			if( v->type.IsPrimitive() )
+			{
+				if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
+
+				// Implicitly convert the value to the return type
+				ImplicitConversion(&expr, v->type, rnode->firstChild, asIC_IMPLICIT_CONV);
+
+				// Verify that the conversion was successful
+				if( expr.type.dataType != v->type )
+				{
+					asCString str;
+					str.Format(TXT_NO_CONVERSION_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
+					Error(str.AddressOf(), rnode);
+					r = -1;
+				}
+				else
+				{
+					ConvertToVariable(&expr);
+					ReleaseTemporaryVariable(expr.type, &expr.bc);
+
+					// Load the variable in the register
+					if( v->type.GetSizeOnStackDWords() == 1 )
+						expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
+					else
+						expr.bc.InstrSHORT(asBC_CpyVtoR8, expr.type.stackOffset);
+				}
+			}
+			else if( v->type.IsObject() )
+			{
+				PrepareArgument(&v->type, &expr, rnode->firstChild);
+
+				// Pop the reference to the temporary variable again
+				expr.bc.Pop(AS_PTR_SIZE);
+
+				// Load the object pointer into the object register
+				// LOADOBJ also clears the address in the variable
+				expr.bc.InstrSHORT(asBC_LOADOBJ, expr.type.stackOffset);
+
+				// LOADOBJ cleared the address in the variable so the object will not be freed
+				// here, but the temporary variable must still be freed so the slot can be reused
+				// By releasing without the bytecode we do just that.
+				ReleaseTemporaryVariable(expr.type, 0);
+			}
+
+			// Release temporary variables used by expression
+			ReleaseTemporaryVariable(expr.type, &expr.bc);
+		}
+
+		bc->AddCode(&expr.bc);
 	}
-	else if( rnode->firstChild )
-		Error(TXT_CANT_RETURN_VALUE, rnode);
 
 	// Call destructor on all variables except for the function parameters
 	asCVariableScope *vs = variables;

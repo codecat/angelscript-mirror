@@ -699,6 +699,13 @@ bool asCParser::IsFuncDecl(bool isMethod)
 		GetToken(&t2);
 	}
 
+	// There can be an ampersand if the function returns a reference
+	if( t2.type == ttAmp )
+	{
+		RewindTo(&t);
+		return true;
+	}
+
 	if( t2.type != ttIdentifier )
 	{
 		RewindTo(&t);

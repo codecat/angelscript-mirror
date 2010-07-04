@@ -41,9 +41,12 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != "TestParser (3, 17) : Error   : Expected ')' or ','\n"
-					   "TestParser (3, 17) : Error   : Expected method or property\n"
+					   "TestParser (3, 20) : Error   : Expected method or property\n"
 					   "TestParser (4, 1) : Error   : Unexpected token '}'\n" )
+	{
+		printf("%s", bout.buffer.c_str());
 		fail = true;
+	}
 
 	engine->Release();
 

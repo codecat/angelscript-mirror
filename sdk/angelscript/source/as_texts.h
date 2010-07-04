@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -58,6 +58,7 @@
 #define TXT_CANNOT_INHERIT_FROM_SELF             "Can't inherit from itself, or another class that inherits from this class"
 #define TXT_CANNOT_INSTANCIATE_TEMPLATE_s_WITH_s "Can't instanciate template '%s' with subtype '%s'"
 #define TXT_CANT_IMPLICITLY_CONVERT_s_TO_s       "Can't implicitly convert from '%s' to '%s'."
+#define TXT_CANNOT_RETURN_REF_TO_LOCAL           "Can't return reference to local value."
 #define TXT_CANT_RETURN_VALUE                    "Can't return value when return type is 'void'"
 #define TXT_CHANGE_SIGN                          "Implicit conversion changed sign of value"
 #define TXT_COMPILING_s                          "Compiling %s"
@@ -167,7 +168,6 @@
 #define TXT_REF_IS_TEMP                   "Reference is temporary"
 #define TXT_RETURN_CANT_BE_s              "Return type can't be '%s'"
 
-#define TXT_SCRIPT_FUNCTIONS_DOESNT_SUPPORT_RETURN_REF "Script functions must not return references"
 #define TXT_SIGNED_UNSIGNED_MISMATCH                   "Signed/Unsigned mismatch"
 #define TXT_STRINGS_NOT_RECOGNIZED                     "Strings are not recognized by the application"
 #define TXT_SWITCH_CASE_MUST_BE_CONSTANT               "Case expressions must be constants"
