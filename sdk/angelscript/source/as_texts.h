@@ -164,9 +164,10 @@
 #define TXT_PROPERTY_HAS_NO_GET_ACCESSOR  "The property has no get accessor"
 #define TXT_PROPERTY_HAS_NO_SET_ACCESSOR  "The property has no set accessor"
 
-#define TXT_REF_IS_READ_ONLY              "Reference is read-only"
-#define TXT_REF_IS_TEMP                   "Reference is temporary"
-#define TXT_RETURN_CANT_BE_s              "Return type can't be '%s'"
+#define TXT_REF_IS_READ_ONLY                    "Reference is read-only"
+#define TXT_REF_IS_TEMP                         "Reference is temporary"
+#define TXT_RETURN_CANT_BE_s                    "Return type can't be '%s'"
+#define TXT_REF_CANT_BE_RETURNED_DEFERRED_PARAM "Resulting reference cannot be returned, because the expression has deferred output parameters that must be evaluated."
 
 #define TXT_SIGNED_UNSIGNED_MISMATCH                   "Signed/Unsigned mismatch"
 #define TXT_STRINGS_NOT_RECOGNIZED                     "Strings are not recognized by the application"

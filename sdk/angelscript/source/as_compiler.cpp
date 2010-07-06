@@ -2753,6 +2753,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			if( !(expr.type.dataType.IsReference() ||
 				  (expr.type.dataType.IsObject() && !expr.type.dataType.IsObjectHandle())) )
 			{
+				// Clean up the potential deferred parameters
+				ProcessDeferredParams(&expr);
 				Error(TXT_NOT_VALID_REFERENCE, rnode);
 				return;
 			}
@@ -2763,6 +2765,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			// to know the scope of them.
 			if( expr.type.isVariable || expr.type.isTemporary )
 			{
+				// Clean up the potential deferred parameters
+				ProcessDeferredParams(&expr);
 				Error(TXT_CANNOT_RETURN_REF_TO_LOCAL, rnode);
 				return;
 			}
@@ -2771,8 +2775,9 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			// of these cannot be done without keeping the reference which is not safe
 			if( expr.deferredParams.GetLength() )
 			{
-				// TODO: Write proper error message
-				Error("deferred parameters. what should the error be?", rnode);
+				// Clean up the potential deferred parameters
+				ProcessDeferredParams(&expr);
+				Error(TXT_REF_CANT_BE_RETURNED_DEFERRED_PARAM, rnode);
 				return;
 			}
 
@@ -2781,6 +2786,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			if( !(v->type == expr.type.dataType ||
 				(expr.type.dataType.IsObject() && !expr.type.dataType.IsObjectHandle() && v->type.IsEqualExceptRef(expr.type.dataType))) )
 			{
+				// Clean up the potential deferred parameters
+				ProcessDeferredParams(&expr);
 				asCString str;
 				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
 				Error(str.AddressOf(), rnode);
@@ -6484,6 +6491,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 		else if( outParam.argInOutFlags == asTM_OUTREF )
 		{
 			asSExprContext *expr = outParam.origExpr;
+			outParam.origExpr = 0;
 
 			if( outParam.argType.dataType.IsObjectHandle() )
 			{
@@ -9881,7 +9889,10 @@ void asCCompiler::MergeExprBytecode(asSExprContext *before, asSExprContext *afte
 	before->bc.AddCode(&after->bc);
 
 	for( asUINT n = 0; n < after->deferredParams.GetLength(); n++ )
+	{
 		before->deferredParams.PushLast(after->deferredParams[n]);
+		after->deferredParams[n].origExpr = 0;
+	}
 
 	after->deferredParams.SetLength(0);
 }

@@ -168,6 +168,60 @@ bool Test()
 			fail = true;
 	}
 
+	// Test returning reference to a global variable
+	// This should work, as the global variable is guaranteed to be there even after the function returns
+	{
+		bout.buffer = "";
+		const char *script =
+			"string g;\n"
+			"string &Test()\n"
+			"{\n"
+			"  return g;\n"
+			"}\n"
+			"string &Test2()\n"
+			"{\n"
+			"  return Test();\n"
+			"}\n";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) fail = true;
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		r = ExecuteString(engine, "Test2() = '42'; assert( g == '42' );", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+	}
+
+	// This should not work, as the output parameter is evaluated after the reference is 
+	// is returned from Test, but before it is returned from Test2.
+	{
+		bout.buffer = "";
+		const char *script =
+			"string g;\n"
+			"string &Test(string &out s)\n"
+			"{\n"
+			"  return g;\n"
+			"}\n"
+			"string &Test2()\n"
+			"{\n"
+			"  string s;\n"
+			"  return Test(s);\n"
+			"}\n";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 ) fail = true;
+		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
+		                   "script (9, 3) : Error   : Resulting reference cannot be returned, because the expression has deferred output parameters that must be evaluated.\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+	}
+
 	// Test returning a constant
 	// This should fail to compile because the expression is not a reference
 	{
