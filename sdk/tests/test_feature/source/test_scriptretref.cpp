@@ -196,13 +196,63 @@ bool Test()
 			fail = true;
 	}
 
+	// This should work as the parameter is a primitive and doesn't need cleanup after the expression.
+	{
+		bout.buffer = "";
+		const char *script =
+			"string g;\n"
+			"string &Test(int s)\n"
+			"{\n"
+			"  return g;\n"
+			"}\n"
+			"string &Test2()\n"
+			"{\n"
+			"  return Test(1);\n"
+			"}\n";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) fail = true;
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+	}
+
+
 	// This should not work, as the output parameter is evaluated after the reference is 
 	// is returned from Test, but before it is returned from Test2.
 	{
 		bout.buffer = "";
 		const char *script =
 			"string g;\n"
-			"string &Test(string &out s)\n"
+			"string &Test(int &out s)\n"
+			"{\n"
+			"  return g;\n"
+			"}\n"
+			"string &Test2()\n"
+			"{\n"
+			"  int s;\n"
+			"  return Test(s);\n"
+			"}\n";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 ) fail = true;
+		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
+		                   "script (9, 3) : Error   : Resulting reference cannot be returned, because there are deferred arguments that may invalidate it.\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+	}
+
+	// This should not work, as the input parameter is cleaned up after the 
+	// reference is returned from Test, which may invalidate the reference
+	{
+		bout.buffer = "";
+		const char *script =
+			"string g;\n"
+			"string &Test(const string &in s)\n"
 			"{\n"
 			"  return g;\n"
 			"}\n"
@@ -215,7 +265,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 ) fail = true;
 		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
-		                   "script (9, 3) : Error   : Resulting reference cannot be returned, because the expression has deferred output parameters that must be evaluated.\n" )
+		                   "script (9, 3) : Error   : Resulting reference cannot be returned, because there are deferred arguments that may invalidate it.\n" )
 		{
 			printf(bout.buffer.c_str());
 			fail = true;

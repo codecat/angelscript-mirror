@@ -1012,6 +1012,46 @@ bool Test()
 		engine->Release();
 	}
 
+	//////////////
+	{
+		const char *script = 
+			"class Obj {}; \n"
+			"class Hoge \n"
+			"{ \n"
+			"    const Obj obj()const { return Obj(); } \n"
+			"} \n"
+			"class Foo \n"
+			"{ \n"
+			"    Foo() \n"
+			"    { \n"
+			"        Hoge h; \n"
+			"        Obj tmpObj = h.obj(); /* OK */ \n"
+			"        mObj = h.obj(); /* Build failed */ \n" // this should work
+			"    } \n"
+			"    Obj mObj; \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void sine()", asFUNCTION(0), asCALL_GENERIC);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
+
 	// Success
  	return fail;
 }

@@ -4253,8 +4253,10 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 						// Make a temporary object with the copy
 						PrepareTemporaryObject(node, ctx, reservedVars);
 					}
-					else
-						ctx->type.dataType.MakeReadOnly(false);
+
+					// In case the object was already in a temporary variable, then the function
+					// didn't really do anything so we need to remove the constness here
+					ctx->type.dataType.MakeReadOnly(false);
 				}
 			}
 
