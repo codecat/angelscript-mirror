@@ -18,6 +18,16 @@ bool Test()
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
+	// TODO: The return expression must not use any local variables or temporaries that will be 
+	//       destroyed after the expression is completed.
+
+	// TODO: Any local variables used by the function must be destroyed before the return expression
+	//       is evaluated, so that there is no clean up after the expression
+
+	// TODO: Make sure a reference to the object is held by the caller so that the callee doesn't destroy
+	//       itself before returning the reference. For example if the object is stored in a global variable
+	//       and the class resets the global variable.
+
 	// Test returning reference to a global variable
 	// This should work, as the global variable is guaranteed to be there even after the function returns
 	{

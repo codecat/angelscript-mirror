@@ -775,7 +775,7 @@ asCScriptNode *asCParser::ParseFuncDef()
 	GetToken(&t1);
 	if( t1.type != ttEndStatement )
 	{
-		Error(asGetTokenDefinition(ttEndStatement), &t1);
+		Error(ExpectedToken(asGetTokenDefinition(ttEndStatement)).AddressOf(), &t1);
 		return node;
 	}
 
