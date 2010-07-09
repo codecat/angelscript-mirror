@@ -24,10 +24,6 @@ bool Test()
 	// TODO: Any local variables used by the function must be destroyed before the return expression
 	//       is evaluated, so that there is no clean up after the expression
 
-	// TODO: Make sure a reference to the object is held by the caller so that the callee doesn't destroy
-	//       itself before returning the reference. For example if the object is stored in a global variable
-	//       and the class resets the global variable.
-
 	// Test returning reference to a global variable
 	// This should work, as the global variable is guaranteed to be there even after the function returns
 	{
@@ -227,6 +223,37 @@ bool Test()
 			printf(bout.buffer.c_str());
 			fail = true;
 		}
+	}
+
+	// Make sure a reference to the object is held by the caller so that the callee doesn't destroy
+	// itself before returning the reference. For example if the object is stored in a global variable
+	// and the class resets the global variable.
+	{
+		bout.buffer = "";
+		const char *script =
+			"class Test\n"
+			"{ \n"
+			"  string &t()\n"
+			"  { \n"
+			"    @g = null; \n"  
+			"    return m; \n"
+			"  } \n"
+			"  string m; \n"
+			"} \n"
+			"Test @g; \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) fail = true;
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		r = ExecuteString(engine, "@g = Test(); g.m = 'test'; assert( g.t() == 'test' );", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
 	}
 
 

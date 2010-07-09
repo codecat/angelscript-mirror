@@ -9,7 +9,7 @@
 static const char * const TESTNAME = "TestCondition";
 
 using std::string;
-static string a;
+static CScriptString *a = 0;
 
 static const char *script1 =
 "void Test(string strA, string strB)   \n"
@@ -66,10 +66,12 @@ bool TestCondition()
 	bool fail = false;
 	int r;
 
+	a = new CScriptString();
+
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString_Generic(engine);
-	engine->RegisterGlobalProperty("string a", &a);
+	engine->RegisterGlobalProperty("string a", a);
 
 //	engine->RegisterObjectType("Data", 0, asOBJ_REF | asOBJ_NOHANDLE);
 
@@ -157,6 +159,7 @@ bool TestCondition()
 		fail = true;
 
 	engine->Release();
+	a->Release();
 
 	// Success
 	return fail;

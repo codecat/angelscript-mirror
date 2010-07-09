@@ -1629,6 +1629,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					lctx.type.dataType.MakeReadOnly(false);
 
 					DoAssignment(&ctx, &lctx, &expr, node, node, ttAssignment, node);
+					ProcessDeferredParams(&ctx);
 				}
 				else
 				{
@@ -1646,6 +1647,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					sVariable *v = variables->GetVariable(name.AddressOf());
 					lexpr.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
 					lexpr.type.stackOffset = (short)v->stackOffset;
+					lexpr.type.isVariable = true;
 
 
 					// If left expression resolves into a registered type
@@ -6473,6 +6475,14 @@ void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args,
 			// Release the temporary variable now
 			ReleaseTemporaryVariable(args[n]->type, &ctx->bc);
 		}
+
+		// Move the argument's deferred expressions over to the final expression
+		for( asUINT m = 0; m < args[n]->deferredParams.GetLength(); m++ )
+		{
+			ctx->deferredParams.PushLast(args[n]->deferredParams[m]);
+			args[n]->deferredParams[m].origExpr = 0;
+		}
+		args[n]->deferredParams.SetLength(0);
 	}
 }
 
@@ -8068,8 +8078,6 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 
 void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType, asCArray<int> *reservedVars)
 {
-	asSExprContext e(engine);
-
 	// Reference parameters whose value won't be used don't evaluate the expression
 	if( paramType->IsReference() && !(refType & asTM_INREF) )
 	{
@@ -8079,11 +8087,9 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 		arg->origExpr = orig;
 	}
 
-	MergeExprBytecodeAndType(&e, arg);
-	PrepareArgument(paramType, &e, arg->exprNode, isFunction, refType, reservedVars);
+	PrepareArgument(paramType, arg, arg->exprNode, isFunction, refType, reservedVars);
 	// arg still holds the original expression for output parameters
-	arg->type = e.type;
-	ctx->bc.AddCode(&e.bc);
+	ctx->bc.AddCode(&arg->bc);
 }
 
 bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
@@ -8716,6 +8722,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 			MergeExprBytecode(ctx, lctx);
 			MergeExprBytecode(ctx, rctx);
 		}
+		ProcessDeferredParams(ctx);
 
 		asEBCInstr instruction = asBC_ADDi;
 		if( lctx->type.dataType.IsIntegerType() ||
@@ -8977,6 +8984,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 				MergeExprBytecode(ctx, lctx);
 				MergeExprBytecode(ctx, rctx);
 			}
+			ProcessDeferredParams(ctx);
 
 			asEBCInstr instruction = asBC_BAND;
 			if( lctx->type.dataType.GetSizeInMemoryDWords() == 1 )
@@ -9113,6 +9121,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 				MergeExprBytecode(ctx, lctx);
 				MergeExprBytecode(ctx, rctx);
 			}
+			ProcessDeferredParams(ctx);
 
 			asEBCInstr instruction = asBC_BSLL;
 			if( lctx->type.dataType.GetSizeInMemoryDWords() == 1 )
@@ -9298,6 +9307,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 
 				MergeExprBytecode(ctx, lctx);
 				MergeExprBytecode(ctx, rctx);
+				ProcessDeferredParams(ctx);
 
 				int a = AllocateVariable(asCDataType::CreatePrimitive(ttBool, true), true);
 				int b = lctx->type.stackOffset;
@@ -9334,6 +9344,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 
 			MergeExprBytecode(ctx, lctx);
 			MergeExprBytecode(ctx, rctx);
+			ProcessDeferredParams(ctx);
 
 			asEBCInstr iCmp = asBC_CMPi, iT = asBC_TZ;
 
@@ -9537,6 +9548,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 
 			MergeExprBytecode(ctx, lctx);
 			MergeExprBytecode(ctx, rctx);
+			ProcessDeferredParams(ctx);
 
 			int a = AllocateVariable(ctx->type.dataType, true);
 			int b = lctx->type.stackOffset;
@@ -9753,6 +9765,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 
 		ReleaseTemporaryVariable(lctx->type, &ctx->bc);
 		ReleaseTemporaryVariable(rctx->type, &ctx->bc);
+		ProcessDeferredParams(ctx);
 	}
 	else
 	{
@@ -9767,6 +9780,26 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
 
 	int argSize = descr->GetSpaceNeededForArguments();
+
+	if( descr->objectType && descr->returnType.IsReference() && 
+		!ctx->type.isVariable && (ctx->type.dataType.IsObjectHandle() || ctx->type.dataType.SupportHandles()) &&
+		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_SCOPED) )
+	{
+		// The class method we're calling is returning a reference, which may be to a member of the object.
+		// In order to guarantee the lifetime of the reference, we must hold a local reference to the object.
+		int tempRef = AllocateVariable(ctx->type.dataType, true);
+		ctx->bc.InstrSHORT(asBC_PSF, tempRef);
+		ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
+
+		// Add the release of this reference, as a deferred expression
+		asSDeferredParam deferred;
+		deferred.origExpr = 0;
+		deferred.argInOutFlags = asTM_INREF;
+		deferred.argNode = 0;
+		deferred.argType.SetVariable(ctx->type.dataType, tempRef, true);
+
+		ctx->deferredParams.PushLast(deferred);
+	}
 
 	ctx->type.Set(descr->returnType);
 

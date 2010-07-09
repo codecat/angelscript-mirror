@@ -11,7 +11,7 @@ static void func(asIScriptGeneric *gen)
 }
 
 static float cnst = 2.0f;
-static std::string g_str = "test";
+static CScriptString *g_str = 0;
 
 static const char *script3 =
 "float f = 2;                 \n"
@@ -90,12 +90,14 @@ bool TestGlobalVar()
 	COutStream out;
 	int r;
 
+	g_str = new CScriptString("test");
+
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString_Generic(engine);
 
 	engine->RegisterGlobalFunction("float func()", asFUNCTION(func), asCALL_GENERIC);
 	engine->RegisterGlobalProperty("float g_f", &cnst);
-	engine->RegisterGlobalProperty("string g_str", &g_str);
+	engine->RegisterGlobalProperty("string g_str", g_str);
 	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
 
 	asIScriptModule *mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
@@ -348,6 +350,9 @@ bool TestGlobalVar()
 
 		engine->Release();
 	}
+
+	g_str->Release();
+	g_str = 0;
 
 	return ret;
 }
