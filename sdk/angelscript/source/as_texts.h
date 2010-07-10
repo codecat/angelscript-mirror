@@ -167,7 +167,8 @@
 #define TXT_REF_IS_READ_ONLY                    "Reference is read-only"
 #define TXT_REF_IS_TEMP                         "Reference is temporary"
 #define TXT_RETURN_CANT_BE_s                    "Return type can't be '%s'"
-#define TXT_REF_CANT_BE_RETURNED_DEFERRED_PARAM "Resulting reference cannot be returned, because there are deferred arguments that may invalidate it."
+#define TXT_REF_CANT_BE_RETURNED_DEFERRED_PARAM "Resulting reference cannot be returned. There are deferred arguments that may invalidate it."
+#define TXT_REF_CANT_BE_RETURNED_LOCAL_VARS     "Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it."
 
 #define TXT_SIGNED_UNSIGNED_MISMATCH                   "Signed/Unsigned mismatch"
 #define TXT_STRINGS_NOT_RECOGNIZED                     "Strings are not recognized by the application"

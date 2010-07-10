@@ -18,9 +18,6 @@ bool Test()
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
-	// TODO: The return expression must not use any local variables or temporaries that will be 
-	//       destroyed after the expression is completed.
-
 	// TODO: Any local variables used by the function must be destroyed before the return expression
 	//       is evaluated, so that there is no clean up after the expression
 
@@ -256,6 +253,26 @@ bool Test()
 			fail = true;
 	}
 
+	// The return expression must not use any local variables or temporaries that will be 
+	// destroyed after the expression is completed.
+	{
+		bout.buffer = "";
+		const char *script =
+			"uint8 &Test2()\n"
+			"{\n"
+			"  string s;\n"
+			"  return s[1];\n"
+			"}\n";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 ) fail = true;
+		if( bout.buffer != "script (1, 1) : Info    : Compiling uint8& Test2()\n"
+		                   "script (4, 3) : Error   : Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it.\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+	}
 
 	// This should not work, as the output parameter is evaluated after the reference is 
 	// is returned from Test, but before it is returned from Test2.
@@ -276,7 +293,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 ) fail = true;
 		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
-		                   "script (9, 3) : Error   : Resulting reference cannot be returned, because there are deferred arguments that may invalidate it.\n" )
+		                   "script (9, 3) : Error   : Resulting reference cannot be returned. There are deferred arguments that may invalidate it.\n" )
 		{
 			printf(bout.buffer.c_str());
 			fail = true;
@@ -302,7 +319,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 ) fail = true;
 		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
-		                   "script (9, 3) : Error   : Resulting reference cannot be returned, because there are deferred arguments that may invalidate it.\n" )
+		                   "script (9, 3) : Error   : Resulting reference cannot be returned. There are deferred arguments that may invalidate it.\n" )
 		{
 			printf(bout.buffer.c_str());
 			fail = true;

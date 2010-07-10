@@ -2737,20 +2737,16 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 
 		if( v->type.IsReference() )
 		{
-			// TODO: Add support for returning references
-			//
-			//       The expression that gives the reference must not use any of the 
-			//       variables that must be destroyed upon exit, because then it means
-			//       reference will stay alive while the clean-up is done, which could
-			//       potentially mean that there is a reference on the stack when the 
-			//       context is suspended.
+			// The expression that gives the reference must not use any of the 
+			// variables that must be destroyed upon exit, because then it means
+			// reference will stay alive while the clean-up is done, which could
+			// potentially mean that the reference is invalidated by the clean-up.
 			//       
-			//       When the function is returning a reference, the clean-up of the 
-			//       variables must be done before the evaluation of the expression.
+			// When the function is returning a reference, the clean-up of the 
+			// variables must be done before the evaluation of the expression.
 			//
-			//       A reference to a global variable, or a class member for class methods
-			//       should be allowed to be returned.
-			//
+			// A reference to a global variable, or a class member for class methods
+			// should be allowed to be returned.
 
 			if( !(expr.type.dataType.IsReference() ||
 				  (expr.type.dataType.IsObject() && !expr.type.dataType.IsObjectHandle())) )
@@ -2781,6 +2777,25 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				ProcessDeferredParams(&expr);
 				Error(TXT_REF_CANT_BE_RETURNED_DEFERRED_PARAM, rnode);
 				return;
+			}
+
+			// Make sure the expression isn't using any local variables that  
+			// will need to be cleaned up before the function completes
+			asCArray<int> usedVars;
+			expr.bc.GetVarsUsed(usedVars);
+			for( asUINT n = 0; n < usedVars.GetLength(); n++ )
+			{
+				int var = GetVariableSlot(usedVars[n]);
+				if( var != -1 )
+				{
+					asCDataType dt = variableAllocations[var];
+					if( dt.IsObject() )
+					{
+						ProcessDeferredParams(&expr);
+						Error(TXT_REF_CANT_BE_RETURNED_LOCAL_VARS, rnode);
+						return;
+					}
+				}
 			}
 
 			// The type must match exactly as we cannot convert
