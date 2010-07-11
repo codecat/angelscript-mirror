@@ -97,6 +97,7 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_script_handle
  - \subpage doc_script_class_main
  - \subpage doc_script_class_prop
+ - \subpage doc_script_retref
  - \subpage doc_operator_precedence
  - \subpage doc_reserved_keywords
 
