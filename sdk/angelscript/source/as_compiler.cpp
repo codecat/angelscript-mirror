@@ -2769,6 +2769,19 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				return;
 			}
 
+			// The type must match exactly as we cannot convert
+			// the reference without loosing the original value
+			if( !(v->type == expr.type.dataType ||
+				(expr.type.dataType.IsObject() && !expr.type.dataType.IsObjectHandle() && v->type.IsEqualExceptRef(expr.type.dataType))) )
+			{
+				// Clean up the potential deferred parameters
+				ProcessDeferredParams(&expr);
+				asCString str;
+				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
+				Error(str.AddressOf(), rnode);
+				return;
+			}
+
 			// The expression must not have any deferred expressions, because the evaluation 
 			// of these cannot be done without keeping the reference which is not safe
 			if( expr.deferredParams.GetLength() )
@@ -2798,17 +2811,19 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				}
 			}
 
-			// The type must match exactly as we cannot convert
-			// the reference without loosing the original value
-			if( !(v->type == expr.type.dataType ||
-				(expr.type.dataType.IsObject() && !expr.type.dataType.IsObjectHandle() && v->type.IsEqualExceptRef(expr.type.dataType))) )
+			// All objects in the function must be cleaned up before the expression 
+			// is evaluated, otherwise there is a possibility that the cleanup will
+			// invalidate the reference.
+
+			// Call destructor on all variables except for the function parameters
+			asCVariableScope *vs = variables;
+			while( vs )
 			{
-				// Clean up the potential deferred parameters
-				ProcessDeferredParams(&expr);
-				asCString str;
-				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
-				Error(str.AddressOf(), rnode);
-				return;
+				for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
+					if( vs->variables[n]->stackOffset > 0 )
+						CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, bc);
+
+				vs = vs->parent;
 			}
 
 			// For primitives the reference is already in the register,
@@ -2888,15 +2903,21 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 		bc->AddCode(&expr.bc);
 	}
 
-	// Call destructor on all variables except for the function parameters
-	asCVariableScope *vs = variables;
-	while( vs )
+	if( !v->type.IsReference() )
 	{
-		for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
-			if( vs->variables[n]->stackOffset > 0 )
-				CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, bc);
+		// For functions that return a reference, this has already 
+		// been done before the expression was evaluated
 
-		vs = vs->parent;
+		// Call destructor on all variables except for the function parameters
+		asCVariableScope *vs = variables;
+		while( vs )
+		{
+			for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
+				if( vs->variables[n]->stackOffset > 0 )
+					CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, bc);
+
+			vs = vs->parent;
+		}
 	}
 
 	// Jump to the end of the function
@@ -7145,7 +7166,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			return -1;
 		}
 
-		if( ctx->type.isVariable )
+		if( ctx->type.isVariable && !ctx->type.dataType.IsReference() )
 			ConvertToReference(ctx);
 		else if( !ctx->type.dataType.IsReference() )
 		{
@@ -7217,11 +7238,11 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 
 void asCCompiler::ConvertToReference(asSExprContext *ctx)
 {
-	if( ctx->type.isVariable )
+	if( ctx->type.isVariable && !ctx->type.dataType.IsReference() )
 	{
 		ctx->bc.InstrSHORT(asBC_LDV, ctx->type.stackOffset);
 		ctx->type.dataType.MakeReference(true);
-		ctx->type.Set(ctx->type.dataType);
+		ctx->type.SetVariable(ctx->type.dataType, ctx->type.stackOffset, ctx->type.isTemporary);
 	}
 }
 
@@ -7600,7 +7621,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			return -1;
 		}
 
-		if( ctx->type.isVariable )
+		if( ctx->type.isVariable && !ctx->type.dataType.IsReference() )
 			ConvertToReference(ctx);
 		else if( !ctx->type.dataType.IsReference() )
 		{

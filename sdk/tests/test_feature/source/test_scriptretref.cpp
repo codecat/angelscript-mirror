@@ -253,6 +253,52 @@ bool Test()
 			fail = true;
 	}
 
+	// Objects in the function must be cleaned up before the return expression 
+	// is evaluated to make sure they do not invalidate the reference.
+	{
+		bout.buffer = "";
+		const char *script =
+			"Val @g; \n"
+			"class Cleanup \n"
+			"{ \n"
+			"  ~Cleanup() \n"
+			"  { \n"
+			"    @g = null; \n"
+			"  } \n"
+			"} \n"
+			"class Val { string v; } \n"
+			"string &Test()\n"
+			"{\n"
+			"  Cleanup c(); \n"
+			"  @g = Val(); \n"
+			"  g.v = 'test'; \n"
+			"  return g.v; \n"
+			"}\n";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) fail = true;
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		// This should give a null pointer exception, since the Cleanup is supposed   
+		// to clear the global variable before the return expression is evaluated
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "assert( Test() == 'test' );", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+		{
+			fail = true;
+		}
+		else if( std::string(ctx->GetExceptionString()) != "Null pointer access" )
+		{
+			printf("%s", ctx->GetExceptionString());
+			fail = true;
+		}
+		ctx->Release();
+	}
+
 	// The return expression must not use any local variables or temporaries that will be 
 	// destroyed after the expression is completed.
 	{
@@ -361,6 +407,23 @@ bool Test()
 		if( r >= 0 ) fail = true;
 		if( bout.buffer != "script19 (2, 1) : Info    : Compiling Object& Test(Object&in)\n"
 						   "script19 (4, 3) : Error   : Can't return reference to local value.\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+	}
+
+	// Test returning reference to local variable with pre-increment
+	// This should not work, because the resulting reference is still pointing to the local variable
+	{
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+		bout.buffer = "";
+		const char *script25 = "int &SomeFunc() { int a = 0; return ++a; }";
+		r = mod->AddScriptSection("25", script25);
+		r = mod->Build();
+		if( r >= 0 ) fail = true;
+		if( bout.buffer != "25 (1, 1) : Info    : Compiling int& SomeFunc()\n"
+						   "25 (1, 30) : Error   : Can't return reference to local value.\n" )
 		{
 			printf(bout.buffer.c_str());
 			fail = true;
