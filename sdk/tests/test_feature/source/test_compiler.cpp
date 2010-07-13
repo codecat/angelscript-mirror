@@ -1051,6 +1051,48 @@ bool Test()
 		engine->Release();
 	}
 
+	//////////////
+	{
+		const char *script = 
+			"class dummy \n"
+			"{ \n"
+			"int x; \n"
+			"dummy(int new_x) \n"
+			"{ \n"
+			"x=new_x; \n"
+			"} \n"
+			"} \n"
+			"  \n"
+			"void main() \n"
+			"{ \n"
+			"alert('Result', '' + bad.x + ''); \n"
+			"dummy bad(15); \n"
+			"alert('Result', '' + bad.x + ''); \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptString(engine);
+
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+
+		if( bout.buffer != "script (10, 1) : Info    : Compiling void main()\n"
+		                   "script (12, 22) : Error   : 'bad' is not declared\n"
+		                   "script (13, 7) : Error   : 'bad' is already declared\n"
+		                   "script (14, 25) : Error   : 'x' is not a member of 'int'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
 
 	// Success
  	return fail;

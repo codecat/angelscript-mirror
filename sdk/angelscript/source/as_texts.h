@@ -41,7 +41,7 @@
 
 // Compiler messages
 
-#define TXT_s_ALREADY_DECLARED            "'%s' already declared"
+#define TXT_s_ALREADY_DECLARED            "'%s' is already declared"
 #define TXT_ARG_NOT_LVALUE                "Argument cannot be assigned. Output will be discarded."
 #define TXT_ASSIGN_IN_GLOBAL_EXPR         "Assignments are not allowed in global expressions"
 

@@ -1506,6 +1506,10 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			asCString str;
 			str.Format(TXT_s_ALREADY_DECLARED, name.AddressOf());
 			Error(str.AddressOf(), node);
+
+			// Don't continue after this error, as it will just 
+			// lead to more errors that are likely false
+			return;
 		}
 
 		outFunc->AddVariable(name, type, offset);
@@ -1546,7 +1550,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					{
 						sVariable *v = variables->GetVariable(name.AddressOf());
 						asSExprContext ctx(engine);
-						if( v->type.GetObjectType()->flags & asOBJ_REF )
+						if( v->type.GetObjectType() && (v->type.GetObjectType()->flags & asOBJ_REF) )
 						{
 							MakeFunctionCall(&ctx, funcs[0], 0, args, node, true, v->stackOffset);
 
