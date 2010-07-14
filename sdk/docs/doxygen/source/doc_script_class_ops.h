@@ -20,7 +20,7 @@ and the script class.
 <tr><td>~</td>             <td>opCom</td>
 </table>
 
-When the expression <tt><i>op</i> a</tt> is compiled, the compiler will rewrite it as <tt>a.opfunc</tt> and compile that instead.
+When the expression <tt><i>op</i> a</tt> is compiled, the compiler will rewrite it as <tt>a.<i>opfunc</i>()</tt> and compile that instead.
 
 
 \section doc_script_class_cmp_ops Comparison operators
@@ -104,5 +104,17 @@ so if that is all you want to do, then there is no need to implement this method
 
 The expressions with binary operators <tt>a <i>op</i> b</tt> will be rewritten as <tt>a.<i>opfunc</i>(b)</tt> 
 and <tt>b.<i>opfunc_r</i>(a)</tt> and then the best match will be used. 
+
+
+
+\section doc_script_class_index_op Index operators
+
+<table cellspacing=0 cellpadding=0 border=0>
+<tr><td width=80><b>op</b></td><td width=120><b>opfunc</b></td></tr>
+<tr><td>[]</td>             <td>opIndex</td>
+</table>
+
+When the expression <tt>a[i]</tt> is compiled, the compiler will rewrite it as <tt>a.opIndex(i)</tt> and compile that instead.
+
 
 */

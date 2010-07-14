@@ -138,8 +138,8 @@ void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptArray,Release), asCALL_THISCALL); assert( r >= 0 );
 
 	// The index operator returns the template subtype
-	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_INDEX, "T &f(uint)", asMETHOD(CScriptArray, At), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_INDEX, "const T &f(uint) const", asMETHOD(CScriptArray, At), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "T &opIndex(uint)", asMETHOD(CScriptArray, At), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "const T &opIndex(uint) const", asMETHOD(CScriptArray, At), asCALL_THISCALL); assert( r >= 0 );
 	
 	// The assignment operator
 	r = engine->RegisterObjectMethod("array<T>", "array<T> &opAssign(const array<T>&in)", asMETHOD(CScriptArray, operator=), asCALL_THISCALL); assert( r >= 0 );

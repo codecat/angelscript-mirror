@@ -163,9 +163,8 @@ public:
     array(uint length);
     array(uint length, const T &in defaultValue);
     
-    // Access elements
-    // T & operator [] (uint)
-    // const T & operator [] (uint) const
+    T       &opIndex(uint);
+    const T &opIndex(uint) const;
 
     array<T> opAssign(const array<T> & in);
     

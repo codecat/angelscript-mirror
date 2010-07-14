@@ -1793,20 +1793,38 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	retType.MakeReference(true);
 	retType.MakeReadOnly(false);
 	funcId = 0;
-	asSTypeBehaviour *beh = var->dataType.GetBehaviour();
-	for( asUINT n = 0; n < beh->operators.GetLength(); n += 2 )
+	for( asUINT n = 0; n < var->dataType.GetObjectType()->methods.GetLength(); n++ )
 	{
-		if( asBEHAVE_INDEX == beh->operators[n] )
+		asCScriptFunction *desc = builder->GetFunctionDescription(var->dataType.GetObjectType()->methods[n]);
+		if( !desc->isReadOnly &&
+			 desc->parameterTypes.GetLength() == 1 &&
+			 (desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttUInt, false) ||
+			  desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttInt,  false)) &&
+			 desc->returnType == retType &&
+			 desc->name == "opIndex" )
 		{
-			asCScriptFunction *desc = builder->GetFunctionDescription(beh->operators[n+1]);
-			if( !desc->isReadOnly &&
-				 desc->parameterTypes.GetLength() == 1 &&
-				 (desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttUInt, false) ||
-				  desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttInt,  false)) &&
-				 desc->returnType == retType )
+			funcId = var->dataType.GetObjectType()->methods[n];
+			break;
+		}
+	}
+	// TODO: Deprecate this
+	if( funcId == 0 )
+	{
+		asSTypeBehaviour *beh = var->dataType.GetBehaviour();
+		for( asUINT n = 0; n < beh->operators.GetLength(); n += 2 )
+		{
+			if( asBEHAVE_INDEX == beh->operators[n] )
 			{
-				funcId = beh->operators[n+1];
-				break;
+				asCScriptFunction *desc = builder->GetFunctionDescription(beh->operators[n+1]);
+				if( !desc->isReadOnly &&
+					 desc->parameterTypes.GetLength() == 1 &&
+					 (desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttUInt, false) ||
+					  desc->parameterTypes[0] == asCDataType::CreatePrimitive(ttInt,  false)) &&
+					 desc->returnType == retType )
+				{
+					funcId = beh->operators[n+1];
+					break;
+				}
 			}
 		}
 	}
@@ -7836,94 +7854,104 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		CompileAssignment(node->firstChild, &expr);
 
 		asCTypeInfo objType = ctx->type;
-		asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
-		if( beh == 0 )
-		{
-			asCString str;
-			str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), node);
-			return -1;
-		}
-		else
-		{
-			// Now find a matching function for the object type and indexing type
-			asCArray<int> ops;
-			asUINT n;
-			if( isConst )
-			{
-				// Only list const behaviours
-				for( n = 0; n < beh->operators.GetLength(); n += 2 )
-				{
-					if( asBEHAVE_INDEX == beh->operators[n] && engine->scriptFunctions[beh->operators[n+1]]->isReadOnly )
-						ops.PushLast(beh->operators[n+1]);
-				}
-			}
-			else
-			{
-				// TODO: Prefer non-const over const
-				for( n = 0; n < beh->operators.GetLength(); n += 2 )
-				{
-					if( asBEHAVE_INDEX == beh->operators[n] )
-						ops.PushLast(beh->operators[n+1]);
-				}
-			}
 
-			asCArray<int> ops1;
-			MatchArgument(ops, ops1, &expr.type, 0);
-
-			if( !isConst )
-				FilterConst(ops1);
-
-			// Did we find a suitable function?
-			if( ops1.GetLength() == 1 )
-			{
-				asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
-
-				// Store the code for the object
-				asCByteCode objBC(engine);
-				objBC.AddCode(&ctx->bc);
-
-				// Add code for arguments
-
-				PrepareArgument(&descr->parameterTypes[0], &expr, node->firstChild, true, descr->inOutFlags[0]);
-				MergeExprBytecode(ctx, &expr);
-
-				if( descr->parameterTypes[0].IsReference() )
-				{
-					if( descr->parameterTypes[0].IsObject() && !descr->parameterTypes[0].IsObjectHandle() )
-						ctx->bc.InstrWORD(asBC_GETOBJREF, 0);
-					else
-						ctx->bc.InstrWORD(asBC_GETREF, 0);
-				}
-				else if( descr->parameterTypes[0].IsObject() )
-				{
-					ctx->bc.InstrWORD(asBC_GETOBJ, 0);
-
-					// The temporary variable must not be freed as it will no longer hold an object
-					DeallocateVariable(expr.type.stackOffset);
-					expr.type.isTemporary = false;
-				}
-
-				// Add the code for the object again
-				ctx->bc.AddCode(&objBC);
-
-				asCArray<asSExprContext*> args;
-				args.PushLast(&expr);
-				PerformFunctionCall(descr->id, ctx, false, &args);
-			}
-			else if( ops.GetLength() > 1 )
-			{
-				Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
-				PrintMatchingFuncs(ops, node);
-
-				return -1;
-			}
-			else
+		// TODO: Check for the existence of the opIndex method
+		asSExprContext lctx(engine);
+		MergeExprBytecodeAndType(&lctx, ctx);
+		int r = CompileOverloadedDualOperator2(node, "opIndex", &lctx, &expr, ctx);
+		if( r == 0 )
+		{	
+			// TODO: Deprecate this
+			MergeExprBytecodeAndType(ctx, &lctx);
+			asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
+			if( beh == 0 )
 			{
 				asCString str;
-				str.Format(TXT_NO_MATCHING_OP_FOUND_FOR_TYPE_s, expr.type.dataType.Format().AddressOf());
+				str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
 				Error(str.AddressOf(), node);
 				return -1;
+			}
+			else
+			{
+				// Now find a matching function for the object type and indexing type
+				asCArray<int> ops;
+				asUINT n;
+				if( isConst )
+				{
+					// Only list const behaviours
+					for( n = 0; n < beh->operators.GetLength(); n += 2 )
+					{
+						if( asBEHAVE_INDEX == beh->operators[n] && engine->scriptFunctions[beh->operators[n+1]]->isReadOnly )
+							ops.PushLast(beh->operators[n+1]);
+					}
+				}
+				else
+				{
+					// TODO: Prefer non-const over const
+					for( n = 0; n < beh->operators.GetLength(); n += 2 )
+					{
+						if( asBEHAVE_INDEX == beh->operators[n] )
+							ops.PushLast(beh->operators[n+1]);
+					}
+				}
+
+				asCArray<int> ops1;
+				MatchArgument(ops, ops1, &expr.type, 0);
+
+				if( !isConst )
+					FilterConst(ops1);
+
+				// Did we find a suitable function?
+				if( ops1.GetLength() == 1 )
+				{
+					asCScriptFunction *descr = engine->scriptFunctions[ops1[0]];
+
+					// Store the code for the object
+					asCByteCode objBC(engine);
+					objBC.AddCode(&ctx->bc);
+
+					// Add code for arguments
+
+					PrepareArgument(&descr->parameterTypes[0], &expr, node->firstChild, true, descr->inOutFlags[0]);
+					MergeExprBytecode(ctx, &expr);
+
+					if( descr->parameterTypes[0].IsReference() )
+					{
+						if( descr->parameterTypes[0].IsObject() && !descr->parameterTypes[0].IsObjectHandle() )
+							ctx->bc.InstrWORD(asBC_GETOBJREF, 0);
+						else
+							ctx->bc.InstrWORD(asBC_GETREF, 0);
+					}
+					else if( descr->parameterTypes[0].IsObject() )
+					{
+						ctx->bc.InstrWORD(asBC_GETOBJ, 0);
+
+						// The temporary variable must not be freed as it will no longer hold an object
+						DeallocateVariable(expr.type.stackOffset);
+						expr.type.isTemporary = false;
+					}
+
+					// Add the code for the object again
+					ctx->bc.AddCode(&objBC);
+
+					asCArray<asSExprContext*> args;
+					args.PushLast(&expr);
+					PerformFunctionCall(descr->id, ctx, false, &args);
+				}
+				else if( ops.GetLength() > 1 )
+				{
+					Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+					PrintMatchingFuncs(ops, node);
+
+					return -1;
+				}
+				else
+				{
+					asCString str;
+					str.Format(TXT_NO_MATCHING_OP_FOUND_FOR_TYPE_s, expr.type.dataType.Format().AddressOf());
+					Error(str.AddressOf(), node);
+					return -1;
+				}
 			}
 		}
 
@@ -8359,6 +8387,10 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 		// Which is the best matching function?
 		asCArray<int> ops;
 		MatchArgument(funcs, ops, &rctx->type, 0);
+
+		// If the object is not const, then we need to prioritize non-const methods
+		if( !isConst )
+			FilterConst(ops);
 
 		// Did we find an operator?
 		if( ops.GetLength() == 1 )
