@@ -318,10 +318,10 @@
 // Embarcadero C++Builder
 #if defined(__BORLANDC__)
  #ifndef _Windows
-  #error Configuration doesn't yet support BCC for Linux or Mac OS.
+  #error "Configuration doesn't yet support BCC for Linux or Mac OS."
  #endif
  #if defined(_M_X64)
-  #error Configuration doesn't yet support BCC for AMD64.
+  #error "Configuration doesn't yet support BCC for AMD64."
  #endif
 
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))

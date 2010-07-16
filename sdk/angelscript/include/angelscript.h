@@ -415,11 +415,17 @@ struct asSMessageInfo
 // Don't define anything when linking statically to the lib
 
 #ifdef WIN32
-  #ifdef ANGELSCRIPT_EXPORT
+  #if defined(ANGELSCRIPT_EXPORT)
     #define AS_API __declspec(dllexport)
-  #elif defined ANGELSCRIPT_DLL_LIBRARY_IMPORT
+  #elif defined(ANGELSCRIPT_DLL_LIBRARY_IMPORT)
     #define AS_API __declspec(dllimport)
   #else // statically linked library
+    #define AS_API
+  #endif
+#elif defined(__GNUC__) 
+  #if defined(ANGELSCRIPT_EXPORT)
+    #define AS_API __attribute__((visibility ("default")))
+  #else
     #define AS_API
   #endif
 #else
