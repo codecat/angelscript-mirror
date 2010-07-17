@@ -7840,22 +7840,11 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		Dereference(ctx, true);
 		bool isConst = ctx->type.dataType.IsReadOnly();
 
-		if( ctx->type.dataType.IsObjectHandle() )
-		{
-			// Convert the handle to a normal object
-			asCDataType dt = ctx->type.dataType;
-			dt.MakeHandle(false);
-
-			ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV);
-		}
-
 		// Compile the expression
 		asSExprContext expr(engine);
 		CompileAssignment(node->firstChild, &expr);
 
-		asCTypeInfo objType = ctx->type;
-
-		// TODO: Check for the existence of the opIndex method
+		// Check for the existence of the opIndex method
 		asSExprContext lctx(engine);
 		MergeExprBytecodeAndType(&lctx, ctx);
 		int r = CompileOverloadedDualOperator2(node, "opIndex", &lctx, &expr, ctx);
@@ -7863,6 +7852,17 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		{	
 			// TODO: Deprecate this
 			MergeExprBytecodeAndType(ctx, &lctx);
+
+			if( ctx->type.dataType.IsObjectHandle() )
+			{
+				// Convert the handle to a normal object
+				asCDataType dt = ctx->type.dataType;
+				dt.MakeHandle(false);
+
+				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV);
+			}
+
+			asCTypeInfo objType = ctx->type;
 			asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
 			if( beh == 0 )
 			{
@@ -7953,24 +7953,24 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 					return -1;
 				}
 			}
-		}
 
-		// If the method returned a reference, then we can't release the original  
-		// object yet, because the reference may be to a member of it
-		if( objType.isTemporary &&
-			(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) &&
-			!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not to a member
-		{
-			// Remember the object's variable, so that it can be released
-			// later on when the reference to its member goes out of scope
-			ctx->type.isTemporary = true;
-			ctx->type.stackOffset = objType.stackOffset;
-		}
-		else
-		{
-			// As the index operator didn't return a reference to a
-			// member we can release the original object now
-			ReleaseTemporaryVariable(objType, &ctx->bc);
+			// If the method returned a reference, then we can't release the original  
+			// object yet, because the reference may be to a member of it
+			if( objType.isTemporary &&
+				(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) &&
+				!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not to a member
+			{
+				// Remember the object's variable, so that it can be released
+				// later on when the reference to its member goes out of scope
+				ctx->type.isTemporary = true;
+				ctx->type.stackOffset = objType.stackOffset;
+			}
+			else
+			{
+				// As the index operator didn't return a reference to a
+				// member we can release the original object now
+				ReleaseTemporaryVariable(objType, &ctx->bc);
+			}
 		}
 	}
 
@@ -8406,8 +8406,23 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			ctx->type = lctx->type;
 			MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args, node);
 
-			// TODO: Can we do this here? 
-			ReleaseTemporaryVariable(objType, &ctx->bc);
+			// If the method returned a reference, then we can't release the original  
+			// object yet, because the reference may be to a member of it
+			if( objType.isTemporary &&
+				(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) &&
+				!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not to a member
+			{
+				// Remember the object's variable, so that it can be released
+				// later on when the reference to its member goes out of scope
+				ctx->type.isTemporary = true;
+				ctx->type.stackOffset = objType.stackOffset;
+			}
+			else
+			{
+				// As the index operator didn't return a reference to a
+				// member we can release the original object now
+				ReleaseTemporaryVariable(objType, &ctx->bc);
+			}
 
 			// Found matching operator
 			return 1;

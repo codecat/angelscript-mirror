@@ -565,7 +565,8 @@ bool Test()
 		fail = true;
 		printf("Failed to compile the script\n");
 	}
-	if( bout.buffer != "" )
+	if( bout.buffer != "script (5, 1) : Info    : Compiling void func()\n"
+	                   "script (8, 14) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
