@@ -388,6 +388,29 @@ bool Test()
 	}
 	engine->Release();
 
+	//---------------------------
+	// It should not be possible to declare a method with the same name as the class
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script = 
+			"class A { \n"
+			"  void A() {} \n"
+			"} \n";
+		mod->AddScriptSection("script", script);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+		if( bout.buffer != "script (2, 3) : Error   : The method cannot be named with the class name\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

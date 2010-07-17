@@ -117,6 +117,7 @@
 #define TXT_INVALID_UNICODE_SEQUENCE_IN_SRC     "Invalid unicode sequence in source"
 
 #define TXT_METHOD_IN_GLOBAL_EXPR                   "Object method calls are not allowed in global expressions"
+#define TXT_METHOD_CANT_HAVE_NAME_OF_CLASS          "The method cannot be named with the class name"
 #define TXT_MISSING_IMPLEMENTATION_OF_s             "Missing implementation of '%s'"
 #define TXT_MORE_THAN_ONE_MATCHING_OP               "Found more than one matching operator"
 #define TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s       "Multiple matching signatures to '%s'"

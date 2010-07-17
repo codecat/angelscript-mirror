@@ -2239,7 +2239,16 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	if( !isConstructor && !isDestructor )
 	{
 		if( objType )
+		{
 			CheckNameConflictMember(objType, name.AddressOf(), node, file);
+
+			if( name == objType->name )
+			{
+				int r, c;
+				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+				WriteError(file->name.AddressOf(), TXT_METHOD_CANT_HAVE_NAME_OF_CLASS, r, c);
+			}
+		}
 		else
 			CheckNameConflict(name.AddressOf(), node, file);
 	}
