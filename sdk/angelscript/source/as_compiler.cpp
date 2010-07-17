@@ -2995,7 +2995,7 @@ void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 
 	for( unsigned int n = 0; n < funcs.GetLength(); n++ )
 	{
-		asIScriptFunction *func = engine->scriptFunctions[funcs[n]];
+		asIScriptFunction *func = builder->GetFunctionDescription(funcs[n]);
 
 		builder->WriteInfo(script->name.AddressOf(), func->GetDeclaration(true), r, c, false);
 	}

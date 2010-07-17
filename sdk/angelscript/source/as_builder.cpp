@@ -2409,11 +2409,21 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
 
 		// Store the parameter type
-		n = n->next->next;
 		parameterTypes.PushLast(type);
 		inOutFlags.PushLast(inOutFlag);
 
+		if( type.GetTokenType() == ttVoid )
+		{
+			int r, c;
+			file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+			asCString str;
+			str.Format(TXT_PARAMETER_CANT_BE_s, type.Format().AddressOf());
+			WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+			break;
+		}
+
 		// Move to next parameter
+		n = n->next->next;
 		if( n && n->nodeType == snIdentifier )
 			n = n->next;
 	}

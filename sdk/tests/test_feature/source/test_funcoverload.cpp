@@ -9,7 +9,7 @@ static const char *script1 =
 "}                                         \n";
 
 static const char *script2 =
-"void ScriptFunc(void)                     \n"
+"void ScriptFunc(void m)                   \n"
 "{                                         \n"
 "}                                         \n";
 
@@ -76,10 +76,16 @@ bool TestFuncOverload()
 		fail = true;
 	if( bout.buffer != "TestFuncOverload (1, 1) : Info    : Compiling void ScriptFunc(void)\n"
                        "TestFuncOverload (1, 17) : Error   : Parameter type can't be 'void'\n" )
+	{
+		printf("%s", bout.buffer.c_str());
 		fail = true;
+	}
+
+	// Permit void parameter list
+	r = engine->RegisterGlobalFunction("void func2(void)", asFUNCTION(FuncVoid), asCALL_CDECL); assert( r >= 0 );
 
 	// Don't permit void parameters
-	r = engine->RegisterGlobalFunction("void func2(void)", asFUNCTION(FuncVoid), asCALL_CDECL); assert( r < 0 );
+	r = engine->RegisterGlobalFunction("void func3(void n)", asFUNCTION(FuncVoid), asCALL_CDECL); assert( r < 0 );
 
 	engine->Release();
 

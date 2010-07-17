@@ -42,8 +42,8 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
-	if( r >= 0 ) fail = true;
-	if( out.buffer != "Test2Func (1, 1) : Info    : Compiling void Test(void)\nTest2Func (1, 11) : Error   : Parameter type can't be 'void'\n" )
+	if( r < 0 ) fail = true;
+	if( out.buffer != "" )
 		fail = true;
 
 

@@ -1479,6 +1479,18 @@ asCScriptNode *asCParser::ParseParameterList()
 	}
 	else
 	{
+		// If the parameter list is just (void) then the void token should be ignored
+		if( t1.type == ttVoid )
+		{
+			sToken t2;
+			GetToken(&t2);
+			if( t2.type == ttCloseParanthesis )
+			{
+				node->UpdateSourcePos(t2.pos, t2.length);
+				return node;
+			}
+		}
+
 		RewindTo(&t1);
 
 		for(;;)

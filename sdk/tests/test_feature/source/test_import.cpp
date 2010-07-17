@@ -102,6 +102,21 @@ bool Test()
 	// Bind all functions that the module imports
 	r = engine->GetModule(0)->BindAllImportedFunctions(); assert( r < 0 );
 
+	{
+		const char *script = 
+		    "import int test(void) from 'mod1'; \n"
+		    "void main() \n"
+	   	    "{ \n"
+		    "  int str; \n"
+		    "  str = test(); \n"
+		    "}\n";
+
+		mod->AddScriptSection("4", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+	}
+
 	engine->Release();
 
 	// Success
@@ -110,3 +125,4 @@ bool Test()
 
 } // namespace
 
+ 
