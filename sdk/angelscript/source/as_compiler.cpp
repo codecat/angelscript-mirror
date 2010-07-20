@@ -5619,7 +5619,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 				// TODO: This is the same as what is in CompileExpressionPostOp
 				// Put the offset on the stack
-				ctx->bc.InstrINT(asBC_ADDSi, prop->byteOffset);
+				ctx->bc.InstrSHORT_DW(asBC_ADDSi, prop->byteOffset, engine->GetTypeIdFromDataType(dt));
 
 				if( prop->type.IsReference() )
 					ctx->bc.Instr(asBC_RDSPTR);
@@ -7732,7 +7732,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				if( prop )
 				{
 					// Put the offset on the stack
-					ctx->bc.InstrINT(asBC_ADDSi, prop->byteOffset);
+					ctx->bc.InstrSHORT_DW(asBC_ADDSi, prop->byteOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(ctx->type.dataType.GetObjectType(), false)));
 
 					if( prop->type.IsReference() )
 						ctx->bc.Instr(asBC_RDSPTR);

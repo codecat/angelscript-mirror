@@ -143,6 +143,10 @@ SOURCE=..\..\source\test_string_pooled.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_thisprop.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\utils.cpp
 # End Source File
 # End Group

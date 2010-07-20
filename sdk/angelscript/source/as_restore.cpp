@@ -198,6 +198,9 @@ int asCRestore::Save()
 	// usedStringConstants[]
 	WriteUsedStringConstants();
 
+	// usedObjectProperties[]
+	WriteUsedObjectProps();
+
 	// TODO: Store script section names
 
 	return asSUCCESS;
@@ -347,6 +350,9 @@ int asCRestore::Restore()
 
 	// usedStringConstants[]
 	ReadUsedStringConstants();
+
+	// usedObjectProperties
+	ReadUsedObjectProps();
 
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		TranslateFunction(module->scriptFunctions[i]);
@@ -1392,8 +1398,17 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			*(int*)(tmp+1) = FindObjectTypeIdx(*(asCObjectType**)(tmp+1));
 		}
 		else if( c == asBC_TYPEID || // DW_ARG
-			     c == asBC_Cast )    // DW_ARG
+			     c == asBC_Cast )   // DW_ARG
 		{
+			// Translate type ids into indices
+			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
+		}
+		else if( c == asBC_ADDSi ||      // W_DW_ARG
+			     c == asBC_LoadThisR )   // W_DW_ARG
+		{
+			// Translate property offsets into indices
+			*(((short*)tmp)+1) = FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
+
 			// Translate type ids into indices
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
 		}
@@ -1465,6 +1480,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_rW_DW_ARG:
 		case asBCTYPE_wW_DW_ARG:
+		case asBCTYPE_W_DW_ARG:
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
@@ -1656,6 +1672,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_rW_DW_ARG:
 		case asBCTYPE_wW_DW_ARG:
+		case asBCTYPE_W_DW_ARG:
 			{
 				*(asBYTE*)(bc) = b;
 
@@ -1961,14 +1978,87 @@ void asCRestore::ReadUsedGlobalProps()
 	}
 }
 
+void asCRestore::WriteUsedObjectProps()
+{
+	int c = (int)usedObjectProperties.GetLength();
+	WriteEncodedUInt(c);
+
+	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
+	{
+		asCObjectType *objType = usedObjectProperties[n].objType;
+		WriteObjectType(objType);
+
+		// Find the property name
+		for( asUINT p = 0; p < objType->properties.GetLength(); p++ )
+		{
+			if( objType->properties[p]->byteOffset == usedObjectProperties[n].offset )
+			{
+				WriteString(&objType->properties[p]->name);
+				break;
+			}
+		}
+	}	
+}
+
+void asCRestore::ReadUsedObjectProps()
+{
+	asUINT c = ReadEncodedUInt();
+
+	usedObjectProperties.SetLength(c);
+	for( asUINT n = 0; n < c; n++ )
+	{
+		asCObjectType *objType = ReadObjectType();
+		asCString name;
+		ReadString(&name);
+
+		// Find the property offset
+		for( asUINT p = 0; p < objType->properties.GetLength(); p++ )
+		{
+			if( objType->properties[p]->name == name )
+			{
+				usedObjectProperties[n].objType = objType;
+				usedObjectProperties[n].offset = objType->properties[p]->byteOffset;
+				break;
+			}
+		}
+
+		// TODO: make sure the property was found
+	}
+}
+
 //---------------------------------------------------------------------------------------------------
 // Miscellaneous
 //---------------------------------------------------------------------------------------------------
 
+int asCRestore::FindObjectPropIndex(short offset, int typeId)
+{
+	asCObjectType *objType = engine->GetObjectTypeFromTypeId(typeId);
+	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
+	{
+		if( usedObjectProperties[n].objType == objType &&
+			usedObjectProperties[n].offset  == offset )
+			return n;
+	}
+
+	SObjProp prop = {objType, offset};
+	usedObjectProperties.PushLast(prop);
+	return (int)usedObjectProperties.GetLength() - 1;
+}
+
+short asCRestore::FindObjectPropOffset(asWORD index)
+{
+	if( index >= usedObjectProperties.GetLength() )
+	{
+		asASSERT(false);
+		return 0;
+	}
+
+	return usedObjectProperties[index].offset;
+}
+
 int asCRestore::FindFunctionIndex(asCScriptFunction *func)
 {
-	asUINT n;
-	for( n = 0; n < usedFunctions.GetLength(); n++ )
+	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
 	{
 		if( usedFunctions[n] == func )
 			return n;
@@ -1997,12 +2087,22 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			asPTRWORD *ot = (asPTRWORD*)&bc[n+1];
 			*(asCObjectType**)ot = FindObjectType(*(int*)ot);
 		}
-		else  if( c == asBC_TYPEID ||
-			      c == asBC_Cast )
+		else if( c == asBC_TYPEID ||
+			     c == asBC_Cast )
 		{
 			// Translate the index to the type id
 			int *tid = (int*)&bc[n+1];
 			*tid = FindTypeId(*tid);
+		}
+		else if( c == asBC_ADDSi ||
+			     c == asBC_LoadThisR )
+		{
+			// Translate the index to the type id
+			int *tid = (int*)&bc[n+1];
+			*tid = FindTypeId(*tid);
+
+			// Translate the prop index into the property offset
+			*(((short*)&bc[n])+1) = FindObjectPropOffset(*(((short*)&bc[n])+1));
 		}
 		else if( c == asBC_CALL ||
 				 c == asBC_CALLINTF ||

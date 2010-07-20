@@ -198,6 +198,7 @@ void Test()
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.18.0             : 2.48 secs\n");
 	printf("AngelScript 2.18.1 WIP         : 2.61 secs\n");
+	printf("AngelScript 2.19.1 WIP         : 2.63 secs\n");
 
 	printf("\nBuilding...\n");
 

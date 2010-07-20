@@ -329,7 +329,7 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1393 ) 
+	if( stream.buffer.size() != 1409 ) 
 	{
 		// Originally this was 3213
 		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
@@ -337,7 +337,7 @@ bool Test()
 	}
 
 	asUINT zeroes = stream.CountZeroes();
-	if( zeroes != 432 )
+	if( zeroes != 438 )
 	{
 		printf("The saved byte code contains a different amount of zeroes than expected. Counted %d\n", zeroes);
 	}
@@ -748,6 +748,57 @@ bool Test()
 
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
+	// Test that property offsets are properly mapped
+	{
+		asQWORD test;
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterObjectType("test", 8, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectProperty("test", "int a", 0);
+		engine->RegisterObjectProperty("test", "int b", 4);
+
+		engine->RegisterGlobalProperty("test t", &test);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, "void func() { t.a = 1; t.b = 2; }");
+		mod->Build();
+
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		if( *(int*)(&test) != 1 || *((int*)(&test)+1) != 2 )
+			fail = true;
+
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterObjectType("test", 8, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectProperty("test", "int a", 4); // Switch order of the properties
+		engine->RegisterObjectProperty("test", "int b", 0);
+
+		engine->RegisterGlobalProperty("test t", &test);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			fail = true;
+
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		if( *(int*)(&test) != 2 || *((int*)(&test)+1) != 1 )
 			fail = true;
 
 		engine->Release();

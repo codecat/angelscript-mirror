@@ -18,6 +18,7 @@ namespace TestMthd         { void Test(); }
 namespace TestString       { void Test(); }
 namespace TestStringPooled { void Test(); }
 namespace TestString2      { void Test(); }
+namespace TestThisProp     { void Test(); }
 
 void DetectMemoryLeaks()
 {
@@ -50,6 +51,7 @@ int main(int argc, char **argv)
 	TestString::Test();
 	TestString2::Test();
 	TestStringPooled::Test();
+	TestThisProp::Test();
 	
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");

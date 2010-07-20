@@ -200,6 +200,9 @@ Push the function pointer on the stack
 
  - \ref asBC_FuncPtr
 
+Load the address to a property of the local object into the value register. Substitutes the sequence PshV4 0, ADDSi x, PopRPtr.
+
+ - \ref asBC_LoadThisR
 
 
 

@@ -19,8 +19,8 @@ the \ref asIBinaryStream::Read "Read" method to reconstruct the script module.
 
 \section doc_adv_precompile_1 Things to remember
 
- - The engine configuration must be the same when saving and loading the bytecode, otherwise the 
-   load will fail as functions, types, or global properties cannot be found.
+ - All the objects, methods, properties, etc used when compiling the bytecode must also be registered
+   when loading the precompiled bytecode, otherwise the load will fail when not finding the correct entity.
 
  - The script engine doesn't perform validation of the pre-compiled bytecode, so the application is
    responsible for authenticating the source. If this authentication isn't performed by the application
@@ -29,28 +29,14 @@ the \ref asIBinaryStream::Read "Read" method to reconstruct the script module.
 
  - If the application that compiles the script code is separate from the application that will execute
    them, then you may register the functions and methods with null pointers so you don't need to 
-   actually implement all of them. In this case you should also set the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD
+   actually implement all of them. Object properties must be registered with different offsets so that
+   they can be differentiated by the bytecode loader. You should also set the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD 
    to false with \ref asIScriptEngine::SetEngineProperty, so the script engine doesn't attempt to initialize 
    the global variables after the script has been built.
 
-\section doc_adv_precompile_2 Platform independence
-
-The saved bytecode is not yet platform independent, but the plan is to make it so. The following are items 
-that can make the bytecode incompatible on different platforms.
-
- - Object property offsets may differ for different compilers and different operating systems due
-   to different byte packing schemes. If possible, avoid registering object property offsets to minimize
-   the risk of mismatches. You can for example use \ref doc_script_class_prop "property accessors" instead.
-   
- - The pre-compiled bytecode is currently not independent of the used CPU architecture, a script that
-   is compiled for a 32-bit target is generally not equal to a script compiled for a 64-bit target. The saved
-   bytecode is the same for big-endian and little-endian CPUs though. The bytecode is also independent of the target 
-   Operating System, so a script compiled on Linux is equal to Windows, given that the engine configuration is
-   the same for both.
-
-
-
-
+ - The saved bytecode is almost fully platform independent, with the exception of the difference in 
+   pointer size. A script compiled on a 32bit platform will generally not work on a 64bit platform 
+   and vice versa.
 
 
 

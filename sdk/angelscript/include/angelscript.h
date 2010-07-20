@@ -1284,8 +1284,9 @@ enum asEBCInstr
 	asBC_JitEntry		= 175,
 	asBC_CallPtr        = 176,
 	asBC_FuncPtr        = 177,
+	asBC_LoadThisR      = 178,
 
-	asBC_MAXBYTECODE	= 178,
+	asBC_MAXBYTECODE	= 179,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_PSP			= 253,
@@ -1314,11 +1315,12 @@ enum asEBCType
 	asBCTYPE_W_rW_ARG     = 15,
 	asBCTYPE_wW_W_ARG     = 16,
 	asBCTYPE_QW_DW_ARG    = 17,
-	asBCTYPE_rW_QW_ARG    = 18
+	asBCTYPE_rW_QW_ARG    = 18,
+	asBCTYPE_W_DW_ARG     = 19
 };
 
 // Instruction type sizes
-const int asBCTypeSize[19] =
+const int asBCTypeSize[20] =
 {
     0, // asBCTYPE_INFO
     1, // asBCTYPE_NO_ARG
@@ -1338,7 +1340,8 @@ const int asBCTypeSize[19] =
     2, // asBCTYPE_W_rW_ARG
     2, // asBCTYPE_wW_W_ARG
     4, // asBCTYPE_QW_DW_ARG
-    3  // asBCTYPE_rW_QW_ARG
+    3, // asBCTYPE_rW_QW_ARG
+    2  // asBCTYPE_W_DW_ARG
 };
 
 // Instruction info
@@ -1452,7 +1455,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(TYPEID,	DW_ARG,			1),
 	asBCINFO(SetV4,		wW_DW_ARG,		0),
 	asBCINFO(SetV8,		wW_QW_ARG,		0),
-	asBCINFO(ADDSi,		DW_ARG,			0),
+	asBCINFO(ADDSi,		W_DW_ARG,		0),
 	asBCINFO(CpyVtoV4,	wW_rW_ARG,		0),
 	asBCINFO(CpyVtoV8,	wW_rW_ARG,		0),
 	asBCINFO(CpyVtoR4,	rW_ARG,			0),
@@ -1551,8 +1554,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(JitEntry,	W_ARG,			0),
 	asBCINFO(CallPtr,   rW_ARG,         0xFFFF),
 	asBCINFO(FuncPtr,   PTR_ARG,        AS_PTR_SIZE),
+	asBCINFO(LoadThisR, W_DW_ARG,       0),
 
-	asBCINFO_DUMMY(178),
 	asBCINFO_DUMMY(179),
 	asBCINFO_DUMMY(180),
 	asBCINFO_DUMMY(181),

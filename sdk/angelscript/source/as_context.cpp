@@ -2324,7 +2324,7 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_ADDSi:
-		*(size_t*)l_sp = size_t(asPTRWORD(*(size_t*)l_sp) + asBC_INTARG(l_bc));
+		*(size_t*)l_sp = size_t(asPTRWORD(*(size_t*)l_sp) + asBC_SWORDARG0(l_bc));
 		l_bc += 2;
 		break;
 
@@ -3187,9 +3187,22 @@ void asCContext::ExecuteNext()
 		l_bc += 1+AS_PTR_SIZE;
 		break;
 
+	case asBC_LoadThisR:
+		{
+			// PshV4
+			asPTRWORD tmp = *(asPTRWORD*)l_fp;
+
+			// ADDSi
+			tmp = tmp + asBC_SWORDARG0(l_bc);
+
+			// PopRPtr
+			*(asPTRWORD*)&regs.valueRegister = tmp;
+			l_bc += 2;
+		}
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 178: l_bc = (asDWORD*)178; break;
 	case 179: l_bc = (asDWORD*)179; break;
 	case 180: l_bc = (asDWORD*)180; break;
 	case 181: l_bc = (asDWORD*)181; break;

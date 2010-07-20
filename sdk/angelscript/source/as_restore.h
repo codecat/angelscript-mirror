@@ -95,17 +95,21 @@ protected:
 	asCScriptFunction *FindFunction(int idx);
 	int FindGlobalPropPtrIndex(void *);
 	int FindStringConstantIndex(int id);
+	int FindObjectPropIndex(short offset, int typeId);
+	short FindObjectPropOffset(asWORD index);
 
 	// Intermediate data used for storing that which isn't constant, function id's, pointers, etc
 	void WriteUsedTypeIds();
 	void WriteUsedFunctions();
 	void WriteUsedGlobalProps();
 	void WriteUsedStringConstants();
+	void WriteUsedObjectProps();
 
 	void ReadUsedTypeIds();
 	void ReadUsedFunctions();
 	void ReadUsedGlobalProps();
 	void ReadUsedStringConstants();
+	void ReadUsedObjectProps();
 
 	// After loading, each function needs to be translated to update pointers, function ids, etc
 	void TranslateFunction(asCScriptFunction *func);
@@ -120,6 +124,14 @@ protected:
 	asCArray<asCScriptFunction*> savedFunctions;
 	asCArray<asCDataType>        savedDataTypes;
 	asCArray<asCString>          savedStrings;
+
+	struct SObjProp
+	{
+		asCObjectType *objType;
+		int            offset;
+	};
+
+	asCArray<SObjProp>           usedObjectProperties;
 };
 
 END_AS_NAMESPACE

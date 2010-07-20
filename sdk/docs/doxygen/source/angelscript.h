@@ -60,9 +60,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.19.0
-#define ANGELSCRIPT_VERSION        21900
-#define ANGELSCRIPT_VERSION_STRING "2.19.0"
+//! \details Version 2.19.1
+#define ANGELSCRIPT_VERSION        21901
+#define ANGELSCRIPT_VERSION_STRING "2.19.1"
 
 // Data types
 
@@ -618,11 +618,17 @@ struct asSMessageInfo
 //! \brief A define that specifies how the function should be imported
 
 #ifdef WIN32
-  #ifdef ANGELSCRIPT_EXPORT
+  #if defined(ANGELSCRIPT_EXPORT)
     #define AS_API __declspec(dllexport)
-  #elif defined ANGELSCRIPT_DLL_LIBRARY_IMPORT
+  #elif defined(ANGELSCRIPT_DLL_LIBRARY_IMPORT)
     #define AS_API __declspec(dllimport)
   #else // statically linked library
+    #define AS_API
+  #endif
+#elif defined(__GNUC__) 
+  #if defined(ANGELSCRIPT_EXPORT)
+    #define AS_API __attribute__((visibility ("default")))
+  #else
     #define AS_API
   #endif
 #else
@@ -3512,8 +3518,10 @@ enum asEBCInstr
 	asBC_CallPtr        = 176,
 	//! \brief Push a function pointer on the stack
 	asBC_FuncPtr        = 177,
+	//! \brief Load the address to a property of the local object into the stack. PshV4 0, ADDSi x, PopRPtr
+	asBC_LoadThisR      = 178,
 
-	asBC_MAXBYTECODE	= 178,
+	asBC_MAXBYTECODE	= 179,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_PSP			= 253,
@@ -3561,12 +3569,14 @@ enum asEBCType
 	//! \brief Instruction + QWORD arg + DWORD arg
 	asBCTYPE_QW_DW_ARG    = 17,
 	//! \brief Instruction + WORD arg (source var) + QWORD arg
-	asBCTYPE_rW_QW_ARG    = 18
+	asBCTYPE_rW_QW_ARG    = 18,
+	//! \brief Instruction + WORD arg + DWORD arg
+	asBCTYPE_W_DW_ARG     = 19
 };
 
 // Instruction type sizes
 //! \brief Lookup table for determining the size of each \ref asEBCType "type" of bytecode instruction.
-const int asBCTypeSize[19] =
+const int asBCTypeSize[20] =
 {
     0, // asBCTYPE_INFO
     1, // asBCTYPE_NO_ARG
@@ -3586,7 +3596,8 @@ const int asBCTypeSize[19] =
     2, // asBCTYPE_W_rW_ARG
     2, // asBCTYPE_wW_W_ARG
     4, // asBCTYPE_QW_DW_ARG
-    3  // asBCTYPE_rW_QW_ARG
+    3, // asBCTYPE_rW_QW_ARG
+    2  // asBCTYPE_W_DW_ARG
 };
 
 // Instruction info
@@ -3714,7 +3725,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(TYPEID,	DW_ARG,			1),
 	asBCINFO(SetV4,		wW_DW_ARG,		0),
 	asBCINFO(SetV8,		wW_QW_ARG,		0),
-	asBCINFO(ADDSi,		DW_ARG,			0),
+	asBCINFO(ADDSi,		W_DW_ARG,		0),
 	asBCINFO(CpyVtoV4,	wW_rW_ARG,		0),
 	asBCINFO(CpyVtoV8,	wW_rW_ARG,		0),
 	asBCINFO(CpyVtoR4,	rW_ARG,			0),
@@ -3813,8 +3824,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(JitEntry,	W_ARG,			0),
 	asBCINFO(CallPtr,   rW_ARG,         0xFFFF),
 	asBCINFO(FuncPtr,   PTR_ARG,        AS_PTR_SIZE),
+	asBCINFO(LoadThisR, W_DW_ARG,       0),
 
-	asBCINFO_DUMMY(178),
 	asBCINFO_DUMMY(179),
 	asBCINFO_DUMMY(180),
 	asBCINFO_DUMMY(181),

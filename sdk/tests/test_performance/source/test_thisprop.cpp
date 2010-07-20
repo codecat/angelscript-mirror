@@ -4,35 +4,44 @@
 
 #include "utils.h"
 
-namespace TestBasic2
+namespace TestThisProp
 {
 
-#define TESTNAME "TestBasic2"
+#define TESTNAME "TestThisProp"
 
 static const char *script =
-"void TestBasic2()                      \n"
+"void TestThisProp()                    \n"
 "{                                      \n"
-"    float a = 1, b = 2, c = 3;         \n"
-"    int i = 0;                         \n"
-"                                       \n"
+"  Test t();                            \n"
+"  t.Run();                             \n"
+"}                                      \n"
+"class Test                             \n"
+"{                                      \n"
+"  float a;                             \n"
+"  float b;                             \n" 
+"  float c;                             \n"
+"  int i;                               \n"
+"  void Run()                           \n"
+"  {                                    \n"
+"    a = 1; b = 2; c = 3;               \n"
+"    i = 0;                             \n"
 "    for ( i = 0; i < 10000000; i++ )   \n"
 "    {                                  \n"
-"       a = a + b * c;                  \n"
-"       if( a == 0 )                    \n"
-"         a = 100.0f;                   \n"
-"       if( b == 1 )                    \n"
-"         b = 2;                        \n"
+"      a = a + b * c;                   \n"
+"      if( a == 0 )                     \n"
+"        a = 100.0f;                    \n"
+"      if( b == 1 )                     \n"
+"        b = 2;                         \n"
 "    }                                  \n"
+"  }                                    \n"
 "}                                      \n";
 
 void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.15.0             : .857 secs\n");
-	printf("AngelScript 2.18.0             : .594 secs\n");
-	printf("AngelScript 2.18.1 WIP         : .361 secs\n");
-	printf("AngelScript 2.19.1 WIP         : .302 secs\n");
+	printf("AngelScript 2.19.1 WIP (before) : 1.94 secs\n");
+	printf("AngelScript 2.19.1 WIP          : .959 secs\n");
 
 
 	printf("\nBuilding...\n");
@@ -47,7 +56,7 @@ void Test()
 	mod->Build();
 
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(mod->GetFunctionIdByDecl("void TestBasic2()"));
+	ctx->Prepare(mod->GetFunctionIdByDecl("void TestThisProp()"));
 
 	printf("Executing AngelScript version...\n");
 
