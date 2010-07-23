@@ -329,7 +329,7 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1409 ) 
+	if( stream.buffer.size() != 1436 ) 
 	{
 		// Originally this was 3213
 		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
@@ -337,7 +337,7 @@ bool Test()
 	}
 
 	asUINT zeroes = stream.CountZeroes();
-	if( zeroes != 438 )
+	if( zeroes != 440 )
 	{
 		printf("The saved byte code contains a different amount of zeroes than expected. Counted %d\n", zeroes);
 	}
@@ -346,6 +346,9 @@ bool Test()
 	mod->LoadByteCode(&stream);
 
 	if( mod->GetFunctionCount() != 5 )
+		fail = true;
+
+	if( string(mod->GetFunctionDescriptorByIndex(0)->GetScriptSectionName()) != ":1" )
 		fail = true;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);

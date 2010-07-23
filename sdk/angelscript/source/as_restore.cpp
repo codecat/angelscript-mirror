@@ -602,7 +602,14 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 		WriteEncodedUInt(func->vfTableIdx);
 	}
 
-	// TODO: Store script section index
+	// Store script section name
+	if( func->scriptSectionIdx >= 0 )
+		WriteString(engine->scriptSectionNames[func->scriptSectionIdx]);
+	else
+	{
+		char c = 0;
+		WRITE_NUM(c);
+	}
 }
 
 asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine) 
@@ -666,6 +673,12 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 	{
 		func->vfTableIdx = ReadEncodedUInt();
 	}
+
+	// Read script section name
+	asCString name;
+	ReadString(&name);
+	if( name.GetLength() > 0 )
+		func->scriptSectionIdx = engine->GetScriptSectionNameIndex(name.AddressOf());
 
 	if( addToModule )
 	{
@@ -1004,6 +1017,13 @@ void asCRestore::WriteString(asCString* str)
 	//       This will make it unnecessary to store the extra byte to 
 	//       identify new versus old strings.
 
+	if( str->GetLength() == 0 )
+	{
+		char z = '\0';
+		WRITE_NUM(z);
+		return;
+	}
+
 	// First check if the string hasn't been saved already
 	for( asUINT n = 0; n < savedStrings.GetLength(); n++ )
 	{
@@ -1032,7 +1052,11 @@ void asCRestore::ReadString(asCString* str)
 {
 	char b;
 	READ_NUM(b);
-	if( b == 'n' )
+	if( b == '\0' )
+	{
+		str->SetLength(0);
+	}
+	else if( b == 'n' )
 	{
 		asUINT len = ReadEncodedUInt();
 		str->SetLength(len);
