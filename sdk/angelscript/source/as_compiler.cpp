@@ -3592,16 +3592,18 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 //       causes problems where the conversion is partially done and the compiler continues with
 //       another option.
 
-void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, asCArray<int> *reservedVars)
+void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &toOrig, asCScriptNode *node, EImplicitConv convType, bool generateCode, asCArray<int> *reservedVars)
 {
+	asCDataType to = toOrig;
+	to.MakeReference(false);
+	asASSERT( !ctx->type.dataType.IsReference() );
+
 	// Start by implicitly converting constant values
 	if( ctx->type.isConstant )
 		ImplicitConversionConstant(ctx, to, node, convType);
 
 	if( to == ctx->type.dataType )
 		return;
-
-	// After the constant value has been converted we have the following possibilities
 
 	// Allow implicit conversion between numbers
 	if( generateCode )
@@ -7669,19 +7671,19 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		else if( ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() )
 		{
 			if( ctx->type.dataType.IsEqualExceptRef(asCDataType::CreatePrimitive(ttInt16, false)) ||
-					 ctx->type.dataType.IsEqualExceptRef(asCDataType::CreatePrimitive(ttUInt16, false)) )
+			    ctx->type.dataType.IsEqualExceptRef(asCDataType::CreatePrimitive(ttUInt16, false)) )
 			{
 				iInc = asBC_INCi16;
 				iDec = asBC_DECi16;
 			}
 			else if( ctx->type.dataType.IsEqualExceptRef(asCDataType::CreatePrimitive(ttInt8, false)) ||
-					 ctx->type.dataType.IsEqualExceptRef(asCDataType::CreatePrimitive(ttUInt8, false)) )
+			         ctx->type.dataType.IsEqualExceptRef(asCDataType::CreatePrimitive(ttUInt8, false)) )
 			{
 				iInc = asBC_INCi8;
 				iDec = asBC_DECi8;
 			}
 			else if( ctx->type.dataType.IsEqualExceptRef(asCDataType::CreatePrimitive(ttInt64, false)) ||
-					 ctx->type.dataType.IsEqualExceptRef(asCDataType::CreatePrimitive(ttUInt64, false)) )
+			         ctx->type.dataType.IsEqualExceptRef(asCDataType::CreatePrimitive(ttUInt64, false)) )
 			{
 				iInc = asBC_INCi64;
 				iDec = asBC_DECi64;
@@ -8637,71 +8639,70 @@ void asCCompiler::ConvertToVariable(asSExprContext *ctx)
 
 void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars)
 {
-	if( !ctx->type.isVariable )
+	asCArray<int> excludeVars;
+	if( reservedVars ) excludeVars.Concatenate(*reservedVars);
+	int offset;
+	if( !ctx->type.isVariable &&
+		(ctx->type.dataType.IsObjectHandle() || 
+		 (ctx->type.dataType.IsObject() && ctx->type.dataType.SupportHandles())) )
 	{
-		asCArray<int> excludeVars;
-		if( reservedVars ) excludeVars.Concatenate(*reservedVars);
-		int offset;
-		if( ctx->type.dataType.IsObjectHandle() || 
-			(ctx->type.dataType.IsObject() && ctx->type.dataType.SupportHandles()) )
+		offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
+		if( ctx->type.IsNullConstant() )
+		{
+			// TODO: Adapt pointer size
+			ctx->bc.InstrSHORT_DW(asBC_SetV4, (short)offset, 0);
+		}
+		else
+		{
+			// Copy the object handle to a variable
+			ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+			ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
+			ctx->bc.Pop(AS_PTR_SIZE);
+		}
+
+		ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+		ctx->type.SetVariable(ctx->type.dataType, offset, true);
+		ctx->type.dataType.MakeHandle(true);
+	}
+	else if( (!ctx->type.isVariable || ctx->type.dataType.IsReference()) &&
+		     ctx->type.dataType.IsPrimitive() )
+	{
+		if( ctx->type.isConstant )
 		{
 			offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
-			if( ctx->type.IsNullConstant() )
-			{
-				// TODO: Adapt pointer size
-				ctx->bc.InstrSHORT_DW(asBC_SetV4, (short)offset, 0);
-			}
+			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
+				ctx->bc.InstrSHORT_B(asBC_SetV1, (short)offset, ctx->type.byteValue);
+			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
+				ctx->bc.InstrSHORT_W(asBC_SetV2, (short)offset, ctx->type.wordValue);
+			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 4 )
+				ctx->bc.InstrSHORT_DW(asBC_SetV4, (short)offset, ctx->type.dwordValue);
 			else
-			{
-				// Copy the object handle to a variable
-				ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-				ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
-				ctx->bc.Pop(AS_PTR_SIZE);
-			}
+				ctx->bc.InstrSHORT_QW(asBC_SetV8, (short)offset, ctx->type.qwordValue);
 
-			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 			ctx->type.SetVariable(ctx->type.dataType, offset, true);
-			ctx->type.dataType.MakeHandle(true);
+			return;
 		}
-		else if( ctx->type.dataType.IsPrimitive() )
+		else
 		{
-			if( ctx->type.isConstant )
-			{
-				offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
-				if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
-					ctx->bc.InstrSHORT_B(asBC_SetV1, (short)offset, ctx->type.byteValue);
-				else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
-					ctx->bc.InstrSHORT_W(asBC_SetV2, (short)offset, ctx->type.wordValue);
-				else if( ctx->type.dataType.GetSizeInMemoryBytes() == 4 )
-					ctx->bc.InstrSHORT_DW(asBC_SetV4, (short)offset, ctx->type.dwordValue);
-				else
-					ctx->bc.InstrSHORT_QW(asBC_SetV8, (short)offset, ctx->type.qwordValue);
+			asASSERT(ctx->type.dataType.IsPrimitive());
+			asASSERT(ctx->type.dataType.IsReference());
 
-				ctx->type.SetVariable(ctx->type.dataType, offset, true);
-				return;
-			}
+			ctx->type.dataType.MakeReference(false);
+			offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
+
+			// Read the value from the address in the register directly into the variable
+			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
+				ctx->bc.InstrSHORT(asBC_RDR1, (short)offset);
+			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
+				ctx->bc.InstrSHORT(asBC_RDR2, (short)offset);
+			else if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+				ctx->bc.InstrSHORT(asBC_RDR4, (short)offset);
 			else
-			{
-				asASSERT(ctx->type.dataType.IsPrimitive());
-				asASSERT(ctx->type.dataType.IsReference());
-
-				ctx->type.dataType.MakeReference(false);
-				offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
-
-				// Read the value from the address in the register directly into the variable
-				if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
-					ctx->bc.InstrSHORT(asBC_RDR1, (short)offset);
-				else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
-					ctx->bc.InstrSHORT(asBC_RDR2, (short)offset);
-				else if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-					ctx->bc.InstrSHORT(asBC_RDR4, (short)offset);
-				else
-					ctx->bc.InstrSHORT(asBC_RDR8, (short)offset);
-			}
-
-			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-			ctx->type.SetVariable(ctx->type.dataType, offset, true);
+				ctx->bc.InstrSHORT(asBC_RDR8, (short)offset);
 		}
+
+		ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+		ctx->type.SetVariable(ctx->type.dataType, offset, true);
 	}
 }
 
