@@ -508,6 +508,8 @@ void asCScriptObject::FreeObject(void *ptr, asCObjectType *objType, asCScriptEng
 
 void asCScriptObject::CopyObject(void *src, void *dst, asCObjectType *objType, asCScriptEngine *engine)
 {
+	// TODO: If the object doesn't have the copy behaviour, and it is not a 
+	//       POD object then the copy must not be performed
 	int funcIndex = objType->beh.copy;
 
 	if( funcIndex )

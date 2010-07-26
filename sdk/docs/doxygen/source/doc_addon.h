@@ -498,6 +498,9 @@ public:
   void AddRef();
   void Release();
 
+  // Perform a shallow copy of the other dictionary
+  CScriptDictionary &operator=(const CScriptDictionary &other);
+
   // Sets/Gets a variable type value for a key
   void Set(const std::string &key, void *value, int typeId);
   bool Get(const std::string &key, void *value, int typeId) const;
@@ -526,6 +529,8 @@ public:
 <pre>
   class dictionary
   {
+    dictionary &opAssign(const dictionary &in other);
+
     void set(const string &in key, ? &in value);
     bool get(const string &in value, ? &out value) const;
     

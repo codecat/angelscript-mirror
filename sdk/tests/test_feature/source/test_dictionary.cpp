@@ -163,6 +163,46 @@ bool Test()
 
 	engine->Release();
 
+	//------------------------
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptString(engine);
+		RegisterScriptDictionary(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	
+		const char *script =
+			"class Test \n"
+			"{ \n"
+			"  Test() { dict.set('int', 1); dict.set('string', 'test'); dict.set('handle', @'handle'); } \n"
+			"  dictionary dict; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  Test test = Test(); \n"
+			"} \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PrintException(ctx);
+			fail = true;
+		}
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	return fail;
 }
 

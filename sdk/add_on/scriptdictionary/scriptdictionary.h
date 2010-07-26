@@ -25,6 +25,8 @@ public:
     void AddRef();
     void Release();
 
+    CScriptDictionary &operator =(const CScriptDictionary &other);
+
     // Sets/Gets a variable type value for a key
     void Set(const std::string &key, void *value, int typeId);
     bool Get(const std::string &key, void *value, int typeId) const;
@@ -68,9 +70,6 @@ protected:
     
 	// We don't want anyone to call the destructor directly, it should be called through the Release method
 	virtual ~CScriptDictionary();
-
-	// Don't allow assignment
-    CScriptDictionary &operator =(const CScriptDictionary &other);
 
 	// Helper methods
     void FreeValue(valueStruct &value);

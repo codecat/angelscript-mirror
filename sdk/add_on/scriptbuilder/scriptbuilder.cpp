@@ -33,6 +33,8 @@ void CScriptBuilder::SetIncludeCallback(INCLUDECALLBACK_t callback, void *userPa
 
 int CScriptBuilder::StartNewModule(asIScriptEngine *engine, const char *moduleName)
 {
+	if( engine == 0 ) return -1;
+
 	this->engine = engine;
 	module = engine->GetModule(moduleName, asGM_ALWAYS_CREATE);
 	if( module == 0 )
