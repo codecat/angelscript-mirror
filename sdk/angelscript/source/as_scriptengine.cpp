@@ -1024,6 +1024,7 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	prop->name       = name;
 	prop->type       = type;
 	prop->byteOffset = byteOffset;
+	prop->isPrivate  = false;
 
 	dt.GetObjectType()->properties.PushLast(prop);
 

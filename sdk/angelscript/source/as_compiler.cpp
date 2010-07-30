@@ -7733,6 +7733,14 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				asCObjectProperty *prop = builder->GetObjectProperty(ctx->type.dataType, name.AddressOf());
 				if( prop )
 				{
+					// Is the property access allowed?
+					if( prop->isPrivate && (!outFunc || outFunc->objectType != ctx->type.dataType.GetObjectType()) )
+					{
+						asCString msg;
+						msg.Format(TXT_PRIVATE_PROP_ACCESS_s, name.AddressOf());
+						Error(msg.AddressOf(), node);
+					}
+
 					// Put the offset on the stack
 					ctx->bc.InstrSHORT_DW(asBC_ADDSi, prop->byteOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(ctx->type.dataType.GetObjectType(), false)));
 

@@ -48,15 +48,16 @@ not<br>
 null<br>
 or<br>
 out<br>
+private<br>
 return<br>
 super*<br>
 switch<br>
 this*<br>
 true<br>
 typedef<br>
-uint<br>
 </code></td>
 <td width=100 valign=top><code>
+uint<br>
 uint8<br>
 uint16<br>
 uint32<br>

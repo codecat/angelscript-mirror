@@ -575,9 +575,14 @@ bool asCParser::IsVarDecl()
 	sToken t;
 	GetToken(&t);
 	RewindTo(&t);
-	
-	// A variable decl can start with a const
+
+	// A class property decl can be preceded by 'private' 
 	sToken t1;
+	GetToken(&t1);
+	if( t1.type != ttPrivate )
+		RewindTo(&t1);
+
+	// A variable decl can start with a const
 	GetToken(&t1);
 	if( t1.type == ttConst )
 		GetToken(&t1);
@@ -978,6 +983,10 @@ asCScriptNode *asCParser::ParseClass()
 			// Parse a property declaration
 			asCScriptNode *prop = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDeclaration);
 			node->AddChildLast(prop);
+
+			// A variable declaration can be preceded by 'private'
+			if( t.type == ttPrivate )
+				prop->AddChildLast(ParseToken(ttPrivate));
 
 			prop->AddChildLast(ParseType(true));
 			if( isSyntaxError ) return node;

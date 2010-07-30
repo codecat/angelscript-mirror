@@ -413,6 +413,33 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test private properties
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		const char *script = "class C { \n"
+			                 "private int a; \n"
+							 "void func() { a = 1; } }\n"
+							 "void main() { C c; c.a = 2; }";
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("s", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r >= 0 ) 
+			fail = true;
+
+		if( bout.buffer != "s (4, 1) : Info    : Compiling void main()\n"
+		                   "s (4, 21) : Error   : Illegal access to private property 'a'\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

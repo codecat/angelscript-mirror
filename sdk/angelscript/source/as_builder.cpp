@@ -1616,7 +1616,7 @@ void asCBuilder::CompileClasses()
 			// Copy properties from base class to derived class
 			for( asUINT p = 0; p < baseType->properties.GetLength(); p++ )
 			{
-				asCObjectProperty *prop = AddPropertyToClass(decl, baseType->properties[p]->name, baseType->properties[p]->type);
+				asCObjectProperty *prop = AddPropertyToClass(decl, baseType->properties[p]->name, baseType->properties[p]->type, baseType->properties[p]->isPrivate);
 
 				// The properties must maintain the same offset
 				asASSERT(prop && prop->byteOffset == baseType->properties[p]->byteOffset); UNUSED_VAR(prop);
@@ -1682,8 +1682,12 @@ void asCBuilder::CompileClasses()
 		{
 			if( node->nodeType == snDeclaration )
 			{
+				bool isPrivate = false;
+				if( node->firstChild && node->firstChild->tokenType == ttPrivate )
+					isPrivate = true;
+
 				asCScriptCode *file = decl->script;
-				asCDataType dt = CreateDataTypeFromNode(node->firstChild, file);
+				asCDataType dt = CreateDataTypeFromNode(isPrivate ? node->firstChild->next : node->firstChild, file);
 				asCString name(&file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
 
 				if( dt.IsReadOnly() )
@@ -1696,7 +1700,7 @@ void asCBuilder::CompileClasses()
 
 				CheckNameConflictMember(decl->objType, name.AddressOf(), node->lastChild, file);
 
-				AddPropertyToClass(decl, name, dt, file, node);
+				AddPropertyToClass(decl, name, dt, isPrivate, file, node);
 			}
 			else
 				asASSERT(false);
@@ -1881,12 +1885,13 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 	return vf->id;
 }
 
-asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const asCString &name, const asCDataType &dt, asCScriptCode *file, asCScriptNode *node)
+asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const asCString &name, const asCDataType &dt, bool isPrivate, asCScriptCode *file, asCScriptNode *node)
 {
 	// Store the properties in the object type descriptor
 	asCObjectProperty *prop = asNEW(asCObjectProperty);
-	prop->name = name;
-	prop->type = dt;
+	prop->name      = name;
+	prop->type      = dt;
+	prop->isPrivate = isPrivate;
 
 	int propSize;
 	if( dt.IsObject() )

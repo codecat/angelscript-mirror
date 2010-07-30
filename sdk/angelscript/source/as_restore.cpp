@@ -1120,6 +1120,7 @@ void asCRestore::WriteObjectProperty(asCObjectProperty* prop)
 	WriteString(&prop->name);
 	WriteDataType(&prop->type);
 	WriteEncodedUInt(prop->byteOffset);
+	WRITE_NUM(prop->isPrivate);
 }
 
 void asCRestore::ReadObjectProperty(asCObjectProperty* prop) 
@@ -1127,6 +1128,7 @@ void asCRestore::ReadObjectProperty(asCObjectProperty* prop)
 	ReadString(&prop->name);
 	ReadDataType(&prop->type);
 	prop->byteOffset = ReadEncodedUInt();
+	READ_NUM(prop->isPrivate);
 }
 
 void asCRestore::WriteDataType(const asCDataType *dt) 
