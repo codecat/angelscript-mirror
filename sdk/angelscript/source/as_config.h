@@ -524,6 +524,14 @@
 		#if defined(i386) && !defined(__LP64__)
 			// Support native calling conventions on Mac OS X + Intel 32bit CPU
 			#define AS_X86
+		#elif defined(__LP64__) && !defined(__ppc__) && !defined(__PPC__)
+			#define AS_NO_THREADS
+			#define AS_X64_GCC
+			#define HAS_128_BIT_PRIMITIVES
+			#define SPLIT_OBJS_BY_MEMBER_TYPES
+			// STDCALL is not available on 64bit Mac
+			#undef STDCALL
+			#define STDCALL
 		#elif (defined(__ppc__) || defined(__PPC__)) && !defined(__LP64__)
 			// Support native calling conventions on Mac OS X + PPC 32bit CPU
 			#define AS_PPC

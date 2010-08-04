@@ -329,15 +329,18 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1438 ) 
+	// TODO: These should eventually be equal, once the bytecode is fully platform independent
+	if( (sizeof(void*) == 4 && stream.buffer.size() != 1438) ||
+		(sizeof(void*) == 8 && stream.buffer.size() != 1610) ) 
 	{
-		// Originally this was 3213
+		// Originally this was 3213 (on 32bit)
 		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		fail = true;
 	}
 
 	asUINT zeroes = stream.CountZeroes();
-	if( zeroes != 442 )
+	if( (sizeof(void*) == 4 && zeroes != 442) ||
+		(sizeof(void*) == 8 && zeroes != 585) )
 	{
 		printf("The saved byte code contains a different amount of zeroes than expected. Counted %d\n", zeroes);
 	}
