@@ -48,7 +48,7 @@
 
 BEGIN_AS_NAMESPACE
 
-asCParser::asCParser(asCBuilder *builder)
+asCParser::asCParser(asCBuilder *builder) : tokenizer(builder->engine)
 {
 	this->builder    = builder;
 	this->engine     = builder->engine;

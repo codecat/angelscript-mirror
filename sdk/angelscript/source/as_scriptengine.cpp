@@ -705,7 +705,7 @@ asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLengt
 		stringLength = strlen(string);
 
 	size_t len;
-	asCTokenizer t;
+	asCTokenizer t(this);
 	asETokenClass tc;
 	t.GetToken(string, stringLength, &len, &tc);
 
@@ -1054,7 +1054,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	if( r >= 0 ) return ConfigError(asERROR);
 
 	// Make sure the name is not a reserved keyword
-	asCTokenizer t;
+	asCTokenizer t(this);
 	size_t tokenLen;
 	int token = t.GetToken(name, strlen(name), &tokenLen);
 	if( token != ttIdentifier || strlen(name) != tokenLen )
@@ -1325,7 +1325,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		if( r < 0 )
 		{
 			// Make sure the name is not a reserved keyword
-			asCTokenizer t;
+			asCTokenizer t(this);
 			size_t tokenLen;
 			int token = t.GetToken(name, typeName.GetLength(), &tokenLen);
 			if( token != ttIdentifier || typeName.GetLength() != tokenLen )
@@ -3857,7 +3857,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	}
 
 	// Grab the data type
-	asCTokenizer t;
+	asCTokenizer t(this);
 	size_t tokenLen;
 	eTokenType token;
 	asCDataType dataType;
@@ -3967,7 +3967,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 		return ConfigError(asERROR);
 
 	// Make sure the name is not a reserved keyword
-	asCTokenizer t;
+	asCTokenizer t(this);
 	size_t tokenLen;
 	int token = t.GetToken(name, strlen(name), &tokenLen);
 	if( token != ttIdentifier || strlen(name) != tokenLen )
