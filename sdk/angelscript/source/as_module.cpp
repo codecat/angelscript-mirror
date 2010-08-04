@@ -179,10 +179,10 @@ int asCModule::ResetGlobalVars()
 // interface
 int asCModule::GetFunctionIdByIndex(int index)
 {
-	if( index < 0 || index >= (int)scriptFunctions.GetLength() )
+	if( index < 0 || index >= (int)globalFunctions.GetLength() )
 		return asNO_FUNCTION;
 
-	return scriptFunctions[index]->id;
+	return globalFunctions[index]->id;
 }
 
 // internal
