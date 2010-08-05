@@ -18,8 +18,7 @@ bool Test()
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
-	// TODO: Any local variables used by the function must be destroyed before the return expression
-	//       is evaluated, so that there is no clean up after the expression
+	// TODO: Must be allowed to return 'this' from a class method
 
 	// Test returning reference to a global variable
 	// This should work, as the global variable is guaranteed to be there even after the function returns

@@ -1,5 +1,7 @@
 #include "utils.h"
 
+using namespace std;
+
 namespace TestAssign
 {
 
@@ -18,13 +20,25 @@ static const char *script1 =
 "  assert(a[2] == 0x34);          \n"
 "}                                \n";
 
+string buffer;
 
 void print_generic(asIScriptGeneric *gen)
 {
+	if( gen->GetArgTypeId(0) == asTYPEID_INT32 )
+	{
 	int a = *(int*)gen->GetAddressOfArg(0);
 	UNUSED_VAR(a);
 //	printf("%d\n", a);
 }
+	else
+	{
+		string s = **(string**)gen->GetAddressOfArg(0);
+		UNUSED_VAR(s);
+		buffer += s;
+//		printf("%s\n", s.c_str());
+	}
+}
+
 
 bool Test()
 {
@@ -37,13 +51,13 @@ bool Test()
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	RegisterScriptString(engine);
+	RegisterStdString(engine);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void print(int)", asFUNCTION(print_generic), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print_generic), asCALL_GENERIC);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 0);
 	r = mod->Build();
 	if( r < 0 )
 	{
@@ -62,6 +76,57 @@ bool Test()
 		fail = true;
 	}
 	if( ctx ) ctx->Release();
+
+	{
+		const char *script =
+			"class CTest \n"
+			"{ \n"
+			"	string name; \n"
+			"	 \n"
+			"   CTest() { name = 'temp'; print('CTest::CTest() for ' + name + '\\n'); } \n"
+			"	CTest(string s) { name = s; print('CTest::CTest() for ' + name + '\\n'); } \n"
+			"	~CTest(){ print('CTest::~CTest() for ' + name + '\\n'); } \n"
+			"	 \n"
+		//	"   CTest @opAssign(const CTest &in o) { print('CTest::opAssign(), ' + name + ' becomes ' + o.name + '\\n'); name = o.name; return this; } \n"
+			"	void test(){ print('CTest::test() for ' + name + '\\n'); } \n"
+			"} \n"
+			"void test() \n"
+			"{ \n"
+			"	CTest t1('Ent1'); \n"
+			"	CTest t2('Ent2'); \n"
+			"	 \n"
+			"	t1.test(); \n"
+			"	t2.test(); \n"
+			"	 \n"
+			"	t2 = t1; \n"
+			"} \n";
+
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r < 0 )
+		{
+			fail = true;
+			printf("%s: Failed to compile the script\n", TESTNAME);
+		}
+
+		r = ExecuteString(engine, "test()", mod);
+		if( r != asEXECUTION_FINISHED )
+		{
+			fail = true;
+		}
+
+		// There shouldn't be any temporary variable created for the assignment
+		if( buffer != "CTest::CTest() for Ent1\n"
+		              "CTest::CTest() for Ent2\n"
+		              "CTest::test() for Ent1\n"
+		              "CTest::test() for Ent2\n"
+		              "CTest::~CTest() for Ent1\n"
+		              "CTest::~CTest() for Ent1\n" )
+		{
+			printf("%s", buffer.c_str());
+			fail = true;
+		}
+	}
 
 	engine->Release();
 

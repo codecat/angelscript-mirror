@@ -210,9 +210,10 @@ bool Test()
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "Object obj; float r = 0; obj = r;");
-	if( r >= 0 || bout.buffer != "ExecuteString (1, 32) : Error   : Can't implicitly convert from 'float' to 'Object&'.\n" )
+	if( r >= 0 || bout.buffer != "ExecuteString (1, 32) : Error   : Can't implicitly convert from 'float' to 'const Object&'.\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 

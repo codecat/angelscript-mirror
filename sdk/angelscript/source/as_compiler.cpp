@@ -5165,6 +5165,8 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 		// Implicitly convert the rvalue to the type of the lvalue
 		asCDataType dt = lctx->type.dataType;
+		dt.MakeReference(true);
+		dt.MakeReadOnly(true);
 		PrepareArgument(&dt, rctx, rexpr, true, 1);
 		if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
 		{

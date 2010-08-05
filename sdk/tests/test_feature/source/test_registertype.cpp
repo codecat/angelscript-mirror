@@ -102,8 +102,7 @@ bool Test()
 	r = ExecuteString(engine, "ref r1, r2; r1 = r2;");
 	if( r >= 0 )
 		fail = true;
-	if( bout.buffer != "ExecuteString (1, 18) : Error   : There is no copy operator for this type available.\n"
-		               "ExecuteString (1, 16) : Error   : There is no copy operator for this type available.\n" )
+	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for this type available.\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
@@ -173,8 +172,7 @@ bool Test()
 	r = ExecuteString(engine, "val v1, v2; v1 = v2;");
 	if( r >= 0 )
 		fail = true;
-	if( bout.buffer != "ExecuteString (1, 18) : Error   : There is no copy operator for this type available.\n"
-		               "ExecuteString (1, 16) : Error   : There is no copy operator for this type available.\n" )
+	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for this type available.\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
