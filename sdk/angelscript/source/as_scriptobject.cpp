@@ -436,7 +436,7 @@ asCScriptObject &asCScriptObject::operator=(const asCScriptObject &other)
 				if( !prop->type.IsObjectHandle() )
 					CopyObject(*src, *dst, prop->type.GetObjectType(), engine);
 				else
-					CopyHandle((asDWORD*)src, (asDWORD*)dst, prop->type.GetObjectType(), engine);
+					CopyHandle((asPWORD*)src, (asPWORD*)dst, prop->type.GetObjectType(), engine);
 			}
 			else
 			{
@@ -518,7 +518,7 @@ void asCScriptObject::CopyObject(void *src, void *dst, asCObjectType *objType, a
 		memcpy(dst, src, objType->size);
 }
 
-void asCScriptObject::CopyHandle(asDWORD *src, asDWORD *dst, asCObjectType *objType, asCScriptEngine *engine)
+void asCScriptObject::CopyHandle(asPWORD *src, asPWORD *dst, asCObjectType *objType, asCScriptEngine *engine)
 {
 	if( *dst )
 		engine->CallObjectMethod(*(void**)dst, objType->beh.release);

@@ -78,6 +78,8 @@
 		9B2359120A2DC696008FE303 /* as_thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23586D0A2DC0A1008FE303 /* as_thread.cpp */; };
 		9B2359130A2DC696008FE303 /* as_tokenizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23586E0A2DC0A1008FE303 /* as_tokenizer.cpp */; };
 		9B2359140A2DC696008FE303 /* as_typeinfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B23586F0A2DC0A1008FE303 /* as_typeinfo.cpp */; };
+		CB43CB2F12081A6D00CC914B /* as_criticalsection.h in Headers */ = {isa = PBXBuildFile; fileRef = CB43CB2D12081A6D00CC914B /* as_criticalsection.h */; };
+		CB43CB3012081A6D00CC914B /* as_globalproperty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB43CB2E12081A6D00CC914B /* as_globalproperty.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -153,6 +155,8 @@
 		9B2358700A2DC0A1008FE303 /* as_variablescope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_variablescope.cpp; path = ../../source/as_variablescope.cpp; sourceTree = SOURCE_ROOT; };
 		9B2358910A2DC0B4008FE303 /* angelscript.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = angelscript.h; path = ../../include/angelscript.h; sourceTree = SOURCE_ROOT; };
 		9B2358C50A2DC63E008FE303 /* libas.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libas.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB43CB2D12081A6D00CC914B /* as_criticalsection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_criticalsection.h; path = ../../source/as_criticalsection.h; sourceTree = SOURCE_ROOT; };
+		CB43CB2E12081A6D00CC914B /* as_globalproperty.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_globalproperty.cpp; path = ../../source/as_globalproperty.cpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -194,6 +198,8 @@
 		08FB77ACFE841707C02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				CB43CB2D12081A6D00CC914B /* as_criticalsection.h */,
+				CB43CB2E12081A6D00CC914B /* as_globalproperty.cpp */,
 				751882800EB93E8F00190D34 /* as_atomic.cpp */,
 				751882810EB93E8F00190D34 /* as_callfunc_x64_gcc.cpp */,
 				751882820EB93E8F00190D34 /* as_callfunc_xenon.cpp */,
@@ -321,6 +327,7 @@
 				7526F5C30BEE46B100BAE32D /* as_memory.h in Headers */,
 				7518827E0EB93E5000190D34 /* as_atomic.h in Headers */,
 				7518827F0EB93E5000190D34 /* as_gc.h in Headers */,
+				CB43CB2F12081A6D00CC914B /* as_criticalsection.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -350,10 +357,12 @@
 		0867D690FE84028FC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 4FADC24608B4156D00ABE55E /* Build configuration list for PBXProject "angelscript" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 0867D691FE84028FC02AAC07 /* angelscript */;
 			productRefGroup = 034768DDFF38A45A11DB9C8B /* Products */;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				9B2358C40A2DC63E008FE303 /* as */,
 			);
@@ -400,6 +409,7 @@
 				751882850EB93E8F00190D34 /* as_callfunc_x64_gcc.cpp in Sources */,
 				751882860EB93E8F00190D34 /* as_callfunc_xenon.cpp in Sources */,
 				751882870EB93E8F00190D34 /* as_gc.cpp in Sources */,
+				CB43CB3012081A6D00CC914B /* as_globalproperty.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -410,13 +420,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = (
+					x86_64,
 					ppc,
 					i386,
 				);
 				GCC_DEBUGGING_SYMBOLS = full;
 				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = YES;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				USER_HEADER_SEARCH_PATHS = /usr/include/;
