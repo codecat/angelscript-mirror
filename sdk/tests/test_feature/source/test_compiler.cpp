@@ -1120,6 +1120,48 @@ bool Test()
 		engine->Release();
 	}
 
+	/////////////////////
+	// This test validates that the temporary variable used to store the return 
+	// value while the output parameter is evaluated isn't overwritten
+	{
+		const char *script = 
+			"class obj {} \n"
+			"bool getPendingMats(obj@&out TL) \n"
+			"{ \n"
+			"  return false; \n"
+			"} \n"
+			"void paintFloor() \n"
+			"{ \n"
+			"  obj@[] center(4); \n"
+			"  bool bb = getPendingMats(center[3]); \n"
+			"  assert( bb == false ); \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+		r = ExecuteString(engine, "paintFloor()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

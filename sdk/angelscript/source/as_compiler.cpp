@@ -9995,7 +9995,16 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 		if( descr->returnType.GetSizeInMemoryBytes() )
 		{
-			int offset = AllocateVariable(descr->returnType, true);
+			// Allocate a temporary variable to hold the value, but make sure 
+			// the temporary variable isn't used in any of the deferred arguments
+			asCArray<int> vars;
+			for( asUINT n = 0; args && n < args->GetLength(); n++ )
+			{
+				asSExprContext *expr = (*args)[n]->origExpr;
+				if( expr )
+					expr->bc.GetVarsUsed(vars);
+			}
+			int offset = AllocateVariableNotIn(descr->returnType, true, &vars);
 
 			ctx->type.SetVariable(descr->returnType, offset, true);
 
