@@ -134,6 +134,12 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 		obj->ReleaseAllFunctions();
 	}
 
+	// Remove function definitions
+	for( n = 0; n < funcDefs.GetLength(); n++ )
+	{
+		engine->registeredFuncDefs.RemoveValue(funcDefs[n]);
+		funcDefs[n]->Release();
+	}
 
 	// Remove object types
 	for( n = 0; n < objTypes.GetLength(); n++ )
@@ -157,13 +163,6 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine)
 
 			asDELETE(t, asCObjectType);
 		}
-	}
-
-	// Remove function definitions
-	for( n = 0; n < funcDefs.GetLength(); n++ )
-	{
-		engine->registeredFuncDefs.RemoveValue(funcDefs[n]);
-		funcDefs[n]->Release();
 	}
 
 	// Release other config groups

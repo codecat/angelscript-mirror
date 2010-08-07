@@ -286,6 +286,15 @@ bool Test()
 
 	engine->Release();
 
+	// Test clean up with registered function definitions
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptString(engine);
+		r = engine->RegisterFuncdef("void MSG_NOTIFY_CB(const string& strCommand, const string& strTarget)"); assert(r>=0);
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
