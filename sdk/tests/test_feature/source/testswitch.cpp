@@ -175,6 +175,34 @@ bool TestSwitch()
 		}
 	}
 
+	// Test to make sure assert is not failing
+	{
+		bout.buffer = "";
+		const char *script = 
+			"class Test \n"
+			"{ \n"
+			"	int8 State; \n"
+			"	void test() \n"
+			"	{ \n"
+			"		switch (State) \n"
+			"		{ \n"
+			"       case 0: \n"
+			"		} \n"
+			"	} \n"
+			"}; \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+	}
+
 	engine->Release();
 
 	return fail;

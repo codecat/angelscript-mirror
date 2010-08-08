@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.19.1 WIP - 2010/08/07</h2>
+<h2>Version 2.19.1 WIP - 2010/08/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Removed unnecessary creation temporary copy when doing an assignment using the default copy behaviour (Thanks mandrav)
 <li>Fixed assert failure on clean-up with registered function definitions (Thanks Engin Lee)
 <li>Fixed problem with temporary variable being overwritten when evaluating the output parameters (Thanks IndependentHat)
+<li>Fixed error in compiler where the expression in the switch case wasn't converted correctly if it wasn't a local variable (Thanks mandrav)
 </ul>
 <li>Library
 <ul>

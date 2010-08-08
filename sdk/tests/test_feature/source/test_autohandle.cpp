@@ -35,6 +35,26 @@ CScriptString *TestFunc2()
 	return str;
 }
 
+class A
+{
+public:
+	A() 
+	{ 
+		str = new CScriptString(); 
+	}
+	~A() 
+	{ 
+		str->Release(); 
+	}
+
+	CScriptString *getString()
+	{
+		// The autohandle will increment the refcount
+		return str;
+	}
+
+	CScriptString *str;
+};
 
 bool Test()
 {
@@ -69,6 +89,19 @@ bool Test()
 
 	r = ExecuteString(engine, "object obj(\"1\", \"2\", 1.0f, \"3\")");
 	if( r != 0 ) fail = true;
+
+	// Test autohandle for the return value of a class method
+	r = engine->RegisterObjectType("A", 0, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("A", "string @+ getString() const", asMETHOD(A, getString), asCALL_THISCALL); assert( r >= 0 );
+	
+	A a;
+	r = engine->RegisterGlobalProperty("A a", &a);
+
+	r = ExecuteString(engine, "string @s = a.getString()");
+	if( r != asEXECUTION_FINISHED )
+	{
+		fail = true;
+	}
 
 	engine->Release();
 

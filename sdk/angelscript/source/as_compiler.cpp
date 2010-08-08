@@ -1972,6 +1972,11 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		to.SetTokenType(ttInt);
 	else if( expr.type.dataType.IsUnsignedType() )
 		to.SetTokenType(ttUInt);
+
+	// Make sure the value is in a variable
+	if( expr.type.dataType.IsReference() ) 
+		ConvertToVariable(&expr);
+
 	ImplicitConversion(&expr, to, snode->firstChild, asIC_IMPLICIT_CONV, true);
 
 	ConvertToVariable(&expr);
