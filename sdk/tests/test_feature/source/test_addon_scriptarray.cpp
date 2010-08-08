@@ -143,6 +143,24 @@ static const char *script7 =
 
 bool Test2();
 
+CScriptArray *CreateArrayOfStrings()
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx )
+	{
+		asIScriptEngine* engine = ctx->GetEngine();
+		asIObjectType* t = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string@>"));
+		CScriptArray* arr = new CScriptArray(3, t);
+		for( asUINT i = 0; i < arr->GetSize(); i++ )
+		{
+			CScriptString** p = static_cast<CScriptString**>(arr->At(i));
+			*p = new CScriptString("test");
+		}
+		return arr;
+	}
+	return 0;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -446,6 +464,22 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test creating script array from application
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine);
+		RegisterScriptString(engine);
+	
+		r = engine->RegisterGlobalFunction("array<string@>@ CreateArrayOfStrings()", asFUNCTION(CreateArrayOfStrings), asCALL_CDECL); assert( r >= 0 );
+
+		r = ExecuteString(engine, "array<string@>@ arr = CreateArrayOfStrings()");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+	 
+		// Release engine
+		engine->Release();
+		
+	}
 
 	// Success
 	return fail;

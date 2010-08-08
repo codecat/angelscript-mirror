@@ -132,8 +132,8 @@ public:
   virtual ~CScriptArray();
 
   // Memory management
-  void AddRef();
-  void Release();
+  void AddRef() const;
+  void Release() const;
 
   // Type information
   asIObjectType *GetArrayObjectType() const;
@@ -141,7 +141,7 @@ public:
   int            GetElementTypeId() const;
 
   // Get the current size
-  asUINT GetSize();
+  asUINT GetSize() const;
 
   // Resize the array
   void   Resize(asUINT numElements);
@@ -168,7 +168,7 @@ public:
 
     array<T> opAssign(const array<T> & in);
     
-    uint length();
+    uint length() const;
     void resize(uint);
   }
 </pre>
@@ -187,6 +187,39 @@ public:
     return sum;
   }
 </pre>
+
+\section doc_addon_array_4 C++ example
+
+This function shows how a script array can be instanciated 
+from the application and then passed to the script.
+
+\code
+CScriptArray *CreateArrayOfStrings()
+{
+  // If called from the script, there will always be an active 
+  // context, which can be used to obtain a pointer to the engine.
+  asIScriptContext *ctx = asGetActiveContext();
+  if( ctx )
+  {
+    asIScriptEngine* engine = ctx->GetEngine();
+
+    // The script array needs to know its type to properly handle the elements
+    asIObjectType* t = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string@>"));
+
+    CScriptArray* arr = new CScriptArray(3, t);
+    for( asUINT i = 0; i < arr->GetSize(); i++ )
+    {
+      // Get the pointer to the element so it can be set
+      CScriptString** p = static_cast<CScriptString**>(arr->At(i));
+      *p = new CScriptString("test");
+    }
+
+    // The ref count for the returned handle was already set in the array's constructor
+    return arr;
+  }
+  return 0;
+}
+\endcode
 
 
 

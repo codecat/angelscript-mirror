@@ -676,6 +676,8 @@ extern "C"
 	//! If the script library is compiled with multithread support, this function will return
 	//! the context that is currently active in the thread that is being executed. It will thus
 	//! work even if there are multiple threads executing scripts at the same time.
+	//!
+	//! This function does not increase the reference count of the context.
 	AS_API asIScriptContext * asGetActiveContext();
 
 	// Thread support
@@ -1123,6 +1125,8 @@ public:
 	//! \param[in] index The index of the funcdef.
 	//! \param[out] configGroup The config group in which the funcdef was registered.
 	//! \return The funcdef.
+	//!
+	//! This function does not increase the reference count of the return function definition.
 	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0) = 0;
 	//! \}
 
@@ -1242,6 +1246,8 @@ public:
 	//! \brief Returns the function descriptor for the script function
     //! \param[in] funcId The id of the function or method.
     //! \return A pointer to the function description interface, or null if not found.
+	//!
+	//! This does not increment the reference count of the returned function descriptor.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
 	//! \}
 
@@ -1252,6 +1258,8 @@ public:
 	//! \brief Returns the object type interface for type.
     //! \param[in] typeId The type id of the type.
     //! \return The object type interface for the type, or null if not found.
+	//!
+	//! This does not increment the reference count of the returned object type.
 	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
 	//! \brief Returns a type id by declaration.
 	//! \param[in] decl The declaration of the type.
@@ -1595,10 +1603,14 @@ public:
 	//! \brief Returns the function descriptor for the script function
     //! \param[in] index The index of the function.
     //! \return A pointer to the function description interface, or null if not found.
+	//!
+	//! This does not increase the reference counter of the returned function descriptor.
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) = 0;
 	//! \brief Returns the function descriptor for the script function
     //! \param[in] funcId The id of the function or method.
     //! \return A pointer to the function description interface, or null if not found.
+	//!
+	//! This does not increase the reference counter of the returned function descriptor.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
 	//! \brief Remove a single function from the scope of the module
 	//! \param[in] funcId The id of the function to remove.
@@ -1690,6 +1702,8 @@ public:
 	//! \brief Returns the object type interface by index.
     //! \param[in] index The index of the type.
     //! \return The object type interface for the type, or null if not found.
+	//!
+	//! This does not increase the reference count of the returned object.
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
 	//! \brief Returns a type id by declaration.
     //! \param[in] decl The declaration of the type.
@@ -2461,6 +2475,8 @@ public:
 	virtual int            GetTypeId() const = 0;
     //! \brief Returns the object type interface for the object.
     //! \return The object type interface of the script object.
+	//!
+	//! This does not increase the reference count of the returned object type.
 	virtual asIObjectType *GetObjectType() const = 0;
 	//! \}
 
@@ -2616,7 +2632,10 @@ public:
 	//! \brief Returns the object type that this type derives from.
 	//! \return A pointer to the object type that this type derives from.
 	//!
-	//! This method will only return a pointer in case of script classes that derives from another script class.
+	//! This method will only return a pointer in case of script classes that 
+	//! derives from another script class.
+	//!
+	//! This does not increase the reference count of the returned object type.
 	virtual asIObjectType   *GetBaseType() const = 0;
 	//! \brief Returns the object type flags.
 	//! \return A bit mask with the flags from \ref asEObjTypeFlags.
@@ -2722,6 +2741,8 @@ public:
 	//! \brief Returns the function descriptor for the script method
     //! \param[in] index The index of the method.
     //! \return A pointer to the method description interface, or null if not found.
+	//! 
+	//! This does not increment the reference count of the returned function descriptor.
 	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
 	//! \}
 
@@ -2810,6 +2831,8 @@ public:
 
 	//! \brief Returns the object type for class or interface method
     //! \return A pointer to the object type interface if this is a method.
+	//!
+	//! This does not increase the reference count of the returned object type.
 	virtual asIObjectType   *GetObjectType() const = 0;
 	//! \brief Returns the name of the object for class or interface methods
     //! \return A null terminated string with the name of the object type if this a method.

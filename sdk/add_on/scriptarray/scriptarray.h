@@ -14,8 +14,8 @@ public:
 	CScriptArray(asUINT length, void *defVal, asIObjectType *ot);
 	virtual ~CScriptArray();
 
-	void AddRef();
-	void Release();
+	void AddRef() const;
+	void Release() const;
 
 	// Type information
 	asIObjectType *GetArrayObjectType() const;
@@ -23,7 +23,7 @@ public:
 	int            GetElementTypeId() const;
 
 	void   Resize(asUINT numElements);
-	asUINT GetSize();
+	asUINT GetSize() const;
 
 	// Get a pointer to an element. Returns 0 if out of bounds
 	void  *At(asUINT index);
@@ -40,8 +40,8 @@ public:
 	void ReleaseAllHandles(asIScriptEngine *engine);
 
 protected:
-	int            refCount;
-	bool           gcFlag;
+	mutable int    refCount;
+	mutable bool   gcFlag;
 	asIObjectType *objType;
 	SArrayBuffer  *buffer;
 	bool           isArrayOfHandles;

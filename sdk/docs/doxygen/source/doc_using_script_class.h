@@ -36,7 +36,20 @@ asIScriptModule *module = engine->GetModule("MyModule");
 asIObjectType *type = engine->GetObjectTypeById(module->GetTypeIdByDecl("MyClass"));
 
 // Get the factory function id from the object type
-int factoryId = type->GetFactoryIdByDecl("MyClass @MyClass(int)");
+int factoryId = type->GetFactoryIdByDecl("MyClass @MyClass()");
+
+// Prepare the context to call the factory function
+ctx->Prepare(factoryId);
+
+// Execute the call
+ctx->Execute();
+
+// Get the object that was created
+asIScriptObject *obj = *(asIScriptObject**)ctx->GetAddressOfReturnValue();
+
+// If you're going to store the object you must increase the reference,
+// otherwise it will be destroyed when the context is reused or destroyed.
+obj->AddRef();
 \endcode
 
 The factory function is \ref doc_call_script_func "called as a regular global function" and returns a handle to 

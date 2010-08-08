@@ -285,7 +285,7 @@ CScriptArray::~CScriptArray()
 	if( objType ) objType->Release();
 }
 
-asUINT CScriptArray::GetSize()
+asUINT CScriptArray::GetSize() const
 {
 	return buffer->numElements;
 }
@@ -313,8 +313,8 @@ void CScriptArray::Resize(asUINT numElements)
 
 		// Copy the elements from the old buffer
 		int c = numElements > buffer->numElements ? buffer->numElements : numElements;
-		asDWORD **d = (asDWORD**)newBuffer->data;
-		asDWORD **s = (asDWORD**)buffer->data;
+		void **d = (void**)newBuffer->data;
+		void **s = (void**)buffer->data;
 		for( int n = 0; n < c; n++ )
 			d[n] = s[n];
 		
@@ -445,18 +445,18 @@ void CScriptArray::Construct(SArrayBuffer *buf, asUINT start, asUINT end)
 	if( isArrayOfHandles )
 	{
 		// Set all object handles to null
-		asDWORD *d = (asDWORD*)(buf->data + start * sizeof(void*));
+		void *d = (void*)(buf->data + start * sizeof(void*));
 		memset(d, 0, (end-start)*sizeof(void*));
 	}
 	else if( typeId & asTYPEID_MASK_OBJECT )
 	{
-		asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
-		asDWORD **d = (asDWORD**)(buf->data + start * sizeof(void*));
+		void **max = (void**)(buf->data + end * sizeof(void*));
+		void **d = (void**)(buf->data + start * sizeof(void*));
 
 		asIScriptEngine *engine = objType->GetEngine();
 
 		for( ; d < max; d++ )
-			*d = (asDWORD*)engine->CreateScriptObject(typeId);
+			*d = (void*)engine->CreateScriptObject(typeId);
 	}
 }
 
@@ -468,8 +468,8 @@ void CScriptArray::Destruct(SArrayBuffer *buf, asUINT start, asUINT end)
 	{
 		asIScriptEngine *engine = objType->GetEngine();
 
-		asDWORD **max = (asDWORD**)(buf->data + end * sizeof(void*));
-		asDWORD **d   = (asDWORD**)(buf->data + start * sizeof(void*));
+		void **max = (void**)(buf->data + end * sizeof(void*));
+		void **d   = (void**)(buf->data + start * sizeof(void*));
 
 		for( ; d < max; d++ )
 		{
@@ -491,9 +491,9 @@ void CScriptArray::CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src)
 			int typeId = objType->GetSubTypeId();
 			int count = dst->numElements > src->numElements ? src->numElements : dst->numElements;
 
-			asDWORD **max = (asDWORD**)(dst->data + count * sizeof(void*));
-			asDWORD **d   = (asDWORD**)dst->data;
-			asDWORD **s   = (asDWORD**)src->data;
+			void **max = (void**)(dst->data + count * sizeof(void*));
+			void **d   = (void**)dst->data;
+			void **s   = (void**)src->data;
 			
 			for( ; d < max; d++, s++ )
 			{
@@ -513,9 +513,9 @@ void CScriptArray::CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src)
 			if( typeId & asTYPEID_MASK_OBJECT )
 			{
 				// Call the assignment operator on all of the objects
-				asDWORD **max = (asDWORD**)(dst->data + count * sizeof(void*));
-				asDWORD **d   = (asDWORD**)dst->data;
-				asDWORD **s   = (asDWORD**)src->data;
+				void **max = (void**)(dst->data + count * sizeof(void*));
+				void **d   = (void**)dst->data;
+				void **s   = (void**)src->data;
 
 				for( ; d < max; d++, s++ )
 					engine->CopyScriptObject(*d, *s, typeId);
@@ -564,14 +564,14 @@ void CScriptArray::ReleaseAllHandles(asIScriptEngine *engine)
 	}
 }
 
-void CScriptArray::AddRef()
+void CScriptArray::AddRef() const
 {
 	// Clear the GC flag then increase the counter
 	gcFlag = false;
 	refCount++;
 }
 
-void CScriptArray::Release()
+void CScriptArray::Release() const
 {
 	// Now do the actual releasing (clearing the flag set by GC)
 	gcFlag = false;
