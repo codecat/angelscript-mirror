@@ -399,9 +399,9 @@
 		#endif
 	#endif
 
-	#if _MSC_VER <= 1200 // MSVC++ 6
+	#if _MSC_VER <= 1300 // MSVC++ 7.0 and lower
 		#define I64(x) x##l
-	#else
+	#else // MSVC++ 7.1 and higher
 		#define I64(x) x##ll
 	#endif
 
@@ -441,9 +441,9 @@
 		#define ASM_INTEL  // Intel style for inline assembly
 	#endif
 
-	#if _MSC_VER <= 1200 // MSVC++ 6
+	#if _MSC_VER <= 1300 // MSVC++ 7.0 and lower
 		#define I64(x) x##l
-	#else
+	#else // MSVC++ 7.1 and higher
 		#define I64(x) x##ll
 	#endif
 
