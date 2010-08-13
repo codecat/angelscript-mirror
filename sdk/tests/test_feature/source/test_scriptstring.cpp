@@ -457,6 +457,28 @@ bool Test()
 	}
 
 	//--------------
+	// Empty heredoc string
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+
+		const char *script = 
+			"void func() { \n"
+			" string @tutPage = string(\"\"\" \n"
+	        "    \"\"\"); \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		engine->Release();
+	}
+
+	//--------------
 	// Unicode strings
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

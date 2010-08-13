@@ -6333,8 +6333,8 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, 
 void asCCompiler::ProcessHeredocStringConstant(asCString &str, asCScriptNode *node)
 {
 	// Remove first line if it only contains whitespace
-	asUINT start;
-	for( start = 0; start < str.GetLength(); start++ )
+	int start;
+	for( start = 0; start < (int)str.GetLength(); start++ )
 	{
 		if( str[start] == '\n' )
 		{
@@ -6373,7 +6373,8 @@ void asCCompiler::ProcessHeredocStringConstant(asCString &str, asCScriptNode *no
 	if( end < 0 ) end = 0;
 
 	asCString tmp;
-	tmp.Assign(&str[start], end-start);
+	if( end > start ) 
+		tmp.Assign(&str[start], end-start);
 
 	ProcessStringConstant(tmp, node, false);
 
