@@ -958,7 +958,7 @@ bool Test()
 		if( r >= 0 )
 			fail = true;
 
-		if( bout.buffer != "script (3, 2) : Info    : Compiling void irc_event::irc_event()\n"
+		if( bout.buffer != "script (3, 2) : Info    : Compiling irc_event::irc_event()\n"
 		                   "script (6, 10) : Error   : No matching signatures to 'irc_event::set_command(string)'\n"
 		                   "script (6, 10) : Info    : Candidates are:\n"
 		                   "script (6, 10) : Info    : void irc_event::set_command(string@[])\n" )

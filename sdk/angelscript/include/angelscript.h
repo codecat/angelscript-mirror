@@ -55,8 +55,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        21901
-#define ANGELSCRIPT_VERSION_STRING "2.19.1"
+#define ANGELSCRIPT_VERSION        21902
+#define ANGELSCRIPT_VERSION_STRING "2.19.2 WIP"
 
 // Data types
 

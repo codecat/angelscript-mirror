@@ -26,10 +26,10 @@ void print_generic(asIScriptGeneric *gen)
 {
 	if( gen->GetArgTypeId(0) == asTYPEID_INT32 )
 	{
-	int a = *(int*)gen->GetAddressOfArg(0);
-	UNUSED_VAR(a);
-//	printf("%d\n", a);
-}
+		int a = *(int*)gen->GetAddressOfArg(0);
+		UNUSED_VAR(a);
+//		printf("%d\n", a);
+	}
 	else
 	{
 		string s = **(string**)gen->GetAddressOfArg(0);

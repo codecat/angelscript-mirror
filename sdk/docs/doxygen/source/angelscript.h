@@ -1229,12 +1229,12 @@ public:
 	//! the engine holds to it will be invalid after the call.
 	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag = asGM_ONLY_IF_EXISTS) = 0;
 	//! \brief Discard a module.
-    //!
-    //! \param[in] module The name of the module
-    //! \return A negative value on error
-    //! \retval asNO_MODULE The module was not found.
-    //!
-    //! Discards a module and frees its memory. Any pointers that the application holds 
+	//!
+	//! \param[in] module The name of the module
+	//! \return A negative value on error
+	//! \retval asNO_MODULE The module was not found.
+	//!
+	//! Discards a module and frees its memory. Any pointers that the application holds 
 	//! to this module will be invalid after this call.
 	virtual int              DiscardModule(const char *module) = 0;
 	//! \}
@@ -1244,8 +1244,8 @@ public:
     //! \{
 
 	//! \brief Returns the function descriptor for the script function
-    //! \param[in] funcId The id of the function or method.
-    //! \return A pointer to the function description interface, or null if not found.
+	//! \param[in] funcId The id of the function or method.
+	//! \return A pointer to the function description interface, or null if not found.
 	//!
 	//! This does not increment the reference count of the returned function descriptor.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
@@ -1256,8 +1256,8 @@ public:
     //! \{
 
 	//! \brief Returns the object type interface for type.
-    //! \param[in] typeId The type id of the type.
-    //! \return The object type interface for the type, or null if not found.
+	//! \param[in] typeId The type id of the type.
+	//! \return The object type interface for the type, or null if not found.
 	//!
 	//! This does not increment the reference count of the returned object type.
 	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
@@ -1285,12 +1285,12 @@ public:
 	//! be obtained through the script module's \ref asIScriptModule::GetTypeIdByDecl "GetTypeIdByDecl".
 	virtual int            GetTypeIdByDecl(const char *decl) = 0;
 	//! \brief Returns a type declaration.
-    //! \param[in] typeId The type id of the type.
-    //! \return A null terminated string with the type declaration, or null if not found.
+	//! \param[in] typeId The type id of the type.
+	//! \return A null terminated string with the type declaration, or null if not found.
 	virtual const char    *GetTypeDeclaration(int typeId) = 0;
 	//! \brief Returns the size of a primitive type.
-    //! \param[in] typeId The type id of the type.
-    //! \return The size of the type in bytes.
+	//! \param[in] typeId The type id of the type.
+	//! \return The size of the type in bytes.
 	virtual int            GetSizeOfPrimitiveType(int typeId) = 0;
 	//! \}
 
@@ -1601,14 +1601,14 @@ public:
     //! The method will find the script function with the exact same declaration.
 	virtual int                GetFunctionIdByDecl(const char *decl) = 0;
 	//! \brief Returns the function descriptor for the script function
-    //! \param[in] index The index of the function.
-    //! \return A pointer to the function description interface, or null if not found.
+	//! \param[in] index The index of the function.
+	//! \return A pointer to the function description interface, or null if not found.
 	//!
 	//! This does not increase the reference counter of the returned function descriptor.
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) = 0;
 	//! \brief Returns the function descriptor for the script function
-    //! \param[in] funcId The id of the function or method.
-    //! \return A pointer to the function description interface, or null if not found.
+	//! \param[in] funcId The id of the function or method.
+	//! \return A pointer to the function description interface, or null if not found.
 	//!
 	//! This does not increase the reference counter of the returned function descriptor.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
@@ -1697,11 +1697,11 @@ public:
     //! \{
 
 	//! \brief Returns the number of object types.
-    //! \return The number of object types declared in the module.
+	//! \return The number of object types declared in the module.
 	virtual int            GetObjectTypeCount() = 0;
 	//! \brief Returns the object type interface by index.
-    //! \param[in] index The index of the type.
-    //! \return The object type interface for the type, or null if not found.
+	//! \param[in] index The index of the type.
+	//! \return The object type interface for the type, or null if not found.
 	//!
 	//! This does not increase the reference count of the returned object.
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
@@ -2473,8 +2473,8 @@ public:
 	//! \brief Returns the type id of the object.
     //! \return The type id of the script object.
 	virtual int            GetTypeId() const = 0;
-    //! \brief Returns the object type interface for the object.
-    //! \return The object type interface of the script object.
+	//! \brief Returns the object type interface for the object.
+	//! \return The object type interface of the script object.
 	//!
 	//! This does not increase the reference count of the returned object type.
 	virtual asIObjectType *GetObjectType() const = 0;
@@ -2739,8 +2739,8 @@ public:
     //! The method will find the script method with the exact same declaration.
 	virtual int                GetMethodIdByDecl(const char *decl) const = 0;
 	//! \brief Returns the function descriptor for the script method
-    //! \param[in] index The index of the method.
-    //! \return A pointer to the method description interface, or null if not found.
+	//! \param[in] index The index of the method.
+	//! \return A pointer to the method description interface, or null if not found.
 	//! 
 	//! This does not increment the reference count of the returned function descriptor.
 	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
@@ -2795,31 +2795,31 @@ public:
 	//! \{
 
 	//! \brief Returns a pointer to the script engine.
-    //! \return A pointer to the engine.
+	//! \return A pointer to the engine.
 	virtual asIScriptEngine *GetEngine() const = 0;
 
 	// Memory management
 	//! \brief Increases the reference counter.
-    //!
-    //! \return The number of references to this object.
-    //!
-    //! Call this method when storing an additional reference to the object.
+	//!
+	//! \return The number of references to this object.
+	//!
+	//! Call this method when storing an additional reference to the object.
 	virtual int AddRef() = 0;
 	//! \brief Decrease reference counter.
-    //!
-    //! \return The number of references to this object.
-    //!
-    //! Call this method when you will no longer use the references that you own.
+	//!
+	//! \return The number of references to this object.
+	//!
+	//! Call this method when you will no longer use the references that you own.
 	virtual int Release() = 0;
 
 	//! \brief Returns the id of the function
 	//! \return The id of the function
 	virtual int              GetId() const = 0;
 	//! \brief Returns the name of the module where the function was implemented
-    //! \return A null terminated string with the module name.
+	//! \return A null terminated string with the module name.
 	virtual const char      *GetModuleName() const = 0;
 	//! \brief Returns the name of the script section where the function was implemented.
-    //! \return A null terminated string with the script section name where the function was implemented.
+	//! \return A null terminated string with the script section name where the function was implemented.
 	virtual const char      *GetScriptSectionName() const = 0;
 	//! \brief Returns the name of the config group in which the function was registered.
 	//! \return The name of the config group, or null if not in any group.
@@ -2830,25 +2830,25 @@ public:
 	//! \{
 
 	//! \brief Returns the object type for class or interface method
-    //! \return A pointer to the object type interface if this is a method.
+	//! \return A pointer to the object type interface if this is a method.
 	//!
 	//! This does not increase the reference count of the returned object type.
 	virtual asIObjectType   *GetObjectType() const = 0;
 	//! \brief Returns the name of the object for class or interface methods
-    //! \return A null terminated string with the name of the object type if this a method.
+	//! \return A null terminated string with the name of the object type if this a method.
 	virtual const char      *GetObjectName() const = 0;
 	//! \brief Returns the name of the function or method
-    //! \return A null terminated string with the name of the function.
+	//! \return A null terminated string with the name of the function.
 	virtual const char      *GetName() const = 0;
 	//! \brief Returns the function declaration
 	//! \param[in] includeObjectName Indicate whether the object name should be prepended to the function name
-    //! \return A null terminated string with the function declaration.
+	//! \return A null terminated string with the function declaration.
 	virtual const char      *GetDeclaration(bool includeObjectName = true) const = 0;
 	//! \brief Returns true if it is a class method
-    //! \return True if this a class method.
+	//! \return True if this a class method.
 	virtual bool             IsClassMethod() const = 0;
 	//! \brief Returns true if it is an interface method
-    //! \return True if this is an interface method.
+	//! \return True if this is an interface method.
 	virtual bool             IsInterfaceMethod() const = 0;
 	//! \brief Returns true if the class method is read-only
 	//! \return True if the class method is read-only

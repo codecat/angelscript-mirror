@@ -330,7 +330,7 @@ bool Test()
 	mod->SaveByteCode(&stream);
 
 	// TODO: These should eventually be equal, once the bytecode is fully platform independent
-	if( (sizeof(void*) == 4 && stream.buffer.size() != 1438) ||
+	if( (sizeof(void*) == 4 && stream.buffer.size() != 1445) ||
 		(sizeof(void*) == 8 && stream.buffer.size() != 1610) ) 
 	{
 		// Originally this was 3213 (on 32bit)

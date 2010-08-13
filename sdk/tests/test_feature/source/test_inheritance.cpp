@@ -459,7 +459,7 @@ bool Test2()
 		fail = true;
 	// TODO: The error message should explain that it is not possible to call super 
 	//       because the class doesn't derived from another class
-	if( bout.buffer != "script (1, 11) : Info    : Compiling void A::A()\n"
+	if( bout.buffer != "script (1, 11) : Info    : Compiling A::A()\n"
 					   "script (1, 17) : Error   : No matching signatures to 'A::super()'\n" )
 	{
 		fail = true;
@@ -474,7 +474,7 @@ bool Test2()
 	r = mod->Build();
 	if( r >= 0 ) 
 		fail = true;
-	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::B()\n"
+	if( bout.buffer != "script (1, 26) : Info    : Compiling B::B()\n"
 					   "script (1, 41) : Error   : Can't call a constructor multiple times\n" )
 	{
 		fail = true;
@@ -489,7 +489,7 @@ bool Test2()
 	r = mod->Build(); 
 	if( r >= 0 )
 		fail = true;
-	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::B()\n"
+	if( bout.buffer != "script (1, 26) : Info    : Compiling B::B()\n"
 					   "script (1, 46) : Error   : Can't call a constructor in loops\n" )
 	{
 		fail = true;
@@ -505,7 +505,7 @@ bool Test2()
 	r = mod->Build(); 
 	if( r >= 0 )
 		fail = true;
-	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::B()\n"
+	if( bout.buffer != "script (1, 26) : Info    : Compiling B::B()\n"
 					   "script (1, 52) : Error   : Can't call a constructor in switch\n" )
 	{
 		fail = true;
@@ -522,9 +522,9 @@ bool Test2()
 	r = mod->Build(); 
 	if( r >= 0 )
 		fail = true;
-	if( bout.buffer != "script (2, 1) : Info    : Compiling void B::B(int)\n"
+	if( bout.buffer != "script (2, 1) : Info    : Compiling B::B(int)\n"
 					   "script (2, 10) : Error   : Both conditions must call constructor\n"
-					   "script (3, 1) : Info    : Compiling void B::B(float)\n"
+					   "script (3, 1) : Info    : Compiling B::B(float)\n"
 				   	   "script (3, 12) : Error   : Both conditions must call constructor\n" )
 	{
 		fail = true;
@@ -567,7 +567,7 @@ bool Test2()
 	r = mod->Build();
 	if( r >= 0 )
 		fail = true;
-	if( bout.buffer != "script (1, 27) : Info    : Compiling void B::B()\n"
+	if( bout.buffer != "script (1, 27) : Info    : Compiling B::B()\n"
 					   "script (1, 33) : Error   : No matching signatures to '::super()'\n" )
 	{
 		fail = true;

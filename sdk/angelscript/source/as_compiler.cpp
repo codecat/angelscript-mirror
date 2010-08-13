@@ -872,6 +872,14 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	// Concatenate the bytecode
 	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
 
+	// Add information on the line number for the global variable
+	size_t pos = 0;
+	if( gvar->idNode )
+		pos = gvar->idNode->tokenPos;
+	else if( gvar->nextNode ) 
+		pos = gvar->nextNode->tokenPos;
+	LineInstr(&byteCode, pos);
+
 	// We need to push zeroes on the stack to guarantee
 	// that temporary object handles are clear
 	int n;

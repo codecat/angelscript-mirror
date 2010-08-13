@@ -1341,8 +1341,8 @@ void asCBuilder::CompileGlobalVariables()
 				if( gvar->property && !gvar->isEnumValue )
 					initOrder.PushLast(gvar->property);
 
-				// Does the function contain more than just a RET instruction?
-				if( initFunc && initFunc->byteCode.GetLength() > 1 )
+				// Does the function contain more than just a SUSPEND followed by a RET instruction?
+				if( initFunc && initFunc->byteCode.GetLength() > 2 )
 				{
 					// Create the init function for this variable
 					initFunc->id = engine->GetNextScriptFunctionId();
@@ -1351,6 +1351,7 @@ void asCBuilder::CompileGlobalVariables()
 					// Finalize the init function for this variable
 					initFunc->funcType = asFUNC_SCRIPT;
 					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
+					initFunc->scriptSectionIdx = engine->GetScriptSectionNameIndex(gvar->script->name.AddressOf());
 
 					// Notify the GC of the new script function
 					engine->gc.AddScriptObjectToGC(initFunc, &engine->functionBehaviours);

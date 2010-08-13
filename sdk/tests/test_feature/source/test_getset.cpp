@@ -780,8 +780,10 @@ bool Test()
 		// This test also verifies that circular references between global 
 		// properties and functions is properly resolved by the GC.
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterStdString(engine);
+
+		bout.buffer = "";
 
 		script =
 			"string _s = s; \n"
@@ -792,6 +794,13 @@ bool Test()
 		r = mod->Build();
 		if( r != asINIT_GLOBAL_VARS_FAILED )
 			fail = true;
+
+		if( bout.buffer != "script (1, 13) : Error   : Failed to initialize global variable '_s'\n"
+		                   "script (2, 0) : Info    : Exception 'Null pointer access' in 'string get_s()'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
 
 		engine->Release();
 	}

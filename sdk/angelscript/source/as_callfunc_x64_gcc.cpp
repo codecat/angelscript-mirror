@@ -79,23 +79,23 @@ typedef asQWORD ( *funcptr_t )( void );
 		: "m" ( dest )                           \
 	)
 #else
-#define PUSH_LONG( val )                                 \
-	__asm__ __volatile__ (                           \
+#define PUSH_LONG( val )                         \
+	__asm__ __volatile__ (                       \
 		"mov    %0, %%rax\r\n"                   \
 		"push   %%rax"                           \
 		:                                        \
 		: "m" ( val )                            \
 	)
 
-#define POP_LONG( reg )                                  \
-	__asm__ __volatile__ (                           \
+#define POP_LONG( reg )                          \
+	__asm__ __volatile__ (                       \
 		"popq     %rax\r\n"                      \
 		"movq     %rax, " reg                    \
 	)
 
 
-#define ASM_GET_REG( name, dest )                        \
-	__asm__ __volatile__ (                           \
+#define ASM_GET_REG( name, dest )                \
+	__asm__ __volatile__ (                       \
 		"mov  %" name ", %0\r\n"                 \
 		:                                        \
 		: "m" ( dest )                           \

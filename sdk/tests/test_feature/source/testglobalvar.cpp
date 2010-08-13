@@ -332,8 +332,9 @@ bool TestGlobalVar()
 	//-----------------------
 	// variables of object type that access other global objects in constructor will throw null-pointer exception
 	{
+		CBufferedOutStream bout;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		const char *script = "class A { void Access() {} } \n"
@@ -347,6 +348,13 @@ bool TestGlobalVar()
 		r = mod->Build();
 		if( r >= 0 )
 			ret = true;
+
+		if( bout.buffer != " (4, 3) : Error   : Failed to initialize global variable 'g_b'\n"
+		                   " (2, 0) : Info    : Exception 'Null pointer access' in 'B::B()'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			ret = true;
+		}
 
 		engine->Release();
 	}

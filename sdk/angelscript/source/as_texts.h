@@ -188,6 +188,11 @@
 
 #define TXT_VALUE_TOO_LARGE_FOR_TYPE      "Value is too large for data type"
 
+// Global variable initialization
+
+#define TXT_FAILED_TO_INITIALIZE_s		"Failed to initialize global variable '%s'"
+#define TXT_EXCEPTION_s_IN_s            "Exception '%s' in '%s'"
+
 // Engine message
 
 #define TXT_INVALID_CONFIGURATION                  "Invalid configuration"
