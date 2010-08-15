@@ -22,8 +22,8 @@ class CScriptDictionary
 public:
     // Memory management
     CScriptDictionary(asIScriptEngine *engine);
-    void AddRef();
-    void Release();
+    void AddRef() const;
+    void Release() const;
 
     CScriptDictionary &operator =(const CScriptDictionary &other);
 
@@ -76,7 +76,7 @@ protected:
 	
 	// Our properties
     asIScriptEngine *engine;
-    int refCount;
+    mutable int refCount;
     std::map<std::string, valueStruct> dict;
 };
 

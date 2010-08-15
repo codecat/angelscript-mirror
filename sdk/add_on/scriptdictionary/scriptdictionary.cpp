@@ -30,13 +30,13 @@ CScriptDictionary::~CScriptDictionary()
     DeleteAll();
 }
 
-void CScriptDictionary::AddRef()
+void CScriptDictionary::AddRef() const
 {
 	// We need to clear the GC flag
 	refCount = (refCount & 0x7FFFFFFF) + 1;
 }
 
-void CScriptDictionary::Release()
+void CScriptDictionary::Release() const
 {
 	// We need to clear the GC flag
 	refCount = (refCount & 0x7FFFFFFF) - 1;

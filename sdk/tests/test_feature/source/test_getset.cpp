@@ -31,6 +31,43 @@ bool Test()
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
+	// The getter can return a handle while the setter takes a reference
+	{
+		const char *script = 
+			"class Test \n"
+			"{ \n"
+			"  string @get_s() { return 'test'; } \n"
+			"  void set_s(const string &in) {} \n"
+			"} \n"
+			"void func() \n"
+			"{ \n"
+			"  Test t; \n"
+			"  string s = t.s; \n" 
+			"  t.s = s; \n"
+			"} \n";
+
+		mod->AddScriptSection("script", script);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+		{
+			fail = true;
+			printf("Failed to compile the script\n");
+		}
+
+		r = ExecuteString(engine, "Test t; @t.s = 'test';", mod);
+		if( r >= 0 )
+		{
+			fail = true;
+			printf("Shouldn't be allowed\n");
+		}
+		if( bout.buffer != "ExecuteString (1, 14) : Error   : It is not allowed to perform a handle assignment on a non-handle property\n" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+	}
+
 	// main1 and main2 should produce the same bytecode
 	const char *script1 = 
 		"class Test                            \n"

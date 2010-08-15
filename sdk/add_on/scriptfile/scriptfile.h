@@ -42,8 +42,8 @@ class CScriptFile
 public:
     CScriptFile();
 
-    void AddRef();
-    void Release();
+    void AddRef() const;
+    void Release() const;
 
 	// TODO: Implement the "r+", "w+" and "a+" modes
 	// mode = "r" -> open the file for reading
@@ -69,8 +69,8 @@ public:
 protected:
     ~CScriptFile();
 
-    int   refCount;
-    FILE *file;
+    mutable int refCount;
+    FILE       *file;
 };
 
 // This function will determine the configuration of the engine

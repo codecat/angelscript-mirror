@@ -43,7 +43,7 @@ CScriptString::~CScriptString()
 // reference counting
 //--------------------
 
-void CScriptString::AddRef()
+void CScriptString::AddRef() const
 {
 	refCount++;
 }
@@ -54,7 +54,7 @@ static void StringAddRef_Generic(asIScriptGeneric *gen)
 	thisPointer->AddRef();
 }
 
-void CScriptString::Release()
+void CScriptString::Release() const
 {
 	if( --refCount == 0 )
 		delete this;

@@ -5051,6 +5051,16 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return -1;
 		}
 
+		// It is not allowed to do a handle assignment on a property accessor that
+		//  doesn't take a handle in the set accessor.
+		if( lctx->property_set && 
+			lctx->type.isExplicitHandle && 
+			!engine->scriptFunctions[lctx->property_set]->parameterTypes[0].IsObjectHandle() )
+		{
+			Error(TXT_HANDLE_ASSIGN_ON_NON_HANDLE_PROP, opNode);
+			return -1;
+		}
+
 		MergeExprBytecodeAndType(ctx, lctx);
 
 		return ProcessPropertySetAccessor(ctx, rctx, opNode);
@@ -7407,7 +7417,10 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		asCScriptFunction *getFunc = engine->scriptFunctions[getId];
 		asCScriptFunction *setFunc = engine->scriptFunctions[setId];
 
-		if( !getFunc->returnType.IsEqualExceptRefAndConst(setFunc->parameterTypes[0]) )
+		// It is permitted for a getter to return a handle and the setter to take a reference
+		if( !getFunc->returnType.IsEqualExceptRefAndConst(setFunc->parameterTypes[0]) &&
+			!((getFunc->returnType.IsObjectHandle() && !setFunc->parameterTypes[0].IsObjectHandle()) &&
+			  (getFunc->returnType.GetObjectType() == setFunc->parameterTypes[0].GetObjectType())) )
 		{
 			asCString str;
 			str.Format(TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s, name.AddressOf());
@@ -7481,11 +7494,13 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 			ctx->property_ref = ctx->type.dataType.IsReference();
 		}
 
+		// The setter's parameter type is used as the property type,
+		// unless only the getter is available	
 		asCDataType dt;
-		if( getId )
-			dt = engine->scriptFunctions[getId]->returnType;
-		else
+		if( setId )
 			dt = engine->scriptFunctions[setId]->parameterTypes[0];
+		else
+			dt = engine->scriptFunctions[getId]->returnType;
 
 		// Just change the type, the context must still maintain information 
 		// about previous variable offset and the indicator of temporary variable.

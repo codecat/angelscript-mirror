@@ -93,7 +93,8 @@
 
 #define TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s "The property '%s' has mismatching types for the get and set accessors"
 
-#define TXT_HANDLE_COMPARISON             "The operand is implicitly converted to handle in order to compare them"
+#define TXT_HANDLE_ASSIGN_ON_NON_HANDLE_PROP     "It is not allowed to perform a handle assignment on a non-handle property"
+#define TXT_HANDLE_COMPARISON                    "The operand is implicitly converted to handle in order to compare them"
 
 #define TXT_IDENTIFIER_s_NOT_DATA_TYPE          "Identifier '%s' is not a data type"
 #define TXT_IF_WITH_EMPTY_STATEMENT             "If with empty statement"

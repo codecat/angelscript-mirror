@@ -248,8 +248,8 @@ public:
   CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine);
 
   // Memory management
-  int AddRef();
-  int Release();
+  int AddRef() const;
+  int Release() const;
 
   // Copy the stored value from another any object
   CScriptAny &operator=(const CScriptAny&);
@@ -413,8 +413,8 @@ public:
   CScriptString(const std::string &s);
 
   // Memory management
-  void AddRef();
-  void Release();
+  void AddRef() const;
+  void Release() const;
 
   // Assignment
   CScriptString &operator=(const CScriptString &other);
@@ -528,8 +528,8 @@ class CScriptDictionary
 public:
   // Memory management
   CScriptDictionary(asIScriptEngine *engine);
-  void AddRef();
-  void Release();
+  void AddRef() const;
+  void Release() const;
 
   // Perform a shallow copy of the other dictionary
   CScriptDictionary &operator=(const CScriptDictionary &other);
@@ -629,8 +629,8 @@ public:
   CScriptFile();
 
   // Memory management
-  void AddRef();
-  void Release();
+  void AddRef() const;
+  void Release() const;
 
   // Opening and closing file handles
   // mode = "r" -> open the file for reading

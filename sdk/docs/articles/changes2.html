@@ -29,6 +29,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Script language
 <ul>
 <li>It is now also permitted to return a reference to the 'this' pointer
+<li>A get accessor can now return a handle, while the set accessor takes a value or reference. This allow the property to behave as a value property, even though a new object is created each time it's value is taken.
+</ul>
+<li>Add-ons
+<ul>
+<li>Made the addref/release methods on the add-ons const, so they can be used on const pointers as well
 </ul>
 </ul>
 
