@@ -192,11 +192,11 @@ bool Test()
 	if( r >= 0 )
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : Type 'val' is missing behaviours\n"
-		               " (0, 0) : Info    : A non-pod value type must have the constructor and destructor behaviours\n"
+		               " (0, 0) : Info    : A non-pod value type must have the default constructor and destructor behaviours\n"
 		               " (0, 0) : Error   : Type 'val1' is missing behaviours\n"
-					   " (0, 0) : Info    : A non-pod value type must have the constructor and destructor behaviours\n"
+					   " (0, 0) : Info    : A non-pod value type must have the default constructor and destructor behaviours\n"
 					   " (0, 0) : Error   : Type 'val2' is missing behaviours\n"
-					   " (0, 0) : Info    : A non-pod value type must have the constructor and destructor behaviours\n"
+					   " (0, 0) : Info    : A non-pod value type must have the default constructor and destructor behaviours\n"
 					   " (0, 0) : Error   : Invalid configuration\n" )
 	{
 		printf(bout.buffer.c_str());

@@ -2795,8 +2795,9 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			// No references to local variables, temporary variables, or parameters
 			// are allowed to be returned, since they go out of scope when the function
 			// returns. Even reference parameters are disallowed, since it is not possible
-			// to know the scope of them.
-			if( expr.type.isVariable || expr.type.isTemporary )
+			// to know the scope of them. The exception is the 'this' pointer, which 
+			// is treated by the compiler as a local variable, but isn't really so.
+			if( (expr.type.isVariable && !(expr.type.stackOffset == 0 && outFunc->objectType)) || expr.type.isTemporary )
 			{
 				// Clean up the potential deferred parameters
 				ProcessDeferredParams(&expr);

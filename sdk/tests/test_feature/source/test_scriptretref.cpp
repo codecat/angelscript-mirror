@@ -18,7 +18,31 @@ bool Test()
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
-	// TODO: Must be allowed to return 'this' from a class method
+	// Must be allowed to return 'this' from a class method
+	{
+		bout.buffer = "";
+		const char *script = 
+			"class C \n"
+			"{ \n"
+			"  C &opAssign(const C &in o) \n"
+			"  { \n"
+			"    return this; \n"
+			"  } \n"
+			"  int n; \n"
+			"} \n";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) fail = true;
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		r = ExecuteString(engine, "C a, b; (a = b).n = 42; assert( a.n == 42 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+	}
 
 	// Test returning reference to a global variable
 	// This should work, as the global variable is guaranteed to be there even after the function returns
