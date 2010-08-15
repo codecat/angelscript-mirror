@@ -347,7 +347,11 @@ void DumpModule(asIScriptModule *mod)
 		" string& opAssign(uint)\n"
 		" string& opAddAssign(uint)\n"
 		" string opAdd(uint) const\n"
-		" string opAdd_r(uint) const\n" )
+		" string opAdd_r(uint) const\n" 
+		" string& opAssign(bool)\n"
+		" string& opAddAssign(bool)\n"
+		" string opAdd(bool) const\n"
+		" string opAdd_r(bool) const\n" )
 	{
 		cout << s.str() << endl;
 		cout << "Failed to get the expected result when dumping the module" << endl << endl;

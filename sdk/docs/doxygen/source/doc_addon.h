@@ -378,6 +378,11 @@ Refer to the <code>std::string</code> implementation for your compiler.
     string &opAddAssign(uint val);
     string  opAdd(uint val) const;
     string  opAdd_r(uint val) const;
+
+    string &opAssign(bool val);
+    string &opAddAssign(bool val);
+    string  opAdd(bool val) const;
+    string  opAdd_r(bool val) const;
   }
 </pre>
 
@@ -473,6 +478,11 @@ public:
     string &opAddAssign(uint val);
     string \@opAdd(uint val) const;
     string \@opAdd_r(uint val) const;
+
+    string &opAssign(bool val);
+    string &opAddAssign(bool val);
+    string \@opAdd(bool val) const;
+    string \@opAdd_r(bool val) const;
   }
 
   // Get a substring of a string
