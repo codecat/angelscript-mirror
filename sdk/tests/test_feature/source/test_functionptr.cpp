@@ -17,6 +17,12 @@ void ReceiveFuncPtr(asIScriptFunction *funcPtr)
 
 bool Test()
 {
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("Skipped due to AS_MAX_PORTABILITY\n");
+		return false;
+	}
+
 	bool fail = false;
 	int r;
 	COutStream out;

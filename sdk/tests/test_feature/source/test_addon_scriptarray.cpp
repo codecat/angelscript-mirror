@@ -466,19 +466,25 @@ bool Test()
 
 	// Test creating script array from application
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		RegisterScriptArray(engine);
-		RegisterScriptString(engine);
-	
-		r = engine->RegisterGlobalFunction("array<string@>@ CreateArrayOfStrings()", asFUNCTION(CreateArrayOfStrings), asCALL_CDECL); assert( r >= 0 );
-
-		r = ExecuteString(engine, "array<string@>@ arr = CreateArrayOfStrings()");
-		if( r != asEXECUTION_FINISHED )
-			fail = true;
-	 
-		// Release engine
-		engine->Release();
+		if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		{
+			printf("Subtest: Skipped due to AS_MAX_PORTABILITY\n");
+		}
+		else
+		{
+			asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			RegisterScriptArray(engine);
+			RegisterScriptString(engine);
 		
+			r = engine->RegisterGlobalFunction("array<string@>@ CreateArrayOfStrings()", asFUNCTION(CreateArrayOfStrings), asCALL_CDECL); assert( r >= 0 );
+
+			r = ExecuteString(engine, "array<string@>@ arr = CreateArrayOfStrings()");
+			if( r != asEXECUTION_FINISHED )
+				fail = true;
+		 
+			// Release engine
+			engine->Release();
+		}		
 	}
 
 	// Success
