@@ -1990,6 +1990,8 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 	ConvertToVariable(&expr);
 	int offset = expr.type.stackOffset;
 
+	ProcessDeferredParams(&expr);
+
 	//-------------------------------
 	// Determine case values and labels
 	//--------------------------------

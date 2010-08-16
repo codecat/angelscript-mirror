@@ -1162,6 +1162,39 @@ bool Test()
 		engine->Release();
 	}
 
+
+	// Make sure the deferred parameters are processed in the switch condition
+	{
+		const char *script = 
+			"int[] level1(9); \n"
+			"void move_x() \n"
+			"{ \n"
+			"    switch(level1[1]) \n"
+			"    { \n"
+			"    case 2: \n"
+			"      break; \n"
+			"    } \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
