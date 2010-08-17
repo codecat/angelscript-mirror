@@ -1877,6 +1877,7 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 	vf->isReadOnly = func->isReadOnly;
 	vf->objectType = func->objectType;
 	vf->signatureId = func->signatureId;
+	vf->isPrivate = func->isPrivate;
 	vf->vfTableIdx = idx;
 
 	module->AddScriptFunction(vf);
@@ -2289,11 +2290,11 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		sFunctionDescription *func = asNEW(sFunctionDescription);
 		functions.PushLast(func);
 
-		func->script  = file;
-		func->node    = node;
-		func->name    = name;
-		func->objType = objType;
-		func->funcId  = funcID;
+		func->script    = file;
+		func->node      = node;
+		func->name      = name;
+		func->objType   = objType;
+		func->funcId    = funcID;
 	}
 
 	// Destructors may not have any parameters
@@ -2346,7 +2347,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	}
 
 	// Register the function
-	module->AddScriptFunction(file->idx, funcID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction);
+	module->AddScriptFunction(file->idx, funcID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate);
 
 	if( objType )
 	{

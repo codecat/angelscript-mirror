@@ -454,10 +454,11 @@ bool Test()
 
 		bout.buffer = "";
 		r = mod->Build();
-		if( r < 0 )
+		if( r >= 0 )
 			fail = true;
 
-		if( bout.buffer != "" )
+		if( bout.buffer != "s (4, 1) : Info    : Compiling void main()\n"
+		                   "s (4, 20) : Error   : Illegal call to private method 'void C::func()'\n" )
 		{
 			printf(bout.buffer.c_str());
 			fail = true;

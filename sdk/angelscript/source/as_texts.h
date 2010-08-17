@@ -162,6 +162,7 @@
 #define TXT_PARAMETER_ALREADY_DECLARED    "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s           "Parameter type can't be '%s'"
 #define TXT_POSSIBLE_LOSS_OF_PRECISION    "Conversion from double to float, possible loss of precision"
+#define TXT_PRIVATE_METHOD_CALL_s         "Illegal call to private method '%s'"
 #define TXT_PRIVATE_PROP_ACCESS_s         "Illegal access to private property '%s'"
 #define TXT_PROPERTY_CANT_BE_CONST        "Class properties cannot be declared as const"
 #define TXT_PROPERTY_HAS_NO_GET_ACCESSOR  "The property has no get accessor"

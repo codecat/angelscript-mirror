@@ -712,7 +712,7 @@ int asCModule::GetNextImportedFunctionId()
 }
 
 // internal
-int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType, bool isConstMethod, bool isGlobalFunction)
+int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, bool isInterface, asCObjectType *objType, bool isConstMethod, bool isGlobalFunction, bool isPrivate)
 {
 	asASSERT(id >= 0);
 
@@ -729,6 +729,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	}
 	func->objectType = objType;
 	func->isReadOnly = isConstMethod;
+	func->isPrivate  = isPrivate;
 
 	// The script function's refCount was initialized to 1
 	scriptFunctions.PushLast(func);

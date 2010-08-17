@@ -502,7 +502,10 @@ void asCRestore::WriteFunctionSignature(asCScriptFunction *func)
 
 	if( func->objectType )
 	{
-		WRITE_NUM(func->isReadOnly);
+		asBYTE b = 0;
+		b += func->isReadOnly ? 1 : 0;
+		b += func->isPrivate  ? 2 : 0;
+		WRITE_NUM(b);
 	}
 }
 
@@ -536,7 +539,10 @@ void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
 	func->objectType = ReadObjectType();
 	if( func->objectType )
 	{
-		READ_NUM(func->isReadOnly);
+		asBYTE b;
+		READ_NUM(b);
+		func->isReadOnly = (b & 1) ? true : false;
+		func->isPrivate  = (b & 2) ? true : false;
 	}
 }
 

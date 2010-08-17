@@ -132,6 +132,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, in
 	objectType             = 0; 
 	name                   = ""; 
 	isReadOnly             = false;
+	isPrivate              = false;
 	stackNeeded            = 0;
 	sysFuncIntf            = 0;
 	signatureId            = 0;
