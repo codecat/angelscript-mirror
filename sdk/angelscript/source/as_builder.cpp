@@ -286,9 +286,9 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	node = node->firstChild;
 
 	// Create the function
-	bool isConstructor, isDestructor;
+	bool isConstructor, isDestructor, isPrivate;
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_SCRIPT);
-	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->isReadOnly, isConstructor, isDestructor);
+	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->isReadOnly, isConstructor, isDestructor, isPrivate);
 	func->id               = engine->GetNextScriptFunctionId();
 	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
 
@@ -1014,8 +1014,9 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
 	bool                       isConstMethod;
 	bool                       isConstructor;
 	bool                       isDestructor;
+	bool                       isPrivate;
 
-	GetParsedFunctionDetails(node, file, 0, name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor);
+	GetParsedFunctionDetails(node, file, 0, name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor, isPrivate);
 
 	int i = module->AddFuncDef(name.AddressOf());
 
@@ -2157,25 +2158,35 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file)
 	return 0;
 }
 
-void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, bool &isConstMethod, bool &isConstructor, bool &isDestructor)
+void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate)
 {
+	node = node->firstChild;
+
+	// Is the function a private class method?
+	isPrivate = false;
+	if( node->tokenType == ttPrivate )
+	{
+		isPrivate = true;
+		node = node->next;
+	}
+
 	// Find the name
 	isConstructor = false;
 	isDestructor = false;
 	asCScriptNode *n = 0;
-	if( node->firstChild->nodeType == snDataType )
-		n = node->firstChild->next->next;
+	if( node->nodeType == snDataType )
+		n = node->next->next;
 	else
 	{
 		// If the first node is a ~ token, then we know it is a destructor
-		if( node->firstChild->tokenType == ttBitNot )
+		if( node->tokenType == ttBitNot )
 		{
-			n = node->firstChild->next;
+			n = node->next;
 			isDestructor = true;
 		}
 		else
 		{
-			n = node->firstChild;
+			n = node;
 			isConstructor = true;
 		}
 	}
@@ -2184,8 +2195,8 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	// Initialize a script function object for registration
 	if( !isConstructor && !isDestructor )
 	{
-		returnType = CreateDataTypeFromNode(node->firstChild, file);
-		returnType = ModifyDataTypeFromNode(returnType, node->firstChild->next, file, 0, 0);
+		returnType = CreateDataTypeFromNode(node, file);
+		returnType = ModifyDataTypeFromNode(returnType, node->next, file, 0, 0);
 	}
 	else
 		returnType = asCDataType::CreatePrimitive(ttVoid, false);
@@ -2238,8 +2249,9 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	bool                       isConstMethod;
 	bool                       isConstructor;
 	bool                       isDestructor;
+	bool                       isPrivate;
 
-	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor);
+	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor, isPrivate);
 
 	// Check for name conflicts
 	if( !isConstructor && !isDestructor )

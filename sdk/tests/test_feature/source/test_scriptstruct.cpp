@@ -440,6 +440,32 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test private methods
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script = "class C { \n"
+							 "  private void func() {} \n"
+							 "  void func2() { func(); } } \n"
+							 "void main() { C c; c.func(); } \n";
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("s", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		if( bout.buffer != "" )
+		{
+			printf(bout.buffer.c_str());
+			fail = true;
+		}
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

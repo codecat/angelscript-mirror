@@ -662,6 +662,15 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	GetToken(&t);
 	RewindTo(&t);
 
+	// A class method decl can be preceded by 'private' 
+	if( isMethod )
+	{
+		sToken t1;
+		GetToken(&t1);
+		if( t1.type != ttPrivate )
+			RewindTo(&t1);
+	}
+
 	// A class constructor starts with identifier followed by parenthesis
 	// A class destructor starts with the ~ token
 	if( isMethod )
@@ -669,9 +678,12 @@ bool asCParser::IsFuncDecl(bool isMethod)
 		sToken t1, t2;
 		GetToken(&t1);
 		GetToken(&t2);
-		RewindTo(&t);
+		RewindTo(&t1);
 		if( (t1.type == ttIdentifier && t2.type == ttOpenParanthesis) || t1.type == ttBitNot )
+		{
+			RewindTo(&t);
 			return true;
+		}
 	}
 
 	// A function decl can start with a const
@@ -797,6 +809,13 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 	GetToken(&t1);
 	GetToken(&t2);
 	RewindTo(&t1);
+
+	// A class method can start with private
+	if( isMethod && t1.type == ttPrivate )
+	{
+		node->AddChildLast(ParseToken(ttPrivate));
+		if( isSyntaxError ) return node;
+	}
 
 	// If it is a global function, or a method, except constructor and destructor, then the return type is parsed
 	if( !isMethod || (t1.type != ttBitNot && t2.type != ttOpenParanthesis) )
