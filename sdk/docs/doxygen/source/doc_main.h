@@ -108,10 +108,6 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_script_class_ops
 
 
-\todo Add page on class methods
-\todo Add page on constructor and destructors
-\todo Add page on inheritance
-
 
 
 

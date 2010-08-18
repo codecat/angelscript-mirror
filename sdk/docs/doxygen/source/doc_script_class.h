@@ -4,8 +4,7 @@
 \page doc_script_class Script classes
 
 In AngelScript the script writer may declare script classes. The syntax is
-similar to that of C++, except the public, protected, and private keywords are
-not available. All the class methods must be declared with their implementation, 
+similar to that of C++. All the class methods must be declared with their implementation, 
 like in Java.
 
 The default constructor and destructor are not needed, unless specific
@@ -49,6 +48,8 @@ It is also possible to \ref doc_script_class_ops "overload operators" for the cl
     int a;
   }
 </pre>
+
+\section doc_script_class_inheritance Inheritance and polymorphism
 
 AngelScript supports single inheritance, where a derived class inherits the 
 properties and methods of its base class. Multiple inheritance is not supported,
@@ -97,7 +98,47 @@ on the destructor being called at a specific moment. AngelScript will also
 call the destructor only once, even if the object is resurrected by adding a
 reference to it while executing the destructor.
 
+\section doc_script_class_private Private class members
 
+Class members can be declared as private if you wish do not intend for them to be accessed 
+from outside the public class methods. This can be useful in large programs where you to 
+avoid programmer errors where properties or methods are inappropriately used.
+
+<pre>
+  // A class with private members
+  class MyPrivate
+  {
+    // The following are public members
+    void PublicFunc()
+    {
+      // The class can access its own private members
+      PrivateProp = 0; // OK
+      PrivateFunc();   // OK
+    }    
+ 
+    int PublicProp;
+
+    // The following are private members
+    private void PrivateFunc()
+    {
+    } 
+
+    private int PrivateProp;
+  }
+
+  void GlobalFunc()
+  {
+    MyPrivate obj;
+
+    // Public members can be accessed normally
+    obj.PublicProp = 0;  // OK
+    obj.PublicFunc();    // OK
+
+    // Accessing private members will give a compiler error
+    obj.PrivateProp = 0; // Error
+    obj.PrivateFunc();   // Error
+  }
+</pre>
 
 
 
