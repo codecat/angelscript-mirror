@@ -345,6 +345,14 @@ bool Test()
 	// REF+SCOPED
 	if( !fail ) fail = TestRefScoped();
 
+	// Registering a global function as const shouldn't be allowed
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		r = engine->RegisterGlobalFunction("void func() const", asFUNCTION(0), asCALL_GENERIC);
+		if( r >= 0 )
+			fail = true;
+		engine->Release();
+	}
 
 	// TODO:
 	// What about asOBJ_NOHANDLE and asEP_ALLOW_UNSAFE_REFERENCES? Should it allow &inout?

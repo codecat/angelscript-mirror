@@ -800,7 +800,11 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 	// Set the read-only flag if const is declared after parameter list
 	if( node->lastChild->nodeType == snUndefined && node->lastChild->tokenType == ttConst )
+	{
+		if( objType == 0 )
+			return asINVALID_DECLARATION;
 		func->isReadOnly = true;
+	}
 	else
 		func->isReadOnly = false;
 

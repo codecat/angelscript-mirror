@@ -930,13 +930,14 @@ int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl
 	asCBuilder bld(this, mod);
 
 	asCScriptFunction func(this, mod, -1);
-	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
-	if( r < 0 )
-		return asINVALID_DECLARATION;
 
 	// Set the object type so that the signature can be properly compared
 	// This cast is OK, it will only be used for comparison
 	func.objectType = const_cast<asCObjectType*>(ot);
+
+	int r = bld.ParseFunctionDeclaration(func.objectType, decl, &func, false);
+	if( r < 0 )
+		return asINVALID_DECLARATION;
 
 	// Search script functions for matching interface
 	int id = -1;
