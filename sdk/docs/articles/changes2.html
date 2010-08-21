@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.19.2 WIP - 2010/08/20</h2>
+<h2>Version 2.19.2 WIP - 2010/08/21</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Added explaining messages to callback when failing to initialize a global variable after a compilation
 <li>Improved validation during loading bytecode to avoid crashes on invalid files 
+<li>Improved the way class methods with virtual inheritance on MSVC 32bit is registered, so that this is now properly detected and gives an error (Thanks vroad)
 </ul>
 <li>Script language
 <ul>

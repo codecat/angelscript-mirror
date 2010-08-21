@@ -1002,26 +1002,8 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 	template <class M>
 	static asSFuncPtr Convert(M Mthd)
 	{
-		// This is where a class with virtual inheritance falls, or
-		// on 64bit platforms with 8byte data alignments.
-
-		// Method pointers for virtual inheritance is not supported,
-		// as it requires the location of the vbase table, which is 
-		// only available to the C++ compiler, but not in the method
-		// pointer. 
-
-		// You can get around this by forward declaring the class and
-		// storing the sizeof its method pointer in a constant. Example:
-
-		// class ClassWithVirtualInheritance;
-		// const int ClassWithVirtualInheritance_workaround = sizeof(void ClassWithVirtualInheritance::*());
-
-		// This will force the compiler to use the unknown type
-		// for the class, which falls under the next case
-
-		// TODO: We need to try to identify if this is really a method pointer
-		//       with virtual inheritance, or just a method pointer for multiple 
-		//       inheritance with pad bytes to produce a 16byte structure.
+		// On 32bit platforms with is where a class with virtual inheritance falls.
+		// On 64bit platforms we can also fall here if 8byte data alignments is used.
 
 		asSFuncPtr p;
 		asMemClear(&p, sizeof(p));
@@ -1030,6 +1012,32 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 
 		// Mark this as a class method
 		p.flag = 3;
+
+		// Microsoft has a terrible optimization on class methods with virtual inheritance.
+		// They are hardcoding an important offset, which is not coming in the method pointer.
+#ifdef _MSC_VER
+		if( sizeof(void*) == 4 )
+		{
+			// Method pointers for virtual inheritance is not supported,
+			// as it requires the location of the vbase table, which is 
+			// only available to the C++ compiler, but not in the method
+			// pointer. 
+
+			// You can get around this by forward declaring the class and
+			// storing the sizeof its method pointer in a constant. Example:
+
+			// class ClassWithVirtualInheritance;
+			// const int ClassWithVirtualInheritance_workaround = sizeof(void ClassWithVirtualInheritance::*());
+
+			// This will force the compiler to use the unknown type
+			// for the class, which falls under the next case
+
+
+			// Copy the virtual table index to the 4th dword so that AngelScript
+			// can properly detect and deny the use of methods with virtual inheritance.
+			*(((asDWORD*)&p)+3) = *(((asDWORD*)&p)+2);
+		}
+#endif
 
 		return p;
 	}
