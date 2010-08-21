@@ -268,7 +268,8 @@ bool Test()
 	{
 		fail = true;
 	}
-	if( bout.buffer != "ExecuteString (1, 10) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n" )
+	if( bout.buffer != "ExecuteString (1, 10) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
+		               "ExecuteString (1, 10) : Info    : int& Object::GetRef()\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

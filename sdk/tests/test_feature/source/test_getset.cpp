@@ -552,7 +552,8 @@ bool Test()
 	r = ExecuteString(engine, "Test t; t.s.resize(4);", mod);
 	if( r < 0 )
 		fail = true;
-	if( bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n" )
+	if( bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
+		               "ExecuteString (1, 13) : Info    : void string::resize(uint)\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
@@ -609,7 +610,8 @@ bool Test()
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "script (5, 1) : Info    : Compiling void func()\n"
-	                   "script (8, 14) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n" )
+	                   "script (8, 14) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
+					   "script (8, 14) : Info    : int& _builtin_array_::opIndex(uint)\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

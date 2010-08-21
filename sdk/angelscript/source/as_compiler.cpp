@@ -3003,6 +3003,17 @@ void asCCompiler::Warning(const char *msg, asCScriptNode *node)
 	builder->WriteWarning(script->name.AddressOf(), msg, r, c);
 }
 
+void asCCompiler::Information(const char *msg, asCScriptNode *node)
+{
+	asCString str;
+
+	int r = 0, c = 0;
+	asASSERT( node );
+	if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+	builder->WriteInfo(script->name.AddressOf(), msg, r, c, false);
+}
+
 void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 {
 	int r = 0, c = 0;
@@ -8502,6 +8513,7 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 			!engine->scriptFunctions[funcId]->isReadOnly )
 		{
 			Warning(TXT_CALLING_NONCONST_METHOD_ON_TEMP, node);
+			Information(engine->scriptFunctions[funcId]->GetDeclaration(), node);
 		}
 	}
 
