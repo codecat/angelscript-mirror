@@ -643,6 +643,7 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
 		}
+		// TODO: optimize: PshV8 0, ADDSi, PopRPtr -> LoadThisR
 		// PshV4 0, ADDSi, PopRPtr -> LoadThisR
 		else if( IsCombination(curr, asBC_PshV4, asBC_ADDSi) &&
 		         IsCombination(instr, asBC_ADDSi, asBC_PopRPtr) &&
@@ -651,12 +652,26 @@ int asCByteCode::Optimize()
 			DeleteInstruction(curr);
 			instr = GoBack(ChangeFirstDeleteNext(instr, asBC_LoadThisR));
 		}
+		// TODO: optimize: PSF x, RDS4 -> PshV8
 		// PSF x, RDS4 -> PshV4 x
 		else if( IsCombination(curr, asBC_PSF, asBC_RDS4) )
 			instr = GoBack(ChangeFirstDeleteNext(curr, asBC_PshV4));
 		// RDS4, POP x -> POP x
-		else if( IsCombination(curr, asBC_RDS4, asBC_POP) && instr->wArg[0] > 0 ) 
-			instr = GoBack(DeleteInstruction(curr));
+		else if( IsCombination(curr, asBC_RDS4, asBC_POP) && instr->wArg[0] >= 1 ) 
+		{
+			DeleteInstruction(curr);
+			// Transform the pop to remove the address instead of the 4 byte word
+			instr->wArg[0] -= 1-AS_PTR_SIZE; 
+			instr = GoBack(instr);
+		}
+		// RDS8, POP 2 -> POP x-1
+		else if( IsCombination(curr, asBC_RDS8, asBC_POP) && instr->wArg[0] >= 2 )
+		{
+			DeleteInstruction(curr);
+			// Transform the pop to remove the address instead of the 8 byte word
+			instr->wArg[0] -= 2-AS_PTR_SIZE; 
+			instr = GoBack(instr);
+		}
 		// LDG x, WRTV4 y -> CpyVtoG4 y, x
 		else if( IsCombination(curr, asBC_LDG, asBC_WRTV4) && !IsTempRegUsed(instr) )
 		{
@@ -793,13 +808,6 @@ int asCByteCode::Optimize()
 			instr->wArg[0] -= AS_PTR_SIZE;
 			instr = GoBack(instr);
 		}
-		// RDS8, POP 2 -> POP x-1
-		else if( IsCombination(curr, asBC_RDS8, asBC_POP) && instr->wArg[0] > 1 )
-		{
-			DeleteInstruction(curr);
-			instr->wArg[0] -= 2-AS_PTR_SIZE; // Transform the pop to remove the address instead of the 8 byte word
-			instr = GoBack(instr);
-		}
 		// PshC8 y, POP x -> POP x-2
 		else if( IsCombination(curr, asBC_PshC8, asBC_POP) && instr->wArg[0] > 1 )
 		{
@@ -835,6 +843,7 @@ int asCByteCode::Optimize()
 		// JMP +0 -> remove
 		else if( IsCombination(curr, asBC_JMP, asBC_LABEL) && *(int*)&curr->arg == instr->wArg[0] )
 			instr = GoBack(DeleteInstruction(curr));
+		// TODO: optimize: PSF, ChkRefS, RDS8 -> PshV8, CHKREF
 		// PSF, ChkRefS, RDS4 -> PshV4, CHKREF
 		else if( IsCombination(curr, asBC_PSF, asBC_ChkRefS) &&
 		         IsCombination(instr, asBC_ChkRefS, asBC_RDS4) )
@@ -860,6 +869,7 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
 		}
+		// TODO: optimize: PshV8, CHKREF, POP -> ChkNullV
 		// PshV4, CHKREF, POP -> ChkNullV
 		else if( (IsCombination(curr, asBC_PshV4, asBC_CHKREF) &&
 		          IsCombination(instr, asBC_CHKREF, asBC_POP) &&

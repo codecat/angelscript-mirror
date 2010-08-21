@@ -2870,13 +2870,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			if( !expr.type.dataType.IsPrimitive() )
 			{
 				if( !expr.type.dataType.IsObjectHandle() && expr.type.dataType.IsReference() )
-				{
-#ifndef AS_64BIT_PTR 
-					expr.bc.Instr(asBC_RDS4);
-#else
-					expr.bc.Instr(asBC_RDS8);
-#endif
-				}
+					expr.bc.Instr(asBC_RDSPTR);
 
 				expr.bc.Instr(asBC_PopRPtr);
 			}
@@ -3547,11 +3541,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 
 				// Call the cast operator
 				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
-#ifdef AS_64BIT_PTR
-				ctx->bc.Instr(asBC_RDS8);
-#else
-				ctx->bc.Instr(asBC_RDS4);
-#endif
+				ctx->bc.Instr(asBC_RDSPTR);
 				ctx->type.dataType.MakeReference(false);
 
 				asCTypeInfo objType = ctx->type;
