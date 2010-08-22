@@ -10,6 +10,10 @@ Of course, it would be possible to duplicate the script modules, so that there i
 that would be impose a rather big overhead for the application. Script classes don't have that overhead, as all instances
 share the same module, and thus the same bytecode and function ids, etc. 
 
+
+
+
+
 \section doc_use_script_class_1 Instanciating the script class
 
 Before instanciating the script class you need to know which class to instanciate. Exactly how this is done 
@@ -55,6 +59,10 @@ obj->AddRef();
 The factory function is \ref doc_call_script_func "called as a regular global function" and returns a handle to 
 the newly instanciated class.
 
+
+
+
+
 \section doc_use_script_class_2 Calling a method on the script class
 
 Calling the methods of the script classes are similar to \ref doc_call_script_func "calling global functions" except
@@ -74,5 +82,53 @@ ctx->SetObject(obj);
 // Execute the call
 ctx->Execute();
 \endcode
+
+
+
+
+
+\section doc_use_script_class_3 Receiving script classes
+
+In order for the application to register a function that receives a script class it must first know the type. Of course,
+since the class is declared in the script it isn't possible to know the type before the script is compiled. Instead the 
+application can register an interface with the engine. The function can then be registered to receive a handle to that interface.
+
+\code
+// Register an interface
+engine->RegisterInterface("IMyObj");
+
+// You can also register methods with the interface if you wish to force the script class to implement them
+engine->RegisterInterfaceMethod("IMyObj", "void RequiredMethod()");
+
+// Register a function that receives a handle to the interface
+engine->RegisterGlobalFunction("void ReceiveMyObj(IMyObj @obj)", asFUNCTION(ReceiveMyObj), asCALL_CDECL);
+\endcode
+
+The function that receives the interface should be implemented to take a pointer to an \ref asIScriptObject. 
+
+\code
+asIScriptObject *gObj = 0;
+void ReceiveMyObj(asIScriptObject *obj)
+{
+  // Do something with the object
+  if( obj )
+  {
+    if( doStore )
+    {
+      // If the object is stored, we shouldn't release the handle
+      gObj = obj;
+    }
+    else
+    {
+      // If the object is not stored, we must release the handle before returning
+      obj->Release();
+    }
+  }
+}
+\endcode
+
+If you don't want to use interfaces like this, then you may want to look into the \ref doc_adv_var_type "variable argument type" or the generic container \ref doc_addon_any "any add-on", which are ways that can be used to receive values and objects of which the type is not known beforehand.
+
+
 
 */
