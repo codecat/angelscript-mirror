@@ -615,6 +615,13 @@
 		#define AS_BSD
 		#if defined(i386) && !defined(__LP64__)
 			#define AS_X86
+		#elif defined(__LP64__)
+		    #define AS_X64_GCC
+            #define HAS_128_BIT_PRIMITIVES
+            #define SPLIT_OBJS_BY_MEMBER_TYPES
+    
+            #undef STDCALL
+            #define STDCALL
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
