@@ -552,8 +552,12 @@ bool Test()
 	r = ExecuteString(engine, "Test t; t.s.resize(4);", mod);
 	if( r < 0 )
 		fail = true;
-	if( bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
-		               "ExecuteString (1, 13) : Info    : void string::resize(uint)\n" )
+	if( (sizeof(void*) == 4 &&
+		 bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
+		                "ExecuteString (1, 13) : Info    : void string::resize(uint)\n") ||
+		(sizeof(void*) == 8 &&
+		 bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
+		                "ExecuteString (1, 13) : Info    : void string::resize(uint64)\n") )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;

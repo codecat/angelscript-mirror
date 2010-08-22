@@ -643,19 +643,22 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
 		}
-		// TODO: optimize: PshV8 0, ADDSi, PopRPtr -> LoadThisR
 		// PshV4 0, ADDSi, PopRPtr -> LoadThisR
-		else if( IsCombination(curr, asBC_PshV4, asBC_ADDSi) &&
+		// PshV8 0, ADDSi, PopRPtr -> LoadThisR
+		else if( (IsCombination(curr, asBC_PshV4, asBC_ADDSi) ||
+			      IsCombination(curr, asBC_PshV8, asBC_ADDSi)) &&
 		         IsCombination(instr, asBC_ADDSi, asBC_PopRPtr) &&
 				 curr->wArg[0] == 0 )
 		{
 			DeleteInstruction(curr);
 			instr = GoBack(ChangeFirstDeleteNext(instr, asBC_LoadThisR));
 		}
-		// TODO: optimize: PSF x, RDS4 -> PshV8
 		// PSF x, RDS4 -> PshV4 x
 		else if( IsCombination(curr, asBC_PSF, asBC_RDS4) )
 			instr = GoBack(ChangeFirstDeleteNext(curr, asBC_PshV4));
+		// PSF x, RDS8 -> PshV8 x
+		else if( IsCombination(curr, asBC_PSF, asBC_RDS8) )
+			instr = GoBack(ChangeFirstDeleteNext(curr, asBC_PshV8));
 		// RDS4, POP x -> POP x
 		else if( IsCombination(curr, asBC_RDS4, asBC_POP) && instr->wArg[0] >= 1 ) 
 		{
@@ -790,9 +793,10 @@ int asCByteCode::Optimize()
 			InsertBefore(curr, instr);
 			instr = GoBack(instr);
 		}
-		// YYY y, POP x -> POP x-1
+		// PshV4 y, POP x -> POP x-1
+		// PshC4 y, POP x -> POP x-1
 		else if( (IsCombination(curr, asBC_PshV4, asBC_POP) ||
-		          IsCombination(curr, asBC_PshC4, asBC_POP)) && instr->wArg[0] > 0 )
+		          IsCombination(curr, asBC_PshC4, asBC_POP)) && instr->wArg[0] >= 1 )
 		{
 			DeleteInstruction(curr);
 			instr->wArg[0]--;
@@ -802,14 +806,16 @@ int asCByteCode::Optimize()
 		else if( (IsCombination(curr, asBC_PshRPtr, asBC_POP) ||
 			      IsCombination(curr, asBC_PSF    , asBC_POP) ||
 				  IsCombination(curr, asBC_VAR    , asBC_POP)) 
-				  && instr->wArg[0] > (AS_PTR_SIZE-1) )
+				  && instr->wArg[0] >= AS_PTR_SIZE )
 		{
 			DeleteInstruction(curr);
 			instr->wArg[0] -= AS_PTR_SIZE;
 			instr = GoBack(instr);
 		}
+		// PshV8 y, POP x -> POP x-2
 		// PshC8 y, POP x -> POP x-2
-		else if( IsCombination(curr, asBC_PshC8, asBC_POP) && instr->wArg[0] > 1 )
+		else if( (IsCombination(curr, asBC_PshV8, asBC_POP) ||
+			      IsCombination(curr, asBC_PshC8, asBC_POP)) && instr->wArg[0] >= 2 )
 		{
 			DeleteInstruction(curr);
 			instr->wArg[0] -= 2;
@@ -843,7 +849,6 @@ int asCByteCode::Optimize()
 		// JMP +0 -> remove
 		else if( IsCombination(curr, asBC_JMP, asBC_LABEL) && *(int*)&curr->arg == instr->wArg[0] )
 			instr = GoBack(DeleteInstruction(curr));
-		// TODO: optimize: PSF, ChkRefS, RDS8 -> PshV8, CHKREF
 		// PSF, ChkRefS, RDS4 -> PshV4, CHKREF
 		else if( IsCombination(curr, asBC_PSF, asBC_ChkRefS) &&
 		         IsCombination(instr, asBC_ChkRefS, asBC_RDS4) )
@@ -852,6 +857,18 @@ int asCByteCode::Optimize()
 
 			// TODO: Pointer size
 			curr->op = asBC_PshV4;
+			instr->op = asBC_CHKREF;
+			DeleteInstruction(instr->next);
+			instr = GoBack(curr);
+		}
+		// PSF, ChkRefS, RDS8 -> PshV8, CHKREF
+		else if( IsCombination(curr, asBC_PSF, asBC_ChkRefS) &&
+		         IsCombination(instr, asBC_ChkRefS, asBC_RDS8) )
+		{
+			asASSERT( AS_PTR_SIZE == 2 );
+
+			// TODO: Pointer size
+			curr->op = asBC_PshV8;
 			instr->op = asBC_CHKREF;
 			DeleteInstruction(instr->next);
 			instr = GoBack(curr);
@@ -869,13 +886,26 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
 		}
-		// TODO: optimize: PshV8, CHKREF, POP -> ChkNullV
 		// PshV4, CHKREF, POP -> ChkNullV
 		else if( (IsCombination(curr, asBC_PshV4, asBC_CHKREF) &&
 		          IsCombination(instr, asBC_CHKREF, asBC_POP) &&
-		          instr->next->wArg[0] > 0) )
+		          instr->next->wArg[0] >= 1) )
 		{
 			asASSERT( AS_PTR_SIZE == 1 );
+
+			// TODO: Pointer size
+			curr->op = asBC_ChkNullV;
+			curr->stackInc = 0;
+			DeleteInstruction(instr->next);
+			DeleteInstruction(instr);
+			instr = GoBack(curr);
+		}
+		// PshV8, CHKREF, POP -> ChkNullV
+		else if( (IsCombination(curr, asBC_PshV8, asBC_CHKREF) &&
+		          IsCombination(instr, asBC_CHKREF, asBC_POP) &&
+		          instr->next->wArg[0] >= 2) )
+		{
+			asASSERT( AS_PTR_SIZE == 2 );
 
 			// TODO: Pointer size
 			curr->op = asBC_ChkNullV;

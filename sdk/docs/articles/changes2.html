@@ -37,6 +37,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>A get accessor can now return a handle, while the set accessor takes a value or reference. This allow the property to behave as a value property, even though a new object is created each time it's value is taken.
 <li>Class methods can now be declared as private
 </ul>
+<li>Virtual machine
+<ul>
+<li>Added PshV8 for improved bytecode optimizations on 64bit platforms
+</ul>
 <li>Add-ons
 <ul>
 <li>Made the addref/release methods on the add-ons const, so they can be used on const pointers as well

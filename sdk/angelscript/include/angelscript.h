@@ -1293,8 +1293,9 @@ enum asEBCInstr
 	asBC_CallPtr        = 176,
 	asBC_FuncPtr        = 177,
 	asBC_LoadThisR      = 178,
+	asBC_PshV8          = 179,
 
-	asBC_MAXBYTECODE	= 179,
+	asBC_MAXBYTECODE	= 180,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_PSP			= 253,
@@ -1563,8 +1564,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(CallPtr,   rW_ARG,         0xFFFF),
 	asBCINFO(FuncPtr,   PTR_ARG,        AS_PTR_SIZE),
 	asBCINFO(LoadThisR, W_DW_ARG,       0),
+	asBCINFO(PshV8,		rW_ARG,			2),
 
-	asBCINFO_DUMMY(179),
 	asBCINFO_DUMMY(180),
 	asBCINFO_DUMMY(181),
 	asBCINFO_DUMMY(182),

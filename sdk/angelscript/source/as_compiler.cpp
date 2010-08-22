@@ -7785,7 +7785,6 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 					// Reference to primitive must be stored in the temp register
 					if( prop->type.IsPrimitive() )
 					{
-						// TODO: optimize: The ADD offset command should store the reference in the register directly
 						ctx->bc.Instr(asBC_PopRPtr);
 					}
 
@@ -8693,8 +8692,11 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 		offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
 		if( ctx->type.IsNullConstant() )
 		{
-			// TODO: Adapt pointer size
+#ifdef AS_64BIT_PTR
+			ctx->bc.InstrSHORT_QW(asBC_SetV8, (short)offset, 0);
+#else
 			ctx->bc.InstrSHORT_DW(asBC_SetV4, (short)offset, 0);
+#endif
 		}
 		else
 		{
