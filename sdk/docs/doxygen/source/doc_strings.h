@@ -14,7 +14,7 @@ doc_addon_string "reference counted string type".
 
 \section doc_strings_1 Unicode vs ASCII
 
-Is you're application using Unicode or plain ASCII for the text? If you use Unicode, then you'll want to encode the scripts
+Is your application using Unicode or plain ASCII for the text? If you use Unicode, then you'll want to encode the scripts
 in UTF-8, which the AngelScript compiler supports natively. By default AngelScript expects the scripts to have been encoded 
 in UTF-8, but should you prefer ASCII you can turn this off by setting the engine property \ref asEP_SCRIPT_SCANNER to 0 right
 after creating the engine.

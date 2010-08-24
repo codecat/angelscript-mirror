@@ -356,8 +356,8 @@ Refer to the <code>std::string</code> implementation for your compiler.
     string  opAdd(const string &in right) const;
     
     // Access individual characters
-    // uint8 &operator [] (uint)
-    // const uint8 &operator [] (uint) const
+    uint8       &opIndex(uint);
+    const uint8 &opIndex(uint) const;
     
     // Comparison operators
     bool opEquals(const string &in right) const;
@@ -451,8 +451,8 @@ public:
     string \@opAdd(const string &in right) const;
     
     // Access individual characters
-    // uint8 &operator [] (uint)
-    // const uint8 &operator [] (uint) const
+    uint8       &opIndex(uint);
+    const uint8 &opIndex(uint) const;
     
     // Comparison operators
     bool opEquals(const string &in right) const;

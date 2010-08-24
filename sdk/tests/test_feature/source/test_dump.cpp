@@ -322,8 +322,6 @@ void DumpModule(asIScriptModule *mod)
 		"reg type: val string group: <null>\n"
 		" beh(1) void _beh_1_()\n"
 		" beh(0) void _beh_0_()\n"
-		" beh(10) uint8& _beh_10_(uint)\n"
-		" beh(10) const uint8& _beh_10_(uint) const\n"
 		" string& opAssign(const string&in)\n"
 		" string& opAddAssign(const string&in)\n"
 		" bool opEquals(const string&in) const\n"
@@ -336,6 +334,8 @@ void DumpModule(asIScriptModule *mod)
 		" uint length() const\n"
 		" void resize(uint)\n"
 #endif
+		" uint8& opIndex(uint)\n"
+		" const uint8& opIndex(uint) const\n"
 		" string& opAssign(double)\n"
 		" string& opAddAssign(double)\n"
 		" string opAdd(double) const\n"

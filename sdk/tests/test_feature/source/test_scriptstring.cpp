@@ -156,6 +156,7 @@ bool Test()
 {
 	bool fail = false;
 	COutStream out;
+	CBufferedOutStream bout;
 	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
 	int r;
@@ -181,10 +182,19 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
 
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	bout.buffer = "";
 	r = ExecuteString(engine, "assert(string('abc')[0] == 97)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
+	if( bout.buffer != "ExecuteString (1, 21) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
+	                   "ExecuteString (1, 21) : Info    : uint8& string::opIndex(uint)\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		fail = true;
+	}
 
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = ExecuteString(engine, "string a = 'abc'; assert(a[0] == 97)");
 	if( r != asEXECUTION_FINISHED )
 		fail = true;
@@ -318,8 +328,8 @@ bool Test()
 	r = ExecuteString(engine, "print(\"\" + '\xFF')");
 	if( r != asEXECUTION_FINISHED ) fail = true;
 
-	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	bout.buffer = "";
 	r = ExecuteString(engine, "print(\"\" + '')");
 	if( r != -1 ) fail = true;
 	r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false); assert( r >= 0 );
