@@ -1619,7 +1619,7 @@ void asCByteCode::PostProcess()
 }
 
 #ifdef AS_DEBUG
-void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine)
+void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScriptFunction *func)
 {
 	_mkdir("AS_DEBUG");
 
@@ -1639,12 +1639,59 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine)
 		return;
 #endif
 
+	asUINT n;
+
+	fprintf(file, "%s\n\n", func->GetDeclaration());
+
 	fprintf(file, "Temps: ");
-	for( asUINT n = 0; n < temporaryVariables.GetLength(); n++ )
+	for( n = 0; n < temporaryVariables.GetLength(); n++ )
 	{
 		fprintf(file, "%d", temporaryVariables[n]);
 		if( n < temporaryVariables.GetLength()-1 )
 			fprintf(file, ", ");
+	}
+	fprintf(file, "\n\n");
+
+	fprintf(file, "Variables: \n");
+	for( n = 0; n < func->variables.GetLength(); n++ )
+	{
+		fprintf(file, " %.3d: %s %s\n", func->variables[n]->stackOffset, func->variables[n]->type.Format().AddressOf(), func->variables[n]->name.AddressOf());
+	}
+	asUINT offset = 0;
+	if( func->objectType )
+	{
+		fprintf(file, " %.3d: %s this\n", 0, func->objectType->name.AddressOf());
+		offset += AS_PTR_SIZE;
+	}
+	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
+	{
+		bool found = false;
+		for( asUINT v = 0; v < func->variables.GetLength(); v++ )
+		{
+			if( func->variables[v]->stackOffset == offset )
+			{
+				found = true;
+				break;
+			}
+		}
+		if( !found )
+			fprintf(file, " %.3d: %s {noname param}\n", offset, func->parameterTypes[n].Format().AddressOf());
+
+		offset += func->parameterTypes[n].GetSizeOnStackDWords();
+	}
+	for( n = 0; n < func->objVariablePos.GetLength(); n++ )
+	{
+		bool found = false;
+		for( asUINT v = 0; v < func->variables.GetLength(); v++ )
+		{
+			if( func->variables[v]->stackOffset == func->objVariablePos[n] )
+			{
+				found = true;
+				break;
+			}
+		}
+		if( !found )
+			fprintf(file, " %.3d: %s {noname}\n", func->objVariablePos[n], func->objVariableTypes[n]->name.AddressOf());
 	}
 	fprintf(file, "\n\n");
 
