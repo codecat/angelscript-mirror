@@ -136,6 +136,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_ANDROID
 		"AS_ANDROID "
 #endif
+#ifdef AS_HAIKU
+		"AS_HAIKU "
+#endif
 
 	// CPU family
 #ifdef AS_PPC
