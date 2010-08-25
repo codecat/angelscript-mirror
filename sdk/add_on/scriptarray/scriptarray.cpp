@@ -548,20 +548,8 @@ void CScriptArray::EnumReferences(asIScriptEngine *engine)
 // GC behaviour
 void CScriptArray::ReleaseAllHandles(asIScriptEngine *engine)
 {
-	int subTypeId = objType->GetSubTypeId();
-	asIObjectType *subType = engine->GetObjectTypeById(subTypeId);
-	if( subType && subType->GetFlags() & asOBJ_GC )
-	{
-		void **d = (void**)buffer->data;
-		for( asUINT n = 0; n < buffer->numElements; n++ )
-		{
-			if( d[n] )
-			{
-				engine->ReleaseScriptObject(d[n], subTypeId);
-				d[n] = 0;
-			}
-		}
-	}
+	// Resizing to zero will release everything
+	Resize(0);
 }
 
 void CScriptArray::AddRef() const

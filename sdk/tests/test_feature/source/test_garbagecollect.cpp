@@ -75,6 +75,49 @@ bool Test()
     ctx->Release();
     engine->Release();
 
+	// Test 
+	{	
+		COutStream out;
+		int r;
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, 
+			"interface ITest\n"
+			"{\n"
+			"}\n"
+			"class Test : ITest\n"
+			"{\n"
+			"	ITest@[] arr;\n"
+			"	void Set(ITest@ e)\n"
+			"	{\n"
+			"		arr.resize(1);\n"
+			"		@arr[0]=e;\n"
+			"	}\n"
+			"}\n"
+			"void main()\n"
+			"{\n"
+			"	Test@ t=Test();\n"
+			"	t.Set(t);\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		asUINT currentSize;
+		engine->GetGCStatistics(&currentSize);
+		
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->GetGCStatistics(&currentSize);
+
+		engine->Release();
+	}
+
 	return fail;
 }
 
