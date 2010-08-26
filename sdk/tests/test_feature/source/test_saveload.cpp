@@ -810,6 +810,56 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test loading and executing bytecode
+	{
+		const char *script = 
+			"interface ITest\n"
+			"{\n"
+			"}\n"
+			"class Test : ITest\n"
+			"{\n"
+			"	ITest@[] arr;\n"
+			"	void Set(ITest@ e)\n"
+			"	{\n"
+			"		arr.resize(1);\n"
+			"		@arr[0]=e;\n"
+			"	}\n"
+			"}\n"
+			"void main()\n"
+			"{\n"
+			"	Test@ t=Test();\n"
+			"	t.Set(t);\n"
+			"}\n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			fail = true;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

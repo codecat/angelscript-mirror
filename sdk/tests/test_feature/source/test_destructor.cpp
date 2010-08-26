@@ -112,6 +112,7 @@ bool Test()
 	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 		fail = true;
+	engine->GarbageCollect();
 	if( count != 2 )
 		fail = true;
 

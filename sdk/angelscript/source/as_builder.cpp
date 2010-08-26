@@ -1834,34 +1834,6 @@ void asCBuilder::CompileClasses()
 
 					ot->flags |= asOBJ_GC;
 				}
-
-				// TODO: array: The template type should define if the instanciation can form circles or not
-				if( dt.IsArrayType() )
-				{
-					asCDataType sub = dt.GetSubType();
-					while( sub.IsObject() )
-					{
-						if( sub.IsObjectHandle() || (sub.GetObjectType()->flags & asOBJ_GC) )
-						{
-							decl->objType->flags |= asOBJ_GC;
-
-							// Make sure the array object is also marked as potential circle
-							sub = dt;
-							while( sub.IsTemplate() )
-							{
-								sub.GetObjectType()->flags |= asOBJ_GC;
-								sub = sub.GetSubType();
-							}
-
-							break;
-						}
-
-						if( sub.IsTemplate() )
-							sub = sub.GetSubType();
-						else
-							break;
-					}
-				}
 			}
 		}
 	}

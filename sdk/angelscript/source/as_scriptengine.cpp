@@ -2721,11 +2721,9 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Increase ref counter for sub type if it is an object type
 	if( ot->templateSubType.GetObjectType() ) ot->templateSubType.GetObjectType()->AddRef();
 
-	// Verify if the subtype contains a garbage collected object, in which case this template is a potential circular reference
-	// TODO: We may be a bit smarter here. If we can guarantee that the array type cannot be part of the
-	//       potential circular reference then we don't need to set the flag
-
-	if( ot->templateSubType.GetObjectType() && (ot->templateSubType.GetObjectType()->flags & asOBJ_GC) )
+	// Verify if the subtype contains a garbage collected object, in which case this template is a potential circular reference.
+	// A handle can potentially hold derived types, which may be garbage collected so to be safe we have to set the GC flag.
+	if( ot->templateSubType.IsObjectHandle() || (ot->templateSubType.GetObjectType() && (ot->templateSubType.GetObjectType()->flags & asOBJ_GC)) )
 		ot->flags |= asOBJ_GC;
 	else if( ot->name == defaultArrayObjectType->name )
 		ot->flags &= ~asOBJ_GC;
