@@ -230,7 +230,7 @@ int asCRestore::Restore()
 		ReadObjectTypeDeclaration(ot, 2);
 	}
 
-	// structTypes[]
+	// classTypes[]
 	// First restore the structure names, then the properties
 	count = ReadEncodedUInt();
 	module->classTypes.Allocate(count, 0);
@@ -263,7 +263,27 @@ int asCRestore::Restore()
 			ReadObjectTypeDeclaration(module->classTypes[i], 2);
 	}
 
-	module->ResolveInterfaceIds();
+	asCArray<void*> substitutions;
+	module->ResolveInterfaceIds(&substitutions);
+
+	// The above method may have replaced the interface object types
+	// so we must updated this in the savedDataTypes if it is there.
+	// All the interface methods were also substituted so the 
+	// savedFunctions must also be updated
+	for( i = 0; i < substitutions.GetLength(); i += 2 )
+	{
+		for( asUINT d = 0; d < savedDataTypes.GetLength(); d++ )
+		{
+			if( savedDataTypes[d].GetObjectType() == substitutions[i] )
+				savedDataTypes[d].SetObjectType(reinterpret_cast<asCObjectType*>(substitutions[i+1]));
+		}
+
+		for( asUINT f = 0; f < savedFunctions.GetLength(); f++ )
+		{
+			if( savedFunctions[f] == substitutions[i] )
+				savedFunctions[f] = reinterpret_cast<asCScriptFunction*>(substitutions[i+1]);
+		}
+	}
 
 	// Read class methods and behaviours
 	for( i = 0; i < module->classTypes.GetLength(); ++i )
@@ -364,13 +384,16 @@ int asCRestore::Restore()
 	engine->PrepareEngine();
 
 	// Add references for all functions
-	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
-		module->scriptFunctions[i]->AddReferences();
-	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
-		if( module->scriptGlobals[i]->GetInitFunc() )
-			module->scriptGlobals[i]->GetInitFunc()->AddReferences();
+	if( !error )
+	{
+		for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
+			module->scriptFunctions[i]->AddReferences();
+		for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
+			if( module->scriptGlobals[i]->GetInitFunc() )
+				module->scriptGlobals[i]->GetInitFunc()->AddReferences();
 
-	module->CallInit();
+		module->CallInit();
+	}
 
 	return error ? asERROR : asSUCCESS;
 }
@@ -711,6 +734,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		// name
 		WriteString(&ot->name);
 		// size
+		// TODO: size may need to be adjusted if platform changes (pointer size, alignment, etc)
 		WriteEncodedUInt(ot->size);
 		// flags
 		asDWORD flags = ot->flags;
@@ -1148,6 +1172,7 @@ void asCRestore::WriteObjectProperty(asCObjectProperty* prop)
 {
 	WriteString(&prop->name);
 	WriteDataType(&prop->type);
+	// TODO: offset may need to be adjusted on different platforms (alignment, pointer size, etc)
 	WriteEncodedUInt(prop->byteOffset);
 	WRITE_NUM(prop->isPrivate);
 }

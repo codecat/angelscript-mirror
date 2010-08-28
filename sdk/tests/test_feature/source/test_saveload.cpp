@@ -860,6 +860,54 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test two modules with same interface
+	{
+		CBytecodeStream stream(__FILE__"1");
+
+		const char *script = 
+			"interface ITest \n"
+			"{ \n"
+			"  ITest@ test(); \n"
+			"} \n"
+			"class CTest : ITest \n"
+			"{ \n"
+			"  ITest@ test() \n"
+			"  { \n"
+			"    return this; \n"
+			"  } \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+
+		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			fail = true;
+
+		stream.Restart();
+		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
