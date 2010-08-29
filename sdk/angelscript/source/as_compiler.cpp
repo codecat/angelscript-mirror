@@ -8795,6 +8795,12 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	asCArray<int> reservedVars;
 	rctx->bc.GetVarsUsed(reservedVars);
 	lctx->bc.GetVarsUsed(reservedVars);
+
+	if( lctx->type.dataType.IsReference() )
+		ConvertToVariableNotIn(lctx, &reservedVars);
+	if( rctx->type.dataType.IsReference() )
+		ConvertToVariableNotIn(rctx, &reservedVars);
+
 	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
 	ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
 
@@ -9390,6 +9396,12 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	// Do the actual conversion
 	asCArray<int> reservedVars;
 	rctx->bc.GetVarsUsed(reservedVars);
+
+	if( lctx->type.dataType.IsReference() )
+		ConvertToVariableNotIn(lctx, &reservedVars);
+	if( rctx->type.dataType.IsReference() )
+		ConvertToVariableNotIn(rctx, &reservedVars);
+
 	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
 	ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV);
 

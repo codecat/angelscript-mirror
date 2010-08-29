@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.19.2 WIP - 2010/08/27</h2>
+<h2>Version 2.19.2 WIP - 2010/08/29</h2>
 
 <ul>
 <li>Bug fixes
@@ -26,6 +26,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in built-in array object that prevented the GC from breaking circular references (Thanks cvet)
 <li>Fixed bug in restoring bytecode that didn't properly detect when arrays needed to be garbage collected (Thanks cvet)
 <li>Restoring bytecode to multiple modules with shared interfaces no longer crashes the application (Thanks TheAtom)
+<li>Fixed bug with comparison of primitive returned by reference from property accessor (Thanks mk1x86)
 </ul>
 <li>Library
 <ul>
