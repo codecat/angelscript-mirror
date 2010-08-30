@@ -1,0 +1,4 @@
+objtype string 0 1 // REF
+objbeh  string 4 "void f()" // ADDREF
+objbeh  string 5 "void f()" // RELEASE
+objmthd string "uint length()"
