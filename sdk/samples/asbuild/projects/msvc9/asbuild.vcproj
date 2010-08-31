@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="../../../../angelscript/lib/angelscriptd.lib"
-				OutputFile="..\bin\$(ProjectName).exe"
+				OutputFile="..\..\bin\$(ProjectName).exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -137,7 +137,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="../../../../angelscript/lib/angelscript.lib"
-				OutputFile="..\bin\$(ProjectName).exe"
+				OutputFile="..\..\bin\$(ProjectName).exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"

@@ -1,4 +1,24 @@
-objtype string 0 1 // REF
-objbeh  string 4 "void f()" // ADDREF
-objbeh  string 5 "void f()" // RELEASE
-objmthd string "uint length()"
+// Register the string type
+objtype string 1               // REF
+objbeh  string 2 "string @f()" // FACTORY
+objbeh  string 4 "void f()"    // ADDREF
+objbeh  string 5 "void f()"    // RELEASE
+objmthd string "uint get_length()"
+objmthd string "string &opAssign(const string &in)"
+
+// Register the string factory
+strfactory "string@"
+
+// Register global functions
+func "void Print(const string &in)"
+
+// Register the vec3d type
+objtype vec3d 10               // VALUE + POD
+objprop vec3d "float x"
+objprop vec3d "float y"
+objprop vec3d "float z"
+
+// Register an interface
+intf     IController
+intfmthd IController "string @get_debugName() const"
+

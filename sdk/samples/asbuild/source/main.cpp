@@ -15,7 +15,8 @@ using namespace std;
 
 // Function prototypes
 int ConfigureEngine(asIScriptEngine *engine, const char *configFile);
-int CompileScript(asIScriptEngine *engine, const char *scriptFile, const char *outputFile);
+int CompileScript(asIScriptEngine *engine, const char *scriptFile);
+int SaveBytecode(asIScriptEngine *engine, const char *outputFile);
 static const char *GetCurrentDir(char *buf, size_t size);
 asETokenClass GetToken(asIScriptEngine *engine, string &token, const string &text, asUINT &pos);
 asUINT GetLineNumber(const string &text, asUINT pos);
@@ -62,7 +63,11 @@ int main(int argc, char **argv)
 	if( r < 0 ) return -1;
 	
 	// Compile the script code
-	r = CompileScript(engine, argv[2], argv[3]);
+	r = CompileScript(engine, argv[2]);
+	if( r < 0 ) return -1;
+
+	// Save the bytecode
+	r = SaveBytecode(engine, argv[3]);
 	if( r < 0 ) return -1;
 
 	// Release the engine
@@ -131,12 +136,13 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 		GetToken(engine, token, config, pos);
 		if( token == "objtype" )
 		{
-			string name, size, flags;
+			string name, flags;
 			GetToken(engine, name, config, pos);
-			GetToken(engine, size, config, pos);
 			GetToken(engine, flags, config, pos);
 
-			r = engine->RegisterObjectType(name.c_str(), atol(size.c_str()), atol(flags.c_str()));
+			// The size of the value type doesn't matter, because the 
+			// engine must adjust it anyway for different platforms
+			r = engine->RegisterObjectType(name.c_str(), (atol(flags.c_str()) & asOBJ_VALUE) ? 1 : 0, atol(flags.c_str()));
 			if( r < 0 )
 			{
 				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register object type");
@@ -195,6 +201,32 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 				return -1;
 			}
 		}
+		else if( token == "intf" )
+		{
+			string name, size, flags;
+			GetToken(engine, name, config, pos);
+
+			r = engine->RegisterInterface(name.c_str());
+			if( r < 0 )
+			{
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register interface");
+				return -1;
+			}
+		}
+		else if( token == "intfmthd" )
+		{
+			string name, decl;
+			GetToken(engine, name, config, pos);
+			GetToken(engine, decl, config, pos);
+			decl = decl.substr(1, decl.length() - 2);
+
+			r = engine->RegisterInterfaceMethod(name.c_str(), decl.c_str());
+			if( r < 0 )
+			{
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register interface method");
+				return -1;
+			}
+		}
 		else if( token == "func" )
 		{
 			string decl;
@@ -205,6 +237,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			if( r < 0 )
 			{
 				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register global function");
+				return -1;
 			}
 		}
 		else if( token == "prop" )
@@ -217,6 +250,20 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			if( r < 0 )
 			{
 				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register global property");
+				return -1;
+			}
+		}
+		else if( token == "strfactory" )
+		{
+			string type;
+			GetToken(engine, type, config, pos);
+			type = type.substr(1, type.length() - 2);
+
+			r = engine->RegisterStringFactory(type.c_str(), asFUNCTION(0), asCALL_GENERIC);
+			if( r < 0 )
+			{
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register string factory");
+				return -1;
 			}
 		}
 	}
@@ -253,7 +300,7 @@ asUINT GetLineNumber(const string &text, asUINT pos)
 	return count;
 }
 
-int CompileScript(asIScriptEngine *engine, const char *scriptFile, const char *outputFile)
+int CompileScript(asIScriptEngine *engine, const char *scriptFile)
 {
 	int r;
 
@@ -265,9 +312,70 @@ int CompileScript(asIScriptEngine *engine, const char *scriptFile, const char *o
 	if( r < 0 ) return -1;
 
 	r = builder.BuildModule();
-	if( r < 0 ) return -1;
+	if( r < 0 )
+	{
+		engine->WriteMessage(scriptFile, 0, 0, asMSGTYPE_ERROR, "Script failed to build");
+		return -1;
+	}
 
-	// TODO: Save the bytecode to the outputFile
+	engine->WriteMessage(scriptFile, 0, 0, asMSGTYPE_INFORMATION, "Script successfully built");
+
+	return 0;
+}
+
+class CBytecodeStream : public asIBinaryStream
+{
+public:
+	CBytecodeStream() {f = 0;}
+	~CBytecodeStream() { if( f ) fclose(f); }
+
+	int Open(const char *filename)
+	{
+		if( f ) return -1;
+#if _MSC_VER >= 1500
+		fopen_s(&f, filename, "wb");
+#else
+		f = fopen(filename, "wb");
+#endif
+		if( f == 0 ) return -1;
+		return 0;
+	}
+	void Write(const void *ptr, asUINT size) 
+	{
+		if( size == 0 || f == 0 ) return; 
+		fwrite(ptr, size, 1, f); 
+	}
+	void Read(void *, asUINT ) {}
+
+protected:
+	FILE *f;
+};
+
+int SaveBytecode(asIScriptEngine *engine, const char *outputFile)
+{
+	CBytecodeStream stream;
+	int r = stream.Open(outputFile);
+	if( r < 0 )
+	{
+		engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
+		return -1;
+	}
+
+	asIScriptModule *mod = engine->GetModule("build");
+	if( mod == 0 )
+	{
+		engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
+		return -1;
+	}
+
+	r = mod->SaveByteCode(&stream);
+	if( r < 0 )
+	{
+		engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
+		return -1;
+	}
+
+	engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_INFORMATION, "Bytecode successfully saved");
 
 	return 0;
 }
