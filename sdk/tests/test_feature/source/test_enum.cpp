@@ -425,6 +425,40 @@ static bool TestEnum()
 
 	engine->Release();
 
+	{
+		COutStream out;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", "enum waveformType \n"
+										"{ \n"
+										"  sawtoothWave = 1, \n"
+										"  squareWave = 2, \n"
+										"  sineWave = 3 \n"
+										"} \n"
+										"void main() \n"
+										"{ \n"
+										"  tone_synth synth; \n"
+										"  synth.waveform_type = sineWave; \n"
+									//	"  assert( '' + sineWave + '' == '3' ); \n"
+										"  assert( synth.waveform_type == 3 ); \n"
+										"} \n"
+										"class tone_synth { void set_waveform_type(double v) {prop = v;} double get_waveform_type() {return prop;} double prop; }\n");
+
+		r = mod->Build();
+		if( r < 0 ) 
+			fail = true;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

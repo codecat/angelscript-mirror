@@ -3586,29 +3586,6 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 }
 
 
-// TODO: Re-think the implementation for implicit conversions
-//       It's currently inefficient and may at times generate unneeded copies of objects
-//       There are also too many different code paths to test, each working slightly differently
-//
-//       Reference and handle-of should be treated last
-//
-//       - The following conversion categories needs to be implemented in separate functions
-//         - primitive to primitive
-//         - primitive to value type
-//         - primitive to reference type
-//         - value type to value type
-//         - value type to primitive
-//         - value type to reference type
-//         - reference type to reference type
-//         - reference type to primitive
-//         - reference type to value type
-//
-//       Explicit conversion and implicit conversion should use the same functions, only with a flag to enable/disable conversions
-//
-//       If the conversion fails, the type in the asSExprContext must not be modified. This
-//       causes problems where the conversion is partially done and the compiler continues with
-//       another option.
-
 void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &toOrig, asCScriptNode *node, EImplicitConv convType, bool generateCode, asCArray<int> *reservedVars)
 {
 	asCDataType to = toOrig;
@@ -3618,6 +3595,9 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 	// Start by implicitly converting constant values
 	if( ctx->type.isConstant )
 		ImplicitConversionConstant(ctx, to, node, convType);
+
+	// A primitive is const or not
+	ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
 
 	if( to == ctx->type.dataType )
 		return;
@@ -4587,7 +4567,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				from->type.wordValue = short(from->type.intValue);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 		}
 	}
 	else if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 )
@@ -4754,7 +4734,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				from->type.wordValue = asWORD(from->type.dwordValue);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 		}
 	}
 	else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 )
@@ -4849,7 +4829,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(str.AddressOf(), node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.floatValue = fc;
 		}
 		else if( from->type.dataType.IsEnumType() )
@@ -4861,7 +4841,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.floatValue = fc;
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
@@ -4881,7 +4861,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.floatValue = fc;
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
@@ -4892,7 +4872,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.floatValue = fc;
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
@@ -4912,7 +4892,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.floatValue = fc;
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
@@ -4925,7 +4905,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.floatValue = fc;
 		}
 	}
@@ -4944,7 +4924,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		//		if( !isExplicit ) Warning(str, node);
 		//	}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.doubleValue = fc;
 		}
 		else if( from->type.dataType.IsEnumType() )
@@ -4956,7 +4936,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.doubleValue = fc;
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
@@ -4976,7 +4956,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.doubleValue = fc;
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
@@ -4988,7 +4968,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.doubleValue = fc;
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
@@ -5008,7 +4988,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.doubleValue = fc;
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
@@ -5021,7 +5001,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType.SetTokenType(to.GetTokenType());
+			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.doubleValue = fc;
 		}
 	}
