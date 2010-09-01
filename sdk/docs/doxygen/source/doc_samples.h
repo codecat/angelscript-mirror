@@ -11,6 +11,7 @@ This page gives a brief description of the samples that you'll find in the /sdk/
  - \subpage doc_samples_corout
  - \subpage doc_samples_events
  - \subpage doc_samples_incl
+ - \subpage doc_samples_asbuild
 
 
 
@@ -23,6 +24,7 @@ AngelScript, that is, how to configure the engine, load and compile a script,
 and finally execute a script function with parameters and return value.
 
 
+ - \ref asIScriptEngine::SetMessageCallback
  - LineCallback() function which aborts execution when the time is up
  - Strings
  - Registered global functions
@@ -119,6 +121,25 @@ complicated circular includes.
  - LineCallback() functions which aborts execution when the time is up
  - Processing the \#include directive
  - Circular \#includes are resolved automatically
+
+
+
+
+\page doc_samples_asbuild Generic bytecode compiler
+
+<b>Path:</b> /sdk/samples/asbuild/
+
+This sample shows how a generic bytecode compiler can be built to provide offline compilation of scripts.
+It takes as input a configuration file that defines the application interface, registers it using dummy
+functions and properties, then it compiles the script and saves the bytecode to a file on disk.
+
+ - \ref doc_adv_precompile 
+ - \ref doc_addon_build
+ - \ref asIScriptEngine::SetMessageCallback
+ - \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD
+ - \ref asIScriptEngine::ParseToken
+ - \ref asIScriptModule::SaveByteCode
+ - \ref asIBinaryStream
 
 
 

@@ -17,9 +17,11 @@ call the \ref asIScriptModule::LoadByteCode "LoadByteCode" method, passing it a 
 stream object. The script module will then pull all the bytecode and related data from that object with 
 the \ref asIBinaryStream::Read "Read" method to reconstruct the script module.
 
+\see \ref doc_samples_asbuild
+
 \section doc_adv_precompile_1 Things to remember
 
- - All the objects, methods, properties, etc used when compiling the bytecode must also be registered
+ - All the objects, methods, properties, etc, used when compiling the bytecode must also be registered
    when loading the precompiled bytecode, otherwise the load will fail when not finding the correct entity.
 
  - The script engine doesn't perform validation of the pre-compiled bytecode, so the application is
