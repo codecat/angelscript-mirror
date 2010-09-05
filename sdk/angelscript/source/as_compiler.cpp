@@ -8117,7 +8117,8 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 				if( !isMatchExceptConst )
 				{
 					// Is it a size promotion, e.g. int8 -> int?
-					if( argType->dataType.IsSamePrimitiveBaseType(ti.type.dataType) )
+					if( argType->dataType.IsSamePrimitiveBaseType(ti.type.dataType) || 
+						(argType->dataType.IsEnumType() && ti.type.dataType.IsIntegerType()) )
 					{
 						if( !isMatchWithBaseType ) matches.SetLength(0);
 
@@ -8133,7 +8134,8 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 
 						// Is it a match except for sign?
 						if( (argType->dataType.IsIntegerType() && ti.type.dataType.IsUnsignedType()) ||
-							(argType->dataType.IsUnsignedType() && ti.type.dataType.IsIntegerType()) )
+							(argType->dataType.IsUnsignedType() && ti.type.dataType.IsIntegerType()) ||
+							(argType->dataType.IsEnumType() && ti.type.dataType.IsUnsignedType()) )
 						{
 							if( !isMatchExceptSign ) matches.SetLength(0);
 

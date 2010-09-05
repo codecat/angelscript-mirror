@@ -443,7 +443,7 @@ static bool TestEnum()
 										"{ \n"
 										"  tone_synth synth; \n"
 										"  synth.waveform_type = sineWave; \n"
-									//	"  assert( '' + sineWave + '' == '3' ); \n"
+										"  assert( '' + sineWave + '' == '3' ); \n"
 										"  assert( synth.waveform_type == 3 ); \n"
 										"} \n"
 										"class tone_synth { void set_waveform_type(double v) {prop = v;} double get_waveform_type() {return prop;} double prop; }\n");
