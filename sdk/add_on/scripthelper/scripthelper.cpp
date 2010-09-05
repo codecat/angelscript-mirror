@@ -1,6 +1,7 @@
 #include <string.h>
 #include "scripthelper.h"
 #include <string>
+#include <assert.h>
 
 using namespace std;
 
@@ -156,6 +157,151 @@ int ExecuteString(asIScriptEngine *engine, const char *code, asIScriptModule *mo
 	if( !ctx ) execCtx->Release();
 
 	return r;
+}
+
+int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
+{
+	int c, n;
+
+	FILE *f = 0;
+#ifdef _MSC_VER
+	fopen_s(&f, filename, "wt");
+#else
+	f = fopen(filename, "wt");
+#endif
+	if( f == 0 )
+		return -1;
+
+	// Write enum types and their values
+	fprintf(f, "// Enums\n");
+	c = engine->GetEnumCount();
+	for( n = 0; n < c; n++ )
+	{
+		int typeId;
+		const char *enumName = engine->GetEnumByIndex(n, &typeId);
+		fprintf(f, "enum %s\n", enumName);
+		for( int m = 0; m < engine->GetEnumValueCount(typeId); m++ )
+		{
+			const char *valName;
+			int val;
+			valName = engine->GetEnumValueByIndex(typeId, m, &val);
+			fprintf(f, "enumval %s %s %d\n", enumName, valName, val);
+		}
+	}
+
+	// Enumerate all types
+	fprintf(f, "\n// Types\n");
+
+	c = engine->GetObjectTypeCount();
+	for( n = 0; n < c; n++ )
+	{
+		asIObjectType *type = engine->GetObjectTypeByIndex(n);
+		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
+		{
+			// This should only be interfaces
+			assert( type->GetSize() == 0 );
+
+			fprintf(f, "intf %s\n", type->GetName());
+		}
+		else
+		{
+			// Only the type flags are necessary. The application flags are application 
+			// specific and doesn't matter to the offline compiler. The object size is also
+			// unnecessary for the offline compiler
+			fprintf(f, "objtype %s %d\n", type->GetName(), type->GetFlags() & 0xFF);
+		}
+	}
+
+	c = engine->GetTypedefCount();
+	for( n = 0; n < c; n++ )
+	{
+		int typeId;
+		const char *typeDef = engine->GetTypedefByIndex(n, &typeId);
+		fprintf(f, "typedef %s \"%s\"\n", typeDef, engine->GetTypeDeclaration(typeId));
+	}
+
+	c = engine->GetFuncdefCount();
+	for( n = 0; n < c; n++ )
+	{
+		asIScriptFunction *funcDef = engine->GetFuncdefByIndex(n);
+		fprintf(f, "funcdef \"%s\"\n", funcDef->GetDeclaration());
+	}
+
+	// Write the object types members
+	fprintf(f, "\n// Type members\n");
+	
+	c = engine->GetObjectTypeCount();
+	for( n = 0; n < c; n++ )
+	{
+		asIObjectType *type = engine->GetObjectTypeByIndex(n);
+		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
+		{
+			for( int m = 0; m < type->GetMethodCount(); m++ )
+			{
+				asIScriptFunction *func = type->GetMethodDescriptorByIndex(m);
+				fprintf(f, "intfmthd %s \"%s\"\n", type->GetName(), func->GetDeclaration(false));
+			}
+		}
+		else
+		{
+			int m;
+			for( m = 0; m < type->GetFactoryCount(); m++ )
+			{
+				asIScriptFunction *func = engine->GetFunctionDescriptorById(type->GetFactoryIdByIndex(m));
+				fprintf(f, "objbeh %s %d \"%s\"\n", type->GetName(), asBEHAVE_FACTORY, func->GetDeclaration(false));
+			}
+			for( m = 0; m < type->GetBehaviourCount(); m++ )
+			{
+				asEBehaviours beh;
+				asIScriptFunction *func = engine->GetFunctionDescriptorById(type->GetBehaviourByIndex(m, &beh));
+				fprintf(f, "objbeh %s %d \"%s\"\n", type->GetName(), beh, func->GetDeclaration(false));
+			}
+			for( m = 0; m < type->GetMethodCount(); m++ )
+			{
+				asIScriptFunction *func = type->GetMethodDescriptorByIndex(m);
+				fprintf(f, "objmthd %s \"%s\"\n", type->GetName(), func->GetDeclaration(false));
+			}
+			for( m = 0; m < type->GetPropertyCount(); m++ )
+			{
+				// TODO: Need a GetPropertyDeclaration
+				const char *name = type->GetPropertyName(m);
+				int typeId = type->GetPropertyTypeId(m);
+				fprintf(f, "objprop %s \"%s %s\"\n", type->GetName(), engine->GetTypeDeclaration(typeId), name);
+			}
+		}
+	}
+
+	// Write functions
+	fprintf(f, "\n// Functions\n");
+
+	c = engine->GetGlobalFunctionCount();
+	for( n = 0; n < c; n++ )
+	{
+		asIScriptFunction *func = engine->GetFunctionDescriptorById(engine->GetGlobalFunctionIdByIndex(n));
+		fprintf(f, "func \"%s\"\n", func->GetDeclaration());
+	}
+
+	// Write global properties
+	fprintf(f, "\n// Properties\n");
+
+	c = engine->GetGlobalPropertyCount();
+	for( n = 0; n < c; n++ )
+	{
+		const char *name;
+		int typeId;
+		bool isConst;
+		engine->GetGlobalPropertyByIndex(n, &name, &typeId, &isConst); 
+		fprintf(f, "prop \"%s%s %s\"\n", isConst ? "const " : "", engine->GetTypeDeclaration(typeId), name);
+	}
+
+	// Write string factory
+	fprintf(f, "\n// String factory\n");
+	int typeId = engine->GetStringFactoryReturnTypeId();
+	if( typeId > 0 )
+		fprintf(f, "strfactory \"%s\"\n", engine->GetTypeDeclaration(typeId));
+
+	fclose(f);
+	return 0;
 }
 
 END_AS_NAMESPACE

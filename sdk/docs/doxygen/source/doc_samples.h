@@ -133,6 +133,10 @@ This sample shows how a generic bytecode compiler can be built to provide offlin
 It takes as input a configuration file that defines the application interface, registers it using dummy
 functions and properties, then it compiles the script and saves the bytecode to a file on disk.
 
+The configuration file should preferably be created automatically by calling the \ref doc_addon_helpers "WriteConfigToFile" 
+helper function. This function should be called from the application that will execute the bytecode, after 
+the application interface has been fully registered.
+
  - \ref doc_adv_precompile 
  - \ref doc_addon_build
  - \ref asIScriptEngine::SetMessageCallback

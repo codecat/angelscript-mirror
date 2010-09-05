@@ -266,6 +266,59 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 				return -1;
 			}
 		}
+		else if( token == "enum" )
+		{
+			string type;
+			GetToken(engine, type, config, pos);
+			
+			r = engine->RegisterEnum(type.c_str());
+			if( r < 0 )
+			{
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register enum type");
+				return -1;
+			}
+		}
+		else if( token == "enumval" )
+		{
+			string type, name, value;
+			GetToken(engine, type, config, pos);
+			GetToken(engine, name, config, pos);
+			GetToken(engine, value, config, pos);
+
+			r = engine->RegisterEnumValue(type.c_str(), name.c_str(), atol(value.c_str()));
+			if( r < 0 )
+			{
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register enum value");
+				return -1;
+			}
+		}
+		else if( token == "typedef" )
+		{
+			string type, decl;
+			GetToken(engine, type, config, pos);
+			GetToken(engine, decl, config, pos);
+			decl = decl.substr(1, decl.length() - 2);
+
+			r = engine->RegisterTypedef(type.c_str(), decl.c_str());
+			if( r < 0 )
+			{
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register typedef");
+				return -1;
+			}
+		}
+		else if( token == "funcdef" )
+		{
+			string decl;
+			GetToken(engine, decl, config, pos);
+			decl = decl.substr(1, decl.length() - 2);
+
+			r = engine->RegisterFuncdef(decl.c_str());
+			if( r < 0 )
+			{
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register funcdef");
+				return -1;
+			}
+		}
 	}
 
 	engine->WriteMessage(configFile, 0, 0, asMSGTYPE_INFORMATION, "Configuration successfully registered");

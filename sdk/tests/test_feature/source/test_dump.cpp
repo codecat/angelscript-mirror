@@ -50,12 +50,17 @@ bool Test()
 
 	engine->RegisterFuncdef("void Callback(int a, int b)");
 
+	engine->RegisterInterface("MyIntf");
+	engine->RegisterInterfaceMethod("MyIntf", "void func() const");
+
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r < 0 )
 		fail = true;
+
+	WriteConfigToFile(engine, "AS_DEBUG/config.txt");
 
 	DumpModule(mod);
 
@@ -351,7 +356,9 @@ void DumpModule(asIScriptModule *mod)
 		" string& opAssign(bool)\n"
 		" string& opAddAssign(bool)\n"
 		" string opAdd(bool) const\n"
-		" string opAdd_r(bool) const\n" )
+		" string opAdd_r(bool) const\n"
+		"type: interface MyIntf\n"
+		" void func() const\n" )
 	{
 		cout << s.str() << endl;
 		cout << "Failed to get the expected result when dumping the module" << endl << endl;

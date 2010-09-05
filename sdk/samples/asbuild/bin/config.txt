@@ -1,24 +1,50 @@
-// Register the string type
-objtype string 1               // REF
-objbeh  string 2 "string @f()" // FACTORY
-objbeh  string 4 "void f()"    // ADDREF
-objbeh  string 5 "void f()"    // RELEASE
-objmthd string "uint get_length()"
-objmthd string "string &opAssign(const string &in)"
+// Enums
+enum myEnum
+enumval myEnum value1 1
+enumval myEnum value2 2
 
-// Register the string factory
-strfactory "string@"
+// Types
+objtype string 2
+intf MyIntf
+typedef myFloat "float"
+funcdef "void Callback(int, int)"
 
-// Register global functions
+// Type members
+objbeh string 1 "void _beh_1_()"
+objbeh string 0 "void _beh_0_()"
+objmthd string "string& opAssign(const string&in)"
+objmthd string "string& opAddAssign(const string&in)"
+objmthd string "bool opEquals(const string&in) const"
+objmthd string "int opCmp(const string&in) const"
+objmthd string "string opAdd(const string&in) const"
+objmthd string "uint length() const"
+objmthd string "void resize(uint)"
+objmthd string "uint8& opIndex(uint)"
+objmthd string "const uint8& opIndex(uint) const"
+objmthd string "string& opAssign(double)"
+objmthd string "string& opAddAssign(double)"
+objmthd string "string opAdd(double) const"
+objmthd string "string opAdd_r(double) const"
+objmthd string "string& opAssign(int)"
+objmthd string "string& opAddAssign(int)"
+objmthd string "string opAdd(int) const"
+objmthd string "string opAdd_r(int) const"
+objmthd string "string& opAssign(uint)"
+objmthd string "string& opAddAssign(uint)"
+objmthd string "string opAdd(uint) const"
+objmthd string "string opAdd_r(uint) const"
+objmthd string "string& opAssign(bool)"
+objmthd string "string& opAddAssign(bool)"
+objmthd string "string opAdd(bool) const"
+objmthd string "string opAdd_r(bool) const"
+intfmthd MyIntf "void func() const"
+
+// Functions
 func "void Print(const string &in)"
 
-// Register the vec3d type
-objtype vec3d 10               // VALUE + POD
-objprop vec3d "float x"
-objprop vec3d "float y"
-objprop vec3d "float z"
+// Properties
+prop "float f"
+prop "const float myConst"
 
-// Register an interface
-intf     IController
-intfmthd IController "string @get_debugName() const"
-
+// String factory
+strfactory "string"
