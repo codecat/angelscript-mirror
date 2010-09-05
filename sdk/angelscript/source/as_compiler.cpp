@@ -2930,6 +2930,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 
 			// Release temporary variables used by expression
 			ReleaseTemporaryVariable(expr.type, &expr.bc);
+			ProcessDeferredParams(&expr);
 		}
 
 		bc->AddCode(&expr.bc);

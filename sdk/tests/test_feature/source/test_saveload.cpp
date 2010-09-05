@@ -860,6 +860,66 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test 
+	{
+		CBytecodeStream stream(__FILE__"1");
+
+		const char *script = 
+			"interface ITest1 { } \n"
+			"interface ITest2 { } \n"
+			" \n"
+			"CTest@[] Array1; \n"
+			" \n"
+			"class CTest : ITest1 \n"
+			"{ \n"
+			"	CTest() \n"
+			"	{ \n"
+			"		Index=0; \n"
+			"		@Field=null; \n"
+			"	} \n"
+			" \n"
+			"	int Index; \n"
+			"	ITest2@ Field; \n"
+			"} \n"
+			" \n"
+			"int GetTheIndex() \n"
+			"{ \n"
+			"  return Array1[0].Index; \n"
+			"} \n"
+			" \n"
+			"void Test() \n"
+			"{ \n"
+			"  Array1.resize(1); \n"
+			"  CTest test(); \n"
+			"  @Array1[0] = test; \n"
+			"  GetTheIndex(); \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+
+		r = ExecuteString(engine, "Test()", mod);
+
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			fail = true;
+
+		r = ExecuteString(engine, "Test()", mod);
+
+		engine->Release();
+	}
+
 	// Test two modules with same interface
 	{
 		CBytecodeStream stream(__FILE__"1");
@@ -907,6 +967,7 @@ bool Test()
 
 		engine->Release();
 	}
+
 
 	// Success
 	return fail;
