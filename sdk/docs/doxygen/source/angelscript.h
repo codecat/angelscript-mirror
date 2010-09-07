@@ -60,9 +60,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.19.2
-#define ANGELSCRIPT_VERSION        21902
-#define ANGELSCRIPT_VERSION_STRING "2.19.2"
+//! \details Version 2.20.0
+#define ANGELSCRIPT_VERSION        22000
+#define ANGELSCRIPT_VERSION_STRING "2.20.0"
 
 // Data types
 
@@ -209,8 +209,11 @@ enum asEBehaviours
 	asBEHAVE_REF_CAST,
 	//! \brief Implicit reference cast operator
 	asBEHAVE_IMPLICIT_REF_CAST,
+#ifdef AS_DEPRECATED
 	//! \brief operator []
+	//! \deprecated since 2.20.0. Use opIndex method instead.
 	asBEHAVE_INDEX,
+#endif
 	//! \brief Callback for validating template instances
 	asBEHAVE_TEMPLATE_CALLBACK,
 

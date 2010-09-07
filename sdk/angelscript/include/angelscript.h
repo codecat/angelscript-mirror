@@ -55,8 +55,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        21902
-#define ANGELSCRIPT_VERSION_STRING "2.19.2"
+#define ANGELSCRIPT_VERSION        22000
+#define ANGELSCRIPT_VERSION_STRING "2.20.0 WIP"
 
 // Data types
 
@@ -148,7 +148,9 @@ enum asEBehaviours
 	asBEHAVE_IMPLICIT_VALUE_CAST,
 	asBEHAVE_REF_CAST,
 	asBEHAVE_IMPLICIT_REF_CAST,
+#ifdef AS_DEPRECATED
 	asBEHAVE_INDEX,
+#endif
 	asBEHAVE_TEMPLATE_CALLBACK,
 
 	// Garbage collection behaviours

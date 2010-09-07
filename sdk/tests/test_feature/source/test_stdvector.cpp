@@ -133,12 +133,12 @@ bool Test()
 		return false;
 	}
 
-	COutStream out;
+	CBufferedOutStream bout;
 	bool fail = false;
 	int r;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 	RegisterStdString(engine);
 	RegisterVector<char>("int8[]", "int8", engine);
@@ -189,6 +189,12 @@ bool Test()
 		// The object that was returned by value, must not be freed too early
 		r = ExecuteString(engine, "Assert(TestInt()[0].v == 10)", mod);
 		if( r != asEXECUTION_FINISHED )
+		{
+			fail = true;
+		}
+
+		if( bout.buffer != "ExecuteString (1, 17) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
+		                   "ExecuteString (1, 17) : Info    : MyStruct& _builtin_array_::opIndex(int)\n" )
 		{
 			fail = true;
 		}

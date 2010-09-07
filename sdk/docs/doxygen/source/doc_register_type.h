@@ -227,28 +227,6 @@ Other advanced behaviours are described with the \ref doc_advanced_api "advanced
 Only a few operators have special behaviours for them, the other operators are registered as 
 ordinary \ref doc_script_class_ops "class methods with predefined names".
 
-\section doc_reg_opbeh_1 Index operator
-
-The index operator is usually used to access an element by index, e.g. the elements of an array.
-
-\code
-// Simple implementation of the index operator
-int &MyClass::operator[] (int index)
-{
-  return internal_array[index];
-}
-
-// Non-mutable variant that works on const references to the object
-const int &MyClass::operator[] (int index) const
-{
-  return internal_array[index];
-}
-
-// Register both the const and non-const alternative for const correctness
-r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_INDEX, "int &f(int)", asMETHODPR(MyClass, operator[], (int), int&), asCALL_THISCALL); assert( r >= 0 );
-r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_INDEX, "const int &f(int) const", asMETHODPR(MyClass, operator[], (int) const, const int&), asCALL_THISCALL); assert( r >= 0 );
-\endcode
-
 \section doc_reg_opbeh_2 Value cast operators
 
 The value cast operators are used to allow the scripts to convert an object type to another 

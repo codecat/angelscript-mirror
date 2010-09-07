@@ -1690,6 +1690,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 		func.id = beh->templateCallback = AddBehaviourFunction(func, internal);
 	}
+#ifdef AS_DEPRECATED
 	else if( behaviour == asBEHAVE_INDEX )
 	{
 		// Verify that the var type is not used
@@ -1710,6 +1711,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
+#endif
 	else if( behaviour >= asBEHAVE_FIRST_GC &&
 		     behaviour <= asBEHAVE_LAST_GC )
 	{

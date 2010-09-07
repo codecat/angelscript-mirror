@@ -1815,7 +1815,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			break;
 		}
 	}
-	// TODO: Deprecate this
+#ifdef AS_DEPRECATED
 	if( funcId == 0 )
 	{
 		asSTypeBehaviour *beh = var->dataType.GetBehaviour();
@@ -1836,7 +1836,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			}
 		}
 	}
-
+#endif
 	if( funcId == 0 )
 	{
 		Error(TXT_NO_APPROPRIATE_INDEX_OPERATOR, node);
@@ -7875,7 +7875,12 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		int r = CompileOverloadedDualOperator2(node, "opIndex", &lctx, &expr, ctx);
 		if( r == 0 )
 		{	
-			// TODO: Deprecate this
+#ifndef AS_DEPRECATED
+			asCString str;
+			str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
+			Error(str.AddressOf(), node);
+			return -1;	
+#else
 			MergeExprBytecodeAndType(ctx, &lctx);
 
 			if( ctx->type.dataType.IsObjectHandle() )
@@ -7996,6 +8001,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				// member we can release the original object now
 				ReleaseTemporaryVariable(objType, &ctx->bc);
 			}
+#endif
 		}
 	}
 

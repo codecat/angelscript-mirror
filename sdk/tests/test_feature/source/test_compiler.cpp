@@ -799,7 +799,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_FACTORY, "EntityArray @f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
-		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_INDEX, "Entity@ &f(const uint)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("EntityArray", "Entity@ &opIndex(const uint)", asFUNCTION(0), asCALL_GENERIC);
 
 		engine->RegisterGlobalFunction("Entity @DeleteEntity(Entity &in)", asFUNCTION(0), asCALL_GENERIC);
 

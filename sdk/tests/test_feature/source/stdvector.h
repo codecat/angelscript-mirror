@@ -168,16 +168,14 @@ void RegisterVector(const std::string V_AS,  //The typename of the vector inside
 		asCALL_CDECL_OBJLAST);
 	assert(error_code >= 0 && "Failed to register construct(size)");
 
-	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
-		asBEHAVE_INDEX,
-		(T_AS+"& f(int)").c_str(),
+	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		(T_AS+"& opIndex(int)").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::Index),
 		asCALL_CDECL_OBJLAST);
 	assert(error_code >= 0 && "Failed to register operator[]");
 
-	error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
-		asBEHAVE_INDEX,
-		("const "+T_AS+"& f(int) const").c_str(),
+	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		("const "+T_AS+"& opIndex(int) const").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::Index),
 		asCALL_CDECL_OBJLAST);
 	assert(error_code >= 0 && "Failed to register operator[]");

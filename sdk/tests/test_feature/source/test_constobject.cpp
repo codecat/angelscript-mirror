@@ -91,8 +91,8 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_ADDREF, "void f()", asMETHOD(CObj,AddRef), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_RELEASE, "void f()", asMETHOD(CObj,Release), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectMethod("obj", "obj &opAssign(const obj &in)", asMETHOD(CObj,operator=), asCALL_THISCALL); assert( r>=0 );
-	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_INDEX, "int &f(int)", asMETHODPR(CObj, operator[], (int), int&), asCALL_THISCALL); assert( r>=0 );
-	r = engine->RegisterObjectBehaviour("obj", asBEHAVE_INDEX, "const int &f(int) const", asMETHODPR(CObj, operator[], (int) const, const int&), asCALL_THISCALL); assert( r>=0 );
+	r = engine->RegisterObjectMethod("obj", "int &opIndex(int)", asMETHODPR(CObj, operator[], (int), int&), asCALL_THISCALL); assert( r>=0 );
+	r = engine->RegisterObjectMethod("obj", "const int &opIndex(int) const", asMETHODPR(CObj, operator[], (int) const, const int&), asCALL_THISCALL); assert( r>=0 );
 
 	r = engine->RegisterObjectType("prop", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r>=0 );
 	r = engine->RegisterObjectProperty("prop", "int val", 0); assert( r>=0 );

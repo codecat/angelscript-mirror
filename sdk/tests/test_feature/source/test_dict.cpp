@@ -64,7 +64,7 @@ bool Test()
 	engine->RegisterObjectBehaviour("Dict", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("Dict", "Dict &opAssign(const Dict &in)", asMETHOD(CDict,operator=), asCALL_THISCALL);
 
-	engine->RegisterObjectBehaviour("Dict", asBEHAVE_INDEX, "Dict &f(string)", asMETHOD(CDict, operator[]), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Dict", "Dict &opIndex(string)", asMETHOD(CDict, operator[]), asCALL_THISCALL);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
