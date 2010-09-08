@@ -183,18 +183,18 @@ asCContext::~asCContext()
 	DetachEngine();
 }
 
-int asCContext::AddRef()
+int asCContext::AddRef() const
 {
 	return refCount.atomicInc();
 }
 
-int asCContext::Release()
+int asCContext::Release() const
 {
 	int r = refCount.atomicDec();
 
 	if( r == 0 )
 	{
-		asDELETE(this,asCContext);
+		asDELETE(const_cast<asCContext*>(this),asCContext);
 		return 0;
 	}
 
@@ -217,7 +217,7 @@ void asCContext::DetachEngine()
 	engine = 0;
 }
 
-asIScriptEngine *asCContext::GetEngine()
+asIScriptEngine *asCContext::GetEngine() const
 {
 	return engine;
 }
@@ -229,7 +229,7 @@ void *asCContext::SetUserData(void *data)
 	return oldData;
 }
 
-void *asCContext::GetUserData()
+void *asCContext::GetUserData() const
 {
 	return userData;
 }
@@ -3522,7 +3522,7 @@ const char *asCContext::GetExceptionString()
 	return exceptionString.AddressOf();
 }
 
-asEContextState asCContext::GetState()
+asEContextState asCContext::GetState() const
 {
 	return status;
 }

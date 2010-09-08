@@ -736,13 +736,13 @@ public:
 	//! Call this method when storing an additional reference to the object.
 	//! Remember that the first reference that is received from \ref asCreateScriptEngine
 	//! is already accounted for.
-	virtual int AddRef() = 0;
+	virtual int AddRef() const = 0;
 	//! \brief Decrease reference counter.
 	//!
 	//! \return The number of references to this object.
 	//!
 	//! Call this method when you will no longer use the references that you own.
-	virtual int Release() = 0;
+	virtual int Release() const = 0;
 	//! \}
 
 	// Engine properties
@@ -764,7 +764,7 @@ public:
 	//! \return The value of the property, or 0 if it is an invalid property.
 	//!
 	//! Calling this method lets you determine the current value of the engine properties.
-	virtual asPWORD GetEngineProperty(asEEngineProp property) = 0;
+	virtual asPWORD GetEngineProperty(asEEngineProp property) const = 0;
 	//! \}
 
 	// Compiler messages
@@ -823,7 +823,7 @@ public:
 	//! \brief Sets the JIT compiler
 	virtual int SetJITCompiler(asIJITCompiler *compiler) = 0;
 	//! \brief Returns the JIT compiler
-	virtual asIJITCompiler *GetJITCompiler() = 0;
+	virtual asIJITCompiler *GetJITCompiler() const = 0;
 	//! \}
 
 	// Global functions
@@ -847,12 +847,12 @@ public:
 	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Returns the number of registered functions.
 	//! \return The number of registered functions.
-	virtual int GetGlobalFunctionCount() = 0;
+	virtual int GetGlobalFunctionCount() const = 0;
 	//! \brief Returns the function id of the registered function.
 	//! \param[in] index The index of the registered global function.
 	//! \return The id of the function, or a negative value on error.
 	//! \retval asINVALID_ARG \a index is too large.
-	virtual int GetGlobalFunctionIdByIndex(asUINT index) = 0;
+	virtual int GetGlobalFunctionIdByIndex(asUINT index) const = 0;
 	//! \}
 
 	// Global properties
@@ -879,7 +879,7 @@ public:
 	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
 	//! \brief Returns the number of registered global properties.
 	//! \return The number of registered global properties.
-	virtual int GetGlobalPropertyCount() = 0;
+	virtual int GetGlobalPropertyCount() const = 0;
 	//! \brief Returns the detail on the registered global property.
 	//! \param[in] index The index of the global variable.
 	//! \param[out] name Receives the name of the property.
@@ -889,7 +889,7 @@ public:
 	//! \param[out] pointer Receives the pointer of the property.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG \a index is too large.
-	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) = 0;
+	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const = 0;
 	//! \}
 
 	// Object types
@@ -1009,11 +1009,11 @@ public:
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 	//! \brief Returns the number of registered object types.
     //! \return The number of object types registered by the application.
-	virtual int            GetObjectTypeCount() = 0;
+	virtual int            GetObjectTypeCount() const = 0;
 	//! \brief Returns the object type interface by index.
     //! \param[in] index The index of the type.
     //! \return The registered object type interface for the type, or null if not found.
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
 	//! \}
 
 	// String factory
@@ -1052,7 +1052,7 @@ public:
     //! \brief Returns the type id of the type that the string factory returns.
     //! \return The type id of the type that the string type returns, or a negative value on error.
     //! \retval asNO_FUNCTION The string factory has not been registered.
-	virtual int GetStringFactoryReturnTypeId() = 0;
+	virtual int GetStringFactoryReturnTypeId() const = 0;
 	//! \}
 
 	// Enums
@@ -1086,23 +1086,23 @@ public:
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value) = 0;
 	//! \brief Returns the number of registered enum types.
 	//! \return The number of registered enum types.
-	virtual int         GetEnumCount() = 0;
+	virtual int         GetEnumCount() const = 0;
 	//! \brief Returns the registered enum type.
 	//! \param[in] index The index of the enum type.
 	//! \param[out] enumTypeId Receives the type if of the enum type.
 	//! \param[out] configGroup Receives the config group in which the enum was registered.
 	//! \return The name of the registered enum type, or null on error.
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0) = 0;
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0) const = 0;
 	//! \brief Returns the number of enum values for the enum type.
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \return The number of enum values for the enum type.
-	virtual int         GetEnumValueCount(int enumTypeId) = 0;
+	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	//! \brief Returns the name and value of the enum value for the enum type.
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \param[in] index The index of the enum value.
 	//! \param[out] outValue Receives the value of the enum value.
 	//! \return The name of the enum value.
-	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) = 0;
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 	//! \}
 
 	// Funcdefs
@@ -1123,14 +1123,14 @@ public:
 	virtual int                RegisterFuncdef(const char *decl) = 0;
 	//! \brief Returns the number of registered function definitions.
 	//! \return The number of registered funcdefs.
-	virtual int                GetFuncdefCount() = 0;
+	virtual int                GetFuncdefCount() const = 0;
 	//! \brief Returns a registered function definition.
 	//! \param[in] index The index of the funcdef.
 	//! \param[out] configGroup The config group in which the funcdef was registered.
 	//! \return The funcdef.
 	//!
 	//! This function does not increase the reference count of the return function definition.
-	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0) = 0;
+	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0) const = 0;
 	//! \}
 
 	// Typedefs
@@ -1154,13 +1154,13 @@ public:
 	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
 	//! \brief Returns the number of registered typedefs.
 	//! \return The number of registered typedefs.
-	virtual int         GetTypedefCount() = 0;
+	virtual int         GetTypedefCount() const = 0;
 	//! \brief Returns a registered typedef.
 	//! \param[in] index The index of the typedef.
 	//! \param[out] typeId The type that the typedef aliases.
 	//! \param[out] configGroup Receives the config group in which the type def was registered.
 	//! \return The name of the typedef.
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0) = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0) const = 0;
 	//! \}
 
 	// Configuration groups
@@ -1251,7 +1251,7 @@ public:
 	//! \return A pointer to the function description interface, or null if not found.
 	//!
 	//! This does not increment the reference count of the returned function descriptor.
-	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
 	//! \}
 
 	// Type identification
@@ -1263,7 +1263,7 @@ public:
 	//! \return The object type interface for the type, or null if not found.
 	//!
 	//! This does not increment the reference count of the returned object type.
-	virtual asIObjectType *GetObjectTypeById(int typeId) = 0;
+	virtual asIObjectType *GetObjectTypeById(int typeId) const = 0;
 	//! \brief Returns a type id by declaration.
 	//! \param[in] decl The declaration of the type.
 	//! \return A negative value on error, or the type id of the type.
@@ -1286,15 +1286,15 @@ public:
 	//! This method is only able to return the type id that are not specific for a script module, i.e.
 	//! built-in types and application registered types. Type ids for script declared types should
 	//! be obtained through the script module's \ref asIScriptModule::GetTypeIdByDecl "GetTypeIdByDecl".
-	virtual int            GetTypeIdByDecl(const char *decl) = 0;
+	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 	//! \brief Returns a type declaration.
 	//! \param[in] typeId The type id of the type.
 	//! \return A null terminated string with the type declaration, or null if not found.
-	virtual const char    *GetTypeDeclaration(int typeId) = 0;
+	virtual const char    *GetTypeDeclaration(int typeId) const = 0;
 	//! \brief Returns the size of a primitive type.
 	//! \param[in] typeId The type id of the type.
 	//! \return The size of the type in bytes.
-	virtual int            GetSizeOfPrimitiveType(int typeId) = 0;
+	virtual int            GetSizeOfPrimitiveType(int typeId) const = 0;
 	//! \}
 
 	// Script execution
@@ -1364,7 +1364,7 @@ public:
     //! compatible with an object of another type. This is useful if you have a pointer 
     //! to a object, but only knows that it implements a certain interface and now you 
     //! want to determine if it implements another interface.
-	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
+	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
 	//! \}
 
 	// String interpretation
@@ -1380,7 +1380,7 @@ public:
 	//! This function is useful for those applications that want to tokenize strings into 
 	//! tokens that the script language uses, e.g. IDEs providing syntax highlighting, or intellisense.
 	//! It can also be used to parse the meta data strings that may be declared for script entities.
-	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) = 0;
+	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const = 0;
 	//! \}
 
 	// Garbage collection
@@ -1414,7 +1414,7 @@ public:
 	//! \ref GarbageCollect method so that some of the objects ca be freed.
 	//!
 	//! \see \ref doc_gc
-	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0) = 0;
+	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0) const = 0;
 	//! \brief Notify the garbage collector of a new object that needs to be managed.
     //! \param[in] obj A pointer to the newly created object.
     //! \param[in] typeId The type id of the object.
@@ -1447,7 +1447,7 @@ public:
 	virtual void *SetUserData(void *data) = 0;
 	//! \brief Returns the address of the previously registered user data.
 	//! \return The pointer to the user data.
-	virtual void *GetUserData() = 0;
+	virtual void *GetUserData() const = 0;
 	//! \}
 
 #ifdef AS_DEPRECATED
@@ -1473,7 +1473,7 @@ public:
 
 	//! \brief Returns a pointer to the engine.
     //! \return A pointer to the engine.
-	virtual asIScriptEngine *GetEngine() = 0;
+	virtual asIScriptEngine *GetEngine() const = 0;
 	//! \brief Sets the name of the module.
 	//! \param[in] name The new name.
 	//!
@@ -1481,7 +1481,7 @@ public:
 	virtual void             SetName(const char *name) = 0;
 	//! \brief Gets the name of the module.
 	//! \return The name of the module.
-	virtual const char      *GetName() = 0;
+	virtual const char      *GetName() const = 0;
 	//! \}
 
 	// Compilation
@@ -1571,7 +1571,7 @@ public:
     //! \retval asERROR The module was not compiled successfully.
     //!
     //! This method retrieves the number of compiled script functions.
-	virtual int                GetFunctionCount() = 0;
+	virtual int                GetFunctionCount() const = 0;
 	//! \brief Returns the function id by index.
     //! \param[in] index The index of the function.
     //! \return A negative value on error, or the function id.
@@ -1579,7 +1579,7 @@ public:
     //!
     //! This method should be used to retrieve the id of the script function that you wish to 
     //! execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare"  method.
-	virtual int                GetFunctionIdByIndex(int index) = 0;
+	virtual int                GetFunctionIdByIndex(int index) const = 0;
 	//! \brief Returns the function id by name.
     //! \param[in] name The name of the function.
     //! \return A negative value on error, or the function id.
@@ -1589,7 +1589,7 @@ public:
     //!
     //! This method should be used to retrieve the id of the script function that you 
     //! wish to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	virtual int                GetFunctionIdByName(const char *name) = 0;
+	virtual int                GetFunctionIdByName(const char *name) const = 0;
 	//! \brief Returns the function id by declaration.
     //! \param[in] decl The function signature.
     //! \return A negative value on error, or the function id.
@@ -1602,19 +1602,19 @@ public:
     //! to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
     //!
     //! The method will find the script function with the exact same declaration.
-	virtual int                GetFunctionIdByDecl(const char *decl) = 0;
+	virtual int                GetFunctionIdByDecl(const char *decl) const = 0;
 	//! \brief Returns the function descriptor for the script function
 	//! \param[in] index The index of the function.
 	//! \return A pointer to the function description interface, or null if not found.
 	//!
 	//! This does not increase the reference counter of the returned function descriptor.
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) const = 0;
 	//! \brief Returns the function descriptor for the script function
 	//! \param[in] funcId The id of the function or method.
 	//! \return A pointer to the function description interface, or null if not found.
 	//!
 	//! This does not increase the reference counter of the returned function descriptor.
-	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
 	//! \brief Remove a single function from the scope of the module
 	//! \param[in] funcId The id of the function to remove.
 	//! \return A negative value on error.
@@ -1641,7 +1641,7 @@ public:
 	//! \brief Returns the number of global variables in the module.
     //! \return A negative value on error, or the number of global variables in the module.
 	//! \retval asERROR The module was not compiled successfully.
-	virtual int         GetGlobalVarCount() = 0;
+	virtual int         GetGlobalVarCount() const = 0;
 	//! \brief Returns the global variable index by name.
     //! \param[in] name The name of the global variable.
     //! \return A negative value on error, or the global variable index.
@@ -1649,7 +1649,7 @@ public:
     //! \retval asNO_GLOBAL_VAR The matching global variable was found.
     //!
     //! This method should be used to retrieve the index of the script variable that you wish to access.
-	virtual int         GetGlobalVarIndexByName(const char *name) = 0;
+	virtual int         GetGlobalVarIndexByName(const char *name) const = 0;
 	//! \brief Returns the global variable index by declaration.
     //! \param[in] decl The global variable declaration.
     //! \return A negative value on error, or the global variable index.
@@ -1659,7 +1659,7 @@ public:
     //! This method should be used to retrieve the index of the script variable that you wish to access.
     //!
     //! The method will find the script variable with the exact same declaration.
-	virtual int         GetGlobalVarIndexByDecl(const char *decl) = 0;
+	virtual int         GetGlobalVarIndexByDecl(const char *decl) const = 0;
 	//! \brief Returns the global variable declaration.
     //! \param[in] index The index of the global variable.
     //! \return A null terminated string with the variable declaration, or null if not found.
@@ -1668,17 +1668,17 @@ public:
     //! that the host application will access. Verifying the declaration is important because, 
     //! even though the script may compile correctly the user may not have used the variable 
     //! types as intended.
-	virtual const char *GetGlobalVarDeclaration(int index) = 0;
+	virtual const char *GetGlobalVarDeclaration(int index) const = 0;
 	//! \brief Returns the global variable name.
     //! \param[in] index The index of the global variable.
     //! \return A null terminated string with the variable name, or null if not found.
-	virtual const char *GetGlobalVarName(int index) = 0;
+	virtual const char *GetGlobalVarName(int index) const = 0;
 	//! \brief Returns the type id for the global variable.
 	//! \param[in] index The index of the global variable.
 	//! \param[out] isConst Receives the constness indicator of the variable.
 	//! \return The type id of the global variable, or a negative value on error.
 	//! \retval asINVALID_ARG The index is out of range.
-	virtual int         GetGlobalVarTypeId(int index, bool *isConst = 0) = 0;
+	virtual int         GetGlobalVarTypeId(int index, bool *isConst = 0) const = 0;
 	//! \brief Returns the pointer to the global variable.
     //! \param[in] index The index of the global variable.
     //! \return A pointer to the global variable, or null if not found.
@@ -1701,13 +1701,13 @@ public:
 
 	//! \brief Returns the number of object types.
 	//! \return The number of object types declared in the module.
-	virtual int            GetObjectTypeCount() = 0;
+	virtual int            GetObjectTypeCount() const = 0;
 	//! \brief Returns the object type interface by index.
 	//! \param[in] index The index of the type.
 	//! \return The object type interface for the type, or null if not found.
 	//!
 	//! This does not increase the reference count of the returned object.
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) = 0;
+	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
 	//! \brief Returns a type id by declaration.
     //! \param[in] decl The declaration of the type.
     //! \return A negative value on error, or the type id of the type.
@@ -1726,7 +1726,7 @@ public:
     //! A base type yields the same type id whether the declaration is const or not, however if the 
     //! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
     //! string@ but string is the same as const string. 
-	virtual int            GetTypeIdByDecl(const char *decl) = 0;
+	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 	//! \}
 
 	// Enums
@@ -1735,23 +1735,23 @@ public:
 
 	//! \brief Returns the number of enum types declared in the module.
 	//! \return The number of enum types in the module.
-	virtual int         GetEnumCount() = 0;
+	virtual int         GetEnumCount() const = 0;
 	//! \brief Returns the enum type.
 	//! \param[in] index The index of the enum type.
 	//! \param[out] enumTypeId Receives the type id of the enum type.
 	//! \return The name of the enum type, or null on error.
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId) = 0;
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId) const = 0;
 	//! \brief Returns the number of values defined for the enum type.
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \return The number of enum values or a negative value on error.
 	//! \retval asINVALID_ARG \a enumTypeId is not an enum type.
-	virtual int         GetEnumValueCount(int enumTypeId) = 0;
+	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	//! \brief Returns the name and value of the enum value.
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \param[in] index The index of the enum value.
 	//! \param[out] outValue Receives the numeric value.
 	//! \return The name of the enum value.
-	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) = 0;
+	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 	//! \}
 
 	// Typedefs
@@ -1760,12 +1760,12 @@ public:
 
 	//! \brief Returns the number of typedefs in the module.
 	//! \return The number of typedefs in the module.
-	virtual int         GetTypedefCount() = 0;
+	virtual int         GetTypedefCount() const = 0;
 	//! \brief Returns the typedef.
 	//! \param[in] index The index of the typedef.
 	//! \param[out] typeId The type that the typedef aliases.
 	//! \return The name of the typedef.
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId) = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId) const = 0;
 	//! \}
 
 	// Dynamic binding between modules
@@ -1778,7 +1778,7 @@ public:
     //!
     //! This function returns the number of functions that are imported in a module. These 
     //! functions need to be bound before they can be used, or a script exception will be thrown.
-	virtual int         GetImportedFunctionCount() = 0;
+	virtual int         GetImportedFunctionCount() const = 0;
 	//! \brief Returns the imported function index by declaration.
     //! \param[in] decl The function declaration of the imported function.
     //! \return A negative value on error, or the index of the imported function.
@@ -1787,7 +1787,7 @@ public:
     //! \retval asNO_FUNCTION Didn't find any matching function.
     //!
     //! This function is used to find a specific imported function by its declaration.
-	virtual int         GetImportedFunctionIndexByDecl(const char *decl) = 0;
+	virtual int         GetImportedFunctionIndexByDecl(const char *decl) const = 0;
 	//! \brief Returns the imported function declaration.
     //! \param[in] importIndex The index of the imported function.
     //! \return A null terminated string with the function declaration, or null if not found.
@@ -1795,13 +1795,13 @@ public:
     //! Use this function to get the declaration of the imported function. The returned 
     //! declaration can be used to find a matching function in another module that can be bound 
     //! to the imported function. 
-	virtual const char *GetImportedFunctionDeclaration(int importIndex) = 0;
+	virtual const char *GetImportedFunctionDeclaration(int importIndex) const = 0;
 	//! \brief Returns the declared imported function source module.
     //! \param[in] importIndex The index of the imported function.
     //! \return A null terminated string with the name of the source module, or null if not found.
     //!
     //! Use this function to get the name of the suggested module to import the function from.
-	virtual const char *GetImportedFunctionSourceModule(int importIndex) = 0;
+	virtual const char *GetImportedFunctionSourceModule(int importIndex) const = 0;
 	//! \brief Binds an imported function to the function from another module.
     //! \param[in] importIndex The index of the imported function.
     //! \param[in] funcId The function id of the function that will be bound to the imported function.
@@ -1851,7 +1851,7 @@ public:
     //!
     //! The pre-compiled byte code is currently not platform independent, so you need to make
     //! sure the byte code is compiled on a platform that is compatible with the one that will load it.	
-	virtual int SaveByteCode(asIBinaryStream *out) = 0;
+	virtual int SaveByteCode(asIBinaryStream *out) const = 0;
 	//! \brief Load pre-compiled bytecode from a binary stream.
     //!
     //! \param[in] in The input stream.
@@ -1888,13 +1888,13 @@ public:
     //! Call this method when storing an additional reference to the object.
     //! Remember that the first reference that is received from \ref asIScriptEngine::CreateContext
     //! is already accounted for.
-	virtual int AddRef() = 0;
+	virtual int AddRef() const = 0;
 	//! \brief Decrease reference counter.
     //!
     //! \return The number of references to this object.
     //!
     //! Call this method when you will no longer use the references that you own.
-	virtual int Release() = 0;
+	virtual int Release() const = 0;
 	//! \}
 
 	// Miscellaneous
@@ -1903,7 +1903,7 @@ public:
 
 	//! \brief Returns a pointer to the engine.
     //! \return A pointer to the engine.
-	virtual asIScriptEngine *GetEngine() = 0;
+	virtual asIScriptEngine *GetEngine() const = 0;
 	//! \}
 
 	// Execution
@@ -1970,7 +1970,7 @@ public:
 	virtual int             Suspend() = 0;
 	//! \brief Returns the state of the context.
     //! \return The current state of the context.
-	virtual asEContextState GetState() = 0;
+	virtual asEContextState GetState() const = 0;
 	//! \}
 
 	// Arguments
@@ -2275,7 +2275,7 @@ public:
 	virtual void *SetUserData(void *data) = 0;
 	//! \brief Returns the address of the previously registered user data.
     //! \return The pointer to the user data.
-	virtual void *GetUserData() = 0;
+	virtual void *GetUserData() const = 0;
 	//! \}
 
 protected:
@@ -2292,10 +2292,10 @@ public:
 
     //! \brief Returns a pointer to the script engine.
     //! \return A pointer to the engine.
-	virtual asIScriptEngine *GetEngine() = 0;
+	virtual asIScriptEngine *GetEngine() const = 0;
     //! \brief Returns the function id of the called function.
     //! \return The function id of the function being called.
-	virtual int              GetFunctionId() = 0;
+	virtual int              GetFunctionId() const = 0;
 	//! \}
 
 	// Object
@@ -2307,7 +2307,7 @@ public:
 	virtual void   *GetObject() = 0;
     //! \brief Returns the type id of the object if this is a class method.
     //! \return The type id of the object if this is a method.
-	virtual int     GetObjectTypeId() = 0;
+	virtual int     GetObjectTypeId() const = 0;
 	//! \}
 
 	// Arguments
@@ -2316,11 +2316,11 @@ public:
 
     //! \brief Returns the number of arguments.
     //! \return The number of arguments to the function.
-	virtual int     GetArgCount() = 0;
+	virtual int     GetArgCount() const = 0;
     //! \brief Returns the type id of the argument.
     //! \param[in] arg The argument index.
     //! \return The type id of the argument.
-	virtual int     GetArgTypeId(asUINT arg) = 0;
+	virtual int     GetArgTypeId(asUINT arg) const = 0;
     //! \brief Returns the value of an 8-bit argument.
     //! \param[in] arg The argument index.
     //! \return The 1 byte argument value.
@@ -2371,7 +2371,7 @@ public:
 
     //! \brief Gets the type id of the return value.
     //! \return The type id of the return value.
-	virtual int     GetReturnTypeId() = 0;
+	virtual int     GetReturnTypeId() const = 0;
     //! \brief Sets the 8-bit return value.
     //! \param[in] val The return value.
     //! \return A negative value on error.
@@ -2460,13 +2460,13 @@ public:
     //! \return The number of references to this object.
     //!
     //! Call this method when storing an additional reference to the object.
-	virtual int AddRef() = 0;
+	virtual int AddRef() const = 0;
 	//! \brief Decrease reference counter.
     //!
     //! \return The number of references to this object.
     //!
     //! Call this method when you will no longer use the references that you own.
-	virtual int Release() = 0;
+	virtual int Release() const = 0;
 	//! \}
 
 	// Type info
@@ -2616,13 +2616,13 @@ public:
     //! \return The number of references to this object.
     //!
     //! Call this method when storing an additional reference to the object.
-	virtual int AddRef() = 0;
+	virtual int AddRef() const = 0;
 	//! \brief Decrease reference counter.
     //!
     //! \return The number of references to this object.
     //!
     //! Call this method when you will no longer use the references that you own.
-	virtual int Release() = 0;
+	virtual int Release() const = 0;
 	//! \}
 
 	// Type info
@@ -2807,13 +2807,13 @@ public:
 	//! \return The number of references to this object.
 	//!
 	//! Call this method when storing an additional reference to the object.
-	virtual int AddRef() = 0;
+	virtual int AddRef() const = 0;
 	//! \brief Decrease reference counter.
 	//!
 	//! \return The number of references to this object.
 	//!
 	//! Call this method when you will no longer use the references that you own.
-	virtual int Release() = 0;
+	virtual int Release() const = 0;
 
 	//! \brief Returns the id of the function
 	//! \return The id of the function

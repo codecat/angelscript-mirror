@@ -180,7 +180,7 @@ int asCScriptFunction::GetId() const
 }
 
 // interface
-int asCScriptFunction::AddRef()
+int asCScriptFunction::AddRef() const
 {
 	gcFlag = false;
 	asASSERT( funcType != asFUNC_IMPORTED );
@@ -188,13 +188,13 @@ int asCScriptFunction::AddRef()
 }
 
 // interface
-int asCScriptFunction::Release()
+int asCScriptFunction::Release() const
 {
 	gcFlag = false;
 	asASSERT( funcType != asFUNC_IMPORTED );
 	int r = refCount.atomicDec();
 	if( r == 0 && funcType != -1 ) // Dummy functions are allocated on the stack and cannot be deleted
-		asDELETE(this,asCScriptFunction);
+		asDELETE(const_cast<asCScriptFunction*>(this),asCScriptFunction);
 
 	return r;
 }

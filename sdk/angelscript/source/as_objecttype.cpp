@@ -140,13 +140,13 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 	acceptRefSubType = true;
 }
 
-int asCObjectType::AddRef()
+int asCObjectType::AddRef() const
 {
 	gcFlag = false;
 	return refCount.atomicInc();
 }
 
-int asCObjectType::Release()
+int asCObjectType::Release() const
 {
 	gcFlag = false;
 	return refCount.atomicDec();

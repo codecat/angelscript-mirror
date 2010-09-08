@@ -88,8 +88,8 @@ public:
 	asIScriptEngine     *GetEngine() const;
 
 	// Memory management
-	int AddRef();
-	int Release();
+	int AddRef() const;
+	int Release() const;
 
 	int                  GetId() const;
 	const char          *GetModuleName() const;
@@ -146,8 +146,8 @@ public:
 	//-----------------------------------
 	// Properties
 
-	asCAtomic                    refCount;
-	bool                         gcFlag;
+	mutable asCAtomic            refCount;
+	mutable bool                 gcFlag;
 	asCScriptEngine             *engine;
 	asCModule                   *module;
 

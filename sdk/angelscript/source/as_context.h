@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -57,12 +57,12 @@ class asCContext : public asIScriptContext
 {
 public:
 	// From asIScriptContext
-	int  AddRef();
-	int  Release();
+	int  AddRef() const;
+	int  Release() const;
 
-	asIScriptEngine *GetEngine();
+	asIScriptEngine *GetEngine() const;
 
-	asEContextState GetState();
+	asEContextState GetState() const;
 
 	int  Prepare(int functionID);
 	int  Unprepare();
@@ -119,7 +119,7 @@ public:
     void       *GetThisPointer(int stackLevel);
 
 	void *SetUserData(void *data);
-	void *GetUserData();
+	void *GetUserData() const;
 
 public:
 	// Internal public functions
@@ -154,7 +154,7 @@ public:
 	void SetInternalException(const char *descr);
 
 	// Must be protected for multiple accesses
-	asCAtomic refCount;
+	mutable asCAtomic refCount;
 
 	bool holdEngineRef;
 	asCScriptEngine *engine;
