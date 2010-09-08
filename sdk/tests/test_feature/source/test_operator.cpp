@@ -435,13 +435,25 @@ bool Test()
 			"    t.value = ~value;              \n"
 			"    return t;                      \n"
 			"  }                                \n"
+			"  void opPostInc()                 \n"
+			"  {                                \n"
+			"    value++;                       \n"
+			"  }                                \n"
+			"  void opPreDec()                  \n"
+			"  {                                \n"
+			"    --value;                       \n"
+			"  }                                \n"
 			"}                                  \n"
 			"void main()                        \n"
 			"{                                  \n"
 			"  Test a;                          \n"
 			"  a.value = 1;                     \n"
 			"  assert( (-a).value == -1 );      \n"
-			"  assert( (~a).value == ~1 );      \n"
+			"  assert( (~a).value == int(~1) ); \n"
+			"  a++;                             \n"
+			"  assert( a.value == 2 );          \n"
+			"  --a;                             \n"
+			"  assert( a.value == 1 );          \n"
 			"}                                  \n";
 
 		bout.buffer = "";
@@ -451,6 +463,10 @@ bool Test()
 		{
 			fail = true;
 		}
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+		}
 		
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
@@ -458,14 +474,16 @@ bool Test()
 			fail = true;
 		}
 
-		// Test const correctness. opCom() isn't const so it must not be allowed
+		// Test const correctness.
 		bout.buffer = "";
-		r = ExecuteString(engine, "Test a; const Test @h = a; assert( (~h).value == ~1 );", mod);
+		r = ExecuteString(engine, "Test a; const Test @h = a; assert( (~h).value == ~1 ); h++; --h;", mod);
 		if( r >= 0 )
 		{
 			fail = true;
 		}
-		if( bout.buffer != "ExecuteString (1, 37) : Error   : Function 'opCom() const' not found\n" )
+		if( bout.buffer != "ExecuteString (1, 37) : Error   : Function 'opCom() const' not found\n"
+			               "ExecuteString (1, 57) : Error   : Function 'opPostInc() const' not found\n"
+		                   "ExecuteString (1, 61) : Error   : Function 'opPreDec() const' not found\n" )
 		{
 			printf(bout.buffer.c_str());
 		}

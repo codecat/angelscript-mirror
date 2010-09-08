@@ -12,15 +12,28 @@ methods when it compiles expressions involving the overloaded operators
 and the script class.
 
 
-\section doc_script_class_unary_ops Unary operators
+\section doc_script_class_unary_ops Prefixed unary operators
 
 <table cellspacing=0 cellpadding=0 border=0>
 <tr><td width=80><b>op</b></td><td width=120><b>opfunc</b></td></tr>
-<tr><td>-</td>             <td>opNeg</td>
-<tr><td>~</td>             <td>opCom</td>
+<tr><td>-</td>             <td>opNeg</td></tr>
+<tr><td>~</td>             <td>opCom</td></tr>
+<tr><td>++</td>            <td>opPreInc</td></tr>
+<tr><td>--</td>            <td>opPreDec</td></tr>
 </table>
 
 When the expression <tt><i>op</i> a</tt> is compiled, the compiler will rewrite it as <tt>a.<i>opfunc</i>()</tt> and compile that instead.
+
+
+\section doc_script_class_unary2_ops Postfixed unary operators
+
+<table cellspacing=0 cellpadding=0 border=0>
+<tr><td width=80><b>op</b></td><td width=120><b>opfunc</b></td></tr>
+<tr><td>++</td>            <td>opPostInc</td></tr>
+<tr><td>--</td>            <td>opPostDec</td></tr>
+</table>
+
+When the expression <tt>a <i>op</i></tt> is compiled, the compiler will rewrite it as <tt>a.<i>opfunc</i>()</tt> and compile that instead.
 
 
 \section doc_script_class_cmp_ops Comparison operators

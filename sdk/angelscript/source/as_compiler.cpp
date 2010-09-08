@@ -6960,18 +6960,21 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		if( makeConst )
 			ctx->type.dataType.MakeReadOnly(true);
 	}
-	else if( (op == ttMinus || op == ttBitNot) && ctx->type.dataType.IsObject() )
+	else if( (op == ttMinus || op == ttBitNot || op == ttInc || op == ttDec) && ctx->type.dataType.IsObject() )
 	{
-		// Look for the opNeg or opCom methods
+		// Look for the appropriate method
 		const char *opName = 0;
 		switch( op )
 		{
-		case ttMinus:  opName = "opNeg"; break;
-		case ttBitNot: opName = "opCom"; break;
+		case ttMinus:  opName = "opNeg";    break;
+		case ttBitNot: opName = "opCom";    break;
+		case ttInc:    opName = "opPreInc"; break;
+		case ttDec:    opName = "opPreDec"; break;
 		}
 
 		if( opName )
 		{
+			// TODO: Should convert this to something similar to CompileOverloadedDualOperator2
 			ProcessPropertyGetAccessor(ctx, node);
 
 			// Is it a const value?
@@ -7641,7 +7644,74 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	// Check if the variable is initialized (if it indeed is a variable)
 	IsVariableInitialized(&ctx->type, node);
 
-	if( op == ttInc || op == ttDec )
+	if( (op == ttInc || op == ttDec) && ctx->type.dataType.IsObject() )
+	{
+		const char *opName = 0;
+		switch( op )
+		{
+		case ttInc:    opName = "opPostInc"; break;
+		case ttDec:    opName = "opPostDec"; break;
+		}
+
+		if( opName )
+		{
+			// TODO: Should convert this to something similar to CompileOverloadedDualOperator2
+			ProcessPropertyGetAccessor(ctx, node);
+
+			// Is it a const value?
+			bool isConst = false;
+			if( ctx->type.dataType.IsObjectHandle() )
+				isConst = ctx->type.dataType.IsHandleToConst();
+			else
+				isConst = ctx->type.dataType.IsReadOnly();
+
+			// TODO: If the value isn't const, then first try to find the non const method, and if not found try to find the const method
+
+			// Find the correct method
+			asCArray<int> funcs;
+			asCObjectType *ot = ctx->type.dataType.GetObjectType();
+			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+			{
+				asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
+				if( func->name == opName &&
+					func->parameterTypes.GetLength() == 0 &&
+					(!isConst || func->isReadOnly) )
+				{
+					funcs.PushLast(func->id);
+				}
+			}
+
+			// Did we find the method?
+			if( funcs.GetLength() == 1 )
+			{
+				asCTypeInfo objType = ctx->type;
+				asCArray<asSExprContext *> args;
+				MakeFunctionCall(ctx, funcs[0], objType.dataType.GetObjectType(), args, node);
+				ReleaseTemporaryVariable(objType, &ctx->bc);
+				return 0;
+			}
+			else if( funcs.GetLength() == 0 )
+			{
+				asCString str;
+				str = asCString(opName) + "()";
+				if( isConst )
+					str += " const";
+				str.Format(TXT_FUNCTION_s_NOT_FOUND, str.AddressOf());
+				Error(str.AddressOf(), node);
+				ctx->type.SetDummy();
+				return -1;
+			}
+			else if( funcs.GetLength() > 1 )
+			{
+				Error(TXT_MORE_THAN_ONE_MATCHING_OP, node);
+				PrintMatchingFuncs(funcs, node);
+
+				ctx->type.SetDummy();
+				return -1;
+			}
+		}
+	}
+	else if( op == ttInc || op == ttDec )
 	{
 		if( globalExpression )
 		{
