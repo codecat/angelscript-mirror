@@ -1,14 +1,15 @@
 # Angelscript MingW makefile
 # Type 'make' then 'make install' to complete the installation of the library
 
-CXX = g++
+CXX ?= g++
+AR ?= ar
 CXXFLAGS = -ggdb
 SRCDIR = ../../source
 OBJDIR = obj
 SRCNAMES = \
   as_arrayobject.cpp \
   as_atomic.cpp \
-  as_builder.cpp  \
+  as_builder.cpp \
   as_bytecode.cpp \
   as_callfunc.cpp \
   as_callfunc_mips.cpp \
@@ -53,7 +54,7 @@ UNINSTALLFILES_D = $(MINGDIR)\lib\libangelscript.a $(MINGDIR)\include\angelscrip
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	ar rcs $(BIN) $(OBJ)
+	$(AR) rcs $(BIN) $(OBJ)
 	@echo -------------------------------------------------------------------
 	@echo Done. Now type 'make install' to install the library on your MinGW.
 
