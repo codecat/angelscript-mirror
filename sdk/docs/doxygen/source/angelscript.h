@@ -2765,6 +2765,10 @@ public:
     //! \param[in] prop The property index.
     //! \return A null terminated string with the property name.
 	virtual const char *GetPropertyName(asUINT prop) const = 0;
+	//! \brief Returns whether a property is private or not.
+	//! \param[in] prop The property index.
+	//! \return True if the property is private.
+	virtual bool        IsPropertyPrivate(asUINT prop) const = 0;
 	//! \brief Returns the offset of the property in the memory layout.
 	//! \param[in] prop The property index.
 	//! \return The offset of the property in the memory layout.
@@ -2856,6 +2860,9 @@ public:
 	//! \brief Returns true if the class method is read-only
 	//! \return True if the class method is read-only
 	virtual bool             IsReadOnly() const = 0;
+	//! \brief Returns true if the class method is private
+	//! \return True if the class method is private
+	virtual bool             IsPrivate() const = 0;
 	//! \}
 
 	//! \name Parameter and return types

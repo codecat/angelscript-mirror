@@ -249,6 +249,12 @@ bool asCScriptFunction::IsReadOnly() const
 	return isReadOnly;
 }
 
+// interface
+bool asCScriptFunction::IsPrivate() const
+{
+	return isPrivate;
+}
+
 // internal
 int asCScriptFunction::GetSpaceNeededForArguments()
 {

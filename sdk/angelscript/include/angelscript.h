@@ -832,6 +832,7 @@ public:
 	virtual int         GetPropertyCount() const = 0;
 	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
 	virtual const char *GetPropertyName(asUINT prop) const = 0;
+	virtual bool        IsPropertyPrivate(asUINT prop) const = 0;
 	virtual int         GetPropertyOffset(asUINT prop) const = 0;
 
 	// Behaviours
@@ -862,6 +863,7 @@ public:
 	virtual bool             IsClassMethod() const = 0;
 	virtual bool             IsInterfaceMethod() const = 0;
 	virtual bool             IsReadOnly() const = 0;
+	virtual bool             IsPrivate() const = 0;
 
 	virtual int              GetParamCount() const = 0;
 	virtual int              GetParamTypeId(int index, asDWORD *flags = 0) const = 0;

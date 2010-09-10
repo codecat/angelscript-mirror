@@ -404,6 +404,14 @@ asIObjectType *asCObjectType::GetBaseType() const
 	return derivedFrom; 
 }
 
+bool asCObjectType::IsPropertyPrivate(asUINT prop) const
+{
+	if( prop >= properties.GetLength() )
+		return false;
+
+	return properties[prop]->isPrivate;
+}
+
 int asCObjectType::GetPropertyOffset(asUINT prop) const
 {
 	if( prop >= properties.GetLength() )

@@ -103,6 +103,7 @@ public:
 	bool                 IsClassMethod() const;
 	bool                 IsInterfaceMethod() const;
 	bool                 IsReadOnly() const;
+	bool                 IsPrivate() const;
 
 	int                  GetParamCount() const;
 	int                  GetParamTypeId(int index, asDWORD *flags = 0) const;

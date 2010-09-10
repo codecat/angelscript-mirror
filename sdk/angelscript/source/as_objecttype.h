@@ -174,6 +174,7 @@ public:
 	int         GetPropertyCount() const;
 	int         GetPropertyTypeId(asUINT prop) const;
 	const char *GetPropertyName(asUINT prop) const;
+	bool        IsPropertyPrivate(asUINT prop) const;
 	int         GetPropertyOffset(asUINT prop) const;
 
 //===========================================
