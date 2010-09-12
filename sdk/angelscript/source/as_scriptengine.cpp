@@ -47,7 +47,6 @@
 #include "as_texts.h"
 #include "as_module.h"
 #include "as_callfunc.h"
-#include "as_arrayobject.h"
 #include "as_generic.h"
 #include "as_scriptobject.h"
 #include "as_compiler.h"
@@ -414,7 +413,6 @@ asCScriptEngine::asCScriptEngine()
 
 	defaultArrayObjectType = 0;
 
-	RegisterArrayObject(this);
 	RegisterScriptObject(this);
 	RegisterScriptFunction(this);
 	RegisterObjectTypeGCBehaviours(this);
@@ -1283,17 +1281,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 		currentGroup->objTypes.PushLast(type);
 
-		if( defaultArrayObjectType == 0 )
-		{
-			// TODO: The default array object type should be defined by the application
-			// The default array object type is registered by the engine itself
-			defaultArrayObjectType = type;
-			type->AddRef();
-		}
-		else
-		{
-			registeredObjTypes.PushLast(type);
-		}
+		registeredObjTypes.PushLast(type);
 	}
 	else
 	{
@@ -2299,6 +2287,32 @@ int asCScriptEngine::ConfigError(int err)
 	return err;
 }
 
+// interface
+int asCScriptEngine::RegisterDefaultArrayType(const char *type)
+{
+	asCBuilder bld(this, 0);
+	asCDataType dt;
+	int r = bld.ParseDataType(type, &dt);
+	if( r < 0 ) return r;
+
+	if( dt.GetObjectType() == 0 ||
+		!(dt.GetObjectType()->GetFlags() & asOBJ_TEMPLATE) )
+		return asINVALID_TYPE;
+
+	defaultArrayObjectType = dt.GetObjectType();
+	defaultArrayObjectType->AddRef();
+
+	return 0;
+}
+
+// interface
+int asCScriptEngine::GetDefaultArrayTypeId() const
+{
+	if( defaultArrayObjectType )
+		return GetTypeIdFromDataType(asCDataType::CreateObject(defaultArrayObjectType, false));
+
+	return asINVALID_TYPE;
+}
 
 // interface
 int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPtr &funcPointer, asDWORD callConv)
@@ -2727,8 +2741,6 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// A handle can potentially hold derived types, which may be garbage collected so to be safe we have to set the GC flag.
 	if( ot->templateSubType.IsObjectHandle() || (ot->templateSubType.GetObjectType() && (ot->templateSubType.GetObjectType()->flags & asOBJ_GC)) )
 		ot->flags |= asOBJ_GC;
-	else if( ot->name == defaultArrayObjectType->name )
-		ot->flags &= ~asOBJ_GC;
 
 	templateTypes.PushLast(ot);
 
@@ -3300,7 +3312,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt) const
 	if( dt.GetObjectType() )
 	{
 		if( dt.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT ) typeId |= asTYPEID_SCRIPTOBJECT;
-		else if( dt.GetObjectType()->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_SCRIPTARRAY; // TODO: Should be asTYPEID_TEMPLATE
+		else if( dt.GetObjectType()->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_TEMPLATE; 
 		else if( dt.GetObjectType()->flags & asOBJ_ENUM ); // TODO: Should we have a specific bit for this?
 		else typeId |= asTYPEID_APPOBJECT;
 	}

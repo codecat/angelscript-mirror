@@ -2730,7 +2730,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			{
 				int r, c;
 				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-				WriteError(file->name.AddressOf(), TXT_TOO_MANY_ARRAY_DIMENSIONS, r, c);
+				WriteError(file->name.AddressOf(), TXT_NO_DEFAULT_ARRAY_TYPE, r, c);
 				break;
 			}
 		}

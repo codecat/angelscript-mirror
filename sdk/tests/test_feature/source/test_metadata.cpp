@@ -35,7 +35,7 @@ const char *script =
 // interface declarations can have meta data
 "[ myintf ] interface MyIntf {} \n"
 // arrays must still work
-"int[] array = {1, 2, 3}; \n"
+"int[] arr = {1, 2, 3}; \n"
 "int[] arrayfunc(int[] a) { a.resize(1); return a; } \n"
 // directives in comments should be ignored
 "/* \n"
@@ -56,6 +56,7 @@ bool Test()
 	// TODO: Preprocessor directives should be alone on the line
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 

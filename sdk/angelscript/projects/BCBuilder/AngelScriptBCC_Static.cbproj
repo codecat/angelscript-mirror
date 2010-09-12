@@ -439,10 +439,6 @@
 				<VirtualFolder>{C4677389-340C-45A6-AC4C-F440F64B74A8}</VirtualFolder>
 				<BuildOrder>43</BuildOrder>
 			</None>
-			<None Include="..\..\source\as_arrayobject.h">
-				<VirtualFolder>{C4677389-340C-45A6-AC4C-F440F64B74A8}</VirtualFolder>
-				<BuildOrder>40</BuildOrder>
-			</None>
 			<None Include="..\..\source\as_compiler.h">
 				<VirtualFolder>{C4677389-340C-45A6-AC4C-F440F64B74A8}</VirtualFolder>
 				<BuildOrder>45</BuildOrder>
@@ -477,11 +473,6 @@
 				<VirtualFolder>{C4677389-340C-45A6-AC4C-F440F64B74A8}</VirtualFolder>
 				<BuildOrder>77</BuildOrder>
 			</None>
-			<CppCompile Include="..\..\source\as_arrayobject.cpp">
-				<VirtualFolder>{1D68C792-68AA-47C5-9F9E-C72C393D9819}</VirtualFolder>
-				<BuildOrder>5</BuildOrder>
-				<BuildOrder>25</BuildOrder>
-			</CppCompile>
 			<CppCompile Include="..\..\source\as_callfunc_xenon.cpp">
 				<VirtualFolder>{1D68C792-68AA-47C5-9F9E-C72C393D9819}</VirtualFolder>
 				<BuildOrder>44</BuildOrder>

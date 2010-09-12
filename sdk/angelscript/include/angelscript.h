@@ -65,7 +65,6 @@ class asIScriptModule;
 class asIScriptContext;
 class asIScriptGeneric;
 class asIScriptObject;
-class asIScriptArray;
 class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
@@ -274,7 +273,7 @@ enum asETypeIdFlags
 	asTYPEID_MASK_OBJECT    = 0x1C000000,
 	asTYPEID_APPOBJECT      = 0x04000000,
 	asTYPEID_SCRIPTOBJECT   = 0x08000000,
-	asTYPEID_SCRIPTARRAY    = 0x10000000,
+	asTYPEID_TEMPLATE       = 0x10000000,
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
 
@@ -499,6 +498,10 @@ public:
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv) = 0;
 	virtual int GetStringFactoryReturnTypeId() const = 0;
+
+	// Default array type
+	virtual int RegisterDefaultArrayType(const char *type) = 0;
+	virtual int GetDefaultArrayTypeId() const = 0;
 
 	// Enums
 	virtual int         RegisterEnum(const char *type) = 0;
@@ -769,29 +772,6 @@ public:
 
 protected:
 	virtual ~asIScriptObject() {}
-};
-
-class asIScriptArray
-{
-public:
-	virtual asIScriptEngine *GetEngine() const = 0;
-
-	// Memory management
-	virtual int AddRef() = 0;
-	virtual int Release() = 0;
-
-	// Array type
-	virtual int GetArrayTypeId() = 0;
-
-	// Elements
-	virtual int    GetElementTypeId() = 0;
-	virtual asUINT GetElementCount() = 0;
-	virtual void * GetElementPointer(asUINT index) = 0;
-	virtual void   Resize(asUINT size) = 0;
-	virtual int    CopyFrom(asIScriptArray *other) = 0;
-
-protected:
-	virtual ~asIScriptArray() {}
 };
 
 class asIObjectType

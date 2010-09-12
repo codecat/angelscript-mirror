@@ -29,8 +29,6 @@
 		</VirtualTargets>
 		<Unit filename="..\..\include\angelscript.h" />
 		<Unit filename="..\..\source\as_array.h" />
-		<Unit filename="..\..\source\as_arrayobject.cpp" />
-		<Unit filename="..\..\source\as_arrayobject.h" />
 		<Unit filename="..\..\source\as_atomic.cpp" />
 		<Unit filename="..\..\source\as_atomic.h" />
 		<Unit filename="..\..\source\as_builder.cpp" />

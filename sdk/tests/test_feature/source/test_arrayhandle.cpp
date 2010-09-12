@@ -52,7 +52,7 @@ bool Test()
 	int r;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
+	RegisterScriptArray(engine, true);
 	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("double atof(const string &in)",asFUNCTION(StringToDouble),asCALL_GENERIC);
@@ -109,6 +109,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 

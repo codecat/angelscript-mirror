@@ -7,7 +7,6 @@ CXXFLAGS = -ggdb
 SRCDIR = ../../source
 OBJDIR = obj
 SRCNAMES = \
-  as_arrayobject.cpp \
   as_atomic.cpp \
   as_builder.cpp \
   as_bytecode.cpp \

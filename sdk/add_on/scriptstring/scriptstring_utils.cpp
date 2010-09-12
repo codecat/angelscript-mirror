@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "scriptstring.h"
+#include "../scriptarray/scriptarray.h"
 #include <string.h> // strstr
 
 
@@ -235,14 +236,14 @@ void StringFindLastNotOf0_Generic(asIScriptGeneric *gen)
 // for a specified delimiter. Example:
 //
 // string str = "A|B||D";
-// string@[]@ array = split(str, "|");
+// array<string@>@ array = split(str, "|");
 //
 // The resulting array has the following elements:
 //
 // {"A", "B", "", "D"}
 //
 // AngelScript signature:
-// string@[]@ split(const string &in str, const string &in delim)
+// array<string@>@ split(const string &in str, const string &in delim)
 void StringSplit_Generic(asIScriptGeneric *gen)
 {
     // Obtain a pointer to the engine
@@ -250,13 +251,14 @@ void StringSplit_Generic(asIScriptGeneric *gen)
     asIScriptEngine *engine = ctx->GetEngine();
 
     // TODO: This should only be done once
-    int stringArrayType = engine->GetTypeIdByDecl("string@[]");
+	// TODO: This assumes that CScriptArray was already registered
+	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string@>"));
 
     // Create the array object
-    asIScriptArray *array = (asIScriptArray*)engine->CreateScriptObject(stringArrayType);
+    CScriptArray *array = new CScriptArray(0, arrayType);
 
     // Get the arguments
-    CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
+    CScriptString *str   = *(CScriptString**)gen->GetAddressOfArg(0);
     CScriptString *delim = *(CScriptString**)gen->GetAddressOfArg(1);
 
     // Find the existence of the delimiter in the input string
@@ -266,8 +268,8 @@ void StringSplit_Generic(asIScriptGeneric *gen)
         // Add the part to the array
         CScriptString *part = new CScriptString();
         part->buffer.assign(&str->buffer[prev], pos-prev);
-        array->Resize(array->GetElementCount()+1);
-        *(CScriptString**)array->GetElementPointer(count) = part;
+        array->Resize(array->GetSize()+1);
+        *(CScriptString**)array->At(count) = part;
 
         // Find the next part
         count++;
@@ -277,11 +279,11 @@ void StringSplit_Generic(asIScriptGeneric *gen)
     // Add the remaining part
     CScriptString *part = new CScriptString();
     part->buffer.assign(&str->buffer[prev]);
-    array->Resize(array->GetElementCount()+1);
-    *(CScriptString**)array->GetElementPointer(count) = part;
+    array->Resize(array->GetSize()+1);
+    *(CScriptString**)array->At(count) = part;
 
     // Return the array by handle
-    *(asIScriptArray**)gen->GetAddressOfReturnLocation() = array;
+    *(CScriptArray**)gen->GetAddressOfReturnLocation() = array;
 }
 
 
@@ -290,7 +292,7 @@ void StringSplit_Generic(asIScriptGeneric *gen)
 // delimiter and concatenates the array elements into one delimited string.
 // Example:
 //
-// string@[] array = {"A", "B", "", "D"};
+// array<string@> array = {"A", "B", "", "D"};
 // string str = join(array, "|");
 //
 // The resulting string is:
@@ -298,25 +300,25 @@ void StringSplit_Generic(asIScriptGeneric *gen)
 // "A|B||D"
 //
 // AngelScript signature:
-// string@ join(const string@[] &in array, const string &in delim)
+// string@ join(const array<string@> &in array, const string &in delim)
 void StringJoin_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-    asIScriptArray *array = *(asIScriptArray**)gen->GetAddressOfArg(0);
+    CScriptArray  *array = *(CScriptArray**)gen->GetAddressOfArg(0);
     CScriptString *delim = *(CScriptString**)gen->GetAddressOfArg(1);
 
     // Create the new string
     CScriptString *str = new CScriptString();
     int n;
-    for( n = 0; n < (int)array->GetElementCount() - 1; n++ )
+    for( n = 0; n < (int)array->GetSize() - 1; n++ )
     {
-        CScriptString *part = *(CScriptString**)array->GetElementPointer(n);
+        CScriptString *part = *(CScriptString**)array->At(n);
         str->buffer += part->buffer;
         str->buffer += delim->buffer;
     }
 
     // Add the last part
-    CScriptString *part = *(CScriptString**)array->GetElementPointer(n);
+    CScriptString *part = *(CScriptString**)array->At(n);
     str->buffer += part->buffer;
 
     // Return the string
@@ -365,8 +367,8 @@ void RegisterScriptStringUtils(asIScriptEngine *engine)
     r = engine->RegisterGlobalFunction("int findLastOf(const string &in, const string &in, int)", asFUNCTION(StringFindLastOf_Generic), asCALL_GENERIC); assert(r >= 0);
     r = engine->RegisterGlobalFunction("int findLastNotOf(const string &in, const string &in)", asFUNCTION(StringFindLastNotOf0_Generic), asCALL_GENERIC); assert(r >= 0);
     r = engine->RegisterGlobalFunction("int findLastNotOf(const string &in, const string &in, int)", asFUNCTION(StringFindLastNotOf_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("string@[]@ split(const string &in, const string &in)", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("string@ join(const string@[] &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterGlobalFunction("array<string@>@ split(const string &in, const string &in)", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterGlobalFunction("string@ join(const array<string@> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
 }
 
 END_AS_NAMESPACE

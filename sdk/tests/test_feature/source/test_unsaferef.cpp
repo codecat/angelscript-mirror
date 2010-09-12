@@ -8,9 +8,9 @@ static const char * const TESTNAME = "TestUnsafeRef";
 static const char *script1 =
 "void Test()                            \n"
 "{                                      \n"
-"   int[] array = {0};                  \n"
-"   TestRefInt(array[0]);               \n"
-"   Assert(array[0] == 23);             \n"
+"   int[] arr = {0};                    \n"
+"   TestRefInt(arr[0]);                 \n"
+"   Assert(arr[0] == 23);               \n"
 "   int a = 0;                          \n"
 "   TestRefInt(a);                      \n"
 "   Assert(a == 23);                    \n"
@@ -40,7 +40,7 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-
+	RegisterScriptArray(engine, true);
 	RegisterScriptString(engine);
 
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );

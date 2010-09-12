@@ -119,6 +119,10 @@ public:
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv);
 	virtual int GetStringFactoryReturnTypeId() const;
 
+	// Default array type
+	virtual int RegisterDefaultArrayType(const char *type);
+	virtual int GetDefaultArrayTypeId() const;
+
 	// Enums
 	virtual int         RegisterEnum(const char *type);
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value);

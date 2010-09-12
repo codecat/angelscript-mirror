@@ -310,10 +310,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\source\as_arrayobject.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\as_atomic.cpp"
 				>
 			</File>
@@ -511,10 +507,6 @@
 			</File>
 			<File
 				RelativePath="..\..\source\as_array.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\as_arrayobject.h"
 				>
 			</File>
 			<File

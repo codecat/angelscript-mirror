@@ -100,6 +100,7 @@ bool Test()
 
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	RegisterScriptArray(engine, true);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
@@ -115,6 +116,7 @@ bool Test()
 	// test 2
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	RegisterScriptArray(engine, true);
 
 	bout.buffer = "";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -808,10 +810,10 @@ bool Test()
 		// Entity doesn't have a default factory, this is supposed to fail
 		const char *script = 
 			"void func() { \n"
-			"EntityArray array; \n"
-			"Entity @temp = @array[0]; \n"
+			"EntityArray arr; \n"
+			"Entity @temp = @arr[0]; \n"
 			"DeleteEntity(temp); \n"
-			"DeleteEntity(array[0]); \n"
+			"DeleteEntity(arr[0]); \n"
 			"}; \n";
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
@@ -869,12 +871,13 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 
 		const char *script = 
 			"void my_method() \n"
 			"{ \n"
-			"    int[] array; \n"
-			"    if(array[unexisting_var-1]==1) \n"
+			"    int[] arr; \n"
+			"    if(arr[unexisting_var-1]==1) \n"
 			"    { \n"
 			"    } \n"
 			"} \n";
@@ -887,7 +890,7 @@ bool Test()
 			fail = true;
 
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void my_method()\n"
-		                   "script (4, 14) : Error   : 'unexisting_var' is not declared\n" )
+		                   "script (4, 12) : Error   : 'unexisting_var' is not declared\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			fail = true;
@@ -949,6 +952,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 		RegisterScriptString(engine);
 
 		bout.buffer = "";
@@ -1139,6 +1143,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 
@@ -1178,6 +1183,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 
 		bout.buffer = "";
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -1268,6 +1274,7 @@ bool Test3()
 	int r;
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterScriptArray(engine, true);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	const char *script =

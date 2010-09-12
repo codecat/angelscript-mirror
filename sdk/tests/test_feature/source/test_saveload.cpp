@@ -159,7 +159,7 @@ bool fail = false;
 int number = 0;
 int number2 = 0;
 COutStream out;
-asIScriptArray* GlobalCharArray = 0;
+CScriptArray* GlobalCharArray = 0;
 
 void ArrayToHexStr(asIScriptGeneric *gen)
 {
@@ -169,10 +169,11 @@ asIScriptEngine *ConfigureEngine(int version)
 {
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	RegisterScriptArray(engine, true);
 	RegisterScriptString(engine);
 
 	// Register a property with the built-in array type
-	GlobalCharArray = (asIScriptArray*)engine->CreateScriptObject(engine->GetTypeIdByDecl("uint8[]"));
+	GlobalCharArray = (CScriptArray*)engine->CreateScriptObject(engine->GetTypeIdByDecl("uint8[]"));
 	int r = engine->RegisterGlobalProperty("uint8[] GlobalCharArray", GlobalCharArray); assert( r >= 0 );
 
 	// Register function that use the built-in array type
@@ -330,7 +331,7 @@ bool Test()
 	mod->SaveByteCode(&stream);
 
 	// TODO: These should eventually be equal, once the bytecode is fully platform independent
-	if( (sizeof(void*) == 4 && stream.buffer.size() != 1443) /* ||
+	if( (sizeof(void*) == 4 && stream.buffer.size() != 1454) /* ||
 		(sizeof(void*) == 8 && stream.buffer.size() != 1616) */ ) 
 	{
 		// Originally this was 3213 (on 32bit)
@@ -412,6 +413,7 @@ bool Test()
 	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine, true);
 		int r = engine->RegisterObjectType("float[]", sizeof(vector<float>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructFloatArray, (vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructFloatArray, (int, vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
@@ -439,6 +441,7 @@ bool Test()
 	// Built-in array types must be able to be declared even though the complete script structure hasn't been loaded yet
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterScriptArray(engine, true);
 	RegisterScriptString(engine);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script4, strlen(script4));
@@ -466,6 +469,7 @@ bool Test()
 		// Now load the bytecode into a fresh engine and test the script again
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 		RegisterScriptString(engine);
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->LoadByteCode(&stream4);
@@ -477,6 +481,7 @@ bool Test()
 	//----------------
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterScriptArray(engine, true);
 	RegisterScriptString(engine);
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
@@ -521,6 +526,7 @@ bool Test()
 		// Now load the bytecode into a fresh engine and test the script again
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 		RegisterScriptString(engine);
 		r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
@@ -594,7 +600,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		const char *script = 
@@ -614,7 +620,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -637,7 +643,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, script);
@@ -648,7 +654,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
@@ -672,7 +678,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, script);
@@ -683,7 +689,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
@@ -701,7 +707,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, script);
@@ -712,7 +718,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
@@ -833,6 +839,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, script);
@@ -847,6 +854,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
@@ -897,6 +905,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 
 		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, script);
@@ -909,6 +918,7 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 
 		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);

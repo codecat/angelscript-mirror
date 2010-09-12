@@ -50,7 +50,7 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-
+	RegisterScriptArray(engine, true);
 	RegisterStdString(engine);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void print(int)", asFUNCTION(print_generic), asCALL_GENERIC);

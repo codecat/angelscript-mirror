@@ -47,7 +47,6 @@ DELETER = rm -f
 COPIER = cp -a
 
 SRCNAMES = \
-  as_arrayobject.cpp \
   as_atomic.cpp \
   as_builder.cpp  \
   as_bytecode.cpp \

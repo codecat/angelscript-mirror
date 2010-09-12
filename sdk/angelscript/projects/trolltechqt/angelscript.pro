@@ -15,7 +15,6 @@ win32: LIBS += -lwinmm
 
 HEADERS += ../../include/angelscript.h \
            ../../source/as_array.h \
-           ../../source/as_arrayobject.h \
            ../../source/as_builder.h \
            ../../source/as_bytecode.h \
            ../../source/as_bytecodedef.h \
@@ -49,8 +48,7 @@ HEADERS += ../../include/angelscript.h \
            ../../source/as_typeinfo.h \
            ../../source/as_variablescope.h
 
-SOURCES += ../../source/as_arrayobject.cpp \
-           ../../source/as_atomic.cpp \
+SOURCES += ../../source/as_atomic.cpp \
            ../../source/as_builder.cpp \
            ../../source/as_bytecode.cpp \
            ../../source/as_callfunc.cpp \

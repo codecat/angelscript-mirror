@@ -71,7 +71,6 @@ class asIScriptModule;
 class asIScriptContext;
 class asIScriptGeneric;
 class asIScriptObject;
-class asIScriptArray;
 class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
@@ -421,8 +420,8 @@ enum asETypeIdFlags
 	asTYPEID_APPOBJECT      = 0x04000000,
 	//! The bit that shows if the type is a script class
 	asTYPEID_SCRIPTOBJECT   = 0x08000000,
-	//! The bit that shows if the type is a script array
-	asTYPEID_SCRIPTARRAY    = 0x10000000,
+	//! The bit that shows if the type is a template type
+	asTYPEID_TEMPLATE       = 0x10000000,
 	//! The mask for the type id sequence number
 	asTYPEID_MASK_SEQNBR    = 0x03FFFFFF
 };
@@ -1053,6 +1052,22 @@ public:
     //! \return The type id of the type that the string type returns, or a negative value on error.
     //! \retval asNO_FUNCTION The string factory has not been registered.
 	virtual int GetStringFactoryReturnTypeId() const = 0;
+	//! \}
+
+	// Default array type
+	//! \name Default array type
+	//! \{
+
+	//! \brief Registers the type that should be used as the default array
+	//! 
+	//! \param[in] type The name of the template type, e.g. array<T>
+	//! \return A negative value on error.
+	//! \retval asINVALID_TYPE The type is not a template type
+	virtual int RegisterDefaultArrayType(const char *type) = 0;
+	//! \brief Returns the type id of the registered type
+	//! \return The type id, or a negative value on error.
+	//! \retval asINVALID_TYPE The default array type hasn't been registered.
+	virtual int GetDefaultArrayTypeId() const = 0;
 	//! \}
 
 	// Enums
@@ -2529,68 +2544,6 @@ protected:
 };
 
 
-//! \brief The interface for a script array object
-class asIScriptArray
-{
-public:
-	//! \brief Return the script engine.
-	//! \return The script engine.
-	virtual asIScriptEngine *GetEngine() const = 0;
-
-	// Memory management
-	//! \brief Increase reference counter.
-    //!
-    //! \return The number of references to this object.
-    //!
-    //! Call this method when storing an additional reference to the object.
-	virtual int AddRef() = 0;
-	//! \brief Decrease reference counter.
-    //!
-    //! \return The number of references to this object.
-    //!
-    //! Call this method when you will no longer use the references that you own.
-	virtual int Release() = 0;
-
-	// Array type
-	//! \brief Returns the type id of the array object.
-    //! \return The type id of the array object.
-	virtual int GetArrayTypeId() = 0;
-
-	// Elements
-	//! \brief Returns the type id of the contained elements.
-    //! \return The type id of the array elements.
-	virtual int    GetElementTypeId() = 0;
-
-    //! \brief Returns the size of the array.
-    //! \return The number of elements in the array.
-	virtual asUINT GetElementCount() = 0;
-
-    //! \brief Returns a pointer to the element referenced by index.
-    //! \param[in] index The element index.
-    //! \return A pointer to the element value.
-    //!
-    //! The method returns a pointer to the memory location for the element. Use the 
-    //! type id for the element to determine the content of the pointer, and how to handle it.
-	virtual void * GetElementPointer(asUINT index) = 0;
-
-    //! \brief Resizes the array.
-    //! \param[in] size The new size of the array.
-    //!
-    //! This method allows the application to resize the array.
-	virtual void   Resize(asUINT size) = 0;
-
-    //! \brief Copies the elements from another array, overwriting the current content.
-    //! \param[in] other A pointer to the source array.
-    //! \return A negative value on error.
-    //! \retval asINVALID_ARG  The argument is null.
-    //! \retval asINVALID_TYPE The other array is of different type.
-    //! 
-    //! This method copies the contents of the other object to this one.
-	virtual int    CopyFrom(asIScriptArray *other) = 0;
-
-protected:
-	virtual ~asIScriptArray() {}
-};
 
 //! \brief The interface for an object type
 class asIObjectType

@@ -72,7 +72,7 @@ static const char *correct =
 "  Module2:void Test3():10,3\n"
 //" int c = 3\n"
 "--- exception ---\n"
-"desc: Out of range\n"
+"desc: Index out of bounds\n"
 "func: void Test3()\n"
 "modl: Module2\n"
 "sect: :2\n"
@@ -85,7 +85,7 @@ static const char *correct =
 "Module2:void Test2():5,2\n"
 " int b = 2\n"
 "--- exception ---\n"
-"desc: Out of range\n"
+"desc: Index out of bounds\n"
 "func: void Test3()\n"
 "modl: Module2\n"
 "sect: :2\n"
@@ -198,6 +198,7 @@ bool Test()
 	int number = 0;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 	RegisterScriptString_Generic(engine);
 
 	// Test GetTypeIdByDecl

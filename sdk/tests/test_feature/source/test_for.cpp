@@ -43,7 +43,7 @@ bool Test()
 	COutStream out;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	
+	RegisterScriptArray(engine, true);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString_Generic(engine);

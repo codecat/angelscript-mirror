@@ -7,6 +7,9 @@
 
 BEGIN_AS_NAMESPACE
 
+static void RegisterScriptArray_Native(asIScriptEngine *engine);
+static void RegisterScriptArray_Generic(asIScriptEngine *engine);
+
 struct SArrayBuffer
 {
 	asDWORD numElements;
@@ -107,15 +110,20 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 }
 
 // Registers the template array type
-void RegisterScriptArray(asIScriptEngine *engine)
+void RegisterScriptArray(asIScriptEngine *engine, bool defaultArray)
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0 )
 		RegisterScriptArray_Native(engine);
 	else
 		RegisterScriptArray_Generic(engine);
+
+	if( defaultArray )
+	{
+		int r = engine->RegisterDefaultArrayType("array<T>"); assert( r >= 0 );
+	}
 }
 
-void RegisterScriptArray_Native(asIScriptEngine *engine)
+static void RegisterScriptArray_Native(asIScriptEngine *engine)
 {
 	int r;
 	
@@ -697,7 +705,7 @@ static void ScriptArrayReleaseAllHandles_Generic(asIScriptGeneric *gen)
 	self->ReleaseAllHandles(engine);
 }
 
-void RegisterScriptArray_Generic(asIScriptEngine *engine)
+static void RegisterScriptArray_Generic(asIScriptEngine *engine)
 {
 	int r;
 	

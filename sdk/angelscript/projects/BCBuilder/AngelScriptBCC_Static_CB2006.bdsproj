@@ -298,7 +298,6 @@
       </project>
       <FILELIST>
         <FILE FILENAME="AngelScriptBCC_Static_CB2006.bpf" CONTAINERID="BPF" LOCALCOMMAND="" UNITNAME="AngelScriptBCC_Static_CB2006" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="..\..\source\as_arrayobject.cpp" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="as_arrayobject.cpp" FORMNAME="" DESIGNCLASS=""/>
         <FILE FILENAME="..\..\source\as_atomic.cpp" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="as_atomic.cpp" FORMNAME="" DESIGNCLASS=""/>
         <FILE FILENAME="..\..\source\as_builder.cpp" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="as_builder.cpp" FORMNAME="" DESIGNCLASS=""/>
         <FILE FILENAME="..\..\source\as_bytecode.cpp" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="as_bytecode.cpp" FORMNAME="" DESIGNCLASS=""/>

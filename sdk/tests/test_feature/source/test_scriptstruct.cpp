@@ -231,8 +231,8 @@ bool Test()
 	asIScriptModule *mod = 0;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	RegisterScriptString_Generic(engine);
+	RegisterScriptArray(engine, true);
+	RegisterScriptString(engine);
 
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 

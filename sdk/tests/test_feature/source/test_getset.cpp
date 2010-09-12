@@ -25,7 +25,7 @@ bool Test()
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-
+	RegisterScriptArray(engine, true);
 	RegisterScriptString(engine);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
@@ -615,7 +615,7 @@ bool Test()
 	}
 	if( bout.buffer != "script (5, 1) : Info    : Compiling void func()\n"
 	                   "script (8, 14) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
-					   "script (8, 14) : Info    : int& _builtin_array_::opIndex(uint)\n" )
+					   "script (8, 14) : Info    : int& array::opIndex(uint)\n" )
 	{
 		printf(bout.buffer.c_str());
 		fail = true;
@@ -858,6 +858,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		const char *script = 
@@ -920,6 +921,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
 
 		const char *script = 
 			"class sound \n"

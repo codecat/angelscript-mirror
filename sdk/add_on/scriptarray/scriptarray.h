@@ -57,9 +57,7 @@ protected:
 	void Destruct(SArrayBuffer *buf, asUINT start, asUINT end);
 };
 
-void RegisterScriptArray(asIScriptEngine *engine);
-void RegisterScriptArray_Native(asIScriptEngine *engine);
-void RegisterScriptArray_Generic(asIScriptEngine *engine);
+void RegisterScriptArray(asIScriptEngine *engine, bool defaultArray);
 
 END_AS_NAMESPACE
 

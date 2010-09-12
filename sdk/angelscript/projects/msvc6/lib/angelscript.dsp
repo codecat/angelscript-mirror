@@ -110,10 +110,6 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\..\source\as_arrayobject.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\source\as_atomic.cpp
 # End Source File
 # Begin Source File
@@ -263,10 +259,6 @@ SOURCE=..\..\..\source\as_variablescope.cpp
 # Begin Source File
 
 SOURCE=..\..\..\source\as_array.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\source\as_arrayobject.h
 # End Source File
 # Begin Source File
 

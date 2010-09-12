@@ -35,6 +35,7 @@ bool Test1()
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterScriptArray(engine, true);
 	RegisterScriptAny(engine);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);

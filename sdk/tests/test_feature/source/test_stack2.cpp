@@ -147,7 +147,7 @@ bool Test()
 	bool fail = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
+	RegisterScriptArray(engine, true);
 	RegisterStdString(engine);
 
 	engine->RegisterGlobalFunction("int a_int()", asFUNCTION(a_int), asCALL_CDECL);

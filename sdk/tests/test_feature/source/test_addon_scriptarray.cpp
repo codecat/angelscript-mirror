@@ -114,7 +114,7 @@ static const char *script5 =
 "   Assert(c.length() == 4);                     \n"
 "   Assert(c[2].length() == 2);                  \n"
 "   Assert(c[2][1] == 4);                        \n"
-"   const int[] d = {0,1,2};                     \n"
+"   const array<int> d = {0,1,2};                \n"
 "   Assert(d.length() == 3);                     \n"
 "   Assert(d[2] == 2);                           \n"
 "}                                               \n";
@@ -175,7 +175,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	RegisterScriptString(engine);
-	RegisterScriptArray(engine);
+	RegisterScriptArray(engine, false);
 
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
@@ -351,7 +351,7 @@ bool Test()
 	// Test too large arrays
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "array<int> a; a.resize(0xFFFFFFFF);", 0, ctx);
@@ -381,7 +381,7 @@ bool Test()
 	// Test garbage collect with script class that holds array member
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 
 		asIScriptModule *mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
 
@@ -406,7 +406,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		RegisterScriptArray(engine);
+		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		asIScriptModule *mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
@@ -444,7 +444,7 @@ bool Test()
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	 
 		// Register array class
-		RegisterScriptArray_Generic(engine);
+		RegisterScriptArray(engine, false);
 	 
 		// Compile
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -473,7 +473,7 @@ bool Test()
 		else
 		{
 			asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-			RegisterScriptArray(engine);
+			RegisterScriptArray(engine, false);
 			RegisterScriptString(engine);
 		
 			r = engine->RegisterGlobalFunction("array<string@>@ CreateArrayOfStrings()", asFUNCTION(CreateArrayOfStrings), asCALL_CDECL); assert( r >= 0 );
@@ -516,7 +516,7 @@ bool Test2()
 	"sum(As);      \n";
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptArray(engine);
+	RegisterScriptArray(engine, false);
 	asIScriptModule *module = engine->GetModule("module", asGM_ALWAYS_CREATE);
 
 	module->AddScriptSection("script", script);

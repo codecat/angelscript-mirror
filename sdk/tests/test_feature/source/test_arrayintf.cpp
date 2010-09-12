@@ -19,26 +19,26 @@ static const char *script1 =
 "}                            \n";
 
 
-asIScriptArray *floatArray = 0;
-asIScriptArray *stringArray = 0;
+CScriptArray *floatArray = 0;
+CScriptArray *stringArray = 0;
 
 bool Test()
 {
 	bool fail = false;
 	int r;
+	COutStream out;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	RegisterScriptString_Generic(engine);
+	RegisterScriptArray(engine, true);
+	RegisterScriptString(engine);
 
 	engine->RegisterGlobalProperty("float[] @floatArray", &floatArray);
 	engine->RegisterGlobalProperty("string[] @stringArray", &stringArray);
 
-	COutStream out;
-
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 ) fail = true;
 
@@ -47,7 +47,7 @@ bool Test()
 		fail = true;
 	else
 	{
-		if( (floatArray->GetArrayTypeId() & asTYPEID_MASK_OBJECT) != asTYPEID_SCRIPTARRAY )
+		if( (floatArray->GetArrayTypeId() & asTYPEID_MASK_OBJECT) != asTYPEID_TEMPLATE )
 			fail = true;
 
 		if( floatArray->GetArrayTypeId() != engine->GetTypeIdByDecl("float[]") )
@@ -56,13 +56,13 @@ bool Test()
 		if( floatArray->GetElementTypeId() != engine->GetTypeIdByDecl("float") )
 			fail = true;
 
-		if( floatArray->GetElementCount() != 2 )
+		if( floatArray->GetSize() != 2 )
 			fail = true;
 
-		if( *(float*)floatArray->GetElementPointer(0) != 1.1f )
+		if( *(float*)floatArray->At(0) != 1.1f )
 			fail = true;
 
-		if( *(float*)floatArray->GetElementPointer(1) != 1.2f )
+		if( *(float*)floatArray->At(1) != 1.2f )
 			fail = true;
 
 		if( stringArray->GetArrayTypeId() != engine->GetTypeIdByDecl("string[]") )
@@ -71,10 +71,10 @@ bool Test()
 		if( stringArray->GetElementTypeId() != engine->GetTypeIdByDecl("string") )
 			fail = true;
 
-		if( stringArray->GetElementCount() != 1 )
+		if( stringArray->GetSize() != 1 )
 			fail = true;
 
-		if( ((CScriptString*)stringArray->GetElementPointer(0))->buffer != "test" )
+		if( ((CScriptString*)stringArray->At(0))->buffer != "test" )
 			fail = true;
 
 		stringArray->Resize(2);

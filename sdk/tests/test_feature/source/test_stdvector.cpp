@@ -139,7 +139,7 @@ bool Test()
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-
+	RegisterScriptArray(engine, true);
 	RegisterStdString(engine);
 	RegisterVector<char>("int8[]", "int8", engine);
 	RegisterVector<int>("int[]", "int", engine);
@@ -194,8 +194,9 @@ bool Test()
 		}
 
 		if( bout.buffer != "ExecuteString (1, 17) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
-		                   "ExecuteString (1, 17) : Info    : MyStruct& _builtin_array_::opIndex(int)\n" )
+		                   "ExecuteString (1, 17) : Info    : MyStruct& array::opIndex(int)\n" )
 		{
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}

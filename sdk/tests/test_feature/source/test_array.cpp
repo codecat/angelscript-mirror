@@ -135,7 +135,7 @@ static const char *script7 =
 "{                                               \n"
 "  TestC t;                                      \n"
 "  Assert(count == 1);                           \n"
-"  TestC[] array(5);                             \n"
+"  TestC[] arr(5);                               \n"
 "  Assert(count == 6);                           \n"
 "}                                               \n";
 
@@ -151,6 +151,7 @@ bool Test()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	RegisterScriptArray(engine, true);
 
 	RegisterScriptString_Generic(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -300,6 +301,7 @@ bool Test()
 	{
 		// Create the script engine
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine, true);
 
 		// Compile
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -325,6 +327,7 @@ bool Test()
 		// Create the script engine
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptArray(engine, true);
 
 		r = ExecuteString(engine, "int[][] a(2, int[](2)); assert(a[1].length() == 2);\n");
 		if( r != asEXECUTION_FINISHED )
@@ -363,6 +366,7 @@ bool Test2()
 	"sum(As);      \n";
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 
 	asIScriptModule *module = engine->GetModule("module", asGM_ALWAYS_CREATE);
 

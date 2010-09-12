@@ -36,7 +36,6 @@
 #include "as_scriptengine.h"
 
 #include "as_scriptobject.h"
-#include "as_arrayobject.h"
 
 BEGIN_AS_NAMESPACE
 

@@ -106,6 +106,7 @@ bool Test()
 
 	// ---------------------------------------------
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 	RegisterScriptString_Generic(engine);
 	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -136,6 +137,7 @@ bool Test()
 	//--------------------------------------------------
 	// Verify that the GC can handle circles with any structures
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 	RegisterScriptString_Generic(engine);
 	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -175,6 +177,7 @@ bool Test()
 	//-------------------------------------------------------
 	// Don't allow const handle to retrieve()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 	RegisterScriptString_Generic(engine);
 	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -201,6 +204,7 @@ bool Test()
 	//--------------------------------------------------------
 	// Make sure it is possible to pass any to the application
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 	RegisterScriptString_Generic(engine);
 	RegisterScriptAny(engine);
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);

@@ -165,6 +165,7 @@ bool Test()
 	fail = TestUTF16() || fail;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, false);
 	RegisterScriptString(engine);
 	RegisterScriptStringUtils(engine);
 
@@ -361,8 +362,8 @@ bool Test()
 	// Test the string utils
 	ExecuteString(engine, "string str = 'abcdef'; assert(findFirst(str, 'def') == 3);");
 	ExecuteString(engine, "string str = 'abcdef'; assert(findFirstOf(str, 'feb') == 1);");
-	ExecuteString(engine, "string str = 'a|b||d'; string@[]@ array = split(str, '|'); assert(array.length() == 4); assert(array[1] == 'b');");
-	ExecuteString(engine, "string@[] array = {'a', 'b', '', 'd'}; assert(join(array, '|') == 'a|b||d');");
+	ExecuteString(engine, "string str = 'a|b||d'; array<string@>@ arr = split(str, '|'); assert(arr.length() == 4); assert(arr[1] == 'b');");
+	ExecuteString(engine, "array<string@> arr = {'a', 'b', '', 'd'}; assert(join(arr, '|') == 'a|b||d');");
 
 	engine->Release();
 

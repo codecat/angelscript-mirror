@@ -315,6 +315,7 @@ bool Test()
 	//-------------
 	// Test array types
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
 	r = engine->RegisterObjectType("int[]", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
@@ -415,6 +416,7 @@ bool Test()
 	//-------------
 	// Test object types in script arrays
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
@@ -453,6 +455,7 @@ bool Test()
 	//------------------
 	// Test object types held by external variable, i.e. any
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	RegisterScriptArray(engine, true);
 	RegisterScriptAny(engine);
 
 	engine->BeginConfigGroup("group1");
@@ -479,7 +482,7 @@ bool Test()
 	engine->DiscardModule(0);
 	engine->GarbageCollect();
 
-	asIScriptArray *array = 0;
+	CScriptArray *array = 0;
 	any->Retrieve(&array, engine->GetTypeIdByDecl("mytype[]@"));
 	if( array == 0 )
 		fail = true;

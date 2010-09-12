@@ -118,7 +118,8 @@ Since it is a generic class it is not the most performatic due to the need to de
 runtime. For that reason it is recommended that the application registers a \ref doc_adv_template_2 "template specialization" for the
 array types that are most commonly used.
 
-The type is registered with <code>RegisterScriptArray(asIScriptEngine*)</code>.
+The type is registered with <code>RegisterScriptArray(asIScriptEngine *engine, bool defaultArrayType)</code>. The second 
+parameter should be set to true if you wish to allow the syntax form <code>type[]</code> to declare arrays.
 
 \section doc_addon_array_1 Public C++ interface
 
@@ -402,6 +403,8 @@ object.
 
 Register the type with <code>RegisterScriptString(asIScriptEngine*)</code>. Register the 
 utility functions with <code>RegisterScriptStringUtils(asIScriptEngine*)</code>.
+
+The utility functions require that the \ref doc_addon_array has been registered first.
 
 \see \ref doc_addon_std_string
 
