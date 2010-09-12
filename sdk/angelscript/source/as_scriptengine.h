@@ -386,6 +386,7 @@ public:
 		bool includeJitInstructions;
 		int  stringEncoding;
 		int  propertyAccessorMode;
+		bool expandDefaultArrayToTemplate;
 	} ep;
 };
 

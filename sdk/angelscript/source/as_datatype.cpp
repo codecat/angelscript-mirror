@@ -149,7 +149,7 @@ asCString asCDataType::Format() const
 	{
 		str += asGetTokenDefinition(tokenType);
 	}
-	else if( IsArrayType() )
+	else if( IsArrayType() && objectType && !objectType->engine->ep.expandDefaultArrayToTemplate )
 	{
 		str += objectType->templateSubType.Format();
 		str += "[]";

@@ -109,7 +109,9 @@ enum asEEngineProp
 	//! Select string encoding for literals: 0 - UTF8/ASCII, 1 - UTF16. Default: 0 (UTF8)
 	asEP_STRING_ENCODING              = 13,
 	//! Enable or disable property accessors: 0 - no accessors, 1 - app registered accessors, 2 - app and script created accessors
-	asEP_PROPERTY_ACCESSOR_MODE       = 14
+	asEP_PROPERTY_ACCESSOR_MODE       = 14,
+	//! Format default array in template form in messages and declarations. Default: false
+	asEP_EXPAND_DEF_ARRAY_TO_TMPL     = 15
 };
 
 // Calling conventions

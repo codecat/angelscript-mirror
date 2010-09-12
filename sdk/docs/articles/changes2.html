@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added asIScriptFunction::IsPrivate and asIScriptObject::IsPropertyPrivate
 <li>Removed asIScriptArray interface
 <li>Added RegisterDefaultArrayType and GetDefaultArrayTypeId to asIScriptEngine
+<li>Added asEP_EXPAND_DEF_ARRAY_TO_TMPL that tells the engine to format the declaration of the default array in the template form
 </ul>
 <li>Script language
 <ul>
@@ -38,9 +39,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Removed as_arrayobject.h and as_arrayobject.cpp
 </ul>
-<li>Add-ons
+<li>Add-ons &amp; samples
 <ul>
 <li>The script array add-on can now be registered as the default array type
+<li>Improved asbuild to support registration of template types and default array
+<li>Improved WriteConfigToFile the same way
 </ul>
 </ul>
 

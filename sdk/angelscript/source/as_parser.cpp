@@ -158,7 +158,7 @@ int asCParser::ParseDataType(asCScriptCode *script)
 }
 
 
-// Parse a template declaration: IDENTIFIER < class IDENTIFIER >
+// Parse a template declaration: IDENTIFIER '<' 'class'? IDENTIFIER '>'
 int asCParser::ParseTemplateDecl(asCScriptCode *script)
 {
 	Reset();
@@ -177,12 +177,10 @@ int asCParser::ParseTemplateDecl(asCScriptCode *script)
 		return -1;
 	}
 
+	// The class token is optional
 	GetToken(&t);
 	if( t.type != ttClass )
-	{
-		Error(ExpectedToken(asGetTokenDefinition(ttClass)).AddressOf(), &t);
-		return -1;
-	}
+		RewindTo(&t);
 
 	scriptNode->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return -1;

@@ -279,6 +279,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 			return asINVALID_ARG;
 		break;
 
+	case asEP_EXPAND_DEF_ARRAY_TO_TMPL:
+		ep.expandDefaultArrayToTemplate = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -331,6 +335,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 	case asEP_PROPERTY_ACCESSOR_MODE:
 		return ep.propertyAccessorMode;
+
+	case asEP_EXPAND_DEF_ARRAY_TO_TMPL:
+		return ep.expandDefaultArrayToTemplate;
 	}
 
 	return 0;
@@ -352,24 +359,25 @@ asCScriptEngine::asCScriptEngine()
 
 	// Engine properties
 	{
-		ep.allowUnsafeReferences    = false;
-		ep.optimizeByteCode         = true;
-		ep.copyScriptSections       = true;
-		ep.maximumContextStackSize  = 0;         // no limit
-		ep.useCharacterLiterals     = false;
-		ep.allowMultilineStrings    = false;
-		ep.allowImplicitHandleTypes = false;
+		ep.allowUnsafeReferences        = false;
+		ep.optimizeByteCode             = true;
+		ep.copyScriptSections           = true;
+		ep.maximumContextStackSize      = 0;         // no limit
+		ep.useCharacterLiterals         = false;
+		ep.allowMultilineStrings        = false;
+		ep.allowImplicitHandleTypes     = false;
 		// TODO: optimize: Maybe this should be turned off by default? If a debugger is not used
 		//                 then this is just slowing down the execution. The exception handler
 		//                 should still be able to determine the line number from the bytecode
 		//                 position.
-		ep.buildWithoutLineCues     = false;
-		ep.initGlobalVarsAfterBuild = true;
-		ep.requireEnumScope         = false;
-		ep.scanner                  = 1;         // utf8. 0 = ascii
-		ep.includeJitInstructions   = false;
-		ep.stringEncoding           = 0;         // utf8. 1 = utf16
-		ep.propertyAccessorMode     = 2;         // 0 = disable, 1 = app registered only, 2 = app and script created
+		ep.buildWithoutLineCues         = false;
+		ep.initGlobalVarsAfterBuild     = true;
+		ep.requireEnumScope             = false;
+		ep.scanner                      = 1;         // utf8. 0 = ascii
+		ep.includeJitInstructions       = false;
+		ep.stringEncoding               = 0;         // utf8. 1 = utf16
+		ep.propertyAccessorMode         = 2;         // 0 = disable, 1 = app registered only, 2 = app and script created
+		ep.expandDefaultArrayToTemplate = false;
 	}
 
 	gc.engine = this;

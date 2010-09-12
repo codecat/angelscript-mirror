@@ -138,6 +138,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 		{
 			string name, flags;
 			GetToken(engine, name, config, pos);
+			name = name.substr(1, name.length() - 2);
 			GetToken(engine, flags, config, pos);
 
 			// The size of the value type doesn't matter, because the 
@@ -153,6 +154,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 		{
 			string name, behaviour, decl;
 			GetToken(engine, name, config, pos);
+			name = name.substr(1, name.length() - 2);
 			GetToken(engine, behaviour, config, pos);
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
@@ -168,6 +170,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 		{
 			string name, decl;
 			GetToken(engine, name, config, pos);
+			name = name.substr(1, name.length() - 2);
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
 
@@ -182,6 +185,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 		{
 			string name, decl;
 			GetToken(engine, name, config, pos);
+			name = name.substr(1, name.length() - 2);
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
 
@@ -263,6 +267,19 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			if( r < 0 )
 			{
 				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register string factory");
+				return -1;
+			}
+		}
+		else if( token == "defarray" )
+		{
+			string type;
+			GetToken(engine, type, config, pos);
+			type = type.substr(1, type.length() - 2);
+
+			r = engine->RegisterDefaultArrayType(type.c_str());
+			if( r < 0 )
+			{
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register the default array type");
 				return -1;
 			}
 		}

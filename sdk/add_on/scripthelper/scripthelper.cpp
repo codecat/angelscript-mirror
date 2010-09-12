@@ -172,6 +172,10 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	if( f == 0 )
 		return -1;
 
+	// Make sure the default array type is expanded to the template form 
+	bool expandDefArrayToTempl = engine->GetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL) ? true : false;
+	engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
+
 	// Write enum types and their values
 	fprintf(f, "// Enums\n");
 	c = engine->GetEnumCount();
@@ -208,7 +212,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			// Only the type flags are necessary. The application flags are application 
 			// specific and doesn't matter to the offline compiler. The object size is also
 			// unnecessary for the offline compiler
-			fprintf(f, "objtype %s %d\n", type->GetName(), type->GetFlags() & 0xFF);
+			fprintf(f, "objtype \"%s\" %d\n", engine->GetTypeDeclaration(type->GetTypeId()), type->GetFlags() & 0xFF);
 		}
 	}
 
@@ -234,12 +238,13 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	for( n = 0; n < c; n++ )
 	{
 		asIObjectType *type = engine->GetObjectTypeByIndex(n);
+		string typeDecl = engine->GetTypeDeclaration(type->GetTypeId());
 		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
 		{
 			for( int m = 0; m < type->GetMethodCount(); m++ )
 			{
 				asIScriptFunction *func = type->GetMethodDescriptorByIndex(m);
-				fprintf(f, "intfmthd %s \"%s\"\n", type->GetName(), func->GetDeclaration(false));
+				fprintf(f, "intfmthd %s \"%s\"\n", typeDecl.c_str(), func->GetDeclaration(false));
 			}
 		}
 		else
@@ -248,25 +253,25 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			for( m = 0; m < type->GetFactoryCount(); m++ )
 			{
 				asIScriptFunction *func = engine->GetFunctionDescriptorById(type->GetFactoryIdByIndex(m));
-				fprintf(f, "objbeh %s %d \"%s\"\n", type->GetName(), asBEHAVE_FACTORY, func->GetDeclaration(false));
+				fprintf(f, "objbeh \"%s\" %d \"%s\"\n", typeDecl.c_str(), asBEHAVE_FACTORY, func->GetDeclaration(false));
 			}
 			for( m = 0; m < type->GetBehaviourCount(); m++ )
 			{
 				asEBehaviours beh;
 				asIScriptFunction *func = engine->GetFunctionDescriptorById(type->GetBehaviourByIndex(m, &beh));
-				fprintf(f, "objbeh %s %d \"%s\"\n", type->GetName(), beh, func->GetDeclaration(false));
+				fprintf(f, "objbeh \"%s\" %d \"%s\"\n", typeDecl.c_str(), beh, func->GetDeclaration(false));
 			}
 			for( m = 0; m < type->GetMethodCount(); m++ )
 			{
 				asIScriptFunction *func = type->GetMethodDescriptorByIndex(m);
-				fprintf(f, "objmthd %s \"%s\"\n", type->GetName(), func->GetDeclaration(false));
+				fprintf(f, "objmthd \"%s\" \"%s\"\n", typeDecl.c_str(), func->GetDeclaration(false));
 			}
 			for( m = 0; m < type->GetPropertyCount(); m++ )
 			{
 				// TODO: Need a GetPropertyDeclaration
 				const char *name = type->GetPropertyName(m);
 				int typeId = type->GetPropertyTypeId(m);
-				fprintf(f, "objprop %s \"%s %s\"\n", type->GetName(), engine->GetTypeDeclaration(typeId), name);
+				fprintf(f, "objprop \"%s\" \"%s %s\"\n", typeDecl.c_str(), engine->GetTypeDeclaration(typeId), name);
 			}
 		}
 	}
@@ -300,7 +305,17 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	if( typeId > 0 )
 		fprintf(f, "strfactory \"%s\"\n", engine->GetTypeDeclaration(typeId));
 
+	// Write default array type
+	fprintf(f, "\n// Default array type\n");
+	typeId = engine->GetDefaultArrayTypeId();
+	if( typeId > 0 )
+		fprintf(f, "defarray \"%s\"\n", engine->GetTypeDeclaration(typeId));
+
 	fclose(f);
+
+	// Restore original settings
+	engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, expandDefArrayToTempl);
+
 	return 0;
 }
 

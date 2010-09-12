@@ -32,6 +32,7 @@ bool Test()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
+	RegisterScriptArray(engine, true);
 	RegisterStdString(engine);
 
 	float f;
@@ -324,6 +325,24 @@ void DumpModule(asIScriptModule *mod)
 		" value2 = 2\n"
 		"reg funcdef: void Callback(int, int)\n"
 		"string factory: string\n"
+		"reg type: ref array group: <null>\n"
+		" T[]@ _beh_2_(int&in)\n"
+		" T[]@ _beh_2_(int&in, uint)\n"
+		" T[]@ _beh_2_(int&in, uint, const T&in)\n"
+		" beh(4) void _beh_4_()\n"
+		" beh(5) void _beh_5_()\n"
+		" beh(11) int _beh_11_()\n"
+		" beh(12) void _beh_12_()\n"
+		" beh(13) bool _beh_13_()\n"
+		" beh(14) void _beh_14_(int&in)\n"
+		" beh(15) void _beh_15_(int&in)\n"
+		" beh(10) bool _beh_10_(int&in)\n"
+		" beh(3) T[]@ _beh_3_(int&in, uint)\n"
+		" T& opIndex(uint)\n"
+		" const T& opIndex(uint) const\n"
+		" T[]& opAssign(const T[]&in)\n"
+		" uint length() const\n"
+		" void resize(uint)\n"
 		"reg type: val string group: <null>\n"
 		" beh(1) void _beh_1_()\n"
 		" beh(0) void _beh_0_()\n"
