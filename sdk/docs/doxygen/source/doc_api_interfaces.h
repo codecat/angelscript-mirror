@@ -12,7 +12,6 @@
  
  - \ref asIScriptGeneric
  - \ref asIScriptObject
- - \ref asIScriptArray
  - \ref asIObjectType
  - \ref asIScriptFunction
  - \ref asIJITCompiler

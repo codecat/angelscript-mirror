@@ -2,19 +2,42 @@
 
 \page doc_hello_world Your first script
 
+This tutorial will show you the basics on how to configure the engine, compile a script, and then
+execute it.
+
+In this tutorial a couple of add-ons are used to make the code easier. You are not required to use
+these in your own application, but they will most likely let you get your project up and running 
+faster. You'll want to take a look at the rest of the \ref doc_addon "add-ons" later on to see what 
+else may be useful for you.
+
+\code
+// Include the definitions of the script library and the add-ons we'll use.
+// The project settings may need to be configured to let the compiler where
+// to find these headers. Don't forget to add the source modules for the
+// add-ons to your project as well so that they will be compiled into the 
+// application.
+#include <angelscript.h>
+#include <scriptstdstring/scriptstdstring.h>
+#include <scriptbuilder/scriptbuilder.h>
+\endcode
+
 Being an embedded scripting library there isn't much that AngelScript allows the scripts 
-to do by themselves, so the first thing the application must do is to register the interface 
+to do by themselves, so the first thing the application must do is to \ref doc_register_api "register the interface" 
 that the script will have to interact with the application. The interface may consist of 
 functions, variables, and even complete classes.
+
+Pay special attention to how the \ref doc_compile_script_msg "message callback" is registered right after the engine 
+is created. The message callback is used by the engine to give human readable error messages
+when something isn't working as it should, e.g. a registration is done incorrectly, or a script
+has an error that fails to compile. While you still need to verify the return codes, the message
+callback can give you valuable information that will let you figure out what is wrong without
+much effort.
 
 \code
 // Create the script engine
 asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 // Set the message callback to receive information on errors in human readable form.
-// It's recommended to do this right after the creation of the engine, because if
-// some registration fails the engine may send valuable information to the message
-// stream.
 r = engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL); assert( r >= 0 );
 
 // AngelScript doesn't have a built-in string type, as there is no definite standard 
@@ -39,7 +62,10 @@ standard output stream. Let's say it's stored in the file <tt>test.as</tt>.
   }
 </pre>
 
-Here's the code for loading the script file and compiling it.
+Here's the code for loading the script file and compiling it. The AngelScript engine itself doesn't have 
+access to the filesystem so the loading the files has to be done by the application. Here we're going to use 
+the \ref doc_addon_build "script builder" add-on, which does the loading of the script files, and some preprocessing, such as 
+handling \#include directives. 
 
 \code
 // The CScriptBuilder helper is an add-on that loads the file,
@@ -51,6 +77,7 @@ if( r < 0 )
 {
   // If the code fails here it is usually because there
   // is no more memory to allocate the module
+  printf("Unrecoverable error while starting a new module.\n");
   return;
 }
 r = builder.AddSectionFromFile("test.as");
@@ -73,7 +100,7 @@ if( r < 0 )
 \endcode
 
 The last step is to identify the function that is to be called, and set up a context
-for executing it.
+for executing it. 
 
 \code
 // Find the function that is to be called. 
