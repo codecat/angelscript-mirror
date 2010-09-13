@@ -487,6 +487,27 @@ bool Test()
 		}		
 	}
 
+	// Test insertAt, removeAt
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine, false);
+		RegisterScriptString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "array<string> arr = {'1','2','3'}; \n"
+			                      "arr.insertAt(1, 'test'); \n"
+								  "assert( arr[1] == 'test' );\n"
+								  "arr.insertAt(4, '4'); \n"
+								  "assert( arr[4] == '4' );\n"
+								  "arr.removeAt(0); \n"
+								  "assert( arr[0] == 'test' );\n"
+								  "assert( arr[3] == '4' );\n");
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

@@ -30,7 +30,11 @@ public:
 
 	CScriptArray &operator=(const CScriptArray&);
 
-	// TODO: Add methods Sort, Reverse, Find, PopLast, PushLast, InsertAt, RemoveAt, etc
+	// TODO: Add methods Sort, Reverse, Find, etc
+	void InsertAt(asUINT index, void *value);
+	void RemoveAt(asUINT index);
+	void InsertLast(void *value);
+	void RemoveLast();
 
 	// GC methods
 	int  GetRefCount();
@@ -48,6 +52,9 @@ protected:
 	int            elementSize;
 
 	bool CheckMaxSize(asUINT numElements);
+
+	void Resize(int delta, asUINT at);
+	void SetValue(asUINT index, void *value);
 
 	void CreateBuffer(SArrayBuffer **buf, asUINT numElements);
 	void DeleteBuffer(SArrayBuffer *buf);

@@ -152,6 +152,12 @@ public:
 
   // Copy the contents of one array to another (only if the types are the same)
   CScriptArray &operator=(const CScriptArray&);
+
+  // Array manipulation
+  void InsertAt(asUINT index, void *value);
+  void RemoveAt(asUINT index);
+  void InsertLast(void *value);
+  void RemoveLast();
 };
 \endcode
 
@@ -169,6 +175,10 @@ public:
 
     array<T> opAssign(const array<T> & in);
     
+    void insertAt(uint index, const T& in);
+    void removeAt(uint index);
+    void insertLast(const T& in);
+    void removeLast();
     uint length() const;
     void resize(uint);
   }
