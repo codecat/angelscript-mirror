@@ -1687,6 +1687,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		func.id = beh->templateCallback = AddBehaviourFunction(func, internal);
 	}
 #ifdef AS_DEPRECATED
+	// Since 2.20.0
 	else if( behaviour == asBEHAVE_INDEX )
 	{
 		// Verify that the var type is not used
@@ -2453,105 +2454,6 @@ void asCScriptEngine::BuildCompleted()
 
 	isBuilding = false;
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2009-12-08, 2.18.0
-// interface
-int asCScriptEngine::ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags)
-{
-	int r;
-	if( (r = RequestBuild()) < 0 )
-		return r;
-
-	PrepareEngine();
-
-	// Make sure the config worked
-	if( configFailed )
-	{
-		if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
-			*ctx = 0;
-
-		WriteMessage("",0,0,asMSGTYPE_ERROR,TXT_INVALID_CONFIGURATION);
-		isBuilding = false;
-		return asINVALID_CONFIGURATION;
-	}
-
-	asIScriptContext *exec = 0;
-	if( !(flags & asEXECSTRING_USE_MY_CONTEXT) )
-	{
-		int r = CreateContext(&exec, false);
-		if( r < 0 )
-		{
-			if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
-				*ctx = 0;
-			isBuilding = false;
-			return r;
-		}
-		if( ctx )
-		{
-			*ctx = exec;
-			exec->AddRef();
-		}
-	}
-	else
-	{
-		if( *ctx == 0 )
-		{
-			isBuilding = false;
-			return asINVALID_ARG;
-		}
-		exec = *ctx;
-		exec->AddRef();
-	}
-
-	// Make sure the context isn't holding a reference to the previous ExecuteString function()
-	exec->Unprepare();
-
-	// Get the module to compile the string in
-	asCModule *mod = GetModule(module, true);
-
-	// Compile string function
-	asCBuilder builder(this, mod);
-	asCString str = script;
-	str = "void ExecuteString(){\n" + str + "\n;}";
-
-	r = builder.BuildString(str.AddressOf(), (asCContext*)exec);
-	
-	BuildCompleted();
-
-	if( r < 0 )
-	{
-		if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
-		{
-			(*ctx)->Release();
-			*ctx = 0;
-		}
-		exec->Release();
-		return asERROR;
-	}
-
-	// Prepare and execute the context
-	r = ((asCContext*)exec)->Prepare(((asCContext*)exec)->stringFunction->id);
-	if( r < 0 )
-	{
-		if( ctx && !(flags & asEXECSTRING_USE_MY_CONTEXT) )
-		{
-			(*ctx)->Release();
-			*ctx = 0;
-		}
-		exec->Release();
-		return r;
-	}
-
-	if( flags & asEXECSTRING_ONLY_PREPARE )
-		r = asEXECUTION_PREPARED;
-	else
-		r = exec->Execute();
-
-	exec->Release();
-	return r;
-}
-#endif
 
 void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 {

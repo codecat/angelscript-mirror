@@ -161,10 +161,6 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	inExceptionHandler = false;
 	isStackMemoryNotAllocated = false;
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2009-12-08, 2.18.0
-	stringFunction = 0;
-#endif
 	currentFunction = 0;
 	regs.objectRegister = 0;
 	initialFunction = 0;
@@ -379,33 +375,9 @@ int asCContext::Unprepare()
 	regs.stackFramePointer = 0;
 	regs.stackPointer = 0;
 	stackIndex = 0;
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2009-12-08, 2.18.0
-	// Deallocate string function
-	if( stringFunction )
-	{
-		stringFunction->Release();
-		stringFunction = 0;
-	}
-#endif
 	
 	return 0;
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2009-12-08, 2.18.0
-int asCContext::SetExecuteStringFunction(asCScriptFunction *func)
-{
-	if( stringFunction )
-		stringFunction->Release();
-
-	// The new function already has the refCount set to 1
-	stringFunction = func;
-
-	return 0;
-}
-#endif
 
 asBYTE asCContext::GetReturnByte()
 {

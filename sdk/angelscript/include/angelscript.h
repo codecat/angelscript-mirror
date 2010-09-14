@@ -210,16 +210,6 @@ enum asEContextState
     asEXECUTION_ERROR         = 7
 };
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.18.0, 2009-12-08
-// ExecuteString flags
-enum asEExecStrFlags
-{
-	asEXECSTRING_ONLY_PREPARE   = 1,
-	asEXECSTRING_USE_MY_CONTEXT = 2
-};
-#endif
-
 // Message types
 enum asEMsgType
 {
@@ -562,11 +552,6 @@ public:
 	// User data
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() const = 0;
-
-#ifdef AS_DEPRECATED
-	// deprecated since 2009-12-08, 2.18.0
-	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
-#endif
 
 protected:
 	virtual ~asIScriptEngine() {}

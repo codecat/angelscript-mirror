@@ -1816,6 +1816,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		}
 	}
 #ifdef AS_DEPRECATED
+	// Since 2.20.0
 	if( funcId == 0 )
 	{
 		asSTypeBehaviour *beh = var->dataType.GetBehaviour();
@@ -7946,6 +7947,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		if( r == 0 )
 		{	
 #ifndef AS_DEPRECATED
+			// Since 2.20.0
 			asCString str;
 			str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
 			Error(str.AddressOf(), node);

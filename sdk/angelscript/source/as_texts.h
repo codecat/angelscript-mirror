@@ -211,10 +211,6 @@
 
 // Internal names
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.18.0, 2009-12-08
-#define TXT_EXECUTESTRING                 "ExecuteString"
-#endif
 #define TXT_PROPERTY                      "Property"
 #define TXT_SYSTEM_FUNCTION               "System function"
 #define TXT_VARIABLE_DECL                 "Variable declaration"

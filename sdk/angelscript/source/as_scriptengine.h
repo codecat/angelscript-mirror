@@ -182,11 +182,6 @@ public:
 	virtual void *SetUserData(void *data);
 	virtual void *GetUserData() const;
 
-#ifdef AS_DEPRECATED
-	// deprecated since 2009-12-08, 2.18.0
-	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
-#endif
-
 //===========================================================
 // internal methods
 //===========================================================

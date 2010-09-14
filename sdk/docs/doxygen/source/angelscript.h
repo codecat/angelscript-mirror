@@ -318,20 +318,6 @@ enum asEContextState
     asEXECUTION_ERROR         = 7
 };
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.18.0, 2009-12-08
-// ExecuteString flags
-//! \brief ExecuteString flags.
-//! \deprecated since 2.18.0
-enum asEExecStrFlags
-{
-	//! Only prepare the context
-	asEXECSTRING_ONLY_PREPARE   = 1,
-	//! Use the pre-allocated context
-	asEXECSTRING_USE_MY_CONTEXT = 2
-};
-#endif
-
 // Message types
 
 //! \brief Compiler message types.
@@ -1466,16 +1452,6 @@ public:
 	//! \return The pointer to the user data.
 	virtual void *GetUserData() const = 0;
 	//! \}
-
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-
-	// deprecated since 2009-12-08, 2.18.0
-	//! \deprecated Since 2.18.0. Use the \ref doc_addon_helpers "ExecuteString" helper function instead.
-	virtual int           ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
-	//! \}
-#endif
 
 protected:
 	virtual ~asIScriptEngine() {}

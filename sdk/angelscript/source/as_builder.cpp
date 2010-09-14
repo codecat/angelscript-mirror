@@ -187,21 +187,6 @@ int asCBuilder::Build()
 	return asSUCCESS;
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2009-12-08, 2.18.0
-int asCBuilder::BuildString(const char *string, asCContext *ctx)
-{
-	asCScriptFunction *execFunc = 0;
-	int r = CompileFunction(TXT_EXECUTESTRING, string, -1, 0, &execFunc);
-	if( r >= 0 )
-	{
-		ctx->SetExecuteStringFunction(execFunc);
-	}
-
-	return r;
-}
-#endif
-
 int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int lineOffset)
 {
 	numErrors = 0;
