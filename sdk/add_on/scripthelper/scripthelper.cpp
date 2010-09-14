@@ -164,7 +164,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	int c, n;
 
 	FILE *f = 0;
-#ifdef _MSC_VER
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
 	fopen_s(&f, filename, "wt");
 #else
 	f = fopen(filename, "wt");

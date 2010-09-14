@@ -239,7 +239,11 @@ int CScriptFile::Open(const std::string &filename, const std::string &mode)
 	m += "b";
 
     // Open the file
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	fopen_s(&file, myFilename.c_str(), m.c_str());
+#else
     file = fopen(myFilename.c_str(), m.c_str());
+#endif
     if( file == 0 )
         return -1;
 
