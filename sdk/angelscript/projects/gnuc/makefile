@@ -43,6 +43,8 @@ else
 	CXXFLAGS = -g -Wall -fPIC -fno-strict-aliasing
 endif
 
+AR ?= ar
+RANLIB ?= ranlib
 DELETER = rm -f
 COPIER = cp -a
 
@@ -99,8 +101,8 @@ ifdef SHARED
 	$(CXX) -shared -Wl,-soname,$(LIB) -o $(BIN) $(OBJ)
 	( cd $(LIBDIR); ln -s $(LIB) $(DEVLIB) )
 else
-	ar r $(BIN) $(OBJ)
-	ranlib $(BIN)
+	$(AR) r $(BIN) $(OBJ)
+	$(RANLIB) $(BIN)
 endif
 	@echo -------------------------------------------------------------------
 	@echo Done. As root, type 'make install' to install the library.
