@@ -53,8 +53,10 @@ public:
 // asIScriptGeneric
 //------------------------------
 	// Miscellaneous
-	asIScriptEngine *GetEngine() const;
-	int              GetFunctionId() const;
+	asIScriptEngine   *GetEngine() const;
+	int                GetFunctionId() const;
+	asIScriptFunction *GetFunctionDescriptor() const;
+	void              *GetFunctionUserData() const;
 
 	// Object
 	void   *GetObject();

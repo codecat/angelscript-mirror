@@ -700,8 +700,10 @@ class asIScriptGeneric
 {
 public:
 	// Miscellaneous
-	virtual asIScriptEngine *GetEngine() const = 0;
-	virtual int              GetFunctionId() const = 0;
+	virtual asIScriptEngine   *GetEngine() const = 0;
+	virtual int                GetFunctionId() const = 0;
+	virtual asIScriptFunction *GetFunctionDescriptor() const = 0;
+	virtual void              *GetFunctionUserData() const = 0;
 
 	// Object
 	virtual void   *GetObject() = 0;
@@ -837,6 +839,10 @@ public:
 
 	// For JIT compilation
 	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;
+
+	// User data
+	virtual void *SetUserData(void *userData) = 0;
+	virtual void *GetUserData() const = 0;
 
 protected:
 	virtual ~asIScriptFunction() {};

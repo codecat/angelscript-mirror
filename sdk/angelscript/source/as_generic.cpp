@@ -75,6 +75,18 @@ int asCGeneric::GetFunctionId() const
 }
 
 // interface
+asIScriptFunction *asCGeneric::GetFunctionDescriptor() const
+{
+	return sysFunction;
+}
+
+// interface
+void *asCGeneric::GetFunctionUserData() const
+{
+	return sysFunction->userData;
+}
+
+// interface
 void *asCGeneric::GetObject()
 {
 	return currentObject;

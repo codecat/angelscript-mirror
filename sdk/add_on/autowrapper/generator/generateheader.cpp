@@ -63,6 +63,10 @@ int main()
            "public:\n"
            "    X d;\n"
            "    as_wrapNative_helper(X d_) : d(d_) {}\n"
+           "private:\n"
+           "    // These are declared to avoid compiler warnings\n"
+           "    as_wrapNative_helper(const as_wrapNative_helper&);\n"
+           "    as_wrapNative_helper& operator=(const as_wrapNative_helper&);\n"
            "};\n\n");
 
 	// Iterate over the number of parameters 

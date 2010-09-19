@@ -48,6 +48,10 @@ class as_wrapNative_helper
 public:
     X d;
     as_wrapNative_helper(X d_) : d(d_) {}
+private:
+    // These are declared to avoid compiler warnings
+    as_wrapNative_helper(const as_wrapNative_helper&);
+    as_wrapNative_helper& operator=(const as_wrapNative_helper&);
 };
 
 // 0 parameter(s)

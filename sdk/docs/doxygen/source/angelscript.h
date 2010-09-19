@@ -2285,10 +2285,16 @@ public:
 
     //! \brief Returns a pointer to the script engine.
     //! \return A pointer to the engine.
-	virtual asIScriptEngine *GetEngine() const = 0;
+	virtual asIScriptEngine   *GetEngine() const = 0;
     //! \brief Returns the function id of the called function.
     //! \return The function id of the function being called.
-	virtual int              GetFunctionId() const = 0;
+	virtual int                GetFunctionId() const = 0;
+	//! \brief Returns the function descriptor of the called function.
+	//! \return The function descriptor of the called function.
+	virtual asIScriptFunction *GetFunctionDescriptor() const = 0;
+	//! \brief Returns the user data for the called function.
+	//! \return The user data for the called function.
+	virtual void              *GetFunctionUserData() const = 0;
 	//! \}
 
 	// Object
@@ -2824,6 +2830,21 @@ public:
 	//! This function is used by the \ref asIJITCompiler to obtain the byte
 	//!  code buffer for building the native machine code representation.
 	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;
+	//! \}
+
+	// User data
+	//! \name User data
+	//! \{
+
+	//! \brief Register the memory address of some user data.
+    //! \param[in] userData A pointer to the user data.
+    //! \return The previous pointer stored in the context.
+    //!
+    //! This method allows the application to associate a value, e.g. a pointer, with the context instance.
+	virtual void *SetUserData(void *userData) = 0;
+	//! \brief Returns the address of the previously registered user data.
+    //! \return The pointer to the user data.
+	virtual void *GetUserData() const = 0;
 	//! \}
 
 protected:

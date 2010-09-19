@@ -109,6 +109,9 @@ public:
 	int                  GetParamTypeId(int index, asDWORD *flags = 0) const;
 	int                  GetReturnTypeId() const;
 
+	void                *SetUserData(void *userData);
+	void                *GetUserData() const;
+
 	// For JIT compilation
 	asDWORD             *GetByteCode(asUINT *length = 0);
 
@@ -151,6 +154,8 @@ public:
 	mutable bool                 gcFlag;
 	asCScriptEngine             *engine;
 	asCModule                   *module;
+
+	void                        *userData;
 
 	// Function signature
 	asCString                    name;

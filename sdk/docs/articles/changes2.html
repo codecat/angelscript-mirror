@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.20.0 WIP - 2010/09/14</h2>
+<h2>Version 2.20.0 WIP - 2010/09/19</h2>
 
 <ul>
 <li>Library
@@ -31,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added RegisterDefaultArrayType and GetDefaultArrayTypeId to asIScriptEngine
 <li>Added asEP_EXPAND_DEF_ARRAY_TO_TMPL that tells the engine to format the declaration of the default array in the template form
 <li>Removed the previously deprecated ExecuteString from script engine interface
+<li>Added user data to the script function interface, and methods to retrieve it from the generic interface (Thanks Pierre Fortin)
 </ul>
 <li>Script language
 <ul>
@@ -46,6 +47,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved asbuild to support registration of template types and default array
 <li>Improved WriteConfigToFile the same way
 <li>Implemented InsertAt, RemoveAt, InsertLast, and RemoveLast for the array add-on
+<li>Fixed compiler warnings in autowrappedcall.h when working with functions that take parameters by reference (Thanks Pierre Fortin)
 </ul>
 </ul>
 

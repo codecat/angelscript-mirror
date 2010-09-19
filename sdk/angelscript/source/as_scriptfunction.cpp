@@ -729,6 +729,20 @@ asDWORD *asCScriptFunction::GetByteCode(asUINT *length)
 	return 0;
 }
 
+// interface
+void *asCScriptFunction::SetUserData(void *data)
+{
+	void *oldData = userData;
+	userData = data;
+	return oldData;
+}
+
+// interface
+void *asCScriptFunction::GetUserData() const
+{
+	return userData;
+}
+
 // internal
 asCGlobalProperty *asCScriptFunction::GetPropertyByGlobalVarPtr(void *gvarPtr)
 {
