@@ -1,4 +1,6 @@
 #include "utils.h"
+#include "../../../add_on/scriptmath3d/scriptmath3d.h"
+
 using namespace std;
 
 static const char * const TESTNAME = "TestConstructor";
@@ -155,6 +157,50 @@ bool TestConstructor()
 	}
 
 	engine->Release();
+
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		
+		RegisterScriptMath3D(engine);
+
+		const char *script = 
+			"class Obj \n"
+			"{  \n"
+			"   Obj(const vector3 &in v) \n"
+			"   { \n"
+			"     pos = v; \n"
+			"   } \n"
+			"   vector3 pos; \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			fail = true;
+
+		int typeId = mod->GetTypeIdByDecl("Obj");
+		asIObjectType *type = engine->GetObjectTypeById(typeId);
+		int funcId = type->GetFactoryIdByDecl("Obj @Obj(const vector3 &in)");
+		if( funcId < 0 )
+			fail = true;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(funcId);
+		Vector3 pos(1,2,3);
+		*(Vector3**)ctx->GetAddressOfArg(0) = &pos;
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			fail = true;
+		asIScriptObject *obj = *(asIScriptObject**)ctx->GetAddressOfReturnValue();
+		Vector3 pos2 = *(Vector3*)obj->GetAddressOfProperty(0);
+		if( pos2 != pos )
+			fail = true;
+
+		ctx->Release();
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;
