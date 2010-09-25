@@ -33,6 +33,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added asEP_EXPAND_DEF_ARRAY_TO_TMPL that tells the engine to format the declaration of the default array in the template form
 <li>Removed the previously deprecated ExecuteString from script engine interface
 <li>Added user data to the script function interface, and methods to retrieve it from the generic interface (Thanks Pierre Fortin)
+<li>Added methods to asIScriptFunction to enumerate local variables (Thanks Ciaran "Carrot" Davies)
+<li>Deprecated IsClassMethod and IsInterfaceMethod, use the new GetFuncType instead
+<li>Added a parameter to the GetMethod methods to allow retrieving the real method instead of the virtual method
 </ul>
 <li>Script language
 <ul>

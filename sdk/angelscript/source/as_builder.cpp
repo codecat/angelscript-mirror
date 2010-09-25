@@ -1245,7 +1245,7 @@ void asCBuilder::CompileGlobalVariables()
 				if( gvar->nextNode )
 				{
 					asCCompiler comp(engine);
-					asCScriptFunction func(engine, module, -1);
+					asCScriptFunction func(engine, module, asFUNC_DUMMY);
 
 					// Temporarily switch the type of the variable to int so it can be compiled properly
 					asCDataType saveType;
@@ -1300,7 +1300,7 @@ void asCBuilder::CompileGlobalVariables()
 			else
 			{
 				// Compile the global variable
-				initFunc = asNEW(asCScriptFunction)(engine, module, -1);
+				initFunc = asNEW(asCScriptFunction)(engine, module, asFUNC_DUMMY);
 				asCCompiler comp(engine);
 				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar, initFunc);
 				if( r >= 0 )

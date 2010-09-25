@@ -150,10 +150,6 @@ public:
 	int              GetTypeId() const;
 	int              GetSubTypeId() const;
 
-	// Behaviours
-	int GetBehaviourCount() const;
-	int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const;
-
 	// Interfaces
 	int              GetInterfaceCount() const;
 	asIObjectType   *GetInterface(asUINT index) const;
@@ -165,10 +161,10 @@ public:
 
 	// Methods
 	int                GetMethodCount() const;
-	int                GetMethodIdByIndex(int index) const;
-	int                GetMethodIdByName(const char *name) const;
-	int                GetMethodIdByDecl(const char *decl) const;
-	asIScriptFunction *GetMethodDescriptorByIndex(int index) const;
+	int                GetMethodIdByIndex(int index, bool getVirtual) const;
+	int                GetMethodIdByName(const char *name, bool getVirtual) const;
+	int                GetMethodIdByDecl(const char *decl, bool getVirtual) const;
+	asIScriptFunction *GetMethodDescriptorByIndex(int index, bool getVirtual) const;
 
 	// Properties
 	int         GetPropertyCount() const;
@@ -176,6 +172,10 @@ public:
 	const char *GetPropertyName(asUINT prop) const;
 	bool        IsPropertyPrivate(asUINT prop) const;
 	int         GetPropertyOffset(asUINT prop) const;
+
+	// Behaviours
+	int GetBehaviourCount() const;
+	int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const;
 
 //===========================================
 // Internal

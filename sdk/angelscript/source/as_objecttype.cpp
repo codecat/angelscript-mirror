@@ -320,20 +320,30 @@ int asCObjectType::GetFactoryIdByDecl(const char *decl) const
 	return engine->GetFactoryIdByDecl(this, decl);
 }
 
+// interface
 int asCObjectType::GetMethodCount() const
 {
 	return (int)methods.GetLength();
 }
 
-int asCObjectType::GetMethodIdByIndex(int index) const
+// interface
+int asCObjectType::GetMethodIdByIndex(int index, bool getVirtual) const
 {
 	if( index < 0 || (unsigned)index >= methods.GetLength() )
 		return asINVALID_ARG;
 
+	if( !getVirtual )
+	{
+		asCScriptFunction *func = engine->scriptFunctions[methods[index]];
+		if( func && func->funcType == asFUNC_VIRTUAL )
+			return virtualFunctionTable[func->vfTableIdx]->id;
+	}
+
 	return methods[index];
 }
 
-int asCObjectType::GetMethodIdByName(const char *name) const
+// interface
+int asCObjectType::GetMethodIdByName(const char *name, bool getVirtual) const
 {
 	int id = -1;
 	for( size_t n = 0; n < methods.GetLength(); n++ )
@@ -349,10 +359,18 @@ int asCObjectType::GetMethodIdByName(const char *name) const
 
 	if( id == -1 ) return asNO_FUNCTION;
 
+	if( !getVirtual )
+	{
+		asCScriptFunction *func = engine->scriptFunctions[id];
+		if( func && func->funcType == asFUNC_VIRTUAL )
+			return virtualFunctionTable[func->vfTableIdx]->id;
+	}
+
 	return id;
 }
 
-int asCObjectType::GetMethodIdByDecl(const char *decl) const
+// interface
+int asCObjectType::GetMethodIdByDecl(const char *decl, bool getVirtual) const
 {
 	// Get the module from one of the methods
 	if( methods.GetLength() == 0 )
@@ -367,13 +385,29 @@ int asCObjectType::GetMethodIdByDecl(const char *decl) const
 		return asNO_MODULE;
 	}
 
-	return engine->GetMethodIdByDecl(this, decl, mod);
+	int id = engine->GetMethodIdByDecl(this, decl, mod);
+	if( !getVirtual && id >= 0 )
+	{
+		asCScriptFunction *func = engine->scriptFunctions[id];
+		if( func && func->funcType == asFUNC_VIRTUAL )
+			return virtualFunctionTable[func->vfTableIdx]->id;
+	}
+
+	return id;
 }
 
-asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(int index) const
+// interface
+asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(int index, bool getVirtual) const
 {
 	if( index < 0 || (unsigned)index >= methods.GetLength() ) 
 		return 0;
+
+	if( !getVirtual )
+	{
+		asCScriptFunction *func = engine->scriptFunctions[methods[index]];
+		if( func && func->funcType == asFUNC_VIRTUAL )
+			return virtualFunctionTable[func->vfTableIdx];
+	}
 
 	return engine->scriptFunctions[methods[index]];
 }

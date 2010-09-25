@@ -910,7 +910,7 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 
 	asCBuilder bld(this, mod);
 
-	asCScriptFunction func(this, mod,-1);
+	asCScriptFunction func(this, mod, asFUNC_DUMMY);
 	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
@@ -938,7 +938,7 @@ int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl
 {
 	asCBuilder bld(this, mod);
 
-	asCScriptFunction func(this, mod, -1);
+	asCScriptFunction func(this, mod, asFUNC_DUMMY);
 
 	// Set the object type so that the signature can be properly compared
 	// This cast is OK, it will only be used for comparison
@@ -1455,7 +1455,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	asSTypeBehaviour *beh = &objectType->beh;
 
 	// Verify function declaration
-	asCScriptFunction func(this, 0, -1);
+	asCScriptFunction func(this, 0, asFUNC_DUMMY);
 
 	asCBuilder bld(this, 0);
 	int r = bld.ParseFunctionDeclaration(objectType, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
@@ -2030,7 +2030,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	if( r < 0 )
 	{
 		// Set as dummy function before deleting
-		func->funcType = -1;
+		func->funcType = asFUNC_DUMMY;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION);
 	}
@@ -2131,7 +2131,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	if( r < 0 )
 	{
 		// Set as dummy function before deleting
-		func->funcType = -1;
+		func->funcType = asFUNC_DUMMY;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION);
 	}
@@ -2355,7 +2355,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 	if( r < 0 )
 	{
 		// Set as dummy before deleting
-		func->funcType = -1;
+		func->funcType = asFUNC_DUMMY;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_TYPE);
 	}
@@ -3706,7 +3706,7 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 	if( r < 0 )
 	{
 		// Set as dummy function before deleting
-		func->funcType = -1;
+		func->funcType = asFUNC_DUMMY;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION);
 	}

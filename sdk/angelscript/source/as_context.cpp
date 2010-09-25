@@ -3676,7 +3676,7 @@ int asCContext::GetVarCount(int stackLevel)
 	if( func == 0 )
 		return asERROR;
 
-	return (int)func->variables.GetLength();
+	return func->GetVarCount();
 }
 
 const char *asCContext::GetVarName(int varIndex, int stackLevel)
@@ -3697,10 +3697,9 @@ const char *asCContext::GetVarName(int varIndex, int stackLevel)
 	if( func == 0 )
 		return 0;
 
-	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
-		return 0;
-
-	return func->variables[varIndex]->name.AddressOf();
+	const char *name = 0;
+	int r = func->GetVar(varIndex, &name);
+	return r >= 0 ? name : 0;
 }
 
 const char *asCContext::GetVarDeclaration(int varIndex, int stackLevel)
@@ -3721,15 +3720,7 @@ const char *asCContext::GetVarDeclaration(int varIndex, int stackLevel)
 	if( func == 0 )
 		return 0;
 
-	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
-		return 0;
-
-	asASSERT(threadManager);
-	asCString *tempString = &threadManager->GetLocalData()->string;
-	*tempString = func->variables[varIndex]->type.Format();
-	*tempString += " " + func->variables[varIndex]->name;
-
-	return tempString->AddressOf();
+	return func->GetVarDecl(varIndex);
 }
 
 int asCContext::GetVarTypeId(int varIndex, int stackLevel)
@@ -3750,10 +3741,9 @@ int asCContext::GetVarTypeId(int varIndex, int stackLevel)
 	if( func == 0 )
 		return asINVALID_ARG;
 
-	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
-		return asINVALID_ARG;
-
-	return engine->GetTypeIdFromDataType(func->variables[varIndex]->type);
+	int typeId;
+	int r = func->GetVar(varIndex, 0, &typeId);
+	return r < 0 ? r : typeId;
 }
 
 void *asCContext::GetAddressOfVar(int varIndex, int stackLevel)

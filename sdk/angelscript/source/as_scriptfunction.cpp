@@ -123,7 +123,7 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 }
 
 // internal
-asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, int _funcType)
+asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType _funcType)
 {
 	refCount.set(1);
 	this->engine           = engine;
@@ -231,6 +231,8 @@ const char *asCScriptFunction::GetName() const
 	return name.AddressOf();
 }
 
+#ifdef AS_DEPRECATED
+// Since 2.20.0
 // interface
 bool asCScriptFunction::IsClassMethod() const
 {
@@ -242,6 +244,7 @@ bool asCScriptFunction::IsInterfaceMethod() const
 {
 	return objectType && objectType->IsInterface();
 }
+#endif
 
 // interface
 bool asCScriptFunction::IsReadOnly() const
@@ -364,6 +367,46 @@ int asCScriptFunction::GetLineNumber(int programPosition)
 			return lineNumbers[i*2+1];
 		}
 	}
+}
+
+// interface
+asEFuncType asCScriptFunction::GetFuncType() const
+{
+	return funcType;
+}
+
+// interface
+int asCScriptFunction::GetVarCount() const
+{
+	return int(variables.GetLength());
+}
+
+// interface
+int asCScriptFunction::GetVar(asUINT index, const char **name, int *typeId) const
+{
+	if( index >= variables.GetLength() )
+		return asINVALID_ARG;
+
+	if( name )
+		*name = variables[index]->name.AddressOf();
+	if( typeId )
+		*typeId = engine->GetTypeIdFromDataType(variables[index]->type);
+
+	return asSUCCESS;
+}
+
+// interface
+const char *asCScriptFunction::GetVarDecl(asUINT index) const
+{
+	if( index >= variables.GetLength() )
+		return 0;
+
+	asASSERT(threadManager);
+	asCString *tempString = &threadManager->GetLocalData()->string;
+	*tempString = variables[index]->type.Format();
+	*tempString += " " + variables[index]->name;
+
+	return tempString->AddressOf();	
 }
 
 // internal

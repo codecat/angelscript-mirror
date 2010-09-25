@@ -291,6 +291,17 @@ enum asECompileFlags
 	asCOMP_ADD_TO_MODULE = 1
 };
 
+// Function types
+enum asEFuncType
+{
+	asFUNC_SYSTEM    = 0,
+	asFUNC_SCRIPT    = 1,
+	asFUNC_INTERFACE = 2,
+	asFUNC_VIRTUAL   = 3,
+	asFUNC_FUNCDEF   = 4,
+	asFUNC_IMPORTED  = 5
+};
+
 //
 // asBYTE  =  8 bits
 // asWORD  = 16 bits
@@ -791,10 +802,10 @@ public:
 
 	// Methods
 	virtual int                GetMethodCount() const = 0;
-	virtual int                GetMethodIdByIndex(int index) const = 0;
-	virtual int                GetMethodIdByName(const char *name) const = 0;
-	virtual int                GetMethodIdByDecl(const char *decl) const = 0;
-	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
+	virtual int                GetMethodIdByIndex(int index, bool getVirtual = true) const = 0;
+	virtual int                GetMethodIdByName(const char *name, bool getVirtual = true) const = 0;
+	virtual int                GetMethodIdByDecl(const char *decl, bool getVirtual = true) const = 0;
+	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index, bool getVirtual = true) const = 0;
 
 	// Properties
 	virtual int         GetPropertyCount() const = 0;
@@ -821,6 +832,7 @@ public:
 	virtual int Release() const = 0;
 
 	virtual int              GetId() const = 0;
+	virtual asEFuncType      GetFuncType() const = 0;
 	virtual const char      *GetModuleName() const = 0;
 	virtual const char      *GetScriptSectionName() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;
@@ -828,8 +840,6 @@ public:
 	virtual const char      *GetObjectName() const = 0;
 	virtual const char      *GetName() const = 0;
 	virtual const char      *GetDeclaration(bool includeObjectName = true) const = 0;
-	virtual bool             IsClassMethod() const = 0;
-	virtual bool             IsInterfaceMethod() const = 0;
 	virtual bool             IsReadOnly() const = 0;
 	virtual bool             IsPrivate() const = 0;
 
@@ -837,12 +847,22 @@ public:
 	virtual int              GetParamTypeId(int index, asDWORD *flags = 0) const = 0;
 	virtual int              GetReturnTypeId() const = 0;
 
+	// Debug information
+	virtual int              GetVarCount() const = 0;
+	virtual int              GetVar(asUINT index, const char **name, int *typeId = 0) const = 0;
+	virtual const char *     GetVarDecl(asUINT index) const = 0;
+
 	// For JIT compilation
 	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;
 
 	// User data
 	virtual void *SetUserData(void *userData) = 0;
 	virtual void *GetUserData() const = 0;
+
+#ifdef AS_DEPRECATED
+	virtual bool             IsClassMethod() const = 0;
+	virtual bool             IsInterfaceMethod() const = 0;
+#endif
 
 protected:
 	virtual ~asIScriptFunction() {};
