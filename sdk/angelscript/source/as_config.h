@@ -477,7 +477,13 @@
 	// Support native calling conventions on x86, but not 64bit yet
 	#if defined(i386) && !defined(__LP64__)
 		#define AS_X86
+	// PS3
+	#elif (defined(__PPC__) || defined(__ppc__)) && defined(__PPU__)
+		// Support native calling conventions on PS3
+		#define AS_PS3
+		#define AS_PPC_64
 	#endif
+
 
 	#define I64(x) x##ll
 

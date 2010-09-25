@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -49,6 +49,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef __SNC__
+#include "ppu_asm_intrinsics.h"
+#endif
+
 
 BEGIN_AS_NAMESPACE
 
@@ -357,14 +362,22 @@ asm(""
 static asDWORD GetReturnedFloat(void)
 {
 	asDWORD f;
+#ifdef __SNC__
+	__stfs( __freg(1), 0, (void*)&f);
+#else
 	asm(" stfs 1, %0\n" : "=m"(f));
+#endif
 	return f;
 }
 
 static asQWORD GetReturnedDouble(void)
 {
 	asQWORD f;
+#ifdef __SNC__
+	__stfd( __freg(1), 0, (void*)&f);
+#else
 	asm(" stfd 1, %0\n" : "=m"(f));
+#endif
 	return f;
 }
 
