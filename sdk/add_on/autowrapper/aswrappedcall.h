@@ -4,6 +4,8 @@
 // Generate the wrappers by calling the macros in global scope. 
 // Then register the wrapper function with the script engine using the asCALL_GENERIC 
 // calling convention. The wrapper can handle both global functions and class methods.
+// The wrapper can also handle OBJLAST & OBJFIRST methods as well.
+// or a asCALL_CDECL_OBJLAST.
 //
 // Example:
 //
@@ -11,6 +13,8 @@
 // asDECLARE_FUNCTION_WRAPPERPR(MyGenericOverloadedWrapper, MyOverloadedFunction, (int), void);
 // asDECLARE_METHOD_WRAPPER(MyGenericMethodWrapper, MyClass, Method);
 // asDECLARE_METHOD_WRAPPERPR(MyGenericOverloadedMethodWrapper, MyClass, Method, (int) const, void);
+// asDECLARE_FUNCTION_OBJ_WRAPPER(MyGenericMethodWrapper, MyRealFunction);
+// asDECLARE_FUNCTION_OBJ_WRAPPERPR(MyGenericOverloadedMethodWrapper, MyOverloadedFunction, (int), void);
 //
 // This file was generated to accept functions with a maximum of 10 parameters.
 
@@ -27,6 +31,18 @@
     static void wrapper_name(asIScriptGeneric *gen)\
     { \
         asCallWrappedFunc((rettype (*)params)(&func),gen);\
+    }
+
+#define asDECLARE_FUNCTION_OBJ_WRAPPER(wrapper_name,func,objfirst) \
+    static void wrapper_name(asIScriptGeneric *gen)\
+    { \
+        asCallWrappedFuncObj<objfirst>::Call(&func,gen);\
+    }
+
+#define asDECLARE_FUNCTION_OBJ_WRAPPERPR(wrapper_name,func,objfirst,params,rettype) \
+    static void wrapper_name(asIScriptGeneric *gen)\
+    { \
+        asCallWrappedFuncObj<objfirst>::Call((rettype (*)params)(&func),gen);\
     }
 
 #define asDECLARE_METHOD_WRAPPER(wrapper_name,cl,func) \
@@ -54,7 +70,43 @@ private:
     as_wrapNative_helper& operator=(const as_wrapNative_helper&);
 };
 
+// A helper class to statically branch on the right wrapper for constructors
+template<bool ObjFirst>
+class asCallWrappedFuncObj;
+
+template<>
+struct asCallWrappedFuncObj<true>
+{
+    template<typename Ctor>
+    static void Call(Ctor ctor, asIScriptGeneric *gen)
+    {
+        asCallWrappedFuncObjFirst(ctor, gen);
+    }
+};
+
+template<>
+struct asCallWrappedFuncObj<false>
+{
+    template<typename Ctor>
+    static void Call(Ctor ctor, asIScriptGeneric *gen)
+    {
+        asCallWrappedFuncObjLast(ctor, gen);
+    }
+};
+
 // 0 parameter(s)
+
+template<typename C>
+static void asCallWrappedFuncObjFirst(void (*func)(C*),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()));
+}
+
+template<typename C>
+static void asCallWrappedFuncObjLast(void (*func)(C*),asIScriptGeneric* gen)
+{
+    func(static_cast<C*>(gen->GetObject()));
+}
 
 static void asWrapNative_p0_void(void (*func)(),asIScriptGeneric *)
 {
@@ -127,6 +179,18 @@ inline void asCallWrappedFunc(R (C::*func)() const,asIScriptGeneric *gen)
 }
 
 // 1 parameter(s)
+
+template<typename C, typename T1>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d);
+}
+
+template<typename C, typename T1>
+static void asCallWrappedFuncObjLast(void (*func)(T1,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,static_cast<C*>(gen->GetObject()));
+}
 
 template<typename T1>
 static void asWrapNative_p1_void(void (*func)(T1),asIScriptGeneric *gen)
@@ -202,6 +266,18 @@ inline void asCallWrappedFunc(R (C::*func)(T1) const,asIScriptGeneric *gen)
 
 // 2 parameter(s)
 
+template<typename C, typename T1, typename T2>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1,T2),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d);
+}
+
+template<typename C, typename T1, typename T2>
+static void asCallWrappedFuncObjLast(void (*func)(T1,T2,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d,static_cast<C*>(gen->GetObject()));
+}
+
 template<typename T1,typename T2>
 static void asWrapNative_p2_void(void (*func)(T1,T2),asIScriptGeneric *gen)
 {
@@ -275,6 +351,18 @@ inline void asCallWrappedFunc(R (C::*func)(T1,T2) const,asIScriptGeneric *gen)
 }
 
 // 3 parameter(s)
+
+template<typename C, typename T1, typename T2, typename T3>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1,T2,T3),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d);
+}
+
+template<typename C, typename T1, typename T2, typename T3>
+static void asCallWrappedFuncObjLast(void (*func)(T1,T2,T3,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d,((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d,static_cast<C*>(gen->GetObject()));
+}
 
 template<typename T1,typename T2,typename T3>
 static void asWrapNative_p3_void(void (*func)(T1,T2,T3),asIScriptGeneric *gen)
@@ -350,6 +438,18 @@ inline void asCallWrappedFunc(R (C::*func)(T1,T2,T3) const,asIScriptGeneric *gen
 
 // 4 parameter(s)
 
+template<typename C, typename T1, typename T2, typename T3, typename T4>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1,T2,T3,T4),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d);
+}
+
+template<typename C, typename T1, typename T2, typename T3, typename T4>
+static void asCallWrappedFuncObjLast(void (*func)(T1,T2,T3,T4,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d,((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d,((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d,static_cast<C*>(gen->GetObject()));
+}
+
 template<typename T1,typename T2,typename T3,typename T4>
 static void asWrapNative_p4_void(void (*func)(T1,T2,T3,T4),asIScriptGeneric *gen)
 {
@@ -423,6 +523,18 @@ inline void asCallWrappedFunc(R (C::*func)(T1,T2,T3,T4) const,asIScriptGeneric *
 }
 
 // 5 parameter(s)
+
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1,T2,T3,T4,T5),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d);
+}
+
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5>
+static void asCallWrappedFuncObjLast(void (*func)(T1,T2,T3,T4,T5,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d,((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d,((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d,((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d,static_cast<C*>(gen->GetObject()));
+}
 
 template<typename T1,typename T2,typename T3,typename T4,typename T5>
 static void asWrapNative_p5_void(void (*func)(T1,T2,T3,T4,T5),asIScriptGeneric *gen)
@@ -498,6 +610,18 @@ inline void asCallWrappedFunc(R (C::*func)(T1,T2,T3,T4,T5) const,asIScriptGeneri
 
 // 6 parameter(s)
 
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1,T2,T3,T4,T5,T6),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d);
+}
+
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+static void asCallWrappedFuncObjLast(void (*func)(T1,T2,T3,T4,T5,T6,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d,((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d,((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d,((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d,((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d,static_cast<C*>(gen->GetObject()));
+}
+
 template<typename T1,typename T2,typename T3,typename T4,typename T5,typename T6>
 static void asWrapNative_p6_void(void (*func)(T1,T2,T3,T4,T5,T6),asIScriptGeneric *gen)
 {
@@ -571,6 +695,18 @@ inline void asCallWrappedFunc(R (C::*func)(T1,T2,T3,T4,T5,T6) const,asIScriptGen
 }
 
 // 7 parameter(s)
+
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1,T2,T3,T4,T5,T6,T7),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d);
+}
+
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+static void asCallWrappedFuncObjLast(void (*func)(T1,T2,T3,T4,T5,T6,T7,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d,((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d,((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d,((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d,((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d,((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d,static_cast<C*>(gen->GetObject()));
+}
 
 template<typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7>
 static void asWrapNative_p7_void(void (*func)(T1,T2,T3,T4,T5,T6,T7),asIScriptGeneric *gen)
@@ -646,6 +782,18 @@ inline void asCallWrappedFunc(R (C::*func)(T1,T2,T3,T4,T5,T6,T7) const,asIScript
 
 // 8 parameter(s)
 
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1,T2,T3,T4,T5,T6,T7,T8),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d);
+}
+
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+static void asCallWrappedFuncObjLast(void (*func)(T1,T2,T3,T4,T5,T6,T7,T8,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d,((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d,((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d,((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d,((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d,((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d,((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d,static_cast<C*>(gen->GetObject()));
+}
+
 template<typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7,typename T8>
 static void asWrapNative_p8_void(void (*func)(T1,T2,T3,T4,T5,T6,T7,T8),asIScriptGeneric *gen)
 {
@@ -720,6 +868,18 @@ inline void asCallWrappedFunc(R (C::*func)(T1,T2,T3,T4,T5,T6,T7,T8) const,asIScr
 
 // 9 parameter(s)
 
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1,T2,T3,T4,T5,T6,T7,T8,T9),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d);
+}
+
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+static void asCallWrappedFuncObjLast(void (*func)(T1,T2,T3,T4,T5,T6,T7,T8,T9,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d,((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d,((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d,((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d,((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d,((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d,((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d,((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d,static_cast<C*>(gen->GetObject()));
+}
+
 template<typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7,typename T8,typename T9>
 static void asWrapNative_p9_void(void (*func)(T1,T2,T3,T4,T5,T6,T7,T8,T9),asIScriptGeneric *gen)
 {
@@ -793,6 +953,18 @@ inline void asCallWrappedFunc(R (C::*func)(T1,T2,T3,T4,T5,T6,T7,T8,T9) const,asI
 }
 
 // 10 parameter(s)
+
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
+static void asCallWrappedFuncObjFirst(void (*func)(C*,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10),asIScriptGeneric *gen)
+{
+    func(static_cast<C*>(gen->GetObject()), ((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d, ((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d, ((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d, ((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d, ((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d, ((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d, ((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d, ((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d, ((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d, ((as_wrapNative_helper<T10> *)gen->GetAddressOfArg(9))->d);
+}
+
+template<typename C, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
+static void asCallWrappedFuncObjLast(void (*func)(T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,C*),asIScriptGeneric* gen)
+{
+    func(((as_wrapNative_helper<T1> *)gen->GetAddressOfArg(0))->d,((as_wrapNative_helper<T2> *)gen->GetAddressOfArg(1))->d,((as_wrapNative_helper<T3> *)gen->GetAddressOfArg(2))->d,((as_wrapNative_helper<T4> *)gen->GetAddressOfArg(3))->d,((as_wrapNative_helper<T5> *)gen->GetAddressOfArg(4))->d,((as_wrapNative_helper<T6> *)gen->GetAddressOfArg(5))->d,((as_wrapNative_helper<T7> *)gen->GetAddressOfArg(6))->d,((as_wrapNative_helper<T8> *)gen->GetAddressOfArg(7))->d,((as_wrapNative_helper<T9> *)gen->GetAddressOfArg(8))->d,((as_wrapNative_helper<T10> *)gen->GetAddressOfArg(9))->d,static_cast<C*>(gen->GetObject()));
+}
 
 template<typename T1,typename T2,typename T3,typename T4,typename T5,typename T6,typename T7,typename T8,typename T9,typename T10>
 static void asWrapNative_p10_void(void (*func)(T1,T2,T3,T4,T5,T6,T7,T8,T9,T10),asIScriptGeneric *gen)
