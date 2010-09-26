@@ -93,11 +93,12 @@ public:
 	int  Abort();
 	int  Suspend();
 
-	int  GetCurrentLineNumber(int *column);
+	// TODO: These two should be deprecated. They do the same thing as the GetCallstackXXX
+	int  GetCurrentLineNumber(int *column, const char **sectionName);
 	int  GetCurrentFunction();
 
 	int  SetException(const char *descr);
-	int  GetExceptionLineNumber(int *column);
+	int  GetExceptionLineNumber(int *column, const char **sectionName);
 	int  GetExceptionFunction();
 	const char *GetExceptionString();
 
@@ -108,7 +109,7 @@ public:
 
 	int GetCallstackSize();
 	int GetCallstackFunction(int index);
-	int GetCallstackLineNumber(int index, int *column);
+	int GetCallstackLineNumber(int index, int *column, const char **sectionName);
 
 	int         GetVarCount(int stackLevel);
 	const char *GetVarName(int varIndex, int stackLevel);

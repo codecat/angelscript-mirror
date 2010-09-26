@@ -448,6 +448,24 @@ enum asECompileFlags
 	asCOMP_ADD_TO_MODULE = 1
 };
 
+// Function types
+//! \brief Function types
+enum asEFuncType
+{
+	//! \brief An application registered function
+	asFUNC_SYSTEM    = 0,
+	//! \brief A script implemented function
+	asFUNC_SCRIPT    = 1,
+	//! \brief An interface method
+	asFUNC_INTERFACE = 2,
+	//! \brief A virtual method for script classes
+	asFUNC_VIRTUAL   = 3,
+	//! \brief A function definition
+	asFUNC_FUNCDEF   = 4,
+	//! \brief An imported function
+	asFUNC_IMPORTED  = 5
+};
+
 
 
 //! \typedef asBYTE
@@ -2120,11 +2138,12 @@ public:
 	virtual int         SetException(const char *string) = 0;
 	//! \brief Returns the line number where the exception occurred.
     //! \param[out] column The variable will receive the column number.
+    //! \param[out] sectionName The variable will receive the name of the script section.
     //! \return The line number where the exception occurred.
     //!
     //! This method returns the line number where the exception ocurred. The line number 
     //! is relative to the script section where the function was implemented.
-	virtual int         GetExceptionLineNumber(int *column = 0) = 0;
+	virtual int         GetExceptionLineNumber(int *column = 0, const char **sectionName = 0) = 0;
 	//! \brief Returns the function id of the function where the exception occurred.
     //! \return The function id where the exception occurred.
 	virtual int         GetExceptionFunction() = 0;
@@ -2189,11 +2208,12 @@ public:
 	virtual void        ClearLineCallback() = 0;
 	//! \brief Get the current line number that is being executed.
     //! \param[out] column The variable will receive the column number.
+    //! \param[out] sectionName The variable will receive the name of the script section.
     //! \return The current line number.
     //!
     //! This method returns the line number where the context is currently located. 
     //! The line number is relative to the script section where the function was implemented.
-	virtual int         GetCurrentLineNumber(int *column = 0) = 0;
+	virtual int         GetCurrentLineNumber(int *column = 0, const char **sectionName = 0) = 0;
 	//! \brief Get the current function that is being executed.
     //! \return The function id of the current function.
 	virtual int         GetCurrentFunction() = 0;
@@ -2211,8 +2231,9 @@ public:
 	//! \brief Returns the line number at the specified callstack level.
     //! \param[in] index The index on the call stack.
     //! \param[out] column The variable will receive the column number.
+    //! \param[out] sectionName The variable will receive the name of the script section.
     //! \return The line number for the call stack level referred to by the index.
-	virtual int         GetCallstackLineNumber(int index, int *column = 0) = 0;
+	virtual int         GetCallstackLineNumber(int index, int *column = 0, const char **sectionName = 0) = 0;
 	//! \brief Returns the number of local variables at the specified callstack level.
     //! \param[in] stackLevel The index on the call stack.
     //! \return The number of variables in the function on the call stack level.
@@ -2650,23 +2671,31 @@ public:
 	virtual int                GetMethodCount() const = 0;
 	//! \brief Returns the method id by index.
     //! \param[in] index The index of the method.
+	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
     //! \return A negative value on error, or the method id.
     //! \retval asINVALID_ARG \a index is out of bounds.
     //!
-    //! This method should be used to retrieve the ID of the script method for the object 
-    //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	virtual int                GetMethodIdByIndex(int index) const = 0;
+    //! This method should be used to retrieve the id of the script method for the object 
+    //! that you wish to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	//!
+	//! By default this returns the virtual method for script classes. This will allow you to 
+	//! call the virtual method on classes, and rely on the polymorphism to call the correct 
+	//! implementation. If you wish to inspect the real method, then you should set the second
+	//! parameter to false to retrieve the real method.
+	virtual int                GetMethodIdByIndex(int index, bool getVirtual = true) const = 0;
 	//! \brief Returns the method id by name.
     //! \param[in] name The name of the method.
+	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
     //! \return A negative value on error, or the method id.
     //! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
     //! \retval asNO_FUNCTION Didn't find any matching method.
     //!
     //! This method should be used to retrieve the ID of the script method for the object 
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	virtual int                GetMethodIdByName(const char *name) const = 0;
+	virtual int                GetMethodIdByName(const char *name, bool getVirtual = true) const = 0;
 	//! \brief Returns the method id by declaration.
     //! \param[in] decl The method signature.
+	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
     //! \return A negative value on error, or the method id.
     //! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
     //! \retval asNO_FUNCTION Didn't find any matching method.
@@ -2677,13 +2706,14 @@ public:
     //! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
     //!
     //! The method will find the script method with the exact same declaration.
-	virtual int                GetMethodIdByDecl(const char *decl) const = 0;
+	virtual int                GetMethodIdByDecl(const char *decl, bool getVirtual = true) const = 0;
 	//! \brief Returns the function descriptor for the script method
 	//! \param[in] index The index of the method.
+	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
 	//! \return A pointer to the method description interface, or null if not found.
 	//! 
 	//! This does not increment the reference count of the returned function descriptor.
-	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index) const = 0;
+	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index, bool getVirtual = true) const = 0;
 	//! \}
 
 	// Properties
@@ -2759,6 +2789,9 @@ public:
 	//! \brief Returns the id of the function
 	//! \return The id of the function
 	virtual int              GetId() const = 0;
+	//! \brief Returns the type of the function
+	//! \return The type of the function
+	virtual asEFuncType      GetFuncType() const = 0;
 	//! \brief Returns the name of the module where the function was implemented
 	//! \return A null terminated string with the module name.
 	virtual const char      *GetModuleName() const = 0;
@@ -2788,12 +2821,6 @@ public:
 	//! \param[in] includeObjectName Indicate whether the object name should be prepended to the function name
 	//! \return A null terminated string with the function declaration.
 	virtual const char      *GetDeclaration(bool includeObjectName = true) const = 0;
-	//! \brief Returns true if it is a class method
-	//! \return True if this a class method.
-	virtual bool             IsClassMethod() const = 0;
-	//! \brief Returns true if it is an interface method
-	//! \return True if this is an interface method.
-	virtual bool             IsInterfaceMethod() const = 0;
 	//! \brief Returns true if the class method is read-only
 	//! \return True if the class method is read-only
 	virtual bool             IsReadOnly() const = 0;
@@ -2817,6 +2844,26 @@ public:
     //! \brief Returns the type id of the return type.
     //! \return The type id of the return type.
 	virtual int              GetReturnTypeId() const = 0;
+	//! \}
+
+	//! \name Debug information
+	//! \{
+
+	// Debug information
+	//! \brief Returns the number of local variables in the function
+	//! \return The number of local variables in the function
+	virtual int              GetVarCount() const = 0;
+	//! \brief Returns information about a local variable
+	//! \param[in] index The zero based index of the local variable
+	//! \param[out] name Receives the name of the variable
+	//! \param[out] typeId Receives the typeId of the variable
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG The \a index is out of range
+	virtual int              GetVar(asUINT index, const char **name, int *typeId = 0) const = 0;
+	//! \brief Returns the declaration of a local variable
+	//! \param[in] index The zero based index of the local variable
+	//! \return The declaration string, or null on error
+	virtual const char *     GetVarDecl(asUINT index) const = 0;
 	//! \}
 
 	//! \name JIT compilation
@@ -2846,6 +2893,21 @@ public:
     //! \return The pointer to the user data.
 	virtual void *GetUserData() const = 0;
 	//! \}
+
+#ifdef AS_DEPRECATED
+	//! \name Deprecated
+	//! \{
+
+	//! \brief Returns true if it is a class method
+	//! \return True if this a class method.
+	//! \deprecated since 2.20.0. Use \ref asIScriptFunction::GetFuncType instead.
+	virtual bool             IsClassMethod() const = 0;
+	//! \brief Returns true if it is an interface method
+	//! \return True if this is an interface method.
+	//! \deprecated since 2.20.0. Use \ref asIScriptFunction::GetFuncType instead.
+	virtual bool             IsInterfaceMethod() const = 0;
+	//! \}
+#endif
 
 protected:
 	virtual ~asIScriptFunction() {};

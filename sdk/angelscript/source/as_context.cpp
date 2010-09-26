@@ -1105,7 +1105,7 @@ int asCContext::GetCallstackFunction(int index)
 	return func->id;
 }
 
-int asCContext::GetCallstackLineNumber(int index, int *column)
+int asCContext::GetCallstackLineNumber(int index, int *column, const char **sectionName)
 {
 	// TODO: The current function should be accessed at stackLevel 0
 
@@ -1117,6 +1117,8 @@ int asCContext::GetCallstackLineNumber(int index, int *column)
 
 	asDWORD line = func->GetLineNumber(int(bytePos - func->byteCode.AddressOf()));
 	if( column ) *column = (line >> 20);
+
+	if( sectionName ) *sectionName = func->GetScriptSectionName();
 
 	return (line & 0xFFFFF);
 }
@@ -3450,15 +3452,19 @@ void asCContext::CleanStackFrame()
 	}
 }
 
-int asCContext::GetExceptionLineNumber(int *column)
+// interface
+int asCContext::GetExceptionLineNumber(int *column, const char **sectionName)
 {
 	if( GetState() != asEXECUTION_EXCEPTION ) return asERROR;
 
 	if( column ) *column = exceptionColumn;
 
+	if( sectionName ) *sectionName = engine->scriptFunctions[exceptionFunction]->GetScriptSectionName();
+
 	return exceptionLine;
 }
 
+// interface
 int asCContext::GetExceptionFunction()
 {
 	if( GetState() != asEXECUTION_EXCEPTION ) return asERROR;
@@ -3466,6 +3472,7 @@ int asCContext::GetExceptionFunction()
 	return exceptionFunction;
 }
 
+// interface
 int asCContext::GetCurrentFunction()
 {
 	if( status == asEXECUTION_SUSPENDED || status == asEXECUTION_ACTIVE )
@@ -3474,12 +3481,15 @@ int asCContext::GetCurrentFunction()
 	return -1;
 }
 
-int asCContext::GetCurrentLineNumber(int *column)
+// interface
+int asCContext::GetCurrentLineNumber(int *column, const char **sectionName)
 {
 	if( status == asEXECUTION_SUSPENDED || status == asEXECUTION_ACTIVE )
 	{
 		asDWORD line = currentFunction->GetLineNumber(int(regs.programPointer - currentFunction->byteCode.AddressOf()));
 		if( column ) *column = line >> 20;
+
+		if( sectionName ) *sectionName = currentFunction->GetScriptSectionName();
 
 		return line & 0xFFFFF;
 	}

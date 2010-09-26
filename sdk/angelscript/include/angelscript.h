@@ -677,7 +677,7 @@ public:
 
 	// Exception handling
 	virtual int         SetException(const char *string) = 0;
-	virtual int         GetExceptionLineNumber(int *column = 0) = 0;
+	virtual int         GetExceptionLineNumber(int *column = 0, const char **sectionName = 0) = 0;
 	virtual int         GetExceptionFunction() = 0;
 	virtual const char *GetExceptionString() = 0;
 	virtual int         SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
@@ -686,11 +686,11 @@ public:
 	// Debugging
 	virtual int         SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	virtual void        ClearLineCallback() = 0;
-	virtual int         GetCurrentLineNumber(int *column = 0) = 0;
+	virtual int         GetCurrentLineNumber(int *column = 0, const char **sectionName = 0) = 0;
 	virtual int         GetCurrentFunction() = 0;
 	virtual int         GetCallstackSize() = 0;
 	virtual int         GetCallstackFunction(int index) = 0;
-	virtual int         GetCallstackLineNumber(int index, int *column = 0) = 0;
+	virtual int         GetCallstackLineNumber(int index, int *column = 0, const char **sectionName = 0) = 0;
 	virtual int         GetVarCount(int stackLevel = -1) = 0;
 	virtual const char *GetVarName(int varIndex, int stackLevel = -1) = 0;
 	virtual const char *GetVarDeclaration(int varIndex, int stackLevel = -1) = 0;
