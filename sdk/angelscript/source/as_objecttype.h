@@ -168,14 +168,20 @@ public:
 
 	// Properties
 	int         GetPropertyCount() const;
-	int         GetPropertyTypeId(asUINT prop) const;
-	const char *GetPropertyName(asUINT prop) const;
-	bool        IsPropertyPrivate(asUINT prop) const;
-	int         GetPropertyOffset(asUINT prop) const;
+	int         GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, int *offset) const;
+	const char *GetPropertyDeclaration(asUINT index) const;
 
 	// Behaviours
 	int GetBehaviourCount() const;
 	int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const;
+
+#ifdef AS_DEPRECATED
+	// Since 2.20.0
+	int         GetPropertyTypeId(asUINT prop) const;
+	const char *GetPropertyName(asUINT prop) const;
+	bool        IsPropertyPrivate(asUINT prop) const;
+	int         GetPropertyOffset(asUINT prop) const;
+#endif
 
 //===========================================
 // Internal

@@ -145,7 +145,7 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 	// Show properties
 	for( int p = 0; p < objType->GetPropertyCount(); p++ )
 	{
-		s << " " << engine->GetTypeDeclaration(objType->GetPropertyTypeId(p)) << " " << objType->GetPropertyName(p) << endl;
+		s << " " << objType->GetPropertyDeclaration(p) << endl;
 	}
 }
 

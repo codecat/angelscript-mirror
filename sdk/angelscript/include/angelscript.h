@@ -813,14 +813,19 @@ public:
 
 	// Properties
 	virtual int         GetPropertyCount() const = 0;
-	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
-	virtual const char *GetPropertyName(asUINT prop) const = 0;
-	virtual bool        IsPropertyPrivate(asUINT prop) const = 0;
-	virtual int         GetPropertyOffset(asUINT prop) const = 0;
+	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0) const = 0;
+	virtual const char *GetPropertyDeclaration(asUINT index) const = 0;
 
 	// Behaviours
 	virtual int GetBehaviourCount() const = 0;
 	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+
+#ifdef AS_DEPRECATED
+	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
+	virtual const char *GetPropertyName(asUINT prop) const = 0;
+	virtual bool        IsPropertyPrivate(asUINT prop) const = 0;
+	virtual int         GetPropertyOffset(asUINT prop) const = 0;
+#endif
 
 protected:
 	virtual ~asIObjectType() {}

@@ -412,11 +412,51 @@ asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(int index, bool get
 	return engine->scriptFunctions[methods[index]];
 }
 
+// interface
 int asCObjectType::GetPropertyCount() const
 {
 	return (int)properties.GetLength();
 }
 
+// interface
+int asCObjectType::GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, int *offset) const
+{
+	if( index >= properties.GetLength() )
+		return asINVALID_ARG;
+
+	if( name )
+		*name = properties[index]->name.AddressOf();
+	if( typeId )
+		*typeId = engine->GetTypeIdFromDataType(properties[index]->type);
+	if( isPrivate )
+		*isPrivate = properties[index]->isPrivate;
+	if( offset )
+		*offset = properties[index]->byteOffset;
+
+	return 0;
+}
+
+// interface
+const char *asCObjectType::GetPropertyDeclaration(asUINT index) const
+{
+	if( index >= properties.GetLength() )
+		return 0;
+
+	asASSERT(threadManager);
+	asCString *tempString = &threadManager->GetLocalData()->string;
+	if( properties[index]->isPrivate )
+		*tempString = "private ";
+	else
+		*tempString = "";
+	*tempString += properties[index]->type.Format();
+	*tempString += " ";
+	*tempString += properties[index]->name;
+
+	return tempString->AddressOf();
+}
+
+#ifdef AS_DEPRECATED
+// Since 2.20.0
 int asCObjectType::GetPropertyTypeId(asUINT prop) const
 {
 	if( prop >= properties.GetLength() )
@@ -433,11 +473,6 @@ const char *asCObjectType::GetPropertyName(asUINT prop) const
 	return properties[prop]->name.AddressOf();
 }
 
-asIObjectType *asCObjectType::GetBaseType() const
-{
-	return derivedFrom; 
-}
-
 bool asCObjectType::IsPropertyPrivate(asUINT prop) const
 {
 	if( prop >= properties.GetLength() )
@@ -452,6 +487,12 @@ int asCObjectType::GetPropertyOffset(asUINT prop) const
 		return 0;
 
 	return properties[prop]->byteOffset;
+}
+#endif
+
+asIObjectType *asCObjectType::GetBaseType() const
+{
+	return derivedFrom; 
 }
 
 int asCObjectType::GetBehaviourCount() const

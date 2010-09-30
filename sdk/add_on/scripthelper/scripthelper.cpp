@@ -268,10 +268,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			}
 			for( m = 0; m < type->GetPropertyCount(); m++ )
 			{
-				// TODO: Need a GetPropertyDeclaration
-				const char *name = type->GetPropertyName(m);
-				int typeId = type->GetPropertyTypeId(m);
-				fprintf(f, "objprop \"%s\" \"%s %s\"\n", typeDecl.c_str(), engine->GetTypeDeclaration(typeId), name);
+				fprintf(f, "objprop \"%s\" \"%s %s\"\n", typeDecl.c_str(), type->GetPropertyDeclaration(m));
 			}
 		}
 	}

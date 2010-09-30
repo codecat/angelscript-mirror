@@ -2732,25 +2732,21 @@ public:
 	//! \{
 
 	//! \brief Returns the number of properties that the object contains.
-    //! \return The number of member properties of the script object.
+	//! \return The number of member properties of the script object.
 	virtual int         GetPropertyCount() const = 0;
-    //! \brief Returns the type id of the property referenced by \a prop.
-    //! \param[in] prop The property index.
-    //! \return The type id of the member property, or a negative value on error.
-    //! \retval asINVALID_ARG \a prop is too large
-	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
-    //! \brief Returns the name of the property referenced by \a prop.
-    //! \param[in] prop The property index.
-    //! \return A null terminated string with the property name.
-	virtual const char *GetPropertyName(asUINT prop) const = 0;
-	//! \brief Returns whether a property is private or not.
-	//! \param[in] prop The property index.
-	//! \return True if the property is private.
-	virtual bool        IsPropertyPrivate(asUINT prop) const = 0;
-	//! \brief Returns the offset of the property in the memory layout.
-	//! \param[in] prop The property index.
-	//! \return The offset of the property in the memory layout.
-	virtual int         GetPropertyOffset(asUINT prop) const = 0;
+	//! \brief Returns the attributes of the property.
+	//! \param[in] index The index of the property
+	//! \param[out] name The name of the property
+	//! \param[out] typeId The type of the property
+	//! \param[out] isPrivate Whether the property is private or not
+	//! \param[out] offset The offset into the object where the property is stored
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG The \a index is out of bounds
+	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0) const = 0;
+	//! \brief Returns the declaration of the property
+	//! \param[in] index The index of the property
+	//! \return The declaration of the property, or null on error.
+	virtual const char *GetPropertyDeclaration(asUINT index) const = 0;
 	//! \}
 
 	// Behaviours
@@ -2767,6 +2763,25 @@ public:
 	//! \retval asINVALID_ARG The \a index is too large.
 	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
 	//! \}
+
+#ifdef AS_DEPRECATED
+	//! \name Deprecated
+	//! \{
+
+    //! \brief Returns the type id of the property referenced by \a prop.
+    //! \deprecated since 2.20.0. Use \ref asIObjectType::GetProperty instead.
+	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
+    //! \brief Returns the name of the property referenced by \a prop.
+    //! \deprecated since 2.20.0. Use \ref asIObjectType::GetProperty instead.
+	virtual const char *GetPropertyName(asUINT prop) const = 0;
+	//! \brief Returns whether a property is private or not.
+    //! \deprecated since 2.20.0. Use \ref asIObjectType::GetProperty instead.
+	virtual bool        IsPropertyPrivate(asUINT prop) const = 0;
+	//! \brief Returns the offset of the property in the memory layout.
+    //! \deprecated since 2.20.0. Use \ref asIObjectType::GetProperty instead.
+	virtual int         GetPropertyOffset(asUINT prop) const = 0;
+	//! \}
+#endif
 
 protected:
 	virtual ~asIObjectType() {}
