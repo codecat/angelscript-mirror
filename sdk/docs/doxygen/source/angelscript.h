@@ -1679,23 +1679,21 @@ public:
     //! that the host application will access. Verifying the declaration is important because, 
     //! even though the script may compile correctly the user may not have used the variable 
     //! types as intended.
-	virtual const char *GetGlobalVarDeclaration(int index) const = 0;
-	//! \brief Returns the global variable name.
-    //! \param[in] index The index of the global variable.
-    //! \return A null terminated string with the variable name, or null if not found.
-	virtual const char *GetGlobalVarName(int index) const = 0;
-	//! \brief Returns the type id for the global variable.
+	virtual const char *GetGlobalVarDeclaration(asUINT index) const = 0;
+	//! \brief Returns the global variable properties.
 	//! \param[in] index The index of the global variable.
-	//! \param[out] isConst Receives the constness indicator of the variable.
-	//! \return The type id of the global variable, or a negative value on error.
+	//! \param[out] name The name of the variable.
+	//! \param[out] typeId The type of the variable.
+	//! \param[out] isConst Whether or not the variable is const.
+	//! \return A negative value on error.
 	//! \retval asINVALID_ARG The index is out of range.
-	virtual int         GetGlobalVarTypeId(int index, bool *isConst = 0) const = 0;
+	virtual int         GetGlobalVar(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0) const = 0;
 	//! \brief Returns the pointer to the global variable.
-    //! \param[in] index The index of the global variable.
-    //! \return A pointer to the global variable, or null if not found.
-    //!
-    //! This method should be used to retrieve the pointer of a variable that you wish to access.
-	virtual void       *GetAddressOfGlobalVar(int index) = 0;
+	//! \param[in] index The index of the global variable.
+	//! \return A pointer to the global variable, or null if not found.
+	//!
+	//! This method should be used to retrieve the pointer of a variable that you wish to access.
+	virtual void       *GetAddressOfGlobalVar(asUINT index) = 0;
 	//! \brief Remove the global variable from the scope of the module.
 	//! \param[in] index The index of the global variable.
 	//! \return A negative value on error.
@@ -1703,7 +1701,7 @@ public:
 	//!
 	//! The global variable is removed from the scope of the module, but 
 	//! it is not destroyed until all functions that access it are freed.
-	virtual int         RemoveGlobalVar(int index) = 0;
+	virtual int         RemoveGlobalVar(asUINT index) = 0;
 	//! \}
 
 	// Type identification
@@ -1879,6 +1877,19 @@ public:
     //! engine has been configured in the same way as when the byte code was first compiled.
 	virtual int LoadByteCode(asIBinaryStream *in) = 0;
 	//! \}
+
+#ifdef AS_DEPRECATED
+	//! \name Deprecated
+	//! \{
+
+	//! \brief Returns the global variable name.
+	//! \deprecated since 2.20.0. Use \ref asIScriptModule::GetGlobalVar instead.
+	virtual const char *GetGlobalVarName(int index) const = 0;
+	//! \brief Returns the type id for the global variable.
+	//! \deprecated since 2.20.0. Use \ref asIScriptModule::GetGlobalVar instead.
+	virtual int         GetGlobalVarTypeId(int index, bool *isConst = 0) const = 0;
+	//! \}
+#endif
 
 protected:
 	virtual ~asIScriptModule() {}

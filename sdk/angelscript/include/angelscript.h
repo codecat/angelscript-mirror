@@ -595,11 +595,10 @@ public:
 	virtual int         GetGlobalVarCount() const = 0;
 	virtual int         GetGlobalVarIndexByName(const char *name) const = 0;
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const = 0;
-	virtual const char *GetGlobalVarDeclaration(int index) const = 0;
-	virtual const char *GetGlobalVarName(int index) const = 0;
-	virtual int         GetGlobalVarTypeId(int index, bool *isConst = 0) const = 0;
-	virtual void       *GetAddressOfGlobalVar(int index) = 0;
-	virtual int         RemoveGlobalVar(int index) = 0;
+	virtual const char *GetGlobalVarDeclaration(asUINT index) const = 0;
+	virtual int         GetGlobalVar(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0) const = 0;
+	virtual void       *GetAddressOfGlobalVar(asUINT index) = 0;
+	virtual int         RemoveGlobalVar(asUINT index) = 0;
 
 	// Type identification
 	virtual int            GetObjectTypeCount() const = 0;
@@ -629,6 +628,11 @@ public:
 	// Bytecode saving and loading
 	virtual int SaveByteCode(asIBinaryStream *out) const = 0;
 	virtual int LoadByteCode(asIBinaryStream *in) = 0;
+
+#ifdef AS_DEPRECATED
+	virtual const char *GetGlobalVarName(int index) const = 0;
+	virtual int         GetGlobalVarTypeId(int index, bool *isConst = 0) const = 0;
+#endif
 
 protected:
 	virtual ~asIScriptModule() {}

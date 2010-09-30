@@ -69,14 +69,16 @@ bool TestEnumGlobVar()
 		ret = true;
 	}
 
-	if( (buffer = mod->GetGlobalVarName(3)) == 0 )
+	buffer = 0;
+	mod->GetGlobalVar(3, &buffer);
+	if( buffer == 0 )
 	{
-		printf("%s: GetGlobalVarName() failed\n", TESTNAME);
+		printf("%s: GetGlobalVar() failed\n", TESTNAME);
 		ret = true;
 	}
 	else if( strcmp(buffer, "d") != 0 )
 	{
-		printf("%s: GetGlobalVarName() returned %s\n", TESTNAME, buffer);
+		printf("%s: GetGlobalVar() returned %s\n", TESTNAME, buffer);
 		ret = true;
 	}
 
@@ -84,7 +86,7 @@ bool TestEnumGlobVar()
 	d = (unsigned long *)mod->GetAddressOfGlobalVar(3);
 	if( d == 0 )
 	{
-		printf("%s: GetGlobalVarPointer() returned %d\n", TESTNAME, r);
+		printf("%s: GetAddressOfGlobalVar() returned %d\n", TESTNAME, r);
 		ret = true;
 	}
 	if( *d != 0xC0DE )

@@ -118,11 +118,10 @@ public:
 	virtual int         GetGlobalVarCount() const;
 	virtual int         GetGlobalVarIndexByName(const char *name) const;
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const;
-	virtual const char *GetGlobalVarDeclaration(int index) const;
-	virtual const char *GetGlobalVarName(int index) const;
-	virtual int         GetGlobalVarTypeId(int index, bool *isConst) const;
-	virtual void       *GetAddressOfGlobalVar(int index);
-	virtual int         RemoveGlobalVar(int index);
+	virtual const char *GetGlobalVarDeclaration(asUINT index) const;
+	virtual int         GetGlobalVar(asUINT index, const char **name, int *typeId, bool *isConst) const;
+	virtual void       *GetAddressOfGlobalVar(asUINT index);
+	virtual int         RemoveGlobalVar(asUINT index);
 
 	// Type identification
 	virtual int            GetObjectTypeCount() const;
@@ -152,6 +151,12 @@ public:
 	// Bytecode Saving/Loading
 	virtual int SaveByteCode(asIBinaryStream *out) const;
 	virtual int LoadByteCode(asIBinaryStream *in);
+
+#ifdef AS_DEPRECATED
+	// Since 2.20.0
+	virtual const char *GetGlobalVarName(int index) const;
+	virtual int         GetGlobalVarTypeId(int index, bool *isConst) const;
+#endif
 
 //-----------------------------------------------
 // Internal

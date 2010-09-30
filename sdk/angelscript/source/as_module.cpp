@@ -509,9 +509,9 @@ int asCModule::GetGlobalVarIndexByName(const char *name) const
 }
 
 // interface
-int asCModule::RemoveGlobalVar(int index)
+int asCModule::RemoveGlobalVar(asUINT index)
 {
-	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
+	if( index >= scriptGlobals.GetLength() )
 		return asINVALID_ARG;
 
 	scriptGlobals[index]->Release();
@@ -562,9 +562,9 @@ int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 }
 
 // interface
-void *asCModule::GetAddressOfGlobalVar(int index)
+void *asCModule::GetAddressOfGlobalVar(asUINT index)
 {
-	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
+	if( index >= scriptGlobals.GetLength() )
 		return 0;
 
 	// TODO: value types shouldn't need dereferencing
@@ -576,9 +576,9 @@ void *asCModule::GetAddressOfGlobalVar(int index)
 }
 
 // interface
-const char *asCModule::GetGlobalVarDeclaration(int index) const
+const char *asCModule::GetGlobalVarDeclaration(asUINT index) const
 {
-	if( index < 0 || index >= (int)scriptGlobals.GetLength() )
+	if( index >= scriptGlobals.GetLength() )
 		return 0;
 
 	asCGlobalProperty *prop = scriptGlobals[index];
@@ -591,6 +591,27 @@ const char *asCModule::GetGlobalVarDeclaration(int index) const
 	return tempString->AddressOf();
 }
 
+// interface
+int asCModule::GetGlobalVar(asUINT index, const char **name, int *typeId, bool *isConst) const
+{
+	if( index >= scriptGlobals.GetLength() )
+		return asINVALID_ARG;
+
+	asCGlobalProperty *prop = scriptGlobals[index];
+
+	if( name )
+		*name = prop->name.AddressOf();
+	if( typeId )
+		*typeId = engine->GetTypeIdFromDataType(prop->type);
+	if( isConst )
+		*isConst = prop->type.IsReadOnly();
+
+	return asSUCCESS;
+}
+
+
+#ifdef AS_DEPRECATED
+// Since 2.20.0
 // interface
 const char *asCModule::GetGlobalVarName(int index) const
 {
@@ -612,6 +633,7 @@ int asCModule::GetGlobalVarTypeId(int index, bool *isConst) const
 
 	return engine->GetTypeIdFromDataType(scriptGlobals[index]->type);
 }
+#endif
 
 // interface
 int asCModule::GetObjectTypeCount() const
