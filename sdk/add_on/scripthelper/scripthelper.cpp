@@ -2,6 +2,7 @@
 #include "scripthelper.h"
 #include <string>
 #include <assert.h>
+#include <stdio.h>
 
 using namespace std;
 
