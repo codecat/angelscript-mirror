@@ -5,6 +5,11 @@ CXXFLAGS = -ggdb -I../../../../angelscript/include -Wno-missing-field-initialize
 SRCDIR = ../../source
 OBJDIR = obj
 
+ifdef DONT_WAIT
+    CXXFLAGS += -DDONT_WAIT
+endif
+
+
 SRCNAMES = \
   bstr.cpp \
   main.cpp \

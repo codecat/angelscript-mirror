@@ -336,7 +336,7 @@ int main(int argc, char **argv)
 //succeed:
 	printf("--------------------------------------------\n");
 	printf("All of the tests passed with success.\n\n");
-#if defined(WIN32) || defined(_WIN64)
+#if !defined(DONT_WAIT) && (defined(WIN32) || defined(_WIN64))
 	printf("Press any key to quit.\n");
 	while(!_getch());
 #endif
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
 failed:
 	printf("--------------------------------------------\n");
 	printf("One of the tests failed, see details above.\n\n");
-#if defined(WIN32) || defined(_WIN64)
+#if !defined(DONT_WAIT) && (defined(WIN32) || defined(_WIN64))
 	printf("Press any key to quit.\n");
 	while(!_getch());
 #endif
