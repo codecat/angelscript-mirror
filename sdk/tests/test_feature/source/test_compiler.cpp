@@ -1214,6 +1214,25 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test return of handle to array
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"class Test \n"
+			"{ \n"
+			"  array<int> @retArray() { return array<int>(); } \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 ) 
+			fail = true;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

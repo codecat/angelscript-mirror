@@ -696,6 +696,12 @@ bool asCParser::IsFuncDecl(bool isMethod)
 		return false;
 	}
 
+	if( !CheckTemplateType(t1) )
+	{
+		RewindTo(&t);
+		return false;
+	}
+
 	// Object handles can be interleaved with the array brackets
 	sToken t2;
 	GetToken(&t2);
