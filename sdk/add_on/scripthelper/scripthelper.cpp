@@ -213,7 +213,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			// Only the type flags are necessary. The application flags are application 
 			// specific and doesn't matter to the offline compiler. The object size is also
 			// unnecessary for the offline compiler
-			fprintf(f, "objtype \"%s\" %d\n", engine->GetTypeDeclaration(type->GetTypeId()), type->GetFlags() & 0xFF);
+			fprintf(f, "objtype \"%s\" %u\n", engine->GetTypeDeclaration(type->GetTypeId()), type->GetFlags() & 0xFF);
 		}
 	}
 
@@ -269,7 +269,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			}
 			for( m = 0; m < type->GetPropertyCount(); m++ )
 			{
-				fprintf(f, "objprop \"%s\" \"%s %s\"\n", typeDecl.c_str(), type->GetPropertyDeclaration(m));
+				fprintf(f, "objprop \"%s\" \"%s\"\n", typeDecl.c_str(), type->GetPropertyDeclaration(m));
 			}
 		}
 	}
