@@ -66,6 +66,7 @@
 #define TXT_CONSTRUCTOR_NAME_ERROR               "The constructor name must be the same as the class"
 
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
+#define TXT_DECL_IN_SWITCH                "Variables cannot be declared in switch cases, except inside statement blocks"
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
 #define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM  "The destructor must not have any parameters"
 #define TXT_DUPLICATE_SWITCH_CASE         "Duplicate switch case"

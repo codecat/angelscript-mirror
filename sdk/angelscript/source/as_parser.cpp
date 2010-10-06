@@ -2264,8 +2264,11 @@ asCScriptNode *asCParser::ParseCase()
 		   t.type != ttEndStatementBlock && 
 		   t.type != ttBreak )
 	{
-
-		node->AddChildLast(ParseStatement());
+		if( IsVarDecl() )
+			// Variable declarations are not allowed, but we parse it anyway to give a good error message
+			node->AddChildLast(ParseDeclaration());
+		else
+			node->AddChildLast(ParseStatement());
 		if( isSyntaxError ) return node;
 
 		GetToken(&t);

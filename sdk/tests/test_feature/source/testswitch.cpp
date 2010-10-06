@@ -200,7 +200,31 @@ bool TestSwitch()
 			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
+	}
 
+	// Test to make sure the error message is appropriate when declaring variable in case
+	{
+		bout.buffer = "";
+		const char *script = 
+			"	void test() \n"
+			"	{ \n"
+			"		switch (0) \n"
+			"		{ \n"
+			"       case 0: \n"
+			"         int n; \n"
+			"		} \n"
+			"	} \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			fail = true;
+		if( bout.buffer != "script (1, 2) : Info    : Compiling void test()\n"
+		                   "script (6, 10) : Error   : Variables cannot be declared in switch cases, except inside statement blocks\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			fail = true;
+		}
 	}
 
 	engine->Release();
