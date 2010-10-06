@@ -18,11 +18,14 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <h2>Version 2.20.0 WIP - 2010/10/05</h2>
 
 <ul>
+<li>Bug fixes
+<ul>
+<li>Fixed bug in parser when a function or method returned a handle to a template type (Thanks yzslhawk)
+</ul>
 <li>Library
 <ul>
 <li>Removed the built-in array type, the array type must be registered by the application instead
 <li>Added support for native calling conventions on PS3 with SNC compiler (Thanks Kidneythief)
-<li>Fixed bug in parser when a function or method returned a handle to a template type (Thanks yzslhawk)
 <li>Improved compiler error message when trying to declare variable in switch case
 </ul>
 <li>Library interface
