@@ -141,6 +141,8 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	vfTableIdx             = -1;
 	jitFunction            = 0;
 	gcFlag                 = false;
+	userData               = 0;
+	id                     = 0;
 
 	// Notify the GC of script functions
 	if( funcType == asFUNC_SCRIPT )

@@ -65,7 +65,16 @@ struct asSDeferredParam
 
 struct asSExprContext
 {
-	asSExprContext(asCScriptEngine *engine) : bc(engine) {exprNode = 0; origExpr = 0; property_get = 0; property_set = 0; }
+	asSExprContext(asCScriptEngine *engine) : bc(engine) 
+	{
+		exprNode = 0; 
+		origExpr = 0; 
+		property_get = 0; 
+		property_set = 0; 
+		property_const  = false;
+		property_handle = false;
+		property_ref    = false;
+	}
 
 	asCByteCode bc;
 	asCTypeInfo type;
