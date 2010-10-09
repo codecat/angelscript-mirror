@@ -32,16 +32,16 @@ bool Test()
 			"} \n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "C a, b; (a = b).n = 42; assert( a.n == 42 );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// Test returning reference to a global variable
@@ -56,16 +56,16 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "g = 0; Test() = 42; assert( g == 42 );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// Test returning reference to a global variable
@@ -80,16 +80,16 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "Test() = '42'; assert( g == '42' );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// Test returning reference to a global variable
@@ -104,16 +104,16 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "@Test() = @'42'; assert( g == '42' );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// Test returning reference to a class member
@@ -130,16 +130,16 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "A a; a.g = 0; a.Test() = 42; assert( a.g == 42 );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// Test returning reference to a class member
@@ -156,16 +156,16 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "A a; a.g = ''; a.Test() = '42'; assert( a.g == '42' );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// Test returning reference to a class member
@@ -182,16 +182,16 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "A a; @a.Test() = @'42'; assert( a.g == '42' );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// Test returning reference to a global variable
@@ -210,16 +210,16 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "Test2() = '42'; assert( g == '42' );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// This should work as the parameter is a primitive and doesn't need cleanup after the expression.
@@ -237,11 +237,11 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -264,16 +264,16 @@ bool Test()
 
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "@g = Test(); g.m = 'test'; assert( g.t() == 'test' );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// Objects in the function must be cleaned up before the return expression 
@@ -299,11 +299,11 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// This should give a null pointer exception, since the Cleanup is supposed   
@@ -312,12 +312,12 @@ bool Test()
 		r = ExecuteString(engine, "assert( Test() == 'test' );", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		else if( std::string(ctx->GetExceptionString()) != "Null pointer access" )
 		{
 			printf("%s", ctx->GetExceptionString());
-			fail = true;
+			TEST_FAILED;
 		}
 		ctx->Release();
 	}
@@ -334,12 +334,12 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "script (1, 1) : Info    : Compiling uint8& Test2()\n"
 		                   "script (4, 3) : Error   : Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -360,12 +360,12 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
 		                   "script (9, 3) : Error   : Resulting reference cannot be returned. There are deferred arguments that may invalidate it.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -386,12 +386,12 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
 		                   "script (9, 3) : Error   : Resulting reference cannot be returned. There are deferred arguments that may invalidate it.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -406,12 +406,12 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "script (1, 1) : Info    : Compiling int& Test()\n"
 						   "script (3, 3) : Error   : Not a valid reference\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -427,12 +427,12 @@ bool Test()
 			"}\n";
 		mod->AddScriptSection("script19", script19, strlen(script19));
 		r = mod->Build();
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "script19 (2, 1) : Info    : Compiling Object& Test(Object&in)\n"
 						   "script19 (4, 3) : Error   : Can't return reference to local value.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -444,12 +444,12 @@ bool Test()
 		const char *script25 = "int &SomeFunc() { int a = 0; return ++a; }";
 		r = mod->AddScriptSection("25", script25);
 		r = mod->Build();
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "25 (1, 1) : Info    : Compiling int& SomeFunc()\n"
 						   "25 (1, 30) : Error   : Can't return reference to local value.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -460,12 +460,12 @@ bool Test()
 		const char *script25 = "string &SomeFunc() { return ''; }";
 		r = mod->AddScriptSection("25", script25);
 		r = mod->Build();
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "25 (1, 1) : Info    : Compiling string& SomeFunc()\n"
 						   "25 (1, 22) : Error   : Can't return reference to local value.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 

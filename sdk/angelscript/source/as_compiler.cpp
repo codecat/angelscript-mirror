@@ -7942,7 +7942,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		ProcessPropertyGetAccessor(ctx, node);
 
 		Dereference(ctx, true);
-#ifndef AS_DEPRECATED
+#ifdef AS_DEPRECATED
 		// Since 2.20.0
 		bool isConst = ctx->type.dataType.IsReadOnly();
 #endif
@@ -7958,12 +7958,13 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		if( r == 0 )
 		{	
 #ifndef AS_DEPRECATED
-			// Since 2.20.0
 			asCString str;
 			str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
 			Error(str.AddressOf(), node);
 			return -1;	
 #else
+			// Deprecated since 2.20.0
+
 			MergeExprBytecodeAndType(ctx, &lctx);
 
 			if( ctx->type.dataType.IsObjectHandle() )
