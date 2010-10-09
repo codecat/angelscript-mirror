@@ -350,7 +350,7 @@ bool Test()
 	}
 	if( outbuffer != "Test::Set\nTest::Set\nSet::Set\n" )
 	{
-		printf(outbuffer.c_str());
+		printf("%s", outbuffer.c_str());
 		fail = true;
 	}
 

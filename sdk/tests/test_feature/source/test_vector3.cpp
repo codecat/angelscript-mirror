@@ -3,7 +3,7 @@
 
 static const char * const TESTNAME = "TestVector3";
 
-static char *script =
+static const char *script =
 "vector3 TestVector3()  \n"
 "{                      \n"
 "  vector3 v;           \n"

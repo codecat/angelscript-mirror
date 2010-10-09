@@ -71,7 +71,7 @@ void Point_Release(Point &point)
 }
 
 
-static char *script =
+static const char *script =
 "Point AddPoints(Point p1, Point p2) \n"
 "{                                   \n"
 "Point p3 = p1;                      \n"

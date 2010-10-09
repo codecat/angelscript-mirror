@@ -203,13 +203,13 @@ bool Test()
 
 	// Test GetTypeIdByDecl
 	if( engine->GetTypeIdByDecl("int") != engine->GetTypeIdByDecl("const int") )
-		fail = true;
+		TEST_FAILED;
 	if( engine->GetTypeIdByDecl("string") != engine->GetTypeIdByDecl("const string") )
-		fail = true;
+		TEST_FAILED;
 
 	// A handle to a const is different from a handle to a non-const
 	if( engine->GetTypeIdByDecl("string@") == engine->GetTypeIdByDecl("const string@") )
-		fail = true;
+		TEST_FAILED;
 
 	// Test debugging
 	engine->RegisterGlobalProperty("int number", &number);
@@ -243,9 +243,8 @@ bool Test()
 
 	if( printBuffer != correct )
 	{
-		fail = true;
-		printf(printBuffer.c_str());
-		printf("%s: failed\n", TESTNAME);
+		TEST_FAILED;
+		printf("%s", printBuffer.c_str());
 	}
 
 	// Success
@@ -299,11 +298,11 @@ bool Test2()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "string @o; func(o); assert( o == 'test' );", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

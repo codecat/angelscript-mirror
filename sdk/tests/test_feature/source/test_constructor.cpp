@@ -103,28 +103,18 @@ bool TestConstructor()
 	mod->Build();
 
 	if( out.buffer != "" )
-	{
-		fail = true;
-		printf("%s: Failed to compile global constructors\n", TESTNAME);
-	}
+		TEST_FAILED;
 
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2));
 	mod->Build();
 
 	if( out.buffer != "" )
-	{
-		fail = true;
-		printf("%s: Failed to compile local constructors\n", TESTNAME);
-	}
-
+		TEST_FAILED;
 
 	ExecuteString(engine, "TestConstructor()", mod);
 
 	if( a != 8 || b != 11 )
-	{
-		printf("%s: Values are not what were expected\n", TESTNAME);
-		fail = false;
-	}
+		TEST_FAILED;
 
 /*
 	mod->AddScriptSection(0, TESTNAME, script3, strlen(script3));
@@ -132,10 +122,7 @@ bool TestConstructor()
 
 	if( out.buffer != "TestConstructor (1, 12) : Info    : Compiling obj* g_obj4\n"
 	                  "TestConstructor (1, 12) : Error   : Only objects have constructors\n" )
-	{
-		fail = true;
-		printf("%s: Failed to compile global constructors\n", TESTNAME);
-	}
+		TEST_FAILED;
 */
 	out.buffer = "";
 	mod->AddScriptSection(TESTNAME, script4, strlen(script4));
@@ -143,18 +130,14 @@ bool TestConstructor()
 
 	if( out.buffer != "" ) 
 	{
-		fail = true;
-		printf(out.buffer.c_str());
-		printf("%s: Failed to compile constructor in expression\n", TESTNAME);
+		TEST_FAILED;
+		printf("%s", out.buffer.c_str());
 	}
 
 	ExecuteString(engine, "TestConstructor2()", mod);
 
 	if( a != 11 || b != 13 )
-	{
-		printf("%s: Values are not what were expected\n", TESTNAME);
-		fail = false;
-	}
+		TEST_FAILED;		
 
 	engine->Release();
 
@@ -177,13 +160,13 @@ bool TestConstructor()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		int typeId = mod->GetTypeIdByDecl("Obj");
 		asIObjectType *type = engine->GetObjectTypeById(typeId);
 		int funcId = type->GetFactoryIdByDecl("Obj @Obj(const vector3 &in)");
 		if( funcId < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		asIScriptContext *ctx = engine->CreateContext();
 		ctx->Prepare(funcId);
@@ -191,11 +174,11 @@ bool TestConstructor()
 		*(Vector3**)ctx->GetAddressOfArg(0) = &pos;
 		r = ctx->Execute();
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 		asIScriptObject *obj = *(asIScriptObject**)ctx->GetAddressOfReturnValue();
 		Vector3 pos2 = *(Vector3*)obj->GetAddressOfProperty(0);
 		if( pos2 != pos )
-			fail = true;
+			TEST_FAILED;
 
 		ctx->Release();
 

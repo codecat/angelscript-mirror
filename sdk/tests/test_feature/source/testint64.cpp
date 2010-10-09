@@ -8,7 +8,7 @@
 
 static const char * const TESTNAME = "TestInt64";
 
-static char *script = 
+static const char *script = 
 "int Main()\n"
 "{\n"
 "    // Call test\n"

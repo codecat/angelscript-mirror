@@ -105,7 +105,7 @@ void RegisterB(asIScriptEngine* engine)
 
 
 
-char* script =
+static const char* script =
 "class CTest\n"
 "{\n"
 "	typeA@ m_a;\n"
