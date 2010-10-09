@@ -175,7 +175,7 @@ bool Test()
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : Illegal operation on 'type&'\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -184,7 +184,7 @@ bool Test()
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -193,7 +193,7 @@ bool Test()
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -256,7 +256,7 @@ bool Test()
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'type&' to 'int'.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 /*

@@ -170,7 +170,7 @@ bool Test()
 		               "ExecuteString (1, 1) : Info    : Candidates are:\n"
 					   "ExecuteString (1, 1) : Info    : void Test(obj@)\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -200,7 +200,7 @@ bool Test()
 	if( r >= 0 ) fail = true;
 	if(bout.buffer != "ExecuteString (1, 28) : Error   : Can't implicitly convert from 'const obj@' to 'obj@'.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -239,7 +239,7 @@ bool Test()
 		               "script (15, 13) : Error   : No matching signatures to 'CTest::SetInt(const uint) const'\n"
 					   "script (16, 7) : Error   : No matching signatures to 'CTest::SetInt(const uint) const'\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -255,7 +255,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -332,7 +332,7 @@ bool Test2()
 	if( bout.buffer != "script (9, 1) : Info    : Compiling void Func(const MyType&in)\n"
 					   "script (11, 6) : Error   : No matching signatures to 'MyType::TestConst() const'\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -357,7 +357,7 @@ bool Test2()
 	if( bout.buffer != "script (4, 4) : Info    : Compiling void MyType::TestConst() const\n"
 					   "script (6, 11) : Error   : Reference is read-only\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -382,7 +382,7 @@ bool Test2()
 	if( bout.buffer != "script (4, 4) : Info    : Compiling void MyType::TestConst() const\n"
 					   "script (6, 16) : Error   : Reference is read-only\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 

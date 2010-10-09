@@ -257,7 +257,7 @@ bool TestGlobalVar()
 		if( bout.buffer != "Property (1, 17) : Error   : Expected '<end of file>'\n" )
 		{
 			ret = true;
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 		}
 		engine->Release();
 	}

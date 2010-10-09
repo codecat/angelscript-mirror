@@ -121,7 +121,7 @@ bool Test()
 		}
 		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'uint' available.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 		}
 
 		engine->Release();
@@ -174,7 +174,7 @@ bool Test()
 		}
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 		}
 
 		r = ExecuteString(engine, "main()", mod);
@@ -275,7 +275,7 @@ bool Test()
 		}
 		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'uint' available.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 		}
 
 		engine->Release();
@@ -335,7 +335,7 @@ bool Test()
 		}
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 		
@@ -395,7 +395,7 @@ bool Test()
 		}
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 		
@@ -485,7 +485,7 @@ bool Test()
 			               "ExecuteString (1, 57) : Error   : Function 'opPostInc() const' not found\n"
 		                   "ExecuteString (1, 61) : Error   : Function 'opPreDec() const' not found\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 		}
 
 		engine->Release();

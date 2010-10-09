@@ -152,7 +152,7 @@ bool TestVector3()
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float, float)\n"
 	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3&'.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 

@@ -397,7 +397,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -433,7 +433,7 @@ bool Test()
 		if( bout.buffer != "s (4, 1) : Info    : Compiling void main()\n"
 		                   "s (4, 21) : Error   : Illegal access to private property 'a'\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -460,7 +460,7 @@ bool Test()
 		if( bout.buffer != "s (4, 1) : Info    : Compiling void main()\n"
 		                   "s (4, 20) : Error   : Illegal call to private method 'void C::func()'\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 

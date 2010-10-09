@@ -27,7 +27,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -44,7 +44,7 @@ bool Test()
 		               " (0, 0) : Info    : A garbage collected type must have the addref, release, and all gc behaviours\n"
 		               " (0, 0) : Error   : Invalid configuration\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -67,7 +67,7 @@ bool Test()
 		               " (0, 0) : Error   : The behaviour is not compatible with the type\n"
 					   " (0, 0) : Error   : The behaviour is not compatible with the type\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -86,7 +86,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -104,7 +104,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for this type available.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -121,7 +121,7 @@ bool Test()
 		               " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 		               " (0, 0) : Error   : Invalid configuration\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -142,7 +142,7 @@ bool Test()
 		               " (0, 0) : Error   : The behaviour is not compatible with the type\n"
 					   "System function (1, 5) : Error   : Object handle is not supported for this type\n")
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -157,7 +157,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -174,7 +174,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for this type available.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -199,7 +199,7 @@ bool Test()
 					   " (0, 0) : Info    : A non-pod value type must have the default constructor and destructor behaviours\n"
 					   " (0, 0) : Error   : Invalid configuration\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -224,7 +224,7 @@ bool Test()
 					   " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 					   " (0, 0) : Error   : Invalid configuration\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -251,7 +251,7 @@ bool Test()
 					   "script (1, 34) : Error   : No default constructor for object of type 'ref'.\n"
 					   "script (1, 34) : Error   : There is no copy operator for this type available.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -273,7 +273,7 @@ bool Test()
 		               "script (1, 11) : Error   : Parameter type can't be 'ref&'\n"
 					   "script (1, 23) : Error   : Parameter type can't be 'ref&'\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();
@@ -293,7 +293,7 @@ bool Test()
 	                   "ExecuteString (1, 6) : Error   : Data type can't be 'ref'\n"
 	                   "System function (1, 4) : Error   : Object handle is not supported for this type\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -330,7 +330,7 @@ bool Test()
 						   " (0, 0) : Error   : Don't support passing type 'test1' by value to application\n"
 						   " (0, 0) : Error   : Invalid configuration\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 		engine->Release();
@@ -454,7 +454,7 @@ bool TestRefScoped()
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
 						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -463,7 +463,7 @@ bool TestRefScoped()
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
 						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -477,7 +477,7 @@ bool TestRefScoped()
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -493,7 +493,7 @@ bool TestRefScoped()
 	if( r != asEXECUTION_FINISHED ) fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -506,7 +506,7 @@ bool TestRefScoped()
 		fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "A a; scoped s; a.s = s;", mod);
@@ -522,7 +522,7 @@ bool TestRefScoped()
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "System function (1, 14) : Error   : Object handle is not supported for this type\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -532,7 +532,7 @@ bool TestRefScoped()
 	if( r >= 0 ) fail = true;
 	if( bout.buffer != "System function (1, 14) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 

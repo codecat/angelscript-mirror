@@ -170,7 +170,7 @@ bool TestSwitch()
 
 		if( bout.buffer != "ExecuteString (1, 28) : Error   : Duplicate switch case\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}

@@ -165,7 +165,7 @@ bool Test()
 			               "TestRefArgument (6, 1) : Info    : Compiling void Testf(float&inout)\n"
 						   "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -263,7 +263,7 @@ bool Test()
 
 		if( bout.buffer != "ExecuteString (1, 3) : Error   : Not a valid reference\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 

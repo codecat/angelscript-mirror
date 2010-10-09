@@ -117,7 +117,7 @@ bool Test()
 	if( bout.buffer != "script (2, 1) : Error   : Data type can't be 'functype'\n"
 					   "script (2, 10) : Error   : No default constructor for object of type 'functype'.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -132,7 +132,7 @@ bool Test()
 	if( bout.buffer != "script (2, 1) : Info    : Compiling void func()\n"
 					   "script (2, 15) : Error   : No matching signatures to 'functype()'\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -146,7 +146,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "script (2, 5) : Error   : Name conflict. 'test' is a funcdef.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -162,7 +162,7 @@ bool Test()
 	if( bout.buffer != "script (2, 3) : Info    : Compiling void t::func()\n"
 	                   "script (2, 18) : Error   : 'func' is not declared\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -191,7 +191,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "main()", mod);
@@ -224,7 +224,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 

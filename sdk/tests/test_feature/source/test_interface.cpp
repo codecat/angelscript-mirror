@@ -152,7 +152,7 @@ bool Test()
 					   "TestInterface (15, 16) : Error   : Can't implicitly convert from 'myclass&' to 'nointf@&'.\n"
 					   "TestInterface (16, 16) : Error   : Can't implicitly convert from 'intf@&' to 'myclass@&'.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 

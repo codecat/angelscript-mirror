@@ -68,7 +68,7 @@ bool Test()
 						   " (1, 1) : Error   : Identifier 'type' is not a data type\n" )
 		{
 			fail = true;
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 		}
 	}
 	else

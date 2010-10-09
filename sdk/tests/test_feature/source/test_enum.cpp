@@ -135,7 +135,7 @@ static bool TestEnum()
 	if( buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n1205\n0\n1\n2\n" )
 	{
 		fail = true;
-		printf(buffer.c_str());
+		printf("%s", buffer.c_str());
 	}
 
 	// Registered enums are literal constants
@@ -169,7 +169,7 @@ static bool TestEnum()
 					   "error (1, 1) : Info    : Compiling TEST_ERR ERR2\n"
                        "error (1, 1) : Error   : Use of uninitialized global variable 'ERR1'.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -180,7 +180,7 @@ static bool TestEnum()
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 5) : Error   : Illegal variable name 'TEST_ENUM'.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -205,7 +205,7 @@ static bool TestEnum()
 	if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'uint' to 'TEST_ENUM'.\n"
                        "ExecuteString (1, 33) : Error   : Can't implicitly convert from 'float' to 'TEST_ENUM'.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -319,7 +319,7 @@ static bool TestEnum()
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -335,7 +335,7 @@ static bool TestEnum()
 	if( bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
                        "error (1, 18) : Error   : 'UNKNOWN_ENUM::ENUM1' is not declared\n")
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -356,7 +356,7 @@ static bool TestEnum()
 	if( bout.buffer != "error (5, 1) : Info    : Compiling void f()\n"
 		               "error (5, 18) : Error   : 'SomeClass::SOMEVALUE' is not declared\n")
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -376,7 +376,7 @@ static bool TestEnum()
 	if( bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
 		               "error (1, 18) : Error   : 'ENUM1' is not declared\n")
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -404,7 +404,7 @@ static bool TestEnum()
 		fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	if( obj.val != ENUM2 )
@@ -419,7 +419,7 @@ static bool TestEnum()
 		fail = true;
 	if( bout.buffer != "test (1, 22) : Error   : Name conflict. 'inf' is a global property.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 

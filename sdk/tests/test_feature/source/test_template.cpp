@@ -261,7 +261,7 @@ bool Test()
 
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'int'\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -291,7 +291,7 @@ bool Test()
 
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'string'\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 

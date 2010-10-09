@@ -58,7 +58,7 @@ bool Test()
 					   "no code (0, 0) : Error   : The code must contain one and only one function\n"
 					   "var (0, 0) : Error   : The code must contain one and only one function\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -81,7 +81,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != " (1, 2) : Error   : No matching signatures to 'func()'\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -139,7 +139,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != " (1, 1) : Error   : Name conflict. 'g_var' is a global property.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -177,7 +177,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->Release();

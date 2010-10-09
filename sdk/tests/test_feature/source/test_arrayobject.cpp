@@ -291,7 +291,7 @@ bool Test()
 	}
 	if( bout.buffer != "ExecuteString (1, 15) : Error   : Type 'int&' doesn't support the indexing operator\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	

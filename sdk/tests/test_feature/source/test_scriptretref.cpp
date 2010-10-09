@@ -35,7 +35,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -59,7 +59,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -83,7 +83,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -107,7 +107,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -133,7 +133,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -159,7 +159,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -185,7 +185,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -213,7 +213,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -240,7 +240,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -267,7 +267,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -302,7 +302,7 @@ bool Test()
 		if( r < 0 ) fail = true;
 		if( bout.buffer != "" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -338,7 +338,7 @@ bool Test()
 		if( bout.buffer != "script (1, 1) : Info    : Compiling uint8& Test2()\n"
 		                   "script (4, 3) : Error   : Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -364,7 +364,7 @@ bool Test()
 		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
 		                   "script (9, 3) : Error   : Resulting reference cannot be returned. There are deferred arguments that may invalidate it.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -390,7 +390,7 @@ bool Test()
 		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
 		                   "script (9, 3) : Error   : Resulting reference cannot be returned. There are deferred arguments that may invalidate it.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -410,7 +410,7 @@ bool Test()
 		if( bout.buffer != "script (1, 1) : Info    : Compiling int& Test()\n"
 						   "script (3, 3) : Error   : Not a valid reference\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -431,7 +431,7 @@ bool Test()
 		if( bout.buffer != "script19 (2, 1) : Info    : Compiling Object& Test(Object&in)\n"
 						   "script19 (4, 3) : Error   : Can't return reference to local value.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -448,7 +448,7 @@ bool Test()
 		if( bout.buffer != "25 (1, 1) : Info    : Compiling int& SomeFunc()\n"
 						   "25 (1, 30) : Error   : Can't return reference to local value.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -464,7 +464,7 @@ bool Test()
 		if( bout.buffer != "25 (1, 1) : Info    : Compiling string& SomeFunc()\n"
 						   "25 (1, 22) : Error   : Can't return reference to local value.\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}

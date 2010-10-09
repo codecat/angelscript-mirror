@@ -134,7 +134,7 @@ bool Test()
 					   "ExecuteString (1, 40) : Error   : Illegal operation on 'const int'\n" )
 	{
 		fail = true;
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 	}
 
 	//--------------
@@ -194,7 +194,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 24) : Error   : A cast operator has one argument\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 

@@ -63,7 +63,7 @@ bool Test()
 		}
 		if( bout.buffer != "ExecuteString (1, 14) : Error   : It is not allowed to perform a handle assignment on a non-handle property\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 	}
@@ -99,7 +99,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -138,7 +138,7 @@ bool Test()
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main1()\n"
 	                   "script (9, 10) : Error   : Compound assignments with property accessors are not allowed\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -169,7 +169,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -198,7 +198,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -226,7 +226,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -262,7 +262,7 @@ bool Test()
 	                   "script (12, 4) : Info    : void Test::set_s(float)\n"
 	                   "script (12, 4) : Info    : void Test::set_s(uint)\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -291,7 +291,7 @@ bool Test()
                        "script (9, 4) : Info    : uint Test::get_p()\n"
                        "script (9, 4) : Info    : void Test::set_p(float)\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -321,7 +321,7 @@ bool Test()
 					   "script (9, 7) : Error   : The property has no set accessor\n"
 					   "script (10, 7) : Error   : The property has no get accessor\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -350,7 +350,7 @@ bool Test()
 					   "script (9, 6) : Error   : Not a valid reference\n"
 				 	   "script (10, 3) : Error   : Not a valid reference\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -383,7 +383,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -419,7 +419,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -455,7 +455,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -472,7 +472,7 @@ bool Test()
 	}
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : Compound assignments with property accessors are not allowed\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	
@@ -503,7 +503,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -537,7 +537,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -559,7 +559,7 @@ bool Test()
 		 bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
 		                "ExecuteString (1, 13) : Info    : void string::resize(uint64)\n") )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -585,7 +585,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -617,7 +617,7 @@ bool Test()
 	                   "script (8, 14) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
 					   "script (8, 14) : Info    : int& array::opIndex(uint)\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -648,7 +648,7 @@ bool Test()
 	}
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -683,7 +683,7 @@ bool Test()
 					   "script (12, 7) : Error   : Non-const method call on read-only object reference\n"
 	                   "script (12, 7) : Info    : void Test::set_s(int)\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -707,7 +707,7 @@ bool Test()
 	if( bout.buffer != "script (7, 1) : Info    : Compiling void test_get()\n"
 	                   "script (9, 21) : Error   : The property has no get accessor\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
@@ -723,7 +723,7 @@ bool Test()
 		fail = true;
 	if( bout.buffer != "" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	r = ExecuteString(engine, "Test t; t.set_direction(3);", mod);

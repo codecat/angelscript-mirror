@@ -523,7 +523,7 @@ bool Test()
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode code point\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -534,7 +534,7 @@ bool Test()
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode code point\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -545,7 +545,7 @@ bool Test()
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode escape sequence, expected 4 hex digits\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -556,7 +556,7 @@ bool Test()
 			fail = true;
 		if( bout.buffer != "ExecuteString (1, 9) : Warning : Invalid unicode escape sequence, expected 8 hex digits\n" )
 		{
-			printf(bout.buffer.c_str());
+			printf("%s", bout.buffer.c_str());
 			fail = true;
 		}
 
@@ -754,7 +754,7 @@ bool TestUTF16()
 	if( str.size() != 1 || str[0] != 0xFF )
 		fail = true;
 	if( bout.buffer != "ExecuteString (1, 5) : Warning : Invalid unicode sequence in source\n" )
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 
 	// Test heredoc strings
 	r = ExecuteString(engine, "s = \"\"\"\xC2\x80\"\"\"");

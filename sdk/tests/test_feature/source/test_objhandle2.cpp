@@ -177,7 +177,7 @@ bool Test()
 		                         "ExecuteString (1, 18) : Error   : No default constructor for object of type 'refclass'.\n" ) 
 	{
 		fail = true;
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		printf("%s: failure\n", TESTNAME);
 	}
 

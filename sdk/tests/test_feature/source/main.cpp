@@ -349,5 +349,5 @@ failed:
 	printf("Press any key to quit.\n");
 	while(!_getch());
 #endif
-	return 0;
+	return -1;
 }

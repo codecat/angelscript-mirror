@@ -80,7 +80,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "script (1, 1) : Error   : Data type can't be 'Object'\n"
 		  					     "script (1, 8) : Error   : No default constructor for object of type 'Object'.\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 	engine->DiscardModule(0);
@@ -90,7 +90,7 @@ bool Test()
 	r = ExecuteString(engine, "Object[] obj;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 7) : Error   : Data type can't be 'Object'\n" )
 	{
-		printf(bout.buffer.c_str());
+		printf("%s", bout.buffer.c_str());
 		fail = true;
 	}
 
