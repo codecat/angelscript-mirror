@@ -3587,7 +3587,7 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForGlobalVar(int gvarId) const
 	{
 		for( asUINT m = 0; m < configGroups[n]->globalProps.GetLength(); m++ )
 		{
-			if( configGroups[n]->globalProps[m]->id == gvarId )
+			if( int(configGroups[n]->globalProps[m]->id) == gvarId )
 				return configGroups[n];
 		}
 	}

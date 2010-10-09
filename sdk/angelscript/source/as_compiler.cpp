@@ -927,7 +927,7 @@ void asCCompiler::FinalizeFunction()
 	asUINT n;
 
 	// Tell the bytecode which variables are temporary
-	for( n = 0; n < (signed)variableIsTemporary.GetLength(); n++ )
+	for( n = 0; n < variableIsTemporary.GetLength(); n++ )
 	{
 		if( variableIsTemporary[n] )
 			byteCode.DefineTemporaryVariable(GetVariableOffset(n));
@@ -937,7 +937,7 @@ void asCCompiler::FinalizeFunction()
 	byteCode.Finalize();
 
 	// Compile the list of object variables for the exception handler
-	for( n = 0; n < (int)variableAllocations.GetLength(); n++ )
+	for( n = 0; n < variableAllocations.GetLength(); n++ )
 	{
 		if( variableAllocations[n].IsObject() && !variableAllocations[n].IsReference() )
 		{
@@ -7942,7 +7942,10 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		ProcessPropertyGetAccessor(ctx, node);
 
 		Dereference(ctx, true);
+#ifndef AS_DEPRECATED
+		// Since 2.20.0
 		bool isConst = ctx->type.dataType.IsReadOnly();
+#endif
 
 		// Compile the expression
 		asSExprContext expr(engine);
