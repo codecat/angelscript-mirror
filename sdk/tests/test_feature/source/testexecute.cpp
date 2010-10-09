@@ -18,6 +18,12 @@ static void cfunction_generic(asIScriptGeneric *) {
 	cfunction();
 }
 
+static void cleanContext(asIScriptContext *ctx)
+{
+	assert(ctx->GetUserData() == (void*)(size_t)0xDEADF00D);
+	called = true;
+}
+
 bool TestExecute()
 {
 	bool ret = false;
@@ -43,7 +49,12 @@ bool TestExecute()
 	assert(ctx->SetUserData((void*)(size_t)0xDEADF00D) == 0);
 	assert(ctx->GetUserData() == (void*)(size_t)0xDEADF00D);
 	assert(ctx->SetUserData(0) == (void*)(size_t)0xDEADF00D);
+	assert(ctx->SetUserData((void*)(size_t)0xDEADF00D) == 0);
+	engine->SetContextUserDataCleanupCallback(cleanContext);
+	called = false;
 	ctx->Release();
+	if( !called )
+		ret = true;
 
 	engine->Release();
 	engine = NULL;

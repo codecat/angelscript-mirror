@@ -332,6 +332,9 @@ typedef void (*asFUNCTION_t)();
 typedef void (*asGENFUNC_t)(asIScriptGeneric *);
 typedef void *(*asALLOCFUNC_t)(size_t);
 typedef void (*asFREEFUNC_t)(void *);
+typedef void (*asCLEANENGINEFUNC_t)(asIScriptEngine *);
+typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
+typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 
 #define asFUNCTION(f) asFunctionPtr(f)
 #if (defined(_MSC_VER) && _MSC_VER <= 1200) || (defined(__BORLANDC__) && __BORLANDC__ < 0x590)
@@ -563,6 +566,9 @@ public:
 	// User data
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() const = 0;
+	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback) = 0;
+	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback) = 0;
+	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback) = 0;
 
 protected:
 	virtual ~asIScriptEngine() {}

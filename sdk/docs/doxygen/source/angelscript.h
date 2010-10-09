@@ -522,6 +522,12 @@ typedef void (*asGENFUNC_t)(asIScriptGeneric *);
 typedef void *(*asALLOCFUNC_t)(size_t);
 //! The function signature for the custom memory deallocation function
 typedef void (*asFREEFUNC_t)(void *);
+//! The function signature for the engine cleanup callback function
+typedef void (*asCLEANENGINEFUNC_t)(asIScriptEngine *);
+//! The function signature for the context cleanup callback function
+typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
+//! The function signature for the function cleanup callback function
+typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 
 //! \ingroup funcs
 //! \brief Returns an asSFuncPtr representing the function specified by the name
@@ -1465,10 +1471,39 @@ public:
 	//! \return The previous pointer stored in the engine.
 	//!
 	//! This method allows the application to associate a value, e.g. a pointer, with the engine instance.
+	//!
+	//! Optionally, a callback function can be \ref SetEngineUserDataCleanupCallback "registered" to clean up the user data when the engine is destroyed.
 	virtual void *SetUserData(void *data) = 0;
 	//! \brief Returns the address of the previously registered user data.
 	//! \return The pointer to the user data.
 	virtual void *GetUserData() const = 0;
+	//! \brief Set the function that should be called when the engine is destroyed
+	//! \param[in] callback A pointer to the function
+	//!
+	//! The function given with this call will be invoked when the engine
+	//! is destroyed if any \ref SetUserData "user data" has been registered with the engine.
+	//!
+	//! The function is called from within the engine destructor, so the callback
+	//! should not be used for anything but cleaning up the user data itself.
+	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback) = 0;
+	//! \brief Set the function that should be called when a context is destroyed
+	//! \param[in] callback A pointer to the function
+	//!
+	//! The function given with this call will be invoked when a context
+	//! is destroyed if any \ref asIScriptContext::SetUserData "user data" has been registered with the context.
+	//!
+	//! The function is called from within the context destructor, so the callback
+	//! should not be used for anything but cleaning up the user data itself.
+	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback) = 0;
+	//! \brief Set the function that should be called when a function is destroyed
+	//! \param[in] callback A pointer to the function
+	//!
+	//! The function given with this call will be invoked when a function
+	//! is destroyed if any \ref asIScriptFunction::SetUserData "user data" has been registered with the function.
+	//!
+	//! The function is called from within the function destructor, so the callback
+	//! should not be used for anything but cleaning up the user data itself.
+	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback) = 0;
 	//! \}
 
 protected:
@@ -2293,13 +2328,17 @@ public:
 	//! \{
 
 	//! \brief Register the memory address of some user data.
-    //! \param[in] data A pointer to the user data.
-    //! \return The previous pointer stored in the context.
-    //!
-    //! This method allows the application to associate a value, e.g. a pointer, with the context instance.
+	//! \param[in] data A pointer to the user data.
+	//! \return The previous pointer stored in the context.
+	//!
+	//! This method allows the application to associate a value, e.g. a pointer, with the context instance.
+	//!
+	//! Optionally, a callback function can be \ref asIScriptEngine::SetContextUserDataCleanupCallback "registered" 
+	//! to clean up the user data when the context is destroyed. As the callback is registered with the engine, it is
+	//! only necessary to do it once, even if more than one context is used.
 	virtual void *SetUserData(void *data) = 0;
 	//! \brief Returns the address of the previously registered user data.
-    //! \return The pointer to the user data.
+	//! \return The pointer to the user data.
 	virtual void *GetUserData() const = 0;
 	//! \}
 
@@ -2910,13 +2949,17 @@ public:
 	//! \{
 
 	//! \brief Register the memory address of some user data.
-    //! \param[in] userData A pointer to the user data.
-    //! \return The previous pointer stored in the context.
-    //!
-    //! This method allows the application to associate a value, e.g. a pointer, with the context instance.
+	//! \param[in] userData A pointer to the user data.
+	//! \return The previous pointer stored in the context.
+	//!
+	//! This method allows the application to associate a value, e.g. a pointer, with the context instance.
+	//!
+	//! Optionally, a callback function can be \ref asIScriptEngine::SetFunctionUserDataCleanupCallback "registered" 
+	//! to clean up the user data when the function is destroyed. As the callback is registered with the engine, it is
+	//! only necessary to do it once.
 	virtual void *SetUserData(void *userData) = 0;
 	//! \brief Returns the address of the previously registered user data.
-    //! \return The pointer to the user data.
+	//! \return The pointer to the user data.
 	virtual void *GetUserData() const = 0;
 	//! \}
 

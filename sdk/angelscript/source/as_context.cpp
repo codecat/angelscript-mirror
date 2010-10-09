@@ -207,6 +207,10 @@ void asCContext::DetachEngine()
 	// Free all resources
 	Unprepare();
 
+	// Clean the user data
+	if( userData && engine->cleanContextFunc )
+		engine->cleanContextFunc(this);
+
 	// Clear engine pointer
 	if( holdEngineRef )
 		engine->Release();

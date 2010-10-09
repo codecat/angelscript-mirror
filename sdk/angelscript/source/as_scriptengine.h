@@ -181,6 +181,9 @@ public:
 	// User data
 	virtual void *SetUserData(void *data);
 	virtual void *GetUserData() const;
+	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback);
+	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback);
+	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback);
 
 //===========================================================
 // internal methods
@@ -359,7 +362,10 @@ public:
 	asCArray<asCString*>        stringConstants;
 
 	// User data
-	void *userData;
+	void                  *userData;
+	asCLEANENGINEFUNC_t    cleanEngineFunc;
+	asCLEANCONTEXTFUNC_t   cleanContextFunc;
+	asCLEANFUNCTIONFUNC_t  cleanFunctionFunc;
 
 	// Critical sections for threads
 	DECLARECRITICALSECTION(engineCritical);

@@ -389,8 +389,12 @@ asCScriptEngine::asCScriptEngine()
 	isBuilding = false;
 	lastModule = 0;
 
+	// User data
+	userData          = 0;
+	cleanEngineFunc   = 0;
+	cleanContextFunc  = 0;
+	cleanFunctionFunc = 0;
 
-	userData = 0;
 
 	initialContextStackSize = 1024;      // 4 KB (1024 * sizeof(asDWORD)
 
@@ -598,6 +602,10 @@ asCScriptEngine::~asCScriptEngine()
 		asDELETE(scriptSectionNames[n],asCString);
 	}
 	scriptSectionNames.SetLength(0);
+
+	// Clean the user data
+	if( userData && cleanEngineFunc )
+		cleanEngineFunc(this);
 
 	// Release the thread manager
 	threadManager->Release();

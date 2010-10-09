@@ -150,6 +150,10 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 // internal
 asCScriptFunction::~asCScriptFunction()
 {
+	// Clean user data
+	if( userData && engine->cleanFunctionFunc )
+		engine->cleanFunctionFunc(this);
+
 	// Imported functions are not reference counted, nor are dummy 
 	// functions that are allocated on the stack
 	asASSERT( funcType == -1              || 
@@ -197,6 +201,24 @@ int asCScriptFunction::Release() const
 		asDELETE(const_cast<asCScriptFunction*>(this),asCScriptFunction);
 
 	return r;
+}
+
+// interface 
+void asCScriptEngine::SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback)
+{
+	cleanEngineFunc = callback;
+}
+
+// interface
+void asCScriptEngine::SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback)
+{
+	cleanContextFunc = callback;
+}
+
+// interface
+void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback)
+{
+	cleanFunctionFunc = callback;
 }
 
 // interface

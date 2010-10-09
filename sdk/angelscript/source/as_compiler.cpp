@@ -2247,7 +2247,15 @@ void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc)
 			isFinished = true;
 
 		asCByteCode statement(engine);
-		CompileStatement(node, &hasReturn, &statement);
+		if( node->nodeType == snDeclaration )
+		{
+			Error(TXT_DECL_IN_SWITCH, node);
+
+			// Compile it anyway to avoid further compiler errors
+			CompileDeclaration(node, &statement);
+		}
+		else
+			CompileStatement(node, &hasReturn, &statement);
 
 		LineInstr(bc, node->tokenPos);
 		bc->AddCode(&statement);
