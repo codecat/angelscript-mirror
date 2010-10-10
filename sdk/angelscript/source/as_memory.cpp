@@ -59,8 +59,8 @@ asALLOCFUNC_t userAlloc = malloc;
 asFREEFUNC_t  userFree  = free;
 #elif defined(__GNUC__)
 // GNUC allows an explicit order of initialization for globals.
-asALLOCFUNC_t userAlloc = malloc __attribute__ ((init_priority (101)));
-asFREEFUNC_t  userFree  = free   __attribute__ ((init_priority (101)));
+asALLOCFUNC_t userAlloc __attribute__ ((init_priority (101))) = malloc;
+asFREEFUNC_t  userFree  __attribute__ ((init_priority (101))) = free;
 #else
 // Other compilers will just have to rely on luck.
 asALLOCFUNC_t userAlloc = malloc;
