@@ -562,6 +562,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\as_memory.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\as_module.h"
 				>
 			</File>
