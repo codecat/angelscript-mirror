@@ -537,9 +537,7 @@ asCScriptEngine::~asCScriptEngine()
 	for( n = 0; n < registeredGlobalProps.GetLength(); n++ )
 	{
 		if( registeredGlobalProps[n] )
-		{
-			asDELETE(registeredGlobalProps[n],asCGlobalProperty);
-		}
+			registeredGlobalProps[n]->Release();
 	}
 	registeredGlobalProps.SetLength(0);
 	FreeUnusedGlobalProperties();
