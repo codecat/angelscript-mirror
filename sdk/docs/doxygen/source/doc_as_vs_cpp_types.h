@@ -44,7 +44,7 @@ the application and the script engine, e.g. std::string or another class of your
 \section doc_as_vs_cpp_types_2 Arrays
 
 AngelScript also expects the application to register the type that should be used for 
-dynamic arrays. Normally this is done by registering the \ref doc_addon_array add-on, but 
+\ref doc_arrays "dynamic arrays". Normally this is done by registering the \ref doc_addon_array add-on, but 
 the application is free to do it differently.
 
 It is also possible to have different object types for different array types, so the 
