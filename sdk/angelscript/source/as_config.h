@@ -218,7 +218,7 @@
 // AS_WIN     - Microsoft Windows
 // AS_LINUX   - Linux
 // AS_MAC     - Apple Macintosh
-// AS_BSD     - FreeBSD
+// AS_BSD     - BSD based OS (FreeBSD, DragonFly, OpenBSD, etc)
 // AS_XBOX    - Microsoft XBox
 // AS_XBOX360 - Microsoft XBox 360
 // AS_PSP     - Sony Playstation Portable
@@ -618,7 +618,7 @@
 		#endif
 
 	// Free BSD
-	#elif __FreeBSD__
+	#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 		#define AS_BSD
 		#if defined(i386) && !defined(__LP64__)
 			#define AS_X86
