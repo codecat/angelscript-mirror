@@ -51,20 +51,20 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 			printf("Failed to compile the script\n");
 		}
 
 		r = ExecuteString(engine, "Test t; @t.s = 'test';", mod);
 		if( r >= 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 			printf("Shouldn't be allowed\n");
 		}
 		if( bout.buffer != "ExecuteString (1, 14) : Error   : It is not allowed to perform a handle assignment on a non-handle property\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -94,25 +94,25 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "main1()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "main2()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test compound assignment with accessors (not allowed)
@@ -133,13 +133,13 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main1()\n"
 	                   "script (9, 10) : Error   : Compound assignments with property accessors are not allowed\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test get accessor with boolean operators
@@ -164,13 +164,13 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test get accessor with math operators
@@ -193,13 +193,13 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test get accessor with bitwise operators
@@ -221,13 +221,13 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test multiple get accessors for same property. Should give error
@@ -251,7 +251,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "script (8, 1) : Info    : Compiling void main()\n"
@@ -263,7 +263,7 @@ bool Test()
 	                   "script (12, 4) : Info    : void Test::set_s(uint)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test mismatching type between get accessor and set accessor. Should give error
@@ -283,7 +283,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
@@ -292,7 +292,7 @@ bool Test()
                        "script (9, 4) : Info    : void Test::set_p(float)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test only set accessor for read expression
@@ -314,7 +314,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
@@ -322,7 +322,7 @@ bool Test()
 					   "script (10, 7) : Error   : The property has no get accessor\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test pre and post ++. Should fail, since the expression is not a variable
@@ -343,7 +343,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Didn't fail to compile the script\n");
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
@@ -351,7 +351,7 @@ bool Test()
 				 	   "script (10, 3) : Error   : Not a valid reference\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test using property accessors from within class methods without 'this'
@@ -378,18 +378,18 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test accessors with function arguments (by value, in ref, out ref)
@@ -414,18 +414,18 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// When the property is an object type, then the set accessor should be 
@@ -450,30 +450,30 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Compound assignments for object properties will not be allowed
 	r = ExecuteString(engine, "Test t; t.s += 'hello';", mod);
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : Compound assignments with property accessors are not allowed\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	
 	// Test @t.prop = @obj; Property is a handle, and the property is assigned a new handle. Should work
@@ -498,18 +498,18 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test accessing members of an object property
@@ -532,18 +532,18 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test accessing a non-const method on an object through a get accessor
@@ -551,7 +551,7 @@ bool Test()
 	bout.buffer.c_str();
 	r = ExecuteString(engine, "Test t; t.s.resize(4);", mod);
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( (sizeof(void*) == 4 &&
 		 bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
 		                "ExecuteString (1, 13) : Info    : void string::resize(uint)\n") ||
@@ -560,7 +560,7 @@ bool Test()
 		                "ExecuteString (1, 13) : Info    : void string::resize(uint64)\n") )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test opNeg for object through get accessor
@@ -580,18 +580,18 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}	
 
 	// Test index operator for object through get accessor
@@ -610,7 +610,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "script (5, 1) : Info    : Compiling void func()\n"
@@ -618,12 +618,12 @@ bool Test()
 					   "script (8, 14) : Info    : int& array::opIndex(uint)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}	
 
 	// Test accessing normal properties for object through get accessor
@@ -643,18 +643,18 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}	
 
 	// Test const/non-const get and set accessors
@@ -676,7 +676,7 @@ bool Test()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (7, 1) : Info    : Compiling void func()\n"
 	                   "script (10, 15) : Error   : Non-const method call on read-only object reference\n"
 	                   "script (10, 15) : Info    : int Test::get_p()\n"
@@ -684,7 +684,7 @@ bool Test()
 	                   "script (12, 7) : Info    : void Test::set_s(int)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test accessor with property of the same name
@@ -703,12 +703,12 @@ bool Test()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (7, 1) : Info    : Compiling void test_get()\n"
 	                   "script (9, 21) : Error   : The property has no get accessor\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	const char *script20 = 
@@ -720,15 +720,15 @@ bool Test()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "Test t; t.set_direction(3);", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 	
 	// TODO: Test non-const get accessor for object type with const overloaded dual operator
 	
@@ -760,11 +760,11 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "GetObject().opacity = 1.0f;", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -788,7 +788,7 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "Object obj; \n"
 								  "float elapsed = 1.0f; \n"
@@ -796,7 +796,7 @@ bool Test()
 								  "obj.rotation = obj.rotation + elapsed * 1.0f; \n"
 								  "assert( obj.rot == 1 ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -816,11 +816,11 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "s = 10; assert( s == 10 );", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 
@@ -842,13 +842,13 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r != asINIT_GLOBAL_VARS_FAILED )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "script (1, 13) : Error   : Failed to initialize global variable '_s'\n"
 		                   "script (2, 0) : Info    : Exception 'Null pointer access' in 'string get_s()'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -868,11 +868,11 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "MyObj[] a(1); if( a[0].Active == true ) { } if( a[0].get_Active() == true ) { }", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -908,11 +908,11 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "main", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -940,11 +940,11 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "main", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -972,11 +972,49 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "main", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test property accessors for opIndex
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+		RegisterScriptString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"class CTest \n"
+			"{ \n"
+			"  CTest() { arr.resize(5); } \n"
+			"  int get_opIndex(int i) const { return arr[i]; } \n"
+			"  void set_opIndex(int i, int v) { arr[i] = v; } \n"
+			"  array<int> arr; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  CTest s; \n"
+			"  s[0] = 42; \n"
+			"  assert( s[0] == 42 ); \n"
+			"  s[1] = 24; \n"
+			"  assert( s[1] == 24 ); \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -1034,21 +1072,21 @@ bool Test2()
 	mod->AddScriptSection("string", string);
 	r = mod->Build();
 	if( r < 0 ) 
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	// Test disabling property accessors
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	engine->SetEngineProperty(asEP_PROPERTY_ACCESSOR_MODE, 0);
 	r = ExecuteString(engine, "CMyObj o; o.Text = 'hello';");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 12) : Error   : 'Text' is not a member of 'CMyObj'\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 

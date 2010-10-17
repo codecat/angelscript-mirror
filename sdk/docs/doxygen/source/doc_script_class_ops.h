@@ -129,5 +129,21 @@ and <tt>b.<i>opfunc_r</i>(a)</tt> and then the best match will be used.
 
 When the expression <tt>a[i]</tt> is compiled, the compiler will rewrite it as <tt>a.opIndex(i)</tt> and compile that instead.
 
+The index operator can also be formed similarly to \ref doc_script_class_prop "property accessors". The get accessor should then be 
+named <tt>get_opIndex</tt> and have one parameter for the indexing. The set accessor should be named <tt>set_opIndex</tt> and have two
+parameters, the first is for the indexing, and the second for the new value.
+
+<pre>
+  class MyObj
+  {
+    float get_opIndex(int idx) const       { return 0; }
+    void set_opIndex(int idx, float value) { }
+  }
+</pre>
+
+When the expression <tt>a[i]</tt> is used to retrieve the value, the compiler will rewrite it as <tt>a.get_opIndex(i)</tt>. When 
+the expression is used to set the value, the compiler will rewrite it as <tt>a.set_opIndex(i, expr)</tt>.
+
+
 
 */

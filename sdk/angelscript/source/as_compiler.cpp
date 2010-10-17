@@ -7295,6 +7295,11 @@ void asCCompiler::ConvertToReference(asSExprContext *ctx)
 
 int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node)
 {
+	return FindPropertyAccessor(name, ctx, 0, node);
+}
+
+int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node)
+{
 	if( engine->ep.propertyAccessorMode == 0 )
 	{
 		// Property accessors have been disabled by the application
@@ -7313,7 +7318,8 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
-			if( f->name == getName && f->parameterTypes.GetLength() == 0 )
+			// TODO: The type of the parameter should match the argument
+			if( f->name == getName && f->parameterTypes.GetLength() == (arg?1:0) )
 			{
 				if( getId == 0 )
 					getId = ot->methods[n];
@@ -7326,7 +7332,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 				}
 			}
 			// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
-			if( f->name == setName && f->parameterTypes.GetLength() == 1 )
+			if( f->name == setName && f->parameterTypes.GetLength() == (arg?2:1) )
 			{
 				if( setId == 0 )
 					setId = ot->methods[n];
@@ -7342,6 +7348,8 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 	}
 	else
 	{
+		asASSERT(arg == 0);
+
 		// Look for appropriate global functions. 
 		asCArray<int> funcs;
 		asUINT n;
@@ -7414,9 +7422,10 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		asCScriptFunction *setFunc = engine->scriptFunctions[setId];
 
 		// It is permitted for a getter to return a handle and the setter to take a reference
-		if( !getFunc->returnType.IsEqualExceptRefAndConst(setFunc->parameterTypes[0]) &&
-			!((getFunc->returnType.IsObjectHandle() && !setFunc->parameterTypes[0].IsObjectHandle()) &&
-			  (getFunc->returnType.GetObjectType() == setFunc->parameterTypes[0].GetObjectType())) )
+		int idx = (arg?1:0);
+		if( !getFunc->returnType.IsEqualExceptRefAndConst(setFunc->parameterTypes[idx]) &&
+			!((getFunc->returnType.IsObjectHandle() && !setFunc->parameterTypes[idx].IsObjectHandle()) &&
+			  (getFunc->returnType.GetObjectType() == setFunc->parameterTypes[idx].GetObjectType())) )
 		{
 			asCString str;
 			str.Format(TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s, name.AddressOf());
@@ -7478,7 +7487,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 
 		if( ctx->type.dataType.IsObject() )
 		{
-			// If the object is read-only then we need to remember 
+			// If the object is read-only then we need to remember that
 			if( (!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly()) ||
 				(ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst()) )
 				ctx->property_const = true;
@@ -7487,14 +7496,14 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 
 			// If the object is a handle then we need to remember that
 			ctx->property_handle = ctx->type.dataType.IsObjectHandle();
-			ctx->property_ref = ctx->type.dataType.IsReference();
+			ctx->property_ref    = ctx->type.dataType.IsReference();
 		}
 
 		// The setter's parameter type is used as the property type,
 		// unless only the getter is available	
 		asCDataType dt;
 		if( setId )
-			dt = engine->scriptFunctions[setId]->parameterTypes[0];
+			dt = engine->scriptFunctions[setId]->parameterTypes[(arg?1:0)];
 		else
 			dt = engine->scriptFunctions[getId]->returnType;
 
@@ -7506,6 +7515,13 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		ctx->type.stackOffset = offset;
 		ctx->type.isTemporary = isTemp;
 		ctx->exprNode = node;
+
+		// Store the argument for later use
+		if( arg )
+		{
+			ctx->property_arg = asNEW(asSExprContext)(engine);
+			MergeExprBytecodeAndType(ctx->property_arg, arg);
+		}
 
 		return 1;
 	}
@@ -7531,11 +7547,18 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	asCArray<int> funcs;
 	funcs.PushLast(ctx->property_set);
 	asCArray<asSExprContext *> args;
+	if( ctx->property_arg )
+		args.PushLast(ctx->property_arg);
 	args.PushLast(arg);
 	MatchFunctions(funcs, args, node, func->GetName(), func->objectType, ctx->property_const);
 	if( funcs.GetLength() == 0 )
 	{
 		// MatchFunctions already reported the error
+		if( ctx->property_arg )
+		{
+			asDELETE(ctx->property_arg, asSExprContext);
+			ctx->property_arg = 0;
+		}
 		return -1;
 	}
 
@@ -7581,6 +7604,11 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 
 	ctx->property_get = 0;
 	ctx->property_set = 0;
+	if( ctx->property_arg )
+	{
+		asDELETE(ctx->property_arg, asSExprContext);
+		ctx->property_arg = 0;
+	}
 
 	return 0;
 }
@@ -7601,6 +7629,26 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 
 	asCTypeInfo objType = ctx->type;
 	asCScriptFunction *func = engine->scriptFunctions[ctx->property_get];
+
+	// Make sure the arg match the property
+	asCArray<int> funcs;
+	funcs.PushLast(ctx->property_get);
+	asCArray<asSExprContext *> args;
+	if( ctx->property_arg )
+		args.PushLast(ctx->property_arg);
+	MatchFunctions(funcs, args, node, func->GetName(), func->objectType, ctx->property_const);
+	if( funcs.GetLength() == 0 )
+	{
+		// MatchFunctions already reported the error
+		if( ctx->property_arg )
+		{
+			asDELETE(ctx->property_arg, asSExprContext);
+			ctx->property_arg = 0;
+		}
+		ctx->type.SetDummy();
+		return;
+	}
+
 	if( func->objectType )
 	{
 		// Setup the context with the original type so the method call gets built correctly
@@ -7619,7 +7667,6 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 	}
 
 	// Call the accessor
-	asCArray<asSExprContext *> args;
 	MakeFunctionCall(ctx, ctx->property_get, func->objectType, args, node);
 
 	if( func->objectType )
@@ -7644,6 +7691,11 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 
 	ctx->property_get = 0;
 	ctx->property_set = 0;
+	if( ctx->property_arg )
+	{
+		asDELETE(ctx->property_arg, asSExprContext);
+		ctx->property_arg = 0;
+	}
 }
 
 int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ctx)
@@ -7958,10 +8010,19 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		if( r == 0 )
 		{	
 #ifndef AS_DEPRECATED
-			asCString str;
-			str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), node);
-			return -1;	
+			// Check for accessors methods for the opIndex
+			r = FindPropertyAccessor("opIndex", &lctx, &expr, node);
+			if( r == 0 )
+			{
+				asCString str;
+				str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
+				Error(str.AddressOf(), node);
+				return -1;	
+			}
+			else if( r < 0 )
+				return -1;
+
+			MergeExprBytecodeAndType(ctx, &lctx);
 #else
 			// Deprecated since 2.20.0
 
@@ -10179,7 +10240,10 @@ void asCCompiler::MergeExprBytecodeAndType(asSExprContext *before, asSExprContex
 	before->property_const  = after->property_const;
 	before->property_handle = after->property_handle;
 	before->property_ref    = after->property_ref;
+	before->property_arg    = after->property_arg;
 	before->exprNode        = after->exprNode;
+
+	after->property_arg = 0;
 
 	// Do not copy the origExpr member
 }
