@@ -582,12 +582,14 @@
 		#if defined(i386) && !defined(__LP64__)
 			// Support native calling conventions on Intel 32bit CPU
 			#define AS_X86
-		#else
+		#else defined(__LP64__)
 			// No support for native calling conventions yet
 			#define AS_MAX_PORTABILITY
 			// STDCALL is not available on 64bit Linux
 			#undef STDCALL
 			#define STDCALL
+		#else
+			#define AS_MAX_PORTABILITY
 		#endif
         #define AS_WIN
         #define AS_WINDOWS_THREADS
@@ -601,13 +603,15 @@
 
 			// Support native calling conventions on Intel 32bit CPU
 			#define AS_X86
-		#else
+		#else defined(__LP64__)
 			#define AS_X64_GCC
 			#define HAS_128_BIT_PRIMITIVES
 			#define SPLIT_OBJS_BY_MEMBER_TYPES
 			// STDCALL is not available on 64bit Linux
 			#undef STDCALL
 			#define STDCALL
+		#else
+			#define AS_MAX_PORTABILITY
 		#endif
        	#define AS_LINUX
        	#define AS_POSIX_THREADS
