@@ -58,7 +58,7 @@ BEGIN_AS_NAMESPACE
 class asCBuilder;
 class asCContext;
 
-// TODO: Remove this when import is removed
+// TODO: import: Remove this when import is removed
 struct sBindInfo;
 
 // TODO: Deprecate CreateScriptObject. Objects should be created by calling the factory function instead.

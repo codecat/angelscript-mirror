@@ -20,7 +20,7 @@ ifeq ($(TARGETPLATFORM), iphone)
 	OBJDIR = obj-iphone
 	LIBDIR = ../../lib-iphone
 	CXX = $(IPHONEBIN)/arm-apple-darwin9-g++-4.0.1 
-	CXXFLAGS = -g -Wall -fPIC  -isysroot /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS2.2.sdk
+	CXXFLAGS += -g -Wall -fPIC  -isysroot /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS2.2.sdk
 else ifeq ($(TARGETPLATFORM), android)
 	ANDROIDNDKROOT = /cygdrive/c/android/android-ndk-1.6_r1
 	ANDROIDBIN = $(ANDROIDNDKROOT)/build/prebuilt/windows/arm-eabi-4.2.1/bin
@@ -28,7 +28,7 @@ else ifeq ($(TARGETPLATFORM), android)
 	OBJDIR = obj-android
 	LIBDIR = ../../lib-android
 	CXX = $(ANDROIDBIN)/arm-eabi-gcc
-	CXXFLAGS = -g -Wall -I$(SYSROOT)/usr/include \
+	CXXFLAGS += -g -Wall -I$(SYSROOT)/usr/include \
 	-Wall \
 	-DANDROID \
 	-fno-exceptions \
@@ -40,7 +40,7 @@ else
 	CXX ?= gcc
 	# On i686 architecture you may need to add -march=i686 if you get 
 	# an undefined symbol for __sync_sub_and_fetch_4 in as_atomic.cpp.
-	CXXFLAGS = -g -Wall -fPIC -fno-strict-aliasing
+	CXXFLAGS += -g -Wall -fPIC -fno-strict-aliasing
 endif
 
 AR ?= ar

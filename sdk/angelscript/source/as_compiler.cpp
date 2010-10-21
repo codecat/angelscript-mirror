@@ -2305,7 +2305,7 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		// Jump to the else case
 		bc->InstrINT(asBC_JMP, afterLabel);
 
-		// TODO: Should we warn?
+		// TODO: Should we warn that the expression will always go to the else?
 	}
 
 	// Compile the if statement
@@ -3381,8 +3381,6 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 	}
 	else if( !lvalue->isExplicitHandle )
 	{
-		// TODO: Call the assignment operator, or do a BC_COPY if none exist
-
 		asSExprContext ctx(engine);
 		ctx.type = *lvalue;
 		Dereference(&ctx, true);
@@ -3422,7 +3420,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 			return;
 		}
 
-		// TODO: Convert to register based
+		// TODO: optimize: Convert to register based
 		bc->InstrPTR(asBC_REFCPY, lvalue->dataType.GetObjectType());
 
 		// Mark variable as initialized

@@ -1,7 +1,7 @@
 # Test Framework GNUC makefile
 
 CXX = g++
-CXXFLAGS = -ggdb -I../../../../angelscript/include -Wno-missing-field-initializers
+CXXFLAGS += -ggdb -I../../../../angelscript/include -Wno-missing-field-initializers
 SRCDIR = ../../source
 OBJDIR = obj
 
@@ -165,7 +165,7 @@ DELETER = rm -f
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CXX) -o $(BIN) $(OBJ) -langelscript -L ../../../../angelscript/lib
+	$(CXX) $(LDFLAGS) -o $(BIN) $(OBJ) -langelscript -L ../../../../angelscript/lib
 	@echo -------------------------------------------------------------------
 	@echo Done.
 

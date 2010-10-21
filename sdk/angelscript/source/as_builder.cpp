@@ -175,8 +175,6 @@ int asCBuilder::Build()
 
 	ParseScripts();
 
-	// TODO: funcdef: Complete the funcdefs
-
 	CompileClasses();
 	CompileGlobalVariables();
 	CompileFunctions();
@@ -2426,7 +2424,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 {
-	// TODO: This should be improved
+	// TODO: import: This should be improved when the imported functions are removed
 	// Get the description from the engine
 	if( (id & 0xFFFF0000) == 0 )
 		return engine->scriptFunctions[id];
