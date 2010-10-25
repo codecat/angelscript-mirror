@@ -75,7 +75,7 @@ bool Test()
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script, strlen(script));
  	int r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 
 	engine->RegisterGlobalFunction("void print(float)", asFUNCTION(print_gen), asCALL_GENERIC);
@@ -83,7 +83,7 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script2, strlen(script2));
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	ExecuteString(engine, "start()", mod);
 
@@ -94,10 +94,10 @@ bool Test()
 	engine->RegisterGlobalProperty("float f", &f);
 	r = ExecuteString(engine, "f = 3.14f;");
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	if( f < 3.139999f || f > 3.140001f )
-		fail = true;
+		TEST_FAILED;
 
 	setlocale(LC_NUMERIC, "C");
 

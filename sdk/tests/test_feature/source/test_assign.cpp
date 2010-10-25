@@ -61,7 +61,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -73,7 +73,7 @@ bool Test()
 			PrintException(ctx);
 
 		printf("%s: Failed to execute script\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 
@@ -105,14 +105,14 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 			printf("%s: Failed to compile the script\n", TESTNAME);
 		}
 
 		r = ExecuteString(engine, "test()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// There shouldn't be any temporary variable created for the assignment
@@ -124,7 +124,7 @@ bool Test()
 		              "CTest::~CTest() for Ent1\n" )
 		{
 			printf("%s", buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 

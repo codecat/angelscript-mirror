@@ -38,7 +38,7 @@ bool Test()
 	r = ExecuteString(engine, script);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

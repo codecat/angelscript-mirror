@@ -63,7 +63,7 @@ bool TestFuncOverload()
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	int r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	ExecuteString(engine, "func(func(3));", mod);
 
@@ -73,12 +73,12 @@ bool TestFuncOverload()
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "TestFuncOverload (1, 1) : Info    : Compiling void ScriptFunc(void)\n"
                        "TestFuncOverload (1, 17) : Error   : Parameter type can't be 'void'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Permit void parameter list
@@ -123,7 +123,7 @@ bool Test2()
 	r = mod->AddScriptSection("test", script1, strlen(script1));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	const char *script2 =
 		"class A{}  \n"
@@ -140,7 +140,7 @@ bool Test2()
 	r = mod->AddScriptSection("test", script2, strlen(script2));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

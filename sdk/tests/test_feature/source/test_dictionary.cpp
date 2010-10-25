@@ -83,7 +83,7 @@ bool Test()
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ExecuteString(engine, "Test()", mod, ctx);
@@ -91,7 +91,7 @@ bool Test()
 	{
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
-		fail = true;
+		TEST_FAILED;
 	}
 	ctx->Release();
 
@@ -101,34 +101,34 @@ bool Test()
 	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
 	if( gcCurrentSize != 1 || gcTotalDestroyed != 2 || gcTotalDetected != 1 )
-		fail = true;
+		TEST_FAILED;
 
 	// Test circular references including a script class and the dictionary
 	mod->AddScriptSection("script", script2, strlen(script2));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "f()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 	engine->GarbageCollect();
 	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
 	if( gcCurrentSize != 4 || gcTotalDestroyed != 6 || gcTotalDetected != 3  )
-		fail = true;
+		TEST_FAILED;
 
 	// Test invalid ref cast together with the variable argument
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "dictionary d; d.set('hello', cast<int>(4));");
 	if( r >= 0 ) 
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 35) : Error   : Illegal target type for reference cast\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -149,7 +149,7 @@ bool Test()
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	ctx = engine->CreateContext();
 	r = ExecuteString(engine, "Test()", mod, ctx);
@@ -157,7 +157,7 @@ bool Test()
 	{
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
-		fail = true;
+		TEST_FAILED;
 	}
 	ctx->Release();
 
@@ -188,7 +188,7 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
@@ -196,7 +196,7 @@ bool Test()
 		{
 			if( r == asEXECUTION_EXCEPTION )
 				PrintException(ctx);
-			fail = true;
+			TEST_FAILED;
 		}
 		ctx->Release();
 

@@ -83,7 +83,7 @@ bool Test()
 	if( objectsAllocated )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Success

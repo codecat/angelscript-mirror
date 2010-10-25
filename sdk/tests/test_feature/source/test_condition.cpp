@@ -85,7 +85,7 @@ bool TestCondition()
 	r = ExecuteString(engine, "print(a == \"a\" ? \"t\" : \"f\")");
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
@@ -96,7 +96,7 @@ bool TestCondition()
 	r = ExecuteString(engine, "Test(\"t\", \"f\")", mod);
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
@@ -106,7 +106,7 @@ bool TestCondition()
 	r = ExecuteString(engine, "Test()");
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 */
@@ -116,28 +116,28 @@ bool TestCondition()
 	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
 	r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(float(b ? 15 : 0)));");
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
 	r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(b ? 15 : 0));");
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
 	r = ExecuteString(engine, "(true) ? print(\"true\") : print(\"false\")");
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
@@ -150,13 +150,13 @@ bool TestCondition()
 	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "nextThink = 0; advance(true); assert( nextThink == 100 + 300 );", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "nextThink = 0; advance(false); assert( nextThink == 100 + 30 );", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 	a->Release();

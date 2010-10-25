@@ -276,20 +276,23 @@ void asCModule::CallExit()
 	{
 		if( scriptGlobals[n]->type.IsObject() )
 		{
-			void *obj = *(void**)scriptGlobals[n]->GetAddressOfValue();
-			if( obj )
+			void **obj = (void**)scriptGlobals[n]->GetAddressOfValue();
+			if( *obj )
 			{
 				asCObjectType *ot = scriptGlobals[n]->type.GetObjectType();
 
 				if( ot->beh.release )
-					engine->CallObjectMethod(obj, ot->beh.release);
+					engine->CallObjectMethod(*obj, ot->beh.release);
 				else
 				{
 					if( ot->beh.destruct )
-						engine->CallObjectMethod(obj, ot->beh.destruct);
+						engine->CallObjectMethod(*obj, ot->beh.destruct);
 
-					engine->CallFree(obj);
+					engine->CallFree(*obj);
 				}
+
+				// Set the address to 0 as someone might try to access the variable afterwards
+				*obj = 0;
 			}
 		}
 	}

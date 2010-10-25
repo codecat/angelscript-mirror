@@ -240,7 +240,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -248,7 +248,7 @@ bool Test()
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 //	printf("---\n");
@@ -257,7 +257,7 @@ bool Test()
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
  //	printf("---\n");
@@ -266,7 +266,7 @@ bool Test()
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 //	printf("---\n");
@@ -276,7 +276,7 @@ bool Test()
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 //	printf("---\n");
@@ -287,7 +287,7 @@ bool Test()
 	if( r != asEXECUTION_SUSPENDED )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	ctx->Abort();
 	ctx->Release();
@@ -298,7 +298,7 @@ bool Test()
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 //	printf("---\n");
@@ -307,19 +307,19 @@ bool Test()
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 //	printf("---\n");
 
 	mod->AddScriptSection("script", script3, strlen(script3));
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	r = ExecuteString(engine, "calc()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
  	engine->Release();

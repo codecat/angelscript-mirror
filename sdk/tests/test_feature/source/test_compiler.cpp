@@ -106,10 +106,10 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void testFunction()\n"
                        "TestCompiler (3, 8) : Error   : Expected ';'\n" )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 
@@ -123,13 +123,13 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 
 	if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void CompilerAssert()\n"
 					   "TestCompiler (3, 13) : Error   : Can't implicitly convert from 'uint' to 'bool'.\n"
 					   "TestCompiler (4, 13) : Error   : Can't implicitly convert from 'uint' to 'bool'.\n"
 					   "TestCompiler (5, 5) : Error   : No conversion from 'bool' to math type available.\n" )
-	   fail = true;
+	   TEST_FAILED;
 
 	// test 3
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -137,7 +137,7 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	// test 4
 	bout.buffer = "";
@@ -146,29 +146,29 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 
 	if( bout.buffer != "TestCompiler (1, 11) : Error   : Identifier 'I' is not a data type\n" )
-		fail = true;
+		TEST_FAILED;
 
 	// test 5
 	RegisterScriptString(engine);
 	bout.buffer = "";
 	r = ExecuteString(engine, "string &ref");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 8) : Error   : Expected '('\n" )
-		fail = true;
+		TEST_FAILED;
 
 	bout.buffer = "";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "TestCompiler (2, 1) : Info    : Compiling void crash()\n"
 	                   "TestCompiler (2, 25) : Error   : Can't implicitly convert from 'void' to 'bool'.\n" )
-		fail = true;
+		TEST_FAILED;
 
 	// test 6
 	// Verify that script class methods can have the same signature as
@@ -181,7 +181,7 @@ bool Test()
 	if( r < 0 )
 	{
 		printf("failed on 6\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// test 7
@@ -192,7 +192,7 @@ bool Test()
 	if( bout.buffer != "ExecuteString (1, 6) : Error   : Data type can't be 'void'\n" )
 	{
 		printf("failed on 7\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// test 8
@@ -203,13 +203,13 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "script (3, 2) : Error   : Identifier 'Sprite' is not a data type\n"
 					   "script (5, 2) : Info    : Compiling string Ship::GetName()\n"
 					   "script (6, 17) : Error   : Illegal operation on 'int&'\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// test 9
@@ -220,14 +220,14 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "script (1, 1) : Info    : Compiling float calc(float, float)\n"
 	                   "script (1, 77) : Error   : Multiline strings are not allowed in this application\n"
 	                   "script (1, 32) : Error   : No matching signatures to 'Print(string@&)'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// test 10
@@ -238,13 +238,13 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "script (2, 1) : Info    : Compiling int fuzzy()\n"
 		               "script (3, 3) : Error   : No conversion from 'void' to 'int' available.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// test 11
@@ -255,13 +255,13 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "script (2, 1) : Info    : Compiling void test()\n"
 		               "script (2, 26) : Error   : Can't implicitly convert from 'void' to 'int'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 12
@@ -273,14 +273,14 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "script (3, 3) : Error   : Identifier 'object' is not a data type\n"
 					   "script (4, 3) : Info    : Compiling void c::func()\n"
                        "script (5, 18) : Error   : Illegal operation on 'int&'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 13
@@ -288,11 +288,11 @@ bool Test()
 	bout.buffer = "";
 	r = ExecuteString(engine, "uint32[] a = 0;");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : Can't implicitly convert from 'const uint' to 'uint[]&'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 14
@@ -302,24 +302,24 @@ bool Test()
 	r = mod->AddScriptSection("script", script12, strlen(script12));
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (4, 1) : Info    : Compiling void assert()\n"
                        "script (6, 4) : Error   : Both expressions must have the same type\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 15
 	// Declaring a class inside a function
 	bout.buffer = "";
 	r = ExecuteString(engine, "class XXX { int a; }; XXX b;");
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : Expected expression value\n"
 	                   "ExecuteString (1, 27) : Error   : Expected ';'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 16
@@ -329,12 +329,12 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script_16, strlen(script_16));
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 		               "script (1, 36) : Warning : 'b' is not initialized.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 17
@@ -344,25 +344,25 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script_17, strlen(script_17));
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 		               "script (1, 23) : Warning : 'a' is not initialized.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 18
 	// Properly notify the error of comparing boolean operands
 	bout.buffer = "";
 	r = ExecuteString(engine, "bool b1,b2; if( b1 <= b2 ) {}");
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 20) : Warning : 'b1' is not initialized.\n"
                        "ExecuteString (1, 20) : Warning : 'b2' is not initialized.\n"
                        "ExecuteString (1, 20) : Error   : Illegal operation on this datatype\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 19 - moved to test_scriptretref
@@ -377,14 +377,14 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script20", script20, strlen(script20));
 	r = mod->Build();
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script20 (2, 1) : Info    : Compiling void test()\n"
 	                   "script20 (3, 22) : Error   : No matching signatures to 'A::GetClient()'\n"
 	                   "script20 (3, 17) : Warning : The operand is implicitly converted to handle in order to compare them\n"
 	                   "script20 (3, 17) : Error   : No conversion from 'const int' to 'A@' available.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 21
@@ -401,13 +401,13 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script21", script21, strlen(script21));
 	r = mod->Build();
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script21 (2, 1) : Info    : Compiling void main()\n"
 					   "script21 (4, 28) : Error   : 'SomethingUndefined' is not declared\n"
 					   "script21 (4, 11) : Error   : No conversion from 'int' to 'bool' available.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 22
@@ -425,14 +425,14 @@ bool Test()
 
 	r = mod->AddScriptSection("22", script22);
 	r = mod->Build();
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "22 (2, 1) : Info    : Compiling void Func(Some@)\n"
 	                   "22 (5, 1) : Error   : No matching signatures to 'Func_(<null handle>)'\n"
 					   "22 (5, 1) : Info    : Candidates are:\n"
 					   "22 (5, 1) : Info    : void Func_(uint)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 23 - don't assert on invalid condition expression
@@ -440,11 +440,11 @@ bool Test()
 	const char *script23 = "openHandle.IsValid() ? 1 : 0\n";
 
 	r = ExecuteString(engine, script23);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'openHandle' is not declared\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 24 - don't assert on invalid return statement
@@ -452,12 +452,12 @@ bool Test()
 	const char *script24 = "string SomeFunc() { return null; }";
 	r = mod->AddScriptSection("24", script24);
 	r = mod->Build();
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "24 (1, 1) : Info    : Compiling string SomeFunc()\n"
 		               "24 (1, 28) : Error   : Can't implicitly convert from '<null handle>' to 'string'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 25 - moved to test_scriptretref
@@ -467,7 +467,7 @@ bool Test()
 	const char *script26 = "void main() { main(anyWord)+main(anyWord); }";
 	r = mod->AddScriptSection("26", script26);
 	r = mod->Build();
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "26 (1, 1) : Info    : Compiling void main()\n"
 	                   "26 (1, 20) : Error   : 'anyWord' is not declared\n"
 	                   "26 (1, 29) : Error   : No matching signatures to 'main(int)'\n"
@@ -475,7 +475,7 @@ bool Test()
 					   "26 (1, 29) : Info    : void main()\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -502,7 +502,7 @@ bool Test()
 		                             "test (1, 12) : Error   : There is no copy operator for this type available.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -517,14 +517,14 @@ bool Test()
 		r = ExecuteString(engine, "if(true); if(true) {} else;");
 		if( r >= 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		if( bout.buffer != "ExecuteString (1, 9) : Error   : If with empty statement\n"
 			               "ExecuteString (1, 27) : Error   : Else with empty statement\n")
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -543,7 +543,7 @@ bool Test()
 		mod->AddScriptSection("s", script);
 		int r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "s (2, 1) : Error   : A function with the same name and parameters already exist\n"
 		                   "s (3, 1) : Info    : Compiling void main()\n"
@@ -552,7 +552,7 @@ bool Test()
 		                   "s (3, 15) : Info    : float func()\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -574,13 +574,13 @@ bool Test()
 		mod->AddScriptSection("s", script);
 		int r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "s (1, 1) : Info    : Compiling void main()\n"
 						   "s (3, 21) : Error   : 'ti' is not declared\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -594,7 +594,7 @@ bool Test()
 		int r = ExecuteString(engine, "MissingFunction('test')");
 		if( r >= 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 			printf("%s: ExecuteString() succeeded even though it shouldn't\n", TESTNAME);
 		}
 
@@ -628,7 +628,7 @@ bool Test()
 		bout.buffer = "";
 		int r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != " (9, 1) : Info    : Compiling void main()\n"
 						   " (10, 5) : Error   : No matching signatures to 'test()'\n"
@@ -642,7 +642,7 @@ bool Test()
 						   " (12, 10) : Info    : void Test::test(float)\n"
 						   " (12, 10) : Info    : void Test::test(bool)\n" )
 		{
-			fail = true;
+			TEST_FAILED;
 			printf("%s", bout.buffer.c_str());
 		}
 
@@ -680,7 +680,7 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 		
 		engine->Release();
 	}
@@ -700,12 +700,12 @@ bool Test()
 		mod->AddScriptSection("scriptMain", scriptMain, strlen(scriptMain));
 		r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 		if( bout.buffer != "scriptMain (1, 1) : Info    : Compiling void error()\n"
 						   "scriptMain (1, 20) : Error   : 'a' is not declared\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 		engine->Release();
 	}
@@ -738,11 +738,11 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -775,15 +775,15 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -819,7 +819,7 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 						   "script (4, 14) : Error   : No default constructor for object of type 'Entity'.\n"
 						   "script (4, 14) : Error   : There is no copy operator for this type available.\n"
@@ -827,7 +827,7 @@ bool Test()
 						   "script (5, 14) : Error   : There is no copy operator for this type available.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -842,7 +842,7 @@ bool Test()
 		mod->AddScriptSection("test", "class C { int x; int get_x() {return x;} }\n");
 		r = mod->Build(); 
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -857,11 +857,11 @@ bool Test()
 		mod->AddScriptSection("test", "interface ITest {}\n class Test {ITest t;}\n class Test2 : Test {}\n");
 		r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 		if( bout.buffer != "test (2, 14) : Error   : Data type can't be 'ITest'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -887,13 +887,13 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void my_method()\n"
 		                   "script (4, 12) : Error   : 'unexisting_var' is not declared\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -920,13 +920,13 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"
 		                   "script (3, 9) : Error   : Expression must be of boolean type\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -960,7 +960,7 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "script (3, 2) : Info    : Compiling irc_event::irc_event()\n"
 		                   "script (6, 10) : Error   : No matching signatures to 'irc_event::set_command(string)'\n"
@@ -968,7 +968,7 @@ bool Test()
 		                   "script (6, 10) : Info    : void irc_event::set_command(string@[])\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -1002,7 +1002,7 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "script (11, 1) : Info    : Compiling void main()\n"
 		                   "script (14, 19) : Error   : No matching signatures to 'tone_synth::set_waveform_type(sine)'\n"
@@ -1010,7 +1010,7 @@ bool Test()
 		                   "script (14, 19) : Info    : void tone_synth::set_waveform_type(wf_type)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -1044,12 +1044,12 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -1084,7 +1084,7 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "script (10, 1) : Info    : Compiling void main()\n"
 		                   "script (12, 22) : Error   : 'bad' is not declared\n"
@@ -1092,7 +1092,7 @@ bool Test()
 		                   "script (14, 25) : Error   : 'x' is not a member of 'int'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -1113,12 +1113,12 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -1152,17 +1152,17 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "paintFloor()", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -1190,12 +1190,12 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -1209,7 +1209,7 @@ bool Test()
 
 		r = ExecuteString(engine, "assert( .42 == 0.42 ); assert( .42f == 0.42f )");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -1228,7 +1228,7 @@ bool Test()
 			"} \n");
 		r = mod->Build();
 		if( r < 0 ) 
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -1278,7 +1278,7 @@ bool Test2()
 
 	r = ExecuteString(engine, script);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 	return fail;
@@ -1327,11 +1327,11 @@ bool Test3()
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 	return fail;
@@ -1374,14 +1374,14 @@ bool Test4()
 	mod->AddScriptSection("test", script1, strlen(script1));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	const char *script2 = "void main() { Chars a = current.f().Save.FieldName; print(a); }";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test", script2, strlen(script2));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 	return fail;
@@ -1413,7 +1413,7 @@ bool Test5()
 	mod->AddScriptSection("test", script, strlen(script));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 	return fail;
@@ -1440,11 +1440,11 @@ bool Test6()
 	mod->AddScriptSection("script", script1, strlen(script1));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// This should also work
@@ -1458,11 +1458,11 @@ bool Test6()
 	mod->AddScriptSection("script", script2, strlen(script2));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// This would cause an assert failure
@@ -1477,13 +1477,13 @@ bool Test6()
 	mod->AddScriptSection("script", script3, strlen(script3));
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (4, 18) : Info    : Compiling const MyClass foo\n"
 					   "script (4, 28) : Error   : 'bar' is not declared\n"
 					   "script (4, 24) : Error   : 'a' is not declared\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// This would also cause an assert failure
@@ -1497,12 +1497,12 @@ bool Test6()
 	mod->AddScriptSection("script", script4, strlen(script4));
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"
 					   "script (2, 9) : Error   : 'i' is not declared\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -1555,7 +1555,7 @@ bool Test7()
 	int r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -1581,16 +1581,16 @@ bool Test8()
 	mod->AddScriptSection("script", script);
 	int r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "string str = func(); assert( str == '' );", mod);
 	if( r != asEXECUTION_FINISHED ) 
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 
@@ -1614,13 +1614,13 @@ bool Test9()
 	mod->AddScriptSection("sc", script);
 	int r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 
 	if( bout.buffer != "sc (1, 1) : Info    : Compiling void Func()\n"
 					   "sc (3, 3) : Error   : 'aaa' is not declared\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

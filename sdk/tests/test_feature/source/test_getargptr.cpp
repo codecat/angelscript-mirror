@@ -35,7 +35,7 @@ bool Test()
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	int func = engine->GetModule(0)->GetFunctionIdByName("test");
 	asIScriptContext *ctx = engine->CreateContext();
@@ -48,17 +48,17 @@ bool Test()
 	*(float**)ctx->GetAddressOfArg(3) = &pi;
 
 	r = ctx->Execute();
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
-	if( *(int*)ctx->GetAddressOfReturnValue() != 107 ) fail = true;
+	if( *(int*)ctx->GetAddressOfReturnValue() != 107 ) TEST_FAILED;
 
 	func = engine->GetModule(0)->GetFunctionIdByName("test2");
 	ctx->Prepare(func);
 
 	r = ctx->Execute();
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
-	if( ((CScriptString*)ctx->GetAddressOfReturnValue())->buffer != "tst" ) fail = true;
+	if( ((CScriptString*)ctx->GetAddressOfReturnValue())->buffer != "tst" ) TEST_FAILED;
 
 	ctx->Release();
 

@@ -5,10 +5,12 @@
 namespace TestGarbageCollect
 {
 
+int called = 0;
 void PrintString_Generic(asIScriptGeneric *gen)
 {
 	std::string *str = (std::string*)gen->GetArgAddress(0);
-	//printf("%s",str->c_str());
+//	printf("%s",str->c_str());
+	called++;
 }
 
 bool Test()
@@ -66,7 +68,7 @@ bool Test()
 			if( currentSize    != 8 ||
 				totalDestroyed != n+1 ||
 				totalDetected  != 0 )
-				fail = true;
+				TEST_FAILED;
             //printf("(%lu,%lu,%lu)\n" , currentSize , totalDestroyed , totalDetected );
         }
     }
@@ -105,18 +107,78 @@ bool Test()
 			"}\n");
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		asUINT currentSize;
 		engine->GetGCStatistics(&currentSize);
 		
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->GetGCStatistics(&currentSize);
 
 		engine->Release();
+	}
+
+	// Test attempted access of global variable after it has been destroyed
+	{	
+		COutStream out;
+		int r;
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void Log(const string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, 
+			"class Big \n"
+			"{ \n"
+			"  Big() \n"
+			"  { \n"
+			"    Log('Big instance created\\n'); \n"
+			"  } \n"
+			"  ~Big() \n"
+			"  { \n"
+			"    Log('Big instance being destroyed\\n'); \n"
+			"  } \n"
+			"  void exec() \n"
+			"  { \n"
+			"    Log('executed\\n'); \n"
+			"  } \n"
+			"} \n"
+			"Big big; \n" // Global object
+			"class SomeClass \n"
+			"{ \n"
+			"  SomeClass@ handle; \n" // Make sure SomeClass is garbage collected
+			"  SomeClass() {} \n"
+			"  ~SomeClass() \n"
+			"  { \n"
+			"    Log('Before attempting access to global var\\n'); \n"
+			"    big.exec(); \n" // As the module has already been destroyed, the global variable won't exist anymore, thus raising a null pointer exception here
+			"    Log('SomeClass instance being destroyed\\n'); \n" // This won't be called
+			"  } \n"
+			"} \n"
+			"void test_main() \n"
+			"{ \n"
+			"  SomeClass @something = @SomeClass(); \n" // Instanciate the object. It will only be destroyed by the GC
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "test_main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// The global variables in the module will be destroyed first. The objects in the GC that 
+		// tries to access them should throw exception, but should not cause the application to crash
+		called = 0;
+		engine->Release();
+		if( called != 2 )
+			TEST_FAILED;
 	}
 
 	return fail;

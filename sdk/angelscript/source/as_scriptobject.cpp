@@ -30,11 +30,8 @@
 
 
 #include <new>
-
 #include "as_config.h"
-
 #include "as_scriptengine.h"
-
 #include "as_scriptobject.h"
 
 BEGIN_AS_NAMESPACE

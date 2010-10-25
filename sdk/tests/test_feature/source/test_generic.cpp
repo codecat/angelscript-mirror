@@ -285,63 +285,63 @@ bool Test2()
 	r = ExecuteString(engine, "TestNoArg()");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterGlobalFunction("void TestStringByVal(string val)", asFUNCTION(TestStringByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "TestStringByVal('test')");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterGlobalFunction("void TestStringByRef(const string &in ref)", asFUNCTION(TestStringByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "TestStringByRef('test')");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterGlobalFunction("void TestIntByVal(int val)", asFUNCTION(TestIntByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "TestIntByVal(42)");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterGlobalFunction("void TestIntByRef(int &in ref)", asFUNCTION(TestIntByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "TestIntByRef(42)");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterGlobalFunction("int TestRetIntByVal()", asFUNCTION(TestRetIntByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "assert(TestRetIntByVal() == 42)");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterGlobalFunction("int &TestRetIntByRef()", asFUNCTION(TestRetIntByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "assert(TestRetIntByRef() == 42)");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterGlobalFunction("string TestRetStringByVal()", asFUNCTION(TestRetStringByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "assert(TestRetStringByVal() == 'test')");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterGlobalFunction("string &TestRetStringByRef()", asFUNCTION(TestRetStringByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "assert(TestRetStringByRef() == 'test')");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterObjectType("C", sizeof(C), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS); assert( r >= 0 );
@@ -354,7 +354,7 @@ bool Test2()
 	r = ExecuteString(engine, "C c; c.a(); c.b(); c.c(1); c.c(1.1f);");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

@@ -15,45 +15,45 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 	r = engine->RegisterGlobalFunction("void func(mytype)", asFUNCTION(0), asCALL_GENERIC);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 
 	r = engine->RegisterGlobalFunction("void func(int &)", asFUNCTION(0), asCALL_GENERIC);
 	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 	}
 	else
 	{
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 	}
 	
 	r = engine->RegisterObjectType("mytype", 0, asOBJ_REF);
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_CONSTRUCT, "void f(othertype)", asFUNCTION(0), asCALL_GENERIC);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 
 	r = engine->RegisterObjectMethod("mytype", "type opAdd(int) const", asFUNCTION(0), asCALL_GENERIC);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 
 	r = engine->RegisterGlobalProperty("type a", 0);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 
 	r = engine->RegisterObjectMethod("mytype", "void method(int &)", asFUNCTION(0), asCALL_GENERIC);
 	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 	}
 	else
 	{
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 	}
 
 	r = engine->RegisterObjectProperty("mytype", "type a", 0);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 
 	r = engine->RegisterStringFactory("type", asFUNCTION(0), asCALL_GENERIC);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 
 	// Verify the output messages
 	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
@@ -67,7 +67,7 @@ bool Test()
 						   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
 						   " (1, 1) : Error   : Identifier 'type' is not a data type\n" )
 		{
-			fail = true;
+			TEST_FAILED;
 			printf("%s", bout.buffer.c_str());
 		}
 	}
@@ -80,7 +80,7 @@ bool Test()
 						   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
 						   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
 						   " (1, 1) : Error   : Identifier 'type' is not a data type\n")
-			fail = true;
+			TEST_FAILED;
 	}
 
 	engine->Release();

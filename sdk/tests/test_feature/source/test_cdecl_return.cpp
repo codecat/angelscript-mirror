@@ -79,7 +79,7 @@ bool Test()
 	if (!returned) 
 	{
 		printf("\nTestReturn: cfunction didn't return properly\n\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	ExecuteString(engine, "Assert(!retfalse() == cfunction_b())");
@@ -88,7 +88,7 @@ bool Test()
 	if( returned )
 	{
 		printf("\nTestReturn: retfalse didn't return properly\n\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	ExecuteString(engine, "Assert(!retfalse2() == cfunction_b())");
@@ -97,7 +97,7 @@ bool Test()
 	if( returned )
 	{
 		printf("\nTestReturn: retfalse2 didn't return properly\n\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -239,14 +239,14 @@ bool TestReturnStruct()
     r = engine->RegisterGlobalProperty("rect r",&rc); assert( r >= 0 );
     r = ExecuteString(engine,"p=Point();");
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 	if( p.x != 1 || p.y != 2 )
-		fail = true;
+		TEST_FAILED;
     r = ExecuteString(engine,"r=Rect();");
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 	if( rc.tl.x != 3 || rc.tl.y != 4 || rc.br.x != 5 || rc.br.y != 6 )
-		fail = true;
+		TEST_FAILED;
     
     // at that point, 'p' should contain 1,2 while 'rc' should contain 3,4,5,6
     

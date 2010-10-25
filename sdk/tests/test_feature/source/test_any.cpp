@@ -118,7 +118,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", "TestAny");
 	}
 	ctx = engine->CreateContext();
@@ -128,7 +128,7 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Execution failed\n", "TestAny");
 	}
 	if( ctx ) ctx->Release();
@@ -149,7 +149,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", "TestAny");
 	}
 	ctx = engine->CreateContext();
@@ -159,7 +159,7 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Execution failed\n", "TestAny");
 	}
 	if( ctx ) ctx->Release();
@@ -189,14 +189,14 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to Build()\n", "TestAny");
 	}
 	if( bout.buffer != "TestAny (5, 1) : Info    : Compiling void TestAny()\n"
 	                   "TestAny (9, 15) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -216,14 +216,14 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile\n", "TestAny");
 	}
 	
 	r = ExecuteString(engine, "TestAny()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to execute\n", "TestAny");
 	}
 
@@ -232,21 +232,21 @@ bool Test()
 		int typeId = myAny->GetTypeId();
 
 		if( !(typeId & asTYPEID_OBJHANDLE) )
-			fail = true;
+			TEST_FAILED;
 		if( (typeId & asTYPEID_MASK_OBJECT) != asTYPEID_APPOBJECT )
-			fail = true;
+			TEST_FAILED;
 
 		const char *decl = engine->GetTypeDeclaration(typeId);
 		if( (decl == 0) || (strcmp(decl, "string@") != 0) )
 		{
-			fail = true;
+			TEST_FAILED;
 			printf("%s: Failed to return the correct type\n", "TestAny");
 		}
 
 		int typeId2 = engine->GetTypeIdByDecl("string@");
 		if( typeId != typeId2 )
 		{
-			fail = true;
+			TEST_FAILED;
 			printf("%s: Failed to return the correct type\n", "TestAny");
 		}
 
@@ -255,7 +255,7 @@ bool Test()
 
 		if( str->buffer != "test" )
 		{
-			fail = true;
+			TEST_FAILED;
 			printf("%s: Failed to set the string correctly\n", "TestAny");
 		}
 
@@ -265,13 +265,13 @@ bool Test()
 		myAny = 0;
 	}
 	else
-		fail = true;
+		TEST_FAILED;
 
 	//--------------------------------------
 	// Make sure the any type can store primitives as well
 	r = ExecuteString(engine, "any a; a.store(1); int b; a.retrieve(b); Assert(b == 1);");
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

@@ -65,7 +65,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -77,7 +77,7 @@ bool Test()
 			PrintException(ctx);
 
 		printf("%s: Failed to execute script\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 
@@ -87,7 +87,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -99,7 +99,7 @@ bool Test()
 			PrintException(ctx);
 
 		printf("%s: Failed to execute script\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 
@@ -139,7 +139,9 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 ) 
-			fail = true;
+		{
+			TEST_FAILED;
+		}
 		else
 		{
 			asIScriptContext *ctx = engine->CreateContext();
@@ -150,7 +152,7 @@ bool Test()
 									  "TestFunc(n); \n", mod, ctx);
 			if( r != asEXECUTION_FINISHED )
 			{
-				fail = true;
+				TEST_FAILED;
 				if( r == asEXECUTION_EXCEPTION )
 					PrintException(ctx);
 			}

@@ -93,15 +93,15 @@ bool Test()
 	mod->AddScriptSection("script", script1, strlen(script1));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( count != 1 )
-		fail = true;
+		TEST_FAILED;
 	engine->DiscardModule(0);
 	if( count != 2 )
-		fail = true;
+		TEST_FAILED;
 
 	// Test destructor for script class in array
 	count = 0;
@@ -109,13 +109,13 @@ bool Test()
 	mod->AddScriptSection("script", script2, strlen(script2));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	engine->GarbageCollect();
 	if( count != 2 )
-		fail = true;
+		TEST_FAILED;
 
 	// Test destructor for script class cleaned up by garbage collector
 	count = 0;
@@ -123,13 +123,13 @@ bool Test()
 	mod->AddScriptSection("script", script3, strlen(script3));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	engine->GarbageCollect();
 	if( count != 1 )
-		fail = true;
+		TEST_FAILED;
 
 	// Make sure destructor is only called once in the life time of the object, even if resurrected
 	count = 0;
@@ -137,15 +137,15 @@ bool Test()
 	mod->AddScriptSection("script", script4, strlen(script4));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( count != 1 )
-		fail = true;
+		TEST_FAILED;
 	engine->DiscardModule(0);
 	if( count != 1 )
-		fail = true;
+		TEST_FAILED;
 
 	// Destructor for member
 	count = 0;
@@ -153,12 +153,12 @@ bool Test()
 	mod->AddScriptSection("script", script5, strlen(script5));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( count != 1 )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

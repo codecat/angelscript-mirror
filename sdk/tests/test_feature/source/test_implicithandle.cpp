@@ -66,20 +66,20 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
 
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Execution failed\n");
 	}
 
 	if( output != "Hello!\nCreated\n---\n7\n---\n7\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("Got: \n%s", output.c_str());
 	}
 
@@ -89,7 +89,7 @@ bool Test()
 	r = engine->ExecuteString(0, "MyClass a; assert( a == null );");
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	*/
 

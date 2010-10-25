@@ -59,7 +59,7 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	WriteConfigToFile(engine, "AS_DEBUG/config.txt");
 

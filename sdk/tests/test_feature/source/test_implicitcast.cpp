@@ -160,7 +160,7 @@ bool Test()
 	{
 		if( r == 3 )
 			PrintException(ctx);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 
@@ -172,29 +172,29 @@ bool Test()
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "type t(5); t << 1; ");
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : Illegal operation on 'type&'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	bout.buffer = "";
 	r = ExecuteString(engine, "type t(5); t + t; ");
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	bout.buffer = "";
 	r = ExecuteString(engine, "type t(5); t < t; ");
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test3
@@ -203,7 +203,7 @@ bool Test()
 	// int8 is requested, so the cast to int is used
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = ExecuteString(engine, "type t(2); assert( (1.0 / t) == (1.0 / 2.0) );");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	engine->Release();
 
@@ -216,7 +216,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "bool f()", asFUNCTION(Type_castInt), asCALL_GENERIC); 
 	if( r != asNOT_SUPPORTED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -241,30 +241,30 @@ bool Test()
 		// explicit cast to int is allowed
 		r = ExecuteString(engine, "type t; t.v = 5; int a = int(t); assert(a == 5);"); 
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		// as cast to int is allowed, AngelScript also allows cast to float (using cast to int then implicit cast to int)
 		r = ExecuteString(engine, "type t; t.v = 5; float a = float(t); assert(a == 5.0f);");
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		// implicit cast to int is not allowed
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		r = ExecuteString(engine, "type t; int a = t;");
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 		if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'type&' to 'int'.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 /*
 		// Having an implicit constructor with an int param makes it possible to compare the type with int
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		r = ExecuteString(engine, "type t(5); assert( t == 5 );");
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 */
 		engine->Release();
 	}
@@ -284,7 +284,7 @@ bool Test()
 		int r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -305,7 +305,7 @@ bool Test()
 		int r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -355,42 +355,42 @@ bool Test()
 		// Test the classes to make sure they work
 		r = ExecuteString(engine, "A a; assert(a.test() == 1); B b; assert(b.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		// It should be possible to register a REF_CAST to allow implicit cast
 		// Test IMPLICIT_REF_CAST from subclass to baseclass
 		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "A@+ f()", asFUNCTION(B::castToA), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = ExecuteString(engine, "B b; A@ a = b; assert(a.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		// Test explicit cast with registered IMPLICIT_REF_CAST
 		r = ExecuteString(engine, "B b; A@ a = cast<A>(b); assert(a.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		// It should be possible to assign a value of type B 
 		// to and variable of type A due to the implicit ref cast
 		r = ExecuteString(engine, "A a; B b; a = b;");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		// Test REF_CAST from baseclass to subclass
 		r = engine->RegisterObjectBehaviour("A", asBEHAVE_REF_CAST, "B@+ f()", asFUNCTION(B::AcastToB), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = ExecuteString(engine, "B b; A@ a = cast<A>(b); B@ _b = cast<B>(a); assert(_b.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		// Test REF_CAST from baseclass to subclass, where the cast is invalid
 		r = ExecuteString(engine, "A a; B@ b = cast<B>(a); assert(@b == null);");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		// Doing a ref cast on a null pointer must not throw an exception
 		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "A@ a;\n B@ b;\n @b = cast<B>(a);\n @a = @b;\n", 0, ctx);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 		ctx->Release();
@@ -419,11 +419,11 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "testFunc();", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		// TODO: This requires implicit value cast
 		// Test passing a value of B to a function expecting its base class
@@ -433,10 +433,10 @@ bool Test()
 		r = mod->AddScriptSection(0, "script", script, strlen(script));
 		r = mod->Build(0);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 		r = ExecuteString(engine, "B b; func(b)");
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 */
 		// TODO: A handle to A can not be implicitly cast to a handle to B since it was registered as explicit REF_CAST
 		// TODO: It shouldn't be possible to cast away constness
@@ -485,7 +485,9 @@ bool Test2()
 	r = mod->AddScriptSection("script", script, sizeof(script) - 1); assert(r >= 0);
 	r = mod->Build(); 
 	if( r < 0 )
-		fail = true;
+	{
+		TEST_FAILED;
+	}
 	else
 	{
 		int func_id = mod->GetFunctionIdByDecl("void main()"); assert(func_id >= 0);
@@ -501,7 +503,7 @@ bool Test2()
 	r = ExecuteString(engine, "complex c; simple s = simple(c);");
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -597,10 +599,10 @@ bool Test3()
 	mod->AddScriptSection("script", script);
 	int r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "OnLoad()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();	
 

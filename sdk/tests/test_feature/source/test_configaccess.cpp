@@ -38,7 +38,7 @@ bool Test()
 	// Make sure the default access is granted
 	r = ExecuteString(engine, "val = 1.3f"); 
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	// Make sure the default access can be turned off
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -46,12 +46,12 @@ bool Test()
 
 	r = ExecuteString(engine, "val = 1.0f");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'val' is not declared\n"
 /*		               "ExecuteString (1, 5) : Error   : Reference is read-only\n"
 		               "ExecuteString (1, 5) : Error   : Not a valid lvalue\n"*/)
-		fail = true;
+		TEST_FAILED;
 
 	// Make sure the default access can be overridden
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -59,7 +59,7 @@ bool Test()
 
 	r = ExecuteString(engine, "val = 1.0f");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 
@@ -78,17 +78,17 @@ bool Test()
 	bout.buffer = "";
 	r = ExecuteString(engine, "Func()");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : No matching signatures to 'Func()'\n" )
-		fail = true;
+		TEST_FAILED;
 
 	r = engine->SetConfigGroupModuleAccess("group", "ExecuteString", true); assert( r >= 0 );
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = ExecuteString(engine, "Func()");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 
@@ -107,10 +107,10 @@ bool Test()
 	bout.buffer = "";
 	r = ExecuteString(engine, "mytype a");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : Type 'mytype' is not available for this module\n")
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 
@@ -133,10 +133,10 @@ bool Test()
 
 	// TODO: It should be possible to disallow individual class methods
 //	if( r >= 0 )
-//		fail = true;
+//		TEST_FAILED;
 
 //	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching operator that takes the types 'mytype&' and 'mytype&' found\n")
-//		fail = true;
+//		TEST_FAILED;
 
 	engine->Release();
 

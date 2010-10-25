@@ -57,10 +57,10 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r != 0 )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	// It must be possible to save the byte code with function handles
 	CBytecodeStream bytecode(__FILE__"1");
@@ -70,7 +70,7 @@ bool Test()
 		mod2->LoadByteCode(&bytecode);
 		r = ExecuteString(engine, "main()", mod2);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	// Test function pointers as members of classes. It should be possible to call the function
@@ -94,12 +94,12 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ExecuteString(engine, "CMyObj o; o.test();", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 	}
@@ -113,12 +113,12 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (2, 1) : Error   : Data type can't be 'functype'\n"
 					   "script (2, 10) : Error   : No default constructor for object of type 'functype'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// It must not be possible to invoke the funcdef
@@ -128,12 +128,12 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (2, 1) : Info    : Compiling void func()\n"
 					   "script (2, 15) : Error   : No matching signatures to 'functype()'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test that a funcdef can't have the same name as other global entities
@@ -143,11 +143,11 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (2, 5) : Error   : Name conflict. 'test' is a funcdef.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Must not be possible to take the address of class methods
@@ -158,12 +158,12 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (2, 3) : Info    : Compiling void t::func()\n"
 	                   "script (2, 18) : Error   : 'func' is not declared\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// A more complex sample
@@ -188,20 +188,20 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	// It must be possible to register the function signature from the application
 	r = engine->RegisterFuncdef("void AppCallback()");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = engine->RegisterGlobalFunction("void ReceiveFuncPtr(AppCallback @)", asFUNCTION(ReceiveFuncPtr), asCALL_CDECL); assert( r >= 0 );
 
@@ -221,19 +221,19 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	if( !receivedFuncPtrIsOK )
-		fail = true;
+		TEST_FAILED;
 
 	mod->SaveByteCode(&bytecode);
 	{
@@ -242,10 +242,10 @@ bool Test()
 		mod2->LoadByteCode(&bytecode);
 		r = ExecuteString(engine, "main()", mod2);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		if( !receivedFuncPtrIsOK )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	//----------------------------------------------------------

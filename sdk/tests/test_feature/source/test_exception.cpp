@@ -46,29 +46,29 @@ bool TestException()
 		if( strcmp(function->GetName(), "ExecuteString") != 0 )
 		{
 			printf("%s: Exception function name is wrong\n", TESTNAME);
-			fail = true;
+			TEST_FAILED;
 		}
 		if( strcmp(function->GetDeclaration(), "void ExecuteString()") != 0 )
 		{
 			printf("%s: Exception function declaration is wrong\n", TESTNAME);
-			fail = true;
+			TEST_FAILED;
 		}
 
 		if( line != 2 )
 		{
 			printf("%s: Exception line number is wrong\n", TESTNAME);
-			fail = true;
+			TEST_FAILED;
 		}
 		if( strcmp(desc, "Divide by zero") != 0 )
 		{
 			printf("%s: Exception string is wrong\n", TESTNAME);
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 	else
 	{
 		printf("%s: Failed to raise exception\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	ctx->Release();
@@ -79,7 +79,7 @@ bool TestException()
 	r = ExecuteString(engine, "A a; a.Test(\"test\");", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// A test to verify behaviour when exception occurs in script class constructor
@@ -107,11 +107,11 @@ bool TestException()
 	"} \n";
 	mod->AddScriptSection("script2", script2);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->GarbageCollect();

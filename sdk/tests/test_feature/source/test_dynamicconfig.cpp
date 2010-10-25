@@ -113,7 +113,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
@@ -131,7 +131,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 3) : Error   : No matching signatures to 'MyFunc()'\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -150,7 +150,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
@@ -168,7 +168,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 3) : Error   : 'global' is not declared\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Try registering the property again
@@ -192,7 +192,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
@@ -210,7 +210,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 10) : Error   : Expected ';'\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -232,7 +232,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
@@ -255,7 +255,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (5, 9) : Error   : No matching operator that takes the types 'string&' and 'mytype&' found\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -283,12 +283,12 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->DiscardModule(0);
@@ -297,9 +297,9 @@ bool Test()
 	int *o = 0;
 	any->Retrieve(&o, engine->GetTypeIdByDecl("mytype@"));
 	if( o == 0 )
-		fail = true;
+		TEST_FAILED;
 	if( --(*o) != 1 )
-		fail = true;
+		TEST_FAILED;
 
 	// The mytype variable is still stored in the any variable so we shouldn't be allowed to remove it's configuration group
 	r = engine->RemoveConfigGroup("group1"); assert( r < 0 );
@@ -327,7 +327,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
@@ -353,7 +353,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
@@ -370,7 +370,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (3, 3) : Error   : Identifier 'mytype' is not a data type\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -389,7 +389,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
@@ -408,7 +408,7 @@ bool Test()
 								 "TestDynamicConfig (1, 1) : Info    : Compiling void Test(int&in)\n"
 		                         "TestDynamicConfig (1, 11) : Error   : Identifier 'mytype' is not a data type\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -428,7 +428,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RemoveConfigGroup("group1"); assert( r == asCONFIG_GROUP_IS_IN_USE );
@@ -446,7 +446,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 11) : Error   : Expected expression value\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -471,12 +471,12 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->DiscardModule(0);
@@ -485,7 +485,9 @@ bool Test()
 	CScriptArray *array = 0;
 	any->Retrieve(&array, engine->GetTypeIdByDecl("mytype[]@"));
 	if( array == 0 )
-		fail = true;
+	{
+		TEST_FAILED;
+	}
 	else
 		array->Release();
 
@@ -626,20 +628,20 @@ bool Test2()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->DiscardModule(0);
 	r = engine->RemoveConfigGroup("MyGroup");
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Now do everything again
@@ -653,13 +655,13 @@ bool Test2()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

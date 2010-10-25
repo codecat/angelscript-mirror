@@ -88,7 +88,7 @@ bool Test()
 
 	if( failed )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: failed\n", TESTNAME);
 	}
 	

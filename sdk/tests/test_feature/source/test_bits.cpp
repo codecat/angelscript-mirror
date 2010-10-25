@@ -85,19 +85,19 @@ bool Test()
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	r = ExecuteString(engine, "uint8 newmask = 0xFF, mask = 0x15; Assert( (newmask & ~mask) == 0xEA );");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	r = ExecuteString(engine, "uint8 newmask = 0xFF; newmask = newmask & (~mask2) & (~mask3) & (~mask5); Assert( newmask == 0xD3 );", mod);
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	r = ExecuteString(engine, "uint8 newmask = 0XFE; Assert( (newmask & mask0) == 0 );", mod);
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	r = ExecuteString(engine, "uint8 b = 0xFF; b &= ~mask4; BitsTest(b);", mod);
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 
 	engine->RegisterGlobalFunction("uint8 ReturnByte(uint8)", asFUNCTION(ReturnByte), asCALL_GENERIC);
@@ -107,24 +107,24 @@ bool Test()
 	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 	r = mod->Build();
 	if( r < 0 ) 
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	// bitwise operators should maintain signed/unsigned type of left hand operand
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "int a = 0, b = 0; bool c = (a < (b>>1));");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "uint a = 0, b = 0; bool c = (a < (b>>1));");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	
 	engine->Release();
@@ -163,7 +163,7 @@ bool Test2()
 	int r = ExecuteString(engine, script);
 	if( r != asEXECUTION_FINISHED ) 
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

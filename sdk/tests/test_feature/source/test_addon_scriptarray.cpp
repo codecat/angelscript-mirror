@@ -185,7 +185,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -197,7 +197,7 @@ bool Test()
 			PrintException(ctx);
 
 		printf("%s: Failed to execute script\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 
@@ -206,7 +206,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -214,7 +214,7 @@ bool Test()
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		printf("%s: No exception\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Must be possible to declare array of arrays
@@ -223,7 +223,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -232,7 +232,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failure\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( r == asEXECUTION_EXCEPTION )
 	{
@@ -247,7 +247,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 	ctx = engine->CreateContext();
@@ -255,7 +255,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: Failure\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( r == asEXECUTION_EXCEPTION )
 	{
@@ -268,10 +268,10 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	ctx = engine->CreateContext();
 	r = ExecuteString(engine, "TestArrayInitList()", mod, ctx);
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( r == asEXECUTION_EXCEPTION )
 		PrintException(ctx);
 
@@ -281,13 +281,13 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
 	r = mod->Build();
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "Test_Addon_ScriptArray (1, 1) : Info    : Compiling void Test()\n"
 	                   "Test_Addon_ScriptArray (3, 20) : Error   : Initialization lists cannot be used with 'array<int>@'\n"
 	                   "Test_Addon_ScriptArray (4, 21) : Error   : Initialization lists cannot be used with 'int'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Array object must call default constructor of the script classes
@@ -296,10 +296,10 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
 	r = mod->Build();
 	if( r < 0 ) 
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 		
 	// Test bool[] on Mac OS X with PPC CPU
 	// Submitted by Edward Rudd
@@ -316,22 +316,22 @@ bool Test()
 	
 	r = ExecuteString(engine, script8, mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	// Make sure it is possible to do multiple assignments with the array type
 	r = ExecuteString(engine, "array<int> a, b, c; a = b = c;");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	// Must support syntax as: array<array<int>>, i.e. without white space between the closing angled brackets.
 	r = ExecuteString(engine, "array<array<int>> a(2); Assert( a.length() == 2 );");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	// Must support arrays of handles
 	r = ExecuteString(engine, "array<array<int>@> a(1); @a[0] = @array<int>(4);");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	// Do not allow the instantiation of a template with a subtype that cannot be created
 	bout.buffer = "";
@@ -339,11 +339,11 @@ bool Test()
 	engine->RegisterObjectType("single", 0, asOBJ_REF | asOBJ_NOHANDLE);
 	r = ExecuteString(engine, "array<single> a;");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'single'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -357,21 +357,21 @@ bool Test()
 		r = ExecuteString(engine, "array<int> a; a.resize(0xFFFFFFFF);", 0, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		else if( strcmp(ctx->GetExceptionString(), "Too large array size") != 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "array<int> a(0xFFFFFFFF);", 0, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		else if( strcmp(ctx->GetExceptionString(), "Too large array size") != 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		ctx->Release();
@@ -394,7 +394,7 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("MyTest"));
 		obj->Release();
@@ -429,11 +429,11 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -480,7 +480,7 @@ bool Test()
 
 			r = ExecuteString(engine, "array<string@>@ arr = CreateArrayOfStrings()");
 			if( r != asEXECUTION_FINISHED )
-				fail = true;
+				TEST_FAILED;
 		 
 			// Release engine
 			engine->Release();
@@ -503,7 +503,7 @@ bool Test()
 								  "assert( arr[0] == 'test' );\n"
 								  "assert( arr[3] == '4' );\n");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -544,13 +544,13 @@ bool Test2()
 	int r = module->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, exec, module);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

@@ -40,42 +40,44 @@ bool Test()
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED ) 
-		fail = true;
+	{
+		TEST_FAILED;
+	}
 	else
 	{
 		if( (floatArray->GetArrayTypeId() & asTYPEID_MASK_OBJECT) != asTYPEID_TEMPLATE )
-			fail = true;
+			TEST_FAILED;
 
 		if( floatArray->GetArrayTypeId() != engine->GetTypeIdByDecl("float[]") )
-			fail = true;
+			TEST_FAILED;
 
 		if( floatArray->GetElementTypeId() != engine->GetTypeIdByDecl("float") )
-			fail = true;
+			TEST_FAILED;
 
 		if( floatArray->GetSize() != 2 )
-			fail = true;
+			TEST_FAILED;
 
 		if( *(float*)floatArray->At(0) != 1.1f )
-			fail = true;
+			TEST_FAILED;
 
 		if( *(float*)floatArray->At(1) != 1.2f )
-			fail = true;
+			TEST_FAILED;
 
 		if( stringArray->GetArrayTypeId() != engine->GetTypeIdByDecl("string[]") )
-			fail = true;
+			TEST_FAILED;
 
 		if( stringArray->GetElementTypeId() != engine->GetTypeIdByDecl("string") )
-			fail = true;
+			TEST_FAILED;
 
 		if( stringArray->GetSize() != 1 )
-			fail = true;
+			TEST_FAILED;
 
 		if( ((CScriptString*)stringArray->At(0))->buffer != "test" )
-			fail = true;
+			TEST_FAILED;
 
 		stringArray->Resize(2);
 	}

@@ -229,16 +229,16 @@ bool Test()
 	mod->AddScriptSection("decl", declarations, strlen(declarations));
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	r = ExecuteString(engine, "MyTest()", mod);
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	
 	// TEST 2
 	mod->AddScriptSection("script", script2, strlen(script2));
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	int idx = engine->GetModule(0)->GetGlobalVarIndexByName("gFlag");
 	bool *flag = (bool*)engine->GetModule(0)->GetAddressOfGlobalVar(idx);
@@ -246,7 +246,7 @@ bool Test()
 
 	ExecuteString(engine, "Set()", mod);
 	if( *flag != true )
-		fail = true;
+		TEST_FAILED;
 	ExecuteString(engine, "Assert(gFlag == true)", mod);
 
 	ExecuteString(engine, "gFlag = false; DoNothing()", mod);
@@ -266,28 +266,28 @@ bool Test()
 	engine->RegisterObjectMethod("tst", "bool test_f(uint)", asMETHOD(tst, test_f), asCALL_THISCALL);
 	
 	r = ExecuteString(engine, "tst t; if( t.test_f(2000) == true ) Assert(false);");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	
 	r = ExecuteString(engine, "tst t; if( !(t.test_f(2000) == false) ) Assert(false);");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	
 //	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 0);
 	r = ExecuteString(engine, "tst t; if( t.test_f(2000) ) Assert(false);");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 		
 	engine->RegisterGlobalFunction("bool test_t()", asFUNCTION(test_t), asCALL_CDECL);
 	r = ExecuteString(engine, "Assert( test_t() );");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 		
 	// TEST 4
 	// Return a false value as out parameter. The value must be properly interpreted, even with trash in upper bytes
 	engine->RegisterGlobalFunction("void GiveFalse(bool &out)", asFUNCTION(GiveFalse), asCALL_CDECL);
 	r = ExecuteString(engine, "bool f; GiveFalse(f); Assert( !f );");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	r = ExecuteString(engine, "bool f; GiveFalse(f); if( f ) Assert(false);");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	r = ExecuteString(engine, "bool f, f2 = false; GiveFalse(f); Assert( !(f || f2) );");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	// TEST 5
 	// The same test with global variable
@@ -296,11 +296,11 @@ bool Test()
 		falseValue = 0x00FFFF00;
 	engine->RegisterGlobalProperty("bool falseValue", &falseValue);
 	r = ExecuteString(engine, "Assert( !falseValue );");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	r = ExecuteString(engine, "if( falseValue ) Assert(false);");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	r = ExecuteString(engine, "bool f2 = false; Assert( !(falseValue || f2) );");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	// TEST 6
 	// Test to make sure bools can be passed to member functions properly
@@ -309,19 +309,19 @@ bool Test()
 	engine->RegisterObjectMethod("BoolTester", "void TestFalse(bool)", asMETHOD(TestBoolClass, TestFalse), asCALL_THISCALL);	
 	TestBoolClass testBool;
 	r = engine->RegisterGlobalProperty("BoolTester TestBoolClass", &testBool );
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	mod->AddScriptSection("script", script3, strlen(script3));
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	else
 	{
 		r = ExecuteString(engine, "TestBoolToMember();", mod);
-		if( r != asEXECUTION_FINISHED ) fail = true;
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
-		if( testBool.m_fail ) fail = true;
+		if( testBool.m_fail ) TEST_FAILED;
 	}
 
 	// TEST 7
@@ -329,14 +329,16 @@ bool Test()
 	mod->AddScriptSection("script", script4, strlen(script4));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+	{
+		TEST_FAILED;
+	}
 	else
 	{
 		r = ExecuteString(engine, "test();", mod);
-		if( r != asEXECUTION_FINISHED ) fail = true;
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 		if( buf != "false\ntrue\nfalse\n" )
-			fail = true;
+			TEST_FAILED;
 	}
 
 
@@ -351,7 +353,7 @@ bool Test()
 	mod->AddScriptSection("script", script5, strlen(script5));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

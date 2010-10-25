@@ -82,13 +82,13 @@ bool Test()
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = ExecuteString(engine, "TestFunc(\"1\", \"2\", 1.0f, \"3\")");
-	if( r != 0 ) fail = true;
+	if( r != 0 ) TEST_FAILED;
 
 	r = ExecuteString(engine, "Assert(TestFunc2() == \"Test\")");
-	if( r != 0 ) fail = true;
+	if( r != 0 ) TEST_FAILED;
 
 	r = ExecuteString(engine, "object obj(\"1\", \"2\", 1.0f, \"3\")");
-	if( r != 0 ) fail = true;
+	if( r != 0 ) TEST_FAILED;
 
 	// Test autohandle for the return value of a class method
 	r = engine->RegisterObjectType("A", 0, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
@@ -100,7 +100,7 @@ bool Test()
 	r = ExecuteString(engine, "string @s = a.getString()");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

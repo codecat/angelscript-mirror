@@ -261,7 +261,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -275,7 +275,7 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 		
-		fail = true;
+		TEST_FAILED;
 	}
 	
 	if( ctx ) ctx->Release();
@@ -287,12 +287,12 @@ bool Test()
 	r = ExecuteString(engine, "char[] t; t[0][0] = 1;");
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "ExecuteString (1, 15) : Error   : Type 'int&' doesn't support the indexing operator\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	
 

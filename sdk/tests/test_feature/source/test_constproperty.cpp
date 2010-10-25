@@ -93,7 +93,7 @@ bool Test()
 	if( !out.buffer.empty() )
 	{
 		printf("%s: Failed to pass argument as 'const type &in'\n%s", TESTNAME, out.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -127,7 +127,7 @@ bool Test()
 		              "TestConstProperty (5, 11) : Error   : Reference is read-only\n" )
 	{
 		printf("%s: Failed to detect all properties as constant\n%s", TESTNAME, out.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

@@ -119,12 +119,12 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( TestModule(0, engine) )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Must make sure that the inheritance path is stored/restored with the saved byte code
@@ -133,20 +133,20 @@ bool Test()
 		r = mod->SaveByteCode(&stream);
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
 		r = mod2->LoadByteCode(&stream);
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// Both modules should have the same number of functions
 		if( mod->GetFunctionCount() != mod2->GetFunctionCount() )
 		{
-			fail = true;
+			TEST_FAILED;
 
 			asUINT n;
 			printf("First module's functions\n");
@@ -165,7 +165,7 @@ bool Test()
 
 		if( TestModule("2", engine) )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->DiscardModule("2");
@@ -199,7 +199,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	ctx->Release();
 	obj->Release();
@@ -208,7 +208,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	r = ExecuteString(engine, "Derived d; Base @b = @d; assert( b !is null );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test that cast from base to derived require explicit cast
@@ -217,11 +217,11 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	r = ExecuteString(engine, "Base b; Derived @d = @b;", mod);
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "ExecuteString (1, 22) : Error   : Can't implicitly convert from 'Base@const&' to 'Derived@&'.\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -230,7 +230,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	r = ExecuteString(engine, "Derived d; Base @b = @d; assert( cast<Derived>(b) !is null );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test the explicit cast behaviour for a non-handle script object
@@ -244,7 +244,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	r = ExecuteString(engine, "Derived d; Base b = d;", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test that it is possible to pass a derived class to a function expecting a reference to the base class
@@ -255,14 +255,14 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	r = ExecuteString(engine, "Derived d; foo(d);", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test polymorphing
 	r = ExecuteString(engine, "Derived d; Base @b = @d; b.a = 3; b.f2(); assert( b.a == 2 );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Base class' destructor must be called when object is destroyed
@@ -271,7 +271,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 		                              "assert( baseDestructorCalled );\n", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// If the base class is garbage collected, then the derived class must also be garbage collected
@@ -280,7 +280,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	r = ExecuteString(engine, "DerivedGC b; @b.b = @b;", mod);
 	if( r != asEXECUTION_FINISHED ) 
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	asUINT gcSize;
@@ -294,7 +294,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	r = ExecuteString(engine, "Intf @a; Derived b; @a = @b;", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test that an implemented constructor calls the base class' default constructor
@@ -303,7 +303,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 									  "assert( derivedConstructorCalled ); \n", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test that the default constructor calls the base class' default constructor
@@ -311,7 +311,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 		                              "assert( baseConstructorCalled ); \n", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test that it is possible to manually call the base class' constructor
@@ -322,38 +322,44 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 									  "assert( !baseConstructorCalled ); \n", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test that it is possible to determine base class from object type interface
 	asIObjectType *d = engine->GetObjectTypeById(mod->GetTypeIdByDecl("Derived"));
 	if( d == 0 )
-		fail = true;
+	{
+		TEST_FAILED;
+	}
 	else if( d->GetBaseType() == 0 )
-		fail = true;
+	{
+		TEST_FAILED;
+	}
 	else if( strcmp(d->GetBaseType()->GetName(), "Base") != 0 )
-		fail = true;
+	{
+		TEST_FAILED;
+	}
 
 	// Test factory id
 	if( d->GetFactoryCount() != 2 )
-		fail = true;
+		TEST_FAILED;
 	int fid = d->GetFactoryIdByDecl("Derived@ Derived(int)");
 	if( fid < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( fid != d->GetFactoryIdByIndex(1) )
-		fail = true;
+		TEST_FAILED;
 
 	// Test various levels of inheritance
 	printResult = "";
 	r = ExecuteString(engine, "C3 c; c.Call();", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( printResult != "C2:Fun" )
 	{
 		printf("%s\n", printResult.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// TODO: not related to inheritance, but it should be possible to call another constructor from within a constructor. 
@@ -384,7 +390,7 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 11) : Error   : Can't inherit from 'string'\n" )
 	{
 		fail = true;

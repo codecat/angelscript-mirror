@@ -82,7 +82,7 @@ bool Test()
 	if( number != 1234567890 )
 	{
 		printf("%s: Failed to set the number as expected\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test 2
@@ -114,7 +114,7 @@ bool Test()
 		mod->AddScriptSection("4", script);
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	engine->Release();
