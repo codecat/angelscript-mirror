@@ -317,4 +317,31 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	return 0;
 }
 
+void PrintException(asIScriptContext *ctx, bool printStack)
+{
+	if( ctx->GetState() != asEXECUTION_EXCEPTION ) return;
+
+	asIScriptEngine *engine = ctx->GetEngine();
+	int funcId = ctx->GetExceptionFunction();
+	const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
+	printf("func: %s\n", function->GetDeclaration());
+	printf("modl: %s\n", function->GetModuleName());
+	printf("sect: %s\n", function->GetScriptSectionName());
+	printf("line: %d\n", ctx->GetExceptionLineNumber());
+	printf("desc: %s\n", ctx->GetExceptionString());
+
+	if( printStack )
+	{
+		printf("--- call stack ---\n");
+		for( int n = 0; n < ctx->GetCallstackSize(); n++ )
+		{
+			funcId = ctx->GetCallstackFunction(n);
+			function = engine->GetFunctionDescriptorById(funcId);
+			printf("%s (%d): %s\n", function->GetScriptSectionName(),
+			                        ctx->GetCallstackLineNumber(n),
+								    function->GetDeclaration());
+		}
+	}
+}
+
 END_AS_NAMESPACE

@@ -20,6 +20,9 @@ int ExecuteString(asIScriptEngine *engine, const char *code, asIScriptModule *mo
 // The format is compatible with the offline compiler in /sdk/samples/asbuild/.
 int WriteConfigToFile(asIScriptEngine *engine, const char *filename);
 
+// Print details of the script exception to the standard output
+void PrintException(asIScriptContext *ctx, bool printStack = false);
+
 END_AS_NAMESPACE
 
 #endif

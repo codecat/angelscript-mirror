@@ -156,7 +156,6 @@ protected:
 };
 #endif
 
-void PrintException(asIScriptContext *ctx);
 void Assert(asIScriptGeneric *gen);
 
 void InstallMemoryManager();

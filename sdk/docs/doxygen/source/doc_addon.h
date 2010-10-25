@@ -1116,6 +1116,13 @@ int ExecuteString(asIScriptEngine *engine, const char *code, asIScriptModule *mo
 // application interface has been fully registered. This way you will not have to create the configuration
 // file manually.
 int WriteConfigToFile(asIScriptEngine *engine, const char *filename);
+
+// Print information on script exception to the standard output.
+// Whenever the asIScriptContext::Execute method returns asEXECUTION_EXCEPTION, the application 
+// can call this function to print some more information about that exception onto the standard
+// output. The information obtained includes the current function, the script source section, 
+// program position in the source section, and the exception description itself.
+void PrintException(asIScriptContext *ctx, bool printStack = false);
 \endcode
 
 \section doc_addon_helpers_2 Example

@@ -8,17 +8,7 @@
 using namespace std;
 
 
-void PrintException(asIScriptContext *ctx)
-{
-	asIScriptEngine *engine = ctx->GetEngine();
-	int funcId = ctx->GetExceptionFunction();
-	const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
-	printf("func: %s\n", function->GetDeclaration());
-	printf("modl: %s\n", function->GetModuleName());
-	printf("sect: %s\n", function->GetScriptSectionName());
-	printf("line: %d\n", ctx->GetExceptionLineNumber());
-	printf("desc: %s\n", ctx->GetExceptionString());
-}
+
 
 void Assert(asIScriptGeneric *gen)
 {
