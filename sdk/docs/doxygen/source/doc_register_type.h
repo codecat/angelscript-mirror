@@ -318,6 +318,35 @@ These methods should be registered with \ref doc_register_func "RegisterObjectMe
 useful when the offset of the property cannot be determined, or if the type of the property is 
 not registered in the script and some translation must occur, i.e. from <tt>char*</tt> to <tt>string</tt>.
 
+If the application class contains a C++ array as a member, it may be advantageous to expose the array
+through \ref doc_script_class_prop "indexed property accessors" rather than attempting to matching the
+C++ array type to a registered type in AngelScript. To do this you can create a couple of simple proxy functions
+that will translate to the array access.
+
+\code
+struct MyStruct
+{
+  int array[16];
+};
+
+// Write a couple of proxy 
+int MyStruct_get_array(unsigned int idx, MyStruct *o)
+{
+  if( idx >= 16 ) return 0;
+  return o->array[idx];
+}
+
+void MyStruct_set_array(unsigned int idx, int value, MyStruct *o)
+{
+  if( idx >= 16 ) return;
+  o->array[idx] = value;
+}
+
+// Register the proxy functions as member methods
+r = engine->RegisterObjectMethod("mytype", "int get_array(uint)", asFUNCTION(MyStruct_get_array), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+r = engine->RegisterObjectMethod("mytype", "void set_array(uint, int)", asFUNCTION(MyStruct_set_array), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+\endcode
+
 
 
 

@@ -69,6 +69,47 @@ e.g. the increment operator must be rewritten as follows:
   a = a + 1;
 </pre>
 
+Property accessors can be used to emulate a single property or an array of properties accessed through the index 
+operator. Property accessors for indexed access work the same way as ordinary property accessors, except that they
+take an index argument. The get accessor should take the index argument as the only argument, and the set accessor
+should take the index argument as the first argument, and the new value as the second argument.
+
+<pre>
+  string firstString;
+  string secondString;
+
+  // A global indexed get accessor
+  string get_stringArray(int idx)
+  {
+    switch( idx )
+    {
+    case 0: return firstString;
+    case 1: return secondString;
+    }
+    return "";
+  }
+
+  // A global indexed set accessor
+  void set_stringArray(int idx, const string &in value)
+  {
+    switch( idx )
+    {
+    case 0: firstString = value; break;
+    case 1: secondString = value; break;
+    }
+  }
+
+  void main()
+  {
+    // Setting the value of the indexed properties
+    stringArray[0] = "Hello";
+    stringArray[1] = "World";
+
+    // Reading the value of the indexed properties
+    print(StringArray[0] + " " + stringArray[1] + "\n");
+  }
+</pre>
+
 The application can optionally turn off support for property accessors, so you need to verify your application's
 manual to determine if this is supported for your application or not.
 

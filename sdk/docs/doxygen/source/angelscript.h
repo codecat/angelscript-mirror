@@ -2008,6 +2008,9 @@ public:
     //! 
     //! Note that if the script freezes, e.g. if trapped in a never ending loop, you may call 
     //! \ref Abort from another thread to stop execution.
+    //!
+    //! If the function returns asEXECUTION_EXCEPTION, use the \ref GetExceptionString, \ref GetExceptionFunction, 
+    //! and \ref GetExceptionLineNumber to obtain more information on the exception and where it occurred.
     //! 
     //! \see \ref doc_call_script_func
 	virtual int             Execute() = 0;
