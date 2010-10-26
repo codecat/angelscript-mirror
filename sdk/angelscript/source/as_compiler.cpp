@@ -5611,7 +5611,18 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			asSExprContext access(engine);
 			access.type.Set(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly));
 			access.type.dataType.MakeReference(true);
-			int r = FindPropertyAccessor(name, &access, errNode);
+			int r = 0;
+			if( errNode->next && errNode->next->tokenType == ttOpenBracket )
+			{
+				// This is an index access, check if there is a property accessor that takes an index arg
+				asSExprContext dummyArg(engine);
+				r = FindPropertyAccessor(name, &access, &dummyArg, errNode);
+			}
+			if( r == 0 )
+			{
+				// Normal property access
+				r = FindPropertyAccessor(name, &access, errNode);
+			}
 			if( r < 0 ) return -1;
 			if( access.property_get || access.property_set )
 			{
@@ -5674,7 +5685,18 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	{
 		// See if there are any matching global property accessors
 		asSExprContext access(engine);
-		int r = FindPropertyAccessor(name, &access, errNode);
+		int r = 0;
+		if( errNode->next && errNode->next->tokenType == ttOpenBracket )
+		{
+			// This is an index access, check if there is a property accessor that takes an index arg
+			asSExprContext dummyArg(engine);
+			r = FindPropertyAccessor(name, &access, &dummyArg, errNode);
+		}
+		if( r == 0 )
+		{
+			// Normal property access
+			r = FindPropertyAccessor(name, &access, errNode);
+		}
 		if( r < 0 ) return -1;
 		if( access.property_get || access.property_set )
 		{
@@ -7316,7 +7338,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
-			// TODO: The type of the parameter should match the argument
+			// TODO: The type of the parameter should match the argument (unless the arg is a dummy)
 			if( f->name == getName && f->parameterTypes.GetLength() == (arg?1:0) )
 			{
 				if( getId == 0 )
@@ -7346,8 +7368,6 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 	}
 	else
 	{
-		asASSERT(arg == 0);
-
 		// Look for appropriate global functions. 
 		asCArray<int> funcs;
 		asUINT n;
@@ -7355,7 +7375,8 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = engine->scriptFunctions[funcs[n]];
-			if( f->parameterTypes.GetLength() == 0 )
+			// TODO: The type of the parameter should match the argument (unless the arg is a dummy)
+			if( f->parameterTypes.GetLength() == (arg?1:0) )
 			{
 				if( getId == 0 )
 					getId = funcs[n];
@@ -7375,7 +7396,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		{
 			asCScriptFunction *f = engine->scriptFunctions[funcs[n]];
 			// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
-			if( f->parameterTypes.GetLength() == 1 )
+			if( f->parameterTypes.GetLength() == (arg?2:1) )
 			{
 				if( setId == 0 )
 					setId = funcs[n];
@@ -7854,7 +7875,15 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			// We need to look for get/set property accessors.
 			// If found, the context stores information on the get/set accessors
 			// until it is known which is to be used.
-			int r = FindPropertyAccessor(name, ctx, node);
+			int r = 0;
+			if( node->next && node->next->tokenType == ttOpenBracket )
+			{
+				// The property accessor should take an index arg
+				asSExprContext dummyArg(engine);
+				r = FindPropertyAccessor(name, ctx, &dummyArg, node);
+			}
+			if( r == 0 )
+				r = FindPropertyAccessor(name, ctx, node);
 			if( r != 0 )
 				return r;
 			
@@ -7981,15 +8010,46 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	}
 	else if( op == ttOpenBracket )
 	{
-		if( !ctx->type.dataType.IsObject() )
+		// If the property access takes an index arg, then we should use that instead of processing it now
+		asCString propertyName;
+		if( (ctx->property_get && engine->scriptFunctions[ctx->property_get]->GetParamCount() == 1) ||
+			(ctx->property_set && engine->scriptFunctions[ctx->property_get]->GetParamCount() == 2) )
 		{
-			asCString str;
-			str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), node);
-			return -1;
-		}
+			// Determine the name of the property accessor
+			asCScriptFunction *func = 0;
+			if( ctx->property_get )
+				func = engine->scriptFunctions[ctx->property_get];
+			else
+				func = engine->scriptFunctions[ctx->property_get];
+			propertyName = func->GetName();
+			propertyName = propertyName.SubString(4);
 
-		ProcessPropertyGetAccessor(ctx, node);
+			// Set the original type of the expression so we can re-evaluate the property accessor
+			if( func->objectType )
+			{
+				ctx->type.dataType = asCDataType::CreateObject(func->objectType, ctx->property_const);
+				if( ctx->property_handle ) ctx->type.dataType.MakeHandle(true);
+				if( ctx->property_ref )	ctx->type.dataType.MakeReference(true);
+			}
+			ctx->property_get = ctx->property_set = 0;
+			if( ctx->property_arg )
+			{
+				asDELETE(ctx->property_arg, asSExprContext);
+				ctx->property_arg = 0;
+			}
+		}
+		else
+		{
+			if( !ctx->type.dataType.IsObject() )
+			{
+				asCString str;
+				str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
+				Error(str.AddressOf(), node);
+				return -1;
+			}
+
+			ProcessPropertyGetAccessor(ctx, node);
+		}
 
 		Dereference(ctx, true);
 #ifdef AS_DEPRECATED
@@ -8004,12 +8064,14 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		// Check for the existence of the opIndex method
 		asSExprContext lctx(engine);
 		MergeExprBytecodeAndType(&lctx, ctx);
-		int r = CompileOverloadedDualOperator2(node, "opIndex", &lctx, &expr, ctx);
+		int r = 0; 
+		if( propertyName == "" )
+			r = CompileOverloadedDualOperator2(node, "opIndex", &lctx, &expr, ctx);
 		if( r == 0 )
 		{	
 #ifndef AS_DEPRECATED
 			// Check for accessors methods for the opIndex
-			r = FindPropertyAccessor("opIndex", &lctx, &expr, node);
+			r = FindPropertyAccessor(propertyName == "" ? "opIndex" : propertyName.AddressOf(), &lctx, &expr, node);
 			if( r == 0 )
 			{
 				asCString str;

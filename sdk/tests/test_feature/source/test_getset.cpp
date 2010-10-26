@@ -1019,6 +1019,85 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test global property accessors with index argument
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+		RegisterScriptString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"  int get_arr(int i) { arr.resize(5); return arr[i]; } \n"
+			"  void set_arr(int i, int v) { arr.resize(5); arr[i] = v; } \n"
+			"  array<int> arr; \n"
+			"void main() \n"
+			"{ \n"
+			"  arr[0] = 42; \n"
+			"  assert( arr[0] == 42 ); \n"
+			"  arr[1] = 24; \n"
+			"  assert( arr[1] == 24 ); \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test member property accessors with index argument
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+		RegisterScriptString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"class CTest \n"
+			"{ \n"
+			"  CTest() { arr.resize(5); } \n"
+			"  int get_arr(int i) { return arr[i]; } \n"
+			"  void set_arr(int i, int v) { arr[i] = v; } \n"
+			"  private array<int> arr; \n"
+			"  void test() \n"
+			"  { \n"
+			"    arr[0] = 42; \n"
+			"    assert( arr[0] == 42 ); \n"
+			"    arr[1] = 24; \n"
+			"    assert( arr[1] == 24 ); \n"
+			"  } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  CTest s; \n"
+			"  s.arr[0] = 42; \n"
+			"  assert( s.arr[0] == 42 ); \n"
+			"  s.arr[1] = 24; \n"
+			"  assert( s.arr[1] == 24 ); \n"
+			"  s.test(); \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	fail = Test2() || fail;
 
 	// Success
