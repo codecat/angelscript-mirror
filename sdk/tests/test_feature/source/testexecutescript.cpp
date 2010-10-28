@@ -111,10 +111,9 @@ static bool ExecuteScript()
 		// In this case we can call Execute again to continue
 		// execution where it last stopped.
 
-		int funcID = ctx->GetCurrentFunction();
-		const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcID);
+		const asIScriptFunction *func = ctx->GetFunction();
 		printf("func : %s\n", func->GetName());
-		printf("line : %d\n", ctx->GetCurrentLineNumber());
+		printf("line : %d\n", ctx->GetLineNumber());
 	}
 	else if( r == asEXECUTION_ABORTED )
 	{

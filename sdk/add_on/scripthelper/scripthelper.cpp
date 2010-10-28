@@ -333,12 +333,11 @@ void PrintException(asIScriptContext *ctx, bool printStack)
 	if( printStack )
 	{
 		printf("--- call stack ---\n");
-		for( int n = 0; n < ctx->GetCallstackSize(); n++ )
+		for( asUINT n = 1; n < ctx->GetCallstackSize(); n++ )
 		{
-			funcId = ctx->GetCallstackFunction(n);
-			function = engine->GetFunctionDescriptorById(funcId);
+			function = ctx->GetFunction(n);
 			printf("%s (%d): %s\n", function->GetScriptSectionName(),
-			                        ctx->GetCallstackLineNumber(n),
+			                        ctx->GetLineNumber(n),
 								    function->GetDeclaration());
 		}
 	}

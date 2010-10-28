@@ -1974,7 +1974,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 
 	ProcessPropertyGetAccessor(&expr, snode);
 
-	// TODO: Need to support 64bit
+	// TODO: Need to support 64bit integers
 	// Convert the expression to a 32bit variable
 	asCDataType to;
 	if( expr.type.dataType.IsIntegerType() || expr.type.dataType.IsEnumType() )

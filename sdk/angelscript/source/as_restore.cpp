@@ -202,8 +202,6 @@ int asCRestore::Save()
 	// usedObjectProperties[]
 	WriteUsedObjectProps();
 
-	// TODO: Store script section names
-
 	return asSUCCESS;
 }
 

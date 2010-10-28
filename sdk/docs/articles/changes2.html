@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.20.0 WIP - 2010/10/25</h2>
+<h2>Version 2.20.0 WIP - 2010/10/27</h2>
 
 <ul>
 <li>Bug fixes
@@ -49,6 +49,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added GetProperty and GetPropertyDeclaration to asIObjectType
 <li>Deprecated GetPropertyName, GetPropertyTypeId, IsPropertyPrivate, and GetPropertyOffset in asIObjectType
 <li>Added ability to set callback functions for cleaning up the user data when the objects are destroyed
+<li>Deprecated GetCurrentFunction and GetCurrentLineNumber from asIScriptContext
+<li>Removed GetCallStackFunction and GetCallStackLineNumber from asIScriptContext
+<li>Added GetFunction and GetLineNumber to asIScriptContext
+<li>Changed index parameter for the methods GetVarXXX, GetAddressOfVar, GetThisXXX in asIScriptContext so the current function is on 0
 </ul>
 <li>Script language
 <ul>

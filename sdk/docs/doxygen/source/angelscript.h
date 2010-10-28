@@ -2251,60 +2251,48 @@ public:
     //! \ref asCALL_THISCALL, \ref asCALL_CDECL_OBJLAST, or \ref asCALL_CDECL_OBJFIRST.
     //!
     //! \see \ref doc_debug
-	virtual int         SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	virtual int                SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes a previously registered callback.
     //! Removes a previously registered callback.
-	virtual void        ClearLineCallback() = 0;
-	//! \brief Get the current line number that is being executed.
-    //! \param[out] column The variable will receive the column number.
-    //! \param[out] sectionName The variable will receive the name of the script section.
-    //! \return The current line number.
-    //!
-    //! This method returns the line number where the context is currently located. 
-    //! The line number is relative to the script section where the function was implemented.
-	virtual int         GetCurrentLineNumber(int *column = 0, const char **sectionName = 0) = 0;
-	//! \brief Get the current function that is being executed.
-    //! \return The function id of the current function.
-	virtual int         GetCurrentFunction() = 0;
+	virtual void               ClearLineCallback() = 0;
 	//! \brief Returns the size of the callstack, i.e. the number of functions that have yet to complete.
-    //! \return The number of functions on the call stack.
+    //! \return The number of functions on the call stack, including the current function.
     //!
-    //! This methods returns the size of the callstack, i.e. how many parent functions there are 
-    //! above the current functions being called. It can be used to enumerate the callstack in order 
+    //! This methods returns the size of the callstack. It can be used to enumerate the callstack in order 
     //! to generate a detailed report when an exception occurs, or for debugging running scripts.
-	virtual int         GetCallstackSize() = 0;
-	//! \brief Returns the function id at the specified callstack level.
-    //! \param[in] index The index on the call stack.
-    //! \return The function id on the call stack referred to by the index.
-	virtual int         GetCallstackFunction(int index) = 0;
+	virtual asUINT             GetCallstackSize() = 0;
+	//! \brief Returns the function at the specified callstack level.
+	//! \param[in] stackLevel The index on the call stack.
+	//! \return The function descriptor on the call stack referred to by the index.
+	virtual asIScriptFunction *GetFunction(asUINT stackLevel = 0) = 0;
 	//! \brief Returns the line number at the specified callstack level.
-    //! \param[in] index The index on the call stack.
+    //! \param[in] stackLevel The index on the call stack.
     //! \param[out] column The variable will receive the column number.
     //! \param[out] sectionName The variable will receive the name of the script section.
     //! \return The line number for the call stack level referred to by the index.
-	virtual int         GetCallstackLineNumber(int index, int *column = 0, const char **sectionName = 0) = 0;
+	virtual int                GetLineNumber(asUINT stackLevel = 0, int *column = 0, const char **sectionName = 0) = 0;
 	//! \brief Returns the number of local variables at the specified callstack level.
     //! \param[in] stackLevel The index on the call stack.
     //! \return The number of variables in the function on the call stack level.
     //!
     //! Returns the number of declared variables, including the parameters, in the function on the stack.
-	virtual int         GetVarCount(int stackLevel = -1) = 0;
+	virtual int                GetVarCount(asUINT stackLevel = 0) = 0;
 	//! \brief Returns the name of local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
     //! \return A null terminated string with the name of the variable.
-	virtual const char *GetVarName(int varIndex, int stackLevel = -1) = 0;
+	virtual const char        *GetVarName(int varIndex, asUINT stackLevel = 0) = 0;
 	//! \brief Returns the declaration of a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
     //! \return A null terminated string with the declaration of the variable.
-	virtual const char *GetVarDeclaration(int varIndex, int stackLevel = -1) = 0;
+	virtual const char        *GetVarDeclaration(int varIndex, asUINT stackLevel = 0) = 0;
 	//! \brief Returns the type id of a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
     //! \return The type id of the variable, or a negative value on error.
 	//! \retval asINVALID_ARG The index or stack level is invalid.
-	virtual int         GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
+	virtual int                GetVarTypeId(int varIndex, asUINT stackLevel = 0) = 0;
 	//! \brief Returns a pointer to a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
@@ -2315,15 +2303,15 @@ public:
     //!
     //! Note that object variables may not be initalized at all moments, thus you must verify 
     //! if the address returned points to a null pointer, before you try to dereference it.
-	virtual void       *GetAddressOfVar(int varIndex, int stackLevel = -1) = 0;
+	virtual void              *GetAddressOfVar(int varIndex, asUINT stackLevel = 0) = 0;
 	//! \brief Returns the type id of the object, if a class method is being executed.
     //! \param[in] stackLevel The index on the call stack.
     //! \return Returns the type id of the object if it is a class method.
-	virtual int         GetThisTypeId(int stackLevel = -1) = 0;
+	virtual int                GetThisTypeId(asUINT stackLevel = 0) = 0;
 	//! \brief Returns a pointer to the object, if a class method is being executed.
     //! \param[in] stackLevel The index on the call stack.
     //! \return Returns a pointer to the object if it is a class method.
-	virtual void       *GetThisPointer(int stackLevel = -1) = 0;
+	virtual void              *GetThisPointer(asUINT stackLevel = 0) = 0;
 	//! \}
 
 	// User data
@@ -2344,6 +2332,18 @@ public:
 	//! \return The pointer to the user data.
 	virtual void *GetUserData() const = 0;
 	//! \}
+
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.20.0
+	//! \name Deprecated
+	//! \{
+
+	//! \deprecated since 2.20.0. Use \ref asIScriptContext::GetLineNumber instead
+	virtual int         GetCurrentLineNumber(int *column = 0, const char **sectionName = 0) = 0;
+	//! \deprecated since 2.20.0. Use \ref asIScriptContext::GetFunction instead
+	virtual int         GetCurrentFunction() = 0;
+	//! \}
+#endif
 
 protected:
 	virtual ~asIScriptContext() {}

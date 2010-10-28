@@ -109,26 +109,25 @@ void print(const char *format, ...)
 	printBuffer += buf;
 }
 
-void PrintVariables(asIScriptContext *ctx, int stackLevel);
+void PrintVariables(asIScriptContext *ctx, asUINT stackLevel);
 
 void LineCallback(asIScriptContext *ctx, void *param)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
-	int funcID = ctx->GetCurrentFunction();
 	int col;
-	int line = ctx->GetCurrentLineNumber(&col);
+	int line = ctx->GetLineNumber(0, &col);
 	int indent = ctx->GetCallstackSize();
-	for( int n = 0; n < indent; n++ )
+	for( int n = 1; n < indent; n++ )
 		print(" ");
-	const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcID);
+	const asIScriptFunction *function = ctx->GetFunction();
 	print("%s:%s:%d,%d\n", function->GetModuleName(),
 	                    function->GetDeclaration(),
 	                    line, col);
 
-//	PrintVariables(ctx, -1);
+//	PrintVariables(ctx, 0);
 }
 
-void PrintVariables(asIScriptContext *ctx, int stackLevel)
+void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
 
@@ -173,15 +172,14 @@ void ExceptionCallback(asIScriptContext *ctx, void *param)
 	print("line: %d,%d\n", line, col);
 
 	// Print the variables in the current function
-	PrintVariables(ctx, -1);
+	PrintVariables(ctx, 0);
 
 	// Show the call stack with the variables
 	print("--- call stack ---\n");
-	for( int n = 0; n < ctx->GetCallstackSize(); n++ )
+	for( asUINT n = 1; n < ctx->GetCallstackSize(); n++ )
 	{
-		funcID = ctx->GetCallstackFunction(n);
-		const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcID);
-		line = ctx->GetCallstackLineNumber(n,&col);
+		const asIScriptFunction *func = ctx->GetFunction(n);
+		line = ctx->GetLineNumber(n,&col);
 		print("%s:%s:%d,%d\n", func->GetModuleName(),
 		                       func->GetDeclaration(),
 							   line, col);
@@ -260,7 +258,7 @@ void DebugCall()
 	asIScriptContext *ctx = asGetActiveContext();
 
 	// Get the address of the output parameter
-	void *varPointer = ctx->GetAddressOfVar(0, -1);
+	void *varPointer = ctx->GetAddressOfVar(0, 0);
 
 	// We got the address to the reference to the handle
 	CScriptString **str = *(CScriptString***)varPointer;

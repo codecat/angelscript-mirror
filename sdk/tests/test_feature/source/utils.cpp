@@ -23,16 +23,14 @@ void Assert(asIScriptGeneric *gen)
 		asIScriptContext *ctx = asGetActiveContext();
 		if( ctx )
 		{
-			asIScriptEngine *engine = ctx->GetEngine();
-			int funcID = ctx->GetCurrentFunction();
-			const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcID);
+			const asIScriptFunction *function = ctx->GetFunction();
 			if( function != 0 )
 			{
 				printf("func: %s\n", function->GetDeclaration());
 				printf("mdle: %s\n", function->GetModuleName());
 				printf("sect: %s\n", function->GetScriptSectionName());
 			}
-			printf("line: %d\n", ctx->GetCurrentLineNumber());
+			printf("line: %d\n", ctx->GetLineNumber());
 			ctx->SetException("Assert failed");
 			printf("---------------------\n");
 		}

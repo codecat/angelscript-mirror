@@ -2382,9 +2382,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 		{
 			asCScriptFunction *func = GetFunctionDescription(funcs[n]);
 
-			// TODO: Isn't the name guaranteed to be equal, because of GetFunctionDescriptions()?
-			if( name == func->name &&
-				parameterTypes.GetLength() == func->parameterTypes.GetLength() )
+			if( parameterTypes.GetLength() == func->parameterTypes.GetLength() )
 			{
 				bool match = true;
 				for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )

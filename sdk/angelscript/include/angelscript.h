@@ -694,24 +694,28 @@ public:
 	virtual void        ClearExceptionCallback() = 0;
 
 	// Debugging
-	virtual int         SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
-	virtual void        ClearLineCallback() = 0;
-	virtual int         GetCurrentLineNumber(int *column = 0, const char **sectionName = 0) = 0;
-	virtual int         GetCurrentFunction() = 0;
-	virtual int         GetCallstackSize() = 0;
-	virtual int         GetCallstackFunction(int index) = 0;
-	virtual int         GetCallstackLineNumber(int index, int *column = 0, const char **sectionName = 0) = 0;
-	virtual int         GetVarCount(int stackLevel = -1) = 0;
-	virtual const char *GetVarName(int varIndex, int stackLevel = -1) = 0;
-	virtual const char *GetVarDeclaration(int varIndex, int stackLevel = -1) = 0;
-	virtual int         GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
-	virtual void       *GetAddressOfVar(int varIndex, int stackLevel = -1) = 0;
-	virtual int         GetThisTypeId(int stackLevel = -1) = 0;
-	virtual void       *GetThisPointer(int stackLevel = -1) = 0;
+	virtual int                SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	virtual void               ClearLineCallback() = 0;
+	virtual asUINT             GetCallstackSize() = 0;
+	virtual asIScriptFunction *GetFunction(asUINT stackLevel = 0) = 0;
+	virtual int                GetLineNumber(asUINT stackLevel = 0, int *column = 0, const char **sectionName = 0) = 0;
+	virtual int                GetVarCount(asUINT stackLevel = 0) = 0;
+	virtual const char        *GetVarName(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual const char        *GetVarDeclaration(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual int                GetVarTypeId(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual void              *GetAddressOfVar(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual int                GetThisTypeId(asUINT stackLevel = 0) = 0;
+	virtual void              *GetThisPointer(asUINT stackLevel = 0) = 0;
 
 	// User data
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() const = 0;
+
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.20.0
+	virtual int         GetCurrentLineNumber(int *column = 0, const char **sectionName = 0) = 0;
+	virtual int         GetCurrentFunction() = 0;
+#endif
 
 protected:
 	virtual ~asIScriptContext() {}

@@ -1090,34 +1090,44 @@ void asCContext::PopCallState()
 	callStack.SetLength(callStack.GetLength() - CALLSTACK_FRAME_SIZE);
 }
 
-int asCContext::GetCallstackSize()
+// interface
+asUINT asCContext::GetCallstackSize()
 {
-	// TODO: The current function should be accessed at stackLevel 0
-
-	return (int)callStack.GetLength() / CALLSTACK_FRAME_SIZE;
+	// The current function is accessed at stackLevel 0
+	return asUINT(1 + callStack.GetLength() / CALLSTACK_FRAME_SIZE);
 }
 
-int asCContext::GetCallstackFunction(int index)
+// interface
+asIScriptFunction *asCContext::GetFunction(asUINT stackLevel)
 {
-	// TODO: The current function should be accessed at stackLevel 0
+	if( stackLevel >= GetCallstackSize() ) return 0;
 
-	if( index < 0 || index >= GetCallstackSize() ) return asINVALID_ARG;
+	if( stackLevel == 0 ) return currentFunction;
 
-	size_t *s = callStack.AddressOf() + index*CALLSTACK_FRAME_SIZE;
+	size_t *s = callStack.AddressOf() + (stackLevel - 1)*CALLSTACK_FRAME_SIZE;
 	asCScriptFunction *func = (asCScriptFunction*)s[1];
 
-	return func->id;
+	return func;
 }
 
-int asCContext::GetCallstackLineNumber(int index, int *column, const char **sectionName)
+// interface
+int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **sectionName)
 {
-	// TODO: The current function should be accessed at stackLevel 0
+	if( stackLevel >= GetCallstackSize() ) return asINVALID_ARG;
 
-	if( index < 0 || index >= GetCallstackSize() ) return asINVALID_ARG;
-
-	size_t *s = callStack.AddressOf() + index*CALLSTACK_FRAME_SIZE;
-	asCScriptFunction *func = (asCScriptFunction*)s[1];
-	asDWORD *bytePos = (asDWORD*)s[2];
+	asCScriptFunction *func;
+	asDWORD *bytePos;
+	if( stackLevel == 0 )
+	{
+		func = currentFunction;
+		bytePos = regs.programPointer;
+	}
+	else
+	{
+		size_t *s = callStack.AddressOf() + (stackLevel-1)*CALLSTACK_FRAME_SIZE;
+		func = (asCScriptFunction*)s[1];
+		bytePos = (asDWORD*)s[2];
+	}
 
 	asDWORD line = func->GetLineNumber(int(bytePos - func->byteCode.AddressOf()));
 	if( column ) *column = (line >> 20);
@@ -3476,6 +3486,8 @@ int asCContext::GetExceptionFunction()
 	return exceptionFunction;
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2.20.0
 // interface
 int asCContext::GetCurrentFunction()
 {
@@ -3500,7 +3512,9 @@ int asCContext::GetCurrentLineNumber(int *column, const char **sectionName)
 
 	return -1;
 }
+#endif
 
+// interface
 const char *asCContext::GetExceptionString()
 {
 	if( GetState() != asEXECUTION_EXCEPTION ) return 0;
@@ -3508,11 +3522,13 @@ const char *asCContext::GetExceptionString()
 	return exceptionString.AddressOf();
 }
 
+// interface
 asEContextState asCContext::GetState() const
 {
 	return status;
 }
 
+// interface
 int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)
 {
 	lineCallback = true;
@@ -3552,6 +3568,7 @@ void asCContext::CallLineCallback()
 		engine->CallObjectMethod(lineCallbackObj, this, &lineCallbackFunc, 0);
 }
 
+// interface
 int asCContext::SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv)
 {
 	exceptionCallback = true;
@@ -3581,12 +3598,14 @@ void asCContext::CallExceptionCallback()
 		engine->CallObjectMethod(exceptionCallbackObj, this, &exceptionCallbackFunc, 0);
 }
 
+// interface
 void asCContext::ClearLineCallback()
 {
 	lineCallback = false;
 	regs.doProcessSuspend = doSuspend;
 }
 
+// interface
 void asCContext::ClearExceptionCallback()
 {
 	exceptionCallback = false;
@@ -3672,110 +3691,61 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 	return popSize;
 }
 
-int asCContext::GetVarCount(int stackLevel)
+// interface
+int asCContext::GetVarCount(asUINT stackLevel)
 {
-	// TODO: The current function should be accessed at stackLevel 0
-
-	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return asINVALID_ARG;
-
-	asCScriptFunction *func;
-	if( stackLevel == -1 )
-		func = currentFunction;
-	else
-	{
-		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
-		func = (asCScriptFunction*)s[1];
-	}
-
-	if( func == 0 )
-		return asERROR;
+	asIScriptFunction *func = GetFunction(stackLevel);
+	if( func == 0 ) return asINVALID_ARG;
 
 	return func->GetVarCount();
 }
 
-const char *asCContext::GetVarName(int varIndex, int stackLevel)
+// interface
+const char *asCContext::GetVarName(int varIndex, asUINT stackLevel)
 {
-	// TODO: The current function should be accessed at stackLevel 0
-
-	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
-
-	asCScriptFunction *func;
-	if( stackLevel == -1 )
-		func = currentFunction;
-	else
-	{
-		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
-		func = (asCScriptFunction*)s[1];
-	}
-
-	if( func == 0 )
-		return 0;
+	asIScriptFunction *func = GetFunction(stackLevel);
+	if( func == 0 ) return 0;
 
 	const char *name = 0;
 	int r = func->GetVar(varIndex, &name);
 	return r >= 0 ? name : 0;
 }
 
-const char *asCContext::GetVarDeclaration(int varIndex, int stackLevel)
+// interface
+const char *asCContext::GetVarDeclaration(int varIndex, asUINT stackLevel)
 {
-	// TODO: The current function should be accessed at stackLevel 0
-
-	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
-
-	asCScriptFunction *func;
-	if( stackLevel == -1 )
-		func = currentFunction;
-	else
-	{
-		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
-		func = (asCScriptFunction*)s[1];
-	}
-
-	if( func == 0 )
-		return 0;
+	asIScriptFunction *func = GetFunction(stackLevel);
+	if( func == 0 ) return 0;
 
 	return func->GetVarDecl(varIndex);
 }
 
-int asCContext::GetVarTypeId(int varIndex, int stackLevel)
+// interface
+int asCContext::GetVarTypeId(int varIndex, asUINT stackLevel)
 {
-	// TODO: The current function should be accessed at stackLevel 0
-
-	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return asINVALID_ARG;
-
-	asCScriptFunction *func;
-	if( stackLevel == -1 )
-		func = currentFunction;
-	else
-	{
-		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
-		func = (asCScriptFunction*)s[1];
-	}
-
-	if( func == 0 )
-		return asINVALID_ARG;
+	asIScriptFunction *func = GetFunction(stackLevel);
+	if( func == 0 ) return asINVALID_ARG;
 
 	int typeId;
 	int r = func->GetVar(varIndex, 0, &typeId);
 	return r < 0 ? r : typeId;
 }
 
-void *asCContext::GetAddressOfVar(int varIndex, int stackLevel)
+// interface
+void *asCContext::GetAddressOfVar(int varIndex, asUINT stackLevel)
 {
-	// TODO: The current function should be accessed at stackLevel 0
-
-	if( stackLevel < -1 || stackLevel >= GetCallstackSize() ) return 0;
+	if( stackLevel >= GetCallstackSize() ) return 0;
 
 	asCScriptFunction *func;
 	asDWORD *sf;
-	if( stackLevel == -1 )
+	if( stackLevel == 0 )
 	{
 		func = currentFunction;
 		sf = regs.stackFramePointer;
 	}
 	else
 	{
-		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
+		size_t *s = callStack.AddressOf() + (stackLevel-1)*CALLSTACK_FRAME_SIZE;
 		func = (asCScriptFunction*)s[1];
 		sf = (asDWORD*)s[0];
 	}
@@ -3793,58 +3763,42 @@ void *asCContext::GetAddressOfVar(int varIndex, int stackLevel)
 	return sf - func->variables[varIndex]->stackOffset;
 }
 
+// interface
 // returns the typeId of the 'this' object at the given call stack level (-1 for current)
 // returns 0 if the function call at the given stack level is not a method
-int asCContext::GetThisTypeId(int stackLevel)
+int asCContext::GetThisTypeId(asUINT stackLevel)
 {
-	// TODO: The current function should be accessed at stackLevel 0
+	asIScriptFunction *func = GetFunction(stackLevel);
+	if( func == 0 ) return asINVALID_ARG;
 
-	if( stackLevel < -1 || stackLevel >= GetCallstackSize() )
-		return 0;
-
-	asCScriptFunction *func = 0;
-	if( stackLevel == -1 )
-	{
-		func = currentFunction;
-	}
-	else
-	{
-		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
-		func = (asCScriptFunction*)s[1];
-	}
-
-	if( func == 0 )
-		return 0;
-
-	if( func->objectType == 0 )
+	if( func->GetObjectType() == 0 )
 		return 0; // not in a method
 
 	// create a datatype
-	asCDataType dt = asCDataType::CreateObject( func->objectType, false);
+	asCDataType dt = asCDataType::CreateObject((asCObjectType*)func->GetObjectType(), false);
 
 	// return a typeId from the data type
-	return engine->GetTypeIdFromDataType( dt );
+	return engine->GetTypeIdFromDataType(dt);
 }
 
+// interface
 // returns the 'this' object pointer at the given call stack level (-1 for current)
 // returns 0 if the function call at the given stack level is not a method
-void *asCContext::GetThisPointer(int stackLevel)
+void *asCContext::GetThisPointer(asUINT stackLevel)
 {
-	// TODO: The current function should be accessed at stackLevel 0
-
-	if( stackLevel < -1 || stackLevel >= GetCallstackSize() )
+	if( stackLevel >= GetCallstackSize() )
 		return 0;
 
 	asCScriptFunction *func;
 	asDWORD *sf;
-	if( stackLevel == -1 )
+	if( stackLevel == 0 )
 	{
 		func = currentFunction;
 		sf = regs.stackFramePointer;
 	}
 	else
 	{
-		size_t *s = callStack.AddressOf() + stackLevel*CALLSTACK_FRAME_SIZE;
+		size_t *s = callStack.AddressOf() + (stackLevel-1)*CALLSTACK_FRAME_SIZE;
 		func = (asCScriptFunction*)s[1];
 		sf = (asDWORD*)s[0];
 	}

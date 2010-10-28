@@ -36,8 +36,7 @@ void CheckFunc(asIScriptGeneric *)
 	if( ctx )
 	{
 		asIScriptEngine *engine = ctx->GetEngine();
-		int funcID = ctx->GetCurrentFunction();
-		const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcID);
+		const asIScriptFunction *func = ctx->GetFunction();
 		if( strcmp(func->GetModuleName(), "DynamicModule") != 0 )
 			failed = true;
 

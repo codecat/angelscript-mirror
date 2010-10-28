@@ -19,15 +19,12 @@ statement or not.
 void DebugLineCallback(asIScriptContext *ctx, CDebugMgr *dbg)
 {
   // Determine if we have reached a break point
-  int funcId = ctx->GetCurrentFunction();
-  int line   = ctx->GetCurrentLineNumber();
-
-  // Determine the script section from the function implementation
-  const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
-  const char *scriptSection = function->GetScriptSectionName();
+  const char *scriptSection;
+  int line = ctx->GetLineNumber(0, 0, &scriptSection);
+  asIScriptFunction *function = ctx->GetFunction();
 
   // Now let the debugger check if a breakpoint has been set here
-  if( dbg->IsBreakpoint(scriptSection, line, funcId) )
+  if( dbg->IsBreakpoint(scriptSection, line, function) )
   {
     // A break point has been reached so the execution of the script should be suspended
     ctx->Suspend();
@@ -72,13 +69,14 @@ Here's an example of how the entire call stack can be printed:
 void PrintCallstack(asIScriptContext *ctx)
 {
   // Show the call stack
-  for( int n = 0; n < ctx->GetCallstackSize(); n++ )
+  for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ )
   {
-    int funcId, line, column;
-    funcId = ctx->GetCallstackFunction(n);
-    line   = ctx->GetCallstackLineNumber(n, &column);
-    const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcId);
-    printf("%s:%s:%d,%d\n", func->GetScriptSectionName(),
+    asIScriptFunction *func;
+    const char *scriptSection;
+    int line, column;
+    func = ctx->GetFunction(n);
+    line = ctx->GetLineNumber(n, &column, &scriptSection);
+    printf("%s:%s:%d,%d\n", scriptSection,
                             func->GetDeclaration(),
                             line, column);
   }
@@ -108,7 +106,7 @@ stack. This can be done for each level in the call stack, and not just the curre
 Here is an example for how the variables may be printed:
 
 \code
-void PrintVariables(asIScriptContext *ctx, int stackLevel)
+void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 {
   asIScriptEngine *engine = ctx->GetEngine();
 
@@ -166,7 +164,7 @@ For script objects that conversion can be done by enumerating the members of an 
 \ref asIScriptObject interface.
 
 The debugger may also need to be able to inspect the global variables that the functions access. As the
-global variables are stored in the module, that is the place to look for them. The \ref asIScriptModule 
+global variables are stored in the module, there is the place to look for them. The \ref asIScriptModule 
 interface can be obtained by querying the module name from the function, and then getting the module 
 pointer from the engine. Once the module is determined the global variables are enumerated much the same
 way as in the example above, except that the appropriate methods on the asIScriptModule interface is used
