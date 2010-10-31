@@ -60,8 +60,6 @@ struct asSScriptVariable
 	int stackOffset;
 };
 
-const asEFuncType asFUNC_DUMMY = asEFuncType(-1);
-
 struct asSSystemFunctionInterface;
 
 // TODO: GetModuleName should be removed. A function won't belong to a specific module anymore

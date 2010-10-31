@@ -158,7 +158,7 @@ asCScriptFunction::~asCScriptFunction()
 
 	// Imported functions are not reference counted, nor are dummy 
 	// functions that are allocated on the stack
-	asASSERT( funcType == -1              || 
+	asASSERT( funcType == asFUNC_DUMMY    ||
 		      funcType == asFUNC_IMPORTED ||
 		      refCount.get() == 0         );
 

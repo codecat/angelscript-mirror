@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.20.0 WIP - 2010/10/27</h2>
+<h2>Version 2.20.0 WIP - 2010/10/31</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in parser when a function or method returned a handle to a template type (Thanks yzslhawk)
 <li>Fixed the initialization order of some global variables that might get used by the engine if it is created in a global (Thanks heqing)
 <li>If global variables in scripts were accessed during destruction of the script objects the application could crash when releasing the engine (Thanks TheAtom)
+<li>Fixed bug on Android/GNUC involving the function type enum (Thanks Fredrik Ehnbom)
 </ul>
 <li>Library
 <ul>

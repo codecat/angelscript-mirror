@@ -798,8 +798,24 @@
 
 
 // The assert macro
-#include <assert.h>
-#define asASSERT(x) assert(x)
+#if defined(ANDROID)
+	#if defined(AS_DEBUG)
+		#include <android/log.h>
+		#include <stdlib.h>
+		#define asASSERT(x) \
+			do { \
+			    if (!(x)) { \
+			        __android_log_print(ANDROID_LOG_ERROR, "AngelScript", "Assert failed at %s:%d - %s", __FILE__, __LINE__, #x); \
+			        exit(1); \
+			    } \
+			} while (0)
+	#else
+		#define asASSERT(x)
+	#endif
+#else
+	#include <assert.h>
+	#define asASSERT(x) assert(x)
+#endif
 
 
 

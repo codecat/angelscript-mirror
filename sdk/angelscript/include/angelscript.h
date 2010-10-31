@@ -294,6 +294,7 @@ enum asECompileFlags
 // Function types
 enum asEFuncType
 {
+	asFUNC_DUMMY     =-1,
 	asFUNC_SYSTEM    = 0,
 	asFUNC_SCRIPT    = 1,
 	asFUNC_INTERFACE = 2,

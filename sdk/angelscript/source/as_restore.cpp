@@ -1468,7 +1468,7 @@ asCObjectType* asCRestore::ReadObjectType()
 	else
 	{
 		// No object type
-		assert( ch == '\0' );
+		asASSERT( ch == '\0' );
 		ot = 0;
 	}
 
