@@ -452,6 +452,7 @@ enum asECompileFlags
 //! \brief Function types
 enum asEFuncType
 {
+	asFUNC_DUMMY     =-1,
 	//! \brief An application registered function
 	asFUNC_SYSTEM    = 0,
 	//! \brief A script implemented function
