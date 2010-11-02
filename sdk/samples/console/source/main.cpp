@@ -317,7 +317,7 @@ void ListVariables(asIScriptEngine *engine)
 
 	// List the application registered variables
 	cout << "Application variables:" << endl;
-	for( n = 0; n < engine->GetGlobalPropertyCount(); n++ )
+	for( n = 0; n < (asUINT)engine->GetGlobalPropertyCount(); n++ )
 	{
 		const char *name;
 		int typeId;
@@ -336,7 +336,7 @@ void ListVariables(asIScriptEngine *engine)
 	{
 		cout << endl;
 		cout << "User variables:" << endl;
-		for( n = 0; n < mod->GetGlobalVarCount(); n++ )
+		for( n = 0; n < (asUINT)mod->GetGlobalVarCount(); n++ )
 		{
 			cout << " " << mod->GetGlobalVarDeclaration(n) << endl;
 		}
@@ -349,7 +349,7 @@ void ListFunctions(asIScriptEngine *engine)
 	
 	// List the application registered functions
 	cout << "Application functions:" << endl;
-	for( n = 0; n < engine->GetGlobalFunctionCount(); n++ )
+	for( n = 0; n < (asUINT)engine->GetGlobalFunctionCount(); n++ )
 	{
 		int id = engine->GetGlobalFunctionIdByIndex(n);
 		asIScriptFunction *func = engine->GetFunctionDescriptorById(id);
@@ -365,7 +365,7 @@ void ListFunctions(asIScriptEngine *engine)
 	{
 		cout << endl;
 		cout << "User functions:" << endl;
-		for( n = 0; n < mod->GetFunctionCount(); n++ )
+		for( n = 0; n < (asUINT)mod->GetFunctionCount(); n++ )
 		{
 			asIScriptFunction *func = mod->GetFunctionDescriptorByIndex(n);
 			cout << " " << func->GetDeclaration() << endl;

@@ -228,6 +228,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scripthelper\scripthelper.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp"
 				>
 				<FileConfiguration
@@ -259,6 +263,10 @@
 			>
 			<File
 				RelativePath="..\..\..\..\angelscript\include\angelscript.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scripthelper\scripthelper.h"
 				>
 			</File>
 			<File
