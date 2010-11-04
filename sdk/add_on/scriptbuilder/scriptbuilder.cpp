@@ -47,6 +47,9 @@ int CScriptBuilder::StartNewModule(asIScriptEngine *engine, const char *moduleNa
 
 int CScriptBuilder::AddSectionFromFile(const char *filename)
 {
+	// TODO: The file name stored in the set should be the fully resolved name because
+	// it is possible to name the same file in multiple ways using relative paths.
+
 	if( IncludeIfNotAlreadyIncluded(filename) )
 	{
 		int r = LoadScriptSection(filename);
@@ -112,9 +115,6 @@ bool CScriptBuilder::IncludeIfNotAlreadyIncluded(const char *filename)
 
 int CScriptBuilder::LoadScriptSection(const char *filename)
 {
-	// TODO: The file name stored in the set should be the fully resolved name because
-	// it is possible to name the same file in multiple ways using relative paths.
-
 	// Open the script file
 	string scriptFile = filename;
 #if _MSC_VER >= 1500
@@ -127,8 +127,11 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 	{
 		// Write a message to the engine's message callback
 		char buf[256];
-		string msg = "Failed to open script file in path: '" + string(GetCurrentDir(buf, 256)) + "'";
+		string msg = "Failed to open script file '" + string(GetCurrentDir(buf, 256)) + scriptFile + "'";
 		engine->WriteMessage(filename, 0, 0, asMSGTYPE_ERROR, msg.c_str());
+
+		// TODO: Write the file where this one was included from
+
 		return -1;
 	}
 	
@@ -151,7 +154,7 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 	{
 		// Write a message to the engine's message callback
 		char buf[256];
-		string msg = "Failed to load script file in path: '" + string(GetCurrentDir(buf, 256)) + "'";
+		string msg = "Failed to load script file '" + string(GetCurrentDir(buf, 256)) + scriptFile + "'";
 		engine->WriteMessage(filename, 0, 0, asMSGTYPE_ERROR, msg.c_str());
 		return -1;
 	}

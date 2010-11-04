@@ -161,7 +161,11 @@ static void ConcatenateStrings_Generic(asIScriptGeneric *gen)
 static CScriptString &AssignUIntToString(unsigned int i, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%u", i);
+#else
 	sprintf(buf, "%u", i);
+#endif
 	dest.buffer = buf;
 	return dest;
 }
@@ -177,7 +181,11 @@ static void AssignUIntToString_Generic(asIScriptGeneric *gen)
 static CScriptString &AssignIntToString(int i, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%d", i);
+#else
 	sprintf(buf, "%d", i);
+#endif
 	dest.buffer = buf;
 	return dest;
 }
@@ -193,7 +201,11 @@ static void AssignIntToString_Generic(asIScriptGeneric *gen)
 static CScriptString &AssignFloatToString(float f, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%g", f);
+#else
 	sprintf(buf, "%g", f);
+#endif
 	dest.buffer = buf;
 	return dest;
 }
@@ -209,7 +221,11 @@ static void AssignFloatToString_Generic(asIScriptGeneric *gen)
 static CScriptString &AssignDoubleToString(double f, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%g", f);
+#else
 	sprintf(buf, "%g", f);
+#endif
 	dest.buffer = buf;
 	return dest;
 }
@@ -225,7 +241,11 @@ static void AssignDoubleToString_Generic(asIScriptGeneric *gen)
 static CScriptString &AssignBoolToString(bool b, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%s", b ? "true" : "false");
+#else
 	sprintf(buf, "%s", b ? "true" : "false");
+#endif
 	dest.buffer = buf;
 	return dest;
 }
@@ -245,7 +265,11 @@ static void AssignBoolToString_Generic(asIScriptGeneric *gen)
 static CScriptString &AddAssignUIntToString(unsigned int i, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%u", i);
+#else
 	sprintf(buf, "%u", i);
+#endif
 	dest.buffer += buf;
 	return dest;
 }
@@ -261,7 +285,11 @@ static void AddAssignUIntToString_Generic(asIScriptGeneric *gen)
 static CScriptString &AddAssignIntToString(int i, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%d", i);
+#else
 	sprintf(buf, "%d", i);
+#endif
 	dest.buffer += buf;
 	return dest;
 }
@@ -277,7 +305,11 @@ static void AddAssignIntToString_Generic(asIScriptGeneric *gen)
 static CScriptString &AddAssignFloatToString(float f, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%g", f);
+#else
 	sprintf(buf, "%g", f);
+#endif
 	dest.buffer += buf;
 	return dest;
 }
@@ -293,7 +325,11 @@ static void AddAssignFloatToString_Generic(asIScriptGeneric *gen)
 static CScriptString &AddAssignDoubleToString(double f, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%g", f);
+#else
 	sprintf(buf, "%g", f);
+#endif
 	dest.buffer += buf;
 	return dest;
 }
@@ -309,7 +345,11 @@ static void AddAssignDoubleToString_Generic(asIScriptGeneric *gen)
 static CScriptString &AddAssignBoolToString(bool b, CScriptString &dest)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%s", b ? "true" : "false");
+#else
 	sprintf(buf, "%s", b ? "true" : "false");
+#endif
 	dest.buffer += buf;
 	return dest;
 }
@@ -329,7 +369,11 @@ static void AddAssignBoolToString_Generic(asIScriptGeneric *gen)
 static CScriptString *AddStringUInt(const CScriptString &str, unsigned int i)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%u", i);
+#else
 	sprintf(buf, "%u", i);
+#endif
 	return new CScriptString(str.buffer + buf);
 }
 
@@ -344,7 +388,11 @@ static void AddStringUInt_Generic(asIScriptGeneric *gen)
 static CScriptString *AddStringInt(const CScriptString &str, int i)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%d", i);
+#else
 	sprintf(buf, "%d", i);
+#endif
 	return new CScriptString(str.buffer + buf);
 }
 
@@ -359,7 +407,11 @@ static void AddStringInt_Generic(asIScriptGeneric *gen)
 static CScriptString *AddStringFloat(const CScriptString &str, float f)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%g", f);
+#else
 	sprintf(buf, "%g", f);
+#endif
 	return new CScriptString(str.buffer + buf);
 }
 
@@ -374,7 +426,11 @@ static void AddStringFloat_Generic(asIScriptGeneric *gen)
 static CScriptString *AddStringDouble(const CScriptString &str, double f)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%g", f);
+#else
 	sprintf(buf, "%g", f);
+#endif
 	return new CScriptString(str.buffer + buf);
 }
 
@@ -389,7 +445,11 @@ static void AddStringDouble_Generic(asIScriptGeneric *gen)
 static CScriptString *AddStringBool(const CScriptString &str, bool b)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%s", b ? "true" : "false");
+#else
 	sprintf(buf, "%s", b ? "true" : "false");
+#endif
 	return new CScriptString(str.buffer + buf);
 }
 
@@ -408,7 +468,11 @@ static void AddStringBool_Generic(asIScriptGeneric *gen)
 static CScriptString *AddIntString(int i, const CScriptString &str)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%d", i);
+#else
 	sprintf(buf, "%d", i);
+#endif
 	return new CScriptString(buf + str.buffer);
 }
 
@@ -423,7 +487,11 @@ static void AddIntString_Generic(asIScriptGeneric *gen)
 static CScriptString *AddUIntString(unsigned int i, const CScriptString &str)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%u", i);
+#else
 	sprintf(buf, "%u", i);
+#endif
 	return new CScriptString(buf + str.buffer);
 }
 
@@ -438,7 +506,11 @@ static void AddUIntString_Generic(asIScriptGeneric *gen)
 static CScriptString *AddFloatString(float f, const CScriptString &str)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%g", f);
+#else
 	sprintf(buf, "%g", f);
+#endif
 	return new CScriptString(buf + str.buffer);
 }
 
@@ -453,7 +525,11 @@ static void AddFloatString_Generic(asIScriptGeneric *gen)
 static CScriptString *AddDoubleString(double f, const CScriptString &str)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%g", f);
+#else
 	sprintf(buf, "%g", f);
+#endif
 	return new CScriptString(buf + str.buffer);
 }
 
@@ -468,7 +544,11 @@ static void AddDoubleString_Generic(asIScriptGeneric *gen)
 static CScriptString *AddBoolString(bool b, const CScriptString &str)
 {
 	char buf[100];
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(buf, 100, "%s", b ? "true" : "false");
+#else
 	sprintf(buf, "%s", b ? "true" : "false");
+#endif
 	return new CScriptString(buf + str.buffer);
 }
 
