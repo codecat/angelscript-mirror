@@ -673,14 +673,35 @@ public:
   
   // Reads to the next new-line character
   int ReadLine(std::string &str);
-  
+
+  // Reads a signed integer
+  asINT64  ReadInt(asUINT bytes);
+
+  // Reads an unsigned integer
+  asQWORD  ReadUInt(asUINT bytes);
+
+  // Reads a float
+  float    ReadFloat();
+
+  // Reads a double
+  double   ReadDouble();
+    
   // Writes a string to the file
   int WriteString(const std::string &str);
   
+  int WriteInt(asINT64 v, asUINT bytes);
+  int WriteUInt(asQWORD v, asUINT bytes);
+  int WriteFloat(float v);
+  int WriteDouble(double v);
+
   // File cursor manipulation
   int GetPos() const;
   int SetPos(int pos);
   int MovePos(int delta);
+
+  // Determines the byte order of the binary values (default: false)
+  // Big-endian = most significant byte first
+  bool mostSignificantByteFirst;
 };
 \endcode
 
@@ -695,10 +716,19 @@ public:
     bool     isEndOfFile() const;
     int      readString(uint length, string &out str);
     int      readLine(string &out str);
+    int64    readInt(uint bytes);
+    uint64   readUInt(uint bytes);
+    float    readFloat();
+    double   readDouble();
     int      writeString(const string &in string);
+    int      writeInt(int64 value, uint bytes);
+    int      writeUInt(uint64 value, uint bytes);
+    int      writeFloat(float value);
+    int      writeDouble(double value);
     int      getPos() const;
     int      setPos(int pos);
     int      movePos(int delta);
+    bool     mostSignificantByteFirst;
   }
 </pre>
 

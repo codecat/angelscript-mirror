@@ -4,8 +4,6 @@
 // This class encapsulates a FILE pointer in a reference counted class for
 // use within AngelScript.
 //
-// It requires the CScriptString add-on to work.
-//
 
 #ifndef SCRIPTFILE_H
 #define SCRIPTFILE_H
@@ -35,8 +33,6 @@
 
 BEGIN_AS_NAMESPACE
 
-class CScriptString;
-
 class CScriptFile
 {
 public:
@@ -52,19 +48,30 @@ public:
     int  Open(const std::string &filename, const std::string &mode);
     int  Close();
     int  GetSize() const;
-	bool IsEOF() const;
+    bool IsEOF() const;
 
     // Reading
-    int ReadString(unsigned int length, std::string &str);
-	int ReadLine(std::string &str);
+    int      ReadString(unsigned int length, std::string &str);
+    int      ReadLine(std::string &str);
+    asINT64  ReadInt(asUINT bytes);
+    asQWORD  ReadUInt(asUINT bytes);
+    float    ReadFloat();
+    double   ReadDouble();
 
     // Writing
     int WriteString(const std::string &str);
+    int WriteInt(asINT64 v, asUINT bytes);
+    int WriteUInt(asQWORD v, asUINT bytes);
+    int WriteFloat(float v);
+    int WriteDouble(double v);
 
     // Cursor
 	int GetPos() const;
     int SetPos(int pos);
     int MovePos(int delta);
+
+    // Big-endian = most significant byte first
+    bool mostSignificantByteFirst;
 
 protected:
     ~CScriptFile();
