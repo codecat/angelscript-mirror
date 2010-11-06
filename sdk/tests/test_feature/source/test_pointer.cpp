@@ -97,24 +97,24 @@ bool Test()
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( obj.val != 23 )
 	{
 		printf("%s: failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "ptr->function(); ptr->val = 13;");
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( obj.val != 13 )
 	{
 		printf("%s: failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -123,14 +123,14 @@ bool Test()
 	if( r < 0 )
 	{
 		printf("%s: failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 	{
 		printf("%s: failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

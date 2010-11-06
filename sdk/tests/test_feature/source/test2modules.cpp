@@ -11,7 +11,7 @@ static const char *script = "int global; void Test() {global = 0;} float Test2()
 
 bool Test2Modules()
 {
-	bool ret = false;
+	bool fail = false;
 	int r;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -21,7 +21,7 @@ bool Test2Modules()
 	if( mod->Build() < 0 )
 	{
 		printf("%s: failed to build module a\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
@@ -29,23 +29,23 @@ bool Test2Modules()
 	if( mod->Build() < 0 )
 	{
 		printf("%s: failed to build module b\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
-	if( !ret )
+	if( !fail )
 	{
 		int aFuncID = engine->GetModule("a")->GetFunctionIdByName("Test");
 		if( aFuncID < 0 )
 		{
 			printf("%s: failed to retrieve func ID for module a\n", TESTNAME);
-			ret = true;
+			TEST_FAILED;
 		}
 
 		int bFuncID = engine->GetModule("b")->GetFunctionIdByName("Test");
 		if( bFuncID < 0 )
 		{
 			printf("%s: failed to retrieve func ID for module b\n", TESTNAME);
-			ret = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -66,21 +66,21 @@ bool Test2Modules()
 	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("scriptA", scriptA, strlen(scriptA));
 	r = mod->Build();
-	if( r < 0 ) ret = true;
+	if( r < 0 ) TEST_FAILED;
 
 	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("scriptB", scriptB, strlen(scriptB));
 	mod->Build();
-	if( r < 0 ) ret = true;
+	if( r < 0 ) TEST_FAILED;
 
 	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(engine->GetModule("b")->GetTypeIdByDecl("CTest"));
 	*((asIScriptObject**)engine->GetModule("a")->GetAddressOfGlobalVar(0)) = obj;
 	r = ExecuteString(engine, "obj.test()", engine->GetModule("a"));
-	if( r != asEXECUTION_FINISHED ) ret = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	int val = *(int*)engine->GetModule("b")->GetAddressOfGlobalVar(engine->GetModule("b")->GetGlobalVarIndexByName("glob"));
-	if( val != 42 ) ret = true;
+	if( val != 42 ) TEST_FAILED;
 
 	engine->Release();
 
-	return ret;
+	return fail;
 }

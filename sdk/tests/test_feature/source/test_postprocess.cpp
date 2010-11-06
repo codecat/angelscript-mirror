@@ -51,7 +51,7 @@ bool Test()
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script, strlen(script), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	engine->Release();
 

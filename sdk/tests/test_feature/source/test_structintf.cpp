@@ -45,19 +45,19 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	// Try retrieving the type Id for the structure
 	int typeId = mod->GetTypeIdByDecl("MyStruct");
 	if( typeId < 0 )
 	{
 		printf("%s: Failed to retrieve the type id for the script struct\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED ) 
-		fail = true;
+		TEST_FAILED;
 	else
 	{		
 		asIScriptObject *s = 0;
@@ -65,44 +65,44 @@ bool Test()
 		any->Retrieve(&s, typeId);
 
 		if( (typeId & asTYPEID_MASK_OBJECT) != asTYPEID_SCRIPTOBJECT )
-			fail = true;
+			TEST_FAILED;
 
 		if( strcmp(engine->GetTypeDeclaration(typeId), "MyStruct@") )
-			fail = true;
+			TEST_FAILED;
 
 		typeId = s->GetTypeId();
 		if( strcmp(engine->GetTypeDeclaration(typeId), "MyStruct") )
-			fail = true;
+			TEST_FAILED;
 
 		if( s->GetPropertyCount() != 3 )
-			fail = true;
+			TEST_FAILED;
 
 		if( strcmp(s->GetPropertyName(0), "a") )
-			fail = true;
+			TEST_FAILED;
 
 		if( s->GetPropertyTypeId(0) != engine->GetTypeIdByDecl("float") )
-			fail = true;
+			TEST_FAILED;
 
 		if( *(float*)s->GetAddressOfProperty(0) != 3.141592f )
-			fail = true;
+			TEST_FAILED;
 
 		if( strcmp(s->GetPropertyName(1), "b") )
-			fail = true;
+			TEST_FAILED;
 
 		if( s->GetPropertyTypeId(1) != engine->GetTypeIdByDecl("string") )
-			fail = true;
+			TEST_FAILED;
 
 		if( ((CScriptString*)s->GetAddressOfProperty(1))->buffer != "test" )
-			fail = true;
+			TEST_FAILED;
 
 		if( strcmp(s->GetPropertyName(2), "c") )
-			fail = true;
+			TEST_FAILED;
 
 		if( s->GetPropertyTypeId(2) != engine->GetTypeIdByDecl("string@") )
-			fail = true;
+			TEST_FAILED;
 
 		if( (*(CScriptString**)s->GetAddressOfProperty(2))->buffer != "test2" )
-			fail = true;
+			TEST_FAILED;
 
 		if( s )
 			s->Release();
@@ -113,7 +113,7 @@ bool Test()
 
 	// The type id is valid for as long as the type exists
 	if( strcmp(engine->GetTypeDeclaration(typeId), "MyStruct") )
-		fail = true;
+		TEST_FAILED;
 
 	// Make sure the type is not used anywhere
 	engine->DiscardModule(0);
@@ -121,7 +121,7 @@ bool Test()
 
 	// The type id is no longer valid
 	if( engine->GetTypeDeclaration(typeId) != 0 )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

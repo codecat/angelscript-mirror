@@ -29,7 +29,7 @@ bool TestBStr()
 		return false;
 	}
 
-	bool ret = false;
+	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -42,12 +42,12 @@ bool TestBStr()
 	if( r < 0 ) 
 	{
 		printf("%s: ExecuteString() failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 	else if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: ExecuteString() returned %d\n", TESTNAME, r);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	// Test passing bstr strings to a script function
@@ -56,7 +56,7 @@ bool TestBStr()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		ret = true;
+		TEST_FAILED;
 	}
 
 	int funcId = mod->GetFunctionIdByIndex(0);
@@ -80,11 +80,11 @@ bool TestBStr()
 
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
-		ret = true;
+		TEST_FAILED;
 
 	if( ctx ) ctx->Release();
 
 	engine->Release();
 
-	return ret;
+	return fail;
 }

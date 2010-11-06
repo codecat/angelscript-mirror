@@ -393,7 +393,7 @@ bool Test2()
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 11) : Error   : Can't inherit from 'string'\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -404,10 +404,10 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 47) : Error   : Can't inherit from multiple classes\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -418,10 +418,10 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 41) : Error   : Can't inherit from itself, or another class that inherits from this class\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -432,10 +432,10 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 11) : Error   : Can't inherit from itself, or another class that inherits from this class\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -447,11 +447,11 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	// TODO: The error should explain that the original property is from the base class
 	if( bout.buffer != "script (1, 41) : Error   : Name conflict. 'a' is an object property.\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -462,13 +462,13 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	// TODO: The error message should explain that it is not possible to call super 
 	//       because the class doesn't derived from another class
 	if( bout.buffer != "script (1, 11) : Info    : Compiling A::A()\n"
 					   "script (1, 17) : Error   : No matching signatures to 'A::super()'\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -479,11 +479,11 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 ) 
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 26) : Info    : Compiling B::B()\n"
 					   "script (1, 41) : Error   : Can't call a constructor multiple times\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -494,11 +494,11 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build(); 
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 26) : Info    : Compiling B::B()\n"
 					   "script (1, 46) : Error   : Can't call a constructor in loops\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -510,11 +510,11 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build(); 
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 26) : Info    : Compiling B::B()\n"
 					   "script (1, 52) : Error   : Can't call a constructor in switch\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -527,13 +527,13 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build(); 
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (2, 1) : Info    : Compiling B::B(int)\n"
 					   "script (2, 10) : Error   : Both conditions must call constructor\n"
 					   "script (3, 1) : Info    : Compiling B::B(float)\n"
 				   	   "script (3, 12) : Error   : Both conditions must call constructor\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -544,11 +544,11 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build(); 
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::mthd()\n"
 					   "script (1, 40) : Error   : No matching signatures to 'super()'\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -558,11 +558,11 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	// TODO: The message could be improved to mention which member
 	if( bout.buffer != "script (1, 24) : Error   : Illegal member type\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -572,11 +572,11 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 27) : Info    : Compiling B::B()\n"
 					   "script (1, 33) : Error   : No matching signatures to '::super()'\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -586,7 +586,7 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 11) : Info    : Compiling void A::method()\n"
 					   "script (1, 27) : Error   : No matching signatures to 'B::test()'\n"
 					   "script (1, 38) : Error   : No matching signatures to 'A::method(const uint)'\n"
@@ -598,7 +598,7 @@ bool Test2()
 					   "script (1, 83) : Error   : Invalid scope resolution\n"
 					   "script (1, 79) : Error   : No matching signatures to 'B::a()'\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 
@@ -609,16 +609,16 @@ bool Test2()
 	bout.buffer = "";
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 	r = ExecuteString(engine, "A a; assert( a1 !is a2 ); assert( a1 !is null ); assert( a2 !is null );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 

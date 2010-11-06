@@ -82,7 +82,7 @@ bool Test()
 	if( var != 1 )
 	{
 		printf("failed to return value correctly\n");
-		fail = true;
+		TEST_FAILED;
 	}
 	
 	ExecuteString(engine, "Assert(RetInt8(1) == 1)");
@@ -94,20 +94,20 @@ bool Test()
 	engine->RegisterObjectMethod("Int8Tester", "void Test0(int8)", asMETHOD(TestInt8Class, Test0), asCALL_THISCALL);	
 	TestInt8Class testInt8;
 	r = engine->RegisterGlobalProperty("Int8Tester TestInt8Class", &testInt8 );
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script3, strlen(script3));
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	else
 	{
 		r = ExecuteString(engine, "TestInt8ToMember();", mod);
-		if( r != asEXECUTION_FINISHED ) fail = true;
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
-		if( testInt8.m_fail ) fail = true;
+		if( testInt8.m_fail ) TEST_FAILED;
 	}
 
 	// Shift operations with int8 should result in int32
@@ -120,7 +120,7 @@ bool Test()
 								 "Assert(ver == 0x04030201);"); // If this is changed to 0x01020304 Avira accuses the compiled obj file as virus
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 

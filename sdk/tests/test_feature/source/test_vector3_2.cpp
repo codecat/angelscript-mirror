@@ -122,7 +122,7 @@ bool Test()
 	if( r < 0 )
 	{
 		printf("%s: Failed to build\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	else
 	{
@@ -131,7 +131,7 @@ bool Test()
 		if( r < 0 )
 		{
 			printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 

@@ -40,7 +40,7 @@ bool TestExecuteString()
 	if( !g_Obj.a || g_Obj.b )
 	{
 		printf("%s: ExecuteString() didn't execute correctly\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	
 	// Success

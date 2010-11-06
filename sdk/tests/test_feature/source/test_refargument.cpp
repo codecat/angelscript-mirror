@@ -132,7 +132,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 	asIScriptContext *ctx = engine->CreateContext();
@@ -146,7 +146,7 @@ bool Test()
 
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Execution failed: %d\n", TESTNAME, r);
 	}
 	if( ctx ) ctx->Release();
@@ -160,17 +160,17 @@ bool Test()
 	r = mod->Build();
 	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
 			               "TestRefArgument (6, 1) : Info    : Compiling void Testf(float&inout)\n"
 						   "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 	else
-		if( r != 0 ) fail = true;
+		if( r != 0 ) TEST_FAILED;
 
 	//----------------------
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -178,10 +178,10 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
 	r = mod->Build();
 	if( r < 0 ) 
-		fail = true;
+		TEST_FAILED;
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	//-------------------
 	if( testNative )
@@ -191,10 +191,10 @@ bool Test()
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
 		r = mod->Build();
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		r = ExecuteString(engine, "Test()", mod);
-		if( r != asEXECUTION_FINISHED ) fail = true;
-		if( NativeTestFail ) fail = true;
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+		if( NativeTestFail ) TEST_FAILED;
 	}
 
 	engine->Release();
@@ -208,10 +208,10 @@ bool Test()
 
 		r = engine->RegisterGlobalFunction("void func(float &)", asFUNCTION(0), asCALL_GENERIC);
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "System function (1, 17) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -231,11 +231,11 @@ bool Test()
 
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "f(0);", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}	
@@ -255,16 +255,16 @@ bool Test()
 
 		r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "f(0);", mod);
 		if( r > 0 )
-			fail = true;
+			TEST_FAILED;
 
 		if( bout.buffer != "ExecuteString (1, 3) : Error   : Not a valid reference\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();	

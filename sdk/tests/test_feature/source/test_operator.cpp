@@ -103,13 +103,13 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// Test const correctness. opEquals(int) isn't const so it must not be allowed
@@ -117,7 +117,7 @@ bool Test()
 		r = ExecuteString(engine, "Test a; const Test @h = a; assert( h == 0 );", mod);
 		if( r >= 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'uint' available.\n" )
 		{
@@ -170,7 +170,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		if( bout.buffer != "" )
 		{
@@ -180,7 +180,7 @@ bool Test()
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -257,13 +257,13 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// Test const correctness. opCmp(int) isn't const so it must not be allowed
@@ -271,7 +271,7 @@ bool Test()
 		r = ExecuteString(engine, "Test a; const Test @h = a; assert( h == 0 );", mod);
 		if( r >= 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'uint' available.\n" )
 		{
@@ -331,18 +331,18 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 		
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -391,18 +391,18 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 		
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -461,7 +461,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		if( bout.buffer != "" )
 		{
@@ -471,7 +471,7 @@ bool Test()
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// Test const correctness.
@@ -479,7 +479,7 @@ bool Test()
 		r = ExecuteString(engine, "Test a; const Test @h = a; assert( (~h).value == ~1 ); h++; --h;", mod);
 		if( r >= 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		if( bout.buffer != "ExecuteString (1, 37) : Error   : Function 'opCom() const' not found\n"
 			               "ExecuteString (1, 57) : Error   : Function 'opPostInc() const' not found\n"

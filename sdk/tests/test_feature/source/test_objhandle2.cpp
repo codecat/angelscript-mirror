@@ -146,7 +146,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 	asIScriptContext *ctx = engine->CreateContext();
@@ -163,7 +163,7 @@ bool Test()
 			printf("desc: %s\n", ctx->GetExceptionString());
 		}
 
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Execution failed\n", TESTNAME);
 	}
 	if( ctx ) ctx->Release();
@@ -176,7 +176,7 @@ bool Test()
 							     // TODO: This second error message doesn't make sense. Why is the compiler trying to instanciate a new refclass?
 		                         "ExecuteString (1, 18) : Error   : No default constructor for object of type 'refclass'.\n" ) 
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 		printf("%s: failure\n", TESTNAME);
 	}
@@ -185,7 +185,7 @@ bool Test()
 	r = ExecuteString(engine, "refclass@ a; a.Method();", 0, ctx);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: No exception\n", TESTNAME);
 	}
 	if( ctx ) ctx->Release();
@@ -206,10 +206,10 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "TestObjHandle2 (3, 1) : Info    : Compiling void Test()\n"
                        "TestObjHandle2 (6, 6) : Error   : Reference is read-only\n" )
-		fail = true;
+		TEST_FAILED;
 	engine->Release();
 
 	// Success

@@ -48,11 +48,11 @@ bool Test()
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 
@@ -67,11 +67,11 @@ bool Test()
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

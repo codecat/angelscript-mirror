@@ -26,7 +26,7 @@ static void cleanContext(asIScriptContext *ctx)
 
 bool TestExecute()
 {
-	bool ret = false;
+	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if( strstr(asGetLibraryOptions(),"AS_MAX_PORTABILITY") )
@@ -41,7 +41,7 @@ bool TestExecute()
 
 	if (!called) {
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	
@@ -54,10 +54,10 @@ bool TestExecute()
 	called = false;
 	ctx->Release();
 	if( !called )
-		ret = true;
+		TEST_FAILED;
 
 	engine->Release();
 	engine = NULL;
 
-	return ret;
+	return fail;
 }

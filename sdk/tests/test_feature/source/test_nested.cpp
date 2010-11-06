@@ -55,7 +55,7 @@ bool TestNested()
 	if( i != 4 )
 	{
 		printf("%s: Failed to call nested ExecuteString() from other context\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	ctx->Release();
@@ -66,13 +66,13 @@ bool TestNested()
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: ExecuteString() didn't succeed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( i != 4 )
 	{
 		printf("%s: Failed to call nested ExecuteString() from ExecuteString()\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

@@ -349,55 +349,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\contextmgr\contextmgr.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\main.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptany\scriptany.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptarray\scriptarray.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptfile\scriptfile.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scripthelper\scripthelper.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptmath\scriptmath.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp"
 				>
 			</File>
 			<File
@@ -935,7 +887,29 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\utils.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+			>
+		</Filter>
+		<Filter
+			Name="add_on"
+			>
+			<File
+				RelativePath="..\..\..\..\add_on\contextmgr\contextmgr.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\contextmgr\contextmgr.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptany\scriptany.cpp"
 				>
 			</File>
 			<File
@@ -943,7 +917,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptarray\scriptarray.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptarray\scriptarray.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp"
 				>
 			</File>
 			<File
@@ -951,7 +933,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptdictionary\scriptdictionary.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptfile\scriptfile.cpp"
 				>
 			</File>
 			<File
@@ -959,7 +949,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scripthelper\scripthelper.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scripthelper\scripthelper.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptmath\scriptmath.cpp"
 				>
 			</File>
 			<File
@@ -967,7 +965,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp"
 				>
 			</File>
 			<File
@@ -975,7 +981,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp"
 				>
 			</File>
 			<File
@@ -986,16 +1000,6 @@
 				RelativePath="..\..\source\stdvector.h"
 				>
 			</File>
-			<File
-				RelativePath="..\..\source\utils.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
-			>
 		</Filter>
 	</Files>
 	<Globals>

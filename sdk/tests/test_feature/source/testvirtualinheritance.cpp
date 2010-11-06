@@ -70,14 +70,14 @@ bool TestVirtualInheritance()
 	if( r != asNOT_SUPPORTED )
 	{
 		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = engine->RegisterObjectMethod("class1", "void CallMe2()", asMETHOD(CDerivedVirtual, CallMe2), asCALL_THISCALL);
 	if( r != asNOT_SUPPORTED )
 	{
 		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 /*
@@ -90,7 +90,7 @@ bool TestVirtualInheritance()
 	if( output2 != "CVBase1: CVBase1::CallMe1()\nCVBase2: CVBase2::CallMe2()\n" )
 	{
 		printf("%s: Method calls failed.\n%s", TESTNAME, output2.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 */
 	

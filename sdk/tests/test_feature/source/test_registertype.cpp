@@ -24,11 +24,11 @@ bool Test()
 	r = engine->RegisterObjectType("ref", 4, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -39,13 +39,13 @@ bool Test()
 	r = engine->RegisterObjectType("gc", 4, asOBJ_REF | asOBJ_GC); assert( r >= 0 );
 	r = ExecuteString(engine, "");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : Type 'gc' is missing behaviours\n"
 		               " (0, 0) : Info    : A garbage collected type must have the addref, release, and all gc behaviours\n"
 		               " (0, 0) : Error   : Invalid configuration\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -56,19 +56,19 @@ bool Test()
 	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("val", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
-		fail = true;
+		TEST_FAILED;
 	r = engine->RegisterObjectBehaviour("val", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
-		fail = true;
+		TEST_FAILED;
 	r = engine->RegisterObjectBehaviour("val", asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
 		               " (0, 0) : Error   : The behaviour is not compatible with the type\n"
 					   " (0, 0) : Error   : The behaviour is not compatible with the type\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -80,14 +80,14 @@ bool Test()
 	r = engine->RegisterObjectType("ref", 4, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void f(ref)", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	r = engine->RegisterGlobalFunction("ref f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -101,11 +101,11 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "ref r1, r2; r1 = r2;");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for this type available.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -116,13 +116,13 @@ bool Test()
 	r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 );
 	r = ExecuteString(engine, "ref r");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : Type 'ref' is missing behaviours\n"
 		               " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 		               " (0, 0) : Error   : Invalid configuration\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -133,17 +133,17 @@ bool Test()
 	r = engine->RegisterObjectType("ref", 0, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
-		fail = true;
+		TEST_FAILED;
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
-		fail = true;
+		TEST_FAILED;
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_FACTORY, "ref @f()", asFUNCTION(0), asCALL_GENERIC);
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
 		               " (0, 0) : Error   : The behaviour is not compatible with the type\n"
 					   "System function (1, 5) : Error   : Object handle is not supported for this type\n")
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -154,11 +154,11 @@ bool Test()
 	r = engine->RegisterObjectType("val", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = ExecuteString(engine, "val v1, v2; v1 = v2;");
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -171,11 +171,11 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = ExecuteString(engine, "val v1, v2; v1 = v2;");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for this type available.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -190,7 +190,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("val2", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = ExecuteString(engine, "val v1, v2; v1 = v2;");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : Type 'val' is missing behaviours\n"
 		               " (0, 0) : Info    : A non-pod value type must have the default constructor and destructor behaviours\n"
 		               " (0, 0) : Error   : Type 'val1' is missing behaviours\n"
@@ -200,7 +200,7 @@ bool Test()
 					   " (0, 0) : Error   : Invalid configuration\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -215,7 +215,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("ref2", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	r = ExecuteString(engine, "ref @r;");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : Type 'ref' is missing behaviours\n"
 		               " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 		               " (0, 0) : Error   : Type 'ref1' is missing behaviours\n"
@@ -225,7 +225,7 @@ bool Test()
 					   " (0, 0) : Error   : Invalid configuration\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -241,7 +241,7 @@ bool Test()
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling ref func(ref)\n"
 		               "script (1, 1) : Error   : Data type can't be 'ref'\n"
 					   "script (1, 10) : Error   : Parameter type can't be 'ref'\n"
@@ -252,7 +252,7 @@ bool Test()
 					   "script (1, 34) : Error   : There is no copy operator for this type available.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -268,13 +268,13 @@ bool Test()
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func(ref&in, ref&out, ref&inout)\n"
 		               "script (1, 11) : Error   : Parameter type can't be 'ref&'\n"
 					   "script (1, 23) : Error   : Parameter type can't be 'ref&'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -285,16 +285,16 @@ bool Test()
 	r = engine->RegisterObjectType("ref", 0, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
 	r = ExecuteString(engine, "ref @r");
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	r = engine->RegisterGlobalFunction("ref@ func()", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 5) : Error   : Object handle is not supported for this type\n"
 	                   "ExecuteString (1, 6) : Error   : Data type can't be 'ref'\n"
 	                   "System function (1, 4) : Error   : Object handle is not supported for this type\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Must be possible to register float types
@@ -308,13 +308,13 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 		r = engine->RegisterObjectType("test1", 4, asOBJ_VALUE | asOBJ_POD);
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		r = engine->RegisterGlobalFunction("test1 f()", asFUNCTION(0), asCALL_CDECL); 
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		r = engine->RegisterGlobalFunction("void f(test1)", asFUNCTION(0), asCALL_CDECL);
-		if( r < 0 ) fail = true;
+		if( r < 0 ) TEST_FAILED;
 		r = ExecuteString(engine, "test1 t");
-		if( r >= 0 ) fail = true;
+		if( r >= 0 ) TEST_FAILED;
 		// TODO: These errors should really be returned immediately when registering the function
 		if( bout.buffer != " (0, 0) : Info    : test1 f()\n"
 			               " (0, 0) : Error   : Can't return type 'test1' by value unless the application type is informed in the registration\n"
@@ -331,14 +331,14 @@ bool Test()
 						   " (0, 0) : Error   : Invalid configuration\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 		engine->Release();
 	}
 
 	// It must not be possible to register a value type without defining the application type
 	r = engine->RegisterObjectType("test2", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CONSTRUCTOR);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 
 	engine->Release();
 
@@ -350,7 +350,7 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		r = engine->RegisterGlobalFunction("void func() const", asFUNCTION(0), asCALL_GENERIC);
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 		engine->Release();
 	}
 
@@ -433,21 +433,21 @@ bool TestRefScoped()
 	// Enumerate the objects behaviours
 	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("scoped"));
 	if( ot->GetBehaviourCount() != 1 )
-		fail = true;
+		TEST_FAILED;
 	asEBehaviours beh;
 	ot->GetBehaviourByIndex(0, &beh);
 	if( beh != asBEHAVE_RELEASE )
-		fail = true;
+		TEST_FAILED;
 
 	// Must be possible to determine type id for scoped types with handle
 	asIScriptFunction *func = engine->GetFunctionDescriptorById(ot->GetFactoryIdByIndex(0));
 	int typeId = func->GetReturnTypeId();
 	if( typeId != engine->GetTypeIdByDecl("scoped@") )
-		fail = true;
+		TEST_FAILED;
 
 	// Don't permit handles to be taken
 	r = ExecuteString(engine, "scoped @s = null");
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	// TODO: The second message is a consequence of the first error, and should ideally not be shown
 	if( sizeof(void*) == 4 )
 	{
@@ -455,7 +455,7 @@ bool TestRefScoped()
 						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 	else
@@ -464,21 +464,21 @@ bool TestRefScoped()
 						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
 	// Test a legal actions
 	r = ExecuteString(engine, "scoped a");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	bout.buffer = "";
 	r = ExecuteString(engine, "scoped s; scoped t = s + 10;");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test a compiler assert failure reported by Jeff Slutter on 2009-04-02
@@ -490,11 +490,11 @@ bool TestRefScoped()
 	r = engine->RegisterGlobalFunction("void SetObjectPosition(scoped &in)", asFUNCTION(Scoped_InRef), asCALL_CDECL); assert( r >= 0 );
 	
 	r = ExecuteString(engine, script);
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// It must be possible to include the scoped type as member in script class
@@ -503,42 +503,42 @@ bool TestRefScoped()
 	mod->AddScriptSection("test", "class A { scoped s; }");
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "A a; scoped s; a.s = s;", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 
 	// Don't permit functions to be registered with handle for parameters
 	bout.buffer = "";
 	r = engine->RegisterGlobalFunction("void f(scoped@)", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "System function (1, 14) : Error   : Object handle is not supported for this type\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Don't permit functions to be registered to take type by reference (since that require handles)
 	bout.buffer = "";
 	r = engine->RegisterGlobalFunction("void f(scoped&)", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	if( r >= 0 ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "System function (1, 14) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Permit &in
 	r = engine->RegisterGlobalFunction("void f(scoped&in)", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 
 	engine->Release();

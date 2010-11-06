@@ -63,7 +63,7 @@ bool Test()
 	// Test the parse token method
 	asETokenClass t = engine->ParseToken("!is");
 	if( t != asTC_KEYWORD )
-		fail = true;
+		TEST_FAILED;
 
 	// Compile a script with meta data strings
 	CScriptBuilder builder;
@@ -73,37 +73,37 @@ bool Test()
 	r = builder.BuildModule();
 #if AS_PROCESS_METADATA == 1
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	int funcId = engine->GetModule(0)->GetFunctionIdByName("func1");
 	string metadata = builder.GetMetadataStringForFunc(funcId);
 	if( metadata != " my meta data test " )
-		fail = true;
+		TEST_FAILED;
 
 	funcId = engine->GetModule(0)->GetFunctionIdByName("func2");
 	metadata = builder.GetMetadataStringForFunc(funcId);
 	if( metadata != " test['hello'] " )
-		fail = true;
+		TEST_FAILED;
 
 	int typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass");
 	metadata = builder.GetMetadataStringForType(typeId);
 	if( metadata != " myclass " )
-		fail = true;
+		TEST_FAILED;
 
 	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
 	metadata = builder.GetMetadataStringForType(typeId);
 	if( metadata != " myintf " )
-		fail = true;
+		TEST_FAILED;
 
 	int varIdx = engine->GetModule(0)->GetGlobalVarIndexByName("g_var");
 	metadata = builder.GetMetadataStringForVar(varIdx);
 	if( metadata != " init " )
-		fail = true;
+		TEST_FAILED;
 
 	varIdx = engine->GetModule(0)->GetGlobalVarIndexByName("g_obj");
 	metadata = builder.GetMetadataStringForVar(varIdx);
 	if( metadata != " var of type myclass " )
-		fail = true;
+		TEST_FAILED;
 #endif
 
 	engine->Release();

@@ -184,20 +184,20 @@ bool Test()
 		mod->AddScriptSection("s", script);
 		int r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		// The object that was returned by value, must not be freed too early
 		r = ExecuteString(engine, "Assert(TestInt()[0].v == 10)", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		if( bout.buffer != "ExecuteString (1, 17) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
 		                   "ExecuteString (1, 17) : Info    : MyStruct& array::opIndex(int)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -206,7 +206,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -219,7 +219,7 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 		
-		fail = true;
+		TEST_FAILED;
 	}
 	
 	if( ctx ) ctx->Release();
@@ -229,7 +229,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -242,7 +242,7 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 		
-		fail = true;
+		TEST_FAILED;
 	}
 	
 	if( ctx ) ctx->Release();
@@ -252,24 +252,24 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	ctx = engine->CreateContext();
 	r = ctx->Prepare(mod->GetFunctionIdByDecl("void Test(string[] v)"));
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	vector<string> local;
 	local.push_back(string("test"));
 	r = ctx->SetArgObject(0, &local);
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	ctx->Release();

@@ -44,7 +44,7 @@ bool TestVector3()
 	if( r < 0 )
 	{
 		printf("%s: Failed to build\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	else
 	{
@@ -53,12 +53,12 @@ bool TestVector3()
 		if( r < 0 )
 		{
 			printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-			fail = true;
+			TEST_FAILED;
 		}
 		if( v.x != 1 || v.y != 2 || v.z != 3 )
 		{
 			printf("%s: Failed to assign correct Vector3\n", TESTNAME);
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// Manual return
@@ -72,7 +72,7 @@ bool TestVector3()
 		if( ret->x != 1 || ret->y != 2 || ret->z != 3 )
 		{
 			printf("%s: Failed to assign correct Vector3\n", TESTNAME);
-			fail = true;
+			TEST_FAILED;
 		}
 
 		ctx->Prepare(mod->GetFunctionIdByDecl("vector3 TestVector3Val(vector3)"));
@@ -83,7 +83,7 @@ bool TestVector3()
 		if( ret->x != 3 || ret->y != 2 || ret->z != 1 )
 		{
 			printf("%s: Failed to pass Vector3 by val\n", TESTNAME);
-			fail = true;
+			TEST_FAILED;
 		}
 
 		ctx->Prepare(mod->GetFunctionIdByDecl("void TestVector3Ref(vector3 &out)"));
@@ -92,7 +92,7 @@ bool TestVector3()
 		if( v.x != 1 || v.y != 2 || v.z != 3 )
 		{
 			printf("%s: Failed to pass Vector3 by ref\n", TESTNAME);
-			fail = true;
+			TEST_FAILED;
 		}
 
 		ctx->Release();
@@ -102,38 +102,38 @@ bool TestVector3()
 	r = ExecuteString(engine, "vector3 v; float x = (v = vector3(10.0f,7,8)).x; assert( x > 9.9999f && x < 10.0001f );");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test some operator overloads
 	r = ExecuteString(engine, "vector3 v(1,0,0); assert( (v*2).length() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "vector3 v(1,0,0); assert( (2*v).length() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "vector3 v(1,0,0); assert( (v+v).length() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "vector3 v(1,0,0); assert( v == vector3(1,0,0) );");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "vector3 v(1,0,0); assert( (v *= 2).length() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test error message when constructor is not found
@@ -142,7 +142,7 @@ bool TestVector3()
 	r = ExecuteString(engine, "vector3 v = vector3(4,3);");
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	// TODO: the function signature for the constructors/factories should carry the name of the object
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'vector3(const uint, const uint)'\n"
@@ -153,7 +153,7 @@ bool TestVector3()
 	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3&'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

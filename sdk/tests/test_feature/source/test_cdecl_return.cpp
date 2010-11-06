@@ -125,7 +125,7 @@ static void cfunction_f_gen(asIScriptGeneric *gen)
 }
 bool TestReturnF()
 {
-	bool ret = false;
+	bool fail = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterGlobalProperty("float returnValue_f", &returnValue_f);
@@ -139,13 +139,13 @@ bool TestReturnF()
 	if( returnValue_f != 18.87f ) 
 	{
 		printf("\n%s: cfunction didn't return properly. Expected %f, got %f\n\n", TESTNAME, 18.87f, returnValue_f);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
 	
 	// Success
-	return ret;
+	return fail;
 }
 
 //-------------------------------------------
@@ -164,7 +164,7 @@ static void cfunction_d_gen(asIScriptGeneric *gen)
 
 bool TestReturnD()
 {
-	bool ret = false;
+	bool fail = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterGlobalProperty("double returnValue_d", &returnValue_d);
@@ -178,13 +178,13 @@ bool TestReturnD()
 	if( returnValue_d != 88.32 ) 
 	{
 		printf("\n%s: cfunction didn't return properly. Expected %f, got %f\n\n", TESTNAME, 88.32, returnValue_d);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
 	
 	// Success
-	return ret;
+	return fail;
 }
 
 //-----------------------------------------------

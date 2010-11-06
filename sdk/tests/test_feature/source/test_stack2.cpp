@@ -186,38 +186,38 @@ bool Test()
 	// Verify order of calculations
  	output = "";
 	ExecuteString(engine, "a_str() + b_str()", mod);
-	if( output != "ba" ) fail = true;
+	if( output != "ba" ) TEST_FAILED;
 
 	output = "";
 	ExecuteString(engine, "b_strref() = a_str()", mod);
-	if( output != "ab" ) fail = true;
+	if( output != "ab" ) TEST_FAILED;
 
 	output = "";
 	ExecuteString(engine, "b_strref() += a_str()", mod);
-	if( output != "ab" ) fail = true;
+	if( output != "ab" ) TEST_FAILED;
 
 	output = "";
 	ExecuteString(engine, "a_int() + b_int()", mod);
-	if( output != "ab" ) fail = true;
+	if( output != "ab" ) TEST_FAILED;
 
 	output = "";
 	ExecuteString(engine, "b_intref() = a_int()", mod);
-	if( output != "ab" ) fail = true;
+	if( output != "ab" ) TEST_FAILED;
 
 	output = "";
 	ExecuteString(engine, "b_intref() += a_int()", mod);
-	if( output != "ab" ) fail = true;
+	if( output != "ab" ) TEST_FAILED;
 
 	// Nested output parameters with a returned reference
 	ci = 0; cs = ""; str = "";
 	ExecuteString(engine, "complex3(complex(str)) = 1", mod);
-	if( ci != 1 ) fail = true;
-	if( cs != "outparm3" ) fail = true;
-	if( str != "outparm" ) fail = true;
+	if( ci != 1 ) TEST_FAILED;
+	if( cs != "outparm3" ) TEST_FAILED;
+	if( str != "outparm" ) TEST_FAILED;
 
 	str = "";
  	ExecuteString(engine, "GetProp(\"test\").Get(str);", mod);
-	if( str != "PropOut" ) fail = true;
+	if( str != "PropOut" ) TEST_FAILED;
 
  	engine->Release();
 
@@ -251,17 +251,17 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		int r = mod->Build();
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
-			fail = true;
+			TEST_FAILED;
 		if( string(ctx->GetExceptionString()) != "Stack overflow" )
-			fail = true;
+			TEST_FAILED;
 		// On 32bit targets the exception happens in testclass, but on 64bit targets the exception happens in myCompare
 		if( sizeof(void*) == 4 && string(engine->GetFunctionDescriptorById(ctx->GetExceptionFunction())->GetName()) != "testclass" ||
 			sizeof(void*) == 8 && string(engine->GetFunctionDescriptorById(ctx->GetExceptionFunction())->GetName()) != "myCompare" )
-			fail = true;
+			TEST_FAILED;
 		ctx->Release();
 		
 		engine->Release();

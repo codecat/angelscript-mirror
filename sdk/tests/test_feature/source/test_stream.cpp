@@ -127,7 +127,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -139,14 +139,14 @@ bool Test()
 			PrintException(ctx);
 
 		printf("%s: Failed to execute script\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 
 	if( stream.str() != "abc" )
 	{
 		printf("%s: Failed to create the correct stream\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	stream.clear();
@@ -155,7 +155,7 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	ctx = engine->CreateContext();
 	r = ExecuteString(engine, "Test2()", mod, ctx);
@@ -163,7 +163,7 @@ bool Test()
 	{
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 

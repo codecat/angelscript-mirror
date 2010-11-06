@@ -67,7 +67,7 @@ bool TestVirtualMethod()
 	if( output1 != "CBase: CBase::CallMe()\nCDerived: CDerived::CallMe()\n" )
 	{
 		printf("%s: Virtual method calls failed.\n%s", TESTNAME, output1.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	
 	engine->Release();

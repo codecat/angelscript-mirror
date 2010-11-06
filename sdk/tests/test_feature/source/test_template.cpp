@@ -144,7 +144,7 @@ bool Test()
 	}
 
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int&in)", asFUNCTION(MyTmpl_factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL); assert( r >= 0 );
@@ -170,7 +170,7 @@ bool Test()
 								 "assert( s.GetNameOfType() == 'MyTmpl<string>' ); \n");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test that the assignment works
@@ -178,7 +178,7 @@ bool Test()
 		                         "i1.Assign(i2);      \n");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test that the template sub type works
@@ -187,7 +187,7 @@ bool Test()
 								 "i.GetVal(); \n");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// It should be possible to register specializations of the template type
@@ -205,14 +205,14 @@ bool Test()
 		                         "assert( f.GetNameOfType() == 'MyTmpl<float>' ); \n");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "MyTmpl<float> f1, f2; \n"
 		                         "f1.Assign(f2);        \n");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "MyTmpl<float> f; \n"
@@ -220,7 +220,7 @@ bool Test()
 								 "f.GetVal(); \n");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	
@@ -256,13 +256,13 @@ bool Test()
 		r = ExecuteString(engine, "MyTmpl<int> t;");
 		if( r >= 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'int'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -286,13 +286,13 @@ bool Test()
 		r = ExecuteString(engine, "MyTmpl<string> t;");
 		if( r >= 0 )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'string'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -305,10 +305,10 @@ bool Test()
 		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f()", asFUNCTION(0), asCALL_GENERIC);
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int)", asFUNCTION(0), asCALL_GENERIC);
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 		engine->Release();
 	}
 
@@ -320,7 +320,7 @@ bool Test()
 		r = engine->RegisterObjectProperty("MyTmpl<T>", "T a", 0); 
 		if( r != asINVALID_DECLARATION )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		engine->Release();
 	}
@@ -331,7 +331,7 @@ bool Test()
 		r = engine->RegisterObjectType("MyTmpl<float>", 0, asOBJ_REF);
 		if( r != asINVALID_NAME )
 		{
-			fail = true;
+			TEST_FAILED;
 		}
 		engine->Release();
 	}

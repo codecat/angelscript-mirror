@@ -192,7 +192,7 @@ static void cfunction_gen(asIScriptGeneric *gen)
 
 bool TestExecute32Args()
 {
-	bool ret = false;
+	bool fail = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -251,7 +251,7 @@ bool TestExecute32Args()
 	{
 		// failure
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	} 
 	else if( !testVal ) 
 	{
@@ -260,7 +260,7 @@ bool TestExecute32Args()
 		for (int i = 0; i < 32; i++) 
 			printf("value %d: %d\n", i, values[i]);
 		
-		ret = true;
+		TEST_FAILED;
 	}
 	
 	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -281,7 +281,7 @@ bool TestExecute32Args()
 		{
 			// failure
 			printf("\n%s: cfunction not called from script\n\n", TESTNAME);
-			ret = true;
+			TEST_FAILED;
 		} 
 		else if( !testVal ) 
 		{
@@ -290,7 +290,7 @@ bool TestExecute32Args()
 			for (int i = 0; i < 32; i++) 
 				printf("value %d: %f\n", i, fvalues[i]);
 		
-			ret = true;
+			TEST_FAILED;
 		}
 		
 		called = false;
@@ -309,7 +309,7 @@ bool TestExecute32Args()
 		{
 			// failure
 			printf("\n%s: cfunction not called from script\n\n", TESTNAME);
-			ret = true;
+			TEST_FAILED;
 		} 
 		else if( !testVal ) 
 		{
@@ -318,12 +318,12 @@ bool TestExecute32Args()
 			for (int i = 0; i < 32; i++) 
 				printf("value %d: %f\n", i, dvalues[i]);
 		
-			ret = true;
+			TEST_FAILED;
 		}
 	}
 
 	engine->Release();
 	
 	// Success
-	return ret;
+	return fail;
 }

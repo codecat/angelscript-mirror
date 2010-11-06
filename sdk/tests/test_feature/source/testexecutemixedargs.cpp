@@ -60,7 +60,7 @@ static void cfunction2(asINT64 i1, float f2, char i3, int i4)
 
 bool TestExecuteMixedArgs()
 {
-	bool ret = false;
+	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -72,10 +72,10 @@ bool TestExecuteMixedArgs()
 	
 	if (!called) {
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	} else if (!testVal) {
 		printf("\n%s: testVal is not of expected value. Got (%d, %f, %f, %c), expected (%d, %f, %f, %c)\n\n", TESTNAME, t1, t2, t3, t4, 10, 1.92f, 3.88, 97);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -92,17 +92,17 @@ bool TestExecuteMixedArgs()
 		if( !called )
 		{
 			printf("%s: cfunction2 not called\n", TESTNAME);
-			ret = true;
+			TEST_FAILED;
 		}
 		else if( !testVal )
 		{
 			printf("%s: testVal not of expected value. Got(%lld, %g, %d, %d)\n", TESTNAME, g1, g2, g3, g4);
-			ret = true;
+			TEST_FAILED;
 		}
 	}
 
 	engine->Release();
 	engine = NULL;
 
-	return ret;
+	return fail;
 }

@@ -98,13 +98,13 @@ bool TestNotComplexThisCall()
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c1.a != 0xDEADC0DE )
 	{
 		printf("%s: Failed to assign object returned from function. c1.a = %X\n", TESTNAME, (unsigned int)c1.a);
-		fail = true;
+		TEST_FAILED;
 	}
 
 
@@ -115,19 +115,19 @@ bool TestNotComplexThisCall()
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c2.a != 0xDEADC0DE )
 	{
 		printf("%s: Failed to assign object returned from function. c2.a = %X\n", TESTNAME, (unsigned int)c2.a);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c2.b != 0x01234567 )
 	{
 		printf("%s: Failed to assign object returned from function. c2.b = %X\n", TESTNAME, (unsigned int)c2.b);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	c3.a = 0;
@@ -138,25 +138,25 @@ bool TestNotComplexThisCall()
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c3.a != 0xDEADC0DE )
 	{
 		printf("%s: Failed to assign object returned from function. c3.a = %X\n", TESTNAME, (unsigned int)c3.a);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c3.b != 0x01234567 )
 	{
 		printf("%s: Failed to assign object returned from function. c3.b = %X\n", TESTNAME, (unsigned int)c3.b);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c3.c != 0x89ABCDEF )
 	{
 		printf("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, (unsigned int)c3.c);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

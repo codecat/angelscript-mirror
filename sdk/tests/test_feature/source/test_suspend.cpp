@@ -88,13 +88,13 @@ bool Test()
 			ctx->Execute();
 	}
 	else
-		fail = true;
+		TEST_FAILED;
 
 	// Make sure the Execute method returns proper status on abort
 	int r = ExecuteString(engine, "Abort()", 0, 0);
 	if( r != asEXECUTION_ABORTED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Release the engine first
@@ -120,7 +120,7 @@ bool Test()
 	if( loopCount != 3 )
 	{
 		printf("%s: failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	ctx->Prepare(asPREPARE_PREVIOUS);
@@ -130,7 +130,7 @@ bool Test()
 	if( loopCount != 3 )
 	{
 		printf("%s: failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	ctx->Release();

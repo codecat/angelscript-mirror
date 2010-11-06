@@ -21,13 +21,13 @@ bool TestNotInitialized()
 	int r = ExecuteString(engine, "int a; cfunction(a);");
 	if( r < 0 )
 	{
-	    fail = true;
+	    TEST_FAILED;
 	}
 
 	if( out.buffer != "ExecuteString (1, 18) : Warning : 'a' is not initialized.\n" )
 	{
 		printf("%s: Failed to catch use of uninitialized variable\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

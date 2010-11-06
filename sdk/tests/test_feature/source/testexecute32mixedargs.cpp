@@ -118,7 +118,7 @@ static void cfunction_gen(asIScriptGeneric *gen)
 
 bool TestExecute32MixedArgs()
 {
-	bool ret = false;
+	bool fail = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -164,7 +164,7 @@ bool TestExecute32MixedArgs()
 	{
 		// failure
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	} 
 	else if( !testVal ) 
 	{
@@ -180,11 +180,11 @@ bool TestExecute32MixedArgs()
 				printf("fvalue[%d]: %f\n", pos+j, fvalues[pos+j]);
 			pos += 4;
 		}
-		ret = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
 	
 	// Success
-	return ret;
+	return fail;
 }

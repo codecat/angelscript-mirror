@@ -68,13 +68,13 @@ bool Test()
 
 	if( a != 0x12345678 || b != 0x12345678 || c != 0x12345678 || d != 0x12345678 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to assign all objects equally\n", TESTNAME);
 	}
 
 	if( clr != 0x12345678 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Src object changed during operation\n", TESTNAME);
 	}
 

@@ -99,13 +99,13 @@ bool TestCDecl_Class()
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c1.a != 0xDEADC0DE )
 	{
 		printf("%s: Failed to assign object returned from function. c1.a = %X\n", TESTNAME, (unsigned int)c1.a);
-		fail = true;
+		TEST_FAILED;
 	}
 
 
@@ -116,19 +116,19 @@ bool TestCDecl_Class()
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c2.a != 0xDEADC0DE )
 	{
 		printf("%s: Failed to assign object returned from function. c2.a = %X\n", TESTNAME, (unsigned int)c2.a);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c2.b != 0x01234567 )
 	{
 		printf("%s: Failed to assign object returned from function. c2.b = %X\n", TESTNAME, (unsigned int)c2.b);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	c3.a = 0;
@@ -139,25 +139,25 @@ bool TestCDecl_Class()
 	if( r < 0 )
 	{
 		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c3.a != 0xDEADC0DE )
 	{
 		printf("%s: Failed to assign object returned from function. c3.a = %X\n", TESTNAME, (unsigned int)c3.a);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c3.b != 0x01234567 )
 	{
 		printf("%s: Failed to assign object returned from function. c3.b = %X\n", TESTNAME, (unsigned int)c3.b);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	if( c3.c != 0x89ABCDEF )
 	{
 		printf("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, (unsigned int)c3.c);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test passing the object types by value to a system function
@@ -167,18 +167,18 @@ bool TestCDecl_Class()
 		r = engine->RegisterGlobalFunction("void class1ByVal(class1)", asFUNCTION(class1ByVal), asCALL_CDECL); assert( r >= 0 );
 		r = ExecuteString(engine, "class1 c = _class1(); class1ByVal(c)");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		r = engine->RegisterGlobalFunction("void class2ByVal(class2)", asFUNCTION(class2ByVal), asCALL_CDECL); assert( r >= 0 );
 		r = ExecuteString(engine, "class2 c = _class2(); class2ByVal(c)");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		Class3 c = class3(); class3ByVal(c);
 		r = engine->RegisterGlobalFunction("void class3ByVal(class3)", asFUNCTION(class3ByVal), asCALL_CDECL); assert( r >= 0 );
 		r = ExecuteString(engine, "class3 c = _class3(); class3ByVal(c)");
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 
 	engine->Release();

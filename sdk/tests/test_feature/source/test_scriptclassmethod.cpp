@@ -175,14 +175,14 @@ bool Test()
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED ) 
 	{
 		if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 
@@ -192,26 +192,26 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, "class t{ s() {} };", 18, 0);
 	r = mod->Build();
-	if( r >= 0 ) fail = true;
-	if( bout.buffer != "TestScriptClassMethod (1, 10) : Error   : The constructor name must be the same as the class\n" ) fail = true;
+	if( r >= 0 ) TEST_FAILED;
+	if( bout.buffer != "TestScriptClassMethod (1, 10) : Error   : The constructor name must be the same as the class\n" ) TEST_FAILED;
 
 	// Make sure the default constructor can be overloaded
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	int typeId = engine->GetModule("test")->GetTypeIdByDecl("myclass");
 	asIScriptObject *s = (asIScriptObject*)engine->CreateScriptObject(typeId);
 	if( s == 0 ) 
-		fail = true;
+		TEST_FAILED;
 	else
 	{
 		// Validate the property
@@ -223,17 +223,17 @@ bool Test()
 			if( str == s->GetPropertyName(c) )
 			{	
 				v = (int*)s->GetAddressOfProperty(c);
-				if( *v != 1 ) fail = true;
+				if( *v != 1 ) TEST_FAILED;
 			}
 		}
 
 		// Call the script class method
 		asIObjectType *type = engine->GetObjectTypeById(typeId);
 		if( type->GetMethodCount() != 2 ) 
-			fail = true;
+			TEST_FAILED;
 		int methodId = type->GetMethodIdByDecl("void method2()");
 		if( methodId < 0 ) 
-			fail = true;
+			TEST_FAILED;
 		else
 		{
 			asIScriptContext *ctx = engine->CreateContext();
@@ -241,10 +241,10 @@ bool Test()
 			ctx->SetObject(s);
 			int r = ctx->Execute();
 			if( r != asEXECUTION_FINISHED )
-				fail = true;
+				TEST_FAILED;
 
 			if( (!v) || (*v != 3) ) 
-				fail = true;
+				TEST_FAILED;
 
 			ctx->Release();
 		}
@@ -262,27 +262,27 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test3", script3, strlen(script3), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	typeId = engine->GetModule(0)->GetTypeIdByDecl("myclass");
 	asIObjectType *type = engine->GetObjectTypeById(typeId);
 	int mtdId = type->GetMethodIdByDecl("void func()");
 	asIScriptObject *obj = (asIScriptObject *)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("c"));
 
-	if( mtdId < 0 || obj == 0 ) fail = true;
+	if( mtdId < 0 || obj == 0 ) TEST_FAILED;
 	else
 	{
 		asIScriptContext *ctx = engine->CreateContext();
 		ctx->Prepare(mtdId);
 		ctx->SetObject(obj);
 		r = ctx->Execute();
-		if( r != asEXECUTION_FINISHED ) fail = true;
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 		ctx->Release();
 	}
 
 	type = engine->GetObjectTypeById(typeId);
 	mtdId = type->GetMethodIdByDecl("void func(int, int)");
-	if( mtdId < 0 || obj == 0 ) fail = true;
+	if( mtdId < 0 || obj == 0 ) TEST_FAILED;
 	else
 	{
 		asIScriptContext *ctx = engine->CreateContext();
@@ -291,7 +291,7 @@ bool Test()
 		ctx->SetArgDWord(0, 1);
 		ctx->SetArgDWord(1, 1);
 		r = ctx->Execute();
-		if( r != asEXECUTION_FINISHED ) fail = true;
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 		ctx->Release();
 	}
 
@@ -305,10 +305,10 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test4", script4, strlen(script4), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	
 	int func = mod->GetFunctionIdByDecl("void func()");
-	if( func < 0 ) fail = true;
+	if( func < 0 ) TEST_FAILED;
 
 	engine->Release();
 
@@ -321,12 +321,12 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test5", script5, strlen(script5), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -340,18 +340,18 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test6", script6, strlen(script6), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 
 	outbuffer = "";
 	r = ExecuteString(engine, "Test t; t.Set(1); t.Test2();", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( outbuffer != "Test::Set\nTest::Set\nSet::Set\n" )
 	{
 		printf("%s", outbuffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -379,12 +379,12 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "A a; a.func(); assert( g == 2 );", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -402,11 +402,11 @@ bool Test()
 		bout.buffer = "";
 		r = mod->Build();
 		if( r >= 0 )
-			fail = true;
+			TEST_FAILED;
 		if( bout.buffer != "script (2, 3) : Error   : The method cannot be named with the class name\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			fail = true;
+			TEST_FAILED;
 		}
 		engine->Release();
 	}

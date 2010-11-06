@@ -210,7 +210,7 @@ void TestScripts(asIScriptEngine *engine)
 	if( funcID < 0 ) 
 	{
 		printf("%s: Failed to identify function with handle\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	ExecuteString(engine, "main()", mod);
@@ -218,7 +218,7 @@ void TestScripts(asIScriptEngine *engine)
 	if( number != 1234567890 )
 	{
 		printf("%s: Failed to set the number as expected\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Call an interface method on a class that implements the interface
@@ -230,11 +230,11 @@ void TestScripts(asIScriptEngine *engine)
 	int funcId = type->GetMethodIdByDecl("void test()");
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ctx->Prepare(funcId);
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	ctx->SetObject(obj);
 	ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	if( ctx ) ctx->Release();
 	if( obj ) obj->Release();
@@ -242,7 +242,7 @@ void TestScripts(asIScriptEngine *engine)
 	if( number != 1241 )
 	{
 		printf("%s: Interface method failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 }
 
@@ -311,11 +311,11 @@ bool Test()
 	mod->AddScriptSection(":1", script1, strlen(script1), 0);
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	// Validate the number of global functions
 	if( mod->GetFunctionCount() != 5 )
-		fail = true;
+		TEST_FAILED;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(":2", script2, strlen(script2), 0);
@@ -336,7 +336,7 @@ bool Test()
 	{
 		// Originally this was 3213 (on 32bit)
 		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	asUINT zeroes = stream.CountZeroes();
@@ -350,10 +350,10 @@ bool Test()
 	mod->LoadByteCode(&stream);
 
 	if( mod->GetFunctionCount() != 5 )
-		fail = true;
+		TEST_FAILED;
 
 	if( string(mod->GetFunctionDescriptorByIndex(0)->GetScriptSectionName()) != ":1" )
-		fail = true;
+		TEST_FAILED;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(":2", script2, strlen(script2), 0);
@@ -373,7 +373,7 @@ bool Test()
 	mod->LoadByteCode(&stream);
 
 	if( mod->GetFunctionCount() != 5 )
-		fail = true;
+		TEST_FAILED;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(":2", script2, strlen(script2), 0);
@@ -447,7 +447,7 @@ bool Test()
 	mod->AddScriptSection("script", script4, strlen(script4));
 	r = mod->Build();
 	if( r < 0 ) 
-		fail = true;
+		TEST_FAILED;
 	else
 	{
 		// Test the script with compiled byte code
@@ -456,7 +456,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 		{
 			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
-			fail = true;
+			TEST_FAILED;
 		}
 		if( ctx ) ctx->Release();
 
@@ -475,7 +475,7 @@ bool Test()
 		mod->LoadByteCode(&stream4);
 		r = ExecuteString(engine, "g_inGame.Initialize(0);", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 	engine->Release();
 	//----------------
@@ -504,7 +504,7 @@ bool Test()
 	mod->AddScriptSection("script", script5, strlen(script5));
 	r = mod->Build();
 	if( r < 0 ) 
-		fail = true;
+		TEST_FAILED;
 	else
 	{
 		// Test the script with compiled byte code
@@ -513,7 +513,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 		{
 			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
-			fail = true;
+			TEST_FAILED;
 		}
 		if( ctx ) ctx->Release();
 
@@ -549,7 +549,7 @@ bool Test()
 		mod->LoadByteCode(&stream);
 		r = ExecuteString(engine, "Initialize();", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 	}
 	engine->Release();
 
@@ -574,7 +574,7 @@ bool Test()
 		
 		ExecuteString(engine, "main()", mod);
 		if( _out != " i = (123)aaabbb" )
-			fail = true;
+			TEST_FAILED;
 
 		mod->SaveByteCode(&stream);
 		engine->Release();
@@ -590,7 +590,7 @@ bool Test()
 		_out = "";
 		ExecuteString(engine, "main()", mod);
 		if( _out != " i = (123)aaabbb" )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -627,7 +627,7 @@ bool Test()
 		mod->LoadByteCode(&stream);
 
 		if( ExecuteString(engine, "main()", mod) != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 		
 		engine->Release();
 	}
@@ -659,7 +659,7 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -694,7 +694,7 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -723,7 +723,7 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -756,11 +756,11 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -784,10 +784,10 @@ bool Test()
 
 		r = ExecuteString(engine, "func()", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		if( *(int*)(&test) != 1 || *((int*)(&test)+1) != 2 )
-			fail = true;
+			TEST_FAILED;
 
 		mod->SaveByteCode(&stream);
 		engine->Release();
@@ -804,14 +804,14 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "func()", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		if( *(int*)(&test) != 2 || *((int*)(&test)+1) != 1 )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -847,7 +847,7 @@ bool Test()
 		
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		mod->SaveByteCode(&stream);
 		engine->Release();
@@ -859,11 +859,11 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -923,7 +923,7 @@ bool Test()
 		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "Test()", mod);
 
@@ -967,13 +967,13 @@ bool Test()
 		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		stream.Restart();
 		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			fail = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -1001,24 +1001,24 @@ bool Test2()
 	r = mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	CBytecodeStream stream(__FILE__"6");
 	mod = engine->GetModule(0);
 	r = mod->SaveByteCode(&stream);
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 	engine->Release();
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	r = mod->LoadByteCode(&stream);
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

@@ -68,7 +68,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 8) : Error   : Data type can't be 'Object'\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Must not allow it to be declared as global variable
@@ -81,7 +81,7 @@ bool Test()
 		  					     "script (1, 8) : Error   : No default constructor for object of type 'Object'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 	engine->DiscardModule(0);
 
@@ -91,7 +91,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 7) : Error   : Data type can't be 'Object'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -99,28 +99,28 @@ bool Test()
 	if( r < 0 )
 	{
 		printf("%s: Failed to compile\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "Object@ obj = @CreateObject();");
 	if( r < 0 )
 	{
 		printf("%s: Failed to compile\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "CreateObject();");
 	if( r < 0 )
 	{
 		printf("%s: Failed to compile\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "Object@ obj = @CreateObject(); @obj = @CreateObject();");
 	if( r < 0 )
 	{
 		printf("%s: Failed to compile\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	bout.buffer = "";
@@ -129,7 +129,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 36) : Error   : There is no copy operator for this type available.\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	bout.buffer = "";
@@ -137,7 +137,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 1) : Error   : Reference is temporary\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	bout.buffer = "";
@@ -145,7 +145,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 1) : Error   : Reference is temporary\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Test object with zero size as member of script class
@@ -161,7 +161,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "script (4, 5) : Error   : Data type can't be 'Object'\n" )
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

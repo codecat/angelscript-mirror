@@ -23,7 +23,7 @@ static asIScriptEngine *engine;
 
 bool TestExecuteScript()
 {
-	bool ret = false;
+	bool fail = false;
 	COutStream out;
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -41,13 +41,13 @@ bool TestExecuteScript()
 		r = builder.BuildModule();
 	if( r >= 0 )
 	{
-		ret = ExecuteScript();
+		fail = ExecuteScript();
 	}
 
 	engine->Release();
 	engine = NULL;
 
-	return ret;
+	return fail;
 }
 
 

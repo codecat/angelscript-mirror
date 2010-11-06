@@ -75,7 +75,7 @@ bool TestMultipleInheritance()
 	if( output2 != "CBase1: CBase1::CallMe1()\nCBase2: CBase2::CallMe2()\n" )
 	{
 		printf("%s: Method calls failed.\n%s", TESTNAME, output2.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -159,7 +159,7 @@ bool Exec(asIScriptEngine *engine, Creep &c)
 	int r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	ctx->Release();
@@ -204,7 +204,7 @@ bool TestMultipleInheritance2()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
     CreepClient cc;
@@ -212,7 +212,7 @@ bool TestMultipleInheritance2()
 	fail = Exec(engine, cc) || fail;
 
 	if( addOverlayCalled == false )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

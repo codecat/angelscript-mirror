@@ -85,7 +85,7 @@ void print(asIScriptGeneric *gen)
 
 bool TestGlobalVar()
 {
-	bool ret = false;
+	bool fail = false;
 	asIScriptEngine *engine;
 	COutStream out;
 	int r;
@@ -107,7 +107,7 @@ bool TestGlobalVar()
 	if( mod->Build() >= 0 )
 	{
 		printf("%s: build erronously returned success\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	mod->AddScriptSection("script", script2, strlen(script2), 0);
@@ -115,14 +115,14 @@ bool TestGlobalVar()
 	if( mod->Build() < 0 )
 	{
 		printf("%s: build failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	mod->AddScriptSection("script", script3, strlen(script3), 0);
 	if( mod->Build() < 0 )
 	{
 		printf("%s: build failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	ExecuteString(engine, "TestGlobalVar()", mod);
@@ -141,7 +141,7 @@ bool TestGlobalVar()
 	if( !CompareDouble(*f, 2) || *str != "test" )
 	{
 		printf("%s: Failed to reset the module\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	// Use another module so that we can test that the variable id is correct even for multiple modules
@@ -150,20 +150,20 @@ bool TestGlobalVar()
 	if( mod->Build() < 0 )
 	{
 		printf("%s: build failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	int c = engine->GetModule("b")->GetGlobalVarCount();
-	if( c != 8 ) ret = true;
+	if( c != 8 ) TEST_FAILED;
 	double d;
 	d = *(double*)engine->GetModule("b")->GetAddressOfGlobalVar(0); 
-	if( !CompareDouble(d, 12) ) ret = true;
+	if( !CompareDouble(d, 12) ) TEST_FAILED;
 	d = *(double*)engine->GetModule("b")->GetAddressOfGlobalVar(engine->GetModule("b")->GetGlobalVarIndexByName("gcb")); 
-	if( !CompareDouble(d, 5) ) ret = true;
+	if( !CompareDouble(d, 5) ) TEST_FAILED;
 	d = *(double*)engine->GetModule("b")->GetAddressOfGlobalVar(engine->GetModule("b")->GetGlobalVarIndexByDecl("const double gcc")); 
-	if( !CompareDouble(d, 35.2) ) ret = true;
+	if( !CompareDouble(d, 35.2) ) TEST_FAILED;
 	d = *(double*)engine->GetModule("b")->GetAddressOfGlobalVar(3); 
-	if( !CompareDouble(d, 4) ) ret = true;
+	if( !CompareDouble(d, 4) ) TEST_FAILED;
 	
 	ExecuteString(engine, "test()", engine->GetModule("b"));
 
@@ -192,7 +192,7 @@ bool TestGlobalVar()
 	mod->AddScriptSection("script", script5);
 	r = mod->Build(); 
 	if( r < 0 )
-		ret = true;
+		TEST_FAILED;
 	engine->Release();
 
 	//--------------------------
@@ -204,15 +204,15 @@ bool TestGlobalVar()
 	mod->AddScriptSection("script", script6);
 	r = mod->Build();
 	if( r < 0 )
-		ret = true;
+		TEST_FAILED;
 	else
 	{
 		CScriptString *object = (CScriptString*)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("object"));
 		CScriptString **handle = (CScriptString**)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("handle"));
 		if( *handle != object )
-			ret = true;
+			TEST_FAILED;
 		if( object->buffer != "t" )
-			ret = true;
+			TEST_FAILED;
 	}
 	engine->Release();
 
@@ -234,12 +234,12 @@ bool TestGlobalVar()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
-			ret = true;
+			TEST_FAILED;
 		else
 		{
 			r = ExecuteString(engine, "assert(@a == @h); assert(v.length() == 2); assert(@v[0] == @v[1]);", mod);
 			if( r != asEXECUTION_FINISHED )
-				ret = true;
+				TEST_FAILED;
 		}
 
 		engine->Release();
@@ -253,10 +253,10 @@ bool TestGlobalVar()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		int r = engine->RegisterGlobalProperty("const int value = 3345;", 0);
 		if( r >= 0 )
-			ret = true;
+			TEST_FAILED;
 		if( bout.buffer != "Property (1, 17) : Error   : Expected '<end of file>'\n" )
 		{
-			ret = true;
+			TEST_FAILED;
 			printf("%s", bout.buffer.c_str());
 		}
 		engine->Release();
@@ -277,7 +277,7 @@ bool TestGlobalVar()
 		r = ExecuteString(engine, "float g = 0; g = 1; ::g = 2; assert( g == 1 ); assert( ::g == 2 );", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			ret = true;
+			TEST_FAILED;
 		}
 		engine->Release();
 	}
@@ -298,7 +298,7 @@ bool TestGlobalVar()
 		mod->AddScriptSection("", script);
 		r = mod->Build();
 		if( r < 0 )
-			ret = true;
+			TEST_FAILED;
 
 		engine->Release();
 	}
@@ -319,13 +319,13 @@ bool TestGlobalVar()
 		mod->AddScriptSection("", script);
 		r = mod->Build();
 		if( r < 0 )
-			ret = true;
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "assert( obj.a == 314+42 ); \n"
 			                      "assert( obj.b == 42 ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
-			ret = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -349,13 +349,13 @@ bool TestGlobalVar()
 		mod->AddScriptSection("", script);
 		r = mod->Build();
 		if( r >= 0 )
-			ret = true;
+			TEST_FAILED;
 
 		if( bout.buffer != " (4, 3) : Error   : Failed to initialize global variable 'g_b'\n"
 		                   " (2, 0) : Info    : Exception 'Null pointer access' in 'B::B()'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
-			ret = true;
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -364,6 +364,6 @@ bool TestGlobalVar()
 	g_str->Release();
 	g_str = 0;
 
-	return ret;
+	return fail;
 }
 

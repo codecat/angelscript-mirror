@@ -54,7 +54,7 @@ static void cfunction(asIScriptGeneric *) {
 
 bool TestInt64()
 {
-	bool ret = false;
+	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->RegisterObjectType("Int64", 8, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
@@ -73,7 +73,7 @@ bool TestInt64()
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("\n%s: The execution didn't finish correctly (code %d)\n", TESTNAME, r);
-		ret = true;
+		TEST_FAILED;
 
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
@@ -82,11 +82,11 @@ bool TestInt64()
     if( called != 3 ) 
 	{
 		printf("\n%s: cfunction called %d times. Expected 3 times\n", TESTNAME, called);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	ctx->Release();
 	engine->Release();
 
-	return ret;
+	return fail;
 }

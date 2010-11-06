@@ -110,7 +110,7 @@ bool Test()
 	if( r < 0 )
 	{
 		printf("%s: Failed to build\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	else
 	{
@@ -125,7 +125,7 @@ bool Test()
 		ctx->SetArgObject(1, &b);
 		r = ctx->Execute();
 		if( r != asEXECUTION_FINISHED )
-			fail = true;
+			TEST_FAILED;
 		Point *ret = (Point*)ctx->GetReturnObject();
 		c = *ret;
 		ctx->Release();

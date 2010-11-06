@@ -184,7 +184,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -196,14 +196,14 @@ bool Test()
 			PrintException(ctx);
 
 		printf("%s: Failed to execute script\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 
 	ExecuteString(engine, "ObjNoConstruct a; a = ObjNoConstruct();");
 	if( r != 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed\n", TESTNAME);
 	}
 
@@ -214,16 +214,16 @@ bool Test()
 	{
 		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Verify that the registered types can be enumerated
 	int count = engine->GetObjectTypeCount();
 	if( count != 3 )
-		fail = true;
+		TEST_FAILED;
 	asIObjectType *type = engine->GetObjectTypeByIndex(0);
 	if( strcmp(type->GetName(), "Object") != 0 )
-		fail = true;
+		TEST_FAILED;
 	
 	// Test calling an application registered method directly with context
 	ctx = engine->CreateContext();
@@ -232,9 +232,9 @@ bool Test()
 	ctx->SetArgDWord(0, 42);
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
-		fail = true;
+		TEST_FAILED;
 	if( obj.val != 42 )
-		fail = true;
+		TEST_FAILED;
 	ctx->Release();
 
 	// Test GetObjectTypeCount for the module
@@ -246,11 +246,11 @@ bool Test()
 
 	count = engine->GetObjectTypeCount();
 	if( count != 3 )
-		fail = true;
+		TEST_FAILED;
 
 	count = engine->GetModule(0)->GetObjectTypeCount();
 	if( count != 1 )
-		fail = true;
+		TEST_FAILED;
 
 
 	// Test assigning value to reference returned by class method where the reference points to a member of the class
@@ -258,7 +258,7 @@ bool Test()
 	r = ExecuteString(engine, "Object o; o.GetRef() = 10;");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -266,13 +266,13 @@ bool Test()
 	r = ExecuteString(engine, "Object().GetRef() = 10;");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "ExecuteString (1, 10) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
 		               "ExecuteString (1, 10) : Info    : int& Object::GetRef()\n" )
 	{
 		printf("%s", bout.buffer.c_str());
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// TODO: Make the same test with the index operator
@@ -310,13 +310,13 @@ bool Test2()
 	r = mod->Build();
 	if( r >= 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	if( bout.buffer != "script (1, 17) : Error   : Object handle is not supported for this type\n"
 	                   "script (1, 1) : Info    : Compiling void Test(Creep)\n"
 	                   "script (1, 17) : Error   : Object handle is not supported for this type\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
 	}
 

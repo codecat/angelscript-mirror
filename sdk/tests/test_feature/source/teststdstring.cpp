@@ -149,7 +149,7 @@ bool TestStdString()
 	int r = ExecuteString(engine, "blah1(); blah2();", mod);
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
@@ -161,7 +161,7 @@ bool TestStdString()
 
 	if( printOutput != "hello Ida" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to print the correct string\n", TESTNAME);
 	}
 
@@ -176,37 +176,37 @@ bool TestStdString()
 	ExecuteString(engine, "testString2()", mod);
 	if( printOutput != "Hello World!" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to print the correct string\n", TESTNAME);
 	}
 
 	printOutput = "";
 	ExecuteString(engine, "string a; a = 1; print(a);");
-	if( printOutput != "1" ) fail = true;
+	if( printOutput != "1" ) TEST_FAILED;
 
 	printOutput = "";
 	ExecuteString(engine, "string a; a += 1; print(a);");
-	if( printOutput != "1" ) fail = true;
+	if( printOutput != "1" ) TEST_FAILED;
 
 	printOutput = "";
 	ExecuteString(engine, "string a = \"a\" + 1; print(a);");
-	if( printOutput != "a1" ) fail = true;
+	if( printOutput != "a1" ) TEST_FAILED;
 
 	printOutput = "";
 	ExecuteString(engine, "string a = 1 + \"a\"; print(a);");
-	if( printOutput != "1a" ) fail = true;
+	if( printOutput != "1a" ) TEST_FAILED;
 
 	printOutput = "";
 	ExecuteString(engine, "string a = 1; print(a);");
-	if( printOutput != "1" ) fail = true;
+	if( printOutput != "1" ) TEST_FAILED;
 
 	printOutput = "";
 	ExecuteString(engine, "print(\"a\" + 1.2)");
-	if( printOutput != "a1.2") fail = true;
+	if( printOutput != "a1.2") TEST_FAILED;
 
 	printOutput = "";
 	ExecuteString(engine, "print(1.2 + \"a\")");
-	if( printOutput != "1.2a") fail = true;
+	if( printOutput != "1.2a") TEST_FAILED;
 
 	ExecuteString(engine, "StringByVal(\"test\", \"test\")");
 
@@ -214,13 +214,13 @@ bool TestStdString()
 	mod->AddScriptSection(TESTNAME, script3);
 	if( mod->Build() < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	//--> new: object method string argument test
 	printOutput = "";
 	ExecuteString(engine, "consumerObject.Consume(\"This is my string\")");
-	if( printOutput != "This is my string") fail = true;
+	if( printOutput != "This is my string") TEST_FAILED;
 	//<-- new: object method string argument test
 
 	engine->RegisterObjectType("Http", sizeof(Http), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
@@ -328,15 +328,15 @@ bool TestTwoStringTypes()
 
 	r = ExecuteString(engine, "_String('ab') + 'a'");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "_String a; a+= 'a' + 'b' ; _String b = 'c'; a += b + 'c';");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	r = ExecuteString(engine, "string a; a+= 'a' + 'b' ; string b = 'c'; a += b + 'c';");
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	engine->Release();
 

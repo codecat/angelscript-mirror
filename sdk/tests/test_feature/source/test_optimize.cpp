@@ -810,76 +810,76 @@ bool TestOptimize()
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: !b failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 		
 	r = ExecuteString(engine, "bool b = false; b = not b;");
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: !b failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "uint tmp = 50; uint x = tmp + 0x50;");
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("%s: uint failed\n", TESTNAME);
-		fail = true;
+		TEST_FAILED;
 	}
 
 	bool boolValue;
 	engine->RegisterGlobalProperty("bool boolValue", &boolValue);
 	r = ExecuteString(engine, "bool a = false, b = false; boolValue = a xor b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = false; boolValue = a xor b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = true; boolValue = a xor b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = false, b = true; boolValue = a xor b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 
 	r = ExecuteString(engine, "bool a = false, b = false; boolValue = a and b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = false; boolValue = a and b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = true; boolValue = a and b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = false, b = true; boolValue = a and b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 
 	r = ExecuteString(engine, "bool a = false, b = false; boolValue = a or b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = false; boolValue = a or b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = true; boolValue = a or b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = false, b = true; boolValue = a or b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 
 	r = ExecuteString(engine, "bool a = false, b = false; boolValue = a == b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = false; boolValue = a == b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = true; boolValue = a == b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = false, b = true; boolValue = a == b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 
 	r = ExecuteString(engine, "bool a = false, b = false; boolValue = a != b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = false; boolValue = a != b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = true, b = true; boolValue = a != b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != false ) fail = true;
+	if( boolValue != false ) TEST_FAILED;
 	r = ExecuteString(engine, "bool a = false, b = true; boolValue = a != b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 
 	r = ExecuteString(engine, "bool a = false; bool b = a == false; boolValue = b;"); assert( r == asEXECUTION_FINISHED );
-	if( boolValue != true ) fail = true;
+	if( boolValue != true ) TEST_FAILED;
 
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "assert(float(5-10) == float(-5));");
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	engine->Release();
 

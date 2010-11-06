@@ -17,7 +17,7 @@ void AddRef_Release_dummy(asIScriptGeneric *)
 
 bool TestEnumGlobVar()
 {
-	bool ret = false;
+	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptString_Generic(engine);
@@ -40,33 +40,33 @@ bool TestEnumGlobVar()
 	if( count != 6 )
 	{
 		printf("%s: GetGlobalVarCount() returned %d, expected 6.\n", TESTNAME, count);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	const char *buffer = 0;
 	if( (buffer = mod->GetGlobalVarDeclaration(0)) == 0 )
 	{
 		printf("%s: GetGlobalVarDeclaration() failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 	else if( strcmp(buffer, "int a") != 0 )
 	{
 		printf("%s: GetGlobalVarDeclaration() returned %s\n", TESTNAME, buffer);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	int idx = mod->GetGlobalVarIndexByName("b");
 	if( idx < 0 )
 	{
 		printf("%s: GetGlobalVarIndexByName() returned %d\n", TESTNAME, idx);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	idx = mod->GetGlobalVarIndexByDecl("double c");
 	if( idx < 0 )
 	{
 		printf("%s: GetGlobalVarIndexByDecl() returned %d\n", TESTNAME, idx);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	buffer = 0;
@@ -74,12 +74,12 @@ bool TestEnumGlobVar()
 	if( buffer == 0 )
 	{
 		printf("%s: GetGlobalVar() failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 	else if( strcmp(buffer, "d") != 0 )
 	{
 		printf("%s: GetGlobalVar() returned %s\n", TESTNAME, buffer);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	unsigned long *d;
@@ -87,12 +87,12 @@ bool TestEnumGlobVar()
 	if( d == 0 )
 	{
 		printf("%s: GetAddressOfGlobalVar() returned %d\n", TESTNAME, r);
-		ret = true;
+		TEST_FAILED;
 	}
 	if( *d != 0xC0DE )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	std::string *e;
@@ -100,13 +100,13 @@ bool TestEnumGlobVar()
 	if( e == 0 )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	if( *e != "test" )
 	{
 		printf("%s: Failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	int *f;
@@ -114,17 +114,17 @@ bool TestEnumGlobVar()
 	if( f == 0 )
 	{
 		printf("%s: failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	if( *f != (int)0xBAADF00D )
 	{
 		printf("%s: failed\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
 
-	return ret;
+	return fail;
 }
 

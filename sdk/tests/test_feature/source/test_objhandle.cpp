@@ -182,7 +182,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
@@ -193,7 +193,7 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Execution failed\n", TESTNAME);
 	}
 	if( ctx ) ctx->Release();
@@ -211,12 +211,12 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Execution failed\n", TESTNAME);
 	}
 	if( refclass->refCount != 2 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Ref count is wrong\n", TESTNAME);
 	}
 
@@ -232,7 +232,7 @@ bool Test()
 	r = ExecuteString(engine, "refclass ref; ref.Do()");
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
@@ -245,9 +245,9 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	r = ExecuteString(engine, "Test()", mod);
-	if( r != asEXECUTION_FINISHED ) fail = true;
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	engine->Release();
 
 	//----------------------
@@ -258,7 +258,7 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", scriptC, strlen(scriptC));
 	r = mod->Build();
-	if( r < 0 ) fail = true;
+	if( r < 0 ) TEST_FAILED;
 	engine->Release();
 
 	//---------------------
@@ -277,98 +277,98 @@ bool Test()
 	r = ExecuteString(engine, "A a; a == null;");    // Should give warning
 	if( r < 0 || bout.buffer == "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; null == a;");    // Should give warning
 	if( r < 0 || bout.buffer == "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; @a == null;");   // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; null == @a;");   // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; @a == a;");      // Should give warning
 	if( r < 0 || bout.buffer == "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; a == @a;");      // Should give warning
 	if( r < 0 || bout.buffer == "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; @a == @a;");     // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A @a = null;");       // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; A @b = a;");     // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; A @b = @a;");    // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; A b = @b;");     // Should give error
 	if( r >= 0 || bout.buffer == "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A @a, b; @a = @b;");  // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A @a, b; @a = b;");   // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A @a, b; a = @b;");   // Should give error
 	if( r >= 0 || bout.buffer == "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; null is a;");    // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 	bout.buffer = "";
 	r = ExecuteString(engine, "A a; a !is null;");    // OK
 	if( r < 0 || bout.buffer != "" )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();

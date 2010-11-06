@@ -50,14 +50,14 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Execution failed: %d\n", TESTNAME, r);
 	}
 

@@ -42,7 +42,7 @@ bool Test()
 		              "TestOutput (4, 7) : Error   : 'a' is not declared\n"
 		              "TestOutput (2, 3) : Error   : Expected identifier\n" )
 	{
-		fail = true;
+		TEST_FAILED;
 		printf("%s: Output is not what was expected, got:\n%s\n", TESTNAME, out.buffer.c_str());
 	}
 

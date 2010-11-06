@@ -38,7 +38,7 @@ static void cfunction_gen(asIScriptGeneric *gen)
 
 bool TestExecute4Args()
 {
-	bool ret = false;
+	bool fail = false;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -52,17 +52,17 @@ bool TestExecute4Args()
 	{
 		// failure
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	} 
 	else if( !testVal ) 
 	{
 		// failure
 		printf("\n%s: testVal is not of expected value. Got (%d, %d, %d, %d), expected (%d, %d, %d, %d)\n\n", TESTNAME, t1, t2, t3, t4, 5, 9, 1, 3);
-		ret = true;
+		TEST_FAILED;
 	}
 	
 	engine->Release();
 	
 	// Success
-	return ret;
+	return fail;
 }

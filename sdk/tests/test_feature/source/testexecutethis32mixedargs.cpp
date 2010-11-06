@@ -129,7 +129,7 @@ static TestClass test;
 
 bool TestExecuteThis32MixedArgs()
 {
-	bool ret = false;
+	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	int r;
@@ -186,7 +186,7 @@ bool TestExecuteThis32MixedArgs()
 
 	if (!test.called) {
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
-		ret = true;
+		TEST_FAILED;
 	} else if (!test.testVal) {
 		printf("\n%s: testVal is not of expected value. Got:\n\n", TESTNAME);
 		int pos = 0;
@@ -200,11 +200,11 @@ bool TestExecuteThis32MixedArgs()
 			}
 			pos += 4;
 		}
-		ret = true;
+		TEST_FAILED;
 	}
 
 	engine->Release();
 	engine = NULL;
 
-	return ret;
+	return fail;
 }

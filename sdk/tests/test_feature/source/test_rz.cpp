@@ -43,7 +43,7 @@ bool Test1()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Calling the garbage collector mustn't free the object types, even though they are not used yet
@@ -54,7 +54,7 @@ bool Test1()
 	if( tid1 != tid2 )
 	{
 		printf("Object type was released incorrectly by GC\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Make sure ref count is properly updated
@@ -64,7 +64,7 @@ bool Test1()
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("execution failed\n");
-		fail = true;
+		TEST_FAILED;
 	}
 	else
 	{
@@ -73,7 +73,7 @@ bool Test1()
 		if( !(typeId & asTYPEID_OBJHANDLE) )
 		{
 			printf("not a handle\n");
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// Retrieve will increment the reference count for us
@@ -87,7 +87,7 @@ bool Test1()
 		if( refCount != 4 )
 		{
 			printf("ref count is wrong\n");
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// Clear the reference that the any object holds (this is not necessary)
@@ -102,7 +102,7 @@ bool Test1()
 		if( refCount != 3 )
 		{
 			printf("ref count is wrong\n");
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -117,7 +117,7 @@ bool Test1()
 	if( refCount != 3 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Release the context
@@ -132,7 +132,7 @@ bool Test1()
 	if( refCount != 3 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Call garbage collection
@@ -146,7 +146,7 @@ bool Test1()
 	if( refCount != 3 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Discard the module, freeing the global variable
@@ -160,7 +160,7 @@ bool Test1()
 	if( refCount != 2 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Release the game object
@@ -170,7 +170,7 @@ bool Test1()
 	if( refCount != 1 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Release engine
@@ -215,7 +215,7 @@ bool Test2()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Make sure ref count is properly updated
@@ -225,7 +225,7 @@ bool Test2()
 	if( r != asEXECUTION_FINISHED )
 	{
 		printf("execution failed\n");
-		fail = true;
+		TEST_FAILED;
 	}
 	else
 	{
@@ -234,7 +234,7 @@ bool Test2()
 		if( !(typeId & asTYPEID_OBJHANDLE) )
 		{
 			printf("not a handle\n");
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// Retrieve will increment the reference count for us
@@ -248,7 +248,7 @@ bool Test2()
 		if( refCount != 3 )
 		{
 			printf("ref count is wrong\n");
-			fail = true;
+			TEST_FAILED;
 		}
 
 		// Clear the reference that the any object holds (this is not necessary)
@@ -263,7 +263,7 @@ bool Test2()
 		if( refCount != 2 )
 		{
 			printf("ref count is wrong\n");
-			fail = true;
+			TEST_FAILED;
 		}
 	}
 
@@ -278,7 +278,7 @@ bool Test2()
 	if( refCount != 2 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Release the context
@@ -293,7 +293,7 @@ bool Test2()
 	if( refCount != 2 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Call garbage collection
@@ -307,7 +307,7 @@ bool Test2()
 	if( refCount != 2 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Discard the module, freeing the global variable
@@ -321,7 +321,7 @@ bool Test2()
 	if( refCount != 1 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Release the game object
@@ -331,7 +331,7 @@ bool Test2()
 	if( refCount != 0 )
 	{
 		printf("ref count is wrong\n");
-		fail = true;
+		TEST_FAILED;
 	}
 
 	// Release engine
@@ -469,7 +469,7 @@ bool Test3()
 	// The module will be discarded, but the functions that the live objects use will remain
 	r = engine->DiscardModule("test");	
 	if( r < 0 )
-		fail = true;
+		TEST_FAILED;
 
 	// Do a couple of more builds, so that the memory freed by DiscardModule is reused otherwise 
 	// the problem may not occur, as the memory is still there, even though it was freed
@@ -489,7 +489,7 @@ bool Test3()
 
 	// Print is called by each script class' destructor, even though the module has already been discarded
 	if( g_printCount != 2 )
-		fail = true;
+		TEST_FAILED;
 
 	// we're done
 	engine->Release();
