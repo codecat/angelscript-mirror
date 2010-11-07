@@ -158,5 +158,41 @@ bool TestVector3()
 
 	engine->Release();
 
+	// Test allocation of value types on stack
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptMath3D(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", "void func() { vector3 v; v.x = 1; assert( v.x == 1 ); }");
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+
+		int func = mod->GetFunctionIdByName("func");
+		if( func < 0 ) TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+
+		ctx->Prepare(func);
+
+		// During the execution of the function there should not be any
+		// new allocations,  since the vector is allocated on the stack
+        int allocs = GetNumAllocs();
+
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+
+        if( (GetNumAllocs() - allocs) != 1 )
+		{
+			printf("There were %d allocations during the execution\n", GetNumAllocs() - allocs);
+			TEST_FAILED;
+		}
+
+		ctx->Release();
+		engine->Release();
+	}
+
 	return fail;
 }

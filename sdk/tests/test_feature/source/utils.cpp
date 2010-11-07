@@ -234,3 +234,9 @@ void RemoveMemoryManager()
 
 	asResetGlobalMemoryFunctions();
 }
+
+int GetNumAllocs()
+{
+	return numAllocs;
+}
+

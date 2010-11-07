@@ -52,6 +52,7 @@ void Test()
 	printf("AngelScript 2.18.0             : 2.17 secs\n");
 	printf("AngelScript 2.18.1 WIP         : 2.00 secs\n");
 	printf("AngelScript 2.19.1 WIP         : 1.99 secs\n");
+	printf("AS 2.20.0 (home)               : 1.51 secs\n");
 
 	printf("\nBuilding...\n");
 
