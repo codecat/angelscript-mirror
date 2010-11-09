@@ -268,7 +268,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		{
 			asCString name(&script->code[node->tokenPos], node->tokenLength);
 
-			if( vs.DeclareVariable(name.AddressOf(), type, stackPos) < 0 )
+			if( vs.DeclareVariable(name.AddressOf(), type, stackPos, true) < 0 )
 				Error(TXT_PARAMETER_ALREADY_DECLARED, node);
 
 			outFunc->AddVariable(name, type, stackPos);
@@ -276,7 +276,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 			node = node->next;
 		}
 		else
-			vs.DeclareVariable("", type, stackPos);
+			vs.DeclareVariable("", type, stackPos, true);
 
 		// Move to next parameter
 		stackPos -= type.GetSizeOnStackDWords();
@@ -285,7 +285,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	int n;
 	for( n = (int)vs.variables.GetLength() - 1; n >= 0; n-- )
 	{
-		variables->DeclareVariable(vs.variables[n]->name.AddressOf(), vs.variables[n]->type, vs.variables[n]->stackOffset);
+		variables->DeclareVariable(vs.variables[n]->name.AddressOf(), vs.variables[n]->type, vs.variables[n]->stackOffset, vs.variables[n]->onHeap);
 	}
 
 	// Is the return type allowed?
@@ -297,7 +297,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		Error(str.AddressOf(), node);
 	}
 
-	variables->DeclareVariable("return", returnType, stackPos);
+	variables->DeclareVariable("return", returnType, stackPos, true);
 
 	//--------------------------------------------
 	// Compile the statement block
@@ -361,7 +361,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		{
 			// Call variables destructors
 			if( v->name != "return" && v->name != "return address" )
-				CallDestructor(v->type, v->stackOffset, &byteCode);
+				CallDestructor(v->type, v->stackOffset, v->onHeap, &byteCode);
 
 			DeallocateVariable(v->stackOffset);
 		}
@@ -385,7 +385,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		{
 			// Call variable destructors here, for variables not yet destroyed
 			if( v->name != "return" && v->name != "return address" )
-				CallDestructor(v->type, v->stackOffset, &byteCode);
+				CallDestructor(v->type, v->stackOffset, v->onHeap, &byteCode);
 		}
 
 		// Do not deallocate parameters
@@ -418,7 +418,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	return 0;
 }
 
-int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool isGlobalVar)
+int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool isGlobalVar)
 {
 	if( !type.IsObject() )
 		return 0;
@@ -486,13 +486,21 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, asCByteCode 
 			asCByteCode tmp(engine);
 			if( isGlobalVar )
 				tmp.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-			else
+			else if( isObjectOnHeap )
 				tmp.InstrSHORT(asBC_PSF, (short)offset);
 			tmp.AddCode(bc);
 			bc->AddCode(&tmp);
 
+			// When the object is allocated on the stack the object pointer 
+			// must be pushed on the stack after the arguments
+			if( !isObjectOnHeap )
+			{
+				asASSERT( !isGlobalVar );
+				tmp.InstrSHORT(asBC_PSF, (short)offset);
+			}
+
 			asSExprContext ctx(engine);
-			PerformFunctionCall(func, &ctx, true, &args, type.GetObjectType());
+			PerformFunctionCall(func, &ctx, isObjectOnHeap, &args, type.GetObjectType());
 
 			bc->AddCode(&ctx.bc);
 
@@ -508,7 +516,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, asCByteCode 
 	return -1;
 }
 
-int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar)
+int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar)
 {
 	if( !type.IsObject() || type.IsObjectHandle() )
 		return 0;
@@ -559,12 +567,30 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCo
 		// Allocate and initialize with the default constructor
 		if( func != 0 || (type.GetObjectType()->flags & asOBJ_POD) )
 		{
-			if( isGlobalVar )
-				bc->InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-			else
-				bc->InstrSHORT(asBC_PSF, (short)offset);
+			if( !isObjectOnHeap )
+			{
+				asASSERT( !isGlobalVar );
 
-			bc->Alloc(asBC_ALLOC, type.GetObjectType(), func, AS_PTR_SIZE);
+				// There is nothing to do if there is no function, 
+				// as the memory is already allocated on the stack
+				if( func )
+				{
+					// Call the constructor as a normal function
+					bc->InstrSHORT(asBC_PSF, (short)offset);
+					asSExprContext ctx(engine);
+					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
+					bc->AddCode(&ctx.bc);
+				}
+			}
+			else
+			{
+				if( isGlobalVar )
+					bc->InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+				else
+					bc->InstrSHORT(asBC_PSF, (short)offset);
+
+				bc->Alloc(asBC_ALLOC, type.GetObjectType(), func, AS_PTR_SIZE);
+			}
 
 			return 0;
 		}
@@ -582,15 +608,31 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, asCByteCo
 	return -1;
 }
 
-void asCCompiler::CallDestructor(asCDataType &type, int offset, asCByteCode *bc)
+void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc)
 {
 	if( !type.IsReference() )
 	{
 		// Call destructor for the data type
 		if( type.IsObject() )
 		{
-			// Free the memory
-			bc->InstrW_PTR(asBC_FREE, (short)offset, type.GetObjectType());
+			if( isObjectOnHeap || type.IsObjectHandle() )
+			{
+				// Free the memory
+				bc->InstrW_PTR(asBC_FREE, (short)offset, type.GetObjectType());
+			}
+			else if( type.GetBehaviour()->destruct )
+			{
+				asASSERT( type.GetObjectType()->GetFlags() & asOBJ_VALUE );
+
+				// Call the destructor as a regular function
+				bc->InstrSHORT(asBC_PSF, offset);
+				asSExprContext ctx(engine);
+				PerformFunctionCall(type.GetBehaviour()->destruct, &ctx);
+				bc->AddCode(&ctx.bc);
+			}
+			
+			// If the object is allocated on the heap and there 
+			// is no destructor, then there is nothing to do
 		}
 	}
 }
@@ -650,7 +692,7 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 			// If the block is terminated with a break, continue, or
 			// return the variables are already destroyed
 			if( !isFinished && !*hasReturn )
-				CallDestructor(v->type, v->stackOffset, bc);
+				CallDestructor(v->type, v->stackOffset, v->onHeap, bc);
 
 			// Don't deallocate function parameters
 			if( v->stackOffset > 0 )
@@ -802,7 +844,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			if( !gvar->datatype.IsObjectHandle() )
 			{
 				// Call the default constructor to have a valid object for the assignment
-				CallDefaultConstructor(gvar->datatype, gvar->index, &ctx.bc, gvar->idNode, true);
+				CallDefaultConstructor(gvar->datatype, gvar->index, true, &ctx.bc, gvar->idNode, true);
 			}
 
 			asSExprContext lexpr(engine);
@@ -866,7 +908,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	else if( gvar->datatype.IsObject() && !gvar->datatype.IsObjectHandle() )
 	{
 		// Call the default constructor in case no explicit initialization is given
-		CallDefaultConstructor(gvar->datatype, gvar->index, &ctx.bc, gvar->idNode, true);
+		CallDefaultConstructor(gvar->datatype, gvar->index, true, &ctx.bc, gvar->idNode, true);
 	}
 
 	// Concatenate the bytecode
@@ -894,7 +936,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		sVariable *v = variables->variables[n];
 
 		// Call variable destructors here, for variables not yet destroyed
-		CallDestructor(v->type, v->stackOffset, &byteCode);
+		CallDestructor(v->type, v->stackOffset, v->onHeap, &byteCode);
 
 		DeallocateVariable(v->stackOffset);
 	}
@@ -956,7 +998,7 @@ void asCCompiler::FinalizeFunction()
 	outFunc->objVariableTypes = objVariableTypes;
 }
 
-void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType, asCArray<int> *reservedVars)
+void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType, asCArray<int> *reservedVars, bool forceOnHeap)
 {
 	asCDataType param = *paramType;
 	if( paramType->GetTokenType() == ttQuestion )
@@ -1043,7 +1085,8 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 					// Allocate and construct the temporary object
 					asCByteCode tmpBC(engine);
-					CallDefaultConstructor(dt, offset, &tmpBC, node);
+
+					CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
 
 					// Insert the code before the expression code
 					tmpBC.AddCode(&ctx->bc);
@@ -1097,7 +1140,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			{
 				// Allocate and construct the temporary object
 				asCByteCode tmpBC(engine);
-				CallDefaultConstructor(dt, offset, &tmpBC, node);
+				CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
 
 				// Insert the code before the expression code
 				tmpBC.AddCode(&ctx->bc);
@@ -1227,7 +1270,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				{
 					// Objects passed by value must be placed in temporary variables
 					// so that they are guaranteed to not be referenced anywhere else
-					PrepareTemporaryObject(node, ctx, reservedVars);
+					PrepareTemporaryObject(node, ctx, reservedVars, forceOnHeap);
 
 					// The implicit conversion shouldn't convert the object to
 					// non-reference yet. It will be dereferenced just before the call.
@@ -1296,7 +1339,14 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() )
 			{
 				if( descr->inOutFlags[n] != asTM_INOUTREF )
-					bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+				{
+					if( args[n]->type.isVariable && !IsVariableOnHeap(args[n]->type.stackOffset) )
+						// TODO: optimize: Actually the reference can be pushed on the stack directly
+						//                 as the value allocated on the stack is guaranteed to be safe
+						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+					else
+						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+				}
 				if( args[n]->type.dataType.IsObjectHandle() )
 					bc->InstrWORD(asBC_ChkNullS, (asWORD)offset);
 			}
@@ -1509,7 +1559,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		}
 
 		int offset = AllocateVariable(type, false);
-		if( variables->DeclareVariable(name.AddressOf(), type, offset) < 0 )
+		if( variables->DeclareVariable(name.AddressOf(), type, offset, IsVariableOnHeap(offset)) < 0 )
 		{
 			asCString str;
 			str.Format(TXT_s_ALREADY_DECLARED, name.AddressOf());
@@ -1567,19 +1617,25 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						}
 						else
 						{
-							ctx.bc.InstrSHORT(asBC_VAR, (short)v->stackOffset);
+							// When the object is allocated on the heap, the address where the 
+							// reference will be stored must be pushed on the stack before the 
+							// arguments. This reference on the stack is safe, even if the script
+							// is suspended during the evaluation of the arguments.
+							if( v->onHeap )
+								ctx.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
 
 							PrepareFunctionCall(funcs[0], &ctx.bc, args);
 							MoveArgsToStack(funcs[0], &ctx.bc, args, false);
 
 							int offset = 0;
 							asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
-							for( asUINT n = 0; n < args.GetLength(); n++ )
-								offset += descr->parameterTypes[n].GetSizeOnStackDWords();
 
-							ctx.bc.InstrWORD(asBC_GETREF, (asWORD)offset);
+							// When the object is allocated on the stack, the address to the
+							// object is pushed on the stack after the arguments as the object pointer
+							if( !v->onHeap )
+								ctx.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
 
-							PerformFunctionCall(funcs[0], &ctx, true, &args, type.GetObjectType());
+							PerformFunctionCall(funcs[0], &ctx, v->onHeap, &args, type.GetObjectType());
 						}
 						bc->AddCode(&ctx.bc);
 					}
@@ -1618,7 +1674,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			//             available should the assignment operator be used.
 
 			// Call the default constructor here
-			CallDefaultConstructor(type, offset, &ctx.bc, varNode);
+			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, varNode);
 
 			// Compile the expression
 			asSExprContext expr(engine);
@@ -1725,7 +1781,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		else
 		{
 			// Call the default constructor here if no explicit initialization is done
-			CallDefaultConstructor(type, offset, bc, varNode);
+			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), bc, varNode);
 		}
 	}
 }
@@ -2497,7 +2553,7 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 		sVariable *v = variables->variables[n];
 
 		// Call variable destructors here, for variables not yet destroyed
-		CallDestructor(v->type, v->stackOffset, bc);
+		CallDestructor(v->type, v->stackOffset, v->onHeap, bc);
 
 		// Don't deallocate function parameters
 		if( v->stackOffset > 0 )
@@ -2652,7 +2708,7 @@ void asCCompiler::CompileBreakStatement(asCScriptNode *node, asCByteCode *bc)
 	while( !vs->isBreakScope )
 	{
 		for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
-			CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, bc);
+			CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, vs->variables[n]->onHeap, bc);
 
 		vs = vs->parent;
 	}
@@ -2673,7 +2729,7 @@ void asCCompiler::CompileContinueStatement(asCScriptNode *node, asCByteCode *bc)
 	while( !vs->isContinueScope )
 	{
 		for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
-			CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, bc);
+			CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, vs->variables[n]->onHeap, bc);
 
 		vs = vs->parent;
 	}
@@ -2702,19 +2758,19 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 	}
 }
 
-void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, asCArray<int> *reservedVars)
+void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, asCArray<int> *reservedVars, bool forceOnHeap)
 {
 	// If the object already is stored in temporary variable then nothing needs to be done
 	// Note, a type can be temporary without being a variable, in which case it is holding off
 	// on releasing a previously used object.
-	if( ctx->type.isTemporary && ctx->type.isVariable ) return;
+	if( ctx->type.isTemporary && ctx->type.isVariable && !(forceOnHeap && !IsVariableOnHeap(ctx->type.stackOffset)) ) return;
 
 	// Allocate temporary variable
 	asCDataType dt = ctx->type.dataType;
 	dt.MakeReference(false);
 	dt.MakeReadOnly(false);
 
-	int offset = AllocateVariableNotIn(dt, true, reservedVars);
+	int offset = AllocateVariableNotIn(dt, true, reservedVars, forceOnHeap);
 
 	asCTypeInfo lvalue;
 	dt.MakeReference(true);
@@ -2727,12 +2783,12 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	if( !dt.IsObjectHandle() && dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
 	{
 		// Use the copy constructor/factory when available
-		CallCopyConstructor(dt, offset, &ctx->bc, ctx, node);
+		CallCopyConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, ctx, node);
 	}
 	else
 	{
 		// Allocate and construct the temporary object
-		CallDefaultConstructor(dt, offset, &ctx->bc, node);
+		CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, node);
 
 		// Assign the object to the temporary variable
 		PrepareForAssignment(&lvalue.dataType, ctx, node);
@@ -2868,7 +2924,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			{
 				for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
 					if( vs->variables[n]->stackOffset > 0 )
-						CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, bc);
+						CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, vs->variables[n]->onHeap, bc);
 
 				vs = vs->parent;
 			}
@@ -2922,7 +2978,9 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			}
 			else if( v->type.IsObject() )
 			{
-				PrepareArgument(&v->type, &expr, rnode->firstChild);
+				// Value types are still returned on the heap, so we must
+				// copy the value to an object allocated on the heap here
+				PrepareArgument(&v->type, &expr, rnode->firstChild, false, 0, 0, true);
 
 				// Pop the reference to the temporary variable again
 				expr.bc.Pop(AS_PTR_SIZE);
@@ -2956,7 +3014,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 		{
 			for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
 				if( vs->variables[n]->stackOffset > 0 )
-					CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, bc);
+					CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, vs->variables[n]->onHeap, bc);
 
 			vs = vs->parent;
 		}
@@ -3032,12 +3090,12 @@ void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 	}
 }
 
-int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary)
+int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, bool forceOnHeap)
 {
-	return AllocateVariableNotIn(type, isTemporary, 0);
+	return AllocateVariableNotIn(type, isTemporary, 0, forceOnHeap);
 }
 
-int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary, asCArray<int> *vars)
+int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary, asCArray<int> *vars, bool forceOnHeap)
 {
 	asCDataType t(type);
 
@@ -3047,11 +3105,22 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 	if( t.IsPrimitive() && t.GetSizeOnStackDWords() == 2 )
 		t.SetTokenType(ttDouble);
 
+	bool isOnHeap = true;
+	// TODO: value on stack: Update this
+	if( t.IsPrimitive() /*|| ((t.GetObjectType()->GetFlags() & asOBJ_VALUE) && !forceOnHeap)*/ )
+	{
+		// Primitives and value types (unless overridden) are allocated on the stack
+		isOnHeap = false;
+	}
+
 	// Find a free location with the same type
 	for( asUINT n = 0; n < freeVariables.GetLength(); n++ )
 	{
 		int slot = freeVariables[n];
-		if( variableAllocations[slot].IsEqualExceptConst(t) && variableIsTemporary[slot] == isTemporary )
+
+		if( variableAllocations[slot].IsEqualExceptConst(t) && 
+			variableIsTemporary[slot] == isTemporary &&
+			variableIsOnHeap[slot] == isOnHeap )
 		{
 			// We can't return by slot, must count variable sizes
 			int offset = GetVariableOffset(slot);
@@ -3087,6 +3156,7 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 
 	variableAllocations.PushLast(t);
 	variableIsTemporary.PushLast(isTemporary);
+	variableIsOnHeap.PushLast(isOnHeap);
 
 	int offset = GetVariableOffset((int)variableAllocations.GetLength()-1);
 
@@ -3101,11 +3171,20 @@ int asCCompiler::GetVariableOffset(int varIndex)
 	// Return offset to the last dword on the stack
 	int varOffset = 1;
 	for( int n = 0; n < varIndex; n++ )
-		varOffset += variableAllocations[n].GetSizeOnStackDWords();
+	{
+		if( !variableIsOnHeap[n] && variableAllocations[n].IsObject() )
+			varOffset += variableAllocations[n].GetSizeInMemoryDWords();
+		else
+			varOffset += variableAllocations[n].GetSizeOnStackDWords();
+	}
 
 	if( varIndex < (int)variableAllocations.GetLength() )
 	{
-		int size = variableAllocations[varIndex].GetSizeOnStackDWords();
+		int size;
+		if( !variableIsOnHeap[varIndex] && variableAllocations[varIndex].IsObject() )
+			size = variableAllocations[varIndex].GetSizeInMemoryDWords();
+		else
+			size = variableAllocations[varIndex].GetSizeOnStackDWords();
 		if( size > 1 )
 			varOffset += size-1;
 	}
@@ -3118,15 +3197,30 @@ int asCCompiler::GetVariableSlot(int offset)
 	int varOffset = 1;
 	for( asUINT n = 0; n < variableAllocations.GetLength(); n++ )
 	{
-		varOffset += -1 + variableAllocations[n].GetSizeOnStackDWords();
+		if( !variableIsOnHeap[n] && variableAllocations[n].IsObject() )
+			varOffset += -1 + variableAllocations[n].GetSizeInMemoryDWords();
+		else
+			varOffset += -1 + variableAllocations[n].GetSizeOnStackDWords();
+
 		if( varOffset == offset )
-		{
 			return n;
-		}
+
 		varOffset++;
 	}
 
 	return -1;
+}
+
+bool asCCompiler::IsVariableOnHeap(int offset)
+{
+	int varSlot = GetVariableSlot(offset);
+	if( varSlot < 0 ) 
+	{
+		// This happens for function arguments that are considered as on the heap
+		return true;
+	}
+
+	return variableIsOnHeap[varSlot];
 }
 
 void asCCompiler::DeallocateVariable(int offset)
@@ -3163,17 +3257,7 @@ void asCCompiler::ReleaseTemporaryVariable(asCTypeInfo &t, asCByteCode *bc)
 {
 	if( t.isTemporary )
 	{
-		if( bc )
-		{
-			// We need to call the destructor on the true variable type
-			int n = GetVariableSlot(t.stackOffset);
-			asCDataType dt = variableAllocations[n];
-
-			// Call destructor
-			CallDestructor(dt, t.stackOffset, bc);
-		}
-
-		DeallocateVariable(t.stackOffset);
+		ReleaseTemporaryVariable(t.stackOffset, bc);
 		t.isTemporary = false;
 	}
 }
@@ -3185,9 +3269,10 @@ void asCCompiler::ReleaseTemporaryVariable(int offset, asCByteCode *bc)
 		// We need to call the destructor on the true variable type
 		int n = GetVariableSlot(offset);
 		asCDataType dt = variableAllocations[n];
+		bool isOnHeap = variableIsOnHeap[n];
 
 		// Call destructor
-		CallDestructor(dt, offset, bc);
+		CallDestructor(dt, offset, isOnHeap, bc);
 	}
 
 	DeallocateVariable(offset);
@@ -4249,7 +4334,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 				// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
 
-				CallDefaultConstructor(type.dataType, offset, &ctx->bc, node);
+				CallDefaultConstructor(type.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, node);
 				type.dataType.MakeReference(true);
 
 				PrepareForAssignment(&type.dataType, ctx, node);
@@ -4372,7 +4457,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 						// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
 
-						CallDefaultConstructor(lctx.type.dataType, offset, &lctx.bc, node);
+						CallDefaultConstructor(lctx.type.dataType, offset, IsVariableOnHeap(offset), &lctx.bc, node);
 
 						// Build the right hand expression
 						asSExprContext rctx(engine);
@@ -4400,10 +4485,20 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 			}
 			else
 			{
-				// A non-reference can be converted to a reference,
-				// by putting the value in a temporary variable
-				if( generateCode )
+				// A value type allocated on the stack is differentiated
+				// by it not being a reference. But it can be handled as 
+				// reference by pushing the pointer on the stack
+				if( (ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) &&
+					ctx->type.isVariable &&
+					!IsVariableOnHeap(ctx->type.stackOffset) )
 				{
+					// Actually the pointer is already pushed on the stack in 
+					// CompileVariableAccess, so we don't need to do anything else
+				}
+				else if( generateCode )
+				{
+					// A non-reference can be converted to a reference,
+					// by putting the value in a temporary variable
 					asCTypeInfo type;
 					type.Set(ctx->type.dataType);
 
@@ -4416,7 +4511,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 					// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
 
-					CallDefaultConstructor(type.dataType, offset, &ctx->bc, node);
+					CallDefaultConstructor(type.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, node);
 					type.dataType.MakeReference(true);
 
 					PrepareForAssignment(&type.dataType, ctx, node);
@@ -5194,7 +5289,12 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		MergeExprBytecode(ctx, rctx);
 		MergeExprBytecode(ctx, lctx);
 
-		ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
+		if( rctx->type.isVariable && !IsVariableOnHeap(rctx->type.stackOffset) )
+			// TODO: optimize: Actually the reference can be pushed on the stack directly
+			//                 as the value allocated on the stack is guaranteed to be safe
+			ctx->bc.InstrWORD(asBC_GETREF, AS_PTR_SIZE);
+		else
+			ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
 
 		PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
 
@@ -5336,7 +5436,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 				// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
 
-				CallDefaultConstructor(temp.dataType, offset, &ctx->bc, expr);
+				CallDefaultConstructor(temp.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, expr);
 
 				// Put the code for the condition expression on the output
 				MergeExprBytecode(ctx, &e);
@@ -5582,7 +5682,10 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		{
 			ctx->bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
 			ctx->type.SetVariable(v->type, v->stackOffset, false);
-			ctx->type.dataType.MakeReference(true);
+
+			// If the variable is allocated on the heap we have a reference,
+			// otherwise the actual object pointer is pushed on the stack.
+			if( v->onHeap || v->type.IsObjectHandle() ) ctx->type.dataType.MakeReference(true);
 
 			// Implicitly dereference handle parameters sent by reference
 			if( v->type.IsReference() && (!v->type.IsObject() || v->type.IsObjectHandle()) )
@@ -5857,7 +5960,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			Error(str.AddressOf(), errNode);
 
 			// Declare the variable now so that it will not be reported again
-			variables->DeclareVariable(name.AddressOf(), asCDataType::CreatePrimitive(ttInt, false), 0x7FFF);
+			variables->DeclareVariable(name.AddressOf(), asCDataType::CreatePrimitive(ttInt, false), 0x7FFF, true);
 
 			// Mark the variable as initialized so that the user will not be bother by it again
 			sVariable *v = variables->GetVariable(name.AddressOf());
@@ -6679,6 +6782,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	// The first node is a datatype node
 	asCString name;
 	asCTypeInfo tempObj;
+	bool onHeap = true;
 	asCArray<int> funcs;
 
 	// It is possible that the name is really a constructor
@@ -6741,8 +6845,11 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 			tempObj.isTemporary = true;
 			tempObj.isVariable = true;
 
+			onHeap = IsVariableOnHeap(tempObj.stackOffset);
+
 			// Push the address of the object on the stack
-			ctx->bc.InstrSHORT(asBC_VAR, tempObj.stackOffset);
+			if( onHeap )
+				ctx->bc.InstrSHORT(asBC_VAR, tempObj.stackOffset);
 		}
 		else
 		{
@@ -6771,7 +6878,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 				asASSERT(ctx->bc.GetLastInstr() == asBC_VAR);
 				ctx->bc.RemoveLastInstr();
 
-				CallDefaultConstructor(tempObj.dataType, tempObj.stackOffset, &ctx->bc, node);
+				CallDefaultConstructor(tempObj.dataType, tempObj.stackOffset, IsVariableOnHeap(tempObj.stackOffset), &ctx->bc, node);
 
 				// Push the reference on the stack
 				ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
@@ -6798,19 +6905,27 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 			if( !(dt.GetObjectType()->flags & asOBJ_REF) )
 			{
-				int offset = 0;
-				asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
-				for( asUINT n = 0; n < args.GetLength(); n++ )
-					offset += descr->parameterTypes[n].GetSizeOnStackDWords();
+				// If the object is allocated on the stack, then call the constructor as a normal function
+				if( onHeap )
+				{
+					int offset = 0;
+					asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
+					for( asUINT n = 0; n < args.GetLength(); n++ )
+						offset += descr->parameterTypes[n].GetSizeOnStackDWords();
 
-				ctx->bc.InstrWORD(asBC_GETREF, (asWORD)offset);
+					ctx->bc.InstrWORD(asBC_GETREF, (asWORD)offset);
+				}
+				else
+					ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
 
-				PerformFunctionCall(funcs[0], ctx, true, &args, tempObj.dataType.GetObjectType());
+				PerformFunctionCall(funcs[0], ctx, onHeap, &args, tempObj.dataType.GetObjectType());
 
 				// The constructor doesn't return anything,
 				// so we have to manually inform the type of
 				// the return value
 				ctx->type = tempObj;
+				if( !onHeap )
+					ctx->type.dataType.MakeReference(false);
 
 				// Push the address of the object on the stack again
 				ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
@@ -10153,8 +10268,9 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 	if( isConstructor )
 	{
-		// TODO: When value types are allocated on the stack, this won't be needed anymore
-		//       as the constructor will be called just like any other function
+		// Sometimes the value types are allocated on the heap,  
+		// which is when this way of constructing them is used.
+
 		asASSERT(useVariable == false);
 
 		ctx->bc.Alloc(asBC_ALLOC, objType, descr->id, argSize+AS_PTR_SIZE);
@@ -10195,7 +10311,9 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		else
 		{
 			// Allocate a temporary variable for the returned object
-			returnOffset = AllocateVariable(descr->returnType, true);
+			// The returned object will actually be allocated on the heap, so
+			// we must force the allocation of the variable to do the same
+			returnOffset = AllocateVariable(descr->returnType, true, true);
 			ctx->type.SetVariable(descr->returnType, returnOffset, true);
 		}
 

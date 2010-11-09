@@ -29,8 +29,10 @@ bool TestVector3()
 	COutStream out;
 	CBufferedOutStream bout;
 	int r;
+	asIScriptEngine *engine = 0;
 
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptMath3D(engine);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -166,7 +168,7 @@ bool TestVector3()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script", "void func() { vector3 v; v.x = 1; assert( v.x == 1 ); }");
+		mod->AddScriptSection("script", "void func() { vector3 v; v.x = 1; assert( v.x == 1 ); assert( v.y == 0 ); }");
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
 

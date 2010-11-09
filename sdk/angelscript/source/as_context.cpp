@@ -346,8 +346,9 @@ int asCContext::Unprepare()
 	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
 		return asCONTEXT_ACTIVE;
 
-	// Only clean the stack if the context was prepared but not executed
-	if( status != asEXECUTION_UNINITIALIZED )
+	// Only clean the stack if the context was prepared but not executed until the end
+	if( status != asEXECUTION_UNINITIALIZED && 
+		status != asEXECUTION_FINISHED )
 		CleanStack();
 
 	// Release the returned object (if any)
@@ -3390,6 +3391,7 @@ void asCContext::CleanStackFrame()
 	{
 		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
+			// TODO: value on stack: Need to know whether the object is allocated on the stack or not
 			int pos = currentFunction->objVariablePos[n];
 			if( *(size_t*)&regs.stackFramePointer[-pos] )
 			{
