@@ -13,18 +13,9 @@ static const char *script =
 "{\n"
 "    // Call test\n"
 "    foo();\n"
-
-"    // WHEN THE ABOVE 'foo' IS CALLED, THE SCRIPT JUST BAILS ONCE IT HAS RETURNED\n"
-"    // AND NOTHING AFTER THIS POINT IS EVER EXECUTED. IF WE CALL 'BAR' DIRECTLY\n"
-"    // FROM HERE, BYPASSING 'foo' AS BELOW, IT CONTINUES ON WITHOUT ISSUE.\n"
-
-"    // I added some debug output here to a 'MessageBox' call, but it too was never\n"
-"    // executed.\n"
 "    cfunction();\n"
-
 "    Int64 var;\n"
 "    bar( var );\n"
-    
 "    // Some value we'll know when we return\n"
 "    return 31337;\n"
 "}\n"
@@ -37,12 +28,6 @@ static const char *script =
 
 "void bar( Int64 )\n"
 "{\n"
-"    // If any of the three cases are satisfied, the code works as expected.\n"
-"    // --------------------------------------------------------------------\n"
-"    // 1) We bypass the outer 'foo' function, and call 'bar' directly.\n"
-"    // 2) We change the size of the user defined type to be 4 bytes.\n"
-"    // 3) We make the parameter a reference of the user defined type.\n"
-"    // --------------------------------------------------------------------\n"
 "    cfunction();\n"
 "}\n";
 

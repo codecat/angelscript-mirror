@@ -1095,7 +1095,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					// Assign the evaluated expression to the temporary variable
 					PrepareForAssignment(&dt, ctx, node);
 
-					dt.MakeReference(true);
+					dt.MakeReference(IsVariableOnHeap(offset));
 					asCTypeInfo type;
 					type.Set(dt);
 					type.isTemporary = true;
@@ -1269,8 +1269,11 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				if( !dt.IsReference() )
 				{
 					// Objects passed by value must be placed in temporary variables
-					// so that they are guaranteed to not be referenced anywhere else
-					PrepareTemporaryObject(node, ctx, reservedVars, forceOnHeap);
+					// so that they are guaranteed to not be referenced anywhere else.
+					// The object must also be allocated on the heap, as the memory will
+					// be deleted by in as_callfunc_xxx. 
+					// TODO: value on stack: How can we avoid this unnecessary allocation?
+					PrepareTemporaryObject(node, ctx, reservedVars, true);
 
 					// The implicit conversion shouldn't convert the object to
 					// non-reference yet. It will be dereferenced just before the call.
@@ -1340,7 +1343,8 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 			{
 				if( descr->inOutFlags[n] != asTM_INOUTREF )
 				{
-					if( args[n]->type.isVariable && !IsVariableOnHeap(args[n]->type.stackOffset) )
+					if( (args[n]->type.isVariable || args[n]->type.isTemporary) && 
+						!IsVariableOnHeap(args[n]->type.stackOffset) )
 						// TODO: optimize: Actually the reference can be pushed on the stack directly
 						//                 as the value allocated on the stack is guaranteed to be safe
 						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
@@ -1365,6 +1369,10 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 		}
 		else if( descr->parameterTypes[n].IsObject() )
 		{
+			// TODO: value on stack: What can we do to avoid this unnecessary allocation?
+			// The object must be allocated on the heap, because this memory will be deleted in as_callfunc_xxx
+			asASSERT(IsVariableOnHeap(args[n]->type.stackOffset));
+
 			bc->InstrWORD(asBC_GETOBJ, (asWORD)offset);
 
 			// The temporary variable must not be freed as it will no longer hold an object
@@ -1703,16 +1711,17 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 				{
 					// TODO: We can use a copy constructor here
 
+					sVariable *v = variables->GetVariable(name.AddressOf());
+
 					asSExprContext lexpr(engine);
 					lexpr.type.Set(type);
-					lexpr.type.dataType.MakeReference(true);
+					lexpr.type.dataType.MakeReference(v->onHeap);
 					// Allow initialization of constant variables
 					lexpr.type.dataType.MakeReadOnly(false);
 
 					if( type.IsObjectHandle() )
 						lexpr.type.isExplicitHandle = true;
 
-					sVariable *v = variables->GetVariable(name.AddressOf());
 					lexpr.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
 					lexpr.type.stackOffset = (short)v->stackOffset;
 					lexpr.type.isVariable = true;
@@ -2763,7 +2772,8 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	// If the object already is stored in temporary variable then nothing needs to be done
 	// Note, a type can be temporary without being a variable, in which case it is holding off
 	// on releasing a previously used object.
-	if( ctx->type.isTemporary && ctx->type.isVariable && !(forceOnHeap && !IsVariableOnHeap(ctx->type.stackOffset)) ) return;
+	if( ctx->type.isTemporary && ctx->type.isVariable && 
+		!(forceOnHeap && !IsVariableOnHeap(ctx->type.stackOffset)) ) return;
 
 	// Allocate temporary variable
 	asCDataType dt = ctx->type.dataType;
@@ -2772,8 +2782,10 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 
 	int offset = AllocateVariableNotIn(dt, true, reservedVars, forceOnHeap);
 
+	// Objects stored on the stack are not considered references
+	dt.MakeReference(IsVariableOnHeap(offset));
+
 	asCTypeInfo lvalue;
-	dt.MakeReference(true);
 	lvalue.Set(dt);
 	lvalue.isTemporary = true;
 	lvalue.stackOffset = (short)offset;
@@ -2807,7 +2819,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 
 	// Push the reference to the temporary variable on the stack
 	ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-	lvalue.dataType.MakeReference(true);
+	lvalue.dataType.MakeReference(IsVariableOnHeap(offset));
 
 	ctx->type = lvalue;
 }
@@ -3105,9 +3117,12 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 	if( t.IsPrimitive() && t.GetSizeOnStackDWords() == 2 )
 		t.SetTokenType(ttDouble);
 
+//	asASSERT( t.GetTokenType() != ttUnrecognizedToken );
+
 	bool isOnHeap = true;
 	// TODO: value on stack: Update this
-	if( t.IsPrimitive() /*|| ((t.GetObjectType()->GetFlags() & asOBJ_VALUE) && !forceOnHeap)*/ )
+	if( t.IsPrimitive() /* || 
+		(t.GetObjectType() && (t.GetObjectType()->GetFlags() & asOBJ_VALUE) && !forceOnHeap) */ )
 	{
 		// Primitives and value types (unless overridden) are allocated on the stack
 		isOnHeap = false;
@@ -4543,9 +4558,15 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 					// TODO: Make sure a handle to const isn't converted to non-const reference
 				}
+				else
+				{
+					// This may look strange as the conversion was to make the expression a reference
+					// but a value type allocated on the stack is a reference even without the type 
+					// being marked as such.
+					ctx->type.dataType.MakeReference(IsVariableOnHeap(ctx->type.stackOffset));
+				}
 
-				ctx->type.dataType.MakeReference(true);
-
+				// TODO: If the variable is an object allocated on the stack, this is not true
 				// Since it is a new temporary variable it doesn't have to be const
 				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
 			}
@@ -8836,7 +8857,9 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 
 			asCDataType dt = args[n]->type.dataType;
 			dt.MakeReference(false);
-			int newOffset = AllocateVariableNotIn(dt, true, &usedVars);
+			int newOffset = AllocateVariableNotIn(dt, true, &usedVars, IsVariableOnHeap(args[n]->type.stackOffset));
+
+			asASSERT( IsVariableOnHeap(args[n]->type.stackOffset) == IsVariableOnHeap(newOffset) );
 
 			ctx->bc.ExchangeVar(args[n]->type.stackOffset, newOffset);
 			args[n]->type.stackOffset = (short)newOffset;
