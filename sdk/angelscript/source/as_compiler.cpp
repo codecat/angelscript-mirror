@@ -47,6 +47,14 @@
 
 BEGIN_AS_NAMESPACE
 
+// TODO: I must correct the interpretation of a references to objects in the compiler.
+//       A reference should mean that a pointer to the object is on the stack.
+//       No expression should end up as non-references to objects, as the actual object is 
+//       never put on the stack.
+//       Local variables are declared as non-references, but the expression should be a reference to the variable.
+//       Function parameters of called functions can also be non-references, but in that case it means the 
+//       object will be passed by value (currently on the heap, which will be moved to the application stack).
+
 asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
 {
 	builder = 0;
@@ -1635,9 +1643,6 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 							PrepareFunctionCall(funcs[0], &ctx.bc, args);
 							MoveArgsToStack(funcs[0], &ctx.bc, args, false);
 
-							int offset = 0;
-							asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
-
 							// When the object is allocated on the stack, the address to the
 							// object is pushed on the stack after the arguments as the object pointer
 							if( !v->onHeap )
@@ -3117,7 +3122,8 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 	if( t.IsPrimitive() && t.GetSizeOnStackDWords() == 2 )
 		t.SetTokenType(ttDouble);
 
-//	asASSERT( t.GetTokenType() != ttUnrecognizedToken );
+	// Only null handles have the token type unrecognized token
+	asASSERT( t.IsObjectHandle() || t.GetTokenType() != ttUnrecognizedToken );
 
 	bool isOnHeap = true;
 	// TODO: value on stack: Update this
@@ -4504,7 +4510,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 				// by it not being a reference. But it can be handled as 
 				// reference by pushing the pointer on the stack
 				if( (ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) &&
-					ctx->type.isVariable &&
+					(ctx->type.isVariable || ctx->type.isTemporary) &&
 					!IsVariableOnHeap(ctx->type.stackOffset) )
 				{
 					// Actually the pointer is already pushed on the stack in 
@@ -4527,7 +4533,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 					// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
 
 					CallDefaultConstructor(type.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, node);
-					type.dataType.MakeReference(true);
+					type.dataType.MakeReference(IsVariableOnHeap(offset));
 
 					PrepareForAssignment(&type.dataType, ctx, node);
 
@@ -5310,7 +5316,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		MergeExprBytecode(ctx, rctx);
 		MergeExprBytecode(ctx, lctx);
 
-		if( rctx->type.isVariable && !IsVariableOnHeap(rctx->type.stackOffset) )
+		if( (rctx->type.isVariable || rctx->type.isTemporary) && !IsVariableOnHeap(rctx->type.stackOffset) )
 			// TODO: optimize: Actually the reference can be pushed on the stack directly
 			//                 as the value allocated on the stack is guaranteed to be safe
 			ctx->bc.InstrWORD(asBC_GETREF, AS_PTR_SIZE);
@@ -6746,7 +6752,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 				else
 				{
 					rctx.bc.InstrSHORT(asBC_PSF, outParam.argType.stackOffset);
-					rctx.type.dataType.MakeReference(true);
+					rctx.type.dataType.MakeReference(IsVariableOnHeap(outParam.argType.stackOffset));
 					if( expr->type.isExplicitHandle )
 						rctx.type.isExplicitHandle = true;
 				}
@@ -6896,8 +6902,11 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 				// Call the default constructor
 				ctx->type = tempObj;
 
-				asASSERT(ctx->bc.GetLastInstr() == asBC_VAR);
-				ctx->bc.RemoveLastInstr();
+				if( onHeap )
+				{
+					asASSERT(ctx->bc.GetLastInstr() == asBC_VAR);
+					ctx->bc.RemoveLastInstr();
+				}
 
 				CallDefaultConstructor(tempObj.dataType, tempObj.stackOffset, IsVariableOnHeap(tempObj.stackOffset), &ctx->bc, node);
 

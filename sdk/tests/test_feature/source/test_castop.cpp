@@ -174,7 +174,10 @@ bool Test()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 24) : Error   : No matching operator that takes the types 'string@&' and 'type&' found\n" )
+	{
+		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
+	}
 
 	// Try using the asMETHOD macro with a cast operator
 	// The first option fail to compile on MSVC2005 (Thanks Jeff Slutter)

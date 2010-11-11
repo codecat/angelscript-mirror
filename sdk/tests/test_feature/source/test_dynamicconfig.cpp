@@ -168,6 +168,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 3) : Error   : 'global' is not declared\n" )
 	{
+		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -210,6 +211,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (3, 10) : Error   : Expected ';'\n" )
 	{
+		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -255,6 +257,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
                                  "TestDynamicConfig (5, 9) : Error   : No matching operator that takes the types 'string&' and 'mytype&' found\n" )
 	{
+		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

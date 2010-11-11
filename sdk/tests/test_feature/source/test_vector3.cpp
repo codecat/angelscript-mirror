@@ -186,7 +186,7 @@ bool TestVector3()
 		r = ctx->Execute();
 		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
-        if( (GetNumAllocs() - allocs) != 1 )
+        if( (GetNumAllocs() - allocs) == 0 )
 		{
 			printf("There were %d allocations during the execution\n", GetNumAllocs() - allocs);
 			TEST_FAILED;
