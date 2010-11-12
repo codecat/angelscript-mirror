@@ -244,6 +244,7 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 
+	// The object has been initialized
 	r = ExecuteString(engine, "Test1()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
@@ -251,8 +252,7 @@ bool Test()
 		TEST_FAILED;
 	}
 
-//	printf("---\n");
-
+	// The object has not yet been initialized
 	r = ExecuteString(engine, "Test2()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
@@ -260,8 +260,7 @@ bool Test()
 		TEST_FAILED;
 	}
 
- //	printf("---\n");
-
+	// An object has been initialized and passed by value to function that throws exception
 	r = ExecuteString(engine, "Test3()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
@@ -269,8 +268,8 @@ bool Test()
 		TEST_FAILED;
 	}
 
-//	printf("---\n");
-
+	// An object has been initialized and passed by value to a function, but 
+	// the function cannot be called due to the stack being full
 	engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 4);
 	r = ExecuteString(engine, "Test3()", mod);
 	if( r != asEXECUTION_EXCEPTION )
@@ -279,8 +278,9 @@ bool Test()
 		TEST_FAILED;
 	}
 
-//	printf("---\n");
-
+	// An object is allocated and initialized with a call to 
+	// a function that returns an object by value. The function 
+	// suspends the thread. The context is then aborted.
 	asIScriptContext *ctx = engine->CreateContext();
 	engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 0);
 	r = ExecuteString(engine, "Test4()", mod, ctx);
@@ -292,8 +292,9 @@ bool Test()
 	ctx->Abort();
 	ctx->Release();
 
-//	printf("---\n");
-
+	// An object is allocated and initialized with a call to 
+	// a function that returns an object by value. The function 
+	// sets a script exception.
 	r = ExecuteString(engine, "Test5()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
@@ -301,8 +302,7 @@ bool Test()
 		TEST_FAILED;
 	}
 
-//	printf("---\n");
-
+	// The object constructor sets the exception
 	r = ExecuteString(engine, "Test6()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
@@ -310,8 +310,15 @@ bool Test()
 		TEST_FAILED;
 	}
 
-//	printf("---\n");
+	// A function that is supposed to return a handle sets an exception
+	r = ExecuteString(engine, "Test7()", mod);
+	if( r != asEXECUTION_EXCEPTION )
+	{
+		printf("%s: Failed\n", TESTNAME);
+		TEST_FAILED;
+	}
 
+    // Attempt to call method on null class pointer
 	mod->AddScriptSection("script", script3, strlen(script3));
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
@@ -321,6 +328,24 @@ bool Test()
 		printf("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
+
+	// Exception happens after value object has already been destroyed
+	r = ExecuteString(engine, "{\n"
+		                      "  Object o;\n"
+                              "}\n"
+							  "RaiseException();");
+	if( r != asEXECUTION_EXCEPTION )
+		TEST_FAILED;
+
+	// Exception happens after the value object has been destroyed and, 
+	// the same position would also be used again after the exception
+	r = ExecuteString(engine, "{ Object o; } \n"
+		                      "RaiseException(); \n"
+							  "Object o; \n");
+	if( r != asEXECUTION_EXCEPTION )
+		TEST_FAILED;
+
+
 
  	engine->Release();
 
