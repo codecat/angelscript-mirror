@@ -93,8 +93,6 @@ void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFun
 	continueLabels.SetLength(0);
 
 	byteCode.ClearAll();
-	objVariableTypes.SetLength(0);
-	objVariablePos.SetLength(0);
 
 	globalExpression = false;
 }
@@ -991,8 +989,9 @@ void asCCompiler::FinalizeFunction()
 	{
 		if( variableAllocations[n].IsObject() && !variableAllocations[n].IsReference() )
 		{
-			objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
-			objVariablePos.PushLast(GetVariableOffset(n));
+			outFunc->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
+			outFunc->objVariablePos.PushLast(GetVariableOffset(n));
+			outFunc->objVariableIsOnHeap.PushLast(variableIsOnHeap[n]);
 		}
 	}
 
@@ -1002,8 +1001,6 @@ void asCCompiler::FinalizeFunction()
 	outFunc->AddReferences();
 	outFunc->stackNeeded = byteCode.largestStackUsed;
 	outFunc->lineNumbers = byteCode.lineNumbers;
-	outFunc->objVariablePos = objVariablePos;
-	outFunc->objVariableTypes = objVariableTypes;
 }
 
 void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType, asCArray<int> *reservedVars, bool forceOnHeap)

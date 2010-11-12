@@ -613,6 +613,7 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 		{
 			WriteObjectType(func->objVariableTypes[i]);
 			WriteEncodedUInt(func->objVariablePos[i]);
+			WRITE_NUM(func->objVariableIsOnHeap[i]);
 		}
 
 		WriteEncodedUInt(func->stackNeeded);
@@ -692,6 +693,8 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 			func->objVariableTypes.PushLast(ReadObjectType());
 			num = ReadEncodedUInt();
 			func->objVariablePos.PushLast(num);
+			bool b; READ_NUM(b);
+			func->objVariableIsOnHeap.PushLast(b);
 		}
 
 		func->stackNeeded = ReadEncodedUInt();

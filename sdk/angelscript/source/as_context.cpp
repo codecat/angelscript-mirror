@@ -3391,26 +3391,38 @@ void asCContext::CleanStackFrame()
 	{
 		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
-			// TODO: value on stack: Need to know whether the object is allocated on the stack or not
 			int pos = currentFunction->objVariablePos[n];
-			if( *(size_t*)&regs.stackFramePointer[-pos] )
+			if( currentFunction->objVariableIsOnHeap[n] )
 			{
-				// Call the object's destructor
-				asSTypeBehaviour *beh = &currentFunction->objVariableTypes[n]->beh;
-				if( beh->release )
+				// Check if the pointer is initialized
+				if( *(size_t*)&regs.stackFramePointer[-pos] )
 				{
-					engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[-pos], beh->release);
-					*(size_t*)&regs.stackFramePointer[-pos] = 0;
-				}
-				else
-				{
-					if( beh->destruct )
-						engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[-pos], beh->destruct);
+					// Call the object's destructor
+					asSTypeBehaviour *beh = &currentFunction->objVariableTypes[n]->beh;
+					if( beh->release )
+					{
+						engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[-pos], beh->release);
+						*(size_t*)&regs.stackFramePointer[-pos] = 0;
+					}
+					else
+					{
+						if( beh->destruct )
+							engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[-pos], beh->destruct);
 
-					// Free the memory
-					engine->CallFree((void*)*(size_t*)&regs.stackFramePointer[-pos]);
-					*(size_t*)&regs.stackFramePointer[-pos] = 0;
+						// Free the memory
+						engine->CallFree((void*)*(size_t*)&regs.stackFramePointer[-pos]);
+						*(size_t*)&regs.stackFramePointer[-pos] = 0;
+					}
 				}
+			}
+			else
+			{
+				asASSERT( currentFunction->objVariableTypes[n]->GetFlags() & asOBJ_VALUE );
+
+				// TODO: value on stack: Need to know whether the object was really initialized or not
+				asSTypeBehaviour *beh = &currentFunction->objVariableTypes[n]->beh;
+				if( beh->destruct )
+					engine->CallObjectMethod((void*)(size_t*)&regs.stackFramePointer[-pos], beh->destruct);
 			}
 		}
 
@@ -3760,7 +3772,25 @@ void *asCContext::GetAddressOfVar(int varIndex, asUINT stackLevel)
 
 	// For object variables it's necessary to dereference the pointer to get the address of the value
 	if( func->variables[varIndex]->type.IsObject() && !func->variables[varIndex]->type.IsObjectHandle() )
-		return *(void**)(sf - func->variables[varIndex]->stackOffset);
+	{
+		// Determine if the object is really on the heap
+		bool onHeap = true;
+		if( func->variables[varIndex]->type.GetObjectType()->GetFlags() & asOBJ_VALUE )
+		{
+			int pos = func->variables[varIndex]->stackOffset;
+			for( asUINT n = 0; n < func->objVariablePos.GetLength(); n++ )
+			{
+				if( func->objVariablePos[n] == pos )
+				{
+					onHeap = func->objVariableIsOnHeap[n];
+					break;
+				}
+			}
+		}
+
+		if( onHeap )
+			return *(void**)(sf - func->variables[varIndex]->stackOffset);
+	}
 
 	return sf - func->variables[varIndex]->stackOffset;
 }

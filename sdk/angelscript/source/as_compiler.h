@@ -113,10 +113,6 @@ public:
 	int CompileTemplateFactoryStub(asCBuilder *builder, int trueFactoryId, asCObjectType *objType, asCScriptFunction *outFunc);
 	int CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *expr, sGlobalVariableDescription *gvar, asCScriptFunction *outFunc);
 
-	asCByteCode byteCode;
-	asCArray<asCObjectType*> objVariableTypes;
-	asCArray<int> objVariablePos;
-
 protected:
 	friend class asCBuilder;
 
@@ -227,6 +223,8 @@ protected:
 	void RemoveVariableScope();
 
 	void FinalizeFunction();
+
+	asCByteCode byteCode;
 
 	bool hasCompileErrors;
 

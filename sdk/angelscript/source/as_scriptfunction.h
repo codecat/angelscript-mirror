@@ -55,9 +55,9 @@ class asCGlobalProperty;
 
 struct asSScriptVariable
 {
-	asCString name;
+	asCString   name;
 	asCDataType type;
-	int stackOffset;
+	int         stackOffset;
 };
 
 struct asSSystemFunctionInterface;
@@ -176,6 +176,7 @@ public:
 	asCArray<asDWORD>            byteCode;
 	asCArray<asCObjectType*>     objVariableTypes;
 	asCArray<int>	             objVariablePos;
+	asCArray<bool>               objVariableIsOnHeap;
 	int                          stackNeeded;
 	asCArray<int>                lineNumbers;      // debug info
 	asCArray<asSScriptVariable*> variables;        // debug info
