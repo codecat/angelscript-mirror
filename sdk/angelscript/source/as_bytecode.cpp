@@ -1347,6 +1347,31 @@ void asCByteCode::Line(int line, int column)
     InstrWORD(asBC_JitEntry, 0);
 }
 
+void asCByteCode::ObjInfo(int offset, int info)
+{
+	if( AddInstruction() < 0 )
+		return;
+
+	// Add the special instruction that will be used to tell the exception
+	// handler when an object is initialized and deinitialized.
+	last->op                   = asBC_ObjInfo;
+	last->size                 = 0;
+	last->stackInc             = 0;
+	last->wArg[0]              = offset;
+	*((int*)ARG_DW(last->arg)) = info;
+}
+
+void asCByteCode::Block(bool start)
+{
+	if( AddInstruction() < 0 )
+		return;
+
+	last->op       = asBC_Block;
+	last->size     = 0;
+	last->stackInc = 0;
+	last->wArg[0]  = start ? 1 : 0;
+}
+
 int asCByteCode::FindLabel(int label, cByteInstruction *from, cByteInstruction **dest, int *positionDelta)
 {
 	// Search forward
@@ -1546,13 +1571,6 @@ void asCByteCode::PostProcess()
 			stackSize += instr->stackInc;
 			if( stackSize > largestStackUsed ) 
 				largestStackUsed = stackSize;
-
-			// PSP -> PSF
-			if( instr->op == asBC_PSP )
-			{
-				instr->op = asBC_PSF;
-				instr->wArg[0] = instr->wArg[0] + (short)instr->stackSize;
-			}
 
 			if( instr->op == asBC_JMP )
 			{
@@ -1873,8 +1891,10 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 		case asBCTYPE_INFO:
 			if( instr->op == asBC_LABEL )
 				fprintf(file, "%d:\n", instr->wArg[0]);
-			else
+			else if( instr->op == asBC_LINE )
 				fprintf(file, "   %s\n", asBCInfo[instr->op].name);
+			else if( instr->op == asBC_Block )
+				fprintf(file, "%c\n", instr->wArg[0] ? '{' : '}');
 			break;
 
 		case asBCTYPE_rW_DW_ARG:

@@ -1314,7 +1314,8 @@ enum asEBCInstr
 	asBC_MAXBYTECODE	= 180,
 
 	// Temporary tokens. Can't be output to the final program
-	asBC_PSP			= 253,
+	asBC_Block          = 252,
+	asBC_ObjInfo		= 253,
 	asBC_LINE			= 254,
 	asBC_LABEL			= 255
 };
@@ -1654,11 +1655,11 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(249),
 	asBCINFO_DUMMY(250),
 	asBCINFO_DUMMY(251),
-	asBCINFO_DUMMY(252),
 
-	asBCINFO(PSP,		W_ARG,			AS_PTR_SIZE),
-	asBCINFO(LINE,		INFO,			0xFFFF),
-	asBCINFO(LABEL,		INFO,			0xFFFF)
+	asBCINFO(Block,     INFO,           0),
+	asBCINFO(ObjInfo,	rW_DW_ARG,		0),
+	asBCINFO(LINE,		INFO,			0),
+	asBCINFO(LABEL,		INFO,			0)
 };
 
 // Macros to access bytecode instruction arguments

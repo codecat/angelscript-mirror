@@ -510,6 +510,12 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 
 			bc->AddCode(&ctx.bc);
 
+			// TODO: value on stack: This probably needs to be done in PerformFunctionCall
+			// Mark the object as initialized
+			if( !isObjectOnHeap )
+				bc->ObjInfo(offset, 1); 
+
+
 			return 0;
 		}
 	}
@@ -586,6 +592,10 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 					asSExprContext ctx(engine);
 					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
 					bc->AddCode(&ctx.bc);
+
+					// TODO: value on stack: This probably needs to be done in PerformFunctionCall
+					// Mark the object as initialized
+					bc->ObjInfo(offset, 1); 
 				}
 			}
 			else
@@ -626,19 +636,23 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnH
 				// Free the memory
 				bc->InstrW_PTR(asBC_FREE, (short)offset, type.GetObjectType());
 			}
-			else if( type.GetBehaviour()->destruct )
+			else 
 			{
 				asASSERT( type.GetObjectType()->GetFlags() & asOBJ_VALUE );
 
-				// Call the destructor as a regular function
-				bc->InstrSHORT(asBC_PSF, offset);
-				asSExprContext ctx(engine);
-				PerformFunctionCall(type.GetBehaviour()->destruct, &ctx);
-				bc->AddCode(&ctx.bc);
+				if( type.GetBehaviour()->destruct )
+				{
+					// Call the destructor as a regular function
+					bc->InstrSHORT(asBC_PSF, offset);
+					asSExprContext ctx(engine);
+					PerformFunctionCall(type.GetBehaviour()->destruct, &ctx);
+					bc->AddCode(&ctx.bc);
+				}
+
+				// TODO: Value on stack: This probably needs to be done in PerformFunctionCall
+				// Mark the object as destroyed
+				bc->ObjInfo(offset, 0);
 			}
-			
-			// If the object is allocated on the heap and there 
-			// is no destructor, then there is nothing to do
 		}
 	}
 }
@@ -657,7 +671,10 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 	bool hasWarned = false;
 
 	if( ownVariableScope )
+	{
+		bc->Block(true);
 		AddVariableScope();
+	}
 
 	asCScriptNode *node = block->firstChild;
 	while( node )
@@ -706,6 +723,7 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 		}
 
 		RemoveVariableScope();
+		bc->Block(false);
 	}
 }
 
@@ -1646,6 +1664,10 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 								ctx.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
 
 							PerformFunctionCall(funcs[0], &ctx, v->onHeap, &args, type.GetObjectType());
+
+							// TODO: value on stack: This probably has to be done in PerformFunctionCall
+							// Mark the object as initialized
+							ctx.bc.ObjInfo(v->stackOffset, 1);
 						}
 						bc->AddCode(&ctx.bc);
 					}
@@ -1820,6 +1842,8 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	}
 
 	// Construct the array with the size elements
+
+	// TODO: value on stack: This needs to support value types on the stack as well
 
 	// Find the list factory
 	// TODO: initlist: Add support for value types as well
@@ -2715,6 +2739,8 @@ void asCCompiler::CompileBreakStatement(asCScriptNode *node, asCByteCode *bc)
 	}
 
 	// Add destructor calls for all variables that will go out of scope
+	// Put this clean up in a block to allow exception handler to understand them
+	bc->Block(true);
 	asCVariableScope *vs = variables;
 	while( !vs->isBreakScope )
 	{
@@ -2723,6 +2749,7 @@ void asCCompiler::CompileBreakStatement(asCScriptNode *node, asCByteCode *bc)
 
 		vs = vs->parent;
 	}
+	bc->Block(false);
 
 	bc->InstrINT(asBC_JMP, breakLabels[breakLabels.GetLength()-1]);
 }
@@ -2736,6 +2763,8 @@ void asCCompiler::CompileContinueStatement(asCScriptNode *node, asCByteCode *bc)
 	}
 
 	// Add destructor calls for all variables that will go out of scope
+	// Put this clean up in a block to allow exception handler to understand them
+	bc->Block(true);
 	asCVariableScope *vs = variables;
 	while( !vs->isContinueScope )
 	{
@@ -2744,6 +2773,7 @@ void asCCompiler::CompileContinueStatement(asCScriptNode *node, asCByteCode *bc)
 
 		vs = vs->parent;
 	}
+	bc->Block(false);
 
 	bc->InstrINT(asBC_JMP, continueLabels[continueLabels.GetLength()-1]);
 }
@@ -2933,6 +2963,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			// invalidate the reference.
 
 			// Call destructor on all variables except for the function parameters
+			// Put the clean-up in a block to allow exception handler to understand this
+			bc->Block(true);
 			asCVariableScope *vs = variables;
 			while( vs )
 			{
@@ -2942,6 +2974,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 
 				vs = vs->parent;
 			}
+			bc->Block(false);
 
 			// For primitives the reference is already in the register,
 			// but for non-primitives the reference is on the stack so we 
@@ -3023,6 +3056,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 		// been done before the expression was evaluated
 
 		// Call destructor on all variables except for the function parameters
+		// Put the clean-up in a block to allow exception handler to understand this
+		bc->Block(true);
 		asCVariableScope *vs = variables;
 		while( vs )
 		{
@@ -3032,6 +3067,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 
 			vs = vs->parent;
 		}
+		bc->Block(false);
 	}
 
 	// Jump to the end of the function
