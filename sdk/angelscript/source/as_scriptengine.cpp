@@ -1398,7 +1398,11 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		}
 	}
 
-	return asSUCCESS;
+	// Return the type id as the success (except for template types)
+	if( flags & asOBJ_TEMPLATE )
+		return asSUCCESS;
+
+	return GetTypeIdByDecl(name);
 }
 
 // interface

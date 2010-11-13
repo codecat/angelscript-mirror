@@ -60,9 +60,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.20.0
-#define ANGELSCRIPT_VERSION        22000
-#define ANGELSCRIPT_VERSION_STRING "2.20.0"
+//! \details Version 2.20.1
+#define ANGELSCRIPT_VERSION        22001
+#define ANGELSCRIPT_VERSION_STRING "2.20.1"
 
 // Data types
 
@@ -913,7 +913,7 @@ public:
     //! \param[in] obj The name of the type.
     //! \param[in] byteSize The size of the type in bytes. Only necessary for value types.
     //! \param[in] flags One or more of the asEObjTypeFlags.
-    //! \return A negative value on error.
+    //! \return The type id on success or a negative value on error.
     //! \retval asINVALID_ARG The flags are invalid.
     //! \retval asINVALID_NAME The name is invalid.
     //! \retval asALREADY_REGISTERED Another type of the same name already exists.
