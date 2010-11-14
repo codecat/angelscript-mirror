@@ -67,6 +67,7 @@ public:
 
 	int  Optimize();
 	void ExtractLineNumbers();
+	void ExtractObjectVariableInfo(asCScriptFunction *outFunc);
 	int  ResolveJumpAddresses();
 	int  FindLabel(int label, cByteInstruction *from, cByteInstruction **dest, int *positionDelta);
 

@@ -152,7 +152,7 @@ bool TestVector3()
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_()\n"
 				   	   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(const vector3&in)\n"
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float, float)\n"
-	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3&'.\n" )
+	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -186,7 +186,7 @@ bool TestVector3()
 		r = ctx->Execute();
 		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
-        if( (GetNumAllocs() - allocs) == 0 )
+        if( (GetNumAllocs() - allocs) != 0 )
 		{
 			printf("There were %d allocations during the execution\n", GetNumAllocs() - allocs);
 			TEST_FAILED;

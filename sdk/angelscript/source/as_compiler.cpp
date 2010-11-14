@@ -1002,6 +1002,8 @@ void asCCompiler::FinalizeFunction()
 	// Finalize the bytecode
 	byteCode.Finalize();
 
+	byteCode.ExtractObjectVariableInfo(outFunc);
+
 	// Compile the list of object variables for the exception handler
 	for( n = 0; n < variableAllocations.GetLength(); n++ )
 	{
@@ -3159,9 +3161,8 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 	asASSERT( t.IsObjectHandle() || t.GetTokenType() != ttUnrecognizedToken );
 
 	bool isOnHeap = true;
-	// TODO: value on stack: Update this
-	if( t.IsPrimitive() /* || 
-		(t.GetObjectType() && (t.GetObjectType()->GetFlags() & asOBJ_VALUE) && !forceOnHeap) */ )
+	if( t.IsPrimitive() || 
+		(t.GetObjectType() && (t.GetObjectType()->GetFlags() & asOBJ_VALUE) && !forceOnHeap) )
 	{
 		// Primitives and value types (unless overridden) are allocated on the stack
 		isOnHeap = false;

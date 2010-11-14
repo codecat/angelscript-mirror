@@ -60,6 +60,13 @@ struct asSScriptVariable
 	int         stackOffset;
 };
 
+struct asSObjectVariableInfo
+{
+	asUINT programPos;
+	int    variableOffset;
+	asUINT option;
+};
+
 struct asSSystemFunctionInterface;
 
 // TODO: GetModuleName should be removed. A function won't belong to a specific module anymore
@@ -173,15 +180,16 @@ public:
 	asEFuncType                  funcType;
 
 	// Used by asFUNC_SCRIPT
-	asCArray<asDWORD>            byteCode;
-	asCArray<asCObjectType*>     objVariableTypes;
-	asCArray<int>	             objVariablePos;
-	asCArray<bool>               objVariableIsOnHeap;
-	int                          stackNeeded;
-	asCArray<int>                lineNumbers;      // debug info
-	asCArray<asSScriptVariable*> variables;        // debug info
-	int                          scriptSectionIdx; // debug info
-	bool                         dontCleanUpOnException;   // Stub functions don't own the object and parameters
+	asCArray<asDWORD>               byteCode;
+	asCArray<asCObjectType*>        objVariableTypes;
+	asCArray<int>	                objVariablePos;
+	asCArray<bool>                  objVariableIsOnHeap;
+	asCArray<asSObjectVariableInfo> objVariableInfo;
+	int                             stackNeeded;
+	asCArray<int>                   lineNumbers;      // debug info
+	asCArray<asSScriptVariable*>    variables;        // debug info
+	int                             scriptSectionIdx; // debug info
+	bool                            dontCleanUpOnException;   // Stub functions don't own the object and parameters
 
 	// Used by asFUNC_VIRTUAL
 	int                          vfTableIdx;

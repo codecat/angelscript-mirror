@@ -173,7 +173,7 @@ bool Test()
 	r = ExecuteString(engine, "type t; string a = \"a\" + t + \"b\";"); 
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 24) : Error   : No matching operator that takes the types 'string@&' and 'type&' found\n" )
+	if( bout.buffer != "ExecuteString (1, 24) : Error   : No matching operator that takes the types 'string@&' and 'type' found\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

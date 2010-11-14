@@ -3389,6 +3389,74 @@ void asCContext::CleanStackFrame()
 	// Clean object variables
 	if( !isStackMemoryNotAllocated )
 	{
+		// Determine which object variables that are really live ones
+		asCArray<int> liveObjects;
+		liveObjects.SetLength(currentFunction->objVariablePos.GetLength());
+		memset(liveObjects.AddressOf(), 0, sizeof(int)*liveObjects.GetLength());
+		asUINT pos = asUINT(regs.programPointer - currentFunction->byteCode.AddressOf());
+		for( int n = 0; n < (int)currentFunction->objVariableInfo.GetLength(); n++ )
+		{
+			if( currentFunction->objVariableInfo[n].programPos >= pos )
+			{
+				// We've determined how far the execution ran, now determine which variables are alive
+				for( --n; n >= 0; n-- )
+				{
+					switch( currentFunction->objVariableInfo[n].option )
+					{
+					case 0: // Object was destroyed
+						{
+							// TODO: value on stack: This should have been done by the compiler already
+							// Which variable is this?
+							asUINT var = 0;
+							for( asUINT v = 0; v < currentFunction->objVariablePos.GetLength(); v++ )
+								if( currentFunction->objVariablePos[v] == currentFunction->objVariableInfo[n].variableOffset )
+								{
+									var = v;
+									break;
+								}
+							liveObjects[var] -= 1;
+						}
+						break;
+					case 1: // Object was created
+						{
+							// Which variable is this?
+							asUINT var = 0;
+							for( asUINT v = 0; v < currentFunction->objVariablePos.GetLength(); v++ )
+								if( currentFunction->objVariablePos[v] == currentFunction->objVariableInfo[n].variableOffset )
+								{
+									var = v;
+									break;
+								}
+							liveObjects[var] += 1;
+						}
+						break;
+					case 2: // Start block
+						// We should ignore start blocks, since it just means the  
+						// program was within the block when the exception ocurred
+						break;
+					case 3: // End block
+						// We need to skip the entire block, as the objects created
+						// and destroyed inside this block are already out of scope
+						{
+							int nested = 1;
+							while( nested > 0 )
+							{
+								int option = currentFunction->objVariableInfo[--n].option;
+								if( option == 3 )
+									nested++;
+								if( option == 2 )
+									nested--;
+							}
+						}
+						break;
+					}
+				}
+
+				// We're done with the investigation
+				break;
+			}
+		}
+
 		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
 			int pos = currentFunction->objVariablePos[n];
@@ -3419,10 +3487,13 @@ void asCContext::CleanStackFrame()
 			{
 				asASSERT( currentFunction->objVariableTypes[n]->GetFlags() & asOBJ_VALUE );
 
-				// TODO: value on stack: Need to know whether the object was really initialized or not
-				asSTypeBehaviour *beh = &currentFunction->objVariableTypes[n]->beh;
-				if( beh->destruct )
-					engine->CallObjectMethod((void*)(size_t*)&regs.stackFramePointer[-pos], beh->destruct);
+				// Only destroy the object if it is truly alive
+				if( liveObjects[n] > 0 )
+				{
+					asSTypeBehaviour *beh = &currentFunction->objVariableTypes[n]->beh;
+					if( beh->destruct )
+						engine->CallObjectMethod((void*)(size_t*)&regs.stackFramePointer[-pos], beh->destruct);
+				}
 			}
 		}
 

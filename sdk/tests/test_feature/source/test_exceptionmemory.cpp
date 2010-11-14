@@ -345,7 +345,15 @@ bool Test()
 	if( r != asEXECUTION_EXCEPTION )
 		TEST_FAILED;
 
-
+	// The code has two places where the object is destroyed, one in the if case, and 
+	// and one at the end of the function. If the code doesn't go in to the if case,
+	// and the exception happens afterwards, the exception handler must not think the
+	// object was already destroyed.
+	r = ExecuteString(engine, "Object o; bool a = false; \n"
+		                      "if( a ) return; \n"
+							  "RaiseException(); \n");
+	if( r != asEXECUTION_EXCEPTION )
+		TEST_FAILED;
 
  	engine->Release();
 

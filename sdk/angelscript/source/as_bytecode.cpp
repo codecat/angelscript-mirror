@@ -1167,6 +1167,35 @@ void asCByteCode::ExtractLineNumbers()
 	}
 }
 
+void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
+{
+	int pos = 0;
+	cByteInstruction *instr = first;
+	while( instr )
+	{
+		if( instr->op == asBC_Block )
+		{
+			asSObjectVariableInfo info;
+			info.programPos     = pos;
+			info.variableOffset = 0;
+			info.option         = instr->wArg[0] ? 2 : 3;
+			outFunc->objVariableInfo.PushLast(info);
+		}
+		else if( instr->op == asBC_ObjInfo )
+		{
+			asSObjectVariableInfo info;
+			info.programPos     = pos;
+			info.variableOffset = (short)instr->wArg[0];
+			info.option         = *(int*)ARG_DW(instr->arg);
+			outFunc->objVariableInfo.PushLast(info);
+		}
+		else
+			pos += instr->size;
+
+		instr = instr->next;
+	}
+}
+
 int asCByteCode::GetSize()
 {
 	int size = 0;
