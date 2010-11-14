@@ -699,6 +699,8 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 
 		func->stackNeeded = ReadEncodedUInt();
 
+		// TODO: value on stack: The objVariableInfo array must be stored
+
 		int length = ReadEncodedUInt();
 		func->lineNumbers.SetLength(length);
 		for( i = 0; i < length; ++i )

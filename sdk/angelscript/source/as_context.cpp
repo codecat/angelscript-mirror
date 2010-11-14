@@ -1192,6 +1192,7 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 	// Update framepointer and programCounter
 	regs.stackFramePointer = regs.stackPointer;
 
+	// TODO: optimize: This can be avoided handling this as is done for value types in the exception handler
 	// Set all object variables to 0
 	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 	{
@@ -1244,7 +1245,7 @@ void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 			return;
 		}
 	}
-	else /* if( func->funcType == asFUNC_VIRTUAL ) */
+	else // if( func->funcType == asFUNC_VIRTUAL )
 	{
 		realFunc = objType->virtualFunctionTable[func->vfTableIdx];
 	}
