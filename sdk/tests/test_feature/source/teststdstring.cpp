@@ -128,6 +128,7 @@ bool TestStdString()
 	RegisterStdString(engine);
 	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(PrintString), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void printVal(string)", asFUNCTION(PrintStringVal), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct1), asCALL_CDECL_OBJLAST);
@@ -227,6 +228,24 @@ bool TestStdString()
 	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asMETHOD(Http,Get),asCALL_THISCALL);
 	ExecuteString(engine, "Http h; string str; h.get(\"string\", str);");
 	ExecuteString(engine, "Http h; string str; string a = \"a\"; h.get(\"string\"+a, str);");
+
+
+	mod->AddScriptSection("mod", 
+		"void func() \n"
+		"{ \n"
+		"  assert( test() == 42 ); \n"
+		"} \n"
+		"int test() \n"
+		"{ \n"
+		"  int a = 42; \n"
+		"  string s = 'test'; \n"
+		"  return a; \n"
+		"} \n");
+	if( mod->Build() < 0 )
+		TEST_FAILED;
+	r = ExecuteString(engine, "func()", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
 	engine->Release();
 

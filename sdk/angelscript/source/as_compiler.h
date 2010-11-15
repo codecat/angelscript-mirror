@@ -199,6 +199,7 @@ protected:
 	void ConvertToReference(asSExprContext *ctx);
 	void PushVariableOnStack(asSExprContext *ctx, bool asReference);
 	asCString GetScopeFromNode(asCScriptNode *node);
+	void DestroyVariables(asCByteCode *bc);
 
 	void ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
 	void ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, asCArray<int> *reservedVars = 0);

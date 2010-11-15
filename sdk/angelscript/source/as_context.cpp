@@ -3390,12 +3390,14 @@ void asCContext::CleanStackFrame()
 	// Clean object variables
 	if( !isStackMemoryNotAllocated )
 	{
+		int n;
+
 		// Determine which object variables that are really live ones
 		asCArray<int> liveObjects;
 		liveObjects.SetLength(currentFunction->objVariablePos.GetLength());
 		memset(liveObjects.AddressOf(), 0, sizeof(int)*liveObjects.GetLength());
 		asUINT pos = asUINT(regs.programPointer - currentFunction->byteCode.AddressOf());
-		for( int n = 0; n < (int)currentFunction->objVariableInfo.GetLength(); n++ )
+		for( n = 0; n < (int)currentFunction->objVariableInfo.GetLength(); n++ )
 		{
 			if( currentFunction->objVariableInfo[n].programPos >= pos )
 			{
@@ -3458,7 +3460,7 @@ void asCContext::CleanStackFrame()
 			}
 		}
 
-		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+		for( n = 0; n < (int)currentFunction->objVariablePos.GetLength(); n++ )
 		{
 			int pos = currentFunction->objVariablePos[n];
 			if( currentFunction->objVariableIsOnHeap[n] )

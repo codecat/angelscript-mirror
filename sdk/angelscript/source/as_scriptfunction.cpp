@@ -855,8 +855,8 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 		if( parameterTypes[p].IsObject() )
 			engine->GCEnumCallback(parameterTypes[p].GetObjectType());
 
-	for( asUINT n = 0; n < objVariableTypes.GetLength(); n++ )
-		engine->GCEnumCallback(objVariableTypes[n]);
+	for( asUINT t = 0; t < objVariableTypes.GetLength(); t++ )
+		engine->GCEnumCallback(objVariableTypes[t]);
 
 	// Notify the GC of all script functions that is accessed
 	for( asUINT n = 0; n < byteCode.GetLength(); n += asBCTypeSize[asBCInfo[*(asBYTE*)&byteCode[n]].type] )

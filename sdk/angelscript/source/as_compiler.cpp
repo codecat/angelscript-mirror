@@ -377,12 +377,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	// in order to exit the function
 	byteCode.Label(0);
 
-	// Release the object pointer again
-	if( outFunc->objectType )
-	{
-		byteCode.InstrW_PTR(asBC_FREE, 0, outFunc->objectType);
-	}
-
 	// Call destructors for function parameters
 	for( n = (int)variables->variables.GetLength() - 1; n >= 0; n-- )
 	{
@@ -395,6 +389,12 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		}
 
 		// Do not deallocate parameters
+	}
+
+	// Release the object pointer again
+	if( outFunc->objectType )
+	{
+		byteCode.InstrW_PTR(asBC_FREE, 0, outFunc->objectType);
 	}
 
 	// If there are compile errors, there is no reason to build the final code
@@ -2964,19 +2964,10 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			// is evaluated, otherwise there is a possibility that the cleanup will
 			// invalidate the reference.
 
-			// Call destructor on all variables except for the function parameters
-			// Put the clean-up in a block to allow exception handler to understand this
-			bc->Block(true);
-			asCVariableScope *vs = variables;
-			while( vs )
-			{
-				for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
-					if( vs->variables[n]->stackOffset > 0 )
-						CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, vs->variables[n]->onHeap, bc);
-
-				vs = vs->parent;
-			}
-			bc->Block(false);
+			// Destroy the local variables before loading 
+			// the reference into the register. This will 
+			// be done before the expression is evaluated.
+			DestroyVariables(bc);
 
 			// For primitives the reference is already in the register,
 			// but for non-primitives the reference is on the stack so we 
@@ -2991,7 +2982,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 
 			// There are no temporaries to release so we're done
 		}
-		else
+		else // if( !v->type.IsReference() )
 		{
 			ProcessPropertyGetAccessor(&expr, rnode);
 
@@ -3016,6 +3007,11 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				else
 				{
 					ConvertToVariable(&expr);
+
+					// Clean up the local variables and process deferred parameters
+					DestroyVariables(&expr.bc);
+					ProcessDeferredParams(&expr);
+
 					ReleaseTemporaryVariable(expr.type, &expr.bc);
 
 					// Load the variable in the register
@@ -3034,6 +3030,10 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				// Pop the reference to the temporary variable again
 				expr.bc.Pop(AS_PTR_SIZE);
 
+				// Clean up the local variables and process deferred parameters
+				DestroyVariables(&expr.bc);
+				ProcessDeferredParams(&expr);
+
 				// Load the object pointer into the object register
 				// LOADOBJ also clears the address in the variable
 				expr.bc.InstrSHORT(asBC_LOADOBJ, expr.type.stackOffset);
@@ -3043,37 +3043,36 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				// By releasing without the bytecode we do just that.
 				ReleaseTemporaryVariable(expr.type, 0);
 			}
-
-			// Release temporary variables used by expression
-			ReleaseTemporaryVariable(expr.type, &expr.bc);
-			ProcessDeferredParams(&expr);
 		}
 
 		bc->AddCode(&expr.bc);
 	}
-
-	if( !v->type.IsReference() )
+	else
 	{
-		// For functions that return a reference, this has already 
-		// been done before the expression was evaluated
-
-		// Call destructor on all variables except for the function parameters
-		// Put the clean-up in a block to allow exception handler to understand this
-		bc->Block(true);
-		asCVariableScope *vs = variables;
-		while( vs )
-		{
-			for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
-				if( vs->variables[n]->stackOffset > 0 )
-					CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, vs->variables[n]->onHeap, bc);
-
-			vs = vs->parent;
-		}
-		bc->Block(false);
+		// For functions that don't return anything
+		// we just detroy the local variables
+		DestroyVariables(bc);
 	}
 
 	// Jump to the end of the function
 	bc->InstrINT(asBC_JMP, 0);
+}
+
+void asCCompiler::DestroyVariables(asCByteCode *bc)
+{
+	// Call destructor on all variables except for the function parameters
+	// Put the clean-up in a block to allow exception handler to understand this
+	bc->Block(true);
+	asCVariableScope *vs = variables;
+	while( vs )
+	{
+		for( int n = (int)vs->variables.GetLength() - 1; n >= 0; n-- )
+			if( vs->variables[n]->stackOffset > 0 )
+				CallDestructor(vs->variables[n]->type, vs->variables[n]->stackOffset, vs->variables[n]->onHeap, bc);
+
+		vs = vs->parent;
+	}
+	bc->Block(false);
 }
 
 void asCCompiler::AddVariableScope(bool isBreakScope, bool isContinueScope)
