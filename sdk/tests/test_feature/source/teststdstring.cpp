@@ -230,6 +230,7 @@ bool TestStdString()
 	ExecuteString(engine, "Http h; string str; string a = \"a\"; h.get(\"string\"+a, str);");
 
 
+	// Make sure the return value is kept intact, even though there are objects that needs to be cleaned up
 	mod->AddScriptSection("mod", 
 		"void func() \n"
 		"{ \n"
@@ -239,6 +240,24 @@ bool TestStdString()
 		"{ \n"
 		"  int a = 42; \n"
 		"  string s = 'test'; \n"
+		"  return a; \n"
+		"} \n");
+	if( mod->Build() < 0 )
+		TEST_FAILED;
+	r = ExecuteString(engine, "func()", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	// Make sure the return value is kept intact, even though there are objects that needs to be cleaned up
+	mod->AddScriptSection("mod", 
+		"void func() \n"
+		"{ \n"
+		"  string s = 'test'; \n"
+		"  assert( test(s) == 42 ); \n"
+		"} \n"
+		"int test(string s) \n"
+		"{ \n"
+		"  int a = 42; \n"
 		"  return a; \n"
 		"} \n");
 	if( mod->Build() < 0 )

@@ -330,6 +330,8 @@ int asCContext::Prepare(int funcID)
 		// Set all object variables to 0
 		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
+			if( !currentFunction->objVariableIsOnHeap[n] ) continue;
+
 			int pos = currentFunction->objVariablePos[n];
 			*(size_t*)&regs.stackFramePointer[-pos] = 0;
 		}
@@ -1196,6 +1198,8 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 	// Set all object variables to 0
 	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 	{
+		if( !currentFunction->objVariableIsOnHeap[n] ) continue;
+
 		int pos = currentFunction->objVariablePos[n];
 		*(size_t*)&regs.stackFramePointer[-pos] = 0;
 	}
