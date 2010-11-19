@@ -79,11 +79,11 @@ static const char *correct =
 "line: 10,3\n"
 " int c = 3\n"
 "--- call stack ---\n"
+"Module2:void Test2():5,2\n"
+" int b = 2\n"
 "Module1:void main():8,2\n"
 " int a = 1\n"
 " string s = 'text'\n"
-"Module2:void Test2():5,2\n"
-" int b = 2\n"
 "--- exception ---\n"
 "desc: Index out of bounds\n"
 "func: void Test3()\n"
@@ -92,11 +92,11 @@ static const char *correct =
 "line: 10,3\n"
 " int c = 3\n"
 "--- call stack ---\n"
+"Module2:void Test2():5,2\n"
+" int b = 2\n"
 "Module1:void main():8,2\n"
 " int a = 1\n"
-" string s = 'text'\n"
-"Module2:void Test2():5,2\n"
-" int b = 2\n";
+" string s = 'text'\n";
 
 void print(const char *format, ...)
 {

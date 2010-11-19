@@ -2265,6 +2265,9 @@ public:
 	//! \brief Returns the function at the specified callstack level.
 	//! \param[in] stackLevel The index on the call stack.
 	//! \return The function descriptor on the call stack referred to by the index.
+	//!
+	//! Index 0 refers to the current function, index 1 to the calling function, and so on. 
+	//! The highest index is the originating function that the application called.
 	virtual asIScriptFunction *GetFunction(asUINT stackLevel = 0) = 0;
 	//! \brief Returns the line number at the specified callstack level.
     //! \param[in] stackLevel The index on the call stack.

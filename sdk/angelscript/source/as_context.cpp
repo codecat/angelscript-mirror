@@ -1107,7 +1107,7 @@ asIScriptFunction *asCContext::GetFunction(asUINT stackLevel)
 
 	if( stackLevel == 0 ) return currentFunction;
 
-	size_t *s = callStack.AddressOf() + (stackLevel - 1)*CALLSTACK_FRAME_SIZE;
+	size_t *s = callStack.AddressOf() + (GetCallstackSize() - stackLevel - 1)*CALLSTACK_FRAME_SIZE;
 	asCScriptFunction *func = (asCScriptFunction*)s[1];
 
 	return func;
@@ -1127,7 +1127,7 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 	}
 	else
 	{
-		size_t *s = callStack.AddressOf() + (stackLevel-1)*CALLSTACK_FRAME_SIZE;
+		size_t *s = callStack.AddressOf() + (GetCallstackSize()-stackLevel-1)*CALLSTACK_FRAME_SIZE;
 		func = (asCScriptFunction*)s[1];
 		bytePos = (asDWORD*)s[2];
 	}
@@ -3837,7 +3837,7 @@ void *asCContext::GetAddressOfVar(int varIndex, asUINT stackLevel)
 	}
 	else
 	{
-		size_t *s = callStack.AddressOf() + (stackLevel-1)*CALLSTACK_FRAME_SIZE;
+		size_t *s = callStack.AddressOf() + (GetCallstackSize()-stackLevel-1)*CALLSTACK_FRAME_SIZE;
 		func = (asCScriptFunction*)s[1];
 		sf = (asDWORD*)s[0];
 	}
@@ -3869,6 +3869,9 @@ void *asCContext::GetAddressOfVar(int varIndex, asUINT stackLevel)
 		if( onHeap )
 			return *(void**)(sf - func->variables[varIndex]->stackOffset);
 	}
+
+	// TODO: value on stack: If the object allocated on the stack is not initialized, 
+	//                       return a null pointer instead.
 
 	return sf - func->variables[varIndex]->stackOffset;
 }
@@ -3908,7 +3911,7 @@ void *asCContext::GetThisPointer(asUINT stackLevel)
 	}
 	else
 	{
-		size_t *s = callStack.AddressOf() + (stackLevel-1)*CALLSTACK_FRAME_SIZE;
+		size_t *s = callStack.AddressOf() + (GetCallstackSize()-stackLevel-1)*CALLSTACK_FRAME_SIZE;
 		func = (asCScriptFunction*)s[1];
 		sf = (asDWORD*)s[0];
 	}

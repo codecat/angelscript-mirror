@@ -132,7 +132,7 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
     {
       printf(" %s = %f\n", ctx->GetVarDeclaration(n, stackLevel), *(float*)varPointer);
     }
-    else if( typeId & asTYPEID_SCRIPT_OBJECT )
+    else if( typeId & asTYPEID_SCRIPTOBJECT )
     {
       asIScriptObject *obj = (asIScriptObject*)varPointer;
       if( obj )
