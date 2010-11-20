@@ -3389,82 +3389,103 @@ void asCContext::CleanStack()
 	inExceptionHandler = false;
 }
 
+void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLevel)
+{
+	asASSERT( stackLevel < GetCallstackSize() );
+
+	asCScriptFunction *func;
+	asUINT pos;
+
+	if( stackLevel == 0 )
+	{
+		func = currentFunction;
+		pos = asUINT(regs.programPointer - func->byteCode.AddressOf());
+	}
+	else
+	{
+		size_t *s = callStack.AddressOf() + (GetCallstackSize()-stackLevel-1)*CALLSTACK_FRAME_SIZE;
+		func = (asCScriptFunction*)s[1];
+		pos = asUINT((asDWORD*)s[2] - func->byteCode.AddressOf());
+	}
+
+
+	// Determine which object variables that are really live ones
+	liveObjects.SetLength(func->objVariablePos.GetLength());
+	memset(liveObjects.AddressOf(), 0, sizeof(int)*liveObjects.GetLength());
+	for( int n = 0; n < (int)func->objVariableInfo.GetLength(); n++ )
+	{
+		if( func->objVariableInfo[n].programPos >= pos )
+		{
+			// We've determined how far the execution ran, now determine which variables are alive
+			for( --n; n >= 0; n-- )
+			{
+				switch( func->objVariableInfo[n].option )
+				{
+				case 0: // Object was destroyed
+					{
+						// TODO: value on stack: This should have been done by the compiler already
+						// Which variable is this?
+						asUINT var = 0;
+						for( asUINT v = 0; v < func->objVariablePos.GetLength(); v++ )
+							if( func->objVariablePos[v] == func->objVariableInfo[n].variableOffset )
+							{
+								var = v;
+								break;
+							}
+						liveObjects[var] -= 1;
+					}
+					break;
+				case 1: // Object was created
+					{
+						// Which variable is this?
+						asUINT var = 0;
+						for( asUINT v = 0; v < func->objVariablePos.GetLength(); v++ )
+							if( func->objVariablePos[v] == func->objVariableInfo[n].variableOffset )
+							{
+								var = v;
+								break;
+							}
+						liveObjects[var] += 1;
+					}
+					break;
+				case 2: // Start block
+					// We should ignore start blocks, since it just means the  
+					// program was within the block when the exception ocurred
+					break;
+				case 3: // End block
+					// We need to skip the entire block, as the objects created
+					// and destroyed inside this block are already out of scope
+					{
+						int nested = 1;
+						while( nested > 0 )
+						{
+							int option = func->objVariableInfo[--n].option;
+							if( option == 3 )
+								nested++;
+							if( option == 2 )
+								nested--;
+						}
+					}
+					break;
+				}
+			}
+
+			// We're done with the investigation
+			break;
+		}
+	}
+}
+
 void asCContext::CleanStackFrame()
 {
 	// Clean object variables
 	if( !isStackMemoryNotAllocated )
 	{
-		int n;
-
 		// Determine which object variables that are really live ones
 		asCArray<int> liveObjects;
-		liveObjects.SetLength(currentFunction->objVariablePos.GetLength());
-		memset(liveObjects.AddressOf(), 0, sizeof(int)*liveObjects.GetLength());
-		asUINT pos = asUINT(regs.programPointer - currentFunction->byteCode.AddressOf());
-		for( n = 0; n < (int)currentFunction->objVariableInfo.GetLength(); n++ )
-		{
-			if( currentFunction->objVariableInfo[n].programPos >= pos )
-			{
-				// We've determined how far the execution ran, now determine which variables are alive
-				for( --n; n >= 0; n-- )
-				{
-					switch( currentFunction->objVariableInfo[n].option )
-					{
-					case 0: // Object was destroyed
-						{
-							// TODO: value on stack: This should have been done by the compiler already
-							// Which variable is this?
-							asUINT var = 0;
-							for( asUINT v = 0; v < currentFunction->objVariablePos.GetLength(); v++ )
-								if( currentFunction->objVariablePos[v] == currentFunction->objVariableInfo[n].variableOffset )
-								{
-									var = v;
-									break;
-								}
-							liveObjects[var] -= 1;
-						}
-						break;
-					case 1: // Object was created
-						{
-							// Which variable is this?
-							asUINT var = 0;
-							for( asUINT v = 0; v < currentFunction->objVariablePos.GetLength(); v++ )
-								if( currentFunction->objVariablePos[v] == currentFunction->objVariableInfo[n].variableOffset )
-								{
-									var = v;
-									break;
-								}
-							liveObjects[var] += 1;
-						}
-						break;
-					case 2: // Start block
-						// We should ignore start blocks, since it just means the  
-						// program was within the block when the exception ocurred
-						break;
-					case 3: // End block
-						// We need to skip the entire block, as the objects created
-						// and destroyed inside this block are already out of scope
-						{
-							int nested = 1;
-							while( nested > 0 )
-							{
-								int option = currentFunction->objVariableInfo[--n].option;
-								if( option == 3 )
-									nested++;
-								if( option == 2 )
-									nested--;
-							}
-						}
-						break;
-					}
-				}
+		DetermineLiveObjects(liveObjects, 0);
 
-				// We're done with the investigation
-				break;
-			}
-		}
-
-		for( n = 0; n < (int)currentFunction->objVariablePos.GetLength(); n++ )
+		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
 			int pos = currentFunction->objVariablePos[n];
 			if( currentFunction->objVariableIsOnHeap[n] )
@@ -3861,6 +3882,17 @@ void *asCContext::GetAddressOfVar(int varIndex, asUINT stackLevel)
 				if( func->objVariablePos[n] == pos )
 				{
 					onHeap = func->objVariableIsOnHeap[n];
+
+					if( !onHeap )
+					{
+						// If the object on the stack is not initialized return a null pointer instead
+						asCArray<int> liveObjects;
+						DetermineLiveObjects(liveObjects, stackLevel);
+
+						if( liveObjects[n] <= 0 )
+							return 0;
+					}
+
 					break;
 				}
 			}
@@ -3869,9 +3901,6 @@ void *asCContext::GetAddressOfVar(int varIndex, asUINT stackLevel)
 		if( onHeap )
 			return *(void**)(sf - func->variables[varIndex]->stackOffset);
 	}
-
-	// TODO: value on stack: If the object allocated on the stack is not initialized, 
-	//                       return a null pointer instead.
 
 	return sf - func->variables[varIndex]->stackOffset;
 }
