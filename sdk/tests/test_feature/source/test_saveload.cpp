@@ -331,7 +331,7 @@ bool Test()
 	mod->SaveByteCode(&stream);
 
 	// TODO: These should eventually be equal, once the bytecode is fully platform independent
-	if( (sizeof(void*) == 4 && stream.buffer.size() != 1465) /* ||
+	if( (sizeof(void*) == 4 && stream.buffer.size() != 1476) /* ||
 		(sizeof(void*) == 8 && stream.buffer.size() != 1616) */ ) 
 	{
 		// Originally this was 3213 (on 32bit)
@@ -340,7 +340,7 @@ bool Test()
 	}
 
 	asUINT zeroes = stream.CountZeroes();
-	if( (sizeof(void*) == 4 && zeroes != 442) /* ||
+	if( (sizeof(void*) == 4 && zeroes != 453) /* ||
 		(sizeof(void*) == 8 && zeroes != 609) */ )
 	{
 		printf("The saved byte code contains a different amount of zeroes than expected. Counted %d\n", zeroes);

@@ -618,6 +618,14 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 
 		WriteEncodedUInt(func->stackNeeded);
 
+		WriteEncodedUInt((asUINT)func->objVariableInfo.GetLength());
+		for( i = 0; i < func->objVariableInfo.GetLength(); ++i )
+		{
+			WriteEncodedUInt(func->objVariableInfo[i].programPos);
+			WriteEncodedUInt(func->objVariableInfo[i].variableOffset); // TODO: should be int
+			WriteEncodedUInt(func->objVariableInfo[i].option);
+		}
+
 		asUINT length = (asUINT)func->lineNumbers.GetLength();
 		WriteEncodedUInt(length);
 		for( i = 0; i < length; ++i )
@@ -699,9 +707,16 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 
 		func->stackNeeded = ReadEncodedUInt();
 
-		// TODO: value on stack: The objVariableInfo array must be stored
-
 		int length = ReadEncodedUInt();
+		func->objVariableInfo.SetLength(length);
+		for( i = 0; i < length; ++i )
+		{
+			func->objVariableInfo[i].programPos     = ReadEncodedUInt();
+			func->objVariableInfo[i].variableOffset = ReadEncodedUInt(); // TODO: should be int
+			func->objVariableInfo[i].option         = ReadEncodedUInt();
+		}
+
+		length = ReadEncodedUInt();
 		func->lineNumbers.SetLength(length);
 		for( i = 0; i < length; ++i )
 			func->lineNumbers[i] = ReadEncodedUInt();
