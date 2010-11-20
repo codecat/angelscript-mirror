@@ -1178,7 +1178,7 @@ void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 			asSObjectVariableInfo info;
 			info.programPos     = pos;
 			info.variableOffset = 0;
-			info.option         = instr->wArg[0] ? 2 : 3;
+			info.option         = instr->wArg[0] ? asBLOCK_BEGIN : asBLOCK_END;
 			outFunc->objVariableInfo.PushLast(info);
 		}
 		else if( instr->op == asBC_ObjInfo )

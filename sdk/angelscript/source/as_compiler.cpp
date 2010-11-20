@@ -513,7 +513,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 			// TODO: value on stack: This probably needs to be done in PerformFunctionCall
 			// Mark the object as initialized
 			if( !isObjectOnHeap )
-				bc->ObjInfo(offset, 1); 
+				bc->ObjInfo(offset, asOBJ_INIT); 
 
 
 			return 0;
@@ -595,7 +595,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 					// TODO: value on stack: This probably needs to be done in PerformFunctionCall
 					// Mark the object as initialized
-					bc->ObjInfo(offset, 1); 
+					bc->ObjInfo(offset, asOBJ_INIT); 
 				}
 			}
 			else
@@ -651,7 +651,7 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnH
 
 				// TODO: Value on stack: This probably needs to be done in PerformFunctionCall
 				// Mark the object as destroyed
-				bc->ObjInfo(offset, 0);
+				bc->ObjInfo(offset, asOBJ_UNINIT);
 			}
 		}
 	}
@@ -1669,7 +1669,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 							// TODO: value on stack: This probably has to be done in PerformFunctionCall
 							// Mark the object as initialized
-							ctx.bc.ObjInfo(v->stackOffset, 1);
+							ctx.bc.ObjInfo(v->stackOffset, asOBJ_INIT);
 						}
 						bc->AddCode(&ctx.bc);
 					}

@@ -3421,9 +3421,9 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 			{
 				switch( func->objVariableInfo[n].option )
 				{
-				case 0: // Object was destroyed
+				case asOBJ_UNINIT: // Object was destroyed
 					{
-						// TODO: value on stack: This should have been done by the compiler already
+						// TODO: optimize: This should have been done by the compiler already
 						// Which variable is this?
 						asUINT var = 0;
 						for( asUINT v = 0; v < func->objVariablePos.GetLength(); v++ )
@@ -3435,7 +3435,7 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 						liveObjects[var] -= 1;
 					}
 					break;
-				case 1: // Object was created
+				case asOBJ_INIT: // Object was created
 					{
 						// Which variable is this?
 						asUINT var = 0;
@@ -3448,11 +3448,11 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 						liveObjects[var] += 1;
 					}
 					break;
-				case 2: // Start block
+				case asBLOCK_BEGIN: // Start block
 					// We should ignore start blocks, since it just means the  
 					// program was within the block when the exception ocurred
 					break;
-				case 3: // End block
+				case asBLOCK_END: // End block
 					// We need to skip the entire block, as the objects created
 					// and destroyed inside this block are already out of scope
 					{

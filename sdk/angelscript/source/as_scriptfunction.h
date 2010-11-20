@@ -60,6 +60,14 @@ struct asSScriptVariable
 	int         stackOffset;
 };
 
+enum asEObjVarInfoOption
+{
+	asOBJ_UNINIT,
+	asOBJ_INIT,
+	asBLOCK_BEGIN,
+	asBLOCK_END
+};
+
 struct asSObjectVariableInfo
 {
 	asUINT programPos;
