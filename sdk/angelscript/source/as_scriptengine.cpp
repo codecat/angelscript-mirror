@@ -523,16 +523,20 @@ asCScriptEngine::~asCScriptEngine()
 		mapTypeIdToDataType.Erase(cursor);
 	}
 
-	defaultGroup.RemoveConfiguration(this);
+	// First remove what is not used, so that other groups can be deleted safely
+	defaultGroup.RemoveConfiguration(this, true);
 	while( configGroups.GetLength() )
 	{
 		// Delete config groups in the right order
 		asCConfigGroup *grp = configGroups.PopLast();
 		if( grp )
 		{
+			grp->RemoveConfiguration(this);
 			asDELETE(grp,asCConfigGroup);
 		}
 	}
+	// Remove what is remaining
+	defaultGroup.RemoveConfiguration(this);
 
 	for( n = 0; n < registeredGlobalProps.GetLength(); n++ )
 	{

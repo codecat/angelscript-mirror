@@ -600,6 +600,18 @@ bool Test()
 
 	engine->Release();
 
+	//-----------------------
+	// Make sure the clean-up works when there a groups using types in the default group
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	RegisterStdString(engine);
+
+	engine->BeginConfigGroup("g");
+	r = engine->RegisterGlobalFunction("void SaveLesson(const string &in)", asFUNCTION(0), asCALL_CDECL); assert( r >= 0 );
+	engine->EndConfigGroup();
+
+	engine->Release();
+
 	// Success
 	return fail;
 }
