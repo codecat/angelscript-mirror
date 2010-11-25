@@ -180,11 +180,26 @@ int asCRestore::Save()
 	}
 
 	// usedTypes[]
+	asUINT numValueTypes = 0;
 	count = (asUINT)usedTypes.GetLength();
 	WriteEncodedUInt(count);
 	for( i = 0; i < count; ++i )
 	{
+		if( usedTypes[i]->flags & asOBJ_VALUE )
+			numValueTypes++;
+
 		WriteObjectType(usedTypes[i]);
+	}
+
+	// Write the size of value types so the code can be adjusted if they are not the same when reloading the code
+	WriteEncodedUInt(numValueTypes);
+	for( i = 0; i < count; i++ )
+	{
+		if( usedTypes[i]->flags & asOBJ_VALUE )
+		{
+			WriteEncodedUInt(i);
+			WriteEncodedUInt(usedTypes[i]->GetSize());
+		}
 	}
 
 	// usedTypeIds[]
@@ -355,6 +370,28 @@ int asCRestore::Restore()
 	{
 		asCObjectType *ot = ReadObjectType();
 		usedTypes.PushLast(ot);
+	}
+
+	// Read the size of the value types so we can determine if it is necessary to adjust the code
+	asUINT numValueTypes = ReadEncodedUInt();
+	for( i = 0; i < numValueTypes; ++i )
+	{
+		asUINT idx = ReadEncodedUInt();
+		asUINT size = ReadEncodedUInt();
+
+		if( idx >= usedTypes.GetLength() )
+		{
+			// TODO: Write error message to the callback
+			error = true;
+			continue;
+		}
+
+		if( size != usedTypes[idx]->GetSize() )
+		{
+			// TODO: value on stack: Adjust the code if the size is different
+			asASSERT(false);
+			error = true;
+		}
 	}
 
 	// usedTypeIds[]
@@ -667,6 +704,7 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 			return savedFunctions[index];
 		else
 		{
+			// TODO: Write to message callback
 			error = true;
 			return 0;
 		}
@@ -2100,8 +2138,8 @@ void asCRestore::ReadUsedGlobalProps()
 
 		if( prop == 0 )
 		{
-			error = true;
 			// TODO: Write error message to the callback
+			error = true;
 		}
 	}
 }
@@ -2184,6 +2222,7 @@ short asCRestore::FindObjectPropOffset(asWORD index)
 {
 	if( index >= usedObjectProperties.GetLength() )
 	{
+		// TODO: Write to message callback
 		asASSERT(false);
 		error = true;
 		return 0;
@@ -2210,6 +2249,7 @@ asCScriptFunction *asCRestore::FindFunction(int idx)
 		return usedFunctions[idx];
 	else
 	{
+		// TODO: Write to message callback
 		error = true;
 		return 0;
 	}
@@ -2257,6 +2297,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 				*fid = f->id;
 			else
 			{
+				// TODO: Write to message callback
 				error = true;
 				return;
 			}
@@ -2283,6 +2324,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 					*fid = f->id;
 				else
 				{
+					// TODO: Write to message callback
 					error = true;
 					return;
 				}
@@ -2297,6 +2339,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 				*arg = usedStringConstants[*arg];
 			else
 			{
+				// TODO: Write to message callback
 				error = true;
 				return;
 			}
@@ -2312,12 +2355,14 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 					*fid = bi->importedFunctionSignature->id;
 				else
 				{
+					// TODO: Write to message callback
 					error = true;
 					return;
 				}
 			}
 			else
 			{
+				// TODO: Write to message callback
 				error = true;
 				return;
 			}
@@ -2336,6 +2381,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 				*(void**)index = usedGlobalProperties[*(asUINT*)index];
 			else
 			{
+				// TODO: Write to message callback
 				error = true;
 				return;
 			}
@@ -2343,6 +2389,19 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
+
+	// TODO: value on stack: Adjust size of value types on stack
+
+	// As the bytecode may have been generated on a different platform it is necessary
+	// to adjust the bytecode in case any of the value types allocated on the stack has
+	// a different size on this platform.
+
+	// variable offsets in bytecode
+	// objVariablePos
+	// objVariableInfo[x].variableOffset  // TODO: should be an index into the objVariablePos array
+	// stackNeeded
+	// variables[x].stackOffset
+
 }
 
 int asCRestore::FindTypeIdIdx(int typeId)
@@ -2364,6 +2423,7 @@ int asCRestore::FindTypeId(int idx)
 		return usedTypeIds[idx];
 	else
 	{
+		// TODO: Write to message callback
 		error = true;
 		return 0;
 	}
@@ -2386,6 +2446,7 @@ asCObjectType *asCRestore::FindObjectType(int idx)
 {
 	if( idx < 0 || idx >= (int)usedTypes.GetLength() )
 	{
+		// TODO: Write to message callback
 		error = true;
 		return 0;
 	}
