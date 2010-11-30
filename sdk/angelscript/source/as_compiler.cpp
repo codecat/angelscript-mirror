@@ -157,7 +157,6 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	// Return a handle to the newly created object
 	byteCode.InstrSHORT(asBC_LOADOBJ, (short)varOffset);
 
-	byteCode.Pop(AS_PTR_SIZE);
 	byteCode.Ret(argDwords);
 
 	FinalizeFunction();
@@ -407,7 +406,11 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	// Remove the variable scope
 	RemoveVariableScope();
 
-	byteCode.Pop(varSize);
+	// This POP is not necessary as the return will clean up the stack frame anyway.
+	// The bytecode optimizer would remove this POP, however by not including it here
+	// it is guaranteed it doesn't have to be adjusted by the asCRestore class when
+	// a types are of a different size than originally compiled for.
+	// byteCode.Pop(varSize);
 
 	byteCode.Ret(-stackPos);
 
@@ -972,9 +975,6 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	// Remove the variable scope again
 	RemoveVariableScope();
-
-	if( varSize )
-		byteCode.Pop(varSize);
 
 	byteCode.Ret(0);
 

@@ -1338,15 +1338,14 @@ enum asEBCType
 	asBCTYPE_wW_DW_ARG    = 12,
 	asBCTYPE_wW_rW_DW_ARG = 13,
 	asBCTYPE_rW_rW_ARG    = 14,
-	asBCTYPE_W_rW_ARG     = 15,
-	asBCTYPE_wW_W_ARG     = 16,
-	asBCTYPE_QW_DW_ARG    = 17,
-	asBCTYPE_rW_QW_ARG    = 18,
-	asBCTYPE_W_DW_ARG     = 19
+	asBCTYPE_wW_W_ARG     = 15,
+	asBCTYPE_QW_DW_ARG    = 16,
+	asBCTYPE_rW_QW_ARG    = 17,
+	asBCTYPE_W_DW_ARG     = 18
 };
 
 // Instruction type sizes
-const int asBCTypeSize[20] =
+const int asBCTypeSize[19] =
 {
     0, // asBCTYPE_INFO
     1, // asBCTYPE_NO_ARG
@@ -1363,7 +1362,6 @@ const int asBCTypeSize[20] =
     2, // asBCTYPE_wW_DW_ARG
     3, // asBCTYPE_wW_rW_DW_ARG
     2, // asBCTYPE_rW_rW_ARG
-    2, // asBCTYPE_W_rW_ARG
     2, // asBCTYPE_wW_W_ARG
     4, // asBCTYPE_QW_DW_ARG
     3, // asBCTYPE_rW_QW_ARG

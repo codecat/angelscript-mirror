@@ -130,10 +130,6 @@ void asCByteCode::GetVarsUsed(asCArray<int> &vars)
 			InsertIfNotExists(vars, curr->wArg[0]);
 			InsertIfNotExists(vars, curr->wArg[1]);
 		}
-		else if( asBCInfo[curr->op].type == asBCTYPE_W_rW_ARG )
-		{
-			InsertIfNotExists(vars, curr->wArg[1]);
-		}
 		else if( curr->op == asBC_LoadThisR )
 		{
 			InsertIfNotExists(vars, 0);
@@ -169,11 +165,6 @@ bool asCByteCode::IsVarUsed(int offset)
 				 asBCInfo[curr->op].type == asBCTYPE_wW_rW_DW_ARG )
 		{
 			if( curr->wArg[0] == offset || curr->wArg[1] == offset )
-				return true;
-		}
-		else if( asBCInfo[curr->op].type == asBCTYPE_W_rW_ARG )
-		{
-			if( curr->wArg[1] == offset )
 				return true;
 		}
 		else if( curr->op == asBC_LoadThisR )
@@ -220,11 +211,6 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 		{
 			if( curr->wArg[0] == oldOffset )
 				curr->wArg[0] = (short)newOffset;
-			if( curr->wArg[1] == oldOffset )
-				curr->wArg[1] = (short)newOffset;
-		}
-		else if( asBCInfo[curr->op].type == asBCTYPE_W_rW_ARG )
-		{
 			if( curr->wArg[1] == oldOffset )
 				curr->wArg[1] = (short)newOffset;
 		}
@@ -941,8 +927,7 @@ bool asCByteCode::IsTempVarReadByInstr(cByteInstruction *curr, int offset)
 			  curr->wArg[0] == offset )
 		return true;
 	else if( (asBCInfo[curr->op].type == asBCTYPE_wW_rW_ARG ||
-			  asBCInfo[curr->op].type == asBCTYPE_wW_rW_DW_ARG ||
-			  asBCInfo[curr->op].type == asBCTYPE_W_rW_ARG) &&
+			  asBCInfo[curr->op].type == asBCTYPE_wW_rW_DW_ARG) &&
 			 curr->wArg[1] == offset )
 		return true;
 	else if( asBCInfo[curr->op].type == asBCTYPE_rW_rW_ARG &&
@@ -1540,7 +1525,6 @@ void asCByteCode::Output(asDWORD *array)
 				break;
 			case asBCTYPE_wW_rW_ARG:
 			case asBCTYPE_rW_rW_ARG:
-			case asBCTYPE_W_rW_ARG:
 			case asBCTYPE_wW_W_ARG:
 				*(((asWORD *)ap)+1) = instr->wArg[0];
 				*(((asWORD *)ap)+2) = instr->wArg[1];
@@ -1784,10 +1768,6 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 		case asBCTYPE_wW_rW_ARG:
 		case asBCTYPE_rW_rW_ARG:
 			fprintf(file, "   %-8s v%d, v%d\n", asBCInfo[instr->op].name, instr->wArg[0], instr->wArg[1]);
-			break;
-
-		case asBCTYPE_W_rW_ARG:
-			fprintf(file, "   %-8s %d, v%d\n", asBCInfo[instr->op].name, instr->wArg[0], instr->wArg[1]);
 			break;
 
 		case asBCTYPE_wW_W_ARG:

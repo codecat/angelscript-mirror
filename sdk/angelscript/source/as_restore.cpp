@@ -386,11 +386,12 @@ int asCRestore::Restore()
 			continue;
 		}
 
-		if( size != usedTypes[idx]->GetSize() )
+		if( usedTypes[idx] && size != usedTypes[idx]->GetSize() )
 		{
-			// TODO: value on stack: Adjust the code if the size is different
-			asASSERT(false);
-			error = true;
+			// Keep track of the object types that have changed size 
+			// so the bytecode can be adjusted.
+			SObjChangeSize s = { usedTypes[idx], size };
+			oldObjectSizes.PushLast(s);
 		}
 	}
 
@@ -1705,7 +1706,6 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_wW_rW_ARG:
 		case asBCTYPE_rW_rW_ARG:
-		case asBCTYPE_W_rW_ARG:
 		case asBCTYPE_wW_W_ARG:
 			{
 				// Write the instruction code
@@ -1897,7 +1897,6 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 			break;
 		case asBCTYPE_wW_rW_ARG:
 		case asBCTYPE_rW_rW_ARG:
-		case asBCTYPE_W_rW_ARG:
 		case asBCTYPE_wW_W_ARG:
 			{
 				*(asBYTE*)(bc) = b;
@@ -2174,6 +2173,13 @@ void asCRestore::ReadUsedObjectProps()
 	for( asUINT n = 0; n < c; n++ )
 	{
 		asCObjectType *objType = ReadObjectType();
+		if( objType == 0 )
+		{
+			// TODO: Write error message to callback
+			error = true;
+			break;
+		}
+
 		asCString name;
 		ReadString(&name);
 
@@ -2390,18 +2396,170 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
 
-	// TODO: value on stack: Adjust size of value types on stack
-
 	// As the bytecode may have been generated on a different platform it is necessary
 	// to adjust the bytecode in case any of the value types allocated on the stack has
 	// a different size on this platform.
+	asCArray<int> adjustments;
+	for( n = 0; n < func->objVariableTypes.GetLength(); n++ )
+	{
+		if( func->objVariableTypes[n] &&
+			(func->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
+			!func->objVariableIsOnHeap[n] )
+		{
+			// Check if type has a different size than originally
+			for( asUINT s = 0; s < oldObjectSizes.GetLength(); s++ )
+			{
+				if( oldObjectSizes[s].objType == func->objVariableTypes[n] &&
+					oldObjectSizes[s].oldSize != func->objVariableTypes[n]->GetSize() )
+				{
+					// How much needs to be adjusted? 
+					int newSize = func->objVariableTypes[n]->GetSize();
+					newSize = newSize < 4 ? 1 : newSize/4;
+					int oldSize = oldObjectSizes[s].oldSize;
+					oldSize = oldSize < 4 ? 1 : oldSize/4;
 
-	// variable offsets in bytecode
-	// objVariablePos
-	// objVariableInfo[x].variableOffset  // TODO: should be an index into the objVariablePos array
-	// stackNeeded
-	// variables[x].stackOffset
+					int adjust = newSize - oldSize;
+					if( adjust != 0 )
+					{
+						adjustments.PushLast(func->objVariablePos[n]);
+						adjustments.PushLast(adjust);
+					}
+				}
+			}
+		}
+	}
 
+	asCArray<int> adjustByPos(func->stackNeeded);
+	if( adjustments.GetLength() )
+	{
+		adjustByPos.SetLength(func->stackNeeded);
+		memset(adjustByPos.AddressOf(), 0, adjustByPos.GetLength()*sizeof(int));
+
+		// Build look-up table with the adjustments for each stack position
+		for( n = 0; n < adjustments.GetLength(); n+=2 )
+		{
+			int pos    = adjustments[n];
+			int adjust = adjustments[n+1];
+
+			for( asUINT i = pos; i < adjustByPos.GetLength(); i++ )
+				adjustByPos[i] += adjust;
+		}
+
+		// Adjust all variable positions
+		asDWORD *bc = func->byteCode.AddressOf();
+		for( n = 0; n < func->byteCode.GetLength(); )
+		{
+			int c = *(asBYTE*)&bc[n];
+			switch( asBCInfo[c].type )
+			{
+			case asBCTYPE_wW_ARG:
+			case asBCTYPE_rW_DW_ARG:
+			case asBCTYPE_wW_QW_ARG:
+			case asBCTYPE_rW_ARG:
+			case asBCTYPE_wW_DW_ARG:
+			case asBCTYPE_wW_W_ARG:
+			case asBCTYPE_rW_QW_ARG:
+				{
+					short var = asBC_SWORDARG0(&bc[n]);
+					if( var >= (int)adjustByPos.GetLength() ) 
+						error = true;
+					else if( var >= 0 ) 
+						asBC_SWORDARG0(&bc[n]) += adjustByPos[var];
+				}
+				break;
+
+			case asBCTYPE_wW_rW_ARG:
+			case asBCTYPE_wW_rW_DW_ARG:
+			case asBCTYPE_rW_rW_ARG:
+				{
+					short var = asBC_SWORDARG0(&bc[n]);
+					if( var >= (int)adjustByPos.GetLength() ) 
+						error = true;
+					else if( var >= 0 ) 
+						asBC_SWORDARG0(&bc[n]) += adjustByPos[var];
+
+					var = asBC_SWORDARG1(&bc[n]);
+					if( var >= (int)adjustByPos.GetLength() ) 
+						error = true;
+					else if( var >= 0 ) 
+						asBC_SWORDARG1(&bc[n]) += adjustByPos[var];
+				}
+				break;
+
+			case asBCTYPE_wW_rW_rW_ARG:
+				{
+					short var = asBC_SWORDARG0(&bc[n]);
+					if( var >= (int)adjustByPos.GetLength() ) 
+						error = true;
+					else if( var >= 0 ) 
+						asBC_SWORDARG0(&bc[n]) += adjustByPos[var];
+
+					var = asBC_SWORDARG1(&bc[n]);
+					if( var >= (int)adjustByPos.GetLength() ) 
+						error = true;
+					else if( var >= 0 ) 
+						asBC_SWORDARG1(&bc[n]) += adjustByPos[var];
+
+					var = asBC_SWORDARG2(&bc[n]);
+					if( var >= (int)adjustByPos.GetLength() ) 
+						error = true;
+					else if( var >= 0 ) 
+						asBC_SWORDARG2(&bc[n]) += adjustByPos[var];
+				}
+				break;
+			}
+
+			if( c == asBC_PUSH )
+			{
+				// TODO: Maybe the push instruction should be removed, and be kept in 
+				//       the asCScriptFunction as a property instead. CallScriptFunction 
+				//       can immediately reserve the space
+
+				// PUSH is only used to reserve stack space for variables
+				asBC_WORDARG0(&bc[n]) += adjustByPos[adjustByPos.GetLength()-1];
+			}
+			else if( c == asBC_COPY )
+			{
+				// COPY is used to copy POD types that don't have the opAssign method
+				asASSERT( false );
+				error = true;
+			}
+
+			n += asBCTypeSize[asBCInfo[c].type];
+		}
+
+		// objVariablePos
+		for( n = 0; n < func->objVariablePos.GetLength(); n++ )
+		{
+			if( func->objVariablePos[n] >= (int)adjustByPos.GetLength() )
+				error = true;
+			else if( func->objVariablePos[n] >= 0 )
+				func->objVariablePos[n] += adjustByPos[func->objVariablePos[n]];
+		}
+
+		// objVariableInfo[x].variableOffset  // TODO: should be an index into the objVariablePos array
+		for( n = 0; n < func->objVariableInfo.GetLength(); n++ )
+		{
+			if( func->objVariableInfo[n].variableOffset >= (int)adjustByPos.GetLength() )
+				error = true;
+			else if( func->objVariableInfo[n].variableOffset >= 0 )
+				func->objVariableInfo[n].variableOffset += adjustByPos[func->objVariableInfo[n].variableOffset];
+		}
+
+		// variables[x].stackOffset
+		for( n = 0; n < func->variables.GetLength(); n++ )
+		{
+			if( func->variables[n]->stackOffset >= (int)adjustByPos.GetLength() )
+				error = true;
+			else if( func->variables[n]->stackOffset >= 0 )
+				func->variables[n]->stackOffset += adjustByPos[func->variables[n]->stackOffset];
+		}
+
+		// The stack needed by the function will be adjusted by the highest variable shift
+		// TODO: When bytecode is adjusted for 32/64bit it is necessary to adjust 
+		//       also for pointers pushed on the stack as function arguments
+		func->stackNeeded += adjustByPos[adjustByPos.GetLength()-1];
+	}
 }
 
 int asCRestore::FindTypeIdIdx(int typeId)

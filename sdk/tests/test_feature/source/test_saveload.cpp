@@ -816,6 +816,49 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test that value types are adjusted for different sizes
+	{
+/*		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->RegisterObjectType("test", 4, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectProperty("test", "int16 a", 0);
+		engine->RegisterObjectProperty("test", "int16 b", 2);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, 
+			"void func() { int a = 1; test b; int c = 2; b.a = a; b.b = c; check(b); } \n"
+			"void check(test t) { assert( t.a == 1 ); \n assert( t.b == 2 ); \n } \n");
+		mod->Build();
+
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->RegisterObjectType("test", 8, asOBJ_VALUE | asOBJ_POD); // Different size
+		engine->RegisterObjectProperty("test", "int16 a", 4); // Switch order of the properties
+		engine->RegisterObjectProperty("test", "int16 b", 0);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+*/	}
+
 	// Test loading and executing bytecode
 	{
 		const char *script = 

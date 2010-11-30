@@ -3657,7 +3657,8 @@ enum asEBCInstr
 	asBC_MAXBYTECODE	= 180,
 
 	// Temporary tokens. Can't be output to the final program
-	asBC_PSP			= 253,
+	asBC_Block          = 252,
+	asBC_ObjInfo		= 253,
 	asBC_LINE			= 254,
 	asBC_LABEL			= 255
 };
@@ -3695,21 +3696,19 @@ enum asEBCType
 	asBCTYPE_wW_rW_DW_ARG = 13,
 	//! \brief Instruction + WORD arg (source var) + WORD arg (source var)
 	asBCTYPE_rW_rW_ARG    = 14,
-	//! \brief Instruction + WORD arg + WORD arg (source var)
-	asBCTYPE_W_rW_ARG     = 15,
 	//! \brief Instruction + WORD arg (dest var) + WORD arg
-	asBCTYPE_wW_W_ARG     = 16,
+	asBCTYPE_wW_W_ARG     = 15,
 	//! \brief Instruction + QWORD arg + DWORD arg
-	asBCTYPE_QW_DW_ARG    = 17,
+	asBCTYPE_QW_DW_ARG    = 16,
 	//! \brief Instruction + WORD arg (source var) + QWORD arg
-	asBCTYPE_rW_QW_ARG    = 18,
+	asBCTYPE_rW_QW_ARG    = 17,
 	//! \brief Instruction + WORD arg + DWORD arg
-	asBCTYPE_W_DW_ARG     = 19
+	asBCTYPE_W_DW_ARG     = 18
 };
 
 // Instruction type sizes
 //! \brief Lookup table for determining the size of each \ref asEBCType "type" of bytecode instruction.
-const int asBCTypeSize[20] =
+const int asBCTypeSize[19] =
 {
     0, // asBCTYPE_INFO
     1, // asBCTYPE_NO_ARG
@@ -3726,7 +3725,6 @@ const int asBCTypeSize[20] =
     2, // asBCTYPE_wW_DW_ARG
     3, // asBCTYPE_wW_rW_DW_ARG
     2, // asBCTYPE_rW_rW_ARG
-    2, // asBCTYPE_W_rW_ARG
     2, // asBCTYPE_wW_W_ARG
     4, // asBCTYPE_QW_DW_ARG
     3, // asBCTYPE_rW_QW_ARG
@@ -4032,11 +4030,11 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(249),
 	asBCINFO_DUMMY(250),
 	asBCINFO_DUMMY(251),
-	asBCINFO_DUMMY(252),
 
-	asBCINFO(PSP,		W_ARG,			AS_PTR_SIZE),
-	asBCINFO(LINE,		INFO,			0xFFFF),
-	asBCINFO(LABEL,		INFO,			0xFFFF)
+	asBCINFO(Block,     INFO,           0),
+	asBCINFO(ObjInfo,	rW_DW_ARG,		0),
+	asBCINFO(LINE,		INFO,			0),
+	asBCINFO(LABEL,		INFO,			0)
 };
 
 // Macros to access bytecode instruction arguments
