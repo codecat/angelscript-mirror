@@ -1805,7 +1805,7 @@ void asCContext::ExecuteNext()
 			// replace the pointer on the stack with the lvalue
 			*(size_t**)l_sp = (size_t*)d;
 		}
-		l_bc++;
+		l_bc += 2;
 		break;
 
 	case asBC_PshC8:

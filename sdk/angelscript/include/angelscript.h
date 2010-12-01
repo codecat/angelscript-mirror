@@ -1446,7 +1446,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(BSLL,		wW_rW_rW_ARG,	0),
 	asBCINFO(BSRL,		wW_rW_rW_ARG,	0),
 	asBCINFO(BSRA,		wW_rW_rW_ARG,	0),
-	asBCINFO(COPY,		W_ARG,			-AS_PTR_SIZE),
+	asBCINFO(COPY,		W_DW_ARG,		-AS_PTR_SIZE),
 	asBCINFO(PshC8,		QW_ARG,			2),
 	asBCINFO(RDS8,		NO_ARG,			2-AS_PTR_SIZE),
 	asBCINFO(SWAP8,		NO_ARG,			0),

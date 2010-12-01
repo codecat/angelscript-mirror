@@ -3547,7 +3547,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 			}
 
 			// Copy larger data types from a reference
-			bc->InstrWORD(asBC_COPY, (asWORD)lvalue->dataType.GetSizeInMemoryDWords());
+			bc->InstrSHORT_DW(asBC_COPY, lvalue->dataType.GetSizeInMemoryDWords(), engine->GetTypeIdFromDataType(lvalue->dataType));
 		}
 	}
 	else

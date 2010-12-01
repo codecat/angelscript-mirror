@@ -818,7 +818,7 @@ bool Test()
 
 	// Test that value types are adjusted for different sizes
 	{
-/*		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
@@ -857,7 +857,7 @@ bool Test()
 			TEST_FAILED;
 
 		engine->Release();
-*/	}
+	}
 
 	// Test loading and executing bytecode
 	{

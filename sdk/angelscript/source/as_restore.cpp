@@ -1568,11 +1568,16 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
 		}
 		else if( c == asBC_ADDSi ||      // W_DW_ARG
-			     c == asBC_LoadThisR )   // W_DW_ARG
+			     c == asBC_LoadThisR )   // W_DW_ARG	 
 		{
 			// Translate property offsets into indices
 			*(((short*)tmp)+1) = FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
 
+			// Translate type ids into indices
+			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
+		}
+		else if( c == asBC_COPY )        // W_DW_ARG
+		{
 			// Translate type ids into indices
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
 		}
@@ -2292,6 +2297,12 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			// Translate the prop index into the property offset
 			*(((short*)&bc[n])+1) = FindObjectPropOffset(*(((short*)&bc[n])+1));
 		}
+		else if( c == asBC_COPY )
+		{
+			// Translate the index to the type id
+			int *tid = (int*)&bc[n+1];
+			*tid = FindTypeId(*tid);
+		}
 		else if( c == asBC_CALL ||
 				 c == asBC_CALLINTF ||
 				 c == asBC_CALLSYS )
@@ -2521,8 +2532,16 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			else if( c == asBC_COPY )
 			{
 				// COPY is used to copy POD types that don't have the opAssign method
-				asASSERT( false );
-				error = true;
+				// Update the number of dwords to copy
+				int typeId = asBC_DWORDARG(&bc[n]);
+				const asCDataType *dt = engine->GetDataTypeFromTypeId(typeId);
+				if( dt == 0 )
+				{
+					// TODO: Write error to message
+					error = true;
+				}
+				else
+					asBC_SWORDARG0(&bc[n]) = dt->GetSizeInMemoryDWords();
 			}
 
 			n += asBCTypeSize[asBCInfo[c].type];

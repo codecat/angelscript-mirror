@@ -2153,7 +2153,6 @@ int asCByteCode::InstrSHORT_DW(asEBCInstr bc, short a, asDWORD b)
 	asASSERT(asBCInfo[bc].type == asBCTYPE_wW_DW_ARG || 
 	         asBCInfo[bc].type == asBCTYPE_rW_DW_ARG ||
 			 asBCInfo[bc].type == asBCTYPE_W_DW_ARG);
-	asASSERT(asBCInfo[bc].stackInc == 0);
 
 	if( AddInstruction() < 0 )
 		return 0;
