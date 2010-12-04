@@ -83,8 +83,12 @@ void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
 
 CContextMgr::CContextMgr()
 {
-    getTimeFunc   = 0;
-	currentThread = 0;
+    m_getTimeFunc   = 0;
+	m_currentThread = 0;
+
+	m_numExecutions         = 0;
+	m_numGCObjectsCreated   = 0;
+	m_numGCObjectsDestroyed = 0;
 }
 
 CContextMgr::~CContextMgr()
@@ -92,27 +96,27 @@ CContextMgr::~CContextMgr()
 	asUINT n;
 
 	// Free the memory
-	for( n = 0; n < threads.size(); n++ )
+	for( n = 0; n < m_threads.size(); n++ )
 	{
-		if( threads[n] )
+		if( m_threads[n] )
 		{
-			for( asUINT c = 0; c < threads[n]->coRoutines.size(); c++ )
+			for( asUINT c = 0; c < m_threads[n]->coRoutines.size(); c++ )
 			{
-				if( threads[n]->coRoutines[c] )
-					threads[n]->coRoutines[c]->Release();
+				if( m_threads[n]->coRoutines[c] )
+					m_threads[n]->coRoutines[c]->Release();
 			}
 
-			delete threads[n];
+			delete m_threads[n];
 		}
 	}
 
-	for( n = 0; n < freeThreads.size(); n++ )
+	for( n = 0; n < m_freeThreads.size(); n++ )
 	{
-		if( freeThreads[n] )
+		if( m_freeThreads[n] )
 		{
-			assert( freeThreads[n]->coRoutines.size() == 0 );
+			assert( m_freeThreads[n]->coRoutines.size() == 0 );
 
-			delete freeThreads[n];
+			delete m_freeThreads[n];
 		}
 	}
 }
@@ -121,41 +125,78 @@ void CContextMgr::ExecuteScripts()
 {
 	g_ctxMgr = this; 
 
-	// TODO: Should have a time out. And if not all scripts executed before the 
+	// TODO: Should have an optional time out for this function. If not all scripts executed before the 
 	//       time out, the next time the function is called the loop should continue
 	//       where it left off.
 
-	// TODO: We should have a per thread time out as well. When this is used, the yield
-	//       call should resume the next coroutine immediately if there is still time
+	// TODO: There should be a time out per thread as well. If a thread executes for too 
+	//       long, it should be aborted. A group of co-routines count as a single thread.
 
 	// Check if the system time is higher than the time set for the contexts
-	asUINT time = getTimeFunc ? getTimeFunc() : asUINT(-1);
-	for( currentThread = 0; currentThread < threads.size(); currentThread++ )
+	asUINT time = m_getTimeFunc ? m_getTimeFunc() : asUINT(-1);
+	for( m_currentThread = 0; m_currentThread < m_threads.size(); m_currentThread++ )
 	{
-		if( threads[currentThread]->sleepUntil < time )
+		SContextInfo *thread = m_threads[m_currentThread];
+		if( thread->sleepUntil < time )
 		{
-			// TODO: Only allow each thread to execute for a while
+			int currentCoRoutine = thread->currentCoRoutine;
 
-			int currentCoRoutine = threads[currentThread]->currentCoRoutine;
-			int r = threads[currentThread]->coRoutines[currentCoRoutine]->Execute();
+			// Gather some statistics from the GC
+			asIScriptEngine *engine = thread->coRoutines[currentCoRoutine]->GetEngine();
+			asUINT gcSize1, gcSize2, gcSize3;
+			engine->GetGCStatistics(&gcSize1);
+
+			// Execute the script for this thread and co-routine
+			int r = thread->coRoutines[currentCoRoutine]->Execute();
+
+			// Determine how many new objects were created in the GC
+			engine->GetGCStatistics(&gcSize2);
+			m_numGCObjectsCreated += gcSize2 - gcSize1;
+			m_numExecutions++;
+
 			if( r != asEXECUTION_SUSPENDED )
 			{
-				// The context has terminated execution (for one reason or other)
-				threads[currentThread]->coRoutines[currentCoRoutine]->Release();
-				threads[currentThread]->coRoutines[currentCoRoutine] = 0;
+				// TODO: It should be possible to retrieve the return value before the context is released.
+				//       Maybe by calling a callback, or by storing the context somewhere until it has been
+				//       accessed.
 
-				threads[currentThread]->coRoutines.erase(threads[currentThread]->coRoutines.begin() + threads[currentThread]->currentCoRoutine);
-				if( threads[currentThread]->currentCoRoutine >= threads[currentThread]->coRoutines.size() )
-					threads[currentThread]->currentCoRoutine = 0;
+				// The context has terminated execution (for one reason or other)
+				thread->coRoutines[currentCoRoutine]->Release();
+				thread->coRoutines[currentCoRoutine] = 0;
+
+				thread->coRoutines.erase(thread->coRoutines.begin() + thread->currentCoRoutine);
+				if( thread->currentCoRoutine >= thread->coRoutines.size() )
+					thread->currentCoRoutine = 0;
 
 				// If this was the last co-routine terminate the thread
-				if( threads[currentThread]->coRoutines.size() == 0 )
+				if( thread->coRoutines.size() == 0 )
 				{
-					freeThreads.push_back(threads[currentThread]);
-					threads.erase(threads.begin() + currentThread);
-					currentThread--;
+					m_freeThreads.push_back(thread);
+					m_threads.erase(m_threads.begin() + m_currentThread);
+					m_currentThread--;
 				}
 			}
+
+			// Destroy all known garbage if any new objects were created
+			if( gcSize2 > gcSize1 )
+			{
+				engine->GarbageCollect(asGC_FULL_CYCLE | asGC_DESTROY_GARBAGE);
+
+				// Determine how many objects were destroyed
+ 				engine->GetGCStatistics(&gcSize3);
+				m_numGCObjectsDestroyed += gcSize3 - gcSize2;
+			}
+
+			// TODO: If more objects are created per execution than destroyed on average
+			//       then it may be necessary to run more iterations of the detection of
+			//       cyclic references. At the startup of an application there is usually
+			//       a lot of objects created that will live on through out the application
+			//       so the average number of objects created per execution will be higher
+			//       than the number of destroyed objects in the beginning, but afterwards
+			//       it usually levels out to be more or less equal.
+
+			// Just run an incremental step for detecting cyclic references
+			engine->GarbageCollect(asGC_ONE_STEP | asGC_DETECT_GARBAGE);
 		}
 	}
 
@@ -164,9 +205,9 @@ void CContextMgr::ExecuteScripts()
 
 void CContextMgr::NextCoRoutine()
 {
-	threads[currentThread]->currentCoRoutine++;
-	if( threads[currentThread]->currentCoRoutine >= threads[currentThread]->coRoutines.size() )
-		threads[currentThread]->currentCoRoutine = 0;
+	m_threads[m_currentThread]->currentCoRoutine++;
+	if( m_threads[m_currentThread]->currentCoRoutine >= m_threads[m_currentThread]->coRoutines.size() )
+		m_threads[m_currentThread]->currentCoRoutine = 0;
 }
 
 void CContextMgr::AbortAll()
@@ -174,25 +215,25 @@ void CContextMgr::AbortAll()
 	// Abort all contexts and release them. The script engine will make 
 	// sure that all resources held by the scripts are properly released.
 
-	for( asUINT n = 0; n < threads.size(); n++ )
+	for( asUINT n = 0; n < m_threads.size(); n++ )
 	{
-		for( asUINT c = 0; c < threads[n]->coRoutines.size(); c++ )
+		for( asUINT c = 0; c < m_threads[n]->coRoutines.size(); c++ )
 		{
-			if( threads[n]->coRoutines[c] )
+			if( m_threads[n]->coRoutines[c] )
 			{
-				threads[n]->coRoutines[c]->Abort();
-				threads[n]->coRoutines[c]->Release();
-				threads[n]->coRoutines[c] = 0;
+				m_threads[n]->coRoutines[c]->Abort();
+				m_threads[n]->coRoutines[c]->Release();
+				m_threads[n]->coRoutines[c] = 0;
 			}
 		}
-		threads[n]->coRoutines.resize(0);
+		m_threads[n]->coRoutines.resize(0);
 
-		freeThreads.push_back(threads[n]);
+		m_freeThreads.push_back(m_threads[n]);
 	}
 
-	threads.resize(0);
+	m_threads.resize(0);
 
-	currentThread = 0;
+	m_currentThread = 0;
 }
 
 asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, int funcId)
@@ -212,10 +253,10 @@ asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, int funcId)
 
 	// Add the context to the list for execution
 	SContextInfo *info = 0;
-	if( freeThreads.size() > 0 )
+	if( m_freeThreads.size() > 0 )
 	{
-		info = *freeThreads.rbegin();
-		freeThreads.pop_back();
+		info = *m_freeThreads.rbegin();
+		m_freeThreads.pop_back();
 	}
 	else
 	{
@@ -225,7 +266,7 @@ asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, int funcId)
     info->coRoutines.push_back(ctx);
 	info->currentCoRoutine = 0;
     info->sleepUntil = 0;
-	threads.push_back(info);
+	m_threads.push_back(info);
 
 	return ctx;
 }
@@ -250,12 +291,12 @@ asIScriptContext *CContextMgr::AddContextForCoRoutine(asIScriptContext *currCtx,
 
 	// Find the current context thread info
 	// TODO: Start with the current thread so that we can find the group faster
-	for( asUINT n = 0; n < threads.size(); n++ )
+	for( asUINT n = 0; n < m_threads.size(); n++ )
 	{
-		if( threads[n]->coRoutines[threads[n]->currentCoRoutine] == currCtx )
+		if( m_threads[n]->coRoutines[m_threads[n]->currentCoRoutine] == currCtx )
 		{
 			// Add the coRoutine to the list
-			threads[n]->coRoutines.push_back(coctx);
+			m_threads[n]->coRoutines.push_back(coctx);
 		}
 	}
 
@@ -264,18 +305,18 @@ asIScriptContext *CContextMgr::AddContextForCoRoutine(asIScriptContext *currCtx,
 
 void CContextMgr::SetSleeping(asIScriptContext *ctx, asUINT milliSeconds)
 {
-    assert( getTimeFunc != 0 );
+    assert( m_getTimeFunc != 0 );
     
 	// Find the context and update the timeStamp  
 	// for when the context is to be continued
 
 	// TODO: Start with the current thread
 
-	for( asUINT n = 0; n < threads.size(); n++ )
+	for( asUINT n = 0; n < m_threads.size(); n++ )
 	{
-		if( threads[n]->coRoutines[threads[n]->currentCoRoutine] == ctx )
+		if( m_threads[n]->coRoutines[m_threads[n]->currentCoRoutine] == ctx )
 		{
-			threads[n]->sleepUntil = (getTimeFunc ? getTimeFunc() : 0) + milliSeconds;
+			m_threads[n]->sleepUntil = (m_getTimeFunc ? m_getTimeFunc() : 0) + milliSeconds;
 		}
 	}
 }
@@ -285,7 +326,7 @@ void CContextMgr::RegisterThreadSupport(asIScriptEngine *engine)
 	int r;
 
     // Must set the get time callback function for this to work
-    assert( getTimeFunc != 0 );
+    assert( m_getTimeFunc != 0 );
     
     // Register the sleep function
     r = engine->RegisterGlobalFunction("void sleep(uint)", asFUNCTION(ScriptSleep), asCALL_CDECL); assert( r >= 0 );
@@ -303,7 +344,7 @@ void CContextMgr::RegisterCoRoutineSupport(asIScriptEngine *engine)
 
 void CContextMgr::SetGetTimeCallback(TIMEFUNC_t func)
 {
-	getTimeFunc = func;
+	m_getTimeFunc = func;
 }
 
 END_AS_NAMESPACE

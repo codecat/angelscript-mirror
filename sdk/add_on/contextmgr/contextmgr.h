@@ -69,10 +69,15 @@ public:
     void AbortAll();
 
 protected:
-	std::vector<SContextInfo*> threads;
-	std::vector<SContextInfo*> freeThreads;
-	asUINT                     currentThread;
-    TIMEFUNC_t                 getTimeFunc;
+	std::vector<SContextInfo*> m_threads;
+	std::vector<SContextInfo*> m_freeThreads;
+	asUINT                     m_currentThread;
+    TIMEFUNC_t                 m_getTimeFunc;
+
+	// Statistics for Garbage Collection
+	asUINT   m_numExecutions;
+	asUINT   m_numGCObjectsCreated;
+	asUINT   m_numGCObjectsDestroyed;
 };
 
 
