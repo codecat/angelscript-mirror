@@ -9,6 +9,7 @@ int called = 0;
 void PrintString_Generic(asIScriptGeneric *gen)
 {
 	std::string *str = (std::string*)gen->GetArgAddress(0);
+	UNUSED_VAR(str);
 //	printf("%s",str->c_str());
 	called++;
 }

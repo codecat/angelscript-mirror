@@ -316,7 +316,7 @@ void CScriptArray::Resize(asUINT numElements)
 		return;
 	}
 
-	Resize((int)numElements - (int)buffer->numElements, -1);
+	Resize((int)numElements - (int)buffer->numElements, (asUINT)-1);
 }
 
 // Internal
@@ -346,7 +346,6 @@ void CScriptArray::Resize(int delta, asUINT at)
 	newBuffer = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
 	newBuffer->numElements = buffer->numElements + delta;
 
-	int c = newBuffer->numElements > buffer->numElements ? buffer->numElements : newBuffer->numElements;
 	memcpy(newBuffer->data, buffer->data, at*elementSize);
 	if( delta > 0 && at < buffer->numElements )
 		memcpy(newBuffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements-at)*elementSize);

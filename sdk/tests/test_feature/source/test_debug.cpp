@@ -113,7 +113,6 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel);
 
 void LineCallback(asIScriptContext *ctx, void *param)
 {
-	asIScriptEngine *engine = ctx->GetEngine();
 	int col;
 	int line = ctx->GetLineNumber(0, &col);
 	int indent = ctx->GetCallstackSize();

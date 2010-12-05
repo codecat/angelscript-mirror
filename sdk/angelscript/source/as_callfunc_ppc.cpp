@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2010 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -609,24 +609,27 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	asASSERT( descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS );
 
 	// mark all float/double/int arguments
-	for( s = 0, a = 0; s < (int)descr->parameterTypes.GetLength(); s++, a++ )
+	if( !sysFunc->takesObjByVal )
 	{
-		if( descr->parameterTypes[s].IsFloatType() && !descr->parameterTypes[s].IsReference() )
+		for( s = 0, a = 0; s < (int)descr->parameterTypes.GetLength(); s++, a++ )
 		{
-			argsType[a] = ppcFLOATARG;
-		}
-		else if( descr->parameterTypes[s].IsDoubleType() && !descr->parameterTypes[s].IsReference() )
-		{
-			argsType[a] = ppcDOUBLEARG;
-		}
-		else
-		{
-			argsType[a] = ppcINTARG;
-			if( descr->parameterTypes[s].GetSizeOnStackDWords() == 2 )
+			if( descr->parameterTypes[s].IsFloatType() && !descr->parameterTypes[s].IsReference() )
 			{
-				// Add an extra integer argument for the extra size
-				a++;
+				argsType[a] = ppcFLOATARG;
+			}
+			else if( descr->parameterTypes[s].IsDoubleType() && !descr->parameterTypes[s].IsReference() )
+			{
+				argsType[a] = ppcDOUBLEARG;
+			}
+			else
+			{
 				argsType[a] = ppcINTARG;
+				if( descr->parameterTypes[s].GetSizeOnStackDWords() == 2 )
+				{
+					// Add an extra integer argument for the extra size
+					a++;
+					argsType[a] = ppcINTARG;
+				}
 			}
 		}
 	}
@@ -638,6 +641,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		int spos = 0;
 		int dpos = 1;
 
+        int a = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
@@ -645,13 +649,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 				if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
 				{
+					argsType[a++] = ppcINTARG;
 					paramBuffer[dpos++] = args[spos++];
 					paramSize++;
 				}
 				else
 #endif
 				{
-					// NOTE: we may have to do endian flipping here
+					// TODO: Probably have to handle asOBJ_APP_FLOAT as a primitive
 
 					// Copy the object's memory to the buffer
 					memcpy( &paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes() );
@@ -659,17 +664,28 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 					// Delete the original memory
 					engine->CallFree(*(char**)(args+spos) );
 					spos++;
-					dpos += descr->parameterTypes[n].GetSizeInMemoryDWords();
-					paramSize += descr->parameterTypes[n].GetSizeInMemoryDWords();
+					asUINT dwords = descr->parameterTypes[n].GetSizeInMemoryDWords();
+					dpos += dwords;
+					paramSize += dwords;
+					for( asUINT i = 0; i < dwords; i++ )
+						argsType[a++] = ppcINTARG;
 				}
 			}
 			else
 			{
 				// Copy the value directly
 				paramBuffer[dpos++] = args[spos++];
+				if( descr->parameterTypes[n].IsFloatType() && !descr->parameterTypes[n].IsReference() )
+					argsType[a++] = ppcFLOATARG;
+				else if( descr->parameterTypes[n].IsDoubleType() && !descr->parameterTypes[n].IsReference() )
+					argsType[a++] = ppcDOUBLEARG;
+				else
+					argsType[a++] = ppcINTARG;
 				if( descr->parameterTypes[n].GetSizeOnStackDWords() > 1 )
 				{
 					paramBuffer[dpos++] = args[spos++];
+					if( !descr->parameterTypes[n].IsDoubleType() ) // Double already knows it is 2 dwords
+						argsType[a++] = ppcINTARG;
 				}
 				paramSize += descr->parameterTypes[n].GetSizeOnStackDWords();
 			}
