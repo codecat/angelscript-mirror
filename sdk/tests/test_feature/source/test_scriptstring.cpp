@@ -105,7 +105,7 @@ static const char *script7 =
 static const char *script8 =
 "void test()                    \n"
 "{                              \n"
-"   Func(\"test\");             \n"
+"   Func('test');               \n"
 "}                              \n"
 "string Func(string & str)      \n"
 "{                              \n"
@@ -364,6 +364,19 @@ bool Test()
 	ExecuteString(engine, "string str = 'abcdef'; assert(findFirstOf(str, 'feb') == 1);");
 	ExecuteString(engine, "string str = 'a|b||d'; array<string@>@ arr = split(str, '|'); assert(arr.length() == 4); assert(arr[1] == 'b');");
 	ExecuteString(engine, "array<string@> arr = {'a', 'b', '', 'd'}; assert(join(arr, '|') == 'a|b||d');");
+
+	engine->Release();
+
+	//---------------------------------------
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	RegisterScriptString(engine);
+
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", script8, strlen(script8), 0);
+	mod->Build();
+	r = ExecuteString(engine, "test()", mod);
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	engine->Release();
 
