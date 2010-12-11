@@ -95,7 +95,7 @@ void RemoveTimeoutForContext()
 Observe that the routines for multithreading usually differ a lot depending on the target system. The above code 
 is for Windows and will most likely require adaption to work on any other system.
 
-\see \ref doc_addon_ctxmgr, \ref doc_samples_concurrent
+\see \ref doc_addon_ctxmgr, \ref doc_samples_concurrent, \ref doc_adv_coroutine
 
 
 
