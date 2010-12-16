@@ -2997,7 +2997,7 @@ void asCContext::ExecuteNext()
 
 	case asBC_DIVi64:
 		{
-			asQWORD divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
+			asINT64 divider = *(asINT64*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -3009,14 +3009,14 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
+			*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
 		}
 		l_bc += 2;
 		break;
 
 	case asBC_MODi64:
 		{
-			asQWORD divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
+			asINT64 divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -3028,7 +3028,7 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
-			*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) % divider;
+			*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) % divider;
 		}
 		l_bc += 2;
 		break;

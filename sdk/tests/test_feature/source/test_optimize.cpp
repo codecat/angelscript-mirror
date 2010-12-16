@@ -881,6 +881,40 @@ bool TestOptimize()
 	r = ExecuteString(engine, "assert(float(5-10) == float(-5));");
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
+	r = ExecuteString(engine, "uint32 a = 0x80000000; \n uint result = a/4; \n assert( result == 0x20000000 );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "int32 a = int32(0x80000000); \n int result = a/4; \n assert( result == int32(0xE0000000) );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "uint64 a = 0x8000000000000000; \n uint64 result = a/4; \n assert( result == 0x2000000000000000 );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "int64 a = int64(0x8000000000000000); \n int64 result = a/4; \n assert( result == int64(0xE000000000000000) );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "uint result = 0x80000000/4; \n assert( result == 0x20000000 );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "int result = int32(0x80000000)/4; \n assert( result == int32(0xE0000000) );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "uint64 result = 0x8000000000000000/4; \n assert( result == 0x2000000000000000 );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "int64 result = int64(0x8000000000000000)/4; \n assert( result == int64(0xE000000000000000) );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+
+	r = ExecuteString(engine, "uint32 a = 0x80000000; \n uint result = a%5; \n assert( result == 0x00000003 );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "int32 a = int32(0x80000000); \n int result = a%5; \n assert( result == int32(0xFFFFFFFD) );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "uint64 a = 0x8000000000000000; \n uint64 result = a%5; \n assert( result == 0x0000000000000003 );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "int64 a = int64(0x8000000000000000); \n int64 result = a%5; \n assert( result == int64(0xFFFFFFFFFFFFFFFD) );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "uint result = 0x80000000%5; \n assert( result == 0x00000003 );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "int result = int32(0x80000000)%5; \n assert( result == int32(0xFFFFFFFD) );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "uint64 result = 0x8000000000000000%5; \n assert( result == 0x0000000000000003 );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "int64 result = int64(0x8000000000000000)%5; \n assert( result == int64(0xFFFFFFFFFFFFFFFD) );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+
 	engine->Release();
 
 	// Success
