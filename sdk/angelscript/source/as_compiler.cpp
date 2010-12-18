@@ -9251,9 +9251,15 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				else if( op == ttStar || op == ttMulAssign )
 					instruction = asBC_MULi;
 				else if( op == ttSlash || op == ttDivAssign )
-					instruction = asBC_DIVi; // TODO: bug: Must choose DIVu for unsigned integer
+					if( lctx->type.dataType.IsIntegerType() )
+						instruction = asBC_DIVi;
+					else
+						instruction = asBC_DIVu;
 				else if( op == ttPercent || op == ttModAssign )
-					instruction = asBC_MODi; // TODO: bug: Must choose MODu for unsigned integer
+					if( lctx->type.dataType.IsIntegerType() )
+						instruction = asBC_MODi; 
+					else
+						instruction = asBC_MODu;
 			}
 			else
 			{
@@ -9264,9 +9270,15 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				else if( op == ttStar || op == ttMulAssign )
 					instruction = asBC_MULi64;
 				else if( op == ttSlash || op == ttDivAssign )
-					instruction = asBC_DIVi64; // TODO: bug: Must choose DIVu64 for unsigned integer
+					if( lctx->type.dataType.IsIntegerType() )
+						instruction = asBC_DIVi64;
+					else
+						instruction = asBC_DIVu64;
 				else if( op == ttPercent || op == ttModAssign )
-					instruction = asBC_MODi64; // TODO: bug: Must choose MODu64 for unsigned type
+					if( lctx->type.dataType.IsIntegerType() )
+						instruction = asBC_MODi64;
+					else
+						instruction = asBC_MODu64;
 			}
 		}
 		else if( lctx->type.dataType.IsFloatType() )
@@ -9330,14 +9342,20 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 					if( rctx->type.intValue == 0 )
 						v = 0;
 					else
-						v = lctx->type.intValue / rctx->type.intValue; // TODO: bug: Must use unsigned division for unsigned type
+						if( lctx->type.dataType.IsIntegerType() )
+							v = lctx->type.intValue / rctx->type.intValue; 
+						else
+							v = lctx->type.dwordValue / rctx->type.dwordValue; 
 				}
 				else if( op == ttPercent )
 				{
 					if( rctx->type.intValue == 0 )
 						v = 0;
 					else
-						v = lctx->type.intValue % rctx->type.intValue; // TODO: bug: Must use unsigned division for unsigned type
+						if( lctx->type.dataType.IsIntegerType() )
+							v = lctx->type.intValue % rctx->type.intValue;
+						else
+							v = lctx->type.dwordValue % rctx->type.dwordValue;
 				}
 
 				ctx->type.SetConstantDW(lctx->type.dataType, v);
@@ -9360,14 +9378,20 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 					if( rctx->type.qwordValue == 0 )
 						v = 0;
 					else
-						v = asINT64(lctx->type.qwordValue) / asINT64(rctx->type.qwordValue); // TODO: bug: Must use unsigned division for unsigned type
+						if( lctx->type.dataType.IsIntegerType() )
+							v = asINT64(lctx->type.qwordValue) / asINT64(rctx->type.qwordValue);
+						else
+							v = lctx->type.qwordValue / rctx->type.qwordValue;
 				}
 				else if( op == ttPercent )
 				{
 					if( rctx->type.qwordValue == 0 )
 						v = 0;
 					else
-						v = asINT64(lctx->type.qwordValue) % asINT64(rctx->type.qwordValue); // TODO: bug: Must use unsigned division for unsigned type
+						if( lctx->type.dataType.IsIntegerType() )
+							v = asINT64(lctx->type.qwordValue) % asINT64(rctx->type.qwordValue);
+						else
+							v = lctx->type.qwordValue % rctx->type.qwordValue;
 				}
 
 				ctx->type.SetConstantQW(lctx->type.dataType, v);

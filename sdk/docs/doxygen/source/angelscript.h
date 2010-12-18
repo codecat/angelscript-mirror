@@ -60,9 +60,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.20.1
-#define ANGELSCRIPT_VERSION        22001
-#define ANGELSCRIPT_VERSION_STRING "2.20.1"
+//! \details Version 2.20.2
+#define ANGELSCRIPT_VERSION        22002
+#define ANGELSCRIPT_VERSION_STRING "2.20.2"
 
 // Data types
 
@@ -3653,8 +3653,16 @@ enum asEBCInstr
 	asBC_LoadThisR      = 178,
 	//! \brief Push the 64bit value from a variable onto the stack
 	asBC_PshV8          = 179,
+	//! \brief Divide the values of two 32bit unsigned integer variables and store in a third variable
+	asBC_DIVu			= 180,
+	//! \brief Calculate the modulo of values of two 32bit unsigned integer variables and store in a third variable
+	asBC_MODu			= 181,
+	//! \brief Divide the values of two 64bit unsigned integer variables and store in a third variable
+	asBC_DIVu64			= 182,
+	//! \brief Calculate the modulo of values of two 64bit unsigned integer variables and store in a third variable
+	asBC_MODu64			= 183,
 
-	asBC_MAXBYTECODE	= 180,
+	asBC_MAXBYTECODE	= 184,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_Block          = 252,
@@ -3957,11 +3965,11 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(FuncPtr,   PTR_ARG,        AS_PTR_SIZE),
 	asBCINFO(LoadThisR, W_DW_ARG,       0),
 	asBCINFO(PshV8,		rW_ARG,			2),
+	asBCINFO(DIVu,		wW_rW_rW_ARG,	0),
+	asBCINFO(MODu,		wW_rW_rW_ARG,	0),
+	asBCINFO(DIVu64,	wW_rW_rW_ARG,	0),
+	asBCINFO(MODu64,	wW_rW_rW_ARG,	0),
 
-	asBCINFO_DUMMY(180),
-	asBCINFO_DUMMY(181),
-	asBCINFO_DUMMY(182),
-	asBCINFO_DUMMY(183),
 	asBCINFO_DUMMY(184),
 	asBCINFO_DUMMY(185),
 	asBCINFO_DUMMY(186),

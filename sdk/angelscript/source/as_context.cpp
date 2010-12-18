@@ -3016,7 +3016,7 @@ void asCContext::ExecuteNext()
 
 	case asBC_MODi64:
 		{
-			asINT64 divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
+			asINT64 divider = *(asINT64*)(l_fp - asBC_SWORDARG2(l_bc));
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
@@ -3208,12 +3208,84 @@ void asCContext::ExecuteNext()
 		l_bc++;
 		break;
 
+	case asBC_DIVu:
+		{
+			asUINT divider = *(asUINT*)(l_fp - asBC_SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				regs.programPointer = l_bc;
+				regs.stackPointer = l_sp;
+				regs.stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(asUINT*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asUINT*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
+		}
+		l_bc += 2;
+		break;
+
+	case asBC_MODu:
+		{
+			asUINT divider = *(asUINT*)(l_fp - asBC_SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				regs.programPointer = l_bc;
+				regs.stackPointer = l_sp;
+				regs.stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(asUINT*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asUINT*)(l_fp - asBC_SWORDARG1(l_bc)) % divider;
+		}
+		l_bc += 2;
+		break;
+
+	case asBC_DIVu64:
+		{
+			asQWORD divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				regs.programPointer = l_bc;
+				regs.stackPointer = l_sp;
+				regs.stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
+		}
+		l_bc += 2;
+		break;
+
+	case asBC_MODu64:
+		{
+			asQWORD divider = *(asQWORD*)(l_fp - asBC_SWORDARG2(l_bc));
+			if( divider == 0 )
+			{
+				// Need to move the values back to the context
+				regs.programPointer = l_bc;
+				regs.stackPointer = l_sp;
+				regs.stackFramePointer = l_fp;
+
+				// Raise exception
+				SetInternalException(TXT_DIVIDE_BY_ZERO);
+				return;
+			}
+			*(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc)) % divider;
+		}
+		l_bc += 2;
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 180: l_bc = (asDWORD*)180; break;
-	case 181: l_bc = (asDWORD*)181; break;
-	case 182: l_bc = (asDWORD*)182; break;
-	case 183: l_bc = (asDWORD*)183; break;
 	case 184: l_bc = (asDWORD*)184; break;
 	case 185: l_bc = (asDWORD*)185; break;
 	case 186: l_bc = (asDWORD*)186; break;
