@@ -3160,6 +3160,8 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 	asASSERT( t.IsObjectHandle() || t.GetTokenType() != ttUnrecognizedToken );
 
 	bool isOnHeap = true;
+	// TODO: Remove this once the bugs with value types on stack is fixed
+	forceOnHeap = true;
 	if( t.IsPrimitive() || 
 		(t.GetObjectType() && (t.GetObjectType()->GetFlags() & asOBJ_VALUE) && !forceOnHeap) )
 	{

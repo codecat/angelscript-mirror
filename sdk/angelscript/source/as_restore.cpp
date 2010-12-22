@@ -2302,6 +2302,17 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			// Translate the index to the type id
 			int *tid = (int*)&bc[n+1];
 			*tid = FindTypeId(*tid);
+
+			// COPY is used to copy POD types that don't have the opAssign method
+			// Update the number of dwords to copy as it may be different on the target platform
+			const asCDataType *dt = engine->GetDataTypeFromTypeId(*tid);
+			if( dt == 0 )
+			{
+				// TODO: Write error to message
+				error = true;
+			}
+			else
+				asBC_SWORDARG0(&bc[n]) = dt->GetSizeInMemoryDWords();
 		}
 		else if( c == asBC_CALL ||
 				 c == asBC_CALLINTF ||
@@ -2528,20 +2539,6 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 
 				// PUSH is only used to reserve stack space for variables
 				asBC_WORDARG0(&bc[n]) += adjustByPos[adjustByPos.GetLength()-1];
-			}
-			else if( c == asBC_COPY )
-			{
-				// COPY is used to copy POD types that don't have the opAssign method
-				// Update the number of dwords to copy
-				int typeId = asBC_DWORDARG(&bc[n]);
-				const asCDataType *dt = engine->GetDataTypeFromTypeId(typeId);
-				if( dt == 0 )
-				{
-					// TODO: Write error to message
-					error = true;
-				}
-				else
-					asBC_SWORDARG0(&bc[n]) = dt->GetSizeInMemoryDWords();
 			}
 
 			n += asBCTypeSize[asBCInfo[c].type];

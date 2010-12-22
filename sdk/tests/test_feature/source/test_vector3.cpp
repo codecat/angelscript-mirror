@@ -152,7 +152,7 @@ bool TestVector3()
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_()\n"
 				   	   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(const vector3&in)\n"
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float, float)\n"
-	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3'.\n" )
+	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3&'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -187,6 +187,7 @@ bool TestVector3()
 		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 		// TODO: Why is it different on GNUC?
+		/* TODO: Test this when turning on allocations on stack again
 #ifdef __GNUC__
 		if( (GetNumAllocs() - allocs) != 2 )
 #else
@@ -196,7 +197,7 @@ bool TestVector3()
 			printf("There were %d allocations during the execution\n", GetNumAllocs() - allocs);
 			TEST_FAILED;
 		}
-
+		*/
 		ctx->Release();
 		engine->Release();
 	}
