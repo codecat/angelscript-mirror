@@ -268,6 +268,27 @@ bool TestStdString()
 
 	engine->Release();
 
+	// Test string comparison
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("mod", 
+			"void func(string &in s) \n"
+			"{ \n"
+			"  if( s == 'test' ) \n"
+			"  { \n"
+			"  } \n"
+			"} \n");
+		if( mod->Build() < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	return fail;
 }
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -505,7 +505,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 			if( !isObjectOnHeap )
 			{
 				asASSERT( !isGlobalVar );
-				tmp.InstrSHORT(asBC_PSF, (short)offset);
+				bc->InstrSHORT(asBC_PSF, (short)offset);
 			}
 
 			asSExprContext ctx(engine);
@@ -3161,7 +3161,7 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 
 	bool isOnHeap = true;
 	// TODO: Remove this once the bugs with value types on stack is fixed
-	forceOnHeap = true;
+	// forceOnHeap = true;
 	if( t.IsPrimitive() || 
 		(t.GetObjectType() && (t.GetObjectType()->GetFlags() & asOBJ_VALUE) && !forceOnHeap) )
 	{
@@ -10341,6 +10341,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		// The class method we're calling is returning a reference, which may be to a member of the object.
 		// In order to guarantee the lifetime of the reference, we must hold a local reference to the object.
+		// TODO: optimize: This can be avoided for local variables (non-handles) as they have a well defined life time
 		int tempRef = AllocateVariable(ctx->type.dataType, true);
 		ctx->bc.InstrSHORT(asBC_PSF, tempRef);
 		ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());

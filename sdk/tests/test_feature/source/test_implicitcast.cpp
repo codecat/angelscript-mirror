@@ -173,7 +173,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "type t(5); t << 1; ");
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 14) : Error   : Illegal operation on 'type&'\n" )
+	if( bout.buffer != "ExecuteString (1, 14) : Error   : Illegal operation on 'type'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -182,7 +182,7 @@ bool Test()
 	bout.buffer = "";
 	r = ExecuteString(engine, "type t(5); t + t; ");
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
+	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type' and 'type' found\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -191,7 +191,7 @@ bool Test()
 	bout.buffer = "";
 	r = ExecuteString(engine, "type t(5); t < t; ");
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type&' and 'type&' found\n" )
+	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type' and 'type' found\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -254,7 +254,7 @@ bool Test()
 		r = ExecuteString(engine, "type t; int a = t;");
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'type&' to 'int'.\n" )
+		if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'type' to 'int'.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

@@ -152,7 +152,7 @@ bool TestVector3()
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_()\n"
 				   	   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(const vector3&in)\n"
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float, float)\n"
-	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3&'.\n" )
+	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -199,6 +199,55 @@ bool TestVector3()
 		}
 		*/
 		ctx->Release();
+		engine->Release();
+	}
+
+	// Test passing value type by value
+	{
+		const char *script =
+			"void testR(const vector3&in position) \n"
+			"{ \n"
+			"	assert( position.x == 1 ); \n"
+			"	assert( position.y == 2 ); \n"
+			"	assert( position.z == 3 ); \n"
+			"} \n"
+			"void testV(vector3 position) \n"
+			"{ \n"
+			"	assert( position.x == 1 ); \n"
+			"	assert( position.y == 2 ); \n"
+			"	assert( position.z == 3 ); \n"
+			"} \n"
+			"class T { \n"
+			"  T() { pos = vector3(1,2,3); } \n"
+			"  const vector3 &get_position() const { return pos; } \n"
+			"  vector3 pos; \n"
+			"} \n"
+			"void start() \n"
+			"{ \n"
+			"	T t; \n"
+			"	testR(t.position); \n"
+			"	testV(t.position); \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptMath3D(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		// TODO: optimize: When calling the get_position method, a ref copy of the local object is done. 
+		//                 This can be avoided since the local object cannot die before the returned reference is used.
+		// TODO: optimize: When calling testV the vector3 is copied twice. Once to copy the returned reference to a local 
+		//                 variable, and then to an object allocated on the heap for the function call. Once the value types
+		//                 passed by value are no longer allocated on the heap this may be fixed on its own, but it needs to
+		//                 be checked.
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+
+		r = ExecuteString(engine, "start()", mod);
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+
 		engine->Release();
 	}
 
