@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -371,7 +371,8 @@ void NOINLINE CallCDeclFunction(const asDWORD *args, int paramSize, size_t func)
 	    push ecx
 
 		// Clear the FPU stack, in case the called function doesn't do it by itself
-		fninit
+		// Use emms instead of fninit to preserve FPU control word
+		emms
 
 		// Copy arguments from script
 		// stack to application stack
@@ -406,7 +407,7 @@ endcopy:
     UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
-	    "fninit               \n"
+	    "emms                 \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -454,7 +455,8 @@ void NOINLINE CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int
 	    push ecx
 
 		// Clear the FPU stack, in case the called function doesn't do it by itself
-		fninit
+		// Use emms instead of fninit to preserve FPU control word
+		emms
 
 		// Push the object pointer as the last argument to the function
 		push obj
@@ -494,7 +496,7 @@ endcopy:
     UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
-	    "fninit               \n"
+	    "emms                 \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -544,7 +546,8 @@ void NOINLINE CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, in
 	    push ecx
 
 		// Clear the FPU stack, in case the called function doesn't do it by itself
-		fninit
+		// Use emms instead of fninit to preserve FPU control word
+		emms
 
 		// Copy arguments from script
 		// stack to application stack
@@ -584,7 +587,7 @@ endcopy:
     UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
-	    "fninit               \n"
+	    "emms                 \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -634,7 +637,8 @@ void NOINLINE CallCDeclFunctionRetByRefObjFirst_impl(const void *obj, const asDW
 	    push ecx
 
 		// Clear the FPU stack, in case the called function doesn't do it by itself
-		fninit
+		// Use emms instead of fninit to preserve FPU control word
+		emms
 
 		// Copy arguments from script
 		// stack to application stack
@@ -683,7 +687,7 @@ endcopy:
     UNUSED_VAR(retPtr);
 
 	asm("pushl %ecx           \n"
-	    "fninit               \n"
+	    "emms                 \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -737,7 +741,8 @@ void NOINLINE CallCDeclFunctionRetByRef_impl(const asDWORD *args, int paramSize,
 	    push ecx
 
 		// Clear the FPU stack, in case the called function doesn't do it by itself
-		fninit
+		// Use emms instead of fninit to preserve FPU control word
+		emms
 
 		// Copy arguments from script
 		// stack to application stack
@@ -780,7 +785,7 @@ endcopy:
     UNUSED_VAR(retPtr);
 
 	asm("pushl %ecx           \n"
-	    "fninit               \n"
+	    "emms                 \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
