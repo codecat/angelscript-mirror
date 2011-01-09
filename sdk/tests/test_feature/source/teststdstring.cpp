@@ -289,6 +289,43 @@ bool TestStdString()
 		engine->Release();
 	}
 
+	// Test calling function that takes in-reference with a global const value
+	// Test this for a value type
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("mod", 
+			"const string options_key = 'key'; \n"
+			"string string_encrypt(string &in key) \n"
+			"{ \n"
+			"  return key; \n"
+			"} \n"
+			"void save_settings() \n"
+			"{ \n"
+			"  string settings = string_encrypt(options_key); \n"
+			"  assert( settings == 'key' ); \n"
+			"} \n");
+		// TODO: optimize: The global string is copied twice during the preparation of the argument
+		// TODO: optimize: After the opAssign is called the PshRPtr is used to store returned pointer on stack, but later on it is removed without ever being used
+		if( mod->Build() < 0 )
+			TEST_FAILED; 
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "save_settings();", mod, ctx);
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->Release();
+	} 
+
 	return fail;
 }
 

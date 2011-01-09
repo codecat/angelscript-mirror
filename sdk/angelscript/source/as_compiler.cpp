@@ -4510,6 +4510,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 						lctx.type = ctx->type;
 						lctx.type.isTemporary = true;
 						lctx.type.stackOffset = (short)offset;
+						lctx.type.dataType.MakeReference(IsVariableOnHeap(offset));
 
 						// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
 
