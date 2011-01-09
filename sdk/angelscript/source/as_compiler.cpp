@@ -7412,6 +7412,11 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			Error(TXT_REF_IS_READ_ONLY, node);
 			return -1;
 		}
+		if( ctx->property_get || ctx->property_set )
+		{
+			Error(TXT_INVALID_REF_PROP_ACCESS, node);
+			return -1;
+		}
 
 		if( ctx->type.isVariable && !ctx->type.dataType.IsReference() )
 			ConvertToReference(ctx);
@@ -7988,6 +7993,11 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		if( ctx->type.dataType.IsReadOnly() )
 		{
 			Error(TXT_REF_IS_READ_ONLY, node);
+			return -1;
+		}
+		if( ctx->property_get || ctx->property_set )
+		{
+			Error(TXT_INVALID_REF_PROP_ACCESS, node);
 			return -1;
 		}
 

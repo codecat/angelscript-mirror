@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug with division and modulo operations where the most significant bit of the value was set (Thanks loboWu)
 <li>Fixed bug when calling copy constructor for value types allocated on the stack (Thanks speps)
 <li>Using emms instead of fninit to preserve FPU configuration on x86 (Thanks Lasse &Ouml;&ouml;rni)
+<li>Set property accessor that takes the value by ref was incorrectly accepted for increment/decrement operators (Thanks Philip Bennefall)
 </ul>
 <li>Virtual machine
 <ul>

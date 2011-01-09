@@ -347,8 +347,8 @@ bool Test()
 		printf("Didn't fail to compile the script\n");
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
-					   "script (9, 6) : Error   : Not a valid reference\n"
-				 	   "script (10, 3) : Error   : Not a valid reference\n" )
+					   "script (9, 6) : Error   : Invalid reference. Property accessors cannot be used in combined read/write operations\n"
+				 	   "script (10, 3) : Error   : Invalid reference. Property accessors cannot be used in combined read/write operations\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -1094,6 +1094,40 @@ bool Test()
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test member property accessors with ++ where the set accessor takes a reference
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		const char *script = 
+			"class CTest \n"
+			"{ \n"
+			"  double _vol; \n"
+			"  double get_vol() const { return _vol; } \n"
+			"  void set_vol(double &in v) { _vol = v; } \n"
+			"} \n"
+			"CTest t; \n"
+			"void main() \n"
+			"{ \n"
+			"  for( t.vol = 0; t.vol < 10; t.vol++ ); \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "script (8, 1) : Info    : Compiling void main()\n"
+		                   "script (10, 36) : Error   : Invalid reference. Property accessors cannot be used in combined read/write operations\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}
