@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.20.2 WIP - 2011/01/09</h2>
+<h2>Version 2.20.2 WIP - 2011/01/10</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Using emms instead of fninit to preserve FPU configuration on x86 (Thanks Lasse &Ouml;&ouml;rni)
 <li>Set property accessor that takes the value by ref was incorrectly accepted for increment/decrement operators (Thanks Philip Bennefall)
 <li>When copying an object to remove constness the compiler wasn't handling objects allocated on the stack correctly (Thanks Philip Bennefall)
+<li>Value cast of an object retrieved from a get accessor wasn't working properly (Thanks speps)
 </ul>
 <li>Virtual machine
 <ul>

@@ -4417,13 +4417,6 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 			// handle              -> object
 			// reference           -> object
 
-			if( ctx->type.dataType.IsReference() )
-			{
-				Dereference(ctx, generateCode);
-
-				// TODO: Can't this leave unhandled deferred output params?
-			}
-
 			// An implicit handle can be converted to an object by adding a check for null pointer
 			if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
 			{
@@ -4450,6 +4443,13 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 					// didn't really do anything so we need to remove the constness here
 					ctx->type.dataType.MakeReadOnly(false);
 				}
+			}
+
+			if( ctx->type.dataType.IsReference() )
+			{
+				Dereference(ctx, generateCode);
+
+				// TODO: Can't this leave unhandled deferred output params?
 			}
 
 			// A non-const object can be converted to a const object directly
@@ -4524,7 +4524,8 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 				// A handle can be converted to a reference, by checking for a null pointer
 				if( ctx->type.dataType.IsObjectHandle() )
 				{
-					ctx->bc.InstrSHORT(asBC_ChkNullV, ctx->type.stackOffset);
+					if( generateCode )
+						ctx->bc.InstrSHORT(asBC_ChkNullV, ctx->type.stackOffset);
 					ctx->type.dataType.MakeHandle(false);
 					ctx->type.dataType.MakeReference(true);
 

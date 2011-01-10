@@ -251,5 +251,41 @@ bool TestVector3()
 		engine->Release();
 	}
 
+	// Test use of the copy constructor
+	{
+		const char *script = 
+			"class Camera \n"
+			"{ \n"
+			"  const vector3 &get_lookAt() const { return lookat; } \n"
+			"  void set_lookAt(const vector3 &in v) { lookat = v; } \n"
+			"  vector3 lookat; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  Camera camera; \n"
+			"  camera.lookat = vector3(1,2,3); \n"
+			"  vector3 test = vector3(camera.lookAt); \n"
+			"  vector3 test2(camera.lookAt); \n"
+			"  assert( test.x == 1 ); \n"
+			"  assert( test.y == 2 ); \n"
+			"  assert( test.z == 3 ); \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptMath3D(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+
+		engine->Release();
+	}
+
 	return fail;
 }
