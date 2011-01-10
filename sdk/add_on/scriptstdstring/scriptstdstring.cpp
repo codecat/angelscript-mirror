@@ -18,6 +18,11 @@ static void ConstructStringGeneric(asIScriptGeneric * gen) {
   new (gen->GetObject()) string();
 }
 
+static void CopyConstructStringGeneric(asIScriptGeneric * gen) {
+  string * a = static_cast<string *>(gen->GetArgObject(0));
+  new (gen->GetObject()) string(*a);
+}
+
 static void DestructStringGeneric(asIScriptGeneric * gen) {
   string * ptr = static_cast<string *>(gen->GetObject());
   ptr->~string();
@@ -282,6 +287,7 @@ void RegisterStdString_Generic(asIScriptEngine *engine) {
 
   // Register the object operator overloads
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
+  r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(CopyConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
   r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructStringGeneric),  asCALL_GENERIC); assert( r >= 0 );
   r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(AssignStringGeneric),    asCALL_GENERIC); assert( r >= 0 );
   r = engine->RegisterObjectMethod("string", "string &opAddAssign(const string &in)", asFUNCTION(AddAssignStringGeneric), asCALL_GENERIC); assert( r >= 0 );
@@ -333,6 +339,11 @@ static string StringFactory(asUINT length, const char *s)
 static void ConstructString(string *thisPointer)
 {
 	new(thisPointer) string();
+}
+
+static void CopyConstructString(const string &other, string *thisPointer)
+{
+	new(thisPointer) string(other);
 }
 
 static void DestructString(string *thisPointer)
@@ -499,6 +510,7 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 
 	// Register the object operator overloads
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(CopyConstructString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructString),  asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asMETHODPR(string, operator =, (const string&), string&), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string &opAddAssign(const string &in)", asMETHODPR(string, operator+=, (const string&), string&), asCALL_THISCALL); assert( r >= 0 );

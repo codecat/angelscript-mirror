@@ -350,6 +350,7 @@ void DumpModule(asIScriptModule *mod)
 		"reg type: val string group: <null>\n"
 		" beh(1) void _beh_1_()\n"
 		" beh(0) void _beh_0_()\n"
+		" beh(0) void _beh_0_(const string&in)\n"
 		" string& opAssign(const string&in)\n"
 		" string& opAddAssign(const string&in)\n"
 		" bool opEquals(const string&in) const\n"

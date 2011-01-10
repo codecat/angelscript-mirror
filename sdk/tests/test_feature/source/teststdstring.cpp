@@ -310,8 +310,6 @@ bool TestStdString()
 			"  string settings = string_encrypt(options_key); \n"
 			"  assert( settings == 'key' ); \n"
 			"} \n");
-		// TODO: optimize: The global string is copied twice during the preparation of the argument
-		// TODO: optimize: After the opAssign is called the PshRPtr is used to store returned pointer on stack, but later on it is removed without ever being used
 		if( mod->Build() < 0 )
 			TEST_FAILED; 
 

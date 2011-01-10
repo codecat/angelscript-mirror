@@ -2828,6 +2828,8 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 
 	if( !dt.IsObjectHandle() && dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
 	{
+		PrepareForAssignment(&lvalue.dataType, ctx, node);
+
 		// Use the copy constructor/factory when available
 		CallCopyConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, ctx, node);
 	}
@@ -4378,39 +4380,21 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 		{
 			if( generateCode )
 			{
-				asCTypeInfo type;
-				type.Set(ctx->type.dataType);
-
-				// Allocate a temporary variable
-				int offset = AllocateVariableNotIn(type.dataType, true, reservedVars);
-				type.isTemporary = true;
-				type.stackOffset = (short)offset;
-				if( type.dataType.IsObjectHandle() )
-					type.isExplicitHandle = true;
-
-				// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
-
-				CallDefaultConstructor(type.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, node);
-				type.dataType.MakeReference(true);
-
-				PrepareForAssignment(&type.dataType, ctx, node);
-
-				ctx->bc.InstrSHORT(asBC_PSF, type.stackOffset);
+				// If the input type is a handle, then a simple ref copy is enough
+				bool isExplicitHandle = ctx->type.isExplicitHandle;
+				ctx->type.isExplicitHandle = ctx->type.dataType.IsObjectHandle();				
 
 				// If the input type is read-only we'll need to temporarily
 				// remove this constness, otherwise the assignment will fail
-				bool typeIsReadOnly = type.dataType.IsReadOnly();
-				type.dataType.MakeReadOnly(false);
-				PerformAssignment(&type, &ctx->type, &ctx->bc, node);
-				type.dataType.MakeReadOnly(typeIsReadOnly);
+				bool typeIsReadOnly = ctx->type.dataType.IsReadOnly();
+				ctx->type.dataType.MakeReadOnly(false);
 
-				ctx->bc.Pop(ctx->type.dataType.GetSizeOnStackDWords());
+				// If the object already is a temporary variable, then the copy 
+				// doesn't have to be made as it is already a unique object
+				PrepareTemporaryObject(node, ctx, reservedVars);
 
-				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-
-				ctx->bc.InstrSHORT(asBC_PSF, type.stackOffset);
-
-				ctx->type = type;
+				ctx->type.dataType.MakeReadOnly(typeIsReadOnly);
+				ctx->type.isExplicitHandle = isExplicitHandle;
 			}
 
 			// A non-reference can be converted to a reference,
@@ -4502,41 +4486,9 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 					if( generateCode )
 					{
-						// Allocate a temporary variable
-						asSExprContext lctx(engine);
-						asCDataType dt = ctx->type.dataType;
-						dt.MakeReference(false);
-						int offset = AllocateVariableNotIn(dt, true, reservedVars);
-						lctx.type = ctx->type;
-						lctx.type.isTemporary = true;
-						lctx.type.stackOffset = (short)offset;
-						lctx.type.dataType.MakeReference(IsVariableOnHeap(offset));
-
-						// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
-
-						CallDefaultConstructor(lctx.type.dataType, offset, IsVariableOnHeap(offset), &lctx.bc, node);
-
-						// Build the right hand expression
-						asSExprContext rctx(engine);
-						rctx.type = ctx->type;
-						rctx.bc.AddCode(&lctx.bc);
-						rctx.bc.AddCode(&ctx->bc);
-
-						// Build the left hand expression
-						lctx.bc.InstrSHORT(asBC_PSF, (short)offset);
-
-						// DoAssignment doesn't allow assignment to temporary variable,
-						// so we temporarily set the type as non-temporary.
-						lctx.type.isTemporary = false;
-
-						DoAssignment(ctx, &lctx, &rctx, node, node, ttAssignment, node);
-
-						// If the original const object was a temporary variable, then
-						// that needs to be released now
-						ProcessDeferredParams(ctx);
-
-						ctx->type = lctx.type;
-						ctx->type.isTemporary = true;
+						// If the object already is a temporary variable, then the copy 
+						// doesn't have to be made as it is already a unique object
+						PrepareTemporaryObject(node, ctx, reservedVars);
 					}
 				}
 			}
@@ -4556,39 +4508,17 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 				{
 					// A non-reference can be converted to a reference,
 					// by putting the value in a temporary variable
-					asCTypeInfo type;
-					type.Set(ctx->type.dataType);
-
-					// Allocate a temporary variable
-					int offset = AllocateVariableNotIn(type.dataType, true, reservedVars);
-					type.isTemporary = true;
-					type.stackOffset = (short)offset;
-					if( type.dataType.IsObjectHandle() )
-						type.isExplicitHandle = true;
-
-					// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
-
-					CallDefaultConstructor(type.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, node);
-					type.dataType.MakeReference(IsVariableOnHeap(offset));
-
-					PrepareForAssignment(&type.dataType, ctx, node);
-
-					ctx->bc.InstrSHORT(asBC_PSF, type.stackOffset);
 
 					// If the input type is read-only we'll need to temporarily
 					// remove this constness, otherwise the assignment will fail
-					bool typeIsReadOnly = type.dataType.IsReadOnly();
-					type.dataType.MakeReadOnly(false);
-					PerformAssignment(&type, &ctx->type, &ctx->bc, node);
-					type.dataType.MakeReadOnly(typeIsReadOnly);
+					bool typeIsReadOnly = ctx->type.dataType.IsReadOnly();
+					ctx->type.dataType.MakeReadOnly(false);
 
-					ctx->bc.Pop(ctx->type.dataType.GetSizeOnStackDWords());
+					// If the object already is a temporary variable, then the copy 
+					// doesn't have to be made as it is already a unique object
+					PrepareTemporaryObject(node, ctx, reservedVars);
 
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-
-					ctx->bc.InstrSHORT(asBC_PSF, type.stackOffset);
-
-					ctx->type = type;
+					ctx->type.dataType.MakeReadOnly(typeIsReadOnly);
 				}
 
 				// A handle can be converted to a reference, by checking for a null pointer

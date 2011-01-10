@@ -357,6 +357,7 @@ Refer to the <code>std::string</code> implementation for your compiler.
   {
     // Constructors
     string();
+    string(const string &in);
     
     // Returns the length of the string
     uint length() const;
