@@ -5435,7 +5435,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				// Put the code for the condition expression on the output
 				MergeExprBytecode(ctx, &e);
 
-				// Added the branch decision
+				// Add the branch decision
 				ctx->type = e.type;
 				ConvertToVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_CpyVtoR4, ctx->type.stackOffset);
@@ -5455,7 +5455,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				if( !rtemp.dataType.IsPrimitive() )
 				{
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-					rtemp.dataType.MakeReference(true);
+					rtemp.dataType.MakeReference(IsVariableOnHeap(offset));
 				}
 				PerformAssignment(&rtemp, &le.type, &ctx->bc, cexpr->next);
 				if( !rtemp.dataType.IsPrimitive() )
@@ -5476,7 +5476,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				if( !rtemp.dataType.IsPrimitive() )
 				{
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-					rtemp.dataType.MakeReference(true);
+					rtemp.dataType.MakeReference(IsVariableOnHeap(offset));
 				}
 				PerformAssignment(&rtemp, &re.type, &ctx->bc, cexpr->next);
 				if( !rtemp.dataType.IsPrimitive() )
@@ -5498,7 +5498,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				if( !ctx->type.dataType.IsPrimitive() )
 				{
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-					ctx->type.dataType.MakeReference(true);
+					ctx->type.dataType.MakeReference(IsVariableOnHeap(offset));
 				}
 
 				// Make sure the output isn't marked as being a literal constant

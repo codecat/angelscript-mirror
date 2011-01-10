@@ -287,5 +287,35 @@ bool TestVector3()
 		engine->Release();
 	}
 
+	// Test use of the value types in condition
+	{
+		const char *script = 
+			"void main() \n"
+			"{ \n"
+			"  vector3 test = true ? vector3(1,2,3) : vector3(); \n"
+			"  assert( test.x == 1 ); \n"
+			"  assert( test.y == 2 ); \n"
+			"  assert( test.z == 3 ); \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptMath3D(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+		ctx->Release();
+		engine->Release();
+	}
+
 	return fail;
 }

@@ -26,6 +26,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Set property accessor that takes the value by ref was incorrectly accepted for increment/decrement operators (Thanks Philip Bennefall)
 <li>When copying an object to remove constness the compiler wasn't handling objects allocated on the stack correctly (Thanks Philip Bennefall)
 <li>Value cast of an object retrieved from a get accessor wasn't working properly (Thanks speps)
+<li>Value types allocated on the stack didn't work correctly with the condition operator (Thanks speps)
 </ul>
 <li>Virtual machine
 <ul>
