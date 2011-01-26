@@ -23,6 +23,20 @@ struct Vector3
 
 	float length() const;
 
+	// Swizzle operators
+	Vector3 get_xyz() const;
+	void    set_xyz(const Vector3 &in);
+	Vector3 get_yzx() const;
+	void    set_yzx(const Vector3 &in);
+	Vector3 get_zxy() const;
+	void    set_zxy(const Vector3 &in);
+	Vector3 get_zyx() const;
+	void    set_zyx(const Vector3 &in);
+	Vector3 get_yxz() const;
+	void    set_yxz(const Vector3 &in);
+	Vector3 get_xzy() const;
+	void    set_xzy(const Vector3 &in);
+
 	friend bool operator==(const Vector3 &a, const Vector3 &b);
 	friend bool operator!=(const Vector3 &a, const Vector3 &b);
 	friend Vector3 operator+(const Vector3 &a, const Vector3 &b);

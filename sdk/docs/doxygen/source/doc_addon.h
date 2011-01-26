@@ -797,7 +797,8 @@ This add-on registers some value types and functions that permit the scripts to 
 perform the registration.
 
 Currently the only thing registered is the <code>vector3</code> type, representing a 3D vector, 
-with basic math operators, such as add, subtract, scalar multiply, equality comparison, etc.
+with basic math operators, such as add, subtract, scalar multiply, equality comparison, etc. It 
+also includes swizzle operators xyz, yzx, zxy, zyx, yxz, and xzy implemented with property accessors.
 
 This add-on serves mostly as a sample on how to register a value type. Application
 developers will most likely want to register their own math library rather than use 

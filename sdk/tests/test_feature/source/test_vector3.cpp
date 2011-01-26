@@ -317,5 +317,39 @@ bool TestVector3()
 		engine->Release();
 	}
 
+	//
+	{
+		const char *script = 
+			"bool alert(string &in, string &in) {return true;} \n"
+			"void main() \n"
+			"{ \n"
+			"  vector3 position(5, 0, 0); \n"
+			"  alert('Length', '' + position.length()); \n"
+			"  assert( position.length() == 5 ); \n"
+			"} \n";
+
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptMath3D(engine);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "vector3 pos(5, 0, 0); pos *= 5; assert( pos.length() == 25 )");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	return fail;
 }

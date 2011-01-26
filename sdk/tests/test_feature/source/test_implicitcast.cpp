@@ -311,6 +311,38 @@ bool Test()
 		engine->Release();
 	}
 
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"class File { \n"
+			"  int64 readInt(uint a) { int64 v = -1; return v*512; } \n"
+			"} \n"
+			"const int origVal = -512; \n"
+			"void main() \n"
+			"{ \n"
+			"  File f; \n"
+			"  assert( f.readInt(4) == origVal ); \n"
+			"  assert( int(f.readInt(4)) == origVal ); \n"
+			"  const int localVal = -512; \n"
+			"  assert( f.readInt(4) == localVal ); \n"
+			"  assert( int(f.readInt(4)) == localVal ); \n"
+			"} \n";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		int r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	//-----------------------------------------------------------------
 	// REFERENCE_CAST
 

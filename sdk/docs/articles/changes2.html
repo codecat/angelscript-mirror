@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.20.2 WIP - 2011/01/12</h2>
+<h2>Version 2.20.2 WIP - 2011/01/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>When copying an object to remove constness the compiler wasn't handling objects allocated on the stack correctly (Thanks Philip Bennefall)
 <li>Value cast of an object retrieved from a get accessor wasn't working properly (Thanks speps)
 <li>Value types allocated on the stack didn't work correctly with the condition operator (Thanks speps)
+<li>Fixed a bug in the std::string add-on add operator implementations where the input string was incorrectly modified (Thanks speps)
 </ul>
 <li>Virtual machine
 <ul>
@@ -39,7 +40,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Add-ons
 <ul>
 <li>Added the copy constructor to the std::string registration
-<li>Fixed a bug in the std::string add operator implementations where the input string was incorrectly modified (Thanks speps)
+<li>Added swizzle operators xyz, yzx, zxy, zyx, yxz, and xzy to the vector3 add-on
 </ul>
 </ul>
 

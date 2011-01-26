@@ -124,6 +124,59 @@ Vector3 operator/(const Vector3 &v, float s)
 }
 
 //-----------------------
+// Swizzle operators
+//-----------------------
+
+Vector3 Vector3::get_xyz() const
+{
+	return Vector3(x,y,z);
+}
+Vector3 Vector3::get_yzx() const
+{
+	return Vector3(y,z,x);
+}
+Vector3 Vector3::get_zxy() const
+{
+	return Vector3(z,x,y);
+}
+Vector3 Vector3::get_zyx() const
+{
+	return Vector3(z,y,x);
+}
+Vector3 Vector3::get_yxz() const
+{
+	return Vector3(y,x,z);
+}
+Vector3 Vector3::get_xzy() const
+{
+	return Vector3(x,z,y);
+}
+void Vector3::set_xyz(const Vector3 &v)
+{
+	x = v.x; y = v.y; z = v.z;
+}
+void Vector3::set_yzx(const Vector3 &v)
+{
+	y = v.x; z = v.y; x = v.z;
+}
+void Vector3::set_zxy(const Vector3 &v)
+{
+	z = v.x; x = v.y; y = v.z;
+}
+void Vector3::set_zyx(const Vector3 &v)
+{
+	z = v.x; y = v.y; x = v.z;
+}
+void Vector3::set_yxz(const Vector3 &v)
+{
+	y = v.x; x = v.y; z = v.z;
+}
+void Vector3::set_xzy(const Vector3 &v)
+{
+	x = v.x; z = v.y; y = v.z;
+}
+
+//-----------------------
 // AngelScript functions
 //-----------------------
 
@@ -254,6 +307,84 @@ static void Vector3Vector3DivFloat_Generic(asIScriptGeneric *gen)
 	gen->SetReturnObject(&res);
 }
 
+static void Vector3_get_xyz_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	*(Vector3*)gen->GetAddressOfReturnLocation() = v->get_xyz();
+}
+
+static void Vector3_get_yzx_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	*(Vector3*)gen->GetAddressOfReturnLocation() = v->get_yzx();
+}
+
+static void Vector3_get_zxy_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	*(Vector3*)gen->GetAddressOfReturnLocation() = v->get_zxy();
+}
+
+static void Vector3_get_zyx_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	*(Vector3*)gen->GetAddressOfReturnLocation() = v->get_zyx();
+}
+
+static void Vector3_get_yxz_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	*(Vector3*)gen->GetAddressOfReturnLocation() = v->get_yxz();
+}
+
+static void Vector3_get_xzy_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	*(Vector3*)gen->GetAddressOfReturnLocation() = v->get_xzy();
+}
+
+static void Vector3_set_xyz_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	Vector3 *i = *(Vector3**)gen->GetAddressOfArg(0);
+	v->set_xyz(*i);
+}
+
+static void Vector3_set_yzx_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	Vector3 *i = *(Vector3**)gen->GetAddressOfArg(0);
+	v->set_yzx(*i);
+}
+
+static void Vector3_set_zxy_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	Vector3 *i = *(Vector3**)gen->GetAddressOfArg(0);
+	v->set_zxy(*i);
+}
+
+static void Vector3_set_zyx_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	Vector3 *i = *(Vector3**)gen->GetAddressOfArg(0);
+	v->set_zyx(*i);
+}
+
+static void Vector3_set_yxz_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	Vector3 *i = *(Vector3**)gen->GetAddressOfArg(0);
+	v->set_yxz(*i);
+}
+
+static void Vector3_set_xzy_Generic(asIScriptGeneric *gen)
+{
+	Vector3 *v = (Vector3*)gen->GetObject();
+	Vector3 *i = *(Vector3**)gen->GetAddressOfArg(0);
+	v->set_xzy(*i);
+}
+
 //--------------------------------
 // Registration
 //-------------------------------------
@@ -289,6 +420,20 @@ void RegisterScriptMath3D_Native(asIScriptEngine *engine)
 
 	// Register the object methods
 	r = engine->RegisterObjectMethod("vector3", "float length() const", asMETHOD(Vector3,length), asCALL_THISCALL); assert( r >= 0 );
+
+	// Register the swizzle operators
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_xyz() const", asMETHOD(Vector3, get_xyz), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_yzx() const", asMETHOD(Vector3, get_yzx), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_zxy() const", asMETHOD(Vector3, get_zxy), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_zyx() const", asMETHOD(Vector3, get_zyx), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_yxz() const", asMETHOD(Vector3, get_yxz), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_xzy() const", asMETHOD(Vector3, get_xzy), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_xyz(const vector3 &in)", asMETHOD(Vector3, set_xyz), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_yzx(const vector3 &in)", asMETHOD(Vector3, set_yzx), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_zxy(const vector3 &in)", asMETHOD(Vector3, set_zxy), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_zyx(const vector3 &in)", asMETHOD(Vector3, set_zyx), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_yxz(const vector3 &in)", asMETHOD(Vector3, set_yxz), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_xzy(const vector3 &in)", asMETHOD(Vector3, set_xzy), asCALL_THISCALL); assert( r >= 0 );
 }
 
 void RegisterScriptMath3D_Generic(asIScriptEngine *engine)
@@ -322,6 +467,20 @@ void RegisterScriptMath3D_Generic(asIScriptEngine *engine)
 
 	// Register the object methods
 	r = engine->RegisterObjectMethod("vector3", "float length() const", asFUNCTION(Vector3Length_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	// Register the swizzle operators
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_xyz() const", asFUNCTION(Vector3_get_xyz_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_yzx() const", asFUNCTION(Vector3_get_yzx_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_zxy() const", asFUNCTION(Vector3_get_zxy_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_zyx() const", asFUNCTION(Vector3_get_zyx_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_yxz() const", asFUNCTION(Vector3_get_yxz_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "vector3 get_xzy() const", asFUNCTION(Vector3_get_xzy_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_xyz(const vector3 &in)", asFUNCTION(Vector3_set_xyz_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_yzx(const vector3 &in)", asFUNCTION(Vector3_set_yzx_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_zxy(const vector3 &in)", asFUNCTION(Vector3_set_zxy_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_zyx(const vector3 &in)", asFUNCTION(Vector3_set_zyx_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_yxz(const vector3 &in)", asFUNCTION(Vector3_set_yxz_Generic), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("vector3", "void set_xzy(const vector3 &in)", asFUNCTION(Vector3_set_xzy_Generic), asCALL_THISCALL); assert( r >= 0 );
 }
 
 void RegisterScriptMath3D(asIScriptEngine *engine)
