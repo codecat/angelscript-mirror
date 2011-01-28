@@ -2807,7 +2807,19 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	// Note, a type can be temporary without being a variable, in which case it is holding off
 	// on releasing a previously used object.
 	if( ctx->type.isTemporary && ctx->type.isVariable && 
-		!(forceOnHeap && !IsVariableOnHeap(ctx->type.stackOffset)) ) return;
+		!(forceOnHeap && !IsVariableOnHeap(ctx->type.stackOffset)) )
+	{
+		// If the temporary object is currently not a reference 
+		// the expression needs to be reevaluated to a reference
+		if( !ctx->type.dataType.IsReference() )
+		{
+			ctx->bc.Pop(AS_PTR_SIZE);
+			ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
+			ctx->type.dataType.MakeReference(true);
+		}
+
+		return;
+	}
 
 	// Allocate temporary variable
 	asCDataType dt = ctx->type.dataType;

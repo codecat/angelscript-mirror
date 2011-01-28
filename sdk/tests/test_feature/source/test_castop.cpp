@@ -137,6 +137,17 @@ bool Test()
 		printf("%s", bout.buffer.c_str());
 	}
 
+	// It should be allowed to cast null to an interface
+	bout.buffer = "";
+	r = ExecuteString(engine, "intf1 @a = cast<intf1>(null);", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+	if( bout.buffer != "" )
+	{
+		TEST_FAILED;
+		printf("%s", bout.buffer.c_str());
+	}
+
 	//--------------
 	// Using constructor as implicit cast operator
 	// TODO: Script classes should perhaps allow implicit casts to be implemented as well

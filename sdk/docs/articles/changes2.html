@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.20.2 WIP - 2011/01/25</h2>
+<h2>Version 2.20.2 WIP - 2011/01/27</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Value cast of an object retrieved from a get accessor wasn't working properly (Thanks speps)
 <li>Value types allocated on the stack didn't work correctly with the condition operator (Thanks speps)
 <li>Fixed a bug in the std::string add-on add operator implementations where the input string was incorrectly modified (Thanks speps)
+<li>Fixed bug with compiling explicit ref cast of temporary handle that produced invalid bytecode (Thanks mandrav)
 </ul>
 <li>Virtual machine
 <ul>

@@ -158,6 +158,34 @@ bool Test()
 
 	engine->Release();
 
+	// Test cast for both temporary handle and non-temporary handle
+	{
+		const char *script = 
+			"interface ScriptLogic {} \n"
+			"class PlayerLogic : ScriptLogic {} \n"
+			"ScriptLogic @getScriptObject() { return PlayerLogic(); } \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+
+		// Non-temporary handle
+		r = ExecuteString(engine, "ScriptLogic @c = getScriptObject(); cast<PlayerLogic>(c);", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Temporary handle
+		r = ExecuteString(engine, "cast<PlayerLogic>(getScriptObject());", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();			
+	}
+
 	// Success
 	return fail;
 }
