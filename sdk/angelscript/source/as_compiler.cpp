@@ -9207,15 +9207,19 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				else if( op == ttStar || op == ttMulAssign )
 					instruction = asBC_MULi;
 				else if( op == ttSlash || op == ttDivAssign )
+				{
 					if( lctx->type.dataType.IsIntegerType() )
 						instruction = asBC_DIVi;
 					else
 						instruction = asBC_DIVu;
+				}
 				else if( op == ttPercent || op == ttModAssign )
+				{
 					if( lctx->type.dataType.IsIntegerType() )
 						instruction = asBC_MODi; 
 					else
 						instruction = asBC_MODu;
+				}
 			}
 			else
 			{
@@ -9226,15 +9230,19 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				else if( op == ttStar || op == ttMulAssign )
 					instruction = asBC_MULi64;
 				else if( op == ttSlash || op == ttDivAssign )
+				{
 					if( lctx->type.dataType.IsIntegerType() )
 						instruction = asBC_DIVi64;
 					else
 						instruction = asBC_DIVu64;
+				}
 				else if( op == ttPercent || op == ttModAssign )
+				{
 					if( lctx->type.dataType.IsIntegerType() )
 						instruction = asBC_MODi64;
 					else
 						instruction = asBC_MODu64;
+				}
 			}
 		}
 		else if( lctx->type.dataType.IsFloatType() )

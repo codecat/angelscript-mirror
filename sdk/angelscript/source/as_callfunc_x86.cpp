@@ -309,6 +309,12 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		if( descr->returnType.IsObjectHandle() )
 		{
+#if defined(AS_BIG_ENDIAN) && AS_PTR_SIZE == 1
+			// Since we're treating the system function as if it is returning a QWORD we are
+			// actually receiving the value in the high DWORD of retQW.
+			retQW >>= 32;
+#endif
+
 			context->regs.objectRegister = (void*)(size_t)retQW;
 
 			if( sysFunc->returnAutoHandle && context->regs.objectRegister )
@@ -320,7 +326,15 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			{
 				// Copy the returned value to the pointer sent by the script engine
 				if( sysFunc->hostReturnSize == 1 )
+				{
+#if defined(AS_BIG_ENDIAN) && AS_PTR_SIZE == 1
+					// Since we're treating the system function as if it is returning a QWORD we are
+					// actually receiving the value in the high DWORD of retQW.
+					retQW >>= 32;
+#endif
+
 					*(asDWORD*)retPointer = (asDWORD)retQW;
+				}
 				else
 					*(asQWORD*)retPointer = retQW;
 			}
@@ -333,7 +347,55 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		// Store value in value register
 		if( sysFunc->hostReturnSize == 1 )
+		{
+#if defined(AS_BIG_ENDIAN)
+			// Since we're treating the system function as if it is returning a QWORD we are
+			// actually receiving the value in the high DWORD of retQW.
+			retQW >>= 32;
+
+			// due to endian issues we need to handle return values, that are
+			// less than a DWORD (32 bits) in size, special
+			int numBytes = descr->returnType.GetSizeInMemoryBytes();
+			if( descr->returnType.IsReference() ) numBytes = 4;
+			switch( numBytes )
+			{
+			case 1:
+				{
+					// 8 bits
+					asBYTE *val = (asBYTE*)&context->regs.valueRegister;
+					val[0] = (asBYTE)retQW;
+					val[1] = 0;
+					val[2] = 0;
+					val[3] = 0;
+					val[4] = 0;
+					val[5] = 0;
+					val[6] = 0;
+					val[7] = 0;
+				}
+				break;
+			case 2:
+				{
+					// 16 bits
+					asWORD *val = (asWORD*)&context->regs.valueRegister;
+					val[0] = (asWORD)retQW;
+					val[1] = 0;
+					val[2] = 0;
+					val[3] = 0;
+				}
+				break;
+			default:
+				{
+					// 32 bits
+					asDWORD *val = (asDWORD*)&context->regs.valueRegister;
+					val[0] = (asDWORD)retQW;
+					val[1] = 0;
+				}
+				break;
+			}
+#else
 			*(asDWORD*)&context->regs.valueRegister = (asDWORD)retQW;
+#endif
+		}
 		else
 			context->regs.valueRegister = retQW;
 	}
@@ -343,7 +405,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer )
-			args++;
+			args += AS_PTR_SIZE;
 
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
@@ -352,11 +414,11 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			{
 				// Call the release method on the type
 				engine->CallObjectMethod((void*)*(size_t*)&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
-				args[spos] = 0;
+				*(size_t*)&args[spos] = 0;
 			}
 
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
-				spos++;
+				spos += AS_PTR_SIZE;
 			else
 				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
 		}

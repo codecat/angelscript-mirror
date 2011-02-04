@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -481,32 +481,20 @@ static asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD* pArg
 	return ppcFunc( ppcArgs, PPC_STACK_SIZE(numTotalArgs), func );
 }
 
-int CallSystemFunction(int id, asCContext *context, void *objectPointer)
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer)
 {
 	// use a working array of types, we'll configure the final one in stackArgs
 	asBYTE argsType[2*AS_PPC_MAX_ARGS + 1 + 1 + 1];
 	memset( argsType, 0, sizeof(argsType));
 
-	asCScriptEngine *engine = context->engine;
-	asCScriptFunction *descr = engine->scriptFunctions[id];
+	asCScriptEngine            *engine  = context->engine;
+	asCScriptFunction          *descr   = engine->scriptFunctions[id];
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
-
-	int callConv = sysFunc->callConv;
-	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-	{
-		// we're only handling native calls, handle generic calls in here
-		return context->CallGeneric( id, objectPointer);
-	}
 
 	asQWORD  retQW           = 0;
 	void    *func            = (void*)sysFunc->func;
 	int      paramSize       = sysFunc->paramSize;
-	int      popSize         = paramSize;
-	asDWORD *args            = context->regs.stackPointer;	
-	void    *obj             = NULL;
 	asDWORD *vftable         = NULL;
-	void    *retObjPointer   = NULL; // for system functions that return AngelScript objects
-	void    *retInMemPointer = NULL; // for host functions that need to return data in memory instead of by register
 	int      a, s;
 
 	// convert the parameters that are < 4 bytes from little endian to big endian
@@ -515,6 +503,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	// if this is a THISCALL function and no object pointer was given, then the
 	// first argument on the stack is the object pointer -- we MUST skip it for doing
 	// the endian flipping.
+	int callConv = sysFunc->callConv;
 	if( ( callConv >= ICC_THISCALL ) && (objectPointer == NULL) )
 	{
 		++argDwordOffset;
@@ -555,58 +544,6 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 		argDwordOffset++;
 	}
-
-	// Objects returned to AngelScript must be via an object pointer.  This goes for
-	// ALL objects, including those of simple, complex, primitive or float.  Whether
-	// the host system (PPC in this case) returns the 'object' as a pointer depends on the type of object.
-	context->regs.objectType = descr->returnType.GetObjectType();
-	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
-	{
-		// Allocate the memory for the object
-		retObjPointer = engine->CallAlloc( descr->returnType.GetObjectType() );
-		
-		if( sysFunc->hostReturnInMemory )
-		{
-			// The return is made in memory on the host system
-			callConv++;
-			retInMemPointer = retObjPointer;
-		}
-	}
-
-	// make sure that host functions that will be returning in memory have a memory pointer
-	asASSERT( sysFunc->hostReturnInMemory==false || retInMemPointer!=NULL );
-
-	if( callConv >= ICC_THISCALL )
-	{
-		if( objectPointer )
-		{
-			obj = objectPointer;
-		}
-		else
-		{
-			// The object pointer should be popped from the context stack
-			popSize++;
-
-			// Check for null pointer
-			obj = (void*)*(args);
-			if( obj == NULL )
-			{
-				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
-				if( retObjPointer )
-				{
-					engine->CallFree(retObjPointer);
-				}
-				return 0;
-			}
-
-			// Add the base offset for multiple inheritance
-			obj = (void*)(int(obj) + sysFunc->baseOffset);
-
-			// Skip the object pointer
-			args++;
-		}
-	}
-	asASSERT( descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS );
 
 	// mark all float/double/int arguments
 	if( !sysFunc->takesObjByVal )
@@ -695,8 +632,6 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		args = &paramBuffer[1];
 	}
 	
-	// one last verification to make sure things are how we expect
-	asASSERT( (retInMemPointer!=NULL && sysFunc->hostReturnInMemory) || (retInMemPointer==NULL && !sysFunc->hostReturnInMemory) );
 	context->isCallingSystemFunction = true;
 	switch( callConv )
 	{
@@ -704,30 +639,96 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	case ICC_CDECL_RETURNINMEM:
 	case ICC_STDCALL:
 	case ICC_STDCALL_RETURNINMEM:
-		retQW = CallCDeclFunction( args, argsType, paramSize, (asDWORD)func, retInMemPointer );
+		retQW = CallCDeclFunction( args, argsType, paramSize, (asDWORD)func, retPointer );
 		break;
 	case ICC_THISCALL:
 	case ICC_THISCALL_RETURNINMEM:
-		retQW = CallThisCallFunction(obj, args, argsType, paramSize, (asDWORD)func, retInMemPointer );
+		retQW = CallThisCallFunction(obj, args, argsType, paramSize, (asDWORD)func, retPointer );
 		break;
 	case ICC_VIRTUAL_THISCALL:
 	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		// Get virtual function table from the object pointer
 		vftable = *(asDWORD**)obj;
-		retQW = CallThisCallFunction( obj, args, argsType, paramSize, vftable[asDWORD(func)>>2], retInMemPointer );
+		retQW = CallThisCallFunction( obj, args, argsType, paramSize, vftable[asDWORD(func)>>2], retPointer );
 		break;
 	case ICC_CDECL_OBJLAST:
 	case ICC_CDECL_OBJLAST_RETURNINMEM:
-		retQW = CallThisCallFunction_objLast( obj, args, argsType, paramSize, (asDWORD)func, retInMemPointer );
+		retQW = CallThisCallFunction_objLast( obj, args, argsType, paramSize, (asDWORD)func, retPointer );
 		break;
 	case ICC_CDECL_OBJFIRST:
 	case ICC_CDECL_OBJFIRST_RETURNINMEM:
-		retQW = CallThisCallFunction( obj, args, argsType, paramSize, (asDWORD)func, retInMemPointer );
+		retQW = CallThisCallFunction( obj, args, argsType, paramSize, (asDWORD)func, retPointer );
 		break;
 	default:
 		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
 	}
 	context->isCallingSystemFunction = false;
+
+	// If the return is a float value we need to get the value from the FP register
+	if( sysFunc->hostReturnFloat )
+	{
+		if( sysFunc->hostReturnSize == 1 )
+			retQW = (asQWORD)GetReturnedFloat();
+		else
+			retQW = GetReturnedDouble();
+	}
+
+	return retQW;
+}
+
+int CallSystemFunction(int id, asCContext *context, void *objectPointer)
+{
+	asCScriptEngine            *engine  = context->engine;
+	asCScriptFunction          *descr   = engine->scriptFunctions[id];
+	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
+
+	int callConv = sysFunc->callConv;
+	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
+		return context->CallGeneric(id, objectPointer);
+
+	asQWORD  retQW             = 0;
+	asDWORD *args              = context->regs.stackPointer;
+	void    *retPointer        = 0;
+	void    *obj               = 0;
+	int      popSize           = sysFunc->paramSize;
+
+	context->regs.objectType = descr->returnType.GetObjectType();
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
+	{
+		// Allocate the memory for the object
+		retPointer = engine->CallAlloc(descr->returnType.GetObjectType());
+	}
+
+	if( callConv >= ICC_THISCALL )
+	{
+		if( objectPointer )
+		{
+			obj = objectPointer;
+		}
+		else
+		{
+			// The object pointer should be popped from the context stack
+			popSize += AS_PTR_SIZE;
+
+			// Check for null pointer
+			obj = (void*)*(size_t*)(args);
+			if( obj == 0 )
+			{
+				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
+				if( retPointer )
+					engine->CallFree(retPointer);
+				return 0;
+			}
+
+			// Add the base offset for multiple inheritance
+			obj = (void*)(size_t(obj) + sysFunc->baseOffset);
+
+			// Skip the object pointer
+			args += AS_PTR_SIZE;
+		}
+	}
+
+	retQW = CallSystemFunctionNative(context, descr, obj, args, retPointer);
 
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal )
@@ -738,7 +739,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		    args++;
 
 		int spos = 0;
-		for( int n = 0; n < (int)descr->parameterTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			if( descr->parameterTypes[n].IsObject() &&
 				!descr->parameterTypes[n].IsReference() &&
@@ -747,16 +748,12 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				void *obj = (void*)args[spos++];
 				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
 				if( beh->destruct )
-				{
 					engine->CallObjectMethod(obj, beh->destruct);
-				}
 
 				engine->CallFree(obj);
 			}
 			else
-			{
-				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
-			}
+				spos += descr->parameterTypes[n].GetSizeInMemoryDWords();
 		}
 	}
 #endif
@@ -766,79 +763,46 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	{
 		if( descr->returnType.IsObjectHandle() )
 		{
+#if defined(AS_BIG_ENDIAN) && AS_PTR_SIZE == 1
 			// Since we're treating the system function as if it is returning a QWORD we are
 			// actually receiving the value in the high DWORD of retQW.
 			retQW >>= 32;
-		
-			// returning an object handle
-			context->regs.objectRegister = (void*)(asDWORD)retQW;
+#endif
+
+			context->regs.objectRegister = (void*)(size_t)retQW;
 
 			if( sysFunc->returnAutoHandle && context->regs.objectRegister )
-			{
 				engine->CallObjectMethod(context->regs.objectRegister, descr->returnType.GetObjectType()->beh.addref);
-			}
 		}
 		else
 		{
-			// returning an object
 			if( !sysFunc->hostReturnInMemory )
 			{
-				// In this case, AngelScript wants an object pointer back, but the host system
-				// didn't use 'return in memory', so its results were passed back by the return register.
-				// We have have to take the results of the return register and store them IN the pointer for the object.
-				// The data for the object could fit into a register; we need to copy that data to the object pointer's
-				// memory.
-				asASSERT( retInMemPointer == NULL );
-				asASSERT( retObjPointer != NULL );
-
 				// Copy the returned value to the pointer sent by the script engine
 				if( sysFunc->hostReturnSize == 1 )
 				{
+#if defined(AS_BIG_ENDIAN) && AS_PTR_SIZE == 1
 					// Since we're treating the system function as if it is returning a QWORD we are
 					// actually receiving the value in the high DWORD of retQW.
 					retQW >>= 32;
-				
-					*(asDWORD*)retObjPointer = (asDWORD)retQW;						
+#endif
+
+					*(asDWORD*)retPointer = (asDWORD)retQW;
 				}
 				else
-				{
-					*(asQWORD*)retObjPointer = retQW;
-				}
-			}
-			else
-			{
-				// In this case, AngelScript wants an object pointer back, and the host system
-				// used 'return in memory'.  So its results were already passed back in memory, and
-				// stored in the object pointer.
-				asASSERT( retInMemPointer != NULL );
-				asASSERT( retObjPointer != NULL );
+					*(asQWORD*)retPointer = retQW;
 			}
 
-			// store the return results into the object register
-			context->regs.objectRegister = retObjPointer;
+			// Store the object in the register
+			context->regs.objectRegister = retPointer;
 		}
 	}
 	else
 	{
-		// Store value in valueRegister
-		if( sysFunc->hostReturnFloat )
+		// Store value in value register
+		if( sysFunc->hostReturnSize == 1 )
 		{
-			// floating pointer primitives
-			if( sysFunc->hostReturnSize == 1 )
-			{
-				// single float
-				*(asDWORD*)&context->regs.valueRegister = GetReturnedFloat();
-			}
-			else
-			{
-				// double float
-				context->regs.valueRegister = GetReturnedDouble();
-			}
-		}
-		else if( sysFunc->hostReturnSize == 1 )
-		{
-			// <= 32 bit primitives
-			
+#if defined(AS_BIG_ENDIAN)
 			// Since we're treating the system function as if it is returning a QWORD we are
 			// actually receiving the value in the high DWORD of retQW.
 			retQW >>= 32;
@@ -852,7 +816,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			case 1:
 				{
 					// 8 bits
-					asBYTE *val = (asBYTE*)ARG_DW(context->regs.valueRegister);
+					asBYTE *val = (asBYTE*)&context->regs.valueRegister;
 					val[0] = (asBYTE)retQW;
 					val[1] = 0;
 					val[2] = 0;
@@ -866,7 +830,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			case 2:
 				{
 					// 16 bits
-					asWORD *val = (asWORD*)ARG_DW(context->regs.valueRegister);
+					asWORD *val = (asWORD*)&context->regs.valueRegister;
 					val[0] = (asWORD)retQW;
 					val[1] = 0;
 					val[2] = 0;
@@ -876,27 +840,26 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			default:
 				{
 					// 32 bits
-					asDWORD *val = (asDWORD*)ARG_DW(context->regs.valueRegister);
+					asDWORD *val = (asDWORD*)&context->regs.valueRegister;
 					val[0] = (asDWORD)retQW;
 					val[1] = 0;
 				}
 				break;
 			}
+#else
+			*(asDWORD*)&context->regs.valueRegister = (asDWORD)retQW;
+#endif
 		}
 		else
-		{
-			// 64 bit primitive
 			context->regs.valueRegister = retQW;
-		}
 	}
 
+	// Release autohandles in the arguments
 	if( sysFunc->hasAutoHandles )
 	{
 		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer )
-		{
-			args++;
-		}
+			args += AS_PTR_SIZE;
 
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
@@ -904,18 +867,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			if( sysFunc->paramAutoHandles[n] && args[spos] )
 			{
 				// Call the release method on the type
-				engine->CallObjectMethod((void*)args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
-				args[spos] = 0;
+				engine->CallObjectMethod((void*)*(size_t*)&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
+				*(size_t*)&args[spos] = 0;
 			}
 
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
-			{
-				spos++;
-			}
+				spos += AS_PTR_SIZE;
 			else
-			{
 				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
-			}
 		}
 	}
 

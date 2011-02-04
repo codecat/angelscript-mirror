@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -2528,6 +2528,10 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 					else if( var >= 0 ) 
 						asBC_SWORDARG2(&bc[n]) += adjustByPos[var];
 				}
+				break;
+
+			default:
+				// The other types don't treat variables so won't be modified
 				break;
 			}
 
