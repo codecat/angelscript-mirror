@@ -82,7 +82,7 @@ const t_CallThisCallRetByRef CallThisCallFunctionRetByRef = (t_CallThisCallRetBy
 asDWORD GetReturnedFloat();
 asQWORD GetReturnedDouble();
 
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer)
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/)
 {
 	asCScriptEngine            *engine    = context->engine;
 	asSSystemFunctionInterface *sysFunc   = descr->sysFuncIntf;
@@ -233,6 +233,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		return context->CallGeneric(id, objectPointer);
 
 	asQWORD  retQW             = 0;
+	asQWORD  retQW2            = 0;
 	asDWORD *args              = context->regs.stackPointer;
 	void    *retPointer        = 0;
 	void    *obj               = 0;
@@ -274,7 +275,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 
-	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0);
+	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
 
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal )
@@ -336,8 +337,18 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 					*(asDWORD*)retPointer = (asDWORD)retQW;
 				}
-				else
+				else if( sysFunc->hostReturnSize == 2 )
 					*(asQWORD*)retPointer = retQW;
+				else if( sysFunc->hostReturnSize == 3 )
+				{
+					*(asQWORD*)retPointer         = retQW;
+					*(((asDWORD*)retPointer) + 2) = (asDWORD)retQW2;
+				}
+				else // if( sysFunc->hostReturnSize == 4 )
+				{
+					*(asQWORD*)retPointer         = retQW;
+					*(((asQWORD*)retPointer) + 1) = retQW2;
+				}
 			}
 
 			// Store the object in the register

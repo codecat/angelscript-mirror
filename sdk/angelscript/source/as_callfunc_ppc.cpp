@@ -135,7 +135,7 @@ asm(" .text\n"
 	"address:               \n"
 	" mflr  r31             \n"
 
-    // initial registers for the function
+	// initial registers for the function
 	" mr    r29, r3       \n"   // (r29) args list
 	" mr    r27, r5       \n"   // load the function pointer to call.  func actually holds the pointer to our function
 	" addi  r26, r1, 24   \n"   // setup the pointer to the parameter area to the function we're going to call
@@ -148,7 +148,7 @@ asm(" .text\n"
 	" la    r25, lo16(_ppcArgsType - address)(r25) \n" // load the lower 16 bits of the address to r25
 	" subi  r25, r25, 1    \n"   // since we increment r25 on its use, we'll pre-decrement it
 
-    // loop through the arguments
+	// loop through the arguments
 	"ppcNextArg:           \n"
 	" addi r25, r25, 1     \n"   // increment r25, our arg type pointer
 	// switch based on the current argument type (0:end, 1:int, 2:float 3:double)
@@ -157,7 +157,7 @@ asm(" .text\n"
 	" addis r30, r31, ha16(ppcTypeSwitch - address) \n"   // load the address of the jump table for the switch
 	" la    r30, lo16(ppcTypeSwitch - address)(r30) \n"
 	
-    " add    r0, r30, r24  \n"   // offset by our argument type
+	" add    r0, r30, r24  \n"   // offset by our argument type
 	" mtctr  r0            \n"   // load the jump address into CTR
 	" bctr                 \n"   // jump into the jump table/switch
 	" nop                  \n"
@@ -181,7 +181,7 @@ asm(" .text\n"
 	" lwz   r0, 8(r1)      \n"   // load in the caller's LR
 	" mtlr  r0             \n"   // restore the caller's LR
 	" lmw   r23, -36(r1)   \n"   // restore registers r23 to r31 from the stack
-    " blr                  \n"   // return back to the caller
+	" blr                  \n"   // return back to the caller
 	" nop                  \n"
 	
 	// Integer argument (GPR register)
@@ -481,7 +481,7 @@ static asQWORD CallThisCallFunction_objLast(const void *obj, const asDWORD* pArg
 	return ppcFunc( ppcArgs, PPC_STACK_SIZE(numTotalArgs), func );
 }
 
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer)
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/)
 {
 	// use a working array of types, we'll configure the final one in stackArgs
 	asBYTE argsType[2*AS_PPC_MAX_ARGS + 1 + 1 + 1];
@@ -677,6 +677,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		return context->CallGeneric(id, objectPointer);
 
 	asQWORD  retQW             = 0;
+	asQWORD  retQW2            = 0;
 	asDWORD *args              = context->regs.stackPointer;
 	void    *retPointer        = 0;
 	void    *obj               = 0;
@@ -718,7 +719,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 
-	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0);
+	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
 
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal )
@@ -780,8 +781,18 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 					*(asDWORD*)retPointer = (asDWORD)retQW;
 				}
-				else
+				else if( sysFunc->hostReturnSize == 2 )
 					*(asQWORD*)retPointer = retQW;
+				else if( sysFunc->hostReturnSize == 3 )
+				{
+					*(asQWORD*)retPointer         = retQW;
+					*(((asDWORD*)retPointer) + 2) = (asDWORD)retQW2;
+				}
+				else // if( sysFunc->hostReturnSize == 4 )
+				{
+					*(asQWORD*)retPointer         = retQW;
+					*(((asQWORD*)retPointer) + 1) = retQW2;
+				}
 			}
 
 			// Store the object in the register

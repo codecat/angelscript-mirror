@@ -191,23 +191,17 @@ inline bool IsVariableArgument( asCDataType type )
 	return ( type.GetTokenType() == ttQuestion ) ? true : false;
 }
 
-int CallSystemFunction( int id, asCContext *context, void *objectPointer )
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2)
 {
 	asCScriptEngine            *engine             = context->engine;
-	asCScriptFunction          *descr              = engine->scriptFunctions[id];
-	asSSystemFunctionInterface *sysFunc            = engine->scriptFunctions[id]->sysFuncIntf;
+	asSSystemFunctionInterface *sysFunc            = descr->sysFuncIntf;
 	int                         callConv           = sysFunc->callConv;
 
 	asQWORD                     retQW              = 0;
-	asQWORD                     retQW2             = 0;
 	void                       *func               = ( void * )sysFunc->func;
 	int                         paramSize          = sysFunc->paramSize;
-	asDWORD                    *args               = context->regs.stackPointer;
-	asDWORD                    *stack_pointer      = context->regs.stackPointer;
-	void                       *retPointer         = 0;
-	void                       *obj                = 0;
+	asDWORD                    *stack_pointer      = args;
 	funcptr_t                  *vftable            = NULL;
-	int                         popSize            = paramSize;
 	int                         totalArgumentCount = 0;
 	int                         n                  = 0;
 	int                         base_n             = 0;
@@ -225,19 +219,9 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 
 	asBYTE   argsSet[X64_CALLSTACK_SIZE]  = { 0 };
 
-	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD ) {
-		return context->CallGeneric( id, objectPointer );
-	}
-
-	context->regs.objectType = descr->returnType.GetObjectType();
-	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() ) {
-		// Allocate the memory for the object
-		retPointer = engine->CallAlloc( descr->returnType.GetObjectType() );
-
-		if( sysFunc->hostReturnInMemory ) {
-			// The return is made in memory
-			callConv++;
-		}
+	if( sysFunc->hostReturnInMemory ) {
+		// The return is made in memory
+		callConv++;
 	}
 
 	argumentCount = ( int )descr->parameterTypes.GetLength();
@@ -339,26 +323,6 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 		return 0;
 	}
 #endif
-
-	obj = objectPointer;
-	if ( !obj && callConv >= ICC_THISCALL ) {
-		// The object pointer should be popped from the context stack
-		popSize += AS_PTR_SIZE;
-
-		// Check for null pointer
-		obj = ( void * )( *( ( asQWORD * )( args ) ) );
-		stack_pointer += AS_PTR_SIZE;
-		if( !obj ) {
-			context->SetInternalException( TXT_NULL_POINTER_ACCESS );
-			if( retPointer ) {
-				engine->CallFree( retPointer );
-			}
-			return 0;
-		}
-
-		// Add the base offset for multiple inheritance
-		obj = ( void * )( ( asQWORD )obj + sysFunc->baseOffset );
-	}
 
 	if ( obj && ( callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ) ) {
 		vftable = *( ( funcptr_t ** )obj );
@@ -539,119 +503,229 @@ int CallSystemFunction( int id, asCContext *context, void *objectPointer )
 	ASM_GET_REG( "%rdx", retQW2 );
 	context->isCallingSystemFunction = false;
 
-#ifdef COMPLEX_OBJS_PASSED_BY_REF
-	if( sysFunc->takesObjByVal ) {
-		// Need to free the complex objects passed by value
-		stack_pointer = context->regs.stackPointer;
-		if ( !objectPointer && callConv >= ICC_THISCALL ) {
-			stack_pointer += AS_PTR_SIZE;
+	// If the return is a float value we need to get the value from the FP register
+	if( sysFunc->hostReturnFloat )
+	{
+		if( sysFunc->hostReturnSize == 1 )
+			*(asDWORD*)&retQW = GetReturnedFloat();
+		else
+			retQW = GetReturnedDouble();
+	}
+
+	return retQW;
+}
+
+int CallSystemFunction(int id, asCContext *context, void *objectPointer)
+{
+	asCScriptEngine            *engine  = context->engine;
+	asCScriptFunction          *descr   = engine->scriptFunctions[id];
+	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
+
+	int callConv = sysFunc->callConv;
+	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
+		return context->CallGeneric(id, objectPointer);
+
+	asQWORD  retQW             = 0;
+	asQWORD  retQW2            = 0;
+	asDWORD *args              = context->regs.stackPointer;
+	void    *retPointer        = 0;
+	void    *obj               = 0;
+	int      popSize           = sysFunc->paramSize;
+
+	context->regs.objectType = descr->returnType.GetObjectType();
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
+	{
+		// Allocate the memory for the object
+		retPointer = engine->CallAlloc(descr->returnType.GetObjectType());
+	}
+
+	if( callConv >= ICC_THISCALL )
+	{
+		if( objectPointer )
+		{
+			obj = objectPointer;
 		}
-		for( n = 0; n < ( int )descr->parameterTypes.GetLength(); n++ ) {
-			if ( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsReference() && ( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK ) ) {
-				obj = ( void * )( *( asQWORD * )stack_pointer );
+		else
+		{
+			// The object pointer should be popped from the context stack
+			popSize += AS_PTR_SIZE;
+
+			// Check for null pointer
+			obj = (void*)*(size_t*)(args);
+			if( obj == 0 )
+			{
+				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
+				if( retPointer )
+					engine->CallFree(retPointer);
+				return 0;
+			}
+
+			// Add the base offset for multiple inheritance
+			obj = (void*)(size_t(obj) + sysFunc->baseOffset);
+
+			// Skip the object pointer
+			args += AS_PTR_SIZE;
+		}
+	}
+
+	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
+
+#ifdef COMPLEX_OBJS_PASSED_BY_REF
+	if( sysFunc->takesObjByVal )
+	{
+		// Need to free the complex objects passed by value
+		args = context->regs.stackPointer;
+		if( callConv >= ICC_THISCALL && !objectPointer )
+			args += AS_PTR_SIZE;
+
+		int spos = 0;
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		{
+			if( descr->parameterTypes[n].IsObject() &&
+				!descr->parameterTypes[n].IsReference() &&
+				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )
+			{
+				void *obj = (void*)*(size_t*)&args[spos];
+				spos += AS_PTR_SIZE;
 				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
-				if( beh->destruct ) {
+				if( beh->destruct )
 					engine->CallObjectMethod(obj, beh->destruct);
-				}
 
 				engine->CallFree(obj);
 			}
-
-			stack_pointer += descr->parameterTypes[n].GetSizeInMemoryDWords();
+			else
+				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
 		}
 	}
 #endif
 
 	// Store the returned value in our stack
-	if( descr->returnType.IsObject() && !descr->returnType.IsReference() ) 
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() )
 	{
-		if( descr->returnType.IsObjectHandle() ) 
+		if( descr->returnType.IsObjectHandle() )
 		{
-			context->regs.objectRegister = ( void * )( size_t )retQW;
+#if defined(AS_BIG_ENDIAN) && AS_PTR_SIZE == 1
+			// Since we're treating the system function as if it is returning a QWORD we are
+			// actually receiving the value in the high DWORD of retQW.
+			retQW >>= 32;
+#endif
 
-			if( sysFunc->returnAutoHandle && context->regs.objectRegister ) 
-			{
-				engine->CallObjectMethod( context->regs.objectRegister, descr->returnType.GetObjectType()->beh.addref );
-			}
-		} 
+			context->regs.objectRegister = (void*)(size_t)retQW;
+
+			if( sysFunc->returnAutoHandle && context->regs.objectRegister )
+				engine->CallObjectMethod(context->regs.objectRegister, descr->returnType.GetObjectType()->beh.addref);
+		}
 		else
 		{
-			if ( !sysFunc->hostReturnInMemory && ( descr->returnType.GetObjectType()->flags & asOBJ_APP_CLASS_CA ) != asOBJ_APP_CLASS_CA ) 
+			if( !sysFunc->hostReturnInMemory )
 			{
-				if ( sysFunc->hostReturnSize == 1 ) 
+				// Copy the returned value to the pointer sent by the script engine
+				if( sysFunc->hostReturnSize == 1 )
 				{
-					*( asDWORD * )retPointer = ( asDWORD )retQW;
-				} 
-				else if ( sysFunc->hostReturnSize == 2 ) 
+#if defined(AS_BIG_ENDIAN) && AS_PTR_SIZE == 1
+					// Since we're treating the system function as if it is returning a QWORD we are
+					// actually receiving the value in the high DWORD of retQW.
+					retQW >>= 32;
+#endif
+
+					*(asDWORD*)retPointer = (asDWORD)retQW;
+				}
+				else if( sysFunc->hostReturnSize == 2 )
+					*(asQWORD*)retPointer = retQW;
+				else if( sysFunc->hostReturnSize == 3 )
 				{
-					*( asQWORD * )retPointer = retQW;
-				} 
-				else if ( sysFunc->hostReturnSize == 3 ) 
+					*(asQWORD*)retPointer         = retQW;
+					*(((asDWORD*)retPointer) + 2) = (asDWORD)retQW2;
+				}
+				else // if( sysFunc->hostReturnSize == 4 )
 				{
-					*( asQWORD * )retPointer             = retQW;
-					*( ( ( asDWORD * )retPointer ) + 2 ) = ( asDWORD )retQW2;
-				} 
-				else 
-				{
-					*( asQWORD * )retPointer             = retQW;
-					*( ( ( asQWORD * )retPointer ) + 1 ) = retQW2;
+					*(asQWORD*)retPointer         = retQW;
+					*(((asQWORD*)retPointer) + 1) = retQW2;
 				}
 			}
 
 			// Store the object in the register
 			context->regs.objectRegister = retPointer;
 		}
-	} 
-	else 
+	}
+	else
 	{
-		// Store value in valueRegister
-		if( sysFunc->hostReturnFloat ) 
+		// Store value in value register
+		if( sysFunc->hostReturnSize == 1 )
 		{
-			if( sysFunc->hostReturnSize == 1 ) 
+#if defined(AS_BIG_ENDIAN)
+			// Since we're treating the system function as if it is returning a QWORD we are
+			// actually receiving the value in the high DWORD of retQW.
+			retQW >>= 32;
+
+			// due to endian issues we need to handle return values, that are
+			// less than a DWORD (32 bits) in size, special
+			int numBytes = descr->returnType.GetSizeInMemoryBytes();
+			if( descr->returnType.IsReference() ) numBytes = 4;
+			switch( numBytes )
 			{
-				*(asDWORD*)&context->regs.valueRegister = GetReturnedFloat();
-			} 
-			else 
-			{
-				context->regs.valueRegister = GetReturnedDouble();
+			case 1:
+				{
+					// 8 bits
+					asBYTE *val = (asBYTE*)&context->regs.valueRegister;
+					val[0] = (asBYTE)retQW;
+					val[1] = 0;
+					val[2] = 0;
+					val[3] = 0;
+					val[4] = 0;
+					val[5] = 0;
+					val[6] = 0;
+					val[7] = 0;
+				}
+				break;
+			case 2:
+				{
+					// 16 bits
+					asWORD *val = (asWORD*)&context->regs.valueRegister;
+					val[0] = (asWORD)retQW;
+					val[1] = 0;
+					val[2] = 0;
+					val[3] = 0;
+				}
+				break;
+			default:
+				{
+					// 32 bits
+					asDWORD *val = (asDWORD*)&context->regs.valueRegister;
+					val[0] = (asDWORD)retQW;
+					val[1] = 0;
+				}
+				break;
 			}
-		} 
-		else if ( sysFunc->hostReturnSize == 1 ) 
-		{
-			*( asDWORD * )&context->regs.valueRegister = ( asDWORD )retQW;
-		} 
-		else 
-		{
-			context->regs.valueRegister = retQW;
+#else
+			*(asDWORD*)&context->regs.valueRegister = (asDWORD)retQW;
+#endif
 		}
+		else
+			context->regs.valueRegister = retQW;
 	}
 
-	if( sysFunc->hasAutoHandles ) 
+	// Release autohandles in the arguments
+	if( sysFunc->hasAutoHandles )
 	{
 		args = context->regs.stackPointer;
-		if( callConv >= ICC_THISCALL && !objectPointer ) 
-		{
+		if( callConv >= ICC_THISCALL && !objectPointer )
 			args += AS_PTR_SIZE;
-		}
 
 		int spos = 0;
-		for( n = 0; n < ( int )descr->parameterTypes.GetLength(); n++ ) 
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
-			if( sysFunc->paramAutoHandles[n] && (*(size_t*)&args[spos] != 0) ) 
+			if( sysFunc->paramAutoHandles[n] && *(size_t*)&args[spos] != 0 )
 			{
 				// Call the release method on the type
-				engine->CallObjectMethod( ( void * )*( size_t * )&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release );
-				args[spos] = 0;
+				engine->CallObjectMethod((void*)*(size_t*)&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
+				*(size_t*)&args[spos] = 0;
 			}
 
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
-			{
 				spos += AS_PTR_SIZE;
-			} 
 			else
-			{
 				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
-			}
 		}
 	}
 

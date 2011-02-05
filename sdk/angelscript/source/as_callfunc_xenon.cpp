@@ -558,7 +558,7 @@ inline bool IsVariableArgument( asCDataType type )
 	return (type.GetTokenType() == ttQuestion) ? true : false;
 }
 
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer)
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/)
 {
 	// TODO: optimize: This memset shouldn't be necessary
 	memset( ppcArgsType, 0, sizeof(ppcArgsType));
@@ -790,6 +790,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		return context->CallGeneric(id, objectPointer);
 
 	asQWORD  retQW             = 0;
+	asQWORD  retQW2            = 0;
 	asDWORD *args              = context->regs.stackPointer;
 	void    *retPointer        = 0;
 	void    *obj               = 0;
@@ -831,7 +832,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 
-	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0);
+	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
 
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal )
@@ -839,7 +840,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		// Need to free the complex objects passed by value
 		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer )
-		    args += AS_PTR_SIZE;
+			args += AS_PTR_SIZE;
 
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
@@ -893,8 +894,18 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 					*(asDWORD*)retPointer = (asDWORD)retQW;
 				}
-				else
+				else if( sysFunc->hostReturnSize == 2 )
 					*(asQWORD*)retPointer = retQW;
+				else if( sysFunc->hostReturnSize == 3 )
+				{
+					*(asQWORD*)retPointer         = retQW;
+					*(((asDWORD*)retPointer) + 2) = (asDWORD)retQW2;
+				}
+				else // if( sysFunc->hostReturnSize == 4 )
+				{
+					*(asQWORD*)retPointer         = retQW;
+					*(((asQWORD*)retPointer) + 1) = retQW2;
+				}
 			}
 
 			// Store the object in the register
