@@ -488,7 +488,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	memset( argsType, 0, sizeof(argsType));
 
 	asCScriptEngine            *engine  = context->engine;
-	asCScriptFunction          *descr   = engine->scriptFunctions[id];
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
 
 	asQWORD  retQW           = 0;
@@ -499,16 +498,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 	// convert the parameters that are < 4 bytes from little endian to big endian
 	int argDwordOffset = 0;
-	
-	// if this is a THISCALL function and no object pointer was given, then the
-	// first argument on the stack is the object pointer -- we MUST skip it for doing
-	// the endian flipping.
-	int callConv = sysFunc->callConv;
-	if( ( callConv >= ICC_THISCALL ) && (objectPointer == NULL) )
-	{
-		++argDwordOffset;
-	}
-	
 	for( a = 0; a < (int)descr->parameterTypes.GetLength(); a++ )
 	{
 		int numBytes = descr->parameterTypes[a].GetSizeInMemoryBytes();
@@ -632,6 +621,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		args = &paramBuffer[1];
 	}
 	
+	int callConv = sysFunc->callConv;
 	context->isCallingSystemFunction = true;
 	switch( callConv )
 	{
@@ -668,7 +658,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	if( sysFunc->hostReturnFloat )
 	{
 		if( sysFunc->hostReturnSize == 1 )
-			retQW = (asQWORD)GetReturnedFloat();
+			*(asDWORD*)&retQW = GetReturnedFloat();
 		else
 			retQW = GetReturnedDouble();
 	}
@@ -728,7 +718,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 
-	retQW = CallSystemFunctionNative(context, descr, obj, args, retPointer);
+	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0);
 
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal )

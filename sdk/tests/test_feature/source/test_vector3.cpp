@@ -181,7 +181,7 @@ bool TestVector3()
 
 		// During the execution of the function there should not be any
 		// new allocations,  since the vector is allocated on the stack
-        int allocs = GetNumAllocs();
+        int allocs = GetNumAllocs(); UNUSED_VAR(allocs);
 
 		r = ctx->Execute();
 		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
