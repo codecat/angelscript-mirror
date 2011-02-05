@@ -508,6 +508,40 @@ bool Test()
 		engine->Release();
 	}
 
+	// This test was failing on XBOX 360
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, true);
+		
+		const char *script = 
+			"class ArrayOf  \n"
+			"{  \n"
+			"  uint8[] _boolList;  \n"
+			"  int _numOfStockedObject;  \n"
+			"  ArrayOf(int arraySizeMax)  \n"
+			"  {  \n"
+			"    _boolList.resize(arraySizeMax);  \n"
+			"    _numOfStockedObject = 0;  \n"
+			"    for(int i = 0; i < arraySizeMax; ++i)  \n"
+			"    {  \n"
+			"       _boolList[i] = 0; \n"
+			"    } \n"
+			"  } \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "ArrayOf(100)", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
