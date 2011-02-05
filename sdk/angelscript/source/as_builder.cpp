@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -159,12 +159,12 @@ asCBuilder::~asCBuilder()
 int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy)
 {
 	asCScriptCode *script = asNEW(asCScriptCode);
-	script->SetCode(name, code, codeLength, makeCopy);
+	int r = script->SetCode(name, code, codeLength, makeCopy);
 	script->lineOffset = lineOffset;
 	script->idx = sectionIdx;
 	scripts.PushLast(script);
 
-	return 0;
+	return r;
 }
 
 int asCBuilder::Build()

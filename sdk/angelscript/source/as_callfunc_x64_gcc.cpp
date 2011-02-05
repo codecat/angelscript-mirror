@@ -107,8 +107,6 @@ static asDWORD GetReturnedFloat()
 	float   retval = 0.0f;
 	asDWORD ret    = 0;
 
-// TODO: Should this really be different on Mac and other systems? Probably the Mac way is the correct one
-#ifdef AS_MAC
 	__asm__ __volatile__ (
 		"lea      %0, %%rax\n"
 		"movss    %%xmm0, (%%rax)"
@@ -116,18 +114,9 @@ static asDWORD GetReturnedFloat()
 		: "m" (retval)
 		: "%rax"
 	);
-#else
-	__asm__ __volatile__ (
-		"lea      %0, %%rax\n"
-		"movss    %%xmm0, (%%rax)"
-		: /* no output */
-		: "m" (retval)
-		: "%rax"
-	);
-#endif
 
-	/* We need to avoid implicit conversions from float to unsigned - we need
-	   a bit-wise-correct-and-complete copy of the value */
+	// We need to avoid implicit conversions from float to unsigned - we need
+	// a bit-wise-correct-and-complete copy of the value 
 	memcpy( &ret, &retval, sizeof( ret ) );
 
 	return ( asDWORD )ret;
@@ -138,8 +127,6 @@ static asQWORD GetReturnedDouble()
 	double  retval = 0.0f;
 	asQWORD ret    = 0;
 
-// TODO: Should this really be different on Mac and other systems? Probably the Mac way is the correct one
-#ifdef AS_MAC
 	__asm__ __volatile__ (
 		"lea     %0, %%rax\n"
 		"movlpd  %%xmm0, (%%rax)"
@@ -147,17 +134,9 @@ static asQWORD GetReturnedDouble()
 		: "m" (retval)
 		: "%rax"
 	);
-#else
-	__asm__ __volatile__ (
-		"lea     %0, %%rax\n"
-		"movlpd  %%xmm0, (%%rax)"
-		: /* no optput */
-		: "m" (retval)
-		: "%rax"
-	);
-#endif
-	/* We need to avoid implicit conversions from double to unsigned long long - we need
-	   a bit-wise-correct-and-complete copy of the value */
+
+	// We need to avoid implicit conversions from double to unsigned long long - we need
+	// a bit-wise-correct-and-complete copy of the value 
 	memcpy( &ret, &retval, sizeof( ret ) );
 
 	return ret;

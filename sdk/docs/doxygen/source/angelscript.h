@@ -1543,6 +1543,7 @@ public:
     //! \param[in] lineOffset An offset that will be added to compiler message line numbers
     //! \return A negative value on error.
     //! \retval asMODULE_IS_IN_USE The module is currently in use.
+    //! \retval asINVALID_ARG The \a code argument is null.
     //!
     //! This adds a script section to the module. All sections added will be treated as if one 
     //! large script. Errors reported will give the name of the corresponding section.
