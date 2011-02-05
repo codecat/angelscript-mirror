@@ -277,7 +277,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
 
-#ifdef COMPLEX_OBJS_PASSED_BY_REF
+#if defined(COMPLEX_OBJS_PASSED_BY_REF) || defined(AS_LARGE_OBJS_PASSED_BY_REF)
 	if( sysFunc->takesObjByVal )
 	{
 		// Need to free the complex objects passed by value
@@ -289,14 +289,26 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			if( descr->parameterTypes[n].IsObject() &&
-				!descr->parameterTypes[n].IsReference() &&
-				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )
+				!descr->parameterTypes[n].IsObjectHandle() && 
+				!descr->parameterTypes[n].IsReference() && (
+#ifdef COMPLEX_OBJS_PASSED_BY_REF				
+				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) ||
+#endif				
+#ifdef AS_LARGE_OBJS_PASSED_BY_REF
+				(descr->parameterTypes[n].GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE) ||
+#endif
+				0)
+			  )
 			{
 				void *obj = (void*)*(size_t*)&args[spos];
 				spos += AS_PTR_SIZE;
+
+#ifndef AS_CALLEE_DESTROY_OBJ_BY_VAL
+				// If the called function doesn't destroy objects passed by value we must do so here
 				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
 				if( beh->destruct )
 					engine->CallObjectMethod(obj, beh->destruct);
+#endif
 
 				engine->CallFree(obj);
 			}
