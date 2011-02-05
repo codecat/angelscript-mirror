@@ -726,7 +726,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		// Need to free the complex objects passed by value
 		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer )
-		    args++;
+			args += AS_PTR_SIZE;
 
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
@@ -735,7 +735,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				!descr->parameterTypes[n].IsReference() &&
 				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )
 			{
-				void *obj = (void*)args[spos++];
+				void *obj = (void*)*(size_t*)&args[spos];
+				spos += AS_PTR_SIZE;
 				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
 				if( beh->destruct )
 					engine->CallObjectMethod(obj, beh->destruct);
@@ -743,7 +744,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				engine->CallFree(obj);
 			}
 			else
-				spos += descr->parameterTypes[n].GetSizeInMemoryDWords();
+				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
 		}
 	}
 #endif
@@ -854,7 +855,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
-			if( sysFunc->paramAutoHandles[n] && args[spos] )
+			if( sysFunc->paramAutoHandles[n] && *(size_t*)&args[spos] != 0 )
 			{
 				// Call the release method on the type
 				engine->CallObjectMethod((void*)*(size_t*)&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
