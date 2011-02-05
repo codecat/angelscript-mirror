@@ -193,13 +193,11 @@ inline bool IsVariableArgument( asCDataType type )
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2)
 {
-	asCScriptEngine            *engine             = context->engine;
 	asSSystemFunctionInterface *sysFunc            = descr->sysFuncIntf;
 	int                         callConv           = sysFunc->callConv;
 
 	asQWORD                     retQW              = 0;
 	void                       *func               = ( void * )sysFunc->func;
-	int                         paramSize          = sysFunc->paramSize;
 	asDWORD                    *stack_pointer      = args;
 	funcptr_t                  *vftable            = NULL;
 	int                         totalArgumentCount = 0;
@@ -317,9 +315,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		*/
 
 		context->SetInternalException( TXT_INVALID_CALLING_CONVENTION );
-		if( retPointer ) {
-			engine->CallFree( retPointer );
-		}
 		return 0;
 	}
 #endif
