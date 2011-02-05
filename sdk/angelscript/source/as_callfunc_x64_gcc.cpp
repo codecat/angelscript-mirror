@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -81,7 +81,7 @@ typedef asQWORD ( *funcptr_t )( void );
 #else
 #define PUSH_LONG( val )                         \
 	__asm__ __volatile__ (                       \
-		"mov    %0, %%rax\r\n"                   \
+		"mov    %0, %%rax\n"                     \
 		"push   %%rax"                           \
 		:                                        \
 		: "m" ( val )                            \
@@ -89,14 +89,14 @@ typedef asQWORD ( *funcptr_t )( void );
 
 #define POP_LONG( reg )                          \
 	__asm__ __volatile__ (                       \
-		"popq     %rax\r\n"                      \
+		"popq     %rax\n"                        \
 		"movq     %rax, " reg                    \
 	)
 
 
 #define ASM_GET_REG( name, dest )                \
 	__asm__ __volatile__ (                       \
-		"mov  %" name ", %0\r\n"                 \
+		"mov  %" name ", %0\n"                   \
 		:                                        \
 		: "m" ( dest )                           \
 	)
@@ -118,7 +118,7 @@ static asDWORD GetReturnedFloat()
 	);
 #else
 	__asm__ __volatile__ (
-		"lea      %0, %%rax\r\n"
+		"lea      %0, %%rax\n"
 		"movss    %%xmm0, (%%rax)"
 		: /* no output */
 		: "m" (retval)
@@ -149,7 +149,7 @@ static asQWORD GetReturnedDouble()
 	);
 #else
 	__asm__ __volatile__ (
-		"lea     %0, %%rax\r\n"
+		"lea     %0, %%rax\n"
 		"movlpd  %%xmm0, (%%rax)"
 		: /* no optput */
 		: "m" (retval)
