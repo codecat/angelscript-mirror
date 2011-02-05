@@ -274,7 +274,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 
-	retQW = CallSystemFunctionNative(context, descr, obj, args, retPointer);
+	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0);
 
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 	if( sysFunc->takesObjByVal )
