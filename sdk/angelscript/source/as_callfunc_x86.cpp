@@ -268,7 +268,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			}
 
 			// Add the base offset for multiple inheritance
+#if defined(__GNUC__) && defined(AS_ARM)
+			// On GNUC + ARM the lsb of the offset is used to indicate a virtual function
+			// and the whole offset is thus shifted one bit left to keep the original
+			// offset resolution
+			obj = (void*)(size_t(obj) + (sysFunc->baseOffset>>1));
+#else
 			obj = (void*)(size_t(obj) + sysFunc->baseOffset);
+#endif
 
 			// Skip the object pointer
 			args += AS_PTR_SIZE;

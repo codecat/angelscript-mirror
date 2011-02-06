@@ -419,14 +419,15 @@
 		#define I64(x) x##ll
 	#endif
 
-    #ifdef _ARM_
-        #define AS_ALIGN
-        #define AS_ARM
-        #define CDECL_RETURN_SIMPLE_IN_MEMORY
-        #define STDCALL_RETURN_SIMPLE_IN_MEMORY
-        #define COMPLEX_OBJS_PASSED_BY_REF
-        #define COMPLEX_MASK asOBJ_APP_CLASS_ASSIGNMENT
-    #endif
+	#ifdef _ARM_
+		#define AS_ALIGN
+		#define AS_ARM
+		#define AS_CALLEE_DESTROY_OBJ_BY_VAL
+		#define CDECL_RETURN_SIMPLE_IN_MEMORY
+		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+		#define COMPLEX_OBJS_PASSED_BY_REF
+		#define COMPLEX_MASK asOBJ_APP_CLASS_ASSIGNMENT
+	#endif
 
 	#ifndef COMPLEX_MASK
 		#define COMPLEX_MASK (asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT)
@@ -565,6 +566,7 @@
 			#define AS_ARM
 			#define AS_IPHONE
 			#define AS_ALIGN
+			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
@@ -627,6 +629,7 @@
 			#define AS_ARM
 			#define AS_ALIGN
 			#define AS_NO_ATOMIC
+			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
@@ -726,7 +729,8 @@
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
 
 		#if (defined(_ARM_) || defined(__arm__))
-		    #define AS_ARM
+			#define AS_ARM
+			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 			#define AS_ALIGN
 		#endif
 
