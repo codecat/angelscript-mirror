@@ -280,7 +280,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 #if defined(COMPLEX_OBJS_PASSED_BY_REF) || defined(AS_LARGE_OBJS_PASSED_BY_REF)
 	if( sysFunc->takesObjByVal )
 	{
-		// Need to free the complex objects passed by value
+		// Need to free the complex objects passed by value, but that the 
+		// calling convention implicitly passes by reference behind the scene
 		args = context->regs.stackPointer;
 		if( callConv >= ICC_THISCALL && !objectPointer )
 			args += AS_PTR_SIZE;
@@ -297,8 +298,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 #ifdef AS_LARGE_OBJS_PASSED_BY_REF
 				(descr->parameterTypes[n].GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE) ||
 #endif
-				0)
-			  )
+				0) )
 			{
 				void *obj = (void*)*(size_t*)&args[spos];
 				spos += AS_PTR_SIZE;
