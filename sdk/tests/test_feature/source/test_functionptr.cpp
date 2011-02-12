@@ -86,8 +86,14 @@ bool Test()
 			 "    f();                   \n"
 			 "    CMyObj o;              \n"
 			 "    o.f();                 \n"
-			 "    assert( called == 3 ); \n"
+			 "    main();                \n"
+			 "    assert( called == 4 ); \n"
 			 "  }                        \n"
+			 "}                          \n"
+			 "void main()                \n"
+			 "{                          \n"
+			 "  CMyObj o;                \n"
+			 "  o.f();                   \n"
 			 "}                          \n"
 			 "int called = 0;            \n"
 			 "void func() { called++; }  \n";
@@ -297,6 +303,19 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterScriptString(engine);
 		r = engine->RegisterFuncdef("void MSG_NOTIFY_CB(const string& strCommand, const string& strTarget)"); assert(r>=0);
+
+		engine->Release();
+	}
+
+	// Test registering function pointer as property
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		r = engine->RegisterFuncdef("void fptr()");
+		r = engine->RegisterGlobalProperty("fptr f", 0);
+		if( r >= 0 ) TEST_FAILED;
+		engine->RegisterObjectType("obj", 0, asOBJ_REF);
+		r = engine->RegisterObjectProperty("obj", "fptr f", 0);
+		if( r >= 0 ) TEST_FAILED;
 
 		engine->Release();
 	}

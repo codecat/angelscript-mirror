@@ -5655,13 +5655,13 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	return 0;
 }
 
-int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional, bool noFunction, bool onlyClassMembers)
+int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional, bool noFunction, asCObjectType *objType)
 {
 	bool found = false;
 
 	// It is a local variable or parameter?
 	sVariable *v = 0;
-	if( scope == "" && !onlyClassMembers )
+	if( scope == "" && !objType )
 		v = variables->GetVariable(name.AddressOf());
 	if( v )
 	{
@@ -5700,9 +5700,9 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it a class member?
-	if( !found && outFunc && outFunc->objectType && scope == "" )
+	if( !found && ((objType) || (outFunc && outFunc->objectType && scope == "")) )
 	{
-		if( name == THIS_TOKEN )
+		if( name == THIS_TOKEN && !objType )
 		{
 			asCDataType dt = asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly);
 
@@ -5718,7 +5718,10 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		{
 			// See if there are any matching property accessors
 			asSExprContext access(engine);
-			access.type.Set(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly));
+			if( objType )
+				access.type.Set(asCDataType::CreateObject(objType, false));
+			else
+				access.type.Set(asCDataType::CreateObject(outFunc->objectType, outFunc->isReadOnly));
 			access.type.dataType.MakeReference(true);
 			int r = 0;
 			if( errNode->next && errNode->next->tokenType == ttOpenBracket )
@@ -5735,8 +5738,12 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			if( r < 0 ) return -1;
 			if( access.property_get || access.property_set )
 			{
-				// Prepare the bytecode for the member access
-				ctx->bc.InstrSHORT(asBC_PSF, 0);
+				if( !objType )
+				{
+					// Prepare the bytecode for the member access
+					// This is only done when accessing through the implicit this pointer
+					ctx->bc.InstrSHORT(asBC_PSF, 0);
+				}
 				MergeExprBytecodeAndType(ctx, &access);
 
 				found = true;
@@ -5745,17 +5752,24 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 		if( !found )
 		{
-			asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
+			asCDataType dt;
+			if( objType )
+				dt = asCDataType::CreateObject(objType, false);
+			else
+				dt = asCDataType::CreateObject(outFunc->objectType, false);
 			asCObjectProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
 			if( prop )
 			{
-				// The object pointer is located at stack position 0
-				ctx->bc.InstrSHORT(asBC_PSF, 0);
-				ctx->type.SetVariable(dt, 0, false);
-				ctx->type.dataType.MakeReference(true);
-
-				Dereference(ctx, true);
-
+				if( !objType )
+				{
+					// The object pointer is located at stack position 0
+					// This is only done when accessing through the implicit this pointer
+					ctx->bc.InstrSHORT(asBC_PSF, 0);
+					ctx->type.SetVariable(dt, 0, false);
+					ctx->type.dataType.MakeReference(true);
+					Dereference(ctx, true);
+				}
+				
 				// TODO: This is the same as what is in CompileExpressionPostOp
 				// Put the offset on the stack
 				ctx->bc.InstrSHORT_DW(asBC_ADDSi, prop->byteOffset, engine->GetTypeIdFromDataType(dt));
@@ -5790,7 +5804,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it a global property?
-	if( !found && (scope == "" || scope == "::") && !onlyClassMembers )
+	if( !found && (scope == "" || scope == "::") && !objType )
 	{
 		// See if there are any matching global property accessors
 		asSExprContext access(engine);
@@ -5879,7 +5893,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it the name of a global function?
-	if( !noFunction && !found && (scope == "" || scope == "::") && !onlyClassMembers )
+	if( !noFunction && !found && (scope == "" || scope == "::") && !objType )
 	{
 		asCArray<int> funcs;
 		builder->GetFunctionDescriptions(name.AddressOf(), funcs);
@@ -5908,7 +5922,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it an enum value?
-	if( !found && !onlyClassMembers )
+	if( !found && !objType )
 	{
 		asCObjectType *scopeType = 0;
 		if( scope != "" )
@@ -6994,7 +7008,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 
 			// It is still possible that there is a class member of a function type
 			if( funcs.GetLength() == 0 )
-				CompileVariableAccess(name, scope, &funcPtr, node, true, true, true);
+				CompileVariableAccess(name, scope, &funcPtr, node, true, true, objectType);
 		}
 		else
 		{
@@ -7051,6 +7065,9 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 			// by first storing the function pointer in a local variable (if it isn't already in one)
 			if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
 			{
+				if( objectType )
+					Dereference(ctx, true); // Dereference the object pointer to access the member
+
 				Dereference(&funcPtr, true);
 				ConvertToVariable(&funcPtr);
 				ctx->bc.AddCode(&funcPtr.bc);

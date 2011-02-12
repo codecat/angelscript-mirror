@@ -600,6 +600,15 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	type = CreateDataTypeFromNode(dataType, &source);
 	name.Assign(&decl[nameNode->tokenPos], nameNode->tokenLength);
 
+	// Validate that the type really can be a registered property
+	// We cannot use CanBeInstanciated, as it is allowed to register
+	// properties of type that cannot otherwise be instanciated
+	if( type.GetFuncDef() && !type.IsObjectHandle() )
+	{
+		// Function definitions must always be handles
+		return asINVALID_DECLARATION;
+	}
+
 	// Verify property name
 	if( dt )
 	{
