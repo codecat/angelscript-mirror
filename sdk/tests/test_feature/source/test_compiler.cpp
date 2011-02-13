@@ -1241,14 +1241,14 @@ bool Test()
 		
 		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script",
-		    "class vec { \n"
+			"class vec { \n"
 			"  float angleAt(float) {return 0;} \n"
 			"} \n"
 			"float easeIn(float) {return 0;} \n"
-		    "class t { \n"
-			" float rotation; \n"
-			" vec path; \n"
-			" float alpha; \n"
+			"class t { \n"
+			"  float rotation; \n"
+			"  vec path; \n"
+			"  float alpha; \n"
 			"} \n"
 			"class a { \n"
 			"  t _feuilleRonce00; \n"
@@ -1264,6 +1264,33 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
+		
+		engine->Release();
+	}
+
+	// Test parser error 
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"void main() \n"
+			"{ \n"
+			"  int[] _countKill; \n"
+			"  _countKill[12)++; \n" 
+			"} \n");
+		
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"
+		                   "script (4, 16) : Error   : Expected ']'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 		
 		engine->Release();
 	}
