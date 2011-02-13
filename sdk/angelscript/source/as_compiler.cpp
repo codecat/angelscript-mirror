@@ -1240,7 +1240,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			// Make sure the reference to the value is on the stack
 			if( ctx->type.dataType.IsObject() && ctx->type.dataType.IsReference() )
 				Dereference(ctx, true);
-			else if( ctx->type.isVariable )
+			else if( ctx->type.isVariable && !ctx->type.dataType.IsObject() )
 				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 			else if( ctx->type.dataType.IsPrimitive() )
 				ctx->bc.Instr(asBC_PshRPtr);
