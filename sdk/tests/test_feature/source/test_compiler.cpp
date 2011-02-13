@@ -1232,6 +1232,41 @@ bool Test()
 
 		engine->Release();
 	}
+	
+	// Test complex expression
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+		    "class vec { \n"
+			"  float angleAt(float) {return 0;} \n"
+			"} \n"
+			"float easeIn(float) {return 0;} \n"
+		    "class t { \n"
+			" float rotation; \n"
+			" vec path; \n"
+			" float alpha; \n"
+			"} \n"
+			"class a { \n"
+			"  t _feuilleRonce00; \n"
+			"  void main() \n"
+			"  { \n"
+			"    t[] plant; \n"
+			"    if( true ) \n"
+			"      _feuilleRonce00.rotation = _feuilleRonce00.rotation + (((plant[0].path.angleAt(easeIn(plant[0].alpha) - 0.1f)) - 0.5f) - _feuilleRonce00.rotation) * 0.1f; \n"
+			"    else \n"
+			"      _feuilleRonce00.rotation = _feuilleRonce00.rotation + (((plant[0].path.angleAt(easeIn(plant[0].alpha) - 0.1f))) - _feuilleRonce00.rotation) * 0.1f; \n"
+			"}} \n");
+		
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
 
 	// Success
  	return fail;
