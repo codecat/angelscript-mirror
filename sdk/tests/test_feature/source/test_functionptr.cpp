@@ -291,7 +291,7 @@ bool Test()
 
 	// An interface that takes a funcdef as parameter must still have its typeid shared if the funcdef can also be shared
 	// If the funcdef takes an interface as parameter, it must still be shared
-		
+
 	// Must have a generic function pointer that can store any signature. The function pointer
 	// can then be dynamically cast to the correct function signature so that the function it points
 	// to can be invoked.
@@ -356,6 +356,23 @@ bool Test()
 
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test out of order declaration with function pointers
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("script",
+			"funcdef void FUNC2(CTempObj@);\n"
+			"class CTempObj {}             \n");
+
+		r = mod->Build();
+		if( r < 0 )
 			TEST_FAILED;
 
 		engine->Release();

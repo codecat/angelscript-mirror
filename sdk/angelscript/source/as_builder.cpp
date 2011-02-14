@@ -385,6 +385,12 @@ void asCBuilder::ParseScripts()
 			}
 		}
 
+		// Register the complete function definitions
+		for( n = 0; n < funcDefs.GetLength(); n++ )
+		{
+			CompleteFuncDef(funcDefs[n]);
+		}
+
 		// Register script methods found in the interfaces
 		for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
 		{
@@ -999,11 +1005,15 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
 	fd->name   = name;
 	fd->node   = node;
 	fd->script = file;
+	fd->idx    = module->AddFuncDef(name.AddressOf());
 
 	funcDefs.PushLast(fd);
 
-	// TODO: funcdef: The parameters and return type should only be defined after all global 
-	//                types have been identified
+	return 0;
+}
+
+void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
+{
 	asCDataType                returnType;
 	asCArray<asCDataType>      parameterTypes;
 	asCArray<asETypeModifiers> inOutFlags;
@@ -1012,19 +1022,18 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
 	bool                       isDestructor;
 	bool                       isPrivate;
 
-	GetParsedFunctionDetails(node, file, 0, name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor, isPrivate);
+	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor, isPrivate);
 
-	int i = module->AddFuncDef(name.AddressOf());
-
-	asCScriptFunction *func = module->funcDefs[i];
-	func->returnType = returnType;
-	for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
+	asCScriptFunction *func = module->funcDefs[funcDef->idx];
+	if( func )
 	{
-		func->parameterTypes.PushLast(parameterTypes[p]);
-		func->inOutFlags.PushLast(inOutFlags[p]);
+		func->returnType = returnType;
+		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
+		{
+			func->parameterTypes.PushLast(parameterTypes[p]);
+			func->inOutFlags.PushLast(inOutFlags[p]);
+		}
 	}
-
-	return 0;
 }
 
 int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
