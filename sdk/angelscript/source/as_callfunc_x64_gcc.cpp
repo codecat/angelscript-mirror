@@ -102,7 +102,8 @@ typedef asQWORD ( *funcptr_t )( void );
 	)
 #endif
 
-static asDWORD GetReturnedFloat()
+// Do not allow the compiler to optimize the function as it may end up using the registers used in the inline assembler
+static asDWORD __attribute__ ((optimize(0))) GetReturnedFloat()
 {
 	float   retval = 0.0f;
 	asDWORD ret    = 0;
@@ -122,7 +123,8 @@ static asDWORD GetReturnedFloat()
 	return ( asDWORD )ret;
 }
 
-static asQWORD GetReturnedDouble()
+// Do not allow the compiler to optimize the function as it may end up using the registers used in the inline assembler
+static asQWORD __attribute__ ((optimize(0))) GetReturnedDouble()
 {
 	double  retval = 0.0f;
 	asQWORD ret    = 0;
@@ -142,7 +144,8 @@ static asQWORD GetReturnedDouble()
 	return ret;
 }
 
-static asQWORD __attribute ((__noinline__)) X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func )
+// Do not allow the compiler to optimize the function as it may end up using the registers used in the inline assembler
+static asQWORD __attribute__ ((noinline, optimize(0))) X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func )
 {
 	asQWORD retval      = 0;
 	asQWORD ( *call )() = (asQWORD (*)())func;
