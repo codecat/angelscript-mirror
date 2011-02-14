@@ -7066,7 +7066,12 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 			if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
 			{
 				if( objectType )
+				{
 					Dereference(ctx, true); // Dereference the object pointer to access the member
+
+					// The actual function should be called as if a global function
+					objectType = 0;
+				}
 
 				Dereference(&funcPtr, true);
 				ConvertToVariable(&funcPtr);

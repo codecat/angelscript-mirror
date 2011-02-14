@@ -320,6 +320,47 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test passing handle to function pointer
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("script",
+			"class CTempObj             \n"
+			"{                          \n"
+			"  int Temp;                \n"
+			"}                          \n"
+			"funcdef void FUNC2(CTempObj@);\n"
+			"class CMyObj               \n"
+			"{                          \n"
+			"  CMyObj() { @f2= @func2; }\n"
+			"  FUNC2@ f2;               \n"
+			"}                          \n"
+			"void main()                \n"
+			"{                          \n"
+			"  CMyObj o;                \n"
+			"  CTempObj t;              \n"
+			"  o.f2(t);                 \n"
+			"  assert( called == 1 );   \n"
+			"}                          \n"
+			"int called = 0;            \n"
+			"void func2(CTempObj@ Obj)  \n"
+			"{ called++; }              \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
