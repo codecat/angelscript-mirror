@@ -63,12 +63,16 @@ typedef asQWORD ( *funcptr_t )( void );
 		"pushq  %%rax"                           \
 		:                                        \
 		: "m" ( val )                            \
+		: "%rax"                                 \
 	)
 
 #define POP_LONG( reg )                          \
 	__asm__ __volatile__ (                       \
 		"popq     %rax\n"                        \
 		"movq     %rax, " reg                    \
+		:                                        \
+		:                                        \
+		: "%rax", reg                            \
 	)
 
 
@@ -77,6 +81,7 @@ typedef asQWORD ( *funcptr_t )( void );
 		"movq %" name ", %0\n"                   \
 		:                                        \
 		: "m" ( dest )                           \
+		: name                                   \
 	)
 #else
 #define PUSH_LONG( val )                         \
@@ -85,12 +90,16 @@ typedef asQWORD ( *funcptr_t )( void );
 		"push   %%rax"                           \
 		:                                        \
 		: "m" ( val )                            \
+		: "%rax"                                 \
 	)
 
 #define POP_LONG( reg )                          \
 	__asm__ __volatile__ (                       \
 		"popq     %rax\n"                        \
 		"movq     %rax, " reg                    \
+		:                                        \
+		:                                        \
+		: "%rax", reg                            \
 	)
 
 
@@ -99,10 +108,12 @@ typedef asQWORD ( *funcptr_t )( void );
 		"mov  %" name ", %0\n"                   \
 		:                                        \
 		: "m" ( dest )                           \
+		: name                                   \
 	)
 #endif
 
 // Do not allow the compiler to optimize the function as it may end up using the registers used in the inline assembler
+// TODO: Maybe this is not necessary, as the inline assembly should be explicitly informing which registers are used
 static asDWORD __attribute__ ((optimize(0))) GetReturnedFloat()
 {
 	float   retval = 0.0f;
@@ -124,6 +135,7 @@ static asDWORD __attribute__ ((optimize(0))) GetReturnedFloat()
 }
 
 // Do not allow the compiler to optimize the function as it may end up using the registers used in the inline assembler
+// TODO: Maybe this is not necessary, as the inline assembly should be explicitly informing which registers are used
 static asQWORD __attribute__ ((optimize(0))) GetReturnedDouble()
 {
 	double  retval = 0.0f;
@@ -145,6 +157,7 @@ static asQWORD __attribute__ ((optimize(0))) GetReturnedDouble()
 }
 
 // Do not allow the compiler to optimize the function as it may end up using the registers used in the inline assembler
+// TODO: Maybe this is not necessary, as the inline assembly should be explicitly informing which registers are used
 static asQWORD __attribute__ ((noinline, optimize(0))) X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func )
 {
 	asQWORD retval      = 0;
