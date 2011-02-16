@@ -68,8 +68,8 @@ typedef asQWORD ( *funcptr_t )( void );
 
 #define POP_LONG( reg )                          \
 	__asm__ __volatile__ (                       \
-		"popq     %rax\n"                        \
-		"movq     %rax, " reg                    \
+		"popq     %%rax\n"                       \
+		"movq     %%rax, %" reg                  \
 		:                                        \
 		:                                        \
 		: "%rax", reg                            \
@@ -95,8 +95,8 @@ typedef asQWORD ( *funcptr_t )( void );
 
 #define POP_LONG( reg )                          \
 	__asm__ __volatile__ (                       \
-		"popq     %rax\n"                        \
-		"movq     %rax, " reg                    \
+		"popq     %%rax\n"                       \
+		"movq     %%rax, %" reg                  \
 		:                                        \
 		:                                        \
 		: "%rax", reg                            \
