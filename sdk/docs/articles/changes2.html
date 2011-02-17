@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.20.2 WIP - 2011/02/14</h2>
+<h2>Version 2.20.2 WIP - 2011/02/16</h2>
 
 <ul>
 <li>Bug fixes
@@ -34,6 +34,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bugs when invoking a function pointer directly as class member (Thanks behc)
 <li>Fixed bug in parser that didn't report error for not closing brackets when using index operator in expressions (Thanks speps)
 <li>Fixed bug in compiler with unsafe references and value types (Thanks hemicube)
+<li>Fixed inline assembly in as_callfunc_x64_gcc to support gcc optimizations (Thanks Samuel E. Henley)
 </ul>
 <li>Virtual machine
 <ul>
@@ -43,7 +44,6 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library
 <ul>
 <li>Added configurations for Cygwin and Linux/ARM (Thanks Adrian Batzill)
-<li>Disabled optimization for functions that uses inline assembler in as_callfunc_x64_gcc to allow optimization of the rest of the library (Thanks Samuel E. Henley)
 </ul>
 <li>Script language
 <ul>

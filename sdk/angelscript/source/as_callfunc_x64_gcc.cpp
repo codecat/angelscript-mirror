@@ -55,6 +55,9 @@ typedef asQWORD ( *funcptr_t )( void );
 #define CALLSTACK_MULTIPLIER      2
 #define X64_CALLSTACK_SIZE        ( X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 )
 
+// Note to self: Always remember to inform the used registers on the clobber line, 
+// so that the gcc optimizer doesn't try to use them for other things
+
 // TODO: Should this really be different on Mac and other systems? Probably the Mac way is the correct one
 #if defined(AS_MAC)
 #define PUSH_LONG( val )                         \
@@ -112,9 +115,7 @@ typedef asQWORD ( *funcptr_t )( void );
 	)
 #endif
 
-// Do not allow the compiler to optimize the function as it may end up using the registers used in the inline assembler
-// TODO: Maybe this is not necessary, as the inline assembly should be explicitly informing which registers are used
-static asDWORD __attribute__ ((optimize(0))) GetReturnedFloat()
+static asDWORD GetReturnedFloat()
 {
 	float   retval = 0.0f;
 	asDWORD ret    = 0;
@@ -134,9 +135,7 @@ static asDWORD __attribute__ ((optimize(0))) GetReturnedFloat()
 	return ( asDWORD )ret;
 }
 
-// Do not allow the compiler to optimize the function as it may end up using the registers used in the inline assembler
-// TODO: Maybe this is not necessary, as the inline assembly should be explicitly informing which registers are used
-static asQWORD __attribute__ ((optimize(0))) GetReturnedDouble()
+static asQWORD GetReturnedDouble()
 {
 	double  retval = 0.0f;
 	asQWORD ret    = 0;
@@ -156,9 +155,11 @@ static asQWORD __attribute__ ((optimize(0))) GetReturnedDouble()
 	return ret;
 }
 
-// Do not allow the compiler to optimize the function as it may end up using the registers used in the inline assembler
-// TODO: Maybe this is not necessary, as the inline assembly should be explicitly informing which registers are used
-static asQWORD __attribute__ ((noinline, optimize(0))) X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func )
+// Note to self: If there is any trouble with a function when it is optimized, gcc supports
+// turning off optimization for individual functions by adding the following to the declaration:
+// __attribute__ ((optimize(0)))
+
+static asQWORD __attribute__ ((noinline)) X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func )
 {
 	asQWORD retval      = 0;
 	asQWORD ( *call )() = (asQWORD (*)())func;
