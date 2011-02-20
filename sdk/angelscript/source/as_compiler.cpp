@@ -6989,7 +6989,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	//                Must not allow function names, nor global variables to be returned in this instance
 	asSExprContext funcPtr(engine);
 	if( objectType == 0 )
-		r = CompileVariableAccess(name, scope, &funcPtr, node, true, true, false);
+		r = CompileVariableAccess(name, scope, &funcPtr, node, true, true);
 	if( r < 0 )
 	{
 		if( objectType )
