@@ -542,6 +542,36 @@ bool Test()
 		engine->Release();
 	}
 
+	// test sorting
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"class Value  \n"
+			"{  \n"
+			"  int val;  \n"
+			"  Value(int v) {val = v;} \n"
+			"  int opCmp(const Value &in o) {return val - o.val;} \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "Value[] arr = {Value(2), Value(3), Value(0)}; \n"
+			                      "arr.sortAsc(); \n"
+								  "assert(arr[0].val == 0); \n"
+								  "assert(arr[1].val == 2); \n"
+								  "assert(arr[2].val == 3);", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

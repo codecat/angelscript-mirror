@@ -158,6 +158,10 @@ public:
   void RemoveAt(asUINT index);
   void InsertLast(void *value);
   void RemoveLast();
+  void SortAsc();
+  void SortAsc(asUINT index, asUINT count);
+  void SortDesc();
+  void SortDesc(asUINT index, asUINT count);
 };
 \endcode
 
@@ -181,6 +185,10 @@ public:
     void removeLast();
     uint length() const;
     void resize(uint);
+    void sortAsc();
+    void sortAsc(uint index, uint count);
+    void sortDesc();
+    void sortDesc(uint index, uint count);
   }
 </pre>
 
