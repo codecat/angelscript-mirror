@@ -43,7 +43,7 @@ all: $(BIN)
 
 $(BIN): $(OBJ)
 
-	$(CXX) -o $(BIN) $(OBJ) -langelscript -L ../../../../angelscript/lib
+	$(CXX) -o $(BIN) $(OBJ) -langelscript -L../../../../angelscript/lib
 	@echo -------------------------------------------------------------------
 	@echo Done.
 

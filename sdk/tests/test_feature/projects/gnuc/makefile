@@ -165,7 +165,7 @@ DELETER = rm -f
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CXX) $(LDFLAGS) -o $(BIN) $(OBJ) -langelscript -L ../../../../angelscript/lib
+	$(CXX) $(LDFLAGS) -o $(BIN) $(OBJ) -langelscript -L../../../../angelscript/lib
 	@echo -------------------------------------------------------------------
 	@echo Done.
 
