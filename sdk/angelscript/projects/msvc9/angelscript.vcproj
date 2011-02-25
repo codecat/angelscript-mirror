@@ -510,6 +510,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\as_atomic.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\as_builder.h"
 				>
 			</File>

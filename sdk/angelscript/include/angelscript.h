@@ -902,7 +902,7 @@ public:
 // Function pointers
 
 // Use our own memset() and memcpy() implementations for better portability
-inline void asMemClear(void *_p, int size)
+inline void asMemClear(void *_p, size_t size)
 {
 	char *p = (char *)_p;
 	const char *e = p + size;
@@ -910,7 +910,7 @@ inline void asMemClear(void *_p, int size)
 		*p = 0;
 }
 
-inline void asMemCopy(void *_d, const void *_s, int size)
+inline void asMemCopy(void *_d, const void *_s, size_t size)
 {
 	char *d = (char *)_d;
 	const char *s = (const char *)_s;
