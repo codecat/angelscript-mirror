@@ -161,7 +161,8 @@ bool TestCDecl_Class()
 	}
 
 	// Test passing the object types by value to a system function
-	// TODO: Why isn't this available on 64bit Linux?
+	// This isn't supported on 64bit AMD ABI (Linux, Mac, etc) because the class will be passed in 
+	// multiple registers. To support this AngelScript would need to know the exact layout of the class members.
 	if ( !strstr( asGetLibraryOptions(), "AS_X64_GCC" ) )
 	{
 		r = engine->RegisterGlobalFunction("void class1ByVal(class1)", asFUNCTION(class1ByVal), asCALL_CDECL); assert( r >= 0 );

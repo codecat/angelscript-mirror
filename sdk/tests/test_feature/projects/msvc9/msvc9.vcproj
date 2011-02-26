@@ -753,6 +753,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\testcdecl_class_k.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\testcreateengine.cpp"
 				>
 			</File>

@@ -437,7 +437,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		}
 	}
 
-	// If we are returning a object not by reference, we need to make the
+	// If we are returning an object not by reference, we need to make the
 	// pointer to the space allocated to the object the first parameter.
 	if( descr->returnType.IsObject() && ( descr->returnType.GetObjectType()->flags & asOBJ_APP_CLASS_CA ) == asOBJ_APP_CLASS_CA &&
 		!descr->returnType.IsReference() && !sysFunc->hostReturnInMemory )

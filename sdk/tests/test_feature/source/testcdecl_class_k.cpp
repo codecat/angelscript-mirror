@@ -1,75 +1,78 @@
 //
-// This test was designed to test the asOBJ_CLASS_D flag with cdecl
+// This test was designed to test the asOBJ_CLASS_K flag with cdecl
 //
 // Author: Andreas Jonsson
 //
 
 #include "utils.h"
 
-static const char * const TESTNAME = "TestCDecl_ClassD";
+static const char * const TESTNAME = "TestCDecl_ClassK";
 
-class ClassD1
+class ClassK1
 {
 public:
-	~ClassD1() {a = 0;}
+	ClassK1(unsigned long _a) {a = _a;}
+	ClassK1(const ClassK1 &o) {a = o.a;}
 	unsigned long a;
 };
 
-class ClassD2
+class ClassK2
 {
 public:
-	~ClassD2() {a = 0; b = 0;}
+	ClassK2(unsigned long _a, unsigned long _b) {a = _a; b = _b;}
+	ClassK2(const ClassK2 &o) {a = o.a; b = o.b;}
 	unsigned long a;
 	unsigned long b;
 };
 
-class ClassD3
+class ClassK3
 {
 public:
-	~ClassD3() {a = 0; b = 0; c = 0;}
+	ClassK3(unsigned long _a, unsigned long _b, unsigned long _c) {a = _a; b = _b; c = _c;}
+	ClassK3(const ClassK3 &o) {a = o.a; b = o.b; c = o.c;}
 	unsigned long a;
 	unsigned long b;
 	unsigned long c;
 };
 
-static ClassD1 classD1()
+static ClassK1 classK1()
 {
-	ClassD1 c = {0xDEADC0DE};
+	ClassK1 c(0xDEADC0DE);
 	return c;
 }
 
-static ClassD2 classD2()
+static ClassK2 classK2()
 {
-	ClassD2 c = {0xDEADC0DE, 0x01234567};
+	ClassK2 c(0xDEADC0DE, 0x01234567);
 	return c;
 }
 
-static ClassD3 classD3()
+static ClassK3 classK3()
 {
-	ClassD3 c = {0xDEADC0DE, 0x01234567, 0x89ABCDEF};
+	ClassK3 c(0xDEADC0DE, 0x01234567, 0x89ABCDEF);
 	return c;
 }
 
-static ClassD1 c1;
-static ClassD2 c2;
-static ClassD3 c3;
+static ClassK1 c1(0);
+static ClassK2 c2(0,0);
+static ClassK3 c3(0,0,0);
 
-static void class1ByVal(ClassD1 c)
+static void class1ByVal(ClassK1 c)
 {
 	assert( c.a == 0xDEADC0DE );
 }
 
-static void class2ByVal(ClassD2 c)
+static void class2ByVal(ClassK2 c)
 {
 	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 ); 
 }
 
-static void class3ByVal(ClassD3 c)
+static void class3ByVal(ClassK3 c)
 {
 	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 && c.c == 0x89ABCDEF );
 }
 
-bool TestCDecl_ClassD()
+bool TestCDecl_ClassK()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
@@ -81,17 +84,17 @@ bool TestCDecl_ClassD()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType("class1", sizeof(ClassD1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_D);
-	engine->RegisterObjectType("class2", sizeof(ClassD2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_D);
-	engine->RegisterObjectType("class3", sizeof(ClassD3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_D);
+	engine->RegisterObjectType("class1", sizeof(ClassK1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);
+	engine->RegisterObjectType("class2", sizeof(ClassK2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);
+	engine->RegisterObjectType("class3", sizeof(ClassK3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);
 	
 	engine->RegisterGlobalProperty("class1 c1", &c1);
 	engine->RegisterGlobalProperty("class2 c2", &c2);
 	engine->RegisterGlobalProperty("class3 c3", &c3);
 
-	engine->RegisterGlobalFunction("class1 _class1()", asFUNCTION(classD1), asCALL_CDECL);
-	engine->RegisterGlobalFunction("class2 _class2()", asFUNCTION(classD2), asCALL_CDECL);
-	engine->RegisterGlobalFunction("class3 _class3()", asFUNCTION(classD3), asCALL_CDECL);
+	engine->RegisterGlobalFunction("class1 _class1()", asFUNCTION(classK1), asCALL_CDECL);
+	engine->RegisterGlobalFunction("class2 _class2()", asFUNCTION(classK2), asCALL_CDECL);
+	engine->RegisterGlobalFunction("class3 _class3()", asFUNCTION(classK3), asCALL_CDECL);
 
 	COutStream out;
 

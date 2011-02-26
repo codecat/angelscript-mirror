@@ -546,10 +546,13 @@
 			// Support native calling conventions on Mac OS X + Intel 32bit CPU
 			#define AS_X86
 		#elif defined(__LP64__) && !defined(__ppc__) && !defined(__PPC__)
+			// http://developer.apple.com/library/mac/#documentation/DeveloperTools/Conceptual/LowLevelABI/140-x86-64_Function_Calling_Conventions/x86_64.html#//apple_ref/doc/uid/TP40005035-SW1
 			#define AS_NO_THREADS
 			#define AS_X64_GCC
 			#define HAS_128_BIT_PRIMITIVES
 			#define SPLIT_OBJS_BY_MEMBER_TYPES
+			#undef COMPLEX_MASK
+			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
 			// STDCALL is not available on 64bit Mac
 			#undef STDCALL
 			#define STDCALL
@@ -622,6 +625,8 @@
 			#define AS_X64_GCC
 			#define HAS_128_BIT_PRIMITIVES
 			#define SPLIT_OBJS_BY_MEMBER_TYPES
+			#undef COMPLEX_MASK
+			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
 			// STDCALL is not available on 64bit Linux
 			#undef STDCALL
 			#define STDCALL
@@ -662,7 +667,8 @@
 			#define AS_X64_GCC
 			#define HAS_128_BIT_PRIMITIVES
 			#define SPLIT_OBJS_BY_MEMBER_TYPES
-
+			#undef COMPLEX_MASK
+			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
 			#undef STDCALL
 			#define STDCALL
 		#else

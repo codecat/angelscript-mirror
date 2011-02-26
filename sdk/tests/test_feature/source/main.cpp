@@ -39,6 +39,7 @@ bool TestCDecl_Class();
 bool TestCDecl_ClassA();
 bool TestCDecl_ClassC();
 bool TestCDecl_ClassD();
+bool TestCDecl_ClassK();
 bool TestNotComplexThisCall();
 bool TestNotComplexStdcall();
 bool TestReturnWithCDeclObjFirst();
@@ -308,6 +309,7 @@ int main(int argc, char **argv)
 		if( TestCDecl_ClassA()            ) goto failed; else printf("-- TestCDecl_ClassA passed\n");
 		if( TestCDecl_ClassC()            ) goto failed; else printf("-- TestCDecl_ClassC passed\n");
 		if( TestCDecl_ClassD()            ) goto failed; else printf("-- TestCDecl_ClassD passed\n");
+		if( TestCDecl_ClassK()            ) goto failed; else printf("-- TestCDecl_ClassK passed\n");
 
 		// cdecl_objlast and cdecl_objfirst
 		if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");

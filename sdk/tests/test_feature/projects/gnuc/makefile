@@ -108,6 +108,7 @@ SRCNAMES = \
   testcdecl_class_a.cpp \
   testcdecl_class_c.cpp \
   testcdecl_class_d.cpp \
+  testcdecl_class_k.cpp \
   testcreateengine.cpp \
   testenumglobvar.cpp \
   testexecute.cpp \
