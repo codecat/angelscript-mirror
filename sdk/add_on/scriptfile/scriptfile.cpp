@@ -500,13 +500,13 @@ float CScriptFile::ReadFloat()
 	{
 		unsigned int n = 0;
 		for( ; n < 4; n++ )
-			val |= asQWORD(buf[n]) << ((3-n)*8);
+			val |= asUINT(buf[n]) << ((3-n)*8);
 	}
 	else
 	{
 		unsigned int n = 0;
 		for( ; n < 4; n++ )
-			val |= asQWORD(buf[n]) << (n*8);
+			val |= asUINT(buf[n]) << (n*8);
 	}
 
 	return *reinterpret_cast<float*>(&val);
