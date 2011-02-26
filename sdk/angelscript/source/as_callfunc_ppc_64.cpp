@@ -590,7 +590,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		else
 		{
 			// flip
-			assert( numBytes == 1 || numBytes == 2 );
+			asASSERT( numBytes == 1 || numBytes == 2 );
 			switch( numBytes )
 			{
 			case 1:

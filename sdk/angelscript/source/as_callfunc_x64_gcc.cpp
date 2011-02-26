@@ -236,7 +236,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	}
 
 	argumentCount = ( int )descr->parameterTypes.GetLength();
-	assert( argumentCount <= X64_MAX_ARGS );
+	asASSERT( argumentCount <= X64_MAX_ARGS );
 
 	// TODO: optimize: argsType should be computed in PrepareSystemFunction
 	for( a = 0; a < argumentCount; ++a, ++argIndex ) {
@@ -256,7 +256,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			argsType[argIndex] = x64VARIABLE;
 		}
 	}
-	assert( argIndex == argumentCount );
+	asASSERT( argIndex == argumentCount );
 
 	for ( a = 0; a < argumentCount && totalArgumentCount <= X64_MAX_ARGS; a++ ) {
 		switch ( argsType[a] ) {
@@ -278,7 +278,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		}
 	}
 
-	assert( totalArgumentCount <= X64_MAX_ARGS );
+	asASSERT( totalArgumentCount <= X64_MAX_ARGS );
 	if ( totalArgumentCount > argumentCount ) {
 		memcpy( argsType, tempType, totalArgumentCount );
 	}
