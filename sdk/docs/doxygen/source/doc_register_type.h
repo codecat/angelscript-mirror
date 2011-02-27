@@ -183,32 +183,34 @@ a parameter or return value.
 There are a few different flags for this:
 
 <table border=0 cellspacing=0 cellpadding=0>
-<tr><td>\ref asOBJ_APP_CLASS             &nbsp; </td><td>The C++ type is a class, struct, or union</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_CONSTRUCTOR &nbsp; </td><td>The C++ type has a defined constructor</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_DESTRUCTOR  &nbsp; </td><td>The C++ type has a defined destructor</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_ASSIGNMENT  &nbsp; </td><td>The C++ type has a defined assignment operator</td></tr>
-<tr><td>\ref asOBJ_APP_PRIMITIVE         &nbsp; </td><td>The C++ type is a C++ primitive, but not a float or double</td></tr>
-<tr><td>\ref asOBJ_APP_FLOAT             &nbsp; </td><td>The C++ type is a float or double</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS                  &nbsp; </td><td>The C++ type is a class, struct, or union</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_CONSTRUCTOR      &nbsp; </td><td>The C++ type has a defined constructor</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_DESTRUCTOR       &nbsp; </td><td>The C++ type has a defined destructor</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ASSIGNMENT       &nbsp; </td><td>The C++ type has a defined assignment operator</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_COPY_CONSTRUCTOR &nbsp; </td><td>The C++ type has a defined copy constructor</td></tr>
+<tr><td>\ref asOBJ_APP_PRIMITIVE              &nbsp; </td><td>The C++ type is a C++ primitive, but not a float or double</td></tr>
+<tr><td>\ref asOBJ_APP_FLOAT                  &nbsp; </td><td>The C++ type is a float or double</td></tr>
 </table>
 
 Note that these don't represent how the type will behave in the script language, only what the real type is in the host 
 application. So if you want to register a C++ class that you want to behave as a primitive type in the script language
 you should still use the flag \ref asOBJ_APP_CLASS. The same thing for the flags to identify that the class has a constructor, 
-destructor, or assignment. These flags tell AngelScript that the class has the respective function, but not that the type
-in the script language should have these behaviours.
+destructor, assignment operator, or copy constructor. These flags tell AngelScript that the class has the respective function, 
+but not that the type in the script language should have these behaviours.
 
-For class types there are also a shorter form of the flags for each combination of the 4 flags. They are of the form \ref asOBJ_APP_CLASS_CDA, 
+For class types there is also a shorter form of the flags for each combination of the 5 flags. They are of the form \ref asOBJ_APP_CLASS_CDAK, 
 where the existance of the last letters determine if the constructor, destructor, and/or assignment behaviour are available. For example
-\ref asOBJ_APP_CLASS_CDA is defined as \ref asOBJ_APP_CLASS | \ref asOBJ_APP_CLASS_CONSTRUCTOR | \ref asOBJ_APP_CLASS_DESTRUCTOR | \ref asOBJ_APP_CLASS_ASSIGNMENT.
+\ref asOBJ_APP_CLASS_CDAK is defined as \ref asOBJ_APP_CLASS | \ref asOBJ_APP_CLASS_CONSTRUCTOR | \ref asOBJ_APP_CLASS_DESTRUCTOR | \ref asOBJ_APP_CLASS_ASSIGNMENT | \ref asOBJ_APP_CLASS_COPY_CONSTRUCTOR.
 
 \code
 // Register a complex type that will be passed by value to the application
-r = engine->RegisterObjectType("complex", sizeof(complex), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
+r = engine->RegisterObjectType("complex", sizeof(complex), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
 \endcode
 
 Make sure you inform these flags correctly, because if you do not you may get various errors when executing the scripts. 
 Common problems are stack corruptions, and invalid memory accesses. In some cases you may face more silent errors that
 may be difficult to detect, e.g. the function is not returning the expected values.
+
 
 
 

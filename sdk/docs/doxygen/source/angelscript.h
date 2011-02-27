@@ -60,7 +60,7 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.20.2
+//! \details Version 2.20.3
 #define ANGELSCRIPT_VERSION        22003
 #define ANGELSCRIPT_VERSION_STRING "2.20.3"
 
@@ -137,48 +137,66 @@ enum asECallConvTypes
 enum asEObjTypeFlags
 {
 	//! A reference type.
-	asOBJ_REF                   = 0x01,
+	asOBJ_REF                        = 0x01,
 	//! A value type.
-	asOBJ_VALUE                 = 0x02,
+	asOBJ_VALUE                      = 0x02,
 	//! A garbage collected type. Only valid for reference types.
-	asOBJ_GC                    = 0x04,
+	asOBJ_GC                         = 0x04,
 	//! A plain-old-data type. Only valid for value types.
-	asOBJ_POD                   = 0x08,
+	asOBJ_POD                        = 0x08,
 	//! This reference type doesn't allow handles to be held. Only valid for reference types.
-	asOBJ_NOHANDLE              = 0x10,
+	asOBJ_NOHANDLE                   = 0x10,
 	//! The life time of objects of this type are controlled by the scope of the variable. Only valid for reference types.
-	asOBJ_SCOPED                = 0x20,
+	asOBJ_SCOPED                     = 0x20,
 	//! A template type.
-	asOBJ_TEMPLATE              = 0x40,
+	asOBJ_TEMPLATE                   = 0x40,
 	//! The C++ type is a class type. Only valid for value types.
-	asOBJ_APP_CLASS             = 0x100,
+	asOBJ_APP_CLASS                  = 0x100,
 	//! The C++ class has an explicit constructor. Only valid for value types.
-	asOBJ_APP_CLASS_CONSTRUCTOR = 0x200,
+	asOBJ_APP_CLASS_CONSTRUCTOR      = 0x200,
 	//! The C++ class has an explicit destructor. Only valid for value types.
-	asOBJ_APP_CLASS_DESTRUCTOR  = 0x400,
+	asOBJ_APP_CLASS_DESTRUCTOR       = 0x400,
 	//! The C++ class has an explicit assignment operator. Only valid for value types.
-	asOBJ_APP_CLASS_ASSIGNMENT  = 0x800,
-	//! The C++ type is a class with a constructor, but no destructor or assignment operator.
-	asOBJ_APP_CLASS_C           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
-	//! The C++ type is a class with a constructor and destructor, but no assignment operator.
-	asOBJ_APP_CLASS_CD          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
-	//! The C++ type is a class with a constructor and assignment operator, but no destructor.
-	asOBJ_APP_CLASS_CA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_ASSIGNMENT       = 0x800,
+	//! The C++ class has an explicit copy constructor. Only valid for value types.
+	asOBJ_APP_CLASS_COPY_CONSTRUCTOR = 0x1000,
+	//! The C++ type is a class with a constructor.
+	asOBJ_APP_CLASS_C                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
+	//! The C++ type is a class with a constructor and destructor.
+	asOBJ_APP_CLASS_CD               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
+	//! The C++ type is a class with a constructor and assignment operator.
+	asOBJ_APP_CLASS_CA               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	//! The C++ type is a class with a constructor and copy constructor.
+	asOBJ_APP_CLASS_CK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a class with a constructor, destructor, and assignment operator.
-	asOBJ_APP_CLASS_CDA         = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
-	//! The C++ type is a class with a destructor, but no constructor or assignment operator.
-	asOBJ_APP_CLASS_D           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
-	//! The C++ type is a class with an assignment operator, but no constructor or destructor.
-	asOBJ_APP_CLASS_A           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
-	//! The C++ type is a class with a destructor and assignment operator, but no constructor.
-	asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_CDA              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	//! The C++ type is a class with a constructor, destructor, and copy constructor.
+	asOBJ_APP_CLASS_CDK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	//! The C++ type is a class with a constructor, assignment operator, and copy constructor.
+	asOBJ_APP_CLASS_CAK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	//! The C++ type is a class with a constructor, destructor, assignment operator, and copy constructor.
+	asOBJ_APP_CLASS_CDAK             = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	//! The C++ type is a class with a destructor.
+	asOBJ_APP_CLASS_D                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
+	//! The C++ type is a class with a destructor and assignment operator.
+	asOBJ_APP_CLASS_DA               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	//! The C++ type is a class with a destructor and copy constructor.
+	asOBJ_APP_CLASS_DK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	//! The C++ type is a class with a destructor, assignment operator, and copy constructor.
+	asOBJ_APP_CLASS_DAK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	//! The C++ type is a class with an assignment operator.
+	asOBJ_APP_CLASS_A                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
+	//! The C++ type is a class with an assignment operator and copy constructor.
+	asOBJ_APP_CLASS_AK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	//! The C++ type is a class with a copy constructor.
+	asOBJ_APP_CLASS_K                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a primitive type. Only valid for value types.
-	asOBJ_APP_PRIMITIVE         = 0x1000,
+	asOBJ_APP_PRIMITIVE              = 0x2000,
 	//! The C++ type is a float or double. Only valid for value types.
-	asOBJ_APP_FLOAT             = 0x2000,
-	asOBJ_MASK_VALID_FLAGS      = 0x3F7F,
+	asOBJ_APP_FLOAT                  = 0x4000,
+	asOBJ_MASK_VALID_FLAGS           = 0x7F7F,
 	//! The object is a script class or an interface.
-	asOBJ_SCRIPT_OBJECT         = 0x10000
+	asOBJ_SCRIPT_OBJECT              = 0x10000
 };
 
 // Behaviours
@@ -3021,7 +3039,7 @@ public:
 // Function pointers
 
 // Use our own memset() and memcpy() implementations for better portability
-inline void asMemClear(void *_p, int size)
+inline void asMemClear(void *_p, size_t size)
 {
 	char *p = (char *)_p;
 	const char *e = p + size;
@@ -3029,7 +3047,7 @@ inline void asMemClear(void *_p, int size)
 		*p = 0;
 }
 
-inline void asMemCopy(void *_d, const void *_s, int size)
+inline void asMemCopy(void *_d, const void *_s, size_t size)
 {
 	char *d = (char *)_d;
 	const char *s = (const char *)_s;

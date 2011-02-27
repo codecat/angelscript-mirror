@@ -71,6 +71,21 @@ normal pointer, but don't release it afterwards.
 
 \see \ref doc_obj_handle
 
+\section doc_as_vc_cpp_types_5 Script classes and interfaces
+
+All script classes and interfaces are seen as the \ref asIScriptObject type by
+the application. The \ref asIScriptObject interface has methods to determine
+the actual type of the script class or interface, as well as to interact with the
+actual object instance.
+
+\see \ref doc_use_script_class
+
+\section doc_as_vc_cpp_types_6 Function pointers
+
+All script function pointers are seen as the \ref asIScriptFunction type by 
+the application. The \ref asIScriptFunction type has methods to obtain the name
+of the function and the parameter and return types, etc. 
+
 \section doc_as_vs_cpp_types_4 Parameter references
 
 Because AngelScript needs to guarantee validity of pointers at all times,
