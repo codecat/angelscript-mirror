@@ -709,7 +709,8 @@ void NOINLINE CallCDeclFunctionRetByRefObjLast_impl(const void *obj, const asDWO
 		push ecx
 
 		// Clear the FPU stack, in case the called function doesn't do it by itself
-		fninit
+		// Use emms instead of fninit to preserve FPU control word
+		emms
 
 		push obj
 
@@ -756,7 +757,7 @@ endcopy:
 	UNUSED_VAR(retPtr);
 
 	asm("pushl %ecx           \n"
-		"fninit               \n"
+		"emms                 \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -810,7 +811,8 @@ void NOINLINE CallSTDCallFunction(const asDWORD *args, int paramSize, size_t fun
 		push ecx
 
 		// Clear the FPU stack, in case the called function doesn't do it by itself
-		fninit
+		// Use emms instead of fninit to preserve FPU control word
+		emms
 
 		// Copy arguments from script
 		// stack to application stack
@@ -844,7 +846,7 @@ endcopy:
 	UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
-		"fninit               \n"
+		"emms                 \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -892,7 +894,8 @@ void NOINLINE CallThisCallFunction(const void *obj, const asDWORD *args, int par
 		push ecx
 
 		// Clear the FPU stack, in case the called function doesn't do it by itself
-		fninit
+		// Use emms instead of fninit to preserve FPU control word
+		emms
 
 		// Copy arguments from script
 		// stack to application stack
@@ -942,7 +945,7 @@ endcopy:
 	UNUSED_VAR(func);
 
 	asm("pushl %ecx           \n"
-		"fninit               \n"
+		"emms                 \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -993,7 +996,8 @@ void NOINLINE CallThisCallFunctionRetByRef_impl(const void *obj, const asDWORD *
 		push ecx
 
 		// Clear the FPU stack, in case the called function doesn't do it by itself
-		fninit
+		// Use emms instead of fninit to preserve FPU control word
+		emms
 
 		// Copy arguments from script
 		// stack to application stack
@@ -1052,7 +1056,7 @@ endcopy:
 	UNUSED_VAR(retPtr);
 
 	asm("pushl %ecx           \n"
-		"fninit               \n"
+		"emms                 \n"
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
