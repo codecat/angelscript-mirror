@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		750A2859131A976C000E71FE /* testcdecl_class_k.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 750A2858131A976C000E71FE /* testcdecl_class_k.cpp */; };
 		751882990EB93F4400190D34 /* scriptmath3d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 751882970EB93F4400190D34 /* scriptmath3d.cpp */; };
 		7518829A0EB93F4400190D34 /* scriptmath3d.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 751882980EB93F4400190D34 /* scriptmath3d.h */; };
 		751882A00EB93FA900190D34 /* scriptfile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7518829E0EB93FA900190D34 /* scriptfile.cpp */; };
@@ -199,6 +200,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		750A2858131A976C000E71FE /* testcdecl_class_k.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = testcdecl_class_k.cpp; path = ../../source/testcdecl_class_k.cpp; sourceTree = SOURCE_ROOT; };
 		751882970EB93F4400190D34 /* scriptmath3d.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = scriptmath3d.cpp; path = ../../../../add_on/scriptmath3d/scriptmath3d.cpp; sourceTree = SOURCE_ROOT; };
 		751882980EB93F4400190D34 /* scriptmath3d.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = scriptmath3d.h; path = ../../../../add_on/scriptmath3d/scriptmath3d.h; sourceTree = SOURCE_ROOT; };
 		7518829E0EB93FA900190D34 /* scriptfile.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = scriptfile.cpp; path = ../../../../add_on/scriptfile/scriptfile.cpp; sourceTree = SOURCE_ROOT; };
@@ -403,6 +405,7 @@
 				755D68B110B0484500111607 /* test_operator.cpp */,
 				755D68B210B0484500111607 /* test_template.cpp */,
 				755D68A910B0481C00111607 /* scriptarray.cpp */,
+				750A2858131A976C000E71FE /* testcdecl_class_k.cpp */,
 				755D68AA10B0481C00111607 /* scriptarray.h */,
 				755D68A410B047FF00111607 /* scripthelper.cpp */,
 				755D68A510B047FF00111607 /* scripthelper.h */,
@@ -754,6 +757,7 @@
 				CB43CB3E12081ABE00CC914B /* test_garbagecollect.cpp in Sources */,
 				CB43CB3F12081ABE00CC914B /* test_module.cpp in Sources */,
 				CB43CB4012081ABE00CC914B /* test_scriptretref.cpp in Sources */,
+				750A2859131A976C000E71FE /* testcdecl_class_k.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
