@@ -744,6 +744,13 @@ int asCByteCode::Optimize()
 			// Delete the first instruction
 			instr = GoBack(DeleteInstruction(curr));
 		}
+		// SUSPEND, Block, SUSPEND -> Block, SUSPEND
+		else if( (IsCombination(curr, asBC_SUSPEND, asBC_Block) && IsCombination(instr, asBC_Block, asBC_SUSPEND)) ||
+			     (IsCombination(curr, asBC_LINE, asBC_Block) && IsCombination(instr, asBC_Block, asBC_LINE)) )
+		{
+			// Delete the first instruction
+			instr = GoBack(DeleteInstruction(curr));
+		}
 		// PUSH a, PUSH b -> PUSH a+b
 		else if( IsCombination(curr, asBC_PUSH, asBC_PUSH) )
 		{

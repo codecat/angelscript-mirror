@@ -29,6 +29,7 @@ void Test()
 	// If this test is run alone, it gets 0.631 secs. I believe this has to do with
 	// the memory allocations for the return type that are faster due to less fractioned memory
 	printf("AS 2.20.1 (home)               : 1.65 secs\n");
+	printf("AS 2.20.3 (home)               : .511 secs\n");
 
 
 	printf("\nBuilding...\n");

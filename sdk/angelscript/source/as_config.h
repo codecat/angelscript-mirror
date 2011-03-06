@@ -392,7 +392,7 @@
 
 	#define ASM_INTEL  // Intel style for inline assembly on microsoft compilers
 
-	#if defined(WIN32) || defined(_WIN64)
+	#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
 		#define AS_WIN
 	#endif
 
@@ -595,7 +595,7 @@
 		#define AS_POSIX_THREADS
  
 	// Windows
-	#elif defined(WIN32) || defined(_WIN64) || defined(__CYGWIN__)
+	#elif defined(WIN32) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 		// On Windows the simple classes are returned in the EAX:EDX registers
 		//#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 		//#define CDECL_RETURN_SIMPLE_IN_MEMORY
@@ -622,6 +622,9 @@
 			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+
+			#undef COMPLEX_MASK
+			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
 
 			// Support native calling conventions on Intel 32bit CPU
 			#define AS_X86
@@ -666,6 +669,8 @@
 	#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 		#define AS_BSD
 		#if defined(i386) && !defined(__LP64__)
+			#undef COMPLEX_MASK
+			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
 			#define AS_X86
 		#elif defined(__LP64__)
 			#define AS_X64_GCC

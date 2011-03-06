@@ -20,6 +20,7 @@ namespace TestStringPooled { void Test(); }
 namespace TestString2      { void Test(); }
 namespace TestThisProp     { void Test(); }
 namespace TestVector3      { void Test(); }
+namespace TestAssign       { void Test(); }
 
 void DetectMemoryLeaks()
 {
@@ -54,6 +55,7 @@ int main(int argc, char **argv)
 	TestStringPooled::Test();
 	TestThisProp::Test();
 	TestVector3::Test();
+	TestAssign::Test();
 	
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");
