@@ -5279,28 +5279,50 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return -1;
 		}
 
+		// If the left hand expression is simple, i.e. without any 
+		// function calls or allocations of memory, then we can avoid
+		// doing a copy of the right hand expression (done by PrepareArgument).
+		// Instead the reference to the value can be placed directly on the
+		// stack. 
+		// 
+		// This optimization should only be done for value types, where
+		// the application developer is responsible for making the 
+		// implementation safe against unwanted destruction of the input 
+		// reference before the time.
+		bool simpleExpr = (lctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) && lctx->bc.IsSimpleExpression();
+
 		// Implicitly convert the rvalue to the type of the lvalue
-		asCDataType dt = lctx->type.dataType;
-		dt.MakeReference(true);
-		dt.MakeReadOnly(true);
-		PrepareArgument(&dt, rctx, rexpr, true, 1);
-		if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
+		if( !lctx->type.dataType.IsEqualExceptRefAndConst(rctx->type.dataType) )
+			simpleExpr = false;
+		if( !simpleExpr )
 		{
-			asCString str;
-			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), rexpr);
-			return -1;
+			asCDataType dt = lctx->type.dataType;
+			dt.MakeReference(true);
+			dt.MakeReadOnly(true);
+			PrepareArgument(&dt, rctx, rexpr, true, 1);
+			if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
+			{
+				asCString str;
+				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
+				Error(str.AddressOf(), rexpr);
+				return -1;
+			}
 		}
+		else if( rctx->type.dataType.IsReference() && (!(rctx->type.isVariable || rctx->type.isTemporary) || IsVariableOnHeap(rctx->type.stackOffset)) )
+			rctx->bc.Instr(asBC_RDSPTR);
 
 		MergeExprBytecode(ctx, rctx);
 		MergeExprBytecode(ctx, lctx);
 
-		if( (rctx->type.isVariable || rctx->type.isTemporary) && !IsVariableOnHeap(rctx->type.stackOffset) )
-			// TODO: optimize: Actually the reference can be pushed on the stack directly
-			//                 as the value allocated on the stack is guaranteed to be safe
-			ctx->bc.InstrWORD(asBC_GETREF, AS_PTR_SIZE);
-		else
-			ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
+		if( !simpleExpr )
+		{
+			if( (rctx->type.isVariable || rctx->type.isTemporary) && !IsVariableOnHeap(rctx->type.stackOffset) )
+				// TODO: optimize: Actually the reference can be pushed on the stack directly
+				//                 as the value allocated on the stack is guaranteed to be safe
+				ctx->bc.InstrWORD(asBC_GETREF, AS_PTR_SIZE);
+			else
+				ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
+		}
 
 		PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
 

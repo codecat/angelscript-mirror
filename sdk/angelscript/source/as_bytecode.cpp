@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -1117,6 +1117,30 @@ bool asCByteCode::IsTempRegUsed(cByteInstruction *curr)
 	}
 
 	return false;
+}
+
+bool asCByteCode::IsSimpleExpression()
+{
+	// A simple expression is one that cannot be suspended at any time, i.e.
+	// it doesn't have any calls to other routines, and doesn't have any suspend instructions
+	cByteInstruction *instr = first;
+	while( instr )
+	{
+		if( instr->op == asBC_ALLOC ||
+			instr->op == asBC_CALL ||
+			instr->op == asBC_CALLSYS ||
+			instr->op == asBC_SUSPEND ||
+			instr->op == asBC_LINE ||
+			instr->op == asBC_FREE ||
+			instr->op == asBC_CallPtr ||
+			instr->op == asBC_CALLINTF ||
+			instr->op == asBC_CALLBND )
+			return false;
+
+		instr = instr->next;
+	}
+
+	return true;
 }
 
 void asCByteCode::ExtractLineNumbers()

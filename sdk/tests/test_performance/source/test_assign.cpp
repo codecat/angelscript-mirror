@@ -92,11 +92,11 @@ void Test()
 		   "Time = 0.022281 secs\n"
 		   "Time = 0.019826 secs\n");
 	printf("Current...\n");
-	printf("Time = 0.005712 secs\n"
-		   "Time = 0.010188 secs\n"
-		   "Time = 0.006457 secs\n"
-		   "Time = 0.014145 secs\n"
-		   "Time = 0.014071 secs\n");
+	printf("Time = 0.005877 secs\n"
+		   "Time = 0.012792 secs\n"
+		   "Time = 0.007213 secs\n"
+		   "Time = 0.009388 secs\n"
+		   "Time = 0.009605 secs\n");
 
 	printf("\nBuilding...\n");
 
@@ -131,7 +131,6 @@ void Test()
 	time = GetSystemTimer() - time;
 	printf("Time = %f secs\n", time);
 
-	// TODO: optimize: Avoid unecessary VAR + GETREF when there is no risk in putting the reference directly on the stack
 	ctx->Prepare(mod->GetFunctionIdByDecl("void test3()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
@@ -139,7 +138,6 @@ void Test()
 	printf("Time = %f secs\n", time);
 
 	// TODO: optimize: This will benefit from when value types are inlined in script classes
-	// TODO: optimize: The compiler should recognize that it is an assignment operation that is being done, and not create a temporary variable out of the argument
 	ctx->Prepare(mod->GetFunctionIdByDecl("void test4()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
@@ -147,7 +145,6 @@ void Test()
 	printf("Time = %f secs\n", time);
 
 	// TODO: optimize: This will benefit from when value types are inlined in script classes
-	// TODO: optimize: The compiler should recognize that it is an assignment operation that is being done, and not create a temporary variable out of the argument
 	ctx->Prepare(mod->GetFunctionIdByDecl("void test5()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
