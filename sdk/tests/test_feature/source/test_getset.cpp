@@ -7,6 +7,15 @@ namespace TestGetSet
 
 bool Test2();
 
+class CLevel
+{
+public:
+	float attr;
+};
+
+CLevel g_level;
+CLevel &get_Level() { return g_level; }
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -1128,6 +1137,25 @@ bool Test()
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
+
+		engine->Release();
+	}
+
+	// Test get property returning reference
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterObjectType("LevelType", sizeof(CLevel), asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectProperty("LevelType", "float attr", offsetof(CLevel, attr));
+		engine->RegisterGlobalFunction("LevelType &get_Level()", asFUNCTION(get_Level), asCALL_CDECL);
+		
+		r = ExecuteString(engine, "Level.attr = 0.5f;");
+		if( r != asEXECUTION_FINISHED ) 
+			TEST_FAILED;
+
+		if( g_level.attr != 0.5f )
+			TEST_FAILED;
 
 		engine->Release();
 	}
