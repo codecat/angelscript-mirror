@@ -742,14 +742,21 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	}
 	context->isCallingSystemFunction = false;
 
-	// If the return is a float value we need to get the value from the FP register
 	if( sysFunc->hostReturnFloat )
 	{
+		// If the return is a float value we need to get the value from the FP register
 		if( sysFunc->hostReturnSize == 1 )
 			*(asDWORD*)&retQW = GetReturnedFloat();
 		else
 			retQW = GetReturnedDouble();
 	}
+#if AS_PTR_SIZE == 1
+	else if( descr->returnType.IsReference() || descr->returnType.IsObjectHandle() )
+	{
+		// Move the pointer to the higher bits to compensate for the adjustment done outside
+		retQW <<= 32;
+	}
+#endif
 
 	return retQW;
 }
