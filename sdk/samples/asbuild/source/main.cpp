@@ -159,11 +159,20 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
 
-			r = engine->RegisterObjectBehaviour(name.c_str(), static_cast<asEBehaviours>(atol(behaviour.c_str())), decl.c_str(), asFUNCTION(0), asCALL_GENERIC);
-			if( r < 0 )
+			asEBehaviours behave = static_cast<asEBehaviours>(atol(behaviour.c_str()));
+			if( behave == asBEHAVE_TEMPLATE_CALLBACK )
 			{
-				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register behaviour");
-				return -1;
+				// TODO: How can we let the compiler register this? Maybe through a plug-in system? Or maybe by implementing the callback as a script itself
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_WARNING, "Cannot register template callback without the actual implementation");
+			}
+			else
+			{
+				r = engine->RegisterObjectBehaviour(name.c_str(), behave, decl.c_str(), asFUNCTION(0), asCALL_GENERIC);
+				if( r < 0 )
+				{
+					engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register behaviour");
+					return -1;
+				}
 			}
 		}
 		else if( token == "objmthd" )

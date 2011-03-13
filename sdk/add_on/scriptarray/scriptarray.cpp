@@ -63,6 +63,8 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 	// otherwise we won't be able to instanciate the elements. Script classes always
 	// have default factories, so we don't have to worry about those.
 	int typeId = ot->GetSubTypeId();
+	if( typeId == asTYPEID_VOID )
+		return false;
 	if( (typeId & asTYPEID_MASK_OBJECT) && !(typeId & asTYPEID_OBJHANDLE) && !(typeId & asTYPEID_SCRIPTOBJECT) )
 	{
 		asIObjectType *subtype = ot->GetEngine()->GetObjectTypeById(typeId);
@@ -387,13 +389,9 @@ bool CScriptArray::CheckMaxSize(asUINT numElements)
 
 	asUINT maxSize = 0xFFFFFFFFul - sizeof(SArrayBuffer) + 1;
 	if( objType->GetSubTypeId() & asTYPEID_MASK_OBJECT )
-	{
 		maxSize /= sizeof(void*);
-	}
-	else
-	{
+	else if( elementSize > 0 )
 		maxSize /= elementSize;
-	}
 
 	if( numElements > maxSize )
 	{
@@ -927,6 +925,9 @@ void CScriptArray::CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src)
 // Precache some info
 void CScriptArray::Precache()
 {
+	// TODO: optimize: This information could be stored in the object type as user data,
+	//                 then it wouldn't be necessary to look for this for each array initialization
+
 	subTypeId = objType->GetSubTypeId();
 
 	cmpFuncId = -1;
@@ -963,7 +964,7 @@ void CScriptArray::Precache()
 
 						if( cmpFuncId >= 0 && eqFuncId >= 0 )
 						{
-						break;
+							break;
 						}
 					}
 				}
