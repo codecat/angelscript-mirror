@@ -572,6 +572,137 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test 
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"bool TestSort() \n"
+			"{ \n"
+			"	array<int> A = {1, 5, 2, 4, 3}; \n"
+			"	array<int> B = {1, 5, 2, 4, 3}; \n"
+			"	A.sortAsc(); \n"
+			"	B.sortDesc(); \n"
+			"	return \n"
+			"		A[0] == 1 && A[1] == 2 && A[2] == 3 && A[3] == 4 && A[4] == 5 && \n"
+			"		B[0] == 5 && B[1] == 4 && B[2] == 3 && B[3] == 2 && B[4] == 1; \n"
+			"} \n"
+			"bool TestReverse() \n"
+			"{ \n"
+			"	array<int> A = {5, 4, 3, 2, 1}; \n"
+			"	A.reverse(); \n"
+			"	return A[0] == 1 && A[1] == 2 && A[2] == 3 && A[3] == 4 && A[4] == 5; \n"
+			"} \n"
+			"class cOpCmp \n"
+			"{ \n"
+			"	cOpCmp() \n"
+			"	{ \n"
+			"		a = 0; \n"
+			"		b = 0.0; \n"
+			"	}	 \n"
+			"	cOpCmp(int _a, float _b) \n"
+			"	{ \n"
+			"		a = _a; \n"
+			"		b = _b;	 \n"
+			"	} \n"
+			"	void set(int _a, float _b) \n"
+			"	{ \n"
+			"		a = _a; \n"
+			"		b = _b; \n"
+			"	} \n"
+			"	int opCmp(cOpCmp &in other) \n"
+			"	{ \n"
+			"		return a - other.a; \n"
+			"	} \n"
+			"	int a; \n"
+			"	float b; \n"
+			"} \n"
+			"class cOpEquals \n"
+			"{ \n"
+			"	cOpEquals() \n"
+			"	{ \n"
+			"		a = 0; \n"
+			"		b = 0.0; \n"
+			"	}	 \n"
+			"	cOpEquals(int _a, float _b) \n"
+			"	{ \n"
+			"		a = _a; \n"
+			"		b = _b;	 \n"
+			"	} \n"
+			"	void set(int _a, float _b) \n"
+			"	{ \n"
+			"		a = _a; \n"
+			"		b = _b; \n"
+			"	} \n"
+			"	bool opEquals(cOpEquals &in other) \n"
+			"	{ \n"
+			"		return a == other.a; \n"
+			"	} \n"
+			"	int a; \n"
+			"	float b; \n"
+			"} \n"
+			"bool TestFind() \n"
+			"{ \n"
+			"	array<int> A = {5, 8, 3, 2, 0, 0, 2, 1}; \n"
+			"	if (A.find(10) != -1) \n"
+			"		return false; \n"
+			"	if (A.find(0) != 4) \n"
+			"		return false; \n"
+			"	if (A.find(1, 8) != 1) \n"
+			"		return false; \n"
+			"	if (A.find(2, 8) != -1) \n"
+			"		return false; \n"
+			"	array<cOpCmp> CMP(5); \n"
+			"	CMP[0].set(0, 0.0); \n"
+			"	CMP[1].set(1, 0.0); \n"
+			"	CMP[2].set(2, 0.0); \n"
+			"	CMP[3].set(3, 0.0); \n"
+			"	CMP[4].set(4, 0.0);	\n"
+			"	if (CMP.find(cOpCmp(5, 0.0)) != -1) \n"
+			"		return false; \n"
+			"	if (CMP.find(2, cOpCmp(2, 1.0)) != 2) \n"
+			"		return false; \n"
+			"	if (CMP.find(3, cOpCmp(2, 1.0)) != -1) \n"
+			"		return false; \n"
+			"	array<cOpEquals> EQ(5); \n"
+			"	EQ[0].set(0, 0.0); \n"
+			"	EQ[1].set(1, 0.0); \n"
+			"	EQ[2].set(2, 0.0); \n"
+			"	EQ[3].set(3, 0.0); \n"
+			"	EQ[4].set(4, 0.0); \n"
+			"	if (EQ.find(cOpEquals(5, 0.0)) != -1) \n"
+			"		return false; \n"
+			"	if (EQ.find(2, cOpEquals(2, 1.0)) != 2) \n"
+			"		return false; \n"
+			"	if (EQ.find(3, cOpEquals(2, 1.0)) != -1) \n"
+			"		return false; \n"
+			"	return true; \n"
+			"} \n"
+			"int main() \n"
+			"{ \n"
+			"	if (!TestSort()) \n"
+			"		return 0; \n"
+			"	if (!TestReverse()) \n"
+			"		return 0; \n"
+			"	if (!TestFind()) \n"
+			"		return 0; \n"
+			"	return 789; \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "assert( main() == 789 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

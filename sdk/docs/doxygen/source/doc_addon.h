@@ -162,6 +162,9 @@ public:
   void SortAsc(asUINT index, asUINT count);
   void SortDesc();
   void SortDesc(asUINT index, asUINT count);
+  void reverse();
+  int  find(void *value);
+  int  find(asUINT index, void *value);
 };
 \endcode
 
@@ -189,6 +192,9 @@ public:
     void sortAsc(uint index, uint count);
     void sortDesc();
     void sortDesc(uint index, uint count);
+    void reverse();
+    int  find(const T& in);
+    int  find(uint index, const T& in);
   }
 </pre>
 
