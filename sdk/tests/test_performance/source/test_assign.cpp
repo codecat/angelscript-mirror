@@ -92,11 +92,11 @@ void Test()
 		   "Time = 0.022281 secs\n"
 		   "Time = 0.019826 secs\n");
 	printf("Current...\n");
-	printf("Time = 0.005877 secs\n"
-		   "Time = 0.012792 secs\n"
-		   "Time = 0.007213 secs\n"
-		   "Time = 0.009388 secs\n"
-		   "Time = 0.009605 secs\n");
+	printf("Time = 0.004959 secs\n"
+		   "Time = 0.010941 secs\n"
+		   "Time = 0.004622 secs\n"
+		   "Time = 0.009473 secs\n"
+		   "Time = 0.009446 secs\n");
 
 	printf("\nBuilding...\n");
 

@@ -3680,8 +3680,12 @@ enum asEBCInstr
 	asBC_DIVu64			= 182,
 	//! \brief Calculate the modulo of values of two 64bit unsigned integer variables and store in a third variable
 	asBC_MODu64			= 183,
+	//! \brief Load address of member of reference object into register
+	asBC_LoadRObjR      = 184,
+	//! \brief Load address of member of value object into register
+	asBC_LoadVObjR      = 185,
 
-	asBC_MAXBYTECODE	= 184,
+	asBC_MAXBYTECODE	= 186,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_Block          = 252,
@@ -3730,32 +3734,35 @@ enum asEBCType
 	//! \brief Instruction + WORD arg (source var) + QWORD arg
 	asBCTYPE_rW_QW_ARG    = 17,
 	//! \brief Instruction + WORD arg + DWORD arg
-	asBCTYPE_W_DW_ARG     = 18
+	asBCTYPE_W_DW_ARG     = 18,
+	//! \brief Instruction + WORD arg(source var) + WORD arg + DWORD arg
+	asBCTYPE_rW_W_DW_ARG  = 19
 };
 
 // Instruction type sizes
 //! \brief Lookup table for determining the size of each \ref asEBCType "type" of bytecode instruction.
-const int asBCTypeSize[19] =
+const int asBCTypeSize[20] =
 {
-    0, // asBCTYPE_INFO
-    1, // asBCTYPE_NO_ARG
-    1, // asBCTYPE_W_ARG
-    1, // asBCTYPE_wW_ARG
-    2, // asBCTYPE_DW_ARG
-    2, // asBCTYPE_rW_DW_ARG
-    3, // asBCTYPE_QW_ARG
-    3, // asBCTYPE_DW_DW_ARG
-    2, // asBCTYPE_wW_rW_rW_ARG
-    3, // asBCTYPE_wW_QW_ARG
-    2, // asBCTYPE_wW_rW_ARG
-    1, // asBCTYPE_rW_ARG
-    2, // asBCTYPE_wW_DW_ARG
-    3, // asBCTYPE_wW_rW_DW_ARG
-    2, // asBCTYPE_rW_rW_ARG
-    2, // asBCTYPE_wW_W_ARG
-    4, // asBCTYPE_QW_DW_ARG
-    3, // asBCTYPE_rW_QW_ARG
-    2  // asBCTYPE_W_DW_ARG
+	0, // asBCTYPE_INFO
+	1, // asBCTYPE_NO_ARG
+	1, // asBCTYPE_W_ARG
+	1, // asBCTYPE_wW_ARG
+	2, // asBCTYPE_DW_ARG
+	2, // asBCTYPE_rW_DW_ARG
+	3, // asBCTYPE_QW_ARG
+	3, // asBCTYPE_DW_DW_ARG
+	2, // asBCTYPE_wW_rW_rW_ARG
+	3, // asBCTYPE_wW_QW_ARG
+	2, // asBCTYPE_wW_rW_ARG
+	1, // asBCTYPE_rW_ARG
+	2, // asBCTYPE_wW_DW_ARG
+	3, // asBCTYPE_wW_rW_DW_ARG
+	2, // asBCTYPE_rW_rW_ARG
+	2, // asBCTYPE_wW_W_ARG
+	4, // asBCTYPE_QW_DW_ARG
+	3, // asBCTYPE_rW_QW_ARG
+	2, // asBCTYPE_W_DW_ARG
+	3  // asBCTYPE_rW_W_DW_ARG
 };
 
 // Instruction info
@@ -3988,9 +3995,9 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(MODu,		wW_rW_rW_ARG,	0),
 	asBCINFO(DIVu64,	wW_rW_rW_ARG,	0),
 	asBCINFO(MODu64,	wW_rW_rW_ARG,	0),
+	asBCINFO(LoadRObjR, rW_W_DW_ARG,    0),
+	asBCINFO(LoadVObjR, rW_W_DW_ARG,    0),
 
-	asBCINFO_DUMMY(184),
-	asBCINFO_DUMMY(185),
 	asBCINFO_DUMMY(186),
 	asBCINFO_DUMMY(187),
 	asBCINFO_DUMMY(188),

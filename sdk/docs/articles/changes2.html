@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.20.3 WIP - 2011/03/13</h2>
+<h2>Version 2.20.3 WIP - 2011/03/14</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,7 +28,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library
 <ul>
 <li>Added the flag asOBJ_APP_CLASS_COPY_CONSTRUCTOR so classes with non-trivial copy constructor can be recognized and treated properly in the native calling conventions (Thanks namtabmai)
-<li>Optimized the compiled bytecode a bit
+<li>Improved the bytecode optimization
+</ul>
+<li>Virtual machine
+<ul>
+<li>Added bytecode instructions LoadRObjR, LoadVObjR
 </ul>
 <li>Add-ons
 <ul>

@@ -119,7 +119,8 @@ void asCByteCode::GetVarsUsed(asCArray<int> &vars)
 				 asBCInfo[curr->op].type == asBCTYPE_wW_W_ARG  ||
 			     asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG ||
 			     asBCInfo[curr->op].type == asBCTYPE_wW_DW_ARG ||
-			     asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG )
+			     asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG ||
+				 asBCInfo[curr->op].type == asBCTYPE_rW_W_DW_ARG )
 		{
 			InsertIfNotExists(vars, curr->wArg[0]);
 		}
@@ -155,7 +156,8 @@ bool asCByteCode::IsVarUsed(int offset)
 				 asBCInfo[curr->op].type == asBCTYPE_wW_W_ARG  ||
 				 asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG ||
 				 asBCInfo[curr->op].type == asBCTYPE_wW_DW_ARG ||
-				 asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG )
+				 asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG ||
+				 asBCInfo[curr->op].type == asBCTYPE_rW_W_DW_ARG )
 		{
 			if( curr->wArg[0] == offset )
 				return true;
@@ -652,6 +654,35 @@ int asCByteCode::Optimize()
 			DeleteInstruction(curr);
 			instr = GoBack(ChangeFirstDeleteNext(instr, asBC_LoadThisR));
 		}
+		// PshV4 x, ADDSi, PopRPtr -> LoadRObjR
+		// PshV8 x, ADDSi, PopRPtr -> LoadRObjR
+		else if( (IsCombination(curr, asBC_PshV4, asBC_ADDSi) ||
+			      IsCombination(curr, asBC_PshV8, asBC_ADDSi)) &&
+		         IsCombination(instr, asBC_ADDSi, asBC_PopRPtr) &&
+				 curr->wArg[0] != 0 )
+		{
+			curr->op = asBC_LoadRObjR;
+			curr->size = asBCTypeSize[asBCInfo[asBC_LoadRObjR].type];
+			curr->stackInc = asBCInfo[asBC_LoadRObjR].stackInc;
+			curr->wArg[1] = instr->wArg[0];
+			*(asDWORD*)&curr->arg = *(asDWORD*)&instr->arg;
+			DeleteInstruction(instr->next);
+			DeleteInstruction(instr);
+			instr = GoBack(curr);
+		}
+		// PSF x, ADDSi, PopRPtr -> LoadVObjR
+		else if( IsCombination(curr, asBC_PSF, asBC_ADDSi) &&
+		         IsCombination(instr, asBC_ADDSi, asBC_PopRPtr) )
+		{
+			curr->op = asBC_LoadVObjR;
+			curr->size = asBCTypeSize[asBCInfo[asBC_LoadVObjR].type];
+			curr->stackInc = asBCInfo[asBC_LoadVObjR].stackInc;
+			curr->wArg[1] = instr->wArg[0];
+			*(asDWORD*)&curr->arg = *(asDWORD*)&instr->arg;
+			DeleteInstruction(instr->next);
+			DeleteInstruction(instr);
+			instr = GoBack(curr);
+		}
 		// PSF x, RDS4 -> PshV4 x
 		else if( IsCombination(curr, asBC_PSF, asBC_RDS4) )
 			instr = GoBack(ChangeFirstDeleteNext(curr, asBC_PshV4));
@@ -930,6 +961,7 @@ bool asCByteCode::IsTempVarReadByInstr(cByteInstruction *curr, int offset)
 	else if( (asBCInfo[curr->op].type == asBCTYPE_rW_ARG    ||
 			  asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG ||
 			  asBCInfo[curr->op].type == asBCTYPE_rW_QW_ARG ||
+			  asBCInfo[curr->op].type == asBCTYPE_rW_W_DW_ARG ||
 			  curr->op == asBC_FREE) &&  // FREE both read and write to the variable
 			  curr->wArg[0] == offset )
 		return true;
@@ -1112,7 +1144,9 @@ bool asCByteCode::IsTempRegUsed(cByteInstruction *curr)
 			curr->op == asBC_CMPIu     ||
 			curr->op == asBC_CMPIf     ||
 			curr->op == asBC_LABEL     ||
-			curr->op == asBC_LoadThisR )
+			curr->op == asBC_LoadThisR ||
+			curr->op == asBC_LoadRObjR ||
+			curr->op == asBC_LoadVObjR )
 			return false;
 	}
 
@@ -1540,6 +1574,7 @@ void asCByteCode::Output(asDWORD *array)
 				*(ap+1) = *(asDWORD*)&instr->arg;
 				break;
 			case asBCTYPE_wW_rW_DW_ARG:
+			case asBCTYPE_rW_W_DW_ARG:
 				*(((asWORD*)ap)+1) = instr->wArg[0];
 				*(((asWORD*)ap)+2) = instr->wArg[1];
 				*(ap+2) = *(asDWORD*)&instr->arg;
@@ -1806,6 +1841,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 			break;
 
 		case asBCTYPE_wW_rW_DW_ARG:
+		case asBCTYPE_rW_W_DW_ARG:
 			switch( instr->op )
 			{
 			case asBC_ADDIf:
