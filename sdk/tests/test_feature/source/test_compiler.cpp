@@ -1309,104 +1309,38 @@ bool Test()
 			void AddRef() { refCount++; }
 			void Release() { if( --refCount == 0 ) delete this; }
 			double get_pan() const {return 0;}
-			void set_pan(double) {}
+			void set_pan(double &) {}
 			int refCount;
 
 			static CSound *CSound_fact() {return new CSound();}
 		};
 
 		engine->RegisterObjectType("sound", 0, asOBJ_REF);
-		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @sound()", asFUNCTION(CSound::CSound_fact), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", asFUNCTION(CSound::CSound_fact), asCALL_CDECL);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(CSound, AddRef), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(CSound, Release), asCALL_THISCALL);
 		engine->RegisterObjectMethod("sound", "double get_pan() const", asMETHOD(CSound, get_pan), asCALL_THISCALL);
-		engine->RegisterObjectMethod("sound", "void set_pan(double)", asMETHOD(CSound, set_pan), asCALL_THISCALL);
+		engine->RegisterObjectMethod("sound", "void set_pan(double &in)", asMETHOD(CSound, set_pan), asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 
 		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script",
-	//		"class sound { double get_pan() const {return 0;} void set_pan(double p) {} void play() {} void stop() {} }; \n"
-			"class timer { double get_elapsed() const {return 0;} void set_elapsed(double p) {} void restart() {} }; \n"
-			"double random(double,double) {return 0;} \n"
-			"void exit() {} \n"
-			"bool key_pressed(key) {return false;} \n"
-			"enum key { KEY_RETURN, KEY_S } \n"
-			"void wait(int) {} \n"
-
 			"void main() \n"
 			"{ \n"
-	//		" show_game_window('Boss'); \n"
-			" sound b, d, g; \n"
-			" sound[] h(3); \n"
-			" int y = 1; \n"
-			" for(int x = 0; x <= 2; x++) \n"
+			" sound b; \n"
+			" int hits = 0; \n"
+			" if(b.pan >= -5) \n"
 			" { \n"
-		//	"  h[x].load('sounds/hit'+y+'.ogg'); \n"
-			"  y++; \n"
 			" } \n"
-		//	" g.load('sounds/gun.ogg'); \n"
-		//	" b.load('sounds/bossmove.ogg'); \n"
-		//	" d.load('sounds/bossdie.ogg'); \n"
-			" b.pan = -100; \n"
-		//	" b.volume = -10; \n"
-		//	" b.play_looped(); \n"
-			" timer t; \n"
-			" timer t1; \n"
-			" int movemin = 26, movemax = 34, hits = 0, warp = 750; \n"
-		//	" while(true) \n"
+			" switch(hits) \n"
 			" { \n"
-			"  if(t.elapsed >= random(movemin,movemax)) \n"
-			"  { \n"
-			"   if(b.pan < 0) \n"
-			"   { \n"
-			"    b.pan = b.pan+1; \n"
-			"    t.restart(); \n"
-			"   } \n"
-			"   else if(b.pan > 0) \n"
-			"   { \n"
-			"    b.pan = b.pan-1; \n"
-			"    t.restart(); \n"
-			"   } \n"
-			"  } \n"
-			"  if(b.pan == 0) \n"
-			"  { \n"
-			"   if(t1.elapsed >= warp) \n"
-			"   { \n"
-			"    b.pan = random(-100,100); \n"
-			"    t1.restart(); \n"
-			"   } \n"
-			"  } \n"
-			"  if(key_pressed(KEY_RETURN)) \n"
-			"   exit(); \n"
-			"  if(key_pressed(KEY_S) and b.pan >= -5 and b.pan <= 5) \n"
-			"  { \n"
-			"   if(hits < 25) \n"
-			"   { \n"
-		//	"    g.play(); \n"
-			"    wait(250); \n"
-		//	"    h[random(0,2)].play(); \n"
-			"    hits++; \n"
-			"   } \n"
-			"   else \n"
-			"   { \n"
-		//	"    g.play(); \n"
-		//	"    b.stop(); \n"
-			"    wait(1250); \n"
-		//	"    d.play(); \n"
-			"   } \n"
-			"  } \n"
-			"  switch(hits) \n"
-			"  { \n"
-			"   case 10: movemin = 21; movemax = 29; warp = 500; \n"
-			"   break; \n"
-			"   case 15: movemin = 16; movemax = 24; warp = 450; \n"
-			"   break; \n"
-			"   case 20: movemin = 11; movemax = 19; warp = 4000; \n"
-			"   break; \n"
-			"   case 22: movemin = 8; movemax = 12; warp = 350; \n"
-			"   break; \n"
-			"   case 24: warp = 300; \n"
-			"  } \n"
-			"  wait(5); \n"
+			" case 10:  \n"
+			"  break; \n"
+			" case 15:  \n"
+			"  break; \n"
+			" case 20:\n"
+			"  break; \n"
 			" } \n"
 			"} \n");
 

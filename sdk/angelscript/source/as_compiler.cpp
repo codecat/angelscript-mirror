@@ -8947,13 +8947,13 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 			return -1;
 		}
 
-		// Make sure we have two variables or constants
-		if( lctx->type.dataType.IsReference() ) ConvertToVariableNotIn(lctx, rctx);
-		if( rctx->type.dataType.IsReference() ) ConvertToVariableNotIn(rctx, lctx);
-
 		// Process the property get accessors (if any)
 		ProcessPropertyGetAccessor(lctx, node);
 		ProcessPropertyGetAccessor(rctx, node);
+
+		// Make sure we have two variables or constants
+		if( lctx->type.dataType.IsReference() ) ConvertToVariableNotIn(lctx, rctx);
+		if( rctx->type.dataType.IsReference() ) ConvertToVariableNotIn(rctx, lctx);
 
 		// Make sure lctx doesn't end up with a variable used in rctx
 		if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
@@ -9059,6 +9059,9 @@ void asCCompiler::ConvertToVariable(asSExprContext *ctx)
 
 void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars)
 {
+	// We should never get here while the context is still an unprocessed property accessor
+	asASSERT(ctx->property_get == 0 && ctx->property_set == 0);
+
 	asCArray<int> excludeVars;
 	if( reservedVars ) excludeVars.Concatenate(*reservedVars);
 	int offset;

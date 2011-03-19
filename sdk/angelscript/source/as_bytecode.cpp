@@ -1058,8 +1058,30 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 					!openPaths.Exists(dest) )
 					openPaths.PushLast(dest);
 			}
-			// We cannot optimize over BC_JMPP
-			else if( curr->op == asBC_JMPP ) return true;
+			else if( curr->op == asBC_JMPP ) 
+			{
+				// A JMPP instruction is always followed by a series of JMP instructions 
+				// that give the real destination (like a look-up table). We need add all
+				// of these as open paths.
+				curr = curr->next;
+				while( curr->op == asBC_JMP )
+				{
+					cByteInstruction *dest = 0;
+					int label = *((int*)ARG_DW(curr->arg));
+					int r = FindLabel(label, curr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
+
+					if( !closedPaths.Exists(dest) &&
+						!openPaths.Exists(dest) )
+						openPaths.PushLast(dest);
+
+					curr = curr->next;
+				}
+
+				// We should now be on a label which is the destination of the 
+				// first JMP in the sequence and is already added in the open paths
+				asASSERT(curr->op == asBC_LABEL);
+				break;
+			}
 
 			curr = curr->next;
 		}
