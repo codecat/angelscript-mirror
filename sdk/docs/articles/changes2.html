@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.20.3 WIP - 2011/03/19</h2>
+<h2>Version 2.20.3 WIP - 2011/03/23</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in array add-on when declaring an array of void (Thanks Damian T0MALIK)
 <li>Made the use of emms or fninit dynamic by defining macro CLEAR_FPU_STACK, as some projects needed it to be fninit (Thanks cvet)
 <li>Fixed bug in compiler when a property that takes a reference in set accessor was used in a dual operator expression (Thanks Philip Bennefall)
+<li>Properly handling loading bytecode that attempts to instanciate invalid template type
 </ul>
 <li>Library
 <ul>

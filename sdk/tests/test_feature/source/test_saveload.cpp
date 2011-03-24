@@ -1021,6 +1021,72 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test loading bytecode, where the code uses a template instance that the template callback doesn't allow
+	// The loading of the bytecode must fail graciously in this case, and display intelligent error message to 
+	// allow the script writer to find the error in the original code.
+	{
+		CBytecodeStream stream(__FILE__"1");
+
+		const char *script = 
+			"tmpl<int> t; \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		class Tmpl
+		{
+		public:
+			Tmpl() {refCount = 1;}
+			void AddRef() {refCount++;}
+			void Release() {if( --refCount == 0 ) delete this;}
+			static Tmpl *TmplFactory(asIObjectType*) {return new Tmpl;}
+			static bool TmplCallback(asIObjectType *ot) {return false;}
+			int refCount;
+		};
+
+		r = engine->RegisterObjectType("tmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(Tmpl,AddRef), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(Tmpl,Release), asCALL_THISCALL); assert( r >= 0 );
+		//r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in)", asFUNCTION(Tmpl::TmplCallback), asCALL_CDECL); assert( r >= 0 );
+
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod->SaveByteCode(&stream);
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		r = engine->RegisterObjectType("tmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(Tmpl,AddRef), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(Tmpl,Release), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in)", asFUNCTION(Tmpl::TmplCallback), asCALL_CDECL); assert( r >= 0 );
+
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		bout.buffer = "";
+		r = mod->LoadByteCode(&stream);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n"
+						   " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n"
+						   " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n"
+						   " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 
 	// Success
 	return fail;

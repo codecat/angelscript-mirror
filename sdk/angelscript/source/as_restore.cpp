@@ -1420,7 +1420,10 @@ asCObjectType* asCRestore::ReadObjectType()
 		asCObjectType *tmpl = engine->GetObjectType(typeName.AddressOf());
 		if( tmpl == 0 )
 		{
-			// TODO: Write message to callback
+			// TODO: Move text to as_texts.h
+			asCString str;
+			str.Format("Template type '%s' doesn't exist", typeName.AddressOf());
+			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 			error = true;
 			return 0;
 		}
@@ -1431,7 +1434,10 @@ asCObjectType* asCRestore::ReadObjectType()
 			ot = ReadObjectType();
 			if( ot == 0 )
 			{
-				// TODO: Write message to callback
+				// TODO: Move text to as_texts.h
+				asCString str;
+				str.Format("Failed to read subtype of template type '%s'", typeName.AddressOf());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				error = true;
 				return 0;
 			}
@@ -1449,7 +1455,10 @@ asCObjectType* asCRestore::ReadObjectType()
 			
 			if( ot == 0 )
 			{
-				// TODO: Write message to callback
+				// TODO: Move text to as_texts.h
+				asCString str;
+				str.Format("Attempting to instanciate invalid template type '%s<%s>'", typeName.AddressOf(), dt.Format().AddressOf());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				error = true;
 				return 0;
 			}
@@ -1464,7 +1473,10 @@ asCObjectType* asCRestore::ReadObjectType()
 			
 			if( ot == 0 )
 			{
-				// TODO: Write message to callback
+				// TODO: Move text to as_texts.h
+				asCString str;
+				str.Format("Attempting to instanciate invalid template type '%s<%s>'", typeName.AddressOf(), dt.Format().AddressOf());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				error = true;
 				return 0;
 			}
@@ -1488,7 +1500,10 @@ asCObjectType* asCRestore::ReadObjectType()
 
 		if( ot == 0 )
 		{
-			// TODO: Write message to callback
+			// TODO: Move text to as_texts.h
+			asCString str;
+			str.Format("Template subtype type '%s' doesn't exist", typeName.AddressOf());
+			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 			error = true;
 			return 0;
 		}
@@ -1508,7 +1523,10 @@ asCObjectType* asCRestore::ReadObjectType()
 			
 			if( ot == 0 )
 			{
-				// TODO: Write message to callback
+				// TODO: Move text to as_texts.h
+				asCString str;
+				str.Format("Object type '%s' doesn't exist", typeName.AddressOf());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				error = true;
 				return 0;
 			}
