@@ -1316,11 +1316,11 @@ bool Test()
 		};
 
 		engine->RegisterObjectType("sound", 0, asOBJ_REF);
-		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", asFUNCTION(CSound::CSound_fact), asCALL_CDECL);
-		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(CSound, AddRef), asCALL_THISCALL);
-		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(CSound, Release), asCALL_THISCALL);
-		engine->RegisterObjectMethod("sound", "double get_pan() const", asMETHOD(CSound, get_pan), asCALL_THISCALL);
-		engine->RegisterObjectMethod("sound", "void set_pan(double &in)", asMETHOD(CSound, set_pan), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", asFUNCTIONPR(CSound::CSound_fact, (), CSound *), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHODPR(CSound, AddRef, (), void), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHODPR(CSound, Release, (), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod("sound", "double get_pan() const", asMETHODPR(CSound, get_pan, () const, double), asCALL_THISCALL);
+		engine->RegisterObjectMethod("sound", "void set_pan(double &in)", asMETHODPR(CSound, set_pan, (double &), void), asCALL_THISCALL);
 
 		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 

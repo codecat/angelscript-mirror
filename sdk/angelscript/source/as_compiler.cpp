@@ -784,6 +784,8 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 				if( funcs.GetLength() == 1 )
 				{
+					// TODO: default arg: Add the default values for arguments not explicitly supplied
+
 					if( gvar->datatype.GetObjectType()->flags & asOBJ_REF )
 					{
 						MakeFunctionCall(&ctx, funcs[0], 0, args, node);
@@ -1461,6 +1463,8 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 		{
 			asCScriptFunction *desc = builder->GetFunctionDescription(funcs[n]);
 
+			// TODO: default arg: If the function has more arguments than given, need to check if there are default values for the args
+
 			if( desc->parameterTypes.GetLength() != args.GetLength() )
 			{
 				// remove it from the list
@@ -1639,6 +1643,8 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 					if( funcs.GetLength() == 1 )
 					{
+						// TODO: default arg: Add the default values for arguments not explicitly supplied
+
 						sVariable *v = variables->GetVariable(name.AddressOf());
 						asSExprContext ctx(engine);
 						if( v->type.GetObjectType() && (v->type.GetObjectType()->flags & asOBJ_REF) )
@@ -6945,6 +6951,8 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		}
 		else
 		{
+			// TODO: default arg: Add the default values for arguments not explicitly supplied
+
 			asCByteCode objBC(engine);
 
 			PrepareFunctionCall(funcs[0], &ctx->bc, args);
@@ -7083,6 +7091,8 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		}
 		else
 		{
+			// TODO: default arg: Add the default values for arguments not explicitly supplied
+
 			// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
 			//                is it enough to make sure it is in a local variable? 
 
