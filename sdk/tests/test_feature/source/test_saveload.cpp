@@ -298,6 +298,17 @@ void output(asIScriptGeneric *gen)
 
 bool Test2();
 
+class Tmpl
+{
+public:
+	Tmpl() {refCount = 1;}
+	void AddRef() {refCount++;}
+	void Release() {if( --refCount == 0 ) delete this;}
+	static Tmpl *TmplFactory(asIObjectType*) {return new Tmpl;}
+	static bool TmplCallback(asIObjectType *ot) {return false;}
+	int refCount;
+};
+
 bool Test()
 {
 	int r;
@@ -1032,17 +1043,6 @@ bool Test()
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-
-		class Tmpl
-		{
-		public:
-			Tmpl() {refCount = 1;}
-			void AddRef() {refCount++;}
-			void Release() {if( --refCount == 0 ) delete this;}
-			static Tmpl *TmplFactory(asIObjectType*) {return new Tmpl;}
-			static bool TmplCallback(asIObjectType *ot) {return false;}
-			int refCount;
-		};
 
 		r = engine->RegisterObjectType("tmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
