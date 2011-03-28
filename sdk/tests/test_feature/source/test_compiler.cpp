@@ -80,6 +80,20 @@ bool Test7();
 bool Test8();
 bool Test9();
 
+// For test Philip Bennefall
+class CSound
+{
+public:
+	CSound() { refCount = 1; }
+	void AddRef() { refCount++; }
+	void Release() { if( --refCount == 0 ) delete this; }
+	double get_pan() const {return 0;}
+	void set_pan(double &) {}
+	int refCount;
+
+	static CSound *CSound_fact() {return new CSound();}
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -1301,19 +1315,6 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		RegisterStdString(engine);
-
-		class CSound
-		{
-		public:
-			CSound() { refCount = 1; }
-			void AddRef() { refCount++; }
-			void Release() { if( --refCount == 0 ) delete this; }
-			double get_pan() const {return 0;}
-			void set_pan(double &) {}
-			int refCount;
-
-			static CSound *CSound_fact() {return new CSound();}
-		};
 
 		engine->RegisterObjectType("sound", 0, asOBJ_REF);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", asFUNCTIONPR(CSound::CSound_fact, (), CSound *), asCALL_CDECL);
