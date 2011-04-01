@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -303,6 +303,8 @@ int asCScriptFunction::GetSpaceNeededForReturnValue()
 asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 {
 	asCString str;
+
+	// TODO: default arg: Add option to get the declaration with the default args
 
 	// Don't add the return type for constructors and destructors
 	if( !(returnType.GetTokenType() == ttVoid && 

@@ -639,6 +639,8 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 
 	WriteFunctionSignature(func);
 
+	// TODO: default arg: Store the default arg strings
+
 	if( func->funcType == asFUNC_SCRIPT )
 	{
 		count = (asUINT)func->byteCode.GetLength();
@@ -722,6 +724,8 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine)
 	ReadFunctionSignature(func);
 
 	func->id = engine->GetNextScriptFunctionId();
+
+	// TODO: default arg: Read the default arg strings
 
 	if( func->funcType == asFUNC_SCRIPT )
 	{
