@@ -8490,6 +8490,23 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 		ti.type = *argType;
 		if( argType->dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
 		ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, 0, allowObjectConstruct);
+
+		// If the function parameter is an inout-reference then it must not be possible to call the 
+		// function with an incorrect argument type, even though the type can normally be converted.
+		if( desc->parameterTypes[paramNum].IsReference() && 
+			desc->inOutFlags[paramNum] == asTM_INOUTREF &&
+			desc->parameterTypes[paramNum].GetTokenType() != ttQuestion )
+		{
+			if( desc->parameterTypes[paramNum].IsPrimitive() &&
+				desc->parameterTypes[paramNum].GetTokenType() != argType->dataType.GetTokenType() )
+				continue;
+
+			if( desc->parameterTypes[paramNum].IsEnumType() &&
+				desc->parameterTypes[paramNum].GetObjectType() != argType->dataType.GetObjectType() )
+				continue;
+		}
+
+		// How well does the argument match the function parameter?
 		if( desc->parameterTypes[paramNum].IsEqualExceptRef(ti.type.dataType) )
 		{
 			// Is it an exact match?

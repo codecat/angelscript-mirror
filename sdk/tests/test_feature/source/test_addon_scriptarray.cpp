@@ -710,6 +710,7 @@ bool Test()
 bool Test2()
 {
 	bool fail = false;
+	COutStream out;
 
 	const char *script =
 	"class A                               \n"
@@ -732,6 +733,7 @@ bool Test2()
 	"sum(As);      \n";
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterScriptArray(engine, false);
 	asIScriptModule *module = engine->GetModule("module", asGM_ALWAYS_CREATE);
 

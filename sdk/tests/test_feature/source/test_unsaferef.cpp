@@ -37,6 +37,7 @@ bool Test()
 	int r;
 
 	COutStream out;
+	CBufferedOutStream bout;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
@@ -108,6 +109,39 @@ bool Test()
 		r = ExecuteString(engine, "test()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test ref to primitives
+	{
+		bout.buffer = "";
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"void func(){ \n"
+			"  float a; \n"
+			"  uint8 b; \n"
+			"  int c; \n"
+			"  funcA(c, a, b); \n"
+			"} \n"
+			"void funcA(float& a, uint8& b, int& c) {} \n");
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "TestUnsafeRef (1, 1) : Info    : Compiling void func()\n"
+		                   "TestUnsafeRef (5, 3) : Error   : No matching signatures to 'funcA(int, float, uint8)'\n"
+		                   "TestUnsafeRef (5, 3) : Info    : Candidates are:\n"
+		                   "TestUnsafeRef (5, 3) : Info    : void funcA(float&inout, uint8&inout, int&inout)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}
