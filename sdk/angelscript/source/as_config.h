@@ -603,6 +603,9 @@
 		//#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		//#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 
+		#undef COMPLEX_MASK
+		#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
+
 		#if defined(i386) && !defined(__LP64__)
 			// Support native calling conventions on Intel 32bit CPU
 			#define AS_X86
