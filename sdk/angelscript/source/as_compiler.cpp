@@ -279,6 +279,10 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 			outFunc->AddVariable(name, type, stackPos);
 
 			node = node->next;
+
+			// Skip the default arg
+			if( node && node->nodeType == snExpression )
+				node = node->next;
 		}
 		else
 			vs.DeclareVariable("", type, stackPos, true);

@@ -178,12 +178,11 @@ public:
 	asCDataType                  returnType;
 	asCArray<asCDataType>        parameterTypes;
 	asCArray<asETypeModifiers>   inOutFlags;
+	asCArray<asCString *>        defaultArgs;
 	bool                         isReadOnly;
 	bool                         isPrivate;
 	asCObjectType               *objectType;
 	int                          signatureId;
-
-	// TODO: default arg: Add an array for keeping default args. This should be an array of strings
 
 	int                          id;
 

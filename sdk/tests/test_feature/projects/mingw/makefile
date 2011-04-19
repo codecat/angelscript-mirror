@@ -32,6 +32,7 @@ SRCNAMES = \
   test_conversion.cpp \
   test_custommem.cpp \
   test_debug.cpp \
+  test_defaultarg.cpp \
   test_destructor.cpp \
   test_dict.cpp \
   test_dictionary.cpp \

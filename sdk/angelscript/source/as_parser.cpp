@@ -1545,7 +1545,14 @@ asCScriptNode *asCParser::ParseParameterList()
 
 				GetToken(&t1);
 
-				// TODO: default arg: parse the expression for the default arg
+				// Parse the expression for the default arg
+				if( t1.type == ttAssignment )
+				{
+					node->AddChildLast(ParseExpression());
+					if( isSyntaxError ) return node;
+
+					GetToken(&t1);
+				}
 			}
 
 			// Check if list continues

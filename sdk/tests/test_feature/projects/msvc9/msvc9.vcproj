@@ -461,6 +461,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_defaultarg.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_destructor.cpp"
 				>
 			</File>

@@ -177,6 +177,12 @@ asCScriptFunction::~asCScriptFunction()
 	{
 		asDELETE(sysFuncIntf,asSSystemFunctionInterface);
 	}
+
+	for( asUINT p = 0; p < defaultArgs.GetLength(); p++ )
+	{
+		if( defaultArgs[p] )
+			asDELETE(defaultArgs[p], asCString);
+	}
 }
 
 // interface
@@ -304,7 +310,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 {
 	asCString str;
 
-	// TODO: default arg: Add option to get the declaration with the default args
+	// TODO: default arg: Make the declaration with the default args an option
 
 	// Don't add the return type for constructors and destructors
 	if( !(returnType.GetTokenType() == ttVoid && 
@@ -338,15 +344,30 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 				else if( inOutFlags[n] == asTM_OUTREF ) str += "out";
 				else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
 			}
+
+			if( defaultArgs.GetLength() > n && defaultArgs[n] )
+			{
+				str += " = ";
+				str += *defaultArgs[n];
+			}
+
 			str += ", ";
 		}
 
+		// Add the last parameter
 		str += parameterTypes[n].Format();
 		if( parameterTypes[n].IsReference() && inOutFlags.GetLength() > n )
 		{
 			if( inOutFlags[n] == asTM_INREF ) str += "in";
 			else if( inOutFlags[n] == asTM_OUTREF ) str += "out";
 			else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
+		}
+
+		if( defaultArgs.GetLength() > n && defaultArgs[n] )
+		{
+			asCString tmp;
+			tmp.Format(" arg%d = %s", n, defaultArgs[n]->AddressOf());
+			str += tmp;
 		}
 	}
 

@@ -271,7 +271,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	// Create the function
 	bool isConstructor, isDestructor, isPrivate;
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_SCRIPT);
-	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->isReadOnly, isConstructor, isDestructor, isPrivate);
+	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate);
 	func->id               = engine->GetNextScriptFunctionId();
 	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
 
@@ -752,7 +752,8 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 		if( n && n->nodeType == snIdentifier )
 			n = n->next;
 
-		// TODO: default arg: skip the default arg expression if it is there
+		if( n && n->nodeType == snExpression )
+			n = n->next;
 	}
 
 	// Preallocate memory
@@ -1022,12 +1023,13 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	asCDataType                returnType;
 	asCArray<asCDataType>      parameterTypes;
 	asCArray<asETypeModifiers> inOutFlags;
+	asCArray<asCString *>      defaultArgs;
 	bool                       isConstMethod;
 	bool                       isConstructor;
 	bool                       isDestructor;
 	bool                       isPrivate;
 
-	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor, isPrivate);
+	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate);
 
 	asCScriptFunction *func = module->funcDefs[funcDef->idx];
 	if( func )
@@ -1037,6 +1039,8 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 		{
 			func->parameterTypes.PushLast(parameterTypes[p]);
 			func->inOutFlags.PushLast(inOutFlags[p]);
+
+			// Don't copy the default arg expression as it is not allowed for function definitions
 		}
 	}
 }
@@ -1915,9 +1919,10 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
 	asCArray<asCDataType> parameterTypes;
 	asCArray<asETypeModifiers> inOutFlags;
+	asCArray<asCString *> defaultArgs;
 
 	// Add the script function
-	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false, objType);
+	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), false, objType);
 
 	// Set it as default constructor
 	if( objType->beh.construct )
@@ -1944,7 +1949,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	objType->beh.factory = funcId;
 	objType->beh.factories[0] = funcId;
 	returnType = asCDataType::CreateObjectHandle(objType, false);
-	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
+	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
 	functions.PushLast(0);
 	asCCompiler compiler(engine);
 	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
@@ -2099,8 +2104,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file)
 	return 0;
 }
 
-// TODO: default arg: Need array to store default arg expressions
-void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate)
+void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate)
 {
 	node = node->firstChild;
 
@@ -2158,11 +2162,14 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 		c = c->next->next;
 		if( c && c->nodeType == snIdentifier )
 			c = c->next;
+		if( c && c->nodeType == snExpression )
+			c = c->next;
 	}
 
 	// Get the parameter types
 	parameterTypes.Allocate(count, false);
 	inOutFlags.Allocate(count, false);
+	defaultArgs.Allocate(count, false);
 	n = n->next->firstChild;
 	while( n )
 	{
@@ -2178,6 +2185,18 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 		n = n->next->next;
 		if( n && n->nodeType == snIdentifier )
 			n = n->next;
+		
+		if( n && n->nodeType == snExpression )
+		{
+			// TODO: default arg: Strip out white space and comments to better share the string
+			asCString *defaultArgStr = asNEW(asCString);
+			defaultArgStr->Assign(file->code + n->tokenPos, n->tokenLength);
+			defaultArgs.PushLast(defaultArgStr);
+
+			n = n->next;
+		}
+		else
+			defaultArgs.PushLast(0);
 	}
 }
 
@@ -2188,13 +2207,13 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	asCDataType                returnType;
 	asCArray<asCDataType>      parameterTypes;
 	asCArray<asETypeModifiers> inOutFlags;
+	asCArray<asCString *>      defaultArgs;
 	bool                       isConstMethod;
 	bool                       isConstructor;
 	bool                       isDestructor;
 	bool                       isPrivate;
 
-	// TODO: default arg: Need to get the default arg expressions
-	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, isConstMethod, isConstructor, isDestructor, isPrivate);
+	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate);
 
 	// Check for name conflicts
 	if( !isConstructor && !isDestructor )
@@ -2289,8 +2308,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	}
 
 	// Register the function
-	// TODO: default arg: Pass the default argument expressions
-	module->AddScriptFunction(file->idx, funcID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate);
+	module->AddScriptFunction(file->idx, funcID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate);
 
 	if( objType )
 	{
@@ -2318,8 +2336,9 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 				objType->beh.factories.PushLast(factoryId);
 			}
 
+			// TODO: default arg: We must copy the default arg strings to avoid deleting the same object multiple times
 			asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
-			module->AddScriptFunction(file->idx, factoryId, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
+			module->AddScriptFunction(file->idx, factoryId, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
 
 			// Add a dummy function to the module so that it doesn't mix up the fund Ids
 			functions.PushLast(0);
