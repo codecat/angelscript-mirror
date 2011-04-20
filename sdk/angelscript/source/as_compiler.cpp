@@ -1455,6 +1455,44 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 	return anyErrors ? -1 : 0;
 }
 
+int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext*> &args, asCScriptFunction *func)
+{
+	// Compile the arguments in reverse order (as they will be pushed on the stack)
+	bool anyErrors = false;
+	int explicitArgs = (int)args.GetLength();
+	args.SetLength(func->parameterTypes.GetLength());
+	for( int n = (int)func->parameterTypes.GetLength() - 1; n >= explicitArgs; n-- )
+	{
+		// Parse the default arg string
+		asCParser parser(builder);
+		asCScriptCode code;
+		code.SetCode("default arg", func->defaultArgs[n]->AddressOf(), false);
+		int r = parser.ParseExpression(&code);
+		if( r < 0 ) { anyErrors = true; continue; }
+
+		asCScriptNode *arg = parser.GetScriptNode();		
+
+		// Temporarily set the script code to the default arg expression
+		asCScriptCode *origScript = script;
+		script = &code;
+
+		asSExprContext expr(engine);
+		r = CompileExpression(arg, &expr);
+
+		script = origScript;
+
+		if( r < 0 ) { anyErrors = true; continue; }
+
+		args[n] = asNEW(asSExprContext)(engine);
+		MergeExprBytecodeAndType(args[n], &expr);
+	}
+
+	// TODO: default arg: Must make sure the default arg expressions don't end 
+	//                    up using variables that are used in the explicit args
+
+	return anyErrors ? -1 : 0;
+}
+
 void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
 {
 	asCArray<int> origFuncs = funcs; // Keep the original list for error message
@@ -1467,16 +1505,23 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 		{
 			asCScriptFunction *desc = builder->GetFunctionDescription(funcs[n]);
 
-			// TODO: default arg: If the function has more arguments than given, need to check if there are default values for the args
-
 			if( desc->parameterTypes.GetLength() != args.GetLength() )
 			{
-				// remove it from the list
-				if( n == funcs.GetLength()-1 )
-					funcs.PopLast();
-				else
-					funcs[n] = funcs.PopLast();
-				n--;
+				// Count the number of default args
+				asUINT defaultArgs = 0;
+				for( asUINT d = 0; d < desc->defaultArgs.GetLength(); d++ )
+					if( desc->defaultArgs[d] )
+						defaultArgs++;
+
+				if( args.GetLength() < desc->parameterTypes.GetLength() - defaultArgs )
+				{
+					// remove it from the list
+					if( n == funcs.GetLength()-1 )
+						funcs.PopLast();
+					else
+						funcs[n] = funcs.PopLast();
+					n--;
+				}
 			}
 		}
 
@@ -7095,7 +7140,10 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		}
 		else
 		{
-			// TODO: default arg: Add the default values for arguments not explicitly supplied
+			// Add the default values for arguments not explicitly supplied
+			asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
+			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
+				CompileDefaultArgs(node, args, func);
 
 			// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
 			//                is it enough to make sure it is in a local variable? 

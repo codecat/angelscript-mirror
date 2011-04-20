@@ -131,6 +131,19 @@ int asCParser::ParseFunctionDefinition(asCScriptCode *script)
 	return 0;
 }
 
+int asCParser::ParseExpression(asCScriptCode *script)
+{
+	Reset();
+
+	this->script = script;
+
+	scriptNode = ParseExpression();
+	if( errorWhileParsing )
+		return -1;
+
+	return 0;
+}
+
 int asCParser::ParseDataType(asCScriptCode *script)
 {
 	Reset();
