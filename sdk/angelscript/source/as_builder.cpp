@@ -703,9 +703,10 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompi
 	return 0;
 }
 
-// TODO: default arg: need an array to store the default argument expressions
 int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle)
 {
+	// TODO: Can't we use GetParsedFunctionDetails to do most of what is done in this function?
+
 	numErrors = 0;
 	numWarnings = 0;
 	preMessage.isSet = false;
@@ -759,6 +760,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	// Preallocate memory
 	func->parameterTypes.Allocate(paramCount, false);
 	func->inOutFlags.Allocate(paramCount, false);
+	func->defaultArgs.Allocate(paramCount, false);
 	if( paramAutoHandles ) paramAutoHandles->Allocate(paramCount, false);
 
 	n = node->firstChild->next->next->next->firstChild;
@@ -794,12 +796,22 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 			!type.IsReference() )
 			return asINVALID_DECLARATION;
 
-		// TODO: default arg: Store the default argument
-
 		// Move to next parameter
 		n = n->next->next;
 		if( n && n->nodeType == snIdentifier )
 			n = n->next;
+
+		if( n && n->nodeType == snExpression )
+		{
+			// TODO: default arg: Strip out white space and comments to better share the string
+			asCString *defaultArgStr = asNEW(asCString);
+			defaultArgStr->Assign(source.code + n->tokenPos, n->tokenLength);
+			func->defaultArgs.PushLast(defaultArgStr);
+
+			n = n->next;
+		}
+		else
+			func->defaultArgs.PushLast(0);
 	}
 
 	// Set the read-only flag if const is declared after parameter list

@@ -347,8 +347,9 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 
 			if( defaultArgs.GetLength() > n && defaultArgs[n] )
 			{
-				str += " = ";
-				str += *defaultArgs[n];
+				asCString tmp;
+				tmp.Format(" arg%d = %s", n, defaultArgs[n]->AddressOf());
+				str += tmp;
 			}
 
 			str += ", ";
