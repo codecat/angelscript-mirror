@@ -234,6 +234,29 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 	return 0;
 }
 
+int asCBuilder::ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func)
+{
+	int firstArgWithDefaultValue = -1;
+	for( asUINT n = 0; n < func->defaultArgs.GetLength(); n++ )
+	{
+		if( func->defaultArgs[n] )
+			firstArgWithDefaultValue = n;
+		else if( firstArgWithDefaultValue >= 0 )
+		{
+			int r, c;
+			script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+			asCString str;
+			str.Format(TXT_DEF_ARG_MISSING_IN_FUNC_s, func->GetDeclaration());
+
+			WriteError(script->name.AddressOf(), str.AddressOf(), r, c);
+			return asINVALID_DECLARATION;
+		}
+	}
+
+	return 0;
+}
+
 int asCBuilder::CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asCScriptFunction **outFunc)
 {
 	asASSERT(outFunc != 0);
@@ -274,6 +297,14 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate);
 	func->id               = engine->GetNextScriptFunctionId();
 	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
+
+	// Make sure the default args are declared correctly
+	int r = ValidateDefaultArgs(script, node, func);
+	if( r < 0 )
+	{
+		func->Release();
+		return asERROR;
+	}
 
 	// Tell the engine that the function exists already so the compiler can access it
 	if( compileFlags & asCOMP_ADD_TO_MODULE )
@@ -823,6 +854,9 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	}
 	else
 		func->isReadOnly = false;
+
+	// Make sure the default args are declared correctly
+	ValidateDefaultArgs(&source, node, func);
 
 	if( numErrors > 0 || numWarnings > 0 )
 		return asINVALID_DECLARATION;
@@ -2213,7 +2247,7 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 }
 
 
-int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
+int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
 {
 	asCString                  name;
 	asCDataType                returnType;
@@ -2267,7 +2301,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 		func->node      = node;
 		func->name      = name;
 		func->objType   = objType;
-		func->funcId    = funcID;
+		func->funcId    = funcId;
 	}
 
 	// Destructors may not have any parameters
@@ -2320,11 +2354,14 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 	}
 
 	// Register the function
-	module->AddScriptFunction(file->idx, funcID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate);
+	module->AddScriptFunction(file->idx, funcId, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate);
+
+	// Make sure the default args are declared correctly
+	ValidateDefaultArgs(file, node, engine->scriptFunctions[funcId]);
 
 	if( objType )
 	{
-		engine->scriptFunctions[funcID]->AddRef();
+		engine->scriptFunctions[funcId]->AddRef();
 		if( isConstructor )
 		{
 			int factoryId = engine->GetNextScriptFunctionId();
@@ -2332,8 +2369,8 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 			{
 				// Overload the default constructor
 				engine->scriptFunctions[objType->beh.construct]->Release();
-				objType->beh.construct = funcID;
-				objType->beh.constructors[0] = funcID;
+				objType->beh.construct = funcId;
+				objType->beh.constructors[0] = funcId;
 
 				// Register the default factory as well
 				engine->scriptFunctions[objType->beh.factory]->Release();
@@ -2342,7 +2379,7 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 			}
 			else
 			{
-				objType->beh.constructors.PushLast(funcID);
+				objType->beh.constructors.PushLast(funcId);
 
 				// Register the factory as well
 				objType->beh.factories.PushLast(factoryId);
@@ -2361,9 +2398,9 @@ int asCBuilder::RegisterScriptFunction(int funcID, asCScriptNode *node, asCScrip
 			engine->scriptFunctions[factoryId]->AddRef();
 		}
 		else if( isDestructor )
-			objType->beh.destruct = funcID;
+			objType->beh.destruct = funcId;
 		else
-			objType->methods.PushLast(funcID);
+			objType->methods.PushLast(funcId);
 	}
 
 	// We need to delete the node already if this is an interface method

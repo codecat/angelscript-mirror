@@ -68,6 +68,7 @@
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
 #define TXT_DECL_IN_SWITCH                "Variables cannot be declared in switch cases, except inside statement blocks"
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
+#define TXT_DEF_ARG_MISSING_IN_FUNC_s     "All subsequent parameters after the first default value must have default values in function '%s'"
 #define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM  "The destructor must not have any parameters"
 #define TXT_DUPLICATE_SWITCH_CASE         "Duplicate switch case"
 
