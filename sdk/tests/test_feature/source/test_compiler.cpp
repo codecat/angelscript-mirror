@@ -171,8 +171,11 @@ bool Test()
 	r = ExecuteString(engine, "string &ref");
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 8) : Error   : Expected '('\n" )
+	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'string' is not declared\n" )
+	{
+		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
+	}
 
 	bout.buffer = "";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);

@@ -62,6 +62,7 @@ asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
 
 	variables = 0;
 	isProcessingDeferredParams = false;
+	isCompilingDefaultArg = false;
 	noCodeOutput = 0;
 }
 
@@ -1476,12 +1477,23 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		asCScriptCode *origScript = script;
 		script = &code;
 
+		// Don't allow the expression to access local variables
+		// TODO: namespace: The default arg should see the symbols declared in the same scope as the function
+		isCompilingDefaultArg = true;
 		asSExprContext expr(engine);
 		r = CompileExpression(arg, &expr);
+		isCompilingDefaultArg = false;
 
 		script = origScript;
 
-		if( r < 0 ) { anyErrors = true; continue; }
+		if( r < 0 ) 
+		{ 
+			asCString msg;
+			msg.Format(TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s, n, func->GetDeclaration());
+			Error(msg.AddressOf(), node);
+			anyErrors = true; 
+			continue; 
+		}
 
 		args[n] = asNEW(asSExprContext)(engine);
 		MergeExprBytecodeAndType(args[n], &expr);
@@ -5737,8 +5749,9 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	bool found = false;
 
 	// It is a local variable or parameter?
+	// This is not accessible by default arg expressions
 	sVariable *v = 0;
-	if( scope == "" && !objType )
+	if( !isCompilingDefaultArg && scope == "" && !objType )
 		v = variables->GetVariable(name.AddressOf());
 	if( v )
 	{
@@ -5777,7 +5790,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it a class member?
-	if( !found && ((objType) || (outFunc && outFunc->objectType && scope == "")) )
+	// This is not accessible by default arg expressions
+	if( !isCompilingDefaultArg && !found && ((objType) || (outFunc && outFunc->objectType && scope == "")) )
 	{
 		if( name == THIS_TOKEN && !objType )
 		{
@@ -7140,40 +7154,45 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		}
 		else
 		{
+			int r = asSUCCESS;
+
 			// Add the default values for arguments not explicitly supplied
 			asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
 			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-				CompileDefaultArgs(node, args, func);
+				r = CompileDefaultArgs(node, args, func);
 
 			// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
 			//                is it enough to make sure it is in a local variable? 
 
 			// For function pointer we must guarantee that the function is safe, i.e.
 			// by first storing the function pointer in a local variable (if it isn't already in one)
-			if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
+			if( r == asSUCCESS )
 			{
-				if( objectType )
+				if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
 				{
-					Dereference(ctx, true); // Dereference the object pointer to access the member
+					if( objectType )
+					{
+						Dereference(ctx, true); // Dereference the object pointer to access the member
 
-					// The actual function should be called as if a global function
-					objectType = 0;
+						// The actual function should be called as if a global function
+						objectType = 0;
+					}
+
+					Dereference(&funcPtr, true);
+					ConvertToVariable(&funcPtr);
+					ctx->bc.AddCode(&funcPtr.bc);
+					if( !funcPtr.type.isTemporary )
+						ctx->bc.Pop(AS_PTR_SIZE);
 				}
 
-				Dereference(&funcPtr, true);
-				ConvertToVariable(&funcPtr);
-				ctx->bc.AddCode(&funcPtr.bc);
-				if( !funcPtr.type.isTemporary )
-					ctx->bc.Pop(AS_PTR_SIZE);
-			}
+				MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcPtr.type.stackOffset);
 
-			MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcPtr.type.stackOffset);
-
-			// If the function pointer was copied to a local variable for the call, then
-			// release it again (temporary local variable)
-			if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
-			{
-				ReleaseTemporaryVariable(funcPtr.type, &ctx->bc);
+				// If the function pointer was copied to a local variable for the call, then
+				// release it again (temporary local variable)
+				if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
+				{
+					ReleaseTemporaryVariable(funcPtr.type, &ctx->bc);
+				}
 			}
 		}
 	}

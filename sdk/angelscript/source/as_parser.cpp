@@ -1597,7 +1597,9 @@ asCScriptNode *asCParser::ParseExprValue()
 	RewindTo(&t1);
 
 	// TODO: namespace: Datatypes can be defined in namespaces, thus types too must allow scope prefix
-	if( IsDataType(t1) && t2.type != ttScope )
+	if( IsDataType(t1) && (t2.type == ttOpenParanthesis || 
+		                   t2.type == ttLessThan || 
+						   t2.type == ttOpenBracket) )
 		node->AddChildLast(ParseConstructCall());
 	else if( t1.type == ttIdentifier || t1.type == ttScope )
 	{

@@ -260,6 +260,7 @@ protected:
 	asCArray<int>         tempVariables;
 
 	bool globalExpression;
+	bool isCompilingDefaultArg;
 	bool isProcessingDeferredParams;
 	int noCodeOutput;
 };

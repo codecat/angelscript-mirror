@@ -88,6 +88,7 @@
 #define TXT_EXPECTED_STRING               "Expected string"
 #define TXT_EXPR_MUST_BE_BOOL             "Expression must be of boolean type"
 
+#define TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s "Failed while compiling default arg for parameter %d in function '%s'"
 #define TXT_FOUND_MULTIPLE_ENUM_VALUES    "Found multiple matching enum values"
 #define TXT_FUNCTION_IN_GLOBAL_EXPR       "Function calls are not allowed in global expressions"
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"
