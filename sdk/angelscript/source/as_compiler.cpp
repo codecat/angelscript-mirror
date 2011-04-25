@@ -6661,23 +6661,21 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		int r = CompileAssignment(node->lastChild, &expr);
 		if( r < 0 )
 			anyErrors = true;
-		else
-		{
-			// Determine the requested type
-			to = builder->CreateDataTypeFromNode(node->firstChild, script);
-			to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
 
-			// If the type support object handles, then use it
-			if( to.SupportHandles() )
-			{
-				to.MakeHandle(true);
-			}
-			else if( !to.IsObjectHandle() )
-			{
-				// The cast<type> operator can only be used for reference casts
-				Error(TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST, node->firstChild);
-				anyErrors = true;
-			}
+		// Determine the requested type
+		to = builder->CreateDataTypeFromNode(node->firstChild, script);
+		to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
+
+		// If the type support object handles, then use it
+		if( to.SupportHandles() )
+		{
+			to.MakeHandle(true);
+		}
+		else if( !to.IsObjectHandle() )
+		{
+			// The cast<type> operator can only be used for reference casts
+			Error(TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST, node->firstChild);
+			anyErrors = true;
 		}
 	}
 

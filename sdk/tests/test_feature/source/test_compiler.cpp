@@ -1359,6 +1359,34 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test invalid script
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"class B {}\n"
+			"void func() \n"
+			"{ \n"
+			"  B @b = cast<B>( typo.createInstance() ); //typo is obviously not an object.  \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "script (2, 1) : Info    : Compiling void func()\n"
+		                   "script (4, 19) : Error   : 'typo' is not declared\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
