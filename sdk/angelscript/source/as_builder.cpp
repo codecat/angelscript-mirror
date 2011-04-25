@@ -834,9 +834,9 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 		if( n && n->nodeType == snExpression )
 		{
-			// TODO: default arg: Strip out white space and comments to better share the string
+			// Strip out white space and comments to better share the string
 			asCString *defaultArgStr = asNEW(asCString);
-			defaultArgStr->Assign(source.code + n->tokenPos, n->tokenLength);
+			*defaultArgStr = GetCleanExpressionString(n, &source);
 			func->defaultArgs.PushLast(defaultArgStr);
 
 			n = n->next;
@@ -2234,9 +2234,9 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 		
 		if( n && n->nodeType == snExpression )
 		{
-			// TODO: default arg: Strip out white space and comments to better share the string
+			// Strip out white space and comments to better share the string
 			asCString *defaultArgStr = asNEW(asCString);
-			defaultArgStr->Assign(file->code + n->tokenPos, n->tokenLength);
+			*defaultArgStr = GetCleanExpressionString(n, file);
 			defaultArgs.PushLast(defaultArgStr);
 
 			n = n->next;
@@ -2244,6 +2244,29 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 		else
 			defaultArgs.PushLast(0);
 	}
+}
+
+asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCode *file)
+{
+	asASSERT(node && node->nodeType == snExpression);
+
+	asCString str;
+	str.Assign(file->code + node->tokenPos, node->tokenLength);
+
+	asCString cleanStr;
+	for( asUINT n = 0; n < str.GetLength(); )
+	{
+		int len;
+		asETokenClass tok = engine->ParseToken(str.AddressOf() + n, str.GetLength() - n, &len);
+		if( tok != asTC_COMMENT && tok != asTC_WHITESPACE )
+		{
+			if( cleanStr.GetLength() ) cleanStr += " ";
+			cleanStr.Concatenate(str.AddressOf() + n, len);
+		}
+		n += len;
+	}
+
+	return cleanStr;
 }
 
 

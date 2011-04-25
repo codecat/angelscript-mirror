@@ -159,6 +159,8 @@ protected:
 	int GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue);
 	int GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue);
 
+	asCString GetCleanExpressionString(asCScriptNode *n, asCScriptCode *file);
+
 	void ParseScripts();
 	void CompileFunctions();
 	void CompileGlobalVariables();
