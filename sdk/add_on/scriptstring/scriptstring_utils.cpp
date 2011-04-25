@@ -47,20 +47,6 @@ void StringFindFirst_Generic(asIScriptGeneric *gen)
     // Return the result
     *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
-// TODO: Angelscript should permit default parameters
-void StringFindFirst0_Generic(asIScriptGeneric *gen)
-{
-    // Get the arguments
-    CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
-    CScriptString *sub = *(CScriptString**)gen->GetAddressOfArg(1);
-
-    // Find the substring
-    int loc = (int)str->buffer.find(sub->buffer);
-
-    // Return the result
-    *(int*)gen->GetAddressOfReturnLocation() = loc;
-}
-
 
 
 // This function returns the index of the last position where the substring
@@ -82,18 +68,7 @@ void StringFindLast_Generic(asIScriptGeneric *gen)
     // Return the result
     *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
-void StringFindLast0_Generic(asIScriptGeneric *gen)
-{
-    // Get the arguments
-    CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
-    CScriptString *sub = *(CScriptString**)gen->GetAddressOfArg(1);
 
-    // Find the substring
-    int loc = (int)str->buffer.rfind(sub->buffer);
-
-    // Return the result
-    *(int*)gen->GetAddressOfReturnLocation() = loc;
-}
 
 
 
@@ -116,18 +91,7 @@ void StringFindFirstOf_Generic(asIScriptGeneric *gen)
     // Return the result
     *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
-void StringFindFirstOf0_Generic(asIScriptGeneric *gen)
-{
-    // Get the arguments
-    CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
-    CScriptString *chars = *(CScriptString**)gen->GetAddressOfArg(1);
 
-    // Find the substring
-    int loc = (int)str->buffer.find_first_of(chars->buffer);
-
-    // Return the result
-    *(int*)gen->GetAddressOfReturnLocation() = loc;
-}
 
 
 // This function returns the index of the first character that is not in
@@ -145,18 +109,6 @@ void StringFindFirstNotOf_Generic(asIScriptGeneric *gen)
 
     // Find the substring
     int loc = (int)str->buffer.find_first_not_of(chars->buffer, start);
-
-    // Return the result
-    *(int*)gen->GetAddressOfReturnLocation() = loc;
-}
-void StringFindFirstNotOf0_Generic(asIScriptGeneric *gen)
-{
-    // Get the arguments
-    CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
-    CScriptString *chars = *(CScriptString**)gen->GetAddressOfArg(1);
-
-    // Find the substring
-    int loc = (int)str->buffer.find_first_not_of(chars->buffer);
 
     // Return the result
     *(int*)gen->GetAddressOfReturnLocation() = loc;
@@ -183,18 +135,7 @@ void StringFindLastOf_Generic(asIScriptGeneric *gen)
     // Return the result
     *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
-void StringFindLastOf0_Generic(asIScriptGeneric *gen)
-{
-    // Get the arguments
-    CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
-    CScriptString *chars = *(CScriptString**)gen->GetAddressOfArg(1);
 
-    // Find the substring
-    int loc = (int)str->buffer.find_last_of(chars->buffer);
-
-    // Return the result
-    *(int*)gen->GetAddressOfReturnLocation() = loc;
-}
 
 
 
@@ -217,18 +158,7 @@ void StringFindLastNotOf_Generic(asIScriptGeneric *gen)
     // Return the result
     *(int*)gen->GetAddressOfReturnLocation() = loc;
 }
-void StringFindLastNotOf0_Generic(asIScriptGeneric *gen)
-{
-    // Get the arguments
-    CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
-    CScriptString *chars = *(CScriptString**)gen->GetAddressOfArg(1);
 
-    // Find the substring
-    int loc = (int)str->buffer.find_last_not_of(chars->buffer);
-
-    // Return the result
-    *(int*)gen->GetAddressOfReturnLocation() = loc;
-}
 
 
 
@@ -355,18 +285,12 @@ void RegisterScriptStringUtils(asIScriptEngine *engine)
     int r;
 
     r = engine->RegisterGlobalFunction("string@ substring(const string &in, int, int)", asFUNCTION(StringSubString_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findFirst(const string &in, const string &in)", asFUNCTION(StringFindFirst0_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findFirst(const string &in, const string &in, int)", asFUNCTION(StringFindFirst_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findLast(const string &in, const string &in)", asFUNCTION(StringFindLast0_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findLast(const string &in, const string &in, int)", asFUNCTION(StringFindLast_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findFirstOf(const string &in, const string &in)", asFUNCTION(StringFindFirstOf0_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findFirstOf(const string &in, const string &in, int)", asFUNCTION(StringFindFirstOf_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findFirstNotOf(const string &in, const string &in)", asFUNCTION(StringFindFirstNotOf0_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findFirstNotOf(const string &in, const string &in, int)", asFUNCTION(StringFindFirstNotOf_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findLastOf(const string &in, const string &in)", asFUNCTION(StringFindLastOf0_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findLastOf(const string &in, const string &in, int)", asFUNCTION(StringFindLastOf_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findLastNotOf(const string &in, const string &in)", asFUNCTION(StringFindLastNotOf0_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("int findLastNotOf(const string &in, const string &in, int)", asFUNCTION(StringFindLastNotOf_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterGlobalFunction("int findFirst(const string &in, const string &in, int a = 0)", asFUNCTION(StringFindFirst_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterGlobalFunction("int findFirstOf(const string &in, const string &in, int a = 0)", asFUNCTION(StringFindFirstOf_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterGlobalFunction("int findFirstNotOf(const string &in, const string &in, int a = 0)", asFUNCTION(StringFindFirstNotOf_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterGlobalFunction("int findLast(const string &in, const string &in, int a = -1)", asFUNCTION(StringFindLast_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterGlobalFunction("int findLastOf(const string &in, const string &in, int a = -1)", asFUNCTION(StringFindLastOf_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterGlobalFunction("int findLastNotOf(const string &in, const string &in, int a = -1)", asFUNCTION(StringFindLastNotOf_Generic), asCALL_GENERIC); assert(r >= 0);
     r = engine->RegisterGlobalFunction("array<string@>@ split(const string &in, const string &in)", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
     r = engine->RegisterGlobalFunction("string@ join(const array<string@> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
 }

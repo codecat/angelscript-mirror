@@ -517,32 +517,26 @@ public:
   string @ substring(const string &in str, int start, int length);
 
   // Find the first occurrance of the substring
-  int findFirst(const string &in str, const string &in sub);
-  int findFirst(const string &in str, const string &in sub, int startAt)
-  
+  int findFirst(const string &in str, const string &in sub, int startAt = 0);
+
   // Find the last occurrance of the substring
-  int findLast(const string &in str, const string &in sub);
-  int findLast(const string &in str, const string &in sub, int startAt);
-  
+  int findLast(const string &in str, const string &in sub, int startAt = -1);
+
   // Find the first character from the set 
-  int findFirstOf(const string &in str, const string &in set);
-  int findFirstOf(const string &in str, const string &in set, int startAt);
-  
+  int findFirstOf(const string &in str, const string &in set, int startAt = 0);
+
   // Find the first character not in the set
-  int findFirstNotOf(const string &in str, const string &in set);
-  int findFirstNotOf(const string &in str, const string &in set, int startAt);
-  
+  int findFirstNotOf(const string &in str, const string &in set, int startAt = 0);
+
   // Find the last character from the set
-  int findLastOf(const string &in str, const string &in set);
-  int findLastOf(const string &in str, const string &in set, int startAt);
-  
+  int findLastOf(const string &in str, const string &in set, int startAt = -1);
+
   // Find the last character not in the set
-  int findLastNotOf(const string &in str, const string &in set);
-  int findLastNotOf(const string &in str, const string &in set, int startAt);
-  
+  int findLastNotOf(const string &in str, const string &in set, int startAt = -1);
+
   // Split the string into an array of substrings
   string@[]@ split(const string &in str, const string &in delimiter);
-  
+
   // Join an array of strings into a larger string separated by a delimiter
   string@ join(const string@[] &in str, const string &in delimiter);
 </pre>
