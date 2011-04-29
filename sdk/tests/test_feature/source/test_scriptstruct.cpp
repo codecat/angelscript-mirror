@@ -467,6 +467,55 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test private methods with inheritance
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"bool alreadyCalled = false; \n"
+			"class CBar \n"
+			"{ \n"
+			" CBar() \n"
+			" { \n"
+			"  assert(alreadyCalled == false); \n"
+			"  alreadyCalled = true; \n"
+			" } \n"
+			" void Foo() \n"
+			" { \n"
+			" } \n"
+			"}; \n"
+			"class CDerivedBar : CBar \n"
+			"{ \n"
+			" CDerivedBar() \n"
+			" { \n"
+			" } \n"
+			" private void ImNotAnOverrideOfTheBaseClass() \n"
+			" { \n"
+			" } \n"
+			" private void Foo() \n" 
+			" { \n"
+			" } \n"
+			"}; \n";
+
+		asIScriptModule *mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		mod->Build();
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "CDerivedBar bar; bar.Foo(); ", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PrintException(ctx, true);
+			TEST_FAILED;
+		}
+		ctx->Release();
+ 
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

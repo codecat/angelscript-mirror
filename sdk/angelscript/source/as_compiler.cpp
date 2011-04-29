@@ -213,14 +213,19 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	// part of.
 	AddVariableScope();
 
+	// Skip the private keyword if it is there
+	asCScriptNode *node = func->firstChild;
+	if( node->nodeType == snUndefined && node->tokenType == ttPrivate )
+		node = node->next;
+
 	//----------------------------------------------
 	// Examine return type
 	bool isDestructor = false;
 	asCDataType returnType;
-	if( func->firstChild->nodeType == snDataType )
+	if( node->nodeType == snDataType )
 	{
-		returnType = builder->CreateDataTypeFromNode(func->firstChild, script);
-		returnType = builder->ModifyDataTypeFromNode(returnType, func->firstChild->next, script, 0, 0);
+		returnType = builder->CreateDataTypeFromNode(node, script);
+		returnType = builder->ModifyDataTypeFromNode(returnType, node->next, script, 0, 0);
 
 		// Make sure the return type is instanciable or is void
 		if( !returnType.CanBeInstanciated() &&
@@ -234,7 +239,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	else
 	{
 		returnType = asCDataType::CreatePrimitive(ttVoid, false);
-		if( func->firstChild->tokenType == ttBitNot )
+		if( node->tokenType == ttBitNot )
 			isDestructor = true;
 		else
 			m_isConstructor = true;
@@ -243,7 +248,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	//----------------------------------------------
 	// Declare parameters
 	// Find first parameter
-	asCScriptNode *node = func->firstChild;
 	while( node && node->nodeType != snParameterList )
 		node = node->next;
 
