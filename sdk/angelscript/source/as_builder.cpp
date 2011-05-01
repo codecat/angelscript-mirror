@@ -2408,7 +2408,11 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 				objType->beh.factories.PushLast(factoryId);
 			}
 
-			// TODO: default arg: We must copy the default arg strings to avoid deleting the same object multiple times
+			// We must copy the default arg strings to avoid deleting the same object multiple times
+			for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
+				if( defaultArgs[n] )
+					defaultArgs[n] = asNEW(asCString)(*defaultArgs[n]);
+
 			asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
 			module->AddScriptFunction(file->idx, factoryId, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
 

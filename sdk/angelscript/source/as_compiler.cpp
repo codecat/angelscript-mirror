@@ -7016,45 +7016,53 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		}
 		else
 		{
-			// TODO: default arg: Add the default values for arguments not explicitly supplied
+			int r = asSUCCESS;
 
-			asCByteCode objBC(engine);
+			// Add the default values for arguments not explicitly supplied
+			asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
+			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
+				r = CompileDefaultArgs(node, args, func);
 
-			PrepareFunctionCall(funcs[0], &ctx->bc, args);
-
-			MoveArgsToStack(funcs[0], &ctx->bc, args, false);
-
-			if( !(dt.GetObjectType()->flags & asOBJ_REF) )
+			if( r == asSUCCESS )
 			{
-				// If the object is allocated on the stack, then call the constructor as a normal function
-				if( onHeap )
-				{
-					int offset = 0;
-					asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
-					for( asUINT n = 0; n < args.GetLength(); n++ )
-						offset += descr->parameterTypes[n].GetSizeOnStackDWords();
+				asCByteCode objBC(engine);
 
-					ctx->bc.InstrWORD(asBC_GETREF, (asWORD)offset);
+				PrepareFunctionCall(funcs[0], &ctx->bc, args);
+
+				MoveArgsToStack(funcs[0], &ctx->bc, args, false);
+
+				if( !(dt.GetObjectType()->flags & asOBJ_REF) )
+				{
+					// If the object is allocated on the stack, then call the constructor as a normal function
+					if( onHeap )
+					{
+						int offset = 0;
+						asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
+						for( asUINT n = 0; n < args.GetLength(); n++ )
+							offset += descr->parameterTypes[n].GetSizeOnStackDWords();
+
+						ctx->bc.InstrWORD(asBC_GETREF, (asWORD)offset);
+					}
+					else
+						ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
+
+					PerformFunctionCall(funcs[0], ctx, onHeap, &args, tempObj.dataType.GetObjectType());
+
+					// The constructor doesn't return anything,
+					// so we have to manually inform the type of
+					// the return value
+					ctx->type = tempObj;
+					if( !onHeap )
+						ctx->type.dataType.MakeReference(false);
+
+					// Push the address of the object on the stack again
+					ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
 				}
 				else
-					ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
-
-				PerformFunctionCall(funcs[0], ctx, onHeap, &args, tempObj.dataType.GetObjectType());
-
-				// The constructor doesn't return anything,
-				// so we have to manually inform the type of
-				// the return value
-				ctx->type = tempObj;
-				if( !onHeap )
-					ctx->type.dataType.MakeReference(false);
-
-				// Push the address of the object on the stack again
-				ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
-			}
-			else
-			{
-				// Call the factory to create the reference type
-				PerformFunctionCall(funcs[0], ctx, false, &args);
+				{
+					// Call the factory to create the reference type
+					PerformFunctionCall(funcs[0], ctx, false, &args);
+				}
 			}
 		}
 	}

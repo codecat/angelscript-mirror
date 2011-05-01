@@ -116,11 +116,44 @@ bool Test()
 		engine->Release();
 	}
 
+	// Default args in script class constructors
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char *script =
+			"class T \n"
+			"{ \n"
+			"  T(int a, int b = 25) \n"
+			"  { \n"
+			"    assert(a == 10); \n"
+			"  } \n"
+			"} \n" 
+			"void main() \n"
+			"{ \n"
+			"  T(10); \n"
+			"} \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+
+
 	// TODO: The default args must be stored with the compiled byte code
 
 	// TODO: The compilation of the default args must not add any LINE instructions in the byte code, because they wouldn't match the real script
-
-	// TODO: Default args in script class constructors
 
 	// TODO: Default arg must not end up using variables that are used in previously compiled variables as temporaries
 
