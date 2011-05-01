@@ -1911,6 +1911,11 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 	vf->signatureId = func->signatureId;
 	vf->isPrivate = func->isPrivate;
 	vf->vfTableIdx = idx;
+	vf->defaultArgs = func->defaultArgs;
+	// Copy the default arg strings to avoid multiple deletes on the same object
+	for( asUINT n = 0; n < vf->defaultArgs.GetLength(); n++ )
+		if( vf->defaultArgs[n] )
+			vf->defaultArgs[n] = asNEW(asCString)(*vf->defaultArgs[n]);
 
 	module->AddScriptFunction(vf);
 

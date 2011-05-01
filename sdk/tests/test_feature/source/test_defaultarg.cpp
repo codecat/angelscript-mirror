@@ -149,9 +149,8 @@ bool Test()
 		engine->Release();
 	}
 
-
-
-	// TODO: The default args must be stored with the compiled byte code
+	// The test to make sure the saved bytecode keeps the default args is done in test_saveload.cpp
+	// A test to make sure script class methods with default args work is done in test_saveload.cpp
 
 	// TODO: The compilation of the default args must not add any LINE instructions in the byte code, because they wouldn't match the real script
 

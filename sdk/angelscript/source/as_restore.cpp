@@ -557,6 +557,16 @@ void asCRestore::WriteFunctionSignature(asCScriptFunction *func)
 
 	WRITE_NUM(func->funcType);
 
+	// Write the default args, from last to first
+	count = 0;
+	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
+		if( func->defaultArgs[i] )
+			count++;
+	WriteEncodedUInt(count);
+	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
+		if( func->defaultArgs[i] )
+			WriteString(func->defaultArgs[i]);
+
 	WriteObjectType(func->objectType);
 
 	if( func->objectType )
@@ -595,6 +605,19 @@ void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
 
 	READ_NUM(func->funcType);
 
+	// Read the default args, from last to first
+	count = ReadEncodedUInt();
+	if( count )
+	{
+		func->defaultArgs.SetLength(func->parameterTypes.GetLength());
+		for( i = 0; i < count; i++ )
+		{
+			asCString *str = asNEW(asCString);
+			func->defaultArgs[func->defaultArgs.GetLength()-1-i] = str;
+			ReadString(str);
+		}
+	}
+	
 	func->objectType = ReadObjectType();
 	if( func->objectType )
 	{

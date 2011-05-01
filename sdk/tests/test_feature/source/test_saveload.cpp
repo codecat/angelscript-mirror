@@ -20,7 +20,7 @@ static const char * const TESTNAME = "TestSaveLoad";
 
 
 static const char *script1 =
-"import void Test() from \"DynamicModule\";   \n"
+"import void Test() from 'DynamicModule';     \n"
 "OBJ g_obj;                                   \n"
 "A @gHandle;                                  \n"
 "enum ETest {}                                \n"
@@ -97,7 +97,7 @@ static const char *script4 =
 "CheckCollision g_checkCollision;              \n"
 "                                              \n"
 "class Shot : Actor {                          \n"
-"	void Initialize() {                        \n"
+"	void Initialize(int a = 0) {               \n"
 "		g_checkCollision.Register(this);       \n"
 "	}                                          \n"
 "}                                             \n"
@@ -136,16 +136,16 @@ static const char *script5 =
 "int which = 0;                                         \n"
 "                                                       \n"
 "bool Initialize() {                                    \n"
-"  if (!_iso.Load(\"data/iso/map.imp\"))                \n"
+"  if (!_iso.Load('data/iso/map.imp'))                  \n"
 "    return false;                                      \n"
 "                                                       \n"
 "  _sprite.resize(100);                                 \n"
 "                                                       \n"
-"  if (!_sprite[0].Load(\"data/iso/pacman.spr\"))       \n"
+"  if (!_sprite[0].Load('data/iso/pacman.spr'))         \n"
 "    return false;                                      \n"
 "                                                       \n"
 "  for (int i=1; i < 100; i++) {                        \n"
-"    if (!_sprite[i].Load(\"data/iso/residencia1.spr\"))\n"
+"    if (!_sprite[i].Load('data/iso/residencia1.spr'))  \n"
 "      return false;                                    \n"
 "  }                                                    \n"
 "                                                       \n"
@@ -342,7 +342,7 @@ bool Test()
 	mod->SaveByteCode(&stream);
 
 	// TODO: These should eventually be equal, once the bytecode is fully platform independent
-	if( (sizeof(void*) == 4 && stream.buffer.size() != 1480) /* ||
+	if( (sizeof(void*) == 4 && stream.buffer.size() != 1508) /* ||
 		(sizeof(void*) == 8 && stream.buffer.size() != 1616) */ ) 
 	{
 		// Originally this was 3213 (on 32bit)
@@ -350,7 +350,7 @@ bool Test()
 	}
 
 	asUINT zeroes = stream.CountZeroes();
-	if( (sizeof(void*) == 4 && zeroes != 456) /* ||
+	if( (sizeof(void*) == 4 && zeroes != 484) /* ||
 		(sizeof(void*) == 8 && zeroes != 609) */ )
 	{
 		printf("The saved byte code contains a different amount of zeroes than expected. Counted %d\n", zeroes);
@@ -744,7 +744,7 @@ bool Test()
 		const char *script = 
 			"interface IObj {}; \n"
 		    "class Hoge : IObj {}; \n"
-		    "void main() \n"
+		    "void main(int a = 0) \n"
 		    "{ \n"
 		    "    Hoge h; \n"
 		    "    IObj@ objHandle = h; \n"
