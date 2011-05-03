@@ -1462,9 +1462,14 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 
 int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext*> &args, asCScriptFunction *func)
 {
-	// Compile the arguments in reverse order (as they will be pushed on the stack)
 	bool anyErrors = false;
+	asCArray<int> varsUsed;
 	int explicitArgs = (int)args.GetLength();
+
+	for( int p = 0; p < explicitArgs; p++ )
+		args[p]->bc.GetVarsUsed(varsUsed);
+
+	// Compile the arguments in reverse order (as they will be pushed on the stack)
 	args.SetLength(func->parameterTypes.GetLength());
 	for( int n = (int)func->parameterTypes.GetLength() - 1; n >= explicitArgs; n-- )
 	{
@@ -1501,10 +1506,30 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 
 		args[n] = asNEW(asSExprContext)(engine);
 		MergeExprBytecodeAndType(args[n], &expr);
-	}
 
-	// TODO: default arg: Must make sure the default arg expressions don't end 
-	//                    up using variables that are used in the explicit args
+		// Make sure the default arg expression doesn't end up
+		// with a variable that is used in a previous expression
+		if( args[n]->type.isVariable )
+		{
+			int offset = args[n]->type.stackOffset;
+			if( varsUsed.Exists(offset) )
+			{
+				// Release the current temporary variable
+				ReleaseTemporaryVariable(args[n]->type, 0);
+
+				asCDataType dt = args[n]->type.dataType;
+				dt.MakeReference(false);
+				int newOffset = AllocateVariableNotIn(dt, true, &varsUsed, IsVariableOnHeap(offset));
+
+				asASSERT( IsVariableOnHeap(offset) == IsVariableOnHeap(newOffset) );
+
+				args[n]->bc.ExchangeVar(offset, newOffset);
+				args[n]->type.stackOffset = (short)newOffset;
+				args[n]->type.isTemporary = true;
+				args[n]->type.isVariable = true;
+			}
+		}
+	}
 
 	return anyErrors ? -1 : 0;
 }
@@ -8976,6 +9001,10 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 	{
 		Dereference(ctx, true);
 
+		// This following warning was removed as there may be valid reasons
+		// for calling non-const methods on temporary objects, and we shouldn't
+		// warn when there is no way of removing the warning.
+/*		
 		// Warn if the method is non-const and the object is temporary 
 		// since the changes will be lost when the object is destroyed.
 		// If the object is accessed through a handle, then it is assumed
@@ -8984,10 +9013,10 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 			!ctx->type.dataType.IsObjectHandle() && 
 			!engine->scriptFunctions[funcId]->isReadOnly )
 		{
-			Warning(TXT_CALLING_NONCONST_METHOD_ON_TEMP, node);
+			Warning("A non-const method is called on temporary object. Changes to the object may be lost.", node);
 			Information(engine->scriptFunctions[funcId]->GetDeclaration(), node);
 		}
-	}
+*/	}
 
 	asCByteCode objBC(engine);
 	objBC.AddCode(&ctx->bc);

@@ -268,8 +268,7 @@ bool Test()
 	{
 		TEST_FAILED;
 	}
-	if( bout.buffer != "ExecuteString (1, 10) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
-		               "ExecuteString (1, 10) : Info    : int& Object::GetRef()\n" )
+	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

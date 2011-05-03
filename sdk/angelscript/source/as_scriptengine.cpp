@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -3395,6 +3395,8 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
 
 void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 {
+	// TODO: optimize: Use the copy constructor when available
+
 	// Make sure the type id is for an object type, and not a primitive or a handle
 	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return;
 	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
@@ -3407,6 +3409,7 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 
 	asCObjectType *objType = dt->GetObjectType();
 	// TODO: beh.copy will be removed, so we need to find the default opAssign method instead
+	// TODO: Must not copy if the opAssign is not available and the object is not a POD object
 	if( objType->beh.copy )
 	{
 		CallObjectMethod(dstObj, srcObj, objType->beh.copy);

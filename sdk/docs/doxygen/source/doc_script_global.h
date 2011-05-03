@@ -38,13 +38,17 @@ good practice to declare variables that will not be changed as <code>const</code
 because it makes for more readable code and the compiler is also able to take advantage 
 of it some times. Especially for <code>const &amp;in</code> the compiler is many times able to avoid a copy of the value.
 
-Note that although functions that return types by references can't be
-declared by scripts you may still see functions like these if the host
-application defines them. In that case the returned value may also
-be used as the target in assignments.
+Parameters can have default arguments. When a function with default arguments is called, it is not necessary to explicitly inform the value of the arguments, as the compiler can automatically use the default arg. This is especially useful when functions have some arguments that rarely change.
 
 <pre>
+  // Declaration of a normal function
   int MyFunction(int a, int b)
+  {
+    return a + b;
+  }
+
+  // Declaration of a function with default argument
+  int MyFuncWithDefArg(int a, int b = 0)
   {
     return a + b;
   }

@@ -149,12 +149,48 @@ bool Test()
 		engine->Release();
 	}
 
+	// Default arg must not end up using variables that are used 
+	// in previously compiled variables as temporaries
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char *script =
+			"void func(uint8 a, string b = 'b') \n"
+			"{ \n"
+			"  assert( a == 97 ); \n"
+			"  assert( b == 'b' ); \n"
+			"} \n" 
+			"void main() \n"
+			"{ \n"
+			"  uint8 a; \n"
+			"  func(a = 'a'[0]); \n"
+			"} \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// TODO: Test local declaration with def arg in constructor
+
+	// TODO: Test global declaration with def arg in constructor
+
 	// The test to make sure the saved bytecode keeps the default args is done in test_saveload.cpp
 	// A test to make sure script class methods with default args work is done in test_saveload.cpp
 
 	// TODO: The compilation of the default args must not add any LINE instructions in the byte code, because they wouldn't match the real script
-
-	// TODO: Default arg must not end up using variables that are used in previously compiled variables as temporaries
 
 	// Success
 	return fail;

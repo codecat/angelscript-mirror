@@ -188,8 +188,7 @@ bool Test()
 	r = ExecuteString(engine, "assert(string('abc')[0] == 97)");
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 21) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
-	                   "ExecuteString (1, 21) : Info    : uint8& string::opIndex(uint)\n" )
+	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

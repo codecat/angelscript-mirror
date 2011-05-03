@@ -193,8 +193,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		if( bout.buffer != "ExecuteString (1, 17) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
-		                   "ExecuteString (1, 17) : Info    : MyStruct& array::opIndex(int)\n" )
+		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

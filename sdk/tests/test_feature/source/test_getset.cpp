@@ -557,7 +557,9 @@ bool Test()
 
 	// Test accessing a non-const method on an object through a get accessor
 	// Should at least warn since the object is just a temporary one
-	bout.buffer.c_str();
+/*
+	// This warning isn't done anymore as there are times when it is valid to call a non-const method on temporary objects, for example if a stream like object is implemented
+	bout.buffer = "";
 	r = ExecuteString(engine, "Test t; t.s.resize(4);", mod);
 	if( r < 0 )
 		TEST_FAILED;
@@ -571,6 +573,7 @@ bool Test()
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
+*/
 
 	// Test opNeg for object through get accessor
 	const char *script15 = 
@@ -622,9 +625,7 @@ bool Test()
 		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
-	if( bout.buffer != "script (5, 1) : Info    : Compiling void func()\n"
-	                   "script (8, 14) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
-					   "script (8, 14) : Info    : int& array::opIndex(uint)\n" )
+	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
