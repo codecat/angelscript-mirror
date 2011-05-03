@@ -130,11 +130,14 @@ bool Test()
 			"  T(int a, int b = 25) \n"
 			"  { \n"
 			"    assert(a == 10); \n"
+			"    assert(b == 25); \n"
 			"  } \n"
 			"} \n" 
+			"T g(10); \n"
 			"void main() \n"
 			"{ \n"
 			"  T(10); \n"
+			"  T l(10); \n"
 			"} \n";
 
 		mod->AddScriptSection("script", script);
@@ -182,10 +185,6 @@ bool Test()
 
 		engine->Release();
 	}
-
-	// TODO: Test local declaration with def arg in constructor
-
-	// TODO: Test global declaration with def arg in constructor
 
 	// The test to make sure the saved bytecode keeps the default args is done in test_saveload.cpp
 	// A test to make sure script class methods with default args work is done in test_saveload.cpp

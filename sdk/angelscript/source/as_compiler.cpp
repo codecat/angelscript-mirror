@@ -793,33 +793,41 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 				if( funcs.GetLength() == 1 )
 				{
-					// TODO: default arg: Add the default values for arguments not explicitly supplied
+					int r = asSUCCESS;
 
-					if( gvar->datatype.GetObjectType()->flags & asOBJ_REF )
+					// Add the default values for arguments not explicitly supplied
+					asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
+					if( func && args.GetLength() < (asUINT)func->GetParamCount() )
+						r = CompileDefaultArgs(node, args, func);
+
+					if( r == asSUCCESS )
 					{
-						MakeFunctionCall(&ctx, funcs[0], 0, args, node);
+						if( gvar->datatype.GetObjectType()->flags & asOBJ_REF )
+						{
+							MakeFunctionCall(&ctx, funcs[0], 0, args, node);
 
-						// Store the returned handle in the global variable
-						ctx.bc.Instr(asBC_RDSPTR);
-						ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[gvar->index]->GetAddressOfValue());
-						ctx.bc.InstrPTR(asBC_REFCPY, gvar->datatype.GetObjectType());
-						ctx.bc.Pop(AS_PTR_SIZE);
-						ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
-					}
-					else
-					{
-						// Push the address of the location where the variable will be stored on the stack.
-						// This reference is safe, because the addresses of the global variables cannot change.
-						// TODO: When serialization of the context is implemented this will probably have to change, 
-						//       because this pointer may be on the stack while the context is suspended, and may
-						//       be difficult to serialize as the context doesn't know that the value represents a 
-						//       pointer.
-						ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[gvar->index]->GetAddressOfValue());
+							// Store the returned handle in the global variable
+							ctx.bc.Instr(asBC_RDSPTR);
+							ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[gvar->index]->GetAddressOfValue());
+							ctx.bc.InstrPTR(asBC_REFCPY, gvar->datatype.GetObjectType());
+							ctx.bc.Pop(AS_PTR_SIZE);
+							ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
+						}
+						else
+						{
+							// Push the address of the location where the variable will be stored on the stack.
+							// This reference is safe, because the addresses of the global variables cannot change.
+							// TODO: When serialization of the context is implemented this will probably have to change, 
+							//       because this pointer may be on the stack while the context is suspended, and may
+							//       be difficult to serialize as the context doesn't know that the value represents a 
+							//       pointer.
+							ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[gvar->index]->GetAddressOfValue());
 
-						PrepareFunctionCall(funcs[0], &ctx.bc, args);
-						MoveArgsToStack(funcs[0], &ctx.bc, args, false);
+							PrepareFunctionCall(funcs[0], &ctx.bc, args);
+							MoveArgsToStack(funcs[0], &ctx.bc, args, false);
 
-						PerformFunctionCall(funcs[0], &ctx, true, &args, gvar->datatype.GetObjectType());
+							PerformFunctionCall(funcs[0], &ctx, true, &args, gvar->datatype.GetObjectType());
+						}
 					}
 				}
 			}
@@ -1733,41 +1741,49 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 					if( funcs.GetLength() == 1 )
 					{
-						// TODO: default arg: Add the default values for arguments not explicitly supplied
+						int r = asSUCCESS;
 
-						sVariable *v = variables->GetVariable(name.AddressOf());
-						asSExprContext ctx(engine);
-						if( v->type.GetObjectType() && (v->type.GetObjectType()->flags & asOBJ_REF) )
+						// Add the default values for arguments not explicitly supplied
+						asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
+						if( func && args.GetLength() < (asUINT)func->GetParamCount() )
+							r = CompileDefaultArgs(node, args, func);
+
+						if( r == asSUCCESS )
 						{
-							MakeFunctionCall(&ctx, funcs[0], 0, args, node, true, v->stackOffset);
+							sVariable *v = variables->GetVariable(name.AddressOf());
+							asSExprContext ctx(engine);
+							if( v->type.GetObjectType() && (v->type.GetObjectType()->flags & asOBJ_REF) )
+							{
+								MakeFunctionCall(&ctx, funcs[0], 0, args, node, true, v->stackOffset);
 
-							// Pop the reference left by the function call
-							ctx.bc.Pop(AS_PTR_SIZE);
+								// Pop the reference left by the function call
+								ctx.bc.Pop(AS_PTR_SIZE);
+							}
+							else
+							{
+								// When the object is allocated on the heap, the address where the 
+								// reference will be stored must be pushed on the stack before the 
+								// arguments. This reference on the stack is safe, even if the script
+								// is suspended during the evaluation of the arguments.
+								if( v->onHeap )
+									ctx.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
+
+								PrepareFunctionCall(funcs[0], &ctx.bc, args);
+								MoveArgsToStack(funcs[0], &ctx.bc, args, false);
+
+								// When the object is allocated on the stack, the address to the
+								// object is pushed on the stack after the arguments as the object pointer
+								if( !v->onHeap )
+									ctx.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
+
+								PerformFunctionCall(funcs[0], &ctx, v->onHeap, &args, type.GetObjectType());
+
+								// TODO: value on stack: This probably has to be done in PerformFunctionCall
+								// Mark the object as initialized
+								ctx.bc.ObjInfo(v->stackOffset, asOBJ_INIT);
+							}
+							bc->AddCode(&ctx.bc);
 						}
-						else
-						{
-							// When the object is allocated on the heap, the address where the 
-							// reference will be stored must be pushed on the stack before the 
-							// arguments. This reference on the stack is safe, even if the script
-							// is suspended during the evaluation of the arguments.
-							if( v->onHeap )
-								ctx.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
-
-							PrepareFunctionCall(funcs[0], &ctx.bc, args);
-							MoveArgsToStack(funcs[0], &ctx.bc, args, false);
-
-							// When the object is allocated on the stack, the address to the
-							// object is pushed on the stack after the arguments as the object pointer
-							if( !v->onHeap )
-								ctx.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
-
-							PerformFunctionCall(funcs[0], &ctx, v->onHeap, &args, type.GetObjectType());
-
-							// TODO: value on stack: This probably has to be done in PerformFunctionCall
-							// Mark the object as initialized
-							ctx.bc.ObjInfo(v->stackOffset, asOBJ_INIT);
-						}
-						bc->AddCode(&ctx.bc);
 					}
 				}
 
