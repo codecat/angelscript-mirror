@@ -3964,6 +3964,11 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 	if( NULL == valueName )
 		return ConfigError(asINVALID_NAME);
 
+	int tokenLen;
+	asETokenClass tokenClass = ParseToken(valueName, 0, &tokenLen);
+	if( tokenClass != asTC_IDENTIFIER || tokenLen != strlen(valueName) )
+		return ConfigError(asINVALID_NAME);
+
 	for( unsigned int n = 0; n < ot->enumValues.GetLength(); n++ )
 	{
 		if( ot->enumValues[n]->name == valueName )

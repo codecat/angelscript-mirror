@@ -417,7 +417,7 @@ static bool TestEnum()
 	r = mod->Build();
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "test (1, 22) : Error   : Name conflict. 'inf' is a global property.\n" )
+	if( bout.buffer != "test (1, 22) : Error   : Name conflict. 'inf' is already used.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -454,6 +454,95 @@ static bool TestEnum()
 
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	//paste at the end of TestEnum()
+	{    
+		COutStream out;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		r = engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 1); assert(r >= 0);
+
+		r = engine->RegisterEnum("RENUM_1"); assert(r >= 0);
+		r = engine->RegisterEnumValue("RENUM_1", "R_GLOBAL", 0); assert(r >= 0);
+		r = engine->RegisterEnumValue("RENUM_1", "RE1_1", 1); assert(r >= 0);
+		r = engine->RegisterEnumValue("RENUM_1", "RE1_2", 2); assert(r >= 0);
+
+		r = engine->RegisterEnum("RENUM_2"); assert(r >= 0);
+		r = engine->RegisterEnumValue("RENUM_2", "R_GLOBAL", 13); assert(r >= 0);
+		r = engine->RegisterEnumValue("RENUM_2", "RE2_1", 1); assert(r >= 0);
+		r = engine->RegisterEnumValue("RENUM_2", "RE2_2", 2); assert(r >= 0);
+
+		r = engine->RegisterGlobalFunction("void output(int val1)", asFUNCTION(scriptOutput), asCALL_CDECL); assert(r >= 0);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", 
+			"enum ENUM_1            \n"
+			"{                      \n"
+			"  TEST_GLOBAL = 0,     \n"
+			"  E1_VAL1,             \n"
+			"  E1_VAL2,             \n"
+			"  RE1_2                \n"
+			"}                      \n"
+			"enum ENUM_2            \n"
+			"{                      \n"
+			"  TEST_GLOBAL = 0,     \n" 
+			"  E2_VAL1,             \n"
+			"  E2_VAL2              \n"
+			"}                      \n"
+			"ENUM_1 g_e1 = ENUM_1::E1_VAL1;         \n"
+			"RENUM_1 rg_e1 = RENUM_1::RE1_2;        \n" 
+			"                                       \n"
+			"void main()                            \n"
+			"{                                      \n"
+			"   ENUM_1 l_e1 = ENUM_1::E1_VAL1;      \n"
+			"   g_e1 = ENUM_1::E1_VAL1;             \n"
+			"   rg_e1 = RENUM_1::R_GLOBAL;          \n"
+			"   RENUM_2 rl_e2 = RENUM_2::R_GLOBAL;  \n"
+			"   output(rg_e1);                      \n"
+			"   output(rl_e2);                      \n"
+			"}                                      \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		buffer = "";
+		r = ExecuteString(engine, "main();", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( buffer != "0\n13\n" )
+			TEST_FAILED;
+		engine->Release();
+	} 
+
+	// Some validations that must be done
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		r = engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 1); assert(r >= 0);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", 
+			"enum ENUM_1            \n"
+			"{                      \n"
+			"  E1_VAL1              \n"
+			"}                      \n"
+			"ENUM_1 g_e1 = ENUM_1::E1_VAL1;         \n"
+			"ENUM_1 g_e2 = E2_VAL1;                 \n"); // <- that shouldn't (?)
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "script (6, 13) : Info    : Compiling ENUM_1 g_e2\n"
+		                   "script (6, 15) : Error   : 'E2_VAL1' is not declared\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->RegisterEnum("RENUM_1"); assert(r >= 0);
+		r = engine->RegisterEnumValue("RENUM_1", "@#$%", 777); // shouldn't work
+		if( r >= 0 )
 			TEST_FAILED;
 
 		engine->Release();

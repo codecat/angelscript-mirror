@@ -1245,8 +1245,6 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 
 void asCBuilder::CompileGlobalVariables()
 {
-	asUINT n;
-
 	bool compileSucceeded = true;
 
 	// Store state of compilation (errors, warning, output)
@@ -1287,14 +1285,14 @@ void asCBuilder::CompileGlobalVariables()
 		finalOutput.Clear();
 		for( asUINT n = 0; n < globVariables.GetLength(); n++ )
 		{
+			sGlobalVariableDescription *gvar = globVariables[n];
+			if( gvar->isCompiled )
+				continue;
+
 			asCByteCode init(engine);
 			numWarnings = 0;
 			numErrors = 0;
 			outBuffer.Clear();
-
-			sGlobalVariableDescription *gvar = globVariables[n];
-			if( gvar->isCompiled )
-				continue;
 
 			// Skip this for now if we're not compiling complex types yet
 			if( compilingPrimitives && !gvar->datatype.IsPrimitive() )
@@ -1428,6 +1426,19 @@ void asCBuilder::CompileGlobalVariables()
 					asDELETE(initFunc, asCScriptFunction);
 					initFunc = 0;
 				}
+
+				// Convert enums to true enum values, so subsequent compilations can access it as an enum
+				if( gvar->isEnumValue )
+				{
+					asCObjectType *objectType = gvar->datatype.GetObjectType();
+					asASSERT(NULL != objectType);
+
+					asSEnumValue *e = asNEW(asSEnumValue);
+					e->name = gvar->name;
+					e->value = *(int*)&gvar->constantValue;
+
+					objectType->enumValues.PushLast(e);
+				}
 			}
 			else
 			{
@@ -1479,31 +1490,27 @@ void asCBuilder::CompileGlobalVariables()
 			module->scriptGlobals = initOrder;
 	}
 
-	// Convert all variables compiled for the enums to true enum values
-	for( n = 0; n < globVariables.GetLength(); n++ )
+	// Delete the enum expressions
+	for( asUINT n = 0; n < globVariables.GetLength(); n++ )
 	{
-		asCObjectType *objectType;
 		sGlobalVariableDescription *gvar = globVariables[n];
-		if( !gvar->isEnumValue )
-			continue;
+		if( gvar->isEnumValue )
+		{
+			// Destroy the gvar property
+			if( gvar->nextNode )
+			{
+				gvar->nextNode->Destroy(engine);
+				gvar->nextNode = 0;
+			}
+			if( gvar->property )
+			{
+				asDELETE(gvar->property, asCGlobalProperty);
+				gvar->property = 0;
+			}
 
-		objectType = gvar->datatype.GetObjectType();
-		asASSERT(NULL != objectType);
-
-		asSEnumValue *e = asNEW(asSEnumValue);
-		e->name = gvar->name;
-		e->value = *(int*)&gvar->constantValue;
-
-		objectType->enumValues.PushLast(e);
-
-		// Destroy the gvar property
-		if( gvar->nextNode )
-			gvar->nextNode->Destroy(engine);
-		if( gvar->property )
-			asDELETE(gvar->property, asCGlobalProperty);
-
-		asDELETE(gvar, sGlobalVariableDescription);
-		globVariables[n] = 0;
+			asDELETE(gvar, sGlobalVariableDescription);
+			globVariables[n] = 0;
+		}
 	}
 }
 
@@ -2055,12 +2062,32 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 
 			asCString name(&file->code[tmp->tokenPos], tmp->tokenLength);
 
-			// TODO: Should only have to check for conflicts within the enum type
-			// Check for name conflict errors
-			r = CheckNameConflict(name.AddressOf(), tmp, file);
-			if(asSUCCESS != r)
+			// Check for name conflict errors with other values in the enum
+			r = 0;
+			for( size_t n = globVariables.GetLength(); n-- > 0; )
 			{
+				sGlobalVariableDescription *gvar = globVariables[n];
+				if( gvar->datatype != type )
+					break;
+
+				if( gvar->name == name )
+				{
+					r = asNAME_TAKEN;
+					break;
+				}
+			}
+			if( asSUCCESS != r )
+			{
+				int r, c;
+				file->ConvertPosToRowCol(tmp->tokenPos, &r, &c);
+
+				asCString str;
+				str.Format(TXT_NAME_CONFLICT_s_ALREADY_USED, name.AddressOf());
+				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+
 				tmp = tmp->next;
+				if( tmp && tmp->nodeType == snAssignment )
+					tmp = tmp->next;
 				continue;
 			}
 
