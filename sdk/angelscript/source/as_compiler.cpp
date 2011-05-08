@@ -5356,13 +5356,19 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 	}
 	else // if( lctx->type.dataType.IsObject() )
 	{
+		// The lvalue reference may be marked as a temporary, if for example
+		// it was originated as a handle returned from a function. In such 
+		// cases it must be possible to assign values to it anyway.
+
+		// TODO: Is there any situation where must not allow the assignment to a temporary reference?
+/*
 		// Verify that the left hand value isn't a temporary variable
 		if( lctx->type.isTemporary )
 		{
 			Error(TXT_REF_IS_TEMP, lexpr);
 			return -1;
 		}
-
+*/
 		if( lctx->type.dataType.IsObjectHandle() && !lctx->type.isExplicitHandle )
 		{
 			// Convert the handle to a object reference

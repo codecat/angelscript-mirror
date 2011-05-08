@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../../add_on/scriptmath3d/scriptmath3d.h"
 
 using namespace std;
 
@@ -15,6 +16,25 @@ public:
 
 CLevel g_level;
 CLevel &get_Level() { return g_level; }
+
+class CNode
+{
+public:
+	static CNode *CNodeFactory() {return new CNode();}
+	CNode() {refCount = 1; child = 0;}
+	~CNode() {if( child ) child->Release();}
+	void AddRef() {refCount++;}
+	void Release() {if( --refCount == 0 ) delete this;}
+
+	CNode *GetChild() {return child;}
+	void  SetChild(CNode *n) {if( child ) child->Release(); child = n; n->AddRef();}
+
+	Vector3 vector;
+	CNode *child;
+
+private:
+	int refCount;
+};
 
 bool Test()
 {
@@ -1156,6 +1176,30 @@ bool Test()
 			TEST_FAILED;
 
 		if( g_level.attr != 0.5f )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Make sure it is possible to update properties of objects returned through getter
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptMath3D(engine);
+		engine->RegisterObjectType("node", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("node", asBEHAVE_FACTORY, "node @f()", asFUNCTION(CNode::CNodeFactory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("node", asBEHAVE_ADDREF, "void f()", asMETHOD(CNode, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("node", asBEHAVE_RELEASE, "void f()", asMETHOD(CNode, Release), asCALL_THISCALL);
+		engine->RegisterObjectMethod("node", "node @+ get_child()", asMETHOD(CNode, GetChild), asCALL_THISCALL);
+		engine->RegisterObjectMethod("node", "void set_child(node @+)", asMETHOD(CNode, SetChild), asCALL_THISCALL);
+		engine->RegisterObjectProperty("node", "vector3 vector", offsetof(CNode, vector));
+		engine->RegisterObjectProperty("node", "float x", offsetof(CNode, vector));
+
+		r = ExecuteString(engine, "node @a = node(); \n"
+								  "@a.child = node(); \n"
+								  "a.child.x = 0; \n"
+								  "a.child.vector = vector3(0,0,0); \n");
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		engine->Release();
