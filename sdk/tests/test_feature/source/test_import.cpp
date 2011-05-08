@@ -119,6 +119,37 @@ bool Test()
 
 	engine->Release();
 
+	// Test building the same script twice, where both imports from another pre-existing module
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		mod = engine->GetModule("m0", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script1", "interface I3{};void F(I3@){}");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("m1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script2", "interface I1{void f(I2@);};interface I2{};interface I3{};import void F(I3@) from 'm0';");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		r = mod->BindAllImportedFunctions();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("m2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script2", "interface I1{void f(I2@);};interface I2{};interface I3{};import void F(I3@) from 'm0';");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		r = mod->BindAllImportedFunctions();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

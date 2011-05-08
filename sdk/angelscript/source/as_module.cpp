@@ -1025,7 +1025,7 @@ void asCModule::ResolveInterfaceIds(asCArray<void*> *substitutions)
 		}
 		
 		if( found )
-			break;
+			continue;
 
 		for( unsigned int n = 0; n < engine->classTypes.GetLength(); n++ )
 		{
