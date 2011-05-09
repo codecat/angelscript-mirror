@@ -649,7 +649,7 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	// Verify property name
 	if( dt )
 	{
-		if( CheckNameConflictMember(dt->GetObjectType(), name.AddressOf(), nameNode, &source) < 0 )
+		if( CheckNameConflictMember(dt->GetObjectType(), name.AddressOf(), nameNode, &source, true) < 0 )
 			return asNAME_TAKEN;
 	}
 	else
@@ -894,7 +894,7 @@ int asCBuilder::ParseVariableDeclaration(const char *decl, asCObjectProperty *va
 	return 0;
 }
 
-int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCScriptNode *node, asCScriptCode *code)
+int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCScriptNode *node, asCScriptCode *code, bool isProperty)
 {
 	// It's not necessary to check against object types
 
@@ -918,7 +918,28 @@ int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCS
 		}
 	}
 
-	// TODO: Property names must be checked against method names
+	// Property names must be checked against method names
+	if( isProperty )
+	{
+		asCArray<int> methods = t->methods;
+		for( asUINT n = 0; n < methods.GetLength(); n++ )
+		{
+			if( engine->scriptFunctions[methods[n]]->name == name )
+			{
+				if( code )
+				{
+					int r, c;
+					code->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+					asCString str;
+					str.Format(TXT_NAME_CONFLICT_s_METHOD, name);
+					WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+				}
+
+				return -1;
+			}
+		}
+	}
 
 	return 0;
 }
@@ -1767,7 +1788,7 @@ void asCBuilder::CompileClasses()
 					WriteError(file->name.AddressOf(), TXT_PROPERTY_CANT_BE_CONST, r, c);
 				}
 
-				CheckNameConflictMember(decl->objType, name.AddressOf(), node->lastChild, file);
+				CheckNameConflictMember(decl->objType, name.AddressOf(), node->lastChild, file, true);
 
 				AddPropertyToClass(decl, name, dt, isPrivate, file, node);
 			}
@@ -2321,7 +2342,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	{
 		if( objType )
 		{
-			CheckNameConflictMember(objType, name.AddressOf(), node, file);
+			CheckNameConflictMember(objType, name.AddressOf(), node, file, false);
 
 			if( name == objType->name )
 			{
