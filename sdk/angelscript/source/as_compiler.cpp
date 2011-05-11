@@ -8332,7 +8332,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		// If the property access takes an index arg, then we should use that instead of processing it now
 		asCString propertyName;
 		if( (ctx->property_get && engine->scriptFunctions[ctx->property_get]->GetParamCount() == 1) ||
-			(ctx->property_set && engine->scriptFunctions[ctx->property_get]->GetParamCount() == 2) )
+			(ctx->property_set && engine->scriptFunctions[ctx->property_set]->GetParamCount() == 2) )
 		{
 			// Determine the name of the property accessor
 			asCScriptFunction *func = 0;

@@ -352,10 +352,12 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 asCScriptEngine::asCScriptEngine()
 {
 	// Instanciate the thread manager
+	ENTERCRITICALSECTION(engineCritical);
 	if( threadManager == 0 )
 		threadManager = asNEW(asCThreadManager);
 	else
 		threadManager->AddRef();
+	LEAVECRITICALSECTION(engineCritical);
 
 	// Engine properties
 	{
