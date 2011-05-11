@@ -1479,6 +1479,8 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 
 	// Compile the arguments in reverse order (as they will be pushed on the stack)
 	args.SetLength(func->parameterTypes.GetLength());
+	for( int c = explicitArgs; c < args.GetLength(); c++ )
+		args[c] = 0;
 	for( int n = (int)func->parameterTypes.GetLength() - 1; n >= explicitArgs; n-- )
 	{
 		// Parse the default arg string
@@ -4863,18 +4865,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		if( from->type.dataType.IsFloatType() )
 		{
 			float fc = from->type.floatValue;
-			int uic = int(fc);
+			asUINT uic = asUINT(fc);
 
 			if( float(uic) != fc )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
-			else if( uic < 0 )
-			{
-				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_CHANGE_SIGN, node);
-			}
 
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
+			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 			from->type.intValue = uic;
 
 			// Try once more, in case of a smaller type
@@ -4883,14 +4881,14 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		else if( from->type.dataType.IsDoubleType() )
 		{
 			double fc = from->type.doubleValue;
-			int uic = int(fc);
+			asUINT uic = asUINT(fc);
 
 			if( double(uic) != fc )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
+			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 			from->type.intValue = uic;
 
 			// Try once more, in case of a smaller type
@@ -4966,11 +4964,13 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			// Convert first to int64 then to uint64 to avoid negative float becoming 0 on gnuc base compilers
 			asQWORD uic = asQWORD(asINT64(fc));
 
-			// TODO: MSVC6 doesn't permit UINT64 to double
-			if( float((signed)uic) != fc )
+#if !defined(_MSC_VER) || _MSC_VER > 1200 // MSVC++ 6
+			// MSVC6 doesn't support this conversion
+			if( float(uic) != fc )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
+#endif
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt64, true);
 			from->type.qwordValue = uic;
@@ -4981,11 +4981,13 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			// Convert first to int64 then to uint64 to avoid negative float becoming 0 on gnuc base compilers
 			asQWORD uic = asQWORD(asINT64(fc));
 
-			// TODO: MSVC6 doesn't permit UINT64 to double
-			if( double((signed)uic) != fc )
+#if !defined(_MSC_VER) || _MSC_VER > 1200 // MSVC++ 6
+			// MSVC6 doesn't support this conversion
+			if( double(uic) != fc )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
+#endif
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt64, true);
 			from->type.qwordValue = uic;
@@ -5118,7 +5120,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			// TODO: MSVC6 doesn't permit UINT64 to double
 			float fc = float((signed)from->type.qwordValue);
 
 			if( asQWORD(fc) != from->type.qwordValue )
@@ -5214,7 +5215,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			// TODO: MSVC6 doesn't permit UINT64 to double
 			double fc = double((signed)from->type.qwordValue);
 
 			if( asQWORD(fc) != from->type.qwordValue )

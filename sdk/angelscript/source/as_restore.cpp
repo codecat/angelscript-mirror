@@ -362,7 +362,7 @@ int asCRestore::Restore()
 		info->boundFunctionId = -1;
 		module->bindInformations[i] = info;
 	}
-	
+
 	// usedTypes[]
 	count = ReadEncodedUInt();
 	usedTypes.Allocate(count, 0);
@@ -490,6 +490,7 @@ void asCRestore::ReadUsedFunctions()
 	asUINT count;
 	count = ReadEncodedUInt();
 	usedFunctions.SetLength(count);
+	memset(usedFunctions.AddressOf(), 0, sizeof(asCScriptFunction *)*count);
 
 	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
 	{

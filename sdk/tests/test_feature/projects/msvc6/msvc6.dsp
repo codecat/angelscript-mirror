@@ -42,7 +42,8 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GR /GX /O2 /I "../../../../angelscript/include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GR /GX /I "../../../../angelscript/include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# SUBTRACT CPP /O<none>
 # ADD BASE RSC /l 0x416 /d "NDEBUG"
 # ADD RSC /l 0x416 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -200,6 +201,10 @@ SOURCE=..\..\source\test_custommem.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_debug.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_defaultarg.cpp
 # End Source File
 # Begin Source File
 
@@ -492,6 +497,10 @@ SOURCE=..\..\source\testcdecl_class_c.cpp
 # Begin Source File
 
 SOURCE=..\..\source\testcdecl_class_d.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\testcdecl_class_k.cpp
 # End Source File
 # Begin Source File
 

@@ -316,7 +316,7 @@ bool Test()
 		
 	Test2();
 
- 	asIScriptEngine *engine = ConfigureEngine(0);
+	asIScriptEngine *engine = ConfigureEngine(0);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(":1", script1, strlen(script1), 0);

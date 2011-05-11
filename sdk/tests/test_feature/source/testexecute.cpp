@@ -46,10 +46,10 @@ bool TestExecute()
 
 	
 	asIScriptContext *ctx = engine->CreateContext();
-	assert(ctx->SetUserData((void*)(size_t)0xDEADF00D) == 0);
+	void *p = ctx->SetUserData((void*)(size_t)0xDEADF00D); assert(p == 0);
 	assert(ctx->GetUserData() == (void*)(size_t)0xDEADF00D);
-	assert(ctx->SetUserData(0) == (void*)(size_t)0xDEADF00D);
-	assert(ctx->SetUserData((void*)(size_t)0xDEADF00D) == 0);
+	p = ctx->SetUserData(0); assert(p == (void*)(size_t)0xDEADF00D);
+	p = ctx->SetUserData((void*)(size_t)0xDEADF00D); assert(p == 0);
 	engine->SetContextUserDataCleanupCallback(cleanContext);
 	called = false;
 	ctx->Release();
