@@ -1479,7 +1479,7 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 
 	// Compile the arguments in reverse order (as they will be pushed on the stack)
 	args.SetLength(func->parameterTypes.GetLength());
-	for( int c = explicitArgs; c < args.GetLength(); c++ )
+	for( asUINT c = explicitArgs; c < args.GetLength(); c++ )
 		args[c] = 0;
 	for( int n = (int)func->parameterTypes.GetLength() - 1; n >= explicitArgs; n-- )
 	{
