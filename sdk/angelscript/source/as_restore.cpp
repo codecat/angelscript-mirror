@@ -1433,7 +1433,7 @@ void asCRestore::WriteObjectType(asCObjectType* ot)
 
 asCObjectType* asCRestore::ReadObjectType() 
 {
-	asCObjectType *ot;
+	asCObjectType *ot = 0;
 	char ch;
 	READ_NUM(ch);
 	if( ch == 'a' )
@@ -1513,6 +1513,7 @@ asCObjectType* asCRestore::ReadObjectType()
 		ReadString(&typeName);
 
 		// Find the template subtype
+		ot = 0;
 		for( asUINT n = 0; n < engine->templateSubTypes.GetLength(); n++ )
 		{
 			if( engine->templateSubTypes[n] && engine->templateSubTypes[n]->name == typeName )
@@ -1613,7 +1614,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			     c == asBC_LoadThisR )   // W_DW_ARG	 
 		{
 			// Translate property offsets into indices
-			*(((short*)tmp)+1) = FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
+			*(((short*)tmp)+1) = (short)FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
 
 			// Translate type ids into indices
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
@@ -1622,7 +1623,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			     c == asBC_LoadVObjR )     // rW_W_DW_ARG
 		{
 			// Translate property offsets into indices
-			*(((short*)tmp)+2) = FindObjectPropIndex(*(((short*)tmp)+2), *(int*)(tmp+2));
+			*(((short*)tmp)+2) = (short)FindObjectPropIndex(*(((short*)tmp)+2), *(int*)(tmp+2));
 
 			// Translate type ids into indices
 			*(int*)(tmp+2) = FindTypeIdIdx(*(int*)(tmp+2));
@@ -1648,7 +1649,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 		{
 			// Translate the string constant id
 			asWORD *arg = ((asWORD*)tmp)+1;
-			*arg = FindStringConstantIndex(*arg);
+			*arg = (asWORD)FindStringConstantIndex(*arg);
 		}
 		else if( c == asBC_CALLBND ) // DW_ARG
 		{
@@ -2292,7 +2293,7 @@ short asCRestore::FindObjectPropOffset(asWORD index)
 		return 0;
 	}
 
-	return usedObjectProperties[index].offset;
+	return (short)usedObjectProperties[index].offset;
 }
 
 int asCRestore::FindFunctionIndex(asCScriptFunction *func)
@@ -2375,7 +2376,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 				error = true;
 			}
 			else
-				asBC_SWORDARG0(&bc[n]) = dt->GetSizeInMemoryDWords();
+				asBC_SWORDARG0(&bc[n]) = (short)dt->GetSizeInMemoryDWords();
 		}
 		else if( c == asBC_CALL ||
 				 c == asBC_CALLINTF ||
@@ -2427,7 +2428,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 			asWORD *arg = ((asWORD*)&bc[n])+1;
 
 			if( *arg < usedStringConstants.GetLength() )	
-				*arg = usedStringConstants[*arg];
+				*arg = (asWORD)usedStringConstants[*arg];
 			else
 			{
 				// TODO: Write to message callback
@@ -2550,7 +2551,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 					if( var >= (int)adjustByPos.GetLength() ) 
 						error = true;
 					else if( var >= 0 ) 
-						asBC_SWORDARG0(&bc[n]) += adjustByPos[var];
+						asBC_SWORDARG0(&bc[n]) += (short)adjustByPos[var];
 				}
 				break;
 
@@ -2562,13 +2563,13 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 					if( var >= (int)adjustByPos.GetLength() ) 
 						error = true;
 					else if( var >= 0 ) 
-						asBC_SWORDARG0(&bc[n]) += adjustByPos[var];
+						asBC_SWORDARG0(&bc[n]) += (short)adjustByPos[var];
 
 					var = asBC_SWORDARG1(&bc[n]);
 					if( var >= (int)adjustByPos.GetLength() ) 
 						error = true;
 					else if( var >= 0 ) 
-						asBC_SWORDARG1(&bc[n]) += adjustByPos[var];
+						asBC_SWORDARG1(&bc[n]) += (short)adjustByPos[var];
 				}
 				break;
 
@@ -2578,19 +2579,19 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 					if( var >= (int)adjustByPos.GetLength() ) 
 						error = true;
 					else if( var >= 0 ) 
-						asBC_SWORDARG0(&bc[n]) += adjustByPos[var];
+						asBC_SWORDARG0(&bc[n]) += (short)adjustByPos[var];
 
 					var = asBC_SWORDARG1(&bc[n]);
 					if( var >= (int)adjustByPos.GetLength() ) 
 						error = true;
 					else if( var >= 0 ) 
-						asBC_SWORDARG1(&bc[n]) += adjustByPos[var];
+						asBC_SWORDARG1(&bc[n]) += (short)adjustByPos[var];
 
 					var = asBC_SWORDARG2(&bc[n]);
 					if( var >= (int)adjustByPos.GetLength() ) 
 						error = true;
 					else if( var >= 0 ) 
-						asBC_SWORDARG2(&bc[n]) += adjustByPos[var];
+						asBC_SWORDARG2(&bc[n]) += (short)adjustByPos[var];
 				}
 				break;
 
@@ -2606,7 +2607,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 				//       can immediately reserve the space
 
 				// PUSH is only used to reserve stack space for variables
-				asBC_WORDARG0(&bc[n]) += adjustByPos[adjustByPos.GetLength()-1];
+				asBC_WORDARG0(&bc[n]) += (asWORD)adjustByPos[adjustByPos.GetLength()-1];
 			}
 
 			n += asBCTypeSize[asBCInfo[c].type];

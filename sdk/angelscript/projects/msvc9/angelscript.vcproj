@@ -57,8 +57,7 @@
 				SmallerTypeCheck="false"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="false"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				WarningLevel="4"
 				DebugInformationFormat="3"
 			/>
 			<Tool

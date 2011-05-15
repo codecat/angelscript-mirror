@@ -61,8 +61,8 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! \details Version 2.20.3
-#define ANGELSCRIPT_VERSION        22003
-#define ANGELSCRIPT_VERSION_STRING "2.20.3"
+#define ANGELSCRIPT_VERSION        22100
+#define ANGELSCRIPT_VERSION_STRING "2.21.0"
 
 // Data types
 
@@ -228,11 +228,6 @@ enum asEBehaviours
 	asBEHAVE_REF_CAST,
 	//! \brief Implicit reference cast operator
 	asBEHAVE_IMPLICIT_REF_CAST,
-#ifdef AS_DEPRECATED
-	//! \brief operator []
-	//! \deprecated since 2.20.0. Use opIndex method instead.
-	asBEHAVE_INDEX,
-#endif
 	//! \brief Callback for validating template instances
 	asBEHAVE_TEMPLATE_CALLBACK,
 
@@ -1933,19 +1928,6 @@ public:
 	virtual int LoadByteCode(asIBinaryStream *in) = 0;
 	//! \}
 
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-
-	//! \brief Returns the global variable name.
-	//! \deprecated since 2.20.0. Use \ref asIScriptModule::GetGlobalVar instead.
-	virtual const char *GetGlobalVarName(int index) const = 0;
-	//! \brief Returns the type id for the global variable.
-	//! \deprecated since 2.20.0. Use \ref asIScriptModule::GetGlobalVar instead.
-	virtual int         GetGlobalVarTypeId(int index, bool *isConst = 0) const = 0;
-	//! \}
-#endif
-
 protected:
 	virtual ~asIScriptModule() {}
 };
@@ -2355,18 +2337,6 @@ public:
 	//! \return The pointer to the user data.
 	virtual void *GetUserData() const = 0;
 	//! \}
-
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.20.0
-	//! \name Deprecated
-	//! \{
-
-	//! \deprecated since 2.20.0. Use \ref asIScriptContext::GetLineNumber instead
-	virtual int         GetCurrentLineNumber(int *column = 0, const char **sectionName = 0) = 0;
-	//! \deprecated since 2.20.0. Use \ref asIScriptContext::GetFunction instead
-	virtual int         GetCurrentFunction() = 0;
-	//! \}
-#endif
 
 protected:
 	virtual ~asIScriptContext() {}
@@ -2829,25 +2799,6 @@ public:
 	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
 	//! \}
 
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-
-    //! \brief Returns the type id of the property referenced by \a prop.
-    //! \deprecated since 2.20.0. Use \ref asIObjectType::GetProperty instead.
-	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
-    //! \brief Returns the name of the property referenced by \a prop.
-    //! \deprecated since 2.20.0. Use \ref asIObjectType::GetProperty instead.
-	virtual const char *GetPropertyName(asUINT prop) const = 0;
-	//! \brief Returns whether a property is private or not.
-    //! \deprecated since 2.20.0. Use \ref asIObjectType::GetProperty instead.
-	virtual bool        IsPropertyPrivate(asUINT prop) const = 0;
-	//! \brief Returns the offset of the property in the memory layout.
-    //! \deprecated since 2.20.0. Use \ref asIObjectType::GetProperty instead.
-	virtual int         GetPropertyOffset(asUINT prop) const = 0;
-	//! \}
-#endif
-
 protected:
 	virtual ~asIObjectType() {}
 };
@@ -2988,21 +2939,6 @@ public:
 	//! \return The pointer to the user data.
 	virtual void *GetUserData() const = 0;
 	//! \}
-
-#ifdef AS_DEPRECATED
-	//! \name Deprecated
-	//! \{
-
-	//! \brief Returns true if it is a class method
-	//! \return True if this a class method.
-	//! \deprecated since 2.20.0. Use \ref asIScriptFunction::GetFuncType instead.
-	virtual bool             IsClassMethod() const = 0;
-	//! \brief Returns true if it is an interface method
-	//! \return True if this is an interface method.
-	//! \deprecated since 2.20.0. Use \ref asIScriptFunction::GetFuncType instead.
-	virtual bool             IsInterfaceMethod() const = 0;
-	//! \}
-#endif
 
 protected:
 	virtual ~asIScriptFunction() {};
