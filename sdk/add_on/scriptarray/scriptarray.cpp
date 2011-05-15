@@ -699,7 +699,11 @@ int CScriptArray::Find(asUINT index, void *value)
 		if( ctx )
 		{
 			char tmp[512];
+#if defined(_MSC_VER) && _MSC_VER >= 1500
+			sprintf_s(tmp, 512, "Type '%s' does not have opEquals / opCmp", subType->GetName());
+#else
 			sprintf(tmp, "Type '%s' does not have opEquals / opCmp", subType->GetName());
+#endif
 			ctx->SetException(tmp);
 		}
 
@@ -810,7 +814,11 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 		if( ctx )
 		{
 			char tmp[512];
+#if defined(_MSC_VER) && _MSC_VER >= 1500
+			sprintf_s(tmp, 512, "Type '%s' does not have opCmp", subType->GetName());
+#else
 			sprintf(tmp, "Type '%s' does not have opCmp", subType->GetName());
+#endif
 			ctx->SetException(tmp);
 		}
 

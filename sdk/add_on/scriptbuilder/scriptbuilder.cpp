@@ -127,7 +127,7 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 	{
 		// Write a message to the engine's message callback
 		char buf[256];
-		string msg = "Failed to open script file '" + string(GetCurrentDir(buf, 256)) + scriptFile + "'";
+		string msg = "Failed to open script file '" + string(GetCurrentDir(buf, 256)) + "\\" + scriptFile + "'";
 		engine->WriteMessage(filename, 0, 0, asMSGTYPE_ERROR, msg.c_str());
 
 		// TODO: Write the file where this one was included from
