@@ -11,7 +11,7 @@ BEGIN_AS_NAMESPACE
 //
 // AngelScript signature:
 // string@ substring(const string &in str, int start, int count)
-void StringSubString_Generic(asIScriptGeneric *gen)
+static void StringSubString_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
     CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
@@ -35,7 +35,7 @@ void StringSubString_Generic(asIScriptGeneric *gen)
 //
 // AngelScript signature:
 // int findFirst(const string &in str, const string &in sub, int start)
-void StringFindFirst_Generic(asIScriptGeneric *gen)
+static void StringFindFirst_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
     CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
@@ -56,7 +56,7 @@ void StringFindFirst_Generic(asIScriptGeneric *gen)
 //
 // AngelScript signature:
 // int findLast(const string &in str, const string &in sub, int start)
-void StringFindLast_Generic(asIScriptGeneric *gen)
+static void StringFindLast_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
     CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
@@ -79,7 +79,7 @@ void StringFindLast_Generic(asIScriptGeneric *gen)
 //
 // AngelScript signature:
 // int findFirstOf(const string &in str, const string &in chars, int start)
-void StringFindFirstOf_Generic(asIScriptGeneric *gen)
+static void StringFindFirstOf_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
     CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
@@ -101,7 +101,7 @@ void StringFindFirstOf_Generic(asIScriptGeneric *gen)
 //
 // AngelScript signature:
 // int findFirstNotOf(const string &in str, const string &in chars, int start)
-void StringFindFirstNotOf_Generic(asIScriptGeneric *gen)
+static void StringFindFirstNotOf_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
     CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
@@ -123,7 +123,7 @@ void StringFindFirstNotOf_Generic(asIScriptGeneric *gen)
 //
 // AngelScript signature:
 // int findLastOf(const string &in str, const string &in chars, int start)
-void StringFindLastOf_Generic(asIScriptGeneric *gen)
+static void StringFindLastOf_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
     CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
@@ -146,7 +146,7 @@ void StringFindLastOf_Generic(asIScriptGeneric *gen)
 //
 // AngelScript signature:
 // int findLastNotOf(const string &in str, const string &in chars, int start)
-void StringFindLastNotOf_Generic(asIScriptGeneric *gen)
+static void StringFindLastNotOf_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
     CScriptString *str = *(CScriptString**)gen->GetAddressOfArg(0);
@@ -175,7 +175,7 @@ void StringFindLastNotOf_Generic(asIScriptGeneric *gen)
 //
 // AngelScript signature:
 // array<string@>@ split(const string &in str, const string &in delim)
-void StringSplit_Generic(asIScriptGeneric *gen)
+static void StringSplit_Generic(asIScriptGeneric *gen)
 {
     // Obtain a pointer to the engine
     asIScriptContext *ctx = asGetActiveContext();
@@ -232,7 +232,7 @@ void StringSplit_Generic(asIScriptGeneric *gen)
 //
 // AngelScript signature:
 // string@ join(const array<string@> &in array, const string &in delim)
-void StringJoin_Generic(asIScriptGeneric *gen)
+static void StringJoin_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
     CScriptArray  *array = *(CScriptArray**)gen->GetAddressOfArg(0);

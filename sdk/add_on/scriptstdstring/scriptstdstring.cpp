@@ -127,7 +127,7 @@ static void StringCharAtGeneric(asIScriptGeneric * gen) {
   }
 }
 
-void AssignInt2StringGeneric(asIScriptGeneric *gen) 
+static void AssignInt2StringGeneric(asIScriptGeneric *gen) 
 {
 	int *a = static_cast<int*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
@@ -137,7 +137,7 @@ void AssignInt2StringGeneric(asIScriptGeneric *gen)
 	gen->SetReturnAddress(self);
 }
 
-void AssignUInt2StringGeneric(asIScriptGeneric *gen) 
+static void AssignUInt2StringGeneric(asIScriptGeneric *gen) 
 {
 	unsigned int *a = static_cast<unsigned int*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
@@ -147,7 +147,7 @@ void AssignUInt2StringGeneric(asIScriptGeneric *gen)
 	gen->SetReturnAddress(self);
 }
 
-void AssignDouble2StringGeneric(asIScriptGeneric *gen) 
+static void AssignDouble2StringGeneric(asIScriptGeneric *gen) 
 {
 	double *a = static_cast<double*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
@@ -157,7 +157,7 @@ void AssignDouble2StringGeneric(asIScriptGeneric *gen)
 	gen->SetReturnAddress(self);
 }
 
-void AssignBool2StringGeneric(asIScriptGeneric *gen) 
+static void AssignBool2StringGeneric(asIScriptGeneric *gen) 
 {
 	bool *a = static_cast<bool*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
@@ -167,7 +167,7 @@ void AssignBool2StringGeneric(asIScriptGeneric *gen)
 	gen->SetReturnAddress(self);
 }
 
-void AddAssignDouble2StringGeneric(asIScriptGeneric * gen) {
+static void AddAssignDouble2StringGeneric(asIScriptGeneric * gen) {
   double * a = static_cast<double *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
@@ -176,7 +176,7 @@ void AddAssignDouble2StringGeneric(asIScriptGeneric * gen) {
   gen->SetReturnAddress(self);
 }
 
-void AddAssignInt2StringGeneric(asIScriptGeneric * gen) {
+static void AddAssignInt2StringGeneric(asIScriptGeneric * gen) {
   int * a = static_cast<int *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
@@ -185,7 +185,7 @@ void AddAssignInt2StringGeneric(asIScriptGeneric * gen) {
   gen->SetReturnAddress(self);
 }
 
-void AddAssignUInt2StringGeneric(asIScriptGeneric * gen) {
+static void AddAssignUInt2StringGeneric(asIScriptGeneric * gen) {
   unsigned int * a = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
@@ -194,7 +194,7 @@ void AddAssignUInt2StringGeneric(asIScriptGeneric * gen) {
   gen->SetReturnAddress(self);
 }
 
-void AddAssignBool2StringGeneric(asIScriptGeneric * gen) {
+static void AddAssignBool2StringGeneric(asIScriptGeneric * gen) {
   bool * a = static_cast<bool *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
@@ -203,7 +203,7 @@ void AddAssignBool2StringGeneric(asIScriptGeneric * gen) {
   gen->SetReturnAddress(self);
 }
 
-void AddString2DoubleGeneric(asIScriptGeneric * gen) {
+static void AddString2DoubleGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetObject());
   double * b = static_cast<double *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
@@ -212,7 +212,7 @@ void AddString2DoubleGeneric(asIScriptGeneric * gen) {
   gen->SetReturnObject(&ret_val);
 }
 
-void AddString2IntGeneric(asIScriptGeneric * gen) {
+static void AddString2IntGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetObject());
   int * b = static_cast<int *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
@@ -221,7 +221,7 @@ void AddString2IntGeneric(asIScriptGeneric * gen) {
   gen->SetReturnObject(&ret_val);
 }
 
-void AddString2UIntGeneric(asIScriptGeneric * gen) {
+static void AddString2UIntGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetObject());
   unsigned int * b = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
@@ -230,7 +230,7 @@ void AddString2UIntGeneric(asIScriptGeneric * gen) {
   gen->SetReturnObject(&ret_val);
 }
 
-void AddString2BoolGeneric(asIScriptGeneric * gen) {
+static void AddString2BoolGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetObject());
   bool * b = static_cast<bool *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
@@ -239,7 +239,7 @@ void AddString2BoolGeneric(asIScriptGeneric * gen) {
   gen->SetReturnObject(&ret_val);
 }
 
-void AddDouble2StringGeneric(asIScriptGeneric * gen) {
+static void AddDouble2StringGeneric(asIScriptGeneric * gen) {
   double* a = static_cast<double *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
@@ -248,7 +248,7 @@ void AddDouble2StringGeneric(asIScriptGeneric * gen) {
   gen->SetReturnObject(&ret_val);
 }
 
-void AddInt2StringGeneric(asIScriptGeneric * gen) {
+static void AddInt2StringGeneric(asIScriptGeneric * gen) {
   int* a = static_cast<int *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
@@ -257,7 +257,7 @@ void AddInt2StringGeneric(asIScriptGeneric * gen) {
   gen->SetReturnObject(&ret_val);
 }
 
-void AddUInt2StringGeneric(asIScriptGeneric * gen) {
+static void AddUInt2StringGeneric(asIScriptGeneric * gen) {
   unsigned int* a = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
@@ -266,7 +266,7 @@ void AddUInt2StringGeneric(asIScriptGeneric * gen) {
   gen->SetReturnObject(&ret_val);
 }
 
-void AddBool2StringGeneric(asIScriptGeneric * gen) {
+static void AddBool2StringGeneric(asIScriptGeneric * gen) {
   bool* a = static_cast<bool *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
@@ -280,7 +280,7 @@ void AddBool2StringGeneric(asIScriptGeneric * gen) {
 //
 // AngelScript signature:
 // string string::substr(uint start = 0, int count = -1) const
-void StringSubString_Generic(asIScriptGeneric *gen)
+static void StringSubString_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
     string *str   = (string*)gen->GetObject();
@@ -529,7 +529,7 @@ static int StringCmp(const string &a, const string &b)
 //
 // AngelScript signature:
 // int string::findFirst(const string &in sub, uint start = 0) const
-int StringFindFirst(const string &sub, asUINT start, const string &str)
+static int StringFindFirst(const string &sub, asUINT start, const string &str)
 {
 	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
 	return (int)str.find(sub, start);
@@ -541,7 +541,7 @@ int StringFindFirst(const string &sub, asUINT start, const string &str)
 //
 // AngelScript signature:
 // int string::findLast(const string &in sub, int start = -1) const
-int StringFindLast(const string &sub, int start, const string &str)
+static int StringFindLast(const string &sub, int start, const string &str)
 {
 	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
 	return (int)str.rfind(sub, (size_t)start);

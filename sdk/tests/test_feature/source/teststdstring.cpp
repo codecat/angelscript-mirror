@@ -324,6 +324,34 @@ bool TestStdString()
 		engine->Release();
 	} 
 
+	// Test string methods
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterStdStringUtils(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, 
+			"  string str = 'hello world'; \n"
+			"  assert( str.substr(6, 5) == 'world' ); \n"
+			"  assert( str.findFirst('o') == 4 ); \n"
+			"  assert( str.findLast('o') == 7 ); \n"
+			"  array<string> @arr = 'A|B||D'.split('|'); \n"
+			"  assert( arr.length() == 4 && \n"
+			"      arr[0] == 'A' && \n"
+			"      arr[1] == 'B' && \n"
+			"      arr[2] == ''  && \n"
+			"      arr[3] == 'D' ); \n"
+			"  assert( str.join(arr, ';') == 'A;B;;D' ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	return fail;
 }
 

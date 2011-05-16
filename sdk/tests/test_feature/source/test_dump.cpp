@@ -388,6 +388,9 @@ void DumpModule(asIScriptModule *mod)
 		" string& opAddAssign(bool)\n"
 		" string opAdd(bool) const\n"
 		" string opAdd_r(bool) const\n"
+		" string substr(uint arg0 = 0, int arg1 = - 1) const\n"
+		" int findFirst(const string&in, uint arg1 = 0) const\n"
+		" int findLast(const string&in, int arg1 = - 1) const\n"
 		"type: interface MyIntf\n"
 		" void func() const\n" )
 	{

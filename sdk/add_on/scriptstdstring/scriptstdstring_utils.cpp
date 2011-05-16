@@ -19,7 +19,7 @@ BEGIN_AS_NAMESPACE
 //
 // AngelScript signature:
 // array<string>@ string::split(const string &in delim) const
-void StringSplit_Generic(asIScriptGeneric *gen)
+static void StringSplit_Generic(asIScriptGeneric *gen)
 {
     // Obtain a pointer to the engine
     asIScriptContext *ctx = asGetActiveContext();
@@ -73,7 +73,7 @@ void StringSplit_Generic(asIScriptGeneric *gen)
 //
 // AngelScript signature:
 // string &string::join(const array<string> &in array, const string &in delim)
-void StringJoin_Generic(asIScriptGeneric *gen)
+static void StringJoin_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
 	string *str = (string*)gen->GetObject();
