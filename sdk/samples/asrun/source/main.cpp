@@ -89,6 +89,7 @@ int ConfigureEngine(asIScriptEngine *engine)
 
 	RegisterStdString(engine);
 	RegisterScriptArray(engine, false);
+	RegisterStdStringUtils(engine);
 
 	r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
 	

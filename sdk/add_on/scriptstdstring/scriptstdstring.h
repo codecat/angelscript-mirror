@@ -17,6 +17,7 @@
 BEGIN_AS_NAMESPACE
 
 void RegisterStdString(asIScriptEngine *engine);
+void RegisterStdStringUtils(asIScriptEngine *engine);
 
 END_AS_NAMESPACE
 

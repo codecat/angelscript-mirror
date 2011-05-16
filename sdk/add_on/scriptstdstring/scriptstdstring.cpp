@@ -618,8 +618,6 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	// findLastOf
 	// findFirstNotOf
 	// findLastNotOf
-	// split
-	// join
 	// parseInt
 	// parseFloat
 	// formatInt - maybe as string::string(int64 value, const string &in format)

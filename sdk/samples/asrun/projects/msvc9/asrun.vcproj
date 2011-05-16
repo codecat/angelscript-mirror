@@ -200,6 +200,10 @@
 				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring_utils.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
