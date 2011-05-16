@@ -18,6 +18,7 @@ void StringSubString_Generic(asIScriptGeneric *gen)
     int start = *(int*)gen->GetAddressOfArg(1);
     int count = *(int*)gen->GetAddressOfArg(2);
 
+	// TODO: It's necessary to check for out-of-bounds
     // Create the substring
     CScriptString *sub = new CScriptString();
     sub->buffer = str->buffer.substr(start,count);
