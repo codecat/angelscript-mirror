@@ -177,6 +177,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\..\add_on\debugger\debugger.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\main.cpp"
 				>
 			</File>
@@ -212,6 +216,10 @@
 			>
 			<File
 				RelativePath="..\..\..\..\angelscript\include\angelscript.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\debugger\debugger.h"
 				>
 			</File>
 			<File

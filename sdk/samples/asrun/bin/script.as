@@ -1,5 +1,15 @@
-void main()
+int main()
 {
-  string str = "hello world";
-  print(str);
+  print("Hello world\n");
+
+  Function();
+
+  return 0;
+}
+
+void Function()
+{
+  print("Currently ");
+  print("in a ");
+  print("sub function\n");
 }

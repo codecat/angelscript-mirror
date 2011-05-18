@@ -186,6 +186,37 @@ bool Test()
 		engine->Release();
 	}
 
+	// Shouldn't crash if attempting to call incorrect function
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char *script =
+			"void myFunc( float f, int a=0, int b ) {} \n"
+			"void main() \n"
+			"{ \n"
+			"  int n; \n"
+			"  myFunc( 1.2, 6 ); \n"
+			"} \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "script (1, 1) : Error   : All subsequent parameters after the first default value must have default values in function 'void myFunc(float, int arg1 = 0, int)'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+
 	// The test to make sure the saved bytecode keeps the default args is done in test_saveload.cpp
 	// A test to make sure script class methods with default args work is done in test_saveload.cpp
 

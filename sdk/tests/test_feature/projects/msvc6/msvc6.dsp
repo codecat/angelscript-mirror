@@ -43,7 +43,6 @@ RSC=rc.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD CPP /nologo /MT /W3 /GR /GX /I "../../../../angelscript/include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# SUBTRACT CPP /O<none>
 # ADD BASE RSC /l 0x416 /d "NDEBUG"
 # ADD RSC /l 0x416 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -729,6 +728,10 @@ SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring_utils.cpp
 # End Source File
 # Begin Source File
 

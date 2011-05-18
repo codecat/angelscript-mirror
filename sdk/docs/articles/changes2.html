@@ -15,11 +15,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.21.0 WIP - 2011/05/15</h2>
+<h2>Version 2.21.0 WIP - 2011/05/17</h2>
 
 <ul>
+<li>Bug fixes
 <ul>
 <li>Fixed more compiler warnings for maximum warning level on MSVC (Thanks Thomas Fischer)
+<li>Fixed crash if script tries to call function that has been declared incorrectly with default args (Thanks K&aacute;roly Pint&eacute;r)
 </ul>
 <li>Library
 <ul>
@@ -29,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Added substr, findFirst, findLast, split, and join to the std::string registration
 <li>Created the asrun sample
+<li>Created the CDebugger add-on
 </ul>
 </ul>
 

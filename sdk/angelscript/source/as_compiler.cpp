@@ -1483,6 +1483,8 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		args[c] = 0;
 	for( int n = (int)func->parameterTypes.GetLength() - 1; n >= explicitArgs; n-- )
 	{
+		if( func->defaultArgs[n] == 0 ) { anyErrors = true; continue; }
+
 		// Parse the default arg string
 		asCParser parser(builder);
 		asCScriptCode code;

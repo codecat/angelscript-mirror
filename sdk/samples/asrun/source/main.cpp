@@ -1,20 +1,21 @@
 #include <iostream>  // cout
 #include <assert.h>  // assert()
 #include <string.h>  // strstr()
+#include <stdio.h>
 #include <angelscript.h>
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
 #include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
 #include "../../../add_on/scriptfile/scriptfile.h"
 #include "../../../add_on/scripthelper/scripthelper.h"
-#include <stdio.h>
+#include "../../../add_on/debugger/debugger.h"
 
 using namespace std;
 
 // Function prototypes
 int ConfigureEngine(asIScriptEngine *engine);
 int CompileScript(asIScriptEngine *engine, const char *scriptFile);
-int ExecuteScript(asIScriptEngine *engine, const char *scriptFile);
+int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug);
 void PrintString(const string &str);
 
 void MessageCallback(const asSMessageInfo *msg, void *param)
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
 	if( r < 0 ) return -1;
 
 	// Execute the script
-	r = ExecuteScript(engine, argv[debug ? 2 : 1]);
+	r = ExecuteScript(engine, argv[debug ? 2 : 1], debug);
 	
 	// Release the engine
 	engine->Release();
@@ -121,8 +122,10 @@ int CompileScript(asIScriptEngine *engine, const char *scriptFile)
 	return 0;
 }
 
-int ExecuteScript(asIScriptEngine *engine, const char *scriptFile)
+int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 {
+	CDebugger *dbg = 0;
+
 	asIScriptModule *mod = engine->GetModule("script", asGM_ONLY_IF_EXISTS);
 	if( !mod ) return -1;
 
@@ -140,7 +143,20 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile)
 		return -1;
 	}
 
+	// Set up a context to execute the script
+	asIScriptContext *ctx = engine->CreateContext();
+
+	if( debug )
+	{
+		// Create the debugger instance
+		dbg = new CDebugger();
+
+		// Allow the user to initialize the debugging before moving on
+		dbg->TakeCommands(ctx);
+	}
+
 	// Once we have the main function, we first need to initialize the global variables
+	// TODO: It should be possible to debug the initialization of the global variables too
 	int r = mod->ResetGlobalVars();
 	if( r < 0 )
 	{
@@ -148,8 +164,13 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile)
 		return -1;
 	}
 
-	// Set up a context to execute the script
-	asIScriptContext *ctx = engine->CreateContext();
+	if( dbg )
+	{
+		// Set the line callback for the debugging
+		ctx->SetLineCallback(asMETHOD(CDebugger, LineCallback), dbg, asCALL_THISCALL);
+	}
+
+	// Execute the script
 	ctx->Prepare(funcId);
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
@@ -178,6 +199,10 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile)
 			r = 0;
 	}
 	ctx->Release();
+
+	// Destroy debugger
+	if( dbg )
+		delete dbg;
 
 	return r;
 }

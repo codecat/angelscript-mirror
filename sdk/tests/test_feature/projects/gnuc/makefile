@@ -152,6 +152,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scripthelper.o \
   obj/scriptstring.o \
   obj/scriptstdstring.o \
+  obj/scriptstdstringutil.o \
   obj/scriptany.o \
   obj/scriptstringutil.o \
   obj/scriptmath.o \
@@ -187,6 +188,9 @@ obj/scriptstringutil.o: ../../../../add_on/scriptstring/scriptstring_utils.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptstdstring.o: ../../../../add_on/scriptstdstring/scriptstdstring.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptstdstringutil.o: ../../../../add_on/scriptstdstring/scriptstdstring_utils.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptdictionary.o: ../../../../add_on/scriptdictionary/scriptdictionary.cpp
