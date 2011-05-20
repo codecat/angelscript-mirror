@@ -16,26 +16,23 @@ void CDebugger::LineCallback(asIScriptContext *ctx)
 {
 	if( m_action == CONTINUE )
 	{
-		// Check for break points
-		// TODO: Implement this
-		return;
+		if( !CheckBreakPoint(ctx) )
+			return;
 	}
 	else if( m_action == STEP_OVER )
 	{
 		if( ctx->GetCallstackSize() > m_currentStackLevel )
 		{
-			// Check for break points
-			// TODO: Implement this
-			return;
+			if( !CheckBreakPoint(ctx) )
+				return;
 		}
 	}
 	else if( m_action == STEP_OUT )
 	{
 		if( ctx->GetCallstackSize() >= m_currentStackLevel )
 		{
-			// Check for break points
-			// TODO: Implement this
-			return;
+			if( !CheckBreakPoint(ctx) )
+				return;
 		}
 	}
 	else if( m_action == STEP_INTO )
@@ -48,15 +45,36 @@ void CDebugger::LineCallback(asIScriptContext *ctx)
 	TakeCommands(ctx);
 }
 
+bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
+{
+	// TODO: consider just filename, not the full path
+	// TODO: do case less comparison
+	const char *file = 0;
+	int lineNbr = ctx->GetLineNumber(0, 0, &file);
+
+	for( size_t n = 0; n < breakPoints.size(); n++ )
+	{
+		if( breakPoints[n].lineNbr == lineNbr &&
+			breakPoints[n].file == file )
+		{
+			cout << "Reached break point " << n << " in file '" << file << "' at line " << lineNbr << endl;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void CDebugger::TakeCommands(asIScriptContext *ctx)
 {
 	for(;;)
 	{
-		string cmd;
-		cout << "[dbg]> ";
-		cin >> cmd;
+		char buf[512];
 
-		if( InterpretCommand(cmd, ctx) )
+		cout << "[dbg]> ";
+		cin.getline(buf, 512);
+
+		if( InterpretCommand(string(buf), ctx) )
 			break;
 	}
 }
@@ -86,8 +104,28 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 		break;
 
 	case 'b':
-		// Set break point
-		// take more commands
+		{
+			// Set break point
+			string breakPoint = cmd.substr(2);
+
+			size_t div = breakPoint.find(':');
+			if( div != string::npos )
+			{
+				string file = breakPoint.substr(0, div);
+				string line = breakPoint.substr(div+1);
+
+				int nbr = atoi(line.c_str());
+
+				AddBreakPoint(file, nbr);
+			}
+			else
+			{
+				cout << "Incorrect format for setting break point, expected:" << endl;
+				cout << "b <file name>:<line number>" << endl;
+			}
+
+			// take more commands
+		}
 		return false;
 
 	case 'r':
@@ -121,11 +159,23 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 	return true;
 }
 
+void CDebugger::AddBreakPoint(std::string &file, int lineNbr)
+{
+	// TODO: Store just file name, not entire path
+	// TODO: Verify that there actually is any byte code on that line, otherwise the breakpoint will never be reached
+
+	cout << "Setting break point in file '" << file << "' at line " << lineNbr << endl;
+
+	BreakPoint bp(file, lineNbr);
+	breakPoints.push_back(bp);
+}
+
 void CDebugger::PrintHelp()
 {
 	cout << "c - Continue" << endl;
 	cout << "s - Step into" << endl;
 	cout << "n - Step over" << endl;
 	cout << "o - Step out" << endl;
+	cout << "b - Set break point" << endl;
 	cout << "h - Print this help text" << endl;
 }

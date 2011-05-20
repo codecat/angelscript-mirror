@@ -1,15 +1,33 @@
+/*
+
+  Script must have 'int main()' or 'void main()' as the entry point.
+
+  Some functions that are available:
+
+   void           print(const string &in str);
+   array<string> @getCommandLineArgs();
+
+  Some objects that are available:
+
+   string
+   array<T>
+   file
+
+*/
+
 int main()
 {
-  print("Hello world\n");
+  array<string> @args = getCommandLineArgs();
+  string str;
 
-  Function();
+  print("Received the following args : " + str.join(args, "|") + "\n");
+
+  function();
 
   return 0;
 }
 
-void Function()
+void function()
 {
-  print("Currently ");
-  print("in a ");
-  print("sub function\n");
+  print("Currently in a different function\n");
 }

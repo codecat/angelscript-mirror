@@ -16,7 +16,14 @@ using namespace std;
 int ConfigureEngine(asIScriptEngine *engine);
 int CompileScript(asIScriptEngine *engine, const char *scriptFile);
 int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug);
+
+// For the scripts
 void PrintString(const string &str);
+CScriptArray *GetCommandLineArgs();
+
+CScriptArray *g_commandLineArgs = 0;
+int           g_argc = 0;
+char        **g_argv = 0;
 
 void MessageCallback(const asSMessageInfo *msg, void *param)
 {
@@ -70,14 +77,21 @@ int main(int argc, char **argv)
 	if( strcmp(argv[1], "-d") == 0 )
 		debug = true;
 
+	// Store the command line arguments for the script
+	int scriptArg = debug ? 2 : 1;
+	g_argc = argc - (scriptArg + 1);
+	g_argv = argv + (scriptArg + 1);
+
 	// Compile the script code
-	r = CompileScript(engine, argv[debug ? 2 : 1]);
+	r = CompileScript(engine, argv[scriptArg]);
 	if( r < 0 ) return -1;
 
 	// Execute the script
-	r = ExecuteScript(engine, argv[debug ? 2 : 1], debug);
+	r = ExecuteScript(engine, argv[scriptArg], debug);
 	
 	// Release the engine
+	if( g_commandLineArgs )
+		g_commandLineArgs->Release();
 	engine->Release();
 
 	return r;
@@ -93,6 +107,7 @@ int ConfigureEngine(asIScriptEngine *engine)
 	RegisterStdStringUtils(engine);
 
 	r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("array<string> @getCommandLineArgs()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL); assert( r >= 0 );
 	
 	return 0;
 }
@@ -213,3 +228,32 @@ void PrintString(const string &str)
 	cout << str;
 }
 
+// This function returns the command line arguments that were passed to the script
+CScriptArray *GetCommandLineArgs()
+{
+	if( g_commandLineArgs )
+	{
+		g_commandLineArgs->AddRef();
+		return g_commandLineArgs;
+	}
+
+    // Obtain a pointer to the engine
+    asIScriptContext *ctx = asGetActiveContext();
+    asIScriptEngine *engine = ctx->GetEngine();
+
+    // Create the array object
+	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
+    g_commandLineArgs = new CScriptArray(0, arrayType);
+
+    // Find the existence of the delimiter in the input string
+	for( int n = 0; n < g_argc; n++ )
+	{
+        // Add the arg to the array
+        g_commandLineArgs->Resize(g_commandLineArgs->GetSize()+1);
+        ((string*)g_commandLineArgs->At(n))->assign(g_argv[n]);
+    }
+
+    // Return the array by handle
+	g_commandLineArgs->AddRef();
+    return g_commandLineArgs;
+}

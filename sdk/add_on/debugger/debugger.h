@@ -3,17 +3,20 @@
 
 #include <angelscript.h>
 #include <string>
+#include <vector>
 
 class CDebugger
 {
 public:
 	CDebugger();
-	~CDebugger();
+	virtual ~CDebugger();
 
 	virtual void LineCallback(asIScriptContext *ctx);
 	virtual void TakeCommands(asIScriptContext *ctx);
 	virtual bool InterpretCommand(std::string &cmd, asIScriptContext *ctx);
 	virtual void PrintHelp();
+	virtual void AddBreakPoint(std::string &file, int lineNbr);
+	virtual bool CheckBreakPoint(asIScriptContext *ctx);
 
 protected:
 	enum DebugAction
@@ -25,6 +28,14 @@ protected:
 	};
 	DebugAction m_action;
 	asUINT      m_currentStackLevel;
+
+	struct BreakPoint
+	{
+		BreakPoint(std::string f, int n) : file(f), lineNbr(n) {}
+		std::string file;
+		int         lineNbr;
+	};
+	std::vector<BreakPoint> breakPoints;
 };
 
 #endif

@@ -82,15 +82,18 @@ static void StringJoin_Generic(asIScriptGeneric *gen)
 
     // Create the new string
     *str = "";
-    int n;
-    for( n = 0; n < (int)array->GetSize() - 1; n++ )
-    {
-		*str += *(string*)array->At(n);
-        *str += *delim;
-    }
+	if( array->GetSize() )
+	{
+		int n;
+		for( n = 0; n < (int)array->GetSize() - 1; n++ )
+		{
+			*str += *(string*)array->At(n);
+			*str += *delim;
+		}
 
-    // Add the last part
-    *str += *(string*)array->At(n);
+		// Add the last part
+		*str += *(string*)array->At(n);
+	}
 
     // Return the string
     *(string**)gen->GetAddressOfReturnLocation() = str;
@@ -106,7 +109,9 @@ void RegisterStdStringUtils(asIScriptEngine *engine)
     int r;
 
     r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
-    r = engine->RegisterObjectMethod("string", "string &join(const array<string> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
+    
+	// TODO: The way the join method is called doesn't feel natural. It should be a global function
+	r = engine->RegisterObjectMethod("string", "string &join(const array<string> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
 }
 
 END_AS_NAMESPACE
