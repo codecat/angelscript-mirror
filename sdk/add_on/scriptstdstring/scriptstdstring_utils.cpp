@@ -64,39 +64,37 @@ static void StringSplit_Generic(asIScriptGeneric *gen)
 // Example:
 //
 // array<string> array = {"A", "B", "", "D"};
-// string str;
-// str.join(array, "|");
+// string str = join(array, "|");
 //
 // The resulting string is:
 //
 // "A|B||D"
 //
 // AngelScript signature:
-// string &string::join(const array<string> &in array, const string &in delim)
+// string join(const array<string> &in array, const string &in delim)
 static void StringJoin_Generic(asIScriptGeneric *gen)
 {
     // Get the arguments
-	string *str = (string*)gen->GetObject();
     CScriptArray  *array = *(CScriptArray**)gen->GetAddressOfArg(0);
     string *delim = *(string**)gen->GetAddressOfArg(1);
 
     // Create the new string
-    *str = "";
+    string str = "";
 	if( array->GetSize() )
 	{
 		int n;
 		for( n = 0; n < (int)array->GetSize() - 1; n++ )
 		{
-			*str += *(string*)array->At(n);
-			*str += *delim;
+			str += *(string*)array->At(n);
+			str += *delim;
 		}
 
 		// Add the last part
-		*str += *(string*)array->At(n);
+		str += *(string*)array->At(n);
 	}
 
     // Return the string
-    *(string**)gen->GetAddressOfReturnLocation() = str;
+    new(gen->GetAddressOfReturnLocation()) string(str);
 }
 
 
@@ -106,12 +104,10 @@ static void StringJoin_Generic(asIScriptGeneric *gen)
 // The string type must have been registered first.
 void RegisterStdStringUtils(asIScriptEngine *engine)
 {
-    int r;
+	int r;
 
-    r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
-    
-	// TODO: The way the join method is called doesn't feel natural. It should be a global function
-	r = engine->RegisterObjectMethod("string", "string &join(const array<string> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("string join(const array<string> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
 }
 
 END_AS_NAMESPACE

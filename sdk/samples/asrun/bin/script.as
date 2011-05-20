@@ -18,9 +18,8 @@
 int main()
 {
   array<string> @args = getCommandLineArgs();
-  string str;
 
-  print("Received the following args : " + str.join(args, "|") + "\n");
+  print("Received the following args : " + join(args, "|") + "\n");
 
   function();
 
