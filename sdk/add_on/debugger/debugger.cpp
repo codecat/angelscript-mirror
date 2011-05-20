@@ -106,13 +106,11 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 	case 'b':
 		{
 			// Set break point
-			string breakPoint = cmd.substr(2);
-
-			size_t div = breakPoint.find(':');
-			if( div != string::npos )
+			size_t div = cmd.find(':'); 
+			if( div != string::npos && div > 2 )
 			{
-				string file = breakPoint.substr(0, div);
-				string line = breakPoint.substr(div+1);
+				string file = cmd.substr(2, div-2);
+				string line = cmd.substr(div+1);
 
 				int nbr = atoi(line.c_str());
 
