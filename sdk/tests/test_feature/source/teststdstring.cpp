@@ -345,7 +345,7 @@ bool TestStdString()
 			"      arr[1] == 'B' && \n"
 			"      arr[2] == ''  && \n"
 			"      arr[3] == 'D' ); \n"
-			"  assert( str.join(arr, ';') == 'A;B;;D' ); \n");
+			"  assert( join(arr, ';') == 'A;B;;D' ); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
