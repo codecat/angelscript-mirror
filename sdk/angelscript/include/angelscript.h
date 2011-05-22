@@ -604,7 +604,7 @@ public:
 	virtual int                RemoveFunction(int funcId) = 0;
 
 	// Global variables
-	virtual int         ResetGlobalVars() = 0;
+	virtual int         ResetGlobalVars(asIScriptContext *ctx = 0) = 0;
 	virtual int         GetGlobalVarCount() const = 0;
 	virtual int         GetGlobalVarIndexByName(const char *name) const = 0;
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const = 0;

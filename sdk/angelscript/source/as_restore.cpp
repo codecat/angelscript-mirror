@@ -428,7 +428,11 @@ int asCRestore::Restore()
 			if( module->scriptGlobals[i]->GetInitFunc() )
 				module->scriptGlobals[i]->GetInitFunc()->AddReferences();
 
-		module->CallInit();
+		if( engine->ep.initGlobalVarsAfterBuild )
+		{
+			int r = module->ResetGlobalVars(0);
+			if( r < 0 ) error = true;
+		}
 	}
 
 	return error ? asERROR : asSUCCESS;

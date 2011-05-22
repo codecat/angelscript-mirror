@@ -114,7 +114,7 @@ public:
 	virtual int                RemoveFunction(int funcId);
 
 	// Script global variables
-	virtual int         ResetGlobalVars();
+	virtual int         ResetGlobalVars(asIScriptContext *ctx);
 	virtual int         GetGlobalVarCount() const;
 	virtual int         GetGlobalVarIndexByName(const char *name) const;
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const;
@@ -167,7 +167,7 @@ public:
 
 	void InternalReset();
 
-	int  CallInit();
+	int  CallInit(asIScriptContext *ctx);
 	void CallExit();
 
 	void JITCompile();

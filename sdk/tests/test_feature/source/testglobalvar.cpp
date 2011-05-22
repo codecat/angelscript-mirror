@@ -103,10 +103,9 @@ bool TestGlobalVar()
 	asIScriptModule *mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
 
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	// This should fail, since we are trying to call a function in the initialization
-	if( mod->Build() >= 0 )
+	if( mod->Build() < 0 )
 	{
-		printf("%s: build erronously returned success\n", TESTNAME);
+		printf("%s: build failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 

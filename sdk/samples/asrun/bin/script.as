@@ -15,7 +15,7 @@
 
 */
 
-string g_str = "Global string";
+string g_str = getDefaultString();
 
 int main()
 {
@@ -31,4 +31,9 @@ int main()
 void function()
 {
   print("Currently in a different function\n");
+}
+
+string getDefaultString()
+{
+  return "default";
 }

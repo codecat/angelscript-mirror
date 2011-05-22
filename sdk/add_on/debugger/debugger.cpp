@@ -46,6 +46,7 @@ string CDebugger::ToString(void *value, asUINT typeId)
 
 	// TODO: Should expand enums to the enum name
 	// TODO: Should expand script classes to show values of members
+	// TODO: Value types can have their properties expanded by default
 
 	return s.str();
 }

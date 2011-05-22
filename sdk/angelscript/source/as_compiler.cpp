@@ -94,8 +94,6 @@ void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFun
 	continueLabels.SetLength(0);
 
 	byteCode.ClearAll();
-
-	globalExpression = false;
 }
 
 int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *script, asCScriptFunction *outFunc)
@@ -743,7 +741,6 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, sGlobalVariableDescription *gvar, asCScriptFunction *outFunc)
 {
 	Reset(builder, script, outFunc);
-	globalExpression = true;
 
 	// Add a variable scope (even though variables can't be declared)
 	AddVariableScope();
@@ -5437,13 +5434,6 @@ int asCCompiler::CompileAssignment(asCScriptNode *expr, asSExprContext *ctx)
 	asCScriptNode *lexpr = expr->firstChild;
 	if( lexpr->next )
 	{
-		if( globalExpression )
-		{
-			Error(TXT_ASSIGN_IN_GLOBAL_EXPR, expr);
-			ctx->type.SetDummy();
-			return -1;
-		}
-
 		// Compile the two expression terms
 		asSExprContext lctx(engine), rctx(engine);
 		int rr = CompileAssignment(lexpr->next->next, &rctx);
@@ -6938,15 +6928,6 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		return;
 	}
 
-	if( globalExpression )
-	{
-		Error(TXT_FUNCTION_IN_GLOBAL_EXPR, node);
-
-		// Output dummy code
-		ctx->type.SetDummy();
-		return;
-	}
-
 	// Compile the arguments
 	asCArray<asSExprContext *> args;
 	asCArray<asCTypeInfo> temporaryVariables;
@@ -7154,15 +7135,6 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	if( funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() )
 	{
 		funcs.PushLast(funcPtr.type.dataType.GetFuncDef()->id);
-	}
-
-	if( globalExpression )
-	{
-		Error(TXT_FUNCTION_IN_GLOBAL_EXPR, node);
-
-		// Output dummy code
-		ctx->type.SetDummy();
-		return;
 	}
 
 	// Compile the arguments
@@ -7504,11 +7476,6 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	{
 		// Need a reference to the primitive that will be updated
 		// The result of this expression is the same reference as before
-		if( globalExpression )
-		{
-			Error(TXT_INC_OP_IN_GLOBAL_EXPR, node);
-			return -1;
-		}
 
 		// Make sure the reference isn't a temporary variable
 		if( ctx->type.isTemporary )
@@ -8087,12 +8054,6 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	}
 	else if( op == ttInc || op == ttDec )
 	{
-		if( globalExpression )
-		{
-			Error(TXT_INC_OP_IN_GLOBAL_EXPR, node);
-			return -1;
-		}
-
 		// Make sure the reference isn't a temporary variable
 		if( ctx->type.isTemporary )
 		{
@@ -8257,12 +8218,6 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		}
 		else
 		{
-			if( globalExpression )
-			{
-				Error(TXT_METHOD_IN_GLOBAL_EXPR, node);
-				return -1;
-			}
-
 			// Make sure it is an object we are accessing
 			if( !ctx->type.dataType.IsObject() )
 			{

@@ -63,9 +63,6 @@ Parameters can have default arguments. When a function with default arguments is
 Global variables may be declared in the scripts, which will then be shared between 
 all contexts accessing the script module.
 
-The global variables may be initialized by simple expressions that do not require 
-any functions to be called, i.e. the value can be evaluated at compile time.
-
 Variables declared globally like this are accessible from all functions. The 
 value of the variables are initialized at compile time and any changes are 
 maintained between calls. If a global variable holds a memory resource, e.g. 
@@ -81,6 +78,13 @@ This allows class constructors to access other global variables already with the
 correct initial value. The exception is if the other global variable also is of a 
 non-primitive type, in which case there is no guarantee which variable is initialized 
 first, which may lead to null-pointer exceptions being thrown during initialization.
+
+Be careful with calling functions that may access global variables from within the 
+initialization expression of global variables. While the compiler tries to initialize the
+global variables in the order they are needed, there is no guarantee that it will always
+succeed. Should a function access a global variable that has not yet been initialized you
+will get unpredictable behaviour or a null-pointer exception.
+
 
 
 

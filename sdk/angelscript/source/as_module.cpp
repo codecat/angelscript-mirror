@@ -157,21 +157,18 @@ int asCModule::Build()
 
 	// Initialize global variables
 	if( r >= 0 && engine->ep.initGlobalVarsAfterBuild )
-		r = ResetGlobalVars();
+		r = ResetGlobalVars(0);
 
 	return r;
 }
 
 // interface
-int asCModule::ResetGlobalVars()
+int asCModule::ResetGlobalVars(asIScriptContext *ctx)
 {
 	if( isGlobalVarInitialized ) 
 		CallExit();
 
-	// TODO: The application really should do this manually through a context
-	//       otherwise it cannot properly handle script exceptions that may be
-	//       thrown by object initializations.
-	return CallInit();
+	return CallInit(ctx);
 }
 
 // interface
@@ -184,7 +181,7 @@ int asCModule::GetFunctionIdByIndex(int index) const
 }
 
 // internal
-int asCModule::CallInit()
+int asCModule::CallInit(asIScriptContext *myCtx)
 {
 	if( isGlobalVarInitialized ) 
 		return asERROR;
@@ -200,7 +197,7 @@ int asCModule::CallInit()
 	}
 
 	// Call the init function for each of the global variables
-	asIScriptContext *ctx = 0;
+	asIScriptContext *ctx = myCtx;
 	int r = asEXECUTION_FINISHED;
 	for( n = 0; n < scriptGlobals.GetLength() && r == asEXECUTION_FINISHED; n++ )
 	{
@@ -247,7 +244,7 @@ int asCModule::CallInit()
 		}
 	}
 
-	if( ctx )
+	if( ctx && !myCtx )
 	{
 		ctx->Release();
 		ctx = 0;

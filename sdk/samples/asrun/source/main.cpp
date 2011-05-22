@@ -170,19 +170,19 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 		dbg->TakeCommands(ctx);
 	}
 
-	// Once we have the main function, we first need to initialize the global variables
-	// TODO: It should be possible to debug the initialization of the global variables too
-	int r = mod->ResetGlobalVars();
-	if( r < 0 )
-	{
-		engine->WriteMessage(scriptFile, 0, 0, asMSGTYPE_ERROR, "Failed while initializing global variables");
-		return -1;
-	}
-
 	if( dbg )
 	{
 		// Set the line callback for the debugging
 		ctx->SetLineCallback(asMETHOD(CDebugger, LineCallback), dbg, asCALL_THISCALL);
+	}
+
+	// Once we have the main function, we first need to initialize the global variables
+	// Pass our own context so the initialization of the global variables can be debugged too
+	int r = mod->ResetGlobalVars(ctx);
+	if( r < 0 )
+	{
+		engine->WriteMessage(scriptFile, 0, 0, asMSGTYPE_ERROR, "Failed while initializing global variables");
+		return -1;
 	}
 
 	// Execute the script

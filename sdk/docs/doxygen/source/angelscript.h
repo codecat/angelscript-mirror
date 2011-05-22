@@ -60,7 +60,7 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.20.3
+//! \details Version 2.21.0
 #define ANGELSCRIPT_VERSION        22100
 #define ANGELSCRIPT_VERSION_STRING "2.21.0"
 
@@ -1692,13 +1692,15 @@ public:
     //! \{
 	
 	//! \brief Reset the global variables of the module.
-    //!
-    //! \return A negative value on error.
-    //! \retval asERROR The module was not compiled successfully.
-    //! \retval asINIT_GLOBAL_VARS_FAILED The initialization of the global variables failed.
-    //!
-    //! Resets the global variables declared in this module to their initial value.
-	virtual int         ResetGlobalVars() = 0;
+	//! \param[in] ctx Optional script context.
+	//! \return A negative value on error.
+	//! \retval asERROR The module was not compiled successfully.
+	//! \retval asINIT_GLOBAL_VARS_FAILED The initialization of the global variables failed.
+	//!
+	//! Resets the global variables declared in this module to their initial value. The context should be 
+	//! informed if the application needs to have extra control over how the initialization is done, for 
+	//! example for debugging, or for catching exceptions.
+	virtual int         ResetGlobalVars(asIScriptContext *ctx = 0) = 0;
 	//! \brief Returns the number of global variables in the module.
     //! \return A negative value on error, or the number of global variables in the module.
 	//! \retval asERROR The module was not compiled successfully.
