@@ -13,15 +13,17 @@ public:
 
 	virtual void LineCallback(asIScriptContext *ctx);
 	virtual void TakeCommands(asIScriptContext *ctx);
-	virtual bool InterpretCommand(std::string &cmd, asIScriptContext *ctx);
+	virtual bool InterpretCommand(const std::string &cmd, asIScriptContext *ctx);
 	virtual void PrintHelp();
-	virtual void AddBreakPoint(std::string &file, int lineNbr);
+	virtual void AddFileBreakPoint(const std::string &file, int lineNbr);
+	virtual void AddFuncBreakPoint(const std::string &func);
 	virtual bool CheckBreakPoint(asIScriptContext *ctx);
 	virtual void ListBreakPoints();
 	virtual void ListLocalVariables(asIScriptContext *ctx);
 	virtual void ListGlobalVariables(asIScriptContext *ctx);
 	virtual void PrintCallstack(asIScriptContext *ctx);
 	virtual std::string ToString(void *value, asUINT typeId);
+	virtual void Output(const std::string &str);
 
 protected:
 	enum DebugAction
@@ -32,13 +34,15 @@ protected:
 		STEP_OUT   // run until returning from current function
 	};
 	DebugAction m_action;
-	asUINT      m_currentStackLevel;
+	asUINT      m_lastCommandAtStackLevel;
+	asUINT      m_lastStackLevel;
 
 	struct BreakPoint
 	{
-		BreakPoint(std::string f, int n) : file(f), lineNbr(n) {}
-		std::string file;
+		BreakPoint(std::string f, int n, bool _func) : name(f), lineNbr(n), func(_func) {}
+		std::string name;
 		int         lineNbr;
+		bool        func;
 	};
 	std::vector<BreakPoint> breakPoints;
 };
