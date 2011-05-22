@@ -1,5 +1,6 @@
 #include "debugger.h"
 #include <iostream>  // cout
+#include <sstream> // stringstream
 
 using namespace std;
 
@@ -10,6 +11,42 @@ CDebugger::CDebugger()
 
 CDebugger::~CDebugger()
 {
+}
+
+string CDebugger::ToString(void *value, asUINT typeId)
+{
+	stringstream s;
+	if( typeId == asTYPEID_VOID )
+		return "<void>";
+	else if( typeId == asTYPEID_BOOL )
+		return *(bool*)value ? "true" : "false";
+	else if( typeId == asTYPEID_INT8 )
+		s << *(signed char*)value;
+	else if( typeId == asTYPEID_INT16 )
+		s << *(signed short*)value;
+	else if( typeId == asTYPEID_INT32 )
+		s << *(signed int*)value;
+	else if( typeId == asTYPEID_INT64 )
+		s << *(asINT64*)value;
+	else if( typeId == asTYPEID_UINT8 )
+		s << *(unsigned char*)value;
+	else if( typeId == asTYPEID_UINT16 )
+		s << *(unsigned short*)value;
+	else if( typeId == asTYPEID_UINT32 )
+		s << *(unsigned int*)value;
+	else if( typeId == asTYPEID_UINT64 )
+		s << *(asQWORD*)value;
+	else if( typeId == asTYPEID_FLOAT )
+		s << *(float*)value;
+	else if( typeId == asTYPEID_DOUBLE )
+		s << *(double*)value;
+	else
+		s << "{" << value << "}";
+
+	// TODO: Should expand enums to the enum name
+	// TODO: Should expand script classes to show values of members
+
+	return s.str();
 }
 
 void CDebugger::LineCallback(asIScriptContext *ctx)
@@ -241,8 +278,7 @@ void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 	for( int n = 0; n < func->GetVarCount(); n++ )
 	{
 		// TODO: Should only list the variables visible at the current position
-		// TODO: Should print the value of the variable
-		cout << func->GetVarDecl(n) << endl;
+		cout << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), ctx->GetVarTypeId(n)) << endl;
 	}
 }
 
@@ -257,8 +293,9 @@ void CDebugger::ListGlobalVariables(asIScriptContext *ctx)
 
 	for( int n = 0; n < mod->GetGlobalVarCount(); n++ )
 	{
-		// TODO: Should print the value of the variable
-		cout << mod->GetGlobalVarDeclaration(n) << endl;
+		int typeId;
+		mod->GetGlobalVar(n, 0, &typeId);
+		cout << mod->GetGlobalVarDeclaration(n) << " = " << ToString(mod->GetAddressOfGlobalVar(n), typeId) << endl;
 	}
 }
 

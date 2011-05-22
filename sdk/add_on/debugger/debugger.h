@@ -21,6 +21,7 @@ public:
 	virtual void ListLocalVariables(asIScriptContext *ctx);
 	virtual void ListGlobalVariables(asIScriptContext *ctx);
 	virtual void PrintCallstack(asIScriptContext *ctx);
+	virtual std::string ToString(void *value, asUINT typeId);
 
 protected:
 	enum DebugAction
