@@ -40,15 +40,19 @@ void CDebugger::LineCallback(asIScriptContext *ctx)
 		// Always break
 	}
 
-	cout << "line: " << ctx->GetLineNumber() << endl;
+	cout << ctx->GetFunction()->GetDeclaration() << ":" << ctx->GetLineNumber() << endl;
 
 	TakeCommands(ctx);
 }
 
 bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 {
+	// TODO: Should cache the break points in a function by checking which possible break points
+	//       can be hit when entering a function. If there are no break points in the current function
+	//       then there is no need to check every line.
+
 	// TODO: consider just filename, not the full path
-	// TODO: do case less comparison
+	// TODO: do case-less comparison
 	const char *file = 0;
 	int lineNbr = ctx->GetLineNumber(0, 0, &file);
 
@@ -106,6 +110,8 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 	case 'b':
 		{
 			// Set break point
+			// TODO: When no : is given, assume it is a function name
+			//       As many functions can have the same name, set the break point for the first function entered with that name
 			size_t div = cmd.find(':'); 
 			if( div != string::npos && div > 2 )
 			{
@@ -167,11 +173,16 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 				{
 					ListLocalVariables(ctx);
 				}
+				else if( cmd[p] == 'g' )
+				{
+					ListGlobalVariables(ctx);
+				}
 				else
 				{
 					cout << "Unknown list option, expected one of:" << endl;
 					cout << "b - breakpoints" << endl;
 					cout << "v - local variables" << endl;
+					cout << "g - global variables" << endl;
 				}
 			}
 			else 
@@ -232,6 +243,22 @@ void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 		// TODO: Should only list the variables visible at the current position
 		// TODO: Should print the value of the variable
 		cout << func->GetVarDecl(n) << endl;
+	}
+}
+
+void CDebugger::ListGlobalVariables(asIScriptContext *ctx)
+{
+	// Determine the current module from the function
+	asIScriptFunction *func = ctx->GetFunction();
+	if( !func ) return;
+
+	asIScriptModule *mod = ctx->GetEngine()->GetModule(func->GetModuleName(), asGM_ONLY_IF_EXISTS);
+	if( !mod ) return;
+
+	for( int n = 0; n < mod->GetGlobalVarCount(); n++ )
+	{
+		// TODO: Should print the value of the variable
+		cout << mod->GetGlobalVarDeclaration(n) << endl;
 	}
 }
 

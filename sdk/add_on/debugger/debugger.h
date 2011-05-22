@@ -19,6 +19,7 @@ public:
 	virtual bool CheckBreakPoint(asIScriptContext *ctx);
 	virtual void ListBreakPoints();
 	virtual void ListLocalVariables(asIScriptContext *ctx);
+	virtual void ListGlobalVariables(asIScriptContext *ctx);
 	virtual void PrintCallstack(asIScriptContext *ctx);
 
 protected:

@@ -15,6 +15,8 @@
 
 */
 
+string g_str = "Global string";
+
 int main()
 {
   array<string> @args = getCommandLineArgs();
