@@ -121,23 +121,62 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 				cout << "Incorrect format for setting break point, expected:" << endl;
 				cout << "b <file name>:<line number>" << endl;
 			}
-
-			// take more commands
 		}
+		// take more commands
 		return false;
 
 	case 'r':
-		// Remove break point
+		{
+			// Remove break point
+			if( cmd.length() > 2 )
+			{
+				string br = cmd.substr(2);
+				if( br == "all" )
+					breakPoints.clear();
+				else
+				{
+					int nbr = atoi(br.c_str());
+					if( nbr >= 0 && nbr < (int)breakPoints.size() )
+						breakPoints.erase(breakPoints.begin()+nbr);
+				}
+			}
+			else
+			{
+				cout << "Incorrect format for removing break points, expected:" << endl;
+				cout << "r <all|number of break point>" << endl;
+			}
+		}
 		// take more commands
 		return false;
 
 	case 'l':
-		// List something
+		{
+			// List something
+			size_t p = cmd.find_first_not_of(" \t", 1);
+			if( p != string::npos )
+			{
+				if( cmd[p] == 'b' )
+				{
+					// List all break points
+					for( size_t b = 0; b < breakPoints.size(); b++ )
+						cout << b << " - " << breakPoints[b].file << ":" << breakPoints[b].lineNbr << endl;
+				}
+				else
+				{
+					cout << "Unknown list option, expected one of:" << endl;
+					cout << "b - breakpoints" << endl;
+				}
+			}
+			else 
+			{
+				cout << "Incorrect format for list, expected:" << endl;
+				cout << "l <list option>" << endl;
+			}
+		}
 		// take more commands
 		return false;
 
 	case 'h':
-	case '?':
 		PrintHelp();
 		// take more commands
 		return false;
