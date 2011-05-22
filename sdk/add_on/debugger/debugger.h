@@ -17,6 +17,9 @@ public:
 	virtual void PrintHelp();
 	virtual void AddBreakPoint(std::string &file, int lineNbr);
 	virtual bool CheckBreakPoint(asIScriptContext *ctx);
+	virtual void ListBreakPoints();
+	virtual void ListLocalVariables(asIScriptContext *ctx);
+	virtual void PrintCallstack(asIScriptContext *ctx);
 
 protected:
 	enum DebugAction

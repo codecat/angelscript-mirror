@@ -197,7 +197,12 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 			PrintException(ctx, true);
 			r = -1;
 		}
-		else 
+		else if( r == asEXECUTION_ABORTED )
+		{
+			cout << "The script was aborted" << endl;
+			r = -1;
+		}
+		else
 		{
 			cout << "The script terminated unexpectedly (" << r << ")" << endl;
 			r = -1;

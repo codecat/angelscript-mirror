@@ -132,12 +132,16 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 			{
 				string br = cmd.substr(2);
 				if( br == "all" )
+				{
 					breakPoints.clear();
+					cout << "All break points have been removed" << endl;
+				}
 				else
 				{
 					int nbr = atoi(br.c_str());
 					if( nbr >= 0 && nbr < (int)breakPoints.size() )
 						breakPoints.erase(breakPoints.begin()+nbr);
+					ListBreakPoints();
 				}
 			}
 			else
@@ -157,14 +161,17 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 			{
 				if( cmd[p] == 'b' )
 				{
-					// List all break points
-					for( size_t b = 0; b < breakPoints.size(); b++ )
-						cout << b << " - " << breakPoints[b].file << ":" << breakPoints[b].lineNbr << endl;
+					ListBreakPoints();
+				}
+				else if( cmd[p] == 'v' )
+				{
+					ListLocalVariables(ctx);
 				}
 				else
 				{
 					cout << "Unknown list option, expected one of:" << endl;
 					cout << "b - breakpoints" << endl;
+					cout << "v - local variables" << endl;
 				}
 			}
 			else 
@@ -181,10 +188,22 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 		// take more commands
 		return false;
 
-	case 'p':
-		// print some value
+	case 'e':
+		// TODO: Implement this
+		// Evaluate some expression
 		// take more commands
 		return false;
+
+	case 'w':
+		// Where am I?
+		PrintCallstack(ctx);
+		// take more commands
+		return false;
+
+	case 'a':
+		// abort the execution
+		ctx->Abort();
+		break;
 
 	default:
 		cout << "Unknown command" << endl;
@@ -194,6 +213,34 @@ bool CDebugger::InterpretCommand(string &cmd, asIScriptContext *ctx)
 
 	// Continue execution
 	return true;
+}
+
+void CDebugger::ListBreakPoints()
+{
+	// List all break points
+	for( size_t b = 0; b < breakPoints.size(); b++ )
+		cout << b << " - " << breakPoints[b].file << ":" << breakPoints[b].lineNbr << endl;
+}
+
+void CDebugger::ListLocalVariables(asIScriptContext *ctx)
+{
+	asIScriptFunction *func = ctx->GetFunction();
+	if( !func ) return;
+
+	for( int n = 0; n < func->GetVarCount(); n++ )
+	{
+		// TODO: Should only list the variables visible at the current position
+		// TODO: Should print the value of the variable
+		cout << func->GetVarDecl(n) << endl;
+	}
+}
+
+void CDebugger::PrintCallstack(asIScriptContext *ctx)
+{
+	for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ )
+	{
+		cout << ctx->GetFunction(n)->GetDeclaration() << ":" << ctx->GetLineNumber(n) << endl;
+	}
 }
 
 void CDebugger::AddBreakPoint(std::string &file, int lineNbr)
@@ -211,8 +258,12 @@ void CDebugger::PrintHelp()
 {
 	cout << "c - Continue" << endl;
 	cout << "s - Step into" << endl;
-	cout << "n - Step over" << endl;
+	cout << "n - Next step" << endl;
 	cout << "o - Step out" << endl;
 	cout << "b - Set break point" << endl;
+	cout << "l - List various things" << endl;
+	cout << "r - Remove break point" << endl;
+	cout << "w - Where am I?" << endl;
+	cout << "a - Abort execution" << endl;
 	cout << "h - Print this help text" << endl;
 }

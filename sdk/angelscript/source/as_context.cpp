@@ -1096,6 +1096,8 @@ void asCContext::PopCallState()
 // interface
 asUINT asCContext::GetCallstackSize()
 {
+	if( currentFunction == 0 ) return 0;
+
 	// The current function is accessed at stackLevel 0
 	return asUINT(1 + callStack.GetLength() / CALLSTACK_FRAME_SIZE);
 }
