@@ -108,7 +108,11 @@ int ConfigureEngine(asIScriptEngine *engine)
 
 	r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("array<string> @getCommandLineArgs()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL); assert( r >= 0 );
-	
+
+	// TODO: There should be an option of outputting the engine 
+	//       configuration for use with the offline compiler asbuild.
+	//       It should then be possible to execute pre-compiled bytecode.
+
 	return 0;
 }
 
