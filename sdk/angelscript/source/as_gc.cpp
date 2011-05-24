@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -57,6 +57,20 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 {
 	engine->CallObjectMethod(obj, objType->beh.addref);
 	asSObjTypePair ot = {obj, objType};
+
+	// TODO: We should invoke the garbage collector to destroy some garbage here.
+	//       Only a single step will be called. If an object is destroyed, another
+	//       step will be called until no more garbage is destroyed. A single step
+	//       for the detection of circular references should be called too.
+	//
+	//       This way most garbage will be destroyed automatically without the  
+	//       application having to manually invoke the GC. 
+	//
+	//       DestroyGarbage checks the refCount of each object until it destroys an 
+	//       object. This has to change, as there might be thousands of live objects
+	//       in the GC, and it will make it slow to add new objects.
+	//
+	//       This behaviour can be turned off with an engine property.
 
 	// Add the data to the gcObjects array in a critical section as
 	// another thread might be calling this method at the same time

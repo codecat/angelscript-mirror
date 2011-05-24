@@ -281,6 +281,8 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 			outFunc->AddVariable(name, type, stackPos);
 
+			// TODO: debugger: Add marker for variable declaration
+
 			node = node->next;
 
 			// Skip the default arg
