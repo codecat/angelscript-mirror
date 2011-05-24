@@ -3489,6 +3489,10 @@ void asCContext::CleanStack()
 	inExceptionHandler = false;
 }
 
+// TODO: debugger: This method can also be used to determine visibility of variables.
+//                 It needs to have an extra case asVAR_INIT to show when an ordinary variable
+//                 starts being visible. The visibility of these variables is until the end of 
+//                 the block, so there is no need for a asVAR_UNINIT.
 void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLevel)
 {
 	asASSERT( stackLevel < GetCallstackSize() );

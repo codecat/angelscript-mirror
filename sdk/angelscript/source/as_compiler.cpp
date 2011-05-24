@@ -1020,6 +1020,20 @@ void asCCompiler::FinalizeFunction()
 
 	byteCode.ExtractObjectVariableInfo(outFunc);
 
+	// TODO: debugger: It is also necessary to extract the position where the each variable  
+	//                 is declared so the debugger can determine the scope of the variables.
+	//                 As multiple variables can occupy the same position on the stack if 
+	//                 they are in different scopes it is not possible to use the same way as the 
+	//                 objectVariableInfo.
+	//
+	//                 The compiler needs to put a marker in the bytecode when the variables are
+	//                 declared. This marker needs to have the index of the variable. Here in the
+	//                 end the bytecode needs to be traversed to find all the markers and the position
+	//                 of the variables needs to be updated in the final function.
+	//                 
+	//                 The block structure from the objectVariableInfo is used to determine the scope
+	//                 of the variables afterwards, so there is no need for a specific marker for that.
+
 	// Compile the list of object variables for the exception handler
 	for( n = 0; n < variableAllocations.GetLength(); n++ )
 	{
@@ -1707,6 +1721,8 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		}
 
 		outFunc->AddVariable(name, type, offset);
+
+		// TODO: debugger: Add marker that the variable has been declared
 
 		// Keep the node for the variable decl
 		asCScriptNode *varNode = node;

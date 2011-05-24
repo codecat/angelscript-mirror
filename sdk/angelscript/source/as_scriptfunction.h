@@ -53,6 +53,7 @@ class asCModule;
 class asCConfigGroup;
 class asCGlobalProperty;
 
+// TODO: debugger: Add info about where the variable is declared
 struct asSScriptVariable
 {
 	asCString   name;

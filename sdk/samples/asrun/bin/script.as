@@ -31,6 +31,15 @@ int main()
 void function()
 {
   print("Currently in a different function\n");
+
+  int n = 0;
+  {
+    int n = 1;
+    string s = "hello";
+  }
+  {
+    int n = 2;
+  }
 }
 
 string getDefaultString()
