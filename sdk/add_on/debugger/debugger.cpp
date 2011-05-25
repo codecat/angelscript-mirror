@@ -325,8 +325,8 @@ void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 	stringstream s;
 	for( int n = 0; n < func->GetVarCount(); n++ )
 	{
-		// TODO: Should only list the variables visible at the current position
-		s << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), ctx->GetVarTypeId(n)) << endl;
+		if( ctx->IsVarInScope(n) )
+			s << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), ctx->GetVarTypeId(n)) << endl;
 	}
 	Output(s.str());
 }

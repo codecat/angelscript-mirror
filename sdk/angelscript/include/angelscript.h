@@ -706,6 +706,7 @@ public:
 	virtual const char        *GetVarDeclaration(int varIndex, asUINT stackLevel = 0) = 0;
 	virtual int                GetVarTypeId(int varIndex, asUINT stackLevel = 0) = 0;
 	virtual void              *GetAddressOfVar(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual bool               IsVarInScope(int varIndex, asUINT stackLevel = 0) = 0;
 	virtual int                GetThisTypeId(asUINT stackLevel = 0) = 0;
 	virtual void              *GetThisPointer(asUINT stackLevel = 0) = 0;
 
@@ -1303,6 +1304,7 @@ enum asEBCInstr
 	asBC_MAXBYTECODE	= 186,
 
 	// Temporary tokens. Can't be output to the final program
+	asBC_VarDecl        = 251,
 	asBC_Block          = 252,
 	asBC_ObjInfo		= 253,
 	asBC_LINE			= 254,
@@ -1643,8 +1645,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(248),
 	asBCINFO_DUMMY(249),
 	asBCINFO_DUMMY(250),
-	asBCINFO_DUMMY(251),
 
+	asBCINFO(VarDecl,   W_ARG,          0),
 	asBCINFO(Block,     INFO,           0),
 	asBCINFO(ObjInfo,	rW_DW_ARG,		0),
 	asBCINFO(LINE,		INFO,			0),

@@ -36,6 +36,7 @@ void function()
   {
     int n = 1;
     string s = "hello";
+    print(s + "\n");
   }
   {
     int n = 2;

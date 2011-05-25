@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -3489,10 +3489,61 @@ void asCContext::CleanStack()
 	inExceptionHandler = false;
 }
 
-// TODO: debugger: This method can also be used to determine visibility of variables.
-//                 It needs to have an extra case asVAR_INIT to show when an ordinary variable
-//                 starts being visible. The visibility of these variables is until the end of 
-//                 the block, so there is no need for a asVAR_UNINIT.
+// Interface
+bool asCContext::IsVarInScope(int varIndex, asUINT stackLevel)
+{
+	asASSERT( stackLevel < GetCallstackSize() );
+
+	asCScriptFunction *func;
+	asUINT pos;
+
+	if( stackLevel == 0 )
+	{
+		func = currentFunction;
+		pos = asUINT(regs.programPointer - func->byteCode.AddressOf());
+	}
+	else
+	{
+		size_t *s = callStack.AddressOf() + (GetCallstackSize()-stackLevel-1)*CALLSTACK_FRAME_SIZE;
+		func = (asCScriptFunction*)s[1];
+		pos = asUINT((asDWORD*)s[2] - func->byteCode.AddressOf());
+	}
+
+	// First determine if the program position is after the variable declaration
+	if( (int)func->variables.GetLength() <= varIndex ) return false;
+	if( func->variables[varIndex]->declaredAtProgramPos > pos ) return false;
+
+	asUINT declaredAt = func->variables[varIndex]->declaredAtProgramPos;
+
+	// If the program position is after the variable declaration it is necessary 
+	// determine if the program position is still inside the statement block where 
+	// the variable was delcared.
+	for( int n = 0; n < (int)func->objVariableInfo.GetLength(); n++ )
+	{
+		if( func->objVariableInfo[n].programPos >= declaredAt )
+		{
+			// If the current block ends between the declaredAt and current 
+			// program position, then we know the variable is no longer visible
+			int level = 0;
+			for( ; n < (int)func->objVariableInfo.GetLength(); n++ )
+			{
+				if( func->objVariableInfo[n].programPos > pos )
+					break;
+
+				if( func->objVariableInfo[n].option == asBLOCK_BEGIN ) level++;
+				if( func->objVariableInfo[n].option == asBLOCK_END && --level < 0 )
+					return false;
+			}
+
+			break;
+		}
+	}
+
+	// Variable is visible
+	return true;
+}
+
+// Internal
 void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLevel)
 {
 	asASSERT( stackLevel < GetCallstackSize() );

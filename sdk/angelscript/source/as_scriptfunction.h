@@ -53,12 +53,12 @@ class asCModule;
 class asCConfigGroup;
 class asCGlobalProperty;
 
-// TODO: debugger: Add info about where the variable is declared
 struct asSScriptVariable
 {
 	asCString   name;
 	asCDataType type;
 	int         stackOffset;
+	asUINT      declaredAtProgramPos;
 };
 
 enum asEObjVarInfoOption

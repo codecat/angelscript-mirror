@@ -409,6 +409,7 @@ asEFuncType asCScriptFunction::GetFuncType() const
 }
 
 // interface
+// TODO: Should return asUINT
 int asCScriptFunction::GetVarCount() const
 {
 	return int(variables.GetLength());
@@ -446,9 +447,10 @@ const char *asCScriptFunction::GetVarDecl(asUINT index) const
 void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stackOffset)
 {
 	asSScriptVariable *var = asNEW(asSScriptVariable);
-	var->name        = name;
-	var->type        = type;
-	var->stackOffset = stackOffset;
+	var->name                 = name;
+	var->type                 = type;
+	var->stackOffset          = stackOffset;
+	var->declaredAtProgramPos = 0;
 	variables.PushLast(var);
 }
 
