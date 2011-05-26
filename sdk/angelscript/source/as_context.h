@@ -107,12 +107,11 @@ public:
 	asIScriptFunction *GetFunction(asUINT stackLevel);
 	int                GetLineNumber(asUINT stackLevel, int *column, const char **sectionName);
 	int                GetVarCount(asUINT stackLevel);
-	// TODO: varIndex should be asUINT
-	const char        *GetVarName(int varIndex, asUINT stackLevel);
-	const char        *GetVarDeclaration(int varIndex, asUINT stackLevel);
-	int                GetVarTypeId(int varIndex, asUINT stackLevel);
-	void              *GetAddressOfVar(int varIndex, asUINT stackLevel);
-	bool               IsVarInScope(int varIndex, asUINT stackLevel);
+	const char        *GetVarName(asUINT varIndex, asUINT stackLevel);
+	const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel);
+	int                GetVarTypeId(asUINT varIndex, asUINT stackLevel);
+	void              *GetAddressOfVar(asUINT varIndex, asUINT stackLevel);
+	bool               IsVarInScope(asUINT varIndex, asUINT stackLevel);
 	int                GetThisTypeId(asUINT stackLevel);
     void              *GetThisPointer(asUINT stackLevel);
 

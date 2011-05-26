@@ -190,7 +190,6 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 	}
 
 	// Execute the script
-	// TODO: As this is a long running script it is necessary to invoke the GC once in a while
 	ctx->Prepare(funcId);
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )

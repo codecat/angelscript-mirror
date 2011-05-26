@@ -702,11 +702,11 @@ public:
 	virtual asIScriptFunction *GetFunction(asUINT stackLevel = 0) = 0;
 	virtual int                GetLineNumber(asUINT stackLevel = 0, int *column = 0, const char **sectionName = 0) = 0;
 	virtual int                GetVarCount(asUINT stackLevel = 0) = 0;
-	virtual const char        *GetVarName(int varIndex, asUINT stackLevel = 0) = 0;
-	virtual const char        *GetVarDeclaration(int varIndex, asUINT stackLevel = 0) = 0;
-	virtual int                GetVarTypeId(int varIndex, asUINT stackLevel = 0) = 0;
-	virtual void              *GetAddressOfVar(int varIndex, asUINT stackLevel = 0) = 0;
-	virtual bool               IsVarInScope(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual const char        *GetVarName(asUINT varIndex, asUINT stackLevel = 0) = 0;
+	virtual const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel = 0) = 0;
+	virtual int                GetVarTypeId(asUINT varIndex, asUINT stackLevel = 0) = 0;
+	virtual void              *GetAddressOfVar(asUINT varIndex, asUINT stackLevel = 0) = 0;
+	virtual bool               IsVarInScope(asUINT varIndex, asUINT stackLevel = 0) = 0;
 	virtual int                GetThisTypeId(asUINT stackLevel = 0) = 0;
 	virtual void              *GetThisPointer(asUINT stackLevel = 0) = 0;
 
@@ -852,12 +852,12 @@ public:
 	virtual bool             IsReadOnly() const = 0;
 	virtual bool             IsPrivate() const = 0;
 
-	virtual int              GetParamCount() const = 0;
-	virtual int              GetParamTypeId(int index, asDWORD *flags = 0) const = 0;
+	virtual asUINT           GetParamCount() const = 0;
+	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;
 	virtual int              GetReturnTypeId() const = 0;
 
 	// Debug information
-	virtual int              GetVarCount() const = 0;
+	virtual asUINT           GetVarCount() const = 0;
 	virtual int              GetVar(asUINT index, const char **name, int *typeId = 0) const = 0;
 	virtual const char *     GetVarDecl(asUINT index) const = 0;
 

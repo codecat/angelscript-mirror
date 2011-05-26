@@ -95,6 +95,10 @@ bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 	//       can be hit when entering a function. If there are no break points in the current function
 	//       then there is no need to check every line.
 
+	// TODO: A break point can be placed on a line where there is no code. In this case  
+	//       the first line with code after it should be taken as the break point. It's 
+	//       necessary to know where the function is first declared.
+
 	if( m_lastStackLevel < ctx->GetCallstackSize() )
 	{
 		// We've moved into a new function, so we need to check for a breakpoint at entering the function
@@ -120,13 +124,18 @@ bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 	}
 	m_lastStackLevel = ctx->GetCallstackSize();
 
-	// TODO: consider just filename, not the full path
-	// TODO: do case-less comparison
-	const char *file = 0;
-	int lineNbr = ctx->GetLineNumber(0, 0, &file);
+	const char *tmp = 0;
+	int lineNbr = ctx->GetLineNumber(0, 0, &tmp);
+
+	// Consider just filename, not the full path
+	string file = tmp;
+	size_t r = file.find_last_of("\\/");
+	if( r != string::npos )
+		file = file.substr(r+1);
 
 	for( size_t n = 0; n < breakPoints.size(); n++ )
 	{
+		// TODO: do case-less comparison
 		if( !breakPoints[n].func &&
 			breakPoints[n].lineNbr == lineNbr &&
 			breakPoints[n].name == file )
@@ -185,7 +194,6 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 			size_t div = cmd.find(':'); 
 			if( div != string::npos && div > 2 )
 			{
-				// TODO: Trim the file name
 				string file = cmd.substr(2, div-2);
 				string line = cmd.substr(div+1);
 
@@ -195,7 +203,6 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 			}
 			else if( div == string::npos && (div = cmd.find_first_not_of(" \t", 1)) != string::npos )
 			{
-				// TODO: Trim the function name
 				string func = cmd.substr(div);
 
 				AddFuncBreakPoint(func);
@@ -278,6 +285,12 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 		// take more commands
 		return false;
 
+	case 'p':
+		// TODO: Implement this
+		// Print a value (this is simpler than evaluate)
+		// take more commands
+		return false;
+
 	case 'e':
 		// TODO: Implement this
 		// Evaluate some expression
@@ -323,7 +336,7 @@ void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 	if( !func ) return;
 
 	stringstream s;
-	for( int n = 0; n < func->GetVarCount(); n++ )
+	for( asUINT n = 0; n < func->GetVarCount(); n++ )
 	{
 		if( ctx->IsVarInScope(n) )
 			s << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), ctx->GetVarTypeId(n)) << endl;
@@ -360,25 +373,39 @@ void CDebugger::PrintCallstack(asIScriptContext *ctx)
 
 void CDebugger::AddFuncBreakPoint(const string &func)
 {
+	// Trim the function name
+	size_t b = func.find_first_not_of(" \t");
+	size_t e = func.find_last_not_of(" \t");
+	string actual = func.substr(b, e != string::npos ? e-b+1 : string::npos);
+
 	stringstream s;
-	s << "Adding deferred break point for function '" << func << "'" << endl;
+	s << "Adding deferred break point for function '" << actual << "'" << endl;
 	Output(s.str());
 
-	BreakPoint bp(func, 0, true);
+	BreakPoint bp(actual, 0, true);
 	breakPoints.push_back(bp);
 }
 
 void CDebugger::AddFileBreakPoint(const string &file, int lineNbr)
 {
-	// TODO: Store just file name, not entire path
-	// TODO: Verify that there actually is any byte code on that line, 
-	//       otherwise the breakpoint will never be reached
+	// Store just file name, not entire path
+	size_t r = file.find_last_of("\\/");
+	string actual;
+	if( r != string::npos )
+		actual = file.substr(r+1);
+	else
+		actual = file;
+
+	// Trim the file name
+	size_t b = actual.find_first_not_of(" \t");
+	size_t e = actual.find_last_not_of(" \t");
+	actual = actual.substr(b, e != string::npos ? e-b+1 : string::npos);
 
 	stringstream s;
-	s << "Setting break point in file '" << file << "' at line " << lineNbr << endl;
+	s << "Setting break point in file '" << actual << "' at line " << lineNbr << endl;
 	Output(s.str());
 
-	BreakPoint bp(file, lineNbr, false);
+	BreakPoint bp(actual, lineNbr, false);
 	breakPoints.push_back(bp);
 }
 

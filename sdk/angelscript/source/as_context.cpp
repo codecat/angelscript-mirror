@@ -3490,7 +3490,7 @@ void asCContext::CleanStack()
 }
 
 // Interface
-bool asCContext::IsVarInScope(int varIndex, asUINT stackLevel)
+bool asCContext::IsVarInScope(asUINT varIndex, asUINT stackLevel)
 {
 	asASSERT( stackLevel < GetCallstackSize() );
 
@@ -3941,7 +3941,7 @@ int asCContext::GetVarCount(asUINT stackLevel)
 }
 
 // interface
-const char *asCContext::GetVarName(int varIndex, asUINT stackLevel)
+const char *asCContext::GetVarName(asUINT varIndex, asUINT stackLevel)
 {
 	asIScriptFunction *func = GetFunction(stackLevel);
 	if( func == 0 ) return 0;
@@ -3952,7 +3952,7 @@ const char *asCContext::GetVarName(int varIndex, asUINT stackLevel)
 }
 
 // interface
-const char *asCContext::GetVarDeclaration(int varIndex, asUINT stackLevel)
+const char *asCContext::GetVarDeclaration(asUINT varIndex, asUINT stackLevel)
 {
 	asIScriptFunction *func = GetFunction(stackLevel);
 	if( func == 0 ) return 0;
@@ -3961,7 +3961,7 @@ const char *asCContext::GetVarDeclaration(int varIndex, asUINT stackLevel)
 }
 
 // interface
-int asCContext::GetVarTypeId(int varIndex, asUINT stackLevel)
+int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel)
 {
 	asIScriptFunction *func = GetFunction(stackLevel);
 	if( func == 0 ) return asINVALID_ARG;
@@ -3972,7 +3972,7 @@ int asCContext::GetVarTypeId(int varIndex, asUINT stackLevel)
 }
 
 // interface
-void *asCContext::GetAddressOfVar(int varIndex, asUINT stackLevel)
+void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel)
 {
 	if( stackLevel >= GetCallstackSize() ) return 0;
 
@@ -3993,7 +3993,7 @@ void *asCContext::GetAddressOfVar(int varIndex, asUINT stackLevel)
 	if( func == 0 )
 		return 0;
 
-	if( varIndex < 0 || varIndex >= (signed)func->variables.GetLength() )
+	if( varIndex >= func->variables.GetLength() )
 		return 0;
 
 	// For object variables it's necessary to dereference the pointer to get the address of the value

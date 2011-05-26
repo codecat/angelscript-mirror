@@ -409,8 +409,7 @@ asEFuncType asCScriptFunction::GetFuncType() const
 }
 
 // interface
-// TODO: Should return asUINT
-int asCScriptFunction::GetVarCount() const
+asUINT asCScriptFunction::GetVarCount() const
 {
 	return int(variables.GetLength());
 }
@@ -731,15 +730,15 @@ int asCScriptFunction::GetReturnTypeId() const
 }
 
 // interface
-int asCScriptFunction::GetParamCount() const
+asUINT asCScriptFunction::GetParamCount() const
 {
-	return (int)parameterTypes.GetLength();
+	return parameterTypes.GetLength();
 }
 
 // interface
-int asCScriptFunction::GetParamTypeId(int index, asDWORD *flags) const
+int asCScriptFunction::GetParamTypeId(asUINT index, asDWORD *flags) const
 {
-	if( index < 0 || (unsigned)index >= parameterTypes.GetLength() )
+	if( index >= parameterTypes.GetLength() )
 		return asINVALID_ARG;
 
 	if( flags )

@@ -1058,7 +1058,7 @@ void asCModule::ResolveInterfaceIds(asCArray<void*> *substitutions)
 						if( func->returnType.GetObjectType() == equals[i].a )
 							func->returnType.SetObjectType(equals[i].b);
 
-						for( int p = 0; p < func->GetParamCount(); p++ )
+						for( asUINT p = 0; p < func->GetParamCount(); p++ )
 						{
 							if( func->parameterTypes[p].GetObjectType() == equals[i].a )
 								func->parameterTypes[p].SetObjectType(equals[i].b);
