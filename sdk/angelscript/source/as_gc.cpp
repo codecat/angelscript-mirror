@@ -59,9 +59,8 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 	asSObjTypePair ot = {obj, objType};
 
 	// TODO: We should invoke the garbage collector to destroy some garbage here.
-	//       Only a single step will be called. If an object is destroyed, another
-	//       step will be called until no more garbage is destroyed. A single step
-	//       for the detection of circular references should be called too.
+	//       Only a few steps will be called. A single step for the detection of 
+	//       circular references should be called too.
 	//
 	//       This way most garbage will be destroyed automatically without the  
 	//       application having to manually invoke the GC. 
@@ -70,7 +69,20 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 	//       object. This has to change, as there might be thousands of live objects
 	//       in the GC, and it will make it slow to add new objects.
 	//
+	//       There should be a second list of objects. When an object has been validated
+	//       multiple times without being destroyed it should be moved to the second list.
+	//       The second list is validated with less frequency as it is most likely only
+	//       fill will long living objects.
+	//
 	//       This behaviour can be turned off with an engine property.
+	//
+	//       If the GC is already being executed then we should just skip this. This will
+	//       also avoid the GC being called recursively if for some reason another object
+	//       is created as part of the clean-up process.
+	//       
+	//       However, if this thread is currently working in the GC and another thread
+	//       tries to execute the full GC, then that thread needs to wait until we're done here.
+	//
 
 	// Add the data to the gcObjects array in a critical section as
 	// another thread might be calling this method at the same time
