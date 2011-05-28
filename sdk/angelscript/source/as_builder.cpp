@@ -1889,9 +1889,6 @@ void asCBuilder::CompileClasses()
 
 	if( numErrors > 0 ) return;
 
-	// TODO: The declarations form a graph, all circles in
-	//       the graph must be flagged as potential circles
-
 	// Verify potential circular references
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
@@ -1906,17 +1903,22 @@ void asCBuilder::CompileClasses()
 			{
 				if( dt.IsObjectHandle() )
 				{
-					// TODO: Can this handle really generate a circular reference?
-					//       Only if the handle is of a type that can reference this type, either directly or indirectly
+					// TODO: optimize: If it is known that the handle can't be involved in a circular reference
+					//                 then this object doesn't need to be marked as garbage collected. 
+					//                 - The application could set a flag when registering the object.
+					//                 - The script classes can be marked as final, then the compiler will 
+					//                   be able to determine whether the class is garbage collected or not.
 
 					ot->flags |= asOBJ_GC;
+					break;
 				}
 				else if( dt.GetObjectType()->flags & asOBJ_GC )
 				{
-					// TODO: Just because the member type is a potential circle doesn't mean that this one is
-					//       Only if the object is of a type that can reference this type, either directly or indirectly
+					// TODO: optimize: Just because the member type is a potential circle doesn't mean that this one is
+					//                 Only if the object is of a type that can reference this type, either directly or indirectly
 
 					ot->flags |= asOBJ_GC;
+					break;
 				}
 			}
 		}
