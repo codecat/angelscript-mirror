@@ -91,7 +91,9 @@ void CDebugger::LineCallback(asIScriptContext *ctx)
 	}
 
 	stringstream s;
-	s << ctx->GetFunction()->GetDeclaration() << ":" << ctx->GetLineNumber() << endl;
+	const char *file;
+	int lineNbr = ctx->GetLineNumber(0, 0, &file);
+	s << file << ":" << lineNbr << "; " << ctx->GetFunction()->GetDeclaration() << endl;
 	Output(s.str());
 
 	TakeCommands(ctx);
@@ -380,14 +382,16 @@ void CDebugger::ListStatistics(asIScriptContext *ctx)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
 	
-	asUINT gcCurrSize, gcTotalDestr, gcTotalDet;
-	engine->GetGCStatistics(&gcCurrSize, &gcTotalDestr, &gcTotalDet);
+	asUINT gcCurrSize, gcTotalDestr, gcTotalDet, gcNewObjects, gcTotalNewDestr;
+	engine->GetGCStatistics(&gcCurrSize, &gcTotalDestr, &gcTotalDet, &gcNewObjects, &gcTotalNewDestr);
 
 	stringstream s;
-	s << "Garbage collector: " << endl;
-	s << " current size:    " << gcCurrSize << endl;
-	s << " total destroyed: " << gcTotalDestr << endl;
-	s << " total detected:  " << gcTotalDet << endl;
+	s << "Garbage collector:" << endl;
+	s << " current size:          " << gcCurrSize << endl;
+	s << " total destroyed:       " << gcTotalDestr << endl;
+	s << " total detected:        " << gcTotalDet << endl;
+	s << " new objects:           " << gcNewObjects << endl;
+	s << " new objects destroyed: " << gcTotalNewDestr << endl;
 
 	Output(s.str());
 }
@@ -395,8 +399,13 @@ void CDebugger::ListStatistics(asIScriptContext *ctx)
 void CDebugger::PrintCallstack(asIScriptContext *ctx)
 {
 	stringstream s;
+	const char *file;
+	int lineNbr;
 	for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ )
-		s << ctx->GetFunction(n)->GetDeclaration() << ":" << ctx->GetLineNumber(n) << endl;
+	{
+		lineNbr = ctx->GetLineNumber(n, 0, &file);
+		s << file << ":" << lineNbr << "; " << ctx->GetFunction(n)->GetDeclaration() << endl;
+	}
 	Output(s.str());
 }
 

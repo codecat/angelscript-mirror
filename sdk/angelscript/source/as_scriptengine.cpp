@@ -3196,9 +3196,9 @@ int asCScriptEngine::GarbageCollect(asDWORD flags)
 }
 
 // interface
-void asCScriptEngine::GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected) const
+void asCScriptEngine::GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected, asUINT *newObjects, asUINT *totalNewDestroyed) const
 {
-	gc.GetStatistics(currentSize, totalDestroyed, totalDetected);
+	gc.GetStatistics(currentSize, totalDestroyed, totalDetected, newObjects, totalNewDestroyed);
 }
 
 // interface

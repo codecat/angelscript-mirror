@@ -567,7 +567,7 @@ public:
 
 	// Garbage collection
 	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE) = 0;
-	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0) const = 0;
+	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0, asUINT *newObjects = 0, asUINT *totalNewDestroyed = 0) const = 0;
 	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId) = 0;
 	virtual void GCEnumCallback(void *reference) = 0;
 

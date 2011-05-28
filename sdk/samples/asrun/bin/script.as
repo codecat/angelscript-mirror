@@ -27,8 +27,10 @@ int main()
 
   // Garbage collection is automatic
   // Set up a circular reference to prove this
-  Link @link = Link();
-  @link.next = link;
+  {
+    Link @link = Link();
+    @link.next = link;
+  }
   for( int n = 0; n < 1000; n++ )
   {
     Link @link = Link();
