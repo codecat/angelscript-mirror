@@ -111,7 +111,9 @@ enum asEEngineProp
 	//! Enable or disable property accessors: 0 - no accessors, 1 - app registered accessors, 2 - app and script created accessors
 	asEP_PROPERTY_ACCESSOR_MODE       = 14,
 	//! Format default array in template form in messages and declarations. Default: false
-	asEP_EXPAND_DEF_ARRAY_TO_TMPL     = 15
+	asEP_EXPAND_DEF_ARRAY_TO_TMPL     = 15,
+	//! Enable or disable automatic garbage collection. Default: true
+	asEP_AUTO_GARBAGE_COLLECT         = 16
 };
 
 // Calling conventions
@@ -645,7 +647,7 @@ struct asSMessageInfo
 //! \def AS_API
 //! \brief A define that specifies how the function should be imported
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#if defined(WIN32) || defined(_WIN32) || defined(__CYGWIN__)
   #if defined(ANGELSCRIPT_EXPORT)
     #define AS_API __declspec(dllexport)
   #elif defined(ANGELSCRIPT_DLL_LIBRARY_IMPORT)
@@ -2288,18 +2290,18 @@ public:
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
     //! \return A null terminated string with the name of the variable.
-	virtual const char        *GetVarName(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual const char        *GetVarName(asUINT varIndex, asUINT stackLevel = 0) = 0;
 	//! \brief Returns the declaration of a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
     //! \return A null terminated string with the declaration of the variable.
-	virtual const char        *GetVarDeclaration(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel = 0) = 0;
 	//! \brief Returns the type id of a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
     //! \return The type id of the variable, or a negative value on error.
 	//! \retval asINVALID_ARG The index or stack level is invalid.
-	virtual int                GetVarTypeId(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual int                GetVarTypeId(asUINT varIndex, asUINT stackLevel = 0) = 0;
 	//! \brief Returns a pointer to a local variable at the specified callstack level.
     //! \param[in] varIndex The index of the variable.
     //! \param[in] stackLevel The index on the call stack.
@@ -2310,7 +2312,16 @@ public:
     //!
     //! Note that object variables may not be initalized at all moments, thus you must verify 
     //! if the address returned points to a null pointer, before you try to dereference it.
-	virtual void              *GetAddressOfVar(int varIndex, asUINT stackLevel = 0) = 0;
+	virtual void              *GetAddressOfVar(asUINT varIndex, asUINT stackLevel = 0) = 0;
+	//! \brief Informs whether the variable is in scope at the current program position.
+	//! \param[in] varIndex The index of the variable.
+	//! \param[in] stackLevel The index on the call stack.
+	//! \return True if variable is in scope.
+	//!
+	//! This method can be used to determine if a variable is currently visible from the 
+	//! current program position. This is especially useful if multiple variables with the
+	//! same name is declared in different scopes.
+	virtual bool               IsVarInScope(asUINT varIndex, asUINT stackLevel = 0) = 0;
 	//! \brief Returns the type id of the object, if a class method is being executed.
     //! \param[in] stackLevel The index on the call stack.
     //! \return Returns the type id of the object if it is a class method.
@@ -2878,13 +2889,13 @@ public:
 
     //! \brief Returns the number of parameters for this function.
     //! \return The number of parameters.
-	virtual int              GetParamCount() const = 0;
+	virtual asUINT           GetParamCount() const = 0;
     //! \brief Returns the type id of the specified parameter.
     //! \param[in] index The zero based parameter index.
     //! \param[out] flags A combination of \ref asETypeModifiers.
     //! \return A negative value on error, or the type id of the specified parameter.
     //! \retval asINVALID_ARG The index is out of bounds.
-	virtual int              GetParamTypeId(int index, asDWORD *flags = 0) const = 0;
+	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;
     //! \brief Returns the type id of the return type.
     //! \return The type id of the return type.
 	virtual int              GetReturnTypeId() const = 0;
@@ -2896,7 +2907,7 @@ public:
 	// Debug information
 	//! \brief Returns the number of local variables in the function
 	//! \return The number of local variables in the function
-	virtual int              GetVarCount() const = 0;
+	virtual asUINT           GetVarCount() const = 0;
 	//! \brief Returns information about a local variable
 	//! \param[in] index The zero based index of the local variable
 	//! \param[out] name Receives the name of the variable
@@ -3626,6 +3637,7 @@ enum asEBCInstr
 	asBC_MAXBYTECODE	= 186,
 
 	// Temporary tokens. Can't be output to the final program
+	asBC_VarDecl        = 251,
 	asBC_Block          = 252,
 	asBC_ObjInfo		= 253,
 	asBC_LINE			= 254,
@@ -4001,8 +4013,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(248),
 	asBCINFO_DUMMY(249),
 	asBCINFO_DUMMY(250),
-	asBCINFO_DUMMY(251),
 
+	asBCINFO(VarDecl,   W_ARG,          0),
 	asBCINFO(Block,     INFO,           0),
 	asBCINFO(ObjInfo,	rW_DW_ARG,		0),
 	asBCINFO(LINE,		INFO,			0),
