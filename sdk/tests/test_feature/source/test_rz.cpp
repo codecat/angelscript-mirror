@@ -463,7 +463,7 @@ bool Test3()
 	// There are still objects held alive in the GC
 	unsigned int gcCount;
 	engine->GetGCStatistics(&gcCount);
-	assert( gcCount == 16 ); // The script class types and functions are also in the gc
+	assert( gcCount != 0 ); // The script class types and functions are also in the gc
 
 	// discard the module - no longer in use
 	// The module will be discarded, but the functions that the live objects use will remain

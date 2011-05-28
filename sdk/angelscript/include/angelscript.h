@@ -89,7 +89,8 @@ enum asEEngineProp
 	asEP_INCLUDE_JIT_INSTRUCTIONS     = 12,
 	asEP_STRING_ENCODING              = 13,
 	asEP_PROPERTY_ACCESSOR_MODE       = 14,
-	asEP_EXPAND_DEF_ARRAY_TO_TMPL     = 15
+	asEP_EXPAND_DEF_ARRAY_TO_TMPL     = 15,
+	asEP_AUTO_GARBAGE_COLLECT         = 16
 };
 
 // Calling conventions

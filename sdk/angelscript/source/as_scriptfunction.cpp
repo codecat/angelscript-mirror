@@ -972,16 +972,22 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 		case asBC_REFCPY:
 			{
                 asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
-				objType->Release();
-				*(void**)&byteCode[n+1] = 0;
+				if( objType )
+				{
+					objType->Release();
+					*(void**)&byteCode[n+1] = 0;
+				}
 			}
 			break;
 
 		case asBC_ALLOC:
 			{
 				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
-				objType->Release();
-				*(void**)&byteCode[n+1] = 0;
+				if( objType )
+				{
+					objType->Release();
+				*	(void**)&byteCode[n+1] = 0;
+				}
 
 				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
 				if( func )

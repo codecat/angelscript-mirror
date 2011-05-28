@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -82,7 +82,8 @@ protected:
 		detectGarbage_init,
 		detectGarbage_loop1,
 		detectGarbage_loop2,
-		verifyUnmarked,
+		verifyUnmarked_init,
+		verifyUnmarked_loop,
 		breakCircles_init,
 		breakCircles_loop,
 		breakCircles_haveGarbage
@@ -114,7 +115,8 @@ protected:
 	asSMapNode<void*, asSIntTypePair> *gcMapCursor;
 
 	// Critical section for multithreaded access
-	DECLARECRITICALSECTION(gcCritical);
+	DECLARECRITICALSECTION(gcCritical);   // Used for adding/removing objects
+	DECLARECRITICALSECTION(gcCollecting); // Used for processing
 };
 
 END_AS_NAMESPACE

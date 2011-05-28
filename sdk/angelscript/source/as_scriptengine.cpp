@@ -283,6 +283,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.expandDefaultArrayToTemplate = value ? true : false;
 		break;
 
+	case asEP_AUTO_GARBAGE_COLLECT:
+		ep.autoGarbageCollect = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -338,6 +342,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 	case asEP_EXPAND_DEF_ARRAY_TO_TMPL:
 		return ep.expandDefaultArrayToTemplate;
+
+	case asEP_AUTO_GARBAGE_COLLECT:
+		return ep.autoGarbageCollect;
 	}
 
 	return 0;
@@ -380,6 +387,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.stringEncoding               = 0;         // utf8. 1 = utf16
 		ep.propertyAccessorMode         = 2;         // 0 = disable, 1 = app registered only, 2 = app and script created
 		ep.expandDefaultArrayToTemplate = false;
+		ep.autoGarbageCollect           = true;
 	}
 
 	gc.engine = this;
