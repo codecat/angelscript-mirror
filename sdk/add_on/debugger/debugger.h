@@ -21,6 +21,7 @@ public:
 	virtual void ListBreakPoints();
 	virtual void ListLocalVariables(asIScriptContext *ctx);
 	virtual void ListGlobalVariables(asIScriptContext *ctx);
+	virtual void ListStatistics(asIScriptContext *ctx);
 	virtual void PrintCallstack(asIScriptContext *ctx);
 	virtual std::string ToString(void *value, asUINT typeId);
 	virtual void Output(const std::string &str);

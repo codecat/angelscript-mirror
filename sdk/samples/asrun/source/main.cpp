@@ -50,9 +50,10 @@ int main(int argc, char **argv)
 	if( !argsValid )
 	{
 		cout << "Usage: " << endl;
-		cout << "asrun [-d] <script file>" << endl;
-		cout << " -d             inform if the script should be runned with deug" << endl;
+		cout << "asrun [-d] <script file> [<args>]" << endl;
+		cout << " -d             inform if the script should be runned with debug" << endl;
 		cout << " <script file>  is the script file that should be runned" << endl;
+		cout << " <args>         zero or more args for the script" << endl;
 		return -1;
 	}
 
@@ -167,6 +168,8 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 
 	if( debug )
 	{
+		cout << "Debugging, waiting for commands. Type 'h' for help." << endl;
+
 		// Create the debugger instance
 		dbg = new CDebugger();
 

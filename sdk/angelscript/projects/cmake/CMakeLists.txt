@@ -5,7 +5,6 @@ cmake_policy(SET CMP0003 NEW)
 project(Angelscript) 
  
 set(ANGELSCRIPT_SOURCE 
-        ../../source/as_arrayobject.cpp 
         ../../source/as_atomic.cpp 
         ../../source/as_builder.cpp 
         ../../source/as_bytecode.cpp 
@@ -42,7 +41,6 @@ set(ANGELSCRIPT_SOURCE
 set(ANGELSCRIPT_HEADERS 
         ../../include/angelscript.h 
         ../../source/as_array.h 
-        ../../source/as_arrayobject.h 
         ../../source/as_builder.h 
         ../../source/as_bytecode.h 
         ../../source/as_callfunc.h 
@@ -50,6 +48,7 @@ set(ANGELSCRIPT_HEADERS
         ../../source/as_config.h 
         ../../source/as_configgroup.h 
         ../../source/as_context.h 
+        ../../source/as_criticalsection.h
         ../../source/as_datatype.h 
         ../../source/as_debug.h 
         ../../source/as_generic.h 

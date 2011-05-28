@@ -28,7 +28,11 @@ string CDebugger::ToString(void *value, asUINT typeId)
 	else if( typeId == asTYPEID_INT32 )
 		s << *(signed int*)value;
 	else if( typeId == asTYPEID_INT64 )
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+		s << "{...}"; // MSVC6 doesn't like the operator for 64bit integer
+#else
 		s << *(asINT64*)value;
+#endif
 	else if( typeId == asTYPEID_UINT8 )
 		s << *(unsigned char*)value;
 	else if( typeId == asTYPEID_UINT16 )
@@ -36,7 +40,11 @@ string CDebugger::ToString(void *value, asUINT typeId)
 	else if( typeId == asTYPEID_UINT32 )
 		s << *(unsigned int*)value;
 	else if( typeId == asTYPEID_UINT64 )
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+		s << "{...}"; // MSVC6 doesn't like the operator for 64bit integer
+#else
 		s << *(asQWORD*)value;
+#endif
 	else if( typeId == asTYPEID_FLOAT )
 		s << *(float*)value;
 	else if( typeId == asTYPEID_DOUBLE )
@@ -263,12 +271,17 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 				{
 					ListGlobalVariables(ctx);
 				}
+				else if( cmd[p] == 's' )
+				{
+					ListStatistics(ctx);
+				}
 				else
 				{
 					Output("Unknown list option, expected one of:\n"
 					       "b - breakpoints\n"
 					       "v - local variables\n"
-					       "g - global variables\n");
+					       "g - global variables\n"
+						   "s - statistics\n");
 				}
 			}
 			else 
@@ -360,6 +373,22 @@ void CDebugger::ListGlobalVariables(asIScriptContext *ctx)
 		mod->GetGlobalVar(n, 0, &typeId);
 		s << mod->GetGlobalVarDeclaration(n) << " = " << ToString(mod->GetAddressOfGlobalVar(n), typeId) << endl;
 	}
+	Output(s.str());
+}
+
+void CDebugger::ListStatistics(asIScriptContext *ctx)
+{
+	asIScriptEngine *engine = ctx->GetEngine();
+	
+	asUINT gcCurrSize, gcTotalDestr, gcTotalDet;
+	engine->GetGCStatistics(&gcCurrSize, &gcTotalDestr, &gcTotalDet);
+
+	stringstream s;
+	s << "Garbage collector: " << endl;
+	s << " current size:    " << gcCurrSize << endl;
+	s << " total destroyed: " << gcTotalDestr << endl;
+	s << " total detected:  " << gcTotalDet << endl;
+
 	Output(s.str());
 }
 

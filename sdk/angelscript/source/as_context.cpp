@@ -3510,7 +3510,7 @@ bool asCContext::IsVarInScope(asUINT varIndex, asUINT stackLevel)
 	}
 
 	// First determine if the program position is after the variable declaration
-	if( (int)func->variables.GetLength() <= varIndex ) return false;
+	if( func->variables.GetLength() <= varIndex ) return false;
 	if( func->variables[varIndex]->declaredAtProgramPos > pos ) return false;
 
 	asUINT declaredAt = func->variables[varIndex]->declaredAtProgramPos;
