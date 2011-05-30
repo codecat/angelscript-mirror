@@ -17,8 +17,15 @@
 
 string g_str = getDefaultString();
 
+enum E
+{
+  VALUE1 = 20,
+  VALUE2 = 30
+}
+
 int main()
 {
+  E val = E(100);
   array<string> @args = getCommandLineArgs();
 
   print("Received the following args : " + join(args, "|") + "\n");

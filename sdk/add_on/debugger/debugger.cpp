@@ -14,7 +14,7 @@ CDebugger::~CDebugger()
 {
 }
 
-string CDebugger::ToString(void *value, asUINT typeId)
+string CDebugger::ToString(void *value, asUINT typeId, asIScriptEngine *engine)
 {
 	stringstream s;
 	if( typeId == asTYPEID_VOID )
@@ -49,12 +49,31 @@ string CDebugger::ToString(void *value, asUINT typeId)
 		s << *(float*)value;
 	else if( typeId == asTYPEID_DOUBLE )
 		s << *(double*)value;
-	else
-		s << "{" << value << "}";
+	else if( (typeId & asTYPEID_MASK_OBJECT) == 0 )
+	{
+		// The type is an enum
+		s << *(asUINT*)value;
 
-	// TODO: Should expand enums to the enum name
-	// TODO: Should expand script classes to show values of members
-	// TODO: Value types can have their properties expanded by default
+		// Check if the value matches one of the defined enums
+		for( int n = engine->GetEnumValueCount(typeId); n-- > 0; )
+		{
+			int enumVal;
+			const char *enumName = engine->GetEnumValueByIndex(typeId, n, &enumVal);
+			if( enumVal == *(int*)value )
+			{
+				s << ", " << enumName;
+				break;
+			}
+		}
+	}
+	else
+	{
+		// TODO: Should expand script classes to show values of members
+		// TODO: Value types can have their properties expanded by default
+		
+		// Just print the address
+		s << "{" << value << "}";
+	}
 
 	return s.str();
 }
@@ -301,14 +320,8 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 		return false;
 
 	case 'p':
-		// TODO: Implement this
-		// Print a value (this is simpler than evaluate)
-		// take more commands
-		return false;
-
-	case 'e':
-		// TODO: Implement this
-		// Evaluate some expression
+		// TODO: Implement 'Print a value'
+		// Print a value 
 		// take more commands
 		return false;
 
@@ -354,7 +367,7 @@ void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 	for( asUINT n = 0; n < func->GetVarCount(); n++ )
 	{
 		if( ctx->IsVarInScope(n) )
-			s << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), ctx->GetVarTypeId(n)) << endl;
+			s << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), ctx->GetVarTypeId(n), ctx->GetEngine()) << endl;
 	}
 	Output(s.str());
 }
@@ -373,7 +386,7 @@ void CDebugger::ListGlobalVariables(asIScriptContext *ctx)
 	{
 		int typeId;
 		mod->GetGlobalVar(n, 0, &typeId);
-		s << mod->GetGlobalVarDeclaration(n) << " = " << ToString(mod->GetAddressOfGlobalVar(n), typeId) << endl;
+		s << mod->GetGlobalVarDeclaration(n) << " = " << ToString(mod->GetAddressOfGlobalVar(n), typeId, ctx->GetEngine()) << endl;
 	}
 	Output(s.str());
 }
