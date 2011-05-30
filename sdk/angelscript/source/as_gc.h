@@ -91,7 +91,8 @@ protected:
 		breakCircles_haveGarbage
 	};
 
-	int            DestroyGarbage();
+	int            DestroyNewGarbage();
+	int            DestroyOldGarbage();
 	int            IdentifyGarbageWithCyclicRefs();
 	asSObjTypePair GetNewObjectAtIdx(int idx);
 	asSObjTypePair GetOldObjectAtIdx(int idx);
@@ -112,8 +113,10 @@ protected:
 	asCMap<void*, asSIntTypePair>      gcMap;
 
 	// State variables
-	egcDestroyState                    destroyState;
-	asUINT                             destroyIdx;
+	egcDestroyState                    destroyNewState;
+	egcDestroyState                    destroyOldState;
+	asUINT                             destroyNewIdx;
+	asUINT                             destroyOldIdx;
 	asUINT                             numDestroyed;
 	asUINT                             numNewDestroyed;
 	egcDetectState                     detectState;

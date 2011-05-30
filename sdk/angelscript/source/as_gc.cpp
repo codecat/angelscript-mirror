@@ -48,7 +48,8 @@ asCGarbageCollector::asCGarbageCollector()
 {
 	engine          = 0;
 	detectState     = clearCounters_init;
-	destroyState    = destroyGarbage_init;
+	destroyNewState = destroyGarbage_init;
+	destroyOldState = destroyGarbage_init;
 	numDestroyed    = 0;
 	numNewDestroyed = 0;
 	numDetected     = 0;
@@ -74,13 +75,16 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 
 			// Run one step of DetectGarbage
 			if( gcOldObjects.GetLength() )
+			{
 				IdentifyGarbageWithCyclicRefs();
+				DestroyOldGarbage();
+			}
 
 			// Run a few steps of DestroyGarbage
 			int iter = gcNewObjects.GetLength();
 			if( iter > 10 ) iter = 10;
 			while( iter-- > 0 )
-				DestroyGarbage();
+				DestroyNewGarbage();
 
 			LEAVECRITICALSECTION(gcCollecting);
 		}
@@ -113,7 +117,10 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 				detectState  = clearCounters_init;
 			}
 			if( doDestroy )
-				destroyState = destroyGarbage_init;
+			{
+				destroyNewState = destroyGarbage_init;
+				destroyOldState = destroyGarbage_init;
+			}
 
 			int r = 1;
 			unsigned int count = (unsigned int)(gcNewObjects.GetLength() + gcOldObjects.GetLength());
@@ -125,7 +132,10 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 
 				// Now destroy all known garbage
 				if( doDestroy )
-					while( (r = DestroyGarbage()) == 1 );
+				{
+					while( (r = DestroyNewGarbage()) == 1 );
+					while( (r = DestroyOldGarbage()) == 1 );
+				}
 
 				// Run another iteration if any garbage was destroyed
 				if( count != (unsigned int)(gcNewObjects.GetLength() + gcOldObjects.GetLength()) )
@@ -144,7 +154,10 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 		{
 			// Destroy the garbage that we know of
 			if( doDestroy )
-				DestroyGarbage();
+			{
+				DestroyNewGarbage();
+				DestroyOldGarbage();
+			}
 
 			// Run another incremental step of the identification of cyclic references
 			if( doDetect )
@@ -247,16 +260,11 @@ void asCGarbageCollector::IncreaseCounterForNewObject(int idx)
 	LEAVECRITICALSECTION(gcCritical);
 }
 
-int asCGarbageCollector::DestroyGarbage()
+int asCGarbageCollector::DestroyNewGarbage()
 {
-	// TODO: optimize: There should be a second list of objects. When an object has been validated
-	//                 multiple times without being destroyed it should be moved to the second list.
-	//                 The second list is validated with less frequency as it is most likely only
-	//                 filled will long living objects.
-
 	for(;;)
 	{
-		switch( destroyState )
+		switch( destroyNewState )
 		{
 		case destroyGarbage_init:
 		{
@@ -264,8 +272,8 @@ int asCGarbageCollector::DestroyGarbage()
 			if( gcNewObjects.GetLength() == 0 )
 				return 0;
 
-			destroyIdx = (asUINT)-1;
-			destroyState = destroyGarbage_loop;
+			destroyNewIdx = (asUINT)-1;
+			destroyNewState = destroyGarbage_loop;
 		}
 		break;
 
@@ -279,9 +287,9 @@ int asCGarbageCollector::DestroyGarbage()
 			// Destroy all objects that have refCount == 1. If any objects are
 			// destroyed, go over the list again, because it may have made more
 			// objects reach refCount == 1.
-			if( ++destroyIdx < gcNewObjects.GetLength() )
+			if( ++destroyNewIdx < gcNewObjects.GetLength() )
 			{
-				asSObjTypePair gcObj = GetNewObjectAtIdx(destroyIdx);
+				asSObjTypePair gcObj = GetNewObjectAtIdx(destroyNewIdx);
 				if( engine->CallObjectMethodRetInt(gcObj.obj, gcObj.type->beh.gcGetRefCount) == 1 )
 				{
 					// Release the object immediately
@@ -303,8 +311,8 @@ int asCGarbageCollector::DestroyGarbage()
 					{
 						numDestroyed++;
 						numNewDestroyed++;
-						RemoveNewObjectAtIdx(destroyIdx);
-						destroyIdx--;
+						RemoveNewObjectAtIdx(destroyNewIdx);
+						destroyNewIdx--;
 					}
 					else
 					{
@@ -313,19 +321,19 @@ int asCGarbageCollector::DestroyGarbage()
 						engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.addref);
 					}
 
-					destroyState = destroyGarbage_haveMore;
+					destroyNewState = destroyGarbage_haveMore;
 				}
 				else if( gcObj.count == 3 )
 				{
 					// We've already verified this object multiple times. It is likely
 					// to live for quite a long time so we'll move it to the list if old objects
-					MoveObjectToOldList(destroyIdx);
-					destroyIdx;
+					MoveObjectToOldList(destroyNewIdx);
+					destroyNewIdx--;
 				}
 				else
 				{
 					// Increase the counter for the number of times the object has been verified
-					IncreaseCounterForNewObject(destroyIdx);
+					IncreaseCounterForNewObject(destroyNewIdx);
 				}
 
 				// Allow the application to work a little
@@ -333,15 +341,107 @@ int asCGarbageCollector::DestroyGarbage()
 			}
 			else
 			{
-				if( destroyState == destroyGarbage_haveMore )
+				if( destroyNewState == destroyGarbage_haveMore )
 				{
 					// Restart the cycle
-					destroyState = destroyGarbage_init;
+					destroyNewState = destroyGarbage_init;
 				}
 				else
 				{
 					// Restart the cycle
-					destroyState = destroyGarbage_init;
+					destroyNewState = destroyGarbage_init;
+
+					// Return 0 to tell the application that there 
+					// is no more garbage to destroy at the moment
+					return 0;
+				}
+			}
+		}
+		break;
+		}
+	}
+
+	// Shouldn't reach this point
+	UNREACHABLE_RETURN;
+}
+
+int asCGarbageCollector::DestroyOldGarbage()
+{
+	for(;;)
+	{
+		switch( destroyOldState )
+		{
+		case destroyGarbage_init:
+		{
+			// If there are no objects to be freed then don't start
+			if( gcOldObjects.GetLength() == 0 )
+				return 0;
+
+			destroyOldIdx = (asUINT)-1;
+			destroyOldState = destroyGarbage_loop;
+		}
+		break;
+
+		case destroyGarbage_loop:
+		case destroyGarbage_haveMore:
+		{
+			// If the refCount has reached 1, then only the GC still holds a
+			// reference to the object, thus we don't need to worry about the
+			// application touching the objects during collection.
+
+			// Destroy all objects that have refCount == 1. If any objects are
+			// destroyed, go over the list again, because it may have made more
+			// objects reach refCount == 1.
+			if( ++destroyOldIdx < gcOldObjects.GetLength() )
+			{
+				asSObjTypePair gcObj = GetOldObjectAtIdx(destroyOldIdx);
+				if( engine->CallObjectMethodRetInt(gcObj.obj, gcObj.type->beh.gcGetRefCount) == 1 )
+				{
+					// Release the object immediately
+
+					// Make sure the refCount is really 0, because the
+					// destructor may have increased the refCount again.
+					bool addRef = false;
+					if( gcObj.type->flags & asOBJ_SCRIPT_OBJECT )
+					{
+						// Script objects may actually be resurrected in the destructor
+						int refCount = ((asCScriptObject*)gcObj.obj)->Release();
+						if( refCount > 0 ) addRef = true;
+					}
+					else
+						engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.release);
+
+					// Was the object really destroyed?
+					if( !addRef )
+					{
+						numDestroyed++;
+						RemoveOldObjectAtIdx(destroyOldIdx);
+						destroyOldIdx--;
+					}
+					else
+					{
+						// Since the object was resurrected in the
+						// destructor, we must add our reference again
+						engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.addref);
+					}
+
+					destroyOldState = destroyGarbage_haveMore;
+				}
+
+				// Allow the application to work a little
+				return 1;
+			}
+			else
+			{
+				if( destroyOldState == destroyGarbage_haveMore )
+				{
+					// Restart the cycle
+					destroyOldState = destroyGarbage_init;
+				}
+				else
+				{
+					// Restart the cycle
+					destroyOldState = destroyGarbage_init;
 
 					// Return 0 to tell the application that there 
 					// is no more garbage to destroy at the moment
@@ -422,36 +522,6 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 					// Mark the object so that we can
 					// see if it has changed since read
 					engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.gcSetFlag);
-				}
-				else if( refCount == 1 )
-				{
-					// Release the object immediately
-
-					// Make sure the refCount is really 0, because the
-					// destructor may have increased the refCount again.
-					bool addRef = false;
-					if( gcObj.type->flags & asOBJ_SCRIPT_OBJECT )
-					{
-						// Script objects may actually be resurrected in the destructor
-						int refCount = ((asCScriptObject*)gcObj.obj)->Release();
-						if( refCount > 0 ) addRef = true;
-					}
-					else
-						engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.release);
-
-					// Was the object really destroyed?
-					if( !addRef )
-					{
-						numDestroyed++;
-						RemoveOldObjectAtIdx(detectIdx);
-						detectIdx--;
-					}
-					else
-					{
-						// Since the object was resurrected in the
-						// destructor, we must add our reference again
-						engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.addref);
-					}
 				}
 
 				detectIdx++; 

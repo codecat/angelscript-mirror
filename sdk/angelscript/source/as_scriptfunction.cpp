@@ -971,7 +971,7 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 		case asBC_FREE:
 		case asBC_REFCPY:
 			{
-                asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
 				if( objType )
 				{
 					objType->Release();
