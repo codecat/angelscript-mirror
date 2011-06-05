@@ -26,6 +26,8 @@ SRCNAMES = \
   test_string.cpp \
 
   test_string_pooled.cpp \
+  test_thisprop.cpp \
+  test_vector3.cpp \
   utils.cpp
 
 OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
@@ -43,7 +45,7 @@ all: $(BIN)
 
 $(BIN): $(OBJ)
 
-	$(CXX) -o $(BIN) $(OBJ) -langelscript -L../../../../angelscript/lib
+	$(CXX) -o $(BIN) $(OBJ) -langelscript -lpthread -L../../../../angelscript/lib
 	@echo -------------------------------------------------------------------
 	@echo Done.
 

@@ -230,6 +230,7 @@
 // AS_IPHONE  - Apple IPhone
 // AS_ANDROID - Android
 // AS_HAIKU   - Haiku
+// AS_ILLUMOS - Illumos like (OpenSolaris, OpenIndiana, NCP, etc)
 
 
 
@@ -775,6 +776,32 @@
 			#define AS_NO_ATOMIC
 		#endif
 
+	// Illumos
+	#elif defined(__sun)
+		#if defined(__i386__) && !defined(__LP64__)
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+
+			// Support native calling conventions on Intel 32bit CPU
+			#define AS_X86
+		#elif defined(__LP64__)
+			#define AS_X64_GCC
+			#define HAS_128_BIT_PRIMITIVES
+			#define SPLIT_OBJS_BY_MEMBER_TYPES
+			// STDCALL is not available on 64bit Linux
+			#undef STDCALL
+			#define STDCALL
+		#else
+			#define AS_MAX_PORTABILITY
+		#endif
+		#define AS_ILLUMOS
+		#define AS_POSIX_THREADS
+
+		#if !( ( (__GNUC__ == 4) && (__GNUC_MINOR__ >= 1) || __GNUC__ > 4) )
+			// Only with GCC 4.1 was the atomic instructions available
+			#define AS_NO_ATOMIC
+		#endif
 	#endif
 
 	#define I64(x) x##ll
@@ -828,7 +855,7 @@
 #endif
 
 // Is the target a 64bit system?
-#if defined(__LP64__) || defined(__amd64__) || defined(_M_X64)
+#if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64)
 	#ifndef AS_64BIT_PTR
 		#define AS_64BIT_PTR
 	#endif

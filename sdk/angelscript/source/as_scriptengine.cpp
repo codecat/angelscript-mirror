@@ -138,6 +138,10 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_HAIKU
 		"AS_HAIKU "
 #endif
+#ifdef AS_ILLUMOS
+		"AS_ILLUMOS "
+#endif
+
 
 	// CPU family
 #ifdef AS_PPC
