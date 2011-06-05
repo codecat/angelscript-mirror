@@ -4,6 +4,7 @@
 #include <angelscript.h>
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
 #include <stdio.h>
+#include <stdlib.h>
 #if defined(_MSC_VER) && !defined(_WIN32_WCE)
 #include <direct.h>
 #endif
