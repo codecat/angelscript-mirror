@@ -21,10 +21,12 @@ public:
 	virtual void ListBreakPoints();
 	virtual void ListLocalVariables(asIScriptContext *ctx);
 	virtual void ListGlobalVariables(asIScriptContext *ctx);
+	virtual void ListMemberProperties(asIScriptContext *ctx);
 	virtual void ListStatistics(asIScriptContext *ctx);
 	virtual void PrintCallstack(asIScriptContext *ctx);
-	virtual std::string ToString(void *value, asUINT typeId, asIScriptEngine *engine);
+	virtual std::string ToString(void *value, asUINT typeId, bool expandMembers, asIScriptEngine *engine);
 	virtual void Output(const std::string &str);
+	virtual void PrintValue(const std::string &expr, asIScriptContext *ctx);
 
 protected:
 	enum DebugAction

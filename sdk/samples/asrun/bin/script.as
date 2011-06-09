@@ -23,6 +23,17 @@ enum E
   VALUE2 = 30
 }
 
+class Test
+{
+  int a;
+  int b;
+  string c;
+  void method()
+  {
+    print("In Test::method()\n");
+  }
+}
+
 int main()
 {
   E val = E(100);
@@ -30,6 +41,13 @@ int main()
 
   print("Received the following args : " + join(args, "|") + "\n");
 
+  Test t;
+  Test @ht = t;
+  t.method();
+  
+  array<int> a;
+  array<int> @ha;
+  
   function();
 
   // Garbage collection is automatic

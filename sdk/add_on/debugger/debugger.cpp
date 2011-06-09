@@ -14,7 +14,7 @@ CDebugger::~CDebugger()
 {
 }
 
-string CDebugger::ToString(void *value, asUINT typeId, asIScriptEngine *engine)
+string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asIScriptEngine *engine)
 {
 	stringstream s;
 	if( typeId == asTYPEID_VOID )
@@ -66,9 +66,31 @@ string CDebugger::ToString(void *value, asUINT typeId, asIScriptEngine *engine)
 			}
 		}
 	}
+	else if( typeId & asTYPEID_SCRIPTOBJECT )
+	{
+		// Dereference handles, so we can see what it points to
+		if( typeId & asTYPEID_OBJHANDLE )
+			value = *(void**)value;
+
+		asIScriptObject *obj = (asIScriptObject *)value;
+
+		s << "{" << obj << "}";
+
+		if( obj && expandMembers )
+		{
+			asIObjectType *type = obj->GetObjectType();
+			for( int n = 0; n < obj->GetPropertyCount(); n++ )
+			{
+				s << endl << "  " << type->GetPropertyDeclaration(n) << " = " << ToString(obj->GetAddressOfProperty(n), obj->GetPropertyTypeId(n), false, engine);
+			}
+		}
+	}
 	else
 	{
-		// TODO: Should expand script classes to show values of members
+		// Dereference handles, so we can see what it points to
+		if( typeId & asTYPEID_OBJHANDLE )
+			value = *(void**)value;
+
 		// TODO: Value types can have their properties expanded by default
 		
 		// Just print the address
@@ -292,6 +314,10 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 				{
 					ListGlobalVariables(ctx);
 				}
+				else if( cmd[p] == 'm' )
+				{
+					ListMemberProperties(ctx);
+				}
 				else if( cmd[p] == 's' )
 				{
 					ListStatistics(ctx);
@@ -301,6 +327,7 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 					Output("Unknown list option, expected one of:\n"
 					       "b - breakpoints\n"
 					       "v - local variables\n"
+						   "m - member properties\n"
 					       "g - global variables\n"
 						   "s - statistics\n");
 				}
@@ -320,8 +347,19 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 		return false;
 
 	case 'p':
-		// TODO: Implement 'Print a value'
-		// Print a value 
+		{
+			// Print a value 
+			size_t p = cmd.find_first_not_of(" \t", 1);
+			if( p != string::npos )
+			{
+				PrintValue(cmd.substr(p), ctx);
+			}
+			else
+			{
+				Output("Incorrect format for print, expected:\n"
+					   "p <expression>\n");
+			}
+		}
 		// take more commands
 		return false;
 
@@ -346,6 +384,60 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 	return true;
 }
 
+void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
+{
+	asIScriptEngine *engine = ctx->GetEngine();
+
+	int len;
+	asETokenClass t = engine->ParseToken(expr.c_str(), 0, &len);
+
+	// TODO: If the expression starts with :: we should look for global variables
+	// TODO: If the expression starts with this. we should look for class members
+	if( t == asTC_IDENTIFIER )
+	{
+		string name(expr.c_str(), len);
+
+		// Find the variable
+		void *ptr = 0;
+		int typeId;
+
+		asIScriptFunction *func = ctx->GetFunction();
+		if( !func ) return;
+
+		// We start from the end, in case the same name is reused in different scopes
+		bool found = false;
+		for( asUINT n = func->GetVarCount(); n-- > 0; )
+		{
+			if( ctx->IsVarInScope(n) && name == ctx->GetVarName(n) )
+			{
+				ptr = ctx->GetAddressOfVar(n);
+				typeId = ctx->GetVarTypeId(n);
+				found = true;
+				break;
+			}
+		}
+
+		if( !found )
+		{
+			// TODO: Look for class members, if we're in a class method
+			// TODO: Look for global variables
+		}
+
+		if( found )
+		{
+			// TODO: If there is a . after the identifier, check for members
+
+			stringstream s;
+			s << ToString(ptr, typeId, true, engine) << endl;
+			Output(s.str());
+		}
+	}
+	else
+	{
+		Output("Invalid expression. Expected identifier\n");
+	}
+}
+
 void CDebugger::ListBreakPoints()
 {
 	// List all break points
@@ -358,6 +450,17 @@ void CDebugger::ListBreakPoints()
 	Output(s.str());
 }
 
+void CDebugger::ListMemberProperties(asIScriptContext *ctx)
+{
+	void *ptr = ctx->GetThisPointer();
+	if( ptr )
+	{
+		stringstream s;
+		s << "this = " << ToString(ptr, ctx->GetThisTypeId(), true, ctx->GetEngine()) << endl;
+		Output(s.str());
+	}
+}
+
 void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 {
 	asIScriptFunction *func = ctx->GetFunction();
@@ -367,7 +470,7 @@ void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 	for( asUINT n = 0; n < func->GetVarCount(); n++ )
 	{
 		if( ctx->IsVarInScope(n) )
-			s << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), ctx->GetVarTypeId(n), ctx->GetEngine()) << endl;
+			s << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), ctx->GetVarTypeId(n), false, ctx->GetEngine()) << endl;
 	}
 	Output(s.str());
 }
@@ -386,7 +489,7 @@ void CDebugger::ListGlobalVariables(asIScriptContext *ctx)
 	{
 		int typeId;
 		mod->GetGlobalVar(n, 0, &typeId);
-		s << mod->GetGlobalVarDeclaration(n) << " = " << ToString(mod->GetAddressOfGlobalVar(n), typeId, ctx->GetEngine()) << endl;
+		s << mod->GetGlobalVarDeclaration(n) << " = " << ToString(mod->GetAddressOfGlobalVar(n), typeId, false, ctx->GetEngine()) << endl;
 	}
 	Output(s.str());
 }
@@ -469,6 +572,7 @@ void CDebugger::PrintHelp()
 	       "b - Set break point\n"
 	       "l - List various things\n"
 	       "r - Remove break point\n"
+	       "p - Print value\n"
 	       "w - Where am I?\n"
 	       "a - Abort execution\n"
 	       "h - Print this help text\n");
